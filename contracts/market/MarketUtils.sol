@@ -500,16 +500,17 @@ library MarketUtils {
 
         uint256 longOpenInterest = getOpenInterest(dataStore, market, true);
         uint256 shortOpenInterest = getOpenInterest(dataStore, market, false);
-        uint256 diffUsd = Calc.diff(longOpenInterest, shortOpenInterest);
-
-        if (longOpenInterest + shortOpenInterest == 0) {
-            return (0, 0);
-        }
-
-        int256 adjustedFactor = (fundingFactor * diffUsd / (longOpenInterest + shortOpenInterest) * durationInSeconds).toInt256();
 
         int256 longFundingFactor = getCumulativeFundingFactor(dataStore, market, true);
         int256 shortFundingFactor = getCumulativeFundingFactor(dataStore, market, false);
+
+        if (longOpenInterest == 0 || shortOpenInterest == 0) {
+            return (longFundingFactor, shortFundingFactor);
+        }
+
+        uint256 diffUsd = Calc.diff(longOpenInterest, shortOpenInterest);
+        uint256 totalOpenInterest = longOpenInterest + shortOpenInterest;
+        int256 adjustedFactor = (fundingFactor * diffUsd / totalOpenInterest * durationInSeconds).toInt256();
 
         if (longOpenInterest < shortOpenInterest) {
             // positive funding fee for long positions
