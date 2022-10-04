@@ -547,6 +547,7 @@ library MarketUtils {
         return cumulativeBorrowingFactor + adjustedFactor;
     }
 
+    // cap the max factor to avoid overflow
     function getCappedFundingFactor(
         int256 adjustedFactor,
         uint256 multiplier,
