@@ -512,16 +512,16 @@ library MarketUtils {
         uint256 totalOpenInterest = longOpenInterest + shortOpenInterest;
         int256 adjustedFactor = (fundingFactor * diffUsd / totalOpenInterest * durationInSeconds).toInt256();
 
-        if (longOpenInterest < shortOpenInterest) {
-            // positive funding fee for long positions
-            longFundingFactor -= adjustedFactor;
-            // negative funding fee for short positions
-            shortFundingFactor += getCappedFundingFactor(adjustedFactor, longOpenInterest, shortOpenInterest, durationInSeconds);
-        } else {
-            // positive funding fee for short positions
-            shortFundingFactor -= adjustedFactor;
+        if (longOpenInterest > shortOpenInterest) {
             // negative funding fee for long positions
-            longFundingFactor += getCappedFundingFactor(adjustedFactor, shortOpenInterest, longOpenInterest, durationInSeconds);
+            longFundingFactor += adjustedFactor;
+            // capped positive funding fee for short positions
+            shortFundingFactor -= getCappedFundingFactor(adjustedFactor, longOpenInterest, shortOpenInterest, durationInSeconds);
+        } else {
+            // negative funding fee for short positions
+            shortFundingFactor += adjustedFactor;
+            // positive funding fee for long positions
+            longFundingFactor -= getCappedFundingFactor(adjustedFactor, shortOpenInterest, longOpenInterest, durationInSeconds);
         }
 
         return (longFundingFactor, shortFundingFactor);
