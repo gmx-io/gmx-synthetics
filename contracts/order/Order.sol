@@ -103,6 +103,7 @@ library Order {
         OrderType orderType;
         bool isLong;
         bool hasCollateralInETH;
+        bool isFrozen;
     }
 
     // there is a limit on the number of fields a struct can have when being passed
@@ -171,6 +172,10 @@ library Order {
         return props.flags.hasCollateralInETH;
     }
 
+    function isFrozen(Props memory props) internal pure returns (bool) {
+        return props.flags.isFrozen;
+    }
+
     function setAccount(Props memory props, address _value) internal pure {
         props.addresses.account = _value;
     }
@@ -225,6 +230,10 @@ library Order {
 
     function setHasCollateralInETH(Props memory props, bool _value) internal pure {
         props.flags.hasCollateralInETH = _value;
+    }
+
+    function setIsFrozen(Props memory props, bool _value) internal pure {
+        props.flags.isFrozen = _value;
     }
 
     function touch(Props memory props) internal view {

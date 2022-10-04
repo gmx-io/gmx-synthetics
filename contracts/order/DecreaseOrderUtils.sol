@@ -41,6 +41,8 @@ library DecreaseOrderUtils {
             params.orderStore.remove(params.key, params.order.account());
         } else {
             params.order.setSizeDeltaUsd(adjustedSizeDeltaUsd);
+            // clear execution fee as it would be fully used even for partial fills
+            params.order.setExecutionFee(0);
             // the order is updated but we do not call order.touch() here
             // this should not be gameable
             params.orderStore.set(params.key, params.order);

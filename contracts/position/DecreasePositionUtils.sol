@@ -13,6 +13,7 @@ import "../pricing/PositionPricingUtils.sol";
 import "./Position.sol";
 import "./PositionStore.sol";
 import "./PositionUtils.sol";
+import "../order/OrderUtils.sol";
 
 library DecreasePositionUtils {
     using Position for Position.Props;
@@ -246,7 +247,7 @@ library DecreasePositionUtils {
         );
 
         if (usdAdjustment < params.order.acceptableUsdAdjustment()) {
-            revert(Keys.UNACCEPTABLE_USD_ADJUSTMENT_ERROR);
+            OrderUtils.revertUnacceptableUsdAdjustment(usdAdjustment, params.order.acceptableUsdAdjustment());
         }
 
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(

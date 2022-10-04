@@ -64,6 +64,7 @@ library OrderUtils {
 
     error EmptyOrder();
     error UnsupportedOrderType();
+    error UnacceptableUsdAdjustment(int256 usdAdjustment, int256 acceptableUsdAdjustment);
 
     function createOrder(
         DataStore dataStore,
@@ -146,6 +147,32 @@ library OrderUtils {
             dataStore,
             orderStore,
             order.executionFee(),
+            startingGas,
+            keeper,
+            order.account()
+        );
+    }
+
+    function freezeOrder(
+        DataStore dataStore,
+        OrderStore orderStore,
+        bytes32 key,
+        address keeper,
+        uint256 startingGas
+    ) external {
+        Order.Props memory order = orderStore.get(key);
+        validateNonEmptyOrder(order);
+
+        uint256 executionFee = order.executionFee();
+
+        order.setExecutionFee(0);
+        order.setIsFrozen(true);
+        orderStore.set(key, order);
+
+        GasUtils.payExecutionFee(
+            dataStore,
+            orderStore,
+            executionFee,
             startingGas,
             keeper,
             order.account()
@@ -320,5 +347,9 @@ library OrderUtils {
 
     function revertUnsupportedOrderType() internal pure {
         revert UnsupportedOrderType();
+    }
+
+    function revertUnacceptableUsdAdjustment(int256 usdAdjustment, int256 acceptableUsdAdjustment) internal pure {
+        revert UnacceptableUsdAdjustment(usdAdjustment, acceptableUsdAdjustment);
     }
 }

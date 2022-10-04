@@ -81,24 +81,43 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
             startingGas
         ) {
         } catch Error(string memory reason) {
+            Order.Props memory order = orderStore.get(key);
+
             bytes32 reasonKey = keccak256(abi.encodePacked(reason));
+            bool isMarketOrder = OrderUtils.isMarketOrder(order.orderType());
+
             // revert instead of cancel if the reason for failure is due to oracle params
-            // or order requirements not being met
-            if (reasonKey == Keys.ORACLE_ERROR_KEY ||
-                reasonKey == Keys.EMPTY_POSITION_ERROR_KEY ||
-                reasonKey ==  Keys.INSUFFICIENT_SWAP_OUTPUT_AMOUNT_ERROR_KEY ||
-                reasonKey == Keys.UNACCEPTABLE_USD_ADJUSTMENT_ERROR_KEY
-            ) {
+            if (reasonKey == Keys.ORACLE_ERROR_KEY) {
                 revert(reason);
             }
 
-            OrderUtils.cancelOrder(
-                dataStore,
-                orderStore,
-                key,
-                msg.sender,
-                startingGas
-            );
+            if (!isMarketOrder && reasonKey == Keys.EMPTY_POSITION_ERROR_KEY) {
+                revert(reason);
+            }
+
+            if (isMarketOrder) {
+                OrderUtils.cancelOrder(
+                    dataStore,
+                    orderStore,
+                    key,
+                    msg.sender,
+                    startingGas
+                );
+            } else {
+                // freeze unfulfillable orders to prevent the order system from being gamed
+                // an example of gaming would be if a user creates a limit order
+                // with size greater than the available amount in the pool
+                // the user waits for their limit price to be hit, and if price
+                // moves in their favour after, they can deposit into the pool
+                // to allow the order to be executed then close the order for a profit
+                OrderUtils.freezeOrder(
+                    dataStore,
+                    orderStore,
+                    key,
+                    msg.sender,
+                    startingGas
+                );
+            }
         }
     }
 
@@ -161,6 +180,9 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         withOraclePrices(oracle, dataStore, oracleParams)
     {
         OrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, keeper, startingGas);
+        if (params.order.isFrozen()) {
+            _validateFrozenOrderKeeper(keeper);
+        }
 
         FeatureUtils.validateFeature(params.dataStore, Keys.executeOrderFeatureKey(address(this), uint256(params.order.orderType())));
 
@@ -238,5 +260,9 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         OrderUtils.validateNonEmptyOrder(params.order);
 
         return params;
+    }
+
+    function _validateFrozenOrderKeeper(address keeper) internal view {
+        require(roleStore.hasRole(keeper, Role.FROZEN_ORDER_KEEPER), "Role: FROZEN_ORDER_KEEPER");
     }
 }

@@ -83,12 +83,6 @@ library Keys {
     string public constant EMPTY_POSITION_ERROR = "EMPTY_POSITION_ERROR";
     bytes32 public constant EMPTY_POSITION_ERROR_KEY = keccak256(abi.encodePacked(EMPTY_POSITION_ERROR));
 
-    string public constant UNACCEPTABLE_USD_ADJUSTMENT_ERROR = "UNACCEPTABLE_USD_ADJUSTMENT_ERROR";
-    bytes32 public constant UNACCEPTABLE_USD_ADJUSTMENT_ERROR_KEY = keccak256(abi.encodePacked(UNACCEPTABLE_USD_ADJUSTMENT_ERROR));
-
-    string public constant INSUFFICIENT_SWAP_OUTPUT_AMOUNT_ERROR = "INSUFFICIENT_SWAP_OUTPUT_AMOUNT_ERROR";
-    bytes32 public constant INSUFFICIENT_SWAP_OUTPUT_AMOUNT_ERROR_KEY = keccak256(abi.encodePacked(INSUFFICIENT_SWAP_OUTPUT_AMOUNT_ERROR));
-
     function depositGasLimitKey(bool singleToken) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(
             DEPOSIT_GAS_LIMIT,

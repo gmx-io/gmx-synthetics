@@ -36,6 +36,8 @@ library SwapUtils {
         uint256 poolAmountOut;
     }
 
+    error InsufficientSwapOutputAmount(uint256 outputAmount, uint256 minOutputAmount);
+
     // returns tokenOut, outputAmount
     function swap(SwapParams memory params) external returns (address, uint256) {
         address tokenOut = params.tokenIn;
@@ -61,7 +63,7 @@ library SwapUtils {
         }
 
         if (outputAmount < params.minOutputAmount) {
-            revert(Keys.INSUFFICIENT_SWAP_OUTPUT_AMOUNT_ERROR);
+            revert InsufficientSwapOutputAmount(outputAmount, params.minOutputAmount);
         }
 
         return (tokenOut, outputAmount);
