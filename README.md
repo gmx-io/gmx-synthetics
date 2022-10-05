@@ -171,3 +171,7 @@ For example:
 For position actions (increase / decrease position), the change in balance is calculated based on the difference in the long and short open interest.
 
 `price impact exponents` and `price impact factors` are configured per market and can differ for spot and position actions.
+
+The purpose of the price impact is to help reduce the risk of price manipulation, since the contracts use an oracle price which would be an average or median price of multiple reference exchanges. Without a price impact, it may be profitable to manipulate the prices on reference exchanges while executing orders on the contracts.
+
+This risk will also be present if the positive and negative price impact values are similar, for that reason the positive price impact should be set to a low value in times of volatility or irregular price movements.
