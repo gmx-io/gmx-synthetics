@@ -2,11 +2,15 @@
 
 Contracts for GMX Synthetics.
 
-# Overview
+# General Overview
 
-The contracts outline a system for swaps and perp trading.
+This section provides a general overview of how the contracts work.
 
-Markets are created with a long collateral token, short collateral token and index token.
+For a Technical Overview, please see the section further below.
+
+## Markets
+
+Markets support both spot and perp trading, they are created by specifying a long collateral token, short collateral token and index token.
 
 Examples:
 
@@ -14,17 +18,15 @@ Examples:
 - BTC/USD market with long collateral as WBTC, short collateral as a stablecoin, index token as BTC
 - SOL/USD market with long collateral as ETH, short collateral as a stablecoin, index token as SOL
 
-Liquidity providers can deposit either the long or short collateral token to mint liquidity tokens.
+Liquidity providers can deposit either the long or short collateral token or both to mint liquidity tokens.
 
 The long collateral token is used to back long positions, while the short collateral token is used to back short positions.
 
 Liquidity providers take on the profits and losses of traders for the market that they provide liquidity for.
 
-Having separate markets allows for risk isolation, liquidity providers are only exposed to the markets that they deposit into.
+Having separate markets allows for risk isolation, liquidity providers are only exposed to the markets that they deposit into, this potentially allow for permissionless listings.
 
-The contracts potentially allow for permissionless listings.
-
-# Features
+## Features
 
 The contracts support the following main features:
 
@@ -33,7 +35,7 @@ The contracts support the following main features:
 - Leverage Trading (Perps, Long / Short)
 - Market orders, limit orders, stop-loss, take-profit orders
 
-# Oracle System
+## Oracle System
 
 To avoid front-running issues, most actions require two steps to execute:
 
@@ -58,7 +60,7 @@ Example:
 - The prices signed at block 100 can be used to execute this order
 - Order keepers would bundle the signature and price data for token A then execute the order
 
-# Fees and Pricing
+## Fees and Pricing
 
 Funding fees and price impact keep longs / shorts balanced while reducing the risk of price manipulation.
 
@@ -66,7 +68,7 @@ Funding fees and price impact keep longs / shorts balanced while reducing the ri
 - Borrowing fees: to avoid a user opening equal longs / shorts and unnecessarily taking up capacity
 - Price impact: this allows the contracts to simulate a price impact similar to if the trader were trading using an aggregator for the reference exchanges, there is a negative price impact if an action reduces balance, and a positive price impact if an action improves balance
 
-# Keepers
+## Keepers
 
 There are a few keepers and nodes in the system:
 
@@ -74,7 +76,7 @@ There are a few keepers and nodes in the system:
 - Archive nodes: receives oracle keeper signatures and allows querying of this information
 - Order keepers: checks for deposit / withdraw liquidity requests, order requests, bundles the signed oracle prices with the requests and executes them
 
-# Structure
+## Structure
 
 There are two main types of contracts:
 
@@ -96,3 +98,34 @@ If order logic needs to be updated, a new OrderHandler can be created and can ru
 Store contracts such as OrderStore, PositionStore store specific structs, while DataStore stores general data required by the system.
 
 EnumberableSets are used to allow order lists and position lists to be easily queried by interfaces or keepers, this is used over indexers as there may be a lag for indexers to sync the latest block. Having the lists stored directly in the contract also helps to ensure that accurate data can be retrieved and verified when needed.
+
+# Technical Overview
+
+This section provides a more detailed technical description of the contracts.
+
+## Exchange Contracts
+
+- Router: approve token spending using this contract
+- ExchangeRouter: create requests for deposits, withdrawals, orders, tokens are transferred using the Router
+- /exchange contracts: execute user requests
+
+## Markets
+
+Markets are created using `MarketFactory.createMarket`, this creates a MarketToken and stores a Market.Props struct in the MarketStore.
+
+The MarketToken is used to keep track of liquidity providers share of the market pool and to store the tokens for each market.
+
+At any point in time, the price of a MarketToken is `(worth of market pool) / (MarketToken.totalSupply())`, the function `MarketUtils.getMarketTokenPrice` can be used to retrieve this value.
+
+The worth of the market pool is the sum of
+
+- worth of all tokens deposited into the pool
+- total pending PnL of all open long / short positions
+
+## Deposits
+
+Deposits add liquidity to the market's pool and mint MarketTokens to the depositor.
+
+Requests for deposits are created by calling ExchangeRouter.createDeposit, specifying the market to deposit into as well as the amount of long or short tokens to deposit.
+
+Deposit requests are executed using DepositHandler.executeDeposit, if the deposit was created at block `n`, it should be executed with the oracle prices at block `n`.
