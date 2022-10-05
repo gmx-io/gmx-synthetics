@@ -4,7 +4,7 @@ Contracts for GMX Synthetics.
 
 # General Overview
 
-This section provides a general overview of how the contracts work.
+This section provides a general overview of how the system works.
 
 For a Technical Overview, please see the section further below.
 
@@ -101,7 +101,7 @@ EnumberableSets are used to allow order lists and position lists to be easily qu
 
 # Technical Overview
 
-This section provides a more detailed technical description of the contracts.
+This section provides a technical description of the contracts.
 
 ## Exchange Contracts
 
@@ -115,7 +115,7 @@ Markets are created using `MarketFactory.createMarket`, this creates a MarketTok
 
 The MarketToken is used to keep track of liquidity providers share of the market pool and to store the tokens for each market.
 
-At any point in time, the price of a MarketToken is `(worth of market pool) / (MarketToken.totalSupply())`, the function `MarketUtils.getMarketTokenPrice` can be used to retrieve this value.
+At any point in time, the price of a MarketToken is `(worth of market pool) / MarketToken.totalSupply()`, the function `MarketUtils.getMarketTokenPrice` can be used to retrieve this value.
 
 The worth of the market pool is the sum of
 
@@ -124,8 +124,50 @@ The worth of the market pool is the sum of
 
 ## Deposits
 
-Deposits add liquidity to the market's pool and mint MarketTokens to the depositor.
+Deposits add long / short tokens to the market's pool and mints MarketTokens to the depositor.
 
-Requests for deposits are created by calling ExchangeRouter.createDeposit, specifying the market to deposit into as well as the amount of long or short tokens to deposit.
+Requests for deposits are created by calling ExchangeRouter.createDeposit, specifying:
+
+- the market to deposit into
+- amount of long tokens to deposit
+- amount of short tokens to deposit
 
 Deposit requests are executed using DepositHandler.executeDeposit, if the deposit was created at block `n`, it should be executed with the oracle prices at block `n`.
+
+The amount of MarketTokens to be minted, before fees and price impact, is calculated as `(worth of tokens deposited) / (worth of market pool) * MarketToken.totalSupply()`.
+
+## Withdrawals
+
+Withdrawals burn MarketTokens in exchange for the long / short tokens of a market's pool.
+
+Requests for withdrawals are created by calling ExchangeRouter.createWithdrawal, specifying:
+
+- the market to withdraw from
+- the number of market tokens to burn for long tokens
+- the number of market tokens to burn for short tokens
+
+Withdrawal requests are executed using WithdrawalHandler.executeWithdrawal, if the withdrawal was created at block `n`, it should be executed with the oracle prices at block `n`.
+
+The amount of long or short tokens to be redeemed, before fees and price impact, is calculated as `(worth of market tokens) / (long / short token price)`.
+
+## Price Impact
+
+Price impact is calculated as `(change in balance) ^ (price impact exponent) * (price impact factor)`.
+
+For spot actions (deposits, withdrawals, swaps), the change in balance is calculated based on the difference in the worth of the long tokens and short tokens.
+
+For example:
+
+- A pool has 10 long tokens, each long token is worth $5000
+- The pool also has 50,000 short tokens, each short token is worth $1
+- The `price impact exponent` is set to 2 and `price impact factor` is set to `0.01 / 50,000`
+- The pool is equally balanced with $50,000 of long tokens and $50,000 of short tokens
+- If a user deposits 10 long tokens, the pool would now have $100,000 of long tokens and $50,000 of short tokens
+- The change in balance would be from $0 to -$50,000, a net change of -$50,000
+- There would be negative price impact charged on the user's deposit, calculated as `50,000 ^ 2 * (0.01 / 50,000) => $500`
+- If the user now withdraws 5 long tokens, the balance would change from -$50,000 to -$25,000, a net change of +$25,000
+- There would be a positive price impact rebated to the user in the form of additional long tokens, calculated as `25,000 ^ 2 * (0.01 / 50,000) => $125`
+
+For position actions (increase / decrease position), the change in balance is calculated based on the difference in the long and short open interest.
+
+`price impact exponents` and `price impact factors` are configured per market and can differ for spot and position actions.
