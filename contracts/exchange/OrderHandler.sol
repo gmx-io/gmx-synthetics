@@ -141,6 +141,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         order.setSizeDeltaUsd(sizeDeltaUsd);
         order.setAcceptablePrice(acceptablePrice);
         order.setAcceptablePriceImpactUsd(acceptablePriceImpactUsd);
+        order.setIsFrozen(false);
 
         order.touch();
         _orderStore.set(key, order);
