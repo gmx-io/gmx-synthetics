@@ -7,6 +7,8 @@ import "./Market.sol";
 import "./MarketStore.sol";
 import "./MarketUtils.sol";
 
+import "../utils/Null.sol";
+
 contract MarketFactory is RoleModule {
     using Market for Market.Props;
 
@@ -21,6 +23,11 @@ contract MarketFactory is RoleModule {
         address longToken,
         address shortToken
     ) external onlyController returns (Market.Props memory) {
+        // using the same token for longToken and shortToken is not supported
+        // as the recordTransferIn call in DepositUtils.createDeposit would not
+        // correctly differentiate the deposit of the longToken and shortToken amounts
+        require(longToken != shortToken, "MarketFactory: invalid tokens");
+
         bytes32 marketTokenSalt = keccak256(abi.encodePacked(
             "GMX_MARKET",
             indexToken,
@@ -35,14 +42,11 @@ contract MarketFactory is RoleModule {
             indexToken,
             longToken,
             shortToken,
-            new bytes32[](0)
+            Null.BYTES
         );
 
         marketStore.set(address(marketToken), market);
 
         return market;
     }
-
-    // a way to whitelist markets to swap into
-    function addSwapMarket() external {}
 }

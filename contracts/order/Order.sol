@@ -113,7 +113,7 @@ library Order {
         Addresses addresses;
         Numbers numbers;
         Flags flags;
-        bytes32[] data;
+        bytes data;
     }
 
     function account(Props memory props) internal pure returns (address) {

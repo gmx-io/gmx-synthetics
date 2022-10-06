@@ -15,6 +15,6 @@ library Withdrawal {
         uint256 updatedAtBlock;
         bool shouldConvertETH;
         uint256 executionFee;
-        bytes32[] data;
+        bytes data;
     }
 }

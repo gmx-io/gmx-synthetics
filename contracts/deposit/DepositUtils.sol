@@ -16,6 +16,7 @@ import "../gas/GasUtils.sol";
 import "../eth/EthUtils.sol";
 
 import "../utils/Array.sol";
+import "../utils/Null.sol";
 
 library DepositUtils {
     using SafeCast for uint256;
@@ -83,7 +84,7 @@ library DepositUtils {
             block.number,
             params.shouldConvertETH,
             params.executionFee,
-            new bytes32[](0)
+            Null.BYTES
         );
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteDepositGasLimit(params.dataStore, deposit);

@@ -15,6 +15,7 @@ import "../oracle/OracleUtils.sol";
 import "../gas/GasUtils.sol";
 
 import "../utils/Array.sol";
+import "../utils/Null.sol";
 
 library WithdrawalUtils {
     using SafeCast for uint256;
@@ -87,7 +88,7 @@ library WithdrawalUtils {
             block.number,
             params.shouldConvertETH,
             params.executionFee,
-            new bytes32[](0)
+            Null.BYTES
         );
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(params.dataStore, withdrawal);
