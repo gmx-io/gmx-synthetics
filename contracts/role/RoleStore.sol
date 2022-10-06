@@ -14,18 +14,24 @@ contract RoleStore is Governable {
 
     EnumerableSet.Bytes32Set internal roles;
     mapping(bytes32 => EnumerableSet.AddressSet) internal roleMembers;
+    // checking if an account has a role is a frequently used function
+    // roleCache helps to save gas by offering a more efficient lookup
+    // vs calling roleMembers[key].contains(account)
+    mapping(address => mapping (bytes32 => bool)) roleCache;
 
     function grantRole(address account, bytes32 key) external onlyGov {
         roles.add(key);
         roleMembers[key].add(account);
+        roleCache[account][key] = true;
     }
 
     function revokeRole(address account, bytes32 key) external onlyGov {
         roleMembers[key].remove(account);
+        roleCache[account][key] = false;
     }
 
     function hasRole(address account, bytes32 key) external view returns (bool) {
-        return roleMembers[key].contains(account);
+        return roleCache[account][key];
     }
 
     function getRoleCount() external view returns (uint256) {
