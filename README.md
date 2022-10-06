@@ -230,6 +230,30 @@ Short position example: if the current index token price is $5000, a stop-loss d
 
 Stop-loss decrease order requests are executed using OrderHandler.executeOrder, if the order was created at block `n`, it should be executed with the oracle prices after block `n`.
 
+# Order Pricing
+
+For limit swap, limit increase, limit decrease and stop-loss decrease orders, the order can be executed at the acceptable price if it is within the range of the validated oracle prices.
+
+For example, if the current index token price is $5000 and a user creates a limit long decrease order with acceptable price as $5010, the order can be executed with the index token price as $5010 if oracle prices $5008 and $5012 are validated, the blocks of the oracle prices must be after the order was updated and must be in ascending order.
+
+# Funding Fees
+
+Funding fees incentivise the balancing of long and short positions, the side with the larger open interest pays a funding fee to the side with the smaller open interest.
+
+Funding fees for the larger side is calculated as `(funding factor per second) * (open interest imbalance) / (total open interest)`.
+
+For example if the funding factor per second is 1 / 50,000, and the long open interest is $150,000 and the short open interest is $50,000 then the funding fee per second for longs would be `(1 / 50,000) * 150,000 / 200,000 => 0.000015 => 0.0015%`.
+
+The funding fee per second for shorts would be `0.000015 * 150,000 / 50,000 => 0.000045 => 0.0045%`.
+
+# Borrowing Fees
+
+There is a borrowing fee paid to liquidity providers, this helps prevent users from opening both long and short positions to take up pool capacity without paying any fees.
+
+Borrowing fees are calculated as `borrowing factor * (open interest in usd + pending pnl) / (pool usd)`.
+
+For example if the borrowing factor per second is 1 / 50,000, and the long open interest is $150,000 with +$50,000 of pending pnl, and the pool has $250,000 worth of tokens, the borrowing fee per second for longs would be `(1 / 50,000) * (150,000 + 50,000) / 250,000 => 0.000016 => 0.0016%`.
+
 ## Price Impact
 
 The code for price impact can be found in the `/pricing` contracts.
