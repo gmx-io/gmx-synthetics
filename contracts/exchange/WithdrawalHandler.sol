@@ -53,7 +53,7 @@ contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
         uint256 marketTokensShortAmount,
         uint256 minLongTokenAmount,
         uint256 minShortTokenAmount,
-        bool hasCollateralInETH,
+        bool shouldConvertETH,
         uint256 executionFee
     ) nonReentrant onlyController external returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createWithdrawalFeatureKey(address(this)));
@@ -68,7 +68,7 @@ contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
             marketTokensShortAmount,
             minLongTokenAmount,
             minShortTokenAmount,
-            hasCollateralInETH,
+            shouldConvertETH,
             executionFee,
             EthUtils.weth(dataStore)
         );

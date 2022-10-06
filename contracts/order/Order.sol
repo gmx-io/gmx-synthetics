@@ -102,7 +102,7 @@ library Order {
     struct Flags {
         OrderType orderType;
         bool isLong;
-        bool hasCollateralInETH;
+        bool shouldConvertETH;
         bool isFrozen;
     }
 
@@ -168,8 +168,8 @@ library Order {
         return props.flags.isLong;
     }
 
-    function hasCollateralInETH(Props memory props) internal pure returns (bool) {
-        return props.flags.hasCollateralInETH;
+    function shouldConvertETH(Props memory props) internal pure returns (bool) {
+        return props.flags.shouldConvertETH;
     }
 
     function isFrozen(Props memory props) internal pure returns (bool) {
@@ -228,8 +228,8 @@ library Order {
         props.flags.isLong = _value;
     }
 
-    function setHasCollateralInETH(Props memory props, bool _value) internal pure {
-        props.flags.hasCollateralInETH = _value;
+    function setShouldConvertETH(Props memory props, bool _value) internal pure {
+        props.flags.shouldConvertETH = _value;
     }
 
     function setIsFrozen(Props memory props, bool _value) internal pure {

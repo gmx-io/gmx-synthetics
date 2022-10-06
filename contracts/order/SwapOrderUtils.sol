@@ -48,7 +48,7 @@ library SwapOrderUtils {
             tokenOut,
             outputAmount,
             order.account(),
-            order.hasCollateralInETH()
+            order.shouldConvertETH()
         );
     }
 }

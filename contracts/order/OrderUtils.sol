@@ -43,7 +43,7 @@ library OrderUtils {
 
         Order.OrderType orderType;
         bool isLong;
-        bool hasCollateralInETH;
+        bool shouldConvertETH;
     }
 
     struct ExecuteOrderParams {
@@ -108,7 +108,7 @@ library OrderUtils {
         order.setMinOutputAmount(params.minOutputAmount);
         order.setOrderType(params.orderType);
         order.setIsLong(params.isLong);
-        order.setHasCollateralInETH(params.hasCollateralInETH);
+        order.setShouldConvertETH(params.shouldConvertETH);
 
         uint256 nonce = NonceUtils.incrementNonce(dataStore);
         bytes32 key = keccak256(abi.encodePacked(nonce));
@@ -136,7 +136,7 @@ library OrderUtils {
                     order.initialCollateralToken(),
                     order.initialCollateralDeltaAmount(),
                     order.account(),
-                    order.hasCollateralInETH()
+                    order.shouldConvertETH()
                 );
             }
         }

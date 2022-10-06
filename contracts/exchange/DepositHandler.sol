@@ -48,7 +48,7 @@ contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
         address account,
         address market,
         uint256 minMarketTokens,
-        bool hasCollateralInETH,
+        bool shouldConvertETH,
         uint256 executionFee
     ) external nonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createDepositFeatureKey(address(this)));
@@ -60,7 +60,7 @@ contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
             account,
             market,
             minMarketTokens,
-            hasCollateralInETH,
+            shouldConvertETH,
             executionFee,
             EthUtils.weth(dataStore)
         );

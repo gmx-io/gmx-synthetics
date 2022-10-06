@@ -30,7 +30,7 @@ library WithdrawalUtils {
         uint256 marketTokensShortAmount;
         uint256 minLongTokenAmount;
         uint256 minShortTokenAmount;
-        bool hasCollateralInETH;
+        bool shouldConvertETH;
         uint256 executionFee;
         address weth;
     }
@@ -55,7 +55,7 @@ library WithdrawalUtils {
         uint256 tokenInPrice;
         uint256 tokenOutPrice;
         uint256 marketTokensAmount;
-        bool hasCollateralInETH;
+        bool shouldConvertETH;
         uint256 marketTokensUsd;
         int256 priceImpactUsd;
     }
@@ -85,7 +85,7 @@ library WithdrawalUtils {
             params.minLongTokenAmount,
             params.minShortTokenAmount,
             block.number,
-            params.hasCollateralInETH,
+            params.shouldConvertETH,
             params.executionFee,
             new bytes32[](0)
         );
@@ -149,7 +149,7 @@ library WithdrawalUtils {
                 shortTokenPrice,
                 longTokenPrice,
                 withdrawal.marketTokensLongAmount,
-                withdrawal.hasCollateralInETH,
+                withdrawal.shouldConvertETH,
                 cache.marketTokensLongUsd,
                 priceImpactUsd * cache.marketTokensLongUsd.toInt256() / (cache.marketTokensLongUsd + cache.marketTokensShortUsd).toInt256()
             );
@@ -170,7 +170,7 @@ library WithdrawalUtils {
                 longTokenPrice,
                 shortTokenPrice,
                 withdrawal.marketTokensShortAmount,
-                withdrawal.hasCollateralInETH,
+                withdrawal.shouldConvertETH,
                 cache.marketTokensShortUsd,
                 priceImpactUsd * cache.marketTokensShortUsd.toInt256() / (cache.marketTokensLongUsd + cache.marketTokensShortUsd).toInt256()
             );
@@ -295,7 +295,7 @@ library WithdrawalUtils {
             _params.tokenOut,
             outputAmount,
             _params.account,
-            _params.hasCollateralInETH
+            _params.shouldConvertETH
         );
 
         return outputAmount;

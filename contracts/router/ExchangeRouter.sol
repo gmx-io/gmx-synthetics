@@ -54,7 +54,7 @@ contract ExchangeRouter is ReentrancyGuard {
         uint256 longTokenAmount,
         uint256 shortTokenAmount,
         uint256 minMarketTokens,
-        bool hasCollateralInETH,
+        bool shouldConvertETH,
         uint256 executionFee
     ) nonReentrant external payable returns (bytes32) {
         address account = msg.sender;
@@ -73,7 +73,7 @@ contract ExchangeRouter is ReentrancyGuard {
             account,
             _market,
             minMarketTokens,
-            hasCollateralInETH,
+            shouldConvertETH,
             executionFee
         );
     }
@@ -84,7 +84,7 @@ contract ExchangeRouter is ReentrancyGuard {
         uint256 marketTokensShortAmount,
         uint256 minLongTokenAmount,
         uint256 minShortTokenAmount,
-        bool hasCollateralInETH,
+        bool shouldConvertETH,
         uint256 executionFee
     ) nonReentrant external payable returns (bytes32) {
         address account = msg.sender;
@@ -98,7 +98,7 @@ contract ExchangeRouter is ReentrancyGuard {
             marketTokensShortAmount,
             minLongTokenAmount,
             minShortTokenAmount,
-            hasCollateralInETH,
+            shouldConvertETH,
             executionFee
         );
     }

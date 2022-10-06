@@ -28,7 +28,7 @@ library DepositUtils {
         address account;
         address market;
         uint256 minMarketTokens;
-        bool hasCollateralInETH;
+        bool shouldConvertETH;
         uint256 executionFee;
         address weth;
     }
@@ -81,7 +81,7 @@ library DepositUtils {
             shortTokenAmount,
             params.minMarketTokens,
             block.number,
-            params.hasCollateralInETH,
+            params.shouldConvertETH,
             params.executionFee,
             new bytes32[](0)
         );
@@ -203,7 +203,7 @@ library DepositUtils {
                 market.longToken,
                 deposit.longTokenAmount,
                 deposit.account,
-                deposit.hasCollateralInETH
+                deposit.shouldConvertETH
             );
         }
 
@@ -213,7 +213,7 @@ library DepositUtils {
                 market.shortToken,
                 deposit.shortTokenAmount,
                 deposit.account,
-                deposit.hasCollateralInETH
+                deposit.shouldConvertETH
             );
         }
 

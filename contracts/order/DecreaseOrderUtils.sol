@@ -54,7 +54,7 @@ library DecreaseOrderUtils {
                 order.initialCollateralToken(),
                 outputAmount,
                 order.account(),
-                order.hasCollateralInETH()
+                order.shouldConvertETH()
             );
         } else {
             SwapUtils.swap(SwapUtils.SwapParams(
