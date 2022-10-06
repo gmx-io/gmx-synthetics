@@ -21,34 +21,38 @@ contract RoleModule is Governable {
     }
 
     modifier onlyController() {
-        if (!roleStore.hasRole(msg.sender, Role.CONTROLLER)) {
-            revert Unauthorized(msg.sender, "CONTROLLER");
-        }
+        _validateRole(Role.CONTROLLER, "CONTROLLER");
         _;
     }
 
     modifier onlyRouterPlugin() {
-        require(roleStore.hasRole(msg.sender, Role.ROUTER_PLUGIN), "Role: ROUTER_PLUGIN");
+        _validateRole(Role.ROUTER_PLUGIN, "ROUTER_PLUGIN");
         _;
     }
 
     modifier onlyMarketKeeper() {
-        require(roleStore.hasRole(msg.sender, Role.MARKET_KEEPER), "Role: MARKET_KEEPER");
+        _validateRole(Role.MARKET_KEEPER, "MARKET_KEEPER");
         _;
     }
 
     modifier onlyOrderKeeper() {
-        require(roleStore.hasRole(msg.sender, Role.ORDER_KEEPER), "Role: ORDER_KEEPER");
+        _validateRole(Role.ORDER_KEEPER, "ORDER_KEEPER");
         _;
     }
 
     modifier onlyPricingKeeper() {
-        require(roleStore.hasRole(msg.sender, Role.PRICING_KEEPER), "Role: PRICING_KEEPER");
+        _validateRole(Role.PRICING_KEEPER, "PRICING_KEEPER");
         _;
     }
 
     modifier onlyLiquidationKeeper() {
-        require(roleStore.hasRole(msg.sender, Role.LIQUIDATION_KEEPER), "Role: LIQUIDATION_KEEPER");
+        _validateRole(Role.LIQUIDATION_KEEPER, "LIQUIDATION_KEEPER");
         _;
+    }
+
+    function _validateRole(bytes32 role, string memory roleName) internal view {
+        if (!roleStore.hasRole(msg.sender, role)) {
+            revert Unauthorized(msg.sender, roleName);
+        }
     }
 }

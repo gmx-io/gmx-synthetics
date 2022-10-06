@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "../utils/Precision.sol";
 
 import "../data/DataStore.sol";
+import "../events/EventEmitter.sol";
 import "../fee/FeeReceiver.sol";
 
 import "../oracle/Oracle.sol";
@@ -23,6 +24,7 @@ library DecreasePositionUtils {
 
     struct DecreasePositionParams {
         DataStore dataStore;
+        EventEmitter eventEmitter;
         PositionStore positionStore;
         Oracle oracle;
         FeeReceiver feeReceiver;
@@ -41,7 +43,7 @@ library DecreasePositionUtils {
         uint256 sizeDeltaInTokens;
     }
 
-    function decreasePosition(DecreasePositionParams memory params) external returns (uint256, uint256) {
+    function decreasePosition(DecreasePositionParams memory params) internal returns (uint256, uint256) {
         Position.Props memory position = params.position;
         MarketUtils.MarketPrices memory prices = MarketUtils.getPricesForPosition(
             params.market,
@@ -114,6 +116,7 @@ library DecreasePositionUtils {
 
         MarketUtils.decreaseCollateralSum(
             params.dataStore,
+            params.eventEmitter,
             params.order.market(),
             params.order.initialCollateralToken(),
             params.order.isLong(),
@@ -121,7 +124,13 @@ library DecreasePositionUtils {
         );
 
         if (params.adjustedSizeDeltaUsd > 0) {
-            MarketUtils.decreaseOpenInterest(params.dataStore, params.order.market(), params.order.isLong(), params.adjustedSizeDeltaUsd);
+            MarketUtils.decreaseOpenInterest(
+                params.dataStore,
+                params.eventEmitter,
+                params.order.market(),
+                params.order.isLong(),
+                params.adjustedSizeDeltaUsd
+            );
             // since sizeDeltaInTokens is rounded down, when positions are closed for tokens with
             // a small number of decimals, the price of the market tokens may increase
             MarketUtils.updateOpenInterestInTokens(
@@ -134,9 +143,21 @@ library DecreasePositionUtils {
 
         int256 poolDeltaAmount = fees.feesForPool.toInt256() - values.realizedPnlAmount;
         if (poolDeltaAmount > 0) {
-            MarketUtils.increasePoolAmount(params.dataStore, params.market.marketToken, params.order.initialCollateralToken(), poolDeltaAmount.toUint256());
+            MarketUtils.increasePoolAmount(
+                params.dataStore,
+                params.eventEmitter,
+                params.market.marketToken,
+                params.order.initialCollateralToken(),
+                poolDeltaAmount.toUint256()
+            );
         } else {
-            MarketUtils.decreasePoolAmount(params.dataStore, params.market.marketToken, params.order.initialCollateralToken(), (-poolDeltaAmount).toUint256());
+            MarketUtils.decreasePoolAmount(
+                params.dataStore,
+                params.eventEmitter,
+                params.market.marketToken,
+                params.order.initialCollateralToken(),
+                (-poolDeltaAmount).toUint256()
+            );
         }
 
         require(values.outputAmount >= 0, "DecreasePositionUtils: invalid outputAmount");
@@ -286,6 +307,7 @@ library DecreasePositionUtils {
             // the swap impact pool is decreased by the used amount
             uint256 positiveImpactAmount = MarketUtils.applyPositiveImpact(
                 params.dataStore,
+                params.eventEmitter,
                 params.market.marketToken,
                 params.order.initialCollateralToken(),
                 collateralTokenPrice,
@@ -301,6 +323,7 @@ library DecreasePositionUtils {
             // the difference of 0.005 ETH will be stored in the swap impact pool
             uint256 negativeImpactAmount = MarketUtils.applyNegativeImpact(
                 params.dataStore,
+                params.eventEmitter,
                 params.market.marketToken,
                 params.order.initialCollateralToken(),
                 collateralTokenPrice,

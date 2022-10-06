@@ -21,6 +21,7 @@ import "../order/SwapOrderUtils.sol";
 import "../position/PositionStore.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
+import "../events/EventEmitter.sol";
 
 contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
     using Order for Order.Props;
@@ -30,11 +31,13 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
     OrderStore public orderStore;
     PositionStore public positionStore;
     Oracle public oracle;
+    EventEmitter public eventEmitter;
     FeeReceiver public feeReceiver;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
+        EventEmitter _eventEmitter,
         MarketStore _marketStore,
         OrderStore _orderStore,
         PositionStore _positionStore,
@@ -42,6 +45,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         FeeReceiver _feeReceiver
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
+        eventEmitter = _eventEmitter;
         marketStore = _marketStore;
         orderStore = _orderStore;
         positionStore = _positionStore;
@@ -61,6 +65,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
 
         return OrderUtils.createOrder(
             dataStore,
+            eventEmitter,
             orderStore,
             marketStore,
             account,
@@ -98,6 +103,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
             if (isMarketOrder) {
                 OrderUtils.cancelOrder(
                     dataStore,
+                    eventEmitter,
                     orderStore,
                     key,
                     msg.sender,
@@ -112,6 +118,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
                 // to allow the order to be executed then close the order for a profit
                 OrderUtils.freezeOrder(
                     dataStore,
+                    eventEmitter,
                     orderStore,
                     key,
                     msg.sender,
@@ -144,6 +151,8 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
 
         order.touch();
         _orderStore.set(key, order);
+
+        eventEmitter.emitOrderUpdated(key, sizeDeltaUsd, acceptablePrice, acceptableUsdAdjustment);
     }
 
     function cancelOrder(bytes32 key) external {
@@ -162,6 +171,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
 
         OrderUtils.cancelOrder(
             dataStore,
+            eventEmitter,
             orderStore,
             key,
             msg.sender,
@@ -207,6 +217,9 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
             params.keeper,
             params.order.account()
         );
+
+        // TODO should be inside utils?
+        eventEmitter.emitOrderExecuted(params.key);
     }
 
     function _processOrder(OrderUtils.ExecuteOrderParams memory params) internal {
@@ -241,6 +254,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         params.swapPathMarkets = MarketUtils.getMarkets(marketStore, params.order.swapPath());
 
         params.dataStore = dataStore;
+        params.eventEmitter = eventEmitter;
         params.orderStore = orderStore;
         params.positionStore = positionStore;
         params.oracle = oracle;

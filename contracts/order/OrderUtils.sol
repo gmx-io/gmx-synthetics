@@ -12,6 +12,7 @@ import "./OrderStore.sol";
 import "../nonce/NonceUtils.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleUtils.sol";
+import "../events/EventEmitter.sol";
 
 import "../position/PositionUtils.sol";
 import "../position/IncreasePositionUtils.sol";
@@ -51,6 +52,7 @@ library OrderUtils {
         Order.Props order;
         Market.Props[] swapPathMarkets;
         DataStore dataStore;
+        EventEmitter eventEmitter;
         OrderStore orderStore;
         PositionStore positionStore;
         Oracle oracle;
@@ -68,11 +70,12 @@ library OrderUtils {
 
     function createOrder(
         DataStore dataStore,
+        EventEmitter eventEmitter,
         OrderStore orderStore,
         MarketStore marketStore,
         address account,
         CreateOrderParams memory params
-    ) external returns (bytes32) {
+    ) internal returns (bytes32) {
         uint256 initialCollateralDeltaAmount;
 
         if (params.orderType == Order.OrderType.MarketSwap ||
@@ -116,16 +119,19 @@ library OrderUtils {
         order.touch();
         orderStore.set(key, order);
 
+        eventEmitter.emitOrderCreated(key, order);
+
         return key;
     }
 
     function cancelOrder(
         DataStore dataStore,
+        EventEmitter eventEmitter,
         OrderStore orderStore,
         bytes32 key,
         address keeper,
         uint256 startingGas
-    ) external {
+    ) internal {
         Order.Props memory order = orderStore.get(key);
         validateNonEmptyOrder(order);
 
@@ -151,15 +157,18 @@ library OrderUtils {
             keeper,
             order.account()
         );
+
+        eventEmitter.emitOrderCancelled(key);
     }
 
     function freezeOrder(
         DataStore dataStore,
+        EventEmitter eventEmitter,
         OrderStore orderStore,
         bytes32 key,
         address keeper,
         uint256 startingGas
-    ) external {
+    ) internal {
         Order.Props memory order = orderStore.get(key);
         validateNonEmptyOrder(order);
 
@@ -177,6 +186,8 @@ library OrderUtils {
             keeper,
             order.account()
         );
+
+        eventEmitter.emitOrderFrozen(key);
     }
 
     function validateNonEmptyOrder(Order.Props memory order) internal pure {
@@ -225,7 +236,7 @@ library OrderUtils {
         Order.OrderType orderType,
         uint256 acceptablePrice,
         bool isLong
-    ) external {
+    ) internal {
         if (isSwapOrder(orderType)) {
             return;
         }

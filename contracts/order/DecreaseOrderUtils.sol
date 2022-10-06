@@ -25,6 +25,7 @@ library DecreaseOrderUtils {
         (uint256 outputAmount, uint256 adjustedSizeDeltaUsd) = DecreasePositionUtils.decreasePosition(
             DecreasePositionUtils.DecreasePositionParams(
                 params.dataStore,
+                params.eventEmitter,
                 params.positionStore,
                 params.oracle,
                 params.feeReceiver,
@@ -59,6 +60,7 @@ library DecreaseOrderUtils {
         } else {
             SwapUtils.swap(SwapUtils.SwapParams(
                 params.dataStore,
+                params.eventEmitter,
                 params.oracle,
                 params.feeReceiver,
                 params.order.initialCollateralToken(),

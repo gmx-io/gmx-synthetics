@@ -40,6 +40,8 @@ async function deployFixture() {
   await dataStore.setUint(await keys.MAX_ORACLE_BLOCK_AGE(), 200);
   await dataStore.setUint(await keys.MAX_LEVERAGE(), expandFloatDecimals(100));
 
+  const eventEmitter = await deployContract("EventEmitter", [roleStore.address])
+
   const oracleStore = await deployContract("OracleStore", [roleStore.address]);
 
   await oracleStore.addSigner(signer0.address);
@@ -86,57 +88,15 @@ async function deployFixture() {
   const feeReceiver = await deployContract("FeeReceiver", []);
 
   const gasUtils = await deployContract("GasUtils", []);
-  const pricingUtils = await deployContract("PricingUtils", []);
 
-  const marketUtils = await deployContract("MarketUtils", []);
+  const increaseOrderUtils = await deployContract("IncreaseOrderUtils", []);
+  const decreaseOrderUtils = await deployContract("DecreaseOrderUtils", []);
 
-  const depositUtils = await deployContract("DepositUtils", []);
-  const withdrawalUtils = await deployContract("WithdrawalUtils", []);
-  const swapUtils = await deployContract("SwapUtils", [], {
-    libraries: {
-      PricingUtils: pricingUtils.address,
-    },
-  });
-
-  const orderUtils = await deployContract("OrderUtils", [], {
-    libraries: {
-      GasUtils: gasUtils.address,
-    },
-  });
-
-  const increaseOrderUtils = await deployContract("IncreaseOrderUtils", [], {
-    libraries: {
-      SwapUtils: swapUtils.address,
-      PricingUtils: pricingUtils.address,
-      MarketUtils: marketUtils.address,
-    },
-  });
-
-  const decreasePositionUtils = await deployContract("DecreasePositionUtils", [], {
-    libraries: {
-      PricingUtils: pricingUtils.address,
-      MarketUtils: marketUtils.address,
-    },
-  });
-
-  const decreaseOrderUtils = await deployContract("DecreaseOrderUtils", [], {
-    libraries: {
-      SwapUtils: swapUtils.address,
-      DecreasePositionUtils: decreasePositionUtils.address,
-    },
-  });
-
-  const swapOrderUtils = await deployContract("SwapOrderUtils", [], {
-    libraries: {
-      SwapUtils: swapUtils.address,
-    },
-  });
+  const swapOrderUtils = await deployContract("SwapOrderUtils", []);
 
   const liquidationUtils = await deployContract("LiquidationUtils", [], {
     libraries: {
-      OrderUtils: orderUtils.address,
       DecreaseOrderUtils: decreaseOrderUtils.address,
-      PricingUtils: pricingUtils.address,
     },
   });
 
@@ -145,6 +105,7 @@ async function deployFixture() {
     [
       roleStore.address,
       dataStore.address,
+      eventEmitter.address,
       depositStore.address,
       marketStore.address,
       oracle.address,
@@ -153,9 +114,6 @@ async function deployFixture() {
     {
       libraries: {
         GasUtils: gasUtils.address,
-        DepositUtils: depositUtils.address,
-        PricingUtils: pricingUtils.address,
-        MarketUtils: marketUtils.address,
       },
     }
   );
@@ -165,6 +123,7 @@ async function deployFixture() {
     [
       roleStore.address,
       dataStore.address,
+      eventEmitter.address,
       withdrawalStore.address,
       marketStore.address,
       oracle.address,
@@ -173,9 +132,6 @@ async function deployFixture() {
     {
       libraries: {
         GasUtils: gasUtils.address,
-        WithdrawalUtils: withdrawalUtils.address,
-        PricingUtils: pricingUtils.address,
-        MarketUtils: marketUtils.address,
       },
     }
   );
@@ -185,6 +141,7 @@ async function deployFixture() {
     [
       roleStore.address,
       dataStore.address,
+      eventEmitter.address,
       marketStore.address,
       orderStore.address,
       positionStore.address,
@@ -197,7 +154,6 @@ async function deployFixture() {
         IncreaseOrderUtils: increaseOrderUtils.address,
         DecreaseOrderUtils: decreaseOrderUtils.address,
         SwapOrderUtils: swapOrderUtils.address,
-        OrderUtils: orderUtils.address,
       },
     }
   );

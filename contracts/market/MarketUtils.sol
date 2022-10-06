@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "../data/DataStore.sol";
+import "../events/EventEmitter.sol";
 import "../bank/StrictBank.sol";
 
 import "../deposit/Deposit.sol";
@@ -26,6 +27,8 @@ import "../fee/FeeUtils.sol";
 import "../utils/Calc.sol";
 import "../utils/Precision.sol";
 
+import "hardhat/console.sol";
+
 library MarketUtils {
     using SafeCast for int256;
 
@@ -43,56 +46,6 @@ library MarketUtils {
         uint256 longTokenPrice;
         uint256 shortTokenPrice;
     }
-
-    event PoolAmountIncrease(
-        address market,
-        address token,
-        uint256 amount
-    );
-
-    event PoolAmountDecrease(
-        address market,
-        address token,
-        uint256 amount
-    );
-
-    event ImpactPoolAmountIncreased(
-        address market,
-        address token,
-        uint256 amount
-    );
-
-    event ImpactPoolAmountDecreased(
-        address market,
-        address token,
-        uint256 amount
-    );
-
-    event OpenInterestIncrease(
-        address market,
-        bool isLong,
-        uint256 sizeDeltaUsd
-    );
-
-    event OpenInterestDecrease(
-        address market,
-        bool isLong,
-        uint256 sizeDeltaUsd
-    );
-
-    event CollateralSumIncrease(
-        address market,
-        address collateralToken,
-        bool isLong,
-        uint256 collateralDeltaAmount
-    );
-
-    event CollateralSumDecrease(
-        address market,
-        address collateralToken,
-        bool isLong,
-        uint256 collateralDeltaAmount
-    );
 
     error EmptyMarket();
     error InsufficientPoolAmount(uint256 poolAmount, uint256 amount);
@@ -164,7 +117,7 @@ library MarketUtils {
         uint256 longTokenPrice,
         uint256 shortTokenPrice,
         uint256 indexTokenPrice
-    ) public view returns (uint256) {
+    ) internal view returns (uint256) {
         uint256 longTokenAmount = getPoolAmount(dataStore, market.marketToken, market.longToken);
         uint256 shortTokenAmount = getPoolAmount(dataStore, market.marketToken, market.shortToken);
 
@@ -206,16 +159,28 @@ library MarketUtils {
         return dataStore.getUint(Keys.poolAmountKey(market, token));
     }
 
-    function increasePoolAmount(DataStore dataStore, address market, address token, uint256 amount) internal {
+    function increasePoolAmount(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address token,
+        uint256 amount
+    ) internal {
         dataStore.incrementUint(
             Keys.poolAmountKey(market, token),
             amount
         );
 
-        emit PoolAmountIncrease(market, token, amount);
+        eventEmitter.emitPoolAmountIncreased(market, token, amount);
     }
 
-    function decreasePoolAmount(DataStore dataStore, address market, address token, uint256 amount) internal {
+    function decreasePoolAmount(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address token,
+        uint256 amount
+    ) internal {
         bytes32 key = Keys.poolAmountKey(market, token);
         uint256 poolAmount = dataStore.getUint(key);
 
@@ -228,65 +193,103 @@ library MarketUtils {
             poolAmount - amount
         );
 
-        emit PoolAmountDecrease(market, token, amount);
+        eventEmitter.emitPoolAmountDecreased(market, token, amount);
     }
 
     function getImpactPoolAmount(DataStore dataStore, address market, address token) internal view returns (uint256) {
         return dataStore.getUint(Keys.impactPoolAmountKey(market, token));
     }
 
-    function increaseImpactPoolAmount(DataStore dataStore, address market, address token, uint256 amount) internal {
+    function increaseImpactPoolAmount(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address token,
+        uint256 amount
+    ) internal {
         dataStore.incrementUint(
             Keys.impactPoolAmountKey(market, token),
             amount
         );
 
-        emit ImpactPoolAmountIncreased(market, token, amount);
+        eventEmitter.emitImpactPoolAmountIncrease(market, token, amount);
     }
 
-    function decreaseImpactPoolAmount(DataStore dataStore, address market, address token, uint256 amount) internal {
+    function decreaseImpactPoolAmount(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address token,
+        uint256 amount
+    ) internal {
         dataStore.decrementUint(
             Keys.impactPoolAmountKey(market, token),
             amount
         );
 
-        emit ImpactPoolAmountDecreased(market, token, amount);
+        eventEmitter.emitImpactPoolAmountDecrease(market, token, amount);
     }
 
-    function increaseOpenInterest(DataStore dataStore, address market, bool isLong, uint256 sizeDeltaUsd) internal {
+    function increaseOpenInterest(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        bool isLong,
+        uint256 sizeDeltaUsd
+    ) internal {
         dataStore.incrementUint(
             Keys.openInterestKey(market, isLong),
             sizeDeltaUsd
         );
 
-        emit OpenInterestIncrease(market, isLong, sizeDeltaUsd);
+        eventEmitter.emitOpenInterestIncrease(market, isLong, sizeDeltaUsd);
     }
 
-    function decreaseOpenInterest(DataStore dataStore, address market, bool isLong, uint256 sizeDeltaUsd) internal {
+    function decreaseOpenInterest(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        bool isLong,
+        uint256 sizeDeltaUsd
+    ) internal {
         dataStore.decrementUint(
             Keys.openInterestKey(market, isLong),
             sizeDeltaUsd
         );
 
-        emit OpenInterestDecrease(market, isLong, sizeDeltaUsd);
+        eventEmitter.emitOpenInterestDecrease(market, isLong, sizeDeltaUsd);
     }
 
-    function increaseCollateralSum(DataStore dataStore, address market, address collateralToken, bool isLong, uint256 collateralDeltaAmount) internal {
+    function increaseCollateralSum(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address collateralToken,
+        bool isLong,
+        uint256 collateralDeltaAmount
+    ) internal {
         dataStore.incrementUint(
             Keys.collateralSumKey(market, collateralToken, isLong),
             collateralDeltaAmount
         );
 
-        emit CollateralSumIncrease(market, collateralToken, isLong, collateralDeltaAmount);
+        eventEmitter.emitCollateralSumIncrease(market, collateralToken, isLong, collateralDeltaAmount);
     }
 
-    function decreaseCollateralSum(DataStore dataStore, address market, address collateralToken, bool isLong, uint256 collateralDeltaAmount) internal {
+    function decreaseCollateralSum(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address collateralToken,
+        bool isLong,
+        uint256 collateralDeltaAmount
+    ) internal {
         dataStore.decrementUint(
             Keys.collateralSumKey(market, collateralToken, isLong),
             collateralDeltaAmount
         );
 
-        emit CollateralSumDecrease(market, collateralToken, isLong, collateralDeltaAmount);
+        eventEmitter.emitCollateralSumDecrease(market, collateralToken, isLong, collateralDeltaAmount);
     }
 
     // in case of late liquidations, there may be insufficient collateral to pay for funding fees
@@ -355,18 +358,20 @@ library MarketUtils {
 
     function applyNegativeImpact(
         DataStore dataStore,
+        EventEmitter eventEmitter,
         address market,
         address token,
         uint256 tokenPrice,
         int256 usdAdjustment
     ) internal returns (uint256) {
         uint256 impactAmount = SafeCast.toUint256(-usdAdjustment) / tokenPrice;
-        increaseImpactPoolAmount(dataStore, market, token, impactAmount);
+        increaseImpactPoolAmount(dataStore, eventEmitter, market, token, impactAmount);
         return impactAmount;
     }
 
     function applyPositiveImpact(
         DataStore dataStore,
+        EventEmitter eventEmitter,
         address market,
         address token,
         uint256 tokenPrice,
@@ -379,7 +384,7 @@ library MarketUtils {
             impactAmount = maxImpactAmount;
         }
 
-        decreaseImpactPoolAmount(dataStore, market, token, impactAmount);
+        decreaseImpactPoolAmount(dataStore, eventEmitter, market, token, impactAmount);
 
         return impactAmount;
     }
@@ -464,7 +469,7 @@ library MarketUtils {
         uint256 prevPositionBorrowingFactor,
         uint256 nextPositionSizeInUsd,
         uint256 nextPositionBorrowingFactor
-    ) external {
+    ) internal {
         uint256 totalBorrowing = getNextTotalBorrowing(
             dataStore,
             market,

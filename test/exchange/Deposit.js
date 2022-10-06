@@ -56,9 +56,10 @@ describe("Exchange.Deposit", () => {
     let block = await provider.getBlock();
 
     expect(await depositStore.getDepositCount()).eq(0);
-    await depositHandler
+    const tx0 = await depositHandler
       .connect(wallet)
       .createDeposit(user0.address, ethUsdMarket.marketToken, 100, false, executionFee);
+    printGasUsage(provider, tx0, "depositHandler.createDeposit tx0");
     expect(await depositStore.getDepositCount()).eq(1);
 
     const depositKeys = await depositStore.getDepositKeys(0, 1);
@@ -94,9 +95,9 @@ describe("Exchange.Deposit", () => {
     expect(await reader.getPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(0);
     expect(await reader.getPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq(0);
 
-    const tx0 = await depositHandler.executeDeposit(depositKeys[0], oracleParams);
+    const tx1 = await depositHandler.executeDeposit(depositKeys[0], oracleParams);
 
-    await printGasUsage(provider, tx0, "depositHandler.executeDeposit tx0");
+    await printGasUsage(provider, tx1, "depositHandler.executeDeposit tx1");
 
     expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(95 * 1000, 18));
     expect(await weth.balanceOf(depositStore.address)).eq(0);

@@ -2,6 +2,8 @@ node_modules
 .env
 coverage
 coverage.json
+contracts/Test*.sol
+review_notes.md
 typechain
 typechain-types
 

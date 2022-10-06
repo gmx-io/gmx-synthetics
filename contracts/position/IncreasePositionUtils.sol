@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "../utils/Precision.sol";
 
 import "../data/DataStore.sol";
+import "../events/EventEmitter.sol";
 import "../fee/FeeReceiver.sol";
 
 import "../oracle/Oracle.sol";
@@ -23,6 +24,7 @@ library IncreasePositionUtils {
 
     struct IncreasePositionParams {
         DataStore dataStore;
+        EventEmitter eventEmitter;
         PositionStore positionStore;
         Oracle oracle;
         FeeReceiver feeReceiver;
@@ -93,7 +95,13 @@ library IncreasePositionUtils {
                 params.order.isLong(),
                 sizeDeltaInTokens.toInt256()
             );
-            MarketUtils.increaseOpenInterest(params.dataStore, params.order.market(), params.order.isLong(), params.order.sizeDeltaUsd());
+            MarketUtils.increaseOpenInterest(
+                params.dataStore,
+                params.eventEmitter,
+                params.order.market(),
+                params.order.isLong(),
+                params.order.sizeDeltaUsd()
+            );
             MarketUtils.validateReserve(params.dataStore, params.market, prices, params.order.isLong());
         }
 
@@ -102,6 +110,17 @@ library IncreasePositionUtils {
             position,
             params.market,
             prices
+        );
+
+        params.eventEmitter.emitPositionIncrease(
+            position.account,
+            position.market,
+            position.collateralToken,
+            position.isLong,
+            prices.indexTokenPrice,
+            params.order.sizeDeltaUsd(),
+            collateralDeltaAmount,
+            bytes("")
         );
     }
 
@@ -154,6 +173,7 @@ library IncreasePositionUtils {
             // the swap impact pool is decreased by the used amount
             uint256 positiveImpactAmount = MarketUtils.applyPositiveImpact(
                 params.dataStore,
+                params.eventEmitter,
                 params.market.marketToken,
                 params.collateralToken,
                 collateralTokenPrice,
@@ -169,6 +189,7 @@ library IncreasePositionUtils {
             // the remaining 0.005 ETH will be stored in the swap impact pool
             uint256 negativeImpactAmount = MarketUtils.applyNegativeImpact(
                 params.dataStore,
+                params.eventEmitter,
                 params.market.marketToken,
                 params.collateralToken,
                 collateralTokenPrice,
@@ -181,12 +202,32 @@ library IncreasePositionUtils {
         collateralDeltaAmount += fees.totalNetCostAmount;
 
         if (collateralDeltaAmount > 0) {
-            MarketUtils.increaseCollateralSum(params.dataStore, params.order.market(), params.collateralToken, params.order.isLong(), collateralDeltaAmount.toUint256());
+            MarketUtils.increaseCollateralSum(
+                params.dataStore,
+                params.eventEmitter,
+                params.order.market(),
+                params.collateralToken,
+                params.order.isLong(),
+                collateralDeltaAmount.toUint256()
+            );
         } else {
-            MarketUtils.decreaseCollateralSum(params.dataStore, params.order.market(), params.collateralToken, params.order.isLong(), SafeCast.toUint256(-collateralDeltaAmount));
+            MarketUtils.decreaseCollateralSum(
+                params.dataStore,
+                params.eventEmitter,
+                params.order.market(),
+                params.collateralToken,
+                params.order.isLong(),
+                SafeCast.toUint256(-collateralDeltaAmount)
+            );
         }
 
-        MarketUtils.increasePoolAmount(params.dataStore, params.market.marketToken, params.collateralToken, fees.feesForPool);
+        MarketUtils.increasePoolAmount(
+            params.dataStore,
+            params.eventEmitter,
+            params.market.marketToken,
+            params.collateralToken,
+            fees.feesForPool
+        );
 
         return collateralDeltaAmount;
     }

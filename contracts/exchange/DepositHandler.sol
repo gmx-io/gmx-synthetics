@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "../role/RoleModule.sol";
+import "../events/EventEmitter.sol";
 import "../feature/FeatureUtils.sol";
 
 import "../market/Market.sol";
@@ -20,6 +21,7 @@ import "../oracle/OracleModule.sol";
 contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
 
     DataStore public dataStore;
+    EventEmitter public eventEmitter;
     DepositStore public depositStore;
     MarketStore public marketStore;
     Oracle public oracle;
@@ -28,12 +30,14 @@ contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
+        EventEmitter _eventEmitter,
         DepositStore _depositStore,
         MarketStore _marketStore,
         Oracle _oracle,
         FeeReceiver _feeReceiver
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
+        eventEmitter = _eventEmitter;
         depositStore = _depositStore;
         marketStore = _marketStore;
         oracle = _oracle;
@@ -55,6 +59,7 @@ contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
 
         DepositUtils.CreateDepositParams memory params = DepositUtils.CreateDepositParams(
             dataStore,
+            eventEmitter,
             depositStore,
             marketStore,
             account,
@@ -88,6 +93,7 @@ contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
 
             DepositUtils.cancelDeposit(
                 dataStore,
+                eventEmitter,
                 depositStore,
                 marketStore,
                 key,
@@ -116,6 +122,7 @@ contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
 
         DepositUtils.ExecuteDepositParams memory params = DepositUtils.ExecuteDepositParams(
             dataStore,
+            eventEmitter,
             depositStore,
             marketStore,
             oracle,
