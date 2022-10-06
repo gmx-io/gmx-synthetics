@@ -272,13 +272,13 @@ library MarketUtils {
         emit OpenInterestDecrease(market, isLong, sizeDeltaUsd);
     }
 
-    function increaseCollateralSum(DataStore dataStore, address market, address collateralToken, bool isLong, uint256 collateralDeltaAmount) internal {
+    function increaseCollateralSum(DataStore dataStore, EventEmitter eventEmitter, address market, address collateralToken, bool isLong, uint256 collateralDeltaAmount) internal {
         dataStore.incrementUint(
             Keys.collateralSumKey(market, collateralToken, isLong),
             collateralDeltaAmount
         );
 
-        emit CollateralSumIncrease(market, collateralToken, isLong, collateralDeltaAmount);
+        eventEmitter.emitCollateralSumIncrease(market, collateralToken, isLong, collateralDeltaAmount);
     }
 
     function decreaseCollateralSum(DataStore dataStore, address market, address collateralToken, bool isLong, uint256 collateralDeltaAmount) internal {

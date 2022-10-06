@@ -189,7 +189,7 @@ library IncreasePositionUtils {
         collateralDeltaAmount += fees.totalNetCostAmount;
 
         if (collateralDeltaAmount > 0) {
-            MarketUtils.increaseCollateralSum(params.dataStore, params.order.market(), params.collateralToken, params.order.isLong(), collateralDeltaAmount.toUint256());
+            MarketUtils.increaseCollateralSum(params.dataStore, params.eventEmitter, params.order.market(), params.collateralToken, params.order.isLong(), collateralDeltaAmount.toUint256());
         } else {
             MarketUtils.decreaseCollateralSum(params.dataStore, params.order.market(), params.collateralToken, params.order.isLong(), SafeCast.toUint256(-collateralDeltaAmount));
         }
