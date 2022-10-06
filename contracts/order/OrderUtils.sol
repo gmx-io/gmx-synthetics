@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
+import "../event/EventEmitter.sol";
+
 import "../fee/FeeReceiver.sol";
 
 import "./Order.sol";
@@ -51,6 +53,7 @@ library OrderUtils {
         Order.Props order;
         Market.Props[] swapPathMarkets;
         DataStore dataStore;
+        EventEmitter eventEmitter;
         OrderStore orderStore;
         PositionStore positionStore;
         Oracle oracle;

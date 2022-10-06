@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "../utils/Precision.sol";
 
 import "../data/DataStore.sol";
+import "../event/EventEmitter.sol";
 import "../fee/FeeReceiver.sol";
 
 import "../oracle/Oracle.sol";
@@ -23,6 +24,7 @@ library IncreasePositionUtils {
 
     struct IncreasePositionParams {
         DataStore dataStore;
+        EventEmitter eventEmitter;
         PositionStore positionStore;
         Oracle oracle;
         FeeReceiver feeReceiver;
@@ -93,7 +95,13 @@ library IncreasePositionUtils {
                 params.order.isLong(),
                 sizeDeltaInTokens.toInt256()
             );
-            MarketUtils.increaseOpenInterest(params.dataStore, params.order.market(), params.order.isLong(), params.order.sizeDeltaUsd());
+            MarketUtils.increaseOpenInterest(
+                params.dataStore,
+                params.eventEmitter,
+                params.order.market(),
+                params.order.isLong(),
+                params.order.sizeDeltaUsd()
+            );
             MarketUtils.validateReserve(params.dataStore, params.market, prices, params.order.isLong());
         }
 

@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "../data/DataStore.sol";
+import "../event/EventEmitter.sol";
 import "../bank/StrictBank.sol";
 
 import "../deposit/Deposit.sol";
@@ -253,13 +254,13 @@ library MarketUtils {
         emit ImpactPoolAmountDecreased(market, token, amount);
     }
 
-    function increaseOpenInterest(DataStore dataStore, address market, bool isLong, uint256 sizeDeltaUsd) internal {
+    function increaseOpenInterest(DataStore dataStore, EventEmitter eventEmitter, address market, bool isLong, uint256 sizeDeltaUsd) internal {
         dataStore.incrementUint(
             Keys.openInterestKey(market, isLong),
             sizeDeltaUsd
         );
 
-        emit OpenInterestIncrease(market, isLong, sizeDeltaUsd);
+        eventEmitter.emitOpenInterestIncrease(market, isLong, sizeDeltaUsd);
     }
 
     function decreaseOpenInterest(DataStore dataStore, address market, bool isLong, uint256 sizeDeltaUsd) internal {

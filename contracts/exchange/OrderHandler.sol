@@ -26,6 +26,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
     using Order for Order.Props;
 
     DataStore immutable dataStore;
+    EventEmitter immutable eventEmitter;
     MarketStore immutable marketStore;
     OrderStore immutable orderStore;
     PositionStore immutable positionStore;
@@ -35,6 +36,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
+        EventEmitter _eventEmitter,
         MarketStore _marketStore,
         OrderStore _orderStore,
         PositionStore _positionStore,
@@ -42,6 +44,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         FeeReceiver _feeReceiver
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
+        eventEmitter = _eventEmitter;
         marketStore = _marketStore;
         orderStore = _orderStore;
         positionStore = _positionStore;
@@ -242,6 +245,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         params.swapPathMarkets = MarketUtils.getMarkets(marketStore, params.order.swapPath());
 
         params.dataStore = dataStore;
+        params.eventEmitter = eventEmitter;
         params.orderStore = orderStore;
         params.positionStore = positionStore;
         params.oracle = oracle;

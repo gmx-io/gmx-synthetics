@@ -51,6 +51,7 @@ library IncreaseOrderUtils {
         IncreasePositionUtils.increasePosition(
             IncreasePositionUtils.IncreasePositionParams(
                 params.dataStore,
+                params.eventEmitter,
                 params.positionStore,
                 params.oracle,
                 params.feeReceiver,
