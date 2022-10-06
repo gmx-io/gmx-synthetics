@@ -16,14 +16,14 @@ import "./Router.sol";
 contract ExchangeRouter is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    Router public router;
-    DataStore public dataStore;
-    DepositHandler public depositHandler;
-    WithdrawalHandler public withdrawalHandler;
-    OrderHandler public orderHandler;
-    DepositStore public depositStore;
-    WithdrawalStore public withdrawalStore;
-    OrderStore public orderStore;
+    Router immutable router;
+    DataStore immutable dataStore;
+    DepositHandler immutable depositHandler;
+    WithdrawalHandler immutable withdrawalHandler;
+    OrderHandler immutable orderHandler;
+    DepositStore immutable depositStore;
+    WithdrawalStore immutable withdrawalStore;
+    OrderStore immutable orderStore;
 
     constructor(
         Router _router,

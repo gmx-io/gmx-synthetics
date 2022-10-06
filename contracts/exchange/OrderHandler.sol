@@ -25,12 +25,12 @@ import "../oracle/OracleModule.sol";
 contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
     using Order for Order.Props;
 
-    DataStore public dataStore;
-    MarketStore public marketStore;
-    OrderStore public orderStore;
-    PositionStore public positionStore;
-    Oracle public oracle;
-    FeeReceiver public feeReceiver;
+    DataStore immutable dataStore;
+    MarketStore immutable marketStore;
+    OrderStore immutable orderStore;
+    PositionStore immutable positionStore;
+    Oracle immutable oracle;
+    FeeReceiver immutable feeReceiver;
 
     constructor(
         RoleStore _roleStore,
