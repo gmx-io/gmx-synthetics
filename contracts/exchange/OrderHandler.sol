@@ -86,12 +86,11 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
             bytes32 reasonKey = keccak256(abi.encodePacked(reason));
             bool isMarketOrder = OrderUtils.isMarketOrder(order.orderType());
 
-            // revert instead of cancel if the reason for failure is due to oracle params
-            if (reasonKey == Keys.ORACLE_ERROR_KEY) {
-                revert(reason);
-            }
-
-            if (!isMarketOrder && reasonKey == Keys.EMPTY_POSITION_ERROR_KEY) {
+            if (
+                reasonKey == Keys.ORACLE_ERROR_KEY ||
+                reasonKey == Keys.FROZEN_ORDER_ERROR_KEY ||
+                (!isMarketOrder && reasonKey == Keys.EMPTY_POSITION_ERROR_KEY)
+            ) {
                 revert(reason);
             }
 
@@ -181,7 +180,11 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         withOraclePrices(oracle, dataStore, oracleParams)
     {
         OrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, keeper, startingGas);
-        if (params.order.isFrozen()) {
+        // limit swaps require frozen order keeper as well since on creation it can fail due to output amount
+        // which would automatically cause the order to be frozen
+        // limit increase and decrease positions may fail due to output amount as well and become frozen
+        // but only if their acceptablePrice is reached
+        if (params.order.isFrozen() || params.order.orderType() == Order.OrderType.LimitSwap) {
             _validateFrozenOrderKeeper(keeper);
         }
 
@@ -264,6 +267,6 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
     }
 
     function _validateFrozenOrderKeeper(address keeper) internal view {
-        require(roleStore.hasRole(keeper, Role.FROZEN_ORDER_KEEPER), "Role: FROZEN_ORDER_KEEPER");
+        require(roleStore.hasRole(keeper, Role.FROZEN_ORDER_KEEPER), Keys.FROZEN_ORDER_ERROR);
     }
 }

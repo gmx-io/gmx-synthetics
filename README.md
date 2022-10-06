@@ -120,7 +120,8 @@ At any point in time, the price of a MarketToken is `(worth of market pool) / Ma
 The worth of the market pool is the sum of
 
 - worth of all tokens deposited into the pool
-- total pending PnL of all open long / short positions
+- total pending PnL of all open positions
+- total pending borrow fees of all open positions
 
 ## Deposits
 
@@ -149,6 +150,39 @@ Requests for withdrawals are created by calling ExchangeRouter.createWithdrawal,
 Withdrawal requests are executed using WithdrawalHandler.executeWithdrawal, if the withdrawal was created at block `n`, it should be executed with the oracle prices at block `n`.
 
 The amount of long or short tokens to be redeemed, before fees and price impact, is calculated as `(worth of market tokens) / (long / short token price)`.
+
+## Market Swaps
+
+Long and short tokens of a market can be swapped for each other.
+
+For example, if the ETH / USD market has WETH as the long token and USDC as the short token, WETH can be sent to the market to be swapped for USDC and USDC can be sent to the market to be swapped for WETH.
+
+Swap order requests are created by calling ExchangeRouter.createOrder, specifying:
+
+- the initial collateral token
+- the array of markets to swap through
+- the minimum expected output amount
+
+The swap output amount, before fees and price impact, `(amount of tokens in) * (token in price) / (token out price)`.
+
+Market swap order requests are executed using OrderHandler.executeOrder, if the order was created at block `n`, it should be executed with the oracle prices at block `n`.
+
+## Limit Swaps
+
+This is for passive swap orders that should be executed when the output amount matches the minimum output amount specified by the user.
+
+Limit swap order requests are executed using OrderHandler.executeOrder, if the order was created at block `n`, it should be executed with oracle prices after block `n`.
+
+## Market Increase
+
+Open or increase a long / short perp position.
+
+Market increase order requests are created by calling ExchangeRouter.createOrder, specifying:
+
+- the initial collateral token
+- the array of markets to swap through to get the actual collateral token
+- the amount to increase the position by
+- whether it is a long or short position
 
 ## Price Impact
 
