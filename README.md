@@ -26,6 +26,8 @@ Liquidity providers take on the profits and losses of traders for the market tha
 
 Having separate markets allows for risk isolation, liquidity providers are only exposed to the markets that they deposit into, this potentially allow for permissionless listings.
 
+Traders can use either the long or short token as collateral for the market.
+
 ## Features
 
 The contracts support the following main features:
@@ -169,7 +171,7 @@ Market swap order requests are executed using OrderHandler.executeOrder, if the 
 
 ## Limit Swaps
 
-This is for passive swap orders that should be executed when the output amount matches the minimum output amount specified by the user.
+Passive swap orders that should be executed when the output amount matches the minimum output amount specified by the user.
 
 Limit swap order requests are executed using OrderHandler.executeOrder, if the order was created at block `n`, it should be executed with oracle prices after block `n`.
 
@@ -183,6 +185,50 @@ Market increase order requests are created by calling ExchangeRouter.createOrder
 - the array of markets to swap through to get the actual collateral token
 - the amount to increase the position by
 - whether it is a long or short position
+
+Market increase order requests are executed using OrderHandler.executeOrder, if the order was created at block `n`, it should be executed with the oracle prices at block `n`.
+
+## Limit Increase
+
+Passive increase position orders that should be executed when the index token price matches the acceptable price specified by the user.
+
+Long position example: if the current index token price is $5000, a limit increase order can be created with acceptable price as $4990, the order can be executed when the index token price is <= $4990.
+
+Short position example: if the current index token price is $5000, a limit increase order can be created with acceptable price as $5010, the order can be executed when the index token price is >= $5010.
+
+Limit increase order requests are executed using OrderHandler.executeOrder, if the order was created at block `n`, it should be executed with the oracle prices after block `n`.
+
+## Market Decrease
+
+Close or decrease a long / short perp position.
+
+Market decrease order requests are created by calling ExchangeRouter.createOrder, specifying:
+
+- the initial collateral token
+- the array of markets to swap through for the actual output token
+- the amount to decrease the position by
+
+Market decrease order requests are executed using OrderHandler.executeOrder, if the order was created at block `n`, it should be executed with the oracle prices at block `n`.
+
+## Limit Decrease
+
+Passive decrease position orders that should be executed when the index token price matches the acceptable price specified by the user.
+
+Long position example: if the current index token price is $5000, a limit decrease order can be created with acceptable price as $5010, the order can be executed when the index token price is >= $5010.
+
+Short position example: if the current index token price is $5000, a limit decrease order can be created with acceptable price as $4990, the order can be executed when the index token price is <= $4990.
+
+Limit decrease order requests are executed using OrderHandler.executeOrder, if the order was created at block `n`, it should be executed with the oracle prices after block `n`.
+
+## Stop-Loss Decrease
+
+Passive decrease position orders that should be executed when the index token price crosses the acceptable price specified by the user.
+
+Long position example: if the current index token price is $5000, a stop-loss decrease order can be created with acceptable price as $4990, the order can be executed when the index token price is <= $4990.
+
+Short position example: if the current index token price is $5000, a stop-loss decrease order can be created with acceptable price as $5010, the order can be executed when the index token price is >= $5010.
+
+Stop-loss decrease order requests are executed using OrderHandler.executeOrder, if the order was created at block `n`, it should be executed with the oracle prices after block `n`.
 
 ## Price Impact
 

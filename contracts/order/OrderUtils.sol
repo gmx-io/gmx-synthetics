@@ -237,50 +237,34 @@ library OrderUtils {
             return;
         }
 
-        if (orderType == Order.OrderType.LimitIncrease) {
-            uint256 price = oracle.getPrimaryPrice(indexToken);
-
-            if (isLong) {
-                if (price > acceptablePrice) { revert(Keys.ORACLE_ERROR); }
-                oracle.setSecondaryPrice(indexToken, acceptablePrice);
-            } else {
-                if (price < acceptablePrice) { revert(Keys.ORACLE_ERROR); }
-                oracle.setSecondaryPrice(indexToken, acceptablePrice);
-            }
-
-            return;
-        }
-
-        if (orderType == Order.OrderType.LimitDecrease) {
-            uint256 price = oracle.getPrimaryPrice(indexToken);
-
-            if (isLong) {
-                if (price < acceptablePrice) { revert(Keys.ORACLE_ERROR); }
-                oracle.setSecondaryPrice(indexToken, acceptablePrice);
-            } else {
-                if (price > acceptablePrice) { revert(Keys.ORACLE_ERROR); }
-                oracle.setSecondaryPrice(indexToken, acceptablePrice);
-            }
-
-            return;
-        }
-
-        if (orderType == Order.OrderType.StopLossDecrease) {
+        if (orderType == Order.OrderType.LimitIncrease ||
+            orderType == Order.OrderType.LimitDecrease ||
+            orderType == Order.OrderType.StopLossDecrease
+        ) {
             uint256 primaryPrice = oracle.getPrimaryPrice(indexToken);
             uint256 secondaryPrice = oracle.getSecondaryPrice(indexToken);
 
-            if (isLong) {
-                // to use the acceptablePrice for a stop loss decrease for a long position
-                // the earlier price (primaryPrice) must be more than the acceptablePrice
-                // and the later price (secondaryPrice) must be less than the acceptablePrice
-                bool hasAcceptablePrices = primaryPrice >= acceptablePrice && secondaryPrice <= acceptablePrice;
+            bool shouldValidateAscendingPrice;
+            if (orderType == Order.OrderType.LimitIncrease) {
+                // for long increase orders, the oracle prices should be descending
+                // for short increase orders, the oracle prices should be ascending
+                shouldValidateAscendingPrice = !isLong;
+            } else {
+                // for long decrease orders, the oracle prices should be ascending
+                // for short decrease orders, the oracle prices should be descending
+                shouldValidateAscendingPrice = isLong;
+            }
+
+            if (shouldValidateAscendingPrice) {
+                // check that the earlier price (primaryPrice) is smaller than the acceptablePrice
+                // and that the later price (secondaryPrice) is larger than the acceptablePrice
+                bool hasAcceptablePrices = primaryPrice <= acceptablePrice && secondaryPrice >= acceptablePrice;
                 if (!hasAcceptablePrices) { revert(Keys.ORACLE_ERROR); }
                 oracle.setSecondaryPrice(indexToken, acceptablePrice);
             } else {
-                // to use the acceptablePrice for a stop loss decrease for a short position
-                // the earlier price (primaryPrice) must be less than the acceptablePrice
-                // and the later price (secondaryPrice) must be most than the acceptablePrice
-                bool hasAcceptablePrices = primaryPrice <= acceptablePrice && secondaryPrice >= acceptablePrice;
+                // check that the earlier price (primaryPrice) is larger than the acceptablePrice
+                // and that the later price (secondaryPrice) is smaller than the acceptablePrice
+                bool hasAcceptablePrices = primaryPrice >= acceptablePrice && secondaryPrice <= acceptablePrice;
                 if (!hasAcceptablePrices) { revert(Keys.ORACLE_ERROR); }
                 oracle.setSecondaryPrice(indexToken, acceptablePrice);
             }
