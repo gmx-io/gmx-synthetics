@@ -121,8 +121,8 @@ library PositionUtils {
         );
         uint256 collateralUsd = position.collateralAmount * collateralTokenPrice;
 
-        int256 usdAdjustment = PositionPricingUtils.getPositionPricing(
-            PositionPricingUtils.GetPositionPricingParams(
+        int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
+            PositionPricingUtils.GetPriceImpactUsdParams(
                 dataStore,
                 market.marketToken,
                 market.longToken,
@@ -143,7 +143,7 @@ library PositionUtils {
         );
 
         int256 minCollateralUsd = dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256();
-        int256 remainingCollateralUsd = collateralUsd.toInt256() + positionPnlUsd + usdAdjustment + fees.totalNetCostAmount;
+        int256 remainingCollateralUsd = collateralUsd.toInt256() + positionPnlUsd + priceImpactUsd + fees.totalNetCostAmount;
 
         // the position is liquidatable if the remaining collateral is less than the required min collateral
         if (remainingCollateralUsd < minCollateralUsd) {

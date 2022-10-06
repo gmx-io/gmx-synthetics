@@ -91,18 +91,20 @@ library SwapUtils {
             FeeUtils.SWAP_FEE
         );
 
-        int256 usdAdjustment = SwapPricingUtils.getSwapPricing(SwapPricingUtils.GetSwapPricingParams(
-            params.dataStore,
-            _params.market.marketToken,
-            _params.tokenIn,
-            cache.tokenOut,
-            cache.tokenInPrice,
-            cache.tokenOutPrice,
-            (fees.amountAfterFees * cache.tokenInPrice).toInt256(),
-            -(fees.amountAfterFees * cache.tokenInPrice).toInt256()
-        ));
+        int256 priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(
+            SwapPricingUtils.GetPriceImpactUsdParams(
+                params.dataStore,
+                _params.market.marketToken,
+                _params.tokenIn,
+                cache.tokenOut,
+                cache.tokenInPrice,
+                cache.tokenOutPrice,
+                (fees.amountAfterFees * cache.tokenInPrice).toInt256(),
+                -(fees.amountAfterFees * cache.tokenInPrice).toInt256()
+            )
+        );
 
-        if (usdAdjustment > 0) {
+        if (priceImpactUsd > 0) {
             cache.amountIn = fees.amountAfterFees;
             cache.amountOut = cache.amountIn * cache.tokenInPrice / cache.tokenOutPrice;
             cache.poolAmountOut = cache.amountOut;
@@ -117,7 +119,7 @@ library SwapUtils {
                 _params.market.marketToken,
                 cache.tokenOut,
                 cache.tokenOutPrice,
-                usdAdjustment
+                priceImpactUsd
             );
 
             cache.amountOut += positiveImpactAmount;
@@ -132,7 +134,7 @@ library SwapUtils {
                 _params.market.marketToken,
                 _params.tokenIn,
                 cache.tokenInPrice,
-                usdAdjustment
+                priceImpactUsd
             );
 
             cache.amountIn = fees.amountAfterFees - negativeImpactAmount;

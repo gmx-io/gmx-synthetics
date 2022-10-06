@@ -125,7 +125,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         bytes32 key,
         uint256 sizeDeltaUsd,
         uint256 acceptablePrice,
-        int256 acceptableUsdAdjustment
+        int256 acceptablePriceImpactUsd
     ) external nonReentrant {
         OrderStore _orderStore = orderStore;
         Order.Props memory order = _orderStore.get(key);
@@ -140,7 +140,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
 
         order.setSizeDeltaUsd(sizeDeltaUsd);
         order.setAcceptablePrice(acceptablePrice);
-        order.setAcceptableUsdAdjustment(acceptableUsdAdjustment);
+        order.setAcceptablePriceImpactUsd(acceptablePriceImpactUsd);
 
         order.touch();
         _orderStore.set(key, order);

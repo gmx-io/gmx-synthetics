@@ -13,7 +13,7 @@ library SwapPricingUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
 
-    struct GetSwapPricingParams {
+    struct GetPriceImpactUsdParams {
         DataStore dataStore;
         address market;
         address tokenA;
@@ -48,16 +48,16 @@ library SwapPricingUtils {
     // this is useful if prices are ranging, if prices are strongly directional, the pool may
     // be selling tokens as the token price increases
     //
-    // returns (usd adjustment)
-    function getSwapPricing(GetSwapPricingParams memory params) internal view returns (int256) {
+    // returns (priceImpactUsd)
+    function getPriceImpactUsd(GetPriceImpactUsdParams memory params) internal view returns (int256) {
         PoolParams memory poolParams = getNextPoolAmountsUsd(params);
 
-        int256 usdAdjustment = getUsdAdjustment(params.dataStore, params.market, poolParams);
+        int256 priceImpactUsd = _getPriceImpactUsd(params.dataStore, params.market, poolParams);
 
-        return usdAdjustment;
+        return priceImpactUsd;
     }
 
-    function getUsdAdjustment(DataStore dataStore, address market, PoolParams memory poolParams) internal view returns (int256) {
+    function _getPriceImpactUsd(DataStore dataStore, address market, PoolParams memory poolParams) internal view returns (int256) {
         uint256 initialDiffUsd = Calc.diff(poolParams.poolUsdForTokenA, poolParams.poolUsdForTokenB);
         uint256 nextDiffUsd = Calc.diff(poolParams.nextPoolUsdForTokenA, poolParams.nextPoolUsdForTokenB);
 
@@ -72,7 +72,7 @@ library SwapPricingUtils {
             bool hasPositiveImpact = nextDiffUsd < initialDiffUsd;
             uint256 impactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market, hasPositiveImpact));
 
-            return PricingUtils.getUsdAdjustmentForSameSideRebalance(
+            return PricingUtils.getPriceImpactUsdForSameSideRebalance(
                 initialDiffUsd,
                 nextDiffUsd,
                 hasPositiveImpact,
@@ -83,7 +83,7 @@ library SwapPricingUtils {
             uint256 positiveImpactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market, true));
             uint256 negativeImpactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market, false));
 
-            return PricingUtils.getUsdAdjustmentForCrossoverRebalance(
+            return PricingUtils.getPriceImpactUsdForCrossoverRebalance(
                 initialDiffUsd,
                 nextDiffUsd,
                 positiveImpactFactor,
@@ -94,7 +94,7 @@ library SwapPricingUtils {
     }
 
     function getNextPoolAmountsUsd(
-        GetSwapPricingParams memory params
+        GetPriceImpactUsdParams memory params
     ) internal view returns (PoolParams memory) {
         uint256 poolAmountForTokenA = MarketUtils.getPoolAmount(params.dataStore, params.market, params.tokenA);
         uint256 poolAmountForTokenB = MarketUtils.getPoolAmount(params.dataStore, params.market, params.tokenB);

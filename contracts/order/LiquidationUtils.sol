@@ -32,7 +32,7 @@ library LiquidationUtils {
         order.setInitialCollateralToken(collateralToken);
         order.setSizeDeltaUsd(position.sizeInUsd);
         order.setAcceptablePrice(isLong ? 0 : type(uint256).max);
-        order.setAcceptableUsdAdjustment(-type(int256).max);
+        order.setAcceptablePriceImpactUsd(-type(int256).max);
         order.setOrderType(Order.OrderType.MarketDecrease);
         order.setIsLong(isLong);
 

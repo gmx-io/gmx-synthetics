@@ -358,9 +358,9 @@ library MarketUtils {
         address market,
         address token,
         uint256 tokenPrice,
-        int256 usdAdjustment
+        int256 priceImpactUsd
     ) internal returns (uint256) {
-        uint256 impactAmount = SafeCast.toUint256(-usdAdjustment) / tokenPrice;
+        uint256 impactAmount = SafeCast.toUint256(-priceImpactUsd) / tokenPrice;
         increaseImpactPoolAmount(dataStore, market, token, impactAmount);
         return impactAmount;
     }
@@ -370,9 +370,9 @@ library MarketUtils {
         address market,
         address token,
         uint256 tokenPrice,
-        int256 usdAdjustment
+        int256 priceImpactUsd
     ) internal returns (uint256) {
-        uint256 impactAmount = SafeCast.toUint256(usdAdjustment) / tokenPrice;
+        uint256 impactAmount = SafeCast.toUint256(priceImpactUsd) / tokenPrice;
         uint256 maxImpactAmount = getImpactPoolAmount(dataStore, market, token);
 
         if (impactAmount > maxImpactAmount) {

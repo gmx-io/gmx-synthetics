@@ -152,9 +152,15 @@ The amount of long or short tokens to be redeemed, before fees and price impact,
 
 ## Price Impact
 
-Price impact is calculated as `(change in balance) ^ (price impact exponent) * (price impact factor)`.
+The code for price impact can be found in the `/pricing` contracts.
 
-For spot actions (deposits, withdrawals, swaps), the change in balance is calculated based on the difference in the worth of the long tokens and short tokens.
+Price impact is calculated as:
+
+```
+(initial imbalance) ^ (price impact exponent) * (price impact factor) - (next imbalance) ^ (price impact exponent) * (price impact factor)
+```
+
+For spot actions (deposits, withdrawals, swaps), imbalance is calculated as the difference in the worth of the long tokens and short tokens.
 
 For example:
 
@@ -163,12 +169,12 @@ For example:
 - The `price impact exponent` is set to 2 and `price impact factor` is set to `0.01 / 50,000`
 - The pool is equally balanced with $50,000 of long tokens and $50,000 of short tokens
 - If a user deposits 10 long tokens, the pool would now have $100,000 of long tokens and $50,000 of short tokens
-- The change in balance would be from $0 to -$50,000, a net change of -$50,000
-- There would be negative price impact charged on the user's deposit, calculated as `50,000 ^ 2 * (0.01 / 50,000) => $500`
+- The change in imbalance would be from $0 to -$50,000
+- There would be negative price impact charged on the user's deposit, calculated as `0 ^ 2 * (0.01 / 50,000) - 50,000 ^ 2 * (0.01 / 50,000) => -$500`
 - If the user now withdraws 5 long tokens, the balance would change from -$50,000 to -$25,000, a net change of +$25,000
-- There would be a positive price impact rebated to the user in the form of additional long tokens, calculated as `25,000 ^ 2 * (0.01 / 50,000) => $125`
+- There would be a positive price impact rebated to the user in the form of additional long tokens, calculated as `50,000 ^ 2 * (0.01 / 50,000) - 25,000 ^ 2 * (0.01 / 50,000) => $375`
 
-For position actions (increase / decrease position), the change in balance is calculated based on the difference in the long and short open interest.
+For position actions (increase / decrease position), imbalance is calculated as the difference in the long and short open interest.
 
 `price impact exponents` and `price impact factors` are configured per market and can differ for spot and position actions.
 

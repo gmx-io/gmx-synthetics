@@ -37,7 +37,7 @@ library OrderUtils {
 
         uint256 sizeDeltaUsd;
         uint256 acceptablePrice;
-        int256 acceptableUsdAdjustment;
+        int256 acceptablePriceImpactUsd;
         uint256 executionFee;
         uint256 minOutputAmount;
 
@@ -64,7 +64,7 @@ library OrderUtils {
 
     error EmptyOrder();
     error UnsupportedOrderType();
-    error UnacceptableUsdAdjustment(int256 usdAdjustment, int256 acceptableUsdAdjustment);
+    error UnacceptablePriceImpactUsd(int256 priceImpactUsd, int256 acceptablePriceImpactUsd);
 
     function createOrder(
         DataStore dataStore,
@@ -103,7 +103,7 @@ library OrderUtils {
         order.setSizeDeltaUsd(params.sizeDeltaUsd);
         order.setInitialCollateralDeltaAmount(initialCollateralDeltaAmount);
         order.setAcceptablePrice(params.acceptablePrice);
-        order.setAcceptableUsdAdjustment(params.acceptableUsdAdjustment);
+        order.setAcceptablePriceImpactUsd(params.acceptablePriceImpactUsd);
         order.setExecutionFee(params.executionFee);
         order.setMinOutputAmount(params.minOutputAmount);
         order.setOrderType(params.orderType);
@@ -349,7 +349,7 @@ library OrderUtils {
         revert UnsupportedOrderType();
     }
 
-    function revertUnacceptableUsdAdjustment(int256 usdAdjustment, int256 acceptableUsdAdjustment) internal pure {
-        revert UnacceptableUsdAdjustment(usdAdjustment, acceptableUsdAdjustment);
+    function revertUnacceptablePriceImpactUsd(int256 priceImpactUsd, int256 acceptablePriceImpactUsd) internal pure {
+        revert UnacceptablePriceImpactUsd(priceImpactUsd, acceptablePriceImpactUsd);
     }
 }

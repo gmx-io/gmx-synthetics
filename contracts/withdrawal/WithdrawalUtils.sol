@@ -57,7 +57,7 @@ library WithdrawalUtils {
         uint256 marketTokensAmount;
         bool hasCollateralInETH;
         uint256 marketTokensUsd;
-        int256 usdAdjustment;
+        int256 priceImpactUsd;
     }
 
     struct ExecuteWithdrawalCache {
@@ -127,8 +127,8 @@ library WithdrawalUtils {
         cache.marketTokensLongUsd = MarketUtils.marketTokenAmountToUsd(withdrawal.marketTokensLongAmount, cache.poolValue, cache.marketTokensSupply);
         cache.marketTokensShortUsd = MarketUtils.marketTokenAmountToUsd(withdrawal.marketTokensShortAmount, cache.poolValue, cache.marketTokensSupply);
 
-        int256 usdAdjustment = SwapPricingUtils.getSwapPricing(
-            SwapPricingUtils.GetSwapPricingParams(
+        int256 priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(
+            SwapPricingUtils.GetPriceImpactUsdParams(
                 params.dataStore,
                 market.marketToken,
                 market.longToken,
@@ -151,7 +151,7 @@ library WithdrawalUtils {
                 withdrawal.marketTokensLongAmount,
                 withdrawal.hasCollateralInETH,
                 cache.marketTokensLongUsd,
-                usdAdjustment * cache.marketTokensLongUsd.toInt256() / (cache.marketTokensLongUsd + cache.marketTokensShortUsd).toInt256()
+                priceImpactUsd * cache.marketTokensLongUsd.toInt256() / (cache.marketTokensLongUsd + cache.marketTokensShortUsd).toInt256()
             );
 
             uint256 outputAmount = _executeWithdrawal(params, _params);
@@ -172,7 +172,7 @@ library WithdrawalUtils {
                 withdrawal.marketTokensShortAmount,
                 withdrawal.hasCollateralInETH,
                 cache.marketTokensShortUsd,
-                usdAdjustment * cache.marketTokensShortUsd.toInt256() / (cache.marketTokensLongUsd + cache.marketTokensShortUsd).toInt256()
+                priceImpactUsd * cache.marketTokensShortUsd.toInt256() / (cache.marketTokensLongUsd + cache.marketTokensShortUsd).toInt256()
             );
 
             uint256 outputAmount = _executeWithdrawal(params, _params);
@@ -239,7 +239,7 @@ library WithdrawalUtils {
         uint256 poolAmountDelta = outputAmount - fees.feesForPool;
         outputAmount = fees.amountAfterFees;
 
-        if (_params.usdAdjustment > 0) {
+        if (_params.priceImpactUsd > 0) {
             // when there is a positive price impact factor, additional tokens from the swap impact pool
             // are withdrawn for the user
             // for example, if 50,000 USDC is withdrawn and there is a positive price impact
@@ -250,7 +250,7 @@ library WithdrawalUtils {
                 _params.market.marketToken,
                 _params.tokenOut,
                 _params.tokenOutPrice,
-                _params.usdAdjustment
+                _params.priceImpactUsd
             );
 
             outputAmount += positiveImpactAmount;
@@ -265,7 +265,7 @@ library WithdrawalUtils {
                 _params.market.marketToken,
                 _params.tokenOut,
                 _params.tokenOutPrice,
-                _params.usdAdjustment
+                _params.priceImpactUsd
             );
 
             outputAmount -= negativeImpactAmount;

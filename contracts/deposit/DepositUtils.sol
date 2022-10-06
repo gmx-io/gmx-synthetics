@@ -53,7 +53,7 @@ library DepositUtils {
         uint256 tokenInPrice;
         uint256 tokenOutPrice;
         uint256 amount;
-        int256 usdAdjustment;
+        int256 priceImpactUsd;
     }
 
     error MinMarketTokens(uint256 received, uint256 expected);
@@ -115,8 +115,8 @@ library DepositUtils {
 
         uint256 receivedMarketTokens;
 
-        int256 usdAdjustment = SwapPricingUtils.getSwapPricing(
-            SwapPricingUtils.GetSwapPricingParams(
+        int256 priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(
+            SwapPricingUtils.GetPriceImpactUsdParams(
                 params.dataStore,
                 market.marketToken,
                 market.longToken,
@@ -146,7 +146,7 @@ library DepositUtils {
                 longTokenPrice,
                 shortTokenPrice,
                 deposit.longTokenAmount,
-                usdAdjustment * longTokenUsd.toInt256() / (longTokenUsd + shortTokenUsd).toInt256()
+                priceImpactUsd * longTokenUsd.toInt256() / (longTokenUsd + shortTokenUsd).toInt256()
             );
 
             receivedMarketTokens += _executeDeposit(params, _params);
@@ -163,7 +163,7 @@ library DepositUtils {
                 shortTokenPrice,
                 longTokenPrice,
                 deposit.shortTokenAmount,
-                usdAdjustment * shortTokenUsd.toInt256() / (longTokenUsd + shortTokenUsd).toInt256()
+                priceImpactUsd * shortTokenUsd.toInt256() / (longTokenUsd + shortTokenUsd).toInt256()
             );
 
             receivedMarketTokens += _executeDeposit(params, _params);
@@ -265,14 +265,14 @@ library DepositUtils {
         );
         uint256 supply = MarketUtils.getMarketTokenSupply(MarketToken(_params.market.marketToken));
 
-        if (_params.usdAdjustment > 0) {
+        if (_params.priceImpactUsd > 0) {
             // when there is a positive price impact factor,
             // tokens from the swap impact pool are used to mint additional market tokens for the user
             // for example, if 50,000 USDC is deposited and there is a positive price impact
             // an additional 0.005 ETH may be used to mint market tokens
             // the swap impact pool is decreased by the used amount
             //
-            // usdAdjustment is calculated based on pricing assuming only depositAmount of tokenIn
+            // priceImpactUsd is calculated based on pricing assuming only depositAmount of tokenIn
             // was added to the pool
             // since impactAmount of tokenOut is added to the pool here, the calculation of
             // the tokenInPrice would not be entirely accurate
@@ -281,7 +281,7 @@ library DepositUtils {
                 _params.market.marketToken,
                 _params.tokenOut,
                 _params.tokenOutPrice,
-                _params.usdAdjustment
+                _params.priceImpactUsd
             );
 
             // calculate the usd amount using positiveImpactAmount since it may
@@ -305,7 +305,7 @@ library DepositUtils {
                 _params.market.marketToken,
                 _params.tokenIn,
                 _params.tokenInPrice,
-                _params.usdAdjustment
+                _params.priceImpactUsd
             );
             amountAfterFees -= negativeImpactAmount;
         }

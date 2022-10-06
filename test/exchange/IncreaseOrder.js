@@ -82,7 +82,7 @@ describe("Exchange.IncreaseOrder", () => {
       swapPath: [ethUsdMarket.marketToken],
       sizeDeltaUsd: expandFloatDecimals(200 * 1000),
       acceptablePrice: expandDecimals(5001, 12),
-      acceptableUsdAdjustment: expandDecimals(-5, 30),
+      priceImpactUsd: expandDecimals(-5, 30),
       executionFee,
       minOutputAmount: expandDecimals(50000, 6),
       orderType: OrderType.MarketIncrease,
@@ -105,7 +105,7 @@ describe("Exchange.IncreaseOrder", () => {
     expect(order.numbers.sizeDeltaUsd).eq(expandFloatDecimals(200 * 1000));
     expect(order.numbers.initialCollateralDeltaAmount).eq(expandDecimals(10, 18).sub(executionFee));
     expect(order.numbers.acceptablePrice).eq(expandDecimals(5001, 12));
-    expect(order.numbers.acceptableUsdAdjustment).eq(expandDecimals(-5, 30));
+    expect(order.numbers.priceImpactUsd).eq(expandDecimals(-5, 30));
     expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
     expect(order.numbers.minOutputAmount).eq(expandDecimals(50000, 6));
     expect(order.numbers.updatedAtBlock).eq(block.number + 1);
@@ -126,7 +126,7 @@ describe("Exchange.IncreaseOrder", () => {
       swapPath: [],
       sizeDeltaUsd: expandFloatDecimals(200 * 1000),
       acceptablePrice: expandDecimals(5001, 12),
-      acceptableUsdAdjustment: expandDecimals(-5, 12),
+      priceImpactUsd: expandDecimals(-5, 12),
       executionFee: expandDecimals(1, 15),
       minOutputAmount: expandDecimals(50000, 6),
       orderType: OrderType.MarketIncrease,
