@@ -20,12 +20,12 @@ import "../oracle/OracleModule.sol";
 
 contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
 
-    DataStore public dataStore;
-    EventEmitter public eventEmitter;
-    DepositStore public depositStore;
-    MarketStore public marketStore;
-    Oracle public oracle;
-    FeeReceiver public feeReceiver;
+    DataStore immutable dataStore;
+    EventEmitter immutable eventEmitter;
+    DepositStore immutable depositStore;
+    MarketStore immutable marketStore;
+    Oracle immutable oracle;
+    FeeReceiver immutable feeReceiver;
 
     constructor(
         RoleStore _roleStore,
@@ -52,7 +52,7 @@ contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
         address account,
         address market,
         uint256 minMarketTokens,
-        bool hasCollateralInETH,
+        bool shouldConvertETH,
         uint256 executionFee
     ) external nonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createDepositFeatureKey(address(this)));
@@ -65,7 +65,7 @@ contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
             account,
             market,
             minMarketTokens,
-            hasCollateralInETH,
+            shouldConvertETH,
             executionFee,
             EthUtils.weth(dataStore)
         );

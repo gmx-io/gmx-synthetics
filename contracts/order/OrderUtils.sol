@@ -38,13 +38,13 @@ library OrderUtils {
 
         uint256 sizeDeltaUsd;
         uint256 acceptablePrice;
-        int256 acceptableUsdAdjustment;
+        int256 acceptablePriceImpactUsd;
         uint256 executionFee;
         uint256 minOutputAmount;
 
         Order.OrderType orderType;
         bool isLong;
-        bool hasCollateralInETH;
+        bool shouldConvertETH;
     }
 
     struct ExecuteOrderParams {
@@ -66,7 +66,7 @@ library OrderUtils {
 
     error EmptyOrder();
     error UnsupportedOrderType();
-    error UnacceptableUsdAdjustment(int256 usdAdjustment, int256 acceptableUsdAdjustment);
+    error UnacceptablePriceImpactUsd(int256 priceImpactUsd, int256 acceptablePriceImpactUsd);
 
     function createOrder(
         DataStore dataStore,
@@ -106,12 +106,12 @@ library OrderUtils {
         order.setSizeDeltaUsd(params.sizeDeltaUsd);
         order.setInitialCollateralDeltaAmount(initialCollateralDeltaAmount);
         order.setAcceptablePrice(params.acceptablePrice);
-        order.setAcceptableUsdAdjustment(params.acceptableUsdAdjustment);
+        order.setAcceptablePriceImpactUsd(params.acceptablePriceImpactUsd);
         order.setExecutionFee(params.executionFee);
         order.setMinOutputAmount(params.minOutputAmount);
         order.setOrderType(params.orderType);
         order.setIsLong(params.isLong);
-        order.setHasCollateralInETH(params.hasCollateralInETH);
+        order.setShouldConvertETH(params.shouldConvertETH);
 
         uint256 nonce = NonceUtils.incrementNonce(dataStore);
         bytes32 key = keccak256(abi.encodePacked(nonce));
@@ -142,7 +142,7 @@ library OrderUtils {
                     order.initialCollateralToken(),
                     order.initialCollateralDeltaAmount(),
                     order.account(),
-                    order.hasCollateralInETH()
+                    order.shouldConvertETH()
                 );
             }
         }
@@ -248,50 +248,34 @@ library OrderUtils {
             return;
         }
 
-        if (orderType == Order.OrderType.LimitIncrease) {
-            uint256 price = oracle.getPrimaryPrice(indexToken);
-
-            if (isLong) {
-                if (price > acceptablePrice) { revert(Keys.ORACLE_ERROR); }
-                oracle.setSecondaryPrice(indexToken, acceptablePrice);
-            } else {
-                if (price < acceptablePrice) { revert(Keys.ORACLE_ERROR); }
-                oracle.setSecondaryPrice(indexToken, acceptablePrice);
-            }
-
-            return;
-        }
-
-        if (orderType == Order.OrderType.LimitDecrease) {
-            uint256 price = oracle.getPrimaryPrice(indexToken);
-
-            if (isLong) {
-                if (price < acceptablePrice) { revert(Keys.ORACLE_ERROR); }
-                oracle.setSecondaryPrice(indexToken, acceptablePrice);
-            } else {
-                if (price > acceptablePrice) { revert(Keys.ORACLE_ERROR); }
-                oracle.setSecondaryPrice(indexToken, acceptablePrice);
-            }
-
-            return;
-        }
-
-        if (orderType == Order.OrderType.StopLossDecrease) {
+        if (orderType == Order.OrderType.LimitIncrease ||
+            orderType == Order.OrderType.LimitDecrease ||
+            orderType == Order.OrderType.StopLossDecrease
+        ) {
             uint256 primaryPrice = oracle.getPrimaryPrice(indexToken);
             uint256 secondaryPrice = oracle.getSecondaryPrice(indexToken);
 
-            if (isLong) {
-                // to use the acceptablePrice for a stop loss decrease for a long position
-                // the earlier price (primaryPrice) must be more than the acceptablePrice
-                // and the later price (secondaryPrice) must be less than the acceptablePrice
-                bool hasAcceptablePrices = primaryPrice >= acceptablePrice && secondaryPrice <= acceptablePrice;
+            bool shouldValidateAscendingPrice;
+            if (orderType == Order.OrderType.LimitIncrease) {
+                // for long increase orders, the oracle prices should be descending
+                // for short increase orders, the oracle prices should be ascending
+                shouldValidateAscendingPrice = !isLong;
+            } else {
+                // for long decrease orders, the oracle prices should be ascending
+                // for short decrease orders, the oracle prices should be descending
+                shouldValidateAscendingPrice = isLong;
+            }
+
+            if (shouldValidateAscendingPrice) {
+                // check that the earlier price (primaryPrice) is smaller than the acceptablePrice
+                // and that the later price (secondaryPrice) is larger than the acceptablePrice
+                bool hasAcceptablePrices = primaryPrice <= acceptablePrice && secondaryPrice >= acceptablePrice;
                 if (!hasAcceptablePrices) { revert(Keys.ORACLE_ERROR); }
                 oracle.setSecondaryPrice(indexToken, acceptablePrice);
             } else {
-                // to use the acceptablePrice for a stop loss decrease for a short position
-                // the earlier price (primaryPrice) must be less than the acceptablePrice
-                // and the later price (secondaryPrice) must be most than the acceptablePrice
-                bool hasAcceptablePrices = primaryPrice <= acceptablePrice && secondaryPrice >= acceptablePrice;
+                // check that the earlier price (primaryPrice) is larger than the acceptablePrice
+                // and that the later price (secondaryPrice) is smaller than the acceptablePrice
+                bool hasAcceptablePrices = primaryPrice >= acceptablePrice && secondaryPrice <= acceptablePrice;
                 if (!hasAcceptablePrices) { revert(Keys.ORACLE_ERROR); }
                 oracle.setSecondaryPrice(indexToken, acceptablePrice);
             }
@@ -360,7 +344,7 @@ library OrderUtils {
         revert UnsupportedOrderType();
     }
 
-    function revertUnacceptableUsdAdjustment(int256 usdAdjustment, int256 acceptableUsdAdjustment) internal pure {
-        revert UnacceptableUsdAdjustment(usdAdjustment, acceptableUsdAdjustment);
+    function revertUnacceptablePriceImpactUsd(int256 priceImpactUsd, int256 acceptablePriceImpactUsd) internal pure {
+        revert UnacceptablePriceImpactUsd(priceImpactUsd, acceptablePriceImpactUsd);
     }
 }

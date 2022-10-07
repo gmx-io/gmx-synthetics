@@ -141,6 +141,7 @@ library MarketUtils {
         return longPnl + shortPnl;
     }
 
+
     function getPnl(DataStore dataStore, address market, uint256 indexTokenPrice, bool isLong) internal view returns (int256) {
         int256 openInterest = getOpenInterest(dataStore, market, isLong).toInt256();
         uint256 openInterestInTokens = getOpenInterestInTokens(dataStore, market, isLong);
@@ -362,10 +363,11 @@ library MarketUtils {
         address market,
         address token,
         uint256 tokenPrice,
-        int256 usdAdjustment
+        int256 priceImpactUsd
     ) internal returns (uint256) {
-        uint256 impactAmount = SafeCast.toUint256(-usdAdjustment) / tokenPrice;
+        uint256 impactAmount = SafeCast.toUint256(-priceImpactUsd) / tokenPrice;
         increaseImpactPoolAmount(dataStore, eventEmitter, market, token, impactAmount);
+
         return impactAmount;
     }
 
@@ -375,9 +377,9 @@ library MarketUtils {
         address market,
         address token,
         uint256 tokenPrice,
-        int256 usdAdjustment
+        int256 priceImpactUsd
     ) internal returns (uint256) {
-        uint256 impactAmount = SafeCast.toUint256(usdAdjustment) / tokenPrice;
+        uint256 impactAmount = SafeCast.toUint256(priceImpactUsd) / tokenPrice;
         uint256 maxImpactAmount = getImpactPoolAmount(dataStore, market, token);
 
         if (impactAmount > maxImpactAmount) {
@@ -407,6 +409,12 @@ library MarketUtils {
 
     function getOpenInterestInTokens(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
         return dataStore.getUint(Keys.openInterestInTokensKey(market, isLong));
+    }
+
+    function getOpenInterestWithPnl(DataStore dataStore, address market, uint256 indexTokenPrice, bool isLong) internal view returns (uint256) {
+        uint256 openInterest = getOpenInterest(dataStore, market, isLong);
+        int256 pnl = getPnl(dataStore, market, indexTokenPrice, isLong);
+        return Calc.sum(openInterest, pnl);
     }
 
     function getCollateralSum(DataStore dataStore, address market, address collateralToken,  bool isLong) internal view returns (uint256) {
@@ -541,12 +549,13 @@ library MarketUtils {
         uint256 durationInSeconds = getSecondsSinceCumulativeBorrowingFactorUpdated(dataStore, market.marketToken, isLong);
         uint256 borrowingFactor = getBorrowingFactor(dataStore, market.marketToken, isLong);
 
-        uint256 openInterest = getOpenInterest(dataStore, market.marketToken, isLong);
+        uint256 openInterestWithPnl = getOpenInterestWithPnl(dataStore, market.marketToken, prices.indexTokenPrice, isLong);
+
         uint256 poolAmount = getPoolAmount(dataStore, market.marketToken, isLong ? market.longToken : market.shortToken);
         uint256 poolTokenPrice = isLong ? prices.longTokenPrice : prices.shortTokenPrice;
         uint256 poolUsd = poolAmount * poolTokenPrice;
-        uint256 adjustedFactor = borrowingFactor * openInterest / poolUsd;
-        adjustedFactor = adjustedFactor * durationInSeconds;
+
+        uint256 adjustedFactor = durationInSeconds * borrowingFactor * openInterestWithPnl / poolUsd;
         uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, market.marketToken, isLong);
 
         return cumulativeBorrowingFactor + adjustedFactor;

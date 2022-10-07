@@ -15,6 +15,7 @@ import "../oracle/OracleUtils.sol";
 import "../gas/GasUtils.sol";
 
 import "../utils/Array.sol";
+import "../utils/Null.sol";
 
 library WithdrawalUtils {
     using SafeCast for uint256;
@@ -31,7 +32,7 @@ library WithdrawalUtils {
         uint256 marketTokensShortAmount;
         uint256 minLongTokenAmount;
         uint256 minShortTokenAmount;
-        bool hasCollateralInETH;
+        bool shouldConvertETH;
         uint256 executionFee;
         address weth;
     }
@@ -57,9 +58,9 @@ library WithdrawalUtils {
         uint256 tokenInPrice;
         uint256 tokenOutPrice;
         uint256 marketTokensAmount;
-        bool hasCollateralInETH;
+        bool shouldConvertETH;
         uint256 marketTokensUsd;
-        int256 usdAdjustment;
+        int256 priceImpactUsd;
     }
 
     struct ExecuteWithdrawalCache {
@@ -87,9 +88,9 @@ library WithdrawalUtils {
             params.minLongTokenAmount,
             params.minShortTokenAmount,
             block.number,
-            params.hasCollateralInETH,
+            params.shouldConvertETH,
             params.executionFee,
-            new bytes32[](0)
+            Null.BYTES
         );
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(params.dataStore, withdrawal);
@@ -131,8 +132,8 @@ library WithdrawalUtils {
         cache.marketTokensLongUsd = MarketUtils.marketTokenAmountToUsd(withdrawal.marketTokensLongAmount, cache.poolValue, cache.marketTokensSupply);
         cache.marketTokensShortUsd = MarketUtils.marketTokenAmountToUsd(withdrawal.marketTokensShortAmount, cache.poolValue, cache.marketTokensSupply);
 
-        int256 usdAdjustment = SwapPricingUtils.getSwapPricing(
-            SwapPricingUtils.GetSwapPricingParams(
+        int256 priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(
+            SwapPricingUtils.GetPriceImpactUsdParams(
                 params.dataStore,
                 market.marketToken,
                 market.longToken,
@@ -153,9 +154,9 @@ library WithdrawalUtils {
                 shortTokenPrice,
                 longTokenPrice,
                 withdrawal.marketTokensLongAmount,
-                withdrawal.hasCollateralInETH,
+                withdrawal.shouldConvertETH,
                 cache.marketTokensLongUsd,
-                usdAdjustment * cache.marketTokensLongUsd.toInt256() / (cache.marketTokensLongUsd + cache.marketTokensShortUsd).toInt256()
+                priceImpactUsd * cache.marketTokensLongUsd.toInt256() / (cache.marketTokensLongUsd + cache.marketTokensShortUsd).toInt256()
             );
 
             uint256 outputAmount = _executeWithdrawal(params, _params);
@@ -174,9 +175,9 @@ library WithdrawalUtils {
                 longTokenPrice,
                 shortTokenPrice,
                 withdrawal.marketTokensShortAmount,
-                withdrawal.hasCollateralInETH,
+                withdrawal.shouldConvertETH,
                 cache.marketTokensShortUsd,
-                usdAdjustment * cache.marketTokensShortUsd.toInt256() / (cache.marketTokensLongUsd + cache.marketTokensShortUsd).toInt256()
+                priceImpactUsd * cache.marketTokensShortUsd.toInt256() / (cache.marketTokensLongUsd + cache.marketTokensShortUsd).toInt256()
             );
 
             uint256 outputAmount = _executeWithdrawal(params, _params);
@@ -248,7 +249,7 @@ library WithdrawalUtils {
         uint256 poolAmountDelta = outputAmount - fees.feesForPool;
         outputAmount = fees.amountAfterFees;
 
-        if (_params.usdAdjustment > 0) {
+        if (_params.priceImpactUsd > 0) {
             // when there is a positive price impact factor, additional tokens from the swap impact pool
             // are withdrawn for the user
             // for example, if 50,000 USDC is withdrawn and there is a positive price impact
@@ -260,7 +261,7 @@ library WithdrawalUtils {
                 _params.market.marketToken,
                 _params.tokenOut,
                 _params.tokenOutPrice,
-                _params.usdAdjustment
+                _params.priceImpactUsd
             );
 
             outputAmount += positiveImpactAmount;
@@ -276,7 +277,7 @@ library WithdrawalUtils {
                 _params.market.marketToken,
                 _params.tokenOut,
                 _params.tokenOutPrice,
-                _params.usdAdjustment
+                _params.priceImpactUsd
             );
 
             outputAmount -= negativeImpactAmount;
@@ -312,7 +313,7 @@ library WithdrawalUtils {
             _params.tokenOut,
             outputAmount,
             _params.account,
-            _params.hasCollateralInETH
+            _params.shouldConvertETH
         );
 
         return outputAmount;

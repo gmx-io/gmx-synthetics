@@ -13,8 +13,8 @@ library Withdrawal {
         uint256 minLongTokenAmount;
         uint256 minShortTokenAmount;
         uint256 updatedAtBlock;
-        bool hasCollateralInETH;
+        bool shouldConvertETH;
         uint256 executionFee;
-        bytes32[] data;
+        bytes data;
     }
 }

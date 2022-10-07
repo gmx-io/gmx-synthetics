@@ -21,12 +21,12 @@ import "../eth/EthUtils.sol";
 
 contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
 
-    DataStore public dataStore;
-    EventEmitter public eventEmitter;
-    WithdrawalStore public withdrawalStore;
-    MarketStore public marketStore;
-    Oracle public oracle;
-    FeeReceiver public feeReceiver;
+    DataStore immutable dataStore;
+    EventEmitter immutable eventEmitter;
+    WithdrawalStore immutable withdrawalStore;
+    MarketStore immutable marketStore;
+    Oracle immutable oracle;
+    FeeReceiver immutable feeReceiver;
 
     constructor(
         RoleStore _roleStore,
@@ -56,7 +56,7 @@ contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
         uint256 marketTokensShortAmount,
         uint256 minLongTokenAmount,
         uint256 minShortTokenAmount,
-        bool hasCollateralInETH,
+        bool shouldConvertETH,
         uint256 executionFee
     ) nonReentrant onlyController external returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createWithdrawalFeatureKey(address(this)));
@@ -72,7 +72,7 @@ contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
             marketTokensShortAmount,
             minLongTokenAmount,
             minShortTokenAmount,
-            hasCollateralInETH,
+            shouldConvertETH,
             executionFee,
             EthUtils.weth(dataStore)
         );

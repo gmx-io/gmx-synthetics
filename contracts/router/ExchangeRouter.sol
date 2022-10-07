@@ -16,14 +16,14 @@ import "./Router.sol";
 contract ExchangeRouter is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    Router public router;
-    DataStore public dataStore;
-    DepositHandler public depositHandler;
-    WithdrawalHandler public withdrawalHandler;
-    OrderHandler public orderHandler;
-    DepositStore public depositStore;
-    WithdrawalStore public withdrawalStore;
-    OrderStore public orderStore;
+    Router immutable router;
+    DataStore immutable dataStore;
+    DepositHandler immutable depositHandler;
+    WithdrawalHandler immutable withdrawalHandler;
+    OrderHandler immutable orderHandler;
+    DepositStore immutable depositStore;
+    WithdrawalStore immutable withdrawalStore;
+    OrderStore immutable orderStore;
 
     constructor(
         Router _router,
@@ -54,7 +54,7 @@ contract ExchangeRouter is ReentrancyGuard {
         uint256 longTokenAmount,
         uint256 shortTokenAmount,
         uint256 minMarketTokens,
-        bool hasCollateralInETH,
+        bool shouldConvertETH,
         uint256 executionFee
     ) nonReentrant external payable returns (bytes32) {
         address account = msg.sender;
@@ -73,7 +73,7 @@ contract ExchangeRouter is ReentrancyGuard {
             account,
             _market,
             minMarketTokens,
-            hasCollateralInETH,
+            shouldConvertETH,
             executionFee
         );
     }
@@ -84,7 +84,7 @@ contract ExchangeRouter is ReentrancyGuard {
         uint256 marketTokensShortAmount,
         uint256 minLongTokenAmount,
         uint256 minShortTokenAmount,
-        bool hasCollateralInETH,
+        bool shouldConvertETH,
         uint256 executionFee
     ) nonReentrant external payable returns (bytes32) {
         address account = msg.sender;
@@ -98,7 +98,7 @@ contract ExchangeRouter is ReentrancyGuard {
             marketTokensShortAmount,
             minLongTokenAmount,
             minShortTokenAmount,
-            hasCollateralInETH,
+            shouldConvertETH,
             executionFee
         );
     }

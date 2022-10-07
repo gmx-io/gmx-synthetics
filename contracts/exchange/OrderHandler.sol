@@ -26,13 +26,13 @@ import "../events/EventEmitter.sol";
 contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
     using Order for Order.Props;
 
-    DataStore public dataStore;
-    MarketStore public marketStore;
-    OrderStore public orderStore;
-    PositionStore public positionStore;
-    Oracle public oracle;
-    EventEmitter public eventEmitter;
-    FeeReceiver public feeReceiver;
+    DataStore immutable dataStore;
+    MarketStore immutable marketStore;
+    OrderStore immutable orderStore;
+    PositionStore immutable positionStore;
+    Oracle immutable oracle;
+    EventEmitter immutable eventEmitter;
+    FeeReceiver immutable feeReceiver;
 
     constructor(
         RoleStore _roleStore,
@@ -91,12 +91,11 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
             bytes32 reasonKey = keccak256(abi.encodePacked(reason));
             bool isMarketOrder = OrderUtils.isMarketOrder(order.orderType());
 
-            // revert instead of cancel if the reason for failure is due to oracle params
-            if (reasonKey == Keys.ORACLE_ERROR_KEY) {
-                revert(reason);
-            }
-
-            if (!isMarketOrder && reasonKey == Keys.EMPTY_POSITION_ERROR_KEY) {
+            if (
+                reasonKey == Keys.ORACLE_ERROR_KEY ||
+                reasonKey == Keys.FROZEN_ORDER_ERROR_KEY ||
+                (reasonKey == Keys.EMPTY_POSITION_ERROR_KEY)
+            ) {
                 revert(reason);
             }
 
@@ -132,7 +131,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         bytes32 key,
         uint256 sizeDeltaUsd,
         uint256 acceptablePrice,
-        int256 acceptableUsdAdjustment
+        int256 acceptablePriceImpactUsd
     ) external nonReentrant {
         OrderStore _orderStore = orderStore;
         Order.Props memory order = _orderStore.get(key);
@@ -147,12 +146,13 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
 
         order.setSizeDeltaUsd(sizeDeltaUsd);
         order.setAcceptablePrice(acceptablePrice);
-        order.setAcceptableUsdAdjustment(acceptableUsdAdjustment);
+        order.setAcceptablePriceImpactUsd(acceptablePriceImpactUsd);
+        order.setIsFrozen(false);
 
         order.touch();
         _orderStore.set(key, order);
 
-        eventEmitter.emitOrderUpdated(key, sizeDeltaUsd, acceptablePrice, acceptableUsdAdjustment);
+        eventEmitter.emitOrderUpdated(key, sizeDeltaUsd, acceptablePrice, acceptablePriceImpactUsd);
     }
 
     function cancelOrder(bytes32 key) external {
@@ -190,7 +190,11 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
         OrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, keeper, startingGas);
-        if (params.order.isFrozen()) {
+        // limit swaps require frozen order keeper as well since on creation it can fail due to output amount
+        // which would automatically cause the order to be frozen
+        // limit increase and decrease positions may fail due to output amount as well and become frozen
+        // but only if their acceptablePrice is reached
+        if (params.order.isFrozen() || params.order.orderType() == Order.OrderType.LimitSwap) {
             _validateFrozenOrderKeeper(keeper);
         }
 
@@ -277,6 +281,6 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
     }
 
     function _validateFrozenOrderKeeper(address keeper) internal view {
-        require(roleStore.hasRole(keeper, Role.FROZEN_ORDER_KEEPER), "Role: FROZEN_ORDER_KEEPER");
+        require(roleStore.hasRole(keeper, Role.FROZEN_ORDER_KEEPER), Keys.FROZEN_ORDER_ERROR);
     }
 }

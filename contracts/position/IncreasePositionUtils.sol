@@ -132,8 +132,8 @@ library IncreasePositionUtils {
     ) internal returns (int256) {
         uint256 collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.collateralToken, params.market, prices);
 
-        int256 usdAdjustment = PositionPricingUtils.getPositionPricing(
-            PositionPricingUtils.GetPositionPricingParams(
+        int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
+            PositionPricingUtils.GetPriceImpactUsdParams(
                 params.dataStore,
                 params.market.marketToken,
                 params.market.longToken,
@@ -145,8 +145,8 @@ library IncreasePositionUtils {
             )
         );
 
-        if (usdAdjustment < params.order.acceptableUsdAdjustment()) {
-            OrderUtils.revertUnacceptableUsdAdjustment(usdAdjustment, params.order.acceptableUsdAdjustment());
+        if (priceImpactUsd < params.order.acceptablePriceImpactUsd()) {
+            OrderUtils.revertUnacceptablePriceImpactUsd(priceImpactUsd, params.order.acceptablePriceImpactUsd());
         }
 
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
@@ -165,7 +165,7 @@ library IncreasePositionUtils {
             FeeUtils.POSITION_FEE
         );
 
-        if (usdAdjustment > 0) {
+        if (priceImpactUsd > 0) {
             // when there is a positive price impact factor, additional tokens from the swap impact pool
             // are withdrawn for the user to be used as additional collateral
             // for example, if 50,000 USDC is withdrawn and there is a positive price impact
@@ -177,7 +177,7 @@ library IncreasePositionUtils {
                 params.market.marketToken,
                 params.collateralToken,
                 collateralTokenPrice,
-                usdAdjustment
+                priceImpactUsd
             );
 
             fees.totalNetCostAmount += positiveImpactAmount.toInt256();
@@ -193,7 +193,7 @@ library IncreasePositionUtils {
                 params.market.marketToken,
                 params.collateralToken,
                 collateralTokenPrice,
-                usdAdjustment
+                priceImpactUsd
             );
 
             fees.totalNetCostAmount -= negativeImpactAmount.toInt256();

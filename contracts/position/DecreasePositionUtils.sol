@@ -254,8 +254,8 @@ library DecreasePositionUtils {
     ) internal returns (PositionPricingUtils.PositionFees memory) {
         uint256 collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.order.initialCollateralToken(), params.market, prices);
 
-        int256 usdAdjustment = PositionPricingUtils.getPositionPricing(
-            PositionPricingUtils.GetPositionPricingParams(
+        int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
+            PositionPricingUtils.GetPriceImpactUsdParams(
                 params.dataStore,
                 params.market.marketToken,
                 params.market.longToken,
@@ -267,8 +267,8 @@ library DecreasePositionUtils {
             )
         );
 
-        if (usdAdjustment < params.order.acceptableUsdAdjustment()) {
-            OrderUtils.revertUnacceptableUsdAdjustment(usdAdjustment, params.order.acceptableUsdAdjustment());
+        if (priceImpactUsd < params.order.acceptablePriceImpactUsd()) {
+            OrderUtils.revertUnacceptablePriceImpactUsd(priceImpactUsd, params.order.acceptablePriceImpactUsd());
         }
 
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
@@ -280,7 +280,7 @@ library DecreasePositionUtils {
         );
 
         if (params.forLiquidation) {
-            int256 adjustmentAmount = usdAdjustment / collateralTokenPrice.toInt256();
+            int256 adjustmentAmount = priceImpactUsd / collateralTokenPrice.toInt256();
             int256 totalNetCostAmount = fees.totalNetCostAmount + adjustmentAmount;
 
             // return empty fees and do not apply price impact since there is
@@ -299,7 +299,7 @@ library DecreasePositionUtils {
             FeeUtils.POSITION_FEE
         );
 
-        if (usdAdjustment > 0) {
+        if (priceImpactUsd > 0) {
             // when there is a positive price impact factor, additional tokens from the swap impact pool
             // are withdrawn for the user
             // for example, if 50,000 USDC is withdrawn and there is a positive price impact
@@ -311,7 +311,7 @@ library DecreasePositionUtils {
                 params.market.marketToken,
                 params.order.initialCollateralToken(),
                 collateralTokenPrice,
-                usdAdjustment
+                priceImpactUsd
             );
 
             fees.totalNetCostAmount += positiveImpactAmount.toInt256();
@@ -327,7 +327,7 @@ library DecreasePositionUtils {
                 params.market.marketToken,
                 params.order.initialCollateralToken(),
                 collateralTokenPrice,
-                usdAdjustment
+                priceImpactUsd
             );
 
             fees.totalNetCostAmount -= negativeImpactAmount.toInt256();

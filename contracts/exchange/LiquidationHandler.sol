@@ -22,12 +22,12 @@ import "../oracle/OracleModule.sol";
 contract LiquidationHandler is RoleModule, ReentrancyGuard, OracleModule {
     using Order for Order.Props;
 
-    DataStore public dataStore;
-    EventEmitter public eventEmitter;
-    MarketStore public marketStore;
-    PositionStore public positionStore;
-    Oracle public oracle;
-    FeeReceiver public feeReceiver;
+    DataStore immutable dataStore;
+    EventEmitter immutable eventEmitter;
+    MarketStore immutable marketStore;
+    PositionStore immutable positionStore;
+    Oracle immutable oracle;
+    FeeReceiver immutable feeReceiver;
 
     constructor(
         RoleStore _roleStore,

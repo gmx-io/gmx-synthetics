@@ -7,7 +7,7 @@ import "./Role.sol";
 import "../gov/Governable.sol";
 
 contract RoleModule is Governable {
-    RoleStore public roleStore;
+    RoleStore immutable roleStore;
 
     constructor(RoleStore _roleStore) {
         roleStore = _roleStore;

@@ -289,7 +289,7 @@ contract Oracle is RoleModule {
         }
     }
 
-    // to save costs for tokens with stable prices
+    // set prices using Chainlink price feeds to save costs for tokens with stable prices
     function _setPricesFromPriceFeeds(DataStore dataStore, EventEmitter eventEmitter, address[] memory priceFeedTokens) internal {
         for (uint256 i = 0; i < priceFeedTokens.length; i++) {
             address token = priceFeedTokens[i];
