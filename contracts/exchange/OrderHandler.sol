@@ -89,7 +89,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
             if (
                 reasonKey == Keys.ORACLE_ERROR_KEY ||
                 reasonKey == Keys.FROZEN_ORDER_ERROR_KEY ||
-                (!isMarketOrder && reasonKey == Keys.EMPTY_POSITION_ERROR_KEY)
+                (reasonKey == Keys.EMPTY_POSITION_ERROR_KEY)
             ) {
                 revert(reason);
             }
