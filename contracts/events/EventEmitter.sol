@@ -52,6 +52,8 @@ contract EventEmitter is RoleModule {
     // event OraclePriceSet();
 
     // event PositionFeeCollected();
+    // event SetPricePrecision
+
 
     event SwapFeesCollected(
         bytes32 action,
@@ -80,6 +82,8 @@ contract EventEmitter is RoleModule {
         bool isLong,
         uint256 collateralDeltaAmount
     );
+
+    event OraclePriceUpdated(address token, uint256 price, bool isPrimary, bool isPriceFeed);
 
     constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
 
@@ -177,6 +181,10 @@ contract EventEmitter is RoleModule {
 
     function emitSwapFeesCollected(bytes32 action, SwapPricingUtils.SwapFees calldata fees) external onlyController {
         emit SwapFeesCollected(action, fees);
+    }
+
+    function emitOraclePriceUpdated(address token, uint256 price, bool isPrimary, bool isPriceFeed) external onlyController {
+        emit OraclePriceUpdated(token, price, isPrimary, isPriceFeed);
     }
 
     function emitPositionIncrease(

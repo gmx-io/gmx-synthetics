@@ -56,6 +56,7 @@ async function deployFixture() {
   await oracleStore.addSigner(signer9.address);
 
   const oracle = await deployContract("Oracle", [roleStore.address, oracleStore.address]);
+  await grantRole(roleStore, oracle.address, "CONTROLLER");
 
   const weth = await deployContract("WETH", []);
   await weth.deposit({ value: expandDecimals(10, 18) });
@@ -163,6 +164,7 @@ async function deployFixture() {
     [
       roleStore.address,
       dataStore.address,
+      eventEmitter.address,
       marketStore.address,
       positionStore.address,
       oracle.address,

@@ -120,7 +120,7 @@ contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
     ) external
         nonReentrant
         onlySelf
-        withOraclePrices(oracle, dataStore, oracleParams)
+        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
         FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureKey(address(this)));
 

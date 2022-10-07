@@ -111,7 +111,7 @@ contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
     ) public
         nonReentrant
         onlySelf
-        withOraclePrices(oracle, dataStore, oracleParams)
+        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
         FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureKey(address(this)));
 

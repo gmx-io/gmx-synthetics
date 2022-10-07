@@ -187,7 +187,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
     ) public
         nonReentrant
         onlySelf
-        withOraclePrices(oracle, dataStore, oracleParams)
+        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
         OrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, keeper, startingGas);
         if (params.order.isFrozen()) {
