@@ -316,6 +316,8 @@ library WithdrawalUtils {
             _params.shouldConvertETH
         );
 
+        params.eventEmitter.emitSwapFeesCollected(keccak256(abi.encodePacked("withdrawal")), fees);
+
         return outputAmount;
     }
 }

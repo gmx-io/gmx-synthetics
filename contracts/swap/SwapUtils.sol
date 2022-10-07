@@ -175,6 +175,8 @@ library SwapUtils {
             cache.tokenOut == _params.market.longToken
         );
 
+        params.eventEmitter.emitSwapFeesCollected(keccak256(abi.encodePacked("swap")), fees);
+
         return (cache.tokenOut, cache.amountOut);
     }
 }

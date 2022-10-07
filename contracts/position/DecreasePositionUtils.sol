@@ -162,6 +162,8 @@ library DecreasePositionUtils {
 
         require(values.outputAmount >= 0, "DecreasePositionUtils: invalid outputAmount");
 
+        params.eventEmitter.emitPositionFeesCollected(false, fees);
+
         return (values.outputAmount.toUint256(), params.adjustedSizeDeltaUsd);
     }
 

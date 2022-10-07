@@ -7,6 +7,7 @@ import "../role/RoleModule.sol";
 import "../order/Order.sol";
 import "../deposit/Deposit.sol";
 import "../pricing/SwapPricingUtils.sol";
+import "../pricing/PositionPricingUtils.sol";
 
 contract EventEmitter is RoleModule {
     event PositionIncrease(
@@ -19,16 +20,16 @@ contract EventEmitter is RoleModule {
         int256 collateralDeltaAmount,
         bytes data
     );
-    // event PositionDecrease(
-    //     address indexed account,
-    //     address indexed market,
-    //     address collateralToken,
-    //     bool isLong,
-    //     uint256 price,
-    //     uint256 sizeDeltaUsd,
-    //     uint256 collateralDeltaAmount,
-    //     bytes data
-    // );
+    event PositionDecrease(
+        address indexed account,
+        address indexed market,
+        address collateralToken,
+        bool isLong,
+        uint256 price,
+        uint256 sizeDeltaInUsd,
+        int256 collateralDeltaAmount,
+        bytes data
+    );
 
     event DepositCreated(bytes32 key, Deposit.Props deposit);
     event DepositExecuted(bytes32 key);
@@ -49,16 +50,12 @@ contract EventEmitter is RoleModule {
     event OrderExecuted(bytes32 key);
     event OrderFrozen(bytes32 key);
     // event OrderCallback();
-    // event OraclePriceSet();
 
     // event PositionFeeCollected();
     // event SetPricePrecision
 
-
-    event SwapFeesCollected(
-        bytes32 action,
-        SwapPricingUtils.SwapFees fees
-    );
+    event SwapFeesCollected(bytes32 action, SwapPricingUtils.SwapFees fees);
+    event PositionFeesCollected(bool isIncrease, PositionPricingUtils.PositionFees fees);
 
     event PoolAmountIncreased(address market, address token, uint256 amount);
     event PoolAmountDecreased(address market, address token, uint256 amount);
@@ -183,6 +180,10 @@ contract EventEmitter is RoleModule {
         emit SwapFeesCollected(action, fees);
     }
 
+    function emitPositionFeesCollected(bool isIncrease, PositionPricingUtils.PositionFees calldata fees) external onlyController {
+        emit PositionFeesCollected(isIncrease, fees);
+    }
+
     function emitOraclePriceUpdated(address token, uint256 price, bool isPrimary, bool isPriceFeed) external onlyController {
         emit OraclePriceUpdated(token, price, isPrimary, isPriceFeed);
     }
@@ -198,6 +199,28 @@ contract EventEmitter is RoleModule {
         bytes calldata data
     ) external onlyController {
         emit PositionIncrease(
+            account,
+            market,
+            collateralToken,
+            isLong,
+            price,
+            sizeDeltaUsd,
+            collateralDeltaAmount,
+            data
+        );
+    }
+
+    function emitPositionDecrease(
+        address account,
+        address market,
+        address collateralToken,
+        bool isLong,
+        uint256 price,
+        uint256 sizeDeltaUsd,
+        int256 collateralDeltaAmount,
+        bytes calldata data
+    ) external onlyController {
+        emit PositionDecrease(
             account,
             market,
             collateralToken,

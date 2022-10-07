@@ -229,6 +229,8 @@ library IncreasePositionUtils {
             fees.feesForPool
         );
 
+        params.eventEmitter.emitPositionFeesCollected(true, fees);
+
         return collateralDeltaAmount;
     }
 }
