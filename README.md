@@ -285,3 +285,17 @@ For position actions (increase / decrease position), imbalance is calculated as 
 The purpose of the price impact is to help reduce the risk of price manipulation, since the contracts use an oracle price which would be an average or median price of multiple reference exchanges. Without a price impact, it may be profitable to manipulate the prices on reference exchanges while executing orders on the contracts.
 
 This risk will also be present if the positive and negative price impact values are similar, for that reason the positive price impact should be set to a low value in times of volatility or irregular price movements.
+
+# Fees
+
+There are configurable spreads, swap fees and position fees and per market.
+
+Execution fees are also estimated and accounted for on creation of deposit, withdrawal, order requests so that keepers can execute transactions at a close to net zero cost.
+
+# Reserve Amounts
+
+If a market has stablecoins as the short collateral token it should be able to fully pay short profits if the max short open interest does not exceed the amount of stablecoins in the pool.
+
+If a market has a long collateral token that is different from the index token, the long profits may not be fully paid out if the price increase of the index token exceeds the price increase of the long collateral token.
+
+Markets have a reserve factor that allows open interest to be capped to a percentage of the pool size, this reduces the impact of profits of short positions and reduces the risk that long positions cannot be fully paid out.

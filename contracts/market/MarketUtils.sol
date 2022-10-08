@@ -341,11 +341,18 @@ library MarketUtils {
 
         uint256 reservedUsd;
         if (isLong) {
-            // for longs calculate the reserved USD based on the open interest and currentValue indexTokenPrice
+            // for longs calculate the reserved USD based on the open interest and current indexTokenPrice
+            // this works well for e.g. an ETH / USD market with long collateral token as WETH
+            // the available amount to be reserved would scale with the price of ETH
+            // this also works for e.g. a SOL / USD market with long collateral token as WETH
+            // if the price of SOL increases more than the price of ETH, additional amounts would be
+            // automatically reserved
             uint256 openInterestInTokens = getOpenInterestInTokens(dataStore, market.marketToken, isLong);
             reservedUsd = openInterestInTokens * prices.indexTokenPrice;
         } else {
             // for shorts use the open interest as the reserved USD value
+            // this works well for e.g. an ETH / USD market with short collateral token as USDC
+            // the available amount to be reserved would not change with the price of ETH
             reservedUsd = getOpenInterest(dataStore, market.marketToken, isLong);
         }
 
@@ -405,6 +412,8 @@ library MarketUtils {
         return dataStore.getUint(Keys.openInterestInTokensKey(market, isLong));
     }
 
+    // getOpenInterestInTokens * tokenPrice would not reflect pending positive pnl
+    // from short positions, getOpenInterestWithPnl should be used if that info is needed
     function getOpenInterestWithPnl(DataStore dataStore, address market, uint256 indexTokenPrice, bool isLong) internal view returns (uint256) {
         uint256 openInterest = getOpenInterest(dataStore, market, isLong);
         int256 pnl = getPnl(dataStore, market, indexTokenPrice, isLong);
