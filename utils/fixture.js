@@ -40,7 +40,7 @@ async function deployFixture() {
   await dataStore.setUint(await keys.MAX_ORACLE_BLOCK_AGE(), 200);
   await dataStore.setUint(await keys.MAX_LEVERAGE(), expandFloatDecimals(100));
 
-  const eventEmitter = await deployContract("EventEmitter", [roleStore.address])
+  const eventEmitter = await deployContract("EventEmitter", [roleStore.address]);
 
   const oracleStore = await deployContract("OracleStore", [roleStore.address]);
 
@@ -212,6 +212,7 @@ async function deployFixture() {
       roleStore,
       dataStore,
       depositStore,
+      eventEmitter,
       withdrawalStore,
       oracleStore,
       orderStore,
