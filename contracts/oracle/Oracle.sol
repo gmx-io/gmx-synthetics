@@ -14,6 +14,7 @@ import "./IPriceFeed.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
+import "../events/EventEmitter.sol";
 
 import "../utils/Bits.sol";
 import "../utils/Array.sol";
@@ -79,7 +80,11 @@ contract Oracle is RoleModule {
         SALT = keccak256(abi.encodePacked(block.chainid, "xget-oracle-v1"));
     }
 
-    function setPrices(DataStore dataStore, OracleUtils.SetPricesParams memory params) external onlyController {
+    function setPrices(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        OracleUtils.SetPricesParams memory params
+    ) external onlyController {
         require(tempTokens.length() == 0, "Oracle: tempTokens not cleared");
 
         if (params.tokens.length == 0) { revert EmptyTokens(); }
@@ -117,6 +122,7 @@ contract Oracle is RoleModule {
 
         _setPrices(
             dataStore,
+            eventEmitter,
             signers,
             params.tokens,
             params.compactedOracleBlockNumbers,
@@ -124,7 +130,7 @@ contract Oracle is RoleModule {
             params.signatures
         );
 
-        _setPricesFromPriceFeeds(dataStore, params.priceFeedTokens);
+        _setPricesFromPriceFeeds(dataStore, eventEmitter, params.priceFeedTokens);
     }
 
     function setSecondaryPrice(address token, uint256 price) external onlyController {
@@ -213,6 +219,7 @@ contract Oracle is RoleModule {
 
     function _setPrices(
         DataStore dataStore,
+        EventEmitter eventEmitter,
         address[] memory signers,
         address[] memory tokens,
         uint256[] memory compactedOracleBlockNumbers,
@@ -272,8 +279,10 @@ contract Oracle is RoleModule {
 
             uint256 medianPrice = Array.getMedian(prices) * getPrecision(dataStore, cache.token);
             if (primaryPrices[cache.token] != 0) {
+                eventEmitter.emitOraclePriceUpdated(cache.token, medianPrice, false, false);
                 secondaryPrices[cache.token] = medianPrice;
             } else {
+                eventEmitter.emitOraclePriceUpdated(cache.token, medianPrice, true, false);
                 primaryPrices[cache.token] = medianPrice;
             }
             tempTokens.add(cache.token);
@@ -281,7 +290,7 @@ contract Oracle is RoleModule {
     }
 
     // set prices using Chainlink price feeds to save costs for tokens with stable prices
-    function _setPricesFromPriceFeeds(DataStore dataStore, address[] memory priceFeedTokens) internal {
+    function _setPricesFromPriceFeeds(DataStore dataStore, EventEmitter eventEmitter, address[] memory priceFeedTokens) internal {
         for (uint256 i = 0; i < priceFeedTokens.length; i++) {
             address token = priceFeedTokens[i];
 
@@ -306,6 +315,8 @@ contract Oracle is RoleModule {
 
             primaryPrices[token] = price;
             tempTokens.add(token);
+
+            eventEmitter.emitOraclePriceUpdated(token, price, true, true);
         }
     }
 

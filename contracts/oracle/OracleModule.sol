@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./Oracle.sol";
+import "../events/EventEmitter.sol";
 
 contract OracleModule {
     event OracleError(string reason);
@@ -12,8 +13,13 @@ contract OracleModule {
     // meant for a different type of transaction
     // the tempTokens.length check in oracle.setPrices should help
     // mitigate this
-    modifier withOraclePrices(Oracle oracle, DataStore dataStore, OracleUtils.SetPricesParams memory params) {
-        try oracle.setPrices(dataStore, params) {
+    modifier withOraclePrices(
+        Oracle oracle,
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        OracleUtils.SetPricesParams memory params
+    ) {
+        try oracle.setPrices(dataStore, eventEmitter, params) {
         } catch Error(string memory reason) {
             emit OracleError(reason);
             revert(Keys.ORACLE_ERROR);

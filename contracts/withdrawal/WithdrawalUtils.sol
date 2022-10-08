@@ -23,6 +23,7 @@ library WithdrawalUtils {
 
     struct CreateWithdrawalParams {
         DataStore dataStore;
+        EventEmitter eventEmitter;
         WithdrawalStore withdrawalStore;
         MarketStore marketStore;
         address account;
@@ -38,6 +39,7 @@ library WithdrawalUtils {
 
     struct ExecuteWithdrawalParams {
         DataStore dataStore;
+        EventEmitter eventEmitter;
         WithdrawalStore withdrawalStore;
         MarketStore marketStore;
         Oracle oracle;
@@ -72,7 +74,7 @@ library WithdrawalUtils {
     error MinShortTokens(uint256 received, uint256 expected);
     error InsufficientMarketTokens(uint256 balance, uint256 expected);
 
-    function createWithdrawal(CreateWithdrawalParams memory params) external returns (bytes32) {
+    function createWithdrawal(CreateWithdrawalParams memory params) internal returns (bytes32) {
         uint256 wethAmount = params.withdrawalStore.recordTransferIn(params.weth);
         require(wethAmount == params.executionFee, "WithdrawalUtils: invalid wethAmount");
 
@@ -98,6 +100,8 @@ library WithdrawalUtils {
         bytes32 key = keccak256(abi.encodePacked(nonce));
 
         params.withdrawalStore.set(key, withdrawal);
+
+        params.eventEmitter.emitWithdrawalCreated(key, withdrawal);
 
         return key;
     }
@@ -192,10 +196,13 @@ library WithdrawalUtils {
             params.keeper,
             withdrawal.account
         );
+
+        params.eventEmitter.emitWithdrawalExecuted(params.key);
     }
 
     function cancelWithdrawal(
         DataStore dataStore,
+        EventEmitter eventEmitter,
         WithdrawalStore withdrawalStore,
         bytes32 key,
         address keeper,
@@ -214,6 +221,8 @@ library WithdrawalUtils {
             keeper,
             withdrawal.account
         );
+
+        eventEmitter.emitWithdrawalCancelled(key);
     }
 
     function _executeWithdrawal(
@@ -248,6 +257,7 @@ library WithdrawalUtils {
             // the swap impact pool is decreased by the used amount
             uint256 positiveImpactAmount = MarketUtils.applyPositiveImpact(
                 params.dataStore,
+                params.eventEmitter,
                 _params.market.marketToken,
                 _params.tokenOut,
                 _params.tokenOutPrice,
@@ -263,6 +273,7 @@ library WithdrawalUtils {
             // the remaining 0.005 ETH will be stored in the swap impact pool
             uint256 negativeImpactAmount = MarketUtils.applyNegativeImpact(
                 params.dataStore,
+                params.eventEmitter,
                 _params.market.marketToken,
                 _params.tokenOut,
                 _params.tokenOutPrice,
@@ -272,7 +283,13 @@ library WithdrawalUtils {
             outputAmount -= negativeImpactAmount;
         }
 
-        MarketUtils.decreasePoolAmount(params.dataStore, _params.market.marketToken, _params.tokenOut, poolAmountDelta);
+        MarketUtils.decreasePoolAmount(
+            params.dataStore,
+            params.eventEmitter,
+            _params.market.marketToken,
+            _params.tokenOut,
+            poolAmountDelta
+        );
 
         MarketUtils.validateReserve(
             params.dataStore,
@@ -298,6 +315,8 @@ library WithdrawalUtils {
             _params.account,
             _params.shouldConvertETH
         );
+
+        params.eventEmitter.emitSwapFeesCollected(keccak256(abi.encodePacked("withdrawal")), fees);
 
         return outputAmount;
     }

@@ -16,7 +16,7 @@ library PricingUtils {
         bool hasPositiveImpact,
         uint256 impactFactor,
         uint256 impactExponentFactor
-    ) public pure returns (int256) {
+    ) internal pure returns (int256) {
         uint256 deltaDiffUsd = Calc.diff(
             applyImpactFactor(initialDiffUsd, impactFactor, impactExponentFactor),
             applyImpactFactor(nextDiffUsd, impactFactor, impactExponentFactor)
@@ -33,7 +33,7 @@ library PricingUtils {
         uint256 positiveImpactFactor,
         uint256 negativeImpactFactor,
         uint256 impactExponentFactor
-    ) public pure returns (int256) {
+    ) internal pure returns (int256) {
         uint256 positiveImpactUsd = applyImpactFactor(initialDiffUsd, positiveImpactFactor, impactExponentFactor);
         uint256 negativeImpactUsd = applyImpactFactor(nextDiffUsd, negativeImpactFactor, impactExponentFactor);
         uint256 deltaDiffUsd = Calc.diff(positiveImpactUsd, negativeImpactUsd);

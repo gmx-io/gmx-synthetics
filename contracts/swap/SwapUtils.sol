@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../data/DataStore.sol";
+import "../events/EventEmitter.sol";
 import "../oracle/Oracle.sol";
 import "../pricing/SwapPricingUtils.sol";
 
@@ -11,6 +12,7 @@ library SwapUtils {
 
     struct SwapParams {
         DataStore dataStore;
+        EventEmitter eventEmitter;
         Oracle oracle;
         FeeReceiver feeReceiver;
         address tokenIn;
@@ -39,7 +41,7 @@ library SwapUtils {
     error InsufficientSwapOutputAmount(uint256 outputAmount, uint256 minOutputAmount);
 
     // returns tokenOut, outputAmount
-    function swap(SwapParams memory params) external returns (address, uint256) {
+    function swap(SwapParams memory params) internal returns (address, uint256) {
         address tokenOut = params.tokenIn;
         uint256 outputAmount = params.amountIn;
 
@@ -116,6 +118,7 @@ library SwapUtils {
             // the swap impact pool is decreased by the used amount
             uint256 positiveImpactAmount = MarketUtils.applyPositiveImpact(
                 params.dataStore,
+                params.eventEmitter,
                 _params.market.marketToken,
                 cache.tokenOut,
                 cache.tokenOutPrice,
@@ -131,6 +134,7 @@ library SwapUtils {
             // the remaining 0.005 ETH will be stored in the swap impact pool
             uint256 negativeImpactAmount = MarketUtils.applyNegativeImpact(
                 params.dataStore,
+                params.eventEmitter,
                 _params.market.marketToken,
                 _params.tokenIn,
                 cache.tokenInPrice,
@@ -146,8 +150,20 @@ library SwapUtils {
             MarketToken(_params.market.marketToken).transferOut(cache.tokenOut, cache.poolAmountOut, _params.receiver);
         }
 
-        MarketUtils.increasePoolAmount(params.dataStore, _params.market.marketToken, _params.tokenIn, cache.amountIn + fees.feesForPool);
-        MarketUtils.decreasePoolAmount(params.dataStore, _params.market.marketToken, cache.tokenOut, cache.poolAmountOut);
+        MarketUtils.increasePoolAmount(
+            params.dataStore,
+            params.eventEmitter,
+            _params.market.marketToken,
+            _params.tokenIn,
+            cache.amountIn + fees.feesForPool
+        );
+        MarketUtils.decreasePoolAmount(
+            params.dataStore,
+            params.eventEmitter,
+            _params.market.marketToken,
+            cache.tokenOut,
+            cache.poolAmountOut
+        );
         MarketUtils.validateReserve(
             params.dataStore,
             _params.market,
@@ -158,6 +174,8 @@ library SwapUtils {
             ),
             cache.tokenOut == _params.market.longToken
         );
+
+        params.eventEmitter.emitSwapFeesCollected(keccak256(abi.encodePacked("swap")), fees);
 
         return (cache.tokenOut, cache.amountOut);
     }

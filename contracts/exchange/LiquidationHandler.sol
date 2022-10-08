@@ -23,6 +23,7 @@ contract LiquidationHandler is RoleModule, ReentrancyGuard, OracleModule {
     using Order for Order.Props;
 
     DataStore immutable dataStore;
+    EventEmitter immutable eventEmitter;
     MarketStore immutable marketStore;
     PositionStore immutable positionStore;
     Oracle immutable oracle;
@@ -31,12 +32,14 @@ contract LiquidationHandler is RoleModule, ReentrancyGuard, OracleModule {
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
+        EventEmitter _eventEmitter,
         MarketStore _marketStore,
         PositionStore _positionStore,
         Oracle _oracle,
         FeeReceiver _feeReceiver
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
+        eventEmitter = _eventEmitter;
         marketStore = _marketStore;
         positionStore = _positionStore;
         oracle = _oracle;
@@ -52,7 +55,7 @@ contract LiquidationHandler is RoleModule, ReentrancyGuard, OracleModule {
     ) external
         nonReentrant
         onlyLiquidationKeeper
-        withOraclePrices(oracle, dataStore, oracleParams)
+        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
         FeatureUtils.validateFeature(dataStore, Keys.liquidatePositionFeatureKey(address(this)));
 

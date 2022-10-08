@@ -22,6 +22,7 @@ import "../eth/EthUtils.sol";
 contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
 
     DataStore immutable dataStore;
+    EventEmitter immutable eventEmitter;
     WithdrawalStore immutable withdrawalStore;
     MarketStore immutable marketStore;
     Oracle immutable oracle;
@@ -30,12 +31,14 @@ contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
+        EventEmitter _eventEmitter,
         WithdrawalStore _withdrawalStore,
         MarketStore _marketStore,
         Oracle _oracle,
         FeeReceiver _feeReceiver
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
+        eventEmitter = _eventEmitter;
         withdrawalStore = _withdrawalStore;
         marketStore = _marketStore;
         oracle = _oracle;
@@ -60,6 +63,7 @@ contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
 
         WithdrawalUtils.CreateWithdrawalParams memory params = WithdrawalUtils.CreateWithdrawalParams(
             dataStore,
+            eventEmitter,
             withdrawalStore,
             marketStore,
             account,
@@ -99,6 +103,7 @@ contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
 
             WithdrawalUtils.cancelWithdrawal(
                 dataStore,
+                eventEmitter,
                 withdrawalStore,
                 key,
                 msg.sender,
@@ -115,7 +120,7 @@ contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
     ) external
         nonReentrant
         onlySelf
-        withOraclePrices(oracle, dataStore, oracleParams)
+        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
         FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureKey(address(this)));
 
@@ -126,6 +131,7 @@ contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
 
         WithdrawalUtils.ExecuteWithdrawalParams memory params = WithdrawalUtils.ExecuteWithdrawalParams(
             dataStore,
+            eventEmitter,
             withdrawalStore,
             marketStore,
             oracle,

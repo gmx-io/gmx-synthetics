@@ -10,14 +10,14 @@ describe("Oracle", () => {
   const { provider } = ethers;
 
   let user0, signer0, signer1, signer2, signer3, signer4, signer7, signer9;
-  let keys, reader, dataStore, oracleStore, oracle, weth, wbtc;
+  let keys, reader, dataStore, eventEmitter, oracleStore, oracle, weth, wbtc;
   let oracleSalt;
 
   beforeEach(async () => {
     const fixture = await loadFixture(deployFixture);
     ({ user0, signer0, signer1, signer2, signer3, signer4, signer7, signer9 } = fixture.accounts);
 
-    ({ keys, reader, dataStore, oracleStore, oracle, weth, wbtc } = fixture.contracts);
+    ({ keys, reader, dataStore, eventEmitter, oracleStore, oracle, weth, wbtc } = fixture.contracts);
     ({ oracleSalt } = fixture.props);
   });
 
@@ -31,7 +31,7 @@ describe("Oracle", () => {
     await dataStore.setUint(await reader.oraclePrecisionKey(wbtc.address), 1);
 
     await expect(
-      oracle.connect(user0).setPrices(dataStore.address, {
+      oracle.connect(user0).setPrices(dataStore.address, eventEmitter.address, {
         priceFeedTokens: [],
         signerInfo: 2,
         tokens: [],
@@ -44,7 +44,7 @@ describe("Oracle", () => {
       .withArgs(user0.address, "CONTROLLER");
 
     await expect(
-      oracle.setPrices(dataStore.address, {
+      oracle.setPrices(dataStore.address, eventEmitter.address, {
         priceFeedTokens: [],
         signerInfo: 2,
         tokens: [],
@@ -57,7 +57,7 @@ describe("Oracle", () => {
     const blockNumber = (await provider.getBlock()).number;
 
     await expect(
-      oracle.setPrices(dataStore.address, {
+      oracle.setPrices(dataStore.address, eventEmitter.address, {
         priceFeedTokens: [],
         signerInfo: 0,
         tokens: [weth.address],
@@ -72,7 +72,7 @@ describe("Oracle", () => {
     let signerInfo = getSignerInfo([0, 1]);
 
     await expect(
-      oracle.setPrices(dataStore.address, {
+      oracle.setPrices(dataStore.address, eventEmitter.address, {
         priceFeedTokens: [],
         signerInfo,
         tokens: [weth.address],
@@ -85,7 +85,7 @@ describe("Oracle", () => {
     await dataStore.setUint(await keys.MIN_ORACLE_SIGNERS(), 3);
 
     await expect(
-      oracle.setPrices(dataStore.address, {
+      oracle.setPrices(dataStore.address, eventEmitter.address, {
         priceFeedTokens: [],
         signerInfo,
         tokens: [weth.address],
@@ -100,7 +100,7 @@ describe("Oracle", () => {
     signerInfo = getSignerInfo([0, 1, 2, 3, 4, 1, 9]);
 
     await expect(
-      oracle.setPrices(dataStore.address, {
+      oracle.setPrices(dataStore.address, eventEmitter.address, {
         priceFeedTokens: [],
         signerInfo,
         tokens: [weth.address],
@@ -126,7 +126,7 @@ describe("Oracle", () => {
     );
 
     await expect(
-      oracle.setPrices(dataStore.address, {
+      oracle.setPrices(dataStore.address, eventEmitter.address, {
         priceFeedTokens: [],
         signerInfo,
         tokens: [weth.address],
@@ -148,7 +148,7 @@ describe("Oracle", () => {
     );
 
     await expect(
-      oracle.setPrices(dataStore.address, {
+      oracle.setPrices(dataStore.address, eventEmitter.address, {
         priceFeedTokens: [],
         signerInfo,
         tokens: [weth.address],
@@ -173,7 +173,7 @@ describe("Oracle", () => {
     signatures[3] = signatures[4];
 
     await expect(
-      oracle.setPrices(dataStore.address, {
+      oracle.setPrices(dataStore.address, eventEmitter.address, {
         priceFeedTokens: [],
         signerInfo,
         tokens: [weth.address],
@@ -194,7 +194,7 @@ describe("Oracle", () => {
       prices
     );
 
-    const tx0 = await oracle.setPrices(dataStore.address, {
+    const tx0 = await oracle.setPrices(dataStore.address, eventEmitter.address, {
       priceFeedTokens: [],
       signerInfo,
       tokens: [weth.address],
@@ -230,7 +230,7 @@ describe("Oracle", () => {
     );
 
     await expect(
-      oracle.setPrices(dataStore.address, {
+      oracle.setPrices(dataStore.address, eventEmitter.address, {
         priceFeedTokens: [],
         signerInfo,
         tokens: [weth.address, wbtc.address],
@@ -243,7 +243,7 @@ describe("Oracle", () => {
     await oracle.clearTempPrices();
 
     await expect(
-      oracle.setPrices(dataStore.address, {
+      oracle.setPrices(dataStore.address, eventEmitter.address, {
         priceFeedTokens: [],
         signerInfo,
         tokens: [weth.address, wbtc.address],
@@ -254,7 +254,7 @@ describe("Oracle", () => {
     ).to.be.revertedWithCustomError(oracle, "EmptyBlockNumber");
 
     await expect(
-      oracle.setPrices(dataStore.address, {
+      oracle.setPrices(dataStore.address, eventEmitter.address, {
         priceFeedTokens: [],
         signerInfo,
         tokens: [wbtc.address, weth.address],
@@ -264,7 +264,7 @@ describe("Oracle", () => {
       })
     ).to.be.revertedWithCustomError(oracle, "InvalidSignature");
 
-    const tx1 = await oracle.setPrices(dataStore.address, {
+    const tx1 = await oracle.setPrices(dataStore.address, eventEmitter.address, {
       priceFeedTokens: [],
       signerInfo,
       tokens: [weth.address, wbtc.address],
@@ -303,7 +303,7 @@ describe("Oracle", () => {
     await oracle.clearTempPrices();
 
     await expect(
-      oracle.setPrices(dataStore.address, {
+      oracle.setPrices(dataStore.address, eventEmitter.address, {
         priceFeedTokens: [],
         signerInfo,
         tokens: [weth.address, wbtc.address],
@@ -337,7 +337,7 @@ describe("Oracle", () => {
       wethPrices
     );
 
-    const tx2 = await oracle.setPrices(dataStore.address, {
+    const tx2 = await oracle.setPrices(dataStore.address, eventEmitter.address, {
       priceFeedTokens: [],
       signerInfo,
       tokens: [wbtc.address, weth.address],
@@ -356,7 +356,7 @@ describe("Oracle", () => {
 
     await oracle.clearTempPrices();
 
-    const tx3 = await oracle.setPrices(dataStore.address, {
+    const tx3 = await oracle.setPrices(dataStore.address, eventEmitter.address, {
       priceFeedTokens: [],
       signerInfo,
       tokens: [wbtc.address, weth.address],
