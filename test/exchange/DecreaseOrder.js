@@ -9,12 +9,12 @@ const { OrderType, handleOrder } = require("../../utils/order");
 describe("Exchange.DecreaseOrder", () => {
   let fixture;
   let user0;
-  let positionStore, ethUsdMarket, weth, usdc;
+  let orderStore, positionStore, ethUsdMarket, weth, usdc;
 
   beforeEach(async () => {
     fixture = await loadFixture(deployFixture);
     ({ user0 } = fixture.accounts);
-    ({ positionStore, ethUsdMarket, weth, usdc } = fixture.contracts);
+    ({ orderStore, positionStore, ethUsdMarket, weth, usdc } = fixture.contracts);
 
     await handleDeposit(fixture);
   });
@@ -39,6 +39,7 @@ describe("Exchange.DecreaseOrder", () => {
     });
 
     expect(await positionStore.getAccountPositionCount(user0.address)).eq(1);
+    expect(await orderStore.getOrderCount()).eq(0);
 
     await handleOrder(fixture, {
       create: {
@@ -59,5 +60,6 @@ describe("Exchange.DecreaseOrder", () => {
     });
 
     expect(await positionStore.getAccountPositionCount(user0.address)).eq(0);
+    expect(await orderStore.getOrderCount()).eq(0);
   });
 });
