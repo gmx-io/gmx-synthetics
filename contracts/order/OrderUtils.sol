@@ -78,7 +78,10 @@ library OrderUtils {
     ) internal returns (bytes32) {
         uint256 initialCollateralDeltaAmount;
 
-        if (params.orderType == Order.OrderType.MarketSwap ||
+        address weth = EthUtils.weth(dataStore);
+
+        if (params.initialCollateralToken == weth ||
+            params.orderType == Order.OrderType.MarketSwap ||
             params.orderType == Order.OrderType.LimitSwap ||
             params.orderType == Order.OrderType.MarketIncrease ||
             params.orderType == Order.OrderType.LimitIncrease
@@ -86,12 +89,12 @@ library OrderUtils {
             initialCollateralDeltaAmount = orderStore.recordTransferIn(params.initialCollateralToken);
         }
 
-        address weth = EthUtils.weth(dataStore);
         if (params.initialCollateralToken == weth) {
+            require(initialCollateralDeltaAmount >= params.executionFee, "OrderUtils: invalid executionFee");
             initialCollateralDeltaAmount -= params.executionFee;
         } else {
             uint256 wethAmount = orderStore.recordTransferIn(weth);
-            require(wethAmount == params.executionFee, "DepositUtils: invalid wethAmount");
+            require(wethAmount == params.executionFee, "OrderUtils: invalid wethAmount");
         }
 
         // validate swap path markets
