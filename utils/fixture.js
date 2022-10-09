@@ -230,7 +230,7 @@ async function deployFixture() {
       usdc,
       ethUsdMarket,
     },
-    props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6] },
+    props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };
 }
 

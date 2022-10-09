@@ -9,11 +9,10 @@ const { getBalanceOf } = require("../../utils/token");
 const { OrderType } = require("../../utils/order");
 
 describe("Exchange.IncreaseOrder", () => {
-  const executionFee = "1000000000000000";
   const { AddressZero, HashZero } = ethers.constants;
   const { provider } = ethers;
 
-  let wallet, user0, user1, user2, signers, signerIndexes;
+  let wallet, user0, user1, user2, signers;
   let orderHandler,
     depositHandler,
     depositStore,
@@ -26,7 +25,7 @@ describe("Exchange.IncreaseOrder", () => {
     ethUsdMarket,
     weth,
     usdc;
-  let oracleSalt;
+  let oracleSalt, executionFee, signerIndexes;
 
   beforeEach(async () => {
     const fixture = await loadFixture(deployFixture);
@@ -45,7 +44,7 @@ describe("Exchange.IncreaseOrder", () => {
       weth,
       usdc,
     } = fixture.contracts);
-    ({ oracleSalt, signerIndexes } = fixture.props);
+    ({ oracleSalt, executionFee, signerIndexes } = fixture.props);
 
     await weth.mint(depositStore.address, expandDecimals(1000, 18));
     await depositHandler

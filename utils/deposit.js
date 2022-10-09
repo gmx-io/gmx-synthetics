@@ -11,6 +11,12 @@ async function createDeposit(fixture, overrides = {}) {
   const amount = overrides.amount || expandDecimals(1000, 18);
 
   await token.mint(depositStore.address, amount);
+
+  if (token.address != weth.address) {
+    await weth.mint(depositStore.address, executionFee);
+  }
+
+  await token.mint(depositStore.address, amount);
   await depositHandler.connect(wallet).createDeposit(user0.address, market.marketToken, 100, false, executionFee);
 }
 

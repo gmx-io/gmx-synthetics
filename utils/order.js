@@ -12,20 +12,15 @@ const OrderType = {
 };
 
 async function createOrder(fixture, overrides) {
-  const {
-    market,
-    initialCollateralToken,
-    initialCollateralDeltaAmount,
-    sizeDeltaUsd,
-    acceptablePriceImpactUsd,
-    orderType,
-    isLong,
-    gasUsageLabel,
-  } = overrides;
+  const { initialCollateralToken, initialCollateralDeltaAmount, acceptablePriceImpactUsd, orderType, gasUsageLabel } =
+    overrides;
 
+  const market = overrides.market || ethers.constants.AddressZero;
+  const sizeDeltaUsd = overrides.sizeDeltaUsd || "0";
   const swapPath = overrides.swapPath || [];
   const acceptablePrice = overrides.acceptablePrice || "0";
-  const executionFee = overrides.executionFee || "1000000000000000";
+  const isLong = overrides.isLong || false;
+  const executionFee = overrides.executionFee || fixture.props.executionFee;
   const minOutputAmount = overrides.minOutputAmount || 0;
   const shouldConvertETH = overrides.shouldConvertETH || false;
 
@@ -35,7 +30,7 @@ async function createOrder(fixture, overrides) {
   await initialCollateralToken.mint(orderStore.address, initialCollateralDeltaAmount);
 
   const params = {
-    market: market.marketToken,
+    market,
     initialCollateralToken: initialCollateralToken.address,
     swapPath,
     sizeDeltaUsd,
