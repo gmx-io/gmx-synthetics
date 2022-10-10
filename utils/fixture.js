@@ -95,12 +95,6 @@ async function deployFixture() {
 
   const swapOrderUtils = await deployContract("SwapOrderUtils", []);
 
-  const liquidationUtils = await deployContract("LiquidationUtils", [], {
-    libraries: {
-      DecreaseOrderUtils: decreaseOrderUtils.address,
-    },
-  });
-
   const depositHandler = await deployContract(
     "DepositHandler",
     [
@@ -159,28 +153,9 @@ async function deployFixture() {
     }
   );
 
-  const liquidationHandler = await deployContract(
-    "LiquidationHandler",
-    [
-      roleStore.address,
-      dataStore.address,
-      eventEmitter.address,
-      marketStore.address,
-      positionStore.address,
-      oracle.address,
-      feeReceiver.address,
-    ],
-    {
-      libraries: {
-        LiquidationUtils: liquidationUtils.address,
-      },
-    }
-  );
-
   await grantRole(roleStore, depositHandler.address, "CONTROLLER");
   await grantRole(roleStore, withdrawalHandler.address, "CONTROLLER");
   await grantRole(roleStore, orderHandler.address, "CONTROLLER");
-  await grantRole(roleStore, liquidationHandler.address, "CONTROLLER");
 
   return {
     accounts: {
@@ -222,7 +197,6 @@ async function deployFixture() {
       depositHandler,
       withdrawalHandler,
       orderHandler,
-      liquidationHandler,
       feeReceiver,
       oracle,
       weth,

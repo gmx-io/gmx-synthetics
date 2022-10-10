@@ -7,7 +7,7 @@ import "./OrderUtils.sol";
 library DecreaseOrderUtils {
     using Order for Order.Props;
 
-    function processOrder(OrderUtils.ExecuteOrderParams memory params, bool forLiquidation) external {
+    function processOrder(OrderUtils.ExecuteOrderParams memory params) external {
         Order.Props memory order = params.order;
         MarketUtils.validateNonEmptyMarket(params.market);
 
@@ -33,8 +33,7 @@ library DecreaseOrderUtils {
                 order,
                 position,
                 positionKey,
-                params.order.sizeDeltaUsd(),
-                forLiquidation
+                params.order.sizeDeltaUsd()
             )
         );
 

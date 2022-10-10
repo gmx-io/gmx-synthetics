@@ -202,7 +202,8 @@ library OrderUtils {
     function isMarketOrder(Order.OrderType orderType) internal pure returns (bool) {
         return orderType == Order.OrderType.MarketSwap ||
                orderType == Order.OrderType.MarketIncrease ||
-               orderType == Order.OrderType.MarketDecrease;
+               orderType == Order.OrderType.MarketDecrease ||
+               orderType == Order.OrderType.Liquidation;
     }
 
     function isLimitOrder(Order.OrderType orderType) internal pure returns (bool) {
@@ -229,7 +230,12 @@ library OrderUtils {
     function isDecreaseOrder(Order.OrderType orderType) internal pure returns (bool) {
         return orderType == Order.OrderType.MarketDecrease ||
                orderType == Order.OrderType.LimitDecrease ||
-               orderType == Order.OrderType.StopLossDecrease;
+               orderType == Order.OrderType.StopLossDecrease ||
+               orderType == Order.OrderType.Liquidation;
+    }
+
+    function isLiquidationOrder(Order.OrderType orderType) internal pure returns (bool) {
+        return orderType == Order.OrderType.Liquidation;
     }
 
     // more info on the logic here can be found in Order.sol

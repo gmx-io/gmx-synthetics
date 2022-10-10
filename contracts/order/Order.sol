@@ -75,7 +75,9 @@ library Order {
         // as the secondary price
         // for long positions, primary price (earlier) >= acceptablePrice, secondary price (later) <= acceptablePrice
         // for short positions, primary price (earlier) <= acceptablePrice, secondary price (later) >= acceptablePrice
-        StopLossDecrease
+        StopLossDecrease,
+        // Liquidation: allows liquidation of positions if the criteria for liquidation are met
+        Liquidation
     }
 
     struct Addresses {

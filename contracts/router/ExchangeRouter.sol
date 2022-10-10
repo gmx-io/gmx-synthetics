@@ -13,7 +13,7 @@ import "../exchange/OrderHandler.sol";
 import "./Router.sol";
 
 // for functions which require token transfers from the user
-contract ExchangeRouter is ReentrancyGuard {
+contract ExchangeRouter is ReentrancyGuard, RoleModule {
     using SafeERC20 for IERC20;
 
     Router immutable router;
@@ -27,6 +27,7 @@ contract ExchangeRouter is ReentrancyGuard {
 
     constructor(
         Router _router,
+        RoleStore _roleStore,
         DataStore _dataStore,
         DepositHandler _depositHandler,
         WithdrawalHandler _withdrawalHandler,
@@ -34,7 +35,7 @@ contract ExchangeRouter is ReentrancyGuard {
         DepositStore _depositStore,
         WithdrawalStore _withdrawalStore,
         OrderStore _orderStore
-    ) {
+    ) RoleModule(_roleStore) {
         router = _router;
         dataStore = _dataStore;
 
@@ -114,6 +115,18 @@ contract ExchangeRouter is ReentrancyGuard {
         if (amountIn > 0) {
             router.pluginTransfer(params.initialCollateralToken, account, address(orderStore), amountIn);
         }
+
+        return orderHandler.createOrder(
+            account,
+            params
+        );
+    }
+
+    function createLiquidation(
+        OrderUtils.CreateOrderParams memory params,
+        address account
+    ) nonReentrant external onlyLiquidationKeeper returns (bytes32) {
+        require(params.orderType == Order.OrderType.Liquidation, "ExchangeRouter: invalid order type");
 
         return orderHandler.createOrder(
             account,

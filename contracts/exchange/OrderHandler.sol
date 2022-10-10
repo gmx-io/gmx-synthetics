@@ -94,7 +94,8 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
             if (
                 reasonKey == Keys.ORACLE_ERROR_KEY ||
                 reasonKey == Keys.FROZEN_ORDER_ERROR_KEY ||
-                (reasonKey == Keys.EMPTY_POSITION_ERROR_KEY)
+                reasonKey == Keys.EMPTY_POSITION_ERROR_KEY ||
+                reasonKey == Keys.INVALID_LIQUIDATION_ERROR_KEY
             ) {
                 revert(reason);
             }
@@ -233,7 +234,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         }
 
         if (OrderUtils.isDecreaseOrder(params.order.orderType())) {
-            DecreaseOrderUtils.processOrder(params, false);
+            DecreaseOrderUtils.processOrder(params);
             return;
         }
 

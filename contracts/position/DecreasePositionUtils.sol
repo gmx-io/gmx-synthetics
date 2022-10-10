@@ -33,7 +33,6 @@ library DecreasePositionUtils {
         Position.Props position;
         bytes32 positionKey;
         uint256 adjustedSizeDeltaUsd;
-        bool forLiquidation;
     }
 
     struct ProcessCollateralValues {
@@ -49,6 +48,15 @@ library DecreasePositionUtils {
             params.market,
             params.oracle
         );
+
+        if (OrderUtils.isLiquidationOrder(params.order.orderType()) && !PositionUtils.isPositionLiquidatable(
+            params.dataStore,
+            position,
+            params.market,
+            prices
+        )) {
+            revert(Keys.INVALID_LIQUIDATION_ERROR);
+        }
 
         MarketUtils.updateCumulativeFundingFactors(params.dataStore, params.market.marketToken);
         MarketUtils.updateCumulativeBorrowingFactor(
@@ -201,7 +209,7 @@ library DecreasePositionUtils {
             collateralTokenPrice
         );
 
-        if (params.forLiquidation && remainingCollateralAmount + values.realizedPnlAmount < 0) {
+        if (OrderUtils.isLiquidationOrder(params.order.orderType()) && remainingCollateralAmount + values.realizedPnlAmount < 0) {
             PositionPricingUtils.PositionFees memory emptyFees;
             ProcessCollateralValues memory emptyValues = ProcessCollateralValues(
                 0, // remainingCollateralAmount
@@ -281,7 +289,7 @@ library DecreasePositionUtils {
             Keys.FEE_RECEIVER_POSITION_FACTOR
         );
 
-        if (params.forLiquidation) {
+        if (OrderUtils.isLiquidationOrder(params.order.orderType())) {
             int256 adjustmentAmount = priceImpactUsd / collateralTokenPrice.toInt256();
             int256 totalNetCostAmount = fees.totalNetCostAmount + adjustmentAmount;
 
