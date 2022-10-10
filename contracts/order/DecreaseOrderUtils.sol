@@ -7,7 +7,7 @@ import "./OrderUtils.sol";
 library DecreaseOrderUtils {
     using Order for Order.Props;
 
-    function processOrder(OrderUtils.ExecuteOrderParams memory params, bool forLiquidation) external {
+    function processOrder(OrderUtils.ExecuteOrderParams memory params) external {
         Order.Props memory order = params.order;
         MarketUtils.validateNonEmptyMarket(params.market);
 
@@ -25,6 +25,7 @@ library DecreaseOrderUtils {
         (uint256 outputAmount, uint256 adjustedSizeDeltaUsd) = DecreasePositionUtils.decreasePosition(
             DecreasePositionUtils.DecreasePositionParams(
                 params.dataStore,
+                params.eventEmitter,
                 params.positionStore,
                 params.oracle,
                 params.feeReceiver,
@@ -32,8 +33,7 @@ library DecreaseOrderUtils {
                 order,
                 position,
                 positionKey,
-                params.order.sizeDeltaUsd(),
-                forLiquidation
+                params.order.sizeDeltaUsd()
             )
         );
 
@@ -41,8 +41,9 @@ library DecreaseOrderUtils {
             params.orderStore.remove(params.key, params.order.account());
         } else {
             params.order.setSizeDeltaUsd(adjustedSizeDeltaUsd);
-            // the order is updated but we do not call order.touch() here
-            // this should not be gameable
+            // clear execution fee as it would be fully used even for partial fills
+            params.order.setExecutionFee(0);
+            params.order.touch();
             params.orderStore.set(params.key, params.order);
         }
 
@@ -52,11 +53,12 @@ library DecreaseOrderUtils {
                 order.initialCollateralToken(),
                 outputAmount,
                 order.account(),
-                order.hasCollateralInETH()
+                order.shouldConvertETH()
             );
         } else {
             SwapUtils.swap(SwapUtils.SwapParams(
                 params.dataStore,
+                params.eventEmitter,
                 params.oracle,
                 params.feeReceiver,
                 params.order.initialCollateralToken(),

@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "../utils/Precision.sol";
 
 import "../data/DataStore.sol";
+import "../events/EventEmitter.sol";
 import "../fee/FeeReceiver.sol";
 
 import "../oracle/Oracle.sol";
@@ -13,6 +14,7 @@ import "../pricing/PositionPricingUtils.sol";
 import "./Position.sol";
 import "./PositionStore.sol";
 import "./PositionUtils.sol";
+import "../order/OrderUtils.sol";
 
 library IncreasePositionUtils {
     using Position for Position.Props;
@@ -22,6 +24,7 @@ library IncreasePositionUtils {
 
     struct IncreasePositionParams {
         DataStore dataStore;
+        EventEmitter eventEmitter;
         PositionStore positionStore;
         Oracle oracle;
         FeeReceiver feeReceiver;
@@ -92,7 +95,13 @@ library IncreasePositionUtils {
                 params.order.isLong(),
                 sizeDeltaInTokens.toInt256()
             );
-            MarketUtils.increaseOpenInterest(params.dataStore, params.order.market(), params.order.isLong(), params.order.sizeDeltaUsd());
+            MarketUtils.increaseOpenInterest(
+                params.dataStore,
+                params.eventEmitter,
+                params.order.market(),
+                params.order.isLong(),
+                params.order.sizeDeltaUsd()
+            );
             MarketUtils.validateReserve(params.dataStore, params.market, prices, params.order.isLong());
         }
 
@@ -101,6 +110,17 @@ library IncreasePositionUtils {
             position,
             params.market,
             prices
+        );
+
+        params.eventEmitter.emitPositionIncrease(
+            position.account,
+            position.market,
+            position.collateralToken,
+            position.isLong,
+            prices.indexTokenPrice,
+            params.order.sizeDeltaUsd(),
+            collateralDeltaAmount,
+            bytes("")
         );
     }
 
@@ -112,8 +132,8 @@ library IncreasePositionUtils {
     ) internal returns (int256) {
         uint256 collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.collateralToken, params.market, prices);
 
-        int256 usdAdjustment = PositionPricingUtils.getPositionPricing(
-            PositionPricingUtils.GetPositionPricingParams(
+        int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
+            PositionPricingUtils.GetPriceImpactUsdParams(
                 params.dataStore,
                 params.market.marketToken,
                 params.market.longToken,
@@ -125,8 +145,8 @@ library IncreasePositionUtils {
             )
         );
 
-        if (usdAdjustment < params.order.acceptableUsdAdjustment()) {
-            revert(Keys.UNACCEPTABLE_USD_ADJUSTMENT_ERROR);
+        if (priceImpactUsd < params.order.acceptablePriceImpactUsd()) {
+            OrderUtils.revertUnacceptablePriceImpactUsd(priceImpactUsd, params.order.acceptablePriceImpactUsd());
         }
 
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
@@ -145,7 +165,7 @@ library IncreasePositionUtils {
             FeeUtils.POSITION_FEE
         );
 
-        if (usdAdjustment > 0) {
+        if (priceImpactUsd > 0) {
             // when there is a positive price impact factor, additional tokens from the swap impact pool
             // are withdrawn for the user to be used as additional collateral
             // for example, if 50,000 USDC is withdrawn and there is a positive price impact
@@ -153,10 +173,11 @@ library IncreasePositionUtils {
             // the swap impact pool is decreased by the used amount
             uint256 positiveImpactAmount = MarketUtils.applyPositiveImpact(
                 params.dataStore,
+                params.eventEmitter,
                 params.market.marketToken,
                 params.collateralToken,
                 collateralTokenPrice,
-                usdAdjustment
+                priceImpactUsd
             );
 
             fees.totalNetCostAmount += positiveImpactAmount.toInt256();
@@ -168,10 +189,11 @@ library IncreasePositionUtils {
             // the remaining 0.005 ETH will be stored in the swap impact pool
             uint256 negativeImpactAmount = MarketUtils.applyNegativeImpact(
                 params.dataStore,
+                params.eventEmitter,
                 params.market.marketToken,
                 params.collateralToken,
                 collateralTokenPrice,
-                usdAdjustment
+                priceImpactUsd
             );
 
             fees.totalNetCostAmount -= negativeImpactAmount.toInt256();
@@ -180,12 +202,34 @@ library IncreasePositionUtils {
         collateralDeltaAmount += fees.totalNetCostAmount;
 
         if (collateralDeltaAmount > 0) {
-            MarketUtils.increaseCollateralSum(params.dataStore, params.order.market(), params.collateralToken, params.order.isLong(), collateralDeltaAmount.toUint256());
+            MarketUtils.increaseCollateralSum(
+                params.dataStore,
+                params.eventEmitter,
+                params.order.market(),
+                params.collateralToken,
+                params.order.isLong(),
+                collateralDeltaAmount.toUint256()
+            );
         } else {
-            MarketUtils.decreaseCollateralSum(params.dataStore, params.order.market(), params.collateralToken, params.order.isLong(), SafeCast.toUint256(-collateralDeltaAmount));
+            MarketUtils.decreaseCollateralSum(
+                params.dataStore,
+                params.eventEmitter,
+                params.order.market(),
+                params.collateralToken,
+                params.order.isLong(),
+                SafeCast.toUint256(-collateralDeltaAmount)
+            );
         }
 
-        MarketUtils.increasePoolAmount(params.dataStore, params.market.marketToken, params.collateralToken, fees.feesForPool);
+        MarketUtils.increasePoolAmount(
+            params.dataStore,
+            params.eventEmitter,
+            params.market.marketToken,
+            params.collateralToken,
+            fees.feesForPool
+        );
+
+        params.eventEmitter.emitPositionFeesCollected(true, fees);
 
         return collateralDeltaAmount;
     }

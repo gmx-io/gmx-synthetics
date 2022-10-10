@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "../role/RoleModule.sol";
+import "../events/EventEmitter.sol";
 import "../feature/FeatureUtils.sol";
 
 import "../market/Market.sol";
@@ -19,21 +20,24 @@ import "../oracle/OracleModule.sol";
 
 contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
 
-    DataStore public dataStore;
-    DepositStore public depositStore;
-    MarketStore public marketStore;
-    Oracle public oracle;
-    FeeReceiver public feeReceiver;
+    DataStore immutable dataStore;
+    EventEmitter immutable eventEmitter;
+    DepositStore immutable depositStore;
+    MarketStore immutable marketStore;
+    Oracle immutable oracle;
+    FeeReceiver immutable feeReceiver;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
+        EventEmitter _eventEmitter,
         DepositStore _depositStore,
         MarketStore _marketStore,
         Oracle _oracle,
         FeeReceiver _feeReceiver
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
+        eventEmitter = _eventEmitter;
         depositStore = _depositStore;
         marketStore = _marketStore;
         oracle = _oracle;
@@ -48,19 +52,20 @@ contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
         address account,
         address market,
         uint256 minMarketTokens,
-        bool hasCollateralInETH,
+        bool shouldConvertETH,
         uint256 executionFee
     ) external nonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createDepositFeatureKey(address(this)));
 
         DepositUtils.CreateDepositParams memory params = DepositUtils.CreateDepositParams(
             dataStore,
+            eventEmitter,
             depositStore,
             marketStore,
             account,
             market,
             minMarketTokens,
-            hasCollateralInETH,
+            shouldConvertETH,
             executionFee,
             EthUtils.weth(dataStore)
         );
@@ -88,6 +93,17 @@ contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
 
             DepositUtils.cancelDeposit(
                 dataStore,
+                eventEmitter,
+                depositStore,
+                marketStore,
+                key,
+                msg.sender,
+                startingGas
+            );
+        } catch {
+            DepositUtils.cancelDeposit(
+                dataStore,
+                eventEmitter,
                 depositStore,
                 marketStore,
                 key,
@@ -105,7 +121,7 @@ contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
     ) public
         nonReentrant
         onlySelf
-        withOraclePrices(oracle, dataStore, oracleParams)
+        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
         FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureKey(address(this)));
 
@@ -116,6 +132,7 @@ contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
 
         DepositUtils.ExecuteDepositParams memory params = DepositUtils.ExecuteDepositParams(
             dataStore,
+            eventEmitter,
             depositStore,
             marketStore,
             oracle,

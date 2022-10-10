@@ -12,6 +12,7 @@ import "./OrderStore.sol";
 import "../nonce/NonceUtils.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleUtils.sol";
+import "../events/EventEmitter.sol";
 
 import "../position/PositionUtils.sol";
 import "../position/IncreasePositionUtils.sol";
@@ -37,13 +38,13 @@ library OrderUtils {
 
         uint256 sizeDeltaUsd;
         uint256 acceptablePrice;
-        int256 acceptableUsdAdjustment;
+        int256 acceptablePriceImpactUsd;
         uint256 executionFee;
         uint256 minOutputAmount;
 
         Order.OrderType orderType;
         bool isLong;
-        bool hasCollateralInETH;
+        bool shouldConvertETH;
     }
 
     struct ExecuteOrderParams {
@@ -51,6 +52,7 @@ library OrderUtils {
         Order.Props order;
         Market.Props[] swapPathMarkets;
         DataStore dataStore;
+        EventEmitter eventEmitter;
         OrderStore orderStore;
         PositionStore positionStore;
         Oracle oracle;
@@ -64,17 +66,22 @@ library OrderUtils {
 
     error EmptyOrder();
     error UnsupportedOrderType();
+    error UnacceptablePriceImpactUsd(int256 priceImpactUsd, int256 acceptablePriceImpactUsd);
 
     function createOrder(
         DataStore dataStore,
+        EventEmitter eventEmitter,
         OrderStore orderStore,
         MarketStore marketStore,
         address account,
         CreateOrderParams memory params
-    ) external returns (bytes32) {
+    ) internal returns (bytes32) {
         uint256 initialCollateralDeltaAmount;
 
-        if (params.orderType == Order.OrderType.MarketSwap ||
+        address weth = EthUtils.weth(dataStore);
+
+        if (params.initialCollateralToken == weth ||
+            params.orderType == Order.OrderType.MarketSwap ||
             params.orderType == Order.OrderType.LimitSwap ||
             params.orderType == Order.OrderType.MarketIncrease ||
             params.orderType == Order.OrderType.LimitIncrease
@@ -82,12 +89,12 @@ library OrderUtils {
             initialCollateralDeltaAmount = orderStore.recordTransferIn(params.initialCollateralToken);
         }
 
-        address weth = EthUtils.weth(dataStore);
         if (params.initialCollateralToken == weth) {
+            require(initialCollateralDeltaAmount >= params.executionFee, "OrderUtils: invalid executionFee");
             initialCollateralDeltaAmount -= params.executionFee;
         } else {
             uint256 wethAmount = orderStore.recordTransferIn(weth);
-            require(wethAmount == params.executionFee, "DepositUtils: invalid wethAmount");
+            require(wethAmount == params.executionFee, "OrderUtils: invalid wethAmount");
         }
 
         // validate swap path markets
@@ -102,12 +109,15 @@ library OrderUtils {
         order.setSizeDeltaUsd(params.sizeDeltaUsd);
         order.setInitialCollateralDeltaAmount(initialCollateralDeltaAmount);
         order.setAcceptablePrice(params.acceptablePrice);
-        order.setAcceptableUsdAdjustment(params.acceptableUsdAdjustment);
+        order.setAcceptablePriceImpactUsd(params.acceptablePriceImpactUsd);
         order.setExecutionFee(params.executionFee);
         order.setMinOutputAmount(params.minOutputAmount);
         order.setOrderType(params.orderType);
         order.setIsLong(params.isLong);
-        order.setHasCollateralInETH(params.hasCollateralInETH);
+        order.setShouldConvertETH(params.shouldConvertETH);
+
+        uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
+        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee());
 
         uint256 nonce = NonceUtils.incrementNonce(dataStore);
         bytes32 key = keccak256(abi.encodePacked(nonce));
@@ -115,16 +125,19 @@ library OrderUtils {
         order.touch();
         orderStore.set(key, order);
 
+        eventEmitter.emitOrderCreated(key, order);
+
         return key;
     }
 
     function cancelOrder(
         DataStore dataStore,
+        EventEmitter eventEmitter,
         OrderStore orderStore,
         bytes32 key,
         address keeper,
         uint256 startingGas
-    ) external {
+    ) internal {
         Order.Props memory order = orderStore.get(key);
         validateNonEmptyOrder(order);
 
@@ -135,7 +148,7 @@ library OrderUtils {
                     order.initialCollateralToken(),
                     order.initialCollateralDeltaAmount(),
                     order.account(),
-                    order.hasCollateralInETH()
+                    order.shouldConvertETH()
                 );
             }
         }
@@ -150,6 +163,37 @@ library OrderUtils {
             keeper,
             order.account()
         );
+
+        eventEmitter.emitOrderCancelled(key);
+    }
+
+    function freezeOrder(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        OrderStore orderStore,
+        bytes32 key,
+        address keeper,
+        uint256 startingGas
+    ) internal {
+        Order.Props memory order = orderStore.get(key);
+        validateNonEmptyOrder(order);
+
+        uint256 executionFee = order.executionFee();
+
+        order.setExecutionFee(0);
+        order.setIsFrozen(true);
+        orderStore.set(key, order);
+
+        GasUtils.payExecutionFee(
+            dataStore,
+            orderStore,
+            executionFee,
+            startingGas,
+            keeper,
+            order.account()
+        );
+
+        eventEmitter.emitOrderFrozen(key);
     }
 
     function validateNonEmptyOrder(Order.Props memory order) internal pure {
@@ -161,7 +205,8 @@ library OrderUtils {
     function isMarketOrder(Order.OrderType orderType) internal pure returns (bool) {
         return orderType == Order.OrderType.MarketSwap ||
                orderType == Order.OrderType.MarketIncrease ||
-               orderType == Order.OrderType.MarketDecrease;
+               orderType == Order.OrderType.MarketDecrease ||
+               orderType == Order.OrderType.Liquidation;
     }
 
     function isLimitOrder(Order.OrderType orderType) internal pure returns (bool) {
@@ -188,7 +233,12 @@ library OrderUtils {
     function isDecreaseOrder(Order.OrderType orderType) internal pure returns (bool) {
         return orderType == Order.OrderType.MarketDecrease ||
                orderType == Order.OrderType.LimitDecrease ||
-               orderType == Order.OrderType.StopLossDecrease;
+               orderType == Order.OrderType.StopLossDecrease ||
+               orderType == Order.OrderType.Liquidation;
+    }
+
+    function isLiquidationOrder(Order.OrderType orderType) internal pure returns (bool) {
+        return orderType == Order.OrderType.Liquidation;
     }
 
     // more info on the logic here can be found in Order.sol
@@ -198,62 +248,48 @@ library OrderUtils {
         Order.OrderType orderType,
         uint256 acceptablePrice,
         bool isLong
-    ) external {
+    ) internal {
         if (isSwapOrder(orderType)) {
             return;
         }
 
         // set secondary price to primary price since increase / decrease positions use the secondary price for index token values
-        if (orderType == Order.OrderType.MarketIncrease || orderType == Order.OrderType.MarketDecrease) {
+        if (orderType == Order.OrderType.MarketIncrease ||
+            orderType == Order.OrderType.MarketDecrease ||
+            orderType == Order.OrderType.Liquidation) {
             uint256 price = oracle.getPrimaryPrice(indexToken);
             oracle.setSecondaryPrice(indexToken, price);
             return;
         }
 
-        if (orderType == Order.OrderType.LimitIncrease) {
-            uint256 price = oracle.getPrimaryPrice(indexToken);
-
-            if (isLong) {
-                if (price > acceptablePrice) { revert(Keys.ORACLE_ERROR); }
-                oracle.setSecondaryPrice(indexToken, acceptablePrice);
-            } else {
-                if (price < acceptablePrice) { revert(Keys.ORACLE_ERROR); }
-                oracle.setSecondaryPrice(indexToken, acceptablePrice);
-            }
-
-            return;
-        }
-
-        if (orderType == Order.OrderType.LimitDecrease) {
-            uint256 price = oracle.getPrimaryPrice(indexToken);
-
-            if (isLong) {
-                if (price < acceptablePrice) { revert(Keys.ORACLE_ERROR); }
-                oracle.setSecondaryPrice(indexToken, acceptablePrice);
-            } else {
-                if (price > acceptablePrice) { revert(Keys.ORACLE_ERROR); }
-                oracle.setSecondaryPrice(indexToken, acceptablePrice);
-            }
-
-            return;
-        }
-
-        if (orderType == Order.OrderType.StopLossDecrease) {
+        if (orderType == Order.OrderType.LimitIncrease ||
+            orderType == Order.OrderType.LimitDecrease ||
+            orderType == Order.OrderType.StopLossDecrease
+        ) {
             uint256 primaryPrice = oracle.getPrimaryPrice(indexToken);
             uint256 secondaryPrice = oracle.getSecondaryPrice(indexToken);
 
-            if (isLong) {
-                // to use the acceptablePrice for a stop loss decrease for a long position
-                // the earlier price (primaryPrice) must be more than the acceptablePrice
-                // and the later price (secondaryPrice) must be less than the acceptablePrice
-                bool hasAcceptablePrices = primaryPrice >= acceptablePrice && secondaryPrice <= acceptablePrice;
+            bool shouldValidateAscendingPrice;
+            if (orderType == Order.OrderType.LimitIncrease) {
+                // for long increase orders, the oracle prices should be descending
+                // for short increase orders, the oracle prices should be ascending
+                shouldValidateAscendingPrice = !isLong;
+            } else {
+                // for long decrease orders, the oracle prices should be ascending
+                // for short decrease orders, the oracle prices should be descending
+                shouldValidateAscendingPrice = isLong;
+            }
+
+            if (shouldValidateAscendingPrice) {
+                // check that the earlier price (primaryPrice) is smaller than the acceptablePrice
+                // and that the later price (secondaryPrice) is larger than the acceptablePrice
+                bool hasAcceptablePrices = primaryPrice <= acceptablePrice && secondaryPrice >= acceptablePrice;
                 if (!hasAcceptablePrices) { revert(Keys.ORACLE_ERROR); }
                 oracle.setSecondaryPrice(indexToken, acceptablePrice);
             } else {
-                // to use the acceptablePrice for a stop loss decrease for a short position
-                // the earlier price (primaryPrice) must be less than the acceptablePrice
-                // and the later price (secondaryPrice) must be most than the acceptablePrice
-                bool hasAcceptablePrices = primaryPrice <= acceptablePrice && secondaryPrice >= acceptablePrice;
+                // check that the earlier price (primaryPrice) is larger than the acceptablePrice
+                // and that the later price (secondaryPrice) is smaller than the acceptablePrice
+                bool hasAcceptablePrices = primaryPrice >= acceptablePrice && secondaryPrice <= acceptablePrice;
                 if (!hasAcceptablePrices) { revert(Keys.ORACLE_ERROR); }
                 oracle.setSecondaryPrice(indexToken, acceptablePrice);
             }
@@ -295,7 +331,7 @@ library OrderUtils {
         if (
             orderType == Order.OrderType.MarketIncrease ||
             orderType == Order.OrderType.MarketDecrease ||
-            orderType == Order.OrderType.LimitIncrease
+            orderType == Order.OrderType.Liquidation
         ) {
             if (!oracleBlockNumbers.areEqualTo(orderUpdatedAtBlock)) {
                 revert(Keys.ORACLE_ERROR);
@@ -320,5 +356,9 @@ library OrderUtils {
 
     function revertUnsupportedOrderType() internal pure {
         revert UnsupportedOrderType();
+    }
+
+    function revertUnacceptablePriceImpactUsd(int256 priceImpactUsd, int256 acceptablePriceImpactUsd) internal pure {
+        revert UnacceptablePriceImpactUsd(priceImpactUsd, acceptablePriceImpactUsd);
     }
 }

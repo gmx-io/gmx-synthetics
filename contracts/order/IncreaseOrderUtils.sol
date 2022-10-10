@@ -13,6 +13,7 @@ library IncreaseOrderUtils {
 
         (address collateralToken, uint256 collateralDeltaAmount) = SwapUtils.swap(SwapUtils.SwapParams(
             params.dataStore,
+            params.eventEmitter,
             params.oracle,
             params.feeReceiver,
             params.order.initialCollateralToken(),
@@ -51,6 +52,7 @@ library IncreaseOrderUtils {
         IncreasePositionUtils.increasePosition(
             IncreasePositionUtils.IncreasePositionParams(
                 params.dataStore,
+                params.eventEmitter,
                 params.positionStore,
                 params.oracle,
                 params.feeReceiver,

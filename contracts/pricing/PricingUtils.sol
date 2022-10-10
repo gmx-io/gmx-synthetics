@@ -10,37 +10,37 @@ import "../market/MarketUtils.sol";
 import "../fee/FeeReceiver.sol";
 
 library PricingUtils {
-    function getUsdAdjustmentForSameSideRebalance(
+    function getPriceImpactUsdForSameSideRebalance(
         uint256 initialDiffUsd,
         uint256 nextDiffUsd,
         bool hasPositiveImpact,
         uint256 impactFactor,
         uint256 impactExponentFactor
-    ) public pure returns (int256) {
+    ) internal pure returns (int256) {
         uint256 deltaDiffUsd = Calc.diff(
             applyImpactFactor(initialDiffUsd, impactFactor, impactExponentFactor),
             applyImpactFactor(nextDiffUsd, impactFactor, impactExponentFactor)
         );
 
-        int256 usdAdjustment = Calc.toSigned(deltaDiffUsd, hasPositiveImpact);
+        int256 priceImpactUsd = Calc.toSigned(deltaDiffUsd, hasPositiveImpact);
 
-        return usdAdjustment;
+        return priceImpactUsd;
     }
 
-    function getUsdAdjustmentForCrossoverRebalance(
+    function getPriceImpactUsdForCrossoverRebalance(
         uint256 initialDiffUsd,
         uint256 nextDiffUsd,
         uint256 positiveImpactFactor,
         uint256 negativeImpactFactor,
         uint256 impactExponentFactor
-    ) public pure returns (int256) {
+    ) internal pure returns (int256) {
         uint256 positiveImpactUsd = applyImpactFactor(initialDiffUsd, positiveImpactFactor, impactExponentFactor);
         uint256 negativeImpactUsd = applyImpactFactor(nextDiffUsd, negativeImpactFactor, impactExponentFactor);
         uint256 deltaDiffUsd = Calc.diff(positiveImpactUsd, negativeImpactUsd);
 
-        int256 usdAdjustment = Calc.toSigned(deltaDiffUsd, positiveImpactUsd > negativeImpactUsd);
+        int256 priceImpactUsd = Calc.toSigned(deltaDiffUsd, positiveImpactUsd > negativeImpactUsd);
 
-        return usdAdjustment;
+        return priceImpactUsd;
     }
 
     function applyImpactFactor(

@@ -13,7 +13,7 @@ library PositionPricingUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
 
-    struct GetPositionPricingParams {
+    struct GetPriceImpactUsdParams {
         DataStore dataStore;
         address market;
         address longToken;
@@ -42,16 +42,16 @@ library PositionPricingUtils {
         int256 totalNetCostAmount;
     }
 
-    // returns (usd adjustment)
-    function getPositionPricing(GetPositionPricingParams memory params) internal view returns (int256) {
+    // returns (priceImpactUsd)
+    function getPriceImpactUsd(GetPriceImpactUsdParams memory params) internal view returns (int256) {
         OpenInterestParams memory openInterestParams = getNextOpenInterest(params);
 
-        int256 usdAdjustment = getUsdAdjustment(params.dataStore, params.market, openInterestParams);
+        int256 priceImpactUsd = _getPriceImpactUsd(params.dataStore, params.market, openInterestParams);
 
-        return usdAdjustment;
+        return priceImpactUsd;
     }
 
-    function getUsdAdjustment(DataStore dataStore, address market, OpenInterestParams memory openInterestParams) internal view returns (int256) {
+    function _getPriceImpactUsd(DataStore dataStore, address market, OpenInterestParams memory openInterestParams) internal view returns (int256) {
         uint256 initialDiffUsd = Calc.diff(openInterestParams.longOpenInterest, openInterestParams.shortOpenInterest);
         uint256 nextDiffUsd = Calc.diff(openInterestParams.nextLongOpenInterest, openInterestParams.nextShortOpenInterest);
 
@@ -66,7 +66,7 @@ library PositionPricingUtils {
             bool hasPositiveImpact = nextDiffUsd < initialDiffUsd;
             uint256 impactFactor = dataStore.getUint(Keys.positionImpactFactorKey(market, hasPositiveImpact));
 
-            return PricingUtils.getUsdAdjustmentForSameSideRebalance(
+            return PricingUtils.getPriceImpactUsdForSameSideRebalance(
                 initialDiffUsd,
                 nextDiffUsd,
                 hasPositiveImpact,
@@ -77,7 +77,7 @@ library PositionPricingUtils {
             uint256 positiveImpactFactor = dataStore.getUint(Keys.positionImpactFactorKey(market, true));
             uint256 negativeImpactFactor = dataStore.getUint(Keys.positionImpactFactorKey(market, false));
 
-            return PricingUtils.getUsdAdjustmentForCrossoverRebalance(
+            return PricingUtils.getPriceImpactUsdForCrossoverRebalance(
                 initialDiffUsd,
                 nextDiffUsd,
                 positiveImpactFactor,
@@ -88,7 +88,7 @@ library PositionPricingUtils {
     }
 
     function getNextOpenInterest(
-        GetPositionPricingParams memory params
+        GetPriceImpactUsdParams memory params
     ) internal view returns (OpenInterestParams memory) {
         uint256 longOpenInterest = MarketUtils.getOpenInterest(params.dataStore, params.market, true);
         uint256 shortOpenInterest = MarketUtils.getOpenInterest(params.dataStore, params.market, false);

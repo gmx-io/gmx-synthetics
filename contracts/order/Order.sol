@@ -50,23 +50,23 @@ library Order {
         // for long positions, market price < acceptablePrice
         // for short positions, market price > acceptablePrice
         MarketIncrease,
-        // LimitIncrease: increase position if the acceptablePrice and acceptableUsdAdjustment
+        // LimitIncrease: increase position if the acceptablePrice and acceptablePriceImpactUsd
         // can be fulfilled
         // fulfillment of the acceptablePrice is dependent on the token index price
-        // fulfillment of the acceptableUsdAdjustment is dependent on the price impact
+        // fulfillment of the acceptablePriceImpactUsd is dependent on the price impact
         LimitIncrease,
         // MarketDecrease: decrease position at the curent market price
         // the order will be cancelled if the position cannot be decreased at the acceptablePrice
         // for long positions, market price > acceptablePrice
         // for short positions, market price < acceptablePrice
         MarketDecrease,
-        // LimitDecrease: decrease position if the acceptablePrice and acceptableUsdAdjustment
+        // LimitDecrease: decrease position if the acceptablePrice and acceptablePriceImpactUsd
         // can be fulfilled
         // these orders are reduce-only orders
         // for long positions, market price => acceptablePrice
         // for short positions, market price <= acceptablePrice
         LimitDecrease,
-        // StopLossDecrease: decrease position if the acceptablePrice and acceptableUsdAdjustment
+        // StopLossDecrease: decrease position if the acceptablePrice and acceptablePriceImpactUsd
         // can be fulfilled
         // these orders are reduce-only orders
         // the acceptablePrice will be used for execution, two prices for the index token
@@ -75,7 +75,9 @@ library Order {
         // as the secondary price
         // for long positions, primary price (earlier) >= acceptablePrice, secondary price (later) <= acceptablePrice
         // for short positions, primary price (earlier) <= acceptablePrice, secondary price (later) >= acceptablePrice
-        StopLossDecrease
+        StopLossDecrease,
+        // Liquidation: allows liquidation of positions if the criteria for liquidation are met
+        Liquidation
     }
 
     struct Addresses {
@@ -93,7 +95,7 @@ library Order {
         uint256 sizeDeltaUsd;
         uint256 initialCollateralDeltaAmount;
         uint256 acceptablePrice;
-        int256 acceptableUsdAdjustment;
+        int256 acceptablePriceImpactUsd;
         uint256 executionFee;
         uint256 minOutputAmount;
         uint256 updatedAtBlock;
@@ -102,7 +104,8 @@ library Order {
     struct Flags {
         OrderType orderType;
         bool isLong;
-        bool hasCollateralInETH;
+        bool shouldConvertETH;
+        bool isFrozen;
     }
 
     // there is a limit on the number of fields a struct can have when being passed
@@ -112,7 +115,7 @@ library Order {
         Addresses addresses;
         Numbers numbers;
         Flags flags;
-        bytes32[] data;
+        bytes data;
     }
 
     function account(Props memory props) internal pure returns (address) {
@@ -143,8 +146,8 @@ library Order {
         return props.numbers.acceptablePrice;
     }
 
-    function acceptableUsdAdjustment(Props memory props) internal pure returns (int256) {
-        return props.numbers.acceptableUsdAdjustment;
+    function acceptablePriceImpactUsd(Props memory props) internal pure returns (int256) {
+        return props.numbers.acceptablePriceImpactUsd;
     }
 
     function executionFee(Props memory props) internal pure returns (uint256) {
@@ -167,8 +170,12 @@ library Order {
         return props.flags.isLong;
     }
 
-    function hasCollateralInETH(Props memory props) internal pure returns (bool) {
-        return props.flags.hasCollateralInETH;
+    function shouldConvertETH(Props memory props) internal pure returns (bool) {
+        return props.flags.shouldConvertETH;
+    }
+
+    function isFrozen(Props memory props) internal pure returns (bool) {
+        return props.flags.isFrozen;
     }
 
     function setAccount(Props memory props, address _value) internal pure {
@@ -199,8 +206,8 @@ library Order {
         props.numbers.acceptablePrice = _value;
     }
 
-    function setAcceptableUsdAdjustment(Props memory props, int256 _value) internal pure {
-        props.numbers.acceptableUsdAdjustment = _value;
+    function setAcceptablePriceImpactUsd(Props memory props, int256 _value) internal pure {
+        props.numbers.acceptablePriceImpactUsd = _value;
     }
 
     function setExecutionFee(Props memory props, uint256 _value) internal pure {
@@ -223,8 +230,12 @@ library Order {
         props.flags.isLong = _value;
     }
 
-    function setHasCollateralInETH(Props memory props, bool _value) internal pure {
-        props.flags.hasCollateralInETH = _value;
+    function setShouldConvertETH(Props memory props, bool _value) internal pure {
+        props.flags.shouldConvertETH = _value;
+    }
+
+    function setIsFrozen(Props memory props, bool _value) internal pure {
+        props.flags.isFrozen = _value;
     }
 
     function touch(Props memory props) internal view {

@@ -21,20 +21,23 @@ import "../order/SwapOrderUtils.sol";
 import "../position/PositionStore.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
+import "../events/EventEmitter.sol";
 
 contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
     using Order for Order.Props;
 
-    DataStore public dataStore;
-    MarketStore public marketStore;
-    OrderStore public orderStore;
-    PositionStore public positionStore;
-    Oracle public oracle;
-    FeeReceiver public feeReceiver;
+    DataStore immutable dataStore;
+    MarketStore immutable marketStore;
+    OrderStore immutable orderStore;
+    PositionStore immutable positionStore;
+    Oracle immutable oracle;
+    EventEmitter immutable eventEmitter;
+    FeeReceiver immutable feeReceiver;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
+        EventEmitter _eventEmitter,
         MarketStore _marketStore,
         OrderStore _orderStore,
         PositionStore _positionStore,
@@ -42,6 +45,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         FeeReceiver _feeReceiver
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
+        eventEmitter = _eventEmitter;
         marketStore = _marketStore;
         orderStore = _orderStore;
         positionStore = _positionStore;
@@ -61,6 +65,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
 
         return OrderUtils.createOrder(
             dataStore,
+            eventEmitter,
             orderStore,
             marketStore,
             account,
@@ -82,23 +87,18 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         ) {
         } catch Error(string memory reason) {
             bytes32 reasonKey = keccak256(abi.encodePacked(reason));
-            // revert instead of cancel if the reason for failure is due to oracle params
-            // or order requirements not being met
-            if (reasonKey == Keys.ORACLE_ERROR_KEY ||
-                reasonKey == Keys.EMPTY_POSITION_ERROR_KEY ||
-                reasonKey ==  Keys.INSUFFICIENT_SWAP_OUTPUT_AMOUNT_ERROR_KEY ||
-                reasonKey == Keys.UNACCEPTABLE_USD_ADJUSTMENT_ERROR_KEY
+
+            if (
+                reasonKey == Keys.ORACLE_ERROR_KEY ||
+                reasonKey == Keys.FROZEN_ORDER_ERROR_KEY ||
+                reasonKey == Keys.EMPTY_POSITION_ERROR_KEY
             ) {
                 revert(reason);
             }
 
-            OrderUtils.cancelOrder(
-                dataStore,
-                orderStore,
-                key,
-                msg.sender,
-                startingGas
-            );
+            _handleOrderError(key, startingGas);
+        } catch {
+            _handleOrderError(key, startingGas);
         }
     }
 
@@ -106,8 +106,8 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         bytes32 key,
         uint256 sizeDeltaUsd,
         uint256 acceptablePrice,
-        int256 acceptableUsdAdjustment
-    ) external nonReentrant {
+        int256 acceptablePriceImpactUsd
+    ) external payable nonReentrant {
         OrderStore _orderStore = orderStore;
         Order.Props memory order = _orderStore.get(key);
 
@@ -121,10 +121,21 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
 
         order.setSizeDeltaUsd(sizeDeltaUsd);
         order.setAcceptablePrice(acceptablePrice);
-        order.setAcceptableUsdAdjustment(acceptableUsdAdjustment);
+        order.setAcceptablePriceImpactUsd(acceptablePriceImpactUsd);
+        order.setIsFrozen(false);
+
+        // allow topping up of executionFee as partially filled or frozen orders
+        //  will have their executionFee reduced
+        uint256 receivedWeth = EthUtils.sendWeth(dataStore, address(_orderStore));
+        order.setExecutionFee(order.executionFee() + receivedWeth);
+
+        uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
+        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee());
 
         order.touch();
         _orderStore.set(key, order);
+
+        eventEmitter.emitOrderUpdated(key, sizeDeltaUsd, acceptablePrice, acceptablePriceImpactUsd);
     }
 
     function cancelOrder(bytes32 key) external {
@@ -143,6 +154,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
 
         OrderUtils.cancelOrder(
             dataStore,
+            eventEmitter,
             orderStore,
             key,
             msg.sender,
@@ -158,9 +170,16 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
     ) public
         nonReentrant
         onlySelf
-        withOraclePrices(oracle, dataStore, oracleParams)
+        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
         OrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, keeper, startingGas);
+        // limit swaps require frozen order keeper as well since on creation it can fail due to output amount
+        // which would automatically cause the order to be frozen
+        // limit increase and decrease positions may fail due to output amount as well and become frozen
+        // but only if their acceptablePrice is reached
+        if (params.order.isFrozen() || params.order.orderType() == Order.OrderType.LimitSwap) {
+            _validateFrozenOrderKeeper(keeper);
+        }
 
         FeatureUtils.validateFeature(params.dataStore, Keys.executeOrderFeatureKey(address(this), uint256(params.order.orderType())));
 
@@ -172,9 +191,6 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
             params.order.isLong()
         );
 
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(params.dataStore, params.order);
-        GasUtils.validateExecutionFee(params.dataStore, estimatedGasLimit, params.order.executionFee());
-
         _processOrder(params);
 
         GasUtils.payExecutionFee(
@@ -185,6 +201,8 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
             params.keeper,
             params.order.account()
         );
+
+        eventEmitter.emitOrderExecuted(params.key);
     }
 
     function _processOrder(OrderUtils.ExecuteOrderParams memory params) internal {
@@ -194,7 +212,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         }
 
         if (OrderUtils.isDecreaseOrder(params.order.orderType())) {
-            DecreaseOrderUtils.processOrder(params, false);
+            DecreaseOrderUtils.processOrder(params);
             return;
         }
 
@@ -219,6 +237,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         params.swapPathMarkets = MarketUtils.getMarkets(marketStore, params.order.swapPath());
 
         params.dataStore = dataStore;
+        params.eventEmitter = eventEmitter;
         params.orderStore = orderStore;
         params.positionStore = positionStore;
         params.oracle = oracle;
@@ -238,5 +257,45 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         OrderUtils.validateNonEmptyOrder(params.order);
 
         return params;
+    }
+
+    function _handleOrderError(bytes32 key, uint256 startingGas) internal {
+        Order.Props memory order = orderStore.get(key);
+        bool isMarketOrder = OrderUtils.isMarketOrder(order.orderType());
+
+        if (isMarketOrder) {
+            OrderUtils.cancelOrder(
+                dataStore,
+                eventEmitter,
+                orderStore,
+                key,
+                msg.sender,
+                startingGas
+            );
+        } else {
+            // freeze unfulfillable orders to prevent the order system from being gamed
+            // an example of gaming would be if a user creates a limit order
+            // with size greater than the available amount in the pool
+            // the user waits for their limit price to be hit, and if price
+            // moves in their favour after, they can deposit into the pool
+            // to allow the order to be executed then close the order for a profit
+            //
+            // frozen order keepers will have additional validations before executing
+            // frozen orders to prevent gaming
+            //
+            // alternatively, the user can call updateOrder to unfreeze the order
+            OrderUtils.freezeOrder(
+                dataStore,
+                eventEmitter,
+                orderStore,
+                key,
+                msg.sender,
+                startingGas
+            );
+        }
+    }
+
+    function _validateFrozenOrderKeeper(address keeper) internal view {
+        require(roleStore.hasRole(keeper, Role.FROZEN_ORDER_KEEPER), Keys.FROZEN_ORDER_ERROR);
     }
 }

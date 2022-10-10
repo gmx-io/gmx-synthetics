@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "../data/DataStore.sol";
+import "../events/EventEmitter.sol";
 import "../bank/StrictBank.sol";
 
 import "../deposit/Deposit.sol";
@@ -26,6 +27,8 @@ import "../fee/FeeUtils.sol";
 import "../utils/Calc.sol";
 import "../utils/Precision.sol";
 
+import "hardhat/console.sol";
+
 library MarketUtils {
     using SafeCast for int256;
 
@@ -43,56 +46,6 @@ library MarketUtils {
         uint256 longTokenPrice;
         uint256 shortTokenPrice;
     }
-
-    event PoolAmountIncrease(
-        address market,
-        address token,
-        uint256 amount
-    );
-
-    event PoolAmountDecrease(
-        address market,
-        address token,
-        uint256 amount
-    );
-
-    event ImpactPoolAmountIncreased(
-        address market,
-        address token,
-        uint256 amount
-    );
-
-    event ImpactPoolAmountDecreased(
-        address market,
-        address token,
-        uint256 amount
-    );
-
-    event OpenInterestIncrease(
-        address market,
-        bool isLong,
-        uint256 sizeDeltaUsd
-    );
-
-    event OpenInterestDecrease(
-        address market,
-        bool isLong,
-        uint256 sizeDeltaUsd
-    );
-
-    event CollateralSumIncrease(
-        address market,
-        address collateralToken,
-        bool isLong,
-        uint256 collateralDeltaAmount
-    );
-
-    event CollateralSumDecrease(
-        address market,
-        address collateralToken,
-        bool isLong,
-        uint256 collateralDeltaAmount
-    );
 
     error EmptyMarket();
     error InsufficientPoolAmount(uint256 poolAmount, uint256 amount);
@@ -164,7 +117,7 @@ library MarketUtils {
         uint256 longTokenPrice,
         uint256 shortTokenPrice,
         uint256 indexTokenPrice
-    ) public view returns (uint256) {
+    ) internal view returns (uint256) {
         uint256 longTokenAmount = getPoolAmount(dataStore, market.marketToken, market.longToken);
         uint256 shortTokenAmount = getPoolAmount(dataStore, market.marketToken, market.shortToken);
 
@@ -188,6 +141,7 @@ library MarketUtils {
         return longPnl + shortPnl;
     }
 
+
     function getPnl(DataStore dataStore, address market, uint256 indexTokenPrice, bool isLong) internal view returns (int256) {
         int256 openInterest = getOpenInterest(dataStore, market, isLong).toInt256();
         uint256 openInterestInTokens = getOpenInterestInTokens(dataStore, market, isLong);
@@ -206,16 +160,28 @@ library MarketUtils {
         return dataStore.getUint(Keys.poolAmountKey(market, token));
     }
 
-    function increasePoolAmount(DataStore dataStore, address market, address token, uint256 amount) internal {
+    function increasePoolAmount(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address token,
+        uint256 amount
+    ) internal {
         dataStore.incrementUint(
             Keys.poolAmountKey(market, token),
             amount
         );
 
-        emit PoolAmountIncrease(market, token, amount);
+        eventEmitter.emitPoolAmountIncreased(market, token, amount);
     }
 
-    function decreasePoolAmount(DataStore dataStore, address market, address token, uint256 amount) internal {
+    function decreasePoolAmount(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address token,
+        uint256 amount
+    ) internal {
         bytes32 key = Keys.poolAmountKey(market, token);
         uint256 poolAmount = dataStore.getUint(key);
 
@@ -228,65 +194,103 @@ library MarketUtils {
             poolAmount - amount
         );
 
-        emit PoolAmountDecrease(market, token, amount);
+        eventEmitter.emitPoolAmountDecreased(market, token, amount);
     }
 
     function getImpactPoolAmount(DataStore dataStore, address market, address token) internal view returns (uint256) {
         return dataStore.getUint(Keys.impactPoolAmountKey(market, token));
     }
 
-    function increaseImpactPoolAmount(DataStore dataStore, address market, address token, uint256 amount) internal {
+    function increaseImpactPoolAmount(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address token,
+        uint256 amount
+    ) internal {
         dataStore.incrementUint(
             Keys.impactPoolAmountKey(market, token),
             amount
         );
 
-        emit ImpactPoolAmountIncreased(market, token, amount);
+        eventEmitter.emitImpactPoolAmountIncrease(market, token, amount);
     }
 
-    function decreaseImpactPoolAmount(DataStore dataStore, address market, address token, uint256 amount) internal {
+    function decreaseImpactPoolAmount(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address token,
+        uint256 amount
+    ) internal {
         dataStore.decrementUint(
             Keys.impactPoolAmountKey(market, token),
             amount
         );
 
-        emit ImpactPoolAmountDecreased(market, token, amount);
+        eventEmitter.emitImpactPoolAmountDecrease(market, token, amount);
     }
 
-    function increaseOpenInterest(DataStore dataStore, address market, bool isLong, uint256 sizeDeltaUsd) internal {
+    function increaseOpenInterest(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        bool isLong,
+        uint256 sizeDeltaUsd
+    ) internal {
         dataStore.incrementUint(
             Keys.openInterestKey(market, isLong),
             sizeDeltaUsd
         );
 
-        emit OpenInterestIncrease(market, isLong, sizeDeltaUsd);
+        eventEmitter.emitOpenInterestIncrease(market, isLong, sizeDeltaUsd);
     }
 
-    function decreaseOpenInterest(DataStore dataStore, address market, bool isLong, uint256 sizeDeltaUsd) internal {
+    function decreaseOpenInterest(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        bool isLong,
+        uint256 sizeDeltaUsd
+    ) internal {
         dataStore.decrementUint(
             Keys.openInterestKey(market, isLong),
             sizeDeltaUsd
         );
 
-        emit OpenInterestDecrease(market, isLong, sizeDeltaUsd);
+        eventEmitter.emitOpenInterestDecrease(market, isLong, sizeDeltaUsd);
     }
 
-    function increaseCollateralSum(DataStore dataStore, address market, address collateralToken, bool isLong, uint256 collateralDeltaAmount) internal {
+    function increaseCollateralSum(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address collateralToken,
+        bool isLong,
+        uint256 collateralDeltaAmount
+    ) internal {
         dataStore.incrementUint(
             Keys.collateralSumKey(market, collateralToken, isLong),
             collateralDeltaAmount
         );
 
-        emit CollateralSumIncrease(market, collateralToken, isLong, collateralDeltaAmount);
+        eventEmitter.emitCollateralSumIncrease(market, collateralToken, isLong, collateralDeltaAmount);
     }
 
-    function decreaseCollateralSum(DataStore dataStore, address market, address collateralToken, bool isLong, uint256 collateralDeltaAmount) internal {
+    function decreaseCollateralSum(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address collateralToken,
+        bool isLong,
+        uint256 collateralDeltaAmount
+    ) internal {
         dataStore.decrementUint(
             Keys.collateralSumKey(market, collateralToken, isLong),
             collateralDeltaAmount
         );
 
-        emit CollateralSumDecrease(market, collateralToken, isLong, collateralDeltaAmount);
+        eventEmitter.emitCollateralSumDecrease(market, collateralToken, isLong, collateralDeltaAmount);
     }
 
     // in case of late liquidations, there may be insufficient collateral to pay for funding fees
@@ -340,11 +344,18 @@ library MarketUtils {
 
         uint256 reservedUsd;
         if (isLong) {
-            // for longs calculate the reserved USD based on the open interest and currentValue indexTokenPrice
+            // for longs calculate the reserved USD based on the open interest and current indexTokenPrice
+            // this works well for e.g. an ETH / USD market with long collateral token as WETH
+            // the available amount to be reserved would scale with the price of ETH
+            // this also works for e.g. a SOL / USD market with long collateral token as WETH
+            // if the price of SOL increases more than the price of ETH, additional amounts would be
+            // automatically reserved
             uint256 openInterestInTokens = getOpenInterestInTokens(dataStore, market.marketToken, isLong);
             reservedUsd = openInterestInTokens * prices.indexTokenPrice;
         } else {
             // for shorts use the open interest as the reserved USD value
+            // this works well for e.g. an ETH / USD market with short collateral token as USDC
+            // the available amount to be reserved would not change with the price of ETH
             reservedUsd = getOpenInterest(dataStore, market.marketToken, isLong);
         }
 
@@ -355,31 +366,34 @@ library MarketUtils {
 
     function applyNegativeImpact(
         DataStore dataStore,
+        EventEmitter eventEmitter,
         address market,
         address token,
         uint256 tokenPrice,
-        int256 usdAdjustment
+        int256 priceImpactUsd
     ) internal returns (uint256) {
-        uint256 impactAmount = SafeCast.toUint256(-usdAdjustment) / tokenPrice;
-        increaseImpactPoolAmount(dataStore, market, token, impactAmount);
+        uint256 impactAmount = SafeCast.toUint256(-priceImpactUsd) / tokenPrice;
+        increaseImpactPoolAmount(dataStore, eventEmitter, market, token, impactAmount);
+
         return impactAmount;
     }
 
     function applyPositiveImpact(
         DataStore dataStore,
+        EventEmitter eventEmitter,
         address market,
         address token,
         uint256 tokenPrice,
-        int256 usdAdjustment
+        int256 priceImpactUsd
     ) internal returns (uint256) {
-        uint256 impactAmount = SafeCast.toUint256(usdAdjustment) / tokenPrice;
+        uint256 impactAmount = SafeCast.toUint256(priceImpactUsd) / tokenPrice;
         uint256 maxImpactAmount = getImpactPoolAmount(dataStore, market, token);
 
         if (impactAmount > maxImpactAmount) {
             impactAmount = maxImpactAmount;
         }
 
-        decreaseImpactPoolAmount(dataStore, market, token, impactAmount);
+        decreaseImpactPoolAmount(dataStore, eventEmitter, market, token, impactAmount);
 
         return impactAmount;
     }
@@ -402,6 +416,14 @@ library MarketUtils {
 
     function getOpenInterestInTokens(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
         return dataStore.getUint(Keys.openInterestInTokensKey(market, isLong));
+    }
+
+    // getOpenInterestInTokens * tokenPrice would not reflect pending positive pnl
+    // from short positions, getOpenInterestWithPnl should be used if that info is needed
+    function getOpenInterestWithPnl(DataStore dataStore, address market, uint256 indexTokenPrice, bool isLong) internal view returns (uint256) {
+        uint256 openInterest = getOpenInterest(dataStore, market, isLong);
+        int256 pnl = getPnl(dataStore, market, indexTokenPrice, isLong);
+        return Calc.sum(openInterest, pnl);
     }
 
     function getCollateralSum(DataStore dataStore, address market, address collateralToken,  bool isLong) internal view returns (uint256) {
@@ -464,7 +486,7 @@ library MarketUtils {
         uint256 prevPositionBorrowingFactor,
         uint256 nextPositionSizeInUsd,
         uint256 nextPositionBorrowingFactor
-    ) external {
+    ) internal {
         uint256 totalBorrowing = getNextTotalBorrowing(
             dataStore,
             market,
@@ -500,27 +522,28 @@ library MarketUtils {
 
         uint256 longOpenInterest = getOpenInterest(dataStore, market, true);
         uint256 shortOpenInterest = getOpenInterest(dataStore, market, false);
-        uint256 diffUsd = Calc.diff(longOpenInterest, shortOpenInterest);
-
-        if (longOpenInterest + shortOpenInterest == 0) {
-            return (0, 0);
-        }
-
-        int256 adjustedFactor = (fundingFactor * diffUsd / (longOpenInterest + shortOpenInterest) * durationInSeconds).toInt256();
 
         int256 longFundingFactor = getCumulativeFundingFactor(dataStore, market, true);
         int256 shortFundingFactor = getCumulativeFundingFactor(dataStore, market, false);
 
-        if (longOpenInterest < shortOpenInterest) {
-            // positive funding fee for long positions
-            longFundingFactor -= adjustedFactor;
-            // negative funding fee for short positions
-            shortFundingFactor += getCappedFundingFactor(adjustedFactor, longOpenInterest, shortOpenInterest, durationInSeconds);
-        } else {
-            // positive funding fee for short positions
-            shortFundingFactor -= adjustedFactor;
+        if (longOpenInterest == 0 || shortOpenInterest == 0) {
+            return (longFundingFactor, shortFundingFactor);
+        }
+
+        uint256 diffUsd = Calc.diff(longOpenInterest, shortOpenInterest);
+        uint256 totalOpenInterest = longOpenInterest + shortOpenInterest;
+        int256 adjustedFactor = (fundingFactor * diffUsd / totalOpenInterest * durationInSeconds).toInt256();
+
+        if (longOpenInterest > shortOpenInterest) {
             // negative funding fee for long positions
-            longFundingFactor += getCappedFundingFactor(adjustedFactor, shortOpenInterest, longOpenInterest, durationInSeconds);
+            longFundingFactor += adjustedFactor;
+            // capped positive funding fee for short positions
+            shortFundingFactor -= getCappedFundingFactor(adjustedFactor, longOpenInterest, shortOpenInterest, durationInSeconds);
+        } else {
+            // negative funding fee for short positions
+            shortFundingFactor += adjustedFactor;
+            // positive funding fee for long positions
+            longFundingFactor -= getCappedFundingFactor(adjustedFactor, shortOpenInterest, longOpenInterest, durationInSeconds);
         }
 
         return (longFundingFactor, shortFundingFactor);
@@ -535,17 +558,19 @@ library MarketUtils {
         uint256 durationInSeconds = getSecondsSinceCumulativeBorrowingFactorUpdated(dataStore, market.marketToken, isLong);
         uint256 borrowingFactor = getBorrowingFactor(dataStore, market.marketToken, isLong);
 
-        uint256 openInterest = getOpenInterest(dataStore, market.marketToken, isLong);
+        uint256 openInterestWithPnl = getOpenInterestWithPnl(dataStore, market.marketToken, prices.indexTokenPrice, isLong);
+
         uint256 poolAmount = getPoolAmount(dataStore, market.marketToken, isLong ? market.longToken : market.shortToken);
         uint256 poolTokenPrice = isLong ? prices.longTokenPrice : prices.shortTokenPrice;
         uint256 poolUsd = poolAmount * poolTokenPrice;
-        uint256 adjustedFactor = borrowingFactor * openInterest / poolUsd;
-        adjustedFactor = adjustedFactor * durationInSeconds;
+
+        uint256 adjustedFactor = durationInSeconds * borrowingFactor * openInterestWithPnl / poolUsd;
         uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, market.marketToken, isLong);
 
         return cumulativeBorrowingFactor + adjustedFactor;
     }
 
+    // cap the max factor to avoid overflow
     function getCappedFundingFactor(
         int256 adjustedFactor,
         uint256 multiplier,

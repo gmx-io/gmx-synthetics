@@ -10,8 +10,8 @@ library Deposit {
         uint256 shortTokenAmount;
         uint256 minMarketTokens;
         uint256 updatedAtBlock;
-        bool hasCollateralInETH;
+        bool shouldConvertETH;
         uint256 executionFee;
-        bytes32[] data;
+        bytes data;
     }
 }

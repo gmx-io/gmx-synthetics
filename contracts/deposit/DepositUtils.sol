@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../data/DataStore.sol";
+import "../events/EventEmitter.sol";
 
 import "./DepositStore.sol";
 import "../market/MarketStore.sol";
@@ -16,6 +17,7 @@ import "../gas/GasUtils.sol";
 import "../eth/EthUtils.sol";
 
 import "../utils/Array.sol";
+import "../utils/Null.sol";
 
 library DepositUtils {
     using SafeCast for uint256;
@@ -23,18 +25,20 @@ library DepositUtils {
 
     struct CreateDepositParams {
         DataStore dataStore;
+        EventEmitter eventEmitter;
         DepositStore depositStore;
         MarketStore marketStore;
         address account;
         address market;
         uint256 minMarketTokens;
-        bool hasCollateralInETH;
+        bool shouldConvertETH;
         uint256 executionFee;
         address weth;
     }
 
     struct ExecuteDepositParams {
         DataStore dataStore;
+        EventEmitter eventEmitter;
         DepositStore depositStore;
         MarketStore marketStore;
         Oracle oracle;
@@ -53,12 +57,12 @@ library DepositUtils {
         uint256 tokenInPrice;
         uint256 tokenOutPrice;
         uint256 amount;
-        int256 usdAdjustment;
+        int256 priceImpactUsd;
     }
 
     error MinMarketTokens(uint256 received, uint256 expected);
 
-    function createDeposit(CreateDepositParams memory params) external returns (bytes32) {
+    function createDeposit(CreateDepositParams memory params) internal returns (bytes32) {
         Market.Props memory market = params.marketStore.get(params.market);
         MarketUtils.validateNonEmptyMarket(market);
 
@@ -81,9 +85,9 @@ library DepositUtils {
             shortTokenAmount,
             params.minMarketTokens,
             block.number,
-            params.hasCollateralInETH,
+            params.shouldConvertETH,
             params.executionFee,
-            new bytes32[](0)
+            Null.BYTES
         );
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteDepositGasLimit(params.dataStore, deposit);
@@ -93,6 +97,8 @@ library DepositUtils {
         bytes32 key = keccak256(abi.encodePacked(nonce));
 
         params.depositStore.set(key, deposit);
+
+        params.eventEmitter.emitDepositCreated(key, deposit);
 
         return key;
     }
@@ -115,8 +121,8 @@ library DepositUtils {
 
         uint256 receivedMarketTokens;
 
-        int256 usdAdjustment = SwapPricingUtils.getSwapPricing(
-            SwapPricingUtils.GetSwapPricingParams(
+        int256 priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(
+            SwapPricingUtils.GetPriceImpactUsdParams(
                 params.dataStore,
                 market.marketToken,
                 market.longToken,
@@ -146,7 +152,7 @@ library DepositUtils {
                 longTokenPrice,
                 shortTokenPrice,
                 deposit.longTokenAmount,
-                usdAdjustment * longTokenUsd.toInt256() / (longTokenUsd + shortTokenUsd).toInt256()
+                priceImpactUsd * longTokenUsd.toInt256() / (longTokenUsd + shortTokenUsd).toInt256()
             );
 
             receivedMarketTokens += _executeDeposit(params, _params);
@@ -163,7 +169,7 @@ library DepositUtils {
                 shortTokenPrice,
                 longTokenPrice,
                 deposit.shortTokenAmount,
-                usdAdjustment * shortTokenUsd.toInt256() / (longTokenUsd + shortTokenUsd).toInt256()
+                priceImpactUsd * shortTokenUsd.toInt256() / (longTokenUsd + shortTokenUsd).toInt256()
             );
 
             receivedMarketTokens += _executeDeposit(params, _params);
@@ -183,10 +189,13 @@ library DepositUtils {
             params.keeper,
             deposit.account
         );
+
+        params.eventEmitter.emitDepositExecuted(params.key);
     }
 
     function cancelDeposit(
         DataStore dataStore,
+        EventEmitter eventEmitter,
         DepositStore depositStore,
         MarketStore marketStore,
         bytes32 key,
@@ -203,7 +212,7 @@ library DepositUtils {
                 market.longToken,
                 deposit.longTokenAmount,
                 deposit.account,
-                deposit.hasCollateralInETH
+                deposit.shouldConvertETH
             );
         }
 
@@ -213,7 +222,7 @@ library DepositUtils {
                 market.shortToken,
                 deposit.shortTokenAmount,
                 deposit.account,
-                deposit.hasCollateralInETH
+                deposit.shouldConvertETH
             );
         }
 
@@ -227,6 +236,8 @@ library DepositUtils {
             keeper,
             deposit.account
         );
+
+        eventEmitter.emitDepositCancelled(key);
     }
 
     function _executeDeposit(ExecuteDepositParams memory params, _ExecuteDepositParams memory _params) internal returns (uint256) {
@@ -244,6 +255,8 @@ library DepositUtils {
             fees.feeReceiverAmount,
             FeeUtils.DEPOSIT_FEE
         );
+
+        params.eventEmitter.emitSwapFeesCollected(keccak256(abi.encodePacked("deposit")), fees);
 
         return _processDeposit(params, _params, fees.amountAfterFees, fees.feesForPool);
     }
@@ -265,23 +278,24 @@ library DepositUtils {
         );
         uint256 supply = MarketUtils.getMarketTokenSupply(MarketToken(_params.market.marketToken));
 
-        if (_params.usdAdjustment > 0) {
+        if (_params.priceImpactUsd > 0) {
             // when there is a positive price impact factor,
             // tokens from the swap impact pool are used to mint additional market tokens for the user
             // for example, if 50,000 USDC is deposited and there is a positive price impact
             // an additional 0.005 ETH may be used to mint market tokens
             // the swap impact pool is decreased by the used amount
             //
-            // usdAdjustment is calculated based on pricing assuming only depositAmount of tokenIn
+            // priceImpactUsd is calculated based on pricing assuming only depositAmount of tokenIn
             // was added to the pool
             // since impactAmount of tokenOut is added to the pool here, the calculation of
             // the tokenInPrice would not be entirely accurate
             uint256 positiveImpactAmount = MarketUtils.applyPositiveImpact(
                 params.dataStore,
+                params.eventEmitter,
                 _params.market.marketToken,
                 _params.tokenOut,
                 _params.tokenOutPrice,
-                _params.usdAdjustment
+                _params.priceImpactUsd
             );
 
             // calculate the usd amount using positiveImpactAmount since it may
@@ -293,7 +307,13 @@ library DepositUtils {
             );
 
             // deposit the token out, that was withdrawn from the impact pool, to mint market tokens
-            MarketUtils.increasePoolAmount(params.dataStore, _params.market.marketToken, _params.tokenOut, positiveImpactAmount);
+            MarketUtils.increasePoolAmount(
+                params.dataStore,
+                params.eventEmitter,
+                _params.market.marketToken,
+                _params.tokenOut,
+                positiveImpactAmount
+            );
         } else {
             // when there is a negative price impact factor,
             // less of the deposit amount is used to mint market tokens
@@ -302,16 +322,23 @@ library DepositUtils {
             // the remaining 0.005 ETH will be stored in the swap impact pool
             uint256 negativeImpactAmount = MarketUtils.applyNegativeImpact(
                 params.dataStore,
+                params.eventEmitter,
                 _params.market.marketToken,
                 _params.tokenIn,
                 _params.tokenInPrice,
-                _params.usdAdjustment
+                _params.priceImpactUsd
             );
             amountAfterFees -= negativeImpactAmount;
         }
 
         mintAmount += MarketUtils.usdToMarketTokenAmount(amountAfterFees * _params.tokenInPrice, poolValue, supply);
-        MarketUtils.increasePoolAmount(params.dataStore, _params.market.marketToken, _params.tokenIn, amountAfterFees + feesForPool);
+        MarketUtils.increasePoolAmount(
+            params.dataStore,
+            params.eventEmitter,
+            _params.market.marketToken,
+            _params.tokenIn,
+            amountAfterFees + feesForPool
+        );
 
         MarketToken(_params.market.marketToken).mint(_params.account, mintAmount);
 

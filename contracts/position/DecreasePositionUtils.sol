@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "../utils/Precision.sol";
 
 import "../data/DataStore.sol";
+import "../events/EventEmitter.sol";
 import "../fee/FeeReceiver.sol";
 
 import "../oracle/Oracle.sol";
@@ -13,6 +14,7 @@ import "../pricing/PositionPricingUtils.sol";
 import "./Position.sol";
 import "./PositionStore.sol";
 import "./PositionUtils.sol";
+import "../order/OrderUtils.sol";
 
 library DecreasePositionUtils {
     using Position for Position.Props;
@@ -22,6 +24,7 @@ library DecreasePositionUtils {
 
     struct DecreasePositionParams {
         DataStore dataStore;
+        EventEmitter eventEmitter;
         PositionStore positionStore;
         Oracle oracle;
         FeeReceiver feeReceiver;
@@ -30,7 +33,6 @@ library DecreasePositionUtils {
         Position.Props position;
         bytes32 positionKey;
         uint256 adjustedSizeDeltaUsd;
-        bool forLiquidation;
     }
 
     struct ProcessCollateralValues {
@@ -40,12 +42,23 @@ library DecreasePositionUtils {
         uint256 sizeDeltaInTokens;
     }
 
-    function decreasePosition(DecreasePositionParams memory params) external returns (uint256, uint256) {
+    error InvalidLiquidation();
+
+    function decreasePosition(DecreasePositionParams memory params) internal returns (uint256, uint256) {
         Position.Props memory position = params.position;
         MarketUtils.MarketPrices memory prices = MarketUtils.getPricesForPosition(
             params.market,
             params.oracle
         );
+
+        if (OrderUtils.isLiquidationOrder(params.order.orderType()) && !PositionUtils.isPositionLiquidatable(
+            params.dataStore,
+            position,
+            params.market,
+            prices
+        )) {
+            revert InvalidLiquidation();
+        }
 
         MarketUtils.updateCumulativeFundingFactors(params.dataStore, params.market.marketToken);
         MarketUtils.updateCumulativeBorrowingFactor(
@@ -56,7 +69,12 @@ library DecreasePositionUtils {
         );
 
         if (params.adjustedSizeDeltaUsd > position.sizeInUsd) {
-            params.adjustedSizeDeltaUsd = position.sizeInUsd;
+            if (params.order.orderType() == Order.OrderType.LimitDecrease ||
+                params.order.orderType() == Order.OrderType.StopLossDecrease) {
+                params.adjustedSizeDeltaUsd = position.sizeInUsd;
+            } else {
+                revert("DecreasePositionUtils: Invalid order size");
+            }
         }
 
         uint256 initialCollateralAmount = position.collateralAmount;
@@ -113,6 +131,7 @@ library DecreasePositionUtils {
 
         MarketUtils.decreaseCollateralSum(
             params.dataStore,
+            params.eventEmitter,
             params.order.market(),
             params.order.initialCollateralToken(),
             params.order.isLong(),
@@ -120,7 +139,13 @@ library DecreasePositionUtils {
         );
 
         if (params.adjustedSizeDeltaUsd > 0) {
-            MarketUtils.decreaseOpenInterest(params.dataStore, params.order.market(), params.order.isLong(), params.adjustedSizeDeltaUsd);
+            MarketUtils.decreaseOpenInterest(
+                params.dataStore,
+                params.eventEmitter,
+                params.order.market(),
+                params.order.isLong(),
+                params.adjustedSizeDeltaUsd
+            );
             // since sizeDeltaInTokens is rounded down, when positions are closed for tokens with
             // a small number of decimals, the price of the market tokens may increase
             MarketUtils.updateOpenInterestInTokens(
@@ -133,12 +158,26 @@ library DecreasePositionUtils {
 
         int256 poolDeltaAmount = fees.feesForPool.toInt256() - values.realizedPnlAmount;
         if (poolDeltaAmount > 0) {
-            MarketUtils.increasePoolAmount(params.dataStore, params.market.marketToken, params.order.initialCollateralToken(), poolDeltaAmount.toUint256());
+            MarketUtils.increasePoolAmount(
+                params.dataStore,
+                params.eventEmitter,
+                params.market.marketToken,
+                params.order.initialCollateralToken(),
+                poolDeltaAmount.toUint256()
+            );
         } else {
-            MarketUtils.decreasePoolAmount(params.dataStore, params.market.marketToken, params.order.initialCollateralToken(), (-poolDeltaAmount).toUint256());
+            MarketUtils.decreasePoolAmount(
+                params.dataStore,
+                params.eventEmitter,
+                params.market.marketToken,
+                params.order.initialCollateralToken(),
+                (-poolDeltaAmount).toUint256()
+            );
         }
 
         require(values.outputAmount >= 0, "DecreasePositionUtils: invalid outputAmount");
+
+        params.eventEmitter.emitPositionFeesCollected(false, fees);
 
         return (values.outputAmount.toUint256(), params.adjustedSizeDeltaUsd);
     }
@@ -177,7 +216,7 @@ library DecreasePositionUtils {
             collateralTokenPrice
         );
 
-        if (params.forLiquidation && remainingCollateralAmount + values.realizedPnlAmount < 0) {
+        if (OrderUtils.isLiquidationOrder(params.order.orderType()) && remainingCollateralAmount + values.realizedPnlAmount < 0) {
             PositionPricingUtils.PositionFees memory emptyFees;
             ProcessCollateralValues memory emptyValues = ProcessCollateralValues(
                 0, // remainingCollateralAmount
@@ -232,8 +271,8 @@ library DecreasePositionUtils {
     ) internal returns (PositionPricingUtils.PositionFees memory) {
         uint256 collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.order.initialCollateralToken(), params.market, prices);
 
-        int256 usdAdjustment = PositionPricingUtils.getPositionPricing(
-            PositionPricingUtils.GetPositionPricingParams(
+        int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
+            PositionPricingUtils.GetPriceImpactUsdParams(
                 params.dataStore,
                 params.market.marketToken,
                 params.market.longToken,
@@ -245,8 +284,8 @@ library DecreasePositionUtils {
             )
         );
 
-        if (usdAdjustment < params.order.acceptableUsdAdjustment()) {
-            revert(Keys.UNACCEPTABLE_USD_ADJUSTMENT_ERROR);
+        if (priceImpactUsd < params.order.acceptablePriceImpactUsd()) {
+            OrderUtils.revertUnacceptablePriceImpactUsd(priceImpactUsd, params.order.acceptablePriceImpactUsd());
         }
 
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
@@ -257,8 +296,8 @@ library DecreasePositionUtils {
             Keys.FEE_RECEIVER_POSITION_FACTOR
         );
 
-        if (params.forLiquidation) {
-            int256 adjustmentAmount = usdAdjustment / collateralTokenPrice.toInt256();
+        if (OrderUtils.isLiquidationOrder(params.order.orderType())) {
+            int256 adjustmentAmount = priceImpactUsd / collateralTokenPrice.toInt256();
             int256 totalNetCostAmount = fees.totalNetCostAmount + adjustmentAmount;
 
             // return empty fees and do not apply price impact since there is
@@ -277,7 +316,7 @@ library DecreasePositionUtils {
             FeeUtils.POSITION_FEE
         );
 
-        if (usdAdjustment > 0) {
+        if (priceImpactUsd > 0) {
             // when there is a positive price impact factor, additional tokens from the swap impact pool
             // are withdrawn for the user
             // for example, if 50,000 USDC is withdrawn and there is a positive price impact
@@ -285,10 +324,11 @@ library DecreasePositionUtils {
             // the swap impact pool is decreased by the used amount
             uint256 positiveImpactAmount = MarketUtils.applyPositiveImpact(
                 params.dataStore,
+                params.eventEmitter,
                 params.market.marketToken,
                 params.order.initialCollateralToken(),
                 collateralTokenPrice,
-                usdAdjustment
+                priceImpactUsd
             );
 
             fees.totalNetCostAmount += positiveImpactAmount.toInt256();
@@ -300,10 +340,11 @@ library DecreasePositionUtils {
             // the difference of 0.005 ETH will be stored in the swap impact pool
             uint256 negativeImpactAmount = MarketUtils.applyNegativeImpact(
                 params.dataStore,
+                params.eventEmitter,
                 params.market.marketToken,
                 params.order.initialCollateralToken(),
                 collateralTokenPrice,
-                usdAdjustment
+                priceImpactUsd
             );
 
             fees.totalNetCostAmount -= negativeImpactAmount.toInt256();

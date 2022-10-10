@@ -17,8 +17,6 @@ library Keys {
     bytes32 public constant UPDATE_ORDER_FEATURE = keccak256("UPDATE_ORDER_FEATURE");
     bytes32 public constant CANCEL_ORDER_FEATURE = keccak256("CANCEL_ORDER_FEATURE");
 
-    bytes32 public constant LIQUIDATE_POSITION_FEATURE = keccak256("LIQUIDATE_POSITION_FEATURE");
-
     // the minimum required oracle signers for an observation
     bytes32 public constant MIN_ORACLE_SIGNERS = keccak256("MIN_ORACLE_SIGNERS");
     // the minimum block confirmations before blockhash can be excluded for oracle signature validation
@@ -83,11 +81,8 @@ library Keys {
     string public constant EMPTY_POSITION_ERROR = "EMPTY_POSITION_ERROR";
     bytes32 public constant EMPTY_POSITION_ERROR_KEY = keccak256(abi.encodePacked(EMPTY_POSITION_ERROR));
 
-    string public constant UNACCEPTABLE_USD_ADJUSTMENT_ERROR = "UNACCEPTABLE_USD_ADJUSTMENT_ERROR";
-    bytes32 public constant UNACCEPTABLE_USD_ADJUSTMENT_ERROR_KEY = keccak256(abi.encodePacked(UNACCEPTABLE_USD_ADJUSTMENT_ERROR));
-
-    string public constant INSUFFICIENT_SWAP_OUTPUT_AMOUNT_ERROR = "INSUFFICIENT_SWAP_OUTPUT_AMOUNT_ERROR";
-    bytes32 public constant INSUFFICIENT_SWAP_OUTPUT_AMOUNT_ERROR_KEY = keccak256(abi.encodePacked(INSUFFICIENT_SWAP_OUTPUT_AMOUNT_ERROR));
+    string public constant FROZEN_ORDER_ERROR = "FROZEN_ORDER_ERROR";
+    bytes32 public constant FROZEN_ORDER_ERROR_KEY = keccak256(abi.encodePacked(FROZEN_ORDER_ERROR));
 
     function depositGasLimitKey(bool singleToken) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(
@@ -185,13 +180,6 @@ library Keys {
             CANCEL_ORDER_FEATURE,
             module,
             orderType
-        ));
-    }
-
-    function liquidatePositionFeatureKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
-            LIQUIDATE_POSITION_FEATURE,
-            module
         ));
     }
 

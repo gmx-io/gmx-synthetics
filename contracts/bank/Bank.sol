@@ -22,9 +22,9 @@ contract Bank is RoleModule {
         address token,
         uint256 amount,
         address receiver,
-        bool hasCollateralInETH
+        bool shouldConvertETH
     ) external onlyController {
-        if (token == weth && hasCollateralInETH) {
+        if (token == weth && shouldConvertETH) {
             _transferOutEth(token, amount, receiver);
         } else {
             _transferOut(token, amount, receiver);

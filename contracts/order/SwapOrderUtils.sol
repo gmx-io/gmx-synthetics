@@ -32,6 +32,7 @@ library SwapOrderUtils {
 
         (address tokenOut, uint256 outputAmount) = SwapUtils.swap(SwapUtils.SwapParams(
             params.dataStore,
+            params.eventEmitter,
             params.oracle,
             params.feeReceiver,
             params.order.initialCollateralToken(),
@@ -48,7 +49,7 @@ library SwapOrderUtils {
             tokenOut,
             outputAmount,
             order.account(),
-            order.hasCollateralInETH()
+            order.shouldConvertETH()
         );
     }
 }

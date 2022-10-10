@@ -8,6 +8,6 @@ library Market {
         address indexToken;
         address longToken;
         address shortToken;
-        bytes32[] data;
+        bytes data;
     }
 }

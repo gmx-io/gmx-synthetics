@@ -13,20 +13,21 @@ import "../exchange/OrderHandler.sol";
 import "./Router.sol";
 
 // for functions which require token transfers from the user
-contract ExchangeRouter is ReentrancyGuard {
+contract ExchangeRouter is ReentrancyGuard, RoleModule {
     using SafeERC20 for IERC20;
 
-    Router public router;
-    DataStore public dataStore;
-    DepositHandler public depositHandler;
-    WithdrawalHandler public withdrawalHandler;
-    OrderHandler public orderHandler;
-    DepositStore public depositStore;
-    WithdrawalStore public withdrawalStore;
-    OrderStore public orderStore;
+    Router immutable router;
+    DataStore immutable dataStore;
+    DepositHandler immutable depositHandler;
+    WithdrawalHandler immutable withdrawalHandler;
+    OrderHandler immutable orderHandler;
+    DepositStore immutable depositStore;
+    WithdrawalStore immutable withdrawalStore;
+    OrderStore immutable orderStore;
 
     constructor(
         Router _router,
+        RoleStore _roleStore,
         DataStore _dataStore,
         DepositHandler _depositHandler,
         WithdrawalHandler _withdrawalHandler,
@@ -34,7 +35,7 @@ contract ExchangeRouter is ReentrancyGuard {
         DepositStore _depositStore,
         WithdrawalStore _withdrawalStore,
         OrderStore _orderStore
-    ) {
+    ) RoleModule(_roleStore) {
         router = _router;
         dataStore = _dataStore;
 
@@ -54,13 +55,13 @@ contract ExchangeRouter is ReentrancyGuard {
         uint256 longTokenAmount,
         uint256 shortTokenAmount,
         uint256 minMarketTokens,
-        bool hasCollateralInETH,
+        bool shouldConvertETH,
         uint256 executionFee
     ) nonReentrant external payable returns (bytes32) {
         address account = msg.sender;
         address _depositStore = address(depositStore);
 
-        _sendWeth(_depositStore);
+        EthUtils.sendWeth(dataStore, _depositStore);
 
         if (longTokenAmount > 0) {
             router.pluginTransfer(longToken, account, _depositStore, longTokenAmount);
@@ -73,7 +74,7 @@ contract ExchangeRouter is ReentrancyGuard {
             account,
             _market,
             minMarketTokens,
-            hasCollateralInETH,
+            shouldConvertETH,
             executionFee
         );
     }
@@ -84,12 +85,12 @@ contract ExchangeRouter is ReentrancyGuard {
         uint256 marketTokensShortAmount,
         uint256 minLongTokenAmount,
         uint256 minShortTokenAmount,
-        bool hasCollateralInETH,
+        bool shouldConvertETH,
         uint256 executionFee
     ) nonReentrant external payable returns (bytes32) {
         address account = msg.sender;
 
-        _sendWeth(address(withdrawalStore));
+        EthUtils.sendWeth(dataStore, address(withdrawalStore));
 
         return withdrawalHandler.createWithdrawal(
             account,
@@ -98,7 +99,7 @@ contract ExchangeRouter is ReentrancyGuard {
             marketTokensShortAmount,
             minLongTokenAmount,
             minShortTokenAmount,
-            hasCollateralInETH,
+            shouldConvertETH,
             executionFee
         );
     }
@@ -109,11 +110,23 @@ contract ExchangeRouter is ReentrancyGuard {
     ) nonReentrant external payable returns (bytes32) {
         address account = msg.sender;
 
-        _sendWeth(address(orderStore));
+        EthUtils.sendWeth(dataStore, address(orderStore));
 
         if (amountIn > 0) {
             router.pluginTransfer(params.initialCollateralToken, account, address(orderStore), amountIn);
         }
+
+        return orderHandler.createOrder(
+            account,
+            params
+        );
+    }
+
+    function createLiquidation(
+        OrderUtils.CreateOrderParams memory params,
+        address account
+    ) nonReentrant external onlyLiquidationKeeper returns (bytes32) {
+        require(params.orderType == Order.OrderType.Liquidation, "ExchangeRouter: invalid order type");
 
         return orderHandler.createOrder(
             account,

@@ -14,6 +14,6 @@ library Position {
         int256 fundingFactor;
         uint256 borrowingFactor;
         uint256 increasedAtBlock;
-        bytes32[] data;
+        bytes data;
     }
 }

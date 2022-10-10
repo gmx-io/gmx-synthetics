@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../data/DataStore.sol";
+import "../events/EventEmitter.sol";
 import "../oracle/Oracle.sol";
 import "../pricing/SwapPricingUtils.sol";
 
@@ -11,6 +12,7 @@ library SwapUtils {
 
     struct SwapParams {
         DataStore dataStore;
+        EventEmitter eventEmitter;
         Oracle oracle;
         FeeReceiver feeReceiver;
         address tokenIn;
@@ -36,8 +38,10 @@ library SwapUtils {
         uint256 poolAmountOut;
     }
 
+    error InsufficientSwapOutputAmount(uint256 outputAmount, uint256 minOutputAmount);
+
     // returns tokenOut, outputAmount
-    function swap(SwapParams memory params) external returns (address, uint256) {
+    function swap(SwapParams memory params) internal returns (address, uint256) {
         address tokenOut = params.tokenIn;
         uint256 outputAmount = params.amountIn;
 
@@ -61,7 +65,7 @@ library SwapUtils {
         }
 
         if (outputAmount < params.minOutputAmount) {
-            revert(Keys.INSUFFICIENT_SWAP_OUTPUT_AMOUNT_ERROR);
+            revert InsufficientSwapOutputAmount(outputAmount, params.minOutputAmount);
         }
 
         return (tokenOut, outputAmount);
@@ -89,18 +93,20 @@ library SwapUtils {
             FeeUtils.SWAP_FEE
         );
 
-        int256 usdAdjustment = SwapPricingUtils.getSwapPricing(SwapPricingUtils.GetSwapPricingParams(
-            params.dataStore,
-            _params.market.marketToken,
-            _params.tokenIn,
-            cache.tokenOut,
-            cache.tokenInPrice,
-            cache.tokenOutPrice,
-            (fees.amountAfterFees * cache.tokenInPrice).toInt256(),
-            -(fees.amountAfterFees * cache.tokenInPrice).toInt256()
-        ));
+        int256 priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(
+            SwapPricingUtils.GetPriceImpactUsdParams(
+                params.dataStore,
+                _params.market.marketToken,
+                _params.tokenIn,
+                cache.tokenOut,
+                cache.tokenInPrice,
+                cache.tokenOutPrice,
+                (fees.amountAfterFees * cache.tokenInPrice).toInt256(),
+                -(fees.amountAfterFees * cache.tokenInPrice).toInt256()
+            )
+        );
 
-        if (usdAdjustment > 0) {
+        if (priceImpactUsd > 0) {
             cache.amountIn = fees.amountAfterFees;
             cache.amountOut = cache.amountIn * cache.tokenInPrice / cache.tokenOutPrice;
             cache.poolAmountOut = cache.amountOut;
@@ -112,10 +118,11 @@ library SwapUtils {
             // the swap impact pool is decreased by the used amount
             uint256 positiveImpactAmount = MarketUtils.applyPositiveImpact(
                 params.dataStore,
+                params.eventEmitter,
                 _params.market.marketToken,
                 cache.tokenOut,
                 cache.tokenOutPrice,
-                usdAdjustment
+                priceImpactUsd
             );
 
             cache.amountOut += positiveImpactAmount;
@@ -127,10 +134,11 @@ library SwapUtils {
             // the remaining 0.005 ETH will be stored in the swap impact pool
             uint256 negativeImpactAmount = MarketUtils.applyNegativeImpact(
                 params.dataStore,
+                params.eventEmitter,
                 _params.market.marketToken,
                 _params.tokenIn,
                 cache.tokenInPrice,
-                usdAdjustment
+                priceImpactUsd
             );
 
             cache.amountIn = fees.amountAfterFees - negativeImpactAmount;
@@ -142,8 +150,20 @@ library SwapUtils {
             MarketToken(_params.market.marketToken).transferOut(cache.tokenOut, cache.poolAmountOut, _params.receiver);
         }
 
-        MarketUtils.increasePoolAmount(params.dataStore, _params.market.marketToken, _params.tokenIn, cache.amountIn + fees.feesForPool);
-        MarketUtils.decreasePoolAmount(params.dataStore, _params.market.marketToken, cache.tokenOut, cache.poolAmountOut);
+        MarketUtils.increasePoolAmount(
+            params.dataStore,
+            params.eventEmitter,
+            _params.market.marketToken,
+            _params.tokenIn,
+            cache.amountIn + fees.feesForPool
+        );
+        MarketUtils.decreasePoolAmount(
+            params.dataStore,
+            params.eventEmitter,
+            _params.market.marketToken,
+            cache.tokenOut,
+            cache.poolAmountOut
+        );
         MarketUtils.validateReserve(
             params.dataStore,
             _params.market,
@@ -154,6 +174,8 @@ library SwapUtils {
             ),
             cache.tokenOut == _params.market.longToken
         );
+
+        params.eventEmitter.emitSwapFeesCollected(keccak256(abi.encodePacked("swap")), fees);
 
         return (cache.tokenOut, cache.amountOut);
     }
