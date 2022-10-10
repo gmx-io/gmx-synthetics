@@ -15,7 +15,7 @@ async function createOrder(fixture, overrides) {
   const { initialCollateralToken, initialCollateralDeltaAmount, acceptablePriceImpactUsd, orderType, gasUsageLabel } =
     overrides;
 
-  const market = overrides.market || ethers.constants.AddressZero;
+  const market = (overrides.market && overrides.market.marketToken) || ethers.constants.AddressZero;
   const sizeDeltaUsd = overrides.sizeDeltaUsd || "0";
   const swapPath = overrides.swapPath || [];
   const acceptablePrice = overrides.acceptablePrice || "0";
