@@ -251,7 +251,9 @@ library OrderUtils {
         }
 
         // set secondary price to primary price since increase / decrease positions use the secondary price for index token values
-        if (orderType == Order.OrderType.MarketIncrease || orderType == Order.OrderType.MarketDecrease) {
+        if (orderType == Order.OrderType.MarketIncrease ||
+            orderType == Order.OrderType.MarketDecrease ||
+            orderType == Order.OrderType.Liquidation) {
             uint256 price = oracle.getPrimaryPrice(indexToken);
             oracle.setSecondaryPrice(indexToken, price);
             return;
@@ -326,7 +328,7 @@ library OrderUtils {
         if (
             orderType == Order.OrderType.MarketIncrease ||
             orderType == Order.OrderType.MarketDecrease ||
-            orderType == Order.OrderType.LimitIncrease
+            orderType == Order.OrderType.Liquidation
         ) {
             if (!oracleBlockNumbers.areEqualTo(orderUpdatedAtBlock)) {
                 revert(Keys.ORACLE_ERROR);

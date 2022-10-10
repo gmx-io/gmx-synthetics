@@ -45,7 +45,7 @@ describe("Exchange.DecreaseOrder", () => {
       create: {
         market: ethUsdMarket,
         initialCollateralToken: weth,
-        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        initialCollateralDeltaAmount: 0,
         sizeDeltaUsd: expandFloatDecimals(200 * 1000),
         acceptablePriceImpactUsd: expandDecimals(-5, 12),
         orderType: OrderType.MarketDecrease,

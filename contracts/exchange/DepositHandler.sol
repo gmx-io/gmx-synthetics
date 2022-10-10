@@ -100,6 +100,16 @@ contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
                 msg.sender,
                 startingGas
             );
+        } catch {
+            DepositUtils.cancelDeposit(
+                dataStore,
+                eventEmitter,
+                depositStore,
+                marketStore,
+                key,
+                msg.sender,
+                startingGas
+            );
         }
     }
 

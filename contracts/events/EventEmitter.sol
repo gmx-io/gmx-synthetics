@@ -84,7 +84,6 @@ contract EventEmitter is RoleModule {
 
     constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
 
-    // TODO create separate role for event emitter callers?
     function emitPoolAmountIncreased(address market, address token, uint256 amount) external onlyController {
         emit PoolAmountIncreased(market, token, amount);
     }
@@ -232,4 +231,3 @@ contract EventEmitter is RoleModule {
         );
     }
 }
-

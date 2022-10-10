@@ -42,6 +42,8 @@ library DecreasePositionUtils {
         uint256 sizeDeltaInTokens;
     }
 
+    error InvalidLiquidation();
+
     function decreasePosition(DecreasePositionParams memory params) internal returns (uint256, uint256) {
         Position.Props memory position = params.position;
         MarketUtils.MarketPrices memory prices = MarketUtils.getPricesForPosition(
@@ -55,7 +57,7 @@ library DecreasePositionUtils {
             params.market,
             prices
         )) {
-            revert(Keys.INVALID_LIQUIDATION_ERROR);
+            revert InvalidLiquidation();
         }
 
         MarketUtils.updateCumulativeFundingFactors(params.dataStore, params.market.marketToken);

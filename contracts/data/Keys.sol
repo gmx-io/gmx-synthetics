@@ -81,9 +81,6 @@ library Keys {
     string public constant EMPTY_POSITION_ERROR = "EMPTY_POSITION_ERROR";
     bytes32 public constant EMPTY_POSITION_ERROR_KEY = keccak256(abi.encodePacked(EMPTY_POSITION_ERROR));
 
-    string public constant INVALID_LIQUIDATION_ERROR = "INVALID_LIQUIDATION_ERROR";
-    bytes32 public constant INVALID_LIQUIDATION_ERROR_KEY = keccak256(abi.encodePacked(INVALID_LIQUIDATION_ERROR));
-
     string public constant FROZEN_ORDER_ERROR = "FROZEN_ORDER_ERROR";
     bytes32 public constant FROZEN_ORDER_ERROR_KEY = keccak256(abi.encodePacked(FROZEN_ORDER_ERROR));
 

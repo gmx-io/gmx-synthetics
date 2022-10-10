@@ -109,6 +109,15 @@ contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
                 msg.sender,
                 startingGas
             );
+        } catch {
+            WithdrawalUtils.cancelWithdrawal(
+                dataStore,
+                eventEmitter,
+                withdrawalStore,
+                key,
+                msg.sender,
+                startingGas
+            );
         }
     }
 

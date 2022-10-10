@@ -146,7 +146,7 @@ library PositionUtils {
         int256 remainingCollateralUsd = collateralUsd.toInt256() + positionPnlUsd + priceImpactUsd + fees.totalNetCostAmount;
 
         // the position is liquidatable if the remaining collateral is less than the required min collateral
-        if (remainingCollateralUsd < minCollateralUsd) {
+        if (remainingCollateralUsd < minCollateralUsd || remainingCollateralUsd == 0) {
             return true;
         }
 

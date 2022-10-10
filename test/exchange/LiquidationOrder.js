@@ -45,16 +45,37 @@ describe("Exchange.LiquidationOrder", () => {
       create: {
         market: ethUsdMarket,
         initialCollateralToken: weth,
-        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        initialCollateralDeltaAmount: 0,
         sizeDeltaUsd: expandFloatDecimals(200 * 1000),
         acceptablePriceImpactUsd: expandDecimals(-5, 12),
-        orderType: OrderType.MarketDecrease,
+        orderType: OrderType.Liquidation,
         isLong: true,
         gasUsageLabel: "orderHandler.createOrder",
       },
       execute: {
         tokens: [weth.address, usdc.address],
-        prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+        prices: [expandDecimals(4200, 4), expandDecimals(1, 6)],
+        gasUsageLabel: "orderHandler.executeOrder",
+      },
+    });
+
+    expect(await positionStore.getAccountPositionCount(user0.address)).eq(1);
+    expect(await orderStore.getOrderCount()).eq(0);
+
+    await handleOrder(fixture, {
+      create: {
+        market: ethUsdMarket,
+        initialCollateralToken: weth,
+        initialCollateralDeltaAmount: 0,
+        sizeDeltaUsd: expandFloatDecimals(200 * 1000),
+        acceptablePriceImpactUsd: expandDecimals(-5, 12),
+        orderType: OrderType.Liquidation,
+        isLong: true,
+        gasUsageLabel: "orderHandler.createOrder",
+      },
+      execute: {
+        tokens: [weth.address, usdc.address],
+        prices: [expandDecimals(4000, 4), expandDecimals(1, 6)],
         gasUsageLabel: "orderHandler.executeOrder",
       },
     });

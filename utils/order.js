@@ -9,6 +9,7 @@ const OrderType = {
   MarketDecrease: 4,
   LimitDecrease: 5,
   StopLossDecrease: 6,
+  Liquidation: 7,
 };
 
 async function createOrder(fixture, overrides) {
@@ -24,10 +25,11 @@ async function createOrder(fixture, overrides) {
   const minOutputAmount = overrides.minOutputAmount || 0;
   const shouldConvertETH = overrides.shouldConvertETH || false;
 
-  const { orderStore, orderHandler } = fixture.contracts;
+  const { orderStore, orderHandler, weth } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
   await initialCollateralToken.mint(orderStore.address, initialCollateralDeltaAmount);
+  await weth.mint(orderStore.address, executionFee);
 
   const params = {
     market,

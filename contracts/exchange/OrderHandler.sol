@@ -86,45 +86,19 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
             startingGas
         ) {
         } catch Error(string memory reason) {
-            Order.Props memory order = orderStore.get(key);
-
             bytes32 reasonKey = keccak256(abi.encodePacked(reason));
-            bool isMarketOrder = OrderUtils.isMarketOrder(order.orderType());
 
             if (
                 reasonKey == Keys.ORACLE_ERROR_KEY ||
                 reasonKey == Keys.FROZEN_ORDER_ERROR_KEY ||
-                reasonKey == Keys.EMPTY_POSITION_ERROR_KEY ||
-                reasonKey == Keys.INVALID_LIQUIDATION_ERROR_KEY
+                reasonKey == Keys.EMPTY_POSITION_ERROR_KEY
             ) {
                 revert(reason);
             }
 
-            if (isMarketOrder) {
-                OrderUtils.cancelOrder(
-                    dataStore,
-                    eventEmitter,
-                    orderStore,
-                    key,
-                    msg.sender,
-                    startingGas
-                );
-            } else {
-                // freeze unfulfillable orders to prevent the order system from being gamed
-                // an example of gaming would be if a user creates a limit order
-                // with size greater than the available amount in the pool
-                // the user waits for their limit price to be hit, and if price
-                // moves in their favour after, they can deposit into the pool
-                // to allow the order to be executed then close the order for a profit
-                OrderUtils.freezeOrder(
-                    dataStore,
-                    eventEmitter,
-                    orderStore,
-                    key,
-                    msg.sender,
-                    startingGas
-                );
-            }
+            _handleOrderError(key, startingGas);
+        } catch {
+            _handleOrderError(key, startingGas);
         }
     }
 
@@ -223,7 +197,6 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
             params.order.account()
         );
 
-        // TODO should be inside utils?
         eventEmitter.emitOrderExecuted(params.key);
     }
 
@@ -279,6 +252,40 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         OrderUtils.validateNonEmptyOrder(params.order);
 
         return params;
+    }
+
+    function _handleOrderError(bytes32 key, uint256 startingGas) internal {
+        Order.Props memory order = orderStore.get(key);
+        bool isMarketOrder = OrderUtils.isMarketOrder(order.orderType());
+
+        if (isMarketOrder) {
+            OrderUtils.cancelOrder(
+                dataStore,
+                eventEmitter,
+                orderStore,
+                key,
+                msg.sender,
+                startingGas
+            );
+        } else {
+            // freeze unfulfillable orders to prevent the order system from being gamed
+            // an example of gaming would be if a user creates a limit order
+            // with size greater than the available amount in the pool
+            // the user waits for their limit price to be hit, and if price
+            // moves in their favour after, they can deposit into the pool
+            // to allow the order to be executed then close the order for a profit
+            //
+            // frozen order keepers will have additional validations before executing
+            // frozen orders to prevent gaming
+            OrderUtils.freezeOrder(
+                dataStore,
+                eventEmitter,
+                orderStore,
+                key,
+                msg.sender,
+                startingGas
+            );
+        }
     }
 
     function _validateFrozenOrderKeeper(address keeper) internal view {
