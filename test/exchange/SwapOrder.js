@@ -46,6 +46,6 @@ describe("Exchange.SwapOrder", () => {
 
     expect(await positionStore.getAccountPositionCount(user0.address)).eq(0);
     expect(await orderStore.getOrderCount()).eq(0);
-    expect(await usdc.balanceOf(user0.address)).eq("49995000000");
+    expect(await usdc.balanceOf(user0.address)).eq("50000000000");
   });
 });

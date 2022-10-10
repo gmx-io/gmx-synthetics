@@ -69,7 +69,12 @@ library DecreasePositionUtils {
         );
 
         if (params.adjustedSizeDeltaUsd > position.sizeInUsd) {
-            params.adjustedSizeDeltaUsd = position.sizeInUsd;
+            if (params.order.orderType() == Order.OrderType.LimitDecrease ||
+                params.order.orderType() == Order.OrderType.StopLossDecrease) {
+                params.adjustedSizeDeltaUsd = position.sizeInUsd;
+            } else {
+                revert("DecreasePositionUtils: Invalid order size");
+            }
         }
 
         uint256 initialCollateralAmount = position.collateralAmount;

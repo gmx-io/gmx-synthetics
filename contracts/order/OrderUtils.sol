@@ -116,6 +116,9 @@ library OrderUtils {
         order.setIsLong(params.isLong);
         order.setShouldConvertETH(params.shouldConvertETH);
 
+        uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
+        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee());
+
         uint256 nonce = NonceUtils.incrementNonce(dataStore);
         bytes32 key = keccak256(abi.encodePacked(nonce));
 

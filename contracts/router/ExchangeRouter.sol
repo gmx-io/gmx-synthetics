@@ -61,7 +61,7 @@ contract ExchangeRouter is ReentrancyGuard, RoleModule {
         address account = msg.sender;
         address _depositStore = address(depositStore);
 
-        _sendWeth(_depositStore);
+        EthUtils.sendWeth(dataStore, _depositStore);
 
         if (longTokenAmount > 0) {
             router.pluginTransfer(longToken, account, _depositStore, longTokenAmount);
@@ -90,7 +90,7 @@ contract ExchangeRouter is ReentrancyGuard, RoleModule {
     ) nonReentrant external payable returns (bytes32) {
         address account = msg.sender;
 
-        _sendWeth(address(withdrawalStore));
+        EthUtils.sendWeth(dataStore, address(withdrawalStore));
 
         return withdrawalHandler.createWithdrawal(
             account,
@@ -110,7 +110,7 @@ contract ExchangeRouter is ReentrancyGuard, RoleModule {
     ) nonReentrant external payable returns (bytes32) {
         address account = msg.sender;
 
-        _sendWeth(address(orderStore));
+        EthUtils.sendWeth(dataStore, address(orderStore));
 
         if (amountIn > 0) {
             router.pluginTransfer(params.initialCollateralToken, account, address(orderStore), amountIn);

@@ -107,7 +107,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         uint256 sizeDeltaUsd,
         uint256 acceptablePrice,
         int256 acceptablePriceImpactUsd
-    ) external nonReentrant {
+    ) external payable nonReentrant {
         OrderStore _orderStore = orderStore;
         Order.Props memory order = _orderStore.get(key);
 
@@ -123,6 +123,14 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         order.setAcceptablePrice(acceptablePrice);
         order.setAcceptablePriceImpactUsd(acceptablePriceImpactUsd);
         order.setIsFrozen(false);
+
+        // allow topping up of executionFee as partially filled or frozen orders
+        //  will have their executionFee reduced
+        uint256 receivedWeth = EthUtils.sendWeth(dataStore, address(_orderStore));
+        order.setExecutionFee(order.executionFee() + receivedWeth);
+
+        uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
+        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee());
 
         order.touch();
         _orderStore.set(key, order);
@@ -182,9 +190,6 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
             params.order.acceptablePrice(),
             params.order.isLong()
         );
-
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(params.dataStore, params.order);
-        GasUtils.validateExecutionFee(params.dataStore, estimatedGasLimit, params.order.executionFee());
 
         _processOrder(params);
 
@@ -277,6 +282,8 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
             //
             // frozen order keepers will have additional validations before executing
             // frozen orders to prevent gaming
+            //
+            // alternatively, the user can call updateOrder to unfreeze the order
             OrderUtils.freezeOrder(
                 dataStore,
                 eventEmitter,
