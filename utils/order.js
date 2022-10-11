@@ -1,4 +1,5 @@
 const { logGasUsage } = require("./gas");
+const { bigNumberify, expandDecimals } = require("./math");
 const { executeWithOracleParams } = require("./exchange");
 
 const OrderType = {
@@ -16,22 +17,28 @@ async function createOrder(fixture, overrides) {
   const { initialCollateralToken, initialCollateralDeltaAmount, acceptablePriceImpactUsd, orderType, gasUsageLabel } =
     overrides;
 
+  const { orderStore, orderHandler, weth } = fixture.contracts;
+  const { wallet, user0 } = fixture.accounts;
+
+  const account = overrides.account || user0;
+  const receiver = overrides.receiver || account;
+  const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
   const market = overrides.market || { marketToken: ethers.constants.AddressZero };
   const sizeDeltaUsd = overrides.sizeDeltaUsd || "0";
   const swapPath = overrides.swapPath || [];
   const acceptablePrice = overrides.acceptablePrice || "0";
   const isLong = overrides.isLong || false;
   const executionFee = overrides.executionFee || fixture.props.executionFee;
+  const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
   const minOutputAmount = overrides.minOutputAmount || 0;
   const shouldConvertETH = overrides.shouldConvertETH || false;
-
-  const { orderStore, orderHandler, weth } = fixture.contracts;
-  const { wallet, user0 } = fixture.accounts;
 
   await initialCollateralToken.mint(orderStore.address, initialCollateralDeltaAmount);
   await weth.mint(orderStore.address, executionFee);
 
   const params = {
+    receiver: receiver.address,
+    callbackContract: callbackContract.address,
     market: market.marketToken,
     initialCollateralToken: initialCollateralToken.address,
     swapPath,
@@ -39,6 +46,7 @@ async function createOrder(fixture, overrides) {
     acceptablePrice,
     acceptablePriceImpactUsd,
     executionFee,
+    callbackGasLimit,
     minOutputAmount,
     orderType,
     isLong,
@@ -46,14 +54,17 @@ async function createOrder(fixture, overrides) {
   };
 
   await logGasUsage({
-    tx: orderHandler.connect(wallet).createOrder(user0.address, params),
+    tx: orderHandler.connect(wallet).createOrder(account.address, params),
     label: gasUsageLabel,
   });
 }
 
 async function executeOrder(fixture, overrides) {
-  const { tokens, prices, gasUsageLabel } = overrides;
+  const { weth, usdc } = fixture.contracts;
+  const { gasUsageLabel } = overrides;
   const { orderStore, orderHandler } = fixture.contracts;
+  const tokens = overrides.tokens || [weth.address, usdc.address];
+  const prices = overrides.prices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const orderKeys = await orderStore.getOrderKeys(0, 1);
   const order = await orderStore.get(orderKeys[0]);
 

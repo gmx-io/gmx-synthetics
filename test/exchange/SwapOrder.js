@@ -18,8 +18,8 @@ describe("Exchange.SwapOrder", () => {
 
     await handleDeposit(fixture, {
       create: {
-        token: usdc,
-        amount: expandDecimals(50000, 6),
+        market: ethUsdMarket,
+        shortTokenAmount: expandDecimals(50000, 6),
       },
     });
   });

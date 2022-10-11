@@ -16,7 +16,12 @@ describe("Exchange.DecreaseOrder", () => {
     ({ user0 } = fixture.accounts);
     ({ orderStore, positionStore, ethUsdMarket, weth, usdc } = fixture.contracts);
 
-    await handleDeposit(fixture);
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(1000, 18),
+      },
+    });
   });
 
   it("executeOrder", async () => {

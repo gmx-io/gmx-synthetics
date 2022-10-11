@@ -6,12 +6,14 @@ const { getOracleParams } = require("../../utils/oracle");
 const { printGasUsage } = require("../../utils/gas");
 const { bigNumberify, expandDecimals, expandFloatDecimals } = require("../../utils/math");
 const { getBalanceOf } = require("../../utils/token");
-const { OrderType } = require("../../utils/order");
+const { handleDeposit } = require("../../utils/deposit");
+const { OrderType, createOrder, executeOrder, handleOrder } = require("../../utils/order");
 
 describe("Exchange.IncreaseOrder", () => {
   const { AddressZero, HashZero } = ethers.constants;
   const { provider } = ethers;
 
+  let fixture;
   let wallet, user0, user1, user2, signers;
   let orderHandler,
     depositHandler,
@@ -28,7 +30,7 @@ describe("Exchange.IncreaseOrder", () => {
   let oracleSalt, executionFee, signerIndexes;
 
   beforeEach(async () => {
-    const fixture = await loadFixture(deployFixture);
+    fixture = await loadFixture(deployFixture);
     ({ wallet, user0, user1, user2, signers } = fixture.accounts);
     ({
       orderHandler,
@@ -46,38 +48,20 @@ describe("Exchange.IncreaseOrder", () => {
     } = fixture.contracts);
     ({ oracleSalt, executionFee, signerIndexes } = fixture.props);
 
-    await weth.mint(depositStore.address, expandDecimals(1000, 18));
-    await depositHandler
-      .connect(wallet)
-      .createDeposit(user0.address, ethUsdMarket.marketToken, 100, false, executionFee);
-    const depositKeys = await depositStore.getDepositKeys(0, 1);
-    const deposit = await depositStore.get(depositKeys[0]);
-
-    let block = await provider.getBlock(deposit.updatedAtBlock.toNumber());
-
-    let oracleParams = await getOracleParams({
-      oracleSalt,
-      oracleBlockNumbers: [block.number, block.number],
-      blockHashes: [block.hash, block.hash],
-      signerIndexes,
-      tokens: [weth.address, usdc.address],
-      prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-      signers,
-      priceFeedTokens: [],
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(1000, 18),
+      },
     });
-
-    await depositHandler.executeDeposit(depositKeys[0], oracleParams);
   });
 
   it("createOrder", async () => {
-    await weth.mint(orderStore.address, expandDecimals(10, 18));
-
-    const block = await provider.getBlock();
-
     expect(await orderStore.getOrderCount()).eq(0);
     const params = {
-      market: ethUsdMarket.marketToken,
-      initialCollateralToken: weth.address,
+      market: ethUsdMarket,
+      initialCollateralToken: weth,
+      initialCollateralDeltaAmount: expandDecimals(10, 18),
       swapPath: [ethUsdMarket.marketToken],
       sizeDeltaUsd: expandFloatDecimals(200 * 1000),
       acceptablePrice: expandDecimals(5001, 12),
@@ -87,12 +71,14 @@ describe("Exchange.IncreaseOrder", () => {
       orderType: OrderType.MarketIncrease,
       isLong: true,
       shouldConvertETH: false,
+      gasUsageLabel: "createOrder",
     };
-    const tx0 = await orderHandler.connect(wallet).createOrder(user0.address, params);
+
+    await createOrder(fixture, params);
 
     expect(await orderStore.getOrderCount()).eq(1);
 
-    await printGasUsage(provider, tx0, "orderHandler.createOrder tx0");
+    const block = await provider.getBlock();
 
     const orderKeys = await orderStore.getOrderKeys(0, 1);
     const order = await orderStore.get(orderKeys[0]);
@@ -102,26 +88,24 @@ describe("Exchange.IncreaseOrder", () => {
     expect(order.addresses.initialCollateralToken).eq(weth.address);
     expect(order.addresses.swapPath).eql([ethUsdMarket.marketToken]);
     expect(order.numbers.sizeDeltaUsd).eq(expandFloatDecimals(200 * 1000));
-    expect(order.numbers.initialCollateralDeltaAmount).eq(expandDecimals(10, 18).sub(executionFee));
+    expect(order.numbers.initialCollateralDeltaAmount).eq(expandDecimals(10, 18));
     expect(order.numbers.acceptablePrice).eq(expandDecimals(5001, 12));
     expect(order.numbers.acceptablePriceImpactUsd).eq(expandDecimals(-5, 30));
     expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
     expect(order.numbers.minOutputAmount).eq(expandDecimals(50000, 6));
-    expect(order.numbers.updatedAtBlock).eq(block.number + 1);
+    expect(order.numbers.updatedAtBlock).eq(block.number);
     expect(order.flags.orderType).eq(OrderType.MarketIncrease);
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldConvertETH).eq(false);
   });
 
   it("executeOrder", async () => {
-    await weth.mint(orderStore.address, expandDecimals(10, 18));
-
-    let block = await provider.getBlock();
-
     expect(await orderStore.getOrderCount()).eq(0);
+
     const params = {
-      market: ethUsdMarket.marketToken,
-      initialCollateralToken: weth.address,
+      market: ethUsdMarket,
+      initialCollateralToken: weth,
+      initialCollateralDeltaAmount: expandDecimals(10, 18),
       swapPath: [],
       sizeDeltaUsd: expandFloatDecimals(200 * 1000),
       acceptablePrice: expandDecimals(5001, 12),
@@ -132,54 +116,31 @@ describe("Exchange.IncreaseOrder", () => {
       isLong: true,
       shouldConvertETH: false,
     };
-    await orderHandler.connect(wallet).createOrder(user0.address, params);
+
+    await createOrder(fixture, params);
 
     expect(await orderStore.getOrderCount()).eq(1);
+    expect(await positionStore.getAccountPositionCount(user0.address)).eq(0);
+    expect(await positionStore.getPositionCount()).eq(0);
 
-    let orderKeys = await orderStore.getOrderKeys(0, 1);
-    let order = await orderStore.get(orderKeys[0]);
-
-    let oracleBlockNumber = order.numbers.updatedAtBlock;
-    block = await provider.getBlock(oracleBlockNumber.toNumber());
-
-    let oracleParams = await getOracleParams({
-      oracleSalt,
-      oracleBlockNumbers: [oracleBlockNumber, oracleBlockNumber],
-      blockHashes: [block.hash, block.hash],
-      signerIndexes,
-      tokens: [weth.address, usdc.address],
-      prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-      signers,
-      priceFeedTokens: [],
+    await executeOrder(fixture, {
+      gasUsageLabel: "executeOrder",
     });
 
-    const tx0 = await orderHandler.executeOrder(orderKeys[0], oracleParams);
-
-    await printGasUsage(provider, tx0, "orderHandler.executeOrder tx0");
-
+    expect(await orderStore.getOrderCount()).eq(0);
     expect(await positionStore.getAccountPositionCount(user0.address)).eq(1);
+    expect(await positionStore.getPositionCount()).eq(1);
 
-    await weth.mint(orderStore.address, expandDecimals(10, 18));
-    await orderHandler.connect(wallet).createOrder(user1.address, params);
+    params.account = user1;
 
-    orderKeys = await orderStore.getOrderKeys(0, 1);
-    order = await orderStore.get(orderKeys[0]);
-
-    oracleBlockNumber = order.numbers.updatedAtBlock;
-    block = await provider.getBlock(oracleBlockNumber.toNumber());
-
-    oracleParams = await getOracleParams({
-      oracleSalt,
-      oracleBlockNumbers: [oracleBlockNumber, oracleBlockNumber],
-      blockHashes: [block.hash, block.hash],
-      signerIndexes,
-      tokens: [weth.address, usdc.address],
-      prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-      signers,
-      priceFeedTokens: [],
+    await handleOrder(fixture, {
+      create: params,
+      execute: {
+        gasUsageLabel: "executeOrder",
+      },
     });
 
-    const tx1 = await orderHandler.executeOrder(orderKeys[0], oracleParams);
-    await printGasUsage(provider, tx1, "orderHandler.executeOrder tx1");
+    expect(await positionStore.getAccountPositionCount(user1.address)).eq(1);
+    expect(await positionStore.getPositionCount()).eq(2);
   });
 });
