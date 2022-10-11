@@ -17,8 +17,8 @@ library DecreaseOrderUtils {
 
         OrderUtils.validateOracleBlockNumbersForPosition(
             params.oracleBlockNumbers,
-            params.order.orderType(),
-            params.order.updatedAtBlock(),
+            order.orderType(),
+            order.updatedAtBlock(),
             position.increasedAtBlock
         );
 
@@ -33,18 +33,18 @@ library DecreaseOrderUtils {
                 order,
                 position,
                 positionKey,
-                params.order.sizeDeltaUsd()
+                order.sizeDeltaUsd()
             )
         );
 
-        if (adjustedSizeDeltaUsd == params.order.sizeDeltaUsd()) {
-            params.orderStore.remove(params.key, params.order.account());
+        if (adjustedSizeDeltaUsd == order.sizeDeltaUsd()) {
+            params.orderStore.remove(params.key, order.account());
         } else {
-            params.order.setSizeDeltaUsd(adjustedSizeDeltaUsd);
+            order.setSizeDeltaUsd(adjustedSizeDeltaUsd);
             // clear execution fee as it would be fully used even for partial fills
-            params.order.setExecutionFee(0);
-            params.order.touch();
-            params.orderStore.set(params.key, params.order);
+            order.setExecutionFee(0);
+            order.touch();
+            params.orderStore.set(params.key, order);
         }
 
         if (order.swapPath().length == 0) {
@@ -52,7 +52,7 @@ library DecreaseOrderUtils {
                 EthUtils.weth(params.dataStore),
                 order.initialCollateralToken(),
                 outputAmount,
-                order.account(),
+                order.receiver(),
                 order.shouldConvertETH()
             );
         } else {
@@ -61,11 +61,12 @@ library DecreaseOrderUtils {
                 params.eventEmitter,
                 params.oracle,
                 params.feeReceiver,
-                params.order.initialCollateralToken(),
-                params.order.initialCollateralDeltaAmount(),
+                order.initialCollateralToken(),
+                order.initialCollateralDeltaAmount(),
                 params.swapPathMarkets,
-                params.order.minOutputAmount(),
-                params.order.account()
+                order.minOutputAmount(),
+                order.receiver(),
+                order.shouldConvertETH()
             ));
         }
     }

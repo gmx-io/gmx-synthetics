@@ -54,6 +54,7 @@ library DepositUtils {
     struct _ExecuteDepositParams {
         Market.Props market;
         address account;
+        address receiver;
         address tokenIn;
         address tokenOut;
         uint256 tokenInPrice;
@@ -151,6 +152,7 @@ library DepositUtils {
             _ExecuteDepositParams memory _params = _ExecuteDepositParams(
                 market,
                 deposit.account,
+                deposit.receiver,
                 market.longToken,
                 market.shortToken,
                 longTokenPrice,
@@ -168,6 +170,7 @@ library DepositUtils {
             _ExecuteDepositParams memory _params = _ExecuteDepositParams(
                 market,
                 deposit.account,
+                deposit.receiver,
                 market.shortToken,
                 market.longToken,
                 shortTokenPrice,
@@ -344,7 +347,7 @@ library DepositUtils {
             amountAfterFees + feesForPool
         );
 
-        MarketToken(_params.market.marketToken).mint(_params.account, mintAmount);
+        MarketToken(_params.market.marketToken).mint(_params.receiver, mintAmount);
 
         return mintAmount;
     }

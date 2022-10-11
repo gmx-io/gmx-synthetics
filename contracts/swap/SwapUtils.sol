@@ -6,6 +6,7 @@ import "../data/DataStore.sol";
 import "../events/EventEmitter.sol";
 import "../oracle/Oracle.sol";
 import "../pricing/SwapPricingUtils.sol";
+import "../eth/EthUtils.sol";
 
 library SwapUtils {
     using SafeCast for uint256;
@@ -20,6 +21,7 @@ library SwapUtils {
         Market.Props[] markets;
         uint256 minOutputAmount;
         address receiver;
+        bool shouldConvertETH;
     }
 
     struct _SwapParams {
@@ -27,6 +29,7 @@ library SwapUtils {
         address tokenIn;
         uint256 amountIn;
         address receiver;
+        bool shouldConvertETH;
     }
 
     struct _SwapCache {
@@ -59,7 +62,8 @@ library SwapUtils {
                 market,
                 tokenOut,
                 outputAmount,
-                receiver
+                receiver,
+                i == params.markets.length - 1 ? params.shouldConvertETH : false // only convert ETH on the last swap if needed
             );
             (tokenOut, outputAmount) = _swap(params, _params);
         }
@@ -147,7 +151,13 @@ library SwapUtils {
         }
 
         if (_params.receiver != address(0)) {
-            MarketToken(_params.market.marketToken).transferOut(cache.tokenOut, cache.poolAmountOut, _params.receiver);
+            MarketToken(_params.market.marketToken).transferOut(
+                EthUtils.weth(params.dataStore),
+                cache.tokenOut,
+                cache.poolAmountOut,
+                _params.receiver,
+                _params.shouldConvertETH
+            );
         }
 
         MarketUtils.increasePoolAmount(

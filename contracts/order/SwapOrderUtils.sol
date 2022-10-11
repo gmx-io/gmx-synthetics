@@ -14,9 +14,6 @@ library SwapOrderUtils {
             revert UnexpectedMarket();
         }
 
-        address firstMarket = params.order.swapPath()[0];
-        address lastMarket = params.order.swapPath()[params.order.swapPath().length - 1];
-
         OrderUtils.validateOracleBlockNumbersForSwap(
             params.oracleBlockNumbers,
             params.order.orderType(),
@@ -27,10 +24,12 @@ library SwapOrderUtils {
         params.orderStore.transferOut(
             order.initialCollateralToken(),
             order.initialCollateralDeltaAmount(),
-            firstMarket
+            params.order.swapPath()[0]
         );
 
-        (address tokenOut, uint256 outputAmount) = SwapUtils.swap(SwapUtils.SwapParams(
+        params.orderStore.remove(params.key, params.order.account());
+
+        SwapUtils.swap(SwapUtils.SwapParams(
             params.dataStore,
             params.eventEmitter,
             params.oracle,
@@ -39,17 +38,8 @@ library SwapOrderUtils {
             params.order.initialCollateralDeltaAmount(),
             params.swapPathMarkets,
             params.order.minOutputAmount(),
-            address(0)
-        ));
-
-        params.orderStore.remove(params.key, params.order.account());
-
-        MarketToken(lastMarket).transferOut(
-            EthUtils.weth(params.dataStore),
-            tokenOut,
-            outputAmount,
-            order.account(),
+            params.order.receiver(),
             order.shouldConvertETH()
-        );
+        ));
     }
 }

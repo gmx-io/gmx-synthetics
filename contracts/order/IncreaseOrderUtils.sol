@@ -20,7 +20,8 @@ library IncreaseOrderUtils {
             params.order.initialCollateralDeltaAmount(),
             params.swapPathMarkets,
             params.order.minOutputAmount(),
-            address(0)
+            address(0),
+            false
         ));
 
         bytes32 positionKey = PositionUtils.getPositionKey(params.order.account(), params.order.market(), collateralToken, params.order.isLong());

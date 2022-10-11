@@ -55,6 +55,7 @@ library WithdrawalUtils {
     struct _ExecuteWithdrawalParams {
         Market.Props market;
         address account;
+        address receiver;
         address tokenIn;
         address tokenOut;
         uint256 tokenInPrice;
@@ -153,6 +154,7 @@ library WithdrawalUtils {
             _ExecuteWithdrawalParams memory _params = _ExecuteWithdrawalParams(
                 market,
                 withdrawal.account,
+                withdrawal.receiver,
                 market.shortToken,
                 market.longToken,
                 shortTokenPrice,
@@ -174,6 +176,7 @@ library WithdrawalUtils {
             _ExecuteWithdrawalParams memory _params = _ExecuteWithdrawalParams(
                 market,
                 withdrawal.account,
+                withdrawal.receiver,
                 market.longToken,
                 market.shortToken,
                 longTokenPrice,
@@ -316,7 +319,7 @@ library WithdrawalUtils {
             EthUtils.weth(params.dataStore),
             _params.tokenOut,
             outputAmount,
-            _params.account,
+            _params.receiver,
             _params.shouldConvertETH
         );
 
