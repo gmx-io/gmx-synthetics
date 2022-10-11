@@ -82,6 +82,8 @@ library Order {
 
     struct Addresses {
         address account;
+        address receiver;
+        address callbackContract;
         address market;
          // for increase positions initialCollateralToken is the token sent in by the user
          // the token will be swapped through the specified swapPath, before position increase
@@ -120,6 +122,14 @@ library Order {
 
     function account(Props memory props) internal pure returns (address) {
         return props.addresses.account;
+    }
+
+    function receiver(Props memory props) internal pure returns (address) {
+        return props.addresses.receiver;
+    }
+
+    function callbackContract(Props memory props) internal pure returns (address) {
+        return props.addresses.callbackContract;
     }
 
     function market(Props memory props) internal pure returns (address) {
@@ -180,6 +190,14 @@ library Order {
 
     function setAccount(Props memory props, address _value) internal pure {
         props.addresses.account = _value;
+    }
+
+    function setReceiver(Props memory props, address _value) internal pure {
+        props.addresses.receiver = _value;
+    }
+
+    function setCallbackContract(Props memory props, address _value) internal pure {
+        props.addresses.callbackContract = _value;
     }
 
     function setMarket(Props memory props, address _value) internal pure {

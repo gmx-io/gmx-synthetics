@@ -29,6 +29,8 @@ library DepositUtils {
         DepositStore depositStore;
         MarketStore marketStore;
         address account;
+        address receiver;
+        address callbackContract;
         address market;
         uint256 minMarketTokens;
         bool shouldConvertETH;
@@ -80,6 +82,8 @@ library DepositUtils {
 
         Deposit.Props memory deposit = Deposit.Props(
             params.account,
+            params.receiver,
+            params.callbackContract,
             market.marketToken,
             longTokenAmount,
             shortTokenAmount,

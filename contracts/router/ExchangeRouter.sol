@@ -50,7 +50,9 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
     }
 
     function createDeposit(
-        address _market,
+        address receiver,
+        address callbackContract,
+        address market,
         address longToken,
         address shortToken,
         uint256 longTokenAmount,
@@ -73,7 +75,9 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
 
         return depositHandler.createDeposit(
             account,
-            _market,
+            receiver,
+            callbackContract,
+            market,
             minMarketTokens,
             shouldConvertETH,
             executionFee
@@ -81,6 +85,8 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
     }
 
     function createWithdrawal(
+        address receiver,
+        address callbackContract,
         address market,
         uint256 marketTokensLongAmount,
         uint256 marketTokensShortAmount,
@@ -95,6 +101,8 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
 
         return withdrawalHandler.createWithdrawal(
             account,
+            receiver,
+            callbackContract,
             market,
             marketTokensLongAmount,
             marketTokensShortAmount,

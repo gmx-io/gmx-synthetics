@@ -5,6 +5,8 @@ pragma solidity ^0.8.0;
 library Deposit {
     struct Props {
         address account;
+        address receiver;
+        address callbackContract;
         address market;
         uint256 longTokenAmount;
         uint256 shortTokenAmount;

@@ -27,6 +27,8 @@ library WithdrawalUtils {
         WithdrawalStore withdrawalStore;
         MarketStore marketStore;
         address account;
+        address receiver;
+        address callbackContract;
         address market;
         uint256 marketTokensLongAmount;
         uint256 marketTokensShortAmount;
@@ -82,6 +84,8 @@ library WithdrawalUtils {
 
         Withdrawal.Props memory withdrawal = Withdrawal.Props(
             params.account,
+            params.receiver,
+            params.callbackContract,
             market.marketToken,
             params.marketTokensLongAmount,
             params.marketTokensShortAmount,

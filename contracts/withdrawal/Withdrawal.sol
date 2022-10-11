@@ -7,6 +7,8 @@ pragma solidity ^0.8.0;
 library Withdrawal {
     struct Props {
         address account;
+        address receiver;
+        address callbackContract;
         address market;
         uint256 marketTokensLongAmount;
         uint256 marketTokensShortAmount;

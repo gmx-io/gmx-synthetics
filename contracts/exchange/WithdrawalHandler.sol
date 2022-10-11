@@ -51,6 +51,8 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
 
     function createWithdrawal(
         address account,
+        address receiver,
+        address callbackContract,
         address market,
         uint256 marketTokensLongAmount,
         uint256 marketTokensShortAmount,
@@ -67,6 +69,8 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
             withdrawalStore,
             marketStore,
             account,
+            receiver,
+            callbackContract,
             market,
             marketTokensLongAmount,
             marketTokensShortAmount,

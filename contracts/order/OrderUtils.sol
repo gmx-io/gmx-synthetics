@@ -32,6 +32,8 @@ library OrderUtils {
     using Array for uint256[];
 
     struct CreateOrderParams {
+        address receiver;
+        address callbackContract;
         address market;
         address initialCollateralToken;
         address[] swapPath;
@@ -103,6 +105,8 @@ library OrderUtils {
         Order.Props memory order;
 
         order.setAccount(account);
+        order.setReceiver(params.receiver);
+        order.setCallbackContract(params.callbackContract);
         order.setMarket(params.market);
         order.setInitialCollateralToken(params.initialCollateralToken);
         order.setSwapPath(params.swapPath);

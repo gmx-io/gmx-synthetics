@@ -50,6 +50,8 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
 
     function createDeposit(
         address account,
+        address receiver,
+        address callbackContract,
         address market,
         uint256 minMarketTokens,
         bool shouldConvertETH,
@@ -63,6 +65,8 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
             depositStore,
             marketStore,
             account,
+            receiver,
+            callbackContract,
             market,
             minMarketTokens,
             shouldConvertETH,
