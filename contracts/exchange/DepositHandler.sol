@@ -119,7 +119,6 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         address keeper,
         uint256 startingGas
     ) public
-        nonReentrant
         onlySelf
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {

@@ -127,7 +127,6 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
         address keeper,
         uint256 startingGas
     ) external
-        nonReentrant
         onlySelf
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
