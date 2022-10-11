@@ -6,6 +6,14 @@ import "../data/Keys.sol";
 import "../market/MarketUtils.sol";
 
 contract Reader {
+    function priceFeedKey(address token) external pure returns (bytes32) {
+        return Keys.priceFeedKey(token);
+    }
+
+    function priceFeedPrecisionKey(address token) external pure returns (bytes32) {
+        return Keys.priceFeedPrecisionKey(token);
+    }
+
     function reserveFactorKey(address market, bool isLong) external pure returns (bytes32) {
         return Keys.reserveFactorKey(market, isLong);
     }

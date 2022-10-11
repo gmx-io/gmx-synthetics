@@ -64,6 +64,11 @@ async function deployFixture() {
   const wbtc = await deployContract("MintableToken", []);
   const usdc = await deployContract("MintableToken", []);
 
+  const usdcPriceFeed = await deployContract("MockPriceFeed", []);
+  await usdcPriceFeed.setAnswer(1);
+  await dataStore.setAddress(await reader.priceFeedKey(usdc.address), usdcPriceFeed.address);
+  await dataStore.setUint(await reader.priceFeedPrecisionKey(usdc.address), expandFloatDecimals(1));
+
   await dataStore.setAddress(await keys.WETH(), weth.address);
   await dataStore.setUint(await reader.oraclePrecisionKey(weth.address), expandDecimals(1, 8));
   await dataStore.setUint(await reader.oraclePrecisionKey(wbtc.address), expandDecimals(1, 20));
@@ -199,6 +204,7 @@ async function deployFixture() {
       orderHandler,
       feeReceiver,
       oracle,
+      usdcPriceFeed,
       weth,
       wbtc,
       usdc,
