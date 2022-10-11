@@ -1,37 +1,69 @@
-const { expandDecimals } = require("./math");
+const { logGasUsage } = require("./gas");
+const { expandDecimals, bigNumberify } = require("./math");
 const { executeWithOracleParams } = require("./exchange");
+const { contractAt } = require("./deploy");
 
 async function createDeposit(fixture, overrides = {}) {
   const { depositStore, depositHandler, weth, ethUsdMarket } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
+  const account = overrides.account || user0;
+  const receiver = overrides.receiver || user0;
+  const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
   const executionFee = overrides.executionFee || "1000000000000000";
   const market = overrides.market || ethUsdMarket;
-  const token = overrides.token || weth;
-  const amount = overrides.amount || expandDecimals(1000, 18);
+  const minMarketTokens = overrides.minMarketTokens || bigNumberify(0);
+  const shouldConvertETH = overrides.shouldConvertETH || false;
+  const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
+  const longTokenAmount = overrides.longTokenAmount || bigNumberify(0);
+  const shortTokenAmount = overrides.shortTokenAmount || bigNumberify(0);
 
-  await token.mint(depositStore.address, amount);
+  await weth.mint(depositStore.address, executionFee);
 
-  if (token.address != weth.address) {
-    await weth.mint(depositStore.address, executionFee);
+  if (longTokenAmount.gt(0)) {
+    const longToken = await contractAt("MintableToken", market.longToken);
+    await longToken.mint(depositStore.address, longTokenAmount);
   }
 
-  await token.mint(depositStore.address, amount);
-  await depositHandler.connect(wallet).createDeposit(user0.address, market.marketToken, 100, false, executionFee);
+  if (shortTokenAmount.gt(0)) {
+    const shortToken = await contractAt("MintableToken", market.shortToken);
+    await shortToken.mint(depositStore.address, shortTokenAmount);
+  }
+
+  const params = {
+    receiver: receiver.address,
+    callbackContract: callbackContract.address,
+    market: market.marketToken,
+    minMarketTokens,
+    shouldConvertETH,
+    executionFee,
+    callbackGasLimit,
+  };
+
+  await logGasUsage({
+    tx: depositHandler.connect(wallet).createDeposit(account.address, params),
+    label: overrides.gasUsageLabel,
+  });
 }
 
-async function executeDeposit(fixture) {
+async function executeDeposit(fixture, overrides = {}) {
   const { depositStore, depositHandler, weth, usdc } = fixture.contracts;
+  const { gasUsageLabel } = overrides;
+  const tokens = overrides.tokens || [weth.address, usdc.address];
+  const prices = overrides.prices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const depositKeys = await depositStore.getDepositKeys(0, 1);
-  const _deposit = await depositStore.get(depositKeys[0]);
+  const deposit = await depositStore.get(depositKeys[0]);
 
-  await executeWithOracleParams(fixture, {
+  const params = {
     key: depositKeys[0],
-    oracleBlockNumber: _deposit.updatedAtBlock,
-    tokens: [weth.address, usdc.address],
-    prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+    oracleBlockNumber: deposit.updatedAtBlock,
+    tokens,
+    prices,
     execute: depositHandler.executeDeposit,
-  });
+    gasUsageLabel,
+  };
+
+  await executeWithOracleParams(fixture, params);
 }
 
 async function handleDeposit(fixture, overrides = {}) {
