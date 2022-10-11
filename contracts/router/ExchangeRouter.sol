@@ -108,6 +108,8 @@ contract ExchangeRouter is ReentrancyGuard, RoleModule {
         OrderUtils.CreateOrderParams memory params,
         uint256 amountIn
     ) nonReentrant external payable returns (bytes32) {
+        require(params.orderType != Order.OrderType.Liquidation, "ExchangeRouter: invalid order type");
+
         address account = msg.sender;
 
         EthUtils.sendWeth(dataStore, address(orderStore));
