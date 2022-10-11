@@ -14,6 +14,7 @@ library Deposit {
         uint256 updatedAtBlock;
         bool shouldConvertETH;
         uint256 executionFee;
+        uint256 callbackGasLimit;
         bytes data;
     }
 }

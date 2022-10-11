@@ -42,6 +42,7 @@ library OrderUtils {
         uint256 acceptablePrice;
         int256 acceptablePriceImpactUsd;
         uint256 executionFee;
+        uint256 callbackGasLimit;
         uint256 minOutputAmount;
 
         Order.OrderType orderType;
@@ -115,6 +116,7 @@ library OrderUtils {
         order.setAcceptablePrice(params.acceptablePrice);
         order.setAcceptablePriceImpactUsd(params.acceptablePriceImpactUsd);
         order.setExecutionFee(params.executionFee);
+        order.setCallbackGasLimit(params.callbackGasLimit);
         order.setMinOutputAmount(params.minOutputAmount);
         order.setOrderType(params.orderType);
         order.setIsLong(params.isLong);

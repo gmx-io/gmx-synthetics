@@ -27,8 +27,6 @@ library SwapOrderUtils {
             params.order.swapPath()[0]
         );
 
-        params.orderStore.remove(params.key, params.order.account());
-
         SwapUtils.swap(SwapUtils.SwapParams(
             params.dataStore,
             params.eventEmitter,
@@ -41,5 +39,7 @@ library SwapOrderUtils {
             params.order.receiver(),
             order.shouldConvertETH()
         ));
+
+        params.orderStore.remove(params.key, params.order.account());
     }
 }

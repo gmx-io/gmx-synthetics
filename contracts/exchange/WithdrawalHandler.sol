@@ -51,40 +51,18 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
 
     function createWithdrawal(
         address account,
-        address receiver,
-        address callbackContract,
-        address market,
-        uint256 marketTokensLongAmount,
-        uint256 marketTokensShortAmount,
-        uint256 minLongTokenAmount,
-        uint256 minShortTokenAmount,
-        bool shouldConvertETH,
-        uint256 executionFee
+        WithdrawalUtils.CreateWithdrawalParams memory params
     ) external nonReentrant onlyController  returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createWithdrawalFeatureKey(address(this)));
 
-        WithdrawalUtils.CreateWithdrawalParams memory params = WithdrawalUtils.CreateWithdrawalParams(
+        return WithdrawalUtils.createWithdrawal(
             dataStore,
             eventEmitter,
             withdrawalStore,
             marketStore,
             account,
-            receiver,
-            callbackContract,
-            market,
-            marketTokensLongAmount,
-            marketTokensShortAmount,
-            minLongTokenAmount,
-            minShortTokenAmount,
-            shouldConvertETH,
-            executionFee,
-            EthUtils.weth(dataStore)
+            params
         );
-
-        Market.Props memory _market = params.marketStore.get(params.market);
-        MarketUtils.validateNonEmptyMarket(_market);
-
-        return WithdrawalUtils.createWithdrawal(params);
     }
 
     function executeWithdrawal(

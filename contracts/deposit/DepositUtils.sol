@@ -15,6 +15,7 @@ import "../oracle/OracleUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../eth/EthUtils.sol";
+import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
 import "../utils/Null.sol";
@@ -24,18 +25,13 @@ library DepositUtils {
     using Array for uint256[];
 
     struct CreateDepositParams {
-        DataStore dataStore;
-        EventEmitter eventEmitter;
-        DepositStore depositStore;
-        MarketStore marketStore;
-        address account;
         address receiver;
         address callbackContract;
         address market;
         uint256 minMarketTokens;
         bool shouldConvertETH;
         uint256 executionFee;
-        address weth;
+        uint256 callbackGasLimit;
     }
 
     struct ExecuteDepositParams {
@@ -65,24 +61,33 @@ library DepositUtils {
 
     error MinMarketTokens(uint256 received, uint256 expected);
 
-    function createDeposit(CreateDepositParams memory params) internal returns (bytes32) {
-        Market.Props memory market = params.marketStore.get(params.market);
+    function createDeposit(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        DepositStore depositStore,
+        MarketStore marketStore,
+        address account,
+        CreateDepositParams memory params
+    ) internal returns (bytes32) {
+        Market.Props memory market = marketStore.get(params.market);
         MarketUtils.validateNonEmptyMarket(market);
 
-        uint256 longTokenAmount = params.depositStore.recordTransferIn(market.longToken);
-        uint256 shortTokenAmount = params.depositStore.recordTransferIn(market.shortToken);
+        uint256 longTokenAmount = depositStore.recordTransferIn(market.longToken);
+        uint256 shortTokenAmount = depositStore.recordTransferIn(market.shortToken);
 
-        if (market.longToken == params.weth) {
+        address weth = EthUtils.weth(dataStore);
+
+        if (market.longToken == weth) {
             longTokenAmount -= params.executionFee;
-        } else if (market.shortToken == params.weth) {
+        } else if (market.shortToken == weth) {
             shortTokenAmount -= params.executionFee;
         } else {
-            uint256 wethAmount = params.depositStore.recordTransferIn(params.weth);
+            uint256 wethAmount = depositStore.recordTransferIn(weth);
             require(wethAmount == params.executionFee, "DepositUtils: invalid wethAmount");
         }
 
         Deposit.Props memory deposit = Deposit.Props(
-            params.account,
+            account,
             params.receiver,
             params.callbackContract,
             market.marketToken,
@@ -92,18 +97,19 @@ library DepositUtils {
             block.number,
             params.shouldConvertETH,
             params.executionFee,
+            params.callbackGasLimit,
             Null.BYTES
         );
 
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteDepositGasLimit(params.dataStore, deposit);
-        GasUtils.validateExecutionFee(params.dataStore, estimatedGasLimit, params.executionFee);
+        uint256 estimatedGasLimit = GasUtils.estimateExecuteDepositGasLimit(dataStore, deposit);
+        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee);
 
-        uint256 nonce = NonceUtils.incrementNonce(params.dataStore);
+        uint256 nonce = NonceUtils.incrementNonce(dataStore);
         bytes32 key = keccak256(abi.encodePacked(nonce));
 
-        params.depositStore.set(key, deposit);
+        depositStore.set(key, deposit);
 
-        params.eventEmitter.emitDepositCreated(key, deposit);
+        eventEmitter.emitDepositCreated(key, deposit);
 
         return key;
     }
@@ -188,6 +194,10 @@ library DepositUtils {
 
         params.depositStore.remove(params.key);
 
+        params.eventEmitter.emitDepositExecuted(params.key);
+
+        CallbackUtils.handleCallback(params.key, deposit);
+
         GasUtils.payExecutionFee(
             params.dataStore,
             params.depositStore,
@@ -196,8 +206,6 @@ library DepositUtils {
             params.keeper,
             deposit.account
         );
-
-        params.eventEmitter.emitDepositExecuted(params.key);
     }
 
     function cancelDeposit(

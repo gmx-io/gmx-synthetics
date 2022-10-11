@@ -82,18 +82,18 @@ library GasUtils {
 
     function estimateExecuteDepositGasLimit(DataStore dataStore, Deposit.Props memory deposit) internal view returns (uint256) {
         if (deposit.longTokenAmount == 0 || deposit.shortTokenAmount == 0) {
-            return dataStore.getUint(Keys.depositGasLimitKey(true));
+            return dataStore.getUint(Keys.depositGasLimitKey(true)) + deposit.callbackGasLimit;
         }
 
-        return dataStore.getUint(Keys.depositGasLimitKey(false));
+        return dataStore.getUint(Keys.depositGasLimitKey(false)) + deposit.callbackGasLimit;
     }
 
     function estimateExecuteWithdrawalGasLimit(DataStore dataStore, Withdrawal.Props memory withdrawal) internal view returns (uint256) {
         if (withdrawal.marketTokensLongAmount == 0 || withdrawal.marketTokensShortAmount == 0) {
-            return dataStore.getUint(Keys.withdrawalGasLimitKey(true));
+            return dataStore.getUint(Keys.withdrawalGasLimitKey(true)) + withdrawal.callbackGasLimit;
         }
 
-        return dataStore.getUint(Keys.withdrawalGasLimitKey(false));
+        return dataStore.getUint(Keys.withdrawalGasLimitKey(false)) + withdrawal.callbackGasLimit;
     }
 
     function estimateExecuteOrderGasLimit(DataStore dataStore, Order.Props memory order) internal view returns (uint256) {
@@ -114,16 +114,16 @@ library GasUtils {
 
     function estimateExecuteIncreaseOrderGasLimit(DataStore dataStore, Order.Props memory order) internal view returns (uint256) {
         uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
-        return dataStore.getUint(Keys.increaseOrderGasLimitKey()) + gasPerSwap * order.swapPath().length;
+        return dataStore.getUint(Keys.increaseOrderGasLimitKey()) + gasPerSwap * order.swapPath().length + order.callbackGasLimit();
     }
 
     function estimateExecuteDecreaseOrderGasLimit(DataStore dataStore, Order.Props memory order) internal view returns (uint256) {
         uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
-        return dataStore.getUint(Keys.decreaseOrderGasLimitKey()) + gasPerSwap * order.swapPath().length;
+        return dataStore.getUint(Keys.decreaseOrderGasLimitKey()) + gasPerSwap * order.swapPath().length + order.callbackGasLimit();
     }
 
     function estimateExecuteSwapOrderGasLimit(DataStore dataStore, Order.Props memory order) internal view returns (uint256) {
         uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
-        return dataStore.getUint(Keys.swapOrderGasLimitKey()) + gasPerSwap * order.swapPath().length;
+        return dataStore.getUint(Keys.swapOrderGasLimitKey()) + gasPerSwap * order.swapPath().length + order.callbackGasLimit();
     }
 }

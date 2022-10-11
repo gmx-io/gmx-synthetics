@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/Multicall.sol";
 
 import "../role/RoleModule.sol";
 import "../feature/FeatureUtils.sol";
+import "../callback/CallbackUtils.sol";
 
 import "../market/Market.sol";
 import "../market/MarketStore.sol";
@@ -193,6 +194,10 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
 
         _processOrder(params);
 
+        eventEmitter.emitOrderExecuted(params.key);
+
+        CallbackUtils.handleCallback(key, params.order);
+
         GasUtils.payExecutionFee(
             params.dataStore,
             params.orderStore,
@@ -201,8 +206,6 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
             params.keeper,
             params.order.account()
         );
-
-        eventEmitter.emitOrderExecuted(params.key);
     }
 
     function _processOrder(OrderUtils.ExecuteOrderParams memory params) internal {

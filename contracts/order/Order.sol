@@ -99,6 +99,7 @@ library Order {
         uint256 acceptablePrice;
         int256 acceptablePriceImpactUsd;
         uint256 executionFee;
+        uint256 callbackGasLimit;
         uint256 minOutputAmount;
         uint256 updatedAtBlock;
     }
@@ -162,6 +163,10 @@ library Order {
 
     function executionFee(Props memory props) internal pure returns (uint256) {
         return props.numbers.executionFee;
+    }
+
+    function callbackGasLimit(Props memory props) internal pure returns (uint256) {
+        return props.numbers.callbackGasLimit;
     }
 
     function minOutputAmount(Props memory props) internal pure returns (uint256) {
@@ -230,6 +235,10 @@ library Order {
 
     function setExecutionFee(Props memory props, uint256 _value) internal pure {
         props.numbers.executionFee = _value;
+    }
+
+    function setCallbackGasLimit(Props memory props, uint256 _value) internal pure {
+        props.numbers.callbackGasLimit = _value;
     }
 
     function setMinOutputAmount(Props memory props, uint256 _value) internal pure {

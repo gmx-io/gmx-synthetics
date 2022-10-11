@@ -13,6 +13,7 @@ import "../oracle/Oracle.sol";
 import "../oracle/OracleUtils.sol";
 
 import "../gas/GasUtils.sol";
+import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
 import "../utils/Null.sol";
@@ -22,11 +23,6 @@ library WithdrawalUtils {
     using Array for uint256[];
 
     struct CreateWithdrawalParams {
-        DataStore dataStore;
-        EventEmitter eventEmitter;
-        WithdrawalStore withdrawalStore;
-        MarketStore marketStore;
-        address account;
         address receiver;
         address callbackContract;
         address market;
@@ -36,7 +32,7 @@ library WithdrawalUtils {
         uint256 minShortTokenAmount;
         bool shouldConvertETH;
         uint256 executionFee;
-        address weth;
+        uint256 callbackGasLimit;
     }
 
     struct ExecuteWithdrawalParams {
@@ -77,14 +73,23 @@ library WithdrawalUtils {
     error MinShortTokens(uint256 received, uint256 expected);
     error InsufficientMarketTokens(uint256 balance, uint256 expected);
 
-    function createWithdrawal(CreateWithdrawalParams memory params) internal returns (bytes32) {
-        uint256 wethAmount = params.withdrawalStore.recordTransferIn(params.weth);
+    function createWithdrawal(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        WithdrawalStore withdrawalStore,
+        MarketStore marketStore,
+        address account,
+        CreateWithdrawalParams memory params
+    ) internal returns (bytes32) {
+        address weth = EthUtils.weth(dataStore);
+        uint256 wethAmount = withdrawalStore.recordTransferIn(weth);
         require(wethAmount == params.executionFee, "WithdrawalUtils: invalid wethAmount");
 
-        Market.Props memory market = params.marketStore.get(params.market);
+        Market.Props memory market = marketStore.get(params.market);
+        MarketUtils.validateNonEmptyMarket(market);
 
         Withdrawal.Props memory withdrawal = Withdrawal.Props(
-            params.account,
+            account,
             params.receiver,
             params.callbackContract,
             market.marketToken,
@@ -95,18 +100,19 @@ library WithdrawalUtils {
             block.number,
             params.shouldConvertETH,
             params.executionFee,
+            params.callbackGasLimit,
             Null.BYTES
         );
 
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(params.dataStore, withdrawal);
-        GasUtils.validateExecutionFee(params.dataStore, estimatedGasLimit, params.executionFee);
+        uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(dataStore, withdrawal);
+        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee);
 
-        uint256 nonce = NonceUtils.incrementNonce(params.dataStore);
+        uint256 nonce = NonceUtils.incrementNonce(dataStore);
         bytes32 key = keccak256(abi.encodePacked(nonce));
 
-        params.withdrawalStore.set(key, withdrawal);
+        withdrawalStore.set(key, withdrawal);
 
-        params.eventEmitter.emitWithdrawalCreated(key, withdrawal);
+        eventEmitter.emitWithdrawalCreated(key, withdrawal);
 
         return key;
     }
@@ -195,6 +201,10 @@ library WithdrawalUtils {
 
         params.withdrawalStore.remove(params.key);
 
+        params.eventEmitter.emitWithdrawalExecuted(params.key);
+
+        CallbackUtils.handleCallback(params.key, withdrawal);
+
         GasUtils.payExecutionFee(
             params.dataStore,
             params.withdrawalStore,
@@ -203,8 +213,6 @@ library WithdrawalUtils {
             params.keeper,
             withdrawal.account
         );
-
-        params.eventEmitter.emitWithdrawalExecuted(params.key);
     }
 
     function cancelWithdrawal(

@@ -50,16 +50,11 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
     }
 
     function createDeposit(
-        address receiver,
-        address callbackContract,
-        address market,
         address longToken,
         address shortToken,
         uint256 longTokenAmount,
         uint256 shortTokenAmount,
-        uint256 minMarketTokens,
-        bool shouldConvertETH,
-        uint256 executionFee
+        DepositUtils.CreateDepositParams memory params
     ) nonReentrant external payable returns (bytes32) {
         address account = msg.sender;
         address _depositStore = address(depositStore);
@@ -75,25 +70,12 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
 
         return depositHandler.createDeposit(
             account,
-            receiver,
-            callbackContract,
-            market,
-            minMarketTokens,
-            shouldConvertETH,
-            executionFee
+            params
         );
     }
 
     function createWithdrawal(
-        address receiver,
-        address callbackContract,
-        address market,
-        uint256 marketTokensLongAmount,
-        uint256 marketTokensShortAmount,
-        uint256 minLongTokenAmount,
-        uint256 minShortTokenAmount,
-        bool shouldConvertETH,
-        uint256 executionFee
+        WithdrawalUtils.CreateWithdrawalParams memory params
     ) nonReentrant external payable returns (bytes32) {
         address account = msg.sender;
 
@@ -101,21 +83,13 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
 
         return withdrawalHandler.createWithdrawal(
             account,
-            receiver,
-            callbackContract,
-            market,
-            marketTokensLongAmount,
-            marketTokensShortAmount,
-            minLongTokenAmount,
-            minShortTokenAmount,
-            shouldConvertETH,
-            executionFee
+            params
         );
     }
 
     function createOrder(
-        OrderUtils.CreateOrderParams memory params,
-        uint256 amountIn
+        uint256 amountIn,
+        OrderUtils.CreateOrderParams memory params
     ) nonReentrant external payable returns (bytes32) {
         require(params.orderType != Order.OrderType.Liquidation, "ExchangeRouter: invalid order type");
 

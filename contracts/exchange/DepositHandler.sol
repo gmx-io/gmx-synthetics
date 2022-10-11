@@ -50,31 +50,18 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
 
     function createDeposit(
         address account,
-        address receiver,
-        address callbackContract,
-        address market,
-        uint256 minMarketTokens,
-        bool shouldConvertETH,
-        uint256 executionFee
+        DepositUtils.CreateDepositParams memory params
     ) external nonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createDepositFeatureKey(address(this)));
 
-        DepositUtils.CreateDepositParams memory params = DepositUtils.CreateDepositParams(
+        return DepositUtils.createDeposit(
             dataStore,
             eventEmitter,
             depositStore,
             marketStore,
             account,
-            receiver,
-            callbackContract,
-            market,
-            minMarketTokens,
-            shouldConvertETH,
-            executionFee,
-            EthUtils.weth(dataStore)
+            params
         );
-
-        return DepositUtils.createDeposit(params);
     }
 
     function executeDeposit(
