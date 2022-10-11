@@ -2,130 +2,82 @@ const { expect } = require("chai");
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 
 const { deployFixture } = require("../../utils/fixture");
-const { getOracleParams } = require("../../utils/oracle");
-const { printGasUsage } = require("../../utils/gas");
 const { expandDecimals, decimalToFloat } = require("../../utils/math");
 const { getBalanceOf, getSupplyOf } = require("../../utils/token");
+const { handleDeposit } = require("../../utils/deposit");
+const { createWithdrawal, executeWithdrawal, handleWithdrawal } = require("../../utils/withdrawal");
 
 describe("Exchange.Withdrawal", () => {
   const { AddressZero } = ethers.constants;
   const { provider } = ethers;
-  const executionFee = "0";
 
-  let wallet, user0, signers, signerIndexes;
-  let depositHandler,
-    withdrawalHandler,
-    feeReceiver,
-    reader,
-    dataStore,
-    keys,
-    depositStore,
-    withdrawalStore,
-    ethUsdMarket,
-    weth,
-    usdc;
-  let oracleSalt;
+  let fixture;
+  let user0, user1, user2;
+  let withdrawalHandler, feeReceiver, reader, dataStore, keys, withdrawalStore, ethUsdMarket, weth, usdc;
 
   beforeEach(async () => {
-    const fixture = await loadFixture(deployFixture);
-    ({ wallet, user0, signers } = fixture.accounts);
-    ({
-      depositHandler,
-      withdrawalHandler,
-      feeReceiver,
-      reader,
-      dataStore,
-      keys,
-      depositStore,
-      withdrawalStore,
-      ethUsdMarket,
-      weth,
-      usdc,
-    } = fixture.contracts);
-    ({ oracleSalt, signerIndexes } = fixture.props);
+    fixture = await loadFixture(deployFixture);
+    ({ user0, user1, user2 } = fixture.accounts);
+    ({ withdrawalHandler, feeReceiver, reader, dataStore, keys, withdrawalStore, ethUsdMarket, weth, usdc } =
+      fixture.contracts);
   });
 
   it("createWithdrawal", async () => {
-    const block = await provider.getBlock();
-
     expect(await withdrawalStore.getWithdrawalCount()).eq(0);
-    const tx0 = await withdrawalHandler
-      .connect(wallet)
-      .createWithdrawal(
-        user0.address,
-        ethUsdMarket.marketToken,
-        expandDecimals(1000, 18),
-        expandDecimals(500, 18),
-        100,
-        50,
-        false,
-        executionFee
-      );
+
+    await createWithdrawal(fixture, {
+      account: user0,
+      receiver: user1,
+      callbackContract: user2,
+      market: ethUsdMarket,
+      marketTokensLongAmount: expandDecimals(1000, 18),
+      marketTokensShortAmount: expandDecimals(500, 18),
+      minLongTokenAmount: 100,
+      minShortTokenAmount: 50,
+      shouldConvertETH: true,
+      executionFee: 700,
+      callbackGasLimit: 100000,
+      gasUsageLabel: "createWithdrawal",
+    });
+
     expect(await withdrawalStore.getWithdrawalCount()).eq(1);
 
+    const block = await provider.getBlock();
     const withdrawalKeys = await withdrawalStore.getWithdrawalKeys(0, 1);
     const withdrawal = await withdrawalStore.get(withdrawalKeys[0]);
 
     expect(withdrawal.account).eq(user0.address);
+    expect(withdrawal.receiver).eq(user1.address);
+    expect(withdrawal.callbackContract).eq(user2.address);
     expect(withdrawal.market).eq(ethUsdMarket.marketToken);
     expect(withdrawal.marketTokensLongAmount).eq(expandDecimals(1000, 18));
     expect(withdrawal.marketTokensShortAmount).eq(expandDecimals(500, 18));
     expect(withdrawal.minLongTokenAmount).eq(100);
     expect(withdrawal.minShortTokenAmount).eq(50);
-    expect(withdrawal.updatedAtBlock).eq(block.number + 1);
-
-    await printGasUsage(provider, tx0, "withdrawalHandler.createWithdrawal tx0");
+    expect(withdrawal.updatedAtBlock).eq(block.number);
+    expect(withdrawal.shouldConvertETH).eq(true);
+    expect(withdrawal.executionFee).eq(700);
+    expect(withdrawal.callbackGasLimit).eq(100000);
   });
 
   it("executeWithdrawal", async () => {
-    await weth.mint(depositStore.address, expandDecimals(10, 18));
-    await usdc.mint(depositStore.address, expandDecimals(10 * 5000, 6));
-
-    await depositHandler
-      .connect(wallet)
-      .createDeposit(user0.address, ethUsdMarket.marketToken, 100, false, executionFee);
-    const depositKeys = await depositStore.getDepositKeys(0, 1);
-    const deposit = await depositStore.get(depositKeys[0]);
-
-    let block = await provider.getBlock(deposit.updatedAtBlock.toNumber());
-
-    let oracleParams = await getOracleParams({
-      oracleSalt,
-      oracleBlockNumbers: [block.number, block.number],
-      blockHashes: [block.hash, block.hash],
-      signerIndexes,
-      tokens: [weth.address, usdc.address],
-      prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-      signers,
-      priceFeedTokens: [],
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(10 * 5000, 6),
+      },
     });
 
-    await depositHandler.executeDeposit(depositKeys[0], oracleParams);
-
-    await withdrawalHandler
-      .connect(wallet)
-      .createWithdrawal(
-        user0.address,
-        ethUsdMarket.marketToken,
-        expandDecimals(1000, 18),
-        expandDecimals(500, 18),
-        100,
-        50,
-        false,
-        executionFee
-      );
-
-    block = await provider.getBlock();
-
-    oracleParams = await getOracleParams({
-      oracleSalt,
-      oracleBlockNumbers: [block.number, block.number],
-      blockHashes: [block.hash, block.hash],
-      signerIndexes,
-      tokens: [weth.address, usdc.address],
-      prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-      signers,
-      priceFeedTokens: [],
+    await createWithdrawal(fixture, {
+      receiver: user0,
+      market: ethUsdMarket,
+      marketTokensLongAmount: expandDecimals(1000, 18),
+      marketTokensShortAmount: expandDecimals(500, 18),
+      minLongTokenAmount: 100,
+      minShortTokenAmount: 50,
+      shouldConvertETH: false,
+      gasUsageLabel: "createWithdrawal",
     });
 
     expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(100 * 1000, 18));
@@ -146,28 +98,16 @@ describe("Exchange.Withdrawal", () => {
     const withdrawalKeys = await withdrawalStore.getWithdrawalKeys(0, 1);
     let withdrawal = await withdrawalStore.get(withdrawalKeys[0]);
 
-    block = await provider.getBlock();
-
     expect(withdrawal.account).eq(user0.address);
-    expect(withdrawal.market).eq(ethUsdMarket.marketToken);
-    expect(withdrawal.marketTokensLongAmount).eq(expandDecimals(1000, 18));
-    expect(withdrawal.marketTokensShortAmount).eq(expandDecimals(500, 18));
-    expect(withdrawal.minLongTokenAmount).eq(100);
-    expect(withdrawal.minShortTokenAmount).eq(50);
-    expect(withdrawal.updatedAtBlock).eq(block.number);
+    expect(await withdrawalStore.getWithdrawalCount()).eq(1);
 
-    const tx0 = await withdrawalHandler.executeWithdrawal(withdrawalKeys[0], oracleParams);
-
-    await printGasUsage(provider, tx0, "withdrawalHandler.executeWithdrawal tx0");
+    await executeWithdrawal(fixture, {
+      gasUsageLabel: "executeWithdrawal",
+    });
 
     withdrawal = await withdrawalStore.get(withdrawalKeys[0]);
     expect(withdrawal.account).eq(AddressZero);
-    expect(withdrawal.market).eq(AddressZero);
-    expect(withdrawal.marketTokensLongAmount).eq(0);
-    expect(withdrawal.marketTokensShortAmount).eq(0);
-    expect(withdrawal.minLongTokenAmount).eq(0);
-    expect(withdrawal.minShortTokenAmount).eq(0);
-    expect(withdrawal.updatedAtBlock).eq(0);
+    expect(await withdrawalStore.getWithdrawalCount()).eq(0);
 
     expect(
       await reader.getMarketTokenPrice(
@@ -196,8 +136,6 @@ describe("Exchange.Withdrawal", () => {
   });
 
   it("price impact", async () => {
-    await weth.mint(depositStore.address, expandDecimals(10, 18));
-
     // set price impact to 0.1% for every $50,000 of token imbalance
     // 0.1% => 0.001
     // 0.001 / 50,000 => 2 * (10 ** -8)
@@ -205,51 +143,11 @@ describe("Exchange.Withdrawal", () => {
     await dataStore.setUint(await reader.swapImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
     await dataStore.setUint(await reader.swapImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
-    await depositHandler
-      .connect(wallet)
-      .createDeposit(user0.address, ethUsdMarket.marketToken, 100, false, executionFee);
-    const depositKeys = await depositStore.getDepositKeys(0, 1);
-    const deposit = await depositStore.get(depositKeys[0]);
-
-    let block = await provider.getBlock(deposit.updatedAtBlock.toNumber());
-
-    let oracleParams = await getOracleParams({
-      oracleSalt,
-      oracleBlockNumbers: [block.number, block.number],
-      blockHashes: [block.hash, block.hash],
-      signerIndexes,
-      tokens: [weth.address, usdc.address],
-      prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-      signers,
-      priceFeedTokens: [],
-    });
-
-    await depositHandler.executeDeposit(depositKeys[0], oracleParams);
-
-    await withdrawalHandler
-      .connect(wallet)
-      .createWithdrawal(
-        user0.address,
-        ethUsdMarket.marketToken,
-        49975000000000000005000n,
-        0,
-        100,
-        0,
-        false,
-        executionFee
-      );
-
-    block = await provider.getBlock();
-
-    oracleParams = await getOracleParams({
-      oracleSalt,
-      oracleBlockNumbers: [block.number, block.number],
-      blockHashes: [block.hash, block.hash],
-      signerIndexes,
-      tokens: [weth.address, usdc.address],
-      prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-      signers,
-      priceFeedTokens: [],
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+      },
     });
 
     expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(49975000000000000005000n);
@@ -265,10 +163,16 @@ describe("Exchange.Withdrawal", () => {
     );
     expect(await reader.getPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq(0);
 
-    const withdrawalKeys = await withdrawalStore.getWithdrawalKeys(0, 1);
-    const tx0 = await withdrawalHandler.executeWithdrawal(withdrawalKeys[0], oracleParams);
-
-    await printGasUsage(provider, tx0, "withdrawalHandler.executeWithdrawal tx0");
+    await handleWithdrawal(fixture, {
+      create: {
+        market: ethUsdMarket,
+        marketTokensLongAmount: "49975000000000000005000",
+        minLongTokenAmount: 0,
+      },
+      execute: {
+        gasUsageLabel: "executeWithdrawal",
+      },
+    });
 
     expect(
       await reader.getMarketTokenPrice(
@@ -302,8 +206,6 @@ describe("Exchange.Withdrawal", () => {
     // 30%
     await dataStore.setUint(await keys.FEE_RECEIVER_WITHDRAWAL_FACTOR(), decimalToFloat(3, 1));
 
-    await weth.mint(depositStore.address, expandDecimals(10, 18));
-
     // set price impact to 0.1% for every $50,000 of token imbalance
     // 0.1% => 0.001
     // 0.001 / 50,000 => 2 * (10 ** -8)
@@ -311,26 +213,12 @@ describe("Exchange.Withdrawal", () => {
     await dataStore.setUint(await reader.swapImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
     await dataStore.setUint(await reader.swapImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
-    await depositHandler
-      .connect(wallet)
-      .createDeposit(user0.address, ethUsdMarket.marketToken, 100, false, executionFee);
-    const depositKeys = await depositStore.getDepositKeys(0, 1);
-    const deposit = await depositStore.get(depositKeys[0]);
-
-    let block = await provider.getBlock(deposit.updatedAtBlock.toNumber());
-
-    let oracleParams = await getOracleParams({
-      oracleSalt,
-      oracleBlockNumbers: [block.number, block.number],
-      blockHashes: [block.hash, block.hash],
-      signerIndexes,
-      tokens: [weth.address, usdc.address],
-      prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-      signers,
-      priceFeedTokens: [],
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+      },
     });
-
-    await depositHandler.executeDeposit(depositKeys[0], oracleParams);
 
     expect(
       await reader.getMarketTokenPrice(
@@ -341,32 +229,6 @@ describe("Exchange.Withdrawal", () => {
         expandDecimals(5000, 4 + 8)
       )
     ).eq("1000500500500500500500450400350"); // 1.0005005
-
-    await withdrawalHandler
-      .connect(wallet)
-      .createWithdrawal(
-        user0.address,
-        ethUsdMarket.marketToken,
-        expandDecimals(49940, 18),
-        0,
-        100,
-        0,
-        false,
-        executionFee
-      );
-
-    block = await provider.getBlock();
-
-    oracleParams = await getOracleParams({
-      oracleSalt,
-      oracleBlockNumbers: [block.number, block.number],
-      blockHashes: [block.hash, block.hash],
-      signerIndexes,
-      tokens: [weth.address, usdc.address],
-      prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-      signers,
-      priceFeedTokens: [],
-    });
 
     expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq("49950000000000000005000"); // 49950
     expect(await weth.balanceOf(withdrawalHandler.address)).eq(0);
@@ -384,10 +246,16 @@ describe("Exchange.Withdrawal", () => {
     expect(await weth.balanceOf(feeReceiver.address)).eq(0);
     expect(await usdc.balanceOf(feeReceiver.address)).eq(0);
 
-    const withdrawalKeys = await withdrawalStore.getWithdrawalKeys(0, 1);
-    const tx0 = await withdrawalHandler.executeWithdrawal(withdrawalKeys[0], oracleParams);
-
-    await printGasUsage(provider, tx0, "withdrawalHandler.executeWithdrawal tx0");
+    await handleWithdrawal(fixture, {
+      create: {
+        market: ethUsdMarket,
+        marketTokensLongAmount: expandDecimals(49940, 18),
+        minLongTokenAmount: 100,
+      },
+      execute: {
+        gasUsageLabel: "executeWithdrawal",
+      },
+    });
 
     expect(await weth.balanceOf(feeReceiver.address)).eq("1498949849849849"); // 0.0014989
     expect(await usdc.balanceOf(feeReceiver.address)).eq(0);
@@ -429,8 +297,6 @@ describe("Exchange.Withdrawal", () => {
     // 0.01%: 0.0001
     await dataStore.setUint(await reader.swapSpreadFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 4));
 
-    await weth.mint(depositStore.address, expandDecimals(10, 18));
-
     // set price impact to 0.1% for every $50,000 of token imbalance
     // 0.1% => 0.001
     // 0.001 / 50,000 => 2 * (10 ** -8)
@@ -438,51 +304,11 @@ describe("Exchange.Withdrawal", () => {
     await dataStore.setUint(await reader.swapImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
     await dataStore.setUint(await reader.swapImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
-    await depositHandler
-      .connect(wallet)
-      .createDeposit(user0.address, ethUsdMarket.marketToken, 100, false, executionFee);
-    const depositKeys = await depositStore.getDepositKeys(0, 1);
-    const deposit = await depositStore.get(depositKeys[0]);
-
-    let block = await provider.getBlock(deposit.updatedAtBlock.toNumber());
-
-    let oracleParams = await getOracleParams({
-      oracleSalt,
-      oracleBlockNumbers: [block.number, block.number],
-      blockHashes: [block.hash, block.hash],
-      signerIndexes,
-      tokens: [weth.address, usdc.address],
-      prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-      signers,
-      priceFeedTokens: [],
-    });
-
-    await depositHandler.executeDeposit(depositKeys[0], oracleParams);
-
-    await withdrawalHandler
-      .connect(wallet)
-      .createWithdrawal(
-        user0.address,
-        ethUsdMarket.marketToken,
-        expandDecimals(49940, 18),
-        0,
-        100,
-        0,
-        false,
-        executionFee
-      );
-
-    block = await provider.getBlock();
-
-    oracleParams = await getOracleParams({
-      oracleSalt,
-      oracleBlockNumbers: [block.number, block.number],
-      blockHashes: [block.hash, block.hash],
-      signerIndexes,
-      tokens: [weth.address, usdc.address],
-      prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-      signers,
-      priceFeedTokens: [],
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+      },
     });
 
     expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq("49945000000000000005000"); // 49945
@@ -498,10 +324,16 @@ describe("Exchange.Withdrawal", () => {
     );
     expect(await reader.getPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq(0);
 
-    const withdrawalKeys = await withdrawalStore.getWithdrawalKeys(0, 1);
-    const tx0 = await withdrawalHandler.executeWithdrawal(withdrawalKeys[0], oracleParams);
-
-    await printGasUsage(provider, tx0, "withdrawalHandler.executeWithdrawal tx0");
+    await handleWithdrawal(fixture, {
+      create: {
+        market: ethUsdMarket,
+        marketTokensLongAmount: expandDecimals(49940, 18),
+        minLongTokenAmount: 100,
+      },
+      execute: {
+        gasUsageLabel: "executeWithdrawal",
+      },
+    });
 
     expect(
       await reader.getMarketTokenPrice(

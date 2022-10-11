@@ -8,12 +8,12 @@ async function createDeposit(fixture, overrides = {}) {
   const { wallet, user0 } = fixture.accounts;
 
   const account = overrides.account || user0;
-  const receiver = overrides.receiver || user0;
+  const receiver = overrides.receiver || account;
   const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
-  const executionFee = overrides.executionFee || "1000000000000000";
   const market = overrides.market || ethUsdMarket;
   const minMarketTokens = overrides.minMarketTokens || bigNumberify(0);
   const shouldConvertETH = overrides.shouldConvertETH || false;
+  const executionFee = overrides.executionFee || "1000000000000000";
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
   const longTokenAmount = overrides.longTokenAmount || bigNumberify(0);
   const shortTokenAmount = overrides.shortTokenAmount || bigNumberify(0);
