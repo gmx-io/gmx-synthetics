@@ -136,10 +136,4 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
             params
         );
     }
-
-    function _sendWeth(address receiver) internal {
-        address weth = EthUtils.weth(dataStore);
-        IWETH(weth).deposit{value: msg.value}();
-        IERC20(weth).safeTransfer(address(receiver), msg.value);
-    }
 }
