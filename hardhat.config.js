@@ -1,6 +1,7 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("hardhat-contract-sizer");
 require("solidity-coverage");
+require("hardhat-gas-reporter");
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -11,9 +12,12 @@ module.exports = {
         enabled: true,
         runs: 10,
         details: {
-          constantOptimizer: true
-        }
+          constantOptimizer: true,
+        },
       },
     },
+  },
+  gasReporter: {
+    enabled: process.env.REPORT_GAS ? true : false,
   },
 };

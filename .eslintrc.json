@@ -11,6 +11,7 @@
   "extends": ["eslint:recommended"],
   "rules": {},
   "globals": {
+    "process": true,
     "ethers": true,
     "describe": true,
     "it": true,
