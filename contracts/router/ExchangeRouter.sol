@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Multicall.sol";
 
 import "../exchange/DepositHandler.sol";
 import "../exchange/WithdrawalHandler.sol";
@@ -13,7 +14,7 @@ import "../exchange/OrderHandler.sol";
 import "./Router.sol";
 
 // for functions which require token transfers from the user
-contract ExchangeRouter is ReentrancyGuard, RoleModule {
+contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
     using SafeERC20 for IERC20;
 
     Router immutable router;

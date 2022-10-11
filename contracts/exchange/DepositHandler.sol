@@ -18,7 +18,7 @@ import "../deposit/DepositUtils.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 
-contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
+contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
 
     DataStore immutable dataStore;
     EventEmitter immutable eventEmitter;
@@ -76,7 +76,7 @@ contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
     function executeDeposit(
         bytes32 key,
         OracleUtils.SetPricesParams memory oracleParams
-    ) external onlyOrderKeeper {
+    ) external nonReentrant onlyOrderKeeper {
         uint256 startingGas = gasleft();
 
         try this._executeDeposit(

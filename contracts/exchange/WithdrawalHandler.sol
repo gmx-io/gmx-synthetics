@@ -19,7 +19,7 @@ import "../oracle/OracleModule.sol";
 
 import "../eth/EthUtils.sol";
 
-contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
+contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
 
     DataStore immutable dataStore;
     EventEmitter immutable eventEmitter;
@@ -58,7 +58,7 @@ contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
         uint256 minShortTokenAmount,
         bool shouldConvertETH,
         uint256 executionFee
-    ) nonReentrant onlyController external returns (bytes32) {
+    ) external nonReentrant onlyController  returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createWithdrawalFeatureKey(address(this)));
 
         WithdrawalUtils.CreateWithdrawalParams memory params = WithdrawalUtils.CreateWithdrawalParams(
@@ -86,7 +86,7 @@ contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
     function executeWithdrawal(
         bytes32 key,
         OracleUtils.SetPricesParams memory oracleParams
-    ) external onlyOrderKeeper {
+    ) external nonReentrant onlyOrderKeeper {
         uint256 startingGas = gasleft();
 
         try this._executeWithdrawal(

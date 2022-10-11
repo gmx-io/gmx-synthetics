@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Multicall.sol";
 
 import "../role/RoleModule.sol";
 import "../feature/FeatureUtils.sol";
@@ -23,7 +24,7 @@ import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 import "../events/EventEmitter.sol";
 
-contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
+contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
     using Order for Order.Props;
 
     DataStore immutable dataStore;
@@ -76,7 +77,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
     function executeOrder(
         bytes32 key,
         OracleUtils.SetPricesParams memory oracleParams
-    ) external onlyOrderKeeper {
+    ) external nonReentrant onlyOrderKeeper {
         uint256 startingGas = gasleft();
 
         try this._executeOrder(
@@ -138,7 +139,7 @@ contract OrderHandler is RoleModule, ReentrancyGuard, OracleModule {
         eventEmitter.emitOrderUpdated(key, sizeDeltaUsd, acceptablePrice, acceptablePriceImpactUsd);
     }
 
-    function cancelOrder(bytes32 key) external {
+    function cancelOrder(bytes32 key) external nonReentrant {
         uint256 startingGas = gasleft();
 
         OrderStore _orderStore = orderStore;
