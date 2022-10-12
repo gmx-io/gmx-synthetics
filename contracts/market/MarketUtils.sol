@@ -213,7 +213,7 @@ library MarketUtils {
             amount
         );
 
-        eventEmitter.emitImpactPoolAmountIncrease(market, token, amount);
+        eventEmitter.emitImpactPoolAmountIncreased(market, token, amount);
     }
 
     function decreaseImpactPoolAmount(
@@ -228,7 +228,7 @@ library MarketUtils {
             amount
         );
 
-        eventEmitter.emitImpactPoolAmountDecrease(market, token, amount);
+        eventEmitter.emitImpactPoolAmountDecreased(market, token, amount);
     }
 
     function increaseOpenInterest(
@@ -243,7 +243,7 @@ library MarketUtils {
             sizeDeltaUsd
         );
 
-        eventEmitter.emitOpenInterestIncrease(market, isLong, sizeDeltaUsd);
+        eventEmitter.emitOpenInterestIncreased(market, isLong, sizeDeltaUsd);
     }
 
     function decreaseOpenInterest(
@@ -258,7 +258,7 @@ library MarketUtils {
             sizeDeltaUsd
         );
 
-        eventEmitter.emitOpenInterestDecrease(market, isLong, sizeDeltaUsd);
+        eventEmitter.emitOpenInterestDecreased(market, isLong, sizeDeltaUsd);
     }
 
     function increaseCollateralSum(
@@ -274,7 +274,7 @@ library MarketUtils {
             collateralDeltaAmount
         );
 
-        eventEmitter.emitCollateralSumIncrease(market, collateralToken, isLong, collateralDeltaAmount);
+        eventEmitter.emitCollateralSumIncreased(market, collateralToken, isLong, collateralDeltaAmount);
     }
 
     function decreaseCollateralSum(
@@ -290,7 +290,7 @@ library MarketUtils {
             collateralDeltaAmount
         );
 
-        eventEmitter.emitCollateralSumDecrease(market, collateralToken, isLong, collateralDeltaAmount);
+        eventEmitter.emitCollateralSumDecreased(market, collateralToken, isLong, collateralDeltaAmount);
     }
 
     // in case of late liquidations, there may be insufficient collateral to pay for funding fees

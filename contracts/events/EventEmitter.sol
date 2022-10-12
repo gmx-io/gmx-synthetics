@@ -48,9 +48,9 @@ contract EventEmitter is RoleModule {
         uint256 acceptablePrice,
         int256 acceptableUsdAdjustment
     );
-    event OrderCancelled(bytes32 key);
+    event OrderCancelled(bytes32 key, bytes32 reason);
     event OrderExecuted(bytes32 key);
-    event OrderFrozen(bytes32 key);
+    event OrderFrozen(bytes32 key, bytes32 reason);
     // event OrderCallback();
 
     // event SetPricePrecision
@@ -61,20 +61,20 @@ contract EventEmitter is RoleModule {
     event PoolAmountIncreased(address market, address token, uint256 amount);
     event PoolAmountDecreased(address market, address token, uint256 amount);
 
-    event ImpactPoolAmountIncrease(address market, address token, uint256 amount);
+    event ImpactPoolAmountIncreased(address market, address token, uint256 amount);
     event ImpactPoolAmountDecrease(address market, address token, uint256 amount);
 
     event OpenInterestIncrease(address market, bool isLong, uint256 sizeDeltaUsd);
-    event OpenInterestDecrease(address market, bool isLong, uint256 sizeDeltaUsd);
+    event OpenInterestDecreased(address market, bool isLong, uint256 sizeDeltaUsd);
 
-    event CollateralSumIncrease(
+    event CollateralSumIncreased(
         address market,
         address collateralToken,
         bool isLong,
         uint256 collateralDeltaAmount
     );
 
-    event CollateralSumDecrease(
+    event CollateralSumDecreased(
         address market,
         address collateralToken,
         bool isLong,
@@ -93,38 +93,38 @@ contract EventEmitter is RoleModule {
         emit PoolAmountDecreased(market, token, amount);
     }
 
-    function emitImpactPoolAmountIncrease(address market, address token, uint256 amount) external onlyController {
-        emit ImpactPoolAmountIncrease(market, token, amount);
+    function emitImpactPoolAmountIncreased(address market, address token, uint256 amount) external onlyController {
+        emit ImpactPoolAmountIncreased(market, token, amount);
     }
 
-    function emitImpactPoolAmountDecrease(address market, address token, uint256 amount) external onlyController {
+    function emitImpactPoolAmountDecreased(address market, address token, uint256 amount) external onlyController {
         emit ImpactPoolAmountDecrease(market, token, amount);
     }
 
-    function emitOpenInterestIncrease(address market, bool isLong, uint256 sizeDeltaUsd) external onlyController {
+    function emitOpenInterestIncreased(address market, bool isLong, uint256 sizeDeltaUsd) external onlyController {
         emit OpenInterestIncrease(market, isLong, sizeDeltaUsd);
     }
 
-    function emitOpenInterestDecrease(address market, bool isLong, uint256 sizeDeltaUsd) external onlyController {
-        emit OpenInterestDecrease(market, isLong, sizeDeltaUsd);
+    function emitOpenInterestDecreased(address market, bool isLong, uint256 sizeDeltaUsd) external onlyController {
+        emit OpenInterestDecreased(market, isLong, sizeDeltaUsd);
     }
 
-    function emitCollateralSumIncrease(
+    function emitCollateralSumIncreased(
         address market,
         address collateralToken,
         bool isLong,
         uint256 collateralDeltaAmount
     ) external onlyController {
-        emit CollateralSumIncrease(market, collateralToken, isLong, collateralDeltaAmount);
+        emit CollateralSumIncreased(market, collateralToken, isLong, collateralDeltaAmount);
     }
 
-    function emitCollateralSumDecrease(
+    function emitCollateralSumDecreased(
         address market,
         address collateralToken,
         bool isLong,
         uint256 collateralDeltaAmount
     ) external onlyController {
-        emit CollateralSumDecrease(market, collateralToken, isLong, collateralDeltaAmount);
+        emit CollateralSumDecreased(market, collateralToken, isLong, collateralDeltaAmount);
     }
 
     function emitOrderCreated(bytes32 key, Order.Props memory order) external onlyController {
@@ -144,12 +144,12 @@ contract EventEmitter is RoleModule {
         emit OrderUpdated(key, sizeDeltaUsd, acceptablePrice, acceptableUsdAdjustment);
     }
 
-    function emitOrderCancelled(bytes32 key) external onlyController {
-        emit OrderCancelled(key);
+    function emitOrderCancelled(bytes32 key, bytes32 reason) external onlyController {
+        emit OrderCancelled(key, reason);
     }
 
-    function emitOrderFrozen(bytes32 key) external onlyController {
-        emit OrderFrozen(key);
+    function emitOrderFrozen(bytes32 key, bytes32 reason) external onlyController {
+        emit OrderFrozen(key, reason);
     }
 
     function emitDepositCreated(bytes32 key, Deposit.Props memory deposit) external onlyController {

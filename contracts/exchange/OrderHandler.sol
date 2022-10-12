@@ -98,9 +98,9 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
                 revert(reason);
             }
 
-            _handleOrderError(key, startingGas);
-        } catch {
-            _handleOrderError(key, startingGas);
+            _handleOrderError(key, startingGas, reasonKey);
+        } catch (bytes memory reason) {
+            _handleOrderError(key, startingGas, keccak256(reason));
         }
     }
 
@@ -160,7 +160,8 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
             orderStore,
             key,
             msg.sender,
-            startingGas
+            startingGas,
+            keccak256(abi.encodePacked("BY_USER"))
         );
     }
 
@@ -262,7 +263,7 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
         return params;
     }
 
-    function _handleOrderError(bytes32 key, uint256 startingGas) internal {
+    function _handleOrderError(bytes32 key, uint256 startingGas, bytes32 reason) internal {
         Order.Props memory order = orderStore.get(key);
         bool isMarketOrder = OrderUtils.isMarketOrder(order.orderType());
 
@@ -273,7 +274,8 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
                 orderStore,
                 key,
                 msg.sender,
-                startingGas
+                startingGas,
+                reason
             );
         } else {
             // freeze unfulfillable orders to prevent the order system from being gamed
@@ -293,7 +295,8 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
                 orderStore,
                 key,
                 msg.sender,
-                startingGas
+                startingGas,
+                reason
             );
         }
     }

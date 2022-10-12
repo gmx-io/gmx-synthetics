@@ -142,7 +142,8 @@ library OrderUtils {
         OrderStore orderStore,
         bytes32 key,
         address keeper,
-        uint256 startingGas
+        uint256 startingGas,
+        bytes32 reason
     ) internal {
         Order.Props memory order = orderStore.get(key);
         validateNonEmptyOrder(order);
@@ -170,7 +171,7 @@ library OrderUtils {
             order.account()
         );
 
-        eventEmitter.emitOrderCancelled(key);
+        eventEmitter.emitOrderCancelled(key, reason);
     }
 
     function freezeOrder(
@@ -179,7 +180,8 @@ library OrderUtils {
         OrderStore orderStore,
         bytes32 key,
         address keeper,
-        uint256 startingGas
+        uint256 startingGas,
+        bytes32 reason
     ) internal {
         Order.Props memory order = orderStore.get(key);
         validateNonEmptyOrder(order);
@@ -199,7 +201,7 @@ library OrderUtils {
             order.account()
         );
 
-        eventEmitter.emitOrderFrozen(key);
+        eventEmitter.emitOrderFrozen(key, reason);
     }
 
     function validateNonEmptyOrder(Order.Props memory order) internal pure {
