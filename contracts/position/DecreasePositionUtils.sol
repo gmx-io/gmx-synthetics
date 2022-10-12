@@ -178,8 +178,28 @@ library DecreasePositionUtils {
         require(values.outputAmount >= 0, "DecreasePositionUtils: invalid outputAmount");
 
         params.eventEmitter.emitPositionFeesCollected(false, fees);
+        emitPositionDecrease(params, prices, values);
 
         return (values.outputAmount.toUint256(), params.adjustedSizeDeltaUsd);
+    }
+
+    function emitPositionDecrease(
+        DecreasePositionParams memory params,
+        MarketUtils.MarketPrices memory prices,
+        ProcessCollateralValues memory values
+    ) internal {
+        params.eventEmitter.emitPositionDecrease(
+            params.order.account(),
+            params.order.market(),
+            params.order.initialCollateralToken(),
+            params.order.isLong(),
+            prices.indexTokenPrice,
+            params.adjustedSizeDeltaUsd,
+            params.order.initialCollateralDeltaAmount().toInt256(),
+            values.realizedPnlAmount,
+            values.remainingCollateralAmount,
+            values.outputAmount
+        );
     }
 
     function processCollateral(

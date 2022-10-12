@@ -17,8 +17,7 @@ contract EventEmitter is RoleModule {
         bool isLong,
         uint256 price,
         uint256 sizeDeltaInUsd,
-        int256 collateralDeltaAmount,
-        bytes data
+        int256 collateralDeltaAmount
     );
     event PositionDecrease(
         address indexed account,
@@ -28,8 +27,11 @@ contract EventEmitter is RoleModule {
         uint256 price,
         uint256 sizeDeltaInUsd,
         int256 collateralDeltaAmount,
-        bytes data
+        int256 remainingCollateralAmount,
+        int256 outputAmount,
+        int256 realizedPnlAmount
     );
+    // PositionLiquidated?
 
     event DepositCreated(bytes32 key, Deposit.Props deposit);
     event DepositExecuted(bytes32 key);
@@ -51,7 +53,6 @@ contract EventEmitter is RoleModule {
     event OrderFrozen(bytes32 key);
     // event OrderCallback();
 
-    // event PositionFeeCollected();
     // event SetPricePrecision
 
     event SwapFeesCollected(bytes32 action, SwapPricingUtils.SwapFees fees);
@@ -194,8 +195,7 @@ contract EventEmitter is RoleModule {
         bool isLong,
         uint256 price,
         uint256 sizeDeltaUsd,
-        int256 collateralDeltaAmount,
-        bytes calldata data
+        int256 collateralDeltaAmount
     ) external onlyController {
         emit PositionIncrease(
             account,
@@ -204,8 +204,7 @@ contract EventEmitter is RoleModule {
             isLong,
             price,
             sizeDeltaUsd,
-            collateralDeltaAmount,
-            data
+            collateralDeltaAmount
         );
     }
 
@@ -217,7 +216,9 @@ contract EventEmitter is RoleModule {
         uint256 price,
         uint256 sizeDeltaUsd,
         int256 collateralDeltaAmount,
-        bytes calldata data
+        int256 remainingCollateralAmount,
+        int256 outputAmount,
+        int256 realizedPnlAmount
     ) external onlyController {
         emit PositionDecrease(
             account,
@@ -227,7 +228,9 @@ contract EventEmitter is RoleModule {
             price,
             sizeDeltaUsd,
             collateralDeltaAmount,
-            data
+            remainingCollateralAmount,
+            outputAmount,
+            realizedPnlAmount
         );
     }
 }

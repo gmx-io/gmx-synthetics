@@ -119,8 +119,7 @@ library IncreasePositionUtils {
             position.isLong,
             prices.indexTokenPrice,
             params.order.sizeDeltaUsd(),
-            collateralDeltaAmount,
-            bytes("")
+            collateralDeltaAmount
         );
     }
 
