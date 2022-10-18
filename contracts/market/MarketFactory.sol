@@ -28,7 +28,7 @@ contract MarketFactory is RoleModule {
         // correctly differentiate the deposit of the longToken and shortToken amounts
         require(longToken != shortToken, "MarketFactory: invalid tokens");
 
-        bytes32 marketTokenSalt = keccak256(abi.encodePacked(
+        bytes32 marketTokenSalt = keccak256(abi.encode(
             "GMX_MARKET",
             indexToken,
             longToken,

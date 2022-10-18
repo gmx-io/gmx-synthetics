@@ -105,7 +105,7 @@ library DepositUtils {
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee);
 
         uint256 nonce = NonceUtils.incrementNonce(dataStore);
-        bytes32 key = keccak256(abi.encodePacked(nonce));
+        bytes32 key = keccak256(abi.encode(nonce));
 
         depositStore.set(key, deposit);
 
@@ -271,7 +271,7 @@ library DepositUtils {
             FeeUtils.DEPOSIT_FEE
         );
 
-        params.eventEmitter.emitSwapFeesCollected(keccak256(abi.encodePacked("deposit")), fees);
+        params.eventEmitter.emitSwapFeesCollected(keccak256(abi.encode("deposit")), fees);
 
         return _processDeposit(params, _params, fees.amountAfterFees, fees.feesForPool);
     }

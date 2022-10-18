@@ -1,4 +1,5 @@
 const { bigNumberify, MAX_UINT8, MAX_UINT32, MAX_UINT64 } = require("./math");
+const { hashData } = require("./hash");
 
 const BN = require("bn.js");
 
@@ -11,7 +12,7 @@ async function signPrice(signer, salt, oracleBlockNumber, blockHash, token, pric
     throw new Error(`Max oracleBlockNumber exceeded: ${price.toString()}`);
   }
 
-  const hash = ethers.utils.solidityKeccak256(
+  const hash = hashData(
     ["bytes32", "uint256", "bytes32", "address", "uint256"],
     [salt, oracleBlockNumber, blockHash, token, price]
   );

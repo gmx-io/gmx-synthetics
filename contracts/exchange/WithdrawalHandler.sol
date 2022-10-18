@@ -79,7 +79,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
         ) {
         } catch Error(string memory reason) {
             // revert instead of cancel if the reason for failure is due to oracle params
-            if (keccak256(abi.encodePacked(reason)) == Keys.ORACLE_ERROR_KEY) {
+            if (keccak256(abi.encode(reason)) == Keys.ORACLE_ERROR_KEY) {
                 revert(reason);
             }
 

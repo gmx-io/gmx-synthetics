@@ -108,7 +108,7 @@ library WithdrawalUtils {
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee);
 
         uint256 nonce = NonceUtils.incrementNonce(dataStore);
-        bytes32 key = keccak256(abi.encodePacked(nonce));
+        bytes32 key = keccak256(abi.encode(nonce));
 
         withdrawalStore.set(key, withdrawal);
 
@@ -331,7 +331,7 @@ library WithdrawalUtils {
             _params.shouldConvertETH
         );
 
-        params.eventEmitter.emitSwapFeesCollected(keccak256(abi.encodePacked("withdrawal")), fees);
+        params.eventEmitter.emitSwapFeesCollected(keccak256(abi.encode("withdrawal")), fees);
 
         return outputAmount;
     }

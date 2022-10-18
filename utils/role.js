@@ -1,5 +1,7 @@
+const { hashString } = require("./hash");
+
 async function grantRole(roleStore, account, role) {
-  await roleStore.grantRole(account, ethers.utils.solidityKeccak256(["string"], [role]));
+  await roleStore.grantRole(account, hashString(role));
 }
 
 module.exports = {
