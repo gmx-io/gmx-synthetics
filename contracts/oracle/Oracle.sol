@@ -77,7 +77,7 @@ contract Oracle is RoleModule {
 
         // sign prices with only the chainid and oracle name so that there is
         // less config required in the oracle nodes
-        SALT = keccak256(abi.encodePacked(block.chainid, "xget-oracle-v1"));
+        SALT = keccak256(abi.encode(block.chainid, "xget-oracle-v1"));
     }
 
     function setPrices(
@@ -329,7 +329,7 @@ contract Oracle is RoleModule {
         address expectedSigner
     ) internal view {
         bytes32 digest = ECDSA.toEthSignedMessageHash(
-            keccak256(abi.encodePacked(SALT, oracleBlockNumber, blockHash, token, price))
+            keccak256(abi.encode(SALT, oracleBlockNumber, blockHash, token, price))
         );
 
         address recoveredSigner = ECDSA.recover(digest, signature);

@@ -88,7 +88,7 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
             startingGas
         ) {
         } catch Error(string memory reason) {
-            bytes32 reasonKey = keccak256(abi.encodePacked(reason));
+            bytes32 reasonKey = keccak256(abi.encode(reason));
 
             if (
                 reasonKey == Keys.ORACLE_ERROR_KEY ||

@@ -76,16 +76,16 @@ library Keys {
     string public constant TOTAL_BORROWING = "TOTAL_BORROWING";
 
     string public constant ORACLE_ERROR = "ORACLE_ERROR";
-    bytes32 public constant ORACLE_ERROR_KEY = keccak256(abi.encodePacked(ORACLE_ERROR));
+    bytes32 public constant ORACLE_ERROR_KEY = keccak256(abi.encode(ORACLE_ERROR));
 
     string public constant EMPTY_POSITION_ERROR = "EMPTY_POSITION_ERROR";
-    bytes32 public constant EMPTY_POSITION_ERROR_KEY = keccak256(abi.encodePacked(EMPTY_POSITION_ERROR));
+    bytes32 public constant EMPTY_POSITION_ERROR_KEY = keccak256(abi.encode(EMPTY_POSITION_ERROR));
 
     string public constant FROZEN_ORDER_ERROR = "FROZEN_ORDER_ERROR";
-    bytes32 public constant FROZEN_ORDER_ERROR_KEY = keccak256(abi.encodePacked(FROZEN_ORDER_ERROR));
+    bytes32 public constant FROZEN_ORDER_ERROR_KEY = keccak256(abi.encode(FROZEN_ORDER_ERROR));
 
     function depositGasLimitKey(bool singleToken) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             DEPOSIT_GAS_LIMIT,
             singleToken
         ));
@@ -93,66 +93,66 @@ library Keys {
 
 
     function withdrawalGasLimitKey(bool singleToken) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             WITHDRAWAL_GAS_LIMIT,
             singleToken
         ));
     }
 
     function singleSwapGasLimitKey() internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             SINGLE_SWAP_GAS_LIMIT
         ));
     }
 
     function increaseOrderGasLimitKey() internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             INCREASE_ORDER_GAS_LIMIT
         ));
     }
 
     function decreaseOrderGasLimitKey() internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             DECREASE_ORDER_GAS_LIMIT
         ));
     }
 
     function swapOrderGasLimitKey() internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             SWAP_ORDER_GAS_LIMIT
         ));
     }
 
     function createDepositFeatureKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             CREATE_DEPOSIT_FEATURE,
             module
         ));
     }
 
     function executeDepositFeatureKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             EXECUTE_DEPOSIT_FEATURE,
             module
         ));
     }
 
     function createWithdrawalFeatureKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             CREATE_WITHDRAWAL_FEATURE,
             module
         ));
     }
 
     function executeWithdrawalFeatureKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             EXECUTE_WITHDRAWAL_FEATURE,
             module
         ));
     }
 
     function createOrderFeatureKey(address module, uint256 orderType) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             CREATE_ORDER_FEATURE,
             module,
             orderType
@@ -160,7 +160,7 @@ library Keys {
     }
 
     function executeOrderFeatureKey(address module, uint256 orderType) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             EXECUTE_ORDER_FEATURE,
             module,
             orderType
@@ -168,7 +168,7 @@ library Keys {
     }
 
     function updateOrderFeatureKey(address module, uint256 orderType) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             UPDATE_ORDER_FEATURE,
             module,
             orderType
@@ -176,7 +176,7 @@ library Keys {
     }
 
     function cancelOrderFeatureKey(address module, uint256 orderType) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             CANCEL_ORDER_FEATURE,
             module,
             orderType
@@ -184,7 +184,7 @@ library Keys {
     }
 
     function positionImpactFactorKey(address market, bool isPositive) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             POSITION_IMPACT_FACTOR,
             market,
             isPositive
@@ -192,28 +192,28 @@ library Keys {
    }
 
     function positionImpactExponentFactorKey(address market) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             POSITION_IMPACT_EXPONENT_FACTOR,
             market
         ));
 }
 
     function positionSpreadFactorKey(address market) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             POSITION_SPREAD_FACTOR,
             market
         ));
     }
 
     function positionFeeFactorKey(address market) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             POSITION_FEE_FACTOR,
             market
         ));
     }
 
     function swapImpactFactorKey(address market, bool isPositive) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             SWAP_IMPACT_FACTOR,
             market,
             isPositive
@@ -221,7 +221,7 @@ library Keys {
     }
 
     function swapImpactExponentFactorKey(address market) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             SWAP_IMPACT_EXPONENT_FACTOR,
             market
         ));
@@ -229,21 +229,21 @@ library Keys {
 
 
     function swapSpreadFactorKey(address market) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             SWAP_SPREAD_FACTOR,
             market
         ));
     }
 
     function swapFeeFactorKey(address market) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             SWAP_FEE_FACTOR,
             market
         ));
     }
 
     function oraclePrecisionKey(address token) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             ORACLE_PRECISION,
             token
         ));
@@ -251,7 +251,7 @@ library Keys {
 
     // market open interest
     function openInterestKey(address market, bool isLong) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             OPEN_INTEREST,
             market,
             isLong
@@ -260,7 +260,7 @@ library Keys {
 
     // market open interest in tokens
     function openInterestInTokensKey(address market, bool isLong) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             OPEN_INTEREST_IN_TOKENS,
             market,
             isLong
@@ -269,7 +269,7 @@ library Keys {
 
     // total collateral of positions
     function collateralSumKey(address market, address collateralToken, bool isLong) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             COLLATERAL_SUM,
             market,
             collateralToken,
@@ -279,7 +279,7 @@ library Keys {
 
     // amount of tokens in market pool
     function poolAmountKey(address market, address token) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             POOL_AMOUNT,
             market,
             token
@@ -288,7 +288,7 @@ library Keys {
 
     // amount of tokens in impact pool
     function impactPoolAmountKey(address market, address token) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             SWAP_IMPACT_POOL_AMOUNT,
             market,
             token
@@ -296,7 +296,7 @@ library Keys {
     }
 
     function reserveFactorKey(address market, bool isLong) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             RESERVE_FACTOR,
             market,
             isLong
@@ -304,14 +304,14 @@ library Keys {
     }
 
     function fundingFactorKey(address market) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             FUNDING_FACTOR,
             market
         ));
     }
 
     function cumulativeFundingFactorKey(address market, bool isLong) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             CUMULATIVE_FUNDING_FACTOR,
             market,
             isLong
@@ -319,14 +319,14 @@ library Keys {
     }
 
     function cumulativeFundingFactorUpdatedAtKey(address market) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             CUMULATIVE_FUNDING_FACTOR_UPDATED_AT,
             market
         ));
     }
 
     function borrowingFactorKey(address market, bool isLong) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             BORROWING_FACTOR,
             market,
             isLong
@@ -334,7 +334,7 @@ library Keys {
     }
 
     function cumulativeBorrowingFactorKey(address market, bool isLong) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             CUMULATIVE_BORROWING_FACTOR,
             market,
             isLong
@@ -342,7 +342,7 @@ library Keys {
     }
 
     function cumulativeBorrowingFactorUpdatedAtKey(address market, bool isLong) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             CUMULATIVE_BORROWING_FACTOR_UPDATED_AT,
             market,
             isLong
@@ -350,7 +350,7 @@ library Keys {
     }
 
     function totalBorrowingKey(address market, bool isLong) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             TOTAL_BORROWING,
             market,
             isLong
@@ -358,21 +358,21 @@ library Keys {
     }
 
     function priceFeedKey(address token) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             PRICE_FEED,
             token
         ));
     }
 
     function priceFeedPrecisionKey(address token) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             PRICE_FEED_PRECISION,
             token
         ));
     }
 
     function stablePriceKey(address token) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             STABLE_PRICE,
             token
         ));

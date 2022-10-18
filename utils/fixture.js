@@ -2,6 +2,7 @@ const { expandDecimals } = require("./math");
 const { grantRole } = require("./role");
 const { deployContract } = require("./deploy");
 const { decimalToFloat, expandFloatDecimals } = require("./math");
+const { hashData } = require("./hash");
 
 async function deployFixture() {
   const chainId = 31337; // hardhat chain id
@@ -74,7 +75,7 @@ async function deployFixture() {
   await dataStore.setUint(await reader.oraclePrecisionKey(wbtc.address), expandDecimals(1, 20));
   await dataStore.setUint(await reader.oraclePrecisionKey(usdc.address), expandDecimals(1, 18));
 
-  const oracleSalt = ethers.utils.solidityKeccak256(["uint256", "string"], [chainId, "xget-oracle-v1"]);
+  const oracleSalt = hashData(["uint256", "string"], [chainId, "xget-oracle-v1"]);
 
   const depositStore = await deployContract("DepositStore", [roleStore.address]);
   const withdrawalStore = await deployContract("WithdrawalStore", [roleStore.address]);

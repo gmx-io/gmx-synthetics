@@ -45,7 +45,7 @@ contract Timelock {
             string memory prefix = prefixes[i];
 
             require(allowedFastKeys[prefix], "Timelock: invalid key");
-            bytes32 key = keccak256(abi.encodePacked(
+            bytes32 key = keccak256(abi.encode(
                 prefix,
                 data[i]
             ));
@@ -56,7 +56,7 @@ contract Timelock {
 
     function fastSetUint(DataStore dataStore, string memory prefix, bytes memory data, uint256 value) external onlyAdmin {
         require(allowedFastKeys[prefix], "Timelock: invalid key");
-        bytes32 key = keccak256(abi.encodePacked(
+        bytes32 key = keccak256(abi.encode(
             prefix,
             data
         ));

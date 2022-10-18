@@ -72,7 +72,7 @@ library PositionUtils {
     }
 
     function getPositionKey(address account, address market, address collateralToken, bool isLong) internal pure returns (bytes32) {
-        bytes32 key = keccak256(abi.encodePacked(account, market, collateralToken, isLong));
+        bytes32 key = keccak256(abi.encode(account, market, collateralToken, isLong));
         return key;
     }
 
