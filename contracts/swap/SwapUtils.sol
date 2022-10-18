@@ -151,7 +151,7 @@ library SwapUtils {
         }
 
         if (_params.receiver != address(0)) {
-            MarketToken(_params.market.marketToken).transferOut(
+            MarketToken(payable(_params.market.marketToken)).transferOut(
                 EthUtils.weth(params.dataStore),
                 cache.tokenOut,
                 cache.poolAmountOut,

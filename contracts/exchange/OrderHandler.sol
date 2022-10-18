@@ -22,6 +22,8 @@ import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 import "../events/EventEmitter.sol";
 
+import "../utils/Null.sol";
+
 contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
     using Order for Order.Props;
 
@@ -52,9 +54,7 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
         feeReceiver = _feeReceiver;
     }
 
-    receive() external payable {
-        require(msg.sender == EthUtils.weth(dataStore), "OrderHandler: invalid sender");
-    }
+    receive() external payable {}
 
     function createOrder(
         address account,
@@ -99,6 +99,28 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
         } catch (bytes memory reason) {
             _handleOrderError(key, startingGas, keccak256(reason));
         }
+    }
+
+    function executeLiquidation(
+        address account,
+        address market,
+        address collateralToken,
+        bool isLong,
+        OracleUtils.SetPricesParams calldata oracleParams
+    ) external
+        nonReentrant
+        onlyLiquidationKeeper
+        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+    {
+        uint256 startingGas = gasleft();
+
+        bytes32 key = _createLiquidationOrder(account, market, collateralToken, isLong);
+
+        OrderBaseUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, msg.sender, startingGas);
+
+        FeatureUtils.validateFeature(params.dataStore, Keys.executeOrderFeatureKey(address(this), uint256(params.order.orderType())));
+
+        OrderUtils.executeOrder(params);
     }
 
     function updateOrder(
@@ -255,6 +277,58 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
             );
         }
     }
+
+    function _createLiquidationOrder(
+        address account,
+        address market,
+        address collateralToken,
+        bool isLong
+    ) internal returns (bytes32) {
+        bytes32 positionKey = PositionUtils.getPositionKey(account, market, collateralToken, isLong);
+        Position.Props memory position = positionStore.get(positionKey);
+
+        Order.Addresses memory addresses = Order.Addresses(
+            account, // account
+            account, // receiver
+            address(0), // callbackContract
+            market, // market
+            position.collateralToken, // initialCollateralToken
+            new address[](0) // swapPath
+        );
+
+        Order.Numbers memory numbers = Order.Numbers(
+            position.sizeInUsd, // sizeDeltaUsd
+            0, // initialCollateralDeltaAmount
+            position.isLong ? 0 : type(uint256).max, // acceptablePrice
+            type(int256).min, // acceptablePriceImpactUsd
+            0, // executionFee
+            0, // callbackGasLimit
+            0, // minOutputAmount
+            block.number // updatedAtBlock
+        );
+
+        Order.Flags memory flags = Order.Flags(
+            Order.OrderType.Liquidation, // orderType
+            position.isLong, // isLong
+            true, // shouldConvertETH
+            false // isFrozen
+        );
+
+        Order.Props memory order = Order.Props(
+            addresses,
+            numbers,
+            flags,
+            Null.BYTES
+        );
+
+        order.touch();
+
+        bytes32 key = NonceUtils.getNextKey(dataStore);
+        orderStore.set(key, order);
+
+        return key;
+    }
+
 
     function _validateFrozenOrderKeeper(address keeper) internal view {
         require(roleStore.hasRole(keeper, Role.FROZEN_ORDER_KEEPER), Keys.FROZEN_ORDER_ERROR);

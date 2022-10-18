@@ -5,13 +5,15 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "../role/RoleModule.sol";
 import "../eth/IWETH.sol";
+import "./FundReceiver.sol";
 
-contract Bank is RoleModule {
+contract Bank is FundReceiver {
     using SafeERC20 for IERC20;
 
-    constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
+    constructor(RoleStore _roleStore) FundReceiver(_roleStore) {}
+
+    receive() external payable {}
 
     function transferOut(address token, uint256 amount, address receiver) external onlyController {
         _transferOut(token, amount, receiver);

@@ -72,7 +72,7 @@ library PricingUtils {
         bytes32 feeType
     ) internal {
         if (feeReceiverAmount > 0) {
-            MarketToken(marketToken).transferOut(token, feeReceiverAmount, address(feeReceiver));
+            MarketToken(payable(marketToken)).transferOut(token, feeReceiverAmount, address(feeReceiver));
             feeReceiver.notifyFeeReceived(feeType, token, feeReceiverAmount);
         }
     }

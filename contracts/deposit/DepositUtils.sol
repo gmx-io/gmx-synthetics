@@ -104,8 +104,7 @@ library DepositUtils {
         uint256 estimatedGasLimit = GasUtils.estimateExecuteDepositGasLimit(dataStore, deposit);
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee);
 
-        uint256 nonce = NonceUtils.incrementNonce(dataStore);
-        bytes32 key = keccak256(abi.encode(nonce));
+        bytes32 key = NonceUtils.getNextKey(dataStore);
 
         depositStore.set(key, deposit);
 
@@ -293,7 +292,7 @@ library DepositUtils {
             _params.tokenIn == _params.market.shortToken ? _params.tokenInPrice : _params.tokenOutPrice,
             params.oracle.getPrimaryPrice(_params.market.indexToken)
         );
-        uint256 supply = MarketUtils.getMarketTokenSupply(MarketToken(_params.market.marketToken));
+        uint256 supply = MarketUtils.getMarketTokenSupply(MarketToken(payable(_params.market.marketToken)));
 
         if (_params.priceImpactUsd > 0) {
             // when there is a positive price impact factor,
@@ -357,7 +356,7 @@ library DepositUtils {
             amountAfterFees + feesForPool
         );
 
-        MarketToken(_params.market.marketToken).mint(_params.receiver, mintAmount);
+        MarketToken(payable(_params.market.marketToken)).mint(_params.receiver, mintAmount);
 
         return mintAmount;
     }

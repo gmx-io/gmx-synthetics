@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import "../role/RoleModule.sol";
+import "../bank/FundReceiver.sol";
 import "../feature/FeatureUtils.sol";
 
 import "../market/Market.sol";
@@ -19,7 +19,7 @@ import "../oracle/OracleModule.sol";
 
 import "../eth/EthUtils.sol";
 
-contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
+contract WithdrawalHandler is ReentrancyGuard, FundReceiver, OracleModule {
 
     DataStore immutable dataStore;
     EventEmitter immutable eventEmitter;
@@ -36,7 +36,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
         MarketStore _marketStore,
         Oracle _oracle,
         FeeReceiver _feeReceiver
-    ) RoleModule(_roleStore) {
+    ) FundReceiver(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         withdrawalStore = _withdrawalStore;
@@ -45,9 +45,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
         feeReceiver = _feeReceiver;
     }
 
-    receive() external payable {
-        require(msg.sender == EthUtils.weth(dataStore), "WithdrawalHandler: invalid sender");
-    }
+    receive() external payable {}
 
     function createWithdrawal(
         address account,

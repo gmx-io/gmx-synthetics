@@ -87,8 +87,7 @@ library OrderUtils {
         uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee());
 
-        uint256 nonce = NonceUtils.incrementNonce(dataStore);
-        bytes32 key = keccak256(abi.encode(nonce));
+        bytes32 key = NonceUtils.getNextKey(dataStore);
 
         order.touch();
         orderStore.set(key, order);
