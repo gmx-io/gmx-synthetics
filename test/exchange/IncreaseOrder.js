@@ -2,51 +2,23 @@ const { expect } = require("chai");
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 
 const { deployFixture } = require("../../utils/fixture");
-const { getOracleParams } = require("../../utils/oracle");
-const { printGasUsage } = require("../../utils/gas");
-const { bigNumberify, expandDecimals, expandFloatDecimals } = require("../../utils/math");
-const { getBalanceOf } = require("../../utils/token");
+const { expandDecimals, expandFloatDecimals } = require("../../utils/math");
 const { handleDeposit } = require("../../utils/deposit");
 const { OrderType, createOrder, executeOrder, handleOrder } = require("../../utils/order");
 
 describe("Exchange.IncreaseOrder", () => {
-  const { AddressZero, HashZero } = ethers.constants;
   const { provider } = ethers;
 
   let fixture;
-  let wallet, user0, user1, user2, signers;
-  let orderHandler,
-    depositHandler,
-    depositStore,
-    feeReceiver,
-    reader,
-    dataStore,
-    keys,
-    orderStore,
-    positionStore,
-    ethUsdMarket,
-    weth,
-    usdc;
-  let oracleSalt, executionFee, signerIndexes;
+  let user0, user1;
+  let orderStore, positionStore, ethUsdMarket, weth;
+  let executionFee;
 
   beforeEach(async () => {
     fixture = await loadFixture(deployFixture);
-    ({ wallet, user0, user1, user2, signers } = fixture.accounts);
-    ({
-      orderHandler,
-      depositHandler,
-      depositStore,
-      feeReceiver,
-      reader,
-      dataStore,
-      keys,
-      orderStore,
-      positionStore,
-      ethUsdMarket,
-      weth,
-      usdc,
-    } = fixture.contracts);
-    ({ oracleSalt, executionFee, signerIndexes } = fixture.props);
+    ({ user0, user1 } = fixture.accounts);
+    ({ orderStore, positionStore, ethUsdMarket, weth } = fixture.contracts);
+    ({ executionFee } = fixture.props);
 
     await handleDeposit(fixture, {
       create: {

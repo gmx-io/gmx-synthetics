@@ -2,19 +2,21 @@
 
 pragma solidity ^0.8.0;
 
-import "./OrderUtils.sol";
+import "./OrderBaseUtils.sol";
+import "../swap/SwapUtils.sol";
 
 library SwapOrderUtils {
     using Order for Order.Props;
+    using Array for uint256[];
 
     error UnexpectedMarket();
 
-    function processOrder(OrderUtils.ExecuteOrderParams memory params) external {
+    function processOrder(OrderBaseUtils.ExecuteOrderParams memory params) external {
         if (params.order.market() != address(0)) {
             revert UnexpectedMarket();
         }
 
-        OrderUtils.validateOracleBlockNumbersForSwap(
+        validateOracleBlockNumbers(
             params.oracleBlockNumbers,
             params.order.orderType(),
             params.order.updatedAtBlock()
@@ -41,5 +43,27 @@ library SwapOrderUtils {
         ));
 
         params.orderStore.remove(params.key, params.order.account());
+    }
+
+    function validateOracleBlockNumbers(
+        uint256[] memory oracleBlockNumbers,
+        Order.OrderType orderType,
+        uint256 orderUpdatedAtBlock
+    ) internal pure {
+        if (orderType == Order.OrderType.MarketSwap) {
+            if (!oracleBlockNumbers.areEqualTo(orderUpdatedAtBlock)) {
+                revert(Keys.ORACLE_ERROR);
+            }
+            return;
+        }
+
+        if (orderType == Order.OrderType.LimitSwap) {
+            if (!oracleBlockNumbers.areGreaterThan(orderUpdatedAtBlock)) {
+                revert(Keys.ORACLE_ERROR);
+            }
+            return;
+        }
+
+        OrderBaseUtils.revertUnsupportedOrderType();
     }
 }

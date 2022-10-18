@@ -89,7 +89,7 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
 
     function createOrder(
         uint256 amountIn,
-        OrderUtils.CreateOrderParams memory params
+        OrderBaseUtils.CreateOrderParams memory params
     ) nonReentrant external payable returns (bytes32) {
         require(params.orderType != Order.OrderType.Liquidation, "ExchangeRouter: invalid order type");
 
@@ -108,7 +108,7 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
     }
 
     function createLiquidation(
-        OrderUtils.CreateOrderParams memory params,
+        OrderBaseUtils.CreateOrderParams memory params,
         address account
     ) nonReentrant external onlyLiquidationKeeper returns (bytes32) {
         require(params.orderType == Order.OrderType.Liquidation, "ExchangeRouter: invalid order type");

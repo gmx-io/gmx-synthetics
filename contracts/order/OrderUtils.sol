@@ -14,15 +14,17 @@ import "../oracle/Oracle.sol";
 import "../oracle/OracleUtils.sol";
 import "../events/EventEmitter.sol";
 
-import "../position/PositionUtils.sol";
-import "../position/IncreasePositionUtils.sol";
-import "../position/DecreasePositionUtils.sol";
+import "./IncreaseOrderUtils.sol";
+import "./DecreaseOrderUtils.sol";
+import "./SwapOrderUtils.sol";
+import "./OrderBaseUtils.sol";
 
 import "../market/MarketStore.sol";
 import "../swap/SwapUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../eth/EthUtils.sol";
+import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
 
@@ -31,53 +33,13 @@ library OrderUtils {
     using Position for Position.Props;
     using Array for uint256[];
 
-    struct CreateOrderParams {
-        address receiver;
-        address callbackContract;
-        address market;
-        address initialCollateralToken;
-        address[] swapPath;
-
-        uint256 sizeDeltaUsd;
-        uint256 acceptablePrice;
-        int256 acceptablePriceImpactUsd;
-        uint256 executionFee;
-        uint256 callbackGasLimit;
-        uint256 minOutputAmount;
-
-        Order.OrderType orderType;
-        bool isLong;
-        bool shouldConvertETH;
-    }
-
-    struct ExecuteOrderParams {
-        bytes32 key;
-        Order.Props order;
-        Market.Props[] swapPathMarkets;
-        DataStore dataStore;
-        EventEmitter eventEmitter;
-        OrderStore orderStore;
-        PositionStore positionStore;
-        Oracle oracle;
-        FeeReceiver feeReceiver;
-        uint256[] oracleBlockNumbers;
-        Market.Props market;
-        address keeper;
-        uint256 startingGas;
-        bytes32 positionKey;
-    }
-
-    error EmptyOrder();
-    error UnsupportedOrderType();
-    error UnacceptablePriceImpactUsd(int256 priceImpactUsd, int256 acceptablePriceImpactUsd);
-
     function createOrder(
         DataStore dataStore,
         EventEmitter eventEmitter,
         OrderStore orderStore,
         MarketStore marketStore,
         address account,
-        CreateOrderParams memory params
+        OrderBaseUtils.CreateOrderParams memory params
     ) internal returns (bytes32) {
         uint256 initialCollateralDeltaAmount;
 
@@ -136,6 +98,52 @@ library OrderUtils {
         return key;
     }
 
+    function executeOrder(OrderBaseUtils.ExecuteOrderParams memory params) internal {
+        OrderBaseUtils.validateNonEmptyOrder(params.order);
+
+        setExactOrderPrice(
+            params.oracle,
+            params.market.indexToken,
+            params.order.orderType(),
+            params.order.acceptablePrice(),
+            params.order.isLong()
+        );
+
+        processOrder(params);
+
+        params.eventEmitter.emitOrderExecuted(params.key);
+
+        CallbackUtils.handleExecution(params.key, params.order);
+
+        GasUtils.payExecutionFee(
+            params.dataStore,
+            params.orderStore,
+            params.order.executionFee(),
+            params.startingGas,
+            params.keeper,
+            params.order.account()
+        );
+    }
+
+    function processOrder(OrderBaseUtils.ExecuteOrderParams memory params) internal {
+        if (OrderBaseUtils.isIncreaseOrder(params.order.orderType())) {
+            IncreaseOrderUtils.processOrder(params);
+            return;
+        }
+
+        if (OrderBaseUtils.isDecreaseOrder(params.order.orderType())) {
+            DecreaseOrderUtils.processOrder(params);
+            return;
+        }
+
+        if (OrderBaseUtils.isSwapOrder(params.order.orderType())) {
+            SwapOrderUtils.processOrder(params);
+            return;
+        }
+
+        OrderBaseUtils.revertUnsupportedOrderType();
+    }
+
     function cancelOrder(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -146,9 +154,9 @@ library OrderUtils {
         bytes32 reason
     ) internal {
         Order.Props memory order = orderStore.get(key);
-        validateNonEmptyOrder(order);
+        OrderBaseUtils.validateNonEmptyOrder(order);
 
-        if (isIncreaseOrder(order.orderType()) || isSwapOrder(order.orderType())) {
+        if (OrderBaseUtils.isIncreaseOrder(order.orderType()) || OrderBaseUtils.isSwapOrder(order.orderType())) {
             if (order.initialCollateralDeltaAmount() > 0) {
                 orderStore.transferOut(
                     EthUtils.weth(dataStore),
@@ -162,6 +170,10 @@ library OrderUtils {
 
         orderStore.remove(key, order.account());
 
+        eventEmitter.emitOrderCancelled(key, reason);
+
+        CallbackUtils.handleCancellation(key, order);
+
         GasUtils.payExecutionFee(
             dataStore,
             orderStore,
@@ -170,8 +182,6 @@ library OrderUtils {
             keeper,
             order.account()
         );
-
-        eventEmitter.emitOrderCancelled(key, reason);
     }
 
     function freezeOrder(
@@ -184,7 +194,7 @@ library OrderUtils {
         bytes32 reason
     ) internal {
         Order.Props memory order = orderStore.get(key);
-        validateNonEmptyOrder(order);
+        OrderBaseUtils.validateNonEmptyOrder(order);
 
         uint256 executionFee = order.executionFee();
 
@@ -204,51 +214,6 @@ library OrderUtils {
         eventEmitter.emitOrderFrozen(key, reason);
     }
 
-    function validateNonEmptyOrder(Order.Props memory order) internal pure {
-        if (order.account() == address(0)) {
-            revert EmptyOrder();
-        }
-    }
-
-    function isMarketOrder(Order.OrderType orderType) internal pure returns (bool) {
-        return orderType == Order.OrderType.MarketSwap ||
-               orderType == Order.OrderType.MarketIncrease ||
-               orderType == Order.OrderType.MarketDecrease ||
-               orderType == Order.OrderType.Liquidation;
-    }
-
-    function isLimitOrder(Order.OrderType orderType) internal pure returns (bool) {
-        return orderType == Order.OrderType.LimitSwap ||
-               orderType == Order.OrderType.LimitIncrease ||
-               orderType == Order.OrderType.LimitDecrease;
-    }
-
-    function isSwapOrder(Order.OrderType orderType) internal pure returns (bool) {
-        return orderType == Order.OrderType.MarketSwap ||
-               orderType == Order.OrderType.LimitSwap;
-    }
-
-    function isPositionOrder(Order.OrderType orderType) internal pure returns (bool) {
-        return orderType == Order.OrderType.MarketIncrease ||
-               orderType == Order.OrderType.LimitIncrease;
-    }
-
-    function isIncreaseOrder(Order.OrderType orderType) internal pure returns (bool) {
-        return orderType == Order.OrderType.MarketIncrease ||
-               orderType == Order.OrderType.LimitIncrease;
-    }
-
-    function isDecreaseOrder(Order.OrderType orderType) internal pure returns (bool) {
-        return orderType == Order.OrderType.MarketDecrease ||
-               orderType == Order.OrderType.LimitDecrease ||
-               orderType == Order.OrderType.StopLossDecrease ||
-               orderType == Order.OrderType.Liquidation;
-    }
-
-    function isLiquidationOrder(Order.OrderType orderType) internal pure returns (bool) {
-        return orderType == Order.OrderType.Liquidation;
-    }
-
     // more info on the logic here can be found in Order.sol
     function setExactOrderPrice(
         Oracle oracle,
@@ -257,7 +222,7 @@ library OrderUtils {
         uint256 acceptablePrice,
         bool isLong
     ) internal {
-        if (isSwapOrder(orderType)) {
+        if (OrderBaseUtils.isSwapOrder(orderType)) {
             return;
         }
 
@@ -305,68 +270,6 @@ library OrderUtils {
             return;
         }
 
-        revert("OrderUtils: unsupported order type");
-    }
-
-    function validateOracleBlockNumbersForSwap(
-        uint256[] memory oracleBlockNumbers,
-        Order.OrderType orderType,
-        uint256 orderUpdatedAtBlock
-    ) internal pure {
-        if (orderType == Order.OrderType.MarketSwap) {
-            if (!oracleBlockNumbers.areEqualTo(orderUpdatedAtBlock)) {
-                revert(Keys.ORACLE_ERROR);
-            }
-            return;
-        }
-
-        if (orderType == Order.OrderType.LimitSwap) {
-            if (!oracleBlockNumbers.areGreaterThan(orderUpdatedAtBlock)) {
-                revert(Keys.ORACLE_ERROR);
-            }
-            return;
-        }
-
-        revertUnsupportedOrderType();
-    }
-
-    function validateOracleBlockNumbersForPosition(
-        uint256[] memory oracleBlockNumbers,
-        Order.OrderType orderType,
-        uint256 orderUpdatedAtBlock,
-        uint256 positionIncreasedAtBlock
-    ) internal pure {
-        if (
-            orderType == Order.OrderType.MarketIncrease ||
-            orderType == Order.OrderType.MarketDecrease ||
-            orderType == Order.OrderType.Liquidation
-        ) {
-            if (!oracleBlockNumbers.areEqualTo(orderUpdatedAtBlock)) {
-                revert(Keys.ORACLE_ERROR);
-            }
-            return;
-        }
-
-        if (
-            orderType == Order.OrderType.LimitIncrease ||
-            orderType == Order.OrderType.LimitDecrease ||
-            orderType == Order.OrderType.StopLossDecrease
-        ) {
-            uint256 laterBlock = orderUpdatedAtBlock > positionIncreasedAtBlock ? orderUpdatedAtBlock : positionIncreasedAtBlock;
-            if (!oracleBlockNumbers.areGreaterThan(laterBlock)) {
-                revert(Keys.ORACLE_ERROR);
-            }
-            return;
-        }
-
-        revertUnsupportedOrderType();
-    }
-
-    function revertUnsupportedOrderType() internal pure {
-        revert UnsupportedOrderType();
-    }
-
-    function revertUnacceptablePriceImpactUsd(int256 priceImpactUsd, int256 acceptablePriceImpactUsd) internal pure {
-        revert UnacceptablePriceImpactUsd(priceImpactUsd, acceptablePriceImpactUsd);
+        OrderBaseUtils.revertUnsupportedOrderType();
     }
 }

@@ -16,9 +16,6 @@ import "../market/MarketToken.sol";
 import "../order/Order.sol";
 import "../order/OrderStore.sol";
 import "../order/OrderUtils.sol";
-import "../order/IncreaseOrderUtils.sol";
-import "../order/DecreaseOrderUtils.sol";
-import "../order/SwapOrderUtils.sol";
 
 import "../position/PositionStore.sol";
 import "../oracle/Oracle.sol";
@@ -61,7 +58,7 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
 
     function createOrder(
         address account,
-        OrderUtils.CreateOrderParams memory params
+        OrderBaseUtils.CreateOrderParams memory params
     ) external nonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureKey(address(this), uint256(params.orderType)));
 
@@ -117,7 +114,7 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
 
         require(order.account() == msg.sender, "OrderHandler: forbidden");
 
-        if (OrderUtils.isMarketOrder(order.orderType())) {
+        if (OrderBaseUtils.isMarketOrder(order.orderType())) {
             revert("OrderHandler: invalid orderType");
         }
 
@@ -150,7 +147,7 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
 
         require(order.account() == msg.sender, "OrderHandler: forbidden");
 
-        if (OrderUtils.isMarketOrder(order.orderType())) {
+        if (OrderBaseUtils.isMarketOrder(order.orderType())) {
             revert("OrderHandler: invalid orderType");
         }
 
@@ -174,7 +171,7 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
         onlySelf
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
-        OrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, keeper, startingGas);
+        OrderBaseUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, keeper, startingGas);
         // limit swaps require frozen order keeper as well since on creation it can fail due to output amount
         // which would automatically cause the order to be frozen
         // limit increase and decrease positions may fail due to output amount as well and become frozen
@@ -185,47 +182,7 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
 
         FeatureUtils.validateFeature(params.dataStore, Keys.executeOrderFeatureKey(address(this), uint256(params.order.orderType())));
 
-        OrderUtils.setExactOrderPrice(
-            params.oracle,
-            params.market.indexToken,
-            params.order.orderType(),
-            params.order.acceptablePrice(),
-            params.order.isLong()
-        );
-
-        _processOrder(params);
-
-        eventEmitter.emitOrderExecuted(params.key);
-
-        CallbackUtils.handleCallback(key, params.order);
-
-        GasUtils.payExecutionFee(
-            params.dataStore,
-            params.orderStore,
-            params.order.executionFee(),
-            params.startingGas,
-            params.keeper,
-            params.order.account()
-        );
-    }
-
-    function _processOrder(OrderUtils.ExecuteOrderParams memory params) internal {
-        if (OrderUtils.isIncreaseOrder(params.order.orderType())) {
-            IncreaseOrderUtils.processOrder(params);
-            return;
-        }
-
-        if (OrderUtils.isDecreaseOrder(params.order.orderType())) {
-            DecreaseOrderUtils.processOrder(params);
-            return;
-        }
-
-        if (OrderUtils.isSwapOrder(params.order.orderType())) {
-            SwapOrderUtils.processOrder(params);
-            return;
-        }
-
-        OrderUtils.revertUnsupportedOrderType();
+        OrderUtils.executeOrder(params);
     }
 
     function _getExecuteOrderParams(
@@ -233,8 +190,8 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
         OracleUtils.SetPricesParams memory oracleParams,
         address keeper,
         uint256 startingGas
-    ) internal view returns (OrderUtils.ExecuteOrderParams memory) {
-        OrderUtils.ExecuteOrderParams memory params;
+    ) internal view returns (OrderBaseUtils.ExecuteOrderParams memory) {
+        OrderBaseUtils.ExecuteOrderParams memory params;
 
         params.key = key;
         params.order = orderStore.get(key);
@@ -258,14 +215,12 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
         params.keeper = keeper;
         params.startingGas = startingGas;
 
-        OrderUtils.validateNonEmptyOrder(params.order);
-
         return params;
     }
 
     function _handleOrderError(bytes32 key, uint256 startingGas, bytes32 reason) internal {
         Order.Props memory order = orderStore.get(key);
-        bool isMarketOrder = OrderUtils.isMarketOrder(order.orderType());
+        bool isMarketOrder = OrderBaseUtils.isMarketOrder(order.orderType());
 
         if (isMarketOrder) {
             OrderUtils.cancelOrder(

@@ -14,7 +14,7 @@ import "../pricing/PositionPricingUtils.sol";
 import "./Position.sol";
 import "./PositionStore.sol";
 import "./PositionUtils.sol";
-import "../order/OrderUtils.sol";
+import "../order/OrderBaseUtils.sol";
 
 library IncreasePositionUtils {
     using Position for Position.Props;
@@ -38,7 +38,7 @@ library IncreasePositionUtils {
 
     error InsufficientCollateralAmount();
 
-    function increasePosition(IncreasePositionParams memory params) internal {
+    function increasePosition(IncreasePositionParams memory params) external {
         Position.Props memory position = params.position;
         position.account = params.order.account();
         position.market = params.order.market();
@@ -145,7 +145,7 @@ library IncreasePositionUtils {
         );
 
         if (priceImpactUsd < params.order.acceptablePriceImpactUsd()) {
-            OrderUtils.revertUnacceptablePriceImpactUsd(priceImpactUsd, params.order.acceptablePriceImpactUsd());
+            OrderBaseUtils.revertUnacceptablePriceImpactUsd(priceImpactUsd, params.order.acceptablePriceImpactUsd());
         }
 
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(

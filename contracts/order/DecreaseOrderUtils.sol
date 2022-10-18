@@ -2,12 +2,15 @@
 
 pragma solidity ^0.8.0;
 
-import "./OrderUtils.sol";
+import "./OrderBaseUtils.sol";
+import "../swap/SwapUtils.sol";
+import "../position/DecreasePositionUtils.sol";
 
 library DecreaseOrderUtils {
     using Order for Order.Props;
+    using Array for uint256[];
 
-    function processOrder(OrderUtils.ExecuteOrderParams memory params) external {
+    function processOrder(OrderBaseUtils.ExecuteOrderParams memory params) external {
         Order.Props memory order = params.order;
         MarketUtils.validateNonEmptyMarket(params.market);
 
@@ -15,7 +18,7 @@ library DecreaseOrderUtils {
         Position.Props memory position = params.positionStore.get(positionKey);
         PositionUtils.validateNonEmptyPosition(position);
 
-        OrderUtils.validateOracleBlockNumbersForPosition(
+        validateOracleBlockNumbers(
             params.oracleBlockNumbers,
             order.orderType(),
             order.updatedAtBlock(),
@@ -70,4 +73,35 @@ library DecreaseOrderUtils {
             ));
         }
     }
+
+    function validateOracleBlockNumbers(
+        uint256[] memory oracleBlockNumbers,
+        Order.OrderType orderType,
+        uint256 orderUpdatedAtBlock,
+        uint256 positionIncreasedAtBlock
+    ) internal pure {
+        if (
+            orderType == Order.OrderType.MarketDecrease ||
+            orderType == Order.OrderType.Liquidation
+        ) {
+            if (!oracleBlockNumbers.areEqualTo(orderUpdatedAtBlock)) {
+                revert(Keys.ORACLE_ERROR);
+            }
+            return;
+        }
+
+        if (
+            orderType == Order.OrderType.LimitDecrease ||
+            orderType == Order.OrderType.StopLossDecrease
+        ) {
+            uint256 laterBlock = orderUpdatedAtBlock > positionIncreasedAtBlock ? orderUpdatedAtBlock : positionIncreasedAtBlock;
+            if (!oracleBlockNumbers.areGreaterThan(laterBlock)) {
+                revert(Keys.ORACLE_ERROR);
+            }
+            return;
+        }
+
+        OrderBaseUtils.revertUnsupportedOrderType();
+    }
+
 }

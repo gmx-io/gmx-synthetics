@@ -14,7 +14,7 @@ import "../pricing/PositionPricingUtils.sol";
 import "./Position.sol";
 import "./PositionStore.sol";
 import "./PositionUtils.sol";
-import "../order/OrderUtils.sol";
+import "../order/OrderBaseUtils.sol";
 
 library DecreasePositionUtils {
     using Position for Position.Props;
@@ -44,14 +44,14 @@ library DecreasePositionUtils {
 
     error InvalidLiquidation();
 
-    function decreasePosition(DecreasePositionParams memory params) internal returns (uint256, uint256) {
+    function decreasePosition(DecreasePositionParams memory params) external returns (uint256, uint256) {
         Position.Props memory position = params.position;
         MarketUtils.MarketPrices memory prices = MarketUtils.getPricesForPosition(
             params.market,
             params.oracle
         );
 
-        if (OrderUtils.isLiquidationOrder(params.order.orderType()) && !PositionUtils.isPositionLiquidatable(
+        if (OrderBaseUtils.isLiquidationOrder(params.order.orderType()) && !PositionUtils.isPositionLiquidatable(
             params.dataStore,
             position,
             params.market,
@@ -236,7 +236,7 @@ library DecreasePositionUtils {
             collateralTokenPrice
         );
 
-        if (OrderUtils.isLiquidationOrder(params.order.orderType()) && remainingCollateralAmount + values.realizedPnlAmount < 0) {
+        if (OrderBaseUtils.isLiquidationOrder(params.order.orderType()) && remainingCollateralAmount + values.realizedPnlAmount < 0) {
             PositionPricingUtils.PositionFees memory emptyFees;
             ProcessCollateralValues memory emptyValues = ProcessCollateralValues(
                 0, // remainingCollateralAmount
@@ -305,7 +305,7 @@ library DecreasePositionUtils {
         );
 
         if (priceImpactUsd < params.order.acceptablePriceImpactUsd()) {
-            OrderUtils.revertUnacceptablePriceImpactUsd(priceImpactUsd, params.order.acceptablePriceImpactUsd());
+            OrderBaseUtils.revertUnacceptablePriceImpactUsd(priceImpactUsd, params.order.acceptablePriceImpactUsd());
         }
 
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
@@ -316,7 +316,7 @@ library DecreasePositionUtils {
             Keys.FEE_RECEIVER_POSITION_FACTOR
         );
 
-        if (OrderUtils.isLiquidationOrder(params.order.orderType())) {
+        if (OrderBaseUtils.isLiquidationOrder(params.order.orderType())) {
             int256 adjustmentAmount = priceImpactUsd / collateralTokenPrice.toInt256();
             int256 totalNetCostAmount = fees.totalNetCostAmount + adjustmentAmount;
 

@@ -96,8 +96,19 @@ async function deployFixture() {
 
   const gasUtils = await deployContract("GasUtils", []);
 
-  const increaseOrderUtils = await deployContract("IncreaseOrderUtils", []);
-  const decreaseOrderUtils = await deployContract("DecreaseOrderUtils", []);
+  const increasePositionUtils = await deployContract("IncreasePositionUtils", []);
+  const decreasePositionUtils = await deployContract("DecreasePositionUtils", []);
+
+  const increaseOrderUtils = await deployContract("IncreaseOrderUtils", [], {
+    libraries: {
+      IncreasePositionUtils: increasePositionUtils.address,
+    },
+  });
+  const decreaseOrderUtils = await deployContract("DecreaseOrderUtils", [], {
+    libraries: {
+      DecreasePositionUtils: decreasePositionUtils.address,
+    },
+  });
 
   const swapOrderUtils = await deployContract("SwapOrderUtils", []);
 

@@ -203,7 +203,7 @@ library WithdrawalUtils {
 
         params.eventEmitter.emitWithdrawalExecuted(params.key);
 
-        CallbackUtils.handleCallback(params.key, withdrawal);
+        CallbackUtils.handleExecution(params.key, withdrawal);
 
         GasUtils.payExecutionFee(
             params.dataStore,
@@ -228,6 +228,10 @@ library WithdrawalUtils {
 
         withdrawalStore.remove(key);
 
+        eventEmitter.emitWithdrawalCancelled(key);
+
+        CallbackUtils.handleCancellation(key, withdrawal);
+
         GasUtils.payExecutionFee(
             dataStore,
             withdrawalStore,
@@ -236,8 +240,6 @@ library WithdrawalUtils {
             keeper,
             withdrawal.account
         );
-
-        eventEmitter.emitWithdrawalCancelled(key);
     }
 
     function _executeWithdrawal(

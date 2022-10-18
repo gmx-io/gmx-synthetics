@@ -2,12 +2,15 @@
 
 pragma solidity ^0.8.0;
 
-import "./OrderUtils.sol";
+import "./OrderBaseUtils.sol";
+import "../swap/SwapUtils.sol";
+import "../position/IncreasePositionUtils.sol";
 
 library IncreaseOrderUtils {
     using Order for Order.Props;
+    using Array for uint256[];
 
-    function processOrder(OrderUtils.ExecuteOrderParams memory params) external {
+    function processOrder(OrderBaseUtils.ExecuteOrderParams memory params) external {
         params.orderStore.transferOut(params.order.initialCollateralToken(), params.order.initialCollateralDeltaAmount(), params.order.market());
         MarketUtils.validateNonEmptyMarket(params.market);
 
@@ -39,7 +42,7 @@ library IncreaseOrderUtils {
             position.isLong = params.order.isLong();
         }
 
-        OrderUtils.validateOracleBlockNumbersForPosition(
+        validateOracleBlockNumbers(
             params.oracleBlockNumbers,
             params.order.orderType(),
             params.order.updatedAtBlock(),
@@ -67,5 +70,29 @@ library IncreaseOrderUtils {
         );
 
         params.orderStore.remove(params.key, params.order.account());
+    }
+
+    function validateOracleBlockNumbers(
+        uint256[] memory oracleBlockNumbers,
+        Order.OrderType orderType,
+        uint256 orderUpdatedAtBlock,
+        uint256 positionIncreasedAtBlock
+    ) internal pure {
+        if (orderType == Order.OrderType.MarketIncrease) {
+            if (!oracleBlockNumbers.areEqualTo(orderUpdatedAtBlock)) {
+                revert(Keys.ORACLE_ERROR);
+            }
+            return;
+        }
+
+        if (orderType == Order.OrderType.LimitIncrease) {
+            uint256 laterBlock = orderUpdatedAtBlock > positionIncreasedAtBlock ? orderUpdatedAtBlock : positionIncreasedAtBlock;
+            if (!oracleBlockNumbers.areGreaterThan(laterBlock)) {
+                revert(Keys.ORACLE_ERROR);
+            }
+            return;
+        }
+
+        OrderBaseUtils.revertUnsupportedOrderType();
     }
 }

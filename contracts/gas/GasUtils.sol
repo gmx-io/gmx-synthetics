@@ -9,7 +9,7 @@ import "../utils/Precision.sol";
 import "../deposit/Deposit.sol";
 import "../withdrawal/Withdrawal.sol";
 import "../order/Order.sol";
-import "../order/OrderUtils.sol";
+import "../order/OrderBaseUtils.sol";
 
 import "../bank/StrictBank.sol";
 import "../eth/EthUtils.sol";
@@ -97,19 +97,19 @@ library GasUtils {
     }
 
     function estimateExecuteOrderGasLimit(DataStore dataStore, Order.Props memory order) internal view returns (uint256) {
-        if (OrderUtils.isIncreaseOrder(order.orderType())) {
+        if (OrderBaseUtils.isIncreaseOrder(order.orderType())) {
             return estimateExecuteIncreaseOrderGasLimit(dataStore, order);
         }
 
-        if (OrderUtils.isDecreaseOrder(order.orderType())) {
+        if (OrderBaseUtils.isDecreaseOrder(order.orderType())) {
             return estimateExecuteDecreaseOrderGasLimit(dataStore, order);
         }
 
-        if (OrderUtils.isSwapOrder(order.orderType())) {
+        if (OrderBaseUtils.isSwapOrder(order.orderType())) {
             return estimateExecuteSwapOrderGasLimit(dataStore, order);
         }
 
-        OrderUtils.revertUnsupportedOrderType();
+        OrderBaseUtils.revertUnsupportedOrderType();
     }
 
     function estimateExecuteIncreaseOrderGasLimit(DataStore dataStore, Order.Props memory order) internal view returns (uint256) {

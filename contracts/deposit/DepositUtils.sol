@@ -196,7 +196,7 @@ library DepositUtils {
 
         params.eventEmitter.emitDepositExecuted(params.key);
 
-        CallbackUtils.handleCallback(params.key, deposit);
+        CallbackUtils.handleExecution(params.key, deposit);
 
         GasUtils.payExecutionFee(
             params.dataStore,
@@ -243,6 +243,10 @@ library DepositUtils {
 
         depositStore.remove(key);
 
+        eventEmitter.emitDepositCancelled(key);
+
+        CallbackUtils.handleCancellation(key, deposit);
+
         GasUtils.payExecutionFee(
             dataStore,
             depositStore,
@@ -251,8 +255,6 @@ library DepositUtils {
             keeper,
             deposit.account
         );
-
-        eventEmitter.emitDepositCancelled(key);
     }
 
     function _executeDeposit(ExecuteDepositParams memory params, _ExecuteDepositParams memory _params) internal returns (uint256) {
