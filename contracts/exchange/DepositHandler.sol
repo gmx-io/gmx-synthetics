@@ -50,7 +50,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
 
     function createDeposit(
         address account,
-        DepositUtils.CreateDepositParams memory params
+        DepositUtils.CreateDepositParams calldata params
     ) external nonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createDepositFeatureKey(address(this)));
 
@@ -66,7 +66,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
 
     function executeDeposit(
         bytes32 key,
-        OracleUtils.SetPricesParams memory oracleParams
+        OracleUtils.SetPricesParams calldata oracleParams
     ) external nonReentrant onlyOrderKeeper {
         uint256 startingGas = gasleft();
 

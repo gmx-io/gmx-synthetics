@@ -51,7 +51,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
 
     function createWithdrawal(
         address account,
-        WithdrawalUtils.CreateWithdrawalParams memory params
+        WithdrawalUtils.CreateWithdrawalParams calldata params
     ) external nonReentrant onlyController  returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createWithdrawalFeatureKey(address(this)));
 
@@ -67,7 +67,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
 
     function executeWithdrawal(
         bytes32 key,
-        OracleUtils.SetPricesParams memory oracleParams
+        OracleUtils.SetPricesParams calldata oracleParams
     ) external nonReentrant onlyOrderKeeper {
         uint256 startingGas = gasleft();
 

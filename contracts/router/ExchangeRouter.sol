@@ -54,7 +54,7 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
         address shortToken,
         uint256 longTokenAmount,
         uint256 shortTokenAmount,
-        DepositUtils.CreateDepositParams memory params
+        DepositUtils.CreateDepositParams calldata params
     ) nonReentrant external payable returns (bytes32) {
         address account = msg.sender;
         address _depositStore = address(depositStore);
@@ -75,7 +75,7 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
     }
 
     function createWithdrawal(
-        WithdrawalUtils.CreateWithdrawalParams memory params
+        WithdrawalUtils.CreateWithdrawalParams calldata params
     ) nonReentrant external payable returns (bytes32) {
         address account = msg.sender;
 
@@ -89,7 +89,7 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
 
     function createOrder(
         uint256 amountIn,
-        OrderBaseUtils.CreateOrderParams memory params
+        OrderBaseUtils.CreateOrderParams calldata params
     ) nonReentrant external payable returns (bytes32) {
         require(params.orderType != Order.OrderType.Liquidation, "ExchangeRouter: invalid order type");
 
@@ -108,7 +108,7 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
     }
 
     function createLiquidation(
-        OrderBaseUtils.CreateOrderParams memory params,
+        OrderBaseUtils.CreateOrderParams calldata params,
         address account
     ) nonReentrant external onlyLiquidationKeeper returns (bytes32) {
         require(params.orderType == Order.OrderType.Liquidation, "ExchangeRouter: invalid order type");

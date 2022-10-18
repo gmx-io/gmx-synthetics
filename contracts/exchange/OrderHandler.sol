@@ -58,7 +58,7 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
 
     function createOrder(
         address account,
-        OrderBaseUtils.CreateOrderParams memory params
+        OrderBaseUtils.CreateOrderParams calldata params
     ) external nonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureKey(address(this), uint256(params.orderType)));
 
@@ -74,7 +74,7 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
 
     function executeOrder(
         bytes32 key,
-        OracleUtils.SetPricesParams memory oracleParams
+        OracleUtils.SetPricesParams calldata oracleParams
     ) external nonReentrant onlyOrderKeeper {
         uint256 startingGas = gasleft();
 
