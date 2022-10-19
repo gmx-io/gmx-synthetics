@@ -16,33 +16,40 @@ library PositionUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
     using Position for Position.Props;
+    using Price for Price.Props;
 
     error LiquidatablePosition();
     error UnexpectedPositionState();
 
+    // returns pnlAmount, sizeDeltaInTokens
     function getPositionPnlAmount(
         Position.Props memory position,
         uint256 sizeDeltaUsd,
-        uint256 indexTokenPrice,
-        uint256 collateralTokenPrice
+        Price.Props memory indexTokenPrice,
+        Price.Props memory collateralTokenPrice,
+        bool maximize
     ) internal pure returns (int256, uint256) {
         (int256 realizedPnlUsd, uint256 sizeDeltaInTokens) = PositionUtils.getPositionPnlUsd(
             position,
             sizeDeltaUsd,
-            indexTokenPrice
+            indexTokenPrice,
+            maximize
         );
 
-        return (realizedPnlUsd / collateralTokenPrice.toInt256(), sizeDeltaInTokens);
+        // if maximize is true, pnlAmount should be larger, so use the smaller collateralTokenPrice value
+        // if maximize is false, pnlAmount should be smaller, so use the larger collateralTokenPrice value
+        return (realizedPnlUsd / collateralTokenPrice.pickPrice(!maximize).toInt256(), sizeDeltaInTokens);
     }
 
     // returns (positionPnlUsd, sizeDeltaInTokens)
     function getPositionPnlUsd(
         Position.Props memory position,
         uint256 sizeDeltaUsd,
-        uint256 indexTokenPrice
+        Price.Props memory indexTokenPrice,
+        bool maximize
     ) internal pure returns (int256, uint256) {
         // position.sizeInUsd is the cost of the tokens, positionValue is the current worth of the tokens
-        int256 positionValue = (position.sizeInTokens * indexTokenPrice).toInt256();
+        int256 positionValue = (position.sizeInTokens * indexTokenPrice.pickPriceForPnl(position.isLong, maximize)).toInt256();
         int256 totalPositionPnl = position.isLong ? positionValue - position.sizeInUsd.toInt256() : position.sizeInUsd.toInt256() - positionValue;
 
         uint256 sizeDeltaInTokens;
@@ -107,19 +114,20 @@ library PositionUtils {
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices
     ) internal view returns (bool) {
-        (int256 positionPnlUsd, ) = PositionUtils.getPositionPnlUsd(
+        (int256 positionPnlUsd, ) = getPositionPnlUsd(
             position,
             position.sizeInUsd,
-            prices.indexTokenPrice
+            prices.indexTokenPrice,
+            false
         );
 
         uint256 maxLeverage = dataStore.getUint(Keys.MAX_LEVERAGE);
-        uint256 collateralTokenPrice = MarketUtils.getCachedTokenPrice(
+        Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(
             position.collateralToken,
             market,
             prices
         );
-        uint256 collateralUsd = position.collateralAmount * collateralTokenPrice;
+        uint256 collateralUsd = position.collateralAmount * collateralTokenPrice.min;
 
         int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
@@ -127,8 +135,8 @@ library PositionUtils {
                 market.marketToken,
                 market.longToken,
                 market.shortToken,
-                prices.longTokenPrice,
-                prices.shortTokenPrice,
+                prices.longTokenPrice.midPrice(),
+                prices.shortTokenPrice.midPrice(),
                 -position.sizeInUsd.toInt256(),
                 position.isLong
             )

@@ -9,7 +9,8 @@ library OracleUtils {
         uint256 signerInfo;
         address[] tokens;
         uint256[] compactedOracleBlockNumbers;
-        uint256[] compactedPrices;
+        uint256[] compactedMinPrices;
+        uint256[] compactedMaxPrices;
         bytes[] signatures;
         address[] priceFeedTokens;
     }

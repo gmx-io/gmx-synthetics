@@ -130,7 +130,7 @@ library PositionPricingUtils {
     function getPositionFees(
         DataStore dataStore,
         Position.Props memory position,
-        uint256 collateralTokenPrice,
+        Price.Props memory collateralTokenPrice,
         uint256 sizeDeltaUsd,
         bytes32 feeReceiverFactorKey
     ) internal view returns (PositionFees memory) {
@@ -140,10 +140,10 @@ library PositionPricingUtils {
         uint256 feeReceiverFactor = dataStore.getUint(feeReceiverFactorKey);
         uint256 spreadFactor = dataStore.getUint(Keys.positionSpreadFactorKey(position.market));
 
-        fees.positionFeeAmount = Precision.applyFactor(sizeDeltaUsd, feeFactor) / collateralTokenPrice;
-        fees.spreadAmount = Precision.applyFactor(sizeDeltaUsd, spreadFactor) / collateralTokenPrice;
-        fees.fundingFeeAmount = MarketUtils.getFundingFees(dataStore, position) / collateralTokenPrice.toInt256();
-        fees.borrowingFeeAmount = MarketUtils.getBorrowingFees(dataStore, position) / collateralTokenPrice;
+        fees.positionFeeAmount = Precision.applyFactor(sizeDeltaUsd, feeFactor) / collateralTokenPrice.min;
+        fees.spreadAmount = Precision.applyFactor(sizeDeltaUsd, spreadFactor) / collateralTokenPrice.min;
+        fees.fundingFeeAmount = MarketUtils.getFundingFees(dataStore, position) / collateralTokenPrice.min.toInt256();
+        fees.borrowingFeeAmount = MarketUtils.getBorrowingFees(dataStore, position) / collateralTokenPrice.min;
 
         fees.feeReceiverAmount = Precision.applyFactor(fees.positionFeeAmount, feeReceiverFactor);
         fees.feesForPool = fees.spreadAmount + fees.positionFeeAmount + fees.borrowingFeeAmount - fees.feeReceiverAmount;

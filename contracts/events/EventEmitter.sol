@@ -15,7 +15,7 @@ contract EventEmitter is RoleModule {
         address indexed market,
         address collateralToken,
         bool isLong,
-        uint256 price,
+        Price.Props price,
         uint256 sizeDeltaInUsd,
         int256 collateralDeltaAmount
     );
@@ -24,7 +24,7 @@ contract EventEmitter is RoleModule {
         address indexed market,
         address collateralToken,
         bool isLong,
-        uint256 price,
+        Price.Props price,
         uint256 sizeDeltaInUsd,
         int256 collateralDeltaAmount,
         int256 remainingCollateralAmount,
@@ -81,7 +81,7 @@ contract EventEmitter is RoleModule {
         uint256 collateralDeltaAmount
     );
 
-    event OraclePriceUpdated(address token, uint256 price, bool isPrimary, bool isPriceFeed);
+    event OraclePriceUpdated(address token, uint256 minPrice, uint256 maxPrice, bool isPrimary, bool isPriceFeed);
 
     constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
 
@@ -184,8 +184,8 @@ contract EventEmitter is RoleModule {
         emit PositionFeesCollected(isIncrease, fees);
     }
 
-    function emitOraclePriceUpdated(address token, uint256 price, bool isPrimary, bool isPriceFeed) external onlyController {
-        emit OraclePriceUpdated(token, price, isPrimary, isPriceFeed);
+    function emitOraclePriceUpdated(address token, uint256 minPrice, uint256 maxPrice, bool isPrimary, bool isPriceFeed) external onlyController {
+        emit OraclePriceUpdated(token, minPrice, maxPrice, isPrimary, isPriceFeed);
     }
 
     function emitPositionIncrease(
@@ -193,7 +193,7 @@ contract EventEmitter is RoleModule {
         address market,
         address collateralToken,
         bool isLong,
-        uint256 price,
+        Price.Props memory price,
         uint256 sizeDeltaUsd,
         int256 collateralDeltaAmount
     ) external onlyController {
@@ -213,7 +213,7 @@ contract EventEmitter is RoleModule {
         address market,
         address collateralToken,
         bool isLong,
-        uint256 price,
+        Price.Props memory price,
         uint256 sizeDeltaUsd,
         int256 collateralDeltaAmount,
         int256 remainingCollateralAmount,

@@ -20,6 +20,7 @@ import "../position/PositionStore.sol";
 import "../order/Order.sol";
 
 import "../oracle/Oracle.sol";
+import "../price/Price.sol";
 
 import "../fee/FeeReceiver.sol";
 import "../fee/FeeUtils.sol";
@@ -27,24 +28,23 @@ import "../fee/FeeUtils.sol";
 import "../utils/Calc.sol";
 import "../utils/Precision.sol";
 
-import "hardhat/console.sol";
-
 library MarketUtils {
     using SafeCast for int256;
+    using SafeCast for uint256;
 
     using Deposit for Deposit.Props;
     using Market for Market.Props;
     using Position for Position.Props;
     using Order for Order.Props;
-    using SafeCast for uint256;
+    using Price for Price.Props;
 
     // cap max funding APR at 1000%
     uint256 public constant MAX_ANNUAL_FUNDING_FACTOR = 1000 * Precision.FLOAT_PRECISION;
 
     struct MarketPrices {
-        uint256 indexTokenPrice;
-        uint256 longTokenPrice;
-        uint256 shortTokenPrice;
+        Price.Props indexTokenPrice;
+        Price.Props longTokenPrice;
+        Price.Props shortTokenPrice;
     }
 
     error EmptyMarket();
@@ -54,11 +54,12 @@ library MarketUtils {
     function getMarketTokenPrice(
         DataStore dataStore,
         Market.Props memory market,
-        uint256 longTokenPrice,
-        uint256 shortTokenPrice,
-        uint256 indexTokenPrice
+        Price.Props memory longTokenPrice,
+        Price.Props memory shortTokenPrice,
+        Price.Props memory indexTokenPrice,
+        bool maximize
     ) internal view returns (uint256) {
-        uint256 poolValue = getPoolValue(dataStore, market, longTokenPrice, shortTokenPrice, indexTokenPrice);
+        uint256 poolValue = getPoolValue(dataStore, market, longTokenPrice, shortTokenPrice, indexTokenPrice, maximize);
         if (poolValue == 0) { return 0; }
 
         uint256 supply = getMarketTokenSupply(MarketToken(payable(market.marketToken)));
@@ -82,7 +83,7 @@ library MarketUtils {
         revert("MarketUtils: invalid inputToken");
     }
 
-    function getCachedTokenPrice(address token, Market.Props memory market, MarketPrices memory prices) internal pure returns (uint256) {
+    function getCachedTokenPrice(address token, Market.Props memory market, MarketPrices memory prices) internal pure returns (Price.Props memory) {
         if (token == market.longToken) {
             return prices.longTokenPrice;
         }
@@ -114,43 +115,48 @@ library MarketUtils {
     function getPoolValue(
         DataStore dataStore,
         Market.Props memory market,
-        uint256 longTokenPrice,
-        uint256 shortTokenPrice,
-        uint256 indexTokenPrice
+        Price.Props memory longTokenPrice,
+        Price.Props memory shortTokenPrice,
+        Price.Props memory indexTokenPrice,
+        bool maximize
     ) internal view returns (uint256) {
         uint256 longTokenAmount = getPoolAmount(dataStore, market.marketToken, market.longToken);
         uint256 shortTokenAmount = getPoolAmount(dataStore, market.marketToken, market.shortToken);
 
         uint256 value;
 
-        value = longTokenAmount * longTokenPrice;
-        value += shortTokenAmount * shortTokenPrice;
+        value = longTokenAmount * longTokenPrice.pickPrice(maximize);
+        value += shortTokenAmount * shortTokenPrice.pickPrice(maximize);
 
         value += getTotalBorrowingFees(dataStore, market.marketToken, true);
         value += getTotalBorrowingFees(dataStore, market.marketToken, false);
 
-        int256 pnl = getNetPnl(dataStore, market.marketToken, indexTokenPrice);
+        // !maximize should be used to calculate this as a larger pnl leads to a smaller pool value
+        // and a smaller pnl leads to a larger pool value
+        int256 pnl = getNetPnl(dataStore, market.marketToken, indexTokenPrice, !maximize);
 
-        return Calc.sum(value, pnl);
+        return Calc.sum(value, -pnl);
     }
 
-    function getNetPnl(DataStore dataStore, address market, uint256 indexTokenPrice) internal view returns (int256) {
-        int256 longPnl = getPnl(dataStore, market, indexTokenPrice, true);
-        int256 shortPnl = getPnl(dataStore, market, indexTokenPrice, false);
+    function getNetPnl(DataStore dataStore, address market, Price.Props memory indexTokenPrice, bool maximize) internal view returns (int256) {
+        int256 longPnl = getPnl(dataStore, market, indexTokenPrice, true, maximize);
+        int256 shortPnl = getPnl(dataStore, market, indexTokenPrice, false, maximize);
 
         return longPnl + shortPnl;
     }
 
 
-    function getPnl(DataStore dataStore, address market, uint256 indexTokenPrice, bool isLong) internal view returns (int256) {
+    function getPnl(DataStore dataStore, address market, Price.Props memory indexTokenPrice, bool isLong, bool maximize) internal view returns (int256) {
         int256 openInterest = getOpenInterest(dataStore, market, isLong).toInt256();
         uint256 openInterestInTokens = getOpenInterestInTokens(dataStore, market, isLong);
         if (openInterest == 0 || openInterestInTokens == 0) {
             return 0;
         }
 
+        uint256 price = indexTokenPrice.pickPriceForPnl(isLong, maximize);
+
         // openInterest is the cost of all positions, openInterestValue is the current worth of all positions
-        int256 openInterestValue = (openInterestInTokens * indexTokenPrice).toInt256();
+        int256 openInterestValue = (openInterestInTokens * price).toInt256();
         int256 pnl = isLong ? openInterestValue - openInterest : openInterest - openInterestValue;
 
         return pnl;
@@ -336,7 +342,7 @@ library MarketUtils {
     ) internal view {
         address reserveToken = isLong ? market.longToken : market.shortToken;
         uint256 reservePoolAmount = getPoolAmount(dataStore, market.marketToken, reserveToken);
-        uint256 reserveTokenPrice = isLong ? prices.longTokenPrice : prices.shortTokenPrice;
+        uint256 reserveTokenPrice = isLong ? prices.longTokenPrice.min : prices.shortTokenPrice.min;
         uint256 reservePoolUsd = reservePoolAmount * reserveTokenPrice;
 
         uint256 reserveFactor = getReserveFactor(dataStore, market.marketToken, isLong);
@@ -351,7 +357,7 @@ library MarketUtils {
             // if the price of SOL increases more than the price of ETH, additional amounts would be
             // automatically reserved
             uint256 openInterestInTokens = getOpenInterestInTokens(dataStore, market.marketToken, isLong);
-            reservedUsd = openInterestInTokens * prices.indexTokenPrice;
+            reservedUsd = openInterestInTokens * prices.indexTokenPrice.max;
         } else {
             // for shorts use the open interest as the reserved USD value
             // this works well for e.g. an ETH / USD market with short collateral token as USDC
@@ -369,10 +375,10 @@ library MarketUtils {
         EventEmitter eventEmitter,
         address market,
         address token,
-        uint256 tokenPrice,
+        Price.Props memory tokenPrice,
         int256 priceImpactUsd
     ) internal returns (uint256) {
-        uint256 impactAmount = SafeCast.toUint256(-priceImpactUsd) / tokenPrice;
+        uint256 impactAmount = SafeCast.toUint256(-priceImpactUsd) / tokenPrice.min;
         increaseImpactPoolAmount(dataStore, eventEmitter, market, token, impactAmount);
 
         return impactAmount;
@@ -383,10 +389,10 @@ library MarketUtils {
         EventEmitter eventEmitter,
         address market,
         address token,
-        uint256 tokenPrice,
+        Price.Props memory tokenPrice,
         int256 priceImpactUsd
     ) internal returns (uint256) {
-        uint256 impactAmount = SafeCast.toUint256(priceImpactUsd) / tokenPrice;
+        uint256 impactAmount = SafeCast.toUint256(priceImpactUsd) / tokenPrice.max;
         uint256 maxImpactAmount = getImpactPoolAmount(dataStore, market, token);
 
         if (impactAmount > maxImpactAmount) {
@@ -420,9 +426,9 @@ library MarketUtils {
 
     // getOpenInterestInTokens * tokenPrice would not reflect pending positive pnl
     // from short positions, getOpenInterestWithPnl should be used if that info is needed
-    function getOpenInterestWithPnl(DataStore dataStore, address market, uint256 indexTokenPrice, bool isLong) internal view returns (uint256) {
+    function getOpenInterestWithPnl(DataStore dataStore, address market, Price.Props memory indexTokenPrice, bool isLong, bool maximize) internal view returns (uint256) {
         uint256 openInterest = getOpenInterest(dataStore, market, isLong);
-        int256 pnl = getPnl(dataStore, market, indexTokenPrice, isLong);
+        int256 pnl = getPnl(dataStore, market, indexTokenPrice, isLong, maximize);
         return Calc.sum(openInterest, pnl);
     }
 
@@ -558,10 +564,10 @@ library MarketUtils {
         uint256 durationInSeconds = getSecondsSinceCumulativeBorrowingFactorUpdated(dataStore, market.marketToken, isLong);
         uint256 borrowingFactor = getBorrowingFactor(dataStore, market.marketToken, isLong);
 
-        uint256 openInterestWithPnl = getOpenInterestWithPnl(dataStore, market.marketToken, prices.indexTokenPrice, isLong);
+        uint256 openInterestWithPnl = getOpenInterestWithPnl(dataStore, market.marketToken, prices.indexTokenPrice, isLong, true);
 
         uint256 poolAmount = getPoolAmount(dataStore, market.marketToken, isLong ? market.longToken : market.shortToken);
-        uint256 poolTokenPrice = isLong ? prices.longTokenPrice : prices.shortTokenPrice;
+        uint256 poolTokenPrice = isLong ? prices.longTokenPrice.min : prices.shortTokenPrice.min;
         uint256 poolUsd = poolAmount * poolTokenPrice;
 
         uint256 adjustedFactor = durationInSeconds * borrowingFactor * openInterestWithPnl / poolUsd;

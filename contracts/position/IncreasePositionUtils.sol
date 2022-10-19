@@ -17,10 +17,12 @@ import "./PositionUtils.sol";
 import "../order/OrderBaseUtils.sol";
 
 library IncreasePositionUtils {
-    using Position for Position.Props;
-    using Order for Order.Props;
     using SafeCast for uint256;
     using SafeCast for int256;
+
+    using Position for Position.Props;
+    using Order for Order.Props;
+    using Price for Price.Props;
 
     struct IncreasePositionParams {
         DataStore dataStore;
@@ -66,7 +68,7 @@ library IncreasePositionUtils {
         position.collateralAmount = Calc.sum(position.collateralAmount, collateralDeltaAmount);
 
         // round sizeDeltaInTokens down
-        uint256 sizeDeltaInTokens = params.order.sizeDeltaUsd() / prices.indexTokenPrice;
+        uint256 sizeDeltaInTokens = params.order.sizeDeltaUsd() / prices.indexTokenPrice.max;
         uint256 nextPositionSizeInUsd = position.sizeInUsd + params.order.sizeDeltaUsd();
         uint256 nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(params.dataStore, params.market.marketToken, position.isLong);
 
@@ -129,7 +131,7 @@ library IncreasePositionUtils {
         Position.Props memory position,
         int256 collateralDeltaAmount
     ) internal returns (int256) {
-        uint256 collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.collateralToken, params.market, prices);
+        Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.collateralToken, params.market, prices);
 
         int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
@@ -137,8 +139,8 @@ library IncreasePositionUtils {
                 params.market.marketToken,
                 params.market.longToken,
                 params.market.shortToken,
-                prices.longTokenPrice,
-                prices.shortTokenPrice,
+                prices.longTokenPrice.midPrice(),
+                prices.shortTokenPrice.midPrice(),
                 params.order.sizeDeltaUsd().toInt256(),
                 params.order.isLong()
             )

@@ -229,7 +229,7 @@ library OrderUtils {
         if (orderType == Order.OrderType.MarketIncrease ||
             orderType == Order.OrderType.MarketDecrease ||
             orderType == Order.OrderType.Liquidation) {
-            uint256 price = oracle.getPrimaryPrice(indexToken);
+            Price.Props memory price = oracle.getPrimaryPrice(indexToken);
             oracle.setSecondaryPrice(indexToken, price);
             return;
         }

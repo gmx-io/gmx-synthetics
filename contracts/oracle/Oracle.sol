@@ -11,6 +11,7 @@ import "../role/RoleModule.sol";
 import "./OracleStore.sol";
 import "./OracleUtils.sol";
 import "./IPriceFeed.sol";
+import "../price/Price.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
@@ -23,6 +24,7 @@ import "../utils/Precision.sol";
 contract Oracle is RoleModule {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableValues for EnumerableSet.AddressSet;
+    using Price for Price.Props;
 
     struct _SetPricesCache {
         uint256 minBlockConfirmations;
@@ -30,7 +32,7 @@ contract Oracle is RoleModule {
         uint256 oracleBlockNumber;
         bytes32 blockHash;
         address token;
-        uint256 prevPrice;
+        uint256 prevMidPrice;
         uint256 priceAndSignatureIndex;
         uint256 maxBlockAge;
     }
@@ -53,8 +55,8 @@ contract Oracle is RoleModule {
     // the prices can be for different block numbers
     // the first occurrence of the token's price will be stored in primaryPrices
     // the second occurrence will be stored in secondaryPrices
-    mapping(address => uint256) public primaryPrices;
-    mapping(address => uint256) public secondaryPrices;
+    mapping(address => Price.Props) public primaryPrices;
+    mapping(address => Price.Props) public secondaryPrices;
 
     error EmptyTokens();
     error InvalidBlockNumber(uint256 blockNumber);
@@ -66,6 +68,7 @@ contract Oracle is RoleModule {
     error InvalidSignature(address recoveredSigner, address expectedSigner);
     error MaxSignerIndex(uint256 signerIndex, uint256 maxSignerIndex);
     error DuplicateSigner(uint256 signerIndex);
+    error EmptyPrice(address token);
     error EmptyPrimaryPrice(address token);
     error EmptySecondaryPrice(address token);
 
@@ -124,16 +127,13 @@ contract Oracle is RoleModule {
             dataStore,
             eventEmitter,
             signers,
-            params.tokens,
-            params.compactedOracleBlockNumbers,
-            params.compactedPrices,
-            params.signatures
+            params
         );
 
         _setPricesFromPriceFeeds(dataStore, eventEmitter, params.priceFeedTokens);
     }
 
-    function setSecondaryPrice(address token, uint256 price) external onlyController {
+    function setSecondaryPrice(address token, Price.Props memory price) external onlyController {
         secondaryPrices[token] = price;
     }
 
@@ -155,15 +155,15 @@ contract Oracle is RoleModule {
         return tempTokens.valuesAt(start, end);
     }
 
-    function getPrimaryPrice(address token) external view returns (uint256) {
-        uint256 price = primaryPrices[token];
-        if (price == 0) { revert EmptyPrimaryPrice(token); }
+    function getPrimaryPrice(address token) external view returns (Price.Props memory) {
+        Price.Props memory price = primaryPrices[token];
+        if (price.isEmpty()) { revert EmptyPrimaryPrice(token); }
         return price;
     }
 
-    function getSecondaryPrice(address token) external view returns (uint256) {
-        uint256 price = secondaryPrices[token];
-        if (price == 0) { revert EmptySecondaryPrice(token); }
+    function getSecondaryPrice(address token) external view returns (Price.Props memory) {
+        Price.Props memory price = secondaryPrices[token];
+        if (price.isEmpty()) { revert EmptySecondaryPrice(token); }
         return price;
     }
 
@@ -221,17 +221,14 @@ contract Oracle is RoleModule {
         DataStore dataStore,
         EventEmitter eventEmitter,
         address[] memory signers,
-        address[] memory tokens,
-        uint256[] memory compactedOracleBlockNumbers,
-        uint256[] memory compactedPrices,
-        bytes[] memory signatures
+        OracleUtils.SetPricesParams memory params
     ) internal {
         _SetPricesCache memory cache;
         cache.minBlockConfirmations = dataStore.getUint(Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS);
         cache.maxBlockAge = dataStore.getUint(Keys.MAX_ORACLE_BLOCK_AGE);
 
-        for (uint256 i = 0; i < tokens.length; i++) {
-            cache.oracleBlockNumber = OracleUtils.getUncompactedOracleBlockNumber(compactedOracleBlockNumbers, i);
+        for (uint256 i = 0; i < params.tokens.length; i++) {
+            cache.oracleBlockNumber = OracleUtils.getUncompactedOracleBlockNumber(params.compactedOracleBlockNumbers, i);
 
             if (cache.oracleBlockNumber > block.number) {
                 revert InvalidBlockNumber(cache.oracleBlockNumber);
@@ -252,39 +249,60 @@ contract Oracle is RoleModule {
                 cache.blockHash = blockhash(cache.oracleBlockNumber);
             }
 
-            cache.token = tokens[i];
-            cache.prevPrice = 0;
+            cache.token = params.tokens[i];
+            cache.prevMidPrice = 0;
 
-            uint256[] memory prices = new uint256[](signers.length);
+            uint256[] memory minPrices = new uint256[](signers.length);
+            uint256[] memory maxPrices = new uint256[](signers.length);
+
             for (uint256 j = 0; j < signers.length; j++) {
                 cache.priceAndSignatureIndex = i * signers.length + j;
 
-                uint256 price = OracleUtils.getUncompactedPrice(compactedPrices, cache.priceAndSignatureIndex);
+                uint256 minPrice = OracleUtils.getUncompactedPrice(params.compactedMinPrices, cache.priceAndSignatureIndex);
+                uint256 maxPrice = OracleUtils.getUncompactedPrice(params.compactedMaxPrices, cache.priceAndSignatureIndex);
+                uint256 midPrice = (maxPrice + minPrice) / 2;
 
                 // prices must be in ascending order
-                if (price < cache.prevPrice) { revert PricesNotSorted(price, cache.prevPrice); }
-                cache.prevPrice = price;
+                if (midPrice < cache.prevMidPrice) { revert PricesNotSorted(midPrice, cache.prevMidPrice); }
+                cache.prevMidPrice = midPrice;
 
                 _validateSigner(
                     cache.oracleBlockNumber,
                     cache.blockHash,
                     cache.token,
-                    price,
-                    signatures[cache.priceAndSignatureIndex],
+                    minPrice,
+                    maxPrice,
+                    params.signatures[cache.priceAndSignatureIndex],
                     signers[j]
                 );
 
-                prices[j] = price;
+                minPrices[j] = minPrice;
+                maxPrices[j] = maxPrice;
             }
 
-            uint256 medianPrice = Array.getMedian(prices) * getPrecision(dataStore, cache.token);
-            if (primaryPrices[cache.token] != 0) {
-                eventEmitter.emitOraclePriceUpdated(cache.token, medianPrice, false, false);
-                secondaryPrices[cache.token] = medianPrice;
-            } else {
-                eventEmitter.emitOraclePriceUpdated(cache.token, medianPrice, true, false);
-                primaryPrices[cache.token] = medianPrice;
+            uint256 medianMinPrice = Array.getMedian(minPrices) * getPrecision(dataStore, cache.token);
+            uint256 medianMaxPrice = Array.getMedian(maxPrices) * getPrecision(dataStore, cache.token);
+
+            if (medianMinPrice == 0 || medianMaxPrice == 0) {
+                revert EmptyPrice(cache.token);
             }
+
+            if (primaryPrices[cache.token].isEmpty()) {
+                eventEmitter.emitOraclePriceUpdated(cache.token, medianMinPrice, medianMaxPrice, true, false);
+
+                primaryPrices[cache.token] = Price.Props(
+                    medianMinPrice,
+                    medianMaxPrice
+                );
+            } else {
+                eventEmitter.emitOraclePriceUpdated(cache.token, medianMinPrice, medianMaxPrice, false, false);
+
+                secondaryPrices[cache.token] = Price.Props(
+                    medianMinPrice,
+                    medianMaxPrice
+                );
+            }
+
             tempTokens.add(cache.token);
         }
     }
@@ -294,7 +312,7 @@ contract Oracle is RoleModule {
         for (uint256 i = 0; i < priceFeedTokens.length; i++) {
             address token = priceFeedTokens[i];
 
-            require(primaryPrices[token] == 0, "Oracle: price already set");
+            require(primaryPrices[token].isEmpty(), "Oracle: price already set");
 
             address priceFeedAddress = dataStore.getAddress(Keys.priceFeedKey(token));
             require(priceFeedAddress != address(0), "Oracle: invalid price feed");
@@ -313,10 +331,14 @@ contract Oracle is RoleModule {
 
             require(price != 0, "Oracle: invalid price");
 
-            primaryPrices[token] = price;
+            primaryPrices[token] = Price.Props(
+                price,
+                price
+            );
+
             tempTokens.add(token);
 
-            eventEmitter.emitOraclePriceUpdated(token, price, true, true);
+            eventEmitter.emitOraclePriceUpdated(token, price, price, true, true);
         }
     }
 
@@ -324,12 +346,13 @@ contract Oracle is RoleModule {
         uint256 oracleBlockNumber,
         bytes32 blockHash,
         address token,
-        uint256 price,
+        uint256 minPrice,
+        uint256 maxPrice,
         bytes memory signature,
         address expectedSigner
     ) internal view {
         bytes32 digest = ECDSA.toEthSignedMessageHash(
-            keccak256(abi.encode(SALT, oracleBlockNumber, blockHash, token, price))
+            keccak256(abi.encode(SALT, oracleBlockNumber, blockHash, token, minPrice, maxPrice))
         );
 
         address recoveredSigner = ECDSA.recover(digest, signature);

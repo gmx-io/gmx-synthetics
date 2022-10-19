@@ -10,6 +10,7 @@ import "../eth/EthUtils.sol";
 
 library SwapUtils {
     using SafeCast for uint256;
+    using Price for Price.Props;
 
     struct SwapParams {
         DataStore dataStore;
@@ -34,8 +35,8 @@ library SwapUtils {
 
     struct _SwapCache {
         address tokenOut;
-        uint256 tokenInPrice;
-        uint256 tokenOutPrice;
+        Price.Props tokenInPrice;
+        Price.Props tokenOutPrice;
         uint256 amountIn;
         uint256 amountOut;
         uint256 poolAmountOut;
@@ -103,16 +104,16 @@ library SwapUtils {
                 _params.market.marketToken,
                 _params.tokenIn,
                 cache.tokenOut,
-                cache.tokenInPrice,
-                cache.tokenOutPrice,
-                (fees.amountAfterFees * cache.tokenInPrice).toInt256(),
-                -(fees.amountAfterFees * cache.tokenInPrice).toInt256()
+                cache.tokenInPrice.midPrice(),
+                cache.tokenOutPrice.midPrice(),
+                (fees.amountAfterFees * cache.tokenInPrice.midPrice()).toInt256(),
+                -(fees.amountAfterFees * cache.tokenInPrice.midPrice()).toInt256()
             )
         );
 
         if (priceImpactUsd > 0) {
             cache.amountIn = fees.amountAfterFees;
-            cache.amountOut = cache.amountIn * cache.tokenInPrice / cache.tokenOutPrice;
+            cache.amountOut = cache.amountIn * cache.tokenInPrice.min / cache.tokenOutPrice.max;
             cache.poolAmountOut = cache.amountOut;
 
             // when there is a positive price impact factor, additional tokens from the swap impact pool
@@ -146,7 +147,7 @@ library SwapUtils {
             );
 
             cache.amountIn = fees.amountAfterFees - negativeImpactAmount;
-            cache.amountOut = cache.amountIn * cache.tokenInPrice / cache.tokenOutPrice;
+            cache.amountOut = cache.amountIn * cache.tokenInPrice.min / cache.tokenOutPrice.max;
             cache.poolAmountOut = cache.amountOut;
         }
 

@@ -17,10 +17,12 @@ import "./PositionUtils.sol";
 import "../order/OrderBaseUtils.sol";
 
 library DecreasePositionUtils {
-    using Position for Position.Props;
-    using Order for Order.Props;
     using SafeCast for uint256;
     using SafeCast for int256;
+
+    using Position for Position.Props;
+    using Order for Order.Props;
+    using Price for Price.Props;
 
     struct DecreasePositionParams {
         DataStore dataStore;
@@ -222,7 +224,7 @@ library DecreasePositionUtils {
         remainingCollateralAmount -= collateralDeltaAmount;
         values.outputAmount = collateralDeltaAmount;
 
-        uint256 collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.order.initialCollateralToken(), params.market, prices);
+        Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.order.initialCollateralToken(), params.market, prices);
         // the outputAmount does not factor in price impact
         // for example, if the market is ETH / USD and if a user uses USDC to long ETH
         // if the position is closed in profit or loss, USDC would be sent out from or added to the pool
@@ -234,7 +236,8 @@ library DecreasePositionUtils {
             params.position,
             params.adjustedSizeDeltaUsd,
             prices.indexTokenPrice,
-            collateralTokenPrice
+            collateralTokenPrice,
+            false
         );
 
         if (OrderBaseUtils.isLiquidationOrder(params.order.orderType()) && remainingCollateralAmount + values.realizedPnlAmount < 0) {
@@ -290,7 +293,7 @@ library DecreasePositionUtils {
         Position.Props memory position,
         int256 remainingCollateralAmount
     ) internal returns (PositionPricingUtils.PositionFees memory) {
-        uint256 collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.order.initialCollateralToken(), params.market, prices);
+        Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.order.initialCollateralToken(), params.market, prices);
 
         int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
@@ -298,8 +301,8 @@ library DecreasePositionUtils {
                 params.market.marketToken,
                 params.market.longToken,
                 params.market.shortToken,
-                prices.longTokenPrice,
-                prices.shortTokenPrice,
+                prices.longTokenPrice.midPrice(),
+                prices.shortTokenPrice.midPrice(),
                 -params.adjustedSizeDeltaUsd.toInt256(),
                 params.order.isLong()
             )
@@ -318,7 +321,7 @@ library DecreasePositionUtils {
         );
 
         if (OrderBaseUtils.isLiquidationOrder(params.order.orderType())) {
-            int256 adjustmentAmount = priceImpactUsd / collateralTokenPrice.toInt256();
+            int256 adjustmentAmount = priceImpactUsd / collateralTokenPrice.pickPrice(priceImpactUsd > 0).toInt256();
             int256 totalNetCostAmount = fees.totalNetCostAmount + adjustmentAmount;
 
             // return empty fees and do not apply price impact since there is

@@ -24,6 +24,8 @@ library DepositUtils {
     using SafeCast for uint256;
     using Array for uint256[];
 
+    using Price for Price.Props;
+
     struct CreateDepositParams {
         address receiver;
         address callbackContract;
@@ -53,8 +55,8 @@ library DepositUtils {
         address receiver;
         address tokenIn;
         address tokenOut;
-        uint256 tokenInPrice;
-        uint256 tokenOutPrice;
+        Price.Props tokenInPrice;
+        Price.Props tokenOutPrice;
         uint256 amount;
         int256 priceImpactUsd;
     }
@@ -123,11 +125,11 @@ library DepositUtils {
 
         Market.Props memory market = params.marketStore.get(deposit.market);
 
-        uint256 longTokenPrice = params.oracle.getPrimaryPrice(market.longToken);
-        uint256 shortTokenPrice = params.oracle.getPrimaryPrice(market.shortToken);
+        Price.Props memory longTokenPrice = params.oracle.getPrimaryPrice(market.longToken);
+        Price.Props memory shortTokenPrice = params.oracle.getPrimaryPrice(market.shortToken);
 
-        uint256 longTokenUsd = deposit.longTokenAmount * longTokenPrice;
-        uint256 shortTokenUsd = deposit.shortTokenAmount * shortTokenPrice;
+        uint256 longTokenUsd = deposit.longTokenAmount * longTokenPrice.midPrice();
+        uint256 shortTokenUsd = deposit.shortTokenAmount * shortTokenPrice.midPrice();
 
         uint256 receivedMarketTokens;
 
@@ -137,10 +139,10 @@ library DepositUtils {
                 market.marketToken,
                 market.longToken,
                 market.shortToken,
-                longTokenPrice,
-                shortTokenPrice,
-                (deposit.longTokenAmount * longTokenPrice).toInt256(),
-                (deposit.shortTokenAmount * shortTokenPrice).toInt256()
+                longTokenPrice.midPrice(),
+                shortTokenPrice.midPrice(),
+                (deposit.longTokenAmount * longTokenPrice.midPrice()).toInt256(),
+                (deposit.shortTokenAmount * shortTokenPrice.midPrice()).toInt256()
             )
         );
 
@@ -290,7 +292,8 @@ library DepositUtils {
             _params.market,
             _params.tokenIn == _params.market.longToken ? _params.tokenInPrice : _params.tokenOutPrice,
             _params.tokenIn == _params.market.shortToken ? _params.tokenInPrice : _params.tokenOutPrice,
-            params.oracle.getPrimaryPrice(_params.market.indexToken)
+            params.oracle.getPrimaryPrice(_params.market.indexToken),
+            true
         );
         uint256 supply = MarketUtils.getMarketTokenSupply(MarketToken(payable(_params.market.marketToken)));
 
@@ -317,7 +320,7 @@ library DepositUtils {
             // calculate the usd amount using positiveImpactAmount since it may
             // be capped by the max available amount in the impact pool
             mintAmount += MarketUtils.usdToMarketTokenAmount(
-                positiveImpactAmount * _params.tokenOutPrice,
+                positiveImpactAmount * _params.tokenOutPrice.min,
                 poolValue,
                 supply
             );
@@ -347,7 +350,12 @@ library DepositUtils {
             amountAfterFees -= negativeImpactAmount;
         }
 
-        mintAmount += MarketUtils.usdToMarketTokenAmount(amountAfterFees * _params.tokenInPrice, poolValue, supply);
+        mintAmount += MarketUtils.usdToMarketTokenAmount(
+            amountAfterFees * _params.tokenInPrice.min,
+            poolValue,
+            supply
+        );
+
         MarketUtils.increasePoolAmount(
             params.dataStore,
             params.eventEmitter,
