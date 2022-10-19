@@ -175,6 +175,11 @@ contract Oracle is RoleModule {
     // e.g. to calculate the fiat value of a given number of tokens the
     // calculation would just be: token amount * oracle price
     //
+    // the trade-off of this simplicity in calculation is that tokens with a small
+    // USD price and a lot of decimals may have precision issues
+    // it is also possible that a token's price changes significantly and results
+    // in requiring higher precision
+    //
     // example 1, the price of ETH is 5000, and ETH has 18 decimals
     // the price of one unit of ETH is 5000 / (10 ** 18), 5 * (10 ** -15)
     // to represent the price with 30 decimals, store the price as

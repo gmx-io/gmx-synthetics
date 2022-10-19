@@ -107,7 +107,7 @@ library MarketUtils {
         );
     }
 
-    // the value of a market's liquidity pool is the worth of the liquidity provider tokens in the pool + pending trader pnl
+    // the value of a market's liquidity pool is the worth of the liquidity provider tokens in the pool - pending trader pnl
     // we use the token index prices to calculate this and ignore price impact since if all positions were closed the
     // net price impact should be zero
     // when minting liquidity provider tokens, the price impact of the token in should be considered
