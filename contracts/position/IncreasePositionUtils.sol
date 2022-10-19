@@ -113,6 +113,7 @@ library IncreasePositionUtils {
         );
 
         params.eventEmitter.emitPositionIncrease(
+            params.positionKey,
             position.account,
             position.market,
             position.collateralToken,

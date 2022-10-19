@@ -10,6 +10,7 @@ import "../pricing/PositionPricingUtils.sol";
 
 contract EventEmitter is RoleModule {
     event PositionIncrease(
+        bytes32 key,
         address indexed account,
         address indexed market,
         address collateralToken,
@@ -19,6 +20,7 @@ contract EventEmitter is RoleModule {
         int256 collateralDeltaAmount
     );
     event PositionDecrease(
+        bytes32 key,
         address indexed account,
         address indexed market,
         address collateralToken,
@@ -188,6 +190,7 @@ contract EventEmitter is RoleModule {
     }
 
     function emitPositionIncrease(
+        bytes32 key,
         address account,
         address market,
         address collateralToken,
@@ -197,6 +200,7 @@ contract EventEmitter is RoleModule {
         int256 collateralDeltaAmount
     ) external onlyController {
         emit PositionIncrease(
+            key,
             account,
             market,
             collateralToken,
@@ -208,6 +212,7 @@ contract EventEmitter is RoleModule {
     }
 
     function emitPositionDecrease(
+        bytes32 key,
         address account,
         address market,
         address collateralToken,
@@ -220,6 +225,7 @@ contract EventEmitter is RoleModule {
         int256 realizedPnlAmount
     ) external onlyController {
         emit PositionDecrease(
+            key,
             account,
             market,
             collateralToken,
