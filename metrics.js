@@ -26,7 +26,7 @@ async function run() {
     await metrics.analyze(files[i]);
   }
 
-  console.log(metrics.totals().totals.sloc);
+  console.info(metrics.totals().totals.sloc);
 }
 
 run();

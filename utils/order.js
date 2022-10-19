@@ -83,9 +83,36 @@ async function handleOrder(fixture, overrides = {}) {
   await executeOrder(fixture, overrides.execute);
 }
 
+async function executeLiquidation(fixture, overrides) {
+  const { weth, usdc } = fixture.contracts;
+  const { account, market, collateralToken, isLong, gasUsageLabel } = overrides;
+  const { orderHandler } = fixture.contracts;
+  const tokens = overrides.tokens || [weth.address, usdc.address];
+  const prices = overrides.prices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
+
+  const block = await ethers.provider.getBlock();
+
+  await executeWithOracleParams(fixture, {
+    oracleBlockNumber: bigNumberify(block.number),
+    tokens,
+    prices,
+    execute: async (key, oracleParams) => {
+      return await orderHandler.executeLiquidation(
+        account,
+        market.marketToken,
+        collateralToken.address,
+        isLong,
+        oracleParams
+      );
+    },
+    gasUsageLabel,
+  });
+}
+
 module.exports = {
   OrderType,
   createOrder,
   executeOrder,
   handleOrder,
+  executeLiquidation,
 };

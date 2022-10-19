@@ -13,4 +13,11 @@ library NonceUtils {
     function incrementNonce(DataStore dataStore) internal returns (uint256) {
         return dataStore.incrementUint(Keys.NONCE, 1);
     }
+
+    function getNextKey(DataStore dataStore) internal returns (bytes32) {
+        uint256 nonce = incrementNonce(dataStore);
+        bytes32 key = keccak256(abi.encode(nonce));
+
+        return key;
+    }
 }

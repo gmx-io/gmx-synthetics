@@ -107,8 +107,7 @@ library WithdrawalUtils {
         uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(dataStore, withdrawal);
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee);
 
-        uint256 nonce = NonceUtils.incrementNonce(dataStore);
-        bytes32 key = keccak256(abi.encode(nonce));
+        bytes32 key = NonceUtils.getNextKey(dataStore);
 
         withdrawalStore.set(key, withdrawal);
 
@@ -139,7 +138,7 @@ library WithdrawalUtils {
             params.oracle.getPrimaryPrice(market.indexToken)
         );
 
-        cache.marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(market.marketToken));
+        cache.marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
         cache.marketTokensLongUsd = MarketUtils.marketTokenAmountToUsd(withdrawal.marketTokensLongAmount, cache.poolValue, cache.marketTokensSupply);
         cache.marketTokensShortUsd = MarketUtils.marketTokenAmountToUsd(withdrawal.marketTokensShortAmount, cache.poolValue, cache.marketTokensSupply);
 
@@ -319,13 +318,13 @@ library WithdrawalUtils {
             _params.tokenOut == _params.market.longToken
         );
 
-        uint256 marketTokensBalance = MarketToken(_params.market.marketToken).balanceOf(_params.account);
+        uint256 marketTokensBalance = MarketToken(payable(_params.market.marketToken)).balanceOf(_params.account);
         if (marketTokensBalance < _params.marketTokensAmount) {
             revert InsufficientMarketTokens(marketTokensBalance, _params.marketTokensAmount);
         }
 
-        MarketToken(_params.market.marketToken).burn(_params.account, _params.marketTokensAmount);
-        MarketToken(_params.market.marketToken).transferOut(
+        MarketToken(payable(_params.market.marketToken)).burn(_params.account, _params.marketTokensAmount);
+        MarketToken(payable(_params.market.marketToken)).transferOut(
             EthUtils.weth(params.dataStore),
             _params.tokenOut,
             outputAmount,

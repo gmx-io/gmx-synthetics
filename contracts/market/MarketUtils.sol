@@ -61,7 +61,7 @@ library MarketUtils {
         uint256 poolValue = getPoolValue(dataStore, market, longTokenPrice, shortTokenPrice, indexTokenPrice);
         if (poolValue == 0) { return 0; }
 
-        uint256 supply = getMarketTokenSupply(MarketToken(market.marketToken));
+        uint256 supply = getMarketTokenSupply(MarketToken(payable(market.marketToken)));
 
         // it may be possible for supply to be zero here
         return poolValue * Precision.WEI_PRECISION / supply;

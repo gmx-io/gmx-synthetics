@@ -22,7 +22,8 @@ library DecreaseOrderUtils {
             params.oracleBlockNumbers,
             order.orderType(),
             order.updatedAtBlock(),
-            position.increasedAtBlock
+            position.increasedAtBlock,
+            position.decreasedAtBlock
         );
 
         (uint256 outputAmount, uint256 adjustedSizeDeltaUsd) = DecreasePositionUtils.decreasePosition(
@@ -40,7 +41,11 @@ library DecreaseOrderUtils {
             )
         );
 
-        if (adjustedSizeDeltaUsd == order.sizeDeltaUsd()) {
+        if (
+            order.orderType() == Order.OrderType.MarketDecrease ||
+            order.orderType() == Order.OrderType.Liquidation ||
+            adjustedSizeDeltaUsd == order.sizeDeltaUsd()
+        ) {
             params.orderStore.remove(params.key, order.account());
         } else {
             order.setSizeDeltaUsd(adjustedSizeDeltaUsd);
@@ -51,7 +56,7 @@ library DecreaseOrderUtils {
         }
 
         if (order.swapPath().length == 0) {
-            MarketToken(order.market()).transferOut(
+            MarketToken(payable(order.market())).transferOut(
                 EthUtils.weth(params.dataStore),
                 order.initialCollateralToken(),
                 outputAmount,
@@ -78,12 +83,10 @@ library DecreaseOrderUtils {
         uint256[] memory oracleBlockNumbers,
         Order.OrderType orderType,
         uint256 orderUpdatedAtBlock,
-        uint256 positionIncreasedAtBlock
+        uint256 positionIncreasedAtBlock,
+        uint256 positionDecreasedAtBlock
     ) internal pure {
-        if (
-            orderType == Order.OrderType.MarketDecrease ||
-            orderType == Order.OrderType.Liquidation
-        ) {
+        if (orderType == Order.OrderType.MarketDecrease) {
             if (!oracleBlockNumbers.areEqualTo(orderUpdatedAtBlock)) {
                 revert(Keys.ORACLE_ERROR);
             }
@@ -94,8 +97,17 @@ library DecreaseOrderUtils {
             orderType == Order.OrderType.LimitDecrease ||
             orderType == Order.OrderType.StopLossDecrease
         ) {
-            uint256 laterBlock = orderUpdatedAtBlock > positionIncreasedAtBlock ? orderUpdatedAtBlock : positionIncreasedAtBlock;
-            if (!oracleBlockNumbers.areGreaterThan(laterBlock)) {
+            uint256 latestUpdatedAtBlock = orderUpdatedAtBlock > positionIncreasedAtBlock ? orderUpdatedAtBlock : positionIncreasedAtBlock;
+            if (!oracleBlockNumbers.areGreaterThan(latestUpdatedAtBlock)) {
+                revert(Keys.ORACLE_ERROR);
+            }
+            return;
+        }
+
+        if (orderType == Order.OrderType.Liquidation) {
+            uint256 latestUpdatedAtBlock = positionIncreasedAtBlock > positionDecreasedAtBlock ? positionIncreasedAtBlock : positionDecreasedAtBlock;
+
+            if (!oracleBlockNumbers.areGreaterThan(latestUpdatedAtBlock)) {
                 revert(Keys.ORACLE_ERROR);
             }
             return;

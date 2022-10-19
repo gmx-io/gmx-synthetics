@@ -54,8 +54,8 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
         address shortToken,
         uint256 longTokenAmount,
         uint256 shortTokenAmount,
-        DepositUtils.CreateDepositParams memory params
-    ) nonReentrant external payable returns (bytes32) {
+        DepositUtils.CreateDepositParams calldata params
+    ) external nonReentrant payable returns (bytes32) {
         address account = msg.sender;
         address _depositStore = address(depositStore);
 
@@ -75,8 +75,8 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
     }
 
     function createWithdrawal(
-        WithdrawalUtils.CreateWithdrawalParams memory params
-    ) nonReentrant external payable returns (bytes32) {
+        WithdrawalUtils.CreateWithdrawalParams calldata params
+    ) external nonReentrant payable returns (bytes32) {
         address account = msg.sender;
 
         EthUtils.sendWeth(dataStore, address(withdrawalStore));
@@ -89,8 +89,8 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
 
     function createOrder(
         uint256 amountIn,
-        OrderBaseUtils.CreateOrderParams memory params
-    ) nonReentrant external payable returns (bytes32) {
+        OrderBaseUtils.CreateOrderParams calldata params
+    ) external nonReentrant payable returns (bytes32) {
         require(params.orderType != Order.OrderType.Liquidation, "ExchangeRouter: invalid order type");
 
         address account = msg.sender;
@@ -100,18 +100,6 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
         if (amountIn > 0) {
             router.pluginTransfer(params.initialCollateralToken, account, address(orderStore), amountIn);
         }
-
-        return orderHandler.createOrder(
-            account,
-            params
-        );
-    }
-
-    function createLiquidation(
-        OrderBaseUtils.CreateOrderParams memory params,
-        address account
-    ) nonReentrant external onlyLiquidationKeeper returns (bytes32) {
-        require(params.orderType == Order.OrderType.Liquidation, "ExchangeRouter: invalid order type");
 
         return orderHandler.createOrder(
             account,

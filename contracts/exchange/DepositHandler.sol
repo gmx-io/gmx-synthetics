@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import "../role/RoleModule.sol";
+import "../bank/FundReceiver.sol";
 import "../events/EventEmitter.sol";
 import "../feature/FeatureUtils.sol";
 
@@ -18,7 +18,7 @@ import "../deposit/DepositUtils.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 
-contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
+contract DepositHandler is ReentrancyGuard, FundReceiver, OracleModule {
 
     DataStore immutable dataStore;
     EventEmitter immutable eventEmitter;
@@ -35,7 +35,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         MarketStore _marketStore,
         Oracle _oracle,
         FeeReceiver _feeReceiver
-    ) RoleModule(_roleStore) {
+    ) FundReceiver(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         depositStore = _depositStore;
@@ -44,13 +44,11 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         feeReceiver = _feeReceiver;
     }
 
-    receive() external payable {
-        require(msg.sender == EthUtils.weth(dataStore), "DepositHandler: invalid sender");
-    }
+    receive() external payable {}
 
     function createDeposit(
         address account,
-        DepositUtils.CreateDepositParams memory params
+        DepositUtils.CreateDepositParams calldata params
     ) external nonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createDepositFeatureKey(address(this)));
 
@@ -66,7 +64,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
 
     function executeDeposit(
         bytes32 key,
-        OracleUtils.SetPricesParams memory oracleParams
+        OracleUtils.SetPricesParams calldata oracleParams
     ) external nonReentrant onlyOrderKeeper {
         uint256 startingGas = gasleft();
 

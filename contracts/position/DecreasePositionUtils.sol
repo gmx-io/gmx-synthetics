@@ -42,8 +42,6 @@ library DecreasePositionUtils {
         uint256 sizeDeltaInTokens;
     }
 
-    error InvalidLiquidation();
-
     function decreasePosition(DecreasePositionParams memory params) external returns (uint256, uint256) {
         Position.Props memory position = params.position;
         MarketUtils.MarketPrices memory prices = MarketUtils.getPricesForPosition(
@@ -57,7 +55,7 @@ library DecreasePositionUtils {
             params.market,
             prices
         )) {
-            revert InvalidLiquidation();
+            revert("DecreasePositionUtils: Invalid Liquidation");
         }
 
         MarketUtils.updateCumulativeFundingFactors(params.dataStore, params.market.marketToken);
@@ -67,6 +65,8 @@ library DecreasePositionUtils {
             prices,
             position.isLong
         );
+
+        params.adjustedSizeDeltaUsd = params.order.sizeDeltaUsd();
 
         if (params.adjustedSizeDeltaUsd > position.sizeInUsd) {
             if (params.order.orderType() == Order.OrderType.LimitDecrease ||
@@ -108,6 +108,7 @@ library DecreasePositionUtils {
         position.sizeInUsd = nextPositionSizeInUsd;
         position.sizeInTokens -= values.sizeDeltaInTokens;
         position.collateralAmount = values.remainingCollateralAmount.toUint256();
+        position.decreasedAtBlock = block.number;
 
         if (position.sizeInUsd == 0 || position.sizeInTokens == 0) {
             // withdraw all collateral if the position will be closed
