@@ -1,4 +1,3 @@
-
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity ^0.8.0;
@@ -232,5 +231,33 @@ contract EventEmitter is RoleModule {
             outputAmount,
             realizedPnlAmount
         );
+    }
+
+    function log1(bytes32 topic1, bytes memory data) external onlyController {
+        uint256 len = data.length;
+        assembly {
+            log1(add(data, 32), len, topic1)
+        }
+    }
+
+    function log2(bytes32 topic1, bytes32 topic2, bytes memory data) external onlyController {
+        uint256 len = data.length;
+        assembly {
+            log2(add(data, 32), len, topic1, topic2)
+        }
+    }
+
+    function log3(bytes32 topic1, bytes32 topic2, bytes32 topic3, bytes memory data) external onlyController {
+        uint256 len = data.length;
+        assembly {
+            log3(add(data, 32), len, topic1, topic2, topic3)
+        }
+    }
+
+    function log4(bytes32 topic1, bytes32 topic2, bytes32 topic3, bytes32 topic4, bytes memory data) external onlyController {
+        uint256 len = data.length;
+        assembly {
+            log4(add(data, 32), len, topic1, topic2, topic3, topic4)
+        }
     }
 }
