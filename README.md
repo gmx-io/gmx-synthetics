@@ -261,7 +261,7 @@ The code for price impact can be found in the `/pricing` contracts.
 Price impact is calculated as:
 
 ```
-(initial imbalance) ^ (price impact exponent) * (price impact factor) - (next imbalance) ^ (price impact exponent) * (price impact factor)
+(initial imbalance) ^ (price impact exponent) * (price impact factor / 2) - (next imbalance) ^ (price impact exponent) * (price impact factor / 2)
 ```
 
 For spot actions (deposits, withdrawals, swaps), imbalance is calculated as the difference in the worth of the long tokens and short tokens.
