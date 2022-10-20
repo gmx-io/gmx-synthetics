@@ -19,7 +19,6 @@ import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 
 contract DepositHandler is ReentrancyGuard, FundReceiver, OracleModule {
-
     DataStore immutable dataStore;
     EventEmitter immutable eventEmitter;
     DepositStore immutable depositStore;

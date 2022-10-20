@@ -192,6 +192,7 @@ library DecreasePositionUtils {
         ProcessCollateralValues memory values
     ) internal {
         params.eventEmitter.emitPositionDecrease(
+            params.positionKey,
             params.order.account(),
             params.order.market(),
             params.order.initialCollateralToken(),
