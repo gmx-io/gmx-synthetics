@@ -226,12 +226,29 @@ library OrderUtils {
             return;
         }
 
+        bool isIncrease = isIncreaseOrder(orderType);
+        // increase order:
+        //     - long: use the larger price
+        //     - short: use the smaller price
+        // decrease order:
+        //     - long: use the smaller price
+        //     - short: use the larger price
+        bool shouldUseMaxPrice = isIncrease ? isLong : !isLong;
+
         // set secondary price to primary price since increase / decrease positions use the secondary price for index token values
         if (orderType == Order.OrderType.MarketIncrease ||
             orderType == Order.OrderType.MarketDecrease ||
             orderType == Order.OrderType.Liquidation) {
+
             Price.Props memory price = oracle.getPrimaryPrice(indexToken);
-            oracle.setCustomPrice(indexToken, price);
+
+            oracle.setSecondaryPrice(indexToken, price);
+
+            oracle.setCustomPrice(indexToken, Price.Props(
+                price.pickPrice(shouldUseMaxPrice),
+                price.pickPrice(shouldUseMaxPrice)
+            ));
+
             return;
         }
 
@@ -239,27 +256,16 @@ library OrderUtils {
             orderType == Order.OrderType.LimitDecrease ||
             orderType == Order.OrderType.StopLossDecrease
         ) {
-            bool shouldUseMaxPrice;
-            bool shouldValidateAscendingPrice;
-
-            if (orderType == Order.OrderType.LimitIncrease) {
-                // for long increase orders, use the max price
-                // for short increase orders, use the min price
-                shouldUseMaxPrice = isLong;
-                // for long increase orders, the oracle prices should be descending
-                // for short increase orders, the oracle prices should be ascending
-                shouldValidateAscendingPrice = !isLong;
-            } else {
-                // for long decrease orders, use the min price
-                // for long increase orders, use the max price
-                shouldUseMaxPrice = !isLong;
-                // for long decrease orders, the oracle prices should be ascending
-                // for short decrease orders, the oracle prices should be descending
-                shouldValidateAscendingPrice = isLong;
-            }
-
             uint256 primaryPrice = oracle.getPrimaryPrice(indexToken).pickPrice(shouldUseMaxPrice);
             uint256 secondaryPrice = oracle.getSecondaryPrice(indexToken).pickPrice(shouldUseMaxPrice);
+
+            // increase order:
+            //     - long: validate descending price
+            //     - short: validate ascending price
+            // decrease order:
+            //     - long: validate ascending price
+            //     - short: validate descending price
+            bool shouldValidateAscendingPrice = isIncrease ? !isLong : isLong;
 
             if (shouldValidateAscendingPrice) {
                 // check that the earlier price (primaryPrice) is smaller than the triggerPrice

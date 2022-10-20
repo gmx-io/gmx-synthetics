@@ -99,9 +99,9 @@ library MarketUtils {
 
     // the secondary price for market.indexToken is overwritten for certain order
     // types, use this value instead of the primary price for positions
-    function getMarketPrices(Market.Props memory market, Oracle oracle) internal view returns (MarketPrices memory) {
+    function getMarketPricesForPosition(Market.Props memory market, Oracle oracle) internal view returns (MarketPrices memory) {
         return MarketPrices(
-            oracle.getPrimaryPrice(market.indexToken),
+            oracle.getSecondaryPrice(market.indexToken),
             oracle.getPrimaryPrice(market.longToken),
             oracle.getPrimaryPrice(market.shortToken)
         );

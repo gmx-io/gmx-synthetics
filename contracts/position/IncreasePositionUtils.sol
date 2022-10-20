@@ -47,7 +47,7 @@ library IncreasePositionUtils {
         position.collateralToken = params.collateralToken;
         position.isLong = params.order.isLong();
 
-        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(
+        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPricesForPosition(
             params.market,
             params.oracle
         );
@@ -67,8 +67,30 @@ library IncreasePositionUtils {
         }
         position.collateralAmount = Calc.sum(position.collateralAmount, collateralDeltaAmount);
 
+        int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
+            PositionPricingUtils.GetPriceImpactUsdParams(
+                params.dataStore,
+                params.market.marketToken,
+                params.market.longToken,
+                params.market.shortToken,
+                prices.longTokenPrice.midPrice(),
+                prices.shortTokenPrice.midPrice(),
+                params.order.sizeDeltaUsd().toInt256(),
+                params.order.isLong()
+            )
+        );
+
         // round sizeDeltaInTokens down
-        uint256 sizeDeltaInTokens = params.order.sizeDeltaUsd() / prices.indexTokenPrice.max;
+        uint256 customIndexTokenPrice = OrderBaseUtils.getExecutionPrice(
+            params.oracle.getCustomPrice(params.market.indexToken),
+            params.order.sizeDeltaUsd(),
+            priceImpactUsd,
+            params.order.acceptablePrice(),
+            position.isLong,
+            true
+        );
+
+        uint256 sizeDeltaInTokens = params.order.sizeDeltaUsd() / customIndexTokenPrice.max;
         uint256 nextPositionSizeInUsd = position.sizeInUsd + params.order.sizeDeltaUsd();
         uint256 nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(params.dataStore, params.market.marketToken, position.isLong);
 
@@ -134,23 +156,6 @@ library IncreasePositionUtils {
     ) internal returns (int256) {
         Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.collateralToken, params.market, prices);
 
-        int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
-            PositionPricingUtils.GetPriceImpactUsdParams(
-                params.dataStore,
-                params.market.marketToken,
-                params.market.longToken,
-                params.market.shortToken,
-                prices.longTokenPrice.midPrice(),
-                prices.shortTokenPrice.midPrice(),
-                params.order.sizeDeltaUsd().toInt256(),
-                params.order.isLong()
-            )
-        );
-
-        if (priceImpactUsd < params.order.acceptablePriceImpactUsd()) {
-            OrderBaseUtils.revertUnacceptablePriceImpactUsd(priceImpactUsd, params.order.acceptablePriceImpactUsd());
-        }
-
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
             params.dataStore,
             position,
@@ -166,40 +171,6 @@ library IncreasePositionUtils {
             fees.feeReceiverAmount,
             FeeUtils.POSITION_FEE
         );
-
-        if (priceImpactUsd > 0) {
-            // when there is a positive price impact factor, additional tokens from the swap impact pool
-            // are withdrawn for the user to be used as additional collateral
-            // for example, if 50,000 USDC is withdrawn and there is a positive price impact
-            // an additional 100 USDC may be added to the user's collateral
-            // the swap impact pool is decreased by the used amount
-            uint256 positiveImpactAmount = MarketUtils.applyPositiveImpact(
-                params.dataStore,
-                params.eventEmitter,
-                params.market.marketToken,
-                params.collateralToken,
-                collateralTokenPrice,
-                priceImpactUsd
-            );
-
-            fees.totalNetCostAmount += positiveImpactAmount.toInt256();
-        } else {
-            // when there is a negative price impact factor,
-            // less of the collateral amount is sent to the user's position
-            // for example, if 10 ETH is sent as collateral and there is a negative price impact
-            // only 9.995 ETH may be used for collateral
-            // the remaining 0.005 ETH will be stored in the swap impact pool
-            uint256 negativeImpactAmount = MarketUtils.applyNegativeImpact(
-                params.dataStore,
-                params.eventEmitter,
-                params.market.marketToken,
-                params.collateralToken,
-                collateralTokenPrice,
-                priceImpactUsd
-            );
-
-            fees.totalNetCostAmount -= negativeImpactAmount.toInt256();
-        }
 
         collateralDeltaAmount += fees.totalNetCostAmount;
 

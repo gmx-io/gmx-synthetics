@@ -56,7 +56,7 @@ library OrderBaseUtils {
 
     error EmptyOrder();
     error UnsupportedOrderType();
-    error UnacceptablePriceImpactUsd(int256 priceImpactUsd, int256 acceptablePriceImpactUsd);
+    error UnacceptablePrice(uint256 executionPrice, uint256 acceptablePrice);
 
     function isMarketOrder(Order.OrderType orderType) internal pure returns (bool) {
         return orderType == Order.OrderType.MarketSwap ||
@@ -97,6 +97,64 @@ library OrderBaseUtils {
         return orderType == Order.OrderType.Liquidation;
     }
 
+    function getExecutionPrice(
+        Price.Props customPrice,
+        uint256 sizeDeltaUsd,
+        int256 priceImpactUsd,
+        uint256 acceptablePrice,
+        bool isLong,
+        bool isIncrease
+    ) internal pure returns (uint256) {
+        // increase order:
+        //     - long: use the larger price
+        //     - short: use the smaller price
+        // decrease order:
+        //     - long: use the smaller price
+        //     - short: use the larger price
+        bool shouldUseMaxPrice = isIncrease ? isLong : !isLong;
+
+        // should price be smaller than acceptablePrice
+        // increase order:
+        //     - long: price should be smaller than acceptablePrice
+        //     - short: price should be larger than acceptablePrice
+        // decrease order:
+        //     - long: price should be larger than acceptablePrice
+        //     - short: price should be smaller than acceptablePrice
+        bool shouldPriceBeSmaller = isIncrease ? isLong : !isLong;
+
+        // for market orders, customPrice.min and customPrice.max should be equal
+        // for limit orders, customPrice contains the triggerPrice and the best oracle
+        // price, we first attempt to fulfill the order using the triggerPrice
+        uint256 price = customPrice.pickPrice(shouldUseMaxPrice);
+
+        // adjust price by price impact
+        price = price * (sizeDeltaUsd + priceImpactUsd) / sizeDeltaUsd;
+
+        if (shouldPriceBeSmaller && price <= acceptablePrice) {
+            return price;
+        }
+
+        if (!shouldPriceBeSmaller && price >= acceptablePrice) {
+            return price;
+        }
+
+        // if the order could not be fulfilled using the triggerPrice
+        // check if the best oracle price can fulfill the order
+        price = customPrice.pickPrice(!shouldUseMaxPrice);
+
+        // adjust price by price impact
+        price = price * (sizeDeltaUsd + priceImpactUsd) / sizeDeltaUsd;
+
+        if (shouldPriceBeSmaller && price <= acceptablePrice) {
+            return acceptablePrice;
+        }
+
+        if (!shouldPriceBeSmaller && price >= acceptablePrice) {
+            return acceptablePrice;
+        }
+
+        revert UnacceptablePrice(price, acceptablePrice);
+    }
 
     function validateNonEmptyOrder(Order.Props memory order) internal pure {
         if (order.account() == address(0)) {
@@ -106,9 +164,5 @@ library OrderBaseUtils {
 
     function revertUnsupportedOrderType() internal pure {
         revert UnsupportedOrderType();
-    }
-
-    function revertUnacceptablePriceImpactUsd(int256 priceImpactUsd, int256 acceptablePriceImpactUsd) internal pure {
-        revert UnacceptablePriceImpactUsd(priceImpactUsd, acceptablePriceImpactUsd);
     }
 }

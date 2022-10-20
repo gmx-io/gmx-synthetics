@@ -72,6 +72,7 @@ contract Oracle is RoleModule {
     error EmptyPrice(address token);
     error EmptyPrimaryPrice(address token);
     error EmptySecondaryPrice(address token);
+    error EmptyCustomPrice(address token);
 
     constructor(
         RoleStore _roleStore,
@@ -134,6 +135,10 @@ contract Oracle is RoleModule {
         _setPricesFromPriceFeeds(dataStore, eventEmitter, params.priceFeedTokens);
     }
 
+    function setSecondaryPrice(address token, Price.Props memory price) external onlyController {
+        secondaryPrices[token] = price;
+    }
+
     function setCustomPrice(address token, Price.Props memory price) external onlyController {
         customPrices[token] = price;
     }
@@ -166,6 +171,12 @@ contract Oracle is RoleModule {
     function getSecondaryPrice(address token) external view returns (Price.Props memory) {
         Price.Props memory price = secondaryPrices[token];
         if (price.isEmpty()) { revert EmptySecondaryPrice(token); }
+        return price;
+    }
+
+    function getCustomPrice(address token) external view returns (Price.Props memory) {
+        Price.Props memory price = customPrices[token];
+        if (price.isEmpty()) { revert EmptyCustomPrice(token); }
         return price;
     }
 

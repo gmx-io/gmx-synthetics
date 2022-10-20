@@ -21,7 +21,7 @@ library PositionUtils {
     error LiquidatablePosition();
     error UnexpectedPositionState();
 
-    // returns pnlAmount, sizeDeltaInTokens
+    /* // returns pnlAmount, sizeDeltaInTokens
     function getPositionPnlAmount(
         Position.Props memory position,
         uint256 sizeDeltaUsd,
@@ -39,7 +39,7 @@ library PositionUtils {
         // if maximize is true, pnlAmount should be larger, so use the smaller collateralTokenPrice value
         // if maximize is false, pnlAmount should be smaller, so use the larger collateralTokenPrice value
         return (realizedPnlUsd / collateralTokenPrice.pickPrice(!maximize).toInt256(), sizeDeltaInTokens);
-    }
+    } */
 
     // returns (positionPnlUsd, sizeDeltaInTokens)
     function getPositionPnlUsd(

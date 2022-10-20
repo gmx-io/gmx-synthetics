@@ -6,39 +6,12 @@ library Order {
     using Order for Props;
 
     enum OrderType {
-        // MarketDecrease and StopLossDecrease orders will be removed even after partial fulfillments
-        // e.g. if the position size is 1000 USD and the order size is 2000 USD
-        // if the order is executed it will close the position and the order will
-        // no longer be active
-
-        // Limit / stop-loss orders are executed at the acceptablePrice if two index prices
-        // allowing their fulfillment are presented
-        // e.g. if a limit order is created at block b0, with an acceptablePrice of 2100
-        // if token price is: 2000 (b1), 2200 (b2)
-        // presenting the prices at b1, b2 will allow the order to be executed with index price 2100
-        //
-        // LimitSwap and LimitIncrease orders can always be executed if the right prices are reached
-        // due to this, validating that the prices presented are for blocks
-        // after the order's updatedAtBlock should be sufficient to prevent gaming of the pricing
-        //
-        // LimitDecrease and StopLossDecrease orders can only be fulfilled if there is an existing position
-        // and the right prices are reached
-        // due to this, it is possible to game the pricing by opening multiple orders and waiting for them to
-        // be fulfillable, the user then waits for a favorable price to open a position
-        // once a favorable price is reached a position can be opened and the orders can be executed for a profit
-        // to avoid this, the prices presented should be validated to be after the associated position was opened
-        //
-        // another case to consider would be if the user opens small positions and creates LimitDecrease, StopLossDecrease orders
-        // to front-run price movements
-        // the user waits for the LimitDecrease and StopLossDecrease orders to be fulfillable then attempts to increase
-        // their position size before the orders can be executed
-        // e.g. a user opens a long position of size 1 USD at price 2000
-        // token price increases to 2110
-        // user creates a StopLossDecrease order for price 2100
-        // token price decreases to 1990
-        // user increases position before the StopLossDecrease order can be executed
-        // due to this, the prices presented should be validated to be after the order was updated and also after the position
-        // was increased
+        // for LimitIncrease, LimitDecrease, StopLossDecrease orders, two prices for the
+        // index token need to be recorded in the oracle
+        // the price with the smaller block number is stored as the primary price while the price with the
+        // larger block number is stored as the secondary price
+        // the triggerPrice must be validated to be between the primary price and secondary price
+        // LimitDecrease and StopLossDecrease are reduce-only orders
 
         // MarketSwap: swap token A to token B at the current market price
         // the order will be cancelled if the minOutputAmount cannot be fulfilled
@@ -47,34 +20,15 @@ library Order {
         LimitSwap,
         // MarketIncrease: increase position at the current market price
         // the order will be cancelled if the position cannot be increased at the acceptablePrice
-        // for long positions, market price < acceptablePrice
-        // for short positions, market price > acceptablePrice
         MarketIncrease,
-        // LimitIncrease: increase position if the acceptablePrice and acceptablePriceImpactUsd
-        // can be fulfilled
-        // fulfillment of the acceptablePrice is dependent on the token index price
-        // fulfillment of the acceptablePriceImpactUsd is dependent on the price impact
+        // LimitIncrease: increase position if the triggerPrice is reached and the acceptablePrice can be fulfilled
         LimitIncrease,
         // MarketDecrease: decrease position at the curent market price
         // the order will be cancelled if the position cannot be decreased at the acceptablePrice
-        // for long positions, market price > acceptablePrice
-        // for short positions, market price < acceptablePrice
         MarketDecrease,
-        // LimitDecrease: decrease position if the acceptablePrice and acceptablePriceImpactUsd
-        // can be fulfilled
-        // these orders are reduce-only orders
-        // for long positions, market price => acceptablePrice
-        // for short positions, market price <= acceptablePrice
+        // LimitDecrease: decrease position if the triggerPrice is reached and the acceptablePrice can be fulfilled
         LimitDecrease,
-        // StopLossDecrease: decrease position if the acceptablePrice and acceptablePriceImpactUsd
-        // can be fulfilled
-        // these orders are reduce-only orders
-        // the acceptablePrice will be used for execution, two prices for the index token
-        // need to be recorded in the oracle for this, the price with the smaller block number
-        // is stored as the primary price while the price with the larger block number is stored
-        // as the secondary price
-        // for long positions, primary price (earlier) >= acceptablePrice, secondary price (later) <= acceptablePrice
-        // for short positions, primary price (earlier) <= acceptablePrice, secondary price (later) >= acceptablePrice
+        // StopLossDecrease: decrease position if the triggerPrice is reached and the acceptablePrice can be fulfilled
         StopLossDecrease,
         // Liquidation: allows liquidation of positions if the criteria for liquidation are met
         Liquidation
