@@ -266,7 +266,6 @@ contract Oracle is RoleModule {
 
                 uint256 minPrice = OracleUtils.getUncompactedPrice(params.compactedMinPrices, cache.priceAndSignatureIndex);
                 uint256 maxPrice = OracleUtils.getUncompactedPrice(params.compactedMaxPrices, cache.priceAndSignatureIndex);
-                uint256 midPrice = (maxPrice + minPrice) / 2;
 
                 _validateSigner(
                     cache.oracleBlockNumber,

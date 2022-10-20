@@ -20,6 +20,7 @@ import "../utils/Null.sol";
 
 library WithdrawalUtils {
     using SafeCast for uint256;
+    using Price for Price.Props;
     using Array for uint256[];
 
     struct CreateWithdrawalParams {
@@ -54,8 +55,8 @@ library WithdrawalUtils {
         address receiver;
         address tokenIn;
         address tokenOut;
-        uint256 tokenInPrice;
-        uint256 tokenOutPrice;
+        Price.Props tokenInPrice;
+        Price.Props tokenOutPrice;
         uint256 marketTokensAmount;
         bool shouldConvertETH;
         uint256 marketTokensUsd;
@@ -126,8 +127,8 @@ library WithdrawalUtils {
 
         Market.Props memory market = params.marketStore.get(withdrawal.market);
 
-        uint256 longTokenPrice = params.oracle.getPrimaryPrice(market.longToken);
-        uint256 shortTokenPrice = params.oracle.getPrimaryPrice(market.shortToken);
+        Price.Props memory longTokenPrice = params.oracle.getPrimaryPrice(market.longToken);
+        Price.Props memory shortTokenPrice = params.oracle.getPrimaryPrice(market.shortToken);
 
         ExecuteWithdrawalCache memory cache;
         cache.poolValue = MarketUtils.getPoolValue(
@@ -135,7 +136,8 @@ library WithdrawalUtils {
             market,
             longTokenPrice,
             shortTokenPrice,
-            params.oracle.getPrimaryPrice(market.indexToken)
+            params.oracle.getPrimaryPrice(market.indexToken),
+            false
         );
 
         cache.marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
@@ -148,8 +150,8 @@ library WithdrawalUtils {
                 market.marketToken,
                 market.longToken,
                 market.shortToken,
-                longTokenPrice,
-                shortTokenPrice,
+                longTokenPrice.midPrice(),
+                shortTokenPrice.midPrice(),
                 -(cache.marketTokensLongUsd.toInt256()),
                 -(cache.marketTokensShortUsd.toInt256())
             )
@@ -245,7 +247,7 @@ library WithdrawalUtils {
         ExecuteWithdrawalParams memory params,
         _ExecuteWithdrawalParams memory _params
     ) internal returns (uint256) {
-        uint256 outputAmount = _params.marketTokensUsd / _params.tokenOutPrice;
+        uint256 outputAmount = _params.marketTokensUsd / _params.tokenOutPrice.max;
 
         SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
             params.dataStore,

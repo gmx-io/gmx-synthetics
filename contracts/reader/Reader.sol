@@ -49,16 +49,18 @@ contract Reader {
     function getMarketTokenPrice(
         DataStore dataStore,
         Market.Props memory market,
-        uint256 longTokenPrice,
-        uint256 shortTokenPrice,
-        uint256 indexTokenPrice
+        Price.Props memory longTokenPrice,
+        Price.Props memory shortTokenPrice,
+        Price.Props memory indexTokenPrice,
+        bool maximize
     ) external view returns (uint256) {
         return MarketUtils.getMarketTokenPrice(
             dataStore,
             market,
             longTokenPrice,
             shortTokenPrice,
-            indexTokenPrice
+            indexTokenPrice,
+            maximize
         );
     }
 }
