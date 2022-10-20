@@ -65,11 +65,12 @@ library Array {
         return (arr[arr.length / 2] + arr[arr.length / 2 - 1]) / 2;
     }
 
-    function sort(uint256[] memory data) internal pure returns (uint256[] memory) {
-       quickSort(data, 0, data.length - 1);
-       return data;
+    function sort(uint256[] memory arr) internal pure returns (uint256[] memory) {
+       quickSort(arr, 0, arr.length - 1);
+       return arr;
     }
 
+    // adapted from https://gist.github.com/subhodi/b3b86cc13ad2636420963e692a4d896f
     function quickSort(uint256[] memory arr, uint256 left, uint256 right) internal {
         uint256 i = left;
         uint256 j = right;
