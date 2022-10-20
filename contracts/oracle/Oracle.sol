@@ -278,8 +278,8 @@ contract Oracle is RoleModule {
                 maxPrices[j] = maxPrice;
             }
 
-            minPrices = Array.sort(minPrices);
-            maxPrices = Array.sort(maxPrices);
+            Array.sort(minPrices);
+            Array.sort(maxPrices);
 
             uint256 medianMinPrice = Array.getMedian(minPrices) * getPrecision(dataStore, cache.token);
             uint256 medianMaxPrice = Array.getMedian(maxPrices) * getPrecision(dataStore, cache.token);

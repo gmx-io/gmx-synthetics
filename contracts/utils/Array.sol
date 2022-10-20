@@ -65,26 +65,36 @@ library Array {
         return (arr[arr.length / 2] + arr[arr.length / 2 - 1]) / 2;
     }
 
-    function sort(uint256[] memory arr) internal pure returns (uint256[] memory) {
+    function sort(uint256[] memory arr) internal pure {
        quickSort(arr, 0, arr.length - 1);
-       return arr;
     }
 
-    // adapted from https://gist.github.com/subhodi/b3b86cc13ad2636420963e692a4d896f
-    function quickSort(uint256[] memory arr, uint256 left, uint256 right) internal {
+    // adapted from https://www.guru99.com/quicksort-in-javascript.html
+    function quickSort(uint256[] memory arr, uint256 left, uint256 right) internal pure {
+        if (arr.length <= 1) { return; }
+
+        uint256 index = partition(arr, left, right);
+
+        if (left < index - 1) {
+            quickSort(arr, left, index - 1);
+        }
+
+        if (index < right) {
+            quickSort(arr, index, right);
+        }
+    }
+
+    function partition(uint256[] memory arr, uint256 left, uint256 right) internal pure returns (uint256) {
+        uint256 pivot = arr[(left + right) / 2];
         uint256 i = left;
         uint256 j = right;
-
-        if (i == j) { return; }
-
-        uint256 pivot = arr[left + (right - left) / 2];
 
         while (i <= j) {
             while (arr[i] < pivot) {
                 i++;
             }
 
-            while (pivot < arr[j]) {
+            while (arr[j] > pivot) {
                 j--;
             }
 
@@ -95,12 +105,6 @@ library Array {
             }
         }
 
-        if (left < j) {
-            quickSort(arr, left, j);
-        }
-
-        if (i < right) {
-            quickSort(arr, i, right);
-        }
+        return i;
     }
 }
