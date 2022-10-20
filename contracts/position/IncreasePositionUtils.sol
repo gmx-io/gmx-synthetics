@@ -38,6 +38,15 @@ library IncreasePositionUtils {
         uint256 collateralDeltaAmount;
     }
 
+    struct _IncreasePositionCache {
+        int256 collateralDeltaAmount;
+        int256 priceImpactUsd;
+        uint256 customIndexTokenPrice;
+        uint256 sizeDeltaInTokens;
+        uint256 nextPositionSizeInUsd;
+        uint256 nextPositionBorrowingFactor;
+    }
+
     error InsufficientCollateralAmount();
 
     function increasePosition(IncreasePositionParams memory params) external {
@@ -60,39 +69,38 @@ library IncreasePositionUtils {
             position.isLong
         );
 
-        int256 collateralDeltaAmount = processCollateral(params, prices, position, params.collateralDeltaAmount.toInt256());
+        _IncreasePositionCache memory cache;
+        cache.collateralDeltaAmount = processCollateral(params, prices, position, params.collateralDeltaAmount.toInt256());
 
-        if (collateralDeltaAmount < 0 && position.collateralAmount < SafeCast.toUint256(-collateralDeltaAmount)) {
+        if (cache.collateralDeltaAmount < 0 && position.collateralAmount < SafeCast.toUint256(-cache.collateralDeltaAmount)) {
             revert InsufficientCollateralAmount();
         }
-        position.collateralAmount = Calc.sum(position.collateralAmount, collateralDeltaAmount);
+        position.collateralAmount = Calc.sum(position.collateralAmount, cache.collateralDeltaAmount);
 
-        int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
+        cache.priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
                 params.dataStore,
                 params.market.marketToken,
                 params.market.longToken,
                 params.market.shortToken,
-                prices.longTokenPrice.midPrice(),
-                prices.shortTokenPrice.midPrice(),
                 params.order.sizeDeltaUsd().toInt256(),
                 params.order.isLong()
             )
         );
 
         // round sizeDeltaInTokens down
-        uint256 customIndexTokenPrice = OrderBaseUtils.getExecutionPrice(
+        cache.customIndexTokenPrice = OrderBaseUtils.getExecutionPrice(
             params.oracle.getCustomPrice(params.market.indexToken),
             params.order.sizeDeltaUsd(),
-            priceImpactUsd,
+            cache.priceImpactUsd,
             params.order.acceptablePrice(),
             position.isLong,
             true
         );
 
-        uint256 sizeDeltaInTokens = params.order.sizeDeltaUsd() / customIndexTokenPrice.max;
-        uint256 nextPositionSizeInUsd = position.sizeInUsd + params.order.sizeDeltaUsd();
-        uint256 nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(params.dataStore, params.market.marketToken, position.isLong);
+        cache.sizeDeltaInTokens = params.order.sizeDeltaUsd() / cache.customIndexTokenPrice;
+        cache.nextPositionSizeInUsd = position.sizeInUsd + params.order.sizeDeltaUsd();
+        cache.nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(params.dataStore, params.market.marketToken, position.isLong);
 
         MarketUtils.updateTotalBorrowing(
             params.dataStore,
@@ -100,14 +108,14 @@ library IncreasePositionUtils {
             position.isLong,
             position.borrowingFactor,
             position.sizeInUsd,
-            nextPositionSizeInUsd,
-            nextPositionBorrowingFactor
+            cache.nextPositionSizeInUsd,
+            cache.nextPositionBorrowingFactor
         );
 
-        position.sizeInUsd = nextPositionSizeInUsd;
-        position.sizeInTokens += sizeDeltaInTokens;
+        position.sizeInUsd = cache.nextPositionSizeInUsd;
+        position.sizeInTokens += cache.sizeDeltaInTokens;
         position.fundingFactor = MarketUtils.getCumulativeFundingFactor(params.dataStore, params.market.marketToken, position.isLong);
-        position.borrowingFactor = nextPositionBorrowingFactor;
+        position.borrowingFactor = cache.nextPositionBorrowingFactor;
         position.increasedAtBlock = block.number;
 
         params.positionStore.set(params.positionKey, params.order.account(), position);
@@ -117,7 +125,7 @@ library IncreasePositionUtils {
                 params.dataStore,
                 params.order.market(),
                 params.order.isLong(),
-                sizeDeltaInTokens.toInt256()
+                cache.sizeDeltaInTokens.toInt256()
             );
             MarketUtils.increaseOpenInterest(
                 params.dataStore,
@@ -144,7 +152,7 @@ library IncreasePositionUtils {
             position.isLong,
             prices.indexTokenPrice,
             params.order.sizeDeltaUsd(),
-            collateralDeltaAmount
+            cache.collateralDeltaAmount
         );
     }
 

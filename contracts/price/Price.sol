@@ -21,6 +21,8 @@ library Price {
     }
 
     function pickPriceForPnl(Props memory props, bool isLong, bool maximize) internal pure returns (uint256) {
+        // for long positions, pick the larger price to maximize pnl
+        // for short positions, pick the smaller price to maximize pnl
         if (isLong) {
             return maximize ? props.max : props.min;
         }

@@ -18,8 +18,6 @@ library PositionPricingUtils {
         address market;
         address longToken;
         address shortToken;
-        uint256 longTokenPrice;
-        uint256 shortTokenPrice;
         int256 usdDelta;
         bool isLong;
     }

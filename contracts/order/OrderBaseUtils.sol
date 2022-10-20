@@ -17,6 +17,7 @@ import "../oracle/Oracle.sol";
 // those libraries need some common functions contained here
 library OrderBaseUtils {
     using Order for Order.Props;
+    using Price for Price.Props;
 
     struct CreateOrderParams {
         address receiver;
@@ -98,7 +99,7 @@ library OrderBaseUtils {
     }
 
     function getExecutionPrice(
-        Price.Props customPrice,
+        Price.Props memory customPrice,
         uint256 sizeDeltaUsd,
         int256 priceImpactUsd,
         uint256 acceptablePrice,
@@ -128,7 +129,7 @@ library OrderBaseUtils {
         uint256 price = customPrice.pickPrice(shouldUseMaxPrice);
 
         // adjust price by price impact
-        price = price * (sizeDeltaUsd + priceImpactUsd) / sizeDeltaUsd;
+        price = price * Calc.sum(sizeDeltaUsd, priceImpactUsd) / sizeDeltaUsd;
 
         if (shouldPriceBeSmaller && price <= acceptablePrice) {
             return price;
@@ -143,7 +144,7 @@ library OrderBaseUtils {
         price = customPrice.pickPrice(!shouldUseMaxPrice);
 
         // adjust price by price impact
-        price = price * (sizeDeltaUsd + priceImpactUsd) / sizeDeltaUsd;
+        price = price * Calc.sum(sizeDeltaUsd, priceImpactUsd) / sizeDeltaUsd;
 
         if (shouldPriceBeSmaller && price <= acceptablePrice) {
             return acceptablePrice;

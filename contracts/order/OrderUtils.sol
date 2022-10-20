@@ -226,7 +226,7 @@ library OrderUtils {
             return;
         }
 
-        bool isIncrease = isIncreaseOrder(orderType);
+        bool isIncrease = OrderBaseUtils.isIncreaseOrder(orderType);
         // increase order:
         //     - long: use the larger price
         //     - short: use the smaller price

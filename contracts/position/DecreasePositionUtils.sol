@@ -40,7 +40,8 @@ library DecreasePositionUtils {
     struct ProcessCollateralValues {
         int256 remainingCollateralAmount;
         int256 outputAmount;
-        int256 realizedPnlAmount;
+        int256 positionPnlUsd;
+        int256 positionPnlAmount;
         uint256 sizeDeltaInTokens;
     }
 
@@ -159,7 +160,7 @@ library DecreasePositionUtils {
             );
         }
 
-        int256 poolDeltaAmount = fees.feesForPool.toInt256() - values.realizedPnlAmount;
+        int256 poolDeltaAmount = fees.feesForPool.toInt256() - values.positionPnlAmount;
         if (poolDeltaAmount > 0) {
             MarketUtils.increasePoolAmount(
                 params.dataStore,
@@ -200,7 +201,7 @@ library DecreasePositionUtils {
             prices.indexTokenPrice,
             params.adjustedSizeDeltaUsd,
             params.order.initialCollateralDeltaAmount().toInt256(),
-            values.realizedPnlAmount,
+            values.positionPnlAmount,
             values.remainingCollateralAmount,
             values.outputAmount
         );
@@ -226,6 +227,27 @@ library DecreasePositionUtils {
         values.outputAmount = collateralDeltaAmount;
 
         Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.order.initialCollateralToken(), params.market, prices);
+
+        int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
+            PositionPricingUtils.GetPriceImpactUsdParams(
+                params.dataStore,
+                params.market.marketToken,
+                params.market.longToken,
+                params.market.shortToken,
+                -params.adjustedSizeDeltaUsd.toInt256(),
+                params.order.isLong()
+            )
+        );
+
+        uint256 customIndexTokenPrice = OrderBaseUtils.getExecutionPrice(
+            params.oracle.getCustomPrice(params.market.indexToken),
+            params.order.sizeDeltaUsd(),
+            priceImpactUsd,
+            params.order.acceptablePrice(),
+            position.isLong,
+            true
+        );
+
         // the outputAmount does not factor in price impact
         // for example, if the market is ETH / USD and if a user uses USDC to long ETH
         // if the position is closed in profit or loss, USDC would be sent out from or added to the pool
@@ -233,31 +255,32 @@ library DecreasePositionUtils {
         // this may unbalance the pool and the user could earn the positive price impact through a subsequent
         // action to rebalance the pool
         // price impact can be factored in if this is not desirable
-        (values.realizedPnlAmount, values.sizeDeltaInTokens) = PositionUtils.getPositionPnlAmount(
+        (values.positionPnlUsd, values.sizeDeltaInTokens) = PositionUtils.getPositionPnlUsd(
             params.position,
             params.adjustedSizeDeltaUsd,
-            prices.indexTokenPrice,
-            collateralTokenPrice,
-            false
+            customIndexTokenPrice
         );
 
-        if (OrderBaseUtils.isLiquidationOrder(params.order.orderType()) && remainingCollateralAmount + values.realizedPnlAmount < 0) {
+        values.positionPnlAmount = values.positionPnlUsd / collateralTokenPrice.max.toInt256();
+
+        if (OrderBaseUtils.isLiquidationOrder(params.order.orderType()) && remainingCollateralAmount + values.positionPnlAmount < 0) {
             PositionPricingUtils.PositionFees memory emptyFees;
             ProcessCollateralValues memory emptyValues = ProcessCollateralValues(
                 0, // remainingCollateralAmount
                 0, // outputAmount
-                -position.collateralAmount.toInt256(), // realizedPnlAmount
+                values.positionPnlUsd, // positionPnlUsd
+                -position.collateralAmount.toInt256(), // positionPnlAmount
                 values.sizeDeltaInTokens
             );
             return (emptyFees, emptyValues);
         }
 
-        if (values.realizedPnlAmount > 0) {
+        if (values.positionPnlAmount > 0) {
             // add realized pnl to outputAmount
-            values.outputAmount += values.realizedPnlAmount;
+            values.outputAmount += values.positionPnlAmount;
         } else {
             // deduct losses from the position's collateral
-            remainingCollateralAmount += values.realizedPnlAmount;
+            remainingCollateralAmount += values.positionPnlAmount;
         }
 
         PositionPricingUtils.PositionFees memory fees = processPositionCosts(params, prices, position, remainingCollateralAmount);
@@ -296,23 +319,6 @@ library DecreasePositionUtils {
     ) internal returns (PositionPricingUtils.PositionFees memory) {
         Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.order.initialCollateralToken(), params.market, prices);
 
-        int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
-            PositionPricingUtils.GetPriceImpactUsdParams(
-                params.dataStore,
-                params.market.marketToken,
-                params.market.longToken,
-                params.market.shortToken,
-                prices.longTokenPrice.midPrice(),
-                prices.shortTokenPrice.midPrice(),
-                -params.adjustedSizeDeltaUsd.toInt256(),
-                params.order.isLong()
-            )
-        );
-
-        if (priceImpactUsd < params.order.acceptablePriceImpactUsd()) {
-            OrderBaseUtils.revertUnacceptablePriceImpactUsd(priceImpactUsd, params.order.acceptablePriceImpactUsd());
-        }
-
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
             params.dataStore,
             position,
@@ -322,12 +328,9 @@ library DecreasePositionUtils {
         );
 
         if (OrderBaseUtils.isLiquidationOrder(params.order.orderType())) {
-            int256 adjustmentAmount = priceImpactUsd / collateralTokenPrice.pickPrice(priceImpactUsd > 0).toInt256();
-            int256 totalNetCostAmount = fees.totalNetCostAmount + adjustmentAmount;
-
             // return empty fees and do not apply price impact since there is
             // insufficient collateral
-            if (remainingCollateralAmount + totalNetCostAmount < 0) {
+            if (remainingCollateralAmount + fees.totalNetCostAmount < 0) {
                 PositionPricingUtils.PositionFees memory emptyFees;
                 return emptyFees;
             }
@@ -340,40 +343,6 @@ library DecreasePositionUtils {
             fees.feeReceiverAmount,
             FeeUtils.POSITION_FEE
         );
-
-        if (priceImpactUsd > 0) {
-            // when there is a positive price impact factor, additional tokens from the swap impact pool
-            // are withdrawn for the user
-            // for example, if 50,000 USDC is withdrawn and there is a positive price impact
-            // an additional 100 USDC may be sent to the user
-            // the swap impact pool is decreased by the used amount
-            uint256 positiveImpactAmount = MarketUtils.applyPositiveImpact(
-                params.dataStore,
-                params.eventEmitter,
-                params.market.marketToken,
-                params.order.initialCollateralToken(),
-                collateralTokenPrice,
-                priceImpactUsd
-            );
-
-            fees.totalNetCostAmount += positiveImpactAmount.toInt256();
-        } else {
-            // when there is a negative price impact factor,
-            // either the output amount of collateral amount will be reduced
-            // for example, if the position has 10 ETH as collateral and there is a negative price impact
-            // only 9.995 ETH may be remaining for collateral
-            // the difference of 0.005 ETH will be stored in the swap impact pool
-            uint256 negativeImpactAmount = MarketUtils.applyNegativeImpact(
-                params.dataStore,
-                params.eventEmitter,
-                params.market.marketToken,
-                params.order.initialCollateralToken(),
-                collateralTokenPrice,
-                priceImpactUsd
-            );
-
-            fees.totalNetCostAmount -= negativeImpactAmount.toInt256();
-        }
 
         return fees;
     }
