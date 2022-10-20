@@ -56,6 +56,9 @@ contract Oracle is RoleModule {
     // the second occurrence will be stored in secondaryPrices
     mapping(address => Price.Props) public primaryPrices;
     mapping(address => Price.Props) public secondaryPrices;
+    // customPrices can be used to store custom price values
+    // these prices will be cleared in clearTempPrices
+    mapping(address => Price.Props) public customPrices;
 
     error EmptyTokens();
     error InvalidBlockNumber(uint256 blockNumber);
@@ -131,8 +134,8 @@ contract Oracle is RoleModule {
         _setPricesFromPriceFeeds(dataStore, eventEmitter, params.priceFeedTokens);
     }
 
-    function setSecondaryPrice(address token, Price.Props memory price) external onlyController {
-        secondaryPrices[token] = price;
+    function setCustomPrice(address token, Price.Props memory price) external onlyController {
+        customPrices[token] = price;
     }
 
     function clearTempPrices() external onlyController {
@@ -141,6 +144,7 @@ contract Oracle is RoleModule {
             address token = tempTokens.at(0);
             delete primaryPrices[token];
             delete secondaryPrices[token];
+            delete customPrices[token];
             tempTokens.remove(token);
         }
     }

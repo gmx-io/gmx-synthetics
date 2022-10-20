@@ -46,7 +46,7 @@ library DecreasePositionUtils {
 
     function decreasePosition(DecreasePositionParams memory params) external returns (uint256, uint256) {
         Position.Props memory position = params.position;
-        MarketUtils.MarketPrices memory prices = MarketUtils.getPricesForPosition(
+        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(
             params.market,
             params.oracle
         );

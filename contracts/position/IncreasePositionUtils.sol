@@ -47,7 +47,7 @@ library IncreasePositionUtils {
         position.collateralToken = params.collateralToken;
         position.isLong = params.order.isLong();
 
-        MarketUtils.MarketPrices memory prices = MarketUtils.getPricesForPosition(
+        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(
             params.market,
             params.oracle
         );

@@ -31,6 +31,7 @@ import "../utils/Array.sol";
 library OrderUtils {
     using Order for Order.Props;
     using Position for Position.Props;
+    using Price for Price.Props;
     using Array for uint256[];
 
     function createOrder(
@@ -218,7 +219,7 @@ library OrderUtils {
         Oracle oracle,
         address indexToken,
         Order.OrderType orderType,
-        uint256 acceptablePrice,
+        uint256 triggerPrice,
         bool isLong
     ) internal {
         if (OrderBaseUtils.isSwapOrder(orderType)) {
@@ -230,7 +231,7 @@ library OrderUtils {
             orderType == Order.OrderType.MarketDecrease ||
             orderType == Order.OrderType.Liquidation) {
             Price.Props memory price = oracle.getPrimaryPrice(indexToken);
-            oracle.setSecondaryPrice(indexToken, price);
+            oracle.setCustomPrice(indexToken, price);
             return;
         }
 
@@ -238,32 +239,48 @@ library OrderUtils {
             orderType == Order.OrderType.LimitDecrease ||
             orderType == Order.OrderType.StopLossDecrease
         ) {
-            uint256 primaryPrice = oracle.getPrimaryPrice(indexToken);
-            uint256 secondaryPrice = oracle.getSecondaryPrice(indexToken);
-
+            bool shouldUseMaxPrice;
             bool shouldValidateAscendingPrice;
+
             if (orderType == Order.OrderType.LimitIncrease) {
+                // for long increase orders, use the max price
+                // for short increase orders, use the min price
+                shouldUseMaxPrice = isLong;
                 // for long increase orders, the oracle prices should be descending
                 // for short increase orders, the oracle prices should be ascending
                 shouldValidateAscendingPrice = !isLong;
             } else {
+                // for long decrease orders, use the min price
+                // for long increase orders, use the max price
+                shouldUseMaxPrice = !isLong;
                 // for long decrease orders, the oracle prices should be ascending
                 // for short decrease orders, the oracle prices should be descending
                 shouldValidateAscendingPrice = isLong;
             }
 
+            uint256 primaryPrice = oracle.getPrimaryPrice(indexToken).pickPrice(shouldUseMaxPrice);
+            uint256 secondaryPrice = oracle.getSecondaryPrice(indexToken).pickPrice(shouldUseMaxPrice);
+
             if (shouldValidateAscendingPrice) {
-                // check that the earlier price (primaryPrice) is smaller than the acceptablePrice
-                // and that the later price (secondaryPrice) is larger than the acceptablePrice
-                bool hasAcceptablePrices = primaryPrice <= acceptablePrice && secondaryPrice >= acceptablePrice;
-                if (!hasAcceptablePrices) { revert(Keys.ORACLE_ERROR); }
-                oracle.setSecondaryPrice(indexToken, acceptablePrice);
+                // check that the earlier price (primaryPrice) is smaller than the triggerPrice
+                // and that the later price (secondaryPrice) is larger than the triggerPrice
+                bool ok = primaryPrice <= triggerPrice && secondaryPrice >= triggerPrice;
+                if (!ok) { revert(Keys.ORACLE_ERROR); }
+
+                oracle.setCustomPrice(indexToken, Price.Props(
+                    triggerPrice, // min price that order can be executed with
+                    secondaryPrice // max price that order can be executed with
+                ));
             } else {
-                // check that the earlier price (primaryPrice) is larger than the acceptablePrice
-                // and that the later price (secondaryPrice) is smaller than the acceptablePrice
-                bool hasAcceptablePrices = primaryPrice >= acceptablePrice && secondaryPrice <= acceptablePrice;
-                if (!hasAcceptablePrices) { revert(Keys.ORACLE_ERROR); }
-                oracle.setSecondaryPrice(indexToken, acceptablePrice);
+                // check that the earlier price (primaryPrice) is larger than the triggerPrice
+                // and that the later price (secondaryPrice) is smaller than the triggerPrice
+                bool ok = primaryPrice >= triggerPrice && secondaryPrice <= triggerPrice;
+                if (!ok) { revert(Keys.ORACLE_ERROR); }
+
+                oracle.setCustomPrice(indexToken, Price.Props(
+                    primaryPrice, // min price that order can be executed with
+                    triggerPrice // max price that order can be executed with
+                ));
             }
 
             return;
