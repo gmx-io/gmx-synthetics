@@ -32,7 +32,6 @@ contract Oracle is RoleModule {
         uint256 oracleBlockNumber;
         bytes32 blockHash;
         address token;
-        uint256 prevMidPrice;
         uint256 priceAndSignatureIndex;
         uint256 maxBlockAge;
     }
@@ -63,7 +62,6 @@ contract Oracle is RoleModule {
     error MaxBlockAgeExceeded(uint256 blockNumber);
     error MinOracleSigners(uint256 oracleSigners, uint256 minOracleSigners);
     error MaxOracleSigners(uint256 oracleSigners, uint256 maxOracleSigners);
-    error PricesNotSorted(uint256 price, uint256 prevPrice);
     error BlockNumbersNotSorted(uint256 oracleBlockNumber, uint256 prevOracleBlockNumber);
     error InvalidSignature(address recoveredSigner, address expectedSigner);
     error MaxSignerIndex(uint256 signerIndex, uint256 maxSignerIndex);
@@ -255,7 +253,6 @@ contract Oracle is RoleModule {
             }
 
             cache.token = params.tokens[i];
-            cache.prevMidPrice = 0;
 
             uint256[] memory minPrices = new uint256[](signers.length);
             uint256[] memory maxPrices = new uint256[](signers.length);
@@ -266,10 +263,6 @@ contract Oracle is RoleModule {
                 uint256 minPrice = OracleUtils.getUncompactedPrice(params.compactedMinPrices, cache.priceAndSignatureIndex);
                 uint256 maxPrice = OracleUtils.getUncompactedPrice(params.compactedMaxPrices, cache.priceAndSignatureIndex);
                 uint256 midPrice = (maxPrice + minPrice) / 2;
-
-                // prices must be in ascending order
-                if (midPrice < cache.prevMidPrice) { revert PricesNotSorted(midPrice, cache.prevMidPrice); }
-                cache.prevMidPrice = midPrice;
 
                 _validateSigner(
                     cache.oracleBlockNumber,
@@ -284,6 +277,9 @@ contract Oracle is RoleModule {
                 minPrices[j] = minPrice;
                 maxPrices[j] = maxPrice;
             }
+
+            minPrices = Array.sort(minPrices);
+            maxPrices = Array.sort(maxPrices);
 
             uint256 medianMinPrice = Array.getMedian(minPrices) * getPrecision(dataStore, cache.token);
             uint256 medianMaxPrice = Array.getMedian(maxPrices) * getPrecision(dataStore, cache.token);
