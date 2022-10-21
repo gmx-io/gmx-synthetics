@@ -15,7 +15,7 @@ contract EventEmitter is RoleModule {
         address indexed market,
         address collateralToken,
         bool isLong,
-        Price.Props price,
+        uint256 executionPrice,
         uint256 sizeDeltaInUsd,
         int256 collateralDeltaAmount
     );
@@ -25,7 +25,7 @@ contract EventEmitter is RoleModule {
         address indexed market,
         address collateralToken,
         bool isLong,
-        Price.Props price,
+        uint256 executionPrice,
         uint256 sizeDeltaInUsd,
         int256 collateralDeltaAmount,
         int256 remainingCollateralAmount,
@@ -195,7 +195,7 @@ contract EventEmitter is RoleModule {
         address market,
         address collateralToken,
         bool isLong,
-        Price.Props memory price,
+        uint256 executionPrice,
         uint256 sizeDeltaUsd,
         int256 collateralDeltaAmount
     ) external onlyController {
@@ -205,7 +205,7 @@ contract EventEmitter is RoleModule {
             market,
             collateralToken,
             isLong,
-            price,
+            executionPrice,
             sizeDeltaUsd,
             collateralDeltaAmount
         );
@@ -217,7 +217,7 @@ contract EventEmitter is RoleModule {
         address market,
         address collateralToken,
         bool isLong,
-        Price.Props memory price,
+        uint256 executionPrice,
         uint256 sizeDeltaUsd,
         int256 collateralDeltaAmount,
         int256 remainingCollateralAmount,
@@ -230,7 +230,7 @@ contract EventEmitter is RoleModule {
             market,
             collateralToken,
             isLong,
-            price,
+            executionPrice,
             sizeDeltaUsd,
             collateralDeltaAmount,
             remainingCollateralAmount,

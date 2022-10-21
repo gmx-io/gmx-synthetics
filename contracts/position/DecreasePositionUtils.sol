@@ -38,6 +38,7 @@ library DecreasePositionUtils {
     }
 
     struct ProcessCollateralValues {
+        uint256 customIndexTokenPrice;
         int256 remainingCollateralAmount;
         int256 outputAmount;
         int256 positionPnlUsd;
@@ -182,14 +183,13 @@ library DecreasePositionUtils {
         require(values.outputAmount >= 0, "DecreasePositionUtils: invalid outputAmount");
 
         params.eventEmitter.emitPositionFeesCollected(false, fees);
-        emitPositionDecrease(params, prices, values);
+        emitPositionDecrease(params, values);
 
         return (values.outputAmount.toUint256(), params.adjustedSizeDeltaUsd);
     }
 
     function emitPositionDecrease(
         DecreasePositionParams memory params,
-        MarketUtils.MarketPrices memory prices,
         ProcessCollateralValues memory values
     ) internal {
         params.eventEmitter.emitPositionDecrease(
@@ -198,7 +198,7 @@ library DecreasePositionUtils {
             params.order.market(),
             params.order.initialCollateralToken(),
             params.order.isLong(),
-            prices.indexTokenPrice,
+            values.customIndexTokenPrice,
             params.adjustedSizeDeltaUsd,
             params.order.initialCollateralDeltaAmount().toInt256(),
             values.positionPnlAmount,
@@ -239,7 +239,7 @@ library DecreasePositionUtils {
             )
         );
 
-        uint256 customIndexTokenPrice = OrderBaseUtils.getExecutionPrice(
+        values.customIndexTokenPrice = OrderBaseUtils.getExecutionPrice(
             params.oracle.getCustomPrice(params.market.indexToken),
             params.order.sizeDeltaUsd(),
             priceImpactUsd,
@@ -258,7 +258,7 @@ library DecreasePositionUtils {
         (values.positionPnlUsd, values.sizeDeltaInTokens) = PositionUtils.getPositionPnlUsd(
             params.position,
             params.adjustedSizeDeltaUsd,
-            customIndexTokenPrice
+            values.customIndexTokenPrice
         );
 
         values.positionPnlAmount = values.positionPnlUsd / collateralTokenPrice.max.toInt256();
@@ -266,6 +266,7 @@ library DecreasePositionUtils {
         if (OrderBaseUtils.isLiquidationOrder(params.order.orderType()) && remainingCollateralAmount + values.positionPnlAmount < 0) {
             PositionPricingUtils.PositionFees memory emptyFees;
             ProcessCollateralValues memory emptyValues = ProcessCollateralValues(
+                values.customIndexTokenPrice, // customIndexTokenPrice
                 0, // remainingCollateralAmount
                 0, // outputAmount
                 values.positionPnlUsd, // positionPnlUsd

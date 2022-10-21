@@ -150,7 +150,7 @@ library IncreasePositionUtils {
             position.market,
             position.collateralToken,
             position.isLong,
-            prices.indexTokenPrice,
+            cache.customIndexTokenPrice,
             params.order.sizeDeltaUsd(),
             cache.collateralDeltaAmount
         );
