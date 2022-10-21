@@ -214,7 +214,17 @@ library OrderUtils {
         eventEmitter.emitOrderFrozen(key, reason);
     }
 
-    // more info on the logic here can be found in Order.sol
+    // for market orders, set the min and max values of the customPrice to either
+    // secondaryPrice.min or secondaryPrice.max depending on whether the order
+    // is an increase or decrease and whether it is for a long or short
+    //
+    // customPrice.min and customPrice.max will be equal in this case
+    //
+    // for limit / stop-loss orders, the min and max value will be set to the triggerPrice
+    // and latest secondaryPrice value, this represents the price that the user desired the order
+    // to be fulfilled at and the best oracle price that the order could be fulfilled at
+    //
+    // OrderBaseUtils.getExecutionPrice handles the logic for selecting the execution price to use
     function setExactOrderPrice(
         Oracle oracle,
         address indexToken,
@@ -270,7 +280,7 @@ library OrderUtils {
             if (shouldValidateAscendingPrice) {
                 // check that the earlier price (primaryPrice) is smaller than the triggerPrice
                 // and that the later price (secondaryPrice) is larger than the triggerPrice
-                bool ok = primaryPrice <= triggerPrice && secondaryPrice >= triggerPrice;
+                bool ok = primaryPrice <= triggerPrice && triggerPrice <= secondaryPrice;
                 if (!ok) { revert(Keys.ORACLE_ERROR); }
 
                 oracle.setCustomPrice(indexToken, Price.Props(
@@ -280,11 +290,11 @@ library OrderUtils {
             } else {
                 // check that the earlier price (primaryPrice) is larger than the triggerPrice
                 // and that the later price (secondaryPrice) is smaller than the triggerPrice
-                bool ok = primaryPrice >= triggerPrice && secondaryPrice <= triggerPrice;
+                bool ok = primaryPrice >= triggerPrice && triggerPrice >= secondaryPrice;
                 if (!ok) { revert(Keys.ORACLE_ERROR); }
 
                 oracle.setCustomPrice(indexToken, Price.Props(
-                    primaryPrice, // min price that order can be executed with
+                    secondaryPrice, // min price that order can be executed with
                     triggerPrice // max price that order can be executed with
                 ));
             }

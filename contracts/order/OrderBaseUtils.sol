@@ -98,6 +98,14 @@ library OrderBaseUtils {
         return orderType == Order.OrderType.Liquidation;
     }
 
+    // see OrderUtils.setExactOrderPrice for information on the customPrice values
+    //
+    // for limit / stop-loss orders, the triggerPrice is returned here if it can
+    // fulfill the acceptablePrice after factoring in price impact
+    //
+    // if the triggerPrice cannot fulfill the acceptablePrice, check if the acceptablePrice
+    // can be fulfilled using the best oracle price after factoring in price impact
+    // if it can be fulfilled, fulfill the order at the acceptablePrice
     function getExecutionPrice(
         Price.Props memory customPrice,
         uint256 sizeDeltaUsd,
