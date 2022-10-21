@@ -294,7 +294,7 @@ library Keys {
     }
 
     // amount of tokens in impact pool
-    function impactPoolAmountKey(address market, address token) internal pure returns (bytes32) {
+    function swapImpactPoolAmountKey(address market, address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             SWAP_IMPACT_POOL_AMOUNT,
             market,

@@ -203,11 +203,11 @@ library MarketUtils {
         eventEmitter.emitPoolAmountDecreased(market, token, amount);
     }
 
-    function getImpactPoolAmount(DataStore dataStore, address market, address token) internal view returns (uint256) {
-        return dataStore.getUint(Keys.impactPoolAmountKey(market, token));
+    function getSwapImpactPoolAmount(DataStore dataStore, address market, address token) internal view returns (uint256) {
+        return dataStore.getUint(Keys.swapImpactPoolAmountKey(market, token));
     }
 
-    function increaseImpactPoolAmount(
+    function increaseSwapImpactPoolAmount(
         DataStore dataStore,
         EventEmitter eventEmitter,
         address market,
@@ -215,14 +215,14 @@ library MarketUtils {
         uint256 amount
     ) internal {
         dataStore.incrementUint(
-            Keys.impactPoolAmountKey(market, token),
+            Keys.swapImpactPoolAmountKey(market, token),
             amount
         );
 
         eventEmitter.emitImpactPoolAmountIncreased(market, token, amount);
     }
 
-    function decreaseImpactPoolAmount(
+    function decreaseSwapImpactPoolAmount(
         DataStore dataStore,
         EventEmitter eventEmitter,
         address market,
@@ -230,7 +230,7 @@ library MarketUtils {
         uint256 amount
     ) internal {
         dataStore.decrementUint(
-            Keys.impactPoolAmountKey(market, token),
+            Keys.swapImpactPoolAmountKey(market, token),
             amount
         );
 
@@ -370,7 +370,7 @@ library MarketUtils {
         }
     }
 
-    function applyNegativeImpact(
+    function applyNegativeSwapImpact(
         DataStore dataStore,
         EventEmitter eventEmitter,
         address market,
@@ -379,12 +379,12 @@ library MarketUtils {
         int256 priceImpactUsd
     ) internal returns (uint256) {
         uint256 impactAmount = SafeCast.toUint256(-priceImpactUsd) / tokenPrice.min;
-        increaseImpactPoolAmount(dataStore, eventEmitter, market, token, impactAmount);
+        increaseSwapImpactPoolAmount(dataStore, eventEmitter, market, token, impactAmount);
 
         return impactAmount;
     }
 
-    function applyPositiveImpact(
+    function applyPositiveSwapImpact(
         DataStore dataStore,
         EventEmitter eventEmitter,
         address market,
@@ -393,13 +393,13 @@ library MarketUtils {
         int256 priceImpactUsd
     ) internal returns (uint256) {
         uint256 impactAmount = SafeCast.toUint256(priceImpactUsd) / tokenPrice.max;
-        uint256 maxImpactAmount = getImpactPoolAmount(dataStore, market, token);
+        uint256 maxImpactAmount = getSwapImpactPoolAmount(dataStore, market, token);
 
         if (impactAmount > maxImpactAmount) {
             impactAmount = maxImpactAmount;
         }
 
-        decreaseImpactPoolAmount(dataStore, eventEmitter, market, token, impactAmount);
+        decreaseSwapImpactPoolAmount(dataStore, eventEmitter, market, token, impactAmount);
 
         return impactAmount;
     }

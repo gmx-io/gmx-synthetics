@@ -41,7 +41,8 @@ library IncreasePositionUtils {
     struct _IncreasePositionCache {
         int256 collateralDeltaAmount;
         int256 priceImpactUsd;
-        uint256 customIndexTokenPrice;
+        uint256 executionPrice;
+        int256 priceImpactAmount;
         uint256 sizeDeltaInTokens;
         uint256 nextPositionSizeInUsd;
         uint256 nextPositionBorrowingFactor;
@@ -88,8 +89,10 @@ library IncreasePositionUtils {
             )
         );
 
+        // cap price impact usd
+
         // round sizeDeltaInTokens down
-        cache.customIndexTokenPrice = OrderBaseUtils.getExecutionPrice(
+        cache.executionPrice = OrderBaseUtils.getExecutionPrice(
             params.oracle.getCustomPrice(params.market.indexToken),
             params.order.sizeDeltaUsd(),
             cache.priceImpactUsd,
@@ -98,7 +101,15 @@ library IncreasePositionUtils {
             true
         );
 
-        cache.sizeDeltaInTokens = params.order.sizeDeltaUsd() / cache.customIndexTokenPrice;
+        cache.priceImpactAmount = PositionPricingUtils.getPriceImpactAmount(
+            params.order.sizeDeltaUsd(),
+            cache.executionPrice,
+            prices.indexTokenPrice.max,
+            position.isLong,
+            true
+        );
+
+        cache.sizeDeltaInTokens = params.order.sizeDeltaUsd() / cache.executionPrice;
         cache.nextPositionSizeInUsd = position.sizeInUsd + params.order.sizeDeltaUsd();
         cache.nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(params.dataStore, params.market.marketToken, position.isLong);
 
@@ -150,7 +161,7 @@ library IncreasePositionUtils {
             position.market,
             position.collateralToken,
             position.isLong,
-            cache.customIndexTokenPrice,
+            cache.executionPrice,
             params.order.sizeDeltaUsd(),
             cache.collateralDeltaAmount
         );

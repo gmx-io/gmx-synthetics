@@ -40,7 +40,31 @@ library PositionPricingUtils {
         int256 totalNetCostAmount;
     }
 
-    // returns (priceImpactUsd)
+    function getPriceImpactAmount(
+        uint256 size,
+        uint256 executionPrice,
+        uint256 latestPrice,
+        bool isLong,
+        bool isIncrease
+    ) internal pure returns (int256) {
+        // increase order:
+        //     - long: price impact is size * (latestPrice - executionPrice) / latestPrice
+        //             when executionPrice is smaller than latestPrice there is a positive price impact
+        //     - short: price impact is size * (executionPrice - latestPrice) / latestPrice
+        //              when executionPrice is larger than latestPrice there is a positive price impact
+        // decrease order:
+        //     - long: price impact is size * (executionPrice - latestPrice) / latestPrice
+        //             when executionPrice is larger than latestPrice there is a positive price impact
+        //     - short: price impact is size * (latestPrice - executionPrice) / latestPrice
+        //              when executionPrice is smaller than latestPrice there is a positive price impact
+        int256 priceDiff = latestPrice.toInt256() - executionPrice.toInt256();
+        bool shouldFlipPriceDiff = isIncrease ? !isLong : isLong;
+        if (shouldFlipPriceDiff) { priceDiff = -priceDiff; }
+
+        int256 priceImpactUsd = size.toInt256() * priceDiff / latestPrice.toInt256();
+        return priceImpactUsd / latestPrice.toInt256();
+    }
+
     function getPriceImpactUsd(GetPriceImpactUsdParams memory params) internal view returns (int256) {
         OpenInterestParams memory openInterestParams = getNextOpenInterest(params);
 

@@ -42,8 +42,8 @@ contract Reader {
         return MarketUtils.getPoolAmount(dataStore, market, token);
     }
 
-    function getImpactPoolAmount(DataStore dataStore, address market, address token) external view returns (uint256) {
-        return MarketUtils.getImpactPoolAmount(dataStore, market, token);
+    function getSwapImpactPoolAmount(DataStore dataStore, address market, address token) external view returns (uint256) {
+        return MarketUtils.getSwapImpactPoolAmount(dataStore, market, token);
     }
 
     function getMarketTokenPrice(

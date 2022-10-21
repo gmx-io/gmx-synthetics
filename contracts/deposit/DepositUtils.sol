@@ -308,7 +308,7 @@ library DepositUtils {
             // was added to the pool
             // since impactAmount of tokenOut is added to the pool here, the calculation of
             // the tokenInPrice would not be entirely accurate
-            uint256 positiveImpactAmount = MarketUtils.applyPositiveImpact(
+            uint256 positiveImpactAmount = MarketUtils.applyPositiveSwapImpact(
                 params.dataStore,
                 params.eventEmitter,
                 _params.market.marketToken,
@@ -339,7 +339,7 @@ library DepositUtils {
             // for example, if 10 ETH is deposited and there is a negative price impact
             // only 9.995 ETH may be used to mint market tokens
             // the remaining 0.005 ETH will be stored in the swap impact pool
-            uint256 negativeImpactAmount = MarketUtils.applyNegativeImpact(
+            uint256 negativeImpactAmount = MarketUtils.applyNegativeSwapImpact(
                 params.dataStore,
                 params.eventEmitter,
                 _params.market.marketToken,

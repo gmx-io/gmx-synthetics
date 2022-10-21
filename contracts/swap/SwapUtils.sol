@@ -121,7 +121,7 @@ library SwapUtils {
             // for example, if 50,000 USDC is swapped out and there is a positive price impact
             // an additional 100 USDC may be sent to the user
             // the swap impact pool is decreased by the used amount
-            uint256 positiveImpactAmount = MarketUtils.applyPositiveImpact(
+            uint256 positiveImpactAmount = MarketUtils.applyPositiveSwapImpact(
                 params.dataStore,
                 params.eventEmitter,
                 _params.market.marketToken,
@@ -137,7 +137,7 @@ library SwapUtils {
             // for example, if 10 ETH is swapped in and there is a negative price impact
             // only 9.995 ETH may be swapped in
             // the remaining 0.005 ETH will be stored in the swap impact pool
-            uint256 negativeImpactAmount = MarketUtils.applyNegativeImpact(
+            uint256 negativeImpactAmount = MarketUtils.applyNegativeSwapImpact(
                 params.dataStore,
                 params.eventEmitter,
                 _params.market.marketToken,

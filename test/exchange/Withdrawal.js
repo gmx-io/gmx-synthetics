@@ -195,7 +195,7 @@ describe("Exchange.Withdrawal", () => {
     expect(await reader.getPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(0);
     expect(await reader.getPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq(0);
 
-    expect(await reader.getImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
+    expect(await reader.getSwapImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
       "4998750000000" // 0.00000499875 ETH, 0.02499375 USD
     );
   });
@@ -284,7 +284,7 @@ describe("Exchange.Withdrawal", () => {
     ); // 0.005498550650650652, 27.5 USD
     expect(await reader.getPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq(0);
 
-    expect(await reader.getImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
+    expect(await reader.getSwapImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
       "4998950200250" // 0.000004998950200251, ~0.025 USD
     );
   });
@@ -358,7 +358,7 @@ describe("Exchange.Withdrawal", () => {
     ); // 0.005497900390429474
     expect(await reader.getPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq(0);
 
-    expect(await reader.getImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
+    expect(await reader.getSwapImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
       "4998800060084" // 0.000004998800060084 ETH, ~0.025 USD
     );
   });

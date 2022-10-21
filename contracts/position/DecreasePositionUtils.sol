@@ -38,7 +38,7 @@ library DecreasePositionUtils {
     }
 
     struct ProcessCollateralValues {
-        uint256 customIndexTokenPrice;
+        uint256 executionPrice;
         int256 remainingCollateralAmount;
         int256 outputAmount;
         int256 positionPnlUsd;
@@ -198,7 +198,7 @@ library DecreasePositionUtils {
             params.order.market(),
             params.order.initialCollateralToken(),
             params.order.isLong(),
-            values.customIndexTokenPrice,
+            values.executionPrice,
             params.adjustedSizeDeltaUsd,
             params.order.initialCollateralDeltaAmount().toInt256(),
             values.positionPnlAmount,
@@ -239,7 +239,7 @@ library DecreasePositionUtils {
             )
         );
 
-        values.customIndexTokenPrice = OrderBaseUtils.getExecutionPrice(
+        values.executionPrice = OrderBaseUtils.getExecutionPrice(
             params.oracle.getCustomPrice(params.market.indexToken),
             params.order.sizeDeltaUsd(),
             priceImpactUsd,
@@ -258,7 +258,7 @@ library DecreasePositionUtils {
         (values.positionPnlUsd, values.sizeDeltaInTokens) = PositionUtils.getPositionPnlUsd(
             params.position,
             params.adjustedSizeDeltaUsd,
-            values.customIndexTokenPrice
+            values.executionPrice
         );
 
         values.positionPnlAmount = values.positionPnlUsd / collateralTokenPrice.max.toInt256();
@@ -266,7 +266,7 @@ library DecreasePositionUtils {
         if (OrderBaseUtils.isLiquidationOrder(params.order.orderType()) && remainingCollateralAmount + values.positionPnlAmount < 0) {
             PositionPricingUtils.PositionFees memory emptyFees;
             ProcessCollateralValues memory emptyValues = ProcessCollateralValues(
-                values.customIndexTokenPrice, // customIndexTokenPrice
+                values.executionPrice, // executionPrice
                 0, // remainingCollateralAmount
                 0, // outputAmount
                 values.positionPnlUsd, // positionPnlUsd
