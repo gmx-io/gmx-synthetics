@@ -2,7 +2,11 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+
 library Array {
+    using SafeCast for int256;
+
     function get(bytes32[] memory arr, uint256 index) internal pure returns (bytes32) {
         if (index < arr.length) {
             return arr[index];
@@ -66,14 +70,14 @@ library Array {
     }
 
     function sort(uint256[] memory arr) internal pure {
-       quickSort(arr, 0, arr.length - 1);
+       quickSort(arr, int256(0), int256(arr.length - 1));
     }
 
     // adapted from https://www.guru99.com/quicksort-in-javascript.html
-    function quickSort(uint256[] memory arr, uint256 left, uint256 right) internal pure {
+    function quickSort(uint256[] memory arr, int256 left, int256 right) internal pure {
         if (arr.length <= 1) { return; }
 
-        uint256 index = partition(arr, left, right);
+        int256 index = partition(arr, left, right);
 
         if (left < index - 1) {
             quickSort(arr, left, index - 1);
@@ -84,22 +88,22 @@ library Array {
         }
     }
 
-    function partition(uint256[] memory arr, uint256 left, uint256 right) internal pure returns (uint256) {
-        uint256 pivot = arr[(left + right) / 2];
-        uint256 i = left;
-        uint256 j = right;
+    function partition(uint256[] memory arr, int256 left, int256 right) internal pure returns (int256) {
+        uint256 pivot = arr[((left + right) / 2).toUint256()];
+        int256 i = left;
+        int256 j = right;
 
         while (i <= j) {
-            while (arr[i] < pivot) {
+            while (arr[i.toUint256()] < pivot) {
                 i++;
             }
 
-            while (arr[j] > pivot) {
+            while (arr[j.toUint256()] > pivot) {
                 j--;
             }
 
             if (i <= j) {
-                (arr[i], arr[j]) = (arr[j], arr[i]);
+                (arr[i.toUint256()], arr[j.toUint256()]) = (arr[j.toUint256()], arr[i.toUint256()]);
                 i++;
                 j--;
             }
