@@ -1,10 +1,10 @@
-const { bigNumberify, MAX_UINT8, MAX_UINT32, MAX_UINT64 } = require("./math");
+const { bigNumberify, MAX_UINT8, MAX_UINT64 } = require("./math");
 const { hashData } = require("./hash");
 
 const BN = require("bn.js");
 
 async function signPrice(signer, salt, oracleBlockNumber, blockHash, token, price) {
-  if (bigNumberify(price).gt(MAX_UINT32)) {
+  if (bigNumberify(price).gt(MAX_UINT64)) {
     throw new Error(`Max price exceeded: ${price.toString()}`);
   }
 
@@ -78,8 +78,8 @@ function getCompactedValues({ values, compactedValueBitLength, maxValue }) {
 function getCompactedPrices(prices) {
   return getCompactedValues({
     values: prices,
-    compactedValueBitLength: 32,
-    maxValue: MAX_UINT32,
+    compactedValueBitLength: 64,
+    maxValue: MAX_UINT64,
   });
 }
 

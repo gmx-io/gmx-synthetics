@@ -222,7 +222,7 @@ contract Oracle is RoleModule {
     // to represent the price with 30 decimals, store the price as
     // 5000 / (10 ** 18) * (10 ** 30) => 5 ** (10 ** 15) => 5000 * (10 ** 12)
     // oracle precision for ETH can be set to (10 ** 8) to allow for prices with
-    // a maximum value of (2 ** 32) / (10 ** 4) => 4,294,967,296 / (10 ** 4) => 429,496
+    // a maximum value of (2 ** 64) / (10 ** 4) => 1.8446744e+19 / (10 ** 4) => 1.8446744e+15
     // and up to 4 decimals of precision
     //
     // example 2, the price of BTC is 60,000, and BTC has 8 decimals
@@ -230,7 +230,7 @@ contract Oracle is RoleModule {
     // to represent the price with 30 decimals, store the price as
     // 60,000 / (10 ** 8) * (10 ** 30) => 6 * (10 ** 26) => 60,000 * (10 ** 22)
     // oracle precision for BTC can be set to (10 ** 20) to allow for prices with
-    // a maximum value of (2 ** 32) / (10 ** 2) => 4,294,967,296 / (10 ** 2) => 42,949,672
+    // a maximum value of (2 ** 64) / (10 ** 2) => 1.8446744e+19 / (10 ** 2) => 1.8446744e+17
     // and up to 2 decimals of precision
     //
     // example 3, the price of USDC is 1, and USDC has 6 decimals
@@ -238,7 +238,7 @@ contract Oracle is RoleModule {
     // to represent the price with 30 decimals, store the price as
     // 1 / (10 ** 6) * (10 ** 30) => 1 ** (10 ** 24)
     // oracle precision for USDC can be set to (10 ** 18) to allow for prices with
-    // a maximum value of (2 ** 32) / (10 ** 6) => 4,294,967,296 / (10 ** 6) => 4294
+    // a maximum value of (2 ** 64) / (10 ** 6) => 1.8446744e+19 / (10 ** 6) => 1.8446744e+13
     // and up to 6 decimals of precision
     //
     // example 4, the price of DG is 0.00000001, and DG has 18 decimals
@@ -246,7 +246,7 @@ contract Oracle is RoleModule {
     // to represent the price with 30 decimals, store the price as
     // 1 * (10 ** -26) * (10 ** 30) => 10,000 => 1 * (10 ** 3)
     // oracle precision for DG can be set to (10 ** 1) to allow for prices with
-    // a maximum value of (2 ** 32) / (10 ** 1) => 4,294,967,296 / (10 ** 1) => 429,496,729.6
+    // a maximum value of (2 ** 64) / (10 ** 11) => 1.8446744e+19 / (10 ** 11) => 1.8446744e+8
     // and up to 11 decimals of precision
     //
     // formula to calculate what the precision value should be set to:
