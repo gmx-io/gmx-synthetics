@@ -32,6 +32,7 @@ contract Oracle is RoleModule {
         uint256 oracleBlockNumber;
         bytes32 blockHash;
         address token;
+        bytes32 tokenOracleType;
         uint256 signatureIndex;
         uint256 maxBlockAge;
         uint256[] minPrices;
@@ -279,6 +280,7 @@ contract Oracle is RoleModule {
             }
 
             cache.token = params.tokens[i];
+            cache.tokenOracleType = dataStore.getData(Keys.oracleTypeKey(cache.token));
 
             cache.minPrices = new uint256[](signers.length);
             cache.maxPrices = new uint256[](signers.length);
@@ -309,6 +311,7 @@ contract Oracle is RoleModule {
                     cache.oracleBlockNumber,
                     cache.blockHash,
                     cache.token,
+                    cache.tokenOracleType,
                     cache.minPrices[minPriceIndex],
                     cache.maxPrices[maxPriceIndex],
                     params.signatures[cache.signatureIndex],
@@ -390,13 +393,22 @@ contract Oracle is RoleModule {
         uint256 oracleBlockNumber,
         bytes32 blockHash,
         address token,
+        bytes32 tokenOracleType,
         uint256 minPrice,
         uint256 maxPrice,
         bytes memory signature,
         address expectedSigner
     ) internal view {
         bytes32 digest = ECDSA.toEthSignedMessageHash(
-            keccak256(abi.encode(SALT, oracleBlockNumber, blockHash, token, minPrice, maxPrice))
+            keccak256(abi.encode(
+                SALT,
+                oracleBlockNumber,
+                blockHash,
+                token,
+                tokenOracleType,
+                minPrice,
+                maxPrice
+            ))
         );
 
         address recoveredSigner = ECDSA.recover(digest, signature);

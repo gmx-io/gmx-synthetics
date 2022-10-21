@@ -58,6 +58,7 @@ library Keys {
     string public constant SWAP_SPREAD_FACTOR = "SWAP_SPREAD_FACTOR";
     string public constant SWAP_FEE_FACTOR = "SWAP_FEE_FACTOR";
     string public constant ORACLE_PRECISION = "ORACLE_PRECISION";
+    string public constant ORACLE_TYPE = "ORACLE_TYPE";
     string public constant OPEN_INTEREST = "OPEN_INTEREST";
     string public constant OPEN_INTEREST_IN_TOKENS = "OPEN_INTEREST_IN_TOKENS";
     string public constant COLLATERAL_SUM = "COLLATERAL_SUM";
@@ -90,7 +91,6 @@ library Keys {
             singleToken
         ));
     }
-
 
     function withdrawalGasLimitKey(bool singleToken) internal pure returns (bytes32) {
         return keccak256(abi.encode(
@@ -245,6 +245,13 @@ library Keys {
     function oraclePrecisionKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             ORACLE_PRECISION,
+            token
+        ));
+    }
+
+    function oracleTypeKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            ORACLE_TYPE,
             token
         ));
     }
