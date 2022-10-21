@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.0;
 
+import "../utils/Array.sol";
 import "../utils/Bits.sol";
 
 library OracleUtils {
@@ -10,34 +11,51 @@ library OracleUtils {
         address[] tokens;
         uint256[] compactedOracleBlockNumbers;
         uint256[] compactedMinPrices;
+        uint256[] compactedMinPricesIndexes;
         uint256[] compactedMaxPrices;
+        uint256[] compactedMaxPricesIndexes;
         bytes[] signatures;
         address[] priceFeedTokens;
     }
 
     // compacted prices have a length of 32 bits
-    uint256 public constant COMPACTED_PRICE_LENGTH = 32;
+    uint256 public constant COMPACTED_PRICE_BIT_LENGTH = 32;
     uint256 public constant COMPACTED_PRICE_BITMASK = Bits.BITMASK_32;
-    // one uint256 can store 8 prices
-    uint256 public constant COMPACTED_PRICES_PER_SLOT = 256 / COMPACTED_PRICE_LENGTH;
+
     // compacted block numbers have a length of 64 bits
-    uint256 public constant COMPACTED_BLOCK_NUMBER_LENGTH = 64;
+    uint256 public constant COMPACTED_BLOCK_NUMBER_BIT_LENGTH = 64;
     uint256 public constant COMPACTED_BLOCK_NUMBER_BITMASK = Bits.BITMASK_64;
-    // one uint256 can store 4 block numbers
-    uint256 public constant COMPACTED_BLOCK_NUMBERS_PER_SLOT = 256 / COMPACTED_BLOCK_NUMBER_LENGTH;
+
+    // compacted price indexes have a length of 8 bits
+    uint256 public constant COMPACTED_PRICE_INDEX_BIT_LENGTH = 8;
+    uint256 public constant COMPACTED_PRICE_INDEX_BITMASK = Bits.BITMASK_8;
 
     error EmptyPrice();
     error EmptyBlockNumber();
 
     function getUncompactedPrice(uint256[] memory compactedPrices, uint256 index) internal pure returns (uint256) {
-        uint256 slotIndex = index / COMPACTED_PRICES_PER_SLOT;
-        uint256 priceBits = compactedPrices[slotIndex];
-        uint256 offset = (index - slotIndex * COMPACTED_PRICES_PER_SLOT) * COMPACTED_PRICE_LENGTH;
+        uint256 price = Array.getUncompactedValue(
+            compactedPrices,
+            index,
+            COMPACTED_PRICE_BIT_LENGTH,
+            COMPACTED_PRICE_BITMASK
+        );
 
-        uint256 price = (priceBits >> offset) & COMPACTED_PRICE_BITMASK;
         if (price == 0) { revert EmptyPrice(); }
 
         return price;
+    }
+
+    function getUncompactedPriceIndex(uint256[] memory compactedPriceIndexes, uint256 index) internal pure returns (uint256) {
+        uint256 priceIndex = Array.getUncompactedValue(
+            compactedPriceIndexes,
+            index,
+            COMPACTED_PRICE_INDEX_BIT_LENGTH,
+            COMPACTED_PRICE_INDEX_BITMASK
+        );
+
+        return priceIndex;
+
     }
 
     function getUncompactedOracleBlockNumbers(uint256[] memory compactedOracleBlockNumbers, uint256 length) internal pure returns (uint256[] memory) {
@@ -51,11 +69,13 @@ library OracleUtils {
     }
 
     function getUncompactedOracleBlockNumber(uint256[] memory compactedOracleBlockNumbers, uint256 index) internal pure returns (uint256) {
-        uint256 slotIndex = index / COMPACTED_BLOCK_NUMBERS_PER_SLOT;
-        uint256 blockNumberBits = compactedOracleBlockNumbers[slotIndex];
-        uint256 offset = (index - slotIndex * COMPACTED_BLOCK_NUMBERS_PER_SLOT) * COMPACTED_BLOCK_NUMBER_LENGTH;
+        uint256 blockNumber = Array.getUncompactedValue(
+            compactedOracleBlockNumbers,
+            index,
+            COMPACTED_BLOCK_NUMBER_BIT_LENGTH,
+            COMPACTED_BLOCK_NUMBER_BITMASK
+        );
 
-        uint256 blockNumber = (blockNumberBits >> offset) & COMPACTED_BLOCK_NUMBER_BITMASK;
         if (blockNumber == 0) { revert EmptyBlockNumber(); }
 
         return blockNumber;

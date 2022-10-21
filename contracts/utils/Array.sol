@@ -69,6 +69,23 @@ library Array {
         return (arr[arr.length / 2] + arr[arr.length / 2 - 1]) / 2;
     }
 
+    function getUncompactedValue(
+        uint256[] memory compactedValues,
+        uint256 index,
+        uint256 compactedValueBitLength,
+        uint256 bitmask
+    ) internal pure returns (uint256) {
+        uint256 compactedValuesPerSlot = 256 / compactedValueBitLength;
+
+        uint256 slotIndex = index / compactedValuesPerSlot;
+        uint256 slotBits = compactedValues[slotIndex];
+        uint256 offset = (index - slotIndex * compactedValuesPerSlot) * compactedValueBitLength;
+
+        uint256 value = (slotBits >> offset) & bitmask;
+
+        return value;
+    }
+
     function sort(uint256[] memory arr) internal pure {
        quickSort(arr, int256(0), int256(arr.length - 1));
     }
@@ -77,18 +94,6 @@ library Array {
     function quickSort(uint256[] memory arr, int256 left, int256 right) internal pure {
         if (arr.length <= 1) { return; }
 
-        int256 index = partition(arr, left, right);
-
-        if (left < index - 1) {
-            quickSort(arr, left, index - 1);
-        }
-
-        if (index < right) {
-            quickSort(arr, index, right);
-        }
-    }
-
-    function partition(uint256[] memory arr, int256 left, int256 right) internal pure returns (int256) {
         uint256 pivot = arr[((left + right) / 2).toUint256()];
         int256 i = left;
         int256 j = right;
@@ -109,6 +114,12 @@ library Array {
             }
         }
 
-        return i;
+        if (left < i - 1) {
+            quickSort(arr, left, i - 1);
+        }
+
+        if (i < right) {
+            quickSort(arr, i, right);
+        }
     }
 }

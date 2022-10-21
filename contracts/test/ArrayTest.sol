@@ -20,6 +20,7 @@ contract ArrayTest {
     function sortGasUsage(uint256[] memory arr) external view {
         uint256 startingGas = gasleft();
         Array.sort(arr);
-        console.log("ArrayTest.sortGasUsage", arr.length, startingGas - gasleft());
+        uint256 gasUsed = startingGas - gasleft();
+        console.log("ArrayTest.sortGasUsage", arr.length, gasUsed);
     }
 }
