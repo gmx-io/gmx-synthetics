@@ -289,11 +289,13 @@ contract Oracle is RoleModule {
 
                 if (j == 0) { continue; }
 
-                if (cache.minPrices[j] < cache.minPrices[j - 1]) {
+                // validate that minPrices are sorted in ascending order
+                if (cache.minPrices[j - 1] > cache.minPrices[j]) {
                     revert MinPricesNotSorted(cache.token, cache.minPrices[j], cache.minPrices[j - 1]);
                 }
 
-                if (cache.maxPrices[j] < cache.maxPrices[j - 1]) {
+                // validate that maxPrices are sorted in ascending order
+                if (cache.maxPrices[j - 1] > cache.maxPrices[j]) {
                     revert MaxPricesNotSorted(cache.token, cache.maxPrices[j], cache.maxPrices[j - 1]);
                 }
             }

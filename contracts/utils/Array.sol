@@ -85,41 +85,4 @@ library Array {
 
         return value;
     }
-
-    function sort(uint256[] memory arr) internal pure {
-       quickSort(arr, int256(0), int256(arr.length - 1));
-    }
-
-    // adapted from https://www.guru99.com/quicksort-in-javascript.html
-    function quickSort(uint256[] memory arr, int256 left, int256 right) internal pure {
-        if (arr.length <= 1) { return; }
-
-        uint256 pivot = arr[((left + right) / 2).toUint256()];
-        int256 i = left;
-        int256 j = right;
-
-        while (i <= j) {
-            while (arr[i.toUint256()] < pivot) {
-                i++;
-            }
-
-            while (arr[j.toUint256()] > pivot) {
-                j--;
-            }
-
-            if (i <= j) {
-                (arr[i.toUint256()], arr[j.toUint256()]) = (arr[j.toUint256()], arr[i.toUint256()]);
-                i++;
-                j--;
-            }
-        }
-
-        if (left < i - 1) {
-            quickSort(arr, left, i - 1);
-        }
-
-        if (i < right) {
-            quickSort(arr, i, right);
-        }
-    }
 }
