@@ -166,137 +166,84 @@ library MarketUtils {
         return dataStore.getUint(Keys.poolAmountKey(market, token));
     }
 
-    function increasePoolAmount(
+    function applyDeltaToPoolAmount(
         DataStore dataStore,
         EventEmitter eventEmitter,
         address market,
         address token,
-        uint256 amount
+        int256 amount
     ) internal {
-        dataStore.incrementUint(
+        dataStore.applyDeltaToUint(
             Keys.poolAmountKey(market, token),
             amount
         );
 
-        eventEmitter.emitPoolAmountIncreased(market, token, amount);
+        eventEmitter.emitPoolAmountDelta(market, token, amount);
     }
 
-    function decreasePoolAmount(
-        DataStore dataStore,
-        EventEmitter eventEmitter,
-        address market,
-        address token,
-        uint256 amount
-    ) internal {
-        bytes32 key = Keys.poolAmountKey(market, token);
-        uint256 poolAmount = dataStore.getUint(key);
-
-        if (poolAmount < amount) {
-            revert InsufficientPoolAmount(poolAmount, amount);
-        }
-
-        dataStore.setUint(
-            key,
-            poolAmount - amount
-        );
-
-        eventEmitter.emitPoolAmountDecreased(market, token, amount);
-    }
 
     function getSwapImpactPoolAmount(DataStore dataStore, address market, address token) internal view returns (uint256) {
         return dataStore.getUint(Keys.swapImpactPoolAmountKey(market, token));
     }
 
-    function increaseSwapImpactPoolAmount(
+    function applyDeltaToSwapImpactPool(
         DataStore dataStore,
         EventEmitter eventEmitter,
         address market,
         address token,
-        uint256 amount
+        int256 amount
     ) internal {
-        dataStore.incrementUint(
+        dataStore.applyDeltaToUint(
             Keys.swapImpactPoolAmountKey(market, token),
             amount
         );
 
-        eventEmitter.emitImpactPoolAmountIncreased(market, token, amount);
+        eventEmitter.emitSwapImpactPoolAmountDelta(market, token, amount);
     }
 
-    function decreaseSwapImpactPoolAmount(
+    function applyDeltaToPositionImpactPool(
         DataStore dataStore,
         EventEmitter eventEmitter,
         address market,
-        address token,
-        uint256 amount
+        int256 amount
     ) internal {
-        dataStore.decrementUint(
-            Keys.swapImpactPoolAmountKey(market, token),
+        dataStore.applyDeltaToUint(
+            Keys.positionImpactPoolAmountKey(market),
             amount
         );
 
-        eventEmitter.emitImpactPoolAmountDecreased(market, token, amount);
+        eventEmitter.emitPositionImpactPoolAmountDelta(market, amount);
     }
 
-    function increaseOpenInterest(
+    function applyDeltaToOpenInterest(
         DataStore dataStore,
         EventEmitter eventEmitter,
         address market,
         bool isLong,
-        uint256 sizeDeltaUsd
+        int256 sizeDeltaUsd
     ) internal {
-        dataStore.incrementUint(
+        dataStore.applyDeltaToUint(
             Keys.openInterestKey(market, isLong),
             sizeDeltaUsd
         );
 
-        eventEmitter.emitOpenInterestIncreased(market, isLong, sizeDeltaUsd);
+        eventEmitter.emitOpenInterestDelta(market, isLong, sizeDeltaUsd);
     }
 
-    function decreaseOpenInterest(
-        DataStore dataStore,
-        EventEmitter eventEmitter,
-        address market,
-        bool isLong,
-        uint256 sizeDeltaUsd
-    ) internal {
-        dataStore.decrementUint(
-            Keys.openInterestKey(market, isLong),
-            sizeDeltaUsd
-        );
-
-        eventEmitter.emitOpenInterestDecreased(market, isLong, sizeDeltaUsd);
-    }
-
-    function increaseCollateralSum(
+    function applyDeltaToCollateralSum(
         DataStore dataStore,
         EventEmitter eventEmitter,
         address market,
         address collateralToken,
         bool isLong,
-        uint256 collateralDeltaAmount
+        int256 collateralDeltaAmount
     ) internal {
-        dataStore.incrementUint(
+        dataStore.applyDeltaToUint(
             Keys.collateralSumKey(market, collateralToken, isLong),
             collateralDeltaAmount
         );
 
-        eventEmitter.emitCollateralSumIncreased(market, collateralToken, isLong, collateralDeltaAmount);
-    }
-
-    function decreaseCollateralSum(
-        DataStore dataStore,
-        EventEmitter eventEmitter,
-        address market,
-        address collateralToken,
-        bool isLong,
-        uint256 collateralDeltaAmount
-    ) internal {
-        dataStore.decrementUint(
-            Keys.collateralSumKey(market, collateralToken, isLong),
-            collateralDeltaAmount
-        );
-
-        eventEmitter.emitCollateralSumDecreased(market, collateralToken, isLong, collateralDeltaAmount);
+        eventEmitter.emitCollateralSumDelta(market, collateralToken, isLong, collateralDeltaAmount);
     }
 
     // in case of late liquidations, there may be insufficient collateral to pay for funding fees
@@ -323,7 +270,7 @@ library MarketUtils {
         dataStore.setUint(Keys.cumulativeBorrowingFactorUpdatedAtKey(market.marketToken, isLong), block.timestamp);
     }
 
-    function updateOpenInterestInTokens(
+    function applyDeltaToOpenInterestInTokens(
         DataStore dataStore,
         address market,
         bool isLong,
@@ -370,75 +317,33 @@ library MarketUtils {
         }
     }
 
-    function applyNegativeSwapImpact(
+    function applySwapImpactWithCap(
         DataStore dataStore,
         EventEmitter eventEmitter,
         address market,
         address token,
         Price.Props memory tokenPrice,
         int256 priceImpactUsd
-    ) internal returns (uint256) {
-        uint256 impactAmount = getNegativeSwapImpactAmount(tokenPrice, priceImpactUsd);
+    ) internal returns (int256) {
+        // positive impact: minimize impactAmount, use tokenPrice.max
+        // negative impact: maximize impactAmount, use tokenPrice.min
+        uint256 price = priceImpactUsd > 0 ? tokenPrice.max : tokenPrice.min;
+        int256 impactAmount = priceImpactUsd / price.toInt256();
 
-        increaseSwapImpactPoolAmount(
-            dataStore,
-            eventEmitter,
-            market,
-            token,
-            impactAmount
-        );
-
-        return impactAmount;
-    }
-
-    function getNegativeSwapImpactAmount(
-        Price.Props memory tokenPrice,
-        int256 priceImpactUsd
-    ) internal pure returns (uint256) {
-        uint256 impactAmount = SafeCast.toUint256(-priceImpactUsd) / tokenPrice.min;
-        return impactAmount;
-    }
-
-    function applyPositiveSwapImpact(
-        DataStore dataStore,
-        EventEmitter eventEmitter,
-        address market,
-        address token,
-        Price.Props memory tokenPrice,
-        int256 priceImpactUsd
-    ) internal returns (uint256) {
-        uint256 impactAmount = getMaxPositiveSwapImpactAmount(
-            dataStore,
-            market,
-            token,
-            tokenPrice,
-            priceImpactUsd
-        );
-
-        decreaseSwapImpactPoolAmount(
-            dataStore,
-            eventEmitter,
-            market,
-            token,
-            impactAmount
-        );
-
-        return impactAmount;
-    }
-
-    function getMaxPositiveSwapImpactAmount(
-        DataStore dataStore,
-        address market,
-        address token,
-        Price.Props memory tokenPrice,
-        int256 priceImpactUsd
-    ) internal view returns (uint256) {
-        uint256 impactAmount = SafeCast.toUint256(priceImpactUsd) / tokenPrice.max;
-        uint256 maxImpactAmount = getSwapImpactPoolAmount(dataStore, market, token);
-
-        if (impactAmount > maxImpactAmount) {
-            impactAmount = maxImpactAmount;
+        if (impactAmount > 0) {
+            int256 maxImpactAmount = getSwapImpactPoolAmount(dataStore, market, token).toInt256();
+            if (maxImpactAmount > impactAmount) {
+                impactAmount = maxImpactAmount;
+            }
         }
+
+        applyDeltaToSwapImpactPool(
+            dataStore,
+            eventEmitter,
+            market,
+            token,
+            impactAmount
+        );
 
         return impactAmount;
     }

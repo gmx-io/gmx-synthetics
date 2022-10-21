@@ -134,26 +134,26 @@ library DecreasePositionUtils {
             params.positionStore.set(params.positionKey, params.order.account(), position);
         }
 
-        MarketUtils.decreaseCollateralSum(
+        MarketUtils.applyDeltaToCollateralSum(
             params.dataStore,
             params.eventEmitter,
             params.order.market(),
             params.order.initialCollateralToken(),
             params.order.isLong(),
-            initialCollateralAmount - position.collateralAmount
+            -(initialCollateralAmount - position.collateralAmount).toInt256()
         );
 
         if (params.adjustedSizeDeltaUsd > 0) {
-            MarketUtils.decreaseOpenInterest(
+            MarketUtils.applyDeltaToOpenInterest(
                 params.dataStore,
                 params.eventEmitter,
                 params.order.market(),
                 params.order.isLong(),
-                params.adjustedSizeDeltaUsd
+                -params.adjustedSizeDeltaUsd.toInt256()
             );
             // since sizeDeltaInTokens is rounded down, when positions are closed for tokens with
             // a small number of decimals, the price of the market tokens may increase
-            MarketUtils.updateOpenInterestInTokens(
+            MarketUtils.applyDeltaToOpenInterestInTokens(
                 params.dataStore,
                 params.order.market(),
                 params.order.isLong(),
@@ -162,23 +162,13 @@ library DecreasePositionUtils {
         }
 
         int256 poolDeltaAmount = fees.feesForPool.toInt256() - values.positionPnlAmount;
-        if (poolDeltaAmount > 0) {
-            MarketUtils.increasePoolAmount(
-                params.dataStore,
-                params.eventEmitter,
-                params.market.marketToken,
-                params.order.initialCollateralToken(),
-                poolDeltaAmount.toUint256()
-            );
-        } else {
-            MarketUtils.decreasePoolAmount(
-                params.dataStore,
-                params.eventEmitter,
-                params.market.marketToken,
-                params.order.initialCollateralToken(),
-                (-poolDeltaAmount).toUint256()
-            );
-        }
+        MarketUtils.applyDeltaToPoolAmount(
+            params.dataStore,
+            params.eventEmitter,
+            params.market.marketToken,
+            params.order.initialCollateralToken(),
+            poolDeltaAmount
+        );
 
         require(values.outputAmount >= 0, "DecreasePositionUtils: invalid outputAmount");
 

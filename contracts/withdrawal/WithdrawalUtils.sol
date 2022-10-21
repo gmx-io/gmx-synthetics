@@ -20,6 +20,7 @@ import "../utils/Null.sol";
 
 library WithdrawalUtils {
     using SafeCast for uint256;
+    using SafeCast for int256;
     using Price for Price.Props;
     using Array for uint256[];
 
@@ -273,14 +274,14 @@ library WithdrawalUtils {
             // for example, if 50,000 USDC is withdrawn and there is a positive price impact
             // an additional 100 USDC may be sent to the user
             // the swap impact pool is decreased by the used amount
-            uint256 positiveImpactAmount = MarketUtils.applyPositiveSwapImpact(
+            uint256 positiveImpactAmount = MarketUtils.applySwapImpactWithCap(
                 params.dataStore,
                 params.eventEmitter,
                 _params.market.marketToken,
                 _params.tokenOut,
                 _params.tokenOutPrice,
                 _params.priceImpactUsd
-            );
+            ).toUint256();
 
             outputAmount += positiveImpactAmount;
         } else {
@@ -289,7 +290,7 @@ library WithdrawalUtils {
             // for example, if 10 ETH is withdrawn and there is a negative price impact
             // only 9.995 ETH may be withdrawn
             // the remaining 0.005 ETH will be stored in the swap impact pool
-            uint256 negativeImpactAmount = MarketUtils.applyNegativeSwapImpact(
+            int256 negativeImpactAmount = MarketUtils.applySwapImpactWithCap(
                 params.dataStore,
                 params.eventEmitter,
                 _params.market.marketToken,
@@ -298,15 +299,15 @@ library WithdrawalUtils {
                 _params.priceImpactUsd
             );
 
-            outputAmount -= negativeImpactAmount;
+            outputAmount -= (-negativeImpactAmount).toUint256();
         }
 
-        MarketUtils.decreasePoolAmount(
+        MarketUtils.applyDeltaToPoolAmount(
             params.dataStore,
             params.eventEmitter,
             _params.market.marketToken,
             _params.tokenOut,
-            poolAmountDelta
+            -poolAmountDelta.toInt256()
         );
 
         MarketUtils.validateReserve(

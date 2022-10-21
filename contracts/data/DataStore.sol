@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../role/RoleModule.sol";
+import "../utils/Calc.sol";
 
 contract DataStore is RoleModule {
     mapping(bytes32 => uint256) public uintValues;
@@ -21,6 +22,12 @@ contract DataStore is RoleModule {
     function setUint(bytes32 key, uint256 value) external onlyController returns (uint256) {
         uintValues[key] = value;
         return value;
+    }
+
+    function applyDeltaToUint(bytes32 key, int256 value) external onlyController returns (uint256) {
+        uint256 nextUint = Calc.sum(uintValues[key], value);
+        uintValues[key] = nextUint;
+        return nextUint;
     }
 
     function incrementUint(bytes32 key, uint256 value) external onlyController returns (uint256) {
@@ -44,13 +51,19 @@ contract DataStore is RoleModule {
         return value;
     }
 
+    function applyDeltaToInt(bytes32 key, int256 value) external onlyController returns (int256) {
+        int256 nextInt = intValues[key] + value;
+        intValues[key] = nextInt;
+        return nextInt;
+    }
+
     function incrementInt(bytes32 key, int256 value) external onlyController returns (int256) {
         int256 nextInt = intValues[key] + value;
         intValues[key] = nextInt;
         return nextInt;
     }
 
-    function decrementUint(bytes32 key, int256 value) external onlyController returns (int256) {
+    function decrementInt(bytes32 key, int256 value) external onlyController returns (int256) {
         int256 nextInt = intValues[key] - value;
         intValues[key] = nextInt;
         return nextInt;

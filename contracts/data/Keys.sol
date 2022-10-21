@@ -63,6 +63,7 @@ library Keys {
     string public constant OPEN_INTEREST_IN_TOKENS = "OPEN_INTEREST_IN_TOKENS";
     string public constant COLLATERAL_SUM = "COLLATERAL_SUM";
     string public constant POOL_AMOUNT = "POOL_AMOUNT";
+    string public constant POSITION_IMPACT_POOL_AMOUNT = "POSITION_IMPACT_POOL_AMOUNT";
     string public constant SWAP_IMPACT_POOL_AMOUNT = "SWAP_IMPACT_POOL_AMOUNT";
     string public constant PRICE_FEED = "PRICE_FEED";
     string public constant PRICE_FEED_PRECISION = "PRICE_FEED_PRECISION";
@@ -293,7 +294,15 @@ library Keys {
         ));
     }
 
-    // amount of tokens in impact pool
+    // amount of tokens in position impact pool
+    function positionImpactPoolAmountKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            POSITION_IMPACT_POOL_AMOUNT,
+            market
+        ));
+    }
+
+    // amount of tokens in swap impact pool
     function swapImpactPoolAmountKey(address market, address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             SWAP_IMPACT_POOL_AMOUNT,

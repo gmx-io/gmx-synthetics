@@ -132,18 +132,18 @@ library IncreasePositionUtils {
         params.positionStore.set(params.positionKey, params.order.account(), position);
 
         if (params.order.sizeDeltaUsd() > 0) {
-            MarketUtils.updateOpenInterestInTokens(
+            MarketUtils.applyDeltaToOpenInterestInTokens(
                 params.dataStore,
                 params.order.market(),
                 params.order.isLong(),
                 cache.sizeDeltaInTokens.toInt256()
             );
-            MarketUtils.increaseOpenInterest(
+            MarketUtils.applyDeltaToOpenInterest(
                 params.dataStore,
                 params.eventEmitter,
                 params.order.market(),
                 params.order.isLong(),
-                params.order.sizeDeltaUsd()
+                params.order.sizeDeltaUsd().toInt256()
             );
             MarketUtils.validateReserve(params.dataStore, params.market, prices, params.order.isLong());
         }
@@ -193,32 +193,21 @@ library IncreasePositionUtils {
 
         collateralDeltaAmount += fees.totalNetCostAmount;
 
-        if (collateralDeltaAmount > 0) {
-            MarketUtils.increaseCollateralSum(
-                params.dataStore,
-                params.eventEmitter,
-                params.order.market(),
-                params.collateralToken,
-                params.order.isLong(),
-                collateralDeltaAmount.toUint256()
-            );
-        } else {
-            MarketUtils.decreaseCollateralSum(
-                params.dataStore,
-                params.eventEmitter,
-                params.order.market(),
-                params.collateralToken,
-                params.order.isLong(),
-                SafeCast.toUint256(-collateralDeltaAmount)
-            );
-        }
+        MarketUtils.applyDeltaToCollateralSum(
+            params.dataStore,
+            params.eventEmitter,
+            params.order.market(),
+            params.collateralToken,
+            params.order.isLong(),
+            collateralDeltaAmount
+        );
 
-        MarketUtils.increasePoolAmount(
+        MarketUtils.applyDeltaToPoolAmount(
             params.dataStore,
             params.eventEmitter,
             params.market.marketToken,
             params.collateralToken,
-            fees.feesForPool
+            fees.feesForPool.toInt256()
         );
 
         params.eventEmitter.emitPositionFeesCollected(true, fees);

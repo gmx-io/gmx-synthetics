@@ -10,6 +10,7 @@ import "../eth/EthUtils.sol";
 
 library SwapUtils {
     using SafeCast for uint256;
+    using SafeCast for int256;
     using Price for Price.Props;
 
     struct SwapParams {
@@ -112,23 +113,24 @@ library SwapUtils {
         );
 
         if (priceImpactUsd > 0) {
-            cache.amountIn = fees.amountAfterFees;
-            cache.amountOut = cache.amountIn * cache.tokenInPrice.min / cache.tokenOutPrice.max;
-            cache.poolAmountOut = cache.amountOut;
-
             // when there is a positive price impact factor, additional tokens from the swap impact pool
             // are withdrawn for the user
             // for example, if 50,000 USDC is swapped out and there is a positive price impact
             // an additional 100 USDC may be sent to the user
             // the swap impact pool is decreased by the used amount
-            uint256 positiveImpactAmount = MarketUtils.applyPositiveSwapImpact(
+
+            cache.amountIn = fees.amountAfterFees;
+            cache.amountOut = cache.amountIn * cache.tokenInPrice.min / cache.tokenOutPrice.max;
+            cache.poolAmountOut = cache.amountOut;
+
+            uint256 positiveImpactAmount = MarketUtils.applySwapImpactWithCap(
                 params.dataStore,
                 params.eventEmitter,
                 _params.market.marketToken,
                 cache.tokenOut,
                 cache.tokenOutPrice,
                 priceImpactUsd
-            );
+            ).toUint256();
 
             cache.amountOut += positiveImpactAmount;
         } else {
@@ -137,7 +139,8 @@ library SwapUtils {
             // for example, if 10 ETH is swapped in and there is a negative price impact
             // only 9.995 ETH may be swapped in
             // the remaining 0.005 ETH will be stored in the swap impact pool
-            uint256 negativeImpactAmount = MarketUtils.applyNegativeSwapImpact(
+
+            int256 negativeImpactAmount = MarketUtils.applySwapImpactWithCap(
                 params.dataStore,
                 params.eventEmitter,
                 _params.market.marketToken,
@@ -146,7 +149,7 @@ library SwapUtils {
                 priceImpactUsd
             );
 
-            cache.amountIn = fees.amountAfterFees - negativeImpactAmount;
+            cache.amountIn = fees.amountAfterFees - (-negativeImpactAmount).toUint256();
             cache.amountOut = cache.amountIn * cache.tokenInPrice.min / cache.tokenOutPrice.max;
             cache.poolAmountOut = cache.amountOut;
         }
@@ -161,20 +164,22 @@ library SwapUtils {
             );
         }
 
-        MarketUtils.increasePoolAmount(
+        MarketUtils.applyDeltaToPoolAmount(
             params.dataStore,
             params.eventEmitter,
             _params.market.marketToken,
             _params.tokenIn,
-            cache.amountIn + fees.feesForPool
+            (cache.amountIn + fees.feesForPool).toInt256()
         );
-        MarketUtils.decreasePoolAmount(
+
+        MarketUtils.applyDeltaToPoolAmount(
             params.dataStore,
             params.eventEmitter,
             _params.market.marketToken,
             cache.tokenOut,
-            cache.poolAmountOut
+            -cache.poolAmountOut.toInt256()
         );
+
         MarketUtils.validateReserve(
             params.dataStore,
             _params.market,

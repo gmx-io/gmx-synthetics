@@ -22,6 +22,7 @@ import "../utils/Null.sol";
 
 library DepositUtils {
     using SafeCast for uint256;
+    using SafeCast for int256;
     using Array for uint256[];
 
     using Price for Price.Props;
@@ -308,14 +309,14 @@ library DepositUtils {
             // was added to the pool
             // since impactAmount of tokenOut is added to the pool here, the calculation of
             // the tokenInPrice would not be entirely accurate
-            uint256 positiveImpactAmount = MarketUtils.applyPositiveSwapImpact(
+            uint256 positiveImpactAmount = MarketUtils.applySwapImpactWithCap(
                 params.dataStore,
                 params.eventEmitter,
                 _params.market.marketToken,
                 _params.tokenOut,
                 _params.tokenOutPrice,
                 _params.priceImpactUsd
-            );
+            ).toUint256();
 
             // calculate the usd amount using positiveImpactAmount since it may
             // be capped by the max available amount in the impact pool
@@ -326,12 +327,12 @@ library DepositUtils {
             );
 
             // deposit the token out, that was withdrawn from the impact pool, to mint market tokens
-            MarketUtils.increasePoolAmount(
+            MarketUtils.applyDeltaToPoolAmount(
                 params.dataStore,
                 params.eventEmitter,
                 _params.market.marketToken,
                 _params.tokenOut,
-                positiveImpactAmount
+                positiveImpactAmount.toInt256()
             );
         } else {
             // when there is a negative price impact factor,
@@ -339,7 +340,7 @@ library DepositUtils {
             // for example, if 10 ETH is deposited and there is a negative price impact
             // only 9.995 ETH may be used to mint market tokens
             // the remaining 0.005 ETH will be stored in the swap impact pool
-            uint256 negativeImpactAmount = MarketUtils.applyNegativeSwapImpact(
+            int256 negativeImpactAmount = MarketUtils.applySwapImpactWithCap(
                 params.dataStore,
                 params.eventEmitter,
                 _params.market.marketToken,
@@ -347,7 +348,7 @@ library DepositUtils {
                 _params.tokenInPrice,
                 _params.priceImpactUsd
             );
-            amountAfterFees -= negativeImpactAmount;
+            amountAfterFees -= (-negativeImpactAmount).toUint256();
         }
 
         mintAmount += MarketUtils.usdToMarketTokenAmount(
@@ -356,12 +357,12 @@ library DepositUtils {
             supply
         );
 
-        MarketUtils.increasePoolAmount(
+        MarketUtils.applyDeltaToPoolAmount(
             params.dataStore,
             params.eventEmitter,
             _params.market.marketToken,
             _params.tokenIn,
-            amountAfterFees + feesForPool
+            (amountAfterFees + feesForPool).toInt256()
         );
 
         MarketToken(payable(_params.market.marketToken)).mint(_params.receiver, mintAmount);
