@@ -378,9 +378,24 @@ library MarketUtils {
         Price.Props memory tokenPrice,
         int256 priceImpactUsd
     ) internal returns (uint256) {
-        uint256 impactAmount = SafeCast.toUint256(-priceImpactUsd) / tokenPrice.min;
-        increaseSwapImpactPoolAmount(dataStore, eventEmitter, market, token, impactAmount);
+        uint256 impactAmount = getNegativeSwapImpactAmount(tokenPrice, priceImpactUsd);
 
+        increaseSwapImpactPoolAmount(
+            dataStore,
+            eventEmitter,
+            market,
+            token,
+            impactAmount
+        );
+
+        return impactAmount;
+    }
+
+    function getNegativeSwapImpactAmount(
+        Price.Props memory tokenPrice,
+        int256 priceImpactUsd
+    ) internal pure returns (uint256) {
+        uint256 impactAmount = SafeCast.toUint256(-priceImpactUsd) / tokenPrice.min;
         return impactAmount;
     }
 
@@ -392,14 +407,38 @@ library MarketUtils {
         Price.Props memory tokenPrice,
         int256 priceImpactUsd
     ) internal returns (uint256) {
+        uint256 impactAmount = getMaxPositiveSwapImpactAmount(
+            dataStore,
+            market,
+            token,
+            tokenPrice,
+            priceImpactUsd
+        );
+
+        decreaseSwapImpactPoolAmount(
+            dataStore,
+            eventEmitter,
+            market,
+            token,
+            impactAmount
+        );
+
+        return impactAmount;
+    }
+
+    function getMaxPositiveSwapImpactAmount(
+        DataStore dataStore,
+        address market,
+        address token,
+        Price.Props memory tokenPrice,
+        int256 priceImpactUsd
+    ) internal view returns (uint256) {
         uint256 impactAmount = SafeCast.toUint256(priceImpactUsd) / tokenPrice.max;
         uint256 maxImpactAmount = getSwapImpactPoolAmount(dataStore, market, token);
 
         if (impactAmount > maxImpactAmount) {
             impactAmount = maxImpactAmount;
         }
-
-        decreaseSwapImpactPoolAmount(dataStore, eventEmitter, market, token, impactAmount);
 
         return impactAmount;
     }
