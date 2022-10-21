@@ -101,9 +101,9 @@ library MarketUtils {
     // types, use this value instead of the primary price for positions
     function getMarketPricesForPosition(Market.Props memory market, Oracle oracle) internal view returns (MarketPrices memory) {
         return MarketPrices(
-            oracle.getSecondaryPrice(market.indexToken),
-            oracle.getPrimaryPrice(market.longToken),
-            oracle.getPrimaryPrice(market.shortToken)
+            oracle.getLatestPrice(market.indexToken),
+            oracle.getLatestPrice(market.longToken),
+            oracle.getLatestPrice(market.shortToken)
         );
     }
 

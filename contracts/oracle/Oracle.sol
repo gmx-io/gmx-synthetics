@@ -80,6 +80,7 @@ contract Oracle is RoleModule {
     error EmptyPrice(address token);
     error EmptyPrimaryPrice(address token);
     error EmptySecondaryPrice(address token);
+    error EmptyLatestPrice(address token);
     error EmptyCustomPrice(address token);
 
     constructor(
@@ -180,6 +181,21 @@ contract Oracle is RoleModule {
         Price.Props memory price = secondaryPrices[token];
         if (price.isEmpty()) { revert EmptySecondaryPrice(token); }
         return price;
+    }
+
+    function getLatestPrice(address token) external view returns (Price.Props memory) {
+        Price.Props memory primaryPrice = primaryPrices[token];
+        Price.Props memory secondaryPrice = secondaryPrices[token];
+
+        if (!secondaryPrice.isEmpty()) {
+            return secondaryPrice;
+        }
+
+        if (!primaryPrice.isEmpty()) {
+            return primaryPrice;
+        }
+
+        revert EmptyLatestPrice(token);
     }
 
     function getCustomPrice(address token) external view returns (Price.Props memory) {
