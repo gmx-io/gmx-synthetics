@@ -171,14 +171,14 @@ library MarketUtils {
         EventEmitter eventEmitter,
         address market,
         address token,
-        int256 amount
+        int256 delta
     ) internal {
-        dataStore.applyDeltaToUint(
+        uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.poolAmountKey(market, token),
-            amount
+            delta
         );
 
-        eventEmitter.emitPoolAmountDelta(market, token, amount);
+        eventEmitter.emitPoolAmountUpdated(market, token, delta, nextValue);
     }
 
 
@@ -191,28 +191,14 @@ library MarketUtils {
         EventEmitter eventEmitter,
         address market,
         address token,
-        int256 amount
+        int256 delta
     ) internal {
-        dataStore.applyDeltaToUint(
+        uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.swapImpactPoolAmountKey(market, token),
-            amount
+            delta
         );
 
-        eventEmitter.emitSwapImpactPoolAmountDelta(market, token, amount);
-    }
-
-    function applyDeltaToPositionImpactPool(
-        DataStore dataStore,
-        EventEmitter eventEmitter,
-        address market,
-        int256 amount
-    ) internal {
-        dataStore.applyDeltaToUint(
-            Keys.positionImpactPoolAmountKey(market),
-            amount
-        );
-
-        eventEmitter.emitPositionImpactPoolAmountDelta(market, amount);
+        eventEmitter.emitSwapImpactPoolAmountUpdated(market, token, delta, nextValue);
     }
 
     function applyDeltaToOpenInterest(
@@ -220,14 +206,14 @@ library MarketUtils {
         EventEmitter eventEmitter,
         address market,
         bool isLong,
-        int256 sizeDeltaUsd
+        int256 delta
     ) internal {
-        dataStore.applyDeltaToUint(
+        uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.openInterestKey(market, isLong),
-            sizeDeltaUsd
+            delta
         );
 
-        eventEmitter.emitOpenInterestDelta(market, isLong, sizeDeltaUsd);
+        eventEmitter.emitOpenInterestUpdated(market, isLong, delta, nextValue);
     }
 
     function applyDeltaToCollateralSum(

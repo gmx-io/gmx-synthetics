@@ -59,10 +59,9 @@ contract EventEmitter is RoleModule {
     event SwapFeesCollected(bytes32 action, SwapPricingUtils.SwapFees fees);
     event PositionFeesCollected(bool isIncrease, PositionPricingUtils.PositionFees fees);
 
-    event PoolAmountDelta(address market, address token, int256 amount);
-    event SwapImpactPoolAmountDelta(address market, address token, int256 amount);
-    event PositionImpactPoolAmountDelta(address market, int256 amount);
-    event OpenInterestDelta(address market, bool isLong, int256 sizeDeltaUsd);
+    event PoolAmountUpdated(address market, address token, int256 delta, uint256 nextValue);
+    event SwapImpactPoolAmountUpdated(address market, address token, int256 delta, uint256 nextValue);
+    event OpenInterestUpdated(address market, bool isLong, int256 delta, uint256 nextValue);
 
     event CollateralSumDelta(
         address market,
@@ -75,20 +74,16 @@ contract EventEmitter is RoleModule {
 
     constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
 
-    function emitPoolAmountDelta(address market, address token, int256 amount) external onlyController {
-        emit PoolAmountDelta(market, token, amount);
+    function emitPoolAmountUpdated(address market, address token, int256 delta, uint256 nextValue) external onlyController {
+        emit PoolAmountUpdated(market, token, delta, nextValue);
     }
 
-    function emitSwapImpactPoolAmountDelta(address market, address token, int256 amount) external onlyController {
-        emit SwapImpactPoolAmountDelta(market, token, amount);
+    function emitSwapImpactPoolAmountUpdated(address market, address token, int256 delta, uint256 nextValue) external onlyController {
+        emit SwapImpactPoolAmountUpdated(market, token, delta, nextValue);
     }
 
-    function emitPositionImpactPoolAmountDelta(address market, int256 amount) external onlyController {
-        emit PositionImpactPoolAmountDelta(market, amount);
-    }
-
-    function emitOpenInterestDelta(address market, bool isLong, int256 sizeDeltaUsd) external onlyController {
-        emit OpenInterestDelta(market, isLong, sizeDeltaUsd);
+    function emitOpenInterestUpdated(address market, bool isLong, int256 delta, uint256 nextValue) external onlyController {
+        emit OpenInterestUpdated(market, isLong, delta, nextValue);
     }
 
     function emitCollateralSumDelta(
