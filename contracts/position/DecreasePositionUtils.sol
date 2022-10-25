@@ -112,7 +112,7 @@ library DecreasePositionUtils {
         position.sizeInUsd = nextPositionSizeInUsd;
         position.sizeInTokens -= values.sizeDeltaInTokens;
         position.collateralAmount = values.remainingCollateralAmount.toUint256();
-        position.decreasedAtBlock = block.number;
+        position.decreasedAtBlock = Chain.currentBlockNumber();
 
         if (position.sizeInUsd == 0 || position.sizeInTokens == 0) {
             // withdraw all collateral if the position will be closed

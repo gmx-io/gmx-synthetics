@@ -13,6 +13,7 @@ import "./OracleUtils.sol";
 import "./IPriceFeed.sol";
 import "../price/Price.sol";
 
+import "../chain/Chain.sol";
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
 import "../events/EventEmitter.sol";
@@ -276,11 +277,11 @@ contract Oracle is RoleModule {
         for (uint256 i = 0; i < params.tokens.length; i++) {
             cache.oracleBlockNumber = OracleUtils.getUncompactedOracleBlockNumber(params.compactedOracleBlockNumbers, i);
 
-            if (cache.oracleBlockNumber > block.number) {
+            if (cache.oracleBlockNumber > Chain.currentBlockNumber()) {
                 revert InvalidBlockNumber(cache.oracleBlockNumber);
             }
 
-            if (cache.oracleBlockNumber + cache.maxBlockAge < block.number) {
+            if (cache.oracleBlockNumber + cache.maxBlockAge < Chain.currentBlockNumber()) {
                 revert MaxBlockAgeExceeded(cache.oracleBlockNumber);
             }
 
@@ -291,8 +292,8 @@ contract Oracle is RoleModule {
             cache.prevOracleBlockNumber = cache.oracleBlockNumber;
 
             cache.blockHash = bytes32(0);
-            if (block.number - cache.oracleBlockNumber <= cache.minBlockConfirmations) {
-                cache.blockHash = blockhash(cache.oracleBlockNumber);
+            if (Chain.currentBlockNumber() - cache.oracleBlockNumber <= cache.minBlockConfirmations) {
+                cache.blockHash = Chain.getBlockHash(cache.oracleBlockNumber);
             }
 
             cache.token = params.tokens[i];

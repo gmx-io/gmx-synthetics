@@ -127,7 +127,7 @@ library IncreasePositionUtils {
         position.sizeInTokens += cache.sizeDeltaInTokens;
         position.fundingFactor = MarketUtils.getCumulativeFundingFactor(params.dataStore, params.market.marketToken, position.isLong);
         position.borrowingFactor = cache.nextPositionBorrowingFactor;
-        position.increasedAtBlock = block.number;
+        position.increasedAtBlock = Chain.currentBlockNumber();
 
         params.positionStore.set(params.positionKey, params.order.account(), position);
 

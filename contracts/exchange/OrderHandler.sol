@@ -304,7 +304,7 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
             0, // executionFee
             0, // callbackGasLimit
             0, // minOutputAmount
-            block.number // updatedAtBlock
+            Chain.currentBlockNumber() // updatedAtBlock
         );
 
         Order.Flags memory flags = Order.Flags(

@@ -97,7 +97,7 @@ library DepositUtils {
             longTokenAmount,
             shortTokenAmount,
             params.minMarketTokens,
-            block.number,
+            Chain.currentBlockNumber(),
             params.shouldConvertETH,
             params.executionFee,
             params.callbackGasLimit,

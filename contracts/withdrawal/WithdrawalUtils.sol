@@ -99,7 +99,7 @@ library WithdrawalUtils {
             params.marketTokensShortAmount,
             params.minLongTokenAmount,
             params.minShortTokenAmount,
-            block.number,
+            Chain.currentBlockNumber(),
             params.shouldConvertETH,
             params.executionFee,
             params.callbackGasLimit,

@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "../chain/Chain.sol";
+
 library Order {
     using Order for Props;
 
@@ -220,6 +222,6 @@ library Order {
     }
 
     function touch(Props memory props) internal view {
-        props.setUpdatedAtBlock(block.number);
+        props.setUpdatedAtBlock(Chain.currentBlockNumber());
     }
 }
