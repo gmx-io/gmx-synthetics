@@ -18,9 +18,9 @@ library OracleUtils {
         address[] priceFeedTokens;
     }
 
-    // compacted prices have a length of 64 bits
-    uint256 public constant COMPACTED_PRICE_BIT_LENGTH = 64;
-    uint256 public constant COMPACTED_PRICE_BITMASK = Bits.BITMASK_64;
+    // compacted prices have a length of 32 bits
+    uint256 public constant COMPACTED_PRICE_BIT_LENGTH = 32;
+    uint256 public constant COMPACTED_PRICE_BITMASK = Bits.BITMASK_32;
 
     // compacted block numbers have a length of 64 bits
     uint256 public constant COMPACTED_BLOCK_NUMBER_BIT_LENGTH = 64;
