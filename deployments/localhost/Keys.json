@@ -1,0 +1,834 @@
+{
+  "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "BORROWING_FACTOR",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "CANCELLATION_GAS_LIMIT",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "CANCEL_ORDER_FEATURE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "COLLATERAL_SUM",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "CREATE_DEPOSIT_FEATURE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "CREATE_ORDER_FEATURE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "CREATE_WITHDRAWAL_FEATURE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "CUMULATIVE_BORROWING_FACTOR",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "CUMULATIVE_BORROWING_FACTOR_UPDATED_AT",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "CUMULATIVE_FUNDING_FACTOR",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "CUMULATIVE_FUNDING_FACTOR_UPDATED_AT",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "DECREASE_ORDER_GAS_LIMIT",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "DEPOSIT_GAS_LIMIT",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "EMPTY_POSITION_ERROR",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "EMPTY_POSITION_ERROR_KEY",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ESTIMATED_FEE_BASE_GAS_LIMIT",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ESTIMATED_FEE_MULTIPLIER_FACTOR",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "EXECUTE_DEPOSIT_FEATURE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "EXECUTE_ORDER_FEATURE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "EXECUTE_WITHDRAWAL_FEATURE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "EXECUTION_FEE_BASE_GAS_LIMIT",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "EXECUTION_FEE_MULTIPLIER_FACTOR",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "FEE_RECEIVER_DEPOSIT_FACTOR",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "FEE_RECEIVER_POSITION_FACTOR",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "FEE_RECEIVER_SWAP_FACTOR",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "FEE_RECEIVER_WITHDRAWAL_FACTOR",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "FROZEN_ORDER_ERROR",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "FROZEN_ORDER_ERROR_KEY",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "FUNDING_FACTOR",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "INCREASE_ORDER_GAS_LIMIT",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MAX_LEVERAGE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MAX_ORACLE_BLOCK_AGE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MIN_COLLATERAL_USD",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MIN_ORACLE_BLOCK_CONFIRMATIONS",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MIN_ORACLE_SIGNERS",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "NONCE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "OPEN_INTEREST",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "OPEN_INTEREST_IN_TOKENS",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ORACLE_ERROR",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ORACLE_ERROR_KEY",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ORACLE_PRECISION",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "POOL_AMOUNT",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "POSITION_FEE_FACTOR",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "POSITION_IMPACT_EXPONENT_FACTOR",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "POSITION_IMPACT_FACTOR",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "POSITION_SPREAD_FACTOR",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "PRICE_FEED",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "PRICE_FEED_PRECISION",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "RESERVE_FACTOR",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "SINGLE_SWAP_GAS_LIMIT",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "STABLE_PRICE",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "SWAP_FEE_FACTOR",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "SWAP_IMPACT_EXPONENT_FACTOR",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "SWAP_IMPACT_FACTOR",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "SWAP_IMPACT_POOL_AMOUNT",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "SWAP_ORDER_GAS_LIMIT",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "SWAP_SPREAD_FACTOR",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "TOTAL_BORROWING",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "UPDATE_ORDER_FEATURE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "WETH",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "WITHDRAWAL_GAS_LIMIT",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xd5565143e77befaf867cb44d9538280ee3aae4662a950370fc75acdc5a36910c",
+  "receipt": {
+    "to": null,
+    "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "contractAddress": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+    "transactionIndex": 0,
+    "gasUsed": "860568",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xc892a8d71017db91936dd83583c38e93a2e2ef798c64762bbe2d09b156186f4f",
+    "transactionHash": "0xd5565143e77befaf867cb44d9538280ee3aae4662a950370fc75acdc5a36910c",
+    "logs": [],
+    "blockNumber": 5,
+    "cumulativeGasUsed": "860568",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "94248a78e23524a8af5dba653b641a0b",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.16+commit.07a7930e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"BORROWING_FACTOR\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"CANCELLATION_GAS_LIMIT\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"CANCEL_ORDER_FEATURE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"COLLATERAL_SUM\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"CREATE_DEPOSIT_FEATURE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"CREATE_ORDER_FEATURE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"CREATE_WITHDRAWAL_FEATURE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"CUMULATIVE_BORROWING_FACTOR\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"CUMULATIVE_BORROWING_FACTOR_UPDATED_AT\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"CUMULATIVE_FUNDING_FACTOR\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"CUMULATIVE_FUNDING_FACTOR_UPDATED_AT\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"DECREASE_ORDER_GAS_LIMIT\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"DEPOSIT_GAS_LIMIT\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"EMPTY_POSITION_ERROR\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"EMPTY_POSITION_ERROR_KEY\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ESTIMATED_FEE_BASE_GAS_LIMIT\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ESTIMATED_FEE_MULTIPLIER_FACTOR\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"EXECUTE_DEPOSIT_FEATURE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"EXECUTE_ORDER_FEATURE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"EXECUTE_WITHDRAWAL_FEATURE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"EXECUTION_FEE_BASE_GAS_LIMIT\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"EXECUTION_FEE_MULTIPLIER_FACTOR\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"FEE_RECEIVER_DEPOSIT_FACTOR\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"FEE_RECEIVER_POSITION_FACTOR\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"FEE_RECEIVER_SWAP_FACTOR\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"FEE_RECEIVER_WITHDRAWAL_FACTOR\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"FROZEN_ORDER_ERROR\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"FROZEN_ORDER_ERROR_KEY\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"FUNDING_FACTOR\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"INCREASE_ORDER_GAS_LIMIT\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"MAX_LEVERAGE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"MAX_ORACLE_BLOCK_AGE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"MIN_COLLATERAL_USD\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"MIN_ORACLE_BLOCK_CONFIRMATIONS\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"MIN_ORACLE_SIGNERS\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"NONCE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"OPEN_INTEREST\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"OPEN_INTEREST_IN_TOKENS\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ORACLE_ERROR\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ORACLE_ERROR_KEY\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ORACLE_PRECISION\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"POOL_AMOUNT\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"POSITION_FEE_FACTOR\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"POSITION_IMPACT_EXPONENT_FACTOR\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"POSITION_IMPACT_FACTOR\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"POSITION_SPREAD_FACTOR\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"PRICE_FEED\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"PRICE_FEED_PRECISION\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"RESERVE_FACTOR\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"SINGLE_SWAP_GAS_LIMIT\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"STABLE_PRICE\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"SWAP_FEE_FACTOR\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"SWAP_IMPACT_EXPONENT_FACTOR\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"SWAP_IMPACT_FACTOR\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"SWAP_IMPACT_POOL_AMOUNT\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"SWAP_ORDER_GAS_LIMIT\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"SWAP_SPREAD_FACTOR\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"TOTAL_BORROWING\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"UPDATE_ORDER_FEATURE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"WETH\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"WITHDRAWAL_GAS_LIMIT\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/data/Keys.sol\":\"Keys\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":10},\"remappings\":[]},\"sources\":{\"contracts/data/Keys.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\n\\npragma solidity ^0.8.0;\\n\\nlibrary Keys {\\n    bytes32 public constant WETH = keccak256(\\\"WETH\\\");\\n    bytes32 public constant NONCE = keccak256(\\\"NONCE\\\");\\n\\n    bytes32 public constant CREATE_DEPOSIT_FEATURE = keccak256(\\\"CREATE_DEPOSIT_FEATURE\\\");\\n    bytes32 public constant EXECUTE_DEPOSIT_FEATURE = keccak256(\\\"EXECUTE_DEPOSIT_FEATURE\\\");\\n\\n    bytes32 public constant CREATE_WITHDRAWAL_FEATURE = keccak256(\\\"CREATE_WITHDRAWAL_FEATURE\\\");\\n    bytes32 public constant EXECUTE_WITHDRAWAL_FEATURE = keccak256(\\\"EXECUTE_WITHDRAWAL_FEATURE\\\");\\n\\n    bytes32 public constant CREATE_ORDER_FEATURE = keccak256(\\\"CREATE_ORDER_FEATURE\\\");\\n    bytes32 public constant EXECUTE_ORDER_FEATURE = keccak256(\\\"EXECUTE_ORDER_FEATURE\\\");\\n    bytes32 public constant UPDATE_ORDER_FEATURE = keccak256(\\\"UPDATE_ORDER_FEATURE\\\");\\n    bytes32 public constant CANCEL_ORDER_FEATURE = keccak256(\\\"CANCEL_ORDER_FEATURE\\\");\\n\\n    // the minimum required oracle signers for an observation\\n    bytes32 public constant MIN_ORACLE_SIGNERS = keccak256(\\\"MIN_ORACLE_SIGNERS\\\");\\n    // the minimum block confirmations before blockhash can be excluded for oracle signature validation\\n    bytes32 public constant MIN_ORACLE_BLOCK_CONFIRMATIONS = keccak256(\\\"MIN_ORACLE_BLOCK_CONFIRMATIONS\\\");\\n    // the maximum block age usable for oracle prices\\n    bytes32 public constant MAX_ORACLE_BLOCK_AGE = keccak256(\\\"MAX_ORACLE_BLOCK_AGE\\\");\\n    // the percentage amount of fees to be received for deposits\\n    bytes32 public constant FEE_RECEIVER_DEPOSIT_FACTOR = keccak256(\\\"FEE_RECEIVER_DEPOSIT_FACTOR\\\");\\n    // the percentage amount of fees to be received for withdrawals\\n    bytes32 public constant FEE_RECEIVER_WITHDRAWAL_FACTOR = keccak256(\\\"FEE_RECEIVER_WITHDRAWAL_FACTOR\\\");\\n    // the percentage amount of fees to be received for swaps\\n    bytes32 public constant FEE_RECEIVER_SWAP_FACTOR = keccak256(\\\"FEE_RECEIVER_SWAP_FACTOR\\\");\\n    // the percentage amount of fees to be received for positions\\n    bytes32 public constant FEE_RECEIVER_POSITION_FACTOR = keccak256(\\\"FEE_RECEIVER_POSITION_FACTOR\\\");\\n\\n    bytes32 public constant ESTIMATED_FEE_BASE_GAS_LIMIT = keccak256(\\\"ESTIMATED_FEE_BASE_GAS_LIMIT\\\");\\n    bytes32 public constant ESTIMATED_FEE_MULTIPLIER_FACTOR = keccak256(\\\"ESTIMATED_FEE_MULTIPLIER_FACTOR\\\");\\n\\n    bytes32 public constant EXECUTION_FEE_BASE_GAS_LIMIT = keccak256(\\\"EXECUTION_FEE_BASE_GAS_LIMIT\\\");\\n    bytes32 public constant EXECUTION_FEE_MULTIPLIER_FACTOR = keccak256(\\\"EXECUTION_FEE_MULTIPLIER_FACTOR\\\");\\n\\n    bytes32 public constant DEPOSIT_GAS_LIMIT = keccak256(\\\"DEPOSIT_GAS_LIMIT\\\");\\n    bytes32 public constant WITHDRAWAL_GAS_LIMIT = keccak256(\\\"WITHDRAWAL_GAS_LIMIT\\\");\\n    bytes32 public constant SINGLE_SWAP_GAS_LIMIT = keccak256(\\\"SINGLE_SWAP_GAS_LIMIT\\\");\\n    bytes32 public constant INCREASE_ORDER_GAS_LIMIT = keccak256(\\\"INCREASE_ORDER_GAS_LIMIT\\\");\\n    bytes32 public constant DECREASE_ORDER_GAS_LIMIT = keccak256(\\\"DECREASE_ORDER_GAS_LIMIT\\\");\\n    bytes32 public constant SWAP_ORDER_GAS_LIMIT = keccak256(\\\"SWAP_ORDER_GAS_LIMIT\\\");\\n    bytes32 public constant CANCELLATION_GAS_LIMIT = keccak256(\\\"CANCELLATION_GAS_LIMIT\\\");\\n\\n    bytes32 public constant MAX_LEVERAGE = keccak256(\\\"MAX_LEVERAGE\\\");\\n    bytes32 public constant MIN_COLLATERAL_USD = keccak256(\\\"MIN_COLLATERAL_USD\\\");\\n\\n    string public constant POSITION_IMPACT_FACTOR = \\\"POSITION_IMPACT_FACTOR\\\";\\n    string public constant POSITION_IMPACT_EXPONENT_FACTOR = \\\"POSITION_IMPACT_EXPONENT_FACTOR\\\";\\n    string public constant POSITION_SPREAD_FACTOR = \\\"POSITION_SPREAD_FACTOR\\\";\\n    string public constant POSITION_FEE_FACTOR = \\\"POSITION_FEE_FACTOR\\\";\\n    string public constant SWAP_IMPACT_FACTOR = \\\"SWAP_IMPACT_FACTOR\\\";\\n    string public constant SWAP_IMPACT_EXPONENT_FACTOR = \\\"SWAP_IMPACT_EXPONENT_FACTOR\\\";\\n    string public constant SWAP_SPREAD_FACTOR = \\\"SWAP_SPREAD_FACTOR\\\";\\n    string public constant SWAP_FEE_FACTOR = \\\"SWAP_FEE_FACTOR\\\";\\n    string public constant ORACLE_PRECISION = \\\"ORACLE_PRECISION\\\";\\n    string public constant OPEN_INTEREST = \\\"OPEN_INTEREST\\\";\\n    string public constant OPEN_INTEREST_IN_TOKENS = \\\"OPEN_INTEREST_IN_TOKENS\\\";\\n    string public constant COLLATERAL_SUM = \\\"COLLATERAL_SUM\\\";\\n    string public constant POOL_AMOUNT = \\\"POOL_AMOUNT\\\";\\n    string public constant SWAP_IMPACT_POOL_AMOUNT = \\\"SWAP_IMPACT_POOL_AMOUNT\\\";\\n    string public constant PRICE_FEED = \\\"PRICE_FEED\\\";\\n    string public constant PRICE_FEED_PRECISION = \\\"PRICE_FEED_PRECISION\\\";\\n    string public constant STABLE_PRICE = \\\"STABLE_PRICE\\\";\\n    string public constant RESERVE_FACTOR = \\\"RESERVE_FACTOR\\\";\\n    string public constant FUNDING_FACTOR = \\\"FUNDING_FACTOR\\\";\\n    string public constant CUMULATIVE_FUNDING_FACTOR = \\\"CUMULATIVE_FUNDING_FACTOR\\\";\\n    string public constant CUMULATIVE_FUNDING_FACTOR_UPDATED_AT = \\\"CUMULATIVE_FUNDING_FACTOR_UPDATED_AT\\\";\\n    string public constant BORROWING_FACTOR = \\\"BORROWING_FACTOR\\\";\\n    string public constant CUMULATIVE_BORROWING_FACTOR = \\\"CUMULATIVE_BORROWING_FACTOR\\\";\\n    string public constant CUMULATIVE_BORROWING_FACTOR_UPDATED_AT = \\\"CUMULATIVE_BORROWING_FACTOR_UPDATED_AT\\\";\\n    string public constant TOTAL_BORROWING = \\\"TOTAL_BORROWING\\\";\\n\\n    string public constant ORACLE_ERROR = \\\"ORACLE_ERROR\\\";\\n    bytes32 public constant ORACLE_ERROR_KEY = keccak256(abi.encode(ORACLE_ERROR));\\n\\n    string public constant EMPTY_POSITION_ERROR = \\\"EMPTY_POSITION_ERROR\\\";\\n    bytes32 public constant EMPTY_POSITION_ERROR_KEY = keccak256(abi.encode(EMPTY_POSITION_ERROR));\\n\\n    string public constant FROZEN_ORDER_ERROR = \\\"FROZEN_ORDER_ERROR\\\";\\n    bytes32 public constant FROZEN_ORDER_ERROR_KEY = keccak256(abi.encode(FROZEN_ORDER_ERROR));\\n\\n    function depositGasLimitKey(bool singleToken) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            DEPOSIT_GAS_LIMIT,\\n            singleToken\\n        ));\\n    }\\n\\n\\n    function withdrawalGasLimitKey(bool singleToken) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            WITHDRAWAL_GAS_LIMIT,\\n            singleToken\\n        ));\\n    }\\n\\n    function singleSwapGasLimitKey() internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            SINGLE_SWAP_GAS_LIMIT\\n        ));\\n    }\\n\\n    function increaseOrderGasLimitKey() internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            INCREASE_ORDER_GAS_LIMIT\\n        ));\\n    }\\n\\n    function decreaseOrderGasLimitKey() internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            DECREASE_ORDER_GAS_LIMIT\\n        ));\\n    }\\n\\n    function swapOrderGasLimitKey() internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            SWAP_ORDER_GAS_LIMIT\\n        ));\\n    }\\n\\n    function createDepositFeatureKey(address module) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            CREATE_DEPOSIT_FEATURE,\\n            module\\n        ));\\n    }\\n\\n    function executeDepositFeatureKey(address module) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            EXECUTE_DEPOSIT_FEATURE,\\n            module\\n        ));\\n    }\\n\\n    function createWithdrawalFeatureKey(address module) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            CREATE_WITHDRAWAL_FEATURE,\\n            module\\n        ));\\n    }\\n\\n    function executeWithdrawalFeatureKey(address module) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            EXECUTE_WITHDRAWAL_FEATURE,\\n            module\\n        ));\\n    }\\n\\n    function createOrderFeatureKey(address module, uint256 orderType) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            CREATE_ORDER_FEATURE,\\n            module,\\n            orderType\\n        ));\\n    }\\n\\n    function executeOrderFeatureKey(address module, uint256 orderType) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            EXECUTE_ORDER_FEATURE,\\n            module,\\n            orderType\\n        ));\\n    }\\n\\n    function updateOrderFeatureKey(address module, uint256 orderType) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            UPDATE_ORDER_FEATURE,\\n            module,\\n            orderType\\n        ));\\n    }\\n\\n    function cancelOrderFeatureKey(address module, uint256 orderType) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            CANCEL_ORDER_FEATURE,\\n            module,\\n            orderType\\n        ));\\n    }\\n\\n    function positionImpactFactorKey(address market, bool isPositive) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            POSITION_IMPACT_FACTOR,\\n            market,\\n            isPositive\\n        ));\\n   }\\n\\n    function positionImpactExponentFactorKey(address market) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            POSITION_IMPACT_EXPONENT_FACTOR,\\n            market\\n        ));\\n}\\n\\n    function positionSpreadFactorKey(address market) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            POSITION_SPREAD_FACTOR,\\n            market\\n        ));\\n    }\\n\\n    function positionFeeFactorKey(address market) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            POSITION_FEE_FACTOR,\\n            market\\n        ));\\n    }\\n\\n    function swapImpactFactorKey(address market, bool isPositive) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            SWAP_IMPACT_FACTOR,\\n            market,\\n            isPositive\\n        ));\\n    }\\n\\n    function swapImpactExponentFactorKey(address market) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            SWAP_IMPACT_EXPONENT_FACTOR,\\n            market\\n        ));\\n    }\\n\\n\\n    function swapSpreadFactorKey(address market) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            SWAP_SPREAD_FACTOR,\\n            market\\n        ));\\n    }\\n\\n    function swapFeeFactorKey(address market) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            SWAP_FEE_FACTOR,\\n            market\\n        ));\\n    }\\n\\n    function oraclePrecisionKey(address token) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            ORACLE_PRECISION,\\n            token\\n        ));\\n    }\\n\\n    // market open interest\\n    function openInterestKey(address market, bool isLong) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            OPEN_INTEREST,\\n            market,\\n            isLong\\n        ));\\n    }\\n\\n    // market open interest in tokens\\n    function openInterestInTokensKey(address market, bool isLong) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            OPEN_INTEREST_IN_TOKENS,\\n            market,\\n            isLong\\n        ));\\n    }\\n\\n    // total collateral of positions\\n    function collateralSumKey(address market, address collateralToken, bool isLong) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            COLLATERAL_SUM,\\n            market,\\n            collateralToken,\\n            isLong\\n        ));\\n    }\\n\\n    // amount of tokens in market pool\\n    function poolAmountKey(address market, address token) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            POOL_AMOUNT,\\n            market,\\n            token\\n        ));\\n    }\\n\\n    // amount of tokens in impact pool\\n    function impactPoolAmountKey(address market, address token) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            SWAP_IMPACT_POOL_AMOUNT,\\n            market,\\n            token\\n        ));\\n    }\\n\\n    function reserveFactorKey(address market, bool isLong) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            RESERVE_FACTOR,\\n            market,\\n            isLong\\n        ));\\n    }\\n\\n    function fundingFactorKey(address market) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            FUNDING_FACTOR,\\n            market\\n        ));\\n    }\\n\\n    function cumulativeFundingFactorKey(address market, bool isLong) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            CUMULATIVE_FUNDING_FACTOR,\\n            market,\\n            isLong\\n        ));\\n    }\\n\\n    function cumulativeFundingFactorUpdatedAtKey(address market) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            CUMULATIVE_FUNDING_FACTOR_UPDATED_AT,\\n            market\\n        ));\\n    }\\n\\n    function borrowingFactorKey(address market, bool isLong) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            BORROWING_FACTOR,\\n            market,\\n            isLong\\n        ));\\n    }\\n\\n    function cumulativeBorrowingFactorKey(address market, bool isLong) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            CUMULATIVE_BORROWING_FACTOR,\\n            market,\\n            isLong\\n        ));\\n    }\\n\\n    function cumulativeBorrowingFactorUpdatedAtKey(address market, bool isLong) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            CUMULATIVE_BORROWING_FACTOR_UPDATED_AT,\\n            market,\\n            isLong\\n        ));\\n    }\\n\\n    function totalBorrowingKey(address market, bool isLong) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            TOTAL_BORROWING,\\n            market,\\n            isLong\\n        ));\\n    }\\n\\n    function priceFeedKey(address token) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            PRICE_FEED,\\n            token\\n        ));\\n    }\\n\\n    function priceFeedPrecisionKey(address token) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            PRICE_FEED_PRECISION,\\n            token\\n        ));\\n    }\\n\\n    function stablePriceKey(address token) internal pure returns (bytes32) {\\n        return keccak256(abi.encode(\\n            STABLE_PRICE,\\n            token\\n        ));\\n    }\\n}\\n\",\"keccak256\":\"0x2c83a884c3dae39f444584dde08235c40b12e17b7068965d09c8e5414f049a27\",\"license\":\"BUSL-1.1\"}},\"version\":1}",
+  "bytecode": "0x610e9561003a600b82828239805160001a60731461002d57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600436106102d95760003560e01c80637fcf21561161018e5780637fcf2156146107b05780638b1d35aa146107db57806392bbcc96146108025780639381fa1c146108295780639b45ec971461085f5780639c0d313f14610886578063a204def8146108b5578063a383a742146108e6578063ad5c46481461090d578063b0fa117b14610934578063b359926c1461095b578063b8f50c8d14610982578063b98c9c1c146109bc578063beda3db3146109e3578063c02941c114610a0d578063c1b8380414610a15578063c6c1caa714610a42578063c701f95514610a69578063cace192e14610a90578063ceac2a6914610ac1578063cf5f548214610afd578063cf8b826d14610b24578063d702147814610b4b578063db47e38e14610b72578063e091dd1a14610b99578063ea32605b14610bc0578063ef2c045814610bed578063f2139dae14610bf5578063faec7ab114610c2a578063fde3a8d014610c5d578063ff77169314610c9057600080fd5b80630299405a146102de5780630753a5cf146103185780631ac55cd61461032d5780631e5f4ebe1461033557806324290e641461036f5780632c66335a146103965780632fdd22f2146103bd5780632ffa545e146103c557806331eb318a146103ec57806333b2249b1461041557806334414eee14610447578063369927de1461046e57806337012033146104995780633d78cf1c146104ca578063469eae37146104f15780634857e1ac1461051e57806348885904146105455780634b0018b414610573578063551797901461059a578063563e70e1146105c957806368abf691146105f05780636ad59940146106175780636afc94eb1461063e5780636d350cdc14610673578063734fc495146106a95780637549d6ae146106d757806375f285ff146106fe578063769b8953146107255780637748462c146107515780637b584ce714610778575b600080fd5b6103057fc5f146385442601b83dc692a2045a6a51c328c57eb744cd7fe9db21ece2732ea81565b6040519081526020015b60405180910390f35b610320610cb7565b60405161030f9190610dfb565b610305610cd3565b6103206040518060400160405280601b81526020017a29aba0a82fa4a6a820a1aa2fa2ac2827a722a72a2fa320a1aa27a960291b81525081565b6103057f28eacf58045be545580ce191fdb2c95dd8ed38c221ca4dce1d6cfffeef6e394681565b6103057f34b141cdb545ec7a65b0a9fcfa09657619ff2a37a651748415ab23329b0d620b81565b610305610d29565b6103057f3cd37f0e4ec4979ca09236e1db75c5db02dc6df261ab1c65762ef676eb1c873581565b6103206040518060400160405280600a81526020016914149250d157d191515160b21b81525081565b610320604051806040016040528060138152602001722827a9a4aa24a7a72fa322a2afa320a1aa27a960691b81525081565b6103057fe7152cce7a1763435f081f2a93d631500646db28c752bccbe23708ec12d44a9481565b6103206040518060400160405280600c81526020016b27a920a1a622afa2a92927a960a11b81525081565b6103206040518060400160405280601281526020017129aba0a82fa9a82922a0a22fa320a1aa27a960711b81525081565b6103057fbe2d6af82ecb29b1b2866cb8b6a55a277dc06819559fc740ac2b6d3d2b22b65b81565b6103206040518060400160405280600e81526020016d232aa72224a723afa320a1aa27a960911b81525081565b6103057fdf3892cdc096709e33b7feba8588a71d87e4554a3ec5f32fa2f37c7fce90129e81565b6103206040518060400160405280600f81526020016e544f54414c5f424f52524f57494e4760881b81525081565b6103057fd638db0b793aad68bd5749a0957e4e2d8139912eaf2399596f6a52616dcdd77181565b6103206040518060400160405280601081526020016f2127a92927aba4a723afa320a1aa27a960811b81525081565b6103057f1a9c6697d7b50d6d797c61a11c89666f99ec32f15bebca23a4e3c308cbb579a981565b6103057f4824e0a628d80dadc606d1c367f1efce158d43eb6b568eadfbf186315401309981565b6103057f13534b6716ae9d77fae2341ce331234c4a3626e11ced98b78e30eac7cb7c249181565b610320604051806040016040528060168152602001752827a9a4aa24a7a72fa4a6a820a1aa2fa320a1aa27a960511b81525081565b610320604051806040016040528060178152602001764f50454e5f494e5445524553545f494e5f544f4b454e5360481b81525081565b6103206040518060400160405280600f81526020016e29aba0a82fa322a2afa320a1aa27a960891b81525081565b6103057f86785731196af249785d191b907ed1e0e664c562400b5cff68712acc8235150c81565b6103057f430e6f46d2d516cb53dc80105c6e80dda889b6be6e934e5df021ee925839f25481565b6103206040518060400160405280600d81526020016c13d4115397d2539511549154d5609a1b81525081565b6103057f57830ed48ddd6c6926fd77150229412613ab7d4cc74eea4852e8d2fe32f2fd2481565b6103206040518060400160405280601981526020017821aaa6aaa620aa24ab22afa32aa72224a723afa320a1aa27a960391b81525081565b6103206040518060400160405280600c81526020016b535441424c455f505249434560a01b81525081565b6103057ffde78489a0679abd15ad0e46009d5d596354714d5547f9ee96fc24c9b10382ff81565b6103057f57442b1101c5055683cb8cdd8086a2ebf09683b670b487d0bd9e48781eea2f0981565b6103206040518060400160405280601781526020017614d5d05417d253541050d517d413d3d317d05353d55395604a1b81525081565b6103057f5d28ab2b6d7b03bba14009be040597784d661378ef3e5eeec18feddfca66f59181565b6103206040518060400160405280601081526020016f27a920a1a622afa82922a1a4a9a4a7a760811b81525081565b6103206040518060400160405280601281526020017129aba0a82fa4a6a820a1aa2fa320a1aa27a960711b81525081565b6103057f63ec9f1690458a7d5cd85a825f4cdc9b8bf362214fd18170a3afae44bc5a2cda81565b6103057f0f8a193ff464434486c0daf7db2a895884365d2bc84ba47a68fcf89c1b14b5b881565b6103057f9ec3b24b50c1b3fda988484ddc8460c9cb55c8129a3b7605a66aded80895941781565b6103057fbbfed250d6f6af2b7b126c950fb44a7776f6994206130e3be157c0cdbfa44f4c81565b6103206040518060400160405280601b81526020017a21aaa6aaa620aa24ab22afa127a92927aba4a723afa320a1aa27a960291b81525081565b6103057fd7c8b81a0590c5156d999f6a2bf288c05e2981d523851127c064418a5e9d778081565b6103206040518060400160405280600b81526020016a1413d3d317d05353d5539560aa1b81525081565b610320610d64565b6103206040518060400160405280600e81526020016d434f4c4c41544552414c5f53554d60901b81525081565b6103057f208b50e56a0c2096967045d9a06b7f658bd760dd00828d1ed6a4a62df7f72f2081565b6103057fd1a3dde29d658e8c42d21eb8925b5b872041e8f93cd22b0663eb6996804020c781565b61032060405180604001604052806012815260200171232927ad22a72fa7a92222a92fa2a92927a960711b81525081565b6103206040518060400160405280601f81526020017f504f534954494f4e5f494d504143545f4558504f4e454e545f464143544f520081525081565b6103057ff29e6bd77bed61b07ec6a7881427e90c9600db7bb81d2d475f1b744dcdd852ef81565b6103057f93f5faed8e0d27b20cbe23d4961950b928f9813ebdce45ee71d7f0f1ebc2c56381565b6103057fea2abdea3c7f612c8be2e7be5cab70e9eac1810245363558aaa478d87c06ab1a81565b6103057f83149e8aa36e682c6ab4934284cd7dc614e2e635da89a131a9b1f6eda779f70f81565b6103057f26aa63e2502e7427f5d2c686b0e47f4afee1ea92e517e54538f4e4c9928cbc0881565b6103206040518060400160405280600e81526020016d2922a9a2a92b22afa320a1aa27a960911b81525081565b610305610d80565b610320604051806040016040528060168152602001752827a9a4aa24a7a72fa9a82922a0a22fa320a1aa27a960511b81525081565b6103206040518060400160405280601481526020017322a6a82a2cafa827a9a4aa24a7a72fa2a92927a960611b81525081565b61032060405180604001604052806014815260200173282924a1a2afa322a2a22fa82922a1a4a9a4a7a760611b81525081565b6103057f3068f19c1b3fe1cfef45b175668db422de7f776d9c40328ad069d583f75f55ca81565b604051806060016040528060248152602001610e166024913981565b6040518060400160405280601481526020017322a6a82a2cafa827a9a4aa24a7a72fa2a92927a960611b815250604051602001610d109190610dfb565b6040516020818303038152906040528051906020012081565b60405180604001604052806012815260200171232927ad22a72fa7a92222a92fa2a92927a960711b815250604051602001610d109190610dfb565b604051806060016040528060268152602001610e3a6026913981565b6040518060400160405280600c81526020016b27a920a1a622afa2a92927a960a11b815250604051602001610d109190610dfb565b6000815180845260005b81811015610ddb57602081850181015186830182015201610dbf565b506000602082860101526020601f19601f83011685010191505092915050565b602081526000610e0e6020830184610db5565b939250505056fe43554d554c41544956455f46554e44494e475f464143544f525f555044415445445f415443554d554c41544956455f424f52524f57494e475f464143544f525f555044415445445f4154a2646970667358221220effa5ff8076a484375582c1abb0d0604453a949990d788f3c0332621a46fb3b264736f6c63430008100033",
+  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600436106102d95760003560e01c80637fcf21561161018e5780637fcf2156146107b05780638b1d35aa146107db57806392bbcc96146108025780639381fa1c146108295780639b45ec971461085f5780639c0d313f14610886578063a204def8146108b5578063a383a742146108e6578063ad5c46481461090d578063b0fa117b14610934578063b359926c1461095b578063b8f50c8d14610982578063b98c9c1c146109bc578063beda3db3146109e3578063c02941c114610a0d578063c1b8380414610a15578063c6c1caa714610a42578063c701f95514610a69578063cace192e14610a90578063ceac2a6914610ac1578063cf5f548214610afd578063cf8b826d14610b24578063d702147814610b4b578063db47e38e14610b72578063e091dd1a14610b99578063ea32605b14610bc0578063ef2c045814610bed578063f2139dae14610bf5578063faec7ab114610c2a578063fde3a8d014610c5d578063ff77169314610c9057600080fd5b80630299405a146102de5780630753a5cf146103185780631ac55cd61461032d5780631e5f4ebe1461033557806324290e641461036f5780632c66335a146103965780632fdd22f2146103bd5780632ffa545e146103c557806331eb318a146103ec57806333b2249b1461041557806334414eee14610447578063369927de1461046e57806337012033146104995780633d78cf1c146104ca578063469eae37146104f15780634857e1ac1461051e57806348885904146105455780634b0018b414610573578063551797901461059a578063563e70e1146105c957806368abf691146105f05780636ad59940146106175780636afc94eb1461063e5780636d350cdc14610673578063734fc495146106a95780637549d6ae146106d757806375f285ff146106fe578063769b8953146107255780637748462c146107515780637b584ce714610778575b600080fd5b6103057fc5f146385442601b83dc692a2045a6a51c328c57eb744cd7fe9db21ece2732ea81565b6040519081526020015b60405180910390f35b610320610cb7565b60405161030f9190610dfb565b610305610cd3565b6103206040518060400160405280601b81526020017a29aba0a82fa4a6a820a1aa2fa2ac2827a722a72a2fa320a1aa27a960291b81525081565b6103057f28eacf58045be545580ce191fdb2c95dd8ed38c221ca4dce1d6cfffeef6e394681565b6103057f34b141cdb545ec7a65b0a9fcfa09657619ff2a37a651748415ab23329b0d620b81565b610305610d29565b6103057f3cd37f0e4ec4979ca09236e1db75c5db02dc6df261ab1c65762ef676eb1c873581565b6103206040518060400160405280600a81526020016914149250d157d191515160b21b81525081565b610320604051806040016040528060138152602001722827a9a4aa24a7a72fa322a2afa320a1aa27a960691b81525081565b6103057fe7152cce7a1763435f081f2a93d631500646db28c752bccbe23708ec12d44a9481565b6103206040518060400160405280600c81526020016b27a920a1a622afa2a92927a960a11b81525081565b6103206040518060400160405280601281526020017129aba0a82fa9a82922a0a22fa320a1aa27a960711b81525081565b6103057fbe2d6af82ecb29b1b2866cb8b6a55a277dc06819559fc740ac2b6d3d2b22b65b81565b6103206040518060400160405280600e81526020016d232aa72224a723afa320a1aa27a960911b81525081565b6103057fdf3892cdc096709e33b7feba8588a71d87e4554a3ec5f32fa2f37c7fce90129e81565b6103206040518060400160405280600f81526020016e544f54414c5f424f52524f57494e4760881b81525081565b6103057fd638db0b793aad68bd5749a0957e4e2d8139912eaf2399596f6a52616dcdd77181565b6103206040518060400160405280601081526020016f2127a92927aba4a723afa320a1aa27a960811b81525081565b6103057f1a9c6697d7b50d6d797c61a11c89666f99ec32f15bebca23a4e3c308cbb579a981565b6103057f4824e0a628d80dadc606d1c367f1efce158d43eb6b568eadfbf186315401309981565b6103057f13534b6716ae9d77fae2341ce331234c4a3626e11ced98b78e30eac7cb7c249181565b610320604051806040016040528060168152602001752827a9a4aa24a7a72fa4a6a820a1aa2fa320a1aa27a960511b81525081565b610320604051806040016040528060178152602001764f50454e5f494e5445524553545f494e5f544f4b454e5360481b81525081565b6103206040518060400160405280600f81526020016e29aba0a82fa322a2afa320a1aa27a960891b81525081565b6103057f86785731196af249785d191b907ed1e0e664c562400b5cff68712acc8235150c81565b6103057f430e6f46d2d516cb53dc80105c6e80dda889b6be6e934e5df021ee925839f25481565b6103206040518060400160405280600d81526020016c13d4115397d2539511549154d5609a1b81525081565b6103057f57830ed48ddd6c6926fd77150229412613ab7d4cc74eea4852e8d2fe32f2fd2481565b6103206040518060400160405280601981526020017821aaa6aaa620aa24ab22afa32aa72224a723afa320a1aa27a960391b81525081565b6103206040518060400160405280600c81526020016b535441424c455f505249434560a01b81525081565b6103057ffde78489a0679abd15ad0e46009d5d596354714d5547f9ee96fc24c9b10382ff81565b6103057f57442b1101c5055683cb8cdd8086a2ebf09683b670b487d0bd9e48781eea2f0981565b6103206040518060400160405280601781526020017614d5d05417d253541050d517d413d3d317d05353d55395604a1b81525081565b6103057f5d28ab2b6d7b03bba14009be040597784d661378ef3e5eeec18feddfca66f59181565b6103206040518060400160405280601081526020016f27a920a1a622afa82922a1a4a9a4a7a760811b81525081565b6103206040518060400160405280601281526020017129aba0a82fa4a6a820a1aa2fa320a1aa27a960711b81525081565b6103057f63ec9f1690458a7d5cd85a825f4cdc9b8bf362214fd18170a3afae44bc5a2cda81565b6103057f0f8a193ff464434486c0daf7db2a895884365d2bc84ba47a68fcf89c1b14b5b881565b6103057f9ec3b24b50c1b3fda988484ddc8460c9cb55c8129a3b7605a66aded80895941781565b6103057fbbfed250d6f6af2b7b126c950fb44a7776f6994206130e3be157c0cdbfa44f4c81565b6103206040518060400160405280601b81526020017a21aaa6aaa620aa24ab22afa127a92927aba4a723afa320a1aa27a960291b81525081565b6103057fd7c8b81a0590c5156d999f6a2bf288c05e2981d523851127c064418a5e9d778081565b6103206040518060400160405280600b81526020016a1413d3d317d05353d5539560aa1b81525081565b610320610d64565b6103206040518060400160405280600e81526020016d434f4c4c41544552414c5f53554d60901b81525081565b6103057f208b50e56a0c2096967045d9a06b7f658bd760dd00828d1ed6a4a62df7f72f2081565b6103057fd1a3dde29d658e8c42d21eb8925b5b872041e8f93cd22b0663eb6996804020c781565b61032060405180604001604052806012815260200171232927ad22a72fa7a92222a92fa2a92927a960711b81525081565b6103206040518060400160405280601f81526020017f504f534954494f4e5f494d504143545f4558504f4e454e545f464143544f520081525081565b6103057ff29e6bd77bed61b07ec6a7881427e90c9600db7bb81d2d475f1b744dcdd852ef81565b6103057f93f5faed8e0d27b20cbe23d4961950b928f9813ebdce45ee71d7f0f1ebc2c56381565b6103057fea2abdea3c7f612c8be2e7be5cab70e9eac1810245363558aaa478d87c06ab1a81565b6103057f83149e8aa36e682c6ab4934284cd7dc614e2e635da89a131a9b1f6eda779f70f81565b6103057f26aa63e2502e7427f5d2c686b0e47f4afee1ea92e517e54538f4e4c9928cbc0881565b6103206040518060400160405280600e81526020016d2922a9a2a92b22afa320a1aa27a960911b81525081565b610305610d80565b610320604051806040016040528060168152602001752827a9a4aa24a7a72fa9a82922a0a22fa320a1aa27a960511b81525081565b6103206040518060400160405280601481526020017322a6a82a2cafa827a9a4aa24a7a72fa2a92927a960611b81525081565b61032060405180604001604052806014815260200173282924a1a2afa322a2a22fa82922a1a4a9a4a7a760611b81525081565b6103057f3068f19c1b3fe1cfef45b175668db422de7f776d9c40328ad069d583f75f55ca81565b604051806060016040528060248152602001610e166024913981565b6040518060400160405280601481526020017322a6a82a2cafa827a9a4aa24a7a72fa2a92927a960611b815250604051602001610d109190610dfb565b6040516020818303038152906040528051906020012081565b60405180604001604052806012815260200171232927ad22a72fa7a92222a92fa2a92927a960711b815250604051602001610d109190610dfb565b604051806060016040528060268152602001610e3a6026913981565b6040518060400160405280600c81526020016b27a920a1a622afa2a92927a960a11b815250604051602001610d109190610dfb565b6000815180845260005b81811015610ddb57602081850181015186830182015201610dbf565b506000602082860101526020601f19601f83011685010191505092915050565b602081526000610e0e6020830184610db5565b939250505056fe43554d554c41544956455f46554e44494e475f464143544f525f555044415445445f415443554d554c41544956455f424f52524f57494e475f464143544f525f555044415445445f4154a2646970667358221220effa5ff8076a484375582c1abb0d0604453a949990d788f3c0332621a46fb3b264736f6c63430008100033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}
