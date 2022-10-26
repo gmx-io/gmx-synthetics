@@ -109,7 +109,13 @@ library IncreasePositionUtils {
             true
         );
 
-        cache.sizeDeltaInTokens = PositionUtils.usdToTokenAmount(params.order.sizeDeltaUsd(), cache.executionPrice);
+        if (position.isLong) {
+            // round the number of tokens for long positions down
+            cache.sizeDeltaInTokens = params.order.sizeDeltaUsd() / cache.executionPrice;
+        } else {
+            // round the number of tokens for short positions up
+            cache.sizeDeltaInTokens = Calc.roundUpDivision(params.order.sizeDeltaUsd(), cache.executionPrice);
+        }
         cache.nextPositionSizeInUsd = position.sizeInUsd + params.order.sizeDeltaUsd();
         cache.nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(params.dataStore, params.market.marketToken, position.isLong);
 
