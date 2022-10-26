@@ -34,7 +34,6 @@ library PositionPricingUtils {
         uint256 feesForPool;
         uint256 amountForPool;
         uint256 positionFeeAmount;
-        uint256 spreadAmount;
         int256 fundingFeeAmount;
         uint256 borrowingFeeAmount;
         int256 totalNetCostAmount;
@@ -160,16 +159,14 @@ library PositionPricingUtils {
 
         uint256 feeFactor = dataStore.getUint(Keys.positionFeeFactorKey(position.market));
         uint256 feeReceiverFactor = dataStore.getUint(feeReceiverFactorKey);
-        uint256 spreadFactor = dataStore.getUint(Keys.positionSpreadFactorKey(position.market));
 
         fees.positionFeeAmount = Precision.applyFactor(sizeDeltaUsd, feeFactor) / collateralTokenPrice.min;
-        fees.spreadAmount = Precision.applyFactor(sizeDeltaUsd, spreadFactor) / collateralTokenPrice.min;
         fees.fundingFeeAmount = MarketUtils.getFundingFees(dataStore, position) / collateralTokenPrice.min.toInt256();
         fees.borrowingFeeAmount = MarketUtils.getBorrowingFees(dataStore, position) / collateralTokenPrice.min;
 
         fees.feeReceiverAmount = Precision.applyFactor(fees.positionFeeAmount, feeReceiverFactor);
-        fees.feesForPool = fees.spreadAmount + fees.positionFeeAmount + fees.borrowingFeeAmount - fees.feeReceiverAmount;
-        fees.totalNetCostAmount = fees.fundingFeeAmount - (fees.positionFeeAmount + fees.spreadAmount + fees.borrowingFeeAmount).toInt256();
+        fees.feesForPool = fees.positionFeeAmount + fees.borrowingFeeAmount - fees.feeReceiverAmount;
+        fees.totalNetCostAmount = fees.fundingFeeAmount - (fees.positionFeeAmount + fees.borrowingFeeAmount).toInt256();
 
         return fees;
     }

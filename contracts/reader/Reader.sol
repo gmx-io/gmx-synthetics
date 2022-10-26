@@ -22,10 +22,6 @@ contract Reader {
         return Keys.swapFeeFactorKey(market);
     }
 
-    function swapSpreadFactorKey(address market) external pure returns (bytes32) {
-        return Keys.swapSpreadFactorKey(market);
-    }
-
     function swapImpactFactorKey(address market, bool isPositive) external pure returns (bytes32) {
         return Keys.swapImpactFactorKey(market, isPositive);
     }

@@ -123,16 +123,14 @@ library SwapPricingUtils {
     ) internal view returns (SwapFees memory) {
         SwapFees memory fees;
 
-        uint256 spreadFactor = dataStore.getUint(Keys.swapSpreadFactorKey(marketToken));
         uint256 feeFactor = dataStore.getUint(Keys.swapFeeFactorKey(marketToken));
         uint256 feeReceiverFactor = dataStore.getUint(feeReceiverFactorKey);
 
-        uint256 spreadAmount = Precision.applyFactor(amount, spreadFactor);
         uint256 feeAmount = Precision.applyFactor(amount, feeFactor);
 
         fees.feeReceiverAmount = Precision.applyFactor(feeAmount, feeReceiverFactor);
-        fees.feesForPool = spreadAmount + feeAmount - fees.feeReceiverAmount;
-        fees.amountAfterFees = amount - spreadAmount - feeAmount;
+        fees.feesForPool = feeAmount - fees.feeReceiverAmount;
+        fees.amountAfterFees = amount - feeAmount;
 
         return fees;
     }

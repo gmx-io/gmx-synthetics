@@ -592,8 +592,6 @@ describe("Exchange.Deposit", () => {
     await dataStore.setUint(await reader.swapFeeFactorKey(ethUsdMarket.marketToken), decimalToFloat(5, 4));
     // 30%
     await dataStore.setUint(await keys.FEE_RECEIVER_DEPOSIT_FACTOR(), decimalToFloat(3, 1));
-    // 0.01%: 0.0001
-    await dataStore.setUint(await reader.swapSpreadFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 4));
 
     // set negative price impact to 0.1% for every $50,000 of token imbalance
     // 0.1% => 0.001

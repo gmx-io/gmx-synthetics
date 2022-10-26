@@ -51,11 +51,9 @@ library Keys {
 
     string public constant POSITION_IMPACT_FACTOR = "POSITION_IMPACT_FACTOR";
     string public constant POSITION_IMPACT_EXPONENT_FACTOR = "POSITION_IMPACT_EXPONENT_FACTOR";
-    string public constant POSITION_SPREAD_FACTOR = "POSITION_SPREAD_FACTOR";
     string public constant POSITION_FEE_FACTOR = "POSITION_FEE_FACTOR";
     string public constant SWAP_IMPACT_FACTOR = "SWAP_IMPACT_FACTOR";
     string public constant SWAP_IMPACT_EXPONENT_FACTOR = "SWAP_IMPACT_EXPONENT_FACTOR";
-    string public constant SWAP_SPREAD_FACTOR = "SWAP_SPREAD_FACTOR";
     string public constant SWAP_FEE_FACTOR = "SWAP_FEE_FACTOR";
     string public constant ORACLE_PRECISION = "ORACLE_PRECISION";
     string public constant ORACLE_TYPE = "ORACLE_TYPE";
@@ -199,13 +197,6 @@ library Keys {
         ));
 }
 
-    function positionSpreadFactorKey(address market) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            POSITION_SPREAD_FACTOR,
-            market
-        ));
-    }
-
     function positionFeeFactorKey(address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             POSITION_FEE_FACTOR,
@@ -228,13 +219,6 @@ library Keys {
         ));
     }
 
-
-    function swapSpreadFactorKey(address market) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            SWAP_SPREAD_FACTOR,
-            market
-        ));
-    }
 
     function swapFeeFactorKey(address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(

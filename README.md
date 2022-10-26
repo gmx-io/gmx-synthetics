@@ -288,7 +288,7 @@ This risk will also be present if the positive and negative price impact values 
 
 # Fees
 
-There are configurable spreads, swap fees and position fees and per market.
+There are configurable swap fees and position fees and per market.
 
 Execution fees are also estimated and accounted for on creation of deposit, withdrawal, order requests so that keepers can execute transactions at a close to net zero cost.
 
