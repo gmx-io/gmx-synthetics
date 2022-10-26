@@ -41,6 +41,9 @@ library MarketUtils {
     // cap max funding APR at 1000%
     uint256 public constant MAX_ANNUAL_FUNDING_FACTOR = 1000 * Precision.FLOAT_PRECISION;
 
+    // 0.0000000001 USD
+    uint256 public constant MAX_USD_IMPRECISION = 10 ** 20;
+
     struct MarketPrices {
         Price.Props indexTokenPrice;
         Price.Props longTokenPrice;
@@ -553,7 +556,8 @@ library MarketUtils {
             return Precision.floatToWei(usdValue);
         }
 
-        return usdValue * supply / poolValue;
+        // round market tokens down
+        return supply * usdValue / poolValue;
     }
 
     function marketTokenAmountToUsd(

@@ -120,6 +120,7 @@ library SwapUtils {
             // the swap impact pool is decreased by the used amount
 
             cache.amountIn = fees.amountAfterFees;
+            // round amountOut down
             cache.amountOut = cache.amountIn * cache.tokenInPrice.min / cache.tokenOutPrice.max;
             cache.poolAmountOut = cache.amountOut;
 

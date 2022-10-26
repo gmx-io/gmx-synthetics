@@ -109,7 +109,7 @@ library IncreasePositionUtils {
             true
         );
 
-        cache.sizeDeltaInTokens = params.order.sizeDeltaUsd() / cache.executionPrice;
+        cache.sizeDeltaInTokens = PositionUtils.usdToTokenAmount(params.order.sizeDeltaUsd(), cache.executionPrice);
         cache.nextPositionSizeInUsd = position.sizeInUsd + params.order.sizeDeltaUsd();
         cache.nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(params.dataStore, params.market.marketToken, position.isLong);
 

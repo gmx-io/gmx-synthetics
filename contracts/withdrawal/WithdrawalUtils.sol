@@ -248,6 +248,7 @@ library WithdrawalUtils {
         ExecuteWithdrawalParams memory params,
         _ExecuteWithdrawalParams memory _params
     ) internal returns (uint256) {
+        // round outputAmount down
         uint256 outputAmount = _params.marketTokensUsd / _params.tokenOutPrice.max;
 
         SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(

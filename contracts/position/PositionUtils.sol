@@ -18,9 +18,23 @@ library PositionUtils {
     using Position for Position.Props;
     using Price for Price.Props;
 
+    // 0.0000000001 USD
+    uint256 public constant MAX_USD_IMPRECISION = 10 ** 20;
+
     error LiquidatablePosition();
     error UnexpectedPositionState();
+    error ImpreciseConversion(uint256 diff, uint256 usdValue, uint256 refUsdValue);
 
+    // for long positions, pnl is calculated as:
+    // (position.sizeInTokens * indexTokenPrice) - position.sizeInUsd
+    // if position.sizeInTokens is larger for long positions, the position will have
+    // larger profits and smaller losses for the same changes in token price
+    //
+    // for short positions, pnl is calculated as:
+    // position.sizeInUsd -  (position.sizeInTokens * indexTokenPrice)
+    // if position.sizeInTokens is smaller for long positions, the position will have
+    // larger profits and smaller losses for the same changes in token price
+    //
     // returns (positionPnlUsd, sizeDeltaInTokens)
     function getPositionPnlUsd(
         Position.Props memory position,
@@ -31,27 +45,43 @@ library PositionUtils {
         int256 positionValue = (position.sizeInTokens * indexTokenPrice).toInt256();
         int256 totalPositionPnl = position.isLong ? positionValue - position.sizeInUsd.toInt256() : position.sizeInUsd.toInt256() - positionValue;
 
-        uint256 sizeDeltaInTokens;
-
-        // to avoid gaming for tokens with a small number of decimals
-        // if profit will be realized, round sizeDeltaInTokens down
-        // if loss will be realized, round sizeDeltaInTokens up
-        if (totalPositionPnl > 0) {
-            sizeDeltaInTokens = position.sizeInTokens * sizeDeltaUsd / position.sizeInUsd;
-        } else {
-            uint256 nextSizeInUsd = position.sizeInUsd - sizeDeltaUsd;
-            uint256 nextSizeInTokens = position.sizeInTokens * nextSizeInUsd / position.sizeInUsd;
-            sizeDeltaInTokens = position.sizeInTokens - nextSizeInTokens;
-        }
+        uint256 sizeDeltaInTokens = position.sizeInTokens * sizeDeltaUsd / position.sizeInUsd;
 
         if (position.sizeInUsd == sizeDeltaUsd) {
             sizeDeltaInTokens = position.sizeInTokens;
+        }
+
+        uint256 refUsdValue = sizeDeltaInTokens * indexTokenPrice;
+        uint256 diff = Calc.diff(sizeDeltaUsd, refUsdValue);
+
+        if (diff > MAX_USD_IMPRECISION) {
+            revert ImpreciseConversion(diff, sizeDeltaUsd, refUsdValue);
         }
 
         int256 positionPnlUsd = totalPositionPnl * sizeDeltaInTokens.toInt256() / position.sizeInTokens.toInt256();
 
         return (positionPnlUsd, sizeDeltaInTokens);
     }
+
+    // check the usd rounding difference and throw an error if the difference
+    // is too large
+    // this is to reduce the probability of gaming for tokens with a large
+    // price and a small number of decimal places
+    function usdToTokenAmount(
+        uint256 usdValue,
+        uint256 tokenPrice
+    ) internal pure returns (uint256) {
+        uint256 tokenAmount = usdValue / tokenPrice;
+        uint256 refUsdValue = tokenAmount * tokenPrice;
+        uint256 diff = Calc.diff(usdValue, refUsdValue);
+
+        if (diff > MAX_USD_IMPRECISION) {
+            revert ImpreciseConversion(diff, usdValue, refUsdValue);
+        }
+
+        return tokenAmount;
+    }
+
 
     function getSizeDeltaInTokens(uint256 sizeInUsd, uint256 sizeInTokens, uint256 sizeDeltaUsd) internal pure returns (uint256) {
         return sizeInTokens * sizeDeltaUsd / sizeInUsd;
