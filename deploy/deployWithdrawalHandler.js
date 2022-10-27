@@ -1,8 +1,10 @@
+const { hashString } = require("../utils/hash")
+
 const func = async ({
   getNamedAccounts,
   deployments,
 }) => {
-  const { deploy, get } = deployments
+  const { deploy, get, execute } = deployments
   const { deployer } = await getNamedAccounts()
 
   const { address: roleStoreAddress } = await get("RoleStore");
@@ -14,7 +16,7 @@ const func = async ({
   const { address: feeReceiverAddress } = await get("FeeReceiver");
   const { address: gasUtilsAddress } = await get("GasUtils");
 
-  await deploy("WithdrawalHandler", {
+  const { address, newlyDeployed } = await deploy("WithdrawalHandler", {
     from: deployer,
     log: true,
     args: [
@@ -30,7 +32,12 @@ const func = async ({
       GasUtils: gasUtilsAddress,
     }
   })
+
+  if (newlyDeployed) {
+    await execute("RoleStore", { from: deployer, log: true }, "grantRole", address, hashString("CONTROLLER"))
+  }
 }
+
 func.tags = ["WithdrawalHandler"]
 func.dependencies = [
   "RoleStore",
