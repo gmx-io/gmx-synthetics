@@ -61,6 +61,10 @@ library PositionPricingUtils {
         if (shouldFlipPriceDiff) { priceDiff = -priceDiff; }
 
         int256 priceImpactUsd = size.toInt256() * priceDiff / latestPrice.toInt256();
+        if (priceImpactUsd > 0) {
+            return Calc.roundUpDivision(priceImpactUsd, latestPrice.toInt256());
+        }
+
         return priceImpactUsd / latestPrice.toInt256();
     }
 

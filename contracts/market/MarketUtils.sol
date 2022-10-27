@@ -184,6 +184,29 @@ library MarketUtils {
         eventEmitter.emitPoolAmountUpdated(market, token, delta, nextValue);
     }
 
+    function getCappedPositionImpactUsd(
+        DataStore dataStore,
+        address market,
+        Price.Props memory tokenPrice,
+        int256 priceImpactUsd
+    ) internal view returns (int256) {
+        if (priceImpactUsd < 0) {
+            return priceImpactUsd;
+        }
+
+        uint256 impactPoolAmount = getPositionImpactPoolAmount(dataStore, market);
+        int256 maxPositiveImpactUsd = (impactPoolAmount * tokenPrice.min).toInt256();
+
+        if (priceImpactUsd > maxPositiveImpactUsd) {
+            priceImpactUsd = maxPositiveImpactUsd;
+        }
+
+        return priceImpactUsd;
+    }
+
+    function getPositionImpactPoolAmount(DataStore dataStore, address market) internal view returns (uint256) {
+        return dataStore.getUint(Keys.positionImpactPoolAmountKey(market));
+    }
 
     function getSwapImpactPoolAmount(DataStore dataStore, address market, address token) internal view returns (uint256) {
         return dataStore.getUint(Keys.swapImpactPoolAmountKey(market, token));
@@ -202,6 +225,21 @@ library MarketUtils {
         );
 
         eventEmitter.emitSwapImpactPoolAmountUpdated(market, token, delta, nextValue);
+    }
+
+    function applyDeltaToPositionImpactPool(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        int256 delta
+    ) internal {
+        uint256 nextValue = dataStore.applyDeltaToUint(
+            Keys.positionImpactPoolAmountKey(market),
+            delta,
+            true
+        );
+
+        eventEmitter.emitPositionImpactPoolAmountUpdated(market, delta, nextValue);
     }
 
     function applyDeltaToOpenInterest(

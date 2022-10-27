@@ -6,6 +6,8 @@ import "../role/RoleModule.sol";
 import "../utils/Calc.sol";
 
 contract DataStore is RoleModule {
+    using SafeCast for int256;
+
     mapping(bytes32 => uint256) public uintValues;
     mapping(bytes32 => int256) public intValues;
     mapping(bytes32 => address) public addressValues;
@@ -26,6 +28,18 @@ contract DataStore is RoleModule {
 
     function applyDeltaToUint(bytes32 key, int256 value) external onlyController returns (uint256) {
         uint256 nextUint = Calc.sum(uintValues[key], value);
+        uintValues[key] = nextUint;
+        return nextUint;
+    }
+
+    function applyDeltaToUint(bytes32 key, int256 value, bool ensurePositiveValue) external onlyController returns (uint256) {
+        uint256 uintValue = uintValues[key];
+        if (ensurePositiveValue && value < 0 && (-value).toUint256() > uintValue) {
+            uintValues[key] = 0;
+            return 0;
+        }
+
+        uint256 nextUint = Calc.sum(uintValue, value);
         uintValues[key] = nextUint;
         return nextUint;
     }
