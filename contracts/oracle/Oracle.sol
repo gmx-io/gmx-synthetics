@@ -264,6 +264,27 @@ contract Oracle is RoleModule {
         return precision;
     }
 
+    function getPriceFeed(DataStore dataStore, address token) public view returns (IPriceFeed) {
+        address priceFeedAddress = dataStore.getAddress(Keys.priceFeedKey(token));
+        require(priceFeedAddress != address(0), "Oracle: invalid price feed");
+
+        return IPriceFeed(priceFeedAddress);
+    }
+
+    function getStablePrice(DataStore dataStore, address token) public view returns (uint256) {
+        return dataStore.getUint(Keys.stablePriceKey(token));
+    }
+
+    function getPriceFeedPrecision(DataStore dataStore, address token) public view returns (uint256) {
+        uint256 precision = dataStore.getUint(Keys.priceFeedPrecisionKey(token));
+
+        if (precision == 0) {
+            revert EmptyFeedPrecision(token);
+        }
+
+        return precision;
+    }
+
     function _setPrices(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -370,10 +391,8 @@ contract Oracle is RoleModule {
 
             require(primaryPrices[token].isEmpty(), "Oracle: price already set");
 
-            address priceFeedAddress = dataStore.getAddress(Keys.priceFeedKey(token));
-            require(priceFeedAddress != address(0), "Oracle: invalid price feed");
+            IPriceFeed priceFeed = getPriceFeed(dataStore, token);
 
-            IPriceFeed priceFeed = IPriceFeed(priceFeedAddress);
             (
                 /* uint80 roundID */,
                 int256 _price,
@@ -383,11 +402,7 @@ contract Oracle is RoleModule {
             ) = priceFeed.latestRoundData();
 
             uint256 price = SafeCast.toUint256(_price);
-            uint256 precision = dataStore.getUint(Keys.priceFeedPrecisionKey(token));
-
-            if (precision == 0) {
-                revert EmptyFeedPrecision(token);
-            }
+            uint256 precision = getPriceFeedPrecision(dataStore, token);
 
             price = price * precision / Precision.FLOAT_PRECISION;
 
@@ -395,14 +410,27 @@ contract Oracle is RoleModule {
                 revert EmptyFeedPrice(token);
             }
 
-            primaryPrices[token] = Price.Props(
-                price,
-                price
-            );
+            uint256 stablePrice = getStablePrice(dataStore, token);
+
+            Price.Props memory priceProps;
+
+            if (stablePrice > 0) {
+                priceProps = Price.Props(
+                    price < stablePrice ? price : stablePrice,
+                    price < stablePrice ? stablePrice : price
+                );
+            } else {
+                priceProps = Price.Props(
+                    price,
+                    price
+                );
+            }
+
+            primaryPrices[token] = priceProps;
 
             tempTokens.add(token);
 
-            eventEmitter.emitOraclePriceUpdated(token, price, price, true, true);
+            eventEmitter.emitOraclePriceUpdated(token, priceProps.min, priceProps.max, true, true);
         }
     }
 
