@@ -51,17 +51,17 @@ library Keys {
 
     string public constant POSITION_IMPACT_FACTOR = "POSITION_IMPACT_FACTOR";
     string public constant POSITION_IMPACT_EXPONENT_FACTOR = "POSITION_IMPACT_EXPONENT_FACTOR";
-    string public constant POSITION_SPREAD_FACTOR = "POSITION_SPREAD_FACTOR";
     string public constant POSITION_FEE_FACTOR = "POSITION_FEE_FACTOR";
     string public constant SWAP_IMPACT_FACTOR = "SWAP_IMPACT_FACTOR";
     string public constant SWAP_IMPACT_EXPONENT_FACTOR = "SWAP_IMPACT_EXPONENT_FACTOR";
-    string public constant SWAP_SPREAD_FACTOR = "SWAP_SPREAD_FACTOR";
     string public constant SWAP_FEE_FACTOR = "SWAP_FEE_FACTOR";
     string public constant ORACLE_PRECISION = "ORACLE_PRECISION";
+    string public constant ORACLE_TYPE = "ORACLE_TYPE";
     string public constant OPEN_INTEREST = "OPEN_INTEREST";
     string public constant OPEN_INTEREST_IN_TOKENS = "OPEN_INTEREST_IN_TOKENS";
     string public constant COLLATERAL_SUM = "COLLATERAL_SUM";
     string public constant POOL_AMOUNT = "POOL_AMOUNT";
+    string public constant POSITION_IMPACT_POOL_AMOUNT = "POSITION_IMPACT_POOL_AMOUNT";
     string public constant SWAP_IMPACT_POOL_AMOUNT = "SWAP_IMPACT_POOL_AMOUNT";
     string public constant PRICE_FEED = "PRICE_FEED";
     string public constant PRICE_FEED_PRECISION = "PRICE_FEED_PRECISION";
@@ -90,7 +90,6 @@ library Keys {
             singleToken
         ));
     }
-
 
     function withdrawalGasLimitKey(bool singleToken) internal pure returns (bytes32) {
         return keccak256(abi.encode(
@@ -198,13 +197,6 @@ library Keys {
         ));
 }
 
-    function positionSpreadFactorKey(address market) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            POSITION_SPREAD_FACTOR,
-            market
-        ));
-    }
-
     function positionFeeFactorKey(address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             POSITION_FEE_FACTOR,
@@ -228,13 +220,6 @@ library Keys {
     }
 
 
-    function swapSpreadFactorKey(address market) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            SWAP_SPREAD_FACTOR,
-            market
-        ));
-    }
-
     function swapFeeFactorKey(address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             SWAP_FEE_FACTOR,
@@ -245,6 +230,13 @@ library Keys {
     function oraclePrecisionKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             ORACLE_PRECISION,
+            token
+        ));
+    }
+
+    function oracleTypeKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            ORACLE_TYPE,
             token
         ));
     }
@@ -286,8 +278,16 @@ library Keys {
         ));
     }
 
-    // amount of tokens in impact pool
-    function impactPoolAmountKey(address market, address token) internal pure returns (bytes32) {
+    // amount of tokens in position impact pool
+    function positionImpactPoolAmountKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            POSITION_IMPACT_POOL_AMOUNT,
+            market
+        ));
+    }
+
+    // amount of tokens in swap impact pool
+    function swapImpactPoolAmountKey(address market, address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             SWAP_IMPACT_POOL_AMOUNT,
             market,

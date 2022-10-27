@@ -12,6 +12,10 @@ library Calc {
         return a > b ? a - b : b - a;
     }
 
+    function roundUpDivision(uint256 a, uint256 b) internal pure returns (uint256) {
+        return (a + b - 1) / b;
+    }
+
     function sum(uint256 a, int256 b) internal pure returns (uint256) {
         if (b > 0) {
             return a + b.abs();

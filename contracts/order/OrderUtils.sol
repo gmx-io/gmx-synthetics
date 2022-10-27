@@ -31,6 +31,7 @@ import "../utils/Array.sol";
 library OrderUtils {
     using Order for Order.Props;
     using Position for Position.Props;
+    using Price for Price.Props;
     using Array for uint256[];
 
     function createOrder(
@@ -213,24 +214,51 @@ library OrderUtils {
         eventEmitter.emitOrderFrozen(key, reason);
     }
 
-    // more info on the logic here can be found in Order.sol
+    // for market orders, set the min and max values of the customPrice to either
+    // secondaryPrice.min or secondaryPrice.max depending on whether the order
+    // is an increase or decrease and whether it is for a long or short
+    //
+    // customPrice.min and customPrice.max will be equal in this case
+    //
+    // for limit / stop-loss orders, the min and max value will be set to the triggerPrice
+    // and latest secondaryPrice value, this represents the price that the user desired the order
+    // to be fulfilled at and the best oracle price that the order could be fulfilled at
+    //
+    // OrderBaseUtils.getExecutionPrice handles the logic for selecting the execution price to use
     function setExactOrderPrice(
         Oracle oracle,
         address indexToken,
         Order.OrderType orderType,
-        uint256 acceptablePrice,
+        uint256 triggerPrice,
         bool isLong
     ) internal {
         if (OrderBaseUtils.isSwapOrder(orderType)) {
             return;
         }
 
+        bool isIncrease = OrderBaseUtils.isIncreaseOrder(orderType);
+        // increase order:
+        //     - long: use the larger price
+        //     - short: use the smaller price
+        // decrease order:
+        //     - long: use the smaller price
+        //     - short: use the larger price
+        bool shouldUseMaxPrice = isIncrease ? isLong : !isLong;
+
         // set secondary price to primary price since increase / decrease positions use the secondary price for index token values
         if (orderType == Order.OrderType.MarketIncrease ||
             orderType == Order.OrderType.MarketDecrease ||
             orderType == Order.OrderType.Liquidation) {
-            uint256 price = oracle.getPrimaryPrice(indexToken);
+
+            Price.Props memory price = oracle.getPrimaryPrice(indexToken);
+
             oracle.setSecondaryPrice(indexToken, price);
+
+            oracle.setCustomPrice(indexToken, Price.Props(
+                price.pickPrice(shouldUseMaxPrice),
+                price.pickPrice(shouldUseMaxPrice)
+            ));
+
             return;
         }
 
@@ -238,32 +266,37 @@ library OrderUtils {
             orderType == Order.OrderType.LimitDecrease ||
             orderType == Order.OrderType.StopLossDecrease
         ) {
-            uint256 primaryPrice = oracle.getPrimaryPrice(indexToken);
-            uint256 secondaryPrice = oracle.getSecondaryPrice(indexToken);
+            uint256 primaryPrice = oracle.getPrimaryPrice(indexToken).pickPrice(shouldUseMaxPrice);
+            uint256 secondaryPrice = oracle.getSecondaryPrice(indexToken).pickPrice(shouldUseMaxPrice);
 
-            bool shouldValidateAscendingPrice;
-            if (orderType == Order.OrderType.LimitIncrease) {
-                // for long increase orders, the oracle prices should be descending
-                // for short increase orders, the oracle prices should be ascending
-                shouldValidateAscendingPrice = !isLong;
-            } else {
-                // for long decrease orders, the oracle prices should be ascending
-                // for short decrease orders, the oracle prices should be descending
-                shouldValidateAscendingPrice = isLong;
-            }
+            // increase order:
+            //     - long: validate descending price
+            //     - short: validate ascending price
+            // decrease order:
+            //     - long: validate ascending price
+            //     - short: validate descending price
+            bool shouldValidateAscendingPrice = isIncrease ? !isLong : isLong;
 
             if (shouldValidateAscendingPrice) {
-                // check that the earlier price (primaryPrice) is smaller than the acceptablePrice
-                // and that the later price (secondaryPrice) is larger than the acceptablePrice
-                bool hasAcceptablePrices = primaryPrice <= acceptablePrice && secondaryPrice >= acceptablePrice;
-                if (!hasAcceptablePrices) { revert(Keys.ORACLE_ERROR); }
-                oracle.setSecondaryPrice(indexToken, acceptablePrice);
+                // check that the earlier price (primaryPrice) is smaller than the triggerPrice
+                // and that the later price (secondaryPrice) is larger than the triggerPrice
+                bool ok = primaryPrice <= triggerPrice && triggerPrice <= secondaryPrice;
+                if (!ok) { revert(Keys.ORACLE_ERROR); }
+
+                oracle.setCustomPrice(indexToken, Price.Props(
+                    triggerPrice, // min price that order can be executed with
+                    secondaryPrice // max price that order can be executed with
+                ));
             } else {
-                // check that the earlier price (primaryPrice) is larger than the acceptablePrice
-                // and that the later price (secondaryPrice) is smaller than the acceptablePrice
-                bool hasAcceptablePrices = primaryPrice >= acceptablePrice && secondaryPrice <= acceptablePrice;
-                if (!hasAcceptablePrices) { revert(Keys.ORACLE_ERROR); }
-                oracle.setSecondaryPrice(indexToken, acceptablePrice);
+                // check that the earlier price (primaryPrice) is larger than the triggerPrice
+                // and that the later price (secondaryPrice) is smaller than the triggerPrice
+                bool ok = primaryPrice >= triggerPrice && triggerPrice >= secondaryPrice;
+                if (!ok) { revert(Keys.ORACLE_ERROR); }
+
+                oracle.setCustomPrice(indexToken, Price.Props(
+                    secondaryPrice, // min price that order can be executed with
+                    triggerPrice // max price that order can be executed with
+                ));
             }
 
             return;

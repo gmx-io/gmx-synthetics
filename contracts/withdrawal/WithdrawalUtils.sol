@@ -20,6 +20,8 @@ import "../utils/Null.sol";
 
 library WithdrawalUtils {
     using SafeCast for uint256;
+    using SafeCast for int256;
+    using Price for Price.Props;
     using Array for uint256[];
 
     struct CreateWithdrawalParams {
@@ -54,8 +56,8 @@ library WithdrawalUtils {
         address receiver;
         address tokenIn;
         address tokenOut;
-        uint256 tokenInPrice;
-        uint256 tokenOutPrice;
+        Price.Props tokenInPrice;
+        Price.Props tokenOutPrice;
         uint256 marketTokensAmount;
         bool shouldConvertETH;
         uint256 marketTokensUsd;
@@ -97,7 +99,7 @@ library WithdrawalUtils {
             params.marketTokensShortAmount,
             params.minLongTokenAmount,
             params.minShortTokenAmount,
-            block.number,
+            Chain.currentBlockNumber(),
             params.shouldConvertETH,
             params.executionFee,
             params.callbackGasLimit,
@@ -126,8 +128,8 @@ library WithdrawalUtils {
 
         Market.Props memory market = params.marketStore.get(withdrawal.market);
 
-        uint256 longTokenPrice = params.oracle.getPrimaryPrice(market.longToken);
-        uint256 shortTokenPrice = params.oracle.getPrimaryPrice(market.shortToken);
+        Price.Props memory longTokenPrice = params.oracle.getPrimaryPrice(market.longToken);
+        Price.Props memory shortTokenPrice = params.oracle.getPrimaryPrice(market.shortToken);
 
         ExecuteWithdrawalCache memory cache;
         cache.poolValue = MarketUtils.getPoolValue(
@@ -135,7 +137,8 @@ library WithdrawalUtils {
             market,
             longTokenPrice,
             shortTokenPrice,
-            params.oracle.getPrimaryPrice(market.indexToken)
+            params.oracle.getPrimaryPrice(market.indexToken),
+            false
         );
 
         cache.marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
@@ -148,8 +151,8 @@ library WithdrawalUtils {
                 market.marketToken,
                 market.longToken,
                 market.shortToken,
-                longTokenPrice,
-                shortTokenPrice,
+                longTokenPrice.midPrice(),
+                shortTokenPrice.midPrice(),
                 -(cache.marketTokensLongUsd.toInt256()),
                 -(cache.marketTokensShortUsd.toInt256())
             )
@@ -245,7 +248,8 @@ library WithdrawalUtils {
         ExecuteWithdrawalParams memory params,
         _ExecuteWithdrawalParams memory _params
     ) internal returns (uint256) {
-        uint256 outputAmount = _params.marketTokensUsd / _params.tokenOutPrice;
+        // round outputAmount down
+        uint256 outputAmount = _params.marketTokensUsd / _params.tokenOutPrice.max;
 
         SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
             params.dataStore,
@@ -271,7 +275,7 @@ library WithdrawalUtils {
             // for example, if 50,000 USDC is withdrawn and there is a positive price impact
             // an additional 100 USDC may be sent to the user
             // the swap impact pool is decreased by the used amount
-            uint256 positiveImpactAmount = MarketUtils.applyPositiveImpact(
+            int256 positiveImpactAmount = MarketUtils.applySwapImpactWithCap(
                 params.dataStore,
                 params.eventEmitter,
                 _params.market.marketToken,
@@ -280,14 +284,14 @@ library WithdrawalUtils {
                 _params.priceImpactUsd
             );
 
-            outputAmount += positiveImpactAmount;
+            outputAmount += positiveImpactAmount.toUint256();
         } else {
             // when there is a negative price impact factor,
             // less of the output amount is sent to the user
             // for example, if 10 ETH is withdrawn and there is a negative price impact
             // only 9.995 ETH may be withdrawn
             // the remaining 0.005 ETH will be stored in the swap impact pool
-            uint256 negativeImpactAmount = MarketUtils.applyNegativeImpact(
+            int256 negativeImpactAmount = MarketUtils.applySwapImpactWithCap(
                 params.dataStore,
                 params.eventEmitter,
                 _params.market.marketToken,
@@ -296,15 +300,15 @@ library WithdrawalUtils {
                 _params.priceImpactUsd
             );
 
-            outputAmount -= negativeImpactAmount;
+            outputAmount -= (-negativeImpactAmount).toUint256();
         }
 
-        MarketUtils.decreasePoolAmount(
+        MarketUtils.applyDeltaToPoolAmount(
             params.dataStore,
             params.eventEmitter,
             _params.market.marketToken,
             _params.tokenOut,
-            poolAmountDelta
+            -poolAmountDelta.toInt256()
         );
 
         MarketUtils.validateReserve(

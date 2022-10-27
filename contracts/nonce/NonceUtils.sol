@@ -14,6 +14,11 @@ library NonceUtils {
         return dataStore.incrementUint(Keys.NONCE, 1);
     }
 
+    // position keys are bytes32 values based on a hash of the position account,
+    // market, collateral token and whether the position is long / short
+    // see PositionUtils for more details
+    // return bytes32 here as well instead of uint256 so that all keys have the
+    // same bytes32 type
     function getNextKey(DataStore dataStore) internal returns (bytes32) {
         uint256 nonce = incrementNonce(dataStore);
         bytes32 key = keccak256(abi.encode(nonce));

@@ -123,7 +123,7 @@ describe("Exchange.Deposit", () => {
       "9995000000000000001"
     );
     expect(await reader.getPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq(0);
-    expect(await reader.getImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
+    expect(await reader.getSwapImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
       "4999999999999999" // 0.005 ETH, 25 USD
     );
 
@@ -194,7 +194,7 @@ describe("Exchange.Deposit", () => {
       "9995000000000000001"
     );
     expect(await reader.getPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq(0);
-    expect(await reader.getImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
+    expect(await reader.getSwapImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
       "4999999999999999" // 0.005 ETH, 25 USD
     );
 
@@ -263,7 +263,7 @@ describe("Exchange.Deposit", () => {
       "4998750000000000001" // 4.99875
     );
     expect(await reader.getPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq(0);
-    expect(await reader.getImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
+    expect(await reader.getSwapImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
       "1249999999999999" // 0.00125 ETH, 6.25 USD
     );
 
@@ -296,7 +296,7 @@ describe("Exchange.Deposit", () => {
       "9995000625000000002" // 9.995000625
     );
     expect(await reader.getPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq(0);
-    expect(await reader.getImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
+    expect(await reader.getSwapImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
       "4999374999999998" // 0.004999375 ETH, 24.996875 USD
     );
 
@@ -335,7 +335,7 @@ describe("Exchange.Deposit", () => {
     expect(await reader.getPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq(
       expandDecimals(50 * 1000, 6)
     );
-    expect(await reader.getImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(0);
+    expect(await reader.getSwapImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(0);
   });
 
   it("!isSameSideRebalance, net negative price impact", async () => {
@@ -379,7 +379,7 @@ describe("Exchange.Deposit", () => {
       "9995000000000000001"
     );
     expect(await reader.getPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq(0);
-    expect(await reader.getImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
+    expect(await reader.getSwapImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
       "4999999999999999" // 0.005 ETH, 25 USD
     );
 
@@ -412,12 +412,12 @@ describe("Exchange.Deposit", () => {
       "9995000000000000001"
     );
     expect(await reader.getPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq("99987462497"); // 99987.462497
-    expect(await reader.getImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
+    expect(await reader.getSwapImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
       "4999999999999999" // 0.005 ETH, 25 USD
     );
     // 12.5 USD positive price impact, 25 USD negative price impact
     // net ~12.5 USD negative price impact
-    expect(await reader.getImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq(
+    expect(await reader.getSwapImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq(
       "12537503" // 12.537503
     );
   });
@@ -463,7 +463,7 @@ describe("Exchange.Deposit", () => {
       "9995000000000000001"
     );
     expect(await reader.getPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq(0);
-    expect(await reader.getImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
+    expect(await reader.getSwapImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
       "4999999999999999" // 0.005 ETH, 25 USD
     );
 
@@ -496,10 +496,10 @@ describe("Exchange.Deposit", () => {
       "9997296499375000000" // 9.997296499375
     );
     expect(await reader.getPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq("60000000000"); // 60,000
-    expect(await reader.getImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
+    expect(await reader.getSwapImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
       "2703500625000000" // 0.002703500625 ETH, ~13.51 USD
     );
-    expect(await reader.getImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq(0);
+    expect(await reader.getSwapImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq(0);
   });
 
   it("price impact, fees", async () => {
@@ -550,7 +550,7 @@ describe("Exchange.Deposit", () => {
       "9993500000000000001" // 9.9935 ETH
     );
     expect(await reader.getPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq(0);
-    expect(await reader.getImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
+    expect(await reader.getSwapImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
       "4999999999999999" // 0.005 ETH, 25 USD
     );
 
@@ -582,7 +582,7 @@ describe("Exchange.Deposit", () => {
       "9995996750943750000" // 9.996 ETH
     );
     expect(await reader.getPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq("49967503750"); // 49967.50375 USDC
-    expect(await reader.getImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
+    expect(await reader.getSwapImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
       "2503249056250000" // 0.0025, 12.5 USD
     );
   });
@@ -592,8 +592,6 @@ describe("Exchange.Deposit", () => {
     await dataStore.setUint(await reader.swapFeeFactorKey(ethUsdMarket.marketToken), decimalToFloat(5, 4));
     // 30%
     await dataStore.setUint(await keys.FEE_RECEIVER_DEPOSIT_FACTOR(), decimalToFloat(3, 1));
-    // 0.01%: 0.0001
-    await dataStore.setUint(await reader.swapSpreadFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 4));
 
     // set negative price impact to 0.1% for every $50,000 of token imbalance
     // 0.1% => 0.001
@@ -637,7 +635,7 @@ describe("Exchange.Deposit", () => {
       "9993500000000000001" // 9.9935 ETH
     );
     expect(await reader.getPoolAmount(dataStore.address, ethUsdMarket.marketToken, usdc.address)).eq(0);
-    expect(await reader.getImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
+    expect(await reader.getSwapImpactPoolAmount(dataStore.address, ethUsdMarket.marketToken, weth.address)).eq(
       "4999999999999999" // 0.005 ETH, 24.97 USD
     );
 

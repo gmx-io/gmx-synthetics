@@ -2,7 +2,11 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+
 library Array {
+    using SafeCast for int256;
+
     function get(bytes32[] memory arr, uint256 index) internal pure returns (bytes32) {
         if (index < arr.length) {
             return arr[index];
@@ -63,5 +67,22 @@ library Array {
         }
 
         return (arr[arr.length / 2] + arr[arr.length / 2 - 1]) / 2;
+    }
+
+    function getUncompactedValue(
+        uint256[] memory compactedValues,
+        uint256 index,
+        uint256 compactedValueBitLength,
+        uint256 bitmask
+    ) internal pure returns (uint256) {
+        uint256 compactedValuesPerSlot = 256 / compactedValueBitLength;
+
+        uint256 slotIndex = index / compactedValuesPerSlot;
+        uint256 slotBits = compactedValues[slotIndex];
+        uint256 offset = (index - slotIndex * compactedValuesPerSlot) * compactedValueBitLength;
+
+        uint256 value = (slotBits >> offset) & bitmask;
+
+        return value;
     }
 }

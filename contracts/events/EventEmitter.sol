@@ -15,7 +15,7 @@ contract EventEmitter is RoleModule {
         address indexed market,
         address collateralToken,
         bool isLong,
-        uint256 price,
+        uint256 executionPrice,
         uint256 sizeDeltaInUsd,
         int256 collateralDeltaAmount
     );
@@ -25,7 +25,7 @@ contract EventEmitter is RoleModule {
         address indexed market,
         address collateralToken,
         bool isLong,
-        uint256 price,
+        uint256 executionPrice,
         uint256 sizeDeltaInUsd,
         int256 collateralDeltaAmount,
         int256 remainingCollateralAmount,
@@ -59,73 +59,40 @@ contract EventEmitter is RoleModule {
     event SwapFeesCollected(bytes32 action, SwapPricingUtils.SwapFees fees);
     event PositionFeesCollected(bool isIncrease, PositionPricingUtils.PositionFees fees);
 
-    event PoolAmountIncreased(address market, address token, uint256 amount);
-    event PoolAmountDecreased(address market, address token, uint256 amount);
+    event PoolAmountUpdated(address market, address token, int256 delta, uint256 nextValue);
+    event SwapImpactPoolAmountUpdated(address market, address token, int256 delta, uint256 nextValue);
+    event OpenInterestUpdated(address market, bool isLong, int256 delta, uint256 nextValue);
 
-    event ImpactPoolAmountIncreased(address market, address token, uint256 amount);
-    event ImpactPoolAmountDecrease(address market, address token, uint256 amount);
-
-    event OpenInterestIncrease(address market, bool isLong, uint256 sizeDeltaUsd);
-    event OpenInterestDecreased(address market, bool isLong, uint256 sizeDeltaUsd);
-
-    event CollateralSumIncreased(
+    event CollateralSumDelta(
         address market,
         address collateralToken,
         bool isLong,
-        uint256 collateralDeltaAmount
+        int256 collateralDeltaAmount
     );
 
-    event CollateralSumDecreased(
-        address market,
-        address collateralToken,
-        bool isLong,
-        uint256 collateralDeltaAmount
-    );
-
-    event OraclePriceUpdated(address token, uint256 price, bool isPrimary, bool isPriceFeed);
+    event OraclePriceUpdated(address token, uint256 minPrice, uint256 maxPrice, bool isPrimary, bool isPriceFeed);
 
     constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
 
-    function emitPoolAmountIncreased(address market, address token, uint256 amount) external onlyController {
-        emit PoolAmountIncreased(market, token, amount);
+    function emitPoolAmountUpdated(address market, address token, int256 delta, uint256 nextValue) external onlyController {
+        emit PoolAmountUpdated(market, token, delta, nextValue);
     }
 
-    function emitPoolAmountDecreased(address market, address token, uint256 amount) external onlyController {
-        emit PoolAmountDecreased(market, token, amount);
+    function emitSwapImpactPoolAmountUpdated(address market, address token, int256 delta, uint256 nextValue) external onlyController {
+        emit SwapImpactPoolAmountUpdated(market, token, delta, nextValue);
     }
 
-    function emitImpactPoolAmountIncreased(address market, address token, uint256 amount) external onlyController {
-        emit ImpactPoolAmountIncreased(market, token, amount);
+    function emitOpenInterestUpdated(address market, bool isLong, int256 delta, uint256 nextValue) external onlyController {
+        emit OpenInterestUpdated(market, isLong, delta, nextValue);
     }
 
-    function emitImpactPoolAmountDecreased(address market, address token, uint256 amount) external onlyController {
-        emit ImpactPoolAmountDecrease(market, token, amount);
-    }
-
-    function emitOpenInterestIncreased(address market, bool isLong, uint256 sizeDeltaUsd) external onlyController {
-        emit OpenInterestIncrease(market, isLong, sizeDeltaUsd);
-    }
-
-    function emitOpenInterestDecreased(address market, bool isLong, uint256 sizeDeltaUsd) external onlyController {
-        emit OpenInterestDecreased(market, isLong, sizeDeltaUsd);
-    }
-
-    function emitCollateralSumIncreased(
+    function emitCollateralSumDelta(
         address market,
         address collateralToken,
         bool isLong,
-        uint256 collateralDeltaAmount
+        int256 collateralDeltaAmount
     ) external onlyController {
-        emit CollateralSumIncreased(market, collateralToken, isLong, collateralDeltaAmount);
-    }
-
-    function emitCollateralSumDecreased(
-        address market,
-        address collateralToken,
-        bool isLong,
-        uint256 collateralDeltaAmount
-    ) external onlyController {
-        emit CollateralSumDecreased(market, collateralToken, isLong, collateralDeltaAmount);
+        emit CollateralSumDelta(market, collateralToken, isLong, collateralDeltaAmount);
     }
 
     function emitOrderCreated(bytes32 key, Order.Props memory order) external onlyController {
@@ -185,8 +152,8 @@ contract EventEmitter is RoleModule {
         emit PositionFeesCollected(isIncrease, fees);
     }
 
-    function emitOraclePriceUpdated(address token, uint256 price, bool isPrimary, bool isPriceFeed) external onlyController {
-        emit OraclePriceUpdated(token, price, isPrimary, isPriceFeed);
+    function emitOraclePriceUpdated(address token, uint256 minPrice, uint256 maxPrice, bool isPrimary, bool isPriceFeed) external onlyController {
+        emit OraclePriceUpdated(token, minPrice, maxPrice, isPrimary, isPriceFeed);
     }
 
     function emitPositionIncrease(
@@ -195,7 +162,7 @@ contract EventEmitter is RoleModule {
         address market,
         address collateralToken,
         bool isLong,
-        uint256 price,
+        uint256 executionPrice,
         uint256 sizeDeltaUsd,
         int256 collateralDeltaAmount
     ) external onlyController {
@@ -205,7 +172,7 @@ contract EventEmitter is RoleModule {
             market,
             collateralToken,
             isLong,
-            price,
+            executionPrice,
             sizeDeltaUsd,
             collateralDeltaAmount
         );
@@ -217,7 +184,7 @@ contract EventEmitter is RoleModule {
         address market,
         address collateralToken,
         bool isLong,
-        uint256 price,
+        uint256 executionPrice,
         uint256 sizeDeltaUsd,
         int256 collateralDeltaAmount,
         int256 remainingCollateralAmount,
@@ -230,7 +197,7 @@ contract EventEmitter is RoleModule {
             market,
             collateralToken,
             isLong,
-            price,
+            executionPrice,
             sizeDeltaUsd,
             collateralDeltaAmount,
             remainingCollateralAmount,
