@@ -31,7 +31,13 @@ module.exports = {
         USDC: {
           oraclePrecision: 18
         },
-      }
+      },
+      markets: [
+        {
+          tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
+          reserveFactor: [5, 1],
+        }
+      ]
     },
     localhost: {
       tokens: {
@@ -44,7 +50,13 @@ module.exports = {
         USDC: {
           oraclePrecision: 18
         },
-      }
+      },
+      markets: [
+        {
+          tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
+          reserveFactor: [5, 1],
+        }
+      ]
     },
     arbitrum: {
       url: "https://arb1.arbitrum.io/rpc",

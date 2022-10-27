@@ -20,8 +20,6 @@ const func = async ({
   const { address: decreaseOrderUtilsAddress } = await get("DecreaseOrderUtils");
   const { address: swapOrderUtilsAddress } = await get("SwapOrderUtils");
 
-  console.log("gasUtilsAddress", gasUtilsAddress)
-
   const { newlyDeployed, address } = await deploy("OrderHandler", {
     from: deployer,
     log: true,
