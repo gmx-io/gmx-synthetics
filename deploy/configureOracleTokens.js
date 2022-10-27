@@ -9,7 +9,8 @@ const func = async ({
   const { execute, read } = deployments
   const { deployer } = await getNamedAccounts()
 
-  // network.config.tokens is updated in runtime for non-live networks
+  // network.config.tokens.address values are updated in runtime for non-live networks
+  // instead of being configured in hardhat.config.js
   for (const token of Object.values(network.config.tokens)) {
     const key = hashData(["string", "address"], ["ORACLE_PRECISION", token.address])
     const value = expandDecimals(1, token.oraclePrecision)
