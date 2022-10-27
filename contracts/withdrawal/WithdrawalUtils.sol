@@ -275,16 +275,16 @@ library WithdrawalUtils {
             // for example, if 50,000 USDC is withdrawn and there is a positive price impact
             // an additional 100 USDC may be sent to the user
             // the swap impact pool is decreased by the used amount
-            uint256 positiveImpactAmount = MarketUtils.applySwapImpactWithCap(
+            int256 positiveImpactAmount = MarketUtils.applySwapImpactWithCap(
                 params.dataStore,
                 params.eventEmitter,
                 _params.market.marketToken,
                 _params.tokenOut,
                 _params.tokenOutPrice,
                 _params.priceImpactUsd
-            ).toUint256();
+            );
 
-            outputAmount += positiveImpactAmount;
+            outputAmount += positiveImpactAmount.toUint256();
         } else {
             // when there is a negative price impact factor,
             // less of the output amount is sent to the user

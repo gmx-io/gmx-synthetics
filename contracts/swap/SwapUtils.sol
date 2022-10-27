@@ -124,16 +124,16 @@ library SwapUtils {
             cache.amountOut = cache.amountIn * cache.tokenInPrice.min / cache.tokenOutPrice.max;
             cache.poolAmountOut = cache.amountOut;
 
-            uint256 positiveImpactAmount = MarketUtils.applySwapImpactWithCap(
+            int256 positiveImpactAmount = MarketUtils.applySwapImpactWithCap(
                 params.dataStore,
                 params.eventEmitter,
                 _params.market.marketToken,
                 cache.tokenOut,
                 cache.tokenOutPrice,
                 priceImpactUsd
-            ).toUint256();
+            );
 
-            cache.amountOut += positiveImpactAmount;
+            cache.amountOut += positiveImpactAmount.toUint256();
         } else {
             // when there is a negative price impact factor,
             // less of the input amount is sent to the pool
