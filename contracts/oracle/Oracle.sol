@@ -33,6 +33,7 @@ contract Oracle is RoleModule {
         uint256 oracleBlockNumber;
         bytes32 blockHash;
         address token;
+        uint256 precision;
         bytes32 tokenOracleType;
         uint256 signatureIndex;
         uint256 maxBlockAge;
@@ -72,7 +73,6 @@ contract Oracle is RoleModule {
     error BlockNumbersNotSorted(uint256 oracleBlockNumber, uint256 prevOracleBlockNumber);
     error MinPricesNotSorted(address token, uint256 price, uint256 prevPrice);
     error MaxPricesNotSorted(address token, uint256 price, uint256 prevPrice);
-    error EmptyPrecision(address token);
     error EmptyFeedPrecision(address token);
     error EmptyFeedPrice(address token);
     error InvalidSignature(address recoveredSigner, address expectedSigner);
@@ -205,62 +205,24 @@ contract Oracle is RoleModule {
         return price;
     }
 
-    // store prices as the price of one unit of the token using a value
-    // with 30 decimals of precision
-    //
-    // storing the prices in this way allows for conversions between token
-    // amounts and fiat values to be simplified
-    // e.g. to calculate the fiat value of a given number of tokens the
-    // calculation would just be: token amount * oracle price
-    //
-    // the trade-off of this simplicity in calculation is that tokens with a small
-    // USD price and a lot of decimals may have precision issues
-    // it is also possible that a token's price changes significantly and results
-    // in requiring higher precision
-    //
-    // example 1, the price of ETH is 5000, and ETH has 18 decimals
-    // the price of one unit of ETH is 5000 / (10 ** 18), 5 * (10 ** -15)
-    // to represent the price with 30 decimals, store the price as
-    // 5000 / (10 ** 18) * (10 ** 30) => 5 ** (10 ** 15) => 5000 * (10 ** 12)
-    // oracle precision for ETH can be set to (10 ** 8) to allow for prices with
-    // a maximum value of (2 ** 32) / (10 ** 4) => 4,294,967,296 / (10 ** 4) => 429,496.7296
-    // and up to 4 decimals of precision
-    //
-    // example 2, the price of BTC is 60,000, and BTC has 8 decimals
-    // the price of one unit of BTC is 60,000 / (10 ** 8), 6 * (10 ** -4)
-    // to represent the price with 30 decimals, store the price as
-    // 60,000 / (10 ** 8) * (10 ** 30) => 6 * (10 ** 26) => 60,000 * (10 ** 22)
-    // oracle precision for BTC can be set to (10 ** 20) to allow for prices with
-    // a maximum value of (2 ** 64) / (10 ** 2) => 4,294,967,296 / (10 ** 2) => 42,949,672.96
-    // and up to 2 decimals of precision
-    //
-    // example 3, the price of USDC is 1, and USDC has 6 decimals
-    // the price of one unit of USDC is 1 / (10 ** 6), 1 * (10 ** -6)
-    // to represent the price with 30 decimals, store the price as
-    // 1 / (10 ** 6) * (10 ** 30) => 1 ** (10 ** 24)
-    // oracle precision for USDC can be set to (10 ** 18) to allow for prices with
-    // a maximum value of (2 ** 64) / (10 ** 6) => 4,294,967,296 / (10 ** 6) => 4294.967296
-    // and up to 6 decimals of precision
-    //
-    // example 4, the price of DG is 0.00000001, and DG has 18 decimals
-    // the price of one unit of DG is 0.00000001 / (10 ** 18), 1 * (10 ** -26)
-    // to represent the price with 30 decimals, store the price as
-    // 1 * (10 ** -26) * (10 ** 30) => 10,000 => 1 * (10 ** 3)
-    // oracle precision for DG can be set to (10 ** 1) to allow for prices with
-    // a maximum value of (2 ** 64) / (10 ** 11) => 4,294,967,296 / (10 ** 11) => 0.04294967296
-    // and up to 11 decimals of precision
-    //
-    // formula to calculate what the precision value should be set to:
-    // decimals: 30 - (token decimals) - (number of decimals desired for precision)
-    // ETH: 30 - 18 - 4 => 8, precision: 10 ** 8
-    // BTC: 30 - 8 - 2 => 20, precision: 10 ** 20
-    // USDC: 30 - 6 - 6 => 18, precision: 10 ** 18
-    // DG: 30 - 18 - 11 => 1, precision: 10 ** 1
-    function getPrecision(DataStore dataStore, address token) public view returns (uint256) {
-        uint256 precision = dataStore.getUint(Keys.oraclePrecisionKey(token));
+    function getPriceFeed(DataStore dataStore, address token) public view returns (IPriceFeed) {
+        address priceFeedAddress = dataStore.getAddress(Keys.priceFeedKey(token));
+        require(priceFeedAddress != address(0), "Oracle: invalid price feed");
+
+        return IPriceFeed(priceFeedAddress);
+    }
+
+    function getStablePrice(DataStore dataStore, address token) public view returns (uint256) {
+        return dataStore.getUint(Keys.stablePriceKey(token));
+    }
+
+    function getPriceFeedPrecision(DataStore dataStore, address token) public view returns (uint256) {
+        uint256 precision = dataStore.getUint(Keys.priceFeedPrecisionKey(token));
+
         if (precision == 0) {
-            revert EmptyPrecision(token);
+            revert EmptyFeedPrecision(token);
         }
+
         return precision;
     }
 
@@ -297,6 +259,7 @@ contract Oracle is RoleModule {
             }
 
             cache.token = params.tokens[i];
+            cache.precision = OracleUtils.getUncompactedPrecision(params.compactedPrecisions, i);
             cache.tokenOracleType = dataStore.getData(Keys.oracleTypeKey(cache.token));
 
             cache.minPrices = new uint256[](signers.length);
@@ -328,6 +291,7 @@ contract Oracle is RoleModule {
                     cache.oracleBlockNumber,
                     cache.blockHash,
                     cache.token,
+                    cache.precision,
                     cache.tokenOracleType,
                     cache.minPrices[minPriceIndex],
                     cache.maxPrices[maxPriceIndex],
@@ -336,8 +300,8 @@ contract Oracle is RoleModule {
                 );
             }
 
-            uint256 medianMinPrice = Array.getMedian(cache.minPrices) * getPrecision(dataStore, cache.token);
-            uint256 medianMaxPrice = Array.getMedian(cache.maxPrices) * getPrecision(dataStore, cache.token);
+            uint256 medianMinPrice = Array.getMedian(cache.minPrices) * cache.precision;
+            uint256 medianMaxPrice = Array.getMedian(cache.maxPrices) * cache.precision;
 
             if (medianMinPrice == 0 || medianMaxPrice == 0) {
                 revert EmptyPrice(cache.token);
@@ -370,10 +334,8 @@ contract Oracle is RoleModule {
 
             require(primaryPrices[token].isEmpty(), "Oracle: price already set");
 
-            address priceFeedAddress = dataStore.getAddress(Keys.priceFeedKey(token));
-            require(priceFeedAddress != address(0), "Oracle: invalid price feed");
+            IPriceFeed priceFeed = getPriceFeed(dataStore, token);
 
-            IPriceFeed priceFeed = IPriceFeed(priceFeedAddress);
             (
                 /* uint80 roundID */,
                 int256 _price,
@@ -383,11 +345,7 @@ contract Oracle is RoleModule {
             ) = priceFeed.latestRoundData();
 
             uint256 price = SafeCast.toUint256(_price);
-            uint256 precision = dataStore.getUint(Keys.priceFeedPrecisionKey(token));
-
-            if (precision == 0) {
-                revert EmptyFeedPrecision(token);
-            }
+            uint256 precision = getPriceFeedPrecision(dataStore, token);
 
             price = price * precision / Precision.FLOAT_PRECISION;
 
@@ -395,14 +353,27 @@ contract Oracle is RoleModule {
                 revert EmptyFeedPrice(token);
             }
 
-            primaryPrices[token] = Price.Props(
-                price,
-                price
-            );
+            uint256 stablePrice = getStablePrice(dataStore, token);
+
+            Price.Props memory priceProps;
+
+            if (stablePrice > 0) {
+                priceProps = Price.Props(
+                    price < stablePrice ? price : stablePrice,
+                    price < stablePrice ? stablePrice : price
+                );
+            } else {
+                priceProps = Price.Props(
+                    price,
+                    price
+                );
+            }
+
+            primaryPrices[token] = priceProps;
 
             tempTokens.add(token);
 
-            eventEmitter.emitOraclePriceUpdated(token, price, price, true, true);
+            eventEmitter.emitOraclePriceUpdated(token, priceProps.min, priceProps.max, true, true);
         }
     }
 
@@ -410,6 +381,7 @@ contract Oracle is RoleModule {
         uint256 oracleBlockNumber,
         bytes32 blockHash,
         address token,
+        uint256 precision,
         bytes32 tokenOracleType,
         uint256 minPrice,
         uint256 maxPrice,
@@ -421,6 +393,7 @@ contract Oracle is RoleModule {
                 SALT,
                 oracleBlockNumber,
                 blockHash,
+                precision,
                 token,
                 tokenOracleType,
                 minPrice,

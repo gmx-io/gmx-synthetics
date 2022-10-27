@@ -136,8 +136,17 @@ library OrderBaseUtils {
         // price, we first attempt to fulfill the order using the triggerPrice
         uint256 price = customPrice.pickPrice(shouldUseMaxPrice);
 
+        // increase order:
+        //     - long: lower price for positive impact, higher price for negative impact
+        //     - short: higher price for positive impact, lower price for negative impact
+        // decrease order:
+        //     - long: higher price for positive impact, lower price for negative impact
+        //     - short: lower price for positive impact, higher price for negative impact
+        bool shouldFlipPriceImpactUsd = isIncrease ? isLong : !isLong;
+        int256 priceImpactUsdForPriceAdjustment = shouldFlipPriceImpactUsd ? -priceImpactUsd : priceImpactUsd;
+
         // adjust price by price impact
-        price = price * Calc.sum(sizeDeltaUsd, priceImpactUsd) / sizeDeltaUsd;
+        price = price * Calc.sum(sizeDeltaUsd, priceImpactUsdForPriceAdjustment) / sizeDeltaUsd;
 
         if (shouldPriceBeSmaller && price <= acceptablePrice) {
             return price;
@@ -152,7 +161,7 @@ library OrderBaseUtils {
         price = customPrice.pickPrice(!shouldUseMaxPrice);
 
         // adjust price by price impact
-        price = price * Calc.sum(sizeDeltaUsd, priceImpactUsd) / sizeDeltaUsd;
+        price = price * Calc.sum(sizeDeltaUsd, priceImpactUsdForPriceAdjustment) / sizeDeltaUsd;
 
         if (shouldPriceBeSmaller && price <= acceptablePrice) {
             return acceptablePrice;

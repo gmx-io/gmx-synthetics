@@ -61,6 +61,13 @@ library PositionPricingUtils {
         if (shouldFlipPriceDiff) { priceDiff = -priceDiff; }
 
         int256 priceImpactUsd = size.toInt256() * priceDiff / latestPrice.toInt256();
+
+        // round positive price impact up, this will be deducted from the position impact pool
+        if (priceImpactUsd > 0) {
+            return Calc.roundUpDivision(priceImpactUsd, latestPrice.toInt256());
+        }
+
+        // round negative price impact down, this will be stored in the position impact pool
         return priceImpactUsd / latestPrice.toInt256();
     }
 

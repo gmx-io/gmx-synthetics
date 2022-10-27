@@ -89,9 +89,14 @@ library IncreasePositionUtils {
             )
         );
 
-        // cap price impact usd
+        // cap price impact usd based on the amount available in the position impact pool
+        cache.priceImpactUsd = MarketUtils.getCappedPositionImpactUsd(
+            params.dataStore,
+            params.market.marketToken,
+            prices.indexTokenPrice,
+            cache.priceImpactUsd
+        );
 
-        // round sizeDeltaInTokens down
         cache.executionPrice = OrderBaseUtils.getExecutionPrice(
             params.oracle.getCustomPrice(params.market.indexToken),
             params.order.sizeDeltaUsd(),
@@ -107,6 +112,13 @@ library IncreasePositionUtils {
             prices.indexTokenPrice.max,
             position.isLong,
             true
+        );
+
+        MarketUtils.applyDeltaToPositionImpactPool(
+            params.dataStore,
+            params.eventEmitter,
+            params.market.marketToken,
+            cache.priceImpactAmount
         );
 
         if (position.isLong) {

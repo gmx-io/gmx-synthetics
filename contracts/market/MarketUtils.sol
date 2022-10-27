@@ -134,7 +134,10 @@ library MarketUtils {
         value += getTotalBorrowingFees(dataStore, market.marketToken, true);
         value += getTotalBorrowingFees(dataStore, market.marketToken, false);
 
-        // !maximize should be used to calculate this as a larger pnl leads to a smaller pool value
+        uint256 impactPoolAmount = getPositionImpactPoolAmount(dataStore, market.marketToken);
+        value += impactPoolAmount * indexTokenPrice.pickPrice(maximize);
+
+        // !maximize should be used for net pnl as a larger pnl leads to a smaller pool value
         // and a smaller pnl leads to a larger pool value
         int256 pnl = getNetPnl(dataStore, market.marketToken, indexTokenPrice, !maximize);
 
@@ -147,7 +150,6 @@ library MarketUtils {
 
         return longPnl + shortPnl;
     }
-
 
     function getPnl(DataStore dataStore, address market, Price.Props memory indexTokenPrice, bool isLong, bool maximize) internal view returns (int256) {
         int256 openInterest = getOpenInterest(dataStore, market, isLong).toInt256();
@@ -184,6 +186,29 @@ library MarketUtils {
         eventEmitter.emitPoolAmountUpdated(market, token, delta, nextValue);
     }
 
+    function getCappedPositionImpactUsd(
+        DataStore dataStore,
+        address market,
+        Price.Props memory tokenPrice,
+        int256 priceImpactUsd
+    ) internal view returns (int256) {
+        if (priceImpactUsd < 0) {
+            return priceImpactUsd;
+        }
+
+        uint256 impactPoolAmount = getPositionImpactPoolAmount(dataStore, market);
+        int256 maxPositiveImpactUsd = (impactPoolAmount * tokenPrice.min).toInt256();
+
+        if (priceImpactUsd > maxPositiveImpactUsd) {
+            priceImpactUsd = maxPositiveImpactUsd;
+        }
+
+        return priceImpactUsd;
+    }
+
+    function getPositionImpactPoolAmount(DataStore dataStore, address market) internal view returns (uint256) {
+        return dataStore.getUint(Keys.positionImpactPoolAmountKey(market));
+    }
 
     function getSwapImpactPoolAmount(DataStore dataStore, address market, address token) internal view returns (uint256) {
         return dataStore.getUint(Keys.swapImpactPoolAmountKey(market, token));
@@ -202,6 +227,21 @@ library MarketUtils {
         );
 
         eventEmitter.emitSwapImpactPoolAmountUpdated(market, token, delta, nextValue);
+    }
+
+    function applyDeltaToPositionImpactPool(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        int256 delta
+    ) internal {
+        uint256 nextValue = dataStore.applyDeltaToUint(
+            Keys.positionImpactPoolAmountKey(market),
+            delta,
+            true
+        );
+
+        eventEmitter.emitPositionImpactPoolAmountUpdated(market, delta, nextValue);
     }
 
     function applyDeltaToOpenInterest(
@@ -317,13 +357,20 @@ library MarketUtils {
         // positive impact: minimize impactAmount, use tokenPrice.max
         // negative impact: maximize impactAmount, use tokenPrice.min
         uint256 price = priceImpactUsd > 0 ? tokenPrice.max : tokenPrice.min;
-        int256 impactAmount = priceImpactUsd / price.toInt256();
 
-        if (impactAmount > 0) {
+        int256 impactAmount;
+
+        if (priceImpactUsd > 0) {
+            // round positive impactAmount down, this will be deducted from the swap impact pool for the user
+            impactAmount = priceImpactUsd / price.toInt256();
+
             int256 maxImpactAmount = getSwapImpactPoolAmount(dataStore, market, token).toInt256();
             if (maxImpactAmount > impactAmount) {
                 impactAmount = maxImpactAmount;
             }
+        } else {
+            // round negative impactAmount up, this will be deducted from the user
+            impactAmount = Calc.roundUpDivision(priceImpactUsd, price.toInt256());
         }
 
         applyDeltaToSwapImpactPool(
@@ -536,9 +583,9 @@ library MarketUtils {
     }
 
     // sum of position.borrowingFactor * position.size for all positions of the market
-    // if funding is 100% for 100 years, the cumulativeBorrowingFactor could be as high as 100 * 1000 * (10 ** 30)
+    // if funding is 1000% for 100 years, the cumulativeBorrowingFactor could be as high as 100 * 1000 * (10 ** 30)
     // since position.size is a USD value with 30 decimals, under this scenario, there may be overflow issues
-    // if open interest exceeds (2 ** 256) / (10 ** 30) / (100 * 100 * (10 ** 30)) => 11,579,209,000,000 USD
+    // if open interest exceeds (2 ** 256) / (10 ** 30) / (100 * 1000 * (10 ** 30)) => 1,157,920,900,000 USD
     function getTotalBorrowing(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
         return dataStore.getUint(Keys.totalBorrowingKey(market, isLong));
     }

@@ -229,16 +229,38 @@ library DecreasePositionUtils {
             )
         );
 
+        priceImpactUsd = MarketUtils.getCappedPositionImpactUsd(
+            params.dataStore,
+            params.market.marketToken,
+            prices.indexTokenPrice,
+            priceImpactUsd
+        );
+
         values.executionPrice = OrderBaseUtils.getExecutionPrice(
             params.oracle.getCustomPrice(params.market.indexToken),
             params.order.sizeDeltaUsd(),
             priceImpactUsd,
             params.order.acceptablePrice(),
             position.isLong,
-            true
+            false
         );
 
-        // the outputAmount does not factor in price impact
+        int256 priceImpactAmount = PositionPricingUtils.getPriceImpactAmount(
+            params.order.sizeDeltaUsd(),
+            values.executionPrice,
+            prices.indexTokenPrice.max,
+            position.isLong,
+            false
+        );
+
+        MarketUtils.applyDeltaToPositionImpactPool(
+            params.dataStore,
+            params.eventEmitter,
+            params.market.marketToken,
+            priceImpactAmount
+        );
+
+        // the outputAmount does not factor in swap price impact
         // for example, if the market is ETH / USD and if a user uses USDC to long ETH
         // if the position is closed in profit or loss, USDC would be sent out from or added to the pool
         // without a price impact
