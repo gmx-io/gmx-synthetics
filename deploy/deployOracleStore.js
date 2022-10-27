@@ -7,13 +7,15 @@ const func = async ({
 
   const roleStoreDeployment = await get("RoleStore");
 
-  await deploy("OracleStore", {
+  const { newlyDeployed } = await deploy("OracleStore", {
     from: deployer,
     log: true,
     args: [roleStoreDeployment.address]
   })
 
-  await execute("OracleStore", { from: deployer, log: true }, "addSigner", oracleSigner0)
+  if (newlyDeployed) {
+    await execute("OracleStore", { from: deployer, log: true }, "addSigner", oracleSigner0)
+  }
 }
 func.tags = ["OracleStore"]
 func.dependencies = ["RoleStore"]

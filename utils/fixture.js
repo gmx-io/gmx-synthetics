@@ -67,6 +67,7 @@ async function deployFixture() {
 
   const usdcPriceFeed = await deployContract("MockPriceFeed", []);
   await usdcPriceFeed.setAnswer(1);
+  console.log(usdc.address, await reader.priceFeedKey(usdc.address))
   await dataStore.setAddress(await reader.priceFeedKey(usdc.address), usdcPriceFeed.address);
   await dataStore.setUint(await reader.priceFeedPrecisionKey(usdc.address), expandFloatDecimals(1));
 

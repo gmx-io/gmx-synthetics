@@ -1,3 +1,5 @@
+const { hashString } = require("../utils/hash")
+
 const func = async ({
   getNamedAccounts,
   deployments,
@@ -8,14 +10,16 @@ const func = async ({
   const { address: roleStoreAddress } = await get("RoleStore");
   const { address: oracleStoreAddress } = await get("OracleStore");
 
-  const { address } = await deploy("Oracle", {
+  const { address, newlyDeployed } = await deploy("Oracle", {
     from: deployer,
     log: true,
     args: [roleStoreAddress, oracleStoreAddress]
   })
 
-  await execute("RoleStore", { from: deployer, log: true }, "grantRole", address, ethers.utils.id("CONTROLLER"))
+  if (newlyDeployed) {
+    await execute("RoleStore", { from: deployer, log: true }, "grantRole", address, hashString("CONTROLLER"))
+  }
 }
 func.tags = ["Oracle"]
-func.dependencies = ["RoleStore", "OracleStore"]
+func.dependencies = ["RoleStore", "OracleStore", "Tokens"]
 module.exports = func
