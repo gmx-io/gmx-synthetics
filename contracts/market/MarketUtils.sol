@@ -41,9 +41,6 @@ library MarketUtils {
     // cap max funding APR at 1000%
     uint256 public constant MAX_ANNUAL_FUNDING_FACTOR = 1000 * Precision.FLOAT_PRECISION;
 
-    // 0.0000000001 USD
-    uint256 public constant MAX_USD_IMPRECISION = 10 ** 20;
-
     struct MarketPrices {
         Price.Props indexTokenPrice;
         Price.Props longTokenPrice;
@@ -583,7 +580,7 @@ library MarketUtils {
     }
 
     // sum of position.borrowingFactor * position.size for all positions of the market
-    // if funding is 1000% for 100 years, the cumulativeBorrowingFactor could be as high as 100 * 1000 * (10 ** 30)
+    // if borrowing APR is 1000% for 100 years, the cumulativeBorrowingFactor could be as high as 100 * 1000 * (10 ** 30)
     // since position.size is a USD value with 30 decimals, under this scenario, there may be overflow issues
     // if open interest exceeds (2 ** 256) / (10 ** 30) / (100 * 1000 * (10 ** 30)) => 1,157,920,900,000 USD
     function getTotalBorrowing(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
