@@ -362,7 +362,7 @@ library MarketUtils {
             impactAmount = priceImpactUsd / price.toInt256();
 
             int256 maxImpactAmount = getSwapImpactPoolAmount(dataStore, market, token).toInt256();
-            if (maxImpactAmount > impactAmount) {
+            if (impactAmount > maxImpactAmount) {
                 impactAmount = maxImpactAmount;
             }
         } else {
