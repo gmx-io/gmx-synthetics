@@ -367,15 +367,17 @@ library MarketUtils {
             }
         } else {
             // round negative impactAmount up, this will be deducted from the user
-            impactAmount = Calc.roundUpDivision(priceImpactUsd, price.toInt256());
+            impactAmount = Calc.roundUpDivision(priceImpactUsd, price);
         }
 
+        // if there is a positive impact, the impact pool amount should be reduced
+        // if there is a negative impact, the impact pool amount should be increased
         applyDeltaToSwapImpactPool(
             dataStore,
             eventEmitter,
             market,
             token,
-            impactAmount
+            -impactAmount
         );
 
         return impactAmount;

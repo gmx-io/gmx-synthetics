@@ -253,11 +253,13 @@ library DecreasePositionUtils {
             false
         );
 
+        // if there is a positive impact, the impact pool amount should be reduced
+        // if there is a negative impact, the impact pool amount should be increased
         MarketUtils.applyDeltaToPositionImpactPool(
             params.dataStore,
             params.eventEmitter,
             params.market.marketToken,
-            priceImpactAmount
+            -priceImpactAmount
         );
 
         // the outputAmount does not factor in swap price impact

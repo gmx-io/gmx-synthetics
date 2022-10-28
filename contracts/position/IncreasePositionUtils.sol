@@ -114,11 +114,13 @@ library IncreasePositionUtils {
             true
         );
 
+        // if there is a positive impact, the impact pool amount should be reduced
+        // if there is a negative impact, the impact pool amount should be increased
         MarketUtils.applyDeltaToPositionImpactPool(
             params.dataStore,
             params.eventEmitter,
             params.market.marketToken,
-            cache.priceImpactAmount
+            -cache.priceImpactAmount
         );
 
         if (position.isLong) {
