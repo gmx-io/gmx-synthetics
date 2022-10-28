@@ -135,7 +135,7 @@ describe("Exchange.Deposit", () => {
 
     expect(await getMarketTokenPrice(fixture)).eq(expandDecimals(1, 30));
 
-    expect(await getBalanceOf(ethUsdMarket.marketToken, user1.address)).eq("50000000000000000000000"); // 50000
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user1.address)).eq("49999975006249999995000"); // 49999.975006249999995
   });
 
   it("positive and negative price impact", async () => {
@@ -188,7 +188,7 @@ describe("Exchange.Deposit", () => {
 
     expect(await getMarketTokenPrice(fixture)).eq(expandDecimals(1, 30));
 
-    expect(await getBalanceOf(ethUsdMarket.marketToken, user1.address)).eq("50000000000000000000000"); // 50000
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user1.address)).eq("49987487503124999995000"); // 49987.487503124999995
   });
 
   it("price impact split over multiple orders", async () => {
