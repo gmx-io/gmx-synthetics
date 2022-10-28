@@ -35,6 +35,7 @@ contract Oracle is RoleModule {
         address token;
         uint256 precision;
         bytes32 tokenOracleType;
+        uint256 priceIndex;
         uint256 signatureIndex;
         uint256 maxBlockAge;
         uint256[] minPrices;
@@ -266,8 +267,9 @@ contract Oracle is RoleModule {
             cache.maxPrices = new uint256[](signers.length);
 
             for (uint256 j = 0; j < signers.length; j++) {
-                cache.minPrices[j] = OracleUtils.getUncompactedPrice(params.compactedMinPrices, cache.signatureIndex);
-                cache.maxPrices[j] = OracleUtils.getUncompactedPrice(params.compactedMaxPrices, cache.signatureIndex);
+                cache.priceIndex = i * signers.length + j;
+                cache.minPrices[j] = OracleUtils.getUncompactedPrice(params.compactedMinPrices, cache.priceIndex);
+                cache.maxPrices[j] = OracleUtils.getUncompactedPrice(params.compactedMaxPrices, cache.priceIndex);
 
                 if (j == 0) { continue; }
 
@@ -291,8 +293,8 @@ contract Oracle is RoleModule {
                     cache.oracleBlockNumber,
                     cache.blockHash,
                     cache.token,
-                    cache.precision,
                     cache.tokenOracleType,
+                    cache.precision,
                     cache.minPrices[minPriceIndex],
                     cache.maxPrices[maxPriceIndex],
                     params.signatures[cache.signatureIndex],
@@ -381,8 +383,8 @@ contract Oracle is RoleModule {
         uint256 oracleBlockNumber,
         bytes32 blockHash,
         address token,
-        uint256 precision,
         bytes32 tokenOracleType,
+        uint256 precision,
         uint256 minPrice,
         uint256 maxPrice,
         bytes memory signature,
@@ -393,9 +395,9 @@ contract Oracle is RoleModule {
                 SALT,
                 oracleBlockNumber,
                 blockHash,
-                precision,
                 token,
                 tokenOracleType,
+                precision,
                 minPrice,
                 maxPrice
             ))

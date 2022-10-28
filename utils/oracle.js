@@ -1,29 +1,75 @@
-const { bigNumberify, MAX_UINT8, MAX_UINT32, MAX_UINT64 } = require("./math");
-const { hashData } = require("./hash");
+const { bigNumberify, expandDecimals, MAX_UINT8, MAX_UINT32, MAX_UINT64 } = require("./math");
+const { hashString, hashData } = require("./hash");
 
 const BN = require("bn.js");
 
-async function signPrice(signer, salt, oracleBlockNumber, blockHash, token, price) {
-  if (bigNumberify(price).gt(MAX_UINT32)) {
-    throw new Error(`Max price exceeded: ${price.toString()}`);
+const TOKEN_ORACLE_TYPES = {
+  ONE_PERCENT_PER_MINUTE: hashString("one-percent-per-minute"),
+};
+
+TOKEN_ORACLE_TYPES.DEFAULT = TOKEN_ORACLE_TYPES.ONE_PERCENT_PER_MINUTE;
+
+async function signPrice({
+  signer,
+  salt,
+  oracleBlockNumber,
+  blockHash,
+  token,
+  tokenOracleType,
+  precision,
+  minPrice,
+  maxPrice,
+}) {
+  if (bigNumberify(oracleBlockNumber).gt(MAX_UINT64)) {
+    throw new Error(`oracleBlockNumber exceeds max value: ${oracleBlockNumber.toString()}`);
   }
 
-  if (bigNumberify(oracleBlockNumber).gt(MAX_UINT64)) {
-    throw new Error(`Max oracleBlockNumber exceeded: ${price.toString()}`);
+  if (bigNumberify(precision).gt(MAX_UINT8)) {
+    throw new Error(`precision exceeds max value: ${precision.toString()}`);
   }
+
+  if (bigNumberify(minPrice).gt(MAX_UINT32)) {
+    throw new Error(`minPrice exceeds max value: ${minPrice.toString()}`);
+  }
+
+  if (bigNumberify(maxPrice).gt(MAX_UINT32)) {
+    throw new Error(`maxPrice exceeds max value: ${maxPrice.toString()}`);
+  }
+
+  const expandedPrecision = expandDecimals(1, precision);
 
   const hash = hashData(
-    ["bytes32", "uint256", "bytes32", "address", "uint256"],
-    [salt, oracleBlockNumber, blockHash, token, price]
+    ["bytes32", "uint256", "bytes32", "address", "bytes32", "uint256", "uint256", "uint256"],
+    [salt, oracleBlockNumber, blockHash, token, tokenOracleType, expandedPrecision, minPrice, maxPrice]
   );
 
   return await signer.signMessage(ethers.utils.arrayify(hash));
 }
 
-async function signPrices(signers, salt, oracleBlockNumber, blockHash, token, prices) {
+async function signPrices({
+  signers,
+  salt,
+  oracleBlockNumber,
+  blockHash,
+  token,
+  tokenOracleType,
+  precision,
+  minPrices,
+  maxPrices,
+}) {
   const signatures = [];
   for (let i = 0; i < signers.length; i++) {
-    const signature = await signPrice(signers[i], salt, oracleBlockNumber, blockHash, token, prices[i], i === 0);
+    const signature = await signPrice({
+      signer: signers[i],
+      salt,
+      oracleBlockNumber,
+      blockHash,
+      token,
+      tokenOracleType,
+      precision,
+      minPrice: minPrices[i],
+      maxPrice: maxPrices[i],
+    });
     signatures.push(signature);
   }
   return signatures;
@@ -83,6 +129,22 @@ function getCompactedPrices(prices) {
   });
 }
 
+function getCompactedPriceIndexes(priceIndexes) {
+  return getCompactedValues({
+    values: priceIndexes,
+    compactedValueBitLength: 8,
+    maxValue: MAX_UINT8,
+  });
+}
+
+function getCompactedPrecisions(precisions) {
+  return getCompactedValues({
+    values: precisions,
+    compactedValueBitLength: 8,
+    maxValue: MAX_UINT8,
+  });
+}
+
 function getCompactedOracleBlockNumbers(blockNumbers) {
   return getCompactedValues({
     values: blockNumbers,
@@ -97,42 +159,72 @@ async function getOracleParams({
   blockHashes,
   signerIndexes,
   tokens,
-  prices,
+  tokenOracleTypes,
+  precisions,
+  minPrices,
+  maxPrices,
   signers,
   priceFeedTokens,
 }) {
   const signerInfo = getSignerInfo(signerIndexes);
-  const allPrices = [];
+  const allMinPrices = [];
+  const allMaxPrices = [];
+  const minPriceIndexes = [];
+  const maxPriceIndexes = [];
   const signatures = [];
 
   for (let i = 0; i < tokens.length; i++) {
-    const token = tokens[i];
     const oracleBlockNumber = oracleBlockNumbers[i];
     const blockHash = blockHashes[i];
+    const token = tokens[i];
+    const tokenOracleType = tokenOracleTypes[i];
+    const precision = precisions[i];
+
+    const minPrice = minPrices[i];
+    const maxPrice = maxPrices[i];
 
     for (let j = 0; j < signers.length; j++) {
-      const price = prices[i];
-      const signature = await signPrice(signers[j], oracleSalt, oracleBlockNumber, blockHash, token, price);
-      allPrices.push(price.toString());
+      const signature = await signPrice(
+        signers[j],
+        oracleSalt,
+        oracleBlockNumber,
+        blockHash,
+        token,
+        tokenOracleType,
+        precision,
+        minPrice,
+        maxPrice
+      );
+      allMinPrices.push(minPrice.toString());
+      minPriceIndexes.push(j);
+      allMaxPrices.push(maxPrice.toString());
+      maxPriceIndexes.push(j);
       signatures.push(signature);
     }
   }
 
   return {
-    priceFeedTokens,
     signerInfo,
     tokens,
     compactedOracleBlockNumbers: getCompactedOracleBlockNumbers(oracleBlockNumbers),
-    compactedPrices: getCompactedPrices(allPrices),
+    compactedPrecisions: getCompactedPrecisions(precisions),
+    compactedMinPrices: getCompactedPrices(allMinPrices),
+    compactedMinPricesIndexes: getCompactedPriceIndexes(minPriceIndexes),
+    compactedMaxPrices: getCompactedPrices(allMaxPrices),
+    compactedMaxPricesIndexes: getCompactedPriceIndexes(maxPriceIndexes),
     signatures,
+    priceFeedTokens,
   };
 }
 
 module.exports = {
+  TOKEN_ORACLE_TYPES,
   signPrice,
   signPrices,
   getSignerInfo,
   getCompactedPrices,
+  getCompactedPriceIndexes,
+  getCompactedPrecisions,
   getCompactedOracleBlockNumbers,
   getOracleParams,
 };

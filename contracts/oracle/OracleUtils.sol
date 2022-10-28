@@ -35,8 +35,8 @@ library OracleUtils {
     uint256 public constant COMPACTED_PRICE_INDEX_BIT_LENGTH = 8;
     uint256 public constant COMPACTED_PRICE_INDEX_BITMASK = Bits.BITMASK_8;
 
-    error EmptyPrice();
-    error EmptyBlockNumber();
+    error EmptyCompactedPrice(uint256 index);
+    error EmptyCompactedBlockNumber(uint256 index);
 
     function getUncompactedPrice(uint256[] memory compactedPrices, uint256 index) internal pure returns (uint256) {
         uint256 price = Array.getUncompactedValue(
@@ -46,7 +46,7 @@ library OracleUtils {
             COMPACTED_PRICE_BITMASK
         );
 
-        if (price == 0) { revert EmptyPrice(); }
+        if (price == 0) { revert EmptyCompactedPrice(index); }
 
         return price;
     }
@@ -144,7 +144,7 @@ library OracleUtils {
             COMPACTED_BLOCK_NUMBER_BITMASK
         );
 
-        if (blockNumber == 0) { revert EmptyBlockNumber(); }
+        if (blockNumber == 0) { revert EmptyCompactedBlockNumber(index); }
 
         return blockNumber;
     }
