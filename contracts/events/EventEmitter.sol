@@ -46,8 +46,8 @@ contract EventEmitter is RoleModule {
     event OrderUpdated(
         bytes32 key,
         uint256 sizeDeltaUsd,
-        uint256 acceptablePrice,
-        int256 acceptableUsdAdjustment
+        uint256 triggerPrice,
+        uint256 acceptablePrice
     );
     event OrderCancelled(bytes32 key, bytes32 reason);
     event OrderExecuted(bytes32 key);
@@ -111,10 +111,10 @@ contract EventEmitter is RoleModule {
     function emitOrderUpdated(
         bytes32 key,
         uint256 sizeDeltaUsd,
-        uint256 acceptablePrice,
-        int256 acceptableUsdAdjustment
+        uint256 triggerPrice,
+        uint256 acceptablePrice
     ) external onlyController {
-        emit OrderUpdated(key, sizeDeltaUsd, acceptablePrice, acceptableUsdAdjustment);
+        emit OrderUpdated(key, sizeDeltaUsd, triggerPrice, acceptablePrice);
     }
 
     function emitOrderCancelled(bytes32 key, bytes32 reason) external onlyController {

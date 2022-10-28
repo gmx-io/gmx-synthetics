@@ -15,8 +15,7 @@ const OrderType = {
 };
 
 async function createOrder(fixture, overrides) {
-  const { initialCollateralToken, initialCollateralDeltaAmount, acceptablePriceImpactUsd, orderType, gasUsageLabel } =
-    overrides;
+  const { initialCollateralToken, initialCollateralDeltaAmount, orderType, gasUsageLabel } = overrides;
 
   const { orderStore, orderHandler, weth } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
@@ -28,6 +27,7 @@ async function createOrder(fixture, overrides) {
   const sizeDeltaUsd = overrides.sizeDeltaUsd || "0";
   const swapPath = overrides.swapPath || [];
   const acceptablePrice = overrides.acceptablePrice || "0";
+  const triggerPrice = overrides.triggerPrice || "0";
   const isLong = overrides.isLong || false;
   const executionFee = overrides.executionFee || fixture.props.executionFee;
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
@@ -45,7 +45,7 @@ async function createOrder(fixture, overrides) {
     swapPath,
     sizeDeltaUsd,
     acceptablePrice,
-    acceptablePriceImpactUsd,
+    triggerPrice,
     executionFee,
     callbackGasLimit,
     minOutputAmount,

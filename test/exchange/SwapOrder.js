@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 
 const { deployFixture } = require("../../utils/fixture");
-const { expandDecimals, expandFloatDecimals } = require("../../utils/math");
+const { expandDecimals } = require("../../utils/math");
 const { handleDeposit } = require("../../utils/deposit");
 const { OrderType, handleOrder } = require("../../utils/order");
 
@@ -32,7 +32,7 @@ describe("Exchange.SwapOrder", () => {
       create: {
         initialCollateralToken: weth,
         initialCollateralDeltaAmount: expandDecimals(10, 18),
-        acceptablePriceImpactUsd: expandFloatDecimals(-10),
+        acceptablePrice: 0,
         orderType: OrderType.MarketSwap,
         swapPath: [ethUsdMarket.marketToken],
         gasUsageLabel: "orderHandler.createOrder",

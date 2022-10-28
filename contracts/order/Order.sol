@@ -52,8 +52,8 @@ library Order {
     struct Numbers {
         uint256 sizeDeltaUsd;
         uint256 initialCollateralDeltaAmount;
+        uint256 triggerPrice;
         uint256 acceptablePrice;
-        int256 acceptablePriceImpactUsd;
         uint256 executionFee;
         uint256 callbackGasLimit;
         uint256 minOutputAmount;
@@ -109,12 +109,12 @@ library Order {
         return props.numbers.initialCollateralDeltaAmount;
     }
 
-    function acceptablePrice(Props memory props) internal pure returns (uint256) {
-        return props.numbers.acceptablePrice;
+    function triggerPrice(Props memory props) internal pure returns (uint256) {
+        return props.numbers.triggerPrice;
     }
 
-    function acceptablePriceImpactUsd(Props memory props) internal pure returns (int256) {
-        return props.numbers.acceptablePriceImpactUsd;
+    function acceptablePrice(Props memory props) internal pure returns (uint256) {
+        return props.numbers.acceptablePrice;
     }
 
     function executionFee(Props memory props) internal pure returns (uint256) {
@@ -181,12 +181,12 @@ library Order {
         props.numbers.initialCollateralDeltaAmount = _value;
     }
 
-    function setAcceptablePrice(Props memory props, uint256 _value) internal pure {
-        props.numbers.acceptablePrice = _value;
+    function setTriggerPrice(Props memory props, uint256 _value) internal pure {
+        props.numbers.triggerPrice = _value;
     }
 
-    function setAcceptablePriceImpactUsd(Props memory props, int256 _value) internal pure {
-        props.numbers.acceptablePriceImpactUsd = _value;
+    function setAcceptablePrice(Props memory props, uint256 _value) internal pure {
+        props.numbers.acceptablePrice = _value;
     }
 
     function setExecutionFee(Props memory props, uint256 _value) internal pure {

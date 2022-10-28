@@ -77,8 +77,13 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
         OracleUtils.SetPricesParams calldata oracleParams
     ) external nonReentrant onlyOrderKeeper {
         uint256 startingGas = gasleft();
-
-        try this._executeOrder(
+        this._executeOrder(
+            key,
+            oracleParams,
+            msg.sender,
+            startingGas
+        );
+        /* try this._executeOrder(
             key,
             oracleParams,
             msg.sender,
@@ -98,7 +103,7 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
             _handleOrderError(key, startingGas, reasonKey);
         } catch (bytes memory reason) {
             _handleOrderError(key, startingGas, keccak256(reason));
-        }
+        } */
     }
 
     function executeLiquidation(
@@ -126,8 +131,8 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
     function updateOrder(
         bytes32 key,
         uint256 sizeDeltaUsd,
-        uint256 acceptablePrice,
-        int256 acceptablePriceImpactUsd
+        uint256 triggerPrice,
+        uint256 acceptablePrice
     ) external payable nonReentrant {
         OrderStore _orderStore = orderStore;
         Order.Props memory order = _orderStore.get(key);
@@ -141,8 +146,8 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
         }
 
         order.setSizeDeltaUsd(sizeDeltaUsd);
+        order.setTriggerPrice(triggerPrice);
         order.setAcceptablePrice(acceptablePrice);
-        order.setAcceptablePriceImpactUsd(acceptablePriceImpactUsd);
         order.setIsFrozen(false);
 
         // allow topping up of executionFee as partially filled or frozen orders
@@ -156,7 +161,7 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
         order.touch();
         _orderStore.set(key, order);
 
-        eventEmitter.emitOrderUpdated(key, sizeDeltaUsd, acceptablePrice, acceptablePriceImpactUsd);
+        eventEmitter.emitOrderUpdated(key, sizeDeltaUsd, triggerPrice, acceptablePrice);
     }
 
     function cancelOrder(bytes32 key) external nonReentrant {
@@ -299,8 +304,8 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
         Order.Numbers memory numbers = Order.Numbers(
             position.sizeInUsd, // sizeDeltaUsd
             0, // initialCollateralDeltaAmount
+            0, // triggerPrice
             position.isLong ? 0 : type(uint256).max, // acceptablePrice
-            type(int256).min, // acceptablePriceImpactUsd
             0, // executionFee
             0, // callbackGasLimit
             0, // minOutputAmount
