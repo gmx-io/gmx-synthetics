@@ -5,13 +5,13 @@ const { decimalToFloat } = require("../utils/math")
 const func = async ({
   getNamedAccounts,
   deployments,
-  network,
+  gmx,
 }) => {
   const { execute, read, log } = deployments
   const { deployer } = await getNamedAccounts()
-  const { tokens } = network.config
+  const { tokens, markets } = gmx
 
-  for (const marketConfig of network.config.markets) {
+  for (const marketConfig of markets) {
     const [indexToken, longToken, shortToken] = marketConfig.tokens.map(symbol => tokens[symbol].address)
 
     const marketToken = await read("MarketStore", { from: deployer, log: true }, "getMarketToken", indexToken, longToken, shortToken)
@@ -42,7 +42,7 @@ const func = async ({
     await execute("DataStore", { from: deployer, log: true }, "setUint", key, reserveFactor)
   }
 
-  for (const marketConfig of network.config.markets) {
+  for (const marketConfig of markets) {
     const [indexToken, longToken, shortToken] = marketConfig.tokens.map(symbol => tokens[symbol].address)
     const reserveFactor = decimalToFloat(marketConfig.reserveFactor[0], marketConfig.reserveFactor[1])
 
@@ -52,9 +52,9 @@ const func = async ({
   }
 }
 
-func.skip = async ({ network }) => {
+func.skip = async ({ gmx, network }) => {
   // skip if no markets configured
-  if (!network.config.markets || network.config.markets.length === 0) {
+  if (!gmx.markets || gmx.markets.length === 0) {
     console.warn("no markets configured for network %s", network.name)
     return true
   }

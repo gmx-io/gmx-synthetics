@@ -1,27 +1,25 @@
 const func = async ({
   getNamedAccounts,
   deployments,
-  network
+  gmx
 }) => {
   const { deploy } = deployments
   const { deployer } = await getNamedAccounts()
+  const { tokens } = gmx
 
   const { address: wethAddress } = await deploy("WETH", {
     from: deployer,
     log: true
   })
-  network.config.tokens.WETH.address = wethAddress
+  tokens.WETH.address = wethAddress
 
-  for (const tokenSymbol of Object.keys(network.config.tokens)) {
-    if (tokenSymbol === "WETH") {
-      continue
-    }
+  for (const tokenSymbol of Object.keys(tokens)) {
     const { address } = await deploy(tokenSymbol, {
       from: deployer,
       log: true,
       contract: "MintableToken"
     })
-    network.config.tokens[tokenSymbol].address = address
+    tokens[tokenSymbol].address = address
   }
 }
 
