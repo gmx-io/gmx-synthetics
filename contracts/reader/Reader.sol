@@ -14,6 +14,10 @@ contract Reader {
         return Keys.priceFeedPrecisionKey(token);
     }
 
+    function oracleTypeKey(address token) external pure returns (bytes32) {
+        return Keys.oracleTypeKey(token);
+    }
+
     function reserveFactorKey(address market, bool isLong) external pure returns (bytes32) {
         return Keys.reserveFactorKey(market, isLong);
     }
@@ -28,10 +32,6 @@ contract Reader {
 
     function swapImpactExponentFactorKey(address market) external pure returns (bytes32) {
         return Keys.swapImpactExponentFactorKey(market);
-    }
-
-    function oraclePrecisionKey(address token) external pure returns (bytes32) {
-        return Keys.oraclePrecisionKey(token);
     }
 
     function getPoolAmount(DataStore dataStore, address market, address token) external view returns (uint256) {

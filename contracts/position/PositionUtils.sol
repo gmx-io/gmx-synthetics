@@ -18,9 +18,6 @@ library PositionUtils {
     using Position for Position.Props;
     using Price for Price.Props;
 
-    // 0.0000000001 USD
-    uint256 public constant MAX_USD_IMPRECISION = 10 ** 20;
-
     error LiquidatablePosition();
     error UnexpectedPositionState();
 

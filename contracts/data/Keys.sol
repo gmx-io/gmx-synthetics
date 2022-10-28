@@ -227,13 +227,6 @@ library Keys {
         ));
     }
 
-    function oraclePrecisionKey(address token) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            ORACLE_PRECISION,
-            token
-        ));
-    }
-
     function oracleTypeKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             ORACLE_TYPE,
