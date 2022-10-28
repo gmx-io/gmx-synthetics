@@ -184,17 +184,17 @@ async function getOracleParams({
     const maxPrice = maxPrices[i];
 
     for (let j = 0; j < signers.length; j++) {
-      const signature = await signPrice(
-        signers[j],
-        oracleSalt,
+      const signature = await signPrice({
+        signer: signers[j],
+        salt: oracleSalt,
         oracleBlockNumber,
         blockHash,
         token,
         tokenOracleType,
         precision,
         minPrice,
-        maxPrice
-      );
+        maxPrice,
+      });
       allMinPrices.push(minPrice.toString());
       minPriceIndexes.push(j);
       allMaxPrices.push(maxPrice.toString());

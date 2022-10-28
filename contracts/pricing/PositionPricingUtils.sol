@@ -64,7 +64,7 @@ library PositionPricingUtils {
 
         // round positive price impact up, this will be deducted from the position impact pool
         if (priceImpactUsd > 0) {
-            return Calc.roundUpDivision(priceImpactUsd, latestPrice.toInt256());
+            return Calc.roundUpDivision(priceImpactUsd, latestPrice);
         }
 
         // round negative price impact down, this will be stored in the position impact pool

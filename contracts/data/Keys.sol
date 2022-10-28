@@ -55,7 +55,6 @@ library Keys {
     string public constant SWAP_IMPACT_FACTOR = "SWAP_IMPACT_FACTOR";
     string public constant SWAP_IMPACT_EXPONENT_FACTOR = "SWAP_IMPACT_EXPONENT_FACTOR";
     string public constant SWAP_FEE_FACTOR = "SWAP_FEE_FACTOR";
-    string public constant ORACLE_PRECISION = "ORACLE_PRECISION";
     string public constant ORACLE_TYPE = "ORACLE_TYPE";
     string public constant OPEN_INTEREST = "OPEN_INTEREST";
     string public constant OPEN_INTEREST_IN_TOKENS = "OPEN_INTEREST_IN_TOKENS";
