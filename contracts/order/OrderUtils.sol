@@ -212,5 +212,7 @@ library OrderUtils {
         );
 
         eventEmitter.emitOrderFrozen(key, reason);
+
+        CallbackUtils.handleFreeze(key, order);
     }
 }

@@ -56,6 +56,13 @@ library CallbackUtils {
         } catch {}
     }
 
+    function handleFreeze(bytes32 key, Order.Props memory order) internal {
+        if (!isValidCallbackContract(order.callbackContract())) { return; }
+
+        try IOrderCallbackReceiver(order.callbackContract()).orderFrozen{ gas: order.callbackGasLimit() }(key, order) {
+        } catch {}
+    }
+
     function isValidCallbackContract(address callbackContract) internal view returns (bool) {
         if (callbackContract == address(0)) { return false; }
         if (!callbackContract.isContract()) { return false; }
