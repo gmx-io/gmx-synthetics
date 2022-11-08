@@ -31,6 +31,7 @@ import "../utils/Array.sol";
 library OrderUtils {
     using Order for Order.Props;
     using Position for Position.Props;
+    using Price for Price.Props;
     using Array for uint256[];
 
     function createOrder(
@@ -75,8 +76,8 @@ library OrderUtils {
         order.setSwapPath(params.swapPath);
         order.setSizeDeltaUsd(params.sizeDeltaUsd);
         order.setInitialCollateralDeltaAmount(initialCollateralDeltaAmount);
+        order.setTriggerPrice(params.triggerPrice);
         order.setAcceptablePrice(params.acceptablePrice);
-        order.setAcceptablePriceImpactUsd(params.acceptablePriceImpactUsd);
         order.setExecutionFee(params.executionFee);
         order.setCallbackGasLimit(params.callbackGasLimit);
         order.setMinOutputAmount(params.minOutputAmount);
@@ -100,11 +101,11 @@ library OrderUtils {
     function executeOrder(OrderBaseUtils.ExecuteOrderParams memory params) internal {
         OrderBaseUtils.validateNonEmptyOrder(params.order);
 
-        setExactOrderPrice(
+        OrderBaseUtils.setExactOrderPrice(
             params.oracle,
             params.market.indexToken,
             params.order.orderType(),
-            params.order.acceptablePrice(),
+            params.order.triggerPrice(),
             params.order.isLong()
         );
 
@@ -211,64 +212,5 @@ library OrderUtils {
         );
 
         eventEmitter.emitOrderFrozen(key, reason);
-    }
-
-    // more info on the logic here can be found in Order.sol
-    function setExactOrderPrice(
-        Oracle oracle,
-        address indexToken,
-        Order.OrderType orderType,
-        uint256 acceptablePrice,
-        bool isLong
-    ) internal {
-        if (OrderBaseUtils.isSwapOrder(orderType)) {
-            return;
-        }
-
-        // set secondary price to primary price since increase / decrease positions use the secondary price for index token values
-        if (orderType == Order.OrderType.MarketIncrease ||
-            orderType == Order.OrderType.MarketDecrease ||
-            orderType == Order.OrderType.Liquidation) {
-            uint256 price = oracle.getPrimaryPrice(indexToken);
-            oracle.setSecondaryPrice(indexToken, price);
-            return;
-        }
-
-        if (orderType == Order.OrderType.LimitIncrease ||
-            orderType == Order.OrderType.LimitDecrease ||
-            orderType == Order.OrderType.StopLossDecrease
-        ) {
-            uint256 primaryPrice = oracle.getPrimaryPrice(indexToken);
-            uint256 secondaryPrice = oracle.getSecondaryPrice(indexToken);
-
-            bool shouldValidateAscendingPrice;
-            if (orderType == Order.OrderType.LimitIncrease) {
-                // for long increase orders, the oracle prices should be descending
-                // for short increase orders, the oracle prices should be ascending
-                shouldValidateAscendingPrice = !isLong;
-            } else {
-                // for long decrease orders, the oracle prices should be ascending
-                // for short decrease orders, the oracle prices should be descending
-                shouldValidateAscendingPrice = isLong;
-            }
-
-            if (shouldValidateAscendingPrice) {
-                // check that the earlier price (primaryPrice) is smaller than the acceptablePrice
-                // and that the later price (secondaryPrice) is larger than the acceptablePrice
-                bool hasAcceptablePrices = primaryPrice <= acceptablePrice && secondaryPrice >= acceptablePrice;
-                if (!hasAcceptablePrices) { revert(Keys.ORACLE_ERROR); }
-                oracle.setSecondaryPrice(indexToken, acceptablePrice);
-            } else {
-                // check that the earlier price (primaryPrice) is larger than the acceptablePrice
-                // and that the later price (secondaryPrice) is smaller than the acceptablePrice
-                bool hasAcceptablePrices = primaryPrice >= acceptablePrice && secondaryPrice <= acceptablePrice;
-                if (!hasAcceptablePrices) { revert(Keys.ORACLE_ERROR); }
-                oracle.setSecondaryPrice(indexToken, acceptablePrice);
-            }
-
-            return;
-        }
-
-        OrderBaseUtils.revertUnsupportedOrderType();
     }
 }

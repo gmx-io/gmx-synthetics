@@ -26,11 +26,9 @@ contract Timelock {
         // impact factor should eventually be moved under the oracle system
         // this should be done after the strategy for setting positive and negative
         //  impact factors has been refined and finalized
-        string[6] memory allowedKeys = [
+        string[4] memory allowedKeys = [
             Keys.POSITION_IMPACT_FACTOR,
-            Keys.POSITION_SPREAD_FACTOR,
             Keys.SWAP_IMPACT_FACTOR,
-            Keys.SWAP_SPREAD_FACTOR,
             Keys.POSITION_FEE_FACTOR,
             Keys.SWAP_FEE_FACTOR
         ];

@@ -34,13 +34,14 @@ describe("Exchange.LiquidationOrder", () => {
         initialCollateralToken: weth,
         initialCollateralDeltaAmount: expandDecimals(10, 18),
         sizeDeltaUsd: expandFloatDecimals(200 * 1000),
-        acceptablePriceImpactUsd: expandDecimals(-5, 12),
+        acceptablePrice: expandDecimals(5001, 12),
         orderType: OrderType.MarketIncrease,
         isLong: true,
       },
       execute: {
         tokens: [weth.address, usdc.address],
-        prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+        minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+        maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
       },
     });
 
@@ -55,7 +56,8 @@ describe("Exchange.LiquidationOrder", () => {
         market: ethUsdMarket,
         collateralToken: weth,
         isLong: true,
-        prices: [expandDecimals(4200, 4), expandDecimals(1, 6)],
+        minPrices: [expandDecimals(4200, 4), expandDecimals(1, 6)],
+        maxPrices: [expandDecimals(4200, 4), expandDecimals(1, 6)],
         gasUsageLabel: "orderHandler.executeLiquidation",
       })
     ).to.be.revertedWith("DecreasePositionUtils: Invalid Liquidation");
@@ -68,7 +70,8 @@ describe("Exchange.LiquidationOrder", () => {
       market: ethUsdMarket,
       collateralToken: weth,
       isLong: true,
-      prices: [expandDecimals(4000, 4), expandDecimals(1, 6)],
+      minPrices: [expandDecimals(4000, 4), expandDecimals(1, 6)],
+      maxPrices: [expandDecimals(4000, 4), expandDecimals(1, 6)],
       gasUsageLabel: "orderHandler.executeLiquidation",
     });
 

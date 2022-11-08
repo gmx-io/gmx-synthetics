@@ -1,6 +1,7 @@
 const { logGasUsage } = require("./gas");
 const { bigNumberify, expandDecimals } = require("./math");
 const { executeWithOracleParams } = require("./exchange");
+const { TOKEN_ORACLE_TYPES } = require("./oracle");
 
 const OrderType = {
   MarketSwap: 0,
@@ -14,8 +15,7 @@ const OrderType = {
 };
 
 async function createOrder(fixture, overrides) {
-  const { initialCollateralToken, initialCollateralDeltaAmount, acceptablePriceImpactUsd, orderType, gasUsageLabel } =
-    overrides;
+  const { initialCollateralToken, initialCollateralDeltaAmount, orderType, gasUsageLabel } = overrides;
 
   const { orderStore, orderHandler, weth } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
@@ -27,6 +27,7 @@ async function createOrder(fixture, overrides) {
   const sizeDeltaUsd = overrides.sizeDeltaUsd || "0";
   const swapPath = overrides.swapPath || [];
   const acceptablePrice = overrides.acceptablePrice || "0";
+  const triggerPrice = overrides.triggerPrice || "0";
   const isLong = overrides.isLong || false;
   const executionFee = overrides.executionFee || fixture.props.executionFee;
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
@@ -44,7 +45,7 @@ async function createOrder(fixture, overrides) {
     swapPath,
     sizeDeltaUsd,
     acceptablePrice,
-    acceptablePriceImpactUsd,
+    triggerPrice,
     executionFee,
     callbackGasLimit,
     minOutputAmount,
@@ -64,18 +65,26 @@ async function executeOrder(fixture, overrides) {
   const { gasUsageLabel } = overrides;
   const { orderStore, orderHandler } = fixture.contracts;
   const tokens = overrides.tokens || [weth.address, usdc.address];
-  const prices = overrides.prices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
+  const tokenOracleTypes = overrides.tokenOracleTypes || [TOKEN_ORACLE_TYPES.DEFAULT, TOKEN_ORACLE_TYPES.DEFAULT];
+  const precisions = overrides.precisions || [8, 18];
+  const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
+  const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const orderKeys = await orderStore.getOrderKeys(0, 1);
   const order = await orderStore.get(orderKeys[0]);
 
-  await executeWithOracleParams(fixture, {
+  const params = {
     key: orderKeys[0],
     oracleBlockNumber: order.numbers.updatedAtBlock,
     tokens,
-    prices,
+    tokenOracleTypes,
+    precisions,
+    minPrices,
+    maxPrices,
     execute: orderHandler.executeOrder,
     gasUsageLabel,
-  });
+  };
+
+  await executeWithOracleParams(fixture, params);
 }
 
 async function handleOrder(fixture, overrides = {}) {
@@ -88,14 +97,20 @@ async function executeLiquidation(fixture, overrides) {
   const { account, market, collateralToken, isLong, gasUsageLabel } = overrides;
   const { orderHandler } = fixture.contracts;
   const tokens = overrides.tokens || [weth.address, usdc.address];
-  const prices = overrides.prices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
+  const tokenOracleTypes = overrides.tokenOracleTypes || [TOKEN_ORACLE_TYPES.DEFAULT, TOKEN_ORACLE_TYPES.DEFAULT];
+  const precisions = overrides.precisions || [8, 18];
+  const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
+  const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
 
   const block = await ethers.provider.getBlock();
 
-  await executeWithOracleParams(fixture, {
+  const params = {
     oracleBlockNumber: bigNumberify(block.number),
     tokens,
-    prices,
+    tokenOracleTypes,
+    precisions,
+    minPrices,
+    maxPrices,
     execute: async (key, oracleParams) => {
       return await orderHandler.executeLiquidation(
         account,
@@ -106,7 +121,9 @@ async function executeLiquidation(fixture, overrides) {
       );
     },
     gasUsageLabel,
-  });
+  };
+
+  await executeWithOracleParams(fixture, params);
 }
 
 module.exports = {

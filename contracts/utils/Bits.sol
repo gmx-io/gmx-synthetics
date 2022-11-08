@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 
 library Bits {
     // uint256(~0) is 256 bits of 1s
+    // shift the 1s by (256 - 8) to get (256 - 8) 0s followed by 8 1s
+    uint256 constant public BITMASK_8 = ~uint256(0) >> (256 - 8);
     // shift the 1s by (256 - 16) to get (256 - 16) 0s followed by 16 1s
     uint256 constant public BITMASK_16 = ~uint256(0) >> (256 - 16);
     // shift the 1s by (256 - 32) to get (256 - 32) 0s followed by 32 1s

@@ -14,16 +14,16 @@ contract Reader {
         return Keys.priceFeedPrecisionKey(token);
     }
 
+    function oracleTypeKey(address token) external pure returns (bytes32) {
+        return Keys.oracleTypeKey(token);
+    }
+
     function reserveFactorKey(address market, bool isLong) external pure returns (bytes32) {
         return Keys.reserveFactorKey(market, isLong);
     }
 
     function swapFeeFactorKey(address market) external pure returns (bytes32) {
         return Keys.swapFeeFactorKey(market);
-    }
-
-    function swapSpreadFactorKey(address market) external pure returns (bytes32) {
-        return Keys.swapSpreadFactorKey(market);
     }
 
     function swapImpactFactorKey(address market, bool isPositive) external pure returns (bytes32) {
@@ -34,31 +34,29 @@ contract Reader {
         return Keys.swapImpactExponentFactorKey(market);
     }
 
-    function oraclePrecisionKey(address token) external pure returns (bytes32) {
-        return Keys.oraclePrecisionKey(token);
-    }
-
     function getPoolAmount(DataStore dataStore, address market, address token) external view returns (uint256) {
         return MarketUtils.getPoolAmount(dataStore, market, token);
     }
 
-    function getImpactPoolAmount(DataStore dataStore, address market, address token) external view returns (uint256) {
-        return MarketUtils.getImpactPoolAmount(dataStore, market, token);
+    function getSwapImpactPoolAmount(DataStore dataStore, address market, address token) external view returns (uint256) {
+        return MarketUtils.getSwapImpactPoolAmount(dataStore, market, token);
     }
 
     function getMarketTokenPrice(
         DataStore dataStore,
         Market.Props memory market,
-        uint256 longTokenPrice,
-        uint256 shortTokenPrice,
-        uint256 indexTokenPrice
+        Price.Props memory longTokenPrice,
+        Price.Props memory shortTokenPrice,
+        Price.Props memory indexTokenPrice,
+        bool maximize
     ) external view returns (uint256) {
         return MarketUtils.getMarketTokenPrice(
             dataStore,
             market,
             longTokenPrice,
             shortTokenPrice,
-            indexTokenPrice
+            indexTokenPrice,
+            maximize
         );
     }
 }

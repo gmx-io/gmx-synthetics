@@ -11,6 +11,7 @@ contract MarketStore is RoleModule {
     using Market for Market.Props;
 
     mapping(address => Market.Props) internal markets;
+    mapping(bytes32 => address) public marketAddresses;
     EnumerableSet.AddressSet internal marketTokens;
 
     constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
@@ -18,11 +19,19 @@ contract MarketStore is RoleModule {
     function set(address marketToken, Market.Props memory market) external onlyController {
         markets[marketToken] = market;
         marketTokens.add(marketToken);
+
+        bytes32 marketKey = keccak256(abi.encodePacked(market.indexToken, market.longToken, market.shortToken));
+        marketAddresses[marketKey] = marketToken;
     }
 
     function remove(address marketToken) external onlyController {
+        Market.Props memory market = markets[marketToken];
+
         delete markets[marketToken];
         marketTokens.remove(marketToken);
+
+        bytes32 marketKey = keccak256(abi.encodePacked(market.indexToken, market.longToken, market.shortToken));
+        delete marketAddresses[marketKey];
     }
 
     function contains(address marketToken) external view returns (bool) {
@@ -31,6 +40,11 @@ contract MarketStore is RoleModule {
 
     function get(address marketToken) external view returns (Market.Props memory) {
         return markets[marketToken];
+    }
+
+    function getMarketToken(address indexToken, address longToken, address shortToken) external view returns (address) {
+        bytes32 marketKey = keccak256(abi.encodePacked(indexToken, longToken, shortToken));
+        return marketAddresses[marketKey];
     }
 
     function getMarketCount() external view returns (uint256) {

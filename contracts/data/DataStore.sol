@@ -3,13 +3,17 @@
 pragma solidity ^0.8.0;
 
 import "../role/RoleModule.sol";
+import "../utils/Calc.sol";
 
 contract DataStore is RoleModule {
+    using SafeCast for int256;
+
     mapping(bytes32 => uint256) public uintValues;
     mapping(bytes32 => int256) public intValues;
     mapping(bytes32 => address) public addressValues;
-    mapping(bytes32 => bytes32) public dataValues;
     mapping(bytes32 => bool) public boolValues;
+    mapping(bytes32 => string) public stringValues;
+    mapping(bytes32 => bytes32) public dataValues;
 
     constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
 
@@ -20,6 +24,24 @@ contract DataStore is RoleModule {
     function setUint(bytes32 key, uint256 value) external onlyController returns (uint256) {
         uintValues[key] = value;
         return value;
+    }
+
+    function applyDeltaToUint(bytes32 key, int256 value) external onlyController returns (uint256) {
+        uint256 nextUint = Calc.sum(uintValues[key], value);
+        uintValues[key] = nextUint;
+        return nextUint;
+    }
+
+    function applyDeltaToUint(bytes32 key, int256 value, bool ensurePositiveValue) external onlyController returns (uint256) {
+        uint256 uintValue = uintValues[key];
+        if (ensurePositiveValue && value < 0 && (-value).toUint256() > uintValue) {
+            uintValues[key] = 0;
+            return 0;
+        }
+
+        uint256 nextUint = Calc.sum(uintValue, value);
+        uintValues[key] = nextUint;
+        return nextUint;
     }
 
     function incrementUint(bytes32 key, uint256 value) external onlyController returns (uint256) {
@@ -43,13 +65,19 @@ contract DataStore is RoleModule {
         return value;
     }
 
+    function applyDeltaToInt(bytes32 key, int256 value) external onlyController returns (int256) {
+        int256 nextInt = intValues[key] + value;
+        intValues[key] = nextInt;
+        return nextInt;
+    }
+
     function incrementInt(bytes32 key, int256 value) external onlyController returns (int256) {
         int256 nextInt = intValues[key] + value;
         intValues[key] = nextInt;
         return nextInt;
     }
 
-    function decrementUint(bytes32 key, int256 value) external onlyController returns (int256) {
+    function decrementInt(bytes32 key, int256 value) external onlyController returns (int256) {
         int256 nextInt = intValues[key] - value;
         intValues[key] = nextInt;
         return nextInt;
@@ -64,21 +92,30 @@ contract DataStore is RoleModule {
         return value;
     }
 
-    function getData(bytes32 key) external view returns (bytes32) {
-        return dataValues[key];
-    }
-
-    function setData(bytes32 key, bytes32 value) external onlyController returns (bytes32) {
-        dataValues[key] = value;
-        return value;
-    }
-
     function getBool(bytes32 key) external view returns (bool) {
         return boolValues[key];
     }
 
     function setBool(bytes32 key, bool value) external onlyController returns (bool) {
         boolValues[key] = value;
+        return value;
+    }
+
+    function getString(bytes32 key) external view returns (string memory) {
+        return stringValues[key];
+    }
+
+    function setString(bytes32 key, string memory value) external onlyController returns (string memory) {
+        stringValues[key] = value;
+        return value;
+    }
+
+    function getData(bytes32 key) external view returns (bytes32) {
+        return dataValues[key];
+    }
+
+    function setData(bytes32 key, bytes32 value) external onlyController returns (bytes32) {
+        dataValues[key] = value;
         return value;
     }
 }

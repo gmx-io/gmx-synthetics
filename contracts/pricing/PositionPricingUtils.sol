@@ -18,8 +18,6 @@ library PositionPricingUtils {
         address market;
         address longToken;
         address shortToken;
-        uint256 longTokenPrice;
-        uint256 shortTokenPrice;
         int256 usdDelta;
         bool isLong;
     }
@@ -36,13 +34,43 @@ library PositionPricingUtils {
         uint256 feesForPool;
         uint256 amountForPool;
         uint256 positionFeeAmount;
-        uint256 spreadAmount;
         int256 fundingFeeAmount;
         uint256 borrowingFeeAmount;
         int256 totalNetCostAmount;
     }
 
-    // returns (priceImpactUsd)
+    function getPriceImpactAmount(
+        uint256 size,
+        uint256 executionPrice,
+        uint256 latestPrice,
+        bool isLong,
+        bool isIncrease
+    ) internal pure returns (int256) {
+        // increase order:
+        //     - long: price impact is size * (latestPrice - executionPrice) / latestPrice
+        //             when executionPrice is smaller than latestPrice there is a positive price impact
+        //     - short: price impact is size * (executionPrice - latestPrice) / latestPrice
+        //              when executionPrice is larger than latestPrice there is a positive price impact
+        // decrease order:
+        //     - long: price impact is size * (executionPrice - latestPrice) / latestPrice
+        //             when executionPrice is larger than latestPrice there is a positive price impact
+        //     - short: price impact is size * (latestPrice - executionPrice) / latestPrice
+        //              when executionPrice is smaller than latestPrice there is a positive price impact
+        int256 priceDiff = latestPrice.toInt256() - executionPrice.toInt256();
+        bool shouldFlipPriceDiff = isIncrease ? !isLong : isLong;
+        if (shouldFlipPriceDiff) { priceDiff = -priceDiff; }
+
+        int256 priceImpactUsd = size.toInt256() * priceDiff / latestPrice.toInt256();
+
+        // round positive price impact up, this will be deducted from the position impact pool
+        if (priceImpactUsd > 0) {
+            return Calc.roundUpDivision(priceImpactUsd, latestPrice);
+        }
+
+        // round negative price impact down, this will be stored in the position impact pool
+        return priceImpactUsd / latestPrice.toInt256();
+    }
+
     function getPriceImpactUsd(GetPriceImpactUsdParams memory params) internal view returns (int256) {
         OpenInterestParams memory openInterestParams = getNextOpenInterest(params);
 
@@ -130,7 +158,7 @@ library PositionPricingUtils {
     function getPositionFees(
         DataStore dataStore,
         Position.Props memory position,
-        uint256 collateralTokenPrice,
+        Price.Props memory collateralTokenPrice,
         uint256 sizeDeltaUsd,
         bytes32 feeReceiverFactorKey
     ) internal view returns (PositionFees memory) {
@@ -138,16 +166,14 @@ library PositionPricingUtils {
 
         uint256 feeFactor = dataStore.getUint(Keys.positionFeeFactorKey(position.market));
         uint256 feeReceiverFactor = dataStore.getUint(feeReceiverFactorKey);
-        uint256 spreadFactor = dataStore.getUint(Keys.positionSpreadFactorKey(position.market));
 
-        fees.positionFeeAmount = Precision.applyFactor(sizeDeltaUsd, feeFactor) / collateralTokenPrice;
-        fees.spreadAmount = Precision.applyFactor(sizeDeltaUsd, spreadFactor) / collateralTokenPrice;
-        fees.fundingFeeAmount = MarketUtils.getFundingFees(dataStore, position) / collateralTokenPrice.toInt256();
-        fees.borrowingFeeAmount = MarketUtils.getBorrowingFees(dataStore, position) / collateralTokenPrice;
+        fees.positionFeeAmount = Precision.applyFactor(sizeDeltaUsd, feeFactor) / collateralTokenPrice.min;
+        fees.fundingFeeAmount = MarketUtils.getFundingFees(dataStore, position) / collateralTokenPrice.min.toInt256();
+        fees.borrowingFeeAmount = MarketUtils.getBorrowingFees(dataStore, position) / collateralTokenPrice.min;
 
         fees.feeReceiverAmount = Precision.applyFactor(fees.positionFeeAmount, feeReceiverFactor);
-        fees.feesForPool = fees.spreadAmount + fees.positionFeeAmount + fees.borrowingFeeAmount - fees.feeReceiverAmount;
-        fees.totalNetCostAmount = fees.fundingFeeAmount - (fees.positionFeeAmount + fees.spreadAmount + fees.borrowingFeeAmount).toInt256();
+        fees.feesForPool = fees.positionFeeAmount + fees.borrowingFeeAmount - fees.feeReceiverAmount;
+        fees.totalNetCostAmount = fees.fundingFeeAmount - (fees.positionFeeAmount + fees.borrowingFeeAmount).toInt256();
 
         return fees;
     }

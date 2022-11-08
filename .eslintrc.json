@@ -16,6 +16,7 @@
     "describe": true,
     "it": true,
     "beforeEach": true,
-    "Buffer": true
+    "Buffer": true,
+    "extendEnvironment": true
   }
 }

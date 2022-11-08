@@ -2,6 +2,7 @@ const { logGasUsage } = require("./gas");
 const { expandDecimals, bigNumberify } = require("./math");
 const { executeWithOracleParams } = require("./exchange");
 const { contractAt } = require("./deploy");
+const { TOKEN_ORACLE_TYPES } = require("./oracle");
 
 async function createDeposit(fixture, overrides = {}) {
   const { depositStore, depositHandler, weth, ethUsdMarket } = fixture.contracts;
@@ -50,7 +51,10 @@ async function executeDeposit(fixture, overrides = {}) {
   const { depositStore, depositHandler, weth, usdc } = fixture.contracts;
   const { gasUsageLabel } = overrides;
   const tokens = overrides.tokens || [weth.address, usdc.address];
-  const prices = overrides.prices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
+  const tokenOracleTypes = overrides.tokenOracleTypes || [TOKEN_ORACLE_TYPES.DEFAULT, TOKEN_ORACLE_TYPES.DEFAULT];
+  const precisions = overrides.precisions || [8, 18];
+  const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
+  const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const depositKeys = await depositStore.getDepositKeys(0, 1);
   const deposit = await depositStore.get(depositKeys[0]);
 
@@ -58,7 +62,10 @@ async function executeDeposit(fixture, overrides = {}) {
     key: depositKeys[0],
     oracleBlockNumber: deposit.updatedAtBlock,
     tokens,
-    prices,
+    tokenOracleTypes,
+    precisions,
+    minPrices,
+    maxPrices,
     execute: depositHandler.executeDeposit,
     gasUsageLabel,
   };

@@ -3,6 +3,7 @@ const { grantRole } = require("./role");
 const { deployContract } = require("./deploy");
 const { decimalToFloat, expandFloatDecimals } = require("./math");
 const { hashData } = require("./hash");
+const { TOKEN_ORACLE_TYPES } = require("./oracle");
 
 async function deployFixture() {
   const chainId = 31337; // hardhat chain id
@@ -71,9 +72,9 @@ async function deployFixture() {
   await dataStore.setUint(await reader.priceFeedPrecisionKey(usdc.address), expandFloatDecimals(1));
 
   await dataStore.setAddress(await keys.WETH(), weth.address);
-  await dataStore.setUint(await reader.oraclePrecisionKey(weth.address), expandDecimals(1, 8));
-  await dataStore.setUint(await reader.oraclePrecisionKey(wbtc.address), expandDecimals(1, 20));
-  await dataStore.setUint(await reader.oraclePrecisionKey(usdc.address), expandDecimals(1, 18));
+  await dataStore.setData(await reader.oracleTypeKey(weth.address), TOKEN_ORACLE_TYPES.DEFAULT);
+  await dataStore.setData(await reader.oracleTypeKey(wbtc.address), TOKEN_ORACLE_TYPES.DEFAULT);
+  await dataStore.setData(await reader.oracleTypeKey(usdc.address), TOKEN_ORACLE_TYPES.DEFAULT);
 
   const oracleSalt = hashData(["uint256", "string"], [chainId, "xget-oracle-v1"]);
 

@@ -12,6 +12,8 @@ import "../utils/Null.sol";
 contract MarketFactory is RoleModule {
     using Market for Market.Props;
 
+    event MarketCreated(address marketToken, address indexToken, address longToken, address shortToken);
+
     MarketStore public marketStore;
 
     constructor(RoleStore _roleStore, MarketStore _marketStore) RoleModule(_roleStore) {
@@ -46,6 +48,8 @@ contract MarketFactory is RoleModule {
         );
 
         marketStore.set(address(marketToken), market);
+
+        emit MarketCreated(address(marketToken), indexToken, longToken, shortToken);
 
         return market;
     }

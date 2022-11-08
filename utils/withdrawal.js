@@ -1,6 +1,7 @@
 const { logGasUsage } = require("./gas");
 const { expandDecimals, bigNumberify } = require("./math");
 const { executeWithOracleParams } = require("./exchange");
+const { TOKEN_ORACLE_TYPES } = require("./oracle");
 
 async function createWithdrawal(fixture, overrides = {}) {
   const { withdrawalStore, withdrawalHandler, weth, ethUsdMarket } = fixture.contracts;
@@ -43,7 +44,10 @@ async function executeWithdrawal(fixture, overrides = {}) {
   const { withdrawalStore, withdrawalHandler, weth, usdc } = fixture.contracts;
   const { gasUsageLabel } = overrides;
   const tokens = overrides.tokens || [weth.address, usdc.address];
-  const prices = overrides.prices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
+  const tokenOracleTypes = overrides.tokenOracleTypes || [TOKEN_ORACLE_TYPES.DEFAULT, TOKEN_ORACLE_TYPES.DEFAULT];
+  const precisions = overrides.precisions || [8, 18];
+  const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
+  const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const withdrawalKeys = await withdrawalStore.getWithdrawalKeys(0, 1);
   const withdrawal = await withdrawalStore.get(withdrawalKeys[0]);
 
@@ -51,7 +55,10 @@ async function executeWithdrawal(fixture, overrides = {}) {
     key: withdrawalKeys[0],
     oracleBlockNumber: withdrawal.updatedAtBlock,
     tokens,
-    prices,
+    tokenOracleTypes,
+    precisions,
+    minPrices,
+    maxPrices,
     execute: withdrawalHandler.executeWithdrawal,
     gasUsageLabel,
   };

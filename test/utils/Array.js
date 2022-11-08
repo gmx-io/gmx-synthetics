@@ -1,12 +1,12 @@
 const { expect } = require("chai");
 
-const { deployContract } = require("../../utils/deploy")
+const { deployContract } = require("../../utils/deploy");
 
 describe("Array", () => {
-  let ArrayTest
+  let arrayTest;
 
   beforeEach(async () => {
-    ArrayTest = await deployContract("ArrayTest", [])
+    arrayTest = await deployContract("ArrayTest", []);
   });
 
   it("getMedian", async () => {
@@ -17,8 +17,8 @@ describe("Array", () => {
       [[1, 12, 14, 10000], 13],
       [[1000000, 1000050, 1000100, 2000000], 1000075],
     ]) {
-      const median = await ArrayTest.getMedian(arr)
-      expect(median).to.equal(expected)
+      const median = await arrayTest.getMedian(arr);
+      expect(median).to.equal(expected);
     }
-  })
-})
+  });
+});

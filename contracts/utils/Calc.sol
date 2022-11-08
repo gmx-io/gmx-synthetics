@@ -7,9 +7,22 @@ import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 library Calc {
     using SignedMath for int256;
+    using SafeCast for uint256;
 
     function diff(uint256 a, uint256 b) internal pure returns (uint256) {
         return a > b ? a - b : b - a;
+    }
+
+    function roundUpDivision(uint256 a, uint256 b) internal pure returns (uint256) {
+        return (a + b - 1) / b;
+    }
+
+    function roundUpDivision(int256 a, uint256 b) internal pure returns (int256) {
+        if (a < 0) {
+            return (a - b.toInt256() + 1) / b.toInt256();
+        }
+
+        return (a + b.toInt256() - 1) / b.toInt256();
     }
 
     function sum(uint256 a, int256 b) internal pure returns (uint256) {
@@ -21,14 +34,14 @@ library Calc {
     }
 
     function sum(int256 a, uint256 b) internal pure returns (int256) {
-        return a + SafeCast.toInt256(b);
+        return a + b.toInt256();
     }
 
     function toSigned(uint256 a, bool isPositive) internal pure returns (int256) {
         if (isPositive) {
-            return SafeCast.toInt256(a);
+            return a.toInt256();
         } else {
-            return -SafeCast.toInt256(a);
+            return -a.toInt256();
         }
     }
 }
