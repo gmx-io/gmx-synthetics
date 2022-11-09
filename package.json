@@ -6,10 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepare": "husky install",
-    "lint": "yarn lint:eslint && yarn lint:prettier && yarn lint:tscCheck",
+    "lint": "yarn lint:eslint && yarn lint:prettier",
     "lint:eslint": "eslint --fix $(git diff --name-only --cached --diff-filter=AM | grep '\\.ts')",
-    "lint:prettier": "prettier --write .prettierrc.json $(git diff --name-only --cached --diff-filter=AM | grep '\\.ts')",
-    "lint:tscCheck": "tsc --noEmit"
+    "lint:prettier": "prettier --write .prettierrc.json $(git diff --name-only --cached --diff-filter=AM | grep '\\.ts')"
   },
   "author": "",
   "license": "ISC",
