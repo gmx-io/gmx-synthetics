@@ -234,19 +234,21 @@ library Keys {
     }
 
     // market open interest
-    function openInterestKey(address market, bool isLong) internal pure returns (bytes32) {
+    function openInterestKey(address market, address collateralToken, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             OPEN_INTEREST,
             market,
+            collateralToken,
             isLong
         ));
     }
 
     // market open interest in tokens
-    function openInterestInTokensKey(address market, bool isLong) internal pure returns (bytes32) {
+    function openInterestInTokensKey(address market, address collateralToken, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             OPEN_INTEREST_IN_TOKENS,
             market,
+            collateralToken,
             isLong
         ));
     }

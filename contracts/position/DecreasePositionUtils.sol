@@ -46,7 +46,16 @@ library DecreasePositionUtils {
         uint256 sizeDeltaInTokens;
     }
 
+    struct _DecreasePositionCache {
+        uint256 initialCollateralAmount;
+        uint256 nextPositionSizeInUsd;
+        uint256 nextPositionBorrowingFactor;
+        int256 poolDeltaAmount;
+    }
+
     function decreasePosition(DecreasePositionParams memory params) external returns (uint256, uint256) {
+        _DecreasePositionCache memory cache;
+
         Position.Props memory position = params.position;
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPricesForPosition(
             params.market,
@@ -62,10 +71,17 @@ library DecreasePositionUtils {
             revert("DecreasePositionUtils: Invalid Liquidation");
         }
 
-        MarketUtils.updateCumulativeFundingFactors(params.dataStore, params.market.marketToken);
+        MarketUtils.updateCumulativeFundingFactors(
+            params.dataStore,
+            params.market.marketToken,
+            params.market.longToken,
+            params.market.shortToken
+        );
         MarketUtils.updateCumulativeBorrowingFactor(
             params.dataStore,
-            params.market,
+            params.market.marketToken,
+            params.market.longToken,
+            params.market.shortToken,
             prices,
             position.isLong
         );
@@ -81,7 +97,7 @@ library DecreasePositionUtils {
             }
         }
 
-        uint256 initialCollateralAmount = position.collateralAmount;
+        cache.initialCollateralAmount = position.collateralAmount;
         (
             PositionPricingUtils.PositionFees memory fees,
             ProcessCollateralValues memory values
@@ -89,15 +105,15 @@ library DecreasePositionUtils {
             params,
             prices,
             position,
-            initialCollateralAmount.toInt256()
+            cache.initialCollateralAmount.toInt256()
         );
 
         if (values.remainingCollateralAmount < 0) {
             revert("Insufficient collateral");
         }
 
-        uint256 nextPositionSizeInUsd = position.sizeInUsd - params.adjustedSizeDeltaUsd;
-        uint256 nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(params.dataStore, params.market.marketToken, position.isLong);
+        cache.nextPositionSizeInUsd = position.sizeInUsd - params.adjustedSizeDeltaUsd;
+        cache.nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(params.dataStore, params.market.marketToken, position.isLong);
 
         MarketUtils.updateTotalBorrowing(
             params.dataStore,
@@ -105,11 +121,11 @@ library DecreasePositionUtils {
             position.isLong,
             position.borrowingFactor,
             position.sizeInUsd,
-            nextPositionSizeInUsd,
-            nextPositionBorrowingFactor
+            cache.nextPositionSizeInUsd,
+            cache.nextPositionBorrowingFactor
         );
 
-        position.sizeInUsd = nextPositionSizeInUsd;
+        position.sizeInUsd = cache.nextPositionSizeInUsd;
         position.sizeInTokens -= values.sizeDeltaInTokens;
         position.collateralAmount = values.remainingCollateralAmount.toUint256();
         position.decreasedAtBlock = Chain.currentBlockNumber();
@@ -122,7 +138,7 @@ library DecreasePositionUtils {
             params.positionStore.remove(params.positionKey, params.order.account());
         } else {
             position.fundingFactor = MarketUtils.getCumulativeFundingFactor(params.dataStore, params.market.marketToken, position.isLong);
-            position.borrowingFactor = nextPositionBorrowingFactor;
+            position.borrowingFactor = cache.nextPositionBorrowingFactor;
 
             PositionUtils.validatePosition(
                 params.dataStore,
@@ -137,37 +153,40 @@ library DecreasePositionUtils {
         MarketUtils.applyDeltaToCollateralSum(
             params.dataStore,
             params.eventEmitter,
-            params.order.market(),
-            params.order.initialCollateralToken(),
-            params.order.isLong(),
-            -(initialCollateralAmount - position.collateralAmount).toInt256()
+            position.market,
+            position.collateralToken,
+            position.isLong,
+            -(cache.initialCollateralAmount - position.collateralAmount).toInt256()
         );
 
         if (params.adjustedSizeDeltaUsd > 0) {
             MarketUtils.applyDeltaToOpenInterest(
                 params.dataStore,
                 params.eventEmitter,
-                params.order.market(),
-                params.order.isLong(),
+                position.market,
+                position.collateralToken,
+                position.isLong,
                 -params.adjustedSizeDeltaUsd.toInt256()
             );
             // since sizeDeltaInTokens is rounded down, when positions are closed for tokens with
             // a small number of decimals, the price of the market tokens may increase
             MarketUtils.applyDeltaToOpenInterestInTokens(
                 params.dataStore,
-                params.order.market(),
-                params.order.isLong(),
+                params.eventEmitter,
+                position.market,
+                position.collateralToken,
+                position.isLong,
                 values.sizeDeltaInTokens.toInt256()
             );
         }
 
-        int256 poolDeltaAmount = fees.feesForPool.toInt256() - values.positionPnlAmount;
+        cache.poolDeltaAmount = fees.feesForPool.toInt256() - values.positionPnlAmount;
         MarketUtils.applyDeltaToPoolAmount(
             params.dataStore,
             params.eventEmitter,
             params.market.marketToken,
             params.order.initialCollateralToken(),
-            poolDeltaAmount
+            cache.poolDeltaAmount
         );
 
         require(values.outputAmount >= 0, "DecreasePositionUtils: invalid outputAmount");

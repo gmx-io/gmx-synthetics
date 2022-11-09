@@ -62,10 +62,17 @@ library IncreasePositionUtils {
             params.oracle
         );
 
-        MarketUtils.updateCumulativeFundingFactors(params.dataStore, params.market.marketToken);
+        MarketUtils.updateCumulativeFundingFactors(
+            params.dataStore,
+            params.market.marketToken,
+            params.market.longToken,
+            params.market.shortToken
+        );
         MarketUtils.updateCumulativeBorrowingFactor(
             params.dataStore,
-            params.market,
+            params.market.marketToken,
+            params.market.longToken,
+            params.market.shortToken,
             prices,
             position.isLong
         );
@@ -152,18 +159,21 @@ library IncreasePositionUtils {
         params.positionStore.set(params.positionKey, params.order.account(), position);
 
         if (params.order.sizeDeltaUsd() > 0) {
-            MarketUtils.applyDeltaToOpenInterestInTokens(
-                params.dataStore,
-                params.order.market(),
-                params.order.isLong(),
-                cache.sizeDeltaInTokens.toInt256()
-            );
             MarketUtils.applyDeltaToOpenInterest(
                 params.dataStore,
                 params.eventEmitter,
-                params.order.market(),
-                params.order.isLong(),
+                position.market,
+                position.collateralToken,
+                position.isLong,
                 params.order.sizeDeltaUsd().toInt256()
+            );
+            MarketUtils.applyDeltaToOpenInterestInTokens(
+                params.dataStore,
+                params.eventEmitter,
+                position.market,
+                position.collateralToken,
+                position.isLong,
+                cache.sizeDeltaInTokens.toInt256()
             );
             MarketUtils.validateReserve(params.dataStore, params.market, prices, params.order.isLong());
         }

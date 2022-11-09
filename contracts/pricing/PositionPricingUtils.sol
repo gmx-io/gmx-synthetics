@@ -118,8 +118,20 @@ library PositionPricingUtils {
     function getNextOpenInterest(
         GetPriceImpactUsdParams memory params
     ) internal view returns (OpenInterestParams memory) {
-        uint256 longOpenInterest = MarketUtils.getOpenInterest(params.dataStore, params.market, true);
-        uint256 shortOpenInterest = MarketUtils.getOpenInterest(params.dataStore, params.market, false);
+        uint256 longOpenInterest = MarketUtils.getOpenInterest(
+            params.dataStore,
+            params.market,
+            params.longToken,
+            params.shortToken,
+            true);
+
+        uint256 shortOpenInterest = MarketUtils.getOpenInterest(
+            params.dataStore,
+            params.market,
+            params.longToken,
+            params.shortToken,
+            false
+        );
 
         uint256 nextLongOpenInterest;
         uint256 nextShortOpenInterest;

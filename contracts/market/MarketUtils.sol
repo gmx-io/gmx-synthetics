@@ -128,29 +128,44 @@ library MarketUtils {
         value = longTokenAmount * longTokenPrice.pickPrice(maximize);
         value += shortTokenAmount * shortTokenPrice.pickPrice(maximize);
 
-        value += getTotalBorrowingFees(dataStore, market.marketToken, true);
-        value += getTotalBorrowingFees(dataStore, market.marketToken, false);
+        value += getTotalBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, true);
+        value += getTotalBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, false);
 
         uint256 impactPoolAmount = getPositionImpactPoolAmount(dataStore, market.marketToken);
         value += impactPoolAmount * indexTokenPrice.pickPrice(maximize);
 
         // !maximize should be used for net pnl as a larger pnl leads to a smaller pool value
         // and a smaller pnl leads to a larger pool value
-        int256 pnl = getNetPnl(dataStore, market.marketToken, indexTokenPrice, !maximize);
+        int256 pnl = getNetPnl(dataStore, market.marketToken, market.longToken, market.shortToken, indexTokenPrice, !maximize);
 
         return Calc.sum(value, -pnl);
     }
 
-    function getNetPnl(DataStore dataStore, address market, Price.Props memory indexTokenPrice, bool maximize) internal view returns (int256) {
-        int256 longPnl = getPnl(dataStore, market, indexTokenPrice, true, maximize);
-        int256 shortPnl = getPnl(dataStore, market, indexTokenPrice, false, maximize);
+    function getNetPnl(
+        DataStore dataStore,
+        address market,
+        address longToken,
+        address shortToken,
+        Price.Props memory indexTokenPrice,
+        bool maximize
+    ) internal view returns (int256) {
+        int256 longPnl = getPnl(dataStore, market, longToken, shortToken, indexTokenPrice, true, maximize);
+        int256 shortPnl = getPnl(dataStore, market, longToken, shortToken, indexTokenPrice, false, maximize);
 
         return longPnl + shortPnl;
     }
 
-    function getPnl(DataStore dataStore, address market, Price.Props memory indexTokenPrice, bool isLong, bool maximize) internal view returns (int256) {
-        int256 openInterest = getOpenInterest(dataStore, market, isLong).toInt256();
-        uint256 openInterestInTokens = getOpenInterestInTokens(dataStore, market, isLong);
+    function getPnl(
+        DataStore dataStore,
+        address market,
+        address longToken,
+        address shortToken,
+        Price.Props memory indexTokenPrice,
+        bool isLong,
+        bool maximize
+    ) internal view returns (int256) {
+        int256 openInterest = getOpenInterest(dataStore, market, longToken, shortToken, isLong).toInt256();
+        uint256 openInterestInTokens = getOpenInterestInTokens(dataStore, market, longToken, shortToken, isLong);
         if (openInterest == 0 || openInterestInTokens == 0) {
             return 0;
         }
@@ -245,15 +260,32 @@ library MarketUtils {
         DataStore dataStore,
         EventEmitter eventEmitter,
         address market,
+        address collateralToken,
         bool isLong,
         int256 delta
     ) internal {
         uint256 nextValue = dataStore.applyDeltaToUint(
-            Keys.openInterestKey(market, isLong),
+            Keys.openInterestKey(market, collateralToken, isLong),
             delta
         );
 
-        eventEmitter.emitOpenInterestUpdated(market, isLong, delta, nextValue);
+        eventEmitter.emitOpenInterestUpdated(market, collateralToken, isLong, delta, nextValue);
+    }
+
+    function applyDeltaToOpenInterestInTokens(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address collateralToken,
+        bool isLong,
+        int256 delta
+    ) internal {
+        uint256 nextValue = dataStore.applyDeltaToUint(
+            Keys.openInterestInTokensKey(market, collateralToken, isLong),
+            delta
+        );
+
+        eventEmitter.emitOpenInterestInTokensUpdated(market, collateralToken, isLong, delta, nextValue);
     }
 
     function applyDeltaToCollateralSum(
@@ -278,8 +310,8 @@ library MarketUtils {
     // in the pool, the fees in the impact pool could be used to cover any shortfalls
     // alternatively the pay out of funding fees could be based on the usd value of pending funding fees
     // and the token value of paid funding fees
-    function updateCumulativeFundingFactors(DataStore dataStore, address market) internal {
-        (int256 longFundingFactor, int256 shortFundingFactor) = getNextCumulativeFundingFactors(dataStore, market);
+    function updateCumulativeFundingFactors(DataStore dataStore, address market, address longToken, address shortToken) internal {
+        (int256 longFundingFactor, int256 shortFundingFactor) = getNextCumulativeFundingFactors(dataStore, market, longToken, shortToken);
         setCumulativeFundingFactor(dataStore, market, true, longFundingFactor);
         setCumulativeFundingFactor(dataStore, market, false, shortFundingFactor);
         dataStore.setUint(Keys.cumulativeFundingFactorUpdatedAtKey(market), block.timestamp);
@@ -287,24 +319,15 @@ library MarketUtils {
 
     function updateCumulativeBorrowingFactor(
         DataStore dataStore,
-        Market.Props memory market,
+        address market,
+        address longToken,
+        address shortToken,
         MarketPrices memory prices,
         bool isLong
     ) internal {
-        uint256 borrowingFactor = getNextCumulativeBorrowingFactor(dataStore, market, prices, isLong);
-        setCumulativeBorrowingFactor(dataStore, market.marketToken, isLong, borrowingFactor);
-        dataStore.setUint(Keys.cumulativeBorrowingFactorUpdatedAtKey(market.marketToken, isLong), block.timestamp);
-    }
-
-    function applyDeltaToOpenInterestInTokens(
-        DataStore dataStore,
-        address market,
-        bool isLong,
-        int256 sizeDeltaInTokens
-    ) internal {
-        uint256 openInterestInTokens = getOpenInterestInTokens(dataStore, market, isLong);
-        uint256 nextOpenInterestInTokens = Calc.sum(openInterestInTokens, sizeDeltaInTokens);
-        dataStore.setUint(Keys.openInterestInTokensKey(market, isLong), nextOpenInterestInTokens);
+        uint256 borrowingFactor = getNextCumulativeBorrowingFactor(dataStore, market, longToken, shortToken, prices, isLong);
+        setCumulativeBorrowingFactor(dataStore, market, isLong, borrowingFactor);
+        dataStore.setUint(Keys.cumulativeBorrowingFactorUpdatedAtKey(market, isLong), block.timestamp);
     }
 
     function validateReserve(
@@ -329,13 +352,13 @@ library MarketUtils {
             // this also works for e.g. a SOL / USD market with long collateral token as WETH
             // if the price of SOL increases more than the price of ETH, additional amounts would be
             // automatically reserved
-            uint256 openInterestInTokens = getOpenInterestInTokens(dataStore, market.marketToken, isLong);
+            uint256 openInterestInTokens = getOpenInterestInTokens(dataStore, market.marketToken, market.longToken, market.shortToken, isLong);
             reservedUsd = openInterestInTokens * prices.indexTokenPrice.max;
         } else {
             // for shorts use the open interest as the reserved USD value
             // this works well for e.g. an ETH / USD market with short collateral token as USDC
             // the available amount to be reserved would not change with the price of ETH
-            reservedUsd = getOpenInterest(dataStore, market.marketToken, isLong);
+            reservedUsd = getOpenInterest(dataStore, market.marketToken, market.longToken, market.shortToken, isLong);
         }
 
         if (reservedUsd > maxReservedUsd) {
@@ -395,19 +418,63 @@ library MarketUtils {
         return Precision.applyFactor(position.sizeInUsd, diffFactor);
     }
 
-    function getOpenInterest(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.openInterestKey(market, isLong));
+    function getOpenInterest(
+        DataStore dataStore,
+        address market,
+        address longToken,
+        address shortToken,
+        bool isLong
+    ) internal view returns (uint256) {
+        uint256 openInterestUsingLongTokenAsCollateral = getOpenInterest(dataStore, market, longToken, isLong);
+        uint256 openInterestUsingShortTokenAsCollateral = getOpenInterest(dataStore, market, shortToken, isLong);
+
+        return openInterestUsingLongTokenAsCollateral + openInterestUsingShortTokenAsCollateral;
     }
 
-    function getOpenInterestInTokens(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.openInterestInTokensKey(market, isLong));
+    function getOpenInterest(
+        DataStore dataStore,
+        address market,
+        address collateralToken,
+        bool isLong
+    ) internal view returns (uint256) {
+        return dataStore.getUint(Keys.openInterestKey(market, collateralToken, isLong));
+    }
+
+    function getOpenInterestInTokens(
+        DataStore dataStore,
+        address market,
+        address longToken,
+        address shortToken,
+        bool isLong
+    ) internal view returns (uint256) {
+        uint256 openInterestUsingLongTokenAsCollateral = getOpenInterestInTokens(dataStore, market, longToken, isLong);
+        uint256 openInterestUsingShortTokenAsCollateral = getOpenInterestInTokens(dataStore, market, shortToken, isLong);
+
+        return openInterestUsingLongTokenAsCollateral + openInterestUsingShortTokenAsCollateral;
+    }
+
+    function getOpenInterestInTokens(
+        DataStore dataStore,
+        address market,
+        address collateralToken,
+        bool isLong
+    ) internal view returns (uint256) {
+        return dataStore.getUint(Keys.openInterestInTokensKey(market, collateralToken, isLong));
     }
 
     // getOpenInterestInTokens * tokenPrice would not reflect pending positive pnl
     // from short positions, getOpenInterestWithPnl should be used if that info is needed
-    function getOpenInterestWithPnl(DataStore dataStore, address market, Price.Props memory indexTokenPrice, bool isLong, bool maximize) internal view returns (uint256) {
-        uint256 openInterest = getOpenInterest(dataStore, market, isLong);
-        int256 pnl = getPnl(dataStore, market, indexTokenPrice, isLong, maximize);
+    function getOpenInterestWithPnl(
+        DataStore dataStore,
+        address market,
+        address longToken,
+        address shortToken,
+        Price.Props memory indexTokenPrice,
+        bool isLong,
+        bool maximize
+    ) internal view returns (uint256) {
+        uint256 openInterest = getOpenInterest(dataStore, market, longToken, shortToken, isLong);
+        int256 pnl = getPnl(dataStore, market, longToken, shortToken, indexTokenPrice, isLong, maximize);
         return Calc.sum(openInterest, pnl);
     }
 
@@ -501,12 +568,12 @@ library MarketUtils {
         return totalBorrowing;
     }
 
-    function getNextCumulativeFundingFactors(DataStore dataStore, address market) internal view returns (int256, int256) {
+    function getNextCumulativeFundingFactors(DataStore dataStore, address market, address longToken, address shortToken) internal view returns (int256, int256) {
         uint256 durationInSeconds = getSecondsSinceCumulativeFundingFactorUpdated(dataStore, market);
         uint256 fundingFactor = getFundingFactor(dataStore, market);
 
-        uint256 longOpenInterest = getOpenInterest(dataStore, market, true);
-        uint256 shortOpenInterest = getOpenInterest(dataStore, market, false);
+        uint256 longOpenInterest = getOpenInterest(dataStore, market, longToken, shortToken, true);
+        uint256 shortOpenInterest = getOpenInterest(dataStore, market, longToken, shortToken, false);
 
         int256 longFundingFactor = getCumulativeFundingFactor(dataStore, market, true);
         int256 shortFundingFactor = getCumulativeFundingFactor(dataStore, market, false);
@@ -536,21 +603,23 @@ library MarketUtils {
 
     function getNextCumulativeBorrowingFactor(
         DataStore dataStore,
-        Market.Props memory market,
+        address market,
+        address longToken,
+        address shortToken,
         MarketPrices memory prices,
         bool isLong
     ) internal view returns (uint256) {
-        uint256 durationInSeconds = getSecondsSinceCumulativeBorrowingFactorUpdated(dataStore, market.marketToken, isLong);
-        uint256 borrowingFactor = getBorrowingFactor(dataStore, market.marketToken, isLong);
+        uint256 durationInSeconds = getSecondsSinceCumulativeBorrowingFactorUpdated(dataStore, market, isLong);
+        uint256 borrowingFactor = getBorrowingFactor(dataStore, market, isLong);
 
-        uint256 openInterestWithPnl = getOpenInterestWithPnl(dataStore, market.marketToken, prices.indexTokenPrice, isLong, true);
+        uint256 openInterestWithPnl = getOpenInterestWithPnl(dataStore, market, longToken, shortToken, prices.indexTokenPrice, isLong, true);
 
-        uint256 poolAmount = getPoolAmount(dataStore, market.marketToken, isLong ? market.longToken : market.shortToken);
+        uint256 poolAmount = getPoolAmount(dataStore, market, isLong ? longToken : shortToken);
         uint256 poolTokenPrice = isLong ? prices.longTokenPrice.min : prices.shortTokenPrice.min;
         uint256 poolUsd = poolAmount * poolTokenPrice;
 
         uint256 adjustedFactor = durationInSeconds * borrowingFactor * openInterestWithPnl / poolUsd;
-        uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, market.marketToken, isLong);
+        uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, market, isLong);
 
         return cumulativeBorrowingFactor + adjustedFactor;
     }
@@ -574,8 +643,8 @@ library MarketUtils {
         return factor;
     }
 
-    function getTotalBorrowingFees(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
-        uint256 openInterest = getOpenInterest(dataStore, market, isLong);
+    function getTotalBorrowingFees(DataStore dataStore, address market, address longToken, address shortToken, bool isLong) internal view returns (uint256) {
+        uint256 openInterest = getOpenInterest(dataStore, market, longToken, shortToken, isLong);
         uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, market, isLong);
         uint256 totalBorrowing = getTotalBorrowing(dataStore, market, isLong);
         return openInterest * cumulativeBorrowingFactor - totalBorrowing;
