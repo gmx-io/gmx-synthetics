@@ -299,3 +299,23 @@ If a market has stablecoins as the short collateral token it should be able to f
 If a market has a long collateral token that is different from the index token, the long profits may not be fully paid out if the price increase of the index token exceeds the price increase of the long collateral token.
 
 Markets have a reserve factor that allows open interest to be capped to a percentage of the pool size, this reduces the impact of profits of short positions and reduces the risk that long positions cannot be fully paid out.
+
+# Commands
+
+To compile contracts:
+
+```
+npx hardhat compile
+```
+
+To run all tests:
+
+```
+npx hardhat test
+```
+
+To check metrics:
+
+```
+npx ts-node metrics.ts
+```

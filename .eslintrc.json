@@ -4,12 +4,20 @@
     "commonjs": true,
     "es2021": true
   },
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
   "overrides": [],
   "parserOptions": {
     "ecmaVersion": "latest"
   },
-  "extends": ["eslint:recommended"],
-  "rules": {},
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "rules": {
+    "no-undef": "error"
+  },
   "globals": {
     "process": true,
     "ethers": true,
