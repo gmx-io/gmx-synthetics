@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import { expect } from "chai"
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 import { deployContract } from "../../utils/deploy";
