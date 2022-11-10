@@ -3,6 +3,7 @@ import { grantRole } from "./role";
 import { deployContract } from "./deploy";
 import { decimalToFloat, expandFloatDecimals } from "./math";
 import { hashData } from "./hash";
+import * as keys from "./keys";
 import { TOKEN_ORACLE_TYPES } from "./oracle";
 
 async function deployFixture() {
@@ -30,7 +31,6 @@ async function deployFixture() {
     signer9,
   ] = await ethers.getSigners();
 
-  const keys = await deployContract("Keys", []);
   const reader = await deployContract("Reader", []);
 
   const roleStore = await deployContract("RoleStore", []);
@@ -38,9 +38,9 @@ async function deployFixture() {
   await grantRole(roleStore, wallet.address, "ORDER_KEEPER");
 
   const dataStore = await deployContract("DataStore", [roleStore.address]);
-  await dataStore.setUint(await keys.MIN_ORACLE_BLOCK_CONFIRMATIONS(), 100);
-  await dataStore.setUint(await keys.MAX_ORACLE_BLOCK_AGE(), 200);
-  await dataStore.setUint(await keys.MAX_LEVERAGE(), expandFloatDecimals(100));
+  await dataStore.setUint(keys.MIN_ORACLE_BLOCK_CONFIRMATIONS, 100);
+  await dataStore.setUint(keys.MAX_ORACLE_BLOCK_AGE, 200);
+  await dataStore.setUint(keys.MAX_LEVERAGE, expandFloatDecimals(100));
 
   const eventEmitter = await deployContract("EventEmitter", [roleStore.address]);
 
@@ -68,13 +68,13 @@ async function deployFixture() {
 
   const usdcPriceFeed = await deployContract("MockPriceFeed", []);
   await usdcPriceFeed.setAnswer(1);
-  await dataStore.setAddress(await reader.priceFeedKey(usdc.address), usdcPriceFeed.address);
-  await dataStore.setUint(await reader.priceFeedPrecisionKey(usdc.address), expandFloatDecimals(1));
+  await dataStore.setAddress(keys.priceFeedKey(usdc.address), usdcPriceFeed.address);
+  await dataStore.setUint(keys.priceFeedPrecisionKey(usdc.address), expandFloatDecimals(1));
 
-  await dataStore.setAddress(await keys.WETH(), weth.address);
-  await dataStore.setData(await reader.oracleTypeKey(weth.address), TOKEN_ORACLE_TYPES.DEFAULT);
-  await dataStore.setData(await reader.oracleTypeKey(wbtc.address), TOKEN_ORACLE_TYPES.DEFAULT);
-  await dataStore.setData(await reader.oracleTypeKey(usdc.address), TOKEN_ORACLE_TYPES.DEFAULT);
+  await dataStore.setAddress(keys.WETH, weth.address);
+  await dataStore.setData(keys.oracleTypeKey(weth.address), TOKEN_ORACLE_TYPES.DEFAULT);
+  await dataStore.setData(keys.oracleTypeKey(wbtc.address), TOKEN_ORACLE_TYPES.DEFAULT);
+  await dataStore.setData(keys.oracleTypeKey(usdc.address), TOKEN_ORACLE_TYPES.DEFAULT);
 
   const oracleSalt = hashData(["uint256", "string"], [chainId, "xget-oracle-v1"]);
 
@@ -91,7 +91,7 @@ async function deployFixture() {
   const marketKeys = await marketStore.getMarketKeys(0, 1);
   const ethUsdMarket = await marketStore.get(marketKeys[0]);
 
-  await dataStore.setUint(await reader.reserveFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 1));
+  await dataStore.setUint(keys.reserveFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 1));
 
   const feeReceiver = await deployContract("FeeReceiver", []);
 
@@ -200,7 +200,6 @@ async function deployFixture() {
       signers: [signer0, signer1, signer2, signer3, signer4, signer5, signer6],
     },
     contracts: {
-      keys,
       reader,
       roleStore,
       dataStore,

@@ -1,5 +1,5 @@
-import { hashData } from "../utils/hash";
 import { expandFloatDecimals } from "../utils/math";
+import * as keys from "../utils/keys";
 
 const func = async ({ getNamedAccounts, deployments }) => {
   const { deploy, execute, get } = deployments;
@@ -15,10 +15,10 @@ const func = async ({ getNamedAccounts, deployments }) => {
   if (newlyDeployed) {
     await execute("UsdcPriceFeed", { from: deployer, log: true }, "setAnswer", 1);
 
-    const priceFeedKey = hashData(["string", "address"], ["PRICE_FEED", usdcAddress]);
+    const priceFeedKey = keys.priceFeedKey(usdcAddress);
     await execute("DataStore", { from: deployer, log: true }, "setAddress", priceFeedKey, address);
 
-    const priceFeedPrecisionKey = hashData(["string", "address"], ["PRICE_FEED_PRECISION", usdcAddress]);
+    const priceFeedPrecisionKey = keys.priceFeedPrecisionKey(usdcAddress);
     await execute("DataStore", { from: deployer, log: true }, "setUint", priceFeedPrecisionKey, expandFloatDecimals(1));
   }
 };
