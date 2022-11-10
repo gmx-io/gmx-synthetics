@@ -34,7 +34,7 @@ export function oracleTypeKey(token) {
 }
 
 export function reserveFactorKey(market, isLong) {
-  return hashData(["bytes32", "address", "bool"], [ORACLE_TYPE, market, isLong]);
+  return hashData(["bytes32", "address", "bool"], [RESERVE_FACTOR, market, isLong]);
 }
 
 export function swapFeeFactorKey(market) {

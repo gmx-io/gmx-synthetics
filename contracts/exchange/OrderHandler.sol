@@ -78,13 +78,7 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
     ) external nonReentrant onlyOrderKeeper {
         uint256 startingGas = gasleft();
 
-        this._executeOrder(
-            key,
-            oracleParams,
-            msg.sender,
-            startingGas
-        );
-        /* try this._executeOrder(
+        try this._executeOrder(
             key,
             oracleParams,
             msg.sender,
@@ -104,7 +98,7 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
             _handleOrderError(key, startingGas, reasonKey);
         } catch (bytes memory reason) {
             _handleOrderError(key, startingGas, keccak256(reason));
-        } */
+        }
     }
 
     function executeLiquidation(
