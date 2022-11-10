@@ -103,6 +103,9 @@ library OrderBaseUtils {
     // is an increase or decrease and whether it is for a long or short
     //
     // customPrice.min and customPrice.max will be equal in this case
+    // this is because in getExecutionPrice the function will try to use the closest price which can fulfill
+    // the order, if customPrice.min is set to secondaryPrice.min and customPrice.max is set to secondaryPrice.max
+    // getExecutionPrice will pick a better price than what should be possible
     //
     // for limit / stop-loss orders, the min and max value will be set to the triggerPrice
     // and latest secondaryPrice value, this represents the price that the user desired the order
@@ -135,8 +138,6 @@ library OrderBaseUtils {
             orderType == Order.OrderType.Liquidation) {
 
             Price.Props memory price = oracle.getPrimaryPrice(indexToken);
-
-            oracle.setSecondaryPrice(indexToken, price);
 
             oracle.setCustomPrice(indexToken, Price.Props(
                 price.pickPrice(shouldUseMaxPrice),
@@ -222,7 +223,7 @@ library OrderBaseUtils {
         //     - short: price should be smaller than acceptablePrice
         bool shouldPriceBeSmaller = isIncrease ? isLong : !isLong;
 
-        // for market orders, customPrice.min and customPrice.max should be equal
+        // for market orders, customPrice.min and customPrice.max should be equal, see setExactOrderPrice for more info
         // for limit orders, customPrice contains the triggerPrice and the best oracle
         // price, we first attempt to fulfill the order using the triggerPrice
         uint256 price = customPrice.pickPrice(shouldUseMaxPrice);
