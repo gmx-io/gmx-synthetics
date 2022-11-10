@@ -6,34 +6,6 @@ import "../data/Keys.sol";
 import "../market/MarketUtils.sol";
 
 contract Reader {
-    function priceFeedKey(address token) external pure returns (bytes32) {
-        return Keys.priceFeedKey(token);
-    }
-
-    function priceFeedPrecisionKey(address token) external pure returns (bytes32) {
-        return Keys.priceFeedPrecisionKey(token);
-    }
-
-    function oracleTypeKey(address token) external pure returns (bytes32) {
-        return Keys.oracleTypeKey(token);
-    }
-
-    function reserveFactorKey(address market, bool isLong) external pure returns (bytes32) {
-        return Keys.reserveFactorKey(market, isLong);
-    }
-
-    function swapFeeFactorKey(address market) external pure returns (bytes32) {
-        return Keys.swapFeeFactorKey(market);
-    }
-
-    function swapImpactFactorKey(address market, bool isPositive) external pure returns (bytes32) {
-        return Keys.swapImpactFactorKey(market, isPositive);
-    }
-
-    function swapImpactExponentFactorKey(address market) external pure returns (bytes32) {
-        return Keys.swapImpactExponentFactorKey(market);
-    }
-
     function getPoolAmount(DataStore dataStore, address market, address token) external view returns (uint256) {
         return MarketUtils.getPoolAmount(dataStore, market, token);
     }

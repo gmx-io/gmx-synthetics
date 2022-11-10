@@ -14,19 +14,20 @@ import {
 } from "../../utils/oracle";
 import { printGasUsage } from "../../utils/gas";
 import { grantRole } from "../../utils/role";
+import * as keys from "../../utils/keys";
 
 describe("Oracle", () => {
   const { provider } = ethers;
 
   let user0, signer0, signer1, signer2, signer3, signer4, signer7, signer9;
-  let keys, roleStore, dataStore, eventEmitter, oracleStore, oracle, weth, wbtc, usdc;
+  let roleStore, dataStore, eventEmitter, oracleStore, oracle, weth, wbtc, usdc;
   let oracleSalt;
 
   beforeEach(async () => {
     const fixture = await loadFixture(deployFixture);
     ({ user0, signer0, signer1, signer2, signer3, signer4, signer7, signer9 } = fixture.accounts);
 
-    ({ keys, roleStore, dataStore, eventEmitter, oracleStore, oracle, weth, wbtc, usdc } = fixture.contracts);
+    ({ roleStore, dataStore, eventEmitter, oracleStore, oracle, weth, wbtc, usdc } = fixture.contracts);
     ({ oracleSalt } = fixture.props);
   });
 
@@ -102,7 +103,7 @@ describe("Oracle", () => {
       })
     ).to.be.revertedWith("ECDSA: invalid signature length");
 
-    await dataStore.setUint(await keys.MIN_ORACLE_SIGNERS(), 3);
+    await dataStore.setUint(keys.MIN_ORACLE_SIGNERS, 3);
 
     await expect(
       oracle.setPrices(dataStore.address, eventEmitter.address, {

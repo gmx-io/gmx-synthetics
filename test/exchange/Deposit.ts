@@ -6,18 +6,19 @@ import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { getBalanceOf } from "../../utils/token";
 import { getMarketTokenPrice } from "../../utils/market";
 import { createDeposit, executeDeposit, handleDeposit } from "../../utils/deposit";
+import * as keys from "../../utils/keys";
 
 describe("Exchange.Deposit", () => {
   const { provider } = ethers;
 
   let fixture;
   let user0, user1, user2;
-  let feeReceiver, reader, dataStore, keys, depositStore, ethUsdMarket, weth, usdc;
+  let feeReceiver, reader, dataStore, depositStore, ethUsdMarket, weth, usdc;
 
   beforeEach(async () => {
     fixture = await loadFixture(deployFixture);
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ feeReceiver, reader, dataStore, keys, depositStore, ethUsdMarket, weth, usdc } = fixture.contracts);
+    ({ feeReceiver, reader, dataStore, depositStore, ethUsdMarket, weth, usdc } = fixture.contracts);
   });
 
   it("createDeposit", async () => {
@@ -80,9 +81,9 @@ describe("Exchange.Deposit", () => {
     // set price impact to 0.1% for every $50,000 of token imbalance
     // 0.1% => 0.001
     // 0.001 / 50,000 => 2 * (10 ** -8)
-    await dataStore.setUint(await reader.swapImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 8));
-    await dataStore.setUint(await reader.swapImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
-    await dataStore.setUint(await reader.swapImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 8));
+    await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
+    await dataStore.setUint(keys.swapImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
     expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(0);
     expect(await weth.balanceOf(depositStore.address)).eq(0);
@@ -145,9 +146,9 @@ describe("Exchange.Deposit", () => {
     // set positive price impact to 0.05% for every $50,000 of token imbalance
     // 0.05% => 0.0005
     // 0.0005 / 50,000 => 1 * (10 ** -8)
-    await dataStore.setUint(await reader.swapImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
-    await dataStore.setUint(await reader.swapImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
-    await dataStore.setUint(await reader.swapImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
+    await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
+    await dataStore.setUint(keys.swapImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
     await handleDeposit(fixture, {
       create: {
@@ -198,9 +199,9 @@ describe("Exchange.Deposit", () => {
     // set positive price impact to 0.05% for every $50,000 of token imbalance
     // 0.05% => 0.0005
     // 0.0005 / 50,000 => 1 * (10 ** -8)
-    await dataStore.setUint(await reader.swapImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
-    await dataStore.setUint(await reader.swapImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
-    await dataStore.setUint(await reader.swapImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
+    await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
+    await dataStore.setUint(keys.swapImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
     await handleDeposit(fixture, {
       create: {
@@ -256,8 +257,8 @@ describe("Exchange.Deposit", () => {
     // increase positive price impact to 0.2% for every $50,000 of token imbalance
     // 0.2% => 0.002
     // 0.002 / 50,000 => 4 * (10 ** -8)
-    await dataStore.setUint(await reader.swapImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(4, 8));
-    await dataStore.setUint(await reader.swapImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(4, 8));
+    await dataStore.setUint(keys.swapImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
     await handleDeposit(fixture, {
       create: {
@@ -290,9 +291,9 @@ describe("Exchange.Deposit", () => {
     // set positive price impact to 0.05% for every $50,000 of token imbalance
     // 0.05% => 0.0005
     // 0.0005 / 50,000 => 1 * (10 ** -8)
-    await dataStore.setUint(await reader.swapImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
-    await dataStore.setUint(await reader.swapImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
-    await dataStore.setUint(await reader.swapImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
+    await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
+    await dataStore.setUint(keys.swapImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
     await handleDeposit(fixture, {
       create: {
@@ -357,9 +358,9 @@ describe("Exchange.Deposit", () => {
     // set positive price impact to 0.05% for every $50,000 of token imbalance
     // 0.05% => 0.0005
     // 0.0005 / 50,000 => 1 * (10 ** -8)
-    await dataStore.setUint(await reader.swapImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
-    await dataStore.setUint(await reader.swapImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
-    await dataStore.setUint(await reader.swapImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
+    await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
+    await dataStore.setUint(keys.swapImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
     await handleDeposit(fixture, {
       create: {
@@ -415,9 +416,9 @@ describe("Exchange.Deposit", () => {
 
   it("price impact, fees", async () => {
     // 0.05%: 0.0005
-    await dataStore.setUint(await reader.swapFeeFactorKey(ethUsdMarket.marketToken), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken), decimalToFloat(5, 4));
     // 30%
-    await dataStore.setUint(await keys.FEE_RECEIVER_DEPOSIT_FACTOR(), decimalToFloat(3, 1));
+    await dataStore.setUint(keys.FEE_RECEIVER_DEPOSIT_FACTOR, decimalToFloat(3, 1));
 
     // set negative price impact to 0.1% for every $50,000 of token imbalance
     // 0.1% => 0.001
@@ -425,9 +426,9 @@ describe("Exchange.Deposit", () => {
     // set positive price impact to 0.05% for every $50,000 of token imbalance
     // 0.05% => 0.0005
     // 0.0005 / 50,000 => 1 * (10 ** -8)
-    await dataStore.setUint(await reader.swapImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
-    await dataStore.setUint(await reader.swapImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
-    await dataStore.setUint(await reader.swapImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
+    await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
+    await dataStore.setUint(keys.swapImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
     await handleDeposit(fixture, {
       create: {
