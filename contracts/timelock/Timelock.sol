@@ -8,8 +8,8 @@ import "../data/Keys.sol";
 contract Timelock {
     address public admin;
 
-    mapping (string => bool) public allowedFastKeys;
-    mapping (string => bool) public allowedSlowKeys;
+    mapping (bytes32 => bool) public allowedFastKeys;
+    mapping (bytes32 => bool) public allowedSlowKeys;
 
     constructor() {
         admin = msg.sender;
@@ -26,7 +26,7 @@ contract Timelock {
         // impact factor should eventually be moved under the oracle system
         // this should be done after the strategy for setting positive and negative
         //  impact factors has been refined and finalized
-        string[4] memory allowedKeys = [
+        bytes32[4] memory allowedKeys = [
             Keys.POSITION_IMPACT_FACTOR,
             Keys.SWAP_IMPACT_FACTOR,
             Keys.POSITION_FEE_FACTOR,
@@ -38,9 +38,9 @@ contract Timelock {
         }
     }
 
-    function fastSetUints(DataStore dataStore, string[] memory prefixes, bytes[] memory data, uint256[] memory values) external onlyAdmin {
+    function fastSetUints(DataStore dataStore, bytes32[] memory prefixes, bytes[] memory data, uint256[] memory values) external onlyAdmin {
         for (uint256 i = 0; i < prefixes.length; i++) {
-            string memory prefix = prefixes[i];
+            bytes32 prefix = prefixes[i];
 
             require(allowedFastKeys[prefix], "Timelock: invalid key");
             bytes32 key = keccak256(abi.encode(
@@ -52,7 +52,7 @@ contract Timelock {
         }
     }
 
-    function fastSetUint(DataStore dataStore, string memory prefix, bytes memory data, uint256 value) external onlyAdmin {
+    function fastSetUint(DataStore dataStore, bytes32 prefix, bytes memory data, uint256 value) external onlyAdmin {
         require(allowedFastKeys[prefix], "Timelock: invalid key");
         bytes32 key = keccak256(abi.encode(
             prefix,
