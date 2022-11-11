@@ -236,6 +236,65 @@ For limit swap, limit increase, limit decrease and stop-loss decrease orders, th
 
 For example, if the current index token price is $5000 and a user creates a limit long decrease order with acceptable price as $5010, the order can be executed with the index token price as $5010 if oracle prices $5008 and $5012 are validated, the blocks of the oracle prices must be after the order was updated and must be in ascending order.
 
+# Oracle Prices
+
+Oracle prices are signed as a value together with a precision, this allows prices to be compacted as uint32 values.
+
+The signed prices represent the price of one unit of the token using a value with 30 decimals of precision.
+
+Representing the prices in this way allows for conversions between token amounts and fiat values to be simplified, e.g. to calculate the fiat value of a given number of tokens the calculation would just be: `token amount * oracle price`, to calculate the token amount for a fiat value it would be: `fiat value / oracle price`.
+
+The trade-off of this simplicity in calculation is that tokens with a small USD price and a lot of decimals may have precision issues it is also possible that a token's price changes significantly and results in requiring higher precision.
+
+## Example 1
+
+The price of ETH is 5000, and ETH has 18 decimals.
+
+The price of one unit of ETH is `5000 / (10 ^ 18), 5 * (10 ^ -15)`.
+
+To represent the price with 30 decimals, store the price as `5000 / (10 ^ 18) * (10 ^ 30) => 5 * (10 ^ 15) => 5000 * (10 ^ 12)`.
+
+With this config ETH prices can have a maximum value of `(2 ^ 32) / (10 ^ 4) => 4,294,967,296 / (10 ^ 4) => 429,496.7296` and up to 4 decimals of precision.
+
+## Example 2
+
+The price of BTC is 60,000, and BTC has 8 decimals.
+
+The price of one unit of BTC is `60,000 / (10 ^ 8), 6 * (10 ^ -4)`.
+
+To represent the price with 30 decimals, store the price as `60,000 / (10 ^ 8) * (10 ^ 30) => 6 * (10 ^ 26) => 60,000 * (10 ^ 22)`.
+
+With this config BTC prices can have a maximum value of `(2 ^ 64) / (10 ^ 2) => 4,294,967,296 / (10 ^ 2) => 42,949,672.96` and up to 2 decimals of precision.
+
+## Example 3
+
+The price of USDC is 1, and USDC has 6 decimals.
+
+The price of one unit of USDC is `1 / (10 ^ 6), 1 * (10 ^ -6)`.
+
+To represent the price with 30 decimals, store the price as `1 / (10 ^ 6) * (10 ^ 30) => 1 * (10 ^ 24)`.
+
+With this config USDC prices can have a maximum value of `(2 ^ 64) / (10 ^ 6) => 4,294,967,296 / (10 ^ 6) => 4294.967296` and up to 6 decimals of precision.
+
+## Example 4
+
+The price of DG is 0.00000001, and DG has 18 decimals.
+
+The price of one unit of DG is `0.00000001 / (10 ^ 18), 1 * (10 ^ -26)`.
+
+To represent the price with 30 decimals, store the price as `1 * (10 ^ -26) * (10 ^ 30) => 10,000 => 1 * (10 ^ 3)`.
+
+With this config DG can have a maximum value of `(2 ^ 64) / (10 ^ 11) => 4,294,967,296 / (10 ^ 11) => 0.04294967296`. and up to 11 decimals of precision.
+
+The formula to calculate what the precision value should be set to:
+
+Decimals: 30 - (token decimals) - (number of decimals desired for precision)
+
+- ETH: 30 - 18 - 4 => 8, precision: 10 ^ 8
+- BTC: 30 - 8 - 2 => 20, precision: 10 ^ 20
+- USDC: 30 - 6 - 6 => 18, precision: 10 ^ 18
+- DG: 30 - 18 - 11 => 1, precision: 10 ^ 1
+
 # Funding Fees
 
 Funding fees incentivise the balancing of long and short positions, the side with the larger open interest pays a funding fee to the side with the smaller open interest.
