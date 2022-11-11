@@ -304,12 +304,105 @@ library MarketUtils {
         eventEmitter.emitCollateralSumDelta(market, collateralToken, isLong, collateralDeltaAmount);
     }
 
-    // in case of late liquidations, there may be insufficient collateral to pay for funding fees
-    // additionally since funding fees are accounted for in USD while collateral amounts may be in
-    // non stablecoins, it is possible that the amount to be paid out exceeds the worth of the collateral
-    // in the pool, the fees in the impact pool could be used to cover any shortfalls
-    // alternatively the pay out of funding fees could be based on the usd value of pending funding fees
-    // and the token value of paid funding fees
+    function updateFundingAmountPerSize(
+        DataStore dataStore,
+        MarketPrices memory prices,
+        address market,
+        address longToken,
+        address shortToken
+    ) internal {
+        (
+            int256 longCollateralFundingPerSizeForLongs,
+            int256 longCollateralFundingPerSizeForShorts,
+            int256 shortCollateralFundingPerSizeForLongs,
+            int256 shortCollateralFundingPerSizeForShorts
+        ) = getNextFundingAmountPerSize(dataStore, prices, market, longToken, shortToken);
+
+        setFundingAmountPerSize(dataStore, market, longToken, true, longCollateralFundingPerSizeForLongs);
+        setFundingAmountPerSize(dataStore, market, longToken, false, longCollateralFundingPerSizeForShorts);
+        setFundingAmountPerSize(dataStore, market, shortToken, true, shortCollateralFundingPerSizeForLongs);
+        setFundingAmountPerSize(dataStore, market, shortToken, false, shortCollateralFundingPerSizeForShorts);
+
+        dataStore.setUint(Keys.fundingUpdatedAtKey(market), block.timestamp);
+    }
+
+    function getNextFundingAmountPerSize(
+        DataStore dataStore,
+        MarketPrices memory prices,
+        address market,
+        address longToken,
+        address shortToken
+    ) internal view returns (int256, int256, int256, int256) {
+        uint256 longOpenInterestWithLongCollateral = getOpenInterest(dataStore, market, longToken, true);
+        uint256 longOpenInterestWithShortCollateral = getOpenInterest(dataStore, market, shortToken, true);
+        uint256 shortOpenInterestWithLongCollateral = getOpenInterest(dataStore, market, longToken, false);
+        uint256 shortOpenInterestWithShortCollateral = getOpenInterest(dataStore, market, shortToken, false);
+
+        uint256 longOpenInterest = longOpenInterestWithLongCollateral + longOpenInterestWithShortCollateral;
+        uint256 shortOpenInterest = shortOpenInterestWithLongCollateral + shortOpenInterestWithShortCollateral;
+
+        int256 longCollateralFundingPerSizeForLongs = getFundingAmountPerSize(dataStore, market, longToken, true);
+        int256 longCollateralFundingPerSizeForShorts = getFundingAmountPerSize(dataStore, market, longToken, false);
+        int256 shortCollateralFundingPerSizeForLongs = getFundingAmountPerSize(dataStore, market, shortToken, true);
+        int256 shortCollateralFundingPerSizeForShorts = getFundingAmountPerSize(dataStore, market, shortToken, false);
+
+        if (longOpenInterest == 0 || shortOpenInterest == 0) {
+            return (
+                longCollateralFundingPerSizeForLongs,
+                longCollateralFundingPerSizeForShorts,
+                shortCollateralFundingPerSizeForLongs,
+                shortCollateralFundingPerSizeForShorts
+            );
+        }
+
+        uint256 durationInSeconds = getSecondsSinceFundingUpdated(dataStore, market);
+        uint256 fundingFactor = getFundingFactor(dataStore, market);
+
+        uint256 diffUsd = Calc.diff(longOpenInterest, shortOpenInterest);
+        uint256 totalOpenInterest = longOpenInterest + shortOpenInterest;
+        uint256 fundingUsd = (fundingFactor * diffUsd * durationInSeconds) / totalOpenInterest;
+
+        uint256 fundingUsdForLongCollateral;
+        uint256 fundingUsdForShortCollateral;
+
+        if (longOpenInterest > shortOpenInterest) {
+            fundingUsdForLongCollateral = fundingUsd * longOpenInterestWithLongCollateral / longOpenInterest;
+            fundingUsdForShortCollateral = fundingUsd * longOpenInterestWithShortCollateral / longOpenInterest;
+        } else {
+            fundingUsdForLongCollateral = fundingUsd * shortOpenInterestWithLongCollateral / shortOpenInterest;
+            fundingUsdForShortCollateral = fundingUsd * shortOpenInterestWithShortCollateral / shortOpenInterest;
+        }
+
+        // use Precision.FLOAT_PRECISION here because fundingUsdForLongCollateral or fundingUsdForShortCollateral divided by longTokenPrice
+        // will give an amount in number of tokens which may be quite a small value and could become zero after being divided by longOpenInterest
+        // the result will be the amount in number of tokens multiplied by Precision.FLOAT_PRECISION per 1 USD of size
+        uint256 fundingAmountPerSizeForLongCollateralForLongs = (fundingUsdForLongCollateral / prices.longTokenPrice.max * Precision.FLOAT_PRECISION) / (longOpenInterest / Precision.FLOAT_PRECISION);
+        uint256 fundingAmountPerSizeForShortCollateralForLongs = (fundingUsdForShortCollateral / prices.shortTokenPrice.max * Precision.FLOAT_PRECISION) / (longOpenInterest / Precision.FLOAT_PRECISION);
+        uint256 fundingAmountPerSizeForLongCollateralForShorts = (fundingUsdForLongCollateral / prices.longTokenPrice.max * Precision.FLOAT_PRECISION) / (shortOpenInterest / Precision.FLOAT_PRECISION);
+        uint256 fundingAmountPerSizeForShortCollateralForShorts = (fundingUsdForShortCollateral / prices.shortTokenPrice.max * Precision.FLOAT_PRECISION) / (shortOpenInterest / Precision.FLOAT_PRECISION);
+
+        if (longOpenInterest > shortOpenInterest) {
+            // longs pay shorts
+            longCollateralFundingPerSizeForLongs += fundingAmountPerSizeForLongCollateralForLongs.toInt256();
+            shortCollateralFundingPerSizeForLongs += fundingAmountPerSizeForShortCollateralForLongs.toInt256();
+            shortCollateralFundingPerSizeForLongs -= fundingAmountPerSizeForLongCollateralForShorts.toInt256();
+            shortCollateralFundingPerSizeForShorts -= fundingAmountPerSizeForShortCollateralForShorts.toInt256();
+        } else {
+            // shorts pay longs
+            longCollateralFundingPerSizeForLongs -= fundingAmountPerSizeForLongCollateralForLongs.toInt256();
+            shortCollateralFundingPerSizeForLongs -= fundingAmountPerSizeForShortCollateralForLongs.toInt256();
+            shortCollateralFundingPerSizeForLongs += fundingAmountPerSizeForLongCollateralForShorts.toInt256();
+            shortCollateralFundingPerSizeForShorts += fundingAmountPerSizeForShortCollateralForShorts.toInt256();
+        }
+
+        return (
+            longCollateralFundingPerSizeForLongs,
+            longCollateralFundingPerSizeForShorts,
+            shortCollateralFundingPerSizeForLongs,
+            shortCollateralFundingPerSizeForShorts
+        );
+    }
+
     function updateCumulativeFundingFactors(DataStore dataStore, address market, address longToken, address shortToken) internal {
         (int256 longFundingFactor, int256 shortFundingFactor) = getNextCumulativeFundingFactors(dataStore, market, longToken, shortToken);
         setCumulativeFundingFactor(dataStore, market, true, longFundingFactor);
@@ -490,6 +583,14 @@ library MarketUtils {
         return dataStore.getUint(Keys.fundingFactorKey(market));
     }
 
+    function getFundingAmountPerSize(DataStore dataStore, address market, address collateralToken, bool isLong) internal view returns (int256) {
+        return dataStore.getInt(Keys.fundingAmountPerSizeKey(market, collateralToken, isLong));
+    }
+
+    function setFundingAmountPerSize(DataStore dataStore, address market, address collateralToken, bool isLong, int256 value) internal returns (int256) {
+        return dataStore.setInt(Keys.fundingAmountPerSizeKey(market, collateralToken, isLong), value);
+    }
+
     function getCumulativeFundingFactor(DataStore dataStore, address market, bool isLong) internal view returns (int256) {
         return dataStore.getInt(Keys.cumulativeFundingFactorKey(market, isLong));
     }
@@ -500,6 +601,12 @@ library MarketUtils {
 
     function getCumulativeFundingFactorUpdatedAt(DataStore dataStore, address market) internal view returns (uint256) {
         return dataStore.getUint(Keys.cumulativeFundingFactorUpdatedAtKey(market));
+    }
+
+    function getSecondsSinceFundingUpdated(DataStore dataStore, address market) internal view returns (uint256) {
+        uint256 updatedAt = dataStore.getUint(Keys.fundingUpdatedAtKey(market));
+        if (updatedAt == 0) { return 0; }
+        return block.timestamp - updatedAt;
     }
 
     function getSecondsSinceCumulativeFundingFactorUpdated(DataStore dataStore, address market) internal view returns (uint256) {

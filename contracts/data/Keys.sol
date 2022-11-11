@@ -67,6 +67,8 @@ library Keys {
     bytes32 public constant STABLE_PRICE = keccak256("STABLE_PRICE");
     bytes32 public constant RESERVE_FACTOR = keccak256("RESERVE_FACTOR");
     bytes32 public constant FUNDING_FACTOR = keccak256("FUNDING_FACTOR");
+    bytes32 public constant FUNDING_AMOUNT_PER_SIZE = keccak256("FUNDING_AMOUNT_PER_SIZE");
+    bytes32 public constant FUNDING_UPDATED_AT = keccak256("FUNDING_UPDATED_AT");
     bytes32 public constant CUMULATIVE_FUNDING_FACTOR = keccak256("CUMULATIVE_FUNDING_FACTOR");
     bytes32 public constant CUMULATIVE_FUNDING_FACTOR_UPDATED_AT = keccak256("CUMULATIVE_FUNDING_FACTOR_UPDATED_AT");
     bytes32 public constant BORROWING_FACTOR = keccak256("BORROWING_FACTOR");
@@ -300,6 +302,22 @@ library Keys {
     function fundingFactorKey(address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             FUNDING_FACTOR,
+            market
+        ));
+    }
+
+    function fundingAmountPerSizeKey(address market, address collateralToken, bool isLong) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            FUNDING_AMOUNT_PER_SIZE,
+            market,
+            collateralToken,
+            isLong
+        ));
+    }
+
+    function fundingUpdatedAtKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            FUNDING_UPDATED_AT,
             market
         ));
     }
