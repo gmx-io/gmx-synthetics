@@ -3,7 +3,6 @@ import { hashString, hashData } from "./hash";
 
 import BN from "bn.js";
 
-// test
 export const TOKEN_ORACLE_TYPES = {
   ONE_PERCENT_PER_MINUTE: hashString("one-percent-per-minute"),
 };
