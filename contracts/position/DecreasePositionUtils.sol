@@ -71,12 +71,14 @@ library DecreasePositionUtils {
             revert("DecreasePositionUtils: Invalid Liquidation");
         }
 
-        MarketUtils.updateCumulativeFundingFactors(
+        MarketUtils.updateFundingAmountPerSize(
             params.dataStore,
+            prices,
             params.market.marketToken,
             params.market.longToken,
             params.market.shortToken
         );
+
         MarketUtils.updateCumulativeBorrowingFactor(
             params.dataStore,
             params.market.marketToken,
@@ -137,7 +139,9 @@ library DecreasePositionUtils {
 
             params.positionStore.remove(params.positionKey, params.order.account());
         } else {
-            position.fundingFactor = MarketUtils.getCumulativeFundingFactor(params.dataStore, params.market.marketToken, position.isLong);
+            if (!fees.hasPendingFundingFee) {
+                position.fundingAmountPerSize = fees.latestFundingAmountPerSize;
+            }
             position.borrowingFactor = cache.nextPositionBorrowingFactor;
 
             PositionUtils.validatePosition(

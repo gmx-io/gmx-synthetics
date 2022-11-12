@@ -95,9 +95,11 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
                 revert(reason);
             }
 
-            _handleOrderError(key, startingGas, reasonKey);
+            _handleOrderError(key, startingGas, reason, reasonKey);
         } catch (bytes memory reason) {
-            _handleOrderError(key, startingGas, keccak256(reason));
+            string memory _reason = string(abi.encode(reason));
+            bytes32 reasonKey = keccak256(abi.encode(reason));
+            _handleOrderError(key, startingGas, _reason, reasonKey);
         }
     }
 
@@ -180,7 +182,7 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
             key,
             msg.sender,
             startingGas,
-            keccak256(abi.encodePacked("BY_USER"))
+            "USER_INITIATED_CANCEL"
         );
     }
 
@@ -240,7 +242,12 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
         return params;
     }
 
-    function _handleOrderError(bytes32 key, uint256 startingGas, bytes32 reason) internal {
+    function _handleOrderError(
+        bytes32 key,
+        uint256 startingGas,
+        string memory reason,
+        bytes32 reasonKey
+    ) internal {
         Order.Props memory order = orderStore.get(key);
         bool isMarketOrder = OrderBaseUtils.isMarketOrder(order.orderType());
 
@@ -255,6 +262,10 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
                 reason
             );
         } else {
+            if (reasonKey == Keys.UNACCEPTABLE_PRICE_ERROR_KEY) {
+                revert(reason);
+            }
+
             // freeze unfulfillable orders to prevent the order system from being gamed
             // an example of gaming would be if a user creates a limit order
             // with size greater than the available amount in the pool

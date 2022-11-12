@@ -49,9 +49,9 @@ contract EventEmitter is RoleModule {
         uint256 triggerPrice,
         uint256 acceptablePrice
     );
-    event OrderCancelled(bytes32 key, bytes32 reason);
+    event OrderCancelled(bytes32 key, string reason);
     event OrderExecuted(bytes32 key);
-    event OrderFrozen(bytes32 key, bytes32 reason);
+    event OrderFrozen(bytes32 key, string reason);
     // event OrderCallback();
 
     // event SetPricePrecision
@@ -122,11 +122,11 @@ contract EventEmitter is RoleModule {
         emit OrderUpdated(key, sizeDeltaUsd, triggerPrice, acceptablePrice);
     }
 
-    function emitOrderCancelled(bytes32 key, bytes32 reason) external onlyController {
+    function emitOrderCancelled(bytes32 key, string memory reason) external onlyController {
         emit OrderCancelled(key, reason);
     }
 
-    function emitOrderFrozen(bytes32 key, bytes32 reason) external onlyController {
+    function emitOrderFrozen(bytes32 key, string memory reason) external onlyController {
         emit OrderFrozen(key, reason);
     }
 

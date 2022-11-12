@@ -69,8 +69,6 @@ library Keys {
     bytes32 public constant FUNDING_FACTOR = keccak256("FUNDING_FACTOR");
     bytes32 public constant FUNDING_AMOUNT_PER_SIZE = keccak256("FUNDING_AMOUNT_PER_SIZE");
     bytes32 public constant FUNDING_UPDATED_AT = keccak256("FUNDING_UPDATED_AT");
-    bytes32 public constant CUMULATIVE_FUNDING_FACTOR = keccak256("CUMULATIVE_FUNDING_FACTOR");
-    bytes32 public constant CUMULATIVE_FUNDING_FACTOR_UPDATED_AT = keccak256("CUMULATIVE_FUNDING_FACTOR_UPDATED_AT");
     bytes32 public constant BORROWING_FACTOR = keccak256("BORROWING_FACTOR");
     bytes32 public constant CUMULATIVE_BORROWING_FACTOR = keccak256("CUMULATIVE_BORROWING_FACTOR");
     bytes32 public constant CUMULATIVE_BORROWING_FACTOR_UPDATED_AT = keccak256("CUMULATIVE_BORROWING_FACTOR_UPDATED_AT");
@@ -84,6 +82,9 @@ library Keys {
 
     string public constant FROZEN_ORDER_ERROR = "FROZEN_ORDER_ERROR";
     bytes32 public constant FROZEN_ORDER_ERROR_KEY = keccak256(abi.encode(FROZEN_ORDER_ERROR));
+
+    string public constant UNACCEPTABLE_PRICE_ERROR = "UNACCEPTABLE_PRICE_ERROR";
+    bytes32 public constant UNACCEPTABLE_PRICE_ERROR_KEY = keccak256(abi.encode(UNACCEPTABLE_PRICE_ERROR));
 
     function depositGasLimitKey(bool singleToken) internal pure returns (bytes32) {
         return keccak256(abi.encode(
@@ -318,21 +319,6 @@ library Keys {
     function fundingUpdatedAtKey(address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             FUNDING_UPDATED_AT,
-            market
-        ));
-    }
-
-    function cumulativeFundingFactorKey(address market, bool isLong) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            CUMULATIVE_FUNDING_FACTOR,
-            market,
-            isLong
-        ));
-    }
-
-    function cumulativeFundingFactorUpdatedAtKey(address market) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            CUMULATIVE_FUNDING_FACTOR_UPDATED_AT,
             market
         ));
     }

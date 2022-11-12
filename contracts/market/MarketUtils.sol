@@ -38,13 +38,40 @@ library MarketUtils {
     using Order for Order.Props;
     using Price for Price.Props;
 
-    // cap max funding APR at 1000%
-    uint256 public constant MAX_ANNUAL_FUNDING_FACTOR = 1000 * Precision.FLOAT_PRECISION;
-
     struct MarketPrices {
         Price.Props indexTokenPrice;
         Price.Props longTokenPrice;
         Price.Props shortTokenPrice;
+    }
+
+    struct _GetNextFundingAmountPerSizeCache {
+        uint256 longOpenInterestWithLongCollateral;
+        uint256 longOpenInterestWithShortCollateral;
+        uint256 shortOpenInterestWithLongCollateral;
+        uint256 shortOpenInterestWithShortCollateral;
+
+        uint256 longOpenInterest;
+        uint256 shortOpenInterest;
+
+        int256 longCollateralFundingPerSizeForLongs;
+        int256 longCollateralFundingPerSizeForShorts;
+        int256 shortCollateralFundingPerSizeForLongs;
+        int256 shortCollateralFundingPerSizeForShorts;
+
+        uint256 durationInSeconds;
+        uint256 fundingFactor;
+
+        uint256 diffUsd;
+        uint256 totalOpenInterest;
+        uint256 fundingUsd;
+
+        uint256 fundingUsdForLongCollateral;
+        uint256 fundingUsdForShortCollateral;
+
+        uint256 fundingAmountPerSizeForLongCollateralForLongs;
+        uint256 fundingAmountPerSizeForShortCollateralForLongs;
+        uint256 fundingAmountPerSizeForLongCollateralForShorts;
+        uint256 fundingAmountPerSizeForShortCollateralForShorts;
     }
 
     error EmptyMarket();
@@ -333,81 +360,72 @@ library MarketUtils {
         address longToken,
         address shortToken
     ) internal view returns (int256, int256, int256, int256) {
-        uint256 longOpenInterestWithLongCollateral = getOpenInterest(dataStore, market, longToken, true);
-        uint256 longOpenInterestWithShortCollateral = getOpenInterest(dataStore, market, shortToken, true);
-        uint256 shortOpenInterestWithLongCollateral = getOpenInterest(dataStore, market, longToken, false);
-        uint256 shortOpenInterestWithShortCollateral = getOpenInterest(dataStore, market, shortToken, false);
+        _GetNextFundingAmountPerSizeCache memory cache;
+        cache.longOpenInterestWithLongCollateral = getOpenInterest(dataStore, market, longToken, true);
+        cache.longOpenInterestWithShortCollateral = getOpenInterest(dataStore, market, shortToken, true);
+        cache.shortOpenInterestWithLongCollateral = getOpenInterest(dataStore, market, longToken, false);
+        cache.shortOpenInterestWithShortCollateral = getOpenInterest(dataStore, market, shortToken, false);
 
-        uint256 longOpenInterest = longOpenInterestWithLongCollateral + longOpenInterestWithShortCollateral;
-        uint256 shortOpenInterest = shortOpenInterestWithLongCollateral + shortOpenInterestWithShortCollateral;
+        cache.longOpenInterest = cache.longOpenInterestWithLongCollateral + cache.longOpenInterestWithShortCollateral;
+        cache.shortOpenInterest = cache.shortOpenInterestWithLongCollateral + cache.shortOpenInterestWithShortCollateral;
 
-        int256 longCollateralFundingPerSizeForLongs = getFundingAmountPerSize(dataStore, market, longToken, true);
-        int256 longCollateralFundingPerSizeForShorts = getFundingAmountPerSize(dataStore, market, longToken, false);
-        int256 shortCollateralFundingPerSizeForLongs = getFundingAmountPerSize(dataStore, market, shortToken, true);
-        int256 shortCollateralFundingPerSizeForShorts = getFundingAmountPerSize(dataStore, market, shortToken, false);
+        cache.longCollateralFundingPerSizeForLongs = getFundingAmountPerSize(dataStore, market, longToken, true);
+        cache.longCollateralFundingPerSizeForShorts = getFundingAmountPerSize(dataStore, market, longToken, false);
+        cache.shortCollateralFundingPerSizeForLongs = getFundingAmountPerSize(dataStore, market, shortToken, true);
+        cache.shortCollateralFundingPerSizeForShorts = getFundingAmountPerSize(dataStore, market, shortToken, false);
 
-        if (longOpenInterest == 0 || shortOpenInterest == 0) {
+        if (cache.longOpenInterest == 0 || cache.shortOpenInterest == 0) {
             return (
-                longCollateralFundingPerSizeForLongs,
-                longCollateralFundingPerSizeForShorts,
-                shortCollateralFundingPerSizeForLongs,
-                shortCollateralFundingPerSizeForShorts
+                cache.longCollateralFundingPerSizeForLongs,
+                cache.longCollateralFundingPerSizeForShorts,
+                cache.shortCollateralFundingPerSizeForLongs,
+                cache.shortCollateralFundingPerSizeForShorts
             );
         }
 
-        uint256 durationInSeconds = getSecondsSinceFundingUpdated(dataStore, market);
-        uint256 fundingFactor = getFundingFactor(dataStore, market);
+        cache.durationInSeconds = getSecondsSinceFundingUpdated(dataStore, market);
+        cache.fundingFactor = getFundingFactor(dataStore, market);
 
-        uint256 diffUsd = Calc.diff(longOpenInterest, shortOpenInterest);
-        uint256 totalOpenInterest = longOpenInterest + shortOpenInterest;
-        uint256 fundingUsd = (fundingFactor * diffUsd * durationInSeconds) / totalOpenInterest;
+        cache.diffUsd = Calc.diff(cache.longOpenInterest, cache.shortOpenInterest);
+        cache.totalOpenInterest = cache.longOpenInterest + cache.shortOpenInterest;
+        cache.fundingUsd = (cache.fundingFactor * cache.diffUsd * cache.durationInSeconds) / cache.totalOpenInterest;
 
-        uint256 fundingUsdForLongCollateral;
-        uint256 fundingUsdForShortCollateral;
-
-        if (longOpenInterest > shortOpenInterest) {
-            fundingUsdForLongCollateral = fundingUsd * longOpenInterestWithLongCollateral / longOpenInterest;
-            fundingUsdForShortCollateral = fundingUsd * longOpenInterestWithShortCollateral / longOpenInterest;
+        if (cache.longOpenInterest > cache.shortOpenInterest) {
+            cache.fundingUsdForLongCollateral = cache.fundingUsd * cache.longOpenInterestWithLongCollateral / cache.longOpenInterest;
+            cache.fundingUsdForShortCollateral = cache.fundingUsd * cache.longOpenInterestWithShortCollateral / cache.longOpenInterest;
         } else {
-            fundingUsdForLongCollateral = fundingUsd * shortOpenInterestWithLongCollateral / shortOpenInterest;
-            fundingUsdForShortCollateral = fundingUsd * shortOpenInterestWithShortCollateral / shortOpenInterest;
+            cache.fundingUsdForLongCollateral = cache.fundingUsd * cache.shortOpenInterestWithLongCollateral / cache.shortOpenInterest;
+            cache.fundingUsdForShortCollateral = cache.fundingUsd * cache.shortOpenInterestWithShortCollateral / cache.shortOpenInterest;
         }
 
         // use Precision.FLOAT_PRECISION here because fundingUsdForLongCollateral or fundingUsdForShortCollateral divided by longTokenPrice
         // will give an amount in number of tokens which may be quite a small value and could become zero after being divided by longOpenInterest
         // the result will be the amount in number of tokens multiplied by Precision.FLOAT_PRECISION per 1 USD of size
-        uint256 fundingAmountPerSizeForLongCollateralForLongs = (fundingUsdForLongCollateral / prices.longTokenPrice.max * Precision.FLOAT_PRECISION) / (longOpenInterest / Precision.FLOAT_PRECISION);
-        uint256 fundingAmountPerSizeForShortCollateralForLongs = (fundingUsdForShortCollateral / prices.shortTokenPrice.max * Precision.FLOAT_PRECISION) / (longOpenInterest / Precision.FLOAT_PRECISION);
-        uint256 fundingAmountPerSizeForLongCollateralForShorts = (fundingUsdForLongCollateral / prices.longTokenPrice.max * Precision.FLOAT_PRECISION) / (shortOpenInterest / Precision.FLOAT_PRECISION);
-        uint256 fundingAmountPerSizeForShortCollateralForShorts = (fundingUsdForShortCollateral / prices.shortTokenPrice.max * Precision.FLOAT_PRECISION) / (shortOpenInterest / Precision.FLOAT_PRECISION);
+        cache.fundingAmountPerSizeForLongCollateralForLongs = (cache.fundingUsdForLongCollateral / prices.longTokenPrice.max * Precision.FLOAT_PRECISION) / (cache.longOpenInterest / Precision.FLOAT_PRECISION);
+        cache.fundingAmountPerSizeForShortCollateralForLongs = (cache.fundingUsdForShortCollateral / prices.shortTokenPrice.max * Precision.FLOAT_PRECISION) / (cache.longOpenInterest / Precision.FLOAT_PRECISION);
+        cache.fundingAmountPerSizeForLongCollateralForShorts = (cache.fundingUsdForLongCollateral / prices.longTokenPrice.max * Precision.FLOAT_PRECISION) / (cache.shortOpenInterest / Precision.FLOAT_PRECISION);
+        cache.fundingAmountPerSizeForShortCollateralForShorts = (cache.fundingUsdForShortCollateral / prices.shortTokenPrice.max * Precision.FLOAT_PRECISION) / (cache.shortOpenInterest / Precision.FLOAT_PRECISION);
 
-        if (longOpenInterest > shortOpenInterest) {
+        if (cache.longOpenInterest > cache.shortOpenInterest) {
             // longs pay shorts
-            longCollateralFundingPerSizeForLongs += fundingAmountPerSizeForLongCollateralForLongs.toInt256();
-            shortCollateralFundingPerSizeForLongs += fundingAmountPerSizeForShortCollateralForLongs.toInt256();
-            shortCollateralFundingPerSizeForLongs -= fundingAmountPerSizeForLongCollateralForShorts.toInt256();
-            shortCollateralFundingPerSizeForShorts -= fundingAmountPerSizeForShortCollateralForShorts.toInt256();
+            cache.longCollateralFundingPerSizeForLongs += cache.fundingAmountPerSizeForLongCollateralForLongs.toInt256();
+            cache.shortCollateralFundingPerSizeForLongs += cache.fundingAmountPerSizeForShortCollateralForLongs.toInt256();
+            cache.shortCollateralFundingPerSizeForLongs -= cache.fundingAmountPerSizeForLongCollateralForShorts.toInt256();
+            cache.shortCollateralFundingPerSizeForShorts -= cache.fundingAmountPerSizeForShortCollateralForShorts.toInt256();
         } else {
             // shorts pay longs
-            longCollateralFundingPerSizeForLongs -= fundingAmountPerSizeForLongCollateralForLongs.toInt256();
-            shortCollateralFundingPerSizeForLongs -= fundingAmountPerSizeForShortCollateralForLongs.toInt256();
-            shortCollateralFundingPerSizeForLongs += fundingAmountPerSizeForLongCollateralForShorts.toInt256();
-            shortCollateralFundingPerSizeForShorts += fundingAmountPerSizeForShortCollateralForShorts.toInt256();
+            cache.longCollateralFundingPerSizeForLongs -= cache.fundingAmountPerSizeForLongCollateralForLongs.toInt256();
+            cache.shortCollateralFundingPerSizeForLongs -= cache.fundingAmountPerSizeForShortCollateralForLongs.toInt256();
+            cache.shortCollateralFundingPerSizeForLongs += cache.fundingAmountPerSizeForLongCollateralForShorts.toInt256();
+            cache.shortCollateralFundingPerSizeForShorts += cache.fundingAmountPerSizeForShortCollateralForShorts.toInt256();
         }
 
         return (
-            longCollateralFundingPerSizeForLongs,
-            longCollateralFundingPerSizeForShorts,
-            shortCollateralFundingPerSizeForLongs,
-            shortCollateralFundingPerSizeForShorts
+            cache.longCollateralFundingPerSizeForLongs,
+            cache.longCollateralFundingPerSizeForShorts,
+            cache.shortCollateralFundingPerSizeForLongs,
+            cache.shortCollateralFundingPerSizeForShorts
         );
-    }
-
-    function updateCumulativeFundingFactors(DataStore dataStore, address market, address longToken, address shortToken) internal {
-        (int256 longFundingFactor, int256 shortFundingFactor) = getNextCumulativeFundingFactors(dataStore, market, longToken, shortToken);
-        setCumulativeFundingFactor(dataStore, market, true, longFundingFactor);
-        setCumulativeFundingFactor(dataStore, market, false, shortFundingFactor);
-        dataStore.setUint(Keys.cumulativeFundingFactorUpdatedAtKey(market), block.timestamp);
     }
 
     function updateCumulativeBorrowingFactor(
@@ -499,10 +517,27 @@ library MarketUtils {
         return impactAmount;
     }
 
-    function getFundingFees(DataStore dataStore, Position.Props memory position) internal view returns (int256) {
-        int256 cumulativeFundingFactor = getCumulativeFundingFactor(dataStore, position.market, position.isLong);
-        int256 diffFactor = position.fundingFactor - cumulativeFundingFactor;
-        return Precision.applyFactor(position.sizeInUsd, diffFactor);
+    // return hasPendingFundingFee because it may be possible for there to be a funding fee but it is too small and the fundingFeeAmount is zero
+    // in which case the position's fundingAmountPerSize should not be updated, otherwise a user could avoid paying funding fees by continually
+    // updating the position before the funding fee becomes large enough to be chargeable
+    // returns (hasPendingFundingFee, fundingFeeAmount, latestFundingAmountPerSize)
+    function getDeductibleFundingFeeAmount(DataStore dataStore, Position.Props memory position) internal view returns (bool, uint256, int256) {
+        int256 latestFundingAmountPerSize = getFundingAmountPerSize(dataStore, position.market, position.collateralToken, position.isLong);
+
+        // the position is just being opened, so there are no funding fees
+        if (position.fundingAmountPerSize == 0) {
+            return (false, 0, latestFundingAmountPerSize);
+        }
+
+        // the latest funding amount is less than the position's funding amount per size, so no funding fees are due
+        if (latestFundingAmountPerSize <= position.fundingAmountPerSize) {
+            return (false, 0, latestFundingAmountPerSize);
+        }
+
+        uint256 diff = (latestFundingAmountPerSize - position.fundingAmountPerSize).toUint256();
+        uint256 amount = diff * (position.sizeInUsd / Precision.FLOAT_PRECISION) / Precision.FLOAT_PRECISION;
+
+        return (true, amount, latestFundingAmountPerSize);
     }
 
     function getBorrowingFees(DataStore dataStore, Position.Props memory position) internal view returns (uint256) {
@@ -591,26 +626,8 @@ library MarketUtils {
         return dataStore.setInt(Keys.fundingAmountPerSizeKey(market, collateralToken, isLong), value);
     }
 
-    function getCumulativeFundingFactor(DataStore dataStore, address market, bool isLong) internal view returns (int256) {
-        return dataStore.getInt(Keys.cumulativeFundingFactorKey(market, isLong));
-    }
-
-    function setCumulativeFundingFactor(DataStore dataStore, address market, bool isLong, int256 value) internal {
-        dataStore.setInt(Keys.cumulativeFundingFactorKey(market, isLong), value);
-    }
-
-    function getCumulativeFundingFactorUpdatedAt(DataStore dataStore, address market) internal view returns (uint256) {
-        return dataStore.getUint(Keys.cumulativeFundingFactorUpdatedAtKey(market));
-    }
-
     function getSecondsSinceFundingUpdated(DataStore dataStore, address market) internal view returns (uint256) {
         uint256 updatedAt = dataStore.getUint(Keys.fundingUpdatedAtKey(market));
-        if (updatedAt == 0) { return 0; }
-        return block.timestamp - updatedAt;
-    }
-
-    function getSecondsSinceCumulativeFundingFactorUpdated(DataStore dataStore, address market) internal view returns (uint256) {
-        uint256 updatedAt = getCumulativeFundingFactorUpdatedAt(dataStore, market);
         if (updatedAt == 0) { return 0; }
         return block.timestamp - updatedAt;
     }
@@ -675,39 +692,6 @@ library MarketUtils {
         return totalBorrowing;
     }
 
-    function getNextCumulativeFundingFactors(DataStore dataStore, address market, address longToken, address shortToken) internal view returns (int256, int256) {
-        uint256 durationInSeconds = getSecondsSinceCumulativeFundingFactorUpdated(dataStore, market);
-        uint256 fundingFactor = getFundingFactor(dataStore, market);
-
-        uint256 longOpenInterest = getOpenInterest(dataStore, market, longToken, shortToken, true);
-        uint256 shortOpenInterest = getOpenInterest(dataStore, market, longToken, shortToken, false);
-
-        int256 longFundingFactor = getCumulativeFundingFactor(dataStore, market, true);
-        int256 shortFundingFactor = getCumulativeFundingFactor(dataStore, market, false);
-
-        if (longOpenInterest == 0 || shortOpenInterest == 0) {
-            return (longFundingFactor, shortFundingFactor);
-        }
-
-        uint256 diffUsd = Calc.diff(longOpenInterest, shortOpenInterest);
-        uint256 totalOpenInterest = longOpenInterest + shortOpenInterest;
-        int256 adjustedFactor = (fundingFactor * diffUsd / totalOpenInterest * durationInSeconds).toInt256();
-
-        if (longOpenInterest > shortOpenInterest) {
-            // negative funding fee for long positions
-            longFundingFactor += adjustedFactor;
-            // capped positive funding fee for short positions
-            shortFundingFactor -= getCappedFundingFactor(adjustedFactor, longOpenInterest, shortOpenInterest, durationInSeconds);
-        } else {
-            // negative funding fee for short positions
-            shortFundingFactor += adjustedFactor;
-            // positive funding fee for long positions
-            longFundingFactor -= getCappedFundingFactor(adjustedFactor, shortOpenInterest, longOpenInterest, durationInSeconds);
-        }
-
-        return (longFundingFactor, shortFundingFactor);
-    }
-
     function getNextCumulativeBorrowingFactor(
         DataStore dataStore,
         address market,
@@ -729,25 +713,6 @@ library MarketUtils {
         uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, market, isLong);
 
         return cumulativeBorrowingFactor + adjustedFactor;
-    }
-
-    // cap the max factor to avoid overflow
-    function getCappedFundingFactor(
-        int256 adjustedFactor,
-        uint256 multiplier,
-        uint256 divisor,
-        uint256 durationInSeconds
-    ) internal pure returns (int256) {
-        if (divisor == 0) { return 0; }
-
-        int256 factor = adjustedFactor * multiplier.toInt256() / divisor.toInt256();
-        int256 maxFactor = (MAX_ANNUAL_FUNDING_FACTOR * durationInSeconds / (365 days)).toInt256();
-
-        if (factor > maxFactor) {
-            return maxFactor;
-        }
-
-        return factor;
     }
 
     function getTotalBorrowingFees(DataStore dataStore, address market, address longToken, address shortToken, bool isLong) internal view returns (uint256) {

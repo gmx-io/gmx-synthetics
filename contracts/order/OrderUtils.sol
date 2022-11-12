@@ -151,7 +151,7 @@ library OrderUtils {
         bytes32 key,
         address keeper,
         uint256 startingGas,
-        bytes32 reason
+        string memory reason
     ) internal {
         Order.Props memory order = orderStore.get(key);
         OrderBaseUtils.validateNonEmptyOrder(order);
@@ -191,7 +191,7 @@ library OrderUtils {
         bytes32 key,
         address keeper,
         uint256 startingGas,
-        bytes32 reason
+        string memory reason
     ) internal {
         Order.Props memory order = orderStore.get(key);
         OrderBaseUtils.validateNonEmptyOrder(order);

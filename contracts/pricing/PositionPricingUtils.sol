@@ -34,9 +34,11 @@ library PositionPricingUtils {
         uint256 feesForPool;
         uint256 amountForPool;
         uint256 positionFeeAmount;
-        int256 fundingFeeAmount;
+        uint256 fundingFeeAmount;
+        int256 latestFundingAmountPerSize;
         uint256 borrowingFeeAmount;
         int256 totalNetCostAmount;
+        bool hasPendingFundingFee;
     }
 
     function getPriceImpactAmount(
@@ -180,12 +182,12 @@ library PositionPricingUtils {
         uint256 feeReceiverFactor = dataStore.getUint(feeReceiverFactorKey);
 
         fees.positionFeeAmount = Precision.applyFactor(sizeDeltaUsd, feeFactor) / collateralTokenPrice.min;
-        fees.fundingFeeAmount = MarketUtils.getFundingFees(dataStore, position) / collateralTokenPrice.min.toInt256();
+        (fees.hasPendingFundingFee, fees.fundingFeeAmount, fees.latestFundingAmountPerSize) = MarketUtils.getDeductibleFundingFeeAmount(dataStore, position);
         fees.borrowingFeeAmount = MarketUtils.getBorrowingFees(dataStore, position) / collateralTokenPrice.min;
 
         fees.feeReceiverAmount = Precision.applyFactor(fees.positionFeeAmount, feeReceiverFactor);
         fees.feesForPool = fees.positionFeeAmount + fees.borrowingFeeAmount - fees.feeReceiverAmount;
-        fees.totalNetCostAmount = fees.fundingFeeAmount - (fees.positionFeeAmount + fees.borrowingFeeAmount).toInt256();
+        fees.totalNetCostAmount = (fees.positionFeeAmount + fees.fundingFeeAmount + fees.borrowingFeeAmount).toInt256();
 
         return fees;
     }

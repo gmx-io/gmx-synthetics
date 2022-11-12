@@ -62,12 +62,14 @@ library IncreasePositionUtils {
             params.oracle
         );
 
-        MarketUtils.updateCumulativeFundingFactors(
+        MarketUtils.updateFundingAmountPerSize(
             params.dataStore,
+            prices,
             params.market.marketToken,
             params.market.longToken,
             params.market.shortToken
         );
+
         MarketUtils.updateCumulativeBorrowingFactor(
             params.dataStore,
             params.market.marketToken,
@@ -78,7 +80,13 @@ library IncreasePositionUtils {
         );
 
         _IncreasePositionCache memory cache;
-        cache.collateralDeltaAmount = processCollateral(params, prices, position, params.collateralDeltaAmount.toInt256());
+        PositionPricingUtils.PositionFees memory fees;
+        (cache.collateralDeltaAmount, fees) = processCollateral(
+            params,
+            prices,
+            position,
+            params.collateralDeltaAmount.toInt256()
+        );
 
         if (cache.collateralDeltaAmount < 0 && position.collateralAmount < SafeCast.toUint256(-cache.collateralDeltaAmount)) {
             revert InsufficientCollateralAmount();
@@ -152,7 +160,9 @@ library IncreasePositionUtils {
 
         position.sizeInUsd = cache.nextPositionSizeInUsd;
         position.sizeInTokens += cache.sizeDeltaInTokens;
-        position.fundingFactor = MarketUtils.getCumulativeFundingFactor(params.dataStore, params.market.marketToken, position.isLong);
+        if (!fees.hasPendingFundingFee) {
+            position.fundingAmountPerSize = fees.latestFundingAmountPerSize;
+        }
         position.borrowingFactor = cache.nextPositionBorrowingFactor;
         position.increasedAtBlock = Chain.currentBlockNumber();
 
@@ -202,7 +212,7 @@ library IncreasePositionUtils {
         MarketUtils.MarketPrices memory prices,
         Position.Props memory position,
         int256 collateralDeltaAmount
-    ) internal returns (int256) {
+    ) internal returns (int256, PositionPricingUtils.PositionFees memory) {
         Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.collateralToken, params.market, prices);
 
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
@@ -242,6 +252,6 @@ library IncreasePositionUtils {
 
         params.eventEmitter.emitPositionFeesCollected(true, fees);
 
-        return collateralDeltaAmount;
+        return (collateralDeltaAmount, fees);
     }
 }
