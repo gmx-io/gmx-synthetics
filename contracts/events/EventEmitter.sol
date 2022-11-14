@@ -49,9 +49,9 @@ contract EventEmitter is RoleModule {
         uint256 triggerPrice,
         uint256 acceptablePrice
     );
-    event OrderCancelled(bytes32 key, bytes32 reason);
+    event OrderCancelled(bytes32 key, string reason);
     event OrderExecuted(bytes32 key);
-    event OrderFrozen(bytes32 key, bytes32 reason);
+    event OrderFrozen(bytes32 key, string reason);
     // event OrderCallback();
 
     // event SetPricePrecision
@@ -62,7 +62,8 @@ contract EventEmitter is RoleModule {
     event PoolAmountUpdated(address market, address token, int256 delta, uint256 nextValue);
     event SwapImpactPoolAmountUpdated(address market, address token, int256 delta, uint256 nextValue);
     event PositionImpactPoolAmountUpdated(address market, int256 delta, uint256 nextValue);
-    event OpenInterestUpdated(address market, bool isLong, int256 delta, uint256 nextValue);
+    event OpenInterestUpdated(address market, address collateralToken, bool isLong, int256 delta, uint256 nextValue);
+    event OpenInterestInTokensUpdated(address market, address collateralToken, bool isLong, int256 delta, uint256 nextValue);
 
     event CollateralSumDelta(
         address market,
@@ -87,8 +88,12 @@ contract EventEmitter is RoleModule {
         emit PositionImpactPoolAmountUpdated(market, delta, nextValue);
     }
 
-    function emitOpenInterestUpdated(address market, bool isLong, int256 delta, uint256 nextValue) external onlyController {
-        emit OpenInterestUpdated(market, isLong, delta, nextValue);
+    function emitOpenInterestUpdated(address market, address collateralToken, bool isLong, int256 delta, uint256 nextValue) external onlyController {
+        emit OpenInterestUpdated(market, collateralToken, isLong, delta, nextValue);
+    }
+
+    function emitOpenInterestInTokensUpdated(address market, address collateralToken, bool isLong, int256 delta, uint256 nextValue) external onlyController {
+        emit OpenInterestInTokensUpdated(market, collateralToken, isLong, delta, nextValue);
     }
 
     function emitCollateralSumDelta(
@@ -117,11 +122,11 @@ contract EventEmitter is RoleModule {
         emit OrderUpdated(key, sizeDeltaUsd, triggerPrice, acceptablePrice);
     }
 
-    function emitOrderCancelled(bytes32 key, bytes32 reason) external onlyController {
+    function emitOrderCancelled(bytes32 key, string memory reason) external onlyController {
         emit OrderCancelled(key, reason);
     }
 
-    function emitOrderFrozen(bytes32 key, bytes32 reason) external onlyController {
+    function emitOrderFrozen(bytes32 key, string memory reason) external onlyController {
         emit OrderFrozen(key, reason);
     }
 

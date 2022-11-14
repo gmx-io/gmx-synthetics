@@ -61,6 +61,9 @@ library PricingUtils {
         );
         adjustedDiffUsd = Precision.weiToFloat(adjustedDiffUsd);
 
+        // we divide by 2 here to more easily translate liquidity into the appropriate impactFactor values
+        // for example, if the impactExponentFactor is 2 and we want to have an impact of 0.1% for $2 million of difference
+        // we can set the impactFactor to be 0.1% / $2 million
         return Precision.applyFactor(adjustedDiffUsd, impactFactor) / 2;
     }
 

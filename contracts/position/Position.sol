@@ -11,7 +11,7 @@ library Position {
         uint256 sizeInUsd;
         uint256 sizeInTokens;
         uint256 collateralAmount;
-        int256 fundingFactor;
+        int256 fundingAmountPerSize;
         uint256 borrowingFactor;
         uint256 increasedAtBlock;
         uint256 decreasedAtBlock;

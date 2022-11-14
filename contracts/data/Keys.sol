@@ -67,8 +67,8 @@ library Keys {
     bytes32 public constant STABLE_PRICE = keccak256("STABLE_PRICE");
     bytes32 public constant RESERVE_FACTOR = keccak256("RESERVE_FACTOR");
     bytes32 public constant FUNDING_FACTOR = keccak256("FUNDING_FACTOR");
-    bytes32 public constant CUMULATIVE_FUNDING_FACTOR = keccak256("CUMULATIVE_FUNDING_FACTOR");
-    bytes32 public constant CUMULATIVE_FUNDING_FACTOR_UPDATED_AT = keccak256("CUMULATIVE_FUNDING_FACTOR_UPDATED_AT");
+    bytes32 public constant FUNDING_AMOUNT_PER_SIZE = keccak256("FUNDING_AMOUNT_PER_SIZE");
+    bytes32 public constant FUNDING_UPDATED_AT = keccak256("FUNDING_UPDATED_AT");
     bytes32 public constant BORROWING_FACTOR = keccak256("BORROWING_FACTOR");
     bytes32 public constant CUMULATIVE_BORROWING_FACTOR = keccak256("CUMULATIVE_BORROWING_FACTOR");
     bytes32 public constant CUMULATIVE_BORROWING_FACTOR_UPDATED_AT = keccak256("CUMULATIVE_BORROWING_FACTOR_UPDATED_AT");
@@ -82,6 +82,9 @@ library Keys {
 
     string public constant FROZEN_ORDER_ERROR = "FROZEN_ORDER_ERROR";
     bytes32 public constant FROZEN_ORDER_ERROR_KEY = keccak256(abi.encode(FROZEN_ORDER_ERROR));
+
+    string public constant UNACCEPTABLE_PRICE_ERROR = "UNACCEPTABLE_PRICE_ERROR";
+    bytes32 public constant UNACCEPTABLE_PRICE_ERROR_KEY = keccak256(abi.encode(UNACCEPTABLE_PRICE_ERROR));
 
     function depositGasLimitKey(bool singleToken) internal pure returns (bytes32) {
         return keccak256(abi.encode(
@@ -234,19 +237,21 @@ library Keys {
     }
 
     // market open interest
-    function openInterestKey(address market, bool isLong) internal pure returns (bytes32) {
+    function openInterestKey(address market, address collateralToken, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             OPEN_INTEREST,
             market,
+            collateralToken,
             isLong
         ));
     }
 
     // market open interest in tokens
-    function openInterestInTokensKey(address market, bool isLong) internal pure returns (bytes32) {
+    function openInterestInTokensKey(address market, address collateralToken, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             OPEN_INTEREST_IN_TOKENS,
             market,
+            collateralToken,
             isLong
         ));
     }
@@ -302,17 +307,18 @@ library Keys {
         ));
     }
 
-    function cumulativeFundingFactorKey(address market, bool isLong) internal pure returns (bytes32) {
+    function fundingAmountPerSizeKey(address market, address collateralToken, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            CUMULATIVE_FUNDING_FACTOR,
+            FUNDING_AMOUNT_PER_SIZE,
             market,
+            collateralToken,
             isLong
         ));
     }
 
-    function cumulativeFundingFactorUpdatedAtKey(address market) internal pure returns (bytes32) {
+    function fundingUpdatedAtKey(address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            CUMULATIVE_FUNDING_FACTOR_UPDATED_AT,
+            FUNDING_UPDATED_AT,
             market
         ));
     }

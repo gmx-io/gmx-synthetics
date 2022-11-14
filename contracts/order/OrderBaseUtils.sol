@@ -57,7 +57,6 @@ library OrderBaseUtils {
 
     error EmptyOrder();
     error UnsupportedOrderType();
-    error UnacceptablePrice(uint256 executionPrice, uint256 acceptablePrice);
 
     function isMarketOrder(Order.OrderType orderType) internal pure returns (bool) {
         return orderType == Order.OrderType.MarketSwap ||
@@ -263,7 +262,7 @@ library OrderBaseUtils {
             return acceptablePrice;
         }
 
-        revert UnacceptablePrice(price, acceptablePrice);
+        revert(Keys.UNACCEPTABLE_PRICE_ERROR);
     }
 
     function validateNonEmptyOrder(Order.Props memory order) internal pure {
