@@ -87,6 +87,9 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
         } catch Error(string memory reason) {
             bytes32 reasonKey = keccak256(abi.encode(reason));
 
+            // note that it is possible for any external contract to spoof these errors
+            // this can happen when calling transfers for external tokens, eth transfers, callbacks etc
+            // because of that, errors from external calls should be separately caught
             if (
                 reasonKey == Keys.ORACLE_ERROR_KEY ||
                 reasonKey == Keys.FROZEN_ORDER_ERROR_KEY ||
