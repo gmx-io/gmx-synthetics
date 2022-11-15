@@ -401,10 +401,10 @@ library MarketUtils {
         // use Precision.FLOAT_PRECISION here because fundingUsdForLongCollateral or fundingUsdForShortCollateral divided by longTokenPrice
         // will give an amount in number of tokens which may be quite a small value and could become zero after being divided by longOpenInterest
         // the result will be the amount in number of tokens multiplied by Precision.FLOAT_PRECISION per 1 USD of size
-        cache.fundingAmountPerSizeForLongCollateralForLongs = (cache.fundingUsdForLongCollateral / prices.longTokenPrice.max * Precision.FLOAT_PRECISION) / (cache.longOpenInterest / Precision.FLOAT_PRECISION);
-        cache.fundingAmountPerSizeForShortCollateralForLongs = (cache.fundingUsdForShortCollateral / prices.shortTokenPrice.max * Precision.FLOAT_PRECISION) / (cache.longOpenInterest / Precision.FLOAT_PRECISION);
-        cache.fundingAmountPerSizeForLongCollateralForShorts = (cache.fundingUsdForLongCollateral / prices.longTokenPrice.max * Precision.FLOAT_PRECISION) / (cache.shortOpenInterest / Precision.FLOAT_PRECISION);
-        cache.fundingAmountPerSizeForShortCollateralForShorts = (cache.fundingUsdForShortCollateral / prices.shortTokenPrice.max * Precision.FLOAT_PRECISION) / (cache.shortOpenInterest / Precision.FLOAT_PRECISION);
+        cache.fundingAmountPerSizeForLongCollateralForLongs = getPerSizeValue(cache.fundingUsdForLongCollateral / prices.longTokenPrice.max, cache.longOpenInterest);
+        cache.fundingAmountPerSizeForShortCollateralForLongs = getPerSizeValue(cache.fundingUsdForShortCollateral / prices.shortTokenPrice.max, cache.longOpenInterest);
+        cache.fundingAmountPerSizeForLongCollateralForShorts = getPerSizeValue(cache.fundingUsdForLongCollateral / prices.longTokenPrice.max, cache.shortOpenInterest);
+        cache.fundingAmountPerSizeForShortCollateralForShorts = getPerSizeValue(cache.fundingUsdForShortCollateral / prices.shortTokenPrice.max, cache.shortOpenInterest);
 
         if (cache.longOpenInterest > cache.shortOpenInterest) {
             // longs pay shorts
@@ -439,6 +439,10 @@ library MarketUtils {
         uint256 borrowingFactor = getNextCumulativeBorrowingFactor(dataStore, market, longToken, shortToken, prices, isLong);
         setCumulativeBorrowingFactor(dataStore, market, isLong, borrowingFactor);
         dataStore.setUint(Keys.cumulativeBorrowingFactorUpdatedAtKey(market, isLong), block.timestamp);
+    }
+
+    function getPerSizeValue(uint256 amount, uint256 totalSize) internal pure returns (uint256) {
+        return (amount * Precision.FLOAT_PRECISION) / (totalSize / Precision.FLOAT_PRECISION);
     }
 
     function validateReserve(
@@ -520,24 +524,21 @@ library MarketUtils {
     // return hasPendingFundingFee because it may be possible for there to be a funding fee but it is too small and the fundingFeeAmount is zero
     // in which case the position's fundingAmountPerSize should not be updated, otherwise a user could avoid paying funding fees by continually
     // updating the position before the funding fee becomes large enough to be chargeable
-    // returns (hasPendingFundingFee, fundingFeeAmount, latestFundingAmountPerSize)
-    function getDeductibleFundingFeeAmount(DataStore dataStore, Position.Props memory position) internal view returns (bool, uint256, int256) {
-        int256 latestFundingAmountPerSize = getFundingAmountPerSize(dataStore, position.market, position.collateralToken, position.isLong);
-
+    // returns (hasPendingFundingFee, fundingFeeAmount)
+    function getFundingFeeAmount(
+        int256 latestFundingAmountPerSize,
+        int256 positionFundingAmountPerSize,
+        uint256 positionSizeInUsd
+    ) internal pure returns (bool, int256) {
         // the position is just being opened, so there are no funding fees
-        if (position.fundingAmountPerSize == 0) {
-            return (false, 0, latestFundingAmountPerSize);
+        if (positionFundingAmountPerSize == 0) {
+            return (false, 0);
         }
 
-        // the latest funding amount is less than the position's funding amount per size, so no funding fees are due
-        if (latestFundingAmountPerSize <= position.fundingAmountPerSize) {
-            return (false, 0, latestFundingAmountPerSize);
-        }
+        int256 diff = (latestFundingAmountPerSize - positionFundingAmountPerSize);
+        int256 amount = diff * (positionSizeInUsd.toInt256() / Precision.FLOAT_PRECISION.toInt256()) / Precision.FLOAT_PRECISION.toInt256();
 
-        uint256 diff = (latestFundingAmountPerSize - position.fundingAmountPerSize).toUint256();
-        uint256 amount = diff * (position.sizeInUsd / Precision.FLOAT_PRECISION) / Precision.FLOAT_PRECISION;
-
-        return (true, amount, latestFundingAmountPerSize);
+        return (amount == 0, amount);
     }
 
     function getBorrowingFees(DataStore dataStore, Position.Props memory position) internal view returns (uint256) {

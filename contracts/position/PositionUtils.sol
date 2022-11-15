@@ -127,8 +127,9 @@ library PositionUtils {
             dataStore,
             position,
             collateralTokenPrice,
-            position.sizeInUsd,
-            Keys.FEE_RECEIVER_POSITION_FACTOR
+            market.longToken,
+            market.shortToken,
+            position.sizeInUsd
         );
 
         int256 minCollateralUsd = dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256();

@@ -139,8 +139,11 @@ library DecreasePositionUtils {
 
             params.positionStore.remove(params.positionKey, params.order.account());
         } else {
-            if (!fees.hasPendingFundingFee) {
-                position.fundingAmountPerSize = fees.latestFundingAmountPerSize;
+            if (!fees.hasPendingLongTokenFundingFee) {
+                position.longTokenFundingAmountPerSize = fees.latestLongTokenFundingAmountPerSize;
+            }
+            if (!fees.hasPendingShortTokenFundingFee) {
+                position.shortTokenFundingAmountPerSize = fees.latestShortTokenFundingAmountPerSize;
             }
             position.borrowingFactor = cache.nextPositionBorrowingFactor;
 
@@ -361,8 +364,9 @@ library DecreasePositionUtils {
             params.dataStore,
             position,
             collateralTokenPrice,
-            params.adjustedSizeDeltaUsd,
-            Keys.FEE_RECEIVER_POSITION_FACTOR
+            params.market.longToken,
+            params.market.shortToken,
+            params.adjustedSizeDeltaUsd
         );
 
         if (OrderBaseUtils.isLiquidationOrder(params.order.orderType())) {

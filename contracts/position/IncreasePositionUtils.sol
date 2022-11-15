@@ -160,8 +160,11 @@ library IncreasePositionUtils {
 
         position.sizeInUsd = cache.nextPositionSizeInUsd;
         position.sizeInTokens += cache.sizeDeltaInTokens;
-        if (!fees.hasPendingFundingFee) {
-            position.fundingAmountPerSize = fees.latestFundingAmountPerSize;
+        if (!fees.hasPendingLongTokenFundingFee) {
+            position.longTokenFundingAmountPerSize = fees.latestLongTokenFundingAmountPerSize;
+        }
+        if (!fees.hasPendingShortTokenFundingFee) {
+            position.shortTokenFundingAmountPerSize = fees.latestShortTokenFundingAmountPerSize;
         }
         position.borrowingFactor = cache.nextPositionBorrowingFactor;
         position.increasedAtBlock = Chain.currentBlockNumber();
@@ -219,8 +222,9 @@ library IncreasePositionUtils {
             params.dataStore,
             position,
             collateralTokenPrice,
-            params.order.sizeDeltaUsd(),
-            Keys.FEE_RECEIVER_POSITION_FACTOR
+            params.market.longToken,
+            params.market.shortToken,
+            params.order.sizeDeltaUsd()
         );
 
         PricingUtils.transferFees(

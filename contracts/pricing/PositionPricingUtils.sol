@@ -35,10 +35,14 @@ library PositionPricingUtils {
         uint256 amountForPool;
         uint256 positionFeeAmount;
         uint256 fundingFeeAmount;
-        int256 latestFundingAmountPerSize;
+        int256 latestLongTokenFundingAmountPerSize;
+        int256 latestShortTokenFundingAmountPerSize;
+        int256 longTokenFundingFeeAmount;
+        int256 shortTokenFundingFeeAmount;
         uint256 borrowingFeeAmount;
         int256 totalNetCostAmount;
-        bool hasPendingFundingFee;
+        bool hasPendingLongTokenFundingFee;
+        bool hasPendingShortTokenFundingFee;
     }
 
     function getPriceImpactAmount(
@@ -173,20 +177,34 @@ library PositionPricingUtils {
         DataStore dataStore,
         Position.Props memory position,
         Price.Props memory collateralTokenPrice,
-        uint256 sizeDeltaUsd,
-        bytes32 feeReceiverFactorKey
+        address longToken,
+        address shortToken,
+        uint256 sizeDeltaUsd
     ) internal view returns (PositionFees memory) {
         PositionFees memory fees;
 
         uint256 feeFactor = dataStore.getUint(Keys.positionFeeFactorKey(position.market));
-        uint256 feeReceiverFactor = dataStore.getUint(feeReceiverFactorKey);
+        uint256 feeReceiverFactor = dataStore.getUint(Keys.FEE_RECEIVER_POSITION_FACTOR);
 
         fees.positionFeeAmount = Precision.applyFactor(sizeDeltaUsd, feeFactor) / collateralTokenPrice.min;
-        (fees.hasPendingFundingFee, fees.fundingFeeAmount, fees.latestFundingAmountPerSize) = MarketUtils.getDeductibleFundingFeeAmount(dataStore, position);
         fees.borrowingFeeAmount = MarketUtils.getBorrowingFees(dataStore, position) / collateralTokenPrice.min;
 
         fees.feeReceiverAmount = Precision.applyFactor(fees.positionFeeAmount, feeReceiverFactor);
         fees.feesForPool = fees.positionFeeAmount + fees.borrowingFeeAmount - fees.feeReceiverAmount;
+
+        fees.latestLongTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market, longToken, position.isLong);
+        fees.latestShortTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market, shortToken, position.isLong);
+
+        (fees.hasPendingLongTokenFundingFee, fees.longTokenFundingFeeAmount) = MarketUtils.getFundingFeeAmount(fees.latestLongTokenFundingAmountPerSize, position.longTokenFundingAmountPerSize, position.sizeInUsd);
+        (fees.hasPendingShortTokenFundingFee, fees.shortTokenFundingFeeAmount) = MarketUtils.getFundingFeeAmount(fees.latestShortTokenFundingAmountPerSize, position.shortTokenFundingAmountPerSize, position.sizeInUsd);
+
+        if (position.collateralToken == longToken && fees.longTokenFundingFeeAmount > 0) {
+            fees.fundingFeeAmount = fees.longTokenFundingFeeAmount.toUint256();
+        }
+        if (position.collateralToken == shortToken && fees.shortTokenFundingFeeAmount > 0) {
+            fees.fundingFeeAmount = fees.shortTokenFundingFeeAmount.toUint256();
+        }
+
         fees.totalNetCostAmount = (fees.positionFeeAmount + fees.fundingFeeAmount + fees.borrowingFeeAmount).toInt256();
 
         return fees;
