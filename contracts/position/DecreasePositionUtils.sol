@@ -132,6 +132,28 @@ library DecreasePositionUtils {
         position.collateralAmount = values.remainingCollateralAmount.toUint256();
         position.decreasedAtBlock = Chain.currentBlockNumber();
 
+        if (fees.longTokenFundingFeeAmount > 0) {
+            MarketUtils.incrementClaimableFundingAmount(
+                params.dataStore,
+                params.eventEmitter,
+                params.market.marketToken,
+                params.market.longToken,
+                position.account,
+                fees.longTokenFundingFeeAmount.toUint256()
+            );
+        }
+
+        if (fees.shortTokenFundingFeeAmount > 0) {
+            MarketUtils.incrementClaimableFundingAmount(
+                params.dataStore,
+                params.eventEmitter,
+                params.market.marketToken,
+                params.market.shortToken,
+                position.account,
+                fees.shortTokenFundingFeeAmount.toUint256()
+            );
+        }
+
         if (position.sizeInUsd == 0 || position.sizeInTokens == 0) {
             // withdraw all collateral if the position will be closed
             values.outputAmount += position.collateralAmount.toInt256();

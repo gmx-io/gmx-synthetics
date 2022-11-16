@@ -166,6 +166,29 @@ library IncreasePositionUtils {
         if (!fees.hasPendingShortTokenFundingFee) {
             position.shortTokenFundingAmountPerSize = fees.latestShortTokenFundingAmountPerSize;
         }
+
+        if (fees.longTokenFundingFeeAmount > 0) {
+            MarketUtils.incrementClaimableFundingAmount(
+                params.dataStore,
+                params.eventEmitter,
+                params.market.marketToken,
+                params.market.longToken,
+                position.account,
+                fees.longTokenFundingFeeAmount.toUint256()
+            );
+        }
+
+        if (fees.shortTokenFundingFeeAmount > 0) {
+            MarketUtils.incrementClaimableFundingAmount(
+                params.dataStore,
+                params.eventEmitter,
+                params.market.marketToken,
+                params.market.shortToken,
+                position.account,
+                fees.shortTokenFundingFeeAmount.toUint256()
+            );
+        }
+
         position.borrowingFactor = cache.nextPositionBorrowingFactor;
         position.increasedAtBlock = Chain.currentBlockNumber();
 

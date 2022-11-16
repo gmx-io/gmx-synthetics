@@ -64,6 +64,7 @@ contract EventEmitter is RoleModule {
     event PositionImpactPoolAmountUpdated(address market, int256 delta, uint256 nextValue);
     event OpenInterestUpdated(address market, address collateralToken, bool isLong, int256 delta, uint256 nextValue);
     event OpenInterestInTokensUpdated(address market, address collateralToken, bool isLong, int256 delta, uint256 nextValue);
+    event ClaimableFundingUpdated(address market, address token, address account, uint256 delta, uint256 nextValue);
 
     event CollateralSumDelta(
         address market,
@@ -94,6 +95,10 @@ contract EventEmitter is RoleModule {
 
     function emitOpenInterestInTokensUpdated(address market, address collateralToken, bool isLong, int256 delta, uint256 nextValue) external onlyController {
         emit OpenInterestInTokensUpdated(market, collateralToken, isLong, delta, nextValue);
+    }
+
+    function emitClaimableFundingUpdated(address market, address token, address account, uint256 delta, uint256 nextValue) external onlyController {
+        emit ClaimableFundingUpdated(market, token, account, delta, nextValue);
     }
 
     function emitCollateralSumDelta(

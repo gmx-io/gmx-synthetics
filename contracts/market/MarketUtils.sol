@@ -210,6 +210,22 @@ library MarketUtils {
         return dataStore.getUint(Keys.poolAmountKey(market, token));
     }
 
+    function incrementClaimableFundingAmount(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address token,
+        address account,
+        uint256 delta
+    ) internal {
+        uint256 nextValue = dataStore.incrementUint(
+            Keys.claimableFundingAmountKey(market, token, account),
+            delta
+        );
+
+        eventEmitter.emitClaimableFundingUpdated(market, token, account, delta, nextValue);
+    }
+
     function applyDeltaToPoolAmount(
         DataStore dataStore,
         EventEmitter eventEmitter,
