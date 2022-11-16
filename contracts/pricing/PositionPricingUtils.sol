@@ -40,7 +40,8 @@ library PositionPricingUtils {
         int256 longTokenFundingFeeAmount;
         int256 shortTokenFundingFeeAmount;
         uint256 borrowingFeeAmount;
-        int256 totalNetCostAmount;
+        uint256 totalNetCostAmount;
+        uint256 totalNetCostUsd;
         bool hasPendingLongTokenFundingFee;
         bool hasPendingShortTokenFundingFee;
     }
@@ -205,7 +206,8 @@ library PositionPricingUtils {
             fees.fundingFeeAmount = fees.shortTokenFundingFeeAmount.toUint256();
         }
 
-        fees.totalNetCostAmount = (fees.positionFeeAmount + fees.fundingFeeAmount + fees.borrowingFeeAmount).toInt256();
+        fees.totalNetCostAmount = fees.positionFeeAmount + fees.fundingFeeAmount + fees.borrowingFeeAmount;
+        fees.totalNetCostUsd = fees.totalNetCostAmount * collateralTokenPrice.max;
 
         return fees;
     }

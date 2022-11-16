@@ -61,7 +61,7 @@ async function deployFixture() {
   await grantRole(roleStore, oracle.address, "CONTROLLER");
 
   const weth = await deployContract("WETH", []);
-  await weth.deposit({ value: expandDecimals(10, 18) });
+  await weth.deposit({ value: expandDecimals(50, 18) });
 
   const wbtc = await deployContract("MintableToken", []);
   const usdc = await deployContract("MintableToken", []);

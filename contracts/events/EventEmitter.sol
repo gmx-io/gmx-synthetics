@@ -28,9 +28,10 @@ contract EventEmitter is RoleModule {
         uint256 executionPrice,
         uint256 sizeDeltaInUsd,
         int256 collateralDeltaAmount,
+        int256 positionPnlUsd,
+        int256 pnlAmountForPool,
         int256 remainingCollateralAmount,
-        int256 outputAmount,
-        int256 realizedPnlAmount
+        uint256 outputAmount
     );
     // PositionLiquidated?
 
@@ -66,6 +67,8 @@ contract EventEmitter is RoleModule {
     event OpenInterestInTokensUpdated(address market, address collateralToken, bool isLong, int256 delta, uint256 nextValue);
     event ClaimableFundingUpdated(address market, address token, address account, uint256 delta, uint256 nextValue);
     event FundingFeesClaimed(address market, address token, address account, address receiver, uint256 amount);
+
+    event InsufficientFundingFeePayment(uint256 fundingFeeAmount, uint256 collateralAmount);
 
     event CollateralSumDelta(
         address market,
@@ -207,9 +210,10 @@ contract EventEmitter is RoleModule {
         uint256 executionPrice,
         uint256 sizeDeltaUsd,
         int256 collateralDeltaAmount,
+        int256 positionPnlUsd,
+        int256 pnlAmountForPool,
         int256 remainingCollateralAmount,
-        int256 outputAmount,
-        int256 realizedPnlAmount
+        uint256 outputAmount
     ) external onlyController {
         emit PositionDecrease(
             key,
@@ -220,10 +224,15 @@ contract EventEmitter is RoleModule {
             executionPrice,
             sizeDeltaUsd,
             collateralDeltaAmount,
+            positionPnlUsd,
+            pnlAmountForPool,
             remainingCollateralAmount,
-            outputAmount,
-            realizedPnlAmount
+            outputAmount
         );
+    }
+
+    function emitInsufficientFundingFeePayment(uint256 fundingFeeAmount, uint256 collateralAmount) external onlyController {
+        emit InsufficientFundingFeePayment(fundingFeeAmount, collateralAmount);
     }
 
     function log1(bytes32 topic1, bytes memory data) external onlyController {
