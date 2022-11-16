@@ -16,9 +16,11 @@ import "./Router.sol";
 // for functions which require token transfers from the user
 contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
     using SafeERC20 for IERC20;
+    using Order for Order.Props;
 
     Router immutable router;
     DataStore immutable dataStore;
+    EventEmitter immutable eventEmitter;
     DepositHandler immutable depositHandler;
     WithdrawalHandler immutable withdrawalHandler;
     OrderHandler immutable orderHandler;
@@ -30,6 +32,7 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
         Router _router,
         RoleStore _roleStore,
         DataStore _dataStore,
+        EventEmitter _eventEmitter,
         DepositHandler _depositHandler,
         WithdrawalHandler _withdrawalHandler,
         OrderHandler _orderHandler,
@@ -39,6 +42,7 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
     ) RoleModule(_roleStore) {
         router = _router;
         dataStore = _dataStore;
+        eventEmitter = _eventEmitter;
 
         depositHandler = _depositHandler;
         withdrawalHandler = _withdrawalHandler;
@@ -105,5 +109,85 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
             account,
             params
         );
+    }
+
+    function updateOrder(
+        bytes32 key,
+        uint256 sizeDeltaUsd,
+        uint256 triggerPrice,
+        uint256 acceptablePrice
+    ) external payable nonReentrant {
+        OrderStore _orderStore = orderStore;
+        Order.Props memory order = _orderStore.get(key);
+
+        FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureKey(address(this), uint256(order.orderType())));
+
+        require(order.account() == msg.sender, "ExchangeRouter: forbidden");
+
+        if (OrderBaseUtils.isMarketOrder(order.orderType())) {
+            revert("ExchangeRouter: invalid orderType");
+        }
+
+        order.setSizeDeltaUsd(sizeDeltaUsd);
+        order.setTriggerPrice(triggerPrice);
+        order.setAcceptablePrice(acceptablePrice);
+        order.setIsFrozen(false);
+
+        // allow topping up of executionFee as partially filled or frozen orders
+        //  will have their executionFee reduced
+        uint256 receivedWeth = EthUtils.sendWeth(dataStore, address(_orderStore));
+        order.setExecutionFee(order.executionFee() + receivedWeth);
+
+        uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
+        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee());
+
+        order.touch();
+        _orderStore.set(key, order);
+
+        eventEmitter.emitOrderUpdated(key, sizeDeltaUsd, triggerPrice, acceptablePrice);
+    }
+
+    function cancelOrder(bytes32 key) external nonReentrant {
+        uint256 startingGas = gasleft();
+
+        OrderStore _orderStore = orderStore;
+        Order.Props memory order = _orderStore.get(key);
+
+        FeatureUtils.validateFeature(dataStore, Keys.cancelOrderFeatureKey(address(this), uint256(order.orderType())));
+
+        require(order.account() == msg.sender, "ExchangeRouter: forbidden");
+
+        if (OrderBaseUtils.isMarketOrder(order.orderType())) {
+            revert("ExchangeRouter: invalid orderType");
+        }
+
+        OrderUtils.cancelOrder(
+            dataStore,
+            eventEmitter,
+            orderStore,
+            key,
+            msg.sender,
+            startingGas,
+            "USER_INITIATED_CANCEL"
+        );
+    }
+
+    function claimFundingFees(address[] memory markets, address[] memory tokens, address receiver) external nonReentrant {
+        if (markets.length != tokens.length) {
+            revert("Invalid input");
+        }
+
+        address account = msg.sender;
+
+        for (uint256 i = 0; i < markets.length; i++) {
+            MarketUtils.claimFundingFees(
+                dataStore,
+                eventEmitter,
+                markets[i],
+                tokens[i],
+                account,
+                receiver
+            );
+        }
     }
 }

@@ -226,6 +226,34 @@ library MarketUtils {
         eventEmitter.emitClaimableFundingUpdated(market, token, account, delta, nextValue);
     }
 
+    function claimFundingFees(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address token,
+        address account,
+        address receiver
+    ) internal {
+        bytes32 key = Keys.claimableFundingAmountKey(market, token, account);
+
+        uint256 claimableAmount = dataStore.getUint(key);
+        dataStore.setUint(key, 0);
+
+        MarketToken(payable(market)).transferOut(
+            token,
+            claimableAmount,
+            receiver
+        );
+
+        eventEmitter.emitFundingFeesClaimed(
+            market,
+            token,
+            account,
+            receiver,
+            claimableAmount
+        );
+    }
+
     function applyDeltaToPoolAmount(
         DataStore dataStore,
         EventEmitter eventEmitter,

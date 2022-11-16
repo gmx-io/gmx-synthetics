@@ -106,7 +106,7 @@ contract DepositHandler is ReentrancyGuard, FundReceiver, OracleModule {
         OracleUtils.SetPricesParams memory oracleParams,
         address keeper,
         uint256 startingGas
-    ) public
+    ) external
         onlySelf
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {

@@ -3,7 +3,6 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/Multicall.sol";
 
 import "../role/RoleModule.sol";
 import "../feature/FeatureUtils.sol";
@@ -24,7 +23,7 @@ import "../events/EventEmitter.sol";
 
 import "../utils/Null.sol";
 
-contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
+contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
     using Order for Order.Props;
 
     DataStore immutable dataStore;
@@ -128,73 +127,12 @@ contract OrderHandler is ReentrancyGuard, Multicall, RoleModule, OracleModule {
         OrderUtils.executeOrder(params);
     }
 
-    function updateOrder(
-        bytes32 key,
-        uint256 sizeDeltaUsd,
-        uint256 triggerPrice,
-        uint256 acceptablePrice
-    ) external payable nonReentrant {
-        OrderStore _orderStore = orderStore;
-        Order.Props memory order = _orderStore.get(key);
-
-        FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureKey(address(this), uint256(order.orderType())));
-
-        require(order.account() == msg.sender, "OrderHandler: forbidden");
-
-        if (OrderBaseUtils.isMarketOrder(order.orderType())) {
-            revert("OrderHandler: invalid orderType");
-        }
-
-        order.setSizeDeltaUsd(sizeDeltaUsd);
-        order.setTriggerPrice(triggerPrice);
-        order.setAcceptablePrice(acceptablePrice);
-        order.setIsFrozen(false);
-
-        // allow topping up of executionFee as partially filled or frozen orders
-        //  will have their executionFee reduced
-        uint256 receivedWeth = EthUtils.sendWeth(dataStore, address(_orderStore));
-        order.setExecutionFee(order.executionFee() + receivedWeth);
-
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee());
-
-        order.touch();
-        _orderStore.set(key, order);
-
-        eventEmitter.emitOrderUpdated(key, sizeDeltaUsd, triggerPrice, acceptablePrice);
-    }
-
-    function cancelOrder(bytes32 key) external nonReentrant {
-        uint256 startingGas = gasleft();
-
-        OrderStore _orderStore = orderStore;
-        Order.Props memory order = _orderStore.get(key);
-
-        FeatureUtils.validateFeature(dataStore, Keys.cancelOrderFeatureKey(address(this), uint256(order.orderType())));
-
-        require(order.account() == msg.sender, "OrderHandler: forbidden");
-
-        if (OrderBaseUtils.isMarketOrder(order.orderType())) {
-            revert("OrderHandler: invalid orderType");
-        }
-
-        OrderUtils.cancelOrder(
-            dataStore,
-            eventEmitter,
-            orderStore,
-            key,
-            msg.sender,
-            startingGas,
-            "USER_INITIATED_CANCEL"
-        );
-    }
-
     function _executeOrder(
         bytes32 key,
         OracleUtils.SetPricesParams memory oracleParams,
         address keeper,
         uint256 startingGas
-    ) public
+    ) external
         onlySelf
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
