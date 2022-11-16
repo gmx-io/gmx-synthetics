@@ -50,7 +50,6 @@ describe("Exchange.LiquidationOrder", () => {
 
     await grantRole(roleStore, wallet.address, "LIQUIDATION_KEEPER");
 
-    console.log("user0", user0.address);
     await expect(
       executeLiquidation(fixture, {
         account: user0.address,
