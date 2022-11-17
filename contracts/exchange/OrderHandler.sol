@@ -8,6 +8,8 @@ import "../role/RoleModule.sol";
 import "../feature/FeatureUtils.sol";
 import "../callback/CallbackUtils.sol";
 
+import "../adl/AdlUtils.sol";
+
 import "../market/Market.sol";
 import "../market/MarketStore.sol";
 import "../market/MarketToken.sol";
@@ -126,6 +128,59 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
 
         OrderUtils.executeOrder(params);
     }
+
+    function updateAdlState(
+        address market,
+        bool isLong,
+        OracleUtils.SetPricesParams calldata oracleParams
+    ) external
+        nonReentrant
+        onlyAdlKeeper
+        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+    {
+        uint256[] memory oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
+            oracleParams.compactedOracleBlockNumbers,
+            oracleParams.tokens.length
+        );
+
+        AdlUtils.updateAdlState(
+            dataStore,
+            eventEmitter,
+            marketStore,
+            oracle,
+            market,
+            isLong,
+            oracleBlockNumbers
+        );
+    }
+
+    /* function executeAdl(
+        address account,
+        address market,
+        address collateralToken,
+        bool isLong,
+        uint256 sizeDeltaUsd,
+        OracleUtils.SetPricesParams calldata oracleParams
+    ) external
+        nonReentrant
+        onlyAdlKeeper
+        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+    {
+        uint256 startingGas = gasleft();
+
+        // validate that adl is enabled
+        // validate oracle block number for adl
+
+        bytes32 key = _createAdlOrder(account, market, collateralToken, isLong);
+
+        OrderBaseUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, msg.sender, startingGas);
+
+        FeatureUtils.validateFeature(params.dataStore, Keys.executeAdlFeatureKey(address(this), uint256(params.order.orderType())));
+
+        OrderUtils.executeOrder(params);
+
+        // validate that pnl was not over corrected
+    } */
 
     function _executeOrder(
         bytes32 key,
