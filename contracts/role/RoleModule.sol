@@ -50,6 +50,11 @@ contract RoleModule is Governable {
         _;
     }
 
+    modifier onlyAdlKeeper() {
+        _validateRole(Role.ADL_KEEPER, "ADL_KEEPER");
+        _;
+    }
+
     function _validateRole(bytes32 role, string memory roleName) internal view {
         if (!roleStore.hasRole(msg.sender, role)) {
             revert Unauthorized(msg.sender, roleName);

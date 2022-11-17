@@ -14,6 +14,7 @@ library Keys {
 
     bytes32 public constant CREATE_ORDER_FEATURE = keccak256("CREATE_ORDER_FEATURE");
     bytes32 public constant EXECUTE_ORDER_FEATURE = keccak256("EXECUTE_ORDER_FEATURE");
+    bytes32 public constant EXECUTE_ADL_FEATURE = keccak256("EXECUTE_ADL_FEATURE");
     bytes32 public constant UPDATE_ORDER_FEATURE = keccak256("UPDATE_ORDER_FEATURE");
     bytes32 public constant CANCEL_ORDER_FEATURE = keccak256("CANCEL_ORDER_FEATURE");
 
@@ -66,6 +67,9 @@ library Keys {
     bytes32 public constant PRICE_FEED_PRECISION = keccak256("PRICE_FEED_PRECISION");
     bytes32 public constant STABLE_PRICE = keccak256("STABLE_PRICE");
     bytes32 public constant RESERVE_FACTOR = keccak256("RESERVE_FACTOR");
+    bytes32 public constant MAX_PNL_FACTOR = keccak256("MAX_PNL_FACTOR");
+    bytes32 public constant LATEST_ADL_BLOCK = keccak256("LATEST_ADL_BLOCK");
+    bytes32 public constant IS_ADL_ENABLED = keccak256("IS_ADL_ENABLED");
     bytes32 public constant FUNDING_FACTOR = keccak256("FUNDING_FACTOR");
     bytes32 public constant FUNDING_AMOUNT_PER_SIZE = keccak256("FUNDING_AMOUNT_PER_SIZE");
     bytes32 public constant FUNDING_UPDATED_AT = keccak256("FUNDING_UPDATED_AT");
@@ -164,6 +168,14 @@ library Keys {
     function executeOrderFeatureKey(address module, uint256 orderType) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             EXECUTE_ORDER_FEATURE,
+            module,
+            orderType
+        ));
+    }
+
+    function executeAdlFeatureKey(address module, uint256 orderType) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            EXECUTE_ADL_FEATURE,
             module,
             orderType
         ));
@@ -296,6 +308,30 @@ library Keys {
     function reserveFactorKey(address market, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             RESERVE_FACTOR,
+            market,
+            isLong
+        ));
+    }
+
+    function maxPnlFactorKey(address market, bool isLong) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MAX_PNL_FACTOR,
+            market,
+            isLong
+        ));
+    }
+
+    function latestAdlBlockKey(address market, bool isLong) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            LATEST_ADL_BLOCK,
+            market,
+            isLong
+        ));
+    }
+
+    function isAdlEnabledKey(address market, bool isLong) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            IS_ADL_ENABLED,
             market,
             isLong
         ));
