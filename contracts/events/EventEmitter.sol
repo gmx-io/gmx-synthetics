@@ -67,7 +67,7 @@ contract EventEmitter is RoleModule {
     event OpenInterestInTokensUpdated(address market, address collateralToken, bool isLong, int256 delta, uint256 nextValue);
     event ClaimableFundingUpdated(address market, address token, address account, uint256 delta, uint256 nextValue);
     event FundingFeesClaimed(address market, address token, address account, address receiver, uint256 amount);
-    event AdlStateUpdated(int256 pnlToPoolFactor, uint256 maxPnlFactor, bool shouldEnableAdl, uint256 oracleBlockNumber);
+    event AdlStateUpdated(int256 pnlToPoolFactor, uint256 maxPnlFactor, bool shouldEnableAdl);
 
     event InsufficientFundingFeePayment(uint256 fundingFeeAmount, uint256 collateralAmount);
 
@@ -110,8 +110,8 @@ contract EventEmitter is RoleModule {
         emit FundingFeesClaimed(market, token, account, receiver, amount);
     }
 
-    function emitAdlStateUpdated(int256 pnlToPoolFactor, uint256 maxPnlFactor, bool shouldEnableAdl, uint256 oracleBlockNumber) external onlyController {
-        emit AdlStateUpdated(pnlToPoolFactor, maxPnlFactor, shouldEnableAdl, oracleBlockNumber);
+    function emitAdlStateUpdated(int256 pnlToPoolFactor, uint256 maxPnlFactor, bool shouldEnableAdl) external onlyController {
+        emit AdlStateUpdated(pnlToPoolFactor, maxPnlFactor, shouldEnableAdl);
     }
 
     function emitCollateralSumDelta(

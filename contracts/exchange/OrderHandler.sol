@@ -9,6 +9,7 @@ import "../feature/FeatureUtils.sol";
 import "../callback/CallbackUtils.sol";
 
 import "../adl/AdlUtils.sol";
+import "../liquidation/LiquidationUtils.sol";
 
 import "../market/Market.sol";
 import "../market/MarketStore.sol";
@@ -120,7 +121,15 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
     {
         uint256 startingGas = gasleft();
 
-        bytes32 key = _createLiquidationOrder(account, market, collateralToken, isLong);
+        bytes32 key = LiquidationUtils.createLiquidationOrder(
+            dataStore,
+            orderStore,
+            positionStore,
+            account,
+            market,
+            collateralToken,
+            isLong
+        );
 
         OrderBaseUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, msg.sender, startingGas);
 
@@ -284,58 +293,6 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
             );
         }
     }
-
-    function _createLiquidationOrder(
-        address account,
-        address market,
-        address collateralToken,
-        bool isLong
-    ) internal returns (bytes32) {
-        bytes32 positionKey = PositionUtils.getPositionKey(account, market, collateralToken, isLong);
-        Position.Props memory position = positionStore.get(positionKey);
-
-        Order.Addresses memory addresses = Order.Addresses(
-            account, // account
-            account, // receiver
-            address(0), // callbackContract
-            market, // market
-            position.collateralToken, // initialCollateralToken
-            new address[](0) // swapPath
-        );
-
-        Order.Numbers memory numbers = Order.Numbers(
-            position.sizeInUsd, // sizeDeltaUsd
-            0, // initialCollateralDeltaAmount
-            0, // triggerPrice
-            position.isLong ? 0 : type(uint256).max, // acceptablePrice
-            0, // executionFee
-            0, // callbackGasLimit
-            0, // minOutputAmount
-            Chain.currentBlockNumber() // updatedAtBlock
-        );
-
-        Order.Flags memory flags = Order.Flags(
-            Order.OrderType.Liquidation, // orderType
-            position.isLong, // isLong
-            true, // shouldConvertETH
-            false // isFrozen
-        );
-
-        Order.Props memory order = Order.Props(
-            addresses,
-            numbers,
-            flags,
-            Null.BYTES
-        );
-
-        order.touch();
-
-        bytes32 key = NonceUtils.getNextKey(dataStore);
-        orderStore.set(key, order);
-
-        return key;
-    }
-
 
     function _validateFrozenOrderKeeper(address keeper) internal view {
         require(roleStore.hasRole(keeper, Role.FROZEN_ORDER_KEEPER), Keys.FROZEN_ORDER_ERROR);

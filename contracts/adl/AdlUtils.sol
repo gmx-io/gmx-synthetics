@@ -21,13 +21,13 @@ library AdlUtils {
     ) internal {
         uint256 latestAdlBlock = getLatestAdlBlock(dataStore, market, isLong);
 
-        if (!oracleBlockNumbers.areGreaterThan(latestAdlBlock)) {
-            revert("OrderHandler: Invalid oracle block number");
-        }
-
         uint256 oracleBlockNumber = oracleBlockNumbers[0];
         if (!oracleBlockNumbers.areEqualTo(oracleBlockNumber)) {
             revert("OrderHandler: Oracle block numbers must be equivalent");
+        }
+
+        if (oracleBlockNumber < latestAdlBlock) {
+            revert("OrderHandler: Invalid oracle block number");
         }
 
         Market.Props memory _market = marketStore.get(market);
@@ -43,9 +43,9 @@ library AdlUtils {
         bool shouldEnableAdl = pnlToPoolFactor > 0 && pnlToPoolFactor.toUint256() > maxPnlFactor;
 
         setIsAdlEnabled(dataStore, market, isLong, shouldEnableAdl);
-        setLatestAdlBlock(dataStore, market, isLong, oracleBlockNumber);
+        setLatestAdlBlock(dataStore, market, isLong, block.number);
 
-        eventEmitter.emitAdlStateUpdated(pnlToPoolFactor, maxPnlFactor, shouldEnableAdl, oracleBlockNumber);
+        eventEmitter.emitAdlStateUpdated(pnlToPoolFactor, maxPnlFactor, shouldEnableAdl);
     }
 
     function getLatestAdlBlock(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
