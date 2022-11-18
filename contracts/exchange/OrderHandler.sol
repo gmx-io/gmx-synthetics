@@ -27,7 +27,18 @@ import "../events/EventEmitter.sol";
 import "../utils/Null.sol";
 
 contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
+    using SafeCast for uint256;
     using Order for Order.Props;
+    using Array for uint256[];
+
+    struct _ExecuteAdlCache {
+        uint256 startingGas;
+        uint256[] oracleBlockNumbers;
+        bytes32 key;
+        int256 pnlToPoolFactor;
+        int256 nextPnlToPoolFactor;
+        uint256 maxPnlFactorForWithdrawals;
+    }
 
     DataStore immutable dataStore;
     MarketStore immutable marketStore;
@@ -163,7 +174,7 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         );
     }
 
-    /* function executeAdl(
+    function executeAdl(
         address account,
         address market,
         address collateralToken,
@@ -175,21 +186,59 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         onlyAdlKeeper
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
-        uint256 startingGas = gasleft();
+        _ExecuteAdlCache memory cache;
 
-        // validate that adl is enabled
-        // validate oracle block number for adl
+        cache.startingGas = gasleft();
 
-        bytes32 key = _createAdlOrder(account, market, collateralToken, isLong);
+        cache.oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
+            oracleParams.compactedOracleBlockNumbers,
+            oracleParams.tokens.length
+        );
 
-        OrderBaseUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, msg.sender, startingGas);
+        AdlUtils.validateAdl(
+            dataStore,
+            market,
+            isLong,
+            cache.oracleBlockNumbers
+        );
+
+        cache.pnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, marketStore, oracle, market, isLong, true);
+
+        if (cache.pnlToPoolFactor < 0) {
+            revert("Invalid pnlToPoolFactor");
+        }
+
+        cache.key = AdlUtils.createAdlOrder(
+            AdlUtils.CreateAdlOrderParams(
+                dataStore,
+                orderStore,
+                positionStore,
+                account,
+                market,
+                collateralToken,
+                isLong,
+                sizeDeltaUsd,
+                cache.oracleBlockNumbers[0]
+            )
+        );
+
+        OrderBaseUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(cache.key, oracleParams, msg.sender, cache.startingGas);
 
         FeatureUtils.validateFeature(params.dataStore, Keys.executeAdlFeatureKey(address(this), uint256(params.order.orderType())));
 
         OrderUtils.executeOrder(params);
 
-        // validate that pnl was not over corrected
-    } */
+        cache.nextPnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, marketStore, oracle, market, isLong, true);
+        if (cache.nextPnlToPoolFactor >= cache.pnlToPoolFactor) {
+            revert("Invalid adl");
+        }
+
+        cache.maxPnlFactorForWithdrawals = MarketUtils.getMaxPnlFactorForWithdrawals(dataStore, market, isLong);
+
+        if (cache.nextPnlToPoolFactor < cache.maxPnlFactorForWithdrawals.toInt256()) {
+            revert("Pnl was overcorrected");
+        }
+    }
 
     function _executeOrder(
         bytes32 key,

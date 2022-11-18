@@ -68,6 +68,7 @@ library Keys {
     bytes32 public constant STABLE_PRICE = keccak256("STABLE_PRICE");
     bytes32 public constant RESERVE_FACTOR = keccak256("RESERVE_FACTOR");
     bytes32 public constant MAX_PNL_FACTOR = keccak256("MAX_PNL_FACTOR");
+    bytes32 public constant MAX_PNL_FACTOR_FOR_WITHDRAWALS = keccak256("MAX_PNL_FACTOR_FOR_WITHDRAWALS");
     bytes32 public constant LATEST_ADL_BLOCK = keccak256("LATEST_ADL_BLOCK");
     bytes32 public constant IS_ADL_ENABLED = keccak256("IS_ADL_ENABLED");
     bytes32 public constant FUNDING_FACTOR = keccak256("FUNDING_FACTOR");
@@ -316,6 +317,14 @@ library Keys {
     function maxPnlFactorKey(address market, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             MAX_PNL_FACTOR,
+            market,
+            isLong
+        ));
+    }
+
+    function maxPnlFactorForWithdrawalsKey(address market, bool isLong) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MAX_PNL_FACTOR_FOR_WITHDRAWALS,
             market,
             isLong
         ));

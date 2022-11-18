@@ -501,6 +501,24 @@ library MarketUtils {
         return (amount * Precision.FLOAT_PRECISION) / (totalSize / Precision.FLOAT_PRECISION);
     }
 
+    function getPnlToPoolFactor(
+        DataStore dataStore,
+        MarketStore marketStore,
+        Oracle oracle,
+        address market,
+        bool isLong,
+        bool maximize
+    ) internal view returns (int256) {
+        Market.Props memory _market = marketStore.get(market);
+        MarketUtils.MarketPrices memory prices = MarketUtils.MarketPrices(
+            oracle.getPrimaryPrice(_market.indexToken),
+            oracle.getPrimaryPrice(_market.longToken),
+            oracle.getPrimaryPrice(_market.shortToken)
+        );
+
+        return getPnlToPoolFactor(dataStore, _market, prices, isLong, maximize);
+    }
+
     // return factor for (pnl of positions) / (long or short pool value)
     function getPnlToPoolFactor(
         DataStore dataStore,
@@ -693,6 +711,10 @@ library MarketUtils {
 
     function getMaxPnlFactor(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
         return dataStore.getUint(Keys.maxPnlFactorKey(market, isLong));
+    }
+
+    function getMaxPnlFactorForWithdrawals(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
+        return dataStore.getUint(Keys.maxPnlFactorForWithdrawalsKey(market, isLong));
     }
 
     function getFundingFactor(DataStore dataStore, address market) internal view returns (uint256) {

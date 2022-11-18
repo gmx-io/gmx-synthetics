@@ -18,7 +18,7 @@ library LiquidationUtils {
         address market,
         address collateralToken,
         bool isLong
-    ) internal returns (bytes32) {
+    ) external returns (bytes32) {
         bytes32 positionKey = PositionUtils.getPositionKey(account, market, collateralToken, isLong);
         Position.Props memory position = positionStore.get(positionKey);
 
@@ -55,8 +55,6 @@ library LiquidationUtils {
             flags,
             Null.BYTES
         );
-
-        order.touch();
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
         orderStore.set(key, order);
