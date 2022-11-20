@@ -40,13 +40,13 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         uint256 maxPnlFactorForWithdrawals;
     }
 
-    DataStore immutable dataStore;
-    MarketStore immutable marketStore;
-    OrderStore immutable orderStore;
-    PositionStore immutable positionStore;
-    Oracle immutable oracle;
-    EventEmitter immutable eventEmitter;
-    FeeReceiver immutable feeReceiver;
+    DataStore public immutable dataStore;
+    MarketStore public immutable marketStore;
+    OrderStore public immutable orderStore;
+    PositionStore public immutable positionStore;
+    Oracle public immutable oracle;
+    EventEmitter public immutable eventEmitter;
+    FeeReceiver public immutable feeReceiver;
 
     constructor(
         RoleStore _roleStore,

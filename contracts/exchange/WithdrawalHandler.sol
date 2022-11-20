@@ -21,12 +21,12 @@ import "../eth/EthUtils.sol";
 
 contract WithdrawalHandler is ReentrancyGuard, FundReceiver, OracleModule {
 
-    DataStore immutable dataStore;
-    EventEmitter immutable eventEmitter;
-    WithdrawalStore immutable withdrawalStore;
-    MarketStore immutable marketStore;
-    Oracle immutable oracle;
-    FeeReceiver immutable feeReceiver;
+    DataStore public immutable dataStore;
+    EventEmitter public immutable eventEmitter;
+    WithdrawalStore public immutable withdrawalStore;
+    MarketStore public immutable marketStore;
+    Oracle public immutable oracle;
+    FeeReceiver public immutable feeReceiver;
 
     constructor(
         RoleStore _roleStore,

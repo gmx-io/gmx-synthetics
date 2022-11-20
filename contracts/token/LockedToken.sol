@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts (last updated v4.7.0) (token/ERC20/ERC20.sol)
+// SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
+
+import "../bank/Bank.sol";
 
 /**
  * @dev Implementation of the {IERC20} interface.
@@ -32,7 +33,7 @@ import "@openzeppelin/contracts/utils/Context.sol";
  * functions have been added to mitigate the well-known issues around setting
  * allowances. See {IERC20-approve}.
  */
-contract LockedToken is Context, IERC20, IERC20Metadata {
+contract LockedToken is Bank, Context, IERC20, IERC20Metadata {
     mapping(address => uint256) private _balances;
 
     mapping(address => mapping(address => uint256)) private _allowances;
@@ -51,9 +52,17 @@ contract LockedToken is Context, IERC20, IERC20Metadata {
      * All two of these values are immutable: they can only be set once during
      * construction.
      */
-    constructor(string memory name_, string memory symbol_) {
+    constructor(string memory name_, string memory symbol_, RoleStore _roleStore) Bank(_roleStore) {
         _name = name_;
         _symbol = symbol_;
+    }
+
+    function mint(address account, uint256 amount) external onlyController {
+        _mint(account, amount);
+    }
+
+    function burn(address account, uint256 amount) external onlyController {
+        _burn(account, amount);
     }
 
     /**
