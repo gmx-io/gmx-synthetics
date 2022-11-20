@@ -18,15 +18,15 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
     using SafeERC20 for IERC20;
     using Order for Order.Props;
 
-    Router immutable router;
-    DataStore immutable dataStore;
-    EventEmitter immutable eventEmitter;
-    DepositHandler immutable depositHandler;
-    WithdrawalHandler immutable withdrawalHandler;
-    OrderHandler immutable orderHandler;
-    DepositStore immutable depositStore;
-    WithdrawalStore immutable withdrawalStore;
-    OrderStore immutable orderStore;
+    Router public immutable router;
+    DataStore public immutable dataStore;
+    EventEmitter public immutable eventEmitter;
+    DepositHandler public immutable depositHandler;
+    WithdrawalHandler public immutable withdrawalHandler;
+    OrderHandler public immutable orderHandler;
+    DepositStore public immutable depositStore;
+    WithdrawalStore public immutable withdrawalStore;
+    OrderStore public immutable orderStore;
 
     constructor(
         Router _router,
