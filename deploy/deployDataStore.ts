@@ -1,7 +1,8 @@
+import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { hashString } from "../utils/hash";
 import { expandFloatDecimals } from "../utils/math";
 
-const func = async ({ getNamedAccounts, deployments, gmx }) => {
+const func = async ({ getNamedAccounts, deployments, gmx }: HardhatRuntimeEnvironment) => {
   const { deploy, execute, get } = deployments;
   const { deployer } = await getNamedAccounts();
   const { tokens } = gmx;
@@ -23,7 +24,9 @@ const func = async ({ getNamedAccounts, deployments, gmx }) => {
     await setDataStoreUint("MAX_ORACLE_BLOCK_AGE", 200);
     await setDataStoreUint("MAX_LEVERAGE", expandFloatDecimals(100));
 
-    await execute("DataStore", { from: deployer, log: true }, "setAddress", hashString("WETH"), tokens.WETH.address);
+    const wrappedAddress = Object.values(tokens).find((token) => token.wrapped)?.address;
+
+    await execute("DataStore", { from: deployer, log: true }, "setAddress", hashString("WETH"), wrappedAddress);
   }
 };
 func.tags = ["DataStore"];

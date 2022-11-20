@@ -1,4 +1,8 @@
+import { calculateCreate2 } from "eth-create2-calculator";
 import { expandDecimals } from "./math";
+import { hashData } from "./hash";
+
+import MarketTokenArtifact from "../artifacts/contracts/market/MarketToken.sol/MarketToken.json";
 
 export async function getMarketTokenPrice(fixture) {
   const { reader, dataStore, ethUsdMarket } = fixture.contracts;
@@ -20,4 +24,13 @@ export async function getMarketTokenPrice(fixture) {
     },
     true
   );
+}
+
+export function getMarketTokenAddress(indexToken, longToken, shortToken, marketFactoryAddress, roleStoreAddress) {
+  const salt = hashData(["string", "address", "address", "address"], ["GMX_MARKET", indexToken, longToken, shortToken]);
+  const byteCode = MarketTokenArtifact.bytecode;
+  return calculateCreate2(marketFactoryAddress, salt, byteCode, {
+    params: [roleStoreAddress],
+    types: ["address"],
+  });
 }

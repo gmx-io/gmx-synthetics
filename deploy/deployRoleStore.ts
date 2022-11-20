@@ -1,6 +1,7 @@
+import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { hashString } from "../utils/hash";
 
-const func = async ({ getNamedAccounts, deployments }) => {
+const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment) => {
   const { deploy, execute } = deployments;
   const { deployer } = await getNamedAccounts();
 
@@ -15,4 +16,5 @@ const func = async ({ getNamedAccounts, deployments }) => {
   }
 };
 func.tags = ["RoleStore"];
+func.dependencies = ["Init"];
 export default func;

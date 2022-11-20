@@ -1,41 +1,111 @@
-export default {
+// https://docs.chain.link/data-feeds/price-feeds/addresses?network=avalanche
+
+// synthetic token without corresponding token
+// address will be generated in runtime in hardhat.config.ts
+// should not be deployed
+// should not be wrapped
+type SyntheticTokenConfig = {
+  address?: never;
+  decimals: number;
+  synthetic: true;
+  wrapped?: never;
+  deploy?: never;
+};
+
+type RealTokenConfig = {
+  address: string;
+  decimals: number;
+  synthetic?: never;
+  wrapped?: true;
+  deploy?: never;
+};
+
+// test token to deploy in local and test networks
+// automatically deployed in localhost and hardhat networks
+// `deploy` should be set to `true` to deploy on live networks
+export type TestTokenConfig = {
+  address?: never;
+  decimals: number;
+  deploy?: true;
+  wrapped?: boolean;
+  synthetic?: never;
+};
+
+export type TokenConfig = SyntheticTokenConfig | RealTokenConfig | TestTokenConfig;
+export type TokensConfig = { [tokenSymbol: string]: TokenConfig };
+
+const config: {
+  [network: string]: TokensConfig;
+} = {
   arbitrum: {
     WETH: {
-      oraclePrecision: 8,
       address: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+      decimals: 18,
+      wrapped: true,
     },
     WBTC: {
-      oraclePrecision: 20,
       address: "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+      decimals: 8,
     },
     USDC: {
-      oraclePrecision: 18,
       address: "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+      decimals: 6,
     },
   },
-  avalanche: {},
-
+  avalanche: {
+    WAVAX: {
+      address: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
+      decimals: 18,
+    },
+  },
+  avalancheFuji: {
+    WAVAX: {
+      address: "0x1D308089a2D1Ced3f1Ce36B1FcaF815b07217be3",
+      wrapped: true,
+      decimals: 18,
+    },
+    SOL: {
+      synthetic: true,
+      decimals: 18,
+    },
+    USDT: {
+      decimals: 6,
+      deploy: true,
+    },
+    WETH: {
+      decimals: 18,
+      deploy: true,
+    },
+  },
   // token addresses are retrieved in runtime for hardhat and localhost networks
   hardhat: {
     WETH: {
-      oraclePrecision: 8,
+      wrapped: true,
+      decimals: 18,
     },
     WBTC: {
-      oraclePrecision: 20,
+      decimals: 8,
     },
     USDC: {
-      oraclePrecision: 18,
+      decimals: 6,
     },
   },
   localhost: {
     WETH: {
-      oraclePrecision: 8,
+      wrapped: true,
+      decimals: 18,
     },
     WBTC: {
-      oraclePrecision: 20,
+      decimals: 8,
     },
     USDC: {
-      oraclePrecision: 18,
+      decimals: 6,
+    },
+    SOL: {
+      synthetic: true,
+      decimals: 18,
     },
   },
 };
+
+export default config;

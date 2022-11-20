@@ -5,16 +5,8 @@ import "solidity-coverage";
 import "hardhat-gas-reporter";
 import "hardhat-deploy";
 
-import allTokens from "./config/tokens";
-import allMarkets from "./config/markets";
-
-extendEnvironment((hre) => {
-  // extend hre context with gmx domain data
-  hre.gmx = {
-    tokens: allTokens[hre.network.name] || {},
-    markets: allMarkets[hre.network.name] || [],
-  };
-});
+// extends hre with gmx domain data
+import "./config";
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -36,13 +28,21 @@ const config: HardhatUserConfig = {
     arbitrum: {
       url: "https://arb1.arbitrum.io/rpc",
     },
+    arbitrumGoerli: {
+      url: "https://goerli-rollup.arbitrum.io/rpc",
+      chainId: 421613,
+    },
+    avalancheFuji: {
+      url: "https://api.avax-test.network/ext/bc/C/rpc",
+      chainId: 43113,
+      accounts: [process.env.DEPLOYER_KEY].filter(Boolean),
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS ? true : false,
   },
   namedAccounts: {
     deployer: 0,
-    oracleSigner0: "0xFb11f15f206bdA02c224EDC744b0E50E46137046", // G
   },
 };
 

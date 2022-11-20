@@ -1,4 +1,4 @@
-export async function deployContract(name, args, contractOptions) {
+export async function deployContract(name, args, contractOptions = {}) {
   const contractFactory = await ethers.getContractFactory(name, contractOptions);
   return await contractFactory.deploy(...args);
 }
