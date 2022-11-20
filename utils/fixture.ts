@@ -100,6 +100,8 @@ async function deployFixture() {
   const increasePositionUtils = await deployContract("IncreasePositionUtils", []);
   const decreasePositionUtils = await deployContract("DecreasePositionUtils", []);
 
+  const orderUtils = await deployContract("OrderUtils", []);
+
   const liquidationUtils = await deployContract("LiquidationUtils", []);
   const adlUtils = await deployContract("AdlUtils", []);
 
@@ -170,6 +172,7 @@ async function deployFixture() {
         IncreaseOrderUtils: increaseOrderUtils.address,
         DecreaseOrderUtils: decreaseOrderUtils.address,
         SwapOrderUtils: swapOrderUtils.address,
+        OrderUtils: orderUtils.address,
         LiquidationUtils: liquidationUtils.address,
         AdlUtils: adlUtils.address,
       },

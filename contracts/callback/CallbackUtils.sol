@@ -8,58 +8,81 @@ import "./IOrderCallbackReceiver.sol";
 import "./IDepositCallbackReceiver.sol";
 import "./IWithdrawalCallbackReceiver.sol";
 
+// half of the callbackGasLimit value is forwarded per call since
+// both before and after functions would be called
 library CallbackUtils {
     using Address for address;
     using Deposit for Deposit.Props;
     using Withdrawal for Withdrawal.Props;
     using Order for Order.Props;
 
-    function handleExecution(bytes32 key, Deposit.Props memory deposit) internal {
+    function beforeDepositExecution(bytes32 key, Deposit.Props memory deposit) internal {
         if (!isValidCallbackContract(deposit.callbackContract)) { return; }
 
-        try IDepositCallbackReceiver(deposit.callbackContract).depositExecuted{ gas: deposit.callbackGasLimit }(key, deposit) {
+        try IDepositCallbackReceiver(deposit.callbackContract).beforeDepositExecution{ gas: deposit.callbackGasLimit / 2 }(key, deposit) {
         } catch {}
     }
 
-    function handleCancellation(bytes32 key, Deposit.Props memory deposit) internal {
+    function afterDepositExecution(bytes32 key, Deposit.Props memory deposit) internal {
         if (!isValidCallbackContract(deposit.callbackContract)) { return; }
 
-        try IDepositCallbackReceiver(deposit.callbackContract).depositCancelled{ gas: deposit.callbackGasLimit }(key, deposit) {
+        try IDepositCallbackReceiver(deposit.callbackContract).afterDepositExecution{ gas: deposit.callbackGasLimit / 2 }(key, deposit) {
         } catch {}
     }
 
-    function handleExecution(bytes32 key, Withdrawal.Props memory withdrawal) internal {
+    function afterDepositCancellation(bytes32 key, Deposit.Props memory deposit) internal {
+        if (!isValidCallbackContract(deposit.callbackContract)) { return; }
+
+        try IDepositCallbackReceiver(deposit.callbackContract).afterDepositCancellation{ gas: deposit.callbackGasLimit / 2 }(key, deposit) {
+        } catch {}
+    }
+
+    function beforeWithdrawalExecution(bytes32 key, Withdrawal.Props memory withdrawal) internal {
         if (!isValidCallbackContract(withdrawal.callbackContract)) { return; }
 
-        try IWithdrawalCallbackReceiver(withdrawal.callbackContract).withdrawalExecuted{ gas: withdrawal.callbackGasLimit }(key, withdrawal) {
+        try IWithdrawalCallbackReceiver(withdrawal.callbackContract).beforeWithdrawalExecution{ gas: withdrawal.callbackGasLimit / 2 }(key, withdrawal) {
         } catch {}
     }
 
-    function handleCancellation(bytes32 key, Withdrawal.Props memory withdrawal) internal {
+    function afterWithdrawalExecution(bytes32 key, Withdrawal.Props memory withdrawal) internal {
         if (!isValidCallbackContract(withdrawal.callbackContract)) { return; }
 
-        try IWithdrawalCallbackReceiver(withdrawal.callbackContract).withdrawalCancelled{ gas: withdrawal.callbackGasLimit }(key, withdrawal) {
+        try IWithdrawalCallbackReceiver(withdrawal.callbackContract).afterWithdrawalExecution{ gas: withdrawal.callbackGasLimit / 2 }(key, withdrawal) {
         } catch {}
     }
 
-    function handleExecution(bytes32 key, Order.Props memory order) internal {
-        if (!isValidCallbackContract(order.callbackContract())) { return; }
+    function afterWithdrawalCancellation(bytes32 key, Withdrawal.Props memory withdrawal) internal {
+        if (!isValidCallbackContract(withdrawal.callbackContract)) { return; }
 
-        try IOrderCallbackReceiver(order.callbackContract()).orderExecuted{ gas: order.callbackGasLimit() }(key, order) {
+        try IWithdrawalCallbackReceiver(withdrawal.callbackContract).afterWithdrawalCancellation{ gas: withdrawal.callbackGasLimit / 2 }(key, withdrawal) {
         } catch {}
     }
 
-    function handleCancellation(bytes32 key, Order.Props memory order) internal {
+    function beforeOrderExecution(bytes32 key, Order.Props memory order) internal {
         if (!isValidCallbackContract(order.callbackContract())) { return; }
 
-        try IOrderCallbackReceiver(order.callbackContract()).orderCancelled{ gas: order.callbackGasLimit() }(key, order) {
+        try IOrderCallbackReceiver(order.callbackContract()).beforeOrderExecution{ gas: order.callbackGasLimit() / 2 }(key, order) {
         } catch {}
     }
 
-    function handleFreeze(bytes32 key, Order.Props memory order) internal {
+    function afterOrderExecution(bytes32 key, Order.Props memory order) internal {
         if (!isValidCallbackContract(order.callbackContract())) { return; }
 
-        try IOrderCallbackReceiver(order.callbackContract()).orderFrozen{ gas: order.callbackGasLimit() }(key, order) {
+        try IOrderCallbackReceiver(order.callbackContract()).afterOrderExecution{ gas: order.callbackGasLimit() / 2 }(key, order) {
+        } catch {}
+    }
+
+    function afterOrderCancellation(bytes32 key, Order.Props memory order) internal {
+        if (!isValidCallbackContract(order.callbackContract())) { return; }
+
+        try IOrderCallbackReceiver(order.callbackContract()).afterOrderCancellation{ gas: order.callbackGasLimit() / 2 }(key, order) {
+        } catch {}
+    }
+
+    function afterOrderFrozen(bytes32 key, Order.Props memory order) internal {
+        if (!isValidCallbackContract(order.callbackContract())) { return; }
+
+        try IOrderCallbackReceiver(order.callbackContract()).afterOrderFrozen{ gas: order.callbackGasLimit() / 2 }(key, order) {
         } catch {}
     }
 
