@@ -41,7 +41,7 @@ library OrderUtils {
         MarketStore marketStore,
         address account,
         OrderBaseUtils.CreateOrderParams memory params
-    ) internal returns (bytes32) {
+    ) external returns (bytes32) {
         uint256 initialCollateralDeltaAmount;
 
         address weth = EthUtils.weth(dataStore);
@@ -109,11 +109,13 @@ library OrderUtils {
             params.order.isLong()
         );
 
+        CallbackUtils.beforeOrderExecution(params.key, params.order);
+
         processOrder(params);
 
         params.eventEmitter.emitOrderExecuted(params.key);
 
-        CallbackUtils.handleExecution(params.key, params.order);
+        CallbackUtils.afterOrderExecution(params.key, params.order);
 
         GasUtils.payExecutionFee(
             params.dataStore,
@@ -172,7 +174,7 @@ library OrderUtils {
 
         eventEmitter.emitOrderCancelled(key, reason);
 
-        CallbackUtils.handleCancellation(key, order);
+        CallbackUtils.afterOrderCancellation(key, order);
 
         GasUtils.payExecutionFee(
             dataStore,
@@ -213,6 +215,6 @@ library OrderUtils {
 
         eventEmitter.emitOrderFrozen(key, reason);
 
-        CallbackUtils.handleFreeze(key, order);
+        CallbackUtils.afterOrderFrozen(key, order);
     }
 }

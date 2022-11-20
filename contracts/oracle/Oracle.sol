@@ -217,6 +217,14 @@ contract Oracle is RoleModule {
         return dataStore.getUint(Keys.stablePriceKey(token));
     }
 
+    // return the precision to convert the external price feed price to the price of 1 unit of the token
+    // represented with 30 decimals
+    // for example, if USDC has 6 decimals and a price of 1 USD, one unit of USDC would have a price of
+    // 1 / (10 ^ 6) * (10 ^ 30) => 1 * (10 ^ 24)
+    // if the external price feed has 8 decimals, the price feed price would be 1 * (10 ^ 8)
+    // in this case the priceFeedPrecision should be 10 ^ 46
+    // the conversion of the price feed price would be 1 * (10 ^ 8) * (10 ^ 46) / (10 ^ 30) => 1 * (10 ^ 24)
+    // formula for decimals for price feed precision: 60 - (external price feed precision) - (token decimals)
     function getPriceFeedPrecision(DataStore dataStore, address token) public view returns (uint256) {
         uint256 precision = dataStore.getUint(Keys.priceFeedPrecisionKey(token));
 

@@ -10,4 +10,5 @@ library Role {
     bytes32 public constant FROZEN_ORDER_KEEPER = keccak256("FROZEN_ORDER_KEEPER");
     bytes32 public constant PRICING_KEEPER = keccak256("PRICING_KEEPER");
     bytes32 public constant LIQUIDATION_KEEPER = keccak256("LIQUIDATION_KEEPER");
+    bytes32 public constant ADL_KEEPER = keccak256("ADL_KEEPER");
 }

@@ -126,6 +126,8 @@ library WithdrawalUtils {
             revert(Keys.ORACLE_ERROR);
         }
 
+        CallbackUtils.beforeWithdrawalExecution(params.key, withdrawal);
+
         Market.Props memory market = params.marketStore.get(withdrawal.market);
 
         Price.Props memory longTokenPrice = params.oracle.getPrimaryPrice(market.longToken);
@@ -205,7 +207,7 @@ library WithdrawalUtils {
 
         params.eventEmitter.emitWithdrawalExecuted(params.key);
 
-        CallbackUtils.handleExecution(params.key, withdrawal);
+        CallbackUtils.afterWithdrawalExecution(params.key, withdrawal);
 
         GasUtils.payExecutionFee(
             params.dataStore,
@@ -232,7 +234,7 @@ library WithdrawalUtils {
 
         eventEmitter.emitWithdrawalCancelled(key);
 
-        CallbackUtils.handleCancellation(key, withdrawal);
+        CallbackUtils.afterWithdrawalCancellation(key, withdrawal);
 
         GasUtils.payExecutionFee(
             dataStore,

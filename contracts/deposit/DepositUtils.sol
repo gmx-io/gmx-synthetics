@@ -124,6 +124,8 @@ library DepositUtils {
             revert(Keys.ORACLE_ERROR);
         }
 
+        CallbackUtils.beforeDepositExecution(params.key, deposit);
+
         Market.Props memory market = params.marketStore.get(deposit.market);
 
         Price.Props memory longTokenPrice = params.oracle.getPrimaryPrice(market.longToken);
@@ -198,7 +200,7 @@ library DepositUtils {
 
         params.eventEmitter.emitDepositExecuted(params.key);
 
-        CallbackUtils.handleExecution(params.key, deposit);
+        CallbackUtils.afterDepositExecution(params.key, deposit);
 
         GasUtils.payExecutionFee(
             params.dataStore,
@@ -247,7 +249,7 @@ library DepositUtils {
 
         eventEmitter.emitDepositCancelled(key);
 
-        CallbackUtils.handleCancellation(key, deposit);
+        CallbackUtils.afterDepositCancellation(key, deposit);
 
         GasUtils.payExecutionFee(
             dataStore,

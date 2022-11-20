@@ -134,6 +134,18 @@ library MarketUtils {
         );
     }
 
+    function getPoolUsdWithoutPnl(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketPrices memory prices,
+        bool isLong
+    ) internal view returns (uint256) {
+        address token = isLong ? market.longToken : market.shortToken;
+        uint256 poolAmount = getPoolAmount(dataStore, market.marketToken, token);
+        uint256 tokenPrice = isLong ? prices.longTokenPrice.min : prices.shortTokenPrice.min;
+        return poolAmount * tokenPrice;
+    }
+
     // the value of a market's liquidity pool is the worth of the liquidity provider tokens in the pool - pending trader pnl
     // we use the token index prices to calculate this and ignore price impact since if all positions were closed the
     // net price impact should be zero
@@ -489,19 +501,57 @@ library MarketUtils {
         return (amount * Precision.FLOAT_PRECISION) / (totalSize / Precision.FLOAT_PRECISION);
     }
 
+    function getPnlToPoolFactor(
+        DataStore dataStore,
+        MarketStore marketStore,
+        Oracle oracle,
+        address market,
+        bool isLong,
+        bool maximize
+    ) internal view returns (int256) {
+        Market.Props memory _market = marketStore.get(market);
+        MarketUtils.MarketPrices memory prices = MarketUtils.MarketPrices(
+            oracle.getPrimaryPrice(_market.indexToken),
+            oracle.getPrimaryPrice(_market.longToken),
+            oracle.getPrimaryPrice(_market.shortToken)
+        );
+
+        return getPnlToPoolFactor(dataStore, _market, prices, isLong, maximize);
+    }
+
+    // return factor for (pnl of positions) / (long or short pool value)
+    function getPnlToPoolFactor(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketPrices memory prices,
+        bool isLong,
+        bool maximize
+    ) internal view returns (int256) {
+        uint256 poolUsd = getPoolUsdWithoutPnl(dataStore, market, prices, isLong);
+
+        int256 pnl = getPnl(
+            dataStore,
+            market.marketToken,
+            market.longToken,
+            market.shortToken,
+            prices.indexTokenPrice,
+            isLong,
+            maximize
+        );
+
+        return pnl * Precision.FLOAT_PRECISION.toInt256() / poolUsd.toInt256();
+    }
+
     function validateReserve(
         DataStore dataStore,
         Market.Props memory market,
         MarketPrices memory prices,
         bool isLong
     ) internal view {
-        address reserveToken = isLong ? market.longToken : market.shortToken;
-        uint256 reservePoolAmount = getPoolAmount(dataStore, market.marketToken, reserveToken);
-        uint256 reserveTokenPrice = isLong ? prices.longTokenPrice.min : prices.shortTokenPrice.min;
-        uint256 reservePoolUsd = reservePoolAmount * reserveTokenPrice;
+        uint256 poolUsd = getPoolUsdWithoutPnl(dataStore, market, prices, isLong);
 
         uint256 reserveFactor = getReserveFactor(dataStore, market.marketToken, isLong);
-        uint256 maxReservedUsd = Precision.applyFactor(reservePoolUsd, reserveFactor);
+        uint256 maxReservedUsd = Precision.applyFactor(poolUsd, reserveFactor);
 
         uint256 reservedUsd;
         if (isLong) {
@@ -657,6 +707,14 @@ library MarketUtils {
 
     function getReserveFactor(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
         return dataStore.getUint(Keys.reserveFactorKey(market, isLong));
+    }
+
+    function getMaxPnlFactor(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
+        return dataStore.getUint(Keys.maxPnlFactorKey(market, isLong));
+    }
+
+    function getMaxPnlFactorForWithdrawals(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
+        return dataStore.getUint(Keys.maxPnlFactorForWithdrawalsKey(market, isLong));
     }
 
     function getFundingFactor(DataStore dataStore, address market) internal view returns (uint256) {

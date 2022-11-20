@@ -7,7 +7,7 @@ import "./Role.sol";
 import "../gov/Governable.sol";
 
 contract RoleModule is Governable {
-    RoleStore immutable roleStore;
+    RoleStore public immutable roleStore;
 
     constructor(RoleStore _roleStore) {
         roleStore = _roleStore;
@@ -47,6 +47,11 @@ contract RoleModule is Governable {
 
     modifier onlyLiquidationKeeper() {
         _validateRole(Role.LIQUIDATION_KEEPER, "LIQUIDATION_KEEPER");
+        _;
+    }
+
+    modifier onlyAdlKeeper() {
+        _validateRole(Role.ADL_KEEPER, "ADL_KEEPER");
         _;
     }
 

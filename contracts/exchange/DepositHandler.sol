@@ -19,12 +19,12 @@ import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 
 contract DepositHandler is ReentrancyGuard, FundReceiver, OracleModule {
-    DataStore immutable dataStore;
-    EventEmitter immutable eventEmitter;
-    DepositStore immutable depositStore;
-    MarketStore immutable marketStore;
-    Oracle immutable oracle;
-    FeeReceiver immutable feeReceiver;
+    DataStore public immutable dataStore;
+    EventEmitter public immutable eventEmitter;
+    DepositStore public immutable depositStore;
+    MarketStore public immutable marketStore;
+    Oracle public immutable oracle;
+    FeeReceiver public immutable feeReceiver;
 
     constructor(
         RoleStore _roleStore,
