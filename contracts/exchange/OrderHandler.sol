@@ -8,6 +8,9 @@ import "../role/RoleModule.sol";
 import "../feature/FeatureUtils.sol";
 import "../callback/CallbackUtils.sol";
 
+import "../adl/AdlUtils.sol";
+import "../liquidation/LiquidationUtils.sol";
+
 import "../market/Market.sol";
 import "../market/MarketStore.sol";
 import "../market/MarketToken.sol";
@@ -24,7 +27,18 @@ import "../events/EventEmitter.sol";
 import "../utils/Null.sol";
 
 contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
+    using SafeCast for uint256;
     using Order for Order.Props;
+    using Array for uint256[];
+
+    struct _ExecuteAdlCache {
+        uint256 startingGas;
+        uint256[] oracleBlockNumbers;
+        bytes32 key;
+        int256 pnlToPoolFactor;
+        int256 nextPnlToPoolFactor;
+        uint256 maxPnlFactorForWithdrawals;
+    }
 
     DataStore immutable dataStore;
     MarketStore immutable marketStore;
@@ -118,13 +132,112 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
     {
         uint256 startingGas = gasleft();
 
-        bytes32 key = _createLiquidationOrder(account, market, collateralToken, isLong);
+        bytes32 key = LiquidationUtils.createLiquidationOrder(
+            dataStore,
+            orderStore,
+            positionStore,
+            account,
+            market,
+            collateralToken,
+            isLong
+        );
 
         OrderBaseUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, msg.sender, startingGas);
 
         FeatureUtils.validateFeature(params.dataStore, Keys.executeOrderFeatureKey(address(this), uint256(params.order.orderType())));
 
         OrderUtils.executeOrder(params);
+    }
+
+    function updateAdlState(
+        address market,
+        bool isLong,
+        OracleUtils.SetPricesParams calldata oracleParams
+    ) external
+        nonReentrant
+        onlyAdlKeeper
+        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+    {
+        uint256[] memory oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
+            oracleParams.compactedOracleBlockNumbers,
+            oracleParams.tokens.length
+        );
+
+        AdlUtils.updateAdlState(
+            dataStore,
+            eventEmitter,
+            marketStore,
+            oracle,
+            market,
+            isLong,
+            oracleBlockNumbers
+        );
+    }
+
+    function executeAdl(
+        address account,
+        address market,
+        address collateralToken,
+        bool isLong,
+        uint256 sizeDeltaUsd,
+        OracleUtils.SetPricesParams calldata oracleParams
+    ) external
+        nonReentrant
+        onlyAdlKeeper
+        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+    {
+        _ExecuteAdlCache memory cache;
+
+        cache.startingGas = gasleft();
+
+        cache.oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
+            oracleParams.compactedOracleBlockNumbers,
+            oracleParams.tokens.length
+        );
+
+        AdlUtils.validateAdl(
+            dataStore,
+            market,
+            isLong,
+            cache.oracleBlockNumbers
+        );
+
+        cache.pnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, marketStore, oracle, market, isLong, true);
+
+        if (cache.pnlToPoolFactor < 0) {
+            revert("Invalid pnlToPoolFactor");
+        }
+
+        cache.key = AdlUtils.createAdlOrder(
+            AdlUtils.CreateAdlOrderParams(
+                dataStore,
+                orderStore,
+                positionStore,
+                account,
+                market,
+                collateralToken,
+                isLong,
+                sizeDeltaUsd,
+                cache.oracleBlockNumbers[0]
+            )
+        );
+
+        OrderBaseUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(cache.key, oracleParams, msg.sender, cache.startingGas);
+
+        FeatureUtils.validateFeature(params.dataStore, Keys.executeAdlFeatureKey(address(this), uint256(params.order.orderType())));
+
+        OrderUtils.executeOrder(params);
+
+        cache.nextPnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, marketStore, oracle, market, isLong, true);
+        if (cache.nextPnlToPoolFactor >= cache.pnlToPoolFactor) {
+            revert("Invalid adl");
+        }
+
+        cache.maxPnlFactorForWithdrawals = MarketUtils.getMaxPnlFactorForWithdrawals(dataStore, market, isLong);
+
+        if (cache.nextPnlToPoolFactor < cache.maxPnlFactorForWithdrawals.toInt256()) {
+            revert("Pnl was overcorrected");
+        }
     }
 
     function _executeOrder(
@@ -229,58 +342,6 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
             );
         }
     }
-
-    function _createLiquidationOrder(
-        address account,
-        address market,
-        address collateralToken,
-        bool isLong
-    ) internal returns (bytes32) {
-        bytes32 positionKey = PositionUtils.getPositionKey(account, market, collateralToken, isLong);
-        Position.Props memory position = positionStore.get(positionKey);
-
-        Order.Addresses memory addresses = Order.Addresses(
-            account, // account
-            account, // receiver
-            address(0), // callbackContract
-            market, // market
-            position.collateralToken, // initialCollateralToken
-            new address[](0) // swapPath
-        );
-
-        Order.Numbers memory numbers = Order.Numbers(
-            position.sizeInUsd, // sizeDeltaUsd
-            0, // initialCollateralDeltaAmount
-            0, // triggerPrice
-            position.isLong ? 0 : type(uint256).max, // acceptablePrice
-            0, // executionFee
-            0, // callbackGasLimit
-            0, // minOutputAmount
-            Chain.currentBlockNumber() // updatedAtBlock
-        );
-
-        Order.Flags memory flags = Order.Flags(
-            Order.OrderType.Liquidation, // orderType
-            position.isLong, // isLong
-            true, // shouldConvertETH
-            false // isFrozen
-        );
-
-        Order.Props memory order = Order.Props(
-            addresses,
-            numbers,
-            flags,
-            Null.BYTES
-        );
-
-        order.touch();
-
-        bytes32 key = NonceUtils.getNextKey(dataStore);
-        orderStore.set(key, order);
-
-        return key;
-    }
-
 
     function _validateFrozenOrderKeeper(address keeper) internal view {
         require(roleStore.hasRole(keeper, Role.FROZEN_ORDER_KEEPER), Keys.FROZEN_ORDER_ERROR);
