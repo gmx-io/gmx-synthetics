@@ -137,9 +137,9 @@ export function getCompactedPriceIndexes(priceIndexes) {
   });
 }
 
-export function getCompactedPrecisions(precisions) {
+export function getCompactedDecimals(decimals) {
   return getCompactedValues({
-    values: precisions,
+    values: decimals,
     compactedValueBitLength: 8,
     maxValue: MAX_UINT8,
   });
@@ -207,7 +207,7 @@ export async function getOracleParams({
     signerInfo,
     tokens,
     compactedOracleBlockNumbers: getCompactedOracleBlockNumbers(oracleBlockNumbers),
-    compactedPrecisions: getCompactedPrecisions(precisions),
+    compactedDecimals: getCompactedDecimals(precisions),
     compactedMinPrices: getCompactedPrices(allMinPrices),
     compactedMinPricesIndexes: getCompactedPriceIndexes(minPriceIndexes),
     compactedMaxPrices: getCompactedPrices(allMaxPrices),
