@@ -64,7 +64,7 @@ library Keys {
     bytes32 public constant POSITION_IMPACT_POOL_AMOUNT = keccak256("POSITION_IMPACT_POOL_AMOUNT");
     bytes32 public constant SWAP_IMPACT_POOL_AMOUNT = keccak256("SWAP_IMPACT_POOL_AMOUNT");
     bytes32 public constant PRICE_FEED = keccak256("PRICE_FEED");
-    bytes32 public constant PRICE_FEED_PRECISION = keccak256("PRICE_FEED_PRECISION");
+    bytes32 public constant PRICE_FEED_MULTIPLIER = keccak256("PRICE_FEED_MULTIPLIER");
     bytes32 public constant STABLE_PRICE = keccak256("STABLE_PRICE");
     bytes32 public constant RESERVE_FACTOR = keccak256("RESERVE_FACTOR");
     bytes32 public constant MAX_PNL_FACTOR = keccak256("MAX_PNL_FACTOR");
@@ -417,9 +417,9 @@ library Keys {
         ));
     }
 
-    function priceFeedPrecisionKey(address token) internal pure returns (bytes32) {
+    function priceFeedMultiplierKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            PRICE_FEED_PRECISION,
+            PRICE_FEED_MULTIPLIER,
             token
         ));
     }
