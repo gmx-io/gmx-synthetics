@@ -1,10 +1,11 @@
+type OraclePriceFeed = {
+  decimals: number;
+} & ({ address: string; deploy?: never } | { address?: never; deploy: true });
+
 export type OracleConfig = {
   signers: string[];
   priceFeeds: {
-    [tokenSymbol: string]: {
-      address: string;
-      decimals: number;
-    };
+    [tokenSymbol: string]: OraclePriceFeed;
   };
 };
 
@@ -25,6 +26,10 @@ const config: {
       USDT: {
         address: "0x7898AcCC83587C3C55116c5230C17a6Cd9C71bad",
         decimals: 8,
+      },
+      USDC: {
+        decimals: 6,
+        deploy: true,
       },
     },
   },

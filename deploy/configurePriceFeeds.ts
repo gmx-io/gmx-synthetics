@@ -25,13 +25,19 @@ const func = async ({ getNamedAccounts, deployments, gmx }: HardhatRuntimeEnviro
         log("Price feed for %s already set to %s", tokenSymbol, priceFeedAddress);
       }
 
-      const priceFeedPrecisionKey = keys.priceFeedPrecisionKey(token.address);
-      const priceFeedPrecision = expandDecimals(1, 60 - decimals - token.decimals);
-      const currentPriceFeedPrecision = await read("DataStore", "getUint", priceFeedPrecisionKey);
-      if (currentPriceFeedPrecision !== priceFeedPrecision) {
-        await execute("DataStore", { from: deployer, log: true }, "setUint", priceFeedPrecisionKey, priceFeedPrecision);
+      const priceFeedMultiplierKey = keys.priceFeedMultiplierKey(token.address);
+      const priceFeedMultiplier = expandDecimals(1, 60 - decimals - token.decimals);
+      const currentPriceFeedMultiplier = await read("DataStore", "getUint", priceFeedMultiplierKey);
+      if (currentPriceFeedMultiplier !== priceFeedMultiplier) {
+        await execute(
+          "DataStore",
+          { from: deployer, log: true },
+          "setUint",
+          priceFeedMultiplierKey,
+          priceFeedMultiplier
+        );
       } else {
-        log("Price feed precision for %s already set to %s", tokenSymbol, priceFeedPrecision);
+        log("Price feed precision for %s already set to %s", tokenSymbol, priceFeedMultiplier);
       }
     }
   }

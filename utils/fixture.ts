@@ -69,7 +69,7 @@ async function deployFixture() {
   const usdcPriceFeed = await deployContract("MockPriceFeed", []);
   await usdcPriceFeed.setAnswer(expandDecimals(1, 8));
   await dataStore.setAddress(keys.priceFeedKey(usdc.address), usdcPriceFeed.address);
-  await dataStore.setUint(keys.priceFeedPrecisionKey(usdc.address), expandDecimals(1, 46));
+  await dataStore.setUint(keys.priceFeedMultiplierKey(usdc.address), expandDecimals(1, 46));
 
   await dataStore.setAddress(keys.WETH, weth.address);
   await dataStore.setData(keys.oracleTypeKey(weth.address), TOKEN_ORACLE_TYPES.DEFAULT);

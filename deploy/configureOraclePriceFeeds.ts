@@ -23,14 +23,14 @@ const func = async ({ getNamedAccounts, deployments, gmx }: HardhatRuntimeEnviro
       await execute("DataStore", { from: deployer, log: true }, "setAddress", priceFeedKey, priceFeedAddress);
     }
 
-    const priceFeedPrecisionKey = keys.priceFeedPrecisionKey(token.address);
-    const storedPrecision = await read("DataStore", "getUint", priceFeedPrecisionKey);
+    const priceFeedMultiplierKey = keys.priceFeedMultiplierKey(token.address);
+    const storedPrecision = await read("DataStore", "getUint", priceFeedMultiplierKey);
     // formula for decimals for price feed precision: 60 - (external price feed decimals) - (token decimals)
 
-    const priceFeedPrecision = expandDecimals(1, 60 - priceFeed.decimals - token.decimals);
-    if (priceFeedPrecision !== storedPrecision) {
-      log("setting price feed precision for " + tokenSymbol + " to " + priceFeedPrecision.toString());
-      await execute("DataStore", { from: deployer, log: true }, "setUint", priceFeedPrecisionKey, priceFeedPrecision);
+    const priceFeedMultiplier = expandDecimals(1, 60 - priceFeed.decimals - token.decimals);
+    if (priceFeedMultiplier !== storedPrecision) {
+      log("setting price feed precision for " + tokenSymbol + " to " + priceFeedMultiplier.toString());
+      await execute("DataStore", { from: deployer, log: true }, "setUint", priceFeedMultiplierKey, priceFeedMultiplier);
     }
   }
 };

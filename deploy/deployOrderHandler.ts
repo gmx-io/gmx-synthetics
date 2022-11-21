@@ -17,6 +17,9 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { address: increaseOrderUtilsAddress } = await get("IncreaseOrderUtils");
   const { address: decreaseOrderUtilsAddress } = await get("DecreaseOrderUtils");
   const { address: swapOrderUtilsAddress } = await get("SwapOrderUtils");
+  const { address: orderUtilsAddress } = await get("OrderUtils");
+  const { address: liquidationUtilsAddress } = await get("LiquidationUtils");
+  const { address: adlUtilsAddress } = await get("AdlUtils");
 
   const { newlyDeployed, address } = await deploy("OrderHandler", {
     from: deployer,
@@ -36,6 +39,9 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
       IncreaseOrderUtils: increaseOrderUtilsAddress,
       DecreaseOrderUtils: decreaseOrderUtilsAddress,
       SwapOrderUtils: swapOrderUtilsAddress,
+      OrderUtils: orderUtilsAddress,
+      LiquidationUtils: liquidationUtilsAddress,
+      AdlUtils: adlUtilsAddress,
     },
   });
 
@@ -58,5 +64,8 @@ func.dependencies = [
   "IncreaseOrderUtils",
   "DecreaseOrderUtils",
   "SwapOrderUtils",
+  "AdlUtils",
+  "LiquidationUtils",
+  "OrderUtils",
 ];
 export default func;
