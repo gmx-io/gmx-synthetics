@@ -18,8 +18,14 @@ const func = async ({ getNamedAccounts, deployments }) => {
     const priceFeedKey = keys.priceFeedKey(usdcAddress);
     await execute("DataStore", { from: deployer, log: true }, "setAddress", priceFeedKey, address);
 
-    const priceFeedPrecisionKey = keys.priceFeedPrecisionKey(usdcAddress);
-    await execute("DataStore", { from: deployer, log: true }, "setUint", priceFeedPrecisionKey, expandFloatDecimals(1));
+    const priceFeedMultiplierKey = keys.priceFeedMultiplierKey(usdcAddress);
+    await execute(
+      "DataStore",
+      { from: deployer, log: true },
+      "setUint",
+      priceFeedMultiplierKey,
+      expandFloatDecimals(1)
+    );
   }
 };
 

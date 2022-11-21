@@ -74,7 +74,7 @@ contract Oracle is RoleModule {
     error BlockNumbersNotSorted(uint256 oracleBlockNumber, uint256 prevOracleBlockNumber);
     error MinPricesNotSorted(address token, uint256 price, uint256 prevPrice);
     error MaxPricesNotSorted(address token, uint256 price, uint256 prevPrice);
-    error EmptyFeedPrecision(address token);
+    error EmptyPriceFeedMultiplier(address token);
     error EmptyFeedPrice(address token);
     error InvalidSignature(address recoveredSigner, address expectedSigner);
     error MaxSignerIndex(uint256 signerIndex, uint256 maxSignerIndex);
@@ -217,22 +217,22 @@ contract Oracle is RoleModule {
         return dataStore.getUint(Keys.stablePriceKey(token));
     }
 
-    // return the precision to convert the external price feed price to the price of 1 unit of the token
+    // return the multiplier value to convert the external price feed price to the price of 1 unit of the token
     // represented with 30 decimals
     // for example, if USDC has 6 decimals and a price of 1 USD, one unit of USDC would have a price of
     // 1 / (10 ^ 6) * (10 ^ 30) => 1 * (10 ^ 24)
     // if the external price feed has 8 decimals, the price feed price would be 1 * (10 ^ 8)
-    // in this case the priceFeedPrecision should be 10 ^ 46
+    // in this case the priceFeedMultiplier should be 10 ^ 46
     // the conversion of the price feed price would be 1 * (10 ^ 8) * (10 ^ 46) / (10 ^ 30) => 1 * (10 ^ 24)
-    // formula for decimals for price feed precision: 60 - (external price feed precision) - (token decimals)
-    function getPriceFeedPrecision(DataStore dataStore, address token) public view returns (uint256) {
-        uint256 precision = dataStore.getUint(Keys.priceFeedPrecisionKey(token));
+    // formula for decimals for price feed multiplier: 60 - (external price feed decimals) - (token decimals)
+    function getPriceFeedMultiplier(DataStore dataStore, address token) public view returns (uint256) {
+        uint256 multiplier = dataStore.getUint(Keys.priceFeedMultiplierKey(token));
 
-        if (precision == 0) {
-            revert EmptyFeedPrecision(token);
+        if (multiplier == 0) {
+            revert EmptyPriceFeedMultiplier(token);
         }
 
-        return precision;
+        return multiplier;
     }
 
     function _setPrices(
@@ -355,7 +355,7 @@ contract Oracle is RoleModule {
             ) = priceFeed.latestRoundData();
 
             uint256 price = SafeCast.toUint256(_price);
-            uint256 precision = getPriceFeedPrecision(dataStore, token);
+            uint256 precision = getPriceFeedMultiplier(dataStore, token);
 
             price = price * precision / Precision.FLOAT_PRECISION;
 

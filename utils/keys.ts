@@ -12,7 +12,7 @@ export const FEE_RECEIVER_WITHDRAWAL_FACTOR = hashString("FEE_RECEIVER_WITHDRAWA
 export const FEE_RECEIVER_WITHDRAWAL_FACTOR = hashString("FEE_RECEIVER_WITHDRAWAL_FACTOR");
 
 export const PRICE_FEED = hashString("PRICE_FEED");
-export const PRICE_FEED_PRECISION = hashString("PRICE_FEED_PRECISION");
+export const PRICE_FEED_MULTIPLIER = hashString("PRICE_FEED_MULTIPLIER");
 export const ORACLE_TYPE = hashString("ORACLE_TYPE");
 export const RESERVE_FACTOR = hashString("RESERVE_FACTOR");
 export const SWAP_FEE_FACTOR = hashString("SWAP_FEE_FACTOR");
@@ -25,8 +25,8 @@ export function priceFeedKey(token) {
   return hashData(["bytes32", "address"], [PRICE_FEED, token]);
 }
 
-export function priceFeedPrecisionKey(token) {
-  return hashData(["bytes32", "address"], [PRICE_FEED_PRECISION, token]);
+export function priceFeedMultiplierKey(token) {
+  return hashData(["bytes32", "address"], [PRICE_FEED_MULTIPLIER, token]);
 }
 
 export function oracleTypeKey(token) {
