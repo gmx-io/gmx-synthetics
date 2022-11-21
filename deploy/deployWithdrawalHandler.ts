@@ -10,7 +10,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { address: eventEmitterAddress } = await get("EventEmitter");
   const { address: withdrawalStoreAddress } = await get("WithdrawalStore");
   const { address: marketStoreAddress } = await get("MarketStore");
-  const { address: oracleAddress } = await get("OracleStore");
+  const { address: oracleAddress } = await get("Oracle");
   const { address: feeReceiverAddress } = await get("FeeReceiver");
   const { address: gasUtilsAddress } = await get("GasUtils");
 

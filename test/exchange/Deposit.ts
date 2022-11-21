@@ -1,5 +1,4 @@
 import { expect } from "chai";
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
@@ -16,7 +15,8 @@ describe("Exchange.Deposit", () => {
   let feeReceiver, reader, dataStore, depositStore, ethUsdMarket, weth, usdc;
 
   beforeEach(async () => {
-    fixture = await loadFixture(deployFixture);
+    fixture = await deployFixture();
+
     ({ user0, user1, user2 } = fixture.accounts);
     ({ feeReceiver, reader, dataStore, depositStore, ethUsdMarket, weth, usdc } = fixture.contracts);
   });
@@ -61,6 +61,8 @@ describe("Exchange.Deposit", () => {
       minMarketTokens: 100,
       gasUsageLabel: "createDeposit",
     });
+
+    console.log(ethUsdMarket);
 
     const depositKeys = await depositStore.getDepositKeys(0, 1);
     let deposit = await depositStore.get(depositKeys[0]);

@@ -1,3 +1,5 @@
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+
 export type MarketConfig = {
   tokens: [indexToken: string, longToken: string, shortToken: string];
   reserveFactor: [number, number];
@@ -41,4 +43,17 @@ const config: {
   ],
 };
 
-export default config;
+export default async function (hre: HardhatRuntimeEnvironment) {
+  const markets = config[hre.network.name];
+  const tokens = hre.gmx.tokens;
+  if (markets) {
+    for (const market of markets) {
+      for (const tokenSymbol of market.tokens) {
+        if (!tokens[tokenSymbol]) {
+          throw new Error(`Market ${market.tokens.join(":")} uses token that does not exist: ${tokenSymbol}`);
+        }
+      }
+    }
+  }
+  return markets;
+}
