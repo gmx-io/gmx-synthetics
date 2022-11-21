@@ -26,7 +26,6 @@ export type OracleConfig = {
 };
 
 export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleConfig> {
-  const tokens = hre.gmx.tokens;
   const network = hre.network;
 
   let testSigners: string[];
@@ -63,23 +62,29 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             decimals: 8,
             deploy: true,
           },
-          oracleType: "foo",
         },
       },
     },
   };
 
   const oracle: OracleConfig = config[hre.network.name];
-  if (oracle) {
-    // validate there are corresponding tokens for price feeds
-    for (const tokenSymbol of Object.keys(oracle.tokens)) {
-      if (!tokens[tokenSymbol]) {
-        throw new Error(`Missing token for ${tokenSymbol}`);
-      }
+  const tokens = hre.gmx.tokens;
 
-      if (oracle.tokens[tokenSymbol].oracleType === undefined) {
-        oracle.tokens[tokenSymbol].oracleType = TOKEN_ORACLE_TYPES.DEFAULT;
-      }
+  // to make sure all tokens have an oracle type so oracle deployment/configuration script works correctly
+  for (const tokenSymbol of Object.keys(tokens)) {
+    if (oracle.tokens[tokenSymbol] === undefined) {
+      oracle.tokens[tokenSymbol] = {};
+    }
+  }
+
+  // validate there are corresponding tokens for price feeds
+  for (const tokenSymbol of Object.keys(oracle.tokens)) {
+    if (!tokens[tokenSymbol]) {
+      throw new Error(`Missing token for ${tokenSymbol}`);
+    }
+
+    if (oracle.tokens[tokenSymbol].oracleType === undefined) {
+      oracle.tokens[tokenSymbol].oracleType = TOKEN_ORACLE_TYPES.DEFAULT;
     }
   }
 

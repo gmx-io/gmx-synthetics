@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { hashData } from "../utils/hash";
 import { decimalToFloat } from "../utils/math";
 import { getMarketTokenAddress } from "../utils/market";
+import * as keys from "../utils/keys";
 
 const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRuntimeEnvironment) => {
   const { execute, read, get, log } = deployments;
@@ -32,7 +32,7 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
   }
 
   async function setReserveFactor(marketToken: symbol, isLong: boolean, reserveFactor: number) {
-    const key = hashData(["string", "address", "bool"], ["RESERVE_FACTOR", marketToken, isLong]);
+    const key = keys.reserveFactorKey(marketToken, isLong);
     const currentReservedFactor = await read("DataStore", { from: deployer }, "getUint", key);
     if (currentReservedFactor.eq(reserveFactor)) {
       log("reserve factor for %s %s already set %s", marketToken, isLong ? "long" : "short", reserveFactor);

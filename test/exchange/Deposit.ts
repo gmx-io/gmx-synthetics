@@ -62,8 +62,6 @@ describe("Exchange.Deposit", () => {
       gasUsageLabel: "createDeposit",
     });
 
-    console.log(ethUsdMarket);
-
     const depositKeys = await depositStore.getDepositKeys(0, 1);
     let deposit = await depositStore.get(depositKeys[0]);
 
