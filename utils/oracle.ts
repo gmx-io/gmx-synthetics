@@ -3,7 +3,7 @@ import { hashString, hashData } from "./hash";
 
 import BN from "bn.js";
 
-export const TOKEN_ORACLE_TYPES = {
+export const TOKEN_ORACLE_TYPES: { [key: string]: string } = {
   ONE_PERCENT_PER_MINUTE: hashString("one-percent-per-minute"),
 };
 
@@ -93,7 +93,7 @@ function getCompactedValues({ values, compactedValueBitLength, maxValue }) {
   const compactedValues = [];
   let shouldExit = false;
 
-  for (let i = 0; i < parseInt((values.length - 1) / compactedValuesPerSlot) + 1; i++) {
+  for (let i = 0; i < Math.floor((values.length - 1) / compactedValuesPerSlot) + 1; i++) {
     let valueBits = new BN("0");
     for (let j = 0; j < compactedValuesPerSlot; j++) {
       const index = i * compactedValuesPerSlot + j;

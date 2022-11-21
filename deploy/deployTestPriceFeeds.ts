@@ -1,31 +1,21 @@
-import { expandFloatDecimals } from "../utils/math";
-import * as keys from "../utils/keys";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-const func = async ({ getNamedAccounts, deployments }) => {
-  const { deploy, execute, get } = deployments;
+const func = async ({ getNamedAccounts, deployments, gmx }: HardhatRuntimeEnvironment) => {
+  const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
-  const { address: usdcAddress } = await get("USDC");
+  const { oracle: oracleConfig } = gmx;
 
-  const { newlyDeployed, address } = await deploy("UsdcPriceFeed", {
-    from: deployer,
-    log: true,
-    contract: "MockPriceFeed",
-  });
+  for (const [tokenSymbol, priceFeed] of Object.entries(oracleConfig.priceFeeds)) {
+    if (priceFeed.deploy) {
+      continue;
+    }
 
-  if (newlyDeployed) {
-    await execute("UsdcPriceFeed", { from: deployer, log: true }, "setAnswer", 1);
-
-    const priceFeedKey = keys.priceFeedKey(usdcAddress);
-    await execute("DataStore", { from: deployer, log: true }, "setAddress", priceFeedKey, address);
-
-    const priceFeedMultiplierKey = keys.priceFeedMultiplierKey(usdcAddress);
-    await execute(
-      "DataStore",
-      { from: deployer, log: true },
-      "setUint",
-      priceFeedMultiplierKey,
-      expandFloatDecimals(1)
-    );
+    const { address } = await deploy(`${tokenSymbol}PriceFeed`, {
+      from: deployer,
+      log: true,
+      contract: "MockPriceFeed",
+    });
+    priceFeed.address = address;
   }
 };
 

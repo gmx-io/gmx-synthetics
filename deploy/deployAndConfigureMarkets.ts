@@ -1,24 +1,28 @@
-import { ethers } from "hardhat";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { hashData } from "../utils/hash";
 import { decimalToFloat } from "../utils/math";
+import { getMarketTokenAddress } from "../utils/market";
 
-const func = async ({ getNamedAccounts, deployments, gmx }) => {
-  const { execute, read, log } = deployments;
+const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRuntimeEnvironment) => {
+  const { execute, read, get, log } = deployments;
   const { deployer } = await getNamedAccounts();
   const { tokens, markets } = gmx;
+
+  const { address: marketFactoryAddress } = await get("MarketFactory");
+  const { address: roleStoreAddress } = await get("RoleStore");
 
   for (const marketConfig of markets) {
     const [indexToken, longToken, shortToken] = marketConfig.tokens.map((symbol) => tokens[symbol].address);
 
-    const marketToken = await read(
-      "MarketStore",
-      { from: deployer, log: true },
-      "getMarketToken",
+    const marketToken = getMarketTokenAddress(
       indexToken,
       longToken,
-      shortToken
+      shortToken,
+      marketFactoryAddress,
+      roleStoreAddress
     );
-    if (marketToken !== ethers.constants.AddressZero) {
+    const code = await ethers.provider.getCode(marketToken);
+    if (code !== "0x") {
       log("market %s already exists at %s", marketConfig.tokens.join(":"), marketToken);
       continue;
     }
@@ -27,9 +31,9 @@ const func = async ({ getNamedAccounts, deployments, gmx }) => {
     await execute("MarketFactory", { from: deployer, log: true }, "createMarket", indexToken, longToken, shortToken);
   }
 
-  async function setReserveFactor(marketToken, isLong, reserveFactor) {
-    const key = hashData(["string", "address", "bool"], ["RESERVE_FACTOR", marketToken, isLong], reserveFactor);
-    const currentReservedFactor = await read("DataStore", { from: deployer, log: true }, "getUint", key);
+  async function setReserveFactor(marketToken: symbol, isLong: boolean, reserveFactor: number) {
+    const key = hashData(["string", "address", "bool"], ["RESERVE_FACTOR", marketToken, isLong]);
+    const currentReservedFactor = await read("DataStore", { from: deployer }, "getUint", key);
     if (currentReservedFactor.eq(reserveFactor)) {
       log("reserve factor for %s %s already set %s", marketToken, isLong ? "long" : "short", reserveFactor);
       return;
@@ -42,14 +46,14 @@ const func = async ({ getNamedAccounts, deployments, gmx }) => {
     const [indexToken, longToken, shortToken] = marketConfig.tokens.map((symbol) => tokens[symbol].address);
     const reserveFactor = decimalToFloat(marketConfig.reserveFactor[0], marketConfig.reserveFactor[1]);
 
-    const marketToken = await read(
-      "MarketStore",
-      { from: deployer, log: true },
-      "getMarketToken",
+    const marketToken = getMarketTokenAddress(
       indexToken,
       longToken,
-      shortToken
+      shortToken,
+      marketFactoryAddress,
+      roleStoreAddress
     );
+
     await setReserveFactor(marketToken, true, reserveFactor);
     await setReserveFactor(marketToken, false, reserveFactor);
   }

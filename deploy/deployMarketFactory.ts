@@ -1,6 +1,7 @@
+import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { hashString } from "../utils/hash";
 
-const func = async ({ getNamedAccounts, deployments }) => {
+const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment) => {
   const { deploy, get, execute } = deployments;
   const { deployer } = await getNamedAccounts();
 
