@@ -17,8 +17,6 @@ import "../withdrawal/WithdrawalUtils.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 
-import "../eth/EthUtils.sol";
-
 contract WithdrawalHandler is ReentrancyGuard, FundReceiver, OracleModule {
 
     DataStore public immutable dataStore;

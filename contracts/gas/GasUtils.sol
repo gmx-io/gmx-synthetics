@@ -12,8 +12,8 @@ import "../order/Order.sol";
 import "../order/OrderBaseUtils.sol";
 
 import "../bank/StrictBank.sol";
-import "../eth/EthUtils.sol";
-import "../eth/IWETH.sol";
+import "../wrap/WrapUtils.sol";
+import "../wrap/IWNT.sol";
 
 library GasUtils {
     using Order for Order.Props;
@@ -31,9 +31,9 @@ library GasUtils {
         address keeper,
         address user
     ) external {
-        address weth = EthUtils.weth(dataStore);
-        bank.transferOut(weth, executionFee, address(this));
-        IWETH(weth).withdraw(executionFee);
+        address wnt = WrapUtils.wnt(dataStore);
+        bank.transferOut(wnt, executionFee, address(this));
+        IWNT(wnt).withdraw(executionFee);
 
         uint256 gasUsed = startingGas - gasleft();
         uint256 executionFeeForKeeper = adjustGasLimit(dataStore, gasUsed) * tx.gasprice;

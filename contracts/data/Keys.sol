@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 library Keys {
-    bytes32 public constant WETH = keccak256(abi.encode("WETH"));
+    bytes32 public constant WNT = keccak256(abi.encode("WNT"));
     bytes32 public constant NONCE = keccak256(abi.encode("NONCE"));
 
     bytes32 public constant CREATE_DEPOSIT_FEATURE = keccak256(abi.encode("CREATE_DEPOSIT_FEATURE"));

@@ -89,7 +89,7 @@ library AdlUtils {
         Order.Flags memory flags = Order.Flags(
             Order.OrderType.MarketDecrease, // orderType
             position.isLong, // isLong
-            true, // shouldConvertETH
+            true, // shouldUnwrapNativeToken
             false // isFrozen
         );
 

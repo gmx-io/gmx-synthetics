@@ -4,8 +4,10 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract WETH is ERC20 {
-    constructor() ERC20("Mintable Token", "MT") {}
+// similar implementation as WETH but since some networks
+// might have a different native token we use WNT for a more general reference
+contract WNT is ERC20 {
+    constructor() ERC20("Wrapped Native Token", "WNT") {}
 
     function deposit() external payable {
         _mint(msg.sender, msg.value);

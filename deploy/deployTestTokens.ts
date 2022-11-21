@@ -17,7 +17,7 @@ const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRunt
     const { address } = await deploy(tokenSymbol, {
       from: deployer,
       log: true,
-      contract: token.wrapped ? "WETH" : "MintableToken",
+      contract: token.wrapped ? "WNT" : "MintableToken",
     });
     tokens[tokenSymbol].address = address;
   }

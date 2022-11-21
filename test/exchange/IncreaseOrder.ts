@@ -10,13 +10,13 @@ describe("Exchange.IncreaseOrder", () => {
 
   let fixture;
   let user0, user1;
-  let orderStore, positionStore, ethUsdMarket, weth;
+  let orderStore, positionStore, ethUsdMarket, wnt;
   let executionFee;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1 } = fixture.accounts);
-    ({ orderStore, positionStore, ethUsdMarket, weth } = fixture.contracts);
+    ({ orderStore, positionStore, ethUsdMarket, wnt } = fixture.contracts);
     ({ executionFee } = fixture.props);
 
     await handleDeposit(fixture, {
@@ -31,7 +31,7 @@ describe("Exchange.IncreaseOrder", () => {
     expect(await orderStore.getOrderCount()).eq(0);
     const params = {
       market: ethUsdMarket,
-      initialCollateralToken: weth,
+      initialCollateralToken: wnt,
       initialCollateralDeltaAmount: expandDecimals(10, 18),
       swapPath: [ethUsdMarket.marketToken],
       sizeDeltaUsd: expandFloatDecimals(200 * 1000),
@@ -40,7 +40,7 @@ describe("Exchange.IncreaseOrder", () => {
       minOutputAmount: expandDecimals(50000, 6),
       orderType: OrderType.MarketIncrease,
       isLong: true,
-      shouldConvertETH: false,
+      shouldUnwrapNativeToken: false,
       gasUsageLabel: "createOrder",
     };
 
@@ -55,7 +55,7 @@ describe("Exchange.IncreaseOrder", () => {
 
     expect(order.addresses.account).eq(user0.address);
     expect(order.addresses.market).eq(ethUsdMarket.marketToken);
-    expect(order.addresses.initialCollateralToken).eq(weth.address);
+    expect(order.addresses.initialCollateralToken).eq(wnt.address);
     expect(order.addresses.swapPath).eql([ethUsdMarket.marketToken]);
     expect(order.numbers.sizeDeltaUsd).eq(expandFloatDecimals(200 * 1000));
     expect(order.numbers.initialCollateralDeltaAmount).eq(expandDecimals(10, 18));
@@ -65,7 +65,7 @@ describe("Exchange.IncreaseOrder", () => {
     expect(order.numbers.updatedAtBlock).eq(block.number);
     expect(order.flags.orderType).eq(OrderType.MarketIncrease);
     expect(order.flags.isLong).eq(true);
-    expect(order.flags.shouldConvertETH).eq(false);
+    expect(order.flags.shouldUnwrapNativeToken).eq(false);
   });
 
   it("executeOrder", async () => {
@@ -73,7 +73,7 @@ describe("Exchange.IncreaseOrder", () => {
 
     const params = {
       market: ethUsdMarket,
-      initialCollateralToken: weth,
+      initialCollateralToken: wnt,
       initialCollateralDeltaAmount: expandDecimals(10, 18),
       swapPath: [],
       sizeDeltaUsd: expandFloatDecimals(200 * 1000),
@@ -82,7 +82,7 @@ describe("Exchange.IncreaseOrder", () => {
       minOutputAmount: expandDecimals(50000, 6),
       orderType: OrderType.MarketIncrease,
       isLong: true,
-      shouldConvertETH: false,
+      shouldUnwrapNativeToken: false,
     };
 
     await createOrder(fixture, params);

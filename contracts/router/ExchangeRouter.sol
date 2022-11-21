@@ -63,7 +63,7 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
         address account = msg.sender;
         address _depositStore = address(depositStore);
 
-        EthUtils.sendWeth(dataStore, _depositStore);
+        WrapUtils.sendWnt(dataStore, _depositStore);
 
         if (longTokenAmount > 0) {
             router.pluginTransfer(longToken, account, _depositStore, longTokenAmount);
@@ -83,7 +83,7 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
     ) external nonReentrant payable returns (bytes32) {
         address account = msg.sender;
 
-        EthUtils.sendWeth(dataStore, address(withdrawalStore));
+        WrapUtils.sendWnt(dataStore, address(withdrawalStore));
 
         return withdrawalHandler.createWithdrawal(
             account,
@@ -99,7 +99,7 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
 
         address account = msg.sender;
 
-        EthUtils.sendWeth(dataStore, address(orderStore));
+        WrapUtils.sendWnt(dataStore, address(orderStore));
 
         if (amountIn > 0) {
             router.pluginTransfer(params.initialCollateralToken, account, address(orderStore), amountIn);
@@ -135,8 +135,8 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
 
         // allow topping up of executionFee as partially filled or frozen orders
         //  will have their executionFee reduced
-        uint256 receivedWeth = EthUtils.sendWeth(dataStore, address(_orderStore));
-        order.setExecutionFee(order.executionFee() + receivedWeth);
+        uint256 receivedWnt = WrapUtils.sendWnt(dataStore, address(_orderStore));
+        order.setExecutionFee(order.executionFee() + receivedWnt);
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee());

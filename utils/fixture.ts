@@ -30,8 +30,8 @@ export async function deployFixture() {
     signer9,
   ] = await hre.ethers.getSigners();
 
-  const weth = await hre.ethers.getContract("WETH");
-  await weth.deposit({ value: expandDecimals(50, 18) });
+  const wnt = await hre.ethers.getContract("WETH");
+  await wnt.deposit({ value: expandDecimals(50, 18) });
 
   const wbtc = await hre.ethers.getContract("WBTC");
   const usdc = await hre.ethers.getContract("USDC");
@@ -59,8 +59,8 @@ export async function deployFixture() {
   const oracle = await hre.ethers.getContract("Oracle");
 
   const ethUsdMarketAddress = getMarketTokenAddress(
-    weth.address,
-    weth.address,
+    wnt.address,
+    wnt.address,
     usdc.address,
     marketFactory.address,
     roleStore.address
@@ -109,7 +109,7 @@ export async function deployFixture() {
       feeReceiver,
       oracle,
       usdcPriceFeed,
-      weth,
+      wnt,
       wbtc,
       usdc,
       ethUsdMarket,
