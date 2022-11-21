@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npx hardhat test",
     "prepare": "husky install",
     "lint": "yarn lint:eslint && yarn lint:prettier",
     "lint:eslint": "eslint --fix $(git diff --name-only --cached --diff-filter=AM | grep '\\.ts')",

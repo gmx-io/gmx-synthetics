@@ -1,5 +1,4 @@
 import { expect } from "chai";
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 import { deployContract } from "../../utils/deploy";
 import { deployFixture } from "../../utils/fixture";
@@ -24,7 +23,7 @@ describe("Oracle", () => {
   let oracleSalt;
 
   beforeEach(async () => {
-    const fixture = await loadFixture(deployFixture);
+    const fixture = await deployFixture();
     ({ user0, signer0, signer1, signer2, signer3, signer4, signer7, signer9 } = fixture.accounts);
 
     ({ roleStore, dataStore, eventEmitter, oracleStore, oracle, wnt, wbtc, usdc } = fixture.contracts);

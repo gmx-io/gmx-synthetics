@@ -4,7 +4,7 @@ import { executeWithOracleParams } from "./exchange";
 import { contractAt } from "./deploy";
 import { TOKEN_ORACLE_TYPES } from "./oracle";
 
-export async function createDeposit(fixture, overrides = {}) {
+export async function createDeposit(fixture, overrides: any = {}) {
   const { depositStore, depositHandler, wnt, ethUsdMarket } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
@@ -47,7 +47,7 @@ export async function createDeposit(fixture, overrides = {}) {
   });
 }
 
-export async function executeDeposit(fixture, overrides = {}) {
+export async function executeDeposit(fixture, overrides: any = {}) {
   const { depositStore, depositHandler, wnt, usdc } = fixture.contracts;
   const { gasUsageLabel } = overrides;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
@@ -73,7 +73,7 @@ export async function executeDeposit(fixture, overrides = {}) {
   await executeWithOracleParams(fixture, params);
 }
 
-export async function handleDeposit(fixture, overrides = {}) {
+export async function handleDeposit(fixture, overrides: any = {}) {
   await createDeposit(fixture, overrides.create);
   await executeDeposit(fixture, overrides.execute);
 }

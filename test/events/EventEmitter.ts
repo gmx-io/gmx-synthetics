@@ -1,5 +1,4 @@
 import { expect } from "chai";
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 import { deployFixture } from "../../utils/fixture";
 
@@ -8,7 +7,7 @@ describe("EventEmitter", () => {
   let eventEmitter;
 
   beforeEach(async () => {
-    fixture = await loadFixture(deployFixture);
+    fixture = await deployFixture();
     ({ eventEmitter } = fixture.contracts);
   });
 

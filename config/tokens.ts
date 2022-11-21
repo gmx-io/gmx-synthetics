@@ -1,3 +1,7 @@
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+
+import { hashData } from "../utils/hash";
+
 // https://docs.chain.link/data-feeds/price-feeds/addresses?network=avalanche
 
 // synthetic token without corresponding token
@@ -33,6 +37,10 @@ export type TestTokenConfig = {
 
 export type TokenConfig = SyntheticTokenConfig | RealTokenConfig | TestTokenConfig;
 export type TokensConfig = { [tokenSymbol: string]: TokenConfig };
+
+function getSyntheticTokenAddress(tokenSymbol: string) {
+  return "0x" + hashData(["string"], [tokenSymbol]).substring(26);
+}
 
 const config: {
   [network: string]: TokensConfig;
@@ -108,4 +116,17 @@ const config: {
   },
 };
 
-export default config;
+export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensConfig> {
+  const tokens = config[hre.network.name];
+
+  for (const [tokenSymbol, token] of Object.entries(tokens as TokensConfig)) {
+    if (token.synthetic) {
+      token.address = getSyntheticTokenAddress(tokenSymbol);
+    }
+    if (!hre.network.live) {
+      token.deploy = true;
+    }
+  }
+
+  return tokens;
+}

@@ -1,5 +1,4 @@
 import { expect } from "chai";
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, expandFloatDecimals } from "../../utils/math";
@@ -15,7 +14,7 @@ describe("Exchange.IncreaseOrder", () => {
   let executionFee;
 
   beforeEach(async () => {
-    fixture = await loadFixture(deployFixture);
+    fixture = await deployFixture();
     ({ user0, user1 } = fixture.accounts);
     ({ orderStore, positionStore, ethUsdMarket, wnt } = fixture.contracts);
     ({ executionFee } = fixture.props);

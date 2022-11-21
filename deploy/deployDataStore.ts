@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { hashString } from "../utils/hash";
+import * as keys from "../utils/keys";
 import { expandFloatDecimals } from "../utils/math";
 
 const func = async ({ getNamedAccounts, deployments, gmx }: HardhatRuntimeEnvironment) => {
@@ -26,7 +27,7 @@ const func = async ({ getNamedAccounts, deployments, gmx }: HardhatRuntimeEnviro
 
     const wrappedAddress = Object.values(tokens).find((token) => token.wrapped)?.address;
 
-    await execute("DataStore", { from: deployer, log: true }, "setAddress", hashString("WNT"), wrappedAddress);
+    await execute("DataStore", { from: deployer, log: true }, "setAddress", keys.WNT, wrappedAddress);
   }
 };
 func.tags = ["DataStore"];

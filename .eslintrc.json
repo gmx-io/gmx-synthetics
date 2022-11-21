@@ -16,7 +16,8 @@
     "plugin:@typescript-eslint/recommended"
   ],
   "rules": {
-    "no-undef": "error"
+    "no-undef": "error",
+    "@typescript-eslint/no-explicit-any": 0
   },
   "globals": {
     "process": true,
