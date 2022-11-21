@@ -32,7 +32,7 @@ library WithdrawalUtils {
         uint256 marketTokensShortAmount;
         uint256 minLongTokenAmount;
         uint256 minShortTokenAmount;
-        bool shouldConvertETH;
+        bool shouldUnwrapNativeToken;
         uint256 executionFee;
         uint256 callbackGasLimit;
     }
@@ -59,7 +59,7 @@ library WithdrawalUtils {
         Price.Props tokenInPrice;
         Price.Props tokenOutPrice;
         uint256 marketTokensAmount;
-        bool shouldConvertETH;
+        bool shouldUnwrapNativeToken;
         uint256 marketTokensUsd;
         int256 priceImpactUsd;
     }
@@ -83,9 +83,9 @@ library WithdrawalUtils {
         address account,
         CreateWithdrawalParams memory params
     ) internal returns (bytes32) {
-        address weth = EthUtils.weth(dataStore);
-        uint256 wethAmount = withdrawalStore.recordTransferIn(weth);
-        require(wethAmount == params.executionFee, "WithdrawalUtils: invalid wethAmount");
+        address wnt = WrapUtils.wnt(dataStore);
+        uint256 wntAmount = withdrawalStore.recordTransferIn(wnt);
+        require(wntAmount == params.executionFee, "WithdrawalUtils: invalid wntAmount");
 
         Market.Props memory market = marketStore.get(params.market);
         MarketUtils.validateNonEmptyMarket(market);
@@ -100,7 +100,7 @@ library WithdrawalUtils {
             params.minLongTokenAmount,
             params.minShortTokenAmount,
             Chain.currentBlockNumber(),
-            params.shouldConvertETH,
+            params.shouldUnwrapNativeToken,
             params.executionFee,
             params.callbackGasLimit,
             Null.BYTES
@@ -170,7 +170,7 @@ library WithdrawalUtils {
                 shortTokenPrice,
                 longTokenPrice,
                 withdrawal.marketTokensLongAmount,
-                withdrawal.shouldConvertETH,
+                withdrawal.shouldUnwrapNativeToken,
                 cache.marketTokensLongUsd,
                 priceImpactUsd * cache.marketTokensLongUsd.toInt256() / (cache.marketTokensLongUsd + cache.marketTokensShortUsd).toInt256()
             );
@@ -192,7 +192,7 @@ library WithdrawalUtils {
                 longTokenPrice,
                 shortTokenPrice,
                 withdrawal.marketTokensShortAmount,
-                withdrawal.shouldConvertETH,
+                withdrawal.shouldUnwrapNativeToken,
                 cache.marketTokensShortUsd,
                 priceImpactUsd * cache.marketTokensShortUsd.toInt256() / (cache.marketTokensLongUsd + cache.marketTokensShortUsd).toInt256()
             );
@@ -331,11 +331,11 @@ library WithdrawalUtils {
 
         MarketToken(payable(_params.market.marketToken)).burn(_params.account, _params.marketTokensAmount);
         MarketToken(payable(_params.market.marketToken)).transferOut(
-            EthUtils.weth(params.dataStore),
+            WrapUtils.wnt(params.dataStore),
             _params.tokenOut,
             outputAmount,
             _params.receiver,
-            _params.shouldConvertETH
+            _params.shouldUnwrapNativeToken
         );
 
         params.eventEmitter.emitSwapFeesCollected(keccak256(abi.encode("withdrawal")), fees);

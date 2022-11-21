@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-interface IWETH {
+interface IWNT {
     function deposit() external payable;
     function withdraw(uint256 amount) external;
 }

@@ -10,12 +10,12 @@ import { grantRole } from "../../utils/role";
 describe("Exchange.LiquidationOrder", () => {
   let fixture;
   let wallet, user0;
-  let roleStore, orderStore, positionStore, ethUsdMarket, weth, usdc;
+  let roleStore, orderStore, positionStore, ethUsdMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await loadFixture(deployFixture);
     ({ wallet, user0 } = fixture.accounts);
-    ({ roleStore, orderStore, positionStore, ethUsdMarket, weth, usdc } = fixture.contracts);
+    ({ roleStore, orderStore, positionStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -31,7 +31,7 @@ describe("Exchange.LiquidationOrder", () => {
     await handleOrder(fixture, {
       create: {
         market: ethUsdMarket,
-        initialCollateralToken: weth,
+        initialCollateralToken: wnt,
         initialCollateralDeltaAmount: expandDecimals(10, 18),
         sizeDeltaUsd: expandFloatDecimals(200 * 1000),
         acceptablePrice: expandDecimals(5001, 12),
@@ -39,7 +39,7 @@ describe("Exchange.LiquidationOrder", () => {
         isLong: true,
       },
       execute: {
-        tokens: [weth.address, usdc.address],
+        tokens: [wnt.address, usdc.address],
         minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
         maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
       },
@@ -54,7 +54,7 @@ describe("Exchange.LiquidationOrder", () => {
       executeLiquidation(fixture, {
         account: user0.address,
         market: ethUsdMarket,
-        collateralToken: weth,
+        collateralToken: wnt,
         isLong: true,
         minPrices: [expandDecimals(4200, 4), expandDecimals(1, 6)],
         maxPrices: [expandDecimals(4200, 4), expandDecimals(1, 6)],
@@ -68,7 +68,7 @@ describe("Exchange.LiquidationOrder", () => {
     await executeLiquidation(fixture, {
       account: user0.address,
       market: ethUsdMarket,
-      collateralToken: weth,
+      collateralToken: wnt,
       isLong: true,
       minPrices: [expandDecimals(4000, 4), expandDecimals(1, 6)],
       maxPrices: [expandDecimals(4000, 4), expandDecimals(1, 6)],

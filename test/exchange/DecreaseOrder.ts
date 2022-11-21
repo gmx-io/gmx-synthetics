@@ -9,12 +9,12 @@ import { OrderType, handleOrder } from "../../utils/order";
 describe("Exchange.DecreaseOrder", () => {
   let fixture;
   let user0;
-  let orderStore, positionStore, ethUsdMarket, weth, usdc;
+  let orderStore, positionStore, ethUsdMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await loadFixture(deployFixture);
     ({ user0 } = fixture.accounts);
-    ({ orderStore, positionStore, ethUsdMarket, weth, usdc } = fixture.contracts);
+    ({ orderStore, positionStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -30,7 +30,7 @@ describe("Exchange.DecreaseOrder", () => {
     await handleOrder(fixture, {
       create: {
         market: ethUsdMarket,
-        initialCollateralToken: weth,
+        initialCollateralToken: wnt,
         initialCollateralDeltaAmount: expandDecimals(10, 18),
         sizeDeltaUsd: expandFloatDecimals(200 * 1000),
         acceptablePrice: expandDecimals(5001, 12),
@@ -38,7 +38,7 @@ describe("Exchange.DecreaseOrder", () => {
         isLong: true,
       },
       execute: {
-        tokens: [weth.address, usdc.address],
+        tokens: [wnt.address, usdc.address],
         prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
       },
     });
@@ -49,7 +49,7 @@ describe("Exchange.DecreaseOrder", () => {
     await handleOrder(fixture, {
       create: {
         market: ethUsdMarket,
-        initialCollateralToken: weth,
+        initialCollateralToken: wnt,
         initialCollateralDeltaAmount: 0,
         sizeDeltaUsd: expandFloatDecimals(200 * 1000),
         acceptablePrice: 0,
@@ -58,7 +58,7 @@ describe("Exchange.DecreaseOrder", () => {
         gasUsageLabel: "orderHandler.createOrder",
       },
       execute: {
-        tokens: [weth.address, usdc.address],
+        tokens: [wnt.address, usdc.address],
         prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
         gasUsageLabel: "orderHandler.executeOrder",
       },

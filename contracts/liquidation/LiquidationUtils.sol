@@ -45,7 +45,7 @@ library LiquidationUtils {
         Order.Flags memory flags = Order.Flags(
             Order.OrderType.Liquidation, // orderType
             position.isLong, // isLong
-            true, // shouldConvertETH
+            true, // shouldUnwrapNativeToken
             false // isFrozen
         );
 

@@ -63,7 +63,7 @@ library Order {
     struct Flags {
         OrderType orderType;
         bool isLong;
-        bool shouldConvertETH;
+        bool shouldUnwrapNativeToken;
         bool isFrozen;
     }
 
@@ -141,8 +141,8 @@ library Order {
         return props.flags.isLong;
     }
 
-    function shouldConvertETH(Props memory props) internal pure returns (bool) {
-        return props.flags.shouldConvertETH;
+    function shouldUnwrapNativeToken(Props memory props) internal pure returns (bool) {
+        return props.flags.shouldUnwrapNativeToken;
     }
 
     function isFrozen(Props memory props) internal pure returns (bool) {
@@ -213,8 +213,8 @@ library Order {
         props.flags.isLong = _value;
     }
 
-    function setShouldConvertETH(Props memory props, bool _value) internal pure {
-        props.flags.shouldConvertETH = _value;
+    function setShouldUnwrapNativeToken(Props memory props, bool _value) internal pure {
+        props.flags.shouldUnwrapNativeToken = _value;
     }
 
     function setIsFrozen(Props memory props, bool _value) internal pure {

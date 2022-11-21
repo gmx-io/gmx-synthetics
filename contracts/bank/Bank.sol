@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "../eth/IWETH.sol";
+import "../wrap/IWNT.sol";
 import "./FundReceiver.sol";
 
 contract Bank is FundReceiver {
@@ -20,14 +20,14 @@ contract Bank is FundReceiver {
     }
 
     function transferOut(
-        address weth,
+        address wnt,
         address token,
         uint256 amount,
         address receiver,
-        bool shouldConvertETH
+        bool shouldUnwrapNativeToken
     ) external onlyController {
-        if (token == weth && shouldConvertETH) {
-            _transferOutEth(token, amount, receiver);
+        if (token == wnt && shouldUnwrapNativeToken) {
+            _transferOutNativeToken(token, amount, receiver);
         } else {
             _transferOut(token, amount, receiver);
         }
@@ -41,10 +41,10 @@ contract Bank is FundReceiver {
         _afterTransferOut(token);
     }
 
-    function _transferOutEth(address token, uint256 amount, address receiver) internal {
+    function _transferOutNativeToken(address token, uint256 amount, address receiver) internal {
         require(receiver != address(this), "Bank: invalid receiver");
 
-        IWETH(token).withdraw(amount);
+        IWNT(token).withdraw(amount);
         payable(receiver).transfer(amount);
 
         _afterTransferOut(token);
