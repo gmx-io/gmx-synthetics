@@ -14,7 +14,7 @@ import "../oracle/Oracle.sol";
 import "../oracle/OracleUtils.sol";
 
 import "../gas/GasUtils.sol";
-import "../eth/EthUtils.sol";
+import "../wrap/WrapUtils.sol";
 import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
@@ -32,7 +32,7 @@ library DepositUtils {
         address callbackContract;
         address market;
         uint256 minMarketTokens;
-        bool shouldConvertETH;
+        bool shouldUnwrapNativeToken;
         uint256 executionFee;
         uint256 callbackGasLimit;
     }
@@ -78,15 +78,15 @@ library DepositUtils {
         uint256 longTokenAmount = depositStore.recordTransferIn(market.longToken);
         uint256 shortTokenAmount = depositStore.recordTransferIn(market.shortToken);
 
-        address weth = EthUtils.weth(dataStore);
+        address wnt = WrapUtils.wnt(dataStore);
 
-        if (market.longToken == weth) {
+        if (market.longToken == wnt) {
             longTokenAmount -= params.executionFee;
-        } else if (market.shortToken == weth) {
+        } else if (market.shortToken == wnt) {
             shortTokenAmount -= params.executionFee;
         } else {
-            uint256 wethAmount = depositStore.recordTransferIn(weth);
-            require(wethAmount == params.executionFee, "DepositUtils: invalid wethAmount");
+            uint256 wntAmount = depositStore.recordTransferIn(wnt);
+            require(wntAmount == params.executionFee, "DepositUtils: invalid wntAmount");
         }
 
         Deposit.Props memory deposit = Deposit.Props(
@@ -98,7 +98,7 @@ library DepositUtils {
             shortTokenAmount,
             params.minMarketTokens,
             Chain.currentBlockNumber(),
-            params.shouldConvertETH,
+            params.shouldUnwrapNativeToken,
             params.executionFee,
             params.callbackGasLimit,
             Null.BYTES
@@ -227,21 +227,21 @@ library DepositUtils {
         Market.Props memory market = marketStore.get(deposit.market);
         if (deposit.longTokenAmount > 0) {
             depositStore.transferOut(
-                EthUtils.weth(dataStore),
+                WrapUtils.wnt(dataStore),
                 market.longToken,
                 deposit.longTokenAmount,
                 deposit.account,
-                deposit.shouldConvertETH
+                deposit.shouldUnwrapNativeToken
             );
         }
 
         if (deposit.shortTokenAmount > 0) {
             depositStore.transferOut(
-                EthUtils.weth(dataStore),
+                WrapUtils.wnt(dataStore),
                 market.shortToken,
                 deposit.shortTokenAmount,
                 deposit.account,
-                deposit.shouldConvertETH
+                deposit.shouldUnwrapNativeToken
             );
         }
 

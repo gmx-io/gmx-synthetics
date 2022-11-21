@@ -1,6 +1,6 @@
 import { hashString, hashData } from "./hash";
 
-export const WETH = hashString("WETH");
+export const WNT = hashString("WNT");
 export const MAX_LEVERAGE = hashString("MAX_LEVERAGE");
 
 export const MIN_ORACLE_BLOCK_CONFIRMATIONS = hashString("MIN_ORACLE_BLOCK_CONFIRMATIONS");

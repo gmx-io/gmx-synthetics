@@ -57,11 +57,11 @@ library DecreaseOrderUtils {
 
         if (order.swapPath().length == 0) {
             MarketToken(payable(order.market())).transferOut(
-                EthUtils.weth(params.dataStore),
+                WrapUtils.wnt(params.dataStore),
                 order.initialCollateralToken(),
                 outputAmount,
                 order.receiver(),
-                order.shouldConvertETH()
+                order.shouldUnwrapNativeToken()
             );
         } else {
             SwapUtils.swap(SwapUtils.SwapParams(
@@ -74,7 +74,7 @@ library DecreaseOrderUtils {
                 params.swapPathMarkets,
                 order.minOutputAmount(),
                 order.receiver(),
-                order.shouldConvertETH()
+                order.shouldUnwrapNativeToken()
             ));
         }
     }

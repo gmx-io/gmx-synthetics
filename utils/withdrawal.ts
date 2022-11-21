@@ -4,7 +4,7 @@ import { executeWithOracleParams } from "./exchange";
 import { TOKEN_ORACLE_TYPES } from "./oracle";
 
 export async function createWithdrawal(fixture, overrides = {}) {
-  const { withdrawalStore, withdrawalHandler, weth, ethUsdMarket } = fixture.contracts;
+  const { withdrawalStore, withdrawalHandler, wnt, ethUsdMarket } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
   const account = overrides.account || user0;
@@ -15,11 +15,11 @@ export async function createWithdrawal(fixture, overrides = {}) {
   const marketTokensShortAmount = overrides.marketTokensShortAmount || bigNumberify(0);
   const minLongTokenAmount = overrides.minLongTokenAmount || bigNumberify(0);
   const minShortTokenAmount = overrides.minShortTokenAmount || bigNumberify(0);
-  const shouldConvertETH = overrides.shouldConvertETH || false;
+  const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
   const executionFee = overrides.executionFee || "1000000000000000";
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
 
-  await weth.mint(withdrawalStore.address, executionFee);
+  await wnt.mint(withdrawalStore.address, executionFee);
 
   const params = {
     receiver: receiver.address,
@@ -29,7 +29,7 @@ export async function createWithdrawal(fixture, overrides = {}) {
     marketTokensShortAmount,
     minLongTokenAmount,
     minShortTokenAmount,
-    shouldConvertETH,
+    shouldUnwrapNativeToken,
     executionFee,
     callbackGasLimit,
   };
@@ -41,9 +41,9 @@ export async function createWithdrawal(fixture, overrides = {}) {
 }
 
 export async function executeWithdrawal(fixture, overrides = {}) {
-  const { withdrawalStore, withdrawalHandler, weth, usdc } = fixture.contracts;
+  const { withdrawalStore, withdrawalHandler, wnt, usdc } = fixture.contracts;
   const { gasUsageLabel } = overrides;
-  const tokens = overrides.tokens || [weth.address, usdc.address];
+  const tokens = overrides.tokens || [wnt.address, usdc.address];
   const tokenOracleTypes = overrides.tokenOracleTypes || [TOKEN_ORACLE_TYPES.DEFAULT, TOKEN_ORACLE_TYPES.DEFAULT];
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];

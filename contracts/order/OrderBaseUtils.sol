@@ -35,7 +35,7 @@ library OrderBaseUtils {
 
         Order.OrderType orderType;
         bool isLong;
-        bool shouldConvertETH;
+        bool shouldUnwrapNativeToken;
     }
 
     struct ExecuteOrderParams {

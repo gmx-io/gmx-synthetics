@@ -60,8 +60,8 @@ async function deployFixture() {
   const oracle = await deployContract("Oracle", [roleStore.address, oracleStore.address]);
   await grantRole(roleStore, oracle.address, "CONTROLLER");
 
-  const weth = await deployContract("WETH", []);
-  await weth.deposit({ value: expandDecimals(50, 18) });
+  const wnt = await deployContract("WNT", []);
+  await wnt.deposit({ value: expandDecimals(50, 18) });
 
   const wbtc = await deployContract("MintableToken", []);
   const usdc = await deployContract("MintableToken", []);
@@ -71,8 +71,8 @@ async function deployFixture() {
   await dataStore.setAddress(keys.priceFeedKey(usdc.address), usdcPriceFeed.address);
   await dataStore.setUint(keys.priceFeedMultiplierKey(usdc.address), expandDecimals(1, 46));
 
-  await dataStore.setAddress(keys.WETH, weth.address);
-  await dataStore.setData(keys.oracleTypeKey(weth.address), TOKEN_ORACLE_TYPES.DEFAULT);
+  await dataStore.setAddress(keys.WNT, wnt.address);
+  await dataStore.setData(keys.oracleTypeKey(wnt.address), TOKEN_ORACLE_TYPES.DEFAULT);
   await dataStore.setData(keys.oracleTypeKey(wbtc.address), TOKEN_ORACLE_TYPES.DEFAULT);
   await dataStore.setData(keys.oracleTypeKey(usdc.address), TOKEN_ORACLE_TYPES.DEFAULT);
 
@@ -87,7 +87,7 @@ async function deployFixture() {
   const marketFactory = await deployContract("MarketFactory", [roleStore.address, marketStore.address]);
   await grantRole(roleStore, marketFactory.address, "CONTROLLER");
 
-  await marketFactory.createMarket(weth.address, weth.address, usdc.address);
+  await marketFactory.createMarket(wnt.address, wnt.address, usdc.address);
   const marketKeys = await marketStore.getMarketKeys(0, 1);
   const ethUsdMarket = await marketStore.get(marketKeys[0]);
 
@@ -225,7 +225,7 @@ async function deployFixture() {
       feeReceiver,
       oracle,
       usdcPriceFeed,
-      weth,
+      wnt,
       wbtc,
       usdc,
       ethUsdMarket,

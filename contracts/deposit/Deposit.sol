@@ -12,7 +12,7 @@ library Deposit {
         uint256 shortTokenAmount;
         uint256 minMarketTokens;
         uint256 updatedAtBlock;
-        bool shouldConvertETH;
+        bool shouldUnwrapNativeToken;
         uint256 executionFee;
         uint256 callbackGasLimit;
         bytes data;

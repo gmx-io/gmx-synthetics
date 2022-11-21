@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "../eth/IWETH.sol";
+import "../wrap/IWNT.sol";
 import "./Bank.sol";
 
 contract StrictBank is Bank {

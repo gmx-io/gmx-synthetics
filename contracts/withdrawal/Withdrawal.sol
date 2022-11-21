@@ -15,7 +15,7 @@ library Withdrawal {
         uint256 minLongTokenAmount;
         uint256 minShortTokenAmount;
         uint256 updatedAtBlock;
-        bool shouldConvertETH;
+        bool shouldUnwrapNativeToken;
         uint256 executionFee;
         uint256 callbackGasLimit;
         bytes data;

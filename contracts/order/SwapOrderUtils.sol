@@ -39,7 +39,7 @@ library SwapOrderUtils {
             params.swapPathMarkets,
             params.order.minOutputAmount(),
             params.order.receiver(),
-            order.shouldConvertETH()
+            order.shouldUnwrapNativeToken()
         ));
 
         params.orderStore.remove(params.key, params.order.account());

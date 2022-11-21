@@ -5,7 +5,7 @@ import { contractAt } from "./deploy";
 import { TOKEN_ORACLE_TYPES } from "./oracle";
 
 export async function createDeposit(fixture, overrides = {}) {
-  const { depositStore, depositHandler, weth, ethUsdMarket } = fixture.contracts;
+  const { depositStore, depositHandler, wnt, ethUsdMarket } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
   const account = overrides.account || user0;
@@ -13,13 +13,13 @@ export async function createDeposit(fixture, overrides = {}) {
   const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
   const market = overrides.market || ethUsdMarket;
   const minMarketTokens = overrides.minMarketTokens || bigNumberify(0);
-  const shouldConvertETH = overrides.shouldConvertETH || false;
+  const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
   const executionFee = overrides.executionFee || "1000000000000000";
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
   const longTokenAmount = overrides.longTokenAmount || bigNumberify(0);
   const shortTokenAmount = overrides.shortTokenAmount || bigNumberify(0);
 
-  await weth.mint(depositStore.address, executionFee);
+  await wnt.mint(depositStore.address, executionFee);
 
   if (longTokenAmount.gt(0)) {
     const longToken = await contractAt("MintableToken", market.longToken);
@@ -36,7 +36,7 @@ export async function createDeposit(fixture, overrides = {}) {
     callbackContract: callbackContract.address,
     market: market.marketToken,
     minMarketTokens,
-    shouldConvertETH,
+    shouldUnwrapNativeToken,
     executionFee,
     callbackGasLimit,
   };
@@ -48,9 +48,9 @@ export async function createDeposit(fixture, overrides = {}) {
 }
 
 export async function executeDeposit(fixture, overrides = {}) {
-  const { depositStore, depositHandler, weth, usdc } = fixture.contracts;
+  const { depositStore, depositHandler, wnt, usdc } = fixture.contracts;
   const { gasUsageLabel } = overrides;
-  const tokens = overrides.tokens || [weth.address, usdc.address];
+  const tokens = overrides.tokens || [wnt.address, usdc.address];
   const tokenOracleTypes = overrides.tokenOracleTypes || [TOKEN_ORACLE_TYPES.DEFAULT, TOKEN_ORACLE_TYPES.DEFAULT];
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];

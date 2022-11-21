@@ -17,7 +17,7 @@ export const OrderType = {
 export async function createOrder(fixture, overrides) {
   const { initialCollateralToken, initialCollateralDeltaAmount, orderType, gasUsageLabel } = overrides;
 
-  const { orderStore, orderHandler, weth } = fixture.contracts;
+  const { orderStore, orderHandler, wnt } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
   const account = overrides.account || user0;
@@ -32,10 +32,10 @@ export async function createOrder(fixture, overrides) {
   const executionFee = overrides.executionFee || fixture.props.executionFee;
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
   const minOutputAmount = overrides.minOutputAmount || 0;
-  const shouldConvertETH = overrides.shouldConvertETH || false;
+  const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
 
   await initialCollateralToken.mint(orderStore.address, initialCollateralDeltaAmount);
-  await weth.mint(orderStore.address, executionFee);
+  await wnt.mint(orderStore.address, executionFee);
 
   const params = {
     receiver: receiver.address,
@@ -51,7 +51,7 @@ export async function createOrder(fixture, overrides) {
     minOutputAmount,
     orderType,
     isLong,
-    shouldConvertETH,
+    shouldUnwrapNativeToken,
   };
 
   await logGasUsage({
@@ -61,10 +61,10 @@ export async function createOrder(fixture, overrides) {
 }
 
 export async function executeOrder(fixture, overrides) {
-  const { weth, usdc } = fixture.contracts;
+  const { wnt, usdc } = fixture.contracts;
   const { gasUsageLabel } = overrides;
   const { orderStore, orderHandler } = fixture.contracts;
-  const tokens = overrides.tokens || [weth.address, usdc.address];
+  const tokens = overrides.tokens || [wnt.address, usdc.address];
   const tokenOracleTypes = overrides.tokenOracleTypes || [TOKEN_ORACLE_TYPES.DEFAULT, TOKEN_ORACLE_TYPES.DEFAULT];
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
@@ -93,10 +93,10 @@ export async function handleOrder(fixture, overrides = {}) {
 }
 
 export async function executeLiquidation(fixture, overrides) {
-  const { weth, usdc } = fixture.contracts;
+  const { wnt, usdc } = fixture.contracts;
   const { account, market, collateralToken, isLong, gasUsageLabel } = overrides;
   const { orderHandler } = fixture.contracts;
-  const tokens = overrides.tokens || [weth.address, usdc.address];
+  const tokens = overrides.tokens || [wnt.address, usdc.address];
   const tokenOracleTypes = overrides.tokenOracleTypes || [TOKEN_ORACLE_TYPES.DEFAULT, TOKEN_ORACLE_TYPES.DEFAULT];
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];

@@ -23,7 +23,7 @@ import "../market/MarketStore.sol";
 import "../swap/SwapUtils.sol";
 
 import "../gas/GasUtils.sol";
-import "../eth/EthUtils.sol";
+import "../wrap/WrapUtils.sol";
 import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
@@ -44,9 +44,9 @@ library OrderUtils {
     ) external returns (bytes32) {
         uint256 initialCollateralDeltaAmount;
 
-        address weth = EthUtils.weth(dataStore);
+        address wnt = WrapUtils.wnt(dataStore);
 
-        if (params.initialCollateralToken == weth ||
+        if (params.initialCollateralToken == wnt ||
             params.orderType == Order.OrderType.MarketSwap ||
             params.orderType == Order.OrderType.LimitSwap ||
             params.orderType == Order.OrderType.MarketIncrease ||
@@ -55,12 +55,12 @@ library OrderUtils {
             initialCollateralDeltaAmount = orderStore.recordTransferIn(params.initialCollateralToken);
         }
 
-        if (params.initialCollateralToken == weth) {
+        if (params.initialCollateralToken == wnt) {
             require(initialCollateralDeltaAmount >= params.executionFee, "OrderUtils: invalid executionFee");
             initialCollateralDeltaAmount -= params.executionFee;
         } else {
-            uint256 wethAmount = orderStore.recordTransferIn(weth);
-            require(wethAmount == params.executionFee, "OrderUtils: invalid wethAmount");
+            uint256 wntAmount = orderStore.recordTransferIn(wnt);
+            require(wntAmount == params.executionFee, "OrderUtils: invalid wntAmount");
         }
 
         // validate swap path markets
@@ -83,7 +83,7 @@ library OrderUtils {
         order.setMinOutputAmount(params.minOutputAmount);
         order.setOrderType(params.orderType);
         order.setIsLong(params.isLong);
-        order.setShouldConvertETH(params.shouldConvertETH);
+        order.setShouldUnwrapNativeToken(params.shouldUnwrapNativeToken);
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee());
@@ -161,11 +161,11 @@ library OrderUtils {
         if (OrderBaseUtils.isIncreaseOrder(order.orderType()) || OrderBaseUtils.isSwapOrder(order.orderType())) {
             if (order.initialCollateralDeltaAmount() > 0) {
                 orderStore.transferOut(
-                    EthUtils.weth(dataStore),
+                    WrapUtils.wnt(dataStore),
                     order.initialCollateralToken(),
                     order.initialCollateralDeltaAmount(),
                     order.account(),
-                    order.shouldConvertETH()
+                    order.shouldUnwrapNativeToken()
                 );
             }
         }
