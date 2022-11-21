@@ -8,5 +8,5 @@ export function hashData(dataTypes, dataValues) {
 }
 
 export function hashString(string) {
-  return ethers.utils.solidityKeccak256(["string"], [string]);
+  return hashData(["string"], [string]);
 }
