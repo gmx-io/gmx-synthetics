@@ -27,6 +27,7 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
     DepositStore public immutable depositStore;
     WithdrawalStore public immutable withdrawalStore;
     OrderStore public immutable orderStore;
+    IReferralStorage public immutable referralStorage;
 
     constructor(
         Router _router,
@@ -38,7 +39,8 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
         OrderHandler _orderHandler,
         DepositStore _depositStore,
         WithdrawalStore _withdrawalStore,
-        OrderStore _orderStore
+        OrderStore _orderStore,
+        IReferralStorage _referralStorage
     ) RoleModule(_roleStore) {
         router = _router;
         dataStore = _dataStore;
@@ -51,6 +53,8 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
         depositStore = _depositStore;
         withdrawalStore = _withdrawalStore;
         orderStore = _orderStore;
+
+        referralStorage = _referralStorage;
     }
 
     function createDeposit(
@@ -93,11 +97,14 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
 
     function createOrder(
         uint256 amountIn,
-        OrderBaseUtils.CreateOrderParams calldata params
+        OrderBaseUtils.CreateOrderParams calldata params,
+        bytes32 referralCode
     ) external nonReentrant payable returns (bytes32) {
         require(params.orderType != Order.OrderType.Liquidation, "ExchangeRouter: invalid order type");
 
         address account = msg.sender;
+
+        ReferralUtils.setTraderReferralCode(referralStorage, account, referralCode);
 
         WrapUtils.sendWnt(dataStore, address(orderStore));
 

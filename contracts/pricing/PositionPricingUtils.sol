@@ -184,14 +184,17 @@ library PositionPricingUtils {
     ) internal view returns (PositionFees memory) {
         PositionFees memory fees;
 
-        uint256 feeFactor = dataStore.getUint(Keys.positionFeeFactorKey(position.market));
-        uint256 feeReceiverFactor = dataStore.getUint(Keys.FEE_RECEIVER_POSITION_FACTOR);
+        (
+            fees.affiliate,
+            fees.traderDiscountAmount,
+            fees.affiliateRewardAmount,
+            fees.feeReceiverAmount,
+            fees.positionFeeAmountForPool
+        ) = getPositionFeesAfterReferral(sizeDeltaUsd, collateralTokenPrice);
 
-        fees.positionFeeAmount = Precision.applyFactor(sizeDeltaUsd, feeFactor) / collateralTokenPrice.min;
         fees.borrowingFeeAmount = MarketUtils.getBorrowingFees(dataStore, position) / collateralTokenPrice.min;
 
-        fees.feeReceiverAmount = Precision.applyFactor(fees.positionFeeAmount, feeReceiverFactor);
-        fees.feesForPool = fees.positionFeeAmount + fees.borrowingFeeAmount - fees.feeReceiverAmount;
+        fees.feesForPool = fees.positionFeeAmountForPool + fees.borrowingFeeAmount;
 
         fees.latestLongTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market, longToken, position.isLong);
         fees.latestShortTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market, shortToken, position.isLong);
@@ -206,9 +209,34 @@ library PositionPricingUtils {
             fees.fundingFeeAmount = fees.shortTokenFundingFeeAmount.toUint256();
         }
 
-        fees.totalNetCostAmount = fees.positionFeeAmount + fees.fundingFeeAmount + fees.borrowingFeeAmount;
+        fees.totalNetCostAmount = fees.affiliateRewardAmount + fees.feeReceiverAmount + fees.positionFeeAmountForPool + fees.fundingFeeAmount + fees.borrowingFeeAmount;
         fees.totalNetCostUsd = fees.totalNetCostAmount * collateralTokenPrice.max;
 
         return fees;
+    }
+
+    function getPositionFeesAfterReferral(
+        IReferralStorage referralStorage,
+        Price.Props memory collateralTokenPrice,
+        address account,
+        uint256 sizeDeltaUsd
+    ) internal returns (uint256, uint256, uint256, uint256) {
+        (address affiliate, uint256 totalRebateFactor, uint256 traderDiscountFactor) = ReferralUtils.getReferralInfo(referralStorage, account);
+
+        uint256 feeFactor = dataStore.getUint(Keys.positionFeeFactorKey(position.market));
+        uint256 positionFeeAmount = Precision.applyFactor(sizeDeltaUsd, feeFactor) / collateralTokenPrice.min;
+
+        uint256 totalRebateAmount = Precision.applyFactor(positionFeeAmount, totalRebateFactor);
+        uint256 traderDiscountAmount = Precision.applyFactor(totalRebateAmount, traderDiscountFactor);
+        uint256 affiliateRewardAmount = totalRebateAmount - traderDiscountAmount;
+
+        uint256 protocolFeeAmount = positionFeeAmount - totalRebateAmount;
+
+        uint256 feeReceiverFactor = dataStore.getUint(Keys.FEE_RECEIVER_POSITION_FACTOR);
+
+        uint256 feeReceiverAmount = Precision.applyFactor(protocolFeeAmount, feeReceiverFactor);
+        uint256 positionFeeAmountForPool = protocolFeeAmount - feeReceiverAmount;
+
+        return (affiliate, traderDiscountAmount, affiliateRewardAmount, feeReceiverAmount, positionFeeAmountForPool);
     }
 }
