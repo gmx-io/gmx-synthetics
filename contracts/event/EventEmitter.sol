@@ -35,53 +35,53 @@ contract EventEmitter is RoleModule {
     );
     // PositionLiquidated?
 
-    event DepositCreated(bytes32 key, Deposit.Props deposit);
-    event DepositExecuted(bytes32 key);
-    event DepositCancelled(bytes32 key);
+    event CreateDeposit(bytes32 key, Deposit.Props deposit);
+    event ExecuteDeposit(bytes32 key);
+    event CancelDeposit(bytes32 key);
 
-    event WithdrawalCreated(bytes32 key, Withdrawal.Props withdrawal);
-    event WithdrawalExecuted(bytes32 key);
-    event WithdrawalCancelled(bytes32 key);
+    event CreateWithdrawal(bytes32 key, Withdrawal.Props withdrawal);
+    event ExecuteWithdrawal(bytes32 key);
+    event CancelWithdrawal(bytes32 key);
 
-    event OrderCreated(bytes32 key, Order.Props order);
-    event OrderUpdated(
+    event CreateOrder(bytes32 key, Order.Props order);
+    event UpdateOrder(
         bytes32 key,
         uint256 sizeDeltaUsd,
         uint256 triggerPrice,
         uint256 acceptablePrice
     );
-    event OrderCancelled(bytes32 key, string reason);
-    event OrderExecuted(bytes32 key);
-    event OrderFrozen(bytes32 key, string reason);
+    event CancelOrder(bytes32 key, string reason);
+    event ExecuteOrder(bytes32 key);
+    event FreezeOrder(bytes32 key, string reason);
     // event OrderCallback();
 
     // event SetPricePrecision
 
-    event SwapFeesCollected(bytes32 action, SwapPricingUtils.SwapFees fees);
-    event PositionFeesCollected(bool isIncrease, PositionPricingUtils.PositionFees fees);
+    event SwapFees(bytes32 action, SwapPricingUtils.SwapFees fees);
+    event PositionFees(bool isIncrease, PositionPricingUtils.PositionFees fees);
 
-    event PoolAmountUpdated(address market, address token, int256 delta, uint256 nextValue);
-    event SwapImpactPoolAmountUpdated(address market, address token, int256 delta, uint256 nextValue);
-    event PositionImpactPoolAmountUpdated(address market, int256 delta, uint256 nextValue);
-    event OpenInterestUpdated(address market, address collateralToken, bool isLong, int256 delta, uint256 nextValue);
-    event OpenInterestInTokensUpdated(address market, address collateralToken, bool isLong, int256 delta, uint256 nextValue);
-    event ClaimableFundingUpdated(address market, address token, address account, uint256 delta, uint256 nextValue);
-    event FundingFeesClaimed(address market, address token, address account, address receiver, uint256 amount);
-    event AdlStateUpdated(int256 pnlToPoolFactor, uint256 maxPnlFactor, bool shouldEnableAdl);
+    event PoolAmountUpdate(address market, address token, int256 delta, uint256 nextValue);
+    event SwapImpactPoolAmountUpdate(address market, address token, int256 delta, uint256 nextValue);
+    event PositionImpactPoolAmount(address market, int256 delta, uint256 nextValue);
+    event OpenInterestUpdate(address market, address collateralToken, bool isLong, int256 delta, uint256 nextValue);
+    event OpenInterestInTokensUpdate(address market, address collateralToken, bool isLong, int256 delta, uint256 nextValue);
+    event ClaimableFunding(address market, address token, address account, uint256 delta, uint256 nextValue);
+    event ClaimFundingFees(address market, address token, address account, address receiver, uint256 amount);
+    event UpdateAdlState(int256 pnlToPoolFactor, uint256 maxPnlFactor, bool shouldEnableAdl);
     event TraderReferralDiscount(address trader, address token, uint256 amount);
     event AffiliateReward(address market, address token, address affiliate, address trader, uint256 amount);
-    event AffiliateRewardClaimed(address market, address token, address account, address receiver, uint256 amount);
+    event ClaimAffiliateReward(address market, address token, address account, address receiver, uint256 amount);
 
     event InsufficientFundingFeePayment(uint256 fundingFeeAmount, uint256 collateralAmount);
 
-    event CollateralSumDelta(
+    event CollateralSumUpdate(
         address market,
         address collateralToken,
         bool isLong,
         int256 collateralDeltaAmount
     );
 
-    event OraclePriceUpdated(address token, uint256 minPrice, uint256 maxPrice, bool isPrimary, bool isPriceFeed);
+    event OraclePriceUpdate(address token, uint256 minPrice, uint256 maxPrice, bool isPrimary, bool isPriceFeed);
 
     constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
 
