@@ -60,6 +60,7 @@ library IncreaseOrderUtils {
                 params.positionStore,
                 params.oracle,
                 params.feeReceiver,
+                params.referralStorage,
                 params.market,
                 params.order,
                 position,

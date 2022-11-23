@@ -18,6 +18,15 @@ library PositionUtils {
     using Position for Position.Props;
     using Price for Price.Props;
 
+    struct _IsPositionLiquidatableCache {
+        int256 positionPnlUsd;
+        uint256 maxLeverage;
+        uint256 collateralUsd;
+        int256 priceImpactUsd;
+        int256 minCollateralUsd;
+        int256 remainingCollateralUsd;
+    }
+
     error LiquidatablePosition();
     error UnexpectedPositionState();
 
@@ -75,12 +84,14 @@ library PositionUtils {
 
     function validatePosition(
         DataStore dataStore,
+        IReferralStorage referralStorage,
         Position.Props memory position,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices
     ) internal view {
         if (isPositionLiquidatable(
             dataStore,
+            referralStorage,
             position,
             market,
             prices
@@ -94,25 +105,29 @@ library PositionUtils {
     // may not be as much as closing the position in one transaction
     function isPositionLiquidatable(
         DataStore dataStore,
+        IReferralStorage referralStorage,
         Position.Props memory position,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices
     ) internal view returns (bool) {
-        (int256 positionPnlUsd, ) = getPositionPnlUsd(
+        _IsPositionLiquidatableCache memory cache;
+
+        (cache.positionPnlUsd, ) = getPositionPnlUsd(
             position,
             position.sizeInUsd,
             prices.indexTokenPrice.pickPriceForPnl(position.isLong, false)
         );
 
-        uint256 maxLeverage = dataStore.getUint(Keys.MAX_LEVERAGE);
+        cache.maxLeverage = dataStore.getUint(Keys.MAX_LEVERAGE);
         Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(
             position.collateralToken,
             market,
             prices
         );
-        uint256 collateralUsd = position.collateralAmount * collateralTokenPrice.min;
 
-        int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
+        cache.collateralUsd = position.collateralAmount * collateralTokenPrice.min;
+
+        cache.priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
                 dataStore,
                 market.marketToken,
@@ -125,6 +140,7 @@ library PositionUtils {
 
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
             dataStore,
+            referralStorage,
             position,
             collateralTokenPrice,
             market.longToken,
@@ -132,16 +148,16 @@ library PositionUtils {
             position.sizeInUsd
         );
 
-        int256 minCollateralUsd = dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256();
-        int256 remainingCollateralUsd = collateralUsd.toInt256() + positionPnlUsd + priceImpactUsd - fees.totalNetCostUsd.toInt256();
+        cache.minCollateralUsd = dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256();
+        cache.remainingCollateralUsd = cache.collateralUsd.toInt256() + cache.positionPnlUsd + cache.priceImpactUsd - fees.totalNetCostUsd.toInt256();
 
         // the position is liquidatable if the remaining collateral is less than the required min collateral
-        if (remainingCollateralUsd < minCollateralUsd || remainingCollateralUsd == 0) {
+        if (cache.remainingCollateralUsd < cache.minCollateralUsd || cache.remainingCollateralUsd == 0) {
             return true;
         }
 
         // validate if position.size / (remaining collateral) exceeds max leverage
-        if (position.sizeInUsd * Precision.FLOAT_PRECISION / remainingCollateralUsd.toUint256() > maxLeverage) {
+        if (position.sizeInUsd * Precision.FLOAT_PRECISION / cache.remainingCollateralUsd.toUint256() > cache.maxLeverage) {
             return true;
         }
 

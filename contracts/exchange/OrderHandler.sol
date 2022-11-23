@@ -22,7 +22,7 @@ import "../order/OrderUtils.sol";
 import "../position/PositionStore.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
-import "../events/EventEmitter.sol";
+import "../event/EventEmitter.sol";
 
 import "../utils/Null.sol";
 import "../referral/IReferralStorage.sol";
@@ -285,6 +285,7 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         params.positionStore = positionStore;
         params.oracle = oracle;
         params.feeReceiver = feeReceiver;
+        params.referralStorage = referralStorage;
         params.oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
             oracleParams.compactedOracleBlockNumbers,
             oracleParams.tokens.length

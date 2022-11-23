@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./Oracle.sol";
-import "../events/EventEmitter.sol";
+import "../event/EventEmitter.sol";
 
 contract OracleModule {
     event OracleError(string reason);

@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "../utils/Precision.sol";
 
 import "../data/DataStore.sol";
-import "../events/EventEmitter.sol";
+import "../event/EventEmitter.sol";
 import "../fee/FeeReceiver.sol";
 
 import "../oracle/Oracle.sol";
@@ -30,6 +30,7 @@ library IncreasePositionUtils {
         PositionStore positionStore;
         Oracle oracle;
         FeeReceiver feeReceiver;
+        IReferralStorage referralStorage;
         Market.Props market;
         Order.Props order;
         Position.Props position;
@@ -216,6 +217,7 @@ library IncreasePositionUtils {
 
         PositionUtils.validatePosition(
             params.dataStore,
+            params.referralStorage,
             position,
             params.market,
             prices
@@ -231,6 +233,19 @@ library IncreasePositionUtils {
             params.order.sizeDeltaUsd(),
             cache.collateralDeltaAmount
         );
+
+        ReferralUtils.incrementAffiliateReward(
+            params.dataStore,
+            params.eventEmitter,
+            fees.affiliate,
+            position.account,
+            position.collateralToken,
+            fees.affiliateRewardAmount
+        );
+
+        if (fees.traderDiscountAmount > 0) {
+            params.eventEmitter.emitTraderReferralDiscount(position.account, position.collateralToken, fees.traderDiscountAmount);
+        }
     }
 
     function processCollateral(
@@ -243,6 +258,7 @@ library IncreasePositionUtils {
 
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
             params.dataStore,
+            params.referralStorage,
             position,
             collateralTokenPrice,
             params.market.longToken,

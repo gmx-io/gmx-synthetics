@@ -6,7 +6,7 @@ import "./Order.sol";
 import "../market/Market.sol";
 
 import "../data/DataStore.sol";
-import "../events/EventEmitter.sol";
+import "../event/EventEmitter.sol";
 
 import "../order/OrderStore.sol";
 import "../position/PositionStore.sol";
@@ -48,6 +48,7 @@ library OrderBaseUtils {
         PositionStore positionStore;
         Oracle oracle;
         FeeReceiver feeReceiver;
+        IReferralStorage referralStorage;
         uint256[] oracleBlockNumbers;
         Market.Props market;
         address keeper;

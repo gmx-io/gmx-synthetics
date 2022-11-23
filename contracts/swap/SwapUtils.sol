@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../data/DataStore.sol";
-import "../events/EventEmitter.sol";
+import "../event/EventEmitter.sol";
 import "../oracle/Oracle.sol";
 import "../pricing/SwapPricingUtils.sol";
 import "../wrap/WrapUtils.sol";

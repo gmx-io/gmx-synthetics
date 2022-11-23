@@ -33,6 +33,7 @@ library DecreaseOrderUtils {
                 params.positionStore,
                 params.oracle,
                 params.feeReceiver,
+                params.referralStorage,
                 params.market,
                 order,
                 position,
