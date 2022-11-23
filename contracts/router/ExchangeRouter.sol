@@ -197,4 +197,23 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
             );
         }
     }
+
+    function claimAffiliateRewards(address[] memory markets, address[] memory tokens, address receiver) external nonReentrant {
+        if (markets.length != tokens.length) {
+            revert("Invalid input");
+        }
+
+        address account = msg.sender;
+
+        for (uint256 i = 0; i < markets.length; i++) {
+            ReferralUtils.claimAffiliateReward(
+                dataStore,
+                eventEmitter,
+                markets[i],
+                tokens[i],
+                account,
+                receiver
+            );
+        }
+    }
 }

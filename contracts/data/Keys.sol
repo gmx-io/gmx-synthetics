@@ -411,11 +411,12 @@ library Keys {
         ));
     }
 
-    function affiliateRewardKey(address affiliate, address token) internal pure returns (bytes32) {
+    function affiliateRewardKey(address market, address token, address account) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             AFFILIATE_REWARD,
-            affiliate,
-            token
+            market,
+            token,
+            account
         ));
     }
 

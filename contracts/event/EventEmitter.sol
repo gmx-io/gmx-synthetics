@@ -69,7 +69,8 @@ contract EventEmitter is RoleModule {
     event FundingFeesClaimed(address market, address token, address account, address receiver, uint256 amount);
     event AdlStateUpdated(int256 pnlToPoolFactor, uint256 maxPnlFactor, bool shouldEnableAdl);
     event TraderReferralDiscount(address trader, address token, uint256 amount);
-    event AffiliateReward(address affiliate, address trader, address token, uint256 amount);
+    event AffiliateReward(address market, address token, address affiliate, address trader, uint256 amount);
+    event AffiliateRewardClaimed(address market, address token, address account, address receiver, uint256 amount);
 
     event InsufficientFundingFeePayment(uint256 fundingFeeAmount, uint256 collateralAmount);
 
@@ -120,8 +121,12 @@ contract EventEmitter is RoleModule {
         emit TraderReferralDiscount(trader, token, amount);
     }
 
-    function emitAffiliateReward(address affiliate, address trader, address token, uint256 amount) external onlyController {
-        emit AffiliateReward(affiliate, trader, token, amount);
+    function emitAffiliateReward(address market, address token, address affiliate, address trader, uint256 amount) external onlyController {
+        emit AffiliateReward(market, token, affiliate, trader, amount);
+    }
+
+    function emitAffiliateRewardClaimed(address market, address token, address account, address receiver, uint256 amount) external onlyController {
+        emit AffiliateRewardClaimed(market, token, account, receiver, amount);
     }
 
     function emitCollateralSumDelta(

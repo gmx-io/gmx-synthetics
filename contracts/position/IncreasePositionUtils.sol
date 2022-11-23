@@ -237,9 +237,10 @@ library IncreasePositionUtils {
         ReferralUtils.incrementAffiliateReward(
             params.dataStore,
             params.eventEmitter,
+            position.market,
+            position.collateralToken,
             fees.affiliate,
             position.account,
-            position.collateralToken,
             fees.affiliateRewardAmount
         );
 

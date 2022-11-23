@@ -6,6 +6,7 @@ import "../data/DataStore.sol";
 import "../data/Keys.sol";
 
 import "../event/EventEmitter.sol";
+import "../market/MarketToken.sol";
 
 import "./IReferralStorage.sol";
 import "./ReferralTier.sol";
@@ -28,17 +29,18 @@ library ReferralUtils {
     function incrementAffiliateReward(
         DataStore dataStore,
         EventEmitter eventEmitter,
+        address market,
+        address token,
         address affiliate,
         address trader,
-        address token,
         uint256 delta
     ) internal {
         if (delta == 0) {
             return;
         }
 
-        dataStore.incrementUint(Keys.affiliateRewardKey(affiliate, token), delta);
-        eventEmitter.emitAffiliateReward(affiliate, trader, token, delta);
+        dataStore.incrementUint(Keys.affiliateRewardKey(market, token, affiliate), delta);
+        eventEmitter.emitAffiliateReward(market, token, affiliate, trader, delta);
     }
 
     function getReferralInfo(
@@ -70,4 +72,33 @@ library ReferralUtils {
             Precision.basisPointsToFloat(discountShare)
         );
     }
+
+    function claimAffiliateReward(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address token,
+        address account,
+        address receiver
+    ) internal {
+        bytes32 key = Keys.affiliateRewardKey(market, token, account);
+
+        uint256 rewardAmount = dataStore.getUint(key);
+        dataStore.setUint(key, 0);
+
+        MarketToken(payable(market)).transferOut(
+            token,
+            rewardAmount,
+            receiver
+        );
+
+        eventEmitter.emitAffiliateRewardClaimed(
+            market,
+            token,
+            account,
+            receiver,
+            rewardAmount
+        );
+    }
+
 }
