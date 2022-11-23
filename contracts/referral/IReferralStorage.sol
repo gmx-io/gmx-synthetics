@@ -15,5 +15,5 @@ interface IReferralStorage {
     function setReferrerTier(address _referrer, uint256 _tierId) external;
     function govSetCodeOwner(bytes32 _code, address _newAccount) external;
 
-    function tiers(uint256 _tierLevel) external view returns (ReferralTier.Props memory);
+    function tiers(uint256 _tierLevel) external view returns (uint256, uint256);
 }

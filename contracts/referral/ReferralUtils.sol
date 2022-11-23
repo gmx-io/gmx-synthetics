@@ -55,10 +55,7 @@ library ReferralUtils {
         if (code != bytes32(0)) {
             affiliate = referralStorage.codeOwners(code);
             uint256 referralTierLevel = referralStorage.referrerTiers(affiliate);
-            ReferralTier.Props memory referralTier = referralStorage.tiers(referralTierLevel);
-
-            totalRebate = referralTier.totalRebate;
-            discountShare = referralTier.discountShare;
+            (totalRebate, discountShare) = referralStorage.tiers(referralTierLevel);
 
             uint256 customDiscountShare = referralStorage.referrerDiscountShares(affiliate);
             if (customDiscountShare != 0) {
