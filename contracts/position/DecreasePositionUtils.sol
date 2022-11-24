@@ -237,7 +237,7 @@ library DecreasePositionUtils {
         );
 
         if (fees.traderDiscountAmount > 0) {
-            params.eventEmitter.emitTraderReferralDiscount(position.account, position.collateralToken, fees.traderDiscountAmount);
+            params.eventEmitter.emitTraderReferralDiscountApplied(position.account, position.collateralToken, fees.traderDiscountAmount);
         }
 
         return (values.outputAmount, params.adjustedSizeDeltaUsd);

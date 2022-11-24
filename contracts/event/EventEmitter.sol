@@ -68,8 +68,8 @@ contract EventEmitter is RoleModule {
     event ClaimableFundingUpdated(address market, address token, address account, uint256 delta, uint256 nextValue);
     event FundingFeesClaimed(address market, address token, address account, address receiver, uint256 amount);
     event AdlStateUpdated(int256 pnlToPoolFactor, uint256 maxPnlFactor, bool shouldEnableAdl);
-    event TraderReferralDiscount(address trader, address token, uint256 amount);
-    event AffiliateReward(address market, address token, address affiliate, address trader, uint256 amount);
+    event TraderReferralDiscountApplied(address trader, address token, uint256 amount);
+    event AffiliateRewardEarned(address market, address token, address affiliate, address trader, uint256 amount);
     event AffiliateRewardClaimed(address market, address token, address account, address receiver, uint256 amount);
 
     event InsufficientFundingFeePayment(uint256 fundingFeeAmount, uint256 collateralAmount);
@@ -117,12 +117,12 @@ contract EventEmitter is RoleModule {
         emit AdlStateUpdated(pnlToPoolFactor, maxPnlFactor, shouldEnableAdl);
     }
 
-    function emitTraderReferralDiscount(address trader, address token, uint256 amount) external onlyController {
-        emit TraderReferralDiscount(trader, token, amount);
+    function emitTraderReferralDiscountApplied(address trader, address token, uint256 amount) external onlyController {
+        emit TraderReferralDiscountApplied(trader, token, amount);
     }
 
-    function emitAffiliateReward(address market, address token, address affiliate, address trader, uint256 amount) external onlyController {
-        emit AffiliateReward(market, token, affiliate, trader, amount);
+    function emitAffiliateRewardEarned(address market, address token, address affiliate, address trader, uint256 amount) external onlyController {
+        emit AffiliateRewardEarned(market, token, affiliate, trader, amount);
     }
 
     function emitAffiliateRewardClaimed(address market, address token, address account, address receiver, uint256 amount) external onlyController {

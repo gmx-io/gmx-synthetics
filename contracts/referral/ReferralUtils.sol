@@ -40,7 +40,7 @@ library ReferralUtils {
         }
 
         dataStore.incrementUint(Keys.affiliateRewardKey(market, token, affiliate), delta);
-        eventEmitter.emitAffiliateReward(market, token, affiliate, trader, delta);
+        eventEmitter.emitAffiliateRewardEarned(market, token, affiliate, trader, delta);
     }
 
     function getReferralInfo(
