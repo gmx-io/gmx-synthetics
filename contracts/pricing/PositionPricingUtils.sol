@@ -9,6 +9,9 @@ import "../utils/Calc.sol";
 
 import "./PricingUtils.sol";
 
+import "../referral/IReferralStorage.sol";
+import "../referral/ReferralUtils.sol";
+
 library PositionPricingUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
@@ -30,9 +33,12 @@ library PositionPricingUtils {
     }
 
     struct PositionFees {
+        address affiliate;
+        uint256 traderDiscountAmount;
+        uint256 affiliateRewardAmount;
         uint256 feeReceiverAmount;
         uint256 feesForPool;
-        uint256 amountForPool;
+        uint256 positionFeeAmountForPool;
         uint256 positionFeeAmount;
         uint256 fundingFeeAmount;
         int256 latestLongTokenFundingAmountPerSize;
@@ -44,6 +50,21 @@ library PositionPricingUtils {
         uint256 totalNetCostUsd;
         bool hasPendingLongTokenFundingFee;
         bool hasPendingShortTokenFundingFee;
+    }
+
+    struct _GetPositionFeesAfterReferralCache {
+        address affiliate;
+        uint256 totalRebateFactor;
+        uint256 traderDiscountFactor;
+        uint256 feeFactor;
+        uint256 positionFeeAmount;
+        uint256 totalRebateAmount;
+        uint256 traderDiscountAmount;
+        uint256 affiliateRewardAmount;
+        uint256 protocolFeeAmount;
+        uint256 feeReceiverFactor;
+        uint256 feeReceiverAmount;
+        uint256 positionFeeAmountForPool;
     }
 
     function getPriceImpactAmount(
@@ -176,6 +197,7 @@ library PositionPricingUtils {
 
     function getPositionFees(
         DataStore dataStore,
+        IReferralStorage referralStorage,
         Position.Props memory position,
         Price.Props memory collateralTokenPrice,
         address longToken,
@@ -184,14 +206,24 @@ library PositionPricingUtils {
     ) internal view returns (PositionFees memory) {
         PositionFees memory fees;
 
-        uint256 feeFactor = dataStore.getUint(Keys.positionFeeFactorKey(position.market));
-        uint256 feeReceiverFactor = dataStore.getUint(Keys.FEE_RECEIVER_POSITION_FACTOR);
+        (
+            fees.affiliate,
+            fees.traderDiscountAmount,
+            fees.affiliateRewardAmount,
+            fees.feeReceiverAmount,
+            fees.positionFeeAmountForPool
+        ) = getPositionFeesAfterReferral(
+            dataStore,
+            referralStorage,
+            collateralTokenPrice,
+            position.account,
+            position.market,
+            sizeDeltaUsd
+        );
 
-        fees.positionFeeAmount = Precision.applyFactor(sizeDeltaUsd, feeFactor) / collateralTokenPrice.min;
         fees.borrowingFeeAmount = MarketUtils.getBorrowingFees(dataStore, position) / collateralTokenPrice.min;
 
-        fees.feeReceiverAmount = Precision.applyFactor(fees.positionFeeAmount, feeReceiverFactor);
-        fees.feesForPool = fees.positionFeeAmount + fees.borrowingFeeAmount - fees.feeReceiverAmount;
+        fees.feesForPool = fees.positionFeeAmountForPool + fees.borrowingFeeAmount;
 
         fees.latestLongTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market, longToken, position.isLong);
         fees.latestShortTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market, shortToken, position.isLong);
@@ -206,9 +238,38 @@ library PositionPricingUtils {
             fees.fundingFeeAmount = fees.shortTokenFundingFeeAmount.toUint256();
         }
 
-        fees.totalNetCostAmount = fees.positionFeeAmount + fees.fundingFeeAmount + fees.borrowingFeeAmount;
+        fees.totalNetCostAmount = fees.affiliateRewardAmount + fees.feeReceiverAmount + fees.positionFeeAmountForPool + fees.fundingFeeAmount + fees.borrowingFeeAmount;
         fees.totalNetCostUsd = fees.totalNetCostAmount * collateralTokenPrice.max;
 
         return fees;
+    }
+
+    function getPositionFeesAfterReferral(
+        DataStore dataStore,
+        IReferralStorage referralStorage,
+        Price.Props memory collateralTokenPrice,
+        address account,
+        address market,
+        uint256 sizeDeltaUsd
+    ) internal view returns (address, uint256, uint256, uint256, uint256) {
+        _GetPositionFeesAfterReferralCache memory cache;
+
+        (cache.affiliate, cache.totalRebateFactor, cache.traderDiscountFactor) = ReferralUtils.getReferralInfo(referralStorage, account);
+
+        cache.feeFactor = dataStore.getUint(Keys.positionFeeFactorKey(market));
+        cache.positionFeeAmount = Precision.applyFactor(sizeDeltaUsd, cache.feeFactor) / collateralTokenPrice.min;
+
+        cache.totalRebateAmount = Precision.applyFactor(cache.positionFeeAmount, cache.totalRebateFactor);
+        cache.traderDiscountAmount = Precision.applyFactor(cache.totalRebateAmount, cache.traderDiscountFactor);
+        cache.affiliateRewardAmount = cache.totalRebateAmount - cache.traderDiscountAmount;
+
+        cache.protocolFeeAmount = cache.positionFeeAmount - cache.totalRebateAmount;
+
+        cache.feeReceiverFactor = dataStore.getUint(Keys.FEE_RECEIVER_POSITION_FACTOR);
+
+        cache.feeReceiverAmount = Precision.applyFactor(cache.protocolFeeAmount, cache.feeReceiverFactor);
+        cache.positionFeeAmountForPool = cache.protocolFeeAmount - cache.feeReceiverAmount;
+
+        return (cache.affiliate, cache.traderDiscountAmount, cache.affiliateRewardAmount, cache.feeReceiverAmount, cache.positionFeeAmountForPool);
     }
 }

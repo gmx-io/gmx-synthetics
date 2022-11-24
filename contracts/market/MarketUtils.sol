@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "../data/DataStore.sol";
-import "../events/EventEmitter.sol";
+import "../event/EventEmitter.sol";
 import "../bank/StrictBank.sol";
 
 import "../deposit/Deposit.sol";

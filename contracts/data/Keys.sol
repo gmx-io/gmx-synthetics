@@ -79,6 +79,7 @@ library Keys {
     bytes32 public constant CUMULATIVE_BORROWING_FACTOR = keccak256(abi.encode("CUMULATIVE_BORROWING_FACTOR"));
     bytes32 public constant CUMULATIVE_BORROWING_FACTOR_UPDATED_AT = keccak256(abi.encode("CUMULATIVE_BORROWING_FACTOR_UPDATED_AT"));
     bytes32 public constant TOTAL_BORROWING = keccak256(abi.encode("TOTAL_BORROWING"));
+    bytes32 public constant AFFILIATE_REWARD = keccak256(abi.encode("AFFILIATE_REWARD"));
 
     string public constant ORACLE_ERROR = "ORACLE_ERROR";
     bytes32 public constant ORACLE_ERROR_KEY = keccak256(abi.encode(ORACLE_ERROR));
@@ -407,6 +408,15 @@ library Keys {
             TOTAL_BORROWING,
             market,
             isLong
+        ));
+    }
+
+    function affiliateRewardKey(address market, address token, address account) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            AFFILIATE_REWARD,
+            market,
+            token,
+            account
         ));
     }
 

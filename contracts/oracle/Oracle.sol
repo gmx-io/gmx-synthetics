@@ -16,7 +16,7 @@ import "../price/Price.sol";
 import "../chain/Chain.sol";
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
-import "../events/EventEmitter.sol";
+import "../event/EventEmitter.sol";
 
 import "../utils/Bits.sol";
 import "../utils/Array.sol";

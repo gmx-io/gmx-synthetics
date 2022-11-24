@@ -9,6 +9,7 @@ library Precision {
 
     uint256 public constant FLOAT_PRECISION = 10 ** 30;
     uint256 public constant WEI_PRECISION = 10 ** 18;
+    uint256 public constant BASIS_POINTS_DIVISOR = 10000;
 
     uint256 public constant FLOAT_TO_WEI_DIVISOR = 10 ** 12;
 
@@ -26,5 +27,9 @@ library Precision {
 
     function weiToFloat(uint256 amount) internal pure returns (uint256) {
         return amount * FLOAT_TO_WEI_DIVISOR;
+    }
+
+    function basisPointsToFloat(uint256 basisPoints) internal pure returns (uint256) {
+        return basisPoints * FLOAT_PRECISION / BASIS_POINTS_DIVISOR;
     }
 }
