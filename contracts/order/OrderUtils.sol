@@ -12,7 +12,7 @@ import "./OrderStore.sol";
 import "../nonce/NonceUtils.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleUtils.sol";
-import "../events/EventEmitter.sol";
+import "../event/EventEmitter.sol";
 
 import "./IncreaseOrderUtils.sol";
 import "./DecreaseOrderUtils.sol";

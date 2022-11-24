@@ -22,9 +22,10 @@ import "../order/OrderUtils.sol";
 import "../position/PositionStore.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
-import "../events/EventEmitter.sol";
+import "../event/EventEmitter.sol";
 
 import "../utils/Null.sol";
+import "../referral/IReferralStorage.sol";
 
 contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
     using SafeCast for uint256;
@@ -47,6 +48,7 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
     Oracle public immutable oracle;
     EventEmitter public immutable eventEmitter;
     FeeReceiver public immutable feeReceiver;
+    IReferralStorage public immutable referralStorage;
 
     constructor(
         RoleStore _roleStore,
@@ -56,7 +58,8 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         OrderStore _orderStore,
         PositionStore _positionStore,
         Oracle _oracle,
-        FeeReceiver _feeReceiver
+        FeeReceiver _feeReceiver,
+        IReferralStorage _referralStorage
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
@@ -65,6 +68,7 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         positionStore = _positionStore;
         oracle = _oracle;
         feeReceiver = _feeReceiver;
+        referralStorage = _referralStorage;
     }
 
     receive() external payable {}
@@ -281,6 +285,7 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         params.positionStore = positionStore;
         params.oracle = oracle;
         params.feeReceiver = feeReceiver;
+        params.referralStorage = referralStorage;
         params.oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
             oracleParams.compactedOracleBlockNumbers,
             oracleParams.tokens.length

@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "../utils/Precision.sol";
 
 import "../data/DataStore.sol";
-import "../events/EventEmitter.sol";
+import "../event/EventEmitter.sol";
 import "../fee/FeeReceiver.sol";
 
 import "../oracle/Oracle.sol";
@@ -30,6 +30,7 @@ library DecreasePositionUtils {
         PositionStore positionStore;
         Oracle oracle;
         FeeReceiver feeReceiver;
+        IReferralStorage referralStorage;
         Market.Props market;
         Order.Props order;
         Position.Props position;
@@ -66,6 +67,7 @@ library DecreasePositionUtils {
 
         if (OrderBaseUtils.isLiquidationOrder(params.order.orderType()) && !PositionUtils.isPositionLiquidatable(
             params.dataStore,
+            params.referralStorage,
             position,
             params.market,
             prices
@@ -173,6 +175,7 @@ library DecreasePositionUtils {
 
             PositionUtils.validatePosition(
                 params.dataStore,
+                params.referralStorage,
                 position,
                 params.market,
                 prices
@@ -222,6 +225,20 @@ library DecreasePositionUtils {
 
         params.eventEmitter.emitPositionFeesCollected(false, fees);
         emitPositionDecrease(params, values);
+
+        ReferralUtils.incrementAffiliateReward(
+            params.dataStore,
+            params.eventEmitter,
+            position.market,
+            position.collateralToken,
+            fees.affiliate,
+            position.account,
+            fees.affiliateRewardAmount
+        );
+
+        if (fees.traderDiscountAmount > 0) {
+            params.eventEmitter.emitTraderReferralDiscountApplied(position.account, position.collateralToken, fees.traderDiscountAmount);
+        }
 
         return (values.outputAmount, params.adjustedSizeDeltaUsd);
     }
@@ -324,6 +341,7 @@ library DecreasePositionUtils {
 
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
             params.dataStore,
+            params.referralStorage,
             position,
             collateralTokenPrice,
             params.market.longToken,
