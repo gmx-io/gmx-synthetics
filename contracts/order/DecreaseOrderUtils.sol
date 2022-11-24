@@ -26,7 +26,7 @@ library DecreaseOrderUtils {
             position.decreasedAtBlock
         );
 
-        (uint256 outputAmount, uint256 adjustedSizeDeltaUsd) = DecreasePositionUtils.decreasePosition(
+        DecreasePositionUtils.DecreasePositionResult memory result = DecreasePositionUtils.decreasePosition(
             DecreasePositionUtils.DecreasePositionParams(
                 params.dataStore,
                 params.eventEmitter,
@@ -45,33 +45,60 @@ library DecreaseOrderUtils {
         if (
             order.orderType() == Order.OrderType.MarketDecrease ||
             order.orderType() == Order.OrderType.Liquidation ||
-            adjustedSizeDeltaUsd == order.sizeDeltaUsd()
+            result.adjustedSizeDeltaUsd == order.sizeDeltaUsd()
         ) {
             params.orderStore.remove(params.key, order.account());
         } else {
-            order.setSizeDeltaUsd(adjustedSizeDeltaUsd);
+            order.setSizeDeltaUsd(result.adjustedSizeDeltaUsd);
             // clear execution fee as it would be fully used even for partial fills
             order.setExecutionFee(0);
             order.touch();
             params.orderStore.set(params.key, order);
         }
 
+        // if the pnlToken and the collateralToken are different
+        // and if a swap fails or no swap was requested
+        // then it is possible to receive two separate tokens from decreasing
+        // the position
+        // transfer the two tokens to the user in this case and skip processing
+        // the swapPath
+        if (result.outputAmount > 0 && result.pnlAmountForUser > 0) {
+            MarketToken(payable(order.market())).transferOut(
+                WrapUtils.wnt(params.dataStore),
+                result.outputToken,
+                result.outputAmount,
+                order.receiver(),
+                order.shouldUnwrapNativeToken()
+            );
+
+            MarketToken(payable(order.market())).transferOut(
+                WrapUtils.wnt(params.dataStore),
+                result.pnlToken,
+                result.pnlAmountForUser,
+                order.receiver(),
+                order.shouldUnwrapNativeToken()
+            );
+
+            return;
+        }
+
         if (order.swapPath().length == 0) {
             MarketToken(payable(order.market())).transferOut(
                 WrapUtils.wnt(params.dataStore),
-                order.initialCollateralToken(),
-                outputAmount,
+                result.outputToken,
+                result.outputAmount,
                 order.receiver(),
                 order.shouldUnwrapNativeToken()
             );
         } else {
+            // TODO: attempt swap, catch errors and transfer
             SwapUtils.swap(SwapUtils.SwapParams(
                 params.dataStore,
                 params.eventEmitter,
                 params.oracle,
                 params.feeReceiver,
-                order.initialCollateralToken(),
-                order.initialCollateralDeltaAmount(),
+                result.outputToken,
+                result.outputAmount,
                 params.swapPathMarkets,
                 order.minOutputAmount(),
                 order.receiver(),
