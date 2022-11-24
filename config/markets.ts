@@ -13,15 +13,15 @@ const config: {
   avalanche: [],
   avalancheFuji: [
     {
-      tokens: ["WAVAX", "WAVAX", "USDT"], // indexToken, longToken, shortToken
+      tokens: ["WAVAX", "WAVAX", "USDC"], // indexToken, longToken, shortToken
       reserveFactor: [2, 1],
     },
     {
-      tokens: ["WETH", "WETH", "USDT"], // indexToken, longToken, shortToken
+      tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
       reserveFactor: [1, 1],
     },
     {
-      tokens: ["SOL", "WETH", "USDT"], // indexToken, longToken, shortToken
+      tokens: ["SOL", "WETH", "USDC"], // indexToken, longToken, shortToken
       reserveFactor: [5, 1],
     },
   ],

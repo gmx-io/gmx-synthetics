@@ -60,18 +60,6 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
 
       // price feeds https://docs.chain.link/data-feeds/price-feeds/addresses?network=avalanche#Avalanche%20Testnet
       tokens: {
-        WETH: {
-          priceFeed: {
-            address: "0x86d67c3D38D2bCeE722E601025C25a575021c6EA",
-            decimals: 8,
-          },
-        },
-        MATIC: {
-          priceFeed: {
-            address: "0xB0924e98CAFC880ed81F6A4cA63FD61006D1f8A0",
-            decimals: 8,
-          },
-        },
         USDC: {
           priceFeed: {
             // this is USDT price feed, there is no USDC feed on Avalanche Fuji

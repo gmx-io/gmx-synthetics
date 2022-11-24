@@ -1,0 +1,89 @@
+{
+  "address": "0xBd00b5c1286d4D30BB441e111314828f27466E33",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "key",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "FeeReceived",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "key",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "notifyFeeReceived",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x9d2dcd5f9b241e4938c29fcd8b43994577341c2f6699cf528e126b4e3757b692",
+  "receipt": {
+    "to": null,
+    "from": "0xFb11f15f206bdA02c224EDC744b0E50E46137046",
+    "contractAddress": "0xBd00b5c1286d4D30BB441e111314828f27466E33",
+    "transactionIndex": 5,
+    "gasUsed": "109597",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x0dc55e0217bf94beb19a339eb73a56f8e191cba8c6d3b6b0c3ec68169c06058f",
+    "transactionHash": "0x9d2dcd5f9b241e4938c29fcd8b43994577341c2f6699cf528e126b4e3757b692",
+    "logs": [],
+    "blockNumber": 16167238,
+    "cumulativeGasUsed": "645034",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "635dda53de9b7a48407bbc874989be1e",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.16+commit.07a7930e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"key\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"FeeReceived\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"key\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"notifyFeeReceived\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/fee/FeeReceiver.sol\":\"FeeReceiver\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":10},\"remappings\":[]},\"sources\":{\"contracts/fee/FeeReceiver.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\n\\npragma solidity ^0.8.0;\\n\\ncontract FeeReceiver {\\n    event FeeReceived(bytes32 key, address token, uint256 amount);\\n\\n    function notifyFeeReceived(bytes32 key, address token, uint256 amount) external {\\n        emit FeeReceived(key, token, amount);\\n    }\\n}\\n\",\"keccak256\":\"0x5f16e156586b06f5c3965c2850d8444680b2eedf4891ea9f22ae108dfda1c864\",\"license\":\"BUSL-1.1\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b50610104806100206000396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c806310015f9814602d575b600080fd5b603c6038366004608c565b603e565b005b604080518481526001600160a01b03841660208201529081018290527fc7191f96ab050b47f8820c0915947f2c6e86096b509d5cd8b414b458ea86cb199060600160405180910390a1505050565b60008060006060848603121560a057600080fd5b8335925060208401356001600160a01b038116811460bd57600080fd5b92959294505050604091909101359056fea26469706673582212209b403929cb5d06bb40bf4253cec95836f9d352b4cb10e61a809ea2465f11bcc564736f6c63430008100033",
+  "deployedBytecode": "0x6080604052348015600f57600080fd5b506004361060285760003560e01c806310015f9814602d575b600080fd5b603c6038366004608c565b603e565b005b604080518481526001600160a01b03841660208201529081018290527fc7191f96ab050b47f8820c0915947f2c6e86096b509d5cd8b414b458ea86cb199060600160405180910390a1505050565b60008060006060848603121560a057600080fd5b8335925060208401356001600160a01b038116811460bd57600080fd5b92959294505050604091909101359056fea26469706673582212209b403929cb5d06bb40bf4253cec95836f9d352b4cb10e61a809ea2465f11bcc564736f6c63430008100033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}

@@ -76,7 +76,7 @@ const config: {
       synthetic: true,
       decimals: 18,
     },
-    USDT: {
+    USDC: {
       decimals: 6,
       deploy: true,
     },
@@ -109,7 +109,7 @@ const config: {
     USDC: {
       decimals: 6,
     },
-    MATIC: {
+    SOL: {
       synthetic: true,
       decimals: 18,
     },

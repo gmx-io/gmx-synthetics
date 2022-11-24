@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-contract-sizer";
@@ -39,6 +42,12 @@ const config: HardhatUserConfig = {
       url: "https://api.avax-test.network/ext/bc/C/rpc",
       chainId: 43113,
       accounts: [process.env.DEPLOYER_KEY].filter(Boolean),
+      verify: {
+        etherscan: {
+          apiUrl: "https://api-testnet.snowtrace.io/",
+          apiKey: process.env.SNOWTRACE_API_KEY,
+        },
+      },
     },
   },
   gasReporter: {
