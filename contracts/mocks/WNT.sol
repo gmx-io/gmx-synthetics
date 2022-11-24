@@ -9,6 +9,8 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract WNT is ERC20 {
     constructor() ERC20("Wrapped Native Token", "WNT") {}
 
+    error TransferFailed(address account, uint256 amount);
+
     function deposit() external payable {
         _mint(msg.sender, msg.value);
     }
@@ -16,7 +18,9 @@ contract WNT is ERC20 {
     function withdraw(uint256 amount) external {
         _burn(msg.sender, amount);
         (bool success, ) = msg.sender.call{ value: amount }("");
-        require(success, "FAIL_TRANSFER");
+        if (!success) {
+            revert TransferFailed(msg.sender, amount);
+        }
     }
 
     function mint(address account, uint256 amount) external {

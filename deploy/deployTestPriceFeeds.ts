@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 const func = async ({ getNamedAccounts, deployments, gmx }: HardhatRuntimeEnvironment) => {
-  const { deploy } = deployments;
+  const { deploy, execute } = deployments;
   const { deployer } = await getNamedAccounts();
   const { oracle: oracleConfig } = gmx;
 
@@ -10,19 +10,18 @@ const func = async ({ getNamedAccounts, deployments, gmx }: HardhatRuntimeEnviro
       continue;
     }
 
-    const { address } = await deploy(`${tokenSymbol}PriceFeed`, {
+    const contractName = `${tokenSymbol}PriceFeed`;
+    const { address } = await deploy(contractName, {
       from: deployer,
       log: true,
       contract: "MockPriceFeed",
     });
     priceFeed.address = address;
+
+    await execute(contractName, { from: deployer, log: true }, "setAnswer", priceFeed.initPrice);
   }
 };
 
-func.skip = async ({ network }) => {
-  // we only need deploy tokens for test networks
-  return network.live;
-};
 func.dependencies = ["Tokens", "DataStore"];
 func.tags = ["PriceFeeds"];
 export default func;

@@ -5,18 +5,21 @@ type OracleRealPriceFeed = {
   address: string;
   decimals: number;
   deploy?: never;
+  initPrice?: never;
 };
 
 type OracleTestPriceFeed = {
   address?: never;
   decimals: number;
   deploy: true;
+  initPrice: string;
 };
 
 type OraclePriceFeed = OracleRealPriceFeed | OracleTestPriceFeed;
 
 export type OracleConfig = {
   signers: string[];
+  minOracleSigners: number;
   tokens?: {
     [tokenSymbol: string]: {
       priceFeed?: OraclePriceFeed;
@@ -36,19 +39,23 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
   const config: { [network: string]: OracleConfig } = {
     localhost: {
       signers: testSigners,
+      minOracleSigners: 1,
     },
     hardhat: {
       signers: testSigners,
+      minOracleSigners: 1,
       tokens: {
         USDC: {
           priceFeed: {
             decimals: 8,
             deploy: true,
+            initPrice: "1000000",
           },
         },
       },
     },
     avalancheFuji: {
+      minOracleSigners: 1,
       signers: ["0xFb11f15f206bdA02c224EDC744b0E50E46137046", "0x23247a1A80D01b9482E9d734d2EB780a3b5c8E6c"],
       tokens: {
         USDT: {
@@ -68,6 +75,10 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
   };
 
   const oracle: OracleConfig = config[hre.network.name];
+  if (!oracle.tokens) {
+    oracle.tokens = {};
+  }
+
   const tokens = hre.gmx.tokens;
 
   // to make sure all tokens have an oracle type so oracle deployment/configuration script works correctly

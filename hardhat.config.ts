@@ -5,6 +5,9 @@ import "solidity-coverage";
 import "hardhat-gas-reporter";
 import "hardhat-deploy";
 
+import "@typechain/hardhat";
+import "@nomiclabs/hardhat-ethers";
+
 // extends hre with gmx domain data
 import "./config";
 

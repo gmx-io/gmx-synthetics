@@ -1,4 +1,6 @@
+import { setBalance } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { expandDecimals } from "../utils/math";
 
 const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRuntimeEnvironment) => {
   const { deploy, log } = deployments;
@@ -18,8 +20,13 @@ const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRunt
       from: deployer,
       log: true,
       contract: token.wrapped ? "WNT" : "MintableToken",
+      args: token.wrapped ? [] : [tokenSymbol, tokenSymbol, token.decimals],
     });
     tokens[tokenSymbol].address = address;
+
+    if (token.wrapped && !network.live) {
+      await setBalance(address, expandDecimals(1000, token.decimals));
+    }
   }
 };
 
