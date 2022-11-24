@@ -25,7 +25,7 @@ const func = async ({ getNamedAccounts, deployments, gmx }: HardhatRuntimeEnviro
     await setDataStoreUint("MAX_ORACLE_BLOCK_AGE", 200);
     await setDataStoreUint("MAX_LEVERAGE", expandFloatDecimals(100));
 
-    const wrappedAddress = Object.values(tokens).find((token) => token.wrapped)?.address;
+    const wrappedAddress = Object.values(tokens).find((token) => token.wrappedNative)?.address;
 
     await execute("DataStore", { from: deployer, log: true }, "setAddress", keys.WNT, wrappedAddress);
   }

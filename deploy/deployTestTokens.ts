@@ -19,12 +19,12 @@ const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRunt
     const { address } = await deploy(tokenSymbol, {
       from: deployer,
       log: true,
-      contract: token.wrapped ? "WNT" : "MintableToken",
-      args: token.wrapped ? [] : [tokenSymbol, tokenSymbol, token.decimals],
+      contract: token.wrappedNative ? "WNT" : "MintableToken",
+      args: token.wrappedNative ? [] : [tokenSymbol, tokenSymbol, token.decimals],
     });
     tokens[tokenSymbol].address = address;
 
-    if (token.wrapped && !network.live) {
+    if (token.wrappedNative && !network.live) {
       await setBalance(address, expandDecimals(1000, token.decimals));
     }
   }

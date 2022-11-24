@@ -39,11 +39,11 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
   const config: { [network: string]: OracleConfig } = {
     localhost: {
       signers: testSigners,
-      minOracleSigners: 1,
+      minOracleSigners: 0,
     },
     hardhat: {
       signers: testSigners,
-      minOracleSigners: 1,
+      minOracleSigners: 0,
       tokens: {
         USDC: {
           priceFeed: {
@@ -57,17 +57,26 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     avalancheFuji: {
       minOracleSigners: 1,
       signers: ["0xFb11f15f206bdA02c224EDC744b0E50E46137046", "0x23247a1A80D01b9482E9d734d2EB780a3b5c8E6c"],
+
+      // price feeds https://docs.chain.link/data-feeds/price-feeds/addresses?network=avalanche#Avalanche%20Testnet
       tokens: {
-        USDT: {
+        WETH: {
           priceFeed: {
-            address: "0x7898AcCC83587C3C55116c5230C17a6Cd9C71bad",
-            decimals: 8, // price feed decimals
+            address: "0x86d67c3D38D2bCeE722E601025C25a575021c6EA",
+            decimals: 8,
+          },
+        },
+        MATIC: {
+          priceFeed: {
+            address: "0xB0924e98CAFC880ed81F6A4cA63FD61006D1f8A0",
+            decimals: 8,
           },
         },
         USDC: {
           priceFeed: {
+            // this is USDT price feed, there is no USDC feed on Avalanche Fuji
+            address: "0x7898AcCC83587C3C55116c5230C17a6Cd9C71bad",
             decimals: 8,
-            deploy: true,
           },
         },
       },
