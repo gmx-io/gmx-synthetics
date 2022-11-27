@@ -16,7 +16,7 @@ const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRunt
       log("WARN: Deploying token on live network");
     }
 
-    const { address } = await deploy(tokenSymbol, {
+    const { address, newlyDeployed } = await deploy(tokenSymbol, {
       from: deployer,
       log: true,
       contract: token.wrappedNative ? "WNT" : "MintableToken",
@@ -24,8 +24,15 @@ const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRunt
     });
     tokens[tokenSymbol].address = address;
 
-    if (token.wrappedNative && !network.live) {
-      await setBalance(address, expandDecimals(1000, token.decimals));
+    if (newlyDeployed) {
+      if (token.wrappedNative && !network.live) {
+        await setBalance(address, expandDecimals(1000, token.decimals));
+      }
+
+      if (!token.wrappedNative) {
+        const tokenContract = await ethers.getContractAt("MintableToken", address);
+        await tokenContract.mint(deployer, expandDecimals(1000000, token.decimals));
+      }
     }
   }
 };

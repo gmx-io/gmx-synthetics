@@ -42,7 +42,9 @@ export async function createDeposit(fixture, overrides: any = {}) {
   };
 
   await logGasUsage({
-    tx: depositHandler.connect(wallet).createDeposit(account.address, params),
+    tx: depositHandler.connect(wallet).createDeposit(account.address, params, {
+      gasLimit: "1000000",
+    }),
     label: overrides.gasUsageLabel,
   });
 }

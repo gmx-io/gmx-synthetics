@@ -10,7 +10,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
 
   const existingSignersCount = await read("OracleStore", "getSignerCount");
   const existingSigners = await read("OracleStore", "getSigners", 0, existingSignersCount);
-  log("existing signers", existingSigners);
+  log("existing signers", existingSigners.join(","));
 
   for (const oracleSigner of oracleSigners) {
     if (!existingSigners.includes(oracleSigner)) {

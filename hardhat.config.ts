@@ -39,7 +39,8 @@ const config: HardhatUserConfig = {
       chainId: 421613,
     },
     avalancheFuji: {
-      url: "https://api.avax-test.network/ext/bc/C/rpc",
+      // url: "https://api.avax-test.network/ext/bc/C/rpc",
+      url: "https://avalanche-fuji.infura.io/v3/fb7620c360784f1d84741af88a069604",
       chainId: 43113,
       accounts: [process.env.DEPLOYER_KEY].filter(Boolean),
       verify: {
