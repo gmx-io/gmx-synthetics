@@ -16,6 +16,8 @@ import "./PositionStore.sol";
 import "./PositionUtils.sol";
 import "../order/OrderBaseUtils.sol";
 
+import "../swap/SwapUtils.sol";
+
 library DecreasePositionUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
@@ -29,10 +31,12 @@ library DecreasePositionUtils {
         EventEmitter eventEmitter;
         PositionStore positionStore;
         Oracle oracle;
+        SwapHandler swapHandler;
         FeeReceiver feeReceiver;
         IReferralStorage referralStorage;
         Market.Props market;
         Order.Props order;
+        Market.Props[] swapPathMarkets;
         Position.Props position;
         bytes32 positionKey;
         uint256 adjustedSizeDeltaUsd;
@@ -269,9 +273,36 @@ library DecreasePositionUtils {
 
         cache.outputToken = params.position.collateralToken;
 
-        // TODO: attempt swap collateralToken to pnlToken if needed
-        // if successful update outputAmount and pnlAmountForUser
+        // swap the withdrawn collateral from collateralToken to pnlToken if needed
+        if (params.position.collateralToken != cache.pnlToken && shouldSwapCollateralTokenToPnlToken(params.order.swapPath())) {
+            Market.Props[] memory swapPath = new Market.Props[](1);
+            swapPath[0] = params.swapPathMarkets[0];
 
+            try params.swapHandler.swap(
+                SwapUtils.SwapParams(
+                    params.dataStore,
+                    params.eventEmitter,
+                    params.oracle,
+                    params.feeReceiver,
+                    params.position.collateralToken, // tokenIn
+                    values.outputAmount, // amountIn
+                    swapPath, // markets
+                    0, // minOutputAmount
+                    params.market.marketToken, // receiver
+                    false // shouldUnwrapNativeToken
+                )
+            ) returns (address /* tokenOut */, uint256 swapOutputAmount) {
+                values.outputAmount += swapOutputAmount;
+                values.pnlAmountForUser = 0;
+            } catch Error(string memory reason) {
+                emit SwapUtils.SwapReverted(reason);
+            } catch (bytes memory _reason) {
+                string memory reason = string(abi.encode(_reason));
+                emit SwapUtils.SwapReverted(reason);
+            }
+        }
+
+        // if outputAmount is zero, transfer the values from pnlAmountForUser to outputAmount
         if (values.outputAmount == 0 && values.pnlAmountForUser > 0) {
             cache.outputToken = cache.pnlToken;
             values.outputAmount = values.pnlAmountForUser;
@@ -383,9 +414,33 @@ library DecreasePositionUtils {
             values.pnlAmountForPool = -values.positionPnlUsd / cache.pnlTokenPrice.max.toInt256();
             uint256 pnlAmountForUser = (-values.pnlAmountForPool).toUint256();
 
-            if (shouldSwapPnlTokenToCollateralToken(params.order.swapPath())) {
-                // TODO: attempt swap pnlToken to collateralToken
-                // if successful update pnlToken and pnlAmountForUser
+            // swap the realized profit from the pnlToken to the collateralToken if needed
+            if (params.position.collateralToken != cache.pnlToken && shouldSwapPnlTokenToCollateralToken(params.order.swapPath())) {
+                Market.Props[] memory swapPath = new Market.Props[](1);
+                swapPath[0] = params.swapPathMarkets[0];
+
+                try params.swapHandler.swap(
+                    SwapUtils.SwapParams(
+                        params.dataStore,
+                        params.eventEmitter,
+                        params.oracle,
+                        params.feeReceiver,
+                        cache.pnlToken, // tokenIn
+                        pnlAmountForUser, // amountIn
+                        swapPath, // markets
+                        0, // minOutputAmount
+                        params.market.marketToken, // receiver
+                        false // shouldUnwrapNativeToken
+                    )
+                ) returns (address tokenOut, uint256 swapOutputAmount) {
+                    cache.pnlToken = tokenOut;
+                    pnlAmountForUser = swapOutputAmount;
+                } catch Error(string memory reason) {
+                    emit SwapUtils.SwapReverted(reason);
+                } catch (bytes memory _reason) {
+                    string memory reason = string(abi.encode(_reason));
+                    emit SwapUtils.SwapReverted(reason);
+                }
             }
 
             if (params.position.collateralToken == cache.pnlToken) {
@@ -469,5 +524,13 @@ library DecreasePositionUtils {
         }
 
         return swapPath[0] == MarketUtils.SWAP_PNL_TOKEN_TO_COLLATERAL_TOKEN;
+    }
+
+    function shouldSwapCollateralTokenToPnlToken(address[] memory swapPath) internal pure returns (bool) {
+        if (swapPath.length == 0) {
+            return false;
+        }
+
+        return swapPath[0] == MarketUtils.SWAP_COLLATERAL_TOKEN_TO_PNL_TOKEN;
     }
 }

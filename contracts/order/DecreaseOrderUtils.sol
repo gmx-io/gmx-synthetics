@@ -32,10 +32,12 @@ library DecreaseOrderUtils {
                 params.eventEmitter,
                 params.positionStore,
                 params.oracle,
+                params.swapHandler,
                 params.feeReceiver,
                 params.referralStorage,
                 params.market,
                 order,
+                params.swapPathMarkets,
                 position,
                 positionKey,
                 order.sizeDeltaUsd()

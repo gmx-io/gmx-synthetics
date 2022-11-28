@@ -43,6 +43,8 @@ library SwapUtils {
         uint256 poolAmountOut;
     }
 
+    event SwapReverted(string reason);
+
     error InsufficientSwapOutputAmount(uint256 outputAmount, uint256 minOutputAmount);
 
     // returns tokenOut, outputAmount

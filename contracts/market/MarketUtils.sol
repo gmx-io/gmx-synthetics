@@ -399,7 +399,7 @@ library MarketUtils {
         address market,
         address longToken,
         address shortToken
-    ) internal {
+    ) external {
         (
             int256 longCollateralFundingPerSizeForLongs,
             int256 longCollateralFundingPerSizeForShorts,
@@ -497,7 +497,7 @@ library MarketUtils {
         address shortToken,
         MarketPrices memory prices,
         bool isLong
-    ) internal {
+    ) external {
         uint256 borrowingFactor = getNextCumulativeBorrowingFactor(dataStore, market, longToken, shortToken, prices, isLong);
         setCumulativeBorrowingFactor(dataStore, market, isLong, borrowingFactor);
         dataStore.setUint(Keys.cumulativeBorrowingFactorUpdatedAtKey(market, isLong), block.timestamp);
