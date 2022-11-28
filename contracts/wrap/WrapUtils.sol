@@ -16,13 +16,13 @@ library WrapUtils {
         return dataStore.getAddress(Keys.WNT);
     }
 
-    function sendWnt(DataStore dataStore, address receiver) internal returns (uint256) {
-        if (msg.value == 0) { return 0; }
+    function sendWnt(DataStore dataStore, address receiver, uint256 amount) internal returns (uint256) {
+        if (amount == 0) { return 0; }
 
         address _wnt = wnt(dataStore);
-        IWNT(_wnt).deposit{value: msg.value}();
-        IERC20(_wnt).safeTransfer(address(receiver), msg.value);
+        IWNT(_wnt).deposit{value: amount}();
+        IERC20(_wnt).safeTransfer(receiver, amount);
 
-        return msg.value;
+        return amount;
     }
 }
