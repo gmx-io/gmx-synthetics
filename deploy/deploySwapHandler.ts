@@ -4,16 +4,14 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { deploy, get } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  const { address: marketUtils } = await get("MarketUtils");
+  const roleStore = await get("RoleStore");
 
-  await deploy("DecreasePositionUtils", {
+  await deploy("SwapHandler", {
     from: deployer,
     log: true,
-    libraries: {
-      MarketUtils: marketUtils,
-    },
+    args: [roleStore.address],
   });
 };
-func.tags = ["DecreasePositionUtils"];
-func.dependencies = ["MarketUtils"];
+func.tags = ["SwapHandler"];
+func.dependencies = ["RoleStore"];
 export default func;
