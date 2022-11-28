@@ -94,7 +94,7 @@ library DecreaseOrderUtils {
             );
         } else {
             // TODO: attempt swap, catch errors and transfer
-            SwapUtils.swap(SwapUtils.SwapParams(
+            try params.swapHandler.swap(SwapUtils.SwapParams(
                 params.dataStore,
                 params.eventEmitter,
                 params.oracle,
@@ -105,7 +105,23 @@ library DecreaseOrderUtils {
                 order.minOutputAmount(),
                 order.receiver(),
                 order.shouldUnwrapNativeToken()
-            ));
+            )) returns (address /* tokenOut */, uint256 /* swapOutputAmount */) {
+            } catch Error(string memory reason) {
+                _handleSwapError(
+                    params.dataStore,
+                    order,
+                    result,
+                    reason
+                );
+            } catch (bytes memory _reason) {
+                string memory reason = string(abi.encode(_reason));
+                _handleSwapError(
+                    params.dataStore,
+                    order,
+                    result,
+                    reason
+                );
+            }
         }
     }
 
@@ -146,4 +162,20 @@ library DecreaseOrderUtils {
         OrderBaseUtils.revertUnsupportedOrderType();
     }
 
+    function _handleSwapError(
+        DataStore dataStore,
+        Order.Props memory order,
+        DecreasePositionUtils.DecreasePositionResult memory result,
+        string memory reason
+    ) internal {
+        emit SwapUtils.SwapReverted(reason);
+
+        MarketToken(payable(order.market())).transferOut(
+            WrapUtils.wnt(dataStore),
+            result.outputToken,
+            result.outputAmount,
+            order.receiver(),
+            order.shouldUnwrapNativeToken()
+        );
+    }
 }
