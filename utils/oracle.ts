@@ -13,6 +13,7 @@ export async function signPrice({
   signer,
   salt,
   oracleBlockNumber,
+  oracleTimestamp,
   blockHash,
   token,
   tokenOracleType,
@@ -22,6 +23,10 @@ export async function signPrice({
 }) {
   if (bigNumberify(oracleBlockNumber).gt(MAX_UINT64)) {
     throw new Error(`oracleBlockNumber exceeds max value: ${oracleBlockNumber.toString()}`);
+  }
+
+  if (bigNumberify(oracleTimestamp).gt(MAX_UINT64)) {
+    throw new Error(`oracleTimestamp exceeds max value: ${oracleTimestamp.toString()}`);
   }
 
   if (bigNumberify(precision).gt(MAX_UINT8)) {
@@ -39,8 +44,8 @@ export async function signPrice({
   const expandedPrecision = expandDecimals(1, precision);
 
   const hash = hashData(
-    ["bytes32", "uint256", "bytes32", "address", "bytes32", "uint256", "uint256", "uint256"],
-    [salt, oracleBlockNumber, blockHash, token, tokenOracleType, expandedPrecision, minPrice, maxPrice]
+    ["bytes32", "uint256", "uint256", "bytes32", "address", "bytes32", "uint256", "uint256", "uint256"],
+    [salt, oracleBlockNumber, oracleTimestamp, blockHash, token, tokenOracleType, expandedPrecision, minPrice, maxPrice]
   );
 
   return await signer.signMessage(ethers.utils.arrayify(hash));
@@ -50,6 +55,7 @@ export async function signPrices({
   signers,
   salt,
   oracleBlockNumber,
+  oracleTimestamp,
   blockHash,
   token,
   tokenOracleType,
@@ -63,6 +69,7 @@ export async function signPrices({
       signer: signers[i],
       salt,
       oracleBlockNumber,
+      oracleTimestamp,
       blockHash,
       token,
       tokenOracleType,
@@ -153,9 +160,18 @@ export function getCompactedOracleBlockNumbers(blockNumbers) {
   });
 }
 
+export function getCompactedOracleTimestamps(timestamps) {
+  return getCompactedValues({
+    values: timestamps,
+    compactedValueBitLength: 64,
+    maxValue: MAX_UINT64,
+  });
+}
+
 export async function getOracleParams({
   oracleSalt,
   oracleBlockNumbers,
+  oracleTimestamps,
   blockHashes,
   signerIndexes,
   tokens,
@@ -175,6 +191,7 @@ export async function getOracleParams({
 
   for (let i = 0; i < tokens.length; i++) {
     const oracleBlockNumber = oracleBlockNumbers[i];
+    const oracleTimestamp = oracleTimestamps[i];
     const blockHash = blockHashes[i];
     const token = tokens[i];
     const tokenOracleType = tokenOracleTypes[i];
@@ -188,6 +205,7 @@ export async function getOracleParams({
         signer: signers[j],
         salt: oracleSalt,
         oracleBlockNumber,
+        oracleTimestamp,
         blockHash,
         token,
         tokenOracleType,
@@ -207,6 +225,7 @@ export async function getOracleParams({
     signerInfo,
     tokens,
     compactedOracleBlockNumbers: getCompactedOracleBlockNumbers(oracleBlockNumbers),
+    compactedOracleTimestamps: getCompactedOracleTimestamps(oracleTimestamps),
     compactedDecimals: getCompactedDecimals(precisions),
     compactedMinPrices: getCompactedPrices(allMinPrices),
     compactedMinPricesIndexes: getCompactedPriceIndexes(minPriceIndexes),

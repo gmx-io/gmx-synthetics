@@ -31,13 +31,16 @@ contract Oracle is RoleModule {
         uint256 minBlockConfirmations;
         uint256 prevOracleBlockNumber;
         uint256 oracleBlockNumber;
+        uint256 oracleTimestamp;
         bytes32 blockHash;
         address token;
         uint256 precision;
         bytes32 tokenOracleType;
         uint256 priceIndex;
         uint256 signatureIndex;
-        uint256 maxBlockAge;
+        uint256 maxPriceAge;
+        uint256 minPriceIndex;
+        uint256 maxPriceIndex;
         uint256[] minPrices;
         uint256[] maxPrices;
     }
@@ -68,7 +71,7 @@ contract Oracle is RoleModule {
 
     error EmptyTokens();
     error InvalidBlockNumber(uint256 blockNumber);
-    error MaxBlockAgeExceeded(uint256 blockNumber);
+    error MaxPriceAgeExceeded(uint256 blockNumber);
     error MinOracleSigners(uint256 oracleSigners, uint256 minOracleSigners);
     error MaxOracleSigners(uint256 oracleSigners, uint256 maxOracleSigners);
     error BlockNumbersNotSorted(uint256 oracleBlockNumber, uint256 prevOracleBlockNumber);
@@ -243,17 +246,18 @@ contract Oracle is RoleModule {
     ) internal {
         _SetPricesCache memory cache;
         cache.minBlockConfirmations = dataStore.getUint(Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS);
-        cache.maxBlockAge = dataStore.getUint(Keys.MAX_ORACLE_BLOCK_AGE);
+        cache.maxPriceAge = dataStore.getUint(Keys.MAX_ORACLE_PRICE_AGE);
 
         for (uint256 i = 0; i < params.tokens.length; i++) {
             cache.oracleBlockNumber = OracleUtils.getUncompactedOracleBlockNumber(params.compactedOracleBlockNumbers, i);
+            cache.oracleTimestamp = OracleUtils.getUncompactedOracleTimestamp(params.compactedOracleTimestamps, i);
 
             if (cache.oracleBlockNumber > Chain.currentBlockNumber()) {
                 revert InvalidBlockNumber(cache.oracleBlockNumber);
             }
 
-            if (cache.oracleBlockNumber + cache.maxBlockAge < Chain.currentBlockNumber()) {
-                revert MaxBlockAgeExceeded(cache.oracleBlockNumber);
+            if (cache.oracleTimestamp + cache.maxPriceAge < Chain.currentTimestamp()) {
+                revert MaxPriceAgeExceeded(cache.oracleTimestamp);
             }
 
             // block numbers must be in ascending order
@@ -294,17 +298,18 @@ contract Oracle is RoleModule {
 
             for (uint256 j = 0; j < signers.length; j++) {
                 cache.signatureIndex = i * signers.length + j;
-                uint256 minPriceIndex = OracleUtils.getUncompactedPriceIndex(params.compactedMinPricesIndexes, cache.signatureIndex);
-                uint256 maxPriceIndex = OracleUtils.getUncompactedPriceIndex(params.compactedMaxPricesIndexes, cache.signatureIndex);
+                cache.minPriceIndex = OracleUtils.getUncompactedPriceIndex(params.compactedMinPricesIndexes, cache.signatureIndex);
+                cache.maxPriceIndex = OracleUtils.getUncompactedPriceIndex(params.compactedMaxPricesIndexes, cache.signatureIndex);
 
                 _validateSigner(
                     cache.oracleBlockNumber,
+                    cache.oracleTimestamp,
                     cache.blockHash,
                     cache.token,
                     cache.tokenOracleType,
                     cache.precision,
-                    cache.minPrices[minPriceIndex],
-                    cache.maxPrices[maxPriceIndex],
+                    cache.minPrices[cache.minPriceIndex],
+                    cache.maxPrices[cache.maxPriceIndex],
                     params.signatures[cache.signatureIndex],
                     signers[j]
                 );
@@ -389,6 +394,7 @@ contract Oracle is RoleModule {
 
     function _validateSigner(
         uint256 oracleBlockNumber,
+        uint256 oracleTimestamp,
         bytes32 blockHash,
         address token,
         bytes32 tokenOracleType,
@@ -402,6 +408,7 @@ contract Oracle is RoleModule {
             keccak256(abi.encode(
                 SALT,
                 oracleBlockNumber,
+                oracleTimestamp,
                 blockHash,
                 token,
                 tokenOracleType,

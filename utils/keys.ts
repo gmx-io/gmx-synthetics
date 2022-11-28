@@ -4,7 +4,7 @@ export const WNT = hashString("WNT");
 export const MAX_LEVERAGE = hashString("MAX_LEVERAGE");
 
 export const MIN_ORACLE_BLOCK_CONFIRMATIONS = hashString("MIN_ORACLE_BLOCK_CONFIRMATIONS");
-export const MAX_ORACLE_BLOCK_AGE = hashString("MAX_ORACLE_BLOCK_AGE");
+export const MAX_ORACLE_PRICE_AGE = hashString("MAX_ORACLE_PRICE_AGE");
 export const MIN_ORACLE_SIGNERS = hashString("MIN_ORACLE_SIGNERS");
 
 export const FEE_RECEIVER_DEPOSIT_FACTOR = hashString("FEE_RECEIVER_DEPOSIT_FACTOR");
