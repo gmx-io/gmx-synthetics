@@ -46,6 +46,8 @@ library Keys {
     bytes32 public constant DECREASE_ORDER_GAS_LIMIT = keccak256(abi.encode("DECREASE_ORDER_GAS_LIMIT"));
     bytes32 public constant SWAP_ORDER_GAS_LIMIT = keccak256(abi.encode("SWAP_ORDER_GAS_LIMIT"));
     bytes32 public constant CANCELLATION_GAS_LIMIT = keccak256(abi.encode("CANCELLATION_GAS_LIMIT"));
+    bytes32 public constant TOKEN_TRANSFER_GAS_LIMIT = keccak256(abi.encode("TOKEN_TRANSFER_GAS_LIMIT"));
+    bytes32 public constant NATIVE_TOKEN_TRANSFER_GAS_LIMIT = keccak256(abi.encode("NATIVE_TOKEN_TRANSFER_GAS_LIMIT"));
 
     bytes32 public constant MAX_LEVERAGE = keccak256(abi.encode("MAX_LEVERAGE"));
     bytes32 public constant MIN_COLLATERAL_USD = keccak256(abi.encode("MIN_COLLATERAL_USD"));
@@ -198,6 +200,13 @@ library Keys {
             orderType
         ));
     }
+
+    function tokenTransferGasLimit(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            TOKEN_TRANSFER_GAS_LIMIT,
+            token
+        ));
+   }
 
     function positionImpactFactorKey(address market, bool isPositive) internal pure returns (bytes32) {
         return keccak256(abi.encode(

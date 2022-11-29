@@ -66,7 +66,7 @@ library DecreaseOrderUtils {
         // the swapPath
         if (result.outputAmount > 0 && result.pnlAmountForUser > 0) {
             MarketToken(payable(order.market())).transferOut(
-                WrapUtils.wnt(params.dataStore),
+                params.dataStore,
                 result.outputToken,
                 result.outputAmount,
                 order.receiver(),
@@ -74,7 +74,7 @@ library DecreaseOrderUtils {
             );
 
             MarketToken(payable(order.market())).transferOut(
-                WrapUtils.wnt(params.dataStore),
+                params.dataStore,
                 result.pnlToken,
                 result.pnlAmountForUser,
                 order.receiver(),
@@ -86,7 +86,7 @@ library DecreaseOrderUtils {
 
         if (order.swapPath().length == 0) {
             MarketToken(payable(order.market())).transferOut(
-                WrapUtils.wnt(params.dataStore),
+                params.dataStore,
                 result.outputToken,
                 result.outputAmount,
                 order.receiver(),
@@ -171,7 +171,7 @@ library DecreaseOrderUtils {
         emit SwapUtils.SwapReverted(reason);
 
         MarketToken(payable(order.market())).transferOut(
-            WrapUtils.wnt(dataStore),
+            dataStore,
             result.outputToken,
             result.outputAmount,
             order.receiver(),

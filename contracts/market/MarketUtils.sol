@@ -258,6 +258,7 @@ library MarketUtils {
         dataStore.setUint(key, 0);
 
         MarketToken(payable(market)).transferOut(
+            dataStore,
             token,
             claimableAmount,
             receiver

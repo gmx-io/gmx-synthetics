@@ -19,7 +19,6 @@ import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 
 contract DepositHandler is ReentrancyGuard, FundReceiver, OracleModule {
-    DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     DepositStore public immutable depositStore;
     MarketStore public immutable marketStore;
@@ -34,7 +33,7 @@ contract DepositHandler is ReentrancyGuard, FundReceiver, OracleModule {
         MarketStore _marketStore,
         Oracle _oracle,
         FeeReceiver _feeReceiver
-    ) FundReceiver(_roleStore) {
+    ) FundReceiver(_roleStore, _dataStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         depositStore = _depositStore;

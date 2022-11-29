@@ -12,8 +12,6 @@ import "../order/Order.sol";
 import "../order/OrderBaseUtils.sol";
 
 import "../bank/StrictBank.sol";
-import "../wrap/WrapUtils.sol";
-import "../wrap/IWNT.sol";
 
 library GasUtils {
     using Order for Order.Props;
@@ -31,8 +29,8 @@ library GasUtils {
         address keeper,
         address user
     ) external {
-        address wnt = WrapUtils.wnt(dataStore);
-        bank.transferOut(wnt, executionFee, address(this));
+        address wnt = TokenUtils.wnt(dataStore);
+        bank.transferOut(dataStore, wnt, executionFee, address(this));
         IWNT(wnt).withdraw(executionFee);
 
         uint256 gasUsed = startingGas - gasleft();
@@ -42,7 +40,12 @@ library GasUtils {
             executionFeeForKeeper = executionFee;
         }
 
-        payable(keeper).transfer(executionFeeForKeeper);
+        TokenUtils.nonRevertingTransferNativeToken(
+            dataStore,
+            keeper,
+            executionFeeForKeeper
+        );
+
         emit KeeperExecutionFee(keeper, executionFeeForKeeper);
 
         uint256 refundFeeForUser = executionFee - executionFeeForKeeper;
@@ -50,11 +53,12 @@ library GasUtils {
             return;
         }
 
-        // it is possible to force a transaction to fail by having the user
-        // be a contract and modifying the receive function
-        // this can cause front-running issues, due to that `send` is used instead
-        //  of `transfer` so that the transaction will not revert
-        bool success = payable(user).send(refundFeeForUser);
+        bool success = TokenUtils.nonRevertingTransferNativeToken(
+            dataStore,
+            user,
+            refundFeeForUser
+        );
+
         emit UserRefundFee(user, refundFeeForUser, success);
     }
 

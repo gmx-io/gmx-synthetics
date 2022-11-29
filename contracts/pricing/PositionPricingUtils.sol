@@ -181,6 +181,7 @@ library PositionPricingUtils {
     }
 
     function transferPositionFees(
+        DataStore dataStore,
         FeeReceiver feeReceiver,
         MarketToken marketToken,
         Position.Props memory position,
@@ -188,7 +189,12 @@ library PositionPricingUtils {
         PositionFees memory fees
     ) internal returns (PositionFees memory) {
         if (fees.feeReceiverAmount > 0) {
-            marketToken.transferOut(position.collateralToken, fees.feeReceiverAmount, address(feeReceiver));
+            marketToken.transferOut(
+                dataStore,
+                position.collateralToken,
+                fees.feeReceiverAmount,
+                address(feeReceiver)
+            );
             feeReceiver.notifyFeeReceived(feeType, position.collateralToken, fees.feeReceiverAmount);
         }
 

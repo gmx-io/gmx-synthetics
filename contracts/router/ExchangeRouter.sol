@@ -14,6 +14,8 @@ import "../utils/PayableMulticall.sol";
 import "./Router.sol";
 
 // for functions which require token transfers from the user
+// IMPORTANT: PayableMulticall uses delegatecall, msg.value will be the same for each delegatecall
+// extra care should be taken when using msg.value in any of the functions in this contract
 contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     using SafeERC20 for IERC20;
     using Order for Order.Props;
@@ -58,7 +60,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     }
 
     function sendWnt(address receiver, uint256 amount) external nonReentrant returns (uint256) {
-        return WrapUtils.sendWnt(dataStore, receiver, amount);
+        return TokenUtils.sendWnt(dataStore, receiver, amount);
     }
 
     function createDeposit(
@@ -140,7 +142,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
 
         // allow topping up of executionFee as partially filled or frozen orders
         // will have their executionFee reduced
-        address wnt = WrapUtils.wnt(dataStore);
+        address wnt = TokenUtils.wnt(dataStore);
         uint256 receivedWnt = _orderStore.recordTransferIn(wnt);
         order.setExecutionFee(order.executionFee() + receivedWnt);
 

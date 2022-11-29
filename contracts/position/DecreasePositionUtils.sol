@@ -508,6 +508,7 @@ library DecreasePositionUtils {
         }
 
         PricingUtils.transferFees(
+            params.dataStore,
             params.feeReceiver,
             params.market.marketToken,
             params.position.collateralToken,

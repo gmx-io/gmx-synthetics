@@ -6,7 +6,7 @@ import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 import "../oracle/Oracle.sol";
 import "../pricing/SwapPricingUtils.sol";
-import "../wrap/WrapUtils.sol";
+import "../token/TokenUtils.sol";
 
 library SwapUtils {
     using SafeCast for uint256;
@@ -94,6 +94,7 @@ library SwapUtils {
         );
 
         PricingUtils.transferFees(
+            params.dataStore,
             params.feeReceiver,
             _params.market.marketToken,
             _params.tokenIn,
@@ -159,7 +160,7 @@ library SwapUtils {
 
         if (_params.receiver != address(0)) {
             MarketToken(payable(_params.market.marketToken)).transferOut(
-                WrapUtils.wnt(params.dataStore),
+                params.dataStore,
                 cache.tokenOut,
                 cache.poolAmountOut,
                 _params.receiver,

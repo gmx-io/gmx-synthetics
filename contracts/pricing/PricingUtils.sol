@@ -68,15 +68,24 @@ library PricingUtils {
     }
 
     function transferFees(
+        DataStore dataStore,
         FeeReceiver feeReceiver,
         address marketToken,
         address token,
         uint256 feeReceiverAmount,
         bytes32 feeType
     ) internal {
-        if (feeReceiverAmount > 0) {
-            MarketToken(payable(marketToken)).transferOut(token, feeReceiverAmount, address(feeReceiver));
-            feeReceiver.notifyFeeReceived(feeType, token, feeReceiverAmount);
+        if (feeReceiverAmount == 0) {
+            return;
         }
+
+        MarketToken(payable(marketToken)).transferOut(
+            dataStore,
+            token,
+            feeReceiverAmount,
+            address(feeReceiver)
+        );
+
+        feeReceiver.notifyFeeReceived(feeType, token, feeReceiverAmount);
     }
 }

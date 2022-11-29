@@ -23,7 +23,6 @@ import "../market/MarketStore.sol";
 import "../swap/SwapUtils.sol";
 
 import "../gas/GasUtils.sol";
-import "../wrap/WrapUtils.sol";
 import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
@@ -44,7 +43,7 @@ library OrderUtils {
     ) external returns (bytes32) {
         uint256 initialCollateralDeltaAmount;
 
-        address wnt = WrapUtils.wnt(dataStore);
+        address wnt = TokenUtils.wnt(dataStore);
 
         if (params.initialCollateralToken == wnt ||
             params.orderType == Order.OrderType.MarketSwap ||
@@ -161,7 +160,7 @@ library OrderUtils {
         if (OrderBaseUtils.isIncreaseOrder(order.orderType()) || OrderBaseUtils.isSwapOrder(order.orderType())) {
             if (order.initialCollateralDeltaAmount() > 0) {
                 orderStore.transferOut(
-                    WrapUtils.wnt(dataStore),
+                    TokenUtils.wnt(dataStore),
                     order.initialCollateralToken(),
                     order.initialCollateralDeltaAmount(),
                     order.account(),
