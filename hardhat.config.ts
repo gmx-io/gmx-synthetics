@@ -31,6 +31,7 @@ const config: HardhatUserConfig = {
     hardhat: {
       saveDeployments: true,
       blockGasLimit: 2099510650903,
+      allowUnlimitedContractSize: true,
     },
     arbitrum: {
       url: "https://arb1.arbitrum.io/rpc",
