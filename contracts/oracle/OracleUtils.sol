@@ -10,6 +10,7 @@ library OracleUtils {
         uint256 signerInfo;
         address[] tokens;
         uint256[] compactedOracleBlockNumbers;
+        uint256[] compactedOracleTimestamps;
         uint256[] compactedDecimals;
         uint256[] compactedMinPrices;
         uint256[] compactedMinPricesIndexes;
@@ -31,12 +32,17 @@ library OracleUtils {
     uint256 public constant COMPACTED_BLOCK_NUMBER_BIT_LENGTH = 64;
     uint256 public constant COMPACTED_BLOCK_NUMBER_BITMASK = Bits.BITMASK_64;
 
+    // compacted timestamps have a length of 64 bits
+    uint256 public constant COMPACTED_TIMESTAMP_BIT_LENGTH = 64;
+    uint256 public constant COMPACTED_TIMESTAMP_BITMASK = Bits.BITMASK_64;
+
     // compacted price indexes have a length of 8 bits
     uint256 public constant COMPACTED_PRICE_INDEX_BIT_LENGTH = 8;
     uint256 public constant COMPACTED_PRICE_INDEX_BITMASK = Bits.BITMASK_8;
 
     error EmptyCompactedPrice(uint256 index);
     error EmptyCompactedBlockNumber(uint256 index);
+    error EmptyCompactedTimestamp(uint256 index);
 
     function getUncompactedPrice(uint256[] memory compactedPrices, uint256 index) internal pure returns (uint256) {
         uint256 price = Array.getUncompactedValue(
@@ -95,6 +101,19 @@ library OracleUtils {
         );
 
         if (blockNumber == 0) { revert EmptyCompactedBlockNumber(index); }
+
+        return blockNumber;
+    }
+
+    function getUncompactedOracleTimestamp(uint256[] memory compactedOracleTimestamps, uint256 index) internal pure returns (uint256) {
+        uint256 blockNumber = Array.getUncompactedValue(
+            compactedOracleTimestamps,
+            index,
+            COMPACTED_TIMESTAMP_BIT_LENGTH,
+            COMPACTED_TIMESTAMP_BITMASK
+        );
+
+        if (blockNumber == 0) { revert EmptyCompactedTimestamp(index); }
 
         return blockNumber;
     }

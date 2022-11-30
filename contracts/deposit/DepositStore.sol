@@ -12,7 +12,7 @@ contract DepositStore is StrictBank {
     mapping(bytes32 => Deposit.Props) internal deposits;
     EnumerableSet.Bytes32Set internal depositKeys;
 
-    constructor(RoleStore _roleStore) StrictBank(_roleStore) {}
+    constructor(RoleStore _roleStore, DataStore _dataStore) StrictBank(_roleStore, _dataStore) {}
 
     function set(bytes32 key, Deposit.Props memory deposit) external onlyController {
         deposits[key] = deposit;

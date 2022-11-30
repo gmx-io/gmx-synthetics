@@ -83,7 +83,7 @@ library WithdrawalUtils {
         address account,
         CreateWithdrawalParams memory params
     ) internal returns (bytes32) {
-        address wnt = WrapUtils.wnt(dataStore);
+        address wnt = TokenUtils.wnt(dataStore);
         uint256 wntAmount = withdrawalStore.recordTransferIn(wnt);
         require(wntAmount == params.executionFee, "WithdrawalUtils: invalid wntAmount");
 
@@ -261,6 +261,7 @@ library WithdrawalUtils {
         );
 
         PricingUtils.transferFees(
+            params.dataStore,
             params.feeReceiver,
             _params.market.marketToken,
             _params.tokenOut,
@@ -331,7 +332,7 @@ library WithdrawalUtils {
 
         MarketToken(payable(_params.market.marketToken)).burn(_params.account, _params.marketTokensAmount);
         MarketToken(payable(_params.market.marketToken)).transferOut(
-            WrapUtils.wnt(params.dataStore),
+            params.dataStore,
             _params.tokenOut,
             outputAmount,
             _params.receiver,

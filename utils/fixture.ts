@@ -63,7 +63,8 @@ export async function deployFixture() {
     wnt.address,
     usdc.address,
     marketFactory.address,
-    roleStore.address
+    roleStore.address,
+    dataStore.address
   );
   const ethUsdMarket = await marketStore.get(ethUsdMarketAddress);
 

@@ -6,12 +6,13 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { deployer } = await getNamedAccounts();
 
   const { address: roleStoreAddress } = await get("RoleStore");
+  const { address: dataStoreAddress } = await get("DataStore");
   const { address: marketStoreAddress } = await get("MarketStore");
 
   const { newlyDeployed, address } = await deploy("MarketFactory", {
     from: deployer,
     log: true,
-    args: [roleStoreAddress, marketStoreAddress],
+    args: [roleStoreAddress, dataStoreAddress, marketStoreAddress],
   });
 
   if (newlyDeployed) {
@@ -19,5 +20,5 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   }
 };
 func.tags = ["MarketFactory"];
-func.dependencies = ["RoleStore", "MarketStore"];
+func.dependencies = ["RoleStore", "DataStore", "MarketStore"];
 export default func;

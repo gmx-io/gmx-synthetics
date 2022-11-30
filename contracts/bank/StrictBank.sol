@@ -5,7 +5,6 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "../wrap/IWNT.sol";
 import "./Bank.sol";
 
 contract StrictBank is Bank {
@@ -14,7 +13,7 @@ contract StrictBank is Bank {
     // used to record token balances to evaluate amounts transferred in
     mapping (address => uint256) public tokenBalances;
 
-    constructor(RoleStore _roleStore) Bank(_roleStore) {}
+    constructor(RoleStore _roleStore, DataStore _dataStore) Bank(_roleStore, _dataStore) {}
 
     function recordTransferIn(address token) external onlyController returns (uint256) {
         return _recordTransferIn(token);

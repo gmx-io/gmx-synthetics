@@ -45,6 +45,7 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
     MarketStore public immutable marketStore;
     OrderStore public immutable orderStore;
     PositionStore public immutable positionStore;
+    SwapHandler public immutable swapHandler;
     Oracle public immutable oracle;
     EventEmitter public immutable eventEmitter;
     FeeReceiver public immutable feeReceiver;
@@ -58,6 +59,7 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         OrderStore _orderStore,
         PositionStore _positionStore,
         Oracle _oracle,
+        SwapHandler _swapHandler,
         FeeReceiver _feeReceiver,
         IReferralStorage _referralStorage
     ) RoleModule(_roleStore) {
@@ -67,6 +69,7 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         orderStore = _orderStore;
         positionStore = _positionStore;
         oracle = _oracle;
+        swapHandler = _swapHandler;
         feeReceiver = _feeReceiver;
         referralStorage = _referralStorage;
     }
@@ -116,10 +119,10 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
             }
 
             _handleOrderError(key, startingGas, reason, reasonKey);
-        } catch (bytes memory reason) {
-            string memory _reason = string(abi.encode(reason));
-            bytes32 reasonKey = keccak256(abi.encode(reason));
-            _handleOrderError(key, startingGas, _reason, reasonKey);
+        } catch (bytes memory _reason) {
+            string memory reason = string(abi.encode(_reason));
+            bytes32 reasonKey = keccak256(abi.encode(_reason));
+            _handleOrderError(key, startingGas, reason, reasonKey);
         }
     }
 
@@ -284,6 +287,7 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         params.orderStore = orderStore;
         params.positionStore = positionStore;
         params.oracle = oracle;
+        params.swapHandler = swapHandler;
         params.feeReceiver = feeReceiver;
         params.referralStorage = referralStorage;
         params.oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(

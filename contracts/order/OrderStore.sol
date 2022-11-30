@@ -15,7 +15,7 @@ contract OrderStore is StrictBank {
     EnumerableSet.Bytes32Set internal orderKeys;
     mapping(address => EnumerableSet.Bytes32Set) internal accountOrderKeys;
 
-    constructor(RoleStore _roleStore) StrictBank(_roleStore) {}
+    constructor(RoleStore _roleStore, DataStore _dataStore) StrictBank(_roleStore, _dataStore) {}
 
     function set(bytes32 key, Order.Props memory order) external onlyController {
         orders[key] = order;

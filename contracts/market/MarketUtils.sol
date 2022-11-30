@@ -74,6 +74,12 @@ library MarketUtils {
         uint256 fundingAmountPerSizeForShortCollateralForShorts;
     }
 
+    // the first item of the swap path indicates if
+    // any pre-swap is needed to unify the pnlToken and collateralToken for decrease positions
+    address public constant NO_SWAP = address(1);
+    address public constant SWAP_PNL_TOKEN_TO_COLLATERAL_TOKEN = address(2);
+    address public constant SWAP_COLLATERAL_TOKEN_TO_PNL_TOKEN = address(3);
+
     error EmptyMarket();
     error InsufficientPoolAmount(uint256 poolAmount, uint256 amount);
     error InsufficientReserve(uint256 reservedUsd, uint256 maxReservedUsd);
@@ -252,6 +258,7 @@ library MarketUtils {
         dataStore.setUint(key, 0);
 
         MarketToken(payable(market)).transferOut(
+            dataStore,
             token,
             claimableAmount,
             receiver
@@ -393,7 +400,7 @@ library MarketUtils {
         address market,
         address longToken,
         address shortToken
-    ) internal {
+    ) external {
         (
             int256 longCollateralFundingPerSizeForLongs,
             int256 longCollateralFundingPerSizeForShorts,
@@ -491,7 +498,7 @@ library MarketUtils {
         address shortToken,
         MarketPrices memory prices,
         bool isLong
-    ) internal {
+    ) external {
         uint256 borrowingFactor = getNextCumulativeBorrowingFactor(dataStore, market, longToken, shortToken, prices, isLong);
         setCumulativeBorrowingFactor(dataStore, market, isLong, borrowingFactor);
         dataStore.setUint(Keys.cumulativeBorrowingFactorUpdatedAtKey(market, isLong), block.timestamp);
@@ -872,7 +879,16 @@ library MarketUtils {
         Market.Props[] memory markets = new Market.Props[](swapPath.length);
 
         for (uint256 i = 0; i < swapPath.length; i++) {
-            Market.Props memory market = marketStore.get(swapPath[i]);
+            address marketAddress = swapPath[i];
+            if (
+                marketAddress == NO_SWAP ||
+                marketAddress == SWAP_PNL_TOKEN_TO_COLLATERAL_TOKEN ||
+                marketAddress == SWAP_COLLATERAL_TOKEN_TO_PNL_TOKEN
+            ) {
+                    continue;
+            }
+
+            Market.Props memory market = marketStore.get(marketAddress);
             validateNonEmptyMarket(market);
             markets[i] = market;
         }

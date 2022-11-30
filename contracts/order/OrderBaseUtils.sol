@@ -12,6 +12,7 @@ import "../order/OrderStore.sol";
 import "../position/PositionStore.sol";
 
 import "../oracle/Oracle.sol";
+import "../swap/SwapHandler.sol";
 
 // OrderUtils has the function executeOrder, which uses IncreaseOrderUtils, DecreaseOrderUtils, SwapOrderUtils
 // those libraries need some common functions contained here
@@ -47,6 +48,7 @@ library OrderBaseUtils {
         OrderStore orderStore;
         PositionStore positionStore;
         Oracle oracle;
+        SwapHandler swapHandler;
         FeeReceiver feeReceiver;
         IReferralStorage referralStorage;
         uint256[] oracleBlockNumbers;

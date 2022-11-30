@@ -22,8 +22,8 @@ library Keys {
     bytes32 public constant MIN_ORACLE_SIGNERS = keccak256(abi.encode("MIN_ORACLE_SIGNERS"));
     // the minimum block confirmations before blockhash can be excluded for oracle signature validation
     bytes32 public constant MIN_ORACLE_BLOCK_CONFIRMATIONS = keccak256(abi.encode("MIN_ORACLE_BLOCK_CONFIRMATIONS"));
-    // the maximum block age usable for oracle prices
-    bytes32 public constant MAX_ORACLE_BLOCK_AGE = keccak256(abi.encode("MAX_ORACLE_BLOCK_AGE"));
+    // the maximum usable oracle price age in seconds
+    bytes32 public constant MAX_ORACLE_PRICE_AGE = keccak256(abi.encode("MAX_ORACLE_PRICE_AGE"));
     // the percentage amount of fees to be received for deposits
     bytes32 public constant FEE_RECEIVER_DEPOSIT_FACTOR = keccak256(abi.encode("FEE_RECEIVER_DEPOSIT_FACTOR"));
     // the percentage amount of fees to be received for withdrawals
@@ -46,6 +46,8 @@ library Keys {
     bytes32 public constant DECREASE_ORDER_GAS_LIMIT = keccak256(abi.encode("DECREASE_ORDER_GAS_LIMIT"));
     bytes32 public constant SWAP_ORDER_GAS_LIMIT = keccak256(abi.encode("SWAP_ORDER_GAS_LIMIT"));
     bytes32 public constant CANCELLATION_GAS_LIMIT = keccak256(abi.encode("CANCELLATION_GAS_LIMIT"));
+    bytes32 public constant TOKEN_TRANSFER_GAS_LIMIT = keccak256(abi.encode("TOKEN_TRANSFER_GAS_LIMIT"));
+    bytes32 public constant NATIVE_TOKEN_TRANSFER_GAS_LIMIT = keccak256(abi.encode("NATIVE_TOKEN_TRANSFER_GAS_LIMIT"));
 
     bytes32 public constant MAX_LEVERAGE = keccak256(abi.encode("MAX_LEVERAGE"));
     bytes32 public constant MIN_COLLATERAL_USD = keccak256(abi.encode("MIN_COLLATERAL_USD"));
@@ -198,6 +200,13 @@ library Keys {
             orderType
         ));
     }
+
+    function tokenTransferGasLimit(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            TOKEN_TRANSFER_GAS_LIMIT,
+            token
+        ));
+   }
 
     function positionImpactFactorKey(address market, bool isPositive) internal pure returns (bytes32) {
         return keccak256(abi.encode(

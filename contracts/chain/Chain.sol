@@ -10,6 +10,10 @@ library Chain {
 
     ArbSys constant public arbSys = ArbSys(address(100));
 
+    function currentTimestamp() internal view returns (uint256) {
+        return block.timestamp;
+    }
+
     function currentBlockNumber() internal view returns (uint256) {
         if (block.chainid == ARBITRUM_CHAIN_ID || block.chainid == ARBITRUM_RINKEBY_CHAIN_ID) {
             return arbSys.arbBlockNumber();

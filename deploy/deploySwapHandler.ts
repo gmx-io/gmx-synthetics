@@ -5,14 +5,13 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { deployer } = await getNamedAccounts();
 
   const roleStore = await get("RoleStore");
-  const dataStore = await get("DataStore");
 
-  await deploy("DepositStore", {
+  await deploy("SwapHandler", {
     from: deployer,
     log: true,
-    args: [roleStore.address, dataStore.address],
+    args: [roleStore.address],
   });
 };
-func.tags = ["DepositStore"];
-func.dependencies = ["RoleStore", "DataStore"];
+func.tags = ["SwapHandler"];
+func.dependencies = ["RoleStore"];
 export default func;

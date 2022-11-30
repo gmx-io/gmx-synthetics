@@ -26,11 +26,18 @@ export async function getMarketTokenPrice(fixture) {
   );
 }
 
-export function getMarketTokenAddress(indexToken, longToken, shortToken, marketFactoryAddress, roleStoreAddress) {
+export function getMarketTokenAddress(
+  indexToken,
+  longToken,
+  shortToken,
+  marketFactoryAddress,
+  roleStoreAddress,
+  dataStoreAddress
+) {
   const salt = hashData(["string", "address", "address", "address"], ["GMX_MARKET", indexToken, longToken, shortToken]);
   const byteCode = MarketTokenArtifact.bytecode;
   return calculateCreate2(marketFactoryAddress, salt, byteCode, {
-    params: [roleStoreAddress],
-    types: ["address"],
+    params: [roleStoreAddress, dataStoreAddress],
+    types: ["address", "address"],
   });
 }

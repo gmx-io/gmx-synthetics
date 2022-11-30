@@ -11,7 +11,13 @@ library IncreaseOrderUtils {
     using Array for uint256[];
 
     function processOrder(OrderBaseUtils.ExecuteOrderParams memory params) external {
-        params.orderStore.transferOut(params.order.initialCollateralToken(), params.order.initialCollateralDeltaAmount(), params.order.market());
+        params.orderStore.transferOut(
+            params.dataStore,
+            params.order.initialCollateralToken(),
+            params.order.initialCollateralDeltaAmount(),
+            params.order.market()
+        );
+
         MarketUtils.validateNonEmptyMarket(params.market);
 
         (address collateralToken, uint256 collateralDeltaAmount) = SwapUtils.swap(SwapUtils.SwapParams(

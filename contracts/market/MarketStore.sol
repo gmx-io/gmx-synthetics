@@ -3,9 +3,9 @@
 pragma solidity ^0.8.0;
 
 import "./Market.sol";
-import "../role/RoleModule.sol";
+import "../bank/StrictBank.sol";
 
-contract MarketStore is RoleModule {
+contract MarketStore is StrictBank {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableValues for EnumerableSet.AddressSet;
     using Market for Market.Props;
@@ -13,7 +13,7 @@ contract MarketStore is RoleModule {
     mapping(address => Market.Props) internal markets;
     EnumerableSet.AddressSet internal marketTokens;
 
-    constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
+    constructor(RoleStore _roleStore, DataStore _dataStore) StrictBank(_roleStore, _dataStore) {}
 
     function set(address marketToken, Market.Props memory market) external onlyController {
         markets[marketToken] = market;

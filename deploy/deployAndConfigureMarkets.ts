@@ -10,6 +10,7 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
 
   const { address: marketFactoryAddress } = await get("MarketFactory");
   const { address: roleStoreAddress } = await get("RoleStore");
+  const { address: dataStoreAddress } = await get("DataStore");
 
   for (const marketConfig of markets) {
     const [indexToken, longToken, shortToken] = marketConfig.tokens.map((symbol) => tokens[symbol].address);
@@ -19,7 +20,8 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
       longToken,
       shortToken,
       marketFactoryAddress,
-      roleStoreAddress
+      roleStoreAddress,
+      dataStoreAddress
     );
     const code = await ethers.provider.getCode(marketToken);
     if (code !== "0x") {
@@ -51,7 +53,8 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
       longToken,
       shortToken,
       marketFactoryAddress,
-      roleStoreAddress
+      roleStoreAddress,
+      dataStoreAddress
     );
 
     await setReserveFactor(marketToken, true, reserveFactor);

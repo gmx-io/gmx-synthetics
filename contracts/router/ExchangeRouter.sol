@@ -5,16 +5,18 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/Multicall.sol";
 
 import "../exchange/DepositHandler.sol";
 import "../exchange/WithdrawalHandler.sol";
 import "../exchange/OrderHandler.sol";
+import "../utils/PayableMulticall.sol";
 
 import "./Router.sol";
 
 // for functions which require token transfers from the user
-contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
+// IMPORTANT: PayableMulticall uses delegatecall, msg.value will be the same for each delegatecall
+// extra care should be taken when using msg.value in any of the functions in this contract
+contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     using SafeERC20 for IERC20;
     using Order for Order.Props;
 
@@ -57,17 +59,19 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
         referralStorage = _referralStorage;
     }
 
+    function sendWnt(address receiver, uint256 amount) external nonReentrant {
+        TokenUtils.depositAndSendWrappedNativeToken(dataStore, receiver, amount);
+    }
+
     function createDeposit(
         address longToken,
         address shortToken,
         uint256 longTokenAmount,
         uint256 shortTokenAmount,
         DepositUtils.CreateDepositParams calldata params
-    ) external nonReentrant payable returns (bytes32) {
+    ) external nonReentrant returns (bytes32) {
         address account = msg.sender;
         address _depositStore = address(depositStore);
-
-        WrapUtils.sendWnt(dataStore, _depositStore);
 
         if (longTokenAmount > 0) {
             router.pluginTransfer(longToken, account, _depositStore, longTokenAmount);
@@ -84,10 +88,8 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
 
     function createWithdrawal(
         WithdrawalUtils.CreateWithdrawalParams calldata params
-    ) external nonReentrant payable returns (bytes32) {
+    ) external nonReentrant returns (bytes32) {
         address account = msg.sender;
-
-        WrapUtils.sendWnt(dataStore, address(withdrawalStore));
 
         return withdrawalHandler.createWithdrawal(
             account,
@@ -99,14 +101,12 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
         uint256 amountIn,
         OrderBaseUtils.CreateOrderParams calldata params,
         bytes32 referralCode
-    ) external nonReentrant payable returns (bytes32) {
+    ) external nonReentrant returns (bytes32) {
         require(params.orderType != Order.OrderType.Liquidation, "ExchangeRouter: invalid order type");
 
         address account = msg.sender;
 
         ReferralUtils.setTraderReferralCode(referralStorage, account, referralCode);
-
-        WrapUtils.sendWnt(dataStore, address(orderStore));
 
         if (amountIn > 0) {
             router.pluginTransfer(params.initialCollateralToken, account, address(orderStore), amountIn);
@@ -123,7 +123,7 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
         uint256 sizeDeltaUsd,
         uint256 triggerPrice,
         uint256 acceptablePrice
-    ) external payable nonReentrant {
+    ) external nonReentrant {
         OrderStore _orderStore = orderStore;
         Order.Props memory order = _orderStore.get(key);
 
@@ -141,8 +141,9 @@ contract ExchangeRouter is ReentrancyGuard, Multicall, RoleModule {
         order.setIsFrozen(false);
 
         // allow topping up of executionFee as partially filled or frozen orders
-        //  will have their executionFee reduced
-        uint256 receivedWnt = WrapUtils.sendWnt(dataStore, address(_orderStore));
+        // will have their executionFee reduced
+        address wnt = TokenUtils.wnt(dataStore);
+        uint256 receivedWnt = _orderStore.recordTransferIn(wnt);
         order.setExecutionFee(order.executionFee() + receivedWnt);
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);

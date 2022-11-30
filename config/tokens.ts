@@ -50,20 +50,24 @@ const config: {
       address: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
       decimals: 18,
       wrappedNative: true,
+      transferGasLimit: 200 * 1000,
     },
     WBTC: {
       address: "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
       decimals: 8,
+      transferGasLimit: 200 * 1000,
     },
     USDC: {
       address: "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
       decimals: 6,
+      transferGasLimit: 200 * 1000,
     },
   },
   avalanche: {
     WAVAX: {
       address: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
       decimals: 18,
+      transferGasLimit: 200 * 1000,
     },
   },
   avalancheFuji: {
@@ -71,18 +75,22 @@ const config: {
       address: "0x1D308089a2D1Ced3f1Ce36B1FcaF815b07217be3",
       wrappedNative: true,
       decimals: 18,
+      transferGasLimit: 200 * 1000,
     },
     SOL: {
       synthetic: true,
       decimals: 18,
+      transferGasLimit: 200 * 1000,
     },
     USDC: {
       decimals: 6,
       deploy: true,
+      transferGasLimit: 200 * 1000,
     },
     WETH: {
       decimals: 18,
       deploy: true,
+      transferGasLimit: 200 * 1000,
     },
   },
   // token addresses are retrieved in runtime for hardhat and localhost networks
@@ -90,24 +98,30 @@ const config: {
     WETH: {
       wrappedNative: true,
       decimals: 18,
+      transferGasLimit: 200 * 1000,
     },
     WBTC: {
       decimals: 8,
+      transferGasLimit: 200 * 1000,
     },
     USDC: {
       decimals: 6,
+      transferGasLimit: 200 * 1000,
     },
   },
   localhost: {
     WETH: {
       wrappedNative: true,
       decimals: 18,
+      transferGasLimit: 200 * 1000,
     },
     WBTC: {
       decimals: 8,
+      transferGasLimit: 200 * 1000,
     },
     USDC: {
       decimals: 6,
+      transferGasLimit: 200 * 1000,
     },
     SOL: {
       synthetic: true,

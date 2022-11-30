@@ -3,9 +3,9 @@
 pragma solidity ^0.8.0;
 
 import "./Position.sol";
-import "../role/RoleModule.sol";
+import "../bank/StrictBank.sol";
 
-contract PositionStore is RoleModule {
+contract PositionStore is StrictBank {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using EnumerableValues for EnumerableSet.Bytes32Set;
 
@@ -13,7 +13,7 @@ contract PositionStore is RoleModule {
     EnumerableSet.Bytes32Set internal positionKeys;
     mapping(address => EnumerableSet.Bytes32Set) internal accountPositionKeys;
 
-    constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
+    constructor(RoleStore _roleStore, DataStore _dataStore) StrictBank(_roleStore, _dataStore) {}
 
     function set(bytes32 key, address account, Position.Props memory position) external onlyController {
         positions[key] = position;
