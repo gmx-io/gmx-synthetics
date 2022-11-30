@@ -16,12 +16,11 @@ import "./Router.sol";
 // for functions which require token transfers from the user
 // IMPORTANT: PayableMulticall uses delegatecall, msg.value will be the same for each delegatecall
 // extra care should be taken when using msg.value in any of the functions in this contract
-contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
+contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
     using SafeERC20 for IERC20;
     using Order for Order.Props;
 
     Router public immutable router;
-    DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     DepositHandler public immutable depositHandler;
     WithdrawalHandler public immutable withdrawalHandler;
@@ -43,9 +42,8 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         WithdrawalStore _withdrawalStore,
         OrderStore _orderStore,
         IReferralStorage _referralStorage
-    ) RoleModule(_roleStore) {
+    ) FundReceiver(_roleStore, _dataStore) {
         router = _router;
-        dataStore = _dataStore;
         eventEmitter = _eventEmitter;
 
         depositHandler = _depositHandler;
@@ -58,6 +56,8 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
 
         referralStorage = _referralStorage;
     }
+
+    receive() external payable {}
 
     function sendWnt(address receiver, uint256 amount) external nonReentrant {
         TokenUtils.depositAndSendWrappedNativeToken(dataStore, receiver, amount);

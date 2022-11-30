@@ -11,6 +11,7 @@ import "../callback/CallbackUtils.sol";
 import "../adl/AdlUtils.sol";
 import "../liquidation/LiquidationUtils.sol";
 
+import "../bank/FundReceiver.sol";
 import "../market/Market.sol";
 import "../market/MarketStore.sol";
 import "../market/MarketToken.sol";
@@ -27,7 +28,7 @@ import "../event/EventEmitter.sol";
 import "../utils/Null.sol";
 import "../referral/IReferralStorage.sol";
 
-contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
+contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
     using SafeCast for uint256;
     using Order for Order.Props;
     using Array for uint256[];
@@ -41,7 +42,6 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         uint256 maxPnlFactorForWithdrawals;
     }
 
-    DataStore public immutable dataStore;
     MarketStore public immutable marketStore;
     OrderStore public immutable orderStore;
     PositionStore public immutable positionStore;
@@ -62,8 +62,7 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         SwapHandler _swapHandler,
         FeeReceiver _feeReceiver,
         IReferralStorage _referralStorage
-    ) RoleModule(_roleStore) {
-        dataStore = _dataStore;
+    ) FundReceiver(_roleStore, _dataStore) {
         eventEmitter = _eventEmitter;
         marketStore = _marketStore;
         orderStore = _orderStore;

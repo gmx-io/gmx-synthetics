@@ -6,7 +6,7 @@ import { printGasUsage } from "../../utils/gas";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, createOrder } from "../../utils/order";
 
-describe("Exchange.UpdateOrder", () => {
+describe("Exchange.CancelOrder", () => {
   const { provider } = ethers;
 
   let fixture;
@@ -28,7 +28,7 @@ describe("Exchange.UpdateOrder", () => {
     });
   });
 
-  it("updateOrder", async () => {
+  it("cancelOrder", async () => {
     expect(await orderStore.getOrderCount()).eq(0);
     const params = {
       market: ethUsdMarket,
@@ -49,10 +49,10 @@ describe("Exchange.UpdateOrder", () => {
 
     expect(await orderStore.getOrderCount()).eq(1);
 
-    let block = await provider.getBlock();
+    const block = await provider.getBlock();
 
     const orderKeys = await orderStore.getOrderKeys(0, 1);
-    let order = await orderStore.get(orderKeys[0]);
+    const order = await orderStore.get(orderKeys[0]);
 
     expect(order.addresses.account).eq(user0.address);
     expect(order.addresses.market).eq(ethUsdMarket.marketToken);
@@ -69,33 +69,15 @@ describe("Exchange.UpdateOrder", () => {
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
 
-    await expect(
-      exchangeRouter
-        .connect(user1)
-        .updateOrder(orderKeys[0], expandFloatDecimals(250 * 1000), expandDecimals(4950, 12), expandDecimals(5050, 12))
-    ).to.be.revertedWith("ExchangeRouter: forbidden");
+    await expect(exchangeRouter.connect(user1).cancelOrder(orderKeys[0])).to.be.revertedWith(
+      "ExchangeRouter: forbidden"
+    );
 
-    const txn = await exchangeRouter
-      .connect(user0)
-      .updateOrder(orderKeys[0], expandFloatDecimals(250 * 1000), expandDecimals(4950, 12), expandDecimals(5050, 12));
-    block = await provider.getBlock();
+    expect(await orderStore.getOrderCount()).eq(1);
 
-    await printGasUsage(provider, txn, "updateOrder");
+    const txn = await exchangeRouter.connect(user0).cancelOrder(orderKeys[0]);
 
-    order = await orderStore.get(orderKeys[0]);
-    expect(order.addresses.account).eq(user0.address);
-    expect(order.addresses.market).eq(ethUsdMarket.marketToken);
-    expect(order.addresses.initialCollateralToken).eq(wnt.address);
-    expect(order.addresses.swapPath).eql([ethUsdMarket.marketToken]);
-    expect(order.numbers.sizeDeltaUsd).eq(expandFloatDecimals(250 * 1000));
-    expect(order.numbers.initialCollateralDeltaAmount).eq(expandDecimals(10, 18));
-    expect(order.numbers.acceptablePrice).eq(expandDecimals(4950, 12));
-    expect(order.numbers.triggerPrice).eq(expandDecimals(5050, 12));
-    expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
-    expect(order.numbers.minOutputAmount).eq(expandDecimals(50000, 6));
-    expect(order.numbers.updatedAtBlock).eq(block.number);
-    expect(order.flags.orderType).eq(OrderType.LimitIncrease);
-    expect(order.flags.isLong).eq(true);
-    expect(order.flags.shouldUnwrapNativeToken).eq(false);
+    await printGasUsage(provider, txn, "cancelOrder");
+    expect(await orderStore.getOrderCount()).eq(0);
   });
 });
