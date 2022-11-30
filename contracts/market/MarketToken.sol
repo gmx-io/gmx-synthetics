@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../bank/Bank.sol";
 
 contract MarketToken is ERC20, Bank {
-    constructor(RoleStore _roleStore) ERC20("GMX Market", "GM") Bank(_roleStore) {
+    constructor(RoleStore _roleStore, DataStore _dataStore) ERC20("GMX Market", "GM") Bank(_roleStore, _dataStore) {
     }
 
     function mint(address account, uint256 amount) external onlyController {

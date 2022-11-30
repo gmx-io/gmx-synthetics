@@ -268,6 +268,7 @@ library IncreasePositionUtils {
         );
 
         PricingUtils.transferFees(
+            params.dataStore,
             params.feeReceiver,
             params.market.marketToken,
             position.collateralToken,

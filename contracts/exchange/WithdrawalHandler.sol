@@ -34,7 +34,6 @@ contract WithdrawalHandler is ReentrancyGuard, FundReceiver, OracleModule {
         Oracle _oracle,
         FeeReceiver _feeReceiver
     ) FundReceiver(_roleStore, _dataStore) {
-        dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         withdrawalStore = _withdrawalStore;
         marketStore = _marketStore;

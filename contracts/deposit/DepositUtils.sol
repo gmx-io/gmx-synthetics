@@ -269,6 +269,7 @@ library DepositUtils {
         );
 
         PricingUtils.transferFees(
+            params.dataStore,
             params.feeReceiver,
             _params.market.marketToken,
             _params.tokenIn,

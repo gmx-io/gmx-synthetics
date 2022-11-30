@@ -12,7 +12,7 @@ contract WithdrawalStore is StrictBank {
     mapping(bytes32 => Withdrawal.Props) public withdrawals;
     EnumerableSet.Bytes32Set internal withdrawalKeys;
 
-    constructor(RoleStore _roleStore) StrictBank(_roleStore) {}
+    constructor(RoleStore _roleStore, DataStore _dataStore) StrictBank(_roleStore, _dataStore) {}
 
     function set(bytes32 key, Withdrawal.Props memory withdrawal) external onlyController {
         withdrawals[key] = withdrawal;

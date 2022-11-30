@@ -2,10 +2,11 @@
 
 pragma solidity ^0.8.1;
 
-import "@openzeppelin/contracts/utils/Address.sol";
+/* import "@openzeppelin/contracts/utils/Address.sol"; */
+import "./Address2.sol";
 
 library GasLimitedCall {
-    using Address for address;
+    using Address2 for address;
 
     /**
      * @dev Performs a Solidity function call using a low level `call`. A
@@ -79,6 +80,7 @@ library GasLimitedCall {
     ) internal returns (bytes memory) {
         require(address(this).balance >= value, "Address: insufficient balance for call");
         (bool success, bytes memory returndata) = target.call{value: value, gas: gasLimit }(data);
-        return target.verifyCallResultFromTarget(success, returndata, errorMessage);
+        target.test(value);
+        /* return target.verifyCallResultFromTarget(success, returndata, errorMessage); */
     }
 }

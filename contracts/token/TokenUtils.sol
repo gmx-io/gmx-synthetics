@@ -39,7 +39,15 @@ library TokenUtils {
 
         uint256 gasLimit = dataStore.getUint(Keys.tokenTransferGasLimit(token));
 
-        try IERC20(token).safeTransferWithGasLimit(receiver, amount, gasLimit) {
+        /* try IERC20(token).safeTransferWithGasLimit(receiver, amount, gasLimit) {
+            return;
+        } catch Error(string memory reason) {
+            emit TransferReverted(reason);
+        } catch (bytes memory _reason) {
+            string memory reason = string(abi.encode(_reason));
+            emit TransferReverted(reason);
+        } */
+        try IERC20(token).transfer(receiver, amount) {
             return;
         } catch Error(string memory reason) {
             emit TransferReverted(reason);
@@ -63,7 +71,7 @@ library TokenUtils {
 
         uint256 gasLimit = dataStore.getUint(Keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT);
 
-        (bool success, bytes memory data) = payable(receiver).call{ value: amount, gas: gasLimit }();
+        (bool success, bytes memory data) = payable(receiver).call{ value: amount, gas: gasLimit }("");
 
         if (success) { return true; }
 
@@ -73,17 +81,17 @@ library TokenUtils {
         return false;
     }
 
-    function depositAndSendWrappedNativeToken(
+    function nonRevertingDepositAndSendWrappedNativeToken(
         DataStore dataStore,
         address receiver,
         uint256 amount
-    ) internal returns (bool) {
-        if (amount == 0) { return 0; }
+    ) internal {
+        if (amount == 0) { return; }
 
         address _wnt = wnt(dataStore);
         IWNT(_wnt).deposit{value: amount}();
 
-        return transfer(
+        transfer(
             dataStore,
             _wnt,
             receiver,
@@ -91,16 +99,16 @@ library TokenUtils {
         );
     }
 
-    function withdrawAndSendNativeToken(
+    function nonRevertingWithdrawAndSendNativeToken(
         DataStore dataStore,
         address _wnt,
         address receiver,
         uint256 amount
-    ) internal returns (bool) {
-        if (amount == 0) { return 0; }
+    ) internal {
+        if (amount == 0) { return; }
 
         IWNT(_wnt).withdraw(amount);
 
-        return nonRevertingTransferNativeToken(dataStore, receiver, amount);
+        nonRevertingTransferNativeToken(dataStore, receiver, amount);
     }
 }

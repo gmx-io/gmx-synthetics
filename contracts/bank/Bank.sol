@@ -11,7 +11,7 @@ import "./FundReceiver.sol";
 contract Bank is FundReceiver {
     using SafeERC20 for IERC20;
 
-    constructor(RoleStore _roleStore) FundReceiver(_roleStore) {}
+    constructor(RoleStore _roleStore, DataStore _dataStore) FundReceiver(_roleStore, _dataStore) {}
 
     receive() external payable {}
 
@@ -48,7 +48,7 @@ contract Bank is FundReceiver {
     ) internal {
         require(receiver != address(this), "Bank: invalid receiver");
 
-        TokenUtils.nonRevertingTransfer(dataStore, token, receiver, amount);
+        TokenUtils.transfer(dataStore, token, receiver, amount);
 
         _afterTransferOut(token);
     }

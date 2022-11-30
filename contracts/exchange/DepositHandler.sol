@@ -34,7 +34,6 @@ contract DepositHandler is ReentrancyGuard, FundReceiver, OracleModule {
         Oracle _oracle,
         FeeReceiver _feeReceiver
     ) FundReceiver(_roleStore, _dataStore) {
-        dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         depositStore = _depositStore;
         marketStore = _marketStore;

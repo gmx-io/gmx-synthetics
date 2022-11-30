@@ -14,9 +14,11 @@ contract MarketFactory is RoleModule {
 
     event MarketCreated(address marketToken, address indexToken, address longToken, address shortToken);
 
+    DataStore dataStore;
     MarketStore public marketStore;
 
-    constructor(RoleStore _roleStore, MarketStore _marketStore) RoleModule(_roleStore) {
+    constructor(RoleStore _roleStore, DataStore _dataStore, MarketStore _marketStore) RoleModule(_roleStore) {
+        dataStore = _dataStore;
         marketStore = _marketStore;
     }
 
@@ -37,7 +39,7 @@ contract MarketFactory is RoleModule {
             shortToken
         ));
 
-        MarketToken marketToken = new MarketToken{salt: marketTokenSalt}(roleStore);
+        MarketToken marketToken = new MarketToken{salt: marketTokenSalt}(roleStore, dataStore);
 
         Market.Props memory market = Market.Props(
             address(marketToken),
