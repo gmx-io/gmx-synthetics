@@ -121,8 +121,8 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     function updateOrder(
         bytes32 key,
         uint256 sizeDeltaUsd,
-        uint256 triggerPrice,
-        uint256 acceptablePrice
+        uint256 acceptablePrice,
+        uint256 triggerPrice
     ) external nonReentrant {
         OrderStore _orderStore = orderStore;
         Order.Props memory order = _orderStore.get(key);
