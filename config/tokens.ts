@@ -7,12 +7,12 @@ import { hashData } from "../utils/hash";
 // synthetic token without corresponding token
 // address will be generated in runtime in hardhat.config.ts
 // should not be deployed
-// should not be wrapped
+// should not be wrappedNative
 type SyntheticTokenConfig = {
   address?: never;
   decimals: number;
   synthetic: true;
-  wrapped?: never;
+  wrappedNative?: never;
   deploy?: never;
 };
 
@@ -20,7 +20,7 @@ type RealTokenConfig = {
   address: string;
   decimals: number;
   synthetic?: never;
-  wrapped?: true;
+  wrappedNative?: true;
   deploy?: never;
 };
 
@@ -31,7 +31,7 @@ export type TestTokenConfig = {
   address?: never;
   decimals: number;
   deploy?: true;
-  wrapped?: boolean;
+  wrappedNative?: boolean;
   synthetic?: never;
 };
 
@@ -49,7 +49,7 @@ const config: {
     WETH: {
       address: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
       decimals: 18,
-      wrapped: true,
+      wrappedNative: true,
       transferGasLimit: 200 * 1000,
     },
     WBTC: {
@@ -73,7 +73,7 @@ const config: {
   avalancheFuji: {
     WAVAX: {
       address: "0x1D308089a2D1Ced3f1Ce36B1FcaF815b07217be3",
-      wrapped: true,
+      wrappedNative: true,
       decimals: 18,
       transferGasLimit: 200 * 1000,
     },
@@ -82,7 +82,7 @@ const config: {
       decimals: 18,
       transferGasLimit: 200 * 1000,
     },
-    USDT: {
+    USDC: {
       decimals: 6,
       deploy: true,
       transferGasLimit: 200 * 1000,
@@ -96,7 +96,7 @@ const config: {
   // token addresses are retrieved in runtime for hardhat and localhost networks
   hardhat: {
     WETH: {
-      wrapped: true,
+      wrappedNative: true,
       decimals: 18,
       transferGasLimit: 200 * 1000,
     },
@@ -111,7 +111,7 @@ const config: {
   },
   localhost: {
     WETH: {
-      wrapped: true,
+      wrappedNative: true,
       decimals: 18,
       transferGasLimit: 200 * 1000,
     },

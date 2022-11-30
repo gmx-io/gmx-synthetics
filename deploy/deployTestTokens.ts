@@ -1,5 +1,8 @@
+import { setBalance } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+
 import * as keys from "../utils/keys";
+import { expandDecimals } from "../utils/math";
 
 const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRuntimeEnvironment) => {
   const { execute, read, deploy, log } = deployments;
@@ -32,10 +35,11 @@ const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRunt
       log("WARN: Deploying token on live network");
     }
 
-    const { address } = await deploy(tokenSymbol, {
+    const { address, newlyDeployed } = await deploy(tokenSymbol, {
       from: deployer,
       log: true,
-      contract: token.wrapped ? "WNT" : "MintableToken",
+      contract: token.wrappedNative ? "WNT" : "MintableToken",
+      args: token.wrappedNative ? [] : [tokenSymbol, tokenSymbol, token.decimals],
     });
 
     tokens[tokenSymbol].address = address;
@@ -56,9 +60,20 @@ const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRunt
         token.transferGasLimit
       );
     }
+
+    if (newlyDeployed) {
+      if (token.wrappedNative && !network.live) {
+        await setBalance(address, expandDecimals(1000, token.decimals));
+      }
+
+      if (!token.wrappedNative) {
+        const tokenContract = await ethers.getContractAt("MintableToken", address);
+        await tokenContract.mint(deployer, expandDecimals(1000000, token.decimals));
+      }
+    }
   }
 
-  const wrappedAddress = Object.values(tokens).find((token) => token.wrapped)?.address;
+  const wrappedAddress = Object.values(tokens).find((token) => token.wrappedNative)?.address;
   const currentWrappedAddress = await read("DataStore", { from: deployer }, "getAddress", keys.WNT);
   if (currentWrappedAddress != wrappedAddress) {
     await execute("DataStore", { from: deployer, log: true }, "setAddress", keys.WNT, wrappedAddress);

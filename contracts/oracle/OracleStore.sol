@@ -8,16 +8,21 @@ contract OracleStore is RoleModule {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableValues for EnumerableSet.AddressSet;
 
+    event SignerAdded(address signer);
+    event SignerRemoved(address signer);
+
     EnumerableSet.AddressSet internal signers;
 
     constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
 
     function addSigner(address account) external onlyController {
         signers.add(account);
+        emit SignerAdded(account);
     }
 
     function removeSigner(address account) external onlyController {
         signers.remove(account);
+        emit SignerRemoved(account);
     }
 
     function getSignerCount() external view returns (uint256) {
