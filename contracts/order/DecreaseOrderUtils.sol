@@ -93,7 +93,6 @@ library DecreaseOrderUtils {
                 order.shouldUnwrapNativeToken()
             );
         } else {
-            // TODO: attempt swap, catch errors and transfer
             try params.swapHandler.swap(SwapUtils.SwapParams(
                 params.dataStore,
                 params.eventEmitter,

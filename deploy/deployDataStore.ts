@@ -1,12 +1,10 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { hashString } from "../utils/hash";
-import * as keys from "../utils/keys";
 import { expandFloatDecimals } from "../utils/math";
 
-const func = async ({ getNamedAccounts, deployments, gmx }: HardhatRuntimeEnvironment) => {
+const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment) => {
   const { deploy, execute, get } = deployments;
   const { deployer } = await getNamedAccounts();
-  const { tokens } = gmx;
 
   const roleStore = await get("RoleStore");
 
@@ -24,12 +22,8 @@ const func = async ({ getNamedAccounts, deployments, gmx }: HardhatRuntimeEnviro
     await setDataStoreUint("MIN_ORACLE_BLOCK_CONFIRMATIONS", 100);
     await setDataStoreUint("MAX_ORACLE_PRICE_AGE", 5 * 60); // 5 minutes
     await setDataStoreUint("MAX_LEVERAGE", expandFloatDecimals(100));
-
-    const wrappedAddress = Object.values(tokens).find((token) => token.wrapped)?.address;
-
-    await execute("DataStore", { from: deployer, log: true }, "setAddress", keys.WNT, wrappedAddress);
   }
 };
 func.tags = ["DataStore"];
-func.dependencies = ["RoleStore", "Tokens"];
+func.dependencies = ["RoleStore"];
 export default func;

@@ -1,9 +1,27 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+import * as keys from "../utils/keys";
 
 const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRuntimeEnvironment) => {
-  const { deploy, log } = deployments;
+  const { execute, read, deploy, log } = deployments;
   const { deployer } = await getNamedAccounts();
   const { tokens } = gmx;
+
+  const nativeTokenTransferGasLimit = 200 * 1000;
+  const currentNativeTokenTransferGasLimit = await read(
+    "DataStore",
+    { from: deployer },
+    "getUint",
+    keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT
+  );
+  if (currentNativeTokenTransferGasLimit != nativeTokenTransferGasLimit) {
+    await execute(
+      "DataStore",
+      { from: deployer, log: true },
+      "setUint",
+      keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT,
+      nativeTokenTransferGasLimit
+    );
+  }
 
   for (const [tokenSymbol, token] of Object.entries(tokens)) {
     if (token.synthetic || !token.deploy) {
@@ -19,9 +37,34 @@ const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRunt
       log: true,
       contract: token.wrapped ? "WNT" : "MintableToken",
     });
+
     tokens[tokenSymbol].address = address;
+
+    const currentTokenTransferGasLimit = await read(
+      "DataStore",
+      { from: deployer },
+      "getUint",
+      keys.tokenTransferGasLimit(address)
+    );
+
+    if (currentTokenTransferGasLimit != token.transferGasLimit) {
+      await execute(
+        "DataStore",
+        { from: deployer, log: true },
+        "setUint",
+        keys.tokenTransferGasLimit(address),
+        token.transferGasLimit
+      );
+    }
+  }
+
+  const wrappedAddress = Object.values(tokens).find((token) => token.wrapped)?.address;
+  const currentWrappedAddress = await read("DataStore", { from: deployer }, "getAddress", keys.WNT);
+  if (currentWrappedAddress != wrappedAddress) {
+    await execute("DataStore", { from: deployer, log: true }, "setAddress", keys.WNT, wrappedAddress);
   }
 };
 
 func.tags = ["Tokens"];
+func.dependencies = ["DataStore"];
 export default func;
