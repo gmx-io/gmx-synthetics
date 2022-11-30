@@ -17,14 +17,18 @@ library TokenUtils {
 
     event TransferReverted(string reason);
 
-    // throw a custom TransferError to prevent spoofing of errors to match
-    // error exceptions in e.g. OrderHandler
+    // throw a custom TransferError to prevent spoofing of errors
+    // this is necessary because contracts like DepositHandler, WithdrawalHandler, OrderHandler
+    // do not cancel requests for specific errors
     error TransferError(address token, address receiver, uint256 amount);
 
     function wnt(DataStore dataStore) internal view returns (address) {
         return dataStore.getAddress(Keys.WNT);
     }
 
+    // limit the amount of gas forwarded so that a user cannot intentionally
+    // construct a token call that would consume all gas and prevent necessary
+    // actions like request cancellation from being executed
     function transfer(
         DataStore dataStore,
         address token,
@@ -47,6 +51,9 @@ library TokenUtils {
         revert TransferError(token, receiver, amount);
     }
 
+    // if sufficient gas is forwarded, all native token transfers should not
+    // revert under normal operation
+    // use this call so that payable receiving contracts cannot intentionally cause reverts
     function nonRevertingTransferNativeToken(
         DataStore dataStore,
         address receiver,
