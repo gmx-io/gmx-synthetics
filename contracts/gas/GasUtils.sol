@@ -17,7 +17,7 @@ library GasUtils {
     using Order for Order.Props;
 
     event KeeperExecutionFee(address keeper, uint256 amount);
-    event UserRefundFee(address keeper, uint256 amount, bool success);
+    event UserRefundFee(address keeper, uint256 amount);
 
     error InsufficientExecutionFee(uint256 minExecutionFee, uint256 executionFee);
 
@@ -40,7 +40,7 @@ library GasUtils {
             executionFeeForKeeper = executionFee;
         }
 
-        TokenUtils.nonRevertingTransferNativeToken(
+        TokenUtils.transferNativeToken(
             dataStore,
             keeper,
             executionFeeForKeeper
@@ -53,13 +53,13 @@ library GasUtils {
             return;
         }
 
-        bool success = TokenUtils.nonRevertingTransferNativeToken(
+        TokenUtils.transferNativeToken(
             dataStore,
             user,
             refundFeeForUser
         );
 
-        emit UserRefundFee(user, refundFeeForUser, success);
+        emit UserRefundFee(user, refundFeeForUser);
     }
 
     function validateExecutionFee(DataStore dataStore, uint256 estimatedGasLimit, uint256 executionFee) internal view {

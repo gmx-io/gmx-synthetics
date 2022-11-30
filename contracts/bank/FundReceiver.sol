@@ -15,6 +15,6 @@ contract FundReceiver is RoleModule {
 
     // users may incorrectly send the native token into the contract, allow it to be recovered
     function recoverWnt(address payable receiver, uint256 amount) external onlyController {
-        TokenUtils.nonRevertingTransferNativeToken(dataStore, receiver, amount);
+        TokenUtils.transferNativeToken(dataStore, receiver, amount);
     }
 }

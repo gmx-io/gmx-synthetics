@@ -60,7 +60,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     }
 
     function sendWnt(address receiver, uint256 amount) external nonReentrant {
-        TokenUtils.nonRevertingDepositAndSendWrappedNativeToken(dataStore, receiver, amount);
+        TokenUtils.depositAndSendWrappedNativeToken(dataStore, receiver, amount);
     }
 
     function createDeposit(

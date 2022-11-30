@@ -61,7 +61,7 @@ contract Bank is FundReceiver {
     ) internal {
         require(receiver != address(this), "Bank: invalid receiver");
 
-        TokenUtils.nonRevertingWithdrawAndSendNativeToken(
+        TokenUtils.withdrawAndSendNativeToken(
             dataStore,
             token,
             receiver,
