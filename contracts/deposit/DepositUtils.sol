@@ -19,6 +19,9 @@ import "../callback/CallbackUtils.sol";
 import "../utils/Array.sol";
 import "../utils/Null.sol";
 
+// @title DepositUtils
+// @dev Library for deposit functions, to help with the depositing of liquidity
+// into a market in return for market tokens
 library DepositUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
@@ -26,6 +29,17 @@ library DepositUtils {
 
     using Price for Price.Props;
 
+    // @dev CreateDepositParams struct used in createDeposit to avoid stack
+    // too deep errors
+    //
+    // @param receiver the address to send the market tokens to
+    // @param callbackContract the callback contract
+    // @param market the market to deposit into
+    // @param minMarketTokens the minimum acceptable number of liquidity tokens
+    // @param shouldUnwrapNativeToken whether to unwrap the native token when
+    // sending funds back to the user in case the deposit gets cancelled
+    // @param executionFee the execution fee
+    // @param callbackGasLimit the gas limit for the callbackContract
     struct CreateDepositParams {
         address receiver;
         address callbackContract;
@@ -36,6 +50,19 @@ library DepositUtils {
         uint256 callbackGasLimit;
     }
 
+    // @dev ExecuteDepositParams struct used in executeDeposit to avoid stack
+    // too deep errors
+    //
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param depositStore DepositStore
+    // @param marketStore MarketStore
+    // @param oracle Oracle
+    // @param feeReceiver FeeReceiver
+    // @param key the key of the deposit to execute
+    // @param oracleBlockNumbers the oracle block numbers for the prices in oracle
+    // @param keeper the address of the keeper executing the deposit
+    // @param startingGas the starting amount of gas
     struct ExecuteDepositParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
@@ -49,6 +76,20 @@ library DepositUtils {
         uint256 startingGas;
     }
 
+    // @dev _ExecuteDepositParams struct used in executeDeposit to avoid stack
+    // too deep errors
+    //
+    // @param market the market to deposit into
+    // @param account the depositing account
+    // @param receiver the account to send the market tokens to
+    // @param tokenIn the token to deposit, either the market.longToken or
+    // market.shortToken
+    // @param tokenOut the other token, if tokenIn is market.longToken then
+    // tokenOut is market.shortToken and vice versa
+    // @param tokenInPrice price of tokenIn
+    // @param tokenOutPrice price of tokenOut
+    // @param amount amount of tokenIn
+    // @param priceImpactUsd price impact in USD
     struct _ExecuteDepositParams {
         Market.Props market;
         address account;
@@ -63,6 +104,14 @@ library DepositUtils {
 
     error MinMarketTokens(uint256 received, uint256 expected);
 
+    // @dev creates a deposit in the depositStore
+    //
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param depositStore DepositStore
+    // @param marketStore MarketStore
+    // @param account the depositing account
+    // @param params CreateDepositParams
     function createDeposit(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -115,6 +164,8 @@ library DepositUtils {
         return key;
     }
 
+    // @dev executes a deposit
+    // @param params ExecuteDepositParams
     function executeDeposit(ExecuteDepositParams memory params) internal {
         Deposit.Props memory deposit = params.depositStore.get(params.key);
         require(deposit.account != address(0), "DepositUtils: empty deposit");
@@ -211,6 +262,15 @@ library DepositUtils {
         );
     }
 
+    // @dev cancels a deposit, funds are sent back to the user
+    //
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param depositStore DepositStore
+    // @param marketStore MarketStore
+    // @param key the key of the deposit to cancel
+    // @param keeper the address of the keeper
+    // @param startingGas the starting gas amount
     function cancelDeposit(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -260,6 +320,9 @@ library DepositUtils {
         );
     }
 
+    // @dev executes a deposit
+    // @param params ExecuteDepositParams
+    // @param _params _ExecuteDepositParams
     function _executeDeposit(ExecuteDepositParams memory params, _ExecuteDepositParams memory _params) internal returns (uint256) {
         SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
             params.dataStore,
@@ -282,6 +345,11 @@ library DepositUtils {
         return _processDeposit(params, _params, fees.amountAfterFees, fees.feesForPool);
     }
 
+    // @dev processes a deposit
+    // @param params ExecuteDepositParams
+    // @param _params _ExecuteDepositParams
+    // @param amountAfterFees the deposit amount after fees
+    // @param feesForPool the amount of fees for the pool
     function _processDeposit(
         ExecuteDepositParams memory params,
         _ExecuteDepositParams memory _params,

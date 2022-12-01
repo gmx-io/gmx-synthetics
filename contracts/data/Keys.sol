@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+// @title Keys
+// @dev Keys for values in the DataStore
 library Keys {
     // @dev key for the address of the wrapped native token
     bytes32 public constant WNT = keccak256(abi.encode("WNT"));
