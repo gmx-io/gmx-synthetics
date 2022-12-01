@@ -28,11 +28,15 @@ import "../event/EventEmitter.sol";
 import "../utils/Null.sol";
 import "../referral/IReferralStorage.sol";
 
+// @title OrderHandler
+// @dev Contract to handle creation, execution and cancellation of orders
 contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
     using SafeCast for uint256;
     using Order for Order.Props;
     using Array for uint256[];
 
+    // @dev _ExecuteAdlCache struct used in executeAdl to avoid
+    // stack too deep errors
     struct _ExecuteAdlCache {
         uint256 startingGas;
         uint256[] oracleBlockNumbers;
@@ -75,6 +79,10 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
 
     receive() external payable {}
 
+
+    // @dev creates an order in the order store
+    // @param account the order's account
+    // @param params OrderBaseUtils.CreateOrderParams
     function createOrder(
         address account,
         OrderBaseUtils.CreateOrderParams calldata params
@@ -91,6 +99,9 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
         );
     }
 
+    // @dev executes an order
+    // @param key the key of the order to execute
+    // @param oracleParams OracleUtils.SetPricesParams
     function executeOrder(
         bytes32 key,
         OracleUtils.SetPricesParams calldata oracleParams
@@ -125,6 +136,12 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
         }
     }
 
+    // @dev executes a position liquidation
+    // @param account the account of the position to liquidation
+    // @param market the position's market
+    // @param collateralToken the position's collateralToken
+    // @param isLong whether the position is long or short
+    // @param oracleParams OracleUtils.SetPricesParams
     function executeLiquidation(
         address account,
         address market,
@@ -155,6 +172,10 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
         OrderUtils.executeOrder(params);
     }
 
+    // @dev checks the ADL state to update the isAdlEnabled flag
+    // @param market the market to check
+    // @param isLong whether to check the long or short side
+    // @param oracleParams OracleUtils.SetPricesParams
     function updateAdlState(
         address market,
         bool isLong,
@@ -180,6 +201,13 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
         );
     }
 
+    // @dev auto-deleverages a position
+    // @param account the position's account
+    // @param market the position's market
+    // @param collateralToken the position's collateralToken
+    // @param isLong whether the position is long or short
+    // @param sizeDeltaUsd the size to reduce the position by
+    // @param oracleParams OracleUtils.SetPricesParams
     function executeAdl(
         address account,
         address market,
@@ -246,6 +274,11 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
         }
     }
 
+    // @dev executes an order
+    // @param key the key of the order to execute
+    // @param oracleParams OracleUtils.SetPricesParams
+    // @param keeper the keeper executing the order
+    // @param startingGas the starting gas
     function _executeOrder(
         bytes32 key,
         OracleUtils.SetPricesParams memory oracleParams,
@@ -269,6 +302,12 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
         OrderUtils.executeOrder(params);
     }
 
+    // @dev get the OrderBaseUtils.ExecuteOrderParams to execute an order
+    // @param key the key of the order to execute
+    // @param oracleParams OracleUtils.SetPricesParams
+    // @param keeper the keeper executing the order
+    // @param startingGas the starting gas
+    // @return the required OrderBaseUtils.ExecuteOrderParams params to execute the order
     function _getExecuteOrderParams(
         bytes32 key,
         OracleUtils.SetPricesParams memory oracleParams,
@@ -304,6 +343,11 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
         return params;
     }
 
+    // @dev handle a caught order error
+    // @param key the order's key
+    // @param startingGas the starting gas
+    // @param reason the error reason
+    // @param reasonKey the hash or the error reason
     function _handleOrderError(
         bytes32 key,
         uint256 startingGas,
@@ -351,6 +395,8 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
         }
     }
 
+    // @dev validate that the keeper is a frozen order keeper
+    // @param keeper address of the keeper
     function _validateFrozenOrderKeeper(address keeper) internal view {
         require(roleStore.hasRole(keeper, Role.FROZEN_ORDER_KEEPER), Keys.FROZEN_ORDER_ERROR);
     }

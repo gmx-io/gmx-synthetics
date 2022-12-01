@@ -18,6 +18,8 @@ import "../deposit/DepositUtils.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 
+// @title DepositHandler
+// @dev Contract to handle creation, execution and cancellation of deposits
 contract DepositHandler is ReentrancyGuard, FundReceiver, OracleModule {
     EventEmitter public immutable eventEmitter;
     DepositStore public immutable depositStore;
@@ -43,6 +45,9 @@ contract DepositHandler is ReentrancyGuard, FundReceiver, OracleModule {
 
     receive() external payable {}
 
+    // @dev creates a deposit in the deposit store
+    // @param account the depositing account
+    // @param params DepositUtils.CreateDepositParams
     function createDeposit(
         address account,
         DepositUtils.CreateDepositParams calldata params
@@ -59,6 +64,9 @@ contract DepositHandler is ReentrancyGuard, FundReceiver, OracleModule {
         );
     }
 
+    // @dev executes a deposit
+    // @param key the key of the deposit to execute
+    // @param oracleParams OracleUtils.SetPricesParams
     function executeDeposit(
         bytes32 key,
         OracleUtils.SetPricesParams calldata oracleParams
@@ -99,6 +107,10 @@ contract DepositHandler is ReentrancyGuard, FundReceiver, OracleModule {
         }
     }
 
+    // @dev executes a deposit
+    // @param oracleParams OracleUtils.SetPricesParams
+    // @param keeper the keeper executing the deposit
+    // @param startingGas the starting gas
     function _executeDeposit(
         bytes32 key,
         OracleUtils.SetPricesParams memory oracleParams,
