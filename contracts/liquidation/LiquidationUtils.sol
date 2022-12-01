@@ -7,9 +7,19 @@ import "../nonce/NonceUtils.sol";
 import "../order/OrderStore.sol";
 import "../utils/Null.sol";
 
+// @title LiquidationUtils
+// @dev Library to help with liquidations
 library LiquidationUtils {
     using Order for Order.Props;
 
+    // @dev creates a liquidation order for a position
+    // @param dataStore DataStore
+    // @param orderStore OrderStore
+    // @param positionStore PositionStore
+    // @param account the position's account
+    // @param market the position's market
+    // @param collateralToken the position's collateralToken
+    // @param isLong whether the position is long or short
     function createLiquidationOrder(
         DataStore dataStore,
         OrderStore orderStore,
