@@ -47,7 +47,7 @@ library AdlUtils {
         address collateralToken;
         bool isLong;
         uint256 sizeDeltaUsd;
-        uint256 oracleBlockNumber;
+        uint256 updatedAtBlock;
     }
 
     // @dev Multiple positions may need to be reduced to ensure that the pending
