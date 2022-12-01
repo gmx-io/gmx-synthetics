@@ -73,10 +73,10 @@ library IncreasePositionUtils {
 
         MarketUtils.updateCumulativeBorrowingFactor(
             params.dataStore,
+            prices,
             params.market.marketToken,
             params.market.longToken,
             params.market.shortToken,
-            prices,
             position.isLong
         );
 

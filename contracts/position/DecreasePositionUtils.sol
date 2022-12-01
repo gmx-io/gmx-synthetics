@@ -113,10 +113,10 @@ library DecreasePositionUtils {
 
         MarketUtils.updateCumulativeBorrowingFactor(
             params.dataStore,
+            cache.prices,
             params.market.marketToken,
             params.market.longToken,
             params.market.shortToken,
-            cache.prices,
             params.position.isLong
         );
 
