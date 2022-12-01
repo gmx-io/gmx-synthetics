@@ -82,7 +82,7 @@ library SwapUtils {
     function _swap(SwapParams memory params, _SwapParams memory _params) internal returns (address, uint256) {
         _SwapCache memory cache;
 
-        cache.tokenOut = MarketUtils.getOutputToken(_params.tokenIn, _params.market);
+        cache.tokenOut = MarketUtils.getOppositeToken(_params.tokenIn, _params.market);
         cache.tokenInPrice = params.oracle.getLatestPrice(_params.tokenIn);
         cache.tokenOutPrice = params.oracle.getLatestPrice(cache.tokenOut);
 

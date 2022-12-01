@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../token/TokenUtils.sol";
 import "./FundReceiver.sol";
 
+// @title Bank
+// @dev Contract to handle storing and transferring of tokens
 contract Bank is FundReceiver {
     using SafeERC20 for IERC20;
 
@@ -15,6 +17,12 @@ contract Bank is FundReceiver {
 
     receive() external payable {}
 
+    // @dev transfer tokens from this contract to a receiver
+    //
+    // @param dataStore DataStore
+    // @param token the token to transfer
+    // @param amount the amount to transfer
+    // @param receiver the address to transfer to
     function transferOut(
         DataStore dataStore,
         address token,
@@ -24,6 +32,15 @@ contract Bank is FundReceiver {
         _transferOut(dataStore, token, amount, receiver);
     }
 
+    // @dev transfer tokens from this contract to a receiver
+    // handles native token transfers as well
+    //
+    // @param dataStore DataStore
+    // @param token the token to transfer
+    // @param amount the amount to transfer
+    // @param receiver the address to transfer to
+    // @param shouldUnwrapNativeToken whether to unwrap the wrapped native token
+    // before transferring
     function transferOut(
         DataStore dataStore,
         address token,
@@ -40,6 +57,12 @@ contract Bank is FundReceiver {
         }
     }
 
+    // @dev transfer tokens from this contract to a receiver
+    //
+    // @param dataStore DataStore
+    // @param token the token to transfer
+    // @param amount the amount to transfer
+    // @param receiver the address to transfer to
     function _transferOut(
         DataStore dataStore,
         address token,
@@ -53,6 +76,13 @@ contract Bank is FundReceiver {
         _afterTransferOut(token);
     }
 
+    // @dev unwrap wrapped native tokens and transfer the native tokens from
+    // this contract to a receiver
+    //
+    // @param dataStore DataStore
+    // @param token the token to transfer
+    // @param amount the amount to transfer
+    // @param receiver the address to transfer to
     function _transferOutNativeToken(
         DataStore dataStore,
         address token,

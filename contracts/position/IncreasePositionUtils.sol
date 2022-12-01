@@ -73,10 +73,10 @@ library IncreasePositionUtils {
 
         MarketUtils.updateCumulativeBorrowingFactor(
             params.dataStore,
+            prices,
             params.market.marketToken,
             params.market.longToken,
             params.market.shortToken,
-            prices,
             position.isLong
         );
 
@@ -245,7 +245,7 @@ library IncreasePositionUtils {
         );
 
         if (fees.traderDiscountAmount > 0) {
-            params.eventEmitter.emitTraderReferralDiscountApplied(position.account, position.collateralToken, fees.traderDiscountAmount);
+            params.eventEmitter.emitTraderReferralDiscountApplied(position.market, position.collateralToken, position.account, fees.traderDiscountAmount);
         }
     }
 

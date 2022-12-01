@@ -9,6 +9,8 @@ import "./MarketUtils.sol";
 
 import "../utils/Null.sol";
 
+// @title MarketFactory
+// @dev Contract to create markets
 contract MarketFactory is RoleModule {
     using Market for Market.Props;
 
@@ -22,6 +24,10 @@ contract MarketFactory is RoleModule {
         marketStore = _marketStore;
     }
 
+    // @dev creates a market
+    // @param indexToken address of the index token for the market
+    // @param longToken address of the long token for the market
+    // @param shortToken address of the short token for the market
     function createMarket(
         address indexToken,
         address longToken,

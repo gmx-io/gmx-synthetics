@@ -113,10 +113,10 @@ library DecreasePositionUtils {
 
         MarketUtils.updateCumulativeBorrowingFactor(
             params.dataStore,
+            cache.prices,
             params.market.marketToken,
             params.market.longToken,
             params.market.shortToken,
-            cache.prices,
             params.position.isLong
         );
 
@@ -268,7 +268,7 @@ library DecreasePositionUtils {
         );
 
         if (fees.traderDiscountAmount > 0) {
-            params.eventEmitter.emitTraderReferralDiscountApplied(params.position.account, params.position.collateralToken, fees.traderDiscountAmount);
+            params.eventEmitter.emitTraderReferralDiscountApplied(params.position.market, params.position.collateralToken, params.position.account, fees.traderDiscountAmount);
         }
 
         cache.outputToken = params.position.collateralToken;

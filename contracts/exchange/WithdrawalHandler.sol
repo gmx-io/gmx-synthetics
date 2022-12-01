@@ -17,8 +17,9 @@ import "../withdrawal/WithdrawalUtils.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 
+// @title WithdrawalHandler
+// @dev Contract to handle creation, execution and cancellation of withdrawals
 contract WithdrawalHandler is ReentrancyGuard, FundReceiver, OracleModule {
-
     EventEmitter public immutable eventEmitter;
     WithdrawalStore public immutable withdrawalStore;
     MarketStore public immutable marketStore;
@@ -43,6 +44,9 @@ contract WithdrawalHandler is ReentrancyGuard, FundReceiver, OracleModule {
 
     receive() external payable {}
 
+    // @dev creates a withdrawal in the withdrawal store
+    // @param account the withdrawing account
+    // @param params WithdrawalUtils.CreateWithdrawalParams
     function createWithdrawal(
         address account,
         WithdrawalUtils.CreateWithdrawalParams calldata params
@@ -59,6 +63,9 @@ contract WithdrawalHandler is ReentrancyGuard, FundReceiver, OracleModule {
         );
     }
 
+    // @dev executes a withdrawal
+    // @param key the key of the withdrawal to execute
+    // @param oracleParams OracleUtils.SetPricesParams
     function executeWithdrawal(
         bytes32 key,
         OracleUtils.SetPricesParams calldata oracleParams
@@ -97,6 +104,10 @@ contract WithdrawalHandler is ReentrancyGuard, FundReceiver, OracleModule {
         }
     }
 
+    // @dev executes a withdrawal
+    // @param oracleParams OracleUtils.SetPricesParams
+    // @param keeper the keeper executing the withdrawal
+    // @param startingGas the starting gas
     function _executeWithdrawal(
         bytes32 key,
         OracleUtils.SetPricesParams memory oracleParams,
