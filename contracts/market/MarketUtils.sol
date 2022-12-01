@@ -386,12 +386,12 @@ library MarketUtils {
         bool isLong,
         int256 collateralDeltaAmount
     ) internal {
-        dataStore.applyDeltaToUint(
+        uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.collateralSumKey(market, collateralToken, isLong),
             collateralDeltaAmount
         );
 
-        eventEmitter.emitCollateralSumDelta(market, collateralToken, isLong, collateralDeltaAmount);
+        eventEmitter.emitCollateralSumUpdated(market, collateralToken, isLong, collateralDeltaAmount, nextValue);
     }
 
     function updateFundingAmountPerSize(
