@@ -9,7 +9,18 @@ import "../utils/Precision.sol";
 import "../market/MarketUtils.sol";
 import "../fee/FeeReceiver.sol";
 
+// @title PricingUtils
+// @dev Library for pricing functions
 library PricingUtils {
+    // @dev get the price impact USD if there is no crossover in balance
+    // a crossover in balance is for example if the long open interest is larger
+    // than the short open interest, and a short position is opened such that the
+    // short open interest becomes larger than the long open interest
+    // @param initialDiffUsd the initial difference in USD
+    // @param nextDiffUsd the next difference in USD
+    // @param hasPositiveImpact whether there is a positive impact on balance
+    // @param impactFactor the impact factor
+    // @param impactExponentFactor the impact exponent factor
     function getPriceImpactUsdForSameSideRebalance(
         uint256 initialDiffUsd,
         uint256 nextDiffUsd,
@@ -27,6 +38,15 @@ library PricingUtils {
         return priceImpactUsd;
     }
 
+    // @dev get the price impact USD if there is a crossover in balance
+    // a crossover in balance is for example if the long open interest is larger
+    // than the short open interest, and a short position is opened such that the
+    // short open interest becomes larger than the long open interest
+    // @param initialDiffUsd the initial difference in USD
+    // @param nextDiffUsd the next difference in USD
+    // @param hasPositiveImpact whether there is a positive impact on balance
+    // @param impactFactor the impact factor
+    // @param impactExponentFactor the impact exponent factor
     function getPriceImpactUsdForCrossoverRebalance(
         uint256 initialDiffUsd,
         uint256 nextDiffUsd,
@@ -43,6 +63,10 @@ library PricingUtils {
         return priceImpactUsd;
     }
 
+    // @dev apply the impact factor calculation to a USD diff value
+    // @param diffUsd the difference in USD
+    // @param impactFactor the impact factor
+    // @param impactExponentFactor the impact exponent factor
     function applyImpactFactor(
         uint256 diffUsd,
         uint256 impactFactor,
@@ -67,6 +91,13 @@ library PricingUtils {
         return Precision.applyFactor(adjustedDiffUsd, impactFactor) / 2;
     }
 
+    // @dev transfer fees to the feeReceiver
+    // @param dataStore DataStore
+    // @param feeReceiver FeeReceiver
+    // @param marketToken the market token of the market
+    // @param token the fee token to transfer
+    // @param feeReceiverAmount the amount to transfer
+    // @param feeType the fee type
     function transferFees(
         DataStore dataStore,
         FeeReceiver feeReceiver,

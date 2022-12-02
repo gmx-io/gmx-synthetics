@@ -9,10 +9,22 @@ import "../utils/Calc.sol";
 
 import "./PricingUtils.sol";
 
+// @title SwapPricingUtils
+// @dev Library for pricing functions
 library SwapPricingUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
 
+    // @dev GetPriceImpactUsdParams struct used in getPriceImpactUsd to
+    // avoid stack too deep errors
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param tokenA the token to check balance for
+    // @param tokenB the token to check balance for
+    // @param priceForTokenA the price for tokenA
+    // @param priceForTokenB the price for tokenB
+    // @param usdDeltaForTokenA the USD change in amount of tokenA
+    // @param usdDeltaForTokenB the USD change in amount of tokenB
     struct GetPriceImpactUsdParams {
         DataStore dataStore;
         address market;
@@ -24,6 +36,11 @@ library SwapPricingUtils {
         int256 usdDeltaForTokenB;
     }
 
+    // @dev PoolParams struct to contain pool values
+    // @param poolUsdForTokenA the USD value of tokenA in the pool
+    // @param poolUsdForTokenB the USD value of tokenB in the pool
+    // @param nextPoolUsdForTokenA the next USD value of tokenA in the pool
+    // @param nextPoolUsdForTokenB the next USD value of tokenB in the pool
     struct PoolParams {
         uint256 poolUsdForTokenA;
         uint256 poolUsdForTokenB;
@@ -31,13 +48,18 @@ library SwapPricingUtils {
         uint256 nextPoolUsdForTokenB;
     }
 
+    // @dev SwapFees struct to contain swap fee values
+    // @param feeReceiverAmount the fee amount for the fee receiver
+    // @param feesForPool the fee amount for the pool
+    // @param amountAfterFees the output amount after fees
     struct SwapFees {
         uint256 feeReceiverAmount;
         uint256 feesForPool;
         uint256 amountAfterFees;
-        uint256 amountForPool;
     }
 
+    // @dev get the price impact in USD
+    //
     // note that there will be some difference between the pool amounts used for
     // calculating the price impact and fees vs the actual pool amounts after the
     // swap is done, since the pool amounts will be increased / decreased by an amount
@@ -48,7 +70,9 @@ library SwapPricingUtils {
     // this is useful if prices are ranging, if prices are strongly directional, the pool may
     // be selling tokens as the token price increases
     //
-    // returns (priceImpactUsd)
+    // @param params GetPriceImpactUsdParams
+    //
+    // @return the price impact in USD
     function getPriceImpactUsd(GetPriceImpactUsdParams memory params) internal view returns (int256) {
         PoolParams memory poolParams = getNextPoolAmountsUsd(params);
 
@@ -57,6 +81,11 @@ library SwapPricingUtils {
         return priceImpactUsd;
     }
 
+    // @dev get the price impact in USD
+    // @param dataStore DataStore
+    // @param market the trading market
+    // @param poolParams PoolParams
+    // @return the price impact in USD
     function _getPriceImpactUsd(DataStore dataStore, address market, PoolParams memory poolParams) internal view returns (int256) {
         uint256 initialDiffUsd = Calc.diff(poolParams.poolUsdForTokenA, poolParams.poolUsdForTokenB);
         uint256 nextDiffUsd = Calc.diff(poolParams.nextPoolUsdForTokenA, poolParams.nextPoolUsdForTokenB);
@@ -93,6 +122,9 @@ library SwapPricingUtils {
         }
     }
 
+    // @dev get the next pool amounts in USD
+    // @param params GetPriceImpactUsdParams
+    // @return PoolParams
     function getNextPoolAmountsUsd(
         GetPriceImpactUsdParams memory params
     ) internal view returns (PoolParams memory) {
@@ -115,6 +147,11 @@ library SwapPricingUtils {
         return poolParams;
     }
 
+    // @dev get the swap fees
+    // @param dataStore DataStore
+    // @param marketToken the address of the market token
+    // @param amount the total swap fee amount
+    // @param feeReceiverFactorKey the key for the feeReceiverFactor
     function getSwapFees(
         DataStore dataStore,
         address marketToken,
