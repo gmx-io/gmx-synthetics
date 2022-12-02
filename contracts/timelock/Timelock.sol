@@ -69,10 +69,10 @@ contract Timelock {
 
     /**
      * @dev Sets a `uint256` value in storage with a concatenated `bytes32` prefix and `bytes` data
-     *@param dataStore The storage instance where the value will be set
-     *@param prefix The `bytes32` prefix to concatenate with the `bytes` data
-     *@param data The `bytes` data to concatenate with the `bytes32` prefix
-     *@param value The `uint256` value to set in storage
+     * @param dataStore The storage instance where the value will be set
+     * @param prefix The `bytes32` prefix to concatenate with the `bytes` data
+     * @param data The `bytes` data to concatenate with the `bytes32` prefix
+     * @param value The `uint256` value to set in storage
      */
     function fastSetUint(DataStore dataStore, bytes32 prefix, bytes memory data, uint256 value) external onlyAdmin {
         require(allowedFastKeys[prefix], "Timelock: invalid key");
