@@ -22,11 +22,33 @@ import "../utils/Bits.sol";
 import "../utils/Array.sol";
 import "../utils/Precision.sol";
 
+// @title Oracle
+// @dev Contract to validate and store signed values
 contract Oracle is RoleModule {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableValues for EnumerableSet.AddressSet;
     using Price for Price.Props;
 
+    // @dev _SetPricesCache struct used in setPrices to avoid stack too deep errors
+    // @param minBlockConfirmations the minimum block confirmations before the block
+    // hash is not required to be part of the signed message for validation
+    // @param prevOracleBlockNumber the previous oracle block number of the loop
+    // @param oracleBlockNumber the current oracle block number of the loop
+    // @param oracleTimestamp the current oracle timestamp of the loop
+    // @param blockHash the hash of the current oracleBlockNumber of the loop
+    // @param token the address of the current token of the loop
+    // @param precision the precision used for multiplying
+    // @param tokenOracleType the oracle type of the token, this allows oracle keepers
+    // to sign prices based on different methodologies, and the oracle can be configured
+    // to accept prices based on a specific methodology
+    // @param priceIndex the current price index to retrieve from compactedMinPrices and compactedMaxPrices
+    // to construct the minPrices and maxPrices array
+    // @param signatureIndex the current signature index to retrieve from the signatures array
+    // @param maxPriceAge the max allowed age of price values
+    // @param minPriceIndex the index of the min price in minPrices for the current signer
+    // @param maxPriceIndex the index of the max price in maxPrices for the current signer
+    // @param minPrices the min prices
+    // @param maxPrices the max prices
     struct _SetPricesCache {
         uint256 minBlockConfirmations;
         uint256 prevOracleBlockNumber;
@@ -55,10 +77,10 @@ contract Oracle is RoleModule {
 
     OracleStore public oracleStore;
 
-    // tempTokens stores the tokens with prices that have been set
-    // this is used in clearTempPrices to help ensure that all token prices
+    // tokensWithPrices stores the tokens with prices that have been set
+    // this is used in clearAllPrices to help ensure that all token prices
     // set in setPrices are cleared after use
-    EnumerableSet.AddressSet internal tempTokens;
+    EnumerableSet.AddressSet internal tokensWithPrices;
     // prices for the same token can be sent multiple times in one txn
     // the prices can be for different block numbers
     // the first occurrence of the token's price will be stored in primaryPrices
@@ -66,7 +88,7 @@ contract Oracle is RoleModule {
     mapping(address => Price.Props) public primaryPrices;
     mapping(address => Price.Props) public secondaryPrices;
     // customPrices can be used to store custom price values
-    // these prices will be cleared in clearTempPrices
+    // these prices will be cleared in clearAllPrices
     mapping(address => Price.Props) public customPrices;
 
     error EmptyTokens();
@@ -99,12 +121,16 @@ contract Oracle is RoleModule {
         SALT = keccak256(abi.encode(block.chainid, "xget-oracle-v1"));
     }
 
+    // @dev validate and store signed prices
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param params OracleUtils.SetPricesParams
     function setPrices(
         DataStore dataStore,
         EventEmitter eventEmitter,
         OracleUtils.SetPricesParams memory params
     ) external onlyController {
-        require(tempTokens.length() == 0, "Oracle: tempTokens not cleared");
+        require(tokensWithPrices.length() == 0, "Oracle: tokensWithPrices not cleared");
 
         if (params.tokens.length == 0) { revert EmptyTokens(); }
 
@@ -149,45 +175,67 @@ contract Oracle is RoleModule {
         _setPricesFromPriceFeeds(dataStore, eventEmitter, params.priceFeedTokens);
     }
 
+    // @dev set the secondary price
+    // @param token the token to set the price for
+    // @param price the price value to set to
     function setSecondaryPrice(address token, Price.Props memory price) external onlyController {
         secondaryPrices[token] = price;
     }
 
+    // @dev set a custom price
+    // @param token the token to set the price for
+    // @param price the price value to set to
     function setCustomPrice(address token, Price.Props memory price) external onlyController {
         customPrices[token] = price;
     }
 
-    function clearTempPrices() external onlyController {
-        uint256 length = tempTokens.length();
+    // @dev clear all prices
+    function clearAllPrices() external onlyController {
+        uint256 length = tokensWithPrices.length();
         for (uint256 i = 0; i < length; i++) {
-            address token = tempTokens.at(0);
+            address token = tokensWithPrices.at(0);
             delete primaryPrices[token];
             delete secondaryPrices[token];
             delete customPrices[token];
-            tempTokens.remove(token);
+            tokensWithPrices.remove(token);
         }
     }
 
-    function getTempTokensCount() external view returns (uint256) {
-        return tempTokens.length();
+    // @dev get the length of tokensWithPrices
+    // @return the length of tokensWithPrices
+    function getTokensWithPricesCount() external view returns (uint256) {
+        return tokensWithPrices.length();
     }
 
-    function getTempTokens(uint256 start, uint256 end) external view returns (address[] memory) {
-        return tempTokens.valuesAt(start, end);
+    // @dev get the tokens of tokensWithPrices for the specified indexes
+    // @param start the start index, the value for this index will be included
+    // @param end the end index, the value for this index will not be included
+    // @return the tokens of tokensWithPrices for the specified indexes
+    function getTokensWithPrices(uint256 start, uint256 end) external view returns (address[] memory) {
+        return tokensWithPrices.valuesAt(start, end);
     }
 
+    // @dev get the primary price of a token
+    // @param token the token to get the price for
+    // @return the primary price of a token
     function getPrimaryPrice(address token) external view returns (Price.Props memory) {
         Price.Props memory price = primaryPrices[token];
         if (price.isEmpty()) { revert EmptyPrimaryPrice(token); }
         return price;
     }
 
+    // @dev get the secondary price of a token
+    // @param token the token to get the price for
+    // @return the secondary price of a token
     function getSecondaryPrice(address token) external view returns (Price.Props memory) {
         Price.Props memory price = secondaryPrices[token];
         if (price.isEmpty()) { revert EmptySecondaryPrice(token); }
         return price;
     }
 
+    // @dev get the latest price of a token
+    // @param token the token to get the price for
+    // @return the latest price of a token
     function getLatestPrice(address token) external view returns (Price.Props memory) {
         Price.Props memory primaryPrice = primaryPrices[token];
         Price.Props memory secondaryPrice = secondaryPrices[token];
@@ -203,12 +251,19 @@ contract Oracle is RoleModule {
         revert EmptyLatestPrice(token);
     }
 
+    // @dev get the custom price of a token
+    // @param token the token to get the price for
+    // @return the custom price of a token
     function getCustomPrice(address token) external view returns (Price.Props memory) {
         Price.Props memory price = customPrices[token];
         if (price.isEmpty()) { revert EmptyCustomPrice(token); }
         return price;
     }
 
+    // @dev get the price feed address for a token
+    // @param dataStore DataStore
+    // @param token the token to get the price feed for
+    // @return the price feed for the token
     function getPriceFeed(DataStore dataStore, address token) public view returns (IPriceFeed) {
         address priceFeedAddress = dataStore.getAddress(Keys.priceFeedKey(token));
         require(priceFeedAddress != address(0), "Oracle: invalid price feed");
@@ -216,11 +271,15 @@ contract Oracle is RoleModule {
         return IPriceFeed(priceFeedAddress);
     }
 
+    // @dev get the stable price of a token
+    // @param dataStore DataStore
+    // @param token the token to get the price for
+    // @return the stable price of the token
     function getStablePrice(DataStore dataStore, address token) public view returns (uint256) {
         return dataStore.getUint(Keys.stablePriceKey(token));
     }
 
-    // return the multiplier value to convert the external price feed price to the price of 1 unit of the token
+    // @dev get the multiplier value to convert the external price feed price to the price of 1 unit of the token
     // represented with 30 decimals
     // for example, if USDC has 6 decimals and a price of 1 USD, one unit of USDC would have a price of
     // 1 / (10 ^ 6) * (10 ^ 30) => 1 * (10 ^ 24)
@@ -228,6 +287,10 @@ contract Oracle is RoleModule {
     // in this case the priceFeedMultiplier should be 10 ^ 46
     // the conversion of the price feed price would be 1 * (10 ^ 8) * (10 ^ 46) / (10 ^ 30) => 1 * (10 ^ 24)
     // formula for decimals for price feed multiplier: 60 - (external price feed decimals) - (token decimals)
+    //
+    // @param dataStore DataStore
+    // @param token the token to get the price feed multiplier for
+    // @return the price feed multipler
     function getPriceFeedMultiplier(DataStore dataStore, address token) public view returns (uint256) {
         uint256 multiplier = dataStore.getUint(Keys.priceFeedMultiplierKey(token));
 
@@ -238,6 +301,11 @@ contract Oracle is RoleModule {
         return multiplier;
     }
 
+    // @dev validate and set prices
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param signers the signers of the prices
+    // @param params OracleUtils.SetPricesParams
     function _setPrices(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -272,7 +340,7 @@ contract Oracle is RoleModule {
             }
 
             cache.token = params.tokens[i];
-            cache.precision = OracleUtils.getUncompactedPrecision(params.compactedDecimals, i);
+            cache.precision = 10 ** OracleUtils.getUncompactedDecimal(params.compactedDecimals, i);
             cache.tokenOracleType = dataStore.getData(Keys.oracleTypeKey(cache.token));
 
             cache.minPrices = new uint256[](signers.length);
@@ -338,11 +406,14 @@ contract Oracle is RoleModule {
                 );
             }
 
-            tempTokens.add(cache.token);
+            tokensWithPrices.add(cache.token);
         }
     }
 
-    // set prices using Chainlink price feeds to save costs for tokens with stable prices
+    // @dev set prices using external price feeds to save costs for tokens with stable prices
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param priceFeedTokens the tokens to set the prices using the price feeds for
     function _setPricesFromPriceFeeds(DataStore dataStore, EventEmitter eventEmitter, address[] memory priceFeedTokens) internal {
         for (uint256 i = 0; i < priceFeedTokens.length; i++) {
             address token = priceFeedTokens[i];
@@ -386,12 +457,22 @@ contract Oracle is RoleModule {
 
             primaryPrices[token] = priceProps;
 
-            tempTokens.add(token);
+            tokensWithPrices.add(token);
 
             eventEmitter.emitOraclePriceUpdated(token, priceProps.min, priceProps.max, true, true);
         }
     }
 
+    // @dev validate the signer of a price
+    // @param oracleBlockNumber the block number used for the signed message hash
+    // @param oracleTimestamp the timestamp used for the signed message hash
+    // @param blockHash the block hash used for the signed message hash
+    // @param token the token used for the signed message hash
+    // @param precision the precision used for the signed message hash
+    // @param minPrice the min price used for the signed message hash
+    // @param maxPrice the max price used for the signed message hash
+    // @param signature the signer's signature
+    // @param expectedSigner the address of the expected signer
     function _validateSigner(
         uint256 oracleBlockNumber,
         uint256 oracleTimestamp,

@@ -5,7 +5,22 @@ pragma solidity ^0.8.0;
 import "../utils/Array.sol";
 import "../utils/Bits.sol";
 
+// @title OracleUtils
+// @dev Libary for oracle functions
 library OracleUtils {
+    // @dev SetPricesParams struct for values required in Oracle.setPrices
+    // @param signerInfo compacted indexes of signers, the index is used to retrieve
+    // the signer address from the OracleStore
+    // @param tokens list of tokens to set prices for
+    // @param compactedOracleBlockNumbers compacted oracle block numbers
+    // @param compactedOracleTimestamps compacted oracle timestamps
+    // @param compactedDecimals compacted decimals for prices
+    // @param compactedMinPrices compacted min prices
+    // @param compactedMinPricesIndexes compacted min price indexes
+    // @param compactedMaxPrices compacted max prices
+    // @param compactedMaxPricesIndexes compacted max price indexes
+    // @param signatures signatures of the oracle signers
+    // @param priceFeedTokens tokens to set prices for based on an external price feed value
     struct SetPricesParams {
         uint256 signerInfo;
         address[] tokens;
@@ -44,6 +59,10 @@ library OracleUtils {
     error EmptyCompactedBlockNumber(uint256 index);
     error EmptyCompactedTimestamp(uint256 index);
 
+    // @dev get the uncompacted price at the specified index
+    // @param compactedPrices the compacted prices
+    // @param index the index to get the uncompacted price at
+    // @return the uncompacted price at the specified index
     function getUncompactedPrice(uint256[] memory compactedPrices, uint256 index) internal pure returns (uint256) {
         uint256 price = Array.getUncompactedValue(
             compactedPrices,
@@ -57,19 +76,26 @@ library OracleUtils {
         return price;
     }
 
-    // covert compactedDecimals into precision values
-    function getUncompactedPrecision(uint256[] memory compactedDecimals, uint256 index) internal pure returns (uint256) {
-        uint256 precision = Array.getUncompactedValue(
+    // @dev get the uncompacted decimal at the specified index
+    // @param compactedDecimals the compacted decimals
+    // @param index the index to get the uncompacted decimal at
+    // @return the uncompacted decimal at the specified index
+    function getUncompactedDecimal(uint256[] memory compactedDecimals, uint256 index) internal pure returns (uint256) {
+        uint256 decimal = Array.getUncompactedValue(
             compactedDecimals,
             index,
             COMPACTED_PRECISION_BIT_LENGTH,
             COMPACTED_PRECISION_BITMASK
         );
 
-        return 10 ** precision;
+        return decimal;
     }
 
 
+    // @dev get the uncompacted price index at the specified index
+    // @param compactedPriceIndexes the compacted indexes
+    // @param index the index to get the uncompacted price index at
+    // @return the uncompacted price index at the specified index
     function getUncompactedPriceIndex(uint256[] memory compactedPriceIndexes, uint256 index) internal pure returns (uint256) {
         uint256 priceIndex = Array.getUncompactedValue(
             compactedPriceIndexes,
@@ -82,6 +108,10 @@ library OracleUtils {
 
     }
 
+    // @dev get the uncompacted oracle block numbers
+    // @param compactedOracleBlockNumbers the compacted oracle block numbers
+    // @param length the length of the uncompacted oracle block numbers
+    // @return the uncompacted oracle block numbers
     function getUncompactedOracleBlockNumbers(uint256[] memory compactedOracleBlockNumbers, uint256 length) internal pure returns (uint256[] memory) {
         uint256[] memory blockNumbers = new uint256[](length);
 
@@ -92,6 +122,10 @@ library OracleUtils {
         return blockNumbers;
     }
 
+    // @dev get the uncompacted oracle block number
+    // @param compactedOracleBlockNumbers the compacted oracle block numbers
+    // @param index the index to get the uncompacted oracle block number at
+    // @return the uncompacted oracle block number
     function getUncompactedOracleBlockNumber(uint256[] memory compactedOracleBlockNumbers, uint256 index) internal pure returns (uint256) {
         uint256 blockNumber = Array.getUncompactedValue(
             compactedOracleBlockNumbers,
@@ -105,6 +139,10 @@ library OracleUtils {
         return blockNumber;
     }
 
+    // @dev get the uncompacted oracle timestamp
+    // @param compactedOracleTimestamps the compacted oracle timestamps
+    // @param index the index to get the uncompacted oracle timestamp at
+    // @return the uncompacted oracle timestamp
     function getUncompactedOracleTimestamp(uint256[] memory compactedOracleTimestamps, uint256 index) internal pure returns (uint256) {
         uint256 blockNumber = Array.getUncompactedValue(
             compactedOracleTimestamps,
