@@ -364,9 +364,9 @@ describe("Oracle", () => {
         compactedMaxPricesIndexes: getCompactedPriceIndexes([0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6]),
         signatures: wntSignatures.concat(wbtcSignatures),
       })
-    ).to.be.revertedWith("Oracle: tempTokens not cleared");
+    ).to.be.revertedWith("Oracle: tokensWithPrices not cleared");
 
-    await oracle.clearTempPrices();
+    await oracle.clearAllPrices();
 
     await expect(
       oracle.setPrices(dataStore.address, eventEmitter.address, {
@@ -421,8 +421,8 @@ describe("Oracle", () => {
     expect((await oracle.getPrimaryPrice(wbtc.address)).min).eq(6011000);
     expect((await oracle.getPrimaryPrice(wbtc.address)).max).eq(6051000);
 
-    expect(await oracle.getTempTokensCount()).eq(2);
-    expect(await oracle.getTempTokens(0, 2)).eql([wnt.address, wbtc.address]);
+    expect(await oracle.getTokensWithPricesCount()).eq(2);
+    expect(await oracle.getTokensWithPrices(0, 2)).eql([wnt.address, wbtc.address]);
   });
 
   it("withOraclePrices", async () => {
