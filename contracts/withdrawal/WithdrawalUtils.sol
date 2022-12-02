@@ -18,12 +18,28 @@ import "../callback/CallbackUtils.sol";
 import "../utils/Array.sol";
 import "../utils/Null.sol";
 
+/**
+ * @title WithdrawalUtils
+ * @dev Library for withdrawal functions
+ */
 library WithdrawalUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
     using Price for Price.Props;
     using Array for uint256[];
 
+    /**
+     * @param receiver The address that will receive the withdrawal tokens.
+     * @param callbackContract The contract that will be called back.
+     * @param market The market on which the withdrawal will be executed.
+     * @param marketTokensLongAmount The amount of long market tokens that will be withdrawn.
+     * @param marketTokensShortAmount The amount of short market tokens that will be withdrawn.
+     * @param minLongTokenAmount The minimum amount of long tokens that must be withdrawn.
+     * @param minShortTokenAmount The minimum amount of short tokens that must be withdrawn.
+     * @param shouldUnwrapNativeToken Whether the native token should be unwrapped when executing the withdrawal.
+     * @param executionFee The execution fee for the withdrawal.
+     * @param callbackGasLimit The gas limit for calling the callback contract.
+     */
     struct CreateWithdrawalParams {
         address receiver;
         address callbackContract;
@@ -37,6 +53,18 @@ library WithdrawalUtils {
         uint256 callbackGasLimit;
     }
 
+    /**
+     * @param dataStore The data store where withdrawal data is stored.
+     * @param eventEmitter The event emitter that is used to emit events.
+     * @param withdrawalStore The withdrawal store where withdrawal data is stored.
+     * @param marketStore The market store where market data is stored.
+     * @param oracle The oracle that provides market prices.
+     * @param feeReceiver The address that will receive the withdrawal fees.
+     * @param key The unique identifier of the withdrawal to execute.
+     * @param oracleBlockNumbers The block numbers for the oracle prices.
+     * @param keeper The keeper that is executing the withdrawal.
+     * @param startingGas The starting gas limit for the withdrawal execution.
+     */
     struct ExecuteWithdrawalParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
@@ -50,6 +78,20 @@ library WithdrawalUtils {
         uint256 startingGas;
     }
 
+    /**
+     * @param market The market on which the withdrawal will be executed.
+     * @param account The account that initiated the withdrawal.
+     * @param receiver The address that will receive the withdrawal tokens.
+     * @param tokenIn the other token, if tokenOut is market.longToken then
+     * tokenIn is market.shortToken and vice versa
+     * @param tokenOut the token that will be withdrawn
+     * @param tokenInPrice price of tokenIn
+     * @param tokenOutPrice price of tokenOut
+     * @param marketTokensAmount The amount of market tokens that will be burnt.
+     * @param shouldUnwrapNativeToken Whether the native token should be unwrapped when executing the withdrawal.
+     * @param marketTokensUsd The value of the market tokens in USD.
+     * @param priceImpactUsd The price impact in USD.
+     */
     struct _ExecuteWithdrawalParams {
         Market.Props market;
         address account;
@@ -64,6 +106,12 @@ library WithdrawalUtils {
         int256 priceImpactUsd;
     }
 
+    /**
+     * @param poolValue The value of the market pool in USD.
+     * @param marketTokensSupply The total supply of market tokens.
+     * @param marketTokensLongUsd The value of the long market tokens in USD.
+     * @param marketTokensShortUsd The value of the short market tokens in USD.
+     */
     struct ExecuteWithdrawalCache {
         uint256 poolValue;
         uint256 marketTokensSupply;
@@ -75,6 +123,17 @@ library WithdrawalUtils {
     error MinShortTokens(uint256 received, uint256 expected);
     error InsufficientMarketTokens(uint256 balance, uint256 expected);
 
+    /**
+     * @dev Creates a withdrawal in the withdrawal store.
+     *
+     * @param dataStore The data store where withdrawal data is stored.
+     * @param eventEmitter The event emitter that is used to emit events.
+     * @param withdrawalStore The withdrawal store where withdrawal data is stored.
+     * @param marketStore The market store where market data is stored.
+     * @param account The account that initiated the withdrawal.
+     * @param params The parameters for creating the withdrawal.
+     * @return The unique identifier of the created withdrawal.
+     */
     function createWithdrawal(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -118,6 +177,11 @@ library WithdrawalUtils {
         return key;
     }
 
+    /**
+     * Executes a withdrawal on the market.
+     *
+     * @param params The parameters for executing the withdrawal.
+     */
     function executeWithdrawal(ExecuteWithdrawalParams memory params) internal {
         Withdrawal.Props memory withdrawal = params.withdrawalStore.get(params.key);
         require(withdrawal.account != address(0), "WithdrawalUtils: empty withdrawal");
@@ -219,6 +283,15 @@ library WithdrawalUtils {
         );
     }
 
+    /**
+     * @dev Cancels a withdrawal.
+     * @param dataStore The data store.
+     * @param eventEmitter The event emitter.
+     * @param withdrawalStore The withdrawal store.
+     * @param key The withdrawal key.
+     * @param keeper The keeper sending the transaction.
+     * @param startingGas The starting gas for the transaction.
+     */
     function cancelWithdrawal(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -246,6 +319,11 @@ library WithdrawalUtils {
         );
     }
 
+    /**
+     * @dev executes a withdrawal.
+     * @param params ExecuteWithdrawalParams.
+     * @param _params _ExecuteWithdrawalParams.
+     */
     function _executeWithdrawal(
         ExecuteWithdrawalParams memory params,
         _ExecuteWithdrawalParams memory _params
