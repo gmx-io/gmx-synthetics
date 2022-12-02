@@ -78,6 +78,11 @@ library IncreasePositionUtils {
     error InsufficientCollateralAmount();
 
     // @dev increase a position
+    // The increasePosition function is used to increase the size of a position
+    // in a market. This involves updating the position's collateral amount,
+    // calculating the price impact of the size increase, and updating the position's
+    // size and borrowing factor. This function also applies fees to the position
+    // and updates the market's liquidity pool based on the new position size.
     // @param params IncreasePositionParams
     function increasePosition(IncreasePositionParams memory params) external {
         Position.Props memory position = params.position;
@@ -86,11 +91,13 @@ library IncreasePositionUtils {
         position.collateralToken = params.collateralToken;
         position.isLong = params.order.isLong();
 
+        // get the market prices for the given position
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPricesForPosition(
             params.market,
             params.oracle
         );
 
+        // update the funding amount per size for the market
         MarketUtils.updateFundingAmountPerSize(
             params.dataStore,
             prices,
@@ -99,6 +106,8 @@ library IncreasePositionUtils {
             params.market.shortToken
         );
 
+
+        // update the cumulative borrowing factor for the market
         MarketUtils.updateCumulativeBorrowingFactor(
             params.dataStore,
             prices,
@@ -108,7 +117,10 @@ library IncreasePositionUtils {
             position.isLong
         );
 
+        // create a new cache for holding intermediate results
         _IncreasePositionCache memory cache;
+
+        // process the collateral for the given position and order
         PositionPricingUtils.PositionFees memory fees;
         (cache.collateralDeltaAmount, fees) = processCollateral(
             params,
@@ -117,6 +129,7 @@ library IncreasePositionUtils {
             params.collateralDeltaAmount.toInt256()
         );
 
+        // check if there is sufficient collateral for the position
         if (cache.collateralDeltaAmount < 0 && position.collateralAmount < SafeCast.toUint256(-cache.collateralDeltaAmount)) {
             revert InsufficientCollateralAmount();
         }
