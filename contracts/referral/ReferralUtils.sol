@@ -13,7 +13,13 @@ import "./ReferralTier.sol";
 
 import "../utils/Precision.sol";
 
+// @title ReferralUtils
+// @dev Library for referral functions
 library ReferralUtils {
+    // @dev set the referral code for a trader
+    // @param referralStorage The referral storage instance to use.
+    // @param account The account of the trader.
+    // @param referralCode The referral code.
     function setTraderReferralCode(
         IReferralStorage referralStorage,
         address account,
@@ -26,6 +32,14 @@ library ReferralUtils {
         referralStorage.setTraderReferralCode(account, referralCode);
     }
 
+    // @dev Increments the affiliate's reward balance by the specified delta.
+    // @param dataStore The data store instance to use.
+    // @param eventEmitter The event emitter instance to use.
+    // @param market The market address.
+    // @param token The token address.
+    // @param affiliate The affiliate's address.
+    // @param trader The trader's address.
+    // @param delta The amount to increment the reward balance by.
     function incrementAffiliateReward(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -43,6 +57,10 @@ library ReferralUtils {
         eventEmitter.emitAffiliateRewardEarned(market, token, affiliate, trader, delta);
     }
 
+    // @dev Gets the referral information for the specified trader.
+    // @param referralStorage The referral storage instance to use.
+    // @param trader The trader's address.
+    // @return The affiliate's address, the total rebate, and the discount share.
     function getReferralInfo(
         IReferralStorage referralStorage,
         address trader
@@ -70,6 +88,13 @@ library ReferralUtils {
         );
     }
 
+    // @dev Claims the affiliate's reward balance and transfers it to the specified receiver.
+    // @param dataStore The data store instance to use.
+    // @param eventEmitter The event emitter instance to use.
+    // @param market The market address.
+    // @param token The token address.
+    // @param account The affiliate's address.
+    // @param receiver The address to receive the reward.
     function claimAffiliateReward(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -98,5 +123,4 @@ library ReferralUtils {
             rewardAmount
         );
     }
-
 }
