@@ -12,6 +12,8 @@ library IncreaseOrderUtils {
     using Order for Order.Props;
     using Array for uint256[];
 
+    error UnexpectedPositionState();
+
     // @dev process an increase order
     // @param params OrderBaseUtils.ExecuteOrderParams
     function processOrder(OrderBaseUtils.ExecuteOrderParams memory params) external {
@@ -44,7 +46,7 @@ library IncreaseOrderUtils {
         if (position.account == address(0)) {
             position.account = params.order.account();
             if (position.market != address(0) || position.collateralToken != address(0)) {
-                PositionUtils.revertUnexpectedPositionState();
+                revert UnexpectedPositionState();
             }
 
             position.market = params.order.market();

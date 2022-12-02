@@ -2,6 +2,9 @@
 
 pragma solidity ^0.8.0;
 
+// @title Position
+// @dev Stuct for positions
+//
 // borrowing fees for position require only a borrowingFactor to track
 // an example on how this works is if the global cumulativeBorrowingFactor is 10020%
 // a position would be opened with borrowingFactor as 10020%
@@ -26,6 +29,21 @@ pragma solidity ^0.8.0;
 // 3. short positions with market.longToken as collateral
 // 4. short positions with market.shortToken as collateral
 library Position {
+    // @param account the position's account
+    // @param market the position's market
+    // @param collateralToken the position's collateralToken
+    // @param isLong whether the position is a long or short
+    // @param sizeInUsd the position's size in USD
+    // @param sizeInTokens the position's size in tokens
+    // @param collateralAmount the amount of collateralToken for collateral
+    // @param borrowingFactor the position's borrowing factor
+    // @param longTokenFundingAmountPerSize the position's funding amount per size
+    // for the market.longToken
+    // @param shortTokenFundingAmountPerSize the position's funding amount per size
+    // for the market.shortToken
+    // @param increasedAtBlock the block at which the position was last increased
+    // @param decreasedAtBlock the block at which the position was last decreased
+    // @param data for any additional data
     struct Props {
         address account;
         address market;
