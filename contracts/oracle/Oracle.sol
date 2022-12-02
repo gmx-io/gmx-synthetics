@@ -355,7 +355,7 @@ contract Oracle is RoleModule {
                 /* uint80 roundID */,
                 int256 _price,
                 /* uint256 startedAt */,
-                /* uint256 timeStamp */,
+                /* uint256 timestamp */,
                 /* uint80 answeredInRound */
             ) = priceFeed.latestRoundData();
 
