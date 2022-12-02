@@ -15,7 +15,7 @@ library Deposit {
     // @param updatedAtBlock the block that the deposit was last updated at
     // @param shouldUnwrapNativeToken whether to unwrap the native token when
     // sending funds back to the user in case the deposit gets cancelled
-    // @param executionFee the execution fee
+    // @param executionFee the execution fee for keepers
     // @param callbackGasLimit the gas limit for the callbackContract
     // @param data for any additional data
     struct Props {

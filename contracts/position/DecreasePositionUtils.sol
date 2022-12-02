@@ -18,6 +18,8 @@ import "../order/OrderBaseUtils.sol";
 
 import "../swap/SwapUtils.sol";
 
+// @title DecreasePositionUtils
+// @dev Libary for functions to help with decreasing a position
 library DecreasePositionUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
@@ -26,6 +28,22 @@ library DecreasePositionUtils {
     using Order for Order.Props;
     using Price for Price.Props;
 
+    // @dev DecreasePositionParams struct used in decreasePosition to avoid
+    // stack too deep errors
+    //
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param positionStore PositionStore
+    // @param oracle Oracle
+    // @param swapHandler SwapHandler
+    // @param feeReceiver FeeReceiver
+    // @param referralStorage IReferralStorage
+    // @param market the values of the trading market
+    // @param order the decrease position order
+    // @param swapPathMarkets the values of the markets in the swap path
+    // @param position the order's position
+    // @param positionKey the key of the order's position
+    // @param adjustedSizeDeltaUsd the adjusted order.sizeDeltaUsd
     struct DecreasePositionParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
@@ -42,6 +60,16 @@ library DecreasePositionUtils {
         uint256 adjustedSizeDeltaUsd;
     }
 
+    // @dev ProcessCollateralValues struct used to contain the values in processCollateral
+    // @param executionPrice the order execution price
+    // @param remainingCollateralAmount the remaining collateral amount of the position
+    // @param outputAmount the output amount
+    // @param positionPnlUsd the pnl of the position in USD
+    // @param pnlAmountForPool the pnl for the pool in token amount
+    // @param pnlAmountForUser the pnl for the user in token amount
+    // @param sizeDeltaInTokens the change in position size in tokens
+    // @param priceImpactUsd the USD price impact
+    // @param priceImpactAmount the price impact in tokens
     struct ProcessCollateralValues {
         uint256 executionPrice;
         int256 remainingCollateralAmount;
@@ -54,6 +82,13 @@ library DecreasePositionUtils {
         int256 priceImpactAmount;
     }
 
+    // @dev _ProcessCollateralCache struct used in processCollateral to
+    // avoid stack too deep errors
+    // @param prices the prices of the tokens in the market
+    // @param initialCollateralAmount the initial collateral amount
+    // @param pnlToken the token that the pnl for the user is in, for long positions
+    // this is the market.longToken, for short positions this is the market.shortToken
+    // @param pnlTokenPrice the price of the pnlToken
     struct _ProcessCollateralCache {
         MarketUtils.MarketPrices prices;
         int256 initialCollateralAmount;
@@ -61,6 +96,16 @@ library DecreasePositionUtils {
         Price.Props pnlTokenPrice;
     }
 
+    // @dev _DecreasePositionCache struct used in decreasePosition to
+    // avoid stack too deep errors
+    // @param prices the prices of the tokens in the market
+    // @param pnlToken the token that the pnl for the user is in, for long positions
+    // this is the market.longToken, for short positions this is the market.shortToken
+    // @param pnlTokenPrice the price of the pnlToken
+    // @param initialCollateralAmount the initial collateral amount
+    // @param nextPositionSizeInUsd the new position size in USD
+    // @param nextPositionBorrowingFactor the new position borrowing factor
+    // @param poolDeltaAmount the change in pool amount
     struct _DecreasePositionCache {
         MarketUtils.MarketPrices prices;
         address pnlToken;
@@ -72,6 +117,13 @@ library DecreasePositionUtils {
         int256 poolDeltaAmount;
     }
 
+    // @dev DecreasePositionResult struct for the results of decreasePosition
+    // @param adjustedSizeDeltaUsd the adjusted sizeDeltaUsd
+    // @param outputToken the output token
+    // @param outputAmount the output amount
+    // @param pnlToken the token that the pnl for the user is in, for long positions
+    // this is the market.longToken, for short positions this is the market.shortToken
+    // @param pnlAmountForUser the pnl for the user in token amount
     struct DecreasePositionResult {
         uint256 adjustedSizeDeltaUsd;
         address outputToken;
@@ -80,6 +132,25 @@ library DecreasePositionUtils {
         uint256 pnlAmountForUser;
     }
 
+    // @dev decreases a position
+    // The decreasePosition function decreases the size of an existing position
+    // in a market. It takes a DecreasePositionParams object as an input, which
+    // includes information about the position to be decreased, the market in
+    // which the position exists, and the order that is being used to decrease the position.
+    //
+    // The function first calculates the prices of the tokens in the market, and then
+    // checks whether the position is liquidatable based on the current market prices.
+    // If the order is a liquidation order and the position is not liquidatable, the function reverts.
+    //
+    // If there is not enough collateral in the position to complete the decrease,
+    // the function reverts. Otherwise, the function updates the position's size and
+    // collateral amount, and increments the claimable funding amount for
+    // the market if necessary.
+    //
+    // Finally, the function returns a DecreasePositionResult object containing
+    // information about the outcome of the decrease operation, including the amount
+    // of collateral removed from the position and any fees that were paid.
+    // @param params DecreasePositionParams
     function decreasePosition(
         DecreasePositionParams memory params
     ) external returns (DecreasePositionResult memory) {
@@ -318,6 +389,9 @@ library DecreasePositionUtils {
         );
     }
 
+    // @dev emit details of a position decrease
+    // @param params DecreasePositionParams
+    // @param values ProcessCollateralValues
     function emitPositionDecrease(
         DecreasePositionParams memory params,
         ProcessCollateralValues memory values
@@ -338,6 +412,10 @@ library DecreasePositionUtils {
         );
     }
 
+    // @dev handle the collateral changes of the position
+    // @param params DecreasePositionParams
+    // @param cache _ProcessCollateralCache
+    // @return (ProcessCollateralValues, PositionPricingUtils.PositionFees)
     function processCollateral(
         DecreasePositionParams memory params,
         _ProcessCollateralCache memory cache
@@ -519,6 +597,9 @@ library DecreasePositionUtils {
         return (values, fees);
     }
 
+    // @dev check if the pnlToken should be swapped to the collateralToken
+    // @param the order.swapPath
+    // @return whether the pnlToken should be swapped to the collateralToken
     function shouldSwapPnlTokenToCollateralToken(address[] memory swapPath) internal pure returns (bool) {
         if (swapPath.length == 0) {
             return false;
@@ -527,6 +608,9 @@ library DecreasePositionUtils {
         return swapPath[0] == MarketUtils.SWAP_PNL_TOKEN_TO_COLLATERAL_TOKEN;
     }
 
+    // @dev check if the collateralToken should be swapped to the pnlToken
+    // @param the order.swapPath
+    // @return whether the collateralToken should be swapped to the pnlToken
     function shouldSwapCollateralTokenToPnlToken(address[] memory swapPath) internal pure returns (bool) {
         if (swapPath.length == 0) {
             return false;

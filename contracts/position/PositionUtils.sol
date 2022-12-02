@@ -12,12 +12,22 @@ import "../data/Keys.sol";
 
 import "../pricing/PositionPricingUtils.sol";
 
+// @title PositionUtils
+// @dev Library for position functions
 library PositionUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
     using Position for Position.Props;
     using Price for Price.Props;
 
+    // @dev _IsPositionLiquidatableCache struct used in isPositionLiquidatable
+    // to avoid stack too deep errors
+    // @param positionPnlUsd the position's pnl in USD
+    // @param maxLeverage the max allowed leverage
+    // @param collateralUsd the position's collateral in USD
+    // @param priceImpactUsd the price impact of closing the position in USD
+    // @param minCollateralUsd the minimum allowed collateral in USD
+    // @param remainingCollateralUsd the remaining position collateral in USD
     struct _IsPositionLiquidatableCache {
         int256 positionPnlUsd;
         uint256 maxLeverage;
@@ -28,8 +38,9 @@ library PositionUtils {
     }
 
     error LiquidatablePosition();
-    error UnexpectedPositionState();
 
+    // @dev get the position pnl in USD
+    //
     // for long positions, pnl is calculated as:
     // (position.sizeInTokens * indexTokenPrice) - position.sizeInUsd
     // if position.sizeInTokens is larger for long positions, the position will have
@@ -40,7 +51,11 @@ library PositionUtils {
     // if position.sizeInTokens is smaller for long positions, the position will have
     // larger profits and smaller losses for the same changes in token price
     //
-    // returns (positionPnlUsd, sizeDeltaInTokens)
+    // @param position the position values
+    // @param sizeDeltaUsd the change in position size
+    // @param indexTokenPrice the price of the index token
+    //
+    // @return (positionPnlUsd, sizeDeltaInTokens)
     function getPositionPnlUsd(
         Position.Props memory position,
         uint256 sizeDeltaUsd,
@@ -67,21 +82,40 @@ library PositionUtils {
         return (positionPnlUsd, sizeDeltaInTokens);
     }
 
+    // @dev convert sizeDeltaUsd to sizeDeltaInTokens
+    // @param sizeInUsd the position size in USD
+    // @param sizeInTokens the position size in tokens
+    // @param sizeDeltaUsd the position size change in USD
+    // @return the size delta in tokens
     function getSizeDeltaInTokens(uint256 sizeInUsd, uint256 sizeInTokens, uint256 sizeDeltaUsd) internal pure returns (uint256) {
         return sizeInTokens * sizeDeltaUsd / sizeInUsd;
     }
 
+    // @dev get the key for a position
+    // @param account the position's account
+    // @param market the position's market
+    // @param collateralToken the position's collateralToken
+    // @param isLong whether the position is long or short
+    // @return the position key
     function getPositionKey(address account, address market, address collateralToken, bool isLong) internal pure returns (bytes32) {
         bytes32 key = keccak256(abi.encode(account, market, collateralToken, isLong));
         return key;
     }
 
+    // @dev validate that a position is not empty
+    // @param position the position values
     function validateNonEmptyPosition(Position.Props memory position) internal pure {
         if (position.sizeInUsd == 0 || position.sizeInTokens == 0 || position.collateralAmount == 0) {
             revert(Keys.EMPTY_POSITION_ERROR);
         }
     }
 
+    // @dev check if a position is valid
+    // @param dataStore DataStore
+    // @param referralStorage IReferralStorage
+    // @param position the position values
+    // @param market the market values
+    // @param prices the prices of the tokens in the market
     function validatePosition(
         DataStore dataStore,
         IReferralStorage referralStorage,
@@ -100,9 +134,12 @@ library PositionUtils {
         }
     }
 
-    // price impact is not factored into the liquidation calculation
-    // if the user is able to close the position gradually, the impact
-    // may not be as much as closing the position in one transaction
+    // @dev check if a position is liquidatable
+    // @param dataStore DataStore
+    // @param referralStorage IReferralStorage
+    // @param position the position values
+    // @param market the market values
+    // @param prices the prices of the tokens in the market
     function isPositionLiquidatable(
         DataStore dataStore,
         IReferralStorage referralStorage,
@@ -162,9 +199,5 @@ library PositionUtils {
         }
 
         return false;
-    }
-
-    function revertUnexpectedPositionState() internal pure {
-        revert UnexpectedPositionState();
     }
 }

@@ -6,10 +6,16 @@ import "./OrderBaseUtils.sol";
 import "../swap/SwapUtils.sol";
 import "../position/IncreasePositionUtils.sol";
 
+// @title IncreaseOrderUtils
+// @dev Libary for functions to help with processing an increase order
 library IncreaseOrderUtils {
     using Order for Order.Props;
     using Array for uint256[];
 
+    error UnexpectedPositionState();
+
+    // @dev process an increase order
+    // @param params OrderBaseUtils.ExecuteOrderParams
     function processOrder(OrderBaseUtils.ExecuteOrderParams memory params) external {
         params.orderStore.transferOut(
             params.dataStore,
@@ -40,7 +46,7 @@ library IncreaseOrderUtils {
         if (position.account == address(0)) {
             position.account = params.order.account();
             if (position.market != address(0) || position.collateralToken != address(0)) {
-                PositionUtils.revertUnexpectedPositionState();
+                revert UnexpectedPositionState();
             }
 
             position.market = params.order.market();
@@ -79,6 +85,11 @@ library IncreaseOrderUtils {
         params.orderStore.remove(params.key, params.order.account());
     }
 
+    // @dev validate the oracle block numbers used for the prices in the oracle
+    // @param oracleBlockNumbers the oracle block numbers
+    // @param orderType the order type
+    // @param orderUpdatedAtBlock the block at which the order was last updated
+    // @param positionIncreasedAtBlock the block at which the position was last increased
     function validateOracleBlockNumbers(
         uint256[] memory oracleBlockNumbers,
         Order.OrderType orderType,

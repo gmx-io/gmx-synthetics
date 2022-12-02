@@ -6,10 +6,14 @@ import "./OrderBaseUtils.sol";
 import "../swap/SwapUtils.sol";
 import "../position/DecreasePositionUtils.sol";
 
+// @title DecreaseOrderUtils
+// @dev Libary for functions to help with processing a decrease order
 library DecreaseOrderUtils {
     using Order for Order.Props;
     using Array for uint256[];
 
+    // @dev process a decrease order
+    // @param params OrderBaseUtils.ExecuteOrderParams
     function processOrder(OrderBaseUtils.ExecuteOrderParams memory params) external {
         Order.Props memory order = params.order;
         MarketUtils.validateNonEmptyMarket(params.market);
@@ -124,6 +128,12 @@ library DecreaseOrderUtils {
         }
     }
 
+    // @dev validate the oracle block numbers used for the prices in the oracle
+    // @param oracleBlockNumbers the oracle block numbers
+    // @param orderType the order type
+    // @param orderUpdatedAtBlock the block at which the order was last updated
+    // @param positionIncreasedAtBlock the block at which the position was last increased
+    // @param positionDecreasedAtBlock the block at which the position was last decreased
     function validateOracleBlockNumbers(
         uint256[] memory oracleBlockNumbers,
         Order.OrderType orderType,

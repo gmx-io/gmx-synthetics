@@ -5,6 +5,8 @@ pragma solidity ^0.8.0;
 import "../data/Keys.sol";
 import "../market/MarketUtils.sol";
 
+// @title Reader
+// @dev Library for read functions
 contract Reader {
     function getPoolAmount(DataStore dataStore, address market, address token) external view returns (uint256) {
         return MarketUtils.getPoolAmount(dataStore, market, token);

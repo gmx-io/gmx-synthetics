@@ -4,11 +4,25 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
+/**
+ * @title EnumerableValues
+ * @dev Library to extend the EnumerableSet library with functions to get
+ * valuesAt for a range
+ */
 library EnumerableValues {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
 
+    /**
+     * Returns an array of bytes32 values from the given set, starting at the given
+     * start index and ending before the given end index.
+     *
+     * @param set The set to get the values from.
+     * @param start The starting index.
+     * @param end The ending index.
+     * @return An array of bytes32 values.
+     */
     function valuesAt(EnumerableSet.Bytes32Set storage set, uint256 start, uint256 end) internal view returns (bytes32[] memory) {
         uint256 max = set.length();
         if (end > max) { end = max; }
@@ -22,6 +36,15 @@ library EnumerableValues {
     }
 
 
+    /**
+     * Returns an array of address values from the given set, starting at the given
+     * start index and ending before the given end index.
+     *
+     * @param set The set to get the values from.
+     * @param start The starting index.
+     * @param end The ending index.
+     * @return An array of address values.
+     */
     function valuesAt(EnumerableSet.AddressSet storage set, uint256 start, uint256 end) internal view returns (address[] memory) {
         uint256 max = set.length();
         if (end > max) { end = max; }
@@ -35,6 +58,15 @@ library EnumerableValues {
     }
 
 
+    /**
+     * Returns an array of uint256 values from the given set, starting at the given
+     * start index and ending before the given end index.
+     *
+     * @param set The set to get the values from.
+     * @param start The starting index.
+     * @param end The ending index.
+     * @return An array of uint256 values.
+     */
     function valuesAt(EnumerableSet.UintSet storage set, uint256 start, uint256 end) internal view returns (uint256[] memory) {
         uint256 max = set.length();
         if (end > max) { end = max; }

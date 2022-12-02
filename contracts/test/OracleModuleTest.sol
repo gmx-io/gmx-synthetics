@@ -5,6 +5,10 @@ pragma solidity ^0.8.0;
 
 import "../oracle/OracleModule.sol";
 
+/**
+ * @title OracleModuleTest
+ * @dev Contract to help test the OracleModule contract
+ */
 contract OracleModuleTest is OracleModule {
     function withOraclePricesTest(
         Oracle oracle,

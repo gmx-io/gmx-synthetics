@@ -38,7 +38,7 @@ library DepositUtils {
     // @param minMarketTokens the minimum acceptable number of liquidity tokens
     // @param shouldUnwrapNativeToken whether to unwrap the native token when
     // sending funds back to the user in case the deposit gets cancelled
-    // @param executionFee the execution fee
+    // @param executionFee the execution fee for keepers
     // @param callbackGasLimit the gas limit for the callbackContract
     struct CreateDepositParams {
         address receiver;

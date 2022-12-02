@@ -14,12 +14,30 @@ import "../position/PositionStore.sol";
 import "../oracle/Oracle.sol";
 import "../swap/SwapHandler.sol";
 
-// OrderUtils has the function executeOrder, which uses IncreaseOrderUtils, DecreaseOrderUtils, SwapOrderUtils
-// those libraries need some common functions contained here
+// @title Order
+// @dev Libary for common order functions used in OrderUtils, IncreaseOrderUtils
+// DecreaseOrderUtils, SwapOrderUtils
 library OrderBaseUtils {
     using Order for Order.Props;
     using Price for Price.Props;
 
+    // @dev CreateOrderParams struct used in createOrder to avoid stack
+    // too deep errors
+    //
+    // @param receiver for order.receiver
+    // @param callbackContract for order.callbackContract
+    // @param market for order.market
+    // @param initialCollateralToken for order.initialCollateralToken
+    // @param swapPath for order.swapPath
+    // @param sizeDeltaUsd for order.sizeDeltaUsd
+    // @param triggerPrice for order.triggerPrice
+    // @param acceptablePrice for order.acceptablePrice
+    // @param executionFee for order.executionFee
+    // @param callbackGasLimit for order.callbackGasLimit
+    // @param minOutputAmount for order.minOutputAmount
+    // @param orderType for order.orderType
+    // @param isLong for order.isLong
+    // @param shouldUnwrapNativeToken for order.shouldUnwrapNativeToken
     struct CreateOrderParams {
         address receiver;
         address callbackContract;
@@ -39,6 +57,25 @@ library OrderBaseUtils {
         bool shouldUnwrapNativeToken;
     }
 
+    // @dev ExecuteOrderParams struct used in executeOrder to avoid stack
+    // too deep errors
+    //
+    // @param key the key of the order to execute
+    // @param order the order to execute
+    // @param swapPathMarkets the market values of the markets in the swapPath
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param orderStore OrderStore
+    // @param positionStore PositionStore
+    // @param oracle Oracle
+    // @param swapHandler SwapHandler
+    // @param feeReceiver FeeReceiver
+    // @param referralStorage IReferralStorage
+    // @param oracleBlockNumbers the oracle block numbers for the prices in the oracle
+    // @param market market values of the trading market
+    // @param keeper the keeper sending the transaction
+    // @param startingGas the starting gas
+    // @param positionKey the key of the order's position
     struct ExecuteOrderParams {
         bytes32 key;
         Order.Props order;
@@ -61,6 +98,9 @@ library OrderBaseUtils {
     error EmptyOrder();
     error UnsupportedOrderType();
 
+    // @dev check if an orderType is a market order
+    // @param orderType the order type
+    // @return whether an orderType is a market order
     function isMarketOrder(Order.OrderType orderType) internal pure returns (bool) {
         return orderType == Order.OrderType.MarketSwap ||
                orderType == Order.OrderType.MarketIncrease ||
@@ -68,27 +108,41 @@ library OrderBaseUtils {
                orderType == Order.OrderType.Liquidation;
     }
 
+    // @dev check if an orderType is a limit order
+    // @param orderType the order type
+    // @return whether an orderType is a limit order
     function isLimitOrder(Order.OrderType orderType) internal pure returns (bool) {
         return orderType == Order.OrderType.LimitSwap ||
                orderType == Order.OrderType.LimitIncrease ||
                orderType == Order.OrderType.LimitDecrease;
     }
 
+    // @dev check if an orderType is a swap order
+    // @param orderType the order type
+    // @return whether an orderType is a swap order
     function isSwapOrder(Order.OrderType orderType) internal pure returns (bool) {
         return orderType == Order.OrderType.MarketSwap ||
                orderType == Order.OrderType.LimitSwap;
     }
 
+    // @dev check if an orderType is a position order
+    // @param orderType the order type
+    // @return whether an orderType is a position order
     function isPositionOrder(Order.OrderType orderType) internal pure returns (bool) {
-        return orderType == Order.OrderType.MarketIncrease ||
-               orderType == Order.OrderType.LimitIncrease;
+        return isIncreaseOrder(orderType) || isDecreaseOrder(orderType);
     }
 
+    // @dev check if an orderType is an increase order
+    // @param orderType the order type
+    // @return whether an orderType is an increase order
     function isIncreaseOrder(Order.OrderType orderType) internal pure returns (bool) {
         return orderType == Order.OrderType.MarketIncrease ||
                orderType == Order.OrderType.LimitIncrease;
     }
 
+    // @dev check if an orderType is a decrease order
+    // @param orderType the order type
+    // @return whether an orderType is a decrease order
     function isDecreaseOrder(Order.OrderType orderType) internal pure returns (bool) {
         return orderType == Order.OrderType.MarketDecrease ||
                orderType == Order.OrderType.LimitDecrease ||
@@ -96,12 +150,17 @@ library OrderBaseUtils {
                orderType == Order.OrderType.Liquidation;
     }
 
+    // @dev check if an orderType is a liquidation order
+    // @param orderType the order type
+    // @return whether an orderType is a liquidation order
     function isLiquidationOrder(Order.OrderType orderType) internal pure returns (bool) {
         return orderType == Order.OrderType.Liquidation;
     }
 
-    // for market orders, set the min and max values of the customPrice to either
-    // secondaryPrice.min or secondaryPrice.max depending on whether the order
+    // @dev set the price for increase / decrease orders
+    //
+    // for market orders, set the min and max values of the customPrice for the indexToken
+    // to either secondaryPrice.min or secondaryPrice.max depending on whether the order
     // is an increase or decrease and whether it is for a long or short
     //
     // customPrice.min and customPrice.max will be equal in this case
@@ -114,6 +173,12 @@ library OrderBaseUtils {
     // to be fulfilled at and the best oracle price that the order could be fulfilled at
     //
     // getExecutionPrice handles the logic for selecting the execution price to use
+    //
+    // @param oracle Oracle
+    // @param indexToken the index token
+    // @param orderType the order type
+    // @param triggerPrice the order's triggerPrice
+    // @param isLong whether the order is for a long or short
     function setExactOrderPrice(
         Oracle oracle,
         address indexToken,
@@ -192,6 +257,8 @@ library OrderBaseUtils {
         revertUnsupportedOrderType();
     }
 
+    // @dev get the execution price for an order
+    //
     // see setExactOrderPrice for information on the customPrice values
     //
     // for limit / stop-loss orders, the triggerPrice is returned here if it can
@@ -200,8 +267,16 @@ library OrderBaseUtils {
     // if the triggerPrice cannot fulfill the acceptablePrice, check if the acceptablePrice
     // can be fulfilled using the best oracle price after factoring in price impact
     // if it can be fulfilled, fulfill the order at the acceptablePrice
+    //
+    // @param customIndexTokenPrice the custom price of the index token
+    // @param sizeDeltaUsd the order.sizeDeltaUsd
+    // @param priceImpactUsd the price impact of the order
+    // @param acceptablePrice the order.acceptablePrice
+    // @param isLong whether this is for a long or short order
+    // @param isIncrease whether this is for an increase or decrease order
+    // @return the execution price
     function getExecutionPrice(
-        Price.Props memory customPrice,
+        Price.Props memory customIndexTokenPrice,
         uint256 sizeDeltaUsd,
         int256 priceImpactUsd,
         uint256 acceptablePrice,
@@ -225,10 +300,10 @@ library OrderBaseUtils {
         //     - short: price should be smaller than acceptablePrice
         bool shouldPriceBeSmaller = isIncrease ? isLong : !isLong;
 
-        // for market orders, customPrice.min and customPrice.max should be equal, see setExactOrderPrice for more info
-        // for limit orders, customPrice contains the triggerPrice and the best oracle
+        // for market orders, customIndexTokenPrice.min and customIndexTokenPrice.max should be equal, see setExactOrderPrice for more info
+        // for limit orders, customIndexTokenPrice contains the triggerPrice and the best oracle
         // price, we first attempt to fulfill the order using the triggerPrice
-        uint256 price = customPrice.pickPrice(shouldUseMaxPrice);
+        uint256 price = customIndexTokenPrice.pickPrice(shouldUseMaxPrice);
 
         // increase order:
         //     - long: lower price for positive impact, higher price for negative impact
@@ -252,7 +327,7 @@ library OrderBaseUtils {
 
         // if the order could not be fulfilled using the triggerPrice
         // check if the best oracle price can fulfill the order
-        price = customPrice.pickPrice(!shouldUseMaxPrice);
+        price = customIndexTokenPrice.pickPrice(!shouldUseMaxPrice);
 
         // adjust price by price impact
         price = price * Calc.sum(sizeDeltaUsd, priceImpactUsdForPriceAdjustment) / sizeDeltaUsd;
@@ -268,12 +343,15 @@ library OrderBaseUtils {
         revert(Keys.UNACCEPTABLE_PRICE_ERROR);
     }
 
+    // @dev validate that an order exists
+    // @param order the order to check
     function validateNonEmptyOrder(Order.Props memory order) internal pure {
         if (order.account() == address(0)) {
             revert EmptyOrder();
         }
     }
 
+    // @dev throw an unsupported order type error
     function revertUnsupportedOrderType() internal pure {
         revert UnsupportedOrderType();
     }

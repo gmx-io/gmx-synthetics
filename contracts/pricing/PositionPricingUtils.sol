@@ -12,10 +12,20 @@ import "./PricingUtils.sol";
 import "../referral/IReferralStorage.sol";
 import "../referral/ReferralUtils.sol";
 
+// @title PositionPricingUtils
+// @dev Library for position pricing functions
 library PositionPricingUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
 
+    // @dev GetPriceImpactUsdParams struct used in getPriceImpactUsd to avoid stack
+    // too deep errors
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param longToken the longToken of the market
+    // @param shortToken the shortToken of the market
+    // @param usdDelta the change in position size in USD
+    // @param isLong whether the position is long or short
     struct GetPriceImpactUsdParams {
         DataStore dataStore;
         address market;
@@ -25,6 +35,11 @@ library PositionPricingUtils {
         bool isLong;
     }
 
+    // @dev OpenInterestParams struct to contain open interest values
+    // @param longOpenInterest the amount of long open interest
+    // @param shortOpenInterest the amount of short open interest
+    // @param nextLongOpenInterest the updated amount of long open interest
+    // @param nextShortOpenInterest the updated amount of short open interest
     struct OpenInterestParams {
         uint256 longOpenInterest;
         uint256 shortOpenInterest;
@@ -32,6 +47,26 @@ library PositionPricingUtils {
         uint256 nextShortOpenInterest;
     }
 
+    // @dev PositionFees struct to contain fee values
+    // @param affiliate the referral affiliate of the trader
+    // @param traderDiscountAmount the discount amount for the trader
+    // @param affiliateRewardAmount the affiliate reward amount
+    // @param feeReceiverAmount the amount for the fee receiver
+    // @param feesForPool the amount of fees for the pool
+    // @param positionFeeAmountForPool the position fee amount for the pool
+    // @param positionFeeAmount the fee amount for increasing / decreasing the position
+    // @param fundingFeeAmount the position's funding fee amount
+    // @param latestLongTokenFundingAmountPerSize the latest long token funding
+    // amount per size for the market
+    // @param latestLongTokenFundingAmountPerSize the latest short token funding
+    // amount per size for the market
+    // @param longTokenFundingFeeAmount the funding fee amount in long tokens
+    // @param shortTokenFundingFeeAmount the funding fee amount in short tokens
+    // @param borrowingFeeAmount the borrowing fee amount
+    // @param totalNetCostAmount the total net cost amount in tokens
+    // @param totalNetCostUsd the total net cost in USD
+    // @param hasPendingLongTokenFundingFee whether there is a pending long token funding fee
+    // @param hasPendingShortTokenFundingFee whether there is a pending short token funding fee
     struct PositionFees {
         address affiliate;
         uint256 traderDiscountAmount;
@@ -52,6 +87,20 @@ library PositionPricingUtils {
         bool hasPendingShortTokenFundingFee;
     }
 
+    // @dev _GetPositionFeesAfterReferralCache struct used in getPositionFees
+    // to avoid stack too deep errors
+    // @param affiliate the referral affiliate
+    // @param totalRebateFactor the total referral rebate factor
+    // @param traderDiscountFactor the trader referral discount factor
+    // @param feeFactor the fee factor
+    // @param positionFeeAmount the fee amount for increasing / decreasing the position
+    // @param totalRebateAmount the total referral rebate amount in tokens
+    // @param traderDiscountAmount the trader discount amount in tokens
+    // @param affiliateRewardAmount the affiliate reward amount in tokens
+    // @param protocolFeeAmount the protocol fee
+    // @param feeReceiverFactor the fee receiver factor
+    // @param feeReceiverAmount the amount for the fee receiver
+    // @param positionFeeAmountForPool the position fee amount for the pool in tokens
     struct _GetPositionFeesAfterReferralCache {
         address affiliate;
         uint256 totalRebateFactor;
@@ -67,6 +116,13 @@ library PositionPricingUtils {
         uint256 positionFeeAmountForPool;
     }
 
+    // @dev get the price impact amount for a position increase / decrease
+    // @param size the change in position size
+    // @param executionPrice the execution price of the index token
+    // @param latestPrice the latest price of the index token
+    // @param isLong whether the position is long or short
+    // @param isIncrease whether it is an increase or decrease position
+    // @return the price impact amount for a position increase / decrease
     function getPriceImpactAmount(
         uint256 size,
         uint256 executionPrice,
@@ -99,6 +155,8 @@ library PositionPricingUtils {
         return priceImpactUsd / latestPrice.toInt256();
     }
 
+    // @dev get the price impact in USD for a position increase / decrease
+    // @param params GetPriceImpactUsdParams
     function getPriceImpactUsd(GetPriceImpactUsdParams memory params) internal view returns (int256) {
         OpenInterestParams memory openInterestParams = getNextOpenInterest(params);
 
@@ -107,6 +165,10 @@ library PositionPricingUtils {
         return priceImpactUsd;
     }
 
+    // @dev get the price impact in USD for a position increase / decrease
+    // @param dataStore DataStore
+    // @param market the trading market
+    // @param openInterestParams OpenInterestParams
     function _getPriceImpactUsd(DataStore dataStore, address market, OpenInterestParams memory openInterestParams) internal view returns (int256) {
         uint256 initialDiffUsd = Calc.diff(openInterestParams.longOpenInterest, openInterestParams.shortOpenInterest);
         uint256 nextDiffUsd = Calc.diff(openInterestParams.nextLongOpenInterest, openInterestParams.nextShortOpenInterest);
@@ -143,6 +205,9 @@ library PositionPricingUtils {
         }
     }
 
+    // @dev get the next open interest values
+    // @param params GetPriceImpactUsdParams
+    // @return OpenInterestParams
     function getNextOpenInterest(
         GetPriceImpactUsdParams memory params
     ) internal view returns (OpenInterestParams memory) {
@@ -180,6 +245,13 @@ library PositionPricingUtils {
         return openInterestParams;
     }
 
+    // @dev transfer position fees to the feeReceiver
+    // @param dataStore DataStore
+    // @param feeReceiver FeeReceiver
+    // @param marketToken the market token of the market
+    // @param position the position values
+    // @param feeType the type of the position fee
+    // @param fees PositionFees
     function transferPositionFees(
         DataStore dataStore,
         FeeReceiver feeReceiver,
@@ -201,6 +273,15 @@ library PositionPricingUtils {
         return fees;
     }
 
+    // @dev get position fees
+    // @param dataStore DataStore
+    // @param referralStorage IReferralStorage
+    // @param position the position values
+    // @param collateralTokenPrice the price of the position's collateralToken
+    // @param longToken the long token of the market
+    // @param shortToken the short token of the market
+    // @param sizeDeltaUsd the change in position size
+    // @return PositionFees
     function getPositionFees(
         DataStore dataStore,
         IReferralStorage referralStorage,
@@ -250,6 +331,14 @@ library PositionPricingUtils {
         return fees;
     }
 
+    // @dev get position fees after applying referral rebates / discounts
+    // @param dataStore DataStore
+    // @param referralStorage IReferralStorage
+    // @param collateralTokenPrice the price of the position's collateralToken
+    // @param the position's account
+    // @param market the position's market
+    // @param sizeDeltaUsd the change in position size
+    // @return (affiliate, traderDiscountAmount, affiliateRewardAmount, feeReceiverAmount, positionFeeAmountForPool)
     function getPositionFeesAfterReferral(
         DataStore dataStore,
         IReferralStorage referralStorage,

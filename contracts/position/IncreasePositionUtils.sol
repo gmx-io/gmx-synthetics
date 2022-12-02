@@ -16,6 +16,8 @@ import "./PositionStore.sol";
 import "./PositionUtils.sol";
 import "../order/OrderBaseUtils.sol";
 
+// @title IncreasePositionUtils
+// @dev Libary for functions to help with increasing a position
 library IncreasePositionUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
@@ -24,6 +26,21 @@ library IncreasePositionUtils {
     using Order for Order.Props;
     using Price for Price.Props;
 
+    // @dev IncreasePositionParams struct used in increasePosition to avoid
+    // stack too deep errors
+    //
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param positionStore PositionStore
+    // @param oracle Oracle
+    // @param feeReceiver FeeReceiver
+    // @param referralStorage IReferralStorage
+    // @param market the values of the trading market
+    // @param order the decrease position order
+    // @param position the order's position
+    // @param positionKey the key of the order's position
+    // @param collateral the collateralToken of the position
+    // @param collateralDeltaAmount the amount of collateralToken deposited
     struct IncreasePositionParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
@@ -39,6 +56,15 @@ library IncreasePositionUtils {
         uint256 collateralDeltaAmount;
     }
 
+    // @dev _IncreasePositionCache struct used in increasePosition to
+    // avoid stack too deep errors
+    // @param collateralDeltaAmount the change in collateral amount
+    // @param priceImpactUsd the price impact of the position increase in USD
+    // @param executionPrice the execution price
+    // @param priceImpactAmount the price impact of the position increase in tokens
+    // @param sizeDeltaInTokens the change in position size in tokens
+    // @param nextPositionSizeInUsd the new position size in USD
+    // @param nextPositionBorrowingFactor the new position borrowing factor
     struct _IncreasePositionCache {
         int256 collateralDeltaAmount;
         int256 priceImpactUsd;
@@ -51,6 +77,13 @@ library IncreasePositionUtils {
 
     error InsufficientCollateralAmount();
 
+    // @dev increase a position
+    // The increasePosition function is used to increase the size of a position
+    // in a market. This involves updating the position's collateral amount,
+    // calculating the price impact of the size increase, and updating the position's
+    // size and borrowing factor. This function also applies fees to the position
+    // and updates the market's liquidity pool based on the new position size.
+    // @param params IncreasePositionParams
     function increasePosition(IncreasePositionParams memory params) external {
         Position.Props memory position = params.position;
         position.account = params.order.account();
@@ -58,11 +91,13 @@ library IncreasePositionUtils {
         position.collateralToken = params.collateralToken;
         position.isLong = params.order.isLong();
 
+        // get the market prices for the given position
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPricesForPosition(
             params.market,
             params.oracle
         );
 
+        // update the funding amount per size for the market
         MarketUtils.updateFundingAmountPerSize(
             params.dataStore,
             prices,
@@ -71,6 +106,8 @@ library IncreasePositionUtils {
             params.market.shortToken
         );
 
+
+        // update the cumulative borrowing factor for the market
         MarketUtils.updateCumulativeBorrowingFactor(
             params.dataStore,
             prices,
@@ -80,7 +117,10 @@ library IncreasePositionUtils {
             position.isLong
         );
 
+        // create a new cache for holding intermediate results
         _IncreasePositionCache memory cache;
+
+        // process the collateral for the given position and order
         PositionPricingUtils.PositionFees memory fees;
         (cache.collateralDeltaAmount, fees) = processCollateral(
             params,
@@ -89,6 +129,7 @@ library IncreasePositionUtils {
             params.collateralDeltaAmount.toInt256()
         );
 
+        // check if there is sufficient collateral for the position
         if (cache.collateralDeltaAmount < 0 && position.collateralAmount < SafeCast.toUint256(-cache.collateralDeltaAmount)) {
             revert InsufficientCollateralAmount();
         }
@@ -249,6 +290,11 @@ library IncreasePositionUtils {
         }
     }
 
+    // @dev handle the collateral changes of the position
+    // @param params IncreasePositionParams
+    // @param prices the prices of the tokens in the market
+    // @param position the position to process collateral for
+    // @param collateralDeltaAmount the change in the position's collateral
     function processCollateral(
         IncreasePositionParams memory params,
         MarketUtils.MarketPrices memory prices,
