@@ -27,12 +27,21 @@ import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
 
+// @title OrderUtils
+// @dev Library for order functions
 library OrderUtils {
     using Order for Order.Props;
     using Position for Position.Props;
     using Price for Price.Props;
     using Array for uint256[];
 
+    // @dev creates an order in the order store
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param orderStore OrderStore
+    // @param marketStore MarketStore
+    // @param account the order account
+    // @param params OrderBaseUtils.CreateOrderParams
     function createOrder(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -97,6 +106,8 @@ library OrderUtils {
         return key;
     }
 
+    // @dev executes an order
+    // @param params OrderBaseUtils.ExecuteOrderParams
     function executeOrder(OrderBaseUtils.ExecuteOrderParams memory params) internal {
         OrderBaseUtils.validateNonEmptyOrder(params.order);
 
@@ -126,6 +137,8 @@ library OrderUtils {
         );
     }
 
+    // @dev process an order execution
+    // @param params OrderBaseUtils.ExecuteOrderParams
     function processOrder(OrderBaseUtils.ExecuteOrderParams memory params) internal {
         if (OrderBaseUtils.isIncreaseOrder(params.order.orderType())) {
             IncreaseOrderUtils.processOrder(params);
@@ -145,6 +158,14 @@ library OrderUtils {
         OrderBaseUtils.revertUnsupportedOrderType();
     }
 
+    // @dev cancels an order
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param orderStore OrderStore
+    // @param key the key of the order to cancel
+    // @param keeper the keeper sending the transaction
+    // @param startingGas the starting gas of the transaction
+    // @param reason the reason for cancellation
     function cancelOrder(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -185,6 +206,14 @@ library OrderUtils {
         );
     }
 
+    // @dev freezes an order
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param orderStore OrderStore
+    // @param key the key of the order to freeze
+    // @param keeper the keeper sending the transaction
+    // @param startingGas the starting gas of the transaction
+    // @param reason the reason the order was frozen
     function freezeOrder(
         DataStore dataStore,
         EventEmitter eventEmitter,

@@ -4,51 +4,88 @@ pragma solidity ^0.8.0;
 
 import "../chain/Chain.sol";
 
+// @title Order
+// @dev Struct for orders
 library Order {
     using Order for Props;
 
     enum OrderType {
-        // for LimitIncrease, LimitDecrease, StopLossDecrease orders, two prices for the
+        // @dev for LimitIncrease, LimitDecrease, StopLossDecrease orders, two prices for the
         // index token need to be recorded in the oracle
         // the price with the smaller block number is stored as the primary price while the price with the
         // larger block number is stored as the secondary price
         // the triggerPrice must be validated to be between the primary price and secondary price
         // LimitDecrease and StopLossDecrease are reduce-only orders
 
-        // MarketSwap: swap token A to token B at the current market price
+        // @dev MarketSwap: swap token A to token B at the current market price
         // the order will be cancelled if the minOutputAmount cannot be fulfilled
         MarketSwap,
-        // LimitSwap: swap token A to token B if the minOutputAmount can be fulfilled
+        // @dev LimitSwap: swap token A to token B if the minOutputAmount can be fulfilled
         LimitSwap,
-        // MarketIncrease: increase position at the current market price
+        // @dev MarketIncrease: increase position at the current market price
         // the order will be cancelled if the position cannot be increased at the acceptablePrice
         MarketIncrease,
-        // LimitIncrease: increase position if the triggerPrice is reached and the acceptablePrice can be fulfilled
+        // @dev LimitIncrease: increase position if the triggerPrice is reached and the acceptablePrice can be fulfilled
         LimitIncrease,
-        // MarketDecrease: decrease position at the curent market price
+        // @dev MarketDecrease: decrease position at the curent market price
         // the order will be cancelled if the position cannot be decreased at the acceptablePrice
         MarketDecrease,
-        // LimitDecrease: decrease position if the triggerPrice is reached and the acceptablePrice can be fulfilled
+        // @dev LimitDecrease: decrease position if the triggerPrice is reached and the acceptablePrice can be fulfilled
         LimitDecrease,
-        // StopLossDecrease: decrease position if the triggerPrice is reached and the acceptablePrice can be fulfilled
+        // @dev StopLossDecrease: decrease position if the triggerPrice is reached and the acceptablePrice can be fulfilled
         StopLossDecrease,
-        // Liquidation: allows liquidation of positions if the criteria for liquidation are met
+        // @dev Liquidation: allows liquidation of positions if the criteria for liquidation are met
         Liquidation
     }
 
+    // @dev there is a limit on the number of fields a struct can have when being passed
+    // or returned as a memory variable which can cause "Stack too deep" errors
+    // we use sub-structs here to avoid the issue
+    // @param addresses address values
+    // @param numbers number values
+    // @param flags boolean values
+    // @param data for any additional data
+    struct Props {
+        Addresses addresses;
+        Numbers numbers;
+        Flags flags;
+        bytes data;
+    }
+
+    // @param account the account of the order
+    // @param receiver the receiver for any token transfers
+    // @param callbackContract the contract to call for callbacks
+    // @param market the trading market
+    // @param initialCollateralToken for increase orders, initialCollateralToken
+    // is the token sent in by the user, the token will be swapped through the
+    // specified swapPath, before being deposited into the position as collateral
+    // for decrease orders, initialCollateralToken is the collateral token of the position
+    // withdrawn collateral from the decrease of the position will be swapped
+    // through the specified swapPath
+    // for swaps, initialCollateralToken is the initial token sent it for the swap
+    // @param swapPath an array of market addresses to swap through
     struct Addresses {
         address account;
         address receiver;
         address callbackContract;
         address market;
-         // for increase positions initialCollateralToken is the token sent in by the user
-         // the token will be swapped through the specified swapPath, before position increase
-         // for decrease position initialCollateralToken is the collateral token of the position
-         // any withdrawn collateral will be swapped through the specified swapPath, after position decrease
         address initialCollateralToken;
-        address[] swapPath; // list of markets to swap collateral through
+        address[] swapPath;
     }
 
+    // @param sizeDeltaUsd the requested change in position size
+    // @param initialCollateralDeltaAmount for increase orders, initialCollateralDeltaAmount
+    // is the amount of the initialCollateralToken sent in by the user
+    // for decrease orders, initialCollateralDeltaAmount is the amount of the position's
+    // collateralToken to withdraw
+    // for swaps, initialCollateralDeltaAmount is the amount of initialCollateralToken sent
+    // in for the swap
+    // @param triggerPrice the trigger price for non-market orders
+    // @param acceptablePrice the acceptable execution price for increase / decrease orders
+    // @param executionFee the execution fee for keepers
+    // @param callbackGasLimit the gas limit for the callbackContract
+    // @param minOutputAmount the minimum output amount for decrease orders and swaps
+    // @param updatedAtBlock the block at which the order was last updated
     struct Numbers {
         uint256 sizeDeltaUsd;
         uint256 initialCollateralDeltaAmount;
@@ -60,6 +97,11 @@ library Order {
         uint256 updatedAtBlock;
     }
 
+    // @param orderType the order type
+    // @param isLong whether the order is for a long or short
+    // @param shouldUnwrapNativeToken whether to unwrap native tokens before
+    // transferring to the user
+    // @param isFrozen whether the order is frozen
     struct Flags {
         OrderType orderType;
         bool isLong;
@@ -67,160 +109,262 @@ library Order {
         bool isFrozen;
     }
 
-    // there is a limit on the number of fields a struct can have when being passed
-    // or returned as a memory variable which can cause "Stack too deep" errors
-    // we use sub-structs here to avoid the issue
-    struct Props {
-        Addresses addresses;
-        Numbers numbers;
-        Flags flags;
-        bytes data;
-    }
-
+    // @dev the order account
+    // @param props Props
+    // @return the order account
     function account(Props memory props) internal pure returns (address) {
         return props.addresses.account;
     }
 
+    // @dev the order receiver
+    // @param props Props
+    // @return the order receiver
     function receiver(Props memory props) internal pure returns (address) {
         return props.addresses.receiver;
     }
 
+    // @dev the order callbackContract
+    // @param props Props
+    // @return the order callbackContract
     function callbackContract(Props memory props) internal pure returns (address) {
         return props.addresses.callbackContract;
     }
 
+    // @dev the order market
+    // @param props Props
+    // @return the order market
     function market(Props memory props) internal pure returns (address) {
         return props.addresses.market;
     }
 
+    // @dev the order initialCollateralToken
+    // @param props Props
+    // @return the order initialCollateralToken
     function initialCollateralToken(Props memory props) internal pure returns (address) {
         return props.addresses.initialCollateralToken;
     }
 
+    // @dev the order swapPath
+    // @param props Props
+    // @return the order swapPath
     function swapPath(Props memory props) internal pure returns (address[] memory) {
         return props.addresses.swapPath;
     }
 
+    // @dev the order sizeDeltaUsd
+    // @param props Props
+    // @return the order sizeDeltaUsd
     function sizeDeltaUsd(Props memory props) internal pure returns (uint256) {
         return props.numbers.sizeDeltaUsd;
     }
 
+    // @dev the order initialCollateralDeltaAmount
+    // @param props Props
+    // @return the order initialCollateralDeltaAmount
     function initialCollateralDeltaAmount(Props memory props) internal pure returns (uint256) {
         return props.numbers.initialCollateralDeltaAmount;
     }
 
+    // @dev the order triggerPrice
+    // @param props Props
+    // @return the order triggerPrice
     function triggerPrice(Props memory props) internal pure returns (uint256) {
         return props.numbers.triggerPrice;
     }
 
+    // @dev the order acceptablePrice
+    // @param props Props
+    // @return the order acceptablePrice
     function acceptablePrice(Props memory props) internal pure returns (uint256) {
         return props.numbers.acceptablePrice;
     }
 
+    // @dev the order executionFee
+    // @param props Props
+    // @return the order executionFee
     function executionFee(Props memory props) internal pure returns (uint256) {
         return props.numbers.executionFee;
     }
 
+    // @dev the order callbackGasLimit
+    // @param props Props
+    // @return the order callbackGasLimit
     function callbackGasLimit(Props memory props) internal pure returns (uint256) {
         return props.numbers.callbackGasLimit;
     }
 
+    // @dev the order minOutputAmount
+    // @param props Props
+    // @return the order minOutputAmount
     function minOutputAmount(Props memory props) internal pure returns (uint256) {
         return props.numbers.minOutputAmount;
     }
 
+    // @dev the order updatedAtBlock
+    // @param props Props
+    // @return the order updatedAtBlock
     function updatedAtBlock(Props memory props) internal pure returns (uint256) {
         return props.numbers.updatedAtBlock;
     }
 
+    // @dev the order type
+    // @param props Props
+    // @return the order type
     function orderType(Props memory props) internal pure returns (OrderType) {
         return props.flags.orderType;
     }
 
+    // @dev whether the order is for a long or short
+    // @param props Props
+    // @return whether the order is for a long or short
     function isLong(Props memory props) internal pure returns (bool) {
         return props.flags.isLong;
     }
 
+    // @dev whether to unwrap the native token before transfers to the user
+    // @param props Props
+    // @return whether to unwrap the native token before transfers to the user
     function shouldUnwrapNativeToken(Props memory props) internal pure returns (bool) {
         return props.flags.shouldUnwrapNativeToken;
     }
 
+    // @dev whether the order is frozen
+    // @param props Props
+    // @return whether the order is frozen
     function isFrozen(Props memory props) internal pure returns (bool) {
         return props.flags.isFrozen;
     }
 
-    function setAccount(Props memory props, address _value) internal pure {
-        props.addresses.account = _value;
+    // @dev set the order account
+    // @param props Props
+    // @param value the value to set to
+    function setAccount(Props memory props, address value) internal pure {
+        props.addresses.account = value;
     }
 
-    function setReceiver(Props memory props, address _value) internal pure {
-        props.addresses.receiver = _value;
+    // @dev set the order receiver
+    // @param props Props
+    // @param value the value to set to
+    function setReceiver(Props memory props, address value) internal pure {
+        props.addresses.receiver = value;
     }
 
-    function setCallbackContract(Props memory props, address _value) internal pure {
-        props.addresses.callbackContract = _value;
+    // @dev set the order callbackContract
+    // @param props Props
+    // @param value the value to set to
+    function setCallbackContract(Props memory props, address value) internal pure {
+        props.addresses.callbackContract = value;
     }
 
-    function setMarket(Props memory props, address _value) internal pure {
-        props.addresses.market = _value;
+    // @dev set the order market
+    // @param props Props
+    // @param value the value to set to
+    function setMarket(Props memory props, address value) internal pure {
+        props.addresses.market = value;
     }
 
-    function setInitialCollateralToken(Props memory props, address _value) internal pure {
-        props.addresses.initialCollateralToken = _value;
+    // @dev set the order initialCollateralToken
+    // @param props Props
+    // @param value the value to set to
+    function setInitialCollateralToken(Props memory props, address value) internal pure {
+        props.addresses.initialCollateralToken = value;
     }
 
-    function setSwapPath(Props memory props, address[] memory _value) internal pure {
-        props.addresses.swapPath = _value;
+    // @dev set the order swapPath
+    // @param props Props
+    // @param value the value to set to
+    function setSwapPath(Props memory props, address[] memory value) internal pure {
+        props.addresses.swapPath = value;
     }
 
-    function setSizeDeltaUsd(Props memory props, uint256 _value) internal pure {
-        props.numbers.sizeDeltaUsd = _value;
+    // @dev set the order sizeDeltaUsd
+    // @param props Props
+    // @param value the value to set to
+    function setSizeDeltaUsd(Props memory props, uint256 value) internal pure {
+        props.numbers.sizeDeltaUsd = value;
     }
 
-    function setInitialCollateralDeltaAmount(Props memory props, uint256 _value) internal pure {
-        props.numbers.initialCollateralDeltaAmount = _value;
+    // @dev set the order initialCollateralDeltaAmount
+    // @param props Props
+    // @param value the value to set to
+    function setInitialCollateralDeltaAmount(Props memory props, uint256 value) internal pure {
+        props.numbers.initialCollateralDeltaAmount = value;
     }
 
-    function setTriggerPrice(Props memory props, uint256 _value) internal pure {
-        props.numbers.triggerPrice = _value;
+    // @dev set the order triggerPrice
+    // @param props Props
+    // @param value the value to set to
+    function setTriggerPrice(Props memory props, uint256 value) internal pure {
+        props.numbers.triggerPrice = value;
     }
 
-    function setAcceptablePrice(Props memory props, uint256 _value) internal pure {
-        props.numbers.acceptablePrice = _value;
+    // @dev set the order acceptablePrice
+    // @param props Props
+    // @param value the value to set to
+    function setAcceptablePrice(Props memory props, uint256 value) internal pure {
+        props.numbers.acceptablePrice = value;
     }
 
-    function setExecutionFee(Props memory props, uint256 _value) internal pure {
-        props.numbers.executionFee = _value;
+    // @dev set the order executionFee
+    // @param props Props
+    // @param value the value to set to
+    function setExecutionFee(Props memory props, uint256 value) internal pure {
+        props.numbers.executionFee = value;
     }
 
-    function setCallbackGasLimit(Props memory props, uint256 _value) internal pure {
-        props.numbers.callbackGasLimit = _value;
+    // @dev set the order callbackGasLimit
+    // @param props Props
+    // @param value the value to set to
+    function setCallbackGasLimit(Props memory props, uint256 value) internal pure {
+        props.numbers.callbackGasLimit = value;
     }
 
-    function setMinOutputAmount(Props memory props, uint256 _value) internal pure {
-        props.numbers.minOutputAmount = _value;
+    // @dev set the order minOutputAmount
+    // @param props Props
+    // @param value the value to set to
+    function setMinOutputAmount(Props memory props, uint256 value) internal pure {
+        props.numbers.minOutputAmount = value;
     }
 
-    function setUpdatedAtBlock(Props memory props, uint256 _value) internal pure {
-        props.numbers.updatedAtBlock = _value;
+    // @dev set the order updatedAtBlock
+    // @param props Props
+    // @param value the value to set to
+    function setUpdatedAtBlock(Props memory props, uint256 value) internal pure {
+        props.numbers.updatedAtBlock = value;
     }
 
-    function setOrderType(Props memory props, OrderType _value) internal pure {
-        props.flags.orderType = _value;
+    // @dev set the order type
+    // @param props Props
+    // @param value the value to set to
+    function setOrderType(Props memory props, OrderType value) internal pure {
+        props.flags.orderType = value;
     }
 
-    function setIsLong(Props memory props, bool _value) internal pure {
-        props.flags.isLong = _value;
+    // @dev set whether the order is for a long or short
+    // @param props Props
+    // @param value the value to set to
+    function setIsLong(Props memory props, bool value) internal pure {
+        props.flags.isLong = value;
     }
 
-    function setShouldUnwrapNativeToken(Props memory props, bool _value) internal pure {
-        props.flags.shouldUnwrapNativeToken = _value;
+    // @dev set whether the native token should be unwrapped before being
+    // transferred to the receiver
+    // @param props Props
+    // @param value the value to set to
+    function setShouldUnwrapNativeToken(Props memory props, bool value) internal pure {
+        props.flags.shouldUnwrapNativeToken = value;
     }
 
-    function setIsFrozen(Props memory props, bool _value) internal pure {
-        props.flags.isFrozen = _value;
+    // @dev set whether the order is frozen
+    // transferred to the receiver
+    // @param props Props
+    // @param value the value to set to
+    function setIsFrozen(Props memory props, bool value) internal pure {
+        props.flags.isFrozen = value;
     }
 
+    // @dev set the order.updatedAtBlock to the current block number
+    // @param props Props
     function touch(Props memory props) internal view {
         props.setUpdatedAtBlock(Chain.currentBlockNumber());
     }
