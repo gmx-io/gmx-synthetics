@@ -8,11 +8,27 @@ import "../oracle/Oracle.sol";
 import "../pricing/SwapPricingUtils.sol";
 import "../token/TokenUtils.sol";
 
+/**
+ * @title SwapUtils
+ * @dev Library for swap functions
+ */
 library SwapUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
     using Price for Price.Props;
 
+    /**
+     * @param dataStore The contract that provides access to data stored on-chain.
+     * @param eventEmitter The contract that emits events.
+     * @param oracle The contract that provides access to price data from oracles.
+     * @param feeReceiver The contract that receives fees for the swap operation.
+     * @param tokenIn The address of the token that is being swapped.
+     * @param amountIn The amount of the token that is being swapped.
+     * @param markets An array of market properties, specifying the markets in which the swap should be executed.
+     * @param minOutputAmount The minimum amount of tokens that should be received as part of the swap.
+     * @param receiver The address to which the swapped tokens should be sent.
+     * @param shouldUnwrapNativeToken A boolean indicating whether the received tokens should be unwrapped from the wrapped native token (WNT) if they are wrapped.
+     */
     struct SwapParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
@@ -26,6 +42,13 @@ library SwapUtils {
         bool shouldUnwrapNativeToken;
     }
 
+    /**
+     * @param market The market in which the swap should be executed.
+     * @param tokenIn The address of the token that is being swapped.
+     * @param amountIn The amount of the token that is being swapped.
+     * @param receiver The address to which the swapped tokens should be sent.
+     * @param shouldUnwrapNativeToken A boolean indicating whether the received tokens should be unwrapped from the wrapped native token (WNT) if they are wrapped.
+     */
     struct _SwapParams {
         Market.Props market;
         address tokenIn;
@@ -34,6 +57,14 @@ library SwapUtils {
         bool shouldUnwrapNativeToken;
     }
 
+    /**
+     * @param tokenOut The address of the token that is being received as part of the swap.
+     * @param tokenInPrice The price of the token that is being swapped.
+     * @param tokenOutPrice The price of the token that is being received as part of the swap.
+     * @param amountIn The amount of the token that is being swapped.
+     * @param amountOut The amount of the token that is being received as part of the swap.
+     * @param poolAmountOut The total amount of the token that is being received by all users in the swap pool.
+     */
     struct _SwapCache {
         address tokenOut;
         Price.Props tokenInPrice;
@@ -47,7 +78,13 @@ library SwapUtils {
 
     error InsufficientSwapOutputAmount(uint256 outputAmount, uint256 minOutputAmount);
 
-    // returns tokenOut, outputAmount
+    /**
+     * @dev Swaps a given amount of a given token for another token based on a
+     * specified swap path.
+     * @param params The parameters for the swap.
+     * @return A tuple containing the address of the token that was received as
+     * part of the swap and the amount of the received token.
+     */
     function swap(SwapParams memory params) internal returns (address, uint256) {
         address tokenOut = params.tokenIn;
         uint256 outputAmount = params.amountIn;
@@ -79,6 +116,13 @@ library SwapUtils {
         return (tokenOut, outputAmount);
     }
 
+    /**
+     * Performs a swap on a single market.
+     *
+     * @param params  The parameters for the swap.
+     * @param _params The parameters for the swap on this specific market.
+     * @return The token and amount that was swapped.
+     */
     function _swap(SwapParams memory params, _SwapParams memory _params) internal returns (address, uint256) {
         _SwapCache memory cache;
 
