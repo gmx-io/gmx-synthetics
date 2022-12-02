@@ -109,6 +109,7 @@ library TokenUtils {
         transferNativeToken(dataStore, receiver, amount);
     }
 
+    // adapted from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/utils/SafeERC20.sol
     function nonRevertingTransferWithGasLimit(
         IERC20 token,
         address to,
