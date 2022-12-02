@@ -7,7 +7,6 @@ pragma solidity ^0.8.0;
  * @dev Struct for withdrawals
  */
 library Withdrawal {
-
     /**
      * @param account The account to withdraw for.
      * @param receiver The address that will receive the withdrawn tokens.
