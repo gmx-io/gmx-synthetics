@@ -13,9 +13,14 @@ import "../utils/PayableMulticall.sol";
 
 import "./Router.sol";
 
-// for functions which require token transfers from the user
-// IMPORTANT: PayableMulticall uses delegatecall, msg.value will be the same for each delegatecall
-// extra care should be taken when using msg.value in any of the functions in this contract
+/**
+ * @title ExchangeRouter
+ * @dev Router for exchange functions, supports functions which require
+ * token transfers from the user
+ *
+ * IMPORTANT: PayableMulticall uses delegatecall, msg.value will be the same for each delegatecall
+ * extra care should be taken when using msg.value in any of the functions in this contract
+ */
 contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
     using SafeERC20 for IERC20;
     using Order for Order.Props;
@@ -30,6 +35,9 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
     OrderStore public immutable orderStore;
     IReferralStorage public immutable referralStorage;
 
+    // @dev Constructor that initializes the contract with the provided Router, RoleStore, DataStore,
+    // EventEmitter, DepositHandler, WithdrawalHandler, OrderHandler, DepositStore, WithdrawalStore,
+    // OrderStore, and IReferralStorage instances
     constructor(
         Router _router,
         RoleStore _roleStore,
@@ -57,12 +65,27 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
         referralStorage = _referralStorage;
     }
 
+    // @dev Fallback function that allows the contract to receive Ether
     receive() external payable {}
 
+    // @dev Sends the given amount of wrapped native tokens (WNT) to the given address
     function sendWnt(address receiver, uint256 amount) external nonReentrant {
         TokenUtils.depositAndSendWrappedNativeToken(dataStore, receiver, amount);
     }
 
+    /**
+     * @dev Creates a new deposit with the given long token, short token, long token amount, short token
+     * amount, and deposit parameters. The deposit is created by transferring the specified amounts of
+     * long and short tokens from the caller's account to the deposit store, and then calling the
+     * `createDeposit()` function on the deposit handler contract.
+     *
+     * @param longToken The address of the long token to be used in the deposit
+     * @param shortToken The address of the short token to be used in the deposit
+     * @param longTokenAmount The amount of long tokens to be transferred to the deposit store
+     * @param shortTokenAmount The amount of short tokens to be transferred to the deposit store
+     * @param params The deposit parameters, as specified in the `DepositUtils.CreateDepositParams` struct
+     * @return The unique ID of the newly created deposit
+     */
     function createDeposit(
         address longToken,
         address shortToken,
@@ -86,6 +109,13 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
         );
     }
 
+    /**
+     * @dev Creates a new withdrawal with the given withdrawal parameters. The withdrawal is created by
+     * calling the `createWithdrawal()` function on the withdrawal handler contract.
+     *
+     * @param params The withdrawal parameters, as specified in the `WithdrawalUtils.CreateWithdrawalParams` struct
+     * @return The unique ID of the newly created withdrawal
+     */
     function createWithdrawal(
         WithdrawalUtils.CreateWithdrawalParams calldata params
     ) external nonReentrant returns (bytes32) {
@@ -97,6 +127,17 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
         );
     }
 
+    /**
+     * @dev Creates a new order with the given amount, order parameters, and referral code. The order is
+     * created by transferring the specified amount of collateral tokens from the caller's account to the
+     * order store, and then calling the `createOrder()` function on the order handler contract. The
+     * referral code is also set on the caller's account using the referral storage contract.
+     *
+     * @param amountIn The amount of collateral tokens to be transferred to the order store
+     * @param params The order parameters, as specified in the `OrderBaseUtils.CreateOrderParams` struct
+     * @param referralCode The referral code to be set on the caller's account
+     * @return The unique ID of the newly created order
+     */
     function createOrder(
         uint256 amountIn,
         OrderBaseUtils.CreateOrderParams calldata params,
@@ -118,6 +159,19 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
         );
     }
 
+    /**
+     * @dev Updates the given order with the specified size delta, acceptable price, and trigger price.
+     * The `updateOrder()` feature must be enabled for the given order type. The caller must be the owner
+     * of the order, and the order must not be a market order. The size delta, trigger price, and
+     * acceptable price are updated on the order, and the order is unfrozen. Any additional WNT that is
+     * transferred to the contract is added to the order's execution fee. The updated order is then saved
+     * in the order store, and an `OrderUpdated` event is emitted.
+     *
+     * @param key The unique ID of the order to be updated
+     * @param sizeDeltaUsd The new size delta for the order
+     * @param acceptablePrice The new acceptable price for the order
+     * @param triggerPrice The new trigger price for the order
+     */
     function updateOrder(
         bytes32 key,
         uint256 sizeDeltaUsd,
@@ -155,6 +209,15 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
         eventEmitter.emitOrderUpdated(key, sizeDeltaUsd, triggerPrice, acceptablePrice);
     }
 
+    /**
+     * @dev Cancels the given order. The `cancelOrder()` feature must be enabled for the given order
+     * type. The caller must be the owner of the order, and the order must not be a market order. The
+     * order is cancelled by calling the `cancelOrder()` function in the `OrderUtils` contract. This
+     * function also records the starting gas amount and the reason for cancellation, which is passed to
+     * the `cancelOrder()` function.
+     *
+     * @param key The unique ID of the order to be cancelled
+     */
     function cancelOrder(bytes32 key) external nonReentrant {
         uint256 startingGas = gasleft();
 
@@ -180,6 +243,16 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
         );
     }
 
+    /**
+     * @dev Claims funding fees for the given markets and tokens on behalf of the caller, and sends the
+     * fees to the specified receiver. The length of the `markets` and `tokens` arrays must be the same.
+     * For each market-token pair, the `claimFundingFees()` function in the `MarketUtils` contract is
+     * called to claim the fees for the caller.
+     *
+     * @param markets An array of market addresses
+     * @param tokens An array of token addresses, corresponding to the given markets
+     * @param receiver The address to which the claimed fees should be sent
+     */
     function claimFundingFees(address[] memory markets, address[] memory tokens, address receiver) external nonReentrant {
         if (markets.length != tokens.length) {
             revert("Invalid input");
@@ -199,6 +272,16 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
         }
     }
 
+    /**
+     * @dev Claims affiliate rewards for the given markets and tokens on behalf of the caller, and sends
+     * the rewards to the specified receiver. The length of the `markets` and `tokens` arrays must be
+     * the same. For each market-token pair, the `claimAffiliateReward()` function in the `ReferralUtils`
+     * contract is called to claim the rewards for the caller.
+     *
+     * @param markets An array of market addresses
+     * @param tokens An array of token addresses, corresponding to the given markets
+     * @param receiver The address to which the claimed rewards should be sent
+     */
     function claimAffiliateRewards(address[] memory markets, address[] memory tokens, address receiver) external nonReentrant {
         if (markets.length != tokens.length) {
             revert("Invalid input");
