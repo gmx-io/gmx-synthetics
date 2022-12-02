@@ -39,7 +39,7 @@ library TokenUtils {
     }
 
     /**
-     * @ devTransfers the specified amount of `token` from the caller to `receiver`.
+     * @dev Transfers the specified amount of `token` from the caller to `receiver`.
      * limit the amount of gas forwarded so that a user cannot intentionally
      * construct a token call that would consume all gas and prevent necessary
      * actions like request cancellation from being executed
