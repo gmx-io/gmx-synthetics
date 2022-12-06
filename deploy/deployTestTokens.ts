@@ -35,12 +35,6 @@ const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRunt
     });
 
     tokens[tokenSymbol].address = address;
-    await setUintIfDifferent(
-      keys.tokenTransferGasLimit(address),
-      token.transferGasLimit,
-      `${tokenSymbol} transfer gas limit`
-    );
-
     if (newlyDeployed) {
       if (token.wrappedNative && !network.live) {
         await setBalance(address, expandDecimals(1000, token.decimals));
@@ -51,6 +45,18 @@ const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRunt
         await tokenContract.mint(deployer, expandDecimals(1000000, token.decimals));
       }
     }
+  }
+
+  for (const [tokenSymbol, token] of Object.entries(tokens)) {
+    if (token.synthetic) {
+      continue;
+    }
+
+    await setUintIfDifferent(
+      keys.tokenTransferGasLimit(token.address),
+      token.transferGasLimit,
+      `${tokenSymbol} transfer gas limit`
+    );
   }
 
   const wrappedAddress = Object.values(tokens).find((token) => token.wrappedNative)?.address;

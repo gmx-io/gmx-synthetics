@@ -20,6 +20,7 @@ type SyntheticTokenConfig = {
 type RealTokenConfig = {
   address: string;
   decimals: number;
+  transferGasLimit: number;
   synthetic?: never;
   wrappedNative?: true;
   deploy?: never;
@@ -32,6 +33,7 @@ type RealTokenConfig = {
 export type TestTokenConfig = {
   address?: never;
   decimals: number;
+  transferGasLimit: number;
   deploy?: true;
   wrappedNative?: boolean;
   synthetic?: never;
