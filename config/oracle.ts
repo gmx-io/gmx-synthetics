@@ -76,7 +76,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     oracle.tokens = {};
   }
 
-  const tokens = hre.gmx.tokens;
+  const tokens = await hre.gmx.getTokens();
 
   // to make sure all tokens have an oracle type so oracle deployment/configuration script works correctly
   for (const tokenSymbol of Object.keys(tokens)) {

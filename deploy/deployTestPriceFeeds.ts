@@ -3,7 +3,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 const func = async ({ getNamedAccounts, deployments, gmx }: HardhatRuntimeEnvironment) => {
   const { deploy, execute } = deployments;
   const { deployer } = await getNamedAccounts();
-  const { oracle: oracleConfig } = gmx;
+  const oracleConfig = await gmx.getOracle();
 
   for (const [tokenSymbol, { priceFeed }] of Object.entries(oracleConfig.tokens)) {
     if (!priceFeed || !priceFeed.deploy) {

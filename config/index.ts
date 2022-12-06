@@ -1,3 +1,5 @@
+import _ from "lodash";
+
 import tokensConfig, { TokensConfig } from "./tokens";
 import marketsConfig, { MarketConfig } from "./markets";
 import oracleConfig, { OracleConfig } from "./oracle";
@@ -7,9 +9,9 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 declare module "hardhat/types/runtime" {
   interface HardhatRuntimeEnvironment {
     gmx: {
-      tokens?: TokensConfig;
-      markets?: MarketConfig[];
-      oracle?: OracleConfig;
+      getTokens: () => Promise<TokensConfig>;
+      getMarkets: () => Promise<MarketConfig[]>;
+      getOracle: () => Promise<OracleConfig>;
     };
   }
 }
@@ -17,9 +19,9 @@ declare module "hardhat/types/runtime" {
 extendEnvironment(async (hre: HardhatRuntimeEnvironment) => {
   // extend hre context with gmx domain data
 
-  hre.gmx = {};
-
-  hre.gmx.tokens = await tokensConfig(hre);
-  hre.gmx.oracle = await oracleConfig(hre);
-  hre.gmx.markets = await marketsConfig(hre);
+  hre.gmx = {
+    getTokens: _.memoize(async () => tokensConfig(hre)),
+    getOracle: _.memoize(async () => oracleConfig(hre)),
+    getMarkets: _.memoize(async () => marketsConfig(hre)),
+  };
 });

@@ -14,18 +14,19 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { address: feeReceiverAddress } = await get("FeeReceiver");
   const { address: gasUtilsAddress } = await get("GasUtils");
 
+  const deployArgs = [
+    roleStoreAddress,
+    dataStoreAddress,
+    eventEmitterAddress,
+    depositStoreAddress,
+    marketStoreAddress,
+    oracleAddress,
+    feeReceiverAddress,
+  ];
   const { address, newlyDeployed } = await deploy("DepositHandler", {
     from: deployer,
     log: true,
-    args: [
-      roleStoreAddress,
-      dataStoreAddress,
-      eventEmitterAddress,
-      depositStoreAddress,
-      marketStoreAddress,
-      oracleAddress,
-      feeReceiverAddress,
-    ],
+    args: deployArgs,
     libraries: {
       GasUtils: gasUtilsAddress,
     },

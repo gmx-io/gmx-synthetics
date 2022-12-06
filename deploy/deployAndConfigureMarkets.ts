@@ -2,11 +2,14 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { decimalToFloat } from "../utils/math";
 import { getMarketTokenAddress } from "../utils/market";
 import * as keys from "../utils/keys";
+import { setUintIfDifferent } from "../utils/dataStore";
 
 const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRuntimeEnvironment) => {
-  const { execute, read, get, log } = deployments;
+  const { execute, get, log } = deployments;
   const { deployer } = await getNamedAccounts();
-  const { tokens, markets } = gmx;
+
+  const tokens = await gmx.getTokens();
+  const markets = await gmx.getMarkets();
 
   const { address: marketFactoryAddress } = await get("MarketFactory");
   const { address: roleStoreAddress } = await get("RoleStore");
@@ -35,13 +38,7 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
 
   async function setReserveFactor(marketToken: symbol, isLong: boolean, reserveFactor: number) {
     const key = keys.reserveFactorKey(marketToken, isLong);
-    const currentReservedFactor = await read("DataStore", { from: deployer }, "getUint", key);
-    if (currentReservedFactor.eq(reserveFactor)) {
-      log("reserve factor for %s %s already set %s", marketToken, isLong ? "long" : "short", reserveFactor);
-      return;
-    }
-    log("set market %s %s reserve factor %s", marketToken, isLong ? "long" : "short", reserveFactor.toString());
-    await execute("DataStore", { from: deployer, log: true }, "setUint", key, reserveFactor);
+    setUintIfDifferent(key, reserveFactor, `reserve factor ${marketToken.toString()} ${isLong ? "long" : "short"}`);
   }
 
   for (const marketConfig of markets) {

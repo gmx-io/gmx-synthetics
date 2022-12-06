@@ -1,13 +1,12 @@
-import { ethers } from "ethers";
-
 import { expandDecimals } from "../utils/math";
 import * as keys from "../utils/keys";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { setAddressIfDifferent, setDataIfDifferent, setUintIfDifferent } from "../utils/dataStore";
 
-const func = async ({ getNamedAccounts, deployments, gmx }: HardhatRuntimeEnvironment) => {
-  const { execute, read, log } = deployments;
-  const { deployer } = await getNamedAccounts();
-  const { oracle: oracleConfig, tokens } = gmx;
+const func = async ({ gmx, deployments }: HardhatRuntimeEnvironment) => {
+  const oracleConfig = await gmx.getOracle();
+  const tokens = await gmx.getTokens();
+  const { get } = deployments;
 
   if (oracleConfig) {
     for (const tokenSymbol of Object.keys(oracleConfig.tokens)) {
@@ -17,44 +16,21 @@ const func = async ({ getNamedAccounts, deployments, gmx }: HardhatRuntimeEnviro
       }
       const { priceFeed, oracleType } = oracleConfig.tokens[tokenSymbol];
 
-      const oracleTypeKey = keys.oracleTypeKey(token.address)
-      const currentOracleType = await read("DataStore", "getData", oracleTypeKey);
-      if (oracleType !== currentOracleType) {
-        log("setting oracle type for %s to %s", tokenSymbol, oracleType);
-        await execute("DataStore", { from: deployer, log: true }, "setData", oracleTypeKey, oracleType);
-      } else {
-        log("oracle type for %s is already set to %s", tokenSymbol, oracleType);
-      }
+      const oracleTypeKey = keys.oracleTypeKey(token.address);
+      await setDataIfDifferent(oracleTypeKey, oracleType);
 
       if (!priceFeed) {
-        continue
+        continue;
       }
-      const { address: priceFeedAddress, decimals } = priceFeed;
+
+      const priceFeedAddress = priceFeed.deploy ? (await get(`${tokenSymbol}PriceFeed`)).address : priceFeed.address;
 
       const priceFeedKey = keys.priceFeedKey(token.address);
-      const currentPriceFeedAddress = await read("DataStore", "getAddress", priceFeedKey);
-      if (currentPriceFeedAddress !== ethers.utils.getAddress(priceFeedAddress)) {
-        log("setting price feed for %s to %s", tokenSymbol, priceFeedAddress);
-        await execute("DataStore", { from: deployer, log: true }, "setAddress", priceFeedKey, priceFeedAddress);
-      } else {
-        log("Price feed for %s already set to %s", tokenSymbol, priceFeedAddress);
-      }
+      await setAddressIfDifferent(priceFeedKey, priceFeedAddress, `${tokenSymbol} price feed`);
 
       const priceFeedMultiplierKey = keys.priceFeedMultiplierKey(token.address);
-      const priceFeedMultiplier = expandDecimals(1, 60 - decimals - token.decimals);
-      const currentPriceFeedMultiplier = await read("DataStore", "getUint", priceFeedMultiplierKey);
-      if (currentPriceFeedMultiplier !== priceFeedMultiplier) {
-        log("setting price feed multiplier for %s to %s", tokenSymbol, priceFeedMultiplier);
-        await execute(
-          "DataStore",
-          { from: deployer, log: true },
-          "setUint",
-          priceFeedMultiplierKey,
-          priceFeedMultiplier
-        );
-      } else {
-        log("Price feed precision for %s already set to %s", tokenSymbol, priceFeedMultiplier);
-      }
+      const priceFeedMultiplier = expandDecimals(1, 60 - priceFeed.decimals - token.decimals);
+      await setUintIfDifferent(priceFeedMultiplierKey, priceFeedMultiplier, `${tokenSymbol} price feed multiplier`);
     }
   }
 };

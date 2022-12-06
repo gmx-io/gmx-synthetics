@@ -1,12 +1,13 @@
 import { ethers } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import * as keys from "../utils/keys";
+import { setUintIfDifferent } from "../utils/dataStore";
 
 const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnvironment) => {
   const { read, execute, log } = deployments;
   const { deployer } = await getNamedAccounts();
-  const { oracle } = gmx;
-  const oracleSigners = oracle.signers.map((s) => ethers.utils.getAddress(s));
+  const oracleConfig = await gmx.getOracle();
+  const oracleSigners = oracleConfig.signers.map((s) => ethers.utils.getAddress(s));
 
   const existingSignersCount = await read("OracleStore", "getSignerCount");
   const existingSigners = await read("OracleStore", "getSigners", 0, existingSignersCount);
@@ -26,12 +27,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     }
   }
 
-  const currentMinOracleSigners: ethers.BigNumber = await read("DataStore", "getUint", keys.MIN_ORACLE_SIGNERS);
-  const minOracleSigners = oracle.minOracleSigners;
-  if (!currentMinOracleSigners.eq(minOracleSigners)) {
-    log("setting min oracle signers", minOracleSigners);
-    await execute("DataStore", { from: deployer, log: true }, "setUint", keys.MIN_ORACLE_SIGNERS, minOracleSigners);
-  }
+  await setUintIfDifferent(keys.MIN_ORACLE_SIGNERS, oracleConfig.minOracleSigners, "min oracle signers");
 };
 func.tags = ["OracleSigners"];
 func.dependencies = ["RoleStore", "OracleStore", "DataStore"];

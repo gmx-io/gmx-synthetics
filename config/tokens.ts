@@ -14,6 +14,7 @@ type SyntheticTokenConfig = {
   synthetic: true;
   wrappedNative?: never;
   deploy?: never;
+  transferGasLimit?: never;
 };
 
 type RealTokenConfig = {
@@ -22,6 +23,7 @@ type RealTokenConfig = {
   synthetic?: never;
   wrappedNative?: true;
   deploy?: never;
+  transferGasLimit?: number;
 };
 
 // test token to deploy in local and test networks
@@ -33,6 +35,7 @@ export type TestTokenConfig = {
   deploy?: true;
   wrappedNative?: boolean;
   synthetic?: never;
+  transferGasLimit?: number;
 };
 
 export type TokenConfig = SyntheticTokenConfig | RealTokenConfig | TestTokenConfig;
@@ -80,7 +83,6 @@ const config: {
     SOL: {
       synthetic: true,
       decimals: 18,
-      transferGasLimit: 200 * 1000,
     },
     USDC: {
       decimals: 6,

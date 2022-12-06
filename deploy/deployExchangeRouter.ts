@@ -20,22 +20,23 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const gasUtils = await get("GasUtils");
   const orderUtils = await get("OrderUtils");
 
+  const deployArgs = [
+    router.address,
+    roleStore.address,
+    dataStore.address,
+    eventEmitter.address,
+    depositHandler.address,
+    withdrawalHandler.address,
+    orderHandler.address,
+    depositStore.address,
+    withdrawalStore.address,
+    orderStore.address,
+    referralStorage.address,
+  ];
   const { address, newlyDeployed } = await deploy("ExchangeRouter", {
     from: deployer,
     log: true,
-    args: [
-      router.address,
-      roleStore.address,
-      dataStore.address,
-      eventEmitter.address,
-      depositHandler.address,
-      withdrawalHandler.address,
-      orderHandler.address,
-      depositStore.address,
-      withdrawalStore.address,
-      orderStore.address,
-      referralStorage.address,
-    ],
+    args: deployArgs,
     libraries: {
       GasUtils: gasUtils.address,
       OrderUtils: orderUtils.address,

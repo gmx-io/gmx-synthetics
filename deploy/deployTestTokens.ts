@@ -2,29 +2,21 @@ import { setBalance } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import * as keys from "../utils/keys";
+import { setAddressIfDifferent, setUintIfDifferent } from "../utils/dataStore";
 import { expandDecimals } from "../utils/math";
 
 const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRuntimeEnvironment) => {
-  const { execute, read, deploy, log } = deployments;
+  const { deploy, log } = deployments;
   const { deployer } = await getNamedAccounts();
-  const { tokens } = gmx;
+  const { getTokens } = gmx;
+  const tokens = await getTokens();
 
   const nativeTokenTransferGasLimit = 200 * 1000;
-  const currentNativeTokenTransferGasLimit = await read(
-    "DataStore",
-    { from: deployer },
-    "getUint",
-    keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT
+  await setUintIfDifferent(
+    keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT,
+    nativeTokenTransferGasLimit,
+    "native token transfer gas limit"
   );
-  if (currentNativeTokenTransferGasLimit != nativeTokenTransferGasLimit) {
-    await execute(
-      "DataStore",
-      { from: deployer, log: true },
-      "setUint",
-      keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT,
-      nativeTokenTransferGasLimit
-    );
-  }
 
   for (const [tokenSymbol, token] of Object.entries(tokens)) {
     if (token.synthetic || !token.deploy) {
@@ -43,23 +35,11 @@ const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRunt
     });
 
     tokens[tokenSymbol].address = address;
-
-    const currentTokenTransferGasLimit = await read(
-      "DataStore",
-      { from: deployer },
-      "getUint",
-      keys.tokenTransferGasLimit(address)
+    await setUintIfDifferent(
+      keys.tokenTransferGasLimit(address),
+      token.transferGasLimit,
+      `${tokenSymbol} transfer gas limit`
     );
-
-    if (currentTokenTransferGasLimit != token.transferGasLimit) {
-      await execute(
-        "DataStore",
-        { from: deployer, log: true },
-        "setUint",
-        keys.tokenTransferGasLimit(address),
-        token.transferGasLimit
-      );
-    }
 
     if (newlyDeployed) {
       if (token.wrappedNative && !network.live) {
@@ -74,10 +54,7 @@ const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRunt
   }
 
   const wrappedAddress = Object.values(tokens).find((token) => token.wrappedNative)?.address;
-  const currentWrappedAddress = await read("DataStore", { from: deployer }, "getAddress", keys.WNT);
-  if (currentWrappedAddress != wrappedAddress) {
-    await execute("DataStore", { from: deployer, log: true }, "setAddress", keys.WNT, wrappedAddress);
-  }
+  await setAddressIfDifferent(keys.WNT, wrappedAddress, "WNT");
 };
 
 func.tags = ["Tokens"];

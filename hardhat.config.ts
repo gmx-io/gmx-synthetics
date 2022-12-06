@@ -51,6 +51,14 @@ const config: HardhatUserConfig = {
       },
     },
   },
+  // hardhat-deploy has issues with some contracts
+  // https://github.com/wighawag/hardhat-deploy/issues/264
+  etherscan: {
+    apiKey: {
+      // hardhat-etherscan plugin uses "avalancheFujiTestnet" name
+      avalancheFujiTestnet: process.env.SNOWTRACE_API_KEY,
+    },
+  },
   gasReporter: {
     enabled: process.env.REPORT_GAS ? true : false,
   },
