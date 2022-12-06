@@ -44,23 +44,6 @@ const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRunt
 
     tokens[tokenSymbol].address = address;
 
-    const currentTokenTransferGasLimit = await read(
-      "DataStore",
-      { from: deployer },
-      "getUint",
-      keys.tokenTransferGasLimit(address)
-    );
-
-    if (currentTokenTransferGasLimit != token.transferGasLimit) {
-      await execute(
-        "DataStore",
-        { from: deployer, log: true },
-        "setUint",
-        keys.tokenTransferGasLimit(address),
-        token.transferGasLimit
-      );
-    }
-
     if (newlyDeployed) {
       if (token.wrappedNative && !network.live) {
         await setBalance(address, expandDecimals(1000, token.decimals));
@@ -70,6 +53,29 @@ const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRunt
         const tokenContract = await ethers.getContractAt("MintableToken", address);
         await tokenContract.mint(deployer, expandDecimals(1000000, token.decimals));
       }
+    }
+  }
+
+  for (const [, token] of Object.entries(tokens)) {
+    if (token.synthetic) {
+      continue;
+    }
+
+    const currentTokenTransferGasLimit = await read(
+      "DataStore",
+      { from: deployer },
+      "getUint",
+      keys.tokenTransferGasLimit(token.address)
+    );
+
+    if (currentTokenTransferGasLimit != token.transferGasLimit) {
+      await execute(
+        "DataStore",
+        { from: deployer, log: true },
+        "setUint",
+        keys.tokenTransferGasLimit(token.address),
+        token.transferGasLimit
+      );
     }
   }
 
