@@ -27,6 +27,7 @@ async function getValues(): Promise<{
 async function main() {
   const marketFactory = await ethers.getContract("MarketFactory");
   const roleStore = await ethers.getContract("RoleStore");
+  const dataStore = await ethers.getContract("DataStore");
   const exchangeRouter: ExchangeRouter = await ethers.getContract("ExchangeRouter");
   const router = await ethers.getContract("Router");
 
@@ -64,7 +65,8 @@ async function main() {
     wnt.address,
     usdc.address,
     marketFactory.address,
-    roleStore.address
+    roleStore.address,
+    dataStore.address
   );
   console.log("market %s", wntUsdMarketAddress);
 
@@ -81,10 +83,9 @@ async function main() {
   const tx = await exchangeRouter.createDeposit(
     wnt.address,
     usdc.address,
-    longTokenAmount,
+    longTokenAmount.add(executionFee),
     expandDecimals(1, 6),
-    params,
-    { value: executionFee }
+    params
   );
   console.log("transaction sent", tx.hash);
   await tx.wait();

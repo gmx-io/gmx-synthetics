@@ -24,7 +24,6 @@ type RealTokenConfig = {
   synthetic?: never;
   wrappedNative?: true;
   deploy?: never;
-  transferGasLimit?: number;
 };
 
 // test token to deploy in local and test networks
@@ -37,7 +36,6 @@ export type TestTokenConfig = {
   deploy?: true;
   wrappedNative?: boolean;
   synthetic?: never;
-  transferGasLimit?: number;
 };
 
 export type TokenConfig = SyntheticTokenConfig | RealTokenConfig | TestTokenConfig;
@@ -140,6 +138,9 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensCo
   for (const [tokenSymbol, token] of Object.entries(tokens as TokensConfig)) {
     if (token.synthetic) {
       token.address = getSyntheticTokenAddress(tokenSymbol);
+    }
+    if (token.address) {
+      token.address = ethers.utils.getAddress(token.address);
     }
     if (!hre.network.live) {
       token.deploy = true;

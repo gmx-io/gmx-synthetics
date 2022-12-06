@@ -18,7 +18,7 @@ contract Reader {
         return MarketUtils.getSwapImpactPoolAmount(dataStore, market, token);
     }
 
-    function getMarkets(MarketStore marketStore, uint256 start, uint256 end) internal view returns (Market.Props[] memory) {
+    function getMarkets(MarketStore marketStore, uint256 start, uint256 end) external view returns (Market.Props[] memory) {
         uint256 marketCount = marketStore.getMarketCount();
         if (start >= marketCount) {
             return new Market.Props[](0);
