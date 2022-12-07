@@ -38,17 +38,21 @@ export async function createOrder(fixture, overrides) {
   await wnt.mint(orderStore.address, executionFee);
 
   const params = {
-    receiver: receiver.address,
-    callbackContract: callbackContract.address,
-    market: market.marketToken,
-    initialCollateralToken: initialCollateralToken.address,
-    swapPath,
-    sizeDeltaUsd,
-    acceptablePrice,
-    triggerPrice,
-    executionFee,
-    callbackGasLimit,
-    minOutputAmount,
+    addresses: {
+      receiver: receiver.address,
+      callbackContract: callbackContract.address,
+      market: market.marketToken,
+      initialCollateralToken: initialCollateralToken.address,
+      swapPath,
+    },
+    numbers: {
+      sizeDeltaUsd,
+      acceptablePrice,
+      triggerPrice,
+      executionFee,
+      callbackGasLimit,
+      minOutputAmount,
+    },
     orderType,
     isLong,
     shouldUnwrapNativeToken,

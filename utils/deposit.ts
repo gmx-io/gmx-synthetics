@@ -62,7 +62,7 @@ export async function executeDeposit(fixture, overrides: any = {}) {
 
   const params = {
     key: depositKeys[0],
-    oracleBlockNumber: deposit.updatedAtBlock,
+    oracleBlockNumber: deposit.numbers.updatedAtBlock,
     tokens,
     tokenOracleTypes,
     precisions,

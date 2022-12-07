@@ -25,8 +25,9 @@ import "../utils/Null.sol";
 library WithdrawalUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
-    using Price for Price.Props;
     using Array for uint256[];
+    using Price for Price.Props;
+    using Withdrawal for Withdrawal.Props;
 
     /**
      * @param receiver The address that will receive the withdrawal tokens.
@@ -150,18 +151,24 @@ library WithdrawalUtils {
         MarketUtils.validateNonEmptyMarket(market);
 
         Withdrawal.Props memory withdrawal = Withdrawal.Props(
-            account,
-            params.receiver,
-            params.callbackContract,
-            market.marketToken,
-            params.marketTokensLongAmount,
-            params.marketTokensShortAmount,
-            params.minLongTokenAmount,
-            params.minShortTokenAmount,
-            Chain.currentBlockNumber(),
-            params.shouldUnwrapNativeToken,
-            params.executionFee,
-            params.callbackGasLimit,
+            Withdrawal.Addresses(
+                account,
+                params.receiver,
+                params.callbackContract,
+                market.marketToken
+            ),
+            Withdrawal.Numbers(
+                params.marketTokensLongAmount,
+                params.marketTokensShortAmount,
+                params.minLongTokenAmount,
+                params.minShortTokenAmount,
+                Chain.currentBlockNumber(),
+                params.executionFee,
+                params.callbackGasLimit
+            ),
+            Withdrawal.Flags(
+                params.shouldUnwrapNativeToken
+            ),
             Null.BYTES
         );
 
@@ -184,15 +191,15 @@ library WithdrawalUtils {
      */
     function executeWithdrawal(ExecuteWithdrawalParams memory params) internal {
         Withdrawal.Props memory withdrawal = params.withdrawalStore.get(params.key);
-        require(withdrawal.account != address(0), "WithdrawalUtils: empty withdrawal");
+        require(withdrawal.account() != address(0), "WithdrawalUtils: empty withdrawal");
 
-        if (!params.oracleBlockNumbers.areEqualTo(withdrawal.updatedAtBlock)) {
+        if (!params.oracleBlockNumbers.areEqualTo(withdrawal.updatedAtBlock())) {
             revert(Keys.ORACLE_ERROR);
         }
 
         CallbackUtils.beforeWithdrawalExecution(params.key, withdrawal);
 
-        Market.Props memory market = params.marketStore.get(withdrawal.market);
+        Market.Props memory market = params.marketStore.get(withdrawal.market());
 
         Price.Props memory longTokenPrice = params.oracle.getPrimaryPrice(market.longToken);
         Price.Props memory shortTokenPrice = params.oracle.getPrimaryPrice(market.shortToken);
@@ -208,8 +215,8 @@ library WithdrawalUtils {
         );
 
         cache.marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
-        cache.marketTokensLongUsd = MarketUtils.marketTokenAmountToUsd(withdrawal.marketTokensLongAmount, cache.poolValue, cache.marketTokensSupply);
-        cache.marketTokensShortUsd = MarketUtils.marketTokenAmountToUsd(withdrawal.marketTokensShortAmount, cache.poolValue, cache.marketTokensSupply);
+        cache.marketTokensLongUsd = MarketUtils.marketTokenAmountToUsd(withdrawal.marketTokensLongAmount(), cache.poolValue, cache.marketTokensSupply);
+        cache.marketTokensShortUsd = MarketUtils.marketTokenAmountToUsd(withdrawal.marketTokensShortAmount(), cache.poolValue, cache.marketTokensSupply);
 
         int256 priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(
             SwapPricingUtils.GetPriceImpactUsdParams(
@@ -224,46 +231,46 @@ library WithdrawalUtils {
             )
         );
 
-        if (withdrawal.marketTokensLongAmount > 0) {
+        if (withdrawal.marketTokensLongAmount() > 0) {
             _ExecuteWithdrawalParams memory _params = _ExecuteWithdrawalParams(
                 market,
-                withdrawal.account,
-                withdrawal.receiver,
+                withdrawal.account(),
+                withdrawal.receiver(),
                 market.shortToken,
                 market.longToken,
                 shortTokenPrice,
                 longTokenPrice,
-                withdrawal.marketTokensLongAmount,
-                withdrawal.shouldUnwrapNativeToken,
+                withdrawal.marketTokensLongAmount(),
+                withdrawal.shouldUnwrapNativeToken(),
                 cache.marketTokensLongUsd,
                 priceImpactUsd * cache.marketTokensLongUsd.toInt256() / (cache.marketTokensLongUsd + cache.marketTokensShortUsd).toInt256()
             );
 
             uint256 outputAmount = _executeWithdrawal(params, _params);
 
-            if (outputAmount < withdrawal.minLongTokenAmount) {
-                revert MinLongTokens(outputAmount, withdrawal.minLongTokenAmount);
+            if (outputAmount < withdrawal.minLongTokenAmount()) {
+                revert MinLongTokens(outputAmount, withdrawal.minLongTokenAmount());
             }
         }
 
-        if (withdrawal.marketTokensShortAmount > 0) {
+        if (withdrawal.marketTokensShortAmount() > 0) {
             _ExecuteWithdrawalParams memory _params = _ExecuteWithdrawalParams(
                 market,
-                withdrawal.account,
-                withdrawal.receiver,
+                withdrawal.account(),
+                withdrawal.receiver(),
                 market.longToken,
                 market.shortToken,
                 longTokenPrice,
                 shortTokenPrice,
-                withdrawal.marketTokensShortAmount,
-                withdrawal.shouldUnwrapNativeToken,
+                withdrawal.marketTokensShortAmount(),
+                withdrawal.shouldUnwrapNativeToken(),
                 cache.marketTokensShortUsd,
                 priceImpactUsd * cache.marketTokensShortUsd.toInt256() / (cache.marketTokensLongUsd + cache.marketTokensShortUsd).toInt256()
             );
 
             uint256 outputAmount = _executeWithdrawal(params, _params);
-            if (outputAmount < withdrawal.minShortTokenAmount) {
-                revert MinShortTokens(outputAmount, withdrawal.minShortTokenAmount);
+            if (outputAmount < withdrawal.minShortTokenAmount()) {
+                revert MinShortTokens(outputAmount, withdrawal.minShortTokenAmount());
             }
         }
 
@@ -276,10 +283,10 @@ library WithdrawalUtils {
         GasUtils.payExecutionFee(
             params.dataStore,
             params.withdrawalStore,
-            withdrawal.executionFee,
+            withdrawal.executionFee(),
             params.startingGas,
             params.keeper,
-            withdrawal.account
+            withdrawal.account()
         );
     }
 
@@ -301,7 +308,7 @@ library WithdrawalUtils {
         uint256 startingGas
     ) internal {
         Withdrawal.Props memory withdrawal = withdrawalStore.get(key);
-        require(withdrawal.account != address(0), "WithdrawalUtils: empty withdrawal");
+        require(withdrawal.account() != address(0), "WithdrawalUtils: empty withdrawal");
 
         withdrawalStore.remove(key);
 
@@ -312,10 +319,10 @@ library WithdrawalUtils {
         GasUtils.payExecutionFee(
             dataStore,
             withdrawalStore,
-            withdrawal.executionFee,
+            withdrawal.executionFee(),
             startingGas,
             keeper,
-            withdrawal.account
+            withdrawal.account()
         );
     }
 

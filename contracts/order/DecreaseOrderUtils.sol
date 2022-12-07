@@ -9,6 +9,7 @@ import "../position/DecreasePositionUtils.sol";
 // @title DecreaseOrderUtils
 // @dev Libary for functions to help with processing a decrease order
 library DecreaseOrderUtils {
+    using Position for Position.Props;
     using Order for Order.Props;
     using Array for uint256[];
 
@@ -19,26 +20,28 @@ library DecreaseOrderUtils {
         MarketUtils.validateNonEmptyMarket(params.market);
 
         bytes32 positionKey = PositionUtils.getPositionKey(order.account(), order.market(), order.initialCollateralToken(), order.isLong());
-        Position.Props memory position = params.positionStore.get(positionKey);
+        Position.Props memory position = params.contracts.positionStore.get(positionKey);
         PositionUtils.validateNonEmptyPosition(position);
 
         validateOracleBlockNumbers(
             params.oracleBlockNumbers,
             order.orderType(),
             order.updatedAtBlock(),
-            position.increasedAtBlock,
-            position.decreasedAtBlock
+            position.increasedAtBlock(),
+            position.decreasedAtBlock()
         );
 
         DecreasePositionUtils.DecreasePositionResult memory result = DecreasePositionUtils.decreasePosition(
             DecreasePositionUtils.DecreasePositionParams(
-                params.dataStore,
-                params.eventEmitter,
-                params.positionStore,
-                params.oracle,
-                params.swapHandler,
-                params.feeReceiver,
-                params.referralStorage,
+                DecreasePositionUtils.DecreasePositionParamsContracts(
+                    params.contracts.dataStore,
+                    params.contracts.eventEmitter,
+                    params.contracts.positionStore,
+                    params.contracts.oracle,
+                    params.contracts.swapHandler,
+                    params.contracts.feeReceiver,
+                    params.contracts.referralStorage
+                ),
                 params.market,
                 order,
                 params.swapPathMarkets,
@@ -53,13 +56,13 @@ library DecreaseOrderUtils {
             order.orderType() == Order.OrderType.Liquidation ||
             result.adjustedSizeDeltaUsd == order.sizeDeltaUsd()
         ) {
-            params.orderStore.remove(params.key, order.account());
+            params.contracts.orderStore.remove(params.key, order.account());
         } else {
             order.setSizeDeltaUsd(result.adjustedSizeDeltaUsd);
             // clear execution fee as it would be fully used even for partial fills
             order.setExecutionFee(0);
             order.touch();
-            params.orderStore.set(params.key, order);
+            params.contracts.orderStore.set(params.key, order);
         }
 
         // if the pnlToken and the collateralToken are different
@@ -70,7 +73,7 @@ library DecreaseOrderUtils {
         // the swapPath
         if (result.outputAmount > 0 && result.pnlAmountForUser > 0) {
             MarketToken(payable(order.market())).transferOut(
-                params.dataStore,
+                params.contracts.dataStore,
                 result.outputToken,
                 result.outputAmount,
                 order.receiver(),
@@ -78,7 +81,7 @@ library DecreaseOrderUtils {
             );
 
             MarketToken(payable(order.market())).transferOut(
-                params.dataStore,
+                params.contracts.dataStore,
                 result.pnlToken,
                 result.pnlAmountForUser,
                 order.receiver(),
@@ -90,18 +93,18 @@ library DecreaseOrderUtils {
 
         if (order.swapPath().length == 0) {
             MarketToken(payable(order.market())).transferOut(
-                params.dataStore,
+                params.contracts.dataStore,
                 result.outputToken,
                 result.outputAmount,
                 order.receiver(),
                 order.shouldUnwrapNativeToken()
             );
         } else {
-            try params.swapHandler.swap(SwapUtils.SwapParams(
-                params.dataStore,
-                params.eventEmitter,
-                params.oracle,
-                params.feeReceiver,
+            try params.contracts.swapHandler.swap(SwapUtils.SwapParams(
+                params.contracts.dataStore,
+                params.contracts.eventEmitter,
+                params.contracts.oracle,
+                params.contracts.feeReceiver,
                 result.outputToken,
                 result.outputAmount,
                 params.swapPathMarkets,
@@ -111,7 +114,7 @@ library DecreaseOrderUtils {
             )) returns (address /* tokenOut */, uint256 /* swapOutputAmount */) {
             } catch Error(string memory reason) {
                 _handleSwapError(
-                    params.dataStore,
+                    params.contracts.dataStore,
                     order,
                     result,
                     reason
@@ -119,7 +122,7 @@ library DecreaseOrderUtils {
             } catch (bytes memory _reason) {
                 string memory reason = string(abi.encode(_reason));
                 _handleSwapError(
-                    params.dataStore,
+                    params.contracts.dataStore,
                     order,
                     result,
                     reason

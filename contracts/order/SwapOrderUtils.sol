@@ -27,18 +27,18 @@ library SwapOrderUtils {
         );
 
         Order.Props memory order = params.order;
-        params.orderStore.transferOut(
-            params.dataStore,
+        params.contracts.orderStore.transferOut(
+            params.contracts.dataStore,
             order.initialCollateralToken(),
             order.initialCollateralDeltaAmount(),
             params.order.swapPath()[0]
         );
 
         SwapUtils.swap(SwapUtils.SwapParams(
-            params.dataStore,
-            params.eventEmitter,
-            params.oracle,
-            params.feeReceiver,
+            params.contracts.dataStore,
+            params.contracts.eventEmitter,
+            params.contracts.oracle,
+            params.contracts.feeReceiver,
             params.order.initialCollateralToken(),
             params.order.initialCollateralDeltaAmount(),
             params.swapPathMarkets,
@@ -47,7 +47,7 @@ library SwapOrderUtils {
             order.shouldUnwrapNativeToken()
         ));
 
-        params.orderStore.remove(params.key, params.order.account());
+        params.contracts.orderStore.remove(params.key, params.order.account());
     }
 
     // @dev validate the oracle block numbers used for the prices in the oracle

@@ -62,22 +62,22 @@ library PositionUtils {
         uint256 indexTokenPrice
     ) internal pure returns (int256, uint256) {
         // position.sizeInUsd is the cost of the tokens, positionValue is the current worth of the tokens
-        int256 positionValue = (position.sizeInTokens * indexTokenPrice).toInt256();
-        int256 totalPositionPnl = position.isLong ? positionValue - position.sizeInUsd.toInt256() : position.sizeInUsd.toInt256() - positionValue;
+        int256 positionValue = (position.sizeInTokens() * indexTokenPrice).toInt256();
+        int256 totalPositionPnl = position.isLong() ? positionValue - position.sizeInUsd().toInt256() : position.sizeInUsd().toInt256() - positionValue;
 
         uint256 sizeDeltaInTokens;
 
-        if (position.sizeInUsd == sizeDeltaUsd) {
-            sizeDeltaInTokens = position.sizeInTokens;
+        if (position.sizeInUsd() == sizeDeltaUsd) {
+            sizeDeltaInTokens = position.sizeInTokens();
         } else {
-            if (position.isLong) {
-                sizeDeltaInTokens = Calc.roundUpDivision(position.sizeInTokens * sizeDeltaUsd, position.sizeInUsd);
+            if (position.isLong()) {
+                sizeDeltaInTokens = Calc.roundUpDivision(position.sizeInTokens() * sizeDeltaUsd, position.sizeInUsd());
             } else {
-                sizeDeltaInTokens = position.sizeInTokens * sizeDeltaUsd / position.sizeInUsd;
+                sizeDeltaInTokens = position.sizeInTokens() * sizeDeltaUsd / position.sizeInUsd();
             }
         }
 
-        int256 positionPnlUsd = totalPositionPnl * sizeDeltaInTokens.toInt256() / position.sizeInTokens.toInt256();
+        int256 positionPnlUsd = totalPositionPnl * sizeDeltaInTokens.toInt256() / position.sizeInTokens().toInt256();
 
         return (positionPnlUsd, sizeDeltaInTokens);
     }
@@ -105,7 +105,7 @@ library PositionUtils {
     // @dev validate that a position is not empty
     // @param position the position values
     function validateNonEmptyPosition(Position.Props memory position) internal pure {
-        if (position.sizeInUsd == 0 || position.sizeInTokens == 0 || position.collateralAmount == 0) {
+        if (position.sizeInUsd() == 0 || position.sizeInTokens() == 0 || position.collateralAmount() == 0) {
             revert(Keys.EMPTY_POSITION_ERROR);
         }
     }
@@ -151,18 +151,18 @@ library PositionUtils {
 
         (cache.positionPnlUsd, ) = getPositionPnlUsd(
             position,
-            position.sizeInUsd,
-            prices.indexTokenPrice.pickPriceForPnl(position.isLong, false)
+            position.sizeInUsd(),
+            prices.indexTokenPrice.pickPriceForPnl(position.isLong(), false)
         );
 
         cache.maxLeverage = dataStore.getUint(Keys.MAX_LEVERAGE);
         Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(
-            position.collateralToken,
+            position.collateralToken(),
             market,
             prices
         );
 
-        cache.collateralUsd = position.collateralAmount * collateralTokenPrice.min;
+        cache.collateralUsd = position.collateralAmount() * collateralTokenPrice.min;
 
         cache.priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
@@ -170,8 +170,8 @@ library PositionUtils {
                 market.marketToken,
                 market.longToken,
                 market.shortToken,
-                -position.sizeInUsd.toInt256(),
-                position.isLong
+                -position.sizeInUsd().toInt256(),
+                position.isLong()
             )
         );
 
@@ -182,7 +182,7 @@ library PositionUtils {
             collateralTokenPrice,
             market.longToken,
             market.shortToken,
-            position.sizeInUsd
+            position.sizeInUsd()
         );
 
         cache.minCollateralUsd = dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256();
@@ -194,7 +194,7 @@ library PositionUtils {
         }
 
         // validate if position.size / (remaining collateral) exceeds max leverage
-        if (position.sizeInUsd * Precision.FLOAT_PRECISION / cache.remainingCollateralUsd.toUint256() > cache.maxLeverage) {
+        if (position.sizeInUsd() * Precision.FLOAT_PRECISION / cache.remainingCollateralUsd.toUint256() > cache.maxLeverage) {
             return true;
         }
 

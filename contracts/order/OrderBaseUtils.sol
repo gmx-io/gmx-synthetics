@@ -24,37 +24,45 @@ library OrderBaseUtils {
     // @dev CreateOrderParams struct used in createOrder to avoid stack
     // too deep errors
     //
+    // @param addresses address values
+    // @param numbers number values
+    // @param orderType for order.orderType
+    // @param isLong for order.isLong
+    // @param shouldUnwrapNativeToken for order.shouldUnwrapNativeToken
+    struct CreateOrderParams {
+        CreateOrderParamsAddresses addresses;
+        CreateOrderParamsNumbers numbers;
+        Order.OrderType orderType;
+        bool isLong;
+        bool shouldUnwrapNativeToken;
+    }
+
     // @param receiver for order.receiver
     // @param callbackContract for order.callbackContract
     // @param market for order.market
     // @param initialCollateralToken for order.initialCollateralToken
     // @param swapPath for order.swapPath
+    struct CreateOrderParamsAddresses {
+        address receiver;
+        address callbackContract;
+        address market;
+        address initialCollateralToken;
+        address[] swapPath;
+    }
+
     // @param sizeDeltaUsd for order.sizeDeltaUsd
     // @param triggerPrice for order.triggerPrice
     // @param acceptablePrice for order.acceptablePrice
     // @param executionFee for order.executionFee
     // @param callbackGasLimit for order.callbackGasLimit
     // @param minOutputAmount for order.minOutputAmount
-    // @param orderType for order.orderType
-    // @param isLong for order.isLong
-    // @param shouldUnwrapNativeToken for order.shouldUnwrapNativeToken
-    struct CreateOrderParams {
-        address receiver;
-        address callbackContract;
-        address market;
-        address initialCollateralToken;
-        address[] swapPath;
-
+    struct CreateOrderParamsNumbers {
         uint256 sizeDeltaUsd;
         uint256 triggerPrice;
         uint256 acceptablePrice;
         uint256 executionFee;
         uint256 callbackGasLimit;
         uint256 minOutputAmount;
-
-        Order.OrderType orderType;
-        bool isLong;
-        bool shouldUnwrapNativeToken;
     }
 
     // @dev ExecuteOrderParams struct used in executeOrder to avoid stack
@@ -63,6 +71,23 @@ library OrderBaseUtils {
     // @param key the key of the order to execute
     // @param order the order to execute
     // @param swapPathMarkets the market values of the markets in the swapPath
+    // @param oracleBlockNumbers the oracle block numbers for the prices in the oracle
+    // @param market market values of the trading market
+    // @param keeper the keeper sending the transaction
+    // @param startingGas the starting gas
+    // @param positionKey the key of the order's position
+    struct ExecuteOrderParams {
+        ExecuteOrderParamsContracts contracts;
+        bytes32 key;
+        Order.Props order;
+        Market.Props[] swapPathMarkets;
+        uint256[] oracleBlockNumbers;
+        Market.Props market;
+        address keeper;
+        uint256 startingGas;
+        bytes32 positionKey;
+    }
+
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
     // @param orderStore OrderStore
@@ -71,15 +96,7 @@ library OrderBaseUtils {
     // @param swapHandler SwapHandler
     // @param feeReceiver FeeReceiver
     // @param referralStorage IReferralStorage
-    // @param oracleBlockNumbers the oracle block numbers for the prices in the oracle
-    // @param market market values of the trading market
-    // @param keeper the keeper sending the transaction
-    // @param startingGas the starting gas
-    // @param positionKey the key of the order's position
-    struct ExecuteOrderParams {
-        bytes32 key;
-        Order.Props order;
-        Market.Props[] swapPathMarkets;
+    struct ExecuteOrderParamsContracts {
         DataStore dataStore;
         EventEmitter eventEmitter;
         OrderStore orderStore;
@@ -88,11 +105,6 @@ library OrderBaseUtils {
         SwapHandler swapHandler;
         FeeReceiver feeReceiver;
         IReferralStorage referralStorage;
-        uint256[] oracleBlockNumbers;
-        Market.Props market;
-        address keeper;
-        uint256 startingGas;
-        bytes32 positionKey;
     }
 
     error EmptyOrder();

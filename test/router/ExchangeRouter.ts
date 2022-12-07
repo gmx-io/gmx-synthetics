@@ -50,17 +50,17 @@ describe("ExchangeRouter", () => {
     const depositKeys = await depositStore.getDepositKeys(0, 1);
     const deposit = await depositStore.get(depositKeys[0]);
 
-    expect(deposit.account).eq(user0.address);
-    expect(deposit.receiver).eq(user1.address);
-    expect(deposit.callbackContract).eq(user2.address);
-    expect(deposit.market).eq(ethUsdMarket.marketToken);
-    expect(deposit.longTokenAmount).eq(expandDecimals(10, 18));
-    expect(deposit.shortTokenAmount).eq(expandDecimals(10 * 5000, 6));
-    expect(deposit.minMarketTokens).eq(100);
-    expect(deposit.updatedAtBlock).eq(block.number);
-    expect(deposit.shouldUnwrapNativeToken).eq(true);
-    expect(deposit.executionFee).eq(expandDecimals(1, 18));
-    expect(deposit.callbackGasLimit).eq("200000");
+    expect(deposit.addresses.account).eq(user0.address);
+    expect(deposit.addresses.receiver).eq(user1.address);
+    expect(deposit.addresses.callbackContract).eq(user2.address);
+    expect(deposit.addresses.market).eq(ethUsdMarket.marketToken);
+    expect(deposit.numbers.longTokenAmount).eq(expandDecimals(10, 18));
+    expect(deposit.numbers.shortTokenAmount).eq(expandDecimals(10 * 5000, 6));
+    expect(deposit.numbers.minMarketTokens).eq(100);
+    expect(deposit.numbers.updatedAtBlock).eq(block.number);
+    expect(deposit.numbers.executionFee).eq(expandDecimals(1, 18));
+    expect(deposit.numbers.callbackGasLimit).eq("200000");
+    expect(deposit.flags.shouldUnwrapNativeToken).eq(true);
 
     await logGasUsage({
       tx,

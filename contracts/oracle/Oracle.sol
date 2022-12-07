@@ -30,17 +30,7 @@ contract Oracle is RoleModule {
     using Price for Price.Props;
 
     // @dev _SetPricesCache struct used in setPrices to avoid stack too deep errors
-    // @param minBlockConfirmations the minimum block confirmations before the block
-    // hash is not required to be part of the signed message for validation
     // @param prevOracleBlockNumber the previous oracle block number of the loop
-    // @param oracleBlockNumber the current oracle block number of the loop
-    // @param oracleTimestamp the current oracle timestamp of the loop
-    // @param blockHash the hash of the current oracleBlockNumber of the loop
-    // @param token the address of the current token of the loop
-    // @param precision the precision used for multiplying
-    // @param tokenOracleType the oracle type of the token, this allows oracle keepers
-    // to sign prices based on different methodologies, and the oracle can be configured
-    // to accept prices based on a specific methodology
     // @param priceIndex the current price index to retrieve from compactedMinPrices and compactedMaxPrices
     // to construct the minPrices and maxPrices array
     // @param signatureIndex the current signature index to retrieve from the signatures array
@@ -50,21 +40,35 @@ contract Oracle is RoleModule {
     // @param minPrices the min prices
     // @param maxPrices the max prices
     struct _SetPricesCache {
-        uint256 minBlockConfirmations;
+        _SetPricesInfoCache info;
         uint256 prevOracleBlockNumber;
+        uint256 priceIndex;
+        uint256 signatureIndex;
+        uint256 minPriceIndex;
+        uint256 maxPriceIndex;
+        uint256[] minPrices;
+        uint256[] maxPrices;
+    }
+
+    // @param minBlockConfirmations the minimum block confirmations before the block
+    // hash is not required to be part of the signed message for validation
+    // @param oracleBlockNumber the current oracle block number of the loop
+    // @param oracleTimestamp the current oracle timestamp of the loop
+    // @param blockHash the hash of the current oracleBlockNumber of the loop
+    // @param token the address of the current token of the loop
+    // @param precision the precision used for multiplying
+    // @param tokenOracleType the oracle type of the token, this allows oracle keepers
+    // to sign prices based on different methodologies, and the oracle can be configured
+    // to accept prices based on a specific methodology
+    struct _SetPricesInfoCache {
+        uint256 minBlockConfirmations;
+        uint256 maxPriceAge;
         uint256 oracleBlockNumber;
         uint256 oracleTimestamp;
         bytes32 blockHash;
         address token;
         uint256 precision;
         bytes32 tokenOracleType;
-        uint256 priceIndex;
-        uint256 signatureIndex;
-        uint256 maxPriceAge;
-        uint256 minPriceIndex;
-        uint256 maxPriceIndex;
-        uint256[] minPrices;
-        uint256[] maxPrices;
     }
 
     bytes32 public immutable SALT;
@@ -414,35 +418,35 @@ contract Oracle is RoleModule {
         OracleUtils.SetPricesParams memory params
     ) internal {
         _SetPricesCache memory cache;
-        cache.minBlockConfirmations = dataStore.getUint(Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS);
-        cache.maxPriceAge = dataStore.getUint(Keys.MAX_ORACLE_PRICE_AGE);
+        cache.info.minBlockConfirmations = dataStore.getUint(Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS);
+        cache.info.maxPriceAge = dataStore.getUint(Keys.MAX_ORACLE_PRICE_AGE);
 
         for (uint256 i = 0; i < params.tokens.length; i++) {
-            cache.oracleBlockNumber = OracleUtils.getUncompactedOracleBlockNumber(params.compactedOracleBlockNumbers, i);
-            cache.oracleTimestamp = OracleUtils.getUncompactedOracleTimestamp(params.compactedOracleTimestamps, i);
+            cache.info.oracleBlockNumber = OracleUtils.getUncompactedOracleBlockNumber(params.compactedOracleBlockNumbers, i);
+            cache.info.oracleTimestamp = OracleUtils.getUncompactedOracleTimestamp(params.compactedOracleTimestamps, i);
 
-            if (cache.oracleBlockNumber > Chain.currentBlockNumber()) {
-                revert InvalidBlockNumber(cache.oracleBlockNumber);
+            if (cache.info.oracleBlockNumber > Chain.currentBlockNumber()) {
+                revert InvalidBlockNumber(cache.info.oracleBlockNumber);
             }
 
-            if (cache.oracleTimestamp + cache.maxPriceAge < Chain.currentTimestamp()) {
-                revert MaxPriceAgeExceeded(cache.oracleTimestamp);
+            if (cache.info.oracleTimestamp + cache.info.maxPriceAge < Chain.currentTimestamp()) {
+                revert MaxPriceAgeExceeded(cache.info.oracleTimestamp);
             }
 
             // block numbers must be in ascending order
-            if (cache.oracleBlockNumber < cache.prevOracleBlockNumber) {
-                revert BlockNumbersNotSorted(cache.oracleBlockNumber, cache.prevOracleBlockNumber);
+            if (cache.info.oracleBlockNumber < cache.prevOracleBlockNumber) {
+                revert BlockNumbersNotSorted(cache.info.oracleBlockNumber, cache.prevOracleBlockNumber);
             }
-            cache.prevOracleBlockNumber = cache.oracleBlockNumber;
+            cache.prevOracleBlockNumber = cache.info.oracleBlockNumber;
 
-            cache.blockHash = bytes32(0);
-            if (Chain.currentBlockNumber() - cache.oracleBlockNumber <= cache.minBlockConfirmations) {
-                cache.blockHash = Chain.getBlockHash(cache.oracleBlockNumber);
+            cache.info.blockHash = bytes32(0);
+            if (Chain.currentBlockNumber() - cache.info.oracleBlockNumber <= cache.info.minBlockConfirmations) {
+                cache.info.blockHash = Chain.getBlockHash(cache.info.oracleBlockNumber);
             }
 
-            cache.token = params.tokens[i];
-            cache.precision = 10 ** OracleUtils.getUncompactedDecimal(params.compactedDecimals, i);
-            cache.tokenOracleType = dataStore.getData(Keys.oracleTypeKey(cache.token));
+            cache.info.token = params.tokens[i];
+            cache.info.precision = 10 ** OracleUtils.getUncompactedDecimal(params.compactedDecimals, i);
+            cache.info.tokenOracleType = dataStore.getData(Keys.oracleTypeKey(cache.info.token));
 
             cache.minPrices = new uint256[](signers.length);
             cache.maxPrices = new uint256[](signers.length);
@@ -456,12 +460,12 @@ contract Oracle is RoleModule {
 
                 // validate that minPrices are sorted in ascending order
                 if (cache.minPrices[j - 1] > cache.minPrices[j]) {
-                    revert MinPricesNotSorted(cache.token, cache.minPrices[j], cache.minPrices[j - 1]);
+                    revert MinPricesNotSorted(cache.info.token, cache.minPrices[j], cache.minPrices[j - 1]);
                 }
 
                 // validate that maxPrices are sorted in ascending order
                 if (cache.maxPrices[j - 1] > cache.maxPrices[j]) {
-                    revert MaxPricesNotSorted(cache.token, cache.maxPrices[j], cache.maxPrices[j - 1]);
+                    revert MaxPricesNotSorted(cache.info.token, cache.maxPrices[j], cache.maxPrices[j - 1]);
                 }
             }
 
@@ -471,12 +475,12 @@ contract Oracle is RoleModule {
                 cache.maxPriceIndex = OracleUtils.getUncompactedPriceIndex(params.compactedMaxPricesIndexes, cache.signatureIndex);
 
                 _validateSigner(
-                    cache.oracleBlockNumber,
-                    cache.oracleTimestamp,
-                    cache.blockHash,
-                    cache.token,
-                    cache.tokenOracleType,
-                    cache.precision,
+                    cache.info.oracleBlockNumber,
+                    cache.info.oracleTimestamp,
+                    cache.info.blockHash,
+                    cache.info.token,
+                    cache.info.tokenOracleType,
+                    cache.info.precision,
                     cache.minPrices[cache.minPriceIndex],
                     cache.maxPrices[cache.maxPriceIndex],
                     params.signatures[cache.signatureIndex],
@@ -484,30 +488,30 @@ contract Oracle is RoleModule {
                 );
             }
 
-            uint256 medianMinPrice = Array.getMedian(cache.minPrices) * cache.precision;
-            uint256 medianMaxPrice = Array.getMedian(cache.maxPrices) * cache.precision;
+            uint256 medianMinPrice = Array.getMedian(cache.minPrices) * cache.info.precision;
+            uint256 medianMaxPrice = Array.getMedian(cache.maxPrices) * cache.info.precision;
 
             if (medianMinPrice == 0 || medianMaxPrice == 0) {
-                revert EmptyPrice(cache.token);
+                revert EmptyPrice(cache.info.token);
             }
 
-            if (primaryPrices[cache.token].isEmpty()) {
-                eventEmitter.emitOraclePriceUpdated(cache.token, medianMinPrice, medianMaxPrice, true, false);
+            if (primaryPrices[cache.info.token].isEmpty()) {
+                eventEmitter.emitOraclePriceUpdated(cache.info.token, medianMinPrice, medianMaxPrice, true, false);
 
-                primaryPrices[cache.token] = Price.Props(
+                primaryPrices[cache.info.token] = Price.Props(
                     medianMinPrice,
                     medianMaxPrice
                 );
             } else {
-                eventEmitter.emitOraclePriceUpdated(cache.token, medianMinPrice, medianMaxPrice, false, false);
+                eventEmitter.emitOraclePriceUpdated(cache.info.token, medianMinPrice, medianMaxPrice, false, false);
 
-                secondaryPrices[cache.token] = Price.Props(
+                secondaryPrices[cache.info.token] = Price.Props(
                     medianMinPrice,
                     medianMaxPrice
                 );
             }
 
-            tokensWithPrices.add(cache.token);
+            tokensWithPrices.add(cache.info.token);
         }
     }
 

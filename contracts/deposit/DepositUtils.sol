@@ -28,6 +28,7 @@ library DepositUtils {
     using Array for uint256[];
 
     using Price for Price.Props;
+    using Deposit for Deposit.Props;
 
     // @dev CreateDepositParams struct used in createDeposit to avoid stack
     // too deep errors
@@ -138,17 +139,23 @@ library DepositUtils {
         }
 
         Deposit.Props memory deposit = Deposit.Props(
-            account,
-            params.receiver,
-            params.callbackContract,
-            market.marketToken,
-            longTokenAmount,
-            shortTokenAmount,
-            params.minMarketTokens,
-            Chain.currentBlockNumber(),
-            params.shouldUnwrapNativeToken,
-            params.executionFee,
-            params.callbackGasLimit,
+            Deposit.Addresses(
+                account,
+                params.receiver,
+                params.callbackContract,
+                market.marketToken
+            ),
+            Deposit.Numbers(
+                longTokenAmount,
+                shortTokenAmount,
+                params.minMarketTokens,
+                Chain.currentBlockNumber(),
+                params.executionFee,
+                params.callbackGasLimit
+            ),
+            Deposit.Flags(
+                params.shouldUnwrapNativeToken
+            ),
             Null.BYTES
         );
 
@@ -168,21 +175,21 @@ library DepositUtils {
     // @param params ExecuteDepositParams
     function executeDeposit(ExecuteDepositParams memory params) internal {
         Deposit.Props memory deposit = params.depositStore.get(params.key);
-        require(deposit.account != address(0), "DepositUtils: empty deposit");
+        require(deposit.account() != address(0), "DepositUtils: empty deposit");
 
-        if (!params.oracleBlockNumbers.areEqualTo(deposit.updatedAtBlock)) {
+        if (!params.oracleBlockNumbers.areEqualTo(deposit.updatedAtBlock())) {
             revert(Keys.ORACLE_ERROR);
         }
 
         CallbackUtils.beforeDepositExecution(params.key, deposit);
 
-        Market.Props memory market = params.marketStore.get(deposit.market);
+        Market.Props memory market = params.marketStore.get(deposit.market());
 
         Price.Props memory longTokenPrice = params.oracle.getPrimaryPrice(market.longToken);
         Price.Props memory shortTokenPrice = params.oracle.getPrimaryPrice(market.shortToken);
 
-        uint256 longTokenUsd = deposit.longTokenAmount * longTokenPrice.midPrice();
-        uint256 shortTokenUsd = deposit.shortTokenAmount * shortTokenPrice.midPrice();
+        uint256 longTokenUsd = deposit.longTokenAmount() * longTokenPrice.midPrice();
+        uint256 shortTokenUsd = deposit.shortTokenAmount() * shortTokenPrice.midPrice();
 
         uint256 receivedMarketTokens;
 
@@ -194,8 +201,8 @@ library DepositUtils {
                 market.shortToken,
                 longTokenPrice.midPrice(),
                 shortTokenPrice.midPrice(),
-                (deposit.longTokenAmount * longTokenPrice.midPrice()).toInt256(),
-                (deposit.shortTokenAmount * shortTokenPrice.midPrice()).toInt256()
+                (deposit.longTokenAmount() * longTokenPrice.midPrice()).toInt256(),
+                (deposit.shortTokenAmount() * shortTokenPrice.midPrice()).toInt256()
             )
         );
 
@@ -206,44 +213,44 @@ library DepositUtils {
         // this should still work unless the token has custom behavior that conditionally blocks transfers
         // even if the sender has sufficient balance
         // this will not work correctly for tokens with a burn mechanism, those need to be separately handled
-        if (deposit.longTokenAmount > 0) {
-            params.depositStore.transferOut(params.dataStore, market.longToken, deposit.longTokenAmount, market.marketToken);
+        if (deposit.longTokenAmount() > 0) {
+            params.depositStore.transferOut(params.dataStore, market.longToken, deposit.longTokenAmount(), market.marketToken);
 
             _ExecuteDepositParams memory _params = _ExecuteDepositParams(
                 market,
-                deposit.account,
-                deposit.receiver,
+                deposit.account(),
+                deposit.receiver(),
                 market.longToken,
                 market.shortToken,
                 longTokenPrice,
                 shortTokenPrice,
-                deposit.longTokenAmount,
+                deposit.longTokenAmount(),
                 priceImpactUsd * longTokenUsd.toInt256() / (longTokenUsd + shortTokenUsd).toInt256()
             );
 
             receivedMarketTokens += _executeDeposit(params, _params);
         }
 
-        if (deposit.shortTokenAmount > 0) {
-            params.depositStore.transferOut(params.dataStore, market.shortToken, deposit.shortTokenAmount, market.marketToken);
+        if (deposit.shortTokenAmount() > 0) {
+            params.depositStore.transferOut(params.dataStore, market.shortToken, deposit.shortTokenAmount(), market.marketToken);
 
             _ExecuteDepositParams memory _params = _ExecuteDepositParams(
                 market,
-                deposit.account,
-                deposit.receiver,
+                deposit.account(),
+                deposit.receiver(),
                 market.shortToken,
                 market.longToken,
                 shortTokenPrice,
                 longTokenPrice,
-                deposit.shortTokenAmount,
+                deposit.shortTokenAmount(),
                 priceImpactUsd * shortTokenUsd.toInt256() / (longTokenUsd + shortTokenUsd).toInt256()
             );
 
             receivedMarketTokens += _executeDeposit(params, _params);
         }
 
-        if (receivedMarketTokens < deposit.minMarketTokens) {
-            revert MinMarketTokens(receivedMarketTokens, deposit.minMarketTokens);
+        if (receivedMarketTokens < deposit.minMarketTokens()) {
+            revert MinMarketTokens(receivedMarketTokens, deposit.minMarketTokens());
         }
 
         params.depositStore.remove(params.key);
@@ -255,10 +262,10 @@ library DepositUtils {
         GasUtils.payExecutionFee(
             params.dataStore,
             params.depositStore,
-            deposit.executionFee,
+            deposit.executionFee(),
             params.startingGas,
             params.keeper,
-            deposit.account
+            deposit.account()
         );
     }
 
@@ -281,26 +288,26 @@ library DepositUtils {
         uint256 startingGas
     ) internal {
         Deposit.Props memory deposit = depositStore.get(key);
-        require(deposit.account != address(0), "DepositUtils: empty deposit");
+        require(deposit.account() != address(0), "DepositUtils: empty deposit");
 
-        Market.Props memory market = marketStore.get(deposit.market);
-        if (deposit.longTokenAmount > 0) {
+        Market.Props memory market = marketStore.get(deposit.market());
+        if (deposit.longTokenAmount() > 0) {
             depositStore.transferOut(
                 dataStore,
                 market.longToken,
-                deposit.longTokenAmount,
-                deposit.account,
-                deposit.shouldUnwrapNativeToken
+                deposit.longTokenAmount(),
+                deposit.account(),
+                deposit.shouldUnwrapNativeToken()
             );
         }
 
-        if (deposit.shortTokenAmount > 0) {
+        if (deposit.shortTokenAmount() > 0) {
             depositStore.transferOut(
                 dataStore,
                 market.shortToken,
-                deposit.shortTokenAmount,
-                deposit.account,
-                deposit.shouldUnwrapNativeToken
+                deposit.shortTokenAmount(),
+                deposit.account(),
+                deposit.shouldUnwrapNativeToken()
             );
         }
 
@@ -313,10 +320,10 @@ library DepositUtils {
         GasUtils.payExecutionFee(
             dataStore,
             depositStore,
-            deposit.executionFee,
+            deposit.executionFee(),
             startingGas,
             keeper,
-            deposit.account
+            deposit.account()
         );
     }
 

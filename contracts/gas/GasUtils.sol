@@ -16,6 +16,8 @@ import "../bank/StrictBank.sol";
 // @title GasUtils
 // @dev Library for execution fee estimation and payments
 library GasUtils {
+    using Deposit for Deposit.Props;
+    using Withdrawal for Withdrawal.Props;
     using Order for Order.Props;
 
     // @param keeper address of the keeper
@@ -113,22 +115,22 @@ library GasUtils {
     // @param dataStore DataStore
     // @param deposit the deposit to estimate the gas limit for
     function estimateExecuteDepositGasLimit(DataStore dataStore, Deposit.Props memory deposit) internal view returns (uint256) {
-        if (deposit.longTokenAmount == 0 || deposit.shortTokenAmount == 0) {
-            return dataStore.getUint(Keys.depositGasLimitKey(true)) + deposit.callbackGasLimit;
+        if (deposit.longTokenAmount() == 0 || deposit.shortTokenAmount() == 0) {
+            return dataStore.getUint(Keys.depositGasLimitKey(true)) + deposit.callbackGasLimit();
         }
 
-        return dataStore.getUint(Keys.depositGasLimitKey(false)) + deposit.callbackGasLimit;
+        return dataStore.getUint(Keys.depositGasLimitKey(false)) + deposit.callbackGasLimit();
     }
 
     // @dev the estimated gas limit for withdrawals
     // @param dataStore DataStore
     // @param withdrawal the withdrawal to estimate the gas limit for
     function estimateExecuteWithdrawalGasLimit(DataStore dataStore, Withdrawal.Props memory withdrawal) internal view returns (uint256) {
-        if (withdrawal.marketTokensLongAmount == 0 || withdrawal.marketTokensShortAmount == 0) {
-            return dataStore.getUint(Keys.withdrawalGasLimitKey(true)) + withdrawal.callbackGasLimit;
+        if (withdrawal.marketTokensLongAmount() == 0 || withdrawal.marketTokensShortAmount() == 0) {
+            return dataStore.getUint(Keys.withdrawalGasLimitKey(true)) + withdrawal.callbackGasLimit();
         }
 
-        return dataStore.getUint(Keys.withdrawalGasLimitKey(false)) + withdrawal.callbackGasLimit;
+        return dataStore.getUint(Keys.withdrawalGasLimitKey(false)) + withdrawal.callbackGasLimit();
     }
 
     // @dev the estimated gas limit for orders

@@ -47,18 +47,18 @@ describe("Exchange.Withdrawal", () => {
     const withdrawalKeys = await withdrawalStore.getWithdrawalKeys(0, 1);
     const withdrawal = await withdrawalStore.get(withdrawalKeys[0]);
 
-    expect(withdrawal.account).eq(user0.address);
-    expect(withdrawal.receiver).eq(user1.address);
-    expect(withdrawal.callbackContract).eq(user2.address);
-    expect(withdrawal.market).eq(ethUsdMarket.marketToken);
-    expect(withdrawal.marketTokensLongAmount).eq(expandDecimals(1000, 18));
-    expect(withdrawal.marketTokensShortAmount).eq(expandDecimals(500, 18));
-    expect(withdrawal.minLongTokenAmount).eq(100);
-    expect(withdrawal.minShortTokenAmount).eq(50);
-    expect(withdrawal.updatedAtBlock).eq(block.number);
-    expect(withdrawal.shouldUnwrapNativeToken).eq(true);
-    expect(withdrawal.executionFee).eq(700);
-    expect(withdrawal.callbackGasLimit).eq(100000);
+    expect(withdrawal.addresses.account).eq(user0.address);
+    expect(withdrawal.addresses.receiver).eq(user1.address);
+    expect(withdrawal.addresses.callbackContract).eq(user2.address);
+    expect(withdrawal.addresses.market).eq(ethUsdMarket.marketToken);
+    expect(withdrawal.numbers.marketTokensLongAmount).eq(expandDecimals(1000, 18));
+    expect(withdrawal.numbers.marketTokensShortAmount).eq(expandDecimals(500, 18));
+    expect(withdrawal.numbers.minLongTokenAmount).eq(100);
+    expect(withdrawal.numbers.minShortTokenAmount).eq(50);
+    expect(withdrawal.numbers.updatedAtBlock).eq(block.number);
+    expect(withdrawal.numbers.executionFee).eq(700);
+    expect(withdrawal.numbers.callbackGasLimit).eq(100000);
+    expect(withdrawal.flags.shouldUnwrapNativeToken).eq(true);
   });
 
   it("executeWithdrawal", async () => {
@@ -80,7 +80,6 @@ describe("Exchange.Withdrawal", () => {
       shouldUnwrapNativeToken: false,
       gasUsageLabel: "createWithdrawal",
     });
-
     expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(100 * 1000, 18));
     expect(await wnt.balanceOf(withdrawalHandler.address)).eq(0);
     expect(await usdc.balanceOf(withdrawalHandler.address)).eq(0);
@@ -99,7 +98,7 @@ describe("Exchange.Withdrawal", () => {
     const withdrawalKeys = await withdrawalStore.getWithdrawalKeys(0, 1);
     let withdrawal = await withdrawalStore.get(withdrawalKeys[0]);
 
-    expect(withdrawal.account).eq(user0.address);
+    expect(withdrawal.addresses.account).eq(user0.address);
     expect(await withdrawalStore.getWithdrawalCount()).eq(1);
 
     await executeWithdrawal(fixture, {
@@ -107,7 +106,7 @@ describe("Exchange.Withdrawal", () => {
     });
 
     withdrawal = await withdrawalStore.get(withdrawalKeys[0]);
-    expect(withdrawal.account).eq(AddressZero);
+    expect(withdrawal.addresses.account).eq(AddressZero);
     expect(await withdrawalStore.getWithdrawalCount()).eq(0);
 
     expect(await getMarketTokenPrice(fixture)).eq(expandDecimals(1, 30));
