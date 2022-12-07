@@ -54,41 +54,41 @@ library OrderUtils {
 
         address wnt = TokenUtils.wnt(dataStore);
 
-        if (params.initialCollateralToken == wnt ||
+        if (params.addresses.initialCollateralToken == wnt ||
             params.orderType == Order.OrderType.MarketSwap ||
             params.orderType == Order.OrderType.LimitSwap ||
             params.orderType == Order.OrderType.MarketIncrease ||
             params.orderType == Order.OrderType.LimitIncrease
         ) {
-            initialCollateralDeltaAmount = orderStore.recordTransferIn(params.initialCollateralToken);
+            initialCollateralDeltaAmount = orderStore.recordTransferIn(params.addresses.initialCollateralToken);
         }
 
-        if (params.initialCollateralToken == wnt) {
-            require(initialCollateralDeltaAmount >= params.executionFee, "OrderUtils: invalid executionFee");
-            initialCollateralDeltaAmount -= params.executionFee;
+        if (params.addresses.initialCollateralToken == wnt) {
+            require(initialCollateralDeltaAmount >= params.numbers.executionFee, "OrderUtils: invalid executionFee");
+            initialCollateralDeltaAmount -= params.numbers.executionFee;
         } else {
             uint256 wntAmount = orderStore.recordTransferIn(wnt);
-            require(wntAmount == params.executionFee, "OrderUtils: invalid wntAmount");
+            require(wntAmount == params.numbers.executionFee, "OrderUtils: invalid wntAmount");
         }
 
         // validate swap path markets
-        MarketUtils.getMarkets(marketStore, params.swapPath);
+        MarketUtils.getMarkets(marketStore, params.addresses.swapPath);
 
         Order.Props memory order;
 
         order.setAccount(account);
-        order.setReceiver(params.receiver);
-        order.setCallbackContract(params.callbackContract);
-        order.setMarket(params.market);
-        order.setInitialCollateralToken(params.initialCollateralToken);
-        order.setSwapPath(params.swapPath);
-        order.setSizeDeltaUsd(params.sizeDeltaUsd);
+        order.setReceiver(params.addresses.receiver);
+        order.setCallbackContract(params.addresses.callbackContract);
+        order.setMarket(params.addresses.market);
+        order.setInitialCollateralToken(params.addresses.initialCollateralToken);
+        order.setSwapPath(params.addresses.swapPath);
+        order.setSizeDeltaUsd(params.numbers.sizeDeltaUsd);
         order.setInitialCollateralDeltaAmount(initialCollateralDeltaAmount);
-        order.setTriggerPrice(params.triggerPrice);
-        order.setAcceptablePrice(params.acceptablePrice);
-        order.setExecutionFee(params.executionFee);
-        order.setCallbackGasLimit(params.callbackGasLimit);
-        order.setMinOutputAmount(params.minOutputAmount);
+        order.setTriggerPrice(params.numbers.triggerPrice);
+        order.setAcceptablePrice(params.numbers.acceptablePrice);
+        order.setExecutionFee(params.numbers.executionFee);
+        order.setCallbackGasLimit(params.numbers.callbackGasLimit);
+        order.setMinOutputAmount(params.numbers.minOutputAmount);
         order.setOrderType(params.orderType);
         order.setIsLong(params.isLong);
         order.setShouldUnwrapNativeToken(params.shouldUnwrapNativeToken);
@@ -112,7 +112,7 @@ library OrderUtils {
         OrderBaseUtils.validateNonEmptyOrder(params.order);
 
         OrderBaseUtils.setExactOrderPrice(
-            params.oracle,
+            params.contracts.oracle,
             params.market.indexToken,
             params.order.orderType(),
             params.order.triggerPrice(),
@@ -123,13 +123,13 @@ library OrderUtils {
 
         processOrder(params);
 
-        params.eventEmitter.emitOrderExecuted(params.key);
+        params.contracts.eventEmitter.emitOrderExecuted(params.key);
 
         CallbackUtils.afterOrderExecution(params.key, params.order);
 
         GasUtils.payExecutionFee(
-            params.dataStore,
-            params.orderStore,
+            params.contracts.dataStore,
+            params.contracts.orderStore,
             params.order.executionFee(),
             params.startingGas,
             params.keeper,

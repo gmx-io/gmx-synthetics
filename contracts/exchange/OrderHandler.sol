@@ -167,7 +167,7 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
 
         OrderBaseUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, msg.sender, startingGas);
 
-        FeatureUtils.validateFeature(params.dataStore, Keys.executeOrderFeatureKey(address(this), uint256(params.order.orderType())));
+        FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeOrderFeatureKey(address(this), uint256(params.order.orderType())));
 
         OrderUtils.executeOrder(params);
     }
@@ -258,7 +258,7 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
 
         OrderBaseUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(cache.key, oracleParams, msg.sender, cache.startingGas);
 
-        FeatureUtils.validateFeature(params.dataStore, Keys.executeAdlFeatureKey(address(this), uint256(params.order.orderType())));
+        FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeAdlFeatureKey(address(this), uint256(params.order.orderType())));
 
         OrderUtils.executeOrder(params);
 
@@ -297,7 +297,7 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
             _validateFrozenOrderKeeper(keeper);
         }
 
-        FeatureUtils.validateFeature(params.dataStore, Keys.executeOrderFeatureKey(address(this), uint256(params.order.orderType())));
+        FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeOrderFeatureKey(address(this), uint256(params.order.orderType())));
 
         OrderUtils.executeOrder(params);
     }
@@ -320,14 +320,15 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
         params.order = orderStore.get(key);
         params.swapPathMarkets = MarketUtils.getMarkets(marketStore, params.order.swapPath());
 
-        params.dataStore = dataStore;
-        params.eventEmitter = eventEmitter;
-        params.orderStore = orderStore;
-        params.positionStore = positionStore;
-        params.oracle = oracle;
-        params.swapHandler = swapHandler;
-        params.feeReceiver = feeReceiver;
-        params.referralStorage = referralStorage;
+        params.contracts.dataStore = dataStore;
+        params.contracts.eventEmitter = eventEmitter;
+        params.contracts.orderStore = orderStore;
+        params.contracts.positionStore = positionStore;
+        params.contracts.oracle = oracle;
+        params.contracts.swapHandler = swapHandler;
+        params.contracts.feeReceiver = feeReceiver;
+        params.contracts.referralStorage = referralStorage;
+
         params.oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
             oracleParams.compactedOracleBlockNumbers,
             oracleParams.tokens.length
