@@ -45,7 +45,7 @@ const config: {
 
 export default async function (hre: HardhatRuntimeEnvironment) {
   const markets = config[hre.network.name];
-  const tokens = hre.gmx.tokens;
+  const tokens = await hre.gmx.getTokens();
   if (markets) {
     for (const market of markets) {
       for (const tokenSymbol of market.tokens) {

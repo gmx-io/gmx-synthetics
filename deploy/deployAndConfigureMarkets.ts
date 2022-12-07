@@ -38,7 +38,11 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
 
   async function setReserveFactor(marketToken: symbol, isLong: boolean, reserveFactor: number) {
     const key = keys.reserveFactorKey(marketToken, isLong);
-    setUintIfDifferent(key, reserveFactor, `reserve factor ${marketToken.toString()} ${isLong ? "long" : "short"}`);
+    await setUintIfDifferent(
+      key,
+      reserveFactor,
+      `reserve factor ${marketToken.toString()} ${isLong ? "long" : "short"}`
+    );
   }
 
   for (const marketConfig of markets) {
@@ -61,7 +65,8 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
 
 func.skip = async ({ gmx, network }) => {
   // skip if no markets configured
-  if (!gmx.markets || gmx.markets.length === 0) {
+  const markets = await gmx.getMarkets();
+  if (!markets || markets.length === 0) {
     console.warn("no markets configured for network %s", network.name);
     return true;
   }
