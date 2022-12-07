@@ -67,12 +67,14 @@ library IncreaseOrderUtils {
 
         IncreasePositionUtils.increasePosition(
             IncreasePositionUtils.IncreasePositionParams(
-                params.contracts.dataStore,
-                params.contracts.eventEmitter,
-                params.contracts.positionStore,
-                params.contracts.oracle,
-                params.contracts.feeReceiver,
-                params.contracts.referralStorage,
+                IncreasePositionUtils.IncreasePositionParamsContracts(
+                    params.contracts.dataStore,
+                    params.contracts.eventEmitter,
+                    params.contracts.positionStore,
+                    params.contracts.oracle,
+                    params.contracts.feeReceiver,
+                    params.contracts.referralStorage
+                ),
                 params.market,
                 params.order,
                 position,
