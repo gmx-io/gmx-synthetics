@@ -99,12 +99,12 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
     receive() external payable {}
 
     // @dev Sends the given amount of wrapped native tokens (WNT) to the given address
-    function sendWnt(address receiver, uint256 amount) external nonReentrant {
+    function sendWnt(address receiver, uint256 amount) external payable nonReentrant {
         TokenUtils.depositAndSendWrappedNativeToken(dataStore, receiver, amount);
     }
 
     // @dev Sends the given amount of tokens to the given address
-    function sendTokens(address token, address receiver, uint256 amount) external nonReentrant {
+    function sendTokens(address token, address receiver, uint256 amount) external payable nonReentrant {
         address account = msg.sender;
         router.pluginTransfer(token, account, receiver, amount);
     }
@@ -120,7 +120,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
      */
     function createDeposit(
         DepositUtils.CreateDepositParams calldata params
-    ) external nonReentrant returns (bytes32) {
+    ) external payable nonReentrant returns (bytes32) {
         address account = msg.sender;
 
         return depositHandler.createDeposit(
@@ -138,7 +138,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
      */
     function createWithdrawal(
         WithdrawalUtils.CreateWithdrawalParams calldata params
-    ) external nonReentrant returns (bytes32) {
+    ) external payable nonReentrant returns (bytes32) {
         address account = msg.sender;
 
         return withdrawalHandler.createWithdrawal(
@@ -156,7 +156,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
     function createOrder(
         OrderBaseUtils.CreateOrderParams calldata params,
         bytes32 referralCode
-    ) external nonReentrant returns (bytes32) {
+    ) external payable nonReentrant returns (bytes32) {
         require(params.orderType != Order.OrderType.Liquidation, "ExchangeRouter: invalid order type");
 
         address account = msg.sender;
@@ -187,7 +187,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
         uint256 sizeDeltaUsd,
         uint256 acceptablePrice,
         uint256 triggerPrice
-    ) external nonReentrant {
+    ) external payable nonReentrant {
         OrderStore _orderStore = orderStore;
         Order.Props memory order = _orderStore.get(key);
 
@@ -228,7 +228,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
      *
      * @param key The unique ID of the order to be cancelled
      */
-    function cancelOrder(bytes32 key) external nonReentrant {
+    function cancelOrder(bytes32 key) external payable nonReentrant {
         uint256 startingGas = gasleft();
 
         OrderStore _orderStore = orderStore;
@@ -263,7 +263,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
      * @param tokens An array of token addresses, corresponding to the given markets
      * @param receiver The address to which the claimed fees should be sent
      */
-    function claimFundingFees(address[] memory markets, address[] memory tokens, address receiver) external nonReentrant {
+    function claimFundingFees(address[] memory markets, address[] memory tokens, address receiver) external payable nonReentrant {
         if (markets.length != tokens.length) {
             revert("Invalid input");
         }
@@ -292,7 +292,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
      * @param tokens An array of token addresses, corresponding to the given markets
      * @param receiver The address to which the claimed rewards should be sent
      */
-    function claimAffiliateRewards(address[] memory markets, address[] memory tokens, address receiver) external nonReentrant {
+    function claimAffiliateRewards(address[] memory markets, address[] memory tokens, address receiver) external payable nonReentrant {
         if (markets.length != tokens.length) {
             revert("Invalid input");
         }

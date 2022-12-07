@@ -10,6 +10,10 @@
     "declaration": true,
     "emitDeclarationOnly": true,
     "outDir": "dist",
-    "declarationMap": true
-  }
+    "declarationMap": true,
+    "rootDirs": ["./src", "./scripts", "./test"]
+  },
+  "exclude": ["dist", "node_modules"],
+  "include": ["./test", "./src", "./scripts"],
+  "files": ["./hardhat.config.ts"]
 }
