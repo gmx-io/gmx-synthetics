@@ -17,6 +17,7 @@ import "../bank/StrictBank.sol";
 // @dev Library for execution fee estimation and payments
 library GasUtils {
     using Deposit for Deposit.Props;
+    using Withdrawal for Withdrawal.Props;
     using Order for Order.Props;
 
     // @param keeper address of the keeper
@@ -125,11 +126,11 @@ library GasUtils {
     // @param dataStore DataStore
     // @param withdrawal the withdrawal to estimate the gas limit for
     function estimateExecuteWithdrawalGasLimit(DataStore dataStore, Withdrawal.Props memory withdrawal) internal view returns (uint256) {
-        if (withdrawal.marketTokensLongAmount == 0 || withdrawal.marketTokensShortAmount == 0) {
-            return dataStore.getUint(Keys.withdrawalGasLimitKey(true)) + withdrawal.callbackGasLimit;
+        if (withdrawal.marketTokensLongAmount() == 0 || withdrawal.marketTokensShortAmount() == 0) {
+            return dataStore.getUint(Keys.withdrawalGasLimitKey(true)) + withdrawal.callbackGasLimit();
         }
 
-        return dataStore.getUint(Keys.withdrawalGasLimitKey(false)) + withdrawal.callbackGasLimit;
+        return dataStore.getUint(Keys.withdrawalGasLimitKey(false)) + withdrawal.callbackGasLimit();
     }
 
     // @dev the estimated gas limit for orders

@@ -59,9 +59,9 @@ library CallbackUtils {
     // @param key the key of the withdrawal
     // @param withdrawal the withdrawal to be executed
     function beforeWithdrawalExecution(bytes32 key, Withdrawal.Props memory withdrawal) internal {
-        if (!isValidCallbackContract(withdrawal.callbackContract)) { return; }
+        if (!isValidCallbackContract(withdrawal.callbackContract())) { return; }
 
-        try IWithdrawalCallbackReceiver(withdrawal.callbackContract).beforeWithdrawalExecution{ gas: withdrawal.callbackGasLimit / 2 }(key, withdrawal) {
+        try IWithdrawalCallbackReceiver(withdrawal.callbackContract()).beforeWithdrawalExecution{ gas: withdrawal.callbackGasLimit() / 2 }(key, withdrawal) {
         } catch {}
     }
 
@@ -69,9 +69,9 @@ library CallbackUtils {
     // @param key the key of the withdrawal
     // @param withdrawal the withdrawal that was executed
     function afterWithdrawalExecution(bytes32 key, Withdrawal.Props memory withdrawal) internal {
-        if (!isValidCallbackContract(withdrawal.callbackContract)) { return; }
+        if (!isValidCallbackContract(withdrawal.callbackContract())) { return; }
 
-        try IWithdrawalCallbackReceiver(withdrawal.callbackContract).afterWithdrawalExecution{ gas: withdrawal.callbackGasLimit / 2 }(key, withdrawal) {
+        try IWithdrawalCallbackReceiver(withdrawal.callbackContract()).afterWithdrawalExecution{ gas: withdrawal.callbackGasLimit() / 2 }(key, withdrawal) {
         } catch {}
     }
 
@@ -79,9 +79,9 @@ library CallbackUtils {
     // @param key the key of the withdrawal
     // @param withdrawal the withdrawal that was cancelled
     function afterWithdrawalCancellation(bytes32 key, Withdrawal.Props memory withdrawal) internal {
-        if (!isValidCallbackContract(withdrawal.callbackContract)) { return; }
+        if (!isValidCallbackContract(withdrawal.callbackContract())) { return; }
 
-        try IWithdrawalCallbackReceiver(withdrawal.callbackContract).afterWithdrawalCancellation{ gas: withdrawal.callbackGasLimit / 2 }(key, withdrawal) {
+        try IWithdrawalCallbackReceiver(withdrawal.callbackContract()).afterWithdrawalCancellation{ gas: withdrawal.callbackGasLimit() / 2 }(key, withdrawal) {
         } catch {}
     }
 

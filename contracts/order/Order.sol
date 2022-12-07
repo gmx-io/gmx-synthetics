@@ -40,7 +40,7 @@ library Order {
 
     // @dev there is a limit on the number of fields a struct can have when being passed
     // or returned as a memory variable which can cause "Stack too deep" errors
-    // we use sub-structs here to avoid the issue
+    // use sub-structs to avoid this issue
     // @param addresses address values
     // @param numbers number values
     // @param flags boolean values
