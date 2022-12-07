@@ -29,9 +29,9 @@ library CallbackUtils {
     // @param key the key of the deposit
     // @param deposit the deposit to be executed
     function beforeDepositExecution(bytes32 key, Deposit.Props memory deposit) internal {
-        if (!isValidCallbackContract(deposit.callbackContract)) { return; }
+        if (!isValidCallbackContract(deposit.callbackContract())) { return; }
 
-        try IDepositCallbackReceiver(deposit.callbackContract).beforeDepositExecution{ gas: deposit.callbackGasLimit / 2 }(key, deposit) {
+        try IDepositCallbackReceiver(deposit.callbackContract()).beforeDepositExecution{ gas: deposit.callbackGasLimit() / 2 }(key, deposit) {
         } catch {}
     }
 
@@ -39,9 +39,9 @@ library CallbackUtils {
     // @param key the key of the deposit
     // @param deposit the deposit that was executed
     function afterDepositExecution(bytes32 key, Deposit.Props memory deposit) internal {
-        if (!isValidCallbackContract(deposit.callbackContract)) { return; }
+        if (!isValidCallbackContract(deposit.callbackContract())) { return; }
 
-        try IDepositCallbackReceiver(deposit.callbackContract).afterDepositExecution{ gas: deposit.callbackGasLimit / 2 }(key, deposit) {
+        try IDepositCallbackReceiver(deposit.callbackContract()).afterDepositExecution{ gas: deposit.callbackGasLimit() / 2 }(key, deposit) {
         } catch {}
     }
 
@@ -49,9 +49,9 @@ library CallbackUtils {
     // @param key the key of the deposit
     // @param deposit the deposit that was cancelled
     function afterDepositCancellation(bytes32 key, Deposit.Props memory deposit) internal {
-        if (!isValidCallbackContract(deposit.callbackContract)) { return; }
+        if (!isValidCallbackContract(deposit.callbackContract())) { return; }
 
-        try IDepositCallbackReceiver(deposit.callbackContract).afterDepositCancellation{ gas: deposit.callbackGasLimit / 2 }(key, deposit) {
+        try IDepositCallbackReceiver(deposit.callbackContract()).afterDepositCancellation{ gas: deposit.callbackGasLimit() / 2 }(key, deposit) {
         } catch {}
     }
 
