@@ -32,13 +32,15 @@ library DecreaseOrderUtils {
 
         DecreasePositionUtils.DecreasePositionResult memory result = DecreasePositionUtils.decreasePosition(
             DecreasePositionUtils.DecreasePositionParams(
-                params.contracts.dataStore,
-                params.contracts.eventEmitter,
-                params.contracts.positionStore,
-                params.contracts.oracle,
-                params.contracts.swapHandler,
-                params.contracts.feeReceiver,
-                params.contracts.referralStorage,
+                DecreasePositionUtils.DecreasePositionParamsContracts(
+                    params.contracts.dataStore,
+                    params.contracts.eventEmitter,
+                    params.contracts.positionStore,
+                    params.contracts.oracle,
+                    params.contracts.swapHandler,
+                    params.contracts.feeReceiver,
+                    params.contracts.referralStorage
+                ),
                 params.market,
                 order,
                 params.swapPathMarkets,

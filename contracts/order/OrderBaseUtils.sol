@@ -71,14 +71,6 @@ library OrderBaseUtils {
     // @param key the key of the order to execute
     // @param order the order to execute
     // @param swapPathMarkets the market values of the markets in the swapPath
-    // @param dataStore DataStore
-    // @param eventEmitter EventEmitter
-    // @param orderStore OrderStore
-    // @param positionStore PositionStore
-    // @param oracle Oracle
-    // @param swapHandler SwapHandler
-    // @param feeReceiver FeeReceiver
-    // @param referralStorage IReferralStorage
     // @param oracleBlockNumbers the oracle block numbers for the prices in the oracle
     // @param market market values of the trading market
     // @param keeper the keeper sending the transaction
@@ -96,6 +88,14 @@ library OrderBaseUtils {
         bytes32 positionKey;
     }
 
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param orderStore OrderStore
+    // @param positionStore PositionStore
+    // @param oracle Oracle
+    // @param swapHandler SwapHandler
+    // @param feeReceiver FeeReceiver
+    // @param referralStorage IReferralStorage
     struct ExecuteOrderParamsContracts {
         DataStore dataStore;
         EventEmitter eventEmitter;
