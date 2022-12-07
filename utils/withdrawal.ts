@@ -53,7 +53,7 @@ export async function executeWithdrawal(fixture, overrides = {}) {
 
   const params = {
     key: withdrawalKeys[0],
-    oracleBlockNumber: withdrawal.updatedAtBlock,
+    oracleBlockNumber: withdrawal.numbers.updatedAtBlock,
     tokens,
     tokenOracleTypes,
     precisions,

@@ -23,10 +23,8 @@ const config: HardhatUserConfig = {
         runs: 10,
         details: {
           constantOptimizer: true,
-          yul: false,
         },
       },
-      viaIR: true,
     },
   },
   networks: {
