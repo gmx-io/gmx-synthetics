@@ -97,31 +97,35 @@ library PositionPricingUtils {
 
     // @dev _GetPositionFeesAfterReferralCache struct used in getPositionFees
     // to avoid stack too deep errors
-    // @param affiliate the referral affiliate
-    // @param totalRebateFactor the total referral rebate factor
-    // @param traderDiscountFactor the trader referral discount factor
     // @param feeFactor the fee factor
     // @param positionFeeAmount the fee amount for increasing / decreasing the position
-    // @param totalRebateAmount the total referral rebate amount in tokens
-    // @param traderDiscountAmount the trader discount amount in tokens
-    // @param affiliateRewardAmount the affiliate reward amount in tokens
     // @param protocolFeeAmount the protocol fee
     // @param feeReceiverFactor the fee receiver factor
     // @param feeReceiverAmount the amount for the fee receiver
     // @param positionFeeAmountForPool the position fee amount for the pool in tokens
     struct _GetPositionFeesAfterReferralCache {
-        address affiliate;
-        uint256 totalRebateFactor;
-        uint256 traderDiscountFactor;
+        _GetPositionFeesAfterReferralCacheReferral referral;
         uint256 feeFactor;
         uint256 positionFeeAmount;
-        uint256 totalRebateAmount;
-        uint256 traderDiscountAmount;
-        uint256 affiliateRewardAmount;
         uint256 protocolFeeAmount;
         uint256 feeReceiverFactor;
         uint256 feeReceiverAmount;
         uint256 positionFeeAmountForPool;
+    }
+
+    // @param affiliate the referral affiliate
+    // @param totalRebateFactor the total referral rebate factor
+    // @param traderDiscountFactor the trader referral discount factor
+    // @param totalRebateAmount the total referral rebate amount in tokens
+    // @param traderDiscountAmount the trader discount amount in tokens
+    // @param affiliateRewardAmount the affiliate reward amount in tokens
+    struct _GetPositionFeesAfterReferralCacheReferral {
+        address affiliate;
+        uint256 totalRebateFactor;
+        uint256 traderDiscountFactor;
+        uint256 totalRebateAmount;
+        uint256 traderDiscountAmount;
+        uint256 affiliateRewardAmount;
     }
 
     // @dev get the price impact amount for a position increase / decrease
@@ -365,22 +369,22 @@ library PositionPricingUtils {
     ) internal view returns (address, uint256, uint256, uint256, uint256) {
         _GetPositionFeesAfterReferralCache memory cache;
 
-        (cache.affiliate, cache.totalRebateFactor, cache.traderDiscountFactor) = ReferralUtils.getReferralInfo(referralStorage, account);
+        (cache.referral.affiliate, cache.referral.totalRebateFactor, cache.referral.traderDiscountFactor) = ReferralUtils.getReferralInfo(referralStorage, account);
 
         cache.feeFactor = dataStore.getUint(Keys.positionFeeFactorKey(market));
         cache.positionFeeAmount = Precision.applyFactor(sizeDeltaUsd, cache.feeFactor) / collateralTokenPrice.min;
 
-        cache.totalRebateAmount = Precision.applyFactor(cache.positionFeeAmount, cache.totalRebateFactor);
-        cache.traderDiscountAmount = Precision.applyFactor(cache.totalRebateAmount, cache.traderDiscountFactor);
-        cache.affiliateRewardAmount = cache.totalRebateAmount - cache.traderDiscountAmount;
+        cache.referral.totalRebateAmount = Precision.applyFactor(cache.positionFeeAmount, cache.referral.totalRebateFactor);
+        cache.referral.traderDiscountAmount = Precision.applyFactor(cache.referral.totalRebateAmount, cache.referral.traderDiscountFactor);
+        cache.referral.affiliateRewardAmount = cache.referral.totalRebateAmount - cache.referral.traderDiscountAmount;
 
-        cache.protocolFeeAmount = cache.positionFeeAmount - cache.totalRebateAmount;
+        cache.protocolFeeAmount = cache.positionFeeAmount - cache.referral.totalRebateAmount;
 
         cache.feeReceiverFactor = dataStore.getUint(Keys.FEE_RECEIVER_POSITION_FACTOR);
 
         cache.feeReceiverAmount = Precision.applyFactor(cache.protocolFeeAmount, cache.feeReceiverFactor);
         cache.positionFeeAmountForPool = cache.protocolFeeAmount - cache.feeReceiverAmount;
 
-        return (cache.affiliate, cache.traderDiscountAmount, cache.affiliateRewardAmount, cache.feeReceiverAmount, cache.positionFeeAmountForPool);
+        return (cache.referral.affiliate, cache.referral.traderDiscountAmount, cache.referral.affiliateRewardAmount, cache.feeReceiverAmount, cache.positionFeeAmountForPool);
     }
 }
