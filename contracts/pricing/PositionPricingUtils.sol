@@ -48,41 +48,49 @@ library PositionPricingUtils {
     }
 
     // @dev PositionFees struct to contain fee values
-    // @param affiliate the referral affiliate of the trader
-    // @param traderDiscountAmount the discount amount for the trader
-    // @param affiliateRewardAmount the affiliate reward amount
     // @param feeReceiverAmount the amount for the fee receiver
     // @param feesForPool the amount of fees for the pool
     // @param positionFeeAmountForPool the position fee amount for the pool
     // @param positionFeeAmount the fee amount for increasing / decreasing the position
-    // @param fundingFeeAmount the position's funding fee amount
-    // @param latestLongTokenFundingAmountPerSize the latest long token funding
-    // amount per size for the market
-    // @param latestLongTokenFundingAmountPerSize the latest short token funding
-    // amount per size for the market
-    // @param longTokenFundingFeeAmount the funding fee amount in long tokens
-    // @param shortTokenFundingFeeAmount the funding fee amount in short tokens
     // @param borrowingFeeAmount the borrowing fee amount
     // @param totalNetCostAmount the total net cost amount in tokens
     // @param totalNetCostUsd the total net cost in USD
-    // @param hasPendingLongTokenFundingFee whether there is a pending long token funding fee
-    // @param hasPendingShortTokenFundingFee whether there is a pending short token funding fee
     struct PositionFees {
-        address affiliate;
-        uint256 traderDiscountAmount;
-        uint256 affiliateRewardAmount;
+        PositionReferralFees referral;
+        PositionFundingFees funding;
         uint256 feeReceiverAmount;
         uint256 feesForPool;
         uint256 positionFeeAmountForPool;
         uint256 positionFeeAmount;
+        uint256 borrowingFeeAmount;
+        uint256 totalNetCostAmount;
+        uint256 totalNetCostUsd;
+    }
+
+    // @param affiliate the referral affiliate of the trader
+    // @param traderDiscountAmount the discount amount for the trader
+    // @param affiliateRewardAmount the affiliate reward amount
+    struct PositionReferralFees {
+        address affiliate;
+        uint256 traderDiscountAmount;
+        uint256 affiliateRewardAmount;
+    }
+
+    // @param fundingFeeAmount the position's funding fee amount
+    // @param latestLongTokenFundingAmountPerSize the latest long token funding
+    // amount per size for the market
+    // @param latestShortTokenFundingAmountPerSize the latest short token funding
+    // amount per size for the market
+    // @param longTokenFundingFeeAmount the funding fee amount in long tokens
+    // @param shortTokenFundingFeeAmount the funding fee amount in short tokens
+    // @param hasPendingLongTokenFundingFee whether there is a pending long token funding fee
+    // @param hasPendingShortTokenFundingFee whether there is a pending short token funding fee
+    struct PositionFundingFees {
         uint256 fundingFeeAmount;
         int256 latestLongTokenFundingAmountPerSize;
         int256 latestShortTokenFundingAmountPerSize;
         int256 longTokenFundingFeeAmount;
         int256 shortTokenFundingFeeAmount;
-        uint256 borrowingFeeAmount;
-        uint256 totalNetCostAmount;
-        uint256 totalNetCostUsd;
         bool hasPendingLongTokenFundingFee;
         bool hasPendingShortTokenFundingFee;
     }
@@ -294,9 +302,9 @@ library PositionPricingUtils {
         PositionFees memory fees;
 
         (
-            fees.affiliate,
-            fees.traderDiscountAmount,
-            fees.affiliateRewardAmount,
+            fees.referral.affiliate,
+            fees.referral.traderDiscountAmount,
+            fees.referral.affiliateRewardAmount,
             fees.feeReceiverAmount,
             fees.positionFeeAmountForPool
         ) = getPositionFeesAfterReferral(
@@ -312,20 +320,28 @@ library PositionPricingUtils {
 
         fees.feesForPool = fees.positionFeeAmountForPool + fees.borrowingFeeAmount;
 
-        fees.latestLongTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market, longToken, position.isLong);
-        fees.latestShortTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market, shortToken, position.isLong);
+        fees.funding.latestLongTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market, longToken, position.isLong);
+        fees.funding.latestShortTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market, shortToken, position.isLong);
 
-        (fees.hasPendingLongTokenFundingFee, fees.longTokenFundingFeeAmount) = MarketUtils.getFundingFeeAmount(fees.latestLongTokenFundingAmountPerSize, position.longTokenFundingAmountPerSize, position.sizeInUsd);
-        (fees.hasPendingShortTokenFundingFee, fees.shortTokenFundingFeeAmount) = MarketUtils.getFundingFeeAmount(fees.latestShortTokenFundingAmountPerSize, position.shortTokenFundingAmountPerSize, position.sizeInUsd);
+        (fees.funding.hasPendingLongTokenFundingFee, fees.funding.longTokenFundingFeeAmount) = MarketUtils.getFundingFeeAmount(
+            fees.funding.latestLongTokenFundingAmountPerSize,
+            position.longTokenFundingAmountPerSize,
+            position.sizeInUsd
+        );
+        (fees.funding.hasPendingShortTokenFundingFee, fees.funding.shortTokenFundingFeeAmount) = MarketUtils.getFundingFeeAmount(
+            fees.funding.latestShortTokenFundingAmountPerSize,
+            position.shortTokenFundingAmountPerSize,
+            position.sizeInUsd
+        );
 
-        if (position.collateralToken == longToken && fees.longTokenFundingFeeAmount > 0) {
-            fees.fundingFeeAmount = fees.longTokenFundingFeeAmount.toUint256();
+        if (position.collateralToken == longToken && fees.funding.longTokenFundingFeeAmount > 0) {
+            fees.funding.fundingFeeAmount = fees.funding.longTokenFundingFeeAmount.toUint256();
         }
-        if (position.collateralToken == shortToken && fees.shortTokenFundingFeeAmount > 0) {
-            fees.fundingFeeAmount = fees.shortTokenFundingFeeAmount.toUint256();
+        if (position.collateralToken == shortToken && fees.funding.shortTokenFundingFeeAmount > 0) {
+            fees.funding.fundingFeeAmount = fees.funding.shortTokenFundingFeeAmount.toUint256();
         }
 
-        fees.totalNetCostAmount = fees.affiliateRewardAmount + fees.feeReceiverAmount + fees.positionFeeAmountForPool + fees.fundingFeeAmount + fees.borrowingFeeAmount;
+        fees.totalNetCostAmount = fees.referral.affiliateRewardAmount + fees.feeReceiverAmount + fees.positionFeeAmountForPool + fees.funding.fundingFeeAmount + fees.borrowingFeeAmount;
         fees.totalNetCostUsd = fees.totalNetCostAmount * collateralTokenPrice.max;
 
         return fees;

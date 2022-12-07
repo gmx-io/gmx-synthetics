@@ -206,32 +206,32 @@ library IncreasePositionUtils {
 
         position.sizeInUsd = cache.nextPositionSizeInUsd;
         position.sizeInTokens += cache.sizeDeltaInTokens;
-        if (!fees.hasPendingLongTokenFundingFee) {
-            position.longTokenFundingAmountPerSize = fees.latestLongTokenFundingAmountPerSize;
+        if (!fees.funding.hasPendingLongTokenFundingFee) {
+            position.longTokenFundingAmountPerSize = fees.funding.latestLongTokenFundingAmountPerSize;
         }
-        if (!fees.hasPendingShortTokenFundingFee) {
-            position.shortTokenFundingAmountPerSize = fees.latestShortTokenFundingAmountPerSize;
+        if (!fees.funding.hasPendingShortTokenFundingFee) {
+            position.shortTokenFundingAmountPerSize = fees.funding.latestShortTokenFundingAmountPerSize;
         }
 
-        if (fees.longTokenFundingFeeAmount > 0) {
+        if (fees.funding.longTokenFundingFeeAmount > 0) {
             MarketUtils.incrementClaimableFundingAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.market.marketToken,
                 params.market.longToken,
                 position.account,
-                fees.longTokenFundingFeeAmount.toUint256()
+                fees.funding.longTokenFundingFeeAmount.toUint256()
             );
         }
 
-        if (fees.shortTokenFundingFeeAmount > 0) {
+        if (fees.funding.shortTokenFundingFeeAmount > 0) {
             MarketUtils.incrementClaimableFundingAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.market.marketToken,
                 params.market.shortToken,
                 position.account,
-                fees.shortTokenFundingFeeAmount.toUint256()
+                fees.funding.shortTokenFundingFeeAmount.toUint256()
             );
         }
 
@@ -284,13 +284,18 @@ library IncreasePositionUtils {
             params.contracts.eventEmitter,
             position.market,
             position.collateralToken,
-            fees.affiliate,
+            fees.referral.affiliate,
             position.account,
-            fees.affiliateRewardAmount
+            fees.referral.affiliateRewardAmount
         );
 
-        if (fees.traderDiscountAmount > 0) {
-            params.contracts.eventEmitter.emitTraderReferralDiscountApplied(position.market, position.collateralToken, position.account, fees.traderDiscountAmount);
+        if (fees.referral.traderDiscountAmount > 0) {
+            params.contracts.eventEmitter.emitTraderReferralDiscountApplied(
+                position.market,
+                position.collateralToken,
+                position.account,
+                fees.referral.traderDiscountAmount
+            );
         }
     }
 

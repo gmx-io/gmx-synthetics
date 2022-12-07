@@ -242,25 +242,25 @@ library DecreasePositionUtils {
         params.position.collateralAmount = values.remainingCollateralAmount.toUint256();
         params.position.decreasedAtBlock = Chain.currentBlockNumber();
 
-        if (fees.longTokenFundingFeeAmount > 0) {
+        if (fees.funding.longTokenFundingFeeAmount > 0) {
             MarketUtils.incrementClaimableFundingAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.market.marketToken,
                 params.market.longToken,
                 params.position.account,
-                fees.longTokenFundingFeeAmount.toUint256()
+                fees.funding.longTokenFundingFeeAmount.toUint256()
             );
         }
 
-        if (fees.shortTokenFundingFeeAmount > 0) {
+        if (fees.funding.shortTokenFundingFeeAmount > 0) {
             MarketUtils.incrementClaimableFundingAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.market.marketToken,
                 params.market.shortToken,
                 params.position.account,
-                fees.shortTokenFundingFeeAmount.toUint256()
+                fees.funding.shortTokenFundingFeeAmount.toUint256()
             );
         }
 
@@ -271,11 +271,11 @@ library DecreasePositionUtils {
 
             params.contracts.positionStore.remove(params.positionKey, params.order.account());
         } else {
-            if (!fees.hasPendingLongTokenFundingFee) {
-                params.position.longTokenFundingAmountPerSize = fees.latestLongTokenFundingAmountPerSize;
+            if (!fees.funding.hasPendingLongTokenFundingFee) {
+                params.position.longTokenFundingAmountPerSize = fees.funding.latestLongTokenFundingAmountPerSize;
             }
-            if (!fees.hasPendingShortTokenFundingFee) {
-                params.position.shortTokenFundingAmountPerSize = fees.latestShortTokenFundingAmountPerSize;
+            if (!fees.funding.hasPendingShortTokenFundingFee) {
+                params.position.shortTokenFundingAmountPerSize = fees.funding.latestShortTokenFundingAmountPerSize;
             }
             params.position.borrowingFactor = cache.nextPositionBorrowingFactor;
 
@@ -337,13 +337,18 @@ library DecreasePositionUtils {
             params.contracts.eventEmitter,
             params.position.market,
             params.position.collateralToken,
-            fees.affiliate,
+            fees.referral.affiliate,
             params.position.account,
-            fees.affiliateRewardAmount
+            fees.referral.affiliateRewardAmount
         );
 
-        if (fees.traderDiscountAmount > 0) {
-            params.contracts.eventEmitter.emitTraderReferralDiscountApplied(params.position.market, params.position.collateralToken, params.position.account, fees.traderDiscountAmount);
+        if (fees.referral.traderDiscountAmount > 0) {
+            params.contracts.eventEmitter.emitTraderReferralDiscountApplied(
+                params.position.market,
+                params.position.collateralToken,
+                params.position.account,
+                fees.referral.traderDiscountAmount
+            );
         }
 
         cache.outputToken = params.position.collateralToken;
@@ -558,18 +563,18 @@ library DecreasePositionUtils {
         values.remainingCollateralAmount -= fees.totalNetCostAmount.toInt256();
 
         if (OrderBaseUtils.isLiquidationOrder(params.order.orderType()) && values.remainingCollateralAmount < 0) {
-            if (fees.fundingFeeAmount > params.position.collateralAmount) {
+            if (fees.funding.fundingFeeAmount > params.position.collateralAmount) {
                 values.pnlAmountForPool = 0;
                 // the case where this is insufficient collateral to pay funding fees
                 // should be rare, and the difference should be small
                 // in case it happens, the pool should be topped up with the required amount using
                 // an insurance fund or similar mechanism
                 params.contracts.eventEmitter.emitInsufficientFundingFeePayment(
-                    fees.fundingFeeAmount,
+                    fees.funding.fundingFeeAmount,
                     params.position.collateralAmount
                 );
             } else {
-                values.pnlAmountForPool = (params.position.collateralAmount - fees.fundingFeeAmount).toInt256();
+                values.pnlAmountForPool = (params.position.collateralAmount - fees.funding.fundingFeeAmount).toInt256();
             }
 
             PositionPricingUtils.PositionFees memory _fees;
