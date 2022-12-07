@@ -103,35 +103,25 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
         TokenUtils.depositAndSendWrappedNativeToken(dataStore, receiver, amount);
     }
 
+    // @dev Sends the given amount of tokens to the given address
+    function sendTokens(address token, address receiver, uint256 amount) external nonReentrant {
+        address account = msg.sender;
+        router.pluginTransfer(token, account, receiver, amount);
+    }
+
     /**
      * @dev Creates a new deposit with the given long token, short token, long token amount, short token
      * amount, and deposit parameters. The deposit is created by transferring the specified amounts of
      * long and short tokens from the caller's account to the deposit store, and then calling the
      * `createDeposit()` function on the deposit handler contract.
      *
-     * @param longToken The address of the long token to be used in the deposit
-     * @param shortToken The address of the short token to be used in the deposit
-     * @param longTokenAmount The amount of long tokens to be transferred to the deposit store
-     * @param shortTokenAmount The amount of short tokens to be transferred to the deposit store
      * @param params The deposit parameters, as specified in the `DepositUtils.CreateDepositParams` struct
      * @return The unique ID of the newly created deposit
      */
     function createDeposit(
-        address longToken,
-        address shortToken,
-        uint256 longTokenAmount,
-        uint256 shortTokenAmount,
         DepositUtils.CreateDepositParams calldata params
     ) external nonReentrant returns (bytes32) {
         address account = msg.sender;
-        address _depositStore = address(depositStore);
-
-        if (longTokenAmount > 0) {
-            router.pluginTransfer(longToken, account, _depositStore, longTokenAmount);
-        }
-        if (shortTokenAmount > 0) {
-            router.pluginTransfer(shortToken, account, _depositStore, shortTokenAmount);
-        }
 
         return depositHandler.createDeposit(
             account,
@@ -162,14 +152,8 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
      * created by transferring the specified amount of collateral tokens from the caller's account to the
      * order store, and then calling the `createOrder()` function on the order handler contract. The
      * referral code is also set on the caller's account using the referral storage contract.
-     *
-     * @param amountIn The amount of collateral tokens to be transferred to the order store
-     * @param params The order parameters, as specified in the `OrderBaseUtils.CreateOrderParams` struct
-     * @param referralCode The referral code to be set on the caller's account
-     * @return The unique ID of the newly created order
      */
     function createOrder(
-        uint256 amountIn,
         OrderBaseUtils.CreateOrderParams calldata params,
         bytes32 referralCode
     ) external nonReentrant returns (bytes32) {
@@ -178,10 +162,6 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
         address account = msg.sender;
 
         ReferralUtils.setTraderReferralCode(referralStorage, account, referralCode);
-
-        if (amountIn > 0) {
-            router.pluginTransfer(params.initialCollateralToken, account, address(orderStore), amountIn);
-        }
 
         return orderHandler.createOrder(
             account,
