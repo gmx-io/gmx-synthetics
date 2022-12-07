@@ -877,9 +877,9 @@ library MarketUtils {
     // @param position Position.Props
     // @return the borrowing fees for a position
     function getBorrowingFees(DataStore dataStore, Position.Props memory position) internal view returns (uint256) {
-        uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, position.market, position.isLong);
-        uint256 diffFactor = cumulativeBorrowingFactor - position.borrowingFactor;
-        return Precision.applyFactor(position.sizeInUsd, diffFactor);
+        uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, position.market(), position.isLong());
+        uint256 diffFactor = cumulativeBorrowingFactor - position.borrowingFactor();
+        return Precision.applyFactor(position.sizeInUsd(), diffFactor);
     }
 
     // @dev get either the long or short open interest for a market

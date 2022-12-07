@@ -10,6 +10,7 @@ import "../utils/Null.sol";
 // @title LiquidationUtils
 // @dev Library to help with liquidations
 library LiquidationUtils {
+    using Position for Position.Props;
     using Order for Order.Props;
 
     // @dev creates a liquidation order for a position
@@ -37,15 +38,15 @@ library LiquidationUtils {
             account, // receiver
             address(0), // callbackContract
             market, // market
-            position.collateralToken, // initialCollateralToken
+            position.collateralToken(), // initialCollateralToken
             new address[](0) // swapPath
         );
 
         Order.Numbers memory numbers = Order.Numbers(
-            position.sizeInUsd, // sizeDeltaUsd
+            position.sizeInUsd(), // sizeDeltaUsd
             0, // initialCollateralDeltaAmount
             0, // triggerPrice
-            position.isLong ? 0 : type(uint256).max, // acceptablePrice
+            position.isLong() ? 0 : type(uint256).max, // acceptablePrice
             0, // executionFee
             0, // callbackGasLimit
             0, // minOutputAmount
@@ -54,7 +55,7 @@ library LiquidationUtils {
 
         Order.Flags memory flags = Order.Flags(
             Order.OrderType.Liquidation, // orderType
-            position.isLong, // isLong
+            position.isLong(), // isLong
             true, // shouldUnwrapNativeToken
             false // isFrozen
         );

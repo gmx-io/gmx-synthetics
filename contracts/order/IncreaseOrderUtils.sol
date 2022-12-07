@@ -9,6 +9,7 @@ import "../position/IncreasePositionUtils.sol";
 // @title IncreaseOrderUtils
 // @dev Libary for functions to help with processing an increase order
 library IncreaseOrderUtils {
+    using Position for Position.Props;
     using Order for Order.Props;
     using Array for uint256[];
 
@@ -43,22 +44,22 @@ library IncreaseOrderUtils {
         Position.Props memory position = params.contracts.positionStore.get(positionKey);
 
         // initialize position
-        if (position.account == address(0)) {
-            position.account = params.order.account();
-            if (position.market != address(0) || position.collateralToken != address(0)) {
+        if (position.account() == address(0)) {
+            position.setAccount(params.order.account());
+            if (position.market() != address(0) || position.collateralToken() != address(0)) {
                 revert UnexpectedPositionState();
             }
 
-            position.market = params.order.market();
-            position.collateralToken = collateralToken;
-            position.isLong = params.order.isLong();
+            position.setMarket(params.order.market());
+            position.setCollateralToken(collateralToken);
+            position.setIsLong(params.order.isLong());
         }
 
         validateOracleBlockNumbers(
             params.oracleBlockNumbers,
             params.order.orderType(),
             params.order.updatedAtBlock(),
-            position.increasedAtBlock
+            position.increasedAtBlock()
         );
 
         if (collateralToken != params.market.longToken && collateralToken != params.market.shortToken) {

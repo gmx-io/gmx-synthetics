@@ -25,6 +25,7 @@ library AdlUtils {
     using SafeCast for int256;
     using Array for uint256[];
     using Market for Market.Props;
+    using Position for Position.Props;
 
     // @dev CreateAdlOrderParams struct used in createAdlOrder to avoid stack
     // too deep errors
@@ -110,7 +111,7 @@ library AdlUtils {
         bytes32 positionKey = PositionUtils.getPositionKey(params.account, params.market, params.collateralToken, params.isLong);
         Position.Props memory position = params.positionStore.get(positionKey);
 
-        if (params.sizeDeltaUsd > position.sizeInUsd) {
+        if (params.sizeDeltaUsd > position.sizeInUsd()) {
             revert("Invalid sizeDeltaUsd");
         }
 
@@ -119,7 +120,7 @@ library AdlUtils {
             params.account, // receiver
             address(0), // callbackContract
             params.market, // market
-            position.collateralToken, // initialCollateralToken
+            position.collateralToken(), // initialCollateralToken
             new address[](0) // swapPath
         );
 
@@ -127,7 +128,7 @@ library AdlUtils {
             params.sizeDeltaUsd, // sizeDeltaUsd
             0, // initialCollateralDeltaAmount
             0, // triggerPrice
-            position.isLong ? 0 : type(uint256).max, // acceptablePrice
+            position.isLong() ? 0 : type(uint256).max, // acceptablePrice
             0, // executionFee
             0, // callbackGasLimit
             0, // minOutputAmount
@@ -136,7 +137,7 @@ library AdlUtils {
 
         Order.Flags memory flags = Order.Flags(
             Order.OrderType.MarketDecrease, // orderType
-            position.isLong, // isLong
+            position.isLong(), // isLong
             true, // shouldUnwrapNativeToken
             false // isFrozen
         );

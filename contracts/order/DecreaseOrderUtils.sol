@@ -9,6 +9,7 @@ import "../position/DecreasePositionUtils.sol";
 // @title DecreaseOrderUtils
 // @dev Libary for functions to help with processing a decrease order
 library DecreaseOrderUtils {
+    using Position for Position.Props;
     using Order for Order.Props;
     using Array for uint256[];
 
@@ -26,8 +27,8 @@ library DecreaseOrderUtils {
             params.oracleBlockNumbers,
             order.orderType(),
             order.updatedAtBlock(),
-            position.increasedAtBlock,
-            position.decreasedAtBlock
+            position.increasedAtBlock(),
+            position.decreasedAtBlock()
         );
 
         DecreasePositionUtils.DecreasePositionResult memory result = DecreasePositionUtils.decreasePosition(

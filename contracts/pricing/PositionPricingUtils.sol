@@ -17,6 +17,7 @@ import "../referral/ReferralUtils.sol";
 library PositionPricingUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
+    using Position for Position.Props;
 
     // @dev GetPriceImpactUsdParams struct used in getPriceImpactUsd to avoid stack
     // too deep errors
@@ -275,11 +276,11 @@ library PositionPricingUtils {
         if (fees.feeReceiverAmount > 0) {
             marketToken.transferOut(
                 dataStore,
-                position.collateralToken,
+                position.collateralToken(),
                 fees.feeReceiverAmount,
                 address(feeReceiver)
             );
-            feeReceiver.notifyFeeReceived(feeType, position.collateralToken, fees.feeReceiverAmount);
+            feeReceiver.notifyFeeReceived(feeType, position.collateralToken(), fees.feeReceiverAmount);
         }
 
         return fees;
@@ -315,8 +316,8 @@ library PositionPricingUtils {
             dataStore,
             referralStorage,
             collateralTokenPrice,
-            position.account,
-            position.market,
+            position.account(),
+            position.market(),
             sizeDeltaUsd
         );
 
@@ -324,24 +325,24 @@ library PositionPricingUtils {
 
         fees.feesForPool = fees.positionFeeAmountForPool + fees.borrowingFeeAmount;
 
-        fees.funding.latestLongTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market, longToken, position.isLong);
-        fees.funding.latestShortTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market, shortToken, position.isLong);
+        fees.funding.latestLongTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market(), longToken, position.isLong());
+        fees.funding.latestShortTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market(), shortToken, position.isLong());
 
         (fees.funding.hasPendingLongTokenFundingFee, fees.funding.longTokenFundingFeeAmount) = MarketUtils.getFundingFeeAmount(
             fees.funding.latestLongTokenFundingAmountPerSize,
-            position.longTokenFundingAmountPerSize,
-            position.sizeInUsd
+            position.longTokenFundingAmountPerSize(),
+            position.sizeInUsd()
         );
         (fees.funding.hasPendingShortTokenFundingFee, fees.funding.shortTokenFundingFeeAmount) = MarketUtils.getFundingFeeAmount(
             fees.funding.latestShortTokenFundingAmountPerSize,
-            position.shortTokenFundingAmountPerSize,
-            position.sizeInUsd
+            position.shortTokenFundingAmountPerSize(),
+            position.sizeInUsd()
         );
 
-        if (position.collateralToken == longToken && fees.funding.longTokenFundingFeeAmount > 0) {
+        if (position.collateralToken() == longToken && fees.funding.longTokenFundingFeeAmount > 0) {
             fees.funding.fundingFeeAmount = fees.funding.longTokenFundingFeeAmount.toUint256();
         }
-        if (position.collateralToken == shortToken && fees.funding.shortTokenFundingFeeAmount > 0) {
+        if (position.collateralToken() == shortToken && fees.funding.shortTokenFundingFeeAmount > 0) {
             fees.funding.fundingFeeAmount = fees.funding.shortTokenFundingFeeAmount.toUint256();
         }
 

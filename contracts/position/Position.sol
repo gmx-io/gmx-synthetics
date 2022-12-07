@@ -29,10 +29,29 @@ pragma solidity ^0.8.0;
 // 3. short positions with market.longToken as collateral
 // 4. short positions with market.shortToken as collateral
 library Position {
+    // @dev there is a limit on the number of fields a struct can have when being passed
+    // or returned as a memory variable which can cause "Stack too deep" errors
+    // use sub-structs to avoid this issue
+    // @param addresses address values
+    // @param numbers number values
+    // @param flags boolean values
+    // @param data for any additional data
+    struct Props {
+        Addresses addresses;
+        Numbers numbers;
+        Flags flags;
+        bytes data;
+    }
+
     // @param account the position's account
     // @param market the position's market
     // @param collateralToken the position's collateralToken
-    // @param isLong whether the position is a long or short
+    struct Addresses {
+        address account;
+        address market;
+        address collateralToken;
+    }
+
     // @param sizeInUsd the position's size in USD
     // @param sizeInTokens the position's size in tokens
     // @param collateralAmount the amount of collateralToken for collateral
@@ -43,12 +62,7 @@ library Position {
     // for the market.shortToken
     // @param increasedAtBlock the block at which the position was last increased
     // @param decreasedAtBlock the block at which the position was last decreased
-    // @param data for any additional data
-    struct Props {
-        address account;
-        address market;
-        address collateralToken;
-        bool isLong;
+    struct Numbers {
         uint256 sizeInUsd;
         uint256 sizeInTokens;
         uint256 collateralAmount;
@@ -57,6 +71,106 @@ library Position {
         int256 shortTokenFundingAmountPerSize;
         uint256 increasedAtBlock;
         uint256 decreasedAtBlock;
-        bytes data;
+    }
+
+    // @param isLong whether the position is a long or short
+    struct Flags {
+        bool isLong;
+    }
+
+    function account(Props memory props) internal pure returns (address) {
+        return props.addresses.account;
+    }
+
+    function setAccount(Props memory props, address value) internal pure {
+        props.addresses.account = value;
+    }
+
+    function market(Props memory props) internal pure returns (address) {
+        return props.addresses.market;
+    }
+
+    function setMarket(Props memory props, address value) internal pure {
+        props.addresses.market = value;
+    }
+
+    function collateralToken(Props memory props) internal pure returns (address) {
+        return props.addresses.collateralToken;
+    }
+
+    function setCollateralToken(Props memory props, address value) internal pure {
+        props.addresses.collateralToken = value;
+    }
+
+    function sizeInUsd(Props memory props) internal pure returns (uint256) {
+        return props.numbers.sizeInUsd;
+    }
+
+    function setSizeInUsd(Props memory props, uint256 value) internal pure {
+        props.numbers.sizeInUsd = value;
+    }
+
+    function sizeInTokens(Props memory props) internal pure returns (uint256) {
+        return props.numbers.sizeInTokens;
+    }
+
+    function setSizeInTokens(Props memory props, uint256 value) internal pure {
+        props.numbers.sizeInTokens = value;
+    }
+
+    function collateralAmount(Props memory props) internal pure returns (uint256) {
+        return props.numbers.collateralAmount;
+    }
+
+    function setCollateralAmount(Props memory props, uint256 value) internal pure {
+        props.numbers.collateralAmount = value;
+    }
+
+    function borrowingFactor(Props memory props) internal pure returns (uint256) {
+        return props.numbers.borrowingFactor;
+    }
+
+    function setBorrowingFactor(Props memory props, uint256 value) internal pure {
+        props.numbers.borrowingFactor = value;
+    }
+
+    function longTokenFundingAmountPerSize(Props memory props) internal pure returns (int256) {
+        return props.numbers.longTokenFundingAmountPerSize;
+    }
+
+    function setLongTokenFundingAmountPerSize(Props memory props, int256 value) internal pure {
+        props.numbers.longTokenFundingAmountPerSize = value;
+    }
+
+    function shortTokenFundingAmountPerSize(Props memory props) internal pure returns (int256) {
+        return props.numbers.shortTokenFundingAmountPerSize;
+    }
+
+    function setShortTokenFundingAmountPerSize(Props memory props, int256 value) internal pure {
+        props.numbers.shortTokenFundingAmountPerSize = value;
+    }
+
+    function increasedAtBlock(Props memory props) internal pure returns (uint256) {
+        return props.numbers.increasedAtBlock;
+    }
+
+    function setIncreasedAtBlock(Props memory props, uint256 value) internal pure {
+        props.numbers.increasedAtBlock = value;
+    }
+
+    function decreasedAtBlock(Props memory props) internal pure returns (uint256) {
+        return props.numbers.decreasedAtBlock;
+    }
+
+    function setDecreasedAtBlock(Props memory props, uint256 value) internal pure {
+        props.numbers.decreasedAtBlock = value;
+    }
+
+    function isLong(Props memory props) internal pure returns (bool) {
+        return props.flags.isLong;
+    }
+
+    function setIsLong(Props memory props, bool value) internal pure {
+        props.flags.isLong = value;
     }
 }

@@ -90,10 +90,10 @@ library IncreasePositionUtils {
     // @param params IncreasePositionParams
     function increasePosition(IncreasePositionParams memory params) external {
         Position.Props memory position = params.position;
-        position.account = params.order.account();
-        position.market = params.order.market();
-        position.collateralToken = params.collateralToken;
-        position.isLong = params.order.isLong();
+        position.setAccount(params.order.account());
+        position.setMarket(params.order.market());
+        position.setCollateralToken(params.collateralToken);
+        position.setIsLong(params.order.isLong());
 
         // get the market prices for the given position
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPricesForPosition(
@@ -118,7 +118,7 @@ library IncreasePositionUtils {
             params.market.marketToken,
             params.market.longToken,
             params.market.shortToken,
-            position.isLong
+            position.isLong()
         );
 
         // create a new cache for holding intermediate results
@@ -134,10 +134,10 @@ library IncreasePositionUtils {
         );
 
         // check if there is sufficient collateral for the position
-        if (cache.collateralDeltaAmount < 0 && position.collateralAmount < SafeCast.toUint256(-cache.collateralDeltaAmount)) {
+        if (cache.collateralDeltaAmount < 0 && position.collateralAmount() < SafeCast.toUint256(-cache.collateralDeltaAmount)) {
             revert InsufficientCollateralAmount();
         }
-        position.collateralAmount = Calc.sum(position.collateralAmount, cache.collateralDeltaAmount);
+        position.setCollateralAmount(Calc.sum(position.collateralAmount(), cache.collateralDeltaAmount));
 
         cache.priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
@@ -163,7 +163,7 @@ library IncreasePositionUtils {
             params.order.sizeDeltaUsd(),
             cache.priceImpactUsd,
             params.order.acceptablePrice(),
-            position.isLong,
+            position.isLong(),
             true
         );
 
@@ -171,7 +171,7 @@ library IncreasePositionUtils {
             params.order.sizeDeltaUsd(),
             cache.executionPrice,
             prices.indexTokenPrice.max,
-            position.isLong,
+            position.isLong(),
             true
         );
 
@@ -184,33 +184,33 @@ library IncreasePositionUtils {
             -cache.priceImpactAmount
         );
 
-        if (position.isLong) {
+        if (position.isLong()) {
             // round the number of tokens for long positions down
             cache.sizeDeltaInTokens = params.order.sizeDeltaUsd() / cache.executionPrice;
         } else {
             // round the number of tokens for short positions up
             cache.sizeDeltaInTokens = Calc.roundUpDivision(params.order.sizeDeltaUsd(), cache.executionPrice);
         }
-        cache.nextPositionSizeInUsd = position.sizeInUsd + params.order.sizeDeltaUsd();
-        cache.nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(params.contracts.dataStore, params.market.marketToken, position.isLong);
+        cache.nextPositionSizeInUsd = position.sizeInUsd() + params.order.sizeDeltaUsd();
+        cache.nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(params.contracts.dataStore, params.market.marketToken, position.isLong());
 
         MarketUtils.updateTotalBorrowing(
             params.contracts.dataStore,
             params.market.marketToken,
-            position.isLong,
-            position.borrowingFactor,
-            position.sizeInUsd,
+            position.isLong(),
+            position.borrowingFactor(),
+            position.sizeInUsd(),
             cache.nextPositionSizeInUsd,
             cache.nextPositionBorrowingFactor
         );
 
-        position.sizeInUsd = cache.nextPositionSizeInUsd;
-        position.sizeInTokens += cache.sizeDeltaInTokens;
+        position.setSizeInUsd(cache.nextPositionSizeInUsd);
+        position.setSizeInTokens(position.sizeInTokens() + cache.sizeDeltaInTokens);
         if (!fees.funding.hasPendingLongTokenFundingFee) {
-            position.longTokenFundingAmountPerSize = fees.funding.latestLongTokenFundingAmountPerSize;
+            position.setLongTokenFundingAmountPerSize(fees.funding.latestLongTokenFundingAmountPerSize);
         }
         if (!fees.funding.hasPendingShortTokenFundingFee) {
-            position.shortTokenFundingAmountPerSize = fees.funding.latestShortTokenFundingAmountPerSize;
+            position.setShortTokenFundingAmountPerSize(fees.funding.latestShortTokenFundingAmountPerSize);
         }
 
         if (fees.funding.longTokenFundingFeeAmount > 0) {
@@ -219,7 +219,7 @@ library IncreasePositionUtils {
                 params.contracts.eventEmitter,
                 params.market.marketToken,
                 params.market.longToken,
-                position.account,
+                position.account(),
                 fees.funding.longTokenFundingFeeAmount.toUint256()
             );
         }
@@ -230,13 +230,13 @@ library IncreasePositionUtils {
                 params.contracts.eventEmitter,
                 params.market.marketToken,
                 params.market.shortToken,
-                position.account,
+                position.account(),
                 fees.funding.shortTokenFundingFeeAmount.toUint256()
             );
         }
 
-        position.borrowingFactor = cache.nextPositionBorrowingFactor;
-        position.increasedAtBlock = Chain.currentBlockNumber();
+        position.setBorrowingFactor(cache.nextPositionBorrowingFactor);
+        position.setIncreasedAtBlock(Chain.currentBlockNumber());
 
         params.contracts.positionStore.set(params.positionKey, params.order.account(), position);
 
@@ -244,17 +244,17 @@ library IncreasePositionUtils {
             MarketUtils.applyDeltaToOpenInterest(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
-                position.market,
-                position.collateralToken,
-                position.isLong,
+                position.market(),
+                position.collateralToken(),
+                position.isLong(),
                 params.order.sizeDeltaUsd().toInt256()
             );
             MarketUtils.applyDeltaToOpenInterestInTokens(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
-                position.market,
-                position.collateralToken,
-                position.isLong,
+                position.market(),
+                position.collateralToken(),
+                position.isLong(),
                 cache.sizeDeltaInTokens.toInt256()
             );
             MarketUtils.validateReserve(params.contracts.dataStore, params.market, prices, params.order.isLong());
@@ -270,10 +270,10 @@ library IncreasePositionUtils {
 
         params.contracts.eventEmitter.emitPositionIncrease(
             params.positionKey,
-            position.account,
-            position.market,
-            position.collateralToken,
-            position.isLong,
+            position.account(),
+            position.market(),
+            position.collateralToken(),
+            position.isLong(),
             cache.executionPrice,
             params.order.sizeDeltaUsd(),
             cache.collateralDeltaAmount
@@ -282,18 +282,18 @@ library IncreasePositionUtils {
         ReferralUtils.incrementAffiliateReward(
             params.contracts.dataStore,
             params.contracts.eventEmitter,
-            position.market,
-            position.collateralToken,
+            position.market(),
+            position.collateralToken(),
             fees.referral.affiliate,
-            position.account,
+            position.account(),
             fees.referral.affiliateRewardAmount
         );
 
         if (fees.referral.traderDiscountAmount > 0) {
             params.contracts.eventEmitter.emitTraderReferralDiscountApplied(
-                position.market,
-                position.collateralToken,
-                position.account,
+                position.market(),
+                position.collateralToken(),
+                position.account(),
                 fees.referral.traderDiscountAmount
             );
         }
@@ -326,7 +326,7 @@ library IncreasePositionUtils {
             params.contracts.dataStore,
             params.contracts.feeReceiver,
             params.market.marketToken,
-            position.collateralToken,
+            position.collateralToken(),
             fees.feeReceiverAmount,
             FeeUtils.POSITION_FEE
         );
