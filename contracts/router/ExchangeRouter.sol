@@ -98,7 +98,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
     // @dev Fallback function that allows the contract to receive Ether
     receive() external payable {}
 
-    // @dev Sends the given amount of wrapped native tokens (WNT) to the given address
+    // @dev Wraps the specified amount of native tokens into WNT then sends the WNT to the specified address
     function sendWnt(address receiver, uint256 amount) external payable nonReentrant {
         TokenUtils.depositAndSendWrappedNativeToken(dataStore, receiver, amount);
     }
