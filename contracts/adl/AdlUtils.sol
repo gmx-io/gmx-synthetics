@@ -83,11 +83,11 @@ library AdlUtils {
 
         uint256 oracleBlockNumber = oracleBlockNumbers[0];
         if (!oracleBlockNumbers.areEqualTo(oracleBlockNumber)) {
-            revert("OrderHandler: Oracle block numbers must be equivalent");
+            OracleUtils.revertOracleBlockNumbersAreNotEqual(oracleBlockNumbers, oracleBlockNumber);
         }
 
         if (oracleBlockNumber < latestAdlBlock) {
-            revert("OrderHandler: Invalid oracle block number");
+            OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, latestAdlBlock);
         }
 
         int256 pnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, marketStore, oracle, market, isLong, true);
@@ -174,13 +174,13 @@ library AdlUtils {
 
         uint256 oracleBlockNumber = oracleBlockNumbers[0];
         if (!oracleBlockNumbers.areEqualTo(oracleBlockNumber)) {
-            revert("OrderHandler: Oracle block numbers must be equivalent");
+            OracleUtils.revertOracleBlockNumbersAreNotEqual(oracleBlockNumbers, oracleBlockNumber);
         }
 
         uint256 latestAdlBlock =AdlUtils.getLatestAdlBlock(dataStore, market, isLong);
 
         if (oracleBlockNumber < latestAdlBlock) {
-            revert("OrderHandler: Invalid oracle block number");
+            OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, latestAdlBlock);
         }
     }
 

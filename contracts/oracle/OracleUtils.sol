@@ -59,6 +59,9 @@ library OracleUtils {
     error EmptyCompactedBlockNumber(uint256 index);
     error EmptyCompactedTimestamp(uint256 index);
 
+    error OracleBlockNumbersAreNotEqual(uint256[] oracleBlockNumbers, uint256 expectedBlockNumber);
+    error OracleBlockNumbersAreSmallerThanRequired(uint256[] oracleBlockNumbers, uint256 expectedBlockNumber);
+
     // @dev get the uncompacted price at the specified index
     // @param compactedPrices the compacted prices
     // @param index the index to get the uncompacted price at
@@ -154,5 +157,13 @@ library OracleUtils {
         if (blockNumber == 0) { revert EmptyCompactedTimestamp(index); }
 
         return blockNumber;
+    }
+
+    function revertOracleBlockNumbersAreNotEqual(uint256[] memory oracleBlockNumbers, uint256 expectedBlockNumber) internal pure {
+        revert OracleBlockNumbersAreNotEqual(oracleBlockNumbers, expectedBlockNumber);
+    }
+
+    function revertOracleBlockNumbersAreSmallerThanRequired(uint256[] memory oracleBlockNumbers, uint256 expectedBlockNumber) internal pure {
+        revert OracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, expectedBlockNumber);
     }
 }

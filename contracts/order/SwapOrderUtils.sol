@@ -61,14 +61,14 @@ library SwapOrderUtils {
     ) internal pure {
         if (orderType == Order.OrderType.MarketSwap) {
             if (!oracleBlockNumbers.areEqualTo(orderUpdatedAtBlock)) {
-                revert("Invalid oracle block numbers");
+                OracleUtils.revertOracleBlockNumbersAreNotEqual(oracleBlockNumbers, orderUpdatedAtBlock);
             }
             return;
         }
 
         if (orderType == Order.OrderType.LimitSwap) {
             if (!oracleBlockNumbers.areGreaterThan(orderUpdatedAtBlock)) {
-                revert("Invalid oracle block numbers");
+                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, orderUpdatedAtBlock);
             }
             return;
         }

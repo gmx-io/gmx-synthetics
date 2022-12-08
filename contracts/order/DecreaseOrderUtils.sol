@@ -146,7 +146,7 @@ library DecreaseOrderUtils {
     ) internal pure {
         if (orderType == Order.OrderType.MarketDecrease) {
             if (!oracleBlockNumbers.areEqualTo(orderUpdatedAtBlock)) {
-                revert("Invalid oracle block numbers");
+                OracleUtils.revertOracleBlockNumbersAreNotEqual(oracleBlockNumbers, orderUpdatedAtBlock);
             }
             return;
         }
@@ -157,7 +157,7 @@ library DecreaseOrderUtils {
         ) {
             uint256 latestUpdatedAtBlock = orderUpdatedAtBlock > positionIncreasedAtBlock ? orderUpdatedAtBlock : positionIncreasedAtBlock;
             if (!oracleBlockNumbers.areGreaterThan(latestUpdatedAtBlock)) {
-                revert("Invalid oracle block numbers");
+                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, latestUpdatedAtBlock);
             }
             return;
         }
@@ -166,7 +166,7 @@ library DecreaseOrderUtils {
             uint256 latestUpdatedAtBlock = positionIncreasedAtBlock > positionDecreasedAtBlock ? positionIncreasedAtBlock : positionDecreasedAtBlock;
 
             if (!oracleBlockNumbers.areGreaterThan(latestUpdatedAtBlock)) {
-                revert("Invalid oracle block numbers");
+                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, latestUpdatedAtBlock);
             }
             return;
         }

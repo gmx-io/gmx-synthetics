@@ -101,7 +101,7 @@ library IncreaseOrderUtils {
     ) internal pure {
         if (orderType == Order.OrderType.MarketIncrease) {
             if (!oracleBlockNumbers.areEqualTo(orderUpdatedAtBlock)) {
-                revert("Invalid oracle block numbers");
+                OracleUtils.revertOracleBlockNumbersAreNotEqual(oracleBlockNumbers, orderUpdatedAtBlock);
             }
             return;
         }
@@ -109,7 +109,7 @@ library IncreaseOrderUtils {
         if (orderType == Order.OrderType.LimitIncrease) {
             uint256 laterBlock = orderUpdatedAtBlock > positionIncreasedAtBlock ? orderUpdatedAtBlock : positionIncreasedAtBlock;
             if (!oracleBlockNumbers.areGreaterThan(laterBlock)) {
-                revert("Invalid oracle block numbers");
+                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, laterBlock);
             }
             return;
         }

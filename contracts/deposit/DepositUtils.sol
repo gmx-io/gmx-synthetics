@@ -178,7 +178,7 @@ library DepositUtils {
         require(deposit.account() != address(0), "DepositUtils: empty deposit");
 
         if (!params.oracleBlockNumbers.areEqualTo(deposit.updatedAtBlock())) {
-            revert("Invalid oracle block numbers");
+            OracleUtils.revertOracleBlockNumbersAreNotEqual(oracleBlockNumbers, deposit.updatedAtBlock());
         }
 
         CallbackUtils.beforeDepositExecution(params.key, deposit);
