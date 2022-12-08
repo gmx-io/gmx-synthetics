@@ -6,13 +6,25 @@ import "./RoleStore.sol";
 import "./Role.sol";
 import "../gov/Governable.sol";
 
+/**
+ * @title RoleModule
+ * @dev Contract for role validation functions
+ */
 contract RoleModule is Governable {
-    RoleStore public roleStore;
+    RoleStore public immutable roleStore;
 
+    /**
+     * @dev Constructor that initializes the role store for this contract.
+     *
+     * @param _roleStore The contract instance to use as the role store.
+     */
     constructor(RoleStore _roleStore) {
         roleStore = _roleStore;
     }
 
+    /**
+     * @dev Only allows the contract's own address to call the function.
+     */
     modifier onlySelf() {
         if (msg.sender != address(this)) {
             revert Unauthorized(msg.sender, "SELF");
@@ -20,35 +32,81 @@ contract RoleModule is Governable {
         _;
     }
 
+    /**
+     * @dev Only allows addresses with the CONTROLLER role to call the function.
+     */
     modifier onlyController() {
-        if (!roleStore.hasRole(msg.sender, Role.CONTROLLER)) {
-            revert Unauthorized(msg.sender, "CONTROLLER");
-        }
+        _validateRole(Role.CONTROLLER, "CONTROLLER");
         _;
     }
 
+    /**
+     * @dev Only allows addresses with the ROUTER_PLUGIN role to call the function.
+     */
     modifier onlyRouterPlugin() {
-        require(roleStore.hasRole(msg.sender, Role.ROUTER_PLUGIN), "Role: ROUTER_PLUGIN");
+        _validateRole(Role.ROUTER_PLUGIN, "ROUTER_PLUGIN");
         _;
     }
 
+    /**
+     * @dev Only allows addresses with the MARKET_KEEPER role to call the function.
+     */
     modifier onlyMarketKeeper() {
-        require(roleStore.hasRole(msg.sender, Role.MARKET_KEEPER), "Role: MARKET_KEEPER");
+        _validateRole(Role.MARKET_KEEPER, "MARKET_KEEPER");
         _;
     }
 
+    /**
+     * @dev Only allows addresses with the MARKET_KEEPER role to call the function.
+     */
+    modifier onlyFeeKeeper() {
+        _validateRole(Role.FEE_KEEPER, "FEE_KEEPER");
+        _;
+    }
+
+    /**
+     * @dev Only allows addresses with the ORDER_KEEPER role to call the function.
+     */
     modifier onlyOrderKeeper() {
-        require(roleStore.hasRole(msg.sender, Role.ORDER_KEEPER), "Role: ORDER_KEEPER");
+        _validateRole(Role.ORDER_KEEPER, "ORDER_KEEPER");
         _;
     }
 
+    /**
+     * @dev Only allows addresses with the PRICING_KEEPER role to call the function.
+     */
     modifier onlyPricingKeeper() {
-        require(roleStore.hasRole(msg.sender, Role.PRICING_KEEPER), "Role: PRICING_KEEPER");
+        _validateRole(Role.PRICING_KEEPER, "PRICING_KEEPER");
         _;
     }
 
+    /**
+     * @dev Only allows addresses with the LIQUIDATION_KEEPER role to call the function.
+     */
     modifier onlyLiquidationKeeper() {
-        require(roleStore.hasRole(msg.sender, Role.LIQUIDATION_KEEPER), "Role: LIQUIDATION_KEEPER");
+        _validateRole(Role.LIQUIDATION_KEEPER, "LIQUIDATION_KEEPER");
         _;
+    }
+
+    /**
+     * @dev Only allows addresses with the ADL_KEEPER role to call the function.
+     */
+    modifier onlyAdlKeeper() {
+        _validateRole(Role.ADL_KEEPER, "ADL_KEEPER");
+        _;
+    }
+
+    /**
+     * @dev Validates that the caller has the specified role.
+     *
+     * If the caller does not have the specified role, the transaction is reverted.
+     *
+     * @param role The key of the role to validate.
+     * @param roleName The name of the role to validate.
+     */
+    function _validateRole(bytes32 role, string memory roleName) internal view {
+        if (!roleStore.hasRole(msg.sender, role)) {
+            revert Unauthorized(msg.sender, roleName);
+        }
     }
 }

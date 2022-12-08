@@ -1,11 +1,14 @@
 node_modules
+dist
 .env
 coverage
 coverage.json
+contracts/Test*.sol
+review_notes.md
 typechain
 typechain-types
 
 #Hardhat files
 cache
 artifacts
-
+deployments/localhost

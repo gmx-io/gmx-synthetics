@@ -9,11 +9,23 @@ import "../utils/Calc.sol";
 
 import "./PricingUtils.sol";
 
+// @title SwapPricingUtils
+// @dev Library for pricing functions
 library SwapPricingUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
 
-    struct GetSwapPricingParams {
+    // @dev GetPriceImpactUsdParams struct used in getPriceImpactUsd to
+    // avoid stack too deep errors
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param tokenA the token to check balance for
+    // @param tokenB the token to check balance for
+    // @param priceForTokenA the price for tokenA
+    // @param priceForTokenB the price for tokenB
+    // @param usdDeltaForTokenA the USD change in amount of tokenA
+    // @param usdDeltaForTokenB the USD change in amount of tokenB
+    struct GetPriceImpactUsdParams {
         DataStore dataStore;
         address market;
         address tokenA;
@@ -24,6 +36,11 @@ library SwapPricingUtils {
         int256 usdDeltaForTokenB;
     }
 
+    // @dev PoolParams struct to contain pool values
+    // @param poolUsdForTokenA the USD value of tokenA in the pool
+    // @param poolUsdForTokenB the USD value of tokenB in the pool
+    // @param nextPoolUsdForTokenA the next USD value of tokenA in the pool
+    // @param nextPoolUsdForTokenB the next USD value of tokenB in the pool
     struct PoolParams {
         uint256 poolUsdForTokenA;
         uint256 poolUsdForTokenB;
@@ -31,13 +48,18 @@ library SwapPricingUtils {
         uint256 nextPoolUsdForTokenB;
     }
 
+    // @dev SwapFees struct to contain swap fee values
+    // @param feeReceiverAmount the fee amount for the fee receiver
+    // @param feesForPool the fee amount for the pool
+    // @param amountAfterFees the output amount after fees
     struct SwapFees {
         uint256 feeReceiverAmount;
         uint256 feesForPool;
         uint256 amountAfterFees;
-        uint256 amountForPool;
     }
 
+    // @dev get the price impact in USD
+    //
     // note that there will be some difference between the pool amounts used for
     // calculating the price impact and fees vs the actual pool amounts after the
     // swap is done, since the pool amounts will be increased / decreased by an amount
@@ -48,16 +70,23 @@ library SwapPricingUtils {
     // this is useful if prices are ranging, if prices are strongly directional, the pool may
     // be selling tokens as the token price increases
     //
-    // returns (usd adjustment)
-    function getSwapPricing(GetSwapPricingParams memory params) internal view returns (int256) {
+    // @param params GetPriceImpactUsdParams
+    //
+    // @return the price impact in USD
+    function getPriceImpactUsd(GetPriceImpactUsdParams memory params) internal view returns (int256) {
         PoolParams memory poolParams = getNextPoolAmountsUsd(params);
 
-        int256 usdAdjustment = getUsdAdjustment(params.dataStore, params.market, poolParams);
+        int256 priceImpactUsd = _getPriceImpactUsd(params.dataStore, params.market, poolParams);
 
-        return usdAdjustment;
+        return priceImpactUsd;
     }
 
-    function getUsdAdjustment(DataStore dataStore, address market, PoolParams memory poolParams) internal view returns (int256) {
+    // @dev get the price impact in USD
+    // @param dataStore DataStore
+    // @param market the trading market
+    // @param poolParams PoolParams
+    // @return the price impact in USD
+    function _getPriceImpactUsd(DataStore dataStore, address market, PoolParams memory poolParams) internal view returns (int256) {
         uint256 initialDiffUsd = Calc.diff(poolParams.poolUsdForTokenA, poolParams.poolUsdForTokenB);
         uint256 nextDiffUsd = Calc.diff(poolParams.nextPoolUsdForTokenA, poolParams.nextPoolUsdForTokenB);
 
@@ -72,7 +101,7 @@ library SwapPricingUtils {
             bool hasPositiveImpact = nextDiffUsd < initialDiffUsd;
             uint256 impactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market, hasPositiveImpact));
 
-            return PricingUtils.getUsdAdjustmentForSameSideRebalance(
+            return PricingUtils.getPriceImpactUsdForSameSideRebalance(
                 initialDiffUsd,
                 nextDiffUsd,
                 hasPositiveImpact,
@@ -83,7 +112,7 @@ library SwapPricingUtils {
             uint256 positiveImpactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market, true));
             uint256 negativeImpactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market, false));
 
-            return PricingUtils.getUsdAdjustmentForCrossoverRebalance(
+            return PricingUtils.getPriceImpactUsdForCrossoverRebalance(
                 initialDiffUsd,
                 nextDiffUsd,
                 positiveImpactFactor,
@@ -93,8 +122,11 @@ library SwapPricingUtils {
         }
     }
 
+    // @dev get the next pool amounts in USD
+    // @param params GetPriceImpactUsdParams
+    // @return PoolParams
     function getNextPoolAmountsUsd(
-        GetSwapPricingParams memory params
+        GetPriceImpactUsdParams memory params
     ) internal view returns (PoolParams memory) {
         uint256 poolAmountForTokenA = MarketUtils.getPoolAmount(params.dataStore, params.market, params.tokenA);
         uint256 poolAmountForTokenB = MarketUtils.getPoolAmount(params.dataStore, params.market, params.tokenB);
@@ -115,6 +147,11 @@ library SwapPricingUtils {
         return poolParams;
     }
 
+    // @dev get the swap fees
+    // @param dataStore DataStore
+    // @param marketToken the address of the market token
+    // @param amount the total swap fee amount
+    // @param feeReceiverFactorKey the key for the feeReceiverFactor
     function getSwapFees(
         DataStore dataStore,
         address marketToken,
@@ -123,16 +160,14 @@ library SwapPricingUtils {
     ) internal view returns (SwapFees memory) {
         SwapFees memory fees;
 
-        uint256 spreadFactor = dataStore.getUint(Keys.swapSpreadFactorKey(marketToken));
         uint256 feeFactor = dataStore.getUint(Keys.swapFeeFactorKey(marketToken));
         uint256 feeReceiverFactor = dataStore.getUint(feeReceiverFactorKey);
 
-        uint256 spreadAmount = Precision.applyFactor(amount, spreadFactor);
         uint256 feeAmount = Precision.applyFactor(amount, feeFactor);
 
         fees.feeReceiverAmount = Precision.applyFactor(feeAmount, feeReceiverFactor);
-        fees.feesForPool = spreadAmount + feeAmount - fees.feeReceiverAmount;
-        fees.amountAfterFees = amount - spreadAmount - feeAmount;
+        fees.feesForPool = feeAmount - fees.feeReceiverAmount;
+        fees.amountAfterFees = amount - feeAmount;
 
         return fees;
     }

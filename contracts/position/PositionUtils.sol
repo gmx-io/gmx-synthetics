@@ -12,84 +12,120 @@ import "../data/Keys.sol";
 
 import "../pricing/PositionPricingUtils.sol";
 
+// @title PositionUtils
+// @dev Library for position functions
 library PositionUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
     using Position for Position.Props;
+    using Price for Price.Props;
 
-    error LiquidatablePosition();
-    error UnexpectedPositionState();
-
-    function getPositionPnlAmount(
-        Position.Props memory position,
-        uint256 sizeDeltaUsd,
-        uint256 indexTokenPrice,
-        uint256 collateralTokenPrice
-    ) internal pure returns (int256, uint256) {
-        (int256 realizedPnlUsd, uint256 sizeDeltaInTokens) = PositionUtils.getPositionPnlUsd(
-            position,
-            sizeDeltaUsd,
-            indexTokenPrice
-        );
-
-        return (realizedPnlUsd / collateralTokenPrice.toInt256(), sizeDeltaInTokens);
+    // @dev _IsPositionLiquidatableCache struct used in isPositionLiquidatable
+    // to avoid stack too deep errors
+    // @param positionPnlUsd the position's pnl in USD
+    // @param maxLeverage the max allowed leverage
+    // @param collateralUsd the position's collateral in USD
+    // @param priceImpactUsd the price impact of closing the position in USD
+    // @param minCollateralUsd the minimum allowed collateral in USD
+    // @param remainingCollateralUsd the remaining position collateral in USD
+    struct _IsPositionLiquidatableCache {
+        int256 positionPnlUsd;
+        uint256 maxLeverage;
+        uint256 collateralUsd;
+        int256 priceImpactUsd;
+        int256 minCollateralUsd;
+        int256 remainingCollateralUsd;
     }
 
-    // returns (positionPnlUsd, sizeDeltaInTokens)
+    error LiquidatablePosition();
+
+    // @dev get the position pnl in USD
+    //
+    // for long positions, pnl is calculated as:
+    // (position.sizeInTokens * indexTokenPrice) - position.sizeInUsd
+    // if position.sizeInTokens is larger for long positions, the position will have
+    // larger profits and smaller losses for the same changes in token price
+    //
+    // for short positions, pnl is calculated as:
+    // position.sizeInUsd -  (position.sizeInTokens * indexTokenPrice)
+    // if position.sizeInTokens is smaller for long positions, the position will have
+    // larger profits and smaller losses for the same changes in token price
+    //
+    // @param position the position values
+    // @param sizeDeltaUsd the change in position size
+    // @param indexTokenPrice the price of the index token
+    //
+    // @return (positionPnlUsd, sizeDeltaInTokens)
     function getPositionPnlUsd(
         Position.Props memory position,
         uint256 sizeDeltaUsd,
         uint256 indexTokenPrice
     ) internal pure returns (int256, uint256) {
         // position.sizeInUsd is the cost of the tokens, positionValue is the current worth of the tokens
-        int256 positionValue = (position.sizeInTokens * indexTokenPrice).toInt256();
-        int256 totalPositionPnl = position.isLong ? positionValue - position.sizeInUsd.toInt256() : position.sizeInUsd.toInt256() - positionValue;
+        int256 positionValue = (position.sizeInTokens() * indexTokenPrice).toInt256();
+        int256 totalPositionPnl = position.isLong() ? positionValue - position.sizeInUsd().toInt256() : position.sizeInUsd().toInt256() - positionValue;
 
         uint256 sizeDeltaInTokens;
 
-        // to avoid gaming for tokens with a small number of decimals
-        // if profit will be realized, round sizeDeltaInTokens down
-        // if loss will be realized, round sizeDeltaInTokens up
-        if (totalPositionPnl > 0) {
-            sizeDeltaInTokens = position.sizeInTokens * sizeDeltaUsd / position.sizeInUsd;
+        if (position.sizeInUsd() == sizeDeltaUsd) {
+            sizeDeltaInTokens = position.sizeInTokens();
         } else {
-            uint256 nextSizeInUsd = position.sizeInUsd - sizeDeltaUsd;
-            uint256 nextSizeInTokens = position.sizeInTokens * nextSizeInUsd / position.sizeInUsd;
-            sizeDeltaInTokens = position.sizeInTokens - nextSizeInTokens;
+            if (position.isLong()) {
+                sizeDeltaInTokens = Calc.roundUpDivision(position.sizeInTokens() * sizeDeltaUsd, position.sizeInUsd());
+            } else {
+                sizeDeltaInTokens = position.sizeInTokens() * sizeDeltaUsd / position.sizeInUsd();
+            }
         }
 
-        if (position.sizeInUsd == sizeDeltaUsd) {
-            sizeDeltaInTokens = position.sizeInTokens;
-        }
-
-        int256 positionPnlUsd = totalPositionPnl * sizeDeltaInTokens.toInt256() / position.sizeInTokens.toInt256();
+        int256 positionPnlUsd = totalPositionPnl * sizeDeltaInTokens.toInt256() / position.sizeInTokens().toInt256();
 
         return (positionPnlUsd, sizeDeltaInTokens);
     }
 
+    // @dev convert sizeDeltaUsd to sizeDeltaInTokens
+    // @param sizeInUsd the position size in USD
+    // @param sizeInTokens the position size in tokens
+    // @param sizeDeltaUsd the position size change in USD
+    // @return the size delta in tokens
     function getSizeDeltaInTokens(uint256 sizeInUsd, uint256 sizeInTokens, uint256 sizeDeltaUsd) internal pure returns (uint256) {
         return sizeInTokens * sizeDeltaUsd / sizeInUsd;
     }
 
+    // @dev get the key for a position
+    // @param account the position's account
+    // @param market the position's market
+    // @param collateralToken the position's collateralToken
+    // @param isLong whether the position is long or short
+    // @return the position key
     function getPositionKey(address account, address market, address collateralToken, bool isLong) internal pure returns (bytes32) {
-        bytes32 key = keccak256(abi.encodePacked(account, market, collateralToken, isLong));
+        bytes32 key = keccak256(abi.encode(account, market, collateralToken, isLong));
         return key;
     }
 
+    // @dev validate that a position is not empty
+    // @param position the position values
     function validateNonEmptyPosition(Position.Props memory position) internal pure {
-        if (position.sizeInUsd == 0 || position.sizeInTokens == 0 || position.collateralAmount == 0) {
+        if (position.sizeInUsd() == 0 || position.sizeInTokens() == 0 || position.collateralAmount() == 0) {
             revert(Keys.EMPTY_POSITION_ERROR);
         }
     }
 
+    // @dev check if a position is valid
+    // @param dataStore DataStore
+    // @param referralStorage IReferralStorage
+    // @param position the position values
+    // @param market the market values
+    // @param prices the prices of the tokens in the market
     function validatePosition(
         DataStore dataStore,
+        IReferralStorage referralStorage,
         Position.Props memory position,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices
     ) internal view {
         if (isPositionLiquidatable(
             dataStore,
+            referralStorage,
             position,
             market,
             prices
@@ -98,67 +134,70 @@ library PositionUtils {
         }
     }
 
-    // price impact is not factored into the liquidation calculation
-    // if the user is able to close the position gradually, the impact
-    // may not be as much as closing the position in one transaction
+    // @dev check if a position is liquidatable
+    // @param dataStore DataStore
+    // @param referralStorage IReferralStorage
+    // @param position the position values
+    // @param market the market values
+    // @param prices the prices of the tokens in the market
     function isPositionLiquidatable(
         DataStore dataStore,
+        IReferralStorage referralStorage,
         Position.Props memory position,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices
     ) internal view returns (bool) {
-        (int256 positionPnlUsd, ) = PositionUtils.getPositionPnlUsd(
+        _IsPositionLiquidatableCache memory cache;
+
+        (cache.positionPnlUsd, ) = getPositionPnlUsd(
             position,
-            position.sizeInUsd,
-            prices.indexTokenPrice
+            position.sizeInUsd(),
+            prices.indexTokenPrice.pickPriceForPnl(position.isLong(), false)
         );
 
-        uint256 maxLeverage = dataStore.getUint(Keys.MAX_LEVERAGE);
-        uint256 collateralTokenPrice = MarketUtils.getCachedTokenPrice(
-            position.collateralToken,
+        cache.maxLeverage = dataStore.getUint(Keys.MAX_LEVERAGE);
+        Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(
+            position.collateralToken(),
             market,
             prices
         );
-        uint256 collateralUsd = position.collateralAmount * collateralTokenPrice;
 
-        int256 usdAdjustment = PositionPricingUtils.getPositionPricing(
-            PositionPricingUtils.GetPositionPricingParams(
+        cache.collateralUsd = position.collateralAmount() * collateralTokenPrice.min;
+
+        cache.priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
+            PositionPricingUtils.GetPriceImpactUsdParams(
                 dataStore,
                 market.marketToken,
                 market.longToken,
                 market.shortToken,
-                prices.longTokenPrice,
-                prices.shortTokenPrice,
-                -position.sizeInUsd.toInt256(),
-                position.isLong
+                -position.sizeInUsd().toInt256(),
+                position.isLong()
             )
         );
 
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
             dataStore,
+            referralStorage,
             position,
             collateralTokenPrice,
-            position.sizeInUsd,
-            Keys.FEE_RECEIVER_POSITION_FACTOR
+            market.longToken,
+            market.shortToken,
+            position.sizeInUsd()
         );
 
-        int256 minCollateralUsd = dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256();
-        int256 remainingCollateralUsd = collateralUsd.toInt256() + positionPnlUsd + usdAdjustment + fees.totalNetCostAmount;
+        cache.minCollateralUsd = dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256();
+        cache.remainingCollateralUsd = cache.collateralUsd.toInt256() + cache.positionPnlUsd + cache.priceImpactUsd - fees.totalNetCostUsd.toInt256();
 
         // the position is liquidatable if the remaining collateral is less than the required min collateral
-        if (remainingCollateralUsd < minCollateralUsd) {
+        if (cache.remainingCollateralUsd < cache.minCollateralUsd || cache.remainingCollateralUsd == 0) {
             return true;
         }
 
         // validate if position.size / (remaining collateral) exceeds max leverage
-        if (position.sizeInUsd * Precision.FLOAT_PRECISION / remainingCollateralUsd.toUint256() > maxLeverage) {
+        if (position.sizeInUsd() * Precision.FLOAT_PRECISION / cache.remainingCollateralUsd.toUint256() > cache.maxLeverage) {
             return true;
         }
 
         return false;
-    }
-
-    function revertUnexpectedPositionState() internal pure {
-        revert UnexpectedPositionState();
     }
 }

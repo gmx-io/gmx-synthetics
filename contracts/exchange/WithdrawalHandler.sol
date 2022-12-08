@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import "../role/RoleModule.sol";
+import "../bank/FundReceiver.sol";
 import "../feature/FeatureUtils.sol";
 
 import "../market/Market.sol";
@@ -17,72 +17,59 @@ import "../withdrawal/WithdrawalUtils.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 
-import "../eth/EthUtils.sol";
-
-contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
-
-    DataStore public dataStore;
-    WithdrawalStore public withdrawalStore;
-    MarketStore public marketStore;
-    Oracle public oracle;
-    FeeReceiver public feeReceiver;
+// @title WithdrawalHandler
+// @dev Contract to handle creation, execution and cancellation of withdrawals
+contract WithdrawalHandler is ReentrancyGuard, FundReceiver, OracleModule {
+    EventEmitter public immutable eventEmitter;
+    WithdrawalStore public immutable withdrawalStore;
+    MarketStore public immutable marketStore;
+    Oracle public immutable oracle;
+    FeeReceiver public immutable feeReceiver;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
+        EventEmitter _eventEmitter,
         WithdrawalStore _withdrawalStore,
         MarketStore _marketStore,
         Oracle _oracle,
         FeeReceiver _feeReceiver
-    ) RoleModule(_roleStore) {
-        dataStore = _dataStore;
+    ) FundReceiver(_roleStore, _dataStore) {
+        eventEmitter = _eventEmitter;
         withdrawalStore = _withdrawalStore;
         marketStore = _marketStore;
         oracle = _oracle;
         feeReceiver = _feeReceiver;
     }
 
-    receive() external payable {
-        require(msg.sender == EthUtils.weth(dataStore), "WithdrawalHandler: invalid sender");
-    }
+    receive() external payable {}
 
+    // @dev creates a withdrawal in the withdrawal store
+    // @param account the withdrawing account
+    // @param params WithdrawalUtils.CreateWithdrawalParams
     function createWithdrawal(
         address account,
-        address market,
-        uint256 marketTokensLongAmount,
-        uint256 marketTokensShortAmount,
-        uint256 minLongTokenAmount,
-        uint256 minShortTokenAmount,
-        bool hasCollateralInETH,
-        uint256 executionFee
-    ) nonReentrant onlyController external returns (bytes32) {
+        WithdrawalUtils.CreateWithdrawalParams calldata params
+    ) external nonReentrant onlyController  returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createWithdrawalFeatureKey(address(this)));
 
-        WithdrawalUtils.CreateWithdrawalParams memory params = WithdrawalUtils.CreateWithdrawalParams(
+        return WithdrawalUtils.createWithdrawal(
             dataStore,
+            eventEmitter,
             withdrawalStore,
             marketStore,
             account,
-            market,
-            marketTokensLongAmount,
-            marketTokensShortAmount,
-            minLongTokenAmount,
-            minShortTokenAmount,
-            hasCollateralInETH,
-            executionFee,
-            EthUtils.weth(dataStore)
+            params
         );
-
-        Market.Props memory _market = params.marketStore.get(params.market);
-        MarketUtils.validateNonEmptyMarket(_market);
-
-        return WithdrawalUtils.createWithdrawal(params);
     }
 
+    // @dev executes a withdrawal
+    // @param key the key of the withdrawal to execute
+    // @param oracleParams OracleUtils.SetPricesParams
     function executeWithdrawal(
         bytes32 key,
-        OracleUtils.SetPricesParams memory oracleParams
-    ) external onlyOrderKeeper {
+        OracleUtils.SetPricesParams calldata oracleParams
+    ) external nonReentrant onlyOrderKeeper {
         uint256 startingGas = gasleft();
 
         try this._executeWithdrawal(
@@ -92,30 +79,41 @@ contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
             startingGas
         ) {
         } catch Error(string memory reason) {
-            // revert instead of cancel if the reason for failure is due to oracle params
-            if (keccak256(abi.encodePacked(reason)) == Keys.ORACLE_ERROR_KEY) {
-                revert(reason);
-            }
-
             WithdrawalUtils.cancelWithdrawal(
                 dataStore,
+                eventEmitter,
                 withdrawalStore,
                 key,
                 msg.sender,
-                startingGas
+                startingGas,
+                reason
+            );
+        } catch (bytes memory _reason) {
+            string memory reason = string(abi.encode(_reason));
+            WithdrawalUtils.cancelWithdrawal(
+                dataStore,
+                eventEmitter,
+                withdrawalStore,
+                key,
+                msg.sender,
+                startingGas,
+                reason
             );
         }
     }
 
+    // @dev executes a withdrawal
+    // @param oracleParams OracleUtils.SetPricesParams
+    // @param keeper the keeper executing the withdrawal
+    // @param startingGas the starting gas
     function _executeWithdrawal(
         bytes32 key,
         OracleUtils.SetPricesParams memory oracleParams,
         address keeper,
         uint256 startingGas
     ) external
-        nonReentrant
         onlySelf
-        withOraclePrices(oracle, dataStore, oracleParams)
+        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
         FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureKey(address(this)));
 
@@ -126,6 +124,7 @@ contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
 
         WithdrawalUtils.ExecuteWithdrawalParams memory params = WithdrawalUtils.ExecuteWithdrawalParams(
             dataStore,
+            eventEmitter,
             withdrawalStore,
             marketStore,
             oracle,
