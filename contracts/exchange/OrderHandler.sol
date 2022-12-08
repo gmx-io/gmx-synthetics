@@ -334,7 +334,7 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
         );
 
         if (params.order.market() != address(0)) {
-            params.market = marketStore.get(params.order.market());
+            params.market = MarketUtils.getMarket(marketStore, params.order.market());
         }
 
         params.keeper = keeper;

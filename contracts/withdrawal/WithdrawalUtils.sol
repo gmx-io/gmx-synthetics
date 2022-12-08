@@ -147,8 +147,7 @@ library WithdrawalUtils {
         uint256 wntAmount = withdrawalStore.recordTransferIn(wnt);
         require(wntAmount == params.executionFee, "WithdrawalUtils: invalid wntAmount");
 
-        Market.Props memory market = marketStore.get(params.market);
-        MarketUtils.validateNonEmptyMarket(market);
+        Market.Props memory market = MarketUtils.getMarket(marketStore, params.market);
 
         Withdrawal.Props memory withdrawal = Withdrawal.Props(
             Withdrawal.Addresses(
@@ -199,7 +198,7 @@ library WithdrawalUtils {
 
         CallbackUtils.beforeWithdrawalExecution(params.key, withdrawal);
 
-        Market.Props memory market = params.marketStore.get(withdrawal.market());
+        Market.Props memory market = MarketUtils.getMarket(params.marketStore, withdrawal.market());
 
         Price.Props memory longTokenPrice = params.oracle.getPrimaryPrice(market.longToken);
         Price.Props memory shortTokenPrice = params.oracle.getPrimaryPrice(market.shortToken);

@@ -715,7 +715,7 @@ library MarketUtils {
         bool isLong,
         bool maximize
     ) internal view returns (int256) {
-        Market.Props memory _market = marketStore.get(market);
+        Market.Props memory _market = getMarket(marketStore, market);
         MarketUtils.MarketPrices memory prices = MarketUtils.MarketPrices(
             oracle.getPrimaryPrice(_market.indexToken),
             oracle.getPrimaryPrice(_market.longToken),
@@ -1258,6 +1258,12 @@ library MarketUtils {
         }
     }
 
+    function getMarket(MarketStore marketStore, address marketAddress) internal view returns (Market.Props memory) {
+        Market.Props memory market = marketStore.get(marketAddress);
+        validateNonEmptyMarket(market);
+        return market;
+    }
+
     // @dev get a list of market values based on an input array of market addresses
     // @param marketStore MarketStore
     // @param swapPath list of market addresses
@@ -1274,9 +1280,7 @@ library MarketUtils {
                     continue;
             }
 
-            Market.Props memory market = marketStore.get(marketAddress);
-            validateNonEmptyMarket(market);
-            markets[i] = market;
+            markets[i] = getMarket(marketStore, marketAddress);
         }
 
         return markets;

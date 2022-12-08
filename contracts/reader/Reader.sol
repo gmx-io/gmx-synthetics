@@ -30,7 +30,7 @@ contract Reader {
         Market.Props[] memory markets = new Market.Props[](marketKeys.length);
         for (uint256 i = 0; i < marketKeys.length; i++) {
             address marketKey = marketKeys[i];
-            Market.Props memory market = marketStore.get(marketKey);
+            Market.Props memory market = MarketUtils.getMarket(marketStore, marketKey);
             markets[i] = market;
         }
 
