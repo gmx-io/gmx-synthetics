@@ -13,6 +13,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   if (newlyDeployed) {
     await execute("RoleStore", { from: deployer, log: true }, "grantRole", deployer, hashString("CONTROLLER"));
     await execute("RoleStore", { from: deployer, log: true }, "grantRole", deployer, hashString("ORDER_KEEPER"));
+    await execute("RoleStore", { from: deployer, log: true }, "grantRole", deployer, hashString("MARKET_KEEPER"));
   }
 };
 func.tags = ["RoleStore"];

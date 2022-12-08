@@ -346,7 +346,6 @@ library WithdrawalUtils {
         );
 
         PricingUtils.transferFees(
-            params.dataStore,
             params.feeReceiver,
             _params.market.marketToken,
             _params.tokenOut,
@@ -417,7 +416,6 @@ library WithdrawalUtils {
 
         MarketToken(payable(_params.market.marketToken)).burn(_params.account, _params.marketTokensAmount);
         MarketToken(payable(_params.market.marketToken)).transferOut(
-            params.dataStore,
             _params.tokenOut,
             outputAmount,
             _params.receiver,

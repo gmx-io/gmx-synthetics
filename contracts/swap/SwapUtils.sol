@@ -138,7 +138,6 @@ library SwapUtils {
         );
 
         PricingUtils.transferFees(
-            params.dataStore,
             params.feeReceiver,
             _params.market.marketToken,
             _params.tokenIn,
@@ -204,7 +203,6 @@ library SwapUtils {
 
         if (_params.receiver != address(0)) {
             MarketToken(payable(_params.market.marketToken)).transferOut(
-                params.dataStore,
                 cache.tokenOut,
                 cache.poolAmountOut,
                 _params.receiver,

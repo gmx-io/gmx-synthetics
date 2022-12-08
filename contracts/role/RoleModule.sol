@@ -57,6 +57,14 @@ contract RoleModule is Governable {
     }
 
     /**
+     * @dev Only allows addresses with the MARKET_KEEPER role to call the function.
+     */
+    modifier onlyFeeKeeper() {
+        _validateRole(Role.FEE_KEEPER, "FEE_KEEPER");
+        _;
+    }
+
+    /**
      * @dev Only allows addresses with the ORDER_KEEPER role to call the function.
      */
     modifier onlyOrderKeeper() {

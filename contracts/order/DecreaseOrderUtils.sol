@@ -73,7 +73,6 @@ library DecreaseOrderUtils {
         // the swapPath
         if (result.outputAmount > 0 && result.pnlAmountForUser > 0) {
             MarketToken(payable(order.market())).transferOut(
-                params.contracts.dataStore,
                 result.outputToken,
                 result.outputAmount,
                 order.receiver(),
@@ -81,7 +80,6 @@ library DecreaseOrderUtils {
             );
 
             MarketToken(payable(order.market())).transferOut(
-                params.contracts.dataStore,
                 result.pnlToken,
                 result.pnlAmountForUser,
                 order.receiver(),
@@ -93,7 +91,6 @@ library DecreaseOrderUtils {
 
         if (order.swapPath().length == 0) {
             MarketToken(payable(order.market())).transferOut(
-                params.contracts.dataStore,
                 result.outputToken,
                 result.outputAmount,
                 order.receiver(),
@@ -114,7 +111,6 @@ library DecreaseOrderUtils {
             )) returns (address /* tokenOut */, uint256 /* swapOutputAmount */) {
             } catch Error(string memory reason) {
                 _handleSwapError(
-                    params.contracts.dataStore,
                     order,
                     result,
                     reason
@@ -122,7 +118,6 @@ library DecreaseOrderUtils {
             } catch (bytes memory _reason) {
                 string memory reason = string(abi.encode(_reason));
                 _handleSwapError(
-                    params.contracts.dataStore,
                     order,
                     result,
                     reason
@@ -175,7 +170,6 @@ library DecreaseOrderUtils {
     }
 
     function _handleSwapError(
-        DataStore dataStore,
         Order.Props memory order,
         DecreasePositionUtils.DecreasePositionResult memory result,
         string memory reason
@@ -183,7 +177,6 @@ library DecreaseOrderUtils {
         emit SwapUtils.SwapReverted(reason);
 
         MarketToken(payable(order.market())).transferOut(
-            dataStore,
             result.outputToken,
             result.outputAmount,
             order.receiver(),

@@ -24,12 +24,11 @@ contract Bank is FundReceiver {
     // @param amount the amount to transfer
     // @param receiver the address to transfer to
     function transferOut(
-        DataStore dataStore,
         address token,
         uint256 amount,
         address receiver
     ) external onlyController {
-        _transferOut(dataStore, token, amount, receiver);
+        _transferOut(token, amount, receiver);
     }
 
     // @dev transfer tokens from this contract to a receiver
@@ -42,7 +41,6 @@ contract Bank is FundReceiver {
     // @param shouldUnwrapNativeToken whether to unwrap the wrapped native token
     // before transferring
     function transferOut(
-        DataStore dataStore,
         address token,
         uint256 amount,
         address receiver,
@@ -51,9 +49,9 @@ contract Bank is FundReceiver {
         address wnt = TokenUtils.wnt(dataStore);
 
         if (token == wnt && shouldUnwrapNativeToken) {
-            _transferOutNativeToken(dataStore, token, amount, receiver);
+            _transferOutNativeToken(token, amount, receiver);
         } else {
-            _transferOut(dataStore, token, amount, receiver);
+            _transferOut(token, amount, receiver);
         }
     }
 
@@ -64,7 +62,6 @@ contract Bank is FundReceiver {
     // @param amount the amount to transfer
     // @param receiver the address to transfer to
     function _transferOut(
-        DataStore dataStore,
         address token,
         uint256 amount,
         address receiver
@@ -84,7 +81,6 @@ contract Bank is FundReceiver {
     // @param amount the amount to transfer
     // @param receiver the address to transfer to
     function _transferOutNativeToken(
-        DataStore dataStore,
         address token,
         uint256 amount,
         address receiver

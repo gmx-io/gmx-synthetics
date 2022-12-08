@@ -19,7 +19,6 @@ library IncreaseOrderUtils {
     // @param params OrderBaseUtils.ExecuteOrderParams
     function processOrder(OrderBaseUtils.ExecuteOrderParams memory params) external {
         params.contracts.orderStore.transferOut(
-            params.contracts.dataStore,
             params.order.initialCollateralToken(),
             params.order.initialCollateralDeltaAmount(),
             params.order.market()

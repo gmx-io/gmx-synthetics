@@ -32,7 +32,7 @@ contract MarketFactory is RoleModule {
         address indexToken,
         address longToken,
         address shortToken
-    ) external onlyController returns (Market.Props memory) {
+    ) external onlyMarketKeeper returns (Market.Props memory) {
         // using the same token for longToken and shortToken is not supported
         // as the recordTransferIn call in DepositUtils.createDeposit would not
         // correctly differentiate the deposit of the longToken and shortToken amounts

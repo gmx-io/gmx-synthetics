@@ -141,7 +141,6 @@ library PricingUtils {
     // @param feeReceiverAmount the amount to transfer
     // @param feeType the fee type
     function transferFees(
-        DataStore dataStore,
         FeeReceiver feeReceiver,
         address marketToken,
         address token,
@@ -153,7 +152,6 @@ library PricingUtils {
         }
 
         MarketToken(payable(marketToken)).transferOut(
-            dataStore,
             token,
             feeReceiverAmount,
             address(feeReceiver)

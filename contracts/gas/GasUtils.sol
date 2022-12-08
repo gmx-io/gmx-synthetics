@@ -46,7 +46,7 @@ library GasUtils {
         address user
     ) external {
         address wnt = TokenUtils.wnt(dataStore);
-        bank.transferOut(dataStore, wnt, executionFee, address(this));
+        bank.transferOut(wnt, executionFee, address(this));
         IWNT(wnt).withdraw(executionFee);
 
         uint256 gasUsed = startingGas - gasleft();

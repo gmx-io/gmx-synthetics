@@ -181,7 +181,6 @@ library OrderUtils {
         if (OrderBaseUtils.isIncreaseOrder(order.orderType()) || OrderBaseUtils.isSwapOrder(order.orderType())) {
             if (order.initialCollateralDeltaAmount() > 0) {
                 orderStore.transferOut(
-                    dataStore,
                     order.initialCollateralToken(),
                     order.initialCollateralDeltaAmount(),
                     order.account(),

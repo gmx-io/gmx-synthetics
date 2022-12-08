@@ -258,34 +258,6 @@ library PositionPricingUtils {
         return openInterestParams;
     }
 
-    // @dev transfer position fees to the feeReceiver
-    // @param dataStore DataStore
-    // @param feeReceiver FeeReceiver
-    // @param marketToken the market token of the market
-    // @param position the position values
-    // @param feeType the type of the position fee
-    // @param fees PositionFees
-    function transferPositionFees(
-        DataStore dataStore,
-        FeeReceiver feeReceiver,
-        MarketToken marketToken,
-        Position.Props memory position,
-        bytes32 feeType,
-        PositionFees memory fees
-    ) internal returns (PositionFees memory) {
-        if (fees.feeReceiverAmount > 0) {
-            marketToken.transferOut(
-                dataStore,
-                position.collateralToken(),
-                fees.feeReceiverAmount,
-                address(feeReceiver)
-            );
-            feeReceiver.notifyFeeReceived(feeType, position.collateralToken(), fees.feeReceiverAmount);
-        }
-
-        return fees;
-    }
-
     // @dev get position fees
     // @param dataStore DataStore
     // @param referralStorage IReferralStorage

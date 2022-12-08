@@ -11,6 +11,7 @@ contract FeeReceiver is Bank {
     // @param token the fee token
     // @param amount the fee amount
     event FeeReceived(bytes32 key, address token, uint256 amount);
+    event FeesWithdrawn(address token, uint256 amount, address receiver);
 
     constructor(RoleStore _roleStore, DataStore _dataStore) Bank(_roleStore, _dataStore) {}
 
@@ -20,5 +21,14 @@ contract FeeReceiver is Bank {
     // @param amount the fee amount
     function notifyFeeReceived(bytes32 key, address token, uint256 amount) external {
         emit FeeReceived(key, token, amount);
+    }
+
+    function withdrawFees(
+        address token,
+        uint256 amount,
+        address receiver
+    ) external onlyFeeKeeper {
+        _transferOut(token, amount, receiver);
+        emit FeesWithdrawn(token, amount, receiver);
     }
 }

@@ -28,7 +28,6 @@ library SwapOrderUtils {
 
         Order.Props memory order = params.order;
         params.contracts.orderStore.transferOut(
-            params.contracts.dataStore,
             order.initialCollateralToken(),
             order.initialCollateralDeltaAmount(),
             params.order.swapPath()[0]

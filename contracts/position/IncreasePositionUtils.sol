@@ -323,7 +323,6 @@ library IncreasePositionUtils {
         );
 
         PricingUtils.transferFees(
-            params.contracts.dataStore,
             params.contracts.feeReceiver,
             params.market.marketToken,
             position.collateralToken(),
