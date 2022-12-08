@@ -245,7 +245,9 @@ library OrderBaseUtils {
                 // check that the earlier price (primaryPrice) is smaller than the triggerPrice
                 // and that the later price (secondaryPrice) is larger than the triggerPrice
                 bool ok = primaryPrice <= triggerPrice && triggerPrice <= secondaryPrice;
-                if (!ok) { revert(Keys.ORACLE_ERROR); }
+                if (!ok) {
+                    revert("Invalid prices for order");
+                }
 
                 oracle.setCustomPrice(indexToken, Price.Props(
                     triggerPrice, // min price that order can be executed with
@@ -255,7 +257,9 @@ library OrderBaseUtils {
                 // check that the earlier price (primaryPrice) is larger than the triggerPrice
                 // and that the later price (secondaryPrice) is smaller than the triggerPrice
                 bool ok = primaryPrice >= triggerPrice && triggerPrice >= secondaryPrice;
-                if (!ok) { revert(Keys.ORACLE_ERROR); }
+                if (!ok) {
+                    revert("Invalid prices for order");
+                }
 
                 oracle.setCustomPrice(indexToken, Price.Props(
                     secondaryPrice, // min price that order can be executed with

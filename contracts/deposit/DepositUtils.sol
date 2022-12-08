@@ -178,7 +178,7 @@ library DepositUtils {
         require(deposit.account() != address(0), "DepositUtils: empty deposit");
 
         if (!params.oracleBlockNumbers.areEqualTo(deposit.updatedAtBlock())) {
-            revert(Keys.ORACLE_ERROR);
+            revert("Invalid oracle block numbers");
         }
 
         CallbackUtils.beforeDepositExecution(params.key, deposit);
@@ -285,7 +285,8 @@ library DepositUtils {
         MarketStore marketStore,
         bytes32 key,
         address keeper,
-        uint256 startingGas
+        uint256 startingGas,
+        string memory reason
     ) internal {
         Deposit.Props memory deposit = depositStore.get(key);
         require(deposit.account() != address(0), "DepositUtils: empty deposit");
@@ -313,7 +314,7 @@ library DepositUtils {
 
         depositStore.remove(key);
 
-        eventEmitter.emitDepositCancelled(key);
+        eventEmitter.emitDepositCancelled(key, reason);
 
         CallbackUtils.afterDepositCancellation(key, deposit);
 

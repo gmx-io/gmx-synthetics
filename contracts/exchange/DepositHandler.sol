@@ -80,11 +80,6 @@ contract DepositHandler is ReentrancyGuard, FundReceiver, OracleModule {
             startingGas
         ) {
         } catch Error(string memory reason) {
-            // revert instead of cancel if the reason for failure is due to oracle params
-            if (keccak256(abi.encode(reason)) == Keys.ORACLE_ERROR_KEY) {
-                revert(reason);
-            }
-
             DepositUtils.cancelDeposit(
                 dataStore,
                 eventEmitter,
@@ -92,9 +87,11 @@ contract DepositHandler is ReentrancyGuard, FundReceiver, OracleModule {
                 marketStore,
                 key,
                 msg.sender,
-                startingGas
+                startingGas,
+                reason
             );
-        } catch {
+        } catch (bytes memory _reason) {
+            string memory reason = string(abi.encode(_reason));
             DepositUtils.cancelDeposit(
                 dataStore,
                 eventEmitter,
@@ -102,7 +99,8 @@ contract DepositHandler is ReentrancyGuard, FundReceiver, OracleModule {
                 marketStore,
                 key,
                 msg.sender,
-                startingGas
+                startingGas,
+                reason
             );
         }
     }

@@ -29,11 +29,7 @@ contract OracleModule {
         EventEmitter eventEmitter,
         OracleUtils.SetPricesParams memory params
     ) {
-        try oracle.setPrices(dataStore, eventEmitter, params) {
-        } catch Error(string memory reason) {
-            emit OracleError(reason);
-            revert(Keys.ORACLE_ERROR);
-        }
+        oracle.setPrices(dataStore, eventEmitter, params);
         _;
         oracle.clearAllPrices();
     }

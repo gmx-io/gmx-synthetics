@@ -194,7 +194,7 @@ library WithdrawalUtils {
         require(withdrawal.account() != address(0), "WithdrawalUtils: empty withdrawal");
 
         if (!params.oracleBlockNumbers.areEqualTo(withdrawal.updatedAtBlock())) {
-            revert(Keys.ORACLE_ERROR);
+            revert("Invalid oracle block numbers");
         }
 
         CallbackUtils.beforeWithdrawalExecution(params.key, withdrawal);
@@ -305,14 +305,15 @@ library WithdrawalUtils {
         WithdrawalStore withdrawalStore,
         bytes32 key,
         address keeper,
-        uint256 startingGas
+        uint256 startingGas,
+        string memory reason
     ) internal {
         Withdrawal.Props memory withdrawal = withdrawalStore.get(key);
         require(withdrawal.account() != address(0), "WithdrawalUtils: empty withdrawal");
 
         withdrawalStore.remove(key);
 
-        eventEmitter.emitWithdrawalCancelled(key);
+        eventEmitter.emitWithdrawalCancelled(key, reason);
 
         CallbackUtils.afterWithdrawalCancellation(key, withdrawal);
 

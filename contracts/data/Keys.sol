@@ -139,9 +139,6 @@ library Keys {
     // @dev key for affiliate reward
     bytes32 public constant AFFILIATE_REWARD = keccak256(abi.encode("AFFILIATE_REWARD"));
 
-    string public constant ORACLE_ERROR = "ORACLE_ERROR";
-    bytes32 public constant ORACLE_ERROR_KEY = keccak256(abi.encode(ORACLE_ERROR));
-
     string public constant EMPTY_POSITION_ERROR = "EMPTY_POSITION_ERROR";
     bytes32 public constant EMPTY_POSITION_ERROR_KEY = keccak256(abi.encode(EMPTY_POSITION_ERROR));
 
