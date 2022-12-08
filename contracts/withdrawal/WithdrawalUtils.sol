@@ -194,7 +194,7 @@ library WithdrawalUtils {
         require(withdrawal.account() != address(0), "WithdrawalUtils: empty withdrawal");
 
         if (!params.oracleBlockNumbers.areEqualTo(withdrawal.updatedAtBlock())) {
-            OracleUtils.revertOracleBlockNumbersAreNotEqual(oracleBlockNumbers, withdrawal.updatedAtBlock());
+            OracleUtils.revertOracleBlockNumbersAreNotEqual(params.oracleBlockNumbers, withdrawal.updatedAtBlock());
         }
 
         CallbackUtils.beforeWithdrawalExecution(params.key, withdrawal);
