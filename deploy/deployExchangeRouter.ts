@@ -43,8 +43,8 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     },
   });
 
-  grantRoleIfNotGranted(address, "CONTROLLER");
-  grantRoleIfNotGranted(address, "ROUTER_PLUGIN");
+  await grantRoleIfNotGranted(address, "CONTROLLER");
+  await grantRoleIfNotGranted(address, "ROUTER_PLUGIN");
 };
 func.tags = ["ExchangeRouter"];
 func.dependencies = [

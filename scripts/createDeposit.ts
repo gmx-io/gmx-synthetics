@@ -82,6 +82,8 @@ async function main() {
     executionFee: executionFee,
     callbackGasLimit: 0,
   };
+  console.log("exchange router %s", exchangeRouter.address);
+  console.log("deposit store %s", depositStore.address);
   console.log("creating deposit %s", JSON.stringify(params));
 
   const multicallArgs = [
@@ -91,10 +93,14 @@ async function main() {
   ];
   console.log("multicall args", multicallArgs);
 
-  const tx = await exchangeRouter.multicall(multicallArgs, { value: longTokenAmount.add(executionFee) });
+  const tx = await exchangeRouter.multicall(multicallArgs, {
+    value: longTokenAmount.add(executionFee),
+    gasLimit: 2500000,
+  });
 
   console.log("transaction sent", tx.hash);
   await tx.wait();
+  console.log("receipt received");
 }
 
 main()

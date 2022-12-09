@@ -49,6 +49,7 @@ const config: HardhatUserConfig = {
           apiKey: process.env.SNOWTRACE_API_KEY,
         },
       },
+      blockGasLimit: 2500000,
       gasPrice: 50000000000,
     },
   },

@@ -14,7 +14,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     args: [roleStoreAddress, oracleStoreAddress],
   });
 
-  grantRoleIfNotGranted(address, "CONTROLLER");
+  await grantRoleIfNotGranted(address, "CONTROLLER");
 };
 func.tags = ["Oracle"];
 func.dependencies = ["RoleStore", "OracleStore", "Tokens"];

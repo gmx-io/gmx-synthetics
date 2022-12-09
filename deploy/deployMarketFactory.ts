@@ -15,7 +15,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     args: [roleStoreAddress, dataStoreAddress, marketStoreAddress],
   });
 
-  grantRoleIfNotGranted(address, "CONTROLLER");
+  await grantRoleIfNotGranted(address, "CONTROLLER");
 };
 func.tags = ["MarketFactory"];
 func.dependencies = ["RoleStore", "DataStore", "MarketStore"];

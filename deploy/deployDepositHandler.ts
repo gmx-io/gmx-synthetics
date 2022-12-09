@@ -32,7 +32,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     },
   });
 
-  grantRoleIfNotGranted(address, "CONTROLLER");
+  await grantRoleIfNotGranted(address, "CONTROLLER");
 };
 func.tags = ["DepositHandler"];
 func.dependencies = [
