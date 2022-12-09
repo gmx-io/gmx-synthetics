@@ -28,6 +28,7 @@ async function main() {
   const marketFactory = await ethers.getContract("MarketFactory");
   const roleStore = await ethers.getContract("RoleStore");
   const dataStore = await ethers.getContract("DataStore");
+  const depositStore = await ethers.getContract("DepositStore");
   const exchangeRouter: ExchangeRouter = await ethers.getContract("ExchangeRouter");
   const router = await ethers.getContract("Router");
 
@@ -43,6 +44,7 @@ async function main() {
   }
 
   const wntAllowance = await wnt.allowance(wallet.address, router.address);
+  console.log("WNT address %s symbol %s", wnt.address, await wnt.symbol());
   console.log("WNT allowance %s", wntAllowance.toString());
   if (wntAllowance.lt(longTokenAmount.add(executionFee))) {
     console.log("approving WNT");
@@ -53,6 +55,7 @@ async function main() {
   const usdc: MintableToken = await ethers.getContract("USDC");
   const shortTokenAmount = expandDecimals(1, 6); // 1 USDC
   const usdcAllowance = await usdc.allowance(wallet.address, router.address);
+  console.log("USDC address %s", usdc.address);
   console.log("USDC allowance %s", usdcAllowance.toString());
   if (usdcAllowance.lt(shortTokenAmount)) {
     console.log("approving USDC");
@@ -80,13 +83,16 @@ async function main() {
     callbackGasLimit: 0,
   };
   console.log("creating deposit %s", JSON.stringify(params));
-  const tx = await exchangeRouter.createDeposit(
-    wnt.address,
-    usdc.address,
-    longTokenAmount.add(executionFee),
-    expandDecimals(1, 6),
-    params
-  );
+
+  const multicallArgs = [
+    exchangeRouter.interface.encodeFunctionData("sendWnt", [depositStore.address, longTokenAmount.add(executionFee)]),
+    exchangeRouter.interface.encodeFunctionData("sendTokens", [usdc.address, depositStore.address, shortTokenAmount]),
+    exchangeRouter.interface.encodeFunctionData("createDeposit", [params]),
+  ];
+  console.log("multicall args", multicallArgs);
+
+  const tx = await exchangeRouter.multicall(multicallArgs, { value: longTokenAmount.add(executionFee) });
+
   console.log("transaction sent", tx.hash);
   await tx.wait();
 }

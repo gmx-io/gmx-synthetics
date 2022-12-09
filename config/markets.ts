@@ -3,6 +3,16 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 export type MarketConfig = {
   tokens: [indexToken: string, longToken: string, shortToken: string];
   reserveFactor: [number, number];
+
+  positionFeeFactor?: number | string;
+  positivePositionImpactFactor?: number | string;
+  negativePositionImpactFactor?: number | string;
+  positionImpactExponentFactor?: number | string;
+
+  swapFeeFactor?: number | string;
+  positiveSwapImpactFactor?: number | string;
+  negativeSwapImpactFactor?: number | string;
+  swapImpactExponentFactor?: number | string;
 };
 
 const config: {
@@ -15,6 +25,16 @@ const config: {
     {
       tokens: ["WAVAX", "WAVAX", "USDC"], // indexToken, longToken, shortToken
       reserveFactor: [2, 1],
+
+      positionFeeFactor: 100,
+      positivePositionImpactFactor: 200,
+      negativePositionImpactFactor: 100,
+      positionImpactExponentFactor: 300,
+
+      swapFeeFactor: 100,
+      positiveSwapImpactFactor: 200,
+      negativeSwapImpactFactor: 100,
+      swapImpactExponentFactor: 300,
     },
     {
       tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken

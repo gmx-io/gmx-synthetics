@@ -60,6 +60,52 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
 
     await setReserveFactor(marketToken, true, reserveFactor);
     await setReserveFactor(marketToken, false, reserveFactor);
+
+    for (const name of [
+      "positionFeeFactor",
+      "positionImpactExponentFactor",
+      "swapFeeFactor",
+      "swapImpactExponentFactor",
+    ]) {
+      if (marketConfig[name]) {
+        const value = marketConfig[name];
+        const key = keys[`${name}Key`](marketToken);
+        await setUintIfDifferent(key, value, `${name} for ${marketToken.toString()}`);
+      }
+    }
+
+    if (marketConfig.positivePositionImpactFactor) {
+      const key = keys.positionImpactFactorKey(marketToken, true);
+      await setUintIfDifferent(
+        key,
+        marketConfig.positivePositionImpactFactor,
+        `positive position impact factor for ${marketToken.toString()}`
+      );
+    }
+    if (marketConfig.negativePositionImpactFactor) {
+      const key = keys.positionImpactFactorKey(marketToken, false);
+      await setUintIfDifferent(
+        key,
+        marketConfig.negativePositionImpactFactor,
+        `negative position impact factor for ${marketToken.toString()}`
+      );
+    }
+    if (marketConfig.positiveSwapImpactFactor) {
+      const key = keys.swapImpactFactorKey(marketToken, true);
+      await setUintIfDifferent(
+        key,
+        marketConfig.positiveSwapImpactFactor,
+        `positive swap impact factor for ${marketToken.toString()}`
+      );
+    }
+    if (marketConfig.negativeSwapImpactFactor) {
+      const key = keys.swapImpactFactorKey(marketToken, false);
+      await setUintIfDifferent(
+        key,
+        marketConfig.negativeSwapImpactFactor,
+        `negative swap impact factor for ${marketToken.toString()}`
+      );
+    }
   }
 };
 

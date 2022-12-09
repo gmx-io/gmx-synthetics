@@ -1,8 +1,8 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { hashString } from "../utils/hash";
+import { grantRoleIfNotGranted } from "../utils/role";
 
 const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment) => {
-  const { deploy, get, execute } = deployments;
+  const { deploy, get } = deployments;
   const { deployer } = await getNamedAccounts();
 
   const { address: roleStoreAddress } = await get("RoleStore");
@@ -23,7 +23,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { address: liquidationUtilsAddress } = await get("LiquidationUtils");
   const { address: adlUtilsAddress } = await get("AdlUtils");
 
-  const { newlyDeployed, address } = await deploy("OrderHandler", {
+  const { address } = await deploy("OrderHandler", {
     from: deployer,
     log: true,
     args: [
@@ -49,10 +49,8 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     },
   });
 
-  if (newlyDeployed) {
-    await execute("RoleStore", { from: deployer, log: true }, "grantRole", address, hashString("CONTROLLER"));
-    await execute("RoleStore", { from: deployer, log: true }, "grantRole", address, hashString("ORDER_KEEPER"));
-  }
+  grantRoleIfNotGranted(address, "CONTROLLER");
+  grantRoleIfNotGranted(address, "ORDER_KEEPER");
 };
 func.tags = ["OrderHandler"];
 func.dependencies = [

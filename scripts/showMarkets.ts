@@ -19,7 +19,7 @@ async function main() {
     const longTokenSymbol = addressToSymbol[market.longToken];
     const shortTokenSymbol = addressToSymbol[market.shortToken];
     console.log(
-      "%s indexToken: %s, longToken: %s shortToken: %s",
+      "%s indexToken: %s longToken: %s shortToken: %s",
       market.marketToken,
       indexTokenSymbol.padEnd(5),
       longTokenSymbol.padEnd(5),

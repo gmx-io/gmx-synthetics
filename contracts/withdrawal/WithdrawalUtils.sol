@@ -305,7 +305,7 @@ library WithdrawalUtils {
         bytes32 key,
         address keeper,
         uint256 startingGas,
-        string memory reason
+        bytes memory reason
     ) internal {
         Withdrawal.Props memory withdrawal = withdrawalStore.get(key);
         require(withdrawal.account() != address(0), "WithdrawalUtils: empty withdrawal");

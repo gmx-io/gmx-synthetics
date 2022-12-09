@@ -285,7 +285,7 @@ library DepositUtils {
         bytes32 key,
         address keeper,
         uint256 startingGas,
-        string memory reason
+        bytes memory reason
     ) internal {
         Deposit.Props memory deposit = depositStore.get(key);
         require(deposit.account() != address(0), "DepositUtils: empty deposit");

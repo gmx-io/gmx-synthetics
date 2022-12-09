@@ -88,10 +88,9 @@ contract DepositHandler is ReentrancyGuard, FundReceiver, OracleModule {
                 key,
                 msg.sender,
                 startingGas,
-                reason
+                bytes(reason)
             );
-        } catch (bytes memory _reason) {
-            string memory reason = string(abi.encode(_reason));
+        } catch (bytes memory reason) {
             DepositUtils.cancelDeposit(
                 dataStore,
                 eventEmitter,

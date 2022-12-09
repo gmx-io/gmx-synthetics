@@ -1,22 +1,20 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { hashString } from "../utils/hash";
+import { grantRoleIfNotGranted } from "../utils/role";
 
 const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment) => {
-  const { deploy, get, execute } = deployments;
+  const { deploy, get } = deployments;
   const { deployer } = await getNamedAccounts();
 
   const { address: roleStoreAddress } = await get("RoleStore");
   const { address: oracleStoreAddress } = await get("OracleStore");
 
-  const { address, newlyDeployed } = await deploy("Oracle", {
+  const { address } = await deploy("Oracle", {
     from: deployer,
     log: true,
     args: [roleStoreAddress, oracleStoreAddress],
   });
 
-  if (newlyDeployed) {
-    await execute("RoleStore", { from: deployer, log: true }, "grantRole", address, hashString("CONTROLLER"));
-  }
+  grantRoleIfNotGranted(address, "CONTROLLER");
 };
 func.tags = ["Oracle"];
 func.dependencies = ["RoleStore", "OracleStore", "Tokens"];

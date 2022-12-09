@@ -38,9 +38,9 @@ async function setIfDifferent(
 
   const currentValue: string = await read("DataStore", getMethod, key);
   if (compare ? !compare(currentValue, value) : currentValue != value) {
-    log("Setting %s %s to %s", type, label || key, value.toString());
+    log("setting %s %s to %s", type, label || key, value.toString());
     await execute("DataStore", { from: deployer, log: true }, setMethod, key, value);
   } else {
-    log("Skipping %s %s as it is already set to %s", type, label || key, value.toString());
+    log("skipping %s %s as it is already set to %s", type, label || key, value.toString());
   }
 }

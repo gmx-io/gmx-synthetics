@@ -1,8 +1,8 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { hashString } from "../utils/hash";
+import { grantRoleIfNotGranted } from "../utils/role";
 
 const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment) => {
-  const { deploy, get, execute } = deployments;
+  const { deploy, get } = deployments;
   const { deployer } = await getNamedAccounts();
 
   const { address: roleStoreAddress } = await get("RoleStore");
@@ -14,7 +14,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { address: feeReceiverAddress } = await get("FeeReceiver");
   const { address: gasUtilsAddress } = await get("GasUtils");
 
-  const { address, newlyDeployed } = await deploy("WithdrawalHandler", {
+  const { address } = await deploy("WithdrawalHandler", {
     from: deployer,
     log: true,
     args: [
@@ -31,9 +31,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     },
   });
 
-  if (newlyDeployed) {
-    await execute("RoleStore", { from: deployer, log: true }, "grantRole", address, hashString("CONTROLLER"));
-  }
+  grantRoleIfNotGranted(address, "CONTROLLER");
 };
 
 func.tags = ["WithdrawalHandler"];

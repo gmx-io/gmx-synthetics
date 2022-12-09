@@ -67,7 +67,7 @@ contract EventEmitter is RoleModule {
     // @param key the key of the deposit
     event DepositExecuted(bytes32 key);
     // @param key the key of the deposit
-    event DepositCancelled(bytes32 key, string reason);
+    event DepositCancelled(bytes32 key, bytes reason);
 
     // @param key the key of the withdrawal
     // @param withdrawal the created withdrawal
@@ -75,7 +75,7 @@ contract EventEmitter is RoleModule {
     // @param key the key of the withdrawal
     event WithdrawalExecuted(bytes32 key);
     // @param key the key of the withdrawal
-    event WithdrawalCancelled(bytes32 key, string reason);
+    event WithdrawalCancelled(bytes32 key, bytes reason);
 
     // @param key the key of the order
     // @param order the order created
@@ -349,7 +349,7 @@ contract EventEmitter is RoleModule {
     }
 
     // @param key the key of the deposit
-    function emitDepositCancelled(bytes32 key, string memory reason) external onlyController {
+    function emitDepositCancelled(bytes32 key, bytes memory reason) external onlyController {
         emit DepositCancelled(key, reason);
     }
 
@@ -365,7 +365,7 @@ contract EventEmitter is RoleModule {
     }
 
     // @param key the key of the withdrawal
-    function emitWithdrawalCancelled(bytes32 key, string memory reason) external onlyController {
+    function emitWithdrawalCancelled(bytes32 key, bytes memory reason) external onlyController {
         emit WithdrawalCancelled(key, reason);
     }
 

@@ -1,9 +1,9 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { hashString } from "../utils/hash";
+import { grantRoleIfNotGranted } from "../utils/role";
 
 const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment) => {
-  const { deploy, get, execute } = deployments;
+  const { deploy, get } = deployments;
   const { deployer } = await getNamedAccounts();
 
   const router = await get("Router");
@@ -33,7 +33,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     orderStore.address,
     referralStorage.address,
   ];
-  const { address, newlyDeployed } = await deploy("ExchangeRouter", {
+  const { address } = await deploy("ExchangeRouter", {
     from: deployer,
     log: true,
     args: deployArgs,
@@ -43,10 +43,8 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     },
   });
 
-  if (newlyDeployed) {
-    await execute("RoleStore", { from: deployer, log: true }, "grantRole", address, hashString("ROUTER_PLUGIN"));
-    await execute("RoleStore", { from: deployer, log: true }, "grantRole", address, hashString("CONTROLLER"));
-  }
+  grantRoleIfNotGranted(address, "CONTROLLER");
+  grantRoleIfNotGranted(address, "ROUTER_PLUGIN");
 };
 func.tags = ["ExchangeRouter"];
 func.dependencies = [

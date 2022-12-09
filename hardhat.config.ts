@@ -49,6 +49,7 @@ const config: HardhatUserConfig = {
           apiKey: process.env.SNOWTRACE_API_KEY,
         },
       },
+      gasPrice: 50000000000,
     },
   },
   // hardhat-deploy has issues with some contracts

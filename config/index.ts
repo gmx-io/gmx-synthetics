@@ -1,5 +1,7 @@
 import _ from "lodash";
 
+import { extendEnvironment } from "hardhat/config";
+
 import tokensConfig, { TokensConfig } from "./tokens";
 import marketsConfig, { MarketConfig } from "./markets";
 import oracleConfig, { OracleConfig } from "./oracle";
