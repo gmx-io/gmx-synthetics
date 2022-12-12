@@ -50,7 +50,7 @@ contract WithdrawalHandler is ReentrancyGuard, FundReceiver, OracleModule {
     function createWithdrawal(
         address account,
         WithdrawalUtils.CreateWithdrawalParams calldata params
-    ) external nonReentrant onlyController  returns (bytes32) {
+    ) external nonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createWithdrawalFeatureKey(address(this)));
 
         return WithdrawalUtils.createWithdrawal(
@@ -69,7 +69,11 @@ contract WithdrawalHandler is ReentrancyGuard, FundReceiver, OracleModule {
     function executeWithdrawal(
         bytes32 key,
         OracleUtils.SetPricesParams calldata oracleParams
-    ) external nonReentrant onlyOrderKeeper {
+    )
+        external
+        onlyOrderKeeper
+        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+    {
         uint256 startingGas = gasleft();
 
         try this._executeWithdrawal(
@@ -110,10 +114,7 @@ contract WithdrawalHandler is ReentrancyGuard, FundReceiver, OracleModule {
         OracleUtils.SetPricesParams memory oracleParams,
         address keeper,
         uint256 startingGas
-    ) external
-        onlySelf
-        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
-    {
+    ) external nonReentrant onlySelf {
         FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureKey(address(this)));
 
         uint256[] memory oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(

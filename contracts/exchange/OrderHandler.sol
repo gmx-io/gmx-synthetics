@@ -105,7 +105,10 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
     function executeOrder(
         bytes32 key,
         OracleUtils.SetPricesParams calldata oracleParams
-    ) external nonReentrant onlyOrderKeeper {
+    ) external
+        onlyOrderKeeper
+        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+    {
         uint256 startingGas = gasleft();
 
         try this._executeOrder(
@@ -283,10 +286,7 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
         OracleUtils.SetPricesParams memory oracleParams,
         address keeper,
         uint256 startingGas
-    ) external
-        onlySelf
-        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
-    {
+    ) external nonReentrant onlySelf {
         OrderBaseUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, keeper, startingGas);
         // limit swaps require frozen order keeper as well since on creation it can fail due to output amount
         // which would automatically cause the order to be frozen

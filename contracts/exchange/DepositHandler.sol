@@ -70,7 +70,10 @@ contract DepositHandler is ReentrancyGuard, FundReceiver, OracleModule {
     function executeDeposit(
         bytes32 key,
         OracleUtils.SetPricesParams calldata oracleParams
-    ) external nonReentrant onlyOrderKeeper {
+    ) external
+        onlyOrderKeeper
+        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+    {
         uint256 startingGas = gasleft();
 
         try this._executeDeposit(
@@ -113,10 +116,7 @@ contract DepositHandler is ReentrancyGuard, FundReceiver, OracleModule {
         OracleUtils.SetPricesParams memory oracleParams,
         address keeper,
         uint256 startingGas
-    ) external
-        onlySelf
-        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
-    {
+    ) external nonReentrant onlySelf {
         FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureKey(address(this)));
 
         uint256[] memory oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
