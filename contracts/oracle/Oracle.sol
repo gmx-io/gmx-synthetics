@@ -474,6 +474,18 @@ contract Oracle is RoleModule {
                 cache.minPriceIndex = OracleUtils.getUncompactedPriceIndex(params.compactedMinPricesIndexes, cache.signatureIndex);
                 cache.maxPriceIndex = OracleUtils.getUncompactedPriceIndex(params.compactedMaxPricesIndexes, cache.signatureIndex);
 
+                if (cache.signatureIndex >= params.signatures.length) {
+                    Array.revertArrayOutOfBounds(params.signatures, cache.signatureIndex, "signatures");
+                }
+
+                if (cache.minPriceIndex >= cache.minPrices.length) {
+                    Array.revertArrayOutOfBounds(cache.minPrices, cache.minPriceIndex, "minPrices");
+                }
+
+                if (cache.maxPriceIndex >= cache.maxPrices.length) {
+                    Array.revertArrayOutOfBounds(cache.maxPrices, cache.maxPriceIndex, "maxPrices");
+                }
+
                 _validateSigner(
                     cache.info.oracleBlockNumber,
                     cache.info.oracleTimestamp,

@@ -71,7 +71,8 @@ library OracleUtils {
             compactedPrices,
             index,
             COMPACTED_PRICE_BIT_LENGTH,
-            COMPACTED_PRICE_BITMASK
+            COMPACTED_PRICE_BITMASK,
+            "getUncompactedPrice"
         );
 
         if (price == 0) { revert EmptyCompactedPrice(index); }
@@ -88,7 +89,8 @@ library OracleUtils {
             compactedDecimals,
             index,
             COMPACTED_PRECISION_BIT_LENGTH,
-            COMPACTED_PRECISION_BITMASK
+            COMPACTED_PRECISION_BITMASK,
+            "getUncompactedDecimal"
         );
 
         return decimal;
@@ -104,7 +106,8 @@ library OracleUtils {
             compactedPriceIndexes,
             index,
             COMPACTED_PRICE_INDEX_BIT_LENGTH,
-            COMPACTED_PRICE_INDEX_BITMASK
+            COMPACTED_PRICE_INDEX_BITMASK,
+            "getUncompactedPriceIndex"
         );
 
         return priceIndex;
@@ -134,7 +137,8 @@ library OracleUtils {
             compactedOracleBlockNumbers,
             index,
             COMPACTED_BLOCK_NUMBER_BIT_LENGTH,
-            COMPACTED_BLOCK_NUMBER_BITMASK
+            COMPACTED_BLOCK_NUMBER_BITMASK,
+            "getUncompactedOracleBlockNumber"
         );
 
         if (blockNumber == 0) { revert EmptyCompactedBlockNumber(index); }
@@ -151,7 +155,8 @@ library OracleUtils {
             compactedOracleTimestamps,
             index,
             COMPACTED_TIMESTAMP_BIT_LENGTH,
-            COMPACTED_TIMESTAMP_BITMASK
+            COMPACTED_TIMESTAMP_BITMASK,
+            "getUncompactedOracleTimestamp"
         );
 
         if (blockNumber == 0) { revert EmptyCompactedTimestamp(index); }
