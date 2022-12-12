@@ -92,12 +92,12 @@ contract EventEmitter is RoleModule {
     );
     // @param key the key of the order
     // @param reason the reason the order was cancelled
-    event OrderCancelled(bytes32 key, string reason);
+    event OrderCancelled(bytes32 key, bytes reason);
     // @param key the key of the order
     event OrderExecuted(bytes32 key);
     // @param key the key of the order
     // @param reason the reason the order was frozen
-    event OrderFrozen(bytes32 key, string reason);
+    event OrderFrozen(bytes32 key, bytes reason);
 
     // @param action the type of swap
     // @param fees SwapPricingUtils.SwapFees
@@ -327,13 +327,13 @@ contract EventEmitter is RoleModule {
 
     // @param key the key of the order
     // @param reason the reason the order was cancelled
-    function emitOrderCancelled(bytes32 key, string memory reason) external onlyController {
+    function emitOrderCancelled(bytes32 key, bytes memory reason) external onlyController {
         emit OrderCancelled(key, reason);
     }
 
     // @param key the key of the order
     // @param reason the reason the order was frozen
-    function emitOrderFrozen(bytes32 key, string memory reason) external onlyController {
+    function emitOrderFrozen(bytes32 key, bytes memory reason) external onlyController {
         emit OrderFrozen(key, reason);
     }
 

@@ -130,10 +130,9 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
                 revert(reason);
             }
 
-            _handleOrderError(key, startingGas, reason, reasonKey);
-        } catch (bytes memory _reason) {
-            string memory reason = string(abi.encode(_reason));
-            bytes32 reasonKey = keccak256(abi.encode(_reason));
+            _handleOrderError(key, startingGas, bytes(reason), reasonKey);
+        } catch (bytes memory reason) {
+            bytes32 reasonKey = keccak256(abi.encode(reason));
             _handleOrderError(key, startingGas, reason, reasonKey);
         }
     }
@@ -351,7 +350,7 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
     function _handleOrderError(
         bytes32 key,
         uint256 startingGas,
-        string memory reason,
+        bytes memory reason,
         bytes32 reasonKey
     ) internal {
         Order.Props memory order = orderStore.get(key);
@@ -369,7 +368,7 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
             );
         } else {
             if (reasonKey == Keys.UNACCEPTABLE_PRICE_ERROR_KEY) {
-                revert(reason);
+                revert(string(reason));
             }
 
             // freeze unfulfillable orders to prevent the order system from being gamed
