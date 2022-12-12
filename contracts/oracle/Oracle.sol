@@ -3,7 +3,6 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "../role/RoleModule.sol";
@@ -105,7 +104,6 @@ contract Oracle is RoleModule {
     error MaxPricesNotSorted(address token, uint256 price, uint256 prevPrice);
     error EmptyPriceFeedMultiplier(address token);
     error EmptyFeedPrice(address token);
-    error InvalidSignature(address recoveredSigner, address expectedSigner);
     error MaxSignerIndex(uint256 signerIndex, uint256 maxSignerIndex);
     error DuplicateSigner(uint256 signerIndex);
     error EmptyPrice(address token);
@@ -486,7 +484,8 @@ contract Oracle is RoleModule {
                     Array.revertArrayOutOfBounds(cache.maxPrices, cache.maxPriceIndex, "maxPrices");
                 }
 
-                _validateSigner(
+                OracleUtils.validateSigner(
+                    SALT,
                     cache.info.oracleBlockNumber,
                     cache.info.oracleTimestamp,
                     cache.info.blockHash,
@@ -580,45 +579,4 @@ contract Oracle is RoleModule {
         }
     }
 
-    // @dev validate the signer of a price
-    // @param oracleBlockNumber the block number used for the signed message hash
-    // @param oracleTimestamp the timestamp used for the signed message hash
-    // @param blockHash the block hash used for the signed message hash
-    // @param token the token used for the signed message hash
-    // @param precision the precision used for the signed message hash
-    // @param minPrice the min price used for the signed message hash
-    // @param maxPrice the max price used for the signed message hash
-    // @param signature the signer's signature
-    // @param expectedSigner the address of the expected signer
-    function _validateSigner(
-        uint256 oracleBlockNumber,
-        uint256 oracleTimestamp,
-        bytes32 blockHash,
-        address token,
-        bytes32 tokenOracleType,
-        uint256 precision,
-        uint256 minPrice,
-        uint256 maxPrice,
-        bytes memory signature,
-        address expectedSigner
-    ) internal view {
-        bytes32 digest = ECDSA.toEthSignedMessageHash(
-            keccak256(abi.encode(
-                SALT,
-                oracleBlockNumber,
-                oracleTimestamp,
-                blockHash,
-                token,
-                tokenOracleType,
-                precision,
-                minPrice,
-                maxPrice
-            ))
-        );
-
-        address recoveredSigner = ECDSA.recover(digest, signature);
-        if (recoveredSigner != expectedSigner) {
-            revert InvalidSignature(recoveredSigner, expectedSigner);
-        }
-    }
 }

@@ -17,4 +17,32 @@ contract OracleModuleTest is OracleModule {
         OracleUtils.SetPricesParams memory oracleParams
     ) external withOraclePrices(oracle, dataStore, eventEmitter, oracleParams) {
     }
+
+    function validateSigner(
+        bytes32 SALT,
+        uint256 oracleBlockNumber,
+        uint256 oracleTimestamp,
+        bytes32 blockHash,
+        address token,
+        bytes32 tokenOracleType,
+        uint256 precision,
+        uint256 minPrice,
+        uint256 maxPrice,
+        bytes memory signature,
+        address expectedSigner
+    ) external pure {
+        OracleUtils.validateSigner(
+            SALT,
+            oracleBlockNumber,
+            oracleTimestamp,
+            blockHash,
+            token,
+            tokenOracleType,
+            precision,
+            minPrice,
+            maxPrice,
+            signature,
+            expectedSigner
+        );
+    }
 }
