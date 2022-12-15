@@ -374,8 +374,8 @@ library MarketUtils {
 
         MarketToken(payable(market)).transferOut(
             token,
-            claimableAmount,
-            receiver
+            receiver,
+            claimableAmount
         );
 
         eventEmitter.emitFundingFeesClaimed(

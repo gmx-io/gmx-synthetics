@@ -204,8 +204,8 @@ library SwapUtils {
         if (_params.receiver != address(0)) {
             MarketToken(payable(_params.market.marketToken)).transferOut(
                 cache.tokenOut,
-                cache.poolAmountOut,
                 _params.receiver,
+                cache.poolAmountOut,
                 _params.shouldUnwrapNativeToken
             );
         }

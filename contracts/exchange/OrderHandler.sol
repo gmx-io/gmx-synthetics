@@ -11,7 +11,6 @@ import "../callback/CallbackUtils.sol";
 import "../adl/AdlUtils.sol";
 import "../liquidation/LiquidationUtils.sol";
 
-import "../bank/FundReceiver.sol";
 import "../market/Market.sol";
 import "../market/MarketStore.sol";
 import "../market/MarketToken.sol";
@@ -30,7 +29,7 @@ import "../referral/IReferralStorage.sol";
 
 // @title OrderHandler
 // @dev Contract to handle creation, execution and cancellation of orders
-contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
+contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
     using SafeCast for uint256;
     using Order for Order.Props;
     using Array for uint256[];
@@ -46,12 +45,13 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
         uint256 maxPnlFactorForWithdrawals;
     }
 
+    DataStore public immutable dataStore;
+    EventEmitter public immutable eventEmitter;
     MarketStore public immutable marketStore;
     OrderStore public immutable orderStore;
     PositionStore public immutable positionStore;
     SwapHandler public immutable swapHandler;
     Oracle public immutable oracle;
-    EventEmitter public immutable eventEmitter;
     FeeReceiver public immutable feeReceiver;
     IReferralStorage public immutable referralStorage;
 
@@ -66,7 +66,8 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
         SwapHandler _swapHandler,
         FeeReceiver _feeReceiver,
         IReferralStorage _referralStorage
-    ) FundReceiver(_roleStore, _dataStore) {
+    ) RoleModule(_roleStore) {
+        dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         marketStore = _marketStore;
         orderStore = _orderStore;
@@ -76,9 +77,6 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
         feeReceiver = _feeReceiver;
         referralStorage = _referralStorage;
     }
-
-    receive() external payable {}
-
 
     // @dev creates an order in the order store
     // @param account the order's account

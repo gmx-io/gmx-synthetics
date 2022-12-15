@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import "../bank/FundReceiver.sol";
+import "../role/RoleModule.sol";
 import "../event/EventEmitter.sol";
 import "../feature/FeatureUtils.sol";
 
@@ -20,7 +20,8 @@ import "../oracle/OracleModule.sol";
 
 // @title DepositHandler
 // @dev Contract to handle creation, execution and cancellation of deposits
-contract DepositHandler is ReentrancyGuard, FundReceiver, OracleModule {
+contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
+    DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     DepositStore public immutable depositStore;
     MarketStore public immutable marketStore;
@@ -35,15 +36,14 @@ contract DepositHandler is ReentrancyGuard, FundReceiver, OracleModule {
         MarketStore _marketStore,
         Oracle _oracle,
         FeeReceiver _feeReceiver
-    ) FundReceiver(_roleStore, _dataStore) {
+    ) RoleModule(_roleStore) {
+        dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         depositStore = _depositStore;
         marketStore = _marketStore;
         oracle = _oracle;
         feeReceiver = _feeReceiver;
     }
-
-    receive() external payable {}
 
     // @dev creates a deposit in the deposit store
     // @param account the depositing account

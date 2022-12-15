@@ -417,8 +417,8 @@ library WithdrawalUtils {
         MarketToken(payable(_params.market.marketToken)).burn(_params.account, _params.marketTokensAmount);
         MarketToken(payable(_params.market.marketToken)).transferOut(
             _params.tokenOut,
-            outputAmount,
             _params.receiver,
+            outputAmount,
             _params.shouldUnwrapNativeToken
         );
 

@@ -182,8 +182,8 @@ library OrderUtils {
             if (order.initialCollateralDeltaAmount() > 0) {
                 orderStore.transferOut(
                     order.initialCollateralToken(),
-                    order.initialCollateralDeltaAmount(),
                     order.account(),
+                    order.initialCollateralDeltaAmount(),
                     order.shouldUnwrapNativeToken()
                 );
             }

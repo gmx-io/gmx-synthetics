@@ -153,8 +153,8 @@ library PricingUtils {
 
         MarketToken(payable(marketToken)).transferOut(
             token,
-            feeReceiverAmount,
-            address(feeReceiver)
+            address(feeReceiver),
+            feeReceiverAmount
         );
 
         feeReceiver.notifyFeeReceived(feeType, token, feeReceiverAmount);

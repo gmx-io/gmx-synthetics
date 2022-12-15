@@ -110,8 +110,8 @@ library ReferralUtils {
 
         MarketToken(payable(market)).transferOut(
             token,
-            rewardAmount,
-            receiver
+            receiver,
+            rewardAmount
         );
 
         eventEmitter.emitAffiliateRewardClaimed(

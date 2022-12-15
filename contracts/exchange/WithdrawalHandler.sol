@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import "../bank/FundReceiver.sol";
+import "../role/RoleModule.sol";
 import "../feature/FeatureUtils.sol";
 
 import "../market/Market.sol";
@@ -19,7 +19,8 @@ import "../oracle/OracleModule.sol";
 
 // @title WithdrawalHandler
 // @dev Contract to handle creation, execution and cancellation of withdrawals
-contract WithdrawalHandler is ReentrancyGuard, FundReceiver, OracleModule {
+contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
+    DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     WithdrawalStore public immutable withdrawalStore;
     MarketStore public immutable marketStore;
@@ -34,15 +35,14 @@ contract WithdrawalHandler is ReentrancyGuard, FundReceiver, OracleModule {
         MarketStore _marketStore,
         Oracle _oracle,
         FeeReceiver _feeReceiver
-    ) FundReceiver(_roleStore, _dataStore) {
+    ) RoleModule(_roleStore) {
+        dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         withdrawalStore = _withdrawalStore;
         marketStore = _marketStore;
         oracle = _oracle;
         feeReceiver = _feeReceiver;
     }
-
-    receive() external payable {}
 
     // @dev creates a withdrawal in the withdrawal store
     // @param account the withdrawing account

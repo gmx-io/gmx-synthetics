@@ -74,15 +74,15 @@ library DecreaseOrderUtils {
         if (result.outputAmount > 0 && result.pnlAmountForUser > 0) {
             MarketToken(payable(order.market())).transferOut(
                 result.outputToken,
-                result.outputAmount,
                 order.receiver(),
+                result.outputAmount,
                 order.shouldUnwrapNativeToken()
             );
 
             MarketToken(payable(order.market())).transferOut(
                 result.pnlToken,
-                result.pnlAmountForUser,
                 order.receiver(),
+                result.pnlAmountForUser,
                 order.shouldUnwrapNativeToken()
             );
 
@@ -92,8 +92,8 @@ library DecreaseOrderUtils {
         if (order.swapPath().length == 0) {
             MarketToken(payable(order.market())).transferOut(
                 result.outputToken,
-                result.outputAmount,
                 order.receiver(),
+                result.outputAmount,
                 order.shouldUnwrapNativeToken()
             );
         } else {
@@ -178,8 +178,8 @@ library DecreaseOrderUtils {
 
         MarketToken(payable(order.market())).transferOut(
             result.outputToken,
-            result.outputAmount,
             order.receiver(),
+            result.outputAmount,
             order.shouldUnwrapNativeToken()
         );
     }

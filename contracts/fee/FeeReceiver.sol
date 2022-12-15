@@ -25,10 +25,10 @@ contract FeeReceiver is Bank {
 
     function withdrawFees(
         address token,
-        uint256 amount,
-        address receiver
+        address receiver,
+        uint256 amount
     ) external onlyFeeKeeper {
-        _transferOut(token, amount, receiver);
+        _transferOut(token, receiver, amount);
         emit FeesWithdrawn(token, amount, receiver);
     }
 }

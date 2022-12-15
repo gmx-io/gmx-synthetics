@@ -51,11 +51,12 @@ import "./Router.sol";
  * - Order keepers would bundle the signature and price data for token A
  * then execute the order
  */
-contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
+contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     using SafeERC20 for IERC20;
     using Order for Order.Props;
 
     Router public immutable router;
+    DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     DepositHandler public immutable depositHandler;
     WithdrawalHandler public immutable withdrawalHandler;
@@ -80,8 +81,9 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
         WithdrawalStore _withdrawalStore,
         OrderStore _orderStore,
         IReferralStorage _referralStorage
-    ) FundReceiver(_roleStore, _dataStore) {
+    ) RoleModule(_roleStore) {
         router = _router;
+        dataStore = _dataStore;
         eventEmitter = _eventEmitter;
 
         depositHandler = _depositHandler;
@@ -94,9 +96,6 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, FundReceiver {
 
         referralStorage = _referralStorage;
     }
-
-    // @dev Fallback function that allows the contract to receive Ether
-    receive() external payable {}
 
     // @dev Wraps the specified amount of native tokens into WNT then sends the WNT to the specified address
     function sendWnt(address receiver, uint256 amount) external payable nonReentrant {
