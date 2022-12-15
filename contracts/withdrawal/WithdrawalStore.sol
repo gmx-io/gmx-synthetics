@@ -31,6 +31,12 @@ contract WithdrawalStore is StrictBank {
         withdrawalKeys.remove(key);
     }
 
+    // @dev check if a withdrawal exists
+    // @param key the key of the withdrawal to check
+    function contains(bytes32 key) external view returns (bool) {
+        return withdrawalKeys.contains(key);
+    }
+
     // @dev get a withdrawal from the store
     // @param key the key of the withdrawal
     // @return the withdrawal for the key

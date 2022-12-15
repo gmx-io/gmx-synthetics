@@ -37,6 +37,12 @@ contract OrderStore is StrictBank {
         orderKeys.remove(key);
     }
 
+    // @dev check if an order exists
+    // @param key the key of the order to check
+    function contains(bytes32 key) external view returns (bool) {
+        return orderKeys.contains(key);
+    }
+
     // @dev get an order from the store
     // @param key the key of the order
     // @return the order values
