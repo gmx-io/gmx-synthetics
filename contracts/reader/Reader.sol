@@ -10,14 +10,6 @@ import "../market/MarketStore.sol";
 // @title Reader
 // @dev Library for read functions
 contract Reader {
-    function getPoolAmount(DataStore dataStore, address market, address token) external view returns (uint256) {
-        return MarketUtils.getPoolAmount(dataStore, market, token);
-    }
-
-    function getSwapImpactPoolAmount(DataStore dataStore, address market, address token) external view returns (uint256) {
-        return MarketUtils.getSwapImpactPoolAmount(dataStore, market, token);
-    }
-
     function getMarkets(MarketStore marketStore, uint256 start, uint256 end) external view returns (Market.Props[] memory) {
         uint256 marketCount = marketStore.getMarketCount();
         if (start >= marketCount) {
