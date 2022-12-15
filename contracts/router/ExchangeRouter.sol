@@ -53,6 +53,8 @@ import "./Router.sol";
  */
 contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     using SafeERC20 for IERC20;
+    using Deposit for Deposit.Props;
+    using Withdrawal for Withdrawal.Props;
     using Order for Order.Props;
 
     Router public immutable router;
@@ -61,6 +63,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     DepositHandler public immutable depositHandler;
     WithdrawalHandler public immutable withdrawalHandler;
     OrderHandler public immutable orderHandler;
+    MarketStore public immutable marketStore;
     DepositStore public immutable depositStore;
     WithdrawalStore public immutable withdrawalStore;
     OrderStore public immutable orderStore;
@@ -77,6 +80,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         DepositHandler _depositHandler,
         WithdrawalHandler _withdrawalHandler,
         OrderHandler _orderHandler,
+        MarketStore _marketStore,
         DepositStore _depositStore,
         WithdrawalStore _withdrawalStore,
         OrderStore _orderStore,
@@ -90,6 +94,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         withdrawalHandler = _withdrawalHandler;
         orderHandler = _orderHandler;
 
+        marketStore = _marketStore;
         depositStore = _depositStore;
         withdrawalStore = _withdrawalStore;
         orderStore = _orderStore;
@@ -128,6 +133,28 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         );
     }
 
+    function cancelDeposit(bytes32 key) external payable nonReentrant {
+        uint256 startingGas = gasleft();
+
+        FeatureUtils.validateFeature(dataStore, Keys.cancelDepositFeatureKey(address(this)));
+
+        Deposit.Props memory deposit = depositStore.get(key);
+        require(deposit.account() == msg.sender, "ExchangeRouter: forbidden");
+
+        _validateRequestCancellation(deposit.updatedAtBlock(), "ExchangeRouter: deposit not yet expired");
+
+        DepositUtils.cancelDeposit(
+            dataStore,
+            eventEmitter,
+            depositStore,
+            marketStore,
+            key,
+            msg.sender,
+            startingGas,
+            "USER_INITIATED_CANCEL"
+        );
+    }
+
     /**
      * @dev Creates a new withdrawal with the given withdrawal parameters. The withdrawal is created by
      * calling the `createWithdrawal()` function on the withdrawal handler contract.
@@ -143,6 +170,27 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         return withdrawalHandler.createWithdrawal(
             account,
             params
+        );
+    }
+
+    function cancelWithdrawal(bytes32 key) external payable nonReentrant {
+        uint256 startingGas = gasleft();
+
+        FeatureUtils.validateFeature(dataStore, Keys.cancelWithdrawalFeatureKey(address(this)));
+
+        Withdrawal.Props memory withdrawal = withdrawalStore.get(key);
+        require(withdrawal.account() == msg.sender, "ExchangeRouter: forbidden");
+
+        _validateRequestCancellation(withdrawal.updatedAtBlock(), "ExchangeRouter: withdrawal not yet expired");
+
+        WithdrawalUtils.cancelWithdrawal(
+            dataStore,
+            eventEmitter,
+            withdrawalStore,
+            key,
+            msg.sender,
+            startingGas,
+            "USER_INITIATED_CANCEL"
         );
     }
 
@@ -230,15 +278,14 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     function cancelOrder(bytes32 key) external payable nonReentrant {
         uint256 startingGas = gasleft();
 
-        OrderStore _orderStore = orderStore;
-        Order.Props memory order = _orderStore.get(key);
+        Order.Props memory order = orderStore.get(key);
 
         FeatureUtils.validateFeature(dataStore, Keys.cancelOrderFeatureKey(address(this), uint256(order.orderType())));
 
         require(order.account() == msg.sender, "ExchangeRouter: forbidden");
 
         if (OrderBaseUtils.isMarketOrder(order.orderType())) {
-            revert("ExchangeRouter: invalid orderType");
+            _validateRequestCancellation(order.updatedAtBlock(), "ExchangeRouter: order not yet expired");
         }
 
         OrderUtils.cancelOrder(
@@ -307,6 +354,13 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
                 account,
                 receiver
             );
+        }
+    }
+
+    function _validateRequestCancellation(uint256 createdAtBlock, string memory error) internal view {
+        uint256 requestExpirationAge = dataStore.getUint(Keys.REQUEST_EXPIRATION_AGE);
+        if (Chain.currentBlockNumber() - createdAtBlock < requestExpirationAge) {
+            revert(error);
         }
     }
 }
