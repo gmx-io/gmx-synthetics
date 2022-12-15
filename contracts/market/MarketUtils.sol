@@ -110,8 +110,8 @@ library MarketUtils {
         int256 shortCollateralFundingPerSizeForShorts;
 
         uint256 fundingAmountPerSizeForLongCollateralForLongs;
-        uint256 fundingAmountPerSizeForShortCollateralForLongs;
         uint256 fundingAmountPerSizeForLongCollateralForShorts;
+        uint256 fundingAmountPerSizeForShortCollateralForLongs;
         uint256 fundingAmountPerSizeForShortCollateralForShorts;
     }
 
@@ -644,22 +644,52 @@ library MarketUtils {
         // will give an amount in number of tokens which may be quite a small value and could become zero after being divided by longOpenInterest
         // the result will be the amount in number of tokens multiplied by Precision.FLOAT_PRECISION per 1 USD of size
         cache.fps.fundingAmountPerSizeForLongCollateralForLongs = getPerSizeValue(cache.fundingUsdForLongCollateral / prices.longTokenPrice.max, cache.oi.longOpenInterest);
-        cache.fps.fundingAmountPerSizeForShortCollateralForLongs = getPerSizeValue(cache.fundingUsdForShortCollateral / prices.shortTokenPrice.max, cache.oi.longOpenInterest);
         cache.fps.fundingAmountPerSizeForLongCollateralForShorts = getPerSizeValue(cache.fundingUsdForLongCollateral / prices.longTokenPrice.max, cache.oi.shortOpenInterest);
+        cache.fps.fundingAmountPerSizeForShortCollateralForLongs = getPerSizeValue(cache.fundingUsdForShortCollateral / prices.shortTokenPrice.max, cache.oi.longOpenInterest);
         cache.fps.fundingAmountPerSizeForShortCollateralForShorts = getPerSizeValue(cache.fundingUsdForShortCollateral / prices.shortTokenPrice.max, cache.oi.shortOpenInterest);
 
         if (cache.oi.longOpenInterest > cache.oi.shortOpenInterest) {
             // longs pay shorts
-            cache.fps.longCollateralFundingPerSizeForLongs += cache.fps.fundingAmountPerSizeForLongCollateralForLongs.toInt256();
-            cache.fps.shortCollateralFundingPerSizeForLongs += cache.fps.fundingAmountPerSizeForShortCollateralForLongs.toInt256();
-            cache.fps.shortCollateralFundingPerSizeForLongs -= cache.fps.fundingAmountPerSizeForLongCollateralForShorts.toInt256();
-            cache.fps.shortCollateralFundingPerSizeForShorts -= cache.fps.fundingAmountPerSizeForShortCollateralForShorts.toInt256();
+            cache.fps.longCollateralFundingPerSizeForLongs = Calc.boundedAdd(
+                cache.fps.longCollateralFundingPerSizeForLongs,
+                cache.fps.fundingAmountPerSizeForLongCollateralForLongs.toInt256()
+            );
+
+            cache.fps.longCollateralFundingPerSizeForShorts = Calc.boundedSub(
+                cache.fps.longCollateralFundingPerSizeForShorts,
+                cache.fps.fundingAmountPerSizeForLongCollateralForShorts.toInt256()
+            );
+
+            cache.fps.shortCollateralFundingPerSizeForLongs = Calc.boundedAdd(
+                cache.fps.shortCollateralFundingPerSizeForLongs,
+                cache.fps.fundingAmountPerSizeForShortCollateralForLongs.toInt256()
+            );
+
+            cache.fps.shortCollateralFundingPerSizeForShorts = Calc.boundedSub(
+                cache.fps.shortCollateralFundingPerSizeForShorts,
+                cache.fps.fundingAmountPerSizeForShortCollateralForShorts.toInt256()
+            );
         } else {
             // shorts pay longs
-            cache.fps.longCollateralFundingPerSizeForLongs -= cache.fps.fundingAmountPerSizeForLongCollateralForLongs.toInt256();
-            cache.fps.shortCollateralFundingPerSizeForLongs -= cache.fps.fundingAmountPerSizeForShortCollateralForLongs.toInt256();
-            cache.fps.shortCollateralFundingPerSizeForLongs += cache.fps.fundingAmountPerSizeForLongCollateralForShorts.toInt256();
-            cache.fps.shortCollateralFundingPerSizeForShorts += cache.fps.fundingAmountPerSizeForShortCollateralForShorts.toInt256();
+            cache.fps.longCollateralFundingPerSizeForLongs = Calc.boundedSub(
+                cache.fps.longCollateralFundingPerSizeForLongs,
+                cache.fps.fundingAmountPerSizeForLongCollateralForLongs.toInt256()
+            );
+
+            cache.fps.longCollateralFundingPerSizeForShorts = Calc.boundedAdd(
+                cache.fps.longCollateralFundingPerSizeForShorts,
+                cache.fps.fundingAmountPerSizeForLongCollateralForShorts.toInt256()
+            );
+
+            cache.fps.shortCollateralFundingPerSizeForLongs = Calc.boundedSub(
+                cache.fps.shortCollateralFundingPerSizeForLongs,
+                cache.fps.fundingAmountPerSizeForShortCollateralForLongs.toInt256()
+            );
+
+            cache.fps.shortCollateralFundingPerSizeForShorts = Calc.boundedAdd(
+                cache.fps.shortCollateralFundingPerSizeForShorts,
+                cache.fps.fundingAmountPerSizeForShortCollateralForShorts.toInt256()
+            );
         }
 
         return (
