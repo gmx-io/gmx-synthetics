@@ -139,6 +139,9 @@ library Keys {
     // @dev key for affiliate reward
     bytes32 public constant AFFILIATE_REWARD = keccak256(abi.encode("AFFILIATE_REWARD"));
 
+    string public constant EMPTY_PRICE_ERROR = "EMPTY_PRICE_ERROR";
+    bytes32 public constant EMPTY_PRICE_ERROR_KEY = keccak256(abi.encode(EMPTY_PRICE_ERROR));
+
     string public constant EMPTY_POSITION_ERROR = "EMPTY_POSITION_ERROR";
     bytes32 public constant EMPTY_POSITION_ERROR_KEY = keccak256(abi.encode(EMPTY_POSITION_ERROR));
 

@@ -124,6 +124,7 @@ contract OrderHandler is ReentrancyGuard, FundReceiver, OracleModule {
             // this can happen when calling transfers for external tokens, eth transfers, callbacks etc
             // because of that, errors from external calls should be separately caught
             if (
+                reasonKey == Keys.EMPTY_PRICE_ERROR_KEY ||
                 reasonKey == Keys.FROZEN_ORDER_ERROR_KEY ||
                 reasonKey == Keys.EMPTY_POSITION_ERROR_KEY
             ) {

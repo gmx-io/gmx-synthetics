@@ -83,6 +83,11 @@ contract DepositHandler is ReentrancyGuard, FundReceiver, OracleModule {
             startingGas
         ) {
         } catch Error(string memory reason) {
+            bytes32 reasonKey = keccak256(abi.encode(reason));
+            if (reasonKey == Keys.EMPTY_PRICE_ERROR_KEY) {
+                revert(reason);
+            }
+
             DepositUtils.cancelDeposit(
                 dataStore,
                 eventEmitter,
