@@ -105,4 +105,24 @@ contract Reader {
             maximize
         );
     }
+
+    function getOpenInterestWithPnl(
+        DataStore dataStore,
+        address market,
+        address longToken,
+        address shortToken,
+        Price.Props memory indexTokenPrice,
+        bool isLong,
+        bool maximize
+    ) external view returns (uint256) {
+        return MarketUtils.getOpenInterestWithPnl(
+            dataStore,
+            market,
+            longToken,
+            shortToken,
+            indexTokenPrice,
+            isLong,
+            maximize
+        );
+    }
 }
