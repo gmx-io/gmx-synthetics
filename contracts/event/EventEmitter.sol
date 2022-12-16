@@ -22,6 +22,7 @@ contract EventEmitter is RoleModule {
     // @param isLong whether the position is long or short
     // @param executionPrice the price the position increase was executed at
     // @param sizeDeltaUsd the amount of size the position was increased by
+    // @param sizeDeltaInTokens the amount of size the position was increased by in tokens
     // @param collateralDeltaAmount the amount of collateral that was deposited into the position
     event PositionIncrease(
         bytes32 key,
@@ -31,6 +32,7 @@ contract EventEmitter is RoleModule {
         bool isLong,
         uint256 executionPrice,
         uint256 sizeDeltaInUsd,
+        uint256 sizeDeltaInTokens,
         int256 collateralDeltaAmount
     );
 
@@ -41,9 +43,9 @@ contract EventEmitter is RoleModule {
     // @param isLong whether the position is long or short
     // @param executionPrice the price the position decrease was executed at
     // @param sizeDeltaUsd the amount of size the position was decreased by
+    // @param sizeDeltaInTokens the amount of size the position was decreased by in tokens
     // @param collateralDeltaAmount the amount of collateral that was withdrawn from the position
     // @param positionPnlUsd the pnl realized
-    // @param pnlAmountForPool the pnl amount for the pool
     // @param remainingCollateralAmount the amount of collateral remaining
     // @param outputAmount the amount sent to the user
     event PositionDecrease(
@@ -54,8 +56,8 @@ contract EventEmitter is RoleModule {
         bool isLong,
         uint256 executionPrice,
         uint256 sizeDeltaInUsd,
+        uint256 sizeDeltaInTokens,
         int256 collateralDeltaAmount,
-        int256 positionPnlUsd,
         int256 pnlAmountForPool,
         int256 remainingCollateralAmount,
         uint256 outputAmount
@@ -406,6 +408,7 @@ contract EventEmitter is RoleModule {
         bool isLong,
         uint256 executionPrice,
         uint256 sizeDeltaUsd,
+        uint256 sizeDeltaInTokens,
         int256 collateralDeltaAmount
     ) external onlyController {
         emit PositionIncrease(
@@ -416,6 +419,7 @@ contract EventEmitter is RoleModule {
             isLong,
             executionPrice,
             sizeDeltaUsd,
+            sizeDeltaInTokens,
             collateralDeltaAmount
         );
     }
@@ -440,8 +444,8 @@ contract EventEmitter is RoleModule {
         bool isLong,
         uint256 executionPrice,
         uint256 sizeDeltaUsd,
+        uint256 sizeDeltaInTokens,
         int256 collateralDeltaAmount,
-        int256 positionPnlUsd,
         int256 pnlAmountForPool,
         int256 remainingCollateralAmount,
         uint256 outputAmount
@@ -454,8 +458,8 @@ contract EventEmitter is RoleModule {
             isLong,
             executionPrice,
             sizeDeltaUsd,
+            sizeDeltaInTokens,
             collateralDeltaAmount,
-            positionPnlUsd,
             pnlAmountForPool,
             remainingCollateralAmount,
             outputAmount

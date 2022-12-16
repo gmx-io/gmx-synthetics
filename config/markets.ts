@@ -50,6 +50,10 @@ const config: {
       tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
       reserveFactor: [5, 1],
     },
+    {
+      tokens: ["SOL", "WETH", "USDC"],
+      reserveFactor: [5, 1],
+    },
   ],
   localhost: [
     {

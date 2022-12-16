@@ -110,6 +110,10 @@ const config: {
       decimals: 6,
       transferGasLimit: 200 * 1000,
     },
+    SOL: {
+      synthetic: true,
+      decimals: 18,
+    },
   },
   localhost: {
     WETH: {

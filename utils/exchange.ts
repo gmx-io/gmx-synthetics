@@ -10,7 +10,7 @@ export async function executeWithOracleParams(fixture, overrides) {
 
   const block = await provider.getBlock(oracleBlockNumber.toNumber());
 
-  const oracleParams = await getOracleParams({
+  const args = {
     oracleSalt,
     oracleBlockNumbers: Array(tokens.length).fill(block.number, 0, tokens.length),
     oracleTimestamps: Array(tokens.length).fill(block.timestamp, 0, tokens.length),
@@ -23,7 +23,10 @@ export async function executeWithOracleParams(fixture, overrides) {
     maxPrices,
     signers,
     priceFeedTokens: [],
-  });
+  };
+  console.log("args", args);
+  const oracleParams = await getOracleParams(args);
+  console.log("oracleParams", oracleParams);
 
   await logGasUsage({
     tx: execute(key, oracleParams),

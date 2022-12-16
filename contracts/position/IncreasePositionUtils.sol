@@ -276,6 +276,7 @@ library IncreasePositionUtils {
             position.isLong(),
             cache.executionPrice,
             params.order.sizeDeltaUsd(),
+            cache.sizeDeltaInTokens,
             cache.collateralDeltaAmount
         );
 

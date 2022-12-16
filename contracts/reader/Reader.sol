@@ -6,6 +6,8 @@ import "../data/Keys.sol";
 import "../market/MarketUtils.sol";
 import "../market/Market.sol";
 import "../market/MarketStore.sol";
+import "../position/Position.sol";
+import "../position/PositionUtils.sol";
 
 // @title Reader
 // @dev Library for read functions
@@ -37,6 +39,25 @@ contract Reader {
         return markets;
     }
 
+    function getAccountPositions(PositionStore positionStore, address account, uint256 start, uint256 end) external view returns (Position.Props[] memory) {
+        uint256 positionCount = positionStore.getPositionCount();
+        if (start >= positionCount) {
+            return new Position.Props[](0);
+        }
+        if (end > positionCount) {
+            end = positionCount;
+        }
+        bytes32[] memory positionKeys = positionStore.getAccountPositionKeys(account, start, end);
+        Position.Props[] memory positions = new Position.Props[](positionKeys.length);
+        for (uint256 i = 0; i < positionKeys.length; i++) {
+            bytes32 positionKey = positionKeys[i];
+            Position.Props memory position = positionStore.get(positionKey);
+            positions[i] = position;
+        }
+
+        return positions;
+    }
+
     function getMarketTokenPrice(
         DataStore dataStore,
         Market.Props memory market,
@@ -51,6 +72,44 @@ contract Reader {
             longTokenPrice,
             shortTokenPrice,
             indexTokenPrice,
+            maximize
+        );
+    }
+
+    function getNetPnl(
+        DataStore dataStore,
+        address market,
+        address longToken,
+        address shortToken,
+        Price.Props memory indexTokenPrice,
+        bool maximize
+    ) external view returns (int256) {
+        return MarketUtils.getNetPnl(
+            dataStore,
+            market,
+            longToken,
+            shortToken,
+            indexTokenPrice,
+            maximize
+        );
+    }
+
+    function getPnl(
+        DataStore dataStore,
+        address market,
+        address longToken,
+        address shortToken,
+        Price.Props memory indexTokenPrice,
+        bool isLong,
+        bool maximize
+    ) internal view returns (int256) {
+        return MarketUtils.getPnl(
+            dataStore,
+            market,
+            longToken,
+            shortToken,
+            indexTokenPrice,
+            isLong,
             maximize
         );
     }

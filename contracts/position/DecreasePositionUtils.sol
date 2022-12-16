@@ -413,9 +413,9 @@ library DecreasePositionUtils {
             params.order.isLong(),
             values.executionPrice,
             params.adjustedSizeDeltaUsd,
+            values.sizeDeltaInTokens,
             params.order.initialCollateralDeltaAmount().toInt256(),
             values.pnlAmountForPool,
-            values.positionPnlUsd,
             values.remainingCollateralAmount,
             values.outputAmount
         );
