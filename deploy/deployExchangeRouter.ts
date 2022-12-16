@@ -19,7 +19,6 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const orderStore = await get("OrderStore");
   const referralStorage = await get("ReferralStorage");
   const gasUtils = await get("GasUtils");
-  const orderUtils = await get("OrderUtils");
 
   const deployArgs = [
     router.address,
@@ -41,7 +40,6 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     args: deployArgs,
     libraries: {
       GasUtils: gasUtils.address,
-      OrderUtils: orderUtils.address,
     },
   });
 

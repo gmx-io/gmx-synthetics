@@ -108,7 +108,7 @@ library OrderUtils {
 
     // @dev executes an order
     // @param params OrderBaseUtils.ExecuteOrderParams
-    function executeOrder(OrderBaseUtils.ExecuteOrderParams memory params) internal {
+    function executeOrder(OrderBaseUtils.ExecuteOrderParams memory params) external {
         OrderBaseUtils.validateNonEmptyOrder(params.order);
 
         OrderBaseUtils.setExactOrderPrice(
@@ -174,7 +174,7 @@ library OrderUtils {
         address keeper,
         uint256 startingGas,
         bytes memory reason
-    ) internal {
+    ) external {
         Order.Props memory order = orderStore.get(key);
         OrderBaseUtils.validateNonEmptyOrder(order);
 
@@ -221,7 +221,7 @@ library OrderUtils {
         address keeper,
         uint256 startingGas,
         bytes memory reason
-    ) internal {
+    ) external {
         Order.Props memory order = orderStore.get(key);
         OrderBaseUtils.validateNonEmptyOrder(order);
 

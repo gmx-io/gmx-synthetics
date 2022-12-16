@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+import "./ExchangeUtils.sol";
 import "../role/RoleModule.sol";
 import "../feature/FeatureUtils.sol";
 
@@ -20,6 +21,8 @@ import "../oracle/OracleModule.sol";
 // @title WithdrawalHandler
 // @dev Contract to handle creation, execution and cancellation of withdrawals
 contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
+    using Withdrawal for Withdrawal.Props;
+
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     WithdrawalStore public immutable withdrawalStore;
@@ -60,6 +63,33 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
             marketStore,
             account,
             params
+        );
+    }
+
+    function cancelWithdrawal(
+        bytes32 key,
+        Withdrawal.Props memory withdrawal
+    ) external nonReentrant onlyController {
+        uint256 startingGas = gasleft();
+
+        DataStore _dataStore = dataStore;
+
+        FeatureUtils.validateFeature(_dataStore, Keys.cancelWithdrawalFeatureKey(address(this)));
+
+        ExchangeUtils.validateRequestCancellation(
+            _dataStore,
+            withdrawal.updatedAtBlock(),
+            "ExchangeRouter: withdrawal not yet expired"
+        );
+
+        WithdrawalUtils.cancelWithdrawal(
+            _dataStore,
+            eventEmitter,
+            withdrawalStore,
+            key,
+            withdrawal.account(),
+            startingGas,
+            "USER_INITIATED_CANCEL"
         );
     }
 

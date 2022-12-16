@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+import "./ExchangeUtils.sol";
 import "../role/RoleModule.sol";
 import "../feature/FeatureUtils.sol";
 import "../callback/CallbackUtils.sol";
@@ -94,6 +95,92 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
             marketStore,
             account,
             params
+        );
+    }
+
+    /**
+     * @dev Updates the given order with the specified size delta, acceptable price, and trigger price.
+     * The `updateOrder()` feature must be enabled for the given order type. The caller must be the owner
+     * of the order, and the order must not be a market order. The size delta, trigger price, and
+     * acceptable price are updated on the order, and the order is unfrozen. Any additional WNT that is
+     * transferred to the contract is added to the order's execution fee. The updated order is then saved
+     * in the order store, and an `OrderUpdated` event is emitted.
+     *
+     * @param key The unique ID of the order to be updated
+     * @param sizeDeltaUsd The new size delta for the order
+     * @param acceptablePrice The new acceptable price for the order
+     * @param triggerPrice The new trigger price for the order
+     */
+    function updateOrder(
+        bytes32 key,
+        uint256 sizeDeltaUsd,
+        uint256 acceptablePrice,
+        uint256 triggerPrice,
+        Order.Props memory order
+    ) external payable nonReentrant {
+        OrderStore _orderStore = orderStore;
+
+        FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureKey(address(this), uint256(order.orderType())));
+
+        if (OrderBaseUtils.isMarketOrder(order.orderType())) {
+            revert("OrderHandler: invalid orderType");
+        }
+
+        order.setSizeDeltaUsd(sizeDeltaUsd);
+        order.setTriggerPrice(triggerPrice);
+        order.setAcceptablePrice(acceptablePrice);
+        order.setIsFrozen(false);
+
+        // allow topping up of executionFee as partially filled or frozen orders
+        // will have their executionFee reduced
+        address wnt = TokenUtils.wnt(dataStore);
+        uint256 receivedWnt = _orderStore.recordTransferIn(wnt);
+        order.setExecutionFee(order.executionFee() + receivedWnt);
+
+        uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
+        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee());
+
+        order.touch();
+        _orderStore.set(key, order);
+
+        eventEmitter.emitOrderUpdated(key, sizeDeltaUsd, triggerPrice, acceptablePrice);
+    }
+
+    /**
+     * @dev Cancels the given order. The `cancelOrder()` feature must be enabled for the given order
+     * type. The caller must be the owner of the order, and the order must not be a market order. The
+     * order is cancelled by calling the `cancelOrder()` function in the `OrderUtils` contract. This
+     * function also records the starting gas amount and the reason for cancellation, which is passed to
+     * the `cancelOrder()` function.
+     *
+     * @param key The unique ID of the order to be cancelled
+     */
+    function cancelOrder(
+        bytes32 key,
+        Order.Props memory order
+    ) external nonReentrant onlyController {
+        uint256 startingGas = gasleft();
+
+        DataStore _dataStore = dataStore;
+
+        FeatureUtils.validateFeature(_dataStore, Keys.cancelOrderFeatureKey(address(this), uint256(order.orderType())));
+
+        if (OrderBaseUtils.isMarketOrder(order.orderType())) {
+            ExchangeUtils.validateRequestCancellation(
+                _dataStore,
+                order.updatedAtBlock(),
+                "ExchangeRouter: order not yet expired"
+            );
+        }
+
+        OrderUtils.cancelOrder(
+            dataStore,
+            eventEmitter,
+            orderStore,
+            key,
+            order.account(),
+            startingGas,
+            "USER_INITIATED_CANCEL"
         );
     }
 

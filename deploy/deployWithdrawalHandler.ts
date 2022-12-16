@@ -12,6 +12,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { address: marketStoreAddress } = await get("MarketStore");
   const { address: oracleAddress } = await get("Oracle");
   const { address: feeReceiverAddress } = await get("FeeReceiver");
+  const { address: withdrawalUtilsAddress } = await get("WithdrawalUtils");
   const { address: gasUtilsAddress } = await get("GasUtils");
 
   const { address } = await deploy("WithdrawalHandler", {
@@ -27,6 +28,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
       feeReceiverAddress,
     ],
     libraries: {
+      WithdrawalUtils: withdrawalUtilsAddress,
       GasUtils: gasUtilsAddress,
     },
   });
@@ -43,6 +45,7 @@ func.dependencies = [
   "MarketStore",
   "Oracle",
   "FeeReceiver",
+  "WithdrawalUtils",
   "GasUtils",
 ];
 export default func;

@@ -120,7 +120,7 @@ library DepositUtils {
         MarketStore marketStore,
         address account,
         CreateDepositParams memory params
-    ) internal returns (bytes32) {
+    ) external returns (bytes32) {
         Market.Props memory market = MarketUtils.getMarket(marketStore, params.market);
 
         uint256 longTokenAmount = depositStore.recordTransferIn(market.longToken);
@@ -172,7 +172,7 @@ library DepositUtils {
 
     // @dev executes a deposit
     // @param params ExecuteDepositParams
-    function executeDeposit(ExecuteDepositParams memory params) internal {
+    function executeDeposit(ExecuteDepositParams memory params) external {
         Deposit.Props memory deposit = params.depositStore.get(params.key);
         require(deposit.account() != address(0), "DepositUtils: empty deposit");
 
@@ -286,7 +286,7 @@ library DepositUtils {
         address keeper,
         uint256 startingGas,
         bytes memory reason
-    ) internal {
+    ) external {
         Deposit.Props memory deposit = depositStore.get(key);
         require(deposit.account() != address(0), "DepositUtils: empty deposit");
 

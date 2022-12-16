@@ -134,25 +134,10 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     }
 
     function cancelDeposit(bytes32 key) external payable nonReentrant {
-        uint256 startingGas = gasleft();
-
-        FeatureUtils.validateFeature(dataStore, Keys.cancelDepositFeatureKey(address(this)));
-
         Deposit.Props memory deposit = depositStore.get(key);
         require(deposit.account() == msg.sender, "ExchangeRouter: forbidden");
 
-        _validateRequestCancellation(deposit.updatedAtBlock(), "ExchangeRouter: deposit not yet expired");
-
-        DepositUtils.cancelDeposit(
-            dataStore,
-            eventEmitter,
-            depositStore,
-            marketStore,
-            key,
-            msg.sender,
-            startingGas,
-            "USER_INITIATED_CANCEL"
-        );
+        depositHandler.cancelDeposit(key, deposit);
     }
 
     /**
@@ -174,24 +159,10 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     }
 
     function cancelWithdrawal(bytes32 key) external payable nonReentrant {
-        uint256 startingGas = gasleft();
-
-        FeatureUtils.validateFeature(dataStore, Keys.cancelWithdrawalFeatureKey(address(this)));
-
         Withdrawal.Props memory withdrawal = withdrawalStore.get(key);
         require(withdrawal.account() == msg.sender, "ExchangeRouter: forbidden");
 
-        _validateRequestCancellation(withdrawal.updatedAtBlock(), "ExchangeRouter: withdrawal not yet expired");
-
-        WithdrawalUtils.cancelWithdrawal(
-            dataStore,
-            eventEmitter,
-            withdrawalStore,
-            key,
-            msg.sender,
-            startingGas,
-            "USER_INITIATED_CANCEL"
-        );
+        withdrawalHandler.cancelWithdrawal(key, withdrawal);
     }
 
     /**
@@ -235,35 +206,10 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         uint256 acceptablePrice,
         uint256 triggerPrice
     ) external payable nonReentrant {
-        OrderStore _orderStore = orderStore;
-        Order.Props memory order = _orderStore.get(key);
-
-        FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureKey(address(this), uint256(order.orderType())));
-
+        Order.Props memory order = orderStore.get(key);
         require(order.account() == msg.sender, "ExchangeRouter: forbidden");
 
-        if (OrderBaseUtils.isMarketOrder(order.orderType())) {
-            revert("ExchangeRouter: invalid orderType");
-        }
-
-        order.setSizeDeltaUsd(sizeDeltaUsd);
-        order.setTriggerPrice(triggerPrice);
-        order.setAcceptablePrice(acceptablePrice);
-        order.setIsFrozen(false);
-
-        // allow topping up of executionFee as partially filled or frozen orders
-        // will have their executionFee reduced
-        address wnt = TokenUtils.wnt(dataStore);
-        uint256 receivedWnt = _orderStore.recordTransferIn(wnt);
-        order.setExecutionFee(order.executionFee() + receivedWnt);
-
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee());
-
-        order.touch();
-        _orderStore.set(key, order);
-
-        eventEmitter.emitOrderUpdated(key, sizeDeltaUsd, triggerPrice, acceptablePrice);
+        orderHandler.updateOrder(key, sizeDeltaUsd, acceptablePrice, triggerPrice, order);
     }
 
     /**
@@ -276,27 +222,10 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
      * @param key The unique ID of the order to be cancelled
      */
     function cancelOrder(bytes32 key) external payable nonReentrant {
-        uint256 startingGas = gasleft();
-
         Order.Props memory order = orderStore.get(key);
-
-        FeatureUtils.validateFeature(dataStore, Keys.cancelOrderFeatureKey(address(this), uint256(order.orderType())));
-
         require(order.account() == msg.sender, "ExchangeRouter: forbidden");
 
-        if (OrderBaseUtils.isMarketOrder(order.orderType())) {
-            _validateRequestCancellation(order.updatedAtBlock(), "ExchangeRouter: order not yet expired");
-        }
-
-        OrderUtils.cancelOrder(
-            dataStore,
-            eventEmitter,
-            orderStore,
-            key,
-            msg.sender,
-            startingGas,
-            "USER_INITIATED_CANCEL"
-        );
+        orderHandler.cancelOrder(key, order);
     }
 
     /**
@@ -354,13 +283,6 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
                 account,
                 receiver
             );
-        }
-    }
-
-    function _validateRequestCancellation(uint256 createdAtBlock, string memory error) internal view {
-        uint256 requestExpirationAge = dataStore.getUint(Keys.REQUEST_EXPIRATION_AGE);
-        if (Chain.currentBlockNumber() - createdAtBlock < requestExpirationAge) {
-            revert(error);
         }
     }
 }

@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+import "./ExchangeUtils.sol";
 import "../role/RoleModule.sol";
 import "../event/EventEmitter.sol";
 import "../feature/FeatureUtils.sol";
@@ -21,6 +22,8 @@ import "../oracle/OracleModule.sol";
 // @title DepositHandler
 // @dev Contract to handle creation, execution and cancellation of deposits
 contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
+    using Deposit for Deposit.Props;
+
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     DepositStore public immutable depositStore;
@@ -61,6 +64,34 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
             marketStore,
             account,
             params
+        );
+    }
+
+    function cancelDeposit(
+        bytes32 key,
+        Deposit.Props memory deposit
+    ) external nonReentrant onlyController {
+        uint256 startingGas = gasleft();
+
+        DataStore _dataStore = dataStore;
+
+        FeatureUtils.validateFeature(_dataStore, Keys.cancelDepositFeatureKey(address(this)));
+
+        ExchangeUtils.validateRequestCancellation(
+            _dataStore,
+            deposit.updatedAtBlock(),
+            "ExchangeRouter: deposit not yet expired"
+        );
+
+        DepositUtils.cancelDeposit(
+            _dataStore,
+            eventEmitter,
+            depositStore,
+            marketStore,
+            key,
+            deposit.account(),
+            startingGas,
+            "USER_INITIATED_CANCEL"
         );
     }
 
