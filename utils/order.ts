@@ -99,7 +99,7 @@ export async function handleOrder(fixture, overrides = {}) {
 export async function executeLiquidation(fixture, overrides) {
   const { wnt, usdc } = fixture.contracts;
   const { account, market, collateralToken, isLong, gasUsageLabel } = overrides;
-  const { orderHandler } = fixture.contracts;
+  const { liquidationHandler } = fixture.contracts;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
   const tokenOracleTypes = overrides.tokenOracleTypes || [TOKEN_ORACLE_TYPES.DEFAULT, TOKEN_ORACLE_TYPES.DEFAULT];
   const precisions = overrides.precisions || [8, 18];
@@ -116,7 +116,7 @@ export async function executeLiquidation(fixture, overrides) {
     minPrices,
     maxPrices,
     execute: async (key, oracleParams) => {
-      return await orderHandler.executeLiquidation(
+      return await liquidationHandler.executeLiquidation(
         account,
         market.marketToken,
         collateralToken.address,

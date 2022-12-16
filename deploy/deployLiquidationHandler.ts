@@ -17,8 +17,9 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { address: referralStorageAddress } = await get("ReferralStorage");
   const { address: gasUtilsAddress } = await get("GasUtils");
   const { address: orderUtilsAddress } = await get("OrderUtils");
+  const { address: liquidationUtilsAddress } = await get("LiquidationUtils");
 
-  const { address } = await deploy("OrderHandler", {
+  const { address } = await deploy("LiquidationHandler", {
     from: deployer,
     log: true,
     args: [
@@ -36,13 +37,14 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     libraries: {
       GasUtils: gasUtilsAddress,
       OrderUtils: orderUtilsAddress,
+      LiquidationUtils: liquidationUtilsAddress,
     },
   });
 
   await grantRoleIfNotGranted(address, "CONTROLLER");
   await grantRoleIfNotGranted(address, "ORDER_KEEPER");
 };
-func.tags = ["OrderHandler"];
+func.tags = ["LiquidationHandler"];
 func.dependencies = [
   "RoleStore",
   "DataStore",
@@ -55,6 +57,7 @@ func.dependencies = [
   "FeeReceiver",
   "ReferralStorage",
   "GasUtils",
+  "LiquidationUtils",
   "OrderUtils",
 ];
 export default func;

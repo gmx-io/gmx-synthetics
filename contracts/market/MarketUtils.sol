@@ -1140,7 +1140,7 @@ library MarketUtils {
         uint256 prevPositionBorrowingFactor,
         uint256 nextPositionSizeInUsd,
         uint256 nextPositionBorrowingFactor
-    ) internal {
+    ) external {
         uint256 totalBorrowing = getNextTotalBorrowing(
             dataStore,
             market,

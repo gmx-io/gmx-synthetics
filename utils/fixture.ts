@@ -55,6 +55,8 @@ export async function deployFixture() {
   const depositHandler = await hre.ethers.getContract("DepositHandler");
   const withdrawalHandler = await hre.ethers.getContract("WithdrawalHandler");
   const orderHandler = await hre.ethers.getContract("OrderHandler");
+  const liquidationHandler = await hre.ethers.getContract("LiquidationHandler");
+  const adlHandler = await hre.ethers.getContract("AdlHandler");
   const router = await hre.ethers.getContract("Router");
   const exchangeRouter = await hre.ethers.getContract("ExchangeRouter");
   const feeReceiver = await hre.ethers.getContract("FeeReceiver");
@@ -109,6 +111,8 @@ export async function deployFixture() {
       depositHandler,
       withdrawalHandler,
       orderHandler,
+      liquidationHandler,
+      adlHandler,
       router,
       exchangeRouter,
       feeReceiver,

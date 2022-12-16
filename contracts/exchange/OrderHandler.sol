@@ -2,59 +2,14 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-
-import "./ExchangeUtils.sol";
-import "../role/RoleModule.sol";
-import "../feature/FeatureUtils.sol";
-import "../callback/CallbackUtils.sol";
-
-import "../adl/AdlUtils.sol";
-import "../liquidation/LiquidationUtils.sol";
-
-import "../market/Market.sol";
-import "../market/MarketStore.sol";
-import "../market/MarketToken.sol";
-
-import "../order/Order.sol";
-import "../order/OrderStore.sol";
-import "../order/OrderUtils.sol";
-
-import "../position/PositionStore.sol";
-import "../oracle/Oracle.sol";
-import "../oracle/OracleModule.sol";
-import "../event/EventEmitter.sol";
-
-import "../utils/Null.sol";
-import "../referral/IReferralStorage.sol";
+import "./BaseOrderHandler.sol";
 
 // @title OrderHandler
 // @dev Contract to handle creation, execution and cancellation of orders
-contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
+contract OrderHandler is BaseOrderHandler {
     using SafeCast for uint256;
     using Order for Order.Props;
     using Array for uint256[];
-
-    // @dev _ExecuteAdlCache struct used in executeAdl to avoid
-    // stack too deep errors
-    struct _ExecuteAdlCache {
-        uint256 startingGas;
-        uint256[] oracleBlockNumbers;
-        bytes32 key;
-        int256 pnlToPoolFactor;
-        int256 nextPnlToPoolFactor;
-        uint256 maxPnlFactorForWithdrawals;
-    }
-
-    DataStore public immutable dataStore;
-    EventEmitter public immutable eventEmitter;
-    MarketStore public immutable marketStore;
-    OrderStore public immutable orderStore;
-    PositionStore public immutable positionStore;
-    SwapHandler public immutable swapHandler;
-    Oracle public immutable oracle;
-    FeeReceiver public immutable feeReceiver;
-    IReferralStorage public immutable referralStorage;
 
     constructor(
         RoleStore _roleStore,
@@ -67,17 +22,18 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         SwapHandler _swapHandler,
         FeeReceiver _feeReceiver,
         IReferralStorage _referralStorage
-    ) RoleModule(_roleStore) {
-        dataStore = _dataStore;
-        eventEmitter = _eventEmitter;
-        marketStore = _marketStore;
-        orderStore = _orderStore;
-        positionStore = _positionStore;
-        oracle = _oracle;
-        swapHandler = _swapHandler;
-        feeReceiver = _feeReceiver;
-        referralStorage = _referralStorage;
-    }
+    ) BaseOrderHandler(
+        _roleStore,
+        _dataStore,
+        _eventEmitter,
+        _marketStore,
+        _orderStore,
+        _positionStore,
+        _oracle,
+        _swapHandler,
+        _feeReceiver,
+        _referralStorage
+    ) {}
 
     // @dev creates an order in the order store
     // @param account the order's account
@@ -223,144 +179,6 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         }
     }
 
-    // @dev executes a position liquidation
-    // @param account the account of the position to liquidation
-    // @param market the position's market
-    // @param collateralToken the position's collateralToken
-    // @param isLong whether the position is long or short
-    // @param oracleParams OracleUtils.SetPricesParams
-    function executeLiquidation(
-        address account,
-        address market,
-        address collateralToken,
-        bool isLong,
-        OracleUtils.SetPricesParams calldata oracleParams
-    ) external
-        nonReentrant
-        onlyLiquidationKeeper
-        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
-    {
-        uint256 startingGas = gasleft();
-
-        bytes32 key = LiquidationUtils.createLiquidationOrder(
-            dataStore,
-            orderStore,
-            positionStore,
-            account,
-            market,
-            collateralToken,
-            isLong
-        );
-
-        OrderBaseUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, msg.sender, startingGas);
-
-        FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeOrderFeatureKey(address(this), uint256(params.order.orderType())));
-
-        OrderUtils.executeOrder(params);
-    }
-
-    // @dev checks the ADL state to update the isAdlEnabled flag
-    // @param market the market to check
-    // @param isLong whether to check the long or short side
-    // @param oracleParams OracleUtils.SetPricesParams
-    function updateAdlState(
-        address market,
-        bool isLong,
-        OracleUtils.SetPricesParams calldata oracleParams
-    ) external
-        nonReentrant
-        onlyAdlKeeper
-        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
-    {
-        uint256[] memory oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedOracleBlockNumbers,
-            oracleParams.tokens.length
-        );
-
-        AdlUtils.updateAdlState(
-            dataStore,
-            eventEmitter,
-            marketStore,
-            oracle,
-            market,
-            isLong,
-            oracleBlockNumbers
-        );
-    }
-
-    // @dev auto-deleverages a position
-    // @param account the position's account
-    // @param market the position's market
-    // @param collateralToken the position's collateralToken
-    // @param isLong whether the position is long or short
-    // @param sizeDeltaUsd the size to reduce the position by
-    // @param oracleParams OracleUtils.SetPricesParams
-    function executeAdl(
-        address account,
-        address market,
-        address collateralToken,
-        bool isLong,
-        uint256 sizeDeltaUsd,
-        OracleUtils.SetPricesParams calldata oracleParams
-    ) external
-        nonReentrant
-        onlyAdlKeeper
-        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
-    {
-        _ExecuteAdlCache memory cache;
-
-        cache.startingGas = gasleft();
-
-        cache.oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedOracleBlockNumbers,
-            oracleParams.tokens.length
-        );
-
-        AdlUtils.validateAdl(
-            dataStore,
-            market,
-            isLong,
-            cache.oracleBlockNumbers
-        );
-
-        cache.pnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, marketStore, oracle, market, isLong, true);
-
-        if (cache.pnlToPoolFactor < 0) {
-            revert("Invalid pnlToPoolFactor");
-        }
-
-        cache.key = AdlUtils.createAdlOrder(
-            AdlUtils.CreateAdlOrderParams(
-                dataStore,
-                orderStore,
-                positionStore,
-                account,
-                market,
-                collateralToken,
-                isLong,
-                sizeDeltaUsd,
-                cache.oracleBlockNumbers[0]
-            )
-        );
-
-        OrderBaseUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(cache.key, oracleParams, msg.sender, cache.startingGas);
-
-        FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeAdlFeatureKey(address(this), uint256(params.order.orderType())));
-
-        OrderUtils.executeOrder(params);
-
-        cache.nextPnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, marketStore, oracle, market, isLong, true);
-        if (cache.nextPnlToPoolFactor >= cache.pnlToPoolFactor) {
-            revert("Invalid adl");
-        }
-
-        cache.maxPnlFactorForWithdrawals = MarketUtils.getMaxPnlFactorForWithdrawals(dataStore, market, isLong);
-
-        if (cache.nextPnlToPoolFactor < cache.maxPnlFactorForWithdrawals.toInt256()) {
-            revert("Pnl was overcorrected");
-        }
-    }
-
     // @dev executes an order
     // @param key the key of the order to execute
     // @param oracleParams OracleUtils.SetPricesParams
@@ -384,48 +202,6 @@ contract OrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeOrderFeatureKey(address(this), uint256(params.order.orderType())));
 
         OrderUtils.executeOrder(params);
-    }
-
-    // @dev get the OrderBaseUtils.ExecuteOrderParams to execute an order
-    // @param key the key of the order to execute
-    // @param oracleParams OracleUtils.SetPricesParams
-    // @param keeper the keeper executing the order
-    // @param startingGas the starting gas
-    // @return the required OrderBaseUtils.ExecuteOrderParams params to execute the order
-    function _getExecuteOrderParams(
-        bytes32 key,
-        OracleUtils.SetPricesParams memory oracleParams,
-        address keeper,
-        uint256 startingGas
-    ) internal view returns (OrderBaseUtils.ExecuteOrderParams memory) {
-        OrderBaseUtils.ExecuteOrderParams memory params;
-
-        params.key = key;
-        params.order = orderStore.get(key);
-        params.swapPathMarkets = MarketUtils.getMarkets(marketStore, params.order.swapPath());
-
-        params.contracts.dataStore = dataStore;
-        params.contracts.eventEmitter = eventEmitter;
-        params.contracts.orderStore = orderStore;
-        params.contracts.positionStore = positionStore;
-        params.contracts.oracle = oracle;
-        params.contracts.swapHandler = swapHandler;
-        params.contracts.feeReceiver = feeReceiver;
-        params.contracts.referralStorage = referralStorage;
-
-        params.oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedOracleBlockNumbers,
-            oracleParams.tokens.length
-        );
-
-        if (params.order.market() != address(0)) {
-            params.market = MarketUtils.getMarket(marketStore, params.order.market());
-        }
-
-        params.keeper = keeper;
-        params.startingGas = startingGas;
-
-        return params;
     }
 
     // @dev handle a caught order error
