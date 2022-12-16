@@ -120,7 +120,7 @@ library DepositUtils {
         MarketStore marketStore,
         address account,
         CreateDepositParams memory params
-    ) internal returns (bytes32) {
+    ) external returns (bytes32) {
         Market.Props memory market = MarketUtils.getMarket(marketStore, params.market);
 
         uint256 longTokenAmount = depositStore.recordTransferIn(market.longToken);
@@ -172,7 +172,7 @@ library DepositUtils {
 
     // @dev executes a deposit
     // @param params ExecuteDepositParams
-    function executeDeposit(ExecuteDepositParams memory params) internal {
+    function executeDeposit(ExecuteDepositParams memory params) external {
         Deposit.Props memory deposit = params.depositStore.get(params.key);
         require(deposit.account() != address(0), "DepositUtils: empty deposit");
 
@@ -213,7 +213,7 @@ library DepositUtils {
         // even if the sender has sufficient balance
         // this will not work correctly for tokens with a burn mechanism, those need to be separately handled
         if (deposit.longTokenAmount() > 0) {
-            params.depositStore.transferOut(market.longToken, deposit.longTokenAmount(), market.marketToken);
+            params.depositStore.transferOut(market.longToken, market.marketToken, deposit.longTokenAmount());
 
             _ExecuteDepositParams memory _params = _ExecuteDepositParams(
                 market,
@@ -231,7 +231,7 @@ library DepositUtils {
         }
 
         if (deposit.shortTokenAmount() > 0) {
-            params.depositStore.transferOut(market.shortToken, deposit.shortTokenAmount(), market.marketToken);
+            params.depositStore.transferOut(market.shortToken, market.marketToken, deposit.shortTokenAmount());
 
             _ExecuteDepositParams memory _params = _ExecuteDepositParams(
                 market,
@@ -286,7 +286,7 @@ library DepositUtils {
         address keeper,
         uint256 startingGas,
         bytes memory reason
-    ) internal {
+    ) external {
         Deposit.Props memory deposit = depositStore.get(key);
         require(deposit.account() != address(0), "DepositUtils: empty deposit");
 
@@ -295,8 +295,8 @@ library DepositUtils {
         if (deposit.longTokenAmount() > 0) {
             depositStore.transferOut(
                 market.longToken,
-                deposit.longTokenAmount(),
                 deposit.account(),
+                deposit.longTokenAmount(),
                 deposit.shouldUnwrapNativeToken()
             );
         }
@@ -304,8 +304,8 @@ library DepositUtils {
         if (deposit.shortTokenAmount() > 0) {
             depositStore.transferOut(
                 market.shortToken,
-                deposit.shortTokenAmount(),
                 deposit.account(),
+                deposit.shortTokenAmount(),
                 deposit.shouldUnwrapNativeToken()
             );
         }

@@ -47,6 +47,14 @@ export function reserveFactorKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [RESERVE_FACTOR, market, isLong]);
 }
 
+export function poolAmountKey(market: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [POOL_AMOUNT, market, token]);
+}
+
+export function swapImpactPoolAmountKey(market: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [SWAP_IMPACT_POOL_AMOUNT, market, token]);
+}
+
 export function swapFeeFactorKey(market: string) {
   return hashData(["bytes32", "address"], [SWAP_FEE_FACTOR, market]);
 }

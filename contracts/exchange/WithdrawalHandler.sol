@@ -4,7 +4,8 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import "../bank/FundReceiver.sol";
+import "./ExchangeUtils.sol";
+import "../role/RoleModule.sol";
 import "../feature/FeatureUtils.sol";
 
 import "../market/Market.sol";
@@ -19,7 +20,10 @@ import "../oracle/OracleModule.sol";
 
 // @title WithdrawalHandler
 // @dev Contract to handle creation, execution and cancellation of withdrawals
-contract WithdrawalHandler is ReentrancyGuard, FundReceiver, OracleModule {
+contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
+    using Withdrawal for Withdrawal.Props;
+
+    DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     WithdrawalStore public immutable withdrawalStore;
     MarketStore public immutable marketStore;
@@ -34,15 +38,14 @@ contract WithdrawalHandler is ReentrancyGuard, FundReceiver, OracleModule {
         MarketStore _marketStore,
         Oracle _oracle,
         FeeReceiver _feeReceiver
-    ) FundReceiver(_roleStore, _dataStore) {
+    ) RoleModule(_roleStore) {
+        dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         withdrawalStore = _withdrawalStore;
         marketStore = _marketStore;
         oracle = _oracle;
         feeReceiver = _feeReceiver;
     }
-
-    receive() external payable {}
 
     // @dev creates a withdrawal in the withdrawal store
     // @param account the withdrawing account
@@ -60,6 +63,33 @@ contract WithdrawalHandler is ReentrancyGuard, FundReceiver, OracleModule {
             marketStore,
             account,
             params
+        );
+    }
+
+    function cancelWithdrawal(
+        bytes32 key,
+        Withdrawal.Props memory withdrawal
+    ) external nonReentrant onlyController {
+        uint256 startingGas = gasleft();
+
+        DataStore _dataStore = dataStore;
+
+        FeatureUtils.validateFeature(_dataStore, Keys.cancelWithdrawalFeatureKey(address(this)));
+
+        ExchangeUtils.validateRequestCancellation(
+            _dataStore,
+            withdrawal.updatedAtBlock(),
+            "ExchangeRouter: withdrawal not yet expired"
+        );
+
+        WithdrawalUtils.cancelWithdrawal(
+            _dataStore,
+            eventEmitter,
+            withdrawalStore,
+            key,
+            withdrawal.account(),
+            startingGas,
+            "USER_INITIATED_CANCEL"
         );
     }
 
@@ -83,6 +113,11 @@ contract WithdrawalHandler is ReentrancyGuard, FundReceiver, OracleModule {
             startingGas
         ) {
         } catch Error(string memory reason) {
+            bytes32 reasonKey = keccak256(abi.encode(reason));
+            if (reasonKey == Keys.EMPTY_PRICE_ERROR_KEY) {
+                revert(reason);
+            }
+
             WithdrawalUtils.cancelWithdrawal(
                 dataStore,
                 eventEmitter,

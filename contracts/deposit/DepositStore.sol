@@ -31,6 +31,12 @@ contract DepositStore is StrictBank {
         depositKeys.remove(key);
     }
 
+    // @dev check if a deposit exists
+    // @param key the key of the deposit to check
+    function contains(bytes32 key) external view returns (bool) {
+        return depositKeys.contains(key);
+    }
+
     // @dev get a deposit from the store
     // @param key the key of the deposit
     // @return the deposit for the key

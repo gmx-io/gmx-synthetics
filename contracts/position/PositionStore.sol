@@ -36,6 +36,12 @@ contract PositionStore is StrictBank {
         positionKeys.remove(key);
     }
 
+    // @dev check if a position exists
+    // @param key the key of the position to check
+    function contains(bytes32 key) external view returns (bool) {
+        return positionKeys.contains(key);
+    }
+
     // @dev get a position from the store
     // @param key the key of the position
     // @return the position for the key
@@ -69,11 +75,5 @@ contract PositionStore is StrictBank {
     // @return the position keys for an account for the given indexes
     function getAccountPositionKeys(address account, uint256 start, uint256 end) external view returns (bytes32[] memory) {
         return accountPositionKeys[account].valuesAt(start, end);
-    }
-
-    // @dev check if a position exists
-    // @param key the key of the position to check
-    function contains(bytes32 key) public view returns (bool) {
-        return positionKeys.contains(key);
     }
 }

@@ -142,7 +142,7 @@ library WithdrawalUtils {
         MarketStore marketStore,
         address account,
         CreateWithdrawalParams memory params
-    ) internal returns (bytes32) {
+    ) external returns (bytes32) {
         address wnt = TokenUtils.wnt(dataStore);
         uint256 wntAmount = withdrawalStore.recordTransferIn(wnt);
         require(wntAmount == params.executionFee, "WithdrawalUtils: invalid wntAmount");
@@ -188,7 +188,7 @@ library WithdrawalUtils {
      *
      * @param params The parameters for executing the withdrawal.
      */
-    function executeWithdrawal(ExecuteWithdrawalParams memory params) internal {
+    function executeWithdrawal(ExecuteWithdrawalParams memory params) external {
         Withdrawal.Props memory withdrawal = params.withdrawalStore.get(params.key);
         require(withdrawal.account() != address(0), "WithdrawalUtils: empty withdrawal");
 
@@ -306,7 +306,7 @@ library WithdrawalUtils {
         address keeper,
         uint256 startingGas,
         bytes memory reason
-    ) internal {
+    ) external {
         Withdrawal.Props memory withdrawal = withdrawalStore.get(key);
         require(withdrawal.account() != address(0), "WithdrawalUtils: empty withdrawal");
 
@@ -417,8 +417,8 @@ library WithdrawalUtils {
         MarketToken(payable(_params.market.marketToken)).burn(_params.account, _params.marketTokensAmount);
         MarketToken(payable(_params.market.marketToken)).transferOut(
             _params.tokenOut,
-            outputAmount,
             _params.receiver,
+            outputAmount,
             _params.shouldUnwrapNativeToken
         );
 

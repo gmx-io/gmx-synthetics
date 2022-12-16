@@ -45,10 +45,6 @@ library GasUtils {
         address keeper,
         address user
     ) external {
-        address wnt = TokenUtils.wnt(dataStore);
-        bank.transferOut(wnt, executionFee, address(this));
-        IWNT(wnt).withdraw(executionFee);
-
         uint256 gasUsed = startingGas - gasleft();
         uint256 executionFeeForKeeper = adjustGasUsage(dataStore, gasUsed) * tx.gasprice;
 
@@ -56,8 +52,7 @@ library GasUtils {
             executionFeeForKeeper = executionFee;
         }
 
-        TokenUtils.transferNativeToken(
-            dataStore,
+        bank.transferOutNativeToken(
             keeper,
             executionFeeForKeeper
         );
@@ -69,8 +64,7 @@ library GasUtils {
             return;
         }
 
-        TokenUtils.transferNativeToken(
-            dataStore,
+        bank.transferOutNativeToken(
             user,
             refundFeeForUser
         );

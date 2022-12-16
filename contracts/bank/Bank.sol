@@ -19,22 +19,20 @@ contract Bank is FundReceiver {
 
     // @dev transfer tokens from this contract to a receiver
     //
-    // @param dataStore DataStore
     // @param token the token to transfer
     // @param amount the amount to transfer
     // @param receiver the address to transfer to
     function transferOut(
         address token,
-        uint256 amount,
-        address receiver
+        address receiver,
+        uint256 amount
     ) external onlyController {
-        _transferOut(token, amount, receiver);
+        _transferOut(token, receiver, amount);
     }
 
     // @dev transfer tokens from this contract to a receiver
     // handles native token transfers as well
     //
-    // @param dataStore DataStore
     // @param token the token to transfer
     // @param amount the amount to transfer
     // @param receiver the address to transfer to
@@ -42,29 +40,43 @@ contract Bank is FundReceiver {
     // before transferring
     function transferOut(
         address token,
-        uint256 amount,
         address receiver,
+        uint256 amount,
         bool shouldUnwrapNativeToken
     ) external onlyController {
         address wnt = TokenUtils.wnt(dataStore);
 
         if (token == wnt && shouldUnwrapNativeToken) {
-            _transferOutNativeToken(token, amount, receiver);
+            _transferOutNativeToken(token, receiver, amount);
         } else {
-            _transferOut(token, amount, receiver);
+            _transferOut(token, receiver, amount);
         }
+    }
+
+    // @dev transfer native tokens from this contract to a receiver
+    //
+    // @param token the token to transfer
+    // @param amount the amount to transfer
+    // @param receiver the address to transfer to
+    // @param shouldUnwrapNativeToken whether to unwrap the wrapped native token
+    // before transferring
+    function transferOutNativeToken(
+        address receiver,
+        uint256 amount
+    ) external onlyController {
+        address wnt = TokenUtils.wnt(dataStore);
+        _transferOutNativeToken(wnt, receiver, amount);
     }
 
     // @dev transfer tokens from this contract to a receiver
     //
-    // @param dataStore DataStore
     // @param token the token to transfer
     // @param amount the amount to transfer
     // @param receiver the address to transfer to
     function _transferOut(
         address token,
-        uint256 amount,
-        address receiver
+        address receiver,
+        uint256 amount
     ) internal {
         require(receiver != address(this), "Bank: invalid receiver");
 
@@ -76,14 +88,13 @@ contract Bank is FundReceiver {
     // @dev unwrap wrapped native tokens and transfer the native tokens from
     // this contract to a receiver
     //
-    // @param dataStore DataStore
     // @param token the token to transfer
     // @param amount the amount to transfer
     // @param receiver the address to transfer to
     function _transferOutNativeToken(
         address token,
-        uint256 amount,
-        address receiver
+        address receiver,
+        uint256 amount
     ) internal {
         require(receiver != address(this), "Bank: invalid receiver");
 

@@ -12,11 +12,15 @@ library Keys {
 
     // @dev key for whether the create deposit feature is enabled
     bytes32 public constant CREATE_DEPOSIT_FEATURE = keccak256(abi.encode("CREATE_DEPOSIT_FEATURE"));
+    // @dev key for whether the cancel deposit feature is enabled
+    bytes32 public constant CANCEL_DEPOSIT_FEATURE = keccak256(abi.encode("CANCEL_DEPOSIT_FEATURE"));
     // @dev key for whether the execute deposit feature is enabled
     bytes32 public constant EXECUTE_DEPOSIT_FEATURE = keccak256(abi.encode("EXECUTE_DEPOSIT_FEATURE"));
 
     // @dev key for whether the create withdrawal feature is enabled
     bytes32 public constant CREATE_WITHDRAWAL_FEATURE = keccak256(abi.encode("CREATE_WITHDRAWAL_FEATURE"));
+    // @dev key for whether the cancel withdrawal feature is enabled
+    bytes32 public constant CANCEL_WITHDRAWAL_FEATURE = keccak256(abi.encode("CANCEL_WITHDRAWAL_FEATURE"));
     // @dev key for whether the execute withdrawal feature is enabled
     bytes32 public constant EXECUTE_WITHDRAWAL_FEATURE = keccak256(abi.encode("EXECUTE_WITHDRAWAL_FEATURE"));
 
@@ -72,6 +76,8 @@ library Keys {
     bytes32 public constant TOKEN_TRANSFER_GAS_LIMIT = keccak256(abi.encode("TOKEN_TRANSFER_GAS_LIMIT"));
     // @dev key for the amount of gas to forward for native token transfers
     bytes32 public constant NATIVE_TOKEN_TRANSFER_GAS_LIMIT = keccak256(abi.encode("NATIVE_TOKEN_TRANSFER_GAS_LIMIT"));
+    // @dev key for the maximum request block age, after which the request will be considered expired
+    bytes32 public constant REQUEST_EXPIRATION_AGE = keccak256(abi.encode("REQUEST_EXPIRATION_AGE"));
 
     // @dev key for the max allowed leverage
     bytes32 public constant MAX_LEVERAGE = keccak256(abi.encode("MAX_LEVERAGE"));
@@ -138,6 +144,9 @@ library Keys {
     bytes32 public constant TOTAL_BORROWING = keccak256(abi.encode("TOTAL_BORROWING"));
     // @dev key for affiliate reward
     bytes32 public constant AFFILIATE_REWARD = keccak256(abi.encode("AFFILIATE_REWARD"));
+
+    string public constant EMPTY_PRICE_ERROR = "EMPTY_PRICE_ERROR";
+    bytes32 public constant EMPTY_PRICE_ERROR_KEY = keccak256(abi.encode(EMPTY_PRICE_ERROR));
 
     string public constant EMPTY_POSITION_ERROR = "EMPTY_POSITION_ERROR";
     bytes32 public constant EMPTY_POSITION_ERROR_KEY = keccak256(abi.encode(EMPTY_POSITION_ERROR));
@@ -210,6 +219,16 @@ library Keys {
         ));
     }
 
+    // @dev key for whether cancel deposit is enabled
+    // @param the cancel deposit module
+    // @return key for whether cancel deposit is enabled
+    function cancelDepositFeatureKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CANCEL_DEPOSIT_FEATURE,
+            module
+        ));
+    }
+
     // @dev key for whether execute deposit is enabled
     // @param the execute deposit module
     // @return key for whether execute deposit is enabled
@@ -226,6 +245,16 @@ library Keys {
     function createWithdrawalFeatureKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             CREATE_WITHDRAWAL_FEATURE,
+            module
+        ));
+    }
+
+    // @dev key for whether cancel withdrawal is enabled
+    // @param the cancel withdrawal module
+    // @return key for whether cancel withdrawal is enabled
+    function cancelWithdrawalFeatureKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CANCEL_WITHDRAWAL_FEATURE,
             module
         ));
     }

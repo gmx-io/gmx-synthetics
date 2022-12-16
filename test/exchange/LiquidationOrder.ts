@@ -57,7 +57,7 @@ describe("Exchange.LiquidationOrder", () => {
         isLong: true,
         minPrices: [expandDecimals(4200, 4), expandDecimals(1, 6)],
         maxPrices: [expandDecimals(4200, 4), expandDecimals(1, 6)],
-        gasUsageLabel: "orderHandler.executeLiquidation",
+        gasUsageLabel: "liquidationHandler.executeLiquidation",
       })
     ).to.be.revertedWith("DecreasePositionUtils: Invalid Liquidation");
 
@@ -71,7 +71,7 @@ describe("Exchange.LiquidationOrder", () => {
       isLong: true,
       minPrices: [expandDecimals(4000, 4), expandDecimals(1, 6)],
       maxPrices: [expandDecimals(4000, 4), expandDecimals(1, 6)],
-      gasUsageLabel: "orderHandler.executeLiquidation",
+      gasUsageLabel: "liquidationHandler.executeLiquidation",
     });
 
     expect(await positionStore.getAccountPositionCount(user0.address)).eq(0);

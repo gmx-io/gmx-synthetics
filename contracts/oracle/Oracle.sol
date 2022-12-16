@@ -106,11 +106,7 @@ contract Oracle is RoleModule {
     error EmptyFeedPrice(address token);
     error MaxSignerIndex(uint256 signerIndex, uint256 maxSignerIndex);
     error DuplicateSigner(uint256 signerIndex);
-    error EmptyPrice(address token);
-    error EmptyPrimaryPrice(address token);
-    error EmptySecondaryPrice(address token);
-    error EmptyLatestPrice(address token);
-    error EmptyCustomPrice(address token);
+    error InvalidOraclePrice(address token);
 
     constructor(
         RoleStore _roleStore,
@@ -310,7 +306,7 @@ contract Oracle is RoleModule {
     // @return the primary price of a token
     function getPrimaryPrice(address token) external view returns (Price.Props memory) {
         Price.Props memory price = primaryPrices[token];
-        if (price.isEmpty()) { revert EmptyPrimaryPrice(token); }
+        if (price.isEmpty()) { revert(Keys.EMPTY_PRICE_ERROR); }
         return price;
     }
 
@@ -319,7 +315,7 @@ contract Oracle is RoleModule {
     // @return the secondary price of a token
     function getSecondaryPrice(address token) external view returns (Price.Props memory) {
         Price.Props memory price = secondaryPrices[token];
-        if (price.isEmpty()) { revert EmptySecondaryPrice(token); }
+        if (price.isEmpty()) { revert(Keys.EMPTY_PRICE_ERROR); }
         return price;
     }
 
@@ -338,7 +334,7 @@ contract Oracle is RoleModule {
             return primaryPrice;
         }
 
-        revert EmptyLatestPrice(token);
+        revert(Keys.EMPTY_PRICE_ERROR);
     }
 
     // @dev get the custom price of a token
@@ -346,7 +342,7 @@ contract Oracle is RoleModule {
     // @return the custom price of a token
     function getCustomPrice(address token) external view returns (Price.Props memory) {
         Price.Props memory price = customPrices[token];
-        if (price.isEmpty()) { revert EmptyCustomPrice(token); }
+        if (price.isEmpty()) { revert(Keys.EMPTY_PRICE_ERROR); }
         return price;
     }
 
@@ -503,7 +499,7 @@ contract Oracle is RoleModule {
             uint256 medianMaxPrice = Array.getMedian(cache.maxPrices) * cache.info.precision;
 
             if (medianMinPrice == 0 || medianMaxPrice == 0) {
-                revert EmptyPrice(cache.info.token);
+                revert InvalidOraclePrice(cache.info.token);
             }
 
             if (primaryPrices[cache.info.token].isEmpty()) {

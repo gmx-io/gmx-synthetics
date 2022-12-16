@@ -8,44 +8,56 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { address: roleStoreAddress } = await get("RoleStore");
   const { address: dataStoreAddress } = await get("DataStore");
   const { address: eventEmitterAddress } = await get("EventEmitter");
-  const { address: depositStoreAddress } = await get("DepositStore");
+  const { address: orderStoreAddress } = await get("OrderStore");
+  const { address: positionStoreAddress } = await get("PositionStore");
   const { address: marketStoreAddress } = await get("MarketStore");
   const { address: oracleAddress } = await get("Oracle");
+  const { address: swapHandlerAddress } = await get("SwapHandler");
   const { address: feeReceiverAddress } = await get("FeeReceiver");
-  const { address: depositUtilsAddress } = await get("DepositUtils");
+  const { address: referralStorageAddress } = await get("ReferralStorage");
   const { address: gasUtilsAddress } = await get("GasUtils");
+  const { address: orderUtilsAddress } = await get("OrderUtils");
+  const { address: adlUtilsAddress } = await get("AdlUtils");
 
-  const deployArgs = [
-    roleStoreAddress,
-    dataStoreAddress,
-    eventEmitterAddress,
-    depositStoreAddress,
-    marketStoreAddress,
-    oracleAddress,
-    feeReceiverAddress,
-  ];
-  const { address } = await deploy("DepositHandler", {
+  const { address } = await deploy("AdlHandler", {
     from: deployer,
     log: true,
-    args: deployArgs,
+    args: [
+      roleStoreAddress,
+      dataStoreAddress,
+      eventEmitterAddress,
+      marketStoreAddress,
+      orderStoreAddress,
+      positionStoreAddress,
+      oracleAddress,
+      swapHandlerAddress,
+      feeReceiverAddress,
+      referralStorageAddress,
+    ],
     libraries: {
-      DepositUtils: depositUtilsAddress,
       GasUtils: gasUtilsAddress,
+      OrderUtils: orderUtilsAddress,
+      AdlUtils: adlUtilsAddress,
     },
   });
 
   await grantRoleIfNotGranted(address, "CONTROLLER");
+  await grantRoleIfNotGranted(address, "ORDER_KEEPER");
 };
-func.tags = ["DepositHandler"];
+func.tags = ["AdlHandler"];
 func.dependencies = [
   "RoleStore",
   "DataStore",
   "EventEmitter",
-  "DepositStore",
   "MarketStore",
+  "OrderStore",
+  "PositionStore",
   "Oracle",
+  "SwapHandler",
   "FeeReceiver",
-  "DepositUtils",
+  "ReferralStorage",
   "GasUtils",
+  "AdlUtils",
+  "OrderUtils",
 ];
 export default func;

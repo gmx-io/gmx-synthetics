@@ -20,8 +20,8 @@ library IncreaseOrderUtils {
     function processOrder(OrderBaseUtils.ExecuteOrderParams memory params) external {
         params.contracts.orderStore.transferOut(
             params.order.initialCollateralToken(),
-            params.order.initialCollateralDeltaAmount(),
-            params.order.market()
+            params.order.market(),
+            params.order.initialCollateralDeltaAmount()
         );
 
         MarketUtils.validateNonEmptyMarket(params.market);
