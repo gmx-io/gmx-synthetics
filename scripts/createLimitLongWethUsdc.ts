@@ -2,9 +2,8 @@ import hre from "hardhat";
 
 import { getMarketTokenAddress } from "../utils/market";
 import { bigNumberify, expandDecimals } from "../utils/math";
-
 import { WNT, ExchangeRouter, MintableToken } from "../typechain-types";
-import { DepositUtils } from "../typechain-types/contracts/exchange/DepositHandler";
+import { OrderBaseUtils } from "../typechain-types/contracts/exchange/OrderHandler";
 
 const { ethers } = hre;
 
@@ -25,19 +24,17 @@ async function getValues(): Promise<{
 }
 
 async function main() {
-  console.log("run createDepositWethUsdc");
   const marketFactory = await ethers.getContract("MarketFactory");
   const roleStore = await ethers.getContract("RoleStore");
   const dataStore = await ethers.getContract("DataStore");
-  const depositStore = await ethers.getContract("DepositStore");
+  const orderStore = await ethers.getContract("OrderStore");
   const exchangeRouter: ExchangeRouter = await ethers.getContract("ExchangeRouter");
   const router = await ethers.getContract("Router");
 
   const { wnt } = await getValues();
-
   const [wallet] = await ethers.getSigners();
 
-  const executionFee = expandDecimals(1, 15); // 0.001 WNT
+  const executionFee = expandDecimals(1, 15);
   if ((await wnt.balanceOf(wallet.address)).lt(executionFee)) {
     console.log("depositing %s WNT", executionFee.toString());
     await wnt.deposit({ value: executionFee });
@@ -53,7 +50,7 @@ async function main() {
   console.log("WNT balance %s", await wnt.balanceOf(wallet.address));
 
   const weth: MintableToken = await ethers.getContract("WETH");
-  const longTokenAmount = expandDecimals(1, 17); // 0.1 weth
+  const longTokenAmount = expandDecimals(1, 16); // 0.01 weth
   const wethAllowance = await weth.allowance(wallet.address, router.address);
   console.log("weth address %s", weth.address);
   console.log("weth allowance %s", wethAllowance.toString());
@@ -69,20 +66,6 @@ async function main() {
   }
 
   const usdc: MintableToken = await ethers.getContract("USDC");
-  const shortTokenAmount = expandDecimals(100, 6); // 100 USDC
-  const usdcAllowance = await usdc.allowance(wallet.address, router.address);
-  console.log("USDC address %s", usdc.address);
-  console.log("USDC allowance %s", usdcAllowance.toString());
-  if (usdcAllowance.lt(shortTokenAmount)) {
-    console.log("approving USDC");
-    await usdc.approve(router.address, bigNumberify(2).pow(256).sub(1));
-  }
-  const usdcBalance = await usdc.balanceOf(wallet.address);
-  console.log("USDC balance %s", usdcBalance);
-  if (usdcBalance.lt(shortTokenAmount)) {
-    console.log("minting %s USDC", shortTokenAmount);
-    await usdc.mint(wallet.address, shortTokenAmount);
-  }
 
   const wethUsdMarketAddress = await getMarketTokenAddress(
     weth.address,
@@ -94,24 +77,34 @@ async function main() {
   );
   console.log("market %s", wethUsdMarketAddress);
 
-  const params: DepositUtils.CreateDepositParamsStruct = {
-    receiver: wallet.address,
-    callbackContract: ethers.constants.AddressZero,
-    market: wethUsdMarketAddress,
-    minMarketTokens: 0,
-    shouldUnwrapNativeToken: false,
-    executionFee: executionFee,
-    callbackGasLimit: 0,
+  const params: OrderBaseUtils.CreateOrderParamsStruct = {
+    addresses: {
+      receiver: wallet.address,
+      callbackContract: ethers.constants.AddressZero,
+      market: wethUsdMarketAddress,
+      initialCollateralToken: weth.address,
+      swapPath: [],
+    },
+    numbers: {
+      sizeDeltaUsd: expandDecimals(20, 30),
+      triggerPrice: expandDecimals(11750000, 8), // $1175.0000, WETH oraclePrecision = 8 and 4 decimals
+      acceptablePrice: expandDecimals(13000000, 8), // $1300
+      executionFee,
+      callbackGasLimit: 0,
+      minOutputAmount: 0,
+    },
+    orderType: 3, // LimitIncrease
+    isLong: true, // not relevant for market swap
+    shouldUnwrapNativeToken: false, // not relevant for market swap
   };
   console.log("exchange router %s", exchangeRouter.address);
-  console.log("deposit store %s", depositStore.address);
-  console.log("creating deposit %s", JSON.stringify(params));
+  console.log("order store %s", orderStore.address);
+  console.log("creating MarketIncrease order %s", JSON.stringify(params));
 
   const multicallArgs = [
-    exchangeRouter.interface.encodeFunctionData("sendWnt", [depositStore.address, executionFee]),
-    exchangeRouter.interface.encodeFunctionData("sendTokens", [weth.address, depositStore.address, longTokenAmount]),
-    exchangeRouter.interface.encodeFunctionData("sendTokens", [usdc.address, depositStore.address, shortTokenAmount]),
-    exchangeRouter.interface.encodeFunctionData("createDeposit", [params]),
+    exchangeRouter.interface.encodeFunctionData("sendWnt", [orderStore.address, executionFee]),
+    exchangeRouter.interface.encodeFunctionData("sendTokens", [weth.address, orderStore.address, longTokenAmount]),
+    exchangeRouter.interface.encodeFunctionData("createOrder", [params, ethers.constants.HashZero]),
   ];
   console.log("multicall args", multicallArgs);
 
@@ -122,7 +115,6 @@ async function main() {
 
   console.log("transaction sent", tx.hash);
   await tx.wait();
-  console.log("receipt received");
 }
 
 main()

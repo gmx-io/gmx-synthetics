@@ -15,8 +15,6 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     args: [roleStore.address],
   });
 
-  await setUintIfDifferent(hashString("MIN_ORACLE_BLOCK_CONFIRMATIONS"), 100, "min oracle block confirmations");
-  await setUintIfDifferent(hashString("MAX_ORACLE_PRICE_AGE"), 5 * 60, "min oracle price age");
   await setUintIfDifferent(hashString("MAX_LEVERAGE"), expandFloatDecimals(100), "max leverage");
 };
 func.tags = ["DataStore"];

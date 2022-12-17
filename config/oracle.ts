@@ -18,8 +18,10 @@ type OracleTestPriceFeed = {
 type OraclePriceFeed = OracleRealPriceFeed | OracleTestPriceFeed;
 
 export type OracleConfig = {
-  signers: string[];
-  minOracleSigners: number;
+  signers?: string[];
+  minOracleSigners?: number;
+  minOracleBlockConfirmations?: number;
+  maxOraclePriceAge?: number;
   tokens?: {
     [tokenSymbol: string]: {
       priceFeed?: OraclePriceFeed;
@@ -44,12 +46,14 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     hardhat: {
       signers: testSigners,
       minOracleSigners: 0,
+      minOracleBlockConfirmations: 100,
+      maxOraclePriceAge: 60 * 60,
       tokens: {
         USDC: {
           priceFeed: {
             decimals: 8,
             deploy: true,
-            initPrice: "1000000",
+            initPrice: "100000000",
           },
         },
       },
@@ -68,6 +72,10 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
           },
         },
       },
+    },
+    default: {
+      minOracleSigners: 7,
+      maxOraclePriceAge: 5 * 60,
     },
   };
 

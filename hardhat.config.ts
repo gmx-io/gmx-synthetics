@@ -31,6 +31,9 @@ const config: HardhatUserConfig = {
     hardhat: {
       saveDeployments: true,
     },
+    localhost: {
+      saveDeployments: true,
+    },
     arbitrum: {
       url: "https://arb1.arbitrum.io/rpc",
     },
