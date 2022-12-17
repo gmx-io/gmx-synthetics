@@ -78,20 +78,20 @@ library PositionPricingUtils {
     }
 
     // @param fundingFeeAmount the position's funding fee amount
+    // @param claimableLongTokenAmount the negative funding fee in long token that is claimable
+    // @param claimableShortTokenAmount the negative funding fee in short token that is claimable
     // @param latestLongTokenFundingAmountPerSize the latest long token funding
     // amount per size for the market
     // @param latestShortTokenFundingAmountPerSize the latest short token funding
     // amount per size for the market
-    // @param longTokenFundingFeeAmount the funding fee amount in long tokens
-    // @param shortTokenFundingFeeAmount the funding fee amount in short tokens
     // @param hasPendingLongTokenFundingFee whether there is a pending long token funding fee
     // @param hasPendingShortTokenFundingFee whether there is a pending short token funding fee
     struct PositionFundingFees {
         uint256 fundingFeeAmount;
+        uint256 claimableLongTokenAmount;
+        uint256 claimableShortTokenAmount;
         int256 latestLongTokenFundingAmountPerSize;
         int256 latestShortTokenFundingAmountPerSize;
-        int256 longTokenFundingFeeAmount;
-        int256 shortTokenFundingFeeAmount;
         bool hasPendingLongTokenFundingFee;
         bool hasPendingShortTokenFundingFee;
     }
@@ -297,32 +297,65 @@ library PositionPricingUtils {
 
         fees.feesForPool = fees.positionFeeAmountForPool + fees.borrowingFeeAmount;
 
-        fees.funding.latestLongTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market(), longToken, position.isLong());
-        fees.funding.latestShortTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market(), shortToken, position.isLong());
-
-        (fees.funding.hasPendingLongTokenFundingFee, fees.funding.longTokenFundingFeeAmount) = MarketUtils.getFundingFeeAmount(
-            fees.funding.latestLongTokenFundingAmountPerSize,
-            position.longTokenFundingAmountPerSize(),
-            position.sizeInUsd()
+        fees.funding = getFundingFees(
+            dataStore,
+            position,
+            longToken,
+            shortToken
         );
-        (fees.funding.hasPendingShortTokenFundingFee, fees.funding.shortTokenFundingFeeAmount) = MarketUtils.getFundingFeeAmount(
-            fees.funding.latestShortTokenFundingAmountPerSize,
-            position.shortTokenFundingAmountPerSize(),
-            position.sizeInUsd()
-        );
-
-        if (position.collateralToken() == longToken && fees.funding.longTokenFundingFeeAmount > 0) {
-            fees.funding.fundingFeeAmount = fees.funding.longTokenFundingFeeAmount.toUint256();
-        }
-        if (position.collateralToken() == shortToken && fees.funding.shortTokenFundingFeeAmount > 0) {
-            fees.funding.fundingFeeAmount = fees.funding.shortTokenFundingFeeAmount.toUint256();
-        }
 
         fees.totalNetCostAmount = fees.referral.affiliateRewardAmount + fees.feeReceiverAmount + fees.positionFeeAmountForPool + fees.funding.fundingFeeAmount + fees.borrowingFeeAmount;
         fees.totalNetCostUsd = fees.totalNetCostAmount * collateralTokenPrice.max;
 
         return fees;
     }
+
+    function getFundingFees(
+        DataStore dataStore,
+        Position.Props memory position,
+        address longToken,
+        address shortToken
+    ) internal view returns (PositionFundingFees memory) {
+        PositionFundingFees memory fundingFees;
+
+        fundingFees.latestLongTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market(), longToken, position.isLong());
+        fundingFees.latestShortTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market(), shortToken, position.isLong());
+
+        int256 longTokenFundingFeeAmount;
+        int256 shortTokenFundingFeeAmount;
+
+        (fundingFees.hasPendingLongTokenFundingFee, longTokenFundingFeeAmount) = MarketUtils.getFundingFeeAmount(
+            fundingFees.latestLongTokenFundingAmountPerSize,
+            position.longTokenFundingAmountPerSize(),
+            position.sizeInUsd()
+        );
+
+        (fundingFees.hasPendingShortTokenFundingFee, shortTokenFundingFeeAmount) = MarketUtils.getFundingFeeAmount(
+            fundingFees.latestShortTokenFundingAmountPerSize,
+            position.shortTokenFundingAmountPerSize(),
+            position.sizeInUsd()
+        );
+
+        // if the position has negative funding fees, distribute it to allow it to be claimable
+        if (longTokenFundingFeeAmount < 0) {
+            fundingFees.claimableLongTokenAmount = (-longTokenFundingFeeAmount).toUint256();
+        }
+
+        if (shortTokenFundingFeeAmount < 0) {
+            fundingFees.claimableShortTokenAmount = (-shortTokenFundingFeeAmount).toUint256();
+        }
+
+        if (position.collateralToken() == longToken && longTokenFundingFeeAmount > 0) {
+            fundingFees.fundingFeeAmount = longTokenFundingFeeAmount.toUint256();
+        }
+
+        if (position.collateralToken() == shortToken && shortTokenFundingFeeAmount > 0) {
+            fundingFees.fundingFeeAmount = shortTokenFundingFeeAmount.toUint256();
+        }
+
+        return fundingFees;
+    }
+
 
     // @dev get position fees after applying referral rebates / discounts
     // @param dataStore DataStore

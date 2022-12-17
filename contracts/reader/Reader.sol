@@ -12,6 +12,14 @@ import "../position/PositionUtils.sol";
 // @title Reader
 // @dev Library for read functions
 contract Reader {
+    using Position for Position.Props;
+
+    struct PositionInfo {
+        Position.Props position;
+        uint256 pendingBorrowingFees;
+        PositionPricingUtils.PositionFundingFees pendingFundingFees;
+    }
+
     function getMarkets(MarketStore marketStore, uint256 start, uint256 end) external view returns (Market.Props[] memory) {
         uint256 marketCount = marketStore.getMarketCount();
         if (start >= marketCount) {
@@ -31,23 +39,40 @@ contract Reader {
         return markets;
     }
 
-    function getAccountPositions(PositionStore positionStore, address account, uint256 start, uint256 end) external view returns (Position.Props[] memory) {
-        uint256 positionCount = positionStore.getPositionCount();
+    function getAccountPositionInfoList(DataStore dataStore, MarketStore marketStore, PositionStore positionStore, address account, uint256 start, uint256 end) external view returns (PositionInfo[] memory) {
+        uint256 positionCount = positionStore.getAccountPositionCount(account);
         if (start >= positionCount) {
-            return new Position.Props[](0);
+            return new PositionInfo[](0);
         }
         if (end > positionCount) {
             end = positionCount;
         }
         bytes32[] memory positionKeys = positionStore.getAccountPositionKeys(account, start, end);
-        Position.Props[] memory positions = new Position.Props[](positionKeys.length);
+        PositionInfo[] memory positionInfoList = new PositionInfo[](positionKeys.length);
         for (uint256 i = 0; i < positionKeys.length; i++) {
             bytes32 positionKey = positionKeys[i];
-            Position.Props memory position = positionStore.get(positionKey);
-            positions[i] = position;
+            positionInfoList[i] = getPositionInfo(dataStore, marketStore, positionStore, positionKey);
         }
 
-        return positions;
+        return positionInfoList;
+    }
+
+    function getPositionInfo(DataStore dataStore, MarketStore marketStore, PositionStore positionStore, bytes32 positionKey) public view returns (PositionInfo memory) {
+        Position.Props memory position = positionStore.get(positionKey);
+        Market.Props memory market = marketStore.get(position.market());
+        uint256 pendingBorrowingFees = MarketUtils.getBorrowingFees(dataStore, position);
+        PositionPricingUtils.PositionFundingFees memory pendingFundingFees = PositionPricingUtils.getFundingFees(
+            dataStore,
+            position,
+            market.longToken,
+            market.shortToken
+        );
+
+        return PositionInfo(
+            position,
+            pendingBorrowingFees,
+            pendingFundingFees
+        );
     }
 
     function getMarketTokenPrice(
