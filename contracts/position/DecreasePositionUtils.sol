@@ -242,25 +242,26 @@ library DecreasePositionUtils {
         params.position.setCollateralAmount(values.remainingCollateralAmount.toUint256());
         params.position.setDecreasedAtBlock(Chain.currentBlockNumber());
 
-        if (fees.funding.longTokenFundingFeeAmount > 0) {
+        // if the position has negative funding fees, distribute it to allow it to be claimable
+        if (fees.funding.claimableLongTokenAmount > 0) {
             MarketUtils.incrementClaimableFundingAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.market.marketToken,
                 params.market.longToken,
                 params.position.account(),
-                fees.funding.longTokenFundingFeeAmount.toUint256()
+                fees.funding.claimableLongTokenAmount
             );
         }
 
-        if (fees.funding.shortTokenFundingFeeAmount > 0) {
+        if (fees.funding.claimableShortTokenAmount > 0) {
             MarketUtils.incrementClaimableFundingAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.market.marketToken,
                 params.market.shortToken,
                 params.position.account(),
-                fees.funding.shortTokenFundingFeeAmount.toUint256()
+                fees.funding.claimableShortTokenAmount
             );
         }
 

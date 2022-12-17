@@ -24,9 +24,7 @@ export async function executeWithOracleParams(fixture, overrides) {
     signers,
     priceFeedTokens: [],
   };
-  console.log("args", args);
   const oracleParams = await getOracleParams(args);
-  console.log("oracleParams", oracleParams);
 
   await logGasUsage({
     tx: execute(key, oracleParams),

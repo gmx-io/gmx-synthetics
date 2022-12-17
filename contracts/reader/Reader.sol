@@ -12,6 +12,21 @@ import "../position/PositionUtils.sol";
 // @title Reader
 // @dev Library for read functions
 contract Reader {
+    using Position for Position.Props;
+
+    struct PositionInfo {
+        Position.Props position;
+        uint256 pendingBorrowingFees;
+        PositionPricingUtils.PositionFundingFees pendingFundingFees;
+    }
+
+    struct MarketInfo {
+        Market.Props market;
+        uint256 borrowingFactorPerSecondForLongs;
+        uint256 borrowingFactorPerSecondForShorts;
+        MarketUtils.GetNextFundingAmountPerSizeResult funding;
+    }
+
     function getMarkets(MarketStore marketStore, uint256 start, uint256 end) external view returns (Market.Props[] memory) {
         uint256 marketCount = marketStore.getMarketCount();
         if (start >= marketCount) {
@@ -24,15 +39,82 @@ contract Reader {
         Market.Props[] memory markets = new Market.Props[](marketKeys.length);
         for (uint256 i = 0; i < marketKeys.length; i++) {
             address marketKey = marketKeys[i];
-            Market.Props memory market = MarketUtils.getMarket(marketStore, marketKey);
+            Market.Props memory market = marketStore.get(marketKey);
             markets[i] = market;
         }
 
         return markets;
     }
 
+    function getMarketInfoList(
+        DataStore dataStore,
+        MarketStore marketStore,
+        MarketUtils.MarketPrices[] memory marketPricesList,
+        uint256 start,
+        uint256 end
+    ) external view returns (MarketInfo[] memory) {
+        uint256 marketCount = marketStore.getMarketCount();
+        if (start >= marketCount) {
+            return new MarketInfo[](0);
+        }
+        if (end > marketCount) {
+            end = marketCount;
+        }
+        address[] memory marketKeys = marketStore.getMarketKeys(start, end);
+        MarketInfo[] memory marketInfoList = new MarketInfo[](marketKeys.length);
+        for (uint256 i = 0; i < marketKeys.length; i++) {
+            MarketUtils.MarketPrices memory prices = marketPricesList[i];
+            address marketKey = marketKeys[i];
+            marketInfoList[i] = getMarketInfo(dataStore, marketStore, prices, marketKey);
+        }
+
+        return marketInfoList;
+    }
+
+    function getMarketInfo(
+        DataStore dataStore,
+        MarketStore marketStore,
+        MarketUtils.MarketPrices memory prices,
+        address marketKey
+    ) public view returns (MarketInfo memory) {
+        Market.Props memory market = marketStore.get(marketKey);
+
+        uint256 borrowingFactorPerSecondForLongs = MarketUtils.getBorrowingFactorPerSecond(
+            dataStore,
+            prices,
+            market.marketToken,
+            market.longToken,
+            market.shortToken,
+            true
+        );
+
+        uint256 borrowingFactorPerSecondForShorts = MarketUtils.getBorrowingFactorPerSecond(
+            dataStore,
+            prices,
+            market.marketToken,
+            market.longToken,
+            market.shortToken,
+            false
+        );
+
+        MarketUtils.GetNextFundingAmountPerSizeResult memory funding = MarketUtils.getNextFundingAmountPerSize(
+            dataStore,
+            prices,
+            market.marketToken,
+            market.longToken,
+            market.shortToken
+        );
+
+        return MarketInfo(
+            market,
+            borrowingFactorPerSecondForLongs,
+            borrowingFactorPerSecondForShorts,
+            funding
+        );
+    }
+
     function getAccountPositions(PositionStore positionStore, address account, uint256 start, uint256 end) external view returns (Position.Props[] memory) {
-        uint256 positionCount = positionStore.getPositionCount();
+        uint256 positionCount = positionStore.getAccountPositionCount(account);
         if (start >= positionCount) {
             return new Position.Props[](0);
         }
@@ -43,11 +125,46 @@ contract Reader {
         Position.Props[] memory positions = new Position.Props[](positionKeys.length);
         for (uint256 i = 0; i < positionKeys.length; i++) {
             bytes32 positionKey = positionKeys[i];
-            Position.Props memory position = positionStore.get(positionKey);
-            positions[i] = position;
+            positions[i] = positionStore.get(positionKey);
         }
 
         return positions;
+    }
+
+    function getAccountPositionInfoList(DataStore dataStore, MarketStore marketStore, PositionStore positionStore, address account, uint256 start, uint256 end) external view returns (PositionInfo[] memory) {
+        uint256 positionCount = positionStore.getAccountPositionCount(account);
+        if (start >= positionCount) {
+            return new PositionInfo[](0);
+        }
+        if (end > positionCount) {
+            end = positionCount;
+        }
+        bytes32[] memory positionKeys = positionStore.getAccountPositionKeys(account, start, end);
+        PositionInfo[] memory positionInfoList = new PositionInfo[](positionKeys.length);
+        for (uint256 i = 0; i < positionKeys.length; i++) {
+            bytes32 positionKey = positionKeys[i];
+            positionInfoList[i] = getPositionInfo(dataStore, marketStore, positionStore, positionKey);
+        }
+
+        return positionInfoList;
+    }
+
+    function getPositionInfo(DataStore dataStore, MarketStore marketStore, PositionStore positionStore, bytes32 positionKey) public view returns (PositionInfo memory) {
+        Position.Props memory position = positionStore.get(positionKey);
+        Market.Props memory market = marketStore.get(position.market());
+        uint256 pendingBorrowingFees = MarketUtils.getBorrowingFees(dataStore, position);
+        PositionPricingUtils.PositionFundingFees memory pendingFundingFees = PositionPricingUtils.getFundingFees(
+            dataStore,
+            position,
+            market.longToken,
+            market.shortToken
+        );
+
+        return PositionInfo(
+            position,
+            pendingBorrowingFees,
+            pendingFundingFees
+        );
     }
 
     function getMarketTokenPrice(

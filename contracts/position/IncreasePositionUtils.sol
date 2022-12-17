@@ -213,25 +213,26 @@ library IncreasePositionUtils {
             position.setShortTokenFundingAmountPerSize(fees.funding.latestShortTokenFundingAmountPerSize);
         }
 
-        if (fees.funding.longTokenFundingFeeAmount > 0) {
+        // if the position has negative funding fees, distribute it to allow it to be claimable
+        if (fees.funding.claimableLongTokenAmount > 0) {
             MarketUtils.incrementClaimableFundingAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.market.marketToken,
                 params.market.longToken,
                 position.account(),
-                fees.funding.longTokenFundingFeeAmount.toUint256()
+                fees.funding.claimableLongTokenAmount
             );
         }
 
-        if (fees.funding.shortTokenFundingFeeAmount > 0) {
+        if (fees.funding.claimableShortTokenAmount > 0) {
             MarketUtils.incrementClaimableFundingAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.market.marketToken,
                 params.market.shortToken,
                 position.account(),
-                fees.funding.shortTokenFundingFeeAmount.toUint256()
+                fees.funding.claimableShortTokenAmount
             );
         }
 
