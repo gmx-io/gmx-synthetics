@@ -50,6 +50,15 @@ library MarketUtils {
         Price.Props shortTokenPrice;
     }
 
+    struct GetNextFundingAmountPerSizeResult {
+        uint256 fundingPerSecond;
+        bool longsPayShorts;
+        int256 fundingAmountPerSize_LongCollateral_LongPosition;
+        int256 fundingAmountPerSize_LongCollateral_ShortPosition;
+        int256 fundingAmountPerSize_ShortCollateral_LongPosition;
+        int256 fundingAmountPerSize_ShortCollateral_ShortPosition;
+    }
+
     // @dev _GetNextFundingAmountPerSizeCache struct used in getNextFundingAmountPerSize
     // to avoid stack too deep errors
     //
@@ -574,17 +583,12 @@ library MarketUtils {
         address longToken,
         address shortToken
     ) external {
-        (
-            int256 fundingAmountPerSize_LongCollateral_LongPosition,
-            int256 fundingAmountPerSize_LongCollateral_ShortPosition,
-            int256 fundingAmountPerSize_ShortCollateral_LongPosition,
-            int256 fundingAmountPerSize_ShortCollateral_ShortPosition
-        ) = getNextFundingAmountPerSize(dataStore, prices, market, longToken, shortToken);
+        GetNextFundingAmountPerSizeResult memory result = getNextFundingAmountPerSize(dataStore, prices, market, longToken, shortToken);
 
-        setFundingAmountPerSize(dataStore, market, longToken, true, fundingAmountPerSize_LongCollateral_LongPosition);
-        setFundingAmountPerSize(dataStore, market, longToken, false, fundingAmountPerSize_LongCollateral_ShortPosition);
-        setFundingAmountPerSize(dataStore, market, shortToken, true, fundingAmountPerSize_ShortCollateral_LongPosition);
-        setFundingAmountPerSize(dataStore, market, shortToken, false, fundingAmountPerSize_ShortCollateral_ShortPosition);
+        setFundingAmountPerSize(dataStore, market, longToken, true, result.fundingAmountPerSize_LongCollateral_LongPosition);
+        setFundingAmountPerSize(dataStore, market, longToken, false, result.fundingAmountPerSize_LongCollateral_ShortPosition);
+        setFundingAmountPerSize(dataStore, market, shortToken, true, result.fundingAmountPerSize_ShortCollateral_LongPosition);
+        setFundingAmountPerSize(dataStore, market, shortToken, false, result.fundingAmountPerSize_ShortCollateral_ShortPosition);
 
         dataStore.setUint(Keys.fundingUpdatedAtKey(market), block.timestamp);
     }
@@ -601,8 +605,10 @@ library MarketUtils {
         address market,
         address longToken,
         address shortToken
-    ) internal view returns (int256, int256, int256, int256) {
+    ) internal view returns (GetNextFundingAmountPerSizeResult memory) {
+        GetNextFundingAmountPerSizeResult memory result;
         _GetNextFundingAmountPerSizeCache memory cache;
+
         cache.oi.longOpenInterestWithLongCollateral = getOpenInterest(dataStore, market, longToken, true);
         cache.oi.longOpenInterestWithShortCollateral = getOpenInterest(dataStore, market, shortToken, true);
         cache.oi.shortOpenInterestWithLongCollateral = getOpenInterest(dataStore, market, longToken, false);
@@ -611,18 +617,13 @@ library MarketUtils {
         cache.oi.longOpenInterest = cache.oi.longOpenInterestWithLongCollateral + cache.oi.longOpenInterestWithShortCollateral;
         cache.oi.shortOpenInterest = cache.oi.shortOpenInterestWithLongCollateral + cache.oi.shortOpenInterestWithShortCollateral;
 
-        cache.fps.fundingAmountPerSize_LongCollateral_LongPosition = getFundingAmountPerSize(dataStore, market, longToken, true);
-        cache.fps.fundingAmountPerSize_LongCollateral_ShortPosition = getFundingAmountPerSize(dataStore, market, longToken, false);
-        cache.fps.fundingAmountPerSize_ShortCollateral_LongPosition = getFundingAmountPerSize(dataStore, market, shortToken, true);
-        cache.fps.fundingAmountPerSize_ShortCollateral_ShortPosition = getFundingAmountPerSize(dataStore, market, shortToken, false);
+        result.fundingAmountPerSize_LongCollateral_LongPosition = getFundingAmountPerSize(dataStore, market, longToken, true);
+        result.fundingAmountPerSize_LongCollateral_ShortPosition = getFundingAmountPerSize(dataStore, market, longToken, false);
+        result.fundingAmountPerSize_ShortCollateral_LongPosition = getFundingAmountPerSize(dataStore, market, shortToken, true);
+        result.fundingAmountPerSize_ShortCollateral_ShortPosition = getFundingAmountPerSize(dataStore, market, shortToken, false);
 
         if (cache.oi.longOpenInterest == 0 || cache.oi.shortOpenInterest == 0) {
-            return (
-                cache.fps.fundingAmountPerSize_LongCollateral_LongPosition,
-                cache.fps.fundingAmountPerSize_LongCollateral_ShortPosition,
-                cache.fps.fundingAmountPerSize_ShortCollateral_LongPosition,
-                cache.fps.fundingAmountPerSize_ShortCollateral_ShortPosition
-            );
+            return result;
         }
 
         cache.durationInSeconds = getSecondsSinceFundingUpdated(dataStore, market);
@@ -630,9 +631,11 @@ library MarketUtils {
 
         cache.diffUsd = Calc.diff(cache.oi.longOpenInterest, cache.oi.shortOpenInterest);
         cache.totalOpenInterest = cache.oi.longOpenInterest + cache.oi.shortOpenInterest;
-        cache.fundingUsd = (cache.fundingFactor * cache.diffUsd * cache.durationInSeconds) / cache.totalOpenInterest;
+        result.fundingPerSecond = cache.fundingFactor * cache.diffUsd / cache.totalOpenInterest;
+        result.longsPayShorts = cache.oi.longOpenInterest > cache.oi.shortOpenInterest;
+        cache.fundingUsd = cache.durationInSeconds * result.fundingPerSecond;
 
-        if (cache.oi.longOpenInterest > cache.oi.shortOpenInterest) {
+        if (result.longsPayShorts) {
             cache.fundingUsdForLongCollateral = cache.fundingUsd * cache.oi.longOpenInterestWithLongCollateral / cache.oi.longOpenInterest;
             cache.fundingUsdForShortCollateral = cache.fundingUsd * cache.oi.longOpenInterestWithShortCollateral / cache.oi.longOpenInterest;
         } else {
@@ -648,56 +651,51 @@ library MarketUtils {
         cache.fps.fundingAmountPerSizePortion_ShortCollateral_LongPosition = getPerSizeValue(cache.fundingUsdForShortCollateral / prices.shortTokenPrice.max, cache.oi.longOpenInterest);
         cache.fps.fundingAmountPerSizePortion_ShortCollateral_ShortPosition = getPerSizeValue(cache.fundingUsdForShortCollateral / prices.shortTokenPrice.max, cache.oi.shortOpenInterest);
 
-        if (cache.oi.longOpenInterest > cache.oi.shortOpenInterest) {
+        if (result.longsPayShorts) {
             // longs pay shorts
-            cache.fps.fundingAmountPerSize_LongCollateral_LongPosition = Calc.boundedAdd(
-                cache.fps.fundingAmountPerSize_LongCollateral_LongPosition,
+            result.fundingAmountPerSize_LongCollateral_LongPosition = Calc.boundedAdd(
+                result.fundingAmountPerSize_LongCollateral_LongPosition,
                 cache.fps.fundingAmountPerSizePortion_LongCollateral_LongPosition.toInt256()
             );
 
-            cache.fps.fundingAmountPerSize_LongCollateral_ShortPosition = Calc.boundedSub(
-                cache.fps.fundingAmountPerSize_LongCollateral_ShortPosition,
+            result.fundingAmountPerSize_LongCollateral_ShortPosition = Calc.boundedSub(
+                result.fundingAmountPerSize_LongCollateral_ShortPosition,
                 cache.fps.fundingAmountPerSizePortion_LongCollateral_ShortPosition.toInt256()
             );
 
-            cache.fps.fundingAmountPerSize_ShortCollateral_LongPosition = Calc.boundedAdd(
-                cache.fps.fundingAmountPerSize_ShortCollateral_LongPosition,
+            result.fundingAmountPerSize_ShortCollateral_LongPosition = Calc.boundedAdd(
+                result.fundingAmountPerSize_ShortCollateral_LongPosition,
                 cache.fps.fundingAmountPerSizePortion_ShortCollateral_LongPosition.toInt256()
             );
 
-            cache.fps.fundingAmountPerSize_ShortCollateral_ShortPosition = Calc.boundedSub(
-                cache.fps.fundingAmountPerSize_ShortCollateral_ShortPosition,
+            result.fundingAmountPerSize_ShortCollateral_ShortPosition = Calc.boundedSub(
+                result.fundingAmountPerSize_ShortCollateral_ShortPosition,
                 cache.fps.fundingAmountPerSizePortion_ShortCollateral_ShortPosition.toInt256()
             );
         } else {
             // shorts pay longs
-            cache.fps.fundingAmountPerSize_LongCollateral_LongPosition = Calc.boundedSub(
-                cache.fps.fundingAmountPerSize_LongCollateral_LongPosition,
+            result.fundingAmountPerSize_LongCollateral_LongPosition = Calc.boundedSub(
+                result.fundingAmountPerSize_LongCollateral_LongPosition,
                 cache.fps.fundingAmountPerSizePortion_LongCollateral_LongPosition.toInt256()
             );
 
-            cache.fps.fundingAmountPerSize_LongCollateral_ShortPosition = Calc.boundedAdd(
-                cache.fps.fundingAmountPerSize_LongCollateral_ShortPosition,
+            result.fundingAmountPerSize_LongCollateral_ShortPosition = Calc.boundedAdd(
+                result.fundingAmountPerSize_LongCollateral_ShortPosition,
                 cache.fps.fundingAmountPerSizePortion_LongCollateral_ShortPosition.toInt256()
             );
 
-            cache.fps.fundingAmountPerSize_ShortCollateral_LongPosition = Calc.boundedSub(
-                cache.fps.fundingAmountPerSize_ShortCollateral_LongPosition,
+            result.fundingAmountPerSize_ShortCollateral_LongPosition = Calc.boundedSub(
+                result.fundingAmountPerSize_ShortCollateral_LongPosition,
                 cache.fps.fundingAmountPerSizePortion_ShortCollateral_LongPosition.toInt256()
             );
 
-            cache.fps.fundingAmountPerSize_ShortCollateral_ShortPosition = Calc.boundedAdd(
-                cache.fps.fundingAmountPerSize_ShortCollateral_ShortPosition,
+            result.fundingAmountPerSize_ShortCollateral_ShortPosition = Calc.boundedAdd(
+                result.fundingAmountPerSize_ShortCollateral_ShortPosition,
                 cache.fps.fundingAmountPerSizePortion_ShortCollateral_ShortPosition.toInt256()
             );
         }
 
-        return (
-            cache.fps.fundingAmountPerSize_LongCollateral_LongPosition,
-            cache.fps.fundingAmountPerSize_LongCollateral_ShortPosition,
-            cache.fps.fundingAmountPerSize_ShortCollateral_LongPosition,
-            cache.fps.fundingAmountPerSize_ShortCollateral_ShortPosition
-        );
+        return result;
     }
 
     // @dev update the cumulative borrowing factor for a market
@@ -1194,6 +1192,28 @@ library MarketUtils {
         bool isLong
     ) internal view returns (uint256) {
         uint256 durationInSeconds = getSecondsSinceCumulativeBorrowingFactorUpdated(dataStore, market, isLong);
+        uint256 borrowingFactorPerSecond = getBorrowingFactorPerSecond(
+            dataStore,
+            prices,
+            market,
+            longToken,
+            shortToken,
+            isLong
+        );
+
+        uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, market, isLong);
+
+        return cumulativeBorrowingFactor + durationInSeconds * borrowingFactorPerSecond;
+    }
+
+    function getBorrowingFactorPerSecond(
+        DataStore dataStore,
+        MarketPrices memory prices,
+        address market,
+        address longToken,
+        address shortToken,
+        bool isLong
+    ) internal view returns (uint256) {
         uint256 borrowingFactor = getBorrowingFactor(dataStore, market, isLong);
 
         uint256 openInterestWithPnl = getOpenInterestWithPnl(dataStore, market, longToken, shortToken, prices.indexTokenPrice, isLong, true);
@@ -1202,10 +1222,7 @@ library MarketUtils {
         uint256 poolTokenPrice = isLong ? prices.longTokenPrice.min : prices.shortTokenPrice.min;
         uint256 poolUsd = poolAmount * poolTokenPrice;
 
-        uint256 adjustedFactor = durationInSeconds * borrowingFactor * openInterestWithPnl / poolUsd;
-        uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, market, isLong);
-
-        return cumulativeBorrowingFactor + adjustedFactor;
+        return borrowingFactor * openInterestWithPnl / poolUsd;
     }
 
     // @dev get the total borrowing fees
