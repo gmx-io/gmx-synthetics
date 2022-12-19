@@ -24,6 +24,7 @@ contract EventEmitter is RoleModule {
     // @param sizeDeltaUsd the amount of size the position was increased by
     // @param sizeDeltaInTokens the amount of size the position was increased by in tokens
     // @param collateralDeltaAmount the amount of collateral that was deposited into the position
+    // @param remainingCollateralAmount the amount of collateral remaining
     event PositionIncrease(
         bytes32 key,
         address indexed account,
@@ -33,7 +34,8 @@ contract EventEmitter is RoleModule {
         uint256 executionPrice,
         uint256 sizeDeltaInUsd,
         uint256 sizeDeltaInTokens,
-        int256 collateralDeltaAmount
+        int256 collateralDeltaAmount,
+        int256 remainingCollateralAmount
     );
 
     // @param key the position's key
@@ -409,7 +411,8 @@ contract EventEmitter is RoleModule {
         uint256 executionPrice,
         uint256 sizeDeltaUsd,
         uint256 sizeDeltaInTokens,
-        int256 collateralDeltaAmount
+        int256 collateralDeltaAmount,
+        int256 remainingCollateralAmount
     ) external onlyController {
         emit PositionIncrease(
             key,
@@ -420,7 +423,8 @@ contract EventEmitter is RoleModule {
             executionPrice,
             sizeDeltaUsd,
             sizeDeltaInTokens,
-            collateralDeltaAmount
+            collateralDeltaAmount,
+            remainingCollateralAmount
         );
     }
 

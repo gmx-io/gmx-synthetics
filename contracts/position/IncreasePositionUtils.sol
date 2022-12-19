@@ -110,7 +110,6 @@ library IncreasePositionUtils {
             params.market.shortToken
         );
 
-
         // update the cumulative borrowing factor for the market
         MarketUtils.updateCumulativeBorrowingFactor(
             params.contracts.dataStore,
@@ -134,7 +133,10 @@ library IncreasePositionUtils {
         );
 
         // check if there is sufficient collateral for the position
-        if (cache.collateralDeltaAmount < 0 && position.collateralAmount() < SafeCast.toUint256(-cache.collateralDeltaAmount)) {
+        if (
+            cache.collateralDeltaAmount < 0 &&
+            position.collateralAmount() < SafeCast.toUint256(-cache.collateralDeltaAmount)
+        ) {
             revert InsufficientCollateralAmount();
         }
         position.setCollateralAmount(Calc.sum(position.collateralAmount(), cache.collateralDeltaAmount));
@@ -192,7 +194,11 @@ library IncreasePositionUtils {
             cache.sizeDeltaInTokens = Calc.roundUpDivision(params.order.sizeDeltaUsd(), cache.executionPrice);
         }
         cache.nextPositionSizeInUsd = position.sizeInUsd() + params.order.sizeDeltaUsd();
-        cache.nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(params.contracts.dataStore, params.market.marketToken, position.isLong());
+        cache.nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(
+            params.contracts.dataStore,
+            params.market.marketToken,
+            position.isLong()
+        );
 
         MarketUtils.updateTotalBorrowing(
             params.contracts.dataStore,
@@ -269,17 +275,7 @@ library IncreasePositionUtils {
             prices
         );
 
-        params.contracts.eventEmitter.emitPositionIncrease(
-            params.positionKey,
-            position.account(),
-            position.market(),
-            position.collateralToken(),
-            position.isLong(),
-            cache.executionPrice,
-            params.order.sizeDeltaUsd(),
-            cache.sizeDeltaInTokens,
-            cache.collateralDeltaAmount
-        );
+        emitPositionIncrease(params, position, cache);
 
         ReferralUtils.incrementAffiliateReward(
             params.contracts.dataStore,
@@ -312,7 +308,11 @@ library IncreasePositionUtils {
         Position.Props memory position,
         int256 collateralDeltaAmount
     ) internal returns (int256, PositionPricingUtils.PositionFees memory) {
-        Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.collateralToken, params.market, prices);
+        Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(
+            params.collateralToken,
+            params.market,
+            prices
+        );
 
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
             params.contracts.dataStore,
@@ -354,5 +354,24 @@ library IncreasePositionUtils {
         params.contracts.eventEmitter.emitPositionFeesCollected(true, fees);
 
         return (collateralDeltaAmount, fees);
+    }
+
+    function emitPositionIncrease(
+        IncreasePositionParams memory params,
+        Position.Props memory position,
+        _IncreasePositionCache memory cache
+    ) internal {
+        params.contracts.eventEmitter.emitPositionIncrease(
+            params.positionKey,
+            position.account(),
+            position.market(),
+            position.collateralToken(),
+            position.isLong(),
+            cache.executionPrice,
+            params.order.sizeDeltaUsd(),
+            cache.sizeDeltaInTokens,
+            cache.collateralDeltaAmount,
+            position.collateralAmount().toInt256()
+        );
     }
 }

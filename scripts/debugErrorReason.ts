@@ -13,7 +13,8 @@ async function main() {
     return new ethers.utils.Interface(abi);
   });
 
-  const errorReason = "0xaec5ac84000000000000000000000000000000000000000000000000000000006394d359";
+  const errorReason =
+    "0x6CE234600000000000000000000000000000000000000000000000437030543AD3A5116200000000000000000000000000000000000000000000004372E3A658614C3CD3";
   console.log("Trying to parse error reason", errorReason);
 
   let parsed = false;
@@ -21,10 +22,28 @@ async function main() {
     try {
       const parsedError = iface.parseError(errorReason);
       console.log(parsedError);
+
+      console.log(
+        "%s(%s)",
+        parsedError.name,
+        Object.keys(parsedError.args)
+          .reduce((memo, key) => {
+            if (!isNaN(Number(key))) {
+              return memo;
+            }
+            memo.push(`${key}=${parsedError.args[key].toString()}`);
+            return memo;
+          }, [])
+          .join(", ")
+      );
       parsed = true;
       break;
       // eslint-disable-next-line no-empty
-    } catch (ex) {}
+    } catch (ex) {
+      if (!ex.toString().includes("no matching error")) {
+        console.error(ex);
+      }
+    }
   }
 
   if (!parsed) {
