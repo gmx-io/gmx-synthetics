@@ -144,6 +144,8 @@ library Keys {
     bytes32 public constant TOTAL_BORROWING = keccak256(abi.encode("TOTAL_BORROWING"));
     // @dev key for affiliate reward
     bytes32 public constant AFFILIATE_REWARD = keccak256(abi.encode("AFFILIATE_REWARD"));
+    // @dev key for is market disabled
+    bytes32 public constant IS_MARKET_DISABLED = keccak256(abi.encode("IS_MARKET_DISABLED"));
 
     string public constant EMPTY_PRICE_ERROR = "EMPTY_PRICE_ERROR";
     bytes32 public constant EMPTY_PRICE_ERROR_KEY = keccak256(abi.encode(EMPTY_PRICE_ERROR));
@@ -652,6 +654,16 @@ library Keys {
             market,
             token,
             account
+        ));
+    }
+
+    // @dev key for is market disabled
+    // @param market the market to check
+    // @return key for is market disabled
+    function isMarketDisabledKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            IS_MARKET_DISABLED,
+            market
         ));
     }
 

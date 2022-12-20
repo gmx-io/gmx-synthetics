@@ -24,7 +24,8 @@ library IncreaseOrderUtils {
             params.order.initialCollateralDeltaAmount()
         );
 
-        MarketUtils.validateNonEmptyMarket(params.market);
+        MarketUtils.validateEnabledMarket(params.contracts.dataStore, params.market);
+
 
         (address collateralToken, uint256 collateralDeltaAmount) = SwapUtils.swap(SwapUtils.SwapParams(
             params.contracts.dataStore,

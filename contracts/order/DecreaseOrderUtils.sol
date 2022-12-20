@@ -17,7 +17,7 @@ library DecreaseOrderUtils {
     // @param params OrderBaseUtils.ExecuteOrderParams
     function processOrder(OrderBaseUtils.ExecuteOrderParams memory params) external {
         Order.Props memory order = params.order;
-        MarketUtils.validateNonEmptyMarket(params.market);
+        MarketUtils.validateEnabledMarket(params.contracts.dataStore, params.market);
 
         bytes32 positionKey = PositionUtils.getPositionKey(order.account(), order.market(), order.initialCollateralToken(), order.isLong());
         Position.Props memory position = params.contracts.positionStore.get(positionKey);

@@ -84,7 +84,7 @@ contract BaseOrderHandler is ReentrancyGuard, RoleModule, OracleModule {
 
         params.key = key;
         params.order = orderStore.get(key);
-        params.swapPathMarkets = MarketUtils.getMarkets(marketStore, params.order.swapPath());
+        params.swapPathMarkets = MarketUtils.getEnabledMarkets(dataStore, marketStore, params.order.swapPath());
 
         params.contracts.dataStore = dataStore;
         params.contracts.eventEmitter = eventEmitter;
@@ -101,7 +101,7 @@ contract BaseOrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         );
 
         if (params.order.market() != address(0)) {
-            params.market = MarketUtils.getMarket(marketStore, params.order.market());
+            params.market = MarketUtils.getEnabledMarket(params.contracts.dataStore, marketStore, params.order.market());
         }
 
         params.keeper = keeper;

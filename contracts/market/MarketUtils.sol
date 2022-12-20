@@ -132,6 +132,7 @@ library MarketUtils {
     address public constant SWAP_COLLATERAL_TOKEN_TO_PNL_TOKEN = address(3);
 
     error EmptyMarket();
+    error DisabledMarket(address market);
     error InsufficientPoolAmount(uint256 poolAmount, uint256 amount);
     error InsufficientReserve(uint256 reservedUsd, uint256 maxReservedUsd);
 
@@ -742,7 +743,7 @@ library MarketUtils {
         bool isLong,
         bool maximize
     ) internal view returns (int256) {
-        Market.Props memory _market = getMarket(marketStore, market);
+        Market.Props memory _market = getEnabledMarket(dataStore, marketStore, market);
         MarketUtils.MarketPrices memory prices = MarketUtils.MarketPrices(
             oracle.getPrimaryPrice(_market.indexToken),
             oracle.getPrimaryPrice(_market.longToken),
@@ -1298,22 +1299,27 @@ library MarketUtils {
 
     // @dev validate that a market exists
     // @param market the market to check
-    function validateNonEmptyMarket(Market.Props memory market) internal pure {
+    function validateEnabledMarket(DataStore dataStore, Market.Props memory market) internal view {
         if (market.marketToken == address(0)) {
             revert EmptyMarket();
         }
+
+        bool isMarketDisabled = dataStore.getBool(Keys.isMarketDisabledKey(market.marketToken));
+        if (isMarketDisabled) {
+            revert DisabledMarket(market.marketToken);
+        }
     }
 
-    function getMarket(MarketStore marketStore, address marketAddress) internal view returns (Market.Props memory) {
+    function getEnabledMarket(DataStore dataStore, MarketStore marketStore, address marketAddress) internal view returns (Market.Props memory) {
         Market.Props memory market = marketStore.get(marketAddress);
-        validateNonEmptyMarket(market);
+        validateEnabledMarket(dataStore, market);
         return market;
     }
 
     // @dev get a list of market values based on an input array of market addresses
     // @param marketStore MarketStore
     // @param swapPath list of market addresses
-    function getMarkets(MarketStore marketStore, address[] memory swapPath) internal view returns (Market.Props[] memory) {
+    function getEnabledMarkets(DataStore dataStore, MarketStore marketStore, address[] memory swapPath) internal view returns (Market.Props[] memory) {
         Market.Props[] memory markets = new Market.Props[](swapPath.length);
 
         for (uint256 i = 0; i < swapPath.length; i++) {
@@ -1326,7 +1332,7 @@ library MarketUtils {
                     continue;
             }
 
-            markets[i] = getMarket(marketStore, marketAddress);
+            markets[i] = getEnabledMarket(dataStore, marketStore, marketAddress);
         }
 
         return markets;

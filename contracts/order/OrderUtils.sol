@@ -72,7 +72,7 @@ library OrderUtils {
         }
 
         // validate swap path markets
-        MarketUtils.getMarkets(marketStore, params.addresses.swapPath);
+        MarketUtils.getEnabledMarkets(dataStore, marketStore, params.addresses.swapPath);
 
         Order.Props memory order;
 

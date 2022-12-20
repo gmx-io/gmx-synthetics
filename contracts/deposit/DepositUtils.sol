@@ -121,7 +121,7 @@ library DepositUtils {
         address account,
         CreateDepositParams memory params
     ) external returns (bytes32) {
-        Market.Props memory market = MarketUtils.getMarket(marketStore, params.market);
+        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, marketStore, params.market);
 
         uint256 longTokenAmount = depositStore.recordTransferIn(market.longToken);
         uint256 shortTokenAmount = depositStore.recordTransferIn(market.shortToken);
@@ -290,7 +290,7 @@ library DepositUtils {
         Deposit.Props memory deposit = depositStore.get(key);
         require(deposit.account() != address(0), "DepositUtils: empty deposit");
 
-        Market.Props memory market = MarketUtils.getMarket(marketStore, deposit.market());
+        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, marketStore, deposit.market());
 
         if (deposit.longTokenAmount() > 0) {
             depositStore.transferOut(
