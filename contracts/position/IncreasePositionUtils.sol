@@ -371,7 +371,8 @@ library IncreasePositionUtils {
             params.order.sizeDeltaUsd(),
             cache.sizeDeltaInTokens,
             cache.collateralDeltaAmount,
-            position.collateralAmount().toInt256()
+            position.collateralAmount().toInt256(),
+            params.order.orderType()
         );
     }
 }

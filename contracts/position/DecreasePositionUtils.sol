@@ -406,19 +406,24 @@ library DecreasePositionUtils {
         DecreasePositionParams memory params,
         ProcessCollateralValues memory values
     ) internal {
-        params.contracts.eventEmitter.emitPositionDecrease(
+        EventUtils.EmitPositionDecreaseParams memory eventParams = EventUtils.EmitPositionDecreaseParams(
             params.positionKey,
-            params.order.account(),
-            params.order.market(),
-            params.order.initialCollateralToken(),
-            params.order.isLong(),
+            params.position.account(),
+            params.position.market(),
+            params.position.collateralToken(),
+            params.position.isLong()
+        );
+
+        params.contracts.eventEmitter.emitPositionDecrease(
+            eventParams,
             values.executionPrice,
             params.adjustedSizeDeltaUsd,
             values.sizeDeltaInTokens,
             params.order.initialCollateralDeltaAmount().toInt256(),
             values.pnlAmountForPool,
             values.remainingCollateralAmount,
-            values.outputAmount
+            values.outputAmount,
+            params.order.orderType()
         );
     }
 

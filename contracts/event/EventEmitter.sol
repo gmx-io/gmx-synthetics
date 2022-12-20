@@ -7,6 +7,7 @@ import "../order/Order.sol";
 import "../deposit/Deposit.sol";
 import "../pricing/SwapPricingUtils.sol";
 import "../pricing/PositionPricingUtils.sol";
+import "./EventUtils.sol";
 
 // @title EventEmitter
 // @dev Contract to emit events
@@ -25,6 +26,7 @@ contract EventEmitter is RoleModule {
     // @param sizeDeltaInTokens the amount of size the position was increased by in tokens
     // @param collateralDeltaAmount the amount of collateral that was deposited into the position
     // @param remainingCollateralAmount the amount of collateral remaining
+    // @param orderType the order type for the position increase
     event PositionIncrease(
         bytes32 key,
         address indexed account,
@@ -35,7 +37,8 @@ contract EventEmitter is RoleModule {
         uint256 sizeDeltaInUsd,
         uint256 sizeDeltaInTokens,
         int256 collateralDeltaAmount,
-        int256 remainingCollateralAmount
+        int256 remainingCollateralAmount,
+        Order.OrderType orderType
     );
 
     // @param key the position's key
@@ -50,6 +53,7 @@ contract EventEmitter is RoleModule {
     // @param positionPnlUsd the pnl realized
     // @param remainingCollateralAmount the amount of collateral remaining
     // @param outputAmount the amount sent to the user
+    // @param orderType the order type for the position decrease
     event PositionDecrease(
         bytes32 key,
         address indexed account,
@@ -62,7 +66,8 @@ contract EventEmitter is RoleModule {
         int256 collateralDeltaAmount,
         int256 pnlAmountForPool,
         int256 remainingCollateralAmount,
-        uint256 outputAmount
+        uint256 outputAmount,
+        Order.OrderType orderType
     );
 
     // @param key the key of the deposit
@@ -412,7 +417,8 @@ contract EventEmitter is RoleModule {
         uint256 sizeDeltaUsd,
         uint256 sizeDeltaInTokens,
         int256 collateralDeltaAmount,
-        int256 remainingCollateralAmount
+        int256 remainingCollateralAmount,
+        Order.OrderType orderType
     ) external onlyController {
         emit PositionIncrease(
             key,
@@ -424,7 +430,8 @@ contract EventEmitter is RoleModule {
             sizeDeltaUsd,
             sizeDeltaInTokens,
             collateralDeltaAmount,
-            remainingCollateralAmount
+            remainingCollateralAmount,
+            orderType
         );
     }
 
@@ -441,32 +448,30 @@ contract EventEmitter is RoleModule {
     // @param remainingCollateralAmount the amount of collateral remaining
     // @param outputAmount the amount sent to the user
     function emitPositionDecrease(
-        bytes32 key,
-        address account,
-        address market,
-        address collateralToken,
-        bool isLong,
+        EventUtils.EmitPositionDecreaseParams memory params,
         uint256 executionPrice,
         uint256 sizeDeltaUsd,
         uint256 sizeDeltaInTokens,
         int256 collateralDeltaAmount,
         int256 pnlAmountForPool,
         int256 remainingCollateralAmount,
-        uint256 outputAmount
+        uint256 outputAmount,
+        Order.OrderType orderType
     ) external onlyController {
         emit PositionDecrease(
-            key,
-            account,
-            market,
-            collateralToken,
-            isLong,
+            params.key,
+            params.account,
+            params.market,
+            params.collateralToken,
+            params.isLong,
             executionPrice,
             sizeDeltaUsd,
             sizeDeltaInTokens,
             collateralDeltaAmount,
             pnlAmountForPool,
             remainingCollateralAmount,
-            outputAmount
+            outputAmount,
+            orderType
         );
     }
 
