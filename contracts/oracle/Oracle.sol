@@ -45,6 +45,8 @@ contract Oracle is RoleModule {
         uint256 signatureIndex;
         uint256 minPriceIndex;
         uint256 maxPriceIndex;
+        uint256 minPrice;
+        uint256 maxPrice;
         uint256[] minPrices;
         uint256[] maxPrices;
     }
@@ -107,6 +109,8 @@ contract Oracle is RoleModule {
     error MaxSignerIndex(uint256 signerIndex, uint256 maxSignerIndex);
     error DuplicateSigner(uint256 signerIndex);
     error InvalidOraclePrice(address token);
+    error InvalidSignerMinMaxPrice(uint256 minPrice, uint256 maxPrice);
+    error InvalidMedianMinMaxPrice(uint256 minPrice, uint256 maxPrice);
 
     constructor(
         RoleStore _roleStore,
@@ -480,6 +484,13 @@ contract Oracle is RoleModule {
                     Array.revertArrayOutOfBounds(cache.maxPrices, cache.maxPriceIndex, "maxPrices");
                 }
 
+                cache.minPrice = cache.minPrices[cache.minPriceIndex];
+                cache.maxPrice = cache.maxPrices[cache.maxPriceIndex];
+
+                if (cache.minPrice > cache.maxPrice) {
+                    revert InvalidSignerMinMaxPrice(cache.minPrice, cache.maxPrice);
+                }
+
                 OracleUtils.validateSigner(
                     SALT,
                     cache.info.oracleBlockNumber,
@@ -488,8 +499,8 @@ contract Oracle is RoleModule {
                     cache.info.token,
                     cache.info.tokenOracleType,
                     cache.info.precision,
-                    cache.minPrices[cache.minPriceIndex],
-                    cache.maxPrices[cache.maxPriceIndex],
+                    cache.minPrice,
+                    cache.maxPrice,
                     params.signatures[cache.signatureIndex],
                     signers[j]
                 );
@@ -500,6 +511,10 @@ contract Oracle is RoleModule {
 
             if (medianMinPrice == 0 || medianMaxPrice == 0) {
                 revert InvalidOraclePrice(cache.info.token);
+            }
+
+            if (medianMinPrice > medianMaxPrice) {
+                revert InvalidMedianMinMaxPrice(medianMinPrice, medianMaxPrice);
             }
 
             if (primaryPrices[cache.info.token].isEmpty()) {
