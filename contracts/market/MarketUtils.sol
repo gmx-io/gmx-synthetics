@@ -208,11 +208,19 @@ library MarketUtils {
     // types, use this value instead of the primary price for positions
     // @param market the market values
     // @param oracle Oracle
-    function getMarketPricesForPosition(Market.Props memory market, Oracle oracle) internal view returns (MarketPrices memory) {
+    function getMarketPricesForPosition(Oracle oracle, Market.Props memory market) internal view returns (MarketPrices memory) {
         return MarketPrices(
             oracle.getLatestPrice(market.indexToken),
             oracle.getLatestPrice(market.longToken),
             oracle.getLatestPrice(market.shortToken)
+        );
+    }
+
+    function getMarketPrices(Oracle oracle, Market.Props memory market) internal view returns (MarketPrices memory) {
+        return MarketUtils.MarketPrices(
+            oracle.getPrimaryPrice(market.indexToken),
+            oracle.getPrimaryPrice(market.longToken),
+            oracle.getPrimaryPrice(market.shortToken)
         );
     }
 
@@ -768,6 +776,10 @@ library MarketUtils {
         bool maximize
     ) internal view returns (int256) {
         uint256 poolUsd = getPoolUsdWithoutPnl(dataStore, market, prices, isLong);
+
+        if (poolUsd == 0) {
+            return 0;
+        }
 
         int256 pnl = getPnl(
             dataStore,

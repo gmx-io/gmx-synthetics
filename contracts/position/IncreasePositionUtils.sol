@@ -97,8 +97,8 @@ library IncreasePositionUtils {
 
         // get the market prices for the given position
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPricesForPosition(
-            params.market,
-            params.contracts.oracle
+            params.contracts.oracle,
+            params.market
         );
 
         // update the funding amount per size for the market
@@ -264,7 +264,13 @@ library IncreasePositionUtils {
                 position.isLong(),
                 cache.sizeDeltaInTokens.toInt256()
             );
-            MarketUtils.validateReserve(params.contracts.dataStore, params.market, prices, params.order.isLong());
+
+            MarketUtils.validateReserve(
+                params.contracts.dataStore,
+                params.market,
+                prices,
+                params.order.isLong()
+            );
         }
 
         PositionUtils.validatePosition(

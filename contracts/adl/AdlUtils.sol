@@ -51,6 +51,9 @@ library AdlUtils {
         uint256 updatedAtBlock;
     }
 
+    error PendingAdlForLongs(int256 pnlToPoolFactor, uint256 maxPnlFactor);
+    error PendingAdlForShorts(int256 pnlToPoolFactor, uint256 maxPnlFactor);
+
     // @dev Multiple positions may need to be reduced to ensure that the pending
     // profits does not exceed the allowed thresholds
     //
@@ -90,15 +93,72 @@ library AdlUtils {
             OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, latestAdlBlock);
         }
 
-        int256 pnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, marketStore, oracle, market, isLong, true);
-        uint256 maxPnlFactor = MarketUtils.getMaxPnlFactor(dataStore, market, isLong);
+        Market.Props memory _market = MarketUtils.getEnabledMarket(dataStore, marketStore, market);
+        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(oracle, _market);
+        (bool _shouldEnableAdl, int256 pnlToPoolFactor, uint256 maxPnlFactor) = shouldEnableAdl(
+            dataStore,
+            _market,
+            prices,
+            isLong,
+            false
+        );
 
-        bool shouldEnableAdl = pnlToPoolFactor > 0 && pnlToPoolFactor.toUint256() > maxPnlFactor;
-
-        setIsAdlEnabled(dataStore, market, isLong, shouldEnableAdl);
+        setIsAdlEnabled(dataStore, market, isLong, _shouldEnableAdl);
         setLatestAdlBlock(dataStore, market, isLong, block.number);
 
-        eventEmitter.emitAdlStateUpdated(pnlToPoolFactor, maxPnlFactor, shouldEnableAdl);
+        eventEmitter.emitAdlStateUpdated(pnlToPoolFactor, maxPnlFactor, _shouldEnableAdl);
+    }
+
+    function validatePoolState(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketUtils.MarketPrices memory prices,
+        bool useMaxPnlFactorForWithdrawals
+    ) internal view {
+        (bool _shouldEnableAdlForLongs, int256 pnlToPoolFactorForLongs, uint256 maxPnlFactorForLongs) = AdlUtils.shouldEnableAdl(
+            dataStore,
+            market,
+            prices,
+            true,
+            useMaxPnlFactorForWithdrawals
+        );
+
+        if (_shouldEnableAdlForLongs) {
+            revert PendingAdlForLongs(pnlToPoolFactorForLongs, maxPnlFactorForLongs);
+        }
+
+        (bool _shouldEnableAdlForShorts, int256 pnlToPoolFactorForShorts, uint256 maxPnlFactorForShorts) = AdlUtils.shouldEnableAdl(
+            dataStore,
+            market,
+            prices,
+            false,
+            useMaxPnlFactorForWithdrawals
+        );
+
+        if (_shouldEnableAdlForShorts) {
+            revert PendingAdlForShorts(pnlToPoolFactorForShorts, maxPnlFactorForShorts);
+        }
+    }
+
+    function shouldEnableAdl(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketUtils.MarketPrices memory prices,
+        bool isLong,
+        bool useMaxPnlFactorForWithdrawals
+    ) internal view returns (bool, int256, uint256) {
+        int256 pnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, market, prices, isLong, true);
+        uint256 maxPnlFactor;
+
+        if (useMaxPnlFactorForWithdrawals) {
+            maxPnlFactor = MarketUtils.getMaxPnlFactorForWithdrawals(dataStore, market.marketToken, isLong);
+        } else {
+            maxPnlFactor = MarketUtils.getMaxPnlFactor(dataStore, market.marketToken, isLong);
+        }
+
+        bool _shouldEnableAdl = pnlToPoolFactor > 0 && pnlToPoolFactor.toUint256() > maxPnlFactor;
+
+        return (_shouldEnableAdl, pnlToPoolFactor, maxPnlFactor);
     }
 
     // @dev Construct an ADL order

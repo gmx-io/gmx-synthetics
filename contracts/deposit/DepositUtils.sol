@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "../adl/AdlUtils.sol";
+
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 
@@ -183,12 +185,22 @@ library DepositUtils {
         CallbackUtils.beforeDepositExecution(params.key, deposit);
 
         Market.Props memory market = params.marketStore.get(deposit.market());
+        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(params.oracle, market);
 
-        Price.Props memory longTokenPrice = params.oracle.getPrimaryPrice(market.longToken);
-        Price.Props memory shortTokenPrice = params.oracle.getPrimaryPrice(market.shortToken);
+        // deposits should improve the pool state but it should be checked if
+        // there is any pending ADL before allowing deposits
+        // this prevents deposits before a pending ADL is completed
+        // so that market tokens are not minted at a lower price than they
+        // should be
+        AdlUtils.validatePoolState(
+            params.dataStore,
+            market,
+            prices,
+            false
+        );
 
-        uint256 longTokenUsd = deposit.longTokenAmount() * longTokenPrice.midPrice();
-        uint256 shortTokenUsd = deposit.shortTokenAmount() * shortTokenPrice.midPrice();
+        uint256 longTokenUsd = deposit.longTokenAmount() * prices.longTokenPrice.midPrice();
+        uint256 shortTokenUsd = deposit.shortTokenAmount() * prices.shortTokenPrice.midPrice();
 
         uint256 receivedMarketTokens;
 
@@ -198,10 +210,10 @@ library DepositUtils {
                 market.marketToken,
                 market.longToken,
                 market.shortToken,
-                longTokenPrice.midPrice(),
-                shortTokenPrice.midPrice(),
-                (deposit.longTokenAmount() * longTokenPrice.midPrice()).toInt256(),
-                (deposit.shortTokenAmount() * shortTokenPrice.midPrice()).toInt256()
+                prices.longTokenPrice.midPrice(),
+                prices.shortTokenPrice.midPrice(),
+                (deposit.longTokenAmount() * prices.longTokenPrice.midPrice()).toInt256(),
+                (deposit.shortTokenAmount() * prices.shortTokenPrice.midPrice()).toInt256()
             )
         );
 
@@ -221,8 +233,8 @@ library DepositUtils {
                 deposit.receiver(),
                 market.longToken,
                 market.shortToken,
-                longTokenPrice,
-                shortTokenPrice,
+                prices.longTokenPrice,
+                prices.shortTokenPrice,
                 deposit.longTokenAmount(),
                 priceImpactUsd * longTokenUsd.toInt256() / (longTokenUsd + shortTokenUsd).toInt256()
             );
@@ -239,8 +251,8 @@ library DepositUtils {
                 deposit.receiver(),
                 market.shortToken,
                 market.longToken,
-                shortTokenPrice,
-                longTokenPrice,
+                prices.shortTokenPrice,
+                prices.longTokenPrice,
                 deposit.shortTokenAmount(),
                 priceImpactUsd * shortTokenUsd.toInt256() / (longTokenUsd + shortTokenUsd).toInt256()
             );

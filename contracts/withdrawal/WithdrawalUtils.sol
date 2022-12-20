@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "../adl/AdlUtils.sol";
+
 import "../data/DataStore.sol";
 
 import "./WithdrawalStore.sol";
@@ -398,15 +400,24 @@ library WithdrawalUtils {
             -poolAmountDelta.toInt256()
         );
 
+        MarketUtils.MarketPrices memory prices = MarketUtils.MarketPrices(
+            params.oracle.getPrimaryPrice(_params.market.indexToken),
+            _params.tokenIn == _params.market.longToken ? _params.tokenInPrice : _params.tokenOutPrice,
+            _params.tokenIn == _params.market.shortToken ? _params.tokenInPrice : _params.tokenOutPrice
+        );
+
         MarketUtils.validateReserve(
             params.dataStore,
             _params.market,
-            MarketUtils.MarketPrices(
-                params.oracle.getPrimaryPrice(_params.market.indexToken),
-                _params.tokenIn == _params.market.longToken ? _params.tokenInPrice : _params.tokenOutPrice,
-                _params.tokenIn == _params.market.shortToken ? _params.tokenInPrice : _params.tokenOutPrice
-            ),
+            prices,
             _params.tokenOut == _params.market.longToken
+        );
+
+        AdlUtils.validatePoolState(
+            params.dataStore,
+            _params.market,
+            prices,
+            true
         );
 
         uint256 marketTokensBalance = MarketToken(payable(_params.market.marketToken)).balanceOf(_params.account);

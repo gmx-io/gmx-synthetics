@@ -3,6 +3,8 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 export type MarketConfig = {
   tokens: [indexToken: string, longToken: string, shortToken: string];
   reserveFactor: [number, number];
+  maxPnlFactor: [number, number];
+  maxPnlFactorForWithdrawals: [number, number];
 
   positionFeeFactor?: number | string;
   positivePositionImpactFactor?: number | string;
@@ -25,6 +27,8 @@ const config: {
     {
       tokens: ["WAVAX", "WAVAX", "USDC"], // indexToken, longToken, shortToken
       reserveFactor: [2, 1],
+      maxPnlFactor: [5, 1],
+      maxPnlFactorForWithdrawals: [7, 1],
 
       positionFeeFactor: 100,
       positivePositionImpactFactor: 200,
@@ -39,30 +43,42 @@ const config: {
     {
       tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
       reserveFactor: [1, 1],
+      maxPnlFactor: [5, 1],
+      maxPnlFactorForWithdrawals: [7, 1],
     },
     {
       tokens: ["SOL", "WETH", "USDC"], // indexToken, longToken, shortToken
       reserveFactor: [5, 1],
+      maxPnlFactor: [5, 1],
+      maxPnlFactorForWithdrawals: [7, 1],
     },
   ],
   hardhat: [
     {
       tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
       reserveFactor: [5, 1],
+      maxPnlFactor: [5, 1],
+      maxPnlFactorForWithdrawals: [7, 1],
     },
     {
       tokens: ["SOL", "WETH", "USDC"],
       reserveFactor: [5, 1],
+      maxPnlFactor: [5, 1],
+      maxPnlFactorForWithdrawals: [7, 1],
     },
   ],
   localhost: [
     {
       tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
       reserveFactor: [5, 1],
+      maxPnlFactor: [5, 1],
+      maxPnlFactorForWithdrawals: [7, 1],
     },
     {
       tokens: ["SOL", "WETH", "USDC"],
       reserveFactor: [5, 1],
+      maxPnlFactor: [5, 1],
+      maxPnlFactorForWithdrawals: [7, 1],
     },
   ],
 };

@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.0;
 
+import "../adl/AdlUtils.sol";
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 import "../oracle/Oracle.sol";
@@ -226,15 +227,24 @@ library SwapUtils {
             -cache.poolAmountOut.toInt256()
         );
 
+        MarketUtils.MarketPrices memory prices = MarketUtils.MarketPrices(
+            params.oracle.getLatestPrice(_params.market.indexToken),
+            _params.tokenIn == _params.market.longToken ? cache.tokenInPrice : cache.tokenOutPrice,
+            _params.tokenIn == _params.market.shortToken ? cache.tokenInPrice : cache.tokenOutPrice
+        );
+
         MarketUtils.validateReserve(
             params.dataStore,
             _params.market,
-            MarketUtils.MarketPrices(
-                params.oracle.getLatestPrice(_params.market.indexToken),
-                _params.tokenIn == _params.market.longToken ? cache.tokenInPrice : cache.tokenOutPrice,
-                _params.tokenIn == _params.market.shortToken ? cache.tokenInPrice : cache.tokenOutPrice
-            ),
+            prices,
             cache.tokenOut == _params.market.longToken
+        );
+
+        AdlUtils.validatePoolState(
+            params.dataStore,
+            _params.market,
+            prices,
+            true
         );
 
         params.eventEmitter.emitSwapFeesCollected(keccak256(abi.encode("swap")), fees);

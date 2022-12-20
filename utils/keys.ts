@@ -17,6 +17,9 @@ export const PRICE_FEED = hashString("PRICE_FEED");
 export const PRICE_FEED_MULTIPLIER = hashString("PRICE_FEED_MULTIPLIER");
 export const ORACLE_TYPE = hashString("ORACLE_TYPE");
 export const RESERVE_FACTOR = hashString("RESERVE_FACTOR");
+export const MAX_PNL_FACTOR = hashString("MAX_PNL_FACTOR");
+export const MAX_PNL_FACTOR_FOR_WITHDRAWALS = hashString("MAX_PNL_FACTOR_FOR_WITHDRAWALS");
+
 export const SWAP_FEE_FACTOR = hashString("SWAP_FEE_FACTOR");
 export const SWAP_IMPACT_FACTOR = hashString("SWAP_IMPACT_FACTOR");
 export const SWAP_IMPACT_EXPONENT_FACTOR = hashString("SWAP_IMPACT_EXPONENT_FACTOR");
@@ -45,6 +48,14 @@ export function oracleTypeKey(token: string) {
 
 export function reserveFactorKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [RESERVE_FACTOR, market, isLong]);
+}
+
+export function maxPnlFactorKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [MAX_PNL_FACTOR, market, isLong]);
+}
+
+export function maxPnlFactorForWithdrawalsKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [MAX_PNL_FACTOR_FOR_WITHDRAWALS, market, isLong]);
 }
 
 export function poolAmountKey(market: string, token: string) {

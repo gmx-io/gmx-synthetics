@@ -45,9 +45,32 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
     );
   }
 
+  async function setMaxPnlFactor(marketToken: symbol, isLong: boolean, maxPnlFactor: number) {
+    const key = keys.maxPnlFactorKey(marketToken, isLong);
+    await setUintIfDifferent(
+      key,
+      maxPnlFactor,
+      `max pnl factor ${marketToken.toString()} ${isLong ? "long" : "short"}`
+    );
+  }
+
+  async function setMaxPnlFactorForWithdrawals(marketToken: symbol, isLong: boolean, maxPnlFactor: number) {
+    const key = keys.maxPnlFactorForWithdrawalsKey(marketToken, isLong);
+    await setUintIfDifferent(
+      key,
+      maxPnlFactor,
+      `max pnl factor for withdrawals ${marketToken.toString()} ${isLong ? "long" : "short"}`
+    );
+  }
+
   for (const marketConfig of markets) {
     const [indexToken, longToken, shortToken] = marketConfig.tokens.map((symbol) => tokens[symbol].address);
     const reserveFactor = decimalToFloat(marketConfig.reserveFactor[0], marketConfig.reserveFactor[1]);
+    const maxPnlFactor = decimalToFloat(marketConfig.maxPnlFactor[0], marketConfig.maxPnlFactor[1]);
+    const maxPnlFactorForWithdrawals = decimalToFloat(
+      marketConfig.maxPnlFactorForWithdrawals[0],
+      marketConfig.maxPnlFactorForWithdrawals[1]
+    );
 
     const marketToken = getMarketTokenAddress(
       indexToken,
@@ -60,6 +83,12 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
 
     await setReserveFactor(marketToken, true, reserveFactor);
     await setReserveFactor(marketToken, false, reserveFactor);
+
+    await setMaxPnlFactor(marketToken, true, maxPnlFactor);
+    await setMaxPnlFactor(marketToken, false, maxPnlFactor);
+
+    await setMaxPnlFactorForWithdrawals(marketToken, true, maxPnlFactor);
+    await setMaxPnlFactorForWithdrawals(marketToken, false, maxPnlFactor);
 
     for (const name of [
       "positionFeeFactor",

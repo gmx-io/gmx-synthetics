@@ -161,8 +161,8 @@ library DecreasePositionUtils {
         _DecreasePositionCache memory cache;
 
         cache.prices = MarketUtils.getMarketPricesForPosition(
-            params.market,
-            params.contracts.oracle
+            params.contracts.oracle,
+            params.market
         );
 
         cache.pnlToken = params.position.isLong() ? params.market.longToken : params.market.shortToken;
