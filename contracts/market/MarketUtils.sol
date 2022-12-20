@@ -1319,15 +1319,17 @@ library MarketUtils {
     // @dev get a list of market values based on an input array of market addresses
     // @param marketStore MarketStore
     // @param swapPath list of market addresses
-    function getEnabledMarkets(DataStore dataStore, MarketStore marketStore, address[] memory swapPath) internal view returns (Market.Props[] memory) {
+    function getEnabledMarkets(DataStore dataStore, MarketStore marketStore, address[] memory swapPath, bool allowSwapPathFlag) internal view returns (Market.Props[] memory) {
         Market.Props[] memory markets = new Market.Props[](swapPath.length);
 
         for (uint256 i = 0; i < swapPath.length; i++) {
             address marketAddress = swapPath[i];
             if (
-                marketAddress == NO_SWAP ||
+                i == 0 &&
+                allowSwapPathFlag &&
+                (marketAddress == NO_SWAP ||
                 marketAddress == SWAP_PNL_TOKEN_TO_COLLATERAL_TOKEN ||
-                marketAddress == SWAP_COLLATERAL_TOKEN_TO_PNL_TOKEN
+                marketAddress == SWAP_COLLATERAL_TOKEN_TO_PNL_TOKEN)
             ) {
                     continue;
             }
