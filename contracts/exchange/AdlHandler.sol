@@ -110,10 +110,17 @@ contract AdlHandler is BaseOrderHandler {
             cache.oracleBlockNumbers
         );
 
-        cache.pnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, marketStore, oracle, market, isLong, true);
+        (bool shouldAllowAdl, , ) = AdlUtils.shouldAllowAdl(
+            dataStore,
+            marketStore,
+            oracle,
+            market,
+            isLong,
+            false
+        );
 
-        if (cache.pnlToPoolFactor < 0) {
-            revert("Invalid pnlToPoolFactor");
+        if (shouldAllowAdl) {
+            revert("AdlHandler: ADL not required");
         }
 
         cache.key = AdlUtils.createAdlOrder(
