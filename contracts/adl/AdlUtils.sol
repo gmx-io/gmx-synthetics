@@ -66,6 +66,13 @@ library AdlUtils {
     // Once the pending profit has been reduced below the threshold this function can
     // be called again to clear the flag
     //
+    // The ADL check would be possible to do in AdlHandler.executeAdl as well
+    // but with that order keepers could use stale oracle prices to prove that
+    // an ADL state is possible
+    //
+    // Having this function allows any order keeper to disable ADL if prices
+    // have updated such that ADL is no longer needed
+    //
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
     // @param marketStore MarketStore
