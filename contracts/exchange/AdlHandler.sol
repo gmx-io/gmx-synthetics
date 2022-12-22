@@ -143,6 +143,7 @@ contract AdlHandler is BaseOrderHandler {
 
         OrderUtils.executeOrder(params);
 
+        // validate that the ratio of pending pnl to pool value was decreased
         cache.nextPnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, marketStore, oracle, market, isLong, true);
         if (cache.nextPnlToPoolFactor >= cache.pnlToPoolFactor) {
             revert("Invalid adl");
