@@ -337,7 +337,7 @@ Price impact is calculated as:
 (initial imbalance) ^ (price impact exponent) * (price impact factor / 2) - (next imbalance) ^ (price impact exponent) * (price impact factor / 2)
 ```
 
-For spot actions (deposits, withdrawals, swaps), imbalance is calculated as the difference in the worth of the long tokens and short tokens.
+For swaps, imbalance is calculated as the difference in the worth of the long tokens and short tokens.
 
 For example:
 
@@ -358,6 +358,22 @@ For position actions (increase / decrease position), imbalance is calculated as 
 The purpose of the price impact is to help reduce the risk of price manipulation, since the contracts use an oracle price which would be an average or median price of multiple reference exchanges. Without a price impact, it may be profitable to manipulate the prices on reference exchanges while executing orders on the contracts.
 
 This risk will also be present if the positive and negative price impact values are similar, for that reason the positive price impact should be set to a low value in times of volatility or irregular price movements.
+
+For the price impact on position increases / decreases, if negative price impact is deducted as collateral from the position, this could lead to the position having a different leverage from what the user intended, so instead of deducting collateral the position's entry / exit price is adjusted based on the price impact.
+
+For example:
+
+- The oracle price of the index token is $5000
+- A user opens a long position of size $50,000 with a negative price impact of 0.1%
+- The user's position size is in USD is $50,000 and the size in tokens is (50,000 / 5000) \* (100 - 0.1)% => 9.99
+- This gives the position an entry price of 50,000 / 9.99 => ~$5005
+- The negative price impact is tracked as a number of index tokens
+- In this case there would be 0.01 index tokens in the position impact pool
+- The pending PnL of the user at this point would be (50,000 - 9.99 \* 5000) => $50
+- The tokens in the position impact pool should be accounted for when calculating the pool value to offset this pending PnL
+- The net impact on the pool is zero, +$50 from the pending negative PnL due to price impact and -$50 from the 0.01 index tokens in the position impact pool worth $50
+- If the user closes the position at the index token price of $5000, they would receive (original position collateral - $50)
+- The pool would have an extra $50 of collateral which continues to have a net zero impact on the pool value due to the 0.01 index tokens in the position impact pool
 
 # Fees
 
