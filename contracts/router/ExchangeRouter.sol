@@ -187,12 +187,18 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         );
     }
 
-    function simulateExecuteOrder(
-        bytes32 key,
-        OracleUtils.SimulatePricesParams memory params,
-        OracleUtils.SetPricesParams memory oracleParams
+    function simulateCreateAndExecuteOrder(
+        OrderBaseUtils.CreateOrderParams calldata params,
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams
     ) external payable nonReentrant {
-        orderHandler.simulateExecuteOrder(key, params, oracleParams);
+        address account = msg.sender;
+
+        bytes32 key = orderHandler.createOrder(
+            account,
+            params
+        );
+
+        orderHandler.simulateExecuteOrder(key, simulatedOracleParams);
     }
 
     /**

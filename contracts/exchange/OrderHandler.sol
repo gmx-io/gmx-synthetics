@@ -142,14 +142,15 @@ contract OrderHandler is BaseOrderHandler {
 
     function simulateExecuteOrder(
         bytes32 key,
-        OracleUtils.SimulatePricesParams memory params,
-        OracleUtils.SetPricesParams memory oracleParams
+        OracleUtils.SimulatePricesParams memory params
     ) external
         onlyController
         withSimulatedOraclePrices(oracle, params)
     {
         uint256 startingGas = gasleft();
         bool simulationMode = true;
+
+        OracleUtils.SetPricesParams memory oracleParams;
 
         this._executeOrder(
             key,
