@@ -8,6 +8,7 @@ import "../market/Market.sol";
 import "../market/MarketStore.sol";
 import "../position/Position.sol";
 import "../position/PositionUtils.sol";
+import "../order/OrderStore.sol";
 
 // @title Reader
 // @dev Library for read functions
@@ -27,7 +28,11 @@ contract Reader {
         MarketUtils.GetNextFundingAmountPerSizeResult funding;
     }
 
-    function getMarkets(MarketStore marketStore, uint256 start, uint256 end) external view returns (Market.Props[] memory) {
+    function getMarkets(
+        MarketStore marketStore,
+        uint256 start,
+        uint256 end
+    ) external view returns (Market.Props[] memory) {
         uint256 marketCount = marketStore.getMarketCount();
         if (start >= marketCount) {
             return new Market.Props[](0);
@@ -105,15 +110,15 @@ contract Reader {
             market.shortToken
         );
 
-        return MarketInfo(
-            market,
-            borrowingFactorPerSecondForLongs,
-            borrowingFactorPerSecondForShorts,
-            funding
-        );
+        return MarketInfo(market, borrowingFactorPerSecondForLongs, borrowingFactorPerSecondForShorts, funding);
     }
 
-    function getAccountPositions(PositionStore positionStore, address account, uint256 start, uint256 end) external view returns (Position.Props[] memory) {
+    function getAccountPositions(
+        PositionStore positionStore,
+        address account,
+        uint256 start,
+        uint256 end
+    ) external view returns (Position.Props[] memory) {
         uint256 positionCount = positionStore.getAccountPositionCount(account);
         if (start >= positionCount) {
             return new Position.Props[](0);
@@ -131,7 +136,14 @@ contract Reader {
         return positions;
     }
 
-    function getAccountPositionInfoList(DataStore dataStore, MarketStore marketStore, PositionStore positionStore, address account, uint256 start, uint256 end) external view returns (PositionInfo[] memory) {
+    function getAccountPositionInfoList(
+        DataStore dataStore,
+        MarketStore marketStore,
+        PositionStore positionStore,
+        address account,
+        uint256 start,
+        uint256 end
+    ) external view returns (PositionInfo[] memory) {
         uint256 positionCount = positionStore.getAccountPositionCount(account);
         if (start >= positionCount) {
             return new PositionInfo[](0);
@@ -149,7 +161,12 @@ contract Reader {
         return positionInfoList;
     }
 
-    function getPositionInfo(DataStore dataStore, MarketStore marketStore, PositionStore positionStore, bytes32 positionKey) public view returns (PositionInfo memory) {
+    function getPositionInfo(
+        DataStore dataStore,
+        MarketStore marketStore,
+        PositionStore positionStore,
+        bytes32 positionKey
+    ) public view returns (PositionInfo memory) {
         Position.Props memory position = positionStore.get(positionKey);
         Market.Props memory market = marketStore.get(position.market());
         uint256 pendingBorrowingFees = MarketUtils.getBorrowingFees(dataStore, position);
@@ -160,11 +177,7 @@ contract Reader {
             market.shortToken
         );
 
-        return PositionInfo(
-            position,
-            pendingBorrowingFees,
-            pendingFundingFees
-        );
+        return PositionInfo(position, pendingBorrowingFees, pendingFundingFees);
     }
 
     function getMarketTokenPrice(
@@ -175,14 +188,15 @@ contract Reader {
         Price.Props memory indexTokenPrice,
         bool maximize
     ) external view returns (uint256) {
-        return MarketUtils.getMarketTokenPrice(
-            dataStore,
-            market,
-            longTokenPrice,
-            shortTokenPrice,
-            indexTokenPrice,
-            maximize
-        );
+        return
+            MarketUtils.getMarketTokenPrice(
+                dataStore,
+                market,
+                longTokenPrice,
+                shortTokenPrice,
+                indexTokenPrice,
+                maximize
+            );
     }
 
     function getNetPnl(
@@ -193,14 +207,7 @@ contract Reader {
         Price.Props memory indexTokenPrice,
         bool maximize
     ) external view returns (int256) {
-        return MarketUtils.getNetPnl(
-            dataStore,
-            market,
-            longToken,
-            shortToken,
-            indexTokenPrice,
-            maximize
-        );
+        return MarketUtils.getNetPnl(dataStore, market, longToken, shortToken, indexTokenPrice, maximize);
     }
 
     function getPnl(
@@ -212,15 +219,7 @@ contract Reader {
         bool isLong,
         bool maximize
     ) internal view returns (int256) {
-        return MarketUtils.getPnl(
-            dataStore,
-            market,
-            longToken,
-            shortToken,
-            indexTokenPrice,
-            isLong,
-            maximize
-        );
+        return MarketUtils.getPnl(dataStore, market, longToken, shortToken, indexTokenPrice, isLong, maximize);
     }
 
     function getOpenInterestWithPnl(
@@ -232,14 +231,71 @@ contract Reader {
         bool isLong,
         bool maximize
     ) external view returns (uint256) {
-        return MarketUtils.getOpenInterestWithPnl(
-            dataStore,
-            market,
-            longToken,
-            shortToken,
-            indexTokenPrice,
-            isLong,
-            maximize
-        );
+        return
+            MarketUtils.getOpenInterestWithPnl(
+                dataStore,
+                market,
+                longToken,
+                shortToken,
+                indexTokenPrice,
+                isLong,
+                maximize
+            );
+    }
+
+    function getPnlToPoolFactor(
+        DataStore dataStore,
+        MarketStore marketStore,
+        address marketAddress,
+        MarketUtils.MarketPrices memory prices,
+        bool isLong,
+        bool maximize
+    ) external view returns (int256) {
+        Market.Props memory market = marketStore.get(marketAddress);
+        return MarketUtils.getPnlToPoolFactor(dataStore, market, prices, isLong, maximize);
+    }
+
+    function getAccountOrders(
+        OrderStore orderStore,
+        address account,
+        uint256 start,
+        uint256 end
+    ) external view returns (Order.Props[] memory) {
+        uint256 orderCount = orderStore.getAccountOrderCount(account);
+        if (start >= orderCount) {
+            return new Order.Props[](0);
+        }
+        if (end > orderCount) {
+            end = orderCount;
+        }
+        bytes32[] memory orderKeys = orderStore.getAccountOrderKeys(account, start, end);
+        Order.Props[] memory orders = new Order.Props[](orderKeys.length);
+        for (uint256 i = 0; i < orderKeys.length; i++) {
+            bytes32 orderKey = orderKeys[i];
+            orders[i] = orderStore.get(orderKey);
+        }
+
+        return orders;
+    }
+
+    function getPositionFees(
+        DataStore dataStore,
+        IReferralStorage referralStorage,
+        Position.Props memory position,
+        Price.Props memory collateralTokenPrice,
+        address longToken,
+        address shortToken,
+        uint256 sizeDeltaUsd
+    ) external view returns (PositionPricingUtils.PositionFees memory) {
+        return
+            PositionPricingUtils.getPositionFees(
+                dataStore,
+                referralStorage,
+                position,
+                collateralTokenPrice,
+                longToken,
+                shortToken,
+                sizeDeltaUsd
+            );
     }
 }
