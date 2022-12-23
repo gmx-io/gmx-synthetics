@@ -265,6 +265,13 @@ contract Oracle is RoleModule {
         _setPricesFromPriceFeeds(dataStore, eventEmitter, params.priceFeedTokens);
     }
 
+    // @dev set the primary price
+    // @param token the token to set the price for
+    // @param price the price value to set to
+    function setPrimaryPrice(address token, Price.Props memory price) external onlyController {
+        primaryPrices[token] = price;
+    }
+
     // @dev set the secondary price
     // @param token the token to set the price for
     // @param price the price value to set to

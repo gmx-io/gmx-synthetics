@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 import "../utils/Array.sol";
 import "../utils/Bits.sol";
+import "../price/Price.sol";
 
 // @title OracleUtils
 // @dev Libary for oracle functions
@@ -35,6 +36,13 @@ library OracleUtils {
         uint256[] compactedMaxPricesIndexes;
         bytes[] signatures;
         address[] priceFeedTokens;
+    }
+
+    struct SimulatePricesParams {
+        address[] primaryTokens;
+        Price.Props[] primaryPrices;
+        address[] secondaryTokens;
+        Price.Props[] secondaryPrices;
     }
 
     // compacted prices have a length of 32 bits
