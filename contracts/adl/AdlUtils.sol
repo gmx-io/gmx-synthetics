@@ -276,7 +276,7 @@ library AdlUtils {
             OracleUtils.revertOracleBlockNumbersAreNotEqual(oracleBlockNumbers, oracleBlockNumber);
         }
 
-        uint256 latestAdlBlock =AdlUtils.getLatestAdlBlock(dataStore, market, isLong);
+        uint256 latestAdlBlock = AdlUtils.getLatestAdlBlock(dataStore, market, isLong);
 
         if (oracleBlockNumber < latestAdlBlock) {
             OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, latestAdlBlock);

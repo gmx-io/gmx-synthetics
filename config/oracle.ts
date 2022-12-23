@@ -18,10 +18,10 @@ type OracleTestPriceFeed = {
 type OraclePriceFeed = OracleRealPriceFeed | OracleTestPriceFeed;
 
 export type OracleConfig = {
-  signers?: string[];
-  minOracleSigners?: number;
-  minOracleBlockConfirmations?: number;
-  maxOraclePriceAge?: number;
+  signers: string[];
+  minOracleSigners: number;
+  minOracleBlockConfirmations: number;
+  maxOraclePriceAge: number;
   tokens?: {
     [tokenSymbol: string]: {
       priceFeed?: OraclePriceFeed;
@@ -42,7 +42,10 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     localhost: {
       signers: testSigners,
       minOracleSigners: 0,
+      minOracleBlockConfirmations: 100,
+      maxOraclePriceAge: 60 * 60 * 24,
     },
+
     hardhat: {
       signers: testSigners,
       minOracleSigners: 0,
@@ -58,9 +61,12 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
         },
       },
     },
+
     avalancheFuji: {
-      minOracleSigners: 1,
       signers: ["0xFb11f15f206bdA02c224EDC744b0E50E46137046", "0x23247a1A80D01b9482E9d734d2EB780a3b5c8E6c"],
+      maxOraclePriceAge: 60 * 60,
+      minOracleBlockConfirmations: 100,
+      minOracleSigners: 1,
 
       // price feeds https://docs.chain.link/data-feeds/price-feeds/addresses?network=avalanche#Avalanche%20Testnet
       tokens: {
@@ -72,10 +78,6 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
           },
         },
       },
-    },
-    default: {
-      minOracleSigners: 7,
-      maxOraclePriceAge: 5 * 60,
     },
   };
 

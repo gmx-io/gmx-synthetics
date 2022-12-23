@@ -53,7 +53,7 @@ const config: HardhatUserConfig = {
         },
       },
       blockGasLimit: 2500000,
-      gasPrice: 50000000000,
+      // gasPrice: 50000000000,
     },
   },
   // hardhat-deploy has issues with some contracts
