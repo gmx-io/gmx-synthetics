@@ -148,7 +148,6 @@ contract OrderHandler is BaseOrderHandler {
         withSimulatedOraclePrices(oracle, params)
     {
         uint256 startingGas = gasleft();
-        bool simulationMode = true;
 
         OracleUtils.SetPricesParams memory oracleParams;
 
@@ -158,11 +157,6 @@ contract OrderHandler is BaseOrderHandler {
             msg.sender,
             startingGas
         );
-
-        // the simulationMode flag is used to silence the unreachable code warning
-        if (simulationMode) {
-            revert("End of execute order simulation");
-        }
     }
 
     // @dev executes an order
