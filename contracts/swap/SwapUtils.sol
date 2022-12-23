@@ -202,7 +202,7 @@ library SwapUtils {
             cache.poolAmountOut = cache.amountOut;
         }
 
-        if (_params.receiver != address(0)) {
+        if (_params.receiver != _params.market.marketToken) {
             MarketToken(payable(_params.market.marketToken)).transferOut(
                 cache.tokenOut,
                 _params.receiver,
