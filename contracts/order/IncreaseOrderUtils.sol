@@ -41,6 +41,10 @@ library IncreaseOrderUtils {
             false
         ));
 
+        if (collateralToken != params.market.longToken && collateralToken != params.market.shortToken) {
+            revert("OrderUtils: invalid collateralToken");
+        }
+
         bytes32 positionKey = PositionUtils.getPositionKey(params.order.account(), params.order.market(), collateralToken, params.order.isLong());
         Position.Props memory position = params.contracts.positionStore.get(positionKey);
 
@@ -62,10 +66,6 @@ library IncreaseOrderUtils {
             params.order.updatedAtBlock(),
             position.increasedAtBlock()
         );
-
-        if (collateralToken != params.market.longToken && collateralToken != params.market.shortToken) {
-            revert("OrderUtils: invalid collateralToken");
-        }
 
         IncreasePositionUtils.increasePosition(
             IncreasePositionUtils.IncreasePositionParams(
