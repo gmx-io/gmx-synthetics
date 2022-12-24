@@ -30,7 +30,7 @@ import "../utils/Null.sol";
 // of amount of pending profit to pool value
 //
 // Redemption of market tokens can be done only if the maxPnlFactorForWithdrawals
-// is not exceeded, this can be set to a higher value than maxPnlFactor, and
+// is not exceeded, this can be set to a lower value than maxPnlFactor, and
 // helps reduce the chance that withdrawals would lead to the pool being in a
 // state that requires ADL
 library AdlUtils {
