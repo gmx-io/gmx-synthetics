@@ -1,5 +1,4 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { decimalToFloat } from "../utils/math";
 import { getMarketTokenAddress } from "../utils/market";
 import * as keys from "../utils/keys";
 import { setUintIfDifferent } from "../utils/dataStore";
@@ -64,13 +63,7 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
   }
 
   for (const marketConfig of markets) {
-    const [indexToken, longToken, shortToken] = marketConfig.tokens.map((symbol) => tokens[symbol].address);
-    const reserveFactor = decimalToFloat(marketConfig.reserveFactor[0], marketConfig.reserveFactor[1]);
-    const maxPnlFactor = decimalToFloat(marketConfig.maxPnlFactor[0], marketConfig.maxPnlFactor[1]);
-    const maxPnlFactorForWithdrawals = decimalToFloat(
-      marketConfig.maxPnlFactorForWithdrawals[0],
-      marketConfig.maxPnlFactorForWithdrawals[1]
-    );
+    const [indexToken, longToken, shortToken] = marketConfig.tokens.map((symbol: string) => tokens[symbol].address);
 
     const marketToken = getMarketTokenAddress(
       indexToken,
@@ -81,14 +74,14 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
       dataStoreAddress
     );
 
-    await setReserveFactor(marketToken, true, reserveFactor);
-    await setReserveFactor(marketToken, false, reserveFactor);
+    await setReserveFactor(marketToken, true, marketConfig.reserveFactorLongs);
+    await setReserveFactor(marketToken, false, marketConfig.reserveFactorShorts);
 
-    await setMaxPnlFactor(marketToken, true, maxPnlFactor);
-    await setMaxPnlFactor(marketToken, false, maxPnlFactor);
+    await setMaxPnlFactor(marketToken, true, marketConfig.maxPnlFactorLongs);
+    await setMaxPnlFactor(marketToken, false, marketConfig.maxPnlFactorShorts);
 
-    await setMaxPnlFactorForWithdrawals(marketToken, true, maxPnlFactor);
-    await setMaxPnlFactorForWithdrawals(marketToken, false, maxPnlFactor);
+    await setMaxPnlFactorForWithdrawals(marketToken, true, marketConfig.maxPnlFactorForWithdrawalsLongs);
+    await setMaxPnlFactorForWithdrawals(marketToken, false, marketConfig.maxPnlFactorForWithdrawalsShorts);
 
     for (const name of [
       "positionFeeFactor",

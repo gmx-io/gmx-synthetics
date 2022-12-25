@@ -1,20 +1,52 @@
+import { BigNumber } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-export type MarketConfig = {
+import { decimalToFloat } from "../utils/math";
+
+export type DefaultMarketConfig = {
+  reserveFactorLongs: BigNumber | string;
+  reserveFactorShorts: BigNumber | string;
+
+  maxPnlFactorLongs: BigNumber | string;
+  maxPnlFactorShorts: BigNumber | string;
+
+  maxPnlFactorForWithdrawalsLongs: BigNumber | string;
+  maxPnlFactorForWithdrawalsShorts: BigNumber | string;
+
+  positionFeeFactor: BigNumber | string;
+  positivePositionImpactFactor: BigNumber | string;
+  negativePositionImpactFactor: BigNumber | string;
+  positionImpactExponentFactor: BigNumber | string;
+
+  swapFeeFactor: BigNumber | string;
+  positiveSwapImpactFactor: BigNumber | string;
+  negativeSwapImpactFactor: BigNumber | string;
+  swapImpactExponentFactor: BigNumber | string;
+};
+
+export type MarketConfig = Partial<DefaultMarketConfig> & {
   tokens: [indexToken: string, longToken: string, shortToken: string];
-  reserveFactor: [number, number];
-  maxPnlFactor: [number, number];
-  maxPnlFactorForWithdrawals: [number, number];
+};
 
-  positionFeeFactor?: number | string;
-  positivePositionImpactFactor?: number | string;
-  negativePositionImpactFactor?: number | string;
-  positionImpactExponentFactor?: number | string;
+const defaultMarketConfig: DefaultMarketConfig = {
+  reserveFactorLongs: decimalToFloat(5, 1), // 50%,
+  reserveFactorShorts: decimalToFloat(5, 1), // 50%,
 
-  swapFeeFactor?: number | string;
-  positiveSwapImpactFactor?: number | string;
-  negativeSwapImpactFactor?: number | string;
-  swapImpactExponentFactor?: number | string;
+  maxPnlFactorLongs: decimalToFloat(5, 1), // 50%
+  maxPnlFactorShorts: decimalToFloat(5, 1), // 50%
+
+  maxPnlFactorForWithdrawalsLongs: decimalToFloat(3, 1), // 30%
+  maxPnlFactorForWithdrawalsShorts: decimalToFloat(3, 1), // 30%
+
+  positionFeeFactor: decimalToFloat(5, 4), // 0.05%
+  positivePositionImpactFactor: decimalToFloat(2, 7), // 0.00002 %
+  negativePositionImpactFactor: decimalToFloat(1, 7), // 0.00001 %
+  positionImpactExponentFactor: decimalToFloat(2, 0), // 2
+
+  swapFeeFactor: decimalToFloat(1, 3), // 0.1%,
+  positiveSwapImpactFactor: decimalToFloat(2, 5), // 0.002 %
+  negativeSwapImpactFactor: decimalToFloat(1, 5), // 0.001 %
+  swapImpactExponentFactor: decimalToFloat(2, 0), // 2
 };
 
 const config: {
@@ -26,59 +58,28 @@ const config: {
   avalancheFuji: [
     {
       tokens: ["WAVAX", "WAVAX", "USDC"], // indexToken, longToken, shortToken
-      reserveFactor: [2, 1],
-      maxPnlFactor: [5, 1],
-      maxPnlFactorForWithdrawals: [7, 1],
-
-      positionFeeFactor: 100,
-      positivePositionImpactFactor: 200,
-      negativePositionImpactFactor: 100,
-      positionImpactExponentFactor: 300,
-
-      swapFeeFactor: 100,
-      positiveSwapImpactFactor: 200,
-      negativeSwapImpactFactor: 100,
-      swapImpactExponentFactor: 300,
     },
     {
       tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
-      reserveFactor: [1, 1],
-      maxPnlFactor: [5, 1],
-      maxPnlFactorForWithdrawals: [7, 1],
     },
     {
       tokens: ["SOL", "WETH", "USDC"], // indexToken, longToken, shortToken
-      reserveFactor: [5, 1],
-      maxPnlFactor: [5, 1],
-      maxPnlFactorForWithdrawals: [7, 1],
     },
   ],
   hardhat: [
     {
       tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
-      reserveFactor: [5, 1],
-      maxPnlFactor: [5, 1],
-      maxPnlFactorForWithdrawals: [7, 1],
     },
     {
       tokens: ["SOL", "WETH", "USDC"],
-      reserveFactor: [5, 1],
-      maxPnlFactor: [5, 1],
-      maxPnlFactorForWithdrawals: [7, 1],
     },
   ],
   localhost: [
     {
       tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
-      reserveFactor: [5, 1],
-      maxPnlFactor: [5, 1],
-      maxPnlFactorForWithdrawals: [7, 1],
     },
     {
       tokens: ["SOL", "WETH", "USDC"],
-      reserveFactor: [5, 1],
-      maxPnlFactor: [5, 1],
-      maxPnlFactorForWithdrawals: [7, 1],
     },
   ],
 };
@@ -91,6 +92,12 @@ export default async function (hre: HardhatRuntimeEnvironment) {
       for (const tokenSymbol of market.tokens) {
         if (!tokens[tokenSymbol]) {
           throw new Error(`Market ${market.tokens.join(":")} uses token that does not exist: ${tokenSymbol}`);
+        }
+      }
+
+      for (const key of Object.keys(defaultMarketConfig)) {
+        if (!market[key]) {
+          market[key] = defaultMarketConfig[key];
         }
       }
     }

@@ -42,7 +42,7 @@ const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRunt
 
       if (!token.wrappedNative) {
         const tokenContract = await ethers.getContractAt("MintableToken", address);
-        await tokenContract.mint(deployer, expandDecimals(1000000, token.decimals));
+        await tokenContract.mint(deployer, expandDecimals(1000000000, token.decimals));
       }
     }
   }

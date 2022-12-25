@@ -13,8 +13,7 @@ async function main() {
     return new ethers.utils.Interface(abi);
   });
 
-  const errorReason =
-    "0x6CE234600000000000000000000000000000000000000000000000437030543AD3A5116200000000000000000000000000000000000000000000004372E3A658614C3CD3";
+  const errorReason = "554e41434345505441424c455f50524943455f4552524f520000000000000000";
   console.log("Trying to parse error reason", errorReason);
 
   let parsed = false;
@@ -47,7 +46,14 @@ async function main() {
   }
 
   if (!parsed) {
-    console.log("Cant parse error reason");
+    console.log("Cant parse custom error reason");
+  }
+
+  try {
+    console.log("try parse as string");
+    console.log("parsed string %s", ethers.utils.parseBytes32String("0x" + errorReason));
+  } catch (ex) {
+    console.log("can't parse as string", ex.toString());
   }
 }
 
