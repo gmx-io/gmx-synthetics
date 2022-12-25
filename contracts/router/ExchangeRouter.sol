@@ -187,6 +187,13 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         );
     }
 
+    function simulateExecuteOrder(
+        bytes32 key,
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams
+    ) external payable nonReentrant {
+        orderHandler.simulateExecuteOrder(key, simulatedOracleParams);
+    }
+
     /**
      * @dev Updates the given order with the specified size delta, acceptable price, and trigger price.
      * The `updateOrder()` feature must be enabled for the given order type. The caller must be the owner

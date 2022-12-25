@@ -33,4 +33,34 @@ contract OracleModule {
         _;
         oracle.clearAllPrices();
     }
+
+
+    modifier withSimulatedOraclePrices(
+        Oracle oracle,
+        OracleUtils.SimulatePricesParams memory params
+    ) {
+        if (params.primaryTokens.length != params.primaryPrices.length) {
+            revert("Invalid primary prices");
+        }
+
+        if (params.secondaryTokens.length != params.secondaryPrices.length) {
+            revert("Invalid secondary prices");
+        }
+
+        for (uint256 i = 0; i < params.primaryTokens.length; i++) {
+            address token = params.primaryTokens[i];
+            Price.Props memory price = params.primaryPrices[i];
+            oracle.setPrimaryPrice(token, price);
+        }
+
+        for (uint256 i = 0; i < params.secondaryTokens.length; i++) {
+            address token = params.secondaryTokens[i];
+            Price.Props memory price = params.secondaryPrices[i];
+            oracle.setSecondaryPrice(token, price);
+        }
+
+        _;
+
+        revert("End of oracle price simulation");
+    }
 }
