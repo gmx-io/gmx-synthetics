@@ -331,7 +331,9 @@ library OrderBaseUtils {
         int256 priceImpactUsdForPriceAdjustment = shouldFlipPriceImpactUsd ? -priceImpactUsd : priceImpactUsd;
 
         // adjust price by price impact
-        price = price * Calc.sum(sizeDeltaUsd, priceImpactUsdForPriceAdjustment) / sizeDeltaUsd;
+        if (sizeDeltaUsd > 0) {
+            price = price * Calc.sum(sizeDeltaUsd, priceImpactUsdForPriceAdjustment) / sizeDeltaUsd;
+        }
 
         if (shouldPriceBeSmaller && price <= acceptablePrice) {
             return price;
@@ -346,7 +348,9 @@ library OrderBaseUtils {
         price = customIndexTokenPrice.pickPrice(!shouldUseMaxPrice);
 
         // adjust price by price impact
-        price = price * Calc.sum(sizeDeltaUsd, priceImpactUsdForPriceAdjustment) / sizeDeltaUsd;
+        if (sizeDeltaUsd == 0) {
+            price = price * Calc.sum(sizeDeltaUsd, priceImpactUsdForPriceAdjustment) / sizeDeltaUsd;
+        }
 
         if (shouldPriceBeSmaller && price <= acceptablePrice) {
             return acceptablePrice;

@@ -157,6 +157,10 @@ library MarketUtils {
 
         uint256 supply = getMarketTokenSupply(MarketToken(payable(market.marketToken)));
 
+        if (supply == 0) {
+            revert("getMarketTokenPrice: unexpected state, supply is zero");
+        }
+
         // it may be possible for supply to be zero here
         return poolValue * Precision.WEI_PRECISION / supply;
     }
@@ -1234,6 +1238,10 @@ library MarketUtils {
         uint256 poolAmount = getPoolAmount(dataStore, market, isLong ? longToken : shortToken);
         uint256 poolTokenPrice = isLong ? prices.longTokenPrice.min : prices.shortTokenPrice.min;
         uint256 poolUsd = poolAmount * poolTokenPrice;
+
+        if (poolUsd == 0) {
+            revert("getBorrowingFactorPerSecond: unexpected state, poolUsd is zero");
+        }
 
         return borrowingFactor * openInterestWithPnl / poolUsd;
     }
