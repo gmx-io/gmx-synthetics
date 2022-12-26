@@ -123,6 +123,10 @@ library PositionUtils {
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices
     ) internal view {
+        if (position.sizeInUsd() == 0 || position.sizeInTokens() == 0) {
+            revert("Position size is zero");
+        }
+
         if (isPositionLiquidatable(
             dataStore,
             referralStorage,
