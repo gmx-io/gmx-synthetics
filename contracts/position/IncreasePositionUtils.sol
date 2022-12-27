@@ -139,7 +139,7 @@ library IncreasePositionUtils {
         ) {
             revert InsufficientCollateralAmount();
         }
-        position.setCollateralAmount(Calc.sum(position.collateralAmount(), cache.collateralDeltaAmount));
+        position.setCollateralAmount(Calc.sumReturnUint256(position.collateralAmount(), cache.collateralDeltaAmount));
 
         cache.priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(

@@ -206,7 +206,7 @@ library WithdrawalUtils {
         Price.Props memory shortTokenPrice = params.oracle.getPrimaryPrice(market.shortToken);
 
         ExecuteWithdrawalCache memory cache;
-        cache.poolValue = MarketUtils.getPoolValue(
+        int256 _poolValue = MarketUtils.getPoolValue(
             params.dataStore,
             market,
             longTokenPrice,
@@ -214,6 +214,12 @@ library WithdrawalUtils {
             params.oracle.getPrimaryPrice(market.indexToken),
             false
         );
+
+        if (_poolValue <= 0) {
+            revert("Invalid pool state");
+        }
+
+        cache.poolValue = _poolValue.toUint256();
 
         cache.marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
         cache.marketTokensLongUsd = MarketUtils.marketTokenAmountToUsd(withdrawal.marketTokensLongAmount(), cache.poolValue, cache.marketTokensSupply);

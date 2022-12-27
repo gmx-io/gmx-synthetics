@@ -18,6 +18,9 @@ import "../swap/SwapHandler.sol";
 // @dev Libary for common order functions used in OrderUtils, IncreaseOrderUtils
 // DecreaseOrderUtils, SwapOrderUtils
 library OrderBaseUtils {
+    using SafeCast for int256;
+    using SafeCast for uint256;
+
     using Order for Order.Props;
     using Price for Price.Props;
 
@@ -330,9 +333,13 @@ library OrderBaseUtils {
         bool shouldFlipPriceImpactUsd = isIncrease ? isLong : !isLong;
         int256 priceImpactUsdForPriceAdjustment = shouldFlipPriceImpactUsd ? -priceImpactUsd : priceImpactUsd;
 
+        if (priceImpactUsdForPriceAdjustment < 0 && (-priceImpactUsdForPriceAdjustment).toUint256() > sizeDeltaUsd) {
+            revert("Value of price impact is larger than position size");
+        }
+
         // adjust price by price impact
         if (sizeDeltaUsd > 0) {
-            price = price * Calc.sum(sizeDeltaUsd, priceImpactUsdForPriceAdjustment) / sizeDeltaUsd;
+            price = price * Calc.sumReturnUint256(sizeDeltaUsd, priceImpactUsdForPriceAdjustment) / sizeDeltaUsd;
         }
 
         if (shouldPriceBeSmaller && price <= acceptablePrice) {
@@ -349,7 +356,7 @@ library OrderBaseUtils {
 
         // adjust price by price impact
         if (sizeDeltaUsd == 0) {
-            price = price * Calc.sum(sizeDeltaUsd, priceImpactUsdForPriceAdjustment) / sizeDeltaUsd;
+            price = price * Calc.sumReturnUint256(sizeDeltaUsd, priceImpactUsdForPriceAdjustment) / sizeDeltaUsd;
         }
 
         if (shouldPriceBeSmaller && price <= acceptablePrice) {

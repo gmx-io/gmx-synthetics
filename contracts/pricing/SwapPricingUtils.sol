@@ -134,8 +134,16 @@ library SwapPricingUtils {
         uint256 poolUsdForTokenA = poolAmountForTokenA * params.priceForTokenA;
         uint256 poolUsdForTokenB = poolAmountForTokenB * params.priceForTokenB;
 
-        uint256 nextPoolUsdForTokenA = Calc.sum(poolUsdForTokenA, params.usdDeltaForTokenA);
-        uint256 nextPoolUsdForTokenB = Calc.sum(poolUsdForTokenB, params.usdDeltaForTokenB);
+        if (params.usdDeltaForTokenA < 0 && (-params.usdDeltaForTokenA).toUint256() > poolUsdForTokenA) {
+            revert("Unexpected input, usdDeltaForTokenA is larger than pool");
+        }
+
+        if (params.usdDeltaForTokenB < 0 && (-params.usdDeltaForTokenB).toUint256() > poolUsdForTokenB) {
+            revert("Unexpected input, usdDeltaForTokenB is larger than pool");
+        }
+
+        uint256 nextPoolUsdForTokenA = Calc.sumReturnUint256(poolUsdForTokenA, params.usdDeltaForTokenA);
+        uint256 nextPoolUsdForTokenB = Calc.sumReturnUint256(poolUsdForTokenB, params.usdDeltaForTokenB);
 
         PoolParams memory poolParams = PoolParams(
             poolUsdForTokenA,

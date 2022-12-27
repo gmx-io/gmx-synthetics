@@ -243,9 +243,17 @@ library PositionPricingUtils {
         uint256 nextShortOpenInterest;
 
         if (params.isLong) {
-            nextLongOpenInterest = Calc.sum(longOpenInterest, params.usdDelta);
+            if (params.usdDelta < 0 && (-params.usdDelta).toUint256() > longOpenInterest) {
+                revert("Unexpected input, usdDelta is larger than long open interest");
+            }
+
+            nextLongOpenInterest = Calc.sumReturnUint256(longOpenInterest, params.usdDelta);
         } else {
-            nextShortOpenInterest = Calc.sum(shortOpenInterest, params.usdDelta);
+            if (params.usdDelta < 0 && (-params.usdDelta).toUint256() > shortOpenInterest) {
+                revert("Unexpected input, usdDelta is larger than short open interest");
+            }
+
+            nextShortOpenInterest = Calc.sumReturnUint256(shortOpenInterest, params.usdDelta);
         }
 
         OpenInterestParams memory openInterestParams = OpenInterestParams(

@@ -42,18 +42,29 @@ library Calc {
     }
 
     /**
-     * Adds two numbers together, treating the second number as a signed integer.
+     * Adds two numbers together and return a uint256 value, treating the second number as a signed integer.
      *
      * @param a the first number
      * @param b the second number
      * @return the result of adding the two numbers together
      */
-    function sum(uint256 a, int256 b) internal pure returns (uint256) {
+    function sumReturnUint256(uint256 a, int256 b) internal pure returns (uint256) {
         if (b > 0) {
             return a + b.abs();
         }
 
         return a - b.abs();
+    }
+
+    /**
+     * Adds two numbers together and return an int256 value, treating the second number as a signed integer.
+     *
+     * @param a the first number
+     * @param b the second number
+     * @return the result of adding the two numbers together
+     */
+    function sumReturnInt256(uint256 a, int256 b) internal pure returns (int256) {
+        return a.toInt256() + b;
     }
 
     /**
