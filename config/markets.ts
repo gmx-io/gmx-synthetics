@@ -49,6 +49,27 @@ const defaultMarketConfig: DefaultMarketConfig = {
   swapImpactExponentFactor: decimalToFloat(2, 0), // 2
 };
 
+const testMarketConfig: DefaultMarketConfig = {
+  reserveFactorLongs: decimalToFloat(5, 1), // 50%,
+  reserveFactorShorts: decimalToFloat(5, 1), // 50%,
+
+  maxPnlFactorLongs: decimalToFloat(5, 1), // 50%
+  maxPnlFactorShorts: decimalToFloat(5, 1), // 50%
+
+  maxPnlFactorForWithdrawalsLongs: decimalToFloat(7, 1), // 30%
+  maxPnlFactorForWithdrawalsShorts: decimalToFloat(7, 1), // 30%
+
+  positionFeeFactor: 0,
+  positivePositionImpactFactor: 0,
+  negativePositionImpactFactor: 0,
+  positionImpactExponentFactor: 0,
+
+  swapFeeFactor: 0,
+  positiveSwapImpactFactor: 0,
+  negativeSwapImpactFactor: 0,
+  swapImpactExponentFactor: 0,
+};
+
 const config: {
   [network: string]: MarketConfig[];
 } = {
@@ -69,9 +90,11 @@ const config: {
   hardhat: [
     {
       tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
+      ...testMarketConfig,
     },
     {
       tokens: ["SOL", "WETH", "USDC"],
+      ...testMarketConfig,
     },
   ],
   localhost: [
@@ -96,7 +119,7 @@ export default async function (hre: HardhatRuntimeEnvironment) {
       }
 
       for (const key of Object.keys(defaultMarketConfig)) {
-        if (!market[key]) {
+        if (market[key] === undefined) {
           market[key] = defaultMarketConfig[key];
         }
       }
