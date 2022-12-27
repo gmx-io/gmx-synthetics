@@ -367,13 +367,17 @@ For example:
 - A user opens a long position of size $50,000 with a negative price impact of 0.1%
 - The user's position size is in USD is $50,000 and the size in tokens is (50,000 / 5000) \* (100 - 0.1)% => 9.99
 - This gives the position an entry price of 50,000 / 9.99 => ~$5005
-- The negative price impact is tracked as a number of index tokens
+- The negative price impact is tracked as a number of index tokens in the pool
 - In this case there would be 0.01 index tokens in the position impact pool
 - The pending PnL of the user at this point would be (50,000 - 9.99 \* 5000) => $50
 - The tokens in the position impact pool should be accounted for when calculating the pool value to offset this pending PnL
 - The net impact on the pool is zero, +$50 from the pending negative PnL due to price impact and -$50 from the 0.01 index tokens in the position impact pool worth $50
-- If the user closes the position at the index token price of $5000, they would receive (original position collateral - $50)
-- The pool would have an extra $50 of collateral which continues to have a net zero impact on the pool value due to the 0.01 index tokens in the position impact pool
+- The position would store 0.01 as its price impact value
+- If the user closes the position at a negative price impact of 0.2%, the position impact pool would increase to 0.03 index tokens
+- The user would receive (original position collateral - $150)
+- The pool would have an extra $150 of collateral which continues to have a net zero impact on the pool value due to the 0.03 index tokens in the position impact pool
+
+If the index token is different from both the long and short token of the market, then it is possible that the pool value becomes significantly affected by the position impact pool, if the position impact pool is very large and the index token has a large price increase. Due to this, there should be a method to gradually reduce the size of the position impact pool.
 
 # Fees
 
