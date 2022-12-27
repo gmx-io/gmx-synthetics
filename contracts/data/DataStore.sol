@@ -41,6 +41,10 @@ contract DataStore is RoleModule {
         return value;
     }
 
+    function removeUint(bytes32 key) external onlyController {
+        delete uintValues[key];
+    }
+
     // @dev add the input int value to the existing uint value
     // @param key the key of the value
     // @param value the input int value
@@ -108,6 +112,10 @@ contract DataStore is RoleModule {
         return value;
     }
 
+    function removeInt(bytes32 key) external onlyController {
+        delete intValues[key];
+    }
+
     // @dev add the input int value to the existing int value
     // @param key the key of the value
     // @param value the input int value
@@ -154,6 +162,10 @@ contract DataStore is RoleModule {
         return value;
     }
 
+    function removeAddress(bytes32 key) external onlyController {
+        delete addressValues[key];
+    }
+
     // @dev get the bool value for the given key
     // @param key the key of the value
     // @return the bool value for the key
@@ -168,6 +180,10 @@ contract DataStore is RoleModule {
     function setBool(bytes32 key, bool value) external onlyController returns (bool) {
         boolValues[key] = value;
         return value;
+    }
+
+    function removeBool(bytes32 key) external onlyController {
+        delete boolValues[key];
     }
 
     // @dev get the string value for the given key
@@ -186,6 +202,10 @@ contract DataStore is RoleModule {
         return value;
     }
 
+    function removeString(bytes32 key) external onlyController {
+        delete stringValues[key];
+    }
+
     // @dev get the bytes32 value for the given key
     // @param key the key of the value
     // @return the bytes32 value for the key
@@ -200,5 +220,9 @@ contract DataStore is RoleModule {
     function setData(bytes32 key, bytes32 value) external onlyController returns (bytes32) {
         dataValues[key] = value;
         return value;
+    }
+
+    function removeData(bytes32 key) external onlyController {
+        delete dataValues[key];
     }
 }
