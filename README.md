@@ -372,7 +372,6 @@ For example:
 - The pending PnL of the user at this point would be (50,000 - 9.99 \* 5000) => $50
 - The tokens in the position impact pool should be accounted for when calculating the pool value to offset this pending PnL
 - The net impact on the pool is zero, +$50 from the pending negative PnL due to price impact and -$50 from the 0.01 index tokens in the position impact pool worth $50
-- The position would store 0.01 as its price impact value
 - If the user closes the position at a negative price impact of 0.2%, the position impact pool would increase to 0.03 index tokens
 - The user would receive (original position collateral - $150)
 - The pool would have an extra $150 of collateral which continues to have a net zero impact on the pool value due to the 0.03 index tokens in the position impact pool
