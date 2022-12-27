@@ -12,10 +12,6 @@ export function expandDecimals(n, decimals) {
   return bigNumberify(n).mul(bigNumberify(10).pow(decimals));
 }
 
-export function expandFloatDecimals(value) {
-  return expandDecimals(value, 30);
-}
-
 export function decimalToFloat(value, decimals = 0) {
   return expandDecimals(value, 30 - decimals);
 }

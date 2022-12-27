@@ -1,23 +1,21 @@
 import { expect } from "chai";
 
 import { deployFixture } from "../../utils/fixture";
-import { expandDecimals, expandFloatDecimals } from "../../utils/math";
+import { expandDecimals } from "../../utils/math";
 import { logGasUsage } from "../../utils/gas";
-import { handleDeposit } from "../../utils/deposit";
-import { OrderType, createOrder } from "../../utils/order";
 
 describe("ExchangeRouter", () => {
   const { provider } = ethers;
 
   let fixture;
   let user0, user1, user2;
-  let depositStore, router, exchangeRouter, ethUsdMarket, wnt, usdc;
+  let depositStore, router, exchangeRouter, ethUsdMarket, usdc;
   const executionFee = expandDecimals(1, 18);
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ depositStore, router, exchangeRouter, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ depositStore, router, exchangeRouter, ethUsdMarket, usdc } = fixture.contracts);
   });
 
   it("createDeposit", async () => {
