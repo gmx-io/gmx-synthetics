@@ -24,6 +24,10 @@ contract ListStore is RoleModule {
 
     constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
 
+    function containsBytes32(bytes32 setKey, bytes32 value) external view returns (bool) {
+        return bytes32Sets[setKey].contains(value);
+    }
+
     function getBytes32Count(bytes32 setKey) external view returns (uint256) {
         return bytes32Sets[setKey].length();
     }
@@ -40,6 +44,10 @@ contract ListStore is RoleModule {
         bytes32Sets[setKey].remove(value);
     }
 
+    function containsAddress(bytes32 setKey, address value) external view returns (bool) {
+        return addressSets[setKey].contains(value);
+    }
+
     function getAddressCount(bytes32 setKey) external view returns (uint256) {
         return addressSets[setKey].length();
     }
@@ -54,6 +62,10 @@ contract ListStore is RoleModule {
 
     function removeAddress(bytes32 setKey, address value) external onlyController {
         addressSets[setKey].remove(value);
+    }
+
+    function containsUint(bytes32 setKey, uint256 value) external view returns (bool) {
+        return uintSets[setKey].contains(value);
     }
 
     function getUintCount(bytes32 setKey) external view returns (uint256) {
