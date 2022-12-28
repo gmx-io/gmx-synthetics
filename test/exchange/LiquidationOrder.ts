@@ -1,7 +1,7 @@
 import { expect } from "chai";
 
 import { deployFixture } from "../../utils/fixture";
-import { expandDecimals, expandFloatDecimals } from "../../utils/math";
+import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, handleOrder, executeLiquidation } from "../../utils/order";
 import { grantRole } from "../../utils/role";
@@ -32,7 +32,7 @@ describe("Exchange.LiquidationOrder", () => {
         market: ethUsdMarket,
         initialCollateralToken: wnt,
         initialCollateralDeltaAmount: expandDecimals(10, 18),
-        sizeDeltaUsd: expandFloatDecimals(200 * 1000),
+        sizeDeltaUsd: decimalToFloat(200 * 1000),
         acceptablePrice: expandDecimals(5001, 12),
         orderType: OrderType.MarketIncrease,
         isLong: true,

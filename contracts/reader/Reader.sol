@@ -187,7 +187,7 @@ contract Reader {
         Price.Props memory shortTokenPrice,
         Price.Props memory indexTokenPrice,
         bool maximize
-    ) external view returns (uint256) {
+    ) external view returns (int256) {
         return
             MarketUtils.getMarketTokenPrice(
                 dataStore,
@@ -230,7 +230,7 @@ contract Reader {
         Price.Props memory indexTokenPrice,
         bool isLong,
         bool maximize
-    ) external view returns (uint256) {
+    ) external view returns (int256) {
         return
             MarketUtils.getOpenInterestWithPnl(
                 dataStore,

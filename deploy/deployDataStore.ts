@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { setUintIfDifferent } from "../utils/dataStore";
 import { hashString } from "../utils/hash";
-import { expandFloatDecimals } from "../utils/math";
+import { decimalToFloat } from "../utils/math";
 
 const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment) => {
   const { deploy, get } = deployments;
@@ -15,7 +15,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     args: [roleStore.address],
   });
 
-  await setUintIfDifferent(hashString("MAX_LEVERAGE"), expandFloatDecimals(100), "max leverage");
+  await setUintIfDifferent(hashString("MAX_LEVERAGE"), decimalToFloat(100), "max leverage");
 };
 func.tags = ["DataStore"];
 func.dependencies = ["RoleStore"];

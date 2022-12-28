@@ -151,8 +151,8 @@ library MarketUtils {
         Price.Props memory shortTokenPrice,
         Price.Props memory indexTokenPrice,
         bool maximize
-    ) internal view returns (uint256) {
-        uint256 poolValue = getPoolValue(dataStore, market, longTokenPrice, shortTokenPrice, indexTokenPrice, maximize);
+    ) internal view returns (int256) {
+        int256 poolValue = getPoolValue(dataStore, market, longTokenPrice, shortTokenPrice, indexTokenPrice, maximize);
         if (poolValue == 0) { return 0; }
 
         uint256 supply = getMarketTokenSupply(MarketToken(payable(market.marketToken)));
@@ -161,8 +161,7 @@ library MarketUtils {
             revert("getMarketTokenPrice: unexpected state, supply is zero");
         }
 
-        // it may be possible for supply to be zero here
-        return poolValue * Precision.WEI_PRECISION / supply;
+        return poolValue * Precision.WEI_PRECISION.toInt256() / supply.toInt256();
     }
 
     // @dev get the total supply of the marketToken
@@ -265,7 +264,7 @@ library MarketUtils {
         Price.Props memory shortTokenPrice,
         Price.Props memory indexTokenPrice,
         bool maximize
-    ) internal view returns (uint256) {
+    ) internal view returns (int256) {
         uint256 longTokenAmount = getPoolAmount(dataStore, market.marketToken, market.longToken);
         uint256 shortTokenAmount = getPoolAmount(dataStore, market.marketToken, market.shortToken);
 
@@ -284,7 +283,7 @@ library MarketUtils {
         // and a smaller pnl leads to a larger pool value
         int256 pnl = getNetPnl(dataStore, market.marketToken, market.longToken, market.shortToken, indexTokenPrice, !maximize);
 
-        return Calc.sum(value, -pnl);
+        return Calc.sumReturnInt256(value, -pnl);
     }
 
     // @dev get the net pending pnl for a market
@@ -424,7 +423,8 @@ library MarketUtils {
     ) internal {
         uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.poolAmountKey(market, token),
-            delta
+            delta,
+            "Invalid state, negative poolAmount"
         );
 
         eventEmitter.emitPoolAmountUpdated(market, token, delta, nextValue);
@@ -488,7 +488,8 @@ library MarketUtils {
     ) internal {
         uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.swapImpactPoolAmountKey(market, token),
-            delta
+            delta,
+            "Invalid state: negative swapImpactPoolAmount"
         );
 
         eventEmitter.emitSwapImpactPoolAmountUpdated(market, token, delta, nextValue);
@@ -508,7 +509,7 @@ library MarketUtils {
         uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.positionImpactPoolAmountKey(market),
             delta,
-            true
+            "Invalid state: negative positionImpactPoolAmount"
         );
 
         eventEmitter.emitPositionImpactPoolAmountUpdated(market, delta, nextValue);
@@ -531,7 +532,8 @@ library MarketUtils {
     ) internal {
         uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.openInterestKey(market, collateralToken, isLong),
-            delta
+            delta,
+            "Invalid state: negative open interest"
         );
 
         eventEmitter.emitOpenInterestUpdated(market, collateralToken, isLong, delta, nextValue);
@@ -554,7 +556,8 @@ library MarketUtils {
     ) internal {
         uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.openInterestInTokensKey(market, collateralToken, isLong),
-            delta
+            delta,
+            "Invalid state: negative open interest in tokens"
         );
 
         eventEmitter.emitOpenInterestInTokensUpdated(market, collateralToken, isLong, delta, nextValue);
@@ -577,7 +580,8 @@ library MarketUtils {
     ) internal {
         uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.collateralSumKey(market, collateralToken, isLong),
-            delta
+            delta,
+            "Invalid state: negative collateralSum"
         );
 
         eventEmitter.emitCollateralSumUpdated(market, collateralToken, isLong, delta, nextValue);
@@ -1012,10 +1016,10 @@ library MarketUtils {
         Price.Props memory indexTokenPrice,
         bool isLong,
         bool maximize
-    ) internal view returns (uint256) {
+    ) internal view returns (int256) {
         uint256 openInterest = getOpenInterest(dataStore, market, longToken, shortToken, isLong);
         int256 pnl = getPnl(dataStore, market, longToken, shortToken, indexTokenPrice, isLong, maximize);
-        return Calc.sum(openInterest, pnl);
+        return Calc.sumReturnInt256(openInterest, pnl);
     }
 
     // @dev get the total amount of position collateral for a market
@@ -1233,7 +1237,10 @@ library MarketUtils {
     ) internal view returns (uint256) {
         uint256 borrowingFactor = getBorrowingFactor(dataStore, market, isLong);
 
-        uint256 openInterestWithPnl = getOpenInterestWithPnl(dataStore, market, longToken, shortToken, prices.indexTokenPrice, isLong, true);
+        int256 openInterestWithPnl = getOpenInterestWithPnl(dataStore, market, longToken, shortToken, prices.indexTokenPrice, isLong, true);
+        if (openInterestWithPnl <= 0) {
+            return 0;
+        }
 
         uint256 poolAmount = getPoolAmount(dataStore, market, isLong ? longToken : shortToken);
         uint256 poolTokenPrice = isLong ? prices.longTokenPrice.min : prices.shortTokenPrice.min;
@@ -1243,7 +1250,7 @@ library MarketUtils {
             revert("getBorrowingFactorPerSecond: unexpected state, poolUsd is zero");
         }
 
-        return borrowingFactor * openInterestWithPnl / poolUsd;
+        return borrowingFactor * openInterestWithPnl.toUint256() / poolUsd;
     }
 
     // @dev get the total borrowing fees

@@ -1,7 +1,7 @@
 import { expect } from "chai";
 
 import { deployFixture } from "../../utils/fixture";
-import { expandDecimals, expandFloatDecimals } from "../../utils/math";
+import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { printGasUsage } from "../../utils/gas";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, createOrder } from "../../utils/order";
@@ -35,7 +35,7 @@ describe("Exchange.UpdateOrder", () => {
       initialCollateralToken: wnt,
       initialCollateralDeltaAmount: expandDecimals(10, 18),
       swapPath: [ethUsdMarket.marketToken],
-      sizeDeltaUsd: expandFloatDecimals(200 * 1000),
+      sizeDeltaUsd: decimalToFloat(200 * 1000),
       triggerPrice: expandDecimals(5000, 12),
       acceptablePrice: expandDecimals(5001, 12),
       executionFee,
@@ -58,7 +58,7 @@ describe("Exchange.UpdateOrder", () => {
     expect(order.addresses.market).eq(ethUsdMarket.marketToken);
     expect(order.addresses.initialCollateralToken).eq(wnt.address);
     expect(order.addresses.swapPath).eql([ethUsdMarket.marketToken]);
-    expect(order.numbers.sizeDeltaUsd).eq(expandFloatDecimals(200 * 1000));
+    expect(order.numbers.sizeDeltaUsd).eq(decimalToFloat(200 * 1000));
     expect(order.numbers.initialCollateralDeltaAmount).eq(expandDecimals(10, 18));
     expect(order.numbers.acceptablePrice).eq(expandDecimals(5001, 12));
     expect(order.numbers.triggerPrice).eq(expandDecimals(5000, 12));
@@ -72,12 +72,12 @@ describe("Exchange.UpdateOrder", () => {
     await expect(
       exchangeRouter
         .connect(user1)
-        .updateOrder(orderKeys[0], expandFloatDecimals(250 * 1000), expandDecimals(4950, 12), expandDecimals(5050, 12))
+        .updateOrder(orderKeys[0], decimalToFloat(250 * 1000), expandDecimals(4950, 12), expandDecimals(5050, 12))
     ).to.be.revertedWith("ExchangeRouter: forbidden");
 
     const txn = await exchangeRouter
       .connect(user0)
-      .updateOrder(orderKeys[0], expandFloatDecimals(250 * 1000), expandDecimals(4950, 12), expandDecimals(5050, 12));
+      .updateOrder(orderKeys[0], decimalToFloat(250 * 1000), expandDecimals(4950, 12), expandDecimals(5050, 12));
     block = await provider.getBlock();
 
     await printGasUsage(provider, txn, "updateOrder");
@@ -87,7 +87,7 @@ describe("Exchange.UpdateOrder", () => {
     expect(order.addresses.market).eq(ethUsdMarket.marketToken);
     expect(order.addresses.initialCollateralToken).eq(wnt.address);
     expect(order.addresses.swapPath).eql([ethUsdMarket.marketToken]);
-    expect(order.numbers.sizeDeltaUsd).eq(expandFloatDecimals(250 * 1000));
+    expect(order.numbers.sizeDeltaUsd).eq(decimalToFloat(250 * 1000));
     expect(order.numbers.initialCollateralDeltaAmount).eq(expandDecimals(10, 18));
     expect(order.numbers.acceptablePrice).eq(expandDecimals(4950, 12));
     expect(order.numbers.triggerPrice).eq(expandDecimals(5050, 12));

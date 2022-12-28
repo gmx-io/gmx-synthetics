@@ -1,7 +1,7 @@
 import { expect } from "chai";
 
 import { deployFixture } from "../../utils/fixture";
-import { expandDecimals, expandFloatDecimals } from "../../utils/math";
+import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { printGasUsage } from "../../utils/gas";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, createOrder } from "../../utils/order";
@@ -35,7 +35,7 @@ describe("Exchange.CancelOrder", () => {
       initialCollateralToken: wnt,
       initialCollateralDeltaAmount: expandDecimals(10, 18),
       swapPath: [ethUsdMarket.marketToken],
-      sizeDeltaUsd: expandFloatDecimals(200 * 1000),
+      sizeDeltaUsd: decimalToFloat(200 * 1000),
       triggerPrice: expandDecimals(5000, 12),
       acceptablePrice: expandDecimals(5001, 12),
       executionFee,
@@ -58,7 +58,7 @@ describe("Exchange.CancelOrder", () => {
     expect(order.addresses.market).eq(ethUsdMarket.marketToken);
     expect(order.addresses.initialCollateralToken).eq(wnt.address);
     expect(order.addresses.swapPath).eql([ethUsdMarket.marketToken]);
-    expect(order.numbers.sizeDeltaUsd).eq(expandFloatDecimals(200 * 1000));
+    expect(order.numbers.sizeDeltaUsd).eq(decimalToFloat(200 * 1000));
     expect(order.numbers.initialCollateralDeltaAmount).eq(expandDecimals(10, 18));
     expect(order.numbers.acceptablePrice).eq(expandDecimals(5001, 12));
     expect(order.numbers.triggerPrice).eq(expandDecimals(5000, 12));

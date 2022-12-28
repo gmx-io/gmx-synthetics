@@ -375,7 +375,7 @@ library DepositUtils {
     ) internal returns (uint256) {
         uint256 mintAmount;
 
-        uint256 poolValue = MarketUtils.getPoolValue(
+        int256 _poolValue = MarketUtils.getPoolValue(
             params.dataStore,
             _params.market,
             _params.tokenIn == _params.market.longToken ? _params.tokenInPrice : _params.tokenOutPrice,
@@ -383,6 +383,13 @@ library DepositUtils {
             params.oracle.getPrimaryPrice(_params.market.indexToken),
             true
         );
+
+        if (_poolValue < 0) {
+            revert("Invalid pool state");
+        }
+
+        uint256 poolValue = _poolValue.toUint256();
+
         uint256 supply = MarketUtils.getMarketTokenSupply(MarketToken(payable(_params.market.marketToken)));
 
         if (_params.priceImpactUsd > 0) {

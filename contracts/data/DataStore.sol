@@ -45,26 +45,29 @@ contract DataStore is RoleModule {
     // @param key the key of the value
     // @param value the input int value
     // @return the new uint value
-    function applyDeltaToUint(bytes32 key, int256 value) external onlyController returns (uint256) {
-        uint256 nextUint = Calc.sum(uintValues[key], value);
+    function applyDeltaToUint(bytes32 key, int256 value, string memory errorMessage) external onlyController returns (uint256) {
+        uint256 currValue = uintValues[key];
+        if (value < 0 && (-value).toUint256() > currValue) {
+            revert(errorMessage);
+        }
+        uint256 nextUint = Calc.sumReturnUint256(currValue, value);
         uintValues[key] = nextUint;
         return nextUint;
     }
 
     // @dev add the input int value to the existing uint value, prevent the uint
-    // value from becoming negative if ensurePositiveValue is true
+    // value from becoming negative
     // @param key the key of the value
     // @param value the input int value
-    // @param ensurePositiveValue whether to ensure the uint value remains positive
     // @return the new uint value
-    function applyDeltaToUint(bytes32 key, int256 value, bool ensurePositiveValue) external onlyController returns (uint256) {
+    function applyBoundedDeltaToUint(bytes32 key, int256 value) external onlyController returns (uint256) {
         uint256 uintValue = uintValues[key];
-        if (ensurePositiveValue && value < 0 && (-value).toUint256() > uintValue) {
+        if (value < 0 && (-value).toUint256() > uintValue) {
             uintValues[key] = 0;
             return 0;
         }
 
-        uint256 nextUint = Calc.sum(uintValue, value);
+        uint256 nextUint = Calc.sumReturnUint256(uintValue, value);
         uintValues[key] = nextUint;
         return nextUint;
     }
