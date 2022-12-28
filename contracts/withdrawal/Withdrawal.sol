@@ -32,16 +32,14 @@ library Withdrawal {
         address market;
     }
 
-     // @param marketTokensLongAmount The amount of long market tokens that will be withdrawn.
-     // @param marketTokensShortAmount The amount of short market tokens that will be withdrawn.
+     // @param marketTokensAmount The amount of market tokens that will be withdrawn.
      // @param minLongTokenAmount The minimum amount of long tokens that must be withdrawn.
      // @param minShortTokenAmount The minimum amount of short tokens that must be withdrawn.
      // @param updatedAtBlock The block at which the withdrawal was last updated.
      // @param executionFee The execution fee for the withdrawal.
      // @param callbackGasLimit The gas limit for calling the callback contract.
     struct Numbers {
-        uint256 marketTokensLongAmount;
-        uint256 marketTokensShortAmount;
+        uint256 marketTokensAmount;
         uint256 minLongTokenAmount;
         uint256 minShortTokenAmount;
         uint256 updatedAtBlock;
@@ -86,20 +84,12 @@ library Withdrawal {
         props.addresses.market = value;
     }
 
-    function marketTokensLongAmount(Props memory props) internal pure returns (uint256) {
-        return props.numbers.marketTokensLongAmount;
+    function marketTokensAmount(Props memory props) internal pure returns (uint256) {
+        return props.numbers.marketTokensAmount;
     }
 
-    function setMarketTokensLongAmount(Props memory props, uint256 value) internal pure {
-        props.numbers.marketTokensLongAmount = value;
-    }
-
-    function marketTokensShortAmount(Props memory props) internal pure returns (uint256) {
-        return props.numbers.marketTokensShortAmount;
-    }
-
-    function setMarketTokensShortAmount(Props memory props, uint256 value) internal pure {
-        props.numbers.marketTokensShortAmount = value;
+    function setMarketTokensAmount(Props memory props, uint256 value) internal pure {
+        props.numbers.marketTokensAmount = value;
     }
 
     function minLongTokenAmount(Props memory props) internal pure returns (uint256) {
