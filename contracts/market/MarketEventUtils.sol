@@ -13,17 +13,17 @@ library MarketEventUtils {
         uint256 nextValue
     ) external {
         EventUtils.AddressItems memory addressItems;
-        addressItems.values = new EventUtils.AddressKeyValue[](2);
-        addressItems.values[0] = EventUtils.AddressKeyValue("market", market);
-        addressItems.values[1] = EventUtils.AddressKeyValue("token", token);
+        addressItems.items = new EventUtils.AddressKeyValue[](2);
+        addressItems.items[0] = EventUtils.AddressKeyValue("market", market);
+        addressItems.items[1] = EventUtils.AddressKeyValue("token", token);
 
         EventUtils.UintItems memory uintItems;
-        uintItems.values = new EventUtils.UintKeyValue[](1);
-        uintItems.values[0] = EventUtils.UintKeyValue("nextValue", nextValue);
+        uintItems.items = new EventUtils.UintKeyValue[](1);
+        uintItems.items[0] = EventUtils.UintKeyValue("nextValue", nextValue);
 
         EventUtils.IntItems memory intItems;
-        intItems.values = new EventUtils.IntKeyValue[](1);
-        intItems.values[0] = EventUtils.IntKeyValue("delta", delta);
+        intItems.items = new EventUtils.IntKeyValue[](1);
+        intItems.items[0] = EventUtils.IntKeyValue("delta", delta);
 
         EventUtils.BoolItems memory boolItems;
         EventUtils.Bytes32Items memory bytes32Items;

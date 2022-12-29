@@ -15,33 +15,33 @@ library EventUtils {
     }
 
     struct AddressItems {
-        AddressKeyValue[] values;
-        AddressArrayKeyValue[] arrayValues;
+        AddressKeyValue[] items;
+        AddressArrayKeyValue[] arrayItems;
     }
 
     struct UintItems {
-        UintKeyValue[] values;
-        UintArrayKeyValue[] arrayValues;
+        UintKeyValue[] items;
+        UintArrayKeyValue[] arrayItems;
     }
 
     struct IntItems {
-        IntKeyValue[] values;
-        IntArrayKeyValue[] arrayValues;
+        IntKeyValue[] items;
+        IntArrayKeyValue[] arrayItems;
     }
 
     struct BoolItems {
-        BoolKeyValue[] values;
-        BoolArrayKeyValue[] arrayValues;
+        BoolKeyValue[] items;
+        BoolArrayKeyValue[] arrayItems;
     }
 
     struct Bytes32Items {
-        Bytes32KeyValue[] values;
-        Bytes32ArrayKeyValue[] arrayValues;
+        Bytes32KeyValue[] items;
+        Bytes32ArrayKeyValue[] arrayItems;
     }
 
     struct DataItems {
-        DataKeyValue[] values;
-        DataArrayKeyValue[] arrayValues;
+        DataKeyValue[] items;
+        DataArrayKeyValue[] arrayItems;
     }
 
     struct AddressKeyValue {
