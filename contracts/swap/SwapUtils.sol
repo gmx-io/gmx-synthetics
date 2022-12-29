@@ -77,8 +77,8 @@ library SwapUtils {
 
     event SwapReverted(string reason);
 
-    error InsufficientSwapOutputAmount(uint256 outputAmount, uint256 minOutputAmount);
     error InvalidTokenIn(address tokenIn, address market);
+    error InsufficientSwapOutputAmount(uint256 outputAmount, uint256 minOutputAmount);
 
     /**
      * @dev Swaps a given amount of a given token for another token based on a
