@@ -8,6 +8,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { address: roleStoreAddress } = await get("RoleStore");
   const { address: dataStoreAddress } = await get("DataStore");
   const { address: eventEmitterAddress } = await get("EventEmitter");
+  const { address: eventEmitter2Address } = await get("EventEmitter2");
   const { address: depositStoreAddress } = await get("DepositStore");
   const { address: marketStoreAddress } = await get("MarketStore");
   const { address: oracleAddress } = await get("Oracle");
@@ -19,6 +20,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     roleStoreAddress,
     dataStoreAddress,
     eventEmitterAddress,
+    eventEmitter2Address,
     depositStoreAddress,
     marketStoreAddress,
     oracleAddress,
@@ -41,6 +43,7 @@ func.dependencies = [
   "RoleStore",
   "DataStore",
   "EventEmitter",
+  "EventEmitter2",
   "DepositStore",
   "MarketStore",
   "Oracle",

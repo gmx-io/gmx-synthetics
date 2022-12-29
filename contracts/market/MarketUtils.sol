@@ -6,15 +6,18 @@ import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
+import "../event/EventEmitter2.sol";
 import "../bank/StrictBank.sol";
 
 import "../deposit/Deposit.sol";
 import "../deposit/DepositStore.sol";
 import "../withdrawal/Withdrawal.sol";
 
-import "../market/Market.sol";
-import "../market/MarketToken.sol";
-import "../market/MarketStore.sol";
+import "./Market.sol";
+import "./MarketToken.sol";
+import "./MarketStore.sol";
+import "./MarketEventUtils.sol";
+
 import "../position/Position.sol";
 import "../position/PositionStore.sol";
 import "../order/Order.sol";
@@ -428,6 +431,28 @@ library MarketUtils {
         );
 
         eventEmitter.emitPoolAmountUpdated(market, token, delta, nextValue);
+    }
+
+    // @dev apply a delta to the pool amount
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param market the market to apply to
+    // @param token the token to apply to
+    // @param delta the delta amount
+    function applyDeltaToPoolAmount(
+        DataStore dataStore,
+        EventEmitter2 eventEmitter,
+        address market,
+        address token,
+        int256 delta
+    ) internal {
+        uint256 nextValue = dataStore.applyDeltaToUint(
+            Keys.poolAmountKey(market, token),
+            delta,
+            "Invalid state, negative poolAmount"
+        );
+
+        MarketEventUtils.emitPoolAmountUpdated(eventEmitter, market, token, delta, nextValue);
     }
 
     // @dev cap the input priceImpactUsd by the available amount in the position impact pool

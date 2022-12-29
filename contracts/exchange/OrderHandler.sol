@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./BaseOrderHandler.sol";
+import "../event/EventEmitter2.sol";
 
 // @title OrderHandler
 // @dev Contract to handle creation, execution and cancellation of orders
@@ -10,6 +11,8 @@ contract OrderHandler is BaseOrderHandler {
     using SafeCast for uint256;
     using Order for Order.Props;
     using Array for uint256[];
+
+    EventEmitter2 public immutable eventEmitter2;
 
     constructor(
         RoleStore _roleStore,
@@ -21,7 +24,8 @@ contract OrderHandler is BaseOrderHandler {
         Oracle _oracle,
         SwapHandler _swapHandler,
         FeeReceiver _feeReceiver,
-        IReferralStorage _referralStorage
+        IReferralStorage _referralStorage,
+        EventEmitter2 _eventEmitter2
     ) BaseOrderHandler(
         _roleStore,
         _dataStore,
@@ -33,7 +37,9 @@ contract OrderHandler is BaseOrderHandler {
         _swapHandler,
         _feeReceiver,
         _referralStorage
-    ) {}
+    ) {
+        eventEmitter2 = _eventEmitter2;
+    }
 
     // @dev creates an order in the order store
     // @param account the order's account
@@ -46,7 +52,7 @@ contract OrderHandler is BaseOrderHandler {
 
         return OrderUtils.createOrder(
             dataStore,
-            eventEmitter,
+            eventEmitter2,
             orderStore,
             marketStore,
             account,

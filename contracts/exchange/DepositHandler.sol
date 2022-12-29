@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./ExchangeUtils.sol";
 import "../role/RoleModule.sol";
 import "../event/EventEmitter.sol";
+import "../event/EventEmitter2.sol";
 import "../feature/FeatureUtils.sol";
 
 import "../market/Market.sol";
@@ -26,6 +27,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
+    EventEmitter2 public immutable eventEmitter2;
     DepositStore public immutable depositStore;
     MarketStore public immutable marketStore;
     Oracle public immutable oracle;
@@ -35,6 +37,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
+        EventEmitter2 _eventEmitter2,
         DepositStore _depositStore,
         MarketStore _marketStore,
         Oracle _oracle,
@@ -42,6 +45,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
+        eventEmitter2 = _eventEmitter2;
         depositStore = _depositStore;
         marketStore = _marketStore;
         oracle = _oracle;
@@ -163,6 +167,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         DepositUtils.ExecuteDepositParams memory params = DepositUtils.ExecuteDepositParams(
             dataStore,
             eventEmitter,
+            eventEmitter2,
             depositStore,
             marketStore,
             oracle,

@@ -17,6 +17,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { address: referralStorageAddress } = await get("ReferralStorage");
   const { address: gasUtilsAddress } = await get("GasUtils");
   const { address: orderUtilsAddress } = await get("OrderUtils");
+  const { address: eventEmitter2Address } = await get("EventEmitter2");
 
   const { address } = await deploy("OrderHandler", {
     from: deployer,
@@ -32,6 +33,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
       swapHandlerAddress,
       feeReceiverAddress,
       referralStorageAddress,
+      eventEmitter2Address,
     ],
     libraries: {
       GasUtils: gasUtilsAddress,
@@ -47,6 +49,7 @@ func.dependencies = [
   "RoleStore",
   "DataStore",
   "EventEmitter",
+  "EventEmitter2",
   "MarketStore",
   "OrderStore",
   "PositionStore",
