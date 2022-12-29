@@ -177,6 +177,7 @@ library DepositUtils {
     function executeDeposit(ExecuteDepositParams memory params) external {
         Deposit.Props memory deposit = params.depositStore.get(params.key);
         require(deposit.account() != address(0), "DepositUtils: empty deposit");
+        require(deposit.longTokenAmount() > 0 || deposit.shortTokenAmount() > 0, "DepositUtils: empty deposit amount");
 
         if (!params.oracleBlockNumbers.areEqualTo(deposit.updatedAtBlock())) {
             OracleUtils.revertOracleBlockNumbersAreNotEqual(params.oracleBlockNumbers, deposit.updatedAtBlock());
