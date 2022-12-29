@@ -180,6 +180,7 @@ library MarketUtils {
         if (inputToken == market.longToken) {
             return market.shortToken;
         }
+
         if (inputToken == market.shortToken) {
             return market.longToken;
         }
