@@ -334,13 +334,13 @@ contract Oracle is RoleModule {
     // @param token the token to get the price for
     // @return the latest price of a token
     function getLatestPrice(address token) external view returns (Price.Props memory) {
-        Price.Props memory primaryPrice = primaryPrices[token];
         Price.Props memory secondaryPrice = secondaryPrices[token];
 
         if (!secondaryPrice.isEmpty()) {
             return secondaryPrice;
         }
 
+        Price.Props memory primaryPrice = primaryPrices[token];
         if (!primaryPrice.isEmpty()) {
             return primaryPrice;
         }
