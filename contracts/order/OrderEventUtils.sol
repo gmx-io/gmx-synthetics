@@ -50,7 +50,7 @@ library OrderEventUtils {
         EventUtils.DataItems memory dataItems;
 
         eventEmitter.log(
-            "PoolAmountUpdated",
+            "OrderCreated",
             addressItems,
             uintItems,
             intItems,
