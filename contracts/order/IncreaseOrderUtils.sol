@@ -28,7 +28,7 @@ library IncreaseOrderUtils {
 
         MarketUtils.validateEnabledMarket(params.contracts.dataStore, params.market);
 
-        (address collateralToken, uint256 collateralDeltaAmount) = SwapUtils.swap(SwapUtils.SwapParams(
+        (address collateralToken, uint256 collateralIncrementAmount) = SwapUtils.swap(SwapUtils.SwapParams(
             params.contracts.dataStore,
             params.contracts.eventEmitter,
             params.contracts.oracle,
@@ -68,22 +68,14 @@ library IncreaseOrderUtils {
         );
 
         IncreasePositionUtils.increasePosition(
-            IncreasePositionUtils.IncreasePositionParams(
-                IncreasePositionUtils.IncreasePositionParamsContracts(
-                    params.contracts.dataStore,
-                    params.contracts.eventEmitter,
-                    params.contracts.positionStore,
-                    params.contracts.oracle,
-                    params.contracts.feeReceiver,
-                    params.contracts.referralStorage
-                ),
+            PositionUtils.UpdatePositionParams(
+                params.contracts,
                 params.market,
                 params.order,
                 position,
-                positionKey,
-                collateralToken,
-                collateralDeltaAmount
-            )
+                positionKey
+            ),
+            collateralIncrementAmount
         );
 
         params.contracts.orderStore.remove(params.key, params.order.account());

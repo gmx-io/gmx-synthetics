@@ -28,42 +28,6 @@ library DecreasePositionUtils {
     using Order for Order.Props;
     using Price for Price.Props;
 
-    // @dev DecreasePositionParams struct used in decreasePosition to avoid
-    // stack too deep errors
-    //
-    // @param market the values of the trading market
-    // @param order the decrease position order
-    // @param swapPathMarkets the values of the markets in the swap path
-    // @param position the order's position
-    // @param positionKey the key of the order's position
-    // @param adjustedSizeDeltaUsd the adjusted order.sizeDeltaUsd
-    struct DecreasePositionParams {
-        DecreasePositionParamsContracts contracts;
-        Market.Props market;
-        Order.Props order;
-        Market.Props[] swapPathMarkets;
-        Position.Props position;
-        bytes32 positionKey;
-        uint256 adjustedSizeDeltaUsd;
-    }
-
-    // @param dataStore DataStore
-    // @param eventEmitter EventEmitter
-    // @param positionStore PositionStore
-    // @param oracle Oracle
-    // @param swapHandler SwapHandler
-    // @param feeReceiver FeeReceiver
-    // @param referralStorage IReferralStorage
-    struct DecreasePositionParamsContracts {
-        DataStore dataStore;
-        EventEmitter eventEmitter;
-        PositionStore positionStore;
-        Oracle oracle;
-        SwapHandler swapHandler;
-        FeeReceiver feeReceiver;
-        IReferralStorage referralStorage;
-    }
-
     // @dev ProcessCollateralValues struct used to contain the values in processCollateral
     // @param executionPrice the order execution price
     // @param remainingCollateralAmount the remaining collateral amount of the position
@@ -115,6 +79,7 @@ library DecreasePositionUtils {
         address pnlToken;
         address outputToken;
         Price.Props pnlTokenPrice;
+        uint256 adjustedSizeDeltaUsd;
         uint256 initialCollateralAmount;
         uint256 nextPositionSizeInUsd;
         uint256 nextPositionBorrowingFactor;
@@ -138,7 +103,7 @@ library DecreasePositionUtils {
 
     // @dev decreases a position
     // The decreasePosition function decreases the size of an existing position
-    // in a market. It takes a DecreasePositionParams object as an input, which
+    // in a market. It takes a PositionUtils.UpdatePositionParams object as an input, which
     // includes information about the position to be decreased, the market in
     // which the position exists, and the order that is being used to decrease the position.
     //
@@ -154,9 +119,9 @@ library DecreasePositionUtils {
     // Finally, the function returns a DecreasePositionResult object containing
     // information about the outcome of the decrease operation, including the amount
     // of collateral removed from the position and any fees that were paid.
-    // @param params DecreasePositionParams
+    // @param params PositionUtils.UpdatePositionParams
     function decreasePosition(
-        DecreasePositionParams memory params
+        PositionUtils.UpdatePositionParams memory params
     ) external returns (DecreasePositionResult memory) {
         _DecreasePositionCache memory cache;
 
@@ -195,12 +160,12 @@ library DecreasePositionUtils {
             params.position.isLong()
         );
 
-        params.adjustedSizeDeltaUsd = params.order.sizeDeltaUsd();
+        cache.adjustedSizeDeltaUsd = params.order.sizeDeltaUsd();
 
-        if (params.adjustedSizeDeltaUsd > params.position.sizeInUsd()) {
+        if (cache.adjustedSizeDeltaUsd > params.position.sizeInUsd()) {
             if (params.order.orderType() == Order.OrderType.LimitDecrease ||
                 params.order.orderType() == Order.OrderType.StopLossDecrease) {
-                params.adjustedSizeDeltaUsd = params.position.sizeInUsd();
+                cache.adjustedSizeDeltaUsd = params.position.sizeInUsd();
             } else {
                 revert("DecreasePositionUtils: Invalid order size");
             }
@@ -212,19 +177,14 @@ library DecreasePositionUtils {
             PositionPricingUtils.PositionFees memory fees
         ) = processCollateral(
             params,
-            _ProcessCollateralCache(
-                cache.prices,
-                cache.initialCollateralAmount.toInt256(),
-                cache.pnlToken,
-                cache.pnlTokenPrice
-            )
+            cache
         );
 
         if (values.remainingCollateralAmount < 0) {
             revert("Insufficient collateral");
         }
 
-        cache.nextPositionSizeInUsd = params.position.sizeInUsd() - params.adjustedSizeDeltaUsd;
+        cache.nextPositionSizeInUsd = params.position.sizeInUsd() - cache.adjustedSizeDeltaUsd;
         cache.nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(params.contracts.dataStore, params.market.marketToken, params.position.isLong());
 
         MarketUtils.updateTotalBorrowing(
@@ -300,14 +260,14 @@ library DecreasePositionUtils {
             -(cache.initialCollateralAmount - params.position.collateralAmount()).toInt256()
         );
 
-        if (params.adjustedSizeDeltaUsd > 0) {
+        if (cache.adjustedSizeDeltaUsd > 0) {
             MarketUtils.applyDeltaToOpenInterest(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.position.market(),
                 params.position.collateralToken(),
                 params.position.isLong(),
-                -params.adjustedSizeDeltaUsd.toInt256()
+                -cache.adjustedSizeDeltaUsd.toInt256()
             );
             // since sizeDeltaInTokens is rounded down, when positions are closed for tokens with
             // a small number of decimals, the price of the market tokens may increase
@@ -331,7 +291,7 @@ library DecreasePositionUtils {
         );
 
         params.contracts.eventEmitter.emitPositionFeesCollected(false, fees);
-        emitPositionDecrease(params, values);
+        emitPositionDecrease(params, values, cache);
 
         ReferralUtils.incrementAffiliateReward(
             params.contracts.dataStore,
@@ -357,7 +317,7 @@ library DecreasePositionUtils {
         // swap the withdrawn collateral from collateralToken to pnlToken if needed
         if (params.position.collateralToken() != cache.pnlToken && shouldSwapCollateralTokenToPnlToken(params.order.swapPath())) {
             Market.Props[] memory swapPath = new Market.Props[](1);
-            swapPath[0] = params.swapPathMarkets[0];
+            swapPath[0] = params.market;
 
             try params.contracts.swapHandler.swap(
                 SwapUtils.SwapParams(
@@ -391,7 +351,7 @@ library DecreasePositionUtils {
         }
 
         return DecreasePositionResult(
-            params.adjustedSizeDeltaUsd,
+            cache.adjustedSizeDeltaUsd,
             cache.outputToken,
             values.outputAmount,
             cache.pnlToken,
@@ -400,11 +360,12 @@ library DecreasePositionUtils {
     }
 
     // @dev emit details of a position decrease
-    // @param params DecreasePositionParams
+    // @param params PositionUtils.UpdatePositionParams
     // @param values ProcessCollateralValues
     function emitPositionDecrease(
-        DecreasePositionParams memory params,
-        ProcessCollateralValues memory values
+        PositionUtils.UpdatePositionParams memory params,
+        ProcessCollateralValues memory values,
+        _DecreasePositionCache memory cache
     ) internal {
         EventUtils.EmitPositionDecreaseParams memory eventParams = EventUtils.EmitPositionDecreaseParams(
             params.positionKey,
@@ -417,7 +378,7 @@ library DecreasePositionUtils {
         params.contracts.eventEmitter.emitPositionDecrease(
             eventParams,
             values.executionPrice,
-            params.adjustedSizeDeltaUsd,
+            cache.adjustedSizeDeltaUsd,
             values.sizeDeltaInTokens,
             params.order.initialCollateralDeltaAmount().toInt256(),
             values.pnlAmountForPool,
@@ -428,18 +389,18 @@ library DecreasePositionUtils {
     }
 
     // @dev handle the collateral changes of the position
-    // @param params DecreasePositionParams
+    // @param params PositionUtils.UpdatePositionParams
     // @param cache _ProcessCollateralCache
     // @return (ProcessCollateralValues, PositionPricingUtils.PositionFees)
     function processCollateral(
-        DecreasePositionParams memory params,
-        _ProcessCollateralCache memory cache
+        PositionUtils.UpdatePositionParams memory params,
+        _DecreasePositionCache memory cache
     ) internal returns (
         ProcessCollateralValues memory,
         PositionPricingUtils.PositionFees memory
     ) {
         ProcessCollateralValues memory values;
-        values.remainingCollateralAmount = cache.initialCollateralAmount;
+        values.remainingCollateralAmount = cache.initialCollateralAmount.toInt256();
 
         values.remainingCollateralAmount -= params.order.initialCollateralDeltaAmount().toInt256();
         values.outputAmount = params.order.initialCollateralDeltaAmount();
@@ -452,7 +413,7 @@ library DecreasePositionUtils {
                 params.market.marketToken,
                 params.market.longToken,
                 params.market.shortToken,
-                -params.adjustedSizeDeltaUsd.toInt256(),
+                -cache.adjustedSizeDeltaUsd.toInt256(),
                 params.order.isLong()
             )
         );
@@ -492,7 +453,7 @@ library DecreasePositionUtils {
 
         (values.positionPnlUsd, values.sizeDeltaInTokens) = PositionUtils.getPositionPnlUsd(
             params.position,
-            params.adjustedSizeDeltaUsd,
+            cache.adjustedSizeDeltaUsd,
             values.executionPrice
         );
 
@@ -510,7 +471,7 @@ library DecreasePositionUtils {
             // swap the realized profit from the pnlToken to the collateralToken if needed
             if (params.position.collateralToken() != cache.pnlToken && shouldSwapPnlTokenToCollateralToken(params.order.swapPath())) {
                 Market.Props[] memory swapPath = new Market.Props[](1);
-                swapPath[0] = params.swapPathMarkets[0];
+                swapPath[0] = params.market;
 
                 try params.contracts.swapHandler.swap(
                     SwapUtils.SwapParams(
@@ -551,7 +512,7 @@ library DecreasePositionUtils {
             collateralTokenPrice,
             params.market.longToken,
             params.market.shortToken,
-            params.adjustedSizeDeltaUsd
+            cache.adjustedSizeDeltaUsd
         );
 
         // if there is a positive outputAmount, use the outputAmount to pay for fees and price impact

@@ -11,6 +11,7 @@ import "../data/DataStore.sol";
 import "../data/Keys.sol";
 
 import "../pricing/PositionPricingUtils.sol";
+import "../order/OrderBaseUtils.sol";
 
 // @title PositionUtils
 // @dev Library for position functions
@@ -19,6 +20,39 @@ library PositionUtils {
     using SafeCast for int256;
     using Position for Position.Props;
     using Price for Price.Props;
+
+    // @dev UpdatePositionParams struct used in increasePosition to avoid
+    // stack too deep errors
+    //
+    // @param market the values of the trading market
+    // @param order the decrease position order
+    // @param position the order's position
+    // @param positionKey the key of the order's position
+    // @param collateral the collateralToken of the position
+    // @param collateralDeltaAmount the amount of collateralToken deposited
+    struct UpdatePositionParams {
+        OrderBaseUtils.ExecuteOrderParamsContracts contracts;
+        Market.Props market;
+        Order.Props order;
+        Position.Props position;
+        bytes32 positionKey;
+    }
+
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param positionStore PositionStore
+    // @param oracle Oracle
+    // @param feeReceiver FeeReceiver
+    // @param referralStorage IReferralStorage
+    struct UpdatePositionParamsContracts {
+        DataStore dataStore;
+        EventEmitter eventEmitter;
+        PositionStore positionStore;
+        Oracle oracle;
+        SwapHandler swapHandler;
+        FeeReceiver feeReceiver;
+        IReferralStorage referralStorage;
+    }
 
     // @dev _IsPositionLiquidatableCache struct used in isPositionLiquidatable
     // to avoid stack too deep errors
