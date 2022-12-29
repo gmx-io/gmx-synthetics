@@ -8,6 +8,7 @@ import "../fee/FeeReceiver.sol";
 
 import "./Order.sol";
 import "./OrderStore.sol";
+import "./OrderEventUtils.sol";
 
 import "../nonce/NonceUtils.sol";
 import "../oracle/Oracle.sol";
@@ -44,7 +45,7 @@ library OrderUtils {
     // @param params OrderBaseUtils.CreateOrderParams
     function createOrder(
         DataStore dataStore,
-        EventEmitter eventEmitter,
+        EventEmitter2 eventEmitter2,
         OrderStore orderStore,
         MarketStore marketStore,
         address account,
@@ -106,7 +107,7 @@ library OrderUtils {
         order.touch();
         orderStore.set(key, order);
 
-        eventEmitter.emitOrderCreated(key, order);
+        OrderEventUtils.emitOrderCreated(eventEmitter2, key, order);
 
         return key;
     }
