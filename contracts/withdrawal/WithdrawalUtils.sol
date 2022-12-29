@@ -35,7 +35,7 @@ library WithdrawalUtils {
      * @param receiver The address that will receive the withdrawal tokens.
      * @param callbackContract The contract that will be called back.
      * @param market The market on which the withdrawal will be executed.
-     * @param marketTokensAmount The amount of market tokens that will be withdrawn.
+     * @param marketTokenAmount The amount of market tokens that will be withdrawn.
      * @param minLongTokenAmount The minimum amount of long tokens that must be withdrawn.
      * @param minShortTokenAmount The minimum amount of short tokens that must be withdrawn.
      * @param shouldUnwrapNativeToken Whether the native token should be unwrapped when executing the withdrawal.
@@ -46,7 +46,7 @@ library WithdrawalUtils {
         address receiver;
         address callbackContract;
         address market;
-        uint256 marketTokensAmount;
+        uint256 marketTokenAmount;
         uint256 minLongTokenAmount;
         uint256 minShortTokenAmount;
         bool shouldUnwrapNativeToken;
@@ -116,7 +116,7 @@ library WithdrawalUtils {
                 market.marketToken
             ),
             Withdrawal.Numbers(
-                params.marketTokensAmount,
+                params.marketTokenAmount,
                 params.minLongTokenAmount,
                 params.minShortTokenAmount,
                 Chain.currentBlockNumber(),
@@ -149,15 +149,15 @@ library WithdrawalUtils {
     function executeWithdrawal(ExecuteWithdrawalParams memory params) external {
         Withdrawal.Props memory withdrawal = params.withdrawalStore.get(params.key);
         require(withdrawal.account() != address(0), "WithdrawalUtils: empty withdrawal");
-        require(withdrawal.marketTokensAmount() > 0, "WithdrawalUtils: empty marketTokensAmount");
+        require(withdrawal.marketTokenAmount() > 0, "WithdrawalUtils: empty marketTokenAmount");
 
         if (!params.oracleBlockNumbers.areEqualTo(withdrawal.updatedAtBlock())) {
             OracleUtils.revertOracleBlockNumbersAreNotEqual(params.oracleBlockNumbers, withdrawal.updatedAtBlock());
         }
 
         uint256 marketTokensBalance = MarketToken(payable(withdrawal.market())).balanceOf(withdrawal.account());
-        if (marketTokensBalance < withdrawal.marketTokensAmount()) {
-            revert InsufficientMarketTokens(marketTokensBalance, withdrawal.marketTokensAmount());
+        if (marketTokensBalance < withdrawal.marketTokenAmount()) {
+            revert InsufficientMarketTokens(marketTokensBalance, withdrawal.marketTokenAmount());
         }
 
         CallbackUtils.beforeWithdrawalExecution(params.key, withdrawal);
@@ -231,7 +231,7 @@ library WithdrawalUtils {
             market
         );
 
-        (uint256 longTokenOutputAmount, uint256 shortTokenOutputAmount) = _getOutputAmounts(params, market, prices, withdrawal.marketTokensAmount());
+        (uint256 longTokenOutputAmount, uint256 shortTokenOutputAmount) = _getOutputAmounts(params, market, prices, withdrawal.marketTokenAmount());
 
         SwapPricingUtils.SwapFees memory longTokenFees = SwapPricingUtils.getSwapFees(
             params.dataStore,
@@ -317,7 +317,7 @@ library WithdrawalUtils {
 
         params.withdrawalStore.remove(params.key);
 
-        MarketToken(payable(market.marketToken)).burn(withdrawal.account(), withdrawal.marketTokensAmount());
+        MarketToken(payable(market.marketToken)).burn(withdrawal.account(), withdrawal.marketTokenAmount());
 
         MarketToken(payable(market.marketToken)).transferOut(
             market.longToken,
@@ -341,7 +341,7 @@ library WithdrawalUtils {
         ExecuteWithdrawalParams memory params,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
-        uint256 marketTokensAmount
+        uint256 marketTokenAmount
     ) internal view returns (uint256, uint256) {
         int256 _poolValue = MarketUtils.getPoolValue(
             params.dataStore,
@@ -358,7 +358,7 @@ library WithdrawalUtils {
 
         uint256 poolValue = _poolValue.toUint256();
         uint256 marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
-        uint256 marketTokensUsd = MarketUtils.marketTokenAmountToUsd(marketTokensAmount, poolValue, marketTokensSupply);
+        uint256 marketTokensUsd = MarketUtils.marketTokenAmountToUsd(marketTokenAmount, poolValue, marketTokensSupply);
 
         uint256 longTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market.marketToken, market.longToken);
         uint256 shortTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market.marketToken, market.shortToken);

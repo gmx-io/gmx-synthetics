@@ -32,14 +32,14 @@ library Withdrawal {
         address market;
     }
 
-     // @param marketTokensAmount The amount of market tokens that will be withdrawn.
+     // @param marketTokenAmount The amount of market tokens that will be withdrawn.
      // @param minLongTokenAmount The minimum amount of long tokens that must be withdrawn.
      // @param minShortTokenAmount The minimum amount of short tokens that must be withdrawn.
      // @param updatedAtBlock The block at which the withdrawal was last updated.
      // @param executionFee The execution fee for the withdrawal.
      // @param callbackGasLimit The gas limit for calling the callback contract.
     struct Numbers {
-        uint256 marketTokensAmount;
+        uint256 marketTokenAmount;
         uint256 minLongTokenAmount;
         uint256 minShortTokenAmount;
         uint256 updatedAtBlock;
@@ -84,12 +84,12 @@ library Withdrawal {
         props.addresses.market = value;
     }
 
-    function marketTokensAmount(Props memory props) internal pure returns (uint256) {
-        return props.numbers.marketTokensAmount;
+    function marketTokenAmount(Props memory props) internal pure returns (uint256) {
+        return props.numbers.marketTokenAmount;
     }
 
-    function setMarketTokensAmount(Props memory props, uint256 value) internal pure {
-        props.numbers.marketTokensAmount = value;
+    function setMarketTokenAmount(Props memory props, uint256 value) internal pure {
+        props.numbers.marketTokenAmount = value;
     }
 
     function minLongTokenAmount(Props memory props) internal pure returns (uint256) {
