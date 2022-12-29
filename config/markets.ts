@@ -1,34 +1,34 @@
-import { BigNumber } from "ethers";
+import { BigNumberish } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { decimalToFloat } from "../utils/math";
 
-export type DefaultMarketConfig = {
-  reserveFactorLongs: BigNumber | string;
-  reserveFactorShorts: BigNumber | string;
+export type BaseMarketConfig = {
+  reserveFactorLongs: BigNumberish;
+  reserveFactorShorts: BigNumberish;
 
-  maxPnlFactorLongs: BigNumber | string;
-  maxPnlFactorShorts: BigNumber | string;
+  maxPnlFactorLongs: BigNumberish;
+  maxPnlFactorShorts: BigNumberish;
 
-  maxPnlFactorForWithdrawalsLongs: BigNumber | string;
-  maxPnlFactorForWithdrawalsShorts: BigNumber | string;
+  maxPnlFactorForWithdrawalsLongs: BigNumberish;
+  maxPnlFactorForWithdrawalsShorts: BigNumberish;
 
-  positionFeeFactor: BigNumber | string;
-  positivePositionImpactFactor: BigNumber | string;
-  negativePositionImpactFactor: BigNumber | string;
-  positionImpactExponentFactor: BigNumber | string;
+  positionFeeFactor: BigNumberish;
+  positivePositionImpactFactor: BigNumberish;
+  negativePositionImpactFactor: BigNumberish;
+  positionImpactExponentFactor: BigNumberish;
 
-  swapFeeFactor: BigNumber | string;
-  positiveSwapImpactFactor: BigNumber | string;
-  negativeSwapImpactFactor: BigNumber | string;
-  swapImpactExponentFactor: BigNumber | string;
+  swapFeeFactor: BigNumberish;
+  positiveSwapImpactFactor: BigNumberish;
+  negativeSwapImpactFactor: BigNumberish;
+  swapImpactExponentFactor: BigNumberish;
 };
 
-export type MarketConfig = Partial<DefaultMarketConfig> & {
+export type MarketConfig = Partial<BaseMarketConfig> & {
   tokens: [indexToken: string, longToken: string, shortToken: string];
 };
 
-const defaultMarketConfig: DefaultMarketConfig = {
+const baseMarketConfig: BaseMarketConfig = {
   reserveFactorLongs: decimalToFloat(5, 1), // 50%,
   reserveFactorShorts: decimalToFloat(5, 1), // 50%,
 
@@ -49,25 +49,15 @@ const defaultMarketConfig: DefaultMarketConfig = {
   swapImpactExponentFactor: decimalToFloat(2, 0), // 2
 };
 
-const testMarketConfig: DefaultMarketConfig = {
+const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
   reserveFactorLongs: decimalToFloat(5, 1), // 50%,
   reserveFactorShorts: decimalToFloat(5, 1), // 50%,
 
   maxPnlFactorLongs: decimalToFloat(5, 1), // 50%
   maxPnlFactorShorts: decimalToFloat(5, 1), // 50%
 
-  maxPnlFactorForWithdrawalsLongs: decimalToFloat(7, 1), // 30%
-  maxPnlFactorForWithdrawalsShorts: decimalToFloat(7, 1), // 30%
-
-  positionFeeFactor: 0,
-  positivePositionImpactFactor: 0,
-  negativePositionImpactFactor: 0,
-  positionImpactExponentFactor: 0,
-
-  swapFeeFactor: 0,
-  positiveSwapImpactFactor: 0,
-  negativeSwapImpactFactor: 0,
-  swapImpactExponentFactor: 0,
+  maxPnlFactorForWithdrawalsLongs: decimalToFloat(7, 1), // 70%
+  maxPnlFactorForWithdrawalsShorts: decimalToFloat(7, 1), // 70%
 };
 
 const config: {
@@ -90,11 +80,9 @@ const config: {
   hardhat: [
     {
       tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
-      ...testMarketConfig,
     },
     {
       tokens: ["SOL", "WETH", "USDC"],
-      ...testMarketConfig,
     },
   ],
   localhost: [
@@ -110,6 +98,7 @@ const config: {
 export default async function (hre: HardhatRuntimeEnvironment) {
   const markets = config[hre.network.name];
   const tokens = await hre.gmx.getTokens();
+  const defaultMarketConfig = hre.network.name === "hardhat" ? hardhatBaseMarketConfig : baseMarketConfig;
   if (markets) {
     for (const market of markets) {
       for (const tokenSymbol of market.tokens) {
