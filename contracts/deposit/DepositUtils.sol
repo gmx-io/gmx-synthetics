@@ -69,6 +69,7 @@ library DepositUtils {
     struct ExecuteDepositParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
+        EventEmitter2 eventEmitter2;
         DepositStore depositStore;
         MarketStore marketStore;
         Oracle oracle;
@@ -424,7 +425,7 @@ library DepositUtils {
             // deposit the token out, that was withdrawn from the impact pool, to mint market tokens
             MarketUtils.applyDeltaToPoolAmount(
                 params.dataStore,
-                params.eventEmitter,
+                params.eventEmitter2,
                 _params.market.marketToken,
                 _params.tokenOut,
                 positiveImpactAmount
