@@ -98,7 +98,7 @@ contract Oracle is RoleModule {
 
     error EmptyTokens();
     error InvalidBlockNumber(uint256 blockNumber);
-    error MaxPriceAgeExceeded(uint256 blockNumber);
+    error MaxPriceAgeExceeded(uint256 oracleTimestamp);
     error MinOracleSigners(uint256 oracleSigners, uint256 minOracleSigners);
     error MaxOracleSigners(uint256 oracleSigners, uint256 maxOracleSigners);
     error BlockNumbersNotSorted(uint256 oracleBlockNumber, uint256 prevOracleBlockNumber);
