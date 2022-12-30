@@ -441,17 +441,25 @@ library MarketUtils {
         DataStore dataStore,
         address market,
         Price.Props memory tokenPrice,
-        int256 priceImpactUsd
+        int256 priceImpactUsd,
+        uint256 sizeDeltaUsd
     ) internal view returns (int256) {
         if (priceImpactUsd < 0) {
             return priceImpactUsd;
         }
 
         uint256 impactPoolAmount = getPositionImpactPoolAmount(dataStore, market);
-        int256 maxPositiveImpactUsd = (impactPoolAmount * tokenPrice.min).toInt256();
+        int256 maxPriceImpactUsdBasedOnImpactPool = (impactPoolAmount * tokenPrice.min).toInt256();
 
-        if (priceImpactUsd > maxPositiveImpactUsd) {
-            priceImpactUsd = maxPositiveImpactUsd;
+        if (priceImpactUsd > maxPriceImpactUsdBasedOnImpactPool) {
+            priceImpactUsd = maxPriceImpactUsdBasedOnImpactPool;
+        }
+
+        uint256 maxPriceImpactFactor = getMaxPositionImpactFactor(dataStore, market, true);
+        int256 maxPriceImpactUsdBasedOnMaxPriceImpactFactor = Precision.applyFactor(sizeDeltaUsd, maxPriceImpactFactor).toInt256();
+
+        if (priceImpactUsd > maxPriceImpactUsdBasedOnMaxPriceImpactFactor) {
+            priceImpactUsd = maxPriceImpactUsdBasedOnMaxPriceImpactFactor;
         }
 
         return priceImpactUsd;
@@ -1021,6 +1029,10 @@ library MarketUtils {
         uint256 openInterest = getOpenInterest(dataStore, market, longToken, shortToken, isLong);
         int256 pnl = getPnl(dataStore, market, longToken, shortToken, indexTokenPrice, isLong, maximize);
         return Calc.sumReturnInt256(openInterest, pnl);
+    }
+
+    function getMaxPositionImpactFactor(DataStore dataStore, address market, bool isPositive) internal view returns (uint256) {
+        return dataStore.getUint(Keys.maxPositionImpactFactorKey(market, isPositive));
     }
 
     // @dev get the total amount of position collateral for a market

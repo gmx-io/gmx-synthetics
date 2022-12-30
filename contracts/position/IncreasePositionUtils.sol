@@ -235,7 +235,8 @@ library IncreasePositionUtils {
             params.contracts.dataStore,
             params.market.marketToken,
             prices.indexTokenPrice,
-            priceImpactUsd
+            priceImpactUsd,
+            params.order.sizeDeltaUsd()
         );
 
         uint256 executionPrice = OrderBaseUtils.getExecutionPrice(

@@ -46,6 +46,7 @@ library DecreasePositionCollateralUtils {
         uint256 pnlAmountForUser;
         uint256 sizeDeltaInTokens;
         int256 priceImpactAmount;
+        uint256 priceImpactDiffUsd;
     }
 
     // @dev _ProcessCollateralCache struct used in processCollateral to
@@ -104,7 +105,7 @@ library DecreasePositionCollateralUtils {
 
         Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.order.initialCollateralToken(), params.market, cache.prices);
 
-        (values.executionPrice, values.priceImpactAmount) = getExecutionPrice(params, cache.prices, cache.adjustedSizeDeltaUsd);
+        (values.executionPrice, values.priceImpactAmount, values.priceImpactDiffUsd) = getExecutionPrice(params, cache.prices, cache.adjustedSizeDeltaUsd);
 
         // if there is a positive impact, the impact pool amount should be reduced
         // if there is a negative impact, the impact pool amount should be increased
@@ -192,15 +193,15 @@ library DecreasePositionCollateralUtils {
     function getExecutionPrice(
         PositionUtils.UpdatePositionParams memory params,
         MarketUtils.MarketPrices memory prices,
-        uint256 adjustedSizeDeltaUsd
-    ) internal view returns (uint256, int256) {
+        uint256 sizeDeltaUsd
+    ) internal view returns (uint256, int256, uint256) {
         int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
                 params.contracts.dataStore,
                 params.market.marketToken,
                 params.market.longToken,
                 params.market.shortToken,
-                -adjustedSizeDeltaUsd.toInt256(),
+                -sizeDeltaUsd.toInt256(),
                 params.order.isLong()
             )
         );
@@ -209,8 +210,26 @@ library DecreasePositionCollateralUtils {
             params.contracts.dataStore,
             params.market.marketToken,
             prices.indexTokenPrice,
-            priceImpactUsd
+            priceImpactUsd,
+            sizeDeltaUsd
         );
+
+        uint256 priceImpactDiffUsd;
+        if (priceImpactUsd < 0) {
+            uint256 maxPriceImpactFactor = MarketUtils.getMaxPositionImpactFactor(
+                params.contracts.dataStore,
+                params.market.marketToken,
+                false
+            );
+
+            // convert the max price impact to the min negative value
+            int256 minPriceImpactUsd = -Precision.applyFactor(sizeDeltaUsd, maxPriceImpactFactor).toInt256();
+
+            if (priceImpactUsd < minPriceImpactUsd) {
+                priceImpactDiffUsd = (minPriceImpactUsd - priceImpactUsd).toUint256();
+                priceImpactUsd = minPriceImpactUsd;
+            }
+        }
 
         uint256 executionPrice = OrderBaseUtils.getExecutionPrice(
             params.contracts.oracle.getCustomPrice(params.market.indexToken),
@@ -229,7 +248,7 @@ library DecreasePositionCollateralUtils {
             false
         );
 
-        return (executionPrice, priceImpactAmount);
+        return (executionPrice, priceImpactAmount, priceImpactDiffUsd);
     }
 
     function getLiquidationValues(
@@ -264,7 +283,8 @@ library DecreasePositionCollateralUtils {
             values.pnlAmountForPool, // pnlAmountForPool
             0, // pnlAmountForUser
             values.sizeDeltaInTokens, // sizeDeltaInTokens
-            values.priceImpactAmount // priceImpactAmount
+            values.priceImpactAmount, // priceImpactAmount
+            0 // priceImpactDiffUsd
         );
 
         return (_values, _fees);

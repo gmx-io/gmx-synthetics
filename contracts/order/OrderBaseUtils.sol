@@ -172,7 +172,7 @@ library OrderBaseUtils {
         return orderType == Order.OrderType.Liquidation;
     }
 
-    // @dev set the price for increase / decrease orders
+    // @dev set the price for increase / decrease position orders
     //
     // for market orders, set the min and max values of the customPrice for the indexToken
     // to either secondaryPrice.min or secondaryPrice.max depending on whether the order
@@ -214,7 +214,6 @@ library OrderBaseUtils {
         //     - short: use the larger price
         bool shouldUseMaxPrice = isIncrease ? isLong : !isLong;
 
-        // set secondary price to primary price since increase / decrease positions use the secondary price for index token values
         if (orderType == Order.OrderType.MarketIncrease ||
             orderType == Order.OrderType.MarketDecrease ||
             orderType == Order.OrderType.Liquidation) {
@@ -319,7 +318,8 @@ library OrderBaseUtils {
         //     - short: price should be smaller than acceptablePrice
         bool shouldPriceBeSmaller = isIncrease ? isLong : !isLong;
 
-        // for market orders, customIndexTokenPrice.min and customIndexTokenPrice.max should be equal, see setExactOrderPrice for more info
+        // for market orders, customIndexTokenPrice.min and customIndexTokenPrice.max should
+        // be equal, see setExactOrderPrice for more info
         // for limit orders, customIndexTokenPrice contains the triggerPrice and the best oracle
         // price, we first attempt to fulfill the order using the triggerPrice
         uint256 price = customIndexTokenPrice.pickPrice(shouldUseMaxPrice);
