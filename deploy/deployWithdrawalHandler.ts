@@ -5,31 +5,31 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { deploy, get } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  const { address: roleStoreAddress } = await get("RoleStore");
-  const { address: dataStoreAddress } = await get("DataStore");
-  const { address: eventEmitterAddress } = await get("EventEmitter");
-  const { address: withdrawalStoreAddress } = await get("WithdrawalStore");
-  const { address: marketStoreAddress } = await get("MarketStore");
-  const { address: oracleAddress } = await get("Oracle");
-  const { address: feeReceiverAddress } = await get("FeeReceiver");
-  const { address: withdrawalUtilsAddress } = await get("WithdrawalUtils");
-  const { address: gasUtilsAddress } = await get("GasUtils");
+  const roleStore = await get("RoleStore");
+  const dataStore = await get("DataStore");
+  const eventEmitter = await get("EventEmitter");
+  const withdrawalStore = await get("WithdrawalStore");
+  const marketStore = await get("MarketStore");
+  const oracle = await get("Oracle");
+  const feeReceiver = await get("FeeReceiver");
+  const withdrawalUtils = await get("WithdrawalUtils");
+  const gasUtils = await get("GasUtils");
 
   const { address } = await deploy("WithdrawalHandler", {
     from: deployer,
     log: true,
     args: [
-      roleStoreAddress,
-      dataStoreAddress,
-      eventEmitterAddress,
-      withdrawalStoreAddress,
-      marketStoreAddress,
-      oracleAddress,
-      feeReceiverAddress,
+      roleStore.address,
+      dataStore.address,
+      eventEmitter.address,
+      withdrawalStore.address,
+      marketStore.address,
+      oracle.address,
+      feeReceiver.address,
     ],
     libraries: {
-      WithdrawalUtils: withdrawalUtilsAddress,
-      GasUtils: gasUtilsAddress,
+      WithdrawalUtils: withdrawalUtils.address,
+      GasUtils: gasUtils.address,
     },
   });
 

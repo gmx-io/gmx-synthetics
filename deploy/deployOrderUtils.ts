@@ -4,21 +4,21 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { deploy, get } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  const { address: orderBaseUtilsAddress } = await get("OrderBaseUtils");
-  const { address: increaseOrderUtilsAddress } = await get("IncreaseOrderUtils");
-  const { address: decreaseOrderUtilsAddress } = await get("DecreaseOrderUtils");
-  const { address: swapOrderUtilsAddress } = await get("SwapOrderUtils");
-  const { address: gasUtilsAddress } = await get("GasUtils");
+  const orderBaseUtils = await get("OrderBaseUtils");
+  const increaseOrderUtils = await get("IncreaseOrderUtils");
+  const decreaseOrderUtils = await get("DecreaseOrderUtils");
+  const swapOrderUtils = await get("SwapOrderUtils");
+  const gasUtils = await get("GasUtils");
 
   await deploy("OrderUtils", {
     from: deployer,
     log: true,
     libraries: {
-      OrderBaseUtils: orderBaseUtilsAddress,
-      IncreaseOrderUtils: increaseOrderUtilsAddress,
-      DecreaseOrderUtils: decreaseOrderUtilsAddress,
-      SwapOrderUtils: swapOrderUtilsAddress,
-      GasUtils: gasUtilsAddress,
+      OrderBaseUtils: orderBaseUtils.address,
+      IncreaseOrderUtils: increaseOrderUtils.address,
+      DecreaseOrderUtils: decreaseOrderUtils.address,
+      SwapOrderUtils: swapOrderUtils.address,
+      GasUtils: gasUtils.address,
     },
   });
 };

@@ -8,13 +8,13 @@ const func = async ({ getNamedAccounts, deployments, gmx }: HardhatRuntimeEnviro
   const { deployer } = await getNamedAccounts();
   const oracleConfig = await gmx.getOracle();
 
-  const { address: roleStoreAddress } = await get("RoleStore");
-  const { address: oracleStoreAddress } = await get("OracleStore");
+  const roleStore = await get("RoleStore");
+  const oracleStore = await get("OracleStore");
 
   const { address } = await deploy("Oracle", {
     from: deployer,
     log: true,
-    args: [roleStoreAddress, oracleStoreAddress],
+    args: [roleStore.address, oracleStore.address],
   });
 
   await setUintIfDifferent(

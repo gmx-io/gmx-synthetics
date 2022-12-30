@@ -4,13 +4,13 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { deploy, get } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  const { address: decreasePositionUtilsAddress } = await get("DecreasePositionUtils");
+  const decreasePositionUtils = await get("DecreasePositionUtils");
 
   await deploy("DecreaseOrderUtils", {
     from: deployer,
     log: true,
     libraries: {
-      DecreasePositionUtils: decreasePositionUtilsAddress,
+      DecreasePositionUtils: decreasePositionUtils.address,
     },
   });
 };

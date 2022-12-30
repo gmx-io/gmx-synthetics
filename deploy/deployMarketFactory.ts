@@ -5,14 +5,14 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { deploy, get } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  const { address: roleStoreAddress } = await get("RoleStore");
-  const { address: dataStoreAddress } = await get("DataStore");
-  const { address: marketStoreAddress } = await get("MarketStore");
+  const roleStore = await get("RoleStore");
+  const dataStore = await get("DataStore");
+  const marketStore = await get("MarketStore");
 
   const { address } = await deploy("MarketFactory", {
     from: deployer,
     log: true,
-    args: [roleStoreAddress, dataStoreAddress, marketStoreAddress],
+    args: [roleStore.address, dataStore.address, marketStore.address],
   });
 
   await grantRoleIfNotGranted(address, "CONTROLLER");

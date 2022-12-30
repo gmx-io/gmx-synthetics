@@ -5,32 +5,32 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { deploy, get } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  const { address: roleStoreAddress } = await get("RoleStore");
-  const { address: dataStoreAddress } = await get("DataStore");
-  const { address: eventEmitterAddress } = await get("EventEmitter");
-  const { address: depositStoreAddress } = await get("DepositStore");
-  const { address: marketStoreAddress } = await get("MarketStore");
-  const { address: oracleAddress } = await get("Oracle");
-  const { address: feeReceiverAddress } = await get("FeeReceiver");
-  const { address: depositUtilsAddress } = await get("DepositUtils");
-  const { address: gasUtilsAddress } = await get("GasUtils");
+  const roleStore = await get("RoleStore");
+  const dataStore = await get("DataStore");
+  const eventEmitter = await get("EventEmitter");
+  const depositStore = await get("DepositStore");
+  const marketStore = await get("MarketStore");
+  const oracle = await get("Oracle");
+  const feeReceiver = await get("FeeReceiver");
+  const depositUtils = await get("DepositUtils");
+  const gasUtils = await get("GasUtils");
 
   const deployArgs = [
-    roleStoreAddress,
-    dataStoreAddress,
-    eventEmitterAddress,
-    depositStoreAddress,
-    marketStoreAddress,
-    oracleAddress,
-    feeReceiverAddress,
+    roleStore.address,
+    dataStore.address,
+    eventEmitter.address,
+    depositStore.address,
+    marketStore.address,
+    oracle.address,
+    feeReceiver.address,
   ];
   const { address } = await deploy("DepositHandler", {
     from: deployer,
     log: true,
     args: deployArgs,
     libraries: {
-      DepositUtils: depositUtilsAddress,
-      GasUtils: gasUtilsAddress,
+      DepositUtils: depositUtils.address,
+      GasUtils: gasUtils.address,
     },
   });
 

@@ -4,12 +4,12 @@ const func = async ({ deployments, getNamedAccounts }: HardhatRuntimeEnvironment
   const { deploy, get } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  const roleStoreDeployment = await get("RoleStore");
+  const roleStore = await get("RoleStore");
 
   await deploy("OracleStore", {
     from: deployer,
     log: true,
-    args: [roleStoreDeployment.address],
+    args: [roleStore.address],
   });
 };
 func.tags = ["OracleStore"];
