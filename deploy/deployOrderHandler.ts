@@ -5,37 +5,37 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { deploy, get } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  const { address: roleStoreAddress } = await get("RoleStore");
-  const { address: dataStoreAddress } = await get("DataStore");
-  const { address: eventEmitterAddress } = await get("EventEmitter");
-  const { address: orderStoreAddress } = await get("OrderStore");
-  const { address: positionStoreAddress } = await get("PositionStore");
-  const { address: marketStoreAddress } = await get("MarketStore");
-  const { address: oracleAddress } = await get("Oracle");
-  const { address: swapHandlerAddress } = await get("SwapHandler");
-  const { address: feeReceiverAddress } = await get("FeeReceiver");
-  const { address: referralStorageAddress } = await get("ReferralStorage");
-  const { address: gasUtilsAddress } = await get("GasUtils");
-  const { address: orderUtilsAddress } = await get("OrderUtils");
+  const roleStore = await get("RoleStore");
+  const dataStore = await get("DataStore");
+  const eventEmitter = await get("EventEmitter");
+  const orderStore = await get("OrderStore");
+  const positionStore = await get("PositionStore");
+  const marketStore = await get("MarketStore");
+  const oracle = await get("Oracle");
+  const swapHandler = await get("SwapHandler");
+  const feeReceiver = await get("FeeReceiver");
+  const referralStorage = await get("ReferralStorage");
+  const gasUtils = await get("GasUtils");
+  const orderUtils = await get("OrderUtils");
 
   const { address } = await deploy("OrderHandler", {
     from: deployer,
     log: true,
     args: [
-      roleStoreAddress,
-      dataStoreAddress,
-      eventEmitterAddress,
-      marketStoreAddress,
-      orderStoreAddress,
-      positionStoreAddress,
-      oracleAddress,
-      swapHandlerAddress,
-      feeReceiverAddress,
-      referralStorageAddress,
+      roleStore.address,
+      dataStore.address,
+      eventEmitter.address,
+      marketStore.address,
+      orderStore.address,
+      positionStore.address,
+      oracle.address,
+      swapHandler.address,
+      feeReceiver.address,
+      referralStorage.address,
     ],
     libraries: {
-      GasUtils: gasUtilsAddress,
-      OrderUtils: orderUtilsAddress,
+      GasUtils: gasUtils.address,
+      OrderUtils: orderUtils.address,
     },
   });
 
