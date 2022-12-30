@@ -28,6 +28,7 @@ export const SWAP_IMPACT_POOL_AMOUNT = hashString("SWAP_IMPACT_POOL_AMOUNT");
 
 export const POSITION_IMPACT_FACTOR = hashString("POSITION_IMPACT_FACTOR");
 export const POSITION_IMPACT_EXPONENT_FACTOR = hashString("POSITION_IMPACT_EXPONENT_FACTOR");
+export const MAX_POSITION_IMPACT_FACTOR = hashString("MAX_POSITION_IMPACT_FACTOR");
 export const POSITION_FEE_FACTOR = hashString("POSITION_FEE_FACTOR");
 
 export function tokenTransferGasLimit(token: string) {
@@ -84,6 +85,10 @@ export function positionImpactFactorKey(market: string, isPositive: boolean) {
 
 export function positionImpactExponentFactorKey(market: string) {
   return hashData(["bytes32", "address"], [POSITION_IMPACT_EXPONENT_FACTOR, market]);
+}
+
+export function maxPositionImpactFactorKey(market: string, isPositive: boolean) {
+  return hashData(["bytes32", "address", "bool"], [MAX_POSITION_IMPACT_FACTOR, market, isPositive]);
 }
 
 export function positionFeeFactorKey(market: string) {

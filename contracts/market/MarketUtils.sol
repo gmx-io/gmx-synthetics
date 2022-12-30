@@ -40,6 +40,8 @@ library MarketUtils {
     using Order for Order.Props;
     using Price for Price.Props;
 
+    uint256 public constant CLAIMABLE_COLLATERAL_AMOUNT_TIME_DIVISOR = 1 hours;
+
     // @dev struct to store the prices of tokens of a market
     // @param indexTokenPrice price of the market's index token
     // @param longTokenPrice price of the market's long token
@@ -180,6 +182,7 @@ library MarketUtils {
         if (inputToken == market.longToken) {
             return market.shortToken;
         }
+
         if (inputToken == market.shortToken) {
             return market.longToken;
         }
@@ -350,6 +353,24 @@ library MarketUtils {
         return dataStore.getUint(Keys.poolAmountKey(market, token));
     }
 
+    function incrementClaimableCollateralAmount(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address token,
+        address account,
+        uint256 delta
+    ) internal {
+        uint256 timeKey = block.timestamp / CLAIMABLE_COLLATERAL_AMOUNT_TIME_DIVISOR;
+
+        uint256 nextValue = dataStore.incrementUint(
+            Keys.claimableCollateralAmountKey(market, token, timeKey, account),
+            delta
+        );
+
+        eventEmitter.emitClaimableCollateralUpdated(market, token, timeKey, account, delta, nextValue);
+    }
+
     // @dev increment the claimable funding amount
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
@@ -408,6 +429,54 @@ library MarketUtils {
         );
     }
 
+    // @dev claim collateral
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param market the market to claim for
+    // @param token the token to claim
+    // @param account the account to claim for
+    // @param receiver the receiver to send the amount to
+    function claimCollateral(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address token,
+        uint256 timeKey,
+        address account,
+        address receiver
+    ) internal {
+        uint256 claimableAmount = dataStore.getUint(Keys.claimableCollateralAmountKey(market, token, timeKey, account));
+        uint256 claimableFactor = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey, account));
+        uint256 claimedAmount = dataStore.getUint(Keys.claimedCollateralAmountKey(market, token, timeKey, account));
+
+        uint256 adjustedClaimableAmount = Precision.applyFactor(claimableAmount, claimableFactor);
+        if (adjustedClaimableAmount <= claimedAmount) {
+            revert("Collateral already claimed");
+        }
+
+        uint256 remainingClaimableAmount = adjustedClaimableAmount - claimedAmount;
+
+        dataStore.setUint(
+            Keys.claimedCollateralAmountKey(market, token, timeKey, account),
+            adjustedClaimableAmount
+        );
+
+        MarketToken(payable(market)).transferOut(
+            token,
+            receiver,
+            remainingClaimableAmount
+        );
+
+        eventEmitter.emitCollateralClaimed(
+            market,
+            token,
+            timeKey,
+            account,
+            receiver,
+            remainingClaimableAmount
+        );
+    }
+
     // @dev apply a delta to the pool amount
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
@@ -440,17 +509,25 @@ library MarketUtils {
         DataStore dataStore,
         address market,
         Price.Props memory tokenPrice,
-        int256 priceImpactUsd
+        int256 priceImpactUsd,
+        uint256 sizeDeltaUsd
     ) internal view returns (int256) {
         if (priceImpactUsd < 0) {
             return priceImpactUsd;
         }
 
         uint256 impactPoolAmount = getPositionImpactPoolAmount(dataStore, market);
-        int256 maxPositiveImpactUsd = (impactPoolAmount * tokenPrice.min).toInt256();
+        int256 maxPriceImpactUsdBasedOnImpactPool = (impactPoolAmount * tokenPrice.min).toInt256();
 
-        if (priceImpactUsd > maxPositiveImpactUsd) {
-            priceImpactUsd = maxPositiveImpactUsd;
+        if (priceImpactUsd > maxPriceImpactUsdBasedOnImpactPool) {
+            priceImpactUsd = maxPriceImpactUsdBasedOnImpactPool;
+        }
+
+        uint256 maxPriceImpactFactor = getMaxPositionImpactFactor(dataStore, market, true);
+        int256 maxPriceImpactUsdBasedOnMaxPriceImpactFactor = Precision.applyFactor(sizeDeltaUsd, maxPriceImpactFactor).toInt256();
+
+        if (priceImpactUsd > maxPriceImpactUsdBasedOnMaxPriceImpactFactor) {
+            priceImpactUsd = maxPriceImpactUsdBasedOnMaxPriceImpactFactor;
         }
 
         return priceImpactUsd;
@@ -1020,6 +1097,10 @@ library MarketUtils {
         uint256 openInterest = getOpenInterest(dataStore, market, longToken, shortToken, isLong);
         int256 pnl = getPnl(dataStore, market, longToken, shortToken, indexTokenPrice, isLong, maximize);
         return Calc.sumReturnInt256(openInterest, pnl);
+    }
+
+    function getMaxPositionImpactFactor(DataStore dataStore, address market, bool isPositive) internal view returns (uint256) {
+        return dataStore.getUint(Keys.maxPositionImpactFactorKey(market, isPositive));
     }
 
     // @dev get the total amount of position collateral for a market

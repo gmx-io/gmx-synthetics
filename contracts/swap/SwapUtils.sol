@@ -77,6 +77,7 @@ library SwapUtils {
 
     event SwapReverted(string reason);
 
+    error InvalidTokenIn(address tokenIn, address market);
     error InsufficientSwapOutputAmount(uint256 outputAmount, uint256 minOutputAmount);
 
     /**
@@ -126,6 +127,10 @@ library SwapUtils {
      */
     function _swap(SwapParams memory params, _SwapParams memory _params) internal returns (address, uint256) {
         _SwapCache memory cache;
+
+        if (_params.tokenIn != _params.market.longToken && _params.tokenIn != _params.market.shortToken) {
+            revert InvalidTokenIn(_params.tokenIn, _params.market.marketToken);
+        }
 
         cache.tokenOut = MarketUtils.getOppositeToken(_params.tokenIn, _params.market);
         cache.tokenInPrice = params.oracle.getLatestPrice(_params.tokenIn);

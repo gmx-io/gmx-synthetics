@@ -264,6 +264,26 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         }
     }
 
+    function claimCollateral(address[] memory markets, address[] memory tokens, uint256[] memory timeKeys, address receiver) external payable nonReentrant {
+        if (markets.length != tokens.length || tokens.length != timeKeys.length) {
+            revert("Invalid input");
+        }
+
+        address account = msg.sender;
+
+        for (uint256 i = 0; i < markets.length; i++) {
+            MarketUtils.claimCollateral(
+                dataStore,
+                eventEmitter,
+                markets[i],
+                tokens[i],
+                timeKeys[i],
+                account,
+                receiver
+            );
+        }
+    }
+
     /**
      * @dev Claims affiliate rewards for the given markets and tokens on behalf of the caller, and sends
      * the rewards to the specified receiver. The length of the `markets` and `tokens` arrays must be

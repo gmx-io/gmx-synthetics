@@ -112,6 +112,24 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
         `negative position impact factor for ${marketToken.toString()}`
       );
     }
+
+    if (marketConfig.positiveMaxPositionImpactFactor) {
+      const key = keys.maxPositionImpactFactorKey(marketToken, true);
+      await setUintIfDifferent(
+        key,
+        marketConfig.positiveMaxPositionImpactFactor,
+        `positive max position impact factor for ${marketToken.toString()}`
+      );
+    }
+    if (marketConfig.negativeMaxPositionImpactFactor) {
+      const key = keys.maxPositionImpactFactorKey(marketToken, false);
+      await setUintIfDifferent(
+        key,
+        marketConfig.negativeMaxPositionImpactFactor,
+        `negative max position impact factor for ${marketToken.toString()}`
+      );
+    }
+
     if (marketConfig.positiveSwapImpactFactor) {
       const key = keys.swapImpactFactorKey(marketToken, true);
       await setUintIfDifferent(

@@ -11,14 +11,49 @@ import "../data/DataStore.sol";
 import "../data/Keys.sol";
 
 import "../pricing/PositionPricingUtils.sol";
+import "../order/OrderBaseUtils.sol";
 
 // @title PositionUtils
 // @dev Library for position functions
 library PositionUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
-    using Position for Position.Props;
     using Price for Price.Props;
+    using Position for Position.Props;
+    using Order for Order.Props;
+
+    // @dev UpdatePositionParams struct used in increasePosition to avoid
+    // stack too deep errors
+    //
+    // @param market the values of the trading market
+    // @param order the decrease position order
+    // @param position the order's position
+    // @param positionKey the key of the order's position
+    // @param collateral the collateralToken of the position
+    // @param collateralDeltaAmount the amount of collateralToken deposited
+    struct UpdatePositionParams {
+        OrderBaseUtils.ExecuteOrderParamsContracts contracts;
+        Market.Props market;
+        Order.Props order;
+        Position.Props position;
+        bytes32 positionKey;
+    }
+
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param positionStore PositionStore
+    // @param oracle Oracle
+    // @param feeReceiver FeeReceiver
+    // @param referralStorage IReferralStorage
+    struct UpdatePositionParamsContracts {
+        DataStore dataStore;
+        EventEmitter eventEmitter;
+        PositionStore positionStore;
+        Oracle oracle;
+        SwapHandler swapHandler;
+        FeeReceiver feeReceiver;
+        IReferralStorage referralStorage;
+    }
 
     // @dev _IsPositionLiquidatableCache struct used in isPositionLiquidatable
     // to avoid stack too deep errors
@@ -203,5 +238,123 @@ library PositionUtils {
         }
 
         return false;
+    }
+
+    function updateFundingAndBorrowingState(
+        PositionUtils.UpdatePositionParams memory params,
+        MarketUtils.MarketPrices memory prices
+    ) internal {
+        // update the funding amount per size for the market
+        MarketUtils.updateFundingAmountPerSize(
+            params.contracts.dataStore,
+            prices,
+            params.market.marketToken,
+            params.market.longToken,
+            params.market.shortToken
+        );
+
+        // update the cumulative borrowing factor for the market
+        MarketUtils.updateCumulativeBorrowingFactor(
+            params.contracts.dataStore,
+            prices,
+            params.market.marketToken,
+            params.market.longToken,
+            params.market.shortToken,
+            params.order.isLong()
+        );
+    }
+
+    function updateTotalBorrowing(
+        PositionUtils.UpdatePositionParams memory params,
+        uint256 nextPositionSizeInUsd,
+        uint256 nextPositionBorrowingFactor
+    ) internal {
+        MarketUtils.updateTotalBorrowing(
+            params.contracts.dataStore,
+            params.market.marketToken,
+            params.position.isLong(),
+            params.position.borrowingFactor(),
+            params.position.sizeInUsd(),
+            nextPositionSizeInUsd,
+            nextPositionBorrowingFactor
+        );
+    }
+
+    function incrementClaimableFundingAmount(
+        PositionUtils.UpdatePositionParams memory params,
+        PositionPricingUtils.PositionFees memory fees
+    ) internal {
+        // if the position has negative funding fees, distribute it to allow it to be claimable
+        if (fees.funding.claimableLongTokenAmount > 0) {
+            MarketUtils.incrementClaimableFundingAmount(
+                params.contracts.dataStore,
+                params.contracts.eventEmitter,
+                params.market.marketToken,
+                params.market.longToken,
+                params.order.receiver(),
+                fees.funding.claimableLongTokenAmount
+            );
+        }
+
+        if (fees.funding.claimableShortTokenAmount > 0) {
+            MarketUtils.incrementClaimableFundingAmount(
+                params.contracts.dataStore,
+                params.contracts.eventEmitter,
+                params.market.marketToken,
+                params.market.shortToken,
+                params.order.receiver(),
+                fees.funding.claimableShortTokenAmount
+            );
+        }
+    }
+
+    function updateOpenInterest(
+        PositionUtils.UpdatePositionParams memory params,
+        int256 sizeDeltaUsd,
+        int256 sizeDeltaInTokens
+    ) internal {
+        if (sizeDeltaUsd != 0) {
+            MarketUtils.applyDeltaToOpenInterest(
+                params.contracts.dataStore,
+                params.contracts.eventEmitter,
+                params.position.market(),
+                params.position.collateralToken(),
+                params.position.isLong(),
+                sizeDeltaUsd
+            );
+
+            MarketUtils.applyDeltaToOpenInterestInTokens(
+                params.contracts.dataStore,
+                params.contracts.eventEmitter,
+                params.position.market(),
+                params.position.collateralToken(),
+                params.position.isLong(),
+                sizeDeltaInTokens
+            );
+        }
+    }
+
+    function handleReferral(
+        PositionUtils.UpdatePositionParams memory params,
+        PositionPricingUtils.PositionFees memory fees
+    ) internal {
+        ReferralUtils.incrementAffiliateReward(
+            params.contracts.dataStore,
+            params.contracts.eventEmitter,
+            params.position.market(),
+            params.position.collateralToken(),
+            fees.referral.affiliate,
+            params.position.account(),
+            fees.referral.affiliateRewardAmount
+        );
+
+        if (fees.referral.traderDiscountAmount > 0) {
+            params.contracts.eventEmitter.emitTraderReferralDiscountApplied(
+                params.position.market(),
+                params.position.collateralToken(),
+                params.position.account(),
+                fees.referral.traderDiscountAmount
+            );
+        }
     }
 }
