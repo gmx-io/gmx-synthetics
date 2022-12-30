@@ -98,7 +98,7 @@ contract Oracle is RoleModule {
 
     error EmptyTokens();
     error InvalidBlockNumber(uint256 blockNumber);
-    error MaxPriceAgeExceeded(uint256 blockNumber);
+    error MaxPriceAgeExceeded(uint256 oracleTimestamp);
     error MinOracleSigners(uint256 oracleSigners, uint256 minOracleSigners);
     error MaxOracleSigners(uint256 oracleSigners, uint256 maxOracleSigners);
     error BlockNumbersNotSorted(uint256 oracleBlockNumber, uint256 prevOracleBlockNumber);
@@ -334,13 +334,13 @@ contract Oracle is RoleModule {
     // @param token the token to get the price for
     // @return the latest price of a token
     function getLatestPrice(address token) external view returns (Price.Props memory) {
-        Price.Props memory primaryPrice = primaryPrices[token];
         Price.Props memory secondaryPrice = secondaryPrices[token];
 
         if (!secondaryPrice.isEmpty()) {
             return secondaryPrice;
         }
 
+        Price.Props memory primaryPrice = primaryPrices[token];
         if (!primaryPrice.isEmpty()) {
             return primaryPrice;
         }
