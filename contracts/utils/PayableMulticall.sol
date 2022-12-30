@@ -17,6 +17,7 @@ abstract contract PayableMulticall {
      */
     function multicall(bytes[] calldata data) external payable virtual returns (bytes[] memory results) {
         results = new bytes[](data.length);
+
         for (uint256 i = 0; i < data.length; i++) {
             (bool success, bytes memory result) = address(this).delegatecall(data[i]);
 
@@ -31,6 +32,7 @@ abstract contract PayableMulticall {
 
             results[i] = result;
         }
+
         return results;
     }
 }
