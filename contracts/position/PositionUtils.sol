@@ -157,7 +157,7 @@ library PositionUtils {
         Position.Props memory position,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices
-    ) external view {
+    ) internal view {
         if (position.sizeInUsd() == 0 || position.sizeInTokens() == 0) {
             revert("Position size is zero");
         }
@@ -185,7 +185,7 @@ library PositionUtils {
         Position.Props memory position,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices
-    ) public view returns (bool) {
+    ) internal view returns (bool) {
         _IsPositionLiquidatableCache memory cache;
 
         (cache.positionPnlUsd, ) = getPositionPnlUsd(
@@ -243,7 +243,7 @@ library PositionUtils {
     function updateFundingAndBorrowingState(
         PositionUtils.UpdatePositionParams memory params,
         MarketUtils.MarketPrices memory prices
-    ) external {
+    ) internal {
         // update the funding amount per size for the market
         MarketUtils.updateFundingAmountPerSize(
             params.contracts.dataStore,
@@ -268,7 +268,7 @@ library PositionUtils {
         PositionUtils.UpdatePositionParams memory params,
         uint256 nextPositionSizeInUsd,
         uint256 nextPositionBorrowingFactor
-    ) external {
+    ) internal {
         MarketUtils.updateTotalBorrowing(
             params.contracts.dataStore,
             params.market.marketToken,
@@ -283,7 +283,7 @@ library PositionUtils {
     function incrementClaimableFundingAmount(
         PositionUtils.UpdatePositionParams memory params,
         PositionPricingUtils.PositionFees memory fees
-    ) external {
+    ) internal {
         // if the position has negative funding fees, distribute it to allow it to be claimable
         if (fees.funding.claimableLongTokenAmount > 0) {
             MarketUtils.incrementClaimableFundingAmount(
@@ -312,7 +312,7 @@ library PositionUtils {
         PositionUtils.UpdatePositionParams memory params,
         int256 sizeDeltaUsd,
         int256 sizeDeltaInTokens
-    ) external {
+    ) internal {
         if (sizeDeltaUsd != 0) {
             MarketUtils.applyDeltaToOpenInterest(
                 params.contracts.dataStore,
@@ -337,7 +337,7 @@ library PositionUtils {
     function handleReferral(
         PositionUtils.UpdatePositionParams memory params,
         PositionPricingUtils.PositionFees memory fees
-    ) external {
+    ) internal {
         ReferralUtils.incrementAffiliateReward(
             params.contracts.dataStore,
             params.contracts.eventEmitter,
