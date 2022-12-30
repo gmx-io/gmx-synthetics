@@ -136,6 +136,12 @@ library Keys {
     bytes32 public constant FUNDING_UPDATED_AT = keccak256(abi.encode("FUNDING_UPDATED_AT"));
     // @dev key for claimable funding amount
     bytes32 public constant CLAIMABLE_FUNDING_AMOUNT = keccak256(abi.encode("CLAIMABLE_FUNDING_AMOUNT"));
+    // @dev key for claimable collateral amount
+    bytes32 public constant CLAIMABLE_COLLATERAL_AMOUNT = keccak256(abi.encode("CLAIMABLE_COLLATERAL_AMOUNT"));
+    // @dev key for claimable collateral factor
+    bytes32 public constant CLAIMABLE_COLLATERAL_FACTOR = keccak256(abi.encode("CLAIMABLE_COLLATERAL_FACTOR"));
+    // @dev key for claimed collateral amount
+    bytes32 public constant CLAIMED_COLLATERAL_AMOUNT = keccak256(abi.encode("CLAIMED_COLLATERAL_AMOUNT"));
     // @dev key for borrowing factor
     bytes32 public constant BORROWING_FACTOR = keccak256(abi.encode("BORROWING_FACTOR"));
     // @dev key for cumulative borrowing factor
@@ -604,6 +610,54 @@ library Keys {
             CLAIMABLE_FUNDING_AMOUNT,
             market,
             token,
+            account
+        ));
+    }
+
+    // @dev key for claimable collateral amount
+    // @param market the market to check
+    // @param token the token to check
+    // @param account the account to check
+    // @param timeKey the time key for the claimable amount
+    // @return key for claimable funding amount
+    function claimableCollateralAmountKey(address market, address token, uint256 timeKey, address account) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CLAIMABLE_COLLATERAL_AMOUNT,
+            market,
+            token,
+            timeKey,
+            account
+        ));
+    }
+
+    // @dev key for claimable collateral factor
+    // @param market the market to check
+    // @param token the token to check
+    // @param account the account to check
+    // @param timeKey the time key for the claimable amount
+    // @return key for claimable funding amount
+    function claimableCollateralFactorKey(address market, address token, uint256 timeKey, address account) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CLAIMABLE_COLLATERAL_FACTOR,
+            market,
+            token,
+            timeKey,
+            account
+        ));
+    }
+
+    // @dev key for claimable collateral factor
+    // @param market the market to check
+    // @param token the token to check
+    // @param account the account to check
+    // @param timeKey the time key for the claimable amount
+    // @return key for claimable funding amount
+    function claimedCollateralAmountKey(address market, address token, uint256 timeKey, address account) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CLAIMED_COLLATERAL_AMOUNT,
+            market,
+            token,
+            timeKey,
             account
         ));
     }

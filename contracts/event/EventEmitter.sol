@@ -154,6 +154,14 @@ contract EventEmitter is RoleModule {
     // @param receiver the address that received the claimed amount
     // @param amount the amount claimed
     event FundingFeesClaimed(address market, address token, address account, address receiver, uint256 amount);
+    // @param market the market for the claimable collateral
+    // @param token the token for the claimable collateral
+    // @param account the account for the claimable collateral
+    // @param timeKey the time key for the claimable collateral
+    // @param delta the update amount
+    // @param nextvalue the new claimable collateral
+    event ClaimableCollateralUpdated(address market, address token, uint256 timeKey, address account, uint256 delta, uint256 nextValue);
+    event CollateralClaimed(address market, address token, uint256 timeKey, address account, address receiver, uint256 amount);
     // @param pnlToPoolFactor the pnl to pool factor
     // @param maxPnlFactor the max pnl factor
     // @param shouldEnableAdl whether ADL should be enabled
@@ -260,6 +268,19 @@ contract EventEmitter is RoleModule {
     // @param amount the amount claimed
     function emitFundingFeesClaimed(address market, address token, address account, address receiver, uint256 amount) external onlyController {
         emit FundingFeesClaimed(market, token, account, receiver, amount);
+    }
+
+    // @param market the market for the claimable collateral
+    // @param token the token for the claimable collateral
+    // @param account the account for the claimable collateral
+    // @param delta the update amount
+    // @param nextvalue the new claimable collateral
+    function emitClaimableCollateralUpdated(address market, address token, uint256 timeKey, address account, uint256 delta, uint256 nextValue) external onlyController {
+        emit ClaimableCollateralUpdated(market, token, timeKey, account, delta, nextValue);
+    }
+
+    function emitCollateralClaimed(address market, address token, uint256 timeKey, address account, address receiver, uint256 amount) external onlyController {
+        emit CollateralClaimed(market, token, timeKey, account, receiver, amount);
     }
 
     // @param pnlToPoolFactor the pnl to pool factor

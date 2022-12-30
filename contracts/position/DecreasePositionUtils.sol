@@ -107,10 +107,6 @@ library DecreasePositionUtils {
             cache
         );
 
-        if (values.remainingCollateralAmount < 0) {
-            revert("Insufficient collateral");
-        }
-
         cache.nextPositionSizeInUsd = params.position.sizeInUsd() - cache.adjustedSizeDeltaUsd;
         cache.nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(params.contracts.dataStore, params.market.marketToken, params.position.isLong());
 

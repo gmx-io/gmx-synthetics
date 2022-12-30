@@ -179,6 +179,30 @@ library DecreasePositionCollateralUtils {
             return getLiquidationValues(params, values, fees);
         }
 
+        if (values.remainingCollateralAmount < 0) {
+            revert("Insufficient collateral");
+        }
+
+        // if the price impact was capped, deduct the difference from the collateral
+        // and send it to a holding area
+        if (values.priceImpactDiffUsd > 0) {
+            uint256 priceImpactDiffAmount = values.priceImpactDiffUsd / collateralTokenPrice.max;
+            if (values.remainingCollateralAmount.toUint256() < priceImpactDiffAmount) {
+                priceImpactDiffAmount = values.remainingCollateralAmount.toUint256();
+            }
+
+            values.remainingCollateralAmount -= priceImpactDiffAmount.toInt256();
+
+            MarketUtils.incrementClaimableCollateralAmount(
+                params.contracts.dataStore,
+                params.contracts.eventEmitter,
+                params.market.marketToken,
+                params.position.collateralToken(),
+                params.order.receiver(),
+                priceImpactDiffAmount
+            );
+        }
+
         PricingUtils.transferFees(
             params.contracts.feeReceiver,
             params.market.marketToken,
