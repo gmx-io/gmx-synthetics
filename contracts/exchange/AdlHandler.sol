@@ -28,7 +28,6 @@ contract AdlHandler is BaseOrderHandler {
         EventEmitter _eventEmitter,
         MarketStore _marketStore,
         OrderStore _orderStore,
-        PositionStore _positionStore,
         Oracle _oracle,
         SwapHandler _swapHandler,
         FeeReceiver _feeReceiver,
@@ -39,7 +38,6 @@ contract AdlHandler is BaseOrderHandler {
         _eventEmitter,
         _marketStore,
         _orderStore,
-        _positionStore,
         _oracle,
         _swapHandler,
         _feeReceiver,
@@ -127,7 +125,6 @@ contract AdlHandler is BaseOrderHandler {
             AdlUtils.CreateAdlOrderParams(
                 dataStore,
                 orderStore,
-                positionStore,
                 account,
                 market,
                 collateralToken,

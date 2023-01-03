@@ -7,6 +7,7 @@ import "../event/EventEmitter.sol";
 
 import "../order/OrderStore.sol";
 import "../position/PositionUtils.sol";
+import "../position/PositionStoreUtils.sol";
 import "../nonce/NonceUtils.sol";
 import "../utils/Null.sol";
 
@@ -44,7 +45,6 @@ library AdlUtils {
     //
     // @param dataStore DataStore
     // @param orderStore OrderStore
-    // @param positionStore PositionStore
     // @param account the account to reduce the position for
     // @param market the position's market
     // @param collateralToken the position's collateralToken
@@ -54,7 +54,6 @@ library AdlUtils {
     struct CreateAdlOrderParams {
         DataStore dataStore;
         OrderStore orderStore;
-        PositionStore positionStore;
         address account;
         address market;
         address collateralToken;
@@ -208,7 +207,7 @@ library AdlUtils {
     // @return the key of the created order
     function createAdlOrder(CreateAdlOrderParams memory params) external returns (bytes32) {
         bytes32 positionKey = PositionUtils.getPositionKey(params.account, params.market, params.collateralToken, params.isLong);
-        Position.Props memory position = params.positionStore.get(positionKey);
+        Position.Props memory position = PositionStoreUtils.get(params.dataStore, positionKey);
 
         if (params.sizeDeltaUsd > position.sizeInUsd()) {
             revert("Invalid sizeDeltaUsd");

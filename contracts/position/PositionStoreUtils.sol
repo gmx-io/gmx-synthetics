@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 
 import "./Position.sol";
 import "../data/DataStore.sol";
-import "../data/ListStore.sol";
 
 /**
  * @title PositionStoreUtils
@@ -31,7 +30,7 @@ library PositionStoreUtils {
 
     bytes32 public constant IS_LONG = keccak256(abi.encode("IS_LONG"));
 
-    function get(DataStore dataStore, bytes32 key) internal view returns (Position.Props memory) {
+    function get(DataStore dataStore, bytes32 key) external view returns (Position.Props memory) {
         Position.Props memory position;
 
         position.setAccount(dataStore.getAddress(
@@ -85,14 +84,14 @@ library PositionStoreUtils {
         return position;
     }
 
-    function set(DataStore dataStore, ListStore listStore, bytes32 key, Position.Props memory position) internal {
-        listStore.addBytes32(
+    function set(DataStore dataStore, bytes32 key, Position.Props memory position) external {
+        dataStore.addBytes32(
             POSITION_KEYS,
             key
         );
 
-        listStore.addBytes32(
-            getAccountPositionSetKey(position.account()),
+        dataStore.addBytes32(
+            getAccountPositionListKey(position.account()),
             key
         );
 
@@ -157,14 +156,14 @@ library PositionStoreUtils {
         );
     }
 
-    function remove(DataStore dataStore, ListStore listStore, bytes32 key, address account) internal {
-        listStore.removeBytes32(
+    function remove(DataStore dataStore, bytes32 key, address account) external {
+        dataStore.removeBytes32(
             POSITION_KEYS,
             key
         );
 
-        listStore.removeBytes32(
-            getAccountPositionSetKey(account),
+        dataStore.removeBytes32(
+            getAccountPositionListKey(account),
             key
         );
 
@@ -217,23 +216,23 @@ library PositionStoreUtils {
         );
     }
 
-    function getPositionCount(ListStore listStore) internal view returns (uint256) {
-        return listStore.getBytes32Count(POSITION_KEYS);
+    function getPositionCount(DataStore dataStore) internal view returns (uint256) {
+        return dataStore.getBytes32Count(POSITION_KEYS);
     }
 
-    function getPositionKeys(ListStore listStore, uint256 start, uint256 end) internal view returns (bytes32[] memory) {
-        return listStore.getBytes32ValuesAt(POSITION_KEYS, start, end);
+    function getPositionKeys(DataStore dataStore, uint256 start, uint256 end) internal view returns (bytes32[] memory) {
+        return dataStore.getBytes32ValuesAt(POSITION_KEYS, start, end);
     }
 
-    function getAccountPositionCount(ListStore listStore, address account) internal view returns (uint256) {
-        return listStore.getBytes32Count(getAccountPositionSetKey(account));
+    function getAccountPositionCount(DataStore dataStore, address account) internal view returns (uint256) {
+        return dataStore.getBytes32Count(getAccountPositionListKey(account));
     }
 
-    function getAccountPositionKeys(ListStore listStore, address account, uint256 start, uint256 end) internal view returns (bytes32[] memory) {
-        return listStore.getBytes32ValuesAt(getAccountPositionSetKey(account), start, end);
+    function getAccountPositionKeys(DataStore dataStore, address account, uint256 start, uint256 end) internal view returns (bytes32[] memory) {
+        return dataStore.getBytes32ValuesAt(getAccountPositionListKey(account), start, end);
     }
 
-    function getAccountPositionSetKey(address account) internal pure returns (bytes32) {
+    function getAccountPositionListKey(address account) internal pure returns (bytes32) {
         return keccak256(abi.encode(ACCOUNT_POSITION_KEYS, account));
     }
 }

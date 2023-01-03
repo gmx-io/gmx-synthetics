@@ -12,7 +12,7 @@ import "../oracle/Oracle.sol";
 import "../pricing/PositionPricingUtils.sol";
 
 import "./Position.sol";
-import "./PositionStore.sol";
+import "./PositionStoreUtils.sol";
 import "./PositionUtils.sol";
 import "../order/OrderBaseUtils.sol";
 
@@ -128,7 +128,7 @@ library DecreasePositionUtils {
             values.outputAmount += params.position.collateralAmount();
             params.position.setCollateralAmount(0);
 
-            params.contracts.positionStore.remove(params.positionKey, params.order.account());
+            PositionStoreUtils.remove(params.contracts.dataStore, params.positionKey, params.order.account());
         } else {
             if (!fees.funding.hasPendingLongTokenFundingFee) {
                 params.position.setLongTokenFundingAmountPerSize(fees.funding.latestLongTokenFundingAmountPerSize);
@@ -146,7 +146,7 @@ library DecreasePositionUtils {
                 cache.prices
             );
 
-            params.contracts.positionStore.set(params.positionKey, params.order.account(), params.position);
+            PositionStoreUtils.set(params.contracts.dataStore, params.positionKey, params.position);
         }
 
         MarketUtils.applyDeltaToCollateralSum(

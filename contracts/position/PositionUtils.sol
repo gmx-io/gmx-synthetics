@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "../utils/Precision.sol";
+
 import "./Position.sol";
 
 import "../data/DataStore.sol";
@@ -41,14 +42,12 @@ library PositionUtils {
 
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
-    // @param positionStore PositionStore
     // @param oracle Oracle
     // @param feeReceiver FeeReceiver
     // @param referralStorage IReferralStorage
     struct UpdatePositionParamsContracts {
         DataStore dataStore;
         EventEmitter eventEmitter;
-        PositionStore positionStore;
         Oracle oracle;
         SwapHandler swapHandler;
         FeeReceiver feeReceiver;

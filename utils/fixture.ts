@@ -41,7 +41,9 @@ export async function deployFixture() {
 
   const oracleSalt = hashData(["uint256", "string"], [chainId, "xget-oracle-v1"]);
 
-  const reader = await hre.ethers.getContract("Reader");
+  const marketReader = await hre.ethers.getContract("MarketReader");
+  const positionReader = await hre.ethers.getContract("PositionReader");
+  const orderReader = await hre.ethers.getContract("OrderReader");
   const roleStore = await hre.ethers.getContract("RoleStore");
   const dataStore = await hre.ethers.getContract("DataStore");
   const depositStore = await hre.ethers.getContract("DepositStore");
@@ -49,7 +51,6 @@ export async function deployFixture() {
   const withdrawalStore = await hre.ethers.getContract("WithdrawalStore");
   const oracleStore = await hre.ethers.getContract("OracleStore");
   const orderStore = await hre.ethers.getContract("OrderStore");
-  const positionStore = await hre.ethers.getContract("PositionStore");
   const marketStore = await hre.ethers.getContract("MarketStore");
   const marketFactory = await hre.ethers.getContract("MarketFactory");
   const depositHandler = await hre.ethers.getContract("DepositHandler");
@@ -97,7 +98,9 @@ export async function deployFixture() {
       signers: [signer0, signer1, signer2, signer3, signer4, signer5, signer6],
     },
     contracts: {
-      reader,
+      marketReader,
+      positionReader,
+      orderReader,
       roleStore,
       dataStore,
       depositStore,
@@ -105,7 +108,6 @@ export async function deployFixture() {
       withdrawalStore,
       oracleStore,
       orderStore,
-      positionStore,
       marketStore,
       marketFactory,
       depositHandler,

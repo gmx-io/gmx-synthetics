@@ -4,6 +4,7 @@ import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, createOrder, executeOrder, handleOrder } from "../../utils/order";
+import { getPositionCount, getAccountPositionCount } from "../../utils/position";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.IncreaseOrder", () => {
@@ -11,13 +12,13 @@ describe("Exchange.IncreaseOrder", () => {
 
   let fixture;
   let user0, user1;
-  let dataStore, orderStore, positionStore, ethUsdMarket, wnt;
+  let dataStore, orderStore, ethUsdMarket, wnt;
   let executionFee;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1 } = fixture.accounts);
-    ({ dataStore, orderStore, positionStore, ethUsdMarket, wnt } = fixture.contracts);
+    ({ dataStore, orderStore, ethUsdMarket, wnt } = fixture.contracts);
     ({ executionFee } = fixture.props);
 
     await handleDeposit(fixture, {
@@ -89,16 +90,16 @@ describe("Exchange.IncreaseOrder", () => {
     await createOrder(fixture, params);
 
     expect(await orderStore.getOrderCount()).eq(1);
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(0);
-    expect(await positionStore.getPositionCount()).eq(0);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
+    expect(await getPositionCount(dataStore)).eq(0);
 
     await executeOrder(fixture, {
       gasUsageLabel: "executeOrder",
     });
 
     expect(await orderStore.getOrderCount()).eq(0);
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(1);
-    expect(await positionStore.getPositionCount()).eq(1);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
+    expect(await getPositionCount(dataStore)).eq(1);
 
     params.account = user1;
 
@@ -109,8 +110,8 @@ describe("Exchange.IncreaseOrder", () => {
       },
     });
 
-    expect(await positionStore.getAccountPositionCount(user1.address)).eq(1);
-    expect(await positionStore.getPositionCount()).eq(2);
+    expect(await getAccountPositionCount(dataStore, user1.address)).eq(1);
+    expect(await getPositionCount(dataStore)).eq(2);
   });
 
   it("executeOrder with price impact", async () => {
@@ -140,16 +141,16 @@ describe("Exchange.IncreaseOrder", () => {
     await createOrder(fixture, params);
 
     expect(await orderStore.getOrderCount()).eq(1);
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(0);
-    expect(await positionStore.getPositionCount()).eq(0);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
+    expect(await getPositionCount(dataStore)).eq(0);
 
     await executeOrder(fixture, {
       gasUsageLabel: "executeOrder",
     });
 
     expect(await orderStore.getOrderCount()).eq(0);
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(1);
-    expect(await positionStore.getPositionCount()).eq(1);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
+    expect(await getPositionCount(dataStore)).eq(1);
 
     params.account = user1;
 
@@ -160,7 +161,7 @@ describe("Exchange.IncreaseOrder", () => {
       },
     });
 
-    expect(await positionStore.getAccountPositionCount(user1.address)).eq(1);
-    expect(await positionStore.getPositionCount()).eq(2);
+    expect(await getAccountPositionCount(dataStore, user1.address)).eq(1);
+    expect(await getPositionCount(dataStore)).eq(2);
   });
 });

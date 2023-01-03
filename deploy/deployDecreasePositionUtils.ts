@@ -5,6 +5,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { deployer } = await getNamedAccounts();
 
   const marketUtils = await get("MarketUtils");
+  const positionStoreUtils = await get("PositionStoreUtils");
   const decreasePositionCollateralUtils = await get("DecreasePositionCollateralUtils");
 
   await deploy("DecreasePositionUtils", {
@@ -12,10 +13,11 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     log: true,
     libraries: {
       MarketUtils: marketUtils.address,
+      PositionStoreUtils: positionStoreUtils.address,
       DecreasePositionCollateralUtils: decreasePositionCollateralUtils.address,
     },
   });
 };
 func.tags = ["DecreasePositionUtils"];
-func.dependencies = ["MarketUtils", "DecreasePositionCollateralUtils"];
+func.dependencies = ["MarketUtils", "PositionStoreUtils", "DecreasePositionCollateralUtils"];
 export default func;

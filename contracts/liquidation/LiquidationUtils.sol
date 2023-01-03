@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../position/PositionUtils.sol";
+import "../position/PositionStoreUtils.sol";
 import "../nonce/NonceUtils.sol";
 import "../order/OrderStore.sol";
 import "../utils/Null.sol";
@@ -16,7 +17,6 @@ library LiquidationUtils {
     // @dev creates a liquidation order for a position
     // @param dataStore DataStore
     // @param orderStore OrderStore
-    // @param positionStore PositionStore
     // @param account the position's account
     // @param market the position's market
     // @param collateralToken the position's collateralToken
@@ -24,14 +24,13 @@ library LiquidationUtils {
     function createLiquidationOrder(
         DataStore dataStore,
         OrderStore orderStore,
-        PositionStore positionStore,
         address account,
         address market,
         address collateralToken,
         bool isLong
     ) external returns (bytes32) {
         bytes32 positionKey = PositionUtils.getPositionKey(account, market, collateralToken, isLong);
-        Position.Props memory position = positionStore.get(positionKey);
+        Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
 
         Order.Addresses memory addresses = Order.Addresses(
             account, // account

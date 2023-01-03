@@ -12,7 +12,7 @@ import "../oracle/Oracle.sol";
 import "../pricing/PositionPricingUtils.sol";
 
 import "./Position.sol";
-import "./PositionStore.sol";
+import "./PositionStoreUtils.sol";
 import "./PositionUtils.sol";
 import "../order/OrderBaseUtils.sol";
 
@@ -130,7 +130,7 @@ library IncreasePositionUtils {
         params.position.setBorrowingFactor(cache.nextPositionBorrowingFactor);
         params.position.setIncreasedAtBlock(Chain.currentBlockNumber());
 
-        params.contracts.positionStore.set(params.positionKey, params.order.account(), params.position);
+        PositionStoreUtils.set(params.contracts.dataStore, params.positionKey, params.position);
 
         PositionUtils.updateOpenInterest(
             params,

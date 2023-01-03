@@ -6,20 +6,10 @@ import "../data/Keys.sol";
 import "../market/MarketUtils.sol";
 import "../market/Market.sol";
 import "../market/MarketStore.sol";
-import "../position/Position.sol";
-import "../position/PositionUtils.sol";
-import "../order/OrderStore.sol";
 
-// @title Reader
-// @dev Library for read functions
-contract Reader {
-    using Position for Position.Props;
-
-    struct PositionInfo {
-        Position.Props position;
-        uint256 pendingBorrowingFees;
-        PositionPricingUtils.PositionFundingFees pendingFundingFees;
-    }
+// @title MarketReader
+// @dev Library for market read functions
+contract MarketReader {
 
     struct MarketInfo {
         Market.Props market;
@@ -113,73 +103,6 @@ contract Reader {
         return MarketInfo(market, borrowingFactorPerSecondForLongs, borrowingFactorPerSecondForShorts, funding);
     }
 
-    function getAccountPositions(
-        PositionStore positionStore,
-        address account,
-        uint256 start,
-        uint256 end
-    ) external view returns (Position.Props[] memory) {
-        uint256 positionCount = positionStore.getAccountPositionCount(account);
-        if (start >= positionCount) {
-            return new Position.Props[](0);
-        }
-        if (end > positionCount) {
-            end = positionCount;
-        }
-        bytes32[] memory positionKeys = positionStore.getAccountPositionKeys(account, start, end);
-        Position.Props[] memory positions = new Position.Props[](positionKeys.length);
-        for (uint256 i = 0; i < positionKeys.length; i++) {
-            bytes32 positionKey = positionKeys[i];
-            positions[i] = positionStore.get(positionKey);
-        }
-
-        return positions;
-    }
-
-    function getAccountPositionInfoList(
-        DataStore dataStore,
-        MarketStore marketStore,
-        PositionStore positionStore,
-        address account,
-        uint256 start,
-        uint256 end
-    ) external view returns (PositionInfo[] memory) {
-        uint256 positionCount = positionStore.getAccountPositionCount(account);
-        if (start >= positionCount) {
-            return new PositionInfo[](0);
-        }
-        if (end > positionCount) {
-            end = positionCount;
-        }
-        bytes32[] memory positionKeys = positionStore.getAccountPositionKeys(account, start, end);
-        PositionInfo[] memory positionInfoList = new PositionInfo[](positionKeys.length);
-        for (uint256 i = 0; i < positionKeys.length; i++) {
-            bytes32 positionKey = positionKeys[i];
-            positionInfoList[i] = getPositionInfo(dataStore, marketStore, positionStore, positionKey);
-        }
-
-        return positionInfoList;
-    }
-
-    function getPositionInfo(
-        DataStore dataStore,
-        MarketStore marketStore,
-        PositionStore positionStore,
-        bytes32 positionKey
-    ) public view returns (PositionInfo memory) {
-        Position.Props memory position = positionStore.get(positionKey);
-        Market.Props memory market = marketStore.get(position.market());
-        uint256 pendingBorrowingFees = MarketUtils.getBorrowingFees(dataStore, position);
-        PositionPricingUtils.PositionFundingFees memory pendingFundingFees = PositionPricingUtils.getFundingFees(
-            dataStore,
-            position,
-            market.longToken,
-            market.shortToken
-        );
-
-        return PositionInfo(position, pendingBorrowingFees, pendingFundingFees);
-    }
-
     function getMarketTokenPrice(
         DataStore dataStore,
         Market.Props memory market,
@@ -253,49 +176,5 @@ contract Reader {
     ) external view returns (int256) {
         Market.Props memory market = marketStore.get(marketAddress);
         return MarketUtils.getPnlToPoolFactor(dataStore, market, prices, isLong, maximize);
-    }
-
-    function getAccountOrders(
-        OrderStore orderStore,
-        address account,
-        uint256 start,
-        uint256 end
-    ) external view returns (Order.Props[] memory) {
-        uint256 orderCount = orderStore.getAccountOrderCount(account);
-        if (start >= orderCount) {
-            return new Order.Props[](0);
-        }
-        if (end > orderCount) {
-            end = orderCount;
-        }
-        bytes32[] memory orderKeys = orderStore.getAccountOrderKeys(account, start, end);
-        Order.Props[] memory orders = new Order.Props[](orderKeys.length);
-        for (uint256 i = 0; i < orderKeys.length; i++) {
-            bytes32 orderKey = orderKeys[i];
-            orders[i] = orderStore.get(orderKey);
-        }
-
-        return orders;
-    }
-
-    function getPositionFees(
-        DataStore dataStore,
-        IReferralStorage referralStorage,
-        Position.Props memory position,
-        Price.Props memory collateralTokenPrice,
-        address longToken,
-        address shortToken,
-        uint256 sizeDeltaUsd
-    ) external view returns (PositionPricingUtils.PositionFees memory) {
-        return
-            PositionPricingUtils.getPositionFees(
-                dataStore,
-                referralStorage,
-                position,
-                collateralTokenPrice,
-                longToken,
-                shortToken,
-                sizeDeltaUsd
-            );
     }
 }

@@ -20,7 +20,6 @@ import "../order/Order.sol";
 import "../order/OrderStore.sol";
 import "../order/OrderUtils.sol";
 
-import "../position/PositionStore.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 import "../event/EventEmitter.sol";
@@ -39,7 +38,6 @@ contract BaseOrderHandler is ReentrancyGuard, RoleModule, OracleModule {
     EventEmitter public immutable eventEmitter;
     MarketStore public immutable marketStore;
     OrderStore public immutable orderStore;
-    PositionStore public immutable positionStore;
     SwapHandler public immutable swapHandler;
     Oracle public immutable oracle;
     FeeReceiver public immutable feeReceiver;
@@ -51,7 +49,6 @@ contract BaseOrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         EventEmitter _eventEmitter,
         MarketStore _marketStore,
         OrderStore _orderStore,
-        PositionStore _positionStore,
         Oracle _oracle,
         SwapHandler _swapHandler,
         FeeReceiver _feeReceiver,
@@ -61,7 +58,6 @@ contract BaseOrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         eventEmitter = _eventEmitter;
         marketStore = _marketStore;
         orderStore = _orderStore;
-        positionStore = _positionStore;
         oracle = _oracle;
         swapHandler = _swapHandler;
         feeReceiver = _feeReceiver;
@@ -94,7 +90,6 @@ contract BaseOrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         params.contracts.dataStore = dataStore;
         params.contracts.eventEmitter = eventEmitter;
         params.contracts.orderStore = orderStore;
-        params.contracts.positionStore = positionStore;
         params.contracts.oracle = oracle;
         params.contracts.swapHandler = swapHandler;
         params.contracts.feeReceiver = feeReceiver;

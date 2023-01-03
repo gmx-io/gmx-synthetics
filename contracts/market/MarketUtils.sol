@@ -16,7 +16,6 @@ import "../market/Market.sol";
 import "../market/MarketToken.sol";
 import "../market/MarketStore.sol";
 import "../position/Position.sol";
-import "../position/PositionStore.sol";
 import "../order/Order.sol";
 
 import "../oracle/Oracle.sol";

@@ -17,7 +17,6 @@ contract OrderHandler is BaseOrderHandler {
         EventEmitter _eventEmitter,
         MarketStore _marketStore,
         OrderStore _orderStore,
-        PositionStore _positionStore,
         Oracle _oracle,
         SwapHandler _swapHandler,
         FeeReceiver _feeReceiver,
@@ -28,7 +27,6 @@ contract OrderHandler is BaseOrderHandler {
         _eventEmitter,
         _marketStore,
         _orderStore,
-        _positionStore,
         _oracle,
         _swapHandler,
         _feeReceiver,
@@ -171,13 +169,7 @@ contract OrderHandler is BaseOrderHandler {
     {
         uint256 startingGas = gasleft();
 
-        this._executeOrder(
-            key,
-            oracleParams,
-            msg.sender,
-            startingGas
-        );
-        /* try this._executeOrder(
+        try this._executeOrder(
             key,
             oracleParams,
             msg.sender,
@@ -201,7 +193,7 @@ contract OrderHandler is BaseOrderHandler {
         } catch (bytes memory reason) {
             bytes32 reasonKey = keccak256(abi.encode(reason));
             _handleOrderError(key, startingGas, reason, reasonKey);
-        } */
+        }
     }
 
     // @dev executes an order

@@ -9,7 +9,6 @@ import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 
 import "../order/OrderStore.sol";
-import "../position/PositionStore.sol";
 
 import "../oracle/Oracle.sol";
 import "../swap/SwapHandler.sol";
@@ -94,7 +93,6 @@ library OrderBaseUtils {
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
     // @param orderStore OrderStore
-    // @param positionStore PositionStore
     // @param oracle Oracle
     // @param swapHandler SwapHandler
     // @param feeReceiver FeeReceiver
@@ -103,7 +101,6 @@ library OrderBaseUtils {
         DataStore dataStore;
         EventEmitter eventEmitter;
         OrderStore orderStore;
-        PositionStore positionStore;
         Oracle oracle;
         SwapHandler swapHandler;
         FeeReceiver feeReceiver;

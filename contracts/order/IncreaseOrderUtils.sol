@@ -46,7 +46,7 @@ library IncreaseOrderUtils {
         }
 
         bytes32 positionKey = PositionUtils.getPositionKey(params.order.account(), params.order.market(), collateralToken, params.order.isLong());
-        Position.Props memory position = params.contracts.positionStore.get(positionKey);
+        Position.Props memory position = PositionStoreUtils.get(params.contracts.dataStore, positionKey);
 
         // initialize position
         if (position.account() == address(0)) {

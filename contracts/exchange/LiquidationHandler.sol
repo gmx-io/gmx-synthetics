@@ -17,7 +17,6 @@ contract LiquidationHandler is BaseOrderHandler {
         EventEmitter _eventEmitter,
         MarketStore _marketStore,
         OrderStore _orderStore,
-        PositionStore _positionStore,
         Oracle _oracle,
         SwapHandler _swapHandler,
         FeeReceiver _feeReceiver,
@@ -28,7 +27,6 @@ contract LiquidationHandler is BaseOrderHandler {
         _eventEmitter,
         _marketStore,
         _orderStore,
-        _positionStore,
         _oracle,
         _swapHandler,
         _feeReceiver,
@@ -57,7 +55,6 @@ contract LiquidationHandler is BaseOrderHandler {
         bytes32 key = LiquidationUtils.createLiquidationOrder(
             dataStore,
             orderStore,
-            positionStore,
             account,
             market,
             collateralToken,
