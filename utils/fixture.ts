@@ -7,6 +7,7 @@ import { getMarketTokenAddress } from "./market";
 export async function deployFixture() {
   await hre.deployments.fixture();
   const chainId = 31337; // hardhat chain id
+  const accountList = await hre.ethers.getSigners();
   const [
     wallet,
     user0,
@@ -28,7 +29,7 @@ export async function deployFixture() {
     signer7,
     signer8,
     signer9,
-  ] = await hre.ethers.getSigners();
+  ] = accountList;
 
   const wnt = await hre.ethers.getContract("WETH");
   await wnt.deposit({ value: expandDecimals(50, 18) });
@@ -62,6 +63,7 @@ export async function deployFixture() {
   const exchangeRouter = await hre.ethers.getContract("ExchangeRouter");
   const feeReceiver = await hre.ethers.getContract("FeeReceiver");
   const oracle = await hre.ethers.getContract("Oracle");
+  const positionStoreUtils = await hre.ethers.getContract("PositionStoreUtils");
 
   const ethUsdMarketAddress = getMarketTokenAddress(
     wnt.address,
@@ -74,6 +76,7 @@ export async function deployFixture() {
   const ethUsdMarket = await marketStore.get(ethUsdMarketAddress);
 
   return {
+    accountList,
     accounts: {
       wallet,
       user0,
@@ -119,6 +122,7 @@ export async function deployFixture() {
       exchangeRouter,
       feeReceiver,
       oracle,
+      positionStoreUtils,
       usdcPriceFeed,
       wnt,
       wbtc,
