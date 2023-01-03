@@ -1002,6 +1002,9 @@ library MarketUtils {
     // @return the borrowing fees for a position
     function getBorrowingFees(DataStore dataStore, Position.Props memory position) internal view returns (uint256) {
         uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, position.market(), position.isLong());
+        if (position.borrowingFactor() > cumulativeBorrowingFactor) {
+            revert("getBorrowingFees: unexpected state");
+        }
         uint256 diffFactor = cumulativeBorrowingFactor - position.borrowingFactor();
         return Precision.applyFactor(position.sizeInUsd(), diffFactor);
     }

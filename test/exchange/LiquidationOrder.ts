@@ -5,16 +5,17 @@ import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, handleOrder, executeLiquidation } from "../../utils/order";
 import { grantRole } from "../../utils/role";
+import { getAccountPositionCount } from "../../utils/position";
 
 describe("Exchange.LiquidationOrder", () => {
   let fixture;
   let wallet, user0;
-  let roleStore, orderStore, positionStore, ethUsdMarket, wnt, usdc;
+  let roleStore, dataStore, orderStore, ethUsdMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ wallet, user0 } = fixture.accounts);
-    ({ roleStore, orderStore, positionStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ roleStore, dataStore, orderStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -25,7 +26,7 @@ describe("Exchange.LiquidationOrder", () => {
   });
 
   it("executeLiquidation", async () => {
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(0);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
 
     await handleOrder(fixture, {
       create: {
@@ -44,7 +45,7 @@ describe("Exchange.LiquidationOrder", () => {
       },
     });
 
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(1);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
     expect(await orderStore.getOrderCount()).eq(0);
 
     await grantRole(roleStore, wallet.address, "LIQUIDATION_KEEPER");
@@ -61,7 +62,7 @@ describe("Exchange.LiquidationOrder", () => {
       })
     ).to.be.revertedWith("DecreasePositionUtils: Invalid Liquidation");
 
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(1);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
     expect(await orderStore.getOrderCount()).eq(0);
 
     await executeLiquidation(fixture, {
@@ -74,7 +75,7 @@ describe("Exchange.LiquidationOrder", () => {
       gasUsageLabel: "liquidationHandler.executeLiquidation",
     });
 
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(0);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
     expect(await orderStore.getOrderCount()).eq(0);
   });
 });

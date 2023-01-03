@@ -4,17 +4,18 @@ import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, handleOrder } from "../../utils/order";
+import { getAccountPositionCount } from "../../utils/position";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.DecreaseOrder", () => {
   let fixture;
   let user0;
-  let dataStore, orderStore, positionStore, ethUsdMarket, wnt, usdc;
+  let dataStore, orderStore, ethUsdMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0 } = fixture.accounts);
-    ({ dataStore, orderStore, positionStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ dataStore, orderStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -25,7 +26,7 @@ describe("Exchange.DecreaseOrder", () => {
   });
 
   it("executeOrder", async () => {
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(0);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
 
     await handleOrder(fixture, {
       create: {
@@ -43,7 +44,7 @@ describe("Exchange.DecreaseOrder", () => {
       },
     });
 
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(1);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
     expect(await orderStore.getOrderCount()).eq(0);
 
     await handleOrder(fixture, {
@@ -64,7 +65,7 @@ describe("Exchange.DecreaseOrder", () => {
       },
     });
 
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(0);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
     expect(await orderStore.getOrderCount()).eq(0);
   });
 
@@ -76,7 +77,7 @@ describe("Exchange.DecreaseOrder", () => {
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
     await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(0);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
 
     await handleOrder(fixture, {
       create: {
@@ -94,7 +95,7 @@ describe("Exchange.DecreaseOrder", () => {
       },
     });
 
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(1);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
     expect(await orderStore.getOrderCount()).eq(0);
 
     await handleOrder(fixture, {
@@ -115,7 +116,7 @@ describe("Exchange.DecreaseOrder", () => {
       },
     });
 
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(0);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
     expect(await orderStore.getOrderCount()).eq(0);
   });
 });

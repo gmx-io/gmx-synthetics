@@ -4,16 +4,17 @@ import { deployFixture } from "../../utils/fixture";
 import { expandDecimals } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, handleOrder } from "../../utils/order";
+import { getAccountPositionCount } from "../../utils/position";
 
 describe("Exchange.SwapOrder", () => {
   let fixture;
   let user0;
-  let orderStore, positionStore, ethUsdMarket, wnt, usdc;
+  let dataStore, orderStore, ethUsdMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0 } = fixture.accounts);
-    ({ orderStore, positionStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ dataStore, orderStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -24,7 +25,7 @@ describe("Exchange.SwapOrder", () => {
   });
 
   it("executeOrder", async () => {
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(0);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
     expect(await usdc.balanceOf(user0.address)).eq(0);
 
     await handleOrder(fixture, {
@@ -43,7 +44,7 @@ describe("Exchange.SwapOrder", () => {
       },
     });
 
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(0);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
     expect(await orderStore.getOrderCount()).eq(0);
     expect(await usdc.balanceOf(user0.address)).eq("50000000000");
   });
