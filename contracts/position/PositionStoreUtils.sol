@@ -127,7 +127,7 @@ library PositionStoreUtils {
 
         dataStore.setUint(
             keccak256(abi.encode(key, BORROWING_FACTOR)),
-            position.collateralAmount()
+            position.borrowingFactor()
         );
 
         dataStore.setInt(
