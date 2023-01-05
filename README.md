@@ -406,8 +406,14 @@ To run all tests:
 npx hardhat test
 ```
 
-To check metrics:
+To print code metrics:
 
 ```
 npx ts-node metrics.ts
+```
+
+To print test coverage:
+
+```
+npx hardhat coverage
 ```
