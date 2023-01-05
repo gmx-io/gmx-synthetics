@@ -10,6 +10,12 @@ library Keys {
     // @dev key for the nonce value used in NonceUtils
     bytes32 public constant NONCE = keccak256(abi.encode("NONCE"));
 
+    bytes32 public constant POSITION_LIST = keccak256(abi.encode("POSITION_LIST"));
+    bytes32 public constant ACCOUNT_POSITION_LIST = keccak256(abi.encode("ACCOUNT_POSITION_LIST"));
+
+    bytes32 public constant ORDER_LIST = keccak256(abi.encode("ORDER_LIST"));
+    bytes32 public constant ACCOUNT_ORDER_LIST = keccak256(abi.encode("ACCOUNT_ORDER_LIST"));
+
     // @dev key for whether the create deposit feature is enabled
     bytes32 public constant CREATE_DEPOSIT_FEATURE = keccak256(abi.encode("CREATE_DEPOSIT_FEATURE"));
     // @dev key for whether the cancel deposit feature is enabled
@@ -166,6 +172,14 @@ library Keys {
 
     string public constant UNACCEPTABLE_PRICE_ERROR = "UNACCEPTABLE_PRICE_ERROR";
     bytes32 public constant UNACCEPTABLE_PRICE_ERROR_KEY = keccak256(abi.encode(UNACCEPTABLE_PRICE_ERROR));
+
+    function accountPositionListKey(address account) internal pure returns (bytes32) {
+        return keccak256(abi.encode(ACCOUNT_POSITION_LIST, account));
+    }
+
+    function accountOrderListKey(address account) internal pure returns (bytes32) {
+        return keccak256(abi.encode(ACCOUNT_ORDER_LIST, account));
+    }
 
     // @dev key for deposit gas limit
     // @param singleToken whether a single token or pair tokens are being deposited
