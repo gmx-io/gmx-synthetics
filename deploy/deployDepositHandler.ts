@@ -20,8 +20,8 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     roleStore.address,
     dataStore.address,
     eventEmitter.address,
-    depositVault.address,
     marketStore.address,
+    depositVault.address,
     oracle.address,
     feeReceiver.address,
   ];

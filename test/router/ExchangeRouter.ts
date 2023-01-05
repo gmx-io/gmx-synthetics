@@ -3,19 +3,20 @@ import { expect } from "chai";
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals } from "../../utils/math";
 import { logGasUsage } from "../../utils/gas";
+import { getDepositKeys } from "../../utils/deposit";
 
 describe("ExchangeRouter", () => {
   const { provider } = ethers;
 
   let fixture;
   let user0, user1, user2;
-  let depositStore, router, exchangeRouter, ethUsdMarket, usdc;
+  let reader, dataStore, depositVault, router, exchangeRouter, ethUsdMarket, usdc;
   const executionFee = expandDecimals(1, 18);
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ depositStore, router, exchangeRouter, ethUsdMarket, usdc } = fixture.contracts);
+    ({ reader, dataStore, depositVault, router, exchangeRouter, ethUsdMarket, usdc } = fixture.contracts);
   });
 
   it("createDeposit", async () => {
@@ -23,10 +24,10 @@ describe("ExchangeRouter", () => {
     await usdc.connect(user0).approve(router.address, expandDecimals(50 * 1000, 6));
     const tx = await exchangeRouter.connect(user0).multicall(
       [
-        exchangeRouter.interface.encodeFunctionData("sendWnt", [depositStore.address, expandDecimals(11, 18)]),
+        exchangeRouter.interface.encodeFunctionData("sendWnt", [depositVault.address, expandDecimals(11, 18)]),
         exchangeRouter.interface.encodeFunctionData("sendTokens", [
           usdc.address,
-          depositStore.address,
+          depositVault.address,
           expandDecimals(50 * 1000, 6),
         ]),
         exchangeRouter.interface.encodeFunctionData("createDeposit", [
@@ -45,8 +46,8 @@ describe("ExchangeRouter", () => {
     );
 
     const block = await provider.getBlock();
-    const depositKeys = await depositStore.getDepositKeys(0, 1);
-    const deposit = await depositStore.get(depositKeys[0]);
+    const depositKeys = await getDepositKeys(dataStore, 0, 1);
+    const deposit = await reader.getDeposit(dataStore.address, depositKeys[0]);
 
     expect(deposit.addresses.account).eq(user0.address);
     expect(deposit.addresses.receiver).eq(user1.address);

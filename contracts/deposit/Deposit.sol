@@ -16,7 +16,6 @@ library Deposit {
         Addresses addresses;
         Numbers numbers;
         Flags flags;
-        bytes data;
     }
 
     // @param account the account depositing liquidity

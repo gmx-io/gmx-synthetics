@@ -3,6 +3,9 @@ import { hashString, hashData } from "./hash";
 export const WNT = hashString("WNT");
 export const MAX_LEVERAGE = hashString("MAX_LEVERAGE");
 
+export const DEPOSIT_LIST = hashString("DEPOSIT_LIST");
+export const ACCOUNT_DEPOSIT_LIST = hashString("ACCOUNT_DEPOSIT_LIST");
+
 export const POSITION_LIST = hashString("POSITION_LIST");
 export const ACCOUNT_POSITION_LIST = hashString("ACCOUNT_POSITION_LIST");
 
@@ -36,6 +39,10 @@ export const POSITION_IMPACT_FACTOR = hashString("POSITION_IMPACT_FACTOR");
 export const POSITION_IMPACT_EXPONENT_FACTOR = hashString("POSITION_IMPACT_EXPONENT_FACTOR");
 export const MAX_POSITION_IMPACT_FACTOR = hashString("MAX_POSITION_IMPACT_FACTOR");
 export const POSITION_FEE_FACTOR = hashString("POSITION_FEE_FACTOR");
+
+export function accountDepositListKey(account) {
+  return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
+}
 
 export function accountPositionListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_POSITION_LIST, account]);

@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 
 import "../data/Keys.sol";
 
+import "../deposit/DepositStoreUtils.sol";
+
 import "../position/Position.sol";
 import "../position/PositionUtils.sol";
 import "../position/PositionStoreUtils.sol";
@@ -30,6 +32,10 @@ contract Reader {
         uint256 borrowingFactorPerSecondForLongs;
         uint256 borrowingFactorPerSecondForShorts;
         MarketUtils.GetNextFundingAmountPerSizeResult funding;
+    }
+
+    function getDeposit(DataStore dataStore, bytes32 key) external view returns (Deposit.Props memory) {
+        return DepositStoreUtils.get(dataStore, key);
     }
 
     function getPosition(DataStore dataStore, bytes32 key) external view returns (Position.Props memory) {

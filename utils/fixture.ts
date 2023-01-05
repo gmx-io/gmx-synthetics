@@ -45,7 +45,7 @@ export async function deployFixture() {
   const reader = await hre.ethers.getContract("Reader");
   const roleStore = await hre.ethers.getContract("RoleStore");
   const dataStore = await hre.ethers.getContract("DataStore");
-  const depositStore = await hre.ethers.getContract("DepositStore");
+  const depositVault = await hre.ethers.getContract("DepositVault");
   const eventEmitter = await hre.ethers.getContract("EventEmitter");
   const withdrawalStore = await hre.ethers.getContract("WithdrawalStore");
   const oracleStore = await hre.ethers.getContract("OracleStore");
@@ -61,6 +61,7 @@ export async function deployFixture() {
   const exchangeRouter = await hre.ethers.getContract("ExchangeRouter");
   const feeReceiver = await hre.ethers.getContract("FeeReceiver");
   const oracle = await hre.ethers.getContract("Oracle");
+  const depositStoreUtils = await hre.ethers.getContract("DepositStoreUtils");
   const positionStoreUtils = await hre.ethers.getContract("PositionStoreUtils");
   const orderStoreUtils = await hre.ethers.getContract("OrderStoreUtils");
 
@@ -103,7 +104,7 @@ export async function deployFixture() {
       reader,
       roleStore,
       dataStore,
-      depositStore,
+      depositVault,
       eventEmitter,
       withdrawalStore,
       oracleStore,
@@ -119,6 +120,7 @@ export async function deployFixture() {
       exchangeRouter,
       feeReceiver,
       oracle,
+      depositStoreUtils,
       positionStoreUtils,
       orderStoreUtils,
       usdcPriceFeed,

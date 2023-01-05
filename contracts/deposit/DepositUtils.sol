@@ -21,7 +21,6 @@ import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
-import "../utils/Null.sol";
 
 // @title DepositUtils
 // @dev Library for deposit functions, to help with the depositing of liquidity
@@ -157,8 +156,7 @@ library DepositUtils {
             ),
             Deposit.Flags(
                 params.shouldUnwrapNativeToken
-            ),
-            Null.BYTES
+            )
         );
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteDepositGasLimit(dataStore, deposit);
