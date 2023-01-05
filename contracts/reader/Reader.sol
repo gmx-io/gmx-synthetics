@@ -36,16 +36,28 @@ contract Reader {
         return PositionStoreUtils.get(dataStore, key);
     }
 
+    function getPositionCount(DataStore dataStore) external view returns (uint256) {
+        return PositionStoreUtils.getPositionCount(dataStore);
+    }
+
+    function getPositionKeys(DataStore dataStore, uint256 start, uint256 end) external view returns (bytes32[] memory) {
+        return PositionStoreUtils.getPositionKeys(dataStore, start, end);
+    }
+
+    function getAccountPositionCount(DataStore dataStore, address account) external view returns (uint256) {
+        return PositionStoreUtils.getAccountPositionCount(dataStore, account);
+    }
+
+    function getAccountPositionKeys(DataStore dataStore, address account, uint256 start, uint256 end) external view returns (bytes32[] memory) {
+        return PositionStoreUtils.getAccountPositionKeys(dataStore, account, start, end);
+    }
+
     function getAccountPositions(
         DataStore dataStore,
         address account,
         uint256 start,
         uint256 end
     ) external view returns (Position.Props[] memory) {
-        uint256 positionCount = PositionStoreUtils.getAccountPositionCount(dataStore, account);
-        if (start >= positionCount) { return new Position.Props[](0); }
-        if (end > positionCount) { end = positionCount; }
-
         bytes32[] memory positionKeys = PositionStoreUtils.getAccountPositionKeys(dataStore, account, start, end);
         Position.Props[] memory positions = new Position.Props[](positionKeys.length);
         for (uint256 i = 0; i < positionKeys.length; i++) {
@@ -63,10 +75,6 @@ contract Reader {
         uint256 start,
         uint256 end
     ) external view returns (PositionInfo[] memory) {
-        uint256 positionCount = PositionStoreUtils.getAccountPositionCount(dataStore, account);
-        if (start >= positionCount) { return new PositionInfo[](0); }
-        if (end > positionCount) { end = positionCount; }
-
         bytes32[] memory positionKeys = PositionStoreUtils.getAccountPositionKeys(dataStore, account, start, end);
         PositionInfo[] memory positionInfoList = new PositionInfo[](positionKeys.length);
         for (uint256 i = 0; i < positionKeys.length; i++) {
@@ -122,10 +130,6 @@ contract Reader {
         uint256 start,
         uint256 end
     ) external view returns (Order.Props[] memory) {
-        uint256 orderCount = orderStore.getAccountOrderCount(account);
-        if (start >= orderCount) { return new Order.Props[](0); }
-        if (end > orderCount) { end = orderCount; }
-
         bytes32[] memory orderKeys = orderStore.getAccountOrderKeys(account, start, end);
         Order.Props[] memory orders = new Order.Props[](orderKeys.length);
         for (uint256 i = 0; i < orderKeys.length; i++) {
@@ -141,13 +145,6 @@ contract Reader {
         uint256 start,
         uint256 end
     ) external view returns (Market.Props[] memory) {
-        uint256 marketCount = marketStore.getMarketCount();
-        if (start >= marketCount) {
-            return new Market.Props[](0);
-        }
-        if (end > marketCount) {
-            end = marketCount;
-        }
         address[] memory marketKeys = marketStore.getMarketKeys(start, end);
         Market.Props[] memory markets = new Market.Props[](marketKeys.length);
         for (uint256 i = 0; i < marketKeys.length; i++) {
@@ -166,13 +163,6 @@ contract Reader {
         uint256 start,
         uint256 end
     ) external view returns (MarketInfo[] memory) {
-        uint256 marketCount = marketStore.getMarketCount();
-        if (start >= marketCount) {
-            return new MarketInfo[](0);
-        }
-        if (end > marketCount) {
-            end = marketCount;
-        }
         address[] memory marketKeys = marketStore.getMarketKeys(start, end);
         MarketInfo[] memory marketInfoList = new MarketInfo[](marketKeys.length);
         for (uint256 i = 0; i < marketKeys.length; i++) {
@@ -259,7 +249,7 @@ contract Reader {
         Price.Props memory indexTokenPrice,
         bool isLong,
         bool maximize
-    ) internal view returns (int256) {
+    ) external view returns (int256) {
         return MarketUtils.getPnl(dataStore, market, longToken, shortToken, indexTokenPrice, isLong, maximize);
     }
 

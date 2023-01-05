@@ -30,6 +30,10 @@ describe("PositionStoreUtils", () => {
       removeItem: async (dataStore, itemKey, sampleItem) => {
         await positionStoreUtilsTest.removePosition(dataStore.address, itemKey, sampleItem.addresses.account);
       },
+      getItemCount: reader.getPositionCount,
+      getItemKeys: reader.getPositionKeys,
+      getAccountItemCount: reader.getAccountPositionCount,
+      getAccountItemKeys: reader.getAccountPositionKeys,
     });
   });
 });

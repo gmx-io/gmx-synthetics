@@ -68,6 +68,10 @@ library EnumerableValues {
      * @return An array of uint256 values.
      */
     function valuesAt(EnumerableSet.UintSet storage set, uint256 start, uint256 end) internal view returns (uint256[] memory) {
+        if (start > set.length()) {
+            return new uint256[](0);
+        }
+
         uint256 max = set.length();
         if (end > max) { end = max; }
 

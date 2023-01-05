@@ -1,8 +1,19 @@
 import { expect } from "chai";
 import { hashString } from "./hash";
 
-export async function validateStoreUtils({ fixture, getEmptyItem, getItem, setItem, removeItem }) {
+export async function validateStoreUtils({
+  fixture,
+  getEmptyItem,
+  getItem,
+  setItem,
+  removeItem,
+  getItemCount,
+  getItemKeys,
+  getAccountItemCount,
+  getAccountItemKeys,
+}) {
   const { dataStore } = fixture.contracts;
+  const { user0, user1 } = fixture.accounts;
   const { accountList } = fixture;
   const emptyStoreItem = await getEmptyItem();
   const itemKey = hashString("key");
@@ -18,7 +29,11 @@ export async function validateStoreUtils({ fixture, getEmptyItem, getItem, setIt
 
     Object.keys(emptyStoreItem.addresses).forEach((key, index) => {
       if (isNaN(key)) {
-        sampleItem.addresses[key] = accountList[index].address;
+        if (key === "account") {
+          sampleItem.addresses[key] = user0.address;
+        } else {
+          sampleItem.addresses[key] = accountList[index].address;
+        }
       }
     });
 
@@ -36,7 +51,26 @@ export async function validateStoreUtils({ fixture, getEmptyItem, getItem, setIt
       }
     });
 
+    expect(await getItemCount(dataStore.address)).eq(0);
+    expect(await getItemKeys(dataStore.address, 0, 10)).deep.equal([]);
+
+    expect(await getAccountItemCount(dataStore.address, user0.address)).eq(0);
+    expect(await getAccountItemKeys(dataStore.address, user0.address, 0, 10)).deep.equal([]);
+
+    expect(await getAccountItemCount(dataStore.address, user1.address)).eq(0);
+    expect(await getAccountItemKeys(dataStore.address, user1.address, 0, 10)).deep.equal([]);
+
     await setItem(dataStore.address, itemKey, sampleItem);
+
+    expect(await getItemCount(dataStore.address)).eq(1);
+    expect(await getItemKeys(dataStore.address, 0, 10)).deep.equal([itemKey]);
+
+    expect(await getAccountItemCount(dataStore.address, user0.address)).eq(1);
+    expect(await getAccountItemKeys(dataStore.address, user0.address, 0, 10)).deep.equal([itemKey]);
+
+    expect(await getAccountItemCount(dataStore.address, user1.address)).eq(0);
+    expect(await getAccountItemKeys(dataStore.address, user1.address, 0, 10)).deep.equal([]);
+
     let fetchedItem = await getItem(dataStore.address, itemKey);
 
     Object.keys(emptyStoreItem.addresses).forEach((key) => {
@@ -58,6 +92,16 @@ export async function validateStoreUtils({ fixture, getEmptyItem, getItem, setIt
     });
 
     await removeItem(dataStore, itemKey, sampleItem);
+
+    expect(await getItemCount(dataStore.address)).eq(0);
+    expect(await getItemKeys(dataStore.address, 0, 10)).deep.equal([]);
+
+    expect(await getAccountItemCount(dataStore.address, user0.address)).eq(0);
+    expect(await getAccountItemKeys(dataStore.address, user0.address, 0, 10)).deep.equal([]);
+
+    expect(await getAccountItemCount(dataStore.address, user1.address)).eq(0);
+    expect(await getAccountItemKeys(dataStore.address, user1.address, 0, 10)).deep.equal([]);
+
     fetchedItem = await getItem(dataStore.address, itemKey);
 
     Object.keys(emptyStoreItem.addresses).forEach((key) => {
