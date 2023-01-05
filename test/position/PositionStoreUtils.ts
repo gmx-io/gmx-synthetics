@@ -3,6 +3,12 @@ import { deployFixture } from "../../utils/fixture";
 
 import { grantRole } from "../../utils/role";
 import { validateStoreUtils } from "../../utils/storeUtils";
+import {
+  getPositionCount,
+  getPositionKeys,
+  getAccountPositionCount,
+  getAccountPositionKeys,
+} from "../../utils/position";
 
 describe("PositionStoreUtils", () => {
   let fixture;
@@ -25,15 +31,19 @@ describe("PositionStoreUtils", () => {
     await validateStoreUtils({
       fixture,
       getEmptyItem: positionStoreUtilsTest.getEmptyPosition,
-      getItem: reader.getPosition,
-      setItem: positionStoreUtilsTest.setPosition,
-      removeItem: async (dataStore, itemKey, sampleItem) => {
-        await positionStoreUtilsTest.removePosition(dataStore.address, itemKey, sampleItem.addresses.account);
+      getItem: async (dataStore, key) => {
+        return await reader.getPosition(dataStore.address, key);
       },
-      getItemCount: reader.getPositionCount,
-      getItemKeys: reader.getPositionKeys,
-      getAccountItemCount: reader.getAccountPositionCount,
-      getAccountItemKeys: reader.getAccountPositionKeys,
+      setItem: async (dataStore, key, sampleItem) => {
+        return await positionStoreUtilsTest.setPosition(dataStore.address, key, sampleItem);
+      },
+      removeItem: async (dataStore, itemKey, sampleItem) => {
+        return await positionStoreUtilsTest.removePosition(dataStore.address, itemKey, sampleItem.addresses.account);
+      },
+      getItemCount: getPositionCount,
+      getItemKeys: getPositionKeys,
+      getAccountItemCount: getAccountPositionCount,
+      getAccountItemKeys: getAccountPositionKeys,
     });
   });
 });

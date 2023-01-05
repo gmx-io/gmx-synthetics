@@ -51,27 +51,27 @@ export async function validateStoreUtils({
       }
     });
 
-    expect(await getItemCount(dataStore.address)).eq(0);
-    expect(await getItemKeys(dataStore.address, 0, 10)).deep.equal([]);
+    expect(await getItemCount(dataStore)).eq(0);
+    expect(await getItemKeys(dataStore, 0, 10)).deep.equal([]);
 
-    expect(await getAccountItemCount(dataStore.address, user0.address)).eq(0);
-    expect(await getAccountItemKeys(dataStore.address, user0.address, 0, 10)).deep.equal([]);
+    expect(await getAccountItemCount(dataStore, user0.address)).eq(0);
+    expect(await getAccountItemKeys(dataStore, user0.address, 0, 10)).deep.equal([]);
 
-    expect(await getAccountItemCount(dataStore.address, user1.address)).eq(0);
-    expect(await getAccountItemKeys(dataStore.address, user1.address, 0, 10)).deep.equal([]);
+    expect(await getAccountItemCount(dataStore, user1.address)).eq(0);
+    expect(await getAccountItemKeys(dataStore, user1.address, 0, 10)).deep.equal([]);
 
-    await setItem(dataStore.address, itemKey, sampleItem);
+    await setItem(dataStore, itemKey, sampleItem);
 
-    expect(await getItemCount(dataStore.address)).eq(1);
-    expect(await getItemKeys(dataStore.address, 0, 10)).deep.equal([itemKey]);
+    expect(await getItemCount(dataStore)).eq(1);
+    expect(await getItemKeys(dataStore, 0, 10)).deep.equal([itemKey]);
 
-    expect(await getAccountItemCount(dataStore.address, user0.address)).eq(1);
-    expect(await getAccountItemKeys(dataStore.address, user0.address, 0, 10)).deep.equal([itemKey]);
+    expect(await getAccountItemCount(dataStore, user0.address)).eq(1);
+    expect(await getAccountItemKeys(dataStore, user0.address, 0, 10)).deep.equal([itemKey]);
 
-    expect(await getAccountItemCount(dataStore.address, user1.address)).eq(0);
-    expect(await getAccountItemKeys(dataStore.address, user1.address, 0, 10)).deep.equal([]);
+    expect(await getAccountItemCount(dataStore, user1.address)).eq(0);
+    expect(await getAccountItemKeys(dataStore, user1.address, 0, 10)).deep.equal([]);
 
-    let fetchedItem = await getItem(dataStore.address, itemKey);
+    let fetchedItem = await getItem(dataStore, itemKey);
 
     Object.keys(emptyStoreItem.addresses).forEach((key) => {
       if (isNaN(key)) {
@@ -93,16 +93,16 @@ export async function validateStoreUtils({
 
     await removeItem(dataStore, itemKey, sampleItem);
 
-    expect(await getItemCount(dataStore.address)).eq(0);
-    expect(await getItemKeys(dataStore.address, 0, 10)).deep.equal([]);
+    expect(await getItemCount(dataStore)).eq(0);
+    expect(await getItemKeys(dataStore, 0, 10)).deep.equal([]);
 
-    expect(await getAccountItemCount(dataStore.address, user0.address)).eq(0);
-    expect(await getAccountItemKeys(dataStore.address, user0.address, 0, 10)).deep.equal([]);
+    expect(await getAccountItemCount(dataStore, user0.address)).eq(0);
+    expect(await getAccountItemKeys(dataStore, user0.address, 0, 10)).deep.equal([]);
 
-    expect(await getAccountItemCount(dataStore.address, user1.address)).eq(0);
-    expect(await getAccountItemKeys(dataStore.address, user1.address, 0, 10)).deep.equal([]);
+    expect(await getAccountItemCount(dataStore, user1.address)).eq(0);
+    expect(await getAccountItemKeys(dataStore, user1.address, 0, 10)).deep.equal([]);
 
-    fetchedItem = await getItem(dataStore.address, itemKey);
+    fetchedItem = await getItem(dataStore, itemKey);
 
     Object.keys(emptyStoreItem.addresses).forEach((key) => {
       if (isNaN(key)) {

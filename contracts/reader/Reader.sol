@@ -36,22 +36,6 @@ contract Reader {
         return PositionStoreUtils.get(dataStore, key);
     }
 
-    function getPositionCount(DataStore dataStore) external view returns (uint256) {
-        return PositionStoreUtils.getPositionCount(dataStore);
-    }
-
-    function getPositionKeys(DataStore dataStore, uint256 start, uint256 end) external view returns (bytes32[] memory) {
-        return PositionStoreUtils.getPositionKeys(dataStore, start, end);
-    }
-
-    function getAccountPositionCount(DataStore dataStore, address account) external view returns (uint256) {
-        return PositionStoreUtils.getAccountPositionCount(dataStore, account);
-    }
-
-    function getAccountPositionKeys(DataStore dataStore, address account, uint256 start, uint256 end) external view returns (bytes32[] memory) {
-        return PositionStoreUtils.getAccountPositionKeys(dataStore, account, start, end);
-    }
-
     function getAccountPositions(
         DataStore dataStore,
         address account,
