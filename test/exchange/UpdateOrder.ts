@@ -58,6 +58,7 @@ describe("Exchange.UpdateOrder", () => {
     expect(order.addresses.market).eq(ethUsdMarket.marketToken);
     expect(order.addresses.initialCollateralToken).eq(wnt.address);
     expect(order.addresses.swapPath).eql([ethUsdMarket.marketToken]);
+    expect(order.numbers.orderType).eq(OrderType.LimitIncrease);
     expect(order.numbers.sizeDeltaUsd).eq(decimalToFloat(200 * 1000));
     expect(order.numbers.initialCollateralDeltaAmount).eq(expandDecimals(10, 18));
     expect(order.numbers.acceptablePrice).eq(expandDecimals(5001, 12));
@@ -65,7 +66,6 @@ describe("Exchange.UpdateOrder", () => {
     expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
     expect(order.numbers.minOutputAmount).eq(expandDecimals(50000, 6));
     expect(order.numbers.updatedAtBlock).eq(block.number);
-    expect(order.flags.orderType).eq(OrderType.LimitIncrease);
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
 
@@ -87,6 +87,7 @@ describe("Exchange.UpdateOrder", () => {
     expect(order.addresses.market).eq(ethUsdMarket.marketToken);
     expect(order.addresses.initialCollateralToken).eq(wnt.address);
     expect(order.addresses.swapPath).eql([ethUsdMarket.marketToken]);
+    expect(order.numbers.orderType).eq(OrderType.LimitIncrease);
     expect(order.numbers.sizeDeltaUsd).eq(decimalToFloat(250 * 1000));
     expect(order.numbers.initialCollateralDeltaAmount).eq(expandDecimals(10, 18));
     expect(order.numbers.acceptablePrice).eq(expandDecimals(4950, 12));
@@ -94,7 +95,6 @@ describe("Exchange.UpdateOrder", () => {
     expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
     expect(order.numbers.minOutputAmount).eq(expandDecimals(50000, 6));
     expect(order.numbers.updatedAtBlock).eq(block.number);
-    expect(order.flags.orderType).eq(OrderType.LimitIncrease);
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
   });

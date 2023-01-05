@@ -3,6 +3,12 @@ import { hashString, hashData } from "./hash";
 export const WNT = hashString("WNT");
 export const MAX_LEVERAGE = hashString("MAX_LEVERAGE");
 
+export const POSITION_LIST = hashString("POSITION_LIST");
+export const ACCOUNT_POSITION_LIST = hashString("ACCOUNT_POSITION_LIST");
+
+export const ORDER_LIST = hashString("ORDER_LIST");
+export const ACCOUNT_ORDER_LIST = hashString("ACCOUNT_ORDER_LIST");
+
 export const MIN_ORACLE_BLOCK_CONFIRMATIONS = hashString("MIN_ORACLE_BLOCK_CONFIRMATIONS");
 export const MAX_ORACLE_PRICE_AGE = hashString("MAX_ORACLE_PRICE_AGE");
 export const MIN_ORACLE_SIGNERS = hashString("MIN_ORACLE_SIGNERS");
@@ -30,6 +36,10 @@ export const POSITION_IMPACT_FACTOR = hashString("POSITION_IMPACT_FACTOR");
 export const POSITION_IMPACT_EXPONENT_FACTOR = hashString("POSITION_IMPACT_EXPONENT_FACTOR");
 export const MAX_POSITION_IMPACT_FACTOR = hashString("MAX_POSITION_IMPACT_FACTOR");
 export const POSITION_FEE_FACTOR = hashString("POSITION_FEE_FACTOR");
+
+export function accountPositionListKey(account) {
+  return hashData(["bytes32", "address"], [ACCOUNT_POSITION_LIST, account]);
+}
 
 export function tokenTransferGasLimit(token: string) {
   return hashData(["bytes32", "address"], [TOKEN_TRANSFER_GAS_LIMIT, token]);
