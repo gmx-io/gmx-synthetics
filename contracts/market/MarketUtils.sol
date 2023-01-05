@@ -8,10 +8,6 @@ import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 import "../bank/StrictBank.sol";
 
-import "../deposit/Deposit.sol";
-import "../deposit/DepositStore.sol";
-import "../withdrawal/Withdrawal.sol";
-
 import "../market/Market.sol";
 import "../market/MarketToken.sol";
 import "../market/MarketStore.sol";
@@ -33,7 +29,6 @@ library MarketUtils {
     using SafeCast for int256;
     using SafeCast for uint256;
 
-    using Deposit for Deposit.Props;
     using Market for Market.Props;
     using Position for Position.Props;
     using Order for Order.Props;

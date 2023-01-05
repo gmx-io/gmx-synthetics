@@ -10,6 +10,9 @@ library Keys {
     // @dev key for the nonce value used in NonceUtils
     bytes32 public constant NONCE = keccak256(abi.encode("NONCE"));
 
+    bytes32 public constant DEPOSIT_LIST = keccak256(abi.encode("DEPOSIT_LIST"));
+    bytes32 public constant ACCOUNT_DEPOSIT_LIST = keccak256(abi.encode("ACCOUNT_DEPOSIT_LIST"));
+
     bytes32 public constant POSITION_LIST = keccak256(abi.encode("POSITION_LIST"));
     bytes32 public constant ACCOUNT_POSITION_LIST = keccak256(abi.encode("ACCOUNT_POSITION_LIST"));
 
@@ -172,6 +175,10 @@ library Keys {
 
     string public constant UNACCEPTABLE_PRICE_ERROR = "UNACCEPTABLE_PRICE_ERROR";
     bytes32 public constant UNACCEPTABLE_PRICE_ERROR_KEY = keccak256(abi.encode(UNACCEPTABLE_PRICE_ERROR));
+
+    function accountDepositListKey(address account) internal pure returns (bytes32) {
+        return keccak256(abi.encode(ACCOUNT_DEPOSIT_LIST, account));
+    }
 
     function accountPositionListKey(address account) internal pure returns (bytes32) {
         return keccak256(abi.encode(ACCOUNT_POSITION_LIST, account));

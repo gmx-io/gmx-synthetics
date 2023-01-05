@@ -64,12 +64,11 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     WithdrawalHandler public immutable withdrawalHandler;
     OrderHandler public immutable orderHandler;
     MarketStore public immutable marketStore;
-    DepositStore public immutable depositStore;
     WithdrawalStore public immutable withdrawalStore;
     IReferralStorage public immutable referralStorage;
 
     // @dev Constructor that initializes the contract with the provided Router, RoleStore, DataStore,
-    // EventEmitter, DepositHandler, WithdrawalHandler, OrderHandler, DepositStore, WithdrawalStore,
+    // EventEmitter, DepositHandler, WithdrawalHandler, OrderHandler, WithdrawalStore,
     // OrderStore, and IReferralStorage instances
     constructor(
         Router _router,
@@ -80,7 +79,6 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         WithdrawalHandler _withdrawalHandler,
         OrderHandler _orderHandler,
         MarketStore _marketStore,
-        DepositStore _depositStore,
         WithdrawalStore _withdrawalStore,
         IReferralStorage _referralStorage
     ) RoleModule(_roleStore) {
@@ -93,7 +91,6 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         orderHandler = _orderHandler;
 
         marketStore = _marketStore;
-        depositStore = _depositStore;
         withdrawalStore = _withdrawalStore;
 
         referralStorage = _referralStorage;
@@ -131,7 +128,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     }
 
     function cancelDeposit(bytes32 key) external payable nonReentrant {
-        Deposit.Props memory deposit = depositStore.get(key);
+        Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
         require(deposit.account() == msg.sender, "ExchangeRouter: forbidden");
 
         depositHandler.cancelDeposit(key, deposit);

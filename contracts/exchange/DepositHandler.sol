@@ -14,7 +14,7 @@ import "../market/MarketStore.sol";
 import "../market/MarketToken.sol";
 
 import "../deposit/Deposit.sol";
-import "../deposit/DepositStore.sol";
+import "../deposit/DepositVault.sol";
 import "../deposit/DepositUtils.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
@@ -26,8 +26,8 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
-    DepositStore public immutable depositStore;
     MarketStore public immutable marketStore;
+    DepositVault public immutable depositVault;
     Oracle public immutable oracle;
     FeeReceiver public immutable feeReceiver;
 
@@ -35,14 +35,14 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        DepositStore _depositStore,
         MarketStore _marketStore,
+        DepositVault _depositVault,
         Oracle _oracle,
         FeeReceiver _feeReceiver
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
-        depositStore = _depositStore;
+        depositVault = _depositVault;
         marketStore = _marketStore;
         oracle = _oracle;
         feeReceiver = _feeReceiver;
@@ -60,7 +60,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         return DepositUtils.createDeposit(
             dataStore,
             eventEmitter,
-            depositStore,
+            depositVault,
             marketStore,
             account,
             params
@@ -86,7 +86,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         DepositUtils.cancelDeposit(
             _dataStore,
             eventEmitter,
-            depositStore,
+            depositVault,
             marketStore,
             key,
             deposit.account(),
@@ -122,7 +122,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
             DepositUtils.cancelDeposit(
                 dataStore,
                 eventEmitter,
-                depositStore,
+                depositVault,
                 marketStore,
                 key,
                 msg.sender,
@@ -133,7 +133,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
             DepositUtils.cancelDeposit(
                 dataStore,
                 eventEmitter,
-                depositStore,
+                depositVault,
                 marketStore,
                 key,
                 msg.sender,
@@ -163,8 +163,8 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         DepositUtils.ExecuteDepositParams memory params = DepositUtils.ExecuteDepositParams(
             dataStore,
             eventEmitter,
-            depositStore,
             marketStore,
+            depositVault,
             oracle,
             feeReceiver,
             key,

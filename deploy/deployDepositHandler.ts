@@ -8,18 +8,19 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const roleStore = await get("RoleStore");
   const dataStore = await get("DataStore");
   const eventEmitter = await get("EventEmitter");
-  const depositStore = await get("DepositStore");
+  const depositVault = await get("DepositVault");
   const marketStore = await get("MarketStore");
   const oracle = await get("Oracle");
   const feeReceiver = await get("FeeReceiver");
   const depositUtils = await get("DepositUtils");
+  const depositStoreUtils = await get("DepositStoreUtils");
   const gasUtils = await get("GasUtils");
 
   const deployArgs = [
     roleStore.address,
     dataStore.address,
     eventEmitter.address,
-    depositStore.address,
+    depositVault.address,
     marketStore.address,
     oracle.address,
     feeReceiver.address,
@@ -30,6 +31,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     args: deployArgs,
     libraries: {
       DepositUtils: depositUtils.address,
+      DepositStoreUtils: depositStoreUtils.address,
       GasUtils: gasUtils.address,
     },
   });
@@ -41,7 +43,8 @@ func.dependencies = [
   "RoleStore",
   "DataStore",
   "EventEmitter",
-  "DepositStore",
+  "DepositVault",
+  "DepositStoreUtils",
   "MarketStore",
   "Oracle",
   "FeeReceiver",
