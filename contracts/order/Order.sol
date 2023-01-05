@@ -44,12 +44,10 @@ library Order {
     // @param addresses address values
     // @param numbers number values
     // @param flags boolean values
-    // @param data for any additional data
     struct Props {
         Addresses addresses;
         Numbers numbers;
         Flags flags;
-        bytes data;
     }
 
     // @param account the account of the order
@@ -80,6 +78,7 @@ library Order {
     // collateralToken to withdraw
     // for swaps, initialCollateralDeltaAmount is the amount of initialCollateralToken sent
     // in for the swap
+    // @param orderType the order type
     // @param triggerPrice the trigger price for non-market orders
     // @param acceptablePrice the acceptable execution price for increase / decrease orders
     // @param executionFee the execution fee for keepers
@@ -87,6 +86,7 @@ library Order {
     // @param minOutputAmount the minimum output amount for decrease orders and swaps
     // @param updatedAtBlock the block at which the order was last updated
     struct Numbers {
+        OrderType orderType;
         uint256 sizeDeltaUsd;
         uint256 initialCollateralDeltaAmount;
         uint256 triggerPrice;
@@ -97,13 +97,11 @@ library Order {
         uint256 updatedAtBlock;
     }
 
-    // @param orderType the order type
     // @param isLong whether the order is for a long or short
     // @param shouldUnwrapNativeToken whether to unwrap native tokens before
     // transferring to the user
     // @param isFrozen whether the order is frozen
     struct Flags {
-        OrderType orderType;
         bool isLong;
         bool shouldUnwrapNativeToken;
         bool isFrozen;
@@ -191,6 +189,20 @@ library Order {
     // @param value the value to set to
     function setSwapPath(Props memory props, address[] memory value) internal pure {
         props.addresses.swapPath = value;
+    }
+
+    // @dev the order type
+    // @param props Props
+    // @return the order type
+    function orderType(Props memory props) internal pure returns (OrderType) {
+        return props.numbers.orderType;
+    }
+
+    // @dev set the order type
+    // @param props Props
+    // @param value the value to set to
+    function setOrderType(Props memory props, OrderType value) internal pure {
+        props.numbers.orderType = value;
     }
 
     // @dev the order sizeDeltaUsd
@@ -303,20 +315,6 @@ library Order {
     // @param value the value to set to
     function setUpdatedAtBlock(Props memory props, uint256 value) internal pure {
         props.numbers.updatedAtBlock = value;
-    }
-
-    // @dev the order type
-    // @param props Props
-    // @return the order type
-    function orderType(Props memory props) internal pure returns (OrderType) {
-        return props.flags.orderType;
-    }
-
-    // @dev set the order type
-    // @param props Props
-    // @param value the value to set to
-    function setOrderType(Props memory props, OrderType value) internal pure {
-        props.flags.orderType = value;
     }
 
     // @dev whether the order is for a long or short

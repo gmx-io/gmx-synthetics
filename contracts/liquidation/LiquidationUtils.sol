@@ -6,7 +6,6 @@ import "../position/PositionUtils.sol";
 import "../position/PositionStoreUtils.sol";
 import "../nonce/NonceUtils.sol";
 import "../order/OrderStore.sol";
-import "../utils/Null.sol";
 
 // @title LiquidationUtils
 // @dev Library to help with liquidations
@@ -42,6 +41,7 @@ library LiquidationUtils {
         );
 
         Order.Numbers memory numbers = Order.Numbers(
+            Order.OrderType.Liquidation, // orderType
             position.sizeInUsd(), // sizeDeltaUsd
             0, // initialCollateralDeltaAmount
             0, // triggerPrice
@@ -53,7 +53,6 @@ library LiquidationUtils {
         );
 
         Order.Flags memory flags = Order.Flags(
-            Order.OrderType.Liquidation, // orderType
             position.isLong(), // isLong
             true, // shouldUnwrapNativeToken
             false // isFrozen
@@ -62,8 +61,7 @@ library LiquidationUtils {
         Order.Props memory order = Order.Props(
             addresses,
             numbers,
-            flags,
-            Null.BYTES
+            flags
         );
 
         bytes32 key = NonceUtils.getNextKey(dataStore);

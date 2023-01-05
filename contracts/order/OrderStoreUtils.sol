@@ -5,85 +5,111 @@ pragma solidity ^0.8.0;
 import "../data/Keys.sol";
 import "../data/DataStore.sol";
 
-import "./Position.sol";
+import "./Order.sol";
 
 /**
- * @title PositionStoreUtils
- * @dev Library for position storage functions
+ * @title OrderStoreUtils
+ * @dev Library for order storage functions
  */
-library PositionStoreUtils {
-    using Position for Position.Props;
+library OrderStoreUtils {
+    using Order for Order.Props;
 
     bytes32 public constant ACCOUNT = keccak256(abi.encode("ACCOUNT"));
+    bytes32 public constant RECEIVER = keccak256(abi.encode("RECEIVER"));
+    bytes32 public constant CALLBACK_CONTRACT = keccak256(abi.encode("CALLBACK_CONTRACT"));
     bytes32 public constant MARKET = keccak256(abi.encode("MARKET"));
-    bytes32 public constant COLLATERAL_TOKEN = keccak256(abi.encode("COLLATERAL_TOKEN"));
+    bytes32 public constant INITIAL_COLLATERAL_TOKEN = keccak256(abi.encode("INITIAL_COLLATERAL_TOKEN"));
+    bytes32 public constant SWAP_PATH = keccak256(abi.encode("SWAP_PATH"));
 
-    bytes32 public constant SIZE_IN_USD = keccak256(abi.encode("SIZE_IN_USD"));
-    bytes32 public constant SIZE_IN_TOKENS = keccak256(abi.encode("SIZE_IN_TOKENS"));
-    bytes32 public constant COLLATERAL_AMOUNT = keccak256(abi.encode("COLLATERAL_AMOUNT"));
-    bytes32 public constant BORROWING_FACTOR = keccak256(abi.encode("BORROWING_FACTOR"));
-    bytes32 public constant LONG_TOKEN_FUNDING_AMOUNT_PER_SIZE = keccak256(abi.encode("LONG_TOKEN_FUNDING_AMOUNT_PER_SIZE"));
-    bytes32 public constant SHORT_TOKEN_FUNDING_AMOUNT_PER_SIZE = keccak256(abi.encode("SHORT_TOKEN_FUNDING_AMOUNT_PER_SIZE"));
-    bytes32 public constant INCREASED_AT_BLOCK = keccak256(abi.encode("INCREASED_AT_BLOCK"));
-    bytes32 public constant DECREASED_AT_BLOCK = keccak256(abi.encode("DECREASED_AT_BLOCK"));
+    bytes32 public constant ORDER_TYPE = keccak256(abi.encode("ORDER_TYPE"));
+    bytes32 public constant SIZE_DELTA_USD = keccak256(abi.encode("SIZE_DELTA_USD"));
+    bytes32 public constant INITIAL_COLLATERAL_DELTA_AMOUNT = keccak256(abi.encode("INITIAL_COLLATERAL_DELTA_AMOUNT"));
+    bytes32 public constant TRIGGER_PRICE = keccak256(abi.encode("TRIGGER_PRICE"));
+    bytes32 public constant ACCEPTABLE_PRICE = keccak256(abi.encode("ACCEPTABLE_PRICE"));
+    bytes32 public constant EXECUTION_FEE = keccak256(abi.encode("EXECUTION_FEE"));
+    bytes32 public constant CALLBACK_GAS_LIMIT = keccak256(abi.encode("CALLBACK_GAS_LIMIT"));
+    bytes32 public constant MIN_OUTPUT_AMOUNT = keccak256(abi.encode("MIN_OUTPUT_AMOUNT"));
+    bytes32 public constant UPDATED_AT_BLOCK = keccak256(abi.encode("UPDATED_AT_BLOCK"));
 
     bytes32 public constant IS_LONG = keccak256(abi.encode("IS_LONG"));
+    bytes32 public constant SHOULD_UNWRAP_NATIVE_TOKEN = keccak256(abi.encode("SHOULD_UNWRAP_NATIVE_TOKEN"));
+    bytes32 public constant IS_FROZEN = keccak256(abi.encode("IS_FROZEN"));
 
-    function get(DataStore dataStore, bytes32 key) external view returns (Position.Props memory) {
-        Position.Props memory position;
+    function get(DataStore dataStore, bytes32 key) external view returns (Order.Props memory) {
+        Order.Props memory order;
 
-        position.setAccount(dataStore.getAddress(
+        order.setAccount(dataStore.getAddress(
             keccak256(abi.encode(key, ACCOUNT))
         ));
 
-        position.setMarket(dataStore.getAddress(
+        order.setReceiver(dataStore.getAddress(
+            keccak256(abi.encode(key, RECEIVER))
+        ));
+
+        order.setCallbackContract(dataStore.getAddress(
+            keccak256(abi.encode(key, CALLBACK_CONTRACT))
+        ));
+
+        order.setMarket(dataStore.getAddress(
             keccak256(abi.encode(key, MARKET))
         ));
 
-        position.setCollateralToken(dataStore.getAddress(
-            keccak256(abi.encode(key, COLLATERAL_TOKEN))
+        order.setInitialCollateralToken(dataStore.getAddress(
+            keccak256(abi.encode(key, INITIAL_COLLATERAL_TOKEN))
         ));
 
-        position.setSizeInUsd(dataStore.getUint(
-            keccak256(abi.encode(key, SIZE_IN_USD))
+        order.setOrderType(Order.OrderType(dataStore.getUint(
+            keccak256(abi.encode(key, ORDER_TYPE))
+        )));
+
+        order.setSizeDeltaUsd(dataStore.getUint(
+            keccak256(abi.encode(key, SIZE_DELTA_USD))
         ));
 
-        position.setSizeInTokens(dataStore.getUint(
-            keccak256(abi.encode(key, SIZE_IN_TOKENS))
+        order.setInitialCollateralDeltaAmount(dataStore.getUint(
+            keccak256(abi.encode(key, INITIAL_COLLATERAL_DELTA_AMOUNT))
         ));
 
-        position.setCollateralAmount(dataStore.getUint(
-            keccak256(abi.encode(key, COLLATERAL_AMOUNT))
+        order.setTriggerPrice(dataStore.getUint(
+            keccak256(abi.encode(key, TRIGGER_PRICE))
         ));
 
-        position.setBorrowingFactor(dataStore.getUint(
-            keccak256(abi.encode(key, BORROWING_FACTOR))
+        order.setAcceptablePrice(dataStore.getUint(
+            keccak256(abi.encode(key, ACCEPTABLE_PRICE))
         ));
 
-        position.setLongTokenFundingAmountPerSize(dataStore.getInt(
-            keccak256(abi.encode(key, LONG_TOKEN_FUNDING_AMOUNT_PER_SIZE))
+        order.setExecutionFee(dataStore.getUint(
+            keccak256(abi.encode(key, EXECUTION_FEE))
         ));
 
-        position.setShortTokenFundingAmountPerSize(dataStore.getInt(
-            keccak256(abi.encode(key, SHORT_TOKEN_FUNDING_AMOUNT_PER_SIZE))
+        order.setCallbackGasLimit(dataStore.getUint(
+            keccak256(abi.encode(key, CALLBACK_GAS_LIMIT))
         ));
 
-        position.setIncreasedAtBlock(dataStore.getUint(
-            keccak256(abi.encode(key, INCREASED_AT_BLOCK))
+        order.setMinOutputAmount(dataStore.getUint(
+            keccak256(abi.encode(key, MIN_OUTPUT_AMOUNT))
         ));
 
-        position.setDecreasedAtBlock(dataStore.getUint(
-            keccak256(abi.encode(key, DECREASED_AT_BLOCK))
+        order.setUpdatedAtBlock(dataStore.getUint(
+            keccak256(abi.encode(key, UPDATED_AT_BLOCK))
         ));
 
-        position.setIsLong(dataStore.getBool(
+        order.setIsLong(dataStore.getBool(
             keccak256(abi.encode(key, IS_LONG))
         ));
 
-        return position;
+        order.setShouldUnwrapNativeToken(dataStore.getBool(
+            keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN))
+        ));
+
+        order.setIsFrozen(dataStore.getBool(
+            keccak256(abi.encode(key, IS_FROZEN))
+        ));
+
+        return order;
     }
 
-    function set(DataStore dataStore, bytes32 key, Position.Props memory position) external {
+    /* function set(DataStore dataStore, bytes32 key, Order.Props memory position) external {
         dataStore.addBytes32(
             Keys.POSITION_LIST,
             key
@@ -229,5 +255,5 @@ library PositionStoreUtils {
 
     function getAccountPositionKeys(DataStore dataStore, address account, uint256 start, uint256 end) internal view returns (bytes32[] memory) {
         return dataStore.getBytes32ValuesAt(Keys.accountPositionListKey(account), start, end);
-    }
+    } */
 }
