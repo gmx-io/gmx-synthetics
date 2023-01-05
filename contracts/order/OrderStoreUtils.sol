@@ -109,86 +109,111 @@ library OrderStoreUtils {
         return order;
     }
 
-    /* function set(DataStore dataStore, bytes32 key, Order.Props memory position) external {
+    function set(DataStore dataStore, bytes32 key, Order.Props memory order) external {
         dataStore.addBytes32(
-            Keys.POSITION_LIST,
+            Keys.ORDER_LIST,
             key
         );
 
         dataStore.addBytes32(
-            Keys.accountPositionListKey(position.account()),
+            Keys.accountOrderListKey(order.account()),
             key
         );
 
         dataStore.setAddress(
             keccak256(abi.encode(key, ACCOUNT)),
-            position.account()
+            order.account()
+        );
+
+        dataStore.setAddress(
+            keccak256(abi.encode(key, RECEIVER)),
+            order.receiver()
+        );
+
+        dataStore.setAddress(
+            keccak256(abi.encode(key, CALLBACK_CONTRACT)),
+            order.callbackContract()
         );
 
         dataStore.setAddress(
             keccak256(abi.encode(key, MARKET)),
-            position.market()
+            order.market()
         );
 
         dataStore.setAddress(
-            keccak256(abi.encode(key, COLLATERAL_TOKEN)),
-            position.collateralToken()
+            keccak256(abi.encode(key, INITIAL_COLLATERAL_TOKEN)),
+            order.initialCollateralToken()
         );
 
         dataStore.setUint(
-            keccak256(abi.encode(key, SIZE_IN_USD)),
-            position.sizeInUsd()
+            keccak256(abi.encode(key, ORDER_TYPE)),
+            uint256(order.orderType())
         );
 
         dataStore.setUint(
-            keccak256(abi.encode(key, SIZE_IN_TOKENS)),
-            position.sizeInTokens()
+            keccak256(abi.encode(key, SIZE_DELTA_USD)),
+            order.sizeDeltaUsd()
         );
 
         dataStore.setUint(
-            keccak256(abi.encode(key, COLLATERAL_AMOUNT)),
-            position.collateralAmount()
+            keccak256(abi.encode(key, INITIAL_COLLATERAL_DELTA_AMOUNT)),
+            order.initialCollateralDeltaAmount()
         );
 
         dataStore.setUint(
-            keccak256(abi.encode(key, BORROWING_FACTOR)),
-            position.borrowingFactor()
-        );
-
-        dataStore.setInt(
-            keccak256(abi.encode(key, LONG_TOKEN_FUNDING_AMOUNT_PER_SIZE)),
-            position.longTokenFundingAmountPerSize()
-        );
-
-        dataStore.setInt(
-            keccak256(abi.encode(key, SHORT_TOKEN_FUNDING_AMOUNT_PER_SIZE)),
-            position.shortTokenFundingAmountPerSize()
+            keccak256(abi.encode(key, TRIGGER_PRICE)),
+            order.triggerPrice()
         );
 
         dataStore.setUint(
-            keccak256(abi.encode(key, INCREASED_AT_BLOCK)),
-            position.increasedAtBlock()
+            keccak256(abi.encode(key, ACCEPTABLE_PRICE)),
+            order.acceptablePrice()
         );
 
         dataStore.setUint(
-            keccak256(abi.encode(key, DECREASED_AT_BLOCK)),
-            position.decreasedAtBlock()
+            keccak256(abi.encode(key, EXECUTION_FEE)),
+            order.executionFee()
+        );
+
+        dataStore.setUint(
+            keccak256(abi.encode(key, CALLBACK_GAS_LIMIT)),
+            order.callbackGasLimit()
+        );
+
+        dataStore.setUint(
+            keccak256(abi.encode(key, MIN_OUTPUT_AMOUNT)),
+            order.minOutputAmount()
+        );
+
+        dataStore.setUint(
+            keccak256(abi.encode(key, UPDATED_AT_BLOCK)),
+            order.updatedAtBlock()
         );
 
         dataStore.setBool(
             keccak256(abi.encode(key, IS_LONG)),
-            position.isLong()
+            order.isLong()
+        );
+
+        dataStore.setBool(
+            keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN)),
+            order.shouldUnwrapNativeToken()
+        );
+
+        dataStore.setBool(
+            keccak256(abi.encode(key, IS_FROZEN)),
+            order.isFrozen()
         );
     }
 
     function remove(DataStore dataStore, bytes32 key, address account) external {
         dataStore.removeBytes32(
-            Keys.POSITION_LIST,
+            Keys.ORDER_LIST,
             key
         );
 
         dataStore.removeBytes32(
-            Keys.accountPositionListKey(account),
+            Keys.accountOrderListKey(account),
             key
         );
 
@@ -197,63 +222,83 @@ library OrderStoreUtils {
         );
 
         dataStore.removeAddress(
+            keccak256(abi.encode(key, RECEIVER))
+        );
+
+        dataStore.removeAddress(
+            keccak256(abi.encode(key, CALLBACK_CONTRACT))
+        );
+
+        dataStore.removeAddress(
             keccak256(abi.encode(key, MARKET))
         );
 
         dataStore.removeAddress(
-            keccak256(abi.encode(key, COLLATERAL_TOKEN))
+            keccak256(abi.encode(key, INITIAL_COLLATERAL_TOKEN))
         );
 
         dataStore.removeUint(
-            keccak256(abi.encode(key, SIZE_IN_USD))
+            keccak256(abi.encode(key, ORDER_TYPE))
         );
 
         dataStore.removeUint(
-            keccak256(abi.encode(key, SIZE_IN_TOKENS))
+            keccak256(abi.encode(key, SIZE_DELTA_USD))
         );
 
         dataStore.removeUint(
-            keccak256(abi.encode(key, COLLATERAL_AMOUNT))
+            keccak256(abi.encode(key, INITIAL_COLLATERAL_DELTA_AMOUNT))
         );
 
         dataStore.removeUint(
-            keccak256(abi.encode(key, BORROWING_FACTOR))
-        );
-
-        dataStore.removeInt(
-            keccak256(abi.encode(key, LONG_TOKEN_FUNDING_AMOUNT_PER_SIZE))
-        );
-
-        dataStore.removeInt(
-            keccak256(abi.encode(key, SHORT_TOKEN_FUNDING_AMOUNT_PER_SIZE))
+            keccak256(abi.encode(key, TRIGGER_PRICE))
         );
 
         dataStore.removeUint(
-            keccak256(abi.encode(key, INCREASED_AT_BLOCK))
+            keccak256(abi.encode(key, ACCEPTABLE_PRICE))
         );
 
         dataStore.removeUint(
-            keccak256(abi.encode(key, DECREASED_AT_BLOCK))
+            keccak256(abi.encode(key, EXECUTION_FEE))
+        );
+
+        dataStore.removeUint(
+            keccak256(abi.encode(key, CALLBACK_GAS_LIMIT))
+        );
+
+        dataStore.removeUint(
+            keccak256(abi.encode(key, MIN_OUTPUT_AMOUNT))
+        );
+
+        dataStore.removeUint(
+            keccak256(abi.encode(key, UPDATED_AT_BLOCK))
         );
 
         dataStore.removeBool(
             keccak256(abi.encode(key, IS_LONG))
         );
+
+        dataStore.removeBool(
+            keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN))
+        );
+
+        dataStore.removeBool(
+            keccak256(abi.encode(key, IS_FROZEN))
+        );
     }
 
-    function getPositionCount(DataStore dataStore) internal view returns (uint256) {
-        return dataStore.getBytes32Count(Keys.POSITION_LIST);
+    function getOrderCount(DataStore dataStore) internal view returns (uint256) {
+        return dataStore.getBytes32Count(Keys.ORDER_LIST);
     }
 
-    function getPositionKeys(DataStore dataStore, uint256 start, uint256 end) internal view returns (bytes32[] memory) {
-        return dataStore.getBytes32ValuesAt(Keys.POSITION_LIST, start, end);
+    function getOrderKeys(DataStore dataStore, uint256 start, uint256 end) internal view returns (bytes32[] memory) {
+        return dataStore.getBytes32ValuesAt(Keys.ORDER_LIST, start, end);
     }
 
-    function getAccountPositionCount(DataStore dataStore, address account) internal view returns (uint256) {
-        return dataStore.getBytes32Count(Keys.accountPositionListKey(account));
+    function getAccountOrderCount(DataStore dataStore, address account) internal view returns (uint256) {
+        return dataStore.getBytes32Count(Keys.accountOrderListKey(account));
     }
 
-    function getAccountPositionKeys(DataStore dataStore, address account, uint256 start, uint256 end) internal view returns (bytes32[] memory) {
-        return dataStore.getBytes32ValuesAt(Keys.accountPositionListKey(account), start, end);
-    } */
+    function getAccountOrderKeys(DataStore dataStore, address account, uint256 start, uint256 end) internal view returns (bytes32[] memory) {
+        return dataStore.getBytes32ValuesAt(Keys.accountOrderListKey(account), start, end);
+    }
 }
