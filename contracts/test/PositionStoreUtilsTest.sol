@@ -18,4 +18,8 @@ contract PositionStoreUtilsTest {
     function setPosition(DataStore dataStore, bytes32 key, Position.Props memory position) external {
         PositionStoreUtils.set(dataStore, key, position);
     }
+
+    function removePosition(DataStore dataStore, bytes32 key, address account) external {
+        PositionStoreUtils.remove(dataStore, key, account);
+    }
 }

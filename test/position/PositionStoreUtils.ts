@@ -6,11 +6,11 @@ import { validateStoreUtils } from "../../utils/storeUtils";
 
 describe("PositionStoreUtils", () => {
   let fixture;
-  let roleStore, positionStoreUtils, positionStoreUtilsTest;
+  let roleStore, reader, positionStoreUtils, positionStoreUtilsTest;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ roleStore, positionStoreUtils } = fixture.contracts);
+    ({ roleStore, reader, positionStoreUtils } = fixture.contracts);
 
     positionStoreUtilsTest = await deployContract("PositionStoreUtilsTest", [], {
       libraries: {
@@ -25,7 +25,11 @@ describe("PositionStoreUtils", () => {
     await validateStoreUtils({
       fixture,
       getEmptyItem: positionStoreUtilsTest.getEmptyPosition,
+      getItem: reader.getPosition,
       setItem: positionStoreUtilsTest.setPosition,
+      removeItem: async (dataStore, itemKey, sampleItem) => {
+        await positionStoreUtilsTest.removePosition(dataStore.address, itemKey, sampleItem.addresses.account);
+      },
     });
   });
 });

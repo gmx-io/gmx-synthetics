@@ -16,9 +16,9 @@ export async function getSwapImpactPoolAmount(dataStore, market, token) {
 }
 
 export async function getMarketTokenPrice(fixture) {
-  const { marketReader, dataStore, ethUsdMarket } = fixture.contracts;
+  const { reader, dataStore, ethUsdMarket } = fixture.contracts;
 
-  return await marketReader.getMarketTokenPrice(
+  return await reader.getMarketTokenPrice(
     dataStore.address,
     ethUsdMarket,
     {
