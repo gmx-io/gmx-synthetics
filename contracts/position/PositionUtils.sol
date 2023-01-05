@@ -12,7 +12,7 @@ import "../data/DataStore.sol";
 import "../data/Keys.sol";
 
 import "../pricing/PositionPricingUtils.sol";
-import "../order/OrderBaseUtils.sol";
+import "../order/BaseOrderUtils.sol";
 
 // @title PositionUtils
 // @dev Library for position functions
@@ -33,7 +33,7 @@ library PositionUtils {
     // @param collateral the collateralToken of the position
     // @param collateralDeltaAmount the amount of collateralToken deposited
     struct UpdatePositionParams {
-        OrderBaseUtils.ExecuteOrderParamsContracts contracts;
+        BaseOrderUtils.ExecuteOrderParamsContracts contracts;
         Market.Props market;
         Order.Props order;
         Position.Props position;

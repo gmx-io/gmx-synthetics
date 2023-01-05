@@ -16,7 +16,7 @@ contract OrderHandler is BaseOrderHandler {
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         MarketStore _marketStore,
-        OrderStore _orderStore,
+        OrderVault _orderVault,
         Oracle _oracle,
         SwapHandler _swapHandler,
         FeeReceiver _feeReceiver,
@@ -26,7 +26,7 @@ contract OrderHandler is BaseOrderHandler {
         _dataStore,
         _eventEmitter,
         _marketStore,
-        _orderStore,
+        _orderVault,
         _oracle,
         _swapHandler,
         _feeReceiver,
@@ -35,17 +35,17 @@ contract OrderHandler is BaseOrderHandler {
 
     // @dev creates an order in the order store
     // @param account the order's account
-    // @param params OrderBaseUtils.CreateOrderParams
+    // @param params BaseOrderUtils.CreateOrderParams
     function createOrder(
         address account,
-        OrderBaseUtils.CreateOrderParams calldata params
+        BaseOrderUtils.CreateOrderParams calldata params
     ) external nonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureKey(address(this), uint256(params.orderType)));
 
         return OrderUtils.createOrder(
             dataStore,
             eventEmitter,
-            orderStore,
+            orderVault,
             marketStore,
             account,
             params
@@ -72,11 +72,9 @@ contract OrderHandler is BaseOrderHandler {
         uint256 triggerPrice,
         Order.Props memory order
     ) external payable nonReentrant {
-        OrderStore _orderStore = orderStore;
-
         FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureKey(address(this), uint256(order.orderType())));
 
-        if (OrderBaseUtils.isMarketOrder(order.orderType())) {
+        if (BaseOrderUtils.isMarketOrder(order.orderType())) {
             revert("OrderHandler: invalid orderType");
         }
 
@@ -88,14 +86,14 @@ contract OrderHandler is BaseOrderHandler {
         // allow topping up of executionFee as partially filled or frozen orders
         // will have their executionFee reduced
         address wnt = TokenUtils.wnt(dataStore);
-        uint256 receivedWnt = _orderStore.recordTransferIn(wnt);
+        uint256 receivedWnt = orderVault.recordTransferIn(wnt);
         order.setExecutionFee(order.executionFee() + receivedWnt);
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee());
 
         order.touch();
-        _orderStore.set(key, order);
+        OrderStoreUtils.set(dataStore, key, order);
 
         eventEmitter.emitOrderUpdated(key, sizeDeltaUsd, triggerPrice, acceptablePrice);
     }
@@ -119,7 +117,7 @@ contract OrderHandler is BaseOrderHandler {
 
         FeatureUtils.validateFeature(_dataStore, Keys.cancelOrderFeatureKey(address(this), uint256(order.orderType())));
 
-        if (OrderBaseUtils.isMarketOrder(order.orderType())) {
+        if (BaseOrderUtils.isMarketOrder(order.orderType())) {
             ExchangeUtils.validateRequestCancellation(
                 _dataStore,
                 order.updatedAtBlock(),
@@ -130,7 +128,7 @@ contract OrderHandler is BaseOrderHandler {
         OrderUtils.cancelOrder(
             dataStore,
             eventEmitter,
-            orderStore,
+            orderVault,
             key,
             order.account(),
             startingGas,
@@ -207,7 +205,7 @@ contract OrderHandler is BaseOrderHandler {
         address keeper,
         uint256 startingGas
     ) external nonReentrant onlySelf {
-        OrderBaseUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, keeper, startingGas);
+        BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, keeper, startingGas);
         // limit swaps require frozen order keeper as well since on creation it can fail due to output amount
         // which would automatically cause the order to be frozen
         // limit increase and decrease positions may fail due to output amount as well and become frozen
@@ -232,14 +230,14 @@ contract OrderHandler is BaseOrderHandler {
         bytes memory reason,
         bytes32 reasonKey
     ) internal {
-        Order.Props memory order = orderStore.get(key);
-        bool isMarketOrder = OrderBaseUtils.isMarketOrder(order.orderType());
+        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+        bool isMarketOrder = BaseOrderUtils.isMarketOrder(order.orderType());
 
         if (isMarketOrder) {
             OrderUtils.cancelOrder(
                 dataStore,
                 eventEmitter,
-                orderStore,
+                orderVault,
                 key,
                 msg.sender,
                 startingGas,
@@ -264,7 +262,7 @@ contract OrderHandler is BaseOrderHandler {
             OrderUtils.freezeOrder(
                 dataStore,
                 eventEmitter,
-                orderStore,
+                orderVault,
                 key,
                 msg.sender,
                 startingGas,

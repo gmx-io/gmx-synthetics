@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
-import { OrderType, createOrder, executeOrder, handleOrder } from "../../utils/order";
+import { OrderType, getOrderCount, getOrderKeys, createOrder, executeOrder, handleOrder } from "../../utils/order";
 import { getPositionCount, getAccountPositionCount } from "../../utils/position";
 import * as keys from "../../utils/keys";
 
@@ -12,13 +12,13 @@ describe("Exchange.IncreaseOrder", () => {
 
   let fixture;
   let user0, user1;
-  let dataStore, orderStore, ethUsdMarket, wnt;
+  let reader, dataStore, ethUsdMarket, wnt;
   let executionFee;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1 } = fixture.accounts);
-    ({ dataStore, orderStore, ethUsdMarket, wnt } = fixture.contracts);
+    ({ reader, dataStore, ethUsdMarket, wnt } = fixture.contracts);
     ({ executionFee } = fixture.props);
 
     await handleDeposit(fixture, {
@@ -30,7 +30,7 @@ describe("Exchange.IncreaseOrder", () => {
   });
 
   it("createOrder", async () => {
-    expect(await orderStore.getOrderCount()).eq(0);
+    expect(await getOrderCount(dataStore)).eq(0);
     const params = {
       market: ethUsdMarket,
       initialCollateralToken: wnt,
@@ -48,12 +48,12 @@ describe("Exchange.IncreaseOrder", () => {
 
     await createOrder(fixture, params);
 
-    expect(await orderStore.getOrderCount()).eq(1);
+    expect(await getOrderCount(dataStore)).eq(1);
 
     const block = await provider.getBlock();
 
-    const orderKeys = await orderStore.getOrderKeys(0, 1);
-    const order = await orderStore.get(orderKeys[0]);
+    const orderKeys = await getOrderKeys(dataStore, 0, 1);
+    const order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
     expect(order.addresses.account).eq(user0.address);
     expect(order.addresses.market).eq(ethUsdMarket.marketToken);
@@ -71,7 +71,7 @@ describe("Exchange.IncreaseOrder", () => {
   });
 
   it("executeOrder", async () => {
-    expect(await orderStore.getOrderCount()).eq(0);
+    expect(await getOrderCount(dataStore)).eq(0);
 
     const params = {
       market: ethUsdMarket,
@@ -89,7 +89,7 @@ describe("Exchange.IncreaseOrder", () => {
 
     await createOrder(fixture, params);
 
-    expect(await orderStore.getOrderCount()).eq(1);
+    expect(await getOrderCount(dataStore)).eq(1);
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
     expect(await getPositionCount(dataStore)).eq(0);
 
@@ -97,7 +97,7 @@ describe("Exchange.IncreaseOrder", () => {
       gasUsageLabel: "executeOrder",
     });
 
-    expect(await orderStore.getOrderCount()).eq(0);
+    expect(await getOrderCount(dataStore)).eq(0);
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
     expect(await getPositionCount(dataStore)).eq(1);
 
@@ -122,7 +122,7 @@ describe("Exchange.IncreaseOrder", () => {
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
     await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
-    expect(await orderStore.getOrderCount()).eq(0);
+    expect(await getOrderCount(dataStore)).eq(0);
 
     const params = {
       market: ethUsdMarket,
@@ -140,7 +140,7 @@ describe("Exchange.IncreaseOrder", () => {
 
     await createOrder(fixture, params);
 
-    expect(await orderStore.getOrderCount()).eq(1);
+    expect(await getOrderCount(dataStore)).eq(1);
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
     expect(await getPositionCount(dataStore)).eq(0);
 
@@ -148,7 +148,7 @@ describe("Exchange.IncreaseOrder", () => {
       gasUsageLabel: "executeOrder",
     });
 
-    expect(await orderStore.getOrderCount()).eq(0);
+    expect(await getOrderCount(dataStore)).eq(0);
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
     expect(await getPositionCount(dataStore)).eq(1);
 

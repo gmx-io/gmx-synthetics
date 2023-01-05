@@ -16,9 +16,9 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const marketStore = await get("MarketStore");
   const depositStore = await get("DepositStore");
   const withdrawalStore = await get("WithdrawalStore");
-  const orderStore = await get("OrderStore");
   const referralStorage = await get("ReferralStorage");
   const gasUtils = await get("GasUtils");
+  const orderStoreUtils = await get("OrderStoreUtils");
 
   const deployArgs = [
     router.address,
@@ -31,7 +31,6 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     marketStore.address,
     depositStore.address,
     withdrawalStore.address,
-    orderStore.address,
     referralStorage.address,
   ];
   const { address } = await deploy("ExchangeRouter", {
@@ -40,6 +39,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     args: deployArgs,
     libraries: {
       GasUtils: gasUtils.address,
+      OrderStoreUtils: orderStoreUtils.address,
     },
   });
 
@@ -58,7 +58,7 @@ func.dependencies = [
   "MarketStore",
   "DepositStore",
   "WithdrawalStore",
-  "OrderStore",
   "ReferralStorage",
+  "OrderStoreUtils",
 ];
 export default func;

@@ -3,19 +3,19 @@ import { expect } from "chai";
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
-import { OrderType, handleOrder } from "../../utils/order";
+import { OrderType, getOrderCount, handleOrder } from "../../utils/order";
 import { getAccountPositionCount } from "../../utils/position";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.DecreaseOrder", () => {
   let fixture;
   let user0;
-  let dataStore, orderStore, ethUsdMarket, wnt, usdc;
+  let dataStore, ethUsdMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0 } = fixture.accounts);
-    ({ dataStore, orderStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ dataStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -45,7 +45,7 @@ describe("Exchange.DecreaseOrder", () => {
     });
 
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
-    expect(await orderStore.getOrderCount()).eq(0);
+    expect(await getOrderCount(dataStore)).eq(0);
 
     await handleOrder(fixture, {
       create: {
@@ -66,7 +66,7 @@ describe("Exchange.DecreaseOrder", () => {
     });
 
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
-    expect(await orderStore.getOrderCount()).eq(0);
+    expect(await getOrderCount(dataStore)).eq(0);
   });
 
   it("executeOrder with price impact", async () => {
@@ -96,7 +96,7 @@ describe("Exchange.DecreaseOrder", () => {
     });
 
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
-    expect(await orderStore.getOrderCount()).eq(0);
+    expect(await getOrderCount(dataStore)).eq(0);
 
     await handleOrder(fixture, {
       create: {
@@ -117,6 +117,6 @@ describe("Exchange.DecreaseOrder", () => {
     });
 
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
-    expect(await orderStore.getOrderCount()).eq(0);
+    expect(await getOrderCount(dataStore)).eq(0);
   });
 });

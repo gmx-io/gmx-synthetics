@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 
-import "../order/OrderStore.sol";
+import "../order/OrderStoreUtils.sol";
 import "../position/PositionUtils.sol";
 import "../position/PositionStoreUtils.sol";
 import "../nonce/NonceUtils.sol";
@@ -52,7 +52,6 @@ library AdlUtils {
     // @param updatedAtBlock the block to set the order's updatedAtBlock to
     struct CreateAdlOrderParams {
         DataStore dataStore;
-        OrderStore orderStore;
         address account;
         address market;
         address collateralToken;
@@ -246,7 +245,7 @@ library AdlUtils {
         );
 
         bytes32 key = NonceUtils.getNextKey(params.dataStore);
-        params.orderStore.set(key, order);
+        OrderStoreUtils.set(params.dataStore, key, order);
 
         return key;
     }

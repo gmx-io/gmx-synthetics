@@ -3,19 +3,19 @@ import { expect } from "chai";
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
-import { OrderType, handleOrder, executeLiquidation } from "../../utils/order";
+import { OrderType, getOrderCount, handleOrder, executeLiquidation } from "../../utils/order";
 import { grantRole } from "../../utils/role";
 import { getAccountPositionCount } from "../../utils/position";
 
 describe("Exchange.LiquidationOrder", () => {
   let fixture;
   let wallet, user0;
-  let roleStore, dataStore, orderStore, ethUsdMarket, wnt, usdc;
+  let roleStore, dataStore, ethUsdMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ wallet, user0 } = fixture.accounts);
-    ({ roleStore, dataStore, orderStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ roleStore, dataStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -46,7 +46,7 @@ describe("Exchange.LiquidationOrder", () => {
     });
 
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
-    expect(await orderStore.getOrderCount()).eq(0);
+    expect(await getOrderCount(dataStore)).eq(0);
 
     await grantRole(roleStore, wallet.address, "LIQUIDATION_KEEPER");
 
@@ -63,7 +63,7 @@ describe("Exchange.LiquidationOrder", () => {
     ).to.be.revertedWith("DecreasePositionUtils: Invalid Liquidation");
 
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
-    expect(await orderStore.getOrderCount()).eq(0);
+    expect(await getOrderCount(dataStore)).eq(0);
 
     await executeLiquidation(fixture, {
       account: user0.address,
@@ -76,6 +76,6 @@ describe("Exchange.LiquidationOrder", () => {
     });
 
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
-    expect(await orderStore.getOrderCount()).eq(0);
+    expect(await getOrderCount(dataStore)).eq(0);
   });
 });

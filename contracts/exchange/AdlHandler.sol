@@ -27,7 +27,7 @@ contract AdlHandler is BaseOrderHandler {
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         MarketStore _marketStore,
-        OrderStore _orderStore,
+        OrderVault _orderVault,
         Oracle _oracle,
         SwapHandler _swapHandler,
         FeeReceiver _feeReceiver,
@@ -37,7 +37,7 @@ contract AdlHandler is BaseOrderHandler {
         _dataStore,
         _eventEmitter,
         _marketStore,
-        _orderStore,
+        _orderVault,
         _oracle,
         _swapHandler,
         _feeReceiver,
@@ -124,7 +124,6 @@ contract AdlHandler is BaseOrderHandler {
         cache.key = AdlUtils.createAdlOrder(
             AdlUtils.CreateAdlOrderParams(
                 dataStore,
-                orderStore,
                 account,
                 market,
                 collateralToken,
@@ -134,7 +133,7 @@ contract AdlHandler is BaseOrderHandler {
             )
         );
 
-        OrderBaseUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(cache.key, oracleParams, msg.sender, cache.startingGas);
+        BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(cache.key, oracleParams, msg.sender, cache.startingGas);
 
         FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeAdlFeatureKey(address(this), uint256(params.order.orderType())));
 

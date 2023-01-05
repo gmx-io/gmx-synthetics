@@ -35,7 +35,7 @@ export function getAccountOrderKeys(dataStore, account, start, end) {
 export async function createOrder(fixture, overrides) {
   const { initialCollateralToken, initialCollateralDeltaAmount, orderType, gasUsageLabel } = overrides;
 
-  const { orderStore, orderHandler, wnt } = fixture.contracts;
+  const { orderVault, orderHandler, wnt } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
   const account = overrides.account || user0;
@@ -52,8 +52,8 @@ export async function createOrder(fixture, overrides) {
   const minOutputAmount = overrides.minOutputAmount || 0;
   const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
 
-  await initialCollateralToken.mint(orderStore.address, initialCollateralDeltaAmount);
-  await wnt.mint(orderStore.address, executionFee);
+  await initialCollateralToken.mint(orderVault.address, initialCollateralDeltaAmount);
+  await wnt.mint(orderVault.address, executionFee);
 
   const params = {
     addresses: {
@@ -85,14 +85,14 @@ export async function createOrder(fixture, overrides) {
 export async function executeOrder(fixture, overrides) {
   const { wnt, usdc } = fixture.contracts;
   const { gasUsageLabel } = overrides;
-  const { orderStore, orderHandler } = fixture.contracts;
+  const { reader, dataStore, orderHandler } = fixture.contracts;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
   const tokenOracleTypes = overrides.tokenOracleTypes || [TOKEN_ORACLE_TYPES.DEFAULT, TOKEN_ORACLE_TYPES.DEFAULT];
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
-  const orderKeys = await orderStore.getOrderKeys(0, 1);
-  const order = await orderStore.get(orderKeys[0]);
+  const orderKeys = await getOrderKeys(dataStore, 0, 1);
+  const order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
   const params = {
     key: orderKeys[0],

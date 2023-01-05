@@ -8,7 +8,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const roleStore = await get("RoleStore");
   const dataStore = await get("DataStore");
   const eventEmitter = await get("EventEmitter");
-  const orderStore = await get("OrderStore");
+  const orderVault = await get("OrderVault");
   const marketStore = await get("MarketStore");
   const oracle = await get("Oracle");
   const swapHandler = await get("SwapHandler");
@@ -17,6 +17,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const gasUtils = await get("GasUtils");
   const orderUtils = await get("OrderUtils");
   const positionStoreUtils = await get("PositionStoreUtils");
+  const orderStoreUtils = await get("OrderStoreUtils");
 
   const { address } = await deploy("OrderHandler", {
     from: deployer,
@@ -26,7 +27,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
       dataStore.address,
       eventEmitter.address,
       marketStore.address,
-      orderStore.address,
+      orderVault.address,
       oracle.address,
       swapHandler.address,
       feeReceiver.address,
@@ -36,6 +37,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
       GasUtils: gasUtils.address,
       OrderUtils: orderUtils.address,
       PositionStoreUtils: positionStoreUtils.address,
+      OrderStoreUtils: orderStoreUtils.address,
     },
   });
 
@@ -48,7 +50,7 @@ func.dependencies = [
   "DataStore",
   "EventEmitter",
   "MarketStore",
-  "OrderStore",
+  "OrderVault",
   "Oracle",
   "SwapHandler",
   "FeeReceiver",
@@ -56,5 +58,6 @@ func.dependencies = [
   "GasUtils",
   "OrderUtils",
   "PositionStoreUtils",
+  "OrderStoreUtils",
 ];
 export default func;

@@ -4,10 +4,10 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  await deploy("OrderBaseUtils", {
+  await deploy("BaseOrderUtils", {
     from: deployer,
     log: true,
   });
 };
-func.tags = ["OrderBaseUtils"];
+func.tags = ["BaseOrderUtils"];
 export default func;

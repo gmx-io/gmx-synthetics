@@ -16,7 +16,7 @@ contract LiquidationHandler is BaseOrderHandler {
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         MarketStore _marketStore,
-        OrderStore _orderStore,
+        OrderVault _orderVault,
         Oracle _oracle,
         SwapHandler _swapHandler,
         FeeReceiver _feeReceiver,
@@ -26,7 +26,7 @@ contract LiquidationHandler is BaseOrderHandler {
         _dataStore,
         _eventEmitter,
         _marketStore,
-        _orderStore,
+        _orderVault,
         _oracle,
         _swapHandler,
         _feeReceiver,
@@ -54,14 +54,13 @@ contract LiquidationHandler is BaseOrderHandler {
 
         bytes32 key = LiquidationUtils.createLiquidationOrder(
             dataStore,
-            orderStore,
             account,
             market,
             collateralToken,
             isLong
         );
 
-        OrderBaseUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, msg.sender, startingGas);
+        BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, msg.sender, startingGas);
 
         FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeOrderFeatureKey(address(this), uint256(params.order.orderType())));
 

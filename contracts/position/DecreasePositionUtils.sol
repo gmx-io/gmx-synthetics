@@ -14,7 +14,7 @@ import "../pricing/PositionPricingUtils.sol";
 import "./Position.sol";
 import "./PositionStoreUtils.sol";
 import "./PositionUtils.sol";
-import "../order/OrderBaseUtils.sol";
+import "../order/BaseOrderUtils.sol";
 
 import "./DecreasePositionCollateralUtils.sol";
 
@@ -75,7 +75,7 @@ library DecreasePositionUtils {
         cache.pnlToken = params.position.isLong() ? params.market.longToken : params.market.shortToken;
         cache.pnlTokenPrice = params.position.isLong() ? cache.prices.longTokenPrice : cache.prices.shortTokenPrice;
 
-        if (OrderBaseUtils.isLiquidationOrder(params.order.orderType()) && !PositionUtils.isPositionLiquidatable(
+        if (BaseOrderUtils.isLiquidationOrder(params.order.orderType()) && !PositionUtils.isPositionLiquidatable(
             params.contracts.dataStore,
             params.contracts.referralStorage,
             params.position,

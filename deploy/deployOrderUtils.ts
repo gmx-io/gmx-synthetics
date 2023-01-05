@@ -4,7 +4,8 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { deploy, get } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  const orderBaseUtils = await get("OrderBaseUtils");
+  const baseOrderUtils = await get("BaseOrderUtils");
+  const orderStoreUtils = await get("OrderStoreUtils");
   const increaseOrderUtils = await get("IncreaseOrderUtils");
   const decreaseOrderUtils = await get("DecreaseOrderUtils");
   const swapOrderUtils = await get("SwapOrderUtils");
@@ -14,7 +15,8 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     from: deployer,
     log: true,
     libraries: {
-      OrderBaseUtils: orderBaseUtils.address,
+      BaseOrderUtils: baseOrderUtils.address,
+      OrderStoreUtils: orderStoreUtils.address,
       IncreaseOrderUtils: increaseOrderUtils.address,
       DecreaseOrderUtils: decreaseOrderUtils.address,
       SwapOrderUtils: swapOrderUtils.address,
@@ -23,5 +25,12 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   });
 };
 func.tags = ["OrderUtils"];
-func.dependencies = ["OrderBaseUtils", "IncreaseOrderUtils", "DecreaseOrderUtils", "SwapOrderUtils", "GasUtils"];
+func.dependencies = [
+  "BaseOrderUtils",
+  "OrderStoreUtils",
+  "IncreaseOrderUtils",
+  "DecreaseOrderUtils",
+  "SwapOrderUtils",
+  "GasUtils",
+];
 export default func;

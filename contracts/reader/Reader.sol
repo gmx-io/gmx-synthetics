@@ -8,7 +8,6 @@ import "../position/Position.sol";
 import "../position/PositionUtils.sol";
 import "../position/PositionStoreUtils.sol";
 
-import "../order/OrderStore.sol";
 import "../order/OrderStoreUtils.sol";
 
 import "../market/MarketUtils.sol";
@@ -114,16 +113,16 @@ contract Reader {
     }
 
     function getAccountOrders(
-        OrderStore orderStore,
+        DataStore dataStore,
         address account,
         uint256 start,
         uint256 end
     ) external view returns (Order.Props[] memory) {
-        bytes32[] memory orderKeys = orderStore.getAccountOrderKeys(account, start, end);
+        bytes32[] memory orderKeys = OrderStoreUtils.getAccountOrderKeys(dataStore, account, start, end);
         Order.Props[] memory orders = new Order.Props[](orderKeys.length);
         for (uint256 i = 0; i < orderKeys.length; i++) {
             bytes32 orderKey = orderKeys[i];
-            orders[i] = orderStore.get(orderKey);
+            orders[i] = OrderStoreUtils.get(dataStore, orderKey);
         }
 
         return orders;

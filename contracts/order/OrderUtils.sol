@@ -7,7 +7,8 @@ import "../data/Keys.sol";
 import "../fee/FeeReceiver.sol";
 
 import "./Order.sol";
-import "./OrderStore.sol";
+import "./OrderVault.sol";
+import "./OrderStoreUtils.sol";
 
 import "../nonce/NonceUtils.sol";
 import "../oracle/Oracle.sol";
@@ -17,7 +18,7 @@ import "../event/EventEmitter.sol";
 import "./IncreaseOrderUtils.sol";
 import "./DecreaseOrderUtils.sol";
 import "./SwapOrderUtils.sol";
-import "./OrderBaseUtils.sol";
+import "./BaseOrderUtils.sol";
 
 import "../market/MarketStore.sol";
 import "../swap/SwapUtils.sol";
@@ -41,14 +42,14 @@ library OrderUtils {
     // @param orderStore OrderStore
     // @param marketStore MarketStore
     // @param account the order account
-    // @param params OrderBaseUtils.CreateOrderParams
+    // @param params BaseOrderUtils.CreateOrderParams
     function createOrder(
         DataStore dataStore,
         EventEmitter eventEmitter,
-        OrderStore orderStore,
+        OrderVault orderVault,
         MarketStore marketStore,
         address account,
-        OrderBaseUtils.CreateOrderParams memory params
+        BaseOrderUtils.CreateOrderParams memory params
     ) external returns (bytes32) {
         uint256 initialCollateralDeltaAmount;
 
@@ -60,14 +61,14 @@ library OrderUtils {
             params.orderType == Order.OrderType.MarketIncrease ||
             params.orderType == Order.OrderType.LimitIncrease
         ) {
-            initialCollateralDeltaAmount = orderStore.recordTransferIn(params.addresses.initialCollateralToken);
+            initialCollateralDeltaAmount = orderVault.recordTransferIn(params.addresses.initialCollateralToken);
         }
 
         if (params.addresses.initialCollateralToken == wnt) {
             require(initialCollateralDeltaAmount >= params.numbers.executionFee, "OrderUtils: invalid executionFee");
             initialCollateralDeltaAmount -= params.numbers.executionFee;
         } else {
-            uint256 wntAmount = orderStore.recordTransferIn(wnt);
+            uint256 wntAmount = orderVault.recordTransferIn(wnt);
             require(wntAmount == params.numbers.executionFee, "OrderUtils: invalid wntAmount");
         }
 
@@ -76,7 +77,7 @@ library OrderUtils {
             dataStore,
             marketStore,
             params.addresses.swapPath,
-            OrderBaseUtils.isDecreaseOrder(params.orderType)
+            BaseOrderUtils.isDecreaseOrder(params.orderType)
         );
 
         Order.Props memory order;
@@ -104,7 +105,7 @@ library OrderUtils {
         bytes32 key = NonceUtils.getNextKey(dataStore);
 
         order.touch();
-        orderStore.set(key, order);
+        OrderStoreUtils.set(dataStore, key, order);
 
         eventEmitter.emitOrderCreated(key, order);
 
@@ -112,11 +113,11 @@ library OrderUtils {
     }
 
     // @dev executes an order
-    // @param params OrderBaseUtils.ExecuteOrderParams
-    function executeOrder(OrderBaseUtils.ExecuteOrderParams memory params) external {
-        OrderBaseUtils.validateNonEmptyOrder(params.order);
+    // @param params BaseOrderUtils.ExecuteOrderParams
+    function executeOrder(BaseOrderUtils.ExecuteOrderParams memory params) external {
+        BaseOrderUtils.validateNonEmptyOrder(params.order);
 
-        OrderBaseUtils.setExactOrderPrice(
+        BaseOrderUtils.setExactOrderPrice(
             params.contracts.oracle,
             params.market.indexToken,
             params.order.orderType(),
@@ -134,7 +135,7 @@ library OrderUtils {
 
         GasUtils.payExecutionFee(
             params.contracts.dataStore,
-            params.contracts.orderStore,
+            params.contracts.orderVault,
             params.order.executionFee(),
             params.startingGas,
             params.keeper,
@@ -143,24 +144,24 @@ library OrderUtils {
     }
 
     // @dev process an order execution
-    // @param params OrderBaseUtils.ExecuteOrderParams
-    function processOrder(OrderBaseUtils.ExecuteOrderParams memory params) internal {
-        if (OrderBaseUtils.isIncreaseOrder(params.order.orderType())) {
+    // @param params BaseOrderUtils.ExecuteOrderParams
+    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) internal {
+        if (BaseOrderUtils.isIncreaseOrder(params.order.orderType())) {
             IncreaseOrderUtils.processOrder(params);
             return;
         }
 
-        if (OrderBaseUtils.isDecreaseOrder(params.order.orderType())) {
+        if (BaseOrderUtils.isDecreaseOrder(params.order.orderType())) {
             DecreaseOrderUtils.processOrder(params);
             return;
         }
 
-        if (OrderBaseUtils.isSwapOrder(params.order.orderType())) {
+        if (BaseOrderUtils.isSwapOrder(params.order.orderType())) {
             SwapOrderUtils.processOrder(params);
             return;
         }
 
-        OrderBaseUtils.revertUnsupportedOrderType();
+        BaseOrderUtils.revertUnsupportedOrderType();
     }
 
     // @dev cancels an order
@@ -174,18 +175,18 @@ library OrderUtils {
     function cancelOrder(
         DataStore dataStore,
         EventEmitter eventEmitter,
-        OrderStore orderStore,
+        OrderVault orderVault,
         bytes32 key,
         address keeper,
         uint256 startingGas,
         bytes memory reason
     ) external {
-        Order.Props memory order = orderStore.get(key);
-        OrderBaseUtils.validateNonEmptyOrder(order);
+        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+        BaseOrderUtils.validateNonEmptyOrder(order);
 
-        if (OrderBaseUtils.isIncreaseOrder(order.orderType()) || OrderBaseUtils.isSwapOrder(order.orderType())) {
+        if (BaseOrderUtils.isIncreaseOrder(order.orderType()) || BaseOrderUtils.isSwapOrder(order.orderType())) {
             if (order.initialCollateralDeltaAmount() > 0) {
-                orderStore.transferOut(
+                orderVault.transferOut(
                     order.initialCollateralToken(),
                     order.account(),
                     order.initialCollateralDeltaAmount(),
@@ -194,7 +195,7 @@ library OrderUtils {
             }
         }
 
-        orderStore.remove(key, order.account());
+        OrderStoreUtils.remove(dataStore, key, order.account());
 
         eventEmitter.emitOrderCancelled(key, reason);
 
@@ -202,7 +203,7 @@ library OrderUtils {
 
         GasUtils.payExecutionFee(
             dataStore,
-            orderStore,
+            orderVault,
             order.executionFee(),
             startingGas,
             keeper,
@@ -221,24 +222,24 @@ library OrderUtils {
     function freezeOrder(
         DataStore dataStore,
         EventEmitter eventEmitter,
-        OrderStore orderStore,
+        OrderVault orderVault,
         bytes32 key,
         address keeper,
         uint256 startingGas,
         bytes memory reason
     ) external {
-        Order.Props memory order = orderStore.get(key);
-        OrderBaseUtils.validateNonEmptyOrder(order);
+        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+        BaseOrderUtils.validateNonEmptyOrder(order);
 
         uint256 executionFee = order.executionFee();
 
         order.setExecutionFee(0);
         order.setIsFrozen(true);
-        orderStore.set(key, order);
+        OrderStoreUtils.set(dataStore, key, order);
 
         GasUtils.payExecutionFee(
             dataStore,
-            orderStore,
+            orderVault,
             executionFee,
             startingGas,
             keeper,

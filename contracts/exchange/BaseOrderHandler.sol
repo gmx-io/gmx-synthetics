@@ -17,7 +17,7 @@ import "../market/MarketStore.sol";
 import "../market/MarketToken.sol";
 
 import "../order/Order.sol";
-import "../order/OrderStore.sol";
+import "../order/OrderVault.sol";
 import "../order/OrderUtils.sol";
 
 import "../oracle/Oracle.sol";
@@ -37,7 +37,7 @@ contract BaseOrderHandler is ReentrancyGuard, RoleModule, OracleModule {
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     MarketStore public immutable marketStore;
-    OrderStore public immutable orderStore;
+    OrderVault public immutable orderVault;
     SwapHandler public immutable swapHandler;
     Oracle public immutable oracle;
     FeeReceiver public immutable feeReceiver;
@@ -48,7 +48,7 @@ contract BaseOrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         MarketStore _marketStore,
-        OrderStore _orderStore,
+        OrderVault _orderVault,
         Oracle _oracle,
         SwapHandler _swapHandler,
         FeeReceiver _feeReceiver,
@@ -57,39 +57,39 @@ contract BaseOrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         marketStore = _marketStore;
-        orderStore = _orderStore;
+        orderVault = _orderVault;
         oracle = _oracle;
         swapHandler = _swapHandler;
         feeReceiver = _feeReceiver;
         referralStorage = _referralStorage;
     }
 
-    // @dev get the OrderBaseUtils.ExecuteOrderParams to execute an order
+    // @dev get the BaseOrderUtils.ExecuteOrderParams to execute an order
     // @param key the key of the order to execute
     // @param oracleParams OracleUtils.SetPricesParams
     // @param keeper the keeper executing the order
     // @param startingGas the starting gas
-    // @return the required OrderBaseUtils.ExecuteOrderParams params to execute the order
+    // @return the required BaseOrderUtils.ExecuteOrderParams params to execute the order
     function _getExecuteOrderParams(
         bytes32 key,
         OracleUtils.SetPricesParams memory oracleParams,
         address keeper,
         uint256 startingGas
-    ) internal view returns (OrderBaseUtils.ExecuteOrderParams memory) {
-        OrderBaseUtils.ExecuteOrderParams memory params;
+    ) internal view returns (BaseOrderUtils.ExecuteOrderParams memory) {
+        BaseOrderUtils.ExecuteOrderParams memory params;
 
         params.key = key;
-        params.order = orderStore.get(key);
+        params.order = OrderStoreUtils.get(dataStore, key);
         params.swapPathMarkets = MarketUtils.getEnabledMarkets(
             dataStore,
             marketStore,
             params.order.swapPath(),
-            OrderBaseUtils.isDecreaseOrder(params.order.orderType())
+            BaseOrderUtils.isDecreaseOrder(params.order.orderType())
         );
 
         params.contracts.dataStore = dataStore;
         params.contracts.eventEmitter = eventEmitter;
-        params.contracts.orderStore = orderStore;
+        params.contracts.orderVault = orderVault;
         params.contracts.oracle = oracle;
         params.contracts.swapHandler = swapHandler;
         params.contracts.feeReceiver = feeReceiver;

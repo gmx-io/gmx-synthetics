@@ -66,7 +66,6 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     MarketStore public immutable marketStore;
     DepositStore public immutable depositStore;
     WithdrawalStore public immutable withdrawalStore;
-    OrderStore public immutable orderStore;
     IReferralStorage public immutable referralStorage;
 
     // @dev Constructor that initializes the contract with the provided Router, RoleStore, DataStore,
@@ -83,7 +82,6 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         MarketStore _marketStore,
         DepositStore _depositStore,
         WithdrawalStore _withdrawalStore,
-        OrderStore _orderStore,
         IReferralStorage _referralStorage
     ) RoleModule(_roleStore) {
         router = _router;
@@ -97,7 +95,6 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         marketStore = _marketStore;
         depositStore = _depositStore;
         withdrawalStore = _withdrawalStore;
-        orderStore = _orderStore;
 
         referralStorage = _referralStorage;
     }
@@ -172,7 +169,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
      * referral code is also set on the caller's account using the referral storage contract.
      */
     function createOrder(
-        OrderBaseUtils.CreateOrderParams calldata params,
+        BaseOrderUtils.CreateOrderParams calldata params,
         bytes32 referralCode
     ) external payable nonReentrant returns (bytes32) {
         require(params.orderType != Order.OrderType.Liquidation, "ExchangeRouter: invalid order type");
@@ -213,7 +210,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         uint256 acceptablePrice,
         uint256 triggerPrice
     ) external payable nonReentrant {
-        Order.Props memory order = orderStore.get(key);
+        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         require(order.account() == msg.sender, "ExchangeRouter: forbidden");
 
         orderHandler.updateOrder(key, sizeDeltaUsd, acceptablePrice, triggerPrice, order);
@@ -229,7 +226,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
      * @param key The unique ID of the order to be cancelled
      */
     function cancelOrder(bytes32 key) external payable nonReentrant {
-        Order.Props memory order = orderStore.get(key);
+        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         require(order.account() == msg.sender, "ExchangeRouter: forbidden");
 
         orderHandler.cancelOrder(key, order);

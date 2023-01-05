@@ -14,7 +14,7 @@ import "../pricing/PositionPricingUtils.sol";
 import "./Position.sol";
 import "./PositionStoreUtils.sol";
 import "./PositionUtils.sol";
-import "../order/OrderBaseUtils.sol";
+import "../order/BaseOrderUtils.sol";
 
 // @title IncreasePositionUtils
 // @dev Libary for functions to help with increasing a position
@@ -239,7 +239,7 @@ library IncreasePositionUtils {
             params.order.sizeDeltaUsd()
         );
 
-        uint256 executionPrice = OrderBaseUtils.getExecutionPrice(
+        uint256 executionPrice = BaseOrderUtils.getExecutionPrice(
             params.contracts.oracle.getCustomPrice(params.market.indexToken),
             params.order.sizeDeltaUsd(),
             priceImpactUsd,

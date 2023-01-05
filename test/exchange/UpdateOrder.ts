@@ -4,20 +4,20 @@ import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { printGasUsage } from "../../utils/gas";
 import { handleDeposit } from "../../utils/deposit";
-import { OrderType, createOrder } from "../../utils/order";
+import { OrderType, getOrderCount, getOrderKeys, createOrder } from "../../utils/order";
 
 describe("Exchange.UpdateOrder", () => {
   const { provider } = ethers;
 
   let fixture;
   let user0, user1;
-  let orderStore, exchangeRouter, ethUsdMarket, wnt;
+  let reader, dataStore, exchangeRouter, ethUsdMarket, wnt;
   let executionFee;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1 } = fixture.accounts);
-    ({ orderStore, exchangeRouter, ethUsdMarket, wnt } = fixture.contracts);
+    ({ reader, dataStore, exchangeRouter, ethUsdMarket, wnt } = fixture.contracts);
     ({ executionFee } = fixture.props);
 
     await handleDeposit(fixture, {
@@ -29,7 +29,7 @@ describe("Exchange.UpdateOrder", () => {
   });
 
   it("updateOrder", async () => {
-    expect(await orderStore.getOrderCount()).eq(0);
+    expect(await getOrderCount(dataStore)).eq(0);
     const params = {
       market: ethUsdMarket,
       initialCollateralToken: wnt,
@@ -47,12 +47,12 @@ describe("Exchange.UpdateOrder", () => {
 
     await createOrder(fixture, params);
 
-    expect(await orderStore.getOrderCount()).eq(1);
+    expect(await getOrderCount(dataStore)).eq(1);
 
     let block = await provider.getBlock();
 
-    const orderKeys = await orderStore.getOrderKeys(0, 1);
-    let order = await orderStore.get(orderKeys[0]);
+    const orderKeys = await getOrderKeys(dataStore, 0, 1);
+    let order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
     expect(order.addresses.account).eq(user0.address);
     expect(order.addresses.market).eq(ethUsdMarket.marketToken);
@@ -82,7 +82,7 @@ describe("Exchange.UpdateOrder", () => {
 
     await printGasUsage(provider, txn, "updateOrder");
 
-    order = await orderStore.get(orderKeys[0]);
+    order = await reader.getOrder(dataStore.address, orderKeys[0]);
     expect(order.addresses.account).eq(user0.address);
     expect(order.addresses.market).eq(ethUsdMarket.marketToken);
     expect(order.addresses.initialCollateralToken).eq(wnt.address);

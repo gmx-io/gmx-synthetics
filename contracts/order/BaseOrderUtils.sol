@@ -8,7 +8,7 @@ import "../market/Market.sol";
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 
-import "../order/OrderStore.sol";
+import "../order/OrderVault.sol";
 
 import "../oracle/Oracle.sol";
 import "../swap/SwapHandler.sol";
@@ -16,7 +16,7 @@ import "../swap/SwapHandler.sol";
 // @title Order
 // @dev Libary for common order functions used in OrderUtils, IncreaseOrderUtils
 // DecreaseOrderUtils, SwapOrderUtils
-library OrderBaseUtils {
+library BaseOrderUtils {
     using SafeCast for int256;
     using SafeCast for uint256;
 
@@ -92,7 +92,7 @@ library OrderBaseUtils {
 
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
-    // @param orderStore OrderStore
+    // @param orderVault OrderVault
     // @param oracle Oracle
     // @param swapHandler SwapHandler
     // @param feeReceiver FeeReceiver
@@ -100,7 +100,7 @@ library OrderBaseUtils {
     struct ExecuteOrderParamsContracts {
         DataStore dataStore;
         EventEmitter eventEmitter;
-        OrderStore orderStore;
+        OrderVault orderVault;
         Oracle oracle;
         SwapHandler swapHandler;
         FeeReceiver feeReceiver;

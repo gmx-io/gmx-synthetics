@@ -12,7 +12,7 @@ export async function validateStoreUtils({
   getItemKeys,
   getAccountItemCount,
   getAccountItemKeys,
-  overrideValues,
+  overrideValues = {},
 }) {
   const { dataStore } = fixture.contracts;
   const { user0, user1 } = fixture.accounts;
@@ -83,7 +83,6 @@ export async function validateStoreUtils({
       label: "setItem",
     });
 
-    return;
     expect(await getItemCount(dataStore)).eq(1);
     expect(await getItemKeys(dataStore, 0, 10)).deep.equal([itemKey]);
 

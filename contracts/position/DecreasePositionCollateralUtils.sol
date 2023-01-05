@@ -14,7 +14,7 @@ import "../pricing/PositionPricingUtils.sol";
 import "./Position.sol";
 import "./PositionStoreUtils.sol";
 import "./PositionUtils.sol";
-import "../order/OrderBaseUtils.sol";
+import "../order/BaseOrderUtils.sol";
 
 import "../swap/SwapUtils.sol";
 
@@ -175,7 +175,7 @@ library DecreasePositionCollateralUtils {
         // deduct remaining fees from the position's collateral
         values.remainingCollateralAmount -= fees.totalNetCostAmount.toInt256();
 
-        if (OrderBaseUtils.isLiquidationOrder(params.order.orderType()) && values.remainingCollateralAmount < 0) {
+        if (BaseOrderUtils.isLiquidationOrder(params.order.orderType()) && values.remainingCollateralAmount < 0) {
             return getLiquidationValues(params, values, fees);
         }
 
@@ -255,7 +255,7 @@ library DecreasePositionCollateralUtils {
             }
         }
 
-        uint256 executionPrice = OrderBaseUtils.getExecutionPrice(
+        uint256 executionPrice = BaseOrderUtils.getExecutionPrice(
             params.contracts.oracle.getCustomPrice(params.market.indexToken),
             params.order.sizeDeltaUsd(),
             priceImpactUsd,
