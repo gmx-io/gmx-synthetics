@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "../data/Keys.sol";
 
 import "../deposit/DepositStoreUtils.sol";
+import "../withdrawal/WithdrawalStoreUtils.sol";
 
 import "../position/Position.sol";
 import "../position/PositionUtils.sol";
@@ -36,6 +37,10 @@ contract Reader {
 
     function getDeposit(DataStore dataStore, bytes32 key) external view returns (Deposit.Props memory) {
         return DepositStoreUtils.get(dataStore, key);
+    }
+
+    function getWithdrawal(DataStore dataStore, bytes32 key) external view returns (Withdrawal.Props memory) {
+        return WithdrawalStoreUtils.get(dataStore, key);
     }
 
     function getPosition(DataStore dataStore, bytes32 key) external view returns (Position.Props memory) {

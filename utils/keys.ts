@@ -6,6 +6,9 @@ export const MAX_LEVERAGE = hashString("MAX_LEVERAGE");
 export const DEPOSIT_LIST = hashString("DEPOSIT_LIST");
 export const ACCOUNT_DEPOSIT_LIST = hashString("ACCOUNT_DEPOSIT_LIST");
 
+export const WITHDRAWAL_LIST = hashString("WITHDRAWAL_LIST");
+export const ACCOUNT_WITHDRAWAL_LIST = hashString("ACCOUNT_WITHDRAWAL_LIST");
+
 export const POSITION_LIST = hashString("POSITION_LIST");
 export const ACCOUNT_POSITION_LIST = hashString("ACCOUNT_POSITION_LIST");
 
@@ -42,6 +45,10 @@ export const POSITION_FEE_FACTOR = hashString("POSITION_FEE_FACTOR");
 
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
+}
+
+export function accountWithdrawalListKey(account) {
+  return hashData(["bytes32", "address"], [ACCOUNT_WITHDRAWAL_LIST, account]);
 }
 
 export function accountPositionListKey(account) {

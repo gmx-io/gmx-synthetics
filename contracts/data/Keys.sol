@@ -13,6 +13,9 @@ library Keys {
     bytes32 public constant DEPOSIT_LIST = keccak256(abi.encode("DEPOSIT_LIST"));
     bytes32 public constant ACCOUNT_DEPOSIT_LIST = keccak256(abi.encode("ACCOUNT_DEPOSIT_LIST"));
 
+    bytes32 public constant WITHDRAWAL_LIST = keccak256(abi.encode("WITHDRAWAL_LIST"));
+    bytes32 public constant ACCOUNT_WITHDRAWAL_LIST = keccak256(abi.encode("ACCOUNT_WITHDRAWAL_LIST"));
+
     bytes32 public constant POSITION_LIST = keccak256(abi.encode("POSITION_LIST"));
     bytes32 public constant ACCOUNT_POSITION_LIST = keccak256(abi.encode("ACCOUNT_POSITION_LIST"));
 
@@ -178,6 +181,10 @@ library Keys {
 
     function accountDepositListKey(address account) internal pure returns (bytes32) {
         return keccak256(abi.encode(ACCOUNT_DEPOSIT_LIST, account));
+    }
+
+    function accountWithdrawalListKey(address account) internal pure returns (bytes32) {
+        return keccak256(abi.encode(ACCOUNT_WITHDRAWAL_LIST, account));
     }
 
     function accountPositionListKey(address account) internal pure returns (bytes32) {

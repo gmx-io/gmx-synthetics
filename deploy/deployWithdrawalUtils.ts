@@ -5,15 +5,17 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   const { deployer } = await getNamedAccounts();
 
   const gasUtils = await get("GasUtils");
+  const withdrawalStoreUtils = await get("WithdrawalStoreUtils");
 
   await deploy("WithdrawalUtils", {
     from: deployer,
     log: true,
     libraries: {
       GasUtils: gasUtils.address,
+      WithdrawalStoreUtils: withdrawalStoreUtils.address,
     },
   });
 };
 func.tags = ["WithdrawalUtils"];
-func.dependencies = ["GasUtils"];
+func.dependencies = ["GasUtils", "WithdrawalStoreUtils"];
 export default func;

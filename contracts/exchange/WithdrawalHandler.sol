@@ -13,7 +13,8 @@ import "../market/MarketStore.sol";
 import "../market/MarketToken.sol";
 
 import "../withdrawal/Withdrawal.sol";
-import "../withdrawal/WithdrawalStore.sol";
+import "../withdrawal/WithdrawalVault.sol";
+import "../withdrawal/WithdrawalStoreUtils.sol";
 import "../withdrawal/WithdrawalUtils.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
@@ -25,7 +26,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
-    WithdrawalStore public immutable withdrawalStore;
+    WithdrawalVault public immutable withdrawalVault;
     MarketStore public immutable marketStore;
     Oracle public immutable oracle;
     FeeReceiver public immutable feeReceiver;
@@ -34,14 +35,14 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        WithdrawalStore _withdrawalStore,
+        WithdrawalVault _withdrawalVault,
         MarketStore _marketStore,
         Oracle _oracle,
         FeeReceiver _feeReceiver
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
-        withdrawalStore = _withdrawalStore;
+        withdrawalVault = _withdrawalVault;
         marketStore = _marketStore;
         oracle = _oracle;
         feeReceiver = _feeReceiver;
@@ -59,7 +60,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
         return WithdrawalUtils.createWithdrawal(
             dataStore,
             eventEmitter,
-            withdrawalStore,
+            withdrawalVault,
             marketStore,
             account,
             params
@@ -85,7 +86,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
         WithdrawalUtils.cancelWithdrawal(
             _dataStore,
             eventEmitter,
-            withdrawalStore,
+            withdrawalVault,
             key,
             withdrawal.account(),
             startingGas,
@@ -121,7 +122,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
             WithdrawalUtils.cancelWithdrawal(
                 dataStore,
                 eventEmitter,
-                withdrawalStore,
+                withdrawalVault,
                 key,
                 msg.sender,
                 startingGas,
@@ -131,7 +132,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
             WithdrawalUtils.cancelWithdrawal(
                 dataStore,
                 eventEmitter,
-                withdrawalStore,
+                withdrawalVault,
                 key,
                 msg.sender,
                 startingGas,
@@ -160,7 +161,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
         WithdrawalUtils.ExecuteWithdrawalParams memory params = WithdrawalUtils.ExecuteWithdrawalParams(
             dataStore,
             eventEmitter,
-            withdrawalStore,
+            withdrawalVault,
             marketStore,
             oracle,
             feeReceiver,
