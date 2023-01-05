@@ -41,6 +41,10 @@ export function accountPositionListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_POSITION_LIST, account]);
 }
 
+export function accountOrderListKey(account) {
+  return hashData(["bytes32", "address"], [ACCOUNT_ORDER_LIST, account]);
+}
+
 export function tokenTransferGasLimit(token: string) {
   return hashData(["bytes32", "address"], [TOKEN_TRANSFER_GAS_LIMIT, token]);
 }

@@ -3,6 +3,8 @@ import { bigNumberify, expandDecimals } from "./math";
 import { executeWithOracleParams } from "./exchange";
 import { TOKEN_ORACLE_TYPES } from "./oracle";
 
+import * as keys from "./keys";
+
 export const OrderType = {
   MarketSwap: 0,
   LimitSwap: 1,
@@ -13,6 +15,22 @@ export const OrderType = {
   StopLossDecrease: 6,
   Liquidation: 7,
 };
+
+export function getOrderCount(dataStore) {
+  return dataStore.getBytes32Count(keys.ORDER_LIST);
+}
+
+export function getOrderKeys(dataStore, start, end) {
+  return dataStore.getBytes32ValuesAt(keys.ORDER_LIST, start, end);
+}
+
+export function getAccountOrderCount(dataStore, account) {
+  return dataStore.getBytes32Count(keys.accountOrderListKey(account));
+}
+
+export function getAccountOrderKeys(dataStore, account, start, end) {
+  return dataStore.getBytes32ValuesAt(keys.accountOrderListKey(account), start, end);
+}
 
 export async function createOrder(fixture, overrides) {
   const { initialCollateralToken, initialCollateralDeltaAmount, orderType, gasUsageLabel } = overrides;

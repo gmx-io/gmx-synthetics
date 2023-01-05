@@ -9,6 +9,7 @@ import "../position/PositionUtils.sol";
 import "../position/PositionStoreUtils.sol";
 
 import "../order/OrderStore.sol";
+import "../order/OrderStoreUtils.sol";
 
 import "../market/MarketUtils.sol";
 import "../market/Market.sol";
@@ -34,6 +35,10 @@ contract Reader {
 
     function getPosition(DataStore dataStore, bytes32 key) external view returns (Position.Props memory) {
         return PositionStoreUtils.get(dataStore, key);
+    }
+
+    function getOrder(DataStore dataStore, bytes32 key) external view returns (Order.Props memory) {
+        return OrderStoreUtils.get(dataStore, key);
     }
 
     function getAccountPositions(

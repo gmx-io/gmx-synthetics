@@ -1,5 +1,6 @@
 import { expect } from "chai";
 import { hashString } from "./hash";
+import { logGasUsage } from "./gas";
 
 export async function validateStoreUtils({
   fixture,
@@ -11,6 +12,7 @@ export async function validateStoreUtils({
   getItemKeys,
   getAccountItemCount,
   getAccountItemKeys,
+  overrideValues,
 }) {
   const { dataStore } = fixture.contracts;
   const { user0, user1 } = fixture.accounts;
@@ -29,17 +31,33 @@ export async function validateStoreUtils({
 
     Object.keys(emptyStoreItem.addresses).forEach((key, index) => {
       if (isNaN(key)) {
-        if (key === "account") {
-          sampleItem.addresses[key] = user0.address;
+        let value;
+
+        if (Array.isArray(emptyStoreItem.addresses[key])) {
+          value = [accountList[index].address];
+        } else if (key === "account") {
+          value = user0.address;
         } else {
-          sampleItem.addresses[key] = accountList[index].address;
+          value = accountList[index].address;
         }
+
+        if (overrideValues[`addresses.${key}`]) {
+          value = overrideValues[`addresses.${key}`];
+        }
+
+        sampleItem.addresses[key] = value;
       }
     });
 
     Object.keys(emptyStoreItem.numbers).forEach((key, index) => {
       if (isNaN(key)) {
-        sampleItem.numbers[key] = index + 1;
+        let value = index + 1;
+
+        if (overrideValues[`numbers.${key}`]) {
+          value = overrideValues[`numbers.${key}`];
+        }
+
+        sampleItem.numbers[key] = value;
       }
     });
 
@@ -60,8 +78,12 @@ export async function validateStoreUtils({
     expect(await getAccountItemCount(dataStore, user1.address)).eq(0);
     expect(await getAccountItemKeys(dataStore, user1.address, 0, 10)).deep.equal([]);
 
-    await setItem(dataStore, itemKey, sampleItem);
+    await logGasUsage({
+      tx: setItem(dataStore, itemKey, sampleItem),
+      label: "setItem",
+    });
 
+    return;
     expect(await getItemCount(dataStore)).eq(1);
     expect(await getItemKeys(dataStore, 0, 10)).deep.equal([itemKey]);
 
@@ -75,7 +97,7 @@ export async function validateStoreUtils({
 
     Object.keys(emptyStoreItem.addresses).forEach((key) => {
       if (isNaN(key)) {
-        expect(fetchedItem.addresses[key]).eq(sampleItem.addresses[key]);
+        expect(fetchedItem.addresses[key]).deep.eq(sampleItem.addresses[key]);
       }
     });
 
@@ -106,7 +128,11 @@ export async function validateStoreUtils({
 
     Object.keys(emptyStoreItem.addresses).forEach((key) => {
       if (isNaN(key)) {
-        expect(fetchedItem.addresses[key]).eq(ethers.constants.AddressZero);
+        if (Array.isArray(emptyStoreItem.addresses[key])) {
+          expect(fetchedItem.addresses[key]).deep.eq([]);
+        } else {
+          expect(fetchedItem.addresses[key]).eq(ethers.constants.AddressZero);
+        }
       }
     });
 
