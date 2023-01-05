@@ -28,7 +28,20 @@ contract DataStore is RoleModule {
     // store for string values
     mapping(bytes32 => string) public stringValues;
     // store for bytes32 values
-    mapping(bytes32 => bytes32) public dataValues;
+    mapping(bytes32 => bytes32) public bytes32Values;
+
+    // store for uint[] values
+    mapping(bytes32 => uint256[]) public uintArrayValues;
+    // store for int[] values
+    mapping(bytes32 => int256[]) public intArrayValues;
+    // store for address[] values
+    mapping(bytes32 => address[]) public addressArrayValues;
+    // store for bool[] values
+    mapping(bytes32 => bool[]) public boolArrayValues;
+    // store for string[] values
+    mapping(bytes32 => string[]) public stringArrayValues;
+    // store for bytes32[] values
+    mapping(bytes32 => bytes32[]) public bytes32ArrayValues;
 
     // store for bytes32 sets
     mapping(bytes32 => EnumerableSet.Bytes32Set) internal bytes32Sets;
@@ -223,21 +236,69 @@ contract DataStore is RoleModule {
     // @dev get the bytes32 value for the given key
     // @param key the key of the value
     // @return the bytes32 value for the key
-    function getData(bytes32 key) external view returns (bytes32) {
-        return dataValues[key];
+    function getBytes32(bytes32 key) external view returns (bytes32) {
+        return bytes32Values[key];
     }
 
     // @dev set the bytes32 value for the given key
     // @param key the key of the value
     // @param value the value to set
     // @return the bytes32 value for the key
-    function setData(bytes32 key, bytes32 value) external onlyController returns (bytes32) {
-        dataValues[key] = value;
+    function setBytes32(bytes32 key, bytes32 value) external onlyController returns (bytes32) {
+        bytes32Values[key] = value;
         return value;
     }
 
-    function removeData(bytes32 key) external onlyController {
-        delete dataValues[key];
+    function removeBytes32(bytes32 key) external onlyController {
+        delete bytes32Values[key];
+    }
+
+    function getUintArray(bytes32 key) external view returns (uint256[] memory) {
+        return uintArrayValues[key];
+    }
+
+    function setUintArray(bytes32 key, uint256[] memory value) external onlyController {
+        uintArrayValues[key] = value;
+    }
+
+    function getIntArray(bytes32 key) external view returns (int256[] memory) {
+        return intArrayValues[key];
+    }
+
+    function setIntArray(bytes32 key, int256[] memory value) external onlyController {
+        intArrayValues[key] = value;
+    }
+
+    function getAddressArray(bytes32 key) external view returns (address[] memory) {
+        return addressArrayValues[key];
+    }
+
+    function setAddressArray(bytes32 key, address[] memory value) external onlyController {
+        addressArrayValues[key] = value;
+    }
+
+    function getBoolArray(bytes32 key) external view returns (bool[] memory) {
+        return boolArrayValues[key];
+    }
+
+    function setBoolArray(bytes32 key, bool[] memory value) external onlyController {
+        boolArrayValues[key] = value;
+    }
+
+    function getStringArray(bytes32 key) external view returns (string[] memory) {
+        return stringArrayValues[key];
+    }
+
+    function setStringArray(bytes32 key, string[] memory value) external onlyController {
+        stringArrayValues[key] = value;
+    }
+
+    function getBytes32Array(bytes32 key) external view returns (bytes32[] memory) {
+        return bytes32ArrayValues[key];
+    }
+
+    function setBytes32Array(bytes32 key, bytes32[] memory value) external onlyController {
+        bytes32ArrayValues[key] = value;
     }
 
     function containsBytes32(bytes32 setKey, bytes32 value) external view returns (bool) {

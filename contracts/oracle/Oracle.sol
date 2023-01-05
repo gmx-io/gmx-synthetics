@@ -451,7 +451,7 @@ contract Oracle is RoleModule {
 
             cache.info.token = params.tokens[i];
             cache.info.precision = 10 ** OracleUtils.getUncompactedDecimal(params.compactedDecimals, i);
-            cache.info.tokenOracleType = dataStore.getData(Keys.oracleTypeKey(cache.info.token));
+            cache.info.tokenOracleType = dataStore.getBytes32(Keys.oracleTypeKey(cache.info.token));
 
             cache.minPrices = new uint256[](signers.length);
             cache.maxPrices = new uint256[](signers.length);
