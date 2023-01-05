@@ -58,6 +58,10 @@ library OrderStoreUtils {
             keccak256(abi.encode(key, INITIAL_COLLATERAL_TOKEN))
         ));
 
+        order.setSwapPath(dataStore.getAddressArray(
+            keccak256(abi.encode(key, SWAP_PATH))
+        ));
+
         order.setOrderType(Order.OrderType(dataStore.getUint(
             keccak256(abi.encode(key, ORDER_TYPE))
         )));
@@ -143,6 +147,11 @@ library OrderStoreUtils {
         dataStore.setAddress(
             keccak256(abi.encode(key, INITIAL_COLLATERAL_TOKEN)),
             order.initialCollateralToken()
+        );
+
+        dataStore.setAddressArray(
+            keccak256(abi.encode(key, SWAP_PATH)),
+            order.swapPath()
         );
 
         dataStore.setUint(
@@ -235,6 +244,10 @@ library OrderStoreUtils {
 
         dataStore.removeAddress(
             keccak256(abi.encode(key, INITIAL_COLLATERAL_TOKEN))
+        );
+
+        dataStore.removeAddressArray(
+            keccak256(abi.encode(key, SWAP_PATH))
         );
 
         dataStore.removeUint(

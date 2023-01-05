@@ -261,12 +261,20 @@ contract DataStore is RoleModule {
         uintArrayValues[key] = value;
     }
 
+    function removeUintArray(bytes32 key) external onlyController {
+        delete uintArrayValues[key];
+    }
+
     function getIntArray(bytes32 key) external view returns (int256[] memory) {
         return intArrayValues[key];
     }
 
     function setIntArray(bytes32 key, int256[] memory value) external onlyController {
         intArrayValues[key] = value;
+    }
+
+    function removeIntArray(bytes32 key) external onlyController {
+        delete intArrayValues[key];
     }
 
     function getAddressArray(bytes32 key) external view returns (address[] memory) {
@@ -277,12 +285,20 @@ contract DataStore is RoleModule {
         addressArrayValues[key] = value;
     }
 
+    function removeAddressArray(bytes32 key) external onlyController {
+        delete addressArrayValues[key];
+    }
+
     function getBoolArray(bytes32 key) external view returns (bool[] memory) {
         return boolArrayValues[key];
     }
 
     function setBoolArray(bytes32 key, bool[] memory value) external onlyController {
         boolArrayValues[key] = value;
+    }
+
+    function removeBoolArray(bytes32 key) external onlyController {
+        delete boolArrayValues[key];
     }
 
     function getStringArray(bytes32 key) external view returns (string[] memory) {
@@ -293,12 +309,20 @@ contract DataStore is RoleModule {
         stringArrayValues[key] = value;
     }
 
+    function removeStringArray(bytes32 key) external onlyController {
+        delete stringArrayValues[key];
+    }
+
     function getBytes32Array(bytes32 key) external view returns (bytes32[] memory) {
         return bytes32ArrayValues[key];
     }
 
     function setBytes32Array(bytes32 key, bytes32[] memory value) external onlyController {
         bytes32ArrayValues[key] = value;
+    }
+
+    function removeBytes32Array(bytes32 key) external onlyController {
+        delete bytes32ArrayValues[key];
     }
 
     function containsBytes32(bytes32 setKey, bytes32 value) external view returns (bool) {
