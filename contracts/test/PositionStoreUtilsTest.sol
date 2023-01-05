@@ -15,7 +15,7 @@ contract PositionStoreUtilsTest {
         return position;
     }
 
-    function set(DataStore dataStore, bytes32 key, Position.Props memory position) external {
+    function setPosition(DataStore dataStore, bytes32 key, Position.Props memory position) external {
         PositionStoreUtils.set(dataStore, key, position);
     }
 }

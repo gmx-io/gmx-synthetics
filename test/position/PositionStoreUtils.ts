@@ -1,19 +1,16 @@
-import { expect } from "chai";
-
 import { deployContract } from "../../utils/deploy";
 import { deployFixture } from "../../utils/fixture";
 
-import { hashString } from "../../utils/hash";
 import { grantRole } from "../../utils/role";
+import { validateStoreUtils } from "../../utils/storeUtils";
 
 describe("PositionStoreUtils", () => {
-  let roleStore, dataStore, positionStoreUtils, positionReader, positionStoreUtilsTest;
-  let accountList;
+  let fixture;
+  let roleStore, positionStoreUtils, positionStoreUtilsTest;
 
   beforeEach(async () => {
-    const fixture = await deployFixture();
-    ({ roleStore, dataStore, positionStoreUtils } = fixture.contracts);
-    ({ accountList } = fixture);
+    fixture = await deployFixture();
+    ({ roleStore, positionStoreUtils } = fixture.contracts);
 
     positionStoreUtilsTest = await deployContract("PositionStoreUtilsTest", [], {
       libraries: {
@@ -21,42 +18,14 @@ describe("PositionStoreUtils", () => {
       },
     });
 
-    console.log("grantRole");
     await grantRole(roleStore, positionStoreUtilsTest.address, "CONTROLLER");
   });
 
   it("get, set, remove", async () => {
-    const emptyPosition = await positionStoreUtilsTest.getEmptyPosition();
-    const positionKey = hashString("key");
-
-    for (let i = 0; i < Object.keys(emptyPosition.flags).length / 2; i++) {
-      const samplePosition = {
-        addresses: {},
-        numbers: {},
-        flags: {},
-      };
-
-      Object.keys(emptyPosition.addresses).forEach((key, index) => {
-        if (isNaN(key)) {
-          samplePosition.addresses[key] = accountList[index].address;
-        }
-      });
-
-      Object.keys(emptyPosition.numbers).forEach((key, index) => {
-        if (isNaN(key)) {
-          samplePosition.numbers[key] = index;
-        }
-      });
-
-      Object.keys(emptyPosition.flags).forEach((key, index) => {
-        if (isNaN(key)) {
-          const adjustedIndex = index - Object.keys(emptyPosition.flags).length / 2;
-          // only set one flag to true at a time
-          samplePosition.flags[key] = adjustedIndex === i;
-        }
-      });
-
-      await positionStoreUtilsTest.set(dataStore.address, positionKey, samplePosition);
-    }
+    await validateStoreUtils({
+      fixture,
+      getEmptyItem: positionStoreUtilsTest.getEmptyPosition,
+      setItem: positionStoreUtilsTest.setPosition,
+    });
   });
 });

@@ -6,7 +6,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
 
   const positionStoreUtils = await get("PositionStoreUtils");
 
-  await deploy("PositionReader", {
+  await deploy("Reader", {
     from: deployer,
     log: true,
     libraries: {
@@ -14,6 +14,6 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     },
   });
 };
-func.tags = ["PositionReader"];
+func.tags = ["Reader"];
 func.dependencies = ["PositionStoreUtils"];
 export default func;
