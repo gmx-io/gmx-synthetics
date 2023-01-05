@@ -60,15 +60,15 @@ library EnumerableValues {
 
     /**
      * Returns an array of uint256 values from the given set, starting at the given
-     * start index and ending before the given end index.
+     * start index and ending before the given end index, the item at the end index will not be returned.
      *
      * @param set The set to get the values from.
-     * @param start The starting index.
-     * @param end The ending index.
+     * @param start The starting index (inclusive, item at the start index will be returned).
+     * @param end The ending index (exclusive, item at the end index will not be returned).
      * @return An array of uint256 values.
      */
     function valuesAt(EnumerableSet.UintSet storage set, uint256 start, uint256 end) internal view returns (uint256[] memory) {
-        if (start > set.length()) {
+        if (start >= set.length()) {
             return new uint256[](0);
         }
 
