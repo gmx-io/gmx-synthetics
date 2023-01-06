@@ -17,6 +17,39 @@ import "./EventUtils.sol";
 // Peripheral services like monitoring or analytics would be able to continue
 // to work without an update and without segregating historical data
 contract EventEmitter is RoleModule {
+    event EventLog(
+        string indexed eventName,
+        EventUtils.AddressItems addressItems,
+        EventUtils.UintItems uintItems,
+        EventUtils.IntItems intItems,
+        EventUtils.BoolItems boolItems,
+        EventUtils.Bytes32Items bytes32Items,
+        EventUtils.DataItems dataItems
+    );
+
+    event EventLog1(
+        string indexed eventName,
+        bytes32 indexed key1,
+        EventUtils.AddressItems addressItems,
+        EventUtils.UintItems uintItems,
+        EventUtils.IntItems intItems,
+        EventUtils.BoolItems boolItems,
+        EventUtils.Bytes32Items bytes32Items,
+        EventUtils.DataItems dataItems
+    );
+
+    event EventLog2(
+        string indexed eventName,
+        bytes32 indexed key1,
+        bytes32 indexed key2,
+        EventUtils.AddressItems addressItems,
+        EventUtils.UintItems uintItems,
+        EventUtils.IntItems intItems,
+        EventUtils.BoolItems boolItems,
+        EventUtils.Bytes32Items bytes32Items,
+        EventUtils.DataItems dataItems
+    );
+
     // @param key the position's key
     // @param account the position's account
     // @param market the position's market
@@ -210,6 +243,72 @@ contract EventEmitter is RoleModule {
     event OraclePriceUpdated(address token, uint256 minPrice, uint256 maxPrice, bool isPrimary, bool isPriceFeed);
 
     constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
+
+    function emitEventLog(
+        string memory eventName,
+        EventUtils.AddressItems memory addressItems,
+        EventUtils.UintItems memory uintItems,
+        EventUtils.IntItems memory intItems,
+        EventUtils.BoolItems memory boolItems,
+        EventUtils.Bytes32Items memory bytes32Items,
+        EventUtils.DataItems memory dataItems
+    ) external onlyController {
+        emit EventLog(
+            eventName,
+            addressItems,
+            uintItems,
+            intItems,
+            boolItems,
+            bytes32Items,
+            dataItems
+        );
+    }
+
+    function emitEventLog1(
+        string memory eventName,
+        bytes32 key1,
+        EventUtils.AddressItems memory addressItems,
+        EventUtils.UintItems memory uintItems,
+        EventUtils.IntItems memory intItems,
+        EventUtils.BoolItems memory boolItems,
+        EventUtils.Bytes32Items memory bytes32Items,
+        EventUtils.DataItems memory dataItems
+    ) external onlyController {
+        emit EventLog1(
+            eventName,
+            key1,
+            addressItems,
+            uintItems,
+            intItems,
+            boolItems,
+            bytes32Items,
+            dataItems
+        );
+    }
+
+    function emitEventLog2(
+        string memory eventName,
+        bytes32 key1,
+        bytes32 key2,
+        EventUtils.AddressItems memory addressItems,
+        EventUtils.UintItems memory uintItems,
+        EventUtils.IntItems memory intItems,
+        EventUtils.BoolItems memory boolItems,
+        EventUtils.Bytes32Items memory bytes32Items,
+        EventUtils.DataItems memory dataItems
+    ) external onlyController {
+        emit EventLog2(
+            eventName,
+            key1,
+            key2,
+            addressItems,
+            uintItems,
+            intItems,
+            boolItems,
+            bytes32Items,
+            dataItems
+        );
+    }
 
     // @param market the market of the pool
     // @param token the token of the pool
@@ -506,7 +605,7 @@ contract EventEmitter is RoleModule {
     // @dev event log for general use
     // @param topic1 event topic 1
     // @param data additional data
-    function log1(bytes32 topic1, bytes memory data) external onlyController {
+    function emitDataLog1(bytes32 topic1, bytes memory data) external onlyController {
         uint256 len = data.length;
         assembly {
             log1(add(data, 32), len, topic1)
@@ -517,7 +616,7 @@ contract EventEmitter is RoleModule {
     // @param topic1 event topic 1
     // @param topic2 event topic 2
     // @param data additional data
-    function log2(bytes32 topic1, bytes32 topic2, bytes memory data) external onlyController {
+    function emitDataLog2(bytes32 topic1, bytes32 topic2, bytes memory data) external onlyController {
         uint256 len = data.length;
         assembly {
             log2(add(data, 32), len, topic1, topic2)
@@ -529,7 +628,7 @@ contract EventEmitter is RoleModule {
     // @param topic2 event topic 2
     // @param topic3 event topic 3
     // @param data additional data
-    function log3(bytes32 topic1, bytes32 topic2, bytes32 topic3, bytes memory data) external onlyController {
+    function emitDataLog3(bytes32 topic1, bytes32 topic2, bytes32 topic3, bytes memory data) external onlyController {
         uint256 len = data.length;
         assembly {
             log3(add(data, 32), len, topic1, topic2, topic3)
@@ -542,7 +641,7 @@ contract EventEmitter is RoleModule {
     // @param topic3 event topic 3
     // @param topic4 event topic 4
     // @param data additional data
-    function log4(bytes32 topic1, bytes32 topic2, bytes32 topic3, bytes32 topic4, bytes memory data) external onlyController {
+    function emitDataLog4(bytes32 topic1, bytes32 topic2, bytes32 topic3, bytes32 topic4, bytes memory data) external onlyController {
         uint256 len = data.length;
         assembly {
             log4(add(data, 32), len, topic1, topic2, topic3, topic4)

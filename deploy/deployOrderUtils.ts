@@ -6,6 +6,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
 
   const baseOrderUtils = await get("BaseOrderUtils");
   const orderStoreUtils = await get("OrderStoreUtils");
+  const orderEventUtils = await get("OrderEventUtils");
   const increaseOrderUtils = await get("IncreaseOrderUtils");
   const decreaseOrderUtils = await get("DecreaseOrderUtils");
   const swapOrderUtils = await get("SwapOrderUtils");
@@ -17,6 +18,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     libraries: {
       BaseOrderUtils: baseOrderUtils.address,
       OrderStoreUtils: orderStoreUtils.address,
+      OrderEventUtils: orderEventUtils.address,
       IncreaseOrderUtils: increaseOrderUtils.address,
       DecreaseOrderUtils: decreaseOrderUtils.address,
       SwapOrderUtils: swapOrderUtils.address,
@@ -28,6 +30,7 @@ func.tags = ["OrderUtils"];
 func.dependencies = [
   "BaseOrderUtils",
   "OrderStoreUtils",
+  "OrderEventUtils",
   "IncreaseOrderUtils",
   "DecreaseOrderUtils",
   "SwapOrderUtils",

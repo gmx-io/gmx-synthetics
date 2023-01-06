@@ -9,6 +9,7 @@ import "../fee/FeeReceiver.sol";
 import "./Order.sol";
 import "./OrderVault.sol";
 import "./OrderStoreUtils.sol";
+import "./OrderEventUtils.sol";
 
 import "../nonce/NonceUtils.sol";
 import "../oracle/Oracle.sol";
@@ -107,7 +108,7 @@ library OrderUtils {
         order.touch();
         OrderStoreUtils.set(dataStore, key, order);
 
-        eventEmitter.emitOrderCreated(key, order);
+        OrderEventUtils.emitOrderCreated(eventEmitter, key, order);
 
         return key;
     }
