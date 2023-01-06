@@ -364,7 +364,7 @@ library MarketUtils {
             delta
         );
 
-        eventEmitter.emitClaimableCollateralUpdated(market, token, timeKey, account, delta, nextValue);
+        MarketEventUtils.emitClaimableCollateralUpdated(eventEmitter, market, token, timeKey, account, delta, nextValue);
     }
 
     // @dev increment the claimable funding amount
@@ -387,7 +387,7 @@ library MarketUtils {
             delta
         );
 
-        eventEmitter.emitClaimableFundingUpdated(market, token, account, delta, nextValue);
+        MarketEventUtils.emitClaimableFundingUpdated(eventEmitter, market, token, account, delta, nextValue);
     }
 
     // @dev claim funding fees
@@ -416,7 +416,8 @@ library MarketUtils {
             claimableAmount
         );
 
-        eventEmitter.emitFundingFeesClaimed(
+        MarketEventUtils.emitFundingFeesClaimed(
+            eventEmitter,
             market,
             token,
             account,
@@ -463,7 +464,8 @@ library MarketUtils {
             remainingClaimableAmount
         );
 
-        eventEmitter.emitCollateralClaimed(
+        MarketEventUtils.emitCollateralClaimed(
+            eventEmitter,
             market,
             token,
             timeKey,
@@ -609,7 +611,7 @@ library MarketUtils {
             "Invalid state: negative open interest"
         );
 
-        eventEmitter.emitOpenInterestUpdated(market, collateralToken, isLong, delta, nextValue);
+        MarketEventUtils.emitOpenInterestUpdated(eventEmitter, market, collateralToken, isLong, delta, nextValue);
     }
 
     // @dev apply a delta to the open interest in tokens
@@ -633,7 +635,7 @@ library MarketUtils {
             "Invalid state: negative open interest in tokens"
         );
 
-        eventEmitter.emitOpenInterestInTokensUpdated(market, collateralToken, isLong, delta, nextValue);
+        MarketEventUtils.emitOpenInterestInTokensUpdated(eventEmitter, market, collateralToken, isLong, delta, nextValue);
     }
 
     // @dev apply a delta to the collateral sum
@@ -657,7 +659,7 @@ library MarketUtils {
             "Invalid state: negative collateralSum"
         );
 
-        eventEmitter.emitCollateralSumUpdated(market, collateralToken, isLong, delta, nextValue);
+        MarketEventUtils.emitCollateralSumUpdated(eventEmitter, market, collateralToken, isLong, delta, nextValue);
     }
 
     // @dev update the funding amount per size values

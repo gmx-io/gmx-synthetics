@@ -10,6 +10,7 @@ import "../market/MarketToken.sol";
 
 import "./IReferralStorage.sol";
 import "./ReferralTier.sol";
+import "./ReferralEventUtils.sol";
 
 import "../utils/Precision.sol";
 
@@ -54,7 +55,7 @@ library ReferralUtils {
         }
 
         dataStore.incrementUint(Keys.affiliateRewardKey(market, token, affiliate), delta);
-        eventEmitter.emitAffiliateRewardEarned(market, token, affiliate, trader, delta);
+        ReferralEventUtils.emitAffiliateRewardEarned(eventEmitter, market, token, affiliate, trader, delta);
     }
 
     // @dev Gets the referral information for the specified trader.
@@ -114,7 +115,8 @@ library ReferralUtils {
             rewardAmount
         );
 
-        eventEmitter.emitAffiliateRewardClaimed(
+        ReferralEventUtils.emitAffiliateRewardClaimed(
+            eventEmitter,
             market,
             token,
             account,

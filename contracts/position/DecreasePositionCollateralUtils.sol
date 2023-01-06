@@ -28,6 +28,14 @@ library DecreasePositionCollateralUtils {
     using Order for Order.Props;
     using Price for Price.Props;
 
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
+
     // @dev ProcessCollateralValues struct used to contain the values in processCollateral
     // @param executionPrice the order execution price
     // @param remainingCollateralAmount the remaining collateral amount of the position
@@ -289,7 +297,10 @@ library DecreasePositionCollateralUtils {
             // should be rare, and the difference should be small
             // in case it happens, the pool should be topped up with the required amount using
             // an insurance fund or similar mechanism
-            params.contracts.eventEmitter.emitInsufficientFundingFeePayment(
+            emitInsufficientFundingFeePayment(
+                params.contracts.eventEmitter,
+                params.market.marketToken,
+                params.position.collateralToken(),
                 fees.funding.fundingFeeAmount,
                 params.position.collateralAmount()
             );
@@ -415,15 +426,12 @@ library DecreasePositionCollateralUtils {
         address collateralToken,
         uint256 fundingFeeAmount,
         uint256 collateralAmount
-    ) internal view {
+    ) internal {
         EventUtils.EventLogData memory data;
 
         data.addressItems.initItems(2);
         data.addressItems.setItem(0, "market", market);
         data.addressItems.setItem(1, "collateralToken", collateralToken);
-
-        data.stringItems.initItems(1);
-        data.stringItems.setItem(0, "action", action);
 
         data.uintItems.initItems(2);
         data.uintItems.setItem(0, "fundingFeeAmount", fundingFeeAmount);

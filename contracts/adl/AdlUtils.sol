@@ -39,6 +39,14 @@ library AdlUtils {
     using Market for Market.Props;
     using Position for Position.Props;
 
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
+
     // @dev CreateAdlOrderParams struct used in createAdlOrder to avoid stack
     // too deep errors
     //
@@ -122,7 +130,7 @@ library AdlUtils {
         setIsAdlEnabled(dataStore, market, isLong, shouldEnableAdl);
         setLatestAdlBlock(dataStore, market, isLong, block.number);
 
-        eventEmitter.emitAdlStateUpdated(pnlToPoolFactor, maxPnlFactor, shouldEnableAdl);
+        emitAdlStateUpdated(eventEmitter, market, isLong, pnlToPoolFactor, maxPnlFactor, shouldEnableAdl);
     }
 
     function validatePoolState(
@@ -323,5 +331,32 @@ library AdlUtils {
     // @return whether ADL is enabled
     function setIsAdlEnabled(DataStore dataStore, address market, bool isLong, bool value) internal returns (bool) {
         return dataStore.setBool(Keys.isAdlEnabledKey(market, isLong), value);
+    }
+
+    function emitAdlStateUpdated(
+        EventEmitter eventEmitter,
+        address market,
+        bool isLong,
+        int256 pnlToPoolFactor,
+        uint256 maxPnlFactor,
+        bool shouldEnableAdl
+    ) internal {
+        EventUtils.EventLogData memory data;
+
+        data.intItems.initItems(1);
+        data.intItems.setItem(0, "pnlToPoolFactor", pnlToPoolFactor);
+
+        data.uintItems.initItems(1);
+        data.uintItems.setItem(0, "maxPnlFactor", maxPnlFactor);
+
+        data.boolItems.initItems(2);
+        data.boolItems.setItem(0, "isLong", isLong);
+        data.boolItems.setItem(1, "shouldEnableAdl", shouldEnableAdl);
+
+        eventEmitter.emitEventLog1(
+            "AdlStateUpdated",
+            Cast.toBytes32(market),
+            data
+        );
     }
 }

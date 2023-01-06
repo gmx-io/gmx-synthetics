@@ -8,6 +8,7 @@ import "../data/DataStore.sol";
 
 import "./WithdrawalVault.sol";
 import "./WithdrawalStoreUtils.sol";
+import "./WithdrawalEventUtils.sol";
 
 import "../market/MarketStore.sol";
 
@@ -137,7 +138,7 @@ library WithdrawalUtils {
 
         WithdrawalStoreUtils.set(dataStore, key, withdrawal);
 
-        eventEmitter.emitWithdrawalCreated(key, withdrawal);
+        WithdrawalEventUtils.emitWithdrawalCreated(eventEmitter, key, withdrawal);
 
         return key;
     }
@@ -165,7 +166,7 @@ library WithdrawalUtils {
 
         _executeWithdrawal(params, withdrawal);
 
-        params.eventEmitter.emitWithdrawalExecuted(params.key);
+        WithdrawalEventUtils.emitWithdrawalExecuted(params.eventEmitter, params.key);
 
         CallbackUtils.afterWithdrawalExecution(params.key, withdrawal);
 
@@ -202,7 +203,7 @@ library WithdrawalUtils {
 
         WithdrawalStoreUtils.remove(dataStore, key, withdrawal.account());
 
-        eventEmitter.emitWithdrawalCancelled(key, reason);
+        WithdrawalEventUtils.emitWithdrawalCancelled(eventEmitter, key, reason);
 
         CallbackUtils.afterWithdrawalCancellation(key, withdrawal);
 
@@ -334,8 +335,21 @@ library WithdrawalUtils {
             withdrawal.shouldUnwrapNativeToken()
         );
 
-        params.eventEmitter.emitSwapFeesCollected(keccak256(abi.encode("withdrawal")), longTokenFees);
-        params.eventEmitter.emitSwapFeesCollected(keccak256(abi.encode("withdrawal")), shortTokenFees);
+        SwapPricingUtils.emitSwapFeesCollected(
+            params.eventEmitter,
+            market.marketToken,
+            market.longToken,
+            "withdrawal",
+            longTokenFees
+        );
+
+        SwapPricingUtils.emitSwapFeesCollected(
+            params.eventEmitter,
+            market.marketToken,
+            market.shortToken,
+            "withdrawal",
+            shortTokenFees
+        );
     }
 
     function _getOutputAmounts(

@@ -9,6 +9,7 @@ import "../event/EventEmitter.sol";
 
 import "./DepositVault.sol";
 import "./DepositStoreUtils.sol";
+import "./DepositEventUtils.sol";
 
 import "../market/MarketStore.sol";
 
@@ -166,7 +167,7 @@ library DepositUtils {
 
         DepositStoreUtils.set(dataStore, key, deposit);
 
-        eventEmitter.emitDepositCreated(key, deposit);
+        DepositEventUtils.emitDepositCreated(eventEmitter, key, deposit);
 
         return key;
     }
@@ -267,7 +268,7 @@ library DepositUtils {
 
         DepositStoreUtils.remove(params.dataStore, params.key, deposit.account());
 
-        params.eventEmitter.emitDepositExecuted(params.key);
+        DepositEventUtils.emitDepositExecuted(params.eventEmitter, params.key);
 
         CallbackUtils.afterDepositExecution(params.key, deposit);
 
@@ -325,7 +326,7 @@ library DepositUtils {
 
         DepositStoreUtils.remove(dataStore, key, deposit.account());
 
-        eventEmitter.emitDepositCancelled(key, reason);
+        DepositEventUtils.emitDepositCancelled(eventEmitter, key, reason);
 
         CallbackUtils.afterDepositCancellation(key, deposit);
 
@@ -358,7 +359,13 @@ library DepositUtils {
             FeeUtils.DEPOSIT_FEE
         );
 
-        params.eventEmitter.emitSwapFeesCollected(keccak256(abi.encode("deposit")), fees);
+        SwapPricingUtils.emitSwapFeesCollected(
+            params.eventEmitter,
+             _params.market.marketToken,
+             _params.tokenIn,
+             "deposit",
+             fees
+         );
 
         return _processDeposit(params, _params, fees.amountAfterFees, fees.feesForPool);
     }

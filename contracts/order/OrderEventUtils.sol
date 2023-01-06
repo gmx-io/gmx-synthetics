@@ -90,9 +90,9 @@ library OrderEventUtils {
         data.bytes32Items.setItem(0, "key", key);
 
         data.uintItems.initItems(3);
-        data.bytes32Items.setItem(0, "sizeDeltaUsd", sizeDeltaUsd);
-        data.bytes32Items.setItem(1, "triggerPrice", triggerPrice);
-        data.bytes32Items.setItem(2, "acceptablePrice", acceptablePrice);
+        data.uintItems.setItem(0, "sizeDeltaUsd", sizeDeltaUsd);
+        data.uintItems.setItem(1, "triggerPrice", triggerPrice);
+        data.uintItems.setItem(2, "acceptablePrice", acceptablePrice);
 
         eventEmitter.emitEventLog1(
             "OrderUpdated",
@@ -123,12 +123,16 @@ library OrderEventUtils {
 
     function emitOrderFrozen(
         EventEmitter eventEmitter,
-        bytes32 key
+        bytes32 key,
+        bytes memory reason
     ) external {
         EventUtils.EventLogData memory data;
 
         data.bytes32Items.initItems(1);
         data.bytes32Items.setItem(0, "key", key);
+
+        data.bytesItems.initItems(1);
+        data.bytesItems.setItem(0, "reason", reason);
 
         eventEmitter.emitEventLog1(
             "OrderFrozen",

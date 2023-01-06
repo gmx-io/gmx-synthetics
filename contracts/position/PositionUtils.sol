@@ -13,6 +13,7 @@ import "../data/Keys.sol";
 
 import "../pricing/PositionPricingUtils.sol";
 import "../order/BaseOrderUtils.sol";
+import "../referral/ReferralEventUtils.sol";
 
 // @title PositionUtils
 // @dev Library for position functions
@@ -348,7 +349,8 @@ library PositionUtils {
         );
 
         if (fees.referral.traderDiscountAmount > 0) {
-            params.contracts.eventEmitter.emitTraderReferralDiscountApplied(
+            ReferralEventUtils.emitTraderReferralDiscountApplied(
+                params.contracts.eventEmitter,
                 params.position.market(),
                 params.position.collateralToken(),
                 params.position.account(),

@@ -15,6 +15,14 @@ library SwapPricingUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
 
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
+
     // @dev GetPriceImpactUsdParams struct used in getPriceImpactUsd to
     // avoid stack too deep errors
     // @param dataStore DataStore
@@ -183,13 +191,15 @@ library SwapPricingUtils {
     function emitSwapFeesCollected(
         EventEmitter eventEmitter,
         address market,
+        address token,
         string memory action,
         SwapFees memory fees
-    ) internal view {
+    ) internal {
         EventUtils.EventLogData memory data;
 
-        data.addressItems.initItems(1);
+        data.addressItems.initItems(2);
         data.addressItems.setItem(0, "market", market);
+        data.addressItems.setItem(1, "token", token);
 
         data.stringItems.initItems(1);
         data.stringItems.setItem(0, "action", action);

@@ -260,7 +260,13 @@ library SwapUtils {
             true
         );
 
-        params.eventEmitter.emitSwapFeesCollected(keccak256(abi.encode("swap")), fees);
+        SwapPricingUtils.emitSwapFeesCollected(
+            params.eventEmitter,
+            _params.market.marketToken,
+            _params.tokenIn,
+            "swap",
+            fees
+        );
 
         return (cache.tokenOut, cache.amountOut);
     }

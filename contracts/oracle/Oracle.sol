@@ -16,10 +16,12 @@ import "../chain/Chain.sol";
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
 import "../event/EventEmitter.sol";
+import "../event/EventUtils.sol";
 
 import "../utils/Bits.sol";
 import "../utils/Array.sol";
 import "../utils/Precision.sol";
+import "../utils/Cast.sol";
 
 // @title Oracle
 // @dev Contract to validate and store signed values
@@ -27,6 +29,14 @@ contract Oracle is RoleModule {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableValues for EnumerableSet.AddressSet;
     using Price for Price.Props;
+
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
 
     // @dev _SetPricesCache struct used in setPrices to avoid stack too deep errors
     // @param prevOracleBlockNumber the previous oracle block number of the loop
@@ -525,14 +535,14 @@ contract Oracle is RoleModule {
             }
 
             if (primaryPrices[cache.info.token].isEmpty()) {
-                eventEmitter.emitOraclePriceUpdated(cache.info.token, medianMinPrice, medianMaxPrice, true, false);
+                emitOraclePriceUpdated(eventEmitter, cache.info.token, medianMinPrice, medianMaxPrice, true, false);
 
                 primaryPrices[cache.info.token] = Price.Props(
                     medianMinPrice,
                     medianMaxPrice
                 );
             } else {
-                eventEmitter.emitOraclePriceUpdated(cache.info.token, medianMinPrice, medianMaxPrice, false, false);
+                emitOraclePriceUpdated(eventEmitter, cache.info.token, medianMinPrice, medianMaxPrice, false, false);
 
                 secondaryPrices[cache.info.token] = Price.Props(
                     medianMinPrice,
@@ -593,12 +603,12 @@ contract Oracle is RoleModule {
 
             tokensWithPrices.add(token);
 
-            eventEmitter.emitOraclePriceUpdated(token, priceProps.min, priceProps.max, true, true);
+            emitOraclePriceUpdated(eventEmitter, token, priceProps.min, priceProps.max, true, true);
         }
     }
 
     function emitOraclePriceUpdated(
-        eventEmitter,
+        EventEmitter eventEmitter,
         address token,
         uint256 minPrice,
         uint256 maxPrice,
@@ -620,7 +630,7 @@ contract Oracle is RoleModule {
 
         eventEmitter.emitEventLog1(
             "InsufficientFundingFeePayment",
-            Cast.toBytes32(market),
+            Cast.toBytes32(token),
             data
         );
 

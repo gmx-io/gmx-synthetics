@@ -130,7 +130,7 @@ library OrderUtils {
 
         processOrder(params);
 
-        params.contracts.eventEmitter.emitOrderExecuted(params.key);
+        OrderEventUtils.emitOrderExecuted(params.contracts.eventEmitter, params.key);
 
         CallbackUtils.afterOrderExecution(params.key, params.order);
 
@@ -198,7 +198,7 @@ library OrderUtils {
 
         OrderStoreUtils.remove(dataStore, key, order.account());
 
-        eventEmitter.emitOrderCancelled(key, reason);
+        OrderEventUtils.emitOrderCancelled(eventEmitter, key, reason);
 
         CallbackUtils.afterOrderCancellation(key, order);
 
@@ -247,7 +247,7 @@ library OrderUtils {
             order.account()
         );
 
-        eventEmitter.emitOrderFrozen(key, reason);
+        OrderEventUtils.emitOrderFrozen(eventEmitter, key, reason);
 
         CallbackUtils.afterOrderFrozen(key, order);
     }

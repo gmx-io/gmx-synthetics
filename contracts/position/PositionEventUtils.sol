@@ -36,20 +36,20 @@ library PositionEventUtils {
         data.addressItems.setItem(1, "market", position.market());
         data.addressItems.setItem(2, "collateralToken", position.collateralToken());
 
-        data.uintItems.initItems(10);
+        data.uintItems.initItems(8);
         data.uintItems.setItem(0, "sizeInUsd", position.sizeInUsd());
         data.uintItems.setItem(1, "sizeInTokens", position.sizeInTokens());
         data.uintItems.setItem(2, "collateralAmount", position.collateralAmount());
         data.uintItems.setItem(3, "borrowingFactor", position.borrowingFactor());
-        data.uintItems.setItem(4, "longTokenFundingAmountPerSize", position.longTokenFundingAmountPerSize());
-        data.uintItems.setItem(5, "shortTokenFundingAmountPerSize", position.shortTokenFundingAmountPerSize());
-        data.uintItems.setItem(6, "executionPrice", executionPrice);
-        data.uintItems.setItem(7, "sizeDeltaUsd", sizeDeltaUsd);
-        data.uintItems.setItem(8, "sizeDeltaInTokens", sizeDeltaInTokens);
-        data.uintItems.setItem(9, "orderType", uint256(orderType));
+        data.uintItems.setItem(4, "executionPrice", executionPrice);
+        data.uintItems.setItem(5, "sizeDeltaUsd", sizeDeltaUsd);
+        data.uintItems.setItem(6, "sizeDeltaInTokens", sizeDeltaInTokens);
+        data.uintItems.setItem(7, "orderType", uint256(orderType));
 
-        data.intItems.initItems(1);
-        data.intItems.setItem(0, "collateralDeltaAmount", collateralDeltaAmount);
+        data.intItems.initItems(3);
+        data.intItems.setItem(0, "longTokenFundingAmountPerSize", position.longTokenFundingAmountPerSize());
+        data.intItems.setItem(1, "shortTokenFundingAmountPerSize", position.shortTokenFundingAmountPerSize());
+        data.intItems.setItem(2, "collateralDeltaAmount", collateralDeltaAmount);
 
         data.boolItems.initItems(1);
         data.boolItems.setItem(0, "isLong", position.isLong());
@@ -71,8 +71,8 @@ library PositionEventUtils {
         uint256 executionPrice,
         uint256 sizeDeltaUsd,
         uint256 sizeDeltaInTokens,
-        int256 collateralDeltaAmount,
-        int256 pnlAmount,
+        uint256 collateralDeltaAmount,
+        int256 pnlUsd,
         Order.OrderType orderType
     ) external {
         EventUtils.EventLogData memory data;
@@ -82,21 +82,21 @@ library PositionEventUtils {
         data.addressItems.setItem(1, "market", position.market());
         data.addressItems.setItem(2, "collateralToken", position.collateralToken());
 
-        data.uintItems.initItems(10);
+        data.uintItems.initItems(11);
         data.uintItems.setItem(0, "sizeInUsd", position.sizeInUsd());
         data.uintItems.setItem(1, "sizeInTokens", position.sizeInTokens());
         data.uintItems.setItem(2, "collateralAmount", position.collateralAmount());
         data.uintItems.setItem(3, "borrowingFactor", position.borrowingFactor());
-        data.uintItems.setItem(4, "longTokenFundingAmountPerSize", position.longTokenFundingAmountPerSize());
-        data.uintItems.setItem(5, "shortTokenFundingAmountPerSize", position.shortTokenFundingAmountPerSize());
         data.uintItems.setItem(6, "executionPrice", executionPrice);
         data.uintItems.setItem(7, "sizeDeltaUsd", sizeDeltaUsd);
         data.uintItems.setItem(8, "sizeDeltaInTokens", sizeDeltaInTokens);
-        data.uintItems.setItem(9, "orderType", uint256(orderType));
+        data.uintItems.setItem(9, "collateralDeltaAmount", collateralDeltaAmount);
+        data.uintItems.setItem(10, "orderType", uint256(orderType));
 
-        data.intItems.initItems(2);
-        data.intItems.setItem(0, "collateralDeltaAmount", collateralDeltaAmount);
-        data.intItems.setItem(1, "pnlAmount", pnlAmount);
+        data.intItems.initItems(3);
+        data.intItems.setItem(0, "longTokenFundingAmountPerSize", position.longTokenFundingAmountPerSize());
+        data.intItems.setItem(1, "shortTokenFundingAmountPerSize", position.shortTokenFundingAmountPerSize());
+        data.intItems.setItem(2, "pnlUsd", pnlUsd);
 
         data.boolItems.initItems(1);
         data.boolItems.setItem(0, "isLong", position.isLong());

@@ -14,6 +14,7 @@ import "../pricing/PositionPricingUtils.sol";
 import "./Position.sol";
 import "./PositionStoreUtils.sol";
 import "./PositionUtils.sol";
+import "./PositionEventUtils.sol";
 import "../order/BaseOrderUtils.sol";
 
 // @title IncreasePositionUtils
@@ -155,8 +156,24 @@ library IncreasePositionUtils {
 
         PositionUtils.handleReferral(params, fees);
 
-        params.contracts.eventEmitter.emitPositionFeesCollected(true, fees);
-        emitPositionIncrease(params, cache);
+        PositionPricingUtils.emitPositionFeesCollected(
+            params.contracts.eventEmitter,
+            params.market.marketToken,
+            params.position.collateralToken(),
+            true,
+            fees
+        );
+
+        PositionEventUtils.emitPositionIncrease(
+            params.contracts.eventEmitter,
+            params.positionKey,
+            params.position,
+            cache.executionPrice,
+            params.order.sizeDeltaUsd(),
+            cache.sizeDeltaInTokens,
+            cache.collateralDeltaAmount,
+            params.order.orderType()
+        );
     }
 
     // @dev handle the collateral changes of the position
@@ -257,24 +274,5 @@ library IncreasePositionUtils {
         );
 
         return (executionPrice, priceImpactAmount);
-    }
-
-    function emitPositionIncrease(
-        PositionUtils.UpdatePositionParams memory params,
-        _IncreasePositionCache memory cache
-    ) internal {
-        params.contracts.eventEmitter.emitPositionIncrease(
-            params.positionKey,
-            params.position.account(),
-            params.position.market(),
-            params.position.collateralToken(),
-            params.position.isLong(),
-            cache.executionPrice,
-            params.order.sizeDeltaUsd(),
-            cache.sizeDeltaInTokens,
-            cache.collateralDeltaAmount,
-            params.position.collateralAmount().toInt256(),
-            params.order.orderType()
-        );
     }
 }
