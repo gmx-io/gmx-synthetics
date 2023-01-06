@@ -19,35 +19,20 @@ import "./EventUtils.sol";
 contract EventEmitter is RoleModule {
     event EventLog(
         string indexed eventName,
-        EventUtils.AddressItems addressItems,
-        EventUtils.UintItems uintItems,
-        EventUtils.IntItems intItems,
-        EventUtils.BoolItems boolItems,
-        EventUtils.Bytes32Items bytes32Items,
-        EventUtils.DataItems dataItems
+        EventUtils.EventLogData data
     );
 
     event EventLog1(
         string indexed eventName,
         bytes32 indexed key1,
-        EventUtils.AddressItems addressItems,
-        EventUtils.UintItems uintItems,
-        EventUtils.IntItems intItems,
-        EventUtils.BoolItems boolItems,
-        EventUtils.Bytes32Items bytes32Items,
-        EventUtils.DataItems dataItems
+        EventUtils.EventLogData data
     );
 
     event EventLog2(
         string indexed eventName,
         bytes32 indexed key1,
         bytes32 indexed key2,
-        EventUtils.AddressItems addressItems,
-        EventUtils.UintItems uintItems,
-        EventUtils.IntItems intItems,
-        EventUtils.BoolItems boolItems,
-        EventUtils.Bytes32Items bytes32Items,
-        EventUtils.DataItems dataItems
+        EventUtils.EventLogData data
     );
 
     // @param key the position's key
@@ -121,9 +106,6 @@ contract EventEmitter is RoleModule {
     event WithdrawalCancelled(bytes32 key, bytes reason);
 
     // @param key the key of the order
-    // @param order the order created
-    event OrderCreated(bytes32 key, Order.Props order);
-    // @param key the key of the order
     // @param sizeDeltaUsd the updated sizeDeltaUsd
     // @param triggerPrice the updated triggerPrice
     // @param acceptablePrice the updated acceptablePrice
@@ -149,11 +131,6 @@ contract EventEmitter is RoleModule {
     // @param fees PositionPricingUtils.PositionFees
     event PositionFeesCollected(bool isIncrease, PositionPricingUtils.PositionFees fees);
 
-    // @param market the market of the pool
-    // @param token the token of the pool
-    // @param delta the update amount
-    // @param nextValue the new pool amount
-    event PoolAmountUpdated(address market, address token, int256 delta, uint256 nextValue);
     // @param market the market of the swap impact pool
     // @param token the token of the swap impact pool
     // @param delta the update amount
@@ -246,43 +223,23 @@ contract EventEmitter is RoleModule {
 
     function emitEventLog(
         string memory eventName,
-        EventUtils.AddressItems memory addressItems,
-        EventUtils.UintItems memory uintItems,
-        EventUtils.IntItems memory intItems,
-        EventUtils.BoolItems memory boolItems,
-        EventUtils.Bytes32Items memory bytes32Items,
-        EventUtils.DataItems memory dataItems
+        EventUtils.EventLogData memory data
     ) external onlyController {
         emit EventLog(
             eventName,
-            addressItems,
-            uintItems,
-            intItems,
-            boolItems,
-            bytes32Items,
-            dataItems
+            data
         );
     }
 
     function emitEventLog1(
         string memory eventName,
         bytes32 key1,
-        EventUtils.AddressItems memory addressItems,
-        EventUtils.UintItems memory uintItems,
-        EventUtils.IntItems memory intItems,
-        EventUtils.BoolItems memory boolItems,
-        EventUtils.Bytes32Items memory bytes32Items,
-        EventUtils.DataItems memory dataItems
+        EventUtils.EventLogData memory data
     ) external onlyController {
         emit EventLog1(
             eventName,
             key1,
-            addressItems,
-            uintItems,
-            intItems,
-            boolItems,
-            bytes32Items,
-            dataItems
+            data
         );
     }
 
@@ -290,48 +247,14 @@ contract EventEmitter is RoleModule {
         string memory eventName,
         bytes32 key1,
         bytes32 key2,
-        EventUtils.AddressItems memory addressItems,
-        EventUtils.UintItems memory uintItems,
-        EventUtils.IntItems memory intItems,
-        EventUtils.BoolItems memory boolItems,
-        EventUtils.Bytes32Items memory bytes32Items,
-        EventUtils.DataItems memory dataItems
+        EventUtils.EventLogData memory data
     ) external onlyController {
         emit EventLog2(
             eventName,
             key1,
             key2,
-            addressItems,
-            uintItems,
-            intItems,
-            boolItems,
-            bytes32Items,
-            dataItems
+            data
         );
-    }
-
-    // @param market the market of the pool
-    // @param token the token of the pool
-    // @param delta the update amount
-    // @param nextValue the new pool amount
-    function emitPoolAmountUpdated(address market, address token, int256 delta, uint256 nextValue) external onlyController {
-        emit PoolAmountUpdated(market, token, delta, nextValue);
-    }
-
-    // @param market the market of the swap impact pool
-    // @param token the token of the swap impact pool
-    // @param delta the update amount
-    // @param nextValue the new swap impact pool amount
-    function emitSwapImpactPoolAmountUpdated(address market, address token, int256 delta, uint256 nextValue) external onlyController {
-        emit SwapImpactPoolAmountUpdated(market, token, delta, nextValue);
-    }
-
-    // @param market the market of the position impact pool
-    // @param token the token of the position impact pool
-    // @param delta the update amount
-    // @param nextValue the new position impact pool amount
-    function emitPositionImpactPoolAmountUpdated(address market, int256 delta, uint256 nextValue) external onlyController {
-        emit PositionImpactPoolAmountUpdated(market, delta, nextValue);
     }
 
     // @param market the market for the open interest
@@ -429,12 +352,6 @@ contract EventEmitter is RoleModule {
         uint256 nextValue
     ) external onlyController {
         emit CollateralSumUpdated(market, collateralToken, isLong, delta, nextValue);
-    }
-
-    // @param key the key of the order
-    // @param order the order created
-    function emitOrderCreated(bytes32 key, Order.Props memory order) external onlyController {
-        emit OrderCreated(key, order);
     }
 
     // @param key the key of the order
