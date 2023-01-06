@@ -126,6 +126,9 @@ library DecreasePositionUtils {
         if (params.position.sizeInUsd() == 0 || params.position.sizeInTokens() == 0) {
             // withdraw all collateral if the position will be closed
             values.outputAmount += params.position.collateralAmount();
+
+            params.position.setSizeInUsd(0);
+            params.position.setSizeInTokens(0);
             params.position.setCollateralAmount(0);
 
             PositionStoreUtils.remove(params.contracts.dataStore, params.positionKey, params.order.account());

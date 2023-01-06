@@ -179,4 +179,30 @@ library SwapPricingUtils {
 
         return fees;
     }
+
+    function emitSwapFeesCollected(
+        EventEmitter eventEmitter,
+        address market,
+        string memory action,
+        SwapFees memory fees
+    ) internal view {
+        EventUtils.EventLogData memory data;
+
+        data.addressItems.initItems(1);
+        data.addressItems.setItem(0, "market", market);
+
+        data.stringItems.initItems(1);
+        data.stringItems.setItem(0, "action", action);
+
+        data.uintItems.initItems(3);
+        data.uintItems.setItem(0, "feeReceiverAmount", fees.feeReceiverAmount);
+        data.uintItems.setItem(1, "feesForPool", fees.feesForPool);
+        data.uintItems.setItem(2, "amountAfterFees", fees.amountAfterFees);
+
+        eventEmitter.emitEventLog1(
+            "SwapFeesCollected",
+            Cast.toBytes32(market),
+            data
+        );
+    }
 }

@@ -103,12 +103,16 @@ library OrderEventUtils {
 
     function emitOrderCancelled(
         EventEmitter eventEmitter,
-        bytes32 key
+        bytes32 key,
+        bytes memory reason
     ) external {
         EventUtils.EventLogData memory data;
 
         data.bytes32Items.initItems(1);
         data.bytes32Items.setItem(0, "key", key);
+
+        data.bytesItems.initItems(1);
+        data.bytesItems.setItem(0, "reason", reason);
 
         eventEmitter.emitEventLog1(
             "OrderCancelled",

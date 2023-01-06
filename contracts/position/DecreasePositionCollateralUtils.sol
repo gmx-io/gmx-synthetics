@@ -408,4 +408,31 @@ library DecreasePositionCollateralUtils {
 
         return swapPath[0] == MarketUtils.SWAP_COLLATERAL_TOKEN_TO_PNL_TOKEN;
     }
+
+    function emitInsufficientFundingFeePayment(
+        EventEmitter eventEmitter,
+        address market,
+        address collateralToken,
+        uint256 fundingFeeAmount,
+        uint256 collateralAmount
+    ) internal view {
+        EventUtils.EventLogData memory data;
+
+        data.addressItems.initItems(2);
+        data.addressItems.setItem(0, "market", market);
+        data.addressItems.setItem(1, "collateralToken", collateralToken);
+
+        data.stringItems.initItems(1);
+        data.stringItems.setItem(0, "action", action);
+
+        data.uintItems.initItems(2);
+        data.uintItems.setItem(0, "fundingFeeAmount", fundingFeeAmount);
+        data.uintItems.setItem(1, "collateralAmount", collateralAmount);
+
+        eventEmitter.emitEventLog1(
+            "InsufficientFundingFeePayment",
+            Cast.toBytes32(market),
+            data
+        );
+    }
 }

@@ -597,4 +597,32 @@ contract Oracle is RoleModule {
         }
     }
 
+    function emitOraclePriceUpdated(
+        eventEmitter,
+        address token,
+        uint256 minPrice,
+        uint256 maxPrice,
+        bool isPrimary,
+        bool isPriceFeed
+    ) internal {
+        EventUtils.EventLogData memory data;
+
+        data.addressItems.initItems(1);
+        data.addressItems.setItem(0, "token", token);
+
+        data.uintItems.initItems(2);
+        data.uintItems.setItem(0, "minPrice", minPrice);
+        data.uintItems.setItem(1, "maxPrice", maxPrice);
+
+        data.boolItems.initItems(2);
+        data.boolItems.setItem(0, "isPrimary", isPrimary);
+        data.boolItems.setItem(1, "isPriceFeed", isPriceFeed);
+
+        eventEmitter.emitEventLog1(
+            "InsufficientFundingFeePayment",
+            Cast.toBytes32(market),
+            data
+        );
+
+    }
 }

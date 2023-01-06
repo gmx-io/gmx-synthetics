@@ -401,4 +401,48 @@ library PositionPricingUtils {
 
         return (cache.referral.affiliate, cache.referral.traderDiscountAmount, cache.referral.affiliateRewardAmount, cache.feeReceiverAmount, cache.positionFeeAmountForPool);
     }
+
+    function emitPositionFeesCollected(
+        EventEmitter eventEmitter,
+        address market,
+        bool isIncrease,
+        PositionFees memory fees
+    ) internal view {
+        EventUtils.EventLogData memory data;
+
+        data.addressItems.initItems(2);
+        data.addressItems.setItem(0, "market", market);
+        data.addressItems.setItem(1, "affiliate", fees.referral.affiliate);
+
+        data.stringItems.initItems(1);
+        data.stringItems.setItem(0, "action", action);
+
+        data.uintItems.initItems(13);
+        data.uintItems.setItem(0, "traderDiscountAmount", fees.referral.traderDiscountAmount);
+        data.uintItems.setItem(1, "affiliateRewardAmount", fees.referral.affiliateRewardAmount);
+        data.uintItems.setItem(3, "fundingFeeAmount", fees.referral.fundingFeeAmount);
+        data.uintItems.setItem(4, "claimableLongTokenAmount", fees.referral.claimableLongTokenAmount);
+        data.uintItems.setItem(5, "claimableShortTokenAmount", fees.referral.claimableShortTokenAmount);
+        data.uintItems.setItem(6, "feeReceiverAmount", fees.referral.feeReceiverAmount);
+        data.uintItems.setItem(7, "feesForPool", fees.referral.feesForPool);
+        data.uintItems.setItem(8, "positionFeeAmountForPool", fees.referral.positionFeeAmountForPool);
+        data.uintItems.setItem(9, "positionFeeAmount", fees.referral.positionFeeAmount);
+        data.uintItems.setItem(10, "borrowingFeeAmount", fees.referral.borrowingFeeAmount);
+        data.uintItems.setItem(11, "totalNetCostAmount", fees.referral.totalNetCostAmount);
+        data.uintItems.setItem(12, "totalNetCostUsd", fees.referral.totalNetCostUsd);
+
+        data.intItems.initItems(2);
+        data.intItems.setItem(0, "latestLongTokenFundingAmountPerSize", latestLongTokenFundingAmountPerSize);
+        data.intItems.setItem(1, "latestShortTokenFundingAmountPerSize", latestShortTokenFundingAmountPerSize);
+
+        data.boolItems.initItems(2);
+        data.boolItems.setItem(0, "hasPendingLongTokenFundingFee", fees.referral.hasPendingLongTokenFundingFee);
+        data.boolItems.setItem(1, "hasPendingShortTokenFundingFee", fees.referral.hasPendingShortTokenFundingFee);
+
+        eventEmitter.emitEventLog1(
+            "PositionFeesCollected",
+            Cast.toBytes32(market),
+            data
+        );
+    }
 }

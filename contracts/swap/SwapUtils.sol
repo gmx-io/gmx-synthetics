@@ -18,6 +18,14 @@ library SwapUtils {
     using SafeCast for int256;
     using Price for Price.Props;
 
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
+
     /**
      * @param dataStore The contract that provides access to data stored on-chain.
      * @param eventEmitter The contract that emits events.
