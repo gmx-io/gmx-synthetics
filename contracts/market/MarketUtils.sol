@@ -817,7 +817,7 @@ library MarketUtils {
     // @param totalSize the total size
     // @return the per size value
     function getPerSizeValue(uint256 amount, uint256 totalSize) internal pure returns (uint256) {
-        return (amount * Precision.FLOAT_PRECISION) / (totalSize / Precision.FLOAT_PRECISION);
+        return (amount * Precision.FLOAT_PRECISION / totalSize) / Precision.FLOAT_PRECISION;
     }
 
     // @dev get the ratio of pnl to pool value
