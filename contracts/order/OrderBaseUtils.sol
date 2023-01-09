@@ -235,13 +235,18 @@ library OrderBaseUtils {
             uint256 primaryPrice = oracle.getPrimaryPrice(indexToken).pickPrice(shouldUseMaxPrice);
             uint256 secondaryPrice = oracle.getSecondaryPrice(indexToken).pickPrice(shouldUseMaxPrice);
 
-            // increase order:
-            //     - long: validate descending price
-            //     - short: validate ascending price
-            // decrease order:
-            //     - long: validate ascending price
-            //     - short: validate descending price
-            bool shouldValidateAscendingPrice = isIncrease ? !isLong : isLong;
+            bool shouldValidateAscendingPrice;
+            if (orderType == Order.OrderType.LimitIncrease || orderType == Order.OrderType.StopLossDecrease) {
+                // for limit increase / stop-loss decrease order:
+                //     - long: validate descending price
+                //     - short: validate ascending price
+                shouldValidateAscendingPrice = !isLong;
+            } else {
+                // for limit decrease order:
+                //     - long: validate ascending price
+                //     - short: validate descending price
+                shouldValidateAscendingPrice = isLong;
+            }
 
             if (shouldValidateAscendingPrice) {
                 // check that the earlier price (primaryPrice) is smaller than the triggerPrice
