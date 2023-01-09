@@ -6,6 +6,7 @@ export const MAX_LEVERAGE = hashString("MAX_LEVERAGE");
 export const MIN_ORACLE_BLOCK_CONFIRMATIONS = hashString("MIN_ORACLE_BLOCK_CONFIRMATIONS");
 export const MAX_ORACLE_PRICE_AGE = hashString("MAX_ORACLE_PRICE_AGE");
 export const MIN_ORACLE_SIGNERS = hashString("MIN_ORACLE_SIGNERS");
+export const MIN_COLLATERAL_USD = hashString("MIN_COLLATERAL_USD");
 
 export const FEE_RECEIVER_DEPOSIT_FACTOR = hashString("FEE_RECEIVER_DEPOSIT_FACTOR");
 export const FEE_RECEIVER_WITHDRAWAL_FACTOR = hashString("FEE_RECEIVER_WITHDRAWAL_FACTOR");
@@ -30,6 +31,8 @@ export const POSITION_IMPACT_FACTOR = hashString("POSITION_IMPACT_FACTOR");
 export const POSITION_IMPACT_EXPONENT_FACTOR = hashString("POSITION_IMPACT_EXPONENT_FACTOR");
 export const MAX_POSITION_IMPACT_FACTOR = hashString("MAX_POSITION_IMPACT_FACTOR");
 export const POSITION_FEE_FACTOR = hashString("POSITION_FEE_FACTOR");
+
+const EXECUTE_ADL_FEATURE = hashString("EXECUTE_ADL_FEATURE");
 
 export function tokenTransferGasLimit(token: string) {
   return hashData(["bytes32", "address"], [TOKEN_TRANSFER_GAS_LIMIT, token]);
@@ -93,4 +96,8 @@ export function maxPositionImpactFactorKey(market: string, isPositive: boolean) 
 
 export function positionFeeFactorKey(market: string) {
   return hashData(["bytes32", "address"], [POSITION_FEE_FACTOR, market]);
+}
+
+export function executeAdlFeatureKey(module: string, orderType: number) {
+  return hashData(["bytes32", "address", "uint256"], [EXECUTE_ADL_FEATURE, module, orderType]);
 }

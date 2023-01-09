@@ -10,7 +10,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
     log: true,
   });
 
-  for (const role of ["CONTROLLER", "ORDER_KEEPER", "MARKET_KEEPER", "FROZEN_ORDER_KEEPER"]) {
+  for (const role of ["CONTROLLER", "ORDER_KEEPER", "MARKET_KEEPER", "LIQUIDATION_KEEPER", "FROZEN_ORDER_KEEPER"]) {
     await grantRoleIfNotGranted(deployer, role);
   }
 };

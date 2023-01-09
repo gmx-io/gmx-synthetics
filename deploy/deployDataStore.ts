@@ -16,6 +16,7 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   });
 
   await setUintIfDifferent(hashString("MAX_LEVERAGE"), decimalToFloat(100), "max leverage");
+  await setUintIfDifferent(hashString("MIN_COLLATERAL_USD"), decimalToFloat(1), "min collateral USD");
 };
 func.tags = ["DataStore"];
 func.dependencies = ["RoleStore"];
