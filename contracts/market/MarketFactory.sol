@@ -7,8 +7,6 @@ import "./Market.sol";
 import "./MarketStore.sol";
 import "./MarketUtils.sol";
 
-import "../utils/Null.sol";
-
 // @title MarketFactory
 // @dev Contract to create markets
 contract MarketFactory is RoleModule {
@@ -51,8 +49,7 @@ contract MarketFactory is RoleModule {
             address(marketToken),
             indexToken,
             longToken,
-            shortToken,
-            Null.BYTES
+            shortToken
         );
 
         marketStore.set(address(marketToken), market);

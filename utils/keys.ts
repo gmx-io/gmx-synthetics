@@ -3,6 +3,8 @@ import { hashString, hashData } from "./hash";
 export const WNT = hashString("WNT");
 export const MAX_LEVERAGE = hashString("MAX_LEVERAGE");
 
+export const MARKET_LIST = hashString("MARKET_LIST");
+
 export const DEPOSIT_LIST = hashString("DEPOSIT_LIST");
 export const ACCOUNT_DEPOSIT_LIST = hashString("ACCOUNT_DEPOSIT_LIST");
 

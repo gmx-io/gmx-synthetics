@@ -24,7 +24,6 @@ import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 import "../event/EventEmitter.sol";
 
-import "../utils/Null.sol";
 import "../referral/IReferralStorage.sol";
 
 // @title BaseOrderHandler

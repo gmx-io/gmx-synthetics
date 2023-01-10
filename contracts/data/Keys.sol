@@ -10,6 +10,8 @@ library Keys {
     // @dev key for the nonce value used in NonceUtils
     bytes32 public constant NONCE = keccak256(abi.encode("NONCE"));
 
+    bytes32 public constant MARKET_LIST = keccak256(abi.encode("MARKET_LIST"));
+
     bytes32 public constant DEPOSIT_LIST = keccak256(abi.encode("DEPOSIT_LIST"));
     bytes32 public constant ACCOUNT_DEPOSIT_LIST = keccak256(abi.encode("ACCOUNT_DEPOSIT_LIST"));
 

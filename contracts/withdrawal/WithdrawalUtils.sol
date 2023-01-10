@@ -21,7 +21,6 @@ import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
-import "../utils/Null.sol";
 
 /**
  * @title WithdrawalUtils
