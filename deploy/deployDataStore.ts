@@ -3,13 +3,13 @@ import { hashString } from "../utils/hash";
 import { decimalToFloat } from "../utils/math";
 import { createDeployFunction } from "../utils/deploy";
 
-const dependencyNames = ["RoleStore"];
+const constructorContracts = ["RoleStore"];
 
 const func = createDeployFunction({
   contractName: "DataStore",
-  dependencyNames,
+  dependencyNames: constructorContracts,
   getDeployArgs: async ({ dependencyContracts }) => {
-    return dependencyNames.map((dependencyName) => dependencyContracts[dependencyName].address);
+    return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
   libraryNames: ["GasUtils", "OrderUtils", "AdlUtils", "PositionStoreUtils", "OrderStoreUtils"],
   afterDeploy: async () => {
