@@ -1,22 +1,20 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { setUintIfDifferent } from "../utils/dataStore";
 import { hashString } from "../utils/hash";
 import { decimalToFloat } from "../utils/math";
+import { createDeployFunction } from "../utils/deploy";
 
-const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment) => {
-  const { deploy, get } = deployments;
-  const { deployer } = await getNamedAccounts();
+const dependencyNames = ["RoleStore"];
 
-  const roleStore = await get("RoleStore");
+const func = createDeployFunction({
+  contractName: "DataStore",
+  dependencyNames,
+  getDeployArgs: async ({ dependencyContracts }) => {
+    return dependencyNames.map((dependencyName) => dependencyContracts[dependencyName].address);
+  },
+  libraryNames: ["GasUtils", "OrderUtils", "AdlUtils", "PositionStoreUtils", "OrderStoreUtils"],
+  afterDeploy: async () => {
+    await setUintIfDifferent(hashString("MAX_LEVERAGE"), decimalToFloat(100), "max leverage");
+  },
+});
 
-  await deploy("DataStore", {
-    from: deployer,
-    log: true,
-    args: [roleStore.address],
-  });
-
-  await setUintIfDifferent(hashString("MAX_LEVERAGE"), decimalToFloat(100), "max leverage");
-};
-func.tags = ["DataStore"];
-func.dependencies = ["RoleStore"];
 export default func;

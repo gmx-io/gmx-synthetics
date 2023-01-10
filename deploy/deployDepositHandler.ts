@@ -1,54 +1,26 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { grantRoleIfNotGranted } from "../utils/role";
+import { createDeployFunction } from "../utils/deploy";
 
-const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment) => {
-  const { deploy, get } = deployments;
-  const { deployer } = await getNamedAccounts();
-
-  const roleStore = await get("RoleStore");
-  const dataStore = await get("DataStore");
-  const eventEmitter = await get("EventEmitter");
-  const depositVault = await get("DepositVault");
-  const marketStore = await get("MarketStore");
-  const oracle = await get("Oracle");
-  const feeReceiver = await get("FeeReceiver");
-  const depositUtils = await get("DepositUtils");
-  const depositStoreUtils = await get("DepositStoreUtils");
-  const gasUtils = await get("GasUtils");
-
-  const deployArgs = [
-    roleStore.address,
-    dataStore.address,
-    eventEmitter.address,
-    marketStore.address,
-    depositVault.address,
-    oracle.address,
-    feeReceiver.address,
-  ];
-  const { address } = await deploy("DepositHandler", {
-    from: deployer,
-    log: true,
-    args: deployArgs,
-    libraries: {
-      DepositUtils: depositUtils.address,
-      DepositStoreUtils: depositStoreUtils.address,
-      GasUtils: gasUtils.address,
-    },
-  });
-
-  await grantRoleIfNotGranted(address, "CONTROLLER");
-};
-func.tags = ["DepositHandler"];
-func.dependencies = [
+const dependencyNames = [
   "RoleStore",
   "DataStore",
   "EventEmitter",
-  "DepositVault",
-  "DepositStoreUtils",
   "MarketStore",
+  "DepositVault",
   "Oracle",
   "FeeReceiver",
-  "DepositUtils",
-  "GasUtils",
 ];
+
+const func = createDeployFunction({
+  contractName: "DepositHandler",
+  dependencyNames,
+  getDeployArgs: async ({ dependencyContracts }) => {
+    return dependencyNames.map((dependencyName) => dependencyContracts[dependencyName].address);
+  },
+  libraryNames: ["DepositUtils", "DepositStoreUtils", "GasUtils"],
+  afterDeploy: async ({ deployedContract }) => {
+    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
+  },
+});
+
 export default func;
