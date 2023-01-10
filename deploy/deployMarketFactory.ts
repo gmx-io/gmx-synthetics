@@ -1,22 +1,17 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { grantRoleIfNotGranted } from "../utils/role";
+import { createDeployFunction } from "../utils/deploy";
 
-const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment) => {
-  const { deploy, get } = deployments;
-  const { deployer } = await getNamedAccounts();
+const constructorContracts = ["RoleStore", "DataStore", "MarketStore"];
 
-  const roleStore = await get("RoleStore");
-  const dataStore = await get("DataStore");
-  const marketStore = await get("MarketStore");
+const func = createDeployFunction({
+  contractName: "MarketFactory",
+  dependencyNames: constructorContracts,
+  getDeployArgs: async ({ dependencyContracts }) => {
+    return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
+  },
+  afterDeploy: async ({ deployedContract }) => {
+    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
+  },
+});
 
-  const { address } = await deploy("MarketFactory", {
-    from: deployer,
-    log: true,
-    args: [roleStore.address, dataStore.address, marketStore.address],
-  });
-
-  await grantRoleIfNotGranted(address, "CONTROLLER");
-};
-func.tags = ["MarketFactory"];
-func.dependencies = ["RoleStore", "DataStore", "MarketStore"];
 export default func;

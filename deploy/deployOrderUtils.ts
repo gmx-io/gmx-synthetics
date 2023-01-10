@@ -1,39 +1,16 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { createDeployFunction } from "../utils/deploy";
 
-const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment) => {
-  const { deploy, get } = deployments;
-  const { deployer } = await getNamedAccounts();
+const func = createDeployFunction({
+  contractName: "OrderUtils",
+  libraryNames: [
+    "BaseOrderUtils",
+    "OrderStoreUtils",
+    "OrderEventUtils",
+    "IncreaseOrderUtils",
+    "DecreaseOrderUtils",
+    "SwapOrderUtils",
+    "GasUtils",
+  ],
+});
 
-  const baseOrderUtils = await get("BaseOrderUtils");
-  const orderStoreUtils = await get("OrderStoreUtils");
-  const orderEventUtils = await get("OrderEventUtils");
-  const increaseOrderUtils = await get("IncreaseOrderUtils");
-  const decreaseOrderUtils = await get("DecreaseOrderUtils");
-  const swapOrderUtils = await get("SwapOrderUtils");
-  const gasUtils = await get("GasUtils");
-
-  await deploy("OrderUtils", {
-    from: deployer,
-    log: true,
-    libraries: {
-      BaseOrderUtils: baseOrderUtils.address,
-      OrderStoreUtils: orderStoreUtils.address,
-      OrderEventUtils: orderEventUtils.address,
-      IncreaseOrderUtils: increaseOrderUtils.address,
-      DecreaseOrderUtils: decreaseOrderUtils.address,
-      SwapOrderUtils: swapOrderUtils.address,
-      GasUtils: gasUtils.address,
-    },
-  });
-};
-func.tags = ["OrderUtils"];
-func.dependencies = [
-  "BaseOrderUtils",
-  "OrderStoreUtils",
-  "OrderEventUtils",
-  "IncreaseOrderUtils",
-  "DecreaseOrderUtils",
-  "SwapOrderUtils",
-  "GasUtils",
-];
 export default func;

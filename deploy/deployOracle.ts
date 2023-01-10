@@ -1,30 +1,28 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { grantRoleIfNotGranted } from "../utils/role";
 import { setUintIfDifferent } from "../utils/dataStore";
 import * as keys from "../utils/keys";
+import { createDeployFunction } from "../utils/deploy";
 
-const func = async ({ getNamedAccounts, deployments, gmx }: HardhatRuntimeEnvironment) => {
-  const { deploy, get } = deployments;
-  const { deployer } = await getNamedAccounts();
-  const oracleConfig = await gmx.getOracle();
+const constructorContracts = ["RoleStore", "OracleStore"];
 
-  const roleStore = await get("RoleStore");
-  const oracleStore = await get("OracleStore");
+const func = createDeployFunction({
+  contractName: "Oracle",
+  dependencyNames: constructorContracts,
+  getDeployArgs: async ({ dependencyContracts }) => {
+    return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
+  },
+  afterDeploy: async ({ deployedContract, gmx }) => {
+    const oracleConfig = await gmx.getOracle();
+    await setUintIfDifferent(
+      keys.MIN_ORACLE_BLOCK_CONFIRMATIONS,
+      oracleConfig.minOracleBlockConfirmations,
+      "min oracle block confirmations"
+    );
+    await setUintIfDifferent(keys.MAX_ORACLE_PRICE_AGE, oracleConfig.maxOraclePriceAge, "max oracle price age");
+    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
+  },
+});
 
-  const { address } = await deploy("Oracle", {
-    from: deployer,
-    log: true,
-    args: [roleStore.address, oracleStore.address],
-  });
+func.dependencies = func.dependencies.concat("Tokens");
 
-  await setUintIfDifferent(
-    keys.MIN_ORACLE_BLOCK_CONFIRMATIONS,
-    oracleConfig.minOracleBlockConfirmations,
-    "min oracle block confirmations"
-  );
-  await setUintIfDifferent(keys.MAX_ORACLE_PRICE_AGE, oracleConfig.maxOraclePriceAge, "max oracle price age");
-  await grantRoleIfNotGranted(address, "CONTROLLER");
-};
-func.tags = ["Oracle"];
-func.dependencies = ["RoleStore", "OracleStore", "Tokens"];
 export default func;

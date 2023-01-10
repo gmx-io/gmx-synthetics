@@ -1,19 +1,13 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { grantRoleIfNotGranted } from "../utils/role";
+import { createDeployFunction } from "../utils/deploy";
 
-const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment) => {
-  const { deploy } = deployments;
-  const { deployer } = await getNamedAccounts();
+const func = createDeployFunction({
+  contractName: "RoleStore",
+  afterDeploy: async ({ deployer }) => {
+    for (const role of ["CONTROLLER", "ORDER_KEEPER", "MARKET_KEEPER", "FROZEN_ORDER_KEEPER"]) {
+      await grantRoleIfNotGranted(deployer, role);
+    }
+  },
+});
 
-  await deploy("RoleStore", {
-    from: deployer,
-    log: true,
-  });
-
-  for (const role of ["CONTROLLER", "ORDER_KEEPER", "MARKET_KEEPER", "FROZEN_ORDER_KEEPER"]) {
-    await grantRoleIfNotGranted(deployer, role);
-  }
-};
-func.tags = ["RoleStore"];
-func.dependencies = ["Init"];
 export default func;

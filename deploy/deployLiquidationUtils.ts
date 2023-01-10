@@ -1,20 +1,8 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { createDeployFunction } from "../utils/deploy";
 
-const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment) => {
-  const { deploy, get } = deployments;
-  const { deployer } = await getNamedAccounts();
-  const positionStoreUtils = await get("PositionStoreUtils");
-  const orderStoreUtils = await get("OrderStoreUtils");
+const func = createDeployFunction({
+  contractName: "LiquidationUtils",
+  libraryNames: ["PositionStoreUtils", "OrderStoreUtils"],
+});
 
-  await deploy("LiquidationUtils", {
-    from: deployer,
-    log: true,
-    libraries: {
-      PositionStoreUtils: positionStoreUtils.address,
-      OrderStoreUtils: orderStoreUtils.address,
-    },
-  });
-};
-func.tags = ["LiquidationUtils"];
-func.dependencies = ["PositionStoreUtils", "OrderStoreUtils"];
 export default func;
