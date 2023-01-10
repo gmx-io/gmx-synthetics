@@ -19,9 +19,8 @@ describe("EventEmitter", () => {
     const receipt = await tx.wait();
     const event = receipt.events[0];
 
-    expect(event.event).eq("DepositExecuted");
     expect(event.topics[0]).eq(topic1);
     expect(event.topics.length).eq(1);
-    expect(event.args.key).eq(depositKey);
+    expect(event.data).eq(data);
   });
 });
