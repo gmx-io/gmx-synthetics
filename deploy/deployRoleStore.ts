@@ -10,4 +10,6 @@ const func = createDeployFunction({
   },
 });
 
+func.dependencies = func.dependencies.concat(["Init"]);
+
 export default func;

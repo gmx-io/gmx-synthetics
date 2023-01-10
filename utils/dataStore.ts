@@ -19,8 +19,12 @@ export async function setBytes32IfDifferent(key: string, value: string, label?: 
   await setIfDifferent("bytes32", key, value, { label });
 }
 
+export async function setBoolIfDifferent(key: string, value: boolean, label?: string) {
+  await setIfDifferent("bool", key, value, { label });
+}
+
 async function setIfDifferent(
-  type: "uint" | "address" | "data",
+  type: "uint" | "address" | "data" | "bool",
   key: string,
   value: any,
   { compare, label }: { compare?: (a: any, b: any) => boolean; label?: string } = {}

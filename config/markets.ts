@@ -53,6 +53,8 @@ const baseMarketConfig: BaseMarketConfig = {
   positiveSwapImpactFactor: decimalToFloat(2, 5), // 0.002 %
   negativeSwapImpactFactor: decimalToFloat(1, 5), // 0.001 %
   swapImpactExponentFactor: decimalToFloat(2, 0), // 2
+
+  minCollateralUsd: decimalToFloat(1, 0), // 1 USD
 };
 
 const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
