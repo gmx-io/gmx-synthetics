@@ -44,7 +44,6 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
   });
 
   await grantRoleIfNotGranted(address, "CONTROLLER");
-  await grantRoleIfNotGranted(address, "ORDER_KEEPER");
 };
 func.tags = ["LiquidationHandler"];
 func.dependencies = [

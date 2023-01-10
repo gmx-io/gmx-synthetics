@@ -30,7 +30,6 @@ const func = createDeployFunction({
   libraryNames: ["OrderUtils", "OrderStoreUtils", "OrderEventUtils"],
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
-    await grantRoleIfNotGranted(deployedContract.address, "ORDER_KEEPER");
   },
 });
 

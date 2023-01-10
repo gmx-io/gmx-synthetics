@@ -1,31 +1,23 @@
 import { grantRoleIfNotGranted } from "../utils/role";
 import { createDeployFunction } from "../utils/deploy";
 
+const dependencyNames = [
+  "Router",
+  "RoleStore",
+  "DataStore",
+  "EventEmitter",
+  "DepositHandler",
+  "WithdrawalHandler",
+  "OrderHandler",
+  "MarketStore",
+  "ReferralStorage",
+];
+
 const func = createDeployFunction({
   contractName: "ExchangeRouter",
-  dependencyNames: [
-    "Router",
-    "RoleStore",
-    "DataStore",
-    "EventEmitter",
-    "DepositHandler",
-    "WithdrawalHandler",
-    "OrderHandler",
-    "MarketStore",
-    "ReferralStorage",
-  ],
+  dependencyNames,
   getDeployArgs: async ({ dependencyContracts }) => {
-    return [
-      dependencyContracts["Router"].address,
-      dependencyContracts["RoleStore"].address,
-      dependencyContracts["DataStore"].address,
-      dependencyContracts["EventEmitter"].address,
-      dependencyContracts["DepositHandler"].address,
-      dependencyContracts["WithdrawalHandler"].address,
-      dependencyContracts["OrderHandler"].address,
-      dependencyContracts["MarketStore"].address,
-      dependencyContracts["ReferralStorage"].address,
-    ];
+    return dependencyNames.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
   libraryNames: [
     "DepositStoreUtils",
