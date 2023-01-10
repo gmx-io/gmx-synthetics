@@ -1,63 +1,37 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { grantRoleIfNotGranted } from "../utils/role";
+import { createDeployFunction } from "../utils/deploy";
 
-const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment) => {
-  const { deploy, get } = deployments;
-  const { deployer } = await getNamedAccounts();
+const func = createDeployFunction({
+  contractName: "OrderHandler",
+  dependencyNames: [
+    "RoleStore",
+    "DataStore",
+    "EventEmitter",
+    "MarketStore",
+    "OrderVault",
+    "Oracle",
+    "SwapHandler",
+    "FeeReceiver",
+    "ReferralStorage",
+  ],
+  getDeployArgs: async ({ dependencyContracts }) => {
+    return [
+      dependencyContracts["RoleStore"].address,
+      dependencyContracts["DataStore"].address,
+      dependencyContracts["EventEmitter"].address,
+      dependencyContracts["MarketStore"].address,
+      dependencyContracts["OrderVault"].address,
+      dependencyContracts["Oracle"].address,
+      dependencyContracts["SwapHandler"].address,
+      dependencyContracts["FeeReceiver"].address,
+      dependencyContracts["ReferralStorage"].address,
+    ];
+  },
+  libraryNames: ["OrderUtils", "OrderStoreUtils", "OrderEventUtils"],
+  afterDeploy: async ({ deployedContract }) => {
+    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract.address, "ORDER_KEEPER");
+  },
+});
 
-  const roleStore = await get("RoleStore");
-  const dataStore = await get("DataStore");
-  const eventEmitter = await get("EventEmitter");
-  const orderVault = await get("OrderVault");
-  const marketStore = await get("MarketStore");
-  const oracle = await get("Oracle");
-  const swapHandler = await get("SwapHandler");
-  const feeReceiver = await get("FeeReceiver");
-  const referralStorage = await get("ReferralStorage");
-  const gasUtils = await get("GasUtils");
-  const orderUtils = await get("OrderUtils");
-  const positionStoreUtils = await get("PositionStoreUtils");
-  const orderStoreUtils = await get("OrderStoreUtils");
-
-  const { address } = await deploy("OrderHandler", {
-    from: deployer,
-    log: true,
-    args: [
-      roleStore.address,
-      dataStore.address,
-      eventEmitter.address,
-      marketStore.address,
-      orderVault.address,
-      oracle.address,
-      swapHandler.address,
-      feeReceiver.address,
-      referralStorage.address,
-    ],
-    libraries: {
-      GasUtils: gasUtils.address,
-      OrderUtils: orderUtils.address,
-      PositionStoreUtils: positionStoreUtils.address,
-      OrderStoreUtils: orderStoreUtils.address,
-    },
-  });
-
-  await grantRoleIfNotGranted(address, "CONTROLLER");
-  await grantRoleIfNotGranted(address, "ORDER_KEEPER");
-};
-func.tags = ["OrderHandler"];
-func.dependencies = [
-  "RoleStore",
-  "DataStore",
-  "EventEmitter",
-  "MarketStore",
-  "OrderVault",
-  "Oracle",
-  "SwapHandler",
-  "FeeReceiver",
-  "ReferralStorage",
-  "GasUtils",
-  "OrderUtils",
-  "PositionStoreUtils",
-  "OrderStoreUtils",
-];
 export default func;
