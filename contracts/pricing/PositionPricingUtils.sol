@@ -419,7 +419,7 @@ library PositionPricingUtils {
     ) external {
         EventUtils.EventLogData memory data;
 
-        data.addressItems.initItems(2);
+        data.addressItems.initItems(3);
         data.addressItems.setItem(0, "market", market);
         data.addressItems.setItem(1, "collateralToken", collateralToken);
         data.addressItems.setItem(2, "affiliate", fees.referral.affiliate);
