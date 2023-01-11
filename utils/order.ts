@@ -33,7 +33,7 @@ export function getAccountOrderKeys(dataStore, account, start, end) {
 }
 
 export async function createOrder(fixture, overrides) {
-  const { initialCollateralToken, initialCollateralDeltaAmount, orderType, gasUsageLabel } = overrides;
+  const { initialCollateralToken, orderType, gasUsageLabel } = overrides;
 
   const { orderVault, orderHandler, wnt } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
@@ -43,6 +43,7 @@ export async function createOrder(fixture, overrides) {
   const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
   const market = overrides.market || { marketToken: ethers.constants.AddressZero };
   const sizeDeltaUsd = overrides.sizeDeltaUsd || "0";
+  const initialCollateralDeltaAmount = overrides.initialCollateralDeltaAmount || "0";
   const swapPath = overrides.swapPath || [];
   const acceptablePrice = overrides.acceptablePrice || "0";
   const triggerPrice = overrides.triggerPrice || "0";
@@ -52,7 +53,15 @@ export async function createOrder(fixture, overrides) {
   const minOutputAmount = overrides.minOutputAmount || 0;
   const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
 
-  await initialCollateralToken.mint(orderVault.address, initialCollateralDeltaAmount);
+  if (
+    orderType === OrderType.MarketSwap ||
+    orderType === OrderType.LimitSwap ||
+    orderType === OrderType.MarketIncrease ||
+    orderType === OrderType.LimitIncrease
+  ) {
+    await initialCollateralToken.mint(orderVault.address, initialCollateralDeltaAmount);
+  }
+
   await wnt.mint(orderVault.address, executionFee);
 
   const params = {
@@ -65,6 +74,7 @@ export async function createOrder(fixture, overrides) {
     },
     numbers: {
       sizeDeltaUsd,
+      initialCollateralDeltaAmount,
       acceptablePrice,
       triggerPrice,
       executionFee,

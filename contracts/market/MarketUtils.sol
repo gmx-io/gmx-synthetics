@@ -1428,6 +1428,7 @@ library MarketUtils {
     // @param swapPath list of market addresses
     function getEnabledMarkets(DataStore dataStore, MarketStore marketStore, address[] memory swapPath, bool allowSwapPathFlag) internal view returns (Market.Props[] memory) {
         Market.Props[] memory markets = new Market.Props[](swapPath.length);
+        uint256 indexAdjustment = 0;
 
         for (uint256 i = 0; i < swapPath.length; i++) {
             address marketAddress = swapPath[i];
@@ -1438,10 +1439,12 @@ library MarketUtils {
                 marketAddress == SWAP_PNL_TOKEN_TO_COLLATERAL_TOKEN ||
                 marketAddress == SWAP_COLLATERAL_TOKEN_TO_PNL_TOKEN)
             ) {
-                    continue;
+                markets = new Market.Props[](swapPath.length - 1);
+                indexAdjustment = 1;
+                continue;
             }
 
-            markets[i] = getEnabledMarket(dataStore, marketStore, marketAddress);
+            markets[i - indexAdjustment] = getEnabledMarket(dataStore, marketStore, marketAddress);
         }
 
         return markets;

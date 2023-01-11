@@ -40,7 +40,7 @@ library OrderUtils {
     // @dev creates an order in the order store
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
-    // @param orderStore OrderStore
+    // @param orderVault OrderVault
     // @param marketStore MarketStore
     // @param account the order account
     // @param params BaseOrderUtils.CreateOrderParams
@@ -56,19 +56,29 @@ library OrderUtils {
 
         address wnt = TokenUtils.wnt(dataStore);
 
-        if (params.addresses.initialCollateralToken == wnt ||
+        bool shouldRecordSeparateExecutionFeeTransfer = true;
+
+        if (
             params.orderType == Order.OrderType.MarketSwap ||
             params.orderType == Order.OrderType.LimitSwap ||
             params.orderType == Order.OrderType.MarketIncrease ||
             params.orderType == Order.OrderType.LimitIncrease
         ) {
             initialCollateralDeltaAmount = orderVault.recordTransferIn(params.addresses.initialCollateralToken);
+            if (params.addresses.initialCollateralToken == wnt) {
+                require(initialCollateralDeltaAmount >= params.numbers.executionFee, "OrderUtils: invalid executionFee");
+                initialCollateralDeltaAmount -= params.numbers.executionFee;
+                shouldRecordSeparateExecutionFeeTransfer = false;
+            }
+        } else if (
+            params.orderType == Order.OrderType.MarketDecrease ||
+            params.orderType == Order.OrderType.LimitDecrease ||
+            params.orderType == Order.OrderType.StopLossDecrease
+        ) {
+            initialCollateralDeltaAmount = params.numbers.initialCollateralDeltaAmount;
         }
 
-        if (params.addresses.initialCollateralToken == wnt) {
-            require(initialCollateralDeltaAmount >= params.numbers.executionFee, "OrderUtils: invalid executionFee");
-            initialCollateralDeltaAmount -= params.numbers.executionFee;
-        } else {
+        if (shouldRecordSeparateExecutionFeeTransfer) {
             uint256 wntAmount = orderVault.recordTransferIn(wnt);
             require(wntAmount == params.numbers.executionFee, "OrderUtils: invalid wntAmount");
         }
@@ -168,7 +178,7 @@ library OrderUtils {
     // @dev cancels an order
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
-    // @param orderStore OrderStore
+    // @param orderVault OrderVault
     // @param key the key of the order to cancel
     // @param keeper the keeper sending the transaction
     // @param startingGas the starting gas of the transaction
@@ -215,7 +225,7 @@ library OrderUtils {
     // @dev freezes an order
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
-    // @param orderStore OrderStore
+    // @param orderVault OrderVault
     // @param key the key of the order to freeze
     // @param keeper the keeper sending the transaction
     // @param startingGas the starting gas of the transaction

@@ -33,15 +33,14 @@ library DecreasePositionUtils {
     // @param adjustedSizeDeltaUsd the adjusted sizeDeltaUsd
     // @param outputToken the output token
     // @param outputAmount the output amount
-    // @param pnlToken the token that the pnl for the user is in, for long positions
-    // this is the market.longToken, for short positions this is the market.shortToken
-    // @param pnlAmountForUser the pnl for the user in token amount
+    // @param secondaryOutputToken the secondary output token
+    // @param secondaryOutputAmount the secondary output amount
     struct DecreasePositionResult {
         uint256 adjustedSizeDeltaUsd;
         address outputToken;
         uint256 outputAmount;
-        address pnlToken;
-        uint256 pnlAmountForUser;
+        address secondaryOutputToken;
+        uint256 secondaryOutputAmount;
     }
 
     // @dev decreases a position
@@ -126,7 +125,7 @@ library DecreasePositionUtils {
 
         if (params.position.sizeInUsd() == 0 || params.position.sizeInTokens() == 0) {
             // withdraw all collateral if the position will be closed
-            values.outputAmount += params.position.collateralAmount();
+            values.output.outputAmount += params.position.collateralAmount();
 
             params.position.setSizeInUsd(0);
             params.position.setSizeInTokens(0);
@@ -165,7 +164,7 @@ library DecreasePositionUtils {
         PositionUtils.updateOpenInterest(
             params,
             -cache.adjustedSizeDeltaUsd.toInt256(),
-            values.sizeDeltaInTokens.toInt256()
+            -values.sizeDeltaInTokens.toInt256()
         );
 
         MarketUtils.applyDeltaToPoolAmount(
@@ -206,23 +205,14 @@ library DecreasePositionUtils {
             params.order.orderType()
         );
 
-        cache.outputToken = params.position.collateralToken();
-
         values = DecreasePositionCollateralUtils.swapWithdrawnCollateralToPnlToken(params, values, cache.pnlToken);
-
-        // if outputAmount is zero, transfer the values from pnlAmountForUser to outputAmount
-        if (values.outputAmount == 0 && values.pnlAmountForUser > 0) {
-            cache.outputToken = cache.pnlToken;
-            values.outputAmount = values.pnlAmountForUser;
-            values.pnlAmountForUser = 0;
-        }
 
         return DecreasePositionResult(
             cache.adjustedSizeDeltaUsd,
-            cache.outputToken,
-            values.outputAmount,
-            cache.pnlToken,
-            values.pnlAmountForUser
+            values.output.outputToken,
+            values.output.outputAmount,
+            values.output.secondaryOutputToken,
+            values.output.secondaryOutputAmount
         );
     }
 }
