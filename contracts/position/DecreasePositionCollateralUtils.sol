@@ -168,8 +168,8 @@ library DecreasePositionCollateralUtils {
                 values.outputAmount -= fees.totalNetCostAmount;
                 fees.totalNetCostAmount = 0;
             } else {
+                fees.totalNetCostAmount -= values.outputAmount;
                 values.outputAmount = 0;
-                fees.totalNetCostAmount = fees.totalNetCostAmount - values.outputAmount;
             }
         }
 
