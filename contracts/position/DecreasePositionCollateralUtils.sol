@@ -38,6 +38,7 @@ library DecreasePositionCollateralUtils {
     // @param sizeDeltaInTokens the change in position size in tokens
     // @param priceImpactAmount the price impact in tokens
     struct ProcessCollateralValues {
+        address pnlTokenForPool;
         uint256 executionPrice;
         int256 remainingCollateralAmount;
         uint256 outputAmount;
@@ -72,7 +73,6 @@ library DecreasePositionCollateralUtils {
     // @param initialCollateralAmount the initial collateral amount
     // @param nextPositionSizeInUsd the new position size in USD
     // @param nextPositionBorrowingFactor the new position borrowing factor
-    // @param poolDeltaAmount the change in pool amount
     struct DecreasePositionCache {
         MarketUtils.MarketPrices prices;
         address pnlToken;
@@ -82,7 +82,6 @@ library DecreasePositionCollateralUtils {
         uint256 initialCollateralAmount;
         uint256 nextPositionSizeInUsd;
         uint256 nextPositionBorrowingFactor;
-        int256 poolDeltaAmount;
     }
 
 
@@ -125,11 +124,13 @@ library DecreasePositionCollateralUtils {
         if (values.positionPnlUsd < 0) {
             // position realizes a loss
             // deduct collateral from user, transfer it to the pool
+            values.pnlTokenForPool = params.position.collateralToken();
             values.pnlAmountForPool = -values.positionPnlUsd / collateralTokenPrice.min.toInt256();
             values.remainingCollateralAmount -= values.pnlAmountForPool;
         } else {
             // position realizes a profit
             // deduct the pnl from the pool
+            values.pnlTokenForPool = cache.pnlToken;
             values.pnlAmountForPool = -values.positionPnlUsd / cache.pnlTokenPrice.max.toInt256();
             uint256 pnlAmountForUser = (-values.pnlAmountForPool).toUint256();
 
@@ -300,6 +301,7 @@ library DecreasePositionCollateralUtils {
         PositionPricingUtils.PositionFees memory _fees;
 
         ProcessCollateralValues memory _values = ProcessCollateralValues(
+            values.pnlTokenForPool,
             values.executionPrice, // executionPrice
             0, // remainingCollateralAmount
             0, // outputAmount
