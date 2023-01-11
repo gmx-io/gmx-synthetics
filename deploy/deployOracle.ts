@@ -23,7 +23,7 @@ const func = async ({ getNamedAccounts, deployments, gmx }: HardhatRuntimeEnviro
     "min oracle block confirmations"
   );
   await setUintIfDifferent(keys.MAX_ORACLE_PRICE_AGE, oracleConfig.maxOraclePriceAge, "max oracle price age");
-  await grantRoleIfNotGranted(address, "CONTROLLER");
+  await grantRoleIfNotGranted(address, "CONTROLLER", "oracle");
 };
 func.tags = ["Oracle"];
 func.dependencies = ["RoleStore", "OracleStore", "Tokens"];

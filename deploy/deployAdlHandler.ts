@@ -1,7 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { setBoolIfDifferent } from "../utils/dataStore";
 import { grantRoleIfNotGranted } from "../utils/role";
-import * as keys from "../utils/keys";
 
 const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment) => {
   const { deploy, get } = deployments;
@@ -45,8 +43,6 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
 
   await grantRoleIfNotGranted(address, "CONTROLLER");
   await grantRoleIfNotGranted(address, "ORDER_KEEPER");
-
-  await setBoolIfDifferent(keys.executeAdlFeatureKey(address, 4), true, `ADL feature for ${address}`);
 };
 func.tags = ["AdlHandler"];
 func.dependencies = [
