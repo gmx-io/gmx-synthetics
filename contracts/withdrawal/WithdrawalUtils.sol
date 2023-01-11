@@ -10,8 +10,6 @@ import "./WithdrawalVault.sol";
 import "./WithdrawalStoreUtils.sol";
 import "./WithdrawalEventUtils.sol";
 
-import "../market/MarketStore.sol";
-
 import "../nonce/NonceUtils.sol";
 import "../pricing/SwapPricingUtils.sol";
 import "../oracle/Oracle.sol";
@@ -60,7 +58,6 @@ library WithdrawalUtils {
      * @param dataStore The data store where withdrawal data is stored.
      * @param eventEmitter The event emitter that is used to emit events.
      * @param withdrawalVault WithdrawalVault.
-     * @param marketStore The market store where market data is stored.
      * @param oracle The oracle that provides market prices.
      * @param feeReceiver The address that will receive the withdrawal fees.
      * @param key The unique identifier of the withdrawal to execute.
@@ -72,7 +69,6 @@ library WithdrawalUtils {
         DataStore dataStore;
         EventEmitter eventEmitter;
         WithdrawalVault withdrawalVault;
-        MarketStore marketStore;
         Oracle oracle;
         FeeReceiver feeReceiver;
         bytes32 key;
@@ -91,7 +87,6 @@ library WithdrawalUtils {
      * @param dataStore The data store where withdrawal data is stored.
      * @param eventEmitter The event emitter that is used to emit events.
      * @param withdrawalVault WithdrawalVault.
-     * @param marketStore The market store where market data is stored.
      * @param account The account that initiated the withdrawal.
      * @param params The parameters for creating the withdrawal.
      * @return The unique identifier of the created withdrawal.
@@ -100,7 +95,6 @@ library WithdrawalUtils {
         DataStore dataStore,
         EventEmitter eventEmitter,
         WithdrawalVault withdrawalVault,
-        MarketStore marketStore,
         address account,
         CreateWithdrawalParams memory params
     ) external returns (bytes32) {
@@ -108,7 +102,7 @@ library WithdrawalUtils {
         uint256 wntAmount = withdrawalVault.recordTransferIn(wnt);
         require(wntAmount == params.executionFee, "WithdrawalUtils: invalid wntAmount");
 
-        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, marketStore, params.market);
+        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, params.market);
 
         Withdrawal.Props memory withdrawal = Withdrawal.Props(
             Withdrawal.Addresses(
@@ -225,7 +219,7 @@ library WithdrawalUtils {
         ExecuteWithdrawalParams memory params,
         Withdrawal.Props memory withdrawal
     ) internal {
-        Market.Props memory market = MarketUtils.getEnabledMarket(params.dataStore, params.marketStore, withdrawal.market());
+        Market.Props memory market = MarketUtils.getEnabledMarket(params.dataStore, withdrawal.market());
 
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(
             params.oracle,

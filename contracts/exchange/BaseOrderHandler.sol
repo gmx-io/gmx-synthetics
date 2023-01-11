@@ -13,7 +13,6 @@ import "../adl/AdlUtils.sol";
 import "../liquidation/LiquidationUtils.sol";
 
 import "../market/Market.sol";
-import "../market/MarketStore.sol";
 import "../market/MarketToken.sol";
 
 import "../order/Order.sol";
@@ -35,7 +34,6 @@ contract BaseOrderHandler is ReentrancyGuard, RoleModule, OracleModule {
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
-    MarketStore public immutable marketStore;
     OrderVault public immutable orderVault;
     SwapHandler public immutable swapHandler;
     Oracle public immutable oracle;
@@ -46,7 +44,6 @@ contract BaseOrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        MarketStore _marketStore,
         OrderVault _orderVault,
         Oracle _oracle,
         SwapHandler _swapHandler,
@@ -55,7 +52,6 @@ contract BaseOrderHandler is ReentrancyGuard, RoleModule, OracleModule {
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
-        marketStore = _marketStore;
         orderVault = _orderVault;
         oracle = _oracle;
         swapHandler = _swapHandler;
@@ -81,7 +77,6 @@ contract BaseOrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         params.order = OrderStoreUtils.get(dataStore, key);
         params.swapPathMarkets = MarketUtils.getEnabledMarkets(
             dataStore,
-            marketStore,
             params.order.swapPath(),
             BaseOrderUtils.isDecreaseOrder(params.order.orderType())
         );
@@ -100,7 +95,7 @@ contract BaseOrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         );
 
         if (params.order.market() != address(0)) {
-            params.market = MarketUtils.getEnabledMarket(params.contracts.dataStore, marketStore, params.order.market());
+            params.market = MarketUtils.getEnabledMarket(params.contracts.dataStore, params.order.market());
         }
 
         params.keeper = keeper;

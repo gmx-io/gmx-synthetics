@@ -10,7 +10,6 @@ import "../event/EventEmitter.sol";
 import "../feature/FeatureUtils.sol";
 
 import "../market/Market.sol";
-import "../market/MarketStore.sol";
 import "../market/MarketToken.sol";
 
 import "../deposit/Deposit.sol";
@@ -26,7 +25,6 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
-    MarketStore public immutable marketStore;
     DepositVault public immutable depositVault;
     Oracle public immutable oracle;
     FeeReceiver public immutable feeReceiver;
@@ -35,7 +33,6 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        MarketStore _marketStore,
         DepositVault _depositVault,
         Oracle _oracle,
         FeeReceiver _feeReceiver
@@ -43,7 +40,6 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         depositVault = _depositVault;
-        marketStore = _marketStore;
         oracle = _oracle;
         feeReceiver = _feeReceiver;
     }
@@ -61,7 +57,6 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
             dataStore,
             eventEmitter,
             depositVault,
-            marketStore,
             account,
             params
         );
@@ -87,7 +82,6 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
             _dataStore,
             eventEmitter,
             depositVault,
-            marketStore,
             key,
             deposit.account(),
             startingGas,
@@ -123,7 +117,6 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
                 dataStore,
                 eventEmitter,
                 depositVault,
-                marketStore,
                 key,
                 msg.sender,
                 startingGas,
@@ -134,7 +127,6 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
                 dataStore,
                 eventEmitter,
                 depositVault,
-                marketStore,
                 key,
                 msg.sender,
                 startingGas,
@@ -163,7 +155,6 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         DepositUtils.ExecuteDepositParams memory params = DepositUtils.ExecuteDepositParams(
             dataStore,
             eventEmitter,
-            marketStore,
             depositVault,
             oracle,
             feeReceiver,

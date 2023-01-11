@@ -9,7 +9,6 @@ import "../role/RoleModule.sol";
 import "../feature/FeatureUtils.sol";
 
 import "../market/Market.sol";
-import "../market/MarketStore.sol";
 import "../market/MarketToken.sol";
 
 import "../withdrawal/Withdrawal.sol";
@@ -27,7 +26,6 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     WithdrawalVault public immutable withdrawalVault;
-    MarketStore public immutable marketStore;
     Oracle public immutable oracle;
     FeeReceiver public immutable feeReceiver;
 
@@ -36,14 +34,12 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         WithdrawalVault _withdrawalVault,
-        MarketStore _marketStore,
         Oracle _oracle,
         FeeReceiver _feeReceiver
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         withdrawalVault = _withdrawalVault;
-        marketStore = _marketStore;
         oracle = _oracle;
         feeReceiver = _feeReceiver;
     }
@@ -61,7 +57,6 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
             dataStore,
             eventEmitter,
             withdrawalVault,
-            marketStore,
             account,
             params
         );
@@ -162,7 +157,6 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
             dataStore,
             eventEmitter,
             withdrawalVault,
-            marketStore,
             oracle,
             feeReceiver,
             key,

@@ -10,8 +10,8 @@ import "../bank/StrictBank.sol";
 
 import "./Market.sol";
 import "./MarketToken.sol";
-import "./MarketStore.sol";
 import "./MarketEventUtils.sol";
+import "./MarketStoreUtils.sol";
 
 import "../position/Position.sol";
 import "../order/Order.sol";
@@ -818,7 +818,6 @@ library MarketUtils {
 
     // @dev get the ratio of pnl to pool value
     // @param dataStore DataStore
-    // @param marketStore MarketStore
     // @param oracle Oracle
     // @param market the trading market
     // @param isLong whether to get the value for the long or short side
@@ -826,13 +825,12 @@ library MarketUtils {
     // @return (pnl of positions) / (long or short pool value)
     function getPnlToPoolFactor(
         DataStore dataStore,
-        MarketStore marketStore,
         Oracle oracle,
         address market,
         bool isLong,
         bool maximize
     ) internal view returns (int256) {
-        Market.Props memory _market = getEnabledMarket(dataStore, marketStore, market);
+        Market.Props memory _market = getEnabledMarket(dataStore, market);
         MarketUtils.MarketPrices memory prices = MarketUtils.MarketPrices(
             oracle.getPrimaryPrice(_market.indexToken),
             oracle.getPrimaryPrice(_market.longToken),
@@ -1417,16 +1415,15 @@ library MarketUtils {
         }
     }
 
-    function getEnabledMarket(DataStore dataStore, MarketStore marketStore, address marketAddress) internal view returns (Market.Props memory) {
-        Market.Props memory market = marketStore.get(marketAddress);
+    function getEnabledMarket(DataStore dataStore, address marketAddress) internal view returns (Market.Props memory) {
+        Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
         validateEnabledMarket(dataStore, market);
         return market;
     }
 
     // @dev get a list of market values based on an input array of market addresses
-    // @param marketStore MarketStore
     // @param swapPath list of market addresses
-    function getEnabledMarkets(DataStore dataStore, MarketStore marketStore, address[] memory swapPath, bool allowSwapPathFlag) internal view returns (Market.Props[] memory) {
+    function getEnabledMarkets(DataStore dataStore, address[] memory swapPath, bool allowSwapPathFlag) internal view returns (Market.Props[] memory) {
         Market.Props[] memory markets = new Market.Props[](swapPath.length);
         uint256 indexAdjustment = 0;
 
@@ -1444,7 +1441,7 @@ library MarketUtils {
                 continue;
             }
 
-            markets[i - indexAdjustment] = getEnabledMarket(dataStore, marketStore, marketAddress);
+            markets[i - indexAdjustment] = getEnabledMarket(dataStore, marketAddress);
         }
 
         return markets;

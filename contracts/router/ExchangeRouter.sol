@@ -63,7 +63,6 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     DepositHandler public immutable depositHandler;
     WithdrawalHandler public immutable withdrawalHandler;
     OrderHandler public immutable orderHandler;
-    MarketStore public immutable marketStore;
     IReferralStorage public immutable referralStorage;
 
     // @dev Constructor that initializes the contract with the provided Router, RoleStore, DataStore,
@@ -76,7 +75,6 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         DepositHandler _depositHandler,
         WithdrawalHandler _withdrawalHandler,
         OrderHandler _orderHandler,
-        MarketStore _marketStore,
         IReferralStorage _referralStorage
     ) RoleModule(_roleStore) {
         router = _router;
@@ -86,8 +84,6 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         depositHandler = _depositHandler;
         withdrawalHandler = _withdrawalHandler;
         orderHandler = _orderHandler;
-
-        marketStore = _marketStore;
 
         referralStorage = _referralStorage;
     }

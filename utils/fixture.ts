@@ -3,6 +3,7 @@ import hre from "hardhat";
 import { expandDecimals } from "./math";
 import { hashData } from "./hash";
 import { getMarketTokenAddress } from "./market";
+import { getSyntheticTokenAddress } from "./token";
 
 export async function deployFixture() {
   await hre.deployments.fixture();
@@ -50,7 +51,6 @@ export async function deployFixture() {
   const eventEmitter = await hre.ethers.getContract("EventEmitter");
   const oracleStore = await hre.ethers.getContract("OracleStore");
   const orderVault = await hre.ethers.getContract("OrderVault");
-  const marketStore = await hre.ethers.getContract("MarketStore");
   const marketFactory = await hre.ethers.getContract("MarketFactory");
   const depositHandler = await hre.ethers.getContract("DepositHandler");
   const withdrawalHandler = await hre.ethers.getContract("WithdrawalHandler");
@@ -75,7 +75,17 @@ export async function deployFixture() {
     roleStore.address,
     dataStore.address
   );
-  const ethUsdMarket = await marketStore.get(ethUsdMarketAddress);
+  const ethUsdMarket = await reader.getMarket(dataStore.address, ethUsdMarketAddress);
+
+  const solUsdMarketAddress = getMarketTokenAddress(
+    getSyntheticTokenAddress("SOL"),
+    wnt.address,
+    usdc.address,
+    marketFactory.address,
+    roleStore.address,
+    dataStore.address
+  );
+  const solUsdMarket = await reader.getMarket(dataStore.address, solUsdMarketAddress);
 
   return {
     accountList,
@@ -111,7 +121,6 @@ export async function deployFixture() {
       withdrawalVault,
       oracleStore,
       orderVault,
-      marketStore,
       marketFactory,
       depositHandler,
       withdrawalHandler,
@@ -132,6 +141,7 @@ export async function deployFixture() {
       wbtc,
       usdc,
       ethUsdMarket,
+      solUsdMarket,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };

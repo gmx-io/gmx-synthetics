@@ -17,7 +17,6 @@ import "../order/OrderStoreUtils.sol";
 
 import "../market/MarketUtils.sol";
 import "../market/Market.sol";
-import "../market/MarketStore.sol";
 
 // @title Reader
 // @dev Library for read functions
@@ -75,7 +74,6 @@ contract Reader {
 
     function getAccountPositionInfoList(
         DataStore dataStore,
-        MarketStore marketStore,
         address account,
         uint256 start,
         uint256 end
@@ -84,7 +82,7 @@ contract Reader {
         PositionInfo[] memory positionInfoList = new PositionInfo[](positionKeys.length);
         for (uint256 i = 0; i < positionKeys.length; i++) {
             bytes32 positionKey = positionKeys[i];
-            positionInfoList[i] = getPositionInfo(dataStore, marketStore, positionKey);
+            positionInfoList[i] = getPositionInfo(dataStore, positionKey);
         }
 
         return positionInfoList;
@@ -92,11 +90,10 @@ contract Reader {
 
     function getPositionInfo(
         DataStore dataStore,
-        MarketStore marketStore,
         bytes32 positionKey
     ) public view returns (PositionInfo memory) {
         Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
-        Market.Props memory market = marketStore.get(position.market());
+        Market.Props memory market = MarketStoreUtils.get(dataStore, position.market());
         uint256 pendingBorrowingFees = MarketUtils.getBorrowingFees(dataStore, position);
         PositionPricingUtils.PositionFundingFees memory pendingFundingFees = PositionPricingUtils.getFundingFees(
             dataStore,
@@ -146,15 +143,15 @@ contract Reader {
     }
 
     function getMarkets(
-        MarketStore marketStore,
+        DataStore dataStore,
         uint256 start,
         uint256 end
     ) external view returns (Market.Props[] memory) {
-        address[] memory marketKeys = marketStore.getMarketKeys(start, end);
+        address[] memory marketKeys = MarketStoreUtils.getMarketKeys(dataStore, start, end);
         Market.Props[] memory markets = new Market.Props[](marketKeys.length);
         for (uint256 i = 0; i < marketKeys.length; i++) {
             address marketKey = marketKeys[i];
-            Market.Props memory market = marketStore.get(marketKey);
+            Market.Props memory market = MarketStoreUtils.get(dataStore, marketKey);
             markets[i] = market;
         }
 
@@ -163,17 +160,16 @@ contract Reader {
 
     function getMarketInfoList(
         DataStore dataStore,
-        MarketStore marketStore,
         MarketUtils.MarketPrices[] memory marketPricesList,
         uint256 start,
         uint256 end
     ) external view returns (MarketInfo[] memory) {
-        address[] memory marketKeys = marketStore.getMarketKeys(start, end);
+        address[] memory marketKeys = MarketStoreUtils.getMarketKeys(dataStore, start, end);
         MarketInfo[] memory marketInfoList = new MarketInfo[](marketKeys.length);
         for (uint256 i = 0; i < marketKeys.length; i++) {
             MarketUtils.MarketPrices memory prices = marketPricesList[i];
             address marketKey = marketKeys[i];
-            marketInfoList[i] = getMarketInfo(dataStore, marketStore, prices, marketKey);
+            marketInfoList[i] = getMarketInfo(dataStore, prices, marketKey);
         }
 
         return marketInfoList;
@@ -181,11 +177,10 @@ contract Reader {
 
     function getMarketInfo(
         DataStore dataStore,
-        MarketStore marketStore,
         MarketUtils.MarketPrices memory prices,
         address marketKey
     ) public view returns (MarketInfo memory) {
-        Market.Props memory market = marketStore.get(marketKey);
+        Market.Props memory market = MarketStoreUtils.get(dataStore, marketKey);
 
         uint256 borrowingFactorPerSecondForLongs = MarketUtils.getBorrowingFactorPerSecond(
             dataStore,
@@ -281,13 +276,12 @@ contract Reader {
 
     function getPnlToPoolFactor(
         DataStore dataStore,
-        MarketStore marketStore,
         address marketAddress,
         MarketUtils.MarketPrices memory prices,
         bool isLong,
         bool maximize
     ) external view returns (int256) {
-        Market.Props memory market = marketStore.get(marketAddress);
+        Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
         return MarketUtils.getPnlToPoolFactor(dataStore, market, prices, isLong, maximize);
     }
 }

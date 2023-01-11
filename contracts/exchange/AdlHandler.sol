@@ -26,7 +26,6 @@ contract AdlHandler is BaseOrderHandler {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        MarketStore _marketStore,
         OrderVault _orderVault,
         Oracle _oracle,
         SwapHandler _swapHandler,
@@ -36,7 +35,6 @@ contract AdlHandler is BaseOrderHandler {
         _roleStore,
         _dataStore,
         _eventEmitter,
-        _marketStore,
         _orderVault,
         _oracle,
         _swapHandler,
@@ -65,7 +63,6 @@ contract AdlHandler is BaseOrderHandler {
         AdlUtils.updateAdlState(
             dataStore,
             eventEmitter,
-            marketStore,
             oracle,
             market,
             isLong,
@@ -110,7 +107,6 @@ contract AdlHandler is BaseOrderHandler {
 
         (bool shouldAllowAdl, , ) = AdlUtils.shouldAllowAdl(
             dataStore,
-            marketStore,
             oracle,
             market,
             isLong,
@@ -140,7 +136,7 @@ contract AdlHandler is BaseOrderHandler {
         OrderUtils.executeOrder(params);
 
         // validate that the ratio of pending pnl to pool value was decreased
-        cache.nextPnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, marketStore, oracle, market, isLong, true);
+        cache.nextPnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, oracle, market, isLong, true);
         if (cache.nextPnlToPoolFactor >= cache.pnlToPoolFactor) {
             revert("Invalid adl");
         }

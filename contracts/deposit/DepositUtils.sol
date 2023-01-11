@@ -11,8 +11,6 @@ import "./DepositVault.sol";
 import "./DepositStoreUtils.sol";
 import "./DepositEventUtils.sol";
 
-import "../market/MarketStore.sol";
-
 import "../nonce/NonceUtils.sol";
 import "../pricing/SwapPricingUtils.sol";
 import "../oracle/Oracle.sol";
@@ -60,7 +58,6 @@ library DepositUtils {
     //
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
-    // @param marketStore MarketStore
     // @param oracle Oracle
     // @param feeReceiver FeeReceiver
     // @param key the key of the deposit to execute
@@ -70,7 +67,6 @@ library DepositUtils {
     struct ExecuteDepositParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
-        MarketStore marketStore;
         DepositVault depositVault;
         Oracle oracle;
         FeeReceiver feeReceiver;
@@ -113,18 +109,16 @@ library DepositUtils {
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
     // @param depositVault DepositVault
-    // @param marketStore MarketStore
     // @param account the depositing account
     // @param params CreateDepositParams
     function createDeposit(
         DataStore dataStore,
         EventEmitter eventEmitter,
         DepositVault depositVault,
-        MarketStore marketStore,
         address account,
         CreateDepositParams memory params
     ) external returns (bytes32) {
-        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, marketStore, params.market);
+        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, params.market);
 
         uint256 longTokenAmount = depositVault.recordTransferIn(market.longToken);
         uint256 shortTokenAmount = depositVault.recordTransferIn(market.shortToken);
@@ -186,7 +180,7 @@ library DepositUtils {
 
         CallbackUtils.beforeDepositExecution(params.key, deposit);
 
-        Market.Props memory market = params.marketStore.get(deposit.market());
+        Market.Props memory market = MarketUtils.getEnabledMarket(params.dataStore, deposit.market());
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(params.oracle, market);
 
         // deposits should improve the pool state but it should be checked if
@@ -287,7 +281,6 @@ library DepositUtils {
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
     // @param depositVault DepositVault
-    // @param marketStore MarketStore
     // @param key the key of the deposit to cancel
     // @param keeper the address of the keeper
     // @param startingGas the starting gas amount
@@ -295,7 +288,6 @@ library DepositUtils {
         DataStore dataStore,
         EventEmitter eventEmitter,
         DepositVault depositVault,
-        MarketStore marketStore,
         bytes32 key,
         address keeper,
         uint256 startingGas,
@@ -304,7 +296,7 @@ library DepositUtils {
         Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
         require(deposit.account() != address(0), "DepositUtils: empty deposit");
 
-        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, marketStore, deposit.market());
+        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, deposit.market());
 
         if (deposit.longTokenAmount() > 0) {
             depositVault.transferOut(

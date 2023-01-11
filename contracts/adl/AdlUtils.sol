@@ -92,7 +92,6 @@ library AdlUtils {
     //
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
-    // @param marketStore MarketStore
     // @param oracle Oracle
     // @param market address of the market to check
     // @param isLong indicates whether to check the long or short side of the market
@@ -100,7 +99,6 @@ library AdlUtils {
     function updateAdlState(
         DataStore dataStore,
         EventEmitter eventEmitter,
-        MarketStore marketStore,
         Oracle oracle,
         address market,
         bool isLong,
@@ -117,7 +115,7 @@ library AdlUtils {
             OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, latestAdlBlock);
         }
 
-        Market.Props memory _market = MarketUtils.getEnabledMarket(dataStore, marketStore, market);
+        Market.Props memory _market = MarketUtils.getEnabledMarket(dataStore, market);
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(oracle, _market);
         (bool shouldEnableAdl, int256 pnlToPoolFactor, uint256 maxPnlFactor) = shouldAllowAdl(
             dataStore,
@@ -166,13 +164,12 @@ library AdlUtils {
 
     function shouldAllowAdl(
         DataStore dataStore,
-        MarketStore marketStore,
         Oracle oracle,
         address _market,
         bool isLong,
         bool useMaxPnlFactorForWithdrawals
     ) internal view returns (bool, int256, uint256) {
-        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, marketStore, _market);
+        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, _market);
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(oracle, market);
 
         return shouldAllowAdl(

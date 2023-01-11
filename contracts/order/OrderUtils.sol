@@ -21,7 +21,6 @@ import "./DecreaseOrderUtils.sol";
 import "./SwapOrderUtils.sol";
 import "./BaseOrderUtils.sol";
 
-import "../market/MarketStore.sol";
 import "../swap/SwapUtils.sol";
 
 import "../gas/GasUtils.sol";
@@ -41,14 +40,12 @@ library OrderUtils {
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
     // @param orderVault OrderVault
-    // @param marketStore MarketStore
     // @param account the order account
     // @param params BaseOrderUtils.CreateOrderParams
     function createOrder(
         DataStore dataStore,
         EventEmitter eventEmitter,
         OrderVault orderVault,
-        MarketStore marketStore,
         address account,
         BaseOrderUtils.CreateOrderParams memory params
     ) external returns (bytes32) {
@@ -86,7 +83,6 @@ library OrderUtils {
         // validate swap path markets
         MarketUtils.getEnabledMarkets(
             dataStore,
-            marketStore,
             params.addresses.swapPath,
             BaseOrderUtils.isDecreaseOrder(params.orderType)
         );

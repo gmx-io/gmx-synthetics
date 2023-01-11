@@ -15,7 +15,6 @@ contract OrderHandler is BaseOrderHandler {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        MarketStore _marketStore,
         OrderVault _orderVault,
         Oracle _oracle,
         SwapHandler _swapHandler,
@@ -25,7 +24,6 @@ contract OrderHandler is BaseOrderHandler {
         _roleStore,
         _dataStore,
         _eventEmitter,
-        _marketStore,
         _orderVault,
         _oracle,
         _swapHandler,
@@ -46,7 +44,6 @@ contract OrderHandler is BaseOrderHandler {
             dataStore,
             eventEmitter,
             orderVault,
-            marketStore,
             account,
             params
         );

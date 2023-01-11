@@ -9,12 +9,12 @@ import { logGasUsage } from "../../utils/gas";
 describe("MarketStoreUtils", () => {
   let fixture;
   let accountList;
-  let dataStore, roleStore, reader, marketStoreUtils, marketStoreUtilsTest;
+  let dataStore, roleStore, reader, marketStoreUtils, marketStoreUtilsTest, ethUsdMarket, solUsdMarket;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ accountList } = fixture);
-    ({ dataStore, roleStore, reader, marketStoreUtils } = fixture.contracts);
+    ({ dataStore, roleStore, reader, marketStoreUtils, ethUsdMarket, solUsdMarket } = fixture.contracts);
 
     marketStoreUtilsTest = await deployContract("MarketStoreUtilsTest", [], {
       libraries: {
@@ -53,8 +53,8 @@ describe("MarketStoreUtils", () => {
       }
     });
 
-    expect(await getItemCount(dataStore)).eq(0);
-    expect(await getItemKeys(dataStore, 0, 10)).deep.equal([]);
+    expect(await getItemCount(dataStore)).eq(2);
+    expect(await getItemKeys(dataStore, 0, 10)).deep.equal([ethUsdMarket.marketToken, solUsdMarket.marketToken]);
 
     await logGasUsage({
       tx: setItem(dataStore, itemKey, sampleItem),
@@ -69,8 +69,12 @@ describe("MarketStoreUtils", () => {
       }
     });
 
-    expect(await getItemCount(dataStore)).eq(1);
-    expect(await getItemKeys(dataStore, 0, 10)).deep.equal([itemKey]);
+    expect(await getItemCount(dataStore)).eq(3);
+    expect(await getItemKeys(dataStore, 0, 10)).deep.equal([
+      ethUsdMarket.marketToken,
+      solUsdMarket.marketToken,
+      itemKey,
+    ]);
 
     await removeItem(dataStore, itemKey, sampleItem);
 
@@ -81,5 +85,8 @@ describe("MarketStoreUtils", () => {
         expect(fetchedItem[key]).deep.eq(ethers.constants.AddressZero);
       }
     });
+
+    expect(await getItemCount(dataStore)).eq(2);
+    expect(await getItemKeys(dataStore, 0, 10)).deep.equal([ethUsdMarket.marketToken, solUsdMarket.marketToken]);
   });
 });
