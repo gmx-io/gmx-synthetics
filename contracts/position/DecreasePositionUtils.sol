@@ -161,7 +161,7 @@ library DecreasePositionUtils {
         PositionUtils.updateOpenInterest(
             params,
             -cache.adjustedSizeDeltaUsd.toInt256(),
-            values.sizeDeltaInTokens.toInt256()
+            -values.sizeDeltaInTokens.toInt256()
         );
 
         MarketUtils.applyDeltaToPoolAmount(
