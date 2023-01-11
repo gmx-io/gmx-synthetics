@@ -61,7 +61,7 @@ library DecreaseOrderUtils {
         // the position
         // transfer the two tokens to the user in this case and skip processing
         // the swapPath
-        if (result.outputAmount > 0 && result.pnlAmountForUser > 0) {
+        if (result.secondaryOutputAmount > 0) {
             MarketToken(payable(order.market())).transferOut(
                 result.outputToken,
                 order.receiver(),
@@ -70,9 +70,9 @@ library DecreaseOrderUtils {
             );
 
             MarketToken(payable(order.market())).transferOut(
-                result.pnlToken,
+                result.secondaryOutputToken,
                 order.receiver(),
-                result.pnlAmountForUser,
+                result.secondaryOutputAmount,
                 order.shouldUnwrapNativeToken()
             );
 

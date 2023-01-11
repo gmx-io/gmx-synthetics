@@ -61,6 +61,7 @@ library OrderBaseUtils {
     // @param minOutputAmount for order.minOutputAmount
     struct CreateOrderParamsNumbers {
         uint256 sizeDeltaUsd;
+        uint256 initialCollateralDeltaAmount;
         uint256 triggerPrice;
         uint256 acceptablePrice;
         uint256 executionFee;

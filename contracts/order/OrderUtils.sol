@@ -54,19 +54,29 @@ library OrderUtils {
 
         address wnt = TokenUtils.wnt(dataStore);
 
-        if (params.addresses.initialCollateralToken == wnt ||
+        bool shouldRecordSeparateExecutionFeeTransfer = true;
+
+        if (
             params.orderType == Order.OrderType.MarketSwap ||
             params.orderType == Order.OrderType.LimitSwap ||
             params.orderType == Order.OrderType.MarketIncrease ||
             params.orderType == Order.OrderType.LimitIncrease
         ) {
             initialCollateralDeltaAmount = orderStore.recordTransferIn(params.addresses.initialCollateralToken);
+            if (params.addresses.initialCollateralToken == wnt) {
+                require(initialCollateralDeltaAmount >= params.numbers.executionFee, "OrderUtils: invalid executionFee");
+                initialCollateralDeltaAmount -= params.numbers.executionFee;
+                shouldRecordSeparateExecutionFeeTransfer = false;
+            }
+        } else if (
+            params.orderType == Order.OrderType.MarketDecrease ||
+            params.orderType == Order.OrderType.LimitDecrease ||
+            params.orderType == Order.OrderType.StopLossDecrease
+        ) {
+            initialCollateralDeltaAmount = params.numbers.initialCollateralDeltaAmount;
         }
 
-        if (params.addresses.initialCollateralToken == wnt) {
-            require(initialCollateralDeltaAmount >= params.numbers.executionFee, "OrderUtils: invalid executionFee");
-            initialCollateralDeltaAmount -= params.numbers.executionFee;
-        } else {
+        if (shouldRecordSeparateExecutionFeeTransfer) {
             uint256 wntAmount = orderStore.recordTransferIn(wnt);
             require(wntAmount == params.numbers.executionFee, "OrderUtils: invalid wntAmount");
         }
