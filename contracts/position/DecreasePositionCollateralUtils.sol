@@ -217,7 +217,7 @@ library DecreasePositionCollateralUtils {
     function getExecutionPrice(
         PositionUtils.UpdatePositionParams memory params,
         MarketUtils.MarketPrices memory prices,
-        uint256 sizeDeltaUsd
+        uint256 adjustedSizeDeltaUsd
     ) internal view returns (uint256, int256, uint256) {
         int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
@@ -225,7 +225,7 @@ library DecreasePositionCollateralUtils {
                 params.market.marketToken,
                 params.market.longToken,
                 params.market.shortToken,
-                -sizeDeltaUsd.toInt256(),
+                -adjustedSizeDeltaUsd.toInt256(),
                 params.order.isLong()
             )
         );
@@ -235,7 +235,7 @@ library DecreasePositionCollateralUtils {
             params.market.marketToken,
             prices.indexTokenPrice,
             priceImpactUsd,
-            sizeDeltaUsd
+            adjustedSizeDeltaUsd
         );
 
         uint256 priceImpactDiffUsd;
@@ -247,7 +247,7 @@ library DecreasePositionCollateralUtils {
             );
 
             // convert the max price impact to the min negative value
-            int256 minPriceImpactUsd = -Precision.applyFactor(sizeDeltaUsd, maxPriceImpactFactor).toInt256();
+            int256 minPriceImpactUsd = -Precision.applyFactor(adjustedSizeDeltaUsd, maxPriceImpactFactor).toInt256();
 
             if (priceImpactUsd < minPriceImpactUsd) {
                 priceImpactDiffUsd = (minPriceImpactUsd - priceImpactUsd).toUint256();
@@ -257,7 +257,7 @@ library DecreasePositionCollateralUtils {
 
         uint256 executionPrice = OrderBaseUtils.getExecutionPrice(
             params.contracts.oracle.getCustomPrice(params.market.indexToken),
-            params.order.sizeDeltaUsd(),
+            adjustedSizeDeltaUsd,
             priceImpactUsd,
             params.order.acceptablePrice(),
             params.position.isLong(),
@@ -265,7 +265,7 @@ library DecreasePositionCollateralUtils {
         );
 
         int256 priceImpactAmount = PositionPricingUtils.getPriceImpactAmount(
-            params.order.sizeDeltaUsd(),
+            adjustedSizeDeltaUsd,
             executionPrice,
             prices.indexTokenPrice.max,
             params.position.isLong(),
