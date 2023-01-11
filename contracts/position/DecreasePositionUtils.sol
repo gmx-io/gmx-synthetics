@@ -168,13 +168,20 @@ library DecreasePositionUtils {
             values.sizeDeltaInTokens.toInt256()
         );
 
-        cache.poolDeltaAmount = fees.feesForPool.toInt256() + values.pnlAmountForPool;
         MarketUtils.applyDeltaToPoolAmount(
             params.contracts.dataStore,
             params.contracts.eventEmitter,
             params.market.marketToken,
-            params.order.initialCollateralToken(),
-            cache.poolDeltaAmount
+            values.pnlTokenForPool,
+            values.pnlAmountForPool
+        );
+
+        MarketUtils.applyDeltaToPoolAmount(
+            params.contracts.dataStore,
+            params.contracts.eventEmitter,
+            params.market.marketToken,
+            params.position.collateralToken(),
+            fees.feesForPool.toInt256()
         );
 
         PositionUtils.handleReferral(params, fees);

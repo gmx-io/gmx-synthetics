@@ -561,10 +561,9 @@ library MarketUtils {
         address token,
         int256 delta
     ) internal {
-        uint256 nextValue = dataStore.applyDeltaToUint(
+        uint256 nextValue = dataStore.applyBoundedDeltaToUint(
             Keys.swapImpactPoolAmountKey(market, token),
-            delta,
-            "Invalid state: negative swapImpactPoolAmount"
+            delta
         );
 
         MarketEventUtils.emitSwapImpactPoolAmountUpdated(eventEmitter, market, token, delta, nextValue);
@@ -581,10 +580,9 @@ library MarketUtils {
         address market,
         int256 delta
     ) internal {
-        uint256 nextValue = dataStore.applyDeltaToUint(
+        uint256 nextValue = dataStore.applyBoundedDeltaToUint(
             Keys.positionImpactPoolAmountKey(market),
-            delta,
-            "Invalid state: negative positionImpactPoolAmount"
+            delta
         );
 
         MarketEventUtils.emitPositionImpactPoolAmountUpdated(eventEmitter, market, delta, nextValue);
