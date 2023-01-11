@@ -207,11 +207,12 @@ library SwapUtils {
             cache.poolAmountOut = cache.amountOut;
         }
 
+        // the amountOut value includes the positive price impact amount
         if (_params.receiver != _params.market.marketToken) {
             MarketToken(payable(_params.market.marketToken)).transferOut(
                 cache.tokenOut,
                 _params.receiver,
-                cache.poolAmountOut,
+                cache.amountOut,
                 _params.shouldUnwrapNativeToken
             );
         }
@@ -224,6 +225,8 @@ library SwapUtils {
             (cache.amountIn + fees.feesForPool).toInt256()
         );
 
+        // the poolAmountOut excludes the positive price impact amount
+        // as that is deducted from the swap impact pool instead
         MarketUtils.applyDeltaToPoolAmount(
             params.dataStore,
             params.eventEmitter,
