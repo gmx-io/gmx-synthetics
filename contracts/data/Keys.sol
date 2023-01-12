@@ -24,30 +24,30 @@ library Keys {
     bytes32 public constant ORDER_LIST = keccak256(abi.encode("ORDER_LIST"));
     bytes32 public constant ACCOUNT_ORDER_LIST = keccak256(abi.encode("ACCOUNT_ORDER_LIST"));
 
-    // @dev key for whether the create deposit feature is enabled
-    bytes32 public constant CREATE_DEPOSIT_FEATURE = keccak256(abi.encode("CREATE_DEPOSIT_FEATURE"));
-    // @dev key for whether the cancel deposit feature is enabled
-    bytes32 public constant CANCEL_DEPOSIT_FEATURE = keccak256(abi.encode("CANCEL_DEPOSIT_FEATURE"));
-    // @dev key for whether the execute deposit feature is enabled
-    bytes32 public constant EXECUTE_DEPOSIT_FEATURE = keccak256(abi.encode("EXECUTE_DEPOSIT_FEATURE"));
+    // @dev key for whether the create deposit feature is disabled
+    bytes32 public constant CREATE_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("CREATE_DEPOSIT_FEATURE_DISABLED"));
+    // @dev key for whether the cancel deposit feature is disabled
+    bytes32 public constant CANCEL_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("CANCEL_DEPOSIT_FEATURE_DISABLED"));
+    // @dev key for whether the execute deposit feature is disabled
+    bytes32 public constant EXECUTE_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_DEPOSIT_FEATURE_DISABLED"));
 
-    // @dev key for whether the create withdrawal feature is enabled
-    bytes32 public constant CREATE_WITHDRAWAL_FEATURE = keccak256(abi.encode("CREATE_WITHDRAWAL_FEATURE"));
-    // @dev key for whether the cancel withdrawal feature is enabled
-    bytes32 public constant CANCEL_WITHDRAWAL_FEATURE = keccak256(abi.encode("CANCEL_WITHDRAWAL_FEATURE"));
-    // @dev key for whether the execute withdrawal feature is enabled
-    bytes32 public constant EXECUTE_WITHDRAWAL_FEATURE = keccak256(abi.encode("EXECUTE_WITHDRAWAL_FEATURE"));
+    // @dev key for whether the create withdrawal feature is disabled
+    bytes32 public constant CREATE_WITHDRAWAL_FEATURE_DISABLED = keccak256(abi.encode("CREATE_WITHDRAWAL_FEATURE_DISABLED"));
+    // @dev key for whether the cancel withdrawal feature is disabled
+    bytes32 public constant CANCEL_WITHDRAWAL_FEATURE_DISABLED = keccak256(abi.encode("CANCEL_WITHDRAWAL_FEATURE_DISABLED"));
+    // @dev key for whether the execute withdrawal feature is disabled
+    bytes32 public constant EXECUTE_WITHDRAWAL_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_WITHDRAWAL_FEATURE_DISABLED"));
 
-    // @dev key for whether the create order feature is enabled
-    bytes32 public constant CREATE_ORDER_FEATURE = keccak256(abi.encode("CREATE_ORDER_FEATURE"));
-    // @dev key for whether the execute order feature is enabled
-    bytes32 public constant EXECUTE_ORDER_FEATURE = keccak256(abi.encode("EXECUTE_ORDER_FEATURE"));
-    // @dev key for whether the execute adl feature is enabled
-    bytes32 public constant EXECUTE_ADL_FEATURE = keccak256(abi.encode("EXECUTE_ADL_FEATURE"));
-    // @dev key for whether the update order feature is enabled
-    bytes32 public constant UPDATE_ORDER_FEATURE = keccak256(abi.encode("UPDATE_ORDER_FEATURE"));
-    // @dev key for whether the cancel order feature is enabled
-    bytes32 public constant CANCEL_ORDER_FEATURE = keccak256(abi.encode("CANCEL_ORDER_FEATURE"));
+    // @dev key for whether the create order feature is disabled
+    bytes32 public constant CREATE_ORDER_FEATURE_DISABLED = keccak256(abi.encode("CREATE_ORDER_FEATURE_DISABLED"));
+    // @dev key for whether the execute order feature is disabled
+    bytes32 public constant EXECUTE_ORDER_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_ORDER_FEATURE_DISABLED"));
+    // @dev key for whether the execute adl feature is disabled
+    bytes32 public constant EXECUTE_ADL_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_ADL_FEATURE_DISABLED"));
+    // @dev key for whether the update order feature is disabled
+    bytes32 public constant UPDATE_ORDER_FEATURE_DISABLED = keccak256(abi.encode("UPDATE_ORDER_FEATURE_DISABLED"));
+    // @dev key for whether the cancel order feature is disabled
+    bytes32 public constant CANCEL_ORDER_FEATURE_DISABLED = keccak256(abi.encode("CANCEL_ORDER_FEATURE_DISABLED"));
 
     // @dev key for the minimum required oracle signers for an oracle observation
     bytes32 public constant MIN_ORACLE_SIGNERS = keccak256(abi.encode("MIN_ORACLE_SIGNERS"));
@@ -252,9 +252,9 @@ library Keys {
     // @dev key for whether create deposit is enabled
     // @param the create deposit module
     // @return key for whether create deposit is enabled
-    function createDepositFeatureKey(address module) internal pure returns (bytes32) {
+    function createDepositFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            CREATE_DEPOSIT_FEATURE,
+            CREATE_DEPOSIT_FEATURE_DISABLED,
             module
         ));
     }
@@ -262,9 +262,9 @@ library Keys {
     // @dev key for whether cancel deposit is enabled
     // @param the cancel deposit module
     // @return key for whether cancel deposit is enabled
-    function cancelDepositFeatureKey(address module) internal pure returns (bytes32) {
+    function cancelDepositFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            CANCEL_DEPOSIT_FEATURE,
+            CANCEL_DEPOSIT_FEATURE_DISABLED,
             module
         ));
     }
@@ -272,9 +272,9 @@ library Keys {
     // @dev key for whether execute deposit is enabled
     // @param the execute deposit module
     // @return key for whether execute deposit is enabled
-    function executeDepositFeatureKey(address module) internal pure returns (bytes32) {
+    function executeDepositFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            EXECUTE_DEPOSIT_FEATURE,
+            EXECUTE_DEPOSIT_FEATURE_DISABLED,
             module
         ));
     }
@@ -282,9 +282,9 @@ library Keys {
     // @dev key for whether create withdrawal is enabled
     // @param the create withdrawal module
     // @return key for whether create withdrawal is enabled
-    function createWithdrawalFeatureKey(address module) internal pure returns (bytes32) {
+    function createWithdrawalFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            CREATE_WITHDRAWAL_FEATURE,
+            CREATE_WITHDRAWAL_FEATURE_DISABLED,
             module
         ));
     }
@@ -292,9 +292,9 @@ library Keys {
     // @dev key for whether cancel withdrawal is enabled
     // @param the cancel withdrawal module
     // @return key for whether cancel withdrawal is enabled
-    function cancelWithdrawalFeatureKey(address module) internal pure returns (bytes32) {
+    function cancelWithdrawalFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            CANCEL_WITHDRAWAL_FEATURE,
+            CANCEL_WITHDRAWAL_FEATURE_DISABLED,
             module
         ));
     }
@@ -302,9 +302,9 @@ library Keys {
     // @dev key for whether execute withdrawal is enabled
     // @param the execute withdrawal module
     // @return key for whether execute withdrawal is enabled
-    function executeWithdrawalFeatureKey(address module) internal pure returns (bytes32) {
+    function executeWithdrawalFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            EXECUTE_WITHDRAWAL_FEATURE,
+            EXECUTE_WITHDRAWAL_FEATURE_DISABLED,
             module
         ));
     }
@@ -312,9 +312,9 @@ library Keys {
     // @dev key for whether create order is enabled
     // @param the create order module
     // @return key for whether create order is enabled
-    function createOrderFeatureKey(address module, uint256 orderType) internal pure returns (bytes32) {
+    function createOrderFeatureDisabledKey(address module, uint256 orderType) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            CREATE_ORDER_FEATURE,
+            CREATE_ORDER_FEATURE_DISABLED,
             module,
             orderType
         ));
@@ -323,9 +323,9 @@ library Keys {
     // @dev key for whether execute order is enabled
     // @param the execute order module
     // @return key for whether execute order is enabled
-    function executeOrderFeatureKey(address module, uint256 orderType) internal pure returns (bytes32) {
+    function executeOrderFeatureDisabledKey(address module, uint256 orderType) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            EXECUTE_ORDER_FEATURE,
+            EXECUTE_ORDER_FEATURE_DISABLED,
             module,
             orderType
         ));
@@ -334,9 +334,9 @@ library Keys {
     // @dev key for whether execute adl is enabled
     // @param the execute adl module
     // @return key for whether execute adl is enabled
-    function executeAdlFeatureKey(address module, uint256 orderType) internal pure returns (bytes32) {
+    function executeAdlFeatureDisabledKey(address module, uint256 orderType) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            EXECUTE_ADL_FEATURE,
+            EXECUTE_ADL_FEATURE_DISABLED,
             module,
             orderType
         ));
@@ -345,9 +345,9 @@ library Keys {
     // @dev key for whether update order is enabled
     // @param the update order module
     // @return key for whether update order is enabled
-    function updateOrderFeatureKey(address module, uint256 orderType) internal pure returns (bytes32) {
+    function updateOrderFeatureDisabledKey(address module, uint256 orderType) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            UPDATE_ORDER_FEATURE,
+            UPDATE_ORDER_FEATURE_DISABLED,
             module,
             orderType
         ));
@@ -356,9 +356,9 @@ library Keys {
     // @dev key for whether cancel order is enabled
     // @param the cancel order module
     // @return key for whether cancel order is enabled
-    function cancelOrderFeatureKey(address module, uint256 orderType) internal pure returns (bytes32) {
+    function cancelOrderFeatureDisabledKey(address module, uint256 orderType) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            CANCEL_ORDER_FEATURE,
+            CANCEL_ORDER_FEATURE_DISABLED,
             module,
             orderType
         ));

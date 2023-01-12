@@ -51,7 +51,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         address account,
         DepositUtils.CreateDepositParams calldata params
     ) external nonReentrant onlyController returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.createDepositFeatureKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.createDepositFeatureDisabledKey(address(this)));
 
         return DepositUtils.createDeposit(
             dataStore,
@@ -70,7 +70,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
 
         DataStore _dataStore = dataStore;
 
-        FeatureUtils.validateFeature(_dataStore, Keys.cancelDepositFeatureKey(address(this)));
+        FeatureUtils.validateFeature(_dataStore, Keys.cancelDepositFeatureDisabledKey(address(this)));
 
         ExchangeUtils.validateRequestCancellation(
             _dataStore,
@@ -145,7 +145,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         address keeper,
         uint256 startingGas
     ) external nonReentrant onlySelf {
-        FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureDisabledKey(address(this)));
 
         uint256[] memory oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
             oracleParams.compactedOracleBlockNumbers,

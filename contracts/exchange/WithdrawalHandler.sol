@@ -51,7 +51,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
         address account,
         WithdrawalUtils.CreateWithdrawalParams calldata params
     ) external nonReentrant onlyController returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.createWithdrawalFeatureKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.createWithdrawalFeatureDisabledKey(address(this)));
 
         return WithdrawalUtils.createWithdrawal(
             dataStore,
@@ -70,7 +70,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
 
         DataStore _dataStore = dataStore;
 
-        FeatureUtils.validateFeature(_dataStore, Keys.cancelWithdrawalFeatureKey(address(this)));
+        FeatureUtils.validateFeature(_dataStore, Keys.cancelWithdrawalFeatureDisabledKey(address(this)));
 
         ExchangeUtils.validateRequestCancellation(
             _dataStore,
@@ -146,7 +146,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
         address keeper,
         uint256 startingGas
     ) external nonReentrant onlySelf {
-        FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureDisabledKey(address(this)));
 
         uint256[] memory oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
             oracleParams.compactedOracleBlockNumbers,

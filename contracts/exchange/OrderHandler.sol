@@ -38,7 +38,7 @@ contract OrderHandler is BaseOrderHandler {
         address account,
         BaseOrderUtils.CreateOrderParams calldata params
     ) external nonReentrant onlyController returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureKey(address(this), uint256(params.orderType)));
+        FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureDisabledKey(address(this), uint256(params.orderType)));
 
         return OrderUtils.createOrder(
             dataStore,
@@ -70,7 +70,7 @@ contract OrderHandler is BaseOrderHandler {
         uint256 minOutputAmount,
         Order.Props memory order
     ) external payable nonReentrant {
-        FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureKey(address(this), uint256(order.orderType())));
+        FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
 
         if (BaseOrderUtils.isMarketOrder(order.orderType())) {
             revert("OrderHandler: invalid orderType");
@@ -114,7 +114,7 @@ contract OrderHandler is BaseOrderHandler {
 
         DataStore _dataStore = dataStore;
 
-        FeatureUtils.validateFeature(_dataStore, Keys.cancelOrderFeatureKey(address(this), uint256(order.orderType())));
+        FeatureUtils.validateFeature(_dataStore, Keys.cancelOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
 
         if (BaseOrderUtils.isMarketOrder(order.orderType())) {
             ExchangeUtils.validateRequestCancellation(
@@ -213,7 +213,7 @@ contract OrderHandler is BaseOrderHandler {
             _validateFrozenOrderKeeper(keeper);
         }
 
-        FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeOrderFeatureKey(address(this), uint256(params.order.orderType())));
+        FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeOrderFeatureDisabledKey(address(this), uint256(params.order.orderType())));
 
         OrderUtils.executeOrder(params);
     }
