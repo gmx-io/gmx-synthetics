@@ -19,7 +19,7 @@ const func = createDeployFunction({
       "min oracle block confirmations"
     );
     await setUintIfDifferent(keys.MAX_ORACLE_PRICE_AGE, oracleConfig.maxOraclePriceAge, "max oracle price age");
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER", "oracle");
   },
 });
 

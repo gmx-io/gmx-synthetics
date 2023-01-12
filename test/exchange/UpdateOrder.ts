@@ -72,12 +72,24 @@ describe("Exchange.UpdateOrder", () => {
     await expect(
       exchangeRouter
         .connect(user1)
-        .updateOrder(orderKeys[0], decimalToFloat(250 * 1000), expandDecimals(4950, 12), expandDecimals(5050, 12))
+        .updateOrder(
+          orderKeys[0],
+          decimalToFloat(250 * 1000),
+          expandDecimals(4950, 12),
+          expandDecimals(5050, 12),
+          expandDecimals(52000, 6)
+        )
     ).to.be.revertedWith("ExchangeRouter: forbidden");
 
     const txn = await exchangeRouter
       .connect(user0)
-      .updateOrder(orderKeys[0], decimalToFloat(250 * 1000), expandDecimals(4950, 12), expandDecimals(5050, 12));
+      .updateOrder(
+        orderKeys[0],
+        decimalToFloat(250 * 1000),
+        expandDecimals(4950, 12),
+        expandDecimals(5050, 12),
+        expandDecimals(52000, 6)
+      );
     block = await provider.getBlock();
 
     await printGasUsage(provider, txn, "updateOrder");
@@ -93,7 +105,7 @@ describe("Exchange.UpdateOrder", () => {
     expect(order.numbers.acceptablePrice).eq(expandDecimals(4950, 12));
     expect(order.numbers.triggerPrice).eq(expandDecimals(5050, 12));
     expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
-    expect(order.numbers.minOutputAmount).eq(expandDecimals(50000, 6));
+    expect(order.numbers.minOutputAmount).eq(expandDecimals(52000, 6));
     expect(order.numbers.updatedAtBlock).eq(block.number);
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(false);

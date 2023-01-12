@@ -67,6 +67,7 @@ contract OrderHandler is BaseOrderHandler {
         uint256 sizeDeltaUsd,
         uint256 acceptablePrice,
         uint256 triggerPrice,
+        uint256 minOutputAmount,
         Order.Props memory order
     ) external payable nonReentrant {
         FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureKey(address(this), uint256(order.orderType())));
@@ -78,6 +79,7 @@ contract OrderHandler is BaseOrderHandler {
         order.setSizeDeltaUsd(sizeDeltaUsd);
         order.setTriggerPrice(triggerPrice);
         order.setAcceptablePrice(acceptablePrice);
+        order.setMinOutputAmount(minOutputAmount);
         order.setIsFrozen(false);
 
         // allow topping up of executionFee as partially filled or frozen orders

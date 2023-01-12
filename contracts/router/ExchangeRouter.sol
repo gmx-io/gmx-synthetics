@@ -197,12 +197,20 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         bytes32 key,
         uint256 sizeDeltaUsd,
         uint256 acceptablePrice,
-        uint256 triggerPrice
+        uint256 triggerPrice,
+        uint256 minOutputAmount
     ) external payable nonReentrant {
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         require(order.account() == msg.sender, "ExchangeRouter: forbidden");
 
-        orderHandler.updateOrder(key, sizeDeltaUsd, acceptablePrice, triggerPrice, order);
+        orderHandler.updateOrder(
+            key,
+            sizeDeltaUsd,
+            acceptablePrice,
+            triggerPrice,
+            minOutputAmount,
+            order
+        );
     }
 
     /**
