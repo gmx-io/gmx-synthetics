@@ -9,7 +9,7 @@ import "../utils/Precision.sol";
 import "../deposit/Deposit.sol";
 import "../withdrawal/Withdrawal.sol";
 import "../order/Order.sol";
-import "../order/OrderBaseUtils.sol";
+import "../order/BaseOrderUtils.sol";
 
 import "../bank/StrictBank.sol";
 
@@ -127,19 +127,19 @@ library GasUtils {
     // @param dataStore DataStore
     // @param order the order to estimate the gas limit for
     function estimateExecuteOrderGasLimit(DataStore dataStore, Order.Props memory order) internal view returns (uint256) {
-        if (OrderBaseUtils.isIncreaseOrder(order.orderType())) {
+        if (BaseOrderUtils.isIncreaseOrder(order.orderType())) {
             return estimateExecuteIncreaseOrderGasLimit(dataStore, order);
         }
 
-        if (OrderBaseUtils.isDecreaseOrder(order.orderType())) {
+        if (BaseOrderUtils.isDecreaseOrder(order.orderType())) {
             return estimateExecuteDecreaseOrderGasLimit(dataStore, order);
         }
 
-        if (OrderBaseUtils.isSwapOrder(order.orderType())) {
+        if (BaseOrderUtils.isSwapOrder(order.orderType())) {
             return estimateExecuteSwapOrderGasLimit(dataStore, order);
         }
 
-        OrderBaseUtils.revertUnsupportedOrderType();
+        BaseOrderUtils.revertUnsupportedOrderType();
     }
 
     // @dev the estimated gas limit for increase orders

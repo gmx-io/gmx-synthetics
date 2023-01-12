@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../referral/IReferralStorage.sol";
-import "../gov/Governable.sol";
+import "./Governable.sol";
 
 // @title ReferralStorage
 // @dev Mock referral storage for testing and testnets

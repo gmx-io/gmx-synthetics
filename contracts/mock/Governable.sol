@@ -6,6 +6,7 @@ pragma solidity ^0.8.0;
 // @dev Contract to allow for governance restricted functions
 contract Governable {
     address public gov;
+    address public pendingGov;
 
     event SetGov(address prevGov, address nextGov);
 
@@ -22,10 +23,16 @@ contract Governable {
         _;
     }
 
-    // @dev updates the gov value to the input _gov value
-    // @param _gov the value to update to
-    function setGov(address _gov) external onlyGov {
-        _setGov(_gov);
+    function transferOwnership(address _newGov) external onlyGov {
+        pendingGov = _newGov;
+    }
+
+    function acceptOwnership() external {
+        if (msg.sender != pendingGov) {
+            revert Unauthorized(msg.sender, "PendingGov");
+        }
+
+        _setGov(msg.sender);
     }
 
     // @dev updates the gov value to the input _gov value

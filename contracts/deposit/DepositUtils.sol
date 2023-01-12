@@ -7,8 +7,9 @@ import "../adl/AdlUtils.sol";
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 
-import "./DepositStore.sol";
-import "../market/MarketStore.sol";
+import "./DepositVault.sol";
+import "./DepositStoreUtils.sol";
+import "./DepositEventUtils.sol";
 
 import "../nonce/NonceUtils.sol";
 import "../pricing/SwapPricingUtils.sol";
@@ -19,7 +20,6 @@ import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
-import "../utils/Null.sol";
 
 // @title DepositUtils
 // @dev Library for deposit functions, to help with the depositing of liquidity
@@ -58,8 +58,6 @@ library DepositUtils {
     //
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
-    // @param depositStore DepositStore
-    // @param marketStore MarketStore
     // @param oracle Oracle
     // @param feeReceiver FeeReceiver
     // @param key the key of the deposit to execute
@@ -69,8 +67,7 @@ library DepositUtils {
     struct ExecuteDepositParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
-        DepositStore depositStore;
-        MarketStore marketStore;
+        DepositVault depositVault;
         Oracle oracle;
         FeeReceiver feeReceiver;
         bytes32 key;
@@ -107,26 +104,24 @@ library DepositUtils {
 
     error MinMarketTokens(uint256 received, uint256 expected);
 
-    // @dev creates a deposit in the depositStore
+    // @dev creates a deposit
     //
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
-    // @param depositStore DepositStore
-    // @param marketStore MarketStore
+    // @param depositVault DepositVault
     // @param account the depositing account
     // @param params CreateDepositParams
     function createDeposit(
         DataStore dataStore,
         EventEmitter eventEmitter,
-        DepositStore depositStore,
-        MarketStore marketStore,
+        DepositVault depositVault,
         address account,
         CreateDepositParams memory params
     ) external returns (bytes32) {
-        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, marketStore, params.market);
+        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, params.market);
 
-        uint256 longTokenAmount = depositStore.recordTransferIn(market.longToken);
-        uint256 shortTokenAmount = depositStore.recordTransferIn(market.shortToken);
+        uint256 longTokenAmount = depositVault.recordTransferIn(market.longToken);
+        uint256 shortTokenAmount = depositVault.recordTransferIn(market.shortToken);
 
         address wnt = TokenUtils.wnt(dataStore);
 
@@ -135,7 +130,7 @@ library DepositUtils {
         } else if (market.shortToken == wnt) {
             shortTokenAmount -= params.executionFee;
         } else {
-            uint256 wntAmount = depositStore.recordTransferIn(wnt);
+            uint256 wntAmount = depositVault.recordTransferIn(wnt);
             require(wntAmount == params.executionFee, "DepositUtils: invalid wntAmount");
         }
 
@@ -156,8 +151,7 @@ library DepositUtils {
             ),
             Deposit.Flags(
                 params.shouldUnwrapNativeToken
-            ),
-            Null.BYTES
+            )
         );
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteDepositGasLimit(dataStore, deposit);
@@ -165,9 +159,9 @@ library DepositUtils {
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
 
-        depositStore.set(key, deposit);
+        DepositStoreUtils.set(dataStore, key, deposit);
 
-        eventEmitter.emitDepositCreated(key, deposit);
+        DepositEventUtils.emitDepositCreated(eventEmitter, key, deposit);
 
         return key;
     }
@@ -175,7 +169,8 @@ library DepositUtils {
     // @dev executes a deposit
     // @param params ExecuteDepositParams
     function executeDeposit(ExecuteDepositParams memory params) external {
-        Deposit.Props memory deposit = params.depositStore.get(params.key);
+        Deposit.Props memory deposit = DepositStoreUtils.get(params.dataStore, params.key);
+
         require(deposit.account() != address(0), "DepositUtils: empty deposit");
         require(deposit.longTokenAmount() > 0 || deposit.shortTokenAmount() > 0, "DepositUtils: empty deposit amount");
 
@@ -185,7 +180,7 @@ library DepositUtils {
 
         CallbackUtils.beforeDepositExecution(params.key, deposit);
 
-        Market.Props memory market = params.marketStore.get(deposit.market());
+        Market.Props memory market = MarketUtils.getEnabledMarket(params.dataStore, deposit.market());
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(params.oracle, market);
 
         // deposits should improve the pool state but it should be checked if
@@ -226,7 +221,7 @@ library DepositUtils {
         // even if the sender has sufficient balance
         // this will not work correctly for tokens with a burn mechanism, those need to be separately handled
         if (deposit.longTokenAmount() > 0) {
-            params.depositStore.transferOut(market.longToken, market.marketToken, deposit.longTokenAmount());
+            params.depositVault.transferOut(market.longToken, market.marketToken, deposit.longTokenAmount());
 
             _ExecuteDepositParams memory _params = _ExecuteDepositParams(
                 market,
@@ -244,7 +239,7 @@ library DepositUtils {
         }
 
         if (deposit.shortTokenAmount() > 0) {
-            params.depositStore.transferOut(market.shortToken, market.marketToken, deposit.shortTokenAmount());
+            params.depositVault.transferOut(market.shortToken, market.marketToken, deposit.shortTokenAmount());
 
             _ExecuteDepositParams memory _params = _ExecuteDepositParams(
                 market,
@@ -265,15 +260,15 @@ library DepositUtils {
             revert MinMarketTokens(receivedMarketTokens, deposit.minMarketTokens());
         }
 
-        params.depositStore.remove(params.key);
+        DepositStoreUtils.remove(params.dataStore, params.key, deposit.account());
 
-        params.eventEmitter.emitDepositExecuted(params.key);
+        DepositEventUtils.emitDepositExecuted(params.eventEmitter, params.key);
 
         CallbackUtils.afterDepositExecution(params.key, deposit);
 
         GasUtils.payExecutionFee(
             params.dataStore,
-            params.depositStore,
+            params.depositVault,
             deposit.executionFee(),
             params.startingGas,
             params.keeper,
@@ -285,28 +280,26 @@ library DepositUtils {
     //
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
-    // @param depositStore DepositStore
-    // @param marketStore MarketStore
+    // @param depositVault DepositVault
     // @param key the key of the deposit to cancel
     // @param keeper the address of the keeper
     // @param startingGas the starting gas amount
     function cancelDeposit(
         DataStore dataStore,
         EventEmitter eventEmitter,
-        DepositStore depositStore,
-        MarketStore marketStore,
+        DepositVault depositVault,
         bytes32 key,
         address keeper,
         uint256 startingGas,
         bytes memory reason
     ) external {
-        Deposit.Props memory deposit = depositStore.get(key);
+        Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
         require(deposit.account() != address(0), "DepositUtils: empty deposit");
 
-        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, marketStore, deposit.market());
+        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, deposit.market());
 
         if (deposit.longTokenAmount() > 0) {
-            depositStore.transferOut(
+            depositVault.transferOut(
                 market.longToken,
                 deposit.account(),
                 deposit.longTokenAmount(),
@@ -315,7 +308,7 @@ library DepositUtils {
         }
 
         if (deposit.shortTokenAmount() > 0) {
-            depositStore.transferOut(
+            depositVault.transferOut(
                 market.shortToken,
                 deposit.account(),
                 deposit.shortTokenAmount(),
@@ -323,15 +316,15 @@ library DepositUtils {
             );
         }
 
-        depositStore.remove(key);
+        DepositStoreUtils.remove(dataStore, key, deposit.account());
 
-        eventEmitter.emitDepositCancelled(key, reason);
+        DepositEventUtils.emitDepositCancelled(eventEmitter, key, reason);
 
         CallbackUtils.afterDepositCancellation(key, deposit);
 
         GasUtils.payExecutionFee(
             dataStore,
-            depositStore,
+            depositVault,
             deposit.executionFee(),
             startingGas,
             keeper,
@@ -346,8 +339,7 @@ library DepositUtils {
         SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
             params.dataStore,
             _params.market.marketToken,
-            _params.amount,
-            Keys.FEE_RECEIVER_DEPOSIT_FACTOR
+            _params.amount
         );
 
         PricingUtils.transferFees(
@@ -358,7 +350,13 @@ library DepositUtils {
             FeeUtils.DEPOSIT_FEE
         );
 
-        params.eventEmitter.emitSwapFeesCollected(keccak256(abi.encode("deposit")), fees);
+        SwapPricingUtils.emitSwapFeesCollected(
+            params.eventEmitter,
+             _params.market.marketToken,
+             _params.tokenIn,
+             "deposit",
+             fees
+         );
 
         return _processDeposit(params, _params, fees.amountAfterFees, fees.feesForPool);
     }

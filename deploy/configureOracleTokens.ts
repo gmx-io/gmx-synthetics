@@ -1,7 +1,7 @@
 import { expandDecimals } from "../utils/math";
 import * as keys from "../utils/keys";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { setAddressIfDifferent, setDataIfDifferent, setUintIfDifferent } from "../utils/dataStore";
+import { setAddressIfDifferent, setBytes32IfDifferent, setUintIfDifferent } from "../utils/dataStore";
 
 const func = async ({ gmx, deployments }: HardhatRuntimeEnvironment) => {
   const oracleConfig = await gmx.getOracle();
@@ -17,7 +17,7 @@ const func = async ({ gmx, deployments }: HardhatRuntimeEnvironment) => {
       const { priceFeed, oracleType } = oracleConfig.tokens[tokenSymbol];
 
       const oracleTypeKey = keys.oracleTypeKey(token.address);
-      await setDataIfDifferent(oracleTypeKey, oracleType);
+      await setBytes32IfDifferent(oracleTypeKey, oracleType);
 
       if (!priceFeed) {
         continue;

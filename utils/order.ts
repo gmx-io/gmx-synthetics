@@ -3,6 +3,8 @@ import { bigNumberify, expandDecimals } from "./math";
 import { executeWithOracleParams } from "./exchange";
 import { TOKEN_ORACLE_TYPES } from "./oracle";
 
+import * as keys from "./keys";
+
 export const OrderType = {
   MarketSwap: 0,
   LimitSwap: 1,
@@ -14,10 +16,26 @@ export const OrderType = {
   Liquidation: 7,
 };
 
+export function getOrderCount(dataStore) {
+  return dataStore.getBytes32Count(keys.ORDER_LIST);
+}
+
+export function getOrderKeys(dataStore, start, end) {
+  return dataStore.getBytes32ValuesAt(keys.ORDER_LIST, start, end);
+}
+
+export function getAccountOrderCount(dataStore, account) {
+  return dataStore.getBytes32Count(keys.accountOrderListKey(account));
+}
+
+export function getAccountOrderKeys(dataStore, account, start, end) {
+  return dataStore.getBytes32ValuesAt(keys.accountOrderListKey(account), start, end);
+}
+
 export async function createOrder(fixture, overrides) {
   const { initialCollateralToken, orderType, gasUsageLabel } = overrides;
 
-  const { orderStore, orderHandler, wnt } = fixture.contracts;
+  const { orderVault, orderHandler, wnt } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
   const account = overrides.account || user0;
@@ -41,10 +59,10 @@ export async function createOrder(fixture, overrides) {
     orderType === OrderType.MarketIncrease ||
     orderType === OrderType.LimitIncrease
   ) {
-    await initialCollateralToken.mint(orderStore.address, initialCollateralDeltaAmount);
+    await initialCollateralToken.mint(orderVault.address, initialCollateralDeltaAmount);
   }
 
-  await wnt.mint(orderStore.address, executionFee);
+  await wnt.mint(orderVault.address, executionFee);
 
   const params = {
     addresses: {
@@ -77,14 +95,14 @@ export async function createOrder(fixture, overrides) {
 export async function executeOrder(fixture, overrides) {
   const { wnt, usdc } = fixture.contracts;
   const { gasUsageLabel } = overrides;
-  const { orderStore, orderHandler } = fixture.contracts;
+  const { reader, dataStore, orderHandler } = fixture.contracts;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
   const tokenOracleTypes = overrides.tokenOracleTypes || [TOKEN_ORACLE_TYPES.DEFAULT, TOKEN_ORACLE_TYPES.DEFAULT];
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
-  const orderKeys = await orderStore.getOrderKeys(0, 1);
-  const order = await orderStore.get(orderKeys[0]);
+  const orderKeys = await getOrderKeys(dataStore, 0, 1);
+  const order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
   const params = {
     key: orderKeys[0],

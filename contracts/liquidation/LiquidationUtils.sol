@@ -3,9 +3,9 @@
 pragma solidity ^0.8.0;
 
 import "../position/PositionUtils.sol";
+import "../position/PositionStoreUtils.sol";
+import "../order/OrderStoreUtils.sol";
 import "../nonce/NonceUtils.sol";
-import "../order/OrderStore.sol";
-import "../utils/Null.sol";
 
 // @title LiquidationUtils
 // @dev Library to help with liquidations
@@ -15,23 +15,19 @@ library LiquidationUtils {
 
     // @dev creates a liquidation order for a position
     // @param dataStore DataStore
-    // @param orderStore OrderStore
-    // @param positionStore PositionStore
     // @param account the position's account
     // @param market the position's market
     // @param collateralToken the position's collateralToken
     // @param isLong whether the position is long or short
     function createLiquidationOrder(
         DataStore dataStore,
-        OrderStore orderStore,
-        PositionStore positionStore,
         address account,
         address market,
         address collateralToken,
         bool isLong
     ) external returns (bytes32) {
         bytes32 positionKey = PositionUtils.getPositionKey(account, market, collateralToken, isLong);
-        Position.Props memory position = positionStore.get(positionKey);
+        Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
 
         Order.Addresses memory addresses = Order.Addresses(
             account, // account
@@ -43,6 +39,7 @@ library LiquidationUtils {
         );
 
         Order.Numbers memory numbers = Order.Numbers(
+            Order.OrderType.Liquidation, // orderType
             position.sizeInUsd(), // sizeDeltaUsd
             0, // initialCollateralDeltaAmount
             0, // triggerPrice
@@ -53,22 +50,22 @@ library LiquidationUtils {
             Chain.currentBlockNumber() // updatedAtBlock
         );
 
+        // set shouldUnwrapNativeToken to false to ensure that transfers
+        // to the position.account cannot be blocked
         Order.Flags memory flags = Order.Flags(
-            Order.OrderType.Liquidation, // orderType
             position.isLong(), // isLong
-            true, // shouldUnwrapNativeToken
+            false, // shouldUnwrapNativeToken
             false // isFrozen
         );
 
         Order.Props memory order = Order.Props(
             addresses,
             numbers,
-            flags,
-            Null.BYTES
+            flags
         );
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
-        orderStore.set(key, order);
+        OrderStoreUtils.set(dataStore, key, order);
 
         return key;
     }

@@ -12,9 +12,10 @@ import "../oracle/Oracle.sol";
 import "../pricing/PositionPricingUtils.sol";
 
 import "./Position.sol";
-import "./PositionStore.sol";
+import "./PositionStoreUtils.sol";
 import "./PositionUtils.sol";
-import "../order/OrderBaseUtils.sol";
+import "./PositionEventUtils.sol";
+import "../order/BaseOrderUtils.sol";
 
 import "./DecreasePositionCollateralUtils.sol";
 
@@ -74,7 +75,7 @@ library DecreasePositionUtils {
         cache.pnlToken = params.position.isLong() ? params.market.longToken : params.market.shortToken;
         cache.pnlTokenPrice = params.position.isLong() ? cache.prices.longTokenPrice : cache.prices.shortTokenPrice;
 
-        if (OrderBaseUtils.isLiquidationOrder(params.order.orderType()) && !PositionUtils.isPositionLiquidatable(
+        if (BaseOrderUtils.isLiquidationOrder(params.order.orderType()) && !PositionUtils.isPositionLiquidatable(
             params.contracts.dataStore,
             params.contracts.referralStorage,
             params.position,
@@ -125,9 +126,12 @@ library DecreasePositionUtils {
         if (params.position.sizeInUsd() == 0 || params.position.sizeInTokens() == 0) {
             // withdraw all collateral if the position will be closed
             values.output.outputAmount += params.position.collateralAmount();
+
+            params.position.setSizeInUsd(0);
+            params.position.setSizeInTokens(0);
             params.position.setCollateralAmount(0);
 
-            params.contracts.positionStore.remove(params.positionKey, params.order.account());
+            PositionStoreUtils.remove(params.contracts.dataStore, params.positionKey, params.order.account());
         } else {
             if (!fees.funding.hasPendingLongTokenFundingFee) {
                 params.position.setLongTokenFundingAmountPerSize(fees.funding.latestLongTokenFundingAmountPerSize);
@@ -145,7 +149,7 @@ library DecreasePositionUtils {
                 cache.prices
             );
 
-            params.contracts.positionStore.set(params.positionKey, params.order.account(), params.position);
+            PositionStoreUtils.set(params.contracts.dataStore, params.positionKey, params.position);
         }
 
         MarketUtils.applyDeltaToCollateralSum(
@@ -181,8 +185,25 @@ library DecreasePositionUtils {
 
         PositionUtils.handleReferral(params, fees);
 
-        params.contracts.eventEmitter.emitPositionFeesCollected(false, fees);
-        emitPositionDecrease(params, values, cache);
+        PositionPricingUtils.emitPositionFeesCollected(
+            params.contracts.eventEmitter,
+            params.market.marketToken,
+            params.position.collateralToken(),
+            false,
+            fees
+        );
+
+        PositionEventUtils.emitPositionDecrease(
+            params.contracts.eventEmitter,
+            params.positionKey,
+            params.position,
+            values.executionPrice,
+            cache.adjustedSizeDeltaUsd,
+            values.sizeDeltaInTokens,
+            cache.initialCollateralAmount - params.position.collateralAmount(),
+            values.positionPnlUsd,
+            params.order.orderType()
+        );
 
         values = DecreasePositionCollateralUtils.swapWithdrawnCollateralToPnlToken(params, values, cache.pnlToken);
 
@@ -192,35 +213,6 @@ library DecreasePositionUtils {
             values.output.outputAmount,
             values.output.secondaryOutputToken,
             values.output.secondaryOutputAmount
-        );
-    }
-
-    // @dev emit details of a position decrease
-    // @param params PositionUtils.UpdatePositionParams
-    // @param values ProcessCollateralValues
-    function emitPositionDecrease(
-        PositionUtils.UpdatePositionParams memory params,
-        DecreasePositionCollateralUtils.ProcessCollateralValues memory values,
-        DecreasePositionCollateralUtils.DecreasePositionCache memory cache
-    ) internal {
-        EventUtils.EmitPositionDecreaseParams memory eventParams = EventUtils.EmitPositionDecreaseParams(
-            params.positionKey,
-            params.position.account(),
-            params.position.market(),
-            params.position.collateralToken(),
-            params.position.isLong()
-        );
-
-        params.contracts.eventEmitter.emitPositionDecrease(
-            eventParams,
-            values.executionPrice,
-            cache.adjustedSizeDeltaUsd,
-            values.sizeDeltaInTokens,
-            params.order.initialCollateralDeltaAmount().toInt256(),
-            values.pnlAmountForPool,
-            values.remainingCollateralAmount,
-            values.output.outputAmount,
-            params.order.orderType()
         );
     }
 }

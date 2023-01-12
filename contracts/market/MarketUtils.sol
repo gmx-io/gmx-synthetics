@@ -8,15 +8,12 @@ import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 import "../bank/StrictBank.sol";
 
-import "../deposit/Deposit.sol";
-import "../deposit/DepositStore.sol";
-import "../withdrawal/Withdrawal.sol";
+import "./Market.sol";
+import "./MarketToken.sol";
+import "./MarketEventUtils.sol";
+import "./MarketStoreUtils.sol";
 
-import "../market/Market.sol";
-import "../market/MarketToken.sol";
-import "../market/MarketStore.sol";
 import "../position/Position.sol";
-import "../position/PositionStore.sol";
 import "../order/Order.sol";
 
 import "../oracle/Oracle.sol";
@@ -34,7 +31,6 @@ library MarketUtils {
     using SafeCast for int256;
     using SafeCast for uint256;
 
-    using Deposit for Deposit.Props;
     using Market for Market.Props;
     using Position for Position.Props;
     using Order for Order.Props;
@@ -368,7 +364,7 @@ library MarketUtils {
             delta
         );
 
-        eventEmitter.emitClaimableCollateralUpdated(market, token, timeKey, account, delta, nextValue);
+        MarketEventUtils.emitClaimableCollateralUpdated(eventEmitter, market, token, timeKey, account, delta, nextValue);
     }
 
     // @dev increment the claimable funding amount
@@ -391,7 +387,7 @@ library MarketUtils {
             delta
         );
 
-        eventEmitter.emitClaimableFundingUpdated(market, token, account, delta, nextValue);
+        MarketEventUtils.emitClaimableFundingUpdated(eventEmitter, market, token, account, delta, nextValue);
     }
 
     // @dev claim funding fees
@@ -420,7 +416,8 @@ library MarketUtils {
             claimableAmount
         );
 
-        eventEmitter.emitFundingFeesClaimed(
+        MarketEventUtils.emitFundingFeesClaimed(
+            eventEmitter,
             market,
             token,
             account,
@@ -467,7 +464,8 @@ library MarketUtils {
             remainingClaimableAmount
         );
 
-        eventEmitter.emitCollateralClaimed(
+        MarketEventUtils.emitCollateralClaimed(
+            eventEmitter,
             market,
             token,
             timeKey,
@@ -496,7 +494,7 @@ library MarketUtils {
             "Invalid state, negative poolAmount"
         );
 
-        eventEmitter.emitPoolAmountUpdated(market, token, delta, nextValue);
+        MarketEventUtils.emitPoolAmountUpdated(eventEmitter, market, token, delta, nextValue);
     }
 
     // @dev cap the input priceImpactUsd by the available amount in the position impact pool
@@ -568,7 +566,7 @@ library MarketUtils {
             delta
         );
 
-        eventEmitter.emitSwapImpactPoolAmountUpdated(market, token, delta, nextValue);
+        MarketEventUtils.emitSwapImpactPoolAmountUpdated(eventEmitter, market, token, delta, nextValue);
     }
 
     // @dev apply a delta to the position impact pool
@@ -587,7 +585,7 @@ library MarketUtils {
             delta
         );
 
-        eventEmitter.emitPositionImpactPoolAmountUpdated(market, delta, nextValue);
+        MarketEventUtils.emitPositionImpactPoolAmountUpdated(eventEmitter, market, delta, nextValue);
     }
 
     // @dev apply a delta to the open interest
@@ -611,7 +609,7 @@ library MarketUtils {
             "Invalid state: negative open interest"
         );
 
-        eventEmitter.emitOpenInterestUpdated(market, collateralToken, isLong, delta, nextValue);
+        MarketEventUtils.emitOpenInterestUpdated(eventEmitter, market, collateralToken, isLong, delta, nextValue);
     }
 
     // @dev apply a delta to the open interest in tokens
@@ -635,7 +633,7 @@ library MarketUtils {
             "Invalid state: negative open interest in tokens"
         );
 
-        eventEmitter.emitOpenInterestInTokensUpdated(market, collateralToken, isLong, delta, nextValue);
+        MarketEventUtils.emitOpenInterestInTokensUpdated(eventEmitter, market, collateralToken, isLong, delta, nextValue);
     }
 
     // @dev apply a delta to the collateral sum
@@ -659,7 +657,7 @@ library MarketUtils {
             "Invalid state: negative collateralSum"
         );
 
-        eventEmitter.emitCollateralSumUpdated(market, collateralToken, isLong, delta, nextValue);
+        MarketEventUtils.emitCollateralSumUpdated(eventEmitter, market, collateralToken, isLong, delta, nextValue);
     }
 
     // @dev update the funding amount per size values
@@ -820,7 +818,6 @@ library MarketUtils {
 
     // @dev get the ratio of pnl to pool value
     // @param dataStore DataStore
-    // @param marketStore MarketStore
     // @param oracle Oracle
     // @param market the trading market
     // @param isLong whether to get the value for the long or short side
@@ -828,13 +825,12 @@ library MarketUtils {
     // @return (pnl of positions) / (long or short pool value)
     function getPnlToPoolFactor(
         DataStore dataStore,
-        MarketStore marketStore,
         Oracle oracle,
         address market,
         bool isLong,
         bool maximize
     ) internal view returns (int256) {
-        Market.Props memory _market = getEnabledMarket(dataStore, marketStore, market);
+        Market.Props memory _market = getEnabledMarket(dataStore, market);
         MarketUtils.MarketPrices memory prices = MarketUtils.MarketPrices(
             oracle.getPrimaryPrice(_market.indexToken),
             oracle.getPrimaryPrice(_market.longToken),
@@ -1001,6 +997,9 @@ library MarketUtils {
     // @return the borrowing fees for a position
     function getBorrowingFees(DataStore dataStore, Position.Props memory position) internal view returns (uint256) {
         uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, position.market(), position.isLong());
+        if (position.borrowingFactor() > cumulativeBorrowingFactor) {
+            revert("getBorrowingFees: unexpected state");
+        }
         uint256 diffFactor = cumulativeBorrowingFactor - position.borrowingFactor();
         return Precision.applyFactor(position.sizeInUsd(), diffFactor);
     }
@@ -1416,16 +1415,15 @@ library MarketUtils {
         }
     }
 
-    function getEnabledMarket(DataStore dataStore, MarketStore marketStore, address marketAddress) internal view returns (Market.Props memory) {
-        Market.Props memory market = marketStore.get(marketAddress);
+    function getEnabledMarket(DataStore dataStore, address marketAddress) internal view returns (Market.Props memory) {
+        Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
         validateEnabledMarket(dataStore, market);
         return market;
     }
 
     // @dev get a list of market values based on an input array of market addresses
-    // @param marketStore MarketStore
     // @param swapPath list of market addresses
-    function getEnabledMarkets(DataStore dataStore, MarketStore marketStore, address[] memory swapPath, bool allowSwapPathFlag) internal view returns (Market.Props[] memory) {
+    function getEnabledMarkets(DataStore dataStore, address[] memory swapPath, bool allowSwapPathFlag) internal view returns (Market.Props[] memory) {
         Market.Props[] memory markets = new Market.Props[](swapPath.length);
         uint256 indexAdjustment = 0;
 
@@ -1443,7 +1441,7 @@ library MarketUtils {
                 continue;
             }
 
-            markets[i - indexAdjustment] = getEnabledMarket(dataStore, marketStore, marketAddress);
+            markets[i - indexAdjustment] = getEnabledMarket(dataStore, marketAddress);
         }
 
         return markets;

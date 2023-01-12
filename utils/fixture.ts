@@ -3,10 +3,12 @@ import hre from "hardhat";
 import { expandDecimals } from "./math";
 import { hashData } from "./hash";
 import { getMarketTokenAddress } from "./market";
+import { getSyntheticTokenAddress } from "./token";
 
 export async function deployFixture() {
   await hre.deployments.fixture();
   const chainId = 31337; // hardhat chain id
+  const accountList = await hre.ethers.getSigners();
   const [
     wallet,
     user0,
@@ -28,7 +30,7 @@ export async function deployFixture() {
     signer7,
     signer8,
     signer9,
-  ] = await hre.ethers.getSigners();
+  ] = accountList;
 
   const wnt = await hre.ethers.getContract("WETH");
   await wnt.deposit({ value: expandDecimals(50, 18) });
@@ -44,13 +46,11 @@ export async function deployFixture() {
   const reader = await hre.ethers.getContract("Reader");
   const roleStore = await hre.ethers.getContract("RoleStore");
   const dataStore = await hre.ethers.getContract("DataStore");
-  const depositStore = await hre.ethers.getContract("DepositStore");
+  const depositVault = await hre.ethers.getContract("DepositVault");
+  const withdrawalVault = await hre.ethers.getContract("WithdrawalVault");
   const eventEmitter = await hre.ethers.getContract("EventEmitter");
-  const withdrawalStore = await hre.ethers.getContract("WithdrawalStore");
   const oracleStore = await hre.ethers.getContract("OracleStore");
-  const orderStore = await hre.ethers.getContract("OrderStore");
-  const positionStore = await hre.ethers.getContract("PositionStore");
-  const marketStore = await hre.ethers.getContract("MarketStore");
+  const orderVault = await hre.ethers.getContract("OrderVault");
   const marketFactory = await hre.ethers.getContract("MarketFactory");
   const depositHandler = await hre.ethers.getContract("DepositHandler");
   const withdrawalHandler = await hre.ethers.getContract("WithdrawalHandler");
@@ -61,6 +61,11 @@ export async function deployFixture() {
   const exchangeRouter = await hre.ethers.getContract("ExchangeRouter");
   const feeReceiver = await hre.ethers.getContract("FeeReceiver");
   const oracle = await hre.ethers.getContract("Oracle");
+  const marketStoreUtils = await hre.ethers.getContract("MarketStoreUtils");
+  const depositStoreUtils = await hre.ethers.getContract("DepositStoreUtils");
+  const withdrawalStoreUtils = await hre.ethers.getContract("WithdrawalStoreUtils");
+  const positionStoreUtils = await hre.ethers.getContract("PositionStoreUtils");
+  const orderStoreUtils = await hre.ethers.getContract("OrderStoreUtils");
 
   const ethUsdMarketAddress = getMarketTokenAddress(
     wnt.address,
@@ -70,9 +75,20 @@ export async function deployFixture() {
     roleStore.address,
     dataStore.address
   );
-  const ethUsdMarket = await marketStore.get(ethUsdMarketAddress);
+  const ethUsdMarket = await reader.getMarket(dataStore.address, ethUsdMarketAddress);
+
+  const solUsdMarketAddress = getMarketTokenAddress(
+    getSyntheticTokenAddress("SOL"),
+    wnt.address,
+    usdc.address,
+    marketFactory.address,
+    roleStore.address,
+    dataStore.address
+  );
+  const solUsdMarket = await reader.getMarket(dataStore.address, solUsdMarketAddress);
 
   return {
+    accountList,
     accounts: {
       wallet,
       user0,
@@ -100,13 +116,11 @@ export async function deployFixture() {
       reader,
       roleStore,
       dataStore,
-      depositStore,
+      depositVault,
       eventEmitter,
-      withdrawalStore,
+      withdrawalVault,
       oracleStore,
-      orderStore,
-      positionStore,
-      marketStore,
+      orderVault,
       marketFactory,
       depositHandler,
       withdrawalHandler,
@@ -117,11 +131,17 @@ export async function deployFixture() {
       exchangeRouter,
       feeReceiver,
       oracle,
+      marketStoreUtils,
+      depositStoreUtils,
+      withdrawalStoreUtils,
+      positionStoreUtils,
+      orderStoreUtils,
       usdcPriceFeed,
       wnt,
       wbtc,
       usdc,
       ethUsdMarket,
+      solUsdMarket,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };

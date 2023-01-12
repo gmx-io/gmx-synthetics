@@ -3,13 +3,26 @@ import { hashString, hashData } from "./hash";
 export const WNT = hashString("WNT");
 export const MAX_LEVERAGE = hashString("MAX_LEVERAGE");
 
+export const MARKET_LIST = hashString("MARKET_LIST");
+
+export const DEPOSIT_LIST = hashString("DEPOSIT_LIST");
+export const ACCOUNT_DEPOSIT_LIST = hashString("ACCOUNT_DEPOSIT_LIST");
+
+export const WITHDRAWAL_LIST = hashString("WITHDRAWAL_LIST");
+export const ACCOUNT_WITHDRAWAL_LIST = hashString("ACCOUNT_WITHDRAWAL_LIST");
+
+export const POSITION_LIST = hashString("POSITION_LIST");
+export const ACCOUNT_POSITION_LIST = hashString("ACCOUNT_POSITION_LIST");
+
+export const ORDER_LIST = hashString("ORDER_LIST");
+export const ACCOUNT_ORDER_LIST = hashString("ACCOUNT_ORDER_LIST");
+
 export const MIN_ORACLE_BLOCK_CONFIRMATIONS = hashString("MIN_ORACLE_BLOCK_CONFIRMATIONS");
 export const MAX_ORACLE_PRICE_AGE = hashString("MAX_ORACLE_PRICE_AGE");
 export const MIN_ORACLE_SIGNERS = hashString("MIN_ORACLE_SIGNERS");
 export const MIN_COLLATERAL_USD = hashString("MIN_COLLATERAL_USD");
 
-export const FEE_RECEIVER_DEPOSIT_FACTOR = hashString("FEE_RECEIVER_DEPOSIT_FACTOR");
-export const FEE_RECEIVER_WITHDRAWAL_FACTOR = hashString("FEE_RECEIVER_WITHDRAWAL_FACTOR");
+export const FEE_RECEIVER_FACTOR = hashString("FEE_RECEIVER_FACTOR");
 
 export const TOKEN_TRANSFER_GAS_LIMIT = hashString("TOKEN_TRANSFER_GAS_LIMIT");
 export const NATIVE_TOKEN_TRANSFER_GAS_LIMIT = hashString("NATIVE_TOKEN_TRANSFER_GAS_LIMIT");
@@ -32,7 +45,23 @@ export const POSITION_IMPACT_EXPONENT_FACTOR = hashString("POSITION_IMPACT_EXPON
 export const MAX_POSITION_IMPACT_FACTOR = hashString("MAX_POSITION_IMPACT_FACTOR");
 export const POSITION_FEE_FACTOR = hashString("POSITION_FEE_FACTOR");
 
-const EXECUTE_ADL_FEATURE = hashString("EXECUTE_ADL_FEATURE");
+export const EXECUTE_ADL_FEATURE = hashString("EXECUTE_ADL_FEATURE");
+
+export function accountDepositListKey(account) {
+  return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
+}
+
+export function accountWithdrawalListKey(account) {
+  return hashData(["bytes32", "address"], [ACCOUNT_WITHDRAWAL_LIST, account]);
+}
+
+export function accountPositionListKey(account) {
+  return hashData(["bytes32", "address"], [ACCOUNT_POSITION_LIST, account]);
+}
+
+export function accountOrderListKey(account) {
+  return hashData(["bytes32", "address"], [ACCOUNT_ORDER_LIST, account]);
+}
 
 export function tokenTransferGasLimit(token: string) {
   return hashData(["bytes32", "address"], [TOKEN_TRANSFER_GAS_LIMIT, token]);

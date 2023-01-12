@@ -2,9 +2,10 @@
 
 pragma solidity ^0.8.0;
 
-import "./OrderBaseUtils.sol";
+import "./BaseOrderUtils.sol";
 import "../swap/SwapUtils.sol";
 import "../position/IncreasePositionUtils.sol";
+import "../order/OrderStoreUtils.sol";
 
 // @title IncreaseOrderUtils
 // @dev Libary for functions to help with processing an increase order
@@ -16,11 +17,11 @@ library IncreaseOrderUtils {
     error UnexpectedPositionState();
 
     // @dev process an increase order
-    // @param params OrderBaseUtils.ExecuteOrderParams
-    function processOrder(OrderBaseUtils.ExecuteOrderParams memory params) external {
+    // @param params BaseOrderUtils.ExecuteOrderParams
+    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external {
         address initialMarket = params.order.swapPath().length == 0 ? params.order.market() : params.order.swapPath()[0];
 
-        params.contracts.orderStore.transferOut(
+        params.contracts.orderVault.transferOut(
             params.order.initialCollateralToken(),
             initialMarket,
             params.order.initialCollateralDeltaAmount()
@@ -46,7 +47,7 @@ library IncreaseOrderUtils {
         }
 
         bytes32 positionKey = PositionUtils.getPositionKey(params.order.account(), params.order.market(), collateralToken, params.order.isLong());
-        Position.Props memory position = params.contracts.positionStore.get(positionKey);
+        Position.Props memory position = PositionStoreUtils.get(params.contracts.dataStore, positionKey);
 
         // initialize position
         if (position.account() == address(0)) {
@@ -78,7 +79,7 @@ library IncreaseOrderUtils {
             collateralIncrementAmount
         );
 
-        params.contracts.orderStore.remove(params.key, params.order.account());
+        OrderStoreUtils.remove(params.contracts.dataStore, params.key, params.order.account());
     }
 
     // @dev validate the oracle block numbers used for the prices in the oracle
@@ -107,6 +108,6 @@ library IncreaseOrderUtils {
             return;
         }
 
-        OrderBaseUtils.revertUnsupportedOrderType();
+        BaseOrderUtils.revertUnsupportedOrderType();
     }
 }

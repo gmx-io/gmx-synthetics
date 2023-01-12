@@ -5,10 +5,10 @@ pragma solidity ^0.8.0;
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 
-import "../order/OrderStore.sol";
+import "../order/OrderStoreUtils.sol";
 import "../position/PositionUtils.sol";
+import "../position/PositionStoreUtils.sol";
 import "../nonce/NonceUtils.sol";
-import "../utils/Null.sol";
 
 // @title AdlUtils
 // @dev Library to help with auto-deleveraging
@@ -39,12 +39,19 @@ library AdlUtils {
     using Market for Market.Props;
     using Position for Position.Props;
 
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
+
     // @dev CreateAdlOrderParams struct used in createAdlOrder to avoid stack
     // too deep errors
     //
     // @param dataStore DataStore
     // @param orderStore OrderStore
-    // @param positionStore PositionStore
     // @param account the account to reduce the position for
     // @param market the position's market
     // @param collateralToken the position's collateralToken
@@ -53,8 +60,6 @@ library AdlUtils {
     // @param updatedAtBlock the block to set the order's updatedAtBlock to
     struct CreateAdlOrderParams {
         DataStore dataStore;
-        OrderStore orderStore;
-        PositionStore positionStore;
         address account;
         address market;
         address collateralToken;
@@ -87,7 +92,6 @@ library AdlUtils {
     //
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
-    // @param marketStore MarketStore
     // @param oracle Oracle
     // @param market address of the market to check
     // @param isLong indicates whether to check the long or short side of the market
@@ -95,7 +99,6 @@ library AdlUtils {
     function updateAdlState(
         DataStore dataStore,
         EventEmitter eventEmitter,
-        MarketStore marketStore,
         Oracle oracle,
         address market,
         bool isLong,
@@ -112,7 +115,7 @@ library AdlUtils {
             OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, latestAdlBlock);
         }
 
-        Market.Props memory _market = MarketUtils.getEnabledMarket(dataStore, marketStore, market);
+        Market.Props memory _market = MarketUtils.getEnabledMarket(dataStore, market);
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(oracle, _market);
         (bool shouldEnableAdl, int256 pnlToPoolFactor, uint256 maxPnlFactor) = shouldAllowAdl(
             dataStore,
@@ -125,7 +128,7 @@ library AdlUtils {
         setIsAdlEnabled(dataStore, market, isLong, shouldEnableAdl);
         setLatestAdlBlock(dataStore, market, isLong, block.number);
 
-        eventEmitter.emitAdlStateUpdated(pnlToPoolFactor, maxPnlFactor, shouldEnableAdl);
+        emitAdlStateUpdated(eventEmitter, market, isLong, pnlToPoolFactor, maxPnlFactor, shouldEnableAdl);
     }
 
     function validatePoolState(
@@ -161,13 +164,12 @@ library AdlUtils {
 
     function shouldAllowAdl(
         DataStore dataStore,
-        MarketStore marketStore,
         Oracle oracle,
         address _market,
         bool isLong,
         bool useMaxPnlFactorForWithdrawals
     ) internal view returns (bool, int256, uint256) {
-        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, marketStore, _market);
+        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, _market);
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(oracle, market);
 
         return shouldAllowAdl(
@@ -208,7 +210,7 @@ library AdlUtils {
     // @return the key of the created order
     function createAdlOrder(CreateAdlOrderParams memory params) external returns (bytes32) {
         bytes32 positionKey = PositionUtils.getPositionKey(params.account, params.market, params.collateralToken, params.isLong);
-        Position.Props memory position = params.positionStore.get(positionKey);
+        Position.Props memory position = PositionStoreUtils.get(params.dataStore, positionKey);
 
         if (params.sizeDeltaUsd > position.sizeInUsd()) {
             revert("Invalid sizeDeltaUsd");
@@ -224,6 +226,7 @@ library AdlUtils {
         );
 
         Order.Numbers memory numbers = Order.Numbers(
+            Order.OrderType.MarketDecrease, // orderType
             params.sizeDeltaUsd, // sizeDeltaUsd
             0, // initialCollateralDeltaAmount
             0, // triggerPrice
@@ -234,22 +237,22 @@ library AdlUtils {
             params.updatedAtBlock // updatedAtBlock
         );
 
+        // set shouldUnwrapNativeToken to false to ensure that transfers
+        // to the position.account cannot be blocked
         Order.Flags memory flags = Order.Flags(
-            Order.OrderType.MarketDecrease, // orderType
             position.isLong(), // isLong
-            true, // shouldUnwrapNativeToken
+            false, // shouldUnwrapNativeToken
             false // isFrozen
         );
 
         Order.Props memory order = Order.Props(
             addresses,
             numbers,
-            flags,
-            Null.BYTES
+            flags
         );
 
         bytes32 key = NonceUtils.getNextKey(params.dataStore);
-        params.orderStore.set(key, order);
+        OrderStoreUtils.set(params.dataStore, key, order);
 
         return key;
     }
@@ -327,5 +330,32 @@ library AdlUtils {
     // @return whether ADL is enabled
     function setIsAdlEnabled(DataStore dataStore, address market, bool isLong, bool value) internal returns (bool) {
         return dataStore.setBool(Keys.isAdlEnabledKey(market, isLong), value);
+    }
+
+    function emitAdlStateUpdated(
+        EventEmitter eventEmitter,
+        address market,
+        bool isLong,
+        int256 pnlToPoolFactor,
+        uint256 maxPnlFactor,
+        bool shouldEnableAdl
+    ) internal {
+        EventUtils.EventLogData memory data;
+
+        data.intItems.initItems(1);
+        data.intItems.setItem(0, "pnlToPoolFactor", pnlToPoolFactor);
+
+        data.uintItems.initItems(1);
+        data.uintItems.setItem(0, "maxPnlFactor", maxPnlFactor);
+
+        data.boolItems.initItems(2);
+        data.boolItems.setItem(0, "isLong", isLong);
+        data.boolItems.setItem(1, "shouldEnableAdl", shouldEnableAdl);
+
+        eventEmitter.emitEventLog1(
+            "AdlStateUpdated",
+            Cast.toBytes32(market),
+            data
+        );
     }
 }

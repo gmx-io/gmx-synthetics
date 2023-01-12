@@ -4,10 +4,7 @@ pragma solidity ^0.8.0;
 
 import "./MarketToken.sol";
 import "./Market.sol";
-import "./MarketStore.sol";
 import "./MarketUtils.sol";
-
-import "../utils/Null.sol";
 
 // @title MarketFactory
 // @dev Contract to create markets
@@ -16,12 +13,10 @@ contract MarketFactory is RoleModule {
 
     event MarketCreated(address marketToken, address indexToken, address longToken, address shortToken);
 
-    DataStore dataStore;
-    MarketStore public marketStore;
+    DataStore public immutable dataStore;
 
-    constructor(RoleStore _roleStore, DataStore _dataStore, MarketStore _marketStore) RoleModule(_roleStore) {
+    constructor(RoleStore _roleStore, DataStore _dataStore) RoleModule(_roleStore) {
         dataStore = _dataStore;
-        marketStore = _marketStore;
     }
 
     // @dev creates a market
@@ -51,11 +46,10 @@ contract MarketFactory is RoleModule {
             address(marketToken),
             indexToken,
             longToken,
-            shortToken,
-            Null.BYTES
+            shortToken
         );
 
-        marketStore.set(address(marketToken), market);
+        MarketStoreUtils.set(dataStore, address(marketToken), market);
 
         emit MarketCreated(address(marketToken), indexToken, longToken, shortToken);
 

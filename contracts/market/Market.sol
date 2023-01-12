@@ -39,6 +39,5 @@ library Market {
         address indexToken;
         address longToken;
         address shortToken;
-        bytes data;
     }
 }

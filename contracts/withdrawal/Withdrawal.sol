@@ -13,12 +13,10 @@ library Withdrawal {
     // @param addresses address values
     // @param numbers number values
     // @param flags boolean values
-     // @param data Additional data for the withdrawal.
     struct Props {
         Addresses addresses;
         Numbers numbers;
         Flags flags;
-        bytes data;
     }
 
      // @param account The account to withdraw for.

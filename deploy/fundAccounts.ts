@@ -13,5 +13,5 @@ const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment
 func.skip = async ({ network }) => {
   return network.live;
 };
-func.tags = ["Init"];
+func.tags = ["FundAccounts"];
 export default func;

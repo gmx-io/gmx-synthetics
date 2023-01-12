@@ -19,6 +19,14 @@ library PositionPricingUtils {
     using SafeCast for int256;
     using Position for Position.Props;
 
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
+
     // @dev GetPriceImpactUsdParams struct used in getPriceImpactUsd to avoid stack
     // too deep errors
     // @param dataStore DataStore
@@ -394,11 +402,55 @@ library PositionPricingUtils {
 
         cache.protocolFeeAmount = cache.positionFeeAmount - cache.referral.totalRebateAmount;
 
-        cache.feeReceiverFactor = dataStore.getUint(Keys.FEE_RECEIVER_POSITION_FACTOR);
+        cache.feeReceiverFactor = dataStore.getUint(Keys.FEE_RECEIVER_FACTOR);
 
         cache.feeReceiverAmount = Precision.applyFactor(cache.protocolFeeAmount, cache.feeReceiverFactor);
         cache.positionFeeAmountForPool = cache.protocolFeeAmount - cache.feeReceiverAmount;
 
         return (cache.referral.affiliate, cache.referral.traderDiscountAmount, cache.referral.affiliateRewardAmount, cache.feeReceiverAmount, cache.positionFeeAmountForPool);
+    }
+
+    function emitPositionFeesCollected(
+        EventEmitter eventEmitter,
+        address market,
+        address collateralToken,
+        bool isIncrease,
+        PositionFees memory fees
+    ) external {
+        EventUtils.EventLogData memory data;
+
+        data.addressItems.initItems(3);
+        data.addressItems.setItem(0, "market", market);
+        data.addressItems.setItem(1, "collateralToken", collateralToken);
+        data.addressItems.setItem(2, "affiliate", fees.referral.affiliate);
+
+        data.uintItems.initItems(13);
+        data.uintItems.setItem(0, "traderDiscountAmount", fees.referral.traderDiscountAmount);
+        data.uintItems.setItem(1, "affiliateRewardAmount", fees.referral.affiliateRewardAmount);
+        data.uintItems.setItem(3, "fundingFeeAmount", fees.funding.fundingFeeAmount);
+        data.uintItems.setItem(4, "claimableLongTokenAmount", fees.funding.claimableLongTokenAmount);
+        data.uintItems.setItem(5, "claimableShortTokenAmount", fees.funding.claimableShortTokenAmount);
+        data.uintItems.setItem(6, "feeReceiverAmount", fees.feeReceiverAmount);
+        data.uintItems.setItem(7, "feesForPool", fees.feesForPool);
+        data.uintItems.setItem(8, "positionFeeAmountForPool", fees.positionFeeAmountForPool);
+        data.uintItems.setItem(9, "positionFeeAmount", fees.positionFeeAmount);
+        data.uintItems.setItem(10, "borrowingFeeAmount", fees.borrowingFeeAmount);
+        data.uintItems.setItem(11, "totalNetCostAmount", fees.totalNetCostAmount);
+        data.uintItems.setItem(12, "totalNetCostUsd", fees.totalNetCostUsd);
+
+        data.intItems.initItems(2);
+        data.intItems.setItem(0, "latestLongTokenFundingAmountPerSize", fees.funding.latestLongTokenFundingAmountPerSize);
+        data.intItems.setItem(1, "latestShortTokenFundingAmountPerSize", fees.funding.latestShortTokenFundingAmountPerSize);
+
+        data.boolItems.initItems(3);
+        data.boolItems.setItem(0, "hasPendingLongTokenFundingFee", fees.funding.hasPendingLongTokenFundingFee);
+        data.boolItems.setItem(1, "hasPendingShortTokenFundingFee", fees.funding.hasPendingShortTokenFundingFee);
+        data.boolItems.setItem(2, "isIncrease", isIncrease);
+
+        eventEmitter.emitEventLog1(
+            "PositionFeesCollected",
+            Cast.toBytes32(market),
+            data
+        );
     }
 }

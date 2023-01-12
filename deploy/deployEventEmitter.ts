@@ -1,17 +1,13 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { createDeployFunction } from "../utils/deploy";
 
-const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment) => {
-  const { deploy, get } = deployments;
-  const { deployer } = await getNamedAccounts();
+const constructorContracts = ["RoleStore"];
 
-  const roleStore = await get("RoleStore");
+const func = createDeployFunction({
+  contractName: "EventEmitter",
+  dependencyNames: constructorContracts,
+  getDeployArgs: async ({ dependencyContracts }) => {
+    return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
+  },
+});
 
-  await deploy("EventEmitter", {
-    from: deployer,
-    log: true,
-    args: [roleStore.address],
-  });
-};
-func.tags = ["EventEmitter"];
-func.dependencies = ["RoleStore"];
 export default func;

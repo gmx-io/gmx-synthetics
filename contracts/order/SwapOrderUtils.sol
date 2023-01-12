@@ -2,8 +2,9 @@
 
 pragma solidity ^0.8.0;
 
-import "./OrderBaseUtils.sol";
+import "./BaseOrderUtils.sol";
 import "../swap/SwapUtils.sol";
+import "../order/OrderStoreUtils.sol";
 
 // @title SwapOrderUtils
 // @dev Libary for functions to help with processing a swap order
@@ -14,8 +15,8 @@ library SwapOrderUtils {
     error UnexpectedMarket();
 
     // @dev process a swap order
-    // @param params OrderBaseUtils.ExecuteOrderParams
-    function processOrder(OrderBaseUtils.ExecuteOrderParams memory params) external {
+    // @param params BaseOrderUtils.ExecuteOrderParams
+    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external {
         if (params.order.market() != address(0)) {
             revert UnexpectedMarket();
         }
@@ -27,7 +28,7 @@ library SwapOrderUtils {
         );
 
         Order.Props memory order = params.order;
-        params.contracts.orderStore.transferOut(
+        params.contracts.orderVault.transferOut(
             order.initialCollateralToken(),
             params.order.swapPath()[0],
             order.initialCollateralDeltaAmount()
@@ -46,7 +47,7 @@ library SwapOrderUtils {
             order.shouldUnwrapNativeToken()
         ));
 
-        params.contracts.orderStore.remove(params.key, params.order.account());
+        OrderStoreUtils.remove(params.contracts.dataStore, params.key, params.order.account());
     }
 
     // @dev validate the oracle block numbers used for the prices in the oracle
@@ -72,6 +73,6 @@ library SwapOrderUtils {
             return;
         }
 
-        OrderBaseUtils.revertUnsupportedOrderType();
+        BaseOrderUtils.revertUnsupportedOrderType();
     }
 }

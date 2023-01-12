@@ -1,53 +1,7 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-
 import { grantRoleIfNotGranted } from "../utils/role";
+import { createDeployFunction } from "../utils/deploy";
 
-const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment) => {
-  const { deploy, get } = deployments;
-  const { deployer } = await getNamedAccounts();
-
-  const router = await get("Router");
-  const roleStore = await get("RoleStore");
-  const dataStore = await get("DataStore");
-  const eventEmitter = await get("EventEmitter");
-  const depositHandler = await get("DepositHandler");
-  const withdrawalHandler = await get("WithdrawalHandler");
-  const orderHandler = await get("OrderHandler");
-  const marketStore = await get("MarketStore");
-  const depositStore = await get("DepositStore");
-  const withdrawalStore = await get("WithdrawalStore");
-  const orderStore = await get("OrderStore");
-  const referralStorage = await get("ReferralStorage");
-  const gasUtils = await get("GasUtils");
-
-  const deployArgs = [
-    router.address,
-    roleStore.address,
-    dataStore.address,
-    eventEmitter.address,
-    depositHandler.address,
-    withdrawalHandler.address,
-    orderHandler.address,
-    marketStore.address,
-    depositStore.address,
-    withdrawalStore.address,
-    orderStore.address,
-    referralStorage.address,
-  ];
-  const { address } = await deploy("ExchangeRouter", {
-    from: deployer,
-    log: true,
-    args: deployArgs,
-    libraries: {
-      GasUtils: gasUtils.address,
-    },
-  });
-
-  await grantRoleIfNotGranted(address, "CONTROLLER");
-  await grantRoleIfNotGranted(address, "ROUTER_PLUGIN");
-};
-func.tags = ["ExchangeRouter"];
-func.dependencies = [
+const constructorContracts = [
   "Router",
   "RoleStore",
   "DataStore",
@@ -55,10 +9,26 @@ func.dependencies = [
   "DepositHandler",
   "WithdrawalHandler",
   "OrderHandler",
-  "MarketStore",
-  "DepositStore",
-  "WithdrawalStore",
-  "OrderStore",
   "ReferralStorage",
 ];
+
+const func = createDeployFunction({
+  contractName: "ExchangeRouter",
+  dependencyNames: constructorContracts,
+  getDeployArgs: async ({ dependencyContracts }) => {
+    return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
+  },
+  libraryNames: [
+    "DepositStoreUtils",
+    "WithdrawalStoreUtils",
+    "OrderStoreUtils",
+    "MarketEventUtils",
+    "ReferralEventUtils",
+  ],
+  afterDeploy: async ({ deployedContract }) => {
+    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract.address, "ROUTER_PLUGIN");
+  },
+});
+
 export default func;

@@ -4,13 +4,13 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../utils/EnumerableValues.sol";
-import "../gov/Governable.sol";
+import "./Role.sol";
 
 /**
  * @title RoleStore
  * @dev Stores roles and their members.
  */
-contract RoleStore is Governable {
+contract RoleStore {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using EnumerableValues for EnumerableSet.AddressSet;
@@ -23,16 +23,27 @@ contract RoleStore is Governable {
     // vs calling roleMembers[key].contains(account)
     mapping(address => mapping (bytes32 => bool)) roleCache;
 
+    error Unauthorized(address msgSender, string role);
+
+    modifier onlyRoleAdmin() {
+        if (!hasRole(msg.sender, Role.ROLE_ADMIN)) {
+            revert Unauthorized(msg.sender, "ROLE_ADMIN");
+        }
+        _;
+    }
+
+    constructor() {
+        _grantRole(msg.sender, Role.ROLE_ADMIN);
+    }
+
     /**
      * @dev Grants the specified role to the given account.
      *
      * @param account The address of the account.
      * @param key The key of the role to grant.
      */
-    function grantRole(address account, bytes32 key) external onlyGov {
-        roles.add(key);
-        roleMembers[key].add(account);
-        roleCache[account][key] = true;
+    function grantRole(address account, bytes32 key) external onlyRoleAdmin {
+        _grantRole(account, key);
     }
 
     /**
@@ -41,9 +52,8 @@ contract RoleStore is Governable {
      * @param account The address of the account.
      * @param key The key of the role to revoke.
      */
-    function revokeRole(address account, bytes32 key) external onlyGov {
-        roleMembers[key].remove(account);
-        roleCache[account][key] = false;
+    function revokeRole(address account, bytes32 key) external onlyRoleAdmin {
+        _revokeRole(account, key);
     }
 
     /**
@@ -53,7 +63,7 @@ contract RoleStore is Governable {
      * @param key The key of the role.
      * @return True if the account has the role, false otherwise.
      */
-    function hasRole(address account, bytes32 key) external view returns (bool) {
+    function hasRole(address account, bytes32 key) public view returns (bool) {
         return roleCache[account][key];
     }
 
@@ -97,5 +107,20 @@ contract RoleStore is Governable {
      */
     function getRoleMembers(bytes32 key, uint256 start, uint256 end) external view returns (address[] memory) {
         return roleMembers[key].valuesAt(start, end);
+    }
+
+    function _grantRole(address account, bytes32 key) internal {
+        roles.add(key);
+        roleMembers[key].add(account);
+        roleCache[account][key] = true;
+    }
+
+    function _revokeRole(address account, bytes32 key) internal {
+        roleMembers[key].remove(account);
+        roleCache[account][key] = false;
+
+        if (key == Role.ROLE_ADMIN && roleMembers[key].length() == 0) {
+            revert("There must be at least one role admin");
+        }
     }
 }
