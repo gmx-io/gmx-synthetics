@@ -12,6 +12,13 @@ import "../utils/BasicMulticall.sol";
 
 // @title Config
 contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
 
     uint256 public constant MAX_FEE_FACTOR = 5 * Precision.FLOAT_PRECISION / 100; // 5%
 
@@ -37,6 +44,23 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         bytes32 fullKey = keccak256(abi.encode(key, data));
 
         dataStore.setBool(fullKey, value);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", key);
+
+        eventData.bytesItems.initItems(1);
+        eventData.bytesItems.setItem(0, "data", data);
+
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "value", value);
+
+        eventEmitter.emitEventLog1(
+            "SetBool",
+            key,
+            eventData
+        );
     }
 
     function setUint(bytes32 key, bytes memory data, uint256 value) external onlyConfigKeeper nonReentrant {
@@ -47,6 +71,23 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         _validateRange(key, value);
 
         dataStore.setUint(fullKey, value);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", key);
+
+        eventData.bytesItems.initItems(1);
+        eventData.bytesItems.setItem(0, "data", data);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "value", value);
+
+        eventEmitter.emitEventLog1(
+            "setUint",
+            key,
+            eventData
+        );
     }
 
     function initAllowedKeys() internal {
