@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+import "./ExchangeUtils.sol";
 import "../role/RoleModule.sol";
 import "../feature/FeatureUtils.sol";
 
@@ -17,16 +18,17 @@ import "../withdrawal/WithdrawalUtils.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 
-import "../eth/EthUtils.sol";
+// @title WithdrawalHandler
+// @dev Contract to handle creation, execution and cancellation of withdrawals
+contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
+    using Withdrawal for Withdrawal.Props;
 
-contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
-
-    DataStore immutable dataStore;
-    EventEmitter immutable eventEmitter;
-    WithdrawalStore immutable withdrawalStore;
-    MarketStore immutable marketStore;
-    Oracle immutable oracle;
-    FeeReceiver immutable feeReceiver;
+    DataStore public immutable dataStore;
+    EventEmitter public immutable eventEmitter;
+    WithdrawalStore public immutable withdrawalStore;
+    MarketStore public immutable marketStore;
+    Oracle public immutable oracle;
+    FeeReceiver public immutable feeReceiver;
 
     constructor(
         RoleStore _roleStore,
@@ -45,48 +47,63 @@ contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
         feeReceiver = _feeReceiver;
     }
 
-    receive() external payable {
-        require(msg.sender == EthUtils.weth(dataStore), "WithdrawalHandler: invalid sender");
-    }
-
+    // @dev creates a withdrawal in the withdrawal store
+    // @param account the withdrawing account
+    // @param params WithdrawalUtils.CreateWithdrawalParams
     function createWithdrawal(
         address account,
-        address market,
-        uint256 marketTokensLongAmount,
-        uint256 marketTokensShortAmount,
-        uint256 minLongTokenAmount,
-        uint256 minShortTokenAmount,
-        bool shouldConvertETH,
-        uint256 executionFee
-    ) nonReentrant onlyController external returns (bytes32) {
+        WithdrawalUtils.CreateWithdrawalParams calldata params
+    ) external nonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createWithdrawalFeatureKey(address(this)));
 
-        WithdrawalUtils.CreateWithdrawalParams memory params = WithdrawalUtils.CreateWithdrawalParams(
+        return WithdrawalUtils.createWithdrawal(
             dataStore,
             eventEmitter,
             withdrawalStore,
             marketStore,
             account,
-            market,
-            marketTokensLongAmount,
-            marketTokensShortAmount,
-            minLongTokenAmount,
-            minShortTokenAmount,
-            shouldConvertETH,
-            executionFee,
-            EthUtils.weth(dataStore)
+            params
         );
-
-        Market.Props memory _market = params.marketStore.get(params.market);
-        MarketUtils.validateNonEmptyMarket(_market);
-
-        return WithdrawalUtils.createWithdrawal(params);
     }
 
+    function cancelWithdrawal(
+        bytes32 key,
+        Withdrawal.Props memory withdrawal
+    ) external nonReentrant onlyController {
+        uint256 startingGas = gasleft();
+
+        DataStore _dataStore = dataStore;
+
+        FeatureUtils.validateFeature(_dataStore, Keys.cancelWithdrawalFeatureKey(address(this)));
+
+        ExchangeUtils.validateRequestCancellation(
+            _dataStore,
+            withdrawal.updatedAtBlock(),
+            "ExchangeRouter: withdrawal not yet expired"
+        );
+
+        WithdrawalUtils.cancelWithdrawal(
+            _dataStore,
+            eventEmitter,
+            withdrawalStore,
+            key,
+            withdrawal.account(),
+            startingGas,
+            "USER_INITIATED_CANCEL"
+        );
+    }
+
+    // @dev executes a withdrawal
+    // @param key the key of the withdrawal to execute
+    // @param oracleParams OracleUtils.SetPricesParams
     function executeWithdrawal(
         bytes32 key,
-        OracleUtils.SetPricesParams memory oracleParams
-    ) external onlyOrderKeeper {
+        OracleUtils.SetPricesParams calldata oracleParams
+    )
+        external
+        onlyOrderKeeper
+        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+    {
         uint256 startingGas = gasleft();
 
         try this._executeWithdrawal(
@@ -96,8 +113,8 @@ contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
             startingGas
         ) {
         } catch Error(string memory reason) {
-            // revert instead of cancel if the reason for failure is due to oracle params
-            if (keccak256(abi.encodePacked(reason)) == Keys.ORACLE_ERROR_KEY) {
+            bytes32 reasonKey = keccak256(abi.encode(reason));
+            if (reasonKey == Keys.EMPTY_PRICE_ERROR_KEY) {
                 revert(reason);
             }
 
@@ -107,30 +124,32 @@ contract WithdrawalHandler is RoleModule, ReentrancyGuard, OracleModule {
                 withdrawalStore,
                 key,
                 msg.sender,
-                startingGas
+                startingGas,
+                bytes(reason)
             );
-        } catch {
+        } catch (bytes memory reason) {
             WithdrawalUtils.cancelWithdrawal(
                 dataStore,
                 eventEmitter,
                 withdrawalStore,
                 key,
                 msg.sender,
-                startingGas
+                startingGas,
+                reason
             );
         }
     }
 
+    // @dev executes a withdrawal
+    // @param oracleParams OracleUtils.SetPricesParams
+    // @param keeper the keeper executing the withdrawal
+    // @param startingGas the starting gas
     function _executeWithdrawal(
         bytes32 key,
         OracleUtils.SetPricesParams memory oracleParams,
         address keeper,
         uint256 startingGas
-    ) external
-        nonReentrant
-        onlySelf
-        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
-    {
+    ) external nonReentrant onlySelf {
         FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureKey(address(this)));
 
         uint256[] memory oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(

@@ -5,45 +5,105 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "../role/RoleModule.sol";
-import "../eth/IWETH.sol";
+import "../token/TokenUtils.sol";
+import "./FundReceiver.sol";
 
-contract Bank is RoleModule {
+// @title Bank
+// @dev Contract to handle storing and transferring of tokens
+contract Bank is FundReceiver {
     using SafeERC20 for IERC20;
 
-    constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
+    constructor(RoleStore _roleStore, DataStore _dataStore) FundReceiver(_roleStore, _dataStore) {}
 
-    function transferOut(address token, uint256 amount, address receiver) external onlyController {
-        _transferOut(token, amount, receiver);
+    receive() external payable {}
+
+    // @dev transfer tokens from this contract to a receiver
+    //
+    // @param token the token to transfer
+    // @param amount the amount to transfer
+    // @param receiver the address to transfer to
+    function transferOut(
+        address token,
+        address receiver,
+        uint256 amount
+    ) external onlyController {
+        _transferOut(token, receiver, amount);
     }
 
+    // @dev transfer tokens from this contract to a receiver
+    // handles native token transfers as well
+    //
+    // @param token the token to transfer
+    // @param amount the amount to transfer
+    // @param receiver the address to transfer to
+    // @param shouldUnwrapNativeToken whether to unwrap the wrapped native token
+    // before transferring
     function transferOut(
-        address weth,
         address token,
-        uint256 amount,
         address receiver,
-        bool shouldConvertETH
+        uint256 amount,
+        bool shouldUnwrapNativeToken
     ) external onlyController {
-        if (token == weth && shouldConvertETH) {
-            _transferOutEth(token, amount, receiver);
+        address wnt = TokenUtils.wnt(dataStore);
+
+        if (token == wnt && shouldUnwrapNativeToken) {
+            _transferOutNativeToken(token, receiver, amount);
         } else {
-            _transferOut(token, amount, receiver);
+            _transferOut(token, receiver, amount);
         }
     }
 
-    function _transferOut(address token, uint256 amount, address receiver) internal {
+    // @dev transfer native tokens from this contract to a receiver
+    //
+    // @param token the token to transfer
+    // @param amount the amount to transfer
+    // @param receiver the address to transfer to
+    // @param shouldUnwrapNativeToken whether to unwrap the wrapped native token
+    // before transferring
+    function transferOutNativeToken(
+        address receiver,
+        uint256 amount
+    ) external onlyController {
+        address wnt = TokenUtils.wnt(dataStore);
+        _transferOutNativeToken(wnt, receiver, amount);
+    }
+
+    // @dev transfer tokens from this contract to a receiver
+    //
+    // @param token the token to transfer
+    // @param amount the amount to transfer
+    // @param receiver the address to transfer to
+    function _transferOut(
+        address token,
+        address receiver,
+        uint256 amount
+    ) internal {
         require(receiver != address(this), "Bank: invalid receiver");
 
-        IERC20(token).safeTransfer(receiver, amount);
+        TokenUtils.transfer(dataStore, token, receiver, amount);
 
         _afterTransferOut(token);
     }
 
-    function _transferOutEth(address token, uint256 amount, address receiver) internal {
+    // @dev unwrap wrapped native tokens and transfer the native tokens from
+    // this contract to a receiver
+    //
+    // @param token the token to transfer
+    // @param amount the amount to transfer
+    // @param receiver the address to transfer to
+    function _transferOutNativeToken(
+        address token,
+        address receiver,
+        uint256 amount
+    ) internal {
         require(receiver != address(this), "Bank: invalid receiver");
 
-        IWETH(token).withdraw(amount);
-        payable(receiver).transfer(amount);
+        TokenUtils.withdrawAndSendNativeToken(
+            dataStore,
+            token,
+            receiver,
+            amount
+        );
 
         _afterTransferOut(token);
     }

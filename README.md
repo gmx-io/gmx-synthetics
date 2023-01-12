@@ -236,6 +236,79 @@ For limit swap, limit increase, limit decrease and stop-loss decrease orders, th
 
 For example, if the current index token price is $5000 and a user creates a limit long decrease order with acceptable price as $5010, the order can be executed with the index token price as $5010 if oracle prices $5008 and $5012 are validated, the blocks of the oracle prices must be after the order was updated and must be in ascending order.
 
+# Oracle Prices
+
+Oracle prices are signed as a value together with a precision, this allows prices to be compacted as uint32 values.
+
+The signed prices represent the price of one unit of the token using a value with 30 decimals of precision.
+
+Representing the prices in this way allows for conversions between token amounts and fiat values to be simplified, e.g. to calculate the fiat value of a given number of tokens the calculation would just be: `token amount * oracle price`, to calculate the token amount for a fiat value it would be: `fiat value / oracle price`.
+
+The trade-off of this simplicity in calculation is that tokens with a small USD price and a lot of decimals may have precision issues it is also possible that a token's price changes significantly and results in requiring higher precision.
+
+## Example 1
+
+The price of ETH is 5000, and ETH has 18 decimals.
+
+The price of one unit of ETH is `5000 / (10 ^ 18), 5 * (10 ^ -15)`.
+
+To handle the decimals, multiply the value by `(10 ^ 30)`.
+
+Price would be stored as `5000 / (10 ^ 18) * (10 ^ 30) => 5000 * (10 ^ 12)`.
+
+For gas optimization, these prices are sent to the oracle in the form of a uint8 decimal multiplier value and uint32 price value.
+
+If the decimal multiplier value is set to 8, the uint32 value would be `5000 * (10 ^ 12) / (10 ^ 8) => 5000 * (10 ^ 4)`.
+
+With this config, ETH prices can have a maximum value of `(2 ^ 32) / (10 ^ 4) => 4,294,967,296 / (10 ^ 4) => 429,496.7296` with 4 decimals of precision.
+
+## Example 2
+
+The price of BTC is 60,000, and BTC has 8 decimals.
+
+The price of one unit of BTC is `60,000 / (10 ^ 8), 6 * (10 ^ -4)`.
+
+Price would be stored as `60,000 / (10 ^ 8) * (10 ^ 30) => 6 * (10 ^ 26) => 60,000 * (10 ^ 22)`.
+
+BTC prices maximum value: `(2 ^ 64) / (10 ^ 2) => 4,294,967,296 / (10 ^ 2) => 42,949,672.96`.
+
+Decimals of precision: 2.
+
+## Example 3
+
+The price of USDC is 1, and USDC has 6 decimals.
+
+The price of one unit of USDC is `1 / (10 ^ 6), 1 * (10 ^ -6)`.
+
+Price would be stored as `1 / (10 ^ 6) * (10 ^ 30) => 1 * (10 ^ 24)`.
+
+USDC prices maximum value: `(2 ^ 64) / (10 ^ 6) => 4,294,967,296 / (10 ^ 6) => 4294.967296`.
+
+Decimals of precision: 6.
+
+## Example 4
+
+The price of DG is 0.00000001, and DG has 18 decimals.
+
+The price of one unit of DG is `0.00000001 / (10 ^ 18), 1 * (10 ^ -26)`.
+
+Price would be stored as `1 * (10 ^ -26) * (10 ^ 30) => 1 * (10 ^ 3)`.
+
+DG prices maximum value: `(2 ^ 64) / (10 ^ 11) => 4,294,967,296 / (10 ^ 11) => 0.04294967296`.
+
+Decimals of precision: 11.
+
+## Decimal Multiplier
+
+The formula to calculate what the decimal multiplier value should be set to:
+
+Decimals: 30 - (token decimals) - (number of decimals desired for precision)
+
+- ETH: 30 - 18 - 4 => 8
+- BTC: 30 - 8 - 2 => 20
+- USDC: 30 - 6 - 6 => 18
+- DG: 30 - 18 - 11 => 1
+
 # Funding Fees
 
 Funding fees incentivise the balancing of long and short positions, the side with the larger open interest pays a funding fee to the side with the smaller open interest.
@@ -261,10 +334,10 @@ The code for price impact can be found in the `/pricing` contracts.
 Price impact is calculated as:
 
 ```
-(initial imbalance) ^ (price impact exponent) * (price impact factor) - (next imbalance) ^ (price impact exponent) * (price impact factor)
+(initial imbalance) ^ (price impact exponent) * (price impact factor / 2) - (next imbalance) ^ (price impact exponent) * (price impact factor / 2)
 ```
 
-For spot actions (deposits, withdrawals, swaps), imbalance is calculated as the difference in the worth of the long tokens and short tokens.
+For swaps, imbalance is calculated as the difference in the worth of the long tokens and short tokens.
 
 For example:
 
@@ -286,9 +359,28 @@ The purpose of the price impact is to help reduce the risk of price manipulation
 
 This risk will also be present if the positive and negative price impact values are similar, for that reason the positive price impact should be set to a low value in times of volatility or irregular price movements.
 
+For the price impact on position increases / decreases, if negative price impact is deducted as collateral from the position, this could lead to the position having a different leverage from what the user intended, so instead of deducting collateral the position's entry / exit price is adjusted based on the price impact.
+
+For example:
+
+- The oracle price of the index token is $5000
+- A user opens a long position of size $50,000 with a negative price impact of 0.1%
+- The user's position size is in USD is $50,000 and the size in tokens is (50,000 / 5000) \* (100 - 0.1)% => 9.99
+- This gives the position an entry price of 50,000 / 9.99 => ~$5005
+- The negative price impact is tracked as a number of index tokens in the pool
+- In this case there would be 0.01 index tokens in the position impact pool
+- The pending PnL of the user at this point would be (50,000 - 9.99 \* 5000) => $50
+- The tokens in the position impact pool should be accounted for when calculating the pool value to offset this pending PnL
+- The net impact on the pool is zero, +$50 from the pending negative PnL due to price impact and -$50 from the 0.01 index tokens in the position impact pool worth $50
+- If the user closes the position at a negative price impact of 0.2%, the position impact pool would increase to 0.03 index tokens
+- The user would receive (original position collateral - $150)
+- The pool would have an extra $150 of collateral which continues to have a net zero impact on the pool value due to the 0.03 index tokens in the position impact pool
+
+If the index token is different from both the long and short token of the market, then it is possible that the pool value becomes significantly affected by the position impact pool, if the position impact pool is very large and the index token has a large price increase. Due to this, there should be a method to gradually reduce the size of the position impact pool.
+
 # Fees
 
-There are configurable spreads, swap fees and position fees and per market.
+There are configurable swap fees and position fees and per market.
 
 Execution fees are also estimated and accounted for on creation of deposit, withdrawal, order requests so that keepers can execute transactions at a close to net zero cost.
 
@@ -299,3 +391,23 @@ If a market has stablecoins as the short collateral token it should be able to f
 If a market has a long collateral token that is different from the index token, the long profits may not be fully paid out if the price increase of the index token exceeds the price increase of the long collateral token.
 
 Markets have a reserve factor that allows open interest to be capped to a percentage of the pool size, this reduces the impact of profits of short positions and reduces the risk that long positions cannot be fully paid out.
+
+# Commands
+
+To compile contracts:
+
+```
+npx hardhat compile
+```
+
+To run all tests:
+
+```
+npx hardhat test
+```
+
+To check metrics:
+
+```
+npx ts-node metrics.ts
+```
