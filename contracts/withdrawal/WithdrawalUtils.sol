@@ -231,8 +231,7 @@ library WithdrawalUtils {
         SwapPricingUtils.SwapFees memory longTokenFees = SwapPricingUtils.getSwapFees(
             params.dataStore,
             market.marketToken,
-            longTokenOutputAmount,
-            Keys.FEE_RECEIVER_WITHDRAWAL_FACTOR
+            longTokenOutputAmount
         );
 
         PricingUtils.transferFees(
@@ -246,8 +245,7 @@ library WithdrawalUtils {
         SwapPricingUtils.SwapFees memory shortTokenFees = SwapPricingUtils.getSwapFees(
             params.dataStore,
             market.marketToken,
-            shortTokenOutputAmount,
-            Keys.FEE_RECEIVER_WITHDRAWAL_FACTOR
+            shortTokenOutputAmount
         );
 
         PricingUtils.transferFees(

@@ -339,8 +339,7 @@ library DepositUtils {
         SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
             params.dataStore,
             _params.market.marketToken,
-            _params.amount,
-            Keys.FEE_RECEIVER_DEPOSIT_FACTOR
+            _params.amount
         );
 
         PricingUtils.transferFees(

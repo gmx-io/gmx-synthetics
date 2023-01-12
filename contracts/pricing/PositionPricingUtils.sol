@@ -402,7 +402,7 @@ library PositionPricingUtils {
 
         cache.protocolFeeAmount = cache.positionFeeAmount - cache.referral.totalRebateAmount;
 
-        cache.feeReceiverFactor = dataStore.getUint(Keys.FEE_RECEIVER_POSITION_FACTOR);
+        cache.feeReceiverFactor = dataStore.getUint(Keys.FEE_RECEIVER_FACTOR);
 
         cache.feeReceiverAmount = Precision.applyFactor(cache.protocolFeeAmount, cache.feeReceiverFactor);
         cache.positionFeeAmountForPool = cache.protocolFeeAmount - cache.feeReceiverAmount;

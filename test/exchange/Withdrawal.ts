@@ -129,7 +129,7 @@ describe("Exchange.Withdrawal", () => {
     // 0.05%: 0.0005
     await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken), decimalToFloat(5, 4));
     // 30%
-    await dataStore.setUint(keys.FEE_RECEIVER_WITHDRAWAL_FACTOR, decimalToFloat(3, 1));
+    await dataStore.setUint(keys.FEE_RECEIVER_FACTOR, decimalToFloat(3, 1));
 
     // set price impact to 0.1% for every $50,000 of token imbalance
     // 0.1% => 0.001

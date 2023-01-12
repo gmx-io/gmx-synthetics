@@ -167,17 +167,15 @@ library SwapPricingUtils {
     // @param dataStore DataStore
     // @param marketToken the address of the market token
     // @param amount the total swap fee amount
-    // @param feeReceiverFactorKey the key for the feeReceiverFactor
     function getSwapFees(
         DataStore dataStore,
         address marketToken,
-        uint256 amount,
-        bytes32 feeReceiverFactorKey
+        uint256 amount
     ) internal view returns (SwapFees memory) {
         SwapFees memory fees;
 
         uint256 feeFactor = dataStore.getUint(Keys.swapFeeFactorKey(marketToken));
-        uint256 feeReceiverFactor = dataStore.getUint(feeReceiverFactorKey);
+        uint256 feeReceiverFactor = dataStore.getUint(Keys.FEE_RECEIVER_FACTOR);
 
         uint256 feeAmount = Precision.applyFactor(amount, feeFactor);
 

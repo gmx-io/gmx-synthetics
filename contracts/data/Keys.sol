@@ -24,6 +24,9 @@ library Keys {
     bytes32 public constant ORDER_LIST = keccak256(abi.encode("ORDER_LIST"));
     bytes32 public constant ACCOUNT_ORDER_LIST = keccak256(abi.encode("ACCOUNT_ORDER_LIST"));
 
+    // @dev key for is market disabled
+    bytes32 public constant IS_MARKET_DISABLED = keccak256(abi.encode("IS_MARKET_DISABLED"));
+
     // @dev key for whether the create deposit feature is disabled
     bytes32 public constant CREATE_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("CREATE_DEPOSIT_FEATURE_DISABLED"));
     // @dev key for whether the cancel deposit feature is disabled
@@ -55,14 +58,8 @@ library Keys {
     bytes32 public constant MIN_ORACLE_BLOCK_CONFIRMATIONS = keccak256(abi.encode("MIN_ORACLE_BLOCK_CONFIRMATIONS"));
     // @dev key for the maximum usable oracle price age in seconds
     bytes32 public constant MAX_ORACLE_PRICE_AGE = keccak256(abi.encode("MAX_ORACLE_PRICE_AGE"));
-    // @dev key for the percentage amount of fees to be received for deposits
-    bytes32 public constant FEE_RECEIVER_DEPOSIT_FACTOR = keccak256(abi.encode("FEE_RECEIVER_DEPOSIT_FACTOR"));
-    // @dev key for the percentage amount of fees to be received for withdrawals
-    bytes32 public constant FEE_RECEIVER_WITHDRAWAL_FACTOR = keccak256(abi.encode("FEE_RECEIVER_WITHDRAWAL_FACTOR"));
-    // @dev key for the percentage amount of fees to be received for swaps
-    bytes32 public constant FEE_RECEIVER_SWAP_FACTOR = keccak256(abi.encode("FEE_RECEIVER_SWAP_FACTOR"));
-    // @dev key for the percentage amount of fees to be received for positions
-    bytes32 public constant FEE_RECEIVER_POSITION_FACTOR = keccak256(abi.encode("FEE_RECEIVER_POSITION_FACTOR"));
+    // @dev key for the percentage amount of fees to be received
+    bytes32 public constant FEE_RECEIVER_FACTOR = keccak256(abi.encode("FEE_RECEIVER_FACTOR"));
 
     // @dev key for the base gas limit used when estimating execution fee
     bytes32 public constant ESTIMATED_FEE_BASE_GAS_LIMIT = keccak256(abi.encode("ESTIMATED_FEE_BASE_GAS_LIMIT"));
@@ -166,8 +163,6 @@ library Keys {
     bytes32 public constant TOTAL_BORROWING = keccak256(abi.encode("TOTAL_BORROWING"));
     // @dev key for affiliate reward
     bytes32 public constant AFFILIATE_REWARD = keccak256(abi.encode("AFFILIATE_REWARD"));
-    // @dev key for is market disabled
-    bytes32 public constant IS_MARKET_DISABLED = keccak256(abi.encode("IS_MARKET_DISABLED"));
 
     string public constant EMPTY_PRICE_ERROR = "EMPTY_PRICE_ERROR";
     bytes32 public constant EMPTY_PRICE_ERROR_KEY = keccak256(abi.encode(EMPTY_PRICE_ERROR));
