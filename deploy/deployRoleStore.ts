@@ -10,6 +10,6 @@ const func = createDeployFunction({
   },
 });
 
-func.dependencies = func.dependencies.concat(["Init"]);
+func.dependencies = func.dependencies.concat(["FundAccounts"]);
 
 export default func;

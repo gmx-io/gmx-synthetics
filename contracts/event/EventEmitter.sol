@@ -18,17 +18,20 @@ import "./EventUtils.sol";
 // to work without an update and without segregating historical data
 contract EventEmitter is RoleModule {
     event EventLog(
+        address msgSender,
         string indexed eventName,
         EventUtils.EventLogData data
     );
 
     event EventLog1(
+        address msgSender,
         string indexed eventName,
         bytes32 indexed key1,
         EventUtils.EventLogData data
     );
 
     event EventLog2(
+        address msgSender,
         string indexed eventName,
         bytes32 indexed key1,
         bytes32 indexed key2,
@@ -42,6 +45,7 @@ contract EventEmitter is RoleModule {
         EventUtils.EventLogData memory data
     ) external onlyController {
         emit EventLog(
+            msg.sender,
             eventName,
             data
         );
@@ -53,6 +57,7 @@ contract EventEmitter is RoleModule {
         EventUtils.EventLogData memory data
     ) external onlyController {
         emit EventLog1(
+            msg.sender,
             eventName,
             key1,
             data
@@ -66,6 +71,7 @@ contract EventEmitter is RoleModule {
         EventUtils.EventLogData memory data
     ) external onlyController {
         emit EventLog2(
+            msg.sender,
             eventName,
             key1,
             key2,
