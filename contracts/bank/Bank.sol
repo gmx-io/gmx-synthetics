@@ -6,16 +6,23 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "../token/TokenUtils.sol";
-import "./FundReceiver.sol";
+import "../role/RoleModule.sol";
 
 // @title Bank
 // @dev Contract to handle storing and transferring of tokens
-contract Bank is FundReceiver {
+contract Bank is RoleModule {
     using SafeERC20 for IERC20;
 
-    constructor(RoleStore _roleStore, DataStore _dataStore) FundReceiver(_roleStore, _dataStore) {}
+    DataStore public immutable dataStore;
 
-    receive() external payable {}
+    constructor(RoleStore _roleStore, DataStore _dataStore) RoleModule(_roleStore) {
+        dataStore = _dataStore;
+    }
+
+    receive() external payable {
+        address wnt = TokenUtils.wnt(dataStore);
+        require(msg.sender == wnt, "Bank: invalid native token sender");
+    }
 
     // @dev transfer tokens from this contract to a receiver
     //
