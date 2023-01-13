@@ -29,6 +29,7 @@ async function main() {
         address,
         constructorArguments: args,
         noCompile: true,
+        foo: 1,
       });
     }
   }

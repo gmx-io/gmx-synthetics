@@ -77,6 +77,7 @@ async function main() {
       executionFee,
       callbackGasLimit: 0,
       minOutputAmount: 0,
+      initialCollateralDeltaAmount: 0,
     },
     orderType: 4, // MarketDecrease
     isLong: true, // not relevant for market swap
