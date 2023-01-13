@@ -1,6 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-
-import { hashData } from "../utils/hash";
+import { getSyntheticTokenAddress } from "../utils/token";
 
 // https://docs.chain.link/data-feeds/price-feeds/addresses?network=avalanche
 
@@ -40,10 +39,6 @@ export type TestTokenConfig = {
 
 export type TokenConfig = SyntheticTokenConfig | RealTokenConfig | TestTokenConfig;
 export type TokensConfig = { [tokenSymbol: string]: TokenConfig };
-
-function getSyntheticTokenAddress(tokenSymbol: string) {
-  return "0x" + hashData(["string"], [tokenSymbol]).substring(26);
-}
 
 const config: {
   [network: string]: TokensConfig;

@@ -15,8 +15,8 @@ export async function setAddressIfDifferent(key: string, value: string, label?: 
   });
 }
 
-export async function setDataIfDifferent(key: string, value: string, label?: string) {
-  await setIfDifferent("data", key, value, { label });
+export async function setBytes32IfDifferent(key: string, value: string, label?: string) {
+  await setIfDifferent("bytes32", key, value, { label });
 }
 
 export async function setBoolIfDifferent(key: string, value: boolean, label?: string) {

@@ -3,15 +3,15 @@
 pragma solidity ^0.8.0;
 
 import "./RoleStore.sol";
-import "./Role.sol";
-import "../gov/Governable.sol";
 
 /**
  * @title RoleModule
  * @dev Contract for role validation functions
  */
-contract RoleModule is Governable {
+contract RoleModule {
     RoleStore public immutable roleStore;
+
+    error Unauthorized(address msgSender, string role);
 
     /**
      * @dev Constructor that initializes the role store for this contract.
@@ -29,6 +29,30 @@ contract RoleModule is Governable {
         if (msg.sender != address(this)) {
             revert Unauthorized(msg.sender, "SELF");
         }
+        _;
+    }
+
+    /**
+     * @dev Only allows addresses with the TIMELOCK_MULTISIG role to call the function.
+     */
+    modifier onlyTimelockMultisig() {
+        _validateRole(Role.TIMELOCK_MULTISIG, "TIMELOCK_MULTISIG");
+        _;
+    }
+
+    /**
+     * @dev Only allows addresses with the TIMELOCK_ADMIN role to call the function.
+     */
+    modifier onlyTimelockAdmin() {
+        _validateRole(Role.TIMELOCK_ADMIN, "TIMELOCK_ADMIN");
+        _;
+    }
+
+    /**
+     * @dev Only allows addresses with the CONFIG_KEEPER role to call the function.
+     */
+    modifier onlyConfigKeeper() {
+        _validateRole(Role.CONFIG_KEEPER, "CONFIG_KEEPER");
         _;
     }
 

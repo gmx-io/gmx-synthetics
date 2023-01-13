@@ -9,11 +9,11 @@ import "../role/RoleModule.sol";
 import "../feature/FeatureUtils.sol";
 
 import "../market/Market.sol";
-import "../market/MarketStore.sol";
 import "../market/MarketToken.sol";
 
 import "../withdrawal/Withdrawal.sol";
-import "../withdrawal/WithdrawalStore.sol";
+import "../withdrawal/WithdrawalVault.sol";
+import "../withdrawal/WithdrawalStoreUtils.sol";
 import "../withdrawal/WithdrawalUtils.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
@@ -25,8 +25,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
-    WithdrawalStore public immutable withdrawalStore;
-    MarketStore public immutable marketStore;
+    WithdrawalVault public immutable withdrawalVault;
     Oracle public immutable oracle;
     FeeReceiver public immutable feeReceiver;
 
@@ -34,15 +33,13 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        WithdrawalStore _withdrawalStore,
-        MarketStore _marketStore,
+        WithdrawalVault _withdrawalVault,
         Oracle _oracle,
         FeeReceiver _feeReceiver
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
-        withdrawalStore = _withdrawalStore;
-        marketStore = _marketStore;
+        withdrawalVault = _withdrawalVault;
         oracle = _oracle;
         feeReceiver = _feeReceiver;
     }
@@ -54,13 +51,12 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
         address account,
         WithdrawalUtils.CreateWithdrawalParams calldata params
     ) external nonReentrant onlyController returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.createWithdrawalFeatureKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.createWithdrawalFeatureDisabledKey(address(this)));
 
         return WithdrawalUtils.createWithdrawal(
             dataStore,
             eventEmitter,
-            withdrawalStore,
-            marketStore,
+            withdrawalVault,
             account,
             params
         );
@@ -74,7 +70,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
 
         DataStore _dataStore = dataStore;
 
-        FeatureUtils.validateFeature(_dataStore, Keys.cancelWithdrawalFeatureKey(address(this)));
+        FeatureUtils.validateFeature(_dataStore, Keys.cancelWithdrawalFeatureDisabledKey(address(this)));
 
         ExchangeUtils.validateRequestCancellation(
             _dataStore,
@@ -85,7 +81,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
         WithdrawalUtils.cancelWithdrawal(
             _dataStore,
             eventEmitter,
-            withdrawalStore,
+            withdrawalVault,
             key,
             withdrawal.account(),
             startingGas,
@@ -101,6 +97,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
         OracleUtils.SetPricesParams calldata oracleParams
     )
         external
+        nonReentrant
         onlyOrderKeeper
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
@@ -121,7 +118,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
             WithdrawalUtils.cancelWithdrawal(
                 dataStore,
                 eventEmitter,
-                withdrawalStore,
+                withdrawalVault,
                 key,
                 msg.sender,
                 startingGas,
@@ -131,7 +128,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
             WithdrawalUtils.cancelWithdrawal(
                 dataStore,
                 eventEmitter,
-                withdrawalStore,
+                withdrawalVault,
                 key,
                 msg.sender,
                 startingGas,
@@ -149,8 +146,8 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
         OracleUtils.SetPricesParams memory oracleParams,
         address keeper,
         uint256 startingGas
-    ) external nonReentrant onlySelf {
-        FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureKey(address(this)));
+    ) external onlySelf {
+        FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureDisabledKey(address(this)));
 
         uint256[] memory oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
             oracleParams.compactedOracleBlockNumbers,
@@ -160,8 +157,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
         WithdrawalUtils.ExecuteWithdrawalParams memory params = WithdrawalUtils.ExecuteWithdrawalParams(
             dataStore,
             eventEmitter,
-            withdrawalStore,
-            marketStore,
+            withdrawalVault,
             oracle,
             feeReceiver,
             key,

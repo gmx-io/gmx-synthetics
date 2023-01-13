@@ -6,8 +6,9 @@ import "../adl/AdlUtils.sol";
 
 import "../data/DataStore.sol";
 
-import "./WithdrawalStore.sol";
-import "../market/MarketStore.sol";
+import "./WithdrawalVault.sol";
+import "./WithdrawalStoreUtils.sol";
+import "./WithdrawalEventUtils.sol";
 
 import "../nonce/NonceUtils.sol";
 import "../pricing/SwapPricingUtils.sol";
@@ -18,7 +19,6 @@ import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
-import "../utils/Null.sol";
 
 /**
  * @title WithdrawalUtils
@@ -57,8 +57,7 @@ library WithdrawalUtils {
     /**
      * @param dataStore The data store where withdrawal data is stored.
      * @param eventEmitter The event emitter that is used to emit events.
-     * @param withdrawalStore The withdrawal store where withdrawal data is stored.
-     * @param marketStore The market store where market data is stored.
+     * @param withdrawalVault WithdrawalVault.
      * @param oracle The oracle that provides market prices.
      * @param feeReceiver The address that will receive the withdrawal fees.
      * @param key The unique identifier of the withdrawal to execute.
@@ -69,8 +68,7 @@ library WithdrawalUtils {
     struct ExecuteWithdrawalParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
-        WithdrawalStore withdrawalStore;
-        MarketStore marketStore;
+        WithdrawalVault withdrawalVault;
         Oracle oracle;
         FeeReceiver feeReceiver;
         bytes32 key;
@@ -88,8 +86,7 @@ library WithdrawalUtils {
      *
      * @param dataStore The data store where withdrawal data is stored.
      * @param eventEmitter The event emitter that is used to emit events.
-     * @param withdrawalStore The withdrawal store where withdrawal data is stored.
-     * @param marketStore The market store where market data is stored.
+     * @param withdrawalVault WithdrawalVault.
      * @param account The account that initiated the withdrawal.
      * @param params The parameters for creating the withdrawal.
      * @return The unique identifier of the created withdrawal.
@@ -97,16 +94,15 @@ library WithdrawalUtils {
     function createWithdrawal(
         DataStore dataStore,
         EventEmitter eventEmitter,
-        WithdrawalStore withdrawalStore,
-        MarketStore marketStore,
+        WithdrawalVault withdrawalVault,
         address account,
         CreateWithdrawalParams memory params
     ) external returns (bytes32) {
         address wnt = TokenUtils.wnt(dataStore);
-        uint256 wntAmount = withdrawalStore.recordTransferIn(wnt);
+        uint256 wntAmount = withdrawalVault.recordTransferIn(wnt);
         require(wntAmount == params.executionFee, "WithdrawalUtils: invalid wntAmount");
 
-        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, marketStore, params.market);
+        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, params.market);
 
         Withdrawal.Props memory withdrawal = Withdrawal.Props(
             Withdrawal.Addresses(
@@ -125,8 +121,7 @@ library WithdrawalUtils {
             ),
             Withdrawal.Flags(
                 params.shouldUnwrapNativeToken
-            ),
-            Null.BYTES
+            )
         );
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(dataStore, withdrawal);
@@ -134,9 +129,9 @@ library WithdrawalUtils {
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
 
-        withdrawalStore.set(key, withdrawal);
+        WithdrawalStoreUtils.set(dataStore, key, withdrawal);
 
-        eventEmitter.emitWithdrawalCreated(key, withdrawal);
+        WithdrawalEventUtils.emitWithdrawalCreated(eventEmitter, key, withdrawal);
 
         return key;
     }
@@ -147,7 +142,7 @@ library WithdrawalUtils {
      * @param params The parameters for executing the withdrawal.
      */
     function executeWithdrawal(ExecuteWithdrawalParams memory params) external {
-        Withdrawal.Props memory withdrawal = params.withdrawalStore.get(params.key);
+        Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(params.dataStore, params.key);
         require(withdrawal.account() != address(0), "WithdrawalUtils: empty withdrawal");
         require(withdrawal.marketTokenAmount() > 0, "WithdrawalUtils: empty marketTokenAmount");
 
@@ -164,13 +159,13 @@ library WithdrawalUtils {
 
         _executeWithdrawal(params, withdrawal);
 
-        params.eventEmitter.emitWithdrawalExecuted(params.key);
+        WithdrawalEventUtils.emitWithdrawalExecuted(params.eventEmitter, params.key);
 
         CallbackUtils.afterWithdrawalExecution(params.key, withdrawal);
 
         GasUtils.payExecutionFee(
             params.dataStore,
-            params.withdrawalStore,
+            params.withdrawalVault,
             withdrawal.executionFee(),
             params.startingGas,
             params.keeper,
@@ -182,7 +177,7 @@ library WithdrawalUtils {
      * @dev Cancels a withdrawal.
      * @param dataStore The data store.
      * @param eventEmitter The event emitter.
-     * @param withdrawalStore The withdrawal store.
+     * @param withdrawalVault The withdrawal vault.
      * @param key The withdrawal key.
      * @param keeper The keeper sending the transaction.
      * @param startingGas The starting gas for the transaction.
@@ -190,24 +185,24 @@ library WithdrawalUtils {
     function cancelWithdrawal(
         DataStore dataStore,
         EventEmitter eventEmitter,
-        WithdrawalStore withdrawalStore,
+        WithdrawalVault withdrawalVault,
         bytes32 key,
         address keeper,
         uint256 startingGas,
         bytes memory reason
     ) external {
-        Withdrawal.Props memory withdrawal = withdrawalStore.get(key);
+        Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
         require(withdrawal.account() != address(0), "WithdrawalUtils: empty withdrawal");
 
-        withdrawalStore.remove(key);
+        WithdrawalStoreUtils.remove(dataStore, key, withdrawal.account());
 
-        eventEmitter.emitWithdrawalCancelled(key, reason);
+        WithdrawalEventUtils.emitWithdrawalCancelled(eventEmitter, key, reason);
 
         CallbackUtils.afterWithdrawalCancellation(key, withdrawal);
 
         GasUtils.payExecutionFee(
             dataStore,
-            withdrawalStore,
+            withdrawalVault,
             withdrawal.executionFee(),
             startingGas,
             keeper,
@@ -224,7 +219,7 @@ library WithdrawalUtils {
         ExecuteWithdrawalParams memory params,
         Withdrawal.Props memory withdrawal
     ) internal {
-        Market.Props memory market = MarketUtils.getEnabledMarket(params.dataStore, params.marketStore, withdrawal.market());
+        Market.Props memory market = MarketUtils.getEnabledMarket(params.dataStore, withdrawal.market());
 
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(
             params.oracle,
@@ -236,8 +231,7 @@ library WithdrawalUtils {
         SwapPricingUtils.SwapFees memory longTokenFees = SwapPricingUtils.getSwapFees(
             params.dataStore,
             market.marketToken,
-            longTokenOutputAmount,
-            Keys.FEE_RECEIVER_WITHDRAWAL_FACTOR
+            longTokenOutputAmount
         );
 
         PricingUtils.transferFees(
@@ -251,8 +245,7 @@ library WithdrawalUtils {
         SwapPricingUtils.SwapFees memory shortTokenFees = SwapPricingUtils.getSwapFees(
             params.dataStore,
             market.marketToken,
-            shortTokenOutputAmount,
-            Keys.FEE_RECEIVER_WITHDRAWAL_FACTOR
+            shortTokenOutputAmount
         );
 
         PricingUtils.transferFees(
@@ -315,7 +308,7 @@ library WithdrawalUtils {
             true
         );
 
-        params.withdrawalStore.remove(params.key);
+        WithdrawalStoreUtils.remove(params.dataStore, params.key, withdrawal.account());
 
         MarketToken(payable(market.marketToken)).burn(withdrawal.account(), withdrawal.marketTokenAmount());
 
@@ -333,8 +326,21 @@ library WithdrawalUtils {
             withdrawal.shouldUnwrapNativeToken()
         );
 
-        params.eventEmitter.emitSwapFeesCollected(keccak256(abi.encode("withdrawal")), longTokenFees);
-        params.eventEmitter.emitSwapFeesCollected(keccak256(abi.encode("withdrawal")), shortTokenFees);
+        SwapPricingUtils.emitSwapFeesCollected(
+            params.eventEmitter,
+            market.marketToken,
+            market.longToken,
+            "withdrawal",
+            longTokenFees
+        );
+
+        SwapPricingUtils.emitSwapFeesCollected(
+            params.eventEmitter,
+            market.marketToken,
+            market.shortToken,
+            "withdrawal",
+            shortTokenFees
+        );
     }
 
     function _getOutputAmounts(

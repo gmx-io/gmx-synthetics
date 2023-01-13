@@ -1,4 +1,4 @@
-/* // SPDX-License-Identifier: BUSL-1.1 */
+// SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity ^0.8.0;
 
@@ -12,9 +12,9 @@ import "../oracle/Oracle.sol";
 import "../pricing/PositionPricingUtils.sol";
 
 import "./Position.sol";
-import "./PositionStore.sol";
+import "./PositionStoreUtils.sol";
 import "./PositionUtils.sol";
-import "../order/OrderBaseUtils.sol";
+import "../order/BaseOrderUtils.sol";
 
 import "../swap/SwapUtils.sol";
 
@@ -27,6 +27,14 @@ library DecreasePositionCollateralUtils {
     using Position for Position.Props;
     using Order for Order.Props;
     using Price for Price.Props;
+
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
 
     struct ProcessCollateralValuesOutput {
         address outputToken;
@@ -187,7 +195,7 @@ library DecreasePositionCollateralUtils {
         // deduct remaining fees from the position's collateral
         values.remainingCollateralAmount -= fees.totalNetCostAmount.toInt256();
 
-        if (OrderBaseUtils.isLiquidationOrder(params.order.orderType()) && values.remainingCollateralAmount < 0) {
+        if (BaseOrderUtils.isLiquidationOrder(params.order.orderType()) && values.remainingCollateralAmount < 0) {
             return getLiquidationValues(params, values, fees);
         }
 
@@ -267,7 +275,7 @@ library DecreasePositionCollateralUtils {
             }
         }
 
-        uint256 executionPrice = OrderBaseUtils.getExecutionPrice(
+        uint256 executionPrice = BaseOrderUtils.getExecutionPrice(
             params.contracts.oracle.getCustomPrice(params.market.indexToken),
             adjustedSizeDeltaUsd,
             priceImpactUsd,
@@ -301,7 +309,10 @@ library DecreasePositionCollateralUtils {
             // should be rare, and the difference should be small
             // in case it happens, the pool should be topped up with the required amount using
             // an insurance fund or similar mechanism
-            params.contracts.eventEmitter.emitInsufficientFundingFeePayment(
+            emitInsufficientFundingFeePayment(
+                params.contracts.eventEmitter,
+                params.market.marketToken,
+                params.position.collateralToken(),
                 fees.funding.fundingFeeAmount,
                 params.position.collateralAmount()
             );
@@ -430,5 +441,29 @@ library DecreasePositionCollateralUtils {
         }
 
         return swapPath[0] == MarketUtils.SWAP_COLLATERAL_TOKEN_TO_PNL_TOKEN;
+    }
+
+    function emitInsufficientFundingFeePayment(
+        EventEmitter eventEmitter,
+        address market,
+        address collateralToken,
+        uint256 fundingFeeAmount,
+        uint256 collateralAmount
+    ) internal {
+        EventUtils.EventLogData memory data;
+
+        data.addressItems.initItems(2);
+        data.addressItems.setItem(0, "market", market);
+        data.addressItems.setItem(1, "collateralToken", collateralToken);
+
+        data.uintItems.initItems(2);
+        data.uintItems.setItem(0, "fundingFeeAmount", fundingFeeAmount);
+        data.uintItems.setItem(1, "collateralAmount", collateralAmount);
+
+        eventEmitter.emitEventLog1(
+            "InsufficientFundingFeePayment",
+            Cast.toBytes32(market),
+            data
+        );
     }
 }

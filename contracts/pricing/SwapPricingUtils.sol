@@ -15,6 +15,14 @@ library SwapPricingUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
 
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
+
     // @dev GetPriceImpactUsdParams struct used in getPriceImpactUsd to
     // avoid stack too deep errors
     // @param dataStore DataStore
@@ -159,17 +167,15 @@ library SwapPricingUtils {
     // @param dataStore DataStore
     // @param marketToken the address of the market token
     // @param amount the total swap fee amount
-    // @param feeReceiverFactorKey the key for the feeReceiverFactor
     function getSwapFees(
         DataStore dataStore,
         address marketToken,
-        uint256 amount,
-        bytes32 feeReceiverFactorKey
+        uint256 amount
     ) internal view returns (SwapFees memory) {
         SwapFees memory fees;
 
         uint256 feeFactor = dataStore.getUint(Keys.swapFeeFactorKey(marketToken));
-        uint256 feeReceiverFactor = dataStore.getUint(feeReceiverFactorKey);
+        uint256 feeReceiverFactor = dataStore.getUint(Keys.FEE_RECEIVER_FACTOR);
 
         uint256 feeAmount = Precision.applyFactor(amount, feeFactor);
 
@@ -178,5 +184,33 @@ library SwapPricingUtils {
         fees.amountAfterFees = amount - feeAmount;
 
         return fees;
+    }
+
+    function emitSwapFeesCollected(
+        EventEmitter eventEmitter,
+        address market,
+        address token,
+        string memory action,
+        SwapFees memory fees
+    ) internal {
+        EventUtils.EventLogData memory data;
+
+        data.addressItems.initItems(2);
+        data.addressItems.setItem(0, "market", market);
+        data.addressItems.setItem(1, "token", token);
+
+        data.stringItems.initItems(1);
+        data.stringItems.setItem(0, "action", action);
+
+        data.uintItems.initItems(3);
+        data.uintItems.setItem(0, "feeReceiverAmount", fees.feeReceiverAmount);
+        data.uintItems.setItem(1, "feesForPool", fees.feesForPool);
+        data.uintItems.setItem(2, "amountAfterFees", fees.amountAfterFees);
+
+        eventEmitter.emitEventLog1(
+            "SwapFeesCollected",
+            Cast.toBytes32(market),
+            data
+        );
     }
 }

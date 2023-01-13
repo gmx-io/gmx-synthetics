@@ -11,12 +11,10 @@ library Deposit {
     // @param addresses address values
     // @param numbers number values
     // @param flags boolean values
-    // @param data for any additional data
     struct Props {
         Addresses addresses;
         Numbers numbers;
         Flags flags;
-        bytes data;
     }
 
     // @param account the account depositing liquidity

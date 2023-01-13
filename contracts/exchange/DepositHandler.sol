@@ -10,11 +10,10 @@ import "../event/EventEmitter.sol";
 import "../feature/FeatureUtils.sol";
 
 import "../market/Market.sol";
-import "../market/MarketStore.sol";
 import "../market/MarketToken.sol";
 
 import "../deposit/Deposit.sol";
-import "../deposit/DepositStore.sol";
+import "../deposit/DepositVault.sol";
 import "../deposit/DepositUtils.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
@@ -26,8 +25,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
-    DepositStore public immutable depositStore;
-    MarketStore public immutable marketStore;
+    DepositVault public immutable depositVault;
     Oracle public immutable oracle;
     FeeReceiver public immutable feeReceiver;
 
@@ -35,15 +33,13 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        DepositStore _depositStore,
-        MarketStore _marketStore,
+        DepositVault _depositVault,
         Oracle _oracle,
         FeeReceiver _feeReceiver
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
-        depositStore = _depositStore;
-        marketStore = _marketStore;
+        depositVault = _depositVault;
         oracle = _oracle;
         feeReceiver = _feeReceiver;
     }
@@ -55,13 +51,12 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         address account,
         DepositUtils.CreateDepositParams calldata params
     ) external nonReentrant onlyController returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.createDepositFeatureKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.createDepositFeatureDisabledKey(address(this)));
 
         return DepositUtils.createDeposit(
             dataStore,
             eventEmitter,
-            depositStore,
-            marketStore,
+            depositVault,
             account,
             params
         );
@@ -75,7 +70,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
 
         DataStore _dataStore = dataStore;
 
-        FeatureUtils.validateFeature(_dataStore, Keys.cancelDepositFeatureKey(address(this)));
+        FeatureUtils.validateFeature(_dataStore, Keys.cancelDepositFeatureDisabledKey(address(this)));
 
         ExchangeUtils.validateRequestCancellation(
             _dataStore,
@@ -86,8 +81,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         DepositUtils.cancelDeposit(
             _dataStore,
             eventEmitter,
-            depositStore,
-            marketStore,
+            depositVault,
             key,
             deposit.account(),
             startingGas,
@@ -102,6 +96,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         bytes32 key,
         OracleUtils.SetPricesParams calldata oracleParams
     ) external
+        nonReentrant
         onlyOrderKeeper
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
@@ -122,8 +117,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
             DepositUtils.cancelDeposit(
                 dataStore,
                 eventEmitter,
-                depositStore,
-                marketStore,
+                depositVault,
                 key,
                 msg.sender,
                 startingGas,
@@ -133,8 +127,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
             DepositUtils.cancelDeposit(
                 dataStore,
                 eventEmitter,
-                depositStore,
-                marketStore,
+                depositVault,
                 key,
                 msg.sender,
                 startingGas,
@@ -152,8 +145,8 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         OracleUtils.SetPricesParams memory oracleParams,
         address keeper,
         uint256 startingGas
-    ) external nonReentrant onlySelf {
-        FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureKey(address(this)));
+    ) external onlySelf {
+        FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureDisabledKey(address(this)));
 
         uint256[] memory oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
             oracleParams.compactedOracleBlockNumbers,
@@ -163,8 +156,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         DepositUtils.ExecuteDepositParams memory params = DepositUtils.ExecuteDepositParams(
             dataStore,
             eventEmitter,
-            depositStore,
-            marketStore,
+            depositVault,
             oracle,
             feeReceiver,
             key,

@@ -12,9 +12,10 @@ import "../oracle/Oracle.sol";
 import "../pricing/PositionPricingUtils.sol";
 
 import "./Position.sol";
-import "./PositionStore.sol";
+import "./PositionStoreUtils.sol";
 import "./PositionUtils.sol";
-import "../order/OrderBaseUtils.sol";
+import "./PositionEventUtils.sol";
+import "../order/BaseOrderUtils.sol";
 
 // @title IncreasePositionUtils
 // @dev Libary for functions to help with increasing a position
@@ -130,7 +131,7 @@ library IncreasePositionUtils {
         params.position.setBorrowingFactor(cache.nextPositionBorrowingFactor);
         params.position.setIncreasedAtBlock(Chain.currentBlockNumber());
 
-        params.contracts.positionStore.set(params.positionKey, params.order.account(), params.position);
+        PositionStoreUtils.set(params.contracts.dataStore, params.positionKey, params.position);
 
         PositionUtils.updateOpenInterest(
             params,
@@ -155,8 +156,24 @@ library IncreasePositionUtils {
 
         PositionUtils.handleReferral(params, fees);
 
-        params.contracts.eventEmitter.emitPositionFeesCollected(true, fees);
-        emitPositionIncrease(params, cache);
+        PositionPricingUtils.emitPositionFeesCollected(
+            params.contracts.eventEmitter,
+            params.market.marketToken,
+            params.position.collateralToken(),
+            true,
+            fees
+        );
+
+        PositionEventUtils.emitPositionIncrease(
+            params.contracts.eventEmitter,
+            params.positionKey,
+            params.position,
+            cache.executionPrice,
+            params.order.sizeDeltaUsd(),
+            cache.sizeDeltaInTokens,
+            cache.collateralDeltaAmount,
+            params.order.orderType()
+        );
     }
 
     // @dev handle the collateral changes of the position
@@ -239,7 +256,7 @@ library IncreasePositionUtils {
             params.order.sizeDeltaUsd()
         );
 
-        uint256 executionPrice = OrderBaseUtils.getExecutionPrice(
+        uint256 executionPrice = BaseOrderUtils.getExecutionPrice(
             params.contracts.oracle.getCustomPrice(params.market.indexToken),
             params.order.sizeDeltaUsd(),
             priceImpactUsd,
@@ -257,24 +274,5 @@ library IncreasePositionUtils {
         );
 
         return (executionPrice, priceImpactAmount);
-    }
-
-    function emitPositionIncrease(
-        PositionUtils.UpdatePositionParams memory params,
-        _IncreasePositionCache memory cache
-    ) internal {
-        params.contracts.eventEmitter.emitPositionIncrease(
-            params.positionKey,
-            params.position.account(),
-            params.position.market(),
-            params.position.collateralToken(),
-            params.position.isLong(),
-            cache.executionPrice,
-            params.order.sizeDeltaUsd(),
-            cache.sizeDeltaInTokens,
-            cache.collateralDeltaAmount,
-            params.position.collateralAmount().toInt256(),
-            params.order.orderType()
-        );
     }
 }

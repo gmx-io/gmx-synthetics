@@ -26,9 +26,7 @@ contract AdlHandler is BaseOrderHandler {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        MarketStore _marketStore,
-        OrderStore _orderStore,
-        PositionStore _positionStore,
+        OrderVault _orderVault,
         Oracle _oracle,
         SwapHandler _swapHandler,
         FeeReceiver _feeReceiver,
@@ -37,9 +35,7 @@ contract AdlHandler is BaseOrderHandler {
         _roleStore,
         _dataStore,
         _eventEmitter,
-        _marketStore,
-        _orderStore,
-        _positionStore,
+        _orderVault,
         _oracle,
         _swapHandler,
         _feeReceiver,
@@ -67,7 +63,6 @@ contract AdlHandler is BaseOrderHandler {
         AdlUtils.updateAdlState(
             dataStore,
             eventEmitter,
-            marketStore,
             oracle,
             market,
             isLong,
@@ -112,7 +107,6 @@ contract AdlHandler is BaseOrderHandler {
 
         (bool shouldAllowAdl, , ) = AdlUtils.shouldAllowAdl(
             dataStore,
-            marketStore,
             oracle,
             market,
             isLong,
@@ -126,8 +120,6 @@ contract AdlHandler is BaseOrderHandler {
         cache.key = AdlUtils.createAdlOrder(
             AdlUtils.CreateAdlOrderParams(
                 dataStore,
-                orderStore,
-                positionStore,
                 account,
                 market,
                 collateralToken,
@@ -137,14 +129,14 @@ contract AdlHandler is BaseOrderHandler {
             )
         );
 
-        OrderBaseUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(cache.key, oracleParams, msg.sender, cache.startingGas);
+        BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(cache.key, oracleParams, msg.sender, cache.startingGas);
 
-        FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeAdlFeatureKey(address(this), uint256(params.order.orderType())));
+        FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeAdlFeatureDisabledKey(address(this), uint256(params.order.orderType())));
 
         OrderUtils.executeOrder(params);
 
         // validate that the ratio of pending pnl to pool value was decreased
-        cache.nextPnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, marketStore, oracle, market, isLong, true);
+        cache.nextPnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, oracle, market, isLong, true);
         if (cache.nextPnlToPoolFactor >= cache.pnlToPoolFactor) {
             revert("Invalid adl");
         }

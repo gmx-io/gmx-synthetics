@@ -2,9 +2,10 @@
 
 pragma solidity ^0.8.0;
 
-import "./OrderBaseUtils.sol";
+import "./BaseOrderUtils.sol";
 import "../swap/SwapUtils.sol";
 import "../position/DecreasePositionUtils.sol";
+import "../order/OrderStoreUtils.sol";
 
 // @title DecreaseOrderUtils
 // @dev Libary for functions to help with processing a decrease order
@@ -14,13 +15,13 @@ library DecreaseOrderUtils {
     using Array for uint256[];
 
     // @dev process a decrease order
-    // @param params OrderBaseUtils.ExecuteOrderParams
-    function processOrder(OrderBaseUtils.ExecuteOrderParams memory params) external {
+    // @param params BaseOrderUtils.ExecuteOrderParams
+    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external {
         Order.Props memory order = params.order;
         MarketUtils.validateEnabledMarket(params.contracts.dataStore, params.market);
 
         bytes32 positionKey = PositionUtils.getPositionKey(order.account(), order.market(), order.initialCollateralToken(), order.isLong());
-        Position.Props memory position = params.contracts.positionStore.get(positionKey);
+        Position.Props memory position = PositionStoreUtils.get(params.contracts.dataStore, positionKey);
         PositionUtils.validateNonEmptyPosition(position);
 
         validateOracleBlockNumbers(
@@ -46,13 +47,13 @@ library DecreaseOrderUtils {
             order.orderType() == Order.OrderType.Liquidation ||
             result.adjustedSizeDeltaUsd == order.sizeDeltaUsd()
         ) {
-            params.contracts.orderStore.remove(params.key, order.account());
+            OrderStoreUtils.remove(params.contracts.dataStore, params.key, order.account());
         } else {
             order.setSizeDeltaUsd(result.adjustedSizeDeltaUsd);
             // clear execution fee as it would be fully used even for partial fills
             order.setExecutionFee(0);
             order.touch();
-            params.contracts.orderStore.set(params.key, order);
+            OrderStoreUtils.set(params.contracts.dataStore, params.key, order);
         }
 
         // if the pnlToken and the collateralToken are different
@@ -156,7 +157,7 @@ library DecreaseOrderUtils {
             return;
         }
 
-        OrderBaseUtils.revertUnsupportedOrderType();
+        BaseOrderUtils.revertUnsupportedOrderType();
     }
 
     function _handleSwapError(

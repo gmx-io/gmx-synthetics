@@ -5,7 +5,13 @@ import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { getBalanceOf, getSupplyOf } from "../../utils/token";
 import { getPoolAmount, getSwapImpactPoolAmount, getMarketTokenPrice } from "../../utils/market";
 import { handleDeposit } from "../../utils/deposit";
-import { createWithdrawal, executeWithdrawal, handleWithdrawal } from "../../utils/withdrawal";
+import {
+  getWithdrawalCount,
+  getWithdrawalKeys,
+  createWithdrawal,
+  executeWithdrawal,
+  handleWithdrawal,
+} from "../../utils/withdrawal";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.Withdrawal", () => {
@@ -14,16 +20,16 @@ describe("Exchange.Withdrawal", () => {
 
   let fixture;
   let user0, user1, user2;
-  let withdrawalHandler, feeReceiver, dataStore, withdrawalStore, ethUsdMarket, wnt, usdc;
+  let reader, dataStore, withdrawalHandler, feeReceiver, ethUsdMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ withdrawalHandler, feeReceiver, dataStore, withdrawalStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ reader, dataStore, withdrawalHandler, feeReceiver, ethUsdMarket, wnt, usdc } = fixture.contracts);
   });
 
   it("createWithdrawal", async () => {
-    expect(await withdrawalStore.getWithdrawalCount()).eq(0);
+    expect(await getWithdrawalCount(dataStore)).eq(0);
 
     await createWithdrawal(fixture, {
       account: user0,
@@ -39,11 +45,11 @@ describe("Exchange.Withdrawal", () => {
       gasUsageLabel: "createWithdrawal",
     });
 
-    expect(await withdrawalStore.getWithdrawalCount()).eq(1);
+    expect(await getWithdrawalCount(dataStore)).eq(1);
 
     const block = await provider.getBlock();
-    const withdrawalKeys = await withdrawalStore.getWithdrawalKeys(0, 1);
-    const withdrawal = await withdrawalStore.get(withdrawalKeys[0]);
+    const withdrawalKeys = await getWithdrawalKeys(dataStore, 0, 1);
+    const withdrawal = await reader.getWithdrawal(dataStore.address, withdrawalKeys[0]);
 
     expect(withdrawal.addresses.account).eq(user0.address);
     expect(withdrawal.addresses.receiver).eq(user1.address);
@@ -87,19 +93,19 @@ describe("Exchange.Withdrawal", () => {
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(expandDecimals(10, 18));
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(50 * 1000, 6));
 
-    const withdrawalKeys = await withdrawalStore.getWithdrawalKeys(0, 1);
-    let withdrawal = await withdrawalStore.get(withdrawalKeys[0]);
+    const withdrawalKeys = await getWithdrawalKeys(dataStore, 0, 1);
+    let withdrawal = await reader.getWithdrawal(dataStore.address, withdrawalKeys[0]);
 
     expect(withdrawal.addresses.account).eq(user0.address);
-    expect(await withdrawalStore.getWithdrawalCount()).eq(1);
+    expect(await getWithdrawalCount(dataStore)).eq(1);
 
     await executeWithdrawal(fixture, {
       gasUsageLabel: "executeWithdrawal",
     });
 
-    withdrawal = await withdrawalStore.get(withdrawalKeys[0]);
+    withdrawal = await reader.getWithdrawal(dataStore.address, withdrawalKeys[0]);
     expect(withdrawal.addresses.account).eq(AddressZero);
-    expect(await withdrawalStore.getWithdrawalCount()).eq(0);
+    expect(await getWithdrawalCount(dataStore)).eq(0);
 
     expect(await getMarketTokenPrice(fixture)).eq(expandDecimals(1, 30));
 
@@ -122,8 +128,6 @@ describe("Exchange.Withdrawal", () => {
   it("price impact, fees", async () => {
     // 0.05%: 0.0005
     await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken), decimalToFloat(5, 4));
-    // 30%
-    await dataStore.setUint(keys.FEE_RECEIVER_WITHDRAWAL_FACTOR, decimalToFloat(3, 1));
 
     // set price impact to 0.1% for every $50,000 of token imbalance
     // 0.1% => 0.001
@@ -156,6 +160,9 @@ describe("Exchange.Withdrawal", () => {
 
     expect(await wnt.balanceOf(feeReceiver.address)).eq(0);
     expect(await usdc.balanceOf(feeReceiver.address)).eq(0);
+
+    // 30%
+    await dataStore.setUint(keys.FEE_RECEIVER_FACTOR, decimalToFloat(3, 1));
 
     await handleWithdrawal(fixture, {
       create: {

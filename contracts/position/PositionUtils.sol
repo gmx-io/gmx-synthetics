@@ -5,13 +5,15 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "../utils/Precision.sol";
+
 import "./Position.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
 
 import "../pricing/PositionPricingUtils.sol";
-import "../order/OrderBaseUtils.sol";
+import "../order/BaseOrderUtils.sol";
+import "../referral/ReferralEventUtils.sol";
 
 // @title PositionUtils
 // @dev Library for position functions
@@ -32,7 +34,7 @@ library PositionUtils {
     // @param collateral the collateralToken of the position
     // @param collateralDeltaAmount the amount of collateralToken deposited
     struct UpdatePositionParams {
-        OrderBaseUtils.ExecuteOrderParamsContracts contracts;
+        BaseOrderUtils.ExecuteOrderParamsContracts contracts;
         Market.Props market;
         Order.Props order;
         Position.Props position;
@@ -41,14 +43,12 @@ library PositionUtils {
 
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
-    // @param positionStore PositionStore
     // @param oracle Oracle
     // @param feeReceiver FeeReceiver
     // @param referralStorage IReferralStorage
     struct UpdatePositionParamsContracts {
         DataStore dataStore;
         EventEmitter eventEmitter;
-        PositionStore positionStore;
         Oracle oracle;
         SwapHandler swapHandler;
         FeeReceiver feeReceiver;
@@ -349,7 +349,8 @@ library PositionUtils {
         );
 
         if (fees.referral.traderDiscountAmount > 0) {
-            params.contracts.eventEmitter.emitTraderReferralDiscountApplied(
+            ReferralEventUtils.emitTraderReferralDiscountApplied(
+                params.contracts.eventEmitter,
                 params.position.market(),
                 params.position.collateralToken(),
                 params.position.account(),

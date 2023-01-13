@@ -63,15 +63,10 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     DepositHandler public immutable depositHandler;
     WithdrawalHandler public immutable withdrawalHandler;
     OrderHandler public immutable orderHandler;
-    MarketStore public immutable marketStore;
-    DepositStore public immutable depositStore;
-    WithdrawalStore public immutable withdrawalStore;
-    OrderStore public immutable orderStore;
     IReferralStorage public immutable referralStorage;
 
     // @dev Constructor that initializes the contract with the provided Router, RoleStore, DataStore,
-    // EventEmitter, DepositHandler, WithdrawalHandler, OrderHandler, DepositStore, WithdrawalStore,
-    // OrderStore, and IReferralStorage instances
+    // EventEmitter, DepositHandler, WithdrawalHandler, OrderHandler, OrderStore, and IReferralStorage instances
     constructor(
         Router _router,
         RoleStore _roleStore,
@@ -80,10 +75,6 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         DepositHandler _depositHandler,
         WithdrawalHandler _withdrawalHandler,
         OrderHandler _orderHandler,
-        MarketStore _marketStore,
-        DepositStore _depositStore,
-        WithdrawalStore _withdrawalStore,
-        OrderStore _orderStore,
         IReferralStorage _referralStorage
     ) RoleModule(_roleStore) {
         router = _router;
@@ -93,11 +84,6 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         depositHandler = _depositHandler;
         withdrawalHandler = _withdrawalHandler;
         orderHandler = _orderHandler;
-
-        marketStore = _marketStore;
-        depositStore = _depositStore;
-        withdrawalStore = _withdrawalStore;
-        orderStore = _orderStore;
 
         referralStorage = _referralStorage;
     }
@@ -134,7 +120,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     }
 
     function cancelDeposit(bytes32 key) external payable nonReentrant {
-        Deposit.Props memory deposit = depositStore.get(key);
+        Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
         require(deposit.account() == msg.sender, "ExchangeRouter: forbidden");
 
         depositHandler.cancelDeposit(key, deposit);
@@ -159,7 +145,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     }
 
     function cancelWithdrawal(bytes32 key) external payable nonReentrant {
-        Withdrawal.Props memory withdrawal = withdrawalStore.get(key);
+        Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
         require(withdrawal.account() == msg.sender, "ExchangeRouter: forbidden");
 
         withdrawalHandler.cancelWithdrawal(key, withdrawal);
@@ -172,7 +158,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
      * referral code is also set on the caller's account using the referral storage contract.
      */
     function createOrder(
-        OrderBaseUtils.CreateOrderParams calldata params,
+        BaseOrderUtils.CreateOrderParams calldata params,
         bytes32 referralCode
     ) external payable nonReentrant returns (bytes32) {
         require(params.orderType != Order.OrderType.Liquidation, "ExchangeRouter: invalid order type");
@@ -214,7 +200,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         uint256 triggerPrice,
         uint256 minOutputAmount
     ) external payable nonReentrant {
-        Order.Props memory order = orderStore.get(key);
+        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         require(order.account() == msg.sender, "ExchangeRouter: forbidden");
 
         orderHandler.updateOrder(
@@ -237,7 +223,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
      * @param key The unique ID of the order to be cancelled
      */
     function cancelOrder(bytes32 key) external payable nonReentrant {
-        Order.Props memory order = orderStore.get(key);
+        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         require(order.account() == msg.sender, "ExchangeRouter: forbidden");
 
         orderHandler.cancelOrder(key, order);
@@ -253,7 +239,11 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
      * @param tokens An array of token addresses, corresponding to the given markets
      * @param receiver The address to which the claimed fees should be sent
      */
-    function claimFundingFees(address[] memory markets, address[] memory tokens, address receiver) external payable nonReentrant {
+    function claimFundingFees(
+        address[] memory markets,
+        address[] memory tokens,
+        address receiver
+    ) external payable nonReentrant {
         if (markets.length != tokens.length) {
             revert("Invalid input");
         }
@@ -272,7 +262,12 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         }
     }
 
-    function claimCollateral(address[] memory markets, address[] memory tokens, uint256[] memory timeKeys, address receiver) external payable nonReentrant {
+    function claimCollateral(
+        address[] memory markets,
+        address[] memory tokens,
+        uint256[] memory timeKeys,
+        address receiver
+    ) external payable nonReentrant {
         if (markets.length != tokens.length || tokens.length != timeKeys.length) {
             revert("Invalid input");
         }
@@ -302,7 +297,11 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
      * @param tokens An array of token addresses, corresponding to the given markets
      * @param receiver The address to which the claimed rewards should be sent
      */
-    function claimAffiliateRewards(address[] memory markets, address[] memory tokens, address receiver) external payable nonReentrant {
+    function claimAffiliateRewards(
+        address[] memory markets,
+        address[] memory tokens,
+        address receiver
+    ) external payable nonReentrant {
         if (markets.length != tokens.length) {
             revert("Invalid input");
         }

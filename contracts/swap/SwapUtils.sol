@@ -18,6 +18,14 @@ library SwapUtils {
     using SafeCast for int256;
     using Price for Price.Props;
 
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
+
     /**
      * @param dataStore The contract that provides access to data stored on-chain.
      * @param eventEmitter The contract that emits events.
@@ -139,8 +147,7 @@ library SwapUtils {
         SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
             params.dataStore,
             _params.market.marketToken,
-            _params.amountIn,
-            Keys.FEE_RECEIVER_SWAP_FACTOR
+            _params.amountIn
         );
 
         PricingUtils.transferFees(
@@ -255,7 +262,13 @@ library SwapUtils {
             true
         );
 
-        params.eventEmitter.emitSwapFeesCollected(keccak256(abi.encode("swap")), fees);
+        SwapPricingUtils.emitSwapFeesCollected(
+            params.eventEmitter,
+            _params.market.marketToken,
+            _params.tokenIn,
+            "swap",
+            fees
+        );
 
         return (cache.tokenOut, cache.amountOut);
     }
