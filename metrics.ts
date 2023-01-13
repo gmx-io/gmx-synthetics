@@ -19,7 +19,7 @@ const metrics = new SolidityMetricsContainer("metricsContainerName", options);
 async function run() {
   const files = await getAllFiles("./contracts").toArray();
 
-  const fileFilter;
+  const fileFilter = undefined;
   // const fileFilter = {
   //   "./contracts/deposit/DepositStoreUtils.sol": true,
   //   "./contracts/deposit/DepositEventUtils.sol": true,
