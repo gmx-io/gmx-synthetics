@@ -97,6 +97,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
         OracleUtils.SetPricesParams calldata oracleParams
     )
         external
+        nonReentrant
         onlyOrderKeeper
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
@@ -145,7 +146,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
         OracleUtils.SetPricesParams memory oracleParams,
         address keeper,
         uint256 startingGas
-    ) external nonReentrant onlySelf {
+    ) external onlySelf {
         FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureDisabledKey(address(this)));
 
         uint256[] memory oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(

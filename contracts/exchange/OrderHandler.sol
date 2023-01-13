@@ -69,7 +69,7 @@ contract OrderHandler is BaseOrderHandler {
         uint256 triggerPrice,
         uint256 minOutputAmount,
         Order.Props memory order
-    ) external payable nonReentrant {
+    ) external payable nonReentrant onlyController {
         FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
 
         if (BaseOrderUtils.isMarketOrder(order.orderType())) {
@@ -141,6 +141,7 @@ contract OrderHandler is BaseOrderHandler {
     ) external
         onlyController
         withSimulatedOraclePrices(oracle, params)
+        nonReentrant
     {
         uint256 startingGas = gasleft();
 
@@ -161,6 +162,7 @@ contract OrderHandler is BaseOrderHandler {
         bytes32 key,
         OracleUtils.SetPricesParams calldata oracleParams
     ) external
+        nonReentrant
         onlyOrderKeeper
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
@@ -203,7 +205,7 @@ contract OrderHandler is BaseOrderHandler {
         OracleUtils.SetPricesParams memory oracleParams,
         address keeper,
         uint256 startingGas
-    ) external nonReentrant onlySelf {
+    ) external onlySelf {
         BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, keeper, startingGas);
         // limit swaps require frozen order keeper as well since on creation it can fail due to output amount
         // which would automatically cause the order to be frozen

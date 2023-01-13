@@ -239,7 +239,11 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
      * @param tokens An array of token addresses, corresponding to the given markets
      * @param receiver The address to which the claimed fees should be sent
      */
-    function claimFundingFees(address[] memory markets, address[] memory tokens, address receiver) external payable nonReentrant {
+    function claimFundingFees(
+        address[] memory markets,
+        address[] memory tokens,
+        address receiver
+    ) external payable nonReentrant {
         if (markets.length != tokens.length) {
             revert("Invalid input");
         }
@@ -258,7 +262,12 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         }
     }
 
-    function claimCollateral(address[] memory markets, address[] memory tokens, uint256[] memory timeKeys, address receiver) external payable nonReentrant {
+    function claimCollateral(
+        address[] memory markets,
+        address[] memory tokens,
+        uint256[] memory timeKeys,
+        address receiver
+    ) external payable nonReentrant {
         if (markets.length != tokens.length || tokens.length != timeKeys.length) {
             revert("Invalid input");
         }
@@ -288,7 +297,11 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
      * @param tokens An array of token addresses, corresponding to the given markets
      * @param receiver The address to which the claimed rewards should be sent
      */
-    function claimAffiliateRewards(address[] memory markets, address[] memory tokens, address receiver) external payable nonReentrant {
+    function claimAffiliateRewards(
+        address[] memory markets,
+        address[] memory tokens,
+        address receiver
+    ) external payable nonReentrant {
         if (markets.length != tokens.length) {
             revert("Invalid input");
         }
