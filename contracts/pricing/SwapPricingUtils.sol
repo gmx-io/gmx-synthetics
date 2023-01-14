@@ -112,7 +112,6 @@ library SwapPricingUtils {
             return PricingUtils.getPriceImpactUsdForSameSideRebalance(
                 initialDiffUsd,
                 nextDiffUsd,
-                hasPositiveImpact,
                 impactFactor,
                 impactExponentFactor
             );

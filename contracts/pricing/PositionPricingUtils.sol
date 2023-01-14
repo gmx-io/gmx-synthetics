@@ -208,7 +208,6 @@ library PositionPricingUtils {
             return PricingUtils.getPriceImpactUsdForSameSideRebalance(
                 initialDiffUsd,
                 nextDiffUsd,
-                hasPositiveImpact,
                 impactFactor,
                 impactExponentFactor
             );
