@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../utils/GlobalReentrancyGuard.sol";
+import "../utils/RevertUtils.sol";
 
 import "./ExchangeUtils.sol";
 import "../role/RoleModule.sol";
@@ -83,7 +84,8 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
             key,
             withdrawal.account(),
             startingGas,
-            "USER_INITIATED_CANCEL"
+            Keys.USER_INITIATED_CANCEL,
+            ""
         );
     }
 
@@ -120,9 +122,12 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
                 key,
                 msg.sender,
                 startingGas,
-                bytes(reason)
+                reason,
+                ""
             );
-        } catch (bytes memory reason) {
+        } catch (bytes memory reasonBytes) {
+            string memory reason = RevertUtils.getRevertMessage(reasonBytes);
+
             WithdrawalUtils.cancelWithdrawal(
                 dataStore,
                 eventEmitter,
@@ -130,7 +135,8 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
                 key,
                 msg.sender,
                 startingGas,
-                reason
+                reason,
+                reasonBytes
             );
         }
     }

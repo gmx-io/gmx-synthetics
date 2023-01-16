@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./BaseOrderHandler.sol";
+import "../utils/RevertUtils.sol";
 
 // @title OrderHandler
 // @dev Contract to handle creation, execution and cancellation of orders
@@ -131,7 +132,8 @@ contract OrderHandler is BaseOrderHandler {
             key,
             order.account(),
             startingGas,
-            "USER_INITIATED_CANCEL"
+            Keys.USER_INITIATED_CANCEL,
+            ""
         );
     }
 
@@ -187,10 +189,11 @@ contract OrderHandler is BaseOrderHandler {
                 revert(reason);
             }
 
-            _handleOrderError(key, startingGas, bytes(reason), reasonKey);
-        } catch (bytes memory reason) {
+            _handleOrderError(key, startingGas, reason, "", reasonKey);
+        } catch (bytes memory reasonBytes) {
+            string memory reason = RevertUtils.getRevertMessage(reasonBytes);
             bytes32 reasonKey = keccak256(abi.encode(reason));
-            _handleOrderError(key, startingGas, reason, reasonKey);
+            _handleOrderError(key, startingGas, reason, reasonBytes, reasonKey);
         }
     }
 
@@ -227,7 +230,8 @@ contract OrderHandler is BaseOrderHandler {
     function _handleOrderError(
         bytes32 key,
         uint256 startingGas,
-        bytes memory reason,
+        string memory reason,
+        bytes memory reasonBytes,
         bytes32 reasonKey
     ) internal {
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
@@ -241,7 +245,8 @@ contract OrderHandler is BaseOrderHandler {
                 key,
                 msg.sender,
                 startingGas,
-                reason
+                reason,
+                reasonBytes
             );
         } else {
             if (
@@ -249,7 +254,7 @@ contract OrderHandler is BaseOrderHandler {
                 reasonKey == Keys.EMPTY_POSITION_ERROR_KEY ||
                 reasonKey == Keys.FEATURE_DISABLED_ERROR_KEY
             ) {
-                revert(string(reason));
+                revert(reason);
             }
 
             // freeze unfulfillable orders to prevent the order system from being gamed
@@ -270,7 +275,8 @@ contract OrderHandler is BaseOrderHandler {
                 key,
                 msg.sender,
                 startingGas,
-                reason
+                reason,
+                reasonBytes
             );
         }
     }

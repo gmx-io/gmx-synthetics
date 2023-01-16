@@ -6,6 +6,7 @@ import "./BaseOrderUtils.sol";
 import "../swap/SwapUtils.sol";
 import "../position/DecreasePositionUtils.sol";
 import "../order/OrderStoreUtils.sol";
+import "../utils/RevertUtils.sol";
 
 // @title DecreaseOrderUtils
 // @dev Libary for functions to help with processing a decrease order
@@ -92,14 +93,16 @@ library DecreaseOrderUtils {
                 _handleSwapError(
                     order,
                     result,
-                    reason
+                    reason,
+                    ""
                 );
-            } catch (bytes memory _reason) {
-                string memory reason = string(abi.encode(_reason));
+            } catch (bytes memory reasonBytes) {
+                string memory reason = RevertUtils.getRevertMessage(reasonBytes);
                 _handleSwapError(
                     order,
                     result,
-                    reason
+                    reason,
+                    reasonBytes
                 );
             }
         }
@@ -151,9 +154,10 @@ library DecreaseOrderUtils {
     function _handleSwapError(
         Order.Props memory order,
         DecreasePositionUtils.DecreasePositionResult memory result,
-        string memory reason
+        string memory reason,
+        bytes memory reasonBytes
     ) internal {
-        emit SwapUtils.SwapReverted(reason);
+        emit SwapUtils.SwapReverted(reason, reasonBytes);
 
         MarketToken(payable(order.market())).transferOut(
             result.outputToken,

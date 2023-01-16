@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../adl/AdlUtils.sol";
+import "../exchange/ExchangeUtils.sol";
 
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
@@ -20,6 +21,7 @@ import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
+import "../utils/RevertUtils.sol";
 
 // @title DepositUtils
 // @dev Library for deposit functions, to help with the depositing of liquidity
@@ -131,7 +133,18 @@ library DepositUtils {
             shortTokenAmount -= params.executionFee;
         } else {
             uint256 wntAmount = depositVault.recordTransferIn(wnt);
-            require(wntAmount == params.executionFee, "DepositUtils: invalid wntAmount");
+            require(wntAmount >= params.executionFee, "DepositUtils: invalid wntAmount");
+
+            ExchangeUtils.handleExcessExecutionFee(
+                dataStore,
+                depositVault,
+                wntAmount,
+                params.executionFee
+            );
+        }
+
+        if (longTokenAmount == 0 && shortTokenAmount == 0) {
+            revert("DepositUtils: empty deposit");
         }
 
         Deposit.Props memory deposit = Deposit.Props(
@@ -289,7 +302,8 @@ library DepositUtils {
         bytes32 key,
         address keeper,
         uint256 startingGas,
-        bytes memory reason
+        string memory reason,
+        bytes memory reasonBytes
     ) external {
         Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
         require(deposit.account() != address(0), "DepositUtils: empty deposit");
@@ -316,7 +330,7 @@ library DepositUtils {
 
         DepositStoreUtils.remove(dataStore, key, deposit.account());
 
-        DepositEventUtils.emitDepositCancelled(eventEmitter, key, reason);
+        DepositEventUtils.emitDepositCancelled(eventEmitter, key, reason, reasonBytes);
 
         CallbackUtils.afterDepositCancellation(key, deposit);
 

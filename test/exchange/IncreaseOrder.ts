@@ -130,7 +130,7 @@ describe("Exchange.IncreaseOrder", () => {
       initialCollateralDeltaAmount: expandDecimals(10, 18),
       swapPath: [],
       sizeDeltaUsd: decimalToFloat(200 * 1000),
-      acceptablePrice: expandDecimals(5001, 12),
+      acceptablePrice: expandDecimals(5050, 12),
       executionFee: expandDecimals(1, 15),
       minOutputAmount: expandDecimals(50000, 6),
       orderType: OrderType.MarketIncrease,

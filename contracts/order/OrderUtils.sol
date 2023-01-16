@@ -6,6 +6,8 @@ import "../data/DataStore.sol";
 import "../data/Keys.sol";
 import "../fee/FeeReceiver.sol";
 
+import "../exchange/ExchangeUtils.sol";
+
 import "./Order.sol";
 import "./OrderVault.sol";
 import "./OrderStoreUtils.sol";
@@ -77,7 +79,14 @@ library OrderUtils {
 
         if (shouldRecordSeparateExecutionFeeTransfer) {
             uint256 wntAmount = orderVault.recordTransferIn(wnt);
-            require(wntAmount == params.numbers.executionFee, "OrderUtils: invalid wntAmount");
+            require(wntAmount >= params.numbers.executionFee, "OrderUtils: invalid wntAmount");
+
+            ExchangeUtils.handleExcessExecutionFee(
+                dataStore,
+                orderVault,
+                wntAmount,
+                params.numbers.executionFee
+            );
         }
 
         if (BaseOrderUtils.isDecreaseOrder(params.orderType) && params.addresses.swapPath.length > 0) {
@@ -188,7 +197,8 @@ library OrderUtils {
         bytes32 key,
         address keeper,
         uint256 startingGas,
-        bytes memory reason
+        string memory reason,
+        bytes memory reasonBytes
     ) external {
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         BaseOrderUtils.validateNonEmptyOrder(order);
@@ -206,7 +216,7 @@ library OrderUtils {
 
         OrderStoreUtils.remove(dataStore, key, order.account());
 
-        OrderEventUtils.emitOrderCancelled(eventEmitter, key, reason);
+        OrderEventUtils.emitOrderCancelled(eventEmitter, key, reason, reasonBytes);
 
         CallbackUtils.afterOrderCancellation(key, order);
 
@@ -235,7 +245,8 @@ library OrderUtils {
         bytes32 key,
         address keeper,
         uint256 startingGas,
-        bytes memory reason
+        string memory reason,
+        bytes memory reasonBytes
     ) external {
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         BaseOrderUtils.validateNonEmptyOrder(order);
@@ -259,7 +270,7 @@ library OrderUtils {
             order.account()
         );
 
-        OrderEventUtils.emitOrderFrozen(eventEmitter, key, reason);
+        OrderEventUtils.emitOrderFrozen(eventEmitter, key, reason, reasonBytes);
 
         CallbackUtils.afterOrderFrozen(key, order);
     }

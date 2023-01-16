@@ -83,7 +83,7 @@ library SwapUtils {
         uint256 poolAmountOut;
     }
 
-    event SwapReverted(string reason);
+    event SwapReverted(string reason, bytes reasonBytes);
 
     error InvalidTokenIn(address tokenIn, address market);
     error InsufficientSwapOutputAmount(uint256 outputAmount, uint256 minOutputAmount);

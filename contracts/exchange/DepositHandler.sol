@@ -83,7 +83,8 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
             key,
             deposit.account(),
             startingGas,
-            "USER_INITIATED_CANCEL"
+            Keys.USER_INITIATED_CANCEL,
+            ""
         );
     }
 
@@ -119,9 +120,12 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
                 key,
                 msg.sender,
                 startingGas,
-                bytes(reason)
+                reason,
+                ""
             );
-        } catch (bytes memory reason) {
+        } catch (bytes memory reasonBytes) {
+            string memory reason = RevertUtils.getRevertMessage(reasonBytes);
+
             DepositUtils.cancelDeposit(
                 dataStore,
                 eventEmitter,
@@ -129,7 +133,8 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
                 key,
                 msg.sender,
                 startingGas,
-                reason
+                reason,
+                reasonBytes
             );
         }
     }

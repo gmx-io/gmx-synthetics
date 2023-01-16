@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../adl/AdlUtils.sol";
+import "../exchange/ExchangeUtils.sol";
 
 import "../data/DataStore.sol";
 
@@ -19,6 +20,7 @@ import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
+import "../utils/RevertUtils.sol";
 
 /**
  * @title WithdrawalUtils
@@ -100,7 +102,14 @@ library WithdrawalUtils {
     ) external returns (bytes32) {
         address wnt = TokenUtils.wnt(dataStore);
         uint256 wntAmount = withdrawalVault.recordTransferIn(wnt);
-        require(wntAmount == params.executionFee, "WithdrawalUtils: invalid wntAmount");
+        require(wntAmount >= params.executionFee, "WithdrawalUtils: invalid wntAmount");
+
+        ExchangeUtils.handleExcessExecutionFee(
+            dataStore,
+            withdrawalVault,
+            wntAmount,
+            params.executionFee
+        );
 
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, params.market);
 
@@ -187,14 +196,15 @@ library WithdrawalUtils {
         bytes32 key,
         address keeper,
         uint256 startingGas,
-        bytes memory reason
+        string memory reason,
+        bytes memory reasonBytes
     ) external {
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
         require(withdrawal.account() != address(0), "WithdrawalUtils: empty withdrawal");
 
         WithdrawalStoreUtils.remove(dataStore, key, withdrawal.account());
 
-        WithdrawalEventUtils.emitWithdrawalCancelled(eventEmitter, key, reason);
+        WithdrawalEventUtils.emitWithdrawalCancelled(eventEmitter, key, reason, reasonBytes);
 
         CallbackUtils.afterWithdrawalCancellation(key, withdrawal);
 

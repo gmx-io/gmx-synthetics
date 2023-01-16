@@ -10,6 +10,8 @@ library Keys {
     // @dev key for the nonce value used in NonceUtils
     bytes32 public constant NONCE = keccak256(abi.encode("NONCE"));
 
+    bytes32 public constant HOLDING_ADDRESS = keccak256(abi.encode("HOLDING_ADDRESS"));
+
     bytes32 public constant REENTRANCY_GUARD_STATUS = keccak256(abi.encode("REENTRANCY_GUARD_STATUS"));
 
     bytes32 public constant MARKET_LIST = keccak256(abi.encode("MARKET_LIST"));
@@ -180,6 +182,8 @@ library Keys {
 
     string public constant FEATURE_DISABLED_ERROR = "FEATURE_DISABLED_ERROR";
     bytes32 public constant FEATURE_DISABLED_ERROR_KEY = keccak256(abi.encode(FEATURE_DISABLED_ERROR));
+
+    string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
 
     function accountDepositListKey(address account) internal pure returns (bytes32) {
         return keccak256(abi.encode(ACCOUNT_DEPOSIT_LIST, account));

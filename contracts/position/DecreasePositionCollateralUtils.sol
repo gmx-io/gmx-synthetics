@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../utils/Precision.sol";
+import "../utils/RevertUtils.sol";
 
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
@@ -375,10 +376,10 @@ library DecreasePositionCollateralUtils {
                 values.output.outputAmount = values.output.secondaryOutputAmount + swapOutputAmount;
                 values.output.secondaryOutputAmount = 0;
             } catch Error(string memory reason) {
-                emit SwapUtils.SwapReverted(reason);
-            } catch (bytes memory _reason) {
-                string memory reason = string(abi.encode(_reason));
-                emit SwapUtils.SwapReverted(reason);
+                emit SwapUtils.SwapReverted(reason, "");
+            } catch (bytes memory reasonBytes) {
+                string memory reason = RevertUtils.getRevertMessage(reasonBytes);
+                emit SwapUtils.SwapReverted(reason, reasonBytes);
             }
         }
 
@@ -411,10 +412,10 @@ library DecreasePositionCollateralUtils {
             ) returns (address /* tokenOut */, uint256 swapOutputAmount) {
                 return (true, swapOutputAmount);
             } catch Error(string memory reason) {
-                emit SwapUtils.SwapReverted(reason);
-            } catch (bytes memory _reason) {
-                string memory reason = string(abi.encode(_reason));
-                emit SwapUtils.SwapReverted(reason);
+                emit SwapUtils.SwapReverted(reason, "");
+            } catch (bytes memory reasonBytes) {
+                string memory reason = RevertUtils.getRevertMessage(reasonBytes);
+                emit SwapUtils.SwapReverted(reason, reasonBytes);
             }
         }
 

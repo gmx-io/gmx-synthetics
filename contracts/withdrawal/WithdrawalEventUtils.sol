@@ -71,15 +71,19 @@ library WithdrawalEventUtils {
     function emitWithdrawalCancelled(
         EventEmitter eventEmitter,
         bytes32 key,
-        bytes memory reason
+        string memory reason,
+        bytes memory reasonBytes
     ) external {
         EventUtils.EventLogData memory data;
 
         data.bytes32Items.initItems(1);
         data.bytes32Items.setItem(0, "key", key);
 
+        data.stringItems.initItems(1);
+        data.stringItems.setItem(0, "reason", reason);
+
         data.bytesItems.initItems(1);
-        data.bytesItems.setItem(0, "reason", reason);
+        data.bytesItems.setItem(0, "reasonBytes", reasonBytes);
 
         eventEmitter.emitEventLog(
             "WithdrawalCancelled",

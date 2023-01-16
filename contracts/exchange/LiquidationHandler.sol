@@ -32,7 +32,7 @@ contract LiquidationHandler is BaseOrderHandler {
     ) {}
 
     // @dev executes a position liquidation
-    // @param account the account of the position to liquidation
+    // @param account the account of the position to liquidate
     // @param market the position's market
     // @param collateralToken the position's collateralToken
     // @param isLong whether the position is long or short
