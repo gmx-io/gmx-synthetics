@@ -23,7 +23,7 @@ library FeatureUtils {
     // @param key the feature key
     function validateFeature(DataStore dataStore, bytes32 key) internal view {
         if (isFeatureDisabled(dataStore, key)) {
-            revert DisabledFeature(key);
+            revert(Keys.FEATURE_DISABLED_ERROR);
         }
     }
 }

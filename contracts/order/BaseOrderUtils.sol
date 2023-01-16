@@ -358,7 +358,7 @@ library BaseOrderUtils {
         price = customIndexTokenPrice.pickPrice(!shouldUseMaxPrice);
 
         // adjust price by price impact
-        if (sizeDeltaUsd == 0) {
+        if (sizeDeltaUsd > 0) {
             price = price * Calc.sumReturnUint256(sizeDeltaUsd, priceImpactUsdForPriceAdjustment) / sizeDeltaUsd;
         }
 

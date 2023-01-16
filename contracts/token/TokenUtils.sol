@@ -125,7 +125,7 @@ library TokenUtils {
 
         uint256 gasLimit = dataStore.getUint(Keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT);
 
-        (bool success, bytes memory data) = payable(receiver).call{ value: amount, gas: gasLimit }("");
+        (bool success, /* bytes memory data */) = payable(receiver).call{ value: amount, gas: gasLimit }("");
 
         if (success) { return; }
 

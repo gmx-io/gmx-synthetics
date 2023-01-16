@@ -240,6 +240,10 @@ library OrderUtils {
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         BaseOrderUtils.validateNonEmptyOrder(order);
 
+        if (order.isFrozen()) {
+            revert("Order already frozen");
+        }
+
         uint256 executionFee = order.executionFee();
 
         order.setExecutionFee(0);

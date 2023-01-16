@@ -178,6 +178,9 @@ library Keys {
     string public constant UNACCEPTABLE_PRICE_ERROR = "UNACCEPTABLE_PRICE_ERROR";
     bytes32 public constant UNACCEPTABLE_PRICE_ERROR_KEY = keccak256(abi.encode(UNACCEPTABLE_PRICE_ERROR));
 
+    string public constant FEATURE_DISABLED_ERROR = "FEATURE_DISABLED_ERROR";
+    bytes32 public constant FEATURE_DISABLED_ERROR_KEY = keccak256(abi.encode(FEATURE_DISABLED_ERROR));
+
     function accountDepositListKey(address account) internal pure returns (bytes32) {
         return keccak256(abi.encode(ACCOUNT_DEPOSIT_LIST, account));
     }
