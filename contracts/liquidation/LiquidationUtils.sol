@@ -50,11 +50,9 @@ library LiquidationUtils {
             Chain.currentBlockNumber() // updatedAtBlock
         );
 
-        // set shouldUnwrapNativeToken to false to ensure that transfers
-        // to the position.account cannot be blocked
         Order.Flags memory flags = Order.Flags(
             position.isLong(), // isLong
-            false, // shouldUnwrapNativeToken
+            true, // shouldUnwrapNativeToken
             false // isFrozen
         );
 

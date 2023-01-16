@@ -75,35 +75,6 @@ library TokenUtils {
     }
 
     /**
-     * @dev Transfers the specified amount of native token to the specified receiver address.
-     * limit the amount of gas forwarded so that a user cannot intentionally
-     * construct a token call that would consume all gas and prevent necessary
-     * actions like request cancellation from being executed
-     *
-     * @param dataStore the data store to use for storing and retrieving data
-     * @param receiver the address of the recipient of the native token transfer
-     * @param amount the amount of native token to transfer
-     */
-    function transferNativeToken(
-        DataStore dataStore,
-        address receiver,
-        uint256 amount
-    ) internal {
-        if (amount == 0) { return; }
-
-        uint256 gasLimit = dataStore.getUint(Keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT);
-
-        (bool success, bytes memory data) = payable(receiver).call{ value: amount, gas: gasLimit }("");
-
-        if (success) { return; }
-
-        string memory reason = string(abi.encode(data));
-        emit NativeTokenTransferReverted(reason);
-
-        revert NativeTokenTransferError(receiver, amount);
-    }
-
-    /**
      * Deposits the specified amount of native token and sends the specified
      * amount of wrapped native token to the specified receiver address.
      *
@@ -133,6 +104,10 @@ library TokenUtils {
      * @dev Withdraws the specified amount of wrapped native token and sends the
      * corresponding amount of native token to the specified receiver address.
      *
+     * limit the amount of gas forwarded so that a user cannot intentionally
+     * construct a token call that would consume all gas and prevent necessary
+     * actions like request cancellation from being executed
+     *
      * @param dataStore the data store to use for storing and retrieving data
      * @param _wnt the address of the WNT contract to withdraw the wrapped native token from
      * @param receiver the address of the recipient of the native token transfer
@@ -148,7 +123,18 @@ library TokenUtils {
 
         IWNT(_wnt).withdraw(amount);
 
-        transferNativeToken(dataStore, receiver, amount);
+        uint256 gasLimit = dataStore.getUint(Keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT);
+
+        (bool success, bytes memory data) = payable(receiver).call{ value: amount, gas: gasLimit }("");
+
+        if (success) { return; }
+
+        // if the transfer failed, re-wrap the token and it to the receiver
+        depositAndSendWrappedNativeToken(
+            dataStore,
+            receiver,
+            amount
+        );
     }
 
     /**
