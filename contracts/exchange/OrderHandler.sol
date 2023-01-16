@@ -37,7 +37,7 @@ contract OrderHandler is BaseOrderHandler {
     function createOrder(
         address account,
         BaseOrderUtils.CreateOrderParams calldata params
-    ) external nonReentrant onlyController returns (bytes32) {
+    ) external globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureDisabledKey(address(this), uint256(params.orderType)));
 
         return OrderUtils.createOrder(
@@ -69,7 +69,7 @@ contract OrderHandler is BaseOrderHandler {
         uint256 triggerPrice,
         uint256 minOutputAmount,
         Order.Props memory order
-    ) external payable nonReentrant onlyController {
+    ) external payable globalNonReentrant onlyController {
         FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
 
         if (BaseOrderUtils.isMarketOrder(order.orderType())) {
@@ -109,7 +109,7 @@ contract OrderHandler is BaseOrderHandler {
     function cancelOrder(
         bytes32 key,
         Order.Props memory order
-    ) external nonReentrant onlyController {
+    ) external globalNonReentrant onlyController {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
@@ -141,7 +141,7 @@ contract OrderHandler is BaseOrderHandler {
     ) external
         onlyController
         withSimulatedOraclePrices(oracle, params)
-        nonReentrant
+        globalNonReentrant
     {
         uint256 startingGas = gasleft();
 
@@ -162,7 +162,7 @@ contract OrderHandler is BaseOrderHandler {
         bytes32 key,
         OracleUtils.SetPricesParams calldata oracleParams
     ) external
-        nonReentrant
+        globalNonReentrant
         onlyOrderKeeper
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
@@ -182,8 +182,7 @@ contract OrderHandler is BaseOrderHandler {
             // because of that, errors from external calls should be separately caught
             if (
                 reasonKey == Keys.EMPTY_PRICE_ERROR_KEY ||
-                reasonKey == Keys.FROZEN_ORDER_ERROR_KEY ||
-                reasonKey == Keys.EMPTY_POSITION_ERROR_KEY
+                reasonKey == Keys.FROZEN_ORDER_ERROR_KEY
             ) {
                 revert(reason);
             }
@@ -245,7 +244,10 @@ contract OrderHandler is BaseOrderHandler {
                 reason
             );
         } else {
-            if (reasonKey == Keys.UNACCEPTABLE_PRICE_ERROR_KEY) {
+            if (
+                reasonKey == Keys.UNACCEPTABLE_PRICE_ERROR_KEY ||
+                reasonKey == Keys.EMPTY_POSITION_ERROR_KEY
+            ) {
                 revert(string(reason));
             }
 

@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "../utils/GlobalReentrancyGuard.sol";
 
 import "./ExchangeUtils.sol";
 import "../role/RoleModule.sol";
@@ -20,10 +20,9 @@ import "../oracle/OracleModule.sol";
 
 // @title WithdrawalHandler
 // @dev Contract to handle creation, execution and cancellation of withdrawals
-contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
+contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
     using Withdrawal for Withdrawal.Props;
 
-    DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     WithdrawalVault public immutable withdrawalVault;
     Oracle public immutable oracle;
@@ -36,8 +35,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
         WithdrawalVault _withdrawalVault,
         Oracle _oracle,
         FeeReceiver _feeReceiver
-    ) RoleModule(_roleStore) {
-        dataStore = _dataStore;
+    ) RoleModule(_roleStore) GlobalReentrancyGuard(_dataStore) {
         eventEmitter = _eventEmitter;
         withdrawalVault = _withdrawalVault;
         oracle = _oracle;
@@ -50,7 +48,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
     function createWithdrawal(
         address account,
         WithdrawalUtils.CreateWithdrawalParams calldata params
-    ) external nonReentrant onlyController returns (bytes32) {
+    ) external globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createWithdrawalFeatureDisabledKey(address(this)));
 
         return WithdrawalUtils.createWithdrawal(
@@ -65,7 +63,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
     function cancelWithdrawal(
         bytes32 key,
         Withdrawal.Props memory withdrawal
-    ) external nonReentrant onlyController {
+    ) external globalNonReentrant onlyController {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
@@ -97,7 +95,7 @@ contract WithdrawalHandler is ReentrancyGuard, RoleModule, OracleModule {
         OracleUtils.SetPricesParams calldata oracleParams
     )
         external
-        nonReentrant
+        globalNonReentrant
         onlyOrderKeeper
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {

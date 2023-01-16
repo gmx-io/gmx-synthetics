@@ -132,8 +132,6 @@ library OrderUtils {
             params.order.isLong()
         );
 
-        CallbackUtils.beforeOrderExecution(params.key, params.order);
-
         processOrder(params);
 
         OrderEventUtils.emitOrderExecuted(params.contracts.eventEmitter, params.key);

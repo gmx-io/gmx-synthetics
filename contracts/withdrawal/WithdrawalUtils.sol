@@ -155,8 +155,6 @@ library WithdrawalUtils {
             revert InsufficientMarketTokens(marketTokensBalance, withdrawal.marketTokenAmount());
         }
 
-        CallbackUtils.beforeWithdrawalExecution(params.key, withdrawal);
-
         _executeWithdrawal(params, withdrawal);
 
         WithdrawalEventUtils.emitWithdrawalExecuted(params.eventEmitter, params.key);

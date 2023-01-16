@@ -51,7 +51,7 @@ contract AdlHandler is BaseOrderHandler {
         bool isLong,
         OracleUtils.SetPricesParams calldata oracleParams
     ) external
-        nonReentrant
+        globalNonReentrant
         onlyAdlKeeper
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
@@ -85,7 +85,7 @@ contract AdlHandler is BaseOrderHandler {
         uint256 sizeDeltaUsd,
         OracleUtils.SetPricesParams calldata oracleParams
     ) external
-        nonReentrant
+        globalNonReentrant
         onlyAdlKeeper
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {

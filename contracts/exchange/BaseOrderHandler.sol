@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "../utils/GlobalReentrancyGuard.sol";
 
 import "./ExchangeUtils.sol";
 import "../role/RoleModule.sol";
@@ -27,12 +27,11 @@ import "../referral/IReferralStorage.sol";
 
 // @title BaseOrderHandler
 // @dev Base contract for shared order handler functions
-contract BaseOrderHandler is ReentrancyGuard, RoleModule, OracleModule {
+contract BaseOrderHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
     using SafeCast for uint256;
     using Order for Order.Props;
     using Array for uint256[];
 
-    DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     OrderVault public immutable orderVault;
     SwapHandler public immutable swapHandler;
@@ -49,8 +48,7 @@ contract BaseOrderHandler is ReentrancyGuard, RoleModule, OracleModule {
         SwapHandler _swapHandler,
         FeeReceiver _feeReceiver,
         IReferralStorage _referralStorage
-    ) RoleModule(_roleStore) {
-        dataStore = _dataStore;
+    ) RoleModule(_roleStore) GlobalReentrancyGuard(_dataStore) {
         eventEmitter = _eventEmitter;
         orderVault = _orderVault;
         oracle = _oracle;

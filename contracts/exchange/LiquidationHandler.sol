@@ -44,7 +44,7 @@ contract LiquidationHandler is BaseOrderHandler {
         bool isLong,
         OracleUtils.SetPricesParams calldata oracleParams
     ) external
-        nonReentrant
+        globalNonReentrant
         onlyLiquidationKeeper
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {

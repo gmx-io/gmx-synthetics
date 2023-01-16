@@ -178,8 +178,6 @@ library DepositUtils {
             OracleUtils.revertOracleBlockNumbersAreNotEqual(params.oracleBlockNumbers, deposit.updatedAtBlock());
         }
 
-        CallbackUtils.beforeDepositExecution(params.key, deposit);
-
         Market.Props memory market = MarketUtils.getEnabledMarket(params.dataStore, deposit.market());
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(params.oracle, market);
 

@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "../utils/GlobalReentrancyGuard.sol";
 
 import "./ExchangeUtils.sol";
 import "../role/RoleModule.sol";
@@ -20,10 +20,9 @@ import "../oracle/OracleModule.sol";
 
 // @title DepositHandler
 // @dev Contract to handle creation, execution and cancellation of deposits
-contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
+contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
     using Deposit for Deposit.Props;
 
-    DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     DepositVault public immutable depositVault;
     Oracle public immutable oracle;
@@ -36,8 +35,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         DepositVault _depositVault,
         Oracle _oracle,
         FeeReceiver _feeReceiver
-    ) RoleModule(_roleStore) {
-        dataStore = _dataStore;
+    ) RoleModule(_roleStore) GlobalReentrancyGuard(_dataStore) {
         eventEmitter = _eventEmitter;
         depositVault = _depositVault;
         oracle = _oracle;
@@ -50,7 +48,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
     function createDeposit(
         address account,
         DepositUtils.CreateDepositParams calldata params
-    ) external nonReentrant onlyController returns (bytes32) {
+    ) external globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createDepositFeatureDisabledKey(address(this)));
 
         return DepositUtils.createDeposit(
@@ -65,7 +63,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
     function cancelDeposit(
         bytes32 key,
         Deposit.Props memory deposit
-    ) external nonReentrant onlyController {
+    ) external globalNonReentrant onlyController {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
@@ -96,7 +94,7 @@ contract DepositHandler is ReentrancyGuard, RoleModule, OracleModule {
         bytes32 key,
         OracleUtils.SetPricesParams calldata oracleParams
     ) external
-        nonReentrant
+        globalNonReentrant
         onlyOrderKeeper
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
