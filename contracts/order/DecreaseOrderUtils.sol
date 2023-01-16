@@ -42,19 +42,7 @@ library DecreaseOrderUtils {
             )
         );
 
-        if (
-            order.orderType() == Order.OrderType.MarketDecrease ||
-            order.orderType() == Order.OrderType.Liquidation ||
-            result.adjustedSizeDeltaUsd == order.sizeDeltaUsd()
-        ) {
-            OrderStoreUtils.remove(params.contracts.dataStore, params.key, order.account());
-        } else {
-            order.setSizeDeltaUsd(result.adjustedSizeDeltaUsd);
-            // clear execution fee as it would be fully used even for partial fills
-            order.setExecutionFee(0);
-            order.touch();
-            OrderStoreUtils.set(params.contracts.dataStore, params.key, order);
-        }
+        OrderStoreUtils.remove(params.contracts.dataStore, params.key, order.account());
 
         // if the pnlToken and the collateralToken are different
         // and if a swap fails or no swap was requested
