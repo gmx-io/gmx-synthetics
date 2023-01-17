@@ -250,7 +250,6 @@ contract OrderHandler is BaseOrderHandler {
             );
         } else {
             if (
-                reasonKey == Keys.UNACCEPTABLE_PRICE_ERROR_KEY ||
                 reasonKey == Keys.EMPTY_POSITION_ERROR_KEY ||
                 reasonKey == Keys.FEATURE_DISABLED_ERROR_KEY
             ) {

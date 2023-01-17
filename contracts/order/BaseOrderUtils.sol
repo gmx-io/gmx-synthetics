@@ -370,7 +370,27 @@ library BaseOrderUtils {
             return acceptablePrice;
         }
 
-        revert(Keys.UNACCEPTABLE_PRICE_ERROR);
+        // the setExactOrderPrice function should have validated if the price fulfills
+        // the order's trigger price
+        //
+        // for decrease orders, the price impact should already be capped, so if the user
+        // had set an acceptable price within the range of the capped price impact, then
+        // the order should be fulfillable at the acceptable price
+        //
+        // for increase orders, the negative price impact is not capped
+        //
+        // for both increase and decrease orders, if it is due to price impact that the
+        // order cannot be fulfilled then the order should be frozen
+        //
+        // this is to prevent gaming by manipulation of the price impact value
+        //
+        // usually it should be costly to game the price impact value
+        // however, for certain cases, e.g. a user already has a large position opened
+        // the user may create limit orders that would only trigger after they close
+        // their position, this gives the user the option to cancel the pending order if
+        // prices do not move in their favour or to close their position and let the order
+        // execute if prices move in their favour
+        revert("Order could not be fulfilled due to price impact");
     }
 
     // @dev validate that an order exists
