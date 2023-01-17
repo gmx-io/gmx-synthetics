@@ -63,6 +63,54 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         );
     }
 
+    function setAddress(bytes32 key, bytes memory data, address value) external onlyConfigKeeper nonReentrant {
+        if (!allowedKeys[key]) { revert("Invalid key"); }
+
+        bytes32 fullKey = keccak256(abi.encode(key, data));
+
+        dataStore.setAddress(fullKey, value);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", key);
+
+        eventData.bytesItems.initItems(1);
+        eventData.bytesItems.setItem(0, "data", data);
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "value", value);
+
+        eventEmitter.emitEventLog1(
+            "SetAddress",
+            key,
+            eventData
+        );
+    }
+
+    function setBytes32(bytes32 key, bytes memory data, bytes32 value) external onlyConfigKeeper nonReentrant {
+        if (!allowedKeys[key]) { revert("Invalid key"); }
+
+        bytes32 fullKey = keccak256(abi.encode(key, data));
+
+        dataStore.setBytes32(fullKey, value);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.bytes32Items.initItems(2);
+        eventData.bytes32Items.setItem(0, "key", key);
+        eventData.bytes32Items.setItem(1, "value", value);
+
+        eventData.bytesItems.initItems(1);
+        eventData.bytesItems.setItem(0, "data", data);
+
+        eventEmitter.emitEventLog1(
+            "SetBytes32",
+            key,
+            eventData
+        );
+    }
+
     function setUint(bytes32 key, bytes memory data, uint256 value) external onlyConfigKeeper nonReentrant {
         if (!allowedKeys[key]) { revert("Invalid key"); }
 
@@ -129,6 +177,9 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedKeys[Keys.REQUEST_EXPIRATION_AGE] = true;
         allowedKeys[Keys.MAX_LEVERAGE] = true;
         allowedKeys[Keys.MIN_COLLATERAL_USD] = true;
+
+        allowedKeys[Keys.TOKEN_ID] = true;
+        allowedKeys[Keys.THRESHOLD_POSITION_IMPACT_FACTOR_FOR_VIRTUAL_INVENTORY] = true;
 
         allowedKeys[Keys.POSITION_IMPACT_FACTOR] = true;
         allowedKeys[Keys.POSITION_IMPACT_EXPONENT_FACTOR] = true;
