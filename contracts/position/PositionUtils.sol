@@ -214,6 +214,27 @@ library PositionUtils {
             )
         );
 
+        // even if there is a large positive price impact, positions that would be liquidated
+        // if the positive price impact is reduced should not be allowed to be created
+        // to prevent these positions, check if the position can be liquidated if there is zero positive price impact
+        if (cache.priceImpactUsd > 0) {
+            cache.priceImpactUsd = 0;
+        } else {
+            uint256 maxPriceImpactFactor = MarketUtils.getMaxPositionImpactFactorForLiquidations(
+                dataStore,
+                market.marketToken
+            );
+
+            // if there is a large build up of open interest and a sudden large price movement
+            // it may result in a large imbalance between longs and shorts
+            // this could result in very large price impact temporarily
+            // cap the max negative price impact to prevent cascading liquidations
+            int256 maxNegativePriceImpactUsd = -Precision.applyFactor(position.sizeInUsd(), maxPriceImpactFactor).toInt256();
+            if (cache.priceImpactUsd < maxNegativePriceImpactUsd) {
+                cache.priceImpactUsd = maxNegativePriceImpactUsd;
+            }
+        }
+
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
             dataStore,
             referralStorage,
@@ -228,7 +249,7 @@ library PositionUtils {
         cache.remainingCollateralUsd = cache.collateralUsd.toInt256() + cache.positionPnlUsd + cache.priceImpactUsd - fees.totalNetCostUsd.toInt256();
 
         // the position is liquidatable if the remaining collateral is less than the required min collateral
-        if (cache.remainingCollateralUsd < cache.minCollateralUsd || cache.remainingCollateralUsd == 0) {
+        if (cache.remainingCollateralUsd < cache.minCollateralUsd || cache.remainingCollateralUsd <= 0) {
             return true;
         }
 

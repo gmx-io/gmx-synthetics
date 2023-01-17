@@ -123,15 +123,6 @@ library DecreasePositionCollateralUtils {
 
         (values.executionPrice, values.priceImpactAmount, values.priceImpactDiffUsd) = getExecutionPrice(params, cache.prices, cache.adjustedSizeDeltaUsd);
 
-        // if there is a positive impact, the impact pool amount should be reduced
-        // if there is a negative impact, the impact pool amount should be increased
-        MarketUtils.applyDeltaToPositionImpactPool(
-            params.contracts.dataStore,
-            params.contracts.eventEmitter,
-            params.market.marketToken,
-            -values.priceImpactAmount
-        );
-
         (values.positionPnlUsd, values.sizeDeltaInTokens) = PositionUtils.getPositionPnlUsd(
             params.position,
             cache.adjustedSizeDeltaUsd,
@@ -196,6 +187,18 @@ library DecreasePositionCollateralUtils {
         // deduct remaining fees from the position's collateral
         values.remainingCollateralAmount -= fees.totalNetCostAmount.toInt256();
 
+        // if there is insufficient collateral remaining then prioritize using the collateral to pay
+        // funding fees, the rest of the collateral is sent to the pool
+        // paying of closing fees should be safe to skip
+        // any difference in the paying of borrowing fees should be accounted for
+        // from the transfer of collateral to the pool and by the update of the
+        // pending borrowing fees
+        // any difference in pending negative PnL should similarly be accounted for
+        // through the transfer fo collateral to the pool and by the update of the
+        // pending pnl
+        // paying of price impact should also be safe to skip, it would be the same as
+        // closing the position with zero price impact, just that if there were any collateral that could
+        // partially pay for negative price impact, it would be sent to the pool instead
         if (BaseOrderUtils.isLiquidationOrder(params.order.orderType()) && values.remainingCollateralAmount < 0) {
             return getLiquidationValues(params, values, fees);
         }
@@ -203,6 +206,15 @@ library DecreasePositionCollateralUtils {
         if (values.remainingCollateralAmount < 0) {
             revert("Insufficient collateral");
         }
+
+        // if there is a positive impact, the impact pool amount should be reduced
+        // if there is a negative impact, the impact pool amount should be increased
+        MarketUtils.applyDeltaToPositionImpactPool(
+            params.contracts.dataStore,
+            params.contracts.eventEmitter,
+            params.market.marketToken,
+            -values.priceImpactAmount
+        );
 
         // if the price impact was capped, deduct the difference from the collateral
         // and send it to a holding area

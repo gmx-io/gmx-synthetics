@@ -1100,6 +1100,10 @@ library MarketUtils {
         return dataStore.getUint(Keys.maxPositionImpactFactorKey(market, isPositive));
     }
 
+    function getMaxPositionImpactFactorForLiquidations(DataStore dataStore, address market) internal view returns (uint256) {
+        return dataStore.getUint(Keys.maxPositionImpactFactorForLiquidationsKey(market));
+    }
+
     // @dev get the total amount of position collateral for a market
     // @param dataStore DataStore
     // @param market the market to check

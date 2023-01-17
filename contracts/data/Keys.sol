@@ -105,6 +105,8 @@ library Keys {
     bytes32 public constant POSITION_IMPACT_EXPONENT_FACTOR = keccak256(abi.encode("POSITION_IMPACT_EXPONENT_FACTOR"));
     // @dev key for the max position impact factor
     bytes32 public constant MAX_POSITION_IMPACT_FACTOR = keccak256(abi.encode("MAX_POSITION_IMPACT_FACTOR"));
+    // @dev key for the max position impact factor for liquidations
+    bytes32 public constant MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS = keccak256(abi.encode("MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS"));
     // @dev key for the position fee factor
     bytes32 public constant POSITION_FEE_FACTOR = keccak256(abi.encode("POSITION_FEE_FACTOR"));
     // @dev key for the swap impact factor
@@ -408,6 +410,16 @@ library Keys {
             MAX_POSITION_IMPACT_FACTOR,
             market,
             isPositive
+        ));
+    }
+
+    // @dev key for the max position impact factor for liquidations
+    // @param market the market address to check
+    // @return key for the max position impact factor
+    function maxPositionImpactFactorForLiquidationsKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS,
+            market
         ));
     }
 
