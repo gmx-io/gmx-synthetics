@@ -43,6 +43,10 @@ library Precision {
         return value * FLOAT_PRECISION / divisor;
     }
 
+    function toFactor(int256 value, uint256 divisor) internal pure returns (int256) {
+        return value * FLOAT_PRECISION.toInt256() / divisor.toInt256();
+    }
+
     /**
      * Converts the given value from float to wei.
      *

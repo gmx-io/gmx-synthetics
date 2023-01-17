@@ -207,6 +207,7 @@ library PositionUtils {
             PositionPricingUtils.GetPriceImpactUsdParams(
                 dataStore,
                 market.marketToken,
+                market.indexToken,
                 market.longToken,
                 market.shortToken,
                 -position.sizeInUsd().toInt256(),
@@ -338,7 +339,8 @@ library PositionUtils {
             MarketUtils.applyDeltaToOpenInterest(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
-                params.position.market(),
+                params.market.marketToken,
+                params.market.indexToken,
                 params.position.collateralToken(),
                 params.position.isLong(),
                 sizeDeltaUsd

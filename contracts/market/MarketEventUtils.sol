@@ -28,11 +28,11 @@ library MarketEventUtils {
         data.addressItems.setItem(0, "market", market);
         data.addressItems.setItem(1, "token", token);
 
-        data.uintItems.initItems(1);
-        data.uintItems.setItem(0, "nextValue", nextValue);
-
         data.intItems.initItems(1);
         data.intItems.setItem(0, "delta", delta);
+
+        data.uintItems.initItems(1);
+        data.uintItems.setItem(0, "nextValue", nextValue);
 
         eventEmitter.emitEventLog1(
             "PoolAmountUpdated",
@@ -54,11 +54,11 @@ library MarketEventUtils {
         data.addressItems.setItem(0, "market", market);
         data.addressItems.setItem(1, "token", token);
 
-        data.uintItems.initItems(1);
-        data.uintItems.setItem(0, "nextValue", nextValue);
-
         data.intItems.initItems(1);
         data.intItems.setItem(0, "delta", delta);
+
+        data.uintItems.initItems(1);
+        data.uintItems.setItem(0, "nextValue", nextValue);
 
         eventEmitter.emitEventLog1(
             "SwapImpactPoolAmountUpdated",
@@ -78,11 +78,11 @@ library MarketEventUtils {
         data.addressItems.initItems(1);
         data.addressItems.setItem(0, "market", market);
 
-        data.uintItems.initItems(1);
-        data.uintItems.setItem(0, "nextValue", nextValue);
-
         data.intItems.initItems(1);
         data.intItems.setItem(0, "delta", delta);
+
+        data.uintItems.initItems(1);
+        data.uintItems.setItem(0, "nextValue", nextValue);
 
         eventEmitter.emitEventLog1(
             "PositionImpactPoolAmountUpdated",
@@ -108,15 +108,42 @@ library MarketEventUtils {
         data.boolItems.initItems(1);
         data.boolItems.setItem(0, "isLong", isLong);
 
-        data.uintItems.initItems(1);
-        data.uintItems.setItem(0, "nextValue", nextValue);
-
         data.intItems.initItems(1);
         data.intItems.setItem(0, "delta", delta);
+
+        data.uintItems.initItems(1);
+        data.uintItems.setItem(0, "nextValue", nextValue);
 
         eventEmitter.emitEventLog1(
             "OpenInterestUpdated",
             Cast.toBytes32(market),
+            data
+        );
+    }
+
+    function emitVirtualInventoryUpdated(
+        EventEmitter eventEmitter,
+        address token,
+        bytes32 tokenId,
+        int256 delta,
+        int256 nextValue
+    ) external {
+        EventUtils.EventLogData memory data;
+
+        data.addressItems.initItems(1);
+        data.addressItems.setItem(0, "token", token);
+
+        data.bytes32Items.initItems(1);
+        data.bytes32Items.setItem(0, "tokenId", tokenId);
+
+        data.intItems.initItems(2);
+        data.intItems.setItem(0, "delta", delta);
+        data.intItems.setItem(1, "nextValue", nextValue);
+
+        eventEmitter.emitEventLog2(
+            "VirtualInventoryUpdated",
+            Cast.toBytes32(token),
+            tokenId,
             data
         );
     }
@@ -138,11 +165,11 @@ library MarketEventUtils {
         data.boolItems.initItems(1);
         data.boolItems.setItem(0, "isLong", isLong);
 
-        data.uintItems.initItems(1);
-        data.uintItems.setItem(0, "nextValue", nextValue);
-
         data.intItems.initItems(1);
         data.intItems.setItem(0, "delta", delta);
+
+        data.uintItems.initItems(1);
+        data.uintItems.setItem(0, "nextValue", nextValue);
 
         eventEmitter.emitEventLog1(
             "OpenInterestInTokensUpdated",
@@ -168,11 +195,11 @@ library MarketEventUtils {
         data.boolItems.initItems(1);
         data.boolItems.setItem(0, "isLong", isLong);
 
-        data.uintItems.initItems(1);
-        data.uintItems.setItem(0, "nextValue", nextValue);
-
         data.intItems.initItems(1);
         data.intItems.setItem(0, "delta", delta);
+
+        data.uintItems.initItems(1);
+        data.uintItems.setItem(0, "nextValue", nextValue);
 
         eventEmitter.emitEventLog1(
             "CollateralSumUpdated",

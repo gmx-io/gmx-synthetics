@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/utils/math/SignedMath.sol";
 import "../market/MarketUtils.sol";
 
 import "../utils/Precision.sol";
@@ -15,6 +16,7 @@ import "../referral/ReferralUtils.sol";
 // @title PositionPricingUtils
 // @dev Library for position pricing functions
 library PositionPricingUtils {
+    using SignedMath for int256;
     using SafeCast for uint256;
     using SafeCast for int256;
     using Position for Position.Props;
@@ -38,6 +40,7 @@ library PositionPricingUtils {
     struct GetPriceImpactUsdParams {
         DataStore dataStore;
         address market;
+        address indexToken;
         address longToken;
         address shortToken;
         int256 usdDelta;
@@ -183,7 +186,24 @@ library PositionPricingUtils {
 
         int256 priceImpactUsd = _getPriceImpactUsd(params.dataStore, params.market, openInterestParams);
 
-        return priceImpactUsd;
+        (bool hasVirtualInventory, int256 thresholdPositionImpactFactorForVirtualInventory) = MarketUtils.getThresholdVirtualPositionImpactForVirtualInventory(
+            params.dataStore,
+            params.indexToken
+        );
+
+        if (!hasVirtualInventory) {
+            return priceImpactUsd;
+        }
+
+        OpenInterestParams memory openInterestParamsForVirtualInventory = getNextOpenInterestForVirtualInventory(params);
+        int256 priceImpactUsdForVirtualInventory = _getPriceImpactUsd(params.dataStore, params.market, openInterestParamsForVirtualInventory);
+        int256 priceImpactFactorForVirtualInventory = Precision.toFactor(priceImpactUsdForVirtualInventory, params.usdDelta.abs());
+
+        if (priceImpactFactorForVirtualInventory > thresholdPositionImpactFactorForVirtualInventory) {
+            return priceImpactUsd;
+        }
+
+        return priceImpactUsdForVirtualInventory < priceImpactUsd ? priceImpactUsdForVirtualInventory : priceImpactUsd;
     }
 
     // @dev get the price impact in USD for a position increase / decrease
@@ -246,6 +266,41 @@ library PositionPricingUtils {
             false
         );
 
+        return getNextOpenInterestParams(params, longOpenInterest, shortOpenInterest);
+    }
+
+    function getNextOpenInterestForVirtualInventory(
+        GetPriceImpactUsdParams memory params
+    ) internal view returns (OpenInterestParams memory) {
+        (bool hasVirtualInventory, int256 virtualInventory) = MarketUtils.getVirtualInventoryForPositions(params.dataStore, params.indexToken);
+
+        if (!hasVirtualInventory) {
+            return OpenInterestParams(0, 0, 0, 0);
+        }
+
+        uint256 longOpenInterest;
+        uint256 shortOpenInterest;
+
+        // if virtualInventory is more than zero it means that
+        // tokens were virtually sold to the pool, so set shortOpenInterest
+        // to the virtualInventory value
+        // if virtualInventory is less than zero it means that
+        // tokens were virtually bought from the pool, so set longOpenInterest
+        // to the virtualInventory value
+        if (virtualInventory > 0) {
+            shortOpenInterest = virtualInventory.toUint256();
+        } else {
+            longOpenInterest = (-virtualInventory).toUint256();
+        }
+
+        return getNextOpenInterestParams(params, longOpenInterest, shortOpenInterest);
+    }
+
+    function getNextOpenInterestParams(
+        GetPriceImpactUsdParams memory params,
+        uint256 longOpenInterest,
+        uint256 shortOpenInterest
+    ) internal pure returns (OpenInterestParams memory) {
         uint256 nextLongOpenInterest;
         uint256 nextShortOpenInterest;
 

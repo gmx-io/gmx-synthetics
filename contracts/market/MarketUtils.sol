@@ -487,7 +487,7 @@ library MarketUtils {
         address market,
         address token,
         int256 delta
-    ) internal {
+    ) internal returns (uint256) {
         uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.poolAmountKey(market, token),
             delta,
@@ -495,6 +495,8 @@ library MarketUtils {
         );
 
         MarketEventUtils.emitPoolAmountUpdated(eventEmitter, market, token, delta, nextValue);
+
+        return nextValue;
     }
 
     // @dev cap the input priceImpactUsd by the available amount in the position impact pool
@@ -560,13 +562,15 @@ library MarketUtils {
         address market,
         address token,
         int256 delta
-    ) internal {
+    ) internal returns (uint256) {
         uint256 nextValue = dataStore.applyBoundedDeltaToUint(
             Keys.swapImpactPoolAmountKey(market, token),
             delta
         );
 
         MarketEventUtils.emitSwapImpactPoolAmountUpdated(eventEmitter, market, token, delta, nextValue);
+
+        return nextValue;
     }
 
     // @dev apply a delta to the position impact pool
@@ -579,13 +583,15 @@ library MarketUtils {
         EventEmitter eventEmitter,
         address market,
         int256 delta
-    ) internal {
+    ) internal returns (uint256) {
         uint256 nextValue = dataStore.applyBoundedDeltaToUint(
             Keys.positionImpactPoolAmountKey(market),
             delta
         );
 
         MarketEventUtils.emitPositionImpactPoolAmountUpdated(eventEmitter, market, delta, nextValue);
+
+        return nextValue;
     }
 
     // @dev apply a delta to the open interest
@@ -599,17 +605,35 @@ library MarketUtils {
         DataStore dataStore,
         EventEmitter eventEmitter,
         address market,
+        address indexToken,
         address collateralToken,
         bool isLong,
         int256 delta
-    ) internal {
+    ) internal returns (uint256) {
         uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.openInterestKey(market, collateralToken, isLong),
             delta,
             "Invalid state: negative open interest"
         );
 
+        // if the open interest for longs is increased then tokens were virtually bought from the pool
+        // so the virtual inventory should be decreased
+        // if the open interest for longs is decreased then tokens were virtually sold to the pool
+        // so the virtual inventory should be increased
+        // if the open interest for shorts is increased then tokens were virtually sold to the pool
+        // so the virtual inventory should be increased
+        // if the open interest for shorts is decreased then tokens were virtually bought the pool
+        // so the virtual inventory should be decreased
+        applyDeltaToVirtualInventoryForPositions(
+            dataStore,
+            eventEmitter,
+            indexToken,
+            isLong ? -delta : delta
+        );
+
         MarketEventUtils.emitOpenInterestUpdated(eventEmitter, market, collateralToken, isLong, delta, nextValue);
+
+        return nextValue;
     }
 
     // @dev apply a delta to the open interest in tokens
@@ -626,7 +650,7 @@ library MarketUtils {
         address collateralToken,
         bool isLong,
         int256 delta
-    ) internal {
+    ) internal returns (uint256) {
         uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.openInterestInTokensKey(market, collateralToken, isLong),
             delta,
@@ -634,6 +658,8 @@ library MarketUtils {
         );
 
         MarketEventUtils.emitOpenInterestInTokensUpdated(eventEmitter, market, collateralToken, isLong, delta, nextValue);
+
+        return nextValue;
     }
 
     // @dev apply a delta to the collateral sum
@@ -650,7 +676,7 @@ library MarketUtils {
         address collateralToken,
         bool isLong,
         int256 delta
-    ) internal {
+    ) internal returns (uint256) {
         uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.collateralSumKey(market, collateralToken, isLong),
             delta,
@@ -658,6 +684,8 @@ library MarketUtils {
         );
 
         MarketEventUtils.emitCollateralSumUpdated(eventEmitter, market, collateralToken, isLong, delta, nextValue);
+
+        return nextValue;
     }
 
     // @dev update the funding amount per size values
@@ -1002,6 +1030,68 @@ library MarketUtils {
         }
         uint256 diffFactor = cumulativeBorrowingFactor - position.borrowingFactor();
         return Precision.applyFactor(position.sizeInUsd(), diffFactor);
+    }
+
+    function getVirtualInventoryForSwaps(DataStore dataStore, address token) internal view returns (bool, int256) {
+        bytes32 tokenId = dataStore.getBytes32(Keys.tokenIdKey(token));
+        if (tokenId == bytes32(0)) {
+            return (false, 0);
+        }
+
+        return (true, dataStore.getInt(Keys.virtualInventoryForSwapsKey(tokenId)));
+    }
+
+    function getVirtualInventoryForPositions(DataStore dataStore, address token) internal view returns (bool, int256) {
+        bytes32 tokenId = dataStore.getBytes32(Keys.tokenIdKey(token));
+        if (tokenId == bytes32(0)) {
+            return (false, 0);
+        }
+
+        return (true, dataStore.getInt(Keys.virtualInventoryForPositionsKey(tokenId)));
+    }
+
+    function getThresholdVirtualPositionImpactForVirtualInventory(DataStore dataStore, address token) internal view returns (bool, int256) {
+        bytes32 tokenId = dataStore.getBytes32(Keys.tokenIdKey(token));
+        if (tokenId == bytes32(0)) {
+            return (false, 0);
+        }
+
+        return (true, dataStore.getInt(Keys.thresholdPositionImpactFactorForVirtualInventoryKey(tokenId)));
+    }
+
+    function applyDeltaToVirtualInventoryForSwaps(DataStore dataStore, address token, int256 delta) internal returns (bool, int256) {
+        bytes32 tokenId = dataStore.getBytes32(Keys.tokenIdKey(token));
+        if (tokenId == bytes32(0)) {
+            return (false, 0);
+        }
+
+        int256 nextValue = dataStore.applyDeltaToInt(
+            Keys.virtualInventoryForSwapsKey(tokenId),
+            delta
+        );
+
+        return (true, nextValue);
+    }
+
+    function applyDeltaToVirtualInventoryForPositions(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address token,
+        int256 delta
+    ) internal returns (bool, int256) {
+        bytes32 tokenId = dataStore.getBytes32(Keys.tokenIdKey(token));
+        if (tokenId == bytes32(0)) {
+            return (false, 0);
+        }
+
+        int256 nextValue = dataStore.applyDeltaToInt(
+            Keys.virtualInventoryForPositionsKey(tokenId),
+            delta
+        );
+
+        MarketEventUtils.emitVirtualInventoryUpdated(eventEmitter, token, tokenId, delta, nextValue);
+
+        return (true, nextValue);
     }
 
     // @dev get either the long or short open interest for a market

@@ -240,6 +240,7 @@ library IncreasePositionUtils {
             PositionPricingUtils.GetPriceImpactUsdParams(
                 params.contracts.dataStore,
                 params.market.marketToken,
+                params.market.indexToken,
                 params.market.longToken,
                 params.market.shortToken,
                 params.order.sizeDeltaUsd().toInt256(),
