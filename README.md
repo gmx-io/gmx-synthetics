@@ -355,6 +355,8 @@ For position actions (increase / decrease position), imbalance is calculated as 
 
 `price impact exponents` and `price impact factors` are configured per market and can differ for spot and position actions.
 
+Note that this calculation is the price impact for a user's trade not the price impact on the pool. For example, a user's trade may have a 0.25% price impact, the next trade for a very small amount may have a 0.5% price impact.
+
 The purpose of the price impact is to help reduce the risk of price manipulation, since the contracts use an oracle price which would be an average or median price of multiple reference exchanges. Without a price impact, it may be profitable to manipulate the prices on reference exchanges while executing orders on the contracts.
 
 This risk will also be present if the positive and negative price impact values are similar, for that reason the positive price impact should be set to a low value in times of volatility or irregular price movements.
