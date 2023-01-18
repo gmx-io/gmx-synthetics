@@ -35,11 +35,11 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
 
-        initAllowedKeys();
+        _initAllowedKeys();
     }
 
     function setBool(bytes32 key, bytes memory data, bool value) external onlyConfigKeeper nonReentrant {
-        if (!allowedKeys[key]) { revert("Invalid key"); }
+        _validateKey(key);
 
         bytes32 fullKey = keccak256(abi.encode(key, data));
 
@@ -64,7 +64,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     }
 
     function setAddress(bytes32 key, bytes memory data, address value) external onlyConfigKeeper nonReentrant {
-        if (!allowedKeys[key]) { revert("Invalid key"); }
+        _validateKey(key);
 
         bytes32 fullKey = keccak256(abi.encode(key, data));
 
@@ -89,7 +89,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     }
 
     function setBytes32(bytes32 key, bytes memory data, bytes32 value) external onlyConfigKeeper nonReentrant {
-        if (!allowedKeys[key]) { revert("Invalid key"); }
+        _validateKey(key);
 
         bytes32 fullKey = keccak256(abi.encode(key, data));
 
@@ -112,7 +112,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     }
 
     function setUint(bytes32 key, bytes memory data, uint256 value) external onlyConfigKeeper nonReentrant {
-        if (!allowedKeys[key]) { revert("Invalid key"); }
+        _validateKey(key);
 
         bytes32 fullKey = keccak256(abi.encode(key, data));
 
@@ -132,13 +132,38 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.uintItems.setItem(0, "value", value);
 
         eventEmitter.emitEventLog1(
-            "setUint",
+            "SetUint",
             key,
             eventData
         );
     }
 
-    function initAllowedKeys() internal {
+    function setInt(bytes32 key, bytes memory data, int256 value) external onlyConfigKeeper nonReentrant {
+        _validateKey(key);
+
+        bytes32 fullKey = keccak256(abi.encode(key, data));
+
+        dataStore.setInt(fullKey, value);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", key);
+
+        eventData.bytesItems.initItems(1);
+        eventData.bytesItems.setItem(0, "data", data);
+
+        eventData.intItems.initItems(1);
+        eventData.intItems.setItem(0, "value", value);
+
+        eventEmitter.emitEventLog1(
+            "SetInt",
+            key,
+            eventData
+        );
+    }
+
+    function _initAllowedKeys() internal {
         allowedKeys[Keys.IS_MARKET_DISABLED] = true;
 
         allowedKeys[Keys.CREATE_DEPOSIT_FEATURE_DISABLED] = true;
@@ -197,6 +222,10 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedKeys[Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS] = true;
         allowedKeys[Keys.FUNDING_FACTOR] = true;
         allowedKeys[Keys.BORROWING_FACTOR] = true;
+    }
+
+    function _validateKey(bytes32 key) internal {
+        if (!allowedKeys[key]) { revert("Invalid key"); }
     }
 
     function _validateRange(bytes32 key, uint256 value) internal pure {

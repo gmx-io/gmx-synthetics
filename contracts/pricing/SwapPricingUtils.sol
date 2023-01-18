@@ -209,7 +209,7 @@ library SwapPricingUtils {
         eventEmitter.emitEventLog1(
             "SwapFeesCollected",
             Cast.toBytes32(market),
-            data
+            eventData
         );
     }
 }
