@@ -256,10 +256,13 @@ library PositionUtils {
 
         if (shouldValidateMinCollateralUsd) {
             cache.minCollateralUsd = dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256();
+            if (cache.remainingCollateralUsd < cache.minCollateralUsd) {
+                return true;
+            }
         }
 
         // the position is liquidatable if the remaining collateral is less than the required min collateral
-        if (cache.remainingCollateralUsd < cache.minCollateralUsd || cache.remainingCollateralUsd <= 0) {
+        if (cache.remainingCollateralUsd <= 0) {
             return true;
         }
 
