@@ -475,40 +475,40 @@ library PositionPricingUtils {
         bool isIncrease,
         PositionFees memory fees
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(3);
-        data.addressItems.setItem(0, "market", market);
-        data.addressItems.setItem(1, "collateralToken", collateralToken);
-        data.addressItems.setItem(2, "affiliate", fees.referral.affiliate);
+        eventData.addressItems.initItems(3);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "collateralToken", collateralToken);
+        eventData.addressItems.setItem(2, "affiliate", fees.referral.affiliate);
 
-        data.uintItems.initItems(13);
-        data.uintItems.setItem(0, "traderDiscountAmount", fees.referral.traderDiscountAmount);
-        data.uintItems.setItem(1, "affiliateRewardAmount", fees.referral.affiliateRewardAmount);
-        data.uintItems.setItem(3, "fundingFeeAmount", fees.funding.fundingFeeAmount);
-        data.uintItems.setItem(4, "claimableLongTokenAmount", fees.funding.claimableLongTokenAmount);
-        data.uintItems.setItem(5, "claimableShortTokenAmount", fees.funding.claimableShortTokenAmount);
-        data.uintItems.setItem(6, "feeReceiverAmount", fees.feeReceiverAmount);
-        data.uintItems.setItem(7, "feesForPool", fees.feesForPool);
-        data.uintItems.setItem(8, "positionFeeAmountForPool", fees.positionFeeAmountForPool);
-        data.uintItems.setItem(9, "positionFeeAmount", fees.positionFeeAmount);
-        data.uintItems.setItem(10, "borrowingFeeAmount", fees.borrowingFeeAmount);
-        data.uintItems.setItem(11, "totalNetCostAmount", fees.totalNetCostAmount);
-        data.uintItems.setItem(12, "totalNetCostUsd", fees.totalNetCostUsd);
+        eventData.uintItems.initItems(13);
+        eventData.uintItems.setItem(0, "traderDiscountAmount", fees.referral.traderDiscountAmount);
+        eventData.uintItems.setItem(1, "affiliateRewardAmount", fees.referral.affiliateRewardAmount);
+        eventData.uintItems.setItem(3, "fundingFeeAmount", fees.funding.fundingFeeAmount);
+        eventData.uintItems.setItem(4, "claimableLongTokenAmount", fees.funding.claimableLongTokenAmount);
+        eventData.uintItems.setItem(5, "claimableShortTokenAmount", fees.funding.claimableShortTokenAmount);
+        eventData.uintItems.setItem(6, "feeReceiverAmount", fees.feeReceiverAmount);
+        eventData.uintItems.setItem(7, "feesForPool", fees.feesForPool);
+        eventData.uintItems.setItem(8, "positionFeeAmountForPool", fees.positionFeeAmountForPool);
+        eventData.uintItems.setItem(9, "positionFeeAmount", fees.positionFeeAmount);
+        eventData.uintItems.setItem(10, "borrowingFeeAmount", fees.borrowingFeeAmount);
+        eventData.uintItems.setItem(11, "totalNetCostAmount", fees.totalNetCostAmount);
+        eventData.uintItems.setItem(12, "totalNetCostUsd", fees.totalNetCostUsd);
 
-        data.intItems.initItems(2);
-        data.intItems.setItem(0, "latestLongTokenFundingAmountPerSize", fees.funding.latestLongTokenFundingAmountPerSize);
-        data.intItems.setItem(1, "latestShortTokenFundingAmountPerSize", fees.funding.latestShortTokenFundingAmountPerSize);
+        eventData.intItems.initItems(2);
+        eventData.intItems.setItem(0, "latestLongTokenFundingAmountPerSize", fees.funding.latestLongTokenFundingAmountPerSize);
+        eventData.intItems.setItem(1, "latestShortTokenFundingAmountPerSize", fees.funding.latestShortTokenFundingAmountPerSize);
 
-        data.boolItems.initItems(3);
-        data.boolItems.setItem(0, "hasPendingLongTokenFundingFee", fees.funding.hasPendingLongTokenFundingFee);
-        data.boolItems.setItem(1, "hasPendingShortTokenFundingFee", fees.funding.hasPendingShortTokenFundingFee);
-        data.boolItems.setItem(2, "isIncrease", isIncrease);
+        eventData.boolItems.initItems(3);
+        eventData.boolItems.setItem(0, "hasPendingLongTokenFundingFee", fees.funding.hasPendingLongTokenFundingFee);
+        eventData.boolItems.setItem(1, "hasPendingShortTokenFundingFee", fees.funding.hasPendingShortTokenFundingFee);
+        eventData.boolItems.setItem(2, "isIncrease", isIncrease);
 
         eventEmitter.emitEventLog1(
             "PositionFeesCollected",
             Cast.toBytes32(market),
-            data
+            eventData
         );
     }
 }

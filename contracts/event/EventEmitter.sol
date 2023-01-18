@@ -20,14 +20,14 @@ contract EventEmitter is RoleModule {
     event EventLog(
         address msgSender,
         string indexed eventName,
-        EventUtils.EventLogData data
+        EventUtils.EventLogData eventData
     );
 
     event EventLog1(
         address msgSender,
         string indexed eventName,
         bytes32 indexed key1,
-        EventUtils.EventLogData data
+        EventUtils.EventLogData eventData
     );
 
     event EventLog2(
@@ -35,32 +35,32 @@ contract EventEmitter is RoleModule {
         string indexed eventName,
         bytes32 indexed key1,
         bytes32 indexed key2,
-        EventUtils.EventLogData data
+        EventUtils.EventLogData eventData
     );
 
     constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
 
     function emitEventLog(
         string memory eventName,
-        EventUtils.EventLogData memory data
+        EventUtils.EventLogData memory eventData
     ) external onlyController {
         emit EventLog(
             msg.sender,
             eventName,
-            data
+            eventData
         );
     }
 
     function emitEventLog1(
         string memory eventName,
         bytes32 key1,
-        EventUtils.EventLogData memory data
+        EventUtils.EventLogData memory eventData
     ) external onlyController {
         emit EventLog1(
             msg.sender,
             eventName,
             key1,
-            data
+            eventData
         );
     }
 
@@ -68,14 +68,14 @@ contract EventEmitter is RoleModule {
         string memory eventName,
         bytes32 key1,
         bytes32 key2,
-        EventUtils.EventLogData memory data
+        EventUtils.EventLogData memory eventData
     ) external onlyController {
         emit EventLog2(
             msg.sender,
             eventName,
             key1,
             key2,
-            data
+            eventData
         );
     }
     // @dev event log for general use

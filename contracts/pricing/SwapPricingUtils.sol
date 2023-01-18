@@ -192,19 +192,19 @@ library SwapPricingUtils {
         string memory action,
         SwapFees memory fees
     ) internal {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(2);
-        data.addressItems.setItem(0, "market", market);
-        data.addressItems.setItem(1, "token", token);
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "token", token);
 
-        data.stringItems.initItems(1);
-        data.stringItems.setItem(0, "action", action);
+        eventData.stringItems.initItems(1);
+        eventData.stringItems.setItem(0, "action", action);
 
-        data.uintItems.initItems(3);
-        data.uintItems.setItem(0, "feeReceiverAmount", fees.feeReceiverAmount);
-        data.uintItems.setItem(1, "feesForPool", fees.feesForPool);
-        data.uintItems.setItem(2, "amountAfterFees", fees.amountAfterFees);
+        eventData.uintItems.initItems(3);
+        eventData.uintItems.setItem(0, "feeReceiverAmount", fees.feeReceiverAmount);
+        eventData.uintItems.setItem(1, "feesForPool", fees.feesForPool);
+        eventData.uintItems.setItem(2, "amountAfterFees", fees.amountAfterFees);
 
         eventEmitter.emitEventLog1(
             "SwapFeesCollected",

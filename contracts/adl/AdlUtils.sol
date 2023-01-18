@@ -338,22 +338,22 @@ library AdlUtils {
         uint256 maxPnlFactor,
         bool shouldEnableAdl
     ) internal {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.intItems.initItems(1);
-        data.intItems.setItem(0, "pnlToPoolFactor", pnlToPoolFactor);
+        eventData.intItems.initItems(1);
+        eventData.intItems.setItem(0, "pnlToPoolFactor", pnlToPoolFactor);
 
-        data.uintItems.initItems(1);
-        data.uintItems.setItem(0, "maxPnlFactor", maxPnlFactor);
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "maxPnlFactor", maxPnlFactor);
 
-        data.boolItems.initItems(2);
-        data.boolItems.setItem(0, "isLong", isLong);
-        data.boolItems.setItem(1, "shouldEnableAdl", shouldEnableAdl);
+        eventData.boolItems.initItems(2);
+        eventData.boolItems.setItem(0, "isLong", isLong);
+        eventData.boolItems.setItem(1, "shouldEnableAdl", shouldEnableAdl);
 
         eventEmitter.emitEventLog1(
             "AdlStateUpdated",
             Cast.toBytes32(market),
-            data
+            eventData
         );
     }
 }

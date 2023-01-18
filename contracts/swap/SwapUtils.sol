@@ -120,7 +120,7 @@ library SwapUtils {
         }
 
         if (outputAmount < params.minOutputAmount) {
-            revert InsufficientSwapOutputAmount(outputAmount, params.minOutputAmount);
+            revert(Keys.INSUFFICIENT_SWAP_OUTPUT_ERROR);
         }
 
         return (tokenOut, outputAmount);

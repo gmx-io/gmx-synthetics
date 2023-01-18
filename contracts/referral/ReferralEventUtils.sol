@@ -22,20 +22,20 @@ library ReferralEventUtils {
         address trader,
         uint256 amount
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(3);
-        data.addressItems.setItem(0, "market", market);
-        data.addressItems.setItem(1, "token", token);
-        data.addressItems.setItem(2, "trader", trader);
+        eventData.addressItems.initItems(3);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "token", token);
+        eventData.addressItems.setItem(2, "trader", trader);
 
-        data.uintItems.initItems(1);
-        data.uintItems.setItem(0, "amount", amount);
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "amount", amount);
 
         eventEmitter.emitEventLog1(
             "TraderReferralDiscountApplied",
             Cast.toBytes32(trader),
-            data
+            eventData
         );
     }
 
@@ -47,21 +47,21 @@ library ReferralEventUtils {
         address trader,
         uint256 amount
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(4);
-        data.addressItems.setItem(0, "market", market);
-        data.addressItems.setItem(1, "token", token);
-        data.addressItems.setItem(2, "affiliate", affiliate);
-        data.addressItems.setItem(3, "trader", trader);
+        eventData.addressItems.initItems(4);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "token", token);
+        eventData.addressItems.setItem(2, "affiliate", affiliate);
+        eventData.addressItems.setItem(3, "trader", trader);
 
-        data.uintItems.initItems(1);
-        data.uintItems.setItem(0, "amount", amount);
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "amount", amount);
 
         eventEmitter.emitEventLog1(
             "AffiliateRewardEarned",
             Cast.toBytes32(affiliate),
-            data
+            eventData
         );
     }
 
@@ -73,21 +73,21 @@ library ReferralEventUtils {
         address trader,
         uint256 amount
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(4);
-        data.addressItems.setItem(0, "market", market);
-        data.addressItems.setItem(1, "token", token);
-        data.addressItems.setItem(2, "affiliate", affiliate);
-        data.addressItems.setItem(3, "trader", trader);
+        eventData.addressItems.initItems(4);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "token", token);
+        eventData.addressItems.setItem(2, "affiliate", affiliate);
+        eventData.addressItems.setItem(3, "trader", trader);
 
-        data.uintItems.initItems(1);
-        data.uintItems.setItem(0, "amount", amount);
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "amount", amount);
 
         eventEmitter.emitEventLog1(
             "AffiliateRewardClaimed",
             Cast.toBytes32(affiliate),
-            data
+            eventData
         );
     }
 }

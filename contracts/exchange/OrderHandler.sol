@@ -177,23 +177,10 @@ contract OrderHandler is BaseOrderHandler {
             startingGas
         ) {
         } catch Error(string memory reason) {
-            bytes32 reasonKey = keccak256(abi.encode(reason));
-
-            // note that it is possible for any external contract to spoof these errors
-            // this can happen when calling transfers for external tokens, eth transfers, callbacks etc
-            // because of that, errors from external calls should be separately caught
-            if (
-                reasonKey == Keys.EMPTY_PRICE_ERROR_KEY ||
-                reasonKey == Keys.FROZEN_ORDER_ERROR_KEY
-            ) {
-                revert(reason);
-            }
-
-            _handleOrderError(key, startingGas, reason, "", reasonKey);
+            _handleOrderError(key, startingGas, reason, "");
         } catch (bytes memory reasonBytes) {
             string memory reason = RevertUtils.getRevertMessage(reasonBytes);
-            bytes32 reasonKey = keccak256(abi.encode(reason));
-            _handleOrderError(key, startingGas, reason, reasonBytes, reasonKey);
+            _handleOrderError(key, startingGas, reason, reasonBytes);
         }
     }
 
@@ -209,9 +196,9 @@ contract OrderHandler is BaseOrderHandler {
         uint256 startingGas
     ) external onlySelf {
         BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, keeper, startingGas);
-        // limit swaps require frozen order keeper as well since on creation it can fail due to output amount
+        // limit swaps require frozen order keeper for execution since on creation it can fail due to output amount
         // which would automatically cause the order to be frozen
-        // limit increase and decrease positions may fail due to output amount as well and become frozen
+        // limit increase and limit / trigger decrease orders may fail due to output amount as well and become frozen
         // but only if their acceptablePrice is reached
         if (params.order.isFrozen() || params.order.orderType() == Order.OrderType.LimitSwap) {
             _validateFrozenOrderKeeper(keeper);
@@ -231,9 +218,20 @@ contract OrderHandler is BaseOrderHandler {
         bytes32 key,
         uint256 startingGas,
         string memory reason,
-        bytes memory reasonBytes,
-        bytes32 reasonKey
+        bytes memory reasonBytes
     ) internal {
+        bytes32 reasonKey = keccak256(abi.encode(reason));
+
+        // note that it is possible for any external contract to spoof these errors
+        // this can happen when calling transfers for external tokens, eth transfers, callbacks etc
+        // because of that, errors from external calls should be separately caught
+        if (
+            reasonKey == Keys.EMPTY_PRICE_ERROR_KEY ||
+            reasonKey == Keys.FROZEN_ORDER_ERROR_KEY
+        ) {
+            revert(reason);
+        }
+
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         bool isMarketOrder = BaseOrderUtils.isMarketOrder(order.orderType());
 
@@ -251,6 +249,7 @@ contract OrderHandler is BaseOrderHandler {
         } else {
             if (
                 reasonKey == Keys.EMPTY_POSITION_ERROR_KEY ||
+                reasonKey == Keys.INSUFFICIENT_SWAP_OUTPUT_ERROR_KEY ||
                 reasonKey == Keys.FEATURE_DISABLED_ERROR_KEY
             ) {
                 revert(reason);

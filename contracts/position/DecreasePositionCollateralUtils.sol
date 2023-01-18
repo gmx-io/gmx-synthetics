@@ -464,20 +464,20 @@ library DecreasePositionCollateralUtils {
         uint256 fundingFeeAmount,
         uint256 collateralAmount
     ) internal {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(2);
-        data.addressItems.setItem(0, "market", market);
-        data.addressItems.setItem(1, "collateralToken", collateralToken);
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "collateralToken", collateralToken);
 
-        data.uintItems.initItems(2);
-        data.uintItems.setItem(0, "fundingFeeAmount", fundingFeeAmount);
-        data.uintItems.setItem(1, "collateralAmount", collateralAmount);
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "fundingFeeAmount", fundingFeeAmount);
+        eventData.uintItems.setItem(1, "collateralAmount", collateralAmount);
 
         eventEmitter.emitEventLog1(
             "InsufficientFundingFeePayment",
             Cast.toBytes32(market),
-            data
+            eventData
         );
     }
 }

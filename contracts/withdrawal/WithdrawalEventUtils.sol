@@ -24,32 +24,32 @@ library WithdrawalEventUtils {
         bytes32 key,
         Withdrawal.Props memory withdrawal
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(4);
-        data.addressItems.setItem(0, "account", withdrawal.account());
-        data.addressItems.setItem(1, "receiver", withdrawal.receiver());
-        data.addressItems.setItem(2, "callbackContract", withdrawal.callbackContract());
-        data.addressItems.setItem(3, "market", withdrawal.market());
+        eventData.addressItems.initItems(4);
+        eventData.addressItems.setItem(0, "account", withdrawal.account());
+        eventData.addressItems.setItem(1, "receiver", withdrawal.receiver());
+        eventData.addressItems.setItem(2, "callbackContract", withdrawal.callbackContract());
+        eventData.addressItems.setItem(3, "market", withdrawal.market());
 
-        data.uintItems.initItems(6);
-        data.uintItems.setItem(0, "marketTokenAmount", withdrawal.marketTokenAmount());
-        data.uintItems.setItem(1, "minLongTokenAmount", withdrawal.minLongTokenAmount());
-        data.uintItems.setItem(2, "minShortTokenAmount", withdrawal.minShortTokenAmount());
-        data.uintItems.setItem(3, "updatedAtBlock", withdrawal.updatedAtBlock());
-        data.uintItems.setItem(4, "executionFee", withdrawal.executionFee());
-        data.uintItems.setItem(5, "callbackGasLimit", withdrawal.callbackGasLimit());
+        eventData.uintItems.initItems(6);
+        eventData.uintItems.setItem(0, "marketTokenAmount", withdrawal.marketTokenAmount());
+        eventData.uintItems.setItem(1, "minLongTokenAmount", withdrawal.minLongTokenAmount());
+        eventData.uintItems.setItem(2, "minShortTokenAmount", withdrawal.minShortTokenAmount());
+        eventData.uintItems.setItem(3, "updatedAtBlock", withdrawal.updatedAtBlock());
+        eventData.uintItems.setItem(4, "executionFee", withdrawal.executionFee());
+        eventData.uintItems.setItem(5, "callbackGasLimit", withdrawal.callbackGasLimit());
 
-        data.boolItems.initItems(1);
-        data.boolItems.setItem(0, "shouldUnwrapNativeToken", withdrawal.shouldUnwrapNativeToken());
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", withdrawal.shouldUnwrapNativeToken());
 
-        data.bytes32Items.initItems(1);
-        data.bytes32Items.setItem(0, "key", key);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", key);
 
         eventEmitter.emitEventLog1(
             "WithdrawalCreated",
             Cast.toBytes32(withdrawal.account()),
-            data
+            eventData
         );
     }
 
@@ -57,14 +57,14 @@ library WithdrawalEventUtils {
         EventEmitter eventEmitter,
         bytes32 key
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.bytes32Items.initItems(1);
-        data.bytes32Items.setItem(0, "key", key);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", key);
 
         eventEmitter.emitEventLog(
             "WithdrawalExecuted",
-            data
+            eventData
         );
     }
 
@@ -74,20 +74,20 @@ library WithdrawalEventUtils {
         string memory reason,
         bytes memory reasonBytes
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.bytes32Items.initItems(1);
-        data.bytes32Items.setItem(0, "key", key);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", key);
 
-        data.stringItems.initItems(1);
-        data.stringItems.setItem(0, "reason", reason);
+        eventData.stringItems.initItems(1);
+        eventData.stringItems.setItem(0, "reason", reason);
 
-        data.bytesItems.initItems(1);
-        data.bytesItems.setItem(0, "reasonBytes", reasonBytes);
+        eventData.bytesItems.initItems(1);
+        eventData.bytesItems.setItem(0, "reasonBytes", reasonBytes);
 
         eventEmitter.emitEventLog(
             "WithdrawalCancelled",
-            data
+            eventData
         );
     }
 }

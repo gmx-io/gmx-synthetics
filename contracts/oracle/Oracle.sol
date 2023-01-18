@@ -615,23 +615,23 @@ contract Oracle is RoleModule {
         bool isPrimary,
         bool isPriceFeed
     ) internal {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(1);
-        data.addressItems.setItem(0, "token", token);
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "token", token);
 
-        data.uintItems.initItems(2);
-        data.uintItems.setItem(0, "minPrice", minPrice);
-        data.uintItems.setItem(1, "maxPrice", maxPrice);
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "minPrice", minPrice);
+        eventData.uintItems.setItem(1, "maxPrice", maxPrice);
 
-        data.boolItems.initItems(2);
-        data.boolItems.setItem(0, "isPrimary", isPrimary);
-        data.boolItems.setItem(1, "isPriceFeed", isPriceFeed);
+        eventData.boolItems.initItems(2);
+        eventData.boolItems.setItem(0, "isPrimary", isPrimary);
+        eventData.boolItems.setItem(1, "isPriceFeed", isPriceFeed);
 
         eventEmitter.emitEventLog1(
             "InsufficientFundingFeePayment",
             Cast.toBytes32(token),
-            data
+            eventData
         );
 
     }

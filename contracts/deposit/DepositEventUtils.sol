@@ -24,32 +24,32 @@ library DepositEventUtils {
         bytes32 key,
         Deposit.Props memory deposit
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(4);
-        data.addressItems.setItem(0, "account", deposit.account());
-        data.addressItems.setItem(1, "receiver", deposit.receiver());
-        data.addressItems.setItem(2, "callbackContract", deposit.callbackContract());
-        data.addressItems.setItem(3, "market", deposit.market());
+        eventData.addressItems.initItems(4);
+        eventData.addressItems.setItem(0, "account", deposit.account());
+        eventData.addressItems.setItem(1, "receiver", deposit.receiver());
+        eventData.addressItems.setItem(2, "callbackContract", deposit.callbackContract());
+        eventData.addressItems.setItem(3, "market", deposit.market());
 
-        data.uintItems.initItems(6);
-        data.uintItems.setItem(0, "longTokenAmount", deposit.longTokenAmount());
-        data.uintItems.setItem(1, "shortTokenAmount", deposit.shortTokenAmount());
-        data.uintItems.setItem(2, "minMarketTokens", deposit.minMarketTokens());
-        data.uintItems.setItem(3, "updatedAtBlock", deposit.updatedAtBlock());
-        data.uintItems.setItem(4, "executionFee", deposit.executionFee());
-        data.uintItems.setItem(5, "callbackGasLimit", deposit.callbackGasLimit());
+        eventData.uintItems.initItems(6);
+        eventData.uintItems.setItem(0, "longTokenAmount", deposit.longTokenAmount());
+        eventData.uintItems.setItem(1, "shortTokenAmount", deposit.shortTokenAmount());
+        eventData.uintItems.setItem(2, "minMarketTokens", deposit.minMarketTokens());
+        eventData.uintItems.setItem(3, "updatedAtBlock", deposit.updatedAtBlock());
+        eventData.uintItems.setItem(4, "executionFee", deposit.executionFee());
+        eventData.uintItems.setItem(5, "callbackGasLimit", deposit.callbackGasLimit());
 
-        data.boolItems.initItems(1);
-        data.boolItems.setItem(0, "shouldUnwrapNativeToken", deposit.shouldUnwrapNativeToken());
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", deposit.shouldUnwrapNativeToken());
 
-        data.bytes32Items.initItems(1);
-        data.bytes32Items.setItem(0, "key", key);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", key);
 
         eventEmitter.emitEventLog1(
             "DepositCreated",
             Cast.toBytes32(deposit.account()),
-            data
+            eventData
         );
     }
 
@@ -57,14 +57,14 @@ library DepositEventUtils {
         EventEmitter eventEmitter,
         bytes32 key
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.bytes32Items.initItems(1);
-        data.bytes32Items.setItem(0, "key", key);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", key);
 
         eventEmitter.emitEventLog(
             "DepositExecuted",
-            data
+            eventData
         );
     }
 
@@ -74,20 +74,20 @@ library DepositEventUtils {
         string memory reason,
         bytes memory reasonBytes
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.bytes32Items.initItems(1);
-        data.bytes32Items.setItem(0, "key", key);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", key);
 
-        data.stringItems.initItems(1);
-        data.stringItems.setItem(0, "reason", reason);
+        eventData.stringItems.initItems(1);
+        eventData.stringItems.setItem(0, "reason", reason);
 
-        data.bytesItems.initItems(1);
-        data.bytesItems.setItem(0, "reasonBytes", reasonBytes);
+        eventData.bytesItems.initItems(1);
+        eventData.bytesItems.setItem(0, "reasonBytes", reasonBytes);
 
         eventEmitter.emitEventLog(
             "DepositCancelled",
-            data
+            eventData
         );
     }
 }

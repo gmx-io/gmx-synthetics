@@ -23,41 +23,41 @@ library OrderEventUtils {
         bytes32 key,
         Order.Props memory order
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(5);
-        data.addressItems.setItem(0, "account", order.account());
-        data.addressItems.setItem(1, "receiver", order.receiver());
-        data.addressItems.setItem(2, "callbackContract", order.callbackContract());
-        data.addressItems.setItem(3, "market", order.market());
-        data.addressItems.setItem(4, "initialCollateralToken", order.initialCollateralToken());
+        eventData.addressItems.initItems(5);
+        eventData.addressItems.setItem(0, "account", order.account());
+        eventData.addressItems.setItem(1, "receiver", order.receiver());
+        eventData.addressItems.setItem(2, "callbackContract", order.callbackContract());
+        eventData.addressItems.setItem(3, "market", order.market());
+        eventData.addressItems.setItem(4, "initialCollateralToken", order.initialCollateralToken());
 
-        data.addressItems.initArrayItems(1);
-        data.addressItems.setItem(0, "swapPath", order.swapPath());
+        eventData.addressItems.initArrayItems(1);
+        eventData.addressItems.setItem(0, "swapPath", order.swapPath());
 
-        data.uintItems.initItems(9);
-        data.uintItems.setItem(0, "sizeDeltaUsd", order.sizeDeltaUsd());
-        data.uintItems.setItem(1, "initialCollateralDeltaAmount", order.initialCollateralDeltaAmount());
-        data.uintItems.setItem(2, "triggerPrice", order.triggerPrice());
-        data.uintItems.setItem(3, "acceptablePrice", order.acceptablePrice());
-        data.uintItems.setItem(4, "executionFee", order.executionFee());
-        data.uintItems.setItem(5, "callbackGasLimit", order.callbackGasLimit());
-        data.uintItems.setItem(6, "minOutputAmount", order.minOutputAmount());
-        data.uintItems.setItem(7, "updatedAtBlock", order.updatedAtBlock());
-        data.uintItems.setItem(8, "orderType", uint256(order.orderType()));
+        eventData.uintItems.initItems(9);
+        eventData.uintItems.setItem(0, "sizeDeltaUsd", order.sizeDeltaUsd());
+        eventData.uintItems.setItem(1, "initialCollateralDeltaAmount", order.initialCollateralDeltaAmount());
+        eventData.uintItems.setItem(2, "triggerPrice", order.triggerPrice());
+        eventData.uintItems.setItem(3, "acceptablePrice", order.acceptablePrice());
+        eventData.uintItems.setItem(4, "executionFee", order.executionFee());
+        eventData.uintItems.setItem(5, "callbackGasLimit", order.callbackGasLimit());
+        eventData.uintItems.setItem(6, "minOutputAmount", order.minOutputAmount());
+        eventData.uintItems.setItem(7, "updatedAtBlock", order.updatedAtBlock());
+        eventData.uintItems.setItem(8, "orderType", uint256(order.orderType()));
 
-        data.boolItems.initItems(3);
-        data.boolItems.setItem(0, "isLong", order.isLong());
-        data.boolItems.setItem(1, "shouldUnwrapNativeToken", order.shouldUnwrapNativeToken());
-        data.boolItems.setItem(2, "isFrozen", order.isFrozen());
+        eventData.boolItems.initItems(3);
+        eventData.boolItems.setItem(0, "isLong", order.isLong());
+        eventData.boolItems.setItem(1, "shouldUnwrapNativeToken", order.shouldUnwrapNativeToken());
+        eventData.boolItems.setItem(2, "isFrozen", order.isFrozen());
 
-        data.bytes32Items.initItems(1);
-        data.bytes32Items.setItem(0, "key", key);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", key);
 
         eventEmitter.emitEventLog1(
             "OrderCreated",
             Cast.toBytes32(order.account()),
-            data
+            eventData
         );
     }
 
@@ -65,15 +65,15 @@ library OrderEventUtils {
         EventEmitter eventEmitter,
         bytes32 key
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.bytes32Items.initItems(1);
-        data.bytes32Items.setItem(0, "key", key);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", key);
 
         eventEmitter.emitEventLog1(
             "OrderExecuted",
             key,
-            data
+            eventData
         );
     }
 
@@ -84,20 +84,20 @@ library OrderEventUtils {
         uint256 triggerPrice,
         uint256 acceptablePrice
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.bytes32Items.initItems(1);
-        data.bytes32Items.setItem(0, "key", key);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", key);
 
-        data.uintItems.initItems(3);
-        data.uintItems.setItem(0, "sizeDeltaUsd", sizeDeltaUsd);
-        data.uintItems.setItem(1, "triggerPrice", triggerPrice);
-        data.uintItems.setItem(2, "acceptablePrice", acceptablePrice);
+        eventData.uintItems.initItems(3);
+        eventData.uintItems.setItem(0, "sizeDeltaUsd", sizeDeltaUsd);
+        eventData.uintItems.setItem(1, "triggerPrice", triggerPrice);
+        eventData.uintItems.setItem(2, "acceptablePrice", acceptablePrice);
 
         eventEmitter.emitEventLog1(
             "OrderUpdated",
             key,
-            data
+            eventData
         );
     }
 
@@ -107,21 +107,21 @@ library OrderEventUtils {
         string memory reason,
         bytes memory reasonBytes
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.bytes32Items.initItems(1);
-        data.bytes32Items.setItem(0, "key", key);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", key);
 
-        data.stringItems.initItems(1);
-        data.stringItems.setItem(0, "reason", reason);
+        eventData.stringItems.initItems(1);
+        eventData.stringItems.setItem(0, "reason", reason);
 
-        data.bytesItems.initItems(1);
-        data.bytesItems.setItem(0, "reasonBytes", reasonBytes);
+        eventData.bytesItems.initItems(1);
+        eventData.bytesItems.setItem(0, "reasonBytes", reasonBytes);
 
         eventEmitter.emitEventLog1(
             "OrderCancelled",
             key,
-            data
+            eventData
         );
     }
 
@@ -131,21 +131,21 @@ library OrderEventUtils {
         string memory reason,
         bytes memory reasonBytes
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.bytes32Items.initItems(1);
-        data.bytes32Items.setItem(0, "key", key);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", key);
 
-        data.stringItems.initItems(1);
-        data.stringItems.setItem(0, "reason", reason);
+        eventData.stringItems.initItems(1);
+        eventData.stringItems.setItem(0, "reason", reason);
 
-        data.bytesItems.initItems(1);
-        data.bytesItems.setItem(0, "reasonBytes", reasonBytes);
+        eventData.bytesItems.initItems(1);
+        eventData.bytesItems.setItem(0, "reasonBytes", reasonBytes);
 
         eventEmitter.emitEventLog1(
             "OrderFrozen",
             key,
-            data
+            eventData
         );
     }
 }

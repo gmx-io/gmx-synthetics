@@ -51,15 +51,15 @@ contract Timelock is ReentrancyGuard, RoleModule {
         bytes32 actionKey = keccak256(abi.encodePacked("grantRole", account, key));
         _signalPendingAction(actionKey, "signalGrantRole");
 
-        EventUtils.EventLogData memory data;
-        data.addressItems.initItems(1);
-        data.addressItems.setItem(0, "account", account);
-        data.bytes32Items.initItems(1);
-        data.bytes32Items.setItem(0, "key", key);
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", key);
         eventEmitter.emitEventLog1(
             "SignalGrantRole",
             actionKey,
-            data
+            eventData
         );
     }
 
@@ -69,15 +69,15 @@ contract Timelock is ReentrancyGuard, RoleModule {
 
         roleStore.grantRole(account, key);
 
-        EventUtils.EventLogData memory data;
-        data.addressItems.initItems(1);
-        data.addressItems.setItem(0, "account", account);
-        data.bytes32Items.initItems(1);
-        data.bytes32Items.setItem(0, "key", key);
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", key);
         eventEmitter.emitEventLog1(
             "GrantRole",
             actionKey,
-            data
+            eventData
         );
     }
 
@@ -85,15 +85,15 @@ contract Timelock is ReentrancyGuard, RoleModule {
         bytes32 actionKey = keccak256(abi.encodePacked("revokeRole", account, key));
         _signalPendingAction(actionKey, "signalRevokeRole");
 
-        EventUtils.EventLogData memory data;
-        data.addressItems.initItems(1);
-        data.addressItems.setItem(0, "account", account);
-        data.bytes32Items.initItems(1);
-        data.bytes32Items.setItem(0, "key", key);
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", key);
         eventEmitter.emitEventLog1(
             "SignalRevokeRole",
             actionKey,
-            data
+            eventData
         );
     }
 
@@ -103,15 +103,15 @@ contract Timelock is ReentrancyGuard, RoleModule {
 
         roleStore.revokeRole(account, key);
 
-        EventUtils.EventLogData memory data;
-        data.addressItems.initItems(1);
-        data.addressItems.setItem(0, "account", account);
-        data.bytes32Items.initItems(1);
-        data.bytes32Items.setItem(0, "key", key);
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", key);
         eventEmitter.emitEventLog1(
             "RevokeRole",
             actionKey,
-            data
+            eventData
         );
     }
 
@@ -131,17 +131,17 @@ contract Timelock is ReentrancyGuard, RoleModule {
 
         _signalPendingAction(actionKey, "signalSetPriceFeed");
 
-        EventUtils.EventLogData memory data;
-        data.addressItems.initItems(2);
-        data.addressItems.setItem(0, "token", token);
-        data.addressItems.setItem(1, "priceFeed", priceFeed);
-        data.uintItems.initItems(2);
-        data.uintItems.setItem(0, "priceFeedMultiplier", priceFeedMultiplier);
-        data.uintItems.setItem(1, "stablePrice", stablePrice);
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "token", token);
+        eventData.addressItems.setItem(1, "priceFeed", priceFeed);
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "priceFeedMultiplier", priceFeedMultiplier);
+        eventData.uintItems.setItem(1, "stablePrice", stablePrice);
         eventEmitter.emitEventLog1(
             "SignalSetPriceFeed",
             actionKey,
-            data
+            eventData
         );
     }
 
@@ -165,17 +165,17 @@ contract Timelock is ReentrancyGuard, RoleModule {
         dataStore.setUint(Keys.priceFeedMultiplierKey(token), priceFeedMultiplier);
         dataStore.setUint(Keys.stablePriceKey(token), stablePrice);
 
-        EventUtils.EventLogData memory data;
-        data.addressItems.initItems(2);
-        data.addressItems.setItem(0, "token", token);
-        data.addressItems.setItem(1, "priceFeed", priceFeed);
-        data.uintItems.initItems(2);
-        data.uintItems.setItem(0, "priceFeedMultiplier", priceFeedMultiplier);
-        data.uintItems.setItem(1, "stablePrice", stablePrice);
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "token", token);
+        eventData.addressItems.setItem(1, "priceFeed", priceFeed);
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "priceFeedMultiplier", priceFeedMultiplier);
+        eventData.uintItems.setItem(1, "stablePrice", stablePrice);
         eventEmitter.emitEventLog1(
             "SetPriceFeed",
             actionKey,
-            data
+            eventData
         );
     }
 
@@ -187,18 +187,18 @@ contract Timelock is ReentrancyGuard, RoleModule {
         require(pendingActions[actionKey] == 0, "Timelock: action already signalled");
         pendingActions[actionKey] = block.timestamp + timelockDelay;
 
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.bytes32Items.initItems(1);
-        data.bytes32Items.setItem(0, "actionKey", actionKey);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "actionKey", actionKey);
 
-        data.stringItems.initItems(1);
-        data.stringItems.setItem(0, "actionLabel", actionLabel);
+        eventData.stringItems.initItems(1);
+        eventData.stringItems.setItem(0, "actionLabel", actionLabel);
 
         eventEmitter.emitEventLog1(
             "SignalPendingAction",
             actionKey,
-            data
+            eventData
         );
     }
 
@@ -216,18 +216,18 @@ contract Timelock is ReentrancyGuard, RoleModule {
         require(pendingActions[actionKey] != 0, "Timelock: invalid actionKey");
         delete pendingActions[actionKey];
 
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.bytes32Items.initItems(1);
-        data.bytes32Items.setItem(0, "actionKey", actionKey);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "actionKey", actionKey);
 
-        data.stringItems.initItems(1);
-        data.stringItems.setItem(0, "actionLabel", actionLabel);
+        eventData.stringItems.initItems(1);
+        eventData.stringItems.setItem(0, "actionLabel", actionLabel);
 
         eventEmitter.emitEventLog1(
             "ClearPendingAction",
             actionKey,
-            data
+            eventData
         );
     }
 }

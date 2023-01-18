@@ -22,22 +22,22 @@ library MarketEventUtils {
         int256 delta,
         uint256 nextValue
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(2);
-        data.addressItems.setItem(0, "market", market);
-        data.addressItems.setItem(1, "token", token);
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "token", token);
 
-        data.intItems.initItems(1);
-        data.intItems.setItem(0, "delta", delta);
+        eventData.intItems.initItems(1);
+        eventData.intItems.setItem(0, "delta", delta);
 
-        data.uintItems.initItems(1);
-        data.uintItems.setItem(0, "nextValue", nextValue);
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "nextValue", nextValue);
 
         eventEmitter.emitEventLog1(
             "PoolAmountUpdated",
             Cast.toBytes32(market),
-            data
+            eventData
         );
     }
 
@@ -48,22 +48,22 @@ library MarketEventUtils {
         int256 delta,
         uint256 nextValue
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(2);
-        data.addressItems.setItem(0, "market", market);
-        data.addressItems.setItem(1, "token", token);
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "token", token);
 
-        data.intItems.initItems(1);
-        data.intItems.setItem(0, "delta", delta);
+        eventData.intItems.initItems(1);
+        eventData.intItems.setItem(0, "delta", delta);
 
-        data.uintItems.initItems(1);
-        data.uintItems.setItem(0, "nextValue", nextValue);
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "nextValue", nextValue);
 
         eventEmitter.emitEventLog1(
             "SwapImpactPoolAmountUpdated",
             Cast.toBytes32(market),
-            data
+            eventData
         );
     }
 
@@ -73,21 +73,21 @@ library MarketEventUtils {
         int256 delta,
         uint256 nextValue
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(1);
-        data.addressItems.setItem(0, "market", market);
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "market", market);
 
-        data.intItems.initItems(1);
-        data.intItems.setItem(0, "delta", delta);
+        eventData.intItems.initItems(1);
+        eventData.intItems.setItem(0, "delta", delta);
 
-        data.uintItems.initItems(1);
-        data.uintItems.setItem(0, "nextValue", nextValue);
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "nextValue", nextValue);
 
         eventEmitter.emitEventLog1(
             "PositionImpactPoolAmountUpdated",
             Cast.toBytes32(market),
-            data
+            eventData
         );
     }
 
@@ -99,25 +99,25 @@ library MarketEventUtils {
         int256 delta,
         uint256 nextValue
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(2);
-        data.addressItems.setItem(0, "market", market);
-        data.addressItems.setItem(1, "collateralToken", collateralToken);
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "collateralToken", collateralToken);
 
-        data.boolItems.initItems(1);
-        data.boolItems.setItem(0, "isLong", isLong);
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "isLong", isLong);
 
-        data.intItems.initItems(1);
-        data.intItems.setItem(0, "delta", delta);
+        eventData.intItems.initItems(1);
+        eventData.intItems.setItem(0, "delta", delta);
 
-        data.uintItems.initItems(1);
-        data.uintItems.setItem(0, "nextValue", nextValue);
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "nextValue", nextValue);
 
         eventEmitter.emitEventLog1(
             "OpenInterestUpdated",
             Cast.toBytes32(market),
-            data
+            eventData
         );
     }
 
@@ -128,23 +128,23 @@ library MarketEventUtils {
         int256 delta,
         int256 nextValue
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(1);
-        data.addressItems.setItem(0, "token", token);
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "token", token);
 
-        data.bytes32Items.initItems(1);
-        data.bytes32Items.setItem(0, "tokenId", tokenId);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "tokenId", tokenId);
 
-        data.intItems.initItems(2);
-        data.intItems.setItem(0, "delta", delta);
-        data.intItems.setItem(1, "nextValue", nextValue);
+        eventData.intItems.initItems(2);
+        eventData.intItems.setItem(0, "delta", delta);
+        eventData.intItems.setItem(1, "nextValue", nextValue);
 
         eventEmitter.emitEventLog2(
             "VirtualInventoryUpdated",
             Cast.toBytes32(token),
             tokenId,
-            data
+            eventData
         );
     }
 
@@ -156,25 +156,25 @@ library MarketEventUtils {
         int256 delta,
         uint256 nextValue
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(2);
-        data.addressItems.setItem(0, "market", market);
-        data.addressItems.setItem(1, "collateralToken", collateralToken);
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "collateralToken", collateralToken);
 
-        data.boolItems.initItems(1);
-        data.boolItems.setItem(0, "isLong", isLong);
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "isLong", isLong);
 
-        data.intItems.initItems(1);
-        data.intItems.setItem(0, "delta", delta);
+        eventData.intItems.initItems(1);
+        eventData.intItems.setItem(0, "delta", delta);
 
-        data.uintItems.initItems(1);
-        data.uintItems.setItem(0, "nextValue", nextValue);
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "nextValue", nextValue);
 
         eventEmitter.emitEventLog1(
             "OpenInterestInTokensUpdated",
             Cast.toBytes32(market),
-            data
+            eventData
         );
     }
 
@@ -186,25 +186,25 @@ library MarketEventUtils {
         int256 delta,
         uint256 nextValue
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(2);
-        data.addressItems.setItem(0, "market", market);
-        data.addressItems.setItem(1, "collateralToken", collateralToken);
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "collateralToken", collateralToken);
 
-        data.boolItems.initItems(1);
-        data.boolItems.setItem(0, "isLong", isLong);
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "isLong", isLong);
 
-        data.intItems.initItems(1);
-        data.intItems.setItem(0, "delta", delta);
+        eventData.intItems.initItems(1);
+        eventData.intItems.setItem(0, "delta", delta);
 
-        data.uintItems.initItems(1);
-        data.uintItems.setItem(0, "nextValue", nextValue);
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "nextValue", nextValue);
 
         eventEmitter.emitEventLog1(
             "CollateralSumUpdated",
             Cast.toBytes32(market),
-            data
+            eventData
         );
     }
 
@@ -216,21 +216,21 @@ library MarketEventUtils {
         uint256 delta,
         uint256 nextValue
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(3);
-        data.addressItems.setItem(0, "market", market);
-        data.addressItems.setItem(1, "token", token);
-        data.addressItems.setItem(2, "account", account);
+        eventData.addressItems.initItems(3);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "token", token);
+        eventData.addressItems.setItem(2, "account", account);
 
-        data.uintItems.initItems(2);
-        data.uintItems.setItem(0, "delta", delta);
-        data.uintItems.setItem(1, "nextValue", nextValue);
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "delta", delta);
+        eventData.uintItems.setItem(1, "nextValue", nextValue);
 
         eventEmitter.emitEventLog1(
             "ClaimableFundingUpdated",
             Cast.toBytes32(account),
-            data
+            eventData
         );
     }
 
@@ -242,21 +242,21 @@ library MarketEventUtils {
         address receiver,
         uint256 amount
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(4);
-        data.addressItems.setItem(0, "market", market);
-        data.addressItems.setItem(1, "token", token);
-        data.addressItems.setItem(2, "account", account);
-        data.addressItems.setItem(3, "receiver", receiver);
+        eventData.addressItems.initItems(4);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "token", token);
+        eventData.addressItems.setItem(2, "account", account);
+        eventData.addressItems.setItem(3, "receiver", receiver);
 
-        data.uintItems.initItems(1);
-        data.uintItems.setItem(0, "amount", amount);
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "amount", amount);
 
         eventEmitter.emitEventLog1(
             "FundingFeesClaimed",
             Cast.toBytes32(account),
-            data
+            eventData
         );
     }
 
@@ -269,22 +269,22 @@ library MarketEventUtils {
         uint256 delta,
         uint256 nextValue
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(3);
-        data.addressItems.setItem(0, "market", market);
-        data.addressItems.setItem(1, "token", token);
-        data.addressItems.setItem(2, "account", account);
+        eventData.addressItems.initItems(3);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "token", token);
+        eventData.addressItems.setItem(2, "account", account);
 
-        data.uintItems.initItems(3);
-        data.uintItems.setItem(0, "timeKey", timeKey);
-        data.uintItems.setItem(1, "delta", delta);
-        data.uintItems.setItem(2, "nextValue", nextValue);
+        eventData.uintItems.initItems(3);
+        eventData.uintItems.setItem(0, "timeKey", timeKey);
+        eventData.uintItems.setItem(1, "delta", delta);
+        eventData.uintItems.setItem(2, "nextValue", nextValue);
 
         eventEmitter.emitEventLog1(
             "ClaimableFundingUpdated",
             Cast.toBytes32(account),
-            data
+            eventData
         );
     }
 
@@ -297,22 +297,22 @@ library MarketEventUtils {
         uint256 delta,
         uint256 nextValue
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(3);
-        data.addressItems.setItem(0, "market", market);
-        data.addressItems.setItem(1, "token", token);
-        data.addressItems.setItem(2, "account", account);
+        eventData.addressItems.initItems(3);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "token", token);
+        eventData.addressItems.setItem(2, "account", account);
 
-        data.uintItems.initItems(3);
-        data.uintItems.setItem(0, "timeKey", timeKey);
-        data.uintItems.setItem(1, "delta", delta);
-        data.uintItems.setItem(2, "nextValue", nextValue);
+        eventData.uintItems.initItems(3);
+        eventData.uintItems.setItem(0, "timeKey", timeKey);
+        eventData.uintItems.setItem(1, "delta", delta);
+        eventData.uintItems.setItem(2, "nextValue", nextValue);
 
         eventEmitter.emitEventLog1(
             "ClaimableCollateralUpdated",
             Cast.toBytes32(account),
-            data
+            eventData
         );
     }
 
@@ -325,22 +325,22 @@ library MarketEventUtils {
         address receiver,
         uint256 amount
     ) external {
-        EventUtils.EventLogData memory data;
+        EventUtils.EventLogData memory eventData;
 
-        data.addressItems.initItems(4);
-        data.addressItems.setItem(0, "market", market);
-        data.addressItems.setItem(1, "token", token);
-        data.addressItems.setItem(2, "account", account);
-        data.addressItems.setItem(3, "receiver", receiver);
+        eventData.addressItems.initItems(4);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "token", token);
+        eventData.addressItems.setItem(2, "account", account);
+        eventData.addressItems.setItem(3, "receiver", receiver);
 
-        data.uintItems.initItems(2);
-        data.uintItems.setItem(0, "timeKey", timeKey);
-        data.uintItems.setItem(1, "amount", amount);
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "timeKey", timeKey);
+        eventData.uintItems.setItem(1, "amount", amount);
 
         eventEmitter.emitEventLog1(
             "CollateralClaimed",
             Cast.toBytes32(account),
-            data
+            eventData
         );
     }
 }
