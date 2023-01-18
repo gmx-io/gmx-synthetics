@@ -186,6 +186,10 @@ library PositionPricingUtils {
 
         int256 priceImpactUsd = _getPriceImpactUsd(params.dataStore, params.market, openInterestParams);
 
+        if (priceImpactUsd >= 0) {
+            return priceImpactUsd;
+        }
+
         (bool hasVirtualInventory, int256 thresholdPositionImpactFactorForVirtualInventory) = MarketUtils.getThresholdVirtualPositionImpactForVirtualInventory(
             params.dataStore,
             params.indexToken

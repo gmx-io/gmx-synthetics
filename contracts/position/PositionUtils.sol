@@ -217,7 +217,8 @@ library PositionUtils {
 
         // even if there is a large positive price impact, positions that would be liquidated
         // if the positive price impact is reduced should not be allowed to be created
-        // to prevent these positions, check if the position can be liquidated if there is zero positive price impact
+        // as they would be easily liquidated if the price impact changes
+        // cap the priceImpactUsd to zero to prevent these positions from being created
         if (cache.priceImpactUsd > 0) {
             cache.priceImpactUsd = 0;
         } else {
