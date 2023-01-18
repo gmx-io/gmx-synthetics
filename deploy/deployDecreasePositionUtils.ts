@@ -7,6 +7,7 @@ const func = createDeployFunction({
     "MarketEventUtils",
     "PositionStoreUtils",
     "PositionEventUtils",
+    "OrderEventUtils",
     "PositionPricingUtils",
     "ReferralEventUtils",
     "DecreasePositionCollateralUtils",

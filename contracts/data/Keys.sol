@@ -96,8 +96,8 @@ library Keys {
 
     // @dev key for the min collateral factor
     bytes32 public constant MIN_COLLATERAL_FACTOR = keccak256(abi.encode("MIN_COLLATERAL_FACTOR"));
-    // @dev key for the min collateral factor for open interest
-    bytes32 public constant MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST = keccak256(abi.encode("MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST"));
+    // @dev key for the min collateral factor for open interest multiplier
+    bytes32 public constant MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER = keccak256(abi.encode("MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER"));
     // @dev key for the min allowed collateral in USD
     bytes32 public constant MIN_COLLATERAL_USD = keccak256(abi.encode("MIN_COLLATERAL_USD"));
 
@@ -394,9 +394,9 @@ library Keys {
        ));
    }
 
-   function minCollateralFactorForOpenInterestKey(address market) internal pure returns (bytes32) {
+   function minCollateralFactorForOpenInterestMultiplierKey(address market) internal pure returns (bytes32) {
        return keccak256(abi.encode(
-           MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST,
+           MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER,
            market
        ));
    }

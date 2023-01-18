@@ -68,17 +68,6 @@ library Calc {
     }
 
     /**
-     * Adds two numbers together, treating the second number as an unsigned integer.
-     *
-     * @param a the first number
-     * @param b the second number
-     * @return the result of adding the two numbers together
-     */
-    function sum(int256 a, uint256 b) internal pure returns (int256) {
-        return a + b.toInt256();
-    }
-
-    /**
      * @dev Calculates the absolute difference between two numbers.
      *
      * @param a the first number

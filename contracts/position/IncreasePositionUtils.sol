@@ -151,8 +151,30 @@ library IncreasePositionUtils {
             params.contracts.referralStorage,
             params.position,
             params.market,
-            prices
+            prices,
+            true
         );
+
+        if (params.order.sizeDeltaUsd() > 0) {
+            (int256 positionPnlUsd, /* uint256 sizeDeltaInTokens */) = PositionUtils.getPositionPnlUsd(
+                params.position,
+                params.position.sizeInUsd(),
+                cache.executionPrice
+            );
+
+            if (!PositionUtils.willPositionCollateralBeSufficientForOpenInterest(
+                params.contracts.dataStore,
+                params.market,
+                prices,
+                params.position.collateralToken(),
+                params.position.sizeInUsd(),
+                params.position.collateralAmount(),
+                positionPnlUsd,
+                0
+            )) {
+                revert("Below min collateral factor for open interest");
+            }
+        }
 
         PositionUtils.handleReferral(params, fees);
 

@@ -1094,6 +1094,18 @@ library MarketUtils {
         return (true, nextValue);
     }
 
+    function getOpenInterest(
+        DataStore dataStore,
+        address market,
+        address longToken,
+        address shortToken
+    ) internal view returns (uint256) {
+        uint256 longOpenInterest = getOpenInterest(dataStore, market, longToken, shortToken, true);
+        uint256 shortOpenInterest = getOpenInterest(dataStore, market, longToken, shortToken, false);
+
+        return longOpenInterest + shortOpenInterest;
+    }
+
     // @dev get either the long or short open interest for a market
     // @param dataStore DataStore
     // @param market the market to check
@@ -1198,8 +1210,21 @@ library MarketUtils {
         return dataStore.getUint(Keys.minCollateralFactorKey(market));
     }
 
-    function getMinCollateralFactorForOpenInterest(DataStore dataStore, address market) internal view returns (uint256) {
-        return dataStore.getUint(Keys.minCollateralFactorForOpenInterestKey(market));
+    function getMinCollateralFactorForOpenInterestMultiplier(DataStore dataStore, address market) internal view returns (uint256) {
+        return dataStore.getUint(Keys.minCollateralFactorForOpenInterestMultiplierKey(market));
+    }
+
+    function getMinCollateralFactorForOpenInterest(
+        DataStore dataStore,
+        address market,
+        address longToken,
+        address shortToken,
+        int256 openInterestDelta
+    ) internal view returns (uint256) {
+        uint256 openInterest = getOpenInterest(dataStore, market, longToken, shortToken);
+        openInterest = Calc.sumReturnUint256(openInterest, openInterestDelta);
+        uint256 multiplierFactor = getMinCollateralFactorForOpenInterestMultiplier(dataStore, market);
+        return Precision.applyFactor(openInterest, multiplierFactor);
     }
 
     // @dev get the total amount of position collateral for a market

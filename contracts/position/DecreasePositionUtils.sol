@@ -71,21 +71,7 @@ library DecreasePositionUtils {
             params.market
         );
 
-        cache.pnlToken = params.position.isLong() ? params.market.longToken : params.market.shortToken;
-        cache.pnlTokenPrice = params.position.isLong() ? cache.prices.longTokenPrice : cache.prices.shortTokenPrice;
-
-        if (BaseOrderUtils.isLiquidationOrder(params.order.orderType()) && !PositionUtils.isPositionLiquidatable(
-            params.contracts.dataStore,
-            params.contracts.referralStorage,
-            params.position,
-            params.market,
-            cache.prices
-        )) {
-            revert("DecreasePositionUtils: Invalid Liquidation");
-        }
-
-        PositionUtils.updateFundingAndBorrowingState(params, cache.prices);
-
+        // cap the order size to the position size
         if (params.order.sizeDeltaUsd() > params.position.sizeInUsd()) {
             if (params.order.orderType() == Order.OrderType.LimitDecrease ||
                 params.order.orderType() == Order.OrderType.StopLossDecrease) {
@@ -98,10 +84,62 @@ library DecreasePositionUtils {
                 );
 
                 params.order.setSizeDeltaUsd(params.position.sizeInUsd());
+                // set the initial collateral delta amount to zero to help
+                // ensure that the order can be executed
+                params.order.setInitialCollateralDeltaAmount(0);
             } else {
                 revert("DecreasePositionUtils: Invalid order size");
             }
         }
+
+        if (params.order.sizeDeltaUsd() < params.position.sizeInUsd() && params.order.initialCollateralDeltaAmount() > 0) {
+            // estimate pnl based on indexTokenPrice
+            (int256 positionPnlUsd, /* uint256 sizeDeltaInTokens */) = PositionUtils.getPositionPnlUsd(
+                params.position,
+                params.position.sizeInUsd(),
+                cache.prices.indexTokenPrice.midPrice()
+            );
+
+            if (!PositionUtils.willPositionCollateralBeSufficientForOpenInterest(
+                params.contracts.dataStore,
+                params.market,
+                cache.prices,
+                params.position.collateralToken(),
+                params.position.sizeInUsd() - params.order.sizeDeltaUsd(),
+                params.position.collateralAmount() - params.order.initialCollateralDeltaAmount(),
+                positionPnlUsd,
+                -params.order.sizeDeltaUsd().toInt256()
+            )) {
+                if (params.order.sizeDeltaUsd() == 0) {
+                    revert("Cannot withdraw collateral");
+                }
+
+                OrderEventUtils.emitOrderCollateralDeltaAmountUpdated(
+                    params.contracts.eventEmitter,
+                    params.orderKey,
+                    params.order.initialCollateralDeltaAmount(),
+                    0
+                );
+
+                params.order.setInitialCollateralDeltaAmount(0);
+            }
+        }
+
+        cache.pnlToken = params.position.isLong() ? params.market.longToken : params.market.shortToken;
+        cache.pnlTokenPrice = params.position.isLong() ? cache.prices.longTokenPrice : cache.prices.shortTokenPrice;
+
+        if (BaseOrderUtils.isLiquidationOrder(params.order.orderType()) && !PositionUtils.isPositionLiquidatable(
+            params.contracts.dataStore,
+            params.contracts.referralStorage,
+            params.position,
+            params.market,
+            cache.prices,
+            true
+        )) {
+            revert("DecreasePositionUtils: Invalid Liquidation");
+        }
+
+        PositionUtils.updateFundingAndBorrowingState(params, cache.prices);
 
         cache.initialCollateralAmount = params.position.collateralAmount();
         (
@@ -151,7 +189,8 @@ library DecreasePositionUtils {
                 params.contracts.referralStorage,
                 params.position,
                 params.market,
-                cache.prices
+                cache.prices,
+                false
             );
 
             PositionStoreUtils.set(params.contracts.dataStore, params.positionKey, params.position);

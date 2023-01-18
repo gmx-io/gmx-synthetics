@@ -201,7 +201,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedKeys[Keys.REQUEST_EXPIRATION_AGE] = true;
         allowedKeys[Keys.MIN_COLLATERAL_FACTOR] = true;
-        allowedKeys[Keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST] = true;
+        allowedKeys[Keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER] = true;
         allowedKeys[Keys.MIN_COLLATERAL_USD] = true;
 
         allowedKeys[Keys.TOKEN_ID] = true;

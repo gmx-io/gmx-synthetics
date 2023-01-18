@@ -157,7 +157,8 @@ library PositionUtils {
         IReferralStorage referralStorage,
         Position.Props memory position,
         Market.Props memory market,
-        MarketUtils.MarketPrices memory prices
+        MarketUtils.MarketPrices memory prices,
+        bool shouldValidateMinCollateralUsd
     ) internal view {
         if (position.sizeInUsd() == 0 || position.sizeInTokens() == 0) {
             revert("Position size is zero");
@@ -168,7 +169,8 @@ library PositionUtils {
             referralStorage,
             position,
             market,
-            prices
+            prices,
+            shouldValidateMinCollateralUsd
         )) {
             revert LiquidatablePosition();
         }
@@ -185,7 +187,8 @@ library PositionUtils {
         IReferralStorage referralStorage,
         Position.Props memory position,
         Market.Props memory market,
-        MarketUtils.MarketPrices memory prices
+        MarketUtils.MarketPrices memory prices,
+        bool shouldValidateMinCollateralUsd
     ) internal view returns (bool) {
         _IsPositionLiquidatableCache memory cache;
 
@@ -249,8 +252,11 @@ library PositionUtils {
             position.sizeInUsd()
         );
 
-        cache.minCollateralUsd = dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256();
         cache.remainingCollateralUsd = cache.collateralUsd.toInt256() + cache.positionPnlUsd + cache.priceImpactUsd - fees.totalNetCostUsd.toInt256();
+
+        if (shouldValidateMinCollateralUsd) {
+            cache.minCollateralUsd = dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256();
+        }
 
         // the position is liquidatable if the remaining collateral is less than the required min collateral
         if (cache.remainingCollateralUsd < cache.minCollateralUsd || cache.remainingCollateralUsd <= 0) {
@@ -263,6 +269,39 @@ library PositionUtils {
         }
 
         return false;
+    }
+
+    function willPositionCollateralBeSufficientForOpenInterest(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketUtils.MarketPrices memory prices,
+        address collateralToken,
+        uint256 positionSizeInUsd,
+        uint256 positionCollateralAmount,
+        int256 positionPnlUsd,
+        int256 openInterestDelta
+    ) internal view returns (bool) {
+        Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(
+            collateralToken,
+            market,
+            prices
+        );
+
+        uint256 minCollateralFactor = MarketUtils.getMinCollateralFactorForOpenInterest(
+            dataStore,
+            market.marketToken,
+            market.longToken,
+            market.shortToken,
+            openInterestDelta
+        );
+
+        uint256 collateralUsd = positionCollateralAmount * collateralTokenPrice.min;
+        if (positionPnlUsd > 0) {
+            // allow pending pnl to be treated as collateral for this check
+            collateralUsd += positionPnlUsd.toUint256();
+        }
+
+        return Precision.toFactor(collateralUsd, positionSizeInUsd) >= minCollateralFactor;
     }
 
     function updateFundingAndBorrowingState(
