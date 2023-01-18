@@ -157,9 +157,12 @@ library IncreasePositionUtils {
 
         if (params.order.sizeDeltaUsd() > 0) {
             (int256 positionPnlUsd, /* uint256 sizeDeltaInTokens */) = PositionUtils.getPositionPnlUsd(
+                params.contracts.dataStore,
+                params.market,
+                prices,
                 params.position,
-                params.position.sizeInUsd(),
-                cache.executionPrice
+                cache.executionPrice,
+                params.position.sizeInUsd()
             );
 
             if (!PositionUtils.willPositionCollateralBeSufficientForOpenInterest(

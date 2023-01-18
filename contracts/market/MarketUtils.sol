@@ -57,6 +57,21 @@ library MarketUtils {
         int256 fundingAmountPerSize_ShortCollateral_ShortPosition;
     }
 
+    struct _GetPoolValueCache {
+        uint256 value;
+
+        uint256 longTokenAmount;
+        uint256 shortTokenAmount;
+        uint256 longTokenUsd;
+        uint256 shortTokenUsd;
+
+        uint256 impactPoolAmount;
+        int256 longPnl;
+        int256 shortPnl;
+        int256 netPnl;
+    }
+
+
     // @dev _GetNextFundingAmountPerSizeCache struct used in getNextFundingAmountPerSize
     // to avoid stack too deep errors
     //
@@ -152,6 +167,10 @@ library MarketUtils {
     ) internal view returns (int256) {
         int256 poolValue = getPoolValue(dataStore, market, longTokenPrice, shortTokenPrice, indexTokenPrice, maximize);
         if (poolValue == 0) { return 0; }
+
+        if (poolValue < 0) {
+            revert("getMarketTokenPrice: unexpected state, poolValue is negative");
+        }
 
         uint256 supply = getMarketTokenSupply(MarketToken(payable(market.marketToken)));
 
@@ -264,25 +283,63 @@ library MarketUtils {
         Price.Props memory indexTokenPrice,
         bool maximize
     ) internal view returns (int256) {
-        uint256 longTokenAmount = getPoolAmount(dataStore, market.marketToken, market.longToken);
-        uint256 shortTokenAmount = getPoolAmount(dataStore, market.marketToken, market.shortToken);
+        _GetPoolValueCache memory cache;
+        cache.longTokenAmount = getPoolAmount(dataStore, market.marketToken, market.longToken);
+        cache.shortTokenAmount = getPoolAmount(dataStore, market.marketToken, market.shortToken);
 
-        uint256 value;
+        cache.longTokenUsd = cache.longTokenAmount * longTokenPrice.pickPrice(maximize);
+        cache.shortTokenUsd = cache.shortTokenAmount * shortTokenPrice.pickPrice(maximize);
 
-        value = longTokenAmount * longTokenPrice.pickPrice(maximize);
-        value += shortTokenAmount * shortTokenPrice.pickPrice(maximize);
+        cache.value = cache.longTokenUsd + cache.shortTokenUsd;
 
-        value += getTotalBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, true);
-        value += getTotalBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, false);
+        cache.value += getTotalBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, true);
+        cache.value += getTotalBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, false);
 
-        uint256 impactPoolAmount = getPositionImpactPoolAmount(dataStore, market.marketToken);
-        value += impactPoolAmount * indexTokenPrice.pickPrice(maximize);
+        cache.impactPoolAmount = getPositionImpactPoolAmount(dataStore, market.marketToken);
+        cache.value += cache.impactPoolAmount * indexTokenPrice.pickPrice(maximize);
 
         // !maximize should be used for net pnl as a larger pnl leads to a smaller pool value
         // and a smaller pnl leads to a larger pool value
-        int256 pnl = getNetPnl(dataStore, market.marketToken, market.longToken, market.shortToken, indexTokenPrice, !maximize);
 
-        return Calc.sumReturnInt256(value, -pnl);
+        cache.longPnl = getPnl(
+            dataStore,
+            market.marketToken,
+            market.longToken,
+            market.shortToken,
+            indexTokenPrice,
+            true,
+            !maximize
+        );
+
+        cache.longPnl = getCappedPnl(
+            dataStore,
+            market.marketToken,
+            true,
+            cache.longPnl,
+            cache.longTokenUsd
+        );
+
+        cache.shortPnl = getPnl(
+            dataStore,
+            market.marketToken,
+            market.longToken,
+            market.shortToken,
+            indexTokenPrice,
+            false,
+            !maximize
+        );
+
+        cache.shortPnl = getCappedPnl(
+            dataStore,
+            market.marketToken,
+            false,
+            cache.shortPnl,
+            cache.shortTokenUsd
+        );
+
+        cache.netPnl = cache.longPnl + cache.shortPnl;
+
+        return Calc.sumReturnInt256(cache.value, -cache.netPnl);
     }
 
     // @dev get the net pending pnl for a market
@@ -305,6 +362,43 @@ library MarketUtils {
         int256 shortPnl = getPnl(dataStore, market, longToken, shortToken, indexTokenPrice, false, maximize);
 
         return longPnl + shortPnl;
+    }
+
+    function getCappedPnl(
+        DataStore dataStore,
+        address market,
+        bool isLong,
+        int256 pnl,
+        uint256 poolUsd
+    ) internal view returns (int256) {
+        if (pnl < 0) { return pnl; }
+
+        uint256 maxPnlFactor = getMaxPnlFactor(dataStore, market, isLong);
+        int256 maxPnl = Precision.applyFactor(poolUsd, maxPnlFactor).toInt256();
+
+        return pnl > maxPnl ? maxPnl : pnl;
+    }
+
+    function getPnl(
+        DataStore dataStore,
+        address market,
+        address longToken,
+        address shortToken,
+        uint256 indexTokenPrice,
+        bool isLong,
+        bool maximize
+    ) internal view returns (int256) {
+        Price.Props memory _indexTokenPrice = Price.Props(indexTokenPrice, indexTokenPrice);
+
+        return getPnl(
+            dataStore,
+            market,
+            longToken,
+            shortToken,
+            _indexTokenPrice,
+            isLong,
+            maximize
+        );
     }
 
     // @dev get the pending pnl for a market for either longs or shorts

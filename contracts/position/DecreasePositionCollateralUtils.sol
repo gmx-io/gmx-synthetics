@@ -122,9 +122,12 @@ library DecreasePositionCollateralUtils {
         (values.executionPrice, values.priceImpactAmount, values.priceImpactDiffUsd) = getExecutionPrice(params, cache.prices, params.order.sizeDeltaUsd());
 
         (values.positionPnlUsd, values.sizeDeltaInTokens) = PositionUtils.getPositionPnlUsd(
+            params.contracts.dataStore,
+            params.market,
+            cache.prices,
             params.position,
-            params.order.sizeDeltaUsd(),
-            values.executionPrice
+            values.executionPrice,
+            params.order.sizeDeltaUsd()
         );
 
         if (values.positionPnlUsd < 0) {

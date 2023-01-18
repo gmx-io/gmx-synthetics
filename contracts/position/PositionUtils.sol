@@ -56,6 +56,19 @@ library PositionUtils {
         IReferralStorage referralStorage;
     }
 
+    struct _GetPositionPnlUsdCache {
+        int256 positionValue;
+        int256 totalPositionPnl;
+        address pnlToken;
+        uint256 poolTokenAmount;
+        uint256 poolTokenPrice;
+        uint256 poolTokenUsd;
+        int256 poolPnl;
+        int256 cappedPoolPnl;
+        uint256 sizeDeltaInTokens;
+        int256 positionPnlUsd;
+    }
+
     // @dev _IsPositionLiquidatableCache struct used in isPositionLiquidatable
     // to avoid stack too deep errors
     // @param positionPnlUsd the position's pnl in USD
@@ -93,29 +106,63 @@ library PositionUtils {
     //
     // @return (positionPnlUsd, sizeDeltaInTokens)
     function getPositionPnlUsd(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketUtils.MarketPrices memory prices,
         Position.Props memory position,
-        uint256 sizeDeltaUsd,
-        uint256 indexTokenPrice
-    ) internal pure returns (int256, uint256) {
+        uint256 indexTokenPrice,
+        uint256 sizeDeltaUsd
+    ) public view returns (int256, uint256) {
+        _GetPositionPnlUsdCache memory cache;
+
         // position.sizeInUsd is the cost of the tokens, positionValue is the current worth of the tokens
-        int256 positionValue = (position.sizeInTokens() * indexTokenPrice).toInt256();
-        int256 totalPositionPnl = position.isLong() ? positionValue - position.sizeInUsd().toInt256() : position.sizeInUsd().toInt256() - positionValue;
+        cache.positionValue = (position.sizeInTokens() * indexTokenPrice).toInt256();
+        cache.totalPositionPnl = position.isLong() ? cache.positionValue - position.sizeInUsd().toInt256() : position.sizeInUsd().toInt256() - cache.positionValue;
 
-        uint256 sizeDeltaInTokens;
+        if (cache.totalPositionPnl > 0) {
+            cache.pnlToken = position.isLong() ? market.longToken : market.shortToken;
+            cache.poolTokenAmount = MarketUtils.getPoolAmount(dataStore, market.marketToken, cache.pnlToken);
+            cache.poolTokenPrice = position.isLong() ? prices.longTokenPrice.min : prices.shortTokenPrice.min;
+            cache.poolTokenUsd = cache.poolTokenAmount * cache.poolTokenPrice;
+            cache.poolPnl = MarketUtils.getPnl(
+                dataStore,
+                market.marketToken,
+                market.longToken,
+                market.shortToken,
+                indexTokenPrice,
+                position.isLong(),
+                true
+            );
 
-        if (position.sizeInUsd() == sizeDeltaUsd) {
-            sizeDeltaInTokens = position.sizeInTokens();
-        } else {
-            if (position.isLong()) {
-                sizeDeltaInTokens = Calc.roundUpDivision(position.sizeInTokens() * sizeDeltaUsd, position.sizeInUsd());
-            } else {
-                sizeDeltaInTokens = position.sizeInTokens() * sizeDeltaUsd / position.sizeInUsd();
+            cache.cappedPoolPnl = MarketUtils.getCappedPnl(
+                dataStore,
+                market.marketToken,
+                position.isLong(),
+                cache.poolPnl,
+                cache.poolTokenUsd
+            );
+
+            if (cache.cappedPoolPnl != cache.poolPnl && cache.cappedPoolPnl > 0 && cache.poolPnl > 0) {
+                // divide by WEI_PRECISION to reduce the risk of overflow
+                cache.totalPositionPnl = cache.totalPositionPnl * (cache.cappedPoolPnl / Precision.WEI_PRECISION.toInt256()) / (cache.poolPnl / Precision.WEI_PRECISION.toInt256());
             }
         }
 
-        int256 positionPnlUsd = totalPositionPnl * sizeDeltaInTokens.toInt256() / position.sizeInTokens().toInt256();
+        cache.sizeDeltaInTokens;
 
-        return (positionPnlUsd, sizeDeltaInTokens);
+        if (position.sizeInUsd() == sizeDeltaUsd) {
+            cache.sizeDeltaInTokens = position.sizeInTokens();
+        } else {
+            if (position.isLong()) {
+                cache.sizeDeltaInTokens = Calc.roundUpDivision(position.sizeInTokens() * sizeDeltaUsd, position.sizeInUsd());
+            } else {
+                cache.sizeDeltaInTokens = position.sizeInTokens() * sizeDeltaUsd / position.sizeInUsd();
+            }
+        }
+
+        cache.positionPnlUsd = cache.totalPositionPnl * cache.sizeDeltaInTokens.toInt256() / position.sizeInTokens().toInt256();
+
+        return (cache.positionPnlUsd, cache.sizeDeltaInTokens);
     }
 
     // @dev convert sizeDeltaUsd to sizeDeltaInTokens
@@ -159,7 +206,7 @@ library PositionUtils {
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
         bool shouldValidateMinCollateralUsd
-    ) internal view {
+    ) public view {
         if (position.sizeInUsd() == 0 || position.sizeInTokens() == 0) {
             revert("Position size is zero");
         }
@@ -189,13 +236,16 @@ library PositionUtils {
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
         bool shouldValidateMinCollateralUsd
-    ) internal view returns (bool) {
+    ) public view returns (bool) {
         _IsPositionLiquidatableCache memory cache;
 
         (cache.positionPnlUsd, ) = getPositionPnlUsd(
+            dataStore,
+            market,
+            prices,
             position,
-            position.sizeInUsd(),
-            prices.indexTokenPrice.pickPriceForPnl(position.isLong(), false)
+            prices.indexTokenPrice.pickPriceForPnl(position.isLong(), false),
+            position.sizeInUsd()
         );
 
         cache.minCollateralFactor = MarketUtils.getMinCollateralFactor(dataStore, market.marketToken);
@@ -283,7 +333,7 @@ library PositionUtils {
         uint256 positionCollateralAmount,
         int256 positionPnlUsd,
         int256 openInterestDelta
-    ) internal view returns (bool) {
+    ) public view returns (bool) {
         Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(
             collateralToken,
             market,
