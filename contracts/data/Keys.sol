@@ -94,8 +94,10 @@ library Keys {
     // @dev key for the maximum request block age, after which the request will be considered expired
     bytes32 public constant REQUEST_EXPIRATION_AGE = keccak256(abi.encode("REQUEST_EXPIRATION_AGE"));
 
-    // @dev key for the max allowed leverage
-    bytes32 public constant MAX_LEVERAGE = keccak256(abi.encode("MAX_LEVERAGE"));
+    // @dev key for the min collateral factor
+    bytes32 public constant MIN_COLLATERAL_FACTOR = keccak256(abi.encode("MIN_COLLATERAL_FACTOR"));
+    // @dev key for the min collateral factor for open interest
+    bytes32 public constant MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST = keccak256(abi.encode("MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST"));
     // @dev key for the min allowed collateral in USD
     bytes32 public constant MIN_COLLATERAL_USD = keccak256(abi.encode("MIN_COLLATERAL_USD"));
 
@@ -383,6 +385,20 @@ library Keys {
             TOKEN_TRANSFER_GAS_LIMIT,
             token
         ));
+   }
+
+   function minCollateralFactorKey(address market) internal pure returns (bytes32) {
+       return keccak256(abi.encode(
+           MIN_COLLATERAL_FACTOR,
+           market
+       ));
+   }
+
+   function minCollateralFactorForOpenInterestKey(address market) internal pure returns (bytes32) {
+       return keccak256(abi.encode(
+           MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST,
+           market
+       ));
    }
 
    function tokenIdKey(address token) internal pure returns (bytes32) {

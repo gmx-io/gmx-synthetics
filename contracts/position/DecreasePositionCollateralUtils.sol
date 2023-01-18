@@ -93,12 +93,10 @@ library DecreasePositionCollateralUtils {
         MarketUtils.MarketPrices prices;
         address pnlToken;
         Price.Props pnlTokenPrice;
-        uint256 adjustedSizeDeltaUsd;
         uint256 initialCollateralAmount;
         uint256 nextPositionSizeInUsd;
         uint256 nextPositionBorrowingFactor;
     }
-
 
     // @dev handle the collateral changes of the position
     // @param params PositionUtils.UpdatePositionParams
@@ -121,11 +119,11 @@ library DecreasePositionCollateralUtils {
 
         Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.order.initialCollateralToken(), params.market, cache.prices);
 
-        (values.executionPrice, values.priceImpactAmount, values.priceImpactDiffUsd) = getExecutionPrice(params, cache.prices, cache.adjustedSizeDeltaUsd);
+        (values.executionPrice, values.priceImpactAmount, values.priceImpactDiffUsd) = getExecutionPrice(params, cache.prices, params.order.sizeDeltaUsd());
 
         (values.positionPnlUsd, values.sizeDeltaInTokens) = PositionUtils.getPositionPnlUsd(
             params.position,
-            cache.adjustedSizeDeltaUsd,
+            params.order.sizeDeltaUsd(),
             values.executionPrice
         );
 
@@ -169,7 +167,7 @@ library DecreasePositionCollateralUtils {
             collateralTokenPrice,
             params.market.longToken,
             params.market.shortToken,
-            cache.adjustedSizeDeltaUsd
+            params.order.sizeDeltaUsd()
         );
 
         // if there is a positive outputAmount, use the outputAmount to pay for fees and price impact
@@ -250,7 +248,7 @@ library DecreasePositionCollateralUtils {
     function getExecutionPrice(
         PositionUtils.UpdatePositionParams memory params,
         MarketUtils.MarketPrices memory prices,
-        uint256 adjustedSizeDeltaUsd
+        uint256 sizeDeltaUsd
     ) internal view returns (uint256, int256, uint256) {
         int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
@@ -259,7 +257,7 @@ library DecreasePositionCollateralUtils {
                 params.market.indexToken,
                 params.market.longToken,
                 params.market.shortToken,
-                -adjustedSizeDeltaUsd.toInt256(),
+                -sizeDeltaUsd.toInt256(),
                 params.order.isLong()
             )
         );
@@ -269,7 +267,7 @@ library DecreasePositionCollateralUtils {
             params.market.marketToken,
             prices.indexTokenPrice,
             priceImpactUsd,
-            adjustedSizeDeltaUsd
+            sizeDeltaUsd
         );
 
         uint256 priceImpactDiffUsd;
@@ -281,7 +279,7 @@ library DecreasePositionCollateralUtils {
             );
 
             // convert the max price impact to the min negative value
-            int256 minPriceImpactUsd = -Precision.applyFactor(adjustedSizeDeltaUsd, maxPriceImpactFactor).toInt256();
+            int256 minPriceImpactUsd = -Precision.applyFactor(sizeDeltaUsd, maxPriceImpactFactor).toInt256();
 
             if (priceImpactUsd < minPriceImpactUsd) {
                 priceImpactDiffUsd = (minPriceImpactUsd - priceImpactUsd).toUint256();
@@ -291,7 +289,7 @@ library DecreasePositionCollateralUtils {
 
         uint256 executionPrice = BaseOrderUtils.getExecutionPrice(
             params.contracts.oracle.getCustomPrice(params.market.indexToken),
-            adjustedSizeDeltaUsd,
+            sizeDeltaUsd,
             priceImpactUsd,
             params.order.acceptablePrice(),
             params.position.isLong(),
@@ -299,7 +297,7 @@ library DecreasePositionCollateralUtils {
         );
 
         int256 priceImpactAmount = PositionPricingUtils.getPriceImpactAmount(
-            adjustedSizeDeltaUsd,
+            sizeDeltaUsd,
             executionPrice,
             prices.indexTokenPrice.max,
             params.position.isLong(),

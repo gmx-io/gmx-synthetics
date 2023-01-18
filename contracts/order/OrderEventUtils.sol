@@ -101,6 +101,50 @@ library OrderEventUtils {
         );
     }
 
+    function emitOrderSizeDeltaAutoUpdated(
+        EventEmitter eventEmitter,
+        bytes32 key,
+        uint256 sizeDeltaUsd,
+        uint256 nextSizeDeltaUsd
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", key);
+
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "sizeDeltaUsd", sizeDeltaUsd);
+        eventData.uintItems.setItem(1, "nextSizeDeltaUsd", nextSizeDeltaUsd);
+
+        eventEmitter.emitEventLog1(
+            "OrderSizeDeltaAutoUpdated",
+            key,
+            eventData
+        );
+    }
+
+    function emitOrderCollateralDeltaAmountUpdated(
+        EventEmitter eventEmitter,
+        bytes32 key,
+        uint256 collateralDeltaAmount,
+        uint256 nextCollateralDeltaAmount
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", key);
+
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "collateralDeltaAmount", collateralDeltaAmount);
+        eventData.uintItems.setItem(1, "nextCollateralDeltaAmount", nextCollateralDeltaAmount);
+
+        eventEmitter.emitEventLog1(
+            "OrderCollateralDeltaAmountAutoUpdated",
+            key,
+            eventData
+        );
+    }
+
     function emitOrderCancelled(
         EventEmitter eventEmitter,
         bytes32 key,

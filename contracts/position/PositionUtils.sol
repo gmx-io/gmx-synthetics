@@ -37,6 +37,7 @@ library PositionUtils {
         BaseOrderUtils.ExecuteOrderParamsContracts contracts;
         Market.Props market;
         Order.Props order;
+        bytes32 orderKey;
         Position.Props position;
         bytes32 positionKey;
     }
@@ -58,14 +59,14 @@ library PositionUtils {
     // @dev _IsPositionLiquidatableCache struct used in isPositionLiquidatable
     // to avoid stack too deep errors
     // @param positionPnlUsd the position's pnl in USD
-    // @param maxLeverage the max allowed leverage
+    // @param minCollateralFactor the min collateral factor
     // @param collateralUsd the position's collateral in USD
     // @param priceImpactUsd the price impact of closing the position in USD
     // @param minCollateralUsd the minimum allowed collateral in USD
     // @param remainingCollateralUsd the remaining position collateral in USD
     struct _IsPositionLiquidatableCache {
         int256 positionPnlUsd;
-        uint256 maxLeverage;
+        uint256 minCollateralFactor;
         uint256 collateralUsd;
         int256 priceImpactUsd;
         int256 minCollateralUsd;
@@ -194,7 +195,8 @@ library PositionUtils {
             prices.indexTokenPrice.pickPriceForPnl(position.isLong(), false)
         );
 
-        cache.maxLeverage = dataStore.getUint(Keys.MAX_LEVERAGE);
+        cache.minCollateralFactor = MarketUtils.getMinCollateralFactor(dataStore, market.marketToken);
+
         Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(
             position.collateralToken(),
             market,
@@ -255,8 +257,8 @@ library PositionUtils {
             return true;
         }
 
-        // validate if position.size / (remaining collateral) exceeds max leverage
-        if (position.sizeInUsd() * Precision.FLOAT_PRECISION / cache.remainingCollateralUsd.toUint256() > cache.maxLeverage) {
+        // validate if (remaining collateral) / position.size is less than the min collateral factor (max leverage exceeded)
+        if (Precision.toFactor(cache.remainingCollateralUsd.toUint256(), position.sizeInUsd()) < cache.minCollateralFactor) {
             return true;
         }
 

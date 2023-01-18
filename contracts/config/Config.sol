@@ -200,7 +200,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedKeys[Keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT] = true;
 
         allowedKeys[Keys.REQUEST_EXPIRATION_AGE] = true;
-        allowedKeys[Keys.MAX_LEVERAGE] = true;
+        allowedKeys[Keys.MIN_COLLATERAL_FACTOR] = true;
+        allowedKeys[Keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST] = true;
         allowedKeys[Keys.MIN_COLLATERAL_USD] = true;
 
         allowedKeys[Keys.TOKEN_ID] = true;
@@ -224,7 +225,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedKeys[Keys.BORROWING_FACTOR] = true;
     }
 
-    function _validateKey(bytes32 key) internal {
+    function _validateKey(bytes32 key) internal view {
         if (!allowedKeys[key]) { revert("Invalid key"); }
     }
 

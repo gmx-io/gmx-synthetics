@@ -73,6 +73,7 @@ library IncreaseOrderUtils {
                 params.contracts,
                 params.market,
                 params.order,
+                params.key,
                 position,
                 positionKey
             ),

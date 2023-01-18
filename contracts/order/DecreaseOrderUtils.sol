@@ -38,6 +38,7 @@ library DecreaseOrderUtils {
                 params.contracts,
                 params.market,
                 order,
+                params.key,
                 position,
                 positionKey
             )

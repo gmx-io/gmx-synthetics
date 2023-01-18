@@ -16,6 +16,7 @@ import "./PositionStoreUtils.sol";
 import "./PositionUtils.sol";
 import "./PositionEventUtils.sol";
 import "../order/BaseOrderUtils.sol";
+import "../order/OrderEventUtils.sol";
 
 import "./DecreasePositionCollateralUtils.sol";
 
@@ -30,13 +31,11 @@ library DecreasePositionUtils {
     using Price for Price.Props;
 
     // @dev DecreasePositionResult struct for the results of decreasePosition
-    // @param adjustedSizeDeltaUsd the adjusted sizeDeltaUsd
     // @param outputToken the output token
     // @param outputAmount the output amount
     // @param secondaryOutputToken the secondary output token
     // @param secondaryOutputAmount the secondary output amount
     struct DecreasePositionResult {
-        uint256 adjustedSizeDeltaUsd;
         address outputToken;
         uint256 outputAmount;
         address secondaryOutputToken;
@@ -87,12 +86,18 @@ library DecreasePositionUtils {
 
         PositionUtils.updateFundingAndBorrowingState(params, cache.prices);
 
-        cache.adjustedSizeDeltaUsd = params.order.sizeDeltaUsd();
-
-        if (cache.adjustedSizeDeltaUsd > params.position.sizeInUsd()) {
+        if (params.order.sizeDeltaUsd() > params.position.sizeInUsd()) {
             if (params.order.orderType() == Order.OrderType.LimitDecrease ||
                 params.order.orderType() == Order.OrderType.StopLossDecrease) {
-                cache.adjustedSizeDeltaUsd = params.position.sizeInUsd();
+
+                OrderEventUtils.emitOrderSizeDeltaAutoUpdated(
+                    params.contracts.eventEmitter,
+                    params.orderKey,
+                    params.order.sizeDeltaUsd(),
+                    params.position.sizeInUsd()
+                );
+
+                params.order.setSizeDeltaUsd(params.position.sizeInUsd());
             } else {
                 revert("DecreasePositionUtils: Invalid order size");
             }
@@ -107,7 +112,7 @@ library DecreasePositionUtils {
             cache
         );
 
-        cache.nextPositionSizeInUsd = params.position.sizeInUsd() - cache.adjustedSizeDeltaUsd;
+        cache.nextPositionSizeInUsd = params.position.sizeInUsd() - params.order.sizeDeltaUsd();
         cache.nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(params.contracts.dataStore, params.market.marketToken, params.position.isLong());
 
         PositionUtils.updateTotalBorrowing(
@@ -163,7 +168,7 @@ library DecreasePositionUtils {
 
         PositionUtils.updateOpenInterest(
             params,
-            -cache.adjustedSizeDeltaUsd.toInt256(),
+            -params.order.sizeDeltaUsd().toInt256(),
             -values.sizeDeltaInTokens.toInt256()
         );
 
@@ -198,7 +203,7 @@ library DecreasePositionUtils {
             params.positionKey,
             params.position,
             values.executionPrice,
-            cache.adjustedSizeDeltaUsd,
+            params.order.sizeDeltaUsd(),
             values.sizeDeltaInTokens,
             cache.initialCollateralAmount - params.position.collateralAmount(),
             values.positionPnlUsd,
@@ -208,7 +213,6 @@ library DecreasePositionUtils {
         values = DecreasePositionCollateralUtils.swapWithdrawnCollateralToPnlToken(params, values, cache.pnlToken);
 
         return DecreasePositionResult(
-            cache.adjustedSizeDeltaUsd,
             values.output.outputToken,
             values.output.outputAmount,
             values.output.secondaryOutputToken,

@@ -13,7 +13,7 @@ const func = createDeployFunction({
   },
   libraryNames: ["GasUtils", "OrderUtils", "AdlUtils", "PositionStoreUtils", "OrderStoreUtils"],
   afterDeploy: async () => {
-    await setUintIfDifferent(hashString("MAX_LEVERAGE"), decimalToFloat(100), "max leverage");
+    await setUintIfDifferent(hashString("MIN_COLLATERAL_FACTOR"), decimalToFloat(1, 2), "max leverage"); // 1%
     await setUintIfDifferent(hashString("MIN_COLLATERAL_USD"), decimalToFloat(1), "min collateral USD");
   },
 });
