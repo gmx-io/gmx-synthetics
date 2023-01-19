@@ -262,6 +262,20 @@ library SwapUtils {
             true
         );
 
+        SwapPricingUtils.emitSwapInfo(
+            params.eventEmitter,
+            _params.market.marketToken,
+            _params.receiver,
+            _params.tokenIn,
+            cache.tokenOut,
+            cache.tokenInPrice.min,
+            cache.tokenOutPrice.max,
+            _params.amountIn,
+            cache.amountIn,
+            cache.amountOut,
+            priceImpactUsd
+        );
+
         SwapPricingUtils.emitSwapFeesCollected(
             params.eventEmitter,
             _params.market.marketToken,

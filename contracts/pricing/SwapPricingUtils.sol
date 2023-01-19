@@ -185,6 +185,44 @@ library SwapPricingUtils {
         return fees;
     }
 
+    function emitSwapInfo(
+        EventEmitter eventEmitter,
+        address market,
+        address receiver,
+        address tokenIn,
+        address tokenOut,
+        uint256 tokenInPrice,
+        uint256 tokenOutPrice,
+        uint256 amountIn,
+        uint256 amountInAfterFees,
+        uint256 amountOut,
+        int256 priceImpactUsd
+    ) internal {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(4);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "receiver", receiver);
+        eventData.addressItems.setItem(2, "tokenIn", tokenIn);
+        eventData.addressItems.setItem(3, "tokenOut", tokenOut);
+
+        eventData.uintItems.initItems(5);
+        eventData.uintItems.setItem(0, "tokenInPrice", tokenInPrice);
+        eventData.uintItems.setItem(1, "tokenOutPrice", tokenOutPrice);
+        eventData.uintItems.setItem(2, "amountIn", amountIn);
+        eventData.uintItems.setItem(3, "amountInAfterFees", amountInAfterFees);
+        eventData.uintItems.setItem(4, "amountOut", amountOut);
+
+        eventData.intItems.initItems(1);
+        eventData.intItems.setItem(0, "priceImpactUsd", priceImpactUsd);
+
+        eventEmitter.emitEventLog1(
+            "SwapInfo",
+            Cast.toBytes32(market),
+            eventData
+        );
+    }
+
     function emitSwapFeesCollected(
         EventEmitter eventEmitter,
         address market,
