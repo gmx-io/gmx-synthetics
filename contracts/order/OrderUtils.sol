@@ -117,6 +117,8 @@ library OrderUtils {
         order.setIsLong(params.isLong);
         order.setShouldUnwrapNativeToken(params.shouldUnwrapNativeToken);
 
+        CallbackUtils.validateCallbackGasLimit(dataStore, order.callbackGasLimit());
+
         uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee());
 

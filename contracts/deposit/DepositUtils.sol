@@ -166,6 +166,8 @@ library DepositUtils {
             )
         );
 
+        CallbackUtils.validateCallbackGasLimit(dataStore, deposit.callbackGasLimit());
+
         uint256 estimatedGasLimit = GasUtils.estimateExecuteDepositGasLimit(dataStore, deposit);
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee);
 

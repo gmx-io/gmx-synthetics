@@ -13,6 +13,7 @@ import "../oracle/Oracle.sol";
 import "../pricing/PositionPricingUtils.sol";
 
 import "./Position.sol";
+import "./PositionEventUtils.sol";
 import "./PositionStoreUtils.sol";
 import "./PositionUtils.sol";
 import "../order/BaseOrderUtils.sol";
@@ -201,6 +202,22 @@ library DecreasePositionCollateralUtils {
         // closing the position with zero price impact, just that if there were any collateral that could
         // partially pay for negative price impact, it would be sent to the pool instead
         if (BaseOrderUtils.isLiquidationOrder(params.order.orderType()) && values.remainingCollateralAmount < 0) {
+            PositionPricingUtils.emitPositionFeesInfo(
+                params.contracts.eventEmitter,
+                params.market.marketToken,
+                params.position.collateralToken(),
+                false,
+                fees
+            );
+
+            PositionEventUtils.emitLiquidationInfo(
+                params.contracts.eventEmitter,
+                params.orderKey,
+                params.position.collateralAmount(),
+                values.positionPnlUsd,
+                values.remainingCollateralAmount
+            );
+
             return getLiquidationValues(params, values, fees);
         }
 
@@ -324,7 +341,7 @@ library DecreasePositionCollateralUtils {
             // should be rare, and the difference should be small
             // in case it happens, the pool should be topped up with the required amount using
             // an insurance fund or similar mechanism
-            emitInsufficientFundingFeePayment(
+            PositionEventUtils.emitInsufficientFundingFeePayment(
                 params.contracts.eventEmitter,
                 params.market.marketToken,
                 params.position.collateralToken(),
@@ -456,29 +473,5 @@ library DecreasePositionCollateralUtils {
         }
 
         return swapPath[0] == MarketUtils.SWAP_COLLATERAL_TOKEN_TO_PNL_TOKEN;
-    }
-
-    function emitInsufficientFundingFeePayment(
-        EventEmitter eventEmitter,
-        address market,
-        address collateralToken,
-        uint256 fundingFeeAmount,
-        uint256 collateralAmount
-    ) internal {
-        EventUtils.EventLogData memory eventData;
-
-        eventData.addressItems.initItems(2);
-        eventData.addressItems.setItem(0, "market", market);
-        eventData.addressItems.setItem(1, "collateralToken", collateralToken);
-
-        eventData.uintItems.initItems(2);
-        eventData.uintItems.setItem(0, "fundingFeeAmount", fundingFeeAmount);
-        eventData.uintItems.setItem(1, "collateralAmount", collateralAmount);
-
-        eventEmitter.emitEventLog1(
-            "InsufficientFundingFeePayment",
-            Cast.toBytes32(market),
-            eventData
-        );
     }
 }

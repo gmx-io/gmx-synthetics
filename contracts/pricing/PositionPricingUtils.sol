@@ -475,6 +475,41 @@ library PositionPricingUtils {
         bool isIncrease,
         PositionFees memory fees
     ) external {
+        _emitPositionFees(
+            eventEmitter,
+            market,
+            collateralToken,
+            isIncrease,
+            fees,
+            "PositionFeesCollected"
+        );
+    }
+
+    function emitPositionFeesInfo(
+        EventEmitter eventEmitter,
+        address market,
+        address collateralToken,
+        bool isIncrease,
+        PositionFees memory fees
+    ) external {
+        _emitPositionFees(
+            eventEmitter,
+            market,
+            collateralToken,
+            isIncrease,
+            fees,
+            "PositionFeesInfo"
+        );
+    }
+
+    function _emitPositionFees(
+        EventEmitter eventEmitter,
+        address market,
+        address collateralToken,
+        bool isIncrease,
+        PositionFees memory fees,
+        string memory eventName
+    ) internal {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(3);
@@ -506,7 +541,7 @@ library PositionPricingUtils {
         eventData.boolItems.setItem(2, "isIncrease", isIncrease);
 
         eventEmitter.emitEventLog1(
-            "PositionFeesCollected",
+            eventName,
             Cast.toBytes32(market),
             eventData
         );

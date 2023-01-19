@@ -4,6 +4,9 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/Address.sol";
 
+import "../data/DataStore.sol";
+import "../data/Keys.sol";
+
 import "./IOrderCallbackReceiver.sol";
 import "./IDepositCallbackReceiver.sol";
 import "./IWithdrawalCallbackReceiver.sol";
@@ -25,6 +28,13 @@ library CallbackUtils {
     using Deposit for Deposit.Props;
     using Withdrawal for Withdrawal.Props;
     using Order for Order.Props;
+
+    function validateCallbackGasLimit(DataStore dataStore, uint256 callbackGasLimit) internal view {
+        uint256 maxCallbackGasLimit = dataStore.getUint(Keys.MAX_CALLBACK_GAS_LIMIT);
+        if (callbackGasLimit > maxCallbackGasLimit) {
+            revert("Max callback gas limit exceeded");
+        }
+    }
 
     // @dev called after a deposit execution
     // @param key the key of the deposit

@@ -111,4 +111,52 @@ library PositionEventUtils {
         );
     }
 
+    function emitLiquidationInfo(
+        EventEmitter eventEmitter,
+        bytes32 orderKey,
+        uint256 positionCollateralAmount,
+        int256 positionPnlUsd,
+        int256 remainingCollateralAmount
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "orderKey", orderKey);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "positionCollateralAmount", positionCollateralAmount);
+
+        eventData.intItems.initItems(2);
+        eventData.intItems.setItem(0, "positionPnlUsd", positionPnlUsd);
+        eventData.intItems.setItem(1, "remainingCollateralAmount", remainingCollateralAmount);
+
+        eventEmitter.emitEventLog(
+            "LiquidationInfo",
+            eventData
+        );
+    }
+
+    function emitInsufficientFundingFeePayment(
+        EventEmitter eventEmitter,
+        address market,
+        address collateralToken,
+        uint256 fundingFeeAmount,
+        uint256 collateralAmount
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "collateralToken", collateralToken);
+
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "fundingFeeAmount", fundingFeeAmount);
+        eventData.uintItems.setItem(1, "collateralAmount", collateralAmount);
+
+        eventEmitter.emitEventLog1(
+            "InsufficientFundingFeePayment",
+            Cast.toBytes32(market),
+            eventData
+        );
+    }
 }

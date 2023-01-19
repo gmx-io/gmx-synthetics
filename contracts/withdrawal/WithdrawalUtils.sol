@@ -132,6 +132,8 @@ library WithdrawalUtils {
             )
         );
 
+        CallbackUtils.validateCallbackGasLimit(dataStore, withdrawal.callbackGasLimit());
+
         uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(dataStore, withdrawal);
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee);
 

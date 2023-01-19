@@ -7,6 +7,8 @@ export type BaseMarketConfig = {
   reserveFactorLongs: BigNumberish;
   reserveFactorShorts: BigNumberish;
 
+  minCollateralFactor: BigNumberish;
+
   maxPnlFactorLongs: BigNumberish;
   maxPnlFactorShorts: BigNumberish;
 
@@ -35,6 +37,8 @@ const baseMarketConfig: BaseMarketConfig = {
   reserveFactorLongs: decimalToFloat(5, 1), // 50%,
   reserveFactorShorts: decimalToFloat(5, 1), // 50%,
 
+  minCollateralFactor: decimalToFloat(1, 2), // 1%
+
   maxPnlFactorLongs: decimalToFloat(5, 1), // 50%
   maxPnlFactorShorts: decimalToFloat(5, 1), // 50%
 
@@ -60,6 +64,8 @@ const baseMarketConfig: BaseMarketConfig = {
 const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
   reserveFactorLongs: decimalToFloat(5, 1), // 50%,
   reserveFactorShorts: decimalToFloat(5, 1), // 50%,
+
+  minCollateralFactor: decimalToFloat(1, 2), // 1%
 
   maxPnlFactorLongs: decimalToFloat(5, 1), // 50%
   maxPnlFactorShorts: decimalToFloat(5, 1), // 50%
