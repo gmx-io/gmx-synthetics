@@ -134,6 +134,10 @@ library Keys {
     bytes32 public constant COLLATERAL_SUM = keccak256(abi.encode("COLLATERAL_SUM"));
     // @dev key for pool amount
     bytes32 public constant POOL_AMOUNT = keccak256(abi.encode("POOL_AMOUNT"));
+    // @dev key for max pool amount
+    bytes32 public constant MAX_POOL_AMOUNT = keccak256(abi.encode("MAX_POOL_AMOUNT"));
+    // @dev key for max open interest
+    bytes32 public constant MAX_OPEN_INTEREST = keccak256(abi.encode("MAX_OPEN_INTEREST"));
     // @dev key for position impact pool amount
     bytes32 public constant POSITION_IMPACT_POOL_AMOUNT = keccak256(abi.encode("POSITION_IMPACT_POOL_AMOUNT"));
     // @dev key for swap impact pool amount
@@ -578,6 +582,22 @@ library Keys {
             POOL_AMOUNT,
             market,
             token
+        ));
+    }
+
+    function maxPoolAmountKey(address market, address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MAX_POOL_AMOUNT,
+            market,
+            token
+        ));
+    }
+
+    function maxOpenInterestKey(address market, bool isLong) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MAX_OPEN_INTEREST,
+            market,
+            isLong
         ));
     }
 

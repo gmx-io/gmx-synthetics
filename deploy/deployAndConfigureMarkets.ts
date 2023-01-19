@@ -44,6 +44,25 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
     );
   }
 
+  async function setMinCollateralFactor(marketToken: symbol, minCollateralFactor: number) {
+    const key = keys.minCollateralFactorKey(marketToken);
+    await setUintIfDifferent(key, minCollateralFactor, `min collateral factor ${marketToken.toString()}`);
+  }
+
+  async function setMaxPoolAmount(marketToken: symbol, token: string, maxPoolAmount: number) {
+    const key = keys.maxPoolAmountKey(marketToken, token);
+    await setUintIfDifferent(key, maxPoolAmount, `max pool amount ${marketToken.toString()} ${token.toString()}`);
+  }
+
+  async function setMaxOpenInterest(marketToken: symbol, isLong: boolean, maxOpenInterest: number) {
+    const key = keys.maxOpenInterestKey(marketToken, isLong);
+    await setUintIfDifferent(
+      key,
+      maxOpenInterest,
+      `max open interest ${marketToken.toString()} ${isLong ? "long" : "short"}`
+    );
+  }
+
   async function setMaxPnlFactor(marketToken: symbol, isLong: boolean, maxPnlFactor: number) {
     const key = keys.maxPnlFactorKey(marketToken, isLong);
     await setUintIfDifferent(
@@ -73,6 +92,14 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
       roleStore.address,
       dataStore.address
     );
+
+    await setMinCollateralFactor(marketToken, marketConfig.minCollateralFactor);
+
+    await setMaxPoolAmount(marketToken, longToken, marketConfig.maxLongTokenPoolAmount);
+    await setMaxPoolAmount(marketToken, shortToken, marketConfig.maxShortTokenPoolAmount);
+
+    await setMaxOpenInterest(marketToken, true, marketConfig.maxOpenInterestForLongs);
+    await setMaxOpenInterest(marketToken, false, marketConfig.maxOpenInterestForShorts);
 
     await setReserveFactor(marketToken, true, marketConfig.reserveFactorLongs);
     await setReserveFactor(marketToken, false, marketConfig.reserveFactorShorts);

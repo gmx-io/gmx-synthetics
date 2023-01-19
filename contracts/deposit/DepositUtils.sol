@@ -471,6 +471,12 @@ library DepositUtils {
             (amountAfterFees + feesForPool).toInt256()
         );
 
+        MarketUtils.validatePoolAmount(
+            params.dataStore,
+            _params.market.marketToken,
+            _params.tokenIn
+        );
+
         MarketToken(payable(_params.market.marketToken)).mint(_params.receiver, mintAmount);
 
         return mintAmount;

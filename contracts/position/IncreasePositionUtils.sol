@@ -139,6 +139,16 @@ library IncreasePositionUtils {
             cache.sizeDeltaInTokens.toInt256()
         );
 
+        if (params.order.sizeDeltaUsd() > 0) {
+            MarketUtils.validateOpenInterest(
+                params.contracts.dataStore,
+                params.market.marketToken,
+                params.market.longToken,
+                params.market.shortToken,
+                params.order.isLong()
+            );
+        }
+
         MarketUtils.validateReserve(
             params.contracts.dataStore,
             params.market,

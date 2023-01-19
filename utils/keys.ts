@@ -20,6 +20,8 @@ export const ACCOUNT_ORDER_LIST = hashString("ACCOUNT_ORDER_LIST");
 export const MIN_ORACLE_BLOCK_CONFIRMATIONS = hashString("MIN_ORACLE_BLOCK_CONFIRMATIONS");
 export const MAX_ORACLE_PRICE_AGE = hashString("MAX_ORACLE_PRICE_AGE");
 export const MIN_ORACLE_SIGNERS = hashString("MIN_ORACLE_SIGNERS");
+
+export const MIN_COLLATERAL_FACTOR = hashString("MIN_COLLATERAL_FACTOR");
 export const MIN_COLLATERAL_USD = hashString("MIN_COLLATERAL_USD");
 
 export const FEE_RECEIVER_FACTOR = hashString("FEE_RECEIVER_FACTOR");
@@ -38,6 +40,8 @@ export const SWAP_FEE_FACTOR = hashString("SWAP_FEE_FACTOR");
 export const SWAP_IMPACT_FACTOR = hashString("SWAP_IMPACT_FACTOR");
 export const SWAP_IMPACT_EXPONENT_FACTOR = hashString("SWAP_IMPACT_EXPONENT_FACTOR");
 export const POOL_AMOUNT = hashString("POOL_AMOUNT");
+export const MAX_POOL_AMOUNT = hashString("MAX_POOL_AMOUNT");
+export const MAX_OPEN_INTEREST = hashString("MAX_OPEN_INTEREST");
 export const SWAP_IMPACT_POOL_AMOUNT = hashString("SWAP_IMPACT_POOL_AMOUNT");
 
 export const POSITION_IMPACT_FACTOR = hashString("POSITION_IMPACT_FACTOR");
@@ -79,6 +83,10 @@ export function oracleTypeKey(token: string) {
   return hashData(["bytes32", "address"], [ORACLE_TYPE, token]);
 }
 
+export function minCollateralFactorKey(market: string) {
+  return hashData(["bytes32", "address"], [MIN_COLLATERAL_FACTOR, market]);
+}
+
 export function reserveFactorKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [RESERVE_FACTOR, market, isLong]);
 }
@@ -93,6 +101,14 @@ export function maxPnlFactorForWithdrawalsKey(market: string, isLong: boolean) {
 
 export function poolAmountKey(market: string, token: string) {
   return hashData(["bytes32", "address", "address"], [POOL_AMOUNT, market, token]);
+}
+
+export function maxPoolAmountKey(market: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [MAX_POOL_AMOUNT, market, token]);
+}
+
+export function maxOpenInterestKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [MAX_OPEN_INTEREST, market, isLong]);
 }
 
 export function swapImpactPoolAmountKey(market: string, token: string) {

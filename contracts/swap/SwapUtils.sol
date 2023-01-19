@@ -248,6 +248,12 @@ library SwapUtils {
             _params.tokenIn == _params.market.shortToken ? cache.tokenInPrice : cache.tokenOutPrice
         );
 
+        MarketUtils.validatePoolAmount(
+            params.dataStore,
+            _params.market.marketToken,
+            _params.tokenIn
+        );
+
         MarketUtils.validateReserve(
             params.dataStore,
             _params.market,

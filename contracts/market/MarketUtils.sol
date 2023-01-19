@@ -443,6 +443,14 @@ library MarketUtils {
         return dataStore.getUint(Keys.poolAmountKey(market, token));
     }
 
+    function getMaxPoolAmount(DataStore dataStore, address market, address token) internal view returns (uint256) {
+        return dataStore.getUint(Keys.maxPoolAmountKey(market, token));
+    }
+
+    function getMaxOpenInterest(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
+        return dataStore.getUint(Keys.maxOpenInterestKey(market, isLong));
+    }
+
     function incrementClaimableCollateralAmount(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -993,6 +1001,34 @@ library MarketUtils {
         );
 
         return pnl * Precision.FLOAT_PRECISION.toInt256() / poolUsd.toInt256();
+    }
+
+    function validateOpenInterest(
+        DataStore dataStore,
+        address market,
+        address longToken,
+        address shortToken,
+        bool isLong
+    ) internal view {
+        uint256 openInterest = getOpenInterest(dataStore, market, longToken, shortToken, isLong);
+        uint256 maxOpenInterest = getMaxOpenInterest(dataStore, market, isLong);
+
+        if (openInterest > maxOpenInterest) {
+            revert("Max open interest exceeded");
+        }
+    }
+
+    function validatePoolAmount(
+        DataStore dataStore,
+        address market,
+        address token
+    ) internal view {
+        uint256 poolAmount = getPoolAmount(dataStore, market, token);
+        uint256 poolAmountCap = getMaxPoolAmount(dataStore, market, token);
+
+        if (poolAmount > poolAmountCap) {
+            revert("Max pool amount exceeded");
+        }
     }
 
     // @dev validate that the amount of tokens required to be reserved for positions
