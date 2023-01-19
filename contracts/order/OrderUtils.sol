@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
-import "../fee/FeeReceiver.sol";
 
 import "./Order.sol";
 import "./OrderVault.sol";

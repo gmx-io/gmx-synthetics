@@ -14,6 +14,17 @@ library Keys {
 
     bytes32 public constant REENTRANCY_GUARD_STATUS = keccak256(abi.encode("REENTRANCY_GUARD_STATUS"));
 
+    // @dev key for deposit fees
+    bytes32 public constant DEPOSIT_FEE = keccak256(abi.encode("DEPOSIT_FEE"));
+    // @dev key for withdrawal fees
+    bytes32 public constant WITHDRAWAL_FEE = keccak256(abi.encode("WITHDRAWAL_FEE"));
+    // @dev key for swap fees
+    bytes32 public constant SWAP_FEE = keccak256(abi.encode("SWAP_FEE"));
+    // @dev key for position fees
+    bytes32 public constant POSITION_FEE = keccak256(abi.encode("POSITION_FEE"));
+
+    bytes32 public constant CLAIMABLE_FEE_AMOUNT = keccak256(abi.encode("CLAIMABLE_FEE_AMOUNT"));
+
     bytes32 public constant MARKET_LIST = keccak256(abi.encode("MARKET_LIST"));
 
     bytes32 public constant DEPOSIT_LIST = keccak256(abi.encode("DEPOSIT_LIST"));
@@ -214,6 +225,10 @@ library Keys {
 
     function accountOrderListKey(address account) internal pure returns (bytes32) {
         return keccak256(abi.encode(ACCOUNT_ORDER_LIST, account));
+    }
+
+    function claimableFeeAmountKey(address market, address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(CLAIMABLE_FEE_AMOUNT, market, token));
     }
 
     // @dev key for deposit gas limit

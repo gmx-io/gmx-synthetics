@@ -82,7 +82,6 @@ library DecreaseOrderUtils {
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.contracts.oracle,
-                params.contracts.feeReceiver,
                 result.outputToken,
                 result.outputAmount,
                 params.swapPathMarkets,

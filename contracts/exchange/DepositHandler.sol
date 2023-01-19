@@ -26,20 +26,17 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
     EventEmitter public immutable eventEmitter;
     DepositVault public immutable depositVault;
     Oracle public immutable oracle;
-    FeeReceiver public immutable feeReceiver;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         DepositVault _depositVault,
-        Oracle _oracle,
-        FeeReceiver _feeReceiver
+        Oracle _oracle
     ) RoleModule(_roleStore) GlobalReentrancyGuard(_dataStore) {
         eventEmitter = _eventEmitter;
         depositVault = _depositVault;
         oracle = _oracle;
-        feeReceiver = _feeReceiver;
     }
 
     // @dev creates a deposit in the deposit store
@@ -161,7 +158,6 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
             eventEmitter,
             depositVault,
             oracle,
-            feeReceiver,
             key,
             oracleBlockNumbers,
             keeper,

@@ -96,7 +96,6 @@ library BaseOrderUtils {
     // @param orderVault OrderVault
     // @param oracle Oracle
     // @param swapHandler SwapHandler
-    // @param feeReceiver FeeReceiver
     // @param referralStorage IReferralStorage
     struct ExecuteOrderParamsContracts {
         DataStore dataStore;
@@ -104,7 +103,6 @@ library BaseOrderUtils {
         OrderVault orderVault;
         Oracle oracle;
         SwapHandler swapHandler;
-        FeeReceiver feeReceiver;
         IReferralStorage referralStorage;
     }
 

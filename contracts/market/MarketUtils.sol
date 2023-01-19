@@ -19,9 +19,6 @@ import "../order/Order.sol";
 import "../oracle/Oracle.sol";
 import "../price/Price.sol";
 
-import "../fee/FeeReceiver.sol";
-import "../fee/FeeUtils.sol";
-
 import "../utils/Calc.sol";
 import "../utils/Precision.sol";
 

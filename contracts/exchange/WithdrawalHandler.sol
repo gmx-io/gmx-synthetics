@@ -27,20 +27,17 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
     EventEmitter public immutable eventEmitter;
     WithdrawalVault public immutable withdrawalVault;
     Oracle public immutable oracle;
-    FeeReceiver public immutable feeReceiver;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         WithdrawalVault _withdrawalVault,
-        Oracle _oracle,
-        FeeReceiver _feeReceiver
+        Oracle _oracle
     ) RoleModule(_roleStore) GlobalReentrancyGuard(_dataStore) {
         eventEmitter = _eventEmitter;
         withdrawalVault = _withdrawalVault;
         oracle = _oracle;
-        feeReceiver = _feeReceiver;
     }
 
     // @dev creates a withdrawal in the withdrawal store
@@ -163,7 +160,6 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
             eventEmitter,
             withdrawalVault,
             oracle,
-            feeReceiver,
             key,
             oracleBlockNumbers,
             keeper,

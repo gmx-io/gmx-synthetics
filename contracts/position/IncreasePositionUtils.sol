@@ -6,7 +6,6 @@ import "../utils/Precision.sol";
 
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
-import "../fee/FeeReceiver.sol";
 
 import "../oracle/Oracle.sol";
 import "../pricing/PositionPricingUtils.sol";
@@ -237,12 +236,13 @@ library IncreasePositionUtils {
             params.order.sizeDeltaUsd()
         );
 
-        PricingUtils.transferFees(
-            params.contracts.feeReceiver,
+        FeeUtils.incrementClaimableFeeAmount(
+            params.contracts.dataStore,
+            params.contracts.eventEmitter,
             params.market.marketToken,
             params.position.collateralToken(),
             fees.feeReceiverAmount,
-            FeeUtils.POSITION_FEE
+            Keys.POSITION_FEE
         );
 
         collateralDeltaAmount -= fees.totalNetCostAmount.toInt256();

@@ -38,7 +38,6 @@ library SwapOrderUtils {
             params.contracts.dataStore,
             params.contracts.eventEmitter,
             params.contracts.oracle,
-            params.contracts.feeReceiver,
             params.order.initialCollateralToken(),
             params.order.initialCollateralDeltaAmount(),
             params.swapPathMarkets,

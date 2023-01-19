@@ -8,6 +8,7 @@ import "../event/EventEmitter.sol";
 import "../oracle/Oracle.sol";
 import "../pricing/SwapPricingUtils.sol";
 import "../token/TokenUtils.sol";
+import "../fee/FeeUtils.sol";
 
 /**
  * @title SwapUtils
@@ -30,7 +31,6 @@ library SwapUtils {
      * @param dataStore The contract that provides access to data stored on-chain.
      * @param eventEmitter The contract that emits events.
      * @param oracle The contract that provides access to price data from oracles.
-     * @param feeReceiver The contract that receives fees for the swap operation.
      * @param tokenIn The address of the token that is being swapped.
      * @param amountIn The amount of the token that is being swapped.
      * @param markets An array of market properties, specifying the markets in which the swap should be executed.
@@ -42,7 +42,6 @@ library SwapUtils {
         DataStore dataStore;
         EventEmitter eventEmitter;
         Oracle oracle;
-        FeeReceiver feeReceiver;
         address tokenIn;
         uint256 amountIn;
         Market.Props[] markets;
@@ -95,7 +94,7 @@ library SwapUtils {
      * @return A tuple containing the address of the token that was received as
      * part of the swap and the amount of the received token.
      */
-    function swap(SwapParams memory params) internal returns (address, uint256) {
+    function swap(SwapParams memory params) external returns (address, uint256) {
         address tokenOut = params.tokenIn;
         uint256 outputAmount = params.amountIn;
 
@@ -150,12 +149,13 @@ library SwapUtils {
             _params.amountIn
         );
 
-        PricingUtils.transferFees(
-            params.feeReceiver,
+        FeeUtils.incrementClaimableFeeAmount(
+            params.dataStore,
+            params.eventEmitter,
             _params.market.marketToken,
             _params.tokenIn,
             fees.feeReceiverAmount,
-            FeeUtils.SWAP_FEE
+            Keys.SWAP_FEE
         );
 
         int256 priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(

@@ -36,7 +36,6 @@ contract BaseOrderHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
     OrderVault public immutable orderVault;
     SwapHandler public immutable swapHandler;
     Oracle public immutable oracle;
-    FeeReceiver public immutable feeReceiver;
     IReferralStorage public immutable referralStorage;
 
     constructor(
@@ -46,14 +45,12 @@ contract BaseOrderHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         OrderVault _orderVault,
         Oracle _oracle,
         SwapHandler _swapHandler,
-        FeeReceiver _feeReceiver,
         IReferralStorage _referralStorage
     ) RoleModule(_roleStore) GlobalReentrancyGuard(_dataStore) {
         eventEmitter = _eventEmitter;
         orderVault = _orderVault;
         oracle = _oracle;
         swapHandler = _swapHandler;
-        feeReceiver = _feeReceiver;
         referralStorage = _referralStorage;
     }
 
@@ -84,7 +81,6 @@ contract BaseOrderHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         params.contracts.orderVault = orderVault;
         params.contracts.oracle = oracle;
         params.contracts.swapHandler = swapHandler;
-        params.contracts.feeReceiver = feeReceiver;
         params.contracts.referralStorage = referralStorage;
 
         params.oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(

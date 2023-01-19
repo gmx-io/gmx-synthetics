@@ -60,7 +60,6 @@ library DepositUtils {
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
     // @param oracle Oracle
-    // @param feeReceiver FeeReceiver
     // @param key the key of the deposit to execute
     // @param oracleBlockNumbers the oracle block numbers for the prices in oracle
     // @param keeper the address of the keeper executing the deposit
@@ -70,7 +69,6 @@ library DepositUtils {
         EventEmitter eventEmitter;
         DepositVault depositVault;
         Oracle oracle;
-        FeeReceiver feeReceiver;
         bytes32 key;
         uint256[] oracleBlockNumbers;
         address keeper;
@@ -355,12 +353,13 @@ library DepositUtils {
             _params.amount
         );
 
-        PricingUtils.transferFees(
-            params.feeReceiver,
+        FeeUtils.incrementClaimableFeeAmount(
+            params.dataStore,
+            params.eventEmitter,
             _params.market.marketToken,
             _params.tokenIn,
             fees.feeReceiverAmount,
-            FeeUtils.DEPOSIT_FEE
+            Keys.DEPOSIT_FEE
         );
 
         SwapPricingUtils.emitSwapFeesCollected(

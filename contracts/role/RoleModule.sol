@@ -81,7 +81,7 @@ contract RoleModule {
     }
 
     /**
-     * @dev Only allows addresses with the MARKET_KEEPER role to call the function.
+     * @dev Only allows addresses with the FEE_KEEPER role to call the function.
      */
     modifier onlyFeeKeeper() {
         _validateRole(Role.FEE_KEEPER, "FEE_KEEPER");

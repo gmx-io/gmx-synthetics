@@ -18,7 +18,6 @@ contract LiquidationHandler is BaseOrderHandler {
         OrderVault _orderVault,
         Oracle _oracle,
         SwapHandler _swapHandler,
-        FeeReceiver _feeReceiver,
         IReferralStorage _referralStorage
     ) BaseOrderHandler(
         _roleStore,
@@ -27,7 +26,6 @@ contract LiquidationHandler is BaseOrderHandler {
         _orderVault,
         _oracle,
         _swapHandler,
-        _feeReceiver,
         _referralStorage
     ) {}
 

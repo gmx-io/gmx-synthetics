@@ -60,7 +60,6 @@ library WithdrawalUtils {
      * @param eventEmitter The event emitter that is used to emit events.
      * @param withdrawalVault WithdrawalVault.
      * @param oracle The oracle that provides market prices.
-     * @param feeReceiver The address that will receive the withdrawal fees.
      * @param key The unique identifier of the withdrawal to execute.
      * @param oracleBlockNumbers The block numbers for the oracle prices.
      * @param keeper The keeper that is executing the withdrawal.
@@ -71,7 +70,6 @@ library WithdrawalUtils {
         EventEmitter eventEmitter;
         WithdrawalVault withdrawalVault;
         Oracle oracle;
-        FeeReceiver feeReceiver;
         bytes32 key;
         uint256[] oracleBlockNumbers;
         address keeper;
@@ -243,12 +241,13 @@ library WithdrawalUtils {
             longTokenOutputAmount
         );
 
-        PricingUtils.transferFees(
-            params.feeReceiver,
+        FeeUtils.incrementClaimableFeeAmount(
+            params.dataStore,
+            params.eventEmitter,
             market.marketToken,
             market.longToken,
             longTokenFees.feeReceiverAmount,
-            FeeUtils.WITHDRAWAL_FEE
+            Keys.WITHDRAWAL_FEE
         );
 
         SwapPricingUtils.SwapFees memory shortTokenFees = SwapPricingUtils.getSwapFees(
@@ -257,12 +256,13 @@ library WithdrawalUtils {
             shortTokenOutputAmount
         );
 
-        PricingUtils.transferFees(
-            params.feeReceiver,
+        FeeUtils.incrementClaimableFeeAmount(
+            params.dataStore,
+            params.eventEmitter,
             market.marketToken,
             market.shortToken,
             shortTokenFees.feeReceiverAmount,
-            FeeUtils.WITHDRAWAL_FEE
+            Keys.WITHDRAWAL_FEE
         );
 
         // the pool will be reduced by the outputAmount minus the fees for the pool

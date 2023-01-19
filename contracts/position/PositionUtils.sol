@@ -45,14 +45,12 @@ library PositionUtils {
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
     // @param oracle Oracle
-    // @param feeReceiver FeeReceiver
     // @param referralStorage IReferralStorage
     struct UpdatePositionParamsContracts {
         DataStore dataStore;
         EventEmitter eventEmitter;
         Oracle oracle;
         SwapHandler swapHandler;
-        FeeReceiver feeReceiver;
         IReferralStorage referralStorage;
     }
 

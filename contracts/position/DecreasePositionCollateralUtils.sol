@@ -7,7 +7,6 @@ import "../utils/RevertUtils.sol";
 
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
-import "../fee/FeeReceiver.sol";
 
 import "../oracle/Oracle.sol";
 import "../pricing/PositionPricingUtils.sol";
@@ -254,12 +253,13 @@ library DecreasePositionCollateralUtils {
             );
         }
 
-        PricingUtils.transferFees(
-            params.contracts.feeReceiver,
+        FeeUtils.incrementClaimableFeeAmount(
+            params.contracts.dataStore,
+            params.contracts.eventEmitter,
             params.market.marketToken,
             params.position.collateralToken(),
             fees.feeReceiverAmount,
-            FeeUtils.POSITION_FEE
+            Keys.POSITION_FEE
         );
 
         return (values, fees);
@@ -390,7 +390,6 @@ library DecreasePositionCollateralUtils {
                     params.contracts.dataStore,
                     params.contracts.eventEmitter,
                     params.contracts.oracle,
-                    params.contracts.feeReceiver,
                     params.position.collateralToken(), // tokenIn
                     values.output.outputAmount, // amountIn
                     swapPath, // markets
@@ -432,7 +431,6 @@ library DecreasePositionCollateralUtils {
                     params.contracts.dataStore,
                     params.contracts.eventEmitter,
                     params.contracts.oracle,
-                    params.contracts.feeReceiver,
                     pnlToken, // tokenIn
                     profitAmount, // amountIn
                     swapPath, // markets
