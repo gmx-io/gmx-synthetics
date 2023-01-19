@@ -3,7 +3,6 @@
 pragma solidity ^0.8.0;
 
 import "../adl/AdlUtils.sol";
-import "../exchange/ExchangeUtils.sol";
 
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
@@ -135,7 +134,7 @@ library DepositUtils {
             uint256 wntAmount = depositVault.recordTransferIn(wnt);
             require(wntAmount >= params.executionFee, "DepositUtils: invalid wntAmount");
 
-            ExchangeUtils.handleExcessExecutionFee(
+            GasUtils.handleExcessExecutionFee(
                 dataStore,
                 depositVault,
                 wntAmount,

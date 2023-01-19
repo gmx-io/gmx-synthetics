@@ -102,7 +102,7 @@ library SwapPricingUtils {
         // for example, if there is $2000 of ETH and $1000 of USDC in the pool
         // adding $1999 USDC into the pool will reduce absolute balance from $1000 to $999 but it does not
         // help rebalance the pool much, the isSameSideRebalance value helps avoid gaming using this case
-        bool isSameSideRebalance = poolParams.poolUsdForTokenA <= poolParams.poolUsdForTokenB == poolParams.nextPoolUsdForTokenA <= poolParams.nextPoolUsdForTokenB;
+        bool isSameSideRebalance = (poolParams.poolUsdForTokenA <= poolParams.poolUsdForTokenB) == (poolParams.nextPoolUsdForTokenA <= poolParams.nextPoolUsdForTokenB);
         uint256 impactExponentFactor = dataStore.getUint(Keys.swapImpactExponentFactorKey(market));
 
         if (isSameSideRebalance) {

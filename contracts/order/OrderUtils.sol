@@ -6,8 +6,6 @@ import "../data/DataStore.sol";
 import "../data/Keys.sol";
 import "../fee/FeeReceiver.sol";
 
-import "../exchange/ExchangeUtils.sol";
-
 import "./Order.sol";
 import "./OrderVault.sol";
 import "./OrderStoreUtils.sol";
@@ -81,7 +79,7 @@ library OrderUtils {
             uint256 wntAmount = orderVault.recordTransferIn(wnt);
             require(wntAmount >= params.numbers.executionFee, "OrderUtils: invalid wntAmount");
 
-            ExchangeUtils.handleExcessExecutionFee(
+            GasUtils.handleExcessExecutionFee(
                 dataStore,
                 orderVault,
                 wntAmount,

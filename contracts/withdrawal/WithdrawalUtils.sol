@@ -3,7 +3,6 @@
 pragma solidity ^0.8.0;
 
 import "../adl/AdlUtils.sol";
-import "../exchange/ExchangeUtils.sol";
 
 import "../data/DataStore.sol";
 
@@ -104,7 +103,7 @@ library WithdrawalUtils {
         uint256 wntAmount = withdrawalVault.recordTransferIn(wnt);
         require(wntAmount >= params.executionFee, "WithdrawalUtils: invalid wntAmount");
 
-        ExchangeUtils.handleExcessExecutionFee(
+        GasUtils.handleExcessExecutionFee(
             dataStore,
             withdrawalVault,
             wntAmount,

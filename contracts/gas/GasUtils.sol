@@ -84,6 +84,28 @@ library GasUtils {
         }
     }
 
+    function handleExcessExecutionFee(
+        DataStore dataStore,
+        StrictBank bank,
+        uint256 wntAmount,
+        uint256 executionFee
+    ) internal {
+        uint256 excessWntAmount = wntAmount - executionFee;
+        if (excessWntAmount > 0) {
+            address holdingAddress = dataStore.getAddress(Keys.HOLDING_ADDRESS);
+            if (holdingAddress == address(0)) {
+                revert("Holding address not initialized");
+            }
+
+            address wnt = TokenUtils.wnt(dataStore);
+            bank.transferOut(
+                wnt,
+                holdingAddress,
+                excessWntAmount
+            );
+        }
+    }
+
     // @dev adjust the gas usage to pay a small amount to keepers
     // @param dataStore DataStore
     // @param gasUsed the amount of gas used
