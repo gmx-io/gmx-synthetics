@@ -173,6 +173,20 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         );
     }
 
+    function simulateExecuteDeposit(
+        bytes32 key,
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams
+    ) external payable nonReentrant {
+        depositHandler.simulateExecuteDeposit(key, simulatedOracleParams);
+    }
+
+    function simulateExecuteWithdrawal(
+        bytes32 key,
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams
+    ) external payable nonReentrant {
+        withdrawalHandler.simulateExecuteWithdrawal(key, simulatedOracleParams);
+    }
+
     function simulateExecuteOrder(
         bytes32 key,
         OracleUtils.SimulatePricesParams memory simulatedOracleParams

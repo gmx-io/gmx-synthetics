@@ -111,12 +111,8 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
                 revert(reason);
             }
 
-            DepositUtils.cancelDeposit(
-                dataStore,
-                eventEmitter,
-                depositVault,
+            _handleDepositError(
                 key,
-                msg.sender,
                 startingGas,
                 reason,
                 ""
@@ -124,17 +120,33 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         } catch (bytes memory reasonBytes) {
             string memory reason = RevertUtils.getRevertMessage(reasonBytes);
 
-            DepositUtils.cancelDeposit(
-                dataStore,
-                eventEmitter,
-                depositVault,
+            _handleDepositError(
                 key,
-                msg.sender,
                 startingGas,
                 reason,
                 reasonBytes
             );
         }
+    }
+
+    function simulateExecuteDeposit(
+        bytes32 key,
+        OracleUtils.SimulatePricesParams memory params
+    ) external
+        onlyController
+        withSimulatedOraclePrices(oracle, params)
+        globalNonReentrant
+    {
+
+        uint256 startingGas = gasleft();
+        OracleUtils.SetPricesParams memory oracleParams;
+
+        this._executeDeposit(
+            key,
+            oracleParams,
+            msg.sender,
+            startingGas
+        );
     }
 
     // @dev executes a deposit
@@ -166,5 +178,23 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         );
 
         ExecuteDepositUtils.executeDeposit(params);
+    }
+
+    function _handleDepositError(
+        bytes32 key,
+        uint256 startingGas,
+        string memory reason,
+        bytes memory reasonBytes
+    ) internal {
+        DepositUtils.cancelDeposit(
+            dataStore,
+            eventEmitter,
+            depositVault,
+            key,
+            msg.sender,
+            startingGas,
+            reason,
+            reasonBytes
+        );
     }
 }

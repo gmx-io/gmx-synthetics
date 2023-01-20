@@ -112,12 +112,8 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
                 revert(reason);
             }
 
-            WithdrawalUtils.cancelWithdrawal(
-                dataStore,
-                eventEmitter,
-                withdrawalVault,
+            _handleWithdrawalError(
                 key,
-                msg.sender,
                 startingGas,
                 reason,
                 ""
@@ -125,17 +121,33 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         } catch (bytes memory reasonBytes) {
             string memory reason = RevertUtils.getRevertMessage(reasonBytes);
 
-            WithdrawalUtils.cancelWithdrawal(
-                dataStore,
-                eventEmitter,
-                withdrawalVault,
+            _handleWithdrawalError(
                 key,
-                msg.sender,
                 startingGas,
                 reason,
                 reasonBytes
             );
         }
+    }
+
+    function simulateExecuteWithdrawal(
+        bytes32 key,
+        OracleUtils.SimulatePricesParams memory params
+    ) external
+        onlyController
+        withSimulatedOraclePrices(oracle, params)
+        globalNonReentrant
+    {
+
+        uint256 startingGas = gasleft();
+        OracleUtils.SetPricesParams memory oracleParams;
+
+        this._executeWithdrawal(
+            key,
+            oracleParams,
+            msg.sender,
+            startingGas
+        );
     }
 
     // @dev executes a withdrawal
@@ -167,5 +179,23 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         );
 
         WithdrawalUtils.executeWithdrawal(params);
+    }
+
+    function _handleWithdrawalError(
+        bytes32 key,
+        uint256 startingGas,
+        string memory reason,
+        bytes memory reasonBytes
+    ) internal {
+        WithdrawalUtils.cancelWithdrawal(
+            dataStore,
+            eventEmitter,
+            withdrawalVault,
+            key,
+            msg.sender,
+            startingGas,
+            reason,
+            reasonBytes
+        );
     }
 }
