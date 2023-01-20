@@ -3,6 +3,7 @@ import { expect } from "chai";
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { getBalanceOf } from "../../utils/token";
+import { getClaimableFeeAmount } from "../../utils/fee";
 import { getPoolAmount, getSwapImpactPoolAmount, getMarketTokenPrice } from "../../utils/market";
 import { getDepositCount, getDepositKeys, createDeposit, executeDeposit, handleDeposit } from "../../utils/deposit";
 import * as keys from "../../utils/keys";
@@ -12,13 +13,13 @@ describe("Exchange.Deposit", () => {
 
   let fixture;
   let user0, user1, user2;
-  let reader, feeReceiver, dataStore, depositVault, ethUsdMarket, wnt, usdc;
+  let reader, dataStore, depositVault, ethUsdMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ reader, feeReceiver, dataStore, depositVault, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ reader, dataStore, depositVault, ethUsdMarket, wnt, usdc } = fixture.contracts);
   });
 
   it("createDeposit", async () => {
@@ -431,10 +432,10 @@ describe("Exchange.Deposit", () => {
     expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq("49950000000000000000000"); // 49950
     expect(await wnt.balanceOf(depositVault.address)).eq(0);
     expect(await usdc.balanceOf(depositVault.address)).eq(0);
-    expect(await wnt.balanceOf(feeReceiver.address)).eq("1500000000000000"); // 0.0015 ETH, 7.5 USD
-    expect(await usdc.balanceOf(feeReceiver.address)).eq(0);
+    expect(await getClaimableFeeAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq("1500000000000000"); // 0.0015 ETH, 7.5 USD
+    expect(await getClaimableFeeAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq("0");
 
-    expect(await wnt.balanceOf(ethUsdMarket.marketToken)).eq("9998500000000000000"); // 9.9985 ETH
+    expect(await wnt.balanceOf(ethUsdMarket.marketToken)).eq("10000000000000000000"); // 10 ETH
     expect(await usdc.balanceOf(ethUsdMarket.marketToken)).eq(0);
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(
       "9993500000000000000" // 9.9935 ETH
@@ -458,8 +459,8 @@ describe("Exchange.Deposit", () => {
     expect(await getMarketTokenPrice(fixture)).eq("1000525446705012120185491696460"); // ~1.00052
 
     expect(await getBalanceOf(ethUsdMarket.marketToken, user1.address)).eq("49944998007168690894085"); // 49944.998
-    expect(await wnt.balanceOf(ethUsdMarket.marketToken)).eq("9998500000000000000"); // 9.9985 ETH
-    expect(await usdc.balanceOf(ethUsdMarket.marketToken)).eq("49967503750"); // 49967.50375 USDC
+    expect(await wnt.balanceOf(ethUsdMarket.marketToken)).eq("10000000000000000000"); // 10 ETH
+    expect(await usdc.balanceOf(ethUsdMarket.marketToken)).eq("49975000000"); // 49975 USDC
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(
       "9995996750943749999" // 9.996 ETH
     );

@@ -10,14 +10,7 @@ export async function contractAt(name, address) {
   return await contractFactory.attach(address);
 }
 
-export function createDeployFunction({
-  contractName,
-  dependencyNames,
-  getDeployArgs,
-  libraryNames,
-  afterDeploy,
-  debug,
-}) {
+export function createDeployFunction({ contractName, dependencyNames, getDeployArgs, libraryNames, afterDeploy }) {
   const func = async ({ getNamedAccounts, deployments, gmx }: HardhatRuntimeEnvironment) => {
     const { deploy, get } = deployments;
     const { deployer } = await getNamedAccounts();
@@ -47,18 +40,28 @@ export function createDeployFunction({
 
     let deployedContract;
 
-    // use debug to print library dependencies
-    if (debug) {
-      deployedContract = await deployContract(contractName, deployArgs, {
-        libraries,
-      });
-    } else {
+    try {
       deployedContract = await deploy(contractName, {
         from: deployer,
         log: true,
         args: deployArgs,
         libraries,
       });
+    } catch (e) {
+      // console.error("Deploy error", e);
+
+      // the caught error might not be very informative
+      // e.g. if some library dependency is missing, which library it is
+      // is not shown in the error
+      // attempt a deploy using hardhat so that a more detailed error
+      // would be thrown
+      await deployContract(contractName, deployArgs, {
+        libraries,
+      });
+
+      // throw an error even if the hardhat deploy works
+      // because the actual deploy did not succeed
+      throw new Error(`Deploy failed with error ${e}`);
     }
 
     if (afterDeploy) {

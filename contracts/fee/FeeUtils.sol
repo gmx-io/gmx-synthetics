@@ -95,7 +95,7 @@ library FeeUtils {
         eventData.uintItems.setItem(0, "delta", delta);
         eventData.uintItems.setItem(1, "nextValue", nextValue);
 
-        eventData.bytesItems.initItems(1);
+        eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "feeType", feeType);
 
         eventEmitter.emitEventLog2(
