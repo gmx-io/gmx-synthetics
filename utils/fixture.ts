@@ -76,6 +76,16 @@ export async function deployFixture() {
   );
   const ethUsdMarket = await reader.getMarket(dataStore.address, ethUsdMarketAddress);
 
+  const ethUsdSpotOnlyMarketAddress = getMarketTokenAddress(
+    ethers.constants.AddressZero,
+    wnt.address,
+    usdc.address,
+    marketFactory.address,
+    roleStore.address,
+    dataStore.address
+  );
+  const ethUsdSpotOnlyMarket = await reader.getMarket(dataStore.address, ethUsdSpotOnlyMarketAddress);
+
   const solUsdMarketAddress = getMarketTokenAddress(
     getSyntheticTokenAddress("SOL"),
     wnt.address,
@@ -139,6 +149,7 @@ export async function deployFixture() {
       wbtc,
       usdc,
       ethUsdMarket,
+      ethUsdSpotOnlyMarket,
       solUsdMarket,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },

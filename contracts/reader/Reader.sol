@@ -214,9 +214,9 @@ contract Reader {
     function getMarketTokenPrice(
         DataStore dataStore,
         Market.Props memory market,
+        Price.Props memory indexTokenPrice,
         Price.Props memory longTokenPrice,
         Price.Props memory shortTokenPrice,
-        Price.Props memory indexTokenPrice,
         bool maximize
     ) external view returns (int256) {
         return

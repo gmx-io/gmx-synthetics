@@ -706,6 +706,8 @@ library MarketUtils {
         bool isLong,
         int256 delta
     ) internal returns (uint256) {
+        if (indexToken == address(0)) { revert("Invalid indexToken"); }
+
         uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.openInterestKey(market, collateralToken, isLong),
             delta,
@@ -1664,6 +1666,16 @@ library MarketUtils {
         if (isMarketDisabled) {
             revert DisabledMarket(market.marketToken);
         }
+    }
+
+    function validatePositionMarket(Market.Props memory market) internal pure {
+        if (isSwapOnlyMarket(market)) {
+            revert("Invalid position market");
+        }
+    }
+
+    function isSwapOnlyMarket(Market.Props memory market) internal pure returns (bool) {
+        return market.indexToken == address(0);
     }
 
     function getEnabledMarket(DataStore dataStore, address marketAddress) internal view returns (Market.Props memory) {

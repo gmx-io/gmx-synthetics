@@ -144,8 +144,8 @@ export async function validateStoreUtils({
 
     setSampleItemFlags({ emptyStoreItem, sampleItem, index: i });
 
-    expect(await getItemCount(dataStore)).eq(0);
-    expect(await getItemKeys(dataStore, 0, 10)).deep.equal([]);
+    const initialItemCount = await getItemCount(dataStore);
+    const initialItemKeys = await getItemKeys(dataStore, 0, 10);
 
     if (getAccountItemCount) {
       expect(await getAccountItemCount(dataStore, user0.address)).eq(0);
@@ -162,8 +162,8 @@ export async function validateStoreUtils({
 
     await validateFetchedItemAfterSet({ emptyStoreItem, getItem, dataStore, itemKey, sampleItem });
 
-    expect(await getItemCount(dataStore)).eq(1);
-    expect(await getItemKeys(dataStore, 0, 10)).deep.equal([itemKey]);
+    expect(await getItemCount(dataStore)).eq(initialItemCount.add(1));
+    expect(await getItemKeys(dataStore, 0, 10)).deep.equal(initialItemKeys.concat(itemKey));
 
     if (getAccountItemCount) {
       expect(await getAccountItemCount(dataStore, user0.address)).eq(1);
@@ -175,8 +175,8 @@ export async function validateStoreUtils({
 
     await removeItem(dataStore, itemKey, sampleItem);
 
-    expect(await getItemCount(dataStore)).eq(0);
-    expect(await getItemKeys(dataStore, 0, 10)).deep.equal([]);
+    expect(await getItemCount(dataStore)).eq(initialItemCount);
+    expect(await getItemKeys(dataStore, 0, 10)).deep.equal(initialItemKeys);
 
     if (getAccountItemCount) {
       expect(await getAccountItemCount(dataStore, user0.address)).eq(0);

@@ -117,12 +117,18 @@ const config: {
       tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
     },
     {
+      tokens: ["<EMPTY>", "WETH", "USDC"], // indexToken, longToken, shortToken
+    },
+    {
       tokens: ["SOL", "WETH", "USDC"],
     },
   ],
   localhost: [
     {
       tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
+    },
+    {
+      tokens: ["<EMPTY>", "WETH", "USDC"], // indexToken, longToken, shortToken
     },
     {
       tokens: ["SOL", "WETH", "USDC"],

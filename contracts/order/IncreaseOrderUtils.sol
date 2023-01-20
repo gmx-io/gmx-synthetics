@@ -28,6 +28,7 @@ library IncreaseOrderUtils {
         );
 
         MarketUtils.validateEnabledMarket(params.contracts.dataStore, params.market);
+        MarketUtils.validatePositionMarket(params.market);
 
         (address collateralToken, uint256 collateralIncrementAmount) = SwapUtils.swap(SwapUtils.SwapParams(
             params.contracts.dataStore,

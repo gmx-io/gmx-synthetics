@@ -13,13 +13,13 @@ describe("Exchange.Deposit", () => {
 
   let fixture;
   let user0, user1, user2;
-  let reader, dataStore, depositVault, ethUsdMarket, wnt, usdc;
+  let reader, dataStore, depositVault, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ reader, dataStore, depositVault, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ reader, dataStore, depositVault, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc } = fixture.contracts);
   });
 
   it("createDeposit", async () => {
@@ -76,6 +76,44 @@ describe("Exchange.Deposit", () => {
     expect(deposit.addresses.account).eq(ethers.constants.AddressZero);
     expect(await getBalanceOf(ethUsdMarket.marketToken, user1.address)).eq(expandDecimals(95000, 18));
     expect(await getDepositCount(dataStore)).eq(0);
+  });
+
+  it("spot only market", async () => {
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdSpotOnlyMarket,
+        longTokenAmount: expandDecimals(10, 18),
+      },
+    });
+
+    expect(await getDepositCount(dataStore)).eq(0);
+    expect(
+      await getMarketTokenPrice(fixture, {
+        market: ethUsdSpotOnlyMarket,
+        indexTokenPrice: { min: 0, max: 0 },
+      })
+    ).eq(expandDecimals(1, 30));
+
+    expect(await getBalanceOf(ethUsdSpotOnlyMarket.marketToken, user0.address)).eq("50000000000000000000000"); // 50,000
+    expect(await wnt.balanceOf(depositVault.address)).eq(0);
+    expect(await usdc.balanceOf(depositVault.address)).eq(0);
+
+    expect(await wnt.balanceOf(ethUsdSpotOnlyMarket.marketToken)).eq(expandDecimals(10, 18));
+    expect(await usdc.balanceOf(ethUsdSpotOnlyMarket.marketToken)).eq(0);
+
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdSpotOnlyMarket,
+        shortTokenAmount: expandDecimals(25 * 1000, 6),
+      },
+    });
+
+    expect(await getBalanceOf(ethUsdSpotOnlyMarket.marketToken, user0.address)).eq("75000000000000000000000"); // 75,000
+    expect(await wnt.balanceOf(depositVault.address)).eq(0);
+    expect(await usdc.balanceOf(depositVault.address)).eq(0);
+
+    expect(await wnt.balanceOf(ethUsdSpotOnlyMarket.marketToken)).eq(expandDecimals(10, 18));
+    expect(await usdc.balanceOf(ethUsdSpotOnlyMarket.marketToken)).eq(expandDecimals(25 * 1000, 6));
   });
 
   it("price impact", async () => {
