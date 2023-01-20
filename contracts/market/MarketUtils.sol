@@ -590,6 +590,13 @@ library MarketUtils {
             "Invalid state, negative poolAmount"
         );
 
+        applyDeltaToVirtualInventoryForSwaps(
+            dataStore,
+            market,
+            token,
+            delta
+        );
+
         MarketEventUtils.emitPoolAmountUpdated(eventEmitter, market, token, delta, nextValue);
 
         return nextValue;
@@ -1158,17 +1165,17 @@ library MarketUtils {
         return Precision.applyFactor(position.sizeInUsd(), diffFactor);
     }
 
-    function getVirtualInventoryForSwaps(DataStore dataStore, address token) internal view returns (bool, int256) {
-        bytes32 tokenId = dataStore.getBytes32(Keys.tokenIdKey(token));
-        if (tokenId == bytes32(0)) {
+    function getVirtualInventoryForSwaps(DataStore dataStore, address market, address token) internal view returns (bool, uint256) {
+        bytes32 marketId = dataStore.getBytes32(Keys.virtualMarketIdKey(market));
+        if (marketId == bytes32(0)) {
             return (false, 0);
         }
 
-        return (true, dataStore.getInt(Keys.virtualInventoryForSwapsKey(tokenId)));
+        return (true, dataStore.getUint(Keys.virtualInventoryForSwapsKey(marketId, token)));
     }
 
     function getVirtualInventoryForPositions(DataStore dataStore, address token) internal view returns (bool, int256) {
-        bytes32 tokenId = dataStore.getBytes32(Keys.tokenIdKey(token));
+        bytes32 tokenId = dataStore.getBytes32(Keys.virtualTokenIdKey(token));
         if (tokenId == bytes32(0)) {
             return (false, 0);
         }
@@ -1176,8 +1183,8 @@ library MarketUtils {
         return (true, dataStore.getInt(Keys.virtualInventoryForPositionsKey(tokenId)));
     }
 
-    function getThresholdVirtualPositionImpactForVirtualInventory(DataStore dataStore, address token) internal view returns (bool, int256) {
-        bytes32 tokenId = dataStore.getBytes32(Keys.tokenIdKey(token));
+    function getThresholdPositionImpactFactorForVirtualInventory(DataStore dataStore, address token) internal view returns (bool, int256) {
+        bytes32 tokenId = dataStore.getBytes32(Keys.virtualTokenIdKey(token));
         if (tokenId == bytes32(0)) {
             return (false, 0);
         }
@@ -1185,14 +1192,23 @@ library MarketUtils {
         return (true, dataStore.getInt(Keys.thresholdPositionImpactFactorForVirtualInventoryKey(tokenId)));
     }
 
-    function applyDeltaToVirtualInventoryForSwaps(DataStore dataStore, address token, int256 delta) internal returns (bool, int256) {
-        bytes32 tokenId = dataStore.getBytes32(Keys.tokenIdKey(token));
-        if (tokenId == bytes32(0)) {
+    function getThresholdSwapImpactFactorForVirtualInventory(DataStore dataStore, address market) internal view returns (bool, int256) {
+        bytes32 marketId = dataStore.getBytes32(Keys.virtualMarketIdKey(market));
+        if (marketId == bytes32(0)) {
             return (false, 0);
         }
 
-        int256 nextValue = dataStore.applyDeltaToInt(
-            Keys.virtualInventoryForSwapsKey(tokenId),
+        return (true, dataStore.getInt(Keys.thresholdSwapImpactFactorForVirtualInventoryKey(marketId)));
+    }
+
+    function applyDeltaToVirtualInventoryForSwaps(DataStore dataStore, address market, address token, int256 delta) internal returns (bool, uint256) {
+        bytes32 marketId = dataStore.getBytes32(Keys.virtualMarketIdKey(market));
+        if (marketId == bytes32(0)) {
+            return (false, 0);
+        }
+
+        uint256 nextValue = dataStore.applyBoundedDeltaToUint(
+            Keys.virtualInventoryForSwapsKey(marketId, token),
             delta
         );
 
@@ -1205,7 +1221,7 @@ library MarketUtils {
         address token,
         int256 delta
     ) internal returns (bool, int256) {
-        bytes32 tokenId = dataStore.getBytes32(Keys.tokenIdKey(token));
+        bytes32 tokenId = dataStore.getBytes32(Keys.virtualTokenIdKey(token));
         if (tokenId == bytes32(0)) {
             return (false, 0);
         }
@@ -1215,7 +1231,7 @@ library MarketUtils {
             delta
         );
 
-        MarketEventUtils.emitVirtualInventoryUpdated(eventEmitter, token, tokenId, delta, nextValue);
+        MarketEventUtils.emitVirtualPositionInventoryUpdated(eventEmitter, token, tokenId, delta, nextValue);
 
         return (true, nextValue);
     }

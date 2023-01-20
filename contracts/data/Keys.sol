@@ -117,10 +117,12 @@ library Keys {
     // @dev key for the min allowed collateral in USD
     bytes32 public constant MIN_COLLATERAL_USD = keccak256(abi.encode("MIN_COLLATERAL_USD"));
 
-    bytes32 public constant TOKEN_ID = keccak256(abi.encode("TOKEN_ID"));
+    bytes32 public constant VIRTUAL_TOKEN_ID = keccak256(abi.encode("VIRTUAL_TOKEN_ID"));
+    bytes32 public constant VIRTUAL_MARKET_ID = keccak256(abi.encode("VIRTUAL_MARKET_ID"));
     bytes32 public constant VIRTUAL_INVENTORY_FOR_SWAPS = keccak256(abi.encode("VIRTUAL_INVENTORY_FOR_SWAPS"));
     bytes32 public constant VIRTUAL_INVENTORY_FOR_POSITIONS = keccak256(abi.encode("VIRTUAL_INVENTORY_FOR_POSITIONS"));
     bytes32 public constant THRESHOLD_POSITION_IMPACT_FACTOR_FOR_VIRTUAL_INVENTORY = keccak256(abi.encode("THRESHOLD_POSITION_IMPACT_FACTOR_FOR_VIRTUAL_INVENTORY"));
+    bytes32 public constant THRESHOLD_SWAP_IMPACT_FACTOR_FOR_VIRTUAL_INVENTORY = keccak256(abi.encode("THRESHOLD_SWAP_IMPACT_FACTOR_FOR_VIRTUAL_INVENTORY"));
 
     // @dev key for the position impact factor
     bytes32 public constant POSITION_IMPACT_FACTOR = keccak256(abi.encode("POSITION_IMPACT_FACTOR"));
@@ -425,17 +427,25 @@ library Keys {
        ));
    }
 
-   function tokenIdKey(address token) internal pure returns (bytes32) {
+   function virtualTokenIdKey(address token) internal pure returns (bytes32) {
        return keccak256(abi.encode(
-           TOKEN_ID,
+           VIRTUAL_TOKEN_ID,
            token
        ));
    }
 
-   function virtualInventoryForSwapsKey(bytes32 tokenId) internal pure returns (bytes32) {
+   function virtualMarketIdKey(address market) internal pure returns (bytes32) {
+       return keccak256(abi.encode(
+           VIRTUAL_MARKET_ID,
+           market
+       ));
+   }
+
+   function virtualInventoryForSwapsKey(bytes32 marketId, address token) internal pure returns (bytes32) {
        return keccak256(abi.encode(
            VIRTUAL_INVENTORY_FOR_SWAPS,
-           tokenId
+           marketId,
+           token
        ));
    }
 
@@ -450,6 +460,13 @@ library Keys {
        return keccak256(abi.encode(
            THRESHOLD_POSITION_IMPACT_FACTOR_FOR_VIRTUAL_INVENTORY,
            tokenId
+       ));
+   }
+
+   function thresholdSwapImpactFactorForVirtualInventoryKey(bytes32 marketId) internal pure returns (bytes32) {
+       return keccak256(abi.encode(
+           THRESHOLD_SWAP_IMPACT_FACTOR_FOR_VIRTUAL_INVENTORY,
+           marketId
        ));
    }
 

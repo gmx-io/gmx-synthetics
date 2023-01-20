@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/utils/math/SignedMath.sol";
+
 import "../market/MarketUtils.sol";
 
 import "../utils/Precision.sol";
@@ -12,6 +14,7 @@ import "./PricingUtils.sol";
 // @title SwapPricingUtils
 // @dev Library for pricing functions
 library SwapPricingUtils {
+    using SignedMath for int256;
     using SafeCast for uint256;
     using SafeCast for int256;
 
@@ -86,7 +89,28 @@ library SwapPricingUtils {
 
         int256 priceImpactUsd = _getPriceImpactUsd(params.dataStore, params.market, poolParams);
 
-        return priceImpactUsd;
+        if (priceImpactUsd >= 0) {
+            return priceImpactUsd;
+        }
+
+        (bool hasVirtualInventory, int256 thresholdPositionImpactFactorForVirtualInventory) = MarketUtils.getThresholdSwapImpactFactorForVirtualInventory(
+            params.dataStore,
+            params.market
+        );
+
+        if (!hasVirtualInventory) {
+            return priceImpactUsd;
+        }
+
+        PoolParams memory poolParamsForVirtualInventory = getNextPoolAmountsUsdForVirtualInventory(params);
+        int256 priceImpactUsdForVirtualInventory = _getPriceImpactUsd(params.dataStore, params.market, poolParamsForVirtualInventory);
+        int256 priceImpactFactorForVirtualInventory = Precision.toFactor(priceImpactUsdForVirtualInventory, params.usdDeltaForTokenA.abs() + params.usdDeltaForTokenB.abs());
+
+        if (priceImpactFactorForVirtualInventory > thresholdPositionImpactFactorForVirtualInventory) {
+            return priceImpactUsd;
+        }
+
+        return priceImpactUsdForVirtualInventory < priceImpactUsd ? priceImpactUsdForVirtualInventory : priceImpactUsd;
     }
 
     // @dev get the price impact in USD
@@ -138,6 +162,31 @@ library SwapPricingUtils {
         uint256 poolAmountForTokenA = MarketUtils.getPoolAmount(params.dataStore, params.market, params.tokenA);
         uint256 poolAmountForTokenB = MarketUtils.getPoolAmount(params.dataStore, params.market, params.tokenB);
 
+        return getNextPoolAmountsParams(
+            params,
+            poolAmountForTokenA,
+            poolAmountForTokenB
+        );
+    }
+
+    function getNextPoolAmountsUsdForVirtualInventory(
+        GetPriceImpactUsdParams memory params
+    ) internal view returns (PoolParams memory) {
+        (/* bool hasVirtualInventory */, uint256 poolAmountForTokenA) = MarketUtils.getVirtualInventoryForSwaps(params.dataStore, params.market, params.tokenA);
+        (/* bool hasVirtualInventory */, uint256 poolAmountForTokenB) = MarketUtils.getVirtualInventoryForSwaps(params.dataStore, params.market, params.tokenB);
+
+        return getNextPoolAmountsParams(
+            params,
+            poolAmountForTokenA,
+            poolAmountForTokenB
+        );
+    }
+
+    function getNextPoolAmountsParams(
+        GetPriceImpactUsdParams memory params,
+        uint256 poolAmountForTokenA,
+        uint256 poolAmountForTokenB
+    ) internal pure returns (PoolParams memory) {
         uint256 poolUsdForTokenA = poolAmountForTokenA * params.priceForTokenA;
         uint256 poolUsdForTokenB = poolAmountForTokenB * params.priceForTokenB;
 

@@ -204,8 +204,12 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedKeys[Keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER] = true;
         allowedKeys[Keys.MIN_COLLATERAL_USD] = true;
 
-        allowedKeys[Keys.TOKEN_ID] = true;
+        allowedKeys[Keys.VIRTUAL_TOKEN_ID] = true;
+        allowedKeys[Keys.VIRTUAL_MARKET_ID] = true;
+        allowedKeys[Keys.VIRTUAL_INVENTORY_FOR_SWAPS] = true;
+        allowedKeys[Keys.VIRTUAL_INVENTORY_FOR_POSITIONS] = true;
         allowedKeys[Keys.THRESHOLD_POSITION_IMPACT_FACTOR_FOR_VIRTUAL_INVENTORY] = true;
+        allowedKeys[Keys.THRESHOLD_SWAP_IMPACT_FACTOR_FOR_VIRTUAL_INVENTORY] = true;
 
         allowedKeys[Keys.POSITION_IMPACT_FACTOR] = true;
         allowedKeys[Keys.POSITION_IMPACT_EXPONENT_FACTOR] = true;

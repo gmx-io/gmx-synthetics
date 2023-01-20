@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/math/SignedMath.sol";
+
 import "../market/MarketUtils.sol";
 
 import "../utils/Precision.sol";
@@ -190,7 +191,7 @@ library PositionPricingUtils {
             return priceImpactUsd;
         }
 
-        (bool hasVirtualInventory, int256 thresholdPositionImpactFactorForVirtualInventory) = MarketUtils.getThresholdVirtualPositionImpactForVirtualInventory(
+        (bool hasVirtualInventory, int256 thresholdPositionImpactFactorForVirtualInventory) = MarketUtils.getThresholdPositionImpactFactorForVirtualInventory(
             params.dataStore,
             params.indexToken
         );
@@ -276,11 +277,7 @@ library PositionPricingUtils {
     function getNextOpenInterestForVirtualInventory(
         GetPriceImpactUsdParams memory params
     ) internal view returns (OpenInterestParams memory) {
-        (bool hasVirtualInventory, int256 virtualInventory) = MarketUtils.getVirtualInventoryForPositions(params.dataStore, params.indexToken);
-
-        if (!hasVirtualInventory) {
-            return OpenInterestParams(0, 0, 0, 0);
-        }
+        (/* bool hasVirtualInventory */, int256 virtualInventory) = MarketUtils.getVirtualInventoryForPositions(params.dataStore, params.indexToken);
 
         uint256 longOpenInterest;
         uint256 shortOpenInterest;
