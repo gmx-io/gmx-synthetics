@@ -15,6 +15,7 @@ import "../market/MarketToken.sol";
 import "../deposit/Deposit.sol";
 import "../deposit/DepositVault.sol";
 import "../deposit/DepositUtils.sol";
+import "../deposit/ExecuteDepositUtils.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 
@@ -153,7 +154,7 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
             oracleParams.tokens.length
         );
 
-        DepositUtils.ExecuteDepositParams memory params = DepositUtils.ExecuteDepositParams(
+        ExecuteDepositUtils.ExecuteDepositParams memory params = ExecuteDepositUtils.ExecuteDepositParams(
             dataStore,
             eventEmitter,
             depositVault,
@@ -164,6 +165,6 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
             startingGas
         );
 
-        DepositUtils.executeDeposit(params);
+        ExecuteDepositUtils.executeDeposit(params);
     }
 }
