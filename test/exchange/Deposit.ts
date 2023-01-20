@@ -78,7 +78,7 @@ describe("Exchange.Deposit", () => {
     expect(await getDepositCount(dataStore)).eq(0);
   });
 
-  it("spot only market", async () => {
+  it("executeDeposit, spot only market", async () => {
     await handleDeposit(fixture, {
       create: {
         market: ethUsdSpotOnlyMarket,

@@ -326,9 +326,7 @@ contract Oracle is RoleModule {
     // @param token the token to get the price for
     // @return the primary price of a token
     function getPrimaryPrice(address token) external view returns (Price.Props memory) {
-        if (token == address(0)) {
-            return Price.Props(0, 0);
-        }
+        if (token == address(0)) { return Price.Props(0, 0); }
 
         Price.Props memory price = primaryPrices[token];
         if (price.isEmpty()) { revert(Keys.EMPTY_PRICE_ERROR); }
@@ -340,8 +338,11 @@ contract Oracle is RoleModule {
     // @param token the token to get the price for
     // @return the secondary price of a token
     function getSecondaryPrice(address token) external view returns (Price.Props memory) {
+        if (token == address(0)) { return Price.Props(0, 0); }
+
         Price.Props memory price = secondaryPrices[token];
         if (price.isEmpty()) { revert(Keys.EMPTY_PRICE_ERROR); }
+
         return price;
     }
 
@@ -349,6 +350,8 @@ contract Oracle is RoleModule {
     // @param token the token to get the price for
     // @return the latest price of a token
     function getLatestPrice(address token) external view returns (Price.Props memory) {
+        if (token == address(0)) { return Price.Props(0, 0); }
+
         Price.Props memory secondaryPrice = secondaryPrices[token];
 
         if (!secondaryPrice.isEmpty()) {
