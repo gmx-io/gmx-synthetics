@@ -2,76 +2,100 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "../utils/GlobalReentrancyGuard.sol";
 
+import "./ExchangeUtils.sol";
 import "../role/RoleModule.sol";
+import "../event/EventEmitter.sol";
 import "../feature/FeatureUtils.sol";
 
 import "../market/Market.sol";
-import "../market/MarketStore.sol";
 import "../market/MarketToken.sol";
 
 import "../deposit/Deposit.sol";
-import "../deposit/DepositStore.sol";
+import "../deposit/DepositVault.sol";
 import "../deposit/DepositUtils.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 
-contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
+// @title DepositHandler
+// @dev Contract to handle creation, execution and cancellation of deposits
+contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
+    using Deposit for Deposit.Props;
 
-    DataStore public dataStore;
-    DepositStore public depositStore;
-    MarketStore public marketStore;
-    Oracle public oracle;
-    FeeReceiver public feeReceiver;
+    EventEmitter public immutable eventEmitter;
+    DepositVault public immutable depositVault;
+    Oracle public immutable oracle;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
-        DepositStore _depositStore,
-        MarketStore _marketStore,
-        Oracle _oracle,
-        FeeReceiver _feeReceiver
-    ) RoleModule(_roleStore) {
-        dataStore = _dataStore;
-        depositStore = _depositStore;
-        marketStore = _marketStore;
+        EventEmitter _eventEmitter,
+        DepositVault _depositVault,
+        Oracle _oracle
+    ) RoleModule(_roleStore) GlobalReentrancyGuard(_dataStore) {
+        eventEmitter = _eventEmitter;
+        depositVault = _depositVault;
         oracle = _oracle;
-        feeReceiver = _feeReceiver;
     }
 
-    receive() external payable {
-        require(msg.sender == EthUtils.weth(dataStore), "DepositHandler: invalid sender");
-    }
-
+    // @dev creates a deposit in the deposit store
+    // @param account the depositing account
+    // @param params DepositUtils.CreateDepositParams
     function createDeposit(
         address account,
-        address market,
-        uint256 minMarketTokens,
-        bool hasCollateralInETH,
-        uint256 executionFee
-    ) external nonReentrant onlyController returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.createDepositFeatureKey(address(this)));
+        DepositUtils.CreateDepositParams calldata params
+    ) external globalNonReentrant onlyController returns (bytes32) {
+        FeatureUtils.validateFeature(dataStore, Keys.createDepositFeatureDisabledKey(address(this)));
 
-        DepositUtils.CreateDepositParams memory params = DepositUtils.CreateDepositParams(
+        return DepositUtils.createDeposit(
             dataStore,
-            depositStore,
-            marketStore,
+            eventEmitter,
+            depositVault,
             account,
-            market,
-            minMarketTokens,
-            hasCollateralInETH,
-            executionFee,
-            EthUtils.weth(dataStore)
+            params
         );
-
-        return DepositUtils.createDeposit(params);
     }
 
+    function cancelDeposit(
+        bytes32 key,
+        Deposit.Props memory deposit
+    ) external globalNonReentrant onlyController {
+        uint256 startingGas = gasleft();
+
+        DataStore _dataStore = dataStore;
+
+        FeatureUtils.validateFeature(_dataStore, Keys.cancelDepositFeatureDisabledKey(address(this)));
+
+        ExchangeUtils.validateRequestCancellation(
+            _dataStore,
+            deposit.updatedAtBlock(),
+            "ExchangeRouter: deposit not yet expired"
+        );
+
+        DepositUtils.cancelDeposit(
+            _dataStore,
+            eventEmitter,
+            depositVault,
+            key,
+            deposit.account(),
+            startingGas,
+            Keys.USER_INITIATED_CANCEL,
+            ""
+        );
+    }
+
+    // @dev executes a deposit
+    // @param key the key of the deposit to execute
+    // @param oracleParams OracleUtils.SetPricesParams
     function executeDeposit(
         bytes32 key,
-        OracleUtils.SetPricesParams memory oracleParams
-    ) external onlyOrderKeeper {
+        OracleUtils.SetPricesParams calldata oracleParams
+    ) external
+        globalNonReentrant
+        onlyOrderKeeper
+        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+    {
         uint256 startingGas = gasleft();
 
         try this._executeDeposit(
@@ -81,33 +105,48 @@ contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
             startingGas
         ) {
         } catch Error(string memory reason) {
-            // revert instead of cancel if the reason for failure is due to oracle params
-            if (keccak256(abi.encodePacked(reason)) == Keys.ORACLE_ERROR_KEY) {
+            bytes32 reasonKey = keccak256(abi.encode(reason));
+            if (reasonKey == Keys.EMPTY_PRICE_ERROR_KEY) {
                 revert(reason);
             }
 
             DepositUtils.cancelDeposit(
                 dataStore,
-                depositStore,
-                marketStore,
+                eventEmitter,
+                depositVault,
                 key,
                 msg.sender,
-                startingGas
+                startingGas,
+                reason,
+                ""
+            );
+        } catch (bytes memory reasonBytes) {
+            string memory reason = RevertUtils.getRevertMessage(reasonBytes);
+
+            DepositUtils.cancelDeposit(
+                dataStore,
+                eventEmitter,
+                depositVault,
+                key,
+                msg.sender,
+                startingGas,
+                reason,
+                reasonBytes
             );
         }
     }
 
+    // @dev executes a deposit
+    // @param oracleParams OracleUtils.SetPricesParams
+    // @param keeper the keeper executing the deposit
+    // @param startingGas the starting gas
     function _executeDeposit(
         bytes32 key,
         OracleUtils.SetPricesParams memory oracleParams,
         address keeper,
         uint256 startingGas
-    ) public
-        nonReentrant
-        onlySelf
-        withOraclePrices(oracle, dataStore, oracleParams)
-    {
-        FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureKey(address(this)));
+    ) external onlySelf {
+        FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureDisabledKey(address(this)));
 
         uint256[] memory oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
             oracleParams.compactedOracleBlockNumbers,
@@ -116,10 +155,9 @@ contract DepositHandler is RoleModule, ReentrancyGuard, OracleModule {
 
         DepositUtils.ExecuteDepositParams memory params = DepositUtils.ExecuteDepositParams(
             dataStore,
-            depositStore,
-            marketStore,
+            eventEmitter,
+            depositVault,
             oracle,
-            feeReceiver,
             key,
             oracleBlockNumbers,
             keeper,

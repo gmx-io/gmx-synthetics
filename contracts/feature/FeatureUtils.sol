@@ -5,16 +5,25 @@ pragma solidity ^0.8.0;
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
 
+// @title FeatureUtils
+// @dev Library to validate if a feature is enabled or disabled
 library FeatureUtils {
-    error BlockedFeature(bytes32 key);
+    error DisabledFeature(bytes32 key);
 
-    function isFeatureBlocked(DataStore dataStore, bytes32 key) internal view returns (bool) {
+    // @dev get whether a feature is disabled
+    // @param dataStore DataStore
+    // @param key the feature key
+    // @return whether the feature is disabled
+    function isFeatureDisabled(DataStore dataStore, bytes32 key) internal view returns (bool) {
         return dataStore.getBool(key);
     }
 
+    // @dev validate whether a feature is enabled, reverts if the feature is disabled
+    // @param dataStore DataStore
+    // @param key the feature key
     function validateFeature(DataStore dataStore, bytes32 key) internal view {
-        if (isFeatureBlocked(dataStore, key)) {
-            revert BlockedFeature(key);
+        if (isFeatureDisabled(dataStore, key)) {
+            revert(Keys.FEATURE_DISABLED_ERROR);
         }
     }
 }

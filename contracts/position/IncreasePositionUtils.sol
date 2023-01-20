@@ -5,188 +5,310 @@ pragma solidity ^0.8.0;
 import "../utils/Precision.sol";
 
 import "../data/DataStore.sol";
-import "../fee/FeeReceiver.sol";
+import "../event/EventEmitter.sol";
 
 import "../oracle/Oracle.sol";
 import "../pricing/PositionPricingUtils.sol";
 
 import "./Position.sol";
-import "./PositionStore.sol";
+import "./PositionStoreUtils.sol";
 import "./PositionUtils.sol";
+import "./PositionEventUtils.sol";
+import "../order/BaseOrderUtils.sol";
 
+// @title IncreasePositionUtils
+// @dev Libary for functions to help with increasing a position
 library IncreasePositionUtils {
-    using Position for Position.Props;
-    using Order for Order.Props;
     using SafeCast for uint256;
     using SafeCast for int256;
 
-    struct IncreasePositionParams {
-        DataStore dataStore;
-        PositionStore positionStore;
-        Oracle oracle;
-        FeeReceiver feeReceiver;
-        Market.Props market;
-        Order.Props order;
-        Position.Props position;
-        bytes32 positionKey;
-        address collateralToken;
-        uint256 collateralDeltaAmount;
+    using Position for Position.Props;
+    using Order for Order.Props;
+    using Price for Price.Props;
+
+    // @dev _IncreasePositionCache struct used in increasePosition to
+    // avoid stack too deep errors
+    // @param collateralDeltaAmount the change in collateral amount
+    // @param executionPrice the execution price
+    // @param priceImpactAmount the price impact of the position increase in tokens
+    // @param sizeDeltaInTokens the change in position size in tokens
+    // @param nextPositionSizeInUsd the new position size in USD
+    // @param nextPositionBorrowingFactor the new position borrowing factor
+    struct _IncreasePositionCache {
+        int256 collateralDeltaAmount;
+        uint256 executionPrice;
+        int256 priceImpactAmount;
+        uint256 sizeDeltaInTokens;
+        uint256 nextPositionSizeInUsd;
+        uint256 nextPositionBorrowingFactor;
     }
 
     error InsufficientCollateralAmount();
 
-    function increasePosition(IncreasePositionParams memory params) internal {
-        Position.Props memory position = params.position;
-        position.account = params.order.account();
-        position.market = params.order.market();
-        position.collateralToken = params.collateralToken;
-        position.isLong = params.order.isLong();
-
-        MarketUtils.MarketPrices memory prices = MarketUtils.getPricesForPosition(
-            params.market,
-            params.oracle
+    // @dev increase a position
+    // The increasePosition function is used to increase the size of a position
+    // in a market. This involves updating the position's collateral amount,
+    // calculating the price impact of the size increase, and updating the position's
+    // size and borrowing factor. This function also applies fees to the position
+    // and updates the market's liquidity pool based on the new position size.
+    // @param params PositionUtils.UpdatePositionParams
+    function increasePosition(
+        PositionUtils.UpdatePositionParams memory params,
+        uint256 collateralIncrementAmount
+    ) external {
+        // get the market prices for the given position
+        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPricesForPosition(
+            params.contracts.oracle,
+            params.market
         );
 
-        MarketUtils.updateCumulativeFundingFactors(params.dataStore, params.market.marketToken);
-        MarketUtils.updateCumulativeBorrowingFactor(
-            params.dataStore,
-            params.market,
+        PositionUtils.updateFundingAndBorrowingState(params, prices);
+
+        // create a new cache for holding intermediate results
+        _IncreasePositionCache memory cache;
+
+        // process the collateral for the given position and order
+        PositionPricingUtils.PositionFees memory fees;
+        (cache.collateralDeltaAmount, fees) = processCollateral(
+            params,
             prices,
-            position.isLong
+            collateralIncrementAmount.toInt256()
         );
 
-        int256 collateralDeltaAmount = processCollateral(params, prices, position, params.collateralDeltaAmount.toInt256());
-
-        if (collateralDeltaAmount < 0 && position.collateralAmount < SafeCast.toUint256(-collateralDeltaAmount)) {
+        // check if there is sufficient collateral for the position
+        if (
+            cache.collateralDeltaAmount < 0 &&
+            params.position.collateralAmount() < SafeCast.toUint256(-cache.collateralDeltaAmount)
+        ) {
             revert InsufficientCollateralAmount();
         }
-        position.collateralAmount = Calc.sum(position.collateralAmount, collateralDeltaAmount);
+        params.position.setCollateralAmount(Calc.sumReturnUint256(params.position.collateralAmount(), cache.collateralDeltaAmount));
 
-        // round sizeDeltaInTokens down
-        uint256 sizeDeltaInTokens = params.order.sizeDeltaUsd() / prices.indexTokenPrice;
-        uint256 nextPositionSizeInUsd = position.sizeInUsd + params.order.sizeDeltaUsd();
-        uint256 nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(params.dataStore, params.market.marketToken, position.isLong);
+        (cache.executionPrice, cache.priceImpactAmount) = getExecutionPrice(params, prices);
 
-        MarketUtils.updateTotalBorrowing(
-            params.dataStore,
+        // if there is a positive impact, the impact pool amount should be reduced
+        // if there is a negative impact, the impact pool amount should be increased
+        MarketUtils.applyDeltaToPositionImpactPool(
+            params.contracts.dataStore,
+            params.contracts.eventEmitter,
             params.market.marketToken,
-            position.isLong,
-            position.borrowingFactor,
-            position.sizeInUsd,
-            nextPositionSizeInUsd,
-            nextPositionBorrowingFactor
+            -cache.priceImpactAmount
         );
 
-        position.sizeInUsd = nextPositionSizeInUsd;
-        position.sizeInTokens += sizeDeltaInTokens;
-        position.fundingFactor = MarketUtils.getCumulativeFundingFactor(params.dataStore, params.market.marketToken, position.isLong);
-        position.borrowingFactor = nextPositionBorrowingFactor;
-        position.increasedAtBlock = block.number;
-
-        params.positionStore.set(params.positionKey, params.order.account(), position);
-
-        if (params.order.sizeDeltaUsd() > 0) {
-            MarketUtils.updateOpenInterestInTokens(
-                params.dataStore,
-                params.order.market(),
-                params.order.isLong(),
-                sizeDeltaInTokens.toInt256()
-            );
-            MarketUtils.increaseOpenInterest(params.dataStore, params.order.market(), params.order.isLong(), params.order.sizeDeltaUsd());
-            MarketUtils.validateReserve(params.dataStore, params.market, prices, params.order.isLong());
+        if (params.position.isLong()) {
+            // round the number of tokens for long positions down
+            cache.sizeDeltaInTokens = params.order.sizeDeltaUsd() / cache.executionPrice;
+        } else {
+            // round the number of tokens for short positions up
+            cache.sizeDeltaInTokens = Calc.roundUpDivision(params.order.sizeDeltaUsd(), cache.executionPrice);
         }
 
-        PositionUtils.validatePosition(
-            params.dataStore,
-            position,
-            params.market,
-            prices
+        cache.nextPositionSizeInUsd = params.position.sizeInUsd() + params.order.sizeDeltaUsd();
+        cache.nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(
+            params.contracts.dataStore,
+            params.market.marketToken,
+            params.position.isLong()
         );
-    }
 
-    function processCollateral(
-        IncreasePositionParams memory params,
-        MarketUtils.MarketPrices memory prices,
-        Position.Props memory position,
-        int256 collateralDeltaAmount
-    ) internal returns (int256) {
-        uint256 collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.collateralToken, params.market, prices);
+        PositionUtils.updateTotalBorrowing(
+            params,
+            cache.nextPositionSizeInUsd,
+            cache.nextPositionBorrowingFactor
+        );
 
-        int256 usdAdjustment = PositionPricingUtils.getPositionPricing(
-            PositionPricingUtils.GetPositionPricingParams(
-                params.dataStore,
+        params.position.setSizeInUsd(cache.nextPositionSizeInUsd);
+        params.position.setSizeInTokens(params.position.sizeInTokens() + cache.sizeDeltaInTokens);
+        if (!fees.funding.hasPendingLongTokenFundingFee) {
+            params.position.setLongTokenFundingAmountPerSize(fees.funding.latestLongTokenFundingAmountPerSize);
+        }
+        if (!fees.funding.hasPendingShortTokenFundingFee) {
+            params.position.setShortTokenFundingAmountPerSize(fees.funding.latestShortTokenFundingAmountPerSize);
+        }
+
+        PositionUtils.incrementClaimableFundingAmount(params, fees);
+
+        params.position.setBorrowingFactor(cache.nextPositionBorrowingFactor);
+        params.position.setIncreasedAtBlock(Chain.currentBlockNumber());
+
+        PositionStoreUtils.set(params.contracts.dataStore, params.positionKey, params.position);
+
+        PositionUtils.updateOpenInterest(
+            params,
+            params.order.sizeDeltaUsd().toInt256(),
+            cache.sizeDeltaInTokens.toInt256()
+        );
+
+        if (params.order.sizeDeltaUsd() > 0) {
+            MarketUtils.validateOpenInterest(
+                params.contracts.dataStore,
                 params.market.marketToken,
                 params.market.longToken,
                 params.market.shortToken,
-                prices.longTokenPrice,
-                prices.shortTokenPrice,
+                params.order.isLong()
+            );
+        }
+
+        MarketUtils.validateReserve(
+            params.contracts.dataStore,
+            params.market,
+            prices,
+            params.order.isLong()
+        );
+
+        PositionUtils.validatePosition(
+            params.contracts.dataStore,
+            params.contracts.referralStorage,
+            params.position,
+            params.market,
+            prices,
+            true
+        );
+
+        if (params.order.sizeDeltaUsd() > 0) {
+            (int256 positionPnlUsd, /* uint256 sizeDeltaInTokens */) = PositionUtils.getPositionPnlUsd(
+                params.contracts.dataStore,
+                params.market,
+                prices,
+                params.position,
+                cache.executionPrice,
+                params.position.sizeInUsd()
+            );
+
+            if (!PositionUtils.willPositionCollateralBeSufficientForOpenInterest(
+                params.contracts.dataStore,
+                params.market,
+                prices,
+                params.position.collateralToken(),
+                params.position.sizeInUsd(),
+                params.position.collateralAmount(),
+                positionPnlUsd,
+                0
+            )) {
+                revert("Below min collateral factor for open interest");
+            }
+        }
+
+        PositionUtils.handleReferral(params, fees);
+
+        PositionPricingUtils.emitPositionFeesCollected(
+            params.contracts.eventEmitter,
+            params.market.marketToken,
+            params.position.collateralToken(),
+            true,
+            fees
+        );
+
+        PositionEventUtils.emitPositionIncrease(
+            params.contracts.eventEmitter,
+            params.positionKey,
+            params.position,
+            cache.executionPrice,
+            params.order.sizeDeltaUsd(),
+            cache.sizeDeltaInTokens,
+            cache.collateralDeltaAmount,
+            params.order.orderType()
+        );
+    }
+
+    // @dev handle the collateral changes of the position
+    // @param params PositionUtils.UpdatePositionParams
+    // @param prices the prices of the tokens in the market
+    // @param position the position to process collateral for
+    // @param collateralDeltaAmount the change in the position's collateral
+    function processCollateral(
+        PositionUtils.UpdatePositionParams memory params,
+        MarketUtils.MarketPrices memory prices,
+        int256 collateralDeltaAmount
+    ) internal returns (int256, PositionPricingUtils.PositionFees memory) {
+        Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(
+            params.position.collateralToken(),
+            params.market,
+            prices
+        );
+
+        PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
+            params.contracts.dataStore,
+            params.contracts.referralStorage,
+            params.position,
+            collateralTokenPrice,
+            params.market.longToken,
+            params.market.shortToken,
+            params.order.sizeDeltaUsd()
+        );
+
+        FeeUtils.incrementClaimableFeeAmount(
+            params.contracts.dataStore,
+            params.contracts.eventEmitter,
+            params.market.marketToken,
+            params.position.collateralToken(),
+            fees.feeReceiverAmount,
+            Keys.POSITION_FEE
+        );
+
+        collateralDeltaAmount -= fees.totalNetCostAmount.toInt256();
+
+        MarketUtils.applyDeltaToCollateralSum(
+            params.contracts.dataStore,
+            params.contracts.eventEmitter,
+            params.order.market(),
+            params.position.collateralToken(),
+            params.order.isLong(),
+            collateralDeltaAmount
+        );
+
+        MarketUtils.applyDeltaToPoolAmount(
+            params.contracts.dataStore,
+            params.contracts.eventEmitter,
+            params.market.marketToken,
+            params.position.collateralToken(),
+            fees.feesForPool.toInt256()
+        );
+
+        return (collateralDeltaAmount, fees);
+    }
+
+    function getExecutionPrice(
+        PositionUtils.UpdatePositionParams memory params,
+        MarketUtils.MarketPrices memory prices
+    ) internal view returns (uint256, int256) {
+        int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
+            PositionPricingUtils.GetPriceImpactUsdParams(
+                params.contracts.dataStore,
+                params.market.marketToken,
+                params.market.indexToken,
+                params.market.longToken,
+                params.market.shortToken,
                 params.order.sizeDeltaUsd().toInt256(),
                 params.order.isLong()
             )
         );
 
-        if (usdAdjustment < params.order.acceptableUsdAdjustment()) {
-            revert(Keys.UNACCEPTABLE_USD_ADJUSTMENT_ERROR);
-        }
-
-        PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
-            params.dataStore,
-            position,
-            collateralTokenPrice,
-            params.order.sizeDeltaUsd(),
-            Keys.FEE_RECEIVER_POSITION_FACTOR
-        );
-
-        PricingUtils.transferFees(
-            params.feeReceiver,
+        // cap price impact usd based on the amount available in the position impact pool
+        priceImpactUsd = MarketUtils.getCappedPositionImpactUsd(
+            params.contracts.dataStore,
             params.market.marketToken,
-            position.collateralToken,
-            fees.feeReceiverAmount,
-            FeeUtils.POSITION_FEE
+            prices.indexTokenPrice,
+            priceImpactUsd,
+            params.order.sizeDeltaUsd()
         );
 
-        if (usdAdjustment > 0) {
-            // when there is a positive price impact factor, additional tokens from the swap impact pool
-            // are withdrawn for the user to be used as additional collateral
-            // for example, if 50,000 USDC is withdrawn and there is a positive price impact
-            // an additional 100 USDC may be added to the user's collateral
-            // the swap impact pool is decreased by the used amount
-            uint256 positiveImpactAmount = MarketUtils.applyPositiveImpact(
-                params.dataStore,
-                params.market.marketToken,
-                params.collateralToken,
-                collateralTokenPrice,
-                usdAdjustment
-            );
+        uint256 executionPrice = BaseOrderUtils.getExecutionPrice(
+            params.contracts.oracle.getCustomPrice(params.market.indexToken),
+            params.order.sizeDeltaUsd(),
+            priceImpactUsd,
+            params.order.acceptablePrice(),
+            params.order.isLong(),
+            true
+        );
 
-            fees.totalNetCostAmount += positiveImpactAmount.toInt256();
-        } else {
-            // when there is a negative price impact factor,
-            // less of the collateral amount is sent to the user's position
-            // for example, if 10 ETH is sent as collateral and there is a negative price impact
-            // only 9.995 ETH may be used for collateral
-            // the remaining 0.005 ETH will be stored in the swap impact pool
-            uint256 negativeImpactAmount = MarketUtils.applyNegativeImpact(
-                params.dataStore,
-                params.market.marketToken,
-                params.collateralToken,
-                collateralTokenPrice,
-                usdAdjustment
-            );
+        int256 priceImpactAmount = PositionPricingUtils.getPriceImpactAmount(
+            params.order.sizeDeltaUsd(),
+            executionPrice,
+            prices.indexTokenPrice.max,
+            params.order.isLong(),
+            true
+        );
 
-            fees.totalNetCostAmount -= negativeImpactAmount.toInt256();
-        }
-
-        collateralDeltaAmount += fees.totalNetCostAmount;
-
-        if (collateralDeltaAmount > 0) {
-            MarketUtils.increaseCollateralSum(params.dataStore, params.order.market(), params.collateralToken, params.order.isLong(), collateralDeltaAmount.toUint256());
-        } else {
-            MarketUtils.decreaseCollateralSum(params.dataStore, params.order.market(), params.collateralToken, params.order.isLong(), SafeCast.toUint256(-collateralDeltaAmount));
-        }
-
-        MarketUtils.increasePoolAmount(params.dataStore, params.market.marketToken, params.collateralToken, fees.feesForPool);
-
-        return collateralDeltaAmount;
+        return (executionPrice, priceImpactAmount);
     }
 }

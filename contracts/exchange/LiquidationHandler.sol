@@ -2,73 +2,64 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "./BaseOrderHandler.sol";
 
-import "../role/RoleModule.sol";
-import "../feature/FeatureUtils.sol";
-
-import "../market/Market.sol";
-import "../market/MarketStore.sol";
-import "../market/MarketToken.sol";
-
-import "../order/Order.sol";
-import "../order/OrderStore.sol";
-import "../order/OrderUtils.sol";
-import "../order/LiquidationUtils.sol";
-import "../position/PositionStore.sol";
-import "../oracle/Oracle.sol";
-import "../oracle/OracleModule.sol";
-
-contract LiquidationHandler is RoleModule, ReentrancyGuard, OracleModule {
+// @title LiquidationHandler
+// @dev Contract to handle liquidations
+contract LiquidationHandler is BaseOrderHandler {
+    using SafeCast for uint256;
     using Order for Order.Props;
-
-    DataStore public dataStore;
-    MarketStore public marketStore;
-    PositionStore public positionStore;
-    Oracle public oracle;
-    FeeReceiver public feeReceiver;
+    using Array for uint256[];
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
-        MarketStore _marketStore,
-        PositionStore _positionStore,
+        EventEmitter _eventEmitter,
+        OrderVault _orderVault,
         Oracle _oracle,
-        FeeReceiver _feeReceiver
-    ) RoleModule(_roleStore) {
-        dataStore = _dataStore;
-        marketStore = _marketStore;
-        positionStore = _positionStore;
-        oracle = _oracle;
-        feeReceiver = _feeReceiver;
-    }
+        SwapHandler _swapHandler,
+        IReferralStorage _referralStorage
+    ) BaseOrderHandler(
+        _roleStore,
+        _dataStore,
+        _eventEmitter,
+        _orderVault,
+        _oracle,
+        _swapHandler,
+        _referralStorage
+    ) {}
 
-    function liquidatePosition(
+    // @dev executes a position liquidation
+    // @param account the account of the position to liquidate
+    // @param market the position's market
+    // @param collateralToken the position's collateralToken
+    // @param isLong whether the position is long or short
+    // @param oracleParams OracleUtils.SetPricesParams
+    function executeLiquidation(
         address account,
         address market,
         address collateralToken,
         bool isLong,
-        OracleUtils.SetPricesParams memory oracleParams
+        OracleUtils.SetPricesParams calldata oracleParams
     ) external
-        nonReentrant
+        globalNonReentrant
         onlyLiquidationKeeper
-        withOraclePrices(oracle, dataStore, oracleParams)
+        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
-        FeatureUtils.validateFeature(dataStore, Keys.liquidatePositionFeatureKey(address(this)));
+        uint256 startingGas = gasleft();
 
-        OrderUtils.ExecuteOrderParams memory params;
-
-        params.dataStore = dataStore;
-        params.positionStore = positionStore;
-        params.oracle = oracle;
-        params.feeReceiver = feeReceiver;
-        params.oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedOracleBlockNumbers,
-            oracleParams.tokens.length
+        bytes32 key = LiquidationUtils.createLiquidationOrder(
+            dataStore,
+            account,
+            market,
+            collateralToken,
+            isLong
         );
 
-        params.market = marketStore.get(market);
+        BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, msg.sender, startingGas);
 
-        LiquidationUtils.processLiquidation(params, account, collateralToken, isLong);
+        FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeOrderFeatureDisabledKey(address(this), uint256(params.order.orderType())));
+
+        OrderUtils.executeOrder(params);
     }
 }

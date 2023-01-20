@@ -3,7 +3,6 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "../role/RoleModule.sol";
@@ -11,27 +10,76 @@ import "../role/RoleModule.sol";
 import "./OracleStore.sol";
 import "./OracleUtils.sol";
 import "./IPriceFeed.sol";
+import "../price/Price.sol";
 
+import "../chain/Chain.sol";
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
+import "../event/EventEmitter.sol";
+import "../event/EventUtils.sol";
 
 import "../utils/Bits.sol";
 import "../utils/Array.sol";
 import "../utils/Precision.sol";
+import "../utils/Cast.sol";
 
+// @title Oracle
+// @dev Contract to validate and store signed values
 contract Oracle is RoleModule {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableValues for EnumerableSet.AddressSet;
+    using Price for Price.Props;
 
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
+
+    // @dev _SetPricesCache struct used in setPrices to avoid stack too deep errors
+    // @param prevOracleBlockNumber the previous oracle block number of the loop
+    // @param priceIndex the current price index to retrieve from compactedMinPrices and compactedMaxPrices
+    // to construct the minPrices and maxPrices array
+    // @param signatureIndex the current signature index to retrieve from the signatures array
+    // @param maxPriceAge the max allowed age of price values
+    // @param minPriceIndex the index of the min price in minPrices for the current signer
+    // @param maxPriceIndex the index of the max price in maxPrices for the current signer
+    // @param minPrices the min prices
+    // @param maxPrices the max prices
     struct _SetPricesCache {
-        uint256 minBlockConfirmations;
+        _SetPricesInfoCache info;
         uint256 prevOracleBlockNumber;
+        uint256 priceIndex;
+        uint256 signatureIndex;
+        uint256 minPriceIndex;
+        uint256 maxPriceIndex;
+        uint256 minPrice;
+        uint256 maxPrice;
+        uint256[] minPrices;
+        uint256[] maxPrices;
+    }
+
+    // @param minBlockConfirmations the minimum block confirmations before the block
+    // hash is not required to be part of the signed message for validation
+    // @param oracleBlockNumber the current oracle block number of the loop
+    // @param oracleTimestamp the current oracle timestamp of the loop
+    // @param blockHash the hash of the current oracleBlockNumber of the loop
+    // @param token the address of the current token of the loop
+    // @param precision the precision used for multiplying
+    // @param tokenOracleType the oracle type of the token, this allows oracle keepers
+    // to sign prices based on different methodologies, and the oracle can be configured
+    // to accept prices based on a specific methodology
+    struct _SetPricesInfoCache {
+        uint256 minBlockConfirmations;
+        uint256 maxPriceAge;
         uint256 oracleBlockNumber;
+        uint256 oracleTimestamp;
         bytes32 blockHash;
         address token;
-        uint256 prevPrice;
-        uint256 priceAndSignatureIndex;
-        uint256 maxBlockAge;
+        uint256 precision;
+        bytes32 tokenOracleType;
     }
 
     bytes32 public immutable SALT;
@@ -44,29 +92,35 @@ contract Oracle is RoleModule {
 
     OracleStore public oracleStore;
 
-    // tempTokens stores the tokens with prices that have been set
-    // this is used in clearTempPrices to help ensure that all token prices
+    // tokensWithPrices stores the tokens with prices that have been set
+    // this is used in clearAllPrices to help ensure that all token prices
     // set in setPrices are cleared after use
-    EnumerableSet.AddressSet internal tempTokens;
+    EnumerableSet.AddressSet internal tokensWithPrices;
     // prices for the same token can be sent multiple times in one txn
     // the prices can be for different block numbers
     // the first occurrence of the token's price will be stored in primaryPrices
     // the second occurrence will be stored in secondaryPrices
-    mapping(address => uint256) public primaryPrices;
-    mapping(address => uint256) public secondaryPrices;
+    mapping(address => Price.Props) public primaryPrices;
+    mapping(address => Price.Props) public secondaryPrices;
+    // customPrices can be used to store custom price values
+    // these prices will be cleared in clearAllPrices
+    mapping(address => Price.Props) public customPrices;
 
     error EmptyTokens();
     error InvalidBlockNumber(uint256 blockNumber);
-    error MaxBlockAgeExceeded(uint256 blockNumber);
+    error MaxPriceAgeExceeded(uint256 oracleTimestamp);
     error MinOracleSigners(uint256 oracleSigners, uint256 minOracleSigners);
     error MaxOracleSigners(uint256 oracleSigners, uint256 maxOracleSigners);
-    error PricesNotSorted(uint256 price, uint256 prevPrice);
     error BlockNumbersNotSorted(uint256 oracleBlockNumber, uint256 prevOracleBlockNumber);
-    error InvalidSignature(address recoveredSigner, address expectedSigner);
+    error MinPricesNotSorted(address token, uint256 price, uint256 prevPrice);
+    error MaxPricesNotSorted(address token, uint256 price, uint256 prevPrice);
+    error EmptyPriceFeedMultiplier(address token);
+    error EmptyFeedPrice(address token);
     error MaxSignerIndex(uint256 signerIndex, uint256 maxSignerIndex);
     error DuplicateSigner(uint256 signerIndex);
-    error EmptyPrimaryPrice(address token);
-    error EmptySecondaryPrice(address token);
+    error InvalidOraclePrice(address token);
+    error InvalidSignerMinMaxPrice(uint256 minPrice, uint256 maxPrice);
+    error InvalidMedianMinMaxPrice(uint256 minPrice, uint256 maxPrice);
 
     constructor(
         RoleStore _roleStore,
@@ -76,11 +130,107 @@ contract Oracle is RoleModule {
 
         // sign prices with only the chainid and oracle name so that there is
         // less config required in the oracle nodes
-        SALT = keccak256(abi.encodePacked(block.chainid, "xget-oracle-v1"));
+        SALT = keccak256(abi.encode(block.chainid, "xget-oracle-v1"));
     }
 
-    function setPrices(DataStore dataStore, OracleUtils.SetPricesParams memory params) external onlyController {
-        require(tempTokens.length() == 0, "Oracle: tempTokens not cleared");
+    // @dev validate and store signed prices
+    //
+    // The setPrices function is used to set the prices of tokens in the Oracle contract.
+    // It accepts an array of tokens and a signerInfo parameter. The signerInfo parameter
+    // contains information about the signers that have signed the transaction to set the prices.
+    // The first 16 bits of the signerInfo parameter contain the number of signers, and the following
+    // bits contain the index of each signer in the oracleStore. The function checks that the number
+    // of signers is greater than or equal to the minimum number of signers required, and that
+    // the signer indices are unique and within the maximum signer index. The function then calls
+    // _setPrices and _setPricesFromPriceFeeds to set the prices of the tokens.
+    //
+    // Oracle prices are signed as a value together with a precision, this allows
+    // prices to be compacted as uint32 values.
+    //
+    // The signed prices represent the price of one unit of the token using a value
+    // with 30 decimals of precision.
+    //
+    // Representing the prices in this way allows for conversions between token amounts
+    // and fiat values to be simplified, e.g. to calculate the fiat value of a given
+    // number of tokens the calculation would just be: `token amount * oracle price`,
+    // to calculate the token amount for a fiat value it would be: `fiat value / oracle price`.
+    //
+    // The trade-off of this simplicity in calculation is that tokens with a small USD
+    // price and a lot of decimals may have precision issues it is also possible that
+    // a token's price changes significantly and results in requiring higher precision.
+    //
+    // ## Example 1
+    //
+    // The price of ETH is 5000, and ETH has 18 decimals.
+    //
+    // The price of one unit of ETH is `5000 / (10 ^ 18), 5 * (10 ^ -15)`.
+    //
+    // To handle the decimals, multiply the value by `(10 ^ 30)`.
+    //
+    // Price would be stored as `5000 / (10 ^ 18) * (10 ^ 30) => 5000 * (10 ^ 12)`.
+    //
+    // For gas optimization, these prices are sent to the oracle in the form of a uint8
+    // decimal multiplier value and uint32 price value.
+    //
+    // If the decimal multiplier value is set to 8, the uint32 value would be `5000 * (10 ^ 12) / (10 ^ 8) => 5000 * (10 ^ 4)`.
+    //
+    // With this config, ETH prices can have a maximum value of `(2 ^ 32) / (10 ^ 4) => 4,294,967,296 / (10 ^ 4) => 429,496.7296` with 4 decimals of precision.
+    //
+    // ## Example 2
+    //
+    // The price of BTC is 60,000, and BTC has 8 decimals.
+    //
+    // The price of one unit of BTC is `60,000 / (10 ^ 8), 6 * (10 ^ -4)`.
+    //
+    // Price would be stored as `60,000 / (10 ^ 8) * (10 ^ 30) => 6 * (10 ^ 26) => 60,000 * (10 ^ 22)`.
+    //
+    // BTC prices maximum value: `(2 ^ 64) / (10 ^ 2) => 4,294,967,296 / (10 ^ 2) => 42,949,672.96`.
+    //
+    // Decimals of precision: 2.
+    //
+    // ## Example 3
+    //
+    // The price of USDC is 1, and USDC has 6 decimals.
+    //
+    // The price of one unit of USDC is `1 / (10 ^ 6), 1 * (10 ^ -6)`.
+    //
+    // Price would be stored as `1 / (10 ^ 6) * (10 ^ 30) => 1 * (10 ^ 24)`.
+    //
+    // USDC prices maximum value: `(2 ^ 64) / (10 ^ 6) => 4,294,967,296 / (10 ^ 6) => 4294.967296`.
+    //
+    // Decimals of precision: 6.
+    //
+    // ## Example 4
+    //
+    // The price of DG is 0.00000001, and DG has 18 decimals.
+    //
+    // The price of one unit of DG is `0.00000001 / (10 ^ 18), 1 * (10 ^ -26)`.
+    //
+    // Price would be stored as `1 * (10 ^ -26) * (10 ^ 30) => 1 * (10 ^ 3)`.
+    //
+    // DG prices maximum value: `(2 ^ 64) / (10 ^ 11) => 4,294,967,296 / (10 ^ 11) => 0.04294967296`.
+    //
+    // Decimals of precision: 11.
+    //
+    // ## Decimal Multiplier
+    //
+    // The formula to calculate what the decimal multiplier value should be set to:
+    //
+    // Decimals: 30 - (token decimals) - (number of decimals desired for precision)
+    //
+    // - ETH: 30 - 18 - 4 => 8
+    // - BTC: 30 - 8 - 2 => 20
+    // - USDC: 30 - 6 - 6 => 18
+    // - DG: 30 - 18 - 11 => 1
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param params OracleUtils.SetPricesParams
+    function setPrices(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        OracleUtils.SetPricesParams memory params
+    ) external onlyController {
+        require(tokensWithPrices.length() == 0, "Oracle: tokensWithPrices not cleared");
 
         if (params.tokens.length == 0) { revert EmptyTokens(); }
 
@@ -117,213 +267,372 @@ contract Oracle is RoleModule {
 
         _setPrices(
             dataStore,
+            eventEmitter,
             signers,
-            params.tokens,
-            params.compactedOracleBlockNumbers,
-            params.compactedPrices,
-            params.signatures
+            params
         );
 
-        _setPricesFromPriceFeeds(dataStore, params.priceFeedTokens);
+        _setPricesFromPriceFeeds(dataStore, eventEmitter, params.priceFeedTokens);
     }
 
-    function setSecondaryPrice(address token, uint256 price) external onlyController {
+    // @dev set the primary price
+    // @param token the token to set the price for
+    // @param price the price value to set to
+    function setPrimaryPrice(address token, Price.Props memory price) external onlyController {
+        primaryPrices[token] = price;
+    }
+
+    // @dev set the secondary price
+    // @param token the token to set the price for
+    // @param price the price value to set to
+    function setSecondaryPrice(address token, Price.Props memory price) external onlyController {
         secondaryPrices[token] = price;
     }
 
-    function clearTempPrices() external onlyController {
-        uint256 length = tempTokens.length();
+    // @dev set a custom price
+    // @param token the token to set the price for
+    // @param price the price value to set to
+    function setCustomPrice(address token, Price.Props memory price) external onlyController {
+        customPrices[token] = price;
+    }
+
+    // @dev clear all prices
+    function clearAllPrices() external onlyController {
+        uint256 length = tokensWithPrices.length();
         for (uint256 i = 0; i < length; i++) {
-            address token = tempTokens.at(0);
+            address token = tokensWithPrices.at(0);
             delete primaryPrices[token];
             delete secondaryPrices[token];
-            tempTokens.remove(token);
+            delete customPrices[token];
+            tokensWithPrices.remove(token);
         }
     }
 
-    function getTempTokensCount() external view returns (uint256) {
-        return tempTokens.length();
+    // @dev get the length of tokensWithPrices
+    // @return the length of tokensWithPrices
+    function getTokensWithPricesCount() external view returns (uint256) {
+        return tokensWithPrices.length();
     }
 
-    function getTempTokens(uint256 start, uint256 end) external view returns (address[] memory) {
-        return tempTokens.valuesAt(start, end);
+    // @dev get the tokens of tokensWithPrices for the specified indexes
+    // @param start the start index, the value for this index will be included
+    // @param end the end index, the value for this index will not be included
+    // @return the tokens of tokensWithPrices for the specified indexes
+    function getTokensWithPrices(uint256 start, uint256 end) external view returns (address[] memory) {
+        return tokensWithPrices.valuesAt(start, end);
     }
 
-    function getPrimaryPrice(address token) external view returns (uint256) {
-        uint256 price = primaryPrices[token];
-        if (price == 0) { revert EmptyPrimaryPrice(token); }
+    // @dev get the primary price of a token
+    // @param token the token to get the price for
+    // @return the primary price of a token
+    function getPrimaryPrice(address token) external view returns (Price.Props memory) {
+        Price.Props memory price = primaryPrices[token];
+        if (price.isEmpty()) { revert(Keys.EMPTY_PRICE_ERROR); }
         return price;
     }
 
-    function getSecondaryPrice(address token) external view returns (uint256) {
-        uint256 price = secondaryPrices[token];
-        if (price == 0) { revert EmptySecondaryPrice(token); }
+    // @dev get the secondary price of a token
+    // @param token the token to get the price for
+    // @return the secondary price of a token
+    function getSecondaryPrice(address token) external view returns (Price.Props memory) {
+        Price.Props memory price = secondaryPrices[token];
+        if (price.isEmpty()) { revert(Keys.EMPTY_PRICE_ERROR); }
         return price;
     }
 
-    // store prices as the price of one unit of the token using a value
-    // with 30 decimals of precision
-    //
-    // storing the prices in this way allows for conversions between token
-    // amounts and fiat values to be simplified
-    // e.g. to calculate the fiat value of a given number of tokens the
-    // calculation would just be: token amount * oracle price
-    //
-    // example 1, the price of ETH is 5000, and ETH has 18 decimals
-    // the price of one unit of ETH is 5000 / (10 ** 18), 5 * (10 ** -15)
-    // to represent the price with 30 decimals, store the price as
-    // 5000 / (10 ** 18) * (10 ** 30) => 5 ** (10 ** 15) => 5000 * (10 ** 12)
-    // oracle precision for ETH can be set to (10 ** 8) to allow for prices with
-    // a maximum value of (2 ** 32) / (10 ** 4) => 4,294,967,296 / (10 ** 4) => 429,496
-    // and up to 4 decimals of precision
-    //
-    // example 2, the price of BTC is 60,000, and BTC has 8 decimals
-    // the price of one unit of BTC is 60,000 / (10 ** 8), 6 * (10 ** -4)
-    // to represent the price with 30 decimals, store the price as
-    // 60,000 / (10 ** 8) * (10 ** 30) => 6 * (10 ** 26) => 60,000 * (10 ** 22)
-    // oracle precision for BTC can be set to (10 ** 20) to allow for prices with
-    // a maximum value of (2 ** 32) / (10 ** 2) => 4,294,967,296 / (10 ** 2) => 42,949,672
-    // and up to 2 decimals of precision
-    //
-    // example 3, the price of USDC is 1, and USDC has 6 decimals
-    // the price of one unit of USDC is 1 / (10 ** 6), 1 * (10 ** -6)
-    // to represent the price with 30 decimals, store the price as
-    // 1 / (10 ** 6) * (10 ** 30) => 1 ** (10 ** 24)
-    // oracle precision for USDC can be set to (10 ** 18) to allow for prices with
-    // a maximum value of (2 ** 32) / (10 ** 6) => 4,294,967,296 / (10 ** 6) => 4294
-    // and up to 6 decimals of precision
-    //
-    // example 4, the price of DG is 0.00000001, and DG has 18 decimals
-    // the price of one unit of DG is 0.00000001 / (10 ** 18), 1 * (10 ** -26)
-    // to represent the price with 30 decimals, store the price as
-    // 1 * (10 ** -26) * (10 ** 30) => 10,000 => 1 * (10 ** 3)
-    // oracle precision for DG can be set to (10 ** 1) to allow for prices with
-    // a maximum value of (2 ** 32) / (10 ** 1) => 4,294,967,296 / (10 ** 1) => 429,496,729.6
-    // and up to 11 decimals of precision
-    //
-    // formula to calculate what the precision value should be set to:
-    // decimals: 30 - (token decimals) - (number of decimals desired for precision)
-    // ETH: 30 - 18 - 4 => 8, precision: 10 ** 8
-    // BTC: 30 - 8 - 2 => 20, precision: 10 ** 20
-    // USDC: 30 - 6 - 6 => 18, precision: 10 ** 18
-    // DG: 30 - 18 - 11 => 1, precision: 10 ** 1
-    function getPrecision(DataStore dataStore, address token) public view returns (uint256) {
-        return dataStore.getUint(Keys.oraclePrecisionKey(token));
+    // @dev get the latest price of a token
+    // @param token the token to get the price for
+    // @return the latest price of a token
+    function getLatestPrice(address token) external view returns (Price.Props memory) {
+        Price.Props memory secondaryPrice = secondaryPrices[token];
+
+        if (!secondaryPrice.isEmpty()) {
+            return secondaryPrice;
+        }
+
+        Price.Props memory primaryPrice = primaryPrices[token];
+        if (!primaryPrice.isEmpty()) {
+            return primaryPrice;
+        }
+
+        revert(Keys.EMPTY_PRICE_ERROR);
     }
 
+    // @dev get the custom price of a token
+    // @param token the token to get the price for
+    // @return the custom price of a token
+    function getCustomPrice(address token) external view returns (Price.Props memory) {
+        Price.Props memory price = customPrices[token];
+        if (price.isEmpty()) { revert(Keys.EMPTY_PRICE_ERROR); }
+        return price;
+    }
+
+    // @dev get the price feed address for a token
+    // @param dataStore DataStore
+    // @param token the token to get the price feed for
+    // @return the price feed for the token
+    function getPriceFeed(DataStore dataStore, address token) public view returns (IPriceFeed) {
+        address priceFeedAddress = dataStore.getAddress(Keys.priceFeedKey(token));
+        require(priceFeedAddress != address(0), "Oracle: invalid price feed");
+
+        return IPriceFeed(priceFeedAddress);
+    }
+
+    // @dev get the stable price of a token
+    // @param dataStore DataStore
+    // @param token the token to get the price for
+    // @return the stable price of the token
+    function getStablePrice(DataStore dataStore, address token) public view returns (uint256) {
+        return dataStore.getUint(Keys.stablePriceKey(token));
+    }
+
+    // @dev get the multiplier value to convert the external price feed price to the price of 1 unit of the token
+    // represented with 30 decimals
+    // for example, if USDC has 6 decimals and a price of 1 USD, one unit of USDC would have a price of
+    // 1 / (10 ^ 6) * (10 ^ 30) => 1 * (10 ^ 24)
+    // if the external price feed has 8 decimals, the price feed price would be 1 * (10 ^ 8)
+    // in this case the priceFeedMultiplier should be 10 ^ 46
+    // the conversion of the price feed price would be 1 * (10 ^ 8) * (10 ^ 46) / (10 ^ 30) => 1 * (10 ^ 24)
+    // formula for decimals for price feed multiplier: 60 - (external price feed decimals) - (token decimals)
+    //
+    // @param dataStore DataStore
+    // @param token the token to get the price feed multiplier for
+    // @return the price feed multipler
+    function getPriceFeedMultiplier(DataStore dataStore, address token) public view returns (uint256) {
+        uint256 multiplier = dataStore.getUint(Keys.priceFeedMultiplierKey(token));
+
+        if (multiplier == 0) {
+            revert EmptyPriceFeedMultiplier(token);
+        }
+
+        return multiplier;
+    }
+
+    // @dev validate and set prices
+    // The _setPrices() function is a helper function that is called by the
+    // setPrices() function. It takes in several parameters: a DataStore contract
+    // instance, an EventEmitter contract instance, an array of signers, and an
+    // OracleUtils.SetPricesParams struct containing information about the tokens
+    // and their prices.
+    // The function first initializes a _SetPricesCache struct to store some temporary
+    // values that will be used later in the function. It then loops through the array
+    // of tokens and sets the corresponding values in the cache struct. For each token,
+    // the function also loops through the array of signers and validates the signatures
+    // for the min and max prices for that token. If the signatures are valid, the
+    // function calculates the median min and max prices and sets them in the DataStore
+    // contract.
+    // Finally, the function emits an event to signal that the prices have been set.
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param signers the signers of the prices
+    // @param params OracleUtils.SetPricesParams
     function _setPrices(
         DataStore dataStore,
+        EventEmitter eventEmitter,
         address[] memory signers,
-        address[] memory tokens,
-        uint256[] memory compactedOracleBlockNumbers,
-        uint256[] memory compactedPrices,
-        bytes[] memory signatures
+        OracleUtils.SetPricesParams memory params
     ) internal {
         _SetPricesCache memory cache;
-        cache.minBlockConfirmations = dataStore.getUint(Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS);
-        cache.maxBlockAge = dataStore.getUint(Keys.MAX_ORACLE_BLOCK_AGE);
+        cache.info.minBlockConfirmations = dataStore.getUint(Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS);
+        cache.info.maxPriceAge = dataStore.getUint(Keys.MAX_ORACLE_PRICE_AGE);
 
-        for (uint256 i = 0; i < tokens.length; i++) {
-            cache.oracleBlockNumber = OracleUtils.getUncompactedOracleBlockNumber(compactedOracleBlockNumbers, i);
+        for (uint256 i = 0; i < params.tokens.length; i++) {
+            cache.info.oracleBlockNumber = OracleUtils.getUncompactedOracleBlockNumber(params.compactedOracleBlockNumbers, i);
+            cache.info.oracleTimestamp = OracleUtils.getUncompactedOracleTimestamp(params.compactedOracleTimestamps, i);
 
-            if (cache.oracleBlockNumber > block.number) {
-                revert InvalidBlockNumber(cache.oracleBlockNumber);
+            if (cache.info.oracleBlockNumber > Chain.currentBlockNumber()) {
+                revert InvalidBlockNumber(cache.info.oracleBlockNumber);
             }
 
-            if (cache.oracleBlockNumber + cache.maxBlockAge < block.number) {
-                revert MaxBlockAgeExceeded(cache.oracleBlockNumber);
+            if (cache.info.oracleTimestamp + cache.info.maxPriceAge < Chain.currentTimestamp()) {
+                revert MaxPriceAgeExceeded(cache.info.oracleTimestamp);
             }
 
             // block numbers must be in ascending order
-            if (cache.oracleBlockNumber < cache.prevOracleBlockNumber) {
-                revert BlockNumbersNotSorted(cache.oracleBlockNumber, cache.prevOracleBlockNumber);
+            if (cache.info.oracleBlockNumber < cache.prevOracleBlockNumber) {
+                revert BlockNumbersNotSorted(cache.info.oracleBlockNumber, cache.prevOracleBlockNumber);
             }
-            cache.prevOracleBlockNumber = cache.oracleBlockNumber;
+            cache.prevOracleBlockNumber = cache.info.oracleBlockNumber;
 
-            cache.blockHash = bytes32(0);
-            if (block.number - cache.oracleBlockNumber <= cache.minBlockConfirmations) {
-                cache.blockHash = blockhash(cache.oracleBlockNumber);
+            cache.info.blockHash = bytes32(0);
+            if (Chain.currentBlockNumber() - cache.info.oracleBlockNumber <= cache.info.minBlockConfirmations) {
+                cache.info.blockHash = Chain.getBlockHash(cache.info.oracleBlockNumber);
             }
 
-            cache.token = tokens[i];
-            cache.prevPrice = 0;
+            cache.info.token = params.tokens[i];
+            cache.info.precision = 10 ** OracleUtils.getUncompactedDecimal(params.compactedDecimals, i);
+            cache.info.tokenOracleType = dataStore.getBytes32(Keys.oracleTypeKey(cache.info.token));
 
-            uint256[] memory prices = new uint256[](signers.length);
+            cache.minPrices = new uint256[](signers.length);
+            cache.maxPrices = new uint256[](signers.length);
+
             for (uint256 j = 0; j < signers.length; j++) {
-                cache.priceAndSignatureIndex = i * signers.length + j;
+                cache.priceIndex = i * signers.length + j;
+                cache.minPrices[j] = OracleUtils.getUncompactedPrice(params.compactedMinPrices, cache.priceIndex);
+                cache.maxPrices[j] = OracleUtils.getUncompactedPrice(params.compactedMaxPrices, cache.priceIndex);
 
-                uint256 price = OracleUtils.getUncompactedPrice(compactedPrices, cache.priceAndSignatureIndex);
+                if (j == 0) { continue; }
 
-                // prices must be in ascending order
-                if (price < cache.prevPrice) { revert PricesNotSorted(price, cache.prevPrice); }
-                cache.prevPrice = price;
+                // validate that minPrices are sorted in ascending order
+                if (cache.minPrices[j - 1] > cache.minPrices[j]) {
+                    revert MinPricesNotSorted(cache.info.token, cache.minPrices[j], cache.minPrices[j - 1]);
+                }
 
-                _validateSigner(
-                    cache.oracleBlockNumber,
-                    cache.blockHash,
-                    cache.token,
-                    price,
-                    signatures[cache.priceAndSignatureIndex],
+                // validate that maxPrices are sorted in ascending order
+                if (cache.maxPrices[j - 1] > cache.maxPrices[j]) {
+                    revert MaxPricesNotSorted(cache.info.token, cache.maxPrices[j], cache.maxPrices[j - 1]);
+                }
+            }
+
+            for (uint256 j = 0; j < signers.length; j++) {
+                cache.signatureIndex = i * signers.length + j;
+                cache.minPriceIndex = OracleUtils.getUncompactedPriceIndex(params.compactedMinPricesIndexes, cache.signatureIndex);
+                cache.maxPriceIndex = OracleUtils.getUncompactedPriceIndex(params.compactedMaxPricesIndexes, cache.signatureIndex);
+
+                if (cache.signatureIndex >= params.signatures.length) {
+                    Array.revertArrayOutOfBounds(params.signatures, cache.signatureIndex, "signatures");
+                }
+
+                if (cache.minPriceIndex >= cache.minPrices.length) {
+                    Array.revertArrayOutOfBounds(cache.minPrices, cache.minPriceIndex, "minPrices");
+                }
+
+                if (cache.maxPriceIndex >= cache.maxPrices.length) {
+                    Array.revertArrayOutOfBounds(cache.maxPrices, cache.maxPriceIndex, "maxPrices");
+                }
+
+                cache.minPrice = cache.minPrices[cache.minPriceIndex];
+                cache.maxPrice = cache.maxPrices[cache.maxPriceIndex];
+
+                if (cache.minPrice > cache.maxPrice) {
+                    revert InvalidSignerMinMaxPrice(cache.minPrice, cache.maxPrice);
+                }
+
+                OracleUtils.validateSigner(
+                    SALT,
+                    cache.info.oracleBlockNumber,
+                    cache.info.oracleTimestamp,
+                    cache.info.blockHash,
+                    cache.info.token,
+                    cache.info.tokenOracleType,
+                    cache.info.precision,
+                    cache.minPrice,
+                    cache.maxPrice,
+                    params.signatures[cache.signatureIndex],
                     signers[j]
                 );
-
-                prices[j] = price;
             }
 
-            uint256 medianPrice = Array.getMedian(prices) * getPrecision(dataStore, cache.token);
-            if (primaryPrices[cache.token] != 0) {
-                secondaryPrices[cache.token] = medianPrice;
+            uint256 medianMinPrice = Array.getMedian(cache.minPrices) * cache.info.precision;
+            uint256 medianMaxPrice = Array.getMedian(cache.maxPrices) * cache.info.precision;
+
+            if (medianMinPrice == 0 || medianMaxPrice == 0) {
+                revert InvalidOraclePrice(cache.info.token);
+            }
+
+            if (medianMinPrice > medianMaxPrice) {
+                revert InvalidMedianMinMaxPrice(medianMinPrice, medianMaxPrice);
+            }
+
+            if (primaryPrices[cache.info.token].isEmpty()) {
+                emitOraclePriceUpdated(eventEmitter, cache.info.token, medianMinPrice, medianMaxPrice, true, false);
+
+                primaryPrices[cache.info.token] = Price.Props(
+                    medianMinPrice,
+                    medianMaxPrice
+                );
             } else {
-                primaryPrices[cache.token] = medianPrice;
+                emitOraclePriceUpdated(eventEmitter, cache.info.token, medianMinPrice, medianMaxPrice, false, false);
+
+                secondaryPrices[cache.info.token] = Price.Props(
+                    medianMinPrice,
+                    medianMaxPrice
+                );
             }
-            tempTokens.add(cache.token);
+
+            tokensWithPrices.add(cache.info.token);
         }
     }
 
-    // to save costs for tokens with stable prices
-    function _setPricesFromPriceFeeds(DataStore dataStore, address[] memory priceFeedTokens) internal {
+    // @dev set prices using external price feeds to save costs for tokens with stable prices
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param priceFeedTokens the tokens to set the prices using the price feeds for
+    function _setPricesFromPriceFeeds(DataStore dataStore, EventEmitter eventEmitter, address[] memory priceFeedTokens) internal {
         for (uint256 i = 0; i < priceFeedTokens.length; i++) {
             address token = priceFeedTokens[i];
 
-            require(primaryPrices[token] == 0, "Oracle: price already set");
+            require(primaryPrices[token].isEmpty(), "Oracle: price already set");
 
-            address priceFeedAddress = dataStore.getAddress(Keys.priceFeedKey(token));
-            require(priceFeedAddress != address(0), "Oracle: invalid price feed");
+            IPriceFeed priceFeed = getPriceFeed(dataStore, token);
 
-            IPriceFeed priceFeed = IPriceFeed(priceFeedAddress);
             (
                 /* uint80 roundID */,
                 int256 _price,
                 /* uint256 startedAt */,
-                /* uint256 timeStamp */,
+                /* uint256 timestamp */,
                 /* uint80 answeredInRound */
             ) = priceFeed.latestRoundData();
 
             uint256 price = SafeCast.toUint256(_price);
-            price = price * dataStore.getUint(Keys.priceFeedPrecisionKey(token)) / Precision.FLOAT_PRECISION;
+            uint256 precision = getPriceFeedMultiplier(dataStore, token);
 
-            require(price != 0, "Oracle: invalid price");
+            price = price * precision / Precision.FLOAT_PRECISION;
 
-            primaryPrices[token] = price;
-            tempTokens.add(token);
+            if (price == 0) {
+                revert EmptyFeedPrice(token);
+            }
+
+            uint256 stablePrice = getStablePrice(dataStore, token);
+
+            Price.Props memory priceProps;
+
+            if (stablePrice > 0) {
+                priceProps = Price.Props(
+                    price < stablePrice ? price : stablePrice,
+                    price < stablePrice ? stablePrice : price
+                );
+            } else {
+                priceProps = Price.Props(
+                    price,
+                    price
+                );
+            }
+
+            primaryPrices[token] = priceProps;
+
+            tokensWithPrices.add(token);
+
+            emitOraclePriceUpdated(eventEmitter, token, priceProps.min, priceProps.max, true, true);
         }
     }
 
-    function _validateSigner(
-        uint256 oracleBlockNumber,
-        bytes32 blockHash,
+    function emitOraclePriceUpdated(
+        EventEmitter eventEmitter,
         address token,
-        uint256 price,
-        bytes memory signature,
-        address expectedSigner
-    ) internal view {
-        bytes32 digest = ECDSA.toEthSignedMessageHash(
-            keccak256(abi.encodePacked(SALT, oracleBlockNumber, blockHash, token, price))
+        uint256 minPrice,
+        uint256 maxPrice,
+        bool isPrimary,
+        bool isPriceFeed
+    ) internal {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "token", token);
+
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "minPrice", minPrice);
+        eventData.uintItems.setItem(1, "maxPrice", maxPrice);
+
+        eventData.boolItems.initItems(2);
+        eventData.boolItems.setItem(0, "isPrimary", isPrimary);
+        eventData.boolItems.setItem(1, "isPriceFeed", isPriceFeed);
+
+        eventEmitter.emitEventLog1(
+            "InsufficientFundingFeePayment",
+            Cast.toBytes32(token),
+            eventData
         );
 
-        address recoveredSigner = ECDSA.recover(digest, signature);
-        if (recoveredSigner != expectedSigner) {
-            revert InvalidSignature(recoveredSigner, expectedSigner);
-        }
     }
 }

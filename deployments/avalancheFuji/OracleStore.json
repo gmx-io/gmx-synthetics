@@ -1,0 +1,333 @@
+{
+  "address": "0x885612A7Db92A8391A17d4FfF47Ac537E8E1396A",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "contract RoleStore",
+          "name": "_roleStore",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "msgSender",
+          "type": "address"
+        },
+        {
+          "internalType": "string",
+          "name": "role",
+          "type": "string"
+        }
+      ],
+      "name": "Unauthorized",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "prevGov",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "nextGov",
+          "type": "address"
+        }
+      ],
+      "name": "SetGov",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        }
+      ],
+      "name": "SignerAdded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        }
+      ],
+      "name": "SignerRemoved",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "addSigner",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "index",
+          "type": "uint256"
+        }
+      ],
+      "name": "getSigner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getSignerCount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "start",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "end",
+          "type": "uint256"
+        }
+      ],
+      "name": "getSigners",
+      "outputs": [
+        {
+          "internalType": "address[]",
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "gov",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "removeSigner",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "roleStore",
+      "outputs": [
+        {
+          "internalType": "contract RoleStore",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_gov",
+          "type": "address"
+        }
+      ],
+      "name": "setGov",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xb7352a6569bad399eb3fa04907b151db9bae683fd7fc02218ffdd62be6aa72e8",
+  "receipt": {
+    "to": null,
+    "from": "0xFb11f15f206bdA02c224EDC744b0E50E46137046",
+    "contractAddress": "0x885612A7Db92A8391A17d4FfF47Ac537E8E1396A",
+    "transactionIndex": 0,
+    "gasUsed": "547970",
+    "logsBloom": "0x00000000000000004000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000020002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xa989b7006ac4283826bbcba8945c8bf277ffce1d052d2b1bede2af3d67611638",
+    "transactionHash": "0xb7352a6569bad399eb3fa04907b151db9bae683fd7fc02218ffdd62be6aa72e8",
+    "logs": [
+      {
+        "transactionIndex": 0,
+        "blockNumber": 16728240,
+        "transactionHash": "0xb7352a6569bad399eb3fa04907b151db9bae683fd7fc02218ffdd62be6aa72e8",
+        "address": "0x885612A7Db92A8391A17d4FfF47Ac537E8E1396A",
+        "topics": [
+          "0x53351836099c03ffc3b1727d8abd4b0222afa87d4ed76ae3102d51369ef7f785"
+        ],
+        "data": "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000fb11f15f206bda02c224edc744b0e50e46137046",
+        "logIndex": 0,
+        "blockHash": "0xa989b7006ac4283826bbcba8945c8bf277ffce1d052d2b1bede2af3d67611638"
+      }
+    ],
+    "blockNumber": 16728240,
+    "cumulativeGasUsed": "547970",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    "0xdF83f183CCB84bC1d506b8Df372e9Ca3b0a887Ef"
+  ],
+  "numDeployments": 4,
+  "solcInputHash": "cc918ebec4e06efa59221b6686dcd480",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.16+commit.07a7930e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"contract RoleStore\",\"name\":\"_roleStore\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"msgSender\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"role\",\"type\":\"string\"}],\"name\":\"Unauthorized\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"prevGov\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"nextGov\",\"type\":\"address\"}],\"name\":\"SetGov\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"}],\"name\":\"SignerAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"}],\"name\":\"SignerRemoved\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"addSigner\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"}],\"name\":\"getSigner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getSignerCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"start\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"end\",\"type\":\"uint256\"}],\"name\":\"getSigners\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"gov\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"removeSigner\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"roleStore\",\"outputs\":[{\"internalType\":\"contract RoleStore\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_gov\",\"type\":\"address\"}],\"name\":\"setGov\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/oracle/OracleStore.sol\":\"OracleStore\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":10},\"remappings\":[]},\"sources\":{\"@openzeppelin/contracts/utils/structs/EnumerableSet.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.7.0) (utils/structs/EnumerableSet.sol)\\n\\npragma solidity ^0.8.0;\\n\\n/**\\n * @dev Library for managing\\n * https://en.wikipedia.org/wiki/Set_(abstract_data_type)[sets] of primitive\\n * types.\\n *\\n * Sets have the following properties:\\n *\\n * - Elements are added, removed, and checked for existence in constant time\\n * (O(1)).\\n * - Elements are enumerated in O(n). No guarantees are made on the ordering.\\n *\\n * ```\\n * contract Example {\\n *     // Add the library methods\\n *     using EnumerableSet for EnumerableSet.AddressSet;\\n *\\n *     // Declare a set state variable\\n *     EnumerableSet.AddressSet private mySet;\\n * }\\n * ```\\n *\\n * As of v3.3.0, sets of type `bytes32` (`Bytes32Set`), `address` (`AddressSet`)\\n * and `uint256` (`UintSet`) are supported.\\n *\\n * [WARNING]\\n * ====\\n *  Trying to delete such a structure from storage will likely result in data corruption, rendering the structure unusable.\\n *  See https://github.com/ethereum/solidity/pull/11843[ethereum/solidity#11843] for more info.\\n *\\n *  In order to clean an EnumerableSet, you can either remove all elements one by one or create a fresh instance using an array of EnumerableSet.\\n * ====\\n */\\nlibrary EnumerableSet {\\n    // To implement this library for multiple types with as little code\\n    // repetition as possible, we write it in terms of a generic Set type with\\n    // bytes32 values.\\n    // The Set implementation uses private functions, and user-facing\\n    // implementations (such as AddressSet) are just wrappers around the\\n    // underlying Set.\\n    // This means that we can only create new EnumerableSets for types that fit\\n    // in bytes32.\\n\\n    struct Set {\\n        // Storage of set values\\n        bytes32[] _values;\\n        // Position of the value in the `values` array, plus 1 because index 0\\n        // means a value is not in the set.\\n        mapping(bytes32 => uint256) _indexes;\\n    }\\n\\n    /**\\n     * @dev Add a value to a set. O(1).\\n     *\\n     * Returns true if the value was added to the set, that is if it was not\\n     * already present.\\n     */\\n    function _add(Set storage set, bytes32 value) private returns (bool) {\\n        if (!_contains(set, value)) {\\n            set._values.push(value);\\n            // The value is stored at length-1, but we add 1 to all indexes\\n            // and use 0 as a sentinel value\\n            set._indexes[value] = set._values.length;\\n            return true;\\n        } else {\\n            return false;\\n        }\\n    }\\n\\n    /**\\n     * @dev Removes a value from a set. O(1).\\n     *\\n     * Returns true if the value was removed from the set, that is if it was\\n     * present.\\n     */\\n    function _remove(Set storage set, bytes32 value) private returns (bool) {\\n        // We read and store the value's index to prevent multiple reads from the same storage slot\\n        uint256 valueIndex = set._indexes[value];\\n\\n        if (valueIndex != 0) {\\n            // Equivalent to contains(set, value)\\n            // To delete an element from the _values array in O(1), we swap the element to delete with the last one in\\n            // the array, and then remove the last element (sometimes called as 'swap and pop').\\n            // This modifies the order of the array, as noted in {at}.\\n\\n            uint256 toDeleteIndex = valueIndex - 1;\\n            uint256 lastIndex = set._values.length - 1;\\n\\n            if (lastIndex != toDeleteIndex) {\\n                bytes32 lastValue = set._values[lastIndex];\\n\\n                // Move the last value to the index where the value to delete is\\n                set._values[toDeleteIndex] = lastValue;\\n                // Update the index for the moved value\\n                set._indexes[lastValue] = valueIndex; // Replace lastValue's index to valueIndex\\n            }\\n\\n            // Delete the slot where the moved value was stored\\n            set._values.pop();\\n\\n            // Delete the index for the deleted slot\\n            delete set._indexes[value];\\n\\n            return true;\\n        } else {\\n            return false;\\n        }\\n    }\\n\\n    /**\\n     * @dev Returns true if the value is in the set. O(1).\\n     */\\n    function _contains(Set storage set, bytes32 value) private view returns (bool) {\\n        return set._indexes[value] != 0;\\n    }\\n\\n    /**\\n     * @dev Returns the number of values on the set. O(1).\\n     */\\n    function _length(Set storage set) private view returns (uint256) {\\n        return set._values.length;\\n    }\\n\\n    /**\\n     * @dev Returns the value stored at position `index` in the set. O(1).\\n     *\\n     * Note that there are no guarantees on the ordering of values inside the\\n     * array, and it may change when more values are added or removed.\\n     *\\n     * Requirements:\\n     *\\n     * - `index` must be strictly less than {length}.\\n     */\\n    function _at(Set storage set, uint256 index) private view returns (bytes32) {\\n        return set._values[index];\\n    }\\n\\n    /**\\n     * @dev Return the entire set in an array\\n     *\\n     * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed\\n     * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that\\n     * this function has an unbounded cost, and using it as part of a state-changing function may render the function\\n     * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.\\n     */\\n    function _values(Set storage set) private view returns (bytes32[] memory) {\\n        return set._values;\\n    }\\n\\n    // Bytes32Set\\n\\n    struct Bytes32Set {\\n        Set _inner;\\n    }\\n\\n    /**\\n     * @dev Add a value to a set. O(1).\\n     *\\n     * Returns true if the value was added to the set, that is if it was not\\n     * already present.\\n     */\\n    function add(Bytes32Set storage set, bytes32 value) internal returns (bool) {\\n        return _add(set._inner, value);\\n    }\\n\\n    /**\\n     * @dev Removes a value from a set. O(1).\\n     *\\n     * Returns true if the value was removed from the set, that is if it was\\n     * present.\\n     */\\n    function remove(Bytes32Set storage set, bytes32 value) internal returns (bool) {\\n        return _remove(set._inner, value);\\n    }\\n\\n    /**\\n     * @dev Returns true if the value is in the set. O(1).\\n     */\\n    function contains(Bytes32Set storage set, bytes32 value) internal view returns (bool) {\\n        return _contains(set._inner, value);\\n    }\\n\\n    /**\\n     * @dev Returns the number of values in the set. O(1).\\n     */\\n    function length(Bytes32Set storage set) internal view returns (uint256) {\\n        return _length(set._inner);\\n    }\\n\\n    /**\\n     * @dev Returns the value stored at position `index` in the set. O(1).\\n     *\\n     * Note that there are no guarantees on the ordering of values inside the\\n     * array, and it may change when more values are added or removed.\\n     *\\n     * Requirements:\\n     *\\n     * - `index` must be strictly less than {length}.\\n     */\\n    function at(Bytes32Set storage set, uint256 index) internal view returns (bytes32) {\\n        return _at(set._inner, index);\\n    }\\n\\n    /**\\n     * @dev Return the entire set in an array\\n     *\\n     * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed\\n     * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that\\n     * this function has an unbounded cost, and using it as part of a state-changing function may render the function\\n     * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.\\n     */\\n    function values(Bytes32Set storage set) internal view returns (bytes32[] memory) {\\n        return _values(set._inner);\\n    }\\n\\n    // AddressSet\\n\\n    struct AddressSet {\\n        Set _inner;\\n    }\\n\\n    /**\\n     * @dev Add a value to a set. O(1).\\n     *\\n     * Returns true if the value was added to the set, that is if it was not\\n     * already present.\\n     */\\n    function add(AddressSet storage set, address value) internal returns (bool) {\\n        return _add(set._inner, bytes32(uint256(uint160(value))));\\n    }\\n\\n    /**\\n     * @dev Removes a value from a set. O(1).\\n     *\\n     * Returns true if the value was removed from the set, that is if it was\\n     * present.\\n     */\\n    function remove(AddressSet storage set, address value) internal returns (bool) {\\n        return _remove(set._inner, bytes32(uint256(uint160(value))));\\n    }\\n\\n    /**\\n     * @dev Returns true if the value is in the set. O(1).\\n     */\\n    function contains(AddressSet storage set, address value) internal view returns (bool) {\\n        return _contains(set._inner, bytes32(uint256(uint160(value))));\\n    }\\n\\n    /**\\n     * @dev Returns the number of values in the set. O(1).\\n     */\\n    function length(AddressSet storage set) internal view returns (uint256) {\\n        return _length(set._inner);\\n    }\\n\\n    /**\\n     * @dev Returns the value stored at position `index` in the set. O(1).\\n     *\\n     * Note that there are no guarantees on the ordering of values inside the\\n     * array, and it may change when more values are added or removed.\\n     *\\n     * Requirements:\\n     *\\n     * - `index` must be strictly less than {length}.\\n     */\\n    function at(AddressSet storage set, uint256 index) internal view returns (address) {\\n        return address(uint160(uint256(_at(set._inner, index))));\\n    }\\n\\n    /**\\n     * @dev Return the entire set in an array\\n     *\\n     * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed\\n     * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that\\n     * this function has an unbounded cost, and using it as part of a state-changing function may render the function\\n     * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.\\n     */\\n    function values(AddressSet storage set) internal view returns (address[] memory) {\\n        bytes32[] memory store = _values(set._inner);\\n        address[] memory result;\\n\\n        /// @solidity memory-safe-assembly\\n        assembly {\\n            result := store\\n        }\\n\\n        return result;\\n    }\\n\\n    // UintSet\\n\\n    struct UintSet {\\n        Set _inner;\\n    }\\n\\n    /**\\n     * @dev Add a value to a set. O(1).\\n     *\\n     * Returns true if the value was added to the set, that is if it was not\\n     * already present.\\n     */\\n    function add(UintSet storage set, uint256 value) internal returns (bool) {\\n        return _add(set._inner, bytes32(value));\\n    }\\n\\n    /**\\n     * @dev Removes a value from a set. O(1).\\n     *\\n     * Returns true if the value was removed from the set, that is if it was\\n     * present.\\n     */\\n    function remove(UintSet storage set, uint256 value) internal returns (bool) {\\n        return _remove(set._inner, bytes32(value));\\n    }\\n\\n    /**\\n     * @dev Returns true if the value is in the set. O(1).\\n     */\\n    function contains(UintSet storage set, uint256 value) internal view returns (bool) {\\n        return _contains(set._inner, bytes32(value));\\n    }\\n\\n    /**\\n     * @dev Returns the number of values on the set. O(1).\\n     */\\n    function length(UintSet storage set) internal view returns (uint256) {\\n        return _length(set._inner);\\n    }\\n\\n    /**\\n     * @dev Returns the value stored at position `index` in the set. O(1).\\n     *\\n     * Note that there are no guarantees on the ordering of values inside the\\n     * array, and it may change when more values are added or removed.\\n     *\\n     * Requirements:\\n     *\\n     * - `index` must be strictly less than {length}.\\n     */\\n    function at(UintSet storage set, uint256 index) internal view returns (uint256) {\\n        return uint256(_at(set._inner, index));\\n    }\\n\\n    /**\\n     * @dev Return the entire set in an array\\n     *\\n     * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed\\n     * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that\\n     * this function has an unbounded cost, and using it as part of a state-changing function may render the function\\n     * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.\\n     */\\n    function values(UintSet storage set) internal view returns (uint256[] memory) {\\n        bytes32[] memory store = _values(set._inner);\\n        uint256[] memory result;\\n\\n        /// @solidity memory-safe-assembly\\n        assembly {\\n            result := store\\n        }\\n\\n        return result;\\n    }\\n}\\n\",\"keccak256\":\"0x5050943b32b6a8f282573d166b2e9d87ab7eb4dbba4ab6acf36ecb54fe6995e4\",\"license\":\"MIT\"},\"contracts/gov/Governable.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\n\\npragma solidity ^0.8.0;\\n\\n// @title Governable\\n// @dev Contract to allow for governance restricted functions\\ncontract Governable {\\n    address public gov;\\n\\n    event SetGov(address prevGov, address nextGov);\\n\\n    error Unauthorized(address msgSender, string role);\\n\\n    constructor() {\\n        _setGov(msg.sender);\\n    }\\n\\n    modifier onlyGov() {\\n        if (msg.sender != gov) {\\n            revert Unauthorized(msg.sender, \\\"GOV\\\");\\n        }\\n        _;\\n    }\\n\\n    // @dev updates the gov value to the input _gov value\\n    // @param _gov the value to update to\\n    function setGov(address _gov) external onlyGov {\\n        _setGov(_gov);\\n    }\\n\\n    // @dev updates the gov value to the input _gov value\\n    // @param _gov the value to update to\\n    function _setGov(address _gov) internal {\\n        address prevGov = gov;\\n        gov = _gov;\\n\\n        emit SetGov(prevGov, _gov);\\n    }\\n}\\n\",\"keccak256\":\"0x3a7f4c36ac230d902ab66dcb36a0cd2cde8543df032608b19b35e617f3be8c0d\",\"license\":\"BUSL-1.1\"},\"contracts/oracle/OracleStore.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\n\\npragma solidity ^0.8.0;\\n\\nimport \\\"../role/RoleModule.sol\\\";\\n\\n// @title OracleStore\\n// @dev Stores the list of oracle signers\\ncontract OracleStore is RoleModule {\\n    using EnumerableSet for EnumerableSet.AddressSet;\\n    using EnumerableValues for EnumerableSet.AddressSet;\\n\\n    event SignerAdded(address signer);\\n    event SignerRemoved(address signer);\\n\\n    EnumerableSet.AddressSet internal signers;\\n\\n    constructor(RoleStore _roleStore) RoleModule(_roleStore) {}\\n\\n    // @dev adds a signer\\n    // @param account address of the signer to add\\n    function addSigner(address account) external onlyController {\\n        signers.add(account);\\n        emit SignerAdded(account);\\n    }\\n\\n    // @dev removes a signer\\n    // @param account address of the signer to remove\\n    function removeSigner(address account) external onlyController {\\n        signers.remove(account);\\n        emit SignerRemoved(account);\\n    }\\n\\n    // @dev get the total number of signers\\n    // @return the total number of signers\\n    function getSignerCount() external view returns (uint256) {\\n        return signers.length();\\n    }\\n\\n    // @dev get the signer at the specified index\\n    // @param index the index of the signer to get\\n    // @return the signer at the specified index\\n    function getSigner(uint256 index) external view returns (address) {\\n        return signers.at(index);\\n    }\\n\\n    // @dev get the signers for the specified indexes\\n    // @param start the start index, the value for this index will be included\\n    // @param end the end index, the value for this index will not be included\\n    // @return the signers for the specified indexes\\n    function getSigners(uint256 start, uint256 end) external view returns (address[] memory) {\\n        return signers.valuesAt(start, end);\\n    }\\n}\\n\",\"keccak256\":\"0xc40276ff66d49f8385e3789393e9b34ea16d4eb35d488ae62219473644a754fd\",\"license\":\"BUSL-1.1\"},\"contracts/role/Role.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\n\\npragma solidity ^0.8.0;\\n\\n/**\\n * @title Role\\n * @dev Library for role keys\\n */\\nlibrary Role {\\n    /**\\n     * @dev The CONTROLLER role.\\n     */\\n    bytes32 public constant CONTROLLER = keccak256(abi.encode(\\\"CONTROLLER\\\"));\\n\\n    /**\\n     * @dev The ROUTER_PLUGIN role.\\n     */\\n    bytes32 public constant ROUTER_PLUGIN = keccak256(abi.encode(\\\"ROUTER_PLUGIN\\\"));\\n\\n    /**\\n     * @dev The MARKET_KEEPER role.\\n     */\\n    bytes32 public constant MARKET_KEEPER = keccak256(abi.encode(\\\"MARKET_KEEPER\\\"));\\n\\n    /**\\n     * @dev The FEE_KEEPER role.\\n     */\\n    bytes32 public constant FEE_KEEPER = keccak256(abi.encode(\\\"FEE_KEEPER\\\"));\\n\\n    /**\\n     * @dev The ORDER_KEEPER role.\\n     */\\n    bytes32 public constant ORDER_KEEPER = keccak256(abi.encode(\\\"ORDER_KEEPER\\\"));\\n\\n    /**\\n     * @dev The FROZEN_ORDER_KEEPER role.\\n     */\\n    bytes32 public constant FROZEN_ORDER_KEEPER = keccak256(abi.encode(\\\"FROZEN_ORDER_KEEPER\\\"));\\n\\n    /**\\n     * @dev The PRICING_KEEPER role.\\n     */\\n    bytes32 public constant PRICING_KEEPER = keccak256(abi.encode(\\\"PRICING_KEEPER\\\"));\\n    /**\\n     * @dev The LIQUIDATION_KEEPER role.\\n     */\\n    bytes32 public constant LIQUIDATION_KEEPER = keccak256(abi.encode(\\\"LIQUIDATION_KEEPER\\\"));\\n    /**\\n     * @dev The ADL_KEEPER role.\\n     */\\n    bytes32 public constant ADL_KEEPER = keccak256(abi.encode(\\\"ADL_KEEPER\\\"));\\n}\\n\",\"keccak256\":\"0x25a31e65e5f089e78ef7966d8e98dc74fe89417e4dfe9614d3b24c5d4242556b\",\"license\":\"BUSL-1.1\"},\"contracts/role/RoleModule.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\n\\npragma solidity ^0.8.0;\\n\\nimport \\\"./RoleStore.sol\\\";\\nimport \\\"./Role.sol\\\";\\nimport \\\"../gov/Governable.sol\\\";\\n\\n/**\\n * @title RoleModule\\n * @dev Contract for role validation functions\\n */\\ncontract RoleModule is Governable {\\n    RoleStore public immutable roleStore;\\n\\n    /**\\n     * @dev Constructor that initializes the role store for this contract.\\n     *\\n     * @param _roleStore The contract instance to use as the role store.\\n     */\\n    constructor(RoleStore _roleStore) {\\n        roleStore = _roleStore;\\n    }\\n\\n    /**\\n     * @dev Only allows the contract's own address to call the function.\\n     */\\n    modifier onlySelf() {\\n        if (msg.sender != address(this)) {\\n            revert Unauthorized(msg.sender, \\\"SELF\\\");\\n        }\\n        _;\\n    }\\n\\n    /**\\n     * @dev Only allows addresses with the CONTROLLER role to call the function.\\n     */\\n    modifier onlyController() {\\n        _validateRole(Role.CONTROLLER, \\\"CONTROLLER\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @dev Only allows addresses with the ROUTER_PLUGIN role to call the function.\\n     */\\n    modifier onlyRouterPlugin() {\\n        _validateRole(Role.ROUTER_PLUGIN, \\\"ROUTER_PLUGIN\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @dev Only allows addresses with the MARKET_KEEPER role to call the function.\\n     */\\n    modifier onlyMarketKeeper() {\\n        _validateRole(Role.MARKET_KEEPER, \\\"MARKET_KEEPER\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @dev Only allows addresses with the MARKET_KEEPER role to call the function.\\n     */\\n    modifier onlyFeeKeeper() {\\n        _validateRole(Role.FEE_KEEPER, \\\"FEE_KEEPER\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @dev Only allows addresses with the ORDER_KEEPER role to call the function.\\n     */\\n    modifier onlyOrderKeeper() {\\n        _validateRole(Role.ORDER_KEEPER, \\\"ORDER_KEEPER\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @dev Only allows addresses with the PRICING_KEEPER role to call the function.\\n     */\\n    modifier onlyPricingKeeper() {\\n        _validateRole(Role.PRICING_KEEPER, \\\"PRICING_KEEPER\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @dev Only allows addresses with the LIQUIDATION_KEEPER role to call the function.\\n     */\\n    modifier onlyLiquidationKeeper() {\\n        _validateRole(Role.LIQUIDATION_KEEPER, \\\"LIQUIDATION_KEEPER\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @dev Only allows addresses with the ADL_KEEPER role to call the function.\\n     */\\n    modifier onlyAdlKeeper() {\\n        _validateRole(Role.ADL_KEEPER, \\\"ADL_KEEPER\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @dev Validates that the caller has the specified role.\\n     *\\n     * If the caller does not have the specified role, the transaction is reverted.\\n     *\\n     * @param role The key of the role to validate.\\n     * @param roleName The name of the role to validate.\\n     */\\n    function _validateRole(bytes32 role, string memory roleName) internal view {\\n        if (!roleStore.hasRole(msg.sender, role)) {\\n            revert Unauthorized(msg.sender, roleName);\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0xa0a3e0fb82bb1243f92dde745a6df6cdf6911e5b0eb2588e2950fd1c939ff95d\",\"license\":\"BUSL-1.1\"},\"contracts/role/RoleStore.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\n\\npragma solidity ^0.8.0;\\n\\nimport \\\"@openzeppelin/contracts/utils/structs/EnumerableSet.sol\\\";\\nimport \\\"../utils/EnumerableValues.sol\\\";\\nimport \\\"../gov/Governable.sol\\\";\\n\\n/**\\n * @title RoleStore\\n * @dev Stores roles and their members.\\n */\\ncontract RoleStore is Governable {\\n    using EnumerableSet for EnumerableSet.AddressSet;\\n    using EnumerableSet for EnumerableSet.Bytes32Set;\\n    using EnumerableValues for EnumerableSet.AddressSet;\\n    using EnumerableValues for EnumerableSet.Bytes32Set;\\n\\n    EnumerableSet.Bytes32Set internal roles;\\n    mapping(bytes32 => EnumerableSet.AddressSet) internal roleMembers;\\n    // checking if an account has a role is a frequently used function\\n    // roleCache helps to save gas by offering a more efficient lookup\\n    // vs calling roleMembers[key].contains(account)\\n    mapping(address => mapping (bytes32 => bool)) roleCache;\\n\\n    /**\\n     * @dev Grants the specified role to the given account.\\n     *\\n     * @param account The address of the account.\\n     * @param key The key of the role to grant.\\n     */\\n    function grantRole(address account, bytes32 key) external onlyGov {\\n        roles.add(key);\\n        roleMembers[key].add(account);\\n        roleCache[account][key] = true;\\n    }\\n\\n    /**\\n     * @dev Revokes the specified role from the given account.\\n     *\\n     * @param account The address of the account.\\n     * @param key The key of the role to revoke.\\n     */\\n    function revokeRole(address account, bytes32 key) external onlyGov {\\n        roleMembers[key].remove(account);\\n        roleCache[account][key] = false;\\n    }\\n\\n    /**\\n     * @dev Returns true if the given account has the specified role.\\n     *\\n     * @param account The address of the account.\\n     * @param key The key of the role.\\n     * @return True if the account has the role, false otherwise.\\n     */\\n    function hasRole(address account, bytes32 key) external view returns (bool) {\\n        return roleCache[account][key];\\n    }\\n\\n    /**\\n     * @dev Returns the number of roles stored in the contract.\\n     *\\n     * @return The number of roles.\\n     */\\n    function getRoleCount() external view returns (uint256) {\\n        return roles.length();\\n    }\\n\\n    /**\\n     * @dev Returns the keys of the roles stored in the contract.\\n     *\\n     * @param start The starting index of the range of roles to return.\\n     * @param end The ending index of the range of roles to return.\\n     * @return The keys of the roles.\\n     */\\n    function getRoles(uint256 start, uint256 end) external view returns (bytes32[] memory) {\\n        return roles.valuesAt(start, end);\\n    }\\n\\n    /**\\n     * @dev Returns the number of members of the specified role.\\n     *\\n     * @param key The key of the role.\\n     * @return The number of members of the role.\\n     */\\n    function getRoleMemberCount(bytes32 key) external view returns (uint256) {\\n        return roleMembers[key].length();\\n    }\\n\\n    /**\\n     * @dev Returns the members of the specified role.\\n     *\\n     * @param key The key of the role.\\n     * @param start the start index, the value for this index will be included.\\n     * @param end the end index, the value for this index will not be included.\\n     * @return The members of the role.\\n     */\\n    function getRoleMembers(bytes32 key, uint256 start, uint256 end) external view returns (address[] memory) {\\n        return roleMembers[key].valuesAt(start, end);\\n    }\\n}\\n\",\"keccak256\":\"0x92e6a7fd2d2adc8e820d0790f0cc20e7a5052821345958122197d2abb737c308\",\"license\":\"BUSL-1.1\"},\"contracts/utils/EnumerableValues.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\n\\npragma solidity ^0.8.0;\\n\\nimport \\\"@openzeppelin/contracts/utils/structs/EnumerableSet.sol\\\";\\n\\n/**\\n * @title EnumerableValues\\n * @dev Library to extend the EnumerableSet library with functions to get\\n * valuesAt for a range\\n */\\nlibrary EnumerableValues {\\n    using EnumerableSet for EnumerableSet.Bytes32Set;\\n    using EnumerableSet for EnumerableSet.AddressSet;\\n    using EnumerableSet for EnumerableSet.UintSet;\\n\\n    /**\\n     * Returns an array of bytes32 values from the given set, starting at the given\\n     * start index and ending before the given end index.\\n     *\\n     * @param set The set to get the values from.\\n     * @param start The starting index.\\n     * @param end The ending index.\\n     * @return An array of bytes32 values.\\n     */\\n    function valuesAt(EnumerableSet.Bytes32Set storage set, uint256 start, uint256 end) internal view returns (bytes32[] memory) {\\n        uint256 max = set.length();\\n        if (end > max) { end = max; }\\n\\n        bytes32[] memory items = new bytes32[](end - start);\\n        for (uint256 i = start; i < end; i++) {\\n            items[i - start] = set.at(i);\\n        }\\n\\n        return items;\\n    }\\n\\n\\n    /**\\n     * Returns an array of address values from the given set, starting at the given\\n     * start index and ending before the given end index.\\n     *\\n     * @param set The set to get the values from.\\n     * @param start The starting index.\\n     * @param end The ending index.\\n     * @return An array of address values.\\n     */\\n    function valuesAt(EnumerableSet.AddressSet storage set, uint256 start, uint256 end) internal view returns (address[] memory) {\\n        uint256 max = set.length();\\n        if (end > max) { end = max; }\\n\\n        address[] memory items = new address[](end - start);\\n        for (uint256 i = start; i < end; i++) {\\n            items[i - start] = set.at(i);\\n        }\\n\\n        return items;\\n    }\\n\\n\\n    /**\\n     * Returns an array of uint256 values from the given set, starting at the given\\n     * start index and ending before the given end index.\\n     *\\n     * @param set The set to get the values from.\\n     * @param start The starting index.\\n     * @param end The ending index.\\n     * @return An array of uint256 values.\\n     */\\n    function valuesAt(EnumerableSet.UintSet storage set, uint256 start, uint256 end) internal view returns (uint256[] memory) {\\n        uint256 max = set.length();\\n        if (end > max) { end = max; }\\n\\n        uint256[] memory items = new uint256[](end - start);\\n        for (uint256 i = start; i < end; i++) {\\n            items[i - start] = set.at(i);\\n        }\\n\\n        return items;\\n    }\\n}\\n\",\"keccak256\":\"0x34d18a8815cbee0ac7b15c0aa856d2f2fac60e400166a54784f53bf55c06f08b\",\"license\":\"BUSL-1.1\"}},\"version\":1}",
+  "bytecode": "0x60a060405234801561001057600080fd5b5060405161097538038061097583398101604081905261002f916100ac565b806100393361004b565b6001600160a01b0316608052506100dc565b600080546001600160a01b038381166001600160a01b031983168117909355604080519190921680825260208201939093527f53351836099c03ffc3b1727d8abd4b0222afa87d4ed76ae3102d51369ef7f785910160405180910390a15050565b6000602082840312156100be57600080fd5b81516001600160a01b03811681146100d557600080fd5b9392505050565b6080516108786100fd6000396000818160d301526102e301526108786000f3fe608060405234801561001057600080fd5b50600436106100785760003560e01c80630e316ab71461007d57806312d43a51146100925780633ffefe4e146100bb5780634a4a7b04146100ce578063b715be81146100f5578063cfad57a21461010b578063daf6faa61461011e578063eb12d61e1461013e575b600080fd5b61009061008b366004610655565b610151565b005b6000546100a5906001600160a01b031681565b6040516100b2919061067e565b60405180910390f35b6100a56100c9366004610692565b6101e7565b6100a57f000000000000000000000000000000000000000000000000000000000000000081565b6100fd6101fa565b6040519081526020016100b2565b610090610119366004610655565b61020b565b61013161012c3660046106ab565b610265565b6040516100b291906106cd565b61009061014c366004610655565b61027a565b6101a16040516020016101639061071a565b604051602081830303815290604052805190602001206040518060400160405280600a81526020016921a7a72a2927a62622a960b11b8152506102c7565b6101ac60018261037b565b507f3525e22824a8a7df2c9a6029941c824cf95b6447f1e13d5128fd3826d35afe8b816040516101dc919061067e565b60405180910390a150565b60006101f4600183610390565b92915050565b6000610206600161039c565b905090565b6000546001600160a01b03163314610259576040805163a35b150b60e01b81523360048201526024810191909152600360448201526223a7ab60e91b60648201526084015b60405180910390fd5b610262816103a6565b50565b606061027360018484610407565b9392505050565b61028c6040516020016101639061071a565b6102976001826104d4565b507f47d1c22a25bb3a5d4e481b9b1e6944c2eade3181a0a20b495ed61d35b5323f24816040516101dc919061067e565b60405163ac4ab3fb60e01b8152336004820152602481018390527f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03169063ac4ab3fb90604401602060405180830381865afa158015610332573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610356919061073e565b61037757338160405163a35b150b60e01b8152600401610250929190610760565b5050565b6000610273836001600160a01b0384166104e9565b600061027383836105dc565b60006101f4825490565b600080546001600160a01b038381166001600160a01b031983168117909355604080519190921680825260208201939093527f53351836099c03ffc3b1727d8abd4b0222afa87d4ed76ae3102d51369ef7f785910160405180910390a15050565b606060006104148561039c565b905080831115610422578092505b600061042e85856107d4565b6001600160401b03811115610445576104456107e7565b60405190808252806020026020018201604052801561046e578160200160208202803683370190505b509050845b848110156104ca576104858782610390565b8261049088846107d4565b815181106104a0576104a06107fd565b6001600160a01b0390921660209283029190910190910152806104c281610813565b915050610473565b5095945050505050565b6000610273836001600160a01b038416610606565b600081815260018301602052604081205480156105d257600061050d6001836107d4565b8554909150600090610521906001906107d4565b9050818114610586576000866000018281548110610541576105416107fd565b9060005260206000200154905080876000018481548110610564576105646107fd565b6000918252602080832090910192909255918252600188019052604090208390555b85548690806105975761059761082c565b6001900381819060005260206000200160009055905585600101600086815260200190815260200160002060009055600193505050506101f4565b60009150506101f4565b60008260000182815481106105f3576105f36107fd565b9060005260206000200154905092915050565b600081815260018301602052604081205461064d575081546001818101845560008481526020808220909301849055845484825282860190935260409020919091556101f4565b5060006101f4565b60006020828403121561066757600080fd5b81356001600160a01b038116811461027357600080fd5b6001600160a01b0391909116815260200190565b6000602082840312156106a457600080fd5b5035919050565b600080604083850312156106be57600080fd5b50508035926020909101359150565b6020808252825182820181905260009190848201906040850190845b8181101561070e5783516001600160a01b0316835292840192918401916001016106e9565b50909695505050505050565b6020808252600a908201526921a7a72a2927a62622a960b11b604082015260600190565b60006020828403121561075057600080fd5b8151801515811461027357600080fd5b60018060a01b038316815260006020604081840152835180604085015260005b8181101561079c57858101830151858201606001528201610780565b506000606082860101526060601f19601f830116850101925050509392505050565b634e487b7160e01b600052601160045260246000fd5b818103818111156101f4576101f46107be565b634e487b7160e01b600052604160045260246000fd5b634e487b7160e01b600052603260045260246000fd5b600060018201610825576108256107be565b5060010190565b634e487b7160e01b600052603160045260246000fdfea2646970667358221220578a3ea7bcf3e99e8a880cd5d2eb10bc8a03956b04658ea2c8c958567197031964736f6c63430008100033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100785760003560e01c80630e316ab71461007d57806312d43a51146100925780633ffefe4e146100bb5780634a4a7b04146100ce578063b715be81146100f5578063cfad57a21461010b578063daf6faa61461011e578063eb12d61e1461013e575b600080fd5b61009061008b366004610655565b610151565b005b6000546100a5906001600160a01b031681565b6040516100b2919061067e565b60405180910390f35b6100a56100c9366004610692565b6101e7565b6100a57f000000000000000000000000000000000000000000000000000000000000000081565b6100fd6101fa565b6040519081526020016100b2565b610090610119366004610655565b61020b565b61013161012c3660046106ab565b610265565b6040516100b291906106cd565b61009061014c366004610655565b61027a565b6101a16040516020016101639061071a565b604051602081830303815290604052805190602001206040518060400160405280600a81526020016921a7a72a2927a62622a960b11b8152506102c7565b6101ac60018261037b565b507f3525e22824a8a7df2c9a6029941c824cf95b6447f1e13d5128fd3826d35afe8b816040516101dc919061067e565b60405180910390a150565b60006101f4600183610390565b92915050565b6000610206600161039c565b905090565b6000546001600160a01b03163314610259576040805163a35b150b60e01b81523360048201526024810191909152600360448201526223a7ab60e91b60648201526084015b60405180910390fd5b610262816103a6565b50565b606061027360018484610407565b9392505050565b61028c6040516020016101639061071a565b6102976001826104d4565b507f47d1c22a25bb3a5d4e481b9b1e6944c2eade3181a0a20b495ed61d35b5323f24816040516101dc919061067e565b60405163ac4ab3fb60e01b8152336004820152602481018390527f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03169063ac4ab3fb90604401602060405180830381865afa158015610332573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610356919061073e565b61037757338160405163a35b150b60e01b8152600401610250929190610760565b5050565b6000610273836001600160a01b0384166104e9565b600061027383836105dc565b60006101f4825490565b600080546001600160a01b038381166001600160a01b031983168117909355604080519190921680825260208201939093527f53351836099c03ffc3b1727d8abd4b0222afa87d4ed76ae3102d51369ef7f785910160405180910390a15050565b606060006104148561039c565b905080831115610422578092505b600061042e85856107d4565b6001600160401b03811115610445576104456107e7565b60405190808252806020026020018201604052801561046e578160200160208202803683370190505b509050845b848110156104ca576104858782610390565b8261049088846107d4565b815181106104a0576104a06107fd565b6001600160a01b0390921660209283029190910190910152806104c281610813565b915050610473565b5095945050505050565b6000610273836001600160a01b038416610606565b600081815260018301602052604081205480156105d257600061050d6001836107d4565b8554909150600090610521906001906107d4565b9050818114610586576000866000018281548110610541576105416107fd565b9060005260206000200154905080876000018481548110610564576105646107fd565b6000918252602080832090910192909255918252600188019052604090208390555b85548690806105975761059761082c565b6001900381819060005260206000200160009055905585600101600086815260200190815260200160002060009055600193505050506101f4565b60009150506101f4565b60008260000182815481106105f3576105f36107fd565b9060005260206000200154905092915050565b600081815260018301602052604081205461064d575081546001818101845560008481526020808220909301849055845484825282860190935260409020919091556101f4565b5060006101f4565b60006020828403121561066757600080fd5b81356001600160a01b038116811461027357600080fd5b6001600160a01b0391909116815260200190565b6000602082840312156106a457600080fd5b5035919050565b600080604083850312156106be57600080fd5b50508035926020909101359150565b6020808252825182820181905260009190848201906040850190845b8181101561070e5783516001600160a01b0316835292840192918401916001016106e9565b50909695505050505050565b6020808252600a908201526921a7a72a2927a62622a960b11b604082015260600190565b60006020828403121561075057600080fd5b8151801515811461027357600080fd5b60018060a01b038316815260006020604081840152835180604085015260005b8181101561079c57858101830151858201606001528201610780565b506000606082860101526060601f19601f830116850101925050509392505050565b634e487b7160e01b600052601160045260246000fd5b818103818111156101f4576101f46107be565b634e487b7160e01b600052604160045260246000fd5b634e487b7160e01b600052603260045260246000fd5b600060018201610825576108256107be565b5060010190565b634e487b7160e01b600052603160045260246000fdfea2646970667358221220578a3ea7bcf3e99e8a880cd5d2eb10bc8a03956b04658ea2c8c958567197031964736f6c63430008100033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 12424,
+        "contract": "contracts/oracle/OracleStore.sol:OracleStore",
+        "label": "gov",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_address"
+      },
+      {
+        "astId": 18349,
+        "contract": "contracts/oracle/OracleStore.sol:OracleStore",
+        "label": "signers",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_struct(AddressSet)4244_storage"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_array(t_bytes32)dyn_storage": {
+        "base": "t_bytes32",
+        "encoding": "dynamic_array",
+        "label": "bytes32[]",
+        "numberOfBytes": "32"
+      },
+      "t_bytes32": {
+        "encoding": "inplace",
+        "label": "bytes32",
+        "numberOfBytes": "32"
+      },
+      "t_mapping(t_bytes32,t_uint256)": {
+        "encoding": "mapping",
+        "key": "t_bytes32",
+        "label": "mapping(bytes32 => uint256)",
+        "numberOfBytes": "32",
+        "value": "t_uint256"
+      },
+      "t_struct(AddressSet)4244_storage": {
+        "encoding": "inplace",
+        "label": "struct EnumerableSet.AddressSet",
+        "members": [
+          {
+            "astId": 4243,
+            "contract": "contracts/oracle/OracleStore.sol:OracleStore",
+            "label": "_inner",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_struct(Set)3943_storage"
+          }
+        ],
+        "numberOfBytes": "64"
+      },
+      "t_struct(Set)3943_storage": {
+        "encoding": "inplace",
+        "label": "struct EnumerableSet.Set",
+        "members": [
+          {
+            "astId": 3938,
+            "contract": "contracts/oracle/OracleStore.sol:OracleStore",
+            "label": "_values",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_array(t_bytes32)dyn_storage"
+          },
+          {
+            "astId": 3942,
+            "contract": "contracts/oracle/OracleStore.sol:OracleStore",
+            "label": "_indexes",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_bytes32,t_uint256)"
+          }
+        ],
+        "numberOfBytes": "64"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      }
+    }
+  }
+}

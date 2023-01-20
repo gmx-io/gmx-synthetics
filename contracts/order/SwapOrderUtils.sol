@@ -2,53 +2,76 @@
 
 pragma solidity ^0.8.0;
 
-import "./OrderUtils.sol";
+import "./BaseOrderUtils.sol";
+import "../swap/SwapUtils.sol";
+import "../order/OrderStoreUtils.sol";
 
+// @title SwapOrderUtils
+// @dev Libary for functions to help with processing a swap order
 library SwapOrderUtils {
     using Order for Order.Props;
+    using Array for uint256[];
 
     error UnexpectedMarket();
 
-    function processOrder(OrderUtils.ExecuteOrderParams memory params) external {
+    // @dev process a swap order
+    // @param params BaseOrderUtils.ExecuteOrderParams
+    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external {
         if (params.order.market() != address(0)) {
             revert UnexpectedMarket();
         }
 
-        address firstMarket = params.order.swapPath()[0];
-        address lastMarket = params.order.swapPath()[params.order.swapPath().length - 1];
-
-        OrderUtils.validateOracleBlockNumbersForSwap(
+        validateOracleBlockNumbers(
             params.oracleBlockNumbers,
             params.order.orderType(),
             params.order.updatedAtBlock()
         );
 
         Order.Props memory order = params.order;
-        params.orderStore.transferOut(
+        params.contracts.orderVault.transferOut(
             order.initialCollateralToken(),
-            order.initialCollateralDeltaAmount(),
-            firstMarket
+            params.order.swapPath()[0],
+            order.initialCollateralDeltaAmount()
         );
 
-        (address tokenOut, uint256 outputAmount) = SwapUtils.swap(SwapUtils.SwapParams(
-            params.dataStore,
-            params.oracle,
-            params.feeReceiver,
+        SwapUtils.swap(SwapUtils.SwapParams(
+            params.contracts.dataStore,
+            params.contracts.eventEmitter,
+            params.contracts.oracle,
             params.order.initialCollateralToken(),
             params.order.initialCollateralDeltaAmount(),
             params.swapPathMarkets,
             params.order.minOutputAmount(),
-            address(0)
+            params.order.receiver(),
+            order.shouldUnwrapNativeToken()
         ));
 
-        params.orderStore.remove(params.key, params.order.account());
+        OrderStoreUtils.remove(params.contracts.dataStore, params.key, params.order.account());
+    }
 
-        MarketToken(lastMarket).transferOut(
-            EthUtils.weth(params.dataStore),
-            tokenOut,
-            outputAmount,
-            order.account(),
-            order.hasCollateralInETH()
-        );
+    // @dev validate the oracle block numbers used for the prices in the oracle
+    // @param oracleBlockNumbers the oracle block numbers
+    // @param orderType the order type
+    // @param orderUpdatedAtBlock the block at which the order was last updated
+    function validateOracleBlockNumbers(
+        uint256[] memory oracleBlockNumbers,
+        Order.OrderType orderType,
+        uint256 orderUpdatedAtBlock
+    ) internal pure {
+        if (orderType == Order.OrderType.MarketSwap) {
+            if (!oracleBlockNumbers.areEqualTo(orderUpdatedAtBlock)) {
+                OracleUtils.revertOracleBlockNumbersAreNotEqual(oracleBlockNumbers, orderUpdatedAtBlock);
+            }
+            return;
+        }
+
+        if (orderType == Order.OrderType.LimitSwap) {
+            if (!oracleBlockNumbers.areGreaterThan(orderUpdatedAtBlock)) {
+                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, orderUpdatedAtBlock);
+            }
+            return;
+        }
+
+        BaseOrderUtils.revertUnsupportedOrderType();
     }
 }
