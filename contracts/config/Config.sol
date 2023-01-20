@@ -230,8 +230,17 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     }
 
     function _validateRange(bytes32 key, uint256 value) internal pure {
-        if (key == Keys.SWAP_FEE_FACTOR || key == Keys.POSITION_FEE_FACTOR) {
+        if (
+            key == Keys.SWAP_FEE_FACTOR ||
+            key == Keys.POSITION_FEE_FACTOR
+        ) {
             require(value < MAX_FEE_FACTOR, "Invalid fee factor");
+        }
+
+        if (
+            key == Keys.FEE_RECEIVER_FACTOR
+        ) {
+            require(value < Precision.FLOAT_PRECISION, "Invalid factor");
         }
     }
 }

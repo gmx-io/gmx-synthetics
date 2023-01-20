@@ -87,13 +87,24 @@ library ExecuteDepositUtils {
         Deposit.Props memory deposit = DepositStoreUtils.get(params.dataStore, params.key);
 
         require(deposit.account() != address(0), "DepositUtils: empty deposit");
-        require(deposit.longTokenAmount() > 0 || deposit.shortTokenAmount() > 0, "DepositUtils: empty deposit amount");
 
         if (!params.oracleBlockNumbers.areEqualTo(deposit.updatedAtBlock())) {
             OracleUtils.revertOracleBlockNumbersAreNotEqual(params.oracleBlockNumbers, deposit.updatedAtBlock());
         }
 
         Market.Props memory market = MarketUtils.getEnabledMarket(params.dataStore, deposit.market());
+
+        if (market.longToken == market.shortToken) {
+            (uint256 adjustedLongTokenAmount, uint256 adjustedShortTokenAmount) = getAdjustedLongAndShortTokenAmounts(
+                params.dataStore,
+                market,
+                deposit
+            );
+
+            deposit.setLongTokenAmount(adjustedLongTokenAmount);
+            deposit.setShortTokenAmount(adjustedShortTokenAmount);
+        }
+
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(params.oracle, market);
 
         // deposits should improve the pool state but it should be checked if
@@ -216,20 +227,6 @@ library ExecuteDepositUtils {
              fees
          );
 
-        return _processDeposit(params, _params, fees.amountAfterFees, fees.feesForPool);
-    }
-
-    // @dev processes a deposit
-    // @param params ExecuteDepositParams
-    // @param _params _ExecuteDepositParams
-    // @param amountAfterFees the deposit amount after fees
-    // @param feesForPool the amount of fees for the pool
-    function _processDeposit(
-        ExecuteDepositParams memory params,
-        _ExecuteDepositParams memory _params,
-        uint256 amountAfterFees,
-        uint256 feesForPool
-    ) internal returns (uint256) {
         uint256 mintAmount;
 
         int256 _poolValue = MarketUtils.getPoolValue(
@@ -299,11 +296,11 @@ library ExecuteDepositUtils {
                 _params.tokenInPrice,
                 _params.priceImpactUsd
             );
-            amountAfterFees -= (-negativeImpactAmount).toUint256();
+            fees.amountAfterFees -= (-negativeImpactAmount).toUint256();
         }
 
         mintAmount += MarketUtils.usdToMarketTokenAmount(
-            amountAfterFees * _params.tokenInPrice.min,
+            fees.amountAfterFees * _params.tokenInPrice.min,
             poolValue,
             supply
         );
@@ -313,7 +310,7 @@ library ExecuteDepositUtils {
             params.eventEmitter,
             _params.market.marketToken,
             _params.tokenIn,
-            (amountAfterFees + feesForPool).toInt256()
+            (fees.amountAfterFees + fees.feesForPool).toInt256()
         );
 
         MarketUtils.validatePoolAmount(
@@ -325,5 +322,40 @@ library ExecuteDepositUtils {
         MarketToken(payable(_params.market.marketToken)).mint(_params.receiver, mintAmount);
 
         return mintAmount;
+    }
+
+    function getAdjustedLongAndShortTokenAmounts(
+        DataStore dataStore,
+        Market.Props memory market,
+        Deposit.Props memory deposit
+    ) internal view returns (uint256, uint256) {
+        uint256 poolLongTokenAmount = MarketUtils.getPoolAmount(dataStore, market.marketToken, market.longToken);
+        uint256 poolShortTokenAmount = MarketUtils.getPoolAmount(dataStore, market.marketToken, market.shortToken);
+
+        uint256 adjustedLongTokenAmount;
+        uint256 adjustedShortTokenAmount;
+
+        if (poolLongTokenAmount < poolShortTokenAmount) {
+            uint256 diff = poolLongTokenAmount - poolShortTokenAmount;
+
+            if (diff < poolLongTokenAmount) {
+                adjustedLongTokenAmount = diff + (deposit.longTokenAmount() - diff) / 2;
+                adjustedShortTokenAmount = deposit.longTokenAmount() - adjustedLongTokenAmount;
+            } else {
+                adjustedLongTokenAmount = deposit.longTokenAmount();
+            }
+        } else {
+            uint256 diff = poolShortTokenAmount - poolLongTokenAmount;
+
+            if (diff < poolShortTokenAmount) {
+                adjustedShortTokenAmount = diff + (deposit.longTokenAmount() - diff) / 2;
+                adjustedLongTokenAmount - deposit.longTokenAmount() - adjustedShortTokenAmount;
+            } else {
+                adjustedLongTokenAmount = 0;
+                adjustedShortTokenAmount = deposit.longTokenAmount();
+            }
+        }
+
+        return (adjustedLongTokenAmount, adjustedShortTokenAmount);
     }
 }
