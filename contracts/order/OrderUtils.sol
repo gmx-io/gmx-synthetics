@@ -93,8 +93,7 @@ library OrderUtils {
         // validate swap path markets
         MarketUtils.getEnabledMarkets(
             dataStore,
-            params.addresses.swapPath,
-            BaseOrderUtils.isDecreaseOrder(params.orderType)
+            params.addresses.swapPath
         );
 
         Order.Props memory order;
@@ -105,6 +104,8 @@ library OrderUtils {
         order.setMarket(params.addresses.market);
         order.setInitialCollateralToken(params.addresses.initialCollateralToken);
         order.setSwapPath(params.addresses.swapPath);
+        order.setOrderType(params.orderType);
+        order.setDecreasePositionSwapType(params.decreasePositionSwapType);
         order.setSizeDeltaUsd(params.numbers.sizeDeltaUsd);
         order.setInitialCollateralDeltaAmount(initialCollateralDeltaAmount);
         order.setTriggerPrice(params.numbers.triggerPrice);
@@ -112,7 +113,6 @@ library OrderUtils {
         order.setExecutionFee(params.numbers.executionFee);
         order.setCallbackGasLimit(params.numbers.callbackGasLimit);
         order.setMinOutputAmount(params.numbers.minOutputAmount);
-        order.setOrderType(params.orderType);
         order.setIsLong(params.isLong);
         order.setShouldUnwrapNativeToken(params.shouldUnwrapNativeToken);
 

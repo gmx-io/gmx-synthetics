@@ -16,6 +16,12 @@ export const OrderType = {
   Liquidation: 7,
 };
 
+export const DecreasePositionSwapType = {
+  NoSwap: 0,
+  SwapPnlTokenToCollateralToken: 1,
+  SwapCollateralTokenToPnlToken: 2,
+};
+
 export function getOrderCount(dataStore) {
   return dataStore.getBytes32Count(keys.ORDER_LIST);
 }
@@ -38,6 +44,7 @@ export async function createOrder(fixture, overrides) {
   const { orderVault, orderHandler, wnt } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
+  const decreasePositionSwapType = overrides.decreasePositionSwapType || DecreasePositionSwapType.NoSwap;
   const account = overrides.account || user0;
   const receiver = overrides.receiver || account;
   const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
@@ -82,6 +89,7 @@ export async function createOrder(fixture, overrides) {
       minOutputAmount,
     },
     orderType,
+    decreasePositionSwapType,
     isLong,
     shouldUnwrapNativeToken,
   };

@@ -130,6 +130,11 @@ library DecreasePositionUtils {
         cache.pnlToken = params.position.isLong() ? params.market.longToken : params.market.shortToken;
         cache.pnlTokenPrice = params.position.isLong() ? cache.prices.longTokenPrice : cache.prices.shortTokenPrice;
 
+        if (params.order.decreasePositionSwapType() != Order.DecreasePositionSwapType.NoSwap &&
+            cache.pnlToken == params.position.collateralToken()) {
+            revert("DecreasePositionUtils: invalid decreasePositionSwapType");
+        }
+
         if (BaseOrderUtils.isLiquidationOrder(params.order.orderType()) && !PositionUtils.isPositionLiquidatable(
             params.contracts.dataStore,
             params.contracts.referralStorage,
@@ -251,7 +256,7 @@ library DecreasePositionUtils {
             params.order.orderType()
         );
 
-        values = DecreasePositionCollateralUtils.swapWithdrawnCollateralToPnlToken(params, values, cache.pnlToken);
+        values = DecreasePositionCollateralUtils.swapWithdrawnCollateralToPnlToken(params, values);
 
         return DecreasePositionResult(
             values.output.outputToken,

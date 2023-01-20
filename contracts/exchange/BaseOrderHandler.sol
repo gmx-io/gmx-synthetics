@@ -72,8 +72,7 @@ contract BaseOrderHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         params.order = OrderStoreUtils.get(dataStore, key);
         params.swapPathMarkets = MarketUtils.getEnabledMarkets(
             dataStore,
-            params.order.swapPath(),
-            BaseOrderUtils.isDecreaseOrder(params.order.orderType())
+            params.order.swapPath()
         );
 
         params.contracts.dataStore = dataStore;

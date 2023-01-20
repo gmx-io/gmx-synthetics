@@ -38,6 +38,12 @@ library Order {
         Liquidation
     }
 
+    enum DecreasePositionSwapType {
+        NoSwap,
+        SwapPnlTokenToCollateralToken,
+        SwapCollateralTokenToPnlToken
+    }
+
     // @dev there is a limit on the number of fields a struct can have when being passed
     // or returned as a memory variable which can cause "Stack too deep" errors
     // use sub-structs to avoid this issue
@@ -87,6 +93,7 @@ library Order {
     // @param updatedAtBlock the block at which the order was last updated
     struct Numbers {
         OrderType orderType;
+        DecreasePositionSwapType decreasePositionSwapType;
         uint256 sizeDeltaUsd;
         uint256 initialCollateralDeltaAmount;
         uint256 triggerPrice;
@@ -203,6 +210,14 @@ library Order {
     // @param value the value to set to
     function setOrderType(Props memory props, OrderType value) internal pure {
         props.numbers.orderType = value;
+    }
+
+    function decreasePositionSwapType(Props memory props) internal pure returns (DecreasePositionSwapType) {
+        return props.numbers.decreasePositionSwapType;
+    }
+
+    function setDecreasePositionSwapType(Props memory props, DecreasePositionSwapType value) internal pure {
+        props.numbers.decreasePositionSwapType = value;
     }
 
     // @dev the order sizeDeltaUsd

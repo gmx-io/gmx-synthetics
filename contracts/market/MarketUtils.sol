@@ -135,9 +135,6 @@ library MarketUtils {
     }
 
 
-    // the first item of the swap path indicates if
-    // any pre-swap is needed to unify the pnlToken and collateralToken for decrease positions
-    address public constant NO_SWAP = address(1);
     address public constant SWAP_PNL_TOKEN_TO_COLLATERAL_TOKEN = address(2);
     address public constant SWAP_COLLATERAL_TOKEN_TO_PNL_TOKEN = address(3);
 
@@ -1677,25 +1674,12 @@ library MarketUtils {
 
     // @dev get a list of market values based on an input array of market addresses
     // @param swapPath list of market addresses
-    function getEnabledMarkets(DataStore dataStore, address[] memory swapPath, bool allowSwapPathFlag) internal view returns (Market.Props[] memory) {
+    function getEnabledMarkets(DataStore dataStore, address[] memory swapPath) internal view returns (Market.Props[] memory) {
         Market.Props[] memory markets = new Market.Props[](swapPath.length);
-        uint256 indexAdjustment = 0;
 
         for (uint256 i = 0; i < swapPath.length; i++) {
             address marketAddress = swapPath[i];
-            if (
-                i == 0 &&
-                allowSwapPathFlag &&
-                (marketAddress == NO_SWAP ||
-                marketAddress == SWAP_PNL_TOKEN_TO_COLLATERAL_TOKEN ||
-                marketAddress == SWAP_COLLATERAL_TOKEN_TO_PNL_TOKEN)
-            ) {
-                markets = new Market.Props[](swapPath.length - 1);
-                indexAdjustment = 1;
-                continue;
-            }
-
-            markets[i - indexAdjustment] = getEnabledMarket(dataStore, marketAddress);
+            markets[i] = getEnabledMarket(dataStore, marketAddress);
         }
 
         return markets;

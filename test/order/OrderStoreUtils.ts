@@ -3,7 +3,14 @@ import { deployFixture } from "../../utils/fixture";
 
 import { grantRole } from "../../utils/role";
 import { validateStoreUtils } from "../../utils/storeUtils";
-import { OrderType, getOrderCount, getOrderKeys, getAccountOrderCount, getAccountOrderKeys } from "../../utils/order";
+import {
+  OrderType,
+  DecreasePositionSwapType,
+  getOrderCount,
+  getOrderKeys,
+  getAccountOrderCount,
+  getAccountOrderKeys,
+} from "../../utils/order";
 
 describe("OrderStoreUtils", () => {
   let fixture;
@@ -40,7 +47,8 @@ describe("OrderStoreUtils", () => {
       getAccountItemCount: getAccountOrderCount,
       getAccountItemKeys: getAccountOrderKeys,
       overrideValues: {
-        "numbers.orderType": OrderType.MarketIncrease,
+        "numbers.orderType": OrderType.LimitDecrease,
+        "numbers.decreasePositionSwapType": DecreasePositionSwapType.SwapCollateralTokenToPnlToken,
       },
     });
   });

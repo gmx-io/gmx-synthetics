@@ -35,6 +35,7 @@ library BaseOrderUtils {
         CreateOrderParamsAddresses addresses;
         CreateOrderParamsNumbers numbers;
         Order.OrderType orderType;
+        Order.DecreasePositionSwapType decreasePositionSwapType;
         bool isLong;
         bool shouldUnwrapNativeToken;
     }

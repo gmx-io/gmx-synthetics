@@ -378,10 +378,9 @@ library DecreasePositionCollateralUtils {
     // swap the withdrawn collateral from collateralToken to pnlToken if needed
     function swapWithdrawnCollateralToPnlToken(
         PositionUtils.UpdatePositionParams memory params,
-        ProcessCollateralValues memory values,
-        address pnlToken
+        ProcessCollateralValues memory values
     ) external returns (ProcessCollateralValues memory) {
-        if (params.position.collateralToken() != pnlToken && shouldSwapCollateralTokenToPnlToken(params.order.swapPath())) {
+        if (params.order.decreasePositionSwapType() == Order.DecreasePositionSwapType.SwapCollateralTokenToPnlToken) {
             Market.Props[] memory swapPath = new Market.Props[](1);
             swapPath[0] = params.market;
 
@@ -422,7 +421,7 @@ library DecreasePositionCollateralUtils {
         address pnlToken,
         uint256 profitAmount
     ) internal returns (bool, uint256) {
-        if (params.position.collateralToken() != pnlToken && shouldSwapPnlTokenToCollateralToken(params.order.swapPath())) {
+        if (params.order.decreasePositionSwapType() == Order.DecreasePositionSwapType.SwapPnlTokenToCollateralToken) {
             Market.Props[] memory swapPath = new Market.Props[](1);
             swapPath[0] = params.market;
 
@@ -449,17 +448,6 @@ library DecreasePositionCollateralUtils {
         }
 
         return (false, 0);
-    }
-
-    // @dev check if the pnlToken should be swapped to the collateralToken
-    // @param the order.swapPath
-    // @return whether the pnlToken should be swapped to the collateralToken
-    function shouldSwapPnlTokenToCollateralToken(address[] memory swapPath) internal pure returns (bool) {
-        if (swapPath.length == 0) {
-            return false;
-        }
-
-        return swapPath[0] == MarketUtils.SWAP_PNL_TOKEN_TO_COLLATERAL_TOKEN;
     }
 
     // @dev check if the collateralToken should be swapped to the pnlToken
