@@ -24,12 +24,13 @@ contract FeeHandler is ReentrancyGuard, RoleModule {
 
     function claimFees(
         address[] memory markets,
-        address[] memory tokens,
-        address receiver
+        address[] memory tokens
     ) external nonReentrant onlyFeeKeeper {
         if (markets.length != tokens.length) {
             revert("Invalid input");
         }
+
+        address receiver = dataStore.getAddress(Keys.FEE_RECEIVER);
 
         for (uint256 i = 0; i < markets.length; i++) {
             FeeUtils.claimFees(

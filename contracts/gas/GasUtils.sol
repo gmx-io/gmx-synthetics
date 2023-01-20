@@ -92,7 +92,7 @@ library GasUtils {
     ) internal {
         uint256 excessWntAmount = wntAmount - executionFee;
         if (excessWntAmount > 0) {
-            address holdingAddress = dataStore.getAddress(Keys.HOLDING_ADDRESS);
+            address holdingAddress = dataStore.getAddress(Keys.HOLDING_ACCOUNT);
             if (holdingAddress == address(0)) {
                 revert("Holding address not initialized");
             }

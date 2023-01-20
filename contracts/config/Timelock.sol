@@ -47,6 +47,37 @@ contract Timelock is ReentrancyGuard, RoleModule {
         timelockDelay = _timelockDelay;
     }
 
+    function signalSetFeeReceiver(address account) external onlyTimelockAdmin nonReentrant {
+        require(account != address(0));
+        bytes32 actionKey = keccak256(abi.encodePacked("setFeeReceiver", account));
+        _signalPendingAction(actionKey, "signalSetFeeReceiver");
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+        eventEmitter.emitEventLog1(
+            "SignalSetFeeReceiver",
+            actionKey,
+            eventData
+        );
+    }
+
+    function setFeeReceiverAfterSignal(address account) external onlyTimelockAdmin nonReentrant {
+        bytes32 actionKey = keccak256(abi.encodePacked("setFeeReceiver", account));
+        _validateAndClearAction(actionKey, "setFeeReceiverAfterSignal");
+
+        dataStore.setAddress(Keys.FEE_RECEIVER, account);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+        eventEmitter.emitEventLog1(
+            "SetFeeReceiver",
+            actionKey,
+            eventData
+        );
+    }
+
     function signalGrantRole(address account, bytes32 key) external onlyTimelockAdmin nonReentrant {
         bytes32 actionKey = keccak256(abi.encodePacked("grantRole", account, key));
         _signalPendingAction(actionKey, "signalGrantRole");

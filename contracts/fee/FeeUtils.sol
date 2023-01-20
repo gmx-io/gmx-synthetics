@@ -58,6 +58,10 @@ library FeeUtils {
         address token,
         address receiver
     ) internal {
+        if (receiver == address(0)) {
+            revert("Invalid receiver");
+        }
+
         bytes32 key = Keys.claimableFeeAmountKey(market, token);
 
         uint256 feeAmount = dataStore.getUint(key);
