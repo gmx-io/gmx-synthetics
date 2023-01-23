@@ -87,6 +87,7 @@ contract Oracle is RoleModule {
 
     error EmptyTokens();
     error InvalidBlockNumber(uint256 blockNumber);
+    error InvalidMinMaxBlockNumber(uint256 minOracleBlockNumber, uint256 maxOracleBlockNumber);
     error MaxPriceAgeExceeded(uint256 oracleTimestamp);
     error MinOracleSigners(uint256 oracleSigners, uint256 minOracleSigners);
     error MaxOracleSigners(uint256 oracleSigners, uint256 maxOracleSigners);
@@ -426,6 +427,11 @@ contract Oracle is RoleModule {
         for (uint256 i = 0; i < params.tokens.length; i++) {
             cache.info.minOracleBlockNumber = OracleUtils.getUncompactedOracleBlockNumber(params.compactedMinOracleBlockNumbers, i);
             cache.info.maxOracleBlockNumber = OracleUtils.getUncompactedOracleBlockNumber(params.compactedMaxOracleBlockNumbers, i);
+
+            if (cache.info.minOracleBlockNumber > cache.info.maxOracleBlockNumber) {
+                revert InvalidMinMaxBlockNumber(cache.info.minOracleBlockNumber, cache.info.maxOracleBlockNumber);
+            }
+
             cache.info.oracleTimestamp = OracleUtils.getUncompactedOracleTimestamp(params.compactedOracleTimestamps, i);
 
             if (cache.info.minOracleBlockNumber > Chain.currentBlockNumber()) {
