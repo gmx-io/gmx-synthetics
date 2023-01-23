@@ -93,7 +93,7 @@ library DecreasePositionUtils {
 
         if (params.order.sizeDeltaUsd() < params.position.sizeInUsd() && params.order.initialCollateralDeltaAmount() > 0) {
             // estimate pnl based on indexTokenPrice
-            (int256 positionPnlUsd, /* uint256 sizeDeltaInTokens */) = PositionUtils.getPositionPnlUsd(
+            (cache.estimatedPositionPnlUsd, /* uint256 sizeDeltaInTokens */) = PositionUtils.getPositionPnlUsd(
                 params.contracts.dataStore,
                 params.market,
                 cache.prices,
@@ -102,6 +102,9 @@ library DecreasePositionUtils {
                 params.position.sizeInUsd()
             );
 
+            cache.estimatedRealizedPnlUsd = cache.estimatedPositionPnlUsd * params.order.sizeDeltaUsd().toInt256() / params.position.sizeInUsd().toInt256();
+            cache.estimatedRemainingPnlUsd = cache.estimatedPositionPnlUsd - cache.estimatedRealizedPnlUsd;
+
             if (!PositionUtils.willPositionCollateralBeSufficientForOpenInterest(
                 params.contracts.dataStore,
                 params.market,
@@ -109,7 +112,8 @@ library DecreasePositionUtils {
                 params.position.collateralToken(),
                 params.position.sizeInUsd() - params.order.sizeDeltaUsd(),
                 params.position.collateralAmount() - params.order.initialCollateralDeltaAmount(),
-                positionPnlUsd,
+                cache.estimatedRemainingPnlUsd,
+                cache.estimatedRealizedPnlUsd,
                 -params.order.sizeDeltaUsd().toInt256()
             )) {
                 if (params.order.sizeDeltaUsd() == 0) {

@@ -330,6 +330,7 @@ library PositionUtils {
         uint256 positionSizeInUsd,
         uint256 positionCollateralAmount,
         int256 positionPnlUsd,
+        int256 realizedPnlUsd,
         int256 openInterestDelta
     ) public view returns (bool) {
         Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(
@@ -347,6 +348,11 @@ library PositionUtils {
         );
 
         uint256 collateralUsd = positionCollateralAmount * collateralTokenPrice.min;
+
+        if (realizedPnlUsd < 0) {
+            collateralUsd = Calc.sumReturnUint256(collateralUsd, realizedPnlUsd);
+        }
+
         if (positionPnlUsd > 0) {
             // allow pending pnl to be treated as collateral for this check
             collateralUsd += positionPnlUsd.toUint256();

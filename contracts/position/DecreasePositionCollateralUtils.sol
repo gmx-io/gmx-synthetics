@@ -66,20 +66,6 @@ library DecreasePositionCollateralUtils {
         ProcessCollateralValuesOutput output;
     }
 
-    // @dev _ProcessCollateralCache struct used in processCollateral to
-    // avoid stack too deep errors
-    // @param prices the prices of the tokens in the market
-    // @param initialCollateralAmount the initial collateral amount
-    // @param pnlToken the token that the pnl for the user is in, for long positions
-    // this is the market.longToken, for short positions this is the market.shortToken
-    // @param pnlTokenPrice the price of the pnlToken
-    struct _ProcessCollateralCache {
-        MarketUtils.MarketPrices prices;
-        int256 initialCollateralAmount;
-        address pnlToken;
-        Price.Props pnlTokenPrice;
-    }
-
     // @dev DecreasePositionCache struct used in decreasePosition to
     // avoid stack too deep errors
     // @param prices the prices of the tokens in the market
@@ -91,6 +77,9 @@ library DecreasePositionCollateralUtils {
     // @param nextPositionBorrowingFactor the new position borrowing factor
     struct DecreasePositionCache {
         MarketUtils.MarketPrices prices;
+        int256 estimatedPositionPnlUsd;
+        int256 estimatedRealizedPnlUsd;
+        int256 estimatedRemainingPnlUsd;
         address pnlToken;
         Price.Props pnlTokenPrice;
         uint256 initialCollateralAmount;
@@ -100,7 +89,7 @@ library DecreasePositionCollateralUtils {
 
     // @dev handle the collateral changes of the position
     // @param params PositionUtils.UpdatePositionParams
-    // @param cache _ProcessCollateralCache
+    // @param cache DecreasePositionCache
     // @return (ProcessCollateralValues, PositionPricingUtils.PositionFees)
     function processCollateral(
         PositionUtils.UpdatePositionParams memory params,

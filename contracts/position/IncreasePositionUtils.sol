@@ -182,6 +182,7 @@ library IncreasePositionUtils {
                 params.position.sizeInUsd(),
                 params.position.collateralAmount(),
                 positionPnlUsd,
+                0,
                 0
             )) {
                 revert("Below min collateral factor for open interest");
