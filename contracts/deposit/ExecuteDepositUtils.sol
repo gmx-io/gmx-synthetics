@@ -361,4 +361,13 @@ library ExecuteDepositUtils {
 
         return (adjustedLongTokenAmount, adjustedShortTokenAmount);
     }
+
+    function swap(
+        address[] memory swapPath,
+        uint256 inputAmount,
+        address expectedOutputToken,
+        address market
+    ) internal returns (uint256) {
+
+    }
 }
