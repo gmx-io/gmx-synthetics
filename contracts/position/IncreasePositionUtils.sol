@@ -17,7 +17,7 @@ import "./PositionEventUtils.sol";
 import "../order/BaseOrderUtils.sol";
 
 // @title IncreasePositionUtils
-// @dev Libary for functions to help with increasing a position
+// @dev Library for functions to help with increasing a position
 library IncreasePositionUtils {
     using SafeCast for uint256;
     using SafeCast for int256;

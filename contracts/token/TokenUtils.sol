@@ -56,6 +56,7 @@ library TokenUtils {
         uint256 amount
     ) internal {
         if (amount == 0) { return; }
+        if (receiver == address(0)) { revert("Invalid receiver"); }
 
         uint256 gasLimit = dataStore.getUint(Keys.tokenTransferGasLimit(token));
 
@@ -88,6 +89,7 @@ library TokenUtils {
         uint256 amount
     ) internal {
         if (amount == 0) { return; }
+        if (receiver == address(0)) { revert("Invalid receiver"); }
 
         address _wnt = wnt(dataStore);
         IWNT(_wnt).deposit{value: amount}();
@@ -120,6 +122,7 @@ library TokenUtils {
         uint256 amount
     ) internal {
         if (amount == 0) { return; }
+        if (receiver == address(0)) { revert("Invalid receiver"); }
 
         IWNT(_wnt).withdraw(amount);
 

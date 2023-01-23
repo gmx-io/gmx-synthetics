@@ -205,8 +205,8 @@ library Keys {
     string public constant EMPTY_POSITION_ERROR = "EMPTY_POSITION_ERROR";
     bytes32 public constant EMPTY_POSITION_ERROR_KEY = keccak256(abi.encode(EMPTY_POSITION_ERROR));
 
-    string public constant INSUFFICIENT_SWAP_OUTPUT_ERROR = "INSUFFICIENT_SWAP_OUTPUT_ERROR";
-    bytes32 public constant INSUFFICIENT_SWAP_OUTPUT_ERROR_KEY = keccak256(abi.encode(INSUFFICIENT_SWAP_OUTPUT_ERROR));
+    string public constant INVALID_ORDER_PRICES_ERROR = "INVALID_ORDER_PRICES_ERROR";
+    bytes32 public constant INVALID_ORDER_PRICES_ERROR_KEY = keccak256(abi.encode(INVALID_ORDER_PRICES_ERROR));
 
     string public constant FROZEN_ORDER_ERROR = "FROZEN_ORDER_ERROR";
     bytes32 public constant FROZEN_ORDER_ERROR_KEY = keccak256(abi.encode(FROZEN_ORDER_ERROR));

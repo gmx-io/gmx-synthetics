@@ -86,6 +86,10 @@ library DepositUtils {
             revert("DepositUtils: empty deposit");
         }
 
+        if (params.receiver == address(0)) {
+            revert("Invalid receiver");
+        }
+
         Deposit.Props memory deposit = Deposit.Props(
             Deposit.Addresses(
                 account,

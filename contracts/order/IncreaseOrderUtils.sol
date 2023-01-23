@@ -8,7 +8,7 @@ import "../position/IncreasePositionUtils.sol";
 import "../order/OrderStoreUtils.sol";
 
 // @title IncreaseOrderUtils
-// @dev Libary for functions to help with processing an increase order
+// @dev Library for functions to help with processing an increase order
 library IncreaseOrderUtils {
     using Position for Position.Props;
     using Order for Order.Props;

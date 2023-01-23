@@ -90,11 +90,13 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
 
     // @dev Wraps the specified amount of native tokens into WNT then sends the WNT to the specified address
     function sendWnt(address receiver, uint256 amount) external payable nonReentrant {
+        if (receiver == address(0)) { revert("Invalid receiver"); }
         TokenUtils.depositAndSendWrappedNativeToken(dataStore, receiver, amount);
     }
 
     // @dev Sends the given amount of tokens to the given address
     function sendTokens(address token, address receiver, uint256 amount) external payable nonReentrant {
+        if (receiver == address(0)) { revert("Invalid receiver"); }
         address account = msg.sender;
         router.pluginTransfer(token, account, receiver, amount);
     }
@@ -262,6 +264,10 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
             revert("Invalid input");
         }
 
+        if (receiver == address(0)) {
+            revert("Invalid receiver")
+        }
+
         address account = msg.sender;
 
         for (uint256 i = 0; i < markets.length; i++) {
@@ -284,6 +290,10 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     ) external payable nonReentrant {
         if (markets.length != tokens.length || tokens.length != timeKeys.length) {
             revert("Invalid input");
+        }
+
+        if (receiver == address(0)) {
+            revert("Invalid receiver")
         }
 
         address account = msg.sender;

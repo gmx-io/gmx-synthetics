@@ -9,7 +9,7 @@ import "../order/OrderStoreUtils.sol";
 import "../utils/RevertUtils.sol";
 
 // @title DecreaseOrderUtils
-// @dev Libary for functions to help with processing a decrease order
+// @dev Library for functions to help with processing a decrease order
 library DecreaseOrderUtils {
     using Position for Position.Props;
     using Order for Order.Props;

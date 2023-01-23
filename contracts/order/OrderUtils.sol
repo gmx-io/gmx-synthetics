@@ -86,6 +86,10 @@ library OrderUtils {
             );
         }
 
+        if (param.addresses.receiver == address(0)) {
+            revert("Invalid receiver");
+        }
+
         if (BaseOrderUtils.isDecreaseOrder(params.orderType) && params.addresses.swapPath.length > 0) {
             require(params.addresses.swapPath[0] == params.addresses.market, "OrderUtils: invalid swap path");
         }

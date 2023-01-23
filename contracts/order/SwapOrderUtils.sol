@@ -7,7 +7,7 @@ import "../swap/SwapUtils.sol";
 import "../order/OrderStoreUtils.sol";
 
 // @title SwapOrderUtils
-// @dev Libary for functions to help with processing a swap order
+// @dev Library for functions to help with processing a swap order
 library SwapOrderUtils {
     using Order for Order.Props;
     using Array for uint256[];

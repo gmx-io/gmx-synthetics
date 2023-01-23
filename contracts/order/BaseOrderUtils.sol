@@ -14,7 +14,7 @@ import "../oracle/Oracle.sol";
 import "../swap/SwapHandler.sol";
 
 // @title Order
-// @dev Libary for common order functions used in OrderUtils, IncreaseOrderUtils
+// @dev Library for common order functions used in OrderUtils, IncreaseOrderUtils
 // DecreaseOrderUtils, SwapOrderUtils
 library BaseOrderUtils {
     using SafeCast for int256;
@@ -250,7 +250,7 @@ library BaseOrderUtils {
                 // and that the later price (secondaryPrice) is larger than the triggerPrice
                 bool ok = primaryPrice <= triggerPrice && triggerPrice <= secondaryPrice;
                 if (!ok) {
-                    revert("Invalid prices for order");
+                    revert(Keys.INVALID_ORDER_PRICES_ERROR);
                 }
 
                 oracle.setCustomPrice(indexToken, Price.Props(
@@ -262,7 +262,7 @@ library BaseOrderUtils {
                 // and that the later price (secondaryPrice) is smaller than the triggerPrice
                 bool ok = primaryPrice >= triggerPrice && triggerPrice >= secondaryPrice;
                 if (!ok) {
-                    revert("Invalid prices for order");
+                    revert(Keys.INVALID_ORDER_PRICES_ERROR);
                 }
 
                 oracle.setCustomPrice(indexToken, Price.Props(

@@ -101,6 +101,14 @@ library WithdrawalUtils {
         uint256 wntAmount = withdrawalVault.recordTransferIn(wnt);
         require(wntAmount >= params.executionFee, "WithdrawalUtils: invalid wntAmount");
 
+        if (params.receiver == address(0)) {
+            revert("Invalid receiver");
+        }
+
+        if (params.marketTokenAmount == 0) {
+            revert("Invalid marketTokenAmount");
+        }
+
         GasUtils.handleExcessExecutionFee(
             dataStore,
             withdrawalVault,

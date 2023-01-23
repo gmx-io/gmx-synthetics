@@ -1397,7 +1397,7 @@ library MarketUtils {
         return dataStore.getUint(Keys.maxPnlFactorKey(market, isLong));
     }
 
-    // @dev get the max pnl factor for withdrawals a market
+    // @dev get the max pnl factor for withdrawals for a market
     // @param dataStore DataStore
     // @param market the market to check
     // @param isLong whether to get the value for longs or shorts

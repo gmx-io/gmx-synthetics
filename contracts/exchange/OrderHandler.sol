@@ -247,7 +247,7 @@ contract OrderHandler is BaseOrderHandler {
         } else {
             if (
                 reasonKey == Keys.EMPTY_POSITION_ERROR_KEY ||
-                reasonKey == Keys.INSUFFICIENT_SWAP_OUTPUT_ERROR_KEY ||
+                reasonKey == Keys.INVALID_ORDER_PRICES_ERROR_KEY ||
                 reasonKey == Keys.FEATURE_DISABLED_ERROR_KEY
             ) {
                 revert(reason);

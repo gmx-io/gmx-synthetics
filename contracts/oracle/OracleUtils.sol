@@ -9,7 +9,7 @@ import "../utils/Bits.sol";
 import "../price/Price.sol";
 
 // @title OracleUtils
-// @dev Libary for oracle functions
+// @dev Library for oracle functions
 library OracleUtils {
     // @dev SetPricesParams struct for values required in Oracle.setPrices
     // @param signerInfo compacted indexes of signers, the index is used to retrieve

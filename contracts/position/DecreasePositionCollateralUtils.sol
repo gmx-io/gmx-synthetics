@@ -20,7 +20,7 @@ import "../order/BaseOrderUtils.sol";
 import "../swap/SwapUtils.sol";
 
 // @title DecreasePositionCollateralUtils
-// @dev Libary for functions to help with the calculations when decreasing a position
+// @dev Library for functions to help with the calculations when decreasing a position
 library DecreasePositionCollateralUtils {
     using SafeCast for uint256;
     using SafeCast for int256;

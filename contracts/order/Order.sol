@@ -27,7 +27,7 @@ library Order {
         MarketIncrease,
         // @dev LimitIncrease: increase position if the triggerPrice is reached and the acceptablePrice can be fulfilled
         LimitIncrease,
-        // @dev MarketDecrease: decrease position at the curent market price
+        // @dev MarketDecrease: decrease position at the current market price
         // the order will be cancelled if the position cannot be decreased at the acceptablePrice
         MarketDecrease,
         // @dev LimitDecrease: decrease position if the triggerPrice is reached and the acceptablePrice can be fulfilled
@@ -66,7 +66,7 @@ library Order {
     // for decrease orders, initialCollateralToken is the collateral token of the position
     // withdrawn collateral from the decrease of the position will be swapped
     // through the specified swapPath
-    // for swaps, initialCollateralToken is the initial token sent it for the swap
+    // for swaps, initialCollateralToken is the initial token sent for the swap
     // @param swapPath an array of market addresses to swap through
     struct Addresses {
         address account;

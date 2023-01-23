@@ -20,7 +20,7 @@ import "../order/OrderEventUtils.sol";
 import "./DecreasePositionCollateralUtils.sol";
 
 // @title DecreasePositionUtils
-// @dev Libary for functions to help with decreasing a position
+// @dev Library for functions to help with decreasing a position
 library DecreasePositionUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
