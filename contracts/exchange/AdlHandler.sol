@@ -15,7 +15,8 @@ contract AdlHandler is BaseOrderHandler {
     // stack too deep errors
     struct _ExecuteAdlCache {
         uint256 startingGas;
-        uint256[] oracleBlockNumbers;
+        uint256[] minOracleBlockNumbers;
+        uint256[] maxOracleBlockNumbers;
         bytes32 key;
         int256 pnlToPoolFactor;
         int256 nextPnlToPoolFactor;
@@ -53,8 +54,8 @@ contract AdlHandler is BaseOrderHandler {
         onlyAdlKeeper
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
-        uint256[] memory oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedOracleBlockNumbers,
+        uint256[] memory maxOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
+            oracleParams.compactedMaxOracleBlockNumbers,
             oracleParams.tokens.length
         );
 
@@ -64,7 +65,7 @@ contract AdlHandler is BaseOrderHandler {
             oracle,
             market,
             isLong,
-            oracleBlockNumbers
+            maxOracleBlockNumbers
         );
     }
 
@@ -91,8 +92,13 @@ contract AdlHandler is BaseOrderHandler {
 
         cache.startingGas = gasleft();
 
-        cache.oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedOracleBlockNumbers,
+        cache.minOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
+            oracleParams.compactedMinOracleBlockNumbers,
+            oracleParams.tokens.length
+        );
+
+        cache.maxOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
+            oracleParams.compactedMaxOracleBlockNumbers,
             oracleParams.tokens.length
         );
 
@@ -100,7 +106,7 @@ contract AdlHandler is BaseOrderHandler {
             dataStore,
             market,
             isLong,
-            cache.oracleBlockNumbers
+            cache.maxOracleBlockNumbers
         );
 
         (bool shouldAllowAdl, , ) = AdlUtils.shouldAllowAdl(
@@ -123,7 +129,7 @@ contract AdlHandler is BaseOrderHandler {
                 collateralToken,
                 isLong,
                 sizeDeltaUsd,
-                cache.oracleBlockNumbers[0]
+                cache.minOracleBlockNumbers[0]
             )
         );
 

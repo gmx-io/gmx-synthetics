@@ -61,7 +61,8 @@ library WithdrawalUtils {
      * @param withdrawalVault WithdrawalVault.
      * @param oracle The oracle that provides market prices.
      * @param key The unique identifier of the withdrawal to execute.
-     * @param oracleBlockNumbers The block numbers for the oracle prices.
+     * @param minOracleBlockNumbers The min block numbers for the oracle prices.
+     * @param maxOracleBlockNumbers The max block numbers for the oracle prices.
      * @param keeper The keeper that is executing the withdrawal.
      * @param startingGas The starting gas limit for the withdrawal execution.
      */
@@ -71,7 +72,8 @@ library WithdrawalUtils {
         WithdrawalVault withdrawalVault;
         Oracle oracle;
         bytes32 key;
-        uint256[] oracleBlockNumbers;
+        uint256[] minOracleBlockNumbers;
+        uint256[] maxOracleBlockNumbers;
         address keeper;
         uint256 startingGas;
     }
@@ -162,9 +164,11 @@ library WithdrawalUtils {
         require(withdrawal.account() != address(0), "WithdrawalUtils: empty withdrawal");
         require(withdrawal.marketTokenAmount() > 0, "WithdrawalUtils: empty marketTokenAmount");
 
-        if (!params.oracleBlockNumbers.areEqualTo(withdrawal.updatedAtBlock())) {
-            OracleUtils.revertOracleBlockNumbersAreNotEqual(params.oracleBlockNumbers, withdrawal.updatedAtBlock());
-        }
+        OracleUtils.validateBlockNumberWithinRange(
+            params.minOracleBlockNumbers,
+            params.maxOracleBlockNumbers,
+            withdrawal.updatedAtBlock()
+        );
 
         uint256 marketTokensBalance = MarketToken(payable(withdrawal.market())).balanceOf(withdrawal.account());
         if (marketTokensBalance < withdrawal.marketTokenAmount()) {

@@ -27,7 +27,8 @@ library DecreaseOrderUtils {
         PositionUtils.validateNonEmptyPosition(position);
 
         validateOracleBlockNumbers(
-            params.oracleBlockNumbers,
+            params.minOracleBlockNumbers,
+            params.maxOracleBlockNumbers,
             order.orderType(),
             order.updatedAtBlock(),
             position.increasedAtBlock(),
@@ -116,16 +117,19 @@ library DecreaseOrderUtils {
     // @param positionIncreasedAtBlock the block at which the position was last increased
     // @param positionDecreasedAtBlock the block at which the position was last decreased
     function validateOracleBlockNumbers(
-        uint256[] memory oracleBlockNumbers,
+        uint256[] memory minOracleBlockNumbers,
+        uint256[] memory maxOracleBlockNumbers,
         Order.OrderType orderType,
         uint256 orderUpdatedAtBlock,
         uint256 positionIncreasedAtBlock,
         uint256 positionDecreasedAtBlock
     ) internal pure {
         if (orderType == Order.OrderType.MarketDecrease) {
-            if (!oracleBlockNumbers.areEqualTo(orderUpdatedAtBlock)) {
-                OracleUtils.revertOracleBlockNumbersAreNotEqual(oracleBlockNumbers, orderUpdatedAtBlock);
-            }
+            OracleUtils.validateBlockNumberWithinRange(
+                minOracleBlockNumbers,
+                maxOracleBlockNumbers,
+                orderUpdatedAtBlock
+            );
             return;
         }
 
@@ -134,8 +138,8 @@ library DecreaseOrderUtils {
             orderType == Order.OrderType.StopLossDecrease
         ) {
             uint256 latestUpdatedAtBlock = orderUpdatedAtBlock > positionIncreasedAtBlock ? orderUpdatedAtBlock : positionIncreasedAtBlock;
-            if (!oracleBlockNumbers.areGreaterThan(latestUpdatedAtBlock)) {
-                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, latestUpdatedAtBlock);
+            if (!minOracleBlockNumbers.areGreaterThan(latestUpdatedAtBlock)) {
+                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, latestUpdatedAtBlock);
             }
             return;
         }
@@ -143,8 +147,8 @@ library DecreaseOrderUtils {
         if (orderType == Order.OrderType.Liquidation) {
             uint256 latestUpdatedAtBlock = positionIncreasedAtBlock > positionDecreasedAtBlock ? positionIncreasedAtBlock : positionDecreasedAtBlock;
 
-            if (!oracleBlockNumbers.areGreaterThan(latestUpdatedAtBlock)) {
-                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, latestUpdatedAtBlock);
+            if (!minOracleBlockNumbers.areGreaterThan(latestUpdatedAtBlock)) {
+                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, latestUpdatedAtBlock);
             }
             return;
         }

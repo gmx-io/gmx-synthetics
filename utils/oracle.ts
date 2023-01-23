@@ -12,7 +12,8 @@ TOKEN_ORACLE_TYPES.DEFAULT = TOKEN_ORACLE_TYPES.ONE_PERCENT_PER_MINUTE;
 export async function signPrice({
   signer,
   salt,
-  oracleBlockNumber,
+  minOracleBlockNumber,
+  maxOracleBlockNumber,
   oracleTimestamp,
   blockHash,
   token,
@@ -21,8 +22,12 @@ export async function signPrice({
   minPrice,
   maxPrice,
 }) {
-  if (bigNumberify(oracleBlockNumber).gt(MAX_UINT64)) {
-    throw new Error(`oracleBlockNumber exceeds max value: ${oracleBlockNumber.toString()}`);
+  if (bigNumberify(minOracleBlockNumber).gt(MAX_UINT64)) {
+    throw new Error(`minOracleBlockNumber exceeds max value: ${minOracleBlockNumber.toString()}`);
+  }
+
+  if (bigNumberify(maxOracleBlockNumber).gt(MAX_UINT64)) {
+    throw new Error(`maxOracleBlockNumber exceeds max value: ${maxOracleBlockNumber.toString()}`);
   }
 
   if (bigNumberify(oracleTimestamp).gt(MAX_UINT64)) {
@@ -44,8 +49,19 @@ export async function signPrice({
   const expandedPrecision = expandDecimals(1, precision);
 
   const hash = hashData(
-    ["bytes32", "uint256", "uint256", "bytes32", "address", "bytes32", "uint256", "uint256", "uint256"],
-    [salt, oracleBlockNumber, oracleTimestamp, blockHash, token, tokenOracleType, expandedPrecision, minPrice, maxPrice]
+    ["bytes32", "uint256", "uint256", "uint256", "bytes32", "address", "bytes32", "uint256", "uint256", "uint256"],
+    [
+      salt,
+      minOracleBlockNumber,
+      maxOracleBlockNumber,
+      oracleTimestamp,
+      blockHash,
+      token,
+      tokenOracleType,
+      expandedPrecision,
+      minPrice,
+      maxPrice,
+    ]
   );
 
   return await signer.signMessage(ethers.utils.arrayify(hash));
@@ -54,7 +70,8 @@ export async function signPrice({
 export async function signPrices({
   signers,
   salt,
-  oracleBlockNumber,
+  minOracleBlockNumber,
+  maxOracleBlockNumber,
   oracleTimestamp,
   blockHash,
   token,
@@ -68,7 +85,8 @@ export async function signPrices({
     const signature = await signPrice({
       signer: signers[i],
       salt,
-      oracleBlockNumber,
+      minOracleBlockNumber,
+      maxOracleBlockNumber,
       oracleTimestamp,
       blockHash,
       token,
@@ -170,7 +188,8 @@ export function getCompactedOracleTimestamps(timestamps) {
 
 export async function getOracleParams({
   oracleSalt,
-  oracleBlockNumbers,
+  minOracleBlockNumbers,
+  maxOracleBlockNumbers,
   oracleTimestamps,
   blockHashes,
   signerIndexes,
@@ -190,7 +209,8 @@ export async function getOracleParams({
   const signatures = [];
 
   for (let i = 0; i < tokens.length; i++) {
-    const oracleBlockNumber = oracleBlockNumbers[i];
+    const minOracleBlockNumber = minOracleBlockNumbers[i];
+    const maxOracleBlockNumber = maxOracleBlockNumbers[i];
     const oracleTimestamp = oracleTimestamps[i];
     const blockHash = blockHashes[i];
     const token = tokens[i];
@@ -204,7 +224,8 @@ export async function getOracleParams({
       const signature = await signPrice({
         signer: signers[j],
         salt: oracleSalt,
-        oracleBlockNumber,
+        minOracleBlockNumber,
+        maxOracleBlockNumber,
         oracleTimestamp,
         blockHash,
         token,
@@ -224,7 +245,8 @@ export async function getOracleParams({
   return {
     signerInfo,
     tokens,
-    compactedOracleBlockNumbers: getCompactedOracleBlockNumbers(oracleBlockNumbers),
+    compactedMinOracleBlockNumbers: getCompactedOracleBlockNumbers(minOracleBlockNumbers),
+    compactedMaxOracleBlockNumbers: getCompactedOracleBlockNumbers(maxOracleBlockNumbers),
     compactedOracleTimestamps: getCompactedOracleTimestamps(oracleTimestamps),
     compactedDecimals: getCompactedDecimals(precisions),
     compactedMinPrices: getCompactedPrices(allMinPrices),

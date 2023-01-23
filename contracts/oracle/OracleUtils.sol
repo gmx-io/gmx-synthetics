@@ -11,6 +11,8 @@ import "../price/Price.sol";
 // @title OracleUtils
 // @dev Library for oracle functions
 library OracleUtils {
+    using Array for uint256[];
+
     // @dev SetPricesParams struct for values required in Oracle.setPrices
     // @param signerInfo compacted indexes of signers, the index is used to retrieve
     // the signer address from the OracleStore
@@ -27,7 +29,8 @@ library OracleUtils {
     struct SetPricesParams {
         uint256 signerInfo;
         address[] tokens;
-        uint256[] compactedOracleBlockNumbers;
+        uint256[] compactedMinOracleBlockNumbers;
+        uint256[] compactedMaxOracleBlockNumbers;
         uint256[] compactedOracleTimestamps;
         uint256[] compactedDecimals;
         uint256[] compactedMinPrices;
@@ -43,6 +46,18 @@ library OracleUtils {
         Price.Props[] primaryPrices;
         address[] secondaryTokens;
         Price.Props[] secondaryPrices;
+    }
+
+    struct ReportInfo {
+        uint256 minOracleBlockNumber;
+        uint256 maxOracleBlockNumber;
+        uint256 oracleTimestamp;
+        bytes32 blockHash;
+        address token;
+        bytes32 tokenOracleType;
+        uint256 precision;
+        uint256 minPrice;
+        uint256 maxPrice;
     }
 
     // compacted prices have a length of 32 bits
@@ -71,8 +86,47 @@ library OracleUtils {
 
     error OracleBlockNumbersAreNotEqual(uint256[] oracleBlockNumbers, uint256 expectedBlockNumber);
     error OracleBlockNumbersAreSmallerThanRequired(uint256[] oracleBlockNumbers, uint256 expectedBlockNumber);
+    error OracleBlockNumberNotWithinRange(
+        uint256[] minOracleBlockNumbers,
+        uint256[] maxOracleBlockNumbers,
+        uint256 blockNumber
+    );
 
     error InvalidSignature(address recoveredSigner, address expectedSigner);
+
+    function validateBlockNumberWithinRange(
+        uint256[] memory minOracleBlockNumbers,
+        uint256[] memory maxOracleBlockNumbers,
+        uint256 blockNumber
+    ) internal pure {
+        if (!isBlockNumberWithinRange(
+                minOracleBlockNumbers,
+                maxOracleBlockNumbers,
+                blockNumber
+        )) {
+            revertOracleBlockNumberNotWithinRange(
+                minOracleBlockNumbers,
+                maxOracleBlockNumbers,
+                blockNumber
+            );
+        }
+    }
+
+    function isBlockNumberWithinRange(
+        uint256[] memory minOracleBlockNumbers,
+        uint256[] memory maxOracleBlockNumbers,
+        uint256 blockNumber
+    ) internal pure returns (bool) {
+        if (!minOracleBlockNumbers.areLessThanOrEqualTo(blockNumber)) {
+            return false;
+        }
+
+        if (!maxOracleBlockNumbers.areGreaterThanOrEqualTo(blockNumber)) {
+            return false;
+        }
+
+        return true;
+    }
 
     // @dev get the uncompacted price at the specified index
     // @param compactedPrices the compacted prices
@@ -177,7 +231,8 @@ library OracleUtils {
     }
 
     // @dev validate the signer of a price
-    // @param oracleBlockNumber the block number used for the signed message hash
+    // @param minOracleBlockNumber the min block number used for the signed message hash
+    // @param maxOracleBlockNumber the max block number used for the signed message hash
     // @param oracleTimestamp the timestamp used for the signed message hash
     // @param blockHash the block hash used for the signed message hash
     // @param token the token used for the signed message hash
@@ -188,28 +243,22 @@ library OracleUtils {
     // @param expectedSigner the address of the expected signer
     function validateSigner(
         bytes32 SALT,
-        uint256 oracleBlockNumber,
-        uint256 oracleTimestamp,
-        bytes32 blockHash,
-        address token,
-        bytes32 tokenOracleType,
-        uint256 precision,
-        uint256 minPrice,
-        uint256 maxPrice,
+        ReportInfo memory info,
         bytes memory signature,
         address expectedSigner
     ) internal pure {
         bytes32 digest = ECDSA.toEthSignedMessageHash(
             keccak256(abi.encode(
                 SALT,
-                oracleBlockNumber,
-                oracleTimestamp,
-                blockHash,
-                token,
-                tokenOracleType,
-                precision,
-                minPrice,
-                maxPrice
+                info.minOracleBlockNumber,
+                info.maxOracleBlockNumber,
+                info.oracleTimestamp,
+                info.blockHash,
+                info.token,
+                info.tokenOracleType,
+                info.precision,
+                info.minPrice,
+                info.maxPrice
             ))
         );
 
@@ -225,5 +274,13 @@ library OracleUtils {
 
     function revertOracleBlockNumbersAreSmallerThanRequired(uint256[] memory oracleBlockNumbers, uint256 expectedBlockNumber) internal pure {
         revert OracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, expectedBlockNumber);
+    }
+
+    function revertOracleBlockNumberNotWithinRange(
+        uint256[] memory minOracleBlockNumbers,
+        uint256[] memory maxOracleBlockNumbers,
+        uint256 blockNumber
+    ) internal pure {
+        revert OracleBlockNumberNotWithinRange(minOracleBlockNumbers, maxOracleBlockNumbers, blockNumber);
     }
 }

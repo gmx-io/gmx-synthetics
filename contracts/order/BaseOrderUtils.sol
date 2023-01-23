@@ -85,7 +85,8 @@ library BaseOrderUtils {
         bytes32 key;
         Order.Props order;
         Market.Props[] swapPathMarkets;
-        uint256[] oracleBlockNumbers;
+        uint256[] minOracleBlockNumbers;
+        uint256[] maxOracleBlockNumbers;
         Market.Props market;
         address keeper;
         uint256 startingGas;

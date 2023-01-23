@@ -22,7 +22,8 @@ library SwapOrderUtils {
         }
 
         validateOracleBlockNumbers(
-            params.oracleBlockNumbers,
+            params.minOracleBlockNumbers,
+            params.maxOracleBlockNumbers,
             params.order.orderType(),
             params.order.updatedAtBlock()
         );
@@ -54,20 +55,23 @@ library SwapOrderUtils {
     // @param orderType the order type
     // @param orderUpdatedAtBlock the block at which the order was last updated
     function validateOracleBlockNumbers(
-        uint256[] memory oracleBlockNumbers,
+        uint256[] memory minOracleBlockNumbers,
+        uint256[] memory maxOracleBlockNumbers,
         Order.OrderType orderType,
         uint256 orderUpdatedAtBlock
     ) internal pure {
         if (orderType == Order.OrderType.MarketSwap) {
-            if (!oracleBlockNumbers.areEqualTo(orderUpdatedAtBlock)) {
-                OracleUtils.revertOracleBlockNumbersAreNotEqual(oracleBlockNumbers, orderUpdatedAtBlock);
-            }
+            OracleUtils.validateBlockNumberWithinRange(
+                minOracleBlockNumbers,
+                maxOracleBlockNumbers,
+                orderUpdatedAtBlock
+            );
             return;
         }
 
         if (orderType == Order.OrderType.LimitSwap) {
-            if (!oracleBlockNumbers.areGreaterThan(orderUpdatedAtBlock)) {
-                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, orderUpdatedAtBlock);
+            if (!minOracleBlockNumbers.areGreaterThan(orderUpdatedAtBlock)) {
+                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, orderUpdatedAtBlock);
             }
             return;
         }

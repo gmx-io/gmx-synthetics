@@ -95,24 +95,19 @@ library AdlUtils {
     // @param oracle Oracle
     // @param market address of the market to check
     // @param isLong indicates whether to check the long or short side of the market
-    // @param oracleBlockNumbers the oracle block numbers for the prices stored in the oracle
+    // @param maxOracleBlockNumbers the oracle block numbers for the prices stored in the oracle
     function updateAdlState(
         DataStore dataStore,
         EventEmitter eventEmitter,
         Oracle oracle,
         address market,
         bool isLong,
-        uint256[] memory oracleBlockNumbers
+        uint256[] memory maxOracleBlockNumbers
     ) external {
         uint256 latestAdlBlock = getLatestAdlBlock(dataStore, market, isLong);
 
-        uint256 oracleBlockNumber = oracleBlockNumbers[0];
-        if (!oracleBlockNumbers.areEqualTo(oracleBlockNumber)) {
-            OracleUtils.revertOracleBlockNumbersAreNotEqual(oracleBlockNumbers, oracleBlockNumber);
-        }
-
-        if (oracleBlockNumber < latestAdlBlock) {
-            OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, latestAdlBlock);
+        if (!maxOracleBlockNumbers.areGreaterThanOrEqualTo(latestAdlBlock)) {
+            OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(maxOracleBlockNumbers, latestAdlBlock);
         }
 
         Market.Props memory _market = MarketUtils.getEnabledMarket(dataStore, market);
@@ -261,27 +256,21 @@ library AdlUtils {
     // @param dataStore DataStore
     // @param market address of the market to check
     // @param isLong indicates whether to check the long or short side of the market
-    // @param oracleBlockNumbers the oracle block numbers for the prices stored in the oracle
+    // @param maxOracleBlockNumbers the oracle block numbers for the prices stored in the oracle
     function validateAdl(
         DataStore dataStore,
         address market,
         bool isLong,
-        uint256[] memory oracleBlockNumbers
+        uint256[] memory maxOracleBlockNumbers
     ) external view {
         bool isAdlEnabled = AdlUtils.getIsAdlEnabled(dataStore, market, isLong);
         if (!isAdlEnabled) {
             revert("Adl is not enabled");
         }
 
-        uint256 oracleBlockNumber = oracleBlockNumbers[0];
-        if (!oracleBlockNumbers.areEqualTo(oracleBlockNumber)) {
-            OracleUtils.revertOracleBlockNumbersAreNotEqual(oracleBlockNumbers, oracleBlockNumber);
-        }
-
         uint256 latestAdlBlock = AdlUtils.getLatestAdlBlock(dataStore, market, isLong);
-
-        if (oracleBlockNumber < latestAdlBlock) {
-            OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, latestAdlBlock);
+        if (!maxOracleBlockNumbers.areGreaterThanOrEqualTo(latestAdlBlock)) {
+            OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(maxOracleBlockNumbers, latestAdlBlock);
         }
     }
 

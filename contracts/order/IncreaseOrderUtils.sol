@@ -62,7 +62,8 @@ library IncreaseOrderUtils {
         }
 
         validateOracleBlockNumbers(
-            params.oracleBlockNumbers,
+            params.minOracleBlockNumbers,
+            params.maxOracleBlockNumbers,
             params.order.orderType(),
             params.order.updatedAtBlock(),
             position.increasedAtBlock()
@@ -84,27 +85,31 @@ library IncreaseOrderUtils {
     }
 
     // @dev validate the oracle block numbers used for the prices in the oracle
-    // @param oracleBlockNumbers the oracle block numbers
+    // @param minOracleBlockNumbers the min oracle block numbers
+    // @param maxOracleBlockNumbers the max oracle block numbers
     // @param orderType the order type
     // @param orderUpdatedAtBlock the block at which the order was last updated
     // @param positionIncreasedAtBlock the block at which the position was last increased
     function validateOracleBlockNumbers(
-        uint256[] memory oracleBlockNumbers,
+        uint256[] memory minOracleBlockNumbers,
+        uint256[] memory maxOracleBlockNumbers,
         Order.OrderType orderType,
         uint256 orderUpdatedAtBlock,
         uint256 positionIncreasedAtBlock
     ) internal pure {
         if (orderType == Order.OrderType.MarketIncrease) {
-            if (!oracleBlockNumbers.areEqualTo(orderUpdatedAtBlock)) {
-                OracleUtils.revertOracleBlockNumbersAreNotEqual(oracleBlockNumbers, orderUpdatedAtBlock);
-            }
+            OracleUtils.validateBlockNumberWithinRange(
+                minOracleBlockNumbers,
+                maxOracleBlockNumbers,
+                orderUpdatedAtBlock
+            );
             return;
         }
 
         if (orderType == Order.OrderType.LimitIncrease) {
             uint256 laterBlock = orderUpdatedAtBlock > positionIncreasedAtBlock ? orderUpdatedAtBlock : positionIncreasedAtBlock;
-            if (!oracleBlockNumbers.areGreaterThan(laterBlock)) {
-                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, laterBlock);
+            if (!minOracleBlockNumbers.areGreaterThan(laterBlock)) {
+                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, laterBlock);
             }
             return;
         }

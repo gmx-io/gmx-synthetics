@@ -265,7 +265,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         }
 
         if (receiver == address(0)) {
-            revert("Invalid receiver")
+            revert("Invalid receiver");
         }
 
         address account = msg.sender;
@@ -293,7 +293,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         }
 
         if (receiver == address(0)) {
-            revert("Invalid receiver")
+            revert("Invalid receiver");
         }
 
         address account = msg.sender;

@@ -48,7 +48,8 @@ library ExecuteDepositUtils {
         DepositVault depositVault;
         Oracle oracle;
         bytes32 key;
-        uint256[] oracleBlockNumbers;
+        uint256[] minOracleBlockNumbers;
+        uint256[] maxOracleBlockNumbers;
         address keeper;
         uint256 startingGas;
     }
@@ -88,9 +89,11 @@ library ExecuteDepositUtils {
 
         require(deposit.account() != address(0), "DepositUtils: empty deposit");
 
-        if (!params.oracleBlockNumbers.areEqualTo(deposit.updatedAtBlock())) {
-            OracleUtils.revertOracleBlockNumbersAreNotEqual(params.oracleBlockNumbers, deposit.updatedAtBlock());
-        }
+        OracleUtils.validateBlockNumberWithinRange(
+            params.minOracleBlockNumbers,
+            params.maxOracleBlockNumbers,
+            deposit.updatedAtBlock()
+        );
 
         Market.Props memory market = MarketUtils.getEnabledMarket(params.dataStore, deposit.market());
 

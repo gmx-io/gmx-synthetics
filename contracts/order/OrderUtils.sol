@@ -86,7 +86,7 @@ library OrderUtils {
             );
         }
 
-        if (param.addresses.receiver == address(0)) {
+        if (params.addresses.receiver == address(0)) {
             revert("Invalid receiver");
         }
 
