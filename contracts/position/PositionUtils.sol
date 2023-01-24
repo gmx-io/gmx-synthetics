@@ -54,6 +54,14 @@ library PositionUtils {
         IReferralStorage referralStorage;
     }
 
+    struct WillPositionCollateralBeSufficientValues {
+        uint256 positionSizeInUsd;
+        uint256 positionCollateralAmount;
+        int256 positionPnlUsd;
+        int256 realizedPnlUsd;
+        int256 openInterestDelta;
+    }
+
     struct _GetPositionPnlUsdCache {
         int256 positionValue;
         int256 totalPositionPnl;
@@ -322,17 +330,14 @@ library PositionUtils {
         return false;
     }
 
-    function willPositionCollateralBeSufficientForOpenInterest(
+    function willPositionCollateralBeSufficient(
         DataStore dataStore,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
         address collateralToken,
-        uint256 positionSizeInUsd,
-        uint256 positionCollateralAmount,
-        int256 positionPnlUsd,
-        int256 realizedPnlUsd,
-        int256 openInterestDelta
-    ) public view returns (bool) {
+        bool isLong,
+        WillPositionCollateralBeSufficientValues memory values
+    ) public view returns (bool, int256) {
         Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(
             collateralToken,
             market,
@@ -344,21 +349,25 @@ library PositionUtils {
             market.marketToken,
             market.longToken,
             market.shortToken,
-            openInterestDelta
+            values.openInterestDelta,
+            isLong
         );
 
-        uint256 collateralUsd = positionCollateralAmount * collateralTokenPrice.min;
+        int256 remainingCollateralUsd = values.positionCollateralAmount.toInt256() * collateralTokenPrice.min.toInt256();
 
-        if (realizedPnlUsd < 0) {
-            collateralUsd = Calc.sumReturnUint256(collateralUsd, realizedPnlUsd);
+        remainingCollateralUsd += values.positionPnlUsd;
+
+        if (values.realizedPnlUsd < 0) {
+            remainingCollateralUsd = remainingCollateralUsd + values.realizedPnlUsd;
         }
 
-        if (positionPnlUsd > 0) {
-            // allow pending pnl to be treated as collateral for this check
-            collateralUsd += positionPnlUsd.toUint256();
+        if (remainingCollateralUsd < 0) {
+            return (false, remainingCollateralUsd);
         }
 
-        return Precision.toFactor(collateralUsd, positionSizeInUsd) >= minCollateralFactor;
+        bool willBeSufficient = Precision.toFactor(remainingCollateralUsd.toUint256(), values.positionSizeInUsd) >= minCollateralFactor;
+
+        return (willBeSufficient, remainingCollateralUsd);
     }
 
     function updateFundingAndBorrowingState(

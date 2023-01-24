@@ -1352,8 +1352,8 @@ library MarketUtils {
         return dataStore.getUint(Keys.minCollateralFactorKey(market));
     }
 
-    function getMinCollateralFactorForOpenInterestMultiplier(DataStore dataStore, address market) internal view returns (uint256) {
-        return dataStore.getUint(Keys.minCollateralFactorForOpenInterestMultiplierKey(market));
+    function getMinCollateralFactorForOpenInterestMultiplier(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
+        return dataStore.getUint(Keys.minCollateralFactorForOpenInterestMultiplierKey(market, isLong));
     }
 
     function getMinCollateralFactorForOpenInterest(
@@ -1361,11 +1361,12 @@ library MarketUtils {
         address market,
         address longToken,
         address shortToken,
-        int256 openInterestDelta
+        int256 openInterestDelta,
+        bool isLong
     ) internal view returns (uint256) {
-        uint256 openInterest = getOpenInterest(dataStore, market, longToken, shortToken);
+        uint256 openInterest = getOpenInterest(dataStore, market, longToken, shortToken, isLong);
         openInterest = Calc.sumReturnUint256(openInterest, openInterestDelta);
-        uint256 multiplierFactor = getMinCollateralFactorForOpenInterestMultiplier(dataStore, market);
+        uint256 multiplierFactor = getMinCollateralFactorForOpenInterestMultiplier(dataStore, market, isLong);
         return Precision.applyFactor(openInterest, multiplierFactor);
     }
 

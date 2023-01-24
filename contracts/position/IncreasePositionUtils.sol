@@ -174,17 +174,24 @@ library IncreasePositionUtils {
                 params.position.sizeInUsd()
             );
 
-            if (!PositionUtils.willPositionCollateralBeSufficientForOpenInterest(
+            PositionUtils.WillPositionCollateralBeSufficientValues memory positionValues = PositionUtils.WillPositionCollateralBeSufficientValues(
+                params.position.sizeInUsd(), // positionSizeInUsd
+                params.position.collateralAmount(), // positionCollateralAmount
+                positionPnlUsd, // positionPnlUsd
+                0,  // realizedPnlUsd
+                0 // openInterestDelta
+            );
+
+            (bool willBeSufficient, /* int256 remainingCollateralUsd */) = PositionUtils.willPositionCollateralBeSufficient(
                 params.contracts.dataStore,
                 params.market,
                 prices,
                 params.position.collateralToken(),
-                params.position.sizeInUsd(),
-                params.position.collateralAmount(),
-                positionPnlUsd,
-                0,
-                0
-            )) {
+                params.position.isLong(),
+                positionValues
+            );
+
+            if (!willBeSufficient) {
                 revert("Below min collateral factor for open interest");
             }
         }

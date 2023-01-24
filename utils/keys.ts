@@ -85,8 +85,8 @@ export function oracleTypeKey(token: string) {
   return hashData(["bytes32", "address"], [ORACLE_TYPE, token]);
 }
 
-export function minCollateralFactorKey(market: string) {
-  return hashData(["bytes32", "address"], [MIN_COLLATERAL_FACTOR, market]);
+export function minCollateralFactorKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [MIN_COLLATERAL_FACTOR, market, isLong]);
 }
 
 export function reserveFactorKey(market: string, isLong: boolean) {

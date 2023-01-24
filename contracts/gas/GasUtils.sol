@@ -110,8 +110,8 @@ library GasUtils {
     // @param dataStore DataStore
     // @param gasUsed the amount of gas used
     function adjustGasUsage(DataStore dataStore, uint256 gasUsed) internal view returns (uint256) {
-        uint256 baseGasLimit = dataStore.getUint(Keys.EXECUTION_FEE_BASE_GAS_LIMIT);
-        uint256 multiplierFactor = dataStore.getUint(Keys.EXECUTION_FEE_MULTIPLIER_FACTOR);
+        uint256 baseGasLimit = dataStore.getUint(Keys.EXECUTION_GAS_FEE_BASE_AMOUNT);
+        uint256 multiplierFactor = dataStore.getUint(Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR);
         uint256 gasLimit = baseGasLimit + Precision.applyFactor(gasUsed, multiplierFactor);
         return gasLimit;
     }
@@ -121,8 +121,8 @@ library GasUtils {
     // @param dataStore DataStore
     // @param estimatedGasLimit the estimated gas limit
     function adjustGasLimitForEstimate(DataStore dataStore, uint256 estimatedGasLimit) internal view returns (uint256) {
-        uint256 baseGasLimit = dataStore.getUint(Keys.ESTIMATED_FEE_BASE_GAS_LIMIT);
-        uint256 multiplierFactor = dataStore.getUint(Keys.ESTIMATED_FEE_MULTIPLIER_FACTOR);
+        uint256 baseGasLimit = dataStore.getUint(Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT);
+        uint256 multiplierFactor = dataStore.getUint(Keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR);
         uint256 gasLimit = baseGasLimit + Precision.applyFactor(estimatedGasLimit, multiplierFactor);
         return gasLimit;
     }

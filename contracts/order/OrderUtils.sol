@@ -86,10 +86,6 @@ library OrderUtils {
             );
         }
 
-        if (params.addresses.receiver == address(0)) {
-            revert("Invalid receiver");
-        }
-
         // validate swap path markets
         MarketUtils.getEnabledMarkets(
             dataStore,
@@ -115,6 +111,14 @@ library OrderUtils {
         order.setMinOutputAmount(params.numbers.minOutputAmount);
         order.setIsLong(params.isLong);
         order.setShouldUnwrapNativeToken(params.shouldUnwrapNativeToken);
+
+        if (order.receiver() == address(0)) {
+            revert("Invalid receiver");
+        }
+
+        if (order.initialCollateralDeltaAmount() == 0 && order.sizeDeltaUsd() == 0) {
+            revert("Empty order");
+        }
 
         CallbackUtils.validateCallbackGasLimit(dataStore, order.callbackGasLimit());
 
