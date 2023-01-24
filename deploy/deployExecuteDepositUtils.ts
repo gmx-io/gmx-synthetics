@@ -9,6 +9,7 @@ const func = createDeployFunction({
     "MarketEventUtils",
     "DepositStoreUtils",
     "DepositEventUtils",
+    "SwapUtils",
   ],
 });
 

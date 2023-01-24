@@ -36,6 +36,10 @@ export async function createDeposit(fixture, overrides: any = {}) {
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
   const longTokenAmount = overrides.longTokenAmount || bigNumberify(0);
   const shortTokenAmount = overrides.shortTokenAmount || bigNumberify(0);
+  const initialLongToken = overrides.initialLongToken || market.longToken;
+  const initialShortToken = overrides.initialShortToken || market.shortToken;
+  const longTokenSwapPath = overrides.longTokenSwapPath || [];
+  const shortTokenSwapPath = overrides.shortTokenSwapPath || [];
 
   await wnt.mint(depositVault.address, executionFee);
 
@@ -53,6 +57,10 @@ export async function createDeposit(fixture, overrides: any = {}) {
     receiver: receiver.address,
     callbackContract: callbackContract.address,
     market: market.marketToken,
+    initialLongToken,
+    initialShortToken,
+    longTokenSwapPath,
+    shortTokenSwapPath,
     minMarketTokens,
     shouldUnwrapNativeToken,
     executionFee,
