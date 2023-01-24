@@ -135,6 +135,9 @@ library ExecuteDepositUtils {
         // for both cases, we expect the cache.shortTokenAmount to be zero, because it is unlikely that
         // the user provides different initialLongTokens and initialShortTokens to be swapped to the same
         // token, so that flow is not supported
+        // for the first case, the deposited token will be recorded in initialLongTokenAmount, it is not possible
+        // to have an initialShortTokenAmount because recordTransferIn records a single difference in balance of the token
+        // after all transfers
         // for both cases, split the longTokenAmount into longTokenAmount and shortTokenAmount to minimize
         // price impact for the user
         if (market.longToken == market.shortToken) {
