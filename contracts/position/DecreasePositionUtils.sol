@@ -105,17 +105,24 @@ library DecreasePositionUtils {
             cache.estimatedRealizedPnlUsd = cache.estimatedPositionPnlUsd * params.order.sizeDeltaUsd().toInt256() / params.position.sizeInUsd().toInt256();
             cache.estimatedRemainingPnlUsd = cache.estimatedPositionPnlUsd - cache.estimatedRealizedPnlUsd;
 
-            if (!PositionUtils.willPositionCollateralBeSufficientForOpenInterest(
+            PositionUtils.WillPositionCollateralBeSufficientValues memory positionValues = PositionUtils.WillPositionCollateralBeSufficientValues(
+                params.position.sizeInUsd() - params.order.sizeDeltaUsd(), // positionSizeInUsd
+                params.position.collateralAmount() - params.order.initialCollateralDeltaAmount(), // positionCollateralAmount
+                cache.estimatedRemainingPnlUsd, // positionPnlUsd
+                cache.estimatedRealizedPnlUsd,  // realizedPnlUsd
+                -params.order.sizeDeltaUsd().toInt256() // openInterestDelta
+            );
+
+            (bool willBeSufficient, int256 estimatedRemainingCollateralUsd) = PositionUtils.willPositionCollateralBeSufficient(
                 params.contracts.dataStore,
                 params.market,
                 cache.prices,
                 params.position.collateralToken(),
-                params.position.sizeInUsd() - params.order.sizeDeltaUsd(),
-                params.position.collateralAmount() - params.order.initialCollateralDeltaAmount(),
-                cache.estimatedRemainingPnlUsd,
-                cache.estimatedRealizedPnlUsd,
-                -params.order.sizeDeltaUsd().toInt256()
-            )) {
+                params.position.isLong(),
+                positionValues
+            );
+
+            if (!willBeSufficient) {
                 if (params.order.sizeDeltaUsd() == 0) {
                     revert("Cannot withdraw collateral");
                 }
@@ -128,6 +135,11 @@ library DecreasePositionUtils {
                 );
 
                 params.order.setInitialCollateralDeltaAmount(0);
+            }
+
+            // if the remaining collateral will be below the min collateral usd value, then close the position
+            if (estimatedRemainingCollateralUsd < params.contracts.dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256()) {
+                params.order.setSizeDeltaUsd(params.position.sizeInUsd());
             }
         }
 

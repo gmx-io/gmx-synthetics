@@ -86,14 +86,6 @@ library OrderUtils {
             );
         }
 
-        if (params.addresses.receiver == address(0)) {
-            revert("Invalid receiver");
-        }
-
-        if (BaseOrderUtils.isDecreaseOrder(params.orderType) && params.addresses.swapPath.length > 0) {
-            require(params.addresses.swapPath[0] == params.addresses.market, "OrderUtils: invalid swap path");
-        }
-
         // validate swap path markets
         MarketUtils.getEnabledMarkets(
             dataStore,
@@ -119,6 +111,14 @@ library OrderUtils {
         order.setMinOutputAmount(params.numbers.minOutputAmount);
         order.setIsLong(params.isLong);
         order.setShouldUnwrapNativeToken(params.shouldUnwrapNativeToken);
+
+        if (order.receiver() == address(0)) {
+            revert("Invalid receiver");
+        }
+
+        if (order.initialCollateralDeltaAmount() == 0 && order.sizeDeltaUsd() == 0) {
+            revert("Empty order");
+        }
 
         CallbackUtils.validateCallbackGasLimit(dataStore, order.callbackGasLimit());
 
@@ -154,6 +154,8 @@ library OrderUtils {
 
         CallbackUtils.afterOrderExecution(params.key, params.order);
 
+        // the order.executionFee for liquidation / adl orders is zero
+        // gas costs for liquidations / adl is subsidised by the treasury
         GasUtils.payExecutionFee(
             params.contracts.dataStore,
             params.contracts.orderVault,

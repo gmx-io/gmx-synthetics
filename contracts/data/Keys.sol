@@ -80,14 +80,14 @@ library Keys {
     bytes32 public constant FEE_RECEIVER_FACTOR = keccak256(abi.encode("FEE_RECEIVER_FACTOR"));
 
     // @dev key for the base gas limit used when estimating execution fee
-    bytes32 public constant ESTIMATED_FEE_BASE_GAS_LIMIT = keccak256(abi.encode("ESTIMATED_FEE_BASE_GAS_LIMIT"));
+    bytes32 public constant ESTIMATED_GAS_FEE_BASE_AMOUNT = keccak256(abi.encode("ESTIMATED_GAS_FEE_BASE_AMOUNT"));
     // @dev key for the multiplier used when estimating execution fee
-    bytes32 public constant ESTIMATED_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("ESTIMATED_FEE_MULTIPLIER_FACTOR"));
+    bytes32 public constant ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR"));
 
     // @dev key for the base gas limit used when calculating execution fee
-    bytes32 public constant EXECUTION_FEE_BASE_GAS_LIMIT = keccak256(abi.encode("EXECUTION_FEE_BASE_GAS_LIMIT"));
+    bytes32 public constant EXECUTION_GAS_FEE_BASE_AMOUNT = keccak256(abi.encode("EXECUTION_GAS_FEE_BASE_AMOUNT"));
     // @dev key for the multiplier used when calculating execution fee
-    bytes32 public constant EXECUTION_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("EXECUTION_FEE_MULTIPLIER_FACTOR"));
+    bytes32 public constant EXECUTION_GAS_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("EXECUTION_GAS_FEE_MULTIPLIER_FACTOR"));
 
     // @dev key for the estimated gas limit for deposits
     bytes32 public constant DEPOSIT_GAS_LIMIT = keccak256(abi.encode("DEPOSIT_GAS_LIMIT"));
@@ -420,10 +420,11 @@ library Keys {
        ));
    }
 
-   function minCollateralFactorForOpenInterestMultiplierKey(address market) internal pure returns (bytes32) {
+   function minCollateralFactorForOpenInterestMultiplierKey(address market, bool isLong) internal pure returns (bytes32) {
        return keccak256(abi.encode(
            MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER,
-           market
+           market,
+           isLong
        ));
    }
 

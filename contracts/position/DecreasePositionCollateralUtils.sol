@@ -370,17 +370,18 @@ library DecreasePositionCollateralUtils {
         ProcessCollateralValues memory values
     ) external returns (ProcessCollateralValues memory) {
         if (params.order.decreasePositionSwapType() == Order.DecreasePositionSwapType.SwapCollateralTokenToPnlToken) {
-            Market.Props[] memory swapPath = new Market.Props[](1);
-            swapPath[0] = params.market;
+            Market.Props[] memory swapPathMarkets = new Market.Props[](1);
+            swapPathMarkets[0] = params.market;
 
             try params.contracts.swapHandler.swap(
                 SwapUtils.SwapParams(
                     params.contracts.dataStore,
                     params.contracts.eventEmitter,
                     params.contracts.oracle,
+                    Bank(payable(params.market.marketToken)),
                     params.position.collateralToken(), // tokenIn
                     values.output.outputAmount, // amountIn
-                    swapPath, // markets
+                    swapPathMarkets, // markets
                     0, // minOutputAmount
                     params.market.marketToken, // receiver
                     false // shouldUnwrapNativeToken
@@ -411,17 +412,18 @@ library DecreasePositionCollateralUtils {
         uint256 profitAmount
     ) internal returns (bool, uint256) {
         if (params.order.decreasePositionSwapType() == Order.DecreasePositionSwapType.SwapPnlTokenToCollateralToken) {
-            Market.Props[] memory swapPath = new Market.Props[](1);
-            swapPath[0] = params.market;
+            Market.Props[] memory swapPathMarkets = new Market.Props[](1);
+            swapPathMarkets[0] = params.market;
 
             try params.contracts.swapHandler.swap(
                 SwapUtils.SwapParams(
                     params.contracts.dataStore,
                     params.contracts.eventEmitter,
                     params.contracts.oracle,
+                    Bank(payable(params.market.marketToken)),
                     pnlToken, // tokenIn
                     profitAmount, // amountIn
-                    swapPath, // markets
+                    swapPathMarkets, // markets
                     0, // minOutputAmount
                     params.market.marketToken, // receiver
                     false // shouldUnwrapNativeToken

@@ -29,6 +29,8 @@ export async function createWithdrawal(fixture, overrides = {}) {
   const receiver = overrides.receiver || account;
   const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
   const market = overrides.market || ethUsdMarket;
+  const longTokenSwapPath = overrides.longTokenSwapPath || [];
+  const shortTokenSwapPath = overrides.shortTokenSwapPath || [];
   const marketTokenAmount = overrides.marketTokenAmount || bigNumberify(0);
   const minLongTokenAmount = overrides.minLongTokenAmount || bigNumberify(0);
   const minShortTokenAmount = overrides.minShortTokenAmount || bigNumberify(0);
@@ -42,6 +44,8 @@ export async function createWithdrawal(fixture, overrides = {}) {
     receiver: receiver.address,
     callbackContract: callbackContract.address,
     market: market.marketToken,
+    longTokenSwapPath,
+    shortTokenSwapPath,
     marketTokenAmount,
     minLongTokenAmount,
     minShortTokenAmount,

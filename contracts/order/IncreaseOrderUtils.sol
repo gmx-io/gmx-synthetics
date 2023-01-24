@@ -19,14 +19,6 @@ library IncreaseOrderUtils {
     // @dev process an increase order
     // @param params BaseOrderUtils.ExecuteOrderParams
     function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external {
-        address initialMarket = params.order.swapPath().length == 0 ? params.order.market() : params.order.swapPath()[0];
-
-        params.contracts.orderVault.transferOut(
-            params.order.initialCollateralToken(),
-            initialMarket,
-            params.order.initialCollateralDeltaAmount()
-        );
-
         MarketUtils.validateEnabledMarket(params.contracts.dataStore, params.market);
         MarketUtils.validatePositionMarket(params.market);
 
@@ -34,6 +26,7 @@ library IncreaseOrderUtils {
             params.contracts.dataStore,
             params.contracts.eventEmitter,
             params.contracts.oracle,
+            params.contracts.orderVault,
             params.order.initialCollateralToken(),
             params.order.initialCollateralDeltaAmount(),
             params.swapPathMarkets,

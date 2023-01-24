@@ -110,8 +110,8 @@ library GasUtils {
     // @param dataStore DataStore
     // @param gasUsed the amount of gas used
     function adjustGasUsage(DataStore dataStore, uint256 gasUsed) internal view returns (uint256) {
-        uint256 baseGasLimit = dataStore.getUint(Keys.EXECUTION_FEE_BASE_GAS_LIMIT);
-        uint256 multiplierFactor = dataStore.getUint(Keys.EXECUTION_FEE_MULTIPLIER_FACTOR);
+        uint256 baseGasLimit = dataStore.getUint(Keys.EXECUTION_GAS_FEE_BASE_AMOUNT);
+        uint256 multiplierFactor = dataStore.getUint(Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR);
         uint256 gasLimit = baseGasLimit + Precision.applyFactor(gasUsed, multiplierFactor);
         return gasLimit;
     }
@@ -121,8 +121,8 @@ library GasUtils {
     // @param dataStore DataStore
     // @param estimatedGasLimit the estimated gas limit
     function adjustGasLimitForEstimate(DataStore dataStore, uint256 estimatedGasLimit) internal view returns (uint256) {
-        uint256 baseGasLimit = dataStore.getUint(Keys.ESTIMATED_FEE_BASE_GAS_LIMIT);
-        uint256 multiplierFactor = dataStore.getUint(Keys.ESTIMATED_FEE_MULTIPLIER_FACTOR);
+        uint256 baseGasLimit = dataStore.getUint(Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT);
+        uint256 multiplierFactor = dataStore.getUint(Keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR);
         uint256 gasLimit = baseGasLimit + Precision.applyFactor(estimatedGasLimit, multiplierFactor);
         return gasLimit;
     }
@@ -131,11 +131,15 @@ library GasUtils {
     // @param dataStore DataStore
     // @param deposit the deposit to estimate the gas limit for
     function estimateExecuteDepositGasLimit(DataStore dataStore, Deposit.Props memory deposit) internal view returns (uint256) {
-        if (deposit.longTokenAmount() == 0 || deposit.shortTokenAmount() == 0) {
-            return dataStore.getUint(Keys.depositGasLimitKey(true)) + deposit.callbackGasLimit();
+        uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
+        uint256 swapCount = deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length;
+        uint256 gasForSwaps = swapCount * gasPerSwap;
+
+        if (deposit.initialLongTokenAmount() == 0 || deposit.initialShortTokenAmount() == 0) {
+            return dataStore.getUint(Keys.depositGasLimitKey(true)) + deposit.callbackGasLimit() + gasForSwaps;
         }
 
-        return dataStore.getUint(Keys.depositGasLimitKey(false)) + deposit.callbackGasLimit();
+        return dataStore.getUint(Keys.depositGasLimitKey(false)) + deposit.callbackGasLimit() + gasForSwaps;
     }
 
     // @dev the estimated gas limit for withdrawals

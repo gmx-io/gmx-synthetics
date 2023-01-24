@@ -108,7 +108,7 @@ library PositionPricingUtils {
         bool hasPendingShortTokenFundingFee;
     }
 
-    // @dev _GetPositionFeesAfterReferralCache struct used in getPositionFees
+    // @dev GetPositionFeesAfterReferralCache struct used in getPositionFees
     // to avoid stack too deep errors
     // @param feeFactor the fee factor
     // @param positionFeeAmount the fee amount for increasing / decreasing the position
@@ -116,8 +116,8 @@ library PositionPricingUtils {
     // @param feeReceiverFactor the fee receiver factor
     // @param feeReceiverAmount the amount for the fee receiver
     // @param positionFeeAmountForPool the position fee amount for the pool in tokens
-    struct _GetPositionFeesAfterReferralCache {
-        _GetPositionFeesAfterReferralCacheReferral referral;
+    struct GetPositionFeesAfterReferralCache {
+        GetPositionFeesAfterReferralCacheReferral referral;
         uint256 feeFactor;
         uint256 positionFeeAmount;
         uint256 protocolFeeAmount;
@@ -132,7 +132,7 @@ library PositionPricingUtils {
     // @param totalRebateAmount the total referral rebate amount in tokens
     // @param traderDiscountAmount the trader discount amount in tokens
     // @param affiliateRewardAmount the affiliate reward amount in tokens
-    struct _GetPositionFeesAfterReferralCacheReferral {
+    struct GetPositionFeesAfterReferralCacheReferral {
         address affiliate;
         uint256 totalRebateFactor;
         uint256 traderDiscountFactor;
@@ -444,7 +444,7 @@ library PositionPricingUtils {
         address market,
         uint256 sizeDeltaUsd
     ) internal view returns (address, uint256, uint256, uint256, uint256) {
-        _GetPositionFeesAfterReferralCache memory cache;
+        GetPositionFeesAfterReferralCache memory cache;
 
         (cache.referral.affiliate, cache.referral.totalRebateFactor, cache.referral.traderDiscountFactor) = ReferralUtils.getReferralInfo(referralStorage, account);
 

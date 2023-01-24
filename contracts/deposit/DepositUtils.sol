@@ -39,6 +39,10 @@ library DepositUtils {
         address receiver;
         address callbackContract;
         address market;
+        address initialLongToken;
+        address initialShortToken;
+        address[] longTokenSwapPath;
+        address[] shortTokenSwapPath;
         uint256 minMarketTokens;
         bool shouldUnwrapNativeToken;
         uint256 executionFee;
@@ -61,15 +65,15 @@ library DepositUtils {
     ) external returns (bytes32) {
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, params.market);
 
-        uint256 longTokenAmount = depositVault.recordTransferIn(market.longToken);
-        uint256 shortTokenAmount = depositVault.recordTransferIn(market.shortToken);
+        uint256 initialLongTokenAmount = depositVault.recordTransferIn(params.initialLongToken);
+        uint256 initialShortTokenAmount = depositVault.recordTransferIn(params.initialShortToken);
 
         address wnt = TokenUtils.wnt(dataStore);
 
         if (market.longToken == wnt) {
-            longTokenAmount -= params.executionFee;
+            initialLongTokenAmount -= params.executionFee;
         } else if (market.shortToken == wnt) {
-            shortTokenAmount -= params.executionFee;
+            initialShortTokenAmount -= params.executionFee;
         } else {
             uint256 wntAmount = depositVault.recordTransferIn(wnt);
             require(wntAmount >= params.executionFee, "DepositUtils: invalid wntAmount");
@@ -82,7 +86,7 @@ library DepositUtils {
             );
         }
 
-        if (longTokenAmount == 0 && shortTokenAmount == 0) {
+        if (initialLongTokenAmount == 0 && initialShortTokenAmount == 0) {
             revert("DepositUtils: empty deposit");
         }
 
@@ -95,11 +99,15 @@ library DepositUtils {
                 account,
                 params.receiver,
                 params.callbackContract,
-                market.marketToken
+                market.marketToken,
+                params.initialLongToken,
+                params.initialShortToken,
+                params.longTokenSwapPath,
+                params.shortTokenSwapPath
             ),
             Deposit.Numbers(
-                longTokenAmount,
-                shortTokenAmount,
+                initialLongTokenAmount,
+                initialShortTokenAmount,
                 params.minMarketTokens,
                 Chain.currentBlockNumber(),
                 params.executionFee,
@@ -145,22 +153,20 @@ library DepositUtils {
         Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
         require(deposit.account() != address(0), "DepositUtils: empty deposit");
 
-        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, deposit.market());
-
-        if (deposit.longTokenAmount() > 0) {
+        if (deposit.initialLongTokenAmount() > 0) {
             depositVault.transferOut(
-                market.longToken,
+                deposit.initialLongToken(),
                 deposit.account(),
-                deposit.longTokenAmount(),
+                deposit.initialLongTokenAmount(),
                 deposit.shouldUnwrapNativeToken()
             );
         }
 
-        if (deposit.shortTokenAmount() > 0) {
+        if (deposit.initialShortTokenAmount() > 0) {
             depositVault.transferOut(
-                market.shortToken,
+                deposit.initialShortToken(),
                 deposit.account(),
-                deposit.shortTokenAmount(),
+                deposit.initialShortTokenAmount(),
                 deposit.shouldUnwrapNativeToken()
             );
         }

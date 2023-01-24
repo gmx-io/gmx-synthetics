@@ -11,9 +11,9 @@ contract AdlHandler is BaseOrderHandler {
     using Order for Order.Props;
     using Array for uint256[];
 
-    // @dev _ExecuteAdlCache struct used in executeAdl to avoid
+    // @dev ExecuteAdlCache struct used in executeAdl to avoid
     // stack too deep errors
-    struct _ExecuteAdlCache {
+    struct ExecuteAdlCache {
         uint256 startingGas;
         uint256[] minOracleBlockNumbers;
         uint256[] maxOracleBlockNumbers;
@@ -88,7 +88,7 @@ contract AdlHandler is BaseOrderHandler {
         onlyAdlKeeper
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
-        _ExecuteAdlCache memory cache;
+        ExecuteAdlCache memory cache;
 
         cache.startingGas = gasleft();
 

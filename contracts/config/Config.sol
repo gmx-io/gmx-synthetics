@@ -184,11 +184,11 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedKeys[Keys.MAX_ORACLE_PRICE_AGE] = true;
         allowedKeys[Keys.FEE_RECEIVER_FACTOR] = true;
 
-        allowedKeys[Keys.ESTIMATED_FEE_BASE_GAS_LIMIT] = true;
-        allowedKeys[Keys.ESTIMATED_FEE_MULTIPLIER_FACTOR] = true;
+        allowedKeys[Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT] = true;
+        allowedKeys[Keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR] = true;
 
-        allowedKeys[Keys.EXECUTION_FEE_BASE_GAS_LIMIT] = true;
-        allowedKeys[Keys.EXECUTION_FEE_MULTIPLIER_FACTOR] = true;
+        allowedKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT] = true;
+        allowedKeys[Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR] = true;
 
         allowedKeys[Keys.DEPOSIT_GAS_LIMIT] = true;
         allowedKeys[Keys.WITHDRAWAL_GAS_LIMIT] = true;
@@ -238,13 +238,19 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             key == Keys.SWAP_FEE_FACTOR ||
             key == Keys.POSITION_FEE_FACTOR
         ) {
-            require(value < MAX_FEE_FACTOR, "Invalid fee factor");
+            require(value <= MAX_FEE_FACTOR, "Invalid fee factor");
         }
 
         if (
-            key == Keys.FEE_RECEIVER_FACTOR
+            key == Keys.FEE_RECEIVER_FACTOR ||
+            key == Keys.MIN_COLLATERAL_FACTOR ||
+            key == Keys.RESERVE_FACTOR ||
+            key == Keys.MAX_PNL_FACTOR ||
+            key == Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS ||
+            key == Keys.FUNDING_FACTOR ||
+            key == Keys.BORROWING_FACTOR
         ) {
-            require(value < Precision.FLOAT_PRECISION, "Invalid factor");
+            require(value <= Precision.FLOAT_PRECISION, "Invalid factor");
         }
     }
 }
