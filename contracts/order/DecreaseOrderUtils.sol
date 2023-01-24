@@ -80,17 +80,20 @@ library DecreaseOrderUtils {
                 order.shouldUnwrapNativeToken()
             );
         } else {
-            try params.contracts.swapHandler.swap(SwapUtils.SwapParams(
-                params.contracts.dataStore,
-                params.contracts.eventEmitter,
-                params.contracts.oracle,
-                result.outputToken,
-                result.outputAmount,
-                params.swapPathMarkets,
-                order.minOutputAmount(),
-                order.receiver(),
-                order.shouldUnwrapNativeToken()
-            )) returns (address /* tokenOut */, uint256 /* swapOutputAmount */) {
+            try params.contracts.swapHandler.swap(
+                order.market(),
+                SwapUtils.SwapParams(
+                    params.contracts.dataStore,
+                    params.contracts.eventEmitter,
+                    params.contracts.oracle,
+                    result.outputToken,
+                    result.outputAmount,
+                    params.swapPathMarkets,
+                    order.minOutputAmount(),
+                    order.receiver(),
+                    order.shouldUnwrapNativeToken()
+                )
+            ) returns (address /* tokenOut */, uint256 /* swapOutputAmount */) {
             } catch Error(string memory reason) {
                 _handleSwapError(
                     order,

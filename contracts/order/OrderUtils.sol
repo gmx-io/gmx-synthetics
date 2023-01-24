@@ -90,10 +90,6 @@ library OrderUtils {
             revert("Invalid receiver");
         }
 
-        if (BaseOrderUtils.isDecreaseOrder(params.orderType) && params.addresses.swapPath.length > 0) {
-            require(params.addresses.swapPath[0] == params.addresses.market, "OrderUtils: invalid swap path");
-        }
-
         // validate swap path markets
         MarketUtils.getEnabledMarkets(
             dataStore,

@@ -33,7 +33,7 @@ library SwapUtils {
      * @param oracle The contract that provides access to price data from oracles.
      * @param tokenIn The address of the token that is being swapped.
      * @param amountIn The amount of the token that is being swapped.
-     * @param markets An array of market properties, specifying the markets in which the swap should be executed.
+     * @param swapPathMarkets An array of market properties, specifying the markets in which the swap should be executed.
      * @param minOutputAmount The minimum amount of tokens that should be received as part of the swap.
      * @param receiver The address to which the swapped tokens should be sent.
      * @param shouldUnwrapNativeToken A boolean indicating whether the received tokens should be unwrapped from the wrapped native token (WNT) if they are wrapped.
@@ -44,7 +44,7 @@ library SwapUtils {
         Oracle oracle;
         address tokenIn;
         uint256 amountIn;
-        Market.Props[] markets;
+        Market.Props[] swapPathMarkets;
         uint256 minOutputAmount;
         address receiver;
         bool shouldUnwrapNativeToken;
@@ -95,15 +95,19 @@ library SwapUtils {
      * part of the swap and the amount of the received token.
      */
     function swap(SwapParams memory params) external returns (address, uint256) {
+        if (params.swapPathMarkets.length == 0) {
+            revert("Empty swapPathMarkets");
+        }
+
         address tokenOut = params.tokenIn;
         uint256 outputAmount = params.amountIn;
 
-        for (uint256 i = 0; i < params.markets.length; i++) {
-            Market.Props memory market = params.markets[i];
+        for (uint256 i = 0; i < params.swapPathMarkets.length; i++) {
+            Market.Props memory market = params.swapPathMarkets[i];
             uint256 nextIndex = i + 1;
             address receiver;
-            if (nextIndex < params.markets.length) {
-                receiver = params.markets[nextIndex].marketToken;
+            if (nextIndex < params.swapPathMarkets.length) {
+                receiver = params.swapPathMarkets[nextIndex].marketToken;
             } else {
                 receiver = params.receiver;
             }
@@ -113,8 +117,9 @@ library SwapUtils {
                 tokenOut,
                 outputAmount,
                 receiver,
-                i == params.markets.length - 1 ? params.shouldUnwrapNativeToken : false // only convert ETH on the last swap if needed
+                i == params.swapPathMarkets.length - 1 ? params.shouldUnwrapNativeToken : false // only convert ETH on the last swap if needed
             );
+
             (tokenOut, outputAmount) = _swap(params, _params);
         }
 

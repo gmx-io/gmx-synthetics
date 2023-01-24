@@ -131,11 +131,15 @@ library GasUtils {
     // @param dataStore DataStore
     // @param deposit the deposit to estimate the gas limit for
     function estimateExecuteDepositGasLimit(DataStore dataStore, Deposit.Props memory deposit) internal view returns (uint256) {
-        if (deposit.longTokenAmount() == 0 || deposit.shortTokenAmount() == 0) {
-            return dataStore.getUint(Keys.depositGasLimitKey(true)) + deposit.callbackGasLimit();
+        uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
+        uint256 swapCount = deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length;
+        uint256 gasForSwaps = swapCount * gasPerSwap;
+
+        if (deposit.initialLongTokenAmount() == 0 || deposit.initialShortTokenAmount() == 0) {
+            return dataStore.getUint(Keys.depositGasLimitKey(true)) + deposit.callbackGasLimit() + gasForSwaps;
         }
 
-        return dataStore.getUint(Keys.depositGasLimitKey(false)) + deposit.callbackGasLimit();
+        return dataStore.getUint(Keys.depositGasLimitKey(false)) + deposit.callbackGasLimit() + gasForSwaps;
     }
 
     // @dev the estimated gas limit for withdrawals

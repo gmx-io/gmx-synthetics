@@ -153,8 +153,6 @@ library DepositUtils {
         Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
         require(deposit.account() != address(0), "DepositUtils: empty deposit");
 
-        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, deposit.market());
-
         if (deposit.initialLongTokenAmount() > 0) {
             depositVault.transferOut(
                 deposit.initialLongToken(),

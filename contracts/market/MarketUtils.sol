@@ -1694,6 +1694,16 @@ library MarketUtils {
         return market.indexToken == address(0);
     }
 
+    function isMarketCollateralToken(Market.Props memory market, address token) internal pure returns (bool) {
+        return token == market.longToken || token == market.shortToken;
+    }
+
+    function validateMarketCollateralToken(Market.Props memory market, address token) internal pure {
+        if (!isMarketCollateralToken(market, token)) {
+            revert("Invalid token for market");
+        }
+    }
+
     function getEnabledMarket(DataStore dataStore, address marketAddress) internal view returns (Market.Props memory) {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
         validateEnabledMarket(dataStore, market);

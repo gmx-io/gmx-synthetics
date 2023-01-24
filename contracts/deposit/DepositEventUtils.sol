@@ -61,12 +61,20 @@ library DepositEventUtils {
 
     function emitDepositExecuted(
         EventEmitter eventEmitter,
-        bytes32 key
+        bytes32 key,
+        uint256 longTokenAmount,
+        uint256 shortTokenAmount,
+        uint256 receivedMarketTokens
     ) external {
         EventUtils.EventLogData memory eventData;
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
+
+        eventData.uintItems.initItems(3);
+        eventData.uintItems.setItem(0, "longTokenAmount", longTokenAmount);
+        eventData.uintItems.setItem(1, "shortTokenAmount", shortTokenAmount);
+        eventData.uintItems.setItem(2, "receivedMarketTokens", receivedMarketTokens);
 
         eventEmitter.emitEventLog(
             "DepositExecuted",

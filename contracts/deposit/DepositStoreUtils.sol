@@ -59,19 +59,19 @@ library DepositStoreUtils {
             keccak256(abi.encode(key, INITIAL_SHORT_TOKEN))
         ));
 
-        deposit.setLongTokenSwapPath(dataStore.getAddress(
+        deposit.setLongTokenSwapPath(dataStore.getAddressArray(
             keccak256(abi.encode(key, LONG_TOKEN_SWAP_PATH))
         ));
 
-        deposit.setShortTokenSwapPath(dataStore.getAddress(
+        deposit.setShortTokenSwapPath(dataStore.getAddressArray(
             keccak256(abi.encode(key, SHORT_TOKEN_SWAP_PATH))
         ));
 
-        deposit.setLongTokenAmount(dataStore.getUint(
+        deposit.setInitialLongTokenAmount(dataStore.getUint(
             keccak256(abi.encode(key, INITIAL_LONG_TOKEN_AMOUNT))
         ));
 
-        deposit.setShortTokenAmount(dataStore.getUint(
+        deposit.setInitialShortTokenAmount(dataStore.getUint(
             keccak256(abi.encode(key, INITIAL_SHORT_TOKEN_AMOUNT))
         ));
 
@@ -151,12 +151,12 @@ library DepositStoreUtils {
 
         dataStore.setUint(
             keccak256(abi.encode(key, INITIAL_LONG_TOKEN_AMOUNT)),
-            deposit.longTokenAmount()
+            deposit.initialLongTokenAmount()
         );
 
         dataStore.setUint(
             keccak256(abi.encode(key, INITIAL_SHORT_TOKEN_AMOUNT)),
-            deposit.shortTokenAmount()
+            deposit.initialShortTokenAmount()
         );
 
         dataStore.setUint(
