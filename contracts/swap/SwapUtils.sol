@@ -42,6 +42,7 @@ library SwapUtils {
         DataStore dataStore;
         EventEmitter eventEmitter;
         Oracle oracle;
+        Bank bank;
         address tokenIn;
         uint256 amountIn;
         Market.Props[] swapPathMarkets;
@@ -96,7 +97,24 @@ library SwapUtils {
      */
     function swap(SwapParams memory params) external returns (address, uint256) {
         if (params.swapPathMarkets.length == 0) {
-            revert("Empty swapPathMarkets");
+            if (address(params.bank) != params.receiver) {
+                params.bank.transferOut(
+                    params.tokenIn,
+                    params.receiver,
+                    params.amountIn,
+                    params.shouldUnwrapNativeToken
+                );
+            }
+            return (params.tokenIn, params.amountIn);
+        }
+
+        if (address(params.bank) != params.swapPathMarkets[0].marketToken) {
+            params.bank.transferOut(
+                params.tokenIn,
+                params.swapPathMarkets[0].marketToken,
+                params.amountIn,
+                false
+            );
         }
 
         address tokenOut = params.tokenIn;

@@ -150,6 +150,8 @@ library OrderUtils {
 
         CallbackUtils.afterOrderExecution(params.key, params.order);
 
+        // the order.executionFee for liquidation / adl orders is zero
+        // gas costs for liquidations / adl is subsidised by the treasury
         GasUtils.payExecutionFee(
             params.contracts.dataStore,
             params.contracts.orderVault,

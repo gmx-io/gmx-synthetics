@@ -81,11 +81,11 @@ library DecreaseOrderUtils {
             );
         } else {
             try params.contracts.swapHandler.swap(
-                order.market(),
                 SwapUtils.SwapParams(
                     params.contracts.dataStore,
                     params.contracts.eventEmitter,
                     params.contracts.oracle,
+                    Bank(payable(order.market())),
                     result.outputToken,
                     result.outputAmount,
                     params.swapPathMarkets,

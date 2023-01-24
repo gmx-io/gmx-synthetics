@@ -28,23 +28,17 @@ library SwapOrderUtils {
             params.order.updatedAtBlock()
         );
 
-        Order.Props memory order = params.order;
-        params.contracts.orderVault.transferOut(
-            order.initialCollateralToken(),
-            params.order.swapPath()[0],
-            order.initialCollateralDeltaAmount()
-        );
-
         SwapUtils.swap(SwapUtils.SwapParams(
             params.contracts.dataStore,
             params.contracts.eventEmitter,
             params.contracts.oracle,
+            params.contracts.orderVault,
             params.order.initialCollateralToken(),
             params.order.initialCollateralDeltaAmount(),
             params.swapPathMarkets,
             params.order.minOutputAmount(),
             params.order.receiver(),
-            order.shouldUnwrapNativeToken()
+            params.order.shouldUnwrapNativeToken()
         ));
 
         OrderStoreUtils.remove(params.contracts.dataStore, params.key, params.order.account());

@@ -374,11 +374,11 @@ library DecreasePositionCollateralUtils {
             swapPathMarkets[0] = params.market;
 
             try params.contracts.swapHandler.swap(
-                params.market.marketToken,
                 SwapUtils.SwapParams(
                     params.contracts.dataStore,
                     params.contracts.eventEmitter,
                     params.contracts.oracle,
+                    Bank(payable(params.market.marketToken)),
                     params.position.collateralToken(), // tokenIn
                     values.output.outputAmount, // amountIn
                     swapPathMarkets, // markets
@@ -416,11 +416,11 @@ library DecreasePositionCollateralUtils {
             swapPathMarkets[0] = params.market;
 
             try params.contracts.swapHandler.swap(
-                params.market.marketToken,
                 SwapUtils.SwapParams(
                     params.contracts.dataStore,
                     params.contracts.eventEmitter,
                     params.contracts.oracle,
+                    Bank(payable(params.market.marketToken)),
                     pnlToken, // tokenIn
                     profitAmount, // amountIn
                     swapPathMarkets, // markets

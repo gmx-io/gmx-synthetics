@@ -409,21 +409,6 @@ library ExecuteDepositUtils {
         address market,
         address expectedOutputToken
     ) internal returns (uint256) {
-        if (inputAmount == 0) {
-            return 0;
-        }
-
-        if (swapPath.length == 0) {
-            if (initialToken != expectedOutputToken) {
-                revert("Invalid token for market");
-            }
-
-            params.depositVault.transferOut(initialToken, market, inputAmount);
-            return inputAmount;
-        }
-
-        params.depositVault.transferOut(initialToken, swapPath[0], inputAmount);
-
         Market.Props[] memory swapPathMarkets = MarketUtils.getEnabledMarkets(
             params.dataStore,
             swapPath
@@ -434,6 +419,7 @@ library ExecuteDepositUtils {
                 params.dataStore, // dataStore
                 params.eventEmitter, // eventEmitter
                 params.oracle, // oracle
+                params.depositVault, // bank
                 initialToken, // tokenIn
                 inputAmount, // amountIn
                 swapPathMarkets, // swapPathMarkets

@@ -20,7 +20,6 @@ contract SwapHandler is ReentrancyGuard, RoleModule {
      * @return (outputToken, outputAmount)
      */
     function swap(
-        address initialMarket,
         SwapUtils.SwapParams memory params
     )
         external
@@ -28,19 +27,6 @@ contract SwapHandler is ReentrancyGuard, RoleModule {
         onlyController
         returns (address, uint256)
     {
-        if (params.swapPathMarkets.length == 0) {
-            revert("Empty swapPathMarkets");
-        }
-
-        if (initialMarket != params.swapPathMarkets[0].marketToken) {
-            MarketToken(payable(initialMarket)).transferOut(
-                params.tokenIn,
-                params.swapPathMarkets[0].marketToken,
-                params.amountIn,
-                params.shouldUnwrapNativeToken
-            );
-        }
-
         return SwapUtils.swap(params);
     }
 }
