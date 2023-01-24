@@ -80,7 +80,7 @@ library ExecuteDepositUtils {
         int256 priceImpactUsd;
     }
 
-    struct _ExecuteDepositCache {
+    struct ExecuteDepositCache {
         uint256 longTokenAmount;
         uint256 shortTokenAmount;
         uint256 longTokenUsd;
@@ -95,7 +95,7 @@ library ExecuteDepositUtils {
     // @param params ExecuteDepositParams
     function executeDeposit(ExecuteDepositParams memory params) external {
         Deposit.Props memory deposit = DepositStoreUtils.get(params.dataStore, params.key);
-        _ExecuteDepositCache memory cache;
+        ExecuteDepositCache memory cache;
 
         require(deposit.account() != address(0), "DepositUtils: empty deposit");
 

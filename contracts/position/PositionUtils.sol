@@ -62,7 +62,7 @@ library PositionUtils {
         int256 openInterestDelta;
     }
 
-    struct _GetPositionPnlUsdCache {
+    struct GetPositionPnlUsdCache {
         int256 positionValue;
         int256 totalPositionPnl;
         address pnlToken;
@@ -75,7 +75,7 @@ library PositionUtils {
         int256 positionPnlUsd;
     }
 
-    // @dev _IsPositionLiquidatableCache struct used in isPositionLiquidatable
+    // @dev IsPositionLiquidatableCache struct used in isPositionLiquidatable
     // to avoid stack too deep errors
     // @param positionPnlUsd the position's pnl in USD
     // @param minCollateralFactor the min collateral factor
@@ -83,7 +83,7 @@ library PositionUtils {
     // @param priceImpactUsd the price impact of closing the position in USD
     // @param minCollateralUsd the minimum allowed collateral in USD
     // @param remainingCollateralUsd the remaining position collateral in USD
-    struct _IsPositionLiquidatableCache {
+    struct IsPositionLiquidatableCache {
         int256 positionPnlUsd;
         uint256 minCollateralFactor;
         uint256 collateralUsd;
@@ -119,7 +119,7 @@ library PositionUtils {
         uint256 indexTokenPrice,
         uint256 sizeDeltaUsd
     ) public view returns (int256, uint256) {
-        _GetPositionPnlUsdCache memory cache;
+        GetPositionPnlUsdCache memory cache;
 
         // position.sizeInUsd is the cost of the tokens, positionValue is the current worth of the tokens
         cache.positionValue = (position.sizeInTokens() * indexTokenPrice).toInt256();
@@ -243,7 +243,7 @@ library PositionUtils {
         MarketUtils.MarketPrices memory prices,
         bool shouldValidateMinCollateralUsd
     ) public view returns (bool) {
-        _IsPositionLiquidatableCache memory cache;
+        IsPositionLiquidatableCache memory cache;
 
         (cache.positionPnlUsd, ) = getPositionPnlUsd(
             dataStore,

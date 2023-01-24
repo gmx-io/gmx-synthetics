@@ -74,7 +74,7 @@ library SwapUtils {
      * @param amountOut The amount of the token that is being received as part of the swap.
      * @param poolAmountOut The total amount of the token that is being received by all users in the swap pool.
      */
-    struct _SwapCache {
+    struct SwapCache {
         address tokenOut;
         Price.Props tokenInPrice;
         Price.Props tokenOutPrice;
@@ -156,7 +156,7 @@ library SwapUtils {
      * @return The token and amount that was swapped.
      */
     function _swap(SwapParams memory params, _SwapParams memory _params) internal returns (address, uint256) {
-        _SwapCache memory cache;
+        SwapCache memory cache;
 
         if (_params.tokenIn != _params.market.longToken && _params.tokenIn != _params.market.shortToken) {
             revert InvalidTokenIn(_params.tokenIn, _params.market.marketToken);

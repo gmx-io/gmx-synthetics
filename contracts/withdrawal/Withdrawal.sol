@@ -28,6 +28,8 @@ library Withdrawal {
         address receiver;
         address callbackContract;
         address market;
+        address[] longTokenSwapPath;
+        address[] shortTokenSwapPath;
     }
 
      // @param marketTokenAmount The amount of market tokens that will be withdrawn.
@@ -80,6 +82,22 @@ library Withdrawal {
 
     function setMarket(Props memory props, address value) internal pure {
         props.addresses.market = value;
+    }
+
+    function longTokenSwapPath(Props memory props) internal pure returns (address[] memory) {
+        return props.addresses.longTokenSwapPath;
+    }
+
+    function setLongTokenSwapPath(Props memory props, address[] memory value) internal pure {
+        props.addresses.longTokenSwapPath = value;
+    }
+
+    function shortTokenSwapPath(Props memory props) internal pure returns (address[] memory) {
+        return props.addresses.shortTokenSwapPath;
+    }
+
+    function setShortTokenSwapPath(Props memory props, address[] memory value) internal pure {
+        props.addresses.shortTokenSwapPath = value;
     }
 
     function marketTokenAmount(Props memory props) internal pure returns (uint256) {

@@ -26,7 +26,7 @@ library IncreasePositionUtils {
     using Order for Order.Props;
     using Price for Price.Props;
 
-    // @dev _IncreasePositionCache struct used in increasePosition to
+    // @dev IncreasePositionCache struct used in increasePosition to
     // avoid stack too deep errors
     // @param collateralDeltaAmount the change in collateral amount
     // @param executionPrice the execution price
@@ -34,7 +34,7 @@ library IncreasePositionUtils {
     // @param sizeDeltaInTokens the change in position size in tokens
     // @param nextPositionSizeInUsd the new position size in USD
     // @param nextPositionBorrowingFactor the new position borrowing factor
-    struct _IncreasePositionCache {
+    struct IncreasePositionCache {
         int256 collateralDeltaAmount;
         uint256 executionPrice;
         int256 priceImpactAmount;
@@ -65,7 +65,7 @@ library IncreasePositionUtils {
         PositionUtils.updateFundingAndBorrowingState(params, prices);
 
         // create a new cache for holding intermediate results
-        _IncreasePositionCache memory cache;
+        IncreasePositionCache memory cache;
 
         // process the collateral for the given position and order
         PositionPricingUtils.PositionFees memory fees;

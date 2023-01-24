@@ -38,7 +38,7 @@ contract Oracle is RoleModule {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
-    // @dev _SetPricesCache struct used in setPrices to avoid stack too deep errors
+    // @dev SetPricesCache struct used in setPrices to avoid stack too deep errors
     // @param prevMinOracleBlockNumber the previous oracle block number of the loop
     // @param priceIndex the current price index to retrieve from compactedMinPrices and compactedMaxPrices
     // to construct the minPrices and maxPrices array
@@ -48,7 +48,7 @@ contract Oracle is RoleModule {
     // @param maxPriceIndex the index of the max price in maxPrices for the current signer
     // @param minPrices the min prices
     // @param maxPrices the max prices
-    struct _SetPricesCache {
+    struct SetPricesCache {
         OracleUtils.ReportInfo info;
         uint256 minBlockConfirmations;
         uint256 maxPriceAge;
@@ -402,7 +402,7 @@ contract Oracle is RoleModule {
     // instance, an EventEmitter contract instance, an array of signers, and an
     // OracleUtils.SetPricesParams struct containing information about the tokens
     // and their prices.
-    // The function first initializes a _SetPricesCache struct to store some temporary
+    // The function first initializes a SetPricesCache struct to store some temporary
     // values that will be used later in the function. It then loops through the array
     // of tokens and sets the corresponding values in the cache struct. For each token,
     // the function also loops through the array of signers and validates the signatures
@@ -420,7 +420,7 @@ contract Oracle is RoleModule {
         address[] memory signers,
         OracleUtils.SetPricesParams memory params
     ) internal {
-        _SetPricesCache memory cache;
+        SetPricesCache memory cache;
         cache.minBlockConfirmations = dataStore.getUint(Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS);
         cache.maxPriceAge = dataStore.getUint(Keys.MAX_ORACLE_PRICE_AGE);
 

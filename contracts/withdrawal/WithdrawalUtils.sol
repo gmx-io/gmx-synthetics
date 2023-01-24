@@ -47,6 +47,8 @@ library WithdrawalUtils {
         address receiver;
         address callbackContract;
         address market;
+        address[] longTokenSwapPath;
+        address[] shortTokenSwapPath;
         uint256 marketTokenAmount;
         uint256 minLongTokenAmount;
         uint256 minShortTokenAmount;
@@ -76,6 +78,15 @@ library WithdrawalUtils {
         uint256[] maxOracleBlockNumbers;
         address keeper;
         uint256 startingGas;
+    }
+
+    struct ExecuteWithdrawalCache {
+        uint256 longTokenOutputAmount;
+        uint256 shortTokenOutputAmount;
+        SwapPricingUtils.SwapFees longTokenFees;
+        SwapPricingUtils.SwapFees shortTokenFees;
+        uint256 longTokenPoolAmountDelta;
+        uint256 shortTokenPoolAmountDelta;
     }
 
     error MinLongTokens(uint256 received, uint256 expected);
@@ -118,14 +129,16 @@ library WithdrawalUtils {
             params.executionFee
         );
 
-        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, params.market);
+        MarketUtils.validateEnabledMarket(dataStore, params.market);
 
         Withdrawal.Props memory withdrawal = Withdrawal.Props(
             Withdrawal.Addresses(
                 account,
                 params.receiver,
                 params.callbackContract,
-                market.marketToken
+                params.market,
+                params.longTokenSwapPath,
+                params.shortTokenSwapPath
             ),
             Withdrawal.Numbers(
                 params.marketTokenAmount,
@@ -245,12 +258,14 @@ library WithdrawalUtils {
             market
         );
 
-        (uint256 longTokenOutputAmount, uint256 shortTokenOutputAmount) = _getOutputAmounts(params, market, prices, withdrawal.marketTokenAmount());
+        ExecuteWithdrawalCache memory cache;
 
-        SwapPricingUtils.SwapFees memory longTokenFees = SwapPricingUtils.getSwapFees(
+        (cache.longTokenOutputAmount, cache.shortTokenOutputAmount) = _getOutputAmounts(params, market, prices, withdrawal.marketTokenAmount());
+
+        cache.longTokenFees = SwapPricingUtils.getSwapFees(
             params.dataStore,
             market.marketToken,
-            longTokenOutputAmount
+            cache.longTokenOutputAmount
         );
 
         FeeUtils.incrementClaimableFeeAmount(
@@ -258,14 +273,14 @@ library WithdrawalUtils {
             params.eventEmitter,
             market.marketToken,
             market.longToken,
-            longTokenFees.feeReceiverAmount,
+            cache.longTokenFees.feeReceiverAmount,
             Keys.WITHDRAWAL_FEE
         );
 
-        SwapPricingUtils.SwapFees memory shortTokenFees = SwapPricingUtils.getSwapFees(
+        cache.shortTokenFees = SwapPricingUtils.getSwapFees(
             params.dataStore,
             market.marketToken,
-            shortTokenOutputAmount
+            cache.shortTokenOutputAmount
         );
 
         FeeUtils.incrementClaimableFeeAmount(
@@ -273,31 +288,23 @@ library WithdrawalUtils {
             params.eventEmitter,
             market.marketToken,
             market.shortToken,
-            shortTokenFees.feeReceiverAmount,
+            cache.shortTokenFees.feeReceiverAmount,
             Keys.WITHDRAWAL_FEE
         );
 
         // the pool will be reduced by the outputAmount minus the fees for the pool
-        uint256 longTokenPoolAmountDelta = longTokenOutputAmount - longTokenFees.feesForPool;
-        longTokenOutputAmount = longTokenFees.amountAfterFees;
+        cache.longTokenPoolAmountDelta = cache.longTokenOutputAmount - cache.longTokenFees.feesForPool;
+        cache.longTokenOutputAmount = cache.longTokenFees.amountAfterFees;
 
-        uint256 shortTokenPoolAmountDelta = shortTokenOutputAmount - shortTokenFees.feesForPool;
-        shortTokenOutputAmount = shortTokenFees.amountAfterFees;
-
-        if (longTokenOutputAmount < withdrawal.minLongTokenAmount()) {
-            revert MinLongTokens(longTokenOutputAmount, withdrawal.minLongTokenAmount());
-        }
-
-        if (shortTokenOutputAmount < withdrawal.minShortTokenAmount()) {
-            revert MinShortTokens(shortTokenOutputAmount, withdrawal.minShortTokenAmount());
-        }
+        cache.shortTokenPoolAmountDelta = cache.shortTokenOutputAmount - cache.shortTokenFees.feesForPool;
+        cache.shortTokenOutputAmount = cache.shortTokenFees.amountAfterFees;
 
         MarketUtils.applyDeltaToPoolAmount(
             params.dataStore,
             params.eventEmitter,
             market.marketToken,
             market.longToken,
-            -longTokenPoolAmountDelta.toInt256()
+            -cache.longTokenPoolAmountDelta.toInt256()
         );
 
         MarketUtils.applyDeltaToPoolAmount(
@@ -305,7 +312,7 @@ library WithdrawalUtils {
             params.eventEmitter,
             market.marketToken,
             market.shortToken,
-            -shortTokenPoolAmountDelta.toInt256()
+            -cache.shortTokenPoolAmountDelta.toInt256()
         );
 
         MarketUtils.validateReserve(
@@ -333,17 +340,25 @@ library WithdrawalUtils {
 
         MarketToken(payable(market.marketToken)).burn(withdrawal.account(), withdrawal.marketTokenAmount());
 
-        MarketToken(payable(market.marketToken)).transferOut(
+        swap(
+            params,
+            market,
             market.longToken,
+            cache.longTokenOutputAmount,
+            withdrawal.longTokenSwapPath(),
+            withdrawal.minLongTokenAmount(),
             withdrawal.receiver(),
-            longTokenOutputAmount,
             withdrawal.shouldUnwrapNativeToken()
         );
 
-        MarketToken(payable(market.marketToken)).transferOut(
+        swap(
+            params,
+            market,
             market.shortToken,
+            cache.shortTokenOutputAmount,
+            withdrawal.shortTokenSwapPath(),
+            withdrawal.minShortTokenAmount(),
             withdrawal.receiver(),
-            shortTokenOutputAmount,
             withdrawal.shouldUnwrapNativeToken()
         );
 
@@ -352,7 +367,7 @@ library WithdrawalUtils {
             market.marketToken,
             market.longToken,
             "withdrawal",
-            longTokenFees
+            cache.longTokenFees
         );
 
         SwapPricingUtils.emitSwapFeesCollected(
@@ -360,7 +375,35 @@ library WithdrawalUtils {
             market.marketToken,
             market.shortToken,
             "withdrawal",
-            shortTokenFees
+            cache.shortTokenFees
+        );
+    }
+
+    function swap(
+        ExecuteWithdrawalParams memory params,
+        Market.Props memory market,
+        address tokenIn,
+        uint256 amountIn,
+        address[] memory swapPath,
+        uint256 minOutputAmount,
+        address receiver,
+        bool shouldUnwrapNativeToken
+    ) internal {
+        Market.Props[] memory swapPathMarkets = MarketUtils.getEnabledMarkets(params.dataStore, swapPath);
+
+        SwapUtils.swap(
+            SwapUtils.SwapParams(
+                params.dataStore, // dataStore
+                params.eventEmitter, // eventEmitter
+                params.oracle, // oracle
+                Bank(payable(market.marketToken)), // bank
+                tokenIn, // tokenIn
+                amountIn, // amountIn
+                swapPathMarkets, // swapPathMarkets
+                minOutputAmount, // minOutputAmount
+                receiver, // receiver
+                shouldUnwrapNativeToken // shouldUnwrapNativeToken
+            )
         );
     }
 

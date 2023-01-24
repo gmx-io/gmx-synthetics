@@ -30,16 +30,16 @@ export async function createDeposit(fixture, overrides: any = {}) {
   const receiver = overrides.receiver || account;
   const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
   const market = overrides.market || ethUsdMarket;
+  const initialLongToken = overrides.initialLongToken || market.longToken;
+  const initialShortToken = overrides.initialShortToken || market.shortToken;
+  const longTokenSwapPath = overrides.longTokenSwapPath || [];
+  const shortTokenSwapPath = overrides.shortTokenSwapPath || [];
   const minMarketTokens = overrides.minMarketTokens || bigNumberify(0);
   const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
   const executionFee = overrides.executionFee || "1000000000000000";
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
   const longTokenAmount = overrides.longTokenAmount || bigNumberify(0);
   const shortTokenAmount = overrides.shortTokenAmount || bigNumberify(0);
-  const initialLongToken = overrides.initialLongToken || market.longToken;
-  const initialShortToken = overrides.initialShortToken || market.shortToken;
-  const longTokenSwapPath = overrides.longTokenSwapPath || [];
-  const shortTokenSwapPath = overrides.shortTokenSwapPath || [];
 
   await wnt.mint(depositVault.address, executionFee);
 

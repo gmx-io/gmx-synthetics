@@ -54,7 +54,7 @@ library MarketUtils {
         int256 fundingAmountPerSize_ShortCollateral_ShortPosition;
     }
 
-    struct _GetPoolValueCache {
+    struct GetPoolValueCache {
         uint256 value;
 
         uint256 longTokenAmount;
@@ -69,7 +69,7 @@ library MarketUtils {
     }
 
 
-    // @dev _GetNextFundingAmountPerSizeCache struct used in getNextFundingAmountPerSize
+    // @dev GetNextFundingAmountPerSizeCache struct used in getNextFundingAmountPerSize
     // to avoid stack too deep errors
     //
     // @param durationInSeconds duration in seconds since the last funding update
@@ -81,9 +81,9 @@ library MarketUtils {
     //
     // @param fundingUsdForLongCollateral the funding amount in USD for positions using the long token as collateral
     // @param fundingUsdForShortCollateral the funding amount in USD for positions using the short token as collateral
-    struct _GetNextFundingAmountPerSizeCache {
-        _GetNextFundingAmountPerSizeOpenInterestCache oi;
-        _GetNextFundingAmountPerSizeFundingPerSizeCache fps;
+    struct GetNextFundingAmountPerSizeCache {
+        GetNextFundingAmountPerSizeOpenInterestCache oi;
+        GetNextFundingAmountPerSizeFundingPerSizeCache fps;
 
         uint256 durationInSeconds;
         uint256 fundingFactor;
@@ -103,7 +103,7 @@ library MarketUtils {
     //
     // @param longOpenInterest total long open interest for the market
     // @param shortOpenInterest total short open interest for the market
-    struct _GetNextFundingAmountPerSizeOpenInterestCache {
+    struct GetNextFundingAmountPerSizeOpenInterestCache {
         uint256 longOpenInterestWithLongCollateral;
         uint256 longOpenInterestWithShortCollateral;
         uint256 shortOpenInterestWithLongCollateral;
@@ -122,7 +122,7 @@ library MarketUtils {
     // @param fundingAmountPerSizePortion_LongCollateral_ShortPosition the next funding amount per size for longs using the short token as collateral
     // @param fundingAmountPerSizePortion_ShortCollateral_LongPosition the next funding amount per size for shorts using the long token as collateral
     // @param fundingAmountPerSizePortion_ShortCollateral_ShortPosition the next funding amount per size for shorts using the short token as collateral
-    struct _GetNextFundingAmountPerSizeFundingPerSizeCache {
+    struct GetNextFundingAmountPerSizeFundingPerSizeCache {
         int256 fundingAmountPerSize_LongCollateral_LongPosition;
         int256 fundingAmountPerSize_LongCollateral_ShortPosition;
         int256 fundingAmountPerSize_ShortCollateral_LongPosition;
@@ -277,7 +277,7 @@ library MarketUtils {
         Price.Props memory indexTokenPrice,
         bool maximize
     ) internal view returns (int256) {
-        _GetPoolValueCache memory cache;
+        GetPoolValueCache memory cache;
         cache.longTokenAmount = getPoolAmount(dataStore, market.marketToken, market.longToken);
         cache.shortTokenAmount = getPoolAmount(dataStore, market.marketToken, market.shortToken);
 
@@ -830,7 +830,7 @@ library MarketUtils {
         address shortToken
     ) internal view returns (GetNextFundingAmountPerSizeResult memory) {
         GetNextFundingAmountPerSizeResult memory result;
-        _GetNextFundingAmountPerSizeCache memory cache;
+        GetNextFundingAmountPerSizeCache memory cache;
 
         cache.oi.longOpenInterestWithLongCollateral = getOpenInterest(dataStore, market, longToken, true);
         cache.oi.longOpenInterestWithShortCollateral = getOpenInterest(dataStore, market, shortToken, true);
@@ -1670,6 +1670,19 @@ library MarketUtils {
         }
 
         return marketTokenAmount * poolValue / supply;
+    }
+
+    function validateEnabledMarket(DataStore dataStore, address marketAddress) internal view {
+        Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
+
+        if (market.marketToken == address(0)) {
+            revert EmptyMarket();
+        }
+
+        bool isMarketDisabled = dataStore.getBool(Keys.isMarketDisabledKey(market.marketToken));
+        if (isMarketDisabled) {
+            revert DisabledMarket(market.marketToken);
+        }
     }
 
     // @dev validate that a market exists
