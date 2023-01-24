@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.0;
 
+import "../bank/StrictBank.sol";
 import "../chain/Chain.sol";
 import "../data/DataStore.sol";
 import "../data/Keys.sol";

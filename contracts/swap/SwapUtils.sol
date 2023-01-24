@@ -8,6 +8,7 @@ import "../event/EventEmitter.sol";
 import "../oracle/Oracle.sol";
 import "../pricing/SwapPricingUtils.sol";
 import "../token/TokenUtils.sol";
+import "../fee/FeeUtils.sol";
 
 /**
  * @title SwapUtils
@@ -18,14 +19,21 @@ library SwapUtils {
     using SafeCast for int256;
     using Price for Price.Props;
 
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
+
     /**
      * @param dataStore The contract that provides access to data stored on-chain.
      * @param eventEmitter The contract that emits events.
      * @param oracle The contract that provides access to price data from oracles.
-     * @param feeReceiver The contract that receives fees for the swap operation.
      * @param tokenIn The address of the token that is being swapped.
      * @param amountIn The amount of the token that is being swapped.
-     * @param markets An array of market properties, specifying the markets in which the swap should be executed.
+     * @param swapPathMarkets An array of market properties, specifying the markets in which the swap should be executed.
      * @param minOutputAmount The minimum amount of tokens that should be received as part of the swap.
      * @param receiver The address to which the swapped tokens should be sent.
      * @param shouldUnwrapNativeToken A boolean indicating whether the received tokens should be unwrapped from the wrapped native token (WNT) if they are wrapped.
@@ -34,10 +42,10 @@ library SwapUtils {
         DataStore dataStore;
         EventEmitter eventEmitter;
         Oracle oracle;
-        FeeReceiver feeReceiver;
+        Bank bank;
         address tokenIn;
         uint256 amountIn;
-        Market.Props[] markets;
+        Market.Props[] swapPathMarkets;
         uint256 minOutputAmount;
         address receiver;
         bool shouldUnwrapNativeToken;
@@ -66,7 +74,7 @@ library SwapUtils {
      * @param amountOut The amount of the token that is being received as part of the swap.
      * @param poolAmountOut The total amount of the token that is being received by all users in the swap pool.
      */
-    struct _SwapCache {
+    struct SwapCache {
         address tokenOut;
         Price.Props tokenInPrice;
         Price.Props tokenOutPrice;
@@ -75,7 +83,7 @@ library SwapUtils {
         uint256 poolAmountOut;
     }
 
-    event SwapReverted(string reason);
+    event SwapReverted(string reason, bytes reasonBytes);
 
     error InvalidTokenIn(address tokenIn, address market);
     error InsufficientSwapOutputAmount(uint256 outputAmount, uint256 minOutputAmount);
@@ -87,16 +95,37 @@ library SwapUtils {
      * @return A tuple containing the address of the token that was received as
      * part of the swap and the amount of the received token.
      */
-    function swap(SwapParams memory params) internal returns (address, uint256) {
+    function swap(SwapParams memory params) external returns (address, uint256) {
+        if (params.swapPathMarkets.length == 0) {
+            if (address(params.bank) != params.receiver) {
+                params.bank.transferOut(
+                    params.tokenIn,
+                    params.receiver,
+                    params.amountIn,
+                    params.shouldUnwrapNativeToken
+                );
+            }
+            return (params.tokenIn, params.amountIn);
+        }
+
+        if (address(params.bank) != params.swapPathMarkets[0].marketToken) {
+            params.bank.transferOut(
+                params.tokenIn,
+                params.swapPathMarkets[0].marketToken,
+                params.amountIn,
+                false
+            );
+        }
+
         address tokenOut = params.tokenIn;
         uint256 outputAmount = params.amountIn;
 
-        for (uint256 i = 0; i < params.markets.length; i++) {
-            Market.Props memory market = params.markets[i];
+        for (uint256 i = 0; i < params.swapPathMarkets.length; i++) {
+            Market.Props memory market = params.swapPathMarkets[i];
             uint256 nextIndex = i + 1;
             address receiver;
-            if (nextIndex < params.markets.length) {
-                receiver = params.markets[nextIndex].marketToken;
+            if (nextIndex < params.swapPathMarkets.length) {
+                receiver = params.swapPathMarkets[nextIndex].marketToken;
             } else {
                 receiver = params.receiver;
             }
@@ -106,13 +135,14 @@ library SwapUtils {
                 tokenOut,
                 outputAmount,
                 receiver,
-                i == params.markets.length - 1 ? params.shouldUnwrapNativeToken : false // only convert ETH on the last swap if needed
+                i == params.swapPathMarkets.length - 1 ? params.shouldUnwrapNativeToken : false // only convert ETH on the last swap if needed
             );
+
             (tokenOut, outputAmount) = _swap(params, _params);
         }
 
         if (outputAmount < params.minOutputAmount) {
-            revert InsufficientSwapOutputAmount(outputAmount, params.minOutputAmount);
+            revert("Insufficient swap output");
         }
 
         return (tokenOut, outputAmount);
@@ -126,7 +156,7 @@ library SwapUtils {
      * @return The token and amount that was swapped.
      */
     function _swap(SwapParams memory params, _SwapParams memory _params) internal returns (address, uint256) {
-        _SwapCache memory cache;
+        SwapCache memory cache;
 
         if (_params.tokenIn != _params.market.longToken && _params.tokenIn != _params.market.shortToken) {
             revert InvalidTokenIn(_params.tokenIn, _params.market.marketToken);
@@ -139,16 +169,16 @@ library SwapUtils {
         SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
             params.dataStore,
             _params.market.marketToken,
-            _params.amountIn,
-            Keys.FEE_RECEIVER_SWAP_FACTOR
+            _params.amountIn
         );
 
-        PricingUtils.transferFees(
-            params.feeReceiver,
+        FeeUtils.incrementClaimableFeeAmount(
+            params.dataStore,
+            params.eventEmitter,
             _params.market.marketToken,
             _params.tokenIn,
             fees.feeReceiverAmount,
-            FeeUtils.SWAP_FEE
+            Keys.SWAP_FEE
         );
 
         int256 priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(
@@ -241,6 +271,12 @@ library SwapUtils {
             _params.tokenIn == _params.market.shortToken ? cache.tokenInPrice : cache.tokenOutPrice
         );
 
+        MarketUtils.validatePoolAmount(
+            params.dataStore,
+            _params.market.marketToken,
+            _params.tokenIn
+        );
+
         MarketUtils.validateReserve(
             params.dataStore,
             _params.market,
@@ -255,7 +291,27 @@ library SwapUtils {
             true
         );
 
-        params.eventEmitter.emitSwapFeesCollected(keccak256(abi.encode("swap")), fees);
+        SwapPricingUtils.emitSwapInfo(
+            params.eventEmitter,
+            _params.market.marketToken,
+            _params.receiver,
+            _params.tokenIn,
+            cache.tokenOut,
+            cache.tokenInPrice.min,
+            cache.tokenOutPrice.max,
+            _params.amountIn,
+            cache.amountIn,
+            cache.amountOut,
+            priceImpactUsd
+        );
+
+        SwapPricingUtils.emitSwapFeesCollected(
+            params.eventEmitter,
+            _params.market.marketToken,
+            _params.tokenIn,
+            "swap",
+            fees
+        );
 
         return (cache.tokenOut, cache.amountOut);
     }

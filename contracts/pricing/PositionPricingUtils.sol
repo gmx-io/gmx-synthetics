@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/utils/math/SignedMath.sol";
+
 import "../market/MarketUtils.sol";
 
 import "../utils/Precision.sol";
@@ -15,9 +17,18 @@ import "../referral/ReferralUtils.sol";
 // @title PositionPricingUtils
 // @dev Library for position pricing functions
 library PositionPricingUtils {
+    using SignedMath for int256;
     using SafeCast for uint256;
     using SafeCast for int256;
     using Position for Position.Props;
+
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
 
     // @dev GetPriceImpactUsdParams struct used in getPriceImpactUsd to avoid stack
     // too deep errors
@@ -30,6 +41,7 @@ library PositionPricingUtils {
     struct GetPriceImpactUsdParams {
         DataStore dataStore;
         address market;
+        address indexToken;
         address longToken;
         address shortToken;
         int256 usdDelta;
@@ -96,7 +108,7 @@ library PositionPricingUtils {
         bool hasPendingShortTokenFundingFee;
     }
 
-    // @dev _GetPositionFeesAfterReferralCache struct used in getPositionFees
+    // @dev GetPositionFeesAfterReferralCache struct used in getPositionFees
     // to avoid stack too deep errors
     // @param feeFactor the fee factor
     // @param positionFeeAmount the fee amount for increasing / decreasing the position
@@ -104,8 +116,8 @@ library PositionPricingUtils {
     // @param feeReceiverFactor the fee receiver factor
     // @param feeReceiverAmount the amount for the fee receiver
     // @param positionFeeAmountForPool the position fee amount for the pool in tokens
-    struct _GetPositionFeesAfterReferralCache {
-        _GetPositionFeesAfterReferralCacheReferral referral;
+    struct GetPositionFeesAfterReferralCache {
+        GetPositionFeesAfterReferralCacheReferral referral;
         uint256 feeFactor;
         uint256 positionFeeAmount;
         uint256 protocolFeeAmount;
@@ -120,7 +132,7 @@ library PositionPricingUtils {
     // @param totalRebateAmount the total referral rebate amount in tokens
     // @param traderDiscountAmount the trader discount amount in tokens
     // @param affiliateRewardAmount the affiliate reward amount in tokens
-    struct _GetPositionFeesAfterReferralCacheReferral {
+    struct GetPositionFeesAfterReferralCacheReferral {
         address affiliate;
         uint256 totalRebateFactor;
         uint256 traderDiscountFactor;
@@ -175,7 +187,28 @@ library PositionPricingUtils {
 
         int256 priceImpactUsd = _getPriceImpactUsd(params.dataStore, params.market, openInterestParams);
 
-        return priceImpactUsd;
+        if (priceImpactUsd >= 0) {
+            return priceImpactUsd;
+        }
+
+        (bool hasVirtualInventory, int256 thresholdPositionImpactFactorForVirtualInventory) = MarketUtils.getThresholdPositionImpactFactorForVirtualInventory(
+            params.dataStore,
+            params.indexToken
+        );
+
+        if (!hasVirtualInventory) {
+            return priceImpactUsd;
+        }
+
+        OpenInterestParams memory openInterestParamsForVirtualInventory = getNextOpenInterestForVirtualInventory(params);
+        int256 priceImpactUsdForVirtualInventory = _getPriceImpactUsd(params.dataStore, params.market, openInterestParamsForVirtualInventory);
+        int256 priceImpactFactorForVirtualInventory = Precision.toFactor(priceImpactUsdForVirtualInventory, params.usdDelta.abs());
+
+        if (priceImpactFactorForVirtualInventory > thresholdPositionImpactFactorForVirtualInventory) {
+            return priceImpactUsd;
+        }
+
+        return priceImpactUsdForVirtualInventory < priceImpactUsd ? priceImpactUsdForVirtualInventory : priceImpactUsd;
     }
 
     // @dev get the price impact in USD for a position increase / decrease
@@ -200,7 +233,6 @@ library PositionPricingUtils {
             return PricingUtils.getPriceImpactUsdForSameSideRebalance(
                 initialDiffUsd,
                 nextDiffUsd,
-                hasPositiveImpact,
                 impactFactor,
                 impactExponentFactor
             );
@@ -239,6 +271,37 @@ library PositionPricingUtils {
             false
         );
 
+        return getNextOpenInterestParams(params, longOpenInterest, shortOpenInterest);
+    }
+
+    function getNextOpenInterestForVirtualInventory(
+        GetPriceImpactUsdParams memory params
+    ) internal view returns (OpenInterestParams memory) {
+        (/* bool hasVirtualInventory */, int256 virtualInventory) = MarketUtils.getVirtualInventoryForPositions(params.dataStore, params.indexToken);
+
+        uint256 longOpenInterest;
+        uint256 shortOpenInterest;
+
+        // if virtualInventory is more than zero it means that
+        // tokens were virtually sold to the pool, so set shortOpenInterest
+        // to the virtualInventory value
+        // if virtualInventory is less than zero it means that
+        // tokens were virtually bought from the pool, so set longOpenInterest
+        // to the virtualInventory value
+        if (virtualInventory > 0) {
+            shortOpenInterest = virtualInventory.toUint256();
+        } else {
+            longOpenInterest = (-virtualInventory).toUint256();
+        }
+
+        return getNextOpenInterestParams(params, longOpenInterest, shortOpenInterest);
+    }
+
+    function getNextOpenInterestParams(
+        GetPriceImpactUsdParams memory params,
+        uint256 longOpenInterest,
+        uint256 shortOpenInterest
+    ) internal pure returns (OpenInterestParams memory) {
         uint256 nextLongOpenInterest;
         uint256 nextShortOpenInterest;
 
@@ -381,7 +444,7 @@ library PositionPricingUtils {
         address market,
         uint256 sizeDeltaUsd
     ) internal view returns (address, uint256, uint256, uint256, uint256) {
-        _GetPositionFeesAfterReferralCache memory cache;
+        GetPositionFeesAfterReferralCache memory cache;
 
         (cache.referral.affiliate, cache.referral.totalRebateFactor, cache.referral.traderDiscountFactor) = ReferralUtils.getReferralInfo(referralStorage, account);
 
@@ -394,11 +457,90 @@ library PositionPricingUtils {
 
         cache.protocolFeeAmount = cache.positionFeeAmount - cache.referral.totalRebateAmount;
 
-        cache.feeReceiverFactor = dataStore.getUint(Keys.FEE_RECEIVER_POSITION_FACTOR);
+        cache.feeReceiverFactor = dataStore.getUint(Keys.FEE_RECEIVER_FACTOR);
 
         cache.feeReceiverAmount = Precision.applyFactor(cache.protocolFeeAmount, cache.feeReceiverFactor);
         cache.positionFeeAmountForPool = cache.protocolFeeAmount - cache.feeReceiverAmount;
 
         return (cache.referral.affiliate, cache.referral.traderDiscountAmount, cache.referral.affiliateRewardAmount, cache.feeReceiverAmount, cache.positionFeeAmountForPool);
+    }
+
+    function emitPositionFeesCollected(
+        EventEmitter eventEmitter,
+        address market,
+        address collateralToken,
+        bool isIncrease,
+        PositionFees memory fees
+    ) external {
+        _emitPositionFees(
+            eventEmitter,
+            market,
+            collateralToken,
+            isIncrease,
+            fees,
+            "PositionFeesCollected"
+        );
+    }
+
+    function emitPositionFeesInfo(
+        EventEmitter eventEmitter,
+        address market,
+        address collateralToken,
+        bool isIncrease,
+        PositionFees memory fees
+    ) external {
+        _emitPositionFees(
+            eventEmitter,
+            market,
+            collateralToken,
+            isIncrease,
+            fees,
+            "PositionFeesInfo"
+        );
+    }
+
+    function _emitPositionFees(
+        EventEmitter eventEmitter,
+        address market,
+        address collateralToken,
+        bool isIncrease,
+        PositionFees memory fees,
+        string memory eventName
+    ) internal {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(3);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "collateralToken", collateralToken);
+        eventData.addressItems.setItem(2, "affiliate", fees.referral.affiliate);
+
+        eventData.uintItems.initItems(13);
+        eventData.uintItems.setItem(0, "traderDiscountAmount", fees.referral.traderDiscountAmount);
+        eventData.uintItems.setItem(1, "affiliateRewardAmount", fees.referral.affiliateRewardAmount);
+        eventData.uintItems.setItem(3, "fundingFeeAmount", fees.funding.fundingFeeAmount);
+        eventData.uintItems.setItem(4, "claimableLongTokenAmount", fees.funding.claimableLongTokenAmount);
+        eventData.uintItems.setItem(5, "claimableShortTokenAmount", fees.funding.claimableShortTokenAmount);
+        eventData.uintItems.setItem(6, "feeReceiverAmount", fees.feeReceiverAmount);
+        eventData.uintItems.setItem(7, "feesForPool", fees.feesForPool);
+        eventData.uintItems.setItem(8, "positionFeeAmountForPool", fees.positionFeeAmountForPool);
+        eventData.uintItems.setItem(9, "positionFeeAmount", fees.positionFeeAmount);
+        eventData.uintItems.setItem(10, "borrowingFeeAmount", fees.borrowingFeeAmount);
+        eventData.uintItems.setItem(11, "totalNetCostAmount", fees.totalNetCostAmount);
+        eventData.uintItems.setItem(12, "totalNetCostUsd", fees.totalNetCostUsd);
+
+        eventData.intItems.initItems(2);
+        eventData.intItems.setItem(0, "latestLongTokenFundingAmountPerSize", fees.funding.latestLongTokenFundingAmountPerSize);
+        eventData.intItems.setItem(1, "latestShortTokenFundingAmountPerSize", fees.funding.latestShortTokenFundingAmountPerSize);
+
+        eventData.boolItems.initItems(3);
+        eventData.boolItems.setItem(0, "hasPendingLongTokenFundingFee", fees.funding.hasPendingLongTokenFundingFee);
+        eventData.boolItems.setItem(1, "hasPendingShortTokenFundingFee", fees.funding.hasPendingShortTokenFundingFee);
+        eventData.boolItems.setItem(2, "isIncrease", isIncrease);
+
+        eventEmitter.emitEventLog1(
+            eventName,
+            Cast.toBytes32(market),
+            eventData
+        );
     }
 }

@@ -8,22 +8,16 @@ import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 import "../bank/StrictBank.sol";
 
-import "../deposit/Deposit.sol";
-import "../deposit/DepositStore.sol";
-import "../withdrawal/Withdrawal.sol";
+import "./Market.sol";
+import "./MarketToken.sol";
+import "./MarketEventUtils.sol";
+import "./MarketStoreUtils.sol";
 
-import "../market/Market.sol";
-import "../market/MarketToken.sol";
-import "../market/MarketStore.sol";
 import "../position/Position.sol";
-import "../position/PositionStore.sol";
 import "../order/Order.sol";
 
 import "../oracle/Oracle.sol";
 import "../price/Price.sol";
-
-import "../fee/FeeReceiver.sol";
-import "../fee/FeeUtils.sol";
 
 import "../utils/Calc.sol";
 import "../utils/Precision.sol";
@@ -34,7 +28,6 @@ library MarketUtils {
     using SafeCast for int256;
     using SafeCast for uint256;
 
-    using Deposit for Deposit.Props;
     using Market for Market.Props;
     using Position for Position.Props;
     using Order for Order.Props;
@@ -61,7 +54,22 @@ library MarketUtils {
         int256 fundingAmountPerSize_ShortCollateral_ShortPosition;
     }
 
-    // @dev _GetNextFundingAmountPerSizeCache struct used in getNextFundingAmountPerSize
+    struct GetPoolValueCache {
+        uint256 value;
+
+        uint256 longTokenAmount;
+        uint256 shortTokenAmount;
+        uint256 longTokenUsd;
+        uint256 shortTokenUsd;
+
+        uint256 impactPoolAmount;
+        int256 longPnl;
+        int256 shortPnl;
+        int256 netPnl;
+    }
+
+
+    // @dev GetNextFundingAmountPerSizeCache struct used in getNextFundingAmountPerSize
     // to avoid stack too deep errors
     //
     // @param durationInSeconds duration in seconds since the last funding update
@@ -73,9 +81,9 @@ library MarketUtils {
     //
     // @param fundingUsdForLongCollateral the funding amount in USD for positions using the long token as collateral
     // @param fundingUsdForShortCollateral the funding amount in USD for positions using the short token as collateral
-    struct _GetNextFundingAmountPerSizeCache {
-        _GetNextFundingAmountPerSizeOpenInterestCache oi;
-        _GetNextFundingAmountPerSizeFundingPerSizeCache fps;
+    struct GetNextFundingAmountPerSizeCache {
+        GetNextFundingAmountPerSizeOpenInterestCache oi;
+        GetNextFundingAmountPerSizeFundingPerSizeCache fps;
 
         uint256 durationInSeconds;
         uint256 fundingFactor;
@@ -95,7 +103,7 @@ library MarketUtils {
     //
     // @param longOpenInterest total long open interest for the market
     // @param shortOpenInterest total short open interest for the market
-    struct _GetNextFundingAmountPerSizeOpenInterestCache {
+    struct GetNextFundingAmountPerSizeOpenInterestCache {
         uint256 longOpenInterestWithLongCollateral;
         uint256 longOpenInterestWithShortCollateral;
         uint256 shortOpenInterestWithLongCollateral;
@@ -114,7 +122,7 @@ library MarketUtils {
     // @param fundingAmountPerSizePortion_LongCollateral_ShortPosition the next funding amount per size for longs using the short token as collateral
     // @param fundingAmountPerSizePortion_ShortCollateral_LongPosition the next funding amount per size for shorts using the long token as collateral
     // @param fundingAmountPerSizePortion_ShortCollateral_ShortPosition the next funding amount per size for shorts using the short token as collateral
-    struct _GetNextFundingAmountPerSizeFundingPerSizeCache {
+    struct GetNextFundingAmountPerSizeFundingPerSizeCache {
         int256 fundingAmountPerSize_LongCollateral_LongPosition;
         int256 fundingAmountPerSize_LongCollateral_ShortPosition;
         int256 fundingAmountPerSize_ShortCollateral_LongPosition;
@@ -127,9 +135,6 @@ library MarketUtils {
     }
 
 
-    // the first item of the swap path indicates if
-    // any pre-swap is needed to unify the pnlToken and collateralToken for decrease positions
-    address public constant NO_SWAP = address(1);
     address public constant SWAP_PNL_TOKEN_TO_COLLATERAL_TOKEN = address(2);
     address public constant SWAP_COLLATERAL_TOKEN_TO_PNL_TOKEN = address(3);
 
@@ -156,6 +161,10 @@ library MarketUtils {
     ) internal view returns (int256) {
         int256 poolValue = getPoolValue(dataStore, market, longTokenPrice, shortTokenPrice, indexTokenPrice, maximize);
         if (poolValue == 0) { return 0; }
+
+        if (poolValue < 0) {
+            revert("getMarketTokenPrice: unexpected state, poolValue is negative");
+        }
 
         uint256 supply = getMarketTokenSupply(MarketToken(payable(market.marketToken)));
 
@@ -268,25 +277,63 @@ library MarketUtils {
         Price.Props memory indexTokenPrice,
         bool maximize
     ) internal view returns (int256) {
-        uint256 longTokenAmount = getPoolAmount(dataStore, market.marketToken, market.longToken);
-        uint256 shortTokenAmount = getPoolAmount(dataStore, market.marketToken, market.shortToken);
+        GetPoolValueCache memory cache;
+        cache.longTokenAmount = getPoolAmount(dataStore, market.marketToken, market.longToken);
+        cache.shortTokenAmount = getPoolAmount(dataStore, market.marketToken, market.shortToken);
 
-        uint256 value;
+        cache.longTokenUsd = cache.longTokenAmount * longTokenPrice.pickPrice(maximize);
+        cache.shortTokenUsd = cache.shortTokenAmount * shortTokenPrice.pickPrice(maximize);
 
-        value = longTokenAmount * longTokenPrice.pickPrice(maximize);
-        value += shortTokenAmount * shortTokenPrice.pickPrice(maximize);
+        cache.value = cache.longTokenUsd + cache.shortTokenUsd;
 
-        value += getTotalBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, true);
-        value += getTotalBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, false);
+        cache.value += getTotalBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, true);
+        cache.value += getTotalBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, false);
 
-        uint256 impactPoolAmount = getPositionImpactPoolAmount(dataStore, market.marketToken);
-        value += impactPoolAmount * indexTokenPrice.pickPrice(maximize);
+        cache.impactPoolAmount = getPositionImpactPoolAmount(dataStore, market.marketToken);
+        cache.value += cache.impactPoolAmount * indexTokenPrice.pickPrice(maximize);
 
         // !maximize should be used for net pnl as a larger pnl leads to a smaller pool value
         // and a smaller pnl leads to a larger pool value
-        int256 pnl = getNetPnl(dataStore, market.marketToken, market.longToken, market.shortToken, indexTokenPrice, !maximize);
 
-        return Calc.sumReturnInt256(value, -pnl);
+        cache.longPnl = getPnl(
+            dataStore,
+            market.marketToken,
+            market.longToken,
+            market.shortToken,
+            indexTokenPrice,
+            true,
+            !maximize
+        );
+
+        cache.longPnl = getCappedPnl(
+            dataStore,
+            market.marketToken,
+            true,
+            cache.longPnl,
+            cache.longTokenUsd
+        );
+
+        cache.shortPnl = getPnl(
+            dataStore,
+            market.marketToken,
+            market.longToken,
+            market.shortToken,
+            indexTokenPrice,
+            false,
+            !maximize
+        );
+
+        cache.shortPnl = getCappedPnl(
+            dataStore,
+            market.marketToken,
+            false,
+            cache.shortPnl,
+            cache.shortTokenUsd
+        );
+
+        cache.netPnl = cache.longPnl + cache.shortPnl;
+
+        return Calc.sumReturnInt256(cache.value, -cache.netPnl);
     }
 
     // @dev get the net pending pnl for a market
@@ -309,6 +356,43 @@ library MarketUtils {
         int256 shortPnl = getPnl(dataStore, market, longToken, shortToken, indexTokenPrice, false, maximize);
 
         return longPnl + shortPnl;
+    }
+
+    function getCappedPnl(
+        DataStore dataStore,
+        address market,
+        bool isLong,
+        int256 pnl,
+        uint256 poolUsd
+    ) internal view returns (int256) {
+        if (pnl < 0) { return pnl; }
+
+        uint256 maxPnlFactor = getMaxPnlFactor(dataStore, market, isLong);
+        int256 maxPnl = Precision.applyFactor(poolUsd, maxPnlFactor).toInt256();
+
+        return pnl > maxPnl ? maxPnl : pnl;
+    }
+
+    function getPnl(
+        DataStore dataStore,
+        address market,
+        address longToken,
+        address shortToken,
+        uint256 indexTokenPrice,
+        bool isLong,
+        bool maximize
+    ) internal view returns (int256) {
+        Price.Props memory _indexTokenPrice = Price.Props(indexTokenPrice, indexTokenPrice);
+
+        return getPnl(
+            dataStore,
+            market,
+            longToken,
+            shortToken,
+            _indexTokenPrice,
+            isLong,
+            maximize
+        );
     }
 
     // @dev get the pending pnl for a market for either longs or shorts
@@ -353,6 +437,14 @@ library MarketUtils {
         return dataStore.getUint(Keys.poolAmountKey(market, token));
     }
 
+    function getMaxPoolAmount(DataStore dataStore, address market, address token) internal view returns (uint256) {
+        return dataStore.getUint(Keys.maxPoolAmountKey(market, token));
+    }
+
+    function getMaxOpenInterest(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
+        return dataStore.getUint(Keys.maxOpenInterestKey(market, isLong));
+    }
+
     function incrementClaimableCollateralAmount(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -368,7 +460,7 @@ library MarketUtils {
             delta
         );
 
-        eventEmitter.emitClaimableCollateralUpdated(market, token, timeKey, account, delta, nextValue);
+        MarketEventUtils.emitClaimableCollateralUpdated(eventEmitter, market, token, timeKey, account, delta, nextValue);
     }
 
     // @dev increment the claimable funding amount
@@ -391,7 +483,7 @@ library MarketUtils {
             delta
         );
 
-        eventEmitter.emitClaimableFundingUpdated(market, token, account, delta, nextValue);
+        MarketEventUtils.emitClaimableFundingUpdated(eventEmitter, market, token, account, delta, nextValue);
     }
 
     // @dev claim funding fees
@@ -420,7 +512,8 @@ library MarketUtils {
             claimableAmount
         );
 
-        eventEmitter.emitFundingFeesClaimed(
+        MarketEventUtils.emitFundingFeesClaimed(
+            eventEmitter,
             market,
             token,
             account,
@@ -467,7 +560,8 @@ library MarketUtils {
             remainingClaimableAmount
         );
 
-        eventEmitter.emitCollateralClaimed(
+        MarketEventUtils.emitCollateralClaimed(
+            eventEmitter,
             market,
             token,
             timeKey,
@@ -489,14 +583,23 @@ library MarketUtils {
         address market,
         address token,
         int256 delta
-    ) internal {
+    ) internal returns (uint256) {
         uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.poolAmountKey(market, token),
             delta,
             "Invalid state, negative poolAmount"
         );
 
-        eventEmitter.emitPoolAmountUpdated(market, token, delta, nextValue);
+        applyDeltaToVirtualInventoryForSwaps(
+            dataStore,
+            market,
+            token,
+            delta
+        );
+
+        MarketEventUtils.emitPoolAmountUpdated(eventEmitter, market, token, delta, nextValue);
+
+        return nextValue;
     }
 
     // @dev cap the input priceImpactUsd by the available amount in the position impact pool
@@ -562,13 +665,15 @@ library MarketUtils {
         address market,
         address token,
         int256 delta
-    ) internal {
+    ) internal returns (uint256) {
         uint256 nextValue = dataStore.applyBoundedDeltaToUint(
             Keys.swapImpactPoolAmountKey(market, token),
             delta
         );
 
-        eventEmitter.emitSwapImpactPoolAmountUpdated(market, token, delta, nextValue);
+        MarketEventUtils.emitSwapImpactPoolAmountUpdated(eventEmitter, market, token, delta, nextValue);
+
+        return nextValue;
     }
 
     // @dev apply a delta to the position impact pool
@@ -581,13 +686,15 @@ library MarketUtils {
         EventEmitter eventEmitter,
         address market,
         int256 delta
-    ) internal {
+    ) internal returns (uint256) {
         uint256 nextValue = dataStore.applyBoundedDeltaToUint(
             Keys.positionImpactPoolAmountKey(market),
             delta
         );
 
-        eventEmitter.emitPositionImpactPoolAmountUpdated(market, delta, nextValue);
+        MarketEventUtils.emitPositionImpactPoolAmountUpdated(eventEmitter, market, delta, nextValue);
+
+        return nextValue;
     }
 
     // @dev apply a delta to the open interest
@@ -601,17 +708,37 @@ library MarketUtils {
         DataStore dataStore,
         EventEmitter eventEmitter,
         address market,
+        address indexToken,
         address collateralToken,
         bool isLong,
         int256 delta
-    ) internal {
+    ) internal returns (uint256) {
+        if (indexToken == address(0)) { revert("Invalid indexToken"); }
+
         uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.openInterestKey(market, collateralToken, isLong),
             delta,
             "Invalid state: negative open interest"
         );
 
-        eventEmitter.emitOpenInterestUpdated(market, collateralToken, isLong, delta, nextValue);
+        // if the open interest for longs is increased then tokens were virtually bought from the pool
+        // so the virtual inventory should be decreased
+        // if the open interest for longs is decreased then tokens were virtually sold to the pool
+        // so the virtual inventory should be increased
+        // if the open interest for shorts is increased then tokens were virtually sold to the pool
+        // so the virtual inventory should be increased
+        // if the open interest for shorts is decreased then tokens were virtually bought the pool
+        // so the virtual inventory should be decreased
+        applyDeltaToVirtualInventoryForPositions(
+            dataStore,
+            eventEmitter,
+            indexToken,
+            isLong ? -delta : delta
+        );
+
+        MarketEventUtils.emitOpenInterestUpdated(eventEmitter, market, collateralToken, isLong, delta, nextValue);
+
+        return nextValue;
     }
 
     // @dev apply a delta to the open interest in tokens
@@ -628,14 +755,16 @@ library MarketUtils {
         address collateralToken,
         bool isLong,
         int256 delta
-    ) internal {
+    ) internal returns (uint256) {
         uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.openInterestInTokensKey(market, collateralToken, isLong),
             delta,
             "Invalid state: negative open interest in tokens"
         );
 
-        eventEmitter.emitOpenInterestInTokensUpdated(market, collateralToken, isLong, delta, nextValue);
+        MarketEventUtils.emitOpenInterestInTokensUpdated(eventEmitter, market, collateralToken, isLong, delta, nextValue);
+
+        return nextValue;
     }
 
     // @dev apply a delta to the collateral sum
@@ -652,14 +781,16 @@ library MarketUtils {
         address collateralToken,
         bool isLong,
         int256 delta
-    ) internal {
+    ) internal returns (uint256) {
         uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.collateralSumKey(market, collateralToken, isLong),
             delta,
             "Invalid state: negative collateralSum"
         );
 
-        eventEmitter.emitCollateralSumUpdated(market, collateralToken, isLong, delta, nextValue);
+        MarketEventUtils.emitCollateralSumUpdated(eventEmitter, market, collateralToken, isLong, delta, nextValue);
+
+        return nextValue;
     }
 
     // @dev update the funding amount per size values
@@ -699,7 +830,7 @@ library MarketUtils {
         address shortToken
     ) internal view returns (GetNextFundingAmountPerSizeResult memory) {
         GetNextFundingAmountPerSizeResult memory result;
-        _GetNextFundingAmountPerSizeCache memory cache;
+        GetNextFundingAmountPerSizeCache memory cache;
 
         cache.oi.longOpenInterestWithLongCollateral = getOpenInterest(dataStore, market, longToken, true);
         cache.oi.longOpenInterestWithShortCollateral = getOpenInterest(dataStore, market, shortToken, true);
@@ -820,7 +951,6 @@ library MarketUtils {
 
     // @dev get the ratio of pnl to pool value
     // @param dataStore DataStore
-    // @param marketStore MarketStore
     // @param oracle Oracle
     // @param market the trading market
     // @param isLong whether to get the value for the long or short side
@@ -828,13 +958,12 @@ library MarketUtils {
     // @return (pnl of positions) / (long or short pool value)
     function getPnlToPoolFactor(
         DataStore dataStore,
-        MarketStore marketStore,
         Oracle oracle,
         address market,
         bool isLong,
         bool maximize
     ) internal view returns (int256) {
-        Market.Props memory _market = getEnabledMarket(dataStore, marketStore, market);
+        Market.Props memory _market = getEnabledMarket(dataStore, market);
         MarketUtils.MarketPrices memory prices = MarketUtils.MarketPrices(
             oracle.getPrimaryPrice(_market.indexToken),
             oracle.getPrimaryPrice(_market.longToken),
@@ -875,6 +1004,34 @@ library MarketUtils {
         );
 
         return pnl * Precision.FLOAT_PRECISION.toInt256() / poolUsd.toInt256();
+    }
+
+    function validateOpenInterest(
+        DataStore dataStore,
+        address market,
+        address longToken,
+        address shortToken,
+        bool isLong
+    ) internal view {
+        uint256 openInterest = getOpenInterest(dataStore, market, longToken, shortToken, isLong);
+        uint256 maxOpenInterest = getMaxOpenInterest(dataStore, market, isLong);
+
+        if (openInterest > maxOpenInterest) {
+            revert("Max open interest exceeded");
+        }
+    }
+
+    function validatePoolAmount(
+        DataStore dataStore,
+        address market,
+        address token
+    ) internal view {
+        uint256 poolAmount = getPoolAmount(dataStore, market, token);
+        uint256 poolAmountCap = getMaxPoolAmount(dataStore, market, token);
+
+        if (poolAmount > poolAmountCap) {
+            revert("Max pool amount exceeded");
+        }
     }
 
     // @dev validate that the amount of tokens required to be reserved for positions
@@ -1001,8 +1158,94 @@ library MarketUtils {
     // @return the borrowing fees for a position
     function getBorrowingFees(DataStore dataStore, Position.Props memory position) internal view returns (uint256) {
         uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, position.market(), position.isLong());
+        if (position.borrowingFactor() > cumulativeBorrowingFactor) {
+            revert("getBorrowingFees: unexpected state");
+        }
         uint256 diffFactor = cumulativeBorrowingFactor - position.borrowingFactor();
         return Precision.applyFactor(position.sizeInUsd(), diffFactor);
+    }
+
+    function getVirtualInventoryForSwaps(DataStore dataStore, address market, address token) internal view returns (bool, uint256) {
+        bytes32 marketId = dataStore.getBytes32(Keys.virtualMarketIdKey(market));
+        if (marketId == bytes32(0)) {
+            return (false, 0);
+        }
+
+        return (true, dataStore.getUint(Keys.virtualInventoryForSwapsKey(marketId, token)));
+    }
+
+    function getVirtualInventoryForPositions(DataStore dataStore, address token) internal view returns (bool, int256) {
+        bytes32 tokenId = dataStore.getBytes32(Keys.virtualTokenIdKey(token));
+        if (tokenId == bytes32(0)) {
+            return (false, 0);
+        }
+
+        return (true, dataStore.getInt(Keys.virtualInventoryForPositionsKey(tokenId)));
+    }
+
+    function getThresholdPositionImpactFactorForVirtualInventory(DataStore dataStore, address token) internal view returns (bool, int256) {
+        bytes32 tokenId = dataStore.getBytes32(Keys.virtualTokenIdKey(token));
+        if (tokenId == bytes32(0)) {
+            return (false, 0);
+        }
+
+        return (true, dataStore.getInt(Keys.thresholdPositionImpactFactorForVirtualInventoryKey(tokenId)));
+    }
+
+    function getThresholdSwapImpactFactorForVirtualInventory(DataStore dataStore, address market) internal view returns (bool, int256) {
+        bytes32 marketId = dataStore.getBytes32(Keys.virtualMarketIdKey(market));
+        if (marketId == bytes32(0)) {
+            return (false, 0);
+        }
+
+        return (true, dataStore.getInt(Keys.thresholdSwapImpactFactorForVirtualInventoryKey(marketId)));
+    }
+
+    function applyDeltaToVirtualInventoryForSwaps(DataStore dataStore, address market, address token, int256 delta) internal returns (bool, uint256) {
+        bytes32 marketId = dataStore.getBytes32(Keys.virtualMarketIdKey(market));
+        if (marketId == bytes32(0)) {
+            return (false, 0);
+        }
+
+        uint256 nextValue = dataStore.applyBoundedDeltaToUint(
+            Keys.virtualInventoryForSwapsKey(marketId, token),
+            delta
+        );
+
+        return (true, nextValue);
+    }
+
+    function applyDeltaToVirtualInventoryForPositions(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address token,
+        int256 delta
+    ) internal returns (bool, int256) {
+        bytes32 tokenId = dataStore.getBytes32(Keys.virtualTokenIdKey(token));
+        if (tokenId == bytes32(0)) {
+            return (false, 0);
+        }
+
+        int256 nextValue = dataStore.applyDeltaToInt(
+            Keys.virtualInventoryForPositionsKey(tokenId),
+            delta
+        );
+
+        MarketEventUtils.emitVirtualPositionInventoryUpdated(eventEmitter, token, tokenId, delta, nextValue);
+
+        return (true, nextValue);
+    }
+
+    function getOpenInterest(
+        DataStore dataStore,
+        address market,
+        address longToken,
+        address shortToken
+    ) internal view returns (uint256) {
+        uint256 longOpenInterest = getOpenInterest(dataStore, market, longToken, shortToken, true);
+        uint256 shortOpenInterest = getOpenInterest(dataStore, market, longToken, shortToken, false);
+
+        return longOpenInterest + shortOpenInterest;
     }
 
     // @dev get either the long or short open interest for a market
@@ -1101,6 +1344,32 @@ library MarketUtils {
         return dataStore.getUint(Keys.maxPositionImpactFactorKey(market, isPositive));
     }
 
+    function getMaxPositionImpactFactorForLiquidations(DataStore dataStore, address market) internal view returns (uint256) {
+        return dataStore.getUint(Keys.maxPositionImpactFactorForLiquidationsKey(market));
+    }
+
+    function getMinCollateralFactor(DataStore dataStore, address market) internal view returns (uint256) {
+        return dataStore.getUint(Keys.minCollateralFactorKey(market));
+    }
+
+    function getMinCollateralFactorForOpenInterestMultiplier(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
+        return dataStore.getUint(Keys.minCollateralFactorForOpenInterestMultiplierKey(market, isLong));
+    }
+
+    function getMinCollateralFactorForOpenInterest(
+        DataStore dataStore,
+        address market,
+        address longToken,
+        address shortToken,
+        int256 openInterestDelta,
+        bool isLong
+    ) internal view returns (uint256) {
+        uint256 openInterest = getOpenInterest(dataStore, market, longToken, shortToken, isLong);
+        openInterest = Calc.sumReturnUint256(openInterest, openInterestDelta);
+        uint256 multiplierFactor = getMinCollateralFactorForOpenInterestMultiplier(dataStore, market, isLong);
+        return Precision.applyFactor(openInterest, multiplierFactor);
+    }
+
     // @dev get the total amount of position collateral for a market
     // @param dataStore DataStore
     // @param market the market to check
@@ -1129,7 +1398,7 @@ library MarketUtils {
         return dataStore.getUint(Keys.maxPnlFactorKey(market, isLong));
     }
 
-    // @dev get the max pnl factor for withdrawals a market
+    // @dev get the max pnl factor for withdrawals for a market
     // @param dataStore DataStore
     // @param market the market to check
     // @param isLong whether to get the value for longs or shorts
@@ -1403,6 +1672,19 @@ library MarketUtils {
         return marketTokenAmount * poolValue / supply;
     }
 
+    function validateEnabledMarket(DataStore dataStore, address marketAddress) internal view {
+        Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
+
+        if (market.marketToken == address(0)) {
+            revert EmptyMarket();
+        }
+
+        bool isMarketDisabled = dataStore.getBool(Keys.isMarketDisabledKey(market.marketToken));
+        if (isMarketDisabled) {
+            revert DisabledMarket(market.marketToken);
+        }
+    }
+
     // @dev validate that a market exists
     // @param market the market to check
     function validateEnabledMarket(DataStore dataStore, Market.Props memory market) internal view {
@@ -1416,34 +1698,40 @@ library MarketUtils {
         }
     }
 
-    function getEnabledMarket(DataStore dataStore, MarketStore marketStore, address marketAddress) internal view returns (Market.Props memory) {
-        Market.Props memory market = marketStore.get(marketAddress);
+    function validatePositionMarket(Market.Props memory market) internal pure {
+        if (isSwapOnlyMarket(market)) {
+            revert("Invalid position market");
+        }
+    }
+
+    function isSwapOnlyMarket(Market.Props memory market) internal pure returns (bool) {
+        return market.indexToken == address(0);
+    }
+
+    function isMarketCollateralToken(Market.Props memory market, address token) internal pure returns (bool) {
+        return token == market.longToken || token == market.shortToken;
+    }
+
+    function validateMarketCollateralToken(Market.Props memory market, address token) internal pure {
+        if (!isMarketCollateralToken(market, token)) {
+            revert("Invalid token for market");
+        }
+    }
+
+    function getEnabledMarket(DataStore dataStore, address marketAddress) internal view returns (Market.Props memory) {
+        Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
         validateEnabledMarket(dataStore, market);
         return market;
     }
 
     // @dev get a list of market values based on an input array of market addresses
-    // @param marketStore MarketStore
     // @param swapPath list of market addresses
-    function getEnabledMarkets(DataStore dataStore, MarketStore marketStore, address[] memory swapPath, bool allowSwapPathFlag) internal view returns (Market.Props[] memory) {
+    function getEnabledMarkets(DataStore dataStore, address[] memory swapPath) internal view returns (Market.Props[] memory) {
         Market.Props[] memory markets = new Market.Props[](swapPath.length);
-        uint256 indexAdjustment = 0;
 
         for (uint256 i = 0; i < swapPath.length; i++) {
             address marketAddress = swapPath[i];
-            if (
-                i == 0 &&
-                allowSwapPathFlag &&
-                (marketAddress == NO_SWAP ||
-                marketAddress == SWAP_PNL_TOKEN_TO_COLLATERAL_TOKEN ||
-                marketAddress == SWAP_COLLATERAL_TOKEN_TO_PNL_TOKEN)
-            ) {
-                markets = new Market.Props[](swapPath.length - 1);
-                indexAdjustment = 1;
-                continue;
-            }
-
-            markets[i - indexAdjustment] = getEnabledMarket(dataStore, marketStore, marketAddress);
+            markets[i] = getEnabledMarket(dataStore, marketAddress);
         }
 
         return markets;

@@ -15,28 +15,22 @@ contract LiquidationHandler is BaseOrderHandler {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        MarketStore _marketStore,
-        OrderStore _orderStore,
-        PositionStore _positionStore,
+        OrderVault _orderVault,
         Oracle _oracle,
         SwapHandler _swapHandler,
-        FeeReceiver _feeReceiver,
         IReferralStorage _referralStorage
     ) BaseOrderHandler(
         _roleStore,
         _dataStore,
         _eventEmitter,
-        _marketStore,
-        _orderStore,
-        _positionStore,
+        _orderVault,
         _oracle,
         _swapHandler,
-        _feeReceiver,
         _referralStorage
     ) {}
 
     // @dev executes a position liquidation
-    // @param account the account of the position to liquidation
+    // @param account the account of the position to liquidate
     // @param market the position's market
     // @param collateralToken the position's collateralToken
     // @param isLong whether the position is long or short
@@ -48,7 +42,7 @@ contract LiquidationHandler is BaseOrderHandler {
         bool isLong,
         OracleUtils.SetPricesParams calldata oracleParams
     ) external
-        nonReentrant
+        globalNonReentrant
         onlyLiquidationKeeper
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
@@ -56,17 +50,15 @@ contract LiquidationHandler is BaseOrderHandler {
 
         bytes32 key = LiquidationUtils.createLiquidationOrder(
             dataStore,
-            orderStore,
-            positionStore,
             account,
             market,
             collateralToken,
             isLong
         );
 
-        OrderBaseUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, msg.sender, startingGas);
+        BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, msg.sender, startingGas);
 
-        FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeOrderFeatureKey(address(this), uint256(params.order.orderType())));
+        FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeOrderFeatureDisabledKey(address(this), uint256(params.order.orderType())));
 
         OrderUtils.executeOrder(params);
     }

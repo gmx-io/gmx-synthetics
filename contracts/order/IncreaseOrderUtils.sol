@@ -2,12 +2,13 @@
 
 pragma solidity ^0.8.0;
 
-import "./OrderBaseUtils.sol";
+import "./BaseOrderUtils.sol";
 import "../swap/SwapUtils.sol";
 import "../position/IncreasePositionUtils.sol";
+import "../order/OrderStoreUtils.sol";
 
 // @title IncreaseOrderUtils
-// @dev Libary for functions to help with processing an increase order
+// @dev Library for functions to help with processing an increase order
 library IncreaseOrderUtils {
     using Position for Position.Props;
     using Order for Order.Props;
@@ -16,23 +17,16 @@ library IncreaseOrderUtils {
     error UnexpectedPositionState();
 
     // @dev process an increase order
-    // @param params OrderBaseUtils.ExecuteOrderParams
-    function processOrder(OrderBaseUtils.ExecuteOrderParams memory params) external {
-        address initialMarket = params.order.swapPath().length == 0 ? params.order.market() : params.order.swapPath()[0];
-
-        params.contracts.orderStore.transferOut(
-            params.order.initialCollateralToken(),
-            initialMarket,
-            params.order.initialCollateralDeltaAmount()
-        );
-
+    // @param params BaseOrderUtils.ExecuteOrderParams
+    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external {
         MarketUtils.validateEnabledMarket(params.contracts.dataStore, params.market);
+        MarketUtils.validatePositionMarket(params.market);
 
         (address collateralToken, uint256 collateralIncrementAmount) = SwapUtils.swap(SwapUtils.SwapParams(
             params.contracts.dataStore,
             params.contracts.eventEmitter,
             params.contracts.oracle,
-            params.contracts.feeReceiver,
+            params.contracts.orderVault,
             params.order.initialCollateralToken(),
             params.order.initialCollateralDeltaAmount(),
             params.swapPathMarkets,
@@ -46,7 +40,7 @@ library IncreaseOrderUtils {
         }
 
         bytes32 positionKey = PositionUtils.getPositionKey(params.order.account(), params.order.market(), collateralToken, params.order.isLong());
-        Position.Props memory position = params.contracts.positionStore.get(positionKey);
+        Position.Props memory position = PositionStoreUtils.get(params.contracts.dataStore, positionKey);
 
         // initialize position
         if (position.account() == address(0)) {
@@ -61,7 +55,8 @@ library IncreaseOrderUtils {
         }
 
         validateOracleBlockNumbers(
-            params.oracleBlockNumbers,
+            params.minOracleBlockNumbers,
+            params.maxOracleBlockNumbers,
             params.order.orderType(),
             params.order.updatedAtBlock(),
             position.increasedAtBlock()
@@ -72,41 +67,46 @@ library IncreaseOrderUtils {
                 params.contracts,
                 params.market,
                 params.order,
+                params.key,
                 position,
                 positionKey
             ),
             collateralIncrementAmount
         );
 
-        params.contracts.orderStore.remove(params.key, params.order.account());
+        OrderStoreUtils.remove(params.contracts.dataStore, params.key, params.order.account());
     }
 
     // @dev validate the oracle block numbers used for the prices in the oracle
-    // @param oracleBlockNumbers the oracle block numbers
+    // @param minOracleBlockNumbers the min oracle block numbers
+    // @param maxOracleBlockNumbers the max oracle block numbers
     // @param orderType the order type
     // @param orderUpdatedAtBlock the block at which the order was last updated
     // @param positionIncreasedAtBlock the block at which the position was last increased
     function validateOracleBlockNumbers(
-        uint256[] memory oracleBlockNumbers,
+        uint256[] memory minOracleBlockNumbers,
+        uint256[] memory maxOracleBlockNumbers,
         Order.OrderType orderType,
         uint256 orderUpdatedAtBlock,
         uint256 positionIncreasedAtBlock
     ) internal pure {
         if (orderType == Order.OrderType.MarketIncrease) {
-            if (!oracleBlockNumbers.areEqualTo(orderUpdatedAtBlock)) {
-                OracleUtils.revertOracleBlockNumbersAreNotEqual(oracleBlockNumbers, orderUpdatedAtBlock);
-            }
+            OracleUtils.validateBlockNumberWithinRange(
+                minOracleBlockNumbers,
+                maxOracleBlockNumbers,
+                orderUpdatedAtBlock
+            );
             return;
         }
 
         if (orderType == Order.OrderType.LimitIncrease) {
             uint256 laterBlock = orderUpdatedAtBlock > positionIncreasedAtBlock ? orderUpdatedAtBlock : positionIncreasedAtBlock;
-            if (!oracleBlockNumbers.areGreaterThan(laterBlock)) {
-                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, laterBlock);
+            if (!minOracleBlockNumbers.areGreaterThan(laterBlock)) {
+                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, laterBlock);
             }
             return;
         }
 
-        OrderBaseUtils.revertUnsupportedOrderType();
+        BaseOrderUtils.revertUnsupportedOrderType();
     }
 }

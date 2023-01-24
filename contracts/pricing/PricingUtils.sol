@@ -7,7 +7,6 @@ import "prb-math/contracts/PRBMathUD60x18.sol";
 import "../utils/Calc.sol";
 import "../utils/Precision.sol";
 import "../market/MarketUtils.sol";
-import "../fee/FeeReceiver.sol";
 
 // @title PricingUtils
 // @dev Library for pricing functions
@@ -60,16 +59,16 @@ library PricingUtils {
     // short open interest becomes larger than the long open interest
     // @param initialDiffUsd the initial difference in USD
     // @param nextDiffUsd the next difference in USD
-    // @param hasPositiveImpact whether there is a positive impact on balance
     // @param impactFactor the impact factor
     // @param impactExponentFactor the impact exponent factor
     function getPriceImpactUsdForSameSideRebalance(
         uint256 initialDiffUsd,
         uint256 nextDiffUsd,
-        bool hasPositiveImpact,
         uint256 impactFactor,
         uint256 impactExponentFactor
     ) internal pure returns (int256) {
+        bool hasPositiveImpact = nextDiffUsd < initialDiffUsd;
+
         uint256 deltaDiffUsd = Calc.diff(
             applyImpactFactor(initialDiffUsd, impactFactor, impactExponentFactor),
             applyImpactFactor(nextDiffUsd, impactFactor, impactExponentFactor)
@@ -131,32 +130,5 @@ library PricingUtils {
         // for example, if the impactExponentFactor is 2 and we want to have an impact of 0.1% for $2 million of difference
         // we can set the impactFactor to be 0.1% / 2 million, in factor form that would be 0.001 / 2,000,000 * (10 ^ 30)
         return Precision.applyFactor(adjustedDiffUsd, impactFactor) / 2;
-    }
-
-    // @dev transfer fees to the feeReceiver
-    // @param dataStore DataStore
-    // @param feeReceiver FeeReceiver
-    // @param marketToken the market token of the market
-    // @param token the fee token to transfer
-    // @param feeReceiverAmount the amount to transfer
-    // @param feeType the fee type
-    function transferFees(
-        FeeReceiver feeReceiver,
-        address marketToken,
-        address token,
-        uint256 feeReceiverAmount,
-        bytes32 feeType
-    ) internal {
-        if (feeReceiverAmount == 0) {
-            return;
-        }
-
-        MarketToken(payable(marketToken)).transferOut(
-            token,
-            address(feeReceiver),
-            feeReceiverAmount
-        );
-
-        feeReceiver.notifyFeeReceived(feeType, token, feeReceiverAmount);
     }
 }

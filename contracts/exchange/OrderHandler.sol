@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./BaseOrderHandler.sol";
+import "../utils/RevertUtils.sol";
 
 // @title OrderHandler
 // @dev Contract to handle creation, execution and cancellation of orders
@@ -15,40 +16,33 @@ contract OrderHandler is BaseOrderHandler {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        MarketStore _marketStore,
-        OrderStore _orderStore,
-        PositionStore _positionStore,
+        OrderVault _orderVault,
         Oracle _oracle,
         SwapHandler _swapHandler,
-        FeeReceiver _feeReceiver,
         IReferralStorage _referralStorage
     ) BaseOrderHandler(
         _roleStore,
         _dataStore,
         _eventEmitter,
-        _marketStore,
-        _orderStore,
-        _positionStore,
+        _orderVault,
         _oracle,
         _swapHandler,
-        _feeReceiver,
         _referralStorage
     ) {}
 
     // @dev creates an order in the order store
     // @param account the order's account
-    // @param params OrderBaseUtils.CreateOrderParams
+    // @param params BaseOrderUtils.CreateOrderParams
     function createOrder(
         address account,
-        OrderBaseUtils.CreateOrderParams calldata params
-    ) external nonReentrant onlyController returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureKey(address(this), uint256(params.orderType)));
+        BaseOrderUtils.CreateOrderParams calldata params
+    ) external globalNonReentrant onlyController returns (bytes32) {
+        FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureDisabledKey(address(this), uint256(params.orderType)));
 
         return OrderUtils.createOrder(
             dataStore,
             eventEmitter,
-            orderStore,
-            marketStore,
+            orderVault,
             account,
             params
         );
@@ -72,34 +66,34 @@ contract OrderHandler is BaseOrderHandler {
         uint256 sizeDeltaUsd,
         uint256 acceptablePrice,
         uint256 triggerPrice,
+        uint256 minOutputAmount,
         Order.Props memory order
-    ) external payable nonReentrant {
-        OrderStore _orderStore = orderStore;
+    ) external payable globalNonReentrant onlyController {
+        FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
 
-        FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureKey(address(this), uint256(order.orderType())));
-
-        if (OrderBaseUtils.isMarketOrder(order.orderType())) {
+        if (BaseOrderUtils.isMarketOrder(order.orderType())) {
             revert("OrderHandler: invalid orderType");
         }
 
         order.setSizeDeltaUsd(sizeDeltaUsd);
         order.setTriggerPrice(triggerPrice);
         order.setAcceptablePrice(acceptablePrice);
+        order.setMinOutputAmount(minOutputAmount);
         order.setIsFrozen(false);
 
         // allow topping up of executionFee as partially filled or frozen orders
         // will have their executionFee reduced
         address wnt = TokenUtils.wnt(dataStore);
-        uint256 receivedWnt = _orderStore.recordTransferIn(wnt);
+        uint256 receivedWnt = orderVault.recordTransferIn(wnt);
         order.setExecutionFee(order.executionFee() + receivedWnt);
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee());
 
         order.touch();
-        _orderStore.set(key, order);
+        OrderStoreUtils.set(dataStore, key, order);
 
-        eventEmitter.emitOrderUpdated(key, sizeDeltaUsd, triggerPrice, acceptablePrice);
+        OrderEventUtils.emitOrderUpdated(eventEmitter, key, sizeDeltaUsd, triggerPrice, acceptablePrice);
     }
 
     /**
@@ -114,14 +108,14 @@ contract OrderHandler is BaseOrderHandler {
     function cancelOrder(
         bytes32 key,
         Order.Props memory order
-    ) external nonReentrant onlyController {
+    ) external globalNonReentrant onlyController {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
 
-        FeatureUtils.validateFeature(_dataStore, Keys.cancelOrderFeatureKey(address(this), uint256(order.orderType())));
+        FeatureUtils.validateFeature(_dataStore, Keys.cancelOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
 
-        if (OrderBaseUtils.isMarketOrder(order.orderType())) {
+        if (BaseOrderUtils.isMarketOrder(order.orderType())) {
             ExchangeUtils.validateRequestCancellation(
                 _dataStore,
                 order.updatedAtBlock(),
@@ -132,11 +126,12 @@ contract OrderHandler is BaseOrderHandler {
         OrderUtils.cancelOrder(
             dataStore,
             eventEmitter,
-            orderStore,
+            orderVault,
             key,
             order.account(),
             startingGas,
-            "USER_INITIATED_CANCEL"
+            Keys.USER_INITIATED_CANCEL,
+            ""
         );
     }
 
@@ -146,6 +141,7 @@ contract OrderHandler is BaseOrderHandler {
     ) external
         onlyController
         withSimulatedOraclePrices(oracle, params)
+        globalNonReentrant
     {
         uint256 startingGas = gasleft();
 
@@ -166,42 +162,24 @@ contract OrderHandler is BaseOrderHandler {
         bytes32 key,
         OracleUtils.SetPricesParams calldata oracleParams
     ) external
+        globalNonReentrant
         onlyOrderKeeper
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
         uint256 startingGas = gasleft();
 
-        this._executeOrder(
-            key,
-            oracleParams,
-            msg.sender,
-            startingGas
-        );
-        /* try this._executeOrder(
+        try this._executeOrder(
             key,
             oracleParams,
             msg.sender,
             startingGas
         ) {
         } catch Error(string memory reason) {
-            bytes32 reasonKey = keccak256(abi.encode(reason));
-
-            // note that it is possible for any external contract to spoof these errors
-            // this can happen when calling transfers for external tokens, eth transfers, callbacks etc
-            // because of that, errors from external calls should be separately caught
-            if (
-                reasonKey == Keys.EMPTY_PRICE_ERROR_KEY ||
-                reasonKey == Keys.FROZEN_ORDER_ERROR_KEY ||
-                reasonKey == Keys.EMPTY_POSITION_ERROR_KEY
-            ) {
-                revert(reason);
-            }
-
-            _handleOrderError(key, startingGas, bytes(reason), reasonKey);
-        } catch (bytes memory reason) {
-            bytes32 reasonKey = keccak256(abi.encode(reason));
-            _handleOrderError(key, startingGas, reason, reasonKey);
-        } */
+            _handleOrderError(key, startingGas, reason, "");
+        } catch (bytes memory reasonBytes) {
+            string memory reason = RevertUtils.getRevertMessage(reasonBytes);
+            _handleOrderError(key, startingGas, reason, reasonBytes);
+        }
     }
 
     // @dev executes an order
@@ -214,17 +192,17 @@ contract OrderHandler is BaseOrderHandler {
         OracleUtils.SetPricesParams memory oracleParams,
         address keeper,
         uint256 startingGas
-    ) external nonReentrant onlySelf {
-        OrderBaseUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, keeper, startingGas);
-        // limit swaps require frozen order keeper as well since on creation it can fail due to output amount
+    ) external onlySelf {
+        BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, keeper, startingGas);
+        // limit swaps require frozen order keeper for execution since on creation it can fail due to output amount
         // which would automatically cause the order to be frozen
-        // limit increase and decrease positions may fail due to output amount as well and become frozen
+        // limit increase and limit / trigger decrease orders may fail due to output amount as well and become frozen
         // but only if their acceptablePrice is reached
         if (params.order.isFrozen() || params.order.orderType() == Order.OrderType.LimitSwap) {
             _validateFrozenOrderKeeper(keeper);
         }
 
-        FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeOrderFeatureKey(address(this), uint256(params.order.orderType())));
+        FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeOrderFeatureDisabledKey(address(this), uint256(params.order.orderType())));
 
         OrderUtils.executeOrder(params);
     }
@@ -237,25 +215,42 @@ contract OrderHandler is BaseOrderHandler {
     function _handleOrderError(
         bytes32 key,
         uint256 startingGas,
-        bytes memory reason,
-        bytes32 reasonKey
+        string memory reason,
+        bytes memory reasonBytes
     ) internal {
-        Order.Props memory order = orderStore.get(key);
-        bool isMarketOrder = OrderBaseUtils.isMarketOrder(order.orderType());
+        bytes32 reasonKey = keccak256(abi.encode(reason));
+
+        // note that it is possible for any external contract to spoof these errors
+        // this can happen when calling transfers for external tokens, eth transfers, callbacks etc
+        // because of that, errors from external calls should be separately caught
+        if (
+            reasonKey == Keys.EMPTY_PRICE_ERROR_KEY ||
+            reasonKey == Keys.FROZEN_ORDER_ERROR_KEY
+        ) {
+            revert(reason);
+        }
+
+        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+        bool isMarketOrder = BaseOrderUtils.isMarketOrder(order.orderType());
 
         if (isMarketOrder) {
             OrderUtils.cancelOrder(
                 dataStore,
                 eventEmitter,
-                orderStore,
+                orderVault,
                 key,
                 msg.sender,
                 startingGas,
-                reason
+                reason,
+                reasonBytes
             );
         } else {
-            if (reasonKey == Keys.UNACCEPTABLE_PRICE_ERROR_KEY) {
-                revert(string(reason));
+            if (
+                reasonKey == Keys.EMPTY_POSITION_ERROR_KEY ||
+                reasonKey == Keys.INVALID_ORDER_PRICES_ERROR_KEY ||
+                reasonKey == Keys.FEATURE_DISABLED_ERROR_KEY
+            ) {
+                revert(reason);
             }
 
             // freeze unfulfillable orders to prevent the order system from being gamed
@@ -272,11 +267,12 @@ contract OrderHandler is BaseOrderHandler {
             OrderUtils.freezeOrder(
                 dataStore,
                 eventEmitter,
-                orderStore,
+                orderVault,
                 key,
                 msg.sender,
                 startingGas,
-                reason
+                reason,
+                reasonBytes
             );
         }
     }

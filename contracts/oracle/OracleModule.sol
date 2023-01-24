@@ -34,7 +34,14 @@ contract OracleModule {
         oracle.clearAllPrices();
     }
 
-
+    // tokensWithPrices is not set in this function
+    // it is possible for withSimulatedOraclePrices to be called and a function
+    // using withOraclePrices to be called after
+    // or for a function using withOraclePrices to be called and withSimulatedOraclePrices
+    // called after
+    // this should not cause an issue because this transaction should always revert
+    // and any state changes based on simulated prices as well as the setting of simulated
+    // prices should not be persisted
     modifier withSimulatedOraclePrices(
         Oracle oracle,
         OracleUtils.SimulatePricesParams memory params

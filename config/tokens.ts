@@ -1,6 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-
-import { hashData } from "../utils/hash";
+import { EMTPY_TOKEN_SYMBOL, getSyntheticTokenAddress } from "../utils/token";
 
 // https://docs.chain.link/data-feeds/price-feeds/addresses?network=avalanche
 
@@ -40,10 +39,6 @@ export type TestTokenConfig = {
 
 export type TokenConfig = SyntheticTokenConfig | RealTokenConfig | TestTokenConfig;
 export type TokensConfig = { [tokenSymbol: string]: TokenConfig };
-
-function getSyntheticTokenAddress(tokenSymbol: string) {
-  return "0x" + hashData(["string"], [tokenSymbol]).substring(26);
-}
 
 const config: {
   [network: string]: TokensConfig;
@@ -150,6 +145,11 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensCo
       token.deploy = true;
     }
   }
+
+  tokens[EMTPY_TOKEN_SYMBOL] = {
+    synthetic: true,
+    address: ethers.constants.AddressZero,
+  };
 
   return tokens;
 }

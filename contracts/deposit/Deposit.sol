@@ -11,12 +11,10 @@ library Deposit {
     // @param addresses address values
     // @param numbers number values
     // @param flags boolean values
-    // @param data for any additional data
     struct Props {
         Addresses addresses;
         Numbers numbers;
         Flags flags;
-        bytes data;
     }
 
     // @param account the account depositing liquidity
@@ -28,18 +26,22 @@ library Deposit {
         address receiver;
         address callbackContract;
         address market;
+        address initialLongToken;
+        address initialShortToken;
+        address[] longTokenSwapPath;
+        address[] shortTokenSwapPath;
     }
 
-    // @param longTokenAmount the amount of long tokens to deposit
-    // @param shortTokenAmount the amount of short tokens to deposit
+    // @param initialLongTokenAmount the amount of long tokens to deposit
+    // @param initialShortTokenAmount the amount of short tokens to deposit
     // @param minMarketTokens the minimum acceptable number of liquidity tokens
     // @param updatedAtBlock the block that the deposit was last updated at
     // sending funds back to the user in case the deposit gets cancelled
     // @param executionFee the execution fee for keepers
     // @param callbackGasLimit the gas limit for the callbackContract
     struct Numbers {
-        uint256 longTokenAmount;
-        uint256 shortTokenAmount;
+        uint256 initialLongTokenAmount;
+        uint256 initialShortTokenAmount;
         uint256 minMarketTokens;
         uint256 updatedAtBlock;
         uint256 executionFee;
@@ -83,20 +85,52 @@ library Deposit {
         props.addresses.market = value;
     }
 
-    function longTokenAmount(Props memory props) internal pure returns (uint256) {
-        return props.numbers.longTokenAmount;
+    function initialLongToken(Props memory props) internal pure returns (address) {
+        return props.addresses.initialLongToken;
     }
 
-    function setLongTokenAmount(Props memory props, uint256 value) internal pure {
-        props.numbers.longTokenAmount = value;
+    function setInitialLongToken(Props memory props, address value) internal pure {
+        props.addresses.initialLongToken = value;
     }
 
-    function shortTokenAmount(Props memory props) internal pure returns (uint256) {
-        return props.numbers.shortTokenAmount;
+    function initialShortToken(Props memory props) internal pure returns (address) {
+        return props.addresses.initialShortToken;
     }
 
-    function setShortTokenAmount(Props memory props, uint256 value) internal pure {
-        props.numbers.shortTokenAmount = value;
+    function setInitialShortToken(Props memory props, address value) internal pure {
+        props.addresses.initialShortToken = value;
+    }
+
+    function longTokenSwapPath(Props memory props) internal pure returns (address[] memory) {
+        return props.addresses.longTokenSwapPath;
+    }
+
+    function setLongTokenSwapPath(Props memory props, address[] memory value) internal pure {
+        props.addresses.longTokenSwapPath = value;
+    }
+
+    function shortTokenSwapPath(Props memory props) internal pure returns (address[] memory) {
+        return props.addresses.shortTokenSwapPath;
+    }
+
+    function setShortTokenSwapPath(Props memory props, address[] memory value) internal pure {
+        props.addresses.shortTokenSwapPath = value;
+    }
+
+    function initialLongTokenAmount(Props memory props) internal pure returns (uint256) {
+        return props.numbers.initialLongTokenAmount;
+    }
+
+    function setInitialLongTokenAmount(Props memory props, uint256 value) internal pure {
+        props.numbers.initialLongTokenAmount = value;
+    }
+
+    function initialShortTokenAmount(Props memory props) internal pure returns (uint256) {
+        return props.numbers.initialShortTokenAmount;
+    }
+
+    function setInitialShortTokenAmount(Props memory props, uint256 value) internal pure {
+        props.numbers.initialShortTokenAmount = value;
     }
 
     function minMarketTokens(Props memory props) internal pure returns (uint256) {

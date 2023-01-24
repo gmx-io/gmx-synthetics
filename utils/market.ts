@@ -2,8 +2,17 @@ import { calculateCreate2 } from "eth-create2-calculator";
 import { expandDecimals } from "./math";
 import { hashData } from "./hash";
 import { poolAmountKey, swapImpactPoolAmountKey } from "./keys";
+import * as keys from "./keys";
 
 import MarketTokenArtifact from "../artifacts/contracts/market/MarketToken.sol/MarketToken.json";
+
+export function getMarketCount(dataStore) {
+  return dataStore.getAddressCount(keys.MARKET_LIST);
+}
+
+export function getMarketKeys(dataStore, start, end) {
+  return dataStore.getAddressValuesAt(keys.MARKET_LIST, start, end);
+}
 
 export async function getPoolAmount(dataStore, market, token) {
   const key = poolAmountKey(market, token);
@@ -15,24 +24,31 @@ export async function getSwapImpactPoolAmount(dataStore, market, token) {
   return await dataStore.getUint(key);
 }
 
-export async function getMarketTokenPrice(fixture) {
+export async function getMarketTokenPrice(fixture, overrides: any = {}) {
   const { reader, dataStore, ethUsdMarket } = fixture.contracts;
+  const market = overrides.market || ethUsdMarket;
+
+  const indexTokenPrice = overrides.indexTokenPrice || {
+    min: expandDecimals(5000, 4 + 8),
+    max: expandDecimals(5000, 4 + 8),
+  };
+
+  const longTokenPrice = overrides.longTokenPrice || {
+    min: expandDecimals(5000, 4 + 8),
+    max: expandDecimals(5000, 4 + 8),
+  };
+
+  const shortTokenPrice = overrides.longTokenPrice || {
+    min: expandDecimals(1, 6 + 18),
+    max: expandDecimals(1, 6 + 18),
+  };
 
   return await reader.getMarketTokenPrice(
     dataStore.address,
-    ethUsdMarket,
-    {
-      min: expandDecimals(5000, 4 + 8),
-      max: expandDecimals(5000, 4 + 8),
-    },
-    {
-      min: expandDecimals(1, 6 + 18),
-      max: expandDecimals(1, 6 + 18),
-    },
-    {
-      min: expandDecimals(5000, 4 + 8),
-      max: expandDecimals(5000, 4 + 8),
-    },
+    market,
+    indexTokenPrice,
+    longTokenPrice,
+    shortTokenPrice,
     true
   );
 }

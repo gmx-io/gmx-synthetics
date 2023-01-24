@@ -16,7 +16,7 @@ async function main() {
     }
 
     const oracleTypeKey = keys.oracleTypeKey(tokenAddress);
-    const oracleType = await dataStore.getData(oracleTypeKey);
+    const oracleType = await dataStore.getBytes32(oracleTypeKey);
 
     const priceFeedKey = keys.priceFeedKey(tokenAddress);
     const priceFeed = await dataStore.getAddress(priceFeedKey);

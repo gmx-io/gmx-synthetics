@@ -80,6 +80,57 @@ library Array {
     }
 
     /**
+     * @dev Determines whether all of the elements in the given array are greater than or equal to the specified value.
+     *
+     * @param arr the array to check the elements of
+     * @param value the value to compare the elements of the array to
+     * @return true if all of the elements in the array are greater than or equal to the specified value, false otherwise
+     */
+    function areGreaterThanOrEqualTo(uint256[] memory arr, uint256 value) internal pure returns (bool) {
+        for (uint256 i = 0; i < arr.length; i++) {
+            if (arr[i] < value) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @dev Determines whether all of the elements in the given array are less than the specified value.
+     *
+     * @param arr the array to check the elements of
+     * @param value the value to compare the elements of the array to
+     * @return true if all of the elements in the array are less than the specified value, false otherwise
+     */
+    function areLessThan(uint256[] memory arr, uint256 value) internal pure returns (bool) {
+        for (uint256 i = 0; i < arr.length; i++) {
+            if (arr[i] >= value) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @dev Determines whether all of the elements in the given array are less than or equal to the specified value.
+     *
+     * @param arr the array to check the elements of
+     * @param value the value to compare the elements of the array to
+     * @return true if all of the elements in the array are less than or equal to the specified value, false otherwise
+     */
+    function areLessThanOrEqualTo(uint256[] memory arr, uint256 value) internal pure returns (bool) {
+        for (uint256 i = 0; i < arr.length; i++) {
+            if (arr[i] > value) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * @dev Gets the median value of the elements in the given array. For arrays with an odd number of elements, returns the element at the middle index. For arrays with an even number of elements, returns the average of the two middle elements.
      *
      * @param arr the array to get the median value from

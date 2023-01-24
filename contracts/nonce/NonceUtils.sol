@@ -30,7 +30,7 @@ library NonceUtils {
     // @return bytes32 hash using the next nonce value
     function getNextKey(DataStore dataStore) internal returns (bytes32) {
         uint256 nonce = incrementNonce(dataStore);
-        bytes32 key = keccak256(abi.encode(nonce));
+        bytes32 key = keccak256(abi.encode(address(dataStore), nonce));
 
         return key;
     }

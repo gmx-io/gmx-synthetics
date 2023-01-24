@@ -27,7 +27,7 @@ library Order {
         MarketIncrease,
         // @dev LimitIncrease: increase position if the triggerPrice is reached and the acceptablePrice can be fulfilled
         LimitIncrease,
-        // @dev MarketDecrease: decrease position at the curent market price
+        // @dev MarketDecrease: decrease position at the current market price
         // the order will be cancelled if the position cannot be decreased at the acceptablePrice
         MarketDecrease,
         // @dev LimitDecrease: decrease position if the triggerPrice is reached and the acceptablePrice can be fulfilled
@@ -38,18 +38,22 @@ library Order {
         Liquidation
     }
 
+    enum DecreasePositionSwapType {
+        NoSwap,
+        SwapPnlTokenToCollateralToken,
+        SwapCollateralTokenToPnlToken
+    }
+
     // @dev there is a limit on the number of fields a struct can have when being passed
     // or returned as a memory variable which can cause "Stack too deep" errors
     // use sub-structs to avoid this issue
     // @param addresses address values
     // @param numbers number values
     // @param flags boolean values
-    // @param data for any additional data
     struct Props {
         Addresses addresses;
         Numbers numbers;
         Flags flags;
-        bytes data;
     }
 
     // @param account the account of the order
@@ -62,7 +66,7 @@ library Order {
     // for decrease orders, initialCollateralToken is the collateral token of the position
     // withdrawn collateral from the decrease of the position will be swapped
     // through the specified swapPath
-    // for swaps, initialCollateralToken is the initial token sent it for the swap
+    // for swaps, initialCollateralToken is the initial token sent for the swap
     // @param swapPath an array of market addresses to swap through
     struct Addresses {
         address account;
@@ -80,6 +84,7 @@ library Order {
     // collateralToken to withdraw
     // for swaps, initialCollateralDeltaAmount is the amount of initialCollateralToken sent
     // in for the swap
+    // @param orderType the order type
     // @param triggerPrice the trigger price for non-market orders
     // @param acceptablePrice the acceptable execution price for increase / decrease orders
     // @param executionFee the execution fee for keepers
@@ -87,6 +92,8 @@ library Order {
     // @param minOutputAmount the minimum output amount for decrease orders and swaps
     // @param updatedAtBlock the block at which the order was last updated
     struct Numbers {
+        OrderType orderType;
+        DecreasePositionSwapType decreasePositionSwapType;
         uint256 sizeDeltaUsd;
         uint256 initialCollateralDeltaAmount;
         uint256 triggerPrice;
@@ -97,13 +104,11 @@ library Order {
         uint256 updatedAtBlock;
     }
 
-    // @param orderType the order type
     // @param isLong whether the order is for a long or short
     // @param shouldUnwrapNativeToken whether to unwrap native tokens before
     // transferring to the user
     // @param isFrozen whether the order is frozen
     struct Flags {
-        OrderType orderType;
         bool isLong;
         bool shouldUnwrapNativeToken;
         bool isFrozen;
@@ -191,6 +196,28 @@ library Order {
     // @param value the value to set to
     function setSwapPath(Props memory props, address[] memory value) internal pure {
         props.addresses.swapPath = value;
+    }
+
+    // @dev the order type
+    // @param props Props
+    // @return the order type
+    function orderType(Props memory props) internal pure returns (OrderType) {
+        return props.numbers.orderType;
+    }
+
+    // @dev set the order type
+    // @param props Props
+    // @param value the value to set to
+    function setOrderType(Props memory props, OrderType value) internal pure {
+        props.numbers.orderType = value;
+    }
+
+    function decreasePositionSwapType(Props memory props) internal pure returns (DecreasePositionSwapType) {
+        return props.numbers.decreasePositionSwapType;
+    }
+
+    function setDecreasePositionSwapType(Props memory props, DecreasePositionSwapType value) internal pure {
+        props.numbers.decreasePositionSwapType = value;
     }
 
     // @dev the order sizeDeltaUsd
@@ -303,20 +330,6 @@ library Order {
     // @param value the value to set to
     function setUpdatedAtBlock(Props memory props, uint256 value) internal pure {
         props.numbers.updatedAtBlock = value;
-    }
-
-    // @dev the order type
-    // @param props Props
-    // @return the order type
-    function orderType(Props memory props) internal pure returns (OrderType) {
-        return props.flags.orderType;
-    }
-
-    // @dev set the order type
-    // @param props Props
-    // @param value the value to set to
-    function setOrderType(Props memory props, OrderType value) internal pure {
-        props.flags.orderType = value;
     }
 
     // @dev whether the order is for a long or short

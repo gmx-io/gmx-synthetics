@@ -1,11 +1,20 @@
 import { BigNumberish } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { decimalToFloat } from "../utils/math";
+import { expandDecimals, decimalToFloat } from "../utils/math";
 
 export type BaseMarketConfig = {
   reserveFactorLongs: BigNumberish;
   reserveFactorShorts: BigNumberish;
+
+  minCollateralFactorForLongs: BigNumberish;
+  minCollateralFactorForShorts: BigNumberish;
+
+  maxLongTokenPoolAmount: BigNumberish;
+  maxShortTokenPoolAmount: BigNumberish;
+
+  maxOpenInterestForLongs: BigNumberish;
+  maxOpenInterestForShorts: BigNumberish;
 
   maxPnlFactorLongs: BigNumberish;
   maxPnlFactorShorts: BigNumberish;
@@ -35,6 +44,15 @@ const baseMarketConfig: BaseMarketConfig = {
   reserveFactorLongs: decimalToFloat(5, 1), // 50%,
   reserveFactorShorts: decimalToFloat(5, 1), // 50%,
 
+  minCollateralFactorForLongs: decimalToFloat(1, 2), // 1%
+  minCollateralFactorForShorts: decimalToFloat(1, 2), // 1%
+
+  maxLongTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
+  maxShortTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
+
+  maxOpenInterestForLongs: decimalToFloat(1 * 1000 * 1000 * 1000),
+  maxOpenInterestForShorts: decimalToFloat(1 * 1000 * 1000 * 1000),
+
   maxPnlFactorLongs: decimalToFloat(5, 1), // 50%
   maxPnlFactorShorts: decimalToFloat(5, 1), // 50%
 
@@ -60,6 +78,15 @@ const baseMarketConfig: BaseMarketConfig = {
 const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
   reserveFactorLongs: decimalToFloat(5, 1), // 50%,
   reserveFactorShorts: decimalToFloat(5, 1), // 50%,
+
+  minCollateralFactorForLongs: decimalToFloat(1, 2), // 1%
+  minCollateralFactorForShorts: decimalToFloat(1, 2), // 1%
+
+  maxLongTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
+  maxShortTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
+
+  maxOpenInterestForLongs: decimalToFloat(1 * 1000 * 1000 * 1000),
+  maxOpenInterestForShorts: decimalToFloat(1 * 1000 * 1000 * 1000),
 
   maxPnlFactorLongs: decimalToFloat(5, 1), // 50%
   maxPnlFactorShorts: decimalToFloat(5, 1), // 50%
@@ -93,12 +120,18 @@ const config: {
       tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
     },
     {
+      tokens: ["<EMPTY>", "WETH", "USDC"], // indexToken, longToken, shortToken
+    },
+    {
       tokens: ["SOL", "WETH", "USDC"],
     },
   ],
   localhost: [
     {
       tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
+    },
+    {
+      tokens: ["<EMPTY>", "WETH", "USDC"], // indexToken, longToken, shortToken
     },
     {
       tokens: ["SOL", "WETH", "USDC"],

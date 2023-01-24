@@ -3,18 +3,19 @@ import { expect } from "chai";
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
-import { OrderType, handleOrder } from "../../utils/order";
+import { OrderType, getOrderCount, handleOrder } from "../../utils/order";
+import { getAccountPositionCount } from "../../utils/position";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.DecreaseOrder", () => {
   let fixture;
   let user0;
-  let dataStore, orderStore, positionStore, ethUsdMarket, wnt, usdc;
+  let dataStore, ethUsdMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0 } = fixture.accounts);
-    ({ dataStore, orderStore, positionStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ dataStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -25,7 +26,7 @@ describe("Exchange.DecreaseOrder", () => {
   });
 
   it("executeOrder", async () => {
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(0);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
 
     await handleOrder(fixture, {
       create: {
@@ -43,8 +44,8 @@ describe("Exchange.DecreaseOrder", () => {
       },
     });
 
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(1);
-    expect(await orderStore.getOrderCount()).eq(0);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
+    expect(await getOrderCount(dataStore)).eq(0);
 
     await handleOrder(fixture, {
       create: {
@@ -64,8 +65,8 @@ describe("Exchange.DecreaseOrder", () => {
       },
     });
 
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(0);
-    expect(await orderStore.getOrderCount()).eq(0);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
+    expect(await getOrderCount(dataStore)).eq(0);
   });
 
   it("executeOrder with price impact", async () => {
@@ -76,7 +77,7 @@ describe("Exchange.DecreaseOrder", () => {
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
     await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(0);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
 
     await handleOrder(fixture, {
       create: {
@@ -84,7 +85,7 @@ describe("Exchange.DecreaseOrder", () => {
         initialCollateralToken: wnt,
         initialCollateralDeltaAmount: expandDecimals(10, 18),
         sizeDeltaUsd: decimalToFloat(200 * 1000),
-        acceptablePrice: expandDecimals(5001, 12),
+        acceptablePrice: expandDecimals(5050, 12),
         orderType: OrderType.MarketIncrease,
         isLong: true,
       },
@@ -94,8 +95,8 @@ describe("Exchange.DecreaseOrder", () => {
       },
     });
 
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(1);
-    expect(await orderStore.getOrderCount()).eq(0);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
+    expect(await getOrderCount(dataStore)).eq(0);
 
     await handleOrder(fixture, {
       create: {
@@ -103,7 +104,7 @@ describe("Exchange.DecreaseOrder", () => {
         initialCollateralToken: wnt,
         initialCollateralDeltaAmount: 0,
         sizeDeltaUsd: decimalToFloat(200 * 1000),
-        acceptablePrice: 0,
+        acceptablePrice: expandDecimals(4950, 12),
         orderType: OrderType.MarketDecrease,
         isLong: true,
         gasUsageLabel: "orderHandler.createOrder",
@@ -115,7 +116,7 @@ describe("Exchange.DecreaseOrder", () => {
       },
     });
 
-    expect(await positionStore.getAccountPositionCount(user0.address)).eq(0);
-    expect(await orderStore.getOrderCount()).eq(0);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
+    expect(await getOrderCount(dataStore)).eq(0);
   });
 });

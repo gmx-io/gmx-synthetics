@@ -1,51 +1,18 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { grantRoleIfNotGranted } from "../utils/role";
+import { createDeployFunction } from "../utils/deploy";
 
-const func = async ({ getNamedAccounts, deployments }: HardhatRuntimeEnvironment) => {
-  const { deploy, get } = deployments;
-  const { deployer } = await getNamedAccounts();
+const constructorContracts = ["RoleStore", "DataStore", "EventEmitter", "WithdrawalVault", "Oracle"];
 
-  const roleStore = await get("RoleStore");
-  const dataStore = await get("DataStore");
-  const eventEmitter = await get("EventEmitter");
-  const withdrawalStore = await get("WithdrawalStore");
-  const marketStore = await get("MarketStore");
-  const oracle = await get("Oracle");
-  const feeReceiver = await get("FeeReceiver");
-  const withdrawalUtils = await get("WithdrawalUtils");
-  const gasUtils = await get("GasUtils");
+const func = createDeployFunction({
+  contractName: "WithdrawalHandler",
+  dependencyNames: constructorContracts,
+  getDeployArgs: async ({ dependencyContracts }) => {
+    return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
+  },
+  libraryNames: ["WithdrawalUtils", "WithdrawalStoreUtils", "GasUtils"],
+  afterDeploy: async ({ deployedContract }) => {
+    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
+  },
+});
 
-  const { address } = await deploy("WithdrawalHandler", {
-    from: deployer,
-    log: true,
-    args: [
-      roleStore.address,
-      dataStore.address,
-      eventEmitter.address,
-      withdrawalStore.address,
-      marketStore.address,
-      oracle.address,
-      feeReceiver.address,
-    ],
-    libraries: {
-      WithdrawalUtils: withdrawalUtils.address,
-      GasUtils: gasUtils.address,
-    },
-  });
-
-  await grantRoleIfNotGranted(address, "CONTROLLER");
-};
-
-func.tags = ["WithdrawalHandler"];
-func.dependencies = [
-  "RoleStore",
-  "DataStore",
-  "EventEmitter",
-  "WithdrawalStore",
-  "MarketStore",
-  "Oracle",
-  "FeeReceiver",
-  "WithdrawalUtils",
-  "GasUtils",
-];
 export default func;
