@@ -43,6 +43,7 @@ export async function deployFixture() {
 
   const oracleSalt = hashData(["uint256", "string"], [chainId, "xget-oracle-v1"]);
 
+  const config = await hre.ethers.getContract("Config");
   const reader = await hre.ethers.getContract("Reader");
   const roleStore = await hre.ethers.getContract("RoleStore");
   const dataStore = await hre.ethers.getContract("DataStore");
@@ -122,6 +123,7 @@ export async function deployFixture() {
       signers: [signer0, signer1, signer2, signer3, signer4, signer5, signer6],
     },
     contracts: {
+      config,
       reader,
       roleStore,
       dataStore,

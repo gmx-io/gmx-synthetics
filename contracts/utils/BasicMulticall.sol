@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/Address.sol";
+import "./RevertUtils.sol";
 
 /**
  * @title BasicMulticall
@@ -18,12 +18,8 @@ abstract contract BasicMulticall {
             (bool success, bytes memory result) = address(this).delegatecall(data[i]);
 
             if (!success) {
-                // To get the revert reason, referenced from https://ethereum.stackexchange.com/a/83577
-                if (result.length < 68) revert();
-                assembly {
-                    result := add(result, 0x04)
-                }
-                revert(abi.decode(result, (string)));
+                string memory revertMessage = RevertUtils.getRevertMessage(result);
+                revert(revertMessage);
             }
 
             results[i] = result;

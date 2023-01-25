@@ -106,7 +106,7 @@ library Keys {
     // @dev key for the amount of gas to forward for native token transfers
     bytes32 public constant NATIVE_TOKEN_TRANSFER_GAS_LIMIT = keccak256(abi.encode("NATIVE_TOKEN_TRANSFER_GAS_LIMIT"));
     // @dev key for the maximum request block age, after which the request will be considered expired
-    bytes32 public constant REQUEST_EXPIRATION_AGE = keccak256(abi.encode("REQUEST_EXPIRATION_AGE"));
+    bytes32 public constant REQUEST_EXPIRATION_BLOCK_AGE = keccak256(abi.encode("REQUEST_EXPIRATION_BLOCK_AGE"));
 
     bytes32 public constant MAX_CALLBACK_GAS_LIMIT = keccak256(abi.encode("MAX_CALLBACK_GAS_LIMIT"));
 

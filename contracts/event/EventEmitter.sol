@@ -28,7 +28,7 @@ contract EventEmitter is RoleModule {
         address msgSender,
         string indexed eventNameHash,
         string eventName,
-        bytes32 indexed key1,
+        bytes32 indexed topic1,
         EventUtils.EventLogData eventData
     );
 
@@ -36,8 +36,8 @@ contract EventEmitter is RoleModule {
         address msgSender,
         string indexed eventNameHash,
         string eventName,
-        bytes32 indexed key1,
-        bytes32 indexed key2,
+        bytes32 indexed topic1,
+        bytes32 indexed topic2,
         EventUtils.EventLogData eventData
     );
 
@@ -57,30 +57,30 @@ contract EventEmitter is RoleModule {
 
     function emitEventLog1(
         string memory eventName,
-        bytes32 key1,
+        bytes32 topic1,
         EventUtils.EventLogData memory eventData
     ) external onlyController {
         emit EventLog1(
             msg.sender,
             eventName,
             eventName,
-            key1,
+            topic1,
             eventData
         );
     }
 
     function emitEventLog2(
         string memory eventName,
-        bytes32 key1,
-        bytes32 key2,
+        bytes32 topic1,
+        bytes32 topic2,
         EventUtils.EventLogData memory eventData
     ) external onlyController {
         emit EventLog2(
             msg.sender,
             eventName,
             eventName,
-            key1,
-            key2,
+            topic1,
+            topic2,
             eventData
         );
     }
