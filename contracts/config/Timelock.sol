@@ -6,9 +6,10 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "../role/RoleModule.sol";
 import "../event/EventEmitter.sol";
+import "../utils/BasicMulticall.sol";
 
 // @title Timelock
-contract Timelock is ReentrancyGuard, RoleModule {
+contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.IntItems;
