@@ -34,11 +34,28 @@ export type BaseMarketConfig = {
   positiveSwapImpactFactor: BigNumberish;
   negativeSwapImpactFactor: BigNumberish;
   swapImpactExponentFactor: BigNumberish;
+
+  minCollateralUsd: BigNumberish;
 };
 
-export type MarketConfig = Partial<BaseMarketConfig> & {
-  tokens: [indexToken: string, longToken: string, shortToken: string];
-};
+export type MarketConfig = Partial<BaseMarketConfig> &
+  (
+    | {
+        tokens: {
+          indexToken: string;
+          longToken: string;
+          shortToken: string;
+        };
+        swapOnly?: never;
+      }
+    | {
+        tokens: {
+          longToken: string;
+          shortToken: string;
+        };
+        swapOnly: true;
+      }
+  );
 
 const baseMarketConfig: BaseMarketConfig = {
   reserveFactorLongs: decimalToFloat(5, 1), // 50%,
@@ -96,6 +113,11 @@ const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
 
   positiveMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%
   negativeMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%
+
+  swapFeeFactor: decimalToFloat(1, 3), // 0.1%,
+  positiveSwapImpactFactor: decimalToFloat(2, 5), // 0.002 %
+  negativeSwapImpactFactor: decimalToFloat(1, 5), // 0.001 %
+  swapImpactExponentFactor: decimalToFloat(2, 0), // 2
 };
 
 const config: {
@@ -106,35 +128,37 @@ const config: {
   avalanche: [],
   avalancheFuji: [
     {
-      tokens: ["WAVAX", "WAVAX", "USDC"], // indexToken, longToken, shortToken
+      tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" },
     },
     {
-      tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
+      tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
     },
     {
-      tokens: ["SOL", "WETH", "USDC"], // indexToken, longToken, shortToken
+      tokens: { indexToken: "SOL", longToken: "WETH", shortToken: "USDC" },
     },
   ],
   hardhat: [
     {
-      tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
+      tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
     },
     {
-      tokens: ["<EMPTY>", "WETH", "USDC"], // indexToken, longToken, shortToken
+      tokens: { longToken: "WETH", shortToken: "USDC" },
+      swapOnly: true,
     },
     {
-      tokens: ["SOL", "WETH", "USDC"],
+      tokens: { indexToken: "SOL", longToken: "WETH", shortToken: "USDC" },
     },
   ],
   localhost: [
     {
-      tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
+      tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
     },
     {
-      tokens: ["<EMPTY>", "WETH", "USDC"], // indexToken, longToken, shortToken
+      tokens: { longToken: "WETH", shortToken: "USDC" },
+      swapOnly: true,
     },
     {
-      tokens: ["SOL", "WETH", "USDC"],
+      tokens: { indexToken: "SOL", longToken: "WETH", shortToken: "USDC" },
     },
   ],
 };
@@ -145,9 +169,10 @@ export default async function (hre: HardhatRuntimeEnvironment) {
   const defaultMarketConfig = hre.network.name === "hardhat" ? hardhatBaseMarketConfig : baseMarketConfig;
   if (markets) {
     for (const market of markets) {
-      for (const tokenSymbol of market.tokens) {
+      const tokenSymbols = Object.values(market.tokens);
+      for (const tokenSymbol of tokenSymbols) {
         if (!tokens[tokenSymbol]) {
-          throw new Error(`Market ${market.tokens.join(":")} uses token that does not exist: ${tokenSymbol}`);
+          throw new Error(`Market ${tokenSymbols.join(":")} uses token that does not exist: ${tokenSymbol}`);
         }
       }
 

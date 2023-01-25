@@ -108,12 +108,13 @@ contract Reader {
     function getPositionFees(
         DataStore dataStore,
         IReferralStorage referralStorage,
-        Position.Props memory position,
+        bytes32 positionKey,
         Price.Props memory collateralTokenPrice,
         address longToken,
         address shortToken,
         uint256 sizeDeltaUsd
     ) external view returns (PositionPricingUtils.PositionFees memory) {
+        Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
         return
             PositionPricingUtils.getPositionFees(
                 dataStore,

@@ -1,5 +1,6 @@
+import { ethers } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { EMTPY_TOKEN_SYMBOL, getSyntheticTokenAddress } from "../utils/token";
+import { getSyntheticTokenAddress } from "../utils/token";
 
 // https://docs.chain.link/data-feeds/price-feeds/addresses?network=avalanche
 
@@ -136,20 +137,15 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensCo
 
   for (const [tokenSymbol, token] of Object.entries(tokens as TokensConfig)) {
     if (token.synthetic) {
-      token.address = getSyntheticTokenAddress(tokenSymbol);
+      (token as any).address = getSyntheticTokenAddress(tokenSymbol);
     }
     if (token.address) {
-      token.address = ethers.utils.getAddress(token.address);
+      (token as any).address = ethers.utils.getAddress(token.address);
     }
     if (!hre.network.live) {
-      token.deploy = true;
+      (token as any).deploy = true;
     }
   }
-
-  tokens[EMTPY_TOKEN_SYMBOL] = {
-    synthetic: true,
-    address: ethers.constants.AddressZero,
-  };
 
   return tokens;
 }

@@ -1,8 +1,6 @@
 import { contractAt } from "./deploy";
 import { hashData } from "./hash";
 
-export const EMTPY_TOKEN_SYMBOL = "<EMPTY>";
-
 export async function getBalanceOf(tokenAddress, account) {
   const token = await contractAt("MarketToken", tokenAddress);
   return await token.balanceOf(account);

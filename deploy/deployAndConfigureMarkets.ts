@@ -2,6 +2,16 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { getMarketTokenAddress } from "../utils/market";
 import * as keys from "../utils/keys";
 import { setUintIfDifferent } from "../utils/dataStore";
+import { ethers } from "ethers";
+
+function getMarketTokenAddresses(marketConfig, tokens) {
+  const indexToken = marketConfig.swapOnly
+    ? ethers.constants.AddressZero
+    : tokens[marketConfig.tokens.indexToken].address;
+  const longToken = tokens[marketConfig.tokens.longToken].address;
+  const shortToken = tokens[marketConfig.tokens.shortToken].address;
+  return [indexToken, longToken, shortToken];
+}
 
 const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRuntimeEnvironment) => {
   const { execute, get, log } = deployments;
@@ -15,7 +25,7 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
   const dataStore = await get("DataStore");
 
   for (const marketConfig of markets) {
-    const [indexToken, longToken, shortToken] = marketConfig.tokens.map((symbol) => tokens[symbol].address);
+    const [indexToken, longToken, shortToken] = getMarketTokenAddresses(marketConfig, tokens);
 
     const marketToken = getMarketTokenAddress(
       indexToken,
@@ -27,15 +37,15 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
     );
     const code = await ethers.provider.getCode(marketToken);
     if (code !== "0x") {
-      log("market %s already exists at %s", marketConfig.tokens.join(":"), marketToken);
+      log("market %s:%s:%s already exists at %s", indexToken, longToken, shortToken, marketToken);
       continue;
     }
 
-    log("creating market %s", marketConfig.tokens.join(":"));
+    log("creating market %s:%s:%s", indexToken, longToken, shortToken);
     await execute("MarketFactory", { from: deployer, log: true }, "createMarket", indexToken, longToken, shortToken);
   }
 
-  async function setReserveFactor(marketToken: symbol, isLong: boolean, reserveFactor: number) {
+  async function setReserveFactor(marketToken: string, isLong: boolean, reserveFactor: number) {
     const key = keys.reserveFactorKey(marketToken, isLong);
     await setUintIfDifferent(
       key,
@@ -44,17 +54,17 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
     );
   }
 
-  async function setMinCollateralFactor(marketToken: symbol, minCollateralFactor: number, isLong: boolean) {
+  async function setMinCollateralFactor(marketToken: string, minCollateralFactor: number, isLong: boolean) {
     const key = keys.minCollateralFactorKey(marketToken, isLong);
     await setUintIfDifferent(key, minCollateralFactor, `min collateral factor ${marketToken.toString()}`);
   }
 
-  async function setMaxPoolAmount(marketToken: symbol, token: string, maxPoolAmount: number) {
+  async function setMaxPoolAmount(marketToken: string, token: string, maxPoolAmount: number) {
     const key = keys.maxPoolAmountKey(marketToken, token);
     await setUintIfDifferent(key, maxPoolAmount, `max pool amount ${marketToken.toString()} ${token.toString()}`);
   }
 
-  async function setMaxOpenInterest(marketToken: symbol, isLong: boolean, maxOpenInterest: number) {
+  async function setMaxOpenInterest(marketToken: string, isLong: boolean, maxOpenInterest: number) {
     const key = keys.maxOpenInterestKey(marketToken, isLong);
     await setUintIfDifferent(
       key,
@@ -63,7 +73,7 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
     );
   }
 
-  async function setMaxPnlFactor(marketToken: symbol, isLong: boolean, maxPnlFactor: number) {
+  async function setMaxPnlFactor(marketToken: string, isLong: boolean, maxPnlFactor: number) {
     const key = keys.maxPnlFactorKey(marketToken, isLong);
     await setUintIfDifferent(
       key,
@@ -72,7 +82,7 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
     );
   }
 
-  async function setMaxPnlFactorForWithdrawals(marketToken: symbol, isLong: boolean, maxPnlFactor: number) {
+  async function setMaxPnlFactorForWithdrawals(marketToken: string, isLong: boolean, maxPnlFactor: number) {
     const key = keys.maxPnlFactorForWithdrawalsKey(marketToken, isLong);
     await setUintIfDifferent(
       key,
@@ -82,7 +92,7 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
   }
 
   for (const marketConfig of markets) {
-    const [indexToken, longToken, shortToken] = marketConfig.tokens.map((symbol: string) => tokens[symbol].address);
+    const [indexToken, longToken, shortToken] = getMarketTokenAddresses(marketConfig, tokens);
 
     const marketToken = getMarketTokenAddress(
       indexToken,

@@ -3,7 +3,7 @@ import hre from "hardhat";
 import { getMarketTokenAddress } from "../utils/market";
 import { bigNumberify, expandDecimals } from "../utils/math";
 import { WNT, ExchangeRouter, MintableToken } from "../typechain-types";
-import { OrderBaseUtils } from "../typechain-types/contracts/exchange/OrderHandler";
+import { BaseOrderUtils } from "../typechain-types/contracts/router/ExchangeRouter";
 
 const { ethers } = hre;
 
@@ -27,7 +27,7 @@ async function main() {
   const marketFactory = await ethers.getContract("MarketFactory");
   const roleStore = await ethers.getContract("RoleStore");
   const dataStore = await ethers.getContract("DataStore");
-  const orderStore = await ethers.getContract("OrderStore");
+  const orderVault = await ethers.getContract("OrderVault");
   const exchangeRouter: ExchangeRouter = await ethers.getContract("ExchangeRouter");
   const router = await ethers.getContract("Router");
 
@@ -76,7 +76,7 @@ async function main() {
   );
   console.log("market %s", wethUsdMarketAddress);
 
-  const params: OrderBaseUtils.CreateOrderParamsStruct = {
+  const params: BaseOrderUtils.CreateOrderParamsStruct = {
     addresses: {
       receiver: wallet.address,
       callbackContract: ethers.constants.AddressZero,
@@ -96,14 +96,15 @@ async function main() {
     orderType: 0, // MarketSwap
     isLong: false, // not relevant for market swap
     shouldUnwrapNativeToken: false, // not relevant for market swap
+    decreasePositionSwapType: 0, // not relevant for market swap
   };
   console.log("exchange router %s", exchangeRouter.address);
-  console.log("order store %s", orderStore.address);
+  console.log("order store %s", orderVault.address);
   console.log("creating MarketSwap order %s", JSON.stringify(params));
 
   const multicallArgs = [
-    exchangeRouter.interface.encodeFunctionData("sendWnt", [orderStore.address, executionFee]),
-    exchangeRouter.interface.encodeFunctionData("sendTokens", [weth.address, orderStore.address, swapAmount]),
+    exchangeRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, executionFee]),
+    exchangeRouter.interface.encodeFunctionData("sendTokens", [weth.address, orderVault.address, swapAmount]),
     exchangeRouter.interface.encodeFunctionData("createOrder", [params, ethers.constants.HashZero]),
   ];
   console.log("multicall args", multicallArgs);

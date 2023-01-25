@@ -15,6 +15,10 @@ contract MockPriceFeed is IPriceFeed {
         answer = _answer;
     }
 
+    function latestAnswer() external view returns (int256) {
+        return answer;
+    }
+
     // @dev get the latest data
     // @return (roundId, answer, startedAt, updatedAt, answeredInRound)
     function latestRoundData() external view returns (

@@ -19,20 +19,23 @@ import "./EventUtils.sol";
 contract EventEmitter is RoleModule {
     event EventLog(
         address msgSender,
-        string indexed eventName,
+        string indexed eventNameHash,
+        string eventName,
         EventUtils.EventLogData eventData
     );
 
     event EventLog1(
         address msgSender,
-        string indexed eventName,
+        string indexed eventNameHash,
+        string eventName,
         bytes32 indexed key1,
         EventUtils.EventLogData eventData
     );
 
     event EventLog2(
         address msgSender,
-        string indexed eventName,
+        string indexed eventNameHash,
+        string eventName,
         bytes32 indexed key1,
         bytes32 indexed key2,
         EventUtils.EventLogData eventData
@@ -47,6 +50,7 @@ contract EventEmitter is RoleModule {
         emit EventLog(
             msg.sender,
             eventName,
+            eventName,
             eventData
         );
     }
@@ -58,6 +62,7 @@ contract EventEmitter is RoleModule {
     ) external onlyController {
         emit EventLog1(
             msg.sender,
+            eventName,
             eventName,
             key1,
             eventData
@@ -72,6 +77,7 @@ contract EventEmitter is RoleModule {
     ) external onlyController {
         emit EventLog2(
             msg.sender,
+            eventName,
             eventName,
             key1,
             key2,
