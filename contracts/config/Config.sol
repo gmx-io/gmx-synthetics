@@ -41,7 +41,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     function setBool(bytes32 key, bytes memory data, bool value) external onlyConfigKeeper nonReentrant {
         _validateKey(key);
 
-        bytes32 fullKey = keccak256(abi.encode(key, data));
+        bytes32 fullKey = keccak256(bytes.concat(key, data));
 
         dataStore.setBool(fullKey, value);
 

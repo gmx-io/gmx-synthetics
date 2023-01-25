@@ -17,6 +17,8 @@ export const ACCOUNT_POSITION_LIST = hashString("ACCOUNT_POSITION_LIST");
 export const ORDER_LIST = hashString("ORDER_LIST");
 export const ACCOUNT_ORDER_LIST = hashString("ACCOUNT_ORDER_LIST");
 
+export const IS_MARKET_DISABLED = hashString("IS_MARKET_DISABLED");
+
 export const MIN_ORACLE_BLOCK_CONFIRMATIONS = hashString("MIN_ORACLE_BLOCK_CONFIRMATIONS");
 export const MAX_ORACLE_PRICE_AGE = hashString("MAX_ORACLE_PRICE_AGE");
 export const MIN_ORACLE_SIGNERS = hashString("MIN_ORACLE_SIGNERS");
@@ -68,6 +70,10 @@ export function accountPositionListKey(account) {
 
 export function accountOrderListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_ORDER_LIST, account]);
+}
+
+export function isMarketDisabledKey(market) {
+  return hashData(["bytes32", "address"], [IS_MARKET_DISABLED, market]);
 }
 
 export function tokenTransferGasLimit(token: string) {
