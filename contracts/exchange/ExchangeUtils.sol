@@ -15,7 +15,7 @@ library ExchangeUtils {
         uint256 createdAtBlock,
         string memory error
     ) internal view {
-        uint256 requestExpirationAge = dataStore.getUint(Keys.REQUEST_EXPIRATION_AGE);
+        uint256 requestExpirationAge = dataStore.getUint(Keys.REQUEST_EXPIRATION_BLOCK_AGE);
         if (Chain.currentBlockNumber() - createdAtBlock < requestExpirationAge) {
             revert(error);
         }

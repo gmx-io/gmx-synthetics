@@ -51,7 +51,8 @@ export const POSITION_IMPACT_EXPONENT_FACTOR = hashString("POSITION_IMPACT_EXPON
 export const MAX_POSITION_IMPACT_FACTOR = hashString("MAX_POSITION_IMPACT_FACTOR");
 export const POSITION_FEE_FACTOR = hashString("POSITION_FEE_FACTOR");
 
-export const EXECUTE_ADL_FEATURE = hashString("EXECUTE_ADL_FEATURE");
+export const LATEST_ADL_BLOCK = hashString("LATEST_ADL_BLOCK");
+export const IS_ADL_ENABLED = hashString("IS_ADL_ENABLED");
 
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
@@ -149,6 +150,10 @@ export function positionFeeFactorKey(market: string) {
   return hashData(["bytes32", "address"], [POSITION_FEE_FACTOR, market]);
 }
 
-export function executeAdlFeatureKey(module: string, orderType: number) {
-  return hashData(["bytes32", "address", "uint256"], [EXECUTE_ADL_FEATURE, module, orderType]);
+export function latestAdlBlockKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [LATEST_ADL_BLOCK, market, isLong]);
+}
+
+export function isAdlEnabledKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [IS_ADL_ENABLED, market, isLong]);
 }

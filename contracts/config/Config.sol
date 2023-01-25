@@ -199,7 +199,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedKeys[Keys.TOKEN_TRANSFER_GAS_LIMIT] = true;
         allowedKeys[Keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT] = true;
 
-        allowedKeys[Keys.REQUEST_EXPIRATION_AGE] = true;
+        allowedKeys[Keys.REQUEST_EXPIRATION_BLOCK_AGE] = true;
         allowedKeys[Keys.MIN_COLLATERAL_FACTOR] = true;
         allowedKeys[Keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER] = true;
         allowedKeys[Keys.MIN_COLLATERAL_USD] = true;

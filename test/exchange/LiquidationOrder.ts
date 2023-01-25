@@ -3,7 +3,8 @@ import { expect } from "chai";
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
-import { OrderType, getOrderCount, handleOrder, executeLiquidation } from "../../utils/order";
+import { OrderType, getOrderCount, handleOrder } from "../../utils/order";
+import { executeLiquidation } from "../../utils/liquidation";
 import { grantRole } from "../../utils/role";
 import { getAccountPositionCount } from "../../utils/position";
 

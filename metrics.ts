@@ -19,24 +19,23 @@ const metrics = new SolidityMetricsContainer("metricsContainerName", options);
 async function run() {
   const files = await getAllFiles("./contracts").toArray();
 
-  const fileFilter = undefined;
-  // const fileFilter = {
-  //   "./contracts/deposit/DepositStoreUtils.sol": true,
-  //   "./contracts/deposit/DepositEventUtils.sol": true,
-  //   "./contracts/market/MarketStoreUtils.sol": true,
-  //   "./contracts/market/MarketEventUtils.sol": true,
-  //   "./contracts/order/OrderStoreUtils.sol": true,
-  //   "./contracts/order/OrderEventUtils.sol": true,
-  //   "./contracts/position/PositionStoreUtils.sol": true,
-  //   "./contracts/position/PositionEventUtils.sol": true,
-  //   "./contracts/referral/ReferralEventUtils.sol": true,
-  //   "./contracts/withdrawal/WithdrawalStoreUtils.sol": true,
-  //   "./contracts/withdrawal/WithdrawalEventUtils.sol": true,
-  // };
+  const skipFiles = ["./contracts/mock", "./contracts/reader", "./contracts/test"];
 
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
-    if (fileFilter && !fileFilter[file]) {
+
+    let shouldSkip = false;
+
+    for (let j = 0; j < skipFiles.length; j++) {
+      const skipFile = skipFiles[j];
+      if (file.includes(skipFile)) {
+        shouldSkip = true;
+        break;
+      }
+    }
+
+    if (shouldSkip) {
+      console.info("skipping", file);
       continue;
     }
 

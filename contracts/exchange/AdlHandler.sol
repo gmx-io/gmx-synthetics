@@ -8,6 +8,7 @@ import "./BaseOrderHandler.sol";
 // @dev Contract to handle adls
 contract AdlHandler is BaseOrderHandler {
     using SafeCast for uint256;
+    using SafeCast for int256;
     using Order for Order.Props;
     using Array for uint256[];
 
@@ -18,6 +19,7 @@ contract AdlHandler is BaseOrderHandler {
         uint256[] minOracleBlockNumbers;
         uint256[] maxOracleBlockNumbers;
         bytes32 key;
+        bool shouldAllowAdl;
         int256 pnlToPoolFactor;
         int256 nextPnlToPoolFactor;
         uint256 maxPnlFactorForWithdrawals;
@@ -109,7 +111,7 @@ contract AdlHandler is BaseOrderHandler {
             cache.maxOracleBlockNumbers
         );
 
-        (bool shouldAllowAdl, , ) = AdlUtils.shouldAllowAdl(
+        (cache.shouldAllowAdl, cache.pnlToPoolFactor, /* maxPnlFactor */) = AdlUtils.shouldAllowAdl(
             dataStore,
             oracle,
             market,
@@ -117,7 +119,7 @@ contract AdlHandler is BaseOrderHandler {
             false
         );
 
-        if (shouldAllowAdl) {
+        if (!cache.shouldAllowAdl) {
             revert("AdlHandler: ADL not required");
         }
 
