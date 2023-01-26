@@ -66,7 +66,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     function setAddress(bytes32 key, bytes memory data, address value) external onlyConfigKeeper nonReentrant {
         _validateKey(key);
 
-        bytes32 fullKey = keccak256(abi.encode(key, data));
+        bytes32 fullKey = keccak256(bytes.concat(key, data));
 
         dataStore.setAddress(fullKey, value);
 
@@ -91,7 +91,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     function setBytes32(bytes32 key, bytes memory data, bytes32 value) external onlyConfigKeeper nonReentrant {
         _validateKey(key);
 
-        bytes32 fullKey = keccak256(abi.encode(key, data));
+        bytes32 fullKey = keccak256(bytes.concat(key, data));
 
         dataStore.setBytes32(fullKey, value);
 
@@ -114,7 +114,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     function setUint(bytes32 key, bytes memory data, uint256 value) external onlyConfigKeeper nonReentrant {
         _validateKey(key);
 
-        bytes32 fullKey = keccak256(abi.encode(key, data));
+        bytes32 fullKey = keccak256(bytes.concat(key, data));
 
         _validateRange(key, value);
 
@@ -141,7 +141,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     function setInt(bytes32 key, bytes memory data, int256 value) external onlyConfigKeeper nonReentrant {
         _validateKey(key);
 
-        bytes32 fullKey = keccak256(abi.encode(key, data));
+        bytes32 fullKey = keccak256(bytes.concat(key, data));
 
         dataStore.setInt(fullKey, value);
 
