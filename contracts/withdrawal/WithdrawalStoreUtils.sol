@@ -32,6 +32,9 @@ library WithdrawalStoreUtils {
 
     function get(DataStore dataStore, bytes32 key) external view returns (Withdrawal.Props memory) {
         Withdrawal.Props memory withdrawal;
+        if (!dataStore.containsBytes32(Keys.WITHDRAWAL_LIST, key)) {
+            return withdrawal;
+        }
 
         withdrawal.setAccount(dataStore.getAddress(
             keccak256(abi.encode(key, ACCOUNT))

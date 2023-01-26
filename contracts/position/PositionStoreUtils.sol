@@ -31,6 +31,9 @@ library PositionStoreUtils {
 
     function get(DataStore dataStore, bytes32 key) external view returns (Position.Props memory) {
         Position.Props memory position;
+        if (!dataStore.containsBytes32(Keys.POSITION_LIST, key)) {
+            return position;
+        }
 
         position.setAccount(dataStore.getAddress(
             keccak256(abi.encode(key, ACCOUNT))

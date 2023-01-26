@@ -9,12 +9,12 @@ import { logGasUsage } from "../../utils/gas";
 describe("MarketStoreUtils", () => {
   let fixture;
   let accountList;
-  let dataStore, roleStore, reader, marketStoreUtils, marketStoreUtilsTest, ethUsdMarket, solUsdMarket;
+  let dataStore, roleStore, reader, marketStoreUtils, marketStoreUtilsTest;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ accountList } = fixture);
-    ({ dataStore, roleStore, reader, marketStoreUtils, ethUsdMarket, solUsdMarket } = fixture.contracts);
+    ({ dataStore, roleStore, reader, marketStoreUtils } = fixture.contracts);
 
     marketStoreUtilsTest = await deployContract("MarketStoreUtilsTest", [], {
       libraries: {

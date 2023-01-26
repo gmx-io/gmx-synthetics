@@ -38,6 +38,9 @@ library OrderStoreUtils {
 
     function get(DataStore dataStore, bytes32 key) external view returns (Order.Props memory) {
         Order.Props memory order;
+        if (!dataStore.containsBytes32(Keys.ORDER_LIST, key)) {
+            return order;
+        }
 
         order.setAccount(dataStore.getAddress(
             keccak256(abi.encode(key, ACCOUNT))

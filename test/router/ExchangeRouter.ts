@@ -4,21 +4,43 @@ import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { logGasUsage } from "../../utils/gas";
 import { getDepositKeys } from "../../utils/deposit";
+import { getWithdrawalKeys } from "../../utils/withdrawal";
 import { OrderType, DecreasePositionSwapType, getOrderKeys } from "../../utils/order";
+
+import * as keys from "../../utils/keys";
 
 describe("ExchangeRouter", () => {
   const { provider } = ethers;
 
   let fixture;
   let user0, user1, user2;
-  let reader, dataStore, depositVault, orderVault, router, exchangeRouter, ethUsdMarket, ethUsdSpotOnlyMarket, usdc;
+  let reader,
+    dataStore,
+    depositVault,
+    orderVault,
+    withdrawalVault,
+    router,
+    exchangeRouter,
+    ethUsdMarket,
+    ethUsdSpotOnlyMarket,
+    usdc;
   const executionFee = expandDecimals(1, 18);
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ reader, dataStore, depositVault, orderVault, router, exchangeRouter, ethUsdMarket, ethUsdSpotOnlyMarket, usdc } =
-      fixture.contracts);
+    ({
+      reader,
+      dataStore,
+      depositVault,
+      orderVault,
+      withdrawalVault,
+      router,
+      exchangeRouter,
+      ethUsdMarket,
+      ethUsdSpotOnlyMarket,
+      usdc,
+    } = fixture.contracts);
   });
 
   it("createDeposit", async () => {
@@ -114,6 +136,7 @@ describe("ExchangeRouter", () => {
 
     const block = await provider.getBlock();
     const orderKeys = await getOrderKeys(dataStore, 0, 1);
+    console.log("orderKeys", orderKeys[0]);
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
     expect(order.addresses.account).eq(user0.address);
@@ -140,6 +163,54 @@ describe("ExchangeRouter", () => {
     await logGasUsage({
       tx,
       label: "exchangeRouter.createOrder",
+    });
+  });
+
+  it("createWithdrawal", async () => {
+    const tx = await exchangeRouter.connect(user0).multicall(
+      [
+        exchangeRouter.interface.encodeFunctionData("sendWnt", [withdrawalVault.address, expandDecimals(1, 18)]),
+        exchangeRouter.interface.encodeFunctionData("createWithdrawal", [
+          {
+            receiver: user1.address,
+            callbackContract: user2.address,
+            market: ethUsdMarket.marketToken,
+            longTokenSwapPath: [],
+            shortTokenSwapPath: [],
+            marketTokenAmount: 700,
+            minLongTokenAmount: 800,
+            minShortTokenAmount: 900,
+            shouldUnwrapNativeToken: true,
+            executionFee,
+            callbackGasLimit: "200000",
+          },
+        ]),
+      ],
+      { value: expandDecimals(1, 18) }
+    );
+
+    const block = await provider.getBlock();
+    const withdrawalKeys = await getWithdrawalKeys(dataStore, 0, 1);
+    const withdrawal = await reader.getWithdrawal(dataStore.address, withdrawalKeys[0]);
+
+    expect(withdrawal.addresses.account).eq(user0.address);
+    expect(withdrawal.addresses.receiver).eq(user1.address);
+    expect(withdrawal.addresses.callbackContract).eq(user2.address);
+    expect(withdrawal.addresses.market).eq(ethUsdMarket.marketToken);
+    expect(withdrawal.addresses.longTokenSwapPath).deep.eq([]);
+    expect(withdrawal.addresses.shortTokenSwapPath).deep.eq([]);
+
+    expect(withdrawal.numbers.marketTokenAmount).eq(700);
+    expect(withdrawal.numbers.minLongTokenAmount).eq(800);
+    expect(withdrawal.numbers.minShortTokenAmount).eq(900);
+    expect(withdrawal.numbers.updatedAtBlock).eq(block.number);
+    expect(withdrawal.numbers.executionFee).eq(expandDecimals(1, 18));
+    expect(withdrawal.numbers.callbackGasLimit).eq("200000");
+    expect(withdrawal.flags.shouldUnwrapNativeToken).eq(true);
+
+    await logGasUsage({
+      tx,
+      label: "exchangeRouter.createWithdrawal",
     });
   });
 });

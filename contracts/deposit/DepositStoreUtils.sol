@@ -34,6 +34,9 @@ library DepositStoreUtils {
 
     function get(DataStore dataStore, bytes32 key) external view returns (Deposit.Props memory) {
         Deposit.Props memory deposit;
+        if (!dataStore.containsBytes32(Keys.DEPOSIT_LIST, key)) {
+            return deposit;
+        }
 
         deposit.setAccount(dataStore.getAddress(
             keccak256(abi.encode(key, ACCOUNT))

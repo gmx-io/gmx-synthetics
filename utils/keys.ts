@@ -1,6 +1,7 @@
 import { hashString, hashData } from "./hash";
 
 export const WNT = hashString("WNT");
+export const NONCE = hashString("NONCE");
 export const MAX_LEVERAGE = hashString("MAX_LEVERAGE");
 
 export const FEE_RECEIVER = hashString("FEE_RECEIVER");
