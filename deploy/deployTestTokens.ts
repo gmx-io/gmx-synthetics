@@ -11,13 +11,6 @@ const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRunt
   const { getTokens } = gmx;
   const tokens = await getTokens();
 
-  const nativeTokenTransferGasLimit = 200 * 1000;
-  await setUintIfDifferent(
-    keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT,
-    nativeTokenTransferGasLimit,
-    "native token transfer gas limit"
-  );
-
   for (const [tokenSymbol, token] of Object.entries(tokens)) {
     if (token.synthetic || !token.deploy) {
       continue;

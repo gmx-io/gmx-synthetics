@@ -81,30 +81,30 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     },
   };
 
-  const oracle: OracleConfig = config[hre.network.name];
-  if (!oracle.tokens) {
-    oracle.tokens = {};
+  const oracleConfig: OracleConfig = config[hre.network.name];
+  if (!oracleConfig.tokens) {
+    oracleConfig.tokens = {};
   }
 
   const tokens = await hre.gmx.getTokens();
 
   // to make sure all tokens have an oracle type so oracle deployment/configuration script works correctly
   for (const tokenSymbol of Object.keys(tokens)) {
-    if (oracle.tokens[tokenSymbol] === undefined) {
-      oracle.tokens[tokenSymbol] = {};
+    if (oracleConfig.tokens[tokenSymbol] === undefined) {
+      oracleConfig.tokens[tokenSymbol] = {};
     }
   }
 
   // validate there are corresponding tokens for price feeds
-  for (const tokenSymbol of Object.keys(oracle.tokens)) {
+  for (const tokenSymbol of Object.keys(oracleConfig.tokens)) {
     if (!tokens[tokenSymbol]) {
       throw new Error(`Missing token for ${tokenSymbol}`);
     }
 
-    if (oracle.tokens[tokenSymbol].oracleType === undefined) {
-      oracle.tokens[tokenSymbol].oracleType = TOKEN_ORACLE_TYPES.DEFAULT;
+    if (oracleConfig.tokens[tokenSymbol].oracleType === undefined) {
+      oracleConfig.tokens[tokenSymbol].oracleType = TOKEN_ORACLE_TYPES.DEFAULT;
     }
   }
 
-  return oracle;
+  return oracleConfig;
 }

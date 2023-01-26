@@ -64,6 +64,19 @@ export const IS_ADL_ENABLED = hashString("IS_ADL_ENABLED");
 
 export const FUNDING_FACTOR = hashString("FUNDING_FACTOR");
 
+export const ESTIMATED_GAS_FEE_BASE_AMOUNT = hashString("ESTIMATED_GAS_FEE_BASE_AMOUNT");
+export const ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR = hashString("ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR");
+
+export const EXECUTION_GAS_FEE_BASE_AMOUNT = hashString("EXECUTION_GAS_FEE_BASE_AMOUNT");
+export const EXECUTION_GAS_FEE_MULTIPLIER_FACTOR = hashString("EXECUTION_GAS_FEE_MULTIPLIER_FACTOR");
+
+export const DEPOSIT_GAS_LIMIT = hashString("DEPOSIT_GAS_LIMIT");
+export const WITHDRAWAL_GAS_LIMIT = hashString("WITHDRAWAL_GAS_LIMIT");
+export const SINGLE_SWAP_GAS_LIMIT = hashString("SINGLE_SWAP_GAS_LIMIT");
+export const INCREASE_ORDER_GAS_LIMIT = hashString("INCREASE_ORDER_GAS_LIMIT");
+export const DECREASE_ORDER_GAS_LIMIT = hashString("DECREASE_ORDER_GAS_LIMIT");
+export const SWAP_ORDER_GAS_LIMIT = hashString("SWAP_ORDER_GAS_LIMIT");
+
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
 }
@@ -182,4 +195,28 @@ export function isAdlEnabledKey(market: string, isLong: boolean) {
 
 export function fundingFactorKey(market: string) {
   return hashData(["bytes32", "address"], [FUNDING_FACTOR, market]);
+}
+
+export function depositGasLimitKey(singleToken: boolean) {
+  return hashData(["bytes32", "bool"], [DEPOSIT_GAS_LIMIT, singleToken]);
+}
+
+export function withdrawalGasLimitKey(singleToken: boolean) {
+  return hashData(["bytes32", "bool"], [WITHDRAWAL_GAS_LIMIT, singleToken]);
+}
+
+export function singleSwapGasLimitKey() {
+  return hashData(["bytes32"], [SINGLE_SWAP_GAS_LIMIT]);
+}
+
+export function increaseOrderGasLimitKey() {
+  return hashData(["bytes32"], [INCREASE_ORDER_GAS_LIMIT]);
+}
+
+export function decreaseOrderGasLimitKey() {
+  return hashData(["bytes32"], [DECREASE_ORDER_GAS_LIMIT]);
+}
+
+export function swapOrderGasLimitKey() {
+  return hashData(["bytes32"], [SWAP_ORDER_GAS_LIMIT]);
 }
