@@ -113,11 +113,6 @@ const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
 
   positiveMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%
   negativeMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%
-
-  swapFeeFactor: decimalToFloat(1, 3), // 0.1%,
-  positiveSwapImpactFactor: decimalToFloat(2, 5), // 0.002 %
-  negativeSwapImpactFactor: decimalToFloat(1, 5), // 0.001 %
-  swapImpactExponentFactor: decimalToFloat(2, 0), // 2
 };
 
 const config: {

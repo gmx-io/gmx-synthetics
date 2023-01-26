@@ -45,7 +45,7 @@ describe("Config", () => {
   it("setUint", async () => {
     const key = keys.swapImpactFactorKey(ethUsdMarket.marketToken, true);
 
-    expect(await dataStore.getUint(key)).not.eq(0);
+    expect(await dataStore.getUint(key)).eq(0);
 
     await config
       .connect(user0)
