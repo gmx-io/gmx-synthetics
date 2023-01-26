@@ -126,12 +126,31 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
       "positionImpactExponentFactor",
       "swapFeeFactor",
       "swapImpactExponentFactor",
+      "fundingFactor",
     ]) {
       if (marketConfig[name]) {
         const value = marketConfig[name];
         const key = keys[`${name}Key`](marketToken);
         await setUintIfDifferent(key, value, `${name} for ${marketToken.toString()}`);
       }
+    }
+
+    if (marketConfig.borrowingFactorForLongs) {
+      const key = keys.borrowingFactorKey(marketToken, true);
+      await setUintIfDifferent(
+        key,
+        marketConfig.borrowingFactorForLongs,
+        `borrowing factor for longs for ${marketToken.toString()}`
+      );
+    }
+
+    if (marketConfig.borrowingFactorForShorts) {
+      const key = keys.borrowingFactorKey(marketToken, false);
+      await setUintIfDifferent(
+        key,
+        marketConfig.borrowingFactorForShorts,
+        `borrowing factor for shorts for ${marketToken.toString()}`
+      );
     }
 
     if (marketConfig.positivePositionImpactFactor) {
