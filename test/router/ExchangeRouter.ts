@@ -7,8 +7,6 @@ import { getDepositKeys } from "../../utils/deposit";
 import { getWithdrawalKeys } from "../../utils/withdrawal";
 import { OrderType, DecreasePositionSwapType, getOrderKeys } from "../../utils/order";
 
-import * as keys from "../../utils/keys";
-
 describe("ExchangeRouter", () => {
   const { provider } = ethers;
 
