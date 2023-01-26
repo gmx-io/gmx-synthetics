@@ -1143,7 +1143,7 @@ library MarketUtils {
         int256 latestFundingAmountPerSize,
         int256 positionFundingAmountPerSize,
         uint256 positionSizeInUsd
-    ) internal view returns (bool, int256) {
+    ) internal pure returns (bool, int256) {
         int256 diff = (latestFundingAmountPerSize - positionFundingAmountPerSize);
         int256 amount = diff * positionSizeInUsd.toInt256() / Precision.FLOAT_PRECISION.toInt256();
 
