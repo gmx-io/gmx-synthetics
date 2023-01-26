@@ -4,23 +4,19 @@ import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
-import { OrderType, getOrderCount, getOrderKeys, createOrder, executeOrder, handleOrder } from "../../utils/order";
+import { OrderType, handleOrder } from "../../utils/order";
 import { getPositionCount, getAccountPositionCount } from "../../utils/position";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.FundingFees", () => {
-  const { provider } = ethers;
-
   let fixture;
   let user0, user1;
-  let reader, dataStore, ethUsdMarket, wnt, usdc;
-  let executionFee;
+  let dataStore, ethUsdMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1 } = fixture.accounts);
-    ({ reader, dataStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
-    ({ executionFee } = fixture.props);
+    ({ dataStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -74,7 +70,6 @@ describe("Exchange.FundingFees", () => {
 
     await time.increase(14 * 24 * 60 * 60);
 
-    console.log("******* decrease long");
     await handleOrder(fixture, {
       create: {
         account: user0,
@@ -92,7 +87,6 @@ describe("Exchange.FundingFees", () => {
       },
     });
 
-    console.log("******* decrease short");
     await handleOrder(fixture, {
       create: {
         account: user1,
