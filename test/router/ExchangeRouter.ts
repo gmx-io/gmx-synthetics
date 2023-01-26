@@ -1,22 +1,23 @@
 import { expect } from "chai";
 
 import { deployFixture } from "../../utils/fixture";
-import { expandDecimals } from "../../utils/math";
+import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { logGasUsage } from "../../utils/gas";
 import { getDepositKeys } from "../../utils/deposit";
+import { OrderType, DecreasePositionSwapType, getOrderKeys } from "../../utils/order";
 
 describe("ExchangeRouter", () => {
   const { provider } = ethers;
 
   let fixture;
   let user0, user1, user2;
-  let reader, dataStore, depositVault, router, exchangeRouter, ethUsdMarket, ethUsdSpotOnlyMarket, usdc;
+  let reader, dataStore, depositVault, orderVault, router, exchangeRouter, ethUsdMarket, ethUsdSpotOnlyMarket, usdc;
   const executionFee = expandDecimals(1, 18);
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ reader, dataStore, depositVault, router, exchangeRouter, ethUsdMarket, ethUsdSpotOnlyMarket, usdc } =
+    ({ reader, dataStore, depositVault, orderVault, router, exchangeRouter, ethUsdMarket, ethUsdSpotOnlyMarket, usdc } =
       fixture.contracts);
   });
 
@@ -73,6 +74,72 @@ describe("ExchangeRouter", () => {
     await logGasUsage({
       tx,
       label: "exchangeRouter.createDeposit",
+    });
+  });
+
+  it("createOrder", async () => {
+    await usdc.mint(user0.address, expandDecimals(50 * 1000, 6));
+    await usdc.connect(user0).approve(router.address, expandDecimals(50 * 1000, 6));
+    const tx = await exchangeRouter.connect(user0).multicall(
+      [
+        exchangeRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, expandDecimals(11, 18)]),
+        exchangeRouter.interface.encodeFunctionData("createOrder", [
+          {
+            addresses: {
+              receiver: user1.address,
+              callbackContract: user2.address,
+              market: ethUsdMarket.marketToken,
+              initialCollateralToken: ethUsdMarket.longToken,
+              swapPath: [ethUsdMarket.marketToken],
+            },
+            numbers: {
+              sizeDeltaUsd: decimalToFloat(1000),
+              initialCollateralDeltaAmount: 0,
+              triggerPrice: decimalToFloat(4800),
+              acceptablePrice: decimalToFloat(4900),
+              executionFee,
+              callbackGasLimit: "200000",
+              minOutputAmount: 700,
+            },
+            orderType: OrderType.LimitIncrease,
+            decreasePositionSwapType: DecreasePositionSwapType.SwapCollateralTokenToPnlToken,
+            isLong: true,
+            shouldUnwrapNativeToken: true,
+          },
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+        ]),
+      ],
+      { value: expandDecimals(11, 18) }
+    );
+
+    const block = await provider.getBlock();
+    const orderKeys = await getOrderKeys(dataStore, 0, 1);
+    const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+
+    expect(order.addresses.account).eq(user0.address);
+    expect(order.addresses.receiver).eq(user1.address);
+    expect(order.addresses.callbackContract).eq(user2.address);
+    expect(order.addresses.market).eq(ethUsdMarket.marketToken);
+    expect(order.addresses.initialCollateralToken).eq(ethUsdMarket.longToken);
+    expect(order.addresses.swapPath).deep.eq([ethUsdMarket.marketToken]);
+    expect(order.numbers.orderType).eq(OrderType.LimitIncrease);
+    expect(order.numbers.decreasePositionSwapType).eq(DecreasePositionSwapType.SwapCollateralTokenToPnlToken);
+    expect(order.numbers.sizeDeltaUsd).eq(decimalToFloat(1000));
+    expect(order.numbers.initialCollateralDeltaAmount).eq("10000000000000000000");
+    expect(order.numbers.triggerPrice).eq(decimalToFloat(4800));
+    expect(order.numbers.acceptablePrice).eq(decimalToFloat(4900));
+    expect(order.numbers.executionFee).eq(expandDecimals(1, 18));
+    expect(order.numbers.callbackGasLimit).eq("200000");
+    expect(order.numbers.minOutputAmount).eq(700);
+    expect(order.numbers.updatedAtBlock).eq(block.number);
+
+    expect(order.flags.isLong).eq(true);
+    expect(order.flags.shouldUnwrapNativeToken).eq(true);
+    expect(order.flags.isFrozen).eq(false);
+
+    await logGasUsage({
+      tx,
+      label: "exchangeRouter.createOrder",
     });
   });
 });

@@ -10,11 +10,11 @@ import * as keys from "../../utils/keys";
 describe("Timelock", () => {
   let fixture;
   let user0, user1, user2;
-  let timelock, dataStore, roleStore, ethUsdMarket, wnt;
+  let timelock, dataStore, roleStore, wnt;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ timelock, dataStore, roleStore, ethUsdMarket, wnt } = fixture.contracts);
+    ({ timelock, dataStore, roleStore, wnt } = fixture.contracts);
     ({ user0, user1, user2 } = fixture.accounts);
 
     await grantRole(roleStore, user0.address, "TIMELOCK_ADMIN");
