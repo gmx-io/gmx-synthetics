@@ -67,6 +67,15 @@ library IncreasePositionUtils {
         // create a new cache for holding intermediate results
         IncreasePositionCache memory cache;
 
+        if (params.position.sizeInUsd() == 0) {
+            params.position.setLongTokenFundingAmountPerSize(
+                MarketUtils.getFundingAmountPerSize(params.contracts.dataStore, params.market.marketToken, params.market.longToken, params.position.isLong())
+            );
+            params.position.setShortTokenFundingAmountPerSize(
+                MarketUtils.getFundingAmountPerSize(params.contracts.dataStore, params.market.marketToken, params.market.shortToken, params.position.isLong())
+            );
+        }
+
         // process the collateral for the given position and order
         PositionPricingUtils.PositionFees memory fees;
         (cache.collateralDeltaAmount, fees) = processCollateral(

@@ -1,0 +1,117 @@
+import { expect } from "chai";
+import { time } from "@nomicfoundation/hardhat-network-helpers";
+
+import { deployFixture } from "../../utils/fixture";
+import { expandDecimals, decimalToFloat } from "../../utils/math";
+import { handleDeposit } from "../../utils/deposit";
+import { OrderType, getOrderCount, getOrderKeys, createOrder, executeOrder, handleOrder } from "../../utils/order";
+import { getPositionCount, getAccountPositionCount } from "../../utils/position";
+import * as keys from "../../utils/keys";
+
+describe("Exchange.FundingFees", () => {
+  const { provider } = ethers;
+
+  let fixture;
+  let user0, user1;
+  let reader, dataStore, ethUsdMarket, wnt, usdc;
+  let executionFee;
+
+  beforeEach(async () => {
+    fixture = await deployFixture();
+    ({ user0, user1 } = fixture.accounts);
+    ({ reader, dataStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ executionFee } = fixture.props);
+
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(1000, 18),
+        shortTokenAmount: expandDecimals(500 * 1000, 6),
+      },
+    });
+  });
+
+  it("funding fees", async () => {
+    await dataStore.setUint(keys.fundingFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 7));
+
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(200 * 1000),
+        acceptablePrice: expandDecimals(5050, 12),
+        executionFee: expandDecimals(1, 15),
+        minOutputAmount: 0,
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+        shouldUnwrapNativeToken: false,
+      },
+    });
+
+    await handleOrder(fixture, {
+      create: {
+        account: user1,
+        market: ethUsdMarket,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: expandDecimals(10 * 1000, 6),
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(100 * 1000),
+        acceptablePrice: expandDecimals(4950, 12),
+        executionFee: expandDecimals(1, 15),
+        minOutputAmount: 0,
+        orderType: OrderType.MarketIncrease,
+        isLong: false,
+        shouldUnwrapNativeToken: false,
+      },
+    });
+
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
+    expect(await getAccountPositionCount(dataStore, user1.address)).eq(1);
+    expect(await getPositionCount(dataStore)).eq(2);
+
+    await time.increase(14 * 24 * 60 * 60);
+
+    console.log("******* decrease long");
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(190 * 1000),
+        acceptablePrice: expandDecimals(4950, 12),
+        executionFee: expandDecimals(1, 15),
+        minOutputAmount: 0,
+        orderType: OrderType.MarketDecrease,
+        isLong: true,
+        shouldUnwrapNativeToken: false,
+      },
+    });
+
+    console.log("******* decrease short");
+    await handleOrder(fixture, {
+      create: {
+        account: user1,
+        market: ethUsdMarket,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: expandDecimals(5000, 6),
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(90 * 1000),
+        acceptablePrice: expandDecimals(5050, 12),
+        executionFee: expandDecimals(1, 15),
+        minOutputAmount: 0,
+        orderType: OrderType.MarketDecrease,
+        isLong: false,
+        shouldUnwrapNativeToken: false,
+      },
+    });
+
+    expect(
+      await dataStore.getUint(keys.claimableFundingAmountKey(ethUsdMarket.marketToken, wnt.address, user1.address))
+    ).eq("1612803999999900000");
+  });
+});

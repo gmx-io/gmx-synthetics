@@ -266,6 +266,10 @@ library OrderUtils {
         order.setIsFrozen(true);
         OrderStoreUtils.set(dataStore, key, order);
 
+        OrderEventUtils.emitOrderFrozen(eventEmitter, key, reason, reasonBytes);
+
+        CallbackUtils.afterOrderFrozen(key, order);
+
         GasUtils.payExecutionFee(
             dataStore,
             orderVault,
@@ -275,8 +279,5 @@ library OrderUtils {
             order.account()
         );
 
-        OrderEventUtils.emitOrderFrozen(eventEmitter, key, reason, reasonBytes);
-
-        CallbackUtils.afterOrderFrozen(key, order);
     }
 }

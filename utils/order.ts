@@ -100,7 +100,7 @@ export async function createOrder(fixture, overrides) {
   });
 }
 
-export async function executeOrder(fixture, overrides) {
+export async function executeOrder(fixture, overrides = {}) {
   const { wnt, usdc } = fixture.contracts;
   const { gasUsageLabel } = overrides;
   const { reader, dataStore, orderHandler } = fixture.contracts;

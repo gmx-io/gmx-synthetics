@@ -168,7 +168,13 @@ contract OrderHandler is BaseOrderHandler {
     {
         uint256 startingGas = gasleft();
 
-        try this._executeOrder(
+        this._executeOrder(
+            key,
+            oracleParams,
+            msg.sender,
+            startingGas
+        );
+        /* try this._executeOrder(
             key,
             oracleParams,
             msg.sender,
@@ -179,7 +185,7 @@ contract OrderHandler is BaseOrderHandler {
         } catch (bytes memory reasonBytes) {
             string memory reason = RevertUtils.getRevertMessage(reasonBytes);
             _handleOrderError(key, startingGas, reason, reasonBytes);
-        }
+        } */
     }
 
     // @dev executes an order

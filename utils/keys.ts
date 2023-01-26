@@ -20,6 +20,9 @@ export const ACCOUNT_POSITION_LIST = hashString("ACCOUNT_POSITION_LIST");
 export const ORDER_LIST = hashString("ORDER_LIST");
 export const ACCOUNT_ORDER_LIST = hashString("ACCOUNT_ORDER_LIST");
 
+export const CLAIMABLE_FEE_AMOUNT = hashString("CLAIMABLE_FEE_AMOUNT");
+export const CLAIMABLE_FUNDING_AMOUNT = hashString("CLAIMABLE_FUNDING_AMOUNT");
+
 export const IS_MARKET_DISABLED = hashString("IS_MARKET_DISABLED");
 
 export const MIN_ORACLE_BLOCK_CONFIRMATIONS = hashString("MIN_ORACLE_BLOCK_CONFIRMATIONS");
@@ -43,8 +46,6 @@ export const RESERVE_FACTOR = hashString("RESERVE_FACTOR");
 export const MAX_PNL_FACTOR = hashString("MAX_PNL_FACTOR");
 export const MAX_PNL_FACTOR_FOR_WITHDRAWALS = hashString("MAX_PNL_FACTOR_FOR_WITHDRAWALS");
 
-export const CLAIMABLE_FEE_AMOUNT = hashString("CLAIMABLE_FEE_AMOUNT");
-
 export const SWAP_FEE_FACTOR = hashString("SWAP_FEE_FACTOR");
 export const SWAP_IMPACT_FACTOR = hashString("SWAP_IMPACT_FACTOR");
 export const SWAP_IMPACT_EXPONENT_FACTOR = hashString("SWAP_IMPACT_EXPONENT_FACTOR");
@@ -60,6 +61,8 @@ export const POSITION_FEE_FACTOR = hashString("POSITION_FEE_FACTOR");
 
 export const LATEST_ADL_BLOCK = hashString("LATEST_ADL_BLOCK");
 export const IS_ADL_ENABLED = hashString("IS_ADL_ENABLED");
+
+export const FUNDING_FACTOR = hashString("FUNDING_FACTOR");
 
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
@@ -79,6 +82,14 @@ export function accountOrderListKey(account) {
 
 export function isMarketDisabledKey(market) {
   return hashData(["bytes32", "address"], [IS_MARKET_DISABLED, market]);
+}
+
+export function claimableFeeAmountKey(market: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [CLAIMABLE_FEE_AMOUNT, market, token]);
+}
+
+export function claimableFundingAmountKey(market: string, token: string, account: string) {
+  return hashData(["bytes32", "address", "address", "address"], [CLAIMABLE_FUNDING_AMOUNT, market, token, account]);
 }
 
 export function tokenTransferGasLimit(token: string) {
@@ -115,10 +126,6 @@ export function maxPnlFactorKey(market: string, isLong: boolean) {
 
 export function maxPnlFactorForWithdrawalsKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [MAX_PNL_FACTOR_FOR_WITHDRAWALS, market, isLong]);
-}
-
-export function claimableFeeAmountKey(market: string, token: string) {
-  return hashData(["bytes32", "address", "address"], [CLAIMABLE_FEE_AMOUNT, market, token]);
 }
 
 export function poolAmountKey(market: string, token: string) {
@@ -171,4 +178,8 @@ export function latestAdlBlockKey(market: string, isLong: boolean) {
 
 export function isAdlEnabledKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [IS_ADL_ENABLED, market, isLong]);
+}
+
+export function fundingFactorKey(market: string) {
+  return hashData(["bytes32", "address"], [FUNDING_FACTOR, market]);
 }

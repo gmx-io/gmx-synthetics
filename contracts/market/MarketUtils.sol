@@ -46,7 +46,6 @@ library MarketUtils {
     }
 
     struct GetNextFundingAmountPerSizeResult {
-        uint256 fundingPerSecond;
         bool longsPayShorts;
         int256 fundingAmountPerSize_LongCollateral_LongPosition;
         int256 fundingAmountPerSize_LongCollateral_ShortPosition;
@@ -90,6 +89,8 @@ library MarketUtils {
 
         uint256 diffUsd;
         uint256 totalOpenInterest;
+        uint256 sizeOfLargerSide;
+        uint256 fundingFactorPerSecond;
         uint256 fundingUsd;
 
         uint256 fundingUsdForLongCollateral;
@@ -854,9 +855,11 @@ library MarketUtils {
 
         cache.diffUsd = Calc.diff(cache.oi.longOpenInterest, cache.oi.shortOpenInterest);
         cache.totalOpenInterest = cache.oi.longOpenInterest + cache.oi.shortOpenInterest;
-        result.fundingPerSecond = cache.fundingFactor * cache.diffUsd / cache.totalOpenInterest;
+        cache.sizeOfLargerSide = cache.oi.longOpenInterest > cache.oi.shortOpenInterest ? cache.oi.longOpenInterest : cache.oi.shortOpenInterest;
+        cache.fundingFactorPerSecond = cache.fundingFactor * cache.diffUsd / cache.totalOpenInterest;
+        cache.fundingUsd = (cache.sizeOfLargerSide / Precision.FLOAT_PRECISION) * cache.durationInSeconds * cache.fundingFactorPerSecond;
+
         result.longsPayShorts = cache.oi.longOpenInterest > cache.oi.shortOpenInterest;
-        cache.fundingUsd = cache.durationInSeconds * result.fundingPerSecond;
 
         if (result.longsPayShorts) {
             cache.fundingUsdForLongCollateral = cache.fundingUsd * cache.oi.longOpenInterestWithLongCollateral / cache.oi.longOpenInterest;
@@ -946,7 +949,7 @@ library MarketUtils {
     // @param totalSize the total size
     // @return the per size value
     function getPerSizeValue(uint256 amount, uint256 totalSize) internal pure returns (uint256) {
-        return (amount * Precision.FLOAT_PRECISION / totalSize) / Precision.FLOAT_PRECISION;
+        return amount * Precision.FLOAT_PRECISION / totalSize;
     }
 
     // @dev get the ratio of pnl to pool value
@@ -1140,16 +1143,11 @@ library MarketUtils {
         int256 latestFundingAmountPerSize,
         int256 positionFundingAmountPerSize,
         uint256 positionSizeInUsd
-    ) internal pure returns (bool, int256) {
-        // the position is just being opened, so there are no funding fees
-        if (positionFundingAmountPerSize == 0) {
-            return (false, 0);
-        }
-
+    ) internal view returns (bool, int256) {
         int256 diff = (latestFundingAmountPerSize - positionFundingAmountPerSize);
-        int256 amount = diff * (positionSizeInUsd.toInt256() / Precision.FLOAT_PRECISION.toInt256()) / Precision.FLOAT_PRECISION.toInt256();
+        int256 amount = diff * positionSizeInUsd.toInt256() / Precision.FLOAT_PRECISION.toInt256();
 
-        return (amount == 0, amount);
+        return (diff != 0 && amount == 0, amount);
     }
 
     // @dev get the borrowing fees for a position
