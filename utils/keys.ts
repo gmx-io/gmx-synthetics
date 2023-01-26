@@ -3,6 +3,8 @@ import { hashString, hashData } from "./hash";
 export const WNT = hashString("WNT");
 export const MAX_LEVERAGE = hashString("MAX_LEVERAGE");
 
+export const FEE_RECEIVER = hashString("FEE_RECEIVER");
+
 export const MARKET_LIST = hashString("MARKET_LIST");
 
 export const DEPOSIT_LIST = hashString("DEPOSIT_LIST");
@@ -33,6 +35,8 @@ export const NATIVE_TOKEN_TRANSFER_GAS_LIMIT = hashString("NATIVE_TOKEN_TRANSFER
 
 export const PRICE_FEED = hashString("PRICE_FEED");
 export const PRICE_FEED_MULTIPLIER = hashString("PRICE_FEED_MULTIPLIER");
+export const STABLE_PRICE = hashString("STABLE_PRICE");
+
 export const ORACLE_TYPE = hashString("ORACLE_TYPE");
 export const RESERVE_FACTOR = hashString("RESERVE_FACTOR");
 export const MAX_PNL_FACTOR = hashString("MAX_PNL_FACTOR");
@@ -86,6 +90,10 @@ export function priceFeedKey(token: string) {
 
 export function priceFeedMultiplierKey(token: string) {
   return hashData(["bytes32", "address"], [PRICE_FEED_MULTIPLIER, token]);
+}
+
+export function stablePriceKey(token: string) {
+  return hashData(["bytes32", "address"], [STABLE_PRICE, token]);
 }
 
 export function oracleTypeKey(token: string) {

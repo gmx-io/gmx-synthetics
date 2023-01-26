@@ -3,6 +3,7 @@ import { deployFixture } from "../../utils/fixture";
 
 import { grantRole } from "../../utils/role";
 import { encodeData } from "../../utils/hash";
+import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 import * as keys from "../../utils/keys";
 
 describe("Config", () => {
@@ -40,6 +41,22 @@ describe("Config", () => {
       .setAddress(keys.IS_MARKET_DISABLED, encodeData(["address"], [ethUsdMarket.marketToken]), wnt.address);
 
     expect(await dataStore.getAddress(key)).eq(wnt.address);
+  });
+
+  it("setBytes32", async () => {
+    const key = keys.oracleTypeKey(wnt.address);
+
+    expect(await dataStore.getBytes32(key)).eq(TOKEN_ORACLE_TYPES.DEFAULT);
+
+    await config
+      .connect(user0)
+      .setBytes32(
+        keys.ORACLE_TYPE,
+        encodeData(["address"], [wnt.address]),
+        "0x0000000000000000000000000000000000000000000000000000000000000123"
+      );
+
+    expect(await dataStore.getBytes32(key)).eq("0x0000000000000000000000000000000000000000000000000000000000000123");
   });
 
   it("setUint", async () => {
