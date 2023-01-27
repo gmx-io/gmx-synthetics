@@ -74,15 +74,13 @@ contract Reader {
 
     function getAccountPositionInfoList(
         DataStore dataStore,
-        address account,
-        uint256 start,
-        uint256 end
+        bytes32[] memory positionKeys,
+        MarketUtils.MarketPrices[] memory prices
     ) external view returns (PositionInfo[] memory) {
-        bytes32[] memory positionKeys = PositionStoreUtils.getAccountPositionKeys(dataStore, account, start, end);
         PositionInfo[] memory positionInfoList = new PositionInfo[](positionKeys.length);
         for (uint256 i = 0; i < positionKeys.length; i++) {
             bytes32 positionKey = positionKeys[i];
-            positionInfoList[i] = getPositionInfo(dataStore, positionKey);
+            positionInfoList[i] = getPositionInfo(dataStore, positionKey, prices[i]);
         }
 
         return positionInfoList;
@@ -90,16 +88,32 @@ contract Reader {
 
     function getPositionInfo(
         DataStore dataStore,
-        bytes32 positionKey
+        bytes32 positionKey,
+        MarketUtils.MarketPrices memory prices
     ) public view returns (PositionInfo memory) {
         Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
         Market.Props memory market = MarketStoreUtils.get(dataStore, position.market());
-        uint256 pendingBorrowingFees = MarketUtils.getBorrowingFees(dataStore, position);
+        uint256 pendingBorrowingFees = MarketUtils.getNextBorrowingFees(dataStore, position, market, prices);
+
+        MarketUtils.GetNextFundingAmountPerSizeResult memory nextFundingAmountResult = MarketUtils.getNextFundingAmountPerSize(dataStore, market, prices);
+
+        int256 latestLongTokenFundingAmountPerSize;
+        int256 latestShortTokenFundingAmountPerSize;
+
+        if (position.isLong()) {
+            latestLongTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_LongCollateral_LongPosition;
+            latestShortTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_ShortCollateral_LongPosition;
+        } else {
+            latestLongTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_LongCollateral_ShortPosition;
+            latestShortTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_ShortCollateral_ShortPosition;
+        }
+
         PositionPricingUtils.PositionFundingFees memory pendingFundingFees = PositionPricingUtils.getFundingFees(
-            dataStore,
             position,
             market.longToken,
-            market.shortToken
+            market.shortToken,
+            latestLongTokenFundingAmountPerSize,
+            latestShortTokenFundingAmountPerSize
         );
 
         return PositionInfo(position, pendingBorrowingFees, pendingFundingFees);
@@ -185,28 +199,22 @@ contract Reader {
 
         uint256 borrowingFactorPerSecondForLongs = MarketUtils.getBorrowingFactorPerSecond(
             dataStore,
+            market,
             prices,
-            market.marketToken,
-            market.longToken,
-            market.shortToken,
             true
         );
 
         uint256 borrowingFactorPerSecondForShorts = MarketUtils.getBorrowingFactorPerSecond(
             dataStore,
+            market,
             prices,
-            market.marketToken,
-            market.longToken,
-            market.shortToken,
             false
         );
 
         MarketUtils.GetNextFundingAmountPerSizeResult memory funding = MarketUtils.getNextFundingAmountPerSize(
             dataStore,
-            prices,
-            market.marketToken,
-            market.longToken,
-            market.shortToken
+            market,
+            prices
         );
 
         return MarketInfo(market, borrowingFactorPerSecondForLongs, borrowingFactorPerSecondForShorts, funding);

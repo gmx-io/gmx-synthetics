@@ -377,19 +377,15 @@ library PositionUtils {
         // update the funding amount per size for the market
         MarketUtils.updateFundingAmountPerSize(
             params.contracts.dataStore,
-            prices,
-            params.market.marketToken,
-            params.market.longToken,
-            params.market.shortToken
+            params.market,
+            prices
         );
 
         // update the cumulative borrowing factor for the market
         MarketUtils.updateCumulativeBorrowingFactor(
             params.contracts.dataStore,
+            params.market,
             prices,
-            params.market.marketToken,
-            params.market.longToken,
-            params.market.shortToken,
             params.order.isLong()
         );
     }

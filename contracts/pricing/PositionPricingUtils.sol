@@ -375,11 +375,15 @@ library PositionPricingUtils {
 
         fees.feesForPool = fees.positionFeeAmountForPool + fees.borrowingFeeAmount;
 
+        int256 latestLongTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market(), longToken, position.isLong());
+        int256 latestShortTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market(), shortToken, position.isLong());
+
         fees.funding = getFundingFees(
-            dataStore,
             position,
             longToken,
-            shortToken
+            shortToken,
+            latestLongTokenFundingAmountPerSize,
+            latestShortTokenFundingAmountPerSize
         );
 
         fees.totalNetCostAmount = fees.referral.affiliateRewardAmount + fees.feeReceiverAmount + fees.positionFeeAmountForPool + fees.funding.fundingFeeAmount + fees.borrowingFeeAmount;
@@ -389,15 +393,16 @@ library PositionPricingUtils {
     }
 
     function getFundingFees(
-        DataStore dataStore,
         Position.Props memory position,
         address longToken,
-        address shortToken
-    ) internal view returns (PositionFundingFees memory) {
+        address shortToken,
+        int256 latestLongTokenFundingAmountPerSize,
+        int256 latestShortTokenFundingAmountPerSize
+    ) internal pure returns (PositionFundingFees memory) {
         PositionFundingFees memory fundingFees;
 
-        fundingFees.latestLongTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market(), longToken, position.isLong());
-        fundingFees.latestShortTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market(), shortToken, position.isLong());
+        fundingFees.latestLongTokenFundingAmountPerSize = latestLongTokenFundingAmountPerSize;
+        fundingFees.latestShortTokenFundingAmountPerSize = latestShortTokenFundingAmountPerSize;
 
         int256 longTokenFundingFeeAmount;
         int256 shortTokenFundingFeeAmount;

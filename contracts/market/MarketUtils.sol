@@ -802,19 +802,17 @@ library MarketUtils {
     // @param shortToken the market's short token
     function updateFundingAmountPerSize(
         DataStore dataStore,
-        MarketPrices memory prices,
-        address market,
-        address longToken,
-        address shortToken
+        Market.Props memory market,
+        MarketPrices memory prices
     ) external {
-        GetNextFundingAmountPerSizeResult memory result = getNextFundingAmountPerSize(dataStore, prices, market, longToken, shortToken);
+        GetNextFundingAmountPerSizeResult memory result = getNextFundingAmountPerSize(dataStore, market, prices);
 
-        setFundingAmountPerSize(dataStore, market, longToken, true, result.fundingAmountPerSize_LongCollateral_LongPosition);
-        setFundingAmountPerSize(dataStore, market, longToken, false, result.fundingAmountPerSize_LongCollateral_ShortPosition);
-        setFundingAmountPerSize(dataStore, market, shortToken, true, result.fundingAmountPerSize_ShortCollateral_LongPosition);
-        setFundingAmountPerSize(dataStore, market, shortToken, false, result.fundingAmountPerSize_ShortCollateral_ShortPosition);
+        setFundingAmountPerSize(dataStore, market.marketToken, market.longToken, true, result.fundingAmountPerSize_LongCollateral_LongPosition);
+        setFundingAmountPerSize(dataStore, market.marketToken, market.longToken, false, result.fundingAmountPerSize_LongCollateral_ShortPosition);
+        setFundingAmountPerSize(dataStore, market.marketToken, market.shortToken, true, result.fundingAmountPerSize_ShortCollateral_LongPosition);
+        setFundingAmountPerSize(dataStore, market.marketToken, market.shortToken, false, result.fundingAmountPerSize_ShortCollateral_ShortPosition);
 
-        dataStore.setUint(Keys.fundingUpdatedAtKey(market), block.timestamp);
+        dataStore.setUint(Keys.fundingUpdatedAtKey(market.marketToken), block.timestamp);
     }
 
     // @dev get the next funding amount per size values
@@ -825,33 +823,31 @@ library MarketUtils {
     // @param shortToken the market's short token
     function getNextFundingAmountPerSize(
         DataStore dataStore,
-        MarketPrices memory prices,
-        address market,
-        address longToken,
-        address shortToken
+        Market.Props memory market,
+        MarketPrices memory prices
     ) internal view returns (GetNextFundingAmountPerSizeResult memory) {
         GetNextFundingAmountPerSizeResult memory result;
         GetNextFundingAmountPerSizeCache memory cache;
 
-        cache.oi.longOpenInterestWithLongCollateral = getOpenInterest(dataStore, market, longToken, true);
-        cache.oi.longOpenInterestWithShortCollateral = getOpenInterest(dataStore, market, shortToken, true);
-        cache.oi.shortOpenInterestWithLongCollateral = getOpenInterest(dataStore, market, longToken, false);
-        cache.oi.shortOpenInterestWithShortCollateral = getOpenInterest(dataStore, market, shortToken, false);
+        cache.oi.longOpenInterestWithLongCollateral = getOpenInterest(dataStore, market.marketToken, market.longToken, true);
+        cache.oi.longOpenInterestWithShortCollateral = getOpenInterest(dataStore, market.marketToken, market.shortToken, true);
+        cache.oi.shortOpenInterestWithLongCollateral = getOpenInterest(dataStore, market.marketToken, market.longToken, false);
+        cache.oi.shortOpenInterestWithShortCollateral = getOpenInterest(dataStore, market.marketToken, market.shortToken, false);
 
         cache.oi.longOpenInterest = cache.oi.longOpenInterestWithLongCollateral + cache.oi.longOpenInterestWithShortCollateral;
         cache.oi.shortOpenInterest = cache.oi.shortOpenInterestWithLongCollateral + cache.oi.shortOpenInterestWithShortCollateral;
 
-        result.fundingAmountPerSize_LongCollateral_LongPosition = getFundingAmountPerSize(dataStore, market, longToken, true);
-        result.fundingAmountPerSize_LongCollateral_ShortPosition = getFundingAmountPerSize(dataStore, market, longToken, false);
-        result.fundingAmountPerSize_ShortCollateral_LongPosition = getFundingAmountPerSize(dataStore, market, shortToken, true);
-        result.fundingAmountPerSize_ShortCollateral_ShortPosition = getFundingAmountPerSize(dataStore, market, shortToken, false);
+        result.fundingAmountPerSize_LongCollateral_LongPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.longToken, true);
+        result.fundingAmountPerSize_LongCollateral_ShortPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.longToken, false);
+        result.fundingAmountPerSize_ShortCollateral_LongPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.shortToken, true);
+        result.fundingAmountPerSize_ShortCollateral_ShortPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.shortToken, false);
 
         if (cache.oi.longOpenInterest == 0 || cache.oi.shortOpenInterest == 0) {
             return result;
         }
 
-        cache.durationInSeconds = getSecondsSinceFundingUpdated(dataStore, market);
-        cache.fundingFactor = getFundingFactor(dataStore, market);
+        cache.durationInSeconds = getSecondsSinceFundingUpdated(dataStore, market.marketToken);
+        cache.fundingFactor = getFundingFactor(dataStore, market.marketToken);
 
         cache.diffUsd = Calc.diff(cache.oi.longOpenInterest, cache.oi.shortOpenInterest);
         cache.totalOpenInterest = cache.oi.longOpenInterest + cache.oi.shortOpenInterest;
@@ -933,15 +929,13 @@ library MarketUtils {
     // @param isLong whether to update the long or short side
     function updateCumulativeBorrowingFactor(
         DataStore dataStore,
+        Market.Props memory market,
         MarketPrices memory prices,
-        address market,
-        address longToken,
-        address shortToken,
         bool isLong
     ) external {
-        uint256 borrowingFactor = getNextCumulativeBorrowingFactor(dataStore, prices, market, longToken, shortToken, isLong);
-        setCumulativeBorrowingFactor(dataStore, market, isLong, borrowingFactor);
-        dataStore.setUint(Keys.cumulativeBorrowingFactorUpdatedAtKey(market, isLong), block.timestamp);
+        uint256 borrowingFactor = getNextCumulativeBorrowingFactor(dataStore, market, prices, isLong);
+        setCumulativeBorrowingFactor(dataStore, market.marketToken, isLong, borrowingFactor);
+        dataStore.setUint(Keys.cumulativeBorrowingFactorUpdatedAtKey(market.marketToken, isLong), block.timestamp);
     }
 
     // @dev calculate the per size value based on the amount and totalSize
@@ -1049,27 +1043,18 @@ library MarketUtils {
         MarketPrices memory prices,
         bool isLong
     ) internal view {
+        // poolUsd is used instead of pool amount as the indexToken may not match the longToken
+        // additionally, the shortToken may not be a stablecoin
         uint256 poolUsd = getPoolUsdWithoutPnl(dataStore, market, prices, isLong);
-
         uint256 reserveFactor = getReserveFactor(dataStore, market.marketToken, isLong);
         uint256 maxReservedUsd = Precision.applyFactor(poolUsd, reserveFactor);
 
-        uint256 reservedUsd;
-        if (isLong) {
-            // for longs calculate the reserved USD based on the open interest and current indexTokenPrice
-            // this works well for e.g. an ETH / USD market with long collateral token as WETH
-            // the available amount to be reserved would scale with the price of ETH
-            // this also works for e.g. a SOL / USD market with long collateral token as WETH
-            // if the price of SOL increases more than the price of ETH, additional amounts would be
-            // automatically reserved
-            uint256 openInterestInTokens = getOpenInterestInTokens(dataStore, market.marketToken, market.longToken, market.shortToken, isLong);
-            reservedUsd = openInterestInTokens * prices.indexTokenPrice.max;
-        } else {
-            // for shorts use the open interest as the reserved USD value
-            // this works well for e.g. an ETH / USD market with short collateral token as USDC
-            // the available amount to be reserved would not change with the price of ETH
-            reservedUsd = getOpenInterest(dataStore, market.marketToken, market.longToken, market.shortToken, isLong);
-        }
+        uint256 reservedUsd = getReservedUsd(
+            dataStore,
+            market,
+            prices,
+            isLong
+        );
 
         if (reservedUsd > maxReservedUsd) {
             revert InsufficientReserve(reservedUsd, maxReservedUsd);
@@ -1161,6 +1146,41 @@ library MarketUtils {
         }
         uint256 diffFactor = cumulativeBorrowingFactor - position.borrowingFactor();
         return Precision.applyFactor(position.sizeInUsd(), diffFactor);
+    }
+
+    function getNextBorrowingFees(DataStore dataStore, Position.Props memory position, Market.Props memory market, MarketPrices memory prices) internal view returns (uint256) {
+        uint256 cumulativeBorrowingFactor = getNextCumulativeBorrowingFactor(dataStore, market, prices, position.isLong());
+        if (position.borrowingFactor() > cumulativeBorrowingFactor) {
+            revert("getBorrowingFees: unexpected state");
+        }
+        uint256 diffFactor = cumulativeBorrowingFactor - position.borrowingFactor();
+        return Precision.applyFactor(position.sizeInUsd(), diffFactor);
+    }
+
+    function getReservedUsd(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketPrices memory prices,
+        bool isLong
+    ) internal view returns (uint256) {
+        uint256 reservedUsd;
+        if (isLong) {
+            // for longs calculate the reserved USD based on the open interest and current indexTokenPrice
+            // this works well for e.g. an ETH / USD market with long collateral token as WETH
+            // the available amount to be reserved would scale with the price of ETH
+            // this also works for e.g. a SOL / USD market with long collateral token as WETH
+            // if the price of SOL increases more than the price of ETH, additional amounts would be
+            // automatically reserved
+            uint256 openInterestInTokens = getOpenInterestInTokens(dataStore, market.marketToken, market.longToken, market.shortToken, isLong);
+            reservedUsd = openInterestInTokens * prices.indexTokenPrice.max;
+        } else {
+            // for shorts use the open interest as the reserved USD value
+            // this works well for e.g. an ETH / USD market with short collateral token as USDC
+            // the available amount to be reserved would not change with the price of ETH
+            reservedUsd = getOpenInterest(dataStore, market.marketToken, market.longToken, market.shortToken, isLong);
+        }
+
+        return reservedUsd;
     }
 
     function getVirtualInventoryForSwaps(DataStore dataStore, address market, address token) internal view returns (bool, uint256) {
@@ -1552,51 +1572,47 @@ library MarketUtils {
     // @param isLong whether to check the long or short side
     function getNextCumulativeBorrowingFactor(
         DataStore dataStore,
+        Market.Props memory market,
         MarketPrices memory prices,
-        address market,
-        address longToken,
-        address shortToken,
         bool isLong
     ) internal view returns (uint256) {
-        uint256 durationInSeconds = getSecondsSinceCumulativeBorrowingFactorUpdated(dataStore, market, isLong);
+        uint256 durationInSeconds = getSecondsSinceCumulativeBorrowingFactorUpdated(dataStore, market.marketToken, isLong);
         uint256 borrowingFactorPerSecond = getBorrowingFactorPerSecond(
             dataStore,
-            prices,
             market,
-            longToken,
-            shortToken,
+            prices,
             isLong
         );
 
-        uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, market, isLong);
+        uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, market.marketToken, isLong);
 
         return cumulativeBorrowingFactor + durationInSeconds * borrowingFactorPerSecond;
     }
 
     function getBorrowingFactorPerSecond(
         DataStore dataStore,
+        Market.Props memory market,
         MarketPrices memory prices,
-        address market,
-        address longToken,
-        address shortToken,
         bool isLong
     ) internal view returns (uint256) {
-        uint256 borrowingFactor = getBorrowingFactor(dataStore, market, isLong);
+        uint256 borrowingFactor = getBorrowingFactor(dataStore, market.marketToken, isLong);
 
-        int256 openInterestWithPnl = getOpenInterestWithPnl(dataStore, market, longToken, shortToken, prices.indexTokenPrice, isLong, true);
-        if (openInterestWithPnl <= 0) {
-            return 0;
-        }
+        uint256 reservedUsd = getReservedUsd(
+            dataStore,
+            market,
+            prices,
+            isLong
+        );
 
-        uint256 poolAmount = getPoolAmount(dataStore, market, isLong ? longToken : shortToken);
-        uint256 poolTokenPrice = isLong ? prices.longTokenPrice.min : prices.shortTokenPrice.min;
-        uint256 poolUsd = poolAmount * poolTokenPrice;
+        if (reservedUsd == 0) { return 0; }
+
+        uint256 poolUsd = getPoolUsdWithoutPnl(dataStore, market, prices, isLong);
 
         if (poolUsd == 0) {
             revert("getBorrowingFactorPerSecond: unexpected state, poolUsd is zero");
         }
 
-        return borrowingFactor * openInterestWithPnl.toUint256() / poolUsd;
+        return borrowingFactor * reservedUsd / poolUsd;
     }
 
     // @dev get the total borrowing fees
