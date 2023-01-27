@@ -151,33 +151,40 @@ library PositionPricingUtils {
     function getPriceImpactAmount(
         uint256 size,
         uint256 executionPrice,
-        uint256 latestPrice,
+        Price.Props memory latestPrice,
         bool isLong,
         bool isIncrease
     ) internal pure returns (int256) {
+        uint256 _latestPrice;
+        if (isIncrease) {
+            _latestPrice = isLong ? latestPrice.max : latestPrice.min;
+        } else {
+            _latestPrice = isLong ? latestPrice.min : latestPrice.max;
+        }
+
         // increase order:
-        //     - long: price impact is size * (latestPrice - executionPrice) / latestPrice
-        //             when executionPrice is smaller than latestPrice there is a positive price impact
-        //     - short: price impact is size * (executionPrice - latestPrice) / latestPrice
-        //              when executionPrice is larger than latestPrice there is a positive price impact
+        //     - long: price impact is size * (_latestPrice - executionPrice) / _latestPrice
+        //             when executionPrice is smaller than _latestPrice there is a positive price impact
+        //     - short: price impact is size * (executionPrice - _latestPrice) / _latestPrice
+        //              when executionPrice is larger than _latestPrice there is a positive price impact
         // decrease order:
-        //     - long: price impact is size * (executionPrice - latestPrice) / latestPrice
-        //             when executionPrice is larger than latestPrice there is a positive price impact
-        //     - short: price impact is size * (latestPrice - executionPrice) / latestPrice
-        //              when executionPrice is smaller than latestPrice there is a positive price impact
-        int256 priceDiff = latestPrice.toInt256() - executionPrice.toInt256();
+        //     - long: price impact is size * (executionPrice - _latestPrice) / _latestPrice
+        //             when executionPrice is larger than _latestPrice there is a positive price impact
+        //     - short: price impact is size * (_latestPrice - executionPrice) / _latestPrice
+        //              when executionPrice is smaller than _latestPrice there is a positive price impact
+        int256 priceDiff = _latestPrice.toInt256() - executionPrice.toInt256();
         bool shouldFlipPriceDiff = isIncrease ? !isLong : isLong;
         if (shouldFlipPriceDiff) { priceDiff = -priceDiff; }
 
-        int256 priceImpactUsd = size.toInt256() * priceDiff / latestPrice.toInt256();
+        int256 priceImpactUsd = size.toInt256() * priceDiff / _latestPrice.toInt256();
 
         // round positive price impact up, this will be deducted from the position impact pool
         if (priceImpactUsd > 0) {
-            return Calc.roundUpDivision(priceImpactUsd, latestPrice);
+            return Calc.roundUpDivision(priceImpactUsd, _latestPrice);
         }
 
         // round negative price impact down, this will be stored in the position impact pool
-        return priceImpactUsd / latestPrice.toInt256();
+        return priceImpactUsd / _latestPrice.toInt256();
     }
 
     // @dev get the price impact in USD for a position increase / decrease

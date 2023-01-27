@@ -308,7 +308,7 @@ library DecreasePositionCollateralUtils {
         int256 priceImpactAmount = PositionPricingUtils.getPriceImpactAmount(
             sizeDeltaUsd,
             executionPrice,
-            prices.indexTokenPrice.max,
+            prices.indexTokenPrice,
             params.position.isLong(),
             false
         );
@@ -397,7 +397,7 @@ library DecreasePositionCollateralUtils {
             } catch Error(string memory reason) {
                 emit SwapUtils.SwapReverted(reason, "");
             } catch (bytes memory reasonBytes) {
-                string memory reason = RevertUtils.getRevertMessage(reasonBytes);
+                (string memory reason, /* bool hasRevertMessage */) = RevertUtils.getRevertMessage(reasonBytes);
                 emit SwapUtils.SwapReverted(reason, reasonBytes);
             }
         }
@@ -433,7 +433,7 @@ library DecreasePositionCollateralUtils {
             } catch Error(string memory reason) {
                 emit SwapUtils.SwapReverted(reason, "");
             } catch (bytes memory reasonBytes) {
-                string memory reason = RevertUtils.getRevertMessage(reasonBytes);
+                (string memory reason, /* bool hasRevertMessage */) = RevertUtils.getRevertMessage(reasonBytes);
                 emit SwapUtils.SwapReverted(reason, reasonBytes);
             }
         }

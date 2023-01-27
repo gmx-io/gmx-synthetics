@@ -18,8 +18,7 @@ abstract contract BasicMulticall {
             (bool success, bytes memory result) = address(this).delegatecall(data[i]);
 
             if (!success) {
-                string memory revertMessage = RevertUtils.getRevertMessage(result);
-                revert(revertMessage);
+                RevertUtils.revertWithParsedMessage(result);
             }
 
             results[i] = result;

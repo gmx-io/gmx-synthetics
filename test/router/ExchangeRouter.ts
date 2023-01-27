@@ -134,7 +134,6 @@ describe("ExchangeRouter", () => {
 
     const block = await provider.getBlock();
     const orderKeys = await getOrderKeys(dataStore, 0, 1);
-    console.log("orderKeys", orderKeys[0]);
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
     expect(order.addresses.account).eq(user0.address);

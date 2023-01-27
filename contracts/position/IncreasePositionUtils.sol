@@ -321,7 +321,7 @@ library IncreasePositionUtils {
         int256 priceImpactAmount = PositionPricingUtils.getPriceImpactAmount(
             params.order.sizeDeltaUsd(),
             executionPrice,
-            prices.indexTokenPrice.max,
+            prices.indexTokenPrice,
             params.order.isLong(),
             true
         );

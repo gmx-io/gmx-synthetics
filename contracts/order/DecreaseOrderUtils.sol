@@ -102,7 +102,7 @@ library DecreaseOrderUtils {
                     ""
                 );
             } catch (bytes memory reasonBytes) {
-                string memory reason = RevertUtils.getRevertMessage(reasonBytes);
+                (string memory reason, /* bool hasRevertMessage */) = RevertUtils.getRevertMessage(reasonBytes);
                 _handleSwapError(
                     order,
                     result,

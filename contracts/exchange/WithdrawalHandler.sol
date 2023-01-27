@@ -106,25 +106,10 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
             msg.sender,
             startingGas
         ) {
-        } catch Error(string memory reason) {
-            bytes32 reasonKey = keccak256(abi.encode(reason));
-            if (reasonKey == Keys.EMPTY_PRICE_ERROR_KEY) {
-                revert(reason);
-            }
-
-            _handleWithdrawalError(
-                key,
-                startingGas,
-                reason,
-                ""
-            );
         } catch (bytes memory reasonBytes) {
-            string memory reason = RevertUtils.getRevertMessage(reasonBytes);
-
             _handleWithdrawalError(
                 key,
                 startingGas,
-                reason,
                 reasonBytes
             );
         }
@@ -190,9 +175,15 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
     function _handleWithdrawalError(
         bytes32 key,
         uint256 startingGas,
-        string memory reason,
         bytes memory reasonBytes
     ) internal {
+        (string memory reason, /* bool hasRevertMessage */) = RevertUtils.getRevertMessage(reasonBytes);
+        bytes32 reasonKey = keccak256(abi.encode(reason));
+
+        if (reasonKey == Keys.EMPTY_PRICE_ERROR_KEY) {
+            revert(reason);
+        }
+
         WithdrawalUtils.cancelWithdrawal(
             dataStore,
             eventEmitter,

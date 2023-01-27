@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
+import "../utils/RevertUtils.sol";
 
 import "./IWNT.sol";
 
@@ -20,7 +21,7 @@ library TokenUtils {
     using Address for address;
     using SafeERC20 for IERC20;
 
-    event TokenTransferReverted(string reason);
+    event TokenTransferReverted(string reason, bytes returndata);
     event NativeTokenTransferReverted(string reason);
 
     // throw custom errors to prevent spoofing of errors
@@ -69,8 +70,8 @@ library TokenUtils {
 
         if (success) { return; }
 
-        string memory reason = string(abi.encode(returndata));
-        emit TokenTransferReverted(reason);
+        (string memory reason, /* bool hasRevertMessage */) = RevertUtils.getRevertMessage(returndata);
+        emit TokenTransferReverted(reason, returndata);
 
         revert TokenTransferError(token, receiver, amount);
     }

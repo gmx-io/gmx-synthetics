@@ -174,11 +174,8 @@ contract OrderHandler is BaseOrderHandler {
             msg.sender,
             startingGas
         ) {
-        } catch Error(string memory reason) {
-            _handleOrderError(key, startingGas, reason, "");
         } catch (bytes memory reasonBytes) {
-            string memory reason = RevertUtils.getRevertMessage(reasonBytes);
-            _handleOrderError(key, startingGas, reason, reasonBytes);
+            _handleOrderError(key, startingGas, reasonBytes);
         }
     }
 
@@ -215,9 +212,9 @@ contract OrderHandler is BaseOrderHandler {
     function _handleOrderError(
         bytes32 key,
         uint256 startingGas,
-        string memory reason,
         bytes memory reasonBytes
     ) internal {
+        (string memory reason, /* bool hasRevertMessage */) = RevertUtils.getRevertMessage(reasonBytes);
         bytes32 reasonKey = keccak256(abi.encode(reason));
 
         // note that it is possible for any external contract to spoof these errors

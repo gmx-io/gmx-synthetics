@@ -92,6 +92,8 @@ library WithdrawalUtils {
     error MinLongTokens(uint256 received, uint256 expected);
     error MinShortTokens(uint256 received, uint256 expected);
     error InsufficientMarketTokens(uint256 balance, uint256 expected);
+    error InsufficientWntAmount(uint256 wntAmount, uint256 executionFee);
+    error InsufficientWntAmountExample(uint256 wntAmount, uint256 executionFee);
 
     /**
      * @dev Creates a withdrawal in the withdrawal store.
@@ -112,7 +114,10 @@ library WithdrawalUtils {
     ) external returns (bytes32) {
         address wnt = TokenUtils.wnt(dataStore);
         uint256 wntAmount = withdrawalVault.recordTransferIn(wnt);
-        require(wntAmount >= params.executionFee, "WithdrawalUtils: invalid wntAmount");
+
+        if (wntAmount < params.executionFee) {
+            revert InsufficientWntAmountExample(wntAmount, params.executionFee);
+        }
 
         if (params.receiver == address(0)) {
             revert("Invalid receiver");
