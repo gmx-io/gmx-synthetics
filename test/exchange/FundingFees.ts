@@ -6,17 +6,18 @@ import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, handleOrder } from "../../utils/order";
 import { getPositionCount, getAccountPositionCount } from "../../utils/position";
+import { expectTokenBalanceIncrease } from "../../utils/token";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.FundingFees", () => {
   let fixture;
-  let user0, user1;
-  let dataStore, ethUsdMarket, wnt, usdc;
+  let user0, user1, user2;
+  let dataStore, ethUsdMarket, exchangeRouter, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ user0, user1 } = fixture.accounts);
-    ({ dataStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ user0, user1, user2 } = fixture.accounts);
+    ({ dataStore, ethUsdMarket, exchangeRouter, wnt, usdc } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -107,5 +108,14 @@ describe("Exchange.FundingFees", () => {
     expect(
       await dataStore.getUint(keys.claimableFundingAmountKey(ethUsdMarket.marketToken, wnt.address, user1.address))
     ).eq("1612803999999900000");
+
+    await expectTokenBalanceIncrease({
+      token: wnt,
+      account: user2,
+      sendTxn: async () => {
+        await exchangeRouter.connect(user1).claimFundingFees([ethUsdMarket.marketToken], [wnt.address], user2.address);
+      },
+      increaseAmount: "1612803999999900000",
+    });
   });
 });
