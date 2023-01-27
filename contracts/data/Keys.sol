@@ -259,33 +259,25 @@ library Keys {
     // @dev key for single swap gas limit
     // @return key for single swap gas limit
     function singleSwapGasLimitKey() internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            SINGLE_SWAP_GAS_LIMIT
-        ));
+        return SINGLE_SWAP_GAS_LIMIT;
     }
 
     // @dev key for increase order gas limit
     // @return key for increase order gas limit
     function increaseOrderGasLimitKey() internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            INCREASE_ORDER_GAS_LIMIT
-        ));
+        return INCREASE_ORDER_GAS_LIMIT;
     }
 
     // @dev key for decrease order gas limit
     // @return key for decrease order gas limit
     function decreaseOrderGasLimitKey() internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            DECREASE_ORDER_GAS_LIMIT
-        ));
+        return DECREASE_ORDER_GAS_LIMIT;
     }
 
     // @dev key for swap order gas limit
     // @return key for swap order gas limit
     function swapOrderGasLimitKey() internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            SWAP_ORDER_GAS_LIMIT
-        ));
+        return SWAP_ORDER_GAS_LIMIT;
     }
 
     // @dev key for whether create deposit is enabled
