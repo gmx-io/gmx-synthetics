@@ -377,6 +377,7 @@ library PositionUtils {
         // update the funding amount per size for the market
         MarketUtils.updateFundingAmountPerSize(
             params.contracts.dataStore,
+            params.contracts.eventEmitter,
             params.market,
             prices
         );

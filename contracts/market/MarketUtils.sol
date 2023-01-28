@@ -802,15 +802,16 @@ library MarketUtils {
     // @param shortToken the market's short token
     function updateFundingAmountPerSize(
         DataStore dataStore,
+        EventEmitter eventEmitter,
         Market.Props memory market,
         MarketPrices memory prices
     ) external {
         GetNextFundingAmountPerSizeResult memory result = getNextFundingAmountPerSize(dataStore, market, prices);
 
-        setFundingAmountPerSize(dataStore, market.marketToken, market.longToken, true, result.fundingAmountPerSize_LongCollateral_LongPosition);
-        setFundingAmountPerSize(dataStore, market.marketToken, market.longToken, false, result.fundingAmountPerSize_LongCollateral_ShortPosition);
-        setFundingAmountPerSize(dataStore, market.marketToken, market.shortToken, true, result.fundingAmountPerSize_ShortCollateral_LongPosition);
-        setFundingAmountPerSize(dataStore, market.marketToken, market.shortToken, false, result.fundingAmountPerSize_ShortCollateral_ShortPosition);
+        setFundingAmountPerSize(dataStore, eventEmitter, market.marketToken, market.longToken, true, result.fundingAmountPerSize_LongCollateral_LongPosition);
+        setFundingAmountPerSize(dataStore, eventEmitter, market.marketToken, market.longToken, false, result.fundingAmountPerSize_LongCollateral_ShortPosition);
+        setFundingAmountPerSize(dataStore, eventEmitter, market.marketToken, market.shortToken, true, result.fundingAmountPerSize_ShortCollateral_LongPosition);
+        setFundingAmountPerSize(dataStore, eventEmitter, market.marketToken, market.shortToken, false, result.fundingAmountPerSize_ShortCollateral_ShortPosition);
 
         dataStore.setUint(Keys.fundingUpdatedAtKey(market.marketToken), block.timestamp);
     }
@@ -1469,7 +1470,22 @@ library MarketUtils {
     // @param collateralToken the collateralToken to set
     // @param isLong whether to set it for the long or short side
     // @param value the value to set the funding amount per size to
-    function setFundingAmountPerSize(DataStore dataStore, address market, address collateralToken, bool isLong, int256 value) internal returns (int256) {
+    function setFundingAmountPerSize(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address collateralToken,
+        bool isLong,
+        int256 value
+    ) internal returns (int256) {
+        MarketEventUtils.emitFundingAmountPerSizeUpdated(
+            eventEmitter,
+            market,
+            collateralToken,
+            isLong,
+            value
+        );
+
         return dataStore.setInt(Keys.fundingAmountPerSizeKey(market, collateralToken, isLong), value);
     }
 
