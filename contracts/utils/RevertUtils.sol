@@ -16,11 +16,11 @@ library RevertUtils {
             errorSelector := mload(add(result, 0x20))
         }
 
-        // 0x3f0694f5 is the selector for Panic(string)
+        // 0x4e487b71 is the selector for Panic(uint256)
         // 0x08c379a0 is the selector for Error(string)
         // referenced from https://blog.soliditylang.org/2021/04/21/custom-errors/
         if (
-            errorSelector == bytes4(0x3f0694f5) ||
+            errorSelector == bytes4(0x4e487b71) ||
             errorSelector == bytes4(0x08c379a0)
         ) {
             assembly {
