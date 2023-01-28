@@ -22,7 +22,7 @@ contract AdlHandler is BaseOrderHandler {
         bool shouldAllowAdl;
         int256 pnlToPoolFactor;
         int256 nextPnlToPoolFactor;
-        uint256 maxPnlFactorForWithdrawals;
+        uint256 maxPnlFactorForAdl;
     }
 
     constructor(
@@ -147,9 +147,9 @@ contract AdlHandler is BaseOrderHandler {
             revert("Invalid adl");
         }
 
-        cache.maxPnlFactorForWithdrawals = MarketUtils.getMaxPnlFactorForWithdrawals(dataStore, market, isLong);
+        cache.maxPnlFactorForAdl = MarketUtils.getMaxPnlFactorForAdl(dataStore, market, isLong);
 
-        if (cache.nextPnlToPoolFactor < cache.maxPnlFactorForWithdrawals.toInt256()) {
+        if (cache.nextPnlToPoolFactor < cache.maxPnlFactorForAdl.toInt256()) {
             revert("Pnl was overcorrected");
         }
     }

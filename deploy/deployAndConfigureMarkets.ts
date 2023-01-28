@@ -82,6 +82,15 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
     );
   }
 
+  async function setMaxPnlFactorForAdl(marketToken: string, isLong: boolean, maxPnlFactor: number) {
+    const key = keys.maxPnlFactorForAdlKey(marketToken, isLong);
+    await setUintIfDifferent(
+      key,
+      maxPnlFactor,
+      `max pnl factor for adl ${marketToken.toString()} ${isLong ? "long" : "short"}`
+    );
+  }
+
   async function setMaxPnlFactorForWithdrawals(marketToken: string, isLong: boolean, maxPnlFactor: number) {
     const key = keys.maxPnlFactorForWithdrawalsKey(marketToken, isLong);
     await setUintIfDifferent(
@@ -117,6 +126,9 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
 
     await setMaxPnlFactor(marketToken, true, marketConfig.maxPnlFactorLongs);
     await setMaxPnlFactor(marketToken, false, marketConfig.maxPnlFactorShorts);
+
+    await setMaxPnlFactorForAdl(marketToken, true, marketConfig.maxPnlFactorForAdlLongs);
+    await setMaxPnlFactorForAdl(marketToken, false, marketConfig.maxPnlFactorForAdlShorts);
 
     await setMaxPnlFactorForWithdrawals(marketToken, true, marketConfig.maxPnlFactorForWithdrawalsLongs);
     await setMaxPnlFactorForWithdrawals(marketToken, false, marketConfig.maxPnlFactorForWithdrawalsShorts);

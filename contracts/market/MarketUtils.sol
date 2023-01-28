@@ -33,8 +33,6 @@ library MarketUtils {
     using Order for Order.Props;
     using Price for Price.Props;
 
-    uint256 public constant CLAIMABLE_COLLATERAL_AMOUNT_TIME_DIVISOR = 1 hours;
-
     // @dev struct to store the prices of tokens of a market
     // @param indexTokenPrice price of the market's index token
     // @param longTokenPrice price of the market's long token
@@ -454,7 +452,8 @@ library MarketUtils {
         address account,
         uint256 delta
     ) internal {
-        uint256 timeKey = block.timestamp / CLAIMABLE_COLLATERAL_AMOUNT_TIME_DIVISOR;
+        uint256 divisor = dataStore.getUint(Keys.CLAIMABLE_COLLATERAL_TIME_DIVISOR);
+        uint256 timeKey = block.timestamp / divisor;
 
         uint256 nextValue = dataStore.incrementUint(
             Keys.claimableCollateralAmountKey(market, token, timeKey, account),
@@ -1435,6 +1434,10 @@ library MarketUtils {
     // @return the max pnl factor for a market
     function getMaxPnlFactor(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
         return dataStore.getUint(Keys.maxPnlFactorKey(market, isLong));
+    }
+
+    function getMaxPnlFactorForAdl(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
+        return dataStore.getUint(Keys.maxPnlFactorForAdlKey(market, isLong));
     }
 
     // @dev get the max pnl factor for withdrawals for a market

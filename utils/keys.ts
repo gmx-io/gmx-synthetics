@@ -44,6 +44,7 @@ export const STABLE_PRICE = hashString("STABLE_PRICE");
 export const ORACLE_TYPE = hashString("ORACLE_TYPE");
 export const RESERVE_FACTOR = hashString("RESERVE_FACTOR");
 export const MAX_PNL_FACTOR = hashString("MAX_PNL_FACTOR");
+export const MAX_PNL_FACTOR_FOR_ADL = hashString("MAX_PNL_FACTOR_FOR_ADL");
 export const MAX_PNL_FACTOR_FOR_WITHDRAWALS = hashString("MAX_PNL_FACTOR_FOR_WITHDRAWALS");
 
 export const SWAP_FEE_FACTOR = hashString("SWAP_FEE_FACTOR");
@@ -136,6 +137,10 @@ export function reserveFactorKey(market: string, isLong: boolean) {
 
 export function maxPnlFactorKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [MAX_PNL_FACTOR, market, isLong]);
+}
+
+export function maxPnlFactorForAdlKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [MAX_PNL_FACTOR_FOR_ADL, market, isLong]);
 }
 
 export function maxPnlFactorForWithdrawalsKey(market: string, isLong: boolean) {

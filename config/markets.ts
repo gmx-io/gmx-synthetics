@@ -19,6 +19,9 @@ export type BaseMarketConfig = {
   maxPnlFactorLongs: BigNumberish;
   maxPnlFactorShorts: BigNumberish;
 
+  maxPnlFactorForAdlLongs: BigNumberish;
+  maxPnlFactorForAdlShorts: BigNumberish;
+
   maxPnlFactorForWithdrawalsLongs: BigNumberish;
   maxPnlFactorForWithdrawalsShorts: BigNumberish;
 
@@ -78,6 +81,9 @@ const baseMarketConfig: BaseMarketConfig = {
   maxPnlFactorLongs: decimalToFloat(5, 1), // 50%
   maxPnlFactorShorts: decimalToFloat(5, 1), // 50%
 
+  maxPnlFactorForAdlLongs: decimalToFloat(4, 1), // 40%
+  maxPnlFactorForAdlShorts: decimalToFloat(4, 1), // 40%
+
   maxPnlFactorForWithdrawalsLongs: decimalToFloat(3, 1), // 30%
   maxPnlFactorForWithdrawalsShorts: decimalToFloat(3, 1), // 30%
 
@@ -118,8 +124,11 @@ const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
   maxPnlFactorLongs: decimalToFloat(5, 1), // 50%
   maxPnlFactorShorts: decimalToFloat(5, 1), // 50%
 
-  maxPnlFactorForWithdrawalsLongs: decimalToFloat(7, 1), // 70%
-  maxPnlFactorForWithdrawalsShorts: decimalToFloat(7, 1), // 70%
+  maxPnlFactorForAdlLongs: decimalToFloat(4, 1), // 40%
+  maxPnlFactorForAdlShorts: decimalToFloat(4, 1), // 40%
+
+  maxPnlFactorForWithdrawalsLongs: decimalToFloat(3, 1), // 30%
+  maxPnlFactorForWithdrawalsShorts: decimalToFloat(3, 1), // 30%
 
   positiveMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%
   negativeMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%

@@ -25,6 +25,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
       maxCallbackGasLimit: 2000000,
       minCollateralUsd: decimalToFloat(1),
+      claimableCollateralTimeDivisor: 60 * 60,
     };
   } else {
     return {
@@ -49,6 +50,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
       maxCallbackGasLimit: 2 * 1000 * 1000,
       minCollateralUsd: decimalToFloat(1),
+      claimableCollateralTimeDivisor: 60 * 60,
     };
   }
 }

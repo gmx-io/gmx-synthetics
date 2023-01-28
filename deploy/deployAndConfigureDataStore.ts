@@ -19,6 +19,11 @@ const func = createDeployFunction({
       "max callback gas limit"
     );
     await setUintIfDifferent(hashString("MIN_COLLATERAL_USD"), generalConfig.minCollateralUsd, "min collateral USD");
+    await setUintIfDifferent(
+      hashString("CLAIMABLE_COLLATERAL_TIME_DIVISOR"),
+      generalConfig.minCollateralUsd,
+      "claimable collateral time divisor"
+    );
   },
 });
 
