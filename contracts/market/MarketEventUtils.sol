@@ -239,6 +239,32 @@ library MarketEventUtils {
         );
     }
 
+    function emitBorrowingFactorUpdated(
+        EventEmitter eventEmitter,
+        address market,
+        bool isLong,
+        uint256 delta,
+        uint256 nextValue
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "market", market);
+
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "isLong", isLong);
+
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "delta", delta);
+        eventData.uintItems.setItem(1, "nextValue", nextValue);
+
+        eventEmitter.emitEventLog1(
+            "CumulativeBorrowingFactorUpdated",
+            Cast.toBytes32(market),
+            eventData
+        );
+    }
+
     function emitClaimableFundingUpdated(
         EventEmitter eventEmitter,
         address market,

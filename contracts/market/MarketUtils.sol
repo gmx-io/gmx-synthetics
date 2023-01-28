@@ -929,12 +929,26 @@ library MarketUtils {
     // @param isLong whether to update the long or short side
     function updateCumulativeBorrowingFactor(
         DataStore dataStore,
+        EventEmitter eventEmitter,
         Market.Props memory market,
         MarketPrices memory prices,
         bool isLong
     ) external {
-        uint256 borrowingFactor = getNextCumulativeBorrowingFactor(dataStore, market, prices, isLong);
-        setCumulativeBorrowingFactor(dataStore, market.marketToken, isLong, borrowingFactor);
+        (/* uint256 nextCumulativeBorrowingFactor */, uint256 delta) = getNextCumulativeBorrowingFactor(
+            dataStore,
+            market,
+            prices,
+            isLong
+        );
+
+        incrementCumulativeBorrowingFactor(
+            dataStore,
+            eventEmitter,
+            market.marketToken,
+            isLong,
+            delta
+        );
+
         dataStore.setUint(Keys.cumulativeBorrowingFactorUpdatedAtKey(market.marketToken, isLong), block.timestamp);
     }
 
@@ -1149,11 +1163,17 @@ library MarketUtils {
     }
 
     function getNextBorrowingFees(DataStore dataStore, Position.Props memory position, Market.Props memory market, MarketPrices memory prices) internal view returns (uint256) {
-        uint256 cumulativeBorrowingFactor = getNextCumulativeBorrowingFactor(dataStore, market, prices, position.isLong());
-        if (position.borrowingFactor() > cumulativeBorrowingFactor) {
+        (uint256 nextCumulativeBorrowingFactor, /* uint256 delta */) = getNextCumulativeBorrowingFactor(
+            dataStore,
+            market,
+            prices,
+            position.isLong()
+        );
+
+        if (position.borrowingFactor() > nextCumulativeBorrowingFactor) {
             revert("getBorrowingFees: unexpected state");
         }
-        uint256 diffFactor = cumulativeBorrowingFactor - position.borrowingFactor();
+        uint256 diffFactor = nextCumulativeBorrowingFactor - position.borrowingFactor();
         return Precision.applyFactor(position.sizeInUsd(), diffFactor);
     }
 
@@ -1480,13 +1500,25 @@ library MarketUtils {
         return dataStore.getUint(Keys.cumulativeBorrowingFactorKey(market, isLong));
     }
 
-    // @dev set the cumulative borrowing factor for a market
-    // @param dataStore DataStore
-    // @param market the market to set
-    // @param isLong whether to set the long or short side
-    // @param value the value to set the cumulative borrowing factor to
-    function setCumulativeBorrowingFactor(DataStore dataStore, address market, bool isLong, uint256 value) internal {
-        dataStore.setUint(Keys.cumulativeBorrowingFactorKey(market, isLong), value);
+    function incrementCumulativeBorrowingFactor(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        bool isLong,
+        uint256 delta
+    ) internal {
+        uint256 nextCumulativeBorrowingFactor = dataStore.incrementUint(
+            Keys.cumulativeBorrowingFactorKey(market, isLong),
+            delta
+        );
+
+        MarketEventUtils.emitBorrowingFactorUpdated(
+            eventEmitter,
+            market,
+            isLong,
+            delta,
+            nextCumulativeBorrowingFactor
+        );
     }
 
     // @dev get the timestamp of when the cumulative borrowing factor was last updated
@@ -1575,7 +1607,7 @@ library MarketUtils {
         Market.Props memory market,
         MarketPrices memory prices,
         bool isLong
-    ) internal view returns (uint256) {
+    ) internal view returns (uint256, uint256) {
         uint256 durationInSeconds = getSecondsSinceCumulativeBorrowingFactorUpdated(dataStore, market.marketToken, isLong);
         uint256 borrowingFactorPerSecond = getBorrowingFactorPerSecond(
             dataStore,
@@ -1586,7 +1618,9 @@ library MarketUtils {
 
         uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, market.marketToken, isLong);
 
-        return cumulativeBorrowingFactor + durationInSeconds * borrowingFactorPerSecond;
+        uint256 delta = durationInSeconds * borrowingFactorPerSecond;
+        uint256 nextCumulativeBorrowingFactor = cumulativeBorrowingFactor + delta;
+        return (nextCumulativeBorrowingFactor, delta);
     }
 
     function getBorrowingFactorPerSecond(

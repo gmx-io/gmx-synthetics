@@ -72,6 +72,8 @@ library OrderUtils {
             params.orderType == Order.OrderType.StopLossDecrease
         ) {
             initialCollateralDeltaAmount = params.numbers.initialCollateralDeltaAmount;
+        } else {
+            revert("Invalid order type");
         }
 
         if (shouldRecordSeparateExecutionFeeTransfer) {

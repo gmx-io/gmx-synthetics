@@ -384,6 +384,7 @@ library PositionUtils {
         // update the cumulative borrowing factor for the market
         MarketUtils.updateCumulativeBorrowingFactor(
             params.contracts.dataStore,
+            params.contracts.eventEmitter,
             params.market,
             prices,
             params.order.isLong()
