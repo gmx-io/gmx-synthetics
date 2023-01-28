@@ -5,9 +5,9 @@ pragma solidity ^0.8.0;
 library RevertUtils {
     // To get the revert reason, referenced from https://ethereum.stackexchange.com/a/83577
     function getRevertMessage(bytes memory result) internal pure returns (string memory, bool) {
-        // If the result length is less than 68, then the transaction failed silently without a revert message
+        // If the result length is less than 68, then the transaction either panicked or failed silently
         if (result.length < 68) {
-            return ("Empty revert message", true);
+            return ("", false);
         }
 
         bytes4 errorSelector;
@@ -16,13 +16,9 @@ library RevertUtils {
             errorSelector := mload(add(result, 0x20))
         }
 
-        // 0x4e487b71 is the selector for Panic(uint256)
         // 0x08c379a0 is the selector for Error(string)
         // referenced from https://blog.soliditylang.org/2021/04/21/custom-errors/
-        if (
-            errorSelector == bytes4(0x4e487b71) ||
-            errorSelector == bytes4(0x08c379a0)
-        ) {
+        if (errorSelector == bytes4(0x08c379a0)) {
             assembly {
                 result := add(result, 0x04)
             }
