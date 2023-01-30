@@ -69,9 +69,9 @@ describe("Exchange.CancelOrder", () => {
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
 
-    await expect(exchangeRouter.connect(user1).cancelOrder(orderKeys[0])).to.be.revertedWith(
-      "ExchangeRouter: forbidden"
-    );
+    await expect(exchangeRouter.connect(user1).cancelOrder(orderKeys[0]))
+      .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
+      .withArgs(user1.address, "account for cancelOrder");
 
     expect(await getOrderCount(dataStore)).eq(1);
 

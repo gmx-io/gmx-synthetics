@@ -79,7 +79,9 @@ describe("Exchange.UpdateOrder", () => {
           expandDecimals(5050, 12),
           expandDecimals(52000, 6)
         )
-    ).to.be.revertedWith("ExchangeRouter: forbidden");
+    )
+      .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
+      .withArgs(user1.address, "account for updateOrder");
 
     const txn = await exchangeRouter
       .connect(user0)

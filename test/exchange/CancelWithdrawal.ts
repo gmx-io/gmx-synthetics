@@ -53,9 +53,9 @@ describe("Exchange.Withdrawal", () => {
     expect(withdrawal.numbers.callbackGasLimit).eq(100000);
     expect(withdrawal.flags.shouldUnwrapNativeToken).eq(true);
 
-    await expect(exchangeRouter.connect(user1).cancelWithdrawal(withdrawalKeys[0])).to.be.revertedWith(
-      "ExchangeRouter: forbidden"
-    );
+    await expect(exchangeRouter.connect(user1).cancelWithdrawal(withdrawalKeys[0]))
+      .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
+      .withArgs(user1.address, "account for cancelWithdrawal");
 
     expect(await getWithdrawalCount(dataStore)).eq(1);
 

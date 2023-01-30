@@ -383,7 +383,9 @@ describe("Oracle", () => {
         compactedMaxPricesIndexes: getCompactedPriceIndexes([0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6]),
         signatures: wntSignatures.concat(wbtcSignatures),
       })
-    ).to.be.revertedWith("Oracle: tokensWithPrices not cleared");
+    )
+      .to.be.revertedWithCustomError(oracle, "NonEmptyTokensWithPrices")
+      .withArgs(1);
 
     await oracle.clearAllPrices();
 

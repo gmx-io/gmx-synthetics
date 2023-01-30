@@ -57,9 +57,9 @@ describe("Exchange.CancelDeposit", () => {
     expect(deposit.numbers.callbackGasLimit).eq("200000");
     expect(deposit.flags.shouldUnwrapNativeToken).eq(true);
 
-    await expect(exchangeRouter.connect(user1).cancelDeposit(depositKeys[0])).to.be.revertedWith(
-      "ExchangeRouter: forbidden"
-    );
+    await expect(exchangeRouter.connect(user1).cancelDeposit(depositKeys[0]))
+      .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
+      .withArgs(user1.address, "account for cancelDeposit");
 
     expect(await getDepositCount(dataStore)).eq(1);
 
