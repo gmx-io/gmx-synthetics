@@ -37,6 +37,9 @@ library DecreasePositionCollateralUtils {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
+    error InsufficientCollateral(int256 remainingCollateralAmount);
+    error InvalidOutputToken(address tokenOut, address expectedTokenOut);
+
     // @dev DecreasePositionCache struct used in decreasePosition to
     // avoid stack too deep errors
     // @param prices the prices of the tokens in the market
@@ -181,7 +184,7 @@ library DecreasePositionCollateralUtils {
         }
 
         if (values.remainingCollateralAmount < 0) {
-            revert("Insufficient collateral");
+            revert InsufficientCollateral(values.remainingCollateralAmount);
         }
 
         // if there is a positive impact, the impact pool amount should be reduced
@@ -359,7 +362,7 @@ library DecreasePositionCollateralUtils {
                 )
             ) returns (address tokenOut, uint256 swapOutputAmount) {
                 if (tokenOut != values.output.secondaryOutputToken) {
-                    revert("swapWithdrawnCollateralToPnlToken: unexpected state, mismatched output tokens");
+                    revert InvalidOutputToken(tokenOut, values.output.secondaryOutputToken);
                 }
                 // combine the values into outputToken and outputAmount
                 values.output.outputToken = tokenOut;

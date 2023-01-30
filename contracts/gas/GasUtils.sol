@@ -28,6 +28,7 @@ library GasUtils {
     event UserRefundFee(address user, uint256 amount);
 
     error InsufficientExecutionFee(uint256 minExecutionFee, uint256 executionFee);
+    error EmptyHoldingAddress();
 
     // @dev pay the keeper the execution fee and refund any excess amount to the user
     //
@@ -94,7 +95,7 @@ library GasUtils {
         if (excessWntAmount > 0) {
             address holdingAddress = dataStore.getAddress(Keys.HOLDING_ACCOUNT);
             if (holdingAddress == address(0)) {
-                revert("Holding address not initialized");
+                revert EmptyHoldingAddress();
             }
 
             address wnt = TokenUtils.wnt(dataStore);

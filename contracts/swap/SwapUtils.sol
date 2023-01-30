@@ -142,7 +142,7 @@ library SwapUtils {
         }
 
         if (outputAmount < params.minOutputAmount) {
-            revert("Insufficient swap output");
+            revert InsufficientSwapOutputAmount(outputAmount, params.minOutputAmount);
         }
 
         return (tokenOut, outputAmount);

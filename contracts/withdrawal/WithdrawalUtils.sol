@@ -19,7 +19,7 @@ import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
-import "../utils/RevertUtils.sol";
+import "../utils/ReceiverUtils.sol";
 
 /**
  * @title WithdrawalUtils
@@ -94,6 +94,8 @@ library WithdrawalUtils {
     error InsufficientMarketTokens(uint256 balance, uint256 expected);
     error InsufficientWntAmount(uint256 wntAmount, uint256 executionFee);
     error InsufficientWntAmountExample(uint256 wntAmount, uint256 executionFee);
+    error EmptyMarketTokenAmount();
+    error InvalidPoolValueForWithdrawal(int256 poolValue);
 
     /**
      * @dev Creates a withdrawal in the withdrawal store.
@@ -119,12 +121,10 @@ library WithdrawalUtils {
             revert InsufficientWntAmountExample(wntAmount, params.executionFee);
         }
 
-        if (params.receiver == address(0)) {
-            revert("Invalid receiver");
-        }
+        ReceiverUtils.validateReceiver(params.receiver);
 
         if (params.marketTokenAmount == 0) {
-            revert("Invalid marketTokenAmount");
+            revert EmptyMarketTokenAmount();
         }
 
         GasUtils.handleExcessExecutionFee(
@@ -428,7 +428,7 @@ library WithdrawalUtils {
         );
 
         if (_poolValue <= 0) {
-            revert("Invalid pool state");
+            revert InvalidPoolValueForWithdrawal(_poolValue);
         }
 
         uint256 poolValue = _poolValue.toUint256();

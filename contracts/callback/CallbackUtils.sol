@@ -40,10 +40,12 @@ library CallbackUtils {
     event AfterOrderCancellationError(bytes32 key, Order.Props order, string reason, bytes reasonBytes);
     event AfterOrderFrozenError(bytes32 key, Order.Props order, string reason, bytes reasonBytes);
 
+    error MaxCallbackGasLimitExceeded(uint256 callbackGasLimit, uint256 maxCallbackGasLimit);
+
     function validateCallbackGasLimit(DataStore dataStore, uint256 callbackGasLimit) internal view {
         uint256 maxCallbackGasLimit = dataStore.getUint(Keys.MAX_CALLBACK_GAS_LIMIT);
         if (callbackGasLimit > maxCallbackGasLimit) {
-            revert("Max callback gas limit exceeded");
+            revert MaxCallbackGasLimitExceeded(callbackGasLimit, maxCallbackGasLimit);
         }
     }
 

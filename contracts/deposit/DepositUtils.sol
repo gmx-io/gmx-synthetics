@@ -13,6 +13,7 @@ import "../nonce/NonceUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
+import "../utils/ReceiverUtils.sol";
 
 // @title DepositUtils
 // @dev Library for deposit functions, to help with the depositing of liquidity
@@ -48,6 +49,8 @@ library DepositUtils {
         uint256 executionFee;
         uint256 callbackGasLimit;
     }
+
+    error EmptyDeposit();
 
     // @dev creates a deposit
     //
@@ -87,12 +90,10 @@ library DepositUtils {
         }
 
         if (initialLongTokenAmount == 0 && initialShortTokenAmount == 0) {
-            revert("DepositUtils: empty deposit");
+            revert EmptyDeposit();
         }
 
-        if (params.receiver == address(0)) {
-            revert("Invalid receiver");
-        }
+        ReceiverUtils.validateReceiver(params.receiver);
 
         Deposit.Props memory deposit = Deposit.Props(
             Deposit.Addresses(

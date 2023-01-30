@@ -141,6 +141,10 @@ library PositionPricingUtils {
         uint256 affiliateRewardAmount;
     }
 
+
+    error UsdDeltaExceedsLongOpenInterest(int256 usdDelta, uint256 longOpenInterest);
+    error UsdDeltaExceedsShortOpenInterest(int256 usdDelta, uint256 shortOpenInterest);
+
     // @dev get the price impact amount for a position increase / decrease
     // @param size the change in position size
     // @param executionPrice the execution price of the index token
@@ -314,13 +318,13 @@ library PositionPricingUtils {
 
         if (params.isLong) {
             if (params.usdDelta < 0 && (-params.usdDelta).toUint256() > longOpenInterest) {
-                revert("Unexpected input, usdDelta is larger than long open interest");
+                revert UsdDeltaExceedsLongOpenInterest(params.usdDelta, longOpenInterest);
             }
 
             nextLongOpenInterest = Calc.sumReturnUint256(longOpenInterest, params.usdDelta);
         } else {
             if (params.usdDelta < 0 && (-params.usdDelta).toUint256() > shortOpenInterest) {
-                revert("Unexpected input, usdDelta is larger than short open interest");
+                revert UsdDeltaExceedsShortOpenInterest(params.usdDelta, shortOpenInterest);
             }
 
             nextShortOpenInterest = Calc.sumReturnUint256(shortOpenInterest, params.usdDelta);

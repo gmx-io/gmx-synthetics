@@ -26,6 +26,7 @@ import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
+import "../utils/ReceiverUtils.sol";
 
 // @title OrderUtils
 // @dev Library for order functions
@@ -34,6 +35,9 @@ library OrderUtils {
     using Position for Position.Props;
     using Price for Price.Props;
     using Array for uint256[];
+
+    error OrderTypeCannotBeCreated(Order.OrderType orderType);
+    error OrderAlreadyFrozen();
 
     // @dev creates an order in the order store
     // @param dataStore DataStore
@@ -73,7 +77,7 @@ library OrderUtils {
         ) {
             initialCollateralDeltaAmount = params.numbers.initialCollateralDeltaAmount;
         } else {
-            revert("Invalid order type");
+            revert OrderTypeCannotBeCreated(params.orderType);
         }
 
         if (shouldRecordSeparateExecutionFeeTransfer) {
@@ -114,12 +118,10 @@ library OrderUtils {
         order.setIsLong(params.isLong);
         order.setShouldUnwrapNativeToken(params.shouldUnwrapNativeToken);
 
-        if (order.receiver() == address(0)) {
-            revert("Invalid receiver");
-        }
+        ReceiverUtils.validateReceiver(order.receiver());
 
         if (order.initialCollateralDeltaAmount() == 0 && order.sizeDeltaUsd() == 0) {
-            revert("Empty order");
+            revert BaseOrderUtils.EmptyOrder();
         }
 
         CallbackUtils.validateCallbackGasLimit(dataStore, order.callbackGasLimit());
@@ -259,7 +261,7 @@ library OrderUtils {
         BaseOrderUtils.validateNonEmptyOrder(order);
 
         if (order.isFrozen()) {
-            revert("Order already frozen");
+            revert OrderAlreadyFrozen();
         }
 
         uint256 executionFee = order.executionFee();

@@ -90,6 +90,10 @@ library ExecuteDepositUtils {
     }
 
     error MinMarketTokens(uint256 received, uint256 expected);
+    error EmptyDepositAmountsAfterSwap();
+    error UnexpectedNonZeroShortAmount();
+    error InvalidPoolValueForDeposit(int256 poolValue);
+    error InvalidSwapOutputToken(address outputToken, address expectedOutputToken);
 
     // @dev executes a deposit
     // @param params ExecuteDepositParams
@@ -126,7 +130,7 @@ library ExecuteDepositUtils {
         );
 
         if (cache.longTokenAmount == 0 && cache.shortTokenAmount == 0) {
-            revert("Empty deposit amounts after swap");
+            revert EmptyDepositAmountsAfterSwap();
         }
 
         // if the market.longToken and market.shortToken are the same, there are two cases to consider:
@@ -142,7 +146,7 @@ library ExecuteDepositUtils {
         // price impact for the user
         if (market.longToken == market.shortToken) {
             if (cache.shortTokenAmount > 0) {
-                revert("Unexpected shortTokenAmount");
+                revert UnexpectedNonZeroShortAmount();
             }
 
             (cache.longTokenAmount, cache.shortTokenAmount) = getAdjustedLongAndShortTokenAmounts(
@@ -281,7 +285,7 @@ library ExecuteDepositUtils {
         );
 
         if (_poolValue < 0) {
-            revert("Invalid pool state");
+            revert InvalidPoolValueForDeposit(_poolValue);
         }
 
         uint256 poolValue = _poolValue.toUint256();
@@ -430,7 +434,7 @@ library ExecuteDepositUtils {
         );
 
         if (outputToken != expectedOutputToken) {
-            revert("Invalid output token");
+            revert InvalidSwapOutputToken(outputToken, expectedOutputToken);
         }
 
         return outputAmount;

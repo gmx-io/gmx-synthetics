@@ -44,6 +44,7 @@ library IncreasePositionUtils {
     }
 
     error InsufficientCollateralAmount();
+    error InsufficientCollateralForOpenInterestLeverage(int256 remainingCollateralUsd);
 
     // @dev increase a position
     // The increasePosition function is used to increase the size of a position
@@ -191,7 +192,7 @@ library IncreasePositionUtils {
                 0 // openInterestDelta
             );
 
-            (bool willBeSufficient, /* int256 remainingCollateralUsd */) = PositionUtils.willPositionCollateralBeSufficient(
+            (bool willBeSufficient, int256 remainingCollateralUsd) = PositionUtils.willPositionCollateralBeSufficient(
                 params.contracts.dataStore,
                 params.market,
                 prices,
@@ -201,7 +202,7 @@ library IncreasePositionUtils {
             );
 
             if (!willBeSufficient) {
-                revert("Below min collateral factor for open interest");
+                revert InsufficientCollateralForOpenInterestLeverage(remainingCollateralUsd);
             }
         }
 

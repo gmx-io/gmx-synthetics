@@ -9,7 +9,9 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../exchange/DepositHandler.sol";
 import "../exchange/WithdrawalHandler.sol";
 import "../exchange/OrderHandler.sol";
+
 import "../utils/PayableMulticall.sol";
+import "../utils/ReceiverUtils.sol";
 
 import "./Router.sol";
 
@@ -65,6 +67,10 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     OrderHandler public immutable orderHandler;
     IReferralStorage public immutable referralStorage;
 
+    error InvalidClaimFundingFeesInput(uint256 marketsLength, uint256 tokensLength);
+    error InvalidClaimCollateralInput(uint256 marketsLength, uint256 tokensLength, uint256 timeKeysLength);
+    error InvalidClaimAffiliateRewardsInput(uint256 marketsLength, uint256 tokensLength);
+
     // @dev Constructor that initializes the contract with the provided Router, RoleStore, DataStore,
     // EventEmitter, DepositHandler, WithdrawalHandler, OrderHandler, OrderStore, and IReferralStorage instances
     constructor(
@@ -90,13 +96,13 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
 
     // @dev Wraps the specified amount of native tokens into WNT then sends the WNT to the specified address
     function sendWnt(address receiver, uint256 amount) external payable nonReentrant {
-        if (receiver == address(0)) { revert("Invalid receiver"); }
+        ReceiverUtils.validateReceiver(receiver);
         TokenUtils.depositAndSendWrappedNativeToken(dataStore, receiver, amount);
     }
 
     // @dev Sends the given amount of tokens to the given address
     function sendTokens(address token, address receiver, uint256 amount) external payable nonReentrant {
-        if (receiver == address(0)) { revert("Invalid receiver"); }
+        ReceiverUtils.validateReceiver(receiver);
         address account = msg.sender;
         router.pluginTransfer(token, account, receiver, amount);
     }
@@ -261,12 +267,10 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         address receiver
     ) external payable nonReentrant {
         if (markets.length != tokens.length) {
-            revert("Invalid input");
+            revert InvalidClaimFundingFeesInput(markets.length, tokens.length);
         }
 
-        if (receiver == address(0)) {
-            revert("Invalid receiver");
-        }
+        ReceiverUtils.validateReceiver(receiver);
 
         address account = msg.sender;
 
@@ -289,12 +293,10 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         address receiver
     ) external payable nonReentrant {
         if (markets.length != tokens.length || tokens.length != timeKeys.length) {
-            revert("Invalid input");
+            revert InvalidClaimCollateralInput(markets.length, tokens.length, timeKeys.length);
         }
 
-        if (receiver == address(0)) {
-            revert("Invalid receiver");
-        }
+        ReceiverUtils.validateReceiver(receiver);
 
         address account = msg.sender;
 
@@ -327,7 +329,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         address receiver
     ) external payable nonReentrant {
         if (markets.length != tokens.length) {
-            revert("Invalid input");
+            revert InvalidClaimAffiliateRewardsInput(markets.length, tokens.length);
         }
 
         address account = msg.sender;

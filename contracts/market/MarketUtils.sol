@@ -141,6 +141,18 @@ library MarketUtils {
     error DisabledMarket(address market);
     error InsufficientPoolAmount(uint256 poolAmount, uint256 amount);
     error InsufficientReserve(uint256 reservedUsd, uint256 maxReservedUsd);
+    error UnexpectedPoolValueForTokenPriceCalculation(int256 poolValue);
+    error UnexpectedSupplyForTokenPriceCalculation();
+    error UnableToGetOppositeToken(address inputToken, address market);
+    error UnableToGetCachedTokenPrice(address token, address market);
+    error CollateralAlreadyClaimed(uint256 adjustedClaimableAmount, uint256 claimedAmount);
+    error OpenInterestCannotBeUpdatedForSwapOnlyMarket(address market);
+    error MaxOpenInterestExceeded(uint256 openInterest, uint256 maxOpenInterest);
+    error MaxPoolAmountExceeded(uint256 poolAmount, uint256 maxPoolAmount);
+    error UnexpectedBorrowingFactor(uint256 positionBorrowingFactor, uint256 cumulativeBorrowingFactor);
+    error UnableToGetBorrowingFactorEmptyPoolUsd();
+    error InvalidPositionMarket(address market);
+    error InvalidCollateralTokenForMarket(address market, address token);
 
     // @dev get the market token's price
     // @param dataStore DataStore
@@ -162,13 +174,13 @@ library MarketUtils {
         if (poolValue == 0) { return 0; }
 
         if (poolValue < 0) {
-            revert("getMarketTokenPrice: unexpected state, poolValue is negative");
+            revert UnexpectedPoolValueForTokenPriceCalculation(poolValue);
         }
 
         uint256 supply = getMarketTokenSupply(MarketToken(payable(market.marketToken)));
 
         if (supply == 0) {
-            revert("getMarketTokenPrice: unexpected state, supply is zero");
+            revert UnexpectedSupplyForTokenPriceCalculation();
         }
 
         return poolValue * Precision.WEI_PRECISION.toInt256() / supply.toInt256();
@@ -195,7 +207,7 @@ library MarketUtils {
             return market.longToken;
         }
 
-        revert("MarketUtils: invalid inputToken");
+        revert UnableToGetOppositeToken(inputToken, market.marketToken);
     }
 
     // @dev get the token price from the stored MarketPrices
@@ -214,7 +226,7 @@ library MarketUtils {
             return prices.indexTokenPrice;
         }
 
-        revert("MarketUtils: invalid token");
+        revert UnableToGetCachedTokenPrice(token, market.marketToken);
     }
 
     // @dev return the latest prices for the market tokens
@@ -543,8 +555,8 @@ library MarketUtils {
         uint256 claimedAmount = dataStore.getUint(Keys.claimedCollateralAmountKey(market, token, timeKey, account));
 
         uint256 adjustedClaimableAmount = Precision.applyFactor(claimableAmount, claimableFactor);
-        if (adjustedClaimableAmount <= claimedAmount) {
-            revert("Collateral already claimed");
+        if (adjustedClaimableAmount >= claimedAmount) {
+            revert CollateralAlreadyClaimed(adjustedClaimableAmount, claimedAmount);
         }
 
         uint256 remainingClaimableAmount = adjustedClaimableAmount - claimedAmount;
@@ -713,7 +725,9 @@ library MarketUtils {
         bool isLong,
         int256 delta
     ) internal returns (uint256) {
-        if (indexToken == address(0)) { revert("Invalid indexToken"); }
+        if (indexToken == address(0)) {
+            revert OpenInterestCannotBeUpdatedForSwapOnlyMarket(market);
+        }
 
         uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.openInterestKey(market, collateralToken, isLong),
@@ -1028,7 +1042,7 @@ library MarketUtils {
         uint256 maxOpenInterest = getMaxOpenInterest(dataStore, market, isLong);
 
         if (openInterest > maxOpenInterest) {
-            revert("Max open interest exceeded");
+            revert MaxOpenInterestExceeded(openInterest, maxOpenInterest);
         }
     }
 
@@ -1038,10 +1052,10 @@ library MarketUtils {
         address token
     ) internal view {
         uint256 poolAmount = getPoolAmount(dataStore, market, token);
-        uint256 poolAmountCap = getMaxPoolAmount(dataStore, market, token);
+        uint256 maxPoolAmount = getMaxPoolAmount(dataStore, market, token);
 
-        if (poolAmount > poolAmountCap) {
-            revert("Max pool amount exceeded");
+        if (poolAmount > maxPoolAmount) {
+            revert MaxPoolAmountExceeded(poolAmount, maxPoolAmount);
         }
     }
 
@@ -1156,7 +1170,7 @@ library MarketUtils {
     function getBorrowingFees(DataStore dataStore, Position.Props memory position) internal view returns (uint256) {
         uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, position.market(), position.isLong());
         if (position.borrowingFactor() > cumulativeBorrowingFactor) {
-            revert("getBorrowingFees: unexpected state");
+            revert UnexpectedBorrowingFactor(position.borrowingFactor(), cumulativeBorrowingFactor);
         }
         uint256 diffFactor = cumulativeBorrowingFactor - position.borrowingFactor();
         return Precision.applyFactor(position.sizeInUsd(), diffFactor);
@@ -1171,7 +1185,7 @@ library MarketUtils {
         );
 
         if (position.borrowingFactor() > nextCumulativeBorrowingFactor) {
-            revert("getBorrowingFees: unexpected state");
+            revert UnexpectedBorrowingFactor(position.borrowingFactor(), nextCumulativeBorrowingFactor);
         }
         uint256 diffFactor = nextCumulativeBorrowingFactor - position.borrowingFactor();
         return Precision.applyFactor(position.sizeInUsd(), diffFactor);
@@ -1662,7 +1676,7 @@ library MarketUtils {
         uint256 poolUsd = getPoolUsdWithoutPnl(dataStore, market, prices, isLong);
 
         if (poolUsd == 0) {
-            revert("getBorrowingFactorPerSecond: unexpected state, poolUsd is zero");
+            revert UnableToGetBorrowingFactorEmptyPoolUsd();
         }
 
         return borrowingFactor * reservedUsd / poolUsd;
@@ -1767,7 +1781,7 @@ library MarketUtils {
 
     function validatePositionMarket(Market.Props memory market) internal pure {
         if (isSwapOnlyMarket(market)) {
-            revert("Invalid position market");
+            revert InvalidPositionMarket(market.marketToken);
         }
     }
 
@@ -1781,7 +1795,7 @@ library MarketUtils {
 
     function validateMarketCollateralToken(Market.Props memory market, address token) internal pure {
         if (!isMarketCollateralToken(market, token)) {
-            revert("Invalid token for market");
+            revert InvalidCollateralTokenForMarket(market.marketToken, token);
         }
     }
 

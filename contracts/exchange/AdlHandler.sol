@@ -12,6 +12,10 @@ contract AdlHandler is BaseOrderHandler {
     using Order for Order.Props;
     using Array for uint256[];
 
+    error AdlNotRequired(int256 pnlToPoolFactor);
+    error InvalidAdl(int256 nextPnlToPoolFactor, int256 pnlToPoolFactor);
+    error PnlOvercorrected(int256 nextPnlToPoolFactor, uint256 maxPnlFactorForAdl);
+
     // @dev ExecuteAdlCache struct used in executeAdl to avoid
     // stack too deep errors
     struct ExecuteAdlCache {
@@ -120,7 +124,7 @@ contract AdlHandler is BaseOrderHandler {
         );
 
         if (!cache.shouldAllowAdl) {
-            revert("AdlHandler: ADL not required");
+            revert AdlNotRequired(cache.pnlToPoolFactor);
         }
 
         cache.key = AdlUtils.createAdlOrder(
@@ -144,13 +148,13 @@ contract AdlHandler is BaseOrderHandler {
         // validate that the ratio of pending pnl to pool value was decreased
         cache.nextPnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, oracle, market, isLong, true);
         if (cache.nextPnlToPoolFactor >= cache.pnlToPoolFactor) {
-            revert("Invalid adl");
+            revert InvalidAdl(cache.nextPnlToPoolFactor, cache.pnlToPoolFactor);
         }
 
         cache.maxPnlFactorForAdl = MarketUtils.getMaxPnlFactorForAdl(dataStore, market, isLong);
 
         if (cache.nextPnlToPoolFactor < cache.maxPnlFactorForAdl.toInt256()) {
-            revert("Pnl was overcorrected");
+            revert PnlOvercorrected(cache.nextPnlToPoolFactor, cache.maxPnlFactorForAdl);
         }
     }
 }

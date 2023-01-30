@@ -15,6 +15,7 @@ library IncreaseOrderUtils {
     using Array for uint256[];
 
     error UnexpectedPositionState();
+    error InvalidCollateralToken(address collateralToken, address market);
 
     // @dev process an increase order
     // @param params BaseOrderUtils.ExecuteOrderParams
@@ -36,7 +37,7 @@ library IncreaseOrderUtils {
         ));
 
         if (collateralToken != params.market.longToken && collateralToken != params.market.shortToken) {
-            revert("OrderUtils: invalid collateralToken");
+            revert InvalidCollateralToken(collateralToken, params.market.marketToken);
         }
 
         bytes32 positionKey = PositionUtils.getPositionKey(params.order.account(), params.order.market(), collateralToken, params.order.isLong());

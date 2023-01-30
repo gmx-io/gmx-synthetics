@@ -71,7 +71,7 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         ExchangeUtils.validateRequestCancellation(
             _dataStore,
             deposit.updatedAtBlock(),
-            "ExchangeRouter: deposit not yet expired"
+            "Deposit"
         );
 
         DepositUtils.cancelDeposit(

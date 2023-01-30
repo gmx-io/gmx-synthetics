@@ -15,13 +15,18 @@ contract Bank is RoleModule {
 
     DataStore public immutable dataStore;
 
+    error SelfTransferNotSupported(address receiver);
+    error InvalidNativeTokenSender(address msgSender);
+
     constructor(RoleStore _roleStore, DataStore _dataStore) RoleModule(_roleStore) {
         dataStore = _dataStore;
     }
 
     receive() external payable {
         address wnt = TokenUtils.wnt(dataStore);
-        require(msg.sender == wnt, "Bank: invalid native token sender");
+        if (msg.sender != wnt) {
+            revert InvalidNativeTokenSender(msg.sender);
+        }
     }
 
     // @dev transfer tokens from this contract to a receiver
@@ -85,7 +90,9 @@ contract Bank is RoleModule {
         address receiver,
         uint256 amount
     ) internal {
-        require(receiver != address(this), "Bank: invalid receiver");
+        if (receiver == address(this)) {
+            revert SelfTransferNotSupported(receiver);
+        }
 
         TokenUtils.transfer(dataStore, token, receiver, amount);
 
@@ -103,7 +110,9 @@ contract Bank is RoleModule {
         address receiver,
         uint256 amount
     ) internal {
-        require(receiver != address(this), "Bank: invalid receiver");
+        if (receiver == address(this)) {
+            revert SelfTransferNotSupported(receiver);
+        }
 
         TokenUtils.withdrawAndSendNativeToken(
             dataStore,

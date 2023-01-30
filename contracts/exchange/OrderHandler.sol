@@ -12,6 +12,8 @@ contract OrderHandler is BaseOrderHandler {
     using Order for Order.Props;
     using Array for uint256[];
 
+    error OrderNotUpdatable(Order.OrderType orderType);
+
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
@@ -72,7 +74,7 @@ contract OrderHandler is BaseOrderHandler {
         FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
 
         if (BaseOrderUtils.isMarketOrder(order.orderType())) {
-            revert("OrderHandler: invalid orderType");
+            revert OrderNotUpdatable(order.orderType());
         }
 
         order.setSizeDeltaUsd(sizeDeltaUsd);
@@ -119,7 +121,7 @@ contract OrderHandler is BaseOrderHandler {
             ExchangeUtils.validateRequestCancellation(
                 _dataStore,
                 order.updatedAtBlock(),
-                "ExchangeRouter: order not yet expired"
+                "Order"
             );
         }
 

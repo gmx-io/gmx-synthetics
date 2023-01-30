@@ -27,6 +27,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
     mapping (bytes32 => bool) public allowedKeys;
 
+    error InvalidKey(bytes32 key);
+
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
@@ -230,7 +232,9 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     }
 
     function _validateKey(bytes32 key) internal view {
-        if (!allowedKeys[key]) { revert("Invalid key"); }
+        if (!allowedKeys[key]) {
+            revert InvalidKey(key);
+        }
     }
 
     function _validateRange(bytes32 key, uint256 value) internal pure {

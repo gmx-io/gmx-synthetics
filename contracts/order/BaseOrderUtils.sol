@@ -110,6 +110,8 @@ library BaseOrderUtils {
 
     error EmptyOrder();
     error UnsupportedOrderType();
+    error PriceImpactLargerThanOrderSize(int256 priceImpactUsdForPriceAdjustment, uint256 sizeDeltaUsd);
+    error OrderNotFulfillableDueToPriceImpact(uint256 price, uint256 acceptablePrice);
 
     // @dev check if an orderType is a market order
     // @param orderType the order type
@@ -337,7 +339,7 @@ library BaseOrderUtils {
         int256 priceImpactUsdForPriceAdjustment = shouldFlipPriceImpactUsd ? -priceImpactUsd : priceImpactUsd;
 
         if (priceImpactUsdForPriceAdjustment < 0 && (-priceImpactUsdForPriceAdjustment).toUint256() > sizeDeltaUsd) {
-            revert("Value of price impact is larger than position size");
+            revert PriceImpactLargerThanOrderSize(priceImpactUsdForPriceAdjustment, sizeDeltaUsd);
         }
 
         // adjust price by price impact
@@ -390,7 +392,7 @@ library BaseOrderUtils {
         // their position, this gives the user the option to cancel the pending order if
         // prices do not move in their favour or to close their position and let the order
         // execute if prices move in their favour
-        revert("Order could not be fulfilled due to price impact");
+        revert OrderNotFulfillableDueToPriceImpact(price, acceptablePrice);
     }
 
     // @dev validate that an order exists

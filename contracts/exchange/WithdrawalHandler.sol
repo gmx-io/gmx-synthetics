@@ -71,7 +71,7 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         ExchangeUtils.validateRequestCancellation(
             _dataStore,
             withdrawal.updatedAtBlock(),
-            "ExchangeRouter: withdrawal not yet expired"
+            "Withdrawal"
         );
 
         WithdrawalUtils.cancelWithdrawal(

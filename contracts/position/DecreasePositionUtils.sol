@@ -41,6 +41,11 @@ library DecreasePositionUtils {
         uint256 secondaryOutputAmount;
     }
 
+    error InvalidDecreaseOrderSize(uint256 sizeDeltaUsd, uint256 positionSizeInUsd);
+    error UnableToWithdrawCollateralDueToLeverage(int256 estimatedRemainingCollateralUsd);
+    error InvalidDecreasePositionSwapType(Order.DecreasePositionSwapType decreasePositionSwapType);
+    error PositionShouldNotBeLiquidated();
+
     // @dev decreases a position
     // The decreasePosition function decreases the size of an existing position
     // in a market. It takes a PositionUtils.UpdatePositionParams object as an input, which
@@ -87,7 +92,7 @@ library DecreasePositionUtils {
                 // ensure that the order can be executed
                 params.order.setInitialCollateralDeltaAmount(0);
             } else {
-                revert("DecreasePositionUtils: Invalid order size");
+                revert InvalidDecreaseOrderSize(params.order.sizeDeltaUsd(), params.position.sizeInUsd());
             }
         }
 
@@ -124,7 +129,7 @@ library DecreasePositionUtils {
 
             if (!willBeSufficient) {
                 if (params.order.sizeDeltaUsd() == 0) {
-                    revert("Cannot withdraw collateral");
+                    revert UnableToWithdrawCollateralDueToLeverage(estimatedRemainingCollateralUsd);
                 }
 
                 OrderEventUtils.emitOrderCollateralDeltaAmountUpdated(
@@ -148,7 +153,7 @@ library DecreasePositionUtils {
 
         if (params.order.decreasePositionSwapType() != Order.DecreasePositionSwapType.NoSwap &&
             cache.pnlToken == params.position.collateralToken()) {
-            revert("DecreasePositionUtils: invalid decreasePositionSwapType");
+            revert InvalidDecreasePositionSwapType(params.order.decreasePositionSwapType());
         }
 
         if (BaseOrderUtils.isLiquidationOrder(params.order.orderType()) && !PositionUtils.isPositionLiquidatable(
@@ -159,7 +164,7 @@ library DecreasePositionUtils {
             cache.prices,
             true
         )) {
-            revert("DecreasePositionUtils: Invalid Liquidation");
+            revert PositionShouldNotBeLiquidated();
         }
 
         PositionUtils.updateFundingAndBorrowingState(params, cache.prices);

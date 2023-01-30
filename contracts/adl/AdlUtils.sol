@@ -70,6 +70,8 @@ library AdlUtils {
 
     error PendingAdlForLongs(int256 pnlToPoolFactor, uint256 maxPnlFactor);
     error PendingAdlForShorts(int256 pnlToPoolFactor, uint256 maxPnlFactor);
+    error InvalidSizeDeltaForAdl(uint256 sizeDeltaUsd, uint256 positionSizeInUsd);
+    error AdlNotEnabled();
 
     // @dev Multiple positions may need to be reduced to ensure that the pending
     // profits does not exceed the allowed thresholds
@@ -208,7 +210,7 @@ library AdlUtils {
         Position.Props memory position = PositionStoreUtils.get(params.dataStore, positionKey);
 
         if (params.sizeDeltaUsd > position.sizeInUsd()) {
-            revert("Invalid sizeDeltaUsd");
+            revert InvalidSizeDeltaForAdl(params.sizeDeltaUsd, position.sizeInUsd());
         }
 
         Order.Addresses memory addresses = Order.Addresses(
@@ -265,7 +267,7 @@ library AdlUtils {
     ) external view {
         bool isAdlEnabled = AdlUtils.getIsAdlEnabled(dataStore, market, isLong);
         if (!isAdlEnabled) {
-            revert("Adl is not enabled");
+            revert AdlNotEnabled();
         }
 
         uint256 latestAdlBlock = AdlUtils.getLatestAdlBlock(dataStore, market, isLong);

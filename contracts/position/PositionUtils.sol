@@ -122,6 +122,7 @@ library PositionUtils {
     }
 
     error LiquidatablePosition();
+    error EmptyPosition(uint256 sizeInUsd, uint256 sizeInTokens);
 
     // @dev get the position pnl in USD
     //
@@ -243,7 +244,7 @@ library PositionUtils {
         bool shouldValidateMinCollateralUsd
     ) public view {
         if (position.sizeInUsd() == 0 || position.sizeInTokens() == 0) {
-            revert("Position size is zero");
+            revert EmptyPosition(position.sizeInUsd(), position.sizeInTokens());
         }
 
         if (isPositionLiquidatable(
