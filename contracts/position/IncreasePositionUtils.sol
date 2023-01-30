@@ -223,6 +223,7 @@ library IncreasePositionUtils {
             params.order.sizeDeltaUsd(),
             cache.sizeDeltaInTokens,
             cache.collateralDeltaAmount,
+            cache.priceImpactAmount,
             params.order.orderType()
         );
     }

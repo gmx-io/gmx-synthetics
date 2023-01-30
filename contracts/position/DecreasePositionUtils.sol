@@ -166,7 +166,7 @@ library DecreasePositionUtils {
 
         cache.initialCollateralAmount = params.position.collateralAmount();
         (
-            DecreasePositionCollateralUtils.ProcessCollateralValues memory values,
+            PositionUtils.DecreasePositionCollateralValues memory values,
             PositionPricingUtils.PositionFees memory fees
         ) = DecreasePositionCollateralUtils.processCollateral(
             params,
@@ -264,12 +264,10 @@ library DecreasePositionUtils {
             params.contracts.eventEmitter,
             params.positionKey,
             params.position,
-            values.executionPrice,
             params.order.sizeDeltaUsd(),
-            values.sizeDeltaInTokens,
             cache.initialCollateralAmount - params.position.collateralAmount(),
-            values.positionPnlUsd,
-            params.order.orderType()
+            params.order.orderType(),
+            values
         );
 
         values = DecreasePositionCollateralUtils.swapWithdrawnCollateralToPnlToken(params, values);

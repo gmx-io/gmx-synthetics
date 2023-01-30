@@ -37,35 +37,6 @@ library DecreasePositionCollateralUtils {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
-    struct ProcessCollateralValuesOutput {
-        address outputToken;
-        uint256 outputAmount;
-        address secondaryOutputToken;
-        uint256 secondaryOutputAmount;
-    }
-
-    // @dev ProcessCollateralValues struct used to contain the values in processCollateral
-    // @param executionPrice the order execution price
-    // @param remainingCollateralAmount the remaining collateral amount of the position
-    // @param outputAmount the output amount
-    // @param positionPnlUsd the pnl of the position in USD
-    // @param pnlAmountForPool the pnl for the pool in token amount
-    // @param pnlAmountForUser the pnl for the user in token amount
-    // @param sizeDeltaInTokens the change in position size in tokens
-    // @param priceImpactAmount the price impact in tokens
-    struct ProcessCollateralValues {
-        address pnlTokenForPool;
-        uint256 executionPrice;
-        int256 remainingCollateralAmount;
-        int256 positionPnlUsd;
-        int256 pnlAmountForPool;
-        uint256 pnlAmountForUser;
-        uint256 sizeDeltaInTokens;
-        int256 priceImpactAmount;
-        uint256 priceImpactDiffUsd;
-        ProcessCollateralValuesOutput output;
-    }
-
     // @dev DecreasePositionCache struct used in decreasePosition to
     // avoid stack too deep errors
     // @param prices the prices of the tokens in the market
@@ -90,15 +61,15 @@ library DecreasePositionCollateralUtils {
     // @dev handle the collateral changes of the position
     // @param params PositionUtils.UpdatePositionParams
     // @param cache DecreasePositionCache
-    // @return (ProcessCollateralValues, PositionPricingUtils.PositionFees)
+    // @return (PositionUtils.DecreasePositionCollateralValues, PositionPricingUtils.PositionFees)
     function processCollateral(
         PositionUtils.UpdatePositionParams memory params,
         DecreasePositionCache memory cache
     ) external returns (
-        ProcessCollateralValues memory,
+        PositionUtils.DecreasePositionCollateralValues memory,
         PositionPricingUtils.PositionFees memory
     ) {
-        ProcessCollateralValues memory values;
+        PositionUtils.DecreasePositionCollateralValues memory values;
         values.remainingCollateralAmount = cache.initialCollateralAmount.toInt256();
 
         values.remainingCollateralAmount -= params.order.initialCollateralDeltaAmount().toInt256();
@@ -318,10 +289,10 @@ library DecreasePositionCollateralUtils {
 
     function getLiquidationValues(
         PositionUtils.UpdatePositionParams memory params,
-        ProcessCollateralValues memory values,
+        PositionUtils.DecreasePositionCollateralValues memory values,
         PositionPricingUtils.PositionFees memory fees
     ) internal returns (
-        ProcessCollateralValues memory,
+        PositionUtils.DecreasePositionCollateralValues memory,
         PositionPricingUtils.PositionFees memory
     ) {
         if (fees.funding.fundingFeeAmount > params.position.collateralAmount()) {
@@ -343,7 +314,7 @@ library DecreasePositionCollateralUtils {
 
         PositionPricingUtils.PositionFees memory _fees;
 
-        ProcessCollateralValues memory _values = ProcessCollateralValues(
+        PositionUtils.DecreasePositionCollateralValues memory _values = PositionUtils.DecreasePositionCollateralValues(
             values.pnlTokenForPool,
             values.executionPrice, // executionPrice
             0, // remainingCollateralAmount
@@ -353,7 +324,7 @@ library DecreasePositionCollateralUtils {
             values.sizeDeltaInTokens, // sizeDeltaInTokens
             values.priceImpactAmount, // priceImpactAmount
             0, // priceImpactDiffUsd
-            ProcessCollateralValuesOutput(
+            PositionUtils.DecreasePositionCollateralValuesOutput(
                 address(0),
                 0,
                 address(0),
@@ -367,8 +338,8 @@ library DecreasePositionCollateralUtils {
     // swap the withdrawn collateral from collateralToken to pnlToken if needed
     function swapWithdrawnCollateralToPnlToken(
         PositionUtils.UpdatePositionParams memory params,
-        ProcessCollateralValues memory values
-    ) external returns (ProcessCollateralValues memory) {
+        PositionUtils.DecreasePositionCollateralValues memory values
+    ) external returns (PositionUtils.DecreasePositionCollateralValues memory) {
         if (params.order.decreasePositionSwapType() == Order.DecreasePositionSwapType.SwapCollateralTokenToPnlToken) {
             Market.Props[] memory swapPathMarkets = new Market.Props[](1);
             swapPathMarkets[0] = params.market;

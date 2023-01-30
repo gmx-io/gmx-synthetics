@@ -62,6 +62,35 @@ library PositionUtils {
         int256 openInterestDelta;
     }
 
+    struct DecreasePositionCollateralValuesOutput {
+        address outputToken;
+        uint256 outputAmount;
+        address secondaryOutputToken;
+        uint256 secondaryOutputAmount;
+    }
+
+    // @dev ProcessCollateralValues struct used to contain the values in processCollateral
+    // @param executionPrice the order execution price
+    // @param remainingCollateralAmount the remaining collateral amount of the position
+    // @param outputAmount the output amount
+    // @param positionPnlUsd the pnl of the position in USD
+    // @param pnlAmountForPool the pnl for the pool in token amount
+    // @param pnlAmountForUser the pnl for the user in token amount
+    // @param sizeDeltaInTokens the change in position size in tokens
+    // @param priceImpactAmount the price impact in tokens
+    struct DecreasePositionCollateralValues {
+        address pnlTokenForPool;
+        uint256 executionPrice;
+        int256 remainingCollateralAmount;
+        int256 positionPnlUsd;
+        int256 pnlAmountForPool;
+        uint256 pnlAmountForUser;
+        uint256 sizeDeltaInTokens;
+        int256 priceImpactAmount;
+        uint256 priceImpactDiffUsd;
+        DecreasePositionCollateralValuesOutput output;
+    }
+
     struct GetPositionPnlUsdCache {
         int256 positionValue;
         int256 totalPositionPnl;
