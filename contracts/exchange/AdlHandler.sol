@@ -130,6 +130,7 @@ contract AdlHandler is BaseOrderHandler {
         cache.key = AdlUtils.createAdlOrder(
             AdlUtils.CreateAdlOrderParams(
                 dataStore,
+                eventEmitter,
                 account,
                 market,
                 collateralToken,

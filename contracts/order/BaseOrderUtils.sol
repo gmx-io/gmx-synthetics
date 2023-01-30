@@ -110,6 +110,12 @@ library BaseOrderUtils {
 
     error EmptyOrder();
     error UnsupportedOrderType();
+    error InvalidOrderPrices(
+        uint256 primaryPrice,
+        uint256 secondaryPrice,
+        uint256 triggerPrice,
+        bool shouldValidateAscendingPrice
+    );
     error PriceImpactLargerThanOrderSize(int256 priceImpactUsdForPriceAdjustment, uint256 sizeDeltaUsd);
     error OrderNotFulfillableDueToPriceImpact(uint256 price, uint256 acceptablePrice);
 
@@ -253,7 +259,7 @@ library BaseOrderUtils {
                 // and that the later price (secondaryPrice) is larger than the triggerPrice
                 bool ok = primaryPrice <= triggerPrice && triggerPrice <= secondaryPrice;
                 if (!ok) {
-                    revert(Keys.INVALID_ORDER_PRICES_ERROR);
+                    revert InvalidOrderPrices(primaryPrice, secondaryPrice, triggerPrice, shouldValidateAscendingPrice);
                 }
 
                 oracle.setCustomPrice(indexToken, Price.Props(
@@ -265,7 +271,7 @@ library BaseOrderUtils {
                 // and that the later price (secondaryPrice) is smaller than the triggerPrice
                 bool ok = primaryPrice >= triggerPrice && triggerPrice >= secondaryPrice;
                 if (!ok) {
-                    revert(Keys.INVALID_ORDER_PRICES_ERROR);
+                    revert InvalidOrderPrices(primaryPrice, secondaryPrice, triggerPrice, shouldValidateAscendingPrice);
                 }
 
                 oracle.setCustomPrice(indexToken, Price.Props(

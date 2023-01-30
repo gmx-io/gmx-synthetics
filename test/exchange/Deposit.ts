@@ -7,19 +7,20 @@ import { getClaimableFeeAmount } from "../../utils/fee";
 import { getPoolAmount, getSwapImpactPoolAmount, getMarketTokenPrice } from "../../utils/market";
 import { getDepositCount, getDepositKeys, createDeposit, executeDeposit, handleDeposit } from "../../utils/deposit";
 import * as keys from "../../utils/keys";
+import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 
 describe("Exchange.Deposit", () => {
   const { provider } = ethers;
 
   let fixture;
   let user0, user1, user2;
-  let reader, dataStore, depositVault, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc;
+  let reader, dataStore, oracle, depositVault, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ reader, dataStore, depositVault, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc } = fixture.contracts);
+    ({ reader, dataStore, oracle, depositVault, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc } = fixture.contracts);
   });
 
   it("createDeposit", async () => {
@@ -76,6 +77,17 @@ describe("Exchange.Deposit", () => {
 
     expect(deposit.addresses.account).eq(user0.address);
     expect(await getDepositCount(dataStore)).eq(1);
+
+    await expect(
+      executeDeposit(fixture, {
+        tokens: [wnt.address],
+        tokenOracleTypes: [TOKEN_ORACLE_TYPES.DEFAULT],
+        minPrices: [expandDecimals(5000, 4)],
+        maxPrices: [expandDecimals(5000, 4)],
+      })
+    )
+      .to.be.revertedWithCustomError(oracle, "EmptyPrimaryPrice")
+      .withArgs(usdc.address);
 
     await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
 

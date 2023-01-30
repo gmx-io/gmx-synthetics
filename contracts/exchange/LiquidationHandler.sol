@@ -50,6 +50,7 @@ contract LiquidationHandler is BaseOrderHandler {
 
         bytes32 key = LiquidationUtils.createLiquidationOrder(
             dataStore,
+            eventEmitter,
             account,
             market,
             collateralToken,

@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "../position/PositionUtils.sol";
 import "../position/PositionStoreUtils.sol";
 import "../order/OrderStoreUtils.sol";
+import "../order/OrderEventUtils.sol";
 import "../nonce/NonceUtils.sol";
 
 // @title LiquidationUtils
@@ -21,6 +22,7 @@ library LiquidationUtils {
     // @param isLong whether the position is long or short
     function createLiquidationOrder(
         DataStore dataStore,
+        EventEmitter eventEmitter,
         address account,
         address market,
         address collateralToken,
@@ -65,6 +67,8 @@ library LiquidationUtils {
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
         OrderStoreUtils.set(dataStore, key, order);
+
+        OrderEventUtils.emitOrderCreated(eventEmitter, key, order);
 
         return key;
     }

@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "./RevertUtils.sol";
+import "./ErrorUtils.sol";
 
 /**
  * @title BasicMulticall
@@ -18,7 +18,7 @@ abstract contract BasicMulticall {
             (bool success, bytes memory result) = address(this).delegatecall(data[i]);
 
             if (!success) {
-                RevertUtils.revertWithParsedMessage(result);
+                ErrorUtils.revertWithParsedMessage(result);
             }
 
             results[i] = result;

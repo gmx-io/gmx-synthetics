@@ -28,6 +28,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     mapping (bytes32 => bool) public allowedKeys;
 
     error InvalidKey(bytes32 key);
+    error InvalidFeeFactor(bytes32 key, uint256 value);
+    error InvalidFactor(bytes32 key, uint256 value);
 
     constructor(
         RoleStore _roleStore,
@@ -242,7 +244,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             key == Keys.SWAP_FEE_FACTOR ||
             key == Keys.POSITION_FEE_FACTOR
         ) {
-            require(value <= MAX_FEE_FACTOR, "Invalid fee factor");
+            revert InvalidFeeFactor(key, value);
         }
 
         if (
@@ -254,7 +256,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             key == Keys.FUNDING_FACTOR ||
             key == Keys.BORROWING_FACTOR
         ) {
-            require(value <= Precision.FLOAT_PRECISION, "Invalid factor");
+            revert InvalidFactor(key, value);
         }
     }
 }

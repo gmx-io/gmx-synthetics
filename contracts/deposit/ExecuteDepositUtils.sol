@@ -19,7 +19,7 @@ import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
-import "../utils/RevertUtils.sol";
+import "../utils/ErrorUtils.sol";
 
 // @title DepositUtils
 // @dev Library for deposit functions, to help with the depositing of liquidity
@@ -89,6 +89,7 @@ library ExecuteDepositUtils {
         int256 priceImpactUsd;
     }
 
+    error EmptyDeposit();
     error MinMarketTokens(uint256 received, uint256 expected);
     error EmptyDepositAmountsAfterSwap();
     error UnexpectedNonZeroShortAmount();
@@ -101,7 +102,9 @@ library ExecuteDepositUtils {
         Deposit.Props memory deposit = DepositStoreUtils.get(params.dataStore, params.key);
         ExecuteDepositCache memory cache;
 
-        require(deposit.account() != address(0), "DepositUtils: empty deposit");
+        if (deposit.account() == address(0)) {
+            revert EmptyDeposit();
+        }
 
         OracleUtils.validateBlockNumberWithinRange(
             params.minOracleBlockNumbers,

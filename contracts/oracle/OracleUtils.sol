@@ -80,6 +80,11 @@ library OracleUtils {
     uint256 public constant COMPACTED_PRICE_INDEX_BIT_LENGTH = 8;
     uint256 public constant COMPACTED_PRICE_INDEX_BITMASK = Bits.BITMASK_8;
 
+    error EmptyPrimaryPrice(address token);
+    error EmptySecondaryPrice(address token);
+    error EmptyLatestPrice(address token);
+    error EmptyCustomPrice(address token);
+
     error EmptyCompactedPrice(uint256 index);
     error EmptyCompactedBlockNumber(uint256 index);
     error EmptyCompactedTimestamp(uint256 index);
@@ -282,5 +287,25 @@ library OracleUtils {
         uint256 blockNumber
     ) internal pure {
         revert OracleBlockNumberNotWithinRange(minOracleBlockNumbers, maxOracleBlockNumbers, blockNumber);
+    }
+
+    function isEmptyPriceError(bytes4 errorSelector) internal pure returns (bool) {
+        if (errorSelector == EmptyPrimaryPrice.selector) {
+            return true;
+        }
+
+        if (errorSelector == EmptySecondaryPrice.selector) {
+            return true;
+        }
+
+        if (errorSelector == EmptyLatestPrice.selector) {
+            return true;
+        }
+
+        if (errorSelector == EmptyCustomPrice.selector) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -93,7 +93,7 @@ library WithdrawalUtils {
     error MinShortTokens(uint256 received, uint256 expected);
     error InsufficientMarketTokens(uint256 balance, uint256 expected);
     error InsufficientWntAmount(uint256 wntAmount, uint256 executionFee);
-    error InsufficientWntAmountExample(uint256 wntAmount, uint256 executionFee);
+    error EmptyWithdrawal();
     error EmptyMarketTokenAmount();
     error InvalidPoolValueForWithdrawal(int256 poolValue);
 
@@ -118,7 +118,7 @@ library WithdrawalUtils {
         uint256 wntAmount = withdrawalVault.recordTransferIn(wnt);
 
         if (wntAmount < params.executionFee) {
-            revert InsufficientWntAmountExample(wntAmount, params.executionFee);
+            revert InsufficientWntAmount(wntAmount, params.executionFee);
         }
 
         ReceiverUtils.validateReceiver(params.receiver);
@@ -179,8 +179,12 @@ library WithdrawalUtils {
      */
     function executeWithdrawal(ExecuteWithdrawalParams memory params) external {
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(params.dataStore, params.key);
-        require(withdrawal.account() != address(0), "WithdrawalUtils: empty withdrawal");
-        require(withdrawal.marketTokenAmount() > 0, "WithdrawalUtils: empty marketTokenAmount");
+        if (withdrawal.account() == address(0)) {
+            revert EmptyWithdrawal();
+        }
+        if (withdrawal.marketTokenAmount() == 0) {
+            revert EmptyMarketTokenAmount();
+        }
 
         OracleUtils.validateBlockNumberWithinRange(
             params.minOracleBlockNumbers,
@@ -229,7 +233,9 @@ library WithdrawalUtils {
         bytes memory reasonBytes
     ) external {
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
-        require(withdrawal.account() != address(0), "WithdrawalUtils: empty withdrawal");
+        if (withdrawal.account() == address(0)) {
+            revert EmptyWithdrawal();
+        }
 
         WithdrawalStoreUtils.remove(dataStore, key, withdrawal.account());
 

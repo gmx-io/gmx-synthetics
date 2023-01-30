@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
-import "../utils/RevertUtils.sol";
+import "../utils/ErrorUtils.sol";
 import "../utils/ReceiverUtils.sol";
 
 import "./IWNT.sol";
@@ -71,7 +71,7 @@ library TokenUtils {
 
         if (success) { return; }
 
-        (string memory reason, /* bool hasRevertMessage */) = RevertUtils.getRevertMessage(returndata);
+        (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(returndata);
         emit TokenTransferReverted(reason, returndata);
 
         revert TokenTransferError(token, receiver, amount);

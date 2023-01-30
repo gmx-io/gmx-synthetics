@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./BaseOrderHandler.sol";
-import "../utils/RevertUtils.sol";
+import "../utils/ErrorUtils.sol";
 
 // @title OrderHandler
 // @dev Contract to handle creation, execution and cancellation of orders
@@ -13,6 +13,7 @@ contract OrderHandler is BaseOrderHandler {
     using Array for uint256[];
 
     error OrderNotUpdatable(Order.OrderType orderType);
+    error InvalidKeeperForFrozenOrder(address keeper);
 
     constructor(
         RoleStore _roleStore,
@@ -216,17 +217,15 @@ contract OrderHandler is BaseOrderHandler {
         uint256 startingGas,
         bytes memory reasonBytes
     ) internal {
-        (string memory reason, /* bool hasRevertMessage */) = RevertUtils.getRevertMessage(reasonBytes);
-        bytes32 reasonKey = keccak256(abi.encode(reason));
+        (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
 
-        // note that it is possible for any external contract to spoof these errors
-        // this can happen when calling transfers for external tokens, eth transfers, callbacks etc
-        // because of that, errors from external calls should be separately caught
+        bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
+
         if (
-            reasonKey == Keys.EMPTY_PRICE_ERROR_KEY ||
-            reasonKey == Keys.FROZEN_ORDER_ERROR_KEY
+            OracleUtils.isEmptyPriceError(errorSelector) ||
+            errorSelector == InvalidKeeperForFrozenOrder.selector
         ) {
-            revert(reason);
+            ErrorUtils.revertWithCustomError(reasonBytes);
         }
 
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
@@ -245,11 +244,11 @@ contract OrderHandler is BaseOrderHandler {
             );
         } else {
             if (
-                reasonKey == Keys.EMPTY_POSITION_ERROR_KEY ||
-                reasonKey == Keys.INVALID_ORDER_PRICES_ERROR_KEY ||
-                reasonKey == Keys.FEATURE_DISABLED_ERROR_KEY
+                errorSelector == FeatureUtils.DisabledFeature.selector ||
+                errorSelector == PositionUtils.EmptyPosition.selector ||
+                errorSelector == BaseOrderUtils.InvalidOrderPrices.selector
             ) {
-                revert(reason);
+                ErrorUtils.revertWithCustomError(reasonBytes);
             }
 
             // freeze unfulfillable orders to prevent the order system from being gamed
@@ -279,6 +278,8 @@ contract OrderHandler is BaseOrderHandler {
     // @dev validate that the keeper is a frozen order keeper
     // @param keeper address of the keeper
     function _validateFrozenOrderKeeper(address keeper) internal view {
-        require(roleStore.hasRole(keeper, Role.FROZEN_ORDER_KEEPER), Keys.FROZEN_ORDER_ERROR);
+        if (!roleStore.hasRole(keeper, Role.FROZEN_ORDER_KEEPER)) {
+            revert InvalidKeeperForFrozenOrder(keeper);
+        }
     }
 }

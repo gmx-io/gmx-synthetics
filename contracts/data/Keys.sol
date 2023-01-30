@@ -203,21 +203,6 @@ library Keys {
     // @dev key for affiliate reward
     bytes32 public constant AFFILIATE_REWARD = keccak256(abi.encode("AFFILIATE_REWARD"));
 
-    string public constant EMPTY_PRICE_ERROR = "EMPTY_PRICE_ERROR";
-    bytes32 public constant EMPTY_PRICE_ERROR_KEY = keccak256(abi.encode(EMPTY_PRICE_ERROR));
-
-    string public constant EMPTY_POSITION_ERROR = "EMPTY_POSITION_ERROR";
-    bytes32 public constant EMPTY_POSITION_ERROR_KEY = keccak256(abi.encode(EMPTY_POSITION_ERROR));
-
-    string public constant INVALID_ORDER_PRICES_ERROR = "INVALID_ORDER_PRICES_ERROR";
-    bytes32 public constant INVALID_ORDER_PRICES_ERROR_KEY = keccak256(abi.encode(INVALID_ORDER_PRICES_ERROR));
-
-    string public constant FROZEN_ORDER_ERROR = "FROZEN_ORDER_ERROR";
-    bytes32 public constant FROZEN_ORDER_ERROR_KEY = keccak256(abi.encode(FROZEN_ORDER_ERROR));
-
-    string public constant FEATURE_DISABLED_ERROR = "FEATURE_DISABLED_ERROR";
-    bytes32 public constant FEATURE_DISABLED_ERROR_KEY = keccak256(abi.encode(FEATURE_DISABLED_ERROR));
-
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
 
     function accountDepositListKey(address account) internal pure returns (bytes32) {

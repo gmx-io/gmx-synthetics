@@ -24,6 +24,13 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     EventEmitter public immutable eventEmitter;
     uint256 public timelockDelay;
 
+    error ActionAlreadySignalled();
+    error ActionNotSignalled();
+    error SignalTimeNotYetPassed(uint256 signalTime);
+    error InvalidTimelockDelay(uint256 timelockDelay);
+    error MaxTimelockDelayExceeded(uint256 timelockDelay);
+    error InvalidFeeReceiver(address receiver);
+
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
@@ -42,14 +49,22 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     }
 
     function increaseTimelockDelay(uint256 _timelockDelay) external onlyTimelockAdmin nonReentrant {
-        require(_timelockDelay > timelockDelay, "_timelockDelay must be increased");
-        require(_timelockDelay <= MAX_TIMELOCK_DELAY, "_timelockDelay exceeds max allowed value");
+        if (_timelockDelay <= timelockDelay) {
+            revert InvalidTimelockDelay(_timelockDelay);
+        }
+
+        if (_timelockDelay > MAX_TIMELOCK_DELAY) {
+            revert MaxTimelockDelayExceeded(_timelockDelay);
+        }
 
         timelockDelay = _timelockDelay;
     }
 
     function signalSetFeeReceiver(address account) external onlyTimelockAdmin nonReentrant {
-        require(account != address(0));
+        if (account == address(0)) {
+            revert InvalidFeeReceiver(account);
+        }
+
         bytes32 actionKey = keccak256(abi.encodePacked("setFeeReceiver", account));
         _signalPendingAction(actionKey, "signalSetFeeReceiver");
 
@@ -216,7 +231,10 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     }
 
     function _signalPendingAction(bytes32 actionKey, string memory actionLabel) internal {
-        require(pendingActions[actionKey] == 0, "Timelock: action already signalled");
+        if (pendingActions[actionKey] != 0) {
+            revert ActionAlreadySignalled();
+        }
+
         pendingActions[actionKey] = block.timestamp + timelockDelay;
 
         EventUtils.EventLogData memory eventData;
@@ -240,12 +258,19 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     }
 
     function _validateAction(bytes32 actionKey) internal view {
-        require(pendingActions[actionKey] != 0, "Timelock: action not signalled");
-        require(pendingActions[actionKey] < block.timestamp, "Timelock: action time not yet passed");
+        if (pendingActions[actionKey] == 0) {
+            revert ActionNotSignalled();
+        }
+
+        if (pendingActions[actionKey] > block.timestamp) {
+            revert SignalTimeNotYetPassed(pendingActions[actionKey]);
+        }
     }
 
     function _clearAction(bytes32 actionKey, string memory actionLabel) internal {
-        require(pendingActions[actionKey] != 0, "Timelock: invalid actionKey");
+        if (pendingActions[actionKey] == 0) {
+            revert ActionNotSignalled();
+        }
         delete pendingActions[actionKey];
 
         EventUtils.EventLogData memory eventData;

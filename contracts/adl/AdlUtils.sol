@@ -6,6 +6,7 @@ import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 
 import "../order/OrderStoreUtils.sol";
+import "../order/OrderEventUtils.sol";
 import "../position/PositionUtils.sol";
 import "../position/PositionStoreUtils.sol";
 import "../nonce/NonceUtils.sol";
@@ -60,6 +61,7 @@ library AdlUtils {
     // @param updatedAtBlock the block to set the order's updatedAtBlock to
     struct CreateAdlOrderParams {
         DataStore dataStore;
+        EventEmitter eventEmitter;
         address account;
         address market;
         address collateralToken;
@@ -249,6 +251,8 @@ library AdlUtils {
 
         bytes32 key = NonceUtils.getNextKey(params.dataStore);
         OrderStoreUtils.set(params.dataStore, key, order);
+
+        OrderEventUtils.emitOrderCreated(params.eventEmitter, key, order);
 
         return key;
     }

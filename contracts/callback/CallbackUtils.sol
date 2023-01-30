@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
-import "../utils/RevertUtils.sol";
+import "../utils/ErrorUtils.sol";
 
 import "./IOrderCallbackReceiver.sol";
 import "./IDepositCallbackReceiver.sol";
@@ -57,7 +57,7 @@ library CallbackUtils {
 
         try IDepositCallbackReceiver(deposit.callbackContract()).afterDepositExecution{ gas: deposit.callbackGasLimit() }(key, deposit) {
         } catch (bytes memory reasonBytes) {
-            (string memory reason, /* bool hasRevertMessage */) = RevertUtils.getRevertMessage(reasonBytes);
+            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
             emit AfterDepositExecutionError(key, deposit, reason, reasonBytes);
         }
     }
@@ -70,7 +70,7 @@ library CallbackUtils {
 
         try IDepositCallbackReceiver(deposit.callbackContract()).afterDepositCancellation{ gas: deposit.callbackGasLimit() }(key, deposit) {
         } catch (bytes memory reasonBytes) {
-            (string memory reason, /* bool hasRevertMessage */) = RevertUtils.getRevertMessage(reasonBytes);
+            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
             emit AfterDepositCancellationError(key, deposit, reason, reasonBytes);
         }
     }
@@ -83,7 +83,7 @@ library CallbackUtils {
 
         try IWithdrawalCallbackReceiver(withdrawal.callbackContract()).afterWithdrawalExecution{ gas: withdrawal.callbackGasLimit() }(key, withdrawal) {
         } catch (bytes memory reasonBytes) {
-            (string memory reason, /* bool hasRevertMessage */) = RevertUtils.getRevertMessage(reasonBytes);
+            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
             emit AfterWithdrawalExecutionError(key, withdrawal, reason, reasonBytes);
         }
     }
@@ -96,7 +96,7 @@ library CallbackUtils {
 
         try IWithdrawalCallbackReceiver(withdrawal.callbackContract()).afterWithdrawalCancellation{ gas: withdrawal.callbackGasLimit() }(key, withdrawal) {
         } catch (bytes memory reasonBytes) {
-            (string memory reason, /* bool hasRevertMessage */) = RevertUtils.getRevertMessage(reasonBytes);
+            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
             emit AfterWithdrawalCancellationError(key, withdrawal, reason, reasonBytes);
         }
     }
@@ -109,7 +109,7 @@ library CallbackUtils {
 
         try IOrderCallbackReceiver(order.callbackContract()).afterOrderExecution{ gas: order.callbackGasLimit() }(key, order) {
         } catch (bytes memory reasonBytes) {
-            (string memory reason, /* bool hasRevertMessage */) = RevertUtils.getRevertMessage(reasonBytes);
+            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
             emit AfterOrderExecutionError(key, order, reason, reasonBytes);
         }
     }
@@ -122,7 +122,7 @@ library CallbackUtils {
 
         try IOrderCallbackReceiver(order.callbackContract()).afterOrderCancellation{ gas: order.callbackGasLimit() }(key, order) {
         } catch (bytes memory reasonBytes) {
-            (string memory reason, /* bool hasRevertMessage */) = RevertUtils.getRevertMessage(reasonBytes);
+            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
             emit AfterOrderCancellationError(key, order, reason, reasonBytes);
         }
     }
@@ -135,7 +135,7 @@ library CallbackUtils {
 
         try IOrderCallbackReceiver(order.callbackContract()).afterOrderFrozen{ gas: order.callbackGasLimit() }(key, order) {
         } catch (bytes memory reasonBytes) {
-            (string memory reason, /* bool hasRevertMessage */) = RevertUtils.getRevertMessage(reasonBytes);
+            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
             emit AfterOrderFrozenError(key, order, reason, reasonBytes);
         }
     }

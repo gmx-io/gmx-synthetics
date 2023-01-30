@@ -38,6 +38,7 @@ library OrderUtils {
 
     error OrderTypeCannotBeCreated(Order.OrderType orderType);
     error OrderAlreadyFrozen();
+    error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);
 
     // @dev creates an order in the order store
     // @param dataStore DataStore
@@ -66,7 +67,9 @@ library OrderUtils {
         ) {
             initialCollateralDeltaAmount = orderVault.recordTransferIn(params.addresses.initialCollateralToken);
             if (params.addresses.initialCollateralToken == wnt) {
-                require(initialCollateralDeltaAmount >= params.numbers.executionFee, "OrderUtils: invalid executionFee");
+                if (initialCollateralDeltaAmount < params.numbers.executionFee) {
+                    revert InsufficientWntAmountForExecutionFee(initialCollateralDeltaAmount, params.numbers.executionFee);
+                }
                 initialCollateralDeltaAmount -= params.numbers.executionFee;
                 shouldRecordSeparateExecutionFeeTransfer = false;
             }
@@ -82,7 +85,9 @@ library OrderUtils {
 
         if (shouldRecordSeparateExecutionFeeTransfer) {
             uint256 wntAmount = orderVault.recordTransferIn(wnt);
-            require(wntAmount >= params.numbers.executionFee, "OrderUtils: invalid wntAmount");
+            if (wntAmount < params.numbers.executionFee) {
+                revert InsufficientWntAmountForExecutionFee(wntAmount, params.numbers.executionFee);
+            }
 
             GasUtils.handleExcessExecutionFee(
                 dataStore,

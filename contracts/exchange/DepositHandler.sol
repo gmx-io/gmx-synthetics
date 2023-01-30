@@ -176,11 +176,12 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         uint256 startingGas,
         bytes memory reasonBytes
     ) internal {
-        (string memory reason, /* bool hasRevertMessage */) = RevertUtils.getRevertMessage(reasonBytes);
-        bytes32 reasonKey = keccak256(abi.encode(reason));
+        (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
 
-        if (reasonKey == Keys.EMPTY_PRICE_ERROR_KEY) {
-            revert(reason);
+        bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
+
+        if (OracleUtils.isEmptyPriceError(errorSelector)) {
+            ErrorUtils.revertWithCustomError(reasonBytes);
         }
 
         DepositUtils.cancelDeposit(

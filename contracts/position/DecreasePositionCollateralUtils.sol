@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../utils/Precision.sol";
-import "../utils/RevertUtils.sol";
+import "../utils/ErrorUtils.sol";
 
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
@@ -371,7 +371,7 @@ library DecreasePositionCollateralUtils {
             } catch Error(string memory reason) {
                 emit SwapUtils.SwapReverted(reason, "");
             } catch (bytes memory reasonBytes) {
-                (string memory reason, /* bool hasRevertMessage */) = RevertUtils.getRevertMessage(reasonBytes);
+                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
                 emit SwapUtils.SwapReverted(reason, reasonBytes);
             }
         }
@@ -407,7 +407,7 @@ library DecreasePositionCollateralUtils {
             } catch Error(string memory reason) {
                 emit SwapUtils.SwapReverted(reason, "");
             } catch (bytes memory reasonBytes) {
-                (string memory reason, /* bool hasRevertMessage */) = RevertUtils.getRevertMessage(reasonBytes);
+                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
                 emit SwapUtils.SwapReverted(reason, reasonBytes);
             }
         }

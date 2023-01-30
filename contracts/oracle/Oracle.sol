@@ -101,6 +101,9 @@ contract Oracle is RoleModule {
     error InvalidOraclePrice(address token);
     error InvalidSignerMinMaxPrice(uint256 minPrice, uint256 maxPrice);
     error InvalidMedianMinMaxPrice(uint256 minPrice, uint256 maxPrice);
+    error NonEmptyTokensWithPrices(uint256 tokensWithPricesLength);
+    error EmptyPriceFeed(address token);
+    error PriceAlreadySet(address token, uint256 minPrice, uint256 maxPrice);
 
     constructor(
         RoleStore _roleStore,
@@ -210,7 +213,9 @@ contract Oracle is RoleModule {
         EventEmitter eventEmitter,
         OracleUtils.SetPricesParams memory params
     ) external onlyController {
-        require(tokensWithPrices.length() == 0, "Oracle: tokensWithPrices not cleared");
+        if (tokensWithPrices.length() != 0) {
+            revert NonEmptyTokensWithPrices(tokensWithPrices.length());
+        }
 
         if (params.tokens.length == 0) { revert EmptyTokens(); }
 
@@ -309,7 +314,9 @@ contract Oracle is RoleModule {
         if (token == address(0)) { return Price.Props(0, 0); }
 
         Price.Props memory price = primaryPrices[token];
-        if (price.isEmpty()) { revert(Keys.EMPTY_PRICE_ERROR); }
+        if (price.isEmpty()) {
+            revert OracleUtils.EmptyPrimaryPrice(token);
+        }
 
         return price;
     }
@@ -321,7 +328,9 @@ contract Oracle is RoleModule {
         if (token == address(0)) { return Price.Props(0, 0); }
 
         Price.Props memory price = secondaryPrices[token];
-        if (price.isEmpty()) { revert(Keys.EMPTY_PRICE_ERROR); }
+        if (price.isEmpty()) {
+            revert OracleUtils.EmptySecondaryPrice(token);
+        }
 
         return price;
     }
@@ -343,7 +352,7 @@ contract Oracle is RoleModule {
             return primaryPrice;
         }
 
-        revert(Keys.EMPTY_PRICE_ERROR);
+        revert OracleUtils.EmptyLatestPrice(token);
     }
 
     // @dev get the custom price of a token
@@ -351,7 +360,9 @@ contract Oracle is RoleModule {
     // @return the custom price of a token
     function getCustomPrice(address token) external view returns (Price.Props memory) {
         Price.Props memory price = customPrices[token];
-        if (price.isEmpty()) { revert(Keys.EMPTY_PRICE_ERROR); }
+        if (price.isEmpty()) {
+            revert OracleUtils.EmptyCustomPrice(token);
+        }
         return price;
     }
 
@@ -361,7 +372,9 @@ contract Oracle is RoleModule {
     // @return the price feed for the token
     function getPriceFeed(DataStore dataStore, address token) public view returns (IPriceFeed) {
         address priceFeedAddress = dataStore.getAddress(Keys.priceFeedKey(token));
-        require(priceFeedAddress != address(0), "Oracle: invalid price feed");
+        if (priceFeedAddress == address(0)) {
+            revert EmptyPriceFeed(token);
+        }
 
         return IPriceFeed(priceFeedAddress);
     }
@@ -549,7 +562,9 @@ contract Oracle is RoleModule {
         for (uint256 i = 0; i < priceFeedTokens.length; i++) {
             address token = priceFeedTokens[i];
 
-            require(primaryPrices[token].isEmpty(), "Oracle: price already set");
+            if (!primaryPrices[token].isEmpty()) {
+                revert PriceAlreadySet(token, primaryPrices[token].min, primaryPrices[token].max);
+            }
 
             IPriceFeed priceFeed = getPriceFeed(dataStore, token);
 

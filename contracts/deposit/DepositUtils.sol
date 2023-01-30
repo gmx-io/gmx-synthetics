@@ -51,6 +51,7 @@ library DepositUtils {
     }
 
     error EmptyDeposit();
+    error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);
 
     // @dev creates a deposit
     //
@@ -79,7 +80,9 @@ library DepositUtils {
             initialShortTokenAmount -= params.executionFee;
         } else {
             uint256 wntAmount = depositVault.recordTransferIn(wnt);
-            require(wntAmount >= params.executionFee, "DepositUtils: invalid wntAmount");
+            if (wntAmount < params.executionFee) {
+                revert InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
+            }
 
             GasUtils.handleExcessExecutionFee(
                 dataStore,
@@ -152,7 +155,9 @@ library DepositUtils {
         bytes memory reasonBytes
     ) external {
         Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
-        require(deposit.account() != address(0), "DepositUtils: empty deposit");
+        if (deposit.account() == address(0)) {
+            revert EmptyDeposit();
+        }
 
         if (deposit.initialLongTokenAmount() > 0) {
             depositVault.transferOut(
