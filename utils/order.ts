@@ -16,6 +16,12 @@ export const OrderType = {
   Liquidation: 7,
 };
 
+export const DecreasePositionSwapType = {
+  NoSwap: 0,
+  SwapPnlTokenToCollateralToken: 1,
+  SwapCollateralTokenToPnlToken: 2,
+};
+
 export function getOrderCount(dataStore) {
   return dataStore.getBytes32Count(keys.ORDER_LIST);
 }
@@ -38,6 +44,7 @@ export async function createOrder(fixture, overrides) {
   const { orderVault, orderHandler, wnt } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
+  const decreasePositionSwapType = overrides.decreasePositionSwapType || DecreasePositionSwapType.NoSwap;
   const account = overrides.account || user0;
   const receiver = overrides.receiver || account;
   const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
@@ -82,6 +89,7 @@ export async function createOrder(fixture, overrides) {
       minOutputAmount,
     },
     orderType,
+    decreasePositionSwapType,
     isLong,
     shouldUnwrapNativeToken,
   };
@@ -92,7 +100,7 @@ export async function createOrder(fixture, overrides) {
   });
 }
 
-export async function executeOrder(fixture, overrides) {
+export async function executeOrder(fixture, overrides = {}) {
   const { wnt, usdc } = fixture.contracts;
   const { gasUsageLabel } = overrides;
   const { reader, dataStore, orderHandler } = fixture.contracts;
@@ -122,38 +130,4 @@ export async function executeOrder(fixture, overrides) {
 export async function handleOrder(fixture, overrides = {}) {
   await createOrder(fixture, overrides.create);
   await executeOrder(fixture, overrides.execute);
-}
-
-export async function executeLiquidation(fixture, overrides) {
-  const { wnt, usdc } = fixture.contracts;
-  const { account, market, collateralToken, isLong, gasUsageLabel } = overrides;
-  const { liquidationHandler } = fixture.contracts;
-  const tokens = overrides.tokens || [wnt.address, usdc.address];
-  const tokenOracleTypes = overrides.tokenOracleTypes || [TOKEN_ORACLE_TYPES.DEFAULT, TOKEN_ORACLE_TYPES.DEFAULT];
-  const precisions = overrides.precisions || [8, 18];
-  const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
-  const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
-
-  const block = await ethers.provider.getBlock();
-
-  const params = {
-    oracleBlockNumber: bigNumberify(block.number),
-    tokens,
-    tokenOracleTypes,
-    precisions,
-    minPrices,
-    maxPrices,
-    execute: async (key, oracleParams) => {
-      return await liquidationHandler.executeLiquidation(
-        account,
-        market.marketToken,
-        collateralToken.address,
-        isLong,
-        oracleParams
-      );
-    },
-    gasUsageLabel,
-  };
-
-  await executeWithOracleParams(fixture, params);
 }

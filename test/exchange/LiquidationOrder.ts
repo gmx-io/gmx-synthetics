@@ -3,19 +3,20 @@ import { expect } from "chai";
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
-import { OrderType, getOrderCount, handleOrder, executeLiquidation } from "../../utils/order";
+import { OrderType, getOrderCount, handleOrder } from "../../utils/order";
+import { executeLiquidation } from "../../utils/liquidation";
 import { grantRole } from "../../utils/role";
 import { getAccountPositionCount } from "../../utils/position";
 
 describe("Exchange.LiquidationOrder", () => {
   let fixture;
   let wallet, user0;
-  let roleStore, dataStore, ethUsdMarket, wnt, usdc;
+  let roleStore, dataStore, ethUsdMarket, decreasePositionUtils, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ wallet, user0 } = fixture.accounts);
-    ({ roleStore, dataStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ roleStore, dataStore, ethUsdMarket, decreasePositionUtils, wnt, usdc } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -60,7 +61,7 @@ describe("Exchange.LiquidationOrder", () => {
         maxPrices: [expandDecimals(4200, 4), expandDecimals(1, 6)],
         gasUsageLabel: "liquidationHandler.executeLiquidation",
       })
-    ).to.be.revertedWith("DecreasePositionUtils: Invalid Liquidation");
+    ).to.be.revertedWithCustomError(decreasePositionUtils, "PositionShouldNotBeLiquidated");
 
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
     expect(await getOrderCount(dataStore)).eq(0);

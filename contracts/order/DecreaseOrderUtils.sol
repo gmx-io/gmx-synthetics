@@ -6,10 +6,10 @@ import "./BaseOrderUtils.sol";
 import "../swap/SwapUtils.sol";
 import "../position/DecreasePositionUtils.sol";
 import "../order/OrderStoreUtils.sol";
-import "../utils/RevertUtils.sol";
+import "../utils/ErrorUtils.sol";
 
 // @title DecreaseOrderUtils
-// @dev Libary for functions to help with processing a decrease order
+// @dev Library for functions to help with processing a decrease order
 library DecreaseOrderUtils {
     using Position for Position.Props;
     using Order for Order.Props;
@@ -20,13 +20,15 @@ library DecreaseOrderUtils {
     function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external {
         Order.Props memory order = params.order;
         MarketUtils.validateEnabledMarket(params.contracts.dataStore, params.market);
+        MarketUtils.validatePositionMarket(params.market);
 
         bytes32 positionKey = PositionUtils.getPositionKey(order.account(), order.market(), order.initialCollateralToken(), order.isLong());
         Position.Props memory position = PositionStoreUtils.get(params.contracts.dataStore, positionKey);
         PositionUtils.validateNonEmptyPosition(position);
 
         validateOracleBlockNumbers(
-            params.oracleBlockNumbers,
+            params.minOracleBlockNumbers,
+            params.maxOracleBlockNumbers,
             order.orderType(),
             order.updatedAtBlock(),
             position.increasedAtBlock(),
@@ -78,17 +80,20 @@ library DecreaseOrderUtils {
                 order.shouldUnwrapNativeToken()
             );
         } else {
-            try params.contracts.swapHandler.swap(SwapUtils.SwapParams(
-                params.contracts.dataStore,
-                params.contracts.eventEmitter,
-                params.contracts.oracle,
-                result.outputToken,
-                result.outputAmount,
-                params.swapPathMarkets,
-                order.minOutputAmount(),
-                order.receiver(),
-                order.shouldUnwrapNativeToken()
-            )) returns (address /* tokenOut */, uint256 /* swapOutputAmount */) {
+            try params.contracts.swapHandler.swap(
+                SwapUtils.SwapParams(
+                    params.contracts.dataStore,
+                    params.contracts.eventEmitter,
+                    params.contracts.oracle,
+                    Bank(payable(order.market())),
+                    result.outputToken,
+                    result.outputAmount,
+                    params.swapPathMarkets,
+                    order.minOutputAmount(),
+                    order.receiver(),
+                    order.shouldUnwrapNativeToken()
+                )
+            ) returns (address /* tokenOut */, uint256 /* swapOutputAmount */) {
             } catch Error(string memory reason) {
                 _handleSwapError(
                     order,
@@ -97,7 +102,7 @@ library DecreaseOrderUtils {
                     ""
                 );
             } catch (bytes memory reasonBytes) {
-                string memory reason = RevertUtils.getRevertMessage(reasonBytes);
+                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
                 _handleSwapError(
                     order,
                     result,
@@ -115,16 +120,19 @@ library DecreaseOrderUtils {
     // @param positionIncreasedAtBlock the block at which the position was last increased
     // @param positionDecreasedAtBlock the block at which the position was last decreased
     function validateOracleBlockNumbers(
-        uint256[] memory oracleBlockNumbers,
+        uint256[] memory minOracleBlockNumbers,
+        uint256[] memory maxOracleBlockNumbers,
         Order.OrderType orderType,
         uint256 orderUpdatedAtBlock,
         uint256 positionIncreasedAtBlock,
         uint256 positionDecreasedAtBlock
     ) internal pure {
         if (orderType == Order.OrderType.MarketDecrease) {
-            if (!oracleBlockNumbers.areEqualTo(orderUpdatedAtBlock)) {
-                OracleUtils.revertOracleBlockNumbersAreNotEqual(oracleBlockNumbers, orderUpdatedAtBlock);
-            }
+            OracleUtils.validateBlockNumberWithinRange(
+                minOracleBlockNumbers,
+                maxOracleBlockNumbers,
+                orderUpdatedAtBlock
+            );
             return;
         }
 
@@ -133,8 +141,8 @@ library DecreaseOrderUtils {
             orderType == Order.OrderType.StopLossDecrease
         ) {
             uint256 latestUpdatedAtBlock = orderUpdatedAtBlock > positionIncreasedAtBlock ? orderUpdatedAtBlock : positionIncreasedAtBlock;
-            if (!oracleBlockNumbers.areGreaterThan(latestUpdatedAtBlock)) {
-                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, latestUpdatedAtBlock);
+            if (!minOracleBlockNumbers.areGreaterThan(latestUpdatedAtBlock)) {
+                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, latestUpdatedAtBlock);
             }
             return;
         }
@@ -142,8 +150,8 @@ library DecreaseOrderUtils {
         if (orderType == Order.OrderType.Liquidation) {
             uint256 latestUpdatedAtBlock = positionIncreasedAtBlock > positionDecreasedAtBlock ? positionIncreasedAtBlock : positionDecreasedAtBlock;
 
-            if (!oracleBlockNumbers.areGreaterThan(latestUpdatedAtBlock)) {
-                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, latestUpdatedAtBlock);
+            if (!minOracleBlockNumbers.areGreaterThan(latestUpdatedAtBlock)) {
+                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, latestUpdatedAtBlock);
             }
             return;
         }

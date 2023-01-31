@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/utils/math/SignedMath.sol";
+
 import "../market/MarketUtils.sol";
 
 import "../utils/Precision.sol";
@@ -12,6 +14,7 @@ import "./PricingUtils.sol";
 // @title SwapPricingUtils
 // @dev Library for pricing functions
 library SwapPricingUtils {
+    using SignedMath for int256;
     using SafeCast for uint256;
     using SafeCast for int256;
 
@@ -58,13 +61,15 @@ library SwapPricingUtils {
 
     // @dev SwapFees struct to contain swap fee values
     // @param feeReceiverAmount the fee amount for the fee receiver
-    // @param feesForPool the fee amount for the pool
+    // @param feeAmountForPool the fee amount for the pool
     // @param amountAfterFees the output amount after fees
     struct SwapFees {
         uint256 feeReceiverAmount;
-        uint256 feesForPool;
+        uint256 feeAmountForPool;
         uint256 amountAfterFees;
     }
+
+    error UsdDeltaExceedsPoolValue(int256 usdDelta, uint256 poolUsd);
 
     // @dev get the price impact in USD
     //
@@ -86,7 +91,28 @@ library SwapPricingUtils {
 
         int256 priceImpactUsd = _getPriceImpactUsd(params.dataStore, params.market, poolParams);
 
-        return priceImpactUsd;
+        if (priceImpactUsd >= 0) {
+            return priceImpactUsd;
+        }
+
+        (bool hasVirtualInventory, int256 thresholdImpactFactorForVirtualInventory) = MarketUtils.getThresholdSwapImpactFactorForVirtualInventory(
+            params.dataStore,
+            params.market
+        );
+
+        if (!hasVirtualInventory) {
+            return priceImpactUsd;
+        }
+
+        PoolParams memory poolParamsForVirtualInventory = getNextPoolAmountsUsdForVirtualInventory(params);
+        int256 priceImpactUsdForVirtualInventory = _getPriceImpactUsd(params.dataStore, params.market, poolParamsForVirtualInventory);
+        int256 thresholdPriceImpactUsd = Precision.applyFactor(params.usdDeltaForTokenA.abs() + params.usdDeltaForTokenB.abs(), thresholdImpactFactorForVirtualInventory);
+
+        if (priceImpactUsdForVirtualInventory > thresholdPriceImpactUsd) {
+            return priceImpactUsd;
+        }
+
+        return priceImpactUsdForVirtualInventory < priceImpactUsd ? priceImpactUsdForVirtualInventory : priceImpactUsd;
     }
 
     // @dev get the price impact in USD
@@ -138,15 +164,40 @@ library SwapPricingUtils {
         uint256 poolAmountForTokenA = MarketUtils.getPoolAmount(params.dataStore, params.market, params.tokenA);
         uint256 poolAmountForTokenB = MarketUtils.getPoolAmount(params.dataStore, params.market, params.tokenB);
 
+        return getNextPoolAmountsParams(
+            params,
+            poolAmountForTokenA,
+            poolAmountForTokenB
+        );
+    }
+
+    function getNextPoolAmountsUsdForVirtualInventory(
+        GetPriceImpactUsdParams memory params
+    ) internal view returns (PoolParams memory) {
+        (/* bool hasVirtualInventory */, uint256 poolAmountForTokenA) = MarketUtils.getVirtualInventoryForSwaps(params.dataStore, params.market, params.tokenA);
+        (/* bool hasVirtualInventory */, uint256 poolAmountForTokenB) = MarketUtils.getVirtualInventoryForSwaps(params.dataStore, params.market, params.tokenB);
+
+        return getNextPoolAmountsParams(
+            params,
+            poolAmountForTokenA,
+            poolAmountForTokenB
+        );
+    }
+
+    function getNextPoolAmountsParams(
+        GetPriceImpactUsdParams memory params,
+        uint256 poolAmountForTokenA,
+        uint256 poolAmountForTokenB
+    ) internal pure returns (PoolParams memory) {
         uint256 poolUsdForTokenA = poolAmountForTokenA * params.priceForTokenA;
         uint256 poolUsdForTokenB = poolAmountForTokenB * params.priceForTokenB;
 
         if (params.usdDeltaForTokenA < 0 && (-params.usdDeltaForTokenA).toUint256() > poolUsdForTokenA) {
-            revert("Unexpected input, usdDeltaForTokenA is larger than pool");
+            revert UsdDeltaExceedsPoolValue(params.usdDeltaForTokenA, poolUsdForTokenA);
         }
 
         if (params.usdDeltaForTokenB < 0 && (-params.usdDeltaForTokenB).toUint256() > poolUsdForTokenB) {
-            revert("Unexpected input, usdDeltaForTokenB is larger than pool");
+            revert UsdDeltaExceedsPoolValue(params.usdDeltaForTokenB, poolUsdForTokenB);
         }
 
         uint256 nextPoolUsdForTokenA = Calc.sumReturnUint256(poolUsdForTokenA, params.usdDeltaForTokenA);
@@ -174,12 +225,12 @@ library SwapPricingUtils {
         SwapFees memory fees;
 
         uint256 feeFactor = dataStore.getUint(Keys.swapFeeFactorKey(marketToken));
-        uint256 feeReceiverFactor = dataStore.getUint(Keys.FEE_RECEIVER_FACTOR);
+        uint256 swapFeeReceiverFactor = dataStore.getUint(Keys.SWAP_FEE_RECEIVER_FACTOR);
 
         uint256 feeAmount = Precision.applyFactor(amount, feeFactor);
 
-        fees.feeReceiverAmount = Precision.applyFactor(feeAmount, feeReceiverFactor);
-        fees.feesForPool = feeAmount - fees.feeReceiverAmount;
+        fees.feeReceiverAmount = Precision.applyFactor(feeAmount, swapFeeReceiverFactor);
+        fees.feeAmountForPool = feeAmount - fees.feeReceiverAmount;
         fees.amountAfterFees = amount - feeAmount;
 
         return fees;
@@ -241,7 +292,7 @@ library SwapPricingUtils {
 
         eventData.uintItems.initItems(3);
         eventData.uintItems.setItem(0, "feeReceiverAmount", fees.feeReceiverAmount);
-        eventData.uintItems.setItem(1, "feesForPool", fees.feesForPool);
+        eventData.uintItems.setItem(1, "feeAmountForPool", fees.feeAmountForPool);
         eventData.uintItems.setItem(2, "amountAfterFees", fees.amountAfterFees);
 
         eventEmitter.emitEventLog1(

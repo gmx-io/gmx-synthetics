@@ -72,8 +72,7 @@ contract BaseOrderHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         params.order = OrderStoreUtils.get(dataStore, key);
         params.swapPathMarkets = MarketUtils.getEnabledMarkets(
             dataStore,
-            params.order.swapPath(),
-            BaseOrderUtils.isDecreaseOrder(params.order.orderType())
+            params.order.swapPath()
         );
 
         params.contracts.dataStore = dataStore;
@@ -83,8 +82,13 @@ contract BaseOrderHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         params.contracts.swapHandler = swapHandler;
         params.contracts.referralStorage = referralStorage;
 
-        params.oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedOracleBlockNumbers,
+        params.minOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
+            oracleParams.compactedMinOracleBlockNumbers,
+            oracleParams.tokens.length
+        );
+
+        params.maxOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
+            oracleParams.compactedMaxOracleBlockNumbers,
             oracleParams.tokens.length
         );
 

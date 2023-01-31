@@ -26,15 +26,21 @@ library DepositEventUtils {
     ) external {
         EventUtils.EventLogData memory eventData;
 
-        eventData.addressItems.initItems(4);
+        eventData.addressItems.initItems(6);
         eventData.addressItems.setItem(0, "account", deposit.account());
         eventData.addressItems.setItem(1, "receiver", deposit.receiver());
         eventData.addressItems.setItem(2, "callbackContract", deposit.callbackContract());
         eventData.addressItems.setItem(3, "market", deposit.market());
+        eventData.addressItems.setItem(4, "initialLongToken", deposit.initialLongToken());
+        eventData.addressItems.setItem(5, "initialShortToken", deposit.initialShortToken());
+
+        eventData.addressItems.initArrayItems(2);
+        eventData.addressItems.setItem(0, "longTokenSwapPath", deposit.longTokenSwapPath());
+        eventData.addressItems.setItem(1, "shortTokenSwapPath", deposit.shortTokenSwapPath());
 
         eventData.uintItems.initItems(6);
-        eventData.uintItems.setItem(0, "longTokenAmount", deposit.longTokenAmount());
-        eventData.uintItems.setItem(1, "shortTokenAmount", deposit.shortTokenAmount());
+        eventData.uintItems.setItem(0, "initialLongTokenAmount", deposit.initialLongTokenAmount());
+        eventData.uintItems.setItem(1, "initialShortTokenAmount", deposit.initialShortTokenAmount());
         eventData.uintItems.setItem(2, "minMarketTokens", deposit.minMarketTokens());
         eventData.uintItems.setItem(3, "updatedAtBlock", deposit.updatedAtBlock());
         eventData.uintItems.setItem(4, "executionFee", deposit.executionFee());
@@ -55,12 +61,20 @@ library DepositEventUtils {
 
     function emitDepositExecuted(
         EventEmitter eventEmitter,
-        bytes32 key
+        bytes32 key,
+        uint256 longTokenAmount,
+        uint256 shortTokenAmount,
+        uint256 receivedMarketTokens
     ) external {
         EventUtils.EventLogData memory eventData;
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
+
+        eventData.uintItems.initItems(3);
+        eventData.uintItems.setItem(0, "longTokenAmount", longTokenAmount);
+        eventData.uintItems.setItem(1, "shortTokenAmount", shortTokenAmount);
+        eventData.uintItems.setItem(2, "receivedMarketTokens", receivedMarketTokens);
 
         eventEmitter.emitEventLog(
             "DepositExecuted",

@@ -2,9 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/Address.sol";
-
-import "./RevertUtils.sol";
+import "./ErrorUtils.sol";
 
 /**
  * @title PayableMulticall
@@ -24,8 +22,7 @@ abstract contract PayableMulticall {
             (bool success, bytes memory result) = address(this).delegatecall(data[i]);
 
             if (!success) {
-                string memory revertMessage = RevertUtils.getRevertMessage(result);
-                revert(revertMessage);
+                ErrorUtils.revertWithParsedMessage(result);
             }
 
             results[i] = result;

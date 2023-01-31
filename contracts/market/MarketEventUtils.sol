@@ -121,7 +121,38 @@ library MarketEventUtils {
         );
     }
 
-    function emitVirtualInventoryUpdated(
+    function emitVirtualSwapInventoryUpdated(
+        EventEmitter eventEmitter,
+        address market,
+        address token,
+        bytes32 marketId,
+        int256 delta,
+        uint256 nextValue
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "token", token);
+        eventData.addressItems.setItem(1, "market", market);
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "marketId", marketId);
+
+        eventData.intItems.initItems(1);
+        eventData.intItems.setItem(0, "delta", delta);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "nextValue", nextValue);
+
+        eventEmitter.emitEventLog2(
+            "VirtualSwapInventoryUpdated",
+            Cast.toBytes32(market),
+            marketId,
+            eventData
+        );
+    }
+
+    function emitVirtualPositionInventoryUpdated(
         EventEmitter eventEmitter,
         address token,
         bytes32 tokenId,
@@ -141,7 +172,7 @@ library MarketEventUtils {
         eventData.intItems.setItem(1, "nextValue", nextValue);
 
         eventEmitter.emitEventLog2(
-            "VirtualInventoryUpdated",
+            "VirtualPositionInventoryUpdated",
             Cast.toBytes32(token),
             tokenId,
             eventData
@@ -203,6 +234,58 @@ library MarketEventUtils {
 
         eventEmitter.emitEventLog1(
             "CollateralSumUpdated",
+            Cast.toBytes32(market),
+            eventData
+        );
+    }
+
+    function emitBorrowingFactorUpdated(
+        EventEmitter eventEmitter,
+        address market,
+        bool isLong,
+        uint256 delta,
+        uint256 nextValue
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "market", market);
+
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "isLong", isLong);
+
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "delta", delta);
+        eventData.uintItems.setItem(1, "nextValue", nextValue);
+
+        eventEmitter.emitEventLog1(
+            "CumulativeBorrowingFactorUpdated",
+            Cast.toBytes32(market),
+            eventData
+        );
+    }
+
+    function emitFundingAmountPerSizeUpdated(
+        EventEmitter eventEmitter,
+        address market,
+        address collateralToken,
+        bool isLong,
+        int256 value
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "collateralToken", collateralToken);
+
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "isLong", isLong);
+
+        eventData.intItems.initItems(1);
+        eventData.intItems.setItem(0, "value", value);
+
+        eventEmitter.emitEventLog1(
+            "FundingAmountPerSizeUpdated",
             Cast.toBytes32(market),
             eventData
         );

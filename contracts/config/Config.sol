@@ -27,6 +27,10 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
     mapping (bytes32 => bool) public allowedKeys;
 
+    error InvalidKey(bytes32 key);
+    error InvalidFeeFactor(bytes32 key, uint256 value);
+    error InvalidFactor(bytes32 key, uint256 value);
+
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
@@ -41,7 +45,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     function setBool(bytes32 key, bytes memory data, bool value) external onlyConfigKeeper nonReentrant {
         _validateKey(key);
 
-        bytes32 fullKey = keccak256(abi.encode(key, data));
+        bytes32 fullKey = keccak256(bytes.concat(key, data));
 
         dataStore.setBool(fullKey, value);
 
@@ -66,7 +70,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     function setAddress(bytes32 key, bytes memory data, address value) external onlyConfigKeeper nonReentrant {
         _validateKey(key);
 
-        bytes32 fullKey = keccak256(abi.encode(key, data));
+        bytes32 fullKey = keccak256(bytes.concat(key, data));
 
         dataStore.setAddress(fullKey, value);
 
@@ -91,7 +95,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     function setBytes32(bytes32 key, bytes memory data, bytes32 value) external onlyConfigKeeper nonReentrant {
         _validateKey(key);
 
-        bytes32 fullKey = keccak256(abi.encode(key, data));
+        bytes32 fullKey = keccak256(bytes.concat(key, data));
 
         dataStore.setBytes32(fullKey, value);
 
@@ -114,7 +118,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     function setUint(bytes32 key, bytes memory data, uint256 value) external onlyConfigKeeper nonReentrant {
         _validateKey(key);
 
-        bytes32 fullKey = keccak256(abi.encode(key, data));
+        bytes32 fullKey = keccak256(bytes.concat(key, data));
 
         _validateRange(key, value);
 
@@ -141,7 +145,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     function setInt(bytes32 key, bytes memory data, int256 value) external onlyConfigKeeper nonReentrant {
         _validateKey(key);
 
-        bytes32 fullKey = keccak256(abi.encode(key, data));
+        bytes32 fullKey = keccak256(bytes.concat(key, data));
 
         dataStore.setInt(fullKey, value);
 
@@ -182,13 +186,15 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedKeys[Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS] = true;
         allowedKeys[Keys.MAX_ORACLE_PRICE_AGE] = true;
-        allowedKeys[Keys.FEE_RECEIVER_FACTOR] = true;
+        allowedKeys[Keys.POSITION_FEE_RECEIVER_FACTOR] = true;
+        allowedKeys[Keys.SWAP_FEE_RECEIVER_FACTOR] = true;
+        allowedKeys[Keys.BORROWING_FEE_RECEIVER_FACTOR] = true;
 
-        allowedKeys[Keys.ESTIMATED_FEE_BASE_GAS_LIMIT] = true;
-        allowedKeys[Keys.ESTIMATED_FEE_MULTIPLIER_FACTOR] = true;
+        allowedKeys[Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT] = true;
+        allowedKeys[Keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR] = true;
 
-        allowedKeys[Keys.EXECUTION_FEE_BASE_GAS_LIMIT] = true;
-        allowedKeys[Keys.EXECUTION_FEE_MULTIPLIER_FACTOR] = true;
+        allowedKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT] = true;
+        allowedKeys[Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR] = true;
 
         allowedKeys[Keys.DEPOSIT_GAS_LIMIT] = true;
         allowedKeys[Keys.WITHDRAWAL_GAS_LIMIT] = true;
@@ -199,13 +205,17 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedKeys[Keys.TOKEN_TRANSFER_GAS_LIMIT] = true;
         allowedKeys[Keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT] = true;
 
-        allowedKeys[Keys.REQUEST_EXPIRATION_AGE] = true;
+        allowedKeys[Keys.REQUEST_EXPIRATION_BLOCK_AGE] = true;
         allowedKeys[Keys.MIN_COLLATERAL_FACTOR] = true;
         allowedKeys[Keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER] = true;
         allowedKeys[Keys.MIN_COLLATERAL_USD] = true;
 
-        allowedKeys[Keys.TOKEN_ID] = true;
+        allowedKeys[Keys.VIRTUAL_TOKEN_ID] = true;
+        allowedKeys[Keys.VIRTUAL_MARKET_ID] = true;
+        allowedKeys[Keys.VIRTUAL_INVENTORY_FOR_SWAPS] = true;
+        allowedKeys[Keys.VIRTUAL_INVENTORY_FOR_POSITIONS] = true;
         allowedKeys[Keys.THRESHOLD_POSITION_IMPACT_FACTOR_FOR_VIRTUAL_INVENTORY] = true;
+        allowedKeys[Keys.THRESHOLD_SWAP_IMPACT_FACTOR_FOR_VIRTUAL_INVENTORY] = true;
 
         allowedKeys[Keys.POSITION_IMPACT_FACTOR] = true;
         allowedKeys[Keys.POSITION_IMPACT_EXPONENT_FACTOR] = true;
@@ -226,12 +236,31 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     }
 
     function _validateKey(bytes32 key) internal view {
-        if (!allowedKeys[key]) { revert("Invalid key"); }
+        if (!allowedKeys[key]) {
+            revert InvalidKey(key);
+        }
     }
 
     function _validateRange(bytes32 key, uint256 value) internal pure {
-        if (key == Keys.SWAP_FEE_FACTOR || key == Keys.POSITION_FEE_FACTOR) {
-            require(value < MAX_FEE_FACTOR, "Invalid fee factor");
+        if (
+            key == Keys.SWAP_FEE_FACTOR ||
+            key == Keys.POSITION_FEE_FACTOR
+        ) {
+            revert InvalidFeeFactor(key, value);
+        }
+
+        if (
+            key == Keys.POSITION_FEE_RECEIVER_FACTOR ||
+            key == Keys.SWAP_FEE_RECEIVER_FACTOR ||
+            key == Keys.BORROWING_FEE_RECEIVER_FACTOR ||
+            key == Keys.MIN_COLLATERAL_FACTOR ||
+            key == Keys.RESERVE_FACTOR ||
+            key == Keys.MAX_PNL_FACTOR ||
+            key == Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS ||
+            key == Keys.FUNDING_FACTOR ||
+            key == Keys.BORROWING_FACTOR
+        ) {
+            revert InvalidFactor(key, value);
         }
     }
 }

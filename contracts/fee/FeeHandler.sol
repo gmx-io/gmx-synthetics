@@ -13,6 +13,8 @@ contract FeeHandler is ReentrancyGuard, RoleModule {
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
 
+    error InvalidClaimFeesInput(uint256 marketsLength, uint256 tokensLength);
+
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
@@ -24,12 +26,13 @@ contract FeeHandler is ReentrancyGuard, RoleModule {
 
     function claimFees(
         address[] memory markets,
-        address[] memory tokens,
-        address receiver
+        address[] memory tokens
     ) external nonReentrant onlyFeeKeeper {
         if (markets.length != tokens.length) {
-            revert("Invalid input");
+            revert InvalidClaimFeesInput(markets.length, tokens.length);
         }
+
+        address receiver = dataStore.getAddress(Keys.FEE_RECEIVER);
 
         for (uint256 i = 0; i < markets.length; i++) {
             FeeUtils.claimFees(

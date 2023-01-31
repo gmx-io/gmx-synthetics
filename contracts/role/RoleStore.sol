@@ -24,6 +24,7 @@ contract RoleStore {
     mapping(address => mapping (bytes32 => bool)) roleCache;
 
     error Unauthorized(address msgSender, string role);
+    error ThereMustBeAtLeastOneRoleAdmin();
 
     modifier onlyRoleAdmin() {
         if (!hasRole(msg.sender, Role.ROLE_ADMIN)) {
@@ -120,7 +121,7 @@ contract RoleStore {
         roleCache[account][key] = false;
 
         if (key == Role.ROLE_ADMIN && roleMembers[key].length() == 0) {
-            revert("There must be at least one role admin");
+            revert ThereMustBeAtLeastOneRoleAdmin();
         }
     }
 }

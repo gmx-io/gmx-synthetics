@@ -1,6 +1,5 @@
 import { setUintIfDifferent } from "../utils/dataStore";
 import { hashString } from "../utils/hash";
-import { decimalToFloat } from "../utils/math";
 import { createDeployFunction } from "../utils/deploy";
 
 const constructorContracts = ["RoleStore"];
@@ -12,9 +11,19 @@ const func = createDeployFunction({
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
   libraryNames: ["GasUtils", "OrderUtils", "AdlUtils", "PositionStoreUtils", "OrderStoreUtils"],
-  afterDeploy: async () => {
-    await setUintIfDifferent(hashString("MAX_CALLBACK_GAS_LIMIT"), 2 * 1000 * 1000, "max callback gas limit"); // 1%
-    await setUintIfDifferent(hashString("MIN_COLLATERAL_USD"), decimalToFloat(1), "min collateral USD");
+  afterDeploy: async ({ gmx }) => {
+    const generalConfig = await gmx.getGeneral();
+    await setUintIfDifferent(
+      hashString("MAX_CALLBACK_GAS_LIMIT"),
+      generalConfig.maxCallbackGasLimit,
+      "max callback gas limit"
+    );
+    await setUintIfDifferent(hashString("MIN_COLLATERAL_USD"), generalConfig.minCollateralUsd, "min collateral USD");
+    await setUintIfDifferent(
+      hashString("CLAIMABLE_COLLATERAL_TIME_DIVISOR"),
+      generalConfig.minCollateralUsd,
+      "claimable collateral time divisor"
+    );
   },
 });
 

@@ -29,7 +29,7 @@ async function main() {
   const marketFactory = await ethers.getContract("MarketFactory");
   const roleStore = await ethers.getContract("RoleStore");
   const dataStore = await ethers.getContract("DataStore");
-  const depositStore = await ethers.getContract("DepositStore");
+  const depositVault = await ethers.getContract("DepositVault");
   const exchangeRouter: ExchangeRouter = await ethers.getContract("ExchangeRouter");
   const router = await ethers.getContract("Router");
 
@@ -102,15 +102,19 @@ async function main() {
     shouldUnwrapNativeToken: false,
     executionFee: executionFee,
     callbackGasLimit: 0,
+    initialLongToken: weth.address,
+    longTokenSwapPath: [],
+    initialShortToken: usdc.address,
+    shortTokenSwapPath: [],
   };
   console.log("exchange router %s", exchangeRouter.address);
-  console.log("deposit store %s", depositStore.address);
+  console.log("deposit store %s", depositVault.address);
   console.log("creating deposit %s", JSON.stringify(params));
 
   const multicallArgs = [
-    exchangeRouter.interface.encodeFunctionData("sendWnt", [depositStore.address, executionFee]),
-    exchangeRouter.interface.encodeFunctionData("sendTokens", [weth.address, depositStore.address, longTokenAmount]),
-    exchangeRouter.interface.encodeFunctionData("sendTokens", [usdc.address, depositStore.address, shortTokenAmount]),
+    exchangeRouter.interface.encodeFunctionData("sendWnt", [depositVault.address, executionFee]),
+    exchangeRouter.interface.encodeFunctionData("sendTokens", [weth.address, depositVault.address, longTokenAmount]),
+    exchangeRouter.interface.encodeFunctionData("sendTokens", [usdc.address, depositVault.address, shortTokenAmount]),
     exchangeRouter.interface.encodeFunctionData("createDeposit", [params]),
   ];
   console.log("multicall args", multicallArgs);

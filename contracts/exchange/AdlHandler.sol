@@ -8,18 +8,25 @@ import "./BaseOrderHandler.sol";
 // @dev Contract to handle adls
 contract AdlHandler is BaseOrderHandler {
     using SafeCast for uint256;
+    using SafeCast for int256;
     using Order for Order.Props;
     using Array for uint256[];
 
-    // @dev _ExecuteAdlCache struct used in executeAdl to avoid
+    error AdlNotRequired(int256 pnlToPoolFactor);
+    error InvalidAdl(int256 nextPnlToPoolFactor, int256 pnlToPoolFactor);
+    error PnlOvercorrected(int256 nextPnlToPoolFactor, uint256 minPnlFactorForAdl);
+
+    // @dev ExecuteAdlCache struct used in executeAdl to avoid
     // stack too deep errors
-    struct _ExecuteAdlCache {
+    struct ExecuteAdlCache {
         uint256 startingGas;
-        uint256[] oracleBlockNumbers;
+        uint256[] minOracleBlockNumbers;
+        uint256[] maxOracleBlockNumbers;
         bytes32 key;
+        bool shouldAllowAdl;
         int256 pnlToPoolFactor;
         int256 nextPnlToPoolFactor;
-        uint256 maxPnlFactorForWithdrawals;
+        uint256 minPnlFactorForAdl;
     }
 
     constructor(
@@ -53,8 +60,8 @@ contract AdlHandler is BaseOrderHandler {
         onlyAdlKeeper
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
-        uint256[] memory oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedOracleBlockNumbers,
+        uint256[] memory maxOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
+            oracleParams.compactedMaxOracleBlockNumbers,
             oracleParams.tokens.length
         );
 
@@ -64,7 +71,7 @@ contract AdlHandler is BaseOrderHandler {
             oracle,
             market,
             isLong,
-            oracleBlockNumbers
+            maxOracleBlockNumbers
         );
     }
 
@@ -87,12 +94,17 @@ contract AdlHandler is BaseOrderHandler {
         onlyAdlKeeper
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
-        _ExecuteAdlCache memory cache;
+        ExecuteAdlCache memory cache;
 
         cache.startingGas = gasleft();
 
-        cache.oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedOracleBlockNumbers,
+        cache.minOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
+            oracleParams.compactedMinOracleBlockNumbers,
+            oracleParams.tokens.length
+        );
+
+        cache.maxOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
+            oracleParams.compactedMaxOracleBlockNumbers,
             oracleParams.tokens.length
         );
 
@@ -100,30 +112,31 @@ contract AdlHandler is BaseOrderHandler {
             dataStore,
             market,
             isLong,
-            cache.oracleBlockNumbers
+            cache.maxOracleBlockNumbers
         );
 
-        (bool shouldAllowAdl, , ) = AdlUtils.shouldAllowAdl(
+        (cache.shouldAllowAdl, cache.pnlToPoolFactor, /* maxPnlFactor */) = MarketUtils.isPnlFactorExceeded(
             dataStore,
             oracle,
             market,
             isLong,
-            false
+            Keys.MAX_PNL_FACTOR_FOR_ADL
         );
 
-        if (shouldAllowAdl) {
-            revert("AdlHandler: ADL not required");
+        if (!cache.shouldAllowAdl) {
+            revert AdlNotRequired(cache.pnlToPoolFactor);
         }
 
         cache.key = AdlUtils.createAdlOrder(
             AdlUtils.CreateAdlOrderParams(
                 dataStore,
+                eventEmitter,
                 account,
                 market,
                 collateralToken,
                 isLong,
                 sizeDeltaUsd,
-                cache.oracleBlockNumbers[0]
+                cache.minOracleBlockNumbers[0]
             )
         );
 
@@ -136,13 +149,13 @@ contract AdlHandler is BaseOrderHandler {
         // validate that the ratio of pending pnl to pool value was decreased
         cache.nextPnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, oracle, market, isLong, true);
         if (cache.nextPnlToPoolFactor >= cache.pnlToPoolFactor) {
-            revert("Invalid adl");
+            revert InvalidAdl(cache.nextPnlToPoolFactor, cache.pnlToPoolFactor);
         }
 
-        cache.maxPnlFactorForWithdrawals = MarketUtils.getMaxPnlFactorForWithdrawals(dataStore, market, isLong);
+        cache.minPnlFactorForAdl = MarketUtils.getMinPnlFactorAfterAdl(dataStore, market, isLong);
 
-        if (cache.nextPnlToPoolFactor < cache.maxPnlFactorForWithdrawals.toInt256()) {
-            revert("Pnl was overcorrected");
+        if (cache.nextPnlToPoolFactor < cache.minPnlFactorForAdl.toInt256()) {
+            revert PnlOvercorrected(cache.nextPnlToPoolFactor, cache.minPnlFactorForAdl);
         }
     }
 }

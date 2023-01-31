@@ -19,7 +19,9 @@ contract SwapHandler is ReentrancyGuard, RoleModule {
      * @param params SwapUtils.SwapParams
      * @return (outputToken, outputAmount)
      */
-    function swap(SwapUtils.SwapParams memory params)
+    function swap(
+        SwapUtils.SwapParams memory params
+    )
         external
         nonReentrant
         onlyController

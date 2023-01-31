@@ -8,6 +8,7 @@ import "../data/Keys.sol";
 import "../event/EventEmitter.sol";
 import "../event/EventUtils.sol";
 import "../utils/Cast.sol";
+import "../utils/ReceiverUtils.sol";
 
 import "../market/MarketToken.sol";
 
@@ -58,6 +59,8 @@ library FeeUtils {
         address token,
         address receiver
     ) internal {
+        ReceiverUtils.validateReceiver(receiver);
+
         bytes32 key = Keys.claimableFeeAmountKey(market, token);
 
         uint256 feeAmount = dataStore.getUint(key);

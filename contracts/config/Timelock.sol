@@ -6,9 +6,10 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "../role/RoleModule.sol";
 import "../event/EventEmitter.sol";
+import "../utils/BasicMulticall.sol";
 
 // @title Timelock
-contract Timelock is ReentrancyGuard, RoleModule {
+contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.IntItems;
@@ -22,6 +23,13 @@ contract Timelock is ReentrancyGuard, RoleModule {
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     uint256 public timelockDelay;
+
+    error ActionAlreadySignalled();
+    error ActionNotSignalled();
+    error SignalTimeNotYetPassed(uint256 signalTime);
+    error InvalidTimelockDelay(uint256 timelockDelay);
+    error MaxTimelockDelayExceeded(uint256 timelockDelay);
+    error InvalidFeeReceiver(address receiver);
 
     constructor(
         RoleStore _roleStore,
@@ -41,10 +49,49 @@ contract Timelock is ReentrancyGuard, RoleModule {
     }
 
     function increaseTimelockDelay(uint256 _timelockDelay) external onlyTimelockAdmin nonReentrant {
-        require(_timelockDelay > timelockDelay, "_timelockDelay must be increased");
-        require(_timelockDelay <= MAX_TIMELOCK_DELAY, "_timelockDelay exceeds max allowed value");
+        if (_timelockDelay <= timelockDelay) {
+            revert InvalidTimelockDelay(_timelockDelay);
+        }
+
+        if (_timelockDelay > MAX_TIMELOCK_DELAY) {
+            revert MaxTimelockDelayExceeded(_timelockDelay);
+        }
 
         timelockDelay = _timelockDelay;
+    }
+
+    function signalSetFeeReceiver(address account) external onlyTimelockAdmin nonReentrant {
+        if (account == address(0)) {
+            revert InvalidFeeReceiver(account);
+        }
+
+        bytes32 actionKey = keccak256(abi.encodePacked("setFeeReceiver", account));
+        _signalPendingAction(actionKey, "signalSetFeeReceiver");
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+        eventEmitter.emitEventLog1(
+            "SignalSetFeeReceiver",
+            actionKey,
+            eventData
+        );
+    }
+
+    function setFeeReceiverAfterSignal(address account) external onlyTimelockAdmin nonReentrant {
+        bytes32 actionKey = keccak256(abi.encodePacked("setFeeReceiver", account));
+        _validateAndClearAction(actionKey, "setFeeReceiverAfterSignal");
+
+        dataStore.setAddress(Keys.FEE_RECEIVER, account);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+        eventEmitter.emitEventLog1(
+            "SetFeeReceiver",
+            actionKey,
+            eventData
+        );
     }
 
     function signalGrantRole(address account, bytes32 key) external onlyTimelockAdmin nonReentrant {
@@ -184,7 +231,10 @@ contract Timelock is ReentrancyGuard, RoleModule {
     }
 
     function _signalPendingAction(bytes32 actionKey, string memory actionLabel) internal {
-        require(pendingActions[actionKey] == 0, "Timelock: action already signalled");
+        if (pendingActions[actionKey] != 0) {
+            revert ActionAlreadySignalled();
+        }
+
         pendingActions[actionKey] = block.timestamp + timelockDelay;
 
         EventUtils.EventLogData memory eventData;
@@ -208,12 +258,19 @@ contract Timelock is ReentrancyGuard, RoleModule {
     }
 
     function _validateAction(bytes32 actionKey) internal view {
-        require(pendingActions[actionKey] != 0, "Timelock: action not signalled");
-        require(pendingActions[actionKey] < block.timestamp, "Timelock: action time not yet passed");
+        if (pendingActions[actionKey] == 0) {
+            revert ActionNotSignalled();
+        }
+
+        if (pendingActions[actionKey] > block.timestamp) {
+            revert SignalTimeNotYetPassed(pendingActions[actionKey]);
+        }
     }
 
     function _clearAction(bytes32 actionKey, string memory actionLabel) internal {
-        require(pendingActions[actionKey] != 0, "Timelock: invalid actionKey");
+        if (pendingActions[actionKey] == 0) {
+            revert ActionNotSignalled();
+        }
         delete pendingActions[actionKey];
 
         EventUtils.EventLogData memory eventData;

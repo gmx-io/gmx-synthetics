@@ -9,7 +9,9 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../exchange/DepositHandler.sol";
 import "../exchange/WithdrawalHandler.sol";
 import "../exchange/OrderHandler.sol";
+
 import "../utils/PayableMulticall.sol";
+import "../utils/ReceiverUtils.sol";
 
 import "./Router.sol";
 
@@ -65,6 +67,10 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     OrderHandler public immutable orderHandler;
     IReferralStorage public immutable referralStorage;
 
+    error InvalidClaimFundingFeesInput(uint256 marketsLength, uint256 tokensLength);
+    error InvalidClaimCollateralInput(uint256 marketsLength, uint256 tokensLength, uint256 timeKeysLength);
+    error InvalidClaimAffiliateRewardsInput(uint256 marketsLength, uint256 tokensLength);
+
     // @dev Constructor that initializes the contract with the provided Router, RoleStore, DataStore,
     // EventEmitter, DepositHandler, WithdrawalHandler, OrderHandler, OrderStore, and IReferralStorage instances
     constructor(
@@ -90,11 +96,13 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
 
     // @dev Wraps the specified amount of native tokens into WNT then sends the WNT to the specified address
     function sendWnt(address receiver, uint256 amount) external payable nonReentrant {
+        ReceiverUtils.validateReceiver(receiver);
         TokenUtils.depositAndSendWrappedNativeToken(dataStore, receiver, amount);
     }
 
     // @dev Sends the given amount of tokens to the given address
     function sendTokens(address token, address receiver, uint256 amount) external payable nonReentrant {
+        ReceiverUtils.validateReceiver(receiver);
         address account = msg.sender;
         router.pluginTransfer(token, account, receiver, amount);
     }
@@ -121,7 +129,9 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
 
     function cancelDeposit(bytes32 key) external payable nonReentrant {
         Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
-        require(deposit.account() == msg.sender, "ExchangeRouter: forbidden");
+        if (deposit.account() != msg.sender) {
+            revert Unauthorized(msg.sender, "account for cancelDeposit");
+        }
 
         depositHandler.cancelDeposit(key, deposit);
     }
@@ -146,7 +156,9 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
 
     function cancelWithdrawal(bytes32 key) external payable nonReentrant {
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
-        require(withdrawal.account() == msg.sender, "ExchangeRouter: forbidden");
+        if (withdrawal.account() != msg.sender) {
+            revert Unauthorized(msg.sender, "account for cancelWithdrawal");
+        }
 
         withdrawalHandler.cancelWithdrawal(key, withdrawal);
     }
@@ -161,8 +173,6 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         BaseOrderUtils.CreateOrderParams calldata params,
         bytes32 referralCode
     ) external payable nonReentrant returns (bytes32) {
-        require(params.orderType != Order.OrderType.Liquidation, "ExchangeRouter: invalid order type");
-
         address account = msg.sender;
 
         ReferralUtils.setTraderReferralCode(referralStorage, account, referralCode);
@@ -171,6 +181,20 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
             account,
             params
         );
+    }
+
+    function simulateExecuteDeposit(
+        bytes32 key,
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams
+    ) external payable nonReentrant {
+        depositHandler.simulateExecuteDeposit(key, simulatedOracleParams);
+    }
+
+    function simulateExecuteWithdrawal(
+        bytes32 key,
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams
+    ) external payable nonReentrant {
+        withdrawalHandler.simulateExecuteWithdrawal(key, simulatedOracleParams);
     }
 
     function simulateExecuteOrder(
@@ -201,7 +225,9 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         uint256 minOutputAmount
     ) external payable nonReentrant {
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
-        require(order.account() == msg.sender, "ExchangeRouter: forbidden");
+        if (order.account() != msg.sender) {
+            revert Unauthorized(msg.sender, "account for updateOrder");
+        }
 
         orderHandler.updateOrder(
             key,
@@ -224,7 +250,9 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
      */
     function cancelOrder(bytes32 key) external payable nonReentrant {
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
-        require(order.account() == msg.sender, "ExchangeRouter: forbidden");
+        if (order.account() != msg.sender) {
+            revert Unauthorized(msg.sender, "account for cancelOrder");
+        }
 
         orderHandler.cancelOrder(key, order);
     }
@@ -245,8 +273,10 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         address receiver
     ) external payable nonReentrant {
         if (markets.length != tokens.length) {
-            revert("Invalid input");
+            revert InvalidClaimFundingFeesInput(markets.length, tokens.length);
         }
+
+        ReceiverUtils.validateReceiver(receiver);
 
         address account = msg.sender;
 
@@ -269,8 +299,10 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         address receiver
     ) external payable nonReentrant {
         if (markets.length != tokens.length || tokens.length != timeKeys.length) {
-            revert("Invalid input");
+            revert InvalidClaimCollateralInput(markets.length, tokens.length, timeKeys.length);
         }
+
+        ReceiverUtils.validateReceiver(receiver);
 
         address account = msg.sender;
 
@@ -303,7 +335,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         address receiver
     ) external payable nonReentrant {
         if (markets.length != tokens.length) {
-            revert("Invalid input");
+            revert InvalidClaimAffiliateRewardsInput(markets.length, tokens.length);
         }
 
         address account = msg.sender;

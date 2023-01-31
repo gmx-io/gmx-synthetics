@@ -7,7 +7,8 @@ export type BaseMarketConfig = {
   reserveFactorLongs: BigNumberish;
   reserveFactorShorts: BigNumberish;
 
-  minCollateralFactor: BigNumberish;
+  minCollateralFactorForLongs: BigNumberish;
+  minCollateralFactorForShorts: BigNumberish;
 
   maxLongTokenPoolAmount: BigNumberish;
   maxShortTokenPoolAmount: BigNumberish;
@@ -15,8 +16,17 @@ export type BaseMarketConfig = {
   maxOpenInterestForLongs: BigNumberish;
   maxOpenInterestForShorts: BigNumberish;
 
-  maxPnlFactorLongs: BigNumberish;
-  maxPnlFactorShorts: BigNumberish;
+  maxPnlFactorForTradersLongs: BigNumberish;
+  maxPnlFactorForTradersShorts: BigNumberish;
+
+  maxPnlFactorForAdlLongs: BigNumberish;
+  maxPnlFactorForAdlShorts: BigNumberish;
+
+  minPnlFactorAfterAdlLongs: BigNumberish;
+  minPnlFactorAfterAdlShorts: BigNumberish;
+
+  maxPnlFactorForDepositsLongs: BigNumberish;
+  maxPnlFactorForDepositsShorts: BigNumberish;
 
   maxPnlFactorForWithdrawalsLongs: BigNumberish;
   maxPnlFactorForWithdrawalsShorts: BigNumberish;
@@ -33,17 +43,44 @@ export type BaseMarketConfig = {
   positiveSwapImpactFactor: BigNumberish;
   negativeSwapImpactFactor: BigNumberish;
   swapImpactExponentFactor: BigNumberish;
+
+  minCollateralUsd: BigNumberish;
+
+  borrowingFactorForLongs: BigNumberish;
+  borrowingFactorForShorts: BigNumberish;
+
+  borrowingExponentFactorForLongs: BigNumberish;
+  borrowingExponentFactorForShorts: BigNumberish;
+
+  fundingFactor: BigNumberish;
+  fundingExponentFactor: BigNumberish;
 };
 
-export type MarketConfig = Partial<BaseMarketConfig> & {
-  tokens: [indexToken: string, longToken: string, shortToken: string];
-};
+export type MarketConfig = Partial<BaseMarketConfig> &
+  (
+    | {
+        tokens: {
+          indexToken: string;
+          longToken: string;
+          shortToken: string;
+        };
+        swapOnly?: never;
+      }
+    | {
+        tokens: {
+          longToken: string;
+          shortToken: string;
+        };
+        swapOnly: true;
+      }
+  );
 
 const baseMarketConfig: BaseMarketConfig = {
   reserveFactorLongs: decimalToFloat(5, 1), // 50%,
   reserveFactorShorts: decimalToFloat(5, 1), // 50%,
 
-  minCollateralFactor: decimalToFloat(1, 2), // 1%
+  minCollateralFactorForLongs: decimalToFloat(1, 2), // 1%
+  minCollateralFactorForShorts: decimalToFloat(1, 2), // 1%
 
   maxLongTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
   maxShortTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
@@ -51,8 +88,17 @@ const baseMarketConfig: BaseMarketConfig = {
   maxOpenInterestForLongs: decimalToFloat(1 * 1000 * 1000 * 1000),
   maxOpenInterestForShorts: decimalToFloat(1 * 1000 * 1000 * 1000),
 
-  maxPnlFactorLongs: decimalToFloat(5, 1), // 50%
-  maxPnlFactorShorts: decimalToFloat(5, 1), // 50%
+  maxPnlFactorForTradersLongs: decimalToFloat(5, 1), // 50%
+  maxPnlFactorForTradersShorts: decimalToFloat(5, 1), // 50%
+
+  maxPnlFactorForAdlLongs: decimalToFloat(45, 2), // 45%
+  maxPnlFactorForAdlShorts: decimalToFloat(45, 2), // 45%
+
+  minPnlFactorAfterAdlLongs: decimalToFloat(4, 1), // 40%
+  minPnlFactorAfterAdlShorts: decimalToFloat(4, 1), // 40%
+
+  maxPnlFactorForDepositsLongs: decimalToFloat(6, 1), // 60%
+  maxPnlFactorForDepositsShorts: decimalToFloat(6, 1), // 60%
 
   maxPnlFactorForWithdrawalsLongs: decimalToFloat(3, 1), // 30%
   maxPnlFactorForWithdrawalsShorts: decimalToFloat(3, 1), // 30%
@@ -71,13 +117,23 @@ const baseMarketConfig: BaseMarketConfig = {
   swapImpactExponentFactor: decimalToFloat(2, 0), // 2
 
   minCollateralUsd: decimalToFloat(1, 0), // 1 USD
+
+  borrowingFactorForLongs: decimalToFloat(1, 7), // 0.00001% / second
+  borrowingFactorForShorts: decimalToFloat(1, 7), // 0.00001% / second
+
+  borrowingExponentFactorForLongs: decimalToFloat(1),
+  borrowingExponentFactorForShorts: decimalToFloat(1),
+
+  fundingFactor: decimalToFloat(1, 7), // 0.00001% / second
+  fundingExponentFactor: decimalToFloat(1),
 };
 
 const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
   reserveFactorLongs: decimalToFloat(5, 1), // 50%,
   reserveFactorShorts: decimalToFloat(5, 1), // 50%,
 
-  minCollateralFactor: decimalToFloat(1, 2), // 1%
+  minCollateralFactorForLongs: decimalToFloat(1, 2), // 1%
+  minCollateralFactorForShorts: decimalToFloat(1, 2), // 1%
 
   maxLongTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
   maxShortTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
@@ -85,11 +141,20 @@ const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
   maxOpenInterestForLongs: decimalToFloat(1 * 1000 * 1000 * 1000),
   maxOpenInterestForShorts: decimalToFloat(1 * 1000 * 1000 * 1000),
 
-  maxPnlFactorLongs: decimalToFloat(5, 1), // 50%
-  maxPnlFactorShorts: decimalToFloat(5, 1), // 50%
+  maxPnlFactorForTradersLongs: decimalToFloat(5, 1), // 50%
+  maxPnlFactorForTradersShorts: decimalToFloat(5, 1), // 50%
 
-  maxPnlFactorForWithdrawalsLongs: decimalToFloat(7, 1), // 70%
-  maxPnlFactorForWithdrawalsShorts: decimalToFloat(7, 1), // 70%
+  maxPnlFactorForAdlLongs: decimalToFloat(45, 2), // 45%
+  maxPnlFactorForAdlShorts: decimalToFloat(45, 2), // 45%
+
+  minPnlFactorAfterAdlLongs: decimalToFloat(4, 1), // 40%
+  minPnlFactorAfterAdlShorts: decimalToFloat(4, 1), // 40%
+
+  maxPnlFactorForDepositsLongs: decimalToFloat(6, 1), // 60%
+  maxPnlFactorForDepositsShorts: decimalToFloat(6, 1), // 60%
+
+  maxPnlFactorForWithdrawalsLongs: decimalToFloat(3, 1), // 30%
+  maxPnlFactorForWithdrawalsShorts: decimalToFloat(3, 1), // 30%
 
   positiveMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%
   negativeMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%
@@ -103,29 +168,37 @@ const config: {
   avalanche: [],
   avalancheFuji: [
     {
-      tokens: ["WAVAX", "WAVAX", "USDC"], // indexToken, longToken, shortToken
+      tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" },
     },
     {
-      tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
+      tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
     },
     {
-      tokens: ["SOL", "WETH", "USDC"], // indexToken, longToken, shortToken
+      tokens: { indexToken: "SOL", longToken: "WETH", shortToken: "USDC" },
     },
   ],
   hardhat: [
     {
-      tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
+      tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
     },
     {
-      tokens: ["SOL", "WETH", "USDC"],
+      tokens: { longToken: "WETH", shortToken: "USDC" },
+      swapOnly: true,
+    },
+    {
+      tokens: { indexToken: "SOL", longToken: "WETH", shortToken: "USDC" },
     },
   ],
   localhost: [
     {
-      tokens: ["WETH", "WETH", "USDC"], // indexToken, longToken, shortToken
+      tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
     },
     {
-      tokens: ["SOL", "WETH", "USDC"],
+      tokens: { longToken: "WETH", shortToken: "USDC" },
+      swapOnly: true,
+    },
+    {
+      tokens: { indexToken: "SOL", longToken: "WETH", shortToken: "USDC" },
     },
   ],
 };
@@ -136,9 +209,10 @@ export default async function (hre: HardhatRuntimeEnvironment) {
   const defaultMarketConfig = hre.network.name === "hardhat" ? hardhatBaseMarketConfig : baseMarketConfig;
   if (markets) {
     for (const market of markets) {
-      for (const tokenSymbol of market.tokens) {
+      const tokenSymbols = Object.values(market.tokens);
+      for (const tokenSymbol of tokenSymbols) {
         if (!tokens[tokenSymbol]) {
-          throw new Error(`Market ${market.tokens.join(":")} uses token that does not exist: ${tokenSymbol}`);
+          throw new Error(`Market ${tokenSymbols.join(":")} uses token that does not exist: ${tokenSymbol}`);
         }
       }
 

@@ -43,6 +43,8 @@ export async function deployFixture() {
 
   const oracleSalt = hashData(["uint256", "string"], [chainId, "xget-oracle-v1"]);
 
+  const config = await hre.ethers.getContract("Config");
+  const timelock = await hre.ethers.getContract("Timelock");
   const reader = await hre.ethers.getContract("Reader");
   const roleStore = await hre.ethers.getContract("RoleStore");
   const dataStore = await hre.ethers.getContract("DataStore");
@@ -65,6 +67,7 @@ export async function deployFixture() {
   const withdrawalStoreUtils = await hre.ethers.getContract("WithdrawalStoreUtils");
   const positionStoreUtils = await hre.ethers.getContract("PositionStoreUtils");
   const orderStoreUtils = await hre.ethers.getContract("OrderStoreUtils");
+  const decreasePositionUtils = await hre.ethers.getContract("DecreasePositionUtils");
 
   const ethUsdMarketAddress = getMarketTokenAddress(
     wnt.address,
@@ -75,6 +78,16 @@ export async function deployFixture() {
     dataStore.address
   );
   const ethUsdMarket = await reader.getMarket(dataStore.address, ethUsdMarketAddress);
+
+  const ethUsdSpotOnlyMarketAddress = getMarketTokenAddress(
+    ethers.constants.AddressZero,
+    wnt.address,
+    usdc.address,
+    marketFactory.address,
+    roleStore.address,
+    dataStore.address
+  );
+  const ethUsdSpotOnlyMarket = await reader.getMarket(dataStore.address, ethUsdSpotOnlyMarketAddress);
 
   const solUsdMarketAddress = getMarketTokenAddress(
     getSyntheticTokenAddress("SOL"),
@@ -112,6 +125,8 @@ export async function deployFixture() {
       signers: [signer0, signer1, signer2, signer3, signer4, signer5, signer6],
     },
     contracts: {
+      config,
+      timelock,
       reader,
       roleStore,
       dataStore,
@@ -134,11 +149,13 @@ export async function deployFixture() {
       withdrawalStoreUtils,
       positionStoreUtils,
       orderStoreUtils,
+      decreasePositionUtils,
       usdcPriceFeed,
       wnt,
       wbtc,
       usdc,
       ethUsdMarket,
+      ethUsdSpotOnlyMarket,
       solUsdMarket,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },

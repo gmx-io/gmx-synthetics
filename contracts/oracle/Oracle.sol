@@ -38,8 +38,8 @@ contract Oracle is RoleModule {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
-    // @dev _SetPricesCache struct used in setPrices to avoid stack too deep errors
-    // @param prevOracleBlockNumber the previous oracle block number of the loop
+    // @dev SetPricesCache struct used in setPrices to avoid stack too deep errors
+    // @param prevMinOracleBlockNumber the previous oracle block number of the loop
     // @param priceIndex the current price index to retrieve from compactedMinPrices and compactedMaxPrices
     // to construct the minPrices and maxPrices array
     // @param signatureIndex the current signature index to retrieve from the signatures array
@@ -48,38 +48,17 @@ contract Oracle is RoleModule {
     // @param maxPriceIndex the index of the max price in maxPrices for the current signer
     // @param minPrices the min prices
     // @param maxPrices the max prices
-    struct _SetPricesCache {
-        _SetPricesInfoCache info;
-        uint256 prevOracleBlockNumber;
+    struct SetPricesCache {
+        OracleUtils.ReportInfo info;
+        uint256 minBlockConfirmations;
+        uint256 maxPriceAge;
+        uint256 prevMinOracleBlockNumber;
         uint256 priceIndex;
         uint256 signatureIndex;
         uint256 minPriceIndex;
         uint256 maxPriceIndex;
-        uint256 minPrice;
-        uint256 maxPrice;
         uint256[] minPrices;
         uint256[] maxPrices;
-    }
-
-    // @param minBlockConfirmations the minimum block confirmations before the block
-    // hash is not required to be part of the signed message for validation
-    // @param oracleBlockNumber the current oracle block number of the loop
-    // @param oracleTimestamp the current oracle timestamp of the loop
-    // @param blockHash the hash of the current oracleBlockNumber of the loop
-    // @param token the address of the current token of the loop
-    // @param precision the precision used for multiplying
-    // @param tokenOracleType the oracle type of the token, this allows oracle keepers
-    // to sign prices based on different methodologies, and the oracle can be configured
-    // to accept prices based on a specific methodology
-    struct _SetPricesInfoCache {
-        uint256 minBlockConfirmations;
-        uint256 maxPriceAge;
-        uint256 oracleBlockNumber;
-        uint256 oracleTimestamp;
-        bytes32 blockHash;
-        address token;
-        uint256 precision;
-        bytes32 tokenOracleType;
     }
 
     bytes32 public immutable SALT;
@@ -108,10 +87,11 @@ contract Oracle is RoleModule {
 
     error EmptyTokens();
     error InvalidBlockNumber(uint256 blockNumber);
+    error InvalidMinMaxBlockNumber(uint256 minOracleBlockNumber, uint256 maxOracleBlockNumber);
     error MaxPriceAgeExceeded(uint256 oracleTimestamp);
     error MinOracleSigners(uint256 oracleSigners, uint256 minOracleSigners);
     error MaxOracleSigners(uint256 oracleSigners, uint256 maxOracleSigners);
-    error BlockNumbersNotSorted(uint256 oracleBlockNumber, uint256 prevOracleBlockNumber);
+    error BlockNumbersNotSorted(uint256 minOracleBlockNumber, uint256 prevMinOracleBlockNumber);
     error MinPricesNotSorted(address token, uint256 price, uint256 prevPrice);
     error MaxPricesNotSorted(address token, uint256 price, uint256 prevPrice);
     error EmptyPriceFeedMultiplier(address token);
@@ -121,6 +101,9 @@ contract Oracle is RoleModule {
     error InvalidOraclePrice(address token);
     error InvalidSignerMinMaxPrice(uint256 minPrice, uint256 maxPrice);
     error InvalidMedianMinMaxPrice(uint256 minPrice, uint256 maxPrice);
+    error NonEmptyTokensWithPrices(uint256 tokensWithPricesLength);
+    error EmptyPriceFeed(address token);
+    error PriceAlreadySet(address token, uint256 minPrice, uint256 maxPrice);
 
     constructor(
         RoleStore _roleStore,
@@ -230,7 +213,9 @@ contract Oracle is RoleModule {
         EventEmitter eventEmitter,
         OracleUtils.SetPricesParams memory params
     ) external onlyController {
-        require(tokensWithPrices.length() == 0, "Oracle: tokensWithPrices not cleared");
+        if (tokensWithPrices.length() != 0) {
+            revert NonEmptyTokensWithPrices(tokensWithPrices.length());
+        }
 
         if (params.tokens.length == 0) { revert EmptyTokens(); }
 
@@ -326,8 +311,13 @@ contract Oracle is RoleModule {
     // @param token the token to get the price for
     // @return the primary price of a token
     function getPrimaryPrice(address token) external view returns (Price.Props memory) {
+        if (token == address(0)) { return Price.Props(0, 0); }
+
         Price.Props memory price = primaryPrices[token];
-        if (price.isEmpty()) { revert(Keys.EMPTY_PRICE_ERROR); }
+        if (price.isEmpty()) {
+            revert OracleUtils.EmptyPrimaryPrice(token);
+        }
+
         return price;
     }
 
@@ -335,8 +325,13 @@ contract Oracle is RoleModule {
     // @param token the token to get the price for
     // @return the secondary price of a token
     function getSecondaryPrice(address token) external view returns (Price.Props memory) {
+        if (token == address(0)) { return Price.Props(0, 0); }
+
         Price.Props memory price = secondaryPrices[token];
-        if (price.isEmpty()) { revert(Keys.EMPTY_PRICE_ERROR); }
+        if (price.isEmpty()) {
+            revert OracleUtils.EmptySecondaryPrice(token);
+        }
+
         return price;
     }
 
@@ -344,6 +339,8 @@ contract Oracle is RoleModule {
     // @param token the token to get the price for
     // @return the latest price of a token
     function getLatestPrice(address token) external view returns (Price.Props memory) {
+        if (token == address(0)) { return Price.Props(0, 0); }
+
         Price.Props memory secondaryPrice = secondaryPrices[token];
 
         if (!secondaryPrice.isEmpty()) {
@@ -355,7 +352,7 @@ contract Oracle is RoleModule {
             return primaryPrice;
         }
 
-        revert(Keys.EMPTY_PRICE_ERROR);
+        revert OracleUtils.EmptyLatestPrice(token);
     }
 
     // @dev get the custom price of a token
@@ -363,7 +360,9 @@ contract Oracle is RoleModule {
     // @return the custom price of a token
     function getCustomPrice(address token) external view returns (Price.Props memory) {
         Price.Props memory price = customPrices[token];
-        if (price.isEmpty()) { revert(Keys.EMPTY_PRICE_ERROR); }
+        if (price.isEmpty()) {
+            revert OracleUtils.EmptyCustomPrice(token);
+        }
         return price;
     }
 
@@ -373,7 +372,9 @@ contract Oracle is RoleModule {
     // @return the price feed for the token
     function getPriceFeed(DataStore dataStore, address token) public view returns (IPriceFeed) {
         address priceFeedAddress = dataStore.getAddress(Keys.priceFeedKey(token));
-        require(priceFeedAddress != address(0), "Oracle: invalid price feed");
+        if (priceFeedAddress == address(0)) {
+            revert EmptyPriceFeed(token);
+        }
 
         return IPriceFeed(priceFeedAddress);
     }
@@ -414,7 +415,7 @@ contract Oracle is RoleModule {
     // instance, an EventEmitter contract instance, an array of signers, and an
     // OracleUtils.SetPricesParams struct containing information about the tokens
     // and their prices.
-    // The function first initializes a _SetPricesCache struct to store some temporary
+    // The function first initializes a SetPricesCache struct to store some temporary
     // values that will be used later in the function. It then loops through the array
     // of tokens and sets the corresponding values in the cache struct. For each token,
     // the function also loops through the array of signers and validates the signatures
@@ -432,31 +433,37 @@ contract Oracle is RoleModule {
         address[] memory signers,
         OracleUtils.SetPricesParams memory params
     ) internal {
-        _SetPricesCache memory cache;
-        cache.info.minBlockConfirmations = dataStore.getUint(Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS);
-        cache.info.maxPriceAge = dataStore.getUint(Keys.MAX_ORACLE_PRICE_AGE);
+        SetPricesCache memory cache;
+        cache.minBlockConfirmations = dataStore.getUint(Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS);
+        cache.maxPriceAge = dataStore.getUint(Keys.MAX_ORACLE_PRICE_AGE);
 
         for (uint256 i = 0; i < params.tokens.length; i++) {
-            cache.info.oracleBlockNumber = OracleUtils.getUncompactedOracleBlockNumber(params.compactedOracleBlockNumbers, i);
-            cache.info.oracleTimestamp = OracleUtils.getUncompactedOracleTimestamp(params.compactedOracleTimestamps, i);
+            cache.info.minOracleBlockNumber = OracleUtils.getUncompactedOracleBlockNumber(params.compactedMinOracleBlockNumbers, i);
+            cache.info.maxOracleBlockNumber = OracleUtils.getUncompactedOracleBlockNumber(params.compactedMaxOracleBlockNumbers, i);
 
-            if (cache.info.oracleBlockNumber > Chain.currentBlockNumber()) {
-                revert InvalidBlockNumber(cache.info.oracleBlockNumber);
+            if (cache.info.minOracleBlockNumber > cache.info.maxOracleBlockNumber) {
+                revert InvalidMinMaxBlockNumber(cache.info.minOracleBlockNumber, cache.info.maxOracleBlockNumber);
             }
 
-            if (cache.info.oracleTimestamp + cache.info.maxPriceAge < Chain.currentTimestamp()) {
+            cache.info.oracleTimestamp = OracleUtils.getUncompactedOracleTimestamp(params.compactedOracleTimestamps, i);
+
+            if (cache.info.minOracleBlockNumber > Chain.currentBlockNumber()) {
+                revert InvalidBlockNumber(cache.info.minOracleBlockNumber);
+            }
+
+            if (cache.info.oracleTimestamp + cache.maxPriceAge < Chain.currentTimestamp()) {
                 revert MaxPriceAgeExceeded(cache.info.oracleTimestamp);
             }
 
             // block numbers must be in ascending order
-            if (cache.info.oracleBlockNumber < cache.prevOracleBlockNumber) {
-                revert BlockNumbersNotSorted(cache.info.oracleBlockNumber, cache.prevOracleBlockNumber);
+            if (cache.info.minOracleBlockNumber < cache.prevMinOracleBlockNumber) {
+                revert BlockNumbersNotSorted(cache.info.minOracleBlockNumber, cache.prevMinOracleBlockNumber);
             }
-            cache.prevOracleBlockNumber = cache.info.oracleBlockNumber;
+            cache.prevMinOracleBlockNumber = cache.info.minOracleBlockNumber;
 
             cache.info.blockHash = bytes32(0);
-            if (Chain.currentBlockNumber() - cache.info.oracleBlockNumber <= cache.info.minBlockConfirmations) {
-                cache.info.blockHash = Chain.getBlockHash(cache.info.oracleBlockNumber);
+            if (Chain.currentBlockNumber() - cache.info.minOracleBlockNumber <= cache.minBlockConfirmations) {
+                cache.info.blockHash = Chain.getBlockHash(cache.info.minOracleBlockNumber);
             }
 
             cache.info.token = params.tokens[i];
@@ -501,23 +508,16 @@ contract Oracle is RoleModule {
                     Array.revertArrayOutOfBounds(cache.maxPrices, cache.maxPriceIndex, "maxPrices");
                 }
 
-                cache.minPrice = cache.minPrices[cache.minPriceIndex];
-                cache.maxPrice = cache.maxPrices[cache.maxPriceIndex];
+                cache.info.minPrice = cache.minPrices[cache.minPriceIndex];
+                cache.info.maxPrice = cache.maxPrices[cache.maxPriceIndex];
 
-                if (cache.minPrice > cache.maxPrice) {
-                    revert InvalidSignerMinMaxPrice(cache.minPrice, cache.maxPrice);
+                if (cache.info.minPrice > cache.info.maxPrice) {
+                    revert InvalidSignerMinMaxPrice(cache.info.minPrice, cache.info.maxPrice);
                 }
 
                 OracleUtils.validateSigner(
                     SALT,
-                    cache.info.oracleBlockNumber,
-                    cache.info.oracleTimestamp,
-                    cache.info.blockHash,
-                    cache.info.token,
-                    cache.info.tokenOracleType,
-                    cache.info.precision,
-                    cache.minPrice,
-                    cache.maxPrice,
+                    cache.info,
                     params.signatures[cache.signatureIndex],
                     signers[j]
                 );
@@ -562,7 +562,9 @@ contract Oracle is RoleModule {
         for (uint256 i = 0; i < priceFeedTokens.length; i++) {
             address token = priceFeedTokens[i];
 
-            require(primaryPrices[token].isEmpty(), "Oracle: price already set");
+            if (!primaryPrices[token].isEmpty()) {
+                revert PriceAlreadySet(token, primaryPrices[token].min, primaryPrices[token].max);
+            }
 
             IPriceFeed priceFeed = getPriceFeed(dataStore, token);
 

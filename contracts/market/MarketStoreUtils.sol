@@ -21,6 +21,9 @@ library MarketStoreUtils {
 
     function get(DataStore dataStore, address key) external view returns (Market.Props memory) {
         Market.Props memory market;
+        if (!dataStore.containsAddress(Keys.MARKET_LIST, key)) {
+            return market;
+        }
 
         market.marketToken = dataStore.getAddress(
             keccak256(abi.encode(key, MARKET_TOKEN))

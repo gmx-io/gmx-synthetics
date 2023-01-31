@@ -1,3 +1,4 @@
+import { ethers } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { getSyntheticTokenAddress } from "../utils/token";
 
@@ -136,13 +137,13 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensCo
 
   for (const [tokenSymbol, token] of Object.entries(tokens as TokensConfig)) {
     if (token.synthetic) {
-      token.address = getSyntheticTokenAddress(tokenSymbol);
+      (token as any).address = getSyntheticTokenAddress(tokenSymbol);
     }
     if (token.address) {
-      token.address = ethers.utils.getAddress(token.address);
+      (token as any).address = ethers.utils.getAddress(token.address);
     }
     if (!hre.network.live) {
-      token.deploy = true;
+      (token as any).deploy = true;
     }
   }
 

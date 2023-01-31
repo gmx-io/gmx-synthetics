@@ -9,12 +9,12 @@ import { logGasUsage } from "../../utils/gas";
 describe("MarketStoreUtils", () => {
   let fixture;
   let accountList;
-  let dataStore, roleStore, reader, marketStoreUtils, marketStoreUtilsTest, ethUsdMarket, solUsdMarket;
+  let dataStore, roleStore, reader, marketStoreUtils, marketStoreUtilsTest;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ accountList } = fixture);
-    ({ dataStore, roleStore, reader, marketStoreUtils, ethUsdMarket, solUsdMarket } = fixture.contracts);
+    ({ dataStore, roleStore, reader, marketStoreUtils } = fixture.contracts);
 
     marketStoreUtilsTest = await deployContract("MarketStoreUtilsTest", [], {
       libraries: {
@@ -53,8 +53,8 @@ describe("MarketStoreUtils", () => {
       }
     });
 
-    expect(await getItemCount(dataStore)).eq(2);
-    expect(await getItemKeys(dataStore, 0, 10)).deep.equal([ethUsdMarket.marketToken, solUsdMarket.marketToken]);
+    const initialItemCount = await getItemCount(dataStore);
+    const initialItemKeys = await getItemKeys(dataStore, 0, 10);
 
     await logGasUsage({
       tx: setItem(dataStore, itemKey, sampleItem),
@@ -69,12 +69,8 @@ describe("MarketStoreUtils", () => {
       }
     });
 
-    expect(await getItemCount(dataStore)).eq(3);
-    expect(await getItemKeys(dataStore, 0, 10)).deep.equal([
-      ethUsdMarket.marketToken,
-      solUsdMarket.marketToken,
-      itemKey,
-    ]);
+    expect(await getItemCount(dataStore)).eq(initialItemCount.add(1));
+    expect(await getItemKeys(dataStore, 0, 10)).deep.equal(initialItemKeys.concat(itemKey));
 
     await removeItem(dataStore, itemKey, sampleItem);
 
@@ -86,7 +82,7 @@ describe("MarketStoreUtils", () => {
       }
     });
 
-    expect(await getItemCount(dataStore)).eq(2);
-    expect(await getItemKeys(dataStore, 0, 10)).deep.equal([ethUsdMarket.marketToken, solUsdMarket.marketToken]);
+    expect(await getItemCount(dataStore)).eq(initialItemCount);
+    expect(await getItemKeys(dataStore, 0, 10)).deep.equal(initialItemKeys);
   });
 });

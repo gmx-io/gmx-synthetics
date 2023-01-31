@@ -22,6 +22,7 @@ library OrderStoreUtils {
     bytes32 public constant SWAP_PATH = keccak256(abi.encode("SWAP_PATH"));
 
     bytes32 public constant ORDER_TYPE = keccak256(abi.encode("ORDER_TYPE"));
+    bytes32 public constant DECREASE_POSITION_SWAP_TYPE = keccak256(abi.encode("DECREASE_POSITION_SWAP_TYPE"));
     bytes32 public constant SIZE_DELTA_USD = keccak256(abi.encode("SIZE_DELTA_USD"));
     bytes32 public constant INITIAL_COLLATERAL_DELTA_AMOUNT = keccak256(abi.encode("INITIAL_COLLATERAL_DELTA_AMOUNT"));
     bytes32 public constant TRIGGER_PRICE = keccak256(abi.encode("TRIGGER_PRICE"));
@@ -37,6 +38,9 @@ library OrderStoreUtils {
 
     function get(DataStore dataStore, bytes32 key) external view returns (Order.Props memory) {
         Order.Props memory order;
+        if (!dataStore.containsBytes32(Keys.ORDER_LIST, key)) {
+            return order;
+        }
 
         order.setAccount(dataStore.getAddress(
             keccak256(abi.encode(key, ACCOUNT))
@@ -64,6 +68,10 @@ library OrderStoreUtils {
 
         order.setOrderType(Order.OrderType(dataStore.getUint(
             keccak256(abi.encode(key, ORDER_TYPE))
+        )));
+
+        order.setDecreasePositionSwapType(Order.DecreasePositionSwapType(dataStore.getUint(
+            keccak256(abi.encode(key, DECREASE_POSITION_SWAP_TYPE))
         )));
 
         order.setSizeDeltaUsd(dataStore.getUint(
@@ -160,6 +168,11 @@ library OrderStoreUtils {
         );
 
         dataStore.setUint(
+            keccak256(abi.encode(key, DECREASE_POSITION_SWAP_TYPE)),
+            uint256(order.decreasePositionSwapType())
+        );
+
+        dataStore.setUint(
             keccak256(abi.encode(key, SIZE_DELTA_USD)),
             order.sizeDeltaUsd()
         );
@@ -252,6 +265,10 @@ library OrderStoreUtils {
 
         dataStore.removeUint(
             keccak256(abi.encode(key, ORDER_TYPE))
+        );
+
+        dataStore.removeUint(
+            keccak256(abi.encode(key, DECREASE_POSITION_SWAP_TYPE))
         );
 
         dataStore.removeUint(

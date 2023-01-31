@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../utils/GlobalReentrancyGuard.sol";
-import "../utils/RevertUtils.sol";
+import "../utils/ErrorUtils.sol";
 
 import "./ExchangeUtils.sol";
 import "../role/RoleModule.sol";
@@ -71,7 +71,7 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         ExchangeUtils.validateRequestCancellation(
             _dataStore,
             withdrawal.updatedAtBlock(),
-            "ExchangeRouter: withdrawal not yet expired"
+            "Withdrawal"
         );
 
         WithdrawalUtils.cancelWithdrawal(
@@ -106,36 +106,33 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
             msg.sender,
             startingGas
         ) {
-        } catch Error(string memory reason) {
-            bytes32 reasonKey = keccak256(abi.encode(reason));
-            if (reasonKey == Keys.EMPTY_PRICE_ERROR_KEY) {
-                revert(reason);
-            }
-
-            WithdrawalUtils.cancelWithdrawal(
-                dataStore,
-                eventEmitter,
-                withdrawalVault,
-                key,
-                msg.sender,
-                startingGas,
-                reason,
-                ""
-            );
         } catch (bytes memory reasonBytes) {
-            string memory reason = RevertUtils.getRevertMessage(reasonBytes);
-
-            WithdrawalUtils.cancelWithdrawal(
-                dataStore,
-                eventEmitter,
-                withdrawalVault,
+            _handleWithdrawalError(
                 key,
-                msg.sender,
                 startingGas,
-                reason,
                 reasonBytes
             );
         }
+    }
+
+    function simulateExecuteWithdrawal(
+        bytes32 key,
+        OracleUtils.SimulatePricesParams memory params
+    ) external
+        onlyController
+        withSimulatedOraclePrices(oracle, params)
+        globalNonReentrant
+    {
+
+        uint256 startingGas = gasleft();
+        OracleUtils.SetPricesParams memory oracleParams;
+
+        this._executeWithdrawal(
+            key,
+            oracleParams,
+            msg.sender,
+            startingGas
+        );
     }
 
     // @dev executes a withdrawal
@@ -150,8 +147,13 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
     ) external onlySelf {
         FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureDisabledKey(address(this)));
 
-        uint256[] memory oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedOracleBlockNumbers,
+        uint256[] memory minOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
+            oracleParams.compactedMinOracleBlockNumbers,
+            oracleParams.tokens.length
+        );
+
+        uint256[] memory maxOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
+            oracleParams.compactedMaxOracleBlockNumbers,
             oracleParams.tokens.length
         );
 
@@ -161,11 +163,37 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
             withdrawalVault,
             oracle,
             key,
-            oracleBlockNumbers,
+            minOracleBlockNumbers,
+            maxOracleBlockNumbers,
             keeper,
             startingGas
         );
 
         WithdrawalUtils.executeWithdrawal(params);
+    }
+
+    function _handleWithdrawalError(
+        bytes32 key,
+        uint256 startingGas,
+        bytes memory reasonBytes
+    ) internal {
+        (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
+
+        bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
+
+        if (OracleUtils.isEmptyPriceError(errorSelector)) {
+            ErrorUtils.revertWithCustomError(reasonBytes);
+        }
+
+        WithdrawalUtils.cancelWithdrawal(
+            dataStore,
+            eventEmitter,
+            withdrawalVault,
+            key,
+            msg.sender,
+            startingGas,
+            reason,
+            reasonBytes
+        );
     }
 }

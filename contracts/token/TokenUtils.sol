@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
+import "../utils/ErrorUtils.sol";
+import "../utils/ReceiverUtils.sol";
 
 import "./IWNT.sol";
 
@@ -20,7 +22,7 @@ library TokenUtils {
     using Address for address;
     using SafeERC20 for IERC20;
 
-    event TokenTransferReverted(string reason);
+    event TokenTransferReverted(string reason, bytes returndata);
     event NativeTokenTransferReverted(string reason);
 
     // throw custom errors to prevent spoofing of errors
@@ -56,6 +58,7 @@ library TokenUtils {
         uint256 amount
     ) internal {
         if (amount == 0) { return; }
+        ReceiverUtils.validateReceiver(receiver);
 
         uint256 gasLimit = dataStore.getUint(Keys.tokenTransferGasLimit(token));
 
@@ -68,8 +71,8 @@ library TokenUtils {
 
         if (success) { return; }
 
-        string memory reason = string(abi.encode(returndata));
-        emit TokenTransferReverted(reason);
+        (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(returndata);
+        emit TokenTransferReverted(reason, returndata);
 
         revert TokenTransferError(token, receiver, amount);
     }
@@ -88,6 +91,7 @@ library TokenUtils {
         uint256 amount
     ) internal {
         if (amount == 0) { return; }
+        ReceiverUtils.validateReceiver(receiver);
 
         address _wnt = wnt(dataStore);
         IWNT(_wnt).deposit{value: amount}();
@@ -120,6 +124,7 @@ library TokenUtils {
         uint256 amount
     ) internal {
         if (amount == 0) { return; }
+        ReceiverUtils.validateReceiver(receiver);
 
         IWNT(_wnt).withdraw(amount);
 

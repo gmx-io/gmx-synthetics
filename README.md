@@ -62,6 +62,8 @@ Example:
 - The prices signed at block 100 can be used to execute this order
 - Order keepers would bundle the signature and price data for token A then execute the order
 
+The oracle system allows for both a minimum price and a maximum price to be signed, this allows information about bid-ask spreads to be included.
+
 ## Fees and Pricing
 
 Funding fees and price impact keep longs / shorts balanced while reducing the risk of price manipulation.
@@ -80,26 +82,23 @@ There are a few keepers and nodes in the system:
 
 ## Structure
 
-There are two main types of contracts:
+There are a few main types of contracts:
 
-- Storage contracts which hold funds and have internal state
+- Bank contracts which hold funds
+- Data storage which stores data
+- \*storeUtils utils to serialize, store and retrieve data for structs
 - Logic contracts which do not hold funds and do not have internal state
+- \*eventUtils utils to emit events
 
-The contracts are separated into these two types to allow for gradual upgradeability.
+The contracts are separated into these types to allow for gradual upgradeability.
 
-Using the OrderStore, OrderUtils and OrderHandler contracts as an example
+Majority of data is stored using the DataStore contract.
 
-- OrderStore: stores orders and funds for orders
-- OrderUtils: logic library
-- OrderHandler: logic contract
-
-To avoid exceeding the maximum allowed contract size for contracts such as OrderHandler, OrderUtils and other library contracts are used.
-
-If order logic needs to be updated, a new OrderHandler can be created and can run alongside the existing OrderHandler until it is fully tested, this facilitates zero downtimes updates.
-
-Store contracts such as OrderStore, PositionStore store specific structs, while DataStore stores general data required by the system.
+\*storeUtils contracts store struct data using the DataStore, this allows new keys to be added to structs.
 
 EnumberableSets are used to allow order lists and position lists to be easily queried by interfaces or keepers, this is used over indexers as there may be a lag for indexers to sync the latest block. Having the lists stored directly in the contract also helps to ensure that accurate data can be retrieved and verified when needed.
+
+\*eventUtils contracts emit events using the event emitter, the events are generalized to allow new key-values to be added to events without requiring an update of ABIs.
 
 # Technical Overview
 
@@ -313,9 +312,9 @@ Decimals: 30 - (token decimals) - (number of decimals desired for precision)
 
 Funding fees incentivise the balancing of long and short positions, the side with the larger open interest pays a funding fee to the side with the smaller open interest.
 
-Funding fees for the larger side is calculated as `(funding factor per second) * (open interest imbalance) / (total open interest)`.
+Funding fees for the larger side is calculated as `(funding factor per second) * (open interest imbalance) ^ (funding exponent factor) / (total open interest)`.
 
-For example if the funding factor per second is 1 / 50,000, and the long open interest is $150,000 and the short open interest is $50,000 then the funding fee per second for longs would be `(1 / 50,000) * 150,000 / 200,000 => 0.000015 => 0.0015%`.
+For example if the funding factor per second is 1 / 50,000, and the funding exponent factor is 1, and the long open interest is $150,000 and the short open interest is $50,000 then the funding fee per second for longs would be `(1 / 50,000) * 150,000 / 200,000 => 0.000015 => 0.0015%`.
 
 The funding fee per second for shorts would be `0.000015 * 150,000 / 50,000 => 0.000045 => 0.0045%`.
 
@@ -323,9 +322,9 @@ The funding fee per second for shorts would be `0.000015 * 150,000 / 50,000 => 0
 
 There is a borrowing fee paid to liquidity providers, this helps prevent users from opening both long and short positions to take up pool capacity without paying any fees.
 
-Borrowing fees are calculated as `borrowing factor * (open interest in usd + pending pnl) / (pool usd)`.
+Borrowing fees are calculated as `borrowing factor * (open interest in usd + pending pnl) ^ (borrowing exponent factor) / (pool usd)` for longs and `borrowing factor * (open interest in usd) ^ (borrowing exponent factor) / (pool usd)` for shorts.
 
-For example if the borrowing factor per second is 1 / 50,000, and the long open interest is $150,000 with +$50,000 of pending pnl, and the pool has $250,000 worth of tokens, the borrowing fee per second for longs would be `(1 / 50,000) * (150,000 + 50,000) / 250,000 => 0.000016 => 0.0016%`.
+For example if the borrowing factor per second is 1 / 50,000, and the borrowing exponent factor is 1, and the long open interest is $150,000 with +$50,000 of pending pnl, and the pool has $250,000 worth of tokens, the borrowing fee per second for longs would be `(1 / 50,000) * (150,000 + 50,000) / 250,000 => 0.000016 => 0.0016%`.
 
 ## Price Impact
 
@@ -385,6 +384,8 @@ For example:
 - The pool would have an extra $150 of collateral which continues to have a net zero impact on the pool value due to the 0.03 index tokens in the position impact pool
 
 If the index token is different from both the long and short token of the market, then it is possible that the pool value becomes significantly affected by the position impact pool, if the position impact pool is very large and the index token has a large price increase. Due to this, there should be a method to gradually reduce the size of the position impact pool.
+
+Price impact is also tracked using a virtual inventory value for positions and swaps, this tracks the imbalance of tokens across similar markets, e.g. ETH/USDC, ETH/USDT.
 
 # Fees
 

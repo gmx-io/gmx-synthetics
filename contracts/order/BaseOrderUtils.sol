@@ -14,7 +14,7 @@ import "../oracle/Oracle.sol";
 import "../swap/SwapHandler.sol";
 
 // @title Order
-// @dev Libary for common order functions used in OrderUtils, IncreaseOrderUtils
+// @dev Library for common order functions used in OrderUtils, IncreaseOrderUtils
 // DecreaseOrderUtils, SwapOrderUtils
 library BaseOrderUtils {
     using SafeCast for int256;
@@ -35,6 +35,7 @@ library BaseOrderUtils {
         CreateOrderParamsAddresses addresses;
         CreateOrderParamsNumbers numbers;
         Order.OrderType orderType;
+        Order.DecreasePositionSwapType decreasePositionSwapType;
         bool isLong;
         bool shouldUnwrapNativeToken;
     }
@@ -84,7 +85,8 @@ library BaseOrderUtils {
         bytes32 key;
         Order.Props order;
         Market.Props[] swapPathMarkets;
-        uint256[] oracleBlockNumbers;
+        uint256[] minOracleBlockNumbers;
+        uint256[] maxOracleBlockNumbers;
         Market.Props market;
         address keeper;
         uint256 startingGas;
@@ -108,6 +110,14 @@ library BaseOrderUtils {
 
     error EmptyOrder();
     error UnsupportedOrderType();
+    error InvalidOrderPrices(
+        uint256 primaryPrice,
+        uint256 secondaryPrice,
+        uint256 triggerPrice,
+        bool shouldValidateAscendingPrice
+    );
+    error PriceImpactLargerThanOrderSize(int256 priceImpactUsdForPriceAdjustment, uint256 sizeDeltaUsd);
+    error OrderNotFulfillableDueToPriceImpact(uint256 price, uint256 acceptablePrice);
 
     // @dev check if an orderType is a market order
     // @param orderType the order type
@@ -249,7 +259,7 @@ library BaseOrderUtils {
                 // and that the later price (secondaryPrice) is larger than the triggerPrice
                 bool ok = primaryPrice <= triggerPrice && triggerPrice <= secondaryPrice;
                 if (!ok) {
-                    revert("Invalid prices for order");
+                    revert InvalidOrderPrices(primaryPrice, secondaryPrice, triggerPrice, shouldValidateAscendingPrice);
                 }
 
                 oracle.setCustomPrice(indexToken, Price.Props(
@@ -261,7 +271,7 @@ library BaseOrderUtils {
                 // and that the later price (secondaryPrice) is smaller than the triggerPrice
                 bool ok = primaryPrice >= triggerPrice && triggerPrice >= secondaryPrice;
                 if (!ok) {
-                    revert("Invalid prices for order");
+                    revert InvalidOrderPrices(primaryPrice, secondaryPrice, triggerPrice, shouldValidateAscendingPrice);
                 }
 
                 oracle.setCustomPrice(indexToken, Price.Props(
@@ -335,7 +345,7 @@ library BaseOrderUtils {
         int256 priceImpactUsdForPriceAdjustment = shouldFlipPriceImpactUsd ? -priceImpactUsd : priceImpactUsd;
 
         if (priceImpactUsdForPriceAdjustment < 0 && (-priceImpactUsdForPriceAdjustment).toUint256() > sizeDeltaUsd) {
-            revert("Value of price impact is larger than position size");
+            revert PriceImpactLargerThanOrderSize(priceImpactUsdForPriceAdjustment, sizeDeltaUsd);
         }
 
         // adjust price by price impact
@@ -388,7 +398,7 @@ library BaseOrderUtils {
         // their position, this gives the user the option to cancel the pending order if
         // prices do not move in their favour or to close their position and let the order
         // execute if prices move in their favour
-        revert("Order could not be fulfilled due to price impact");
+        revert OrderNotFulfillableDueToPriceImpact(price, acceptablePrice);
     }
 
     // @dev validate that an order exists

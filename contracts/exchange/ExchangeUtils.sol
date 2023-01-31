@@ -10,14 +10,17 @@ import "../data/Keys.sol";
 // @title ExchangeUtils
 // @dev Library for exchange helper functions
 library ExchangeUtils {
+    error RequestNotYetCancellable(uint256 requestAge, uint256 requestExpirationAge, string requestType);
+
     function validateRequestCancellation(
         DataStore dataStore,
         uint256 createdAtBlock,
-        string memory error
+        string memory requestType
     ) internal view {
-        uint256 requestExpirationAge = dataStore.getUint(Keys.REQUEST_EXPIRATION_AGE);
-        if (Chain.currentBlockNumber() - createdAtBlock < requestExpirationAge) {
-            revert(error);
+        uint256 requestExpirationAge = dataStore.getUint(Keys.REQUEST_EXPIRATION_BLOCK_AGE);
+        uint256 requestAge = Chain.currentBlockNumber() - createdAtBlock;
+        if (requestAge < requestExpirationAge) {
+            revert RequestNotYetCancellable(requestAge, requestExpirationAge, requestType);
         }
     }
 }

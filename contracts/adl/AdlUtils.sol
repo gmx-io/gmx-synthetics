@@ -6,6 +6,7 @@ import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 
 import "../order/OrderStoreUtils.sol";
+import "../order/OrderEventUtils.sol";
 import "../position/PositionUtils.sol";
 import "../position/PositionStoreUtils.sol";
 import "../nonce/NonceUtils.sol";
@@ -21,18 +22,6 @@ import "../nonce/NonceUtils.sol";
 //
 // In this scenario, profitable positions should be automatically closed to ensure
 // that the system remains fully solvent
-//
-// There are two factors that can be specified per market and for longs / shorts:
-// 1. maxPnlFactor
-// 2. maxPnlFactorForWithdrawals
-//
-// If the maxPnlFactor is exceeded then positions can be closed to reduce ratio
-// of amount of pending profit to pool value
-//
-// Redemption of market tokens can be done only if the maxPnlFactorForWithdrawals
-// is not exceeded, this can be set to a lower value than maxPnlFactor, and
-// helps reduce the chance that withdrawals would lead to the pool being in a
-// state that requires ADL
 library AdlUtils {
     using SafeCast for int256;
     using Array for uint256[];
@@ -60,6 +49,7 @@ library AdlUtils {
     // @param updatedAtBlock the block to set the order's updatedAtBlock to
     struct CreateAdlOrderParams {
         DataStore dataStore;
+        EventEmitter eventEmitter;
         address account;
         address market;
         address collateralToken;
@@ -68,8 +58,8 @@ library AdlUtils {
         uint256 updatedAtBlock;
     }
 
-    error PendingAdlForLongs(int256 pnlToPoolFactor, uint256 maxPnlFactor);
-    error PendingAdlForShorts(int256 pnlToPoolFactor, uint256 maxPnlFactor);
+    error InvalidSizeDeltaForAdl(uint256 sizeDeltaUsd, uint256 positionSizeInUsd);
+    error AdlNotEnabled();
 
     // @dev Multiple positions may need to be reduced to ensure that the pending
     // profits does not exceed the allowed thresholds
@@ -95,111 +85,35 @@ library AdlUtils {
     // @param oracle Oracle
     // @param market address of the market to check
     // @param isLong indicates whether to check the long or short side of the market
-    // @param oracleBlockNumbers the oracle block numbers for the prices stored in the oracle
+    // @param maxOracleBlockNumbers the oracle block numbers for the prices stored in the oracle
     function updateAdlState(
         DataStore dataStore,
         EventEmitter eventEmitter,
         Oracle oracle,
         address market,
         bool isLong,
-        uint256[] memory oracleBlockNumbers
+        uint256[] memory maxOracleBlockNumbers
     ) external {
         uint256 latestAdlBlock = getLatestAdlBlock(dataStore, market, isLong);
 
-        uint256 oracleBlockNumber = oracleBlockNumbers[0];
-        if (!oracleBlockNumbers.areEqualTo(oracleBlockNumber)) {
-            OracleUtils.revertOracleBlockNumbersAreNotEqual(oracleBlockNumbers, oracleBlockNumber);
-        }
-
-        if (oracleBlockNumber < latestAdlBlock) {
-            OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, latestAdlBlock);
+        if (!maxOracleBlockNumbers.areGreaterThanOrEqualTo(latestAdlBlock)) {
+            OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(maxOracleBlockNumbers, latestAdlBlock);
         }
 
         Market.Props memory _market = MarketUtils.getEnabledMarket(dataStore, market);
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(oracle, _market);
-        (bool shouldEnableAdl, int256 pnlToPoolFactor, uint256 maxPnlFactor) = shouldAllowAdl(
+        (bool shouldEnableAdl, int256 pnlToPoolFactor, uint256 maxPnlFactor) = MarketUtils.isPnlFactorExceeded(
             dataStore,
             _market,
             prices,
             isLong,
-            false
+            Keys.MAX_PNL_FACTOR
         );
 
         setIsAdlEnabled(dataStore, market, isLong, shouldEnableAdl);
         setLatestAdlBlock(dataStore, market, isLong, block.number);
 
         emitAdlStateUpdated(eventEmitter, market, isLong, pnlToPoolFactor, maxPnlFactor, shouldEnableAdl);
-    }
-
-    function validatePoolState(
-        DataStore dataStore,
-        Market.Props memory market,
-        MarketUtils.MarketPrices memory prices,
-        bool useMaxPnlFactorForWithdrawals
-    ) internal view {
-        (bool shouldEnableAdlForLongs, int256 pnlToPoolFactorForLongs, uint256 maxPnlFactorForLongs) = AdlUtils.shouldAllowAdl(
-            dataStore,
-            market,
-            prices,
-            true,
-            useMaxPnlFactorForWithdrawals
-        );
-
-        if (shouldEnableAdlForLongs) {
-            revert PendingAdlForLongs(pnlToPoolFactorForLongs, maxPnlFactorForLongs);
-        }
-
-        (bool shouldEnableAdlForShorts, int256 pnlToPoolFactorForShorts, uint256 maxPnlFactorForShorts) = AdlUtils.shouldAllowAdl(
-            dataStore,
-            market,
-            prices,
-            false,
-            useMaxPnlFactorForWithdrawals
-        );
-
-        if (shouldEnableAdlForShorts) {
-            revert PendingAdlForShorts(pnlToPoolFactorForShorts, maxPnlFactorForShorts);
-        }
-    }
-
-    function shouldAllowAdl(
-        DataStore dataStore,
-        Oracle oracle,
-        address _market,
-        bool isLong,
-        bool useMaxPnlFactorForWithdrawals
-    ) internal view returns (bool, int256, uint256) {
-        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, _market);
-        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(oracle, market);
-
-        return shouldAllowAdl(
-            dataStore,
-            market,
-            prices,
-            isLong,
-            useMaxPnlFactorForWithdrawals
-        );
-    }
-
-    function shouldAllowAdl(
-        DataStore dataStore,
-        Market.Props memory market,
-        MarketUtils.MarketPrices memory prices,
-        bool isLong,
-        bool useMaxPnlFactorForWithdrawals
-    ) internal view returns (bool, int256, uint256) {
-        int256 pnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, market, prices, isLong, true);
-        uint256 maxPnlFactor;
-
-        if (useMaxPnlFactorForWithdrawals) {
-            maxPnlFactor = MarketUtils.getMaxPnlFactorForWithdrawals(dataStore, market.marketToken, isLong);
-        } else {
-            maxPnlFactor = MarketUtils.getMaxPnlFactor(dataStore, market.marketToken, isLong);
-        }
-
-        bool shouldEnableAdl = pnlToPoolFactor > 0 && pnlToPoolFactor.toUint256() > maxPnlFactor;
-
-        return (shouldEnableAdl, pnlToPoolFactor, maxPnlFactor);
     }
 
     // @dev Construct an ADL order
@@ -213,7 +127,7 @@ library AdlUtils {
         Position.Props memory position = PositionStoreUtils.get(params.dataStore, positionKey);
 
         if (params.sizeDeltaUsd > position.sizeInUsd()) {
-            revert("Invalid sizeDeltaUsd");
+            revert InvalidSizeDeltaForAdl(params.sizeDeltaUsd, position.sizeInUsd());
         }
 
         Order.Addresses memory addresses = Order.Addresses(
@@ -227,6 +141,7 @@ library AdlUtils {
 
         Order.Numbers memory numbers = Order.Numbers(
             Order.OrderType.MarketDecrease, // orderType
+            Order.DecreasePositionSwapType.NoSwap, // decreasePositionSwapType
             params.sizeDeltaUsd, // sizeDeltaUsd
             0, // initialCollateralDeltaAmount
             0, // triggerPrice
@@ -252,6 +167,8 @@ library AdlUtils {
         bytes32 key = NonceUtils.getNextKey(params.dataStore);
         OrderStoreUtils.set(params.dataStore, key, order);
 
+        OrderEventUtils.emitOrderCreated(params.eventEmitter, key, order);
+
         return key;
     }
 
@@ -260,27 +177,21 @@ library AdlUtils {
     // @param dataStore DataStore
     // @param market address of the market to check
     // @param isLong indicates whether to check the long or short side of the market
-    // @param oracleBlockNumbers the oracle block numbers for the prices stored in the oracle
+    // @param maxOracleBlockNumbers the oracle block numbers for the prices stored in the oracle
     function validateAdl(
         DataStore dataStore,
         address market,
         bool isLong,
-        uint256[] memory oracleBlockNumbers
+        uint256[] memory maxOracleBlockNumbers
     ) external view {
         bool isAdlEnabled = AdlUtils.getIsAdlEnabled(dataStore, market, isLong);
         if (!isAdlEnabled) {
-            revert("Adl is not enabled");
-        }
-
-        uint256 oracleBlockNumber = oracleBlockNumbers[0];
-        if (!oracleBlockNumbers.areEqualTo(oracleBlockNumber)) {
-            OracleUtils.revertOracleBlockNumbersAreNotEqual(oracleBlockNumbers, oracleBlockNumber);
+            revert AdlNotEnabled();
         }
 
         uint256 latestAdlBlock = AdlUtils.getLatestAdlBlock(dataStore, market, isLong);
-
-        if (oracleBlockNumber < latestAdlBlock) {
-            OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, latestAdlBlock);
+        if (!maxOracleBlockNumbers.areGreaterThanOrEqualTo(latestAdlBlock)) {
+            OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(maxOracleBlockNumbers, latestAdlBlock);
         }
     }
 

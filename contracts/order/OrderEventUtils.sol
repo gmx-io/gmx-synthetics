@@ -54,8 +54,9 @@ library OrderEventUtils {
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
 
-        eventEmitter.emitEventLog1(
+        eventEmitter.emitEventLog2(
             "OrderCreated",
+            key,
             Cast.toBytes32(order.account()),
             eventData
         );
@@ -123,7 +124,7 @@ library OrderEventUtils {
         );
     }
 
-    function emitOrderCollateralDeltaAmountUpdated(
+    function emitOrderCollateralDeltaAmountAutoUpdated(
         EventEmitter eventEmitter,
         bytes32 key,
         uint256 collateralDeltaAmount,

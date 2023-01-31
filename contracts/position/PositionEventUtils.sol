@@ -7,6 +7,7 @@ import "../event/EventUtils.sol";
 import "../utils/Cast.sol";
 
 import "./Position.sol";
+import "./PositionUtils.sol";
 
 library PositionEventUtils {
     using Position for Position.Props;
@@ -27,6 +28,7 @@ library PositionEventUtils {
         uint256 sizeDeltaUsd,
         uint256 sizeDeltaInTokens,
         int256 collateralDeltaAmount,
+        int256 priceImpactAmount,
         Order.OrderType orderType
     ) external {
         EventUtils.EventLogData memory eventData;
@@ -46,10 +48,11 @@ library PositionEventUtils {
         eventData.uintItems.setItem(6, "sizeDeltaInTokens", sizeDeltaInTokens);
         eventData.uintItems.setItem(7, "orderType", uint256(orderType));
 
-        eventData.intItems.initItems(3);
+        eventData.intItems.initItems(4);
         eventData.intItems.setItem(0, "longTokenFundingAmountPerSize", position.longTokenFundingAmountPerSize());
         eventData.intItems.setItem(1, "shortTokenFundingAmountPerSize", position.shortTokenFundingAmountPerSize());
         eventData.intItems.setItem(2, "collateralDeltaAmount", collateralDeltaAmount);
+        eventData.intItems.setItem(3, "priceImpactAmount", priceImpactAmount);
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "isLong", position.isLong());
@@ -68,12 +71,10 @@ library PositionEventUtils {
         EventEmitter eventEmitter,
         bytes32 positionKey,
         Position.Props memory position,
-        uint256 executionPrice,
         uint256 sizeDeltaUsd,
-        uint256 sizeDeltaInTokens,
         uint256 collateralDeltaAmount,
-        int256 pnlUsd,
-        Order.OrderType orderType
+        Order.OrderType orderType,
+        PositionUtils.DecreasePositionCollateralValues memory values
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -82,21 +83,23 @@ library PositionEventUtils {
         eventData.addressItems.setItem(1, "market", position.market());
         eventData.addressItems.setItem(2, "collateralToken", position.collateralToken());
 
-        eventData.uintItems.initItems(11);
+        eventData.uintItems.initItems(12);
         eventData.uintItems.setItem(0, "sizeInUsd", position.sizeInUsd());
         eventData.uintItems.setItem(1, "sizeInTokens", position.sizeInTokens());
         eventData.uintItems.setItem(2, "collateralAmount", position.collateralAmount());
         eventData.uintItems.setItem(3, "borrowingFactor", position.borrowingFactor());
-        eventData.uintItems.setItem(6, "executionPrice", executionPrice);
+        eventData.uintItems.setItem(6, "executionPrice", values.executionPrice);
         eventData.uintItems.setItem(7, "sizeDeltaUsd", sizeDeltaUsd);
-        eventData.uintItems.setItem(8, "sizeDeltaInTokens", sizeDeltaInTokens);
+        eventData.uintItems.setItem(8, "sizeDeltaInTokens", values.sizeDeltaInTokens);
         eventData.uintItems.setItem(9, "collateralDeltaAmount", collateralDeltaAmount);
-        eventData.uintItems.setItem(10, "orderType", uint256(orderType));
+        eventData.uintItems.setItem(10, "priceImpactDiffUsd", values.priceImpactDiffUsd);
+        eventData.uintItems.setItem(11, "orderType", uint256(orderType));
 
-        eventData.intItems.initItems(3);
+        eventData.intItems.initItems(4);
         eventData.intItems.setItem(0, "longTokenFundingAmountPerSize", position.longTokenFundingAmountPerSize());
         eventData.intItems.setItem(1, "shortTokenFundingAmountPerSize", position.shortTokenFundingAmountPerSize());
-        eventData.intItems.setItem(2, "pnlUsd", pnlUsd);
+        eventData.intItems.setItem(2, "priceImpactAmount", values.priceImpactAmount);
+        eventData.intItems.setItem(3, "pnlUsd", values.positionPnlUsd);
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "isLong", position.isLong());

@@ -15,6 +15,7 @@ import "../market/MarketToken.sol";
 import "../deposit/Deposit.sol";
 import "../deposit/DepositVault.sol";
 import "../deposit/DepositUtils.sol";
+import "../deposit/ExecuteDepositUtils.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 
@@ -70,7 +71,7 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         ExchangeUtils.validateRequestCancellation(
             _dataStore,
             deposit.updatedAtBlock(),
-            "ExchangeRouter: deposit not yet expired"
+            "Deposit"
         );
 
         DepositUtils.cancelDeposit(
@@ -104,36 +105,33 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
             msg.sender,
             startingGas
         ) {
-        } catch Error(string memory reason) {
-            bytes32 reasonKey = keccak256(abi.encode(reason));
-            if (reasonKey == Keys.EMPTY_PRICE_ERROR_KEY) {
-                revert(reason);
-            }
-
-            DepositUtils.cancelDeposit(
-                dataStore,
-                eventEmitter,
-                depositVault,
-                key,
-                msg.sender,
-                startingGas,
-                reason,
-                ""
-            );
         } catch (bytes memory reasonBytes) {
-            string memory reason = RevertUtils.getRevertMessage(reasonBytes);
-
-            DepositUtils.cancelDeposit(
-                dataStore,
-                eventEmitter,
-                depositVault,
+            _handleDepositError(
                 key,
-                msg.sender,
                 startingGas,
-                reason,
                 reasonBytes
             );
         }
+    }
+
+    function simulateExecuteDeposit(
+        bytes32 key,
+        OracleUtils.SimulatePricesParams memory params
+    ) external
+        onlyController
+        withSimulatedOraclePrices(oracle, params)
+        globalNonReentrant
+    {
+
+        uint256 startingGas = gasleft();
+        OracleUtils.SetPricesParams memory oracleParams;
+
+        this._executeDeposit(
+            key,
+            oracleParams,
+            msg.sender,
+            startingGas
+        );
     }
 
     // @dev executes a deposit
@@ -148,22 +146,53 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
     ) external onlySelf {
         FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureDisabledKey(address(this)));
 
-        uint256[] memory oracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedOracleBlockNumbers,
+        uint256[] memory minOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
+            oracleParams.compactedMinOracleBlockNumbers,
             oracleParams.tokens.length
         );
 
-        DepositUtils.ExecuteDepositParams memory params = DepositUtils.ExecuteDepositParams(
+        uint256[] memory maxOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
+            oracleParams.compactedMaxOracleBlockNumbers,
+            oracleParams.tokens.length
+        );
+
+        ExecuteDepositUtils.ExecuteDepositParams memory params = ExecuteDepositUtils.ExecuteDepositParams(
             dataStore,
             eventEmitter,
             depositVault,
             oracle,
             key,
-            oracleBlockNumbers,
+            minOracleBlockNumbers,
+            maxOracleBlockNumbers,
             keeper,
             startingGas
         );
 
-        DepositUtils.executeDeposit(params);
+        ExecuteDepositUtils.executeDeposit(params);
+    }
+
+    function _handleDepositError(
+        bytes32 key,
+        uint256 startingGas,
+        bytes memory reasonBytes
+    ) internal {
+        (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
+
+        bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
+
+        if (OracleUtils.isEmptyPriceError(errorSelector)) {
+            ErrorUtils.revertWithCustomError(reasonBytes);
+        }
+
+        DepositUtils.cancelDeposit(
+            dataStore,
+            eventEmitter,
+            depositVault,
+            key,
+            msg.sender,
+            startingGas,
+            reason,
+            reasonBytes
+        );
     }
 }

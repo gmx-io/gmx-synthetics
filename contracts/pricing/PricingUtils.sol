@@ -113,22 +113,10 @@ library PricingUtils {
         uint256 impactFactor,
         uint256 impactExponentFactor
     ) internal pure returns (uint256) {
-        // `PRBMathUD60x18.pow` doesn't work for `x` less than one
-        if (diffUsd < Precision.FLOAT_PRECISION) {
-            return 0;
-        }
-
-        // `PRBMathUD60x18.pow` accepts 2 fixed point numbers 60x18
-        // we need to convert float (30 decimals) to 60x18 (18 decimals) and then back to 30 decimals
-        uint256 adjustedDiffUsd = PRBMathUD60x18.pow(
-            Precision.floatToWei(diffUsd),
-            Precision.floatToWei(impactExponentFactor)
-        );
-        adjustedDiffUsd = Precision.weiToFloat(adjustedDiffUsd);
-
+        uint256 exponentValue = Precision.applyExponentFactor(diffUsd, impactExponentFactor);
         // we divide by 2 here to more easily translate liquidity into the appropriate impactFactor values
         // for example, if the impactExponentFactor is 2 and we want to have an impact of 0.1% for $2 million of difference
         // we can set the impactFactor to be 0.1% / 2 million, in factor form that would be 0.001 / 2,000,000 * (10 ^ 30)
-        return Precision.applyFactor(adjustedDiffUsd, impactFactor) / 2;
+        return Precision.applyFactor(exponentValue, impactFactor) / 2;
     }
 }
