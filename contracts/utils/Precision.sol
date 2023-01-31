@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "prb-math/contracts/PRBMathUD60x18.sol";
+
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/math/SignedMath.sol";
@@ -61,6 +63,25 @@ library Precision {
         }
 
         return -result.toInt256();
+    }
+
+    function applyExponentFactor(
+        uint256 floatValue,
+        uint256 exponentFactor
+    ) internal pure returns (uint256) {
+        // `PRBMathUD60x18.pow` doesn't work for `x` less than one
+        if (floatValue < FLOAT_PRECISION) {
+            return 0;
+        }
+
+        // `PRBMathUD60x18.pow` accepts 2 fixed point numbers 60x18
+        // we need to convert float (30 decimals) to 60x18 (18 decimals) and then back to 30 decimals
+        uint256 weiValue = PRBMathUD60x18.pow(
+            floatToWei(floatValue),
+            floatToWei(exponentFactor)
+        );
+
+        return weiToFloat(weiValue);
     }
 
     /**
