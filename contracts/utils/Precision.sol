@@ -58,11 +58,7 @@ library Precision {
      */
     function applyFactor(uint256 value, int256 factor) internal pure returns (int256) {
         uint256 result = applyFactor(value, factor.abs());
-        if (factor > 0) {
-            return result.toInt256();
-        }
-
-        return -result.toInt256();
+        return factor > 0 ? result.toInt256() : -result.toInt256();
     }
 
     function applyExponentFactor(
@@ -82,6 +78,34 @@ library Precision {
         );
 
         return weiToFloat(weiValue);
+    }
+
+    function toFactor(uint256 value, uint256 divisor) internal pure returns (uint256) {
+        (bool ok, uint256 numerator) = SafeMath.tryMul(value, FLOAT_PRECISION);
+        if (ok) {
+            return numerator / divisor;
+        }
+
+        // if ok is false, the multiplication overflowed, attempt the multiplication
+        // with reduced values
+
+        // for an overflow to occur, "value" must be more than 10^47
+        // reduce "value" to allow larger values to be handled
+        numerator = (value / SCALING_FACTOR_TO_AVOID_OVERFLOW) * FLOAT_PRECISION;
+
+        // after applying the scaling factor the numerator would be at least 10^(47 - 20) * 10^30 => 10^57
+        // if the divisor is more than 10^40, then reduce the divisor before calculating the final result
+        if (divisor > 10 ** 40) {
+            return numerator / (divisor / SCALING_FACTOR_TO_AVOID_OVERFLOW);
+        }
+
+        // if the divisor is less than 10^40, perform the division before scaling the final result up
+        return (numerator / divisor) * SCALING_FACTOR_TO_AVOID_OVERFLOW;
+    }
+
+    function toFactor(int256 value, uint256 divisor) internal pure returns (int256) {
+        uint256 result = toFactor(value.abs(), divisor);
+        return value > 0 ? result.toInt256() : -result.toInt256();
     }
 
     /**

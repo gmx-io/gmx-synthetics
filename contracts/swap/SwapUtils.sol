@@ -284,11 +284,11 @@ library SwapUtils {
             cache.tokenOut == _params.market.longToken
         );
 
-        AdlUtils.validatePoolState(
+        MarketUtils.validateMaxPnl(
             params.dataStore,
             _params.market,
             prices,
-            true
+            Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS
         );
 
         SwapPricingUtils.emitSwapInfo(

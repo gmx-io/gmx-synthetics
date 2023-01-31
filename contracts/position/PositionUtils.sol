@@ -199,7 +199,8 @@ library PositionUtils {
                 market.marketToken,
                 position.isLong(),
                 cache.poolPnl,
-                cache.poolTokenUsd
+                cache.poolTokenUsd,
+                Keys.MAX_PNL_FACTOR_FOR_TRADERS
             );
 
             if (cache.cappedPoolPnl != cache.poolPnl && cache.cappedPoolPnl > 0 && cache.poolPnl > 0) {

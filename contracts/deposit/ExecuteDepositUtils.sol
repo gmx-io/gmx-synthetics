@@ -114,6 +114,18 @@ library ExecuteDepositUtils {
 
         Market.Props memory market = MarketUtils.getEnabledMarket(params.dataStore, deposit.market());
 
+        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(params.oracle, market);
+
+        // deposits should improve the pool state but it should be checked if
+        // the max pnl factor for deposits is exceeded as this would lead to the
+        // price of the market token decreasing below the allowed amount
+        MarketUtils.validateMaxPnl(
+            params.dataStore,
+            market,
+            prices,
+            Keys.MAX_PNL_FACTOR_FOR_DEPOSITS
+        );
+
         cache.longTokenAmount = swap(
             params,
             deposit.longTokenSwapPath(),
@@ -158,20 +170,6 @@ library ExecuteDepositUtils {
                 cache.longTokenAmount
             );
         }
-
-        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(params.oracle, market);
-
-        // deposits should improve the pool state but it should be checked if
-        // there is any pending ADL before allowing deposits
-        // this prevents deposits before a pending ADL is completed
-        // so that market tokens are not minted at a lower price than they
-        // should be
-        AdlUtils.validatePoolState(
-            params.dataStore,
-            market,
-            prices,
-            false
-        );
 
         cache.longTokenUsd = cache.longTokenAmount * prices.longTokenPrice.midPrice();
         cache.shortTokenUsd = cache.shortTokenAmount * prices.shortTokenPrice.midPrice();
@@ -284,6 +282,7 @@ library ExecuteDepositUtils {
             _params.tokenIn == _params.market.longToken ? _params.tokenInPrice : _params.tokenOutPrice,
             _params.tokenIn == _params.market.shortToken ? _params.tokenInPrice : _params.tokenOutPrice,
             params.oracle.getPrimaryPrice(_params.market.indexToken),
+            Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
             true
         );
 

@@ -16,11 +16,17 @@ export type BaseMarketConfig = {
   maxOpenInterestForLongs: BigNumberish;
   maxOpenInterestForShorts: BigNumberish;
 
-  maxPnlFactorLongs: BigNumberish;
-  maxPnlFactorShorts: BigNumberish;
+  maxPnlFactorForTradersLongs: BigNumberish;
+  maxPnlFactorForTradersShorts: BigNumberish;
 
   maxPnlFactorForAdlLongs: BigNumberish;
   maxPnlFactorForAdlShorts: BigNumberish;
+
+  minPnlFactorAfterAdlLongs: BigNumberish;
+  minPnlFactorAfterAdlShorts: BigNumberish;
+
+  maxPnlFactorForDepositsLongs: BigNumberish;
+  maxPnlFactorForDepositsShorts: BigNumberish;
 
   maxPnlFactorForWithdrawalsLongs: BigNumberish;
   maxPnlFactorForWithdrawalsShorts: BigNumberish;
@@ -78,11 +84,17 @@ const baseMarketConfig: BaseMarketConfig = {
   maxOpenInterestForLongs: decimalToFloat(1 * 1000 * 1000 * 1000),
   maxOpenInterestForShorts: decimalToFloat(1 * 1000 * 1000 * 1000),
 
-  maxPnlFactorLongs: decimalToFloat(5, 1), // 50%
-  maxPnlFactorShorts: decimalToFloat(5, 1), // 50%
+  maxPnlFactorForTradersLongs: decimalToFloat(5, 1), // 50%
+  maxPnlFactorForTradersShorts: decimalToFloat(5, 1), // 50%
 
-  maxPnlFactorForAdlLongs: decimalToFloat(4, 1), // 40%
-  maxPnlFactorForAdlShorts: decimalToFloat(4, 1), // 40%
+  maxPnlFactorForAdlLongs: decimalToFloat(45, 2), // 45%
+  maxPnlFactorForAdlShorts: decimalToFloat(45, 2), // 45%
+
+  minPnlFactorAfterAdlLongs: decimalToFloat(4, 1), // 40%
+  minPnlFactorAfterAdlShorts: decimalToFloat(4, 1), // 40%
+
+  maxPnlFactorForDepositsLongs: decimalToFloat(6, 1), // 60%
+  maxPnlFactorForDepositsShorts: decimalToFloat(6, 1), // 60%
 
   maxPnlFactorForWithdrawalsLongs: decimalToFloat(3, 1), // 30%
   maxPnlFactorForWithdrawalsShorts: decimalToFloat(3, 1), // 30%
@@ -121,11 +133,17 @@ const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
   maxOpenInterestForLongs: decimalToFloat(1 * 1000 * 1000 * 1000),
   maxOpenInterestForShorts: decimalToFloat(1 * 1000 * 1000 * 1000),
 
-  maxPnlFactorLongs: decimalToFloat(5, 1), // 50%
-  maxPnlFactorShorts: decimalToFloat(5, 1), // 50%
+  maxPnlFactorForTradersLongs: decimalToFloat(5, 1), // 50%
+  maxPnlFactorForTradersShorts: decimalToFloat(5, 1), // 50%
 
-  maxPnlFactorForAdlLongs: decimalToFloat(4, 1), // 40%
-  maxPnlFactorForAdlShorts: decimalToFloat(4, 1), // 40%
+  maxPnlFactorForAdlLongs: decimalToFloat(45, 2), // 45%
+  maxPnlFactorForAdlShorts: decimalToFloat(45, 2), // 45%
+
+  minPnlFactorAfterAdlLongs: decimalToFloat(4, 1), // 40%
+  minPnlFactorAfterAdlShorts: decimalToFloat(4, 1), // 40%
+
+  maxPnlFactorForDepositsLongs: decimalToFloat(6, 1), // 60%
+  maxPnlFactorForDepositsShorts: decimalToFloat(6, 1), // 60%
 
   maxPnlFactorForWithdrawalsLongs: decimalToFloat(3, 1), // 30%
   maxPnlFactorForWithdrawalsShorts: decimalToFloat(3, 1), // 30%

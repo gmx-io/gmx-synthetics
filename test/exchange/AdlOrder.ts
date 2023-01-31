@@ -44,11 +44,11 @@ describe("Exchange.AdlOrder", () => {
       },
     });
 
-    const maxPnlFactorKey = keys.maxPnlFactorKey(ethUsdMarket.marketToken, true);
-    const maxPnlFactorForAdlKey = keys.maxPnlFactorForAdlKey(ethUsdMarket.marketToken, true);
+    const maxPnlFactorForAdlKey = keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_ADL, ethUsdMarket.marketToken, true);
+    const minPnlFactorAfterAdlKey = keys.maxPnlFactorKey(keys.MIN_PNL_FACTOR_AFTER_ADL, ethUsdMarket.marketToken, true);
 
-    await dataStore.setUint(maxPnlFactorKey, decimalToFloat(10, 2)); // 10%
-    await dataStore.setUint(maxPnlFactorForAdlKey, decimalToFloat(2, 2)); // 2%
+    await dataStore.setUint(maxPnlFactorForAdlKey, decimalToFloat(10, 2)); // 10%
+    await dataStore.setUint(minPnlFactorAfterAdlKey, decimalToFloat(2, 2)); // 2%
     await grantRole(roleStore, wallet.address, "ADL_KEEPER");
 
     await updateAdlState(fixture, {

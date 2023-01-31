@@ -172,8 +172,14 @@ library Keys {
     bytes32 public constant RESERVE_FACTOR = keccak256(abi.encode("RESERVE_FACTOR"));
     // @dev key for max pnl factor
     bytes32 public constant MAX_PNL_FACTOR = keccak256(abi.encode("MAX_PNL_FACTOR"));
+    // @dev key for max pnl factor
+    bytes32 public constant MAX_PNL_FACTOR_FOR_TRADERS = keccak256(abi.encode("MAX_PNL_FACTOR_FOR_TRADERS"));
     // @dev key for max pnl factor for adl
     bytes32 public constant MAX_PNL_FACTOR_FOR_ADL = keccak256(abi.encode("MAX_PNL_FACTOR_FOR_ADL"));
+    // @dev key for min pnl factor for adl
+    bytes32 public constant MIN_PNL_FACTOR_AFTER_ADL = keccak256(abi.encode("MIN_PNL_FACTOR_AFTER_ADL"));
+    // @dev key for max pnl factor
+    bytes32 public constant MAX_PNL_FACTOR_FOR_DEPOSITS = keccak256(abi.encode("MAX_PNL_FACTOR_FOR_DEPOSITS"));
     // @dev key for max pnl factor for withdrawals
     bytes32 public constant MAX_PNL_FACTOR_FOR_WITHDRAWALS = keccak256(abi.encode("MAX_PNL_FACTOR_FOR_WITHDRAWALS"));
     // @dev key for latest ADL block
@@ -660,29 +666,18 @@ library Keys {
     // @param market the market to check
     // @param isLong whether to get the key for the long or short side
     // @return key for max pnl factor
-    function maxPnlFactorKey(address market, bool isLong) internal pure returns (bytes32) {
+    function maxPnlFactorKey(bytes32 pnlFactorType, address market, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             MAX_PNL_FACTOR,
+            pnlFactorType,
             market,
             isLong
         ));
     }
 
-    function maxPnlFactorForAdlKey(address market, bool isLong) internal pure returns (bytes32) {
+    function minPnlFactorAfterAdlKey(address market, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            MAX_PNL_FACTOR_FOR_ADL,
-            market,
-            isLong
-        ));
-    }
-
-    // @dev key for max pnl factor for withdrawals
-    // @param market the market to check
-    // @param isLong whether to get the key for the long or short side
-    // @return key for max pnl factor for withdrawals
-    function maxPnlFactorForWithdrawalsKey(address market, bool isLong) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            MAX_PNL_FACTOR_FOR_WITHDRAWALS,
+            MIN_PNL_FACTOR_AFTER_ADL,
             market,
             isLong
         ));

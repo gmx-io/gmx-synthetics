@@ -340,11 +340,11 @@ library WithdrawalUtils {
             false
         );
 
-        AdlUtils.validatePoolState(
+        MarketUtils.validateMaxPnl(
             params.dataStore,
             market,
             prices,
-            true
+            Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS
         );
 
         WithdrawalStoreUtils.remove(params.dataStore, params.key, withdrawal.account());
@@ -430,6 +430,7 @@ library WithdrawalUtils {
             prices.longTokenPrice,
             prices.shortTokenPrice,
             params.oracle.getPrimaryPrice(market.indexToken),
+            Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
             false
         );
 

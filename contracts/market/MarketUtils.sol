@@ -150,6 +150,8 @@ library MarketUtils {
     error UnableToGetFundingFactorEmptyOpenInterest();
     error InvalidPositionMarket(address market);
     error InvalidCollateralTokenForMarket(address market, address token);
+    error PnlFactorExceededForLongs(int256 pnlToPoolFactor, uint256 maxPnlFactor);
+    error PnlFactorExceededForShorts(int256 pnlToPoolFactor, uint256 maxPnlFactor);
 
     // @dev get the market token's price
     // @param dataStore DataStore
@@ -165,9 +167,19 @@ library MarketUtils {
         Price.Props memory longTokenPrice,
         Price.Props memory shortTokenPrice,
         Price.Props memory indexTokenPrice,
+        bytes32 pnlFactorType,
         bool maximize
     ) internal view returns (int256) {
-        int256 poolValue = getPoolValue(dataStore, market, longTokenPrice, shortTokenPrice, indexTokenPrice, maximize);
+        int256 poolValue = getPoolValue(
+            dataStore,
+            market,
+            longTokenPrice,
+            shortTokenPrice,
+            indexTokenPrice,
+            pnlFactorType,
+            maximize
+        );
+
         if (poolValue == 0) { return 0; }
 
         if (poolValue < 0) {
@@ -240,7 +252,7 @@ library MarketUtils {
     }
 
     function getMarketPrices(Oracle oracle, Market.Props memory market) internal view returns (MarketPrices memory) {
-        return MarketUtils.MarketPrices(
+        return MarketPrices(
             oracle.getPrimaryPrice(market.indexToken),
             oracle.getPrimaryPrice(market.longToken),
             oracle.getPrimaryPrice(market.shortToken)
@@ -283,6 +295,7 @@ library MarketUtils {
         Price.Props memory longTokenPrice,
         Price.Props memory shortTokenPrice,
         Price.Props memory indexTokenPrice,
+        bytes32 pnlFactorType,
         bool maximize
     ) internal view returns (int256) {
         GetPoolValueCache memory cache;
@@ -322,7 +335,8 @@ library MarketUtils {
             market.marketToken,
             true,
             cache.longPnl,
-            cache.longTokenUsd
+            cache.longTokenUsd,
+            pnlFactorType
         );
 
         cache.shortPnl = getPnl(
@@ -340,7 +354,8 @@ library MarketUtils {
             market.marketToken,
             false,
             cache.shortPnl,
-            cache.shortTokenUsd
+            cache.shortTokenUsd,
+            pnlFactorType
         );
 
         cache.netPnl = cache.longPnl + cache.shortPnl;
@@ -375,11 +390,12 @@ library MarketUtils {
         address market,
         bool isLong,
         int256 pnl,
-        uint256 poolUsd
+        uint256 poolUsd,
+        bytes32 pnlFactorType
     ) internal view returns (int256) {
         if (pnl < 0) { return pnl; }
 
-        uint256 maxPnlFactor = getMaxPnlFactor(dataStore, market, isLong);
+        uint256 maxPnlFactor = getMaxPnlFactor(dataStore, pnlFactorType, market, isLong);
         int256 maxPnl = Precision.applyFactor(poolUsd, maxPnlFactor).toInt256();
 
         return pnl > maxPnl ? maxPnl : pnl;
@@ -976,7 +992,7 @@ library MarketUtils {
     // @param totalSize the total size
     // @return the per size value
     function getPerSizeValue(uint256 amount, uint256 totalSize) internal pure returns (uint256) {
-        return amount * Precision.FLOAT_PRECISION / totalSize;
+        return Precision.toFactor(amount, totalSize);
     }
 
     // @dev get the ratio of pnl to pool value
@@ -994,7 +1010,7 @@ library MarketUtils {
         bool maximize
     ) internal view returns (int256) {
         Market.Props memory _market = getEnabledMarket(dataStore, market);
-        MarketUtils.MarketPrices memory prices = MarketUtils.MarketPrices(
+        MarketPrices memory prices = MarketPrices(
             oracle.getPrimaryPrice(_market.indexToken),
             oracle.getPrimaryPrice(_market.longToken),
             oracle.getPrimaryPrice(_market.shortToken)
@@ -1033,7 +1049,7 @@ library MarketUtils {
             maximize
         );
 
-        return pnl * Precision.FLOAT_PRECISION.toInt256() / poolUsd.toInt256();
+        return Precision.toFactor(pnl, poolUsd);
     }
 
     function validateOpenInterest(
@@ -1162,10 +1178,10 @@ library MarketUtils {
         int256 positionFundingAmountPerSize,
         uint256 positionSizeInUsd
     ) internal pure returns (bool, int256) {
-        int256 diff = (latestFundingAmountPerSize - positionFundingAmountPerSize);
-        int256 amount = diff * positionSizeInUsd.toInt256() / Precision.FLOAT_PRECISION.toInt256();
+        int256 fundingDiffFactor = (latestFundingAmountPerSize - positionFundingAmountPerSize);
+        int256 amount = Precision.applyFactor(positionSizeInUsd, fundingDiffFactor);
 
-        return (diff != 0 && amount == 0, amount);
+        return (fundingDiffFactor != 0 && amount == 0, amount);
     }
 
     // @dev get the borrowing fees for a position
@@ -1451,21 +1467,12 @@ library MarketUtils {
     // @param market the market to check
     // @param isLong whether to get the value for longs or shorts
     // @return the max pnl factor for a market
-    function getMaxPnlFactor(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.maxPnlFactorKey(market, isLong));
+    function getMaxPnlFactor(DataStore dataStore, bytes32 pnlFactorType, address market, bool isLong) internal view returns (uint256) {
+        return dataStore.getUint(Keys.maxPnlFactorKey(pnlFactorType, market, isLong));
     }
 
-    function getMaxPnlFactorForAdl(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.maxPnlFactorForAdlKey(market, isLong));
-    }
-
-    // @dev get the max pnl factor for withdrawals for a market
-    // @param dataStore DataStore
-    // @param market the market to check
-    // @param isLong whether to get the value for longs or shorts
-    // @return the max pnl factor for withdrawals for a market
-    function getMaxPnlFactorForWithdrawals(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.maxPnlFactorForWithdrawalsKey(market, isLong));
+    function getMinPnlFactorAfterAdl(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
+        return dataStore.getUint(Keys.minPnlFactorAfterAdlKey(market, isLong));
     }
 
     // @dev get the funding factor for a market
@@ -1838,5 +1845,70 @@ library MarketUtils {
         }
 
         return markets;
+    }
+
+    function validateMaxPnl(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketPrices memory prices,
+        bytes32 pnlFactorType
+    ) internal view {
+        (bool isPnlFactorExceededForLongs, int256 pnlToPoolFactorForLongs, uint256 maxPnlFactorForLongs) = isPnlFactorExceeded(
+            dataStore,
+            market,
+            prices,
+            true,
+            pnlFactorType
+        );
+
+        if (isPnlFactorExceededForLongs) {
+            revert PnlFactorExceededForLongs(pnlToPoolFactorForLongs, maxPnlFactorForLongs);
+        }
+
+        (bool isPnlFactorExceededForShorts, int256 pnlToPoolFactorForShorts, uint256 maxPnlFactorForShorts) = isPnlFactorExceeded(
+            dataStore,
+            market,
+            prices,
+            false,
+            pnlFactorType
+        );
+
+        if (isPnlFactorExceededForShorts) {
+            revert PnlFactorExceededForShorts(pnlToPoolFactorForShorts, maxPnlFactorForShorts);
+        }
+    }
+
+    function isPnlFactorExceeded(
+        DataStore dataStore,
+        Oracle oracle,
+        address _market,
+        bool isLong,
+        bytes32 pnlFactorType
+    ) internal view returns (bool, int256, uint256) {
+        Market.Props memory market = getEnabledMarket(dataStore, _market);
+        MarketPrices memory prices = getMarketPrices(oracle, market);
+
+        return isPnlFactorExceeded(
+            dataStore,
+            market,
+            prices,
+            isLong,
+            pnlFactorType
+        );
+    }
+
+    function isPnlFactorExceeded(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketPrices memory prices,
+        bool isLong,
+        bytes32 pnlFactorType
+    ) internal view returns (bool, int256, uint256) {
+        int256 pnlToPoolFactor = getPnlToPoolFactor(dataStore, market, prices, isLong, true);
+        uint256 maxPnlFactor = getMaxPnlFactor(dataStore, pnlFactorType, market.marketToken, isLong);
+
+        bool isExceeded = pnlToPoolFactor > 0 && pnlToPoolFactor.toUint256() > maxPnlFactor;
+
+        return (isExceeded, pnlToPoolFactor, maxPnlFactor);
     }
 }
