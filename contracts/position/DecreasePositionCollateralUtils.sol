@@ -414,15 +414,4 @@ library DecreasePositionCollateralUtils {
 
         return (false, 0);
     }
-
-    // @dev check if the collateralToken should be swapped to the pnlToken
-    // @param the order.swapPath
-    // @return whether the collateralToken should be swapped to the pnlToken
-    function shouldSwapCollateralTokenToPnlToken(address[] memory swapPath) internal pure returns (bool) {
-        if (swapPath.length == 0) {
-            return false;
-        }
-
-        return swapPath[0] == MarketUtils.SWAP_COLLATERAL_TOKEN_TO_PNL_TOKEN;
-    }
 }
