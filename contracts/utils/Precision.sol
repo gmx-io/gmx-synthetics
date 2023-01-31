@@ -70,6 +70,10 @@ library Precision {
             return 0;
         }
 
+        if (exponentFactor == FLOAT_PRECISION) {
+            return floatValue;
+        }
+
         // `PRBMathUD60x18.pow` accepts 2 fixed point numbers 60x18
         // we need to convert float (30 decimals) to 60x18 (18 decimals) and then back to 30 decimals
         uint256 weiValue = PRBMathUD60x18.pow(

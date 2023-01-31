@@ -1545,10 +1545,12 @@ library MarketUtils {
 
         uint256 fundingFactor = getFundingFactor(dataStore, market);
 
-        uint256 baseFactor = (fundingFactor * diffUsd / totalOpenInterest) * Precision.FLOAT_PRECISION;
         uint256 fundingExponentFactor = getFundingExponentFactor(dataStore, market);
+        uint256 diffUsdAfterExponent = Precision.applyExponentFactor(diffUsd, fundingExponentFactor);
 
-        return Precision.applyExponentFactor(baseFactor, fundingExponentFactor) / Precision.FLOAT_PRECISION;
+        uint256 diffUsdToOpenInterestFactor = Precision.toFactor(diffUsdAfterExponent, totalOpenInterest);
+
+        return Precision.applyFactor(diffUsdToOpenInterestFactor, fundingFactor);
     }
 
     // @dev get the borrowing factor for a market
@@ -1719,10 +1721,11 @@ library MarketUtils {
             revert UnableToGetBorrowingFactorEmptyPoolUsd();
         }
 
-        uint256 baseFactor = (borrowingFactor * reservedUsd / poolUsd) * Precision.FLOAT_PRECISION;
         uint256 borrowingExponentFactor = getBorrowingExponentFactor(dataStore, market.marketToken, isLong);
+        uint256 reservedUsdAfterExponent = Precision.applyExponentFactor(reservedUsd, borrowingExponentFactor);
 
-        return Precision.applyExponentFactor(baseFactor, borrowingExponentFactor) / Precision.FLOAT_PRECISION;
+        uint256 reservedUsdToPoolFactor = Precision.toFactor(reservedUsdAfterExponent, poolUsd);
+        return Precision.applyFactor(reservedUsdToPoolFactor, borrowingFactor);
     }
 
     // @dev get the total borrowing fees

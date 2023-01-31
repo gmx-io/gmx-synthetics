@@ -312,9 +312,9 @@ Decimals: 30 - (token decimals) - (number of decimals desired for precision)
 
 Funding fees incentivise the balancing of long and short positions, the side with the larger open interest pays a funding fee to the side with the smaller open interest.
 
-Funding fees for the larger side is calculated as `(funding factor per second) * (open interest imbalance) / (total open interest)`.
+Funding fees for the larger side is calculated as `(funding factor per second) * (open interest imbalance) ^ (funding exponent factor) / (total open interest)`.
 
-For example if the funding factor per second is 1 / 50,000, and the long open interest is $150,000 and the short open interest is $50,000 then the funding fee per second for longs would be `(1 / 50,000) * 150,000 / 200,000 => 0.000015 => 0.0015%`.
+For example if the funding factor per second is 1 / 50,000, and the funding exponent factor is 1, and the long open interest is $150,000 and the short open interest is $50,000 then the funding fee per second for longs would be `(1 / 50,000) * 150,000 / 200,000 => 0.000015 => 0.0015%`.
 
 The funding fee per second for shorts would be `0.000015 * 150,000 / 50,000 => 0.000045 => 0.0045%`.
 
@@ -322,9 +322,9 @@ The funding fee per second for shorts would be `0.000015 * 150,000 / 50,000 => 0
 
 There is a borrowing fee paid to liquidity providers, this helps prevent users from opening both long and short positions to take up pool capacity without paying any fees.
 
-Borrowing fees are calculated as `borrowing factor * (open interest in usd + pending pnl) / (pool usd)`.
+Borrowing fees are calculated as `borrowing factor * (open interest in usd + pending pnl) ^ (borrowing exponent factor) / (pool usd)` for longs and `borrowing factor * (open interest in usd) ^ (borrowing exponent factor) / (pool usd)` for shorts.
 
-For example if the borrowing factor per second is 1 / 50,000, and the long open interest is $150,000 with +$50,000 of pending pnl, and the pool has $250,000 worth of tokens, the borrowing fee per second for longs would be `(1 / 50,000) * (150,000 + 50,000) / 250,000 => 0.000016 => 0.0016%`.
+For example if the borrowing factor per second is 1 / 50,000, and the borrowing exponent factor is 1, and the long open interest is $150,000 with +$50,000 of pending pnl, and the pool has $250,000 worth of tokens, the borrowing fee per second for longs would be `(1 / 50,000) * (150,000 + 50,000) / 250,000 => 0.000016 => 0.0016%`.
 
 ## Price Impact
 

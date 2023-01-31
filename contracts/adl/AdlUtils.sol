@@ -22,18 +22,6 @@ import "../nonce/NonceUtils.sol";
 //
 // In this scenario, profitable positions should be automatically closed to ensure
 // that the system remains fully solvent
-//
-// There are two factors that can be specified per market and for longs / shorts:
-// 1. maxPnlFactor
-// 2. maxPnlFactorForWithdrawals
-//
-// If the maxPnlFactor is exceeded then positions can be closed to reduce ratio
-// of amount of pending profit to pool value
-//
-// Redemption of market tokens can be done only if the maxPnlFactorForWithdrawals
-// is not exceeded, this can be set to a lower value than maxPnlFactor, and
-// helps reduce the chance that withdrawals would lead to the pool being in a
-// state that requires ADL
 library AdlUtils {
     using SafeCast for int256;
     using Array for uint256[];

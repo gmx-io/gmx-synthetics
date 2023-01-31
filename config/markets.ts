@@ -53,6 +53,7 @@ export type BaseMarketConfig = {
   borrowingExponentFactorForShorts: BigNumberish;
 
   fundingFactor: BigNumberish;
+  fundingExponentFactor: BigNumberish;
 };
 
 export type MarketConfig = Partial<BaseMarketConfig> &
@@ -124,6 +125,7 @@ const baseMarketConfig: BaseMarketConfig = {
   borrowingExponentFactorForShorts: decimalToFloat(1),
 
   fundingFactor: decimalToFloat(1, 7), // 0.00001% / second
+  fundingExponentFactor: decimalToFloat(1),
 };
 
 const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
