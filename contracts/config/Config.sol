@@ -186,7 +186,9 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedKeys[Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS] = true;
         allowedKeys[Keys.MAX_ORACLE_PRICE_AGE] = true;
-        allowedKeys[Keys.FEE_RECEIVER_FACTOR] = true;
+        allowedKeys[Keys.POSITION_FEE_RECEIVER_FACTOR] = true;
+        allowedKeys[Keys.SWAP_FEE_RECEIVER_FACTOR] = true;
+        allowedKeys[Keys.BORROWING_FEE_RECEIVER_FACTOR] = true;
 
         allowedKeys[Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT] = true;
         allowedKeys[Keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR] = true;
@@ -248,7 +250,9 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         }
 
         if (
-            key == Keys.FEE_RECEIVER_FACTOR ||
+            key == Keys.POSITION_FEE_RECEIVER_FACTOR ||
+            key == Keys.SWAP_FEE_RECEIVER_FACTOR ||
+            key == Keys.BORROWING_FEE_RECEIVER_FACTOR ||
             key == Keys.MIN_COLLATERAL_FACTOR ||
             key == Keys.RESERVE_FACTOR ||
             key == Keys.MAX_PNL_FACTOR ||

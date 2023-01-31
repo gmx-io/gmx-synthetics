@@ -120,6 +120,7 @@ library PositionPricingUtils {
         uint256 feeFactor;
         uint256 positionFeeAmount;
         uint256 protocolFeeAmount;
+        uint256 positionFeeReceiverFactor;
         uint256 feeReceiverAmount;
         uint256 positionFeeAmountForPool;
     }
@@ -358,8 +359,6 @@ library PositionPricingUtils {
     ) internal view returns (PositionFees memory) {
         PositionFees memory fees;
 
-        uint256 feeReceiverFactor = dataStore.getUint(Keys.FEE_RECEIVER_FACTOR);
-
         (
             fees.referral.affiliate,
             fees.referral.traderDiscountAmount,
@@ -368,7 +367,6 @@ library PositionPricingUtils {
             fees.positionFeeAmountForPool
         ) = getPositionFeesAfterReferral(
             dataStore,
-            feeReceiverFactor,
             referralStorage,
             collateralTokenPrice,
             position.account(),
@@ -378,7 +376,8 @@ library PositionPricingUtils {
 
         fees.borrowingFeeAmount = MarketUtils.getBorrowingFees(dataStore, position) / collateralTokenPrice.min;
 
-        uint256 borrowingFeeAmountForFeeReceiver = Precision.applyFactor(fees.borrowingFeeAmount, feeReceiverFactor);
+        uint256 borrowingFeeReceiverFactor = dataStore.getUint(Keys.BORROWING_FEE_RECEIVER_FACTOR);
+        uint256 borrowingFeeAmountForFeeReceiver = Precision.applyFactor(fees.borrowingFeeAmount, borrowingFeeReceiverFactor);
 
         fees.feeAmountForPool = fees.positionFeeAmountForPool + fees.borrowingFeeAmount - borrowingFeeAmountForFeeReceiver;
         fees.feeReceiverAmount += borrowingFeeAmountForFeeReceiver;
@@ -458,7 +457,6 @@ library PositionPricingUtils {
     // @return (affiliate, traderDiscountAmount, affiliateRewardAmount, feeReceiverAmount, positionFeeAmountForPool)
     function getPositionFeesAfterReferral(
         DataStore dataStore,
-        uint256 feeReceiverFactor,
         IReferralStorage referralStorage,
         Price.Props memory collateralTokenPrice,
         address account,
@@ -478,7 +476,8 @@ library PositionPricingUtils {
 
         cache.protocolFeeAmount = cache.positionFeeAmount - cache.referral.totalRebateAmount;
 
-        cache.feeReceiverAmount = Precision.applyFactor(cache.protocolFeeAmount, feeReceiverFactor);
+        cache.positionFeeReceiverFactor = dataStore.getUint(Keys.POSITION_FEE_RECEIVER_FACTOR);
+        cache.feeReceiverAmount = Precision.applyFactor(cache.protocolFeeAmount, cache.positionFeeReceiverFactor);
         cache.positionFeeAmountForPool = cache.protocolFeeAmount - cache.feeReceiverAmount;
 
         return (cache.referral.affiliate, cache.referral.traderDiscountAmount, cache.referral.affiliateRewardAmount, cache.feeReceiverAmount, cache.positionFeeAmountForPool);

@@ -204,7 +204,7 @@ describe("Exchange.Withdrawal", () => {
     expect(await getClaimableFeeAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq("0");
 
     // 30%
-    await dataStore.setUint(keys.FEE_RECEIVER_FACTOR, decimalToFloat(3, 1));
+    await dataStore.setUint(keys.SWAP_FEE_RECEIVER_FACTOR, decimalToFloat(3, 1));
 
     await handleWithdrawal(fixture, {
       create: {

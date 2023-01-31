@@ -225,11 +225,11 @@ library SwapPricingUtils {
         SwapFees memory fees;
 
         uint256 feeFactor = dataStore.getUint(Keys.swapFeeFactorKey(marketToken));
-        uint256 feeReceiverFactor = dataStore.getUint(Keys.FEE_RECEIVER_FACTOR);
+        uint256 swapFeeReceiverFactor = dataStore.getUint(Keys.SWAP_FEE_RECEIVER_FACTOR);
 
         uint256 feeAmount = Precision.applyFactor(amount, feeFactor);
 
-        fees.feeReceiverAmount = Precision.applyFactor(feeAmount, feeReceiverFactor);
+        fees.feeReceiverAmount = Precision.applyFactor(feeAmount, swapFeeReceiverFactor);
         fees.feeAmountForPool = feeAmount - fees.feeReceiverAmount;
         fees.amountAfterFees = amount - feeAmount;
 

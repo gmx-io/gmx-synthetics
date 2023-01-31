@@ -60,7 +60,7 @@ library MarketUtils {
         uint256 shortTokenUsd;
 
         uint256 totalBorrowingFees;
-        uint256 feeReceiverFactor;
+        uint256 borrowingFeeReceiverFactor;
 
         uint256 impactPoolAmount;
         int256 longPnl;
@@ -304,8 +304,8 @@ library MarketUtils {
         cache.totalBorrowingFees = getTotalBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, true);
         cache.totalBorrowingFees += getTotalBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, false);
 
-        cache.feeReceiverFactor = dataStore.getUint(Keys.FEE_RECEIVER_FACTOR);
-        cache.value += Precision.applyFactor(cache.totalBorrowingFees, cache.feeReceiverFactor);
+        cache.borrowingFeeReceiverFactor = dataStore.getUint(Keys.BORROWING_FEE_RECEIVER_FACTOR);
+        cache.value += Precision.applyFactor(cache.totalBorrowingFees, cache.borrowingFeeReceiverFactor);
 
         cache.impactPoolAmount = getPositionImpactPoolAmount(dataStore, market.marketToken);
         cache.value += cache.impactPoolAmount * indexTokenPrice.pickPrice(maximize);
