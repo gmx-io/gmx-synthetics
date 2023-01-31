@@ -202,7 +202,7 @@ library PositionPricingUtils {
             return priceImpactUsd;
         }
 
-        (bool hasVirtualInventory, int256 thresholdPositionImpactFactorForVirtualInventory) = MarketUtils.getThresholdPositionImpactFactorForVirtualInventory(
+        (bool hasVirtualInventory, int256 thresholdImpactFactorForVirtualInventory) = MarketUtils.getThresholdPositionImpactFactorForVirtualInventory(
             params.dataStore,
             params.indexToken
         );
@@ -213,9 +213,9 @@ library PositionPricingUtils {
 
         OpenInterestParams memory openInterestParamsForVirtualInventory = getNextOpenInterestForVirtualInventory(params);
         int256 priceImpactUsdForVirtualInventory = _getPriceImpactUsd(params.dataStore, params.market, openInterestParamsForVirtualInventory);
-        int256 priceImpactFactorForVirtualInventory = Precision.toFactor(priceImpactUsdForVirtualInventory, params.usdDelta.abs());
+        int256 thresholdPriceImpactUsd = Precision.applyFactor(params.usdDelta.abs(), thresholdImpactFactorForVirtualInventory);
 
-        if (priceImpactFactorForVirtualInventory > thresholdPositionImpactFactorForVirtualInventory) {
+        if (priceImpactUsdForVirtualInventory > thresholdPriceImpactUsd) {
             return priceImpactUsd;
         }
 

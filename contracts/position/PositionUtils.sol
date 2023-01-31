@@ -118,6 +118,7 @@ library PositionUtils {
         uint256 collateralUsd;
         int256 priceImpactUsd;
         int256 minCollateralUsd;
+        int256 minCollateralUsdForLeverage;
         int256 remainingCollateralUsd;
     }
 
@@ -351,7 +352,8 @@ library PositionUtils {
         }
 
         // validate if (remaining collateral) / position.size is less than the min collateral factor (max leverage exceeded)
-        if (Precision.toFactor(cache.remainingCollateralUsd.toUint256(), position.sizeInUsd()) < cache.minCollateralFactor) {
+        cache.minCollateralUsdForLeverage = Precision.applyFactor(position.sizeInUsd(), cache.minCollateralFactor).toInt256();
+        if (cache.remainingCollateralUsd < cache.minCollateralUsdForLeverage) {
             return true;
         }
 
@@ -393,7 +395,8 @@ library PositionUtils {
             return (false, remainingCollateralUsd);
         }
 
-        bool willBeSufficient = Precision.toFactor(remainingCollateralUsd.toUint256(), values.positionSizeInUsd) >= minCollateralFactor;
+        int256 minCollateralUsdForLeverage = Precision.applyFactor(values.positionSizeInUsd, minCollateralFactor).toInt256();
+        bool willBeSufficient = remainingCollateralUsd >= minCollateralUsdForLeverage;
 
         return (willBeSufficient, remainingCollateralUsd);
     }

@@ -95,7 +95,7 @@ library SwapPricingUtils {
             return priceImpactUsd;
         }
 
-        (bool hasVirtualInventory, int256 thresholdPositionImpactFactorForVirtualInventory) = MarketUtils.getThresholdSwapImpactFactorForVirtualInventory(
+        (bool hasVirtualInventory, int256 thresholdImpactFactorForVirtualInventory) = MarketUtils.getThresholdSwapImpactFactorForVirtualInventory(
             params.dataStore,
             params.market
         );
@@ -106,9 +106,9 @@ library SwapPricingUtils {
 
         PoolParams memory poolParamsForVirtualInventory = getNextPoolAmountsUsdForVirtualInventory(params);
         int256 priceImpactUsdForVirtualInventory = _getPriceImpactUsd(params.dataStore, params.market, poolParamsForVirtualInventory);
-        int256 priceImpactFactorForVirtualInventory = Precision.toFactor(priceImpactUsdForVirtualInventory, params.usdDeltaForTokenA.abs() + params.usdDeltaForTokenB.abs());
+        int256 thresholdPriceImpactUsd = Precision.applyFactor(params.usdDeltaForTokenA.abs() + params.usdDeltaForTokenB.abs(), thresholdImpactFactorForVirtualInventory);
 
-        if (priceImpactFactorForVirtualInventory > thresholdPositionImpactFactorForVirtualInventory) {
+        if (priceImpactUsdForVirtualInventory > thresholdPriceImpactUsd) {
             return priceImpactUsd;
         }
 

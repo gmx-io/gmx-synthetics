@@ -55,15 +55,12 @@ library Precision {
      * @return The result of applying the factor to the value.
      */
     function applyFactor(uint256 value, int256 factor) internal pure returns (int256) {
-        return value.toInt256() * factor / FLOAT_PRECISION.toInt256();
-    }
+        uint256 result = applyFactor(value, factor.abs());
+        if (factor > 0) {
+            return result.toInt256();
+        }
 
-    function toFactor(uint256 value, uint256 divisor) internal pure returns (uint256) {
-        return value * FLOAT_PRECISION / divisor;
-    }
-
-    function toFactor(int256 value, uint256 divisor) internal pure returns (int256) {
-        return value * FLOAT_PRECISION.toInt256() / divisor.toInt256();
+        return -result.toInt256();
     }
 
     /**
