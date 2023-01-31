@@ -3,6 +3,8 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/SignedMath.sol";
 
 /**
  * @title Precision
@@ -10,12 +12,16 @@ import "@openzeppelin/contracts/utils/math/SafeCast.sol";
  */
 library Precision {
     using SafeCast for uint256;
+    using SignedMath for int256;
 
     uint256 public constant FLOAT_PRECISION = 10 ** 30;
     uint256 public constant WEI_PRECISION = 10 ** 18;
     uint256 public constant BASIS_POINTS_DIVISOR = 10000;
 
     uint256 public constant FLOAT_TO_WEI_DIVISOR = 10 ** 12;
+
+    uint256 public constant SCALING_FACTOR_TO_AVOID_OVERFLOW = 10 ** 20;
+    uint256 public constant FLOAT_PRECISION_AFTER_SCALING_FACTOR = FLOAT_PRECISION / SCALING_FACTOR_TO_AVOID_OVERFLOW;
 
     /**
      * Applies the given factor to the given value and returns the result.
@@ -25,7 +31,20 @@ library Precision {
      * @return The result of applying the factor to the value.
      */
     function applyFactor(uint256 value, uint256 factor) internal pure returns (uint256) {
-        return value * factor / FLOAT_PRECISION;
+        (bool ok, uint256 numerator) = SafeMath.tryMul(value, factor);
+        if (ok) {
+            return numerator / FLOAT_PRECISION;
+        }
+
+        // if ok is false, the multiplication overflowed, attempt the multiplication
+        // with reduced values
+
+        // assign the larger value to a and the smaller value to b
+        (uint256 a, uint256 b) = value > factor ? (value, factor) : (factor, value);
+
+        // for an overflow to occur, "a" must be more than 10^38
+        // reduce "a" to allow larger values to be handled
+        return ((a / SCALING_FACTOR_TO_AVOID_OVERFLOW) * b) / FLOAT_PRECISION_AFTER_SCALING_FACTOR;
     }
 
     /**
