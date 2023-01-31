@@ -30,6 +30,8 @@ describe("Exchange.BorrowingFees", () => {
   it("borrowing fees", async () => {
     await dataStore.setUint(keys.borrowingFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 7));
     await dataStore.setUint(keys.borrowingFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 7));
+    await dataStore.setUint(keys.borrowingExponentFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1));
+    await dataStore.setUint(keys.borrowingExponentFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1));
 
     await handleOrder(fixture, {
       create: {
@@ -90,7 +92,7 @@ describe("Exchange.BorrowingFees", () => {
     const position0 = await reader.getPositionInfo(dataStore.address, positionKeys[0], prices);
     const position1 = await reader.getPositionInfo(dataStore.address, positionKeys[1], prices);
 
-    expect(position0.pendingBorrowingFees).eq("967683200000000000000000000000000"); // $967.6832
-    expect(position1.pendingBorrowingFees).eq("10886400000000000000000000000000000"); // $10,886.4
+    expect(position0.pendingBorrowingFees).eq("967683199999999991176422661600000"); // $967.6832
+    expect(position1.pendingBorrowingFees).eq("10886399999999999888984847360000000"); // $10,886.4
   });
 });
