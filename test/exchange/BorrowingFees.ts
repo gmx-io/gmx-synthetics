@@ -27,7 +27,7 @@ describe("Exchange.BorrowingFees", () => {
     });
   });
 
-  it("funding fees", async () => {
+  it("borrowing fees", async () => {
     await dataStore.setUint(keys.borrowingFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 7));
     await dataStore.setUint(keys.borrowingFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 7));
 
