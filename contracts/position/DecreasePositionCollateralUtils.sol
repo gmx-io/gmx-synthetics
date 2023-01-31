@@ -16,6 +16,7 @@ import "./PositionEventUtils.sol";
 import "./PositionStoreUtils.sol";
 import "./PositionUtils.sol";
 import "../order/BaseOrderUtils.sol";
+import "../order/OrderEventUtils.sol";
 
 import "../swap/SwapUtils.sol";
 
@@ -40,25 +41,11 @@ library DecreasePositionCollateralUtils {
     error InsufficientCollateral(int256 remainingCollateralAmount);
     error InvalidOutputToken(address tokenOut, address expectedTokenOut);
 
-    // @dev DecreasePositionCache struct used in decreasePosition to
-    // avoid stack too deep errors
-    // @param prices the prices of the tokens in the market
-    // @param pnlToken the token that the pnl for the user is in, for long positions
-    // this is the market.longToken, for short positions this is the market.shortToken
-    // @param pnlTokenPrice the price of the pnlToken
-    // @param initialCollateralAmount the initial collateral amount
-    // @param nextPositionSizeInUsd the new position size in USD
-    // @param nextPositionBorrowingFactor the new position borrowing factor
-    struct DecreasePositionCache {
-        MarketUtils.MarketPrices prices;
-        int256 estimatedPositionPnlUsd;
-        int256 estimatedRealizedPnlUsd;
-        int256 estimatedRemainingPnlUsd;
-        address pnlToken;
-        Price.Props pnlTokenPrice;
-        uint256 initialCollateralAmount;
-        uint256 nextPositionSizeInUsd;
-        uint256 nextPositionBorrowingFactor;
+    struct ProcessCollateralCache {
+        int256 adjustedPositionPnlUsd;
+        uint256 adjustedPriceImpactDiffUsd;
+        uint256 adjustedPriceImpactDiffAmount;
+        uint256 pnlDiffAmount;
     }
 
     // @dev handle the collateral changes of the position
@@ -67,18 +54,14 @@ library DecreasePositionCollateralUtils {
     // @return (PositionUtils.DecreasePositionCollateralValues, PositionPricingUtils.PositionFees)
     function processCollateral(
         PositionUtils.UpdatePositionParams memory params,
-        DecreasePositionCache memory cache
+        PositionUtils.DecreasePositionCache memory cache
     ) external returns (
         PositionUtils.DecreasePositionCollateralValues memory,
         PositionPricingUtils.PositionFees memory
     ) {
+        ProcessCollateralCache memory collateralCache;
         PositionUtils.DecreasePositionCollateralValues memory values;
         values.remainingCollateralAmount = cache.initialCollateralAmount.toInt256();
-
-        values.remainingCollateralAmount -= params.order.initialCollateralDeltaAmount().toInt256();
-        values.output.outputToken = params.position.collateralToken();
-        values.output.outputAmount = params.order.initialCollateralDeltaAmount();
-        values.output.secondaryOutputToken = cache.pnlToken;
 
         Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.order.initialCollateralToken(), params.market, cache.prices);
 
@@ -93,7 +76,44 @@ library DecreasePositionCollateralUtils {
             params.order.sizeDeltaUsd()
         );
 
-        if (values.positionPnlUsd < 0) {
+        collateralCache.adjustedPositionPnlUsd = values.positionPnlUsd;
+        collateralCache.adjustedPriceImpactDiffUsd = values.priceImpactDiffUsd;
+
+        if (values.positionPnlUsd > 0 && values.priceImpactDiffUsd > 0) {
+            if (values.positionPnlUsd > values.priceImpactDiffUsd.toInt256()) {
+                collateralCache.adjustedPositionPnlUsd = values.positionPnlUsd - values.priceImpactDiffUsd.toInt256();
+                collateralCache.adjustedPriceImpactDiffUsd = 0;
+            } else {
+                collateralCache.adjustedPositionPnlUsd = 0;
+                collateralCache.adjustedPriceImpactDiffUsd = values.priceImpactDiffUsd - values.positionPnlUsd.toUint256();
+            }
+        }
+
+        collateralCache.adjustedPriceImpactDiffAmount = collateralCache.adjustedPriceImpactDiffUsd / collateralTokenPrice.max;
+
+        if (collateralCache.adjustedPriceImpactDiffUsd > 0 && params.order.initialCollateralDeltaAmount() > 0) {
+            uint256 initialCollateralDeltaAmount = params.order.initialCollateralDeltaAmount();
+
+            if (collateralCache.adjustedPriceImpactDiffAmount > params.order.initialCollateralDeltaAmount()) {
+                params.order.setInitialCollateralDeltaAmount(0);
+            } else {
+                params.order.setInitialCollateralDeltaAmount(params.order.initialCollateralDeltaAmount() - collateralCache.adjustedPriceImpactDiffAmount);
+            }
+
+            OrderEventUtils.emitOrderCollateralDeltaAmountAutoUpdated(
+                params.contracts.eventEmitter,
+                params.orderKey,
+                initialCollateralDeltaAmount,
+                params.order.initialCollateralDeltaAmount()
+            );
+        }
+
+        values.remainingCollateralAmount -= params.order.initialCollateralDeltaAmount().toInt256();
+        values.output.outputToken = params.position.collateralToken();
+        values.output.outputAmount = params.order.initialCollateralDeltaAmount();
+        values.output.secondaryOutputToken = cache.pnlToken;
+
+        if (collateralCache.adjustedPositionPnlUsd < 0) {
             // position realizes a loss
             // deduct collateral from user, transfer it to the pool
             values.pnlTokenForPool = params.position.collateralToken();
@@ -104,7 +124,20 @@ library DecreasePositionCollateralUtils {
             // deduct the pnl from the pool
             values.pnlTokenForPool = cache.pnlToken;
             values.pnlAmountForPool = -values.positionPnlUsd / cache.pnlTokenPrice.max.toInt256();
-            values.pnlAmountForUser = (-values.pnlAmountForPool).toUint256();
+            values.pnlAmountForUser = collateralCache.adjustedPositionPnlUsd.toUint256() / cache.pnlTokenPrice.max;
+
+            // if the price impact was capped send the difference to a holding area
+            collateralCache.pnlDiffAmount = (-values.pnlAmountForPool - values.pnlAmountForUser.toInt256()).toUint256();
+            if (collateralCache.pnlDiffAmount > 0) {
+                MarketUtils.incrementClaimableCollateralAmount(
+                    params.contracts.dataStore,
+                    params.contracts.eventEmitter,
+                    params.market.marketToken,
+                    cache.pnlToken,
+                    params.order.receiver(),
+                    collateralCache.pnlDiffAmount
+                );
+            }
 
             // swap profit to the collateral token here so that the profit can be used
             // to pay for the totalNetCostAmount from the fees
@@ -198,13 +231,12 @@ library DecreasePositionCollateralUtils {
 
         // if the price impact was capped, deduct the difference from the collateral
         // and send it to a holding area
-        if (values.priceImpactDiffUsd > 0) {
-            uint256 priceImpactDiffAmount = values.priceImpactDiffUsd / collateralTokenPrice.max;
-            if (values.remainingCollateralAmount.toUint256() < priceImpactDiffAmount) {
-                priceImpactDiffAmount = values.remainingCollateralAmount.toUint256();
+        if (collateralCache.adjustedPriceImpactDiffAmount > 0) {
+            if (values.remainingCollateralAmount.toUint256() < collateralCache.adjustedPriceImpactDiffAmount) {
+                collateralCache.adjustedPriceImpactDiffAmount = values.remainingCollateralAmount.toUint256();
             }
 
-            values.remainingCollateralAmount -= priceImpactDiffAmount.toInt256();
+            values.remainingCollateralAmount -= collateralCache.adjustedPriceImpactDiffAmount.toInt256();
 
             MarketUtils.incrementClaimableCollateralAmount(
                 params.contracts.dataStore,
@@ -212,7 +244,7 @@ library DecreasePositionCollateralUtils {
                 params.market.marketToken,
                 params.position.collateralToken(),
                 params.order.receiver(),
-                priceImpactDiffAmount
+                collateralCache.adjustedPriceImpactDiffAmount
             );
         }
 
@@ -327,6 +359,7 @@ library DecreasePositionCollateralUtils {
             values.sizeDeltaInTokens, // sizeDeltaInTokens
             values.priceImpactAmount, // priceImpactAmount
             0, // priceImpactDiffUsd
+            0, // priceImpactDiffAmount
             PositionUtils.DecreasePositionCollateralValuesOutput(
                 address(0),
                 0,

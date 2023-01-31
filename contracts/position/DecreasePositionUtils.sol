@@ -68,7 +68,7 @@ library DecreasePositionUtils {
     function decreasePosition(
         PositionUtils.UpdatePositionParams memory params
     ) external returns (DecreasePositionResult memory) {
-        DecreasePositionCollateralUtils.DecreasePositionCache memory cache;
+        PositionUtils.DecreasePositionCache memory cache;
 
         cache.prices = MarketUtils.getMarketPricesForPosition(
             params.contracts.oracle,
@@ -88,9 +88,6 @@ library DecreasePositionUtils {
                 );
 
                 params.order.setSizeDeltaUsd(params.position.sizeInUsd());
-                // set the initial collateral delta amount to zero to help
-                // ensure that the order can be executed
-                params.order.setInitialCollateralDeltaAmount(0);
             } else {
                 revert InvalidDecreaseOrderSize(params.order.sizeDeltaUsd(), params.position.sizeInUsd());
             }
@@ -132,7 +129,7 @@ library DecreasePositionUtils {
                     revert UnableToWithdrawCollateralDueToLeverage(estimatedRemainingCollateralUsd);
                 }
 
-                OrderEventUtils.emitOrderCollateralDeltaAmountUpdated(
+                OrderEventUtils.emitOrderCollateralDeltaAmountAutoUpdated(
                     params.contracts.eventEmitter,
                     params.orderKey,
                     params.order.initialCollateralDeltaAmount(),
@@ -146,6 +143,12 @@ library DecreasePositionUtils {
             if (estimatedRemainingCollateralUsd < params.contracts.dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256()) {
                 params.order.setSizeDeltaUsd(params.position.sizeInUsd());
             }
+        }
+
+        // if the position will be closed, set the initial collateral delta amount
+        // to zero to help ensure that the order can be executed
+        if (params.order.sizeDeltaUsd() == params.position.sizeInUsd() && params.order.initialCollateralDeltaAmount() > 0) {
+            params.order.setInitialCollateralDeltaAmount(0);
         }
 
         cache.pnlToken = params.position.isLong() ? params.market.longToken : params.market.shortToken;

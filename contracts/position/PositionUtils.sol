@@ -88,8 +88,31 @@ library PositionUtils {
         uint256 sizeDeltaInTokens;
         int256 priceImpactAmount;
         uint256 priceImpactDiffUsd;
+        uint256 priceImpactDiffAmount;
         DecreasePositionCollateralValuesOutput output;
     }
+
+    // @dev DecreasePositionCache struct used in decreasePosition to
+    // avoid stack too deep errors
+    // @param prices the prices of the tokens in the market
+    // @param pnlToken the token that the pnl for the user is in, for long positions
+    // this is the market.longToken, for short positions this is the market.shortToken
+    // @param pnlTokenPrice the price of the pnlToken
+    // @param initialCollateralAmount the initial collateral amount
+    // @param nextPositionSizeInUsd the new position size in USD
+    // @param nextPositionBorrowingFactor the new position borrowing factor
+    struct DecreasePositionCache {
+        MarketUtils.MarketPrices prices;
+        int256 estimatedPositionPnlUsd;
+        int256 estimatedRealizedPnlUsd;
+        int256 estimatedRemainingPnlUsd;
+        address pnlToken;
+        Price.Props pnlTokenPrice;
+        uint256 initialCollateralAmount;
+        uint256 nextPositionSizeInUsd;
+        uint256 nextPositionBorrowingFactor;
+    }
+
 
     struct GetPositionPnlUsdCache {
         int256 positionValue;

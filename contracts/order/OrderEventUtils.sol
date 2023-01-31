@@ -124,7 +124,7 @@ library OrderEventUtils {
         );
     }
 
-    function emitOrderCollateralDeltaAmountUpdated(
+    function emitOrderCollateralDeltaAmountAutoUpdated(
         EventEmitter eventEmitter,
         bytes32 key,
         uint256 collateralDeltaAmount,
