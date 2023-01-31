@@ -165,24 +165,6 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
       );
     }
 
-    if (marketConfig.borrowingExponentFactorForLongs) {
-      const key = keys.borrowingExponentFactor(marketToken, true);
-      await setUintIfDifferent(
-        key,
-        marketConfig.borrowingExponentFactorForLongs,
-        `borrowing exponent factor for longs for ${marketToken.toString()}`
-      );
-    }
-
-    if (marketConfig.borrowingExponentFactorForShorts) {
-      const key = keys.borrowingExponentFactor(marketToken, false);
-      await setUintIfDifferent(
-        key,
-        marketConfig.borrowingExponentFactorForShorts,
-        `borrowing exponent factor for shorts for ${marketToken.toString()}`
-      );
-    }
-
     if (marketConfig.positivePositionImpactFactor) {
       const key = keys.positionImpactFactorKey(marketToken, true);
       await setUintIfDifferent(

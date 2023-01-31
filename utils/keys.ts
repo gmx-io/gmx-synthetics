@@ -64,10 +64,7 @@ export const LATEST_ADL_BLOCK = hashString("LATEST_ADL_BLOCK");
 export const IS_ADL_ENABLED = hashString("IS_ADL_ENABLED");
 
 export const FUNDING_FACTOR = hashString("FUNDING_FACTOR");
-export const FUNDING_EXPONENT_FACTOR = hashString("FUNDING_EXPONENT_FACTOR");
-
 export const BORROWING_FACTOR = hashString("BORROWING_FACTOR");
-export const BORROWING_EXPONENT_FACTOR = hashString("BORROWING_EXPONENT_FACTOR");
 
 export const ESTIMATED_GAS_FEE_BASE_AMOUNT = hashString("ESTIMATED_GAS_FEE_BASE_AMOUNT");
 export const ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR = hashString("ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR");
@@ -206,16 +203,8 @@ export function fundingFactorKey(market: string) {
   return hashData(["bytes32", "address"], [FUNDING_FACTOR, market]);
 }
 
-export function fundingExponentFactorKey(market: string) {
-  return hashData(["bytes32", "address"], [FUNDING_EXPONENT_FACTOR, market]);
-}
-
 export function borrowingFactorKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [BORROWING_FACTOR, market, isLong]);
-}
-
-export function borrowingExponentFactorKey(market: string, isLong: boolean) {
-  return hashData(["bytes32", "address", "bool"], [BORROWING_EXPONENT_FACTOR, market, isLong]);
 }
 
 export function depositGasLimitKey(singleToken: boolean) {

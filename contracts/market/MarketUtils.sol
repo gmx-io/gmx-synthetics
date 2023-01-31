@@ -1476,10 +1476,6 @@ library MarketUtils {
         return dataStore.getUint(Keys.fundingFactorKey(market));
     }
 
-    function getFundingExponentFactor(DataStore dataStore, address market) internal view returns (uint256) {
-        return dataStore.getUint(Keys.fundingExponentFactorKey(market));
-    }
-
     // @dev get the funding amount per size for a market based on collateralToken
     // @param dataStore DataStore
     // @param market the market to check
@@ -1538,10 +1534,7 @@ library MarketUtils {
 
         uint256 fundingFactor = getFundingFactor(dataStore, market);
 
-        uint256 baseFactor = (fundingFactor * diffUsd / totalOpenInterest) * Precision.FLOAT_PRECISION;
-        uint256 fundingExponentFactor = getFundingExponentFactor(dataStore, market);
-
-        return Precision.applyExponentFactor(baseFactor, fundingExponentFactor) / Precision.FLOAT_PRECISION;
+        return fundingFactor * diffUsd / totalOpenInterest;
     }
 
     // @dev get the borrowing factor for a market
@@ -1551,10 +1544,6 @@ library MarketUtils {
     // @return the borrowing factor for a market
     function getBorrowingFactor(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
         return dataStore.getUint(Keys.borrowingFactorKey(market, isLong));
-    }
-
-    function getBorrowingExponentFactor(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.borrowingExponentFactorKey(market, isLong));
     }
 
     // @dev get the cumulative borrowing factor for a market
@@ -1712,10 +1701,7 @@ library MarketUtils {
             revert UnableToGetBorrowingFactorEmptyPoolUsd();
         }
 
-        uint256 baseFactor = (borrowingFactor * reservedUsd / poolUsd) * Precision.FLOAT_PRECISION;
-        uint256 borrowingExponentFactor = getBorrowingExponentFactor(dataStore, market.marketToken, isLong);
-
-        return Precision.applyExponentFactor(baseFactor, borrowingExponentFactor) / Precision.FLOAT_PRECISION;
+        return borrowingFactor * reservedUsd / poolUsd;
     }
 
     // @dev get the total borrowing fees

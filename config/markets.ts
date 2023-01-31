@@ -43,9 +43,6 @@ export type BaseMarketConfig = {
   borrowingFactorForLongs: BigNumberish;
   borrowingFactorForShorts: BigNumberish;
 
-  borrowingExponentFactorForLongs: BigNumberish;
-  borrowingExponentFactorForShorts: BigNumberish;
-
   fundingFactor: BigNumberish;
 };
 
@@ -107,9 +104,6 @@ const baseMarketConfig: BaseMarketConfig = {
 
   borrowingFactorForLongs: decimalToFloat(1, 7), // 0.00001% / second
   borrowingFactorForShorts: decimalToFloat(1, 7), // 0.00001% / second
-
-  borrowingExponentFactorForLongs: decimalToFloat(1),
-  borrowingExponentFactorForShorts: decimalToFloat(1),
 
   fundingFactor: decimalToFloat(1, 7), // 0.00001% / second
 };
