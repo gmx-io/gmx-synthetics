@@ -2,8 +2,6 @@
 
 pragma solidity ^0.8.0;
 
-import "hardhat/console.sol";
-
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "../data/DataStore.sol";
@@ -70,12 +68,10 @@ library MarketUtils {
         int256 netPnl;
     }
 
-
     // @dev GetNextFundingAmountPerSizeCache struct used in getNextFundingAmountPerSize
     // to avoid stack too deep errors
     //
     // @param durationInSeconds duration in seconds since the last funding update
-    // @param fundingFactor the funding factor for the market
     //
     // @param diffUsd the absolute difference in long and short open interest for the market
     // @param totalOpenInterest the total long and short open interest for the market
@@ -88,7 +84,6 @@ library MarketUtils {
         GetNextFundingAmountPerSizeFundingPerSizeCache fps;
 
         uint256 durationInSeconds;
-        uint256 fundingFactor;
 
         uint256 diffUsd;
         uint256 totalOpenInterest;
@@ -138,10 +133,6 @@ library MarketUtils {
         uint256 fundingAmountPerSizePortion_ShortCollateral_ShortPosition;
     }
 
-
-    address public constant SWAP_PNL_TOKEN_TO_COLLATERAL_TOKEN = address(2);
-    address public constant SWAP_COLLATERAL_TOKEN_TO_PNL_TOKEN = address(3);
-
     error EmptyMarket();
     error DisabledMarket(address market);
     error InsufficientPoolAmount(uint256 poolAmount, uint256 amount);
@@ -156,6 +147,7 @@ library MarketUtils {
     error MaxPoolAmountExceeded(uint256 poolAmount, uint256 maxPoolAmount);
     error UnexpectedBorrowingFactor(uint256 positionBorrowingFactor, uint256 cumulativeBorrowingFactor);
     error UnableToGetBorrowingFactorEmptyPoolUsd();
+    error UnableToGetFundingFactorEmptyOpenInterest();
     error InvalidPositionMarket(address market);
     error InvalidCollateralTokenForMarket(address market, address token);
 
@@ -870,12 +862,16 @@ library MarketUtils {
         }
 
         cache.durationInSeconds = getSecondsSinceFundingUpdated(dataStore, market.marketToken);
-        cache.fundingFactor = getFundingFactor(dataStore, market.marketToken);
 
         cache.diffUsd = Calc.diff(cache.oi.longOpenInterest, cache.oi.shortOpenInterest);
         cache.totalOpenInterest = cache.oi.longOpenInterest + cache.oi.shortOpenInterest;
         cache.sizeOfLargerSide = cache.oi.longOpenInterest > cache.oi.shortOpenInterest ? cache.oi.longOpenInterest : cache.oi.shortOpenInterest;
-        cache.fundingFactorPerSecond = cache.fundingFactor * cache.diffUsd / cache.totalOpenInterest;
+        cache.fundingFactorPerSecond = getFundingFactorPerSecond(
+            dataStore,
+            market.marketToken,
+            cache.diffUsd,
+            cache.totalOpenInterest
+        );
         cache.fundingUsd = (cache.sizeOfLargerSide / Precision.FLOAT_PRECISION) * cache.durationInSeconds * cache.fundingFactorPerSecond;
 
         result.longsPayShorts = cache.oi.longOpenInterest > cache.oi.shortOpenInterest;
@@ -1480,6 +1476,10 @@ library MarketUtils {
         return dataStore.getUint(Keys.fundingFactorKey(market));
     }
 
+    function getFundingExponentFactor(DataStore dataStore, address market) internal view returns (uint256) {
+        return dataStore.getUint(Keys.fundingExponentFactorKey(market));
+    }
+
     // @dev get the funding amount per size for a market based on collateralToken
     // @param dataStore DataStore
     // @param market the market to check
@@ -1522,6 +1522,26 @@ library MarketUtils {
         uint256 updatedAt = dataStore.getUint(Keys.fundingUpdatedAtKey(market));
         if (updatedAt == 0) { return 0; }
         return block.timestamp - updatedAt;
+    }
+
+    function getFundingFactorPerSecond(
+        DataStore dataStore,
+        address market,
+        uint256 diffUsd,
+        uint256 totalOpenInterest
+    ) internal view returns (uint256) {
+        if (diffUsd == 0) { return 0; }
+
+        if (totalOpenInterest == 0) {
+            revert UnableToGetFundingFactorEmptyOpenInterest();
+        }
+
+        uint256 fundingFactor = getFundingFactor(dataStore, market);
+
+        uint256 baseFactor = (fundingFactor * diffUsd / totalOpenInterest) * Precision.FLOAT_PRECISION;
+        uint256 fundingExponentFactor = getFundingExponentFactor(dataStore, market);
+
+        return Precision.applyExponentFactor(baseFactor, fundingExponentFactor) / Precision.FLOAT_PRECISION;
     }
 
     // @dev get the borrowing factor for a market
@@ -1692,16 +1712,10 @@ library MarketUtils {
             revert UnableToGetBorrowingFactorEmptyPoolUsd();
         }
 
-        uint256 baseFactor = borrowingFactor * reservedUsd / poolUsd;
+        uint256 baseFactor = (borrowingFactor * reservedUsd / poolUsd) * Precision.FLOAT_PRECISION;
         uint256 borrowingExponentFactor = getBorrowingExponentFactor(dataStore, market.marketToken, isLong);
-        console.log(
-            "getBorrowingFactorPerSecond",
-            baseFactor,
-            borrowingExponentFactor,
-            Precision.applyExponentFactor(baseFactor, borrowingExponentFactor)
-        );
 
-        return Precision.applyExponentFactor(baseFactor, borrowingExponentFactor);
+        return Precision.applyExponentFactor(baseFactor, borrowingExponentFactor) / Precision.FLOAT_PRECISION;
     }
 
     // @dev get the total borrowing fees

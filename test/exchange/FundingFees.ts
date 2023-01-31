@@ -30,6 +30,7 @@ describe("Exchange.FundingFees", () => {
 
   it("funding fees", async () => {
     await dataStore.setUint(keys.fundingFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 7));
+    await dataStore.setUint(keys.fundingExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(1));
 
     await handleOrder(fixture, {
       create: {
