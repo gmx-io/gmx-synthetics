@@ -138,7 +138,7 @@ export function reserveFactorKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [RESERVE_FACTOR, market, isLong]);
 }
 
-export function maxPnlFactorKey(pnlFactorType, market: string, isLong: boolean) {
+export function maxPnlFactorKey(pnlFactorType: string, market: string, isLong: boolean) {
   return hashData(["bytes32", "bytes32", "address", "bool"], [MAX_PNL_FACTOR, pnlFactorType, market, isLong]);
 }
 

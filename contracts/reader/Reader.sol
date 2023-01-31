@@ -226,7 +226,7 @@ contract Reader {
         Price.Props memory indexTokenPrice,
         Price.Props memory longTokenPrice,
         Price.Props memory shortTokenPrice,
-        bytes32 maxPnlFactor,
+        bytes32 pnlFactorType,
         bool maximize
     ) external view returns (int256) {
         return
@@ -236,7 +236,7 @@ contract Reader {
                 longTokenPrice,
                 shortTokenPrice,
                 indexTokenPrice,
-                maxPnlFactor,
+                pnlFactorType,
                 maximize
             );
     }
