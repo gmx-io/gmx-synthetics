@@ -61,11 +61,11 @@ library SwapPricingUtils {
 
     // @dev SwapFees struct to contain swap fee values
     // @param feeReceiverAmount the fee amount for the fee receiver
-    // @param feesForPool the fee amount for the pool
+    // @param feeAmountForPool the fee amount for the pool
     // @param amountAfterFees the output amount after fees
     struct SwapFees {
         uint256 feeReceiverAmount;
-        uint256 feesForPool;
+        uint256 feeAmountForPool;
         uint256 amountAfterFees;
     }
 
@@ -225,12 +225,12 @@ library SwapPricingUtils {
         SwapFees memory fees;
 
         uint256 feeFactor = dataStore.getUint(Keys.swapFeeFactorKey(marketToken));
-        uint256 feeReceiverFactor = dataStore.getUint(Keys.FEE_RECEIVER_FACTOR);
+        uint256 swapFeeReceiverFactor = dataStore.getUint(Keys.SWAP_FEE_RECEIVER_FACTOR);
 
         uint256 feeAmount = Precision.applyFactor(amount, feeFactor);
 
-        fees.feeReceiverAmount = Precision.applyFactor(feeAmount, feeReceiverFactor);
-        fees.feesForPool = feeAmount - fees.feeReceiverAmount;
+        fees.feeReceiverAmount = Precision.applyFactor(feeAmount, swapFeeReceiverFactor);
+        fees.feeAmountForPool = feeAmount - fees.feeReceiverAmount;
         fees.amountAfterFees = amount - feeAmount;
 
         return fees;
@@ -292,7 +292,7 @@ library SwapPricingUtils {
 
         eventData.uintItems.initItems(3);
         eventData.uintItems.setItem(0, "feeReceiverAmount", fees.feeReceiverAmount);
-        eventData.uintItems.setItem(1, "feesForPool", fees.feesForPool);
+        eventData.uintItems.setItem(1, "feeAmountForPool", fees.feeAmountForPool);
         eventData.uintItems.setItem(2, "amountAfterFees", fees.amountAfterFees);
 
         eventEmitter.emitEventLog1(

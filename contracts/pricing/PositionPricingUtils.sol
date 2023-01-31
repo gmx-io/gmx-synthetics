@@ -62,7 +62,7 @@ library PositionPricingUtils {
 
     // @dev PositionFees struct to contain fee values
     // @param feeReceiverAmount the amount for the fee receiver
-    // @param feesForPool the amount of fees for the pool
+    // @param feeAmountForPool the amount of fees for the pool
     // @param positionFeeAmountForPool the position fee amount for the pool
     // @param positionFeeAmount the fee amount for increasing / decreasing the position
     // @param borrowingFeeAmount the borrowing fee amount
@@ -72,7 +72,7 @@ library PositionPricingUtils {
         PositionReferralFees referral;
         PositionFundingFees funding;
         uint256 feeReceiverAmount;
-        uint256 feesForPool;
+        uint256 feeAmountForPool;
         uint256 positionFeeAmountForPool;
         uint256 positionFeeAmount;
         uint256 borrowingFeeAmount;
@@ -113,7 +113,6 @@ library PositionPricingUtils {
     // @param feeFactor the fee factor
     // @param positionFeeAmount the fee amount for increasing / decreasing the position
     // @param protocolFeeAmount the protocol fee
-    // @param feeReceiverFactor the fee receiver factor
     // @param feeReceiverAmount the amount for the fee receiver
     // @param positionFeeAmountForPool the position fee amount for the pool in tokens
     struct GetPositionFeesAfterReferralCache {
@@ -121,7 +120,7 @@ library PositionPricingUtils {
         uint256 feeFactor;
         uint256 positionFeeAmount;
         uint256 protocolFeeAmount;
-        uint256 feeReceiverFactor;
+        uint256 positionFeeReceiverFactor;
         uint256 feeReceiverAmount;
         uint256 positionFeeAmountForPool;
     }
@@ -377,7 +376,11 @@ library PositionPricingUtils {
 
         fees.borrowingFeeAmount = MarketUtils.getBorrowingFees(dataStore, position) / collateralTokenPrice.min;
 
-        fees.feesForPool = fees.positionFeeAmountForPool + fees.borrowingFeeAmount;
+        uint256 borrowingFeeReceiverFactor = dataStore.getUint(Keys.BORROWING_FEE_RECEIVER_FACTOR);
+        uint256 borrowingFeeAmountForFeeReceiver = Precision.applyFactor(fees.borrowingFeeAmount, borrowingFeeReceiverFactor);
+
+        fees.feeAmountForPool = fees.positionFeeAmountForPool + fees.borrowingFeeAmount - borrowingFeeAmountForFeeReceiver;
+        fees.feeReceiverAmount += borrowingFeeAmountForFeeReceiver;
 
         int256 latestLongTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market(), longToken, position.isLong());
         int256 latestShortTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market(), shortToken, position.isLong());
@@ -473,9 +476,8 @@ library PositionPricingUtils {
 
         cache.protocolFeeAmount = cache.positionFeeAmount - cache.referral.totalRebateAmount;
 
-        cache.feeReceiverFactor = dataStore.getUint(Keys.FEE_RECEIVER_FACTOR);
-
-        cache.feeReceiverAmount = Precision.applyFactor(cache.protocolFeeAmount, cache.feeReceiverFactor);
+        cache.positionFeeReceiverFactor = dataStore.getUint(Keys.POSITION_FEE_RECEIVER_FACTOR);
+        cache.feeReceiverAmount = Precision.applyFactor(cache.protocolFeeAmount, cache.positionFeeReceiverFactor);
         cache.positionFeeAmountForPool = cache.protocolFeeAmount - cache.feeReceiverAmount;
 
         return (cache.referral.affiliate, cache.referral.traderDiscountAmount, cache.referral.affiliateRewardAmount, cache.feeReceiverAmount, cache.positionFeeAmountForPool);
@@ -537,7 +539,7 @@ library PositionPricingUtils {
         eventData.uintItems.setItem(4, "claimableLongTokenAmount", fees.funding.claimableLongTokenAmount);
         eventData.uintItems.setItem(5, "claimableShortTokenAmount", fees.funding.claimableShortTokenAmount);
         eventData.uintItems.setItem(6, "feeReceiverAmount", fees.feeReceiverAmount);
-        eventData.uintItems.setItem(7, "feesForPool", fees.feesForPool);
+        eventData.uintItems.setItem(7, "feeAmountForPool", fees.feeAmountForPool);
         eventData.uintItems.setItem(8, "positionFeeAmountForPool", fees.positionFeeAmountForPool);
         eventData.uintItems.setItem(9, "positionFeeAmount", fees.positionFeeAmount);
         eventData.uintItems.setItem(10, "borrowingFeeAmount", fees.borrowingFeeAmount);

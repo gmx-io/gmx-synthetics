@@ -61,6 +61,9 @@ library MarketUtils {
         uint256 longTokenUsd;
         uint256 shortTokenUsd;
 
+        uint256 totalBorrowingFees;
+        uint256 borrowingFeeReceiverFactor;
+
         uint256 impactPoolAmount;
         int256 longPnl;
         int256 shortPnl;
@@ -291,6 +294,7 @@ library MarketUtils {
         bool maximize
     ) internal view returns (int256) {
         GetPoolValueCache memory cache;
+
         cache.longTokenAmount = getPoolAmount(dataStore, market.marketToken, market.longToken);
         cache.shortTokenAmount = getPoolAmount(dataStore, market.marketToken, market.shortToken);
 
@@ -299,8 +303,11 @@ library MarketUtils {
 
         cache.value = cache.longTokenUsd + cache.shortTokenUsd;
 
-        cache.value += getTotalBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, true);
-        cache.value += getTotalBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, false);
+        cache.totalBorrowingFees = getTotalBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, true);
+        cache.totalBorrowingFees += getTotalBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, false);
+
+        cache.borrowingFeeReceiverFactor = dataStore.getUint(Keys.BORROWING_FEE_RECEIVER_FACTOR);
+        cache.value += Precision.applyFactor(cache.totalBorrowingFees, cache.borrowingFeeReceiverFactor);
 
         cache.impactPoolAmount = getPositionImpactPoolAmount(dataStore, market.marketToken);
         cache.value += cache.impactPoolAmount * indexTokenPrice.pickPrice(maximize);
