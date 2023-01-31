@@ -280,7 +280,7 @@ library IncreasePositionUtils {
             params.contracts.eventEmitter,
             params.market.marketToken,
             params.position.collateralToken(),
-            fees.feesForPool.toInt256()
+            fees.feeAmountForPool.toInt256()
         );
 
         return (collateralDeltaAmount, fees);

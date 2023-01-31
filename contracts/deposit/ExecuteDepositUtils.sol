@@ -359,7 +359,7 @@ library ExecuteDepositUtils {
             params.eventEmitter,
             _params.market.marketToken,
             _params.tokenIn,
-            (fees.amountAfterFees + fees.feesForPool).toInt256()
+            (fees.amountAfterFees + fees.feeAmountForPool).toInt256()
         );
 
         MarketUtils.validatePoolAmount(

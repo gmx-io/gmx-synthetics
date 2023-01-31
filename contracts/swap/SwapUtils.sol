@@ -252,7 +252,7 @@ library SwapUtils {
             params.eventEmitter,
             _params.market.marketToken,
             _params.tokenIn,
-            (cache.amountIn + fees.feesForPool).toInt256()
+            (cache.amountIn + fees.feeAmountForPool).toInt256()
         );
 
         // the poolAmountOut excludes the positive price impact amount

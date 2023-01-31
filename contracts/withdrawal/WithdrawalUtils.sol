@@ -304,10 +304,10 @@ library WithdrawalUtils {
         );
 
         // the pool will be reduced by the outputAmount minus the fees for the pool
-        cache.longTokenPoolAmountDelta = cache.longTokenOutputAmount - cache.longTokenFees.feesForPool;
+        cache.longTokenPoolAmountDelta = cache.longTokenOutputAmount - cache.longTokenFees.feeAmountForPool;
         cache.longTokenOutputAmount = cache.longTokenFees.amountAfterFees;
 
-        cache.shortTokenPoolAmountDelta = cache.shortTokenOutputAmount - cache.shortTokenFees.feesForPool;
+        cache.shortTokenPoolAmountDelta = cache.shortTokenOutputAmount - cache.shortTokenFees.feeAmountForPool;
         cache.shortTokenOutputAmount = cache.shortTokenFees.amountAfterFees;
 
         MarketUtils.applyDeltaToPoolAmount(
