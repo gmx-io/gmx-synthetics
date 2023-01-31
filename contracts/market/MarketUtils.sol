@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "hardhat/console.sol";
+
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "../data/DataStore.sol";
@@ -1524,6 +1526,10 @@ library MarketUtils {
         return dataStore.getUint(Keys.borrowingFactorKey(market, isLong));
     }
 
+    function getBorrowingExponentFactor(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
+        return dataStore.getUint(Keys.borrowingExponentFactorKey(market, isLong));
+    }
+
     // @dev get the cumulative borrowing factor for a market
     // @param dataStore DataStore
     // @param market the market to check
@@ -1679,7 +1685,16 @@ library MarketUtils {
             revert UnableToGetBorrowingFactorEmptyPoolUsd();
         }
 
-        return borrowingFactor * reservedUsd / poolUsd;
+        uint256 baseFactor = borrowingFactor * reservedUsd / poolUsd;
+        uint256 borrowingExponentFactor = getBorrowingExponentFactor(dataStore, market.marketToken, isLong);
+        console.log(
+            "getBorrowingFactorPerSecond",
+            baseFactor,
+            borrowingExponentFactor,
+            Precision.applyExponentFactor(baseFactor, borrowingExponentFactor)
+        );
+
+        return Precision.applyExponentFactor(baseFactor, borrowingExponentFactor);
     }
 
     // @dev get the total borrowing fees

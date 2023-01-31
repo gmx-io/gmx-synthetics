@@ -194,6 +194,8 @@ library Keys {
     bytes32 public constant CLAIMED_COLLATERAL_AMOUNT = keccak256(abi.encode("CLAIMED_COLLATERAL_AMOUNT"));
     // @dev key for borrowing factor
     bytes32 public constant BORROWING_FACTOR = keccak256(abi.encode("BORROWING_FACTOR"));
+    // @dev key for borrowing factor
+    bytes32 public constant BORROWING_EXPONENT_FACTOR = keccak256(abi.encode("BORROWING_EXPONENT_FACTOR"));
     // @dev key for cumulative borrowing factor
     bytes32 public constant CUMULATIVE_BORROWING_FACTOR = keccak256(abi.encode("CUMULATIVE_BORROWING_FACTOR"));
     // @dev key for when the cumulative borrowing factor was last updated at
@@ -811,6 +813,14 @@ library Keys {
     function borrowingFactorKey(address market, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             BORROWING_FACTOR,
+            market,
+            isLong
+        ));
+    }
+
+    function borrowingExponentFactorKey(address market, bool isLong) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            BORROWING_EXPONENT_FACTOR,
             market,
             isLong
         ));
