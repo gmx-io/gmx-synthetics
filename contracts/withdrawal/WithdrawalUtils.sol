@@ -424,6 +424,11 @@ library WithdrawalUtils {
         MarketUtils.MarketPrices memory prices,
         uint256 marketTokenAmount
     ) internal view returns (uint256, uint256) {
+        // the max pnl factor for withdrawals should be the lower of the max pnl factor values
+        // which means that pnl would be capped to a smaller amount and the pool
+        // value would be higher even if there is a large pnl
+        // this should be okay since MarketUtils.validateMaxPnl is called after the withdrawal
+        // which ensures that the max pnl factor for withdrawals was not exceeded
         int256 _poolValue = MarketUtils.getPoolValue(
             params.dataStore,
             market,
