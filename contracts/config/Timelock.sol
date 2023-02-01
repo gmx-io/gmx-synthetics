@@ -24,6 +24,8 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     EventEmitter public immutable eventEmitter;
     uint256 public timelockDelay;
 
+    mapping (bytes32 => uint256) public pendingActions;
+
     error ActionAlreadySignalled();
     error ActionNotSignalled();
     error SignalTimeNotYetPassed(uint256 signalTime);
@@ -41,8 +43,6 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         eventEmitter = _eventEmitter;
         timelockDelay = _timelockDelay;
     }
-
-    mapping (bytes32 => uint256) public pendingActions;
 
     function revokeRole(address account, bytes32 key) external onlyTimelockMultisig nonReentrant {
         roleStore.revokeRole(account, key);
@@ -65,7 +65,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
             revert InvalidFeeReceiver(account);
         }
 
-        bytes32 actionKey = keccak256(abi.encodePacked("setFeeReceiver", account));
+        bytes32 actionKey = _setFeeReceiverActionKey(account);
         _signalPendingAction(actionKey, "signalSetFeeReceiver");
 
         EventUtils.EventLogData memory eventData;
@@ -79,7 +79,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     }
 
     function setFeeReceiverAfterSignal(address account) external onlyTimelockAdmin nonReentrant {
-        bytes32 actionKey = keccak256(abi.encodePacked("setFeeReceiver", account));
+        bytes32 actionKey = _setFeeReceiverActionKey(account);
         _validateAndClearAction(actionKey, "setFeeReceiverAfterSignal");
 
         dataStore.setAddress(Keys.FEE_RECEIVER, account);
@@ -95,7 +95,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     }
 
     function signalGrantRole(address account, bytes32 key) external onlyTimelockAdmin nonReentrant {
-        bytes32 actionKey = keccak256(abi.encodePacked("grantRole", account, key));
+        bytes32 actionKey = _grantRoleActionKey(account, key);
         _signalPendingAction(actionKey, "signalGrantRole");
 
         EventUtils.EventLogData memory eventData;
@@ -111,7 +111,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     }
 
     function grantRoleAfterSignal(address account, bytes32 key) external onlyTimelockAdmin nonReentrant {
-        bytes32 actionKey = keccak256(abi.encodePacked("grantRole", account, key));
+        bytes32 actionKey = _grantRoleActionKey(account, key);
         _validateAndClearAction(actionKey, "grantRoleAfterSignal");
 
         roleStore.grantRole(account, key);
@@ -129,7 +129,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     }
 
     function signalRevokeRole(address account, bytes32 key) external onlyTimelockAdmin nonReentrant {
-        bytes32 actionKey = keccak256(abi.encodePacked("revokeRole", account, key));
+        bytes32 actionKey = _revokeRoleActionKey(account, key);
         _signalPendingAction(actionKey, "signalRevokeRole");
 
         EventUtils.EventLogData memory eventData;
@@ -145,7 +145,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     }
 
     function revokeRoleAfterSignal(address account, bytes32 key) external onlyTimelockAdmin nonReentrant {
-        bytes32 actionKey = keccak256(abi.encodePacked("revokeRole", account, key));
+        bytes32 actionKey = _revokeRoleActionKey(account, key);
         _validateAndClearAction(actionKey, "revokeRoleAfterSignal");
 
         roleStore.revokeRole(account, key);
@@ -168,13 +168,12 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         uint256 priceFeedMultiplier,
         uint256 stablePrice
     ) external onlyTimelockAdmin nonReentrant {
-        bytes32 actionKey = keccak256(abi.encodePacked(
-            "signalSetPriceFeed",
+        bytes32 actionKey = _setPriceFeedActionKey(
             token,
             priceFeed,
             priceFeedMultiplier,
             stablePrice
-        ));
+        );
 
         _signalPendingAction(actionKey, "signalSetPriceFeed");
 
@@ -198,13 +197,12 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         uint256 priceFeedMultiplier,
         uint256 stablePrice
     ) external onlyTimelockAdmin nonReentrant {
-        bytes32 actionKey = keccak256(abi.encodePacked(
-            "signalSetPriceFeed",
+        bytes32 actionKey = _setPriceFeedActionKey(
             token,
             priceFeed,
             priceFeedMultiplier,
             stablePrice
-        ));
+        );
 
         _validateAndClearAction(actionKey, "signalSetPriceFeed");
 
@@ -250,6 +248,33 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
             actionKey,
             eventData
         );
+    }
+
+    function _setFeeReceiverActionKey(address account) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("setFeeReceiver", account));
+    }
+
+    function _grantRoleActionKey(address account, bytes32 key) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("grantRole", account, key));
+    }
+
+    function _revokeRoleActionKey(address account, bytes32 key) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("grantRole", account, key));
+    }
+
+    function _setPriceFeedActionKey(
+        address token,
+        address priceFeed,
+        uint256 priceFeedMultiplier,
+        uint256 stablePrice
+    ) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(
+            "setPriceFeed",
+            token,
+            priceFeed,
+            priceFeedMultiplier,
+            stablePrice
+        ));
     }
 
     function _validateAndClearAction(bytes32 actionKey, string memory actionLabel) internal {
