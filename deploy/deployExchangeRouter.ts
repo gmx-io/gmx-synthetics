@@ -9,7 +9,6 @@ const constructorContracts = [
   "DepositHandler",
   "WithdrawalHandler",
   "OrderHandler",
-  "ReferralStorage",
 ];
 
 const func = createDeployFunction({

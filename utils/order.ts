@@ -59,6 +59,7 @@ export async function createOrder(fixture, overrides) {
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
   const minOutputAmount = overrides.minOutputAmount || 0;
   const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
+  const referralCode = overrides.referralCode || ethers.constants.HashZero;
 
   if (
     orderType === OrderType.MarketSwap ||
@@ -92,6 +93,7 @@ export async function createOrder(fixture, overrides) {
     decreasePositionSwapType,
     isLong,
     shouldUnwrapNativeToken,
+    referralCode,
   };
 
   await logGasUsage({
@@ -105,23 +107,32 @@ export async function executeOrder(fixture, overrides = {}) {
   const { gasUsageLabel } = overrides;
   const { reader, dataStore, orderHandler } = fixture.contracts;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
-  const tokenOracleTypes = overrides.tokenOracleTypes || [TOKEN_ORACLE_TYPES.DEFAULT, TOKEN_ORACLE_TYPES.DEFAULT];
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const orderKeys = await getOrderKeys(dataStore, 0, 1);
   const order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
+  const oracleBlocks = overrides.oracleBlocks;
+  const minOracleBlockNumbers = overrides.minOracleBlockNumbers;
+  const maxOracleBlockNumbers = overrides.maxOracleBlockNumbers;
+  const oracleTimestamps = overrides.oracleTimestamps;
+  const blockHashes = overrides.blockHashes;
+
   const params = {
     key: orderKeys[0],
     oracleBlockNumber: order.numbers.updatedAtBlock,
     tokens,
-    tokenOracleTypes,
     precisions,
     minPrices,
     maxPrices,
     execute: orderHandler.executeOrder,
     gasUsageLabel,
+    oracleBlocks,
+    minOracleBlockNumbers,
+    maxOracleBlockNumbers,
+    oracleTimestamps,
+    blockHashes,
   };
 
   await executeWithOracleParams(fixture, params);

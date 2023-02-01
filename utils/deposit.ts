@@ -79,7 +79,6 @@ export async function executeDeposit(fixture, overrides: any = {}) {
   const { reader, dataStore, depositHandler, wnt, usdc } = fixture.contracts;
   const { gasUsageLabel } = overrides;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
-  const tokenOracleTypes = overrides.tokenOracleTypes || [TOKEN_ORACLE_TYPES.DEFAULT, TOKEN_ORACLE_TYPES.DEFAULT];
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
@@ -90,7 +89,6 @@ export async function executeDeposit(fixture, overrides: any = {}) {
     key: depositKeys[0],
     oracleBlockNumber: deposit.numbers.updatedAtBlock,
     tokens,
-    tokenOracleTypes,
     precisions,
     minPrices,
     maxPrices,

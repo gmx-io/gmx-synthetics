@@ -65,14 +65,13 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     DepositHandler public immutable depositHandler;
     WithdrawalHandler public immutable withdrawalHandler;
     OrderHandler public immutable orderHandler;
-    IReferralStorage public immutable referralStorage;
 
     error InvalidClaimFundingFeesInput(uint256 marketsLength, uint256 tokensLength);
     error InvalidClaimCollateralInput(uint256 marketsLength, uint256 tokensLength, uint256 timeKeysLength);
     error InvalidClaimAffiliateRewardsInput(uint256 marketsLength, uint256 tokensLength);
 
     // @dev Constructor that initializes the contract with the provided Router, RoleStore, DataStore,
-    // EventEmitter, DepositHandler, WithdrawalHandler, OrderHandler, OrderStore, and IReferralStorage instances
+    // EventEmitter, DepositHandler, WithdrawalHandler, OrderHandler, and OrderStore instances
     constructor(
         Router _router,
         RoleStore _roleStore,
@@ -80,8 +79,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         EventEmitter _eventEmitter,
         DepositHandler _depositHandler,
         WithdrawalHandler _withdrawalHandler,
-        OrderHandler _orderHandler,
-        IReferralStorage _referralStorage
+        OrderHandler _orderHandler
     ) RoleModule(_roleStore) {
         router = _router;
         dataStore = _dataStore;
@@ -90,8 +88,6 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         depositHandler = _depositHandler;
         withdrawalHandler = _withdrawalHandler;
         orderHandler = _orderHandler;
-
-        referralStorage = _referralStorage;
     }
 
     // @dev Wraps the specified amount of native tokens into WNT then sends the WNT to the specified address
@@ -164,18 +160,15 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     }
 
     /**
-     * @dev Creates a new order with the given amount, order parameters, and referral code. The order is
+     * @dev Creates a new order with the given amount, order parameters. The order is
      * created by transferring the specified amount of collateral tokens from the caller's account to the
      * order store, and then calling the `createOrder()` function on the order handler contract. The
      * referral code is also set on the caller's account using the referral storage contract.
      */
     function createOrder(
-        BaseOrderUtils.CreateOrderParams calldata params,
-        bytes32 referralCode
+        BaseOrderUtils.CreateOrderParams calldata params
     ) external payable nonReentrant returns (bytes32) {
         address account = msg.sender;
-
-        ReferralUtils.setTraderReferralCode(referralStorage, account, referralCode);
 
         return orderHandler.createOrder(
             account,

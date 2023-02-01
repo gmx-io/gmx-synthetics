@@ -68,6 +68,7 @@ export async function deployFixture() {
   const positionStoreUtils = await hre.ethers.getContract("PositionStoreUtils");
   const orderStoreUtils = await hre.ethers.getContract("OrderStoreUtils");
   const decreasePositionUtils = await hre.ethers.getContract("DecreasePositionUtils");
+  const referralStorage = await hre.ethers.getContract("ReferralStorage");
 
   const ethUsdMarketAddress = getMarketTokenAddress(
     wnt.address,
@@ -150,6 +151,7 @@ export async function deployFixture() {
       positionStoreUtils,
       orderStoreUtils,
       decreasePositionUtils,
+      referralStorage,
       usdcPriceFeed,
       wnt,
       wbtc,

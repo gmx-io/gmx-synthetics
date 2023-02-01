@@ -7,6 +7,8 @@ import "../swap/SwapUtils.sol";
 import "../position/IncreasePositionUtils.sol";
 import "../order/OrderStoreUtils.sol";
 
+import "hardhat/console.sol";
+
 // @title IncreaseOrderUtils
 // @dev Library for functions to help with processing an increase order
 library IncreaseOrderUtils {
@@ -90,7 +92,7 @@ library IncreaseOrderUtils {
         Order.OrderType orderType,
         uint256 orderUpdatedAtBlock,
         uint256 positionIncreasedAtBlock
-    ) internal pure {
+    ) internal view {
         if (orderType == Order.OrderType.MarketIncrease) {
             OracleUtils.validateBlockNumberWithinRange(
                 minOracleBlockNumbers,
@@ -101,6 +103,9 @@ library IncreaseOrderUtils {
         }
 
         if (orderType == Order.OrderType.LimitIncrease) {
+            console.log("orderUpdatedAtBlock", orderUpdatedAtBlock);
+            console.log("positionIncreasedAtBlock", positionIncreasedAtBlock);
+            console.log("minOracleBlockNumbers", minOracleBlockNumbers[0]);
             uint256 laterBlock = orderUpdatedAtBlock > positionIncreasedAtBlock ? orderUpdatedAtBlock : positionIncreasedAtBlock;
             if (!minOracleBlockNumbers.areGreaterThan(laterBlock)) {
                 OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, laterBlock);

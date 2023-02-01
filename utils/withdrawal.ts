@@ -64,7 +64,6 @@ export async function executeWithdrawal(fixture, overrides = {}) {
   const { reader, dataStore, withdrawalHandler, wnt, usdc } = fixture.contracts;
   const { gasUsageLabel } = overrides;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
-  const tokenOracleTypes = overrides.tokenOracleTypes || [TOKEN_ORACLE_TYPES.DEFAULT, TOKEN_ORACLE_TYPES.DEFAULT];
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
@@ -75,7 +74,6 @@ export async function executeWithdrawal(fixture, overrides = {}) {
     key: withdrawalKeys[0],
     oracleBlockNumber: withdrawal.numbers.updatedAtBlock,
     tokens,
-    tokenOracleTypes,
     precisions,
     minPrices,
     maxPrices,
