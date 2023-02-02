@@ -68,6 +68,8 @@ contract DataStore is RoleModule {
         return value;
     }
 
+    // @dev delete the uint value for the given key
+    // @param key the key of the value
     function removeUint(bytes32 key) external onlyController {
         delete uintValues[key];
     }
@@ -189,6 +191,8 @@ contract DataStore is RoleModule {
         return value;
     }
 
+    // @dev delete the address value for the given key
+    // @param key the key of the value
     function removeAddress(bytes32 key) external onlyController {
         delete addressValues[key];
     }
@@ -209,6 +213,8 @@ contract DataStore is RoleModule {
         return value;
     }
 
+    // @dev delete the bool value for the given key
+    // @param key the key of the value
     function removeBool(bytes32 key) external onlyController {
         delete boolValues[key];
     }
@@ -229,6 +235,8 @@ contract DataStore is RoleModule {
         return value;
     }
 
+    // @dev delete the string value for the given key
+    // @param key the key of the value
     function removeString(bytes32 key) external onlyController {
         delete stringValues[key];
     }
@@ -249,138 +257,245 @@ contract DataStore is RoleModule {
         return value;
     }
 
+    // @dev delete the bytes32 value for the given key
+    // @param key the key of the value
     function removeBytes32(bytes32 key) external onlyController {
         delete bytes32Values[key];
     }
 
+    // @dev get the uint array for the given key
+    // @param key the key of the uint array
+    // @return the uint array for the key
     function getUintArray(bytes32 key) external view returns (uint256[] memory) {
         return uintArrayValues[key];
     }
 
+    // @dev set the uint array for the given key
+    // @param key the key of the uint array
+    // @param value the value of the uint array
     function setUintArray(bytes32 key, uint256[] memory value) external onlyController {
         uintArrayValues[key] = value;
     }
 
+    // @dev delete the uint array for the given key
+    // @param key the key of the uint array
+    // @param value the value of the uint array
     function removeUintArray(bytes32 key) external onlyController {
         delete uintArrayValues[key];
     }
 
+    // @dev get the int array for the given key
+    // @param key the key of the int array
+    // @return the int array for the key
     function getIntArray(bytes32 key) external view returns (int256[] memory) {
         return intArrayValues[key];
     }
 
+    // @dev set the int array for the given key
+    // @param key the key of the int array
+    // @param value the value of the int array
     function setIntArray(bytes32 key, int256[] memory value) external onlyController {
         intArrayValues[key] = value;
     }
 
+    // @dev delete the int array for the given key
+    // @param key the key of the int array
+    // @param value the value of the int array
     function removeIntArray(bytes32 key) external onlyController {
         delete intArrayValues[key];
     }
 
+    // @dev get the address array for the given key
+    // @param key the key of the address array
+    // @return the address array for the key
     function getAddressArray(bytes32 key) external view returns (address[] memory) {
         return addressArrayValues[key];
     }
 
+    // @dev set the address array for the given key
+    // @param key the key of the address array
+    // @param value the value of the address array
     function setAddressArray(bytes32 key, address[] memory value) external onlyController {
         addressArrayValues[key] = value;
     }
 
+    // @dev delete the address array for the given key
+    // @param key the key of the address array
+    // @param value the value of the address array
     function removeAddressArray(bytes32 key) external onlyController {
         delete addressArrayValues[key];
     }
 
+    // @dev get the bool array for the given key
+    // @param key the key of the bool array
+    // @return the bool array for the key
     function getBoolArray(bytes32 key) external view returns (bool[] memory) {
         return boolArrayValues[key];
     }
 
+    // @dev set the bool array for the given key
+    // @param key the key of the bool array
+    // @param value the value of the bool array
     function setBoolArray(bytes32 key, bool[] memory value) external onlyController {
         boolArrayValues[key] = value;
     }
 
+    // @dev delete the bool array for the given key
+    // @param key the key of the bool array
+    // @param value the value of the bool array
     function removeBoolArray(bytes32 key) external onlyController {
         delete boolArrayValues[key];
     }
 
+    // @dev get the string array for the given key
+    // @param key the key of the string array
+    // @return the string array for the key
     function getStringArray(bytes32 key) external view returns (string[] memory) {
         return stringArrayValues[key];
     }
 
+    // @dev set the string array for the given key
+    // @param key the key of the string array
+    // @param value the value of the string array
     function setStringArray(bytes32 key, string[] memory value) external onlyController {
         stringArrayValues[key] = value;
     }
 
+    // @dev delete the string array for the given key
+    // @param key the key of the string array
+    // @param value the value of the string array
     function removeStringArray(bytes32 key) external onlyController {
         delete stringArrayValues[key];
     }
 
+    // @dev get the bytes32 array for the given key
+    // @param key the key of the bytes32 array
+    // @return the bytes32 array for the key
     function getBytes32Array(bytes32 key) external view returns (bytes32[] memory) {
         return bytes32ArrayValues[key];
     }
 
+    // @dev set the bytes32 array for the given key
+    // @param key the key of the bytes32 array
+    // @param value the value of the bytes32 array
     function setBytes32Array(bytes32 key, bytes32[] memory value) external onlyController {
         bytes32ArrayValues[key] = value;
     }
 
+    // @dev delete the bytes32 array for the given key
+    // @param key the key of the bytes32 array
+    // @param value the value of the bytes32 array
     function removeBytes32Array(bytes32 key) external onlyController {
         delete bytes32ArrayValues[key];
     }
 
+    // @dev check whether the given value exists in the set
+    // @param setKey the key of the set
+    // @param value the value to check
     function containsBytes32(bytes32 setKey, bytes32 value) external view returns (bool) {
         return bytes32Sets[setKey].contains(value);
     }
 
+    // @dev get the length of the set
+    // @param setKey the key of the set
     function getBytes32Count(bytes32 setKey) external view returns (uint256) {
         return bytes32Sets[setKey].length();
     }
 
+    // @dev get the values of the set in the given range
+    // @param setKey the key of the set
+    // @param the start of the range, values at the start index will be returned
+    // in the result
+    // @param the end of the range, values at the end index will not be returned
+    // in the result
     function getBytes32ValuesAt(bytes32 setKey, uint256 start, uint256 end) external view returns (bytes32[] memory) {
         return bytes32Sets[setKey].valuesAt(start, end);
     }
 
+    // @dev add the given value to the set
+    // @param setKey the key of the set
+    // @param value the value to add
     function addBytes32(bytes32 setKey, bytes32 value) external onlyController {
         bytes32Sets[setKey].add(value);
     }
 
+    // @dev remove the given value from the set
+    // @param setKey the key of the set
+    // @param value the value to remove
     function removeBytes32(bytes32 setKey, bytes32 value) external onlyController {
         bytes32Sets[setKey].remove(value);
     }
 
+    // @dev check whether the given value exists in the set
+    // @param setKey the key of the set
+    // @param value the value to check
     function containsAddress(bytes32 setKey, address value) external view returns (bool) {
         return addressSets[setKey].contains(value);
     }
 
+    // @dev get the length of the set
+    // @param setKey the key of the set
     function getAddressCount(bytes32 setKey) external view returns (uint256) {
         return addressSets[setKey].length();
     }
 
+    // @dev get the values of the set in the given range
+    // @param setKey the key of the set
+    // @param the start of the range, values at the start index will be returned
+    // in the result
+    // @param the end of the range, values at the end index will not be returned
+    // in the result
     function getAddressValuesAt(bytes32 setKey, uint256 start, uint256 end) external view returns (address[] memory) {
         return addressSets[setKey].valuesAt(start, end);
     }
 
+    // @dev add the given value to the set
+    // @param setKey the key of the set
+    // @param value the value to add
     function addAddress(bytes32 setKey, address value) external onlyController {
         addressSets[setKey].add(value);
     }
 
+    // @dev remove the given value from the set
+    // @param setKey the key of the set
+    // @param value the value to remove
     function removeAddress(bytes32 setKey, address value) external onlyController {
         addressSets[setKey].remove(value);
     }
 
+    // @dev check whether the given value exists in the set
+    // @param setKey the key of the set
+    // @param value the value to check
     function containsUint(bytes32 setKey, uint256 value) external view returns (bool) {
         return uintSets[setKey].contains(value);
     }
 
+    // @dev get the length of the set
+    // @param setKey the key of the set
     function getUintCount(bytes32 setKey) external view returns (uint256) {
         return uintSets[setKey].length();
     }
 
+    // @dev get the values of the set in the given range
+    // @param setKey the key of the set
+    // @param the start of the range, values at the start index will be returned
+    // in the result
+    // @param the end of the range, values at the end index will not be returned
+    // in the result
     function getUintValuesAt(bytes32 setKey, uint256 start, uint256 end) external view returns (uint256[] memory) {
         return uintSets[setKey].valuesAt(start, end);
     }
 
+    // @dev add the given value to the set
+    // @param setKey the key of the set
+    // @param value the value to add
     function addUint(bytes32 setKey, uint256 value) external onlyController {
         uintSets[setKey].add(value);
     }
 
+    // @dev remove the given value from the set
+    // @param setKey the key of the set
+    // @param value the value to remove
     function removeUint(bytes32 setKey, uint256 value) external onlyController {
         uintSets[setKey].remove(value);
     }
