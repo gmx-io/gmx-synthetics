@@ -23,7 +23,8 @@ import "./IWithdrawalCallbackReceiver.sol";
 // in case it is necessary to add "before" callbacks, extra care should be taken
 // to ensure that important state cannot be changed during the before callback
 // for example, if an order can be cancelled in the "before" callback during
-// order execution, it may lead to state that could be abused
+// order execution, it may lead to an order being executed even though the user
+// was already refunded for its cancellation
 library CallbackUtils {
     using Address for address;
     using Deposit for Deposit.Props;
@@ -42,6 +43,12 @@ library CallbackUtils {
 
     error MaxCallbackGasLimitExceeded(uint256 callbackGasLimit, uint256 maxCallbackGasLimit);
 
+    // @dev validate that the callbackGasLimit is less than the max specified value
+    // this is to prevent callback gas limits which are larger than the max gas limits per block
+    // as this would allow for callback contracts that can consume all gas and conditionally cause
+    // executions to fail
+    // @param dataStore DataStore
+    // @param callbackGasLimit the callback gas limit
     function validateCallbackGasLimit(DataStore dataStore, uint256 callbackGasLimit) internal view {
         uint256 maxCallbackGasLimit = dataStore.getUint(Keys.MAX_CALLBACK_GAS_LIMIT);
         if (callbackGasLimit > maxCallbackGasLimit) {

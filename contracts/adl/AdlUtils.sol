@@ -20,7 +20,7 @@ import "../nonce/NonceUtils.sol";
 // it would be possible for the price of DOGE to increase faster than the price of
 // ETH
 //
-// In this scenario, profitable positions should be automatically closed to ensure
+// In this scenario, profitable positions should be closed through ADL to ensure
 // that the system remains fully solvent
 library AdlUtils {
     using SafeCast for int256;
@@ -241,6 +241,14 @@ library AdlUtils {
         return dataStore.setBool(Keys.isAdlEnabledKey(market, isLong), value);
     }
 
+    // @dev emit ADL state update events
+    //
+    // @param eventEmitter EventEmitter
+    // @param market address of the market for the ADL state update
+    // @param isLong indicates the ADL state update is for the long or short side of the market
+    // @param pnlToPoolFactor the ratio of PnL to pool value
+    // @param maxPnlFactor the max PnL factor
+    // @param shouldEnableAdl whether ADL was enabled or disabled
     function emitAdlStateUpdated(
         EventEmitter eventEmitter,
         address market,
