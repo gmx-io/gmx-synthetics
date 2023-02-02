@@ -260,6 +260,17 @@ library PositionUtils {
     // @param position the position values
     // @param market the market values
     // @param prices the prices of the tokens in the market
+    // @param shouldValidateMinCollateralUsd whether min collateral usd needs to be validated
+    // validation is skipped for decrease position to prevent reverts in case the order size
+    // is just slightly smaller than the position size
+    // in decrease position, the remaining collateral is estimated at the start, and the order
+    // size is updated to match the position size if the remaining collateral will be less than
+    // the min collateral usd
+    // since this is an estimate, there may be edge cases where there is a small remaining position size
+    // and small amount of collateral remaining
+    // validation is skipped for this case as it is preferred for the order to be executed
+    // since the small amount of collateral remaining only impacts the potential payment of liquidation
+    // keepers
     function validatePosition(
         DataStore dataStore,
         IReferralStorage referralStorage,
@@ -370,7 +381,6 @@ library PositionUtils {
             }
         }
 
-        // the position is liquidatable if the remaining collateral is less than the required min collateral
         if (cache.remainingCollateralUsd <= 0) {
             return true;
         }
