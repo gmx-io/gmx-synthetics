@@ -2,7 +2,7 @@ import { expect } from "chai";
 
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
-import { getBalanceOf } from "../../utils/token";
+import { getBalanceOf, getSupplyOf } from "../../utils/token";
 import { getClaimableFeeAmount } from "../../utils/fee";
 import { getPoolAmount, getSwapImpactPoolAmount, getMarketTokenPrice } from "../../utils/market";
 import { getDepositCount, getDepositKeys, createDeposit, executeDeposit, handleDeposit } from "../../utils/deposit";
@@ -526,5 +526,21 @@ describe("Exchange.Deposit", () => {
     expect(await getSwapImpactPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(
       "2503249056250001" // 0.0025, 12.5 USD
     );
+  });
+
+  it("handle deposit error", async () => {
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        shortTokenAmount: expandDecimals(50 * 1000, 6),
+        receiver: user1,
+        minMarketTokens: expandDecimals(51 * 1000, 18),
+      },
+      execute: {
+        gasUsageLabel: "executeDeposit",
+      },
+    });
+
+    expect(await getSupplyOf(ethUsdMarket.marketToken)).eq(0);
   });
 });

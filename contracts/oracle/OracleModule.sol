@@ -38,6 +38,7 @@ contract OracleModule {
         oracle.clearAllPrices();
     }
 
+    // @dev set oracle prices for a simulation
     // tokensWithPrices is not set in this function
     // it is possible for withSimulatedOraclePrices to be called and a function
     // using withOraclePrices to be called after
@@ -46,6 +47,8 @@ contract OracleModule {
     // this should not cause an issue because this transaction should always revert
     // and any state changes based on simulated prices as well as the setting of simulated
     // prices should not be persisted
+    // @param oracle Oracle
+    // @param params OracleUtils.SimulatePricesParams
     modifier withSimulatedOraclePrices(
         Oracle oracle,
         OracleUtils.SimulatePricesParams memory params

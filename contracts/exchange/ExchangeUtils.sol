@@ -12,6 +12,10 @@ import "../data/Keys.sol";
 library ExchangeUtils {
     error RequestNotYetCancellable(uint256 requestAge, uint256 requestExpirationAge, string requestType);
 
+    // @dev validate that sufficient time has passed for request to be cancelled
+    // @param dataStore DataStore
+    // @param createdAtBlock the block the request was created at
+    // @param requestType the type of the request
     function validateRequestCancellation(
         DataStore dataStore,
         uint256 createdAtBlock,

@@ -47,7 +47,6 @@ export async function signPrice({
   }
 
   const expandedPrecision = expandDecimals(1, precision);
-
   const hash = hashData(
     ["bytes32", "uint256", "uint256", "uint256", "bytes32", "address", "bytes32", "uint256", "uint256", "uint256"],
     [

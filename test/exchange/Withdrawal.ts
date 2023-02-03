@@ -272,4 +272,17 @@ describe("Exchange.Withdrawal", () => {
       "5000000000000000" // 0.005, 25 USD
     );
   });
+
+  it("handle withdrawal error", async () => {
+    await handleWithdrawal(fixture, {
+      create: {
+        market: ethUsdMarket,
+        marketTokenAmount: expandDecimals(49940, 18),
+        minLongTokenAmount: 100,
+      },
+      execute: {
+        gasUsageLabel: "executeWithdrawal",
+      },
+    });
+  });
 });

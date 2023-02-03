@@ -43,6 +43,16 @@ library MarketUtils {
         Price.Props shortTokenPrice;
     }
 
+    // @dev struct for the result of the getNextFundingAmountPerSize call
+    // @param longsPayShorts whether longs pay shorts or shorts pay longs
+    // @param fundingAmountPerSize_LongCollateral_LongPosition funding amount per
+    // size for users with a long position using long collateral
+    // @param fundingAmountPerSize_LongCollateral_ShortPosition funding amount per
+    // size for users with a short position using long collateral
+    // @param fundingAmountPerSize_ShortCollateral_LongPosition funding amount per
+    // size for users with a long position using short collateral
+    // @param fundingAmountPerSize_ShortCollateral_ShortPosition funding amount per
+    // size for users with a short position using short collateral
     struct GetNextFundingAmountPerSizeResult {
         bool longsPayShorts;
         int256 fundingAmountPerSize_LongCollateral_LongPosition;
@@ -51,6 +61,18 @@ library MarketUtils {
         int256 fundingAmountPerSize_ShortCollateral_ShortPosition;
     }
 
+    // @dev struct to avoid stack too deep errors for the getPoolValue call
+    // @param value the pool value
+    // @param longTokenAmount the amount of long token in the pool
+    // @param shortTokenAmount the amount of short token in the pool
+    // @param longTokenUsd the USD value of the long tokens in the pool
+    // @param shortTokenUsd the USD value of the short tokens in the pool
+    // @param totalBorrowingFees the total pending borrowing fees for the market
+    // @param borrowingFeeReceiverFactor the fee receiver factor for borrowing fees
+    // @param impactPoolAmount the amount of tokens in the impact pool
+    // @param longPnl the pending pnl of long positions
+    // @param shortPnl the pending pnl of short positions
+    // @param netPnl the net pnl of long and short positions
     struct GetPoolValueCache {
         uint256 value;
 
@@ -241,8 +263,8 @@ library MarketUtils {
     // @dev return the latest prices for the market tokens
     // the secondary price for market.indexToken is overwritten for certain order
     // types, use this value instead of the primary price for positions
-    // @param market the market values
     // @param oracle Oracle
+    // @param market the market values
     function getMarketPricesForPosition(Oracle oracle, Market.Props memory market) internal view returns (MarketPrices memory) {
         return MarketPrices(
             oracle.getLatestPrice(market.indexToken),
@@ -251,6 +273,9 @@ library MarketUtils {
         );
     }
 
+    // @dev return the primary prices for the market tokens
+    // @param oracle Oracle
+    // @param market the market values
     function getMarketPrices(Oracle oracle, Market.Props memory market) internal view returns (MarketPrices memory) {
         return MarketPrices(
             oracle.getPrimaryPrice(market.indexToken),
@@ -385,6 +410,13 @@ library MarketUtils {
         return longPnl + shortPnl;
     }
 
+    // @dev get the capped pending pnl for a market
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param isLong whether to check for the long or short side
+    // @param pnl the uncapped pnl of the market
+    // @param poolUsd the USD value of the pool
+    // @param pnlFactorType the pnl factor type to use
     function getCappedPnl(
         DataStore dataStore,
         address market,
@@ -401,6 +433,14 @@ library MarketUtils {
         return pnl > maxPnl ? maxPnl : pnl;
     }
 
+    // @dev get the pending pnl for a market
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param longToken the long token of the market
+    // @param shortToken the short token of the market
+    // @param indexTokenPrice the price of the index token
+    // @param isLong whether to check for the long or short side
+    // @param maximize whether to maximize or minimize the pnl
     function getPnl(
         DataStore dataStore,
         address market,
@@ -465,14 +505,31 @@ library MarketUtils {
         return dataStore.getUint(Keys.poolAmountKey(market, token));
     }
 
+    // @dev get the max amount of tokens allowed to be in the pool
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param token the token to check
+    // @return the max amount of tokens that are allowed in the pool
     function getMaxPoolAmount(DataStore dataStore, address market, address token) internal view returns (uint256) {
         return dataStore.getUint(Keys.maxPoolAmountKey(market, token));
     }
 
+    // @dev get the max open interest allowed for the market
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param isLong whether this is for the long or short side
+    // @return the max open interest allowed for the market
     function getMaxOpenInterest(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
         return dataStore.getUint(Keys.maxOpenInterestKey(market, isLong));
     }
 
+    // @dev increment the claimable collateral amount
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param market the market to increment the claimable collateral for
+    // @param token the claimable token
+    // @param account the account to increment the claimable collateral for
+    // @param delta the amount to increment
     function incrementClaimableCollateralAmount(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -1067,6 +1124,10 @@ library MarketUtils {
         }
     }
 
+    // @dev validate that the pool amount is within the max allowed amount
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param token the token to check
     function validatePoolAmount(
         DataStore dataStore,
         address market,
@@ -1184,7 +1245,8 @@ library MarketUtils {
         return (fundingDiffFactor != 0 && amount == 0, amount);
     }
 
-    // @dev get the borrowing fees for a position
+    // @dev get the borrowing fees for a position, assumes that cumulativeBorrowingFactor
+    // has already been updated to the latest value
     // @param dataStore DataStore
     // @param position Position.Props
     // @return the borrowing fees for a position
@@ -1197,6 +1259,12 @@ library MarketUtils {
         return Precision.applyFactor(position.sizeInUsd(), diffFactor);
     }
 
+    // @dev get the borrowing fees for a position by calculating the latest cumulativeBorrowingFactor
+    // @param dataStore DataStore
+    // @param position Position.Props
+    // @param market the position's market
+    // @param prices the prices of the market tokens
+    // @return the borrowing fees for a position
     function getNextBorrowingFees(DataStore dataStore, Position.Props memory position, Market.Props memory market, MarketPrices memory prices) internal view returns (uint256) {
         (uint256 nextCumulativeBorrowingFactor, /* uint256 delta */) = getNextCumulativeBorrowingFactor(
             dataStore,
@@ -1212,6 +1280,10 @@ library MarketUtils {
         return Precision.applyFactor(position.sizeInUsd(), diffFactor);
     }
 
+    // @dev get the total reserved USD required for positions
+    // @param market the market to check
+    // @param prices the prices of the market tokens
+    // @param isLong whether to get the value for the long or short side
     function getReservedUsd(
         DataStore dataStore,
         Market.Props memory market,
@@ -1238,6 +1310,10 @@ library MarketUtils {
         return reservedUsd;
     }
 
+    // @dev get the virtual inventory for swaps
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param token the token to check
     function getVirtualInventoryForSwaps(DataStore dataStore, address market, address token) internal view returns (bool, uint256) {
         bytes32 marketId = dataStore.getBytes32(Keys.virtualMarketIdKey(market));
         if (marketId == bytes32(0)) {
@@ -1247,6 +1323,9 @@ library MarketUtils {
         return (true, dataStore.getUint(Keys.virtualInventoryForSwapsKey(marketId, token)));
     }
 
+    // @dev get the virtual inventory for positions
+    // @param dataStore DataStore
+    // @param token the token to check
     function getVirtualInventoryForPositions(DataStore dataStore, address token) internal view returns (bool, int256) {
         bytes32 tokenId = dataStore.getBytes32(Keys.virtualTokenIdKey(token));
         if (tokenId == bytes32(0)) {
@@ -1256,6 +1335,9 @@ library MarketUtils {
         return (true, dataStore.getInt(Keys.virtualInventoryForPositionsKey(tokenId)));
     }
 
+    // @dev get the threshold position impact for virtual inventory
+    // @param dataStore DataStore
+    // @param token the token to check
     function getThresholdPositionImpactFactorForVirtualInventory(DataStore dataStore, address token) internal view returns (bool, int256) {
         bytes32 tokenId = dataStore.getBytes32(Keys.virtualTokenIdKey(token));
         if (tokenId == bytes32(0)) {
@@ -1265,6 +1347,9 @@ library MarketUtils {
         return (true, dataStore.getInt(Keys.thresholdPositionImpactFactorForVirtualInventoryKey(tokenId)));
     }
 
+    // @dev get the threshold swap impact for virtual inventory
+    // @param dataStore DataStore
+    // @param token the token to check
     function getThresholdSwapImpactFactorForVirtualInventory(DataStore dataStore, address market) internal view returns (bool, int256) {
         bytes32 marketId = dataStore.getBytes32(Keys.virtualMarketIdKey(market));
         if (marketId == bytes32(0)) {
@@ -1274,6 +1359,11 @@ library MarketUtils {
         return (true, dataStore.getInt(Keys.thresholdSwapImpactFactorForVirtualInventoryKey(marketId)));
     }
 
+    // @dev update the virtual inventory for swaps
+    // @param dataStore DataStore
+    // @param market the market to update
+    // @param token the token to update
+    // @param delta the update amount
     function applyDeltaToVirtualInventoryForSwaps(DataStore dataStore, address market, address token, int256 delta) internal returns (bool, uint256) {
         bytes32 marketId = dataStore.getBytes32(Keys.virtualMarketIdKey(market));
         if (marketId == bytes32(0)) {
@@ -1288,6 +1378,11 @@ library MarketUtils {
         return (true, nextValue);
     }
 
+    // @dev update the virtual inventory for positions
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param token the token to update
+    // @param delta the update amount
     function applyDeltaToVirtualInventoryForPositions(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -1309,6 +1404,11 @@ library MarketUtils {
         return (true, nextValue);
     }
 
+    // @dev get the open interest of a market
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param longToken the long token of the market
+    // @param shortToken the short token of the market
     function getOpenInterest(
         DataStore dataStore,
         address market,
@@ -1413,22 +1513,43 @@ library MarketUtils {
         return Calc.sumReturnInt256(openInterest, pnl);
     }
 
+    // @dev get the max position impact factor for decreasing position
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param isPositive whether the price impact is positive or negative
     function getMaxPositionImpactFactor(DataStore dataStore, address market, bool isPositive) internal view returns (uint256) {
         return dataStore.getUint(Keys.maxPositionImpactFactorKey(market, isPositive));
     }
 
+    // @dev get the max position impact factor for liquidations
+    // @param dataStore DataStore
+    // @param market the market to check
     function getMaxPositionImpactFactorForLiquidations(DataStore dataStore, address market) internal view returns (uint256) {
         return dataStore.getUint(Keys.maxPositionImpactFactorForLiquidationsKey(market));
     }
 
+    // @dev get the min collateral factor
+    // @param dataStore DataStore
+    // @param market the market to check
     function getMinCollateralFactor(DataStore dataStore, address market) internal view returns (uint256) {
         return dataStore.getUint(Keys.minCollateralFactorKey(market));
     }
 
+    // @dev get the min collateral factor for open interest multiplier
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param isLong whether it is for the long or short side
     function getMinCollateralFactorForOpenInterestMultiplier(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
         return dataStore.getUint(Keys.minCollateralFactorForOpenInterestMultiplierKey(market, isLong));
     }
 
+    // @dev get the min collateral factor for open interest
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param longToken the long token of the market
+    // @param shortToken the short token of the market
+    // @param openInterestDelta the change in open interest
+    // @param isLong whether it is for the long or short side
     function getMinCollateralFactorForOpenInterest(
         DataStore dataStore,
         address market,
@@ -1464,6 +1585,7 @@ library MarketUtils {
 
     // @dev get the max pnl factor for a market
     // @param dataStore DataStore
+    // @param pnlFactorType the type of the pnl factor
     // @param market the market to check
     // @param isLong whether to get the value for longs or shorts
     // @return the max pnl factor for a market
@@ -1471,6 +1593,10 @@ library MarketUtils {
         return dataStore.getUint(Keys.maxPnlFactorKey(pnlFactorType, market, isLong));
     }
 
+    // @dev get the min pnl factor after ADL
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param isLong whether to check the long or short side
     function getMinPnlFactorAfterAdl(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
         return dataStore.getUint(Keys.minPnlFactorAfterAdlKey(market, isLong));
     }
@@ -1483,6 +1609,10 @@ library MarketUtils {
         return dataStore.getUint(Keys.fundingFactorKey(market));
     }
 
+    // @dev get the funding exponent factor for a market
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @return the funding exponent factor for a market
     function getFundingExponentFactor(DataStore dataStore, address market) internal view returns (uint256) {
         return dataStore.getUint(Keys.fundingExponentFactorKey(market));
     }
@@ -1531,6 +1661,11 @@ library MarketUtils {
         return block.timestamp - updatedAt;
     }
 
+    // @dev get the funding factor per second
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param diffUsd the difference between the long and short open interest
+    // @param totalOpenInterest the total open interest
     function getFundingFactorPerSecond(
         DataStore dataStore,
         address market,
@@ -1562,6 +1697,11 @@ library MarketUtils {
         return dataStore.getUint(Keys.borrowingFactorKey(market, isLong));
     }
 
+    // @dev get the borrowing exponent factor for a market
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param isLong whether to check the long or short side
+    // @return the borrowing exponent factor for a market
     function getBorrowingExponentFactor(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
         return dataStore.getUint(Keys.borrowingExponentFactorKey(market, isLong));
     }
@@ -1575,6 +1715,12 @@ library MarketUtils {
         return dataStore.getUint(Keys.cumulativeBorrowingFactorKey(market, isLong));
     }
 
+    // @dev increase the cumulative borrowing factor
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param market the market to increment the borrowing factor for
+    // @param isLong whether to increment the long or short side
+    // @param delta the increase amount
     function incrementCumulativeBorrowingFactor(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -1698,6 +1844,11 @@ library MarketUtils {
         return (nextCumulativeBorrowingFactor, delta);
     }
 
+    // @dev get the borrowing factor per second
+    // @param dataStore DataStore
+    // @param market the market to get the borrowing factor per second for
+    // @param prices the prices of the market tokens
+    // @param isLong whether to get the factor for the long or short side
     function getBorrowingFactorPerSecond(
         DataStore dataStore,
         Market.Props memory market,
@@ -1799,6 +1950,9 @@ library MarketUtils {
         return marketTokenAmount * poolValue / supply;
     }
 
+    // @dev validate that the specified market exists and is enabled
+    // @param dataStore DataStore
+    // @param marketAddress the address of the market
     function validateEnabledMarket(DataStore dataStore, address marketAddress) internal view {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
 
@@ -1812,7 +1966,8 @@ library MarketUtils {
         }
     }
 
-    // @dev validate that a market exists
+    // @dev validate that the specified market exists and is enabled
+    // @param dataStore DataStore
     // @param market the market to check
     function validateEnabledMarket(DataStore dataStore, Market.Props memory market) internal view {
         if (market.marketToken == address(0)) {
@@ -1825,26 +1980,39 @@ library MarketUtils {
         }
     }
 
+    // @dev validate that the positions can be opened in the given market
+    // @param market the market to check
     function validatePositionMarket(Market.Props memory market) internal pure {
         if (isSwapOnlyMarket(market)) {
             revert InvalidPositionMarket(market.marketToken);
         }
     }
 
+    // @dev check if a market only supports swaps and not positions
+    // @param market the market to check
     function isSwapOnlyMarket(Market.Props memory market) internal pure returns (bool) {
         return market.indexToken == address(0);
     }
 
+    // @dev check if the given token is a collateral token of the market
+    // @param market the market to check
+    // @param token the token to check
     function isMarketCollateralToken(Market.Props memory market, address token) internal pure returns (bool) {
         return token == market.longToken || token == market.shortToken;
     }
 
+    // @dev validate if the given token is a collateral token of the market
+    // @param market the market to check
+    // @param token the token to check
     function validateMarketCollateralToken(Market.Props memory market, address token) internal pure {
         if (!isMarketCollateralToken(market, token)) {
             revert InvalidCollateralTokenForMarket(market.marketToken, token);
         }
     }
 
+    // @dev get the enabled market, revert if the market does not exist or is not enabled
+    // @param dataStore DataStore
+    // @param marketAddress the address of the market
     function getEnabledMarket(DataStore dataStore, address marketAddress) internal view returns (Market.Props memory) {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
         validateEnabledMarket(dataStore, market);
@@ -1864,6 +2032,11 @@ library MarketUtils {
         return markets;
     }
 
+    // @dev validate that the pending pnl is below the allowed amount
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param prices the prices of the market tokens
+    // @param pnlFactorType the pnl factor type to check
     function validateMaxPnl(
         DataStore dataStore,
         Market.Props memory market,
@@ -1895,25 +2068,37 @@ library MarketUtils {
         }
     }
 
+    // @dev check if the pending pnl exceeds the allowed amount
+    // @param dataStore DataStore
+    // @param oracle Oracle
+    // @param market the market to check
+    // @param isLong whether to check the long or short side
+    // @param pnlFactorType the pnl factor type to check
     function isPnlFactorExceeded(
         DataStore dataStore,
         Oracle oracle,
-        address _market,
+        address market,
         bool isLong,
         bytes32 pnlFactorType
     ) internal view returns (bool, int256, uint256) {
-        Market.Props memory market = getEnabledMarket(dataStore, _market);
-        MarketPrices memory prices = getMarketPrices(oracle, market);
+        Market.Props memory _market = getEnabledMarket(dataStore, market);
+        MarketPrices memory prices = getMarketPrices(oracle, _market);
 
         return isPnlFactorExceeded(
             dataStore,
-            market,
+            _market,
             prices,
             isLong,
             pnlFactorType
         );
     }
 
+    // @dev check if the pending pnl exceeds the allowed amount
+    // @param dataStore DataStore
+    // @param _market the market to check
+    // @param prices the prices of the market tokens
+    // @param isLong whether to check the long or short side
+    // @param pnlFactorType the pnl factor type to check
     function isPnlFactorExceeded(
         DataStore dataStore,
         Market.Props memory market,

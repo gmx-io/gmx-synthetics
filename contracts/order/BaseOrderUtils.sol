@@ -38,6 +38,7 @@ library BaseOrderUtils {
         Order.DecreasePositionSwapType decreasePositionSwapType;
         bool isLong;
         bool shouldUnwrapNativeToken;
+        bytes32 referralCode;
     }
 
     // @param receiver for order.receiver

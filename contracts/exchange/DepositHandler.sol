@@ -58,13 +58,13 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         );
     }
 
-    function cancelDeposit(
-        bytes32 key,
-        Deposit.Props memory deposit
-    ) external globalNonReentrant onlyController {
+    // @dev cancels a deposit
+    // @param key the deposit key
+    function cancelDeposit(bytes32 key) external globalNonReentrant onlyController {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
+        Deposit.Props memory deposit = DepositStoreUtils.get(_dataStore, key);
 
         FeatureUtils.validateFeature(_dataStore, Keys.cancelDepositFeatureDisabledKey(address(this)));
 
@@ -114,6 +114,9 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         }
     }
 
+    // @dev simulate execution of a deposit to check for any errors
+    // @param key the deposit key
+    // @param params OracleUtils.SimulatePricesParams
     function simulateExecuteDeposit(
         bytes32 key,
         OracleUtils.SimulatePricesParams memory params
@@ -171,6 +174,10 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         ExecuteDepositUtils.executeDeposit(params);
     }
 
+    // @dev handle errors from deposits
+    // @param key the deposit key
+    // @param startingGas the starting gas of the txn
+    // @param reasonBytes the reason bytes of the error
     function _handleDepositError(
         bytes32 key,
         uint256 startingGas,

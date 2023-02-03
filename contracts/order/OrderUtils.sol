@@ -27,6 +27,7 @@ import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
 import "../utils/ReceiverUtils.sol";
+import "../referral/ReferralUtils.sol";
 
 // @title OrderUtils
 // @dev Library for order functions
@@ -50,9 +51,12 @@ library OrderUtils {
         DataStore dataStore,
         EventEmitter eventEmitter,
         OrderVault orderVault,
+        IReferralStorage referralStorage,
         address account,
         BaseOrderUtils.CreateOrderParams memory params
     ) external returns (bytes32) {
+        ReferralUtils.setTraderReferralCode(referralStorage, account, params.referralCode);
+
         uint256 initialCollateralDeltaAmount;
 
         address wnt = TokenUtils.wnt(dataStore);

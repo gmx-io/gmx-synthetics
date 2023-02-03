@@ -12,7 +12,7 @@ contract AdlHandler is BaseOrderHandler {
     using Order for Order.Props;
     using Array for uint256[];
 
-    error AdlNotRequired(int256 pnlToPoolFactor);
+    error AdlNotRequired(int256 pnlToPoolFactor, uint256 maxPnlFactorForAdl);
     error InvalidAdl(int256 nextPnlToPoolFactor, int256 pnlToPoolFactor);
     error PnlOvercorrected(int256 nextPnlToPoolFactor, uint256 minPnlFactorForAdl);
 
@@ -24,6 +24,7 @@ contract AdlHandler is BaseOrderHandler {
         uint256[] maxOracleBlockNumbers;
         bytes32 key;
         bool shouldAllowAdl;
+        uint256 maxPnlFactorForAdl;
         int256 pnlToPoolFactor;
         int256 nextPnlToPoolFactor;
         uint256 minPnlFactorForAdl;
@@ -115,7 +116,7 @@ contract AdlHandler is BaseOrderHandler {
             cache.maxOracleBlockNumbers
         );
 
-        (cache.shouldAllowAdl, cache.pnlToPoolFactor, /* maxPnlFactor */) = MarketUtils.isPnlFactorExceeded(
+        (cache.shouldAllowAdl, cache.pnlToPoolFactor, cache.maxPnlFactorForAdl) = MarketUtils.isPnlFactorExceeded(
             dataStore,
             oracle,
             market,
@@ -124,7 +125,7 @@ contract AdlHandler is BaseOrderHandler {
         );
 
         if (!cache.shouldAllowAdl) {
-            revert AdlNotRequired(cache.pnlToPoolFactor);
+            revert AdlNotRequired(cache.pnlToPoolFactor, cache.maxPnlFactorForAdl);
         }
 
         cache.key = AdlUtils.createAdlOrder(

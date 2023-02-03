@@ -5,6 +5,7 @@ import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, getOrderCount, getOrderKeys, createOrder, executeOrder, handleOrder } from "../../utils/order";
 import { getPositionCount, getAccountPositionCount } from "../../utils/position";
+import { hashString } from "../../utils/hash";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.IncreaseOrder", () => {
@@ -12,13 +13,13 @@ describe("Exchange.IncreaseOrder", () => {
 
   let fixture;
   let user0, user1;
-  let reader, dataStore, ethUsdMarket, wnt;
+  let reader, dataStore, referralStorage, ethUsdMarket, wnt;
   let executionFee;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1 } = fixture.accounts);
-    ({ reader, dataStore, ethUsdMarket, wnt } = fixture.contracts);
+    ({ reader, dataStore, referralStorage, ethUsdMarket, wnt } = fixture.contracts);
     ({ executionFee } = fixture.props);
 
     await handleDeposit(fixture, {
@@ -163,5 +164,37 @@ describe("Exchange.IncreaseOrder", () => {
 
     expect(await getAccountPositionCount(dataStore, user1.address)).eq(1);
     expect(await getPositionCount(dataStore)).eq(2);
+  });
+
+  it("referral code", async () => {
+    const referralCode = hashString("referralCode");
+
+    const params = {
+      market: ethUsdMarket,
+      initialCollateralToken: wnt,
+      initialCollateralDeltaAmount: expandDecimals(10, 18),
+      swapPath: [],
+      sizeDeltaUsd: decimalToFloat(200 * 1000),
+      acceptablePrice: expandDecimals(5001, 12),
+      executionFee: expandDecimals(1, 15),
+      minOutputAmount: expandDecimals(50000, 6),
+      orderType: OrderType.MarketIncrease,
+      isLong: true,
+      shouldUnwrapNativeToken: false,
+      referralCode,
+    };
+
+    await referralStorage.connect(user1).registerCode(referralCode);
+
+    expect(await referralStorage.traderReferralCodes(user0.address)).eq(ethers.constants.HashZero);
+
+    await handleOrder(fixture, {
+      create: params,
+      execute: {
+        gasUsageLabel: "executeOrder",
+      },
+    });
+
+    expect(await referralStorage.traderReferralCodes(user0.address)).eq(referralCode);
   });
 });

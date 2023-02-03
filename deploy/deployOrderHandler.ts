@@ -18,7 +18,10 @@ const func = createDeployFunction({
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
   libraryNames: ["MarketStoreUtils", "OrderUtils", "OrderStoreUtils", "OrderEventUtils"],
-  afterDeploy: async ({ deployedContract }) => {
+  afterDeploy: async ({ deployedContract, getNamedAccounts, deployments }) => {
+    const { deployer } = await getNamedAccounts();
+    const { execute } = deployments;
+    await execute("ReferralStorage", { from: deployer, log: true }, "setHandler", deployedContract.address, true);
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
   },
 });

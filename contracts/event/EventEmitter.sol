@@ -43,6 +43,9 @@ contract EventEmitter is RoleModule {
 
     constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
 
+    // @dev emit a general event log
+    // @param eventName the name of the event
+    // @param eventData the event data
     function emitEventLog(
         string memory eventName,
         EventUtils.EventLogData memory eventData
@@ -55,6 +58,10 @@ contract EventEmitter is RoleModule {
         );
     }
 
+    // @dev emit a general event log
+    // @param eventName the name of the event
+    // @param topic1 topic1 for indexing
+    // @param eventData the event data
     function emitEventLog1(
         string memory eventName,
         bytes32 topic1,
@@ -69,6 +76,11 @@ contract EventEmitter is RoleModule {
         );
     }
 
+    // @dev emit a general event log
+    // @param eventName the name of the event
+    // @param topic1 topic1 for indexing
+    // @param topic2 topic2 for indexing
+    // @param eventData the event data
     function emitEventLog2(
         string memory eventName,
         bytes32 topic1,
