@@ -58,13 +58,13 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         );
     }
 
-    function cancelWithdrawal(
-        bytes32 key,
-        Withdrawal.Props memory withdrawal
-    ) external globalNonReentrant onlyController {
+    // @dev cancels a withdrawal
+    // @param key the withdrawal key
+    function cancelWithdrawal(bytes32 key) external globalNonReentrant onlyController {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
+        Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(_dataStore, key);
 
         FeatureUtils.validateFeature(_dataStore, Keys.cancelWithdrawalFeatureDisabledKey(address(this)));
 
@@ -115,6 +115,9 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         }
     }
 
+    // @dev simulate execution of a withdrawal to check for any errors
+    // @param key the withdrawal key
+    // @param params OracleUtils.SimulatePricesParams
     function simulateExecuteWithdrawal(
         bytes32 key,
         OracleUtils.SimulatePricesParams memory params

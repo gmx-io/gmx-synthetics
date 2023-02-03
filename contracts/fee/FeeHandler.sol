@@ -24,6 +24,9 @@ contract FeeHandler is ReentrancyGuard, RoleModule {
         eventEmitter = _eventEmitter;
     }
 
+    // @dev claim fees from the specified markets
+    // @param markets the markets to claim fees from
+    // @param tokens the fee tokens to claim
     function claimFees(
         address[] memory markets,
         address[] memory tokens

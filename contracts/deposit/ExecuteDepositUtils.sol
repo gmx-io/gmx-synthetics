@@ -372,6 +372,12 @@ library ExecuteDepositUtils {
         return mintAmount;
     }
 
+    // @dev this should only be called if the long and short tokens are the same
+    // calculate the long and short amounts that would lead to the smallest amount
+    // of price impact by helping to balance the pool
+    // @param dataStore DataStore
+    // @param market the market for the deposit
+    // @param longTokenAmount the long token amount
     function getAdjustedLongAndShortTokenAmounts(
         DataStore dataStore,
         Market.Props memory market,

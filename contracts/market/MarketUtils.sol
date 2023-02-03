@@ -43,6 +43,16 @@ library MarketUtils {
         Price.Props shortTokenPrice;
     }
 
+    // @dev struct for the result of the getNextFundingAmountPerSize call
+    // @param longsPayShorts whether longs pay shorts or shorts pay longs
+    // @param fundingAmountPerSize_LongCollateral_LongPosition funding amount per
+    // size for users with a long position using long collateral
+    // @param fundingAmountPerSize_LongCollateral_ShortPosition funding amount per
+    // size for users with a short position using long collateral
+    // @param fundingAmountPerSize_ShortCollateral_LongPosition funding amount per
+    // size for users with a long position using short collateral
+    // @param fundingAmountPerSize_ShortCollateral_ShortPosition funding amount per
+    // size for users with a short position using short collateral
     struct GetNextFundingAmountPerSizeResult {
         bool longsPayShorts;
         int256 fundingAmountPerSize_LongCollateral_LongPosition;
@@ -51,6 +61,18 @@ library MarketUtils {
         int256 fundingAmountPerSize_ShortCollateral_ShortPosition;
     }
 
+    // @dev struct to avoid stack too deep errors for the getPoolValue call
+    // @param value the pool value
+    // @param longTokenAmount the amount of long token in the pool
+    // @param shortTokenAmount the amount of short token in the pool
+    // @param longTokenUsd the USD value of the long tokens in the pool
+    // @param shortTokenUsd the USD value of the short tokens in the pool
+    // @param totalBorrowingFees the total pending borrowing fees for the market
+    // @param borrowingFeeReceiverFactor the fee receiver factor for borrowing fees
+    // @param impactPoolAmount the amount of tokens in the impact pool
+    // @param longPnl the pending pnl of long positions
+    // @param shortPnl the pending pnl of short positions
+    // @param netPnl the net pnl of long and short positions
     struct GetPoolValueCache {
         uint256 value;
 
@@ -241,8 +263,8 @@ library MarketUtils {
     // @dev return the latest prices for the market tokens
     // the secondary price for market.indexToken is overwritten for certain order
     // types, use this value instead of the primary price for positions
-    // @param market the market values
     // @param oracle Oracle
+    // @param market the market values
     function getMarketPricesForPosition(Oracle oracle, Market.Props memory market) internal view returns (MarketPrices memory) {
         return MarketPrices(
             oracle.getLatestPrice(market.indexToken),
@@ -251,6 +273,9 @@ library MarketUtils {
         );
     }
 
+    // @dev return the primary prices for the market tokens
+    // @param oracle Oracle
+    // @param market the market values
     function getMarketPrices(Oracle oracle, Market.Props memory market) internal view returns (MarketPrices memory) {
         return MarketPrices(
             oracle.getPrimaryPrice(market.indexToken),
@@ -385,6 +410,13 @@ library MarketUtils {
         return longPnl + shortPnl;
     }
 
+    // @dev get the capped pending pnl for a market
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param isLong whether to check for the long or short side
+    // @param pnl the uncapped pnl of the market
+    // @param poolUsd the USD value of the pool
+    // @param pnlFactorType the pnl factor type to use
     function getCappedPnl(
         DataStore dataStore,
         address market,
@@ -401,6 +433,14 @@ library MarketUtils {
         return pnl > maxPnl ? maxPnl : pnl;
     }
 
+    // @dev get the pending pnl for a market
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param longToken the long token of the market
+    // @param shortToken the short token of the market
+    // @param indexTokenPrice the price of the index token
+    // @param isLong whether to check for the long or short side
+    // @param maximize whether to maximize or minimize the pnl
     function getPnl(
         DataStore dataStore,
         address market,
@@ -465,10 +505,20 @@ library MarketUtils {
         return dataStore.getUint(Keys.poolAmountKey(market, token));
     }
 
+    // @dev get the max amount of tokens allowed to be in the pool
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param token the token to check
+    // @return the max amount of tokens that are allowed in the pool
     function getMaxPoolAmount(DataStore dataStore, address market, address token) internal view returns (uint256) {
         return dataStore.getUint(Keys.maxPoolAmountKey(market, token));
     }
 
+    // @dev get the max open interest allowed for the market
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param isLong whether this is for the long or short side
+    // @return the max open interest allowed for the market
     function getMaxOpenInterest(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
         return dataStore.getUint(Keys.maxOpenInterestKey(market, isLong));
     }

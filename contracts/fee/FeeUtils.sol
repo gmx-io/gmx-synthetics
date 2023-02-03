@@ -23,6 +23,13 @@ library FeeUtils {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
+    // @dev increment the claimable fee amount
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param market the market to increment claimable fees for
+    // @param token the fee token
+    // @param feeReceiverAmount the amount to increment
+    // @param feeType the type of the fee
     function incrementClaimableFeeAmount(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -52,6 +59,12 @@ library FeeUtils {
         );
     }
 
+    // @dev claim fees for the specified market
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param market the market to claim fees for
+    // @param token the fee token
+    // @param receiver the receiver of the claimed fees
     function claimFees(
         DataStore dataStore,
         EventEmitter eventEmitter,

@@ -109,13 +109,11 @@ contract OrderHandler is BaseOrderHandler {
      *
      * @param key The unique ID of the order to be cancelled
      */
-    function cancelOrder(
-        bytes32 key,
-        Order.Props memory order
-    ) external globalNonReentrant onlyController {
+    function cancelOrder(bytes32 key) external globalNonReentrant onlyController {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
+        Order.Props memory order = OrderStoreUtils.get(_dataStore, key);
 
         FeatureUtils.validateFeature(_dataStore, Keys.cancelOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
 
@@ -139,6 +137,9 @@ contract OrderHandler is BaseOrderHandler {
         );
     }
 
+    // @dev simulate execution of an order to check for any errors
+    // @param key the order key
+    // @param params OracleUtils.SimulatePricesParams
     function simulateExecuteOrder(
         bytes32 key,
         OracleUtils.SimulatePricesParams memory params

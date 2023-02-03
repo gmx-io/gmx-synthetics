@@ -129,7 +129,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
             revert Unauthorized(msg.sender, "account for cancelDeposit");
         }
 
-        depositHandler.cancelDeposit(key, deposit);
+        depositHandler.cancelDeposit(key);
     }
 
     /**
@@ -156,7 +156,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
             revert Unauthorized(msg.sender, "account for cancelWithdrawal");
         }
 
-        withdrawalHandler.cancelWithdrawal(key, withdrawal);
+        withdrawalHandler.cancelWithdrawal(key);
     }
 
     /**
@@ -247,7 +247,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
             revert Unauthorized(msg.sender, "account for cancelOrder");
         }
 
-        orderHandler.cancelOrder(key, order);
+        orderHandler.cancelOrder(key);
     }
 
     /**
