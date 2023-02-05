@@ -401,6 +401,44 @@ If a market has a long collateral token that is different from the index token, 
 
 Markets have a reserve factor that allows open interest to be capped to a percentage of the pool size, this reduces the impact of profits of short positions and reduces the risk that long positions cannot be fully paid out.
 
+# Roles
+
+Roles are managed in the RoleStore, the RoleAdmin has access to grant and revoke any role.
+
+The RoleAdmin will be the deployer initially, but this should be removed after roles have been setup.
+
+After the initial setup:
+
+- Only the Timelock contract should have the RoleAdmin role
+
+- System values should only be set using the Config contract
+
+- No EOA should have a Controller role
+
+- Config keepers and timelock admins could potentially disrupt regular operation through the disabling of features, incorrect setting of values, whitelisting malicious tokens, abusing the positive price impact value, etc
+
+- It is expected that the timelock multisig should revoke the permissions of malicious or compromised accounts
+
+# Known Issues
+
+- Collateral tokens need to be whitelisted with a configured TOKEN_TRANSFER_GAS_LIMIT
+
+- Tokens that change balance on transfer, with token burns, etc, are not compatible with the system and should not be whitelisted
+
+- Order keepers can use prices from different blocks for limit orders with a swap, which would lead to different output amounts
+
+- Order keepers and frozen order keepers could potentially extract value through transaction ordering, delayed transaction execution etc, this will be partially mitigated with a keeper network
+
+- Order keepers are expected to validate whether a transaction will revert before sending the transaction to minimize gas wastage
+
+- Oracle signers are expected to accurately report the price of tokens
+
+- A user can reduce price impact by using high leverage positions, this is partially mitigated with the MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER value
+
+- Price impact can be reduced by using positions and swaps and trading across markets, chains, forks, other protocols, this is partially mitigated with virtual inventory tracking
+
+- Virtual IDs must be set on market creation / token whitelisting, if it is set after trading for the token / market is done, the tracking would not be accurate and may need to be adjusted
+
 # Commands
 
 To compile contracts:
