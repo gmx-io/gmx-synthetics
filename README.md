@@ -383,9 +383,11 @@ For example:
 - The user would receive (original position collateral - $150)
 - The pool would have an extra $150 of collateral which continues to have a net zero impact on the pool value due to the 0.03 index tokens in the position impact pool
 
-If the index token is different from both the long and short token of the market, then it is possible that the pool value becomes significantly affected by the position impact pool, if the position impact pool is very large and the index token has a large price increase. Due to this, there should be a method to gradually reduce the size of the position impact pool.
+If the index token is different from both the long and short token of the market, then it is possible that the pool value becomes significantly affected by the position impact pool, if the position impact pool is very large and the index token has a large price increase. An option to gradually reduce the size of the position impact pool may be added if this becomes an issue.
 
 Price impact is also tracked using a virtual inventory value for positions and swaps, this tracks the imbalance of tokens across similar markets, e.g. ETH/USDC, ETH/USDT.
+
+In case of a large price movement, it is possible that a large amount of positions are decreased or liquidated on one side causing a significant imbalance between long and short open interest, this could lead to very high price impact values. To mitigate this, a max position impact factor value can be configured. If the current price impact exceeds the max negative price impact, then any excess collateral deducted beyond the max negative price impact would be held within the contract, if there was no price manipulation detected, this collateral can be released to the user. When the negative price impact is capped, it may be profitable to open and immediately close positions, since the positive price impact may now be more than the capped negative price impact. To avoid this, the max positive price impact should be configured to be below the max negative price impact.
 
 # Fees
 
@@ -400,6 +402,42 @@ If a market has stablecoins as the short collateral token it should be able to f
 If a market has a long collateral token that is different from the index token, the long profits may not be fully paid out if the price increase of the index token exceeds the price increase of the long collateral token.
 
 Markets have a reserve factor that allows open interest to be capped to a percentage of the pool size, this reduces the impact of profits of short positions and reduces the risk that long positions cannot be fully paid out.
+
+# Parameters
+
+- minCollateralFactor: This determines the maximum amount of leverage allowed for positions, e.g. if the minCollateralFactor is equivalent to 1% for a market, the collateral of a position in that market must be more than or equal to 1% of the position size
+
+- maxPoolAmount: The maximum amount of tokens that can be deposited into a market
+
+- maxOpenInterest: The maximum open interest that can be opened for a market
+
+- reserveFactor: This determines the maximum allowed ratio of (worth of tokens reserved for positions) / (tokens in the pool)
+
+- maxPnlFactor: The maximum ratio of (PnL / worth of tokens in the pool)
+
+- positionFeeFactor: This determines the percentage amount of fees to be deducted for position increase / decrease actions, the fee amount is based on the change in position size
+
+- positionImpactFactor: This is the "price impact factor" for positions described in the "Price Impact" section
+
+- maxPositionImpactFactor: This is the "max price impact" for positions described in the "Price Impact" section
+
+- positionImpactExponentFactor: This is the "price impact exponent" value for position actions, described in the "Price Impact" section
+
+- swapFeeFactor: This determines the percentage amount of fees to be deducted for swaps, the fee amount is based on the swap amount
+
+- swapImpactFactor: This is the "price impact factor" described in the "Price Impact" section
+
+- swapImpactExponentFactor: This is the "price impact exponent" value for deposits and swaps, described in the "Price Impact" section above
+
+- fundingFactor: This is the "funding factor per second" value described in the "Funding Fees" section
+
+- borrowingFactorForLongs: This is the "borrowing factor" for long positions described in the "Borrowing Fees" section
+
+- borrowingFactorForShorts: This is the "borrowing factor" for short positions described in the "Borrowing Fees" section
+
+- borrowingExponentFactorForLongs: This is the "borrowing exponent factor" for long positions described in the "Borrowing Fees" section
+
+- borrowingExponentFactorForShorts: This is the "borrowing exponent factor" for long positions described in the "Borrowing Fees" section
 
 # Roles
 
