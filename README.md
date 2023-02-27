@@ -405,7 +405,7 @@ Markets have a reserve factor that allows open interest to be capped to a percen
 
 # Parameters
 
-- minCollateralFactor: This determines the maximum amount of leverage allowed for positions, e.g. if the minCollateralFactor is equivalent to 1% for a market, the collateral of a position in that market must be more than or equal to 1% of the position size
+- minCollateralFactor: This determines the minimum allowed ratio of (position collateral) / (position size)
 
 - maxPoolAmount: The maximum amount of tokens that can be deposited into a market
 
