@@ -1,25 +1,29 @@
 import { expect } from "chai";
+import { mine } from "@nomicfoundation/hardhat-network-helpers";
 
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals } from "../../utils/math";
 import { printGasUsage } from "../../utils/gas";
 import { getDepositCount, getDepositKeys, createDeposit } from "../../utils/deposit";
+import { REQUEST_EXPIRATION_BLOCK_AGE } from "../../utils/keys";
 
 describe("Exchange.CancelDeposit", () => {
   const { provider } = ethers;
 
   let fixture;
   let user0, user1, user2;
-  let reader, dataStore, exchangeRouter, ethUsdMarket, ethUsdSpotOnlyMarket;
+  let reader, dataStore, exchangeRouter, depositHandler, ethUsdMarket, ethUsdSpotOnlyMarket;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ reader, dataStore, exchangeRouter, ethUsdMarket, ethUsdSpotOnlyMarket } = fixture.contracts);
+    ({ reader, dataStore, exchangeRouter, depositHandler, ethUsdMarket, ethUsdSpotOnlyMarket } = fixture.contracts);
   });
 
   it("cancelDeposit", async () => {
+    await dataStore.setUint(REQUEST_EXPIRATION_BLOCK_AGE, 5);
+
     await createDeposit(fixture, {
       receiver: user1,
       callbackContract: user2,
@@ -62,6 +66,14 @@ describe("Exchange.CancelDeposit", () => {
       .withArgs(user1.address, "account for cancelDeposit");
 
     expect(await getDepositCount(dataStore)).eq(1);
+
+    await expect(exchangeRouter.connect(user0).cancelDeposit(depositKeys[0]))
+      .to.be.revertedWithCustomError(depositHandler, "RequestNotYetCancellable")
+      .withArgs(2, 5, "Deposit");
+
+    expect(await getDepositCount(dataStore)).eq(1);
+
+    mine(10);
 
     const txn = await exchangeRouter.connect(user0).cancelDeposit(depositKeys[0]);
 
