@@ -26,51 +26,40 @@ describe("Exchange.Deposit", () => {
   });
 
   it("createDeposit", async () => {
-    const exampleParams = {
-      receiver: user1.address,
-      callbackContract: user2.address,
-      market: ethUsdMarket.marketToken,
-      longTokenAmount: expandDecimals(10, 18),
-      shortTokenAmount: expandDecimals(10 * 5000, 6),
+    const params = {
+      receiver: user1,
+      callbackContract: user2,
+      market: ethUsdMarket,
       initialLongToken: ethUsdMarket.longToken,
       initialShortToken: ethUsdMarket.shortToken,
       longTokenSwapPath: [ethUsdMarket.marketToken, ethUsdSpotOnlyMarket.marketToken],
       shortTokenSwapPath: [ethUsdSpotOnlyMarket.marketToken, ethUsdMarket.marketToken],
       minMarketTokens: 100,
       shouldUnwrapNativeToken: true,
-      executionFee: "500",
+      executionFee: "0",
       callbackGasLimit: "200000",
+      gasUsageLabel: "createDeposit",
     };
 
     const _createDepositFeatureDisabledKey = keys.createDepositFeatureDisabledKey(depositHandler.address);
 
     await dataStore.setBool(_createDepositFeatureDisabledKey, true);
 
-    await expect(depositHandler.connect(user0).createDeposit(user0.address, exampleParams))
+    await expect(createDeposit(fixture, { ...params, sender: user0 }))
       .to.be.revertedWithCustomError(depositHandler, "Unauthorized")
       .withArgs(user0.address, "CONTROLLER");
 
-    await expect(depositHandler.createDeposit(user0.address, exampleParams))
+    await expect(createDeposit(fixture, params))
       .to.be.revertedWithCustomError(depositHandler, "DisabledFeature")
       .withArgs(_createDepositFeatureDisabledKey);
 
     await dataStore.setBool(_createDepositFeatureDisabledKey, false);
 
     await createDeposit(fixture, {
-      receiver: user1,
-      callbackContract: user2,
-      market: ethUsdMarket,
+      ...params,
       longTokenAmount: expandDecimals(10, 18),
       shortTokenAmount: expandDecimals(10 * 5000, 6),
-      initialLongToken: ethUsdMarket.longToken,
-      initialShortToken: ethUsdMarket.shortToken,
-      longTokenSwapPath: [ethUsdMarket.marketToken, ethUsdSpotOnlyMarket.marketToken],
-      shortTokenSwapPath: [ethUsdSpotOnlyMarket.marketToken, ethUsdMarket.marketToken],
-      minMarketTokens: 100,
-      shouldUnwrapNativeToken: true,
       executionFee: "500",
-      callbackGasLimit: "200000",
-      gasUsageLabel: "createDeposit",
     });
 
     const block = await provider.getBlock();

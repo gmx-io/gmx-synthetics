@@ -26,6 +26,7 @@ export async function createDeposit(fixture, overrides: any = {}) {
   const { depositVault, depositHandler, wnt, ethUsdMarket } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
+  const sender = overrides.sender || wallet;
   const account = overrides.account || user0;
   const receiver = overrides.receiver || account;
   const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
@@ -68,7 +69,7 @@ export async function createDeposit(fixture, overrides: any = {}) {
   };
 
   await logGasUsage({
-    tx: depositHandler.connect(wallet).createDeposit(account.address, params, {
+    tx: depositHandler.connect(sender).createDeposit(account.address, params, {
       gasLimit: "1000000",
     }),
     label: overrides.gasUsageLabel,
