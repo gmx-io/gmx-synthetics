@@ -225,7 +225,9 @@ contract OrderHandler is BaseOrderHandler {
 
         if (
             OracleUtils.isEmptyPriceError(errorSelector) ||
-            errorSelector == InvalidKeeperForFrozenOrder.selector
+            errorSelector == FeatureUtils.DisabledFeature.selector ||
+            errorSelector == InvalidKeeperForFrozenOrder.selector ||
+            errorSelector == BaseOrderUtils.InvalidOrderPrices.selector
         ) {
             ErrorUtils.revertWithCustomError(reasonBytes);
         }
@@ -245,11 +247,7 @@ contract OrderHandler is BaseOrderHandler {
                 reasonBytes
             );
         } else {
-            if (
-                errorSelector == FeatureUtils.DisabledFeature.selector ||
-                errorSelector == PositionUtils.EmptyPosition.selector ||
-                errorSelector == BaseOrderUtils.InvalidOrderPrices.selector
-            ) {
+            if (errorSelector == PositionUtils.EmptyPosition.selector) {
                 ErrorUtils.revertWithCustomError(reasonBytes);
             }
 

@@ -5,7 +5,7 @@ import { deployFixture } from "../../utils/fixture";
 import { expandDecimals } from "../../utils/math";
 import { printGasUsage } from "../../utils/gas";
 import { getDepositCount, getDepositKeys, createDeposit } from "../../utils/deposit";
-import { REQUEST_EXPIRATION_BLOCK_AGE } from "../../utils/keys";
+import * as keys from "../../utils/keys";
 
 describe("Exchange.CancelDeposit", () => {
   const { provider } = ethers;
@@ -22,7 +22,7 @@ describe("Exchange.CancelDeposit", () => {
   });
 
   it("cancelDeposit", async () => {
-    await dataStore.setUint(REQUEST_EXPIRATION_BLOCK_AGE, 5);
+    await dataStore.setUint(keys.REQUEST_EXPIRATION_BLOCK_AGE, 5);
 
     await createDeposit(fixture, {
       receiver: user1,

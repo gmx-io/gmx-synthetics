@@ -11,19 +11,51 @@ import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 
 describe("Exchange.Deposit", () => {
   const { provider } = ethers;
+  const { AddressZero, HashZero } = ethers.constants;
 
   let fixture;
   let user0, user1, user2;
-  let reader, dataStore, oracle, depositVault, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc;
+  let reader, dataStore, oracle, depositVault, depositHandler, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ reader, dataStore, oracle, depositVault, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc } = fixture.contracts);
+    ({ reader, dataStore, oracle, depositVault, depositHandler, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc } =
+      fixture.contracts);
   });
 
   it("createDeposit", async () => {
+    const exampleParams = {
+      receiver: user1.address,
+      callbackContract: user2.address,
+      market: ethUsdMarket.marketToken,
+      longTokenAmount: expandDecimals(10, 18),
+      shortTokenAmount: expandDecimals(10 * 5000, 6),
+      initialLongToken: ethUsdMarket.longToken,
+      initialShortToken: ethUsdMarket.shortToken,
+      longTokenSwapPath: [ethUsdMarket.marketToken, ethUsdSpotOnlyMarket.marketToken],
+      shortTokenSwapPath: [ethUsdSpotOnlyMarket.marketToken, ethUsdMarket.marketToken],
+      minMarketTokens: 100,
+      shouldUnwrapNativeToken: true,
+      executionFee: "500",
+      callbackGasLimit: "200000",
+    };
+
+    const _createDepositFeatureDisabledKey = keys.createDepositFeatureDisabledKey(depositHandler.address);
+
+    await dataStore.setBool(_createDepositFeatureDisabledKey, true);
+
+    await expect(depositHandler.connect(user0).createDeposit(user0.address, exampleParams))
+      .to.be.revertedWithCustomError(depositHandler, "Unauthorized")
+      .withArgs(user0.address, "CONTROLLER");
+
+    await expect(depositHandler.createDeposit(user0.address, exampleParams))
+      .to.be.revertedWithCustomError(depositHandler, "DisabledFeature")
+      .withArgs(_createDepositFeatureDisabledKey);
+
+    await dataStore.setBool(_createDepositFeatureDisabledKey, false);
+
     await createDeposit(fixture, {
       receiver: user1,
       callbackContract: user2,
@@ -62,7 +94,58 @@ describe("Exchange.Deposit", () => {
     expect(deposit.flags.shouldUnwrapNativeToken).eq(true);
   });
 
+  it("cancelDeposit", async () => {
+    await createDeposit(fixture, {
+      receiver: user1,
+      callbackContract: user2,
+      market: ethUsdMarket,
+      longTokenAmount: expandDecimals(10, 18),
+      shortTokenAmount: expandDecimals(10 * 5000, 6),
+      initialLongToken: ethUsdMarket.longToken,
+      initialShortToken: ethUsdMarket.shortToken,
+      longTokenSwapPath: [ethUsdMarket.marketToken, ethUsdSpotOnlyMarket.marketToken],
+      shortTokenSwapPath: [ethUsdSpotOnlyMarket.marketToken, ethUsdMarket.marketToken],
+      minMarketTokens: 100,
+      shouldUnwrapNativeToken: true,
+      executionFee: "500",
+      callbackGasLimit: "200000",
+    });
+
+    const depositKeys = await getDepositKeys(dataStore, 0, 1);
+
+    const _cancelDepositFeatureDisabledKey = keys.cancelDepositFeatureDisabledKey(depositHandler.address);
+
+    await dataStore.setBool(_cancelDepositFeatureDisabledKey, true);
+
+    await expect(depositHandler.connect(user0).cancelDeposit(depositKeys[0]))
+      .to.be.revertedWithCustomError(depositHandler, "Unauthorized")
+      .withArgs(user0.address, "CONTROLLER");
+
+    await expect(depositHandler.cancelDeposit(depositKeys[0]))
+      .to.be.revertedWithCustomError(depositHandler, "DisabledFeature")
+      .withArgs(_cancelDepositFeatureDisabledKey);
+  });
+
   it("executeDeposit", async () => {
+    await expect(
+      depositHandler.connect(user0).executeDeposit(HashZero, {
+        signerInfo: 0,
+        tokens: [],
+        compactedMinOracleBlockNumbers: [],
+        compactedMaxOracleBlockNumbers: [],
+        compactedOracleTimestamps: [],
+        compactedDecimals: [],
+        compactedMinPrices: [],
+        compactedMinPricesIndexes: [],
+        compactedMaxPrices: [],
+        compactedMaxPricesIndexes: [],
+        signatures: [],
+        priceFeedTokens: [],
+      })
+    )
+      .to.be.revertedWithCustomError(depositHandler, "Unauthorized")
+      .withArgs(user0.address, "ORDER_KEEPER");
+
     await createDeposit(fixture, {
       receiver: user1,
       market: ethUsdMarket,
@@ -77,6 +160,22 @@ describe("Exchange.Deposit", () => {
 
     expect(deposit.addresses.account).eq(user0.address);
     expect(await getDepositCount(dataStore)).eq(1);
+
+    const _executeDepositFeatureDisabledKey = keys.executeDepositFeatureDisabledKey(depositHandler.address);
+    await dataStore.setBool(_executeDepositFeatureDisabledKey, true);
+
+    await expect(
+      executeDeposit(fixture, {
+        tokens: [wnt.address],
+        tokenOracleTypes: [TOKEN_ORACLE_TYPES.DEFAULT],
+        minPrices: [expandDecimals(5000, 4)],
+        maxPrices: [expandDecimals(5000, 4)],
+      })
+    )
+      .to.be.revertedWithCustomError(depositHandler, "DisabledFeature")
+      .withArgs(_executeDepositFeatureDisabledKey);
+
+    await dataStore.setBool(_executeDepositFeatureDisabledKey, false);
 
     await expect(
       executeDeposit(fixture, {
@@ -93,9 +192,48 @@ describe("Exchange.Deposit", () => {
 
     deposit = await reader.getDeposit(dataStore.address, depositKeys[0]);
 
-    expect(deposit.addresses.account).eq(ethers.constants.AddressZero);
+    expect(deposit.addresses.account).eq(AddressZero);
     expect(await getBalanceOf(ethUsdMarket.marketToken, user1.address)).eq(expandDecimals(95000, 18));
     expect(await getDepositCount(dataStore)).eq(0);
+  });
+
+  it("simulateExecuteDeposit", async () => {
+    await expect(
+      depositHandler.connect(user0).simulateExecuteDeposit(HashZero, {
+        primaryTokens: [],
+        primaryPrices: [],
+        secondaryTokens: [],
+        secondaryPrices: [],
+      })
+    )
+      .to.be.revertedWithCustomError(depositHandler, "Unauthorized")
+      .withArgs(user0.address, "CONTROLLER");
+  });
+
+  it("_executeDeposit", async () => {
+    await expect(
+      depositHandler.connect(user0)._executeDeposit(
+        HashZero,
+        {
+          signerInfo: 0,
+          tokens: [],
+          compactedMinOracleBlockNumbers: [],
+          compactedMaxOracleBlockNumbers: [],
+          compactedOracleTimestamps: [],
+          compactedDecimals: [],
+          compactedMinPrices: [],
+          compactedMinPricesIndexes: [],
+          compactedMaxPrices: [],
+          compactedMaxPricesIndexes: [],
+          signatures: [],
+          priceFeedTokens: [],
+        },
+        user0.address,
+        10
+      )
+    )
+      .to.be.revertedWithCustomError(depositHandler, "Unauthorized")
+      .withArgs(user0.address, "SELF");
   });
 
   it("executeDeposit, spot only market", async () => {
