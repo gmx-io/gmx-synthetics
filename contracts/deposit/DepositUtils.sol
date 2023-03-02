@@ -84,12 +84,7 @@ library DepositUtils {
                 revert InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
             }
 
-            GasUtils.handleExcessExecutionFee(
-                dataStore,
-                depositVault,
-                wntAmount,
-                params.executionFee
-            );
+            params.executionFee = wntAmount;
         }
 
         if (initialLongTokenAmount == 0 && initialShortTokenAmount == 0) {

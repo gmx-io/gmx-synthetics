@@ -38,20 +38,21 @@ export async function createDeposit(fixture, overrides: any = {}) {
   const minMarketTokens = overrides.minMarketTokens || bigNumberify(0);
   const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
   const executionFee = overrides.executionFee || "1000000000000000";
+  const executionFeeToMint = overrides.executionFeeToMint || executionFee;
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
   const longTokenAmount = overrides.longTokenAmount || bigNumberify(0);
   const shortTokenAmount = overrides.shortTokenAmount || bigNumberify(0);
 
-  await wnt.mint(depositVault.address, executionFee);
+  await wnt.mint(depositVault.address, executionFeeToMint);
 
   if (longTokenAmount.gt(0)) {
-    const longToken = await contractAt("MintableToken", market.longToken);
-    await longToken.mint(depositVault.address, longTokenAmount);
+    const _initialLongToken = await contractAt("MintableToken", initialLongToken);
+    await _initialLongToken.mint(depositVault.address, longTokenAmount);
   }
 
   if (shortTokenAmount.gt(0)) {
-    const shortToken = await contractAt("MintableToken", market.shortToken);
-    await shortToken.mint(depositVault.address, shortTokenAmount);
+    const _initialShortToken = await contractAt("MintableToken", initialShortToken);
+    await _initialShortToken.mint(depositVault.address, shortTokenAmount);
   }
 
   const params = {

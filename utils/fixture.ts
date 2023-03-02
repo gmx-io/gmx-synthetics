@@ -55,6 +55,7 @@ export async function deployFixture() {
   const orderVault = await hre.ethers.getContract("OrderVault");
   const marketFactory = await hre.ethers.getContract("MarketFactory");
   const depositHandler = await hre.ethers.getContract("DepositHandler");
+  const depositUtils = await hre.ethers.getContract("DepositUtils");
   const withdrawalHandler = await hre.ethers.getContract("WithdrawalHandler");
   const orderHandler = await hre.ethers.getContract("OrderHandler");
   const liquidationHandler = await hre.ethers.getContract("LiquidationHandler");
@@ -89,6 +90,16 @@ export async function deployFixture() {
     dataStore.address
   );
   const ethUsdSpotOnlyMarket = await reader.getMarket(dataStore.address, ethUsdSpotOnlyMarketAddress);
+
+  const wbtcUsdMarketAddress = getMarketTokenAddress(
+    wbtc.address,
+    wbtc.address,
+    usdc.address,
+    marketFactory.address,
+    roleStore.address,
+    dataStore.address
+  );
+  const wbtcUsdMarket = await reader.getMarket(dataStore.address, wbtcUsdMarketAddress);
 
   const solUsdMarketAddress = getMarketTokenAddress(
     getSyntheticTokenAddress("SOL"),
@@ -138,6 +149,7 @@ export async function deployFixture() {
       orderVault,
       marketFactory,
       depositHandler,
+      depositUtils,
       withdrawalHandler,
       orderHandler,
       liquidationHandler,
@@ -158,6 +170,7 @@ export async function deployFixture() {
       usdc,
       ethUsdMarket,
       ethUsdSpotOnlyMarket,
+      wbtcUsdMarket,
       solUsdMarket,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },

@@ -93,12 +93,7 @@ library OrderUtils {
                 revert InsufficientWntAmountForExecutionFee(wntAmount, params.numbers.executionFee);
             }
 
-            GasUtils.handleExcessExecutionFee(
-                dataStore,
-                orderVault,
-                wntAmount,
-                params.numbers.executionFee
-            );
+            params.numbers.executionFee = wntAmount;
         }
 
         // validate swap path markets

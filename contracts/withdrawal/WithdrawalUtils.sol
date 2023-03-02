@@ -127,12 +127,7 @@ library WithdrawalUtils {
             revert EmptyMarketTokenAmount();
         }
 
-        GasUtils.handleExcessExecutionFee(
-            dataStore,
-            withdrawalVault,
-            wntAmount,
-            params.executionFee
-        );
+        params.executionFee = wntAmount;
 
         MarketUtils.validateEnabledMarket(dataStore, params.market);
 
