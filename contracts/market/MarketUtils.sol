@@ -55,6 +55,7 @@ library MarketUtils {
     // size for users with a short position using short collateral
     struct GetNextFundingAmountPerSizeResult {
         bool longsPayShorts;
+        uint256 fundingFactorPerSecond;
         int256 fundingAmountPerSize_LongCollateral_LongPosition;
         int256 fundingAmountPerSize_LongCollateral_ShortPosition;
         int256 fundingAmountPerSize_ShortCollateral_LongPosition;
@@ -110,7 +111,6 @@ library MarketUtils {
         uint256 diffUsd;
         uint256 totalOpenInterest;
         uint256 sizeOfLargerSide;
-        uint256 fundingFactorPerSecond;
         uint256 fundingUsd;
 
         uint256 fundingUsdForLongCollateral;
@@ -939,13 +939,13 @@ library MarketUtils {
         cache.diffUsd = Calc.diff(cache.oi.longOpenInterest, cache.oi.shortOpenInterest);
         cache.totalOpenInterest = cache.oi.longOpenInterest + cache.oi.shortOpenInterest;
         cache.sizeOfLargerSide = cache.oi.longOpenInterest > cache.oi.shortOpenInterest ? cache.oi.longOpenInterest : cache.oi.shortOpenInterest;
-        cache.fundingFactorPerSecond = getFundingFactorPerSecond(
+        result.fundingFactorPerSecond = getFundingFactorPerSecond(
             dataStore,
             market.marketToken,
             cache.diffUsd,
             cache.totalOpenInterest
         );
-        cache.fundingUsd = (cache.sizeOfLargerSide / Precision.FLOAT_PRECISION) * cache.durationInSeconds * cache.fundingFactorPerSecond;
+        cache.fundingUsd = (cache.sizeOfLargerSide / Precision.FLOAT_PRECISION) * cache.durationInSeconds * result.fundingFactorPerSecond;
 
         result.longsPayShorts = cache.oi.longOpenInterest > cache.oi.shortOpenInterest;
 

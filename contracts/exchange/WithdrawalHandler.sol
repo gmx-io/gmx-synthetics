@@ -184,7 +184,11 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
 
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
-        if (OracleUtils.isEmptyPriceError(errorSelector)) {
+        if (
+            OracleUtils.isEmptyPriceError(errorSelector) ||
+            errorSelector == FeatureUtils.DisabledFeature.selector
+        ) {
+
             ErrorUtils.revertWithCustomError(reasonBytes);
         }
 

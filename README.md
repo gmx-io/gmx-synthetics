@@ -346,9 +346,9 @@ For example:
 - The pool is equally balanced with $50,000 of long tokens and $50,000 of short tokens
 - If a user deposits 10 long tokens, the pool would now have $100,000 of long tokens and $50,000 of short tokens
 - The change in imbalance would be from $0 to -$50,000
-- There would be negative price impact charged on the user's deposit, calculated as `0 ^ 2 * (0.01 / 50,000) - 50,000 ^ 2 * (0.01 / 50,000) => -$500`
+- There would be negative price impact charged on the user's deposit, calculated as `0 ^ 2 * (0.01 / 50,000 / 2) - 50,000 ^ 2 * (0.01 / 50,000 / 2) => -$250`
 - If the user now withdraws 5 long tokens, the balance would change from -$50,000 to -$25,000, a net change of +$25,000
-- There would be a positive price impact rebated to the user in the form of additional long tokens, calculated as `50,000 ^ 2 * (0.01 / 50,000) - 25,000 ^ 2 * (0.01 / 50,000) => $375`
+- There would be a positive price impact rebated to the user in the form of additional long tokens, calculated as `50,000 ^ 2 * (0.01 / 50,000 / 2) - 25,000 ^ 2 * (0.01 / 50,000 / 2) => $187.5`
 
 For position actions (increase / decrease position), imbalance is calculated as the difference in the long and short open interest.
 
@@ -383,9 +383,11 @@ For example:
 - The user would receive (original position collateral - $150)
 - The pool would have an extra $150 of collateral which continues to have a net zero impact on the pool value due to the 0.03 index tokens in the position impact pool
 
-If the index token is different from both the long and short token of the market, then it is possible that the pool value becomes significantly affected by the position impact pool, if the position impact pool is very large and the index token has a large price increase. Due to this, there should be a method to gradually reduce the size of the position impact pool.
+If the index token is different from both the long and short token of the market, then it is possible that the pool value becomes significantly affected by the position impact pool, if the position impact pool is very large and the index token has a large price increase. An option to gradually reduce the size of the position impact pool may be added if this becomes an issue.
 
 Price impact is also tracked using a virtual inventory value for positions and swaps, this tracks the imbalance of tokens across similar markets, e.g. ETH/USDC, ETH/USDT.
+
+In case of a large price movement, it is possible that a large amount of positions are decreased or liquidated on one side causing a significant imbalance between long and short open interest, this could lead to very high price impact values. To mitigate this, a max position impact factor value can be configured. If the current price impact exceeds the max negative price impact, then any excess collateral deducted beyond the max negative price impact would be held within the contract, if there was no price manipulation detected, this collateral can be released to the user. When the negative price impact is capped, it may be profitable to open and immediately close positions, since the positive price impact may now be more than the capped negative price impact. To avoid this, the max positive price impact should be configured to be below the max negative price impact.
 
 # Fees
 
@@ -401,6 +403,42 @@ If a market has a long collateral token that is different from the index token, 
 
 Markets have a reserve factor that allows open interest to be capped to a percentage of the pool size, this reduces the impact of profits of short positions and reduces the risk that long positions cannot be fully paid out.
 
+# Parameters
+
+- minCollateralFactor: This determines the minimum allowed ratio of (position collateral) / (position size)
+
+- maxPoolAmount: The maximum amount of tokens that can be deposited into a market
+
+- maxOpenInterest: The maximum open interest that can be opened for a market
+
+- reserveFactor: This determines the maximum allowed ratio of (worth of tokens reserved for positions) / (tokens in the pool)
+
+- maxPnlFactor: The maximum ratio of (PnL / worth of tokens in the pool)
+
+- positionFeeFactor: This determines the percentage amount of fees to be deducted for position increase / decrease actions, the fee amount is based on the change in position size
+
+- positionImpactFactor: This is the "price impact factor" for positions described in the "Price Impact" section
+
+- maxPositionImpactFactor: This is the "max price impact" for positions described in the "Price Impact" section
+
+- positionImpactExponentFactor: This is the "price impact exponent" value for position actions, described in the "Price Impact" section
+
+- swapFeeFactor: This determines the percentage amount of fees to be deducted for swaps, the fee amount is based on the swap amount
+
+- swapImpactFactor: This is the "price impact factor" described in the "Price Impact" section
+
+- swapImpactExponentFactor: This is the "price impact exponent" value for deposits and swaps, described in the "Price Impact" section above
+
+- fundingFactor: This is the "funding factor per second" value described in the "Funding Fees" section
+
+- borrowingFactorForLongs: This is the "borrowing factor" for long positions described in the "Borrowing Fees" section
+
+- borrowingFactorForShorts: This is the "borrowing factor" for short positions described in the "Borrowing Fees" section
+
+- borrowingExponentFactorForLongs: This is the "borrowing exponent factor" for long positions described in the "Borrowing Fees" section
+
+- borrowingExponentFactorForShorts: This is the "borrowing exponent factor" for long positions described in the "Borrowing Fees" section
+
 # Roles
 
 Roles are managed in the RoleStore, the RoleAdmin has access to grant and revoke any role.
@@ -411,6 +449,8 @@ After the initial setup:
 
 - Only the Timelock contract should have the RoleAdmin role
 
+- New roles can be granted by timelock admins with a time delay
+
 - System values should only be set using the Config contract
 
 - No EOA should have a Controller role
@@ -419,19 +459,19 @@ After the initial setup:
 
 - It is expected that the timelock multisig should revoke the permissions of malicious or compromised accounts
 
+- Order keepers and frozen order keepers could potentially extract value through transaction ordering, delayed transaction execution etc, this will be partially mitigated with a keeper network
+
+- Oracle signers are expected to accurately report the price of tokens
+
 # Known Issues
 
 - Collateral tokens need to be whitelisted with a configured TOKEN_TRANSFER_GAS_LIMIT
 
-- Tokens that change balance on transfer, with token burns, etc, are not compatible with the system and should not be whitelisted
+- Rebasing tokens, tokens that change balance on transfer, with token burns, etc, are not compatible with the system and should not be whitelisted
 
 - Order keepers can use prices from different blocks for limit orders with a swap, which would lead to different output amounts
 
-- Order keepers and frozen order keepers could potentially extract value through transaction ordering, delayed transaction execution etc, this will be partially mitigated with a keeper network
-
 - Order keepers are expected to validate whether a transaction will revert before sending the transaction to minimize gas wastage
-
-- Oracle signers are expected to accurately report the price of tokens
 
 - A user can reduce price impact by using high leverage positions, this is partially mitigated with the MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER value
 

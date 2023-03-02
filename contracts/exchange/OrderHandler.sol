@@ -225,7 +225,13 @@ contract OrderHandler is BaseOrderHandler {
 
         if (
             OracleUtils.isEmptyPriceError(errorSelector) ||
-            errorSelector == InvalidKeeperForFrozenOrder.selector
+            errorSelector == FeatureUtils.DisabledFeature.selector ||
+            errorSelector == InvalidKeeperForFrozenOrder.selector ||
+            // InvalidOrderPrices error should only be raised for limit, trigger orders
+            // it should not be raised for market orders
+            // The transaction is reverted in this case since the oracle prices do not fulfill
+            // the specified trigger price
+            errorSelector == BaseOrderUtils.InvalidOrderPrices.selector
         ) {
             ErrorUtils.revertWithCustomError(reasonBytes);
         }
@@ -245,11 +251,13 @@ contract OrderHandler is BaseOrderHandler {
                 reasonBytes
             );
         } else {
-            if (
-                errorSelector == FeatureUtils.DisabledFeature.selector ||
-                errorSelector == PositionUtils.EmptyPosition.selector ||
-                errorSelector == BaseOrderUtils.InvalidOrderPrices.selector
-            ) {
+            // for market orders, the EmptyPosition error should still lead to the
+            // order being cancelled
+            // for limit, trigger orders, the EmptyPosition error should lead to the transaction
+            // being reverted instead
+            // if the position is created or increased later, the oracle prices used to fulfill the order
+            // must be after the position was last increased, this is validated in DecreaseOrderUtils
+            if (errorSelector == PositionUtils.EmptyPosition.selector) {
                 ErrorUtils.revertWithCustomError(reasonBytes);
             }
 

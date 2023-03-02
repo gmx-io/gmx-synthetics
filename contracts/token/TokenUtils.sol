@@ -134,7 +134,7 @@ library TokenUtils {
 
         if (success) { return; }
 
-        // if the transfer failed, re-wrap the token and it to the receiver
+        // if the transfer failed, re-wrap the token and send it to the receiver
         depositAndSendWrappedNativeToken(
             dataStore,
             receiver,
