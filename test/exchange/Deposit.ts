@@ -75,6 +75,10 @@ describe("Exchange.Deposit", () => {
     await dataStore.setBool(_createDepositFeatureDisabledKey, false);
 
     await expect(
+      createDeposit(fixture, { ...params, account: { address: AddressZero } })
+    ).to.be.revertedWithCustomError(depositUtils, "EmptyDepositAccount");
+
+    await expect(
       createDeposit(fixture, {
         ...params,
         market: { marketToken: user1.address, longToken: wnt.address, shortToken: usdc.address },
@@ -220,7 +224,7 @@ describe("Exchange.Deposit", () => {
       .withArgs(_cancelDepositFeatureDisabledKey);
   });
 
-  it("executeDeposit", async () => {
+  it("executeDeposit validations", async () => {
     await expect(
       depositHandler.connect(user0).executeDeposit(HashZero, {
         signerInfo: 0,

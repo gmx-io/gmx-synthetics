@@ -50,6 +50,7 @@ library DepositUtils {
         uint256 callbackGasLimit;
     }
 
+    error EmptyDepositAccount();
     error EmptyDeposit();
     error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);
 
@@ -67,6 +68,10 @@ library DepositUtils {
         address account,
         CreateDepositParams memory params
     ) external returns (bytes32) {
+        if (account == address(0)) {
+            revert EmptyDepositAccount();
+        }
+
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, params.market);
 
         uint256 initialLongTokenAmount = depositVault.recordTransferIn(params.initialLongToken);

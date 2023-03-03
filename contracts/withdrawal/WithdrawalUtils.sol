@@ -89,11 +89,12 @@ library WithdrawalUtils {
         uint256 shortTokenPoolAmountDelta;
     }
 
+    error EmptyWithdrawalAccount();
+    error EmptyWithdrawal();
     error MinLongTokens(uint256 received, uint256 expected);
     error MinShortTokens(uint256 received, uint256 expected);
     error InsufficientMarketTokens(uint256 balance, uint256 expected);
     error InsufficientWntAmount(uint256 wntAmount, uint256 executionFee);
-    error EmptyWithdrawal();
     error EmptyMarketTokenAmount();
     error InvalidPoolValueForWithdrawal(int256 poolValue);
 
@@ -114,6 +115,10 @@ library WithdrawalUtils {
         address account,
         CreateWithdrawalParams memory params
     ) external returns (bytes32) {
+        if (account == address(0)) {
+            revert EmptyWithdrawalAccount();
+        }
+
         address wnt = TokenUtils.wnt(dataStore);
         uint256 wntAmount = withdrawalVault.recordTransferIn(wnt);
 
