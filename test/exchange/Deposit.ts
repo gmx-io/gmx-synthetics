@@ -1,6 +1,7 @@
 import { expect } from "chai";
 
 import { deployFixture } from "../../utils/fixture";
+import { deployContract } from "../../utils/deploy";
 import { bigNumberify, expandDecimals, decimalToFloat } from "../../utils/math";
 import { getBalanceOf, getSupplyOf } from "../../utils/token";
 import { getClaimableFeeAmount } from "../../utils/fee";
@@ -442,10 +443,13 @@ describe("Exchange.Deposit", () => {
   });
 
   it("executeDeposit, spot only market", async () => {
+    const revertingCallbackReceiver = await deployContract("RevertingCallbackReceiver", []);
+
     await handleDeposit(fixture, {
       create: {
         market: ethUsdSpotOnlyMarket,
         longTokenAmount: expandDecimals(10, 18),
+        callbackContract: user2,
       },
     });
 
@@ -468,6 +472,7 @@ describe("Exchange.Deposit", () => {
       create: {
         market: ethUsdSpotOnlyMarket,
         shortTokenAmount: expandDecimals(25 * 1000, 6),
+        callbackContract: revertingCallbackReceiver,
       },
     });
 
