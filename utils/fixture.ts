@@ -56,6 +56,7 @@ export async function deployFixture() {
   const marketFactory = await hre.ethers.getContract("MarketFactory");
   const depositHandler = await hre.ethers.getContract("DepositHandler");
   const depositUtils = await hre.ethers.getContract("DepositUtils");
+  const executeDepositUtils = await hre.ethers.getContract("ExecuteDepositUtils");
   const withdrawalHandler = await hre.ethers.getContract("WithdrawalHandler");
   const orderHandler = await hre.ethers.getContract("OrderHandler");
   const liquidationHandler = await hre.ethers.getContract("LiquidationHandler");
@@ -91,7 +92,7 @@ export async function deployFixture() {
   );
   const ethUsdSpotOnlyMarket = await reader.getMarket(dataStore.address, ethUsdSpotOnlyMarketAddress);
 
-  const wbtcUsdMarketAddress = getMarketTokenAddress(
+  const btcUsdMarketAddress = getMarketTokenAddress(
     wbtc.address,
     wbtc.address,
     usdc.address,
@@ -99,7 +100,7 @@ export async function deployFixture() {
     roleStore.address,
     dataStore.address
   );
-  const wbtcUsdMarket = await reader.getMarket(dataStore.address, wbtcUsdMarketAddress);
+  const btcUsdMarket = await reader.getMarket(dataStore.address, btcUsdMarketAddress);
 
   const solUsdMarketAddress = getMarketTokenAddress(
     getSyntheticTokenAddress("SOL"),
@@ -150,6 +151,7 @@ export async function deployFixture() {
       marketFactory,
       depositHandler,
       depositUtils,
+      executeDepositUtils,
       withdrawalHandler,
       orderHandler,
       liquidationHandler,
@@ -170,7 +172,7 @@ export async function deployFixture() {
       usdc,
       ethUsdMarket,
       ethUsdSpotOnlyMarket,
-      wbtcUsdMarket,
+      btcUsdMarket,
       solUsdMarket,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },

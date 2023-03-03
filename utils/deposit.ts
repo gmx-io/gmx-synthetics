@@ -85,11 +85,22 @@ export async function executeDeposit(fixture, overrides: any = {}) {
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const depositKeys = await getDepositKeys(dataStore, 0, 1);
-  const deposit = await reader.getDeposit(dataStore.address, depositKeys[0]);
+  let depositKey = overrides.depositKey;
+  let oracleBlockNumber = overrides.oracleBlockNumber;
+
+  if (depositKeys.length > 0) {
+    if (!depositKey) {
+      depositKey = depositKeys[0];
+    }
+    if (!oracleBlockNumber) {
+      const deposit = await reader.getDeposit(dataStore.address, depositKeys[0]);
+      oracleBlockNumber = deposit.numbers.updatedAtBlock;
+    }
+  }
 
   const params = {
-    key: depositKeys[0],
-    oracleBlockNumber: deposit.numbers.updatedAtBlock,
+    key: depositKey,
+    oracleBlockNumber,
     tokens,
     precisions,
     minPrices,

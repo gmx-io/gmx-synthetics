@@ -48,8 +48,6 @@ export function createDeployFunction({ contractName, dependencyNames, getDeployA
         libraries,
       });
     } catch (e) {
-      // console.error("Deploy error", e);
-
       // the caught error might not be very informative
       // e.g. if some library dependency is missing, which library it is
       // is not shown in the error

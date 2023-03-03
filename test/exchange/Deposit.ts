@@ -21,9 +21,10 @@ describe("Exchange.Deposit", () => {
     depositVault,
     depositHandler,
     depositUtils,
+    executeDepositUtils,
     ethUsdMarket,
     ethUsdSpotOnlyMarket,
-    wbtcUsdMarket,
+    btcUsdMarket,
     wnt,
     usdc;
 
@@ -38,9 +39,10 @@ describe("Exchange.Deposit", () => {
       depositVault,
       depositHandler,
       depositUtils,
+      executeDepositUtils,
       ethUsdMarket,
       ethUsdSpotOnlyMarket,
-      wbtcUsdMarket,
+      btcUsdMarket,
       wnt,
       usdc,
     } = fixture.contracts);
@@ -97,7 +99,7 @@ describe("Exchange.Deposit", () => {
     await expect(
       createDeposit(fixture, {
         ...params,
-        market: wbtcUsdMarket,
+        market: btcUsdMarket,
         longTokenAmount: expandDecimals(10, 18),
         shortTokenAmount: expandDecimals(10 * 5000, 6),
         executionFee: "500",
@@ -110,7 +112,7 @@ describe("Exchange.Deposit", () => {
     await wnt.mint(depositVault.address, "1000");
     await createDeposit(fixture, {
       ...params,
-      market: wbtcUsdMarket,
+      market: btcUsdMarket,
       longTokenAmount: expandDecimals(10, 18),
       shortTokenAmount: expandDecimals(10 * 5000, 6),
       executionFee: "500",
@@ -277,6 +279,12 @@ describe("Exchange.Deposit", () => {
 
     await expect(
       executeDeposit(fixture, {
+        oracleBlockNumber: (await provider.getBlock()).number - 10,
+      })
+    ).to.be.revertedWithCustomError(executeDepositUtils, "OracleBlockNumberNotWithinRange");
+
+    await expect(
+      executeDeposit(fixture, {
         tokens: [wnt.address],
         tokenOracleTypes: [TOKEN_ORACLE_TYPES.DEFAULT],
         minPrices: [expandDecimals(5000, 4)],
@@ -293,6 +301,38 @@ describe("Exchange.Deposit", () => {
     expect(deposit.addresses.account).eq(AddressZero);
     expect(await getBalanceOf(ethUsdMarket.marketToken, user1.address)).eq(expandDecimals(95000, 18));
     expect(await getDepositCount(dataStore)).eq(0);
+
+    await expect(
+      executeDeposit(fixture, {
+        depositKey: HashZero,
+        oracleBlockNumber: (await provider.getBlock()).number,
+        gasUsageLabel: "executeDeposit",
+      })
+    ).to.be.revertedWithCustomError(executeDepositUtils, "EmptyDeposit");
+  });
+
+  it("executeDeposit with swap", async () => {
+    await handleDeposit(fixture, {
+      create: {
+        initialLongToken: usdc.address,
+        longTokenAmount: expandDecimals(9 * 5000, 6),
+        initialShortToken: wnt.address,
+        shortTokenAmount: expandDecimals(10, 18),
+        longTokenSwapPath: [ethUsdMarket.marketToken],
+        shortTokenSwapPath: [ethUsdMarket.marketToken],
+      },
+    });
+
+    // await handleDeposit(fixture, {
+    //   create: {
+    //     initialLongToken: usdc.address,
+    //     longTokenAmount: expandDecimals(9 * 5000, 6),
+    //     initialShortToken: wnt.address,
+    //     shortTokenAmount: expandDecimals(10, 18),
+    //     longTokenSwapPath: [ethUsdMarket.marketToken],
+    //     shortTokenSwapPath: [ethUsdMarket.marketToken],
+    //   },
+    // });
   });
 
   it("simulateExecuteDeposit", async () => {
