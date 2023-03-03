@@ -56,7 +56,7 @@ export async function executeWithOracleParams(fixture, overrides) {
 
   const oracleParams = await getOracleParams(args);
 
-  await logGasUsage({
+  return await logGasUsage({
     tx: execute(key, oracleParams),
     label: gasUsageLabel,
   });

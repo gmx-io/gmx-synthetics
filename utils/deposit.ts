@@ -2,7 +2,6 @@ import { logGasUsage } from "./gas";
 import { expandDecimals, bigNumberify } from "./math";
 import { executeWithOracleParams } from "./exchange";
 import { contractAt } from "./deploy";
-import { TOKEN_ORACLE_TYPES } from "./oracle";
 
 import * as keys from "./keys";
 
@@ -69,7 +68,7 @@ export async function createDeposit(fixture, overrides: any = {}) {
     callbackGasLimit,
   };
 
-  await logGasUsage({
+  return await logGasUsage({
     tx: depositHandler.connect(sender).createDeposit(account.address, params, {
       gasLimit: "1000000",
     }),
@@ -109,10 +108,11 @@ export async function executeDeposit(fixture, overrides: any = {}) {
     gasUsageLabel,
   };
 
-  await executeWithOracleParams(fixture, params);
+  return await executeWithOracleParams(fixture, params);
 }
 
 export async function handleDeposit(fixture, overrides: any = {}) {
-  await createDeposit(fixture, overrides.create);
-  await executeDeposit(fixture, overrides.execute);
+  const createResult = await createDeposit(fixture, overrides.create);
+  const executeResult = await executeDeposit(fixture, overrides.execute);
+  return { createResult, executeResult };
 }

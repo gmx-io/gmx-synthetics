@@ -6,6 +6,7 @@ import { getBalanceOf, getSupplyOf } from "../../utils/token";
 import { getClaimableFeeAmount } from "../../utils/fee";
 import { getPoolAmount, getSwapImpactPoolAmount, getMarketTokenPrice } from "../../utils/market";
 import { getDepositCount, getDepositKeys, createDeposit, executeDeposit, handleDeposit } from "../../utils/deposit";
+import { validateCancellationReason } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 
@@ -26,7 +27,8 @@ describe("Exchange.Deposit", () => {
     ethUsdSpotOnlyMarket,
     btcUsdMarket,
     wnt,
-    usdc;
+    usdc,
+    wbtc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
@@ -45,6 +47,7 @@ describe("Exchange.Deposit", () => {
       btcUsdMarket,
       wnt,
       usdc,
+      wbtc,
     } = fixture.contracts);
   });
 
@@ -312,6 +315,17 @@ describe("Exchange.Deposit", () => {
   });
 
   it("executeDeposit with swap", async () => {
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(0);
+
+    await handleDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(9 * 5000, 6),
+      },
+    });
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(95000, 18));
+
     await handleDeposit(fixture, {
       create: {
         initialLongToken: usdc.address,
@@ -323,16 +337,69 @@ describe("Exchange.Deposit", () => {
       },
     });
 
-    // await handleDeposit(fixture, {
-    //   create: {
-    //     initialLongToken: usdc.address,
-    //     longTokenAmount: expandDecimals(9 * 5000, 6),
-    //     initialShortToken: wnt.address,
-    //     shortTokenAmount: expandDecimals(10, 18),
-    //     longTokenSwapPath: [ethUsdMarket.marketToken],
-    //     shortTokenSwapPath: [ethUsdMarket.marketToken],
-    //   },
-    // });
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(190000, 18));
+
+    await handleDeposit(fixture, {
+      create: {
+        account: user1,
+        market: btcUsdMarket,
+        longTokenAmount: expandDecimals(2, 8),
+        shortTokenAmount: expandDecimals(10, 18),
+      },
+      execute: {
+        tokens: [usdc.address, wbtc.address],
+        precisions: [18, 20],
+        minPrices: [expandDecimals(1, 6), expandDecimals(60000, 2)],
+        maxPrices: [expandDecimals(1, 6), expandDecimals(60000, 2)],
+      },
+    });
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(190000, 18));
+
+    let handleDepositResult = await handleDeposit(fixture, {
+      create: {
+        initialLongToken: usdc.address,
+        longTokenAmount: expandDecimals(9 * 5000, 6),
+        initialShortToken: wnt.address,
+        shortTokenAmount: expandDecimals(10, 18),
+        longTokenSwapPath: [btcUsdMarket.marketToken],
+        shortTokenSwapPath: [ethUsdMarket.marketToken],
+      },
+      execute: {
+        tokens: [wnt.address, usdc.address, wbtc.address],
+        precisions: [8, 18, 20],
+        minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(60000, 2)],
+        maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(60000, 2)],
+      },
+    });
+
+    validateCancellationReason({
+      fixture,
+      txReceipt: handleDepositResult.executeResult,
+      eventName: "DepositCancelled",
+      contract: executeDepositUtils,
+      expectedReason: "InvalidSwapOutputToken",
+    });
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(190000, 18));
+
+    handleDepositResult = await handleDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(9 * 5000, 6),
+        minMarketTokens: expandDecimals(500000, 18),
+      },
+    });
+
+    validateCancellationReason({
+      fixture,
+      txReceipt: handleDepositResult.executeResult,
+      eventName: "DepositCancelled",
+      contract: executeDepositUtils,
+      expectedReason: "MinMarketTokens",
+    });
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(190000, 18));
   });
 
   it("simulateExecuteDeposit", async () => {
