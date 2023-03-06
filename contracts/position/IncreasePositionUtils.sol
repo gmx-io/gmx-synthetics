@@ -210,6 +210,7 @@ library IncreasePositionUtils {
 
         PositionPricingUtils.emitPositionFeesCollected(
             params.contracts.eventEmitter,
+            params.orderKey,
             params.market.marketToken,
             params.position.collateralToken(),
             true,

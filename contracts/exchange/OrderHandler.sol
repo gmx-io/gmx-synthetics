@@ -97,7 +97,7 @@ contract OrderHandler is BaseOrderHandler {
         order.touch();
         OrderStoreUtils.set(dataStore, key, order);
 
-        OrderEventUtils.emitOrderUpdated(eventEmitter, key, sizeDeltaUsd, triggerPrice, acceptablePrice);
+        OrderEventUtils.emitOrderUpdated(eventEmitter, key, sizeDeltaUsd, acceptablePrice, triggerPrice, minOutputAmount);
     }
 
     /**

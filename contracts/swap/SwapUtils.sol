@@ -43,6 +43,7 @@ library SwapUtils {
         EventEmitter eventEmitter;
         Oracle oracle;
         Bank bank;
+        bytes32 key;
         address tokenIn;
         uint256 amountIn;
         Market.Props[] swapPathMarkets;
@@ -293,6 +294,7 @@ library SwapUtils {
 
         SwapPricingUtils.emitSwapInfo(
             params.eventEmitter,
+            params.key,
             _params.market.marketToken,
             _params.receiver,
             _params.tokenIn,

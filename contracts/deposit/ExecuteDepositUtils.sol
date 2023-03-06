@@ -432,6 +432,7 @@ library ExecuteDepositUtils {
                 params.eventEmitter, // eventEmitter
                 params.oracle, // oracle
                 params.depositVault, // bank
+                params.key, // key
                 initialToken, // tokenIn
                 inputAmount, // amountIn
                 swapPathMarkets, // swapPathMarkets

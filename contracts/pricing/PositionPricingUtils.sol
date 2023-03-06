@@ -485,6 +485,7 @@ library PositionPricingUtils {
 
     function emitPositionFeesCollected(
         EventEmitter eventEmitter,
+        bytes32 orderKey,
         address market,
         address collateralToken,
         bool isIncrease,
@@ -492,6 +493,7 @@ library PositionPricingUtils {
     ) external {
         _emitPositionFees(
             eventEmitter,
+            orderKey,
             market,
             collateralToken,
             isIncrease,
@@ -502,6 +504,7 @@ library PositionPricingUtils {
 
     function emitPositionFeesInfo(
         EventEmitter eventEmitter,
+        bytes32 orderKey,
         address market,
         address collateralToken,
         bool isIncrease,
@@ -509,6 +512,7 @@ library PositionPricingUtils {
     ) external {
         _emitPositionFees(
             eventEmitter,
+            orderKey,
             market,
             collateralToken,
             isIncrease,
@@ -519,6 +523,7 @@ library PositionPricingUtils {
 
     function _emitPositionFees(
         EventEmitter eventEmitter,
+        bytes32 orderKey,
         address market,
         address collateralToken,
         bool isIncrease,
@@ -526,6 +531,9 @@ library PositionPricingUtils {
         string memory eventName
     ) internal {
         EventUtils.EventLogData memory eventData;
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "orderKey", orderKey);
 
         eventData.addressItems.initItems(3);
         eventData.addressItems.setItem(0, "market", market);

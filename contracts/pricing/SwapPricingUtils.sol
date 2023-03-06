@@ -238,6 +238,7 @@ library SwapPricingUtils {
 
     function emitSwapInfo(
         EventEmitter eventEmitter,
+        bytes32 orderKey,
         address market,
         address receiver,
         address tokenIn,
@@ -250,6 +251,9 @@ library SwapPricingUtils {
         int256 priceImpactUsd
     ) internal {
         EventUtils.EventLogData memory eventData;
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "orderKey", orderKey);
 
         eventData.addressItems.initItems(4);
         eventData.addressItems.setItem(0, "market", market);
