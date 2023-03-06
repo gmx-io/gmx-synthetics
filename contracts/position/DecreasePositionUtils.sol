@@ -271,6 +271,7 @@ library DecreasePositionUtils {
 
         PositionEventUtils.emitPositionDecrease(
             params.contracts.eventEmitter,
+            params.orderKey,
             params.positionKey,
             params.position,
             params.order.sizeDeltaUsd(),
