@@ -207,6 +207,24 @@ describe("Exchange.Order", () => {
     )
       .to.be.revertedWithCustomError(orderUtils, "InsufficientExecutionFee")
       .withArgs("2000000016000000", "2200");
+
+    await createOrder(fixture, {
+      ...params,
+      market: ethUsdMarket,
+      swapPath: [],
+      initialCollateralToken: usdc,
+      initialCollateralDeltaAmount: bigNumberify(0),
+      sizeDeltaUsd: bigNumberify(10),
+      executionFee: "2000000016000000",
+      executionFeeToMint: "3000000000000000",
+      callbackGasLimit: "2000000",
+    });
+
+    const orderKeys = await getOrderKeys(dataStore, 0, 1);
+    const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+
+    // execution fee should include the amounts minted from the previous failed txns
+    expect(order.numbers.executionFee).eq("3000000000002200");
   });
 
   it("stores referral code", async () => {
