@@ -98,6 +98,10 @@ library OrderUtils {
             params.numbers.executionFee = wntAmount;
         }
 
+        if (BaseOrderUtils.isPositionOrder(params.orderType)) {
+            MarketUtils.validatePositionMarket(dataStore, params.addresses.market);
+        }
+
         // validate swap path markets
         MarketUtils.getEnabledMarkets(
             dataStore,

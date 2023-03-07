@@ -20,8 +20,7 @@ library IncreaseOrderUtils {
     // @dev process an increase order
     // @param params BaseOrderUtils.ExecuteOrderParams
     function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external {
-        MarketUtils.validateEnabledMarket(params.contracts.dataStore, params.market);
-        MarketUtils.validatePositionMarket(params.market);
+        MarketUtils.validatePositionMarket(params.contracts.dataStore, params.market);
 
         (address collateralToken, uint256 collateralIncrementAmount) = SwapUtils.swap(SwapUtils.SwapParams(
             params.contracts.dataStore,

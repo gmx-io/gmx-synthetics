@@ -45,6 +45,7 @@ export async function createOrder(fixture, overrides) {
   const { wallet, user0 } = fixture.accounts;
 
   const decreasePositionSwapType = overrides.decreasePositionSwapType || DecreasePositionSwapType.NoSwap;
+  const sender = overrides.sender || wallet;
   const account = overrides.account || user0;
   const receiver = overrides.receiver || account;
   const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
@@ -56,6 +57,7 @@ export async function createOrder(fixture, overrides) {
   const triggerPrice = overrides.triggerPrice || "0";
   const isLong = overrides.isLong || false;
   const executionFee = overrides.executionFee || fixture.props.executionFee;
+  const executionFeeToMint = overrides.executionFeeToMint || executionFee;
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
   const minOutputAmount = overrides.minOutputAmount || 0;
   const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
@@ -70,7 +72,7 @@ export async function createOrder(fixture, overrides) {
     await initialCollateralToken.mint(orderVault.address, initialCollateralDeltaAmount);
   }
 
-  await wnt.mint(orderVault.address, executionFee);
+  await wnt.mint(orderVault.address, executionFeeToMint);
 
   const params = {
     addresses: {
@@ -97,7 +99,7 @@ export async function createOrder(fixture, overrides) {
   };
 
   await logGasUsage({
-    tx: orderHandler.connect(wallet).createOrder(account.address, params),
+    tx: orderHandler.connect(sender).createOrder(account.address, params),
     label: gasUsageLabel,
   });
 }

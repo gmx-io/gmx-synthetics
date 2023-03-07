@@ -24,6 +24,12 @@ export const CREATE_DEPOSIT_FEATURE_DISABLED = hashString("CREATE_DEPOSIT_FEATUR
 export const CANCEL_DEPOSIT_FEATURE_DISABLED = hashString("CANCEL_DEPOSIT_FEATURE_DISABLED");
 export const EXECUTE_DEPOSIT_FEATURE_DISABLED = hashString("EXECUTE_DEPOSIT_FEATURE_DISABLED");
 
+export const CREATE_ORDER_FEATURE_DISABLED = hashString("CREATE_ORDER_FEATURE_DISABLED");
+export const EXECUTE_ORDER_FEATURE_DISABLED = hashString("EXECUTE_ORDER_FEATURE_DISABLED");
+export const EXECUTE_ADL_FEATURE_DISABLED = hashString("EXECUTE_ADL_FEATURE_DISABLED");
+export const UPDATE_ORDER_FEATURE_DISABLED = hashString("UPDATE_ORDER_FEATURE_DISABLED");
+export const CANCEL_ORDER_FEATURE_DISABLED = hashString("CANCEL_ORDER_FEATURE_DISABLED");
+
 export const CLAIMABLE_FEE_AMOUNT = hashString("CLAIMABLE_FEE_AMOUNT");
 export const CLAIMABLE_FUNDING_AMOUNT = hashString("CLAIMABLE_FUNDING_AMOUNT");
 export const CLAIMABLE_COLLATERAL_TIME_DIVISOR = hashString("CLAIMABLE_COLLATERAL_TIME_DIVISOR");
@@ -124,6 +130,26 @@ export function cancelDepositFeatureDisabledKey(contract) {
 
 export function executeDepositFeatureDisabledKey(contract) {
   return hashData(["bytes32", "address"], [EXECUTE_DEPOSIT_FEATURE_DISABLED, contract]);
+}
+
+export function createOrderFeatureDisabledKey(contract, orderType) {
+  return hashData(["bytes32", "address", "uint256"], [CREATE_ORDER_FEATURE_DISABLED, contract, orderType]);
+}
+
+export function executeOrderFeatureDisabledKey(contract, orderType) {
+  return hashData(["bytes32", "address", "uint256"], [EXECUTE_ORDER_FEATURE_DISABLED, contract, orderType]);
+}
+
+export function executeAdlFeatureDisabledKey(contract, orderType) {
+  return hashData(["bytes32", "address", "uint256"], [EXECUTE_ADL_FEATURE_DISABLED, contract, orderType]);
+}
+
+export function updateOrderFeatureDisabledKey(contract, orderType) {
+  return hashData(["bytes32", "address", "uint256"], [UPDATE_ORDER_FEATURE_DISABLED, contract, orderType]);
+}
+
+export function cancelOrderFeatureDisabledKey(contract, orderType) {
+  return hashData(["bytes32", "address", "uint256"], [CANCEL_ORDER_FEATURE_DISABLED, contract, orderType]);
 }
 
 export function claimableFeeAmountKey(market: string, token: string) {
