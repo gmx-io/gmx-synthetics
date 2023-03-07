@@ -26,7 +26,7 @@ import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
-import "../utils/ReceiverUtils.sol";
+import "../utils/AccountUtils.sol";
 import "../referral/ReferralUtils.sol";
 
 // @title OrderUtils
@@ -37,7 +37,6 @@ library OrderUtils {
     using Price for Price.Props;
     using Array for uint256[];
 
-    error EmptyOrderAccount();
     error OrderTypeCannotBeCreated(Order.OrderType orderType);
     error OrderAlreadyFrozen();
     error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);
@@ -56,9 +55,7 @@ library OrderUtils {
         address account,
         BaseOrderUtils.CreateOrderParams memory params
     ) external returns (bytes32) {
-        if (account == address(0)) {
-            revert EmptyOrderAccount();
-        }
+        AccountUtils.validateAccount(account);
 
         ReferralUtils.setTraderReferralCode(referralStorage, account, params.referralCode);
 
@@ -127,7 +124,7 @@ library OrderUtils {
         order.setIsLong(params.isLong);
         order.setShouldUnwrapNativeToken(params.shouldUnwrapNativeToken);
 
-        ReceiverUtils.validateReceiver(order.receiver());
+        AccountUtils.validateReceiver(order.receiver());
 
         if (order.initialCollateralDeltaAmount() == 0 && order.sizeDeltaUsd() == 0) {
             revert BaseOrderUtils.EmptyOrder();

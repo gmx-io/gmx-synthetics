@@ -82,7 +82,7 @@ describe("Exchange.Deposit", () => {
 
     await expect(
       createDeposit(fixture, { ...params, account: { address: AddressZero } })
-    ).to.be.revertedWithCustomError(depositUtils, "EmptyDepositAccount");
+    ).to.be.revertedWithCustomError(depositUtils, "EmptyAccount");
 
     await expect(
       createDeposit(fixture, {
