@@ -265,6 +265,7 @@ library DecreasePositionUtils {
             params.orderKey,
             params.market.marketToken,
             params.position.collateralToken(),
+            params.order.sizeDeltaUsd(),
             false,
             fees
         );

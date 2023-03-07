@@ -213,6 +213,7 @@ library IncreasePositionUtils {
             params.orderKey,
             params.market.marketToken,
             params.position.collateralToken(),
+            params.order.sizeDeltaUsd(),
             true,
             fees
         );

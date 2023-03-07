@@ -13,7 +13,6 @@ import "../data/Keys.sol";
 
 import "../pricing/PositionPricingUtils.sol";
 import "../order/BaseOrderUtils.sol";
-import "../referral/ReferralEventUtils.sol";
 
 // @title PositionUtils
 // @dev Library for position functions
@@ -534,22 +533,10 @@ library PositionUtils {
     ) internal {
         ReferralUtils.incrementAffiliateReward(
             params.contracts.dataStore,
-            params.contracts.eventEmitter,
             params.position.market(),
             params.position.collateralToken(),
             fees.referral.affiliate,
-            params.position.account(),
             fees.referral.affiliateRewardAmount
         );
-
-        if (fees.referral.traderDiscountAmount > 0) {
-            ReferralEventUtils.emitTraderReferralDiscountApplied(
-                params.contracts.eventEmitter,
-                params.position.market(),
-                params.position.collateralToken(),
-                params.position.account(),
-                fees.referral.traderDiscountAmount
-            );
-        }
     }
 }
