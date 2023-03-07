@@ -71,6 +71,8 @@ library DepositUtils {
 
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, params.market);
 
+        // if the initialLongToken and initialShortToken are the same, only the initialLongTokenAmount would
+        // be non-zero, the initialShortTokenAmount would be zero
         uint256 initialLongTokenAmount = depositVault.recordTransferIn(params.initialLongToken);
         uint256 initialShortTokenAmount = depositVault.recordTransferIn(params.initialShortToken);
 

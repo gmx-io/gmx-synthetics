@@ -71,6 +71,8 @@ library OrderUtils {
             params.orderType == Order.OrderType.MarketIncrease ||
             params.orderType == Order.OrderType.LimitIncrease
         ) {
+            // for swaps and increase orders, the initialCollateralDeltaAmount is set based on the amount of tokens
+            // transferred to the orderVault
             initialCollateralDeltaAmount = orderVault.recordTransferIn(params.addresses.initialCollateralToken);
             if (params.addresses.initialCollateralToken == wnt) {
                 if (initialCollateralDeltaAmount < params.numbers.executionFee) {
@@ -84,6 +86,7 @@ library OrderUtils {
             params.orderType == Order.OrderType.LimitDecrease ||
             params.orderType == Order.OrderType.StopLossDecrease
         ) {
+            // for decrease orders, the initialCollateralDeltaAmount is based on the passed in value
             initialCollateralDeltaAmount = params.numbers.initialCollateralDeltaAmount;
         } else {
             revert OrderTypeCannotBeCreated(params.orderType);
