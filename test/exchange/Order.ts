@@ -14,13 +14,14 @@ describe("Exchange.Order", () => {
 
   let fixture;
   let user0, user1;
-  let reader, dataStore, orderHandler, orderUtils, referralStorage, ethUsdMarket, wnt, usdc;
+  let reader, dataStore, orderHandler, orderUtils, referralStorage, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc;
   let executionFee;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1 } = fixture.accounts);
-    ({ reader, dataStore, orderHandler, orderUtils, referralStorage, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ reader, dataStore, orderHandler, orderUtils, referralStorage, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc } =
+      fixture.contracts);
     ({ executionFee } = fixture.props);
 
     await handleDeposit(fixture, {
@@ -72,8 +73,8 @@ describe("Exchange.Order", () => {
     await expect(
       createOrder(fixture, {
         ...params,
-        initialCollateralDeltaAmount: 0,
-        executionFee: "1000",
+        initialCollateralDeltaAmount: bigNumberify(0),
+        executionFee: "100000",
         executionFeeToMint: "200",
       })
     ).to.be.revertedWithCustomError(orderUtils, "InsufficientWntAmountForExecutionFee");
@@ -82,8 +83,8 @@ describe("Exchange.Order", () => {
       createOrder(fixture, {
         ...params,
         initialCollateralToken: usdc,
-        initialCollateralDeltaAmount: "2000",
-        executionFee: "1000",
+        initialCollateralDeltaAmount: bigNumberify(0),
+        executionFee: "100000",
         executionFeeToMint: "200",
       })
     ).to.be.revertedWithCustomError(orderUtils, "InsufficientWntAmountForExecutionFee");
@@ -94,11 +95,118 @@ describe("Exchange.Order", () => {
         ...params,
         orderType: 100,
         initialCollateralToken: usdc,
-        initialCollateralDeltaAmount: "2000",
-        executionFee: "1000",
+        initialCollateralDeltaAmount: bigNumberify(0),
+        executionFee: "100000",
         executionFeeToMint: "200",
       })
     ).to.be.reverted;
+
+    await expect(
+      createOrder(fixture, {
+        ...params,
+        orderType: OrderType.Liquidation,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: bigNumberify(0),
+        executionFee: "100000",
+        executionFeeToMint: "200",
+      })
+    )
+      .to.be.revertedWithCustomError(orderUtils, "OrderTypeCannotBeCreated")
+      .withArgs(OrderType.Liquidation);
+
+    await expect(
+      createOrder(fixture, {
+        ...params,
+        market: { marketToken: user1.address, longToken: wnt.address, shortToken: usdc.address },
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: bigNumberify(0),
+        executionFee: "200",
+        executionFeeToMint: "200",
+      })
+    ).to.be.revertedWithCustomError(orderUtils, "EmptyMarket");
+
+    await expect(
+      createOrder(fixture, {
+        ...params,
+        market: ethUsdSpotOnlyMarket,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: bigNumberify(0),
+        executionFee: "200",
+        executionFeeToMint: "200",
+      })
+    ).to.be.revertedWithCustomError(orderUtils, "InvalidPositionMarket");
+
+    await expect(
+      createOrder(fixture, {
+        ...params,
+        market: ethUsdMarket,
+        swapPath: [user1.address],
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: bigNumberify(0),
+        executionFee: "200",
+        executionFeeToMint: "200",
+      })
+    ).to.be.revertedWithCustomError(orderUtils, "EmptyMarket");
+
+    await expect(
+      createOrder(fixture, {
+        ...params,
+        market: ethUsdMarket,
+        swapPath: [],
+        receiver: { address: AddressZero },
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: bigNumberify(0),
+        executionFee: "200",
+        executionFeeToMint: "200",
+      })
+    ).to.be.revertedWithCustomError(orderUtils, "EmptyReceiver");
+
+    await expect(
+      createOrder(fixture, {
+        ...params,
+        market: ethUsdMarket,
+        swapPath: [],
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: bigNumberify(0),
+        sizeDeltaUsd: bigNumberify(0),
+        executionFee: "200",
+        executionFeeToMint: "200",
+      })
+    ).to.be.revertedWithCustomError(orderUtils, "EmptyOrder");
+
+    await expect(
+      createOrder(fixture, {
+        ...params,
+        market: ethUsdMarket,
+        swapPath: [],
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: bigNumberify(0),
+        sizeDeltaUsd: bigNumberify(10),
+        executionFee: "200",
+        executionFeeToMint: "200",
+        callbackGasLimit: "3000000",
+      })
+    )
+      .to.be.revertedWithCustomError(orderUtils, "MaxCallbackGasLimitExceeded")
+      .withArgs("3000000", "2000000");
+
+    await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
+
+    await expect(
+      createOrder(fixture, {
+        ...params,
+        market: ethUsdMarket,
+        swapPath: [],
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: bigNumberify(0),
+        sizeDeltaUsd: bigNumberify(10),
+        executionFee: "200",
+        executionFeeToMint: "200",
+        callbackGasLimit: "2000000",
+      })
+    )
+      .to.be.revertedWithCustomError(orderUtils, "InsufficientExecutionFee")
+      .withArgs("2000000016000000", "2200");
   });
 
   it("stores referral code", async () => {
