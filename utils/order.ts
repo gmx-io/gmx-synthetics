@@ -1,7 +1,6 @@
 import { logGasUsage } from "./gas";
 import { bigNumberify, expandDecimals } from "./math";
 import { executeWithOracleParams } from "./exchange";
-import { TOKEN_ORACLE_TYPES } from "./oracle";
 
 import * as keys from "./keys";
 
