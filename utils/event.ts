@@ -1,22 +1,35 @@
-export function getParsedLog(fixture, txReceipt, eventName) {
+export function parseLogs(fixture, txReceipt) {
   const { eventEmitter } = fixture.contracts;
   const { logs } = txReceipt;
   for (let i = 0; i < logs.length; i++) {
     try {
       const log = logs[i];
-      const logInfo = eventEmitter.interface.parseLog(log);
-      if (logInfo.args[2] === eventName) {
-        return logInfo;
-      }
+      const parsedLog = eventEmitter.interface.parseLog(log);
+      // if the log could not be parsed, an error would have been thrown above
+      // and the below lines will be skipped
+      log.parsedEventInfo = {
+        msgSender: parsedLog.args[0],
+        eventName: parsedLog.args[1],
+      };
+      log.parsedEventData = getEventDataFromLog(parsedLog);
     } catch (e) {
       // ignore error
     }
   }
 
-  throw new Error("Could not find matching log");
+  return logs;
 }
 
-export function getEventLogValue(logInfo, key) {
+export function getEventDataValue(parsedLogs, eventName, key) {
+  for (let i = 0; i < parsedLogs.length; i++) {
+    const log = parsedLogs[i];
+    if (log.parsedEventInfo?.eventName === eventName) {
+      return log.parsedEventData[key];
+    }
+  }
+}
+
+export function getEventDataFromLog(logInfo) {
   let eventLogArg;
 
   for (let i = 0; i < logInfo.args.length; i++) {
@@ -30,59 +43,27 @@ export function getEventLogValue(logInfo, key) {
     throw new Error("Could not find EventLog arg");
   }
 
-  let value = getEventLogValueFromItems(eventLogArg.addressItems, key);
+  const data = {};
 
-  if (value) {
-    return value;
-  }
+  applyEventDataFromItems(data, eventLogArg.addressItems);
+  applyEventDataFromItems(data, eventLogArg.uintItems);
+  applyEventDataFromItems(data, eventLogArg.intItems);
+  applyEventDataFromItems(data, eventLogArg.boolItems);
+  applyEventDataFromItems(data, eventLogArg.bytes32Items);
+  applyEventDataFromItems(data, eventLogArg.bytesItems);
+  applyEventDataFromItems(data, eventLogArg.stringItems);
 
-  value = getEventLogValueFromItems(eventLogArg.uintItems, key);
-  if (value) {
-    return value;
-  }
-
-  value = getEventLogValueFromItems(eventLogArg.intItems, key);
-  if (value) {
-    return value;
-  }
-
-  value = getEventLogValueFromItems(eventLogArg.boolItems, key);
-  if (value) {
-    return value;
-  }
-
-  value = getEventLogValueFromItems(eventLogArg.bytes32Items, key);
-  if (value) {
-    return value;
-  }
-
-  value = getEventLogValueFromItems(eventLogArg.bytesItems, key);
-  if (value) {
-    return value;
-  }
-
-  value = getEventLogValueFromItems(eventLogArg.stringItems, key);
-  if (value) {
-    return value;
-  }
-
-  throw new Error("Could not find matching event item");
+  return data;
 }
 
-function getEventLogValueFromItems(items, key) {
-  const value = getEventLogValueFromKeyValueItems(items.items, key);
-  if (value) {
-    return value;
-  }
-
-  return getEventLogValueFromKeyValueItems(items.arrayItems, key);
+function applyEventDataFromItems(target, items) {
+  applyEventDataFromKeyValueItems(target, items.items);
+  applyEventDataFromKeyValueItems(target, items.arrayItems);
 }
 
-function getEventLogValueFromKeyValueItems(items, key) {
+function applyEventDataFromKeyValueItems(target, items) {
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    if (item.key === key) {
-      return item.value;
-    }
+    target[item.key] = item.value;
   }
 }
