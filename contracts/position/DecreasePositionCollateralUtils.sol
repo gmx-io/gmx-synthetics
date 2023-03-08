@@ -197,7 +197,7 @@ library DecreasePositionCollateralUtils {
         // closing the position with zero price impact, just that if there were any collateral that could
         // partially pay for negative price impact, it would be sent to the pool instead
         if (BaseOrderUtils.isLiquidationOrder(params.order.orderType()) && values.remainingCollateralAmount < 0) {
-            PositionPricingUtils.emitPositionFeesInfo(
+            PositionEventUtils.emitPositionFeesInfo(
                 params.contracts.eventEmitter,
                 params.orderKey,
                 params.market.marketToken,
