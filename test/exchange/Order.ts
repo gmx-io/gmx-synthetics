@@ -3,26 +3,23 @@ import { expect } from "chai";
 import { deployFixture } from "../../utils/fixture";
 import { bigNumberify, expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
-import { OrderType, getOrderCount, getOrderKeys, createOrder, executeOrder, handleOrder } from "../../utils/order";
+import { OrderType, getOrderCount, getOrderKeys, createOrder } from "../../utils/order";
 import { getPositionCount, getAccountPositionCount } from "../../utils/position";
 import { hashString } from "../../utils/hash";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.Order", () => {
-  const { provider } = ethers;
   const { AddressZero, HashZero } = ethers.constants;
 
   let fixture;
   let user0, user1;
   let reader, dataStore, orderHandler, orderUtils, referralStorage, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc;
-  let executionFee;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1 } = fixture.accounts);
     ({ reader, dataStore, orderHandler, orderUtils, referralStorage, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc } =
       fixture.contracts);
-    ({ executionFee } = fixture.props);
 
     await handleDeposit(fixture, {
       create: {
@@ -252,5 +249,61 @@ describe("Exchange.Order", () => {
     await createOrder(fixture, params);
 
     expect(await referralStorage.traderReferralCodes(user0.address)).eq(referralCode);
+  });
+
+  it("simulateExecuteOrder", async () => {
+    expect(await getOrderCount(dataStore)).eq(0);
+
+    const params = {
+      account: user0,
+      market: ethUsdMarket,
+      initialCollateralToken: wnt,
+      initialCollateralDeltaAmount: expandDecimals(10, 18),
+      swapPath: [],
+      sizeDeltaUsd: decimalToFloat(200 * 1000),
+      acceptablePrice: expandDecimals(5001, 12),
+      executionFee: expandDecimals(1, 15),
+      minOutputAmount: expandDecimals(50000, 6),
+      orderType: OrderType.MarketIncrease,
+      isLong: true,
+      shouldUnwrapNativeToken: false,
+    };
+
+    await createOrder(fixture, params);
+
+    expect(await getOrderCount(dataStore)).eq(1);
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
+    expect(await getPositionCount(dataStore)).eq(0);
+
+    const orderKeys = await getOrderKeys(dataStore, 0, 1);
+
+    await expect(
+      orderHandler.connect(user0).simulateExecuteOrder(orderKeys[0], {
+        primaryTokens: [],
+        primaryPrices: [],
+        secondaryTokens: [],
+        secondaryPrices: [],
+      })
+    )
+      .to.be.revertedWithCustomError(orderHandler, "Unauthorized")
+      .withArgs(user0.address, "CONTROLLER");
+
+    await expect(
+      orderHandler.simulateExecuteOrder(orderKeys[0], {
+        primaryTokens: [wnt.address, usdc.address],
+        primaryPrices: [
+          {
+            min: expandDecimals(5000, 12),
+            max: expandDecimals(5000, 12),
+          },
+          {
+            min: expandDecimals(1, 24),
+            max: expandDecimals(1, 24),
+          },
+        ],
+        secondaryTokens: [],
+        secondaryPrices: [],
+      })
+    ).to.be.revertedWithCustomError(orderHandler, "EndOfOracleSimulation");
   });
 });
