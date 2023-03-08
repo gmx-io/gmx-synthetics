@@ -8,6 +8,7 @@ import "../utils/Cast.sol";
 
 import "./Position.sol";
 import "./PositionUtils.sol";
+import "../pricing/PositionPricingUtils.sol";
 
 library PositionEventUtils {
     using Position for Position.Props;
@@ -164,6 +165,111 @@ library PositionEventUtils {
 
         eventEmitter.emitEventLog1(
             "InsufficientFundingFeePayment",
+            Cast.toBytes32(market),
+            eventData
+        );
+    }
+
+    function emitPositionFeesCollected(
+        EventEmitter eventEmitter,
+        bytes32 orderKey,
+        address market,
+        address collateralToken,
+        uint256 tradeSizeUsd,
+        bool isIncrease,
+        PositionPricingUtils.PositionFees memory fees
+    ) external {
+        _emitPositionFees(
+            eventEmitter,
+            orderKey,
+            market,
+            collateralToken,
+            tradeSizeUsd,
+            isIncrease,
+            fees,
+            "PositionFeesCollected"
+        );
+    }
+
+    function emitPositionFeesInfo(
+        EventEmitter eventEmitter,
+        bytes32 orderKey,
+        address market,
+        address collateralToken,
+        uint256 tradeSizeUsd,
+        bool isIncrease,
+        PositionPricingUtils.PositionFees memory fees
+    ) external {
+        _emitPositionFees(
+            eventEmitter,
+            orderKey,
+            market,
+            collateralToken,
+            tradeSizeUsd,
+            isIncrease,
+            fees,
+            "PositionFeesInfo"
+        );
+    }
+
+    function _emitPositionFees(
+        EventEmitter eventEmitter,
+        bytes32 orderKey,
+        address market,
+        address collateralToken,
+        uint256 tradeSizeUsd,
+        bool isIncrease,
+        PositionPricingUtils.PositionFees memory fees,
+        string memory eventName
+    ) internal {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "orderKey", orderKey);
+
+        eventData.addressItems.initItems(4);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "collateralToken", collateralToken);
+        eventData.addressItems.setItem(2, "affiliate", fees.referral.affiliate);
+        eventData.addressItems.setItem(3, "trader", fees.referral.trader);
+
+        eventData.uintItems.initItems(21);
+        eventData.uintItems.setItem(0, "collateralTokenPrice.min", fees.collateralTokenPrice.min);
+        eventData.uintItems.setItem(1, "collateralTokenPrice.max", fees.collateralTokenPrice.max);
+        eventData.uintItems.setItem(2, "tradeSizeUsd", tradeSizeUsd);
+        eventData.uintItems.setItem(3, "totalRebateFactor", fees.referral.totalRebateFactor);
+        eventData.uintItems.setItem(4, "traderDiscountFactor", fees.referral.traderDiscountFactor);
+        eventData.uintItems.setItem(5, "totalRebateAmount", fees.referral.totalRebateAmount);
+        eventData.uintItems.setItem(6, "traderDiscountAmount", fees.referral.traderDiscountAmount);
+        eventData.uintItems.setItem(7, "affiliateRewardAmount", fees.referral.affiliateRewardAmount);
+        eventData.uintItems.setItem(8, "fundingFeeAmount", fees.funding.fundingFeeAmount);
+        eventData.uintItems.setItem(9, "claimableLongTokenAmount", fees.funding.claimableLongTokenAmount);
+        eventData.uintItems.setItem(10, "claimableShortTokenAmount", fees.funding.claimableShortTokenAmount);
+        eventData.uintItems.setItem(11, "positionFeeFactor", fees.positionFeeFactor);
+        eventData.uintItems.setItem(12, "protocolFeeAmount", fees.protocolFeeAmount);
+        eventData.uintItems.setItem(13, "positionFeeReceiverFactor", fees.positionFeeReceiverFactor);
+        eventData.uintItems.setItem(14, "feeReceiverAmount", fees.feeReceiverAmount);
+        eventData.uintItems.setItem(15, "feeAmountForPool", fees.feeAmountForPool);
+        eventData.uintItems.setItem(16, "positionFeeAmountForPool", fees.positionFeeAmountForPool);
+        eventData.uintItems.setItem(17, "positionFeeAmount", fees.positionFeeAmount);
+        eventData.uintItems.setItem(18, "borrowingFeeAmount", fees.borrowingFeeAmount);
+        eventData.uintItems.setItem(19, "totalNetCostAmount", fees.totalNetCostAmount);
+        eventData.uintItems.setItem(20, "totalNetCostUsd", fees.totalNetCostUsd);
+
+        eventData.intItems.initItems(2);
+        eventData.intItems.setItem(0, "latestLongTokenFundingAmountPerSize", fees.funding.latestLongTokenFundingAmountPerSize);
+        eventData.intItems.setItem(1, "latestShortTokenFundingAmountPerSize", fees.funding.latestShortTokenFundingAmountPerSize);
+
+        eventData.boolItems.initItems(3);
+        eventData.boolItems.setItem(0, "hasPendingLongTokenFundingFee", fees.funding.hasPendingLongTokenFundingFee);
+        eventData.boolItems.setItem(1, "hasPendingShortTokenFundingFee", fees.funding.hasPendingShortTokenFundingFee);
+        eventData.boolItems.setItem(2, "isIncrease", isIncrease);
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "referralCode", fees.referral.referralCode);
+
+        eventEmitter.emitEventLog1(
+            eventName,
             Cast.toBytes32(market),
             eventData
         );
