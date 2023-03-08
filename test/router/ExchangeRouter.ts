@@ -254,12 +254,12 @@ describe("ExchangeRouter", () => {
               primaryTokens: [wnt.address, usdc.address],
               primaryPrices: [
                 {
-                  min: expandDecimals(5000, 4),
-                  max: expandDecimals(5000, 4),
+                  min: expandDecimals(5000, 12),
+                  max: expandDecimals(5000, 12),
                 },
                 {
-                  min: expandDecimals(1, 6),
-                  max: expandDecimals(1, 6),
+                  min: expandDecimals(1, 24),
+                  max: expandDecimals(1, 24),
                 },
               ],
               secondaryTokens: [],
