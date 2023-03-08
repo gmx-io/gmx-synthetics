@@ -85,7 +85,7 @@ contract OrderHandler is BaseOrderHandler {
         order.setMinOutputAmount(minOutputAmount);
         order.setIsFrozen(false);
 
-        // allow topping up of executionFee as partially filled or frozen orders
+        // allow topping up of executionFee as frozen orders
         // will have their executionFee reduced
         address wnt = TokenUtils.wnt(dataStore);
         uint256 receivedWnt = orderVault.recordTransferIn(wnt);
