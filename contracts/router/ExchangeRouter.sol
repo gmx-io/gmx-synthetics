@@ -247,6 +247,10 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
      */
     function cancelOrder(bytes32 key) external payable nonReentrant {
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+        if (order.account() == address(0)) {
+            revert BaseOrderUtils.EmptyOrder();
+        }
+
         if (order.account() != msg.sender) {
             revert Unauthorized(msg.sender, "account for cancelOrder");
         }

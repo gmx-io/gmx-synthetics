@@ -13,20 +13,20 @@ describe("Exchange.CancelDeposit", () => {
   const { AddressZero } = ethers.constants;
 
   let fixture;
-  let user0, user1, user2;
+  let user0, user1;
   let reader, dataStore, exchangeRouter, depositHandler, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
-    ({ user0, user1, user2 } = fixture.accounts);
+    ({ user0, user1 } = fixture.accounts);
     ({ reader, dataStore, exchangeRouter, depositHandler, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc } =
       fixture.contracts);
   });
 
   it("cancelDeposit", async () => {
     const revertingCallbackReceiver = await deployContract("RevertingCallbackReceiver", []);
-    await dataStore.setUint(keys.REQUEST_EXPIRATION_BLOCK_AGE, 5);
+    await dataStore.setUint(keys.REQUEST_EXPIRATION_BLOCK_AGE, 10);
 
     await createDeposit(fixture, {
       receiver: user1,
@@ -73,7 +73,7 @@ describe("Exchange.CancelDeposit", () => {
 
     await expect(exchangeRouter.connect(user0).cancelDeposit(depositKeys[0]))
       .to.be.revertedWithCustomError(depositHandler, "RequestNotYetCancellable")
-      .withArgs(2, 5, "Deposit");
+      .withArgs(2, 10, "Deposit");
 
     expect(await getDepositCount(dataStore)).eq(1);
 
