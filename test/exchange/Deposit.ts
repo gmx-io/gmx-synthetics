@@ -7,6 +7,7 @@ import { getBalanceOf, getSupplyOf } from "../../utils/token";
 import { getClaimableFeeAmount } from "../../utils/fee";
 import { getPoolAmount, getSwapImpactPoolAmount, getMarketTokenPrice } from "../../utils/market";
 import { getDepositCount, getDepositKeys, createDeposit, executeDeposit, handleDeposit } from "../../utils/deposit";
+import { getExecuteParams } from "../../utils/exchange";
 import { validateCancellationReason } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
@@ -347,12 +348,7 @@ describe("Exchange.Deposit", () => {
         longTokenAmount: expandDecimals(2, 8),
         shortTokenAmount: expandDecimals(10, 18),
       },
-      execute: {
-        tokens: [usdc.address, wbtc.address],
-        precisions: [18, 20],
-        minPrices: [expandDecimals(1, 6), expandDecimals(60000, 2)],
-        maxPrices: [expandDecimals(1, 6), expandDecimals(60000, 2)],
-      },
+      execute: getExecuteParams(fixture, { tokens: [usdc, wbtc] }),
     });
 
     expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(190000, 18));
@@ -366,12 +362,7 @@ describe("Exchange.Deposit", () => {
         longTokenSwapPath: [btcUsdMarket.marketToken],
         shortTokenSwapPath: [ethUsdMarket.marketToken],
       },
-      execute: {
-        tokens: [wnt.address, usdc.address, wbtc.address],
-        precisions: [8, 18, 20],
-        minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(60000, 2)],
-        maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(60000, 2)],
-      },
+      execute: getExecuteParams(fixture, { tokens: [wnt, usdc, wbtc] }),
     });
 
     validateCancellationReason({

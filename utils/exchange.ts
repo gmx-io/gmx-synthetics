@@ -1,6 +1,47 @@
 import { logGasUsage } from "./gas";
-import { bigNumberify } from "./math";
+import { bigNumberify, expandDecimals } from "./math";
 import { getOracleParams, TOKEN_ORACLE_TYPES } from "./oracle";
+
+export function getExecuteParams(fixture, { tokens }) {
+  const { wnt, wbtc, usdc } = fixture.contracts;
+  const priceInfoItems = {
+    [wnt.address]: {
+      precision: 8,
+      minPrice: expandDecimals(5000, 4),
+      maxPrice: expandDecimals(5000, 4),
+    },
+    [wbtc.address]: {
+      precision: 20,
+      minPrice: expandDecimals(50000, 2),
+      maxPrice: expandDecimals(50000, 2),
+    },
+    [usdc.address]: {
+      precision: 18,
+      minPrice: expandDecimals(1, 6),
+      maxPrice: expandDecimals(1, 6),
+    },
+  };
+
+  const params = {
+    tokens: [],
+    precisions: [],
+    minPrices: [],
+    maxPrices: [],
+  };
+
+  for (let i = 0; i < tokens.length; i++) {
+    const priceInfoItem = priceInfoItems[tokens[i].address];
+    if (!priceInfoItem) {
+      throw new Error("Missing price info");
+    }
+    params.tokens.push(tokens[i].address);
+    params.precisions.push(priceInfoItem.precision);
+    params.minPrices.push(priceInfoItem.minPrice);
+    params.maxPrices.push(priceInfoItem.maxPrice);
+  }
+
+  return params;
+}
 
 export async function executeWithOracleParams(fixture, overrides) {
   const { key, oracleBlocks, oracleBlockNumber, tokens, precisions, minPrices, maxPrices, execute, gasUsageLabel } =
