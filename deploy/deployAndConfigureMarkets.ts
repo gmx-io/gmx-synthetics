@@ -179,7 +179,7 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
     }
 
     if (marketConfig.borrowingExponentFactorForLongs) {
-      const key = keys.borrowingExponentFactor(marketToken, true);
+      const key = keys.borrowingExponentFactorKey(marketToken, true);
       await setUintIfDifferent(
         key,
         marketConfig.borrowingExponentFactorForLongs,
@@ -188,7 +188,7 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
     }
 
     if (marketConfig.borrowingExponentFactorForShorts) {
-      const key = keys.borrowingExponentFactor(marketToken, false);
+      const key = keys.borrowingExponentFactorKey(marketToken, false);
       await setUintIfDifferent(
         key,
         marketConfig.borrowingExponentFactorForShorts,
