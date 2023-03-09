@@ -3,9 +3,10 @@ import { expect } from "chai";
 import { deployFixture } from "../../utils/fixture";
 import { bigNumberify, expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
-import { OrderType, getOrderCount, getOrderKeys, createOrder } from "../../utils/order";
+import { OrderType, getOrderCount, getOrderKeys, createOrder, handleOrder } from "../../utils/order";
 import { getPositionCount, getAccountPositionCount } from "../../utils/position";
 import { hashString } from "../../utils/hash";
+import { getExecuteParams } from "../../utils/exchange";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.Order", () => {
@@ -13,19 +14,50 @@ describe("Exchange.Order", () => {
 
   let fixture;
   let user0, user1;
-  let reader, dataStore, orderHandler, orderUtils, referralStorage, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc;
+  let reader,
+    dataStore,
+    orderHandler,
+    orderUtils,
+    referralStorage,
+    ethUsdMarket,
+    ethUsdSpotOnlyMarket,
+    btcUsdMarket,
+    wnt,
+    wbtc,
+    usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1 } = fixture.accounts);
-    ({ reader, dataStore, orderHandler, orderUtils, referralStorage, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc } =
-      fixture.contracts);
+    ({
+      reader,
+      dataStore,
+      orderHandler,
+      orderUtils,
+      referralStorage,
+      ethUsdMarket,
+      ethUsdSpotOnlyMarket,
+      btcUsdMarket,
+      wnt,
+      wbtc,
+      usdc,
+    } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
         market: ethUsdMarket,
         longTokenAmount: expandDecimals(1000, 18),
+        shortTokenAmount: expandDecimals(50 * 1000, 6),
       },
+    });
+
+    await handleDeposit(fixture, {
+      create: {
+        market: btcUsdMarket,
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(50 * 1000, 6),
+      },
+      execute: getExecuteParams(fixture, { tokens: [wbtc, usdc] }),
     });
   });
 
@@ -305,5 +337,39 @@ describe("Exchange.Order", () => {
         secondaryPrices: [],
       })
     ).to.be.revertedWithCustomError(orderHandler, "EndOfOracleSimulation");
+  });
+
+  it("executeOrder validations", async () => {
+    const params = {
+      account: user0,
+      market: ethUsdMarket,
+      initialCollateralToken: wnt,
+      initialCollateralDeltaAmount: expandDecimals(1, 18),
+      swapPath: [],
+      sizeDeltaUsd: decimalToFloat(1000),
+      acceptablePrice: expandDecimals(5001, 12),
+      executionFee: expandDecimals(1, 15),
+      minOutputAmount: expandDecimals(50000, 6),
+      orderType: OrderType.MarketIncrease,
+      isLong: true,
+      shouldUnwrapNativeToken: false,
+    };
+
+    const _executeOrderFeatureDisabledKey = keys.executeOrderFeatureDisabledKey(
+      orderHandler.address,
+      OrderType.MarketIncrease
+    );
+
+    await dataStore.setBool(_executeOrderFeatureDisabledKey, true);
+
+    await expect(
+      handleOrder(fixture, {
+        create: params,
+      })
+    )
+      .to.be.revertedWithCustomError(orderHandler, "DisabledFeature")
+      .withArgs(_executeOrderFeatureDisabledKey);
+
+    await dataStore.setBool(_executeOrderFeatureDisabledKey, false);
   });
 });

@@ -70,10 +70,6 @@ describe("Exchange.DecreaseOrder", () => {
         orderType: OrderType.MarketIncrease,
         isLong: true,
       },
-      execute: {
-        tokens: [wnt.address, usdc.address],
-        prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-      },
     });
 
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
@@ -91,8 +87,6 @@ describe("Exchange.DecreaseOrder", () => {
         gasUsageLabel: "orderHandler.createOrder",
       },
       execute: {
-        tokens: [wnt.address, usdc.address],
-        prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
         gasUsageLabel: "orderHandler.executeOrder",
       },
     });
@@ -121,10 +115,6 @@ describe("Exchange.DecreaseOrder", () => {
         orderType: OrderType.MarketIncrease,
         isLong: true,
       },
-      execute: {
-        tokens: [wnt.address, usdc.address],
-        prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-      },
     });
 
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
@@ -142,8 +132,6 @@ describe("Exchange.DecreaseOrder", () => {
         gasUsageLabel: "orderHandler.createOrder",
       },
       execute: {
-        tokens: [wnt.address, usdc.address],
-        prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
         gasUsageLabel: "orderHandler.executeOrder",
       },
     });
