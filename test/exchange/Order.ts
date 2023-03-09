@@ -349,7 +349,7 @@ describe("Exchange.Order", () => {
       sizeDeltaUsd: decimalToFloat(1000),
       acceptablePrice: expandDecimals(5001, 12),
       executionFee: expandDecimals(1, 15),
-      minOutputAmount: expandDecimals(50000, 6),
+      minOutputAmount: 0,
       orderType: OrderType.MarketIncrease,
       isLong: true,
       shouldUnwrapNativeToken: false,
