@@ -57,6 +57,10 @@ export const PRICE_FEED_MULTIPLIER = hashString("PRICE_FEED_MULTIPLIER");
 export const STABLE_PRICE = hashString("STABLE_PRICE");
 
 export const ORACLE_TYPE = hashString("ORACLE_TYPE");
+
+export const OPEN_INTEREST = hashString("OPEN_INTEREST");
+export const OPEN_INTEREST_IN_TOKENS = hashString("OPEN_INTEREST_IN_TOKENS");
+
 export const RESERVE_FACTOR = hashString("RESERVE_FACTOR");
 export const MAX_PNL_FACTOR = hashString("MAX_PNL_FACTOR");
 export const MAX_PNL_FACTOR_FOR_TRADERS = hashString("MAX_PNL_FACTOR_FOR_TRADERS");
@@ -84,6 +88,9 @@ export const IS_ADL_ENABLED = hashString("IS_ADL_ENABLED");
 export const FUNDING_FACTOR = hashString("FUNDING_FACTOR");
 export const FUNDING_EXPONENT_FACTOR = hashString("FUNDING_EXPONENT_FACTOR");
 
+export const FUNDING_AMOUNT_PER_SIZE = hashString("FUNDING_AMOUNT_PER_SIZE");
+export const FUNDING_UPDATED_AT = hashString("FUNDING_UPDATED_AT");
+
 export const BORROWING_FACTOR = hashString("BORROWING_FACTOR");
 export const BORROWING_EXPONENT_FACTOR = hashString("BORROWING_EXPONENT_FACTOR");
 
@@ -99,6 +106,9 @@ export const SINGLE_SWAP_GAS_LIMIT = hashString("SINGLE_SWAP_GAS_LIMIT");
 export const INCREASE_ORDER_GAS_LIMIT = hashString("INCREASE_ORDER_GAS_LIMIT");
 export const DECREASE_ORDER_GAS_LIMIT = hashString("DECREASE_ORDER_GAS_LIMIT");
 export const SWAP_ORDER_GAS_LIMIT = hashString("SWAP_ORDER_GAS_LIMIT");
+
+export const CUMULATIVE_BORROWING_FACTOR = hashString("CUMULATIVE_BORROWING_FACTOR");
+export const CUMULATIVE_BORROWING_FACTOR_UPDATED_AT = hashString("CUMULATIVE_BORROWING_FACTOR_UPDATED_AT");
 
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
@@ -180,6 +190,17 @@ export function oracleTypeKey(token: string) {
   return hashData(["bytes32", "address"], [ORACLE_TYPE, token]);
 }
 
+export function openInterestKey(market: string, collateralToken: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "address", "bool"], [OPEN_INTEREST, market, collateralToken, isLong]);
+}
+
+export function openInterestInTokensKey(market: string, collateralToken: string, isLong: boolean) {
+  return hashData(
+    ["bytes32", "address", "address", "bool"],
+    [OPEN_INTEREST_IN_TOKENS, market, collateralToken, isLong]
+  );
+}
+
 export function minCollateralFactorKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [MIN_COLLATERAL_FACTOR, market, isLong]);
 }
@@ -252,6 +273,17 @@ export function fundingExponentFactorKey(market: string) {
   return hashData(["bytes32", "address"], [FUNDING_EXPONENT_FACTOR, market]);
 }
 
+export function fundingAmountPerSizeKey(market: string, collateralToken: string, isLong: boolean) {
+  return hashData(
+    ["bytes32", "address", "address", "bool"],
+    [FUNDING_AMOUNT_PER_SIZE, market, collateralToken, isLong]
+  );
+}
+
+export function fundingUpdatedAtKey(market: string) {
+  return hashData(["bytes32", "address"], [FUNDING_UPDATED_AT, market]);
+}
+
 export function borrowingFactorKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [BORROWING_FACTOR, market, isLong]);
 }
@@ -282,4 +314,12 @@ export function decreaseOrderGasLimitKey() {
 
 export function swapOrderGasLimitKey() {
   return hashData(["bytes32"], [SWAP_ORDER_GAS_LIMIT]);
+}
+
+export function cumulativeBorrowingFactorKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [CUMULATIVE_BORROWING_FACTOR, market, isLong]);
+}
+
+export function cumulativeBorrowingFactorUpdatedAtKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [CUMULATIVE_BORROWING_FACTOR_UPDATED_AT, market, isLong]);
 }

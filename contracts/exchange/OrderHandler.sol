@@ -95,6 +95,9 @@ contract OrderHandler is BaseOrderHandler {
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee());
 
         order.touch();
+
+        BaseOrderUtils.validateNonEmptyOrder(order);
+
         OrderStoreUtils.set(dataStore, key, order);
 
         OrderEventUtils.emitOrderUpdated(eventEmitter, key, sizeDeltaUsd, acceptablePrice, triggerPrice, minOutputAmount);

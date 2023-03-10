@@ -145,6 +145,8 @@ library OrderUtils {
         bytes32 key = NonceUtils.getNextKey(dataStore);
 
         order.touch();
+
+        BaseOrderUtils.validateNonEmptyOrder(order);
         OrderStoreUtils.set(dataStore, key, order);
 
         OrderEventUtils.emitOrderCreated(eventEmitter, key, order);
