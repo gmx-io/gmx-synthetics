@@ -631,7 +631,7 @@ contract Oracle is RoleModule {
         eventData.boolItems.setItem(1, "isPriceFeed", isPriceFeed);
 
         eventEmitter.emitEventLog1(
-            "InsufficientFundingFeePayment",
+            "OraclePriceUpdate",
             Cast.toBytes32(token),
             eventData
         );

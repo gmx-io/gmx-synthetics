@@ -57,6 +57,10 @@ export const PRICE_FEED_MULTIPLIER = hashString("PRICE_FEED_MULTIPLIER");
 export const STABLE_PRICE = hashString("STABLE_PRICE");
 
 export const ORACLE_TYPE = hashString("ORACLE_TYPE");
+
+export const OPEN_INTEREST = hashString("OPEN_INTEREST");
+export const OPEN_INTEREST_IN_TOKENS = hashString("OPEN_INTEREST_IN_TOKENS");
+
 export const RESERVE_FACTOR = hashString("RESERVE_FACTOR");
 export const MAX_PNL_FACTOR = hashString("MAX_PNL_FACTOR");
 export const MAX_PNL_FACTOR_FOR_TRADERS = hashString("MAX_PNL_FACTOR_FOR_TRADERS");
@@ -184,6 +188,17 @@ export function stablePriceKey(token: string) {
 
 export function oracleTypeKey(token: string) {
   return hashData(["bytes32", "address"], [ORACLE_TYPE, token]);
+}
+
+export function openInterestKey(market: string, collateralToken: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "address", "bool"], [OPEN_INTEREST, market, collateralToken, isLong]);
+}
+
+export function openInterestInTokensKey(market: string, collateralToken: string, isLong: boolean) {
+  return hashData(
+    ["bytes32", "address", "address", "bool"],
+    [OPEN_INTEREST_IN_TOKENS, market, collateralToken, isLong]
+  );
 }
 
 export function minCollateralFactorKey(market: string, isLong: boolean) {

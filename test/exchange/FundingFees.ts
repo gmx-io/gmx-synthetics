@@ -29,7 +29,7 @@ describe("Exchange.FundingFees", () => {
   });
 
   it("funding fees", async () => {
-    await dataStore.setUint(keys.fundingFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 7));
+    await dataStore.setUint(keys.fundingFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 10));
     await dataStore.setUint(keys.fundingExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(1));
 
     await handleOrder(fixture, {
@@ -66,6 +66,15 @@ describe("Exchange.FundingFees", () => {
       },
     });
 
+    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, wnt.address, true))).eq(
+      decimalToFloat(200 * 1000)
+    );
+    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, usdc.address, true))).eq(0);
+    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, wnt.address, false))).eq(0);
+    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, usdc.address, false))).eq(
+      decimalToFloat(100 * 1000)
+    );
+
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
     expect(await getAccountPositionCount(dataStore, user1.address)).eq(1);
     expect(await getPositionCount(dataStore)).eq(2);
@@ -77,7 +86,7 @@ describe("Exchange.FundingFees", () => {
         account: user0,
         market: ethUsdMarket,
         initialCollateralToken: wnt,
-        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        initialCollateralDeltaAmount: 0,
         swapPath: [],
         sizeDeltaUsd: decimalToFloat(190 * 1000),
         acceptablePrice: expandDecimals(4950, 12),
@@ -94,7 +103,7 @@ describe("Exchange.FundingFees", () => {
         account: user1,
         market: ethUsdMarket,
         initialCollateralToken: usdc,
-        initialCollateralDeltaAmount: expandDecimals(5000, 6),
+        initialCollateralDeltaAmount: 0,
         swapPath: [],
         sizeDeltaUsd: decimalToFloat(80 * 1000),
         acceptablePrice: expandDecimals(5050, 12),
@@ -106,18 +115,27 @@ describe("Exchange.FundingFees", () => {
       },
     });
 
+    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, wnt.address, true))).eq(
+      decimalToFloat(10 * 1000)
+    );
+    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, usdc.address, true))).eq(0);
+    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, wnt.address, false))).eq(0);
+    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, usdc.address, false))).eq(
+      decimalToFloat(20 * 1000)
+    );
+
     expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, wnt.address, true))).eq(
-      "8064019999999"
+      "8064019999"
     );
     expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, wnt.address, false))).eq(
-      "-16128039999999"
+      "-16128039999"
     );
     expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, usdc.address, true))).eq("0");
     expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, usdc.address, false))).eq("0");
 
     expect(
       await dataStore.getUint(keys.claimableFundingAmountKey(ethUsdMarket.marketToken, wnt.address, user1.address))
-    ).eq("1612803999999900000");
+    ).eq("1612803999900000");
 
     await expectTokenBalanceIncrease({
       token: wnt,
@@ -125,8 +143,10 @@ describe("Exchange.FundingFees", () => {
       sendTxn: async () => {
         await exchangeRouter.connect(user1).claimFundingFees([ethUsdMarket.marketToken], [wnt.address], user2.address);
       },
-      increaseAmount: "1612803999999900000",
+      increaseAmount: "1612803999900000",
     });
+
+    await time.increase(14 * 24 * 60 * 60);
 
     await handleOrder(fixture, {
       create: {
@@ -163,12 +183,16 @@ describe("Exchange.FundingFees", () => {
     });
 
     expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, wnt.address, true))).eq(
-      "8064019999999"
+      "8064019999"
     );
     expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, wnt.address, false))).eq(
-      "-16128039999999"
+      "-16128039999"
     );
-    expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, usdc.address, true))).eq("0");
-    expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, usdc.address, false))).eq("0");
+    expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, usdc.address, true))).eq(
+      "-80"
+    );
+    expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, usdc.address, false))).eq(
+      "40"
+    );
   });
 });
