@@ -84,6 +84,9 @@ export const IS_ADL_ENABLED = hashString("IS_ADL_ENABLED");
 export const FUNDING_FACTOR = hashString("FUNDING_FACTOR");
 export const FUNDING_EXPONENT_FACTOR = hashString("FUNDING_EXPONENT_FACTOR");
 
+export const FUNDING_AMOUNT_PER_SIZE = hashString("FUNDING_AMOUNT_PER_SIZE");
+export const FUNDING_UPDATED_AT = hashString("FUNDING_UPDATED_AT");
+
 export const BORROWING_FACTOR = hashString("BORROWING_FACTOR");
 export const BORROWING_EXPONENT_FACTOR = hashString("BORROWING_EXPONENT_FACTOR");
 
@@ -253,6 +256,17 @@ export function fundingFactorKey(market: string) {
 
 export function fundingExponentFactorKey(market: string) {
   return hashData(["bytes32", "address"], [FUNDING_EXPONENT_FACTOR, market]);
+}
+
+export function fundingAmountPerSizeKey(market: string, collateralToken: string, isLong: boolean) {
+  return hashData(
+    ["bytes32", "address", "address", "bool"],
+    [FUNDING_AMOUNT_PER_SIZE, market, collateralToken, isLong]
+  );
+}
+
+export function fundingUpdatedAtKey(market: string) {
+  return hashData(["bytes32", "address"], [FUNDING_UPDATED_AT, market]);
 }
 
 export function borrowingFactorKey(market: string, isLong: boolean) {
