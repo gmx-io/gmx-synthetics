@@ -9,7 +9,7 @@ import { getExecuteParams } from "../../utils/exchange";
 import { validateCancellationReason } from "../../utils/error";
 import * as keys from "../../utils/keys";
 
-describe("Exchange.IncreaseOrder", () => {
+describe("Exchange.MarketIncreaseOrder", () => {
   const { provider } = ethers;
 
   let fixture;
@@ -115,6 +115,32 @@ describe("Exchange.IncreaseOrder", () => {
       contract: increaseOrderUtils,
       expectedReason: "InvalidCollateralToken",
     });
+
+    await expect(
+      handleOrder(fixture, {
+        create: {
+          ...params,
+          initialCollateralToken: usdc,
+          initialCollateralDeltaAmount: expandDecimals(5000, 6),
+        },
+        execute: {
+          oracleBlockNumberOffset: -1,
+        },
+      })
+    ).to.be.revertedWithCustomError(increaseOrderUtils, "OracleBlockNumberNotWithinRange");
+
+    await expect(
+      handleOrder(fixture, {
+        create: {
+          ...params,
+          initialCollateralToken: usdc,
+          initialCollateralDeltaAmount: expandDecimals(5000, 6),
+        },
+        execute: {
+          oracleBlockNumberOffset: 5,
+        },
+      })
+    ).to.be.revertedWithCustomError(increaseOrderUtils, "OracleBlockNumberNotWithinRange");
   });
 
   it("executeOrder", async () => {

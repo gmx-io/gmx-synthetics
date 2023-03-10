@@ -1,3 +1,5 @@
+import { mine } from "@nomicfoundation/hardhat-network-helpers";
+
 import { logGasUsage } from "./gas";
 import { bigNumberify, expandDecimals } from "./math";
 import { executeWithOracleParams } from "./exchange";
@@ -105,7 +107,7 @@ export async function createOrder(fixture, overrides) {
 
 export async function executeOrder(fixture, overrides = {}) {
   const { wnt, usdc } = fixture.contracts;
-  const { gasUsageLabel } = overrides;
+  const { gasUsageLabel, oracleBlockNumberOffset } = overrides;
   const { reader, dataStore, orderHandler } = fixture.contracts;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
   const precisions = overrides.precisions || [8, 18];
@@ -114,6 +116,8 @@ export async function executeOrder(fixture, overrides = {}) {
   const orderKeys = await getOrderKeys(dataStore, 0, 10);
   const orderKey = orderKeys[orderKeys.length - 1];
   const order = await reader.getOrder(dataStore.address, orderKey);
+  let oracleBlockNumber = overrides.oracleBlockNumber || order.numbers.updatedAtBlock;
+  oracleBlockNumber = bigNumberify(oracleBlockNumber);
 
   const oracleBlocks = overrides.oracleBlocks;
   const minOracleBlockNumbers = overrides.minOracleBlockNumbers;
@@ -121,14 +125,23 @@ export async function executeOrder(fixture, overrides = {}) {
   const oracleTimestamps = overrides.oracleTimestamps;
   const blockHashes = overrides.blockHashes;
 
+  if (oracleBlockNumberOffset) {
+    if (oracleBlockNumberOffset > 0) {
+      mine(oracleBlockNumberOffset);
+    }
+
+    oracleBlockNumber = oracleBlockNumber.add(oracleBlockNumberOffset);
+  }
+
   const params = {
     key: orderKey,
-    oracleBlockNumber: order.numbers.updatedAtBlock,
+    oracleBlockNumber,
     tokens,
     precisions,
     minPrices,
     maxPrices,
-    execute: orderHandler.executeOrder,
+    simulate: overrides.simulate,
+    execute: overrides.simulate ? orderHandler.simulateExecuteOrder : orderHandler.executeOrder,
     gasUsageLabel,
     oracleBlocks,
     minOracleBlockNumbers,

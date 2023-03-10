@@ -185,6 +185,51 @@ export function getCompactedOracleTimestamps(timestamps) {
   });
 }
 
+export async function getOracleParamsForSimulation({ tokens, minPrices, maxPrices }) {
+  if (tokens.length !== minPrices.length) {
+    throw new Error("Invalid input, tokens.length != minPrices.length", tokens, minPrices);
+  }
+
+  if (tokens.length !== maxPrices.length) {
+    throw new Error("Invalid input, tokens.length != maxPrices.length", tokens, maxPrices);
+  }
+
+  const primaryTokens = [];
+  const primaryPrices = [];
+  const secondaryTokens = [];
+  const secondaryPrices = [];
+
+  const recordedTokens = {};
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+    const minPrice = minPrices[i];
+    const maxPrice = maxPrices[i];
+    if (!recordedTokens[token]) {
+      primaryTokens.push(token);
+      primaryPrices.push({
+        min: minPrice,
+        max: maxPrice,
+      });
+    } else {
+      secondaryTokens.push(token);
+      secondaryPrices.push({
+        min: minPrice,
+        max: maxPrice,
+      });
+    }
+
+    recordedTokens[token] = true;
+  }
+
+  return {
+    primaryTokens,
+    primaryPrices,
+    secondaryTokens,
+    secondaryPrices,
+  };
+}
+
 export async function getOracleParams({
   oracleSalt,
   minOracleBlockNumbers,
