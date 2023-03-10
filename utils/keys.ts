@@ -100,6 +100,9 @@ export const INCREASE_ORDER_GAS_LIMIT = hashString("INCREASE_ORDER_GAS_LIMIT");
 export const DECREASE_ORDER_GAS_LIMIT = hashString("DECREASE_ORDER_GAS_LIMIT");
 export const SWAP_ORDER_GAS_LIMIT = hashString("SWAP_ORDER_GAS_LIMIT");
 
+export const CUMULATIVE_BORROWING_FACTOR = hashString("CUMULATIVE_BORROWING_FACTOR");
+export const CUMULATIVE_BORROWING_FACTOR_UPDATED_AT = hashString("CUMULATIVE_BORROWING_FACTOR_UPDATED_AT");
+
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
 }
@@ -282,4 +285,12 @@ export function decreaseOrderGasLimitKey() {
 
 export function swapOrderGasLimitKey() {
   return hashData(["bytes32"], [SWAP_ORDER_GAS_LIMIT]);
+}
+
+export function cumulativeBorrowingFactorKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [CUMULATIVE_BORROWING_FACTOR, market, isLong]);
+}
+
+export function cumulativeBorrowingFactorUpdatedAtKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [CUMULATIVE_BORROWING_FACTOR_UPDATED_AT, market, isLong]);
 }
