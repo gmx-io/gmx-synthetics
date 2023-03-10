@@ -1,7 +1,9 @@
+import { expect } from "chai";
 import { logGasUsage } from "./gas";
 import { expandDecimals, bigNumberify } from "./math";
 import { executeWithOracleParams } from "./exchange";
 import { contractAt } from "./deploy";
+import { getCancellationReason } from "./error";
 
 import * as keys from "./keys";
 
@@ -77,7 +79,7 @@ export async function createDeposit(fixture, overrides: any = {}) {
 }
 
 export async function executeDeposit(fixture, overrides: any = {}) {
-  const { reader, dataStore, depositHandler, wnt, usdc } = fixture.contracts;
+  const { reader, dataStore, depositHandler, executeDepositUtils, wnt, usdc } = fixture.contracts;
   const { gasUsageLabel } = overrides;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
   const precisions = overrides.precisions || [8, 18];
@@ -108,7 +110,24 @@ export async function executeDeposit(fixture, overrides: any = {}) {
     gasUsageLabel,
   };
 
-  return await executeWithOracleParams(fixture, params);
+  const txReceipt = await executeWithOracleParams(fixture, params);
+
+  const cancellationReason = await getCancellationReason({
+    fixture,
+    txReceipt,
+    eventName: "DepositCancelled",
+    contracts: [executeDepositUtils],
+  });
+
+  if (cancellationReason) {
+    if (overrides.expectedCancellationReason) {
+      expect(cancellationReason.name).eq(overrides.expectedCancellationReason);
+    } else {
+      throw new Error(`Deposit was cancelled: ${JSON.stringify(cancellationReason)}`);
+    }
+  }
+
+  return txReceipt;
 }
 
 export async function handleDeposit(fixture, overrides: any = {}) {

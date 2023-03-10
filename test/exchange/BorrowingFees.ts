@@ -95,6 +95,9 @@ describe("Exchange.BorrowingFees", () => {
     expect(position0.pendingBorrowingFees).eq("967683200000000000000000000000000"); // $967.6832
     expect(position1.pendingBorrowingFees).eq("10886400000000000000000000000000000"); // $10,886.4
 
+    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, true))).eq(0);
+    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, false))).eq(0);
+
     await handleOrder(fixture, {
       create: {
         account: user0,

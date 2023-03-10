@@ -187,11 +187,11 @@ export function getCompactedOracleTimestamps(timestamps) {
 
 export async function getOracleParamsForSimulation({ tokens, minPrices, maxPrices }) {
   if (tokens.length !== minPrices.length) {
-    throw new Error("Invalid input, tokens.length != minPrices.length", tokens, minPrices);
+    throw new Error(`Invalid input, tokens.length != minPrices.length ${tokens}, ${minPrices}`);
   }
 
   if (tokens.length !== maxPrices.length) {
-    throw new Error("Invalid input, tokens.length != maxPrices.length", tokens, maxPrices);
+    throw new Error(`Invalid input, tokens.length != maxPrices.length ${tokens}, ${maxPrices}`);
   }
 
   const primaryTokens = [];

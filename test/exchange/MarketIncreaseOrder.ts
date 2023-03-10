@@ -98,22 +98,17 @@ describe("Exchange.MarketIncreaseOrder", () => {
       shouldUnwrapNativeToken: false,
     };
 
-    const handleOrderResult = await handleOrder(fixture, {
+    await handleOrder(fixture, {
       create: {
         ...params,
         initialCollateralToken: usdc,
         initialCollateralDeltaAmount: expandDecimals(5000, 6),
         swapPath: [btcUsdMarket.marketToken],
       },
-      execute: getExecuteParams(fixture, { tokens: [wnt, wbtc, usdc] }),
-    });
-
-    validateCancellationReason({
-      fixture,
-      txReceipt: handleOrderResult.executeResult,
-      eventName: "OrderCancelled",
-      contract: increaseOrderUtils,
-      expectedReason: "InvalidCollateralToken",
+      execute: {
+        ...getExecuteParams(fixture, { tokens: [wnt, wbtc, usdc] }),
+        expectedCancellationReason: "InvalidCollateralToken",
+      },
     });
 
     await expect(
