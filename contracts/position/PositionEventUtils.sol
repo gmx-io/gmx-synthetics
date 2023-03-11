@@ -224,8 +224,9 @@ library PositionEventUtils {
     ) internal {
         EventUtils.EventLogData memory eventData;
 
-        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.initItems(2);
         eventData.bytes32Items.setItem(0, "orderKey", orderKey);
+        eventData.bytes32Items.setItem(1, "referralCode", fees.referral.referralCode);
 
         eventData.addressItems.initItems(4);
         eventData.addressItems.setItem(0, "market", market);
@@ -264,9 +265,6 @@ library PositionEventUtils {
         eventData.boolItems.setItem(0, "hasPendingLongTokenFundingFee", fees.funding.hasPendingLongTokenFundingFee);
         eventData.boolItems.setItem(1, "hasPendingShortTokenFundingFee", fees.funding.hasPendingShortTokenFundingFee);
         eventData.boolItems.setItem(2, "isIncrease", isIncrease);
-
-        eventData.bytes32Items.initItems(1);
-        eventData.bytes32Items.setItem(0, "referralCode", fees.referral.referralCode);
 
         eventEmitter.emitEventLog1(
             eventName,
