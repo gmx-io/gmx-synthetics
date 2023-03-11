@@ -6,6 +6,8 @@ import "../event/EventEmitter.sol";
 import "../event/EventUtils.sol";
 import "../utils/Cast.sol";
 
+import "./MarketPoolValueInfo.sol";
+
 library MarketEventUtils {
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
@@ -14,6 +16,40 @@ library MarketEventUtils {
     using EventUtils for EventUtils.Bytes32Items;
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
+
+    function emitMarketPoolValueInfo(
+        EventEmitter eventEmitter,
+        address market,
+        MarketPoolValueInfo.Props memory props,
+        uint256 marketTokensSupply
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "market", market);
+
+        eventData.intItems.initItems(4);
+        eventData.intItems.setItem(0, "poolValue", props.poolValue);
+        eventData.intItems.setItem(1, "longPnl", props.longPnl);
+        eventData.intItems.setItem(2, "shortPnl", props.shortPnl);
+        eventData.intItems.setItem(3, "netPnl", props.netPnl);
+
+        eventData.uintItems.initItems(8);
+        eventData.uintItems.setItem(0, "longTokenAmount", props.longTokenAmount);
+        eventData.uintItems.setItem(1, "shortTokenAmount", props.shortTokenAmount);
+        eventData.uintItems.setItem(2, "longTokenUsd", props.longTokenUsd);
+        eventData.uintItems.setItem(3, "shortTokenUsd", props.shortTokenUsd);
+        eventData.uintItems.setItem(4, "totalBorrowingFees", props.totalBorrowingFees);
+        eventData.uintItems.setItem(5, "borrowingFeeReceiverFactor", props.borrowingFeeReceiverFactor);
+        eventData.uintItems.setItem(6, "impactPoolAmount", props.impactPoolAmount);
+        eventData.uintItems.setItem(7, "marketTokensSupply", marketTokensSupply);
+
+        eventEmitter.emitEventLog1(
+            "MarketPoolValueInfo",
+            Cast.toBytes32(market),
+            eventData
+        );
+    }
 
     function emitPoolAmountUpdated(
         EventEmitter eventEmitter,
