@@ -7,9 +7,11 @@ import { handleDeposit } from "../../utils/deposit";
 import { OrderType, handleOrder } from "../../utils/order";
 import { getPositionCount, getAccountPositionCount } from "../../utils/position";
 import { expectTokenBalanceIncrease } from "../../utils/token";
+import { expectWithinRange } from "../../utils/validation";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.FundingFees", () => {
+  const { provider } = ethers;
   let fixture;
   let user0, user1, user2;
   let dataStore, ethUsdMarket, exchangeRouter, wnt, usdc;
@@ -31,6 +33,8 @@ describe("Exchange.FundingFees", () => {
   it("funding fees", async () => {
     await dataStore.setUint(keys.fundingFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 10));
     await dataStore.setUint(keys.fundingExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(1));
+
+    expect(await dataStore.getUint(keys.fundingUpdatedAtKey(ethUsdMarket.marketToken))).eq(0);
 
     await handleOrder(fixture, {
       create: {
@@ -65,6 +69,13 @@ describe("Exchange.FundingFees", () => {
         shouldUnwrapNativeToken: false,
       },
     });
+
+    const block = await provider.getBlock();
+    expectWithinRange(
+      await dataStore.getUint(keys.cumulativeBorrowingFactorUpdatedAtKey(ethUsdMarket.marketToken, true)),
+      block.timestamp,
+      100
+    );
 
     expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, wnt.address, true))).eq(
       decimalToFloat(200 * 1000)
