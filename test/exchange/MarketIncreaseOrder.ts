@@ -6,7 +6,6 @@ import { handleDeposit } from "../../utils/deposit";
 import { OrderType, getOrderCount, getOrderKeys, createOrder, executeOrder, handleOrder } from "../../utils/order";
 import { getPositionCount, getAccountPositionCount } from "../../utils/position";
 import { getExecuteParams } from "../../utils/exchange";
-import { validateCancellationReason } from "../../utils/error";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.MarketIncreaseOrder", () => {
