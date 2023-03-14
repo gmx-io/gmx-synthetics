@@ -61,13 +61,10 @@ export const ORACLE_TYPE = hashString("ORACLE_TYPE");
 export const OPEN_INTEREST = hashString("OPEN_INTEREST");
 export const OPEN_INTEREST_IN_TOKENS = hashString("OPEN_INTEREST_IN_TOKENS");
 
-export const RESERVE_FACTOR = hashString("RESERVE_FACTOR");
-export const MAX_PNL_FACTOR = hashString("MAX_PNL_FACTOR");
-export const MAX_PNL_FACTOR_FOR_TRADERS = hashString("MAX_PNL_FACTOR_FOR_TRADERS");
-export const MAX_PNL_FACTOR_FOR_ADL = hashString("MAX_PNL_FACTOR_FOR_ADL");
-export const MIN_PNL_FACTOR_AFTER_ADL = hashString("MIN_PNL_FACTOR_AFTER_ADL");
-export const MAX_PNL_FACTOR_FOR_DEPOSITS = hashString("MAX_PNL_FACTOR_FOR_DEPOSITS");
-export const MAX_PNL_FACTOR_FOR_WITHDRAWALS = hashString("MAX_PNL_FACTOR_FOR_WITHDRAWALS");
+export const COLLATERAL_SUM = hashString("COLLATERAL_SUM");
+export const POOL_AMOUNT = hashString("POOL_AMOUNT");
+export const MAX_POOL_AMOUNT = hashString("MAX_POOL_AMOUNT");
+export const MAX_OPEN_INTEREST = hashString("MAX_OPEN_INTEREST");
 
 export const POSITION_FEE_RECEIVER_FACTOR = hashString("POSITION_FEE_RECEIVER_FACTOR");
 export const SWAP_FEE_RECEIVER_FACTOR = hashString("SWAP_FEE_RECEIVER_FACTOR");
@@ -76,15 +73,20 @@ export const BORROWING_FEE_RECEIVER_FACTOR = hashString("BORROWING_FEE_RECEIVER_
 export const SWAP_FEE_FACTOR = hashString("SWAP_FEE_FACTOR");
 export const SWAP_IMPACT_FACTOR = hashString("SWAP_IMPACT_FACTOR");
 export const SWAP_IMPACT_EXPONENT_FACTOR = hashString("SWAP_IMPACT_EXPONENT_FACTOR");
-export const POOL_AMOUNT = hashString("POOL_AMOUNT");
-export const MAX_POOL_AMOUNT = hashString("MAX_POOL_AMOUNT");
-export const MAX_OPEN_INTEREST = hashString("MAX_OPEN_INTEREST");
 export const SWAP_IMPACT_POOL_AMOUNT = hashString("SWAP_IMPACT_POOL_AMOUNT");
 
 export const POSITION_IMPACT_FACTOR = hashString("POSITION_IMPACT_FACTOR");
 export const POSITION_IMPACT_EXPONENT_FACTOR = hashString("POSITION_IMPACT_EXPONENT_FACTOR");
 export const MAX_POSITION_IMPACT_FACTOR = hashString("MAX_POSITION_IMPACT_FACTOR");
 export const POSITION_FEE_FACTOR = hashString("POSITION_FEE_FACTOR");
+
+export const RESERVE_FACTOR = hashString("RESERVE_FACTOR");
+export const MAX_PNL_FACTOR = hashString("MAX_PNL_FACTOR");
+export const MAX_PNL_FACTOR_FOR_TRADERS = hashString("MAX_PNL_FACTOR_FOR_TRADERS");
+export const MAX_PNL_FACTOR_FOR_ADL = hashString("MAX_PNL_FACTOR_FOR_ADL");
+export const MIN_PNL_FACTOR_AFTER_ADL = hashString("MIN_PNL_FACTOR_AFTER_ADL");
+export const MAX_PNL_FACTOR_FOR_DEPOSITS = hashString("MAX_PNL_FACTOR_FOR_DEPOSITS");
+export const MAX_PNL_FACTOR_FOR_WITHDRAWALS = hashString("MAX_PNL_FACTOR_FOR_WITHDRAWALS");
 
 export const LATEST_ADL_BLOCK = hashString("LATEST_ADL_BLOCK");
 export const IS_ADL_ENABLED = hashString("IS_ADL_ENABLED");
@@ -215,6 +217,10 @@ export function reserveFactorKey(market: string, isLong: boolean) {
 
 export function maxPnlFactorKey(pnlFactorType: string, market: string, isLong: boolean) {
   return hashData(["bytes32", "bytes32", "address", "bool"], [MAX_PNL_FACTOR, pnlFactorType, market, isLong]);
+}
+
+export function collateralSumKey(market: string, collateralToken: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "address", "bool"], [COLLATERAL_SUM, market, collateralToken, isLong]);
 }
 
 export function poolAmountKey(market: string, token: string) {

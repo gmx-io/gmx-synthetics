@@ -53,6 +53,16 @@ describe("Exchange.PositionFees", () => {
     await dataStore.setUint(keys.fundingFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 10));
     await dataStore.setUint(keys.fundingExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(1));
 
+    expect(await dataStore.getUint(keys.collateralSumKey(ethUsdMarket.marketToken, wnt.address, true))).eq(0);
+    expect(await dataStore.getUint(keys.collateralSumKey(ethUsdMarket.marketToken, usdc.address, false))).eq(0);
+
+    expect(await dataStore.getUint(keys.poolAmountKey(ethUsdMarket.marketToken, wnt.address))).eq(
+      expandDecimals(1000, 18)
+    );
+    expect(await dataStore.getUint(keys.poolAmountKey(ethUsdMarket.marketToken, usdc.address))).eq(
+      expandDecimals(500 * 1000, 6)
+    );
+
     await handleOrder(fixture, {
       create: {
         account: user0,
@@ -71,6 +81,21 @@ describe("Exchange.PositionFees", () => {
       },
     });
 
+    // size: 200,000, fee: 100 USD, trader discount: 100 * 10% * 20% => 2 USD
+    expect(await dataStore.getUint(keys.collateralSumKey(ethUsdMarket.marketToken, wnt.address, true))).eq(
+      "9980400000000000000"
+    ); // 9.9804 ETH, 49902 USD
+    expect(await dataStore.getUint(keys.collateralSumKey(ethUsdMarket.marketToken, usdc.address, false))).eq(0);
+
+    // fee amount for pool: 200,000 * 0.05% * 90% * 80% => 72 USD
+    expect(await dataStore.getUint(keys.poolAmountKey(ethUsdMarket.marketToken, wnt.address))).eq(
+      "1000014400000000000000"
+    ); // 1000.0144 ETH => 5,000,072 USD
+
+    expect(await dataStore.getUint(keys.poolAmountKey(ethUsdMarket.marketToken, usdc.address))).eq(
+      expandDecimals(500 * 1000, 6)
+    );
+
     await handleOrder(fixture, {
       create: {
         account: user1,
@@ -88,6 +113,22 @@ describe("Exchange.PositionFees", () => {
         referralCode: referralCode1,
       },
     });
+
+    expect(await dataStore.getUint(keys.collateralSumKey(ethUsdMarket.marketToken, wnt.address, true))).eq(
+      "9980400000000000000"
+    );
+
+    // size: 100,000, fee: 50 USD, trader discount: 50 * 20% * 25% => 2.5 USD
+    expect(await dataStore.getUint(keys.collateralSumKey(ethUsdMarket.marketToken, usdc.address, false))).eq(
+      "9952500000"
+    ); // 9952.5 USD
+
+    expect(await dataStore.getUint(keys.poolAmountKey(ethUsdMarket.marketToken, wnt.address))).eq(
+      "1000014400000000000000"
+    );
+
+    // fee amount for pool: 100,000 * 0.05% * 80% * 80% => 32 USD
+    expect(await dataStore.getUint(keys.poolAmountKey(ethUsdMarket.marketToken, usdc.address))).eq("500032000000"); // 500,032
 
     await time.increase(14 * 24 * 60 * 60);
 
@@ -158,6 +199,10 @@ describe("Exchange.PositionFees", () => {
       },
     });
 
+    expect(
+      await dataStore.getUint(keys.claimableFundingAmountKey(ethUsdMarket.marketToken, wnt.address, user1.address))
+    ).eq("0");
+
     await handleOrder(fixture, {
       create: {
         account: user1,
@@ -192,36 +237,6 @@ describe("Exchange.PositionFees", () => {
           // totalNetCost: positionFee + borrowingFee + fundingFee - traderDiscount
           //    => 40 + 4.838114 + 0 - 2 => 42.838114 USD
 
-          console.log(positionFeesCollectedEvent.collateralToken);
-          console.log(positionFeesCollectedEvent["collateralTokenPrice.min"].toString());
-          console.log(positionFeesCollectedEvent["collateralTokenPrice.max"].toString());
-          console.log(positionFeesCollectedEvent.tradeSizeUsd.toString());
-          console.log(positionFeesCollectedEvent.totalRebateFactor.toString());
-          console.log(positionFeesCollectedEvent.traderDiscountFactor.toString());
-          console.log(positionFeesCollectedEvent.totalRebateAmount.toString());
-          console.log(positionFeesCollectedEvent.traderDiscountAmount.toString());
-          console.log(positionFeesCollectedEvent.affiliateRewardAmount.toString());
-          console.log(positionFeesCollectedEvent.fundingFeeAmount.toString());
-          console.log(positionFeesCollectedEvent.claimableLongTokenAmount.toString());
-          console.log(positionFeesCollectedEvent.claimableShortTokenAmount.toString());
-          console.log(positionFeesCollectedEvent.borrowingFeeAmount.toString());
-          console.log(positionFeesCollectedEvent.borrowingFeeReceiverFactor.toString());
-          console.log(positionFeesCollectedEvent.borrowingFeeAmountForFeeReceiver.toString());
-          console.log(positionFeesCollectedEvent.positionFeeFactor.toString());
-          console.log(positionFeesCollectedEvent.protocolFeeAmount.toString());
-          console.log(positionFeesCollectedEvent.positionFeeReceiverFactor.toString());
-          console.log(positionFeesCollectedEvent.feeReceiverAmount.toString());
-          console.log(positionFeesCollectedEvent.feeAmountForPool.toString());
-          console.log(positionFeesCollectedEvent.positionFeeAmountForPool.toString());
-          console.log(positionFeesCollectedEvent.positionFeeAmount.toString());
-          console.log(positionFeesCollectedEvent.totalNetCostAmount.toString());
-          console.log(positionFeesCollectedEvent.totalNetCostUsd.toString());
-          console.log(positionFeesCollectedEvent.latestLongTokenFundingAmountPerSize.toString());
-          console.log(positionFeesCollectedEvent.latestShortTokenFundingAmountPerSize.toString());
-          console.log(positionFeesCollectedEvent.hasPendingLongTokenFundingFee);
-          console.log(positionFeesCollectedEvent.hasPendingShortTokenFundingFee);
-          console.log(positionFeesCollectedEvent.isIncrease);
-
           expect(positionFeesCollectedEvent.collateralToken).eq(usdc.address);
           expect(positionFeesCollectedEvent["collateralTokenPrice.min"]).eq(expandDecimals(1, 24));
           expect(positionFeesCollectedEvent["collateralTokenPrice.max"]).eq(expandDecimals(1, 24));
@@ -241,7 +256,7 @@ describe("Exchange.PositionFees", () => {
           expect(positionFeesCollectedEvent.protocolFeeAmount).eq("32000000"); // 32 USD
           expect(positionFeesCollectedEvent.positionFeeReceiverFactor).eq(decimalToFloat(2, 1)); // 20%
           expect(positionFeesCollectedEvent.feeReceiverAmount).eq("8335245"); // 8.335245 USD
-          expect(positionFeesCollectedEvent.feeAmountForPool).eq("31405737"); // 28.502869 USD
+          expect(positionFeesCollectedEvent.feeAmountForPool).eq("28502869"); // 28.502869 USD
           expect(positionFeesCollectedEvent.positionFeeAmountForPool).eq("25600000"); // 25.6 USD
           expect(positionFeesCollectedEvent.positionFeeAmount).eq("40000000"); // 40 USD
           expect(positionFeesCollectedEvent.totalNetCostAmount).eq("42838114"); // 42.838114 USD
@@ -254,5 +269,9 @@ describe("Exchange.PositionFees", () => {
         },
       },
     });
+
+    expect(
+      await dataStore.getUint(keys.claimableFundingAmountKey(ethUsdMarket.marketToken, wnt.address, user1.address))
+    ).eq("1612803999900000");
   });
 });
