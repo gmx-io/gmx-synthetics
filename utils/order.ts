@@ -101,10 +101,13 @@ export async function createOrder(fixture, overrides) {
     referralCode,
   };
 
-  return await logGasUsage({
+  const txReceipt = await logGasUsage({
     tx: orderHandler.connect(sender).createOrder(account.address, params),
     label: gasUsageLabel,
   });
+
+  const result = { txReceipt };
+  return result;
 }
 
 export async function executeOrder(fixture, overrides = {}) {
@@ -168,7 +171,13 @@ export async function executeOrder(fixture, overrides = {}) {
     }
   }
 
-  return txReceipt;
+  const result = { txReceipt };
+
+  if (overrides.afterExecution) {
+    overrides.afterExecution(result);
+  }
+
+  return result;
 }
 
 export async function handleOrder(fixture, overrides = {}) {
