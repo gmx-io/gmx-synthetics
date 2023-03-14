@@ -128,6 +128,12 @@ export async function executeDeposit(fixture, overrides: any = {}) {
     } else {
       throw new Error(`Deposit was cancelled: ${JSON.stringify(cancellationReason)}`);
     }
+  } else {
+    if (overrides.expectedCancellationReason) {
+      throw new Error(
+        `Deposit was not cancelled, expected cancellation with reason: ${overrides.expectedCancellationReason}`
+      );
+    }
   }
 
   const result = { txReceipt };

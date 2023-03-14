@@ -9,7 +9,7 @@ import { hashString } from "../../utils/hash";
 import { getExecuteParams } from "../../utils/exchange";
 import * as keys from "../../utils/keys";
 
-describe("Exchange.Order", () => {
+describe("Exchange.PositionOrder", () => {
   const { AddressZero, HashZero } = ethers.constants;
 
   let fixture;

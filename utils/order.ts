@@ -113,7 +113,7 @@ export async function createOrder(fixture, overrides) {
 export async function executeOrder(fixture, overrides = {}) {
   const { wnt, usdc } = fixture.contracts;
   const { gasUsageLabel, oracleBlockNumberOffset } = overrides;
-  const { reader, dataStore, orderHandler, increaseOrderUtils } = fixture.contracts;
+  const { reader, dataStore, orderHandler, baseOrderUtils, increaseOrderUtils } = fixture.contracts;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
@@ -160,7 +160,7 @@ export async function executeOrder(fixture, overrides = {}) {
     fixture,
     txReceipt,
     eventName: "OrderCancelled",
-    contracts: [orderHandler, increaseOrderUtils],
+    contracts: [orderHandler, baseOrderUtils, increaseOrderUtils],
   });
 
   if (cancellationReason) {
@@ -168,6 +168,12 @@ export async function executeOrder(fixture, overrides = {}) {
       expect(cancellationReason.name).eq(overrides.expectedCancellationReason);
     } else {
       throw new Error(`Order was cancelled: ${JSON.stringify(cancellationReason)}`);
+    }
+  } else {
+    if (overrides.expectedCancellationReason) {
+      throw new Error(
+        `Deposit was not cancelled, expected cancellation with reason: ${overrides.expectedCancellationReason}`
+      );
     }
   }
 
