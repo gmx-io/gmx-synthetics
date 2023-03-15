@@ -37,7 +37,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
     });
   });
 
-  it("executeOrder with price impact", async () => {
+  it("price impact", async () => {
     // set price impact to 0.1% for every $50,000 of token imbalance
     // 0.1% => 0.001
     // 0.001 / 50,000 => 2 * (10 ** -8)
@@ -62,23 +62,16 @@ describe("Exchange.MarketIncreaseOrder", () => {
       shouldUnwrapNativeToken: false,
     };
 
-    await createOrder(fixture, params);
-
-    expect(await getOrderCount(dataStore)).eq(1);
-    expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
-    expect(await getPositionCount(dataStore)).eq(0);
-
-    await executeOrder(fixture, {
-      gasUsageLabel: "executeOrder",
-      afterExecution: ({ logs }) => {
-        const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-        expect(positionIncreaseEvent.executionPrice).eq("5009999999999999"); // ~5010
+    await handleOrder(fixture, {
+      create: params,
+      execute: {
+        gasUsageLabel: "executeOrder",
+        afterExecution: ({ logs }) => {
+          const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
+          expect(positionIncreaseEvent.executionPrice).eq("5009999999999999"); // ~5010
+        },
       },
     });
-
-    expect(await getOrderCount(dataStore)).eq(0);
-    expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
-    expect(await getPositionCount(dataStore)).eq(1);
 
     let positionKeys = await getPositionKeys(dataStore, 0, 10);
     const position0 = await reader.getPosition(dataStore.address, positionKeys[0]);
@@ -203,6 +196,78 @@ describe("Exchange.MarketIncreaseOrder", () => {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
           expect(positionIncreaseEvent.executionPrice).eq("4992500000000000"); // ~4992.5
+        },
+      },
+    });
+  });
+
+  it("capped price impact", async () => {
+    // set price impact to 0.1% for every $50,000 of token imbalance
+    // 0.1% => 0.001
+    // 0.001 / 50,000 => 2 * (10 ** -8)
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
+    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+
+    expect(await getOrderCount(dataStore)).eq(0);
+
+    const params = {
+      account: user0,
+      market: ethUsdMarket,
+      initialCollateralToken: wnt,
+      initialCollateralDeltaAmount: expandDecimals(10, 18),
+      swapPath: [],
+      sizeDeltaUsd: decimalToFloat(200 * 1000),
+      acceptablePrice: expandDecimals(5050, 12),
+      executionFee: expandDecimals(1, 15),
+      minOutputAmount: expandDecimals(50000, 6),
+      orderType: OrderType.MarketIncrease,
+      isLong: true,
+      shouldUnwrapNativeToken: false,
+    };
+
+    await handleOrder(fixture, {
+      create: params,
+      execute: {
+        gasUsageLabel: "executeOrder",
+        afterExecution: ({ logs }) => {
+          const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
+          expect(positionIncreaseEvent.executionPrice).eq("5009999999999999"); // ~5010
+        },
+      },
+    });
+
+    await handleOrder(fixture, {
+      create: { ...params, isLong: false, acceptablePrice: expandDecimals(4950, 12) },
+      execute: {
+        gasUsageLabel: "executeOrder",
+        afterExecution: ({ logs }) => {
+          const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
+          expect(positionIncreaseEvent.executionPrice).eq("5004999999999999"); // ~5005
+        },
+      },
+    });
+
+    await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 4));
+
+    await handleOrder(fixture, {
+      create: params,
+      execute: {
+        gasUsageLabel: "executeOrder",
+        afterExecution: ({ logs }) => {
+          const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
+          expect(positionIncreaseEvent.executionPrice).eq("5009999999999999"); // ~5010
+        },
+      },
+    });
+
+    await handleOrder(fixture, {
+      create: { ...params, isLong: false, acceptablePrice: expandDecimals(4950, 12) },
+      execute: {
+        gasUsageLabel: "executeOrder",
+        afterExecution: ({ logs }) => {
+          const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
+          expect(positionIncreaseEvent.executionPrice).eq("5000500000000000"); // ~5000.5
         },
       },
     });
