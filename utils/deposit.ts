@@ -3,6 +3,7 @@ import { logGasUsage } from "./gas";
 import { expandDecimals, bigNumberify } from "./math";
 import { executeWithOracleParams } from "./exchange";
 import { contractAt } from "./deploy";
+import { parseLogs } from "./event";
 import { getCancellationReason } from "./error";
 
 import * as keys from "./keys";
@@ -114,10 +115,10 @@ export async function executeDeposit(fixture, overrides: any = {}) {
   };
 
   const txReceipt = await executeWithOracleParams(fixture, params);
+  const logs = parseLogs(fixture, txReceipt);
 
   const cancellationReason = await getCancellationReason({
-    fixture,
-    txReceipt,
+    logs,
     eventName: "DepositCancelled",
     contracts: [executeDepositUtils],
   });
@@ -136,7 +137,7 @@ export async function executeDeposit(fixture, overrides: any = {}) {
     }
   }
 
-  const result = { txReceipt };
+  const result = { txReceipt, logs };
   return result;
 }
 

@@ -326,8 +326,8 @@ library PositionPricingUtils {
         uint256 longOpenInterest,
         uint256 shortOpenInterest
     ) internal pure returns (OpenInterestParams memory) {
-        uint256 nextLongOpenInterest;
-        uint256 nextShortOpenInterest;
+        uint256 nextLongOpenInterest = longOpenInterest;
+        uint256 nextShortOpenInterest = shortOpenInterest;
 
         if (params.isLong) {
             if (params.usdDelta < 0 && (-params.usdDelta).toUint256() > longOpenInterest) {
