@@ -62,6 +62,8 @@ describe("Exchange.MarketIncreaseOrder", () => {
       shouldUnwrapNativeToken: false,
     };
 
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
+
     await handleOrder(fixture, {
       create: params,
       execute: {
@@ -72,6 +74,10 @@ describe("Exchange.MarketIncreaseOrder", () => {
         },
       },
     });
+
+    // increase long position was executed with price above oracle price
+    // the impact pool amount should increase
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("79999999999992000"); // 0.079999999999992 ETH, 400 USD
 
     let positionKeys = await getPositionKeys(dataStore, 0, 10);
     const position0 = await reader.getPosition(dataStore.address, positionKeys[0]);
@@ -86,6 +92,8 @@ describe("Exchange.MarketIncreaseOrder", () => {
       },
     });
 
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("79999999999992000"); // 0.079999999999992 ETH, 400 USD
+
     await handleOrder(fixture, {
       create: { ...params, account: user1, acceptablePrice: expandDecimals(5050, 12) },
       execute: {
@@ -96,6 +104,12 @@ describe("Exchange.MarketIncreaseOrder", () => {
         },
       },
     });
+
+    // increase long position was executed with price above oracle price
+    // the impact pool amount should increase
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
+      "319999999999984000"
+    ); // 0.319999999999984 ETH, 1600 USD
 
     expect(await getAccountPositionCount(dataStore, user1.address)).eq(1);
     expect(await getPositionCount(dataStore)).eq(2);
@@ -117,6 +131,10 @@ describe("Exchange.MarketIncreaseOrder", () => {
       },
     });
 
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
+      "319999999999984000"
+    ); // 0.319999999999984 ETH, 1600 USD
+
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
 
     await handleOrder(fixture, {
@@ -134,6 +152,12 @@ describe("Exchange.MarketIncreaseOrder", () => {
         },
       },
     });
+
+    // increase short position was executed with price above oracle price
+    // the impact pool amount should decrease
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
+      "312099999999984000"
+    ); // 0.312099999999984 ETH, 1560.5 USD
 
     await handleOrder(fixture, {
       create: {
@@ -153,6 +177,12 @@ describe("Exchange.MarketIncreaseOrder", () => {
       },
     });
 
+    // decrease short position was executed with price above oracle price
+    // the impact pool amount should increase
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
+      "327899999999984000"
+    ); // 0.327899999999984 ETH, 1639.5 USD
+
     await handleOrder(fixture, {
       create: {
         ...params,
@@ -168,6 +198,12 @@ describe("Exchange.MarketIncreaseOrder", () => {
         },
       },
     });
+
+    // increase short position was executed with price above oracle price
+    // the impact pool amount should decrease
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
+      "187900000000004000"
+    ); // 0.187900000000004 ETH, 939.5 USD
 
     await handleOrder(fixture, {
       create: {
@@ -185,6 +221,12 @@ describe("Exchange.MarketIncreaseOrder", () => {
       },
     });
 
+    // increase short position was executed with price below oracle price
+    // the impact pool amount should increase
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
+      "247900000000004000"
+    ); // 0.247900000000004 ETH, 1239.5 USD
+
     await handleOrder(fixture, {
       create: {
         ...params,
@@ -199,6 +241,12 @@ describe("Exchange.MarketIncreaseOrder", () => {
         },
       },
     });
+
+    // increase long position was executed with price below oracle price
+    // the impact pool amount should decrease
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
+      "217900000000004000"
+    ); // 0.217900000000004 ETH, 1089.5 USD
   });
 
   it("capped price impact", async () => {

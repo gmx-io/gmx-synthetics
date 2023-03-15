@@ -66,6 +66,9 @@ export const POOL_AMOUNT = hashString("POOL_AMOUNT");
 export const MAX_POOL_AMOUNT = hashString("MAX_POOL_AMOUNT");
 export const MAX_OPEN_INTEREST = hashString("MAX_OPEN_INTEREST");
 
+export const POSITION_IMPACT_POOL_AMOUNT = hashString("POSITION_IMPACT_POOL_AMOUNT");
+export const SWAP_IMPACT_POOL_AMOUNT = hashString("SWAP_IMPACT_POOL_AMOUNT");
+
 export const POSITION_FEE_RECEIVER_FACTOR = hashString("POSITION_FEE_RECEIVER_FACTOR");
 export const SWAP_FEE_RECEIVER_FACTOR = hashString("SWAP_FEE_RECEIVER_FACTOR");
 export const BORROWING_FEE_RECEIVER_FACTOR = hashString("BORROWING_FEE_RECEIVER_FACTOR");
@@ -233,6 +236,14 @@ export function maxPoolAmountKey(market: string, token: string) {
 
 export function maxOpenInterestKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [MAX_OPEN_INTEREST, market, isLong]);
+}
+
+export function positionImpactPoolAmountKey(market: string) {
+  return hashData(["bytes32", "address"], [POSITION_IMPACT_POOL_AMOUNT, market]);
+}
+
+export function swapImpactPoolAmountKey(market: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [SWAP_IMPACT_POOL_AMOUNT, market, token]);
 }
 
 export function swapImpactPoolAmountKey(market: string, token: string) {
