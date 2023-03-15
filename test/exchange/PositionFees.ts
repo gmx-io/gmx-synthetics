@@ -5,7 +5,7 @@ import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, handleOrder } from "../../utils/order";
-import { parseLogs, getEventData } from "../../utils/event";
+import { getEventData } from "../../utils/event";
 import { hashString } from "../../utils/hash";
 import * as keys from "../../utils/keys";
 
@@ -148,8 +148,7 @@ describe("Exchange.PositionFees", () => {
         shouldUnwrapNativeToken: false,
       },
       execute: {
-        afterExecution: ({ txReceipt }) => {
-          const logs = parseLogs(fixture, txReceipt);
+        afterExecution: ({ logs }) => {
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
 
           // positionFee: 190,000 * 0.05% => 95 USD
@@ -219,8 +218,7 @@ describe("Exchange.PositionFees", () => {
         shouldUnwrapNativeToken: false,
       },
       execute: {
-        afterExecution: ({ txReceipt }) => {
-          const logs = parseLogs(fixture, txReceipt);
+        afterExecution: ({ logs }) => {
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
 
           // positionFee: 80,000 * 0.05% => 40 USD

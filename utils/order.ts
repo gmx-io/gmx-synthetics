@@ -4,6 +4,7 @@ import { mine } from "@nomicfoundation/hardhat-network-helpers";
 import { logGasUsage } from "./gas";
 import { bigNumberify, expandDecimals } from "./math";
 import { executeWithOracleParams } from "./exchange";
+import { parseLogs } from "./event";
 import { getCancellationReason } from "./error";
 
 import * as keys from "./keys";
@@ -113,7 +114,7 @@ export async function createOrder(fixture, overrides) {
 export async function executeOrder(fixture, overrides = {}) {
   const { wnt, usdc } = fixture.contracts;
   const { gasUsageLabel, oracleBlockNumberOffset } = overrides;
-  const { reader, dataStore, orderHandler, baseOrderUtils, increaseOrderUtils } = fixture.contracts;
+  const { reader, dataStore, orderHandler, baseOrderUtils, increaseOrderUtils, marketUtils } = fixture.contracts;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
@@ -156,11 +157,11 @@ export async function executeOrder(fixture, overrides = {}) {
   };
 
   const txReceipt = await executeWithOracleParams(fixture, params);
+  const logs = parseLogs(fixture, txReceipt);
   const cancellationReason = await getCancellationReason({
-    fixture,
-    txReceipt,
+    logs,
     eventName: "OrderCancelled",
-    contracts: [orderHandler, baseOrderUtils, increaseOrderUtils],
+    contracts: [orderHandler, baseOrderUtils, increaseOrderUtils, marketUtils],
   });
 
   if (cancellationReason) {
@@ -172,12 +173,12 @@ export async function executeOrder(fixture, overrides = {}) {
   } else {
     if (overrides.expectedCancellationReason) {
       throw new Error(
-        `Deposit was not cancelled, expected cancellation with reason: ${overrides.expectedCancellationReason}`
+        `Order was not cancelled, expected cancellation with reason: ${overrides.expectedCancellationReason}`
       );
     }
   }
 
-  const result = { txReceipt };
+  const result = { txReceipt, logs };
 
   if (overrides.afterExecution) {
     overrides.afterExecution(result);
