@@ -178,6 +178,24 @@ export async function executeOrder(fixture, overrides = {}) {
     }
   }
 
+  const frozenReason = await getCancellationReason({
+    logs,
+    eventName: "OrderFrozen",
+    contracts: [orderHandler, baseOrderUtils, increaseOrderUtils, marketUtils],
+  });
+
+  if (frozenReason) {
+    if (overrides.expectedFrozenReason) {
+      expect(frozenReason.name).eq(overrides.expectedFrozenReason);
+    } else {
+      throw new Error(`Order was frozen: ${JSON.stringify(frozenReason)}`);
+    }
+  } else {
+    if (overrides.expectedFrozenReason) {
+      throw new Error(`Order was not frozen, expected freeze with reason: ${overrides.expectedFrozenReason}`);
+    }
+  }
+
   const result = { txReceipt, logs };
 
   if (overrides.afterExecution) {
