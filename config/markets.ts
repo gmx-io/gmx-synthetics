@@ -111,7 +111,7 @@ const baseMarketConfig: BaseMarketConfig = {
   positiveMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%
   negativeMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%
 
-  swapFeeFactor: decimalToFloat(1, 3), // 0.1%,
+  swapFeeFactor: decimalToFloat(5, 4), // 0.05%,
   positiveSwapImpactFactor: decimalToFloat(2, 5), // 0.002 %
   negativeSwapImpactFactor: decimalToFloat(1, 5), // 0.001 %
   swapImpactExponentFactor: decimalToFloat(2, 0), // 2
@@ -124,7 +124,7 @@ const baseMarketConfig: BaseMarketConfig = {
   borrowingExponentFactorForLongs: decimalToFloat(1),
   borrowingExponentFactorForShorts: decimalToFloat(1),
 
-  fundingFactor: decimalToFloat(1, 7), // 0.00001% / second
+  fundingFactor: decimalToFloat(1, 5), // 0.001% / second
   fundingExponentFactor: decimalToFloat(1),
 };
 
