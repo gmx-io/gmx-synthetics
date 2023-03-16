@@ -74,6 +74,8 @@ export async function deployFixture() {
   const orderStoreUtils = await hre.ethers.getContract("OrderStoreUtils");
   const decreasePositionUtils = await hre.ethers.getContract("DecreasePositionUtils");
   const increaseOrderUtils = await hre.ethers.getContract("IncreaseOrderUtils");
+  const increasePositionUtils = await hre.ethers.getContract("IncreasePositionUtils");
+  const positionUtils = await hre.ethers.getContract("PositionUtils");
   const swapUtils = await hre.ethers.getContract("SwapUtils");
   const referralStorage = await hre.ethers.getContract("ReferralStorage");
 
@@ -119,6 +121,9 @@ export async function deployFixture() {
 
   return {
     accountList,
+    getContract: async (contractName) => {
+      return await hre.ethers.getContract(contractName);
+    },
     accounts: {
       wallet,
       user0,
@@ -174,6 +179,8 @@ export async function deployFixture() {
       orderStoreUtils,
       decreasePositionUtils,
       increaseOrderUtils,
+      increasePositionUtils,
+      positionUtils,
       swapUtils,
       referralStorage,
       usdcPriceFeed,
