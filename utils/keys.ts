@@ -81,6 +81,7 @@ export const SWAP_IMPACT_POOL_AMOUNT = hashString("SWAP_IMPACT_POOL_AMOUNT");
 export const POSITION_IMPACT_FACTOR = hashString("POSITION_IMPACT_FACTOR");
 export const POSITION_IMPACT_EXPONENT_FACTOR = hashString("POSITION_IMPACT_EXPONENT_FACTOR");
 export const MAX_POSITION_IMPACT_FACTOR = hashString("MAX_POSITION_IMPACT_FACTOR");
+export const MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS = hashString("MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS");
 export const POSITION_FEE_FACTOR = hashString("POSITION_FEE_FACTOR");
 
 export const RESERVE_FACTOR = hashString("RESERVE_FACTOR");
@@ -210,8 +211,8 @@ export function openInterestInTokensKey(market: string, collateralToken: string,
   );
 }
 
-export function minCollateralFactorKey(market: string, isLong: boolean) {
-  return hashData(["bytes32", "address", "bool"], [MIN_COLLATERAL_FACTOR, market, isLong]);
+export function minCollateralFactorKey(market: string) {
+  return hashData(["bytes32", "address"], [MIN_COLLATERAL_FACTOR, market]);
 }
 
 export function reserveFactorKey(market: string, isLong: boolean) {
@@ -272,6 +273,10 @@ export function positionImpactExponentFactorKey(market: string) {
 
 export function maxPositionImpactFactorKey(market: string, isPositive: boolean) {
   return hashData(["bytes32", "address", "bool"], [MAX_POSITION_IMPACT_FACTOR, market, isPositive]);
+}
+
+export function maxPositionImpactFactorForLiquidationsKey(market: string) {
+  return hashData(["bytes32", "address"], [MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS, market]);
 }
 
 export function positionFeeFactorKey(market: string) {

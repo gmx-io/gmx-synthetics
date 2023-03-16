@@ -171,7 +171,8 @@ library IncreasePositionUtils {
             params.position,
             params.market,
             prices,
-            true
+            true, // isIncrease
+            true // shouldValidateMinCollateralUsd
         );
 
         if (params.order.sizeDeltaUsd() > 0) {

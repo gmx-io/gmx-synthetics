@@ -7,8 +7,7 @@ export type BaseMarketConfig = {
   reserveFactorLongs: BigNumberish;
   reserveFactorShorts: BigNumberish;
 
-  minCollateralFactorForLongs: BigNumberish;
-  minCollateralFactorForShorts: BigNumberish;
+  minCollateralFactor: BigNumberish;
 
   maxLongTokenPoolAmount: BigNumberish;
   maxShortTokenPoolAmount: BigNumberish;
@@ -79,8 +78,7 @@ const baseMarketConfig: BaseMarketConfig = {
   reserveFactorLongs: decimalToFloat(5, 1), // 50%,
   reserveFactorShorts: decimalToFloat(5, 1), // 50%,
 
-  minCollateralFactorForLongs: decimalToFloat(1, 2), // 1%
-  minCollateralFactorForShorts: decimalToFloat(1, 2), // 1%
+  minCollateralFactor: decimalToFloat(1, 2), // 1%
 
   maxLongTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
   maxShortTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
@@ -132,8 +130,7 @@ const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
   reserveFactorLongs: decimalToFloat(5, 1), // 50%,
   reserveFactorShorts: decimalToFloat(5, 1), // 50%,
 
-  minCollateralFactorForLongs: decimalToFloat(1, 2), // 1%
-  minCollateralFactorForShorts: decimalToFloat(1, 2), // 1%
+  minCollateralFactor: decimalToFloat(1, 2), // 1%
 
   maxLongTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
   maxShortTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
