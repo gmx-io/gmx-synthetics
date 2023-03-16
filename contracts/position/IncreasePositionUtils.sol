@@ -43,7 +43,7 @@ library IncreasePositionUtils {
         uint256 nextPositionBorrowingFactor;
     }
 
-    error InsufficientCollateralAmount();
+    error InsufficientCollateralAmount(uint256 collateralAmount, int256 collateralDeltaAmount);
     error InsufficientCollateralForOpenInterestLeverage(int256 remainingCollateralUsd);
 
     // @dev increase a position
@@ -90,7 +90,7 @@ library IncreasePositionUtils {
             cache.collateralDeltaAmount < 0 &&
             params.position.collateralAmount() < SafeCast.toUint256(-cache.collateralDeltaAmount)
         ) {
-            revert InsufficientCollateralAmount();
+            revert InsufficientCollateralAmount(params.position.collateralAmount(), cache.collateralDeltaAmount);
         }
         params.position.setCollateralAmount(Calc.sumReturnUint256(params.position.collateralAmount(), cache.collateralDeltaAmount));
 

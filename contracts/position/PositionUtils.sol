@@ -145,7 +145,8 @@ library PositionUtils {
     }
 
     error LiquidatablePosition();
-    error EmptyPosition(uint256 sizeInUsd, uint256 sizeInTokens, uint256 collateralAmount);
+    error EmptyPosition();
+    error InvalidPositionSizeValues(uint256 sizeInUsd, uint256 sizeInTokens);
 
     // @dev get the position pnl in USD
     //
@@ -248,8 +249,8 @@ library PositionUtils {
     // @dev validate that a position is not empty
     // @param position the position values
     function validateNonEmptyPosition(Position.Props memory position) internal pure {
-        if (position.sizeInUsd() == 0 || position.sizeInTokens() == 0 || position.collateralAmount() == 0) {
-            revert EmptyPosition(position.sizeInUsd(), position.sizeInTokens(), position.collateralAmount());
+        if (position.sizeInUsd() == 0 && position.sizeInTokens() == 0 && position.collateralAmount() == 0) {
+            revert EmptyPosition();
         }
     }
 
@@ -279,6 +280,10 @@ library PositionUtils {
         bool shouldValidateMinCollateralUsd
     ) public view {
         validateNonEmptyPosition(position);
+
+        if (position.sizeInUsd() == 0 || position.sizeInTokens() == 0) {
+            revert InvalidPositionSizeValues(position.sizeInUsd(), position.sizeInTokens());
+        }
 
         if (isPositionLiquidatable(
             dataStore,
