@@ -169,6 +169,15 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
       );
     }
 
+    if (marketConfig.fundingExponentFactor) {
+      const key = keys.fundingExponentFactorKey(marketToken);
+      await setUintIfDifferent(
+        key,
+        marketConfig.fundingExponentFactor,
+        `funding exponent factor for ${marketToken.toString()}`
+      );
+    }
+
     if (marketConfig.borrowingFactorForShorts) {
       const key = keys.borrowingFactorKey(marketToken, false);
       await setUintIfDifferent(

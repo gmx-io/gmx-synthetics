@@ -10,7 +10,13 @@ export async function contractAt(name, address) {
   return await contractFactory.attach(address);
 }
 
-export function createDeployFunction({ contractName, dependencyNames, getDeployArgs, libraryNames, afterDeploy }) {
+export function createDeployFunction({
+  contractName,
+  dependencyNames = null,
+  getDeployArgs = null,
+  libraryNames = null,
+  afterDeploy,
+}) {
   const func = async ({ getNamedAccounts, deployments, gmx }: HardhatRuntimeEnvironment) => {
     const { deploy, get } = deployments;
     const { deployer } = await getNamedAccounts();
