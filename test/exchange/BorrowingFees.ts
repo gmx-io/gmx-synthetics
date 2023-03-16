@@ -138,7 +138,7 @@ describe("Exchange.BorrowingFees", () => {
         account: user1,
         market: ethUsdMarket,
         initialCollateralToken: usdc,
-        initialCollateralDeltaAmount: expandDecimals(1000, 6),
+        initialCollateralDeltaAmount: expandDecimals(5000, 6),
         swapPath: [],
         sizeDeltaUsd: decimalToFloat(1000),
         acceptablePrice: expandDecimals(4950, 12),
