@@ -4,7 +4,7 @@ import { expandDecimals, bigNumberify } from "./math";
 import { executeWithOracleParams } from "./exchange";
 import { contractAt } from "./deploy";
 import { parseLogs } from "./event";
-import { getCancellationReason } from "./error";
+import { getCancellationReason, getErrorString } from "./error";
 
 import * as keys from "./keys";
 
@@ -127,7 +127,7 @@ export async function executeDeposit(fixture, overrides: any = {}) {
     if (overrides.expectedCancellationReason) {
       expect(cancellationReason.name).eq(overrides.expectedCancellationReason);
     } else {
-      throw new Error(`Deposit was cancelled: ${JSON.stringify(cancellationReason)}`);
+      throw new Error(`Deposit was cancelled: ${getErrorString(cancellationReason)}`);
     }
   } else {
     if (overrides.expectedCancellationReason) {

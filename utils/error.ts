@@ -1,5 +1,12 @@
 import { getEventDataValue } from "./event";
 
+export function getErrorString(error) {
+  return JSON.stringify({
+    name: error.name,
+    args: error.args.map((value) => value.toString()),
+  });
+}
+
 export function getCancellationReason({ logs, eventName, contracts }) {
   const reasonBytes = getEventDataValue(logs, eventName, "reasonBytes");
   if (!reasonBytes) {

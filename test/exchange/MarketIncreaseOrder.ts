@@ -229,5 +229,59 @@ describe("Exchange.MarketIncreaseOrder", () => {
         maxPrices: [expandDecimals(5500, 4), expandDecimals(1, 6)],
       },
     });
+
+    it("validates reserve", async () => {
+      const params = {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: expandDecimals(100 * 1000, 6),
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(300 * 1000),
+        acceptablePrice: expandDecimals(4990, 12),
+        executionFee: expandDecimals(1, 15),
+        minOutputAmount: expandDecimals(50000, 6),
+        orderType: OrderType.MarketIncrease,
+        isLong: false,
+        shouldUnwrapNativeToken: false,
+      };
+
+      await handleOrder(fixture, { create: params });
+
+      await handleOrder(fixture, {
+        create: params,
+        execute: {
+          expectedCancellationReason: "InsufficientReserve",
+        },
+      });
+    });
+
+    it("validates open interest", async () => {
+      await dataStore.setUint(keys.maxOpenInterestKey(ethUsdMarket.marketToken, false), decimalToFloat(200 * 1000));
+
+      const params = {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: expandDecimals(100 * 1000, 6),
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(150 * 1000),
+        acceptablePrice: expandDecimals(4990, 12),
+        executionFee: expandDecimals(1, 15),
+        minOutputAmount: expandDecimals(50000, 6),
+        orderType: OrderType.MarketIncrease,
+        isLong: false,
+        shouldUnwrapNativeToken: false,
+      };
+
+      await handleOrder(fixture, { create: params });
+
+      await handleOrder(fixture, {
+        create: params,
+        execute: {
+          expectedCancellationReason: "MaxOpenInterestExceeded",
+        },
+      });
+    });
   });
 });

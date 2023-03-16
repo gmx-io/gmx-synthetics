@@ -5,7 +5,7 @@ import { logGasUsage } from "./gas";
 import { bigNumberify, expandDecimals } from "./math";
 import { executeWithOracleParams } from "./exchange";
 import { parseLogs } from "./event";
-import { getCancellationReason } from "./error";
+import { getCancellationReason, getErrorString } from "./error";
 
 import * as keys from "./keys";
 
@@ -177,7 +177,7 @@ export async function executeOrder(fixture, overrides = {}) {
     if (overrides.expectedCancellationReason) {
       expect(cancellationReason.name).eq(overrides.expectedCancellationReason);
     } else {
-      throw new Error(`Order was cancelled: ${JSON.stringify(cancellationReason)}`);
+      throw new Error(`Order was cancelled: ${getErrorString(cancellationReason)}`);
     }
   } else {
     if (overrides.expectedCancellationReason) {
@@ -197,7 +197,7 @@ export async function executeOrder(fixture, overrides = {}) {
     if (overrides.expectedFrozenReason) {
       expect(frozenReason.name).eq(overrides.expectedFrozenReason);
     } else {
-      throw new Error(`Order was frozen: ${JSON.stringify(frozenReason)}`);
+      throw new Error(`Order was frozen: ${getErrorString(frozenReason)}`);
     }
   } else {
     if (overrides.expectedFrozenReason) {
