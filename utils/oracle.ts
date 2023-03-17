@@ -185,7 +185,7 @@ export function getCompactedOracleTimestamps(timestamps) {
   });
 }
 
-export async function getOracleParamsForSimulation({ tokens, minPrices, maxPrices }) {
+export async function getOracleParamsForSimulation({ tokens, minPrices, maxPrices, precisions }) {
   if (tokens.length !== minPrices.length) {
     throw new Error(`Invalid input, tokens.length != minPrices.length ${tokens}, ${minPrices}`);
   }
@@ -203,8 +203,9 @@ export async function getOracleParamsForSimulation({ tokens, minPrices, maxPrice
 
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
-    const minPrice = minPrices[i];
-    const maxPrice = maxPrices[i];
+    const precisionMultiplier = expandDecimals(1, precisions[i]);
+    const minPrice = minPrices[i].mul(precisionMultiplier);
+    const maxPrice = maxPrices[i].mul(precisionMultiplier);
     if (!recordedTokens[token]) {
       primaryTokens.push(token);
       primaryPrices.push({

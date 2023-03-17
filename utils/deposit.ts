@@ -3,7 +3,8 @@ import { logGasUsage } from "./gas";
 import { expandDecimals, bigNumberify } from "./math";
 import { executeWithOracleParams } from "./exchange";
 import { contractAt } from "./deploy";
-import { getCancellationReason } from "./error";
+import { parseLogs } from "./event";
+import { getCancellationReason, getErrorString } from "./error";
 
 import * as keys from "./keys";
 
@@ -70,12 +71,15 @@ export async function createDeposit(fixture, overrides: any = {}) {
     callbackGasLimit,
   };
 
-  return await logGasUsage({
+  const txReceipt = await logGasUsage({
     tx: depositHandler.connect(sender).createDeposit(account.address, params, {
       gasLimit: "1000000",
     }),
     label: overrides.gasUsageLabel,
   });
+
+  const result = { txReceipt };
+  return result;
 }
 
 export async function executeDeposit(fixture, overrides: any = {}) {
@@ -111,10 +115,10 @@ export async function executeDeposit(fixture, overrides: any = {}) {
   };
 
   const txReceipt = await executeWithOracleParams(fixture, params);
+  const logs = parseLogs(fixture, txReceipt);
 
   const cancellationReason = await getCancellationReason({
-    fixture,
-    txReceipt,
+    logs,
     eventName: "DepositCancelled",
     contracts: [executeDepositUtils],
   });
@@ -123,11 +127,18 @@ export async function executeDeposit(fixture, overrides: any = {}) {
     if (overrides.expectedCancellationReason) {
       expect(cancellationReason.name).eq(overrides.expectedCancellationReason);
     } else {
-      throw new Error(`Deposit was cancelled: ${JSON.stringify(cancellationReason)}`);
+      throw new Error(`Deposit was cancelled: ${getErrorString(cancellationReason)}`);
+    }
+  } else {
+    if (overrides.expectedCancellationReason) {
+      throw new Error(
+        `Deposit was not cancelled, expected cancellation with reason: ${overrides.expectedCancellationReason}`
+      );
     }
   }
 
-  return txReceipt;
+  const result = { txReceipt, logs };
+  return result;
 }
 
 export async function handleDeposit(fixture, overrides: any = {}) {

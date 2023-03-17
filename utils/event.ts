@@ -20,12 +20,19 @@ export function parseLogs(fixture, txReceipt) {
   return logs;
 }
 
-export function getEventDataValue(parsedLogs, eventName, key) {
+export function getEventData(parsedLogs, eventName) {
   for (let i = 0; i < parsedLogs.length; i++) {
     const log = parsedLogs[i];
     if (log.parsedEventInfo?.eventName === eventName) {
-      return log.parsedEventData[key];
+      return log.parsedEventData;
     }
+  }
+}
+
+export function getEventDataValue(parsedLogs, eventName, key) {
+  const eventData = getEventData(parsedLogs, eventName);
+  if (eventData) {
+    return eventData[key];
   }
 }
 

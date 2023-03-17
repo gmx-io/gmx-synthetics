@@ -224,8 +224,9 @@ library PositionEventUtils {
     ) internal {
         EventUtils.EventLogData memory eventData;
 
-        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.initItems(2);
         eventData.bytes32Items.setItem(0, "orderKey", orderKey);
+        eventData.bytes32Items.setItem(1, "referralCode", fees.referral.referralCode);
 
         eventData.addressItems.initItems(4);
         eventData.addressItems.setItem(0, "market", market);
@@ -233,7 +234,7 @@ library PositionEventUtils {
         eventData.addressItems.setItem(2, "affiliate", fees.referral.affiliate);
         eventData.addressItems.setItem(3, "trader", fees.referral.trader);
 
-        eventData.uintItems.initItems(21);
+        eventData.uintItems.initItems(23);
         eventData.uintItems.setItem(0, "collateralTokenPrice.min", fees.collateralTokenPrice.min);
         eventData.uintItems.setItem(1, "collateralTokenPrice.max", fees.collateralTokenPrice.max);
         eventData.uintItems.setItem(2, "tradeSizeUsd", tradeSizeUsd);
@@ -245,16 +246,18 @@ library PositionEventUtils {
         eventData.uintItems.setItem(8, "fundingFeeAmount", fees.funding.fundingFeeAmount);
         eventData.uintItems.setItem(9, "claimableLongTokenAmount", fees.funding.claimableLongTokenAmount);
         eventData.uintItems.setItem(10, "claimableShortTokenAmount", fees.funding.claimableShortTokenAmount);
-        eventData.uintItems.setItem(11, "positionFeeFactor", fees.positionFeeFactor);
-        eventData.uintItems.setItem(12, "protocolFeeAmount", fees.protocolFeeAmount);
-        eventData.uintItems.setItem(13, "positionFeeReceiverFactor", fees.positionFeeReceiverFactor);
-        eventData.uintItems.setItem(14, "feeReceiverAmount", fees.feeReceiverAmount);
-        eventData.uintItems.setItem(15, "feeAmountForPool", fees.feeAmountForPool);
-        eventData.uintItems.setItem(16, "positionFeeAmountForPool", fees.positionFeeAmountForPool);
-        eventData.uintItems.setItem(17, "positionFeeAmount", fees.positionFeeAmount);
-        eventData.uintItems.setItem(18, "borrowingFeeAmount", fees.borrowingFeeAmount);
-        eventData.uintItems.setItem(19, "totalNetCostAmount", fees.totalNetCostAmount);
-        eventData.uintItems.setItem(20, "totalNetCostUsd", fees.totalNetCostUsd);
+        eventData.uintItems.setItem(11, "borrowingFeeAmount", fees.borrowing.borrowingFeeAmount);
+        eventData.uintItems.setItem(12, "borrowingFeeReceiverFactor", fees.borrowing.borrowingFeeReceiverFactor);
+        eventData.uintItems.setItem(13, "borrowingFeeAmountForFeeReceiver", fees.borrowing.borrowingFeeAmountForFeeReceiver);
+        eventData.uintItems.setItem(14, "positionFeeFactor", fees.positionFeeFactor);
+        eventData.uintItems.setItem(15, "protocolFeeAmount", fees.protocolFeeAmount);
+        eventData.uintItems.setItem(16, "positionFeeReceiverFactor", fees.positionFeeReceiverFactor);
+        eventData.uintItems.setItem(17, "feeReceiverAmount", fees.feeReceiverAmount);
+        eventData.uintItems.setItem(18, "feeAmountForPool", fees.feeAmountForPool);
+        eventData.uintItems.setItem(19, "positionFeeAmountForPool", fees.positionFeeAmountForPool);
+        eventData.uintItems.setItem(20, "positionFeeAmount", fees.positionFeeAmount);
+        eventData.uintItems.setItem(21, "totalNetCostAmount", fees.totalNetCostAmount);
+        eventData.uintItems.setItem(22, "totalNetCostUsd", fees.totalNetCostUsd);
 
         eventData.intItems.initItems(2);
         eventData.intItems.setItem(0, "latestLongTokenFundingAmountPerSize", fees.funding.latestLongTokenFundingAmountPerSize);
@@ -264,9 +267,6 @@ library PositionEventUtils {
         eventData.boolItems.setItem(0, "hasPendingLongTokenFundingFee", fees.funding.hasPendingLongTokenFundingFee);
         eventData.boolItems.setItem(1, "hasPendingShortTokenFundingFee", fees.funding.hasPendingShortTokenFundingFee);
         eventData.boolItems.setItem(2, "isIncrease", isIncrease);
-
-        eventData.bytes32Items.initItems(1);
-        eventData.bytes32Items.setItem(0, "referralCode", fees.referral.referralCode);
 
         eventEmitter.emitEventLog1(
             eventName,

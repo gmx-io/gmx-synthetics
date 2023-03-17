@@ -421,13 +421,13 @@ library WithdrawalUtils {
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
         uint256 marketTokenAmount
-    ) internal view returns (uint256, uint256) {
+    ) internal returns (uint256, uint256) {
         // the max pnl factor for withdrawals should be the lower of the max pnl factor values
         // which means that pnl would be capped to a smaller amount and the pool
         // value would be higher even if there is a large pnl
         // this should be okay since MarketUtils.validateMaxPnl is called after the withdrawal
         // which ensures that the max pnl factor for withdrawals was not exceeded
-        int256 _poolValue = MarketUtils.getPoolValue(
+        MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(
             params.dataStore,
             market,
             prices.longTokenPrice,
@@ -437,13 +437,20 @@ library WithdrawalUtils {
             false
         );
 
-        if (_poolValue <= 0) {
-            revert InvalidPoolValueForWithdrawal(_poolValue);
+        if (poolValueInfo.poolValue <= 0) {
+            revert InvalidPoolValueForWithdrawal(poolValueInfo.poolValue);
         }
 
-        uint256 poolValue = _poolValue.toUint256();
+        uint256 poolValue = poolValueInfo.poolValue.toUint256();
         uint256 marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
         uint256 marketTokensUsd = MarketUtils.marketTokenAmountToUsd(marketTokenAmount, poolValue, marketTokensSupply);
+
+        MarketEventUtils.emitMarketPoolValueInfo(
+            params.eventEmitter,
+            market.marketToken,
+            poolValueInfo,
+            marketTokensSupply
+        );
 
         uint256 longTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market.marketToken, market.longToken);
         uint256 shortTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market.marketToken, market.shortToken);

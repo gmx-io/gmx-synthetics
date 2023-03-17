@@ -6,7 +6,6 @@ import { handleDeposit } from "../../utils/deposit";
 import { OrderType, getOrderCount, getOrderKeys, createOrder, executeOrder, handleOrder } from "../../utils/order";
 import { getPositionCount, getAccountPositionCount } from "../../utils/position";
 import { getExecuteParams } from "../../utils/exchange";
-import { validateCancellationReason } from "../../utils/error";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.MarketIncreaseOrder", () => {
@@ -27,7 +26,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
       create: {
         market: ethUsdMarket,
         longTokenAmount: expandDecimals(1000, 18),
-        shortTokenAmount: expandDecimals(50 * 1000, 6),
+        shortTokenAmount: expandDecimals(1000 * 1000, 6),
       },
     });
 
@@ -183,55 +182,188 @@ describe("Exchange.MarketIncreaseOrder", () => {
     expect(await getPositionCount(dataStore)).eq(2);
   });
 
-  it("executeOrder with price impact", async () => {
-    // set price impact to 0.1% for every $50,000 of token imbalance
-    // 0.1% => 0.001
-    // 0.001 / 50,000 => 2 * (10 ** -8)
-    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 8));
-    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
-    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
-
-    expect(await getOrderCount(dataStore)).eq(0);
+  it("validates collateral amount", async () => {
+    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken), decimalToFloat(5, 4)); // 0.05%
 
     const params = {
       account: user0,
       market: ethUsdMarket,
-      initialCollateralToken: wnt,
-      initialCollateralDeltaAmount: expandDecimals(10, 18),
+      initialCollateralToken: usdc,
+      initialCollateralDeltaAmount: expandDecimals(1000, 6),
       swapPath: [],
-      sizeDeltaUsd: decimalToFloat(200 * 1000),
-      acceptablePrice: expandDecimals(5050, 12),
+      sizeDeltaUsd: decimalToFloat(20 * 1000),
+      acceptablePrice: expandDecimals(4990, 12),
       executionFee: expandDecimals(1, 15),
       minOutputAmount: expandDecimals(50000, 6),
       orderType: OrderType.MarketIncrease,
-      isLong: true,
+      isLong: false,
       shouldUnwrapNativeToken: false,
     };
 
-    await createOrder(fixture, params);
+    await handleOrder(fixture, { create: params });
 
-    expect(await getOrderCount(dataStore)).eq(1);
-    expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
-    expect(await getPositionCount(dataStore)).eq(0);
-
-    await executeOrder(fixture, {
-      gasUsageLabel: "executeOrder",
+    await handleOrder(fixture, {
+      create: { ...params, initialCollateralDeltaAmount: 0, account: user1 },
+      execute: {
+        expectedCancellationReason: "InsufficientCollateralAmount",
+      },
     });
 
-    expect(await getOrderCount(dataStore)).eq(0);
-    expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
-    expect(await getPositionCount(dataStore)).eq(1);
+    await handleOrder(fixture, {
+      create: { ...params, initialCollateralDeltaAmount: expandDecimals(1000, 6), account: user0 },
+      execute: {
+        tokens: [wnt.address, usdc.address],
+        precisions: [8, 18],
+        minPrices: [expandDecimals(5500, 4), expandDecimals(1, 6)],
+        maxPrices: [expandDecimals(5500, 4), expandDecimals(1, 6)],
+        expectedCancellationReason: "LiquidatablePosition",
+      },
+    });
 
-    params.account = user1;
+    await handleOrder(fixture, {
+      create: { ...params, initialCollateralDeltaAmount: expandDecimals(2000, 6), account: user0 },
+      execute: {
+        tokens: [wnt.address, usdc.address],
+        precisions: [8, 18],
+        minPrices: [expandDecimals(5500, 4), expandDecimals(1, 6)],
+        maxPrices: [expandDecimals(5500, 4), expandDecimals(1, 6)],
+      },
+    });
+  });
+
+  it("validates reserve", async () => {
+    const params = {
+      account: user0,
+      market: ethUsdMarket,
+      initialCollateralToken: usdc,
+      initialCollateralDeltaAmount: expandDecimals(100 * 1000, 6),
+      swapPath: [],
+      sizeDeltaUsd: decimalToFloat(300 * 1000),
+      acceptablePrice: expandDecimals(4990, 12),
+      executionFee: expandDecimals(1, 15),
+      minOutputAmount: expandDecimals(50000, 6),
+      orderType: OrderType.MarketIncrease,
+      isLong: false,
+      shouldUnwrapNativeToken: false,
+    };
+
+    await handleOrder(fixture, { create: params });
 
     await handleOrder(fixture, {
       create: params,
       execute: {
-        gasUsageLabel: "executeOrder",
+        expectedCancellationReason: "InsufficientReserve",
+      },
+    });
+  });
+
+  it("validates open interest", async () => {
+    await dataStore.setUint(keys.maxOpenInterestKey(ethUsdMarket.marketToken, false), decimalToFloat(200 * 1000));
+
+    const params = {
+      account: user0,
+      market: ethUsdMarket,
+      initialCollateralToken: usdc,
+      initialCollateralDeltaAmount: expandDecimals(100 * 1000, 6),
+      swapPath: [],
+      sizeDeltaUsd: decimalToFloat(150 * 1000),
+      acceptablePrice: expandDecimals(4990, 12),
+      executionFee: expandDecimals(1, 15),
+      minOutputAmount: expandDecimals(50000, 6),
+      orderType: OrderType.MarketIncrease,
+      isLong: false,
+      shouldUnwrapNativeToken: false,
+    };
+
+    await handleOrder(fixture, { create: params });
+
+    await handleOrder(fixture, {
+      create: params,
+      execute: {
+        expectedCancellationReason: "MaxOpenInterestExceeded",
+      },
+    });
+  });
+
+  it("validates position", async () => {
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
+    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken), decimalToFloat(5, 4)); // 0.05%
+
+    await dataStore.setUint(
+      keys.maxPositionImpactFactorForLiquidationsKey(ethUsdMarket.marketToken),
+      decimalToFloat(1) // 100%
+    );
+
+    const params = {
+      account: user0,
+      market: ethUsdMarket,
+      initialCollateralToken: usdc,
+      initialCollateralDeltaAmount: expandDecimals(1000, 6),
+      swapPath: [],
+      sizeDeltaUsd: decimalToFloat(20 * 1000),
+      acceptablePrice: 1,
+      executionFee: expandDecimals(1, 15),
+      minOutputAmount: expandDecimals(50000, 6),
+      orderType: OrderType.MarketIncrease,
+      isLong: false,
+      shouldUnwrapNativeToken: false,
+    };
+
+    await handleOrder(fixture, { create: params });
+
+    await handleOrder(fixture, {
+      create: { ...params, initialCollateralDeltaAmount: expandDecimals(1000, 6), account: user0 },
+      execute: {
+        tokens: [wnt.address, usdc.address],
+        precisions: [8, 18],
+        minPrices: [expandDecimals(5500, 4), expandDecimals(1, 6)],
+        maxPrices: [expandDecimals(5500, 4), expandDecimals(1, 6)],
+        expectedCancellationReason: "LiquidatablePosition",
       },
     });
 
-    expect(await getAccountPositionCount(dataStore, user1.address)).eq(1);
-    expect(await getPositionCount(dataStore)).eq(2);
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 6));
+
+    await handleOrder(fixture, {
+      create: { ...params, initialCollateralDeltaAmount: expandDecimals(1000, 6), account: user0 },
+      execute: {
+        expectedCancellationReason: "LiquidatablePosition",
+      },
+    });
+
+    await dataStore.setUint(
+      keys.maxPositionImpactFactorForLiquidationsKey(ethUsdMarket.marketToken),
+      decimalToFloat(1, 2) // 1%
+    );
+
+    await handleOrder(fixture, {
+      create: { ...params, initialCollateralDeltaAmount: expandDecimals(1000, 6), account: user0 },
+    });
+
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
+
+    await dataStore.setUint(keys.MIN_COLLATERAL_USD, decimalToFloat(5000));
+
+    await handleOrder(fixture, {
+      create: params,
+      execute: {
+        expectedCancellationReason: "LiquidatablePosition",
+      },
+    });
+
+    await dataStore.setUint(keys.MIN_COLLATERAL_USD, decimalToFloat(10));
+
+    await handleOrder(fixture, { create: params });
+
+    await dataStore.setUint(keys.minCollateralFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 1)); // 10x
+
+    await handleOrder(fixture, {
+      create: params,
+      execute: {
+        expectedCancellationReason: "LiquidatablePosition",
+      },
+    });
   });
 });

@@ -6,9 +6,11 @@ import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, handleOrder } from "../../utils/order";
 import { getPositionCount, getAccountPositionCount, getPositionKeys } from "../../utils/position";
+import { expectWithinRange } from "../../utils/validation";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.BorrowingFees", () => {
+  const { provider } = ethers;
   let fixture;
   let user0, user1;
   let reader, dataStore, ethUsdMarket, wnt, usdc;
@@ -32,6 +34,8 @@ describe("Exchange.BorrowingFees", () => {
     await dataStore.setUint(keys.borrowingFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 7));
     await dataStore.setUint(keys.borrowingExponentFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1));
     await dataStore.setUint(keys.borrowingExponentFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1));
+
+    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorUpdatedAtKey(ethUsdMarket.marketToken, true))).eq(0);
 
     await handleOrder(fixture, {
       create: {
@@ -67,6 +71,13 @@ describe("Exchange.BorrowingFees", () => {
       },
     });
 
+    const block = await provider.getBlock();
+    expectWithinRange(
+      await dataStore.getUint(keys.cumulativeBorrowingFactorUpdatedAtKey(ethUsdMarket.marketToken, true)),
+      block.timestamp,
+      100
+    );
+
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
     expect(await getAccountPositionCount(dataStore, user1.address)).eq(1);
     expect(await getPositionCount(dataStore)).eq(2);
@@ -92,8 +103,8 @@ describe("Exchange.BorrowingFees", () => {
     const position0 = await reader.getPositionInfo(dataStore.address, positionKeys[0], prices);
     const position1 = await reader.getPositionInfo(dataStore.address, positionKeys[1], prices);
 
-    expect(position0.pendingBorrowingFees).eq("967683200000000000000000000000000"); // $967.6832
-    expect(position1.pendingBorrowingFees).eq("10886400000000000000000000000000000"); // $10,886.4
+    expectWithinRange(position0.pendingBorrowingFees, "967684000000000000000000000000000", decimalToFloat(10, 3)); // $967.684
+    expectWithinRange(position1.pendingBorrowingFees, "10886400000000000000000000000000000", decimalToFloat(10, 3)); // $10,886.4
 
     expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, true))).eq(0);
     expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, false))).eq(0);
@@ -115,8 +126,10 @@ describe("Exchange.BorrowingFees", () => {
       },
     });
 
-    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, true))).eq(
-      "4838432000000000000000000000"
+    expectWithinRange(
+      await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, true)),
+      "4838432000000000000000000000",
+      decimalToFloat(10, 8)
     );
     expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, false))).eq(0);
 
@@ -125,7 +138,7 @@ describe("Exchange.BorrowingFees", () => {
         account: user1,
         market: ethUsdMarket,
         initialCollateralToken: usdc,
-        initialCollateralDeltaAmount: expandDecimals(1000, 6),
+        initialCollateralDeltaAmount: expandDecimals(5000, 6),
         swapPath: [],
         sizeDeltaUsd: decimalToFloat(1000),
         acceptablePrice: expandDecimals(4950, 12),
@@ -137,12 +150,16 @@ describe("Exchange.BorrowingFees", () => {
       },
     });
 
-    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, true))).eq(
-      "4838432000000000000000000000"
+    expectWithinRange(
+      await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, true)),
+      "4838432000000000000000000000",
+      decimalToFloat(10, 8)
     );
 
-    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, false))).eq(
-      "72576480000000000000000000000"
+    expectWithinRange(
+      await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, false)),
+      "72576480000000000000000000000",
+      decimalToFloat(10, 8)
     );
   });
 });

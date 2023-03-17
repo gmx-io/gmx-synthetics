@@ -1,15 +1,13 @@
-import { expect } from "chai";
-import { parseLogs, getEventDataValue } from "./event";
+import { getEventDataValue } from "./event";
 
-export function validateCancellationReason({ fixture, txReceipt, eventName, contracts, expectedReason }) {
-  const logs = parseLogs(fixture, txReceipt);
-  const reasonBytes = getEventDataValue(logs, eventName, "reasonBytes");
-  const reason = parseError(reasonBytes, contracts);
-  expect(reason.name).eq(expectedReason);
+export function getErrorString(error) {
+  return JSON.stringify({
+    name: error.name,
+    args: error.args.map((value) => value.toString()),
+  });
 }
 
-export function getCancellationReason({ fixture, txReceipt, eventName, contracts }) {
-  const logs = parseLogs(fixture, txReceipt);
+export function getCancellationReason({ logs, eventName, contracts }) {
   const reasonBytes = getEventDataValue(logs, eventName, "reasonBytes");
   if (!reasonBytes) {
     return;

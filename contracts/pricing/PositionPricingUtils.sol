@@ -71,6 +71,7 @@ library PositionPricingUtils {
     struct PositionFees {
         PositionReferralFees referral;
         PositionFundingFees funding;
+        PositionBorrowingFees borrowing;
         Price.Props collateralTokenPrice;
         uint256 positionFeeFactor;
         uint256 protocolFeeAmount;
@@ -79,7 +80,6 @@ library PositionPricingUtils {
         uint256 feeAmountForPool;
         uint256 positionFeeAmountForPool;
         uint256 positionFeeAmount;
-        uint256 borrowingFeeAmount;
         uint256 totalNetCostAmount;
         uint256 totalNetCostUsd;
     }
@@ -96,6 +96,12 @@ library PositionPricingUtils {
         uint256 totalRebateAmount;
         uint256 traderDiscountAmount;
         uint256 affiliateRewardAmount;
+    }
+
+    struct PositionBorrowingFees {
+      uint256 borrowingFeeAmount;
+      uint256 borrowingFeeReceiverFactor;
+      uint256 borrowingFeeAmountForFeeReceiver;
     }
 
     // @param fundingFeeAmount the position's funding fee amount
@@ -320,8 +326,8 @@ library PositionPricingUtils {
         uint256 longOpenInterest,
         uint256 shortOpenInterest
     ) internal pure returns (OpenInterestParams memory) {
-        uint256 nextLongOpenInterest;
-        uint256 nextShortOpenInterest;
+        uint256 nextLongOpenInterest = longOpenInterest;
+        uint256 nextShortOpenInterest = shortOpenInterest;
 
         if (params.isLong) {
             if (params.usdDelta < 0 && (-params.usdDelta).toUint256() > longOpenInterest) {
@@ -374,13 +380,13 @@ library PositionPricingUtils {
             sizeDeltaUsd
         );
 
-        fees.borrowingFeeAmount = MarketUtils.getBorrowingFees(dataStore, position) / collateralTokenPrice.min;
+        fees.borrowing.borrowingFeeAmount = MarketUtils.getBorrowingFees(dataStore, position) / collateralTokenPrice.min;
 
-        uint256 borrowingFeeReceiverFactor = dataStore.getUint(Keys.BORROWING_FEE_RECEIVER_FACTOR);
-        uint256 borrowingFeeAmountForFeeReceiver = Precision.applyFactor(fees.borrowingFeeAmount, borrowingFeeReceiverFactor);
+        fees.borrowing.borrowingFeeReceiverFactor = dataStore.getUint(Keys.BORROWING_FEE_RECEIVER_FACTOR);
+        fees.borrowing.borrowingFeeAmountForFeeReceiver = Precision.applyFactor(fees.borrowing.borrowingFeeAmount, fees.borrowing.borrowingFeeReceiverFactor);
 
-        fees.feeAmountForPool = fees.positionFeeAmountForPool + fees.borrowingFeeAmount - borrowingFeeAmountForFeeReceiver;
-        fees.feeReceiverAmount += borrowingFeeAmountForFeeReceiver;
+        fees.feeAmountForPool = fees.positionFeeAmountForPool + fees.borrowing.borrowingFeeAmount - fees.borrowing.borrowingFeeAmountForFeeReceiver;
+        fees.feeReceiverAmount += fees.borrowing.borrowingFeeAmountForFeeReceiver;
 
         int256 latestLongTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market(), longToken, position.isLong());
         int256 latestShortTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market(), shortToken, position.isLong());
@@ -393,7 +399,7 @@ library PositionPricingUtils {
             latestShortTokenFundingAmountPerSize
         );
 
-        fees.totalNetCostAmount = fees.referral.affiliateRewardAmount + fees.feeReceiverAmount + fees.positionFeeAmountForPool + fees.funding.fundingFeeAmount + fees.borrowingFeeAmount;
+        fees.totalNetCostAmount = fees.positionFeeAmount + fees.funding.fundingFeeAmount + fees.borrowing.borrowingFeeAmount - fees.referral.traderDiscountAmount;
         fees.totalNetCostUsd = fees.totalNetCostAmount * collateralTokenPrice.max;
 
         return fees;

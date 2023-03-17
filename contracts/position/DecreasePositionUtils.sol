@@ -172,7 +172,8 @@ library DecreasePositionUtils {
             params.position,
             params.market,
             cache.prices,
-            true
+            false, // isIncrease
+            true // shouldValidateMinCollateralUsd
         )) {
             revert PositionShouldNotBeLiquidated();
         }
@@ -228,7 +229,8 @@ library DecreasePositionUtils {
                 params.position,
                 params.market,
                 cache.prices,
-                false
+                false, // isIncrease
+                false // shouldValidateMinCollateralUsd
             );
 
             PositionStoreUtils.set(params.contracts.dataStore, params.positionKey, params.position);
