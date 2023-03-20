@@ -109,17 +109,6 @@ library BaseOrderUtils {
         IReferralStorage referralStorage;
     }
 
-    error EmptyOrder();
-    error UnsupportedOrderType();
-    error InvalidOrderPrices(
-        uint256 primaryPrice,
-        uint256 secondaryPrice,
-        uint256 triggerPrice,
-        bool shouldValidateAscendingPrice
-    );
-    error PriceImpactLargerThanOrderSize(int256 priceImpactUsdForPriceAdjustment, uint256 sizeDeltaUsd);
-    error OrderNotFulfillableDueToPriceImpact(uint256 price, uint256 acceptablePrice);
-
     // @dev check if an orderType is a market order
     // @param orderType the order type
     // @return whether an orderType is a market order
@@ -260,7 +249,7 @@ library BaseOrderUtils {
                 // and that the later price (secondaryPrice) is larger than the triggerPrice
                 bool ok = primaryPrice <= triggerPrice && triggerPrice <= secondaryPrice;
                 if (!ok) {
-                    revert InvalidOrderPrices(primaryPrice, secondaryPrice, triggerPrice, shouldValidateAscendingPrice);
+                    revert Errors.InvalidOrderPrices(primaryPrice, secondaryPrice, triggerPrice, shouldValidateAscendingPrice);
                 }
 
                 oracle.setCustomPrice(indexToken, Price.Props(
@@ -272,7 +261,7 @@ library BaseOrderUtils {
                 // and that the later price (secondaryPrice) is smaller than the triggerPrice
                 bool ok = primaryPrice >= triggerPrice && triggerPrice >= secondaryPrice;
                 if (!ok) {
-                    revert InvalidOrderPrices(primaryPrice, secondaryPrice, triggerPrice, shouldValidateAscendingPrice);
+                    revert Errors.InvalidOrderPrices(primaryPrice, secondaryPrice, triggerPrice, shouldValidateAscendingPrice);
                 }
 
                 oracle.setCustomPrice(indexToken, Price.Props(
@@ -284,7 +273,7 @@ library BaseOrderUtils {
             return;
         }
 
-        revertUnsupportedOrderType();
+        revert Errors.UnsupportedOrderType();
     }
 
     // @dev get the execution price for an order
@@ -346,7 +335,7 @@ library BaseOrderUtils {
         int256 priceImpactUsdForPriceAdjustment = shouldFlipPriceImpactUsd ? -priceImpactUsd : priceImpactUsd;
 
         if (priceImpactUsdForPriceAdjustment < 0 && (-priceImpactUsdForPriceAdjustment).toUint256() > sizeDeltaUsd) {
-            revert PriceImpactLargerThanOrderSize(priceImpactUsdForPriceAdjustment, sizeDeltaUsd);
+            revert Errors.PriceImpactLargerThanOrderSize(priceImpactUsdForPriceAdjustment, sizeDeltaUsd);
         }
 
         // adjust price by price impact
@@ -399,19 +388,14 @@ library BaseOrderUtils {
         // their position, this gives the user the option to cancel the pending order if
         // prices do not move in their favour or to close their position and let the order
         // execute if prices move in their favour
-        revert OrderNotFulfillableDueToPriceImpact(price, acceptablePrice);
+        revert Errors.OrderNotFulfillableDueToPriceImpact(price, acceptablePrice);
     }
 
     // @dev validate that an order exists
     // @param order the order to check
     function validateNonEmptyOrder(Order.Props memory order) internal pure {
         if (order.account() == address(0)) {
-            revert EmptyOrder();
+            revert Errors.EmptyOrder();
         }
-    }
-
-    // @dev throw an unsupported order type error
-    function revertUnsupportedOrderType() internal pure {
-        revert UnsupportedOrderType();
     }
 }

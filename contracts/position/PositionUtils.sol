@@ -148,10 +148,6 @@ library PositionUtils {
         int256 remainingCollateralUsd;
     }
 
-    error LiquidatablePosition();
-    error EmptyPosition();
-    error InvalidPositionSizeValues(uint256 sizeInUsd, uint256 sizeInTokens);
-
     // @dev get the position pnl in USD
     //
     // for long positions, pnl is calculated as:
@@ -254,7 +250,7 @@ library PositionUtils {
     // @param position the position values
     function validateNonEmptyPosition(Position.Props memory position) internal pure {
         if (position.sizeInUsd() == 0 && position.sizeInTokens() == 0 && position.collateralAmount() == 0) {
-            revert EmptyPosition();
+            revert Errors.EmptyPosition();
         }
     }
 
@@ -287,7 +283,7 @@ library PositionUtils {
         validateNonEmptyPosition(position);
 
         if (position.sizeInUsd() == 0 || position.sizeInTokens() == 0) {
-            revert InvalidPositionSizeValues(position.sizeInUsd(), position.sizeInTokens());
+            revert Errors.InvalidPositionSizeValues(position.sizeInUsd(), position.sizeInTokens());
         }
 
         if (isPositionLiquidatable(
@@ -299,7 +295,7 @@ library PositionUtils {
             isIncrease,
             shouldValidateMinCollateralUsd
         )) {
-            revert LiquidatablePosition();
+            revert Errors.LiquidatablePosition();
         }
     }
 

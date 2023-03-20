@@ -43,9 +43,6 @@ library IncreasePositionUtils {
         uint256 nextPositionBorrowingFactor;
     }
 
-    error InsufficientCollateralAmount(uint256 collateralAmount, int256 collateralDeltaAmount);
-    error InsufficientCollateralForOpenInterestLeverage(int256 remainingCollateralUsd);
-
     // @dev increase a position
     // The increasePosition function is used to increase the size of a position
     // in a market. This involves updating the position's collateral amount,
@@ -90,7 +87,7 @@ library IncreasePositionUtils {
             cache.collateralDeltaAmount < 0 &&
             params.position.collateralAmount() < SafeCast.toUint256(-cache.collateralDeltaAmount)
         ) {
-            revert InsufficientCollateralAmount(params.position.collateralAmount(), cache.collateralDeltaAmount);
+            revert Errors.InsufficientCollateralAmount(params.position.collateralAmount(), cache.collateralDeltaAmount);
         }
         params.position.setCollateralAmount(Calc.sumReturnUint256(params.position.collateralAmount(), cache.collateralDeltaAmount));
 
@@ -203,7 +200,7 @@ library IncreasePositionUtils {
             );
 
             if (!willBeSufficient) {
-                revert InsufficientCollateralForOpenInterestLeverage(remainingCollateralUsd);
+                revert Errors.InsufficientCollateralForOpenInterestLeverage(remainingCollateralUsd);
             }
         }
 

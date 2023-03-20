@@ -50,9 +50,6 @@ library DepositUtils {
         uint256 callbackGasLimit;
     }
 
-    error EmptyDeposit();
-    error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);
-
     // @dev creates a deposit
     //
     // @param dataStore DataStore
@@ -85,14 +82,14 @@ library DepositUtils {
         } else {
             uint256 wntAmount = depositVault.recordTransferIn(wnt);
             if (wntAmount < params.executionFee) {
-                revert InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
+                revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
             }
 
             params.executionFee = wntAmount;
         }
 
         if (initialLongTokenAmount == 0 && initialShortTokenAmount == 0) {
-            revert EmptyDeposit();
+            revert Errors.EmptyDeposit();
         }
 
         AccountUtils.validateReceiver(params.receiver);
@@ -155,7 +152,7 @@ library DepositUtils {
     ) external {
         Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
         if (deposit.account() == address(0)) {
-            revert EmptyDeposit();
+            revert Errors.EmptyDeposit();
         }
 
         if (deposit.initialLongTokenAmount() > 0) {

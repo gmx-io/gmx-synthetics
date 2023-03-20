@@ -14,9 +14,6 @@ library IncreaseOrderUtils {
     using Order for Order.Props;
     using Array for uint256[];
 
-    error UnexpectedPositionState();
-    error InvalidCollateralToken(address collateralToken, address market);
-
     // @dev process an increase order
     // @param params BaseOrderUtils.ExecuteOrderParams
     function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external {
@@ -37,7 +34,7 @@ library IncreaseOrderUtils {
         ));
 
         if (collateralToken != params.market.longToken && collateralToken != params.market.shortToken) {
-            revert InvalidCollateralToken(collateralToken, params.market.marketToken);
+            revert Errors.InvalidCollateralToken(collateralToken, params.market.marketToken);
         }
 
         bytes32 positionKey = PositionUtils.getPositionKey(params.order.account(), params.order.market(), collateralToken, params.order.isLong());
@@ -47,7 +44,7 @@ library IncreaseOrderUtils {
         if (position.account() == address(0)) {
             position.setAccount(params.order.account());
             if (position.market() != address(0) || position.collateralToken() != address(0)) {
-                revert UnexpectedPositionState();
+                revert Errors.UnexpectedPositionState();
             }
 
             position.setMarket(params.order.market());
@@ -103,11 +100,11 @@ library IncreaseOrderUtils {
         if (orderType == Order.OrderType.LimitIncrease) {
             uint256 laterBlock = orderUpdatedAtBlock > positionIncreasedAtBlock ? orderUpdatedAtBlock : positionIncreasedAtBlock;
             if (!minOracleBlockNumbers.areGreaterThan(laterBlock)) {
-                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, laterBlock);
+                revert Errors.OracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, laterBlock);
             }
             return;
         }
 
-        BaseOrderUtils.revertUnsupportedOrderType();
+        revert Errors.UnsupportedOrderType();
     }
 }
