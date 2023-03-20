@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./BaseOrderHandler.sol";
-import "../utils/ErrorUtils.sol";
+import "../errors/ErrorUtils.sol";
 
 // @title OrderHandler
 // @dev Contract to handle creation, execution and cancellation of orders
@@ -11,9 +11,6 @@ contract OrderHandler is BaseOrderHandler {
     using SafeCast for uint256;
     using Order for Order.Props;
     using Array for uint256[];
-
-    error OrderNotUpdatable(Order.OrderType orderType);
-    error InvalidKeeperForFrozenOrder(address keeper);
 
     constructor(
         RoleStore _roleStore,
@@ -76,7 +73,7 @@ contract OrderHandler is BaseOrderHandler {
         FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
 
         if (BaseOrderUtils.isMarketOrder(order.orderType())) {
-            revert OrderNotUpdatable(order.orderType());
+            revert Errors.OrderNotUpdatable(uint256(order.orderType()));
         }
 
         order.setSizeDeltaUsd(sizeDeltaUsd);
@@ -228,13 +225,13 @@ contract OrderHandler is BaseOrderHandler {
 
         if (
             OracleUtils.isOracleError(errorSelector) ||
-            errorSelector == FeatureUtils.DisabledFeature.selector ||
-            errorSelector == InvalidKeeperForFrozenOrder.selector ||
+            errorSelector == Errors.DisabledFeature.selector ||
+            errorSelector == Errors.InvalidKeeperForFrozenOrder.selector ||
             // InvalidOrderPrices error should only be raised for limit, trigger orders
             // it should not be raised for market orders
             // The transaction is reverted in this case since the oracle prices do not fulfill
             // the specified trigger price
-            errorSelector == BaseOrderUtils.InvalidOrderPrices.selector
+            errorSelector == Errors.InvalidOrderPrices.selector
         ) {
             ErrorUtils.revertWithCustomError(reasonBytes);
         }
@@ -264,7 +261,7 @@ contract OrderHandler is BaseOrderHandler {
             // if the order is already frozen, revert with the custom error to provide more information
             // on why the order cannot be executed
             if (
-                errorSelector == PositionUtils.EmptyPosition.selector ||
+                errorSelector == Errors.EmptyPosition.selector ||
                 order.isFrozen()
             ) {
                 ErrorUtils.revertWithCustomError(reasonBytes);
@@ -298,7 +295,7 @@ contract OrderHandler is BaseOrderHandler {
     // @param keeper address of the keeper
     function _validateFrozenOrderKeeper(address keeper) internal view {
         if (!roleStore.hasRole(keeper, Role.FROZEN_ORDER_KEEPER)) {
-            revert InvalidKeeperForFrozenOrder(keeper);
+            revert Errors.InvalidKeeperForFrozenOrder(keeper);
         }
     }
 }

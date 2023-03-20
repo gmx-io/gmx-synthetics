@@ -58,9 +58,6 @@ library AdlUtils {
         uint256 updatedAtBlock;
     }
 
-    error InvalidSizeDeltaForAdl(uint256 sizeDeltaUsd, uint256 positionSizeInUsd);
-    error AdlNotEnabled();
-
     // @dev Multiple positions may need to be reduced to ensure that the pending
     // profits does not exceed the allowed thresholds
     //
@@ -97,7 +94,7 @@ library AdlUtils {
         uint256 latestAdlBlock = getLatestAdlBlock(dataStore, market, isLong);
 
         if (!maxOracleBlockNumbers.areGreaterThanOrEqualTo(latestAdlBlock)) {
-            OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(maxOracleBlockNumbers, latestAdlBlock);
+            revert Errors.OracleBlockNumbersAreSmallerThanRequired(maxOracleBlockNumbers, latestAdlBlock);
         }
 
         Market.Props memory _market = MarketUtils.getEnabledMarket(dataStore, market);
@@ -127,7 +124,7 @@ library AdlUtils {
         Position.Props memory position = PositionStoreUtils.get(params.dataStore, positionKey);
 
         if (params.sizeDeltaUsd > position.sizeInUsd()) {
-            revert InvalidSizeDeltaForAdl(params.sizeDeltaUsd, position.sizeInUsd());
+            revert Errors.InvalidSizeDeltaForAdl(params.sizeDeltaUsd, position.sizeInUsd());
         }
 
         Order.Addresses memory addresses = Order.Addresses(
@@ -186,12 +183,12 @@ library AdlUtils {
     ) external view {
         bool isAdlEnabled = AdlUtils.getIsAdlEnabled(dataStore, market, isLong);
         if (!isAdlEnabled) {
-            revert AdlNotEnabled();
+            revert Errors.AdlNotEnabled();
         }
 
         uint256 latestAdlBlock = AdlUtils.getLatestAdlBlock(dataStore, market, isLong);
         if (!maxOracleBlockNumbers.areGreaterThanOrEqualTo(latestAdlBlock)) {
-            OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(maxOracleBlockNumbers, latestAdlBlock);
+            revert Errors.OracleBlockNumbersAreSmallerThanRequired(maxOracleBlockNumbers, latestAdlBlock);
         }
     }
 

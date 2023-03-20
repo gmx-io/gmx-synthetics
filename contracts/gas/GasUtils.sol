@@ -27,9 +27,6 @@ library GasUtils {
     // @param amount the amount of execution fee refunded
     event UserRefundFee(address user, uint256 amount);
 
-    error InsufficientExecutionFee(uint256 minExecutionFee, uint256 executionFee);
-    error EmptyHoldingAddress();
-
     // @dev pay the keeper the execution fee and refund any excess amount to the user
     //
     // @param dataStore DataStore
@@ -81,7 +78,7 @@ library GasUtils {
         uint256 gasLimit = adjustGasLimitForEstimate(dataStore, estimatedGasLimit);
         uint256 minExecutionFee = gasLimit * tx.gasprice;
         if (executionFee < minExecutionFee) {
-            revert InsufficientExecutionFee(minExecutionFee, executionFee);
+            revert Errors.InsufficientExecutionFee(minExecutionFee, executionFee);
         }
     }
 
@@ -144,7 +141,7 @@ library GasUtils {
             return estimateExecuteSwapOrderGasLimit(dataStore, order);
         }
 
-        BaseOrderUtils.revertUnsupportedOrderType();
+        revert Errors.UnsupportedOrderType();
     }
 
     // @dev the estimated gas limit for increase orders

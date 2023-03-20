@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
-import "../utils/ErrorUtils.sol";
+import "../errors/ErrorUtils.sol";
 import "../utils/AccountUtils.sol";
 
 import "./IWNT.sol";
@@ -24,12 +24,6 @@ library TokenUtils {
 
     event TokenTransferReverted(string reason, bytes returndata);
     event NativeTokenTransferReverted(string reason);
-
-    // throw custom errors to prevent spoofing of errors
-    // this is necessary because contracts like DepositHandler, WithdrawalHandler, OrderHandler
-    // do not cancel requests for specific errors
-    error TokenTransferError(address token, address receiver, uint256 amount);
-    error NativeTokenTransferError(address receiver, uint256 amount);
 
     /**
      * @dev Returns the address of the WNT token.
@@ -74,7 +68,10 @@ library TokenUtils {
         (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(returndata);
         emit TokenTransferReverted(reason, returndata);
 
-        revert TokenTransferError(token, receiver, amount);
+        // throw custom errors to prevent spoofing of errors
+        // this is necessary because contracts like DepositHandler, WithdrawalHandler, OrderHandler
+        // do not cancel requests for specific errors
+        revert Errors.TokenTransferError(token, receiver, amount);
     }
 
     /**

@@ -120,7 +120,6 @@ export async function executeDeposit(fixture, overrides: any = {}) {
   const cancellationReason = await getCancellationReason({
     logs,
     eventName: "DepositCancelled",
-    contracts: [executeDepositUtils],
   });
 
   if (cancellationReason) {

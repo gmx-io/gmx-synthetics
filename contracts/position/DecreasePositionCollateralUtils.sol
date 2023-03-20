@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../utils/Precision.sol";
-import "../utils/ErrorUtils.sol";
+import "../errors/ErrorUtils.sol";
 
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
@@ -37,9 +37,6 @@ library DecreasePositionCollateralUtils {
     using EventUtils for EventUtils.Bytes32Items;
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
-
-    error InsufficientCollateral(int256 remainingCollateralAmount);
-    error InvalidOutputToken(address tokenOut, address expectedTokenOut);
 
     struct ProcessCollateralCache {
         int256 adjustedPositionPnlUsd;
@@ -219,7 +216,7 @@ library DecreasePositionCollateralUtils {
         }
 
         if (values.remainingCollateralAmount < 0) {
-            revert InsufficientCollateral(values.remainingCollateralAmount);
+            revert Errors.InsufficientCollateral(values.remainingCollateralAmount);
         }
 
         // if there is a positive impact, the impact pool amount should be reduced
@@ -398,7 +395,7 @@ library DecreasePositionCollateralUtils {
                 )
             ) returns (address tokenOut, uint256 swapOutputAmount) {
                 if (tokenOut != values.output.secondaryOutputToken) {
-                    revert InvalidOutputToken(tokenOut, values.output.secondaryOutputToken);
+                    revert Errors.InvalidOutputToken(tokenOut, values.output.secondaryOutputToken);
                 }
                 // combine the values into outputToken and outputAmount
                 values.output.outputToken = tokenOut;

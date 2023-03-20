@@ -127,26 +127,6 @@ library MarketUtils {
         uint256 fundingAmountPerSizePortion_ShortCollateral_ShortPosition;
     }
 
-    error EmptyMarket();
-    error DisabledMarket(address market);
-    error InsufficientPoolAmount(uint256 poolAmount, uint256 amount);
-    error InsufficientReserve(uint256 reservedUsd, uint256 maxReservedUsd);
-    error UnexpectedPoolValueForTokenPriceCalculation(int256 poolValue);
-    error UnexpectedSupplyForTokenPriceCalculation();
-    error UnableToGetOppositeToken(address inputToken, address market);
-    error UnableToGetCachedTokenPrice(address token, address market);
-    error CollateralAlreadyClaimed(uint256 adjustedClaimableAmount, uint256 claimedAmount);
-    error OpenInterestCannotBeUpdatedForSwapOnlyMarket(address market);
-    error MaxOpenInterestExceeded(uint256 openInterest, uint256 maxOpenInterest);
-    error MaxPoolAmountExceeded(uint256 poolAmount, uint256 maxPoolAmount);
-    error UnexpectedBorrowingFactor(uint256 positionBorrowingFactor, uint256 cumulativeBorrowingFactor);
-    error UnableToGetBorrowingFactorEmptyPoolUsd();
-    error UnableToGetFundingFactorEmptyOpenInterest();
-    error InvalidPositionMarket(address market);
-    error InvalidCollateralTokenForMarket(address market, address token);
-    error PnlFactorExceededForLongs(int256 pnlToPoolFactor, uint256 maxPnlFactor);
-    error PnlFactorExceededForShorts(int256 pnlToPoolFactor, uint256 maxPnlFactor);
-
     // @dev get the market token's price
     // @param dataStore DataStore
     // @param market the market to check
@@ -177,13 +157,13 @@ library MarketUtils {
         if (poolValue == 0) { return 0; }
 
         if (poolValue < 0) {
-            revert UnexpectedPoolValueForTokenPriceCalculation(poolValue);
+            revert Errors.UnexpectedPoolValueForTokenPriceCalculation(poolValue);
         }
 
         uint256 supply = getMarketTokenSupply(MarketToken(payable(market.marketToken)));
 
         if (supply == 0) {
-            revert UnexpectedSupplyForTokenPriceCalculation();
+            revert Errors.UnexpectedSupplyForTokenPriceCalculation();
         }
 
         return poolValue * Precision.WEI_PRECISION.toInt256() / supply.toInt256();
@@ -210,7 +190,7 @@ library MarketUtils {
             return market.longToken;
         }
 
-        revert UnableToGetOppositeToken(inputToken, market.marketToken);
+        revert Errors.UnableToGetOppositeToken(inputToken, market.marketToken);
     }
 
     // @dev get the token price from the stored MarketPrices
@@ -229,7 +209,7 @@ library MarketUtils {
             return prices.indexTokenPrice;
         }
 
-        revert UnableToGetCachedTokenPrice(token, market.marketToken);
+        revert Errors.UnableToGetCachedTokenPrice(token, market.marketToken);
     }
 
     // @dev return the latest prices for the market tokens
@@ -603,7 +583,7 @@ library MarketUtils {
 
         uint256 adjustedClaimableAmount = Precision.applyFactor(claimableAmount, claimableFactor);
         if (adjustedClaimableAmount >= claimedAmount) {
-            revert CollateralAlreadyClaimed(adjustedClaimableAmount, claimedAmount);
+            revert Errors.CollateralAlreadyClaimed(adjustedClaimableAmount, claimedAmount);
         }
 
         uint256 remainingClaimableAmount = adjustedClaimableAmount - claimedAmount;
@@ -773,7 +753,7 @@ library MarketUtils {
         int256 delta
     ) internal returns (uint256) {
         if (indexToken == address(0)) {
-            revert OpenInterestCannotBeUpdatedForSwapOnlyMarket(market);
+            revert Errors.OpenInterestCannotBeUpdatedForSwapOnlyMarket(market);
         }
 
         uint256 nextValue = dataStore.applyDeltaToUint(
@@ -1093,7 +1073,7 @@ library MarketUtils {
         uint256 maxOpenInterest = getMaxOpenInterest(dataStore, market, isLong);
 
         if (openInterest > maxOpenInterest) {
-            revert MaxOpenInterestExceeded(openInterest, maxOpenInterest);
+            revert Errors.MaxOpenInterestExceeded(openInterest, maxOpenInterest);
         }
     }
 
@@ -1110,7 +1090,7 @@ library MarketUtils {
         uint256 maxPoolAmount = getMaxPoolAmount(dataStore, market, token);
 
         if (poolAmount > maxPoolAmount) {
-            revert MaxPoolAmountExceeded(poolAmount, maxPoolAmount);
+            revert Errors.MaxPoolAmountExceeded(poolAmount, maxPoolAmount);
         }
     }
 
@@ -1140,7 +1120,7 @@ library MarketUtils {
         );
 
         if (reservedUsd > maxReservedUsd) {
-            revert InsufficientReserve(reservedUsd, maxReservedUsd);
+            revert Errors.InsufficientReserve(reservedUsd, maxReservedUsd);
         }
     }
 
@@ -1226,7 +1206,7 @@ library MarketUtils {
     function getBorrowingFees(DataStore dataStore, Position.Props memory position) internal view returns (uint256) {
         uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, position.market(), position.isLong());
         if (position.borrowingFactor() > cumulativeBorrowingFactor) {
-            revert UnexpectedBorrowingFactor(position.borrowingFactor(), cumulativeBorrowingFactor);
+            revert Errors.UnexpectedBorrowingFactor(position.borrowingFactor(), cumulativeBorrowingFactor);
         }
         uint256 diffFactor = cumulativeBorrowingFactor - position.borrowingFactor();
         return Precision.applyFactor(position.sizeInUsd(), diffFactor);
@@ -1247,7 +1227,7 @@ library MarketUtils {
         );
 
         if (position.borrowingFactor() > nextCumulativeBorrowingFactor) {
-            revert UnexpectedBorrowingFactor(position.borrowingFactor(), nextCumulativeBorrowingFactor);
+            revert Errors.UnexpectedBorrowingFactor(position.borrowingFactor(), nextCumulativeBorrowingFactor);
         }
         uint256 diffFactor = nextCumulativeBorrowingFactor - position.borrowingFactor();
         return Precision.applyFactor(position.sizeInUsd(), diffFactor);
@@ -1648,7 +1628,7 @@ library MarketUtils {
         if (diffUsd == 0) { return 0; }
 
         if (totalOpenInterest == 0) {
-            revert UnableToGetFundingFactorEmptyOpenInterest();
+            revert Errors.UnableToGetFundingFactorEmptyOpenInterest();
         }
 
         uint256 fundingFactor = getFundingFactor(dataStore, market);
@@ -1842,7 +1822,7 @@ library MarketUtils {
         uint256 poolUsd = getPoolUsdWithoutPnl(dataStore, market, prices, isLong);
 
         if (poolUsd == 0) {
-            revert UnableToGetBorrowingFactorEmptyPoolUsd();
+            revert Errors.UnableToGetBorrowingFactorEmptyPoolUsd();
         }
 
         uint256 borrowingExponentFactor = getBorrowingExponentFactor(dataStore, market.marketToken, isLong);
@@ -1930,12 +1910,12 @@ library MarketUtils {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
 
         if (market.marketToken == address(0)) {
-            revert EmptyMarket();
+            revert Errors.EmptyMarket();
         }
 
         bool isMarketDisabled = dataStore.getBool(Keys.isMarketDisabledKey(market.marketToken));
         if (isMarketDisabled) {
-            revert DisabledMarket(market.marketToken);
+            revert Errors.DisabledMarket(market.marketToken);
         }
     }
 
@@ -1944,12 +1924,12 @@ library MarketUtils {
     // @param market the market to check
     function validateEnabledMarket(DataStore dataStore, Market.Props memory market) internal view {
         if (market.marketToken == address(0)) {
-            revert EmptyMarket();
+            revert Errors.EmptyMarket();
         }
 
         bool isMarketDisabled = dataStore.getBool(Keys.isMarketDisabledKey(market.marketToken));
         if (isMarketDisabled) {
-            revert DisabledMarket(market.marketToken);
+            revert Errors.DisabledMarket(market.marketToken);
         }
     }
 
@@ -1959,7 +1939,7 @@ library MarketUtils {
         validateEnabledMarket(dataStore, market);
 
         if (isSwapOnlyMarket(market)) {
-            revert InvalidPositionMarket(market.marketToken);
+            revert Errors.InvalidPositionMarket(market.marketToken);
         }
     }
 
@@ -1986,7 +1966,7 @@ library MarketUtils {
     // @param token the token to check
     function validateMarketCollateralToken(Market.Props memory market, address token) internal pure {
         if (!isMarketCollateralToken(market, token)) {
-            revert InvalidCollateralTokenForMarket(market.marketToken, token);
+            revert Errors.InvalidCollateralTokenForMarket(market.marketToken, token);
         }
     }
 
@@ -2032,7 +2012,7 @@ library MarketUtils {
         );
 
         if (isPnlFactorExceededForLongs) {
-            revert PnlFactorExceededForLongs(pnlToPoolFactorForLongs, maxPnlFactorForLongs);
+            revert Errors.PnlFactorExceededForLongs(pnlToPoolFactorForLongs, maxPnlFactorForLongs);
         }
 
         (bool isPnlFactorExceededForShorts, int256 pnlToPoolFactorForShorts, uint256 maxPnlFactorForShorts) = isPnlFactorExceeded(
@@ -2044,7 +2024,7 @@ library MarketUtils {
         );
 
         if (isPnlFactorExceededForShorts) {
-            revert PnlFactorExceededForShorts(pnlToPoolFactorForShorts, maxPnlFactorForShorts);
+            revert Errors.PnlFactorExceededForShorts(pnlToPoolFactorForShorts, maxPnlFactorForShorts);
         }
     }
 

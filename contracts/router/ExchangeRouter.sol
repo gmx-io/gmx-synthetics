@@ -66,10 +66,6 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     WithdrawalHandler public immutable withdrawalHandler;
     OrderHandler public immutable orderHandler;
 
-    error InvalidClaimFundingFeesInput(uint256 marketsLength, uint256 tokensLength);
-    error InvalidClaimCollateralInput(uint256 marketsLength, uint256 tokensLength, uint256 timeKeysLength);
-    error InvalidClaimAffiliateRewardsInput(uint256 marketsLength, uint256 tokensLength);
-
     // @dev Constructor that initializes the contract with the provided Router, RoleStore, DataStore,
     // EventEmitter, DepositHandler, WithdrawalHandler, OrderHandler, and OrderStore instances
     constructor(
@@ -126,11 +122,11 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     function cancelDeposit(bytes32 key) external payable nonReentrant {
         Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
         if (deposit.account() == address(0)) {
-            revert DepositUtils.EmptyDeposit();
+            revert Errors.EmptyDeposit();
         }
 
         if (deposit.account() != msg.sender) {
-            revert Unauthorized(msg.sender, "account for cancelDeposit");
+            revert Errors.Unauthorized(msg.sender, "account for cancelDeposit");
         }
 
         depositHandler.cancelDeposit(key);
@@ -157,7 +153,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     function cancelWithdrawal(bytes32 key) external payable nonReentrant {
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
         if (withdrawal.account() != msg.sender) {
-            revert Unauthorized(msg.sender, "account for cancelWithdrawal");
+            revert Errors.Unauthorized(msg.sender, "account for cancelWithdrawal");
         }
 
         withdrawalHandler.cancelWithdrawal(key);
@@ -223,7 +219,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     ) external payable nonReentrant {
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         if (order.account() != msg.sender) {
-            revert Unauthorized(msg.sender, "account for updateOrder");
+            revert Errors.Unauthorized(msg.sender, "account for updateOrder");
         }
 
         orderHandler.updateOrder(
@@ -248,11 +244,11 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     function cancelOrder(bytes32 key) external payable nonReentrant {
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         if (order.account() == address(0)) {
-            revert BaseOrderUtils.EmptyOrder();
+            revert Errors.EmptyOrder();
         }
 
         if (order.account() != msg.sender) {
-            revert Unauthorized(msg.sender, "account for cancelOrder");
+            revert Errors.Unauthorized(msg.sender, "account for cancelOrder");
         }
 
         orderHandler.cancelOrder(key);
@@ -274,7 +270,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         address receiver
     ) external payable nonReentrant {
         if (markets.length != tokens.length) {
-            revert InvalidClaimFundingFeesInput(markets.length, tokens.length);
+            revert Errors.InvalidClaimFundingFeesInput(markets.length, tokens.length);
         }
 
         AccountUtils.validateReceiver(receiver);
@@ -300,7 +296,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         address receiver
     ) external payable nonReentrant {
         if (markets.length != tokens.length || tokens.length != timeKeys.length) {
-            revert InvalidClaimCollateralInput(markets.length, tokens.length, timeKeys.length);
+            revert Errors.InvalidClaimCollateralInput(markets.length, tokens.length, timeKeys.length);
         }
 
         AccountUtils.validateReceiver(receiver);
@@ -336,7 +332,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         address receiver
     ) external payable nonReentrant {
         if (markets.length != tokens.length) {
-            revert InvalidClaimAffiliateRewardsInput(markets.length, tokens.length);
+            revert Errors.InvalidClaimAffiliateRewardsInput(markets.length, tokens.length);
         }
 
         address account = msg.sender;
