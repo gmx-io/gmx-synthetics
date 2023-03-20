@@ -234,7 +234,7 @@ library PositionEventUtils {
         eventData.addressItems.setItem(2, "affiliate", fees.referral.affiliate);
         eventData.addressItems.setItem(3, "trader", fees.referral.trader);
 
-        eventData.uintItems.initItems(23);
+        eventData.uintItems.initItems(24);
         eventData.uintItems.setItem(0, "collateralTokenPrice.min", fees.collateralTokenPrice.min);
         eventData.uintItems.setItem(1, "collateralTokenPrice.max", fees.collateralTokenPrice.max);
         eventData.uintItems.setItem(2, "tradeSizeUsd", tradeSizeUsd);
@@ -246,18 +246,19 @@ library PositionEventUtils {
         eventData.uintItems.setItem(8, "fundingFeeAmount", fees.funding.fundingFeeAmount);
         eventData.uintItems.setItem(9, "claimableLongTokenAmount", fees.funding.claimableLongTokenAmount);
         eventData.uintItems.setItem(10, "claimableShortTokenAmount", fees.funding.claimableShortTokenAmount);
-        eventData.uintItems.setItem(11, "borrowingFeeAmount", fees.borrowing.borrowingFeeAmount);
-        eventData.uintItems.setItem(12, "borrowingFeeReceiverFactor", fees.borrowing.borrowingFeeReceiverFactor);
-        eventData.uintItems.setItem(13, "borrowingFeeAmountForFeeReceiver", fees.borrowing.borrowingFeeAmountForFeeReceiver);
-        eventData.uintItems.setItem(14, "positionFeeFactor", fees.positionFeeFactor);
-        eventData.uintItems.setItem(15, "protocolFeeAmount", fees.protocolFeeAmount);
-        eventData.uintItems.setItem(16, "positionFeeReceiverFactor", fees.positionFeeReceiverFactor);
-        eventData.uintItems.setItem(17, "feeReceiverAmount", fees.feeReceiverAmount);
-        eventData.uintItems.setItem(18, "feeAmountForPool", fees.feeAmountForPool);
-        eventData.uintItems.setItem(19, "positionFeeAmountForPool", fees.positionFeeAmountForPool);
-        eventData.uintItems.setItem(20, "positionFeeAmount", fees.positionFeeAmount);
-        eventData.uintItems.setItem(21, "totalNetCostAmount", fees.totalNetCostAmount);
-        eventData.uintItems.setItem(22, "totalNetCostUsd", fees.totalNetCostUsd);
+        eventData.uintItems.setItem(11, "borrowingFeeUsd", fees.borrowing.borrowingFeeUsd);
+        eventData.uintItems.setItem(12, "borrowingFeeAmount", fees.borrowing.borrowingFeeAmount);
+        eventData.uintItems.setItem(13, "borrowingFeeReceiverFactor", fees.borrowing.borrowingFeeReceiverFactor);
+        eventData.uintItems.setItem(14, "borrowingFeeAmountForFeeReceiver", fees.borrowing.borrowingFeeAmountForFeeReceiver);
+        eventData.uintItems.setItem(15, "positionFeeFactor", fees.positionFeeFactor);
+        eventData.uintItems.setItem(16, "protocolFeeAmount", fees.protocolFeeAmount);
+        eventData.uintItems.setItem(17, "positionFeeReceiverFactor", fees.positionFeeReceiverFactor);
+        eventData.uintItems.setItem(18, "feeReceiverAmount", fees.feeReceiverAmount);
+        eventData.uintItems.setItem(19, "feeAmountForPool", fees.feeAmountForPool);
+        eventData.uintItems.setItem(20, "positionFeeAmountForPool", fees.positionFeeAmountForPool);
+        eventData.uintItems.setItem(21, "positionFeeAmount", fees.positionFeeAmount);
+        eventData.uintItems.setItem(22, "totalNetCostAmount", fees.totalNetCostAmount);
+        eventData.uintItems.setItem(23, "totalNetCostUsd", fees.totalNetCostUsd);
 
         eventData.intItems.initItems(2);
         eventData.intItems.setItem(0, "latestLongTokenFundingAmountPerSize", fees.funding.latestLongTokenFundingAmountPerSize);
