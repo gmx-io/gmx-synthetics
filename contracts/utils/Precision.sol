@@ -85,6 +85,8 @@ library Precision {
     }
 
     function toFactor(uint256 value, uint256 divisor) internal pure returns (uint256) {
+        if (value == 0) { return 0; }
+
         (bool ok, uint256 numerator) = SafeMath.tryMul(value, FLOAT_PRECISION);
         if (ok) {
             return numerator / divisor;

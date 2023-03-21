@@ -87,6 +87,9 @@ library MarketUtils {
 
         uint256 fundingUsdForLongCollateral;
         uint256 fundingUsdForShortCollateral;
+
+        uint256 fundingAmountForLongCollateral;
+        uint256 fundingAmountForShortCollateral;
     }
 
     // @param longOpenInterestWithLongCollateral amount of long open interest using the long token as collateral
@@ -111,20 +114,20 @@ library MarketUtils {
     // @param fundingAmountPerSize_ShortCollateral_LongPosition funding per size for longs using the short token as collateral
     // @param fundingAmountPerSize_ShortCollateral_ShortPosition funding per size for shorts using the short token as collateral
     //
-    // @param fundingAmountPerSizePortion_LongCollateral_LongPosition the next funding amount per size for longs using the long token as collateral
-    // @param fundingAmountPerSizePortion_LongCollateral_ShortPosition the next funding amount per size for longs using the short token as collateral
-    // @param fundingAmountPerSizePortion_ShortCollateral_LongPosition the next funding amount per size for shorts using the long token as collateral
-    // @param fundingAmountPerSizePortion_ShortCollateral_ShortPosition the next funding amount per size for shorts using the short token as collateral
+    // @param fundingAmountPerSizeDelta_LongCollateral_LongPosition the next funding amount per size for longs using the long token as collateral
+    // @param fundingAmountPerSizeDelta_LongCollateral_ShortPosition the next funding amount per size for longs using the short token as collateral
+    // @param fundingAmountPerSizeDelta_ShortCollateral_LongPosition the next funding amount per size for shorts using the long token as collateral
+    // @param fundingAmountPerSizeDelta_ShortCollateral_ShortPosition the next funding amount per size for shorts using the short token as collateral
     struct GetNextFundingAmountPerSizeFundingPerSizeCache {
         int256 fundingAmountPerSize_LongCollateral_LongPosition;
-        int256 fundingAmountPerSize_LongCollateral_ShortPosition;
         int256 fundingAmountPerSize_ShortCollateral_LongPosition;
+        int256 fundingAmountPerSize_LongCollateral_ShortPosition;
         int256 fundingAmountPerSize_ShortCollateral_ShortPosition;
 
-        uint256 fundingAmountPerSizePortion_LongCollateral_LongPosition;
-        uint256 fundingAmountPerSizePortion_ShortCollateral_LongPosition;
-        uint256 fundingAmountPerSizePortion_LongCollateral_ShortPosition;
-        uint256 fundingAmountPerSizePortion_ShortCollateral_ShortPosition;
+        uint256 fundingAmountPerSizeDelta_LongCollateral_LongPosition;
+        uint256 fundingAmountPerSizeDelta_ShortCollateral_LongPosition;
+        uint256 fundingAmountPerSizeDelta_LongCollateral_ShortPosition;
+        uint256 fundingAmountPerSizeDelta_ShortCollateral_ShortPosition;
     }
 
     // @dev get the market token's price
@@ -876,19 +879,26 @@ library MarketUtils {
 
         uint256 divisor = getPoolDivisor(market.longToken, market.shortToken);
 
+        // get the open interest values by long / short and by collateral used
         cache.oi.longOpenInterestWithLongCollateral = getOpenInterest(dataStore, market.marketToken, market.longToken, true, divisor);
         cache.oi.longOpenInterestWithShortCollateral = getOpenInterest(dataStore, market.marketToken, market.shortToken, true, divisor);
         cache.oi.shortOpenInterestWithLongCollateral = getOpenInterest(dataStore, market.marketToken, market.longToken, false, divisor);
         cache.oi.shortOpenInterestWithShortCollateral = getOpenInterest(dataStore, market.marketToken, market.shortToken, false, divisor);
 
+        // sum the open interest values to get the total long and short open interest values
         cache.oi.longOpenInterest = cache.oi.longOpenInterestWithLongCollateral + cache.oi.longOpenInterestWithShortCollateral;
         cache.oi.shortOpenInterest = cache.oi.shortOpenInterestWithLongCollateral + cache.oi.shortOpenInterestWithShortCollateral;
 
+        // get the current funding amount per size values
+        // funding amount per size represents the amount of tokens to be paid as funding per one USD of position size
+        // this value is multiplied by Precision.FLOAT_PRECISION since it may be too small and would be equal to zero otherwise
         result.fundingAmountPerSize_LongCollateral_LongPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.longToken, true);
-        result.fundingAmountPerSize_LongCollateral_ShortPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.longToken, false);
         result.fundingAmountPerSize_ShortCollateral_LongPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.shortToken, true);
+        result.fundingAmountPerSize_LongCollateral_ShortPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.longToken, false);
         result.fundingAmountPerSize_ShortCollateral_ShortPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.shortToken, false);
 
+        // if either long or short open interest is zero, then funding should not be updated
+        // as there would not be any user to pay the funding to
         if (cache.oi.longOpenInterest == 0 || cache.oi.shortOpenInterest == 0) {
             return result;
         }
@@ -908,6 +918,11 @@ library MarketUtils {
 
         result.longsPayShorts = cache.oi.longOpenInterest > cache.oi.shortOpenInterest;
 
+        // split the fundingUsd value by long and short collateral
+        // e.g. if the fundingUsd value is $500, and there is $1000 of long open interest using long collateral and $4000 of long open interest
+        // with short collateral, then $100 of funding fees should be paid from long positions using long collateral, $400 of funding fees
+        // should be paid from long positions using short collateral
+        // short positions should receive $100 of funding fees in long collateral and $400 of funding fees in short collateral
         if (result.longsPayShorts) {
             cache.fundingUsdForLongCollateral = cache.fundingUsd * cache.oi.longOpenInterestWithLongCollateral / cache.oi.longOpenInterest;
             cache.fundingUsdForShortCollateral = cache.fundingUsd * cache.oi.longOpenInterestWithShortCollateral / cache.oi.longOpenInterest;
@@ -916,55 +931,69 @@ library MarketUtils {
             cache.fundingUsdForShortCollateral = cache.fundingUsd * cache.oi.shortOpenInterestWithShortCollateral / cache.oi.shortOpenInterest;
         }
 
-        // use Precision.FLOAT_PRECISION here because fundingUsdForLongCollateral or fundingUsdForShortCollateral divided by longTokenPrice
-        // will give an amount in number of tokens which may be quite a small value and could become zero after being divided by longOpenInterest
-        // the result will be the amount in number of tokens multiplied by Precision.FLOAT_PRECISION per 1 USD of size
-        cache.fps.fundingAmountPerSizePortion_LongCollateral_LongPosition = getPerSizeValue(cache.fundingUsdForLongCollateral / prices.longTokenPrice.max, cache.oi.longOpenInterest);
-        cache.fps.fundingAmountPerSizePortion_LongCollateral_ShortPosition = getPerSizeValue(cache.fundingUsdForLongCollateral / prices.longTokenPrice.max, cache.oi.shortOpenInterest);
-        cache.fps.fundingAmountPerSizePortion_ShortCollateral_LongPosition = getPerSizeValue(cache.fundingUsdForShortCollateral / prices.shortTokenPrice.max, cache.oi.longOpenInterest);
-        cache.fps.fundingAmountPerSizePortion_ShortCollateral_ShortPosition = getPerSizeValue(cache.fundingUsdForShortCollateral / prices.shortTokenPrice.max, cache.oi.shortOpenInterest);
+        cache.fundingAmountForLongCollateral = cache.fundingUsdForLongCollateral / prices.longTokenPrice.max;
+        cache.fundingAmountForShortCollateral = cache.fundingUsdForShortCollateral / prices.shortTokenPrice.max;
 
+        // calculate the change in funding amount per size values
+        // for example, if the fundingUsdForLongCollateral is $100, the longToken price is $2000, the longOpenInterest is $10,000
+        // then the fundingAmountPerSize_LongCollateral_LongPosition would be 0.05 tokens per $10,000 or 0.000005 tokens per $1
+        // if longs pay shorts then the fundingAmountPerSize_LongCollateral_LongPosition should be increased by 0.000005
         if (result.longsPayShorts) {
+            // long positions should have funding fees increased by the funding for their collateral divided by the open interest for their collateral
+            cache.fps.fundingAmountPerSizeDelta_LongCollateral_LongPosition = Precision.toFactor(cache.fundingAmountForLongCollateral, cache.oi.longOpenInterestWithLongCollateral);
+            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_LongPosition = Precision.toFactor(cache.fundingAmountForShortCollateral, cache.oi.longOpenInterestWithShortCollateral);
+
+            // short positions should receive positive funding fees equivalent to the funding in the collateral paid by the long positions divided by the total short open interest
+            cache.fps.fundingAmountPerSizeDelta_LongCollateral_ShortPosition = Precision.toFactor(cache.fundingAmountForLongCollateral, cache.oi.shortOpenInterest);
+            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_ShortPosition = Precision.toFactor(cache.fundingAmountForShortCollateral, cache.oi.shortOpenInterest);
+
             // longs pay shorts
             result.fundingAmountPerSize_LongCollateral_LongPosition = Calc.boundedAdd(
                 result.fundingAmountPerSize_LongCollateral_LongPosition,
-                cache.fps.fundingAmountPerSizePortion_LongCollateral_LongPosition.toInt256()
-            );
-
-            result.fundingAmountPerSize_LongCollateral_ShortPosition = Calc.boundedSub(
-                result.fundingAmountPerSize_LongCollateral_ShortPosition,
-                cache.fps.fundingAmountPerSizePortion_LongCollateral_ShortPosition.toInt256()
+                cache.fps.fundingAmountPerSizeDelta_LongCollateral_LongPosition.toInt256()
             );
 
             result.fundingAmountPerSize_ShortCollateral_LongPosition = Calc.boundedAdd(
                 result.fundingAmountPerSize_ShortCollateral_LongPosition,
-                cache.fps.fundingAmountPerSizePortion_ShortCollateral_LongPosition.toInt256()
+                cache.fps.fundingAmountPerSizeDelta_ShortCollateral_LongPosition.toInt256()
+            );
+
+            result.fundingAmountPerSize_LongCollateral_ShortPosition = Calc.boundedSub(
+                result.fundingAmountPerSize_LongCollateral_ShortPosition,
+                cache.fps.fundingAmountPerSizeDelta_LongCollateral_ShortPosition.toInt256()
             );
 
             result.fundingAmountPerSize_ShortCollateral_ShortPosition = Calc.boundedSub(
                 result.fundingAmountPerSize_ShortCollateral_ShortPosition,
-                cache.fps.fundingAmountPerSizePortion_ShortCollateral_ShortPosition.toInt256()
+                cache.fps.fundingAmountPerSizeDelta_ShortCollateral_ShortPosition.toInt256()
             );
         } else {
-            // shorts pay longs
-            result.fundingAmountPerSize_LongCollateral_LongPosition = Calc.boundedSub(
-                result.fundingAmountPerSize_LongCollateral_LongPosition,
-                cache.fps.fundingAmountPerSizePortion_LongCollateral_LongPosition.toInt256()
-            );
+            // short positions should have funding fees increased by the funding for their collateral divided by the open interest for their collateral
+            cache.fps.fundingAmountPerSizeDelta_LongCollateral_ShortPosition = Precision.toFactor(cache.fundingAmountForLongCollateral, cache.oi.shortOpenInterestWithLongCollateral);
+            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_ShortPosition = Precision.toFactor(cache.fundingAmountForShortCollateral, cache.oi.shortOpenInterestWithShortCollateral);
+
+            // long positions should receive positive funding fees equivalent to the funding in the collateral paid by the short positions divided by the total long open interest
+            cache.fps.fundingAmountPerSizeDelta_LongCollateral_LongPosition = Precision.toFactor(cache.fundingAmountForLongCollateral, cache.oi.longOpenInterest);
+            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_LongPosition = Precision.toFactor(cache.fundingAmountForShortCollateral, cache.oi.longOpenInterest);
 
             result.fundingAmountPerSize_LongCollateral_ShortPosition = Calc.boundedAdd(
                 result.fundingAmountPerSize_LongCollateral_ShortPosition,
-                cache.fps.fundingAmountPerSizePortion_LongCollateral_ShortPosition.toInt256()
-            );
-
-            result.fundingAmountPerSize_ShortCollateral_LongPosition = Calc.boundedSub(
-                result.fundingAmountPerSize_ShortCollateral_LongPosition,
-                cache.fps.fundingAmountPerSizePortion_ShortCollateral_LongPosition.toInt256()
+                cache.fps.fundingAmountPerSizeDelta_LongCollateral_ShortPosition.toInt256()
             );
 
             result.fundingAmountPerSize_ShortCollateral_ShortPosition = Calc.boundedAdd(
                 result.fundingAmountPerSize_ShortCollateral_ShortPosition,
-                cache.fps.fundingAmountPerSizePortion_ShortCollateral_ShortPosition.toInt256()
+                cache.fps.fundingAmountPerSizeDelta_ShortCollateral_ShortPosition.toInt256()
+            );
+
+            result.fundingAmountPerSize_LongCollateral_LongPosition = Calc.boundedSub(
+                result.fundingAmountPerSize_LongCollateral_LongPosition,
+                cache.fps.fundingAmountPerSizeDelta_LongCollateral_LongPosition.toInt256()
+            );
+
+            result.fundingAmountPerSize_ShortCollateral_LongPosition = Calc.boundedSub(
+                result.fundingAmountPerSize_ShortCollateral_LongPosition,
+                cache.fps.fundingAmountPerSizeDelta_ShortCollateral_LongPosition.toInt256()
             );
         }
 
@@ -1001,14 +1030,6 @@ library MarketUtils {
         );
 
         dataStore.setUint(Keys.cumulativeBorrowingFactorUpdatedAtKey(market.marketToken, isLong), block.timestamp);
-    }
-
-    // @dev calculate the per size value based on the amount and totalSize
-    // @param amount the amount
-    // @param totalSize the total size
-    // @return the per size value
-    function getPerSizeValue(uint256 amount, uint256 totalSize) internal pure returns (uint256) {
-        return Precision.toFactor(amount, totalSize);
     }
 
     // @dev get the ratio of pnl to pool value
