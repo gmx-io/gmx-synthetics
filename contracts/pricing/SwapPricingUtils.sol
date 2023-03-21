@@ -38,7 +38,7 @@ library SwapPricingUtils {
     // @param usdDeltaForTokenB the USD change in amount of tokenB
     struct GetPriceImpactUsdParams {
         DataStore dataStore;
-        address market;
+        Market.Props market;
         address tokenA;
         address tokenB;
         uint256 priceForTokenA;
@@ -95,7 +95,7 @@ library SwapPricingUtils {
 
         (bool hasVirtualInventory, int256 thresholdImpactFactorForVirtualInventory) = MarketUtils.getThresholdSwapImpactFactorForVirtualInventory(
             params.dataStore,
-            params.market
+            params.market.marketToken
         );
 
         if (!hasVirtualInventory) {
@@ -118,7 +118,7 @@ library SwapPricingUtils {
     // @param market the trading market
     // @param poolParams PoolParams
     // @return the price impact in USD
-    function _getPriceImpactUsd(DataStore dataStore, address market, PoolParams memory poolParams) internal view returns (int256) {
+    function _getPriceImpactUsd(DataStore dataStore, Market.Props memory market, PoolParams memory poolParams) internal view returns (int256) {
         uint256 initialDiffUsd = Calc.diff(poolParams.poolUsdForTokenA, poolParams.poolUsdForTokenB);
         uint256 nextDiffUsd = Calc.diff(poolParams.nextPoolUsdForTokenA, poolParams.nextPoolUsdForTokenB);
 
@@ -127,11 +127,11 @@ library SwapPricingUtils {
         // adding $1999 USDC into the pool will reduce absolute balance from $1000 to $999 but it does not
         // help rebalance the pool much, the isSameSideRebalance value helps avoid gaming using this case
         bool isSameSideRebalance = (poolParams.poolUsdForTokenA <= poolParams.poolUsdForTokenB) == (poolParams.nextPoolUsdForTokenA <= poolParams.nextPoolUsdForTokenB);
-        uint256 impactExponentFactor = dataStore.getUint(Keys.swapImpactExponentFactorKey(market));
+        uint256 impactExponentFactor = dataStore.getUint(Keys.swapImpactExponentFactorKey(market.marketToken));
 
         if (isSameSideRebalance) {
             bool hasPositiveImpact = nextDiffUsd < initialDiffUsd;
-            uint256 impactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market, hasPositiveImpact));
+            uint256 impactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market.marketToken, hasPositiveImpact));
 
             return PricingUtils.getPriceImpactUsdForSameSideRebalance(
                 initialDiffUsd,
@@ -140,8 +140,8 @@ library SwapPricingUtils {
                 impactExponentFactor
             );
         } else {
-            uint256 positiveImpactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market, true));
-            uint256 negativeImpactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market, false));
+            uint256 positiveImpactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market.marketToken, true));
+            uint256 negativeImpactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market.marketToken, false));
 
             return PricingUtils.getPriceImpactUsdForCrossoverRebalance(
                 initialDiffUsd,
@@ -172,8 +172,8 @@ library SwapPricingUtils {
     function getNextPoolAmountsUsdForVirtualInventory(
         GetPriceImpactUsdParams memory params
     ) internal view returns (PoolParams memory) {
-        (/* bool hasVirtualInventory */, uint256 poolAmountForTokenA) = MarketUtils.getVirtualInventoryForSwaps(params.dataStore, params.market, params.tokenA);
-        (/* bool hasVirtualInventory */, uint256 poolAmountForTokenB) = MarketUtils.getVirtualInventoryForSwaps(params.dataStore, params.market, params.tokenB);
+        (/* bool hasVirtualInventory */, uint256 poolAmountForTokenA) = MarketUtils.getVirtualInventoryForSwaps(params.dataStore, params.market.marketToken, params.tokenA);
+        (/* bool hasVirtualInventory */, uint256 poolAmountForTokenB) = MarketUtils.getVirtualInventoryForSwaps(params.dataStore, params.market.marketToken, params.tokenB);
 
         return getNextPoolAmountsParams(
             params,

@@ -33,7 +33,6 @@ library Errors {
     // ExecuteDepositUtils errors
     error MinMarketTokens(uint256 received, uint256 expected);
     error EmptyDepositAmountsAfterSwap();
-    error UnexpectedNonZeroShortAmount();
     error InvalidPoolValueForDeposit(int256 poolValue);
     error InvalidSwapOutputToken(address outputToken, address expectedOutputToken);
 
@@ -62,6 +61,7 @@ library Errors {
     // MarketUtils errors
     error EmptyMarket();
     error DisabledMarket(address market);
+    error MaxSwapPathLengthExceeded(uint256 swapPathLengh, uint256 maxSwapPathLength);
     error InsufficientPoolAmount(uint256 poolAmount, uint256 amount);
     error InsufficientReserve(uint256 reservedUsd, uint256 maxReservedUsd);
     error UnexpectedPoolValueForTokenPriceCalculation(int256 poolValue);
