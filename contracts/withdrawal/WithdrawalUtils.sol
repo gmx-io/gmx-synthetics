@@ -124,6 +124,8 @@ library WithdrawalUtils {
         params.executionFee = wntAmount;
 
         MarketUtils.validateEnabledMarket(dataStore, params.market);
+        MarketUtils.validateSwapPath(dataStore, params.longTokenSwapPath);
+        MarketUtils.validateSwapPath(dataStore, params.shortTokenSwapPath);
 
         Withdrawal.Props memory withdrawal = Withdrawal.Props(
             Withdrawal.Addresses(
@@ -444,8 +446,8 @@ library WithdrawalUtils {
             marketTokensSupply
         );
 
-        uint256 longTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market.marketToken, market.longToken);
-        uint256 shortTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market.marketToken, market.shortToken);
+        uint256 longTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market, market.longToken);
+        uint256 shortTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market, market.shortToken);
 
         uint256 longTokenPoolUsd = longTokenPoolAmount * prices.longTokenPrice.max;
         uint256 shortTokenPoolUsd = shortTokenPoolAmount * prices.shortTokenPrice.max;
