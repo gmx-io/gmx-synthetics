@@ -72,9 +72,7 @@ export async function createDeposit(fixture, overrides: any = {}) {
   };
 
   const txReceipt = await logGasUsage({
-    tx: depositHandler.connect(sender).createDeposit(account.address, params, {
-      gasLimit: "1000000",
-    }),
+    tx: depositHandler.connect(sender).createDeposit(account.address, params),
     label: overrides.gasUsageLabel,
   });
 
