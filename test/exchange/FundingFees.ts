@@ -195,15 +195,15 @@ describe("Exchange.FundingFees", () => {
 
     expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, wnt.address, true))).eq(
       "8064019999"
-    );
+    ); // 0.000000008064019999 ETH, 0.00004032009 USD
     expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, wnt.address, false))).eq(
       "-16128039999"
-    );
+    ); // -0.000000016128039999 ETH, -0.00008064019 USD
     expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, usdc.address, true))).eq(
       "-80"
-    );
+    ); // -0.00008 USD
     expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, usdc.address, false))).eq(
-      "40"
+      "40" // 0.00004 USD
     );
   });
 });
