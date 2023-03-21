@@ -266,6 +266,7 @@ func.skip = async ({ gmx, network }) => {
   }
   return false;
 };
+func.runAtTheEnd = true;
 func.tags = ["Markets"];
 func.dependencies = ["MarketFactory", "Tokens", "DataStore"];
 export default func;
