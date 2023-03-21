@@ -292,7 +292,7 @@ library MarketUtils {
         poolValue += Precision.applyFactor(result.totalBorrowingFees, result.borrowingFeeReceiverFactor);
 
         result.impactPoolAmount = getPositionImpactPoolAmount(dataStore, market.marketToken);
-        poolValue += result.impactPoolAmount * indexTokenPrice.pickPrice(maximize);
+        poolValue -= result.impactPoolAmount * indexTokenPrice.pickPrice(maximize);
 
         // !maximize should be used for net pnl as a larger pnl leads to a smaller pool value
         // and a smaller pnl leads to a larger pool value
@@ -2007,7 +2007,7 @@ library MarketUtils {
         return markets;
     }
 
-    function validateSwapPath(DataStore dataStore, address[] memory swapPath) internal view returns (Market.Props[] memory) {
+    function validateSwapPath(DataStore dataStore, address[] memory swapPath) internal view {
         uint256 maxSwapPathLength = dataStore.getUint(Keys.MAX_SWAP_PATH_LENGTH);
         if (swapPath.length > maxSwapPathLength) {
             revert Errors.MaxSwapPathLengthExceeded(swapPath.length, maxSwapPathLength);
