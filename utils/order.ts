@@ -170,7 +170,6 @@ export async function executeOrder(fixture, overrides = {}) {
   const cancellationReason = await getCancellationReason({
     logs,
     eventName: "OrderCancelled",
-    contracts: [orderHandler, baseOrderUtils, increaseOrderUtils, increasePositionUtils, positionUtils, marketUtils],
   });
 
   if (cancellationReason) {
@@ -190,7 +189,6 @@ export async function executeOrder(fixture, overrides = {}) {
   const frozenReason = await getCancellationReason({
     logs,
     eventName: "OrderFrozen",
-    contracts: [orderHandler, baseOrderUtils, increaseOrderUtils, marketUtils],
   });
 
   if (frozenReason) {

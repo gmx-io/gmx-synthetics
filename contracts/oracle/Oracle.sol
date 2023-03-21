@@ -85,26 +85,6 @@ contract Oracle is RoleModule {
     // these prices will be cleared in clearAllPrices
     mapping(address => Price.Props) public customPrices;
 
-    error EmptyTokens();
-    error InvalidBlockNumber(uint256 blockNumber);
-    error InvalidMinMaxBlockNumber(uint256 minOracleBlockNumber, uint256 maxOracleBlockNumber);
-    error MaxPriceAgeExceeded(uint256 oracleTimestamp);
-    error MinOracleSigners(uint256 oracleSigners, uint256 minOracleSigners);
-    error MaxOracleSigners(uint256 oracleSigners, uint256 maxOracleSigners);
-    error BlockNumbersNotSorted(uint256 minOracleBlockNumber, uint256 prevMinOracleBlockNumber);
-    error MinPricesNotSorted(address token, uint256 price, uint256 prevPrice);
-    error MaxPricesNotSorted(address token, uint256 price, uint256 prevPrice);
-    error EmptyPriceFeedMultiplier(address token);
-    error EmptyFeedPrice(address token);
-    error MaxSignerIndex(uint256 signerIndex, uint256 maxSignerIndex);
-    error DuplicateSigner(uint256 signerIndex);
-    error InvalidOraclePrice(address token);
-    error InvalidSignerMinMaxPrice(uint256 minPrice, uint256 maxPrice);
-    error InvalidMedianMinMaxPrice(uint256 minPrice, uint256 maxPrice);
-    error NonEmptyTokensWithPrices(uint256 tokensWithPricesLength);
-    error EmptyPriceFeed(address token);
-    error PriceAlreadySet(address token, uint256 minPrice, uint256 maxPrice);
-
     constructor(
         RoleStore _roleStore,
         OracleStore _oracleStore
@@ -214,20 +194,20 @@ contract Oracle is RoleModule {
         OracleUtils.SetPricesParams memory params
     ) external onlyController {
         if (tokensWithPrices.length() != 0) {
-            revert NonEmptyTokensWithPrices(tokensWithPrices.length());
+            revert Errors.NonEmptyTokensWithPrices(tokensWithPrices.length());
         }
 
-        if (params.tokens.length == 0) { revert EmptyTokens(); }
+        if (params.tokens.length == 0) { revert Errors.EmptyTokens(); }
 
         // first 16 bits of signer info contains the number of signers
         address[] memory signers = new address[](params.signerInfo & Bits.BITMASK_16);
 
         if (signers.length < dataStore.getUint(Keys.MIN_ORACLE_SIGNERS)) {
-            revert MinOracleSigners(signers.length, dataStore.getUint(Keys.MIN_ORACLE_SIGNERS));
+            revert Errors.MinOracleSigners(signers.length, dataStore.getUint(Keys.MIN_ORACLE_SIGNERS));
         }
 
         if (signers.length > MAX_SIGNERS) {
-            revert MaxOracleSigners(signers.length, MAX_SIGNERS);
+            revert Errors.MaxOracleSigners(signers.length, MAX_SIGNERS);
         }
 
         uint256 signerIndexFlags;
@@ -236,13 +216,13 @@ contract Oracle is RoleModule {
             uint256 signerIndex = params.signerInfo >> (16 + 16 * i) & Bits.BITMASK_16;
 
             if (signerIndex >= MAX_SIGNER_INDEX) {
-                revert MaxSignerIndex(signerIndex, MAX_SIGNER_INDEX);
+                revert Errors.MaxSignerIndex(signerIndex, MAX_SIGNER_INDEX);
             }
 
             uint256 signerIndexBit = 1 << signerIndex;
 
             if (signerIndexFlags & signerIndexBit != 0) {
-                revert DuplicateSigner(signerIndex);
+                revert Errors.DuplicateSigner(signerIndex);
             }
 
             signerIndexFlags = signerIndexFlags | signerIndexBit;
@@ -315,7 +295,7 @@ contract Oracle is RoleModule {
 
         Price.Props memory price = primaryPrices[token];
         if (price.isEmpty()) {
-            revert OracleUtils.EmptyPrimaryPrice(token);
+            revert Errors.EmptyPrimaryPrice(token);
         }
 
         return price;
@@ -329,7 +309,7 @@ contract Oracle is RoleModule {
 
         Price.Props memory price = secondaryPrices[token];
         if (price.isEmpty()) {
-            revert OracleUtils.EmptySecondaryPrice(token);
+            revert Errors.EmptySecondaryPrice(token);
         }
 
         return price;
@@ -352,7 +332,7 @@ contract Oracle is RoleModule {
             return primaryPrice;
         }
 
-        revert OracleUtils.EmptyLatestPrice(token);
+        revert Errors.EmptyLatestPrice(token);
     }
 
     // @dev get the custom price of a token
@@ -361,7 +341,7 @@ contract Oracle is RoleModule {
     function getCustomPrice(address token) external view returns (Price.Props memory) {
         Price.Props memory price = customPrices[token];
         if (price.isEmpty()) {
-            revert OracleUtils.EmptyCustomPrice(token);
+            revert Errors.EmptyCustomPrice(token);
         }
         return price;
     }
@@ -373,7 +353,7 @@ contract Oracle is RoleModule {
     function getPriceFeed(DataStore dataStore, address token) public view returns (IPriceFeed) {
         address priceFeedAddress = dataStore.getAddress(Keys.priceFeedKey(token));
         if (priceFeedAddress == address(0)) {
-            revert EmptyPriceFeed(token);
+            revert Errors.EmptyPriceFeed(token);
         }
 
         return IPriceFeed(priceFeedAddress);
@@ -403,7 +383,7 @@ contract Oracle is RoleModule {
         uint256 multiplier = dataStore.getUint(Keys.priceFeedMultiplierKey(token));
 
         if (multiplier == 0) {
-            revert EmptyPriceFeedMultiplier(token);
+            revert Errors.EmptyPriceFeedMultiplier(token);
         }
 
         return multiplier;
@@ -442,22 +422,22 @@ contract Oracle is RoleModule {
             cache.info.maxOracleBlockNumber = OracleUtils.getUncompactedOracleBlockNumber(params.compactedMaxOracleBlockNumbers, i);
 
             if (cache.info.minOracleBlockNumber > cache.info.maxOracleBlockNumber) {
-                revert InvalidMinMaxBlockNumber(cache.info.minOracleBlockNumber, cache.info.maxOracleBlockNumber);
+                revert Errors.InvalidMinMaxBlockNumber(cache.info.minOracleBlockNumber, cache.info.maxOracleBlockNumber);
             }
 
             cache.info.oracleTimestamp = OracleUtils.getUncompactedOracleTimestamp(params.compactedOracleTimestamps, i);
 
             if (cache.info.minOracleBlockNumber > Chain.currentBlockNumber()) {
-                revert InvalidBlockNumber(cache.info.minOracleBlockNumber);
+                revert Errors.InvalidBlockNumber(cache.info.minOracleBlockNumber);
             }
 
             if (cache.info.oracleTimestamp + cache.maxPriceAge < Chain.currentTimestamp()) {
-                revert MaxPriceAgeExceeded(cache.info.oracleTimestamp);
+                revert Errors.MaxPriceAgeExceeded(cache.info.oracleTimestamp);
             }
 
             // block numbers must be in ascending order
             if (cache.info.minOracleBlockNumber < cache.prevMinOracleBlockNumber) {
-                revert BlockNumbersNotSorted(cache.info.minOracleBlockNumber, cache.prevMinOracleBlockNumber);
+                revert Errors.BlockNumbersNotSorted(cache.info.minOracleBlockNumber, cache.prevMinOracleBlockNumber);
             }
             cache.prevMinOracleBlockNumber = cache.info.minOracleBlockNumber;
 
@@ -482,12 +462,12 @@ contract Oracle is RoleModule {
 
                 // validate that minPrices are sorted in ascending order
                 if (cache.minPrices[j - 1] > cache.minPrices[j]) {
-                    revert MinPricesNotSorted(cache.info.token, cache.minPrices[j], cache.minPrices[j - 1]);
+                    revert Errors.MinPricesNotSorted(cache.info.token, cache.minPrices[j], cache.minPrices[j - 1]);
                 }
 
                 // validate that maxPrices are sorted in ascending order
                 if (cache.maxPrices[j - 1] > cache.maxPrices[j]) {
-                    revert MaxPricesNotSorted(cache.info.token, cache.maxPrices[j], cache.maxPrices[j - 1]);
+                    revert Errors.MaxPricesNotSorted(cache.info.token, cache.maxPrices[j], cache.maxPrices[j - 1]);
                 }
             }
 
@@ -497,22 +477,22 @@ contract Oracle is RoleModule {
                 cache.maxPriceIndex = OracleUtils.getUncompactedPriceIndex(params.compactedMaxPricesIndexes, cache.signatureIndex);
 
                 if (cache.signatureIndex >= params.signatures.length) {
-                    Array.revertArrayOutOfBounds(params.signatures, cache.signatureIndex, "signatures");
+                    revert Errors.ArrayOutOfBoundsBytes(params.signatures, cache.signatureIndex, "signatures");
                 }
 
                 if (cache.minPriceIndex >= cache.minPrices.length) {
-                    Array.revertArrayOutOfBounds(cache.minPrices, cache.minPriceIndex, "minPrices");
+                    revert Errors.ArrayOutOfBoundsUint256(cache.minPrices, cache.minPriceIndex, "minPrices");
                 }
 
                 if (cache.maxPriceIndex >= cache.maxPrices.length) {
-                    Array.revertArrayOutOfBounds(cache.maxPrices, cache.maxPriceIndex, "maxPrices");
+                    revert Errors.ArrayOutOfBoundsUint256(cache.maxPrices, cache.maxPriceIndex, "maxPrices");
                 }
 
                 cache.info.minPrice = cache.minPrices[cache.minPriceIndex];
                 cache.info.maxPrice = cache.maxPrices[cache.maxPriceIndex];
 
                 if (cache.info.minPrice > cache.info.maxPrice) {
-                    revert InvalidSignerMinMaxPrice(cache.info.minPrice, cache.info.maxPrice);
+                    revert Errors.InvalidSignerMinMaxPrice(cache.info.minPrice, cache.info.maxPrice);
                 }
 
                 OracleUtils.validateSigner(
@@ -527,11 +507,11 @@ contract Oracle is RoleModule {
             uint256 medianMaxPrice = Array.getMedian(cache.maxPrices) * cache.info.precision;
 
             if (medianMinPrice == 0 || medianMaxPrice == 0) {
-                revert InvalidOraclePrice(cache.info.token);
+                revert Errors.InvalidOraclePrice(cache.info.token);
             }
 
             if (medianMinPrice > medianMaxPrice) {
-                revert InvalidMedianMinMaxPrice(medianMinPrice, medianMaxPrice);
+                revert Errors.InvalidMedianMinMaxPrice(medianMinPrice, medianMaxPrice);
             }
 
             if (primaryPrices[cache.info.token].isEmpty()) {
@@ -563,7 +543,7 @@ contract Oracle is RoleModule {
             address token = priceFeedTokens[i];
 
             if (!primaryPrices[token].isEmpty()) {
-                revert PriceAlreadySet(token, primaryPrices[token].min, primaryPrices[token].max);
+                revert Errors.PriceAlreadySet(token, primaryPrices[token].min, primaryPrices[token].max);
             }
 
             IPriceFeed priceFeed = getPriceFeed(dataStore, token);
@@ -582,7 +562,7 @@ contract Oracle is RoleModule {
             price = price * precision / Precision.FLOAT_PRECISION;
 
             if (price == 0) {
-                revert EmptyFeedPrice(token);
+                revert Errors.EmptyFeedPrice(token);
             }
 
             uint256 stablePrice = getStablePrice(dataStore, token);

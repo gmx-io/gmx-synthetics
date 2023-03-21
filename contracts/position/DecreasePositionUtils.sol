@@ -41,11 +41,6 @@ library DecreasePositionUtils {
         uint256 secondaryOutputAmount;
     }
 
-    error InvalidDecreaseOrderSize(uint256 sizeDeltaUsd, uint256 positionSizeInUsd);
-    error UnableToWithdrawCollateralDueToLeverage(int256 estimatedRemainingCollateralUsd);
-    error InvalidDecreasePositionSwapType(Order.DecreasePositionSwapType decreasePositionSwapType);
-    error PositionShouldNotBeLiquidated();
-
     // @dev decreases a position
     // The decreasePosition function decreases the size of an existing position
     // in a market. It takes a PositionUtils.UpdatePositionParams object as an input, which
@@ -89,7 +84,7 @@ library DecreasePositionUtils {
 
                 params.order.setSizeDeltaUsd(params.position.sizeInUsd());
             } else {
-                revert InvalidDecreaseOrderSize(params.order.sizeDeltaUsd(), params.position.sizeInUsd());
+                revert Errors.InvalidDecreaseOrderSize(params.order.sizeDeltaUsd(), params.position.sizeInUsd());
             }
         }
 
@@ -126,7 +121,7 @@ library DecreasePositionUtils {
 
             if (!willBeSufficient) {
                 if (params.order.sizeDeltaUsd() == 0) {
-                    revert UnableToWithdrawCollateralDueToLeverage(estimatedRemainingCollateralUsd);
+                    revert Errors.UnableToWithdrawCollateralDueToLeverage(estimatedRemainingCollateralUsd);
                 }
 
                 OrderEventUtils.emitOrderCollateralDeltaAmountAutoUpdated(
@@ -175,7 +170,7 @@ library DecreasePositionUtils {
             false, // isIncrease
             true // shouldValidateMinCollateralUsd
         )) {
-            revert PositionShouldNotBeLiquidated();
+            revert Errors.PositionShouldNotBeLiquidated();
         }
 
         PositionUtils.updateFundingAndBorrowingState(params, cache.prices);

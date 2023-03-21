@@ -87,6 +87,9 @@ library MarketUtils {
 
         uint256 fundingUsdForLongCollateral;
         uint256 fundingUsdForShortCollateral;
+
+        uint256 fundingAmountForLongCollateral;
+        uint256 fundingAmountForShortCollateral;
     }
 
     // @param longOpenInterestWithLongCollateral amount of long open interest using the long token as collateral
@@ -111,41 +114,21 @@ library MarketUtils {
     // @param fundingAmountPerSize_ShortCollateral_LongPosition funding per size for longs using the short token as collateral
     // @param fundingAmountPerSize_ShortCollateral_ShortPosition funding per size for shorts using the short token as collateral
     //
-    // @param fundingAmountPerSizePortion_LongCollateral_LongPosition the next funding amount per size for longs using the long token as collateral
-    // @param fundingAmountPerSizePortion_LongCollateral_ShortPosition the next funding amount per size for longs using the short token as collateral
-    // @param fundingAmountPerSizePortion_ShortCollateral_LongPosition the next funding amount per size for shorts using the long token as collateral
-    // @param fundingAmountPerSizePortion_ShortCollateral_ShortPosition the next funding amount per size for shorts using the short token as collateral
+    // @param fundingAmountPerSizeDelta_LongCollateral_LongPosition the next funding amount per size for longs using the long token as collateral
+    // @param fundingAmountPerSizeDelta_LongCollateral_ShortPosition the next funding amount per size for longs using the short token as collateral
+    // @param fundingAmountPerSizeDelta_ShortCollateral_LongPosition the next funding amount per size for shorts using the long token as collateral
+    // @param fundingAmountPerSizeDelta_ShortCollateral_ShortPosition the next funding amount per size for shorts using the short token as collateral
     struct GetNextFundingAmountPerSizeFundingPerSizeCache {
         int256 fundingAmountPerSize_LongCollateral_LongPosition;
-        int256 fundingAmountPerSize_LongCollateral_ShortPosition;
         int256 fundingAmountPerSize_ShortCollateral_LongPosition;
+        int256 fundingAmountPerSize_LongCollateral_ShortPosition;
         int256 fundingAmountPerSize_ShortCollateral_ShortPosition;
 
-        uint256 fundingAmountPerSizePortion_LongCollateral_LongPosition;
-        uint256 fundingAmountPerSizePortion_ShortCollateral_LongPosition;
-        uint256 fundingAmountPerSizePortion_LongCollateral_ShortPosition;
-        uint256 fundingAmountPerSizePortion_ShortCollateral_ShortPosition;
+        uint256 fundingAmountPerSizeDelta_LongCollateral_LongPosition;
+        uint256 fundingAmountPerSizeDelta_ShortCollateral_LongPosition;
+        uint256 fundingAmountPerSizeDelta_LongCollateral_ShortPosition;
+        uint256 fundingAmountPerSizeDelta_ShortCollateral_ShortPosition;
     }
-
-    error EmptyMarket();
-    error DisabledMarket(address market);
-    error InsufficientPoolAmount(uint256 poolAmount, uint256 amount);
-    error InsufficientReserve(uint256 reservedUsd, uint256 maxReservedUsd);
-    error UnexpectedPoolValueForTokenPriceCalculation(int256 poolValue);
-    error UnexpectedSupplyForTokenPriceCalculation();
-    error UnableToGetOppositeToken(address inputToken, address market);
-    error UnableToGetCachedTokenPrice(address token, address market);
-    error CollateralAlreadyClaimed(uint256 adjustedClaimableAmount, uint256 claimedAmount);
-    error OpenInterestCannotBeUpdatedForSwapOnlyMarket(address market);
-    error MaxOpenInterestExceeded(uint256 openInterest, uint256 maxOpenInterest);
-    error MaxPoolAmountExceeded(uint256 poolAmount, uint256 maxPoolAmount);
-    error UnexpectedBorrowingFactor(uint256 positionBorrowingFactor, uint256 cumulativeBorrowingFactor);
-    error UnableToGetBorrowingFactorEmptyPoolUsd();
-    error UnableToGetFundingFactorEmptyOpenInterest();
-    error InvalidPositionMarket(address market);
-    error InvalidCollateralTokenForMarket(address market, address token);
-    error PnlFactorExceededForLongs(int256 pnlToPoolFactor, uint256 maxPnlFactor);
-    error PnlFactorExceededForShorts(int256 pnlToPoolFactor, uint256 maxPnlFactor);
 
     // @dev get the market token's price
     // @param dataStore DataStore
@@ -177,13 +160,13 @@ library MarketUtils {
         if (poolValue == 0) { return 0; }
 
         if (poolValue < 0) {
-            revert UnexpectedPoolValueForTokenPriceCalculation(poolValue);
+            revert Errors.UnexpectedPoolValueForTokenPriceCalculation(poolValue);
         }
 
         uint256 supply = getMarketTokenSupply(MarketToken(payable(market.marketToken)));
 
         if (supply == 0) {
-            revert UnexpectedSupplyForTokenPriceCalculation();
+            revert Errors.UnexpectedSupplyForTokenPriceCalculation();
         }
 
         return poolValue * Precision.WEI_PRECISION.toInt256() / supply.toInt256();
@@ -210,7 +193,7 @@ library MarketUtils {
             return market.longToken;
         }
 
-        revert UnableToGetOppositeToken(inputToken, market.marketToken);
+        revert Errors.UnableToGetOppositeToken(inputToken, market.marketToken);
     }
 
     // @dev get the token price from the stored MarketPrices
@@ -229,7 +212,7 @@ library MarketUtils {
             return prices.indexTokenPrice;
         }
 
-        revert UnableToGetCachedTokenPrice(token, market.marketToken);
+        revert Errors.UnableToGetCachedTokenPrice(token, market.marketToken);
     }
 
     // @dev return the latest prices for the market tokens
@@ -270,7 +253,7 @@ library MarketUtils {
         bool isLong
     ) internal view returns (uint256) {
         address token = isLong ? market.longToken : market.shortToken;
-        uint256 poolAmount = getPoolAmount(dataStore, market.marketToken, token);
+        uint256 poolAmount = getPoolAmount(dataStore, market, token);
         uint256 tokenPrice = isLong ? prices.longTokenPrice.min : prices.shortTokenPrice.min;
         return poolAmount * tokenPrice;
     }
@@ -297,8 +280,8 @@ library MarketUtils {
     ) internal view returns (MarketPoolValueInfo.Props memory) {
         MarketPoolValueInfo.Props memory result;
 
-        result.longTokenAmount = getPoolAmount(dataStore, market.marketToken, market.longToken);
-        result.shortTokenAmount = getPoolAmount(dataStore, market.marketToken, market.shortToken);
+        result.longTokenAmount = getPoolAmount(dataStore, market, market.longToken);
+        result.shortTokenAmount = getPoolAmount(dataStore, market, market.shortToken);
 
         result.longTokenUsd = result.longTokenAmount * longTokenPrice.pickPrice(maximize);
         result.shortTokenUsd = result.shortTokenAmount * shortTokenPrice.pickPrice(maximize);
@@ -312,7 +295,7 @@ library MarketUtils {
         poolValue += Precision.applyFactor(result.totalBorrowingFees, result.borrowingFeeReceiverFactor);
 
         result.impactPoolAmount = getPositionImpactPoolAmount(dataStore, market.marketToken);
-        poolValue += result.impactPoolAmount * indexTokenPrice.pickPrice(maximize);
+        poolValue -= result.impactPoolAmount * indexTokenPrice.pickPrice(maximize);
 
         // !maximize should be used for net pnl as a larger pnl leads to a smaller pool value
         // and a smaller pnl leads to a larger pool value
@@ -474,8 +457,12 @@ library MarketUtils {
     // @param market the market to check
     // @param token the token to check
     // @return the amount of tokens in the pool
-    function getPoolAmount(DataStore dataStore, address market, address token) internal view returns (uint256) {
-        return dataStore.getUint(Keys.poolAmountKey(market, token));
+    function getPoolAmount(DataStore dataStore, Market.Props memory market, address token) internal view returns (uint256) {
+        /* Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress); */
+        // if the longToken and shortToken are the same, return half of the token amount, so that
+        // calculations of pool value, etc would be correct
+        uint256 divisor = getPoolDivisor(market.longToken, market.shortToken);
+        return dataStore.getUint(Keys.poolAmountKey(market.marketToken, token)) / divisor;
     }
 
     // @dev get the max amount of tokens allowed to be in the pool
@@ -602,8 +589,8 @@ library MarketUtils {
         uint256 claimedAmount = dataStore.getUint(Keys.claimedCollateralAmountKey(market, token, timeKey, account));
 
         uint256 adjustedClaimableAmount = Precision.applyFactor(claimableAmount, claimableFactor);
-        if (adjustedClaimableAmount >= claimedAmount) {
-            revert CollateralAlreadyClaimed(adjustedClaimableAmount, claimedAmount);
+        if (adjustedClaimableAmount <= claimedAmount) {
+            revert Errors.CollateralAlreadyClaimed(adjustedClaimableAmount, claimedAmount);
         }
 
         uint256 remainingClaimableAmount = adjustedClaimableAmount - claimedAmount;
@@ -773,7 +760,7 @@ library MarketUtils {
         int256 delta
     ) internal returns (uint256) {
         if (indexToken == address(0)) {
-            revert OpenInterestCannotBeUpdatedForSwapOnlyMarket(market);
+            revert Errors.OpenInterestCannotBeUpdatedForSwapOnlyMarket(market);
         }
 
         uint256 nextValue = dataStore.applyDeltaToUint(
@@ -890,19 +877,28 @@ library MarketUtils {
         GetNextFundingAmountPerSizeResult memory result;
         GetNextFundingAmountPerSizeCache memory cache;
 
-        cache.oi.longOpenInterestWithLongCollateral = getOpenInterest(dataStore, market.marketToken, market.longToken, true);
-        cache.oi.longOpenInterestWithShortCollateral = getOpenInterest(dataStore, market.marketToken, market.shortToken, true);
-        cache.oi.shortOpenInterestWithLongCollateral = getOpenInterest(dataStore, market.marketToken, market.longToken, false);
-        cache.oi.shortOpenInterestWithShortCollateral = getOpenInterest(dataStore, market.marketToken, market.shortToken, false);
+        uint256 divisor = getPoolDivisor(market.longToken, market.shortToken);
 
+        // get the open interest values by long / short and by collateral used
+        cache.oi.longOpenInterestWithLongCollateral = getOpenInterest(dataStore, market.marketToken, market.longToken, true, divisor);
+        cache.oi.longOpenInterestWithShortCollateral = getOpenInterest(dataStore, market.marketToken, market.shortToken, true, divisor);
+        cache.oi.shortOpenInterestWithLongCollateral = getOpenInterest(dataStore, market.marketToken, market.longToken, false, divisor);
+        cache.oi.shortOpenInterestWithShortCollateral = getOpenInterest(dataStore, market.marketToken, market.shortToken, false, divisor);
+
+        // sum the open interest values to get the total long and short open interest values
         cache.oi.longOpenInterest = cache.oi.longOpenInterestWithLongCollateral + cache.oi.longOpenInterestWithShortCollateral;
         cache.oi.shortOpenInterest = cache.oi.shortOpenInterestWithLongCollateral + cache.oi.shortOpenInterestWithShortCollateral;
 
+        // get the current funding amount per size values
+        // funding amount per size represents the amount of tokens to be paid as funding per one USD of position size
+        // this value is multiplied by Precision.FLOAT_PRECISION since it may be too small and would be equal to zero otherwise
         result.fundingAmountPerSize_LongCollateral_LongPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.longToken, true);
-        result.fundingAmountPerSize_LongCollateral_ShortPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.longToken, false);
         result.fundingAmountPerSize_ShortCollateral_LongPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.shortToken, true);
+        result.fundingAmountPerSize_LongCollateral_ShortPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.longToken, false);
         result.fundingAmountPerSize_ShortCollateral_ShortPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.shortToken, false);
 
+        // if either long or short open interest is zero, then funding should not be updated
+        // as there would not be any user to pay the funding to
         if (cache.oi.longOpenInterest == 0 || cache.oi.shortOpenInterest == 0) {
             return result;
         }
@@ -922,6 +918,11 @@ library MarketUtils {
 
         result.longsPayShorts = cache.oi.longOpenInterest > cache.oi.shortOpenInterest;
 
+        // split the fundingUsd value by long and short collateral
+        // e.g. if the fundingUsd value is $500, and there is $1000 of long open interest using long collateral and $4000 of long open interest
+        // with short collateral, then $100 of funding fees should be paid from long positions using long collateral, $400 of funding fees
+        // should be paid from long positions using short collateral
+        // short positions should receive $100 of funding fees in long collateral and $400 of funding fees in short collateral
         if (result.longsPayShorts) {
             cache.fundingUsdForLongCollateral = cache.fundingUsd * cache.oi.longOpenInterestWithLongCollateral / cache.oi.longOpenInterest;
             cache.fundingUsdForShortCollateral = cache.fundingUsd * cache.oi.longOpenInterestWithShortCollateral / cache.oi.longOpenInterest;
@@ -930,55 +931,69 @@ library MarketUtils {
             cache.fundingUsdForShortCollateral = cache.fundingUsd * cache.oi.shortOpenInterestWithShortCollateral / cache.oi.shortOpenInterest;
         }
 
-        // use Precision.FLOAT_PRECISION here because fundingUsdForLongCollateral or fundingUsdForShortCollateral divided by longTokenPrice
-        // will give an amount in number of tokens which may be quite a small value and could become zero after being divided by longOpenInterest
-        // the result will be the amount in number of tokens multiplied by Precision.FLOAT_PRECISION per 1 USD of size
-        cache.fps.fundingAmountPerSizePortion_LongCollateral_LongPosition = getPerSizeValue(cache.fundingUsdForLongCollateral / prices.longTokenPrice.max, cache.oi.longOpenInterest);
-        cache.fps.fundingAmountPerSizePortion_LongCollateral_ShortPosition = getPerSizeValue(cache.fundingUsdForLongCollateral / prices.longTokenPrice.max, cache.oi.shortOpenInterest);
-        cache.fps.fundingAmountPerSizePortion_ShortCollateral_LongPosition = getPerSizeValue(cache.fundingUsdForShortCollateral / prices.shortTokenPrice.max, cache.oi.longOpenInterest);
-        cache.fps.fundingAmountPerSizePortion_ShortCollateral_ShortPosition = getPerSizeValue(cache.fundingUsdForShortCollateral / prices.shortTokenPrice.max, cache.oi.shortOpenInterest);
+        cache.fundingAmountForLongCollateral = cache.fundingUsdForLongCollateral / prices.longTokenPrice.max;
+        cache.fundingAmountForShortCollateral = cache.fundingUsdForShortCollateral / prices.shortTokenPrice.max;
 
+        // calculate the change in funding amount per size values
+        // for example, if the fundingUsdForLongCollateral is $100, the longToken price is $2000, the longOpenInterest is $10,000
+        // then the fundingAmountPerSize_LongCollateral_LongPosition would be 0.05 tokens per $10,000 or 0.000005 tokens per $1
+        // if longs pay shorts then the fundingAmountPerSize_LongCollateral_LongPosition should be increased by 0.000005
         if (result.longsPayShorts) {
+            // long positions should have funding fees increased by the funding for their collateral divided by the open interest for their collateral
+            cache.fps.fundingAmountPerSizeDelta_LongCollateral_LongPosition = Precision.toFactor(cache.fundingAmountForLongCollateral, cache.oi.longOpenInterestWithLongCollateral);
+            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_LongPosition = Precision.toFactor(cache.fundingAmountForShortCollateral, cache.oi.longOpenInterestWithShortCollateral);
+
+            // short positions should receive positive funding fees equivalent to the funding in the collateral paid by the long positions divided by the total short open interest
+            cache.fps.fundingAmountPerSizeDelta_LongCollateral_ShortPosition = Precision.toFactor(cache.fundingAmountForLongCollateral, cache.oi.shortOpenInterest);
+            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_ShortPosition = Precision.toFactor(cache.fundingAmountForShortCollateral, cache.oi.shortOpenInterest);
+
             // longs pay shorts
             result.fundingAmountPerSize_LongCollateral_LongPosition = Calc.boundedAdd(
                 result.fundingAmountPerSize_LongCollateral_LongPosition,
-                cache.fps.fundingAmountPerSizePortion_LongCollateral_LongPosition.toInt256()
-            );
-
-            result.fundingAmountPerSize_LongCollateral_ShortPosition = Calc.boundedSub(
-                result.fundingAmountPerSize_LongCollateral_ShortPosition,
-                cache.fps.fundingAmountPerSizePortion_LongCollateral_ShortPosition.toInt256()
+                cache.fps.fundingAmountPerSizeDelta_LongCollateral_LongPosition.toInt256()
             );
 
             result.fundingAmountPerSize_ShortCollateral_LongPosition = Calc.boundedAdd(
                 result.fundingAmountPerSize_ShortCollateral_LongPosition,
-                cache.fps.fundingAmountPerSizePortion_ShortCollateral_LongPosition.toInt256()
+                cache.fps.fundingAmountPerSizeDelta_ShortCollateral_LongPosition.toInt256()
+            );
+
+            result.fundingAmountPerSize_LongCollateral_ShortPosition = Calc.boundedSub(
+                result.fundingAmountPerSize_LongCollateral_ShortPosition,
+                cache.fps.fundingAmountPerSizeDelta_LongCollateral_ShortPosition.toInt256()
             );
 
             result.fundingAmountPerSize_ShortCollateral_ShortPosition = Calc.boundedSub(
                 result.fundingAmountPerSize_ShortCollateral_ShortPosition,
-                cache.fps.fundingAmountPerSizePortion_ShortCollateral_ShortPosition.toInt256()
+                cache.fps.fundingAmountPerSizeDelta_ShortCollateral_ShortPosition.toInt256()
             );
         } else {
-            // shorts pay longs
-            result.fundingAmountPerSize_LongCollateral_LongPosition = Calc.boundedSub(
-                result.fundingAmountPerSize_LongCollateral_LongPosition,
-                cache.fps.fundingAmountPerSizePortion_LongCollateral_LongPosition.toInt256()
-            );
+            // short positions should have funding fees increased by the funding for their collateral divided by the open interest for their collateral
+            cache.fps.fundingAmountPerSizeDelta_LongCollateral_ShortPosition = Precision.toFactor(cache.fundingAmountForLongCollateral, cache.oi.shortOpenInterestWithLongCollateral);
+            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_ShortPosition = Precision.toFactor(cache.fundingAmountForShortCollateral, cache.oi.shortOpenInterestWithShortCollateral);
+
+            // long positions should receive positive funding fees equivalent to the funding in the collateral paid by the short positions divided by the total long open interest
+            cache.fps.fundingAmountPerSizeDelta_LongCollateral_LongPosition = Precision.toFactor(cache.fundingAmountForLongCollateral, cache.oi.longOpenInterest);
+            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_LongPosition = Precision.toFactor(cache.fundingAmountForShortCollateral, cache.oi.longOpenInterest);
 
             result.fundingAmountPerSize_LongCollateral_ShortPosition = Calc.boundedAdd(
                 result.fundingAmountPerSize_LongCollateral_ShortPosition,
-                cache.fps.fundingAmountPerSizePortion_LongCollateral_ShortPosition.toInt256()
-            );
-
-            result.fundingAmountPerSize_ShortCollateral_LongPosition = Calc.boundedSub(
-                result.fundingAmountPerSize_ShortCollateral_LongPosition,
-                cache.fps.fundingAmountPerSizePortion_ShortCollateral_LongPosition.toInt256()
+                cache.fps.fundingAmountPerSizeDelta_LongCollateral_ShortPosition.toInt256()
             );
 
             result.fundingAmountPerSize_ShortCollateral_ShortPosition = Calc.boundedAdd(
                 result.fundingAmountPerSize_ShortCollateral_ShortPosition,
-                cache.fps.fundingAmountPerSizePortion_ShortCollateral_ShortPosition.toInt256()
+                cache.fps.fundingAmountPerSizeDelta_ShortCollateral_ShortPosition.toInt256()
+            );
+
+            result.fundingAmountPerSize_LongCollateral_LongPosition = Calc.boundedSub(
+                result.fundingAmountPerSize_LongCollateral_LongPosition,
+                cache.fps.fundingAmountPerSizeDelta_LongCollateral_LongPosition.toInt256()
+            );
+
+            result.fundingAmountPerSize_ShortCollateral_LongPosition = Calc.boundedSub(
+                result.fundingAmountPerSize_ShortCollateral_LongPosition,
+                cache.fps.fundingAmountPerSizeDelta_ShortCollateral_LongPosition.toInt256()
             );
         }
 
@@ -1015,14 +1030,6 @@ library MarketUtils {
         );
 
         dataStore.setUint(Keys.cumulativeBorrowingFactorUpdatedAtKey(market.marketToken, isLong), block.timestamp);
-    }
-
-    // @dev calculate the per size value based on the amount and totalSize
-    // @param amount the amount
-    // @param totalSize the total size
-    // @return the per size value
-    function getPerSizeValue(uint256 amount, uint256 totalSize) internal pure returns (uint256) {
-        return Precision.toFactor(amount, totalSize);
     }
 
     // @dev get the ratio of pnl to pool value
@@ -1093,7 +1100,7 @@ library MarketUtils {
         uint256 maxOpenInterest = getMaxOpenInterest(dataStore, market, isLong);
 
         if (openInterest > maxOpenInterest) {
-            revert MaxOpenInterestExceeded(openInterest, maxOpenInterest);
+            revert Errors.MaxOpenInterestExceeded(openInterest, maxOpenInterest);
         }
     }
 
@@ -1103,14 +1110,14 @@ library MarketUtils {
     // @param token the token to check
     function validatePoolAmount(
         DataStore dataStore,
-        address market,
+        Market.Props memory market,
         address token
     ) internal view {
         uint256 poolAmount = getPoolAmount(dataStore, market, token);
-        uint256 maxPoolAmount = getMaxPoolAmount(dataStore, market, token);
+        uint256 maxPoolAmount = getMaxPoolAmount(dataStore, market.marketToken, token);
 
         if (poolAmount > maxPoolAmount) {
-            revert MaxPoolAmountExceeded(poolAmount, maxPoolAmount);
+            revert Errors.MaxPoolAmountExceeded(poolAmount, maxPoolAmount);
         }
     }
 
@@ -1140,7 +1147,7 @@ library MarketUtils {
         );
 
         if (reservedUsd > maxReservedUsd) {
-            revert InsufficientReserve(reservedUsd, maxReservedUsd);
+            revert Errors.InsufficientReserve(reservedUsd, maxReservedUsd);
         }
     }
 
@@ -1226,7 +1233,7 @@ library MarketUtils {
     function getBorrowingFees(DataStore dataStore, Position.Props memory position) internal view returns (uint256) {
         uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, position.market(), position.isLong());
         if (position.borrowingFactor() > cumulativeBorrowingFactor) {
-            revert UnexpectedBorrowingFactor(position.borrowingFactor(), cumulativeBorrowingFactor);
+            revert Errors.UnexpectedBorrowingFactor(position.borrowingFactor(), cumulativeBorrowingFactor);
         }
         uint256 diffFactor = cumulativeBorrowingFactor - position.borrowingFactor();
         return Precision.applyFactor(position.sizeInUsd(), diffFactor);
@@ -1247,7 +1254,7 @@ library MarketUtils {
         );
 
         if (position.borrowingFactor() > nextCumulativeBorrowingFactor) {
-            revert UnexpectedBorrowingFactor(position.borrowingFactor(), nextCumulativeBorrowingFactor);
+            revert Errors.UnexpectedBorrowingFactor(position.borrowingFactor(), nextCumulativeBorrowingFactor);
         }
         uint256 diffFactor = nextCumulativeBorrowingFactor - position.borrowingFactor();
         return Precision.applyFactor(position.sizeInUsd(), diffFactor);
@@ -1408,8 +1415,9 @@ library MarketUtils {
         address shortToken,
         bool isLong
     ) internal view returns (uint256) {
-        uint256 openInterestUsingLongTokenAsCollateral = getOpenInterest(dataStore, market, longToken, isLong);
-        uint256 openInterestUsingShortTokenAsCollateral = getOpenInterest(dataStore, market, shortToken, isLong);
+        uint256 divisor = getPoolDivisor(longToken, shortToken);
+        uint256 openInterestUsingLongTokenAsCollateral = getOpenInterest(dataStore, market, longToken, isLong, divisor);
+        uint256 openInterestUsingShortTokenAsCollateral = getOpenInterest(dataStore, market, shortToken, isLong, divisor);
 
         return openInterestUsingLongTokenAsCollateral + openInterestUsingShortTokenAsCollateral;
     }
@@ -1423,9 +1431,17 @@ library MarketUtils {
         DataStore dataStore,
         address market,
         address collateralToken,
-        bool isLong
+        bool isLong,
+        uint256 divisor
     ) internal view returns (uint256) {
-        return dataStore.getUint(Keys.openInterestKey(market, collateralToken, isLong));
+        return dataStore.getUint(Keys.openInterestKey(market, collateralToken, isLong)) / divisor;
+    }
+
+    // this is used to divide the values of getPoolAmount and getOpenInterest
+    // if the longToken and shortToken are the same, then these values have to be divided by two
+    // to avoid double counting
+    function getPoolDivisor(address longToken, address shortToken) internal pure returns (uint256) {
+        return longToken == shortToken ? 2 : 1;
     }
 
     // @dev the long and short open interest in tokens for a market
@@ -1648,7 +1664,7 @@ library MarketUtils {
         if (diffUsd == 0) { return 0; }
 
         if (totalOpenInterest == 0) {
-            revert UnableToGetFundingFactorEmptyOpenInterest();
+            revert Errors.UnableToGetFundingFactorEmptyOpenInterest();
         }
 
         uint256 fundingFactor = getFundingFactor(dataStore, market);
@@ -1842,7 +1858,7 @@ library MarketUtils {
         uint256 poolUsd = getPoolUsdWithoutPnl(dataStore, market, prices, isLong);
 
         if (poolUsd == 0) {
-            revert UnableToGetBorrowingFactorEmptyPoolUsd();
+            revert Errors.UnableToGetBorrowingFactorEmptyPoolUsd();
         }
 
         uint256 borrowingExponentFactor = getBorrowingExponentFactor(dataStore, market.marketToken, isLong);
@@ -1930,12 +1946,12 @@ library MarketUtils {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
 
         if (market.marketToken == address(0)) {
-            revert EmptyMarket();
+            revert Errors.EmptyMarket();
         }
 
         bool isMarketDisabled = dataStore.getBool(Keys.isMarketDisabledKey(market.marketToken));
         if (isMarketDisabled) {
-            revert DisabledMarket(market.marketToken);
+            revert Errors.DisabledMarket(market.marketToken);
         }
     }
 
@@ -1944,12 +1960,12 @@ library MarketUtils {
     // @param market the market to check
     function validateEnabledMarket(DataStore dataStore, Market.Props memory market) internal view {
         if (market.marketToken == address(0)) {
-            revert EmptyMarket();
+            revert Errors.EmptyMarket();
         }
 
         bool isMarketDisabled = dataStore.getBool(Keys.isMarketDisabledKey(market.marketToken));
         if (isMarketDisabled) {
-            revert DisabledMarket(market.marketToken);
+            revert Errors.DisabledMarket(market.marketToken);
         }
     }
 
@@ -1959,7 +1975,7 @@ library MarketUtils {
         validateEnabledMarket(dataStore, market);
 
         if (isSwapOnlyMarket(market)) {
-            revert InvalidPositionMarket(market.marketToken);
+            revert Errors.InvalidPositionMarket(market.marketToken);
         }
     }
 
@@ -1986,7 +2002,7 @@ library MarketUtils {
     // @param token the token to check
     function validateMarketCollateralToken(Market.Props memory market, address token) internal pure {
         if (!isMarketCollateralToken(market, token)) {
-            revert InvalidCollateralTokenForMarket(market.marketToken, token);
+            revert Errors.InvalidCollateralTokenForMarket(market.marketToken, token);
         }
     }
 
@@ -2012,6 +2028,18 @@ library MarketUtils {
         return markets;
     }
 
+    function validateSwapPath(DataStore dataStore, address[] memory swapPath) internal view {
+        uint256 maxSwapPathLength = dataStore.getUint(Keys.MAX_SWAP_PATH_LENGTH);
+        if (swapPath.length > maxSwapPathLength) {
+            revert Errors.MaxSwapPathLengthExceeded(swapPath.length, maxSwapPathLength);
+        }
+
+        for (uint256 i = 0; i < swapPath.length; i++) {
+            address marketAddress = swapPath[i];
+            validateEnabledMarket(dataStore, marketAddress);
+        }
+    }
+
     // @dev validate that the pending pnl is below the allowed amount
     // @param dataStore DataStore
     // @param market the market to check
@@ -2032,7 +2060,7 @@ library MarketUtils {
         );
 
         if (isPnlFactorExceededForLongs) {
-            revert PnlFactorExceededForLongs(pnlToPoolFactorForLongs, maxPnlFactorForLongs);
+            revert Errors.PnlFactorExceededForLongs(pnlToPoolFactorForLongs, maxPnlFactorForLongs);
         }
 
         (bool isPnlFactorExceededForShorts, int256 pnlToPoolFactorForShorts, uint256 maxPnlFactorForShorts) = isPnlFactorExceeded(
@@ -2044,7 +2072,7 @@ library MarketUtils {
         );
 
         if (isPnlFactorExceededForShorts) {
-            revert PnlFactorExceededForShorts(pnlToPoolFactorForShorts, maxPnlFactorForShorts);
+            revert Errors.PnlFactorExceededForShorts(pnlToPoolFactorForShorts, maxPnlFactorForShorts);
         }
     }
 

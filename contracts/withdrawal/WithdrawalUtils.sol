@@ -89,14 +89,6 @@ library WithdrawalUtils {
         uint256 shortTokenPoolAmountDelta;
     }
 
-    error EmptyWithdrawal();
-    error MinLongTokens(uint256 received, uint256 expected);
-    error MinShortTokens(uint256 received, uint256 expected);
-    error InsufficientMarketTokens(uint256 balance, uint256 expected);
-    error InsufficientWntAmount(uint256 wntAmount, uint256 executionFee);
-    error EmptyMarketTokenAmount();
-    error InvalidPoolValueForWithdrawal(int256 poolValue);
-
     /**
      * @dev Creates a withdrawal in the withdrawal store.
      *
@@ -120,18 +112,20 @@ library WithdrawalUtils {
         uint256 wntAmount = withdrawalVault.recordTransferIn(wnt);
 
         if (wntAmount < params.executionFee) {
-            revert InsufficientWntAmount(wntAmount, params.executionFee);
+            revert Errors.InsufficientWntAmount(wntAmount, params.executionFee);
         }
 
         AccountUtils.validateReceiver(params.receiver);
 
         if (params.marketTokenAmount == 0) {
-            revert EmptyMarketTokenAmount();
+            revert Errors.EmptyMarketTokenAmount();
         }
 
         params.executionFee = wntAmount;
 
         MarketUtils.validateEnabledMarket(dataStore, params.market);
+        MarketUtils.validateSwapPath(dataStore, params.longTokenSwapPath);
+        MarketUtils.validateSwapPath(dataStore, params.shortTokenSwapPath);
 
         Withdrawal.Props memory withdrawal = Withdrawal.Props(
             Withdrawal.Addresses(
@@ -177,10 +171,10 @@ library WithdrawalUtils {
     function executeWithdrawal(ExecuteWithdrawalParams memory params) external {
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(params.dataStore, params.key);
         if (withdrawal.account() == address(0)) {
-            revert EmptyWithdrawal();
+            revert Errors.EmptyWithdrawal();
         }
         if (withdrawal.marketTokenAmount() == 0) {
-            revert EmptyMarketTokenAmount();
+            revert Errors.EmptyMarketTokenAmount();
         }
 
         OracleUtils.validateBlockNumberWithinRange(
@@ -191,7 +185,7 @@ library WithdrawalUtils {
 
         uint256 marketTokensBalance = MarketToken(payable(withdrawal.market())).balanceOf(withdrawal.account());
         if (marketTokensBalance < withdrawal.marketTokenAmount()) {
-            revert InsufficientMarketTokens(marketTokensBalance, withdrawal.marketTokenAmount());
+            revert Errors.InsufficientMarketTokens(marketTokensBalance, withdrawal.marketTokenAmount());
         }
 
         _executeWithdrawal(params, withdrawal);
@@ -231,7 +225,7 @@ library WithdrawalUtils {
     ) external {
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
         if (withdrawal.account() == address(0)) {
-            revert EmptyWithdrawal();
+            revert Errors.EmptyWithdrawal();
         }
 
         WithdrawalStoreUtils.remove(dataStore, key, withdrawal.account());
@@ -438,7 +432,7 @@ library WithdrawalUtils {
         );
 
         if (poolValueInfo.poolValue <= 0) {
-            revert InvalidPoolValueForWithdrawal(poolValueInfo.poolValue);
+            revert Errors.InvalidPoolValueForWithdrawal(poolValueInfo.poolValue);
         }
 
         uint256 poolValue = poolValueInfo.poolValue.toUint256();
@@ -452,8 +446,8 @@ library WithdrawalUtils {
             marketTokensSupply
         );
 
-        uint256 longTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market.marketToken, market.longToken);
-        uint256 shortTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market.marketToken, market.shortToken);
+        uint256 longTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market, market.longToken);
+        uint256 shortTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market, market.shortToken);
 
         uint256 longTokenPoolUsd = longTokenPoolAmount * prices.longTokenPrice.max;
         uint256 shortTokenPoolUsd = shortTokenPoolAmount * prices.shortTokenPrice.max;

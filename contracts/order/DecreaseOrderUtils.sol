@@ -6,7 +6,7 @@ import "./BaseOrderUtils.sol";
 import "../swap/SwapUtils.sol";
 import "../position/DecreasePositionUtils.sol";
 import "../order/OrderStoreUtils.sol";
-import "../utils/ErrorUtils.sol";
+import "../errors/ErrorUtils.sol";
 
 // @title DecreaseOrderUtils
 // @dev Library for functions to help with processing a decrease order
@@ -142,7 +142,7 @@ library DecreaseOrderUtils {
         ) {
             uint256 latestUpdatedAtBlock = orderUpdatedAtBlock > positionIncreasedAtBlock ? orderUpdatedAtBlock : positionIncreasedAtBlock;
             if (!minOracleBlockNumbers.areGreaterThan(latestUpdatedAtBlock)) {
-                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, latestUpdatedAtBlock);
+                revert Errors.OracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, latestUpdatedAtBlock);
             }
             return;
         }
@@ -151,12 +151,12 @@ library DecreaseOrderUtils {
             uint256 latestUpdatedAtBlock = positionIncreasedAtBlock > positionDecreasedAtBlock ? positionIncreasedAtBlock : positionDecreasedAtBlock;
 
             if (!minOracleBlockNumbers.areGreaterThan(latestUpdatedAtBlock)) {
-                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, latestUpdatedAtBlock);
+                revert Errors.OracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, latestUpdatedAtBlock);
             }
             return;
         }
 
-        BaseOrderUtils.revertUnsupportedOrderType();
+        revert Errors.UnsupportedOrderType();
     }
 
     function _handleSwapError(

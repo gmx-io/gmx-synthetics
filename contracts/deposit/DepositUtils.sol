@@ -50,9 +50,6 @@ library DepositUtils {
         uint256 callbackGasLimit;
     }
 
-    error EmptyDeposit();
-    error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);
-
     // @dev creates a deposit
     //
     // @param dataStore DataStore
@@ -70,6 +67,8 @@ library DepositUtils {
         AccountUtils.validateAccount(account);
 
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, params.market);
+        MarketUtils.validateSwapPath(dataStore, params.longTokenSwapPath);
+        MarketUtils.validateSwapPath(dataStore, params.shortTokenSwapPath);
 
         // if the initialLongToken and initialShortToken are the same, only the initialLongTokenAmount would
         // be non-zero, the initialShortTokenAmount would be zero
@@ -85,14 +84,14 @@ library DepositUtils {
         } else {
             uint256 wntAmount = depositVault.recordTransferIn(wnt);
             if (wntAmount < params.executionFee) {
-                revert InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
+                revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
             }
 
             params.executionFee = wntAmount;
         }
 
         if (initialLongTokenAmount == 0 && initialShortTokenAmount == 0) {
-            revert EmptyDeposit();
+            revert Errors.EmptyDeposit();
         }
 
         AccountUtils.validateReceiver(params.receiver);
@@ -155,7 +154,7 @@ library DepositUtils {
     ) external {
         Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
         if (deposit.account() == address(0)) {
-            revert EmptyDeposit();
+            revert Errors.EmptyDeposit();
         }
 
         if (deposit.initialLongTokenAmount() > 0) {

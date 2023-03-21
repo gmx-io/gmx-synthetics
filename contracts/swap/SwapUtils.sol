@@ -86,9 +86,6 @@ library SwapUtils {
 
     event SwapReverted(string reason, bytes reasonBytes);
 
-    error InvalidTokenIn(address tokenIn, address market);
-    error InsufficientSwapOutputAmount(uint256 outputAmount, uint256 minOutputAmount);
-
     /**
      * @dev Swaps a given amount of a given token for another token based on a
      * specified swap path.
@@ -143,7 +140,7 @@ library SwapUtils {
         }
 
         if (outputAmount < params.minOutputAmount) {
-            revert InsufficientSwapOutputAmount(outputAmount, params.minOutputAmount);
+            revert Errors.InsufficientSwapOutputAmount(outputAmount, params.minOutputAmount);
         }
 
         return (tokenOut, outputAmount);
@@ -160,7 +157,7 @@ library SwapUtils {
         SwapCache memory cache;
 
         if (_params.tokenIn != _params.market.longToken && _params.tokenIn != _params.market.shortToken) {
-            revert InvalidTokenIn(_params.tokenIn, _params.market.marketToken);
+            revert Errors.InvalidTokenIn(_params.tokenIn, _params.market.marketToken);
         }
 
         cache.tokenOut = MarketUtils.getOppositeToken(_params.tokenIn, _params.market);
@@ -185,7 +182,7 @@ library SwapUtils {
         int256 priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(
             SwapPricingUtils.GetPriceImpactUsdParams(
                 params.dataStore,
-                _params.market.marketToken,
+                _params.market,
                 _params.tokenIn,
                 cache.tokenOut,
                 cache.tokenInPrice.midPrice(),
@@ -274,7 +271,7 @@ library SwapUtils {
 
         MarketUtils.validatePoolAmount(
             params.dataStore,
-            _params.market.marketToken,
+            _params.market,
             _params.tokenIn
         );
 
