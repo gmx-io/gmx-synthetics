@@ -1,5 +1,4 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { getMarketTokenAddress } from "../utils/market";
 import * as keys from "../utils/keys";
 import { setUintIfDifferent } from "../utils/dataStore";
 import { ethers } from "ethers";
@@ -27,7 +26,7 @@ async function getOnchainMarketsByTokens(read: (...args: any[]) => any, dataStor
   );
 }
 
-const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRuntimeEnvironment) => {
+const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnvironment) => {
   const { execute, get, read, log } = deployments;
 
   const { deployer } = await getNamedAccounts();
@@ -35,8 +34,6 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
   const tokens = await gmx.getTokens();
   const markets = await gmx.getMarkets();
 
-  const marketFactory = await get("MarketFactory");
-  const roleStore = await get("RoleStore");
   const dataStore = await get("DataStore");
 
   let onchainMarketsByTokens = await getOnchainMarketsByTokens(read, dataStore.address);
