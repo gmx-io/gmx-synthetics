@@ -56,14 +56,29 @@ library TokenUtils {
 
         uint256 gasLimit = dataStore.getUint(Keys.tokenTransferGasLimit(token));
 
-        (bool success, bytes memory returndata) = nonRevertingTransferWithGasLimit(
+        (bool success0, /* bytes memory returndata */) = nonRevertingTransferWithGasLimit(
             IERC20(token),
             receiver,
             amount,
             gasLimit
         );
 
-        if (success) { return; }
+        if (success0) { return; }
+
+        address holdingAddress = dataStore.getAddress(Keys.HOLDING_ADDRESS);
+
+        if (holdingAddress == address(0)) {
+            revert Errors.EmptyHoldingAddress();
+        }
+
+        (bool success1, bytes memory returndata) = nonRevertingTransferWithGasLimit(
+            IERC20(token),
+            holdingAddress,
+            amount,
+            gasLimit
+        );
+
+        if (success1) { return; }
 
         (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(returndata);
         emit TokenTransferReverted(reason, returndata);
