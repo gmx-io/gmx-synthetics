@@ -13,6 +13,9 @@ library Keys {
     // @dev for sending received fees
     bytes32 public constant FEE_RECEIVER = keccak256(abi.encode("FEE_RECEIVER"));
 
+    // @dev for holding tokens that could not be sent out
+    bytes32 public constant HOLDING_ADDRESS = keccak256(abi.encode("HOLDING_ADDRESS"));
+
     // @dev for a global reentrancy guard
     bytes32 public constant REENTRANCY_GUARD_STATUS = keccak256(abi.encode("REENTRANCY_GUARD_STATUS"));
 
