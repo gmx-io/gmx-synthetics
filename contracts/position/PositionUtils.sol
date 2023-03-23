@@ -280,8 +280,6 @@ library PositionUtils {
         bool isIncrease,
         bool shouldValidateMinCollateralUsd
     ) public view {
-        validateNonEmptyPosition(position);
-
         if (position.sizeInUsd() == 0 || position.sizeInTokens() == 0) {
             revert Errors.InvalidPositionSizeValues(position.sizeInUsd(), position.sizeInTokens());
         }
