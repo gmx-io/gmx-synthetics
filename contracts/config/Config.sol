@@ -266,10 +266,23 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param value the value to be set
     function _validateRange(bytes32 baseKey, uint256 value) internal pure {
         if (
+            baseKey == Keys.FUNDING_FACTOR ||
+            baseKey == Keys.BORROWING_FACTOR
+        ) {
+            // revert if value > 1%
+            if (value > 1 * Precision.FLOAT_PRECISION / 100) {
+                revert Errors.InvalidFeeFactor(baseKey, value);
+            }
+        }
+
+        if (
             baseKey == Keys.SWAP_FEE_FACTOR ||
             baseKey == Keys.POSITION_FEE_FACTOR
         ) {
-            revert Errors.InvalidFeeFactor(baseKey, value);
+            // revert if value > 5%
+            if (value > 5 * Precision.FLOAT_PRECISION / 100) {
+                revert Errors.InvalidFeeFactor(baseKey, value);
+            }
         }
 
         if (
@@ -277,13 +290,13 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.SWAP_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.BORROWING_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.MIN_COLLATERAL_FACTOR ||
-            baseKey == Keys.RESERVE_FACTOR ||
             baseKey == Keys.MAX_PNL_FACTOR ||
-            baseKey == Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS ||
-            baseKey == Keys.FUNDING_FACTOR ||
-            baseKey == Keys.BORROWING_FACTOR
+            baseKey == Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS
         ) {
-            revert Errors.InvalidFactor(baseKey, value);
+            // revert if value > 100%
+            if (value > Precision.FLOAT_PRECISION) {
+                revert Errors.InvalidFeeFactor(baseKey, value);
+            }
         }
     }
 }
