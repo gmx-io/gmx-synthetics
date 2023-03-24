@@ -907,8 +907,8 @@ library MarketUtils {
         cache.oi.shortOpenInterest = cache.oi.shortOpenInterestWithLongCollateral + cache.oi.shortOpenInterestWithShortCollateral;
 
         // get the current funding amount per size values
-        // funding amount per size represents the amount of tokens to be paid as funding per one USD of position size
-        // this value is multiplied by Precision.FLOAT_PRECISION since it may be too small and would be equal to zero otherwise
+        // funding amount per size represents the amount of tokens to be paid as
+        // funding per (Precision.LOW_FLOAT_PRECISION / Precision.FLOAT_PRECISION) USD of position size
         result.fundingAmountPerSize_LongCollateral_LongPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.longToken, true);
         result.fundingAmountPerSize_ShortCollateral_LongPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.shortToken, true);
         result.fundingAmountPerSize_LongCollateral_ShortPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.longToken, false);
