@@ -141,18 +141,18 @@ library MarketUtils {
     function getMarketTokenPrice(
         DataStore dataStore,
         Market.Props memory market,
+        Price.Props memory indexTokenPrice,
         Price.Props memory longTokenPrice,
         Price.Props memory shortTokenPrice,
-        Price.Props memory indexTokenPrice,
         bytes32 pnlFactorType,
         bool maximize
-    ) internal view returns (int256) {
+    ) external view returns (int256) {
         int256 poolValue = getPoolValueInfo(
             dataStore,
             market,
+            indexTokenPrice,
             longTokenPrice,
             shortTokenPrice,
-            indexTokenPrice,
             pnlFactorType,
             maximize
         ).poolValue;
@@ -272,12 +272,12 @@ library MarketUtils {
     function getPoolValueInfo(
         DataStore dataStore,
         Market.Props memory market,
+        Price.Props memory indexTokenPrice,
         Price.Props memory longTokenPrice,
         Price.Props memory shortTokenPrice,
-        Price.Props memory indexTokenPrice,
         bytes32 pnlFactorType,
         bool maximize
-    ) internal view returns (MarketPoolValueInfo.Props memory) {
+    ) public view returns (MarketPoolValueInfo.Props memory) {
         MarketPoolValueInfo.Props memory result;
 
         result.longTokenAmount = getPoolAmount(dataStore, market, market.longToken);
@@ -288,8 +288,25 @@ library MarketUtils {
 
         uint256 poolValue = result.longTokenUsd + result.shortTokenUsd;
 
-        result.totalBorrowingFees = getTotalPendingBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, true);
-        result.totalBorrowingFees += getTotalPendingBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, false);
+        MarketPrices memory prices = MarketPrices(
+            indexTokenPrice,
+            longTokenPrice,
+            shortTokenPrice
+        );
+
+        result.totalBorrowingFees = getTotalPendingBorrowingFees(
+            dataStore,
+            market,
+            prices,
+            true
+        );
+
+        result.totalBorrowingFees += getTotalPendingBorrowingFees(
+            dataStore,
+            market,
+            prices,
+            false
+        );
 
         result.borrowingFeePoolFactor = Precision.FLOAT_PRECISION - dataStore.getUint(Keys.BORROWING_FEE_RECEIVER_FACTOR);
         poolValue += Precision.applyFactor(result.totalBorrowingFees, result.borrowingFeePoolFactor);
@@ -1908,11 +1925,30 @@ library MarketUtils {
     // @param longToken the long token of the market
     // @param shortToken the short token of the market
     // @param isLong whether to check the long or short side
-    function getTotalPendingBorrowingFees(DataStore dataStore, address market, address longToken, address shortToken, bool isLong) internal view returns (uint256) {
-        uint256 openInterest = getOpenInterest(dataStore, market, longToken, shortToken, isLong);
-        uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, market, isLong);
-        uint256 totalBorrowing = getTotalBorrowing(dataStore, market, isLong);
-        return (openInterest * cumulativeBorrowingFactor) / Precision.FLOAT_PRECISION - totalBorrowing;
+    function getTotalPendingBorrowingFees(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketPrices memory prices,
+        bool isLong
+    ) internal view returns (uint256) {
+        uint256 openInterest = getOpenInterest(
+            dataStore,
+            market.marketToken,
+            market.longToken,
+            market.shortToken,
+            isLong
+        );
+
+        (uint256 nextCumulativeBorrowingFactor, /* uint256 delta */) = getNextCumulativeBorrowingFactor(
+            dataStore,
+            market,
+            prices,
+            isLong
+        );
+
+        uint256 totalBorrowing = getTotalBorrowing(dataStore, market.marketToken, isLong);
+
+        return (openInterest * nextCumulativeBorrowingFactor) / Precision.FLOAT_PRECISION - totalBorrowing;
     }
 
     // @dev get the total borrowing value

@@ -248,9 +248,9 @@ contract Reader {
             MarketUtils.getMarketTokenPrice(
                 dataStore,
                 market,
+                indexTokenPrice,
                 longTokenPrice,
                 shortTokenPrice,
-                indexTokenPrice,
                 pnlFactorType,
                 maximize
             );
