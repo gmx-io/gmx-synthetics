@@ -284,6 +284,11 @@ library PositionUtils {
             revert Errors.InvalidPositionSizeValues(position.sizeInUsd(), position.sizeInTokens());
         }
 
+        uint256 minPositionSizeUsd = dataStore.getUint(Keys.MIN_POSITION_SIZE_USD);
+        if (position.sizeInUsd() < minPositionSizeUsd) {
+            revert Errors.MinPositionSize(position.sizeInUsd(), minPositionSizeUsd);
+        }
+
         MarketUtils.validateEnabledMarket(dataStore, market.marketToken);
         MarketUtils.validateMarketCollateralToken(market, position.collateralToken());
 
