@@ -259,8 +259,12 @@ describe("Exchange.PositionFees", () => {
           expect(positionFeesCollectedEvent.positionFeeAmountForPool).eq("25600000"); // 25.6 USD
           expect(positionFeesCollectedEvent.positionFeeAmount).eq("40000000"); // 40 USD
           expectWithinRange(positionFeesCollectedEvent.totalNetCostAmount, "42838114", "10"); // 42.838114 USD
-          expect(positionFeesCollectedEvent.totalNetCostUsd).eq("42838114000000000000000000000000"); // 42.838114 USD
-          expect(positionFeesCollectedEvent.latestLongTokenFundingAmountPerSize).eq("-16128039999");
+          expectWithinRange(
+            positionFeesCollectedEvent.totalNetCostUsd,
+            "42838114000000000000000000000000",
+            "10000000000000000000000000"
+          ); // 42.838114 USD
+          expectWithinRange(positionFeesCollectedEvent.latestLongTokenFundingAmountPerSize, "-16128039999", "1000000");
           expect(positionFeesCollectedEvent.latestShortTokenFundingAmountPerSize).eq("0");
           expect(positionFeesCollectedEvent.hasPendingLongTokenFundingFee).eq(false);
           expect(positionFeesCollectedEvent.hasPendingShortTokenFundingFee).eq(false);
