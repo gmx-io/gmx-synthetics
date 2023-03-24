@@ -397,5 +397,9 @@ library BaseOrderUtils {
         if (order.account() == address(0)) {
             revert Errors.EmptyOrder();
         }
+
+        if (order.sizeDeltaUsd() == 0 && order.initialCollateralDeltaAmount() == 0) {
+            revert Errors.EmptyOrder();
+        }
     }
 }
