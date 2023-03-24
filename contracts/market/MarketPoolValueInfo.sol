@@ -11,7 +11,7 @@ library MarketPoolValueInfo {
     // @param longTokenUsd the USD value of the long tokens in the pool
     // @param shortTokenUsd the USD value of the short tokens in the pool
     // @param totalBorrowingFees the total pending borrowing fees for the market
-    // @param borrowingFeeReceiverFactor the fee receiver factor for borrowing fees
+    // @param borrowingFeePoolFactor the pool factor for borrowing fees
     // @param impactPoolAmount the amount of tokens in the impact pool
     // @param longPnl the pending pnl of long positions
     // @param shortPnl the pending pnl of short positions
@@ -28,7 +28,7 @@ library MarketPoolValueInfo {
         uint256 shortTokenUsd;
 
         uint256 totalBorrowingFees;
-        uint256 borrowingFeeReceiverFactor;
+        uint256 borrowingFeePoolFactor;
 
         uint256 impactPoolAmount;
     }

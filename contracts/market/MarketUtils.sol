@@ -291,8 +291,8 @@ library MarketUtils {
         result.totalBorrowingFees = getTotalPendingBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, true);
         result.totalBorrowingFees += getTotalPendingBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, false);
 
-        result.borrowingFeeReceiverFactor = dataStore.getUint(Keys.BORROWING_FEE_RECEIVER_FACTOR);
-        poolValue += Precision.applyFactor(result.totalBorrowingFees, result.borrowingFeeReceiverFactor);
+        result.borrowingFeePoolFactor = Precision.FLOAT_PRECISION - dataStore.getUint(Keys.BORROWING_FEE_RECEIVER_FACTOR);
+        poolValue += Precision.applyFactor(result.totalBorrowingFees, result.borrowingFeePoolFactor);
 
         result.impactPoolAmount = getPositionImpactPoolAmount(dataStore, market.marketToken);
         poolValue -= result.impactPoolAmount * indexTokenPrice.pickPrice(maximize);

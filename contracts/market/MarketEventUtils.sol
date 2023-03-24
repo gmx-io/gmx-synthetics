@@ -40,7 +40,7 @@ library MarketEventUtils {
         eventData.uintItems.setItem(2, "longTokenUsd", props.longTokenUsd);
         eventData.uintItems.setItem(3, "shortTokenUsd", props.shortTokenUsd);
         eventData.uintItems.setItem(4, "totalBorrowingFees", props.totalBorrowingFees);
-        eventData.uintItems.setItem(5, "borrowingFeeReceiverFactor", props.borrowingFeeReceiverFactor);
+        eventData.uintItems.setItem(5, "borrowingFeePoolFactor", props.borrowingFeePoolFactor);
         eventData.uintItems.setItem(6, "impactPoolAmount", props.impactPoolAmount);
         eventData.uintItems.setItem(7, "marketTokensSupply", marketTokensSupply);
 
