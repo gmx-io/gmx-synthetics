@@ -69,7 +69,7 @@ library ReaderUtils {
         address shortToken,
         int256 latestLongTokenFundingAmountPerSize,
         int256 latestShortTokenFundingAmountPerSize
-    ) external view returns (PositionPricingUtils.PositionFundingFees memory) {
+    ) external pure returns (PositionPricingUtils.PositionFundingFees memory) {
         return PositionPricingUtils.getFundingFees(
             position,
             longToken,
