@@ -139,7 +139,6 @@ library Errors {
 
     // IncreaseOrderUtils errors
     error UnexpectedPositionState();
-    error InvalidCollateralToken(address collateralToken, address market);
 
     // OrderUtils errors
     error OrderTypeCannotBeCreated(uint256 orderType);

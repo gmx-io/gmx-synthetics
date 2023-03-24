@@ -33,9 +33,7 @@ library IncreaseOrderUtils {
             false
         ));
 
-        if (collateralToken != params.market.longToken && collateralToken != params.market.shortToken) {
-            revert Errors.InvalidCollateralToken(collateralToken, params.market.marketToken);
-        }
+        MarketUtils.validateMarketCollateralToken(params.market, collateralToken);
 
         bytes32 positionKey = PositionUtils.getPositionKey(params.order.account(), params.order.market(), collateralToken, params.order.isLong());
         Position.Props memory position = PositionStoreUtils.get(params.contracts.dataStore, positionKey);
