@@ -940,12 +940,12 @@ library MarketUtils {
         // if longs pay shorts then the fundingAmountPerSize_LongCollateral_LongPosition should be increased by 0.000005
         if (result.longsPayShorts) {
             // long positions should have funding fees increased by the funding for their collateral divided by the open interest for their collateral
-            cache.fps.fundingAmountPerSizeDelta_LongCollateral_LongPosition = Precision.toFactor(cache.fundingAmountForLongCollateral, cache.oi.longOpenInterestWithLongCollateral);
-            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_LongPosition = Precision.toFactor(cache.fundingAmountForShortCollateral, cache.oi.longOpenInterestWithShortCollateral);
+            cache.fps.fundingAmountPerSizeDelta_LongCollateral_LongPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForLongCollateral, cache.oi.longOpenInterestWithLongCollateral);
+            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_LongPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForShortCollateral, cache.oi.longOpenInterestWithShortCollateral);
 
             // short positions should receive positive funding fees equivalent to the funding in the collateral paid by the long positions divided by the total short open interest
-            cache.fps.fundingAmountPerSizeDelta_LongCollateral_ShortPosition = Precision.toFactor(cache.fundingAmountForLongCollateral, cache.oi.shortOpenInterest);
-            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_ShortPosition = Precision.toFactor(cache.fundingAmountForShortCollateral, cache.oi.shortOpenInterest);
+            cache.fps.fundingAmountPerSizeDelta_LongCollateral_ShortPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForLongCollateral, cache.oi.shortOpenInterest);
+            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_ShortPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForShortCollateral, cache.oi.shortOpenInterest);
 
             // longs pay shorts
             result.fundingAmountPerSize_LongCollateral_LongPosition = Calc.boundedAdd(
@@ -969,12 +969,12 @@ library MarketUtils {
             );
         } else {
             // short positions should have funding fees increased by the funding for their collateral divided by the open interest for their collateral
-            cache.fps.fundingAmountPerSizeDelta_LongCollateral_ShortPosition = Precision.toFactor(cache.fundingAmountForLongCollateral, cache.oi.shortOpenInterestWithLongCollateral);
-            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_ShortPosition = Precision.toFactor(cache.fundingAmountForShortCollateral, cache.oi.shortOpenInterestWithShortCollateral);
+            cache.fps.fundingAmountPerSizeDelta_LongCollateral_ShortPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForLongCollateral, cache.oi.shortOpenInterestWithLongCollateral);
+            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_ShortPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForShortCollateral, cache.oi.shortOpenInterestWithShortCollateral);
 
             // long positions should receive positive funding fees equivalent to the funding in the collateral paid by the short positions divided by the total long open interest
-            cache.fps.fundingAmountPerSizeDelta_LongCollateral_LongPosition = Precision.toFactor(cache.fundingAmountForLongCollateral, cache.oi.longOpenInterest);
-            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_LongPosition = Precision.toFactor(cache.fundingAmountForShortCollateral, cache.oi.longOpenInterest);
+            cache.fps.fundingAmountPerSizeDelta_LongCollateral_LongPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForLongCollateral, cache.oi.longOpenInterest);
+            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_LongPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForShortCollateral, cache.oi.longOpenInterest);
 
             result.fundingAmountPerSize_LongCollateral_ShortPosition = Calc.boundedAdd(
                 result.fundingAmountPerSize_LongCollateral_ShortPosition,
@@ -998,6 +998,35 @@ library MarketUtils {
         }
 
         return result;
+    }
+
+    function getFundingAmountPerSizeDelta(
+        uint256 fundingAmount,
+        uint256 openInterest
+    ) internal pure returns (uint256) {
+        if (openInterest == 0) { return 0; }
+
+        // the divisor would be zero for two cases:
+        // 1. the openInterest of the smaller side is very small
+        // 2. the openInterest of the larger side is very small
+        //
+        // if the openInterest of the smaller side is too small
+        // no funding fees would be received by the smaller side
+        // the larger side may still pay funding fees, this would
+        // result in some excess tokens in the market for this case
+        //
+        // if the openInterest of the larger side is too small
+        // then no funding fees would be paid from that side
+        // though it is possible for the smaller side to still receive
+        // a small amount of funding fees, this may result in a small
+        // amount of excess tokens being deducted from the market
+        //
+        // if a minimum position size of at least 1 USD is set, then
+        // these cases should not occur
+        uint256 divisor = openInterest / Precision.LOW_FLOAT_PRECISION;
+        if (divisor == 0) { return 0; }
+
+        return Precision.toFactor(fundingAmount, divisor);
     }
 
     // @dev update the cumulative borrowing factor for a market
@@ -1220,7 +1249,10 @@ library MarketUtils {
         uint256 positionSizeInUsd
     ) internal pure returns (bool, int256) {
         int256 fundingDiffFactor = (latestFundingAmountPerSize - positionFundingAmountPerSize);
-        int256 amount = Precision.applyFactor(positionSizeInUsd, fundingDiffFactor);
+        // this will always be zero if positionSizeInUsd is less than Precision.LOW_FLOAT_PRECISION
+        // position sizes should be validated to be above a minimum amount
+        // to prevent gaming by using small positions to avoid paying funding fees
+        int256 amount = Precision.applyFactor(positionSizeInUsd / Precision.LOW_FLOAT_PRECISION, fundingDiffFactor);
 
         return (fundingDiffFactor != 0 && amount == 0, amount);
     }
