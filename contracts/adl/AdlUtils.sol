@@ -108,7 +108,7 @@ library AdlUtils {
         );
 
         setIsAdlEnabled(dataStore, market, isLong, shouldEnableAdl);
-        setLatestAdlBlock(dataStore, market, isLong, block.number);
+        setLatestAdlBlock(dataStore, market, isLong, Chain.currentBlockNumber());
 
         emitAdlStateUpdated(eventEmitter, market, isLong, pnlToPoolFactor, maxPnlFactor, shouldEnableAdl);
     }
