@@ -2,6 +2,9 @@ import { getEventDataValue } from "./event";
 
 import Errors from "../artifacts/contracts/errors/Errors.sol/Errors.json";
 
+export const errorsInterface = new ethers.utils.Interface(Errors.abi);
+export const errorsContract = new ethers.Contract(ethers.constants.AddressZero, Errors.abi);
+
 export function getErrorString(error) {
   return JSON.stringify({
     name: error.name,
@@ -15,9 +18,8 @@ export function getCancellationReason({ logs, eventName }) {
     return;
   }
 
-  const errors = new ethers.utils.Interface(Errors.abi);
   try {
-    const reason = errors.parseError(reasonBytes);
+    const reason = errorsInterface.parseError(reasonBytes);
     return reason;
   } catch (e) {
     throw new Error(`Could not parse errorBytes ${reasonBytes}`);
