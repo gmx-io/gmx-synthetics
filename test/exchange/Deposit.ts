@@ -8,6 +8,7 @@ import { getClaimableFeeAmount } from "../../utils/fee";
 import { getPoolAmount, getSwapImpactPoolAmount, getMarketTokenPrice } from "../../utils/market";
 import { getDepositCount, getDepositKeys, createDeposit, executeDeposit, handleDeposit } from "../../utils/deposit";
 import { getExecuteParams } from "../../utils/exchange";
+import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 
@@ -19,11 +20,8 @@ describe("Exchange.Deposit", () => {
   let user0, user1, user2;
   let reader,
     dataStore,
-    oracle,
     depositVault,
     depositHandler,
-    depositUtils,
-    executeDepositUtils,
     ethUsdMarket,
     ethUsdSpotOnlyMarket,
     btcUsdMarket,
@@ -38,11 +36,8 @@ describe("Exchange.Deposit", () => {
     ({
       reader,
       dataStore,
-      oracle,
       depositVault,
       depositHandler,
-      depositUtils,
-      executeDepositUtils,
       ethUsdMarket,
       ethUsdSpotOnlyMarket,
       btcUsdMarket,
@@ -71,31 +66,31 @@ describe("Exchange.Deposit", () => {
     await dataStore.setBool(_createDepositFeatureDisabledKey, true);
 
     await expect(createDeposit(fixture, { ...params, sender: user0 }))
-      .to.be.revertedWithCustomError(depositHandler, "Unauthorized")
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user0.address, "CONTROLLER");
 
     await expect(createDeposit(fixture, params))
-      .to.be.revertedWithCustomError(depositHandler, "DisabledFeature")
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
       .withArgs(_createDepositFeatureDisabledKey);
 
     await dataStore.setBool(_createDepositFeatureDisabledKey, false);
 
     await expect(
       createDeposit(fixture, { ...params, account: { address: AddressZero } })
-    ).to.be.revertedWithCustomError(depositUtils, "EmptyAccount");
+    ).to.be.revertedWithCustomError(errorsContract, "EmptyAccount");
 
     await expect(
       createDeposit(fixture, {
         ...params,
         market: { marketToken: user1.address, longToken: wnt.address, shortToken: usdc.address },
       })
-    ).to.be.revertedWithCustomError(depositUtils, "EmptyMarket");
+    ).to.be.revertedWithCustomError(errorsContract, "EmptyMarket");
 
     const _isMarketDisabledKey = keys.isMarketDisabledKey(ethUsdMarket.marketToken);
     await dataStore.setBool(_isMarketDisabledKey, true);
 
     await expect(createDeposit(fixture, params))
-      .to.be.revertedWithCustomError(depositUtils, "DisabledMarket")
+      .to.be.revertedWithCustomError(errorsContract, "DisabledMarket")
       .withArgs(ethUsdMarket.marketToken);
 
     await dataStore.setBool(_isMarketDisabledKey, false);
@@ -110,7 +105,7 @@ describe("Exchange.Deposit", () => {
         executionFeeToMint: "200",
       })
     )
-      .to.be.revertedWithCustomError(depositUtils, "InsufficientWntAmountForExecutionFee")
+      .to.be.revertedWithCustomError(errorsContract, "InsufficientWntAmountForExecutionFee")
       .withArgs("200", "500");
 
     await wnt.mint(depositVault.address, "1000");
@@ -130,14 +125,14 @@ describe("Exchange.Deposit", () => {
     // in addition to the 1000 wnt was minted and 500 wnt minted for the execution fee
     expect(deposit.numbers.executionFee).eq("1700");
 
-    await expect(createDeposit(fixture, params)).to.be.revertedWithCustomError(depositUtils, "EmptyDeposit");
+    await expect(createDeposit(fixture, params)).to.be.revertedWithCustomError(errorsContract, "EmptyDeposit");
 
     await expect(
       createDeposit(fixture, { ...params, longTokenAmount: bigNumberify(1), receiver: { address: AddressZero } })
-    ).to.be.revertedWithCustomError(depositUtils, "EmptyReceiver");
+    ).to.be.revertedWithCustomError(errorsContract, "EmptyReceiver");
 
     await expect(createDeposit(fixture, { ...params, longTokenAmount: bigNumberify(1), callbackGasLimit: "3000000" }))
-      .to.be.revertedWithCustomError(depositUtils, "MaxCallbackGasLimitExceeded")
+      .to.be.revertedWithCustomError(errorsContract, "MaxCallbackGasLimitExceeded")
       .withArgs("3000000", "2000000");
 
     await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
@@ -150,7 +145,7 @@ describe("Exchange.Deposit", () => {
         executionFee: "3000",
       })
     )
-      .to.be.revertedWithCustomError(depositUtils, "InsufficientExecutionFee")
+      .to.be.revertedWithCustomError(errorsContract, "InsufficientExecutionFee")
       .withArgs("2000000016000000", "3000");
   });
 
@@ -222,11 +217,11 @@ describe("Exchange.Deposit", () => {
     await dataStore.setBool(_cancelDepositFeatureDisabledKey, true);
 
     await expect(depositHandler.connect(user0).cancelDeposit(depositKeys[0]))
-      .to.be.revertedWithCustomError(depositHandler, "Unauthorized")
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user0.address, "CONTROLLER");
 
     await expect(depositHandler.cancelDeposit(depositKeys[0]))
-      .to.be.revertedWithCustomError(depositHandler, "DisabledFeature")
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
       .withArgs(_cancelDepositFeatureDisabledKey);
   });
 
@@ -247,7 +242,7 @@ describe("Exchange.Deposit", () => {
         priceFeedTokens: [],
       })
     )
-      .to.be.revertedWithCustomError(depositHandler, "Unauthorized")
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user0.address, "ORDER_KEEPER");
 
     await createDeposit(fixture, {
@@ -276,7 +271,7 @@ describe("Exchange.Deposit", () => {
         maxPrices: [expandDecimals(5000, 4)],
       })
     )
-      .to.be.revertedWithCustomError(depositHandler, "DisabledFeature")
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
       .withArgs(_executeDepositFeatureDisabledKey);
 
     await dataStore.setBool(_executeDepositFeatureDisabledKey, false);
@@ -285,7 +280,7 @@ describe("Exchange.Deposit", () => {
       executeDeposit(fixture, {
         oracleBlockNumber: (await provider.getBlock()).number - 10,
       })
-    ).to.be.revertedWithCustomError(executeDepositUtils, "OracleBlockNumberNotWithinRange");
+    ).to.be.revertedWithCustomError(errorsContract, "OracleBlockNumberNotWithinRange");
 
     await expect(
       executeDeposit(fixture, {
@@ -295,7 +290,7 @@ describe("Exchange.Deposit", () => {
         maxPrices: [expandDecimals(5000, 4)],
       })
     )
-      .to.be.revertedWithCustomError(oracle, "EmptyPrimaryPrice")
+      .to.be.revertedWithCustomError(errorsContract, "EmptyPrimaryPrice")
       .withArgs(usdc.address);
 
     await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
@@ -312,7 +307,7 @@ describe("Exchange.Deposit", () => {
         oracleBlockNumber: (await provider.getBlock()).number,
         gasUsageLabel: "executeDeposit",
       })
-    ).to.be.revertedWithCustomError(executeDepositUtils, "EmptyDeposit");
+    ).to.be.revertedWithCustomError(errorsContract, "EmptyDeposit");
   });
 
   it("executeDeposit with swap", async () => {
@@ -392,7 +387,7 @@ describe("Exchange.Deposit", () => {
         secondaryPrices: [],
       })
     )
-      .to.be.revertedWithCustomError(depositHandler, "Unauthorized")
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user0.address, "CONTROLLER");
   });
 
@@ -418,7 +413,7 @@ describe("Exchange.Deposit", () => {
         10
       )
     )
-      .to.be.revertedWithCustomError(depositHandler, "Unauthorized")
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user0.address, "SELF");
   });
 

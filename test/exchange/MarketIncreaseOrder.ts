@@ -6,6 +6,7 @@ import { handleDeposit } from "../../utils/deposit";
 import { OrderType, getOrderCount, getOrderKeys, createOrder, executeOrder, handleOrder } from "../../utils/order";
 import { getPositionCount, getAccountPositionCount } from "../../utils/position";
 import { getExecuteParams } from "../../utils/exchange";
+import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.MarketIncreaseOrder", () => {
@@ -13,13 +14,13 @@ describe("Exchange.MarketIncreaseOrder", () => {
 
   let fixture;
   let user0, user1;
-  let reader, dataStore, increaseOrderUtils, ethUsdMarket, btcUsdMarket, wnt, wbtc, usdc;
+  let reader, dataStore, ethUsdMarket, btcUsdMarket, wnt, wbtc, usdc;
   let executionFee;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1 } = fixture.accounts);
-    ({ reader, dataStore, increaseOrderUtils, ethUsdMarket, btcUsdMarket, wnt, wbtc, usdc } = fixture.contracts);
+    ({ reader, dataStore, ethUsdMarket, btcUsdMarket, wnt, wbtc, usdc } = fixture.contracts);
     ({ executionFee } = fixture.props);
 
     await handleDeposit(fixture, {
@@ -121,7 +122,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
           oracleBlockNumberOffset: -1,
         },
       })
-    ).to.be.revertedWithCustomError(increaseOrderUtils, "OracleBlockNumberNotWithinRange");
+    ).to.be.revertedWithCustomError(errorsContract, "OracleBlockNumberNotWithinRange");
 
     await expect(
       handleOrder(fixture, {
@@ -134,7 +135,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
           oracleBlockNumberOffset: 5,
         },
       })
-    ).to.be.revertedWithCustomError(increaseOrderUtils, "OracleBlockNumberNotWithinRange");
+    ).to.be.revertedWithCustomError(errorsContract, "OracleBlockNumberNotWithinRange");
   });
 
   it("executeOrder", async () => {

@@ -7,6 +7,7 @@ import { OrderType, getOrderCount, getOrderKeys, createOrder, handleOrder } from
 import { getPositionCount, getAccountPositionCount } from "../../utils/position";
 import { hashString } from "../../utils/hash";
 import { getExecuteParams } from "../../utils/exchange";
+import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.PositionOrder", () => {
@@ -17,7 +18,6 @@ describe("Exchange.PositionOrder", () => {
   let reader,
     dataStore,
     orderHandler,
-    orderUtils,
     referralStorage,
     ethUsdMarket,
     ethUsdSpotOnlyMarket,
@@ -33,7 +33,6 @@ describe("Exchange.PositionOrder", () => {
       reader,
       dataStore,
       orderHandler,
-      orderUtils,
       referralStorage,
       ethUsdMarket,
       ethUsdSpotOnlyMarket,
@@ -85,17 +84,17 @@ describe("Exchange.PositionOrder", () => {
     await dataStore.setBool(_createOrderFeatureDisabledKey, true);
 
     await expect(createOrder(fixture, { ...params, sender: user0 }))
-      .to.be.revertedWithCustomError(orderHandler, "Unauthorized")
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user0.address, "CONTROLLER");
 
     await expect(createOrder(fixture, params))
-      .to.be.revertedWithCustomError(orderHandler, "DisabledFeature")
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
       .withArgs(_createOrderFeatureDisabledKey);
 
     await dataStore.setBool(_createOrderFeatureDisabledKey, false);
 
     await expect(createOrder(fixture, { ...params, account: { address: AddressZero } })).to.be.revertedWithCustomError(
-      orderUtils,
+      errorsContract,
       "EmptyAccount"
     );
 
@@ -106,7 +105,7 @@ describe("Exchange.PositionOrder", () => {
         executionFee: "100000",
         executionFeeToMint: "200",
       })
-    ).to.be.revertedWithCustomError(orderUtils, "InsufficientWntAmountForExecutionFee");
+    ).to.be.revertedWithCustomError(errorsContract, "InsufficientWntAmountForExecutionFee");
 
     await expect(
       createOrder(fixture, {
@@ -116,7 +115,7 @@ describe("Exchange.PositionOrder", () => {
         executionFee: "100000",
         executionFeeToMint: "200",
       })
-    ).to.be.revertedWithCustomError(orderUtils, "InsufficientWntAmountForExecutionFee");
+    ).to.be.revertedWithCustomError(errorsContract, "InsufficientWntAmountForExecutionFee");
 
     // transaction should be reverted if orderType is invalid
     await expect(
@@ -140,7 +139,7 @@ describe("Exchange.PositionOrder", () => {
         executionFeeToMint: "200",
       })
     )
-      .to.be.revertedWithCustomError(orderUtils, "OrderTypeCannotBeCreated")
+      .to.be.revertedWithCustomError(errorsContract, "OrderTypeCannotBeCreated")
       .withArgs(OrderType.Liquidation);
 
     await expect(
@@ -152,7 +151,7 @@ describe("Exchange.PositionOrder", () => {
         executionFee: "200",
         executionFeeToMint: "200",
       })
-    ).to.be.revertedWithCustomError(orderUtils, "EmptyMarket");
+    ).to.be.revertedWithCustomError(errorsContract, "EmptyMarket");
 
     await expect(
       createOrder(fixture, {
@@ -163,7 +162,7 @@ describe("Exchange.PositionOrder", () => {
         executionFee: "200",
         executionFeeToMint: "200",
       })
-    ).to.be.revertedWithCustomError(orderUtils, "InvalidPositionMarket");
+    ).to.be.revertedWithCustomError(errorsContract, "InvalidPositionMarket");
 
     await expect(
       createOrder(fixture, {
@@ -175,7 +174,7 @@ describe("Exchange.PositionOrder", () => {
         executionFee: "200",
         executionFeeToMint: "200",
       })
-    ).to.be.revertedWithCustomError(orderUtils, "EmptyMarket");
+    ).to.be.revertedWithCustomError(errorsContract, "EmptyMarket");
 
     await expect(
       createOrder(fixture, {
@@ -188,7 +187,7 @@ describe("Exchange.PositionOrder", () => {
         executionFee: "200",
         executionFeeToMint: "200",
       })
-    ).to.be.revertedWithCustomError(orderUtils, "EmptyReceiver");
+    ).to.be.revertedWithCustomError(errorsContract, "EmptyReceiver");
 
     await expect(
       createOrder(fixture, {
@@ -201,7 +200,7 @@ describe("Exchange.PositionOrder", () => {
         executionFee: "200",
         executionFeeToMint: "200",
       })
-    ).to.be.revertedWithCustomError(orderUtils, "EmptyOrder");
+    ).to.be.revertedWithCustomError(errorsContract, "EmptyOrder");
 
     await expect(
       createOrder(fixture, {
@@ -216,7 +215,7 @@ describe("Exchange.PositionOrder", () => {
         callbackGasLimit: "3000000",
       })
     )
-      .to.be.revertedWithCustomError(orderUtils, "MaxCallbackGasLimitExceeded")
+      .to.be.revertedWithCustomError(errorsContract, "MaxCallbackGasLimitExceeded")
       .withArgs("3000000", "2000000");
 
     await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
@@ -234,7 +233,7 @@ describe("Exchange.PositionOrder", () => {
         callbackGasLimit: "2000000",
       })
     )
-      .to.be.revertedWithCustomError(orderUtils, "InsufficientExecutionFee")
+      .to.be.revertedWithCustomError(errorsContract, "InsufficientExecutionFee")
       .withArgs("2000000016000000", "2200");
 
     await createOrder(fixture, {
@@ -317,7 +316,7 @@ describe("Exchange.PositionOrder", () => {
         secondaryPrices: [],
       })
     )
-      .to.be.revertedWithCustomError(orderHandler, "Unauthorized")
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user0.address, "CONTROLLER");
 
     await expect(
@@ -336,7 +335,7 @@ describe("Exchange.PositionOrder", () => {
         secondaryTokens: [],
         secondaryPrices: [],
       })
-    ).to.be.revertedWithCustomError(orderHandler, "EndOfOracleSimulation");
+    ).to.be.revertedWithCustomError(errorsContract, "EndOfOracleSimulation");
   });
 
   it("executeOrder validations", async () => {
@@ -367,7 +366,7 @@ describe("Exchange.PositionOrder", () => {
         create: params,
       })
     )
-      .to.be.revertedWithCustomError(orderHandler, "DisabledFeature")
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
       .withArgs(_executeOrderFeatureDisabledKey);
 
     await dataStore.setBool(_executeOrderFeatureDisabledKey, false);
