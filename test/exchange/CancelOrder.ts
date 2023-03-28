@@ -6,6 +6,7 @@ import { deployContract } from "../../utils/deploy";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { printGasUsage } from "../../utils/gas";
 import { handleDeposit } from "../../utils/deposit";
+import { errorsContract } from "../../utils/error";
 import { OrderType, getOrderCount, getOrderKeys, createOrder } from "../../utils/order";
 import * as keys from "../../utils/keys";
 
@@ -67,13 +68,13 @@ describe("Exchange.CancelOrder", () => {
     await dataStore.setBool(_cancelOrderFeatureDisabledKey, true);
 
     await expect(exchangeRouter.connect(user1).cancelOrder(orderKeys[0]))
-      .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user1.address, "account for cancelOrder");
 
     expect(await getOrderCount(dataStore)).eq(1);
 
     await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0]))
-      .to.be.revertedWithCustomError(orderHandler, "DisabledFeature")
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
       .withArgs(_cancelOrderFeatureDisabledKey);
 
     expect(await getOrderCount(dataStore)).eq(1);
@@ -81,7 +82,7 @@ describe("Exchange.CancelOrder", () => {
     await dataStore.setBool(_cancelOrderFeatureDisabledKey, false);
 
     await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0]))
-      .to.be.revertedWithCustomError(orderHandler, "RequestNotYetCancellable")
+      .to.be.revertedWithCustomError(errorsContract, "RequestNotYetCancellable")
       .withArgs(5, 10, "Order");
 
     mine(10);
@@ -134,7 +135,7 @@ describe("Exchange.CancelOrder", () => {
     expect(await getOrderCount(dataStore)).eq(0);
 
     await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0])).to.be.revertedWithCustomError(
-      exchangeRouter,
+      errorsContract,
       "EmptyOrder"
     );
   });

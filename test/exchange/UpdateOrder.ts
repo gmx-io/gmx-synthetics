@@ -5,6 +5,7 @@ import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { printGasUsage } from "../../utils/gas";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, getOrderCount, getOrderKeys, createOrder } from "../../utils/order";
+import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.UpdateOrder", () => {
@@ -70,7 +71,7 @@ describe("Exchange.UpdateOrder", () => {
           expandDecimals(52000, 6)
         )
     )
-      .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user1.address, "account for updateOrder");
 
     await expect(
@@ -84,7 +85,7 @@ describe("Exchange.UpdateOrder", () => {
           expandDecimals(52000, 6)
         )
     )
-      .to.be.revertedWithCustomError(orderHandler, "DisabledFeature")
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
       .withArgs(_updateOrderFeatureDisabledKey);
 
     await dataStore.setBool(_updateOrderFeatureDisabledKey, false);
@@ -100,7 +101,7 @@ describe("Exchange.UpdateOrder", () => {
           expandDecimals(52000, 6)
         )
     )
-      .to.be.revertedWithCustomError(orderHandler, "OrderNotUpdatable")
+      .to.be.revertedWithCustomError(errorsContract, "OrderNotUpdatable")
       .withArgs(OrderType.MarketIncrease);
   });
 

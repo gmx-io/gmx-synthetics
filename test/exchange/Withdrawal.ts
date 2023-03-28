@@ -13,6 +13,7 @@ import {
   executeWithdrawal,
   handleWithdrawal,
 } from "../../utils/withdrawal";
+import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.Withdrawal", () => {
@@ -21,13 +22,12 @@ describe("Exchange.Withdrawal", () => {
 
   let fixture;
   let user0, user1, user2;
-  let reader, dataStore, marketUtils, withdrawalHandler, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc;
+  let reader, dataStore, withdrawalHandler, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ reader, dataStore, marketUtils, withdrawalHandler, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc } =
-      fixture.contracts);
+    ({ reader, dataStore, withdrawalHandler, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc } = fixture.contracts);
   });
 
   it("createWithdrawal", async () => {
@@ -253,7 +253,7 @@ describe("Exchange.Withdrawal", () => {
     expect(await getClaimableFeeAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq("0");
 
     await expect(getMarketTokenPrice(fixture)).to.be.revertedWithCustomError(
-      marketUtils,
+      errorsContract,
       "UnexpectedSupplyForTokenPriceCalculation"
     );
 
