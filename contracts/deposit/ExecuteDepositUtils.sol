@@ -307,6 +307,12 @@ library ExecuteDepositUtils {
                 _params.tokenOut,
                 positiveImpactAmount
             );
+
+            MarketUtils.validatePoolAmount(
+                params.dataStore,
+                _params.market,
+                _params.tokenOut
+            );
         } else {
             // when there is a negative price impact factor,
             // less of the deposit amount is used to mint market tokens
