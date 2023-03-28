@@ -40,10 +40,7 @@ library PositionPricingUtils {
     // @param isLong whether the position is long or short
     struct GetPriceImpactUsdParams {
         DataStore dataStore;
-        address market;
-        address indexToken;
-        address longToken;
-        address shortToken;
+        Market.Props market;
         int256 usdDelta;
         bool isLong;
     }
@@ -207,7 +204,7 @@ library PositionPricingUtils {
     function getPriceImpactUsd(GetPriceImpactUsdParams memory params) internal view returns (int256) {
         OpenInterestParams memory openInterestParams = getNextOpenInterest(params);
 
-        int256 priceImpactUsd = _getPriceImpactUsd(params.dataStore, params.market, openInterestParams);
+        int256 priceImpactUsd = _getPriceImpactUsd(params.dataStore, params.market.marketToken, openInterestParams);
 
         if (priceImpactUsd >= 0) {
             return priceImpactUsd;
@@ -215,7 +212,7 @@ library PositionPricingUtils {
 
         (bool hasVirtualInventory, int256 thresholdImpactFactorForVirtualInventory) = MarketUtils.getThresholdPositionImpactFactorForVirtualInventory(
             params.dataStore,
-            params.indexToken
+            params.market.indexToken
         );
 
         if (!hasVirtualInventory) {
@@ -223,7 +220,7 @@ library PositionPricingUtils {
         }
 
         OpenInterestParams memory openInterestParamsForVirtualInventory = getNextOpenInterestForVirtualInventory(params);
-        int256 priceImpactUsdForVirtualInventory = _getPriceImpactUsd(params.dataStore, params.market, openInterestParamsForVirtualInventory);
+        int256 priceImpactUsdForVirtualInventory = _getPriceImpactUsd(params.dataStore, params.market.marketToken, openInterestParamsForVirtualInventory);
         int256 thresholdPriceImpactUsd = Precision.applyFactor(params.usdDelta.abs(), thresholdImpactFactorForVirtualInventory);
 
         if (priceImpactUsdForVirtualInventory > thresholdPriceImpactUsd) {
@@ -281,15 +278,12 @@ library PositionPricingUtils {
         uint256 longOpenInterest = MarketUtils.getOpenInterest(
             params.dataStore,
             params.market,
-            params.longToken,
-            params.shortToken,
-            true);
+            true
+        );
 
         uint256 shortOpenInterest = MarketUtils.getOpenInterest(
             params.dataStore,
             params.market,
-            params.longToken,
-            params.shortToken,
             false
         );
 
@@ -299,7 +293,7 @@ library PositionPricingUtils {
     function getNextOpenInterestForVirtualInventory(
         GetPriceImpactUsdParams memory params
     ) internal view returns (OpenInterestParams memory) {
-        (/* bool hasVirtualInventory */, int256 virtualInventory) = MarketUtils.getVirtualInventoryForPositions(params.dataStore, params.indexToken);
+        (/* bool hasVirtualInventory */, int256 virtualInventory) = MarketUtils.getVirtualInventoryForPositions(params.dataStore, params.market.indexToken);
 
         uint256 longOpenInterest;
         uint256 shortOpenInterest;
