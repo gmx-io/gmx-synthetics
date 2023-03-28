@@ -145,7 +145,21 @@ library TokenUtils {
 
         uint256 gasLimit = dataStore.getUint(Keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT);
 
-        (bool success, /* bytes memory data */) = payable(receiver).call{ value: amount, gas: gasLimit }("");
+        bool success;
+        // use an assembly call to avoid loading large data into memory
+        // input mem[in…(in+insize)]
+        // output area mem[out…(out+outsize))]
+        assembly {
+            success := call(
+                gasLimit, // gas limit
+                receiver, // receiver
+                amount, // value
+                0, // in
+                0, // insize
+                0, // out
+                0 // outsize
+            )
+        }
 
         if (success) { return; }
 
