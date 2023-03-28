@@ -262,7 +262,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
             revert Errors.ActionAlreadySignalled();
         }
 
-        pendingActions[actionKey] = block.timestamp + timelockDelay;
+        pendingActions[actionKey] = Chain.currentTimestamp() + timelockDelay;
 
         EventUtils.EventLogData memory eventData;
 
@@ -323,7 +323,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
             revert Errors.ActionNotSignalled();
         }
 
-        if (pendingActions[actionKey] > block.timestamp) {
+        if (pendingActions[actionKey] > Chain.currentTimestamp()) {
             revert Errors.SignalTimeNotYetPassed(pendingActions[actionKey]);
         }
     }
