@@ -171,17 +171,23 @@ library BaseOrderUtils {
     // @dev set the price for increase / decrease position orders
     //
     // for market orders, set the min and max values of the customPrice for the indexToken
-    // to either secondaryPrice.min or secondaryPrice.max depending on whether the order
+    // to either primaryPrice.min or primaryPrice.max depending on whether the order
     // is an increase or decrease and whether it is for a long or short
     //
     // customPrice.min and customPrice.max will be equal in this case
     // this is because in getExecutionPrice the function will try to use the closest price which can fulfill
-    // the order, if customPrice.min is set to secondaryPrice.min and customPrice.max is set to secondaryPrice.max
+    // the order, if customPrice.min is set to primaryPrice.min and customPrice.max is set to primaryPrice.max
     // getExecutionPrice will pick a better price than what should be possible
     //
-    // for limit / stop-loss orders, the min and max value will be set to the triggerPrice
-    // and latest secondaryPrice value, this represents the price that the user desired the order
-    // to be fulfilled at and the best oracle price that the order could be fulfilled at
+    // for limit orders, the the min and max value will be set to the triggerPrice
+    // and primaryPrice value, this represents the price that the user desired the order
+    // to be fulfilled at and the best oracle price that the order can be fulfilled at
+    //
+    // for stop-loss orders, the min and max value will be set to the triggerPrice value
+    // the primaryPrice and secondaryPrice are not used because the primaryPrice is a stale
+    // value and cannot be used as it would result in executing at a better price than what
+    // should be possible, the secondaryPrice is a worse price than the triggerPrice, so there
+    // it should not need to be considered
     //
     // getExecutionPrice handles the logic for selecting the execution price to use
     //
@@ -278,11 +284,11 @@ library BaseOrderUtils {
             if (shouldValidateAscendingPrice) {
                 oracle.setCustomPrice(indexToken, Price.Props(
                     triggerPrice, // min price that order can be executed with
-                    secondaryPrice // max price that order can be executed with
+                    triggerPrice // max price that order can be executed with
                 ));
             } else {
                 oracle.setCustomPrice(indexToken, Price.Props(
-                    secondaryPrice, // min price that order can be executed with
+                    triggerPrice, // min price that order can be executed with
                     triggerPrice // max price that order can be executed with
                 ));
             }
