@@ -475,8 +475,8 @@ library PositionUtils {
             params.contracts.dataStore,
             params.market.marketToken,
             params.position.isLong(),
-            params.position.borrowingFactor(),
             params.position.sizeInUsd(),
+            params.position.borrowingFactor(),
             nextPositionSizeInUsd,
             nextPositionBorrowingFactor
         );
