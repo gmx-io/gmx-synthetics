@@ -308,6 +308,7 @@ library SwapUtils {
             params.eventEmitter,
             _params.market.marketToken,
             _params.tokenIn,
+            cache.tokenInPrice.min,
             "swap",
             fees
         );
