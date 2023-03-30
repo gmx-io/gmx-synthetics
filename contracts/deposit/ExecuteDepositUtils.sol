@@ -240,6 +240,7 @@ library ExecuteDepositUtils {
             params.eventEmitter,
              _params.market.marketToken,
              _params.tokenIn,
+             _params.tokenInPrice.min,
              "deposit",
              fees
          );

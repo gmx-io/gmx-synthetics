@@ -280,6 +280,7 @@ library SwapPricingUtils {
         EventEmitter eventEmitter,
         address market,
         address token,
+        uint256 tokenPrice,
         string memory action,
         SwapFees memory fees
     ) internal {
@@ -292,10 +293,11 @@ library SwapPricingUtils {
         eventData.stringItems.initItems(1);
         eventData.stringItems.setItem(0, "action", action);
 
-        eventData.uintItems.initItems(3);
-        eventData.uintItems.setItem(0, "feeReceiverAmount", fees.feeReceiverAmount);
-        eventData.uintItems.setItem(1, "feeAmountForPool", fees.feeAmountForPool);
-        eventData.uintItems.setItem(2, "amountAfterFees", fees.amountAfterFees);
+        eventData.uintItems.initItems(4);
+        eventData.uintItems.setItem(0, "tokenPrice", tokenPrice);
+        eventData.uintItems.setItem(1, "feeReceiverAmount", fees.feeReceiverAmount);
+        eventData.uintItems.setItem(2, "feeAmountForPool", fees.feeAmountForPool);
+        eventData.uintItems.setItem(3, "amountAfterFees", fees.amountAfterFees);
 
         eventEmitter.emitEventLog1(
             "SwapFeesCollected",
