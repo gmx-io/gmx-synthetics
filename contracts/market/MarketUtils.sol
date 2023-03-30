@@ -781,7 +781,7 @@ library MarketUtils {
         // so the virtual inventory should be increased
         // if the open interest for shorts is increased then tokens were virtually sold to the pool
         // so the virtual inventory should be increased
-        // if the open interest for shorts is decreased then tokens were virtually bought the pool
+        // if the open interest for shorts is decreased then tokens were virtually bought from the pool
         // so the virtual inventory should be decreased
         applyDeltaToVirtualInventoryForPositions(
             dataStore,
