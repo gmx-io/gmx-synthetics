@@ -95,6 +95,10 @@ library SwapUtils {
      */
     function swap(SwapParams memory params) external returns (address, uint256) {
         if (params.swapPathMarkets.length == 0) {
+            if (params.amountIn < params.minOutputAmount) {
+                revert Errors.InsufficientOutputAmount(params.amountIn, params.minOutputAmount);
+            }
+
             if (address(params.bank) != params.receiver) {
                 params.bank.transferOut(
                     params.tokenIn,
