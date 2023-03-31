@@ -303,7 +303,8 @@ library SwapUtils {
             params.dataStore,
             _params.market,
             prices,
-            Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS
+            _params.tokenIn == _params.market.longToken ? Keys.MAX_PNL_FACTOR_FOR_DEPOSITS : Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
+            cache.tokenOut == _params.market.shortToken ? Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS : Keys.MAX_PNL_FACTOR_FOR_DEPOSITS
         );
 
         SwapPricingUtils.emitSwapInfo(
