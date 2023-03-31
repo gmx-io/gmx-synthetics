@@ -120,6 +120,14 @@ library SwapUtils {
 
         for (uint256 i = 0; i < params.swapPathMarkets.length; i++) {
             Market.Props memory market = params.swapPathMarkets[i];
+
+            bool flagExists = params.dataStore.getBool(Keys.swapPathMarketFlagKey(market.marketToken));
+            if (flagExists) {
+                revert Errors.DuplicatedMarketInSwapPath(market.marketToken);
+            }
+
+            params.dataStore.setBool(Keys.swapPathMarketFlagKey(market.marketToken), true);
+
             uint256 nextIndex = i + 1;
             address receiver;
             if (nextIndex < params.swapPathMarkets.length) {
@@ -137,6 +145,11 @@ library SwapUtils {
             );
 
             (tokenOut, outputAmount) = _swap(params, _params);
+        }
+
+        for (uint256 i = 0; i < params.swapPathMarkets.length; i++) {
+            Market.Props memory market = params.swapPathMarkets[i];
+            params.dataStore.setBool(Keys.swapPathMarketFlagKey(market.marketToken), false);
         }
 
         if (outputAmount < params.minOutputAmount) {
