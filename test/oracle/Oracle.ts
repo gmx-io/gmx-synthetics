@@ -14,6 +14,7 @@ import {
 } from "../../utils/oracle";
 import { printGasUsage } from "../../utils/gas";
 import { grantRole } from "../../utils/role";
+import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 
 describe("Oracle", () => {
@@ -53,7 +54,7 @@ describe("Oracle", () => {
         priceFeedTokens: [],
       })
     )
-      .to.be.revertedWithCustomError(oracle, "Unauthorized")
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user0.address, "CONTROLLER");
 
     await expect(
@@ -71,7 +72,7 @@ describe("Oracle", () => {
         signatures: [],
         priceFeedTokens: [],
       })
-    ).to.be.revertedWithCustomError(oracle, "EmptyTokens");
+    ).to.be.revertedWithCustomError(errorsContract, "EmptyTokens");
 
     const blockNumber = (await provider.getBlock()).number;
     const blockTimestamp = (await provider.getBlock()).timestamp;
@@ -92,7 +93,7 @@ describe("Oracle", () => {
         priceFeedTokens: [],
       })
     )
-      .to.be.revertedWithCustomError(oracle, "InvalidBlockNumber")
+      .to.be.revertedWithCustomError(errorsContract, "InvalidBlockNumber")
       .withArgs(blockNumber + 10);
 
     await expect(
@@ -130,7 +131,7 @@ describe("Oracle", () => {
         priceFeedTokens: [],
       })
     )
-      .to.be.revertedWithCustomError(oracle, "MinOracleSigners")
+      .to.be.revertedWithCustomError(errorsContract, "MinOracleSigners")
       .withArgs(2, 3);
 
     await expect(
@@ -149,7 +150,7 @@ describe("Oracle", () => {
         priceFeedTokens: [],
       })
     )
-      .to.be.revertedWithCustomError(oracle, "DuplicateSigner")
+      .to.be.revertedWithCustomError(errorsContract, "DuplicateSigner")
       .withArgs(1);
 
     let signerInfo = getSignerInfo([0, 1, 2, 3, 4, 7, 9]);
@@ -186,7 +187,7 @@ describe("Oracle", () => {
         priceFeedTokens: [],
       })
     )
-      .to.be.revertedWithCustomError(oracle, "EmptyCompactedPrice")
+      .to.be.revertedWithCustomError(errorsContract, "EmptyCompactedPrice")
       .withArgs(5);
 
     signerInfo = getSignerInfo([0, 1, 2, 3, 4, 7, 9]);
@@ -222,7 +223,7 @@ describe("Oracle", () => {
         signatures,
       })
     )
-      .to.be.revertedWithCustomError(oracle, "MinPricesNotSorted")
+      .to.be.revertedWithCustomError(errorsContract, "MinPricesNotSorted")
       .withArgs(wnt.address, 4989, 4990);
 
     signerInfo = getSignerInfo([0, 1, 2, 3, 4, 7, 9]);
@@ -258,7 +259,7 @@ describe("Oracle", () => {
         signatures,
       })
     )
-      .to.be.revertedWithCustomError(oracle, "MaxPricesNotSorted")
+      .to.be.revertedWithCustomError(errorsContract, "MaxPricesNotSorted")
       .withArgs(wnt.address, 4979, 4995);
 
     signerInfo = getSignerInfo([0, 1, 2, 3, 4, 7, 9]);
@@ -295,7 +296,7 @@ describe("Oracle", () => {
         compactedMaxPricesIndexes: getCompactedPriceIndexes([0, 1, 2, 3, 4, 5, 6]),
         signatures,
       })
-    ).to.be.revertedWithCustomError(oracle, "InvalidSignature");
+    ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
 
     signerInfo = getSignerInfo([0, 1, 2, 3, 4, 7, 9]);
     minPrices = [4990, 4991, 4995, 5000, 5001, 5005, 5007];
@@ -384,7 +385,7 @@ describe("Oracle", () => {
         signatures: wntSignatures.concat(wbtcSignatures),
       })
     )
-      .to.be.revertedWithCustomError(oracle, "NonEmptyTokensWithPrices")
+      .to.be.revertedWithCustomError(errorsContract, "NonEmptyTokensWithPrices")
       .withArgs(1);
 
     await oracle.clearAllPrices();
@@ -404,7 +405,7 @@ describe("Oracle", () => {
         compactedMaxPricesIndexes: getCompactedPriceIndexes([0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6]),
         signatures: wntSignatures.concat(wbtcSignatures),
       })
-    ).to.be.revertedWithCustomError(oracle, "EmptyCompactedBlockNumber");
+    ).to.be.revertedWithCustomError(errorsContract, "EmptyCompactedBlockNumber");
 
     await expect(
       oracle.setPrices(dataStore.address, eventEmitter.address, {
@@ -421,7 +422,7 @@ describe("Oracle", () => {
         compactedMaxPricesIndexes: getCompactedPriceIndexes([0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6]),
         signatures: wntSignatures.concat(wbtcSignatures),
       })
-    ).to.be.revertedWithCustomError(oracle, "InvalidSignature");
+    ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
 
     const tx1 = await oracle.setPrices(dataStore.address, eventEmitter.address, {
       priceFeedTokens: [],

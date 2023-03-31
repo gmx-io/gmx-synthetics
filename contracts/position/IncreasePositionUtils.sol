@@ -43,9 +43,6 @@ library IncreasePositionUtils {
         uint256 nextPositionBorrowingFactor;
     }
 
-    error InsufficientCollateralAmount();
-    error InsufficientCollateralForOpenInterestLeverage(int256 remainingCollateralUsd);
-
     // @dev increase a position
     // The increasePosition function is used to increase the size of a position
     // in a market. This involves updating the position's collateral amount,
@@ -90,7 +87,7 @@ library IncreasePositionUtils {
             cache.collateralDeltaAmount < 0 &&
             params.position.collateralAmount() < SafeCast.toUint256(-cache.collateralDeltaAmount)
         ) {
-            revert InsufficientCollateralAmount();
+            revert Errors.InsufficientCollateralAmount(params.position.collateralAmount(), cache.collateralDeltaAmount);
         }
         params.position.setCollateralAmount(Calc.sumReturnUint256(params.position.collateralAmount(), cache.collateralDeltaAmount));
 
@@ -148,16 +145,6 @@ library IncreasePositionUtils {
             cache.sizeDeltaInTokens.toInt256()
         );
 
-        if (params.order.sizeDeltaUsd() > 0) {
-            MarketUtils.validateOpenInterest(
-                params.contracts.dataStore,
-                params.market.marketToken,
-                params.market.longToken,
-                params.market.shortToken,
-                params.order.isLong()
-            );
-        }
-
         MarketUtils.validateReserve(
             params.contracts.dataStore,
             params.market,
@@ -171,7 +158,8 @@ library IncreasePositionUtils {
             params.position,
             params.market,
             prices,
-            true
+            true, // isIncrease
+            true // shouldValidateMinCollateralUsd
         );
 
         if (params.order.sizeDeltaUsd() > 0) {
@@ -202,31 +190,35 @@ library IncreasePositionUtils {
             );
 
             if (!willBeSufficient) {
-                revert InsufficientCollateralForOpenInterestLeverage(remainingCollateralUsd);
+                revert Errors.InsufficientCollateralForOpenInterestLeverage(remainingCollateralUsd);
             }
         }
 
         PositionUtils.handleReferral(params, fees);
 
-        PositionPricingUtils.emitPositionFeesCollected(
+        PositionEventUtils.emitPositionFeesCollected(
             params.contracts.eventEmitter,
+            params.orderKey,
             params.market.marketToken,
             params.position.collateralToken(),
+            params.order.sizeDeltaUsd(),
             true,
             fees
         );
 
-        PositionEventUtils.emitPositionIncrease(
-            params.contracts.eventEmitter,
-            params.positionKey,
-            params.position,
-            cache.executionPrice,
-            params.order.sizeDeltaUsd(),
-            cache.sizeDeltaInTokens,
-            cache.collateralDeltaAmount,
-            cache.priceImpactAmount,
-            params.order.orderType()
-        );
+        PositionEventUtils.PositionIncreaseParams memory eventParams;
+        eventParams.eventEmitter = params.contracts.eventEmitter;
+        eventParams.orderKey = params.orderKey;
+        eventParams.positionKey = params.positionKey;
+        eventParams.position = params.position;
+        eventParams.executionPrice = cache.executionPrice;
+        eventParams.sizeDeltaUsd = params.order.sizeDeltaUsd();
+        eventParams.sizeDeltaInTokens = cache.sizeDeltaInTokens;
+        eventParams.collateralDeltaAmount = cache.collateralDeltaAmount;
+        eventParams.priceImpactAmount = cache.priceImpactAmount;
+        eventParams.orderType = params.order.orderType();
+
+        PositionEventUtils.emitPositionIncrease(eventParams);
     }
 
     // @dev handle the collateral changes of the position
@@ -293,10 +285,7 @@ library IncreasePositionUtils {
         int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
                 params.contracts.dataStore,
-                params.market.marketToken,
-                params.market.indexToken,
-                params.market.longToken,
-                params.market.shortToken,
+                params.market,
                 params.order.sizeDeltaUsd().toInt256(),
                 params.order.isLong()
             )

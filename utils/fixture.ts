@@ -55,19 +55,28 @@ export async function deployFixture() {
   const orderVault = await hre.ethers.getContract("OrderVault");
   const marketFactory = await hre.ethers.getContract("MarketFactory");
   const depositHandler = await hre.ethers.getContract("DepositHandler");
+  const depositUtils = await hre.ethers.getContract("DepositUtils");
+  const executeDepositUtils = await hre.ethers.getContract("ExecuteDepositUtils");
   const withdrawalHandler = await hre.ethers.getContract("WithdrawalHandler");
   const orderHandler = await hre.ethers.getContract("OrderHandler");
+  const baseOrderUtils = await hre.ethers.getContract("BaseOrderUtils");
+  const orderUtils = await hre.ethers.getContract("OrderUtils");
   const liquidationHandler = await hre.ethers.getContract("LiquidationHandler");
   const adlHandler = await hre.ethers.getContract("AdlHandler");
   const router = await hre.ethers.getContract("Router");
   const exchangeRouter = await hre.ethers.getContract("ExchangeRouter");
   const oracle = await hre.ethers.getContract("Oracle");
+  const marketUtils = await hre.ethers.getContract("MarketUtils");
   const marketStoreUtils = await hre.ethers.getContract("MarketStoreUtils");
   const depositStoreUtils = await hre.ethers.getContract("DepositStoreUtils");
   const withdrawalStoreUtils = await hre.ethers.getContract("WithdrawalStoreUtils");
   const positionStoreUtils = await hre.ethers.getContract("PositionStoreUtils");
   const orderStoreUtils = await hre.ethers.getContract("OrderStoreUtils");
   const decreasePositionUtils = await hre.ethers.getContract("DecreasePositionUtils");
+  const increaseOrderUtils = await hre.ethers.getContract("IncreaseOrderUtils");
+  const increasePositionUtils = await hre.ethers.getContract("IncreasePositionUtils");
+  const positionUtils = await hre.ethers.getContract("PositionUtils");
+  const swapUtils = await hre.ethers.getContract("SwapUtils");
   const referralStorage = await hre.ethers.getContract("ReferralStorage");
 
   const ethUsdMarketAddress = getMarketTokenAddress(
@@ -90,6 +99,16 @@ export async function deployFixture() {
   );
   const ethUsdSpotOnlyMarket = await reader.getMarket(dataStore.address, ethUsdSpotOnlyMarketAddress);
 
+  const btcUsdMarketAddress = getMarketTokenAddress(
+    wbtc.address,
+    wbtc.address,
+    usdc.address,
+    marketFactory.address,
+    roleStore.address,
+    dataStore.address
+  );
+  const btcUsdMarket = await reader.getMarket(dataStore.address, btcUsdMarketAddress);
+
   const solUsdMarketAddress = getMarketTokenAddress(
     getSyntheticTokenAddress("SOL"),
     wnt.address,
@@ -102,6 +121,9 @@ export async function deployFixture() {
 
   return {
     accountList,
+    getContract: async (contractName) => {
+      return await hre.ethers.getContract(contractName);
+    },
     accounts: {
       wallet,
       user0,
@@ -138,19 +160,28 @@ export async function deployFixture() {
       orderVault,
       marketFactory,
       depositHandler,
+      depositUtils,
+      executeDepositUtils,
       withdrawalHandler,
       orderHandler,
+      baseOrderUtils,
+      orderUtils,
       liquidationHandler,
       adlHandler,
       router,
       exchangeRouter,
       oracle,
+      marketUtils,
       marketStoreUtils,
       depositStoreUtils,
       withdrawalStoreUtils,
       positionStoreUtils,
       orderStoreUtils,
       decreasePositionUtils,
+      increaseOrderUtils,
+      increasePositionUtils,
+      positionUtils,
+      swapUtils,
       referralStorage,
       usdcPriceFeed,
       wnt,
@@ -158,6 +189,7 @@ export async function deployFixture() {
       usdc,
       ethUsdMarket,
       ethUsdSpotOnlyMarket,
+      btcUsdMarket,
       solUsdMarket,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },

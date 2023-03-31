@@ -1,8 +1,10 @@
+import { expect } from "chai";
 import { logGasUsage } from "./gas";
 import { expandDecimals, bigNumberify } from "./math";
 import { executeWithOracleParams } from "./exchange";
 import { contractAt } from "./deploy";
-import { TOKEN_ORACLE_TYPES } from "./oracle";
+import { parseLogs } from "./event";
+import { getCancellationReason, getErrorString } from "./error";
 
 import * as keys from "./keys";
 
@@ -38,20 +40,21 @@ export async function createDeposit(fixture, overrides: any = {}) {
   const minMarketTokens = overrides.minMarketTokens || bigNumberify(0);
   const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
   const executionFee = overrides.executionFee || "1000000000000000";
+  const executionFeeToMint = overrides.executionFeeToMint || executionFee;
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
   const longTokenAmount = overrides.longTokenAmount || bigNumberify(0);
   const shortTokenAmount = overrides.shortTokenAmount || bigNumberify(0);
 
-  await wnt.mint(depositVault.address, executionFee);
+  await wnt.mint(depositVault.address, executionFeeToMint);
 
   if (longTokenAmount.gt(0)) {
-    const longToken = await contractAt("MintableToken", market.longToken);
-    await longToken.mint(depositVault.address, longTokenAmount);
+    const _initialLongToken = await contractAt("MintableToken", initialLongToken);
+    await _initialLongToken.mint(depositVault.address, longTokenAmount);
   }
 
   if (shortTokenAmount.gt(0)) {
-    const shortToken = await contractAt("MintableToken", market.shortToken);
-    await shortToken.mint(depositVault.address, shortTokenAmount);
+    const _initialShortToken = await contractAt("MintableToken", initialShortToken);
+    await _initialShortToken.mint(depositVault.address, shortTokenAmount);
   }
 
   const params = {
@@ -68,27 +71,39 @@ export async function createDeposit(fixture, overrides: any = {}) {
     callbackGasLimit,
   };
 
-  await logGasUsage({
-    tx: depositHandler.connect(sender).createDeposit(account.address, params, {
-      gasLimit: "1000000",
-    }),
+  const txReceipt = await logGasUsage({
+    tx: depositHandler.connect(sender).createDeposit(account.address, params),
     label: overrides.gasUsageLabel,
   });
+
+  const result = { txReceipt };
+  return result;
 }
 
 export async function executeDeposit(fixture, overrides: any = {}) {
-  const { reader, dataStore, depositHandler, wnt, usdc } = fixture.contracts;
+  const { reader, dataStore, depositHandler, executeDepositUtils, wnt, usdc } = fixture.contracts;
   const { gasUsageLabel } = overrides;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const depositKeys = await getDepositKeys(dataStore, 0, 1);
-  const deposit = await reader.getDeposit(dataStore.address, depositKeys[0]);
+  let depositKey = overrides.depositKey;
+  let oracleBlockNumber = overrides.oracleBlockNumber;
+
+  if (depositKeys.length > 0) {
+    if (!depositKey) {
+      depositKey = depositKeys[0];
+    }
+    if (!oracleBlockNumber) {
+      const deposit = await reader.getDeposit(dataStore.address, depositKeys[0]);
+      oracleBlockNumber = deposit.numbers.updatedAtBlock;
+    }
+  }
 
   const params = {
-    key: depositKeys[0],
-    oracleBlockNumber: deposit.numbers.updatedAtBlock,
+    key: depositKey,
+    oracleBlockNumber,
     tokens,
     precisions,
     minPrices,
@@ -97,10 +112,34 @@ export async function executeDeposit(fixture, overrides: any = {}) {
     gasUsageLabel,
   };
 
-  await executeWithOracleParams(fixture, params);
+  const txReceipt = await executeWithOracleParams(fixture, params);
+  const logs = parseLogs(fixture, txReceipt);
+
+  const cancellationReason = await getCancellationReason({
+    logs,
+    eventName: "DepositCancelled",
+  });
+
+  if (cancellationReason) {
+    if (overrides.expectedCancellationReason) {
+      expect(cancellationReason.name).eq(overrides.expectedCancellationReason);
+    } else {
+      throw new Error(`Deposit was cancelled: ${getErrorString(cancellationReason)}`);
+    }
+  } else {
+    if (overrides.expectedCancellationReason) {
+      throw new Error(
+        `Deposit was not cancelled, expected cancellation with reason: ${overrides.expectedCancellationReason}`
+      );
+    }
+  }
+
+  const result = { txReceipt, logs };
+  return result;
 }
 
 export async function handleDeposit(fixture, overrides: any = {}) {
-  await createDeposit(fixture, overrides.create);
-  await executeDeposit(fixture, overrides.execute);
+  const createResult = await createDeposit(fixture, overrides.create);
+  const executeResult = await executeDeposit(fixture, overrides.execute);
+  return { createResult, executeResult };
 }

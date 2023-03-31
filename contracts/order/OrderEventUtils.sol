@@ -82,18 +82,20 @@ library OrderEventUtils {
         EventEmitter eventEmitter,
         bytes32 key,
         uint256 sizeDeltaUsd,
+        uint256 acceptablePrice,
         uint256 triggerPrice,
-        uint256 acceptablePrice
+        uint256 minOutputAmount
     ) external {
         EventUtils.EventLogData memory eventData;
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
 
-        eventData.uintItems.initItems(3);
+        eventData.uintItems.initItems(4);
         eventData.uintItems.setItem(0, "sizeDeltaUsd", sizeDeltaUsd);
-        eventData.uintItems.setItem(1, "triggerPrice", triggerPrice);
-        eventData.uintItems.setItem(2, "acceptablePrice", acceptablePrice);
+        eventData.uintItems.setItem(1, "acceptablePrice", acceptablePrice);
+        eventData.uintItems.setItem(2, "triggerPrice", triggerPrice);
+        eventData.uintItems.setItem(3, "minOutputAmount", minOutputAmount);
 
         eventEmitter.emitEventLog1(
             "OrderUpdated",

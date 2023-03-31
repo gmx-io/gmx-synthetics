@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./BaseOrderHandler.sol";
-import "../utils/ErrorUtils.sol";
+import "../errors/ErrorUtils.sol";
 
 // @title OrderHandler
 // @dev Contract to handle creation, execution and cancellation of orders
@@ -11,9 +11,6 @@ contract OrderHandler is BaseOrderHandler {
     using SafeCast for uint256;
     using Order for Order.Props;
     using Array for uint256[];
-
-    error OrderNotUpdatable(Order.OrderType orderType);
-    error InvalidKeeperForFrozenOrder(address keeper);
 
     constructor(
         RoleStore _roleStore,
@@ -76,7 +73,7 @@ contract OrderHandler is BaseOrderHandler {
         FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
 
         if (BaseOrderUtils.isMarketOrder(order.orderType())) {
-            revert OrderNotUpdatable(order.orderType());
+            revert Errors.OrderNotUpdatable(uint256(order.orderType()));
         }
 
         order.setSizeDeltaUsd(sizeDeltaUsd);
@@ -85,7 +82,7 @@ contract OrderHandler is BaseOrderHandler {
         order.setMinOutputAmount(minOutputAmount);
         order.setIsFrozen(false);
 
-        // allow topping up of executionFee as partially filled or frozen orders
+        // allow topping up of executionFee as frozen orders
         // will have their executionFee reduced
         address wnt = TokenUtils.wnt(dataStore);
         uint256 receivedWnt = orderVault.recordTransferIn(wnt);
@@ -95,9 +92,12 @@ contract OrderHandler is BaseOrderHandler {
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee());
 
         order.touch();
+
+        BaseOrderUtils.validateNonEmptyOrder(order);
+
         OrderStoreUtils.set(dataStore, key, order);
 
-        OrderEventUtils.emitOrderUpdated(eventEmitter, key, sizeDeltaUsd, triggerPrice, acceptablePrice);
+        OrderEventUtils.emitOrderUpdated(eventEmitter, key, sizeDeltaUsd, acceptablePrice, triggerPrice, minOutputAmount);
     }
 
     /**
@@ -223,23 +223,40 @@ contract OrderHandler is BaseOrderHandler {
 
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
+        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+        bool isMarketOrder = BaseOrderUtils.isMarketOrder(order.orderType());
+
         if (
-            OracleUtils.isEmptyPriceError(errorSelector) ||
-            errorSelector == FeatureUtils.DisabledFeature.selector ||
-            errorSelector == InvalidKeeperForFrozenOrder.selector ||
-            // InvalidOrderPrices error should only be raised for limit, trigger orders
-            // it should not be raised for market orders
-            // The transaction is reverted in this case since the oracle prices do not fulfill
-            // the specified trigger price
-            errorSelector == BaseOrderUtils.InvalidOrderPrices.selector
+            OracleUtils.isOracleError(errorSelector) ||
+            // if the order is already frozen, revert with the custom error to provide more information
+            // on why the order cannot be executed
+            order.isFrozen() ||
+            // for market orders, the EmptyPosition error should still lead to the
+            // order being cancelled
+            // for limit, trigger orders, the EmptyPosition error should lead to the transaction
+            // being reverted instead
+            // if the position is created or increased later, the oracle prices used to fulfill the order
+            // must be after the position was last increased, this is validated in DecreaseOrderUtils
+            (!isMarketOrder && errorSelector == Errors.EmptyPosition.selector) ||
+            errorSelector == Errors.EmptyOrder.selector ||
+            errorSelector == Errors.DisabledFeature.selector ||
+            errorSelector == Errors.InvalidKeeperForFrozenOrder.selector ||
+            errorSelector == Errors.UnsupportedOrderType.selector ||
+            // the transaction is reverted for InvalidLimitOrderPrices and
+            // InvalidStopLossOrderPrices errors since since the oracle prices
+            // do not fulfill the specified trigger price
+            errorSelector == Errors.InvalidLimitOrderPrices.selector ||
+            errorSelector == Errors.InvalidStopLossOrderPrices.selector
         ) {
             ErrorUtils.revertWithCustomError(reasonBytes);
         }
 
-        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
-        bool isMarketOrder = BaseOrderUtils.isMarketOrder(order.orderType());
-
-        if (isMarketOrder) {
+        if (
+            isMarketOrder ||
+            errorSelector == Errors.InvalidPositionMarket.selector ||
+            errorSelector == Errors.InvalidCollateralTokenForMarket.selector ||
+            errorSelector == Errors.InvalidPositionSizeValues.selector
+        ) {
             OrderUtils.cancelOrder(
                 dataStore,
                 eventEmitter,
@@ -250,46 +267,38 @@ contract OrderHandler is BaseOrderHandler {
                 reason,
                 reasonBytes
             );
-        } else {
-            // for market orders, the EmptyPosition error should still lead to the
-            // order being cancelled
-            // for limit, trigger orders, the EmptyPosition error should lead to the transaction
-            // being reverted instead
-            // if the position is created or increased later, the oracle prices used to fulfill the order
-            // must be after the position was last increased, this is validated in DecreaseOrderUtils
-            if (errorSelector == PositionUtils.EmptyPosition.selector) {
-                ErrorUtils.revertWithCustomError(reasonBytes);
-            }
 
-            // freeze unfulfillable orders to prevent the order system from being gamed
-            // an example of gaming would be if a user creates a limit order
-            // with size greater than the available amount in the pool
-            // the user waits for their limit price to be hit, and if price
-            // moves in their favour after, they can deposit into the pool
-            // to allow the order to be executed then close the order for a profit
-            //
-            // frozen order keepers will have additional validations before executing
-            // frozen orders to prevent gaming
-            //
-            // alternatively, the user can call updateOrder to unfreeze the order
-            OrderUtils.freezeOrder(
-                dataStore,
-                eventEmitter,
-                orderVault,
-                key,
-                msg.sender,
-                startingGas,
-                reason,
-                reasonBytes
-            );
+            return;
         }
+
+        // freeze unfulfillable orders to prevent the order system from being gamed
+        // an example of gaming would be if a user creates a limit order
+        // with size greater than the available amount in the pool
+        // the user waits for their limit price to be hit, and if price
+        // moves in their favour after, they can deposit into the pool
+        // to allow the order to be executed then close the order for a profit
+        //
+        // frozen order keepers are expected to execute orders only if the
+        // latest prices match the trigger price
+        //
+        // a user can also call updateOrder to unfreeze an order
+        OrderUtils.freezeOrder(
+            dataStore,
+            eventEmitter,
+            orderVault,
+            key,
+            msg.sender,
+            startingGas,
+            reason,
+            reasonBytes
+        );
     }
 
     // @dev validate that the keeper is a frozen order keeper
     // @param keeper address of the keeper
     function _validateFrozenOrderKeeper(address keeper) internal view {
         if (!roleStore.hasRole(keeper, Role.FROZEN_ORDER_KEEPER)) {
-            revert InvalidKeeperForFrozenOrder(keeper);
+            revert Errors.InvalidKeeperForFrozenOrder(keeper);
         }
     }
 }

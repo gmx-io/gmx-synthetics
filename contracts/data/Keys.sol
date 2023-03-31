@@ -10,11 +10,11 @@ library Keys {
     // @dev key for the nonce value used in NonceUtils
     bytes32 public constant NONCE = keccak256(abi.encode("NONCE"));
 
-    // @dev for holding excess execution fees
-    bytes32 public constant HOLDING_ACCOUNT = keccak256(abi.encode("HOLDING_ACCOUNT"));
-
     // @dev for sending received fees
     bytes32 public constant FEE_RECEIVER = keccak256(abi.encode("FEE_RECEIVER"));
+
+    // @dev for holding tokens that could not be sent out
+    bytes32 public constant HOLDING_ADDRESS = keccak256(abi.encode("HOLDING_ADDRESS"));
 
     // @dev for a global reentrancy guard
     bytes32 public constant REENTRANCY_GUARD_STATUS = keccak256(abi.encode("REENTRANCY_GUARD_STATUS"));
@@ -57,6 +57,9 @@ library Keys {
     // @dev key for is market disabled
     bytes32 public constant IS_MARKET_DISABLED = keccak256(abi.encode("IS_MARKET_DISABLED"));
 
+    // @dev key for the max swap path length allowed
+    bytes32 public constant MAX_SWAP_PATH_LENGTH = keccak256(abi.encode("MAX_SWAP_PATH_LENGTH"));
+
     // @dev key for whether the create deposit feature is disabled
     bytes32 public constant CREATE_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("CREATE_DEPOSIT_FEATURE_DISABLED"));
     // @dev key for whether the cancel deposit feature is disabled
@@ -76,6 +79,8 @@ library Keys {
     // @dev key for whether the execute order feature is disabled
     bytes32 public constant EXECUTE_ORDER_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_ORDER_FEATURE_DISABLED"));
     // @dev key for whether the execute adl feature is disabled
+    // for liquidations, it can be disabled by using the EXECUTE_ORDER_FEATURE_DISABLED key with the Liquidation
+    // order type, ADL orders have a MarketDecrease order type, so a separate key is needed to disable it
     bytes32 public constant EXECUTE_ADL_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_ADL_FEATURE_DISABLED"));
     // @dev key for whether the update order feature is disabled
     bytes32 public constant UPDATE_ORDER_FEATURE_DISABLED = keccak256(abi.encode("UPDATE_ORDER_FEATURE_DISABLED"));
@@ -132,6 +137,8 @@ library Keys {
     bytes32 public constant MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER = keccak256(abi.encode("MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER"));
     // @dev key for the min allowed collateral in USD
     bytes32 public constant MIN_COLLATERAL_USD = keccak256(abi.encode("MIN_COLLATERAL_USD"));
+    // @dev key for the min allowed position size in USD
+    bytes32 public constant MIN_POSITION_SIZE_USD = keccak256(abi.encode("MIN_POSITION_SIZE_USD"));
 
     // @dev key for the virtual id of tokens
     bytes32 public constant VIRTUAL_TOKEN_ID = keccak256(abi.encode("VIRTUAL_TOKEN_ID"));

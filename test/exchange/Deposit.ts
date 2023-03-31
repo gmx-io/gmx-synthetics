@@ -1,11 +1,14 @@
 import { expect } from "chai";
 
 import { deployFixture } from "../../utils/fixture";
-import { expandDecimals, decimalToFloat } from "../../utils/math";
+import { deployContract } from "../../utils/deploy";
+import { bigNumberify, expandDecimals, decimalToFloat } from "../../utils/math";
 import { getBalanceOf, getSupplyOf } from "../../utils/token";
 import { getClaimableFeeAmount } from "../../utils/fee";
 import { getPoolAmount, getSwapImpactPoolAmount, getMarketTokenPrice } from "../../utils/market";
 import { getDepositCount, getDepositKeys, createDeposit, executeDeposit, handleDeposit } from "../../utils/deposit";
+import { getExecuteParams } from "../../utils/exchange";
+import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 
@@ -15,14 +18,135 @@ describe("Exchange.Deposit", () => {
 
   let fixture;
   let user0, user1, user2;
-  let reader, dataStore, oracle, depositVault, depositHandler, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc;
+  let reader,
+    dataStore,
+    depositVault,
+    depositHandler,
+    ethUsdMarket,
+    ethUsdSpotOnlyMarket,
+    btcUsdMarket,
+    wnt,
+    usdc,
+    wbtc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ reader, dataStore, oracle, depositVault, depositHandler, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc } =
-      fixture.contracts);
+    ({
+      reader,
+      dataStore,
+      depositVault,
+      depositHandler,
+      ethUsdMarket,
+      ethUsdSpotOnlyMarket,
+      btcUsdMarket,
+      wnt,
+      usdc,
+      wbtc,
+    } = fixture.contracts);
+  });
+
+  it("createDeposit validations", async () => {
+    const params = {
+      receiver: user1,
+      callbackContract: user2,
+      market: ethUsdMarket,
+      longTokenSwapPath: [ethUsdMarket.marketToken, ethUsdSpotOnlyMarket.marketToken],
+      shortTokenSwapPath: [ethUsdSpotOnlyMarket.marketToken, ethUsdMarket.marketToken],
+      minMarketTokens: 100,
+      shouldUnwrapNativeToken: true,
+      executionFee: "0",
+      callbackGasLimit: "200000",
+      gasUsageLabel: "createDeposit",
+    };
+
+    const _createDepositFeatureDisabledKey = keys.createDepositFeatureDisabledKey(depositHandler.address);
+
+    await dataStore.setBool(_createDepositFeatureDisabledKey, true);
+
+    await expect(createDeposit(fixture, { ...params, sender: user0 }))
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
+      .withArgs(user0.address, "CONTROLLER");
+
+    await expect(createDeposit(fixture, params))
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
+      .withArgs(_createDepositFeatureDisabledKey);
+
+    await dataStore.setBool(_createDepositFeatureDisabledKey, false);
+
+    await expect(
+      createDeposit(fixture, { ...params, account: { address: AddressZero } })
+    ).to.be.revertedWithCustomError(errorsContract, "EmptyAccount");
+
+    await expect(
+      createDeposit(fixture, {
+        ...params,
+        market: { marketToken: user1.address, longToken: wnt.address, shortToken: usdc.address },
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "EmptyMarket");
+
+    const _isMarketDisabledKey = keys.isMarketDisabledKey(ethUsdMarket.marketToken);
+    await dataStore.setBool(_isMarketDisabledKey, true);
+
+    await expect(createDeposit(fixture, params))
+      .to.be.revertedWithCustomError(errorsContract, "DisabledMarket")
+      .withArgs(ethUsdMarket.marketToken);
+
+    await dataStore.setBool(_isMarketDisabledKey, false);
+
+    await expect(
+      createDeposit(fixture, {
+        ...params,
+        market: btcUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(10 * 5000, 6),
+        executionFee: "500",
+        executionFeeToMint: "200",
+      })
+    )
+      .to.be.revertedWithCustomError(errorsContract, "InsufficientWntAmountForExecutionFee")
+      .withArgs("200", "500");
+
+    await wnt.mint(depositVault.address, "1000");
+    await createDeposit(fixture, {
+      ...params,
+      market: btcUsdMarket,
+      longTokenAmount: expandDecimals(10, 18),
+      shortTokenAmount: expandDecimals(10 * 5000, 6),
+      executionFee: "500",
+    });
+
+    const depositKeys = await getDepositKeys(dataStore, 0, 1);
+    const deposit = await reader.getDeposit(dataStore.address, depositKeys[0]);
+
+    // even though the params.executionFee is specified to be 500
+    // the executionFee should be recorded as 1700 because 200 wnt was previously minted to depositVault
+    // in addition to the 1000 wnt was minted and 500 wnt minted for the execution fee
+    expect(deposit.numbers.executionFee).eq("1700");
+
+    await expect(createDeposit(fixture, params)).to.be.revertedWithCustomError(errorsContract, "EmptyDeposit");
+
+    await expect(
+      createDeposit(fixture, { ...params, longTokenAmount: bigNumberify(1), receiver: { address: AddressZero } })
+    ).to.be.revertedWithCustomError(errorsContract, "EmptyReceiver");
+
+    await expect(createDeposit(fixture, { ...params, longTokenAmount: bigNumberify(1), callbackGasLimit: "3000000" }))
+      .to.be.revertedWithCustomError(errorsContract, "MaxCallbackGasLimitExceeded")
+      .withArgs("3000000", "2000000");
+
+    await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
+
+    await expect(
+      createDeposit(fixture, {
+        ...params,
+        longTokenAmount: bigNumberify(1),
+        callbackGasLimit: "2000000",
+        executionFee: "3000",
+      })
+    )
+      .to.be.revertedWithCustomError(errorsContract, "InsufficientExecutionFee")
+      .withArgs("2000000016000000", "3000");
   });
 
   it("createDeposit", async () => {
@@ -40,20 +164,6 @@ describe("Exchange.Deposit", () => {
       callbackGasLimit: "200000",
       gasUsageLabel: "createDeposit",
     };
-
-    const _createDepositFeatureDisabledKey = keys.createDepositFeatureDisabledKey(depositHandler.address);
-
-    await dataStore.setBool(_createDepositFeatureDisabledKey, true);
-
-    await expect(createDeposit(fixture, { ...params, sender: user0 }))
-      .to.be.revertedWithCustomError(depositHandler, "Unauthorized")
-      .withArgs(user0.address, "CONTROLLER");
-
-    await expect(createDeposit(fixture, params))
-      .to.be.revertedWithCustomError(depositHandler, "DisabledFeature")
-      .withArgs(_createDepositFeatureDisabledKey);
-
-    await dataStore.setBool(_createDepositFeatureDisabledKey, false);
 
     await createDeposit(fixture, {
       ...params,
@@ -107,15 +217,15 @@ describe("Exchange.Deposit", () => {
     await dataStore.setBool(_cancelDepositFeatureDisabledKey, true);
 
     await expect(depositHandler.connect(user0).cancelDeposit(depositKeys[0]))
-      .to.be.revertedWithCustomError(depositHandler, "Unauthorized")
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user0.address, "CONTROLLER");
 
     await expect(depositHandler.cancelDeposit(depositKeys[0]))
-      .to.be.revertedWithCustomError(depositHandler, "DisabledFeature")
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
       .withArgs(_cancelDepositFeatureDisabledKey);
   });
 
-  it("executeDeposit", async () => {
+  it("executeDeposit validations", async () => {
     await expect(
       depositHandler.connect(user0).executeDeposit(HashZero, {
         signerInfo: 0,
@@ -132,7 +242,7 @@ describe("Exchange.Deposit", () => {
         priceFeedTokens: [],
       })
     )
-      .to.be.revertedWithCustomError(depositHandler, "Unauthorized")
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user0.address, "ORDER_KEEPER");
 
     await createDeposit(fixture, {
@@ -161,10 +271,16 @@ describe("Exchange.Deposit", () => {
         maxPrices: [expandDecimals(5000, 4)],
       })
     )
-      .to.be.revertedWithCustomError(depositHandler, "DisabledFeature")
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
       .withArgs(_executeDepositFeatureDisabledKey);
 
     await dataStore.setBool(_executeDepositFeatureDisabledKey, false);
+
+    await expect(
+      executeDeposit(fixture, {
+        oracleBlockNumber: (await provider.getBlock()).number - 10,
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "OracleBlockNumberNotWithinRange");
 
     await expect(
       executeDeposit(fixture, {
@@ -174,7 +290,7 @@ describe("Exchange.Deposit", () => {
         maxPrices: [expandDecimals(5000, 4)],
       })
     )
-      .to.be.revertedWithCustomError(oracle, "EmptyPrimaryPrice")
+      .to.be.revertedWithCustomError(errorsContract, "EmptyPrimaryPrice")
       .withArgs(usdc.address);
 
     await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
@@ -184,6 +300,82 @@ describe("Exchange.Deposit", () => {
     expect(deposit.addresses.account).eq(AddressZero);
     expect(await getBalanceOf(ethUsdMarket.marketToken, user1.address)).eq(expandDecimals(95000, 18));
     expect(await getDepositCount(dataStore)).eq(0);
+
+    await expect(
+      executeDeposit(fixture, {
+        depositKey: HashZero,
+        oracleBlockNumber: (await provider.getBlock()).number,
+        gasUsageLabel: "executeDeposit",
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "EmptyDeposit");
+  });
+
+  it("executeDeposit with swap", async () => {
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(0);
+
+    await handleDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(9 * 5000, 6),
+      },
+    });
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(95000, 18));
+
+    await handleDeposit(fixture, {
+      create: {
+        initialLongToken: usdc.address,
+        longTokenAmount: expandDecimals(9 * 5000, 6),
+        initialShortToken: wnt.address,
+        shortTokenAmount: expandDecimals(10, 18),
+        longTokenSwapPath: [ethUsdMarket.marketToken],
+        shortTokenSwapPath: [ethUsdMarket.marketToken],
+      },
+    });
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(190000, 18));
+
+    await handleDeposit(fixture, {
+      create: {
+        account: user1,
+        market: btcUsdMarket,
+        longTokenAmount: expandDecimals(2, 8),
+        shortTokenAmount: expandDecimals(10, 18),
+      },
+      execute: getExecuteParams(fixture, { tokens: [usdc, wbtc] }),
+    });
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(190000, 18));
+
+    await handleDeposit(fixture, {
+      create: {
+        initialLongToken: usdc.address,
+        longTokenAmount: expandDecimals(9 * 5000, 6),
+        initialShortToken: wnt.address,
+        shortTokenAmount: expandDecimals(10, 18),
+        longTokenSwapPath: [btcUsdMarket.marketToken],
+        shortTokenSwapPath: [ethUsdMarket.marketToken],
+      },
+      execute: {
+        ...getExecuteParams(fixture, { tokens: [wnt, usdc, wbtc] }),
+        expectedCancellationReason: "InvalidSwapOutputToken",
+      },
+    });
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(190000, 18));
+
+    await handleDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(9 * 5000, 6),
+        minMarketTokens: expandDecimals(500000, 18),
+      },
+      execute: {
+        expectedCancellationReason: "MinMarketTokens",
+      },
+    });
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(190000, 18));
   });
 
   it("simulateExecuteDeposit", async () => {
@@ -195,7 +387,7 @@ describe("Exchange.Deposit", () => {
         secondaryPrices: [],
       })
     )
-      .to.be.revertedWithCustomError(depositHandler, "Unauthorized")
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user0.address, "CONTROLLER");
   });
 
@@ -221,15 +413,18 @@ describe("Exchange.Deposit", () => {
         10
       )
     )
-      .to.be.revertedWithCustomError(depositHandler, "Unauthorized")
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user0.address, "SELF");
   });
 
   it("executeDeposit, spot only market", async () => {
+    const revertingCallbackReceiver = await deployContract("RevertingCallbackReceiver", []);
+
     await handleDeposit(fixture, {
       create: {
         market: ethUsdSpotOnlyMarket,
         longTokenAmount: expandDecimals(10, 18),
+        callbackContract: user2,
       },
     });
 
@@ -252,6 +447,7 @@ describe("Exchange.Deposit", () => {
       create: {
         market: ethUsdSpotOnlyMarket,
         shortTokenAmount: expandDecimals(25 * 1000, 6),
+        callbackContract: revertingCallbackReceiver,
       },
     });
 
@@ -665,6 +861,7 @@ describe("Exchange.Deposit", () => {
       },
       execute: {
         gasUsageLabel: "executeDeposit",
+        expectedCancellationReason: "MinMarketTokens",
       },
     });
 

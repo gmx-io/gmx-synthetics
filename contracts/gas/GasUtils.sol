@@ -27,9 +27,6 @@ library GasUtils {
     // @param amount the amount of execution fee refunded
     event UserRefundFee(address user, uint256 amount);
 
-    error InsufficientExecutionFee(uint256 minExecutionFee, uint256 executionFee);
-    error EmptyHoldingAddress();
-
     // @dev pay the keeper the execution fee and refund any excess amount to the user
     //
     // @param dataStore DataStore
@@ -81,29 +78,7 @@ library GasUtils {
         uint256 gasLimit = adjustGasLimitForEstimate(dataStore, estimatedGasLimit);
         uint256 minExecutionFee = gasLimit * tx.gasprice;
         if (executionFee < minExecutionFee) {
-            revert InsufficientExecutionFee(minExecutionFee, executionFee);
-        }
-    }
-
-    function handleExcessExecutionFee(
-        DataStore dataStore,
-        StrictBank bank,
-        uint256 wntAmount,
-        uint256 executionFee
-    ) internal {
-        uint256 excessWntAmount = wntAmount - executionFee;
-        if (excessWntAmount > 0) {
-            address holdingAddress = dataStore.getAddress(Keys.HOLDING_ACCOUNT);
-            if (holdingAddress == address(0)) {
-                revert EmptyHoldingAddress();
-            }
-
-            address wnt = TokenUtils.wnt(dataStore);
-            bank.transferOut(
-                wnt,
-                holdingAddress,
-                excessWntAmount
-            );
+            revert Errors.InsufficientExecutionFee(minExecutionFee, executionFee);
         }
     }
 
@@ -147,7 +122,11 @@ library GasUtils {
     // @param dataStore DataStore
     // @param withdrawal the withdrawal to estimate the gas limit for
     function estimateExecuteWithdrawalGasLimit(DataStore dataStore, Withdrawal.Props memory withdrawal) internal view returns (uint256) {
-        return dataStore.getUint(Keys.withdrawalGasLimitKey(false)) + withdrawal.callbackGasLimit();
+        uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
+        uint256 swapCount = withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length;
+        uint256 gasForSwaps = swapCount * gasPerSwap;
+
+        return dataStore.getUint(Keys.withdrawalGasLimitKey(false)) + withdrawal.callbackGasLimit() + gasForSwaps;
     }
 
     // @dev the estimated gas limit for orders
@@ -166,7 +145,7 @@ library GasUtils {
             return estimateExecuteSwapOrderGasLimit(dataStore, order);
         }
 
-        BaseOrderUtils.revertUnsupportedOrderType();
+        revert Errors.UnsupportedOrderType();
     }
 
     // @dev the estimated gas limit for increase orders

@@ -38,7 +38,7 @@ library SwapPricingUtils {
     // @param usdDeltaForTokenB the USD change in amount of tokenB
     struct GetPriceImpactUsdParams {
         DataStore dataStore;
-        address market;
+        Market.Props market;
         address tokenA;
         address tokenB;
         uint256 priceForTokenA;
@@ -69,8 +69,6 @@ library SwapPricingUtils {
         uint256 amountAfterFees;
     }
 
-    error UsdDeltaExceedsPoolValue(int256 usdDelta, uint256 poolUsd);
-
     // @dev get the price impact in USD
     //
     // note that there will be some difference between the pool amounts used for
@@ -97,7 +95,7 @@ library SwapPricingUtils {
 
         (bool hasVirtualInventory, int256 thresholdImpactFactorForVirtualInventory) = MarketUtils.getThresholdSwapImpactFactorForVirtualInventory(
             params.dataStore,
-            params.market
+            params.market.marketToken
         );
 
         if (!hasVirtualInventory) {
@@ -120,7 +118,7 @@ library SwapPricingUtils {
     // @param market the trading market
     // @param poolParams PoolParams
     // @return the price impact in USD
-    function _getPriceImpactUsd(DataStore dataStore, address market, PoolParams memory poolParams) internal view returns (int256) {
+    function _getPriceImpactUsd(DataStore dataStore, Market.Props memory market, PoolParams memory poolParams) internal view returns (int256) {
         uint256 initialDiffUsd = Calc.diff(poolParams.poolUsdForTokenA, poolParams.poolUsdForTokenB);
         uint256 nextDiffUsd = Calc.diff(poolParams.nextPoolUsdForTokenA, poolParams.nextPoolUsdForTokenB);
 
@@ -129,11 +127,11 @@ library SwapPricingUtils {
         // adding $1999 USDC into the pool will reduce absolute balance from $1000 to $999 but it does not
         // help rebalance the pool much, the isSameSideRebalance value helps avoid gaming using this case
         bool isSameSideRebalance = (poolParams.poolUsdForTokenA <= poolParams.poolUsdForTokenB) == (poolParams.nextPoolUsdForTokenA <= poolParams.nextPoolUsdForTokenB);
-        uint256 impactExponentFactor = dataStore.getUint(Keys.swapImpactExponentFactorKey(market));
+        uint256 impactExponentFactor = dataStore.getUint(Keys.swapImpactExponentFactorKey(market.marketToken));
 
         if (isSameSideRebalance) {
             bool hasPositiveImpact = nextDiffUsd < initialDiffUsd;
-            uint256 impactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market, hasPositiveImpact));
+            uint256 impactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market.marketToken, hasPositiveImpact));
 
             return PricingUtils.getPriceImpactUsdForSameSideRebalance(
                 initialDiffUsd,
@@ -142,8 +140,8 @@ library SwapPricingUtils {
                 impactExponentFactor
             );
         } else {
-            uint256 positiveImpactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market, true));
-            uint256 negativeImpactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market, false));
+            uint256 positiveImpactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market.marketToken, true));
+            uint256 negativeImpactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market.marketToken, false));
 
             return PricingUtils.getPriceImpactUsdForCrossoverRebalance(
                 initialDiffUsd,
@@ -174,8 +172,8 @@ library SwapPricingUtils {
     function getNextPoolAmountsUsdForVirtualInventory(
         GetPriceImpactUsdParams memory params
     ) internal view returns (PoolParams memory) {
-        (/* bool hasVirtualInventory */, uint256 poolAmountForTokenA) = MarketUtils.getVirtualInventoryForSwaps(params.dataStore, params.market, params.tokenA);
-        (/* bool hasVirtualInventory */, uint256 poolAmountForTokenB) = MarketUtils.getVirtualInventoryForSwaps(params.dataStore, params.market, params.tokenB);
+        (/* bool hasVirtualInventory */, uint256 poolAmountForTokenA) = MarketUtils.getVirtualInventoryForSwaps(params.dataStore, params.market.marketToken, params.tokenA);
+        (/* bool hasVirtualInventory */, uint256 poolAmountForTokenB) = MarketUtils.getVirtualInventoryForSwaps(params.dataStore, params.market.marketToken, params.tokenB);
 
         return getNextPoolAmountsParams(
             params,
@@ -193,11 +191,11 @@ library SwapPricingUtils {
         uint256 poolUsdForTokenB = poolAmountForTokenB * params.priceForTokenB;
 
         if (params.usdDeltaForTokenA < 0 && (-params.usdDeltaForTokenA).toUint256() > poolUsdForTokenA) {
-            revert UsdDeltaExceedsPoolValue(params.usdDeltaForTokenA, poolUsdForTokenA);
+            revert Errors.UsdDeltaExceedsPoolValue(params.usdDeltaForTokenA, poolUsdForTokenA);
         }
 
         if (params.usdDeltaForTokenB < 0 && (-params.usdDeltaForTokenB).toUint256() > poolUsdForTokenB) {
-            revert UsdDeltaExceedsPoolValue(params.usdDeltaForTokenB, poolUsdForTokenB);
+            revert Errors.UsdDeltaExceedsPoolValue(params.usdDeltaForTokenB, poolUsdForTokenB);
         }
 
         uint256 nextPoolUsdForTokenA = Calc.sumReturnUint256(poolUsdForTokenA, params.usdDeltaForTokenA);
@@ -238,6 +236,7 @@ library SwapPricingUtils {
 
     function emitSwapInfo(
         EventEmitter eventEmitter,
+        bytes32 orderKey,
         address market,
         address receiver,
         address tokenIn,
@@ -250,6 +249,9 @@ library SwapPricingUtils {
         int256 priceImpactUsd
     ) internal {
         EventUtils.EventLogData memory eventData;
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "orderKey", orderKey);
 
         eventData.addressItems.initItems(4);
         eventData.addressItems.setItem(0, "market", market);
@@ -278,6 +280,7 @@ library SwapPricingUtils {
         EventEmitter eventEmitter,
         address market,
         address token,
+        uint256 tokenPrice,
         string memory action,
         SwapFees memory fees
     ) internal {
@@ -290,10 +293,11 @@ library SwapPricingUtils {
         eventData.stringItems.initItems(1);
         eventData.stringItems.setItem(0, "action", action);
 
-        eventData.uintItems.initItems(3);
-        eventData.uintItems.setItem(0, "feeReceiverAmount", fees.feeReceiverAmount);
-        eventData.uintItems.setItem(1, "feeAmountForPool", fees.feeAmountForPool);
-        eventData.uintItems.setItem(2, "amountAfterFees", fees.amountAfterFees);
+        eventData.uintItems.initItems(4);
+        eventData.uintItems.setItem(0, "tokenPrice", tokenPrice);
+        eventData.uintItems.setItem(1, "feeReceiverAmount", fees.feeReceiverAmount);
+        eventData.uintItems.setItem(2, "feeAmountForPool", fees.feeAmountForPool);
+        eventData.uintItems.setItem(3, "amountAfterFees", fees.amountAfterFees);
 
         eventEmitter.emitEventLog1(
             "SwapFeesCollected",

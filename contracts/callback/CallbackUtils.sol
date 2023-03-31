@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
-import "../utils/ErrorUtils.sol";
+import "../errors/ErrorUtils.sol";
 
 import "./IOrderCallbackReceiver.sol";
 import "./IDepositCallbackReceiver.sol";
@@ -25,23 +25,24 @@ import "./IWithdrawalCallbackReceiver.sol";
 // for example, if an order can be cancelled in the "before" callback during
 // order execution, it may lead to an order being executed even though the user
 // was already refunded for its cancellation
+//
+// the details from callback errors are not processed to avoid cases where a malicious
+// callback contract returns a very large value to cause transactions to run out of gas
 library CallbackUtils {
     using Address for address;
     using Deposit for Deposit.Props;
     using Withdrawal for Withdrawal.Props;
     using Order for Order.Props;
 
-    event AfterDepositExecutionError(bytes32 key, Deposit.Props deposit, string reason, bytes reasonBytes);
-    event AfterDepositCancellationError(bytes32 key, Deposit.Props deposit, string reason, bytes reasonBytes);
+    event AfterDepositExecutionError(bytes32 key, Deposit.Props deposit);
+    event AfterDepositCancellationError(bytes32 key, Deposit.Props deposit);
 
-    event AfterWithdrawalExecutionError(bytes32 key, Withdrawal.Props withdrawal, string reason, bytes reasonBytes);
-    event AfterWithdrawalCancellationError(bytes32 key, Withdrawal.Props withdrawal, string reason, bytes reasonBytes);
+    event AfterWithdrawalExecutionError(bytes32 key, Withdrawal.Props withdrawal);
+    event AfterWithdrawalCancellationError(bytes32 key, Withdrawal.Props withdrawal);
 
-    event AfterOrderExecutionError(bytes32 key, Order.Props order, string reason, bytes reasonBytes);
-    event AfterOrderCancellationError(bytes32 key, Order.Props order, string reason, bytes reasonBytes);
-    event AfterOrderFrozenError(bytes32 key, Order.Props order, string reason, bytes reasonBytes);
-
-    error MaxCallbackGasLimitExceeded(uint256 callbackGasLimit, uint256 maxCallbackGasLimit);
+    event AfterOrderExecutionError(bytes32 key, Order.Props order);
+    event AfterOrderCancellationError(bytes32 key, Order.Props order);
+    event AfterOrderFrozenError(bytes32 key, Order.Props order);
 
     // @dev validate that the callbackGasLimit is less than the max specified value
     // this is to prevent callback gas limits which are larger than the max gas limits per block
@@ -52,7 +53,7 @@ library CallbackUtils {
     function validateCallbackGasLimit(DataStore dataStore, uint256 callbackGasLimit) internal view {
         uint256 maxCallbackGasLimit = dataStore.getUint(Keys.MAX_CALLBACK_GAS_LIMIT);
         if (callbackGasLimit > maxCallbackGasLimit) {
-            revert MaxCallbackGasLimitExceeded(callbackGasLimit, maxCallbackGasLimit);
+            revert Errors.MaxCallbackGasLimitExceeded(callbackGasLimit, maxCallbackGasLimit);
         }
     }
 
@@ -63,9 +64,8 @@ library CallbackUtils {
         if (!isValidCallbackContract(deposit.callbackContract())) { return; }
 
         try IDepositCallbackReceiver(deposit.callbackContract()).afterDepositExecution{ gas: deposit.callbackGasLimit() }(key, deposit) {
-        } catch (bytes memory reasonBytes) {
-            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-            emit AfterDepositExecutionError(key, deposit, reason, reasonBytes);
+        } catch {
+            emit AfterDepositExecutionError(key, deposit);
         }
     }
 
@@ -76,9 +76,8 @@ library CallbackUtils {
         if (!isValidCallbackContract(deposit.callbackContract())) { return; }
 
         try IDepositCallbackReceiver(deposit.callbackContract()).afterDepositCancellation{ gas: deposit.callbackGasLimit() }(key, deposit) {
-        } catch (bytes memory reasonBytes) {
-            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-            emit AfterDepositCancellationError(key, deposit, reason, reasonBytes);
+        } catch {
+            emit AfterDepositCancellationError(key, deposit);
         }
     }
 
@@ -89,9 +88,8 @@ library CallbackUtils {
         if (!isValidCallbackContract(withdrawal.callbackContract())) { return; }
 
         try IWithdrawalCallbackReceiver(withdrawal.callbackContract()).afterWithdrawalExecution{ gas: withdrawal.callbackGasLimit() }(key, withdrawal) {
-        } catch (bytes memory reasonBytes) {
-            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-            emit AfterWithdrawalExecutionError(key, withdrawal, reason, reasonBytes);
+        } catch {
+            emit AfterWithdrawalExecutionError(key, withdrawal);
         }
     }
 
@@ -102,9 +100,8 @@ library CallbackUtils {
         if (!isValidCallbackContract(withdrawal.callbackContract())) { return; }
 
         try IWithdrawalCallbackReceiver(withdrawal.callbackContract()).afterWithdrawalCancellation{ gas: withdrawal.callbackGasLimit() }(key, withdrawal) {
-        } catch (bytes memory reasonBytes) {
-            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-            emit AfterWithdrawalCancellationError(key, withdrawal, reason, reasonBytes);
+        } catch {
+            emit AfterWithdrawalCancellationError(key, withdrawal);
         }
     }
 
@@ -115,9 +112,8 @@ library CallbackUtils {
         if (!isValidCallbackContract(order.callbackContract())) { return; }
 
         try IOrderCallbackReceiver(order.callbackContract()).afterOrderExecution{ gas: order.callbackGasLimit() }(key, order) {
-        } catch (bytes memory reasonBytes) {
-            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-            emit AfterOrderExecutionError(key, order, reason, reasonBytes);
+        } catch {
+            emit AfterOrderExecutionError(key, order);
         }
     }
 
@@ -128,9 +124,8 @@ library CallbackUtils {
         if (!isValidCallbackContract(order.callbackContract())) { return; }
 
         try IOrderCallbackReceiver(order.callbackContract()).afterOrderCancellation{ gas: order.callbackGasLimit() }(key, order) {
-        } catch (bytes memory reasonBytes) {
-            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-            emit AfterOrderCancellationError(key, order, reason, reasonBytes);
+        } catch {
+            emit AfterOrderCancellationError(key, order);
         }
     }
 
@@ -141,9 +136,8 @@ library CallbackUtils {
         if (!isValidCallbackContract(order.callbackContract())) { return; }
 
         try IOrderCallbackReceiver(order.callbackContract()).afterOrderFrozen{ gas: order.callbackGasLimit() }(key, order) {
-        } catch (bytes memory reasonBytes) {
-            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-            emit AfterOrderFrozenError(key, order, reason, reasonBytes);
+        } catch {
+            emit AfterOrderFrozenError(key, order);
         }
     }
 

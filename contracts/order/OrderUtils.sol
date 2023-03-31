@@ -26,7 +26,7 @@ import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
-import "../utils/ReceiverUtils.sol";
+import "../utils/AccountUtils.sol";
 import "../referral/ReferralUtils.sol";
 
 // @title OrderUtils
@@ -36,10 +36,6 @@ library OrderUtils {
     using Position for Position.Props;
     using Price for Price.Props;
     using Array for uint256[];
-
-    error OrderTypeCannotBeCreated(Order.OrderType orderType);
-    error OrderAlreadyFrozen();
-    error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);
 
     // @dev creates an order in the order store
     // @param dataStore DataStore
@@ -55,6 +51,8 @@ library OrderUtils {
         address account,
         BaseOrderUtils.CreateOrderParams memory params
     ) external returns (bytes32) {
+        AccountUtils.validateAccount(account);
+
         ReferralUtils.setTraderReferralCode(referralStorage, account, params.referralCode);
 
         uint256 initialCollateralDeltaAmount;
@@ -69,10 +67,12 @@ library OrderUtils {
             params.orderType == Order.OrderType.MarketIncrease ||
             params.orderType == Order.OrderType.LimitIncrease
         ) {
+            // for swaps and increase orders, the initialCollateralDeltaAmount is set based on the amount of tokens
+            // transferred to the orderVault
             initialCollateralDeltaAmount = orderVault.recordTransferIn(params.addresses.initialCollateralToken);
             if (params.addresses.initialCollateralToken == wnt) {
                 if (initialCollateralDeltaAmount < params.numbers.executionFee) {
-                    revert InsufficientWntAmountForExecutionFee(initialCollateralDeltaAmount, params.numbers.executionFee);
+                    revert Errors.InsufficientWntAmountForExecutionFee(initialCollateralDeltaAmount, params.numbers.executionFee);
                 }
                 initialCollateralDeltaAmount -= params.numbers.executionFee;
                 shouldRecordSeparateExecutionFeeTransfer = false;
@@ -82,30 +82,27 @@ library OrderUtils {
             params.orderType == Order.OrderType.LimitDecrease ||
             params.orderType == Order.OrderType.StopLossDecrease
         ) {
+            // for decrease orders, the initialCollateralDeltaAmount is based on the passed in value
             initialCollateralDeltaAmount = params.numbers.initialCollateralDeltaAmount;
         } else {
-            revert OrderTypeCannotBeCreated(params.orderType);
+            revert Errors.OrderTypeCannotBeCreated(uint256(params.orderType));
         }
 
         if (shouldRecordSeparateExecutionFeeTransfer) {
             uint256 wntAmount = orderVault.recordTransferIn(wnt);
             if (wntAmount < params.numbers.executionFee) {
-                revert InsufficientWntAmountForExecutionFee(wntAmount, params.numbers.executionFee);
+                revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.numbers.executionFee);
             }
 
-            GasUtils.handleExcessExecutionFee(
-                dataStore,
-                orderVault,
-                wntAmount,
-                params.numbers.executionFee
-            );
+            params.numbers.executionFee = wntAmount;
+        }
+
+        if (BaseOrderUtils.isPositionOrder(params.orderType)) {
+            MarketUtils.validatePositionMarket(dataStore, params.addresses.market);
         }
 
         // validate swap path markets
-        MarketUtils.getEnabledMarkets(
-            dataStore,
-            params.addresses.swapPath
-        );
+        MarketUtils.validateSwapPath(dataStore, params.addresses.swapPath);
 
         Order.Props memory order;
 
@@ -127,10 +124,10 @@ library OrderUtils {
         order.setIsLong(params.isLong);
         order.setShouldUnwrapNativeToken(params.shouldUnwrapNativeToken);
 
-        ReceiverUtils.validateReceiver(order.receiver());
+        AccountUtils.validateReceiver(order.receiver());
 
         if (order.initialCollateralDeltaAmount() == 0 && order.sizeDeltaUsd() == 0) {
-            revert BaseOrderUtils.EmptyOrder();
+            revert Errors.EmptyOrder();
         }
 
         CallbackUtils.validateCallbackGasLimit(dataStore, order.callbackGasLimit());
@@ -141,6 +138,8 @@ library OrderUtils {
         bytes32 key = NonceUtils.getNextKey(dataStore);
 
         order.touch();
+
+        BaseOrderUtils.validateNonEmptyOrder(order);
         OrderStoreUtils.set(dataStore, key, order);
 
         OrderEventUtils.emitOrderCreated(eventEmitter, key, order);
@@ -197,7 +196,7 @@ library OrderUtils {
             return;
         }
 
-        BaseOrderUtils.revertUnsupportedOrderType();
+        revert Errors.UnsupportedOrderType();
     }
 
     // @dev cancels an order
@@ -270,7 +269,7 @@ library OrderUtils {
         BaseOrderUtils.validateNonEmptyOrder(order);
 
         if (order.isFrozen()) {
-            revert OrderAlreadyFrozen();
+            revert Errors.OrderAlreadyFrozen();
         }
 
         uint256 executionFee = order.executionFee();

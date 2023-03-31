@@ -6,7 +6,7 @@ import "./BaseOrderUtils.sol";
 import "../swap/SwapUtils.sol";
 import "../position/DecreasePositionUtils.sol";
 import "../order/OrderStoreUtils.sol";
-import "../utils/ErrorUtils.sol";
+import "../errors/ErrorUtils.sol";
 
 // @title DecreaseOrderUtils
 // @dev Library for functions to help with processing a decrease order
@@ -19,8 +19,7 @@ library DecreaseOrderUtils {
     // @param params BaseOrderUtils.ExecuteOrderParams
     function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external {
         Order.Props memory order = params.order;
-        MarketUtils.validateEnabledMarket(params.contracts.dataStore, params.market);
-        MarketUtils.validatePositionMarket(params.market);
+        MarketUtils.validatePositionMarket(params.contracts.dataStore, params.market);
 
         bytes32 positionKey = PositionUtils.getPositionKey(order.account(), order.market(), order.initialCollateralToken(), order.isLong());
         Position.Props memory position = PositionStoreUtils.get(params.contracts.dataStore, positionKey);
@@ -86,6 +85,7 @@ library DecreaseOrderUtils {
                     params.contracts.eventEmitter,
                     params.contracts.oracle,
                     Bank(payable(order.market())),
+                    params.key,
                     result.outputToken,
                     result.outputAmount,
                     params.swapPathMarkets,
@@ -142,7 +142,7 @@ library DecreaseOrderUtils {
         ) {
             uint256 latestUpdatedAtBlock = orderUpdatedAtBlock > positionIncreasedAtBlock ? orderUpdatedAtBlock : positionIncreasedAtBlock;
             if (!minOracleBlockNumbers.areGreaterThan(latestUpdatedAtBlock)) {
-                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, latestUpdatedAtBlock);
+                revert Errors.OracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, latestUpdatedAtBlock);
             }
             return;
         }
@@ -151,12 +151,12 @@ library DecreaseOrderUtils {
             uint256 latestUpdatedAtBlock = positionIncreasedAtBlock > positionDecreasedAtBlock ? positionIncreasedAtBlock : positionDecreasedAtBlock;
 
             if (!minOracleBlockNumbers.areGreaterThan(latestUpdatedAtBlock)) {
-                OracleUtils.revertOracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, latestUpdatedAtBlock);
+                revert Errors.OracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, latestUpdatedAtBlock);
             }
             return;
         }
 
-        BaseOrderUtils.revertUnsupportedOrderType();
+        revert Errors.UnsupportedOrderType();
     }
 
     function _handleSwapError(

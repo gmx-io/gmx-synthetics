@@ -7,6 +7,7 @@ import { getDepositKeys } from "../../utils/deposit";
 import { getWithdrawalKeys } from "../../utils/withdrawal";
 import { hashString } from "../../utils/hash";
 import { getNextKey } from "../../utils/nonce";
+import { errorsContract } from "../../utils/error";
 import { OrderType, DecreasePositionSwapType, getOrderKeys } from "../../utils/order";
 
 describe("ExchangeRouter", () => {
@@ -17,7 +18,6 @@ describe("ExchangeRouter", () => {
   let reader,
     dataStore,
     depositVault,
-    depositHandler,
     orderVault,
     withdrawalVault,
     router,
@@ -35,7 +35,6 @@ describe("ExchangeRouter", () => {
       reader,
       dataStore,
       depositVault,
-      depositHandler,
       orderVault,
       withdrawalVault,
       router,
@@ -254,12 +253,12 @@ describe("ExchangeRouter", () => {
               primaryTokens: [wnt.address, usdc.address],
               primaryPrices: [
                 {
-                  min: expandDecimals(5000, 4),
-                  max: expandDecimals(5000, 4),
+                  min: expandDecimals(5000, 12),
+                  max: expandDecimals(5000, 12),
                 },
                 {
-                  min: expandDecimals(1, 6),
-                  max: expandDecimals(1, 6),
+                  min: expandDecimals(1, 24),
+                  max: expandDecimals(1, 24),
                 },
               ],
               secondaryTokens: [],
@@ -269,6 +268,6 @@ describe("ExchangeRouter", () => {
         ],
         { value: expandDecimals(11, 18) }
       )
-    ).to.be.revertedWithCustomError(depositHandler, "EndOfOracleSimulation");
+    ).to.be.revertedWithCustomError(errorsContract, "EndOfOracleSimulation");
   });
 });

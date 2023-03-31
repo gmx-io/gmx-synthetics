@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../utils/GlobalReentrancyGuard.sol";
-import "../utils/ErrorUtils.sol";
+import "../errors/ErrorUtils.sol";
 
 import "./ExchangeUtils.sol";
 import "../role/RoleModule.sol";
@@ -185,8 +185,8 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
         if (
-            OracleUtils.isEmptyPriceError(errorSelector) ||
-            errorSelector == FeatureUtils.DisabledFeature.selector
+            OracleUtils.isOracleError(errorSelector) ||
+            errorSelector == Errors.DisabledFeature.selector
         ) {
 
             ErrorUtils.revertWithCustomError(reasonBytes);

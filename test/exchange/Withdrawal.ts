@@ -13,6 +13,7 @@ import {
   executeWithdrawal,
   handleWithdrawal,
 } from "../../utils/withdrawal";
+import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.Withdrawal", () => {
@@ -252,7 +253,7 @@ describe("Exchange.Withdrawal", () => {
     expect(await getClaimableFeeAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq("0");
 
     await expect(getMarketTokenPrice(fixture)).to.be.revertedWithCustomError(
-      reader,
+      errorsContract,
       "UnexpectedSupplyForTokenPriceCalculation"
     );
 

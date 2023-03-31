@@ -5,6 +5,17 @@ import { setUintIfDifferent } from "../utils/dataStore";
 const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
   const generalConfig = await gmx.getGeneral();
 
+  await setUintIfDifferent(keys.MAX_CALLBACK_GAS_LIMIT, generalConfig.maxCallbackGasLimit, "max callback gas limit");
+  await setUintIfDifferent(keys.MAX_SWAP_PATH_LENGTH, generalConfig.maxSwapPathLength, "max swap path length");
+
+  await setUintIfDifferent(keys.MIN_COLLATERAL_USD, generalConfig.minCollateralUsd, "min collateral USD");
+
+  await setUintIfDifferent(
+    keys.CLAIMABLE_COLLATERAL_TIME_DIVISOR,
+    generalConfig.claimableCollateralTimeDivisor,
+    "claimable collateral time divisor"
+  );
+
   await setUintIfDifferent(
     keys.depositGasLimitKey(true),
     generalConfig.depositGasLimitSingle,

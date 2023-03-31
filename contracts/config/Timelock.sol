@@ -26,13 +26,6 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
 
     mapping (bytes32 => uint256) public pendingActions;
 
-    error ActionAlreadySignalled();
-    error ActionNotSignalled();
-    error SignalTimeNotYetPassed(uint256 signalTime);
-    error InvalidTimelockDelay(uint256 timelockDelay);
-    error MaxTimelockDelayExceeded(uint256 timelockDelay);
-    error InvalidFeeReceiver(address receiver);
-
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
@@ -55,11 +48,11 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param the new timelock delay
     function increaseTimelockDelay(uint256 _timelockDelay) external onlyTimelockAdmin nonReentrant {
         if (_timelockDelay <= timelockDelay) {
-            revert InvalidTimelockDelay(_timelockDelay);
+            revert Errors.InvalidTimelockDelay(_timelockDelay);
         }
 
         if (_timelockDelay > MAX_TIMELOCK_DELAY) {
-            revert MaxTimelockDelayExceeded(_timelockDelay);
+            revert Errors.MaxTimelockDelayExceeded(_timelockDelay);
         }
 
         timelockDelay = _timelockDelay;
@@ -69,7 +62,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param account the new fee receiver
     function signalSetFeeReceiver(address account) external onlyTimelockAdmin nonReentrant {
         if (account == address(0)) {
-            revert InvalidFeeReceiver(account);
+            revert Errors.InvalidFeeReceiver(account);
         }
 
         bytes32 actionKey = _setFeeReceiverActionKey(account);
@@ -266,10 +259,10 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param actionLabel a label for the action
     function _signalPendingAction(bytes32 actionKey, string memory actionLabel) internal {
         if (pendingActions[actionKey] != 0) {
-            revert ActionAlreadySignalled();
+            revert Errors.ActionAlreadySignalled();
         }
 
-        pendingActions[actionKey] = block.timestamp + timelockDelay;
+        pendingActions[actionKey] = Chain.currentTimestamp() + timelockDelay;
 
         EventUtils.EventLogData memory eventData;
 
@@ -327,18 +320,18 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     // @dev validate that the action has been signalled and sufficient time has passed
     function _validateAction(bytes32 actionKey) internal view {
         if (pendingActions[actionKey] == 0) {
-            revert ActionNotSignalled();
+            revert Errors.ActionNotSignalled();
         }
 
-        if (pendingActions[actionKey] > block.timestamp) {
-            revert SignalTimeNotYetPassed(pendingActions[actionKey]);
+        if (pendingActions[actionKey] > Chain.currentTimestamp()) {
+            revert Errors.SignalTimeNotYetPassed(pendingActions[actionKey]);
         }
     }
 
     // @dev clear a previously signalled action
     function _clearAction(bytes32 actionKey, string memory actionLabel) internal {
         if (pendingActions[actionKey] == 0) {
-            revert ActionNotSignalled();
+            revert Errors.ActionNotSignalled();
         }
         delete pendingActions[actionKey];
 

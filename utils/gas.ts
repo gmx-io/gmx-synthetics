@@ -6,8 +6,12 @@ export async function printGasUsage(provider, txn, label) {
 export async function logGasUsage({ tx, label }) {
   const { provider } = ethers;
   const result = await tx;
+
+  const txReceipt = await provider.getTransactionReceipt(result.hash);
+
   if (label) {
-    const { gasUsed } = await provider.getTransactionReceipt(result.hash);
-    console.info(label, gasUsed.toString());
+    console.info(label, txReceipt.gasUsed.toString());
   }
+
+  return txReceipt;
 }

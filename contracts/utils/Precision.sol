@@ -17,6 +17,8 @@ library Precision {
     using SignedMath for int256;
 
     uint256 public constant FLOAT_PRECISION = 10 ** 30;
+    uint256 public constant LOW_FLOAT_PRECISION = 10 ** 15;
+
     uint256 public constant WEI_PRECISION = 10 ** 18;
     uint256 public constant BASIS_POINTS_DIVISOR = 10000;
 
@@ -85,6 +87,8 @@ library Precision {
     }
 
     function toFactor(uint256 value, uint256 divisor) internal pure returns (uint256) {
+        if (value == 0) { return 0; }
+
         (bool ok, uint256 numerator) = SafeMath.tryMul(value, FLOAT_PRECISION);
         if (ok) {
             return numerator / divisor;

@@ -1,23 +1,27 @@
 import { expect } from "chai";
+import { mine } from "@nomicfoundation/hardhat-network-helpers";
 
 import { deployFixture } from "../../utils/fixture";
+import { deployContract } from "../../utils/deploy";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { printGasUsage } from "../../utils/gas";
 import { handleDeposit } from "../../utils/deposit";
+import { errorsContract } from "../../utils/error";
 import { OrderType, getOrderCount, getOrderKeys, createOrder } from "../../utils/order";
+import * as keys from "../../utils/keys";
 
 describe("Exchange.CancelOrder", () => {
   const { provider } = ethers;
 
   let fixture;
   let user0, user1;
-  let reader, dataStore, exchangeRouter, ethUsdMarket, wnt;
+  let reader, dataStore, exchangeRouter, orderHandler, ethUsdMarket, wnt;
   let executionFee;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1 } = fixture.accounts);
-    ({ reader, dataStore, exchangeRouter, ethUsdMarket, wnt } = fixture.contracts);
+    ({ reader, dataStore, exchangeRouter, orderHandler, ethUsdMarket, wnt } = fixture.contracts);
     ({ executionFee } = fixture.props);
 
     await handleDeposit(fixture, {
@@ -26,6 +30,62 @@ describe("Exchange.CancelOrder", () => {
         longTokenAmount: expandDecimals(1000, 18),
       },
     });
+  });
+
+  it("cancelOrder validations", async () => {
+    const revertingCallbackReceiver = await deployContract("RevertingCallbackReceiver", []);
+
+    await dataStore.setUint(keys.REQUEST_EXPIRATION_BLOCK_AGE, 10);
+
+    expect(await getOrderCount(dataStore)).eq(0);
+    const params = {
+      market: ethUsdMarket,
+      callbackContract: revertingCallbackReceiver,
+      initialCollateralToken: wnt,
+      initialCollateralDeltaAmount: expandDecimals(10, 18),
+      swapPath: [ethUsdMarket.marketToken],
+      sizeDeltaUsd: decimalToFloat(200 * 1000),
+      triggerPrice: expandDecimals(5000, 12),
+      acceptablePrice: expandDecimals(5001, 12),
+      executionFee,
+      minOutputAmount: expandDecimals(50000, 6),
+      orderType: OrderType.MarketIncrease,
+      isLong: true,
+      shouldUnwrapNativeToken: false,
+    };
+
+    await createOrder(fixture, params);
+
+    expect(await getOrderCount(dataStore)).eq(1);
+
+    const orderKeys = await getOrderKeys(dataStore, 0, 1);
+
+    const _cancelOrderFeatureDisabledKey = keys.cancelOrderFeatureDisabledKey(
+      orderHandler.address,
+      OrderType.MarketIncrease
+    );
+
+    await dataStore.setBool(_cancelOrderFeatureDisabledKey, true);
+
+    await expect(exchangeRouter.connect(user1).cancelOrder(orderKeys[0]))
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
+      .withArgs(user1.address, "account for cancelOrder");
+
+    expect(await getOrderCount(dataStore)).eq(1);
+
+    await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0]))
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
+      .withArgs(_cancelOrderFeatureDisabledKey);
+
+    expect(await getOrderCount(dataStore)).eq(1);
+
+    await dataStore.setBool(_cancelOrderFeatureDisabledKey, false);
+
+    await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0]))
+      .to.be.revertedWithCustomError(errorsContract, "RequestNotYetCancellable")
+      .withArgs(5, 10, "Order");
+
+    mine(10);
   });
 
   it("cancelOrder", async () => {
@@ -69,15 +129,14 @@ describe("Exchange.CancelOrder", () => {
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
 
-    await expect(exchangeRouter.connect(user1).cancelOrder(orderKeys[0]))
-      .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
-      .withArgs(user1.address, "account for cancelOrder");
-
-    expect(await getOrderCount(dataStore)).eq(1);
-
     const txn = await exchangeRouter.connect(user0).cancelOrder(orderKeys[0]);
 
     await printGasUsage(provider, txn, "cancelOrder");
     expect(await getOrderCount(dataStore)).eq(0);
+
+    await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0])).to.be.revertedWithCustomError(
+      errorsContract,
+      "EmptyOrder"
+    );
   });
 });

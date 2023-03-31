@@ -10,8 +10,14 @@ export async function contractAt(name, address) {
   return await contractFactory.attach(address);
 }
 
-export function createDeployFunction({ contractName, dependencyNames, getDeployArgs, libraryNames, afterDeploy }) {
-  const func = async ({ getNamedAccounts, deployments, gmx }: HardhatRuntimeEnvironment) => {
+export function createDeployFunction({
+  contractName,
+  dependencyNames = null,
+  getDeployArgs = null,
+  libraryNames = null,
+  afterDeploy,
+}) {
+  const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRuntimeEnvironment) => {
     const { deploy, get } = deployments;
     const { deployer } = await getNamedAccounts();
 
@@ -48,8 +54,6 @@ export function createDeployFunction({ contractName, dependencyNames, getDeployA
         libraries,
       });
     } catch (e) {
-      // console.error("Deploy error", e);
-
       // the caught error might not be very informative
       // e.g. if some library dependency is missing, which library it is
       // is not shown in the error
@@ -65,7 +69,7 @@ export function createDeployFunction({ contractName, dependencyNames, getDeployA
     }
 
     if (afterDeploy) {
-      await afterDeploy({ deployedContract, deployer, getNamedAccounts, deployments, gmx });
+      await afterDeploy({ deployedContract, deployer, getNamedAccounts, deployments, gmx, network });
     }
   };
 

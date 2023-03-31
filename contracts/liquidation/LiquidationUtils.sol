@@ -42,7 +42,7 @@ library LiquidationUtils {
 
         Order.Numbers memory numbers = Order.Numbers(
             Order.OrderType.Liquidation, // orderType
-            Order.DecreasePositionSwapType.NoSwap, // decreasePositionSwapType
+            Order.DecreasePositionSwapType.SwapPnlTokenToCollateralToken, // decreasePositionSwapType
             position.sizeInUsd(), // sizeDeltaUsd
             0, // initialCollateralDeltaAmount
             0, // triggerPrice
