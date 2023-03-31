@@ -178,6 +178,7 @@ library Errors {
 
     // SwapPricingUtils errors
     error UsdDeltaExceedsPoolValue(int256 usdDelta, uint256 poolUsd);
+    error InvalidPoolAdjustment(address token, uint256 poolUsdForToken, int256 poolUsdAdjustmentForToken);
 
     // RoleModule errors
     error Unauthorized(address msgSender, string role);
@@ -194,6 +195,7 @@ library Errors {
     // SwapUtils errors
     error InvalidTokenIn(address tokenIn, address market);
     error InsufficientSwapOutputAmount(uint256 outputAmount, uint256 minOutputAmount);
+    error DuplicatedMarketInSwapPath(address market);
 
     // TokenUtils errors
     error EmptyTokenTranferGasLimit(address token);

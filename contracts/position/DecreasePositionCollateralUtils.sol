@@ -141,7 +141,8 @@ library DecreasePositionCollateralUtils {
             (bool wasSwapped, uint256 swapOutputAmount) = swapProfitToCollateralToken(
                 params,
                 cache.pnlToken,
-                values.pnlAmountForUser
+                values.pnlAmountForUser,
+                values.pnlAmountForPool
             );
 
             if (wasSwapped) {
@@ -414,11 +415,16 @@ library DecreasePositionCollateralUtils {
     function swapProfitToCollateralToken(
         PositionUtils.UpdatePositionParams memory params,
         address pnlToken,
-        uint256 profitAmount
+        uint256 profitAmount,
+        int256 poolAmountDelta
     ) internal returns (bool, uint256) {
         if (params.order.decreasePositionSwapType() == Order.DecreasePositionSwapType.SwapPnlTokenToCollateralToken) {
             Market.Props[] memory swapPathMarkets = new Market.Props[](1);
             swapPathMarkets[0] = params.market;
+
+            // adjust the pool amount by the poolAmountDelta so that the price impact of the swap will be
+            // more accurately calculated
+            params.contracts.dataStore.setInt(Keys.poolAmountAdjustmentKey(params.market.marketToken, pnlToken), poolAmountDelta);
 
             try params.contracts.swapHandler.swap(
                 SwapUtils.SwapParams(
@@ -442,6 +448,8 @@ library DecreasePositionCollateralUtils {
                 (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
                 emit SwapUtils.SwapReverted(reason, reasonBytes);
             }
+
+            params.contracts.dataStore.setInt(Keys.poolAmountAdjustmentKey(params.market.marketToken, pnlToken), 0);
         }
 
         return (false, 0);
