@@ -2100,14 +2100,15 @@ library MarketUtils {
         DataStore dataStore,
         Market.Props memory market,
         MarketPrices memory prices,
-        bytes32 pnlFactorType
+        bytes32 pnlFactorTypeForLongs,
+        bytes32 pnlFactorTypeForShorts
     ) internal view {
         (bool isPnlFactorExceededForLongs, int256 pnlToPoolFactorForLongs, uint256 maxPnlFactorForLongs) = isPnlFactorExceeded(
             dataStore,
             market,
             prices,
             true,
-            pnlFactorType
+            pnlFactorTypeForLongs
         );
 
         if (isPnlFactorExceededForLongs) {
@@ -2119,7 +2120,7 @@ library MarketUtils {
             market,
             prices,
             false,
-            pnlFactorType
+            pnlFactorTypeForShorts
         );
 
         if (isPnlFactorExceededForShorts) {

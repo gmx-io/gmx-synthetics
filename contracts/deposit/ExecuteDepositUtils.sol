@@ -116,6 +116,7 @@ library ExecuteDepositUtils {
             params.dataStore,
             market,
             prices,
+            Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS
         );
 

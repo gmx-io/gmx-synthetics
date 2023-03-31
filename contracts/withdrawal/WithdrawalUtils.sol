@@ -335,6 +335,7 @@ library WithdrawalUtils {
             params.dataStore,
             market,
             prices,
+            Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
             Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS
         );
 
