@@ -195,7 +195,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
       sizeDeltaUsd: decimalToFloat(20 * 1000),
       acceptablePrice: expandDecimals(4990, 12),
       executionFee: expandDecimals(1, 15),
-      minOutputAmount: expandDecimals(50000, 6),
+      minOutputAmount: expandDecimals(900, 6),
       orderType: OrderType.MarketIncrease,
       isLong: false,
       shouldUnwrapNativeToken: false,
@@ -204,7 +204,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
     await handleOrder(fixture, { create: params });
 
     await handleOrder(fixture, {
-      create: { ...params, initialCollateralDeltaAmount: 0, account: user1 },
+      create: { ...params, initialCollateralDeltaAmount: 0, minOutputAmount: 0, account: user1 },
       execute: {
         expectedCancellationReason: "InsufficientCollateralAmount",
       },
@@ -306,7 +306,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
       sizeDeltaUsd: decimalToFloat(20 * 1000),
       acceptablePrice: 1,
       executionFee: expandDecimals(1, 15),
-      minOutputAmount: expandDecimals(50000, 6),
+      minOutputAmount: expandDecimals(900, 6),
       orderType: OrderType.MarketIncrease,
       isLong: false,
       shouldUnwrapNativeToken: false,
