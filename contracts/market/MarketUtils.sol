@@ -645,6 +645,7 @@ library MarketUtils {
 
         applyDeltaToVirtualInventoryForSwaps(
             dataStore,
+            eventEmitter,
             market,
             token,
             delta
@@ -1386,7 +1387,13 @@ library MarketUtils {
     // @param market the market to update
     // @param token the token to update
     // @param delta the update amount
-    function applyDeltaToVirtualInventoryForSwaps(DataStore dataStore, address market, address token, int256 delta) internal returns (bool, uint256) {
+    function applyDeltaToVirtualInventoryForSwaps(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address token,
+        int256 delta
+    ) internal returns (bool, uint256) {
         bytes32 marketId = dataStore.getBytes32(Keys.virtualMarketIdKey(market));
         if (marketId == bytes32(0)) {
             return (false, 0);
@@ -1396,6 +1403,8 @@ library MarketUtils {
             Keys.virtualInventoryForSwapsKey(marketId, token),
             delta
         );
+
+        MarketEventUtils.emitVirtualSwapInventoryUpdated(eventEmitter, market, token, marketId, delta, nextValue);
 
         return (true, nextValue);
     }
