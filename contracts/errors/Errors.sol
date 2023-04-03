@@ -82,6 +82,7 @@ library Errors {
 
     // Oracle errors
     error EmptyTokens();
+    error EmptySigner(uint256 signerIndex);
     error InvalidBlockNumber(uint256 blockNumber);
     error InvalidMinMaxBlockNumber(uint256 minOracleBlockNumber, uint256 maxOracleBlockNumber);
     error MaxPriceAgeExceeded(uint256 oracleTimestamp);

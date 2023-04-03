@@ -228,6 +228,10 @@ contract Oracle is RoleModule {
             signerIndexFlags = signerIndexFlags | signerIndexBit;
 
             signers[i] = oracleStore.getSigner(signerIndex);
+
+            if (signers[i] == address(0)) {
+                revert Errors.EmptySigner(signerIndex);
+            }
         }
 
         _setPrices(
