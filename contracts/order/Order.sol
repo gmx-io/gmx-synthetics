@@ -90,6 +90,8 @@ library Order {
     // @param executionFee the execution fee for keepers
     // @param callbackGasLimit the gas limit for the callbackContract
     // @param minOutputAmount the minimum output amount for decrease orders and swaps
+    // note that for decrease orders, multiple tokens could be received, for this reason, the
+    // minOutputAmount value is treated as a USD value for validation in decrease orders
     // @param updatedAtBlock the block at which the order was last updated
     struct Numbers {
         OrderType orderType;

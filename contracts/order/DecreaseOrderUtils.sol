@@ -54,6 +54,15 @@ library DecreaseOrderUtils {
         // transfer the two tokens to the user in this case and skip processing
         // the swapPath
         if (result.secondaryOutputAmount > 0) {
+            _validateOutputAmount(
+                params.contracts.oracle,
+                result.outputToken,
+                result.outputAmount,
+                result.secondaryOutputToken,
+                result.secondaryOutputAmount,
+                order.minOutputAmount()
+            );
+
             MarketToken(payable(order.market())).transferOut(
                 result.outputToken,
                 order.receiver(),
@@ -71,45 +80,37 @@ library DecreaseOrderUtils {
             return;
         }
 
-        if (order.swapPath().length == 0) {
-            MarketToken(payable(order.market())).transferOut(
+        try params.contracts.swapHandler.swap(
+            SwapUtils.SwapParams(
+                params.contracts.dataStore,
+                params.contracts.eventEmitter,
+                params.contracts.oracle,
+                Bank(payable(order.market())),
+                params.key,
                 result.outputToken,
-                order.receiver(),
                 result.outputAmount,
+                params.swapPathMarkets,
+                order.minOutputAmount(),
+                order.receiver(),
                 order.shouldUnwrapNativeToken()
+            )
+        ) returns (address tokenOut, uint256 swapOutputAmount) {
+            _validateOutputAmount(
+                params.contracts.oracle,
+                tokenOut,
+                swapOutputAmount,
+                order.minOutputAmount()
             );
-        } else {
-            try params.contracts.swapHandler.swap(
-                SwapUtils.SwapParams(
-                    params.contracts.dataStore,
-                    params.contracts.eventEmitter,
-                    params.contracts.oracle,
-                    Bank(payable(order.market())),
-                    params.key,
-                    result.outputToken,
-                    result.outputAmount,
-                    params.swapPathMarkets,
-                    order.minOutputAmount(),
-                    order.receiver(),
-                    order.shouldUnwrapNativeToken()
-                )
-            ) returns (address /* tokenOut */, uint256 /* swapOutputAmount */) {
-            } catch Error(string memory reason) {
-                _handleSwapError(
-                    order,
-                    result,
-                    reason,
-                    ""
-                );
-            } catch (bytes memory reasonBytes) {
-                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-                _handleSwapError(
-                    order,
-                    result,
-                    reason,
-                    reasonBytes
-                );
-            }
+        } catch (bytes memory reasonBytes) {
+            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
+
+            _handleSwapError(
+                params.contracts.oracle,
+                order,
+                result,
+                reason,
+                reasonBytes
+            );
         }
     }
 
@@ -159,13 +160,65 @@ library DecreaseOrderUtils {
         revert Errors.UnsupportedOrderType();
     }
 
+    function _validateOutputAmount(
+        Oracle oracle,
+        address outputToken,
+        uint256 outputAmount,
+        uint256 minOutputAmount
+    ) internal view {
+        // for limit / stop-loss orders, the latest price may be the triggerPrice of the order
+        // it is possible that the valuation of the token using this price may not be precise
+        // and the condition for the order execution to revert may not be accurate
+        // this could cause orders to be frozen even if they could be executed, and orders
+        // to be executed even if the received amount of tokens is less than what the user
+        // expected
+        // the user should be informed of this possibility through documentation
+        // it is likely preferred that decrease orders are still executed if the trigger price
+        // is reached and the acceptable price is fulfillable
+        uint256 outputTokenPrice = oracle.getLatestPrice(outputToken).min;
+        uint256 outputUsd = outputAmount * outputTokenPrice;
+
+        if (outputUsd < minOutputAmount) {
+            revert Errors.InsufficientOutputAmount(outputUsd, minOutputAmount);
+        }
+    }
+
+    function _validateOutputAmount(
+        Oracle oracle,
+        address outputToken,
+        uint256 outputAmount,
+        address secondaryOutputToken,
+        uint256 secondaryOutputAmount,
+        uint256 minOutputAmount
+    ) internal view {
+        uint256 outputTokenPrice = oracle.getLatestPrice(outputToken).min;
+        uint256 outputUsd = outputAmount * outputTokenPrice;
+
+        uint256 secondaryOutputTokenPrice = oracle.getLatestPrice(secondaryOutputToken).min;
+        uint256 secondaryOutputUsd = secondaryOutputAmount * secondaryOutputTokenPrice;
+
+        uint256 totalOutputUsd = outputUsd + secondaryOutputUsd;
+
+        if (totalOutputUsd < minOutputAmount) {
+            revert Errors.InsufficientOutputAmount(totalOutputUsd, minOutputAmount);
+        }
+    }
+
     function _handleSwapError(
+        Oracle oracle,
         Order.Props memory order,
         DecreasePositionUtils.DecreasePositionResult memory result,
         string memory reason,
         bytes memory reasonBytes
     ) internal {
         emit SwapUtils.SwapReverted(reason, reasonBytes);
+
+        _validateOutputAmount(
+            oracle,
+            result.outputToken,
+            result.outputAmount,
+            order.minOutputAmount()
+        );
 
         MarketToken(payable(order.market())).transferOut(
             result.outputToken,
