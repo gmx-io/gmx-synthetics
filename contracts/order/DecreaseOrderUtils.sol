@@ -90,7 +90,7 @@ library DecreaseOrderUtils {
                 result.outputToken,
                 result.outputAmount,
                 params.swapPathMarkets,
-                order.minOutputAmount(),
+                0,
                 order.receiver(),
                 order.shouldUnwrapNativeToken()
             )
