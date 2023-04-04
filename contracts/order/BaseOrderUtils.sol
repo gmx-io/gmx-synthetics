@@ -186,7 +186,7 @@ library BaseOrderUtils {
     // for stop-loss orders, the min and max value will be set to the triggerPrice value
     // the primaryPrice and secondaryPrice are not used because the primaryPrice is a stale
     // value and cannot be used as it would result in executing at a better price than what
-    // should be possible, the secondaryPrice is a worse price than the triggerPrice, so there
+    // should be possible, the secondaryPrice is a worse price than the triggerPrice, so
     // it should not need to be considered
     //
     // getExecutionPrice handles the logic for selecting the execution price to use
