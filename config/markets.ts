@@ -53,6 +53,8 @@ export type BaseMarketConfig = {
 
   fundingFactor: BigNumberish;
   fundingExponentFactor: BigNumberish;
+
+  virtualMarketId?: string;
 };
 
 export type MarketConfig = Partial<BaseMarketConfig> &
@@ -169,9 +171,14 @@ const config: {
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
+      virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
+    },
+    {
+      tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "USDC" },
     },
     {
       tokens: { indexToken: "SOL", longToken: "WETH", shortToken: "USDC" },
+      virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
     },
   ],
   hardhat: [

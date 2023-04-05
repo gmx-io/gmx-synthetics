@@ -121,6 +121,9 @@ export const SWAP_ORDER_GAS_LIMIT = hashString("SWAP_ORDER_GAS_LIMIT");
 export const CUMULATIVE_BORROWING_FACTOR = hashString("CUMULATIVE_BORROWING_FACTOR");
 export const CUMULATIVE_BORROWING_FACTOR_UPDATED_AT = hashString("CUMULATIVE_BORROWING_FACTOR_UPDATED_AT");
 
+export const VIRTUAL_TOKEN_ID = hashString("VIRTUAL_TOKEN_ID");
+export const VIRTUAL_MARKET_ID = hashString("VIRTUAL_MARKET_ID");
+
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
 }
@@ -349,4 +352,12 @@ export function cumulativeBorrowingFactorKey(market: string, isLong: boolean) {
 
 export function cumulativeBorrowingFactorUpdatedAtKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [CUMULATIVE_BORROWING_FACTOR_UPDATED_AT, market, isLong]);
+}
+
+export function virtualTokenIdKey(token: string) {
+  return hashData(["bytes32", "address"], [VIRTUAL_TOKEN_ID, token]);
+}
+
+export function virtualMarketIdKey(market: string) {
+  return hashData(["bytes32", "address"], [VIRTUAL_MARKET_ID, market]);
 }
