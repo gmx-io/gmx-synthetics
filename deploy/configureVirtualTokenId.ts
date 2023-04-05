@@ -8,6 +8,7 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
 
   for (const [tokenSymbol, token] of Object.entries(tokens)) {
     const virtualTokenId = token.virtualTokenId || ethers.constants.HashZero;
+
     const virtualTokenIdKey = keys.virtualTokenIdKey(token.address!);
 
     await setBytes32IfDifferent(virtualTokenIdKey, virtualTokenId, `${tokenSymbol} virtual token id`);
