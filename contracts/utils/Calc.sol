@@ -127,7 +127,7 @@ library Calc {
 
         // if subtracting `b` from `a` would result in a value less than the min int256 value
         // then return the min int256 value
-        if (a < 0 && b <= type(int256).min - a) {
+        if (a < 0 && -b <= type(int256).min - a) {
             return type(int256).min;
         }
 
