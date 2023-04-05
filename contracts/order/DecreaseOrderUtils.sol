@@ -142,7 +142,7 @@ library DecreaseOrderUtils {
             orderType == Order.OrderType.StopLossDecrease
         ) {
             uint256 latestUpdatedAtBlock = orderUpdatedAtBlock > positionIncreasedAtBlock ? orderUpdatedAtBlock : positionIncreasedAtBlock;
-            if (!minOracleBlockNumbers.areGreaterThan(latestUpdatedAtBlock)) {
+            if (!minOracleBlockNumbers.areGreaterThanOrEqualTo(latestUpdatedAtBlock)) {
                 revert Errors.OracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, latestUpdatedAtBlock);
             }
             return;
@@ -151,7 +151,7 @@ library DecreaseOrderUtils {
         if (orderType == Order.OrderType.Liquidation) {
             uint256 latestUpdatedAtBlock = positionIncreasedAtBlock > positionDecreasedAtBlock ? positionIncreasedAtBlock : positionDecreasedAtBlock;
 
-            if (!minOracleBlockNumbers.areGreaterThan(latestUpdatedAtBlock)) {
+            if (!minOracleBlockNumbers.areGreaterThanOrEqualTo(latestUpdatedAtBlock)) {
                 revert Errors.OracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, latestUpdatedAtBlock);
             }
             return;

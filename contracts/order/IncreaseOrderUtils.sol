@@ -100,7 +100,7 @@ library IncreaseOrderUtils {
             // for this case, when the limit order price is reached, the order should be frozen
             // the frozen order keepers should only execute frozen orders if the latest prices
             // fulfill the limit price
-            if (!minOracleBlockNumbers.areGreaterThan(orderUpdatedAtBlock)) {
+            if (!minOracleBlockNumbers.areGreaterThanOrEqualTo(orderUpdatedAtBlock)) {
                 revert Errors.OracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, orderUpdatedAtBlock);
             }
             return;
