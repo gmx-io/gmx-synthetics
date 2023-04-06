@@ -55,6 +55,7 @@ export const REQUEST_EXPIRATION_BLOCK_AGE = hashString("REQUEST_EXPIRATION_BLOCK
 
 export const PRICE_FEED = hashString("PRICE_FEED");
 export const PRICE_FEED_MULTIPLIER = hashString("PRICE_FEED_MULTIPLIER");
+export const PRICE_FEED_HEARTBEAT_DURATION = hashString("PRICE_FEED_HEARTBEAT_DURATION");
 export const STABLE_PRICE = hashString("STABLE_PRICE");
 
 export const ORACLE_TYPE = hashString("ORACLE_TYPE");
@@ -194,6 +195,10 @@ export function priceFeedKey(token: string) {
 
 export function priceFeedMultiplierKey(token: string) {
   return hashData(["bytes32", "address"], [PRICE_FEED_MULTIPLIER, token]);
+}
+
+export function priceFeedHeartbeatDurationKey(token: string) {
+  return hashData(["bytes32", "address"], [PRICE_FEED_HEARTBEAT_DURATION, token]);
 }
 
 export function stablePriceKey(token: string) {

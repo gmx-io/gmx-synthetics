@@ -34,7 +34,6 @@ describe("Oracle", () => {
 
   it("inits", async () => {
     expect(await oracle.oracleStore()).to.eq(oracleStore.address);
-    expect(await oracle.SALT()).to.eq(oracleSalt);
   });
 
   it("setPrices", async () => {
