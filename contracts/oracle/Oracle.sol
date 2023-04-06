@@ -564,12 +564,17 @@ contract Oracle is RoleModule {
                 /* uint80 roundID */,
                 int256 _price,
                 /* uint256 startedAt */,
-                /* uint256 timestamp */,
+                uint256 timestamp,
                 /* uint80 answeredInRound */
             ) = priceFeed.latestRoundData();
 
             if (_price <= 0) {
                 revert Errors.InvalidFeedPrice(token, _price);
+            }
+
+            uint256 heartbeatDuration = dataStore.getUint(Keys.priceFeedHeartbeatDurationKey(token));
+            if (block.timestamp > timestamp && block.timestamp - timestamp > heartbeatDuration) {
+                revert Errors.PriceFeedNotUpdated(token, timestamp, heartbeatDuration);
             }
 
             uint256 price = SafeCast.toUint256(_price);

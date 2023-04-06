@@ -185,12 +185,14 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         address token,
         address priceFeed,
         uint256 priceFeedMultiplier,
+        uint256 priceFeedHeartbeatDuration,
         uint256 stablePrice
     ) external onlyTimelockAdmin nonReentrant {
         bytes32 actionKey = _setPriceFeedActionKey(
             token,
             priceFeed,
             priceFeedMultiplier,
+            priceFeedHeartbeatDuration,
             stablePrice
         );
 
@@ -200,9 +202,10 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.addressItems.initItems(2);
         eventData.addressItems.setItem(0, "token", token);
         eventData.addressItems.setItem(1, "priceFeed", priceFeed);
-        eventData.uintItems.initItems(2);
+        eventData.uintItems.initItems(3);
         eventData.uintItems.setItem(0, "priceFeedMultiplier", priceFeedMultiplier);
-        eventData.uintItems.setItem(1, "stablePrice", stablePrice);
+        eventData.uintItems.setItem(1, "priceFeedHeartbeatDuration", priceFeedHeartbeatDuration);
+        eventData.uintItems.setItem(2, "stablePrice", stablePrice);
         eventEmitter.emitEventLog1(
             "SignalSetPriceFeed",
             actionKey,
@@ -219,12 +222,14 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         address token,
         address priceFeed,
         uint256 priceFeedMultiplier,
+        uint256 priceFeedHeartbeatDuration,
         uint256 stablePrice
     ) external onlyTimelockAdmin nonReentrant {
         bytes32 actionKey = _setPriceFeedActionKey(
             token,
             priceFeed,
             priceFeedMultiplier,
+            priceFeedHeartbeatDuration,
             stablePrice
         );
 
@@ -232,15 +237,17 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
 
         dataStore.setAddress(Keys.priceFeedKey(token), priceFeed);
         dataStore.setUint(Keys.priceFeedMultiplierKey(token), priceFeedMultiplier);
+        dataStore.setUint(Keys.priceFeedHeartbeatDurationKey(token), priceFeedHeartbeatDuration);
         dataStore.setUint(Keys.stablePriceKey(token), stablePrice);
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(2);
         eventData.addressItems.setItem(0, "token", token);
         eventData.addressItems.setItem(1, "priceFeed", priceFeed);
-        eventData.uintItems.initItems(2);
+        eventData.uintItems.initItems(3);
         eventData.uintItems.setItem(0, "priceFeedMultiplier", priceFeedMultiplier);
-        eventData.uintItems.setItem(1, "stablePrice", stablePrice);
+        eventData.uintItems.setItem(1, "priceFeedHeartbeatDuration", priceFeedHeartbeatDuration);
+        eventData.uintItems.setItem(2, "stablePrice", stablePrice);
         eventEmitter.emitEventLog1(
             "SetPriceFeed",
             actionKey,
@@ -299,6 +306,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         address token,
         address priceFeed,
         uint256 priceFeedMultiplier,
+        uint256 priceFeedHeartbeatDuration,
         uint256 stablePrice
     ) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(
@@ -306,6 +314,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
             token,
             priceFeed,
             priceFeedMultiplier,
+            priceFeedHeartbeatDuration,
             stablePrice
         ));
     }
