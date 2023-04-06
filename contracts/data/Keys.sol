@@ -194,6 +194,8 @@ library Keys {
     bytes32 public constant PRICE_FEED = keccak256(abi.encode("PRICE_FEED"));
     // @dev key for price feed multiplier
     bytes32 public constant PRICE_FEED_MULTIPLIER = keccak256(abi.encode("PRICE_FEED_MULTIPLIER"));
+    // @dev key for price feed heartbeat
+    bytes32 public constant PRICE_FEED_HEARTBEAT_DURATION = keccak256(abi.encode("PRICE_FEED_HEARTBEAT_DURATION"));
     // @dev key for stable price
     bytes32 public constant STABLE_PRICE = keccak256(abi.encode("STABLE_PRICE"));
     // @dev key for reserve factor
@@ -1000,6 +1002,13 @@ library Keys {
     function priceFeedMultiplierKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             PRICE_FEED_MULTIPLIER,
+            token
+        ));
+    }
+
+    function priceFeedHeartbeatDurationKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            PRICE_FEED_HEARTBEAT_DURATION,
             token
         ));
     }

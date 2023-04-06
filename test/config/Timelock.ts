@@ -70,12 +70,17 @@ describe("Timelock", () => {
     expect(await dataStore.getUint(keys.priceFeedMultiplierKey(wnt.address))).eq(0);
     expect(await dataStore.getUint(keys.stablePriceKey(wnt.address))).eq(0);
 
-    await timelock.connect(user0).signalSetPriceFeed(wnt.address, user2.address, 1000, decimalToFloat(5000));
+    await timelock
+      .connect(user0)
+      .signalSetPriceFeed(wnt.address, user2.address, 1000, 24 * 60 * 60, decimalToFloat(5000));
     await time.increase(1 * 24 * 60 * 60 + 10);
-    await timelock.connect(user0).setPriceFeedAfterSignal(wnt.address, user2.address, 1000, decimalToFloat(5000));
+    await timelock
+      .connect(user0)
+      .setPriceFeedAfterSignal(wnt.address, user2.address, 1000, 24 * 60 * 60, decimalToFloat(5000));
 
     expect(await dataStore.getAddress(keys.priceFeedKey(wnt.address))).eq(user2.address);
     expect(await dataStore.getUint(keys.priceFeedMultiplierKey(wnt.address))).eq(1000);
+    expect(await dataStore.getUint(keys.priceFeedHeartbeatDurationKey(wnt.address))).eq(24 * 60 * 60);
     expect(await dataStore.getUint(keys.stablePriceKey(wnt.address))).eq(decimalToFloat(5000));
   });
 });
