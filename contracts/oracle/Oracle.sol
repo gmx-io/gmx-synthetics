@@ -568,14 +568,14 @@ contract Oracle is RoleModule {
                 /* uint80 answeredInRound */
             ) = priceFeed.latestRoundData();
 
+            if (_price <= 0) {
+                revert Errors.InvalidFeedPrice(token, _price);
+            }
+
             uint256 price = SafeCast.toUint256(_price);
             uint256 precision = getPriceFeedMultiplier(dataStore, token);
 
             price = price * precision / Precision.FLOAT_PRECISION;
-
-            if (price == 0) {
-                revert Errors.EmptyFeedPrice(token);
-            }
 
             uint256 stablePrice = getStablePrice(dataStore, token);
 

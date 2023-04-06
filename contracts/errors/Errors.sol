@@ -92,7 +92,7 @@ library Errors {
     error MinPricesNotSorted(address token, uint256 price, uint256 prevPrice);
     error MaxPricesNotSorted(address token, uint256 price, uint256 prevPrice);
     error EmptyPriceFeedMultiplier(address token);
-    error EmptyFeedPrice(address token);
+    error InvalidFeedPrice(address token, int256 price);
     error MaxSignerIndex(uint256 signerIndex, uint256 maxSignerIndex);
     error DuplicateSigner(uint256 signerIndex);
     error InvalidOraclePrice(address token);
