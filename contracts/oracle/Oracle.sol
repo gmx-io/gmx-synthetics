@@ -61,8 +61,6 @@ contract Oracle is RoleModule {
         uint256[] maxPrices;
     }
 
-    bytes32 public immutable SALT;
-
     uint256 public constant SIGNER_INDEX_LENGTH = 16;
     // subtract 1 as the first slot is used to store number of signers
     uint256 public constant MAX_SIGNERS = 256 / SIGNER_INDEX_LENGTH - 1;
@@ -90,10 +88,6 @@ contract Oracle is RoleModule {
         OracleStore _oracleStore
     ) RoleModule(_roleStore) {
         oracleStore = _oracleStore;
-
-        // sign prices with only the chainid and oracle name so that there is
-        // less config required in the oracle nodes
-        SALT = keccak256(abi.encode(block.chainid, "xget-oracle-v1"));
     }
 
     // @dev validate and store signed prices
@@ -508,7 +502,7 @@ contract Oracle is RoleModule {
                 }
 
                 OracleUtils.validateSigner(
-                    SALT,
+                    _getSalt(),
                     cache.info,
                     params.signatures[cache.signatureIndex],
                     signers[j]
@@ -544,6 +538,12 @@ contract Oracle is RoleModule {
 
             tokensWithPrices.add(cache.info.token);
         }
+    }
+
+    // it might be possible for the block.chainid to change due to a fork or similar
+    // for this reason, this salt is not cached
+    function _getSalt() internal view returns (bytes32) {
+        return keccak256(abi.encode(block.chainid, "xget-oracle-v1"));
     }
 
     // @dev set prices using external price feeds to save costs for tokens with stable prices
