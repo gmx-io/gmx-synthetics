@@ -1241,31 +1241,45 @@ library MarketUtils {
 
     // @dev get the funding fee amount to be deducted or distributed
     //
-    // a hasPendingFundingFee value is returned to indicate if there is a non-zero
-    // pending funding fee even though the current funding fee is zero
-    // this is because it is possible for there to be a funding fee that is too small
-    // resulting in the fundingFeeAmount being zero after rounding
-    // in this case the position's fundingAmountPerSize should not be updated, otherwise
-    // a user could avoid paying funding fees by continually updating the position
-    // before the funding fee becomes large enough to be chargeable
-    //
     // @param latestFundingAmountPerSize the latest funding amount per size
     // @param positionFundingAmountPerSize the funding amount per size for the position
     // @param positionSizeInUsd the position size in USD
     //
-    // @return (hasPendingFundingFee, fundingFeeAmount)
+    // @return fundingFeeAmount
     function getFundingFeeAmount(
         int256 latestFundingAmountPerSize,
         int256 positionFundingAmountPerSize,
         uint256 positionSizeInUsd
-    ) internal pure returns (bool, int256) {
+    ) internal pure returns (int256) {
         int256 fundingDiffFactor = (latestFundingAmountPerSize - positionFundingAmountPerSize);
-        // this will always be zero if positionSizeInUsd is less than Precision.LOW_FLOAT_PRECISION
+
+        // divide the positionSizeInUsd by Precision.LOW_FLOAT_PRECISION as the fundingAmountPerSize values
+        // are stored based on LOW_FLOAT_PRECISION values instead of FLOAT_PRECISION to reduce the chance
+        // of overflows
+        // adjustedPositionSizeInUsd will always be zero if positionSizeInUsd is less than Precision.LOW_FLOAT_PRECISION
         // position sizes should be validated to be above a minimum amount
         // to prevent gaming by using small positions to avoid paying funding fees
-        int256 amount = Precision.applyFactor(positionSizeInUsd / Precision.LOW_FLOAT_PRECISION, fundingDiffFactor);
+        uint256 adjustedPositionSizeInUsd = positionSizeInUsd / Precision.LOW_FLOAT_PRECISION;
 
-        return (fundingDiffFactor != 0 && amount == 0, amount);
+        int256 numerator = adjustedPositionSizeInUsd.toInt256() * fundingDiffFactor;
+
+        if (numerator == 0) { return 0; }
+
+        // if the funding fee amount is negative, it means this amount should be claimable
+        // by the user
+        // round the funding fee amount down for this case
+        if (numerator < 0) {
+            return numerator / Precision.FLOAT_PRECISION.toInt256();
+        }
+
+        // a user could avoid paying funding fees by continually updating the position
+        // before the funding fee becomes large enough to be chargeable
+        // to avoid this, the funding fee amount is rounded up if it is positive
+        //
+        // this could lead to large additional charges if the token has a low number of decimals
+        // or if the token's value is very high, so care should be taken to inform user's if that
+        // is the case
+        return Calc.roundUpDivision(numerator, Precision.FLOAT_PRECISION);
     }
 
     // @dev get the borrowing fees for a position, assumes that cumulativeBorrowingFactor

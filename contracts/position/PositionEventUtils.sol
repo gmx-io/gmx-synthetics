@@ -264,10 +264,8 @@ library PositionEventUtils {
         eventData.intItems.setItem(0, "latestLongTokenFundingAmountPerSize", fees.funding.latestLongTokenFundingAmountPerSize);
         eventData.intItems.setItem(1, "latestShortTokenFundingAmountPerSize", fees.funding.latestShortTokenFundingAmountPerSize);
 
-        eventData.boolItems.initItems(3);
-        eventData.boolItems.setItem(0, "hasPendingLongTokenFundingFee", fees.funding.hasPendingLongTokenFundingFee);
-        eventData.boolItems.setItem(1, "hasPendingShortTokenFundingFee", fees.funding.hasPendingShortTokenFundingFee);
-        eventData.boolItems.setItem(2, "isIncrease", isIncrease);
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "isIncrease", isIncrease);
 
         eventEmitter.emitEventLog1(
             eventName,
