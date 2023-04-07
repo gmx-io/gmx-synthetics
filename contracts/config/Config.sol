@@ -232,8 +232,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.VIRTUAL_MARKET_ID] = true;
         allowedBaseKeys[Keys.VIRTUAL_INVENTORY_FOR_SWAPS] = true;
         allowedBaseKeys[Keys.VIRTUAL_INVENTORY_FOR_POSITIONS] = true;
-        allowedBaseKeys[Keys.THRESHOLD_POSITION_IMPACT_FACTOR_FOR_VIRTUAL_INVENTORY] = true;
-        allowedBaseKeys[Keys.THRESHOLD_SWAP_IMPACT_FACTOR_FOR_VIRTUAL_INVENTORY] = true;
 
         allowedBaseKeys[Keys.POSITION_IMPACT_FACTOR] = true;
         allowedBaseKeys[Keys.POSITION_IMPACT_EXPONENT_FACTOR] = true;
