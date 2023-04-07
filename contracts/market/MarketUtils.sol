@@ -146,8 +146,8 @@ library MarketUtils {
         Price.Props memory shortTokenPrice,
         bytes32 pnlFactorType,
         bool maximize
-    ) external view returns (int256) {
-        int256 poolValue = getPoolValueInfo(
+    ) external view returns (int256, MarketPoolValueInfo.Props memory) {
+        MarketPoolValueInfo.Props memory poolValueInfo = getPoolValueInfo(
             dataStore,
             market,
             indexTokenPrice,
@@ -155,12 +155,12 @@ library MarketUtils {
             shortTokenPrice,
             pnlFactorType,
             maximize
-        ).poolValue;
+        );
 
-        if (poolValue == 0) { return 0; }
+        if (poolValueInfo.poolValue == 0) { return (0, poolValueInfo); }
 
-        if (poolValue < 0) {
-            revert Errors.UnexpectedPoolValueForTokenPriceCalculation(poolValue);
+        if (poolValueInfo.poolValue < 0) {
+            revert Errors.UnexpectedPoolValueForTokenPriceCalculation(poolValueInfo.poolValue);
         }
 
         uint256 supply = getMarketTokenSupply(MarketToken(payable(market.marketToken)));
@@ -169,7 +169,7 @@ library MarketUtils {
             revert Errors.UnexpectedSupplyForTokenPriceCalculation();
         }
 
-        return poolValue * Precision.WEI_PRECISION.toInt256() / supply.toInt256();
+        return (poolValueInfo.poolValue * Precision.WEI_PRECISION.toInt256() / supply.toInt256(), poolValueInfo);
     }
 
     // @dev get the total supply of the marketToken
@@ -906,7 +906,7 @@ library MarketUtils {
 
         // get the current funding amount per size values
         // funding amount per size represents the amount of tokens to be paid as
-        // funding per (Precision.LOW_FLOAT_PRECISION / Precision.FLOAT_PRECISION) USD of position size
+        // funding per (Precision.FLOAT_PRECISION_SQRT / Precision.FLOAT_PRECISION) USD of position size
         result.fundingAmountPerSize_LongCollateral_LongPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.longToken, true);
         result.fundingAmountPerSize_ShortCollateral_LongPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.shortToken, true);
         result.fundingAmountPerSize_LongCollateral_ShortPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.longToken, false);
@@ -929,7 +929,8 @@ library MarketUtils {
             cache.diffUsd,
             cache.totalOpenInterest
         );
-        cache.fundingUsd = (cache.sizeOfLargerSide / Precision.FLOAT_PRECISION) * cache.durationInSeconds * result.fundingFactorPerSecond;
+
+        cache.fundingUsd = Precision.applyFactor(cache.sizeOfLargerSide, cache.durationInSeconds * result.fundingFactorPerSecond);
 
         result.longsPayShorts = cache.oi.longOpenInterest > cache.oi.shortOpenInterest;
 
@@ -939,11 +940,11 @@ library MarketUtils {
         // should be paid from long positions using short collateral
         // short positions should receive $100 of funding fees in long collateral and $400 of funding fees in short collateral
         if (result.longsPayShorts) {
-            cache.fundingUsdForLongCollateral = cache.fundingUsd * cache.oi.longOpenInterestWithLongCollateral / cache.oi.longOpenInterest;
-            cache.fundingUsdForShortCollateral = cache.fundingUsd * cache.oi.longOpenInterestWithShortCollateral / cache.oi.longOpenInterest;
+            cache.fundingUsdForLongCollateral = Precision.applyFraction(cache.fundingUsd, cache.oi.longOpenInterestWithLongCollateral, cache.oi.longOpenInterest);
+            cache.fundingUsdForShortCollateral = Precision.applyFraction(cache.fundingUsd, cache.oi.longOpenInterestWithShortCollateral, cache.oi.longOpenInterest);
         } else {
-            cache.fundingUsdForLongCollateral = cache.fundingUsd * cache.oi.shortOpenInterestWithLongCollateral / cache.oi.shortOpenInterest;
-            cache.fundingUsdForShortCollateral = cache.fundingUsd * cache.oi.shortOpenInterestWithShortCollateral / cache.oi.shortOpenInterest;
+            cache.fundingUsdForLongCollateral = Precision.applyFraction(cache.fundingUsd, cache.oi.shortOpenInterestWithLongCollateral, cache.oi.shortOpenInterest);
+            cache.fundingUsdForShortCollateral = Precision.applyFraction(cache.fundingUsd, cache.oi.shortOpenInterestWithShortCollateral, cache.oi.shortOpenInterest);
         }
 
         cache.fundingAmountForLongCollateral = cache.fundingUsdForLongCollateral / prices.longTokenPrice.max;
@@ -1038,7 +1039,7 @@ library MarketUtils {
         //
         // if a minimum position size of at least 1 USD is set, then
         // these cases should not occur
-        uint256 divisor = openInterest / Precision.LOW_FLOAT_PRECISION;
+        uint256 divisor = openInterest / Precision.FLOAT_PRECISION_SQRT;
         if (divisor == 0) { return 0; }
 
         return Precision.toFactor(fundingAmount, divisor);
@@ -1241,31 +1242,45 @@ library MarketUtils {
 
     // @dev get the funding fee amount to be deducted or distributed
     //
-    // a hasPendingFundingFee value is returned to indicate if there is a non-zero
-    // pending funding fee even though the current funding fee is zero
-    // this is because it is possible for there to be a funding fee that is too small
-    // resulting in the fundingFeeAmount being zero after rounding
-    // in this case the position's fundingAmountPerSize should not be updated, otherwise
-    // a user could avoid paying funding fees by continually updating the position
-    // before the funding fee becomes large enough to be chargeable
-    //
     // @param latestFundingAmountPerSize the latest funding amount per size
     // @param positionFundingAmountPerSize the funding amount per size for the position
     // @param positionSizeInUsd the position size in USD
     //
-    // @return (hasPendingFundingFee, fundingFeeAmount)
+    // @return fundingFeeAmount
     function getFundingFeeAmount(
         int256 latestFundingAmountPerSize,
         int256 positionFundingAmountPerSize,
         uint256 positionSizeInUsd
-    ) internal pure returns (bool, int256) {
+    ) internal pure returns (int256) {
         int256 fundingDiffFactor = (latestFundingAmountPerSize - positionFundingAmountPerSize);
-        // this will always be zero if positionSizeInUsd is less than Precision.LOW_FLOAT_PRECISION
+
+        // divide the positionSizeInUsd by Precision.FLOAT_PRECISION_SQRT as the fundingAmountPerSize values
+        // are stored based on FLOAT_PRECISION_SQRT values instead of FLOAT_PRECISION to reduce the chance
+        // of overflows
+        // adjustedPositionSizeInUsd will always be zero if positionSizeInUsd is less than Precision.FLOAT_PRECISION_SQRT
         // position sizes should be validated to be above a minimum amount
         // to prevent gaming by using small positions to avoid paying funding fees
-        int256 amount = Precision.applyFactor(positionSizeInUsd / Precision.LOW_FLOAT_PRECISION, fundingDiffFactor);
+        uint256 adjustedPositionSizeInUsd = positionSizeInUsd / Precision.FLOAT_PRECISION_SQRT;
 
-        return (fundingDiffFactor != 0 && amount == 0, amount);
+        int256 numerator = adjustedPositionSizeInUsd.toInt256() * fundingDiffFactor;
+
+        if (numerator == 0) { return 0; }
+
+        // if the funding fee amount is negative, it means this amount should be claimable
+        // by the user
+        // round the funding fee amount down for this case
+        if (numerator < 0) {
+            return numerator / Precision.FLOAT_PRECISION.toInt256();
+        }
+
+        // a user could avoid paying funding fees by continually updating the position
+        // before the funding fee becomes large enough to be chargeable
+        // to avoid this, the funding fee amount is rounded up if it is positive
+        //
+        // this could lead to large additional charges if the token has a low number of decimals
+        // or if the token's value is very high, so care should be taken to inform user's if that
+        // is the case
+        return Calc.roundUpDivision(numerator, Precision.FLOAT_PRECISION);
     }
 
     // @dev get the borrowing fees for a position, assumes that cumulativeBorrowingFactor
@@ -1356,30 +1371,6 @@ library MarketUtils {
         }
 
         return (true, dataStore.getInt(Keys.virtualInventoryForPositionsKey(tokenId)));
-    }
-
-    // @dev get the threshold position impact for virtual inventory
-    // @param dataStore DataStore
-    // @param token the token to check
-    function getThresholdPositionImpactFactorForVirtualInventory(DataStore dataStore, address token) internal view returns (bool, int256) {
-        bytes32 tokenId = dataStore.getBytes32(Keys.virtualTokenIdKey(token));
-        if (tokenId == bytes32(0)) {
-            return (false, 0);
-        }
-
-        return (true, dataStore.getInt(Keys.thresholdPositionImpactFactorForVirtualInventoryKey(tokenId)));
-    }
-
-    // @dev get the threshold swap impact for virtual inventory
-    // @param dataStore DataStore
-    // @param token the token to check
-    function getThresholdSwapImpactFactorForVirtualInventory(DataStore dataStore, address market) internal view returns (bool, int256) {
-        bytes32 marketId = dataStore.getBytes32(Keys.virtualMarketIdKey(market));
-        if (marketId == bytes32(0)) {
-            return (false, 0);
-        }
-
-        return (true, dataStore.getInt(Keys.thresholdSwapImpactFactorForVirtualInventoryKey(marketId)));
     }
 
     // @dev update the virtual inventory for swaps

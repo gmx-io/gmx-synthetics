@@ -109,16 +109,12 @@ library PositionPricingUtils {
     // amount per size for the market
     // @param latestShortTokenFundingAmountPerSize the latest short token funding
     // amount per size for the market
-    // @param hasPendingLongTokenFundingFee whether there is a pending long token funding fee
-    // @param hasPendingShortTokenFundingFee whether there is a pending short token funding fee
     struct PositionFundingFees {
         uint256 fundingFeeAmount;
         uint256 claimableLongTokenAmount;
         uint256 claimableShortTokenAmount;
         int256 latestLongTokenFundingAmountPerSize;
         int256 latestShortTokenFundingAmountPerSize;
-        bool hasPendingLongTokenFundingFee;
-        bool hasPendingShortTokenFundingFee;
     }
 
     // @dev GetPositionFeesAfterReferralCache struct used in getPositionFees
@@ -206,28 +202,11 @@ library PositionPricingUtils {
 
         int256 priceImpactUsd = _getPriceImpactUsd(params.dataStore, params.market.marketToken, openInterestParams);
 
-        if (priceImpactUsd >= 0) {
-            return priceImpactUsd;
-        }
+        (bool hasVirtualInventory, int256 virtualInventory) = MarketUtils.getVirtualInventoryForPositions(params.dataStore, params.market.indexToken);
+        if (!hasVirtualInventory) { return priceImpactUsd; }
 
-        (bool hasVirtualInventory, int256 thresholdImpactFactorForVirtualInventory) = MarketUtils.getThresholdPositionImpactFactorForVirtualInventory(
-            params.dataStore,
-            params.market.indexToken
-        );
-
-        if (!hasVirtualInventory) {
-            return priceImpactUsd;
-        }
-
-        OpenInterestParams memory openInterestParamsForVirtualInventory = getNextOpenInterestForVirtualInventory(params);
+        OpenInterestParams memory openInterestParamsForVirtualInventory = getNextOpenInterestForVirtualInventory(params, virtualInventory);
         int256 priceImpactUsdForVirtualInventory = _getPriceImpactUsd(params.dataStore, params.market.marketToken, openInterestParamsForVirtualInventory);
-        int256 thresholdPriceImpactUsd = Precision.applyFactor(params.usdDelta.abs(), thresholdImpactFactorForVirtualInventory);
-
-        // the thresholdPositionImpactFactorForVirtualInventoryKey can be set to small a negative value, e.g. -0.1%
-        // if the price impact for virtual inventory is small, e.g. -0.08%, the normal price impact is used instead, e.g. -0.02%
-        if (priceImpactUsdForVirtualInventory > thresholdPriceImpactUsd) {
-            return priceImpactUsd;
-        }
 
         return priceImpactUsdForVirtualInventory < priceImpactUsd ? priceImpactUsdForVirtualInventory : priceImpactUsd;
     }
@@ -293,10 +272,9 @@ library PositionPricingUtils {
     }
 
     function getNextOpenInterestForVirtualInventory(
-        GetPriceImpactUsdParams memory params
-    ) internal view returns (OpenInterestParams memory) {
-        (/* bool hasVirtualInventory */, int256 virtualInventory) = MarketUtils.getVirtualInventoryForPositions(params.dataStore, params.market.indexToken);
-
+        GetPriceImpactUsdParams memory params,
+        int256 virtualInventory
+    ) internal pure returns (OpenInterestParams memory) {
         uint256 longOpenInterest;
         uint256 shortOpenInterest;
 
@@ -429,16 +407,13 @@ library PositionPricingUtils {
         fundingFees.latestLongTokenFundingAmountPerSize = latestLongTokenFundingAmountPerSize;
         fundingFees.latestShortTokenFundingAmountPerSize = latestShortTokenFundingAmountPerSize;
 
-        int256 longTokenFundingFeeAmount;
-        int256 shortTokenFundingFeeAmount;
-
-        (fundingFees.hasPendingLongTokenFundingFee, longTokenFundingFeeAmount) = MarketUtils.getFundingFeeAmount(
+        int256 longTokenFundingFeeAmount = MarketUtils.getFundingFeeAmount(
             fundingFees.latestLongTokenFundingAmountPerSize,
             position.longTokenFundingAmountPerSize(),
             position.sizeInUsd()
         );
 
-        (fundingFees.hasPendingShortTokenFundingFee, shortTokenFundingFeeAmount) = MarketUtils.getFundingFeeAmount(
+        int256 shortTokenFundingFeeAmount = MarketUtils.getFundingFeeAmount(
             fundingFees.latestShortTokenFundingAmountPerSize,
             position.shortTokenFundingAmountPerSize(),
             position.sizeInUsd()

@@ -202,8 +202,7 @@ library PositionUtils {
             );
 
             if (cache.cappedPoolPnl != cache.poolPnl && cache.cappedPoolPnl > 0 && cache.poolPnl > 0) {
-                // divide by WEI_PRECISION to reduce the risk of overflow
-                cache.totalPositionPnl = cache.totalPositionPnl * (cache.cappedPoolPnl / Precision.WEI_PRECISION.toInt256()) / (cache.poolPnl / Precision.WEI_PRECISION.toInt256());
+                cache.totalPositionPnl = Precision.applyFraction(cache.totalPositionPnl.toUint256(), cache.cappedPoolPnl, cache.poolPnl.toUint256());
             }
         }
 
