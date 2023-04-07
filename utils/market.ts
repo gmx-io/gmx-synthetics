@@ -25,6 +25,10 @@ export async function getSwapImpactPoolAmount(dataStore, market, token) {
 }
 
 export async function getMarketTokenPrice(fixture, overrides: any = {}) {
+  return (await getMarketTokenPriceWithPoolValue(fixture, overrides))[0];
+}
+
+export async function getMarketTokenPriceWithPoolValue(fixture, overrides: any = {}) {
   const { reader, dataStore, ethUsdMarket } = fixture.contracts;
   const market = overrides.market || ethUsdMarket;
   const pnlFactorType = overrides.pnlFactorType || keys.MAX_PNL_FACTOR_FOR_TRADERS;
