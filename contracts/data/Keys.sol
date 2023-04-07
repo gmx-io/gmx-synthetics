@@ -149,10 +149,6 @@ library Keys {
     bytes32 public constant VIRTUAL_INVENTORY_FOR_SWAPS = keccak256(abi.encode("VIRTUAL_INVENTORY_FOR_SWAPS"));
     // @dev key for the virtual inventory for positions
     bytes32 public constant VIRTUAL_INVENTORY_FOR_POSITIONS = keccak256(abi.encode("VIRTUAL_INVENTORY_FOR_POSITIONS"));
-    // @dev key for the threshold position impact for virtual inventory
-    bytes32 public constant THRESHOLD_POSITION_IMPACT_FACTOR_FOR_VIRTUAL_INVENTORY = keccak256(abi.encode("THRESHOLD_POSITION_IMPACT_FACTOR_FOR_VIRTUAL_INVENTORY"));
-    // @dev key for the threshold swap impact for virtual inventory
-    bytes32 public constant THRESHOLD_SWAP_IMPACT_FACTOR_FOR_VIRTUAL_INVENTORY = keccak256(abi.encode("THRESHOLD_SWAP_IMPACT_FACTOR_FOR_VIRTUAL_INVENTORY"));
 
     // @dev key for the position impact factor
     bytes32 public constant POSITION_IMPACT_FACTOR = keccak256(abi.encode("POSITION_IMPACT_FACTOR"));
@@ -511,24 +507,6 @@ library Keys {
            VIRTUAL_INVENTORY_FOR_SWAPS,
            virtualMarketId,
            token
-       ));
-   }
-
-   // @dev the key for the threshold position impact for virtual inventory
-   // @param virtualTokenId the virtual token id to check
-   function thresholdPositionImpactFactorForVirtualInventoryKey(bytes32 virtualTokenId) internal pure returns (bytes32) {
-       return keccak256(abi.encode(
-           THRESHOLD_POSITION_IMPACT_FACTOR_FOR_VIRTUAL_INVENTORY,
-           virtualTokenId
-       ));
-   }
-
-   // @dev the key for the threshold swap impact for virtual inventory
-   // @param virtualMarketId the virtual market id to check
-   function thresholdSwapImpactFactorForVirtualInventoryKey(bytes32 virtualMarketId) internal pure returns (bytes32) {
-       return keccak256(abi.encode(
-           THRESHOLD_SWAP_IMPACT_FACTOR_FOR_VIRTUAL_INVENTORY,
-           virtualMarketId
        ));
    }
 

@@ -89,27 +89,29 @@ library SwapPricingUtils {
 
         int256 priceImpactUsd = _getPriceImpactUsd(params.dataStore, params.market, poolParams);
 
-        if (priceImpactUsd >= 0) {
-            return priceImpactUsd;
-        }
-
-        (bool hasVirtualInventory, int256 thresholdImpactFactorForVirtualInventory) = MarketUtils.getThresholdSwapImpactFactorForVirtualInventory(
+        (bool hasVirtualInventoryTokenA, uint256 virtualPoolAmountForTokenA) = MarketUtils.getVirtualInventoryForSwaps(
             params.dataStore,
-            params.market.marketToken
+            params.market.marketToken,
+            params.tokenA
         );
 
-        if (!hasVirtualInventory) {
+        (bool hasVirtualInventoryTokenB, uint256 virtualPoolAmountForTokenB) = MarketUtils.getVirtualInventoryForSwaps(
+            params.dataStore,
+            params.market.marketToken,
+            params.tokenB
+        );
+
+        if (!hasVirtualInventoryTokenA || !hasVirtualInventoryTokenB) {
             return priceImpactUsd;
         }
 
-        PoolParams memory poolParamsForVirtualInventory = getNextPoolAmountsUsdForVirtualInventory(params);
+        PoolParams memory poolParamsForVirtualInventory = getNextPoolAmountsParams(
+            params,
+            virtualPoolAmountForTokenA,
+            virtualPoolAmountForTokenB
+        );
+
         int256 priceImpactUsdForVirtualInventory = _getPriceImpactUsd(params.dataStore, params.market, poolParamsForVirtualInventory);
-        uint256 largerUsdDelta = params.usdDeltaForTokenA.abs() > params.usdDeltaForTokenB.abs() ? params.usdDeltaForTokenA.abs() : params.usdDeltaForTokenB.abs();
-        int256 thresholdPriceImpactUsd = Precision.applyFactor(largerUsdDelta, thresholdImpactFactorForVirtualInventory);
-
-        if (priceImpactUsdForVirtualInventory > thresholdPriceImpactUsd) {
-            return priceImpactUsd;
-        }
 
         return priceImpactUsdForVirtualInventory < priceImpactUsd ? priceImpactUsdForVirtualInventory : priceImpactUsd;
     }
@@ -162,19 +164,6 @@ library SwapPricingUtils {
     ) internal view returns (PoolParams memory) {
         uint256 poolAmountForTokenA = MarketUtils.getPoolAmount(params.dataStore, params.market, params.tokenA);
         uint256 poolAmountForTokenB = MarketUtils.getPoolAmount(params.dataStore, params.market, params.tokenB);
-
-        return getNextPoolAmountsParams(
-            params,
-            poolAmountForTokenA,
-            poolAmountForTokenB
-        );
-    }
-
-    function getNextPoolAmountsUsdForVirtualInventory(
-        GetPriceImpactUsdParams memory params
-    ) internal view returns (PoolParams memory) {
-        (/* bool hasVirtualInventory */, uint256 poolAmountForTokenA) = MarketUtils.getVirtualInventoryForSwaps(params.dataStore, params.market.marketToken, params.tokenA);
-        (/* bool hasVirtualInventory */, uint256 poolAmountForTokenB) = MarketUtils.getVirtualInventoryForSwaps(params.dataStore, params.market.marketToken, params.tokenB);
 
         return getNextPoolAmountsParams(
             params,
