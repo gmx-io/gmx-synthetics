@@ -929,7 +929,8 @@ library MarketUtils {
             cache.diffUsd,
             cache.totalOpenInterest
         );
-        cache.fundingUsd = (cache.sizeOfLargerSide / Precision.FLOAT_PRECISION) * cache.durationInSeconds * result.fundingFactorPerSecond;
+
+        cache.fundingUsd = Precision.applyFactor(cache.sizeOfLargerSide, cache.durationInSeconds * result.fundingFactorPerSecond);
 
         result.longsPayShorts = cache.oi.longOpenInterest > cache.oi.shortOpenInterest;
 
