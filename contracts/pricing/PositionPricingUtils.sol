@@ -109,16 +109,12 @@ library PositionPricingUtils {
     // amount per size for the market
     // @param latestShortTokenFundingAmountPerSize the latest short token funding
     // amount per size for the market
-    // @param hasPendingLongTokenFundingFee whether there is a pending long token funding fee
-    // @param hasPendingShortTokenFundingFee whether there is a pending short token funding fee
     struct PositionFundingFees {
         uint256 fundingFeeAmount;
         uint256 claimableLongTokenAmount;
         uint256 claimableShortTokenAmount;
         int256 latestLongTokenFundingAmountPerSize;
         int256 latestShortTokenFundingAmountPerSize;
-        bool hasPendingLongTokenFundingFee;
-        bool hasPendingShortTokenFundingFee;
     }
 
     // @dev GetPositionFeesAfterReferralCache struct used in getPositionFees
@@ -429,16 +425,13 @@ library PositionPricingUtils {
         fundingFees.latestLongTokenFundingAmountPerSize = latestLongTokenFundingAmountPerSize;
         fundingFees.latestShortTokenFundingAmountPerSize = latestShortTokenFundingAmountPerSize;
 
-        int256 longTokenFundingFeeAmount;
-        int256 shortTokenFundingFeeAmount;
-
-        (fundingFees.hasPendingLongTokenFundingFee, longTokenFundingFeeAmount) = MarketUtils.getFundingFeeAmount(
+        int256 longTokenFundingFeeAmount = MarketUtils.getFundingFeeAmount(
             fundingFees.latestLongTokenFundingAmountPerSize,
             position.longTokenFundingAmountPerSize(),
             position.sizeInUsd()
         );
 
-        (fundingFees.hasPendingShortTokenFundingFee, shortTokenFundingFeeAmount) = MarketUtils.getFundingFeeAmount(
+        int256 shortTokenFundingFeeAmount = MarketUtils.getFundingFeeAmount(
             fundingFees.latestShortTokenFundingAmountPerSize,
             position.shortTokenFundingAmountPerSize(),
             position.sizeInUsd()

@@ -210,12 +210,8 @@ library DecreasePositionUtils {
 
             PositionStoreUtils.remove(params.contracts.dataStore, params.positionKey, params.order.account());
         } else {
-            if (!fees.funding.hasPendingLongTokenFundingFee) {
-                params.position.setLongTokenFundingAmountPerSize(fees.funding.latestLongTokenFundingAmountPerSize);
-            }
-            if (!fees.funding.hasPendingShortTokenFundingFee) {
-                params.position.setShortTokenFundingAmountPerSize(fees.funding.latestShortTokenFundingAmountPerSize);
-            }
+            params.position.setLongTokenFundingAmountPerSize(fees.funding.latestLongTokenFundingAmountPerSize);
+            params.position.setShortTokenFundingAmountPerSize(fees.funding.latestShortTokenFundingAmountPerSize);
             params.position.setBorrowingFactor(cache.nextPositionBorrowingFactor);
 
             PositionUtils.validatePosition(
