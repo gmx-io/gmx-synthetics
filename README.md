@@ -459,7 +459,7 @@ After the initial setup:
 
 - It is expected that the timelock multisig should revoke the permissions of malicious or compromised accounts
 
-- Order keepers and frozen order keepers could potentially extract value through transaction ordering, delayed transaction execution etc, this will be partially mitigated with a keeper network
+- Order keepers and frozen order keepers could potentially extract value through transaction ordering, delayed transaction execution, ADL execution, etc, this will be partially mitigated with a keeper network
 
 - Oracle signers are expected to accurately report the price of tokens
 
