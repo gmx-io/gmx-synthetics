@@ -23,20 +23,30 @@ contract MarketFactory is RoleModule {
     // @param indexToken address of the index token for the market
     // @param longToken address of the long token for the market
     // @param shortToken address of the short token for the market
+    // @param marketType the type of the market
     function createMarket(
         address indexToken,
         address longToken,
-        address shortToken
+        address shortToken,
+        bytes32 marketType
     ) external onlyMarketKeeper returns (Market.Props memory) {
-        bytes32 marketTokenSalt = keccak256(abi.encode(
+        bytes32 salt = keccak256(abi.encode(
             "GMX_MARKET",
             indexToken,
             longToken,
-            shortToken
+            shortToken,
+            marketType
         ));
 
-        MarketToken marketToken = new MarketToken{salt: marketTokenSalt}(roleStore, dataStore);
+        address existingMarketAddress = dataStore.getAddress(salt);
+        if (existingMarketAddress != address(0)) {
+            revert Errors.MarketAlreadyExists(salt, existingMarketAddress);
+        }
 
+        MarketToken marketToken = new MarketToken{salt: salt}(roleStore, dataStore);
+
+        // the marketType is not stored with the market, it is mainly used to ensure
+        // markets with the same indexToken, longToken and shortToken can be created if needed
         Market.Props memory market = Market.Props(
             address(marketToken),
             indexToken,
@@ -44,7 +54,7 @@ contract MarketFactory is RoleModule {
             shortToken
         );
 
-        MarketStoreUtils.set(dataStore, address(marketToken), market);
+        MarketStoreUtils.set(dataStore, address(marketToken), salt, market);
 
         emit MarketCreated(address(marketToken), indexToken, longToken, shortToken);
 

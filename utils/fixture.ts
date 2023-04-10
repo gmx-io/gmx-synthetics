@@ -2,7 +2,7 @@ import hre from "hardhat";
 
 import { expandDecimals } from "./math";
 import { hashData } from "./hash";
-import { getMarketTokenAddress } from "./market";
+import { getMarketTokenAddress, DEFAULT_MARKET_TYPE } from "./market";
 import { getSyntheticTokenAddress } from "./token";
 
 export async function deployFixture() {
@@ -83,6 +83,7 @@ export async function deployFixture() {
     wnt.address,
     wnt.address,
     usdc.address,
+    DEFAULT_MARKET_TYPE,
     marketFactory.address,
     roleStore.address,
     dataStore.address
@@ -93,6 +94,7 @@ export async function deployFixture() {
     ethers.constants.AddressZero,
     wnt.address,
     usdc.address,
+    DEFAULT_MARKET_TYPE,
     marketFactory.address,
     roleStore.address,
     dataStore.address
@@ -103,6 +105,7 @@ export async function deployFixture() {
     wbtc.address,
     wbtc.address,
     usdc.address,
+    DEFAULT_MARKET_TYPE,
     marketFactory.address,
     roleStore.address,
     dataStore.address
@@ -113,6 +116,7 @@ export async function deployFixture() {
     getSyntheticTokenAddress("SOL"),
     wnt.address,
     usdc.address,
+    DEFAULT_MARKET_TYPE,
     marketFactory.address,
     roleStore.address,
     dataStore.address

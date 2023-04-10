@@ -58,6 +58,9 @@ library Errors {
     error InsufficientExecutionFee(uint256 minExecutionFee, uint256 executionFee);
     error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);
 
+    // MarketFactory errors
+    error MarketAlreadyExists(bytes32 salt, address existingMarketAddress);
+
     // MarketUtils errors
     error EmptyMarket();
     error DisabledMarket(address market);
