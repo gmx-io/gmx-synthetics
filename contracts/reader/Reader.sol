@@ -41,6 +41,10 @@ contract Reader {
         return MarketStoreUtils.get(dataStore, key);
     }
 
+    function getMarketBySalt(DataStore dataStore, bytes32 salt) external view returns (Market.Props memory) {
+        return MarketStoreUtils.getBySalt(dataStore, salt);
+    }
+
     function getDeposit(DataStore dataStore, bytes32 key) external view returns (Deposit.Props memory) {
         return DepositStoreUtils.get(dataStore, key);
     }
