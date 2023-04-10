@@ -409,8 +409,7 @@ describe("Exchange.Deposit", () => {
           signatures: [],
           priceFeedTokens: [],
         },
-        user0.address,
-        10
+        user0.address
       )
     )
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
