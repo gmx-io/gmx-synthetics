@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../utils/EnumerableValues.sol";
 import "./Role.sol";
-import "../errors/Errors.sol";
+import "../error/Errors.sol";
 
 /**
  * @title RoleStore

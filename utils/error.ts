@@ -1,6 +1,6 @@
 import { getEventDataValue } from "./event";
 
-import Errors from "../artifacts/contracts/errors/Errors.sol/Errors.json";
+import Errors from "../artifacts/contracts/error/Errors.sol/Errors.json";
 
 export const errorsInterface = new ethers.utils.Interface(Errors.abi);
 export const errorsContract = new ethers.Contract(ethers.constants.AddressZero, Errors.abi);
