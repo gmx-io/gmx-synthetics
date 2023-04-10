@@ -6,7 +6,7 @@ import "./BaseOrderUtils.sol";
 import "../swap/SwapUtils.sol";
 import "../position/DecreasePositionUtils.sol";
 import "../order/OrderStoreUtils.sol";
-import "../errors/ErrorUtils.sol";
+import "../error/ErrorUtils.sol";
 
 // @title DecreaseOrderUtils
 // @dev Library for functions to help with processing a decrease order

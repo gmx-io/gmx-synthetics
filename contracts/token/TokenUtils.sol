@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
-import "../errors/ErrorUtils.sol";
+import "../error/ErrorUtils.sol";
 import "../utils/AccountUtils.sol";
 
 import "./IWNT.sol";

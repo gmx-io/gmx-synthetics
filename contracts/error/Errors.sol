@@ -95,7 +95,6 @@ library Errors {
     error InvalidFeedPrice(address token, int256 price);
     error PriceFeedNotUpdated(address token, uint256 timestamp, uint256 heartbeatDuration);
     error MaxSignerIndex(uint256 signerIndex, uint256 maxSignerIndex);
-    error DuplicateSigner(uint256 signerIndex);
     error InvalidOraclePrice(address token);
     error InvalidSignerMinMaxPrice(uint256 minPrice, uint256 maxPrice);
     error InvalidMedianMinMaxPrice(uint256 minPrice, uint256 maxPrice);
@@ -238,4 +237,7 @@ library Errors {
     error EmptyMarketTokenAmount();
     error InvalidPoolValueForWithdrawal(int256 poolValue);
 
+    // Uint256Mask errors
+    error MaskIndexOutOfBounds(uint256 index, string label);
+    error DuplicatedIndex(uint256 index, string label);
 }

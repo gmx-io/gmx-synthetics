@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../utils/Precision.sol";
-import "../errors/ErrorUtils.sol";
+import "../error/ErrorUtils.sol";
 
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
