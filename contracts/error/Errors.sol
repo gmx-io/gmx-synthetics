@@ -70,6 +70,7 @@ library Errors {
     error UnexpectedPoolValueForTokenPriceCalculation(int256 poolValue);
     error UnexpectedSupplyForTokenPriceCalculation();
     error UnableToGetOppositeToken(address inputToken, address market);
+    error InvalidSwapMarket(address market);
     error UnableToGetCachedTokenPrice(address token, address market);
     error CollateralAlreadyClaimed(uint256 adjustedClaimableAmount, uint256 claimedAmount);
     error OpenInterestCannotBeUpdatedForSwapOnlyMarket(address market);
