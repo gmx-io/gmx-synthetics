@@ -102,8 +102,7 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         try this._executeDeposit(
             key,
             oracleParams,
-            msg.sender,
-            startingGas
+            msg.sender
         ) {
         } catch (bytes memory reasonBytes) {
             _handleDepositError(
@@ -126,14 +125,12 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         globalNonReentrant
     {
 
-        uint256 startingGas = gasleft();
         OracleUtils.SetPricesParams memory oracleParams;
 
         this._executeDeposit(
             key,
             oracleParams,
-            msg.sender,
-            startingGas
+            msg.sender
         );
     }
 
@@ -144,9 +141,10 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
     function _executeDeposit(
         bytes32 key,
         OracleUtils.SetPricesParams memory oracleParams,
-        address keeper,
-        uint256 startingGas
+        address keeper
     ) external onlySelf {
+        uint256 startingGas = gasleft();
+
         FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureDisabledKey(address(this)));
 
         uint256[] memory minOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
