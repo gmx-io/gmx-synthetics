@@ -656,7 +656,46 @@ library MarketUtils {
         return nextValue;
     }
 
-    // @dev cap the input priceImpactUsd by the available amount in the position impact pool
+    function getAdjustedSwapImpactFactor(DataStore dataStore, address market, bool isPositive) internal view returns (uint256) {
+        (uint256 positiveImpactFactor, uint256 negativeImpactFactor) = getAdjustedSwapImpactFactors(dataStore, market);
+
+        return isPositive ? positiveImpactFactor : negativeImpactFactor;
+    }
+
+    function getAdjustedSwapImpactFactors(DataStore dataStore, address market) internal view returns (uint256, uint256) {
+        uint256 positiveImpactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market, true));
+        uint256 negativeImpactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market, false));
+
+        // if the positive impact factor is more than the negative impact factor, positions could be opened
+        // and closed immediately for a profit if the difference is sufficient to cover the position fees
+        if (positiveImpactFactor > negativeImpactFactor) {
+            positiveImpactFactor = negativeImpactFactor;
+        }
+
+        return (positiveImpactFactor, negativeImpactFactor);
+    }
+
+    function getAdjustedPositionImpactFactor(DataStore dataStore, address market, bool isPositive) internal view returns (uint256) {
+        (uint256 positiveImpactFactor, uint256 negativeImpactFactor) = getAdjustedPositionImpactFactors(dataStore, market);
+
+        return isPositive ? positiveImpactFactor : negativeImpactFactor;
+    }
+
+    function getAdjustedPositionImpactFactors(DataStore dataStore, address market) internal view returns (uint256, uint256) {
+        uint256 positiveImpactFactor = dataStore.getUint(Keys.positionImpactFactorKey(market, true));
+        uint256 negativeImpactFactor = dataStore.getUint(Keys.positionImpactFactorKey(market, false));
+
+        // if the positive impact factor is more than the negative impact factor, positions could be opened
+        // and closed immediately for a profit if the difference is sufficient to cover the position fees
+        if (positiveImpactFactor > negativeImpactFactor) {
+            positiveImpactFactor = negativeImpactFactor;
+        }
+
+        return (positiveImpactFactor, negativeImpactFactor);
+    }
+
+    // @dev cap the input priceImpactUsd by the available amount in the position
+    // impact pool and the max positive position impact factor
     // @param dataStore DataStore
     // @param market the trading market
     // @param tokenPrice the price of the token
@@ -1541,7 +1580,20 @@ library MarketUtils {
     // @param market the market to check
     // @param isPositive whether the price impact is positive or negative
     function getMaxPositionImpactFactor(DataStore dataStore, address market, bool isPositive) internal view returns (uint256) {
-        return dataStore.getUint(Keys.maxPositionImpactFactorKey(market, isPositive));
+        (uint256 maxPositiveImpactFactor, uint256 maxNegativeImpactFactor) = getMaxPositionImpactFactors(dataStore, market);
+
+        return isPositive ? maxPositiveImpactFactor : maxNegativeImpactFactor;
+    }
+
+    function getMaxPositionImpactFactors(DataStore dataStore, address market) internal view returns (uint256, uint256) {
+        uint256 maxPositiveImpactFactor = dataStore.getUint(Keys.maxPositionImpactFactorKey(market, true));
+        uint256 maxNegativeImpactFactor = dataStore.getUint(Keys.maxPositionImpactFactorKey(market, false));
+
+        if (maxPositiveImpactFactor > maxNegativeImpactFactor) {
+            maxPositiveImpactFactor = maxNegativeImpactFactor;
+        }
+
+        return (maxPositiveImpactFactor, maxNegativeImpactFactor);
     }
 
     // @dev get the max position impact factor for liquidations
