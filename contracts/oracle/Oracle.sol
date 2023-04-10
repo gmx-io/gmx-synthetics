@@ -54,6 +54,7 @@ contract Oracle is RoleModule {
         OracleUtils.ReportInfo info;
         uint256 minBlockConfirmations;
         uint256 maxPriceAge;
+        uint256 maxRefPriceDeviationFactor;
         uint256 prevMinOracleBlockNumber;
     }
 
@@ -353,19 +354,6 @@ contract Oracle is RoleModule {
         return price;
     }
 
-    // @dev get the price feed address for a token
-    // @param dataStore DataStore
-    // @param token the token to get the price feed for
-    // @return the price feed for the token
-    function getPriceFeed(DataStore dataStore, address token) public view returns (IPriceFeed) {
-        address priceFeedAddress = dataStore.getAddress(Keys.priceFeedKey(token));
-        if (priceFeedAddress == address(0)) {
-            revert Errors.EmptyPriceFeed(token);
-        }
-
-        return IPriceFeed(priceFeedAddress);
-    }
-
     // @dev get the stable price of a token
     // @param dataStore DataStore
     // @param token the token to get the price for
@@ -423,6 +411,7 @@ contract Oracle is RoleModule {
         SetPricesCache memory cache;
         cache.minBlockConfirmations = dataStore.getUint(Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS);
         cache.maxPriceAge = dataStore.getUint(Keys.MAX_ORACLE_PRICE_AGE);
+        cache.maxRefPriceDeviationFactor = dataStore.getUint(Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR);
 
         for (uint256 i = 0; i < params.tokens.length; i++) {
             OracleUtils.ReportInfo memory reportInfo;
@@ -522,6 +511,23 @@ contract Oracle is RoleModule {
             uint256 medianMinPrice = Array.getMedian(innerCache.minPrices) * reportInfo.precision;
             uint256 medianMaxPrice = Array.getMedian(innerCache.maxPrices) * reportInfo.precision;
 
+            (bool hasPriceFeed, uint256 refPrice) = _getPriceFeedPrice(dataStore, reportInfo.token);
+            if (hasPriceFeed) {
+                validateRefPrice(
+                    reportInfo.token,
+                    medianMinPrice,
+                    refPrice,
+                    cache.maxRefPriceDeviationFactor
+                );
+
+                validateRefPrice(
+                    reportInfo.token,
+                    medianMaxPrice,
+                    refPrice,
+                    cache.maxRefPriceDeviationFactor
+                );
+            }
+
             if (medianMinPrice == 0 || medianMaxPrice == 0) {
                 revert Errors.InvalidOraclePrice(reportInfo.token);
             }
@@ -556,6 +562,58 @@ contract Oracle is RoleModule {
         return keccak256(abi.encode(block.chainid, "xget-oracle-v1"));
     }
 
+    function validateRefPrice(
+        address token,
+        uint256 price,
+        uint256 refPrice,
+        uint256 maxRefPriceDeviationFactor
+    ) internal pure {
+        uint256 diff = Calc.diff(price, refPrice);
+        uint256 diffFactor = Precision.toFactor(diff, refPrice);
+
+        if (diffFactor > maxRefPriceDeviationFactor) {
+            revert Errors.MaxRefPriceDeviationExceeded(
+                token,
+                price,
+                refPrice,
+                maxRefPriceDeviationFactor
+            );
+        }
+    }
+
+    function _getPriceFeedPrice(DataStore dataStore, address token) internal returns (bool, uint256) {
+        address priceFeedAddress = dataStore.getAddress(Keys.priceFeedKey(token));
+        if (priceFeedAddress == address(0)) {
+            return (false, 0);
+        }
+
+        IPriceFeed priceFeed = IPriceFeed(priceFeedAddress);
+
+        (
+            /* uint80 roundID */,
+            int256 _price,
+            /* uint256 startedAt */,
+            uint256 timestamp,
+            /* uint80 answeredInRound */
+        ) = priceFeed.latestRoundData();
+
+        if (_price <= 0) {
+            revert Errors.InvalidFeedPrice(token, _price);
+        }
+
+        uint256 heartbeatDuration = dataStore.getUint(Keys.priceFeedHeartbeatDurationKey(token));
+        if (block.timestamp > timestamp && block.timestamp - timestamp > heartbeatDuration) {
+            revert Errors.PriceFeedNotUpdated(token, timestamp, heartbeatDuration);
+        }
+
+        uint256 price = SafeCast.toUint256(_price);
+        uint256 precision = getPriceFeedMultiplier(dataStore, token);
+
+        uint256 adjustedPrice = price * precision / Precision.FLOAT_PRECISION;
+
+        return (true, adjustedPrice);
+    }
+
     // @dev set prices using external price feeds to save costs for tokens with stable prices
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
@@ -568,29 +626,11 @@ contract Oracle is RoleModule {
                 revert Errors.PriceAlreadySet(token, primaryPrices[token].min, primaryPrices[token].max);
             }
 
-            IPriceFeed priceFeed = getPriceFeed(dataStore, token);
+            (bool hasPriceFeed, uint256 price) = _getPriceFeedPrice(dataStore, token);
 
-            (
-                /* uint80 roundID */,
-                int256 _price,
-                /* uint256 startedAt */,
-                uint256 timestamp,
-                /* uint80 answeredInRound */
-            ) = priceFeed.latestRoundData();
-
-            if (_price <= 0) {
-                revert Errors.InvalidFeedPrice(token, _price);
+            if (!hasPriceFeed) {
+                revert Errors.EmptyPriceFeed(token);
             }
-
-            uint256 heartbeatDuration = dataStore.getUint(Keys.priceFeedHeartbeatDurationKey(token));
-            if (block.timestamp > timestamp && block.timestamp - timestamp > heartbeatDuration) {
-                revert Errors.PriceFeedNotUpdated(token, timestamp, heartbeatDuration);
-            }
-
-            uint256 price = SafeCast.toUint256(_price);
-            uint256 precision = getPriceFeedMultiplier(dataStore, token);
-
-            price = price * precision / Precision.FLOAT_PRECISION;
 
             uint256 stablePrice = getStablePrice(dataStore, token);
 
