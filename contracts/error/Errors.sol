@@ -105,6 +105,12 @@ library Errors {
     error NonEmptyTokensWithPrices(uint256 tokensWithPricesLength);
     error EmptyPriceFeed(address token);
     error PriceAlreadySet(address token, uint256 minPrice, uint256 maxPrice);
+    error MaxRefPriceDeviationExceeded(
+        address token,
+        uint256 price,
+        uint256 refPrice,
+        uint256 maxRefPriceDeviationFactor
+    );
 
     // OracleModule errors
     error InvalidPrimaryPricesForSimulation(uint256 primaryTokensLength, uint256 primaryPricesLength);
