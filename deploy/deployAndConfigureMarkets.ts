@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import * as keys from "../utils/keys";
-import { setUintIfDifferent } from "../utils/dataStore";
+import { setBytes32IfDifferent, setUintIfDifferent } from "../utils/dataStore";
 import { ethers } from "ethers";
 
 function getMarketTokenAddresses(marketConfig, tokens) {
@@ -16,12 +16,13 @@ function getMarketKey(indexToken: string, longToken: string, shortToken: string)
   return [indexToken, longToken, shortToken].join(":");
 }
 
-async function getOnchainMarketsByTokens(read: (...args: any[]) => any, dataStoreAddress: string) {
+async function getOnchainMarkets(read: (...args: any[]) => any, dataStoreAddress: string) {
   const onchainMarkets = await read("Reader", "getMarkets", dataStoreAddress, 0, 1000);
   return Object.fromEntries(
     onchainMarkets.map((market) => {
       const { indexToken, longToken, shortToken } = market;
-      return [[indexToken, longToken, shortToken].join(":"), market];
+      const marketKey = getMarketKey(indexToken, longToken, shortToken);
+      return [marketKey, market];
     })
   );
 }
@@ -36,7 +37,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
 
   const dataStore = await get("DataStore");
 
-  let onchainMarketsByTokens = await getOnchainMarketsByTokens(read, dataStore.address);
+  let onchainMarketsByTokens = await getOnchainMarkets(read, dataStore.address);
 
   for (const marketConfig of markets) {
     const [indexToken, longToken, shortToken] = getMarketTokenAddresses(marketConfig, tokens);
@@ -89,7 +90,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     );
   }
 
-  onchainMarketsByTokens = await getOnchainMarketsByTokens(read, dataStore.address);
+  onchainMarketsByTokens = await getOnchainMarkets(read, dataStore.address);
 
   for (const marketConfig of markets) {
     const [indexToken, longToken, shortToken] = getMarketTokenAddresses(marketConfig, tokens);
@@ -257,6 +258,13 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
         `negative swap impact factor for ${marketToken.toString()}`
       );
     }
+
+    const tokenMarketId = marketConfig.tokenMarketId || ethers.constants.HashZero;
+    await setBytes32IfDifferent(
+      keys.virtualMarketIdKey(marketToken),
+      tokenMarketId,
+      `virtual market id for market ${marketToken.toString()}`
+    );
   }
 };
 
