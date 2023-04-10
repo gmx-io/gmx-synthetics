@@ -178,6 +178,8 @@ library SwapUtils {
             revert Errors.InvalidTokenIn(_params.tokenIn, _params.market.marketToken);
         }
 
+        MarketUtils.validateSwapMarket(_params.market);
+
         cache.tokenOut = MarketUtils.getOppositeToken(_params.tokenIn, _params.market);
         cache.tokenInPrice = params.oracle.getLatestPrice(_params.tokenIn);
         cache.tokenOutPrice = params.oracle.getLatestPrice(cache.tokenOut);

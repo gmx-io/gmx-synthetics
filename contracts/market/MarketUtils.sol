@@ -196,6 +196,12 @@ library MarketUtils {
         revert Errors.UnableToGetOppositeToken(inputToken, market.marketToken);
     }
 
+    function validateSwapMarket(Market.Props memory market) internal pure {
+        if (market.longToken == market.shortToken) {
+            revert Errors.InvalidSwapMarket(market.marketToken);
+        }
+    }
+
     // @dev get the token price from the stored MarketPrices
     // @param token the token to get the price for
     // @param the market values
