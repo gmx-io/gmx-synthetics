@@ -111,6 +111,7 @@ library OrderUtils {
         order.setCallbackContract(params.addresses.callbackContract);
         order.setMarket(params.addresses.market);
         order.setInitialCollateralToken(params.addresses.initialCollateralToken);
+        order.setUiFeeReceiver(params.addresses.uiFeeReceiver);
         order.setSwapPath(params.addresses.swapPath);
         order.setOrderType(params.orderType);
         order.setDecreasePositionSwapType(params.decreasePositionSwapType);

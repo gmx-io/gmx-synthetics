@@ -74,6 +74,7 @@ library Order {
         address callbackContract;
         address market;
         address initialCollateralToken;
+        address uiFeeReceiver;
         address[] swapPath;
     }
 
@@ -184,6 +185,20 @@ library Order {
     // @param value the value to set to
     function setInitialCollateralToken(Props memory props, address value) internal pure {
         props.addresses.initialCollateralToken = value;
+    }
+
+    // @dev the order uiFeeReceiver
+    // @param props Props
+    // @return the order uiFeeReceiver
+    function uiFeeReceiver(Props memory props) internal pure returns (address) {
+        return props.addresses.uiFeeReceiver;
+    }
+
+    // @dev set the order uiFeeReceiver
+    // @param props Props
+    // @param value the value to set to
+    function setUiFeeReceiver(Props memory props, address value) internal pure {
+        props.addresses.uiFeeReceiver = value;
     }
 
     // @dev the order swapPath

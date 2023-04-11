@@ -133,6 +133,7 @@ library AdlUtils {
             address(0), // callbackContract
             params.market, // market
             position.collateralToken(), // initialCollateralToken
+            address(0), // uiFeeReceiver
             new address[](0) // swapPath
         );
 
