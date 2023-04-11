@@ -37,6 +37,15 @@ contract Reader {
         MarketUtils.GetNextFundingAmountPerSizeResult funding;
     }
 
+    struct GetPositionInfoCache {
+        Position.Props position;
+        Market.Props market;
+        Price.Props collateralTokenPrice;
+        uint256 pendingBorrowingFeeUsd;
+        int256 latestLongTokenFundingAmountPerSize;
+        int256 latestShortTokenFundingAmountPerSize;
+    }
+
     function getMarket(DataStore dataStore, address key) external view returns (Market.Props memory) {
         return MarketStoreUtils.get(dataStore, key);
     }
@@ -81,7 +90,8 @@ contract Reader {
         DataStore dataStore,
         IReferralStorage referralStorage,
         bytes32[] memory positionKeys,
-        MarketUtils.MarketPrices[] memory prices
+        MarketUtils.MarketPrices[] memory prices,
+        address uiFeeReceiver
     ) external view returns (PositionInfo[] memory) {
         PositionInfo[] memory positionInfoList = new PositionInfo[](positionKeys.length);
         for (uint256 i = 0; i < positionKeys.length; i++) {
@@ -92,6 +102,7 @@ contract Reader {
                 positionKey,
                 prices[i],
                 0, // sizeDeltaUsd
+                uiFeeReceiver,
                 true // usePositionSizeAsSizeDeltaUsd
             );
         }
@@ -105,59 +116,61 @@ contract Reader {
         bytes32 positionKey,
         MarketUtils.MarketPrices memory prices,
         uint256 sizeDeltaUsd,
+        address uiFeeReceiver,
         bool usePositionSizeAsSizeDeltaUsd
     ) public view returns (PositionInfo memory) {
-        Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
-        Market.Props memory market = MarketStoreUtils.get(dataStore, position.market());
+        GetPositionInfoCache memory cache;
 
-        Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(position.collateralToken(), market, prices);
+        cache.position = PositionStoreUtils.get(dataStore, positionKey);
+        cache.market = MarketStoreUtils.get(dataStore, cache.position.market());
+        cache.collateralTokenPrice = MarketUtils.getCachedTokenPrice(cache.position.collateralToken(), cache.market, prices);
 
         if (usePositionSizeAsSizeDeltaUsd) {
-            sizeDeltaUsd = position.sizeInUsd();
+            sizeDeltaUsd = cache.position.sizeInUsd();
         }
 
-        PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
+        PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams(
             dataStore,
             referralStorage,
-            position,
-            collateralTokenPrice,
-            market.longToken,
-            market.shortToken,
-            sizeDeltaUsd
+            cache.position,
+            cache.collateralTokenPrice,
+            cache.market.longToken,
+            cache.market.shortToken,
+            sizeDeltaUsd,
+            uiFeeReceiver
         );
+
+        PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(getPositionFeesParams);
 
         // borrowing and funding fees need to be overwritten with pending values otherwise they
         // would be using storage values that have not yet been updated
-        uint256 pendingBorrowingFeeUsd = ReaderUtils.getNextBorrowingFees(dataStore, position, market, prices);
+        cache.pendingBorrowingFeeUsd = ReaderUtils.getNextBorrowingFees(dataStore, cache.position, cache.market, prices);
 
         fees.borrowing = ReaderUtils.getBorrowingFees(
             dataStore,
-            collateralTokenPrice,
-            pendingBorrowingFeeUsd
+            cache.collateralTokenPrice,
+            cache.pendingBorrowingFeeUsd
         );
 
-        MarketUtils.GetNextFundingAmountPerSizeResult memory nextFundingAmountResult = ReaderUtils.getNextFundingAmountPerSize(dataStore, market, prices);
+        MarketUtils.GetNextFundingAmountPerSizeResult memory nextFundingAmountResult = ReaderUtils.getNextFundingAmountPerSize(dataStore, cache.market, prices);
 
-        int256 latestLongTokenFundingAmountPerSize;
-        int256 latestShortTokenFundingAmountPerSize;
-
-        if (position.isLong()) {
-            latestLongTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_LongCollateral_LongPosition;
-            latestShortTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_ShortCollateral_LongPosition;
+        if (cache.position.isLong()) {
+            cache.latestLongTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_LongCollateral_LongPosition;
+            cache.latestShortTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_ShortCollateral_LongPosition;
         } else {
-            latestLongTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_LongCollateral_ShortPosition;
-            latestShortTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_ShortCollateral_ShortPosition;
+            cache.latestLongTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_LongCollateral_ShortPosition;
+            cache.latestShortTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_ShortCollateral_ShortPosition;
         }
 
         fees.funding = ReaderUtils.getFundingFees(
-            position,
-            market.longToken,
-            market.shortToken,
-            latestLongTokenFundingAmountPerSize,
-            latestShortTokenFundingAmountPerSize
+            cache.position,
+            cache.market.longToken,
+            cache.market.shortToken,
+            cache.latestLongTokenFundingAmountPerSize,
+            cache.latestShortTokenFundingAmountPerSize
         );
 
-        return PositionInfo(position, fees);
+        return PositionInfo(cache.position, fees);
     }
 
     function getAccountOrders(

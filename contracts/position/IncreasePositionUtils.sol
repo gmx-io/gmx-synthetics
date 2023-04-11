@@ -233,15 +233,18 @@ library IncreasePositionUtils {
             prices
         );
 
-        PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
+        PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams(
             params.contracts.dataStore,
             params.contracts.referralStorage,
             params.position,
             collateralTokenPrice,
             params.market.longToken,
             params.market.shortToken,
-            params.order.sizeDeltaUsd()
+            params.order.sizeDeltaUsd(),
+            params.order.uiFeeReceiver()
         );
+
+        PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(getPositionFeesParams);
 
         FeeUtils.incrementClaimableFeeAmount(
             params.contracts.dataStore,

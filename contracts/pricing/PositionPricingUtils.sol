@@ -30,6 +30,17 @@ library PositionPricingUtils {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
+    struct GetPositionFeesParams {
+        DataStore dataStore;
+        IReferralStorage referralStorage;
+        Position.Props position;
+        Price.Props collateralTokenPrice;
+        address longToken;
+        address shortToken;
+        uint256 sizeDeltaUsd;
+        address uiFeeReceiver;
+    }
+
     // @dev GetPriceImpactUsdParams struct used in getPriceImpactUsd to avoid stack
     // too deep errors
     // @param dataStore DataStore
@@ -69,6 +80,7 @@ library PositionPricingUtils {
         PositionReferralFees referral;
         PositionFundingFees funding;
         PositionBorrowingFees borrowing;
+        PositionUiFees ui;
         Price.Props collateralTokenPrice;
         uint256 positionFeeFactor;
         uint256 protocolFeeAmount;
@@ -115,6 +127,12 @@ library PositionPricingUtils {
         uint256 claimableShortTokenAmount;
         int256 latestLongTokenFundingAmountPerSize;
         int256 latestShortTokenFundingAmountPerSize;
+    }
+
+    struct PositionUiFees {
+        address uiFeeReceiver;
+        uint256 uiFeeReceiverFactor;
+        uint256 uiFeeAmount;
     }
 
     // @dev GetPositionFeesAfterReferralCache struct used in getPositionFees
@@ -334,47 +352,65 @@ library PositionPricingUtils {
     // @param sizeDeltaUsd the change in position size
     // @return PositionFees
     function getPositionFees(
-        DataStore dataStore,
-        IReferralStorage referralStorage,
-        Position.Props memory position,
-        Price.Props memory collateralTokenPrice,
-        address longToken,
-        address shortToken,
-        uint256 sizeDeltaUsd
+        GetPositionFeesParams memory params
     ) internal view returns (PositionFees memory) {
         PositionFees memory fees = getPositionFeesAfterReferral(
-            dataStore,
-            referralStorage,
-            collateralTokenPrice,
-            position.account(),
-            position.market(),
-            sizeDeltaUsd
+            params.dataStore,
+            params.referralStorage,
+            params.collateralTokenPrice,
+            params.position.account(),
+            params.position.market(),
+            params.sizeDeltaUsd
         );
 
-        uint256 borrowingFeeUsd = MarketUtils.getBorrowingFees(dataStore, position);
+        uint256 borrowingFeeUsd = MarketUtils.getBorrowingFees(params.dataStore, params.position);
 
         fees.borrowing = getBorrowingFees(
-            dataStore,
-            collateralTokenPrice,
+            params.dataStore,
+            params.collateralTokenPrice,
             borrowingFeeUsd
         );
 
         fees.feeAmountForPool = fees.positionFeeAmountForPool + fees.borrowing.borrowingFeeAmount - fees.borrowing.borrowingFeeAmountForFeeReceiver;
         fees.feeReceiverAmount += fees.borrowing.borrowingFeeAmountForFeeReceiver;
 
-        int256 latestLongTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market(), longToken, position.isLong());
-        int256 latestShortTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(dataStore, position.market(), shortToken, position.isLong());
+        int256 latestLongTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(
+            params.dataStore,
+            params.position.market(),
+            params.longToken,
+            params.position.isLong()
+        );
+
+        int256 latestShortTokenFundingAmountPerSize = MarketUtils.getFundingAmountPerSize(
+            params.dataStore,
+            params.position.market(),
+            params.shortToken,
+            params.position.isLong()
+        );
 
         fees.funding = getFundingFees(
-            position,
-            longToken,
-            shortToken,
+            params.position,
+            params.longToken,
+            params.shortToken,
             latestLongTokenFundingAmountPerSize,
             latestShortTokenFundingAmountPerSize
         );
 
-        fees.totalNetCostAmount = fees.positionFeeAmount + fees.funding.fundingFeeAmount + fees.borrowing.borrowingFeeAmount - fees.referral.traderDiscountAmount;
-        fees.totalNetCostUsd = fees.totalNetCostAmount * collateralTokenPrice.max;
+        fees.ui = getUiFees(
+            params.dataStore,
+            params.collateralTokenPrice,
+            params.sizeDeltaUsd,
+            params.uiFeeReceiver
+        );
+
+        fees.totalNetCostAmount =
+            fees.positionFeeAmount
+            + fees.funding.fundingFeeAmount
+            + fees.borrowing.borrowingFeeAmount
+            + fees.ui.uiFeeAmount
+            - fees.referral.traderDiscountAmount;
+
+        fees.totalNetCostUsd = fees.totalNetCostAmount * params.collateralTokenPrice.max;
 
         return fees;
     }
@@ -438,6 +474,20 @@ library PositionPricingUtils {
         return fundingFees;
     }
 
+    function getUiFees(
+        DataStore dataStore,
+        Price.Props memory collateralTokenPrice,
+        uint256 sizeDeltaUsd,
+        address uiFeeReceiver
+    ) internal view returns (PositionUiFees memory) {
+        PositionUiFees memory uiFees;
+
+        uiFees.uiFeeReceiver = uiFeeReceiver;
+        uiFees.uiFeeReceiverFactor = MarketUtils.getUiFeeFactor(dataStore, uiFeeReceiver);
+        uiFees.uiFeeAmount = Precision.applyFactor(sizeDeltaUsd, uiFees.uiFeeReceiverFactor) / collateralTokenPrice.min;
+
+        return uiFees;
+    }
 
     // @dev get position fees after applying referral rebates / discounts
     // @param dataStore DataStore

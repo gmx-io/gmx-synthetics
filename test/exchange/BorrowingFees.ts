@@ -105,16 +105,18 @@ describe("Exchange.BorrowingFees", () => {
       referralStorage.address,
       positionKeys[0],
       prices,
-      0,
-      true
+      0, // sizeDeltaUsd
+      ethers.constants.AddressZero,
+      true // usePositionSizeAsSizeDeltaUsd
     );
     const position1 = await reader.getPositionInfo(
       dataStore.address,
       referralStorage.address,
       positionKeys[1],
       prices,
-      0,
-      true
+      0, // sizeDeltaUsd
+      ethers.constants.AddressZero,
+      true // usePositionSizeAsSizeDeltaUsd
     );
 
     expectWithinRange(

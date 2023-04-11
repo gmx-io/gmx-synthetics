@@ -369,15 +369,18 @@ library PositionUtils {
             }
         }
 
-        PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
+        PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams(
             dataStore,
             referralStorage,
             position,
             cache.collateralTokenPrice,
             market.longToken,
             market.shortToken,
-            position.sizeInUsd()
+            position.sizeInUsd(),
+            address(0) // uiFeeReceiver
         );
+
+        PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(getPositionFeesParams);
 
         cache.remainingCollateralUsd = cache.collateralUsd.toInt256() + cache.positionPnlUsd + cache.priceImpactUsd - fees.totalNetCostUsd.toInt256();
 
