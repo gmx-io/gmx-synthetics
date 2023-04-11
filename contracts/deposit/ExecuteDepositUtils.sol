@@ -213,6 +213,7 @@ library ExecuteDepositUtils {
 
         GasUtils.payExecutionFee(
             params.dataStore,
+            params.eventEmitter,
             params.depositVault,
             deposit.executionFee(),
             params.startingGas,

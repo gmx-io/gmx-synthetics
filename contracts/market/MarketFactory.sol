@@ -5,25 +5,31 @@ pragma solidity ^0.8.0;
 import "./MarketToken.sol";
 import "./Market.sol";
 import "./MarketUtils.sol";
+import "../event/EventEmitter.sol";
 
 // @title MarketFactory
 // @dev Contract to create markets
 contract MarketFactory is RoleModule {
     using Market for Market.Props;
 
-    event MarketCreated(
-        address marketToken,
-        bytes32 salt,
-        address indexToken,
-        address longToken,
-        address
-        shortToken
-    );
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
 
     DataStore public immutable dataStore;
+    EventEmitter public immutable eventEmitter;
 
-    constructor(RoleStore _roleStore, DataStore _dataStore) RoleModule(_roleStore) {
+    constructor(
+        RoleStore _roleStore,
+        DataStore _dataStore,
+        EventEmitter _eventEmitter
+    ) RoleModule(_roleStore) {
         dataStore = _dataStore;
+        eventEmitter = _eventEmitter;
     }
 
     // @dev creates a market
@@ -63,8 +69,33 @@ contract MarketFactory is RoleModule {
 
         MarketStoreUtils.set(dataStore, address(marketToken), salt, market);
 
-        emit MarketCreated(address(marketToken), salt, indexToken, longToken, shortToken);
+        emitMarketCreated(address(marketToken), salt, indexToken, longToken, shortToken);
 
         return market;
+    }
+
+    function emitMarketCreated(
+        address marketToken,
+        bytes32 salt,
+        address indexToken,
+        address longToken,
+        address shortToken
+    ) internal {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(4);
+        eventData.addressItems.setItem(0, "marketToken", marketToken);
+        eventData.addressItems.setItem(1, "indexToken", indexToken);
+        eventData.addressItems.setItem(2, "longToken", longToken);
+        eventData.addressItems.setItem(3, "shortToken", shortToken);
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "salt", salt);
+
+        eventEmitter.emitEventLog1(
+            "MarketCreated",
+            Cast.toBytes32(marketToken),
+            eventData
+        );
     }
 }
