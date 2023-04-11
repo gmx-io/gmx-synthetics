@@ -51,6 +51,7 @@ library BaseOrderUtils {
         address callbackContract;
         address market;
         address initialCollateralToken;
+        address uiFeeReceiver;
         address[] swapPath;
     }
 
