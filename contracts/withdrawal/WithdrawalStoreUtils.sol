@@ -17,6 +17,7 @@ library WithdrawalStoreUtils {
     bytes32 public constant ACCOUNT = keccak256(abi.encode("ACCOUNT"));
     bytes32 public constant RECEIVER = keccak256(abi.encode("RECEIVER"));
     bytes32 public constant CALLBACK_CONTRACT = keccak256(abi.encode("CALLBACK_CONTRACT"));
+    bytes32 public constant UI_FEE_RECEIVER = keccak256(abi.encode("UI_FEE_RECEIVER"));
     bytes32 public constant MARKET = keccak256(abi.encode("MARKET"));
     bytes32 public constant LONG_TOKEN_SWAP_PATH = keccak256(abi.encode("LONG_TOKEN_SWAP_PATH"));
     bytes32 public constant SHORT_TOKEN_SWAP_PATH = keccak256(abi.encode("SHORT_TOKEN_SWAP_PATH"));
@@ -46,6 +47,10 @@ library WithdrawalStoreUtils {
 
         withdrawal.setCallbackContract(dataStore.getAddress(
             keccak256(abi.encode(key, CALLBACK_CONTRACT))
+        ));
+
+        withdrawal.setUiFeeReceiver(dataStore.getAddress(
+            keccak256(abi.encode(key, UI_FEE_RECEIVER))
         ));
 
         withdrawal.setMarket(dataStore.getAddress(
@@ -115,6 +120,11 @@ library WithdrawalStoreUtils {
         dataStore.setAddress(
             keccak256(abi.encode(key, CALLBACK_CONTRACT)),
             withdrawal.callbackContract()
+        );
+
+        dataStore.setAddress(
+            keccak256(abi.encode(key, UI_FEE_RECEIVER)),
+            withdrawal.uiFeeReceiver()
         );
 
         dataStore.setAddress(
@@ -189,6 +199,10 @@ library WithdrawalStoreUtils {
 
         dataStore.removeAddress(
             keccak256(abi.encode(key, CALLBACK_CONTRACT))
+        );
+
+        dataStore.removeAddress(
+            keccak256(abi.encode(key, UI_FEE_RECEIVER))
         );
 
         dataStore.removeAddress(

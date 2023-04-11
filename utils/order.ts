@@ -83,9 +83,9 @@ export async function createOrder(fixture, overrides) {
     addresses: {
       receiver: receiver.address,
       callbackContract: callbackContract.address,
+      uiFeeReceiver: uiFeeReceiver.address,
       market: market.marketToken,
       initialCollateralToken: initialCollateralToken.address,
-      uiFeeReceiver: uiFeeReceiver.address,
       swapPath,
     },
     numbers: {

@@ -27,6 +27,14 @@ library Keys {
     bytes32 public constant SWAP_FEE = keccak256(abi.encode("SWAP_FEE"));
     // @dev key for position fees
     bytes32 public constant POSITION_FEE = keccak256(abi.encode("POSITION_FEE"));
+    // @dev key for ui deposit fees
+    bytes32 public constant UI_DEPOSIT_FEE = keccak256(abi.encode("UI_DEPOSIT_FEE"));
+    // @dev key for ui withdrawal fees
+    bytes32 public constant UI_WITHDRAWAL_FEE = keccak256(abi.encode("UI_WITHDRAWAL_FEE"));
+    // @dev key for ui swap fees
+    bytes32 public constant UI_SWAP_FEE = keccak256(abi.encode("UI_SWAP_FEE"));
+    // @dev key for ui position fees
+    bytes32 public constant UI_POSITION_FEE = keccak256(abi.encode("UI_POSITION_FEE"));
 
     // @dev key for ui fee factor
     bytes32 public constant UI_FEE_FACTOR = keccak256(abi.encode("UI_FEE_FACTOR"));
@@ -35,6 +43,8 @@ library Keys {
 
     // @dev key for the claimable fee amount
     bytes32 public constant CLAIMABLE_FEE_AMOUNT = keccak256(abi.encode("CLAIMABLE_FEE_AMOUNT"));
+    // @dev key for the claimable ui fee amount
+    bytes32 public constant CLAIMABLE_UI_FEE_AMOUNT = keccak256(abi.encode("CLAIMABLE_UI_FEE_AMOUNT"));
 
     // @dev key for the market list
     bytes32 public constant MARKET_LIST = keccak256(abi.encode("MARKET_LIST"));
@@ -282,6 +292,13 @@ library Keys {
     // @param token the token for the fee
     function claimableFeeAmountKey(address market, address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(CLAIMABLE_FEE_AMOUNT, market, token));
+    }
+
+    // @dev key for the claimable ui fee amount
+    // @param market the market for the fee
+    // @param token the token for the fee
+    function claimableUiFeeAmountKey(address uiFeeReceiver, address market, address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(CLAIMABLE_UI_FEE_AMOUNT, uiFeeReceiver, market, token));
     }
 
     // @dev key for deposit gas limit

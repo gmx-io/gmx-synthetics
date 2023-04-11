@@ -92,6 +92,7 @@ library DecreaseOrderUtils {
                 params.swapPathMarkets,
                 0,
                 order.receiver(),
+                order.uiFeeReceiver(),
                 order.shouldUnwrapNativeToken()
             )
         ) returns (address tokenOut, uint256 swapOutputAmount) {

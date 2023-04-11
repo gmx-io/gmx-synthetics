@@ -59,6 +59,37 @@ library FeeUtils {
         );
     }
 
+    function incrementClaimableUiFeeAmount(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address uiFeeReceiver,
+        address market,
+        address token,
+        uint256 feeReceiverAmount,
+        bytes32 feeType
+    ) external {
+        if (feeReceiverAmount == 0) {
+            return;
+        }
+
+        bytes32 key = Keys.claimableUiFeeAmountKey(uiFeeReceiver, market, token);
+
+        uint256 nextClaimableFeeAmount = dataStore.incrementUint(
+            key,
+            feeReceiverAmount
+        );
+
+        emitClaimableUiFeeAmountUpdated(
+            eventEmitter,
+            uiFeeReceiver,
+            market,
+            token,
+            feeReceiverAmount,
+            nextClaimableFeeAmount,
+            feeType
+        );
+    }
+
     // @dev claim fees for the specified market
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
@@ -87,6 +118,36 @@ library FeeUtils {
 
         emitFeesClaimed(
             eventEmitter,
+            market,
+            receiver,
+            feeAmount
+        );
+    }
+
+    function claimUiFees(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address uiFeeReceiver,
+        address market,
+        address token,
+        address receiver
+    ) internal {
+        AccountUtils.validateReceiver(receiver);
+
+        bytes32 key = Keys.claimableUiFeeAmountKey(uiFeeReceiver, market, token);
+
+        uint256 feeAmount = dataStore.getUint(key);
+        dataStore.setUint(key, 0);
+
+        MarketToken(payable(market)).transferOut(
+            token,
+            receiver,
+            feeAmount
+        );
+
+        emitUiFeesClaimed(
+            eventEmitter,
+            uiFeeReceiver,
             market,
             receiver,
             feeAmount
@@ -122,6 +183,37 @@ library FeeUtils {
         );
     }
 
+    function emitClaimableUiFeeAmountUpdated(
+        EventEmitter eventEmitter,
+        address uiFeeReceiver,
+        address market,
+        address token,
+        uint256 delta,
+        uint256 nextValue,
+        bytes32 feeType
+    ) internal {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(3);
+        eventData.addressItems.setItem(0, "uiFeeReceiver", uiFeeReceiver);
+        eventData.addressItems.setItem(1, "market", market);
+        eventData.addressItems.setItem(2, "token", token);
+
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "delta", delta);
+        eventData.uintItems.setItem(1, "nextValue", nextValue);
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "feeType", feeType);
+
+        eventEmitter.emitEventLog2(
+            "ClaimableUiFeeAmountUpdated",
+            Cast.toBytes32(market),
+            feeType,
+            eventData
+        );
+    }
+
     function emitFeesClaimed(
         EventEmitter eventEmitter,
         address market,
@@ -139,6 +231,30 @@ library FeeUtils {
 
         eventEmitter.emitEventLog1(
             "FeesClaimed",
+            Cast.toBytes32(market),
+            eventData
+        );
+    }
+
+    function emitUiFeesClaimed(
+        EventEmitter eventEmitter,
+        address uiFeeReceiver,
+        address market,
+        address receiver,
+        uint256 feeAmount
+    ) internal {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(3);
+        eventData.addressItems.setItem(0, "uiFeeReceiver", uiFeeReceiver);
+        eventData.addressItems.setItem(1, "market", market);
+        eventData.addressItems.setItem(2, "receiver", receiver);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "feeAmount", feeAmount);
+
+        eventEmitter.emitEventLog1(
+            "UiFeesClaimed",
             Cast.toBytes32(market),
             eventData
         );
