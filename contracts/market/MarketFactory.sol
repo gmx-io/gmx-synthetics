@@ -45,7 +45,7 @@ contract MarketFactory is RoleModule {
             marketType
         ));
 
-        address existingMarketAddress = dataStore.getAddress(salt);
+        address existingMarketAddress = dataStore.getAddress(MarketStoreUtils.getMarketSaltHash(salt));
         if (existingMarketAddress != address(0)) {
             revert Errors.MarketAlreadyExists(salt, existingMarketAddress);
         }
