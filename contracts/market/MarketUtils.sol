@@ -2235,4 +2235,28 @@ library MarketUtils {
 
         return (isExceeded, pnlToPoolFactor, maxPnlFactor);
     }
+
+    function getUiFeeFactor(DataStore dataStore, address account) internal view returns (uint256) {
+        return dataStore.getUint(Keys.uiFeeFactorKey(account));
+    }
+
+    function setUiFeeFactor(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address account,
+        uint256 uiFeeFactor
+    ) internal {
+        uint256 maxUiFeeFactor = dataStore.getUint(Keys.MAX_UI_FEE_FACTOR);
+
+        if (uiFeeFactor > maxUiFeeFactor) {
+            revert Errors.InvalidUiFeeFactor(uiFeeFactor, maxUiFeeFactor);
+        }
+
+        dataStore.setUint(
+            Keys.uiFeeFactorKey(account),
+            uiFeeFactor
+        );
+
+        MarketEventUtils.emitUiFeeFactorUpdated(eventEmitter, account, uiFeeFactor);
+    }
 }

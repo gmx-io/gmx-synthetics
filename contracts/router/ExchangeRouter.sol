@@ -289,6 +289,11 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         }
     }
 
+    function setUiFeeFactor(uint256 uiFeeFactor) external payable nonReentrant {
+        address account = msg.sender;
+        MarketUtils.setUiFeeFactor(dataStore, eventEmitter, account, uiFeeFactor);
+    }
+
     function claimCollateral(
         address[] memory markets,
         address[] memory tokens,
