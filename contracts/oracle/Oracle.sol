@@ -581,7 +581,7 @@ contract Oracle is RoleModule {
         }
     }
 
-    function _getPriceFeedPrice(DataStore dataStore, address token) internal returns (bool, uint256) {
+    function _getPriceFeedPrice(DataStore dataStore, address token) internal view returns (bool, uint256) {
         address priceFeedAddress = dataStore.getAddress(Keys.priceFeedKey(token));
         if (priceFeedAddress == address(0)) {
             return (false, 0);
