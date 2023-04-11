@@ -61,6 +61,7 @@ describe("ExchangeRouter", () => {
           {
             receiver: user1.address,
             callbackContract: user2.address,
+            uiFeeReceiver: user3.address,
             market: ethUsdMarket.marketToken,
             initialLongToken: ethUsdMarket.longToken,
             initialShortToken: ethUsdMarket.shortToken,
@@ -114,9 +115,9 @@ describe("ExchangeRouter", () => {
             addresses: {
               receiver: user1.address,
               callbackContract: user2.address,
+              uiFeeReceiver: user3.address,
               market: ethUsdMarket.marketToken,
               initialCollateralToken: ethUsdMarket.longToken,
-              uiFeeReceiver: user3.address,
               swapPath: [ethUsdMarket.marketToken],
             },
             numbers: {
@@ -178,6 +179,7 @@ describe("ExchangeRouter", () => {
           {
             receiver: user1.address,
             callbackContract: user2.address,
+            uiFeeReceiver: user3.address,
             market: ethUsdMarket.marketToken,
             longTokenSwapPath: [],
             shortTokenSwapPath: [],
@@ -237,6 +239,7 @@ describe("ExchangeRouter", () => {
             {
               receiver: user1.address,
               callbackContract: user2.address,
+              uiFeeReceiver: user3.address,
               market: ethUsdMarket.marketToken,
               initialLongToken: ethUsdMarket.longToken,
               initialShortToken: ethUsdMarket.shortToken,
