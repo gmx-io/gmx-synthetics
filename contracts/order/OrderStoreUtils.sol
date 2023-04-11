@@ -164,7 +164,7 @@ library OrderStoreUtils {
 
         dataStore.setAddress(
             keccak256(abi.encode(key, UI_FEE_RECEIVER)),
-            order.initialCollateralToken()
+            order.uiFeeReceiver()
         );
 
         dataStore.setAddressArray(

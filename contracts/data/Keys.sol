@@ -28,6 +28,11 @@ library Keys {
     // @dev key for position fees
     bytes32 public constant POSITION_FEE = keccak256(abi.encode("POSITION_FEE"));
 
+    // @dev key for ui fee factor
+    bytes32 public constant UI_FEE_FACTOR = keccak256(abi.encode("UI_FEE_FACTOR"));
+    // @dev key for max ui fee receiver factor
+    bytes32 public constant MAX_UI_FEE_FACTOR = keccak256(abi.encode("MAX_UI_FEE_FACTOR"));
+
     // @dev key for the claimable fee amount
     bytes32 public constant CLAIMABLE_FEE_AMOUNT = keccak256(abi.encode("CLAIMABLE_FEE_AMOUNT"));
 
@@ -442,6 +447,16 @@ library Keys {
             CANCEL_ORDER_FEATURE_DISABLED,
             module,
             orderType
+        ));
+    }
+
+    // @dev key for ui fee factor
+    // @param account the fee receiver account
+    // @return key for ui fee factor
+    function uiFeeFactorKey(address account) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            UI_FEE_FACTOR,
+            account
         ));
     }
 

@@ -84,6 +84,7 @@ library Errors {
     error InvalidCollateralTokenForMarket(address market, address token);
     error PnlFactorExceededForLongs(int256 pnlToPoolFactor, uint256 maxPnlFactor);
     error PnlFactorExceededForShorts(int256 pnlToPoolFactor, uint256 maxPnlFactor);
+    error InvalidUiFeeFactor(uint256 uiFeeFactor, uint256 maxUiFeeFactor);
 
     // Oracle errors
     error EmptyTokens();
