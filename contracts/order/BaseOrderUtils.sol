@@ -49,9 +49,9 @@ library BaseOrderUtils {
     struct CreateOrderParamsAddresses {
         address receiver;
         address callbackContract;
+        address uiFeeReceiver;
         address market;
         address initialCollateralToken;
-        address uiFeeReceiver;
         address[] swapPath;
     }
 

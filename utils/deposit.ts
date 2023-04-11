@@ -32,6 +32,7 @@ export async function createDeposit(fixture, overrides: any = {}) {
   const account = overrides.account || user0;
   const receiver = overrides.receiver || account;
   const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
+  const uiFeeReceiver = overrides.uiFeeReceiver || { address: ethers.constants.AddressZero };
   const market = overrides.market || ethUsdMarket;
   const initialLongToken = overrides.initialLongToken || market.longToken;
   const initialShortToken = overrides.initialShortToken || market.shortToken;
@@ -60,6 +61,7 @@ export async function createDeposit(fixture, overrides: any = {}) {
   const params = {
     receiver: receiver.address,
     callbackContract: callbackContract.address,
+    uiFeeReceiver: uiFeeReceiver.address,
     market: market.marketToken,
     initialLongToken,
     initialShortToken,

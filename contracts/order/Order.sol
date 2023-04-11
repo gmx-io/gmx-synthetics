@@ -59,6 +59,7 @@ library Order {
     // @param account the account of the order
     // @param receiver the receiver for any token transfers
     // @param callbackContract the contract to call for callbacks
+    // @param uiFeeReceiver the ui fee receiver
     // @param market the trading market
     // @param initialCollateralToken for increase orders, initialCollateralToken
     // is the token sent in by the user, the token will be swapped through the
@@ -72,9 +73,9 @@ library Order {
         address account;
         address receiver;
         address callbackContract;
+        address uiFeeReceiver;
         address market;
         address initialCollateralToken;
-        address uiFeeReceiver;
         address[] swapPath;
     }
 

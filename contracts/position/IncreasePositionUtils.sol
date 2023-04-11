@@ -255,6 +255,16 @@ library IncreasePositionUtils {
             Keys.POSITION_FEE
         );
 
+        FeeUtils.incrementClaimableUiFeeAmount(
+            params.contracts.dataStore,
+            params.contracts.eventEmitter,
+            params.order.uiFeeReceiver(),
+            params.market.marketToken,
+            params.position.collateralToken(),
+            fees.ui.uiFeeAmount,
+            Keys.UI_POSITION_FEE
+        );
+
         collateralDeltaAmount -= fees.totalNetCostAmount.toInt256();
 
         MarketUtils.applyDeltaToCollateralSum(

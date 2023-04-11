@@ -262,6 +262,16 @@ library DecreasePositionCollateralUtils {
             Keys.POSITION_FEE
         );
 
+        FeeUtils.incrementClaimableUiFeeAmount(
+            params.contracts.dataStore,
+            params.contracts.eventEmitter,
+            params.order.uiFeeReceiver(),
+            params.market.marketToken,
+            params.position.collateralToken(),
+            fees.ui.uiFeeAmount,
+            Keys.UI_POSITION_FEE
+        );
+
         return (values, fees);
     }
 
@@ -395,6 +405,7 @@ library DecreasePositionCollateralUtils {
                     swapPathMarkets, // markets
                     0, // minOutputAmount
                     params.market.marketToken, // receiver
+                    params.order.uiFeeReceiver(), // uiFeeReceiver
                     false // shouldUnwrapNativeToken
                 )
             ) returns (address tokenOut, uint256 swapOutputAmount) {
@@ -443,6 +454,7 @@ library DecreasePositionCollateralUtils {
                     swapPathMarkets, // markets
                     0, // minOutputAmount
                     params.market.marketToken, // receiver
+                    params.order.uiFeeReceiver(), // uiFeeReceiver
                     false // shouldUnwrapNativeToken
                 )
             ) returns (address /* tokenOut */, uint256 swapOutputAmount) {

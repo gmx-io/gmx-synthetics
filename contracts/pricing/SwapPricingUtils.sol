@@ -67,6 +67,10 @@ library SwapPricingUtils {
         uint256 feeReceiverAmount;
         uint256 feeAmountForPool;
         uint256 amountAfterFees;
+
+        address uiFeeReceiver;
+        uint256 uiFeeReceiverFactor;
+        uint256 uiFeeAmount;
     }
 
     // @dev get the price impact in USD
@@ -221,7 +225,8 @@ library SwapPricingUtils {
     function getSwapFees(
         DataStore dataStore,
         address marketToken,
-        uint256 amount
+        uint256 amount,
+        address uiFeeReceiver
     ) internal view returns (SwapFees memory) {
         SwapFees memory fees;
 
@@ -232,7 +237,12 @@ library SwapPricingUtils {
 
         fees.feeReceiverAmount = Precision.applyFactor(feeAmount, swapFeeReceiverFactor);
         fees.feeAmountForPool = feeAmount - fees.feeReceiverAmount;
-        fees.amountAfterFees = amount - feeAmount;
+
+        fees.uiFeeReceiver = uiFeeReceiver;
+        fees.uiFeeReceiverFactor = MarketUtils.getUiFeeFactor(dataStore, uiFeeReceiver);
+        fees.uiFeeAmount = Precision.applyFactor(amount, fees.uiFeeReceiverFactor);
+
+        fees.amountAfterFees = amount - feeAmount - fees.uiFeeAmount;
 
         return fees;
     }
@@ -289,18 +299,21 @@ library SwapPricingUtils {
     ) internal {
         EventUtils.EventLogData memory eventData;
 
-        eventData.addressItems.initItems(2);
-        eventData.addressItems.setItem(0, "market", market);
-        eventData.addressItems.setItem(1, "token", token);
+        eventData.addressItems.initItems(3);
+        eventData.addressItems.setItem(0, "uiFeeReceiver", fees.uiFeeReceiver);
+        eventData.addressItems.setItem(1, "market", market);
+        eventData.addressItems.setItem(2, "token", token);
 
         eventData.stringItems.initItems(1);
         eventData.stringItems.setItem(0, "action", action);
 
-        eventData.uintItems.initItems(4);
+        eventData.uintItems.initItems(6);
         eventData.uintItems.setItem(0, "tokenPrice", tokenPrice);
         eventData.uintItems.setItem(1, "feeReceiverAmount", fees.feeReceiverAmount);
         eventData.uintItems.setItem(2, "feeAmountForPool", fees.feeAmountForPool);
         eventData.uintItems.setItem(3, "amountAfterFees", fees.amountAfterFees);
+        eventData.uintItems.setItem(4, "uiFeeReceiverFactor", fees.uiFeeReceiverFactor);
+        eventData.uintItems.setItem(5, "uiFeeAmount", fees.uiFeeAmount);
 
         eventEmitter.emitEventLog1(
             "SwapFeesCollected",
