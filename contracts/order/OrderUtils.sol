@@ -170,6 +170,7 @@ library OrderUtils {
         // gas costs for liquidations / adl is subsidised by the treasury
         GasUtils.payExecutionFee(
             params.contracts.dataStore,
+            params.contracts.eventEmitter,
             params.contracts.orderVault,
             params.order.executionFee(),
             params.startingGas,
@@ -239,6 +240,7 @@ library OrderUtils {
 
         GasUtils.payExecutionFee(
             dataStore,
+            eventEmitter,
             orderVault,
             order.executionFee(),
             startingGas,
@@ -284,6 +286,7 @@ library OrderUtils {
 
         GasUtils.payExecutionFee(
             dataStore,
+            eventEmitter,
             orderVault,
             executionFee,
             startingGas,

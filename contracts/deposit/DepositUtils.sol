@@ -183,6 +183,7 @@ library DepositUtils {
 
         GasUtils.payExecutionFee(
             dataStore,
+            eventEmitter,
             depositVault,
             deposit.executionFee(),
             startingGas,
