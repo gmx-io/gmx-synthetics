@@ -120,6 +120,8 @@ library FeeUtils {
             feeAmount
         );
 
+        MarketUtils.validateMarketTokenBalance(dataStore, market);
+
         emitFeesClaimed(
             eventEmitter,
             market,
@@ -153,6 +155,8 @@ library FeeUtils {
             receiver,
             feeAmount
         );
+
+        MarketUtils.validateMarketTokenBalance(dataStore, market);
 
         emitUiFeesClaimed(
             eventEmitter,

@@ -7,6 +7,7 @@ import "../data/Keys.sol";
 
 import "../event/EventEmitter.sol";
 import "../market/MarketToken.sol";
+import "../market/MarketUtils.sol";
 
 import "./IReferralStorage.sol";
 import "./ReferralTier.sol";
@@ -124,6 +125,8 @@ library ReferralUtils {
             receiver,
             rewardAmount
         );
+
+        MarketUtils.validateMarketTokenBalance(dataStore, market);
 
         ReferralEventUtils.emitAffiliateRewardClaimed(
             eventEmitter,
