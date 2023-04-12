@@ -152,8 +152,6 @@ library ExecuteDepositUtils {
         cache.longTokenUsd = cache.longTokenAmount * prices.longTokenPrice.midPrice();
         cache.shortTokenUsd = cache.shortTokenAmount * prices.shortTokenPrice.midPrice();
 
-        cache.receivedMarketTokens;
-
         cache.priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(
             SwapPricingUtils.GetPriceImpactUsdParams(
                 params.dataStore,
@@ -206,6 +204,10 @@ library ExecuteDepositUtils {
         }
 
         DepositStoreUtils.remove(params.dataStore, params.key, deposit.account());
+
+        // validate that internal state changes are correct before calling
+        // external callbacks
+        MarketUtils.validateMarketTokenBalance(params.dataStore, market);
 
         DepositEventUtils.emitDepositExecuted(
             params.eventEmitter,
@@ -412,6 +414,8 @@ library ExecuteDepositUtils {
         if (outputToken != expectedOutputToken) {
             revert Errors.InvalidSwapOutputToken(outputToken, expectedOutputToken);
         }
+
+        MarketUtils.validateMarketTokenBalance(params.dataStore, swapPathMarkets);
 
         return outputAmount;
     }

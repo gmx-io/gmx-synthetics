@@ -85,6 +85,7 @@ library Errors {
     error PnlFactorExceededForLongs(int256 pnlToPoolFactor, uint256 maxPnlFactor);
     error PnlFactorExceededForShorts(int256 pnlToPoolFactor, uint256 maxPnlFactor);
     error InvalidUiFeeFactor(uint256 uiFeeFactor, uint256 maxUiFeeFactor);
+    error EmptyAddressInMarketTokenBalanceValidation(address market, address token);
     error InvalidMarketTokenBalance(address market, address token, uint256 balance, uint256 expectedMinBalance);
 
     // Oracle errors

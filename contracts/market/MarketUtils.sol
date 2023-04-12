@@ -130,6 +130,17 @@ library MarketUtils {
         uint256 fundingAmountPerSizeDelta_ShortCollateral_ShortPosition;
     }
 
+    struct GetExpectedMinTokenBalanceCache {
+        uint256 poolAmount;
+        uint256 collateralForLongs;
+        uint256 collateralForShorts;
+        uint256 swapImpactPoolAmount;
+        uint256 claimableCollateralAmount;
+        uint256 claimableFeeAmount;
+        uint256 claimableUiFeeAmount;
+        uint256 affiliateRewardAmount;
+    }
+
     // @dev get the market token's price
     // @param dataStore DataStore
     // @param market the market to check
@@ -601,6 +612,8 @@ library MarketUtils {
             claimableAmount
         );
 
+        validateMarketTokenBalance(dataStore, market);
+
         MarketEventUtils.emitFundingFeesClaimed(
             eventEmitter,
             market,
@@ -658,6 +671,8 @@ library MarketUtils {
             receiver,
             remainingClaimableAmount
         );
+
+        validateMarketTokenBalance(dataStore, market);
 
         MarketEventUtils.emitCollateralClaimed(
             eventEmitter,
@@ -2284,8 +2299,25 @@ library MarketUtils {
 
     function validateMarketTokenBalance(
         DataStore dataStore,
+        Market.Props[] memory markets
+    ) public view {
+        for (uint256 i = 0; i < markets.length; i++) {
+            validateMarketTokenBalance(dataStore, markets[i]);
+        }
+    }
+
+    function validateMarketTokenBalance(
+        DataStore dataStore,
+        address _market
+    ) public view {
+        Market.Props memory market = getEnabledMarket(dataStore, _market);
+        validateMarketTokenBalance(dataStore, market);
+    }
+
+    function validateMarketTokenBalance(
+        DataStore dataStore,
         Market.Props memory market
-    ) internal view {
+    ) public view {
         validateMarketTokenBalance(dataStore, market, market.longToken);
 
         if (market.longToken == market.shortToken) {
@@ -2300,6 +2332,10 @@ library MarketUtils {
         Market.Props memory market,
         address token
     ) internal view {
+        if (market.marketToken == address(0) || token == address(0)) {
+            revert Errors.EmptyAddressInMarketTokenBalanceValidation(market.marketToken, token);
+        }
+
         uint256 balance = IERC20(token).balanceOf(market.marketToken);
         uint256 expectedMinBalance = getExpectedMinTokenBalance(dataStore, market, token);
 
@@ -2313,27 +2349,31 @@ library MarketUtils {
         Market.Props memory market,
         address token
     ) internal view returns (uint256) {
+        GetExpectedMinTokenBalanceCache memory cache;
+
         // get the pool amount directly as MarketUtils.getPoolAmount will divide the amount by 2
         // for markets with the same long and short token
-        uint256 poolAmount = dataStore.getUint(Keys.poolAmountKey(market.marketToken, token));
-        uint256 collateralForLongs = getCollateralSum(dataStore, market.marketToken, token, true);
-        uint256 collateralForShorts = getCollateralSum(dataStore, market.marketToken, token, false);
-        uint256 swapImpactPoolAmount = getSwapImpactPoolAmount(dataStore, market.marketToken, token);
-        uint256 fundingFeeAmount = dataStore.getUint(Keys.claimableFundingAmountKey(market.marketToken, token));
-        uint256 claimableCollateralAmount = dataStore.getUint(Keys.claimableCollateralAmountKey(market.marketToken, token));
-        uint256 claimableFeeAmount = dataStore.getUint(Keys.claimableFeeAmountKey(market.marketToken, token));
-        uint256 claimableUiFeeAmount = dataStore.getUint(Keys.claimableUiFeeAmountKey(market.marketToken, token));
-        uint256 affiliateRewardAmount = dataStore.getUint(Keys.affiliateRewardKey(market.marketToken, token));
+        cache.poolAmount = dataStore.getUint(Keys.poolAmountKey(market.marketToken, token));
+        cache.collateralForLongs = getCollateralSum(dataStore, market.marketToken, token, true);
+        cache.collateralForShorts = getCollateralSum(dataStore, market.marketToken, token, false);
+        cache.swapImpactPoolAmount = getSwapImpactPoolAmount(dataStore, market.marketToken, token);
+        cache.claimableCollateralAmount = dataStore.getUint(Keys.claimableCollateralAmountKey(market.marketToken, token));
+        cache.claimableFeeAmount = dataStore.getUint(Keys.claimableFeeAmountKey(market.marketToken, token));
+        cache.claimableUiFeeAmount = dataStore.getUint(Keys.claimableUiFeeAmountKey(market.marketToken, token));
+        cache.affiliateRewardAmount = dataStore.getUint(Keys.affiliateRewardKey(market.marketToken, token));
 
+        // funding fees are excluded from this summation as claimable funding fees
+        // are incremented without a corresponding decrease of the collateral of
+        // other positions, the collateral of other positions is decreased when
+        // those positions are updated
         return
-            poolAmount
-            + collateralForLongs
-            + collateralForShorts
-            + swapImpactPoolAmount
-            + fundingFeeAmount
-            + claimableCollateralAmount
-            + claimableFeeAmount
-            + claimableUiFeeAmount
-            + affiliateRewardAmount;
+            cache.poolAmount
+            + cache.collateralForLongs
+            + cache.collateralForShorts
+            + cache.swapImpactPoolAmount
+            + cache.claimableCollateralAmount
+            + cache.claimableFeeAmount
+            + cache.claimableUiFeeAmount
+            + cache.affiliateRewardAmount;
     }
 }

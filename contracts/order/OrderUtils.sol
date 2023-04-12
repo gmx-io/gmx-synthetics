@@ -163,6 +163,13 @@ library OrderUtils {
 
         processOrder(params);
 
+        // validate that internal state changes are correct before calling
+        // external callbacks
+        if (params.market.marketToken != address(0)) {
+            MarketUtils.validateMarketTokenBalance(params.contracts.dataStore, params.market);
+        }
+        MarketUtils.validateMarketTokenBalance(params.contracts.dataStore, params.swapPathMarkets);
+
         OrderEventUtils.emitOrderExecuted(params.contracts.eventEmitter, params.key);
 
         CallbackUtils.afterOrderExecution(params.key, params.order);
