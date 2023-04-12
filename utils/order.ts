@@ -199,7 +199,7 @@ export async function executeOrder(fixture, overrides = {}) {
   const result = { txReceipt, logs };
 
   if (overrides.afterExecution) {
-    overrides.afterExecution(result);
+    await overrides.afterExecution(result);
   }
 
   return result;

@@ -97,11 +97,15 @@ library Precision {
         return weiToFloat(weiValue);
     }
 
-    function toFactor(uint256 value, uint256 divisor) internal pure returns (uint256) {
+    function toFactor(uint256 value, uint256 divisor, bool roundUp) internal pure returns (uint256) {
         if (value == 0) { return 0; }
 
         (bool ok, uint256 numerator) = SafeMath.tryMul(value, FLOAT_PRECISION);
         if (ok) {
+            if (roundUp) {
+                return Calc.roundUpDivision(numerator, divisor);
+            }
+
             return numerator / divisor;
         }
 
@@ -110,16 +114,28 @@ library Precision {
 
         // for an overflow to occur, "value" must be more than 10^47
         // reduce "value" to allow larger values to be handled
-        numerator = (value / FLOAT_PRECISION_SQRT) * FLOAT_PRECISION;
+        numerator = value * FLOAT_PRECISION_SQRT;
 
-        // after applying the scaling factor the numerator would be at least 10^(47 - 20) * 10^30 => 10^57
-        // if the divisor is more than 10^40, then reduce the divisor before calculating the final result
-        if (divisor > 10 ** 40) {
+        // after applying the scaling factor the numerator would be at least 10^(47 - 15) => 10^32
+        // if the divisor is more than 10^25, then reduce the divisor before calculating the final result
+        if (divisor > 10 ** 25) {
+            if (roundUp) {
+                return Calc.roundUpDivision(numerator, divisor / FLOAT_PRECISION_SQRT);
+            }
+
             return numerator / (divisor / FLOAT_PRECISION_SQRT);
         }
 
-        // if the divisor is less than 10^40, perform the division before scaling the final result up
+        // perform the division before scaling the final result up
+        if (roundUp) {
+            return Calc.roundUpDivision(numerator, divisor) * FLOAT_PRECISION_SQRT;
+        }
+
         return (numerator / divisor) * FLOAT_PRECISION_SQRT;
+    }
+
+    function toFactor(uint256 value, uint256 divisor) internal pure returns (uint256) {
+        return toFactor(value, divisor, false);
     }
 
     function toFactor(int256 value, uint256 divisor) internal pure returns (int256) {
