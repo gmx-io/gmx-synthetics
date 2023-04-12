@@ -517,7 +517,21 @@ library MarketUtils {
             delta
         );
 
-        MarketEventUtils.emitClaimableCollateralUpdated(eventEmitter, market, token, timeKey, account, delta, nextValue);
+        uint256 nextPoolValue = dataStore.incrementUint(
+            Keys.claimableCollateralAmountKey(market, token),
+            delta
+        );
+
+        MarketEventUtils.emitClaimableCollateralUpdated(
+            eventEmitter,
+            market,
+            token,
+            timeKey,
+            account,
+            delta,
+            nextValue,
+            nextPoolValue
+        );
     }
 
     // @dev increment the claimable funding amount
@@ -540,7 +554,20 @@ library MarketUtils {
             delta
         );
 
-        MarketEventUtils.emitClaimableFundingUpdated(eventEmitter, market, token, account, delta, nextValue);
+        uint256 nextPoolValue = dataStore.incrementUint(
+            Keys.claimableFundingAmountKey(market, token),
+            delta
+        );
+
+        MarketEventUtils.emitClaimableFundingUpdated(
+            eventEmitter,
+            market,
+            token,
+            account,
+            delta,
+            nextValue,
+            nextPoolValue
+        );
     }
 
     // @dev claim funding fees
@@ -563,6 +590,11 @@ library MarketUtils {
         uint256 claimableAmount = dataStore.getUint(key);
         dataStore.setUint(key, 0);
 
+        uint256 nextPoolValue = dataStore.decrementUint(
+            Keys.claimableFundingAmountKey(market, token),
+            claimableAmount
+        );
+
         MarketToken(payable(market)).transferOut(
             token,
             receiver,
@@ -575,7 +607,8 @@ library MarketUtils {
             token,
             account,
             receiver,
-            claimableAmount
+            claimableAmount,
+            nextPoolValue
         );
     }
 
@@ -615,6 +648,11 @@ library MarketUtils {
             adjustedClaimableAmount
         );
 
+        uint256 nextPoolValue = dataStore.decrementUint(
+            Keys.claimableCollateralAmountKey(market, token),
+            remainingClaimableAmount
+        );
+
         MarketToken(payable(market)).transferOut(
             token,
             receiver,
@@ -628,7 +666,8 @@ library MarketUtils {
             timeKey,
             account,
             receiver,
-            remainingClaimableAmount
+            remainingClaimableAmount,
+            nextPoolValue
         );
     }
 
@@ -2241,5 +2280,60 @@ library MarketUtils {
         );
 
         MarketEventUtils.emitUiFeeFactorUpdated(eventEmitter, account, uiFeeFactor);
+    }
+
+    function validateMarketTokenBalance(
+        DataStore dataStore,
+        Market.Props memory market
+    ) internal view {
+        validateMarketTokenBalance(dataStore, market, market.longToken);
+
+        if (market.longToken == market.shortToken) {
+            return;
+        }
+
+        validateMarketTokenBalance(dataStore, market, market.shortToken);
+    }
+
+    function validateMarketTokenBalance(
+        DataStore dataStore,
+        Market.Props memory market,
+        address token
+    ) internal view {
+        uint256 balance = IERC20(token).balanceOf(market.marketToken);
+        uint256 expectedMinBalance = getExpectedMinTokenBalance(dataStore, market, token);
+
+        if (balance < expectedMinBalance) {
+            revert Errors.InvalidMarketTokenBalance(market.marketToken, token, balance, expectedMinBalance);
+        }
+    }
+
+    function getExpectedMinTokenBalance(
+        DataStore dataStore,
+        Market.Props memory market,
+        address token
+    ) internal view returns (uint256) {
+        // get the pool amount directly as MarketUtils.getPoolAmount will divide the amount by 2
+        // for markets with the same long and short token
+        uint256 poolAmount = dataStore.getUint(Keys.poolAmountKey(market.marketToken, token));
+        uint256 collateralForLongs = getCollateralSum(dataStore, market.marketToken, token, true);
+        uint256 collateralForShorts = getCollateralSum(dataStore, market.marketToken, token, false);
+        uint256 swapImpactPoolAmount = getSwapImpactPoolAmount(dataStore, market.marketToken, token);
+        uint256 fundingFeeAmount = dataStore.getUint(Keys.claimableFundingAmountKey(market.marketToken, token));
+        uint256 claimableCollateralAmount = dataStore.getUint(Keys.claimableCollateralAmountKey(market.marketToken, token));
+        uint256 claimableFeeAmount = dataStore.getUint(Keys.claimableFeeAmountKey(market.marketToken, token));
+        uint256 claimableUiFeeAmount = dataStore.getUint(Keys.claimableUiFeeAmountKey(market.marketToken, token));
+        uint256 affiliateRewardAmount = dataStore.getUint(Keys.affiliateRewardKey(market.marketToken, token));
+
+        return
+            poolAmount
+            + collateralForLongs
+            + collateralForShorts
+            + swapImpactPoolAmount
+            + fundingFeeAmount
+            + claimableCollateralAmount
+            + claimableFeeAmount
+            + claimableUiFeeAmount
+            + affiliateRewardAmount;
     }
 }

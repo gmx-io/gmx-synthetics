@@ -297,8 +297,17 @@ library Keys {
     // @dev key for the claimable ui fee amount
     // @param market the market for the fee
     // @param token the token for the fee
-    function claimableUiFeeAmountKey(address uiFeeReceiver, address market, address token) internal pure returns (bytes32) {
-        return keccak256(abi.encode(CLAIMABLE_UI_FEE_AMOUNT, uiFeeReceiver, market, token));
+    // @param account the account that can claim the ui fee
+    function claimableUiFeeAmountKey(address market, address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(CLAIMABLE_UI_FEE_AMOUNT, market, token));
+    }
+
+    // @dev key for the claimable ui fee amount for account
+    // @param market the market for the fee
+    // @param token the token for the fee
+    // @param account the account that can claim the ui fee
+    function claimableUiFeeAmountKey(address market, address token, address account) internal pure returns (bytes32) {
+        return keccak256(abi.encode(CLAIMABLE_UI_FEE_AMOUNT, market, token, account));
     }
 
     // @dev key for deposit gas limit
@@ -858,6 +867,19 @@ library Keys {
     // @param token the token to check
     // @param account the account to check
     // @return key for claimable funding amount
+    function claimableFundingAmountKey(address market, address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CLAIMABLE_FUNDING_AMOUNT,
+            market,
+            token
+        ));
+    }
+
+    // @dev key for claimable funding amount by account
+    // @param market the market to check
+    // @param token the token to check
+    // @param account the account to check
+    // @return key for claimable funding amount
     function claimableFundingAmountKey(address market, address token, address account) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             CLAIMABLE_FUNDING_AMOUNT,
@@ -868,6 +890,20 @@ library Keys {
     }
 
     // @dev key for claimable collateral amount
+    // @param market the market to check
+    // @param token the token to check
+    // @param account the account to check
+    // @param timeKey the time key for the claimable amount
+    // @return key for claimable funding amount
+    function claimableCollateralAmountKey(address market, address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CLAIMABLE_COLLATERAL_AMOUNT,
+            market,
+            token
+        ));
+    }
+
+    // @dev key for claimable collateral amount for a timeKey for an account
     // @param market the market to check
     // @param token the token to check
     // @param account the account to check
@@ -989,6 +1025,19 @@ library Keys {
     }
 
     // @dev key for affiliate reward amount
+    // @param market the market to check
+    // @param token the token to get the key for
+    // @param account the account to get the key for
+    // @return key for affiliate reward amount
+    function affiliateRewardKey(address market, address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            AFFILIATE_REWARD,
+            market,
+            token
+        ));
+    }
+
+    // @dev key for affiliate reward amount for an account
     // @param market the market to check
     // @param token the token to get the key for
     // @param account the account to get the key for

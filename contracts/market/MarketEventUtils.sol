@@ -333,7 +333,8 @@ library MarketEventUtils {
         address token,
         address account,
         uint256 delta,
-        uint256 nextValue
+        uint256 nextValue,
+        uint256 nextPoolValue
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -342,9 +343,10 @@ library MarketEventUtils {
         eventData.addressItems.setItem(1, "token", token);
         eventData.addressItems.setItem(2, "account", account);
 
-        eventData.uintItems.initItems(2);
+        eventData.uintItems.initItems(3);
         eventData.uintItems.setItem(0, "delta", delta);
         eventData.uintItems.setItem(1, "nextValue", nextValue);
+        eventData.uintItems.setItem(2, "nextPoolValue", nextPoolValue);
 
         eventEmitter.emitEventLog1(
             "ClaimableFundingUpdated",
@@ -359,7 +361,8 @@ library MarketEventUtils {
         address token,
         address account,
         address receiver,
-        uint256 amount
+        uint256 amount,
+        uint256 nextPoolValue
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -369,8 +372,9 @@ library MarketEventUtils {
         eventData.addressItems.setItem(2, "account", account);
         eventData.addressItems.setItem(3, "receiver", receiver);
 
-        eventData.uintItems.initItems(1);
+        eventData.uintItems.initItems(2);
         eventData.uintItems.setItem(0, "amount", amount);
+        eventData.uintItems.setItem(1, "nextPoolValue", nextPoolValue);
 
         eventEmitter.emitEventLog1(
             "FundingFeesClaimed",
@@ -414,7 +418,8 @@ library MarketEventUtils {
         uint256 timeKey,
         address account,
         uint256 delta,
-        uint256 nextValue
+        uint256 nextValue,
+        uint256 nextPoolValue
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -423,10 +428,11 @@ library MarketEventUtils {
         eventData.addressItems.setItem(1, "token", token);
         eventData.addressItems.setItem(2, "account", account);
 
-        eventData.uintItems.initItems(3);
+        eventData.uintItems.initItems(4);
         eventData.uintItems.setItem(0, "timeKey", timeKey);
         eventData.uintItems.setItem(1, "delta", delta);
         eventData.uintItems.setItem(2, "nextValue", nextValue);
+        eventData.uintItems.setItem(3, "nextPoolValue", nextPoolValue);
 
         eventEmitter.emitEventLog1(
             "ClaimableCollateralUpdated",
@@ -442,7 +448,8 @@ library MarketEventUtils {
         uint256 timeKey,
         address account,
         address receiver,
-        uint256 amount
+        uint256 amount,
+        uint256 nextPoolValue
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -452,9 +459,10 @@ library MarketEventUtils {
         eventData.addressItems.setItem(2, "account", account);
         eventData.addressItems.setItem(3, "receiver", receiver);
 
-        eventData.uintItems.initItems(2);
+        eventData.uintItems.initItems(3);
         eventData.uintItems.setItem(0, "timeKey", timeKey);
         eventData.uintItems.setItem(1, "amount", amount);
+        eventData.uintItems.setItem(2, "nextPoolValue", nextPoolValue);
 
         eventEmitter.emitEventLog1(
             "CollateralClaimed",
