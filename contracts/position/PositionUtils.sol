@@ -544,6 +544,7 @@ library PositionUtils {
     ) internal {
         ReferralUtils.incrementAffiliateReward(
             params.contracts.dataStore,
+            params.contracts.eventEmitter,
             params.position.market(),
             params.position.collateralToken(),
             fees.referral.affiliate,

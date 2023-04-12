@@ -43,6 +43,7 @@ library ReferralUtils {
     // @param delta The amount to increment the reward balance by.
     function incrementAffiliateReward(
         DataStore dataStore,
+        EventEmitter eventEmitter,
         address market,
         address token,
         address affiliate,
@@ -50,7 +51,18 @@ library ReferralUtils {
     ) internal {
         if (delta == 0) { return; }
 
-        dataStore.incrementUint(Keys.affiliateRewardKey(market, token, affiliate), delta);
+        uint256 nextValue = dataStore.incrementUint(Keys.affiliateRewardKey(market, token, affiliate), delta);
+        uint256 nextPoolValue = dataStore.incrementUint(Keys.affiliateRewardKey(market, token), delta);
+
+        ReferralEventUtils.emitAffiliateRewardUpdated(
+            eventEmitter,
+            market,
+            token,
+            affiliate,
+            delta,
+            nextValue,
+            nextPoolValue
+        );
     }
 
     // @dev Gets the referral information for the specified trader.
@@ -105,6 +117,8 @@ library ReferralUtils {
         uint256 rewardAmount = dataStore.getUint(key);
         dataStore.setUint(key, 0);
 
+        uint256 nextPoolValue = dataStore.decrementUint(Keys.affiliateRewardKey(market, token), rewardAmount);
+
         MarketToken(payable(market)).transferOut(
             token,
             receiver,
@@ -117,7 +131,8 @@ library ReferralUtils {
             token,
             account,
             receiver,
-            rewardAmount
+            rewardAmount,
+            nextPoolValue
         );
     }
 }
