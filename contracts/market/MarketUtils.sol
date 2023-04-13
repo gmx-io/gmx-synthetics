@@ -2274,7 +2274,10 @@ library MarketUtils {
     }
 
     function getUiFeeFactor(DataStore dataStore, address account) internal view returns (uint256) {
-        return dataStore.getUint(Keys.uiFeeFactorKey(account));
+        uint256 maxUiFeeFactor = dataStore.getUint(Keys.MAX_UI_FEE_FACTOR);
+        uint256 uiFeeFactor = dataStore.getUint(Keys.uiFeeFactorKey(account));
+
+        return uiFeeFactor < maxUiFeeFactor ? uiFeeFactor : maxUiFeeFactor;
     }
 
     function setUiFeeFactor(
