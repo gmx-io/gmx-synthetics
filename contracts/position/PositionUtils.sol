@@ -351,7 +351,7 @@ library PositionUtils {
         // if the positive price impact is reduced should not be allowed to be created
         // as they would be easily liquidated if the price impact changes
         // cap the priceImpactUsd to zero to prevent these positions from being created
-        if (cache.priceImpactUsd > 0) {
+        if (cache.priceImpactUsd >= 0) {
             cache.priceImpactUsd = 0;
         } else {
             uint256 maxPriceImpactFactor = MarketUtils.getMaxPositionImpactFactorForLiquidations(
