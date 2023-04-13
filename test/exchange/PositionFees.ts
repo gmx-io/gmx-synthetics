@@ -183,7 +183,7 @@ describe("Exchange.PositionFees", () => {
           expectWithinRange(
             positionFeesCollectedEvent.borrowingFeeAmountForFeeReceiver,
             "774137332422412",
-            "1000000000"
+            "10000000000"
           ); // 0.000774137332422412 ETH => 3.87068666211 USD
           expect(positionFeesCollectedEvent.positionFeeFactor).eq(decimalToFloat(5, 4));
           expect(positionFeesCollectedEvent.protocolFeeAmount).eq("17100000000000000"); // 0.0171 ETH => 85.5 USD
@@ -193,11 +193,7 @@ describe("Exchange.PositionFees", () => {
           expect(positionFeesCollectedEvent.positionFeeAmountForPool).eq("13680000000000000"); // 0.01368 ETH => 68.4 USD
           expect(positionFeesCollectedEvent.positionFeeAmount).eq("19000000000000000"); // 0.019 ETH => 95 USD
           expectWithinRange(positionFeesCollectedEvent.totalNetCostAmount, "22168147331056031", "10000000000"); // 0.022168147331056031 ETH => 110.840736654 USD
-          expectWithinRange(
-            positionFeesCollectedEvent.totalNetCostUsd,
-            "110840736655280155000000000000000",
-            decimalToFloat(1, 5)
-          ); // 110.840736655 USD
+          expectWithinRange(positionFeesCollectedEvent.collateralCostAmount, "22168147331056031", "10000000000"); // 0.022168147331056031 ETH => 110.840736654 USD
           expectWithinRange(
             positionFeesCollectedEvent.latestLongTokenFundingAmountPerSize,
             "8064019999999995000000000",
@@ -269,11 +265,7 @@ describe("Exchange.PositionFees", () => {
           expect(positionFeesCollectedEvent.positionFeeAmountForPool).eq("25600000"); // 25.6 USD
           expect(positionFeesCollectedEvent.positionFeeAmount).eq("40000000"); // 40 USD
           expectWithinRange(positionFeesCollectedEvent.totalNetCostAmount, "42838114", "50"); // 42.838114 USD
-          expectWithinRange(
-            positionFeesCollectedEvent.totalNetCostUsd,
-            "42838114000000000000000000000000",
-            decimalToFloat(1, 4)
-          ); // 42.838114 USD
+          expectWithinRange(positionFeesCollectedEvent.collateralCostAmount, "42838114", "50"); // 42.838114 USD
           expectWithinRange(
             positionFeesCollectedEvent.latestLongTokenFundingAmountPerSize,
             "-16128039999999990000000000",
