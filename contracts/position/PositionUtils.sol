@@ -223,15 +223,6 @@ library PositionUtils {
         return (cache.positionPnlUsd, cache.sizeDeltaInTokens);
     }
 
-    // @dev convert sizeDeltaUsd to sizeDeltaInTokens
-    // @param sizeInUsd the position size in USD
-    // @param sizeInTokens the position size in tokens
-    // @param sizeDeltaUsd the position size change in USD
-    // @return the size delta in tokens
-    function getSizeDeltaInTokens(uint256 sizeInUsd, uint256 sizeInTokens, uint256 sizeDeltaUsd) internal pure returns (uint256) {
-        return sizeInTokens * sizeDeltaUsd / sizeInUsd;
-    }
-
     // @dev get the key for a position
     // @param account the position's account
     // @param market the position's market
