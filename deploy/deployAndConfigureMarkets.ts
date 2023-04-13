@@ -109,10 +109,47 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     const onchainMarket = onchainMarketsByTokens[marketKey];
     const marketToken = onchainMarket.marketToken;
 
-    await setMinCollateralFactor(marketToken, marketConfig.minCollateralFactor);
-
     await setMaxPoolAmount(marketToken, longToken, marketConfig.maxLongTokenPoolAmount);
     await setMaxPoolAmount(marketToken, shortToken, marketConfig.maxShortTokenPoolAmount);
+
+    for (const name of ["swapFeeFactor", "swapImpactExponentFactor"]) {
+      if (marketConfig[name]) {
+        const value = marketConfig[name];
+        const key = keys[`${name}Key`](marketToken);
+        await setUintIfDifferent(key, value, `${name} for ${marketToken.toString()}`);
+      }
+    }
+
+    if (marketConfig.positiveSwapImpactFactor) {
+      const key = keys.swapImpactFactorKey(marketToken, true);
+      await setUintIfDifferent(
+        key,
+        marketConfig.positiveSwapImpactFactor,
+        `positive swap impact factor for ${marketToken.toString()}`
+      );
+    }
+    if (marketConfig.negativeSwapImpactFactor) {
+      const key = keys.swapImpactFactorKey(marketToken, false);
+      await setUintIfDifferent(
+        key,
+        marketConfig.negativeSwapImpactFactor,
+        `negative swap impact factor for ${marketToken.toString()}`
+      );
+    }
+
+    const virtualMarketId = marketConfig.virtualMarketId || ethers.constants.HashZero;
+    await setBytes32IfDifferent(
+      keys.virtualMarketIdKey(marketToken),
+      virtualMarketId,
+      `virtual market id for market ${marketToken.toString()}`
+    );
+
+    // the rest params are not used for swap-only markets
+    if (marketConfig.swapOnly) {
+      continue;
+    }
+
+    await setMinCollateralFactor(marketToken, marketConfig.minCollateralFactor);
 
     await setMaxOpenInterest(marketToken, true, marketConfig.maxOpenInterestForLongs);
     await setMaxOpenInterest(marketToken, false, marketConfig.maxOpenInterestForShorts);
@@ -258,30 +295,6 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
         `negative max position impact factor for ${marketToken.toString()}`
       );
     }
-
-    if (marketConfig.positiveSwapImpactFactor) {
-      const key = keys.swapImpactFactorKey(marketToken, true);
-      await setUintIfDifferent(
-        key,
-        marketConfig.positiveSwapImpactFactor,
-        `positive swap impact factor for ${marketToken.toString()}`
-      );
-    }
-    if (marketConfig.negativeSwapImpactFactor) {
-      const key = keys.swapImpactFactorKey(marketToken, false);
-      await setUintIfDifferent(
-        key,
-        marketConfig.negativeSwapImpactFactor,
-        `negative swap impact factor for ${marketToken.toString()}`
-      );
-    }
-
-    const tokenMarketId = marketConfig.tokenMarketId || ethers.constants.HashZero;
-    await setBytes32IfDifferent(
-      keys.virtualMarketIdKey(marketToken),
-      tokenMarketId,
-      `virtual market id for market ${marketToken.toString()}`
-    );
   }
 };
 

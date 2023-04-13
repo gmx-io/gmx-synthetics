@@ -35,7 +35,7 @@ export type TestTokenConfig = {
   address?: never;
   decimals: number;
   transferGasLimit: number;
-  deploy?: true;
+  deploy: true;
   wrappedNative?: boolean;
   synthetic?: never;
   virtualTokenId?: string;
@@ -88,6 +88,11 @@ const config: {
       decimals: 6,
       transferGasLimit: 200 * 1000,
     },
+    USDT: {
+      decimals: 6,
+      transferGasLimit: 200 * 1000,
+      deploy: true,
+    },
     WETH: {
       address: "0x82F0b3695Ed2324e55bbD9A9554cB4192EC3a514",
       decimals: 18,
@@ -101,14 +106,17 @@ const config: {
       wrappedNative: true,
       decimals: 18,
       transferGasLimit: 200 * 1000,
+      deploy: true,
     },
     WBTC: {
       decimals: 8,
       transferGasLimit: 200 * 1000,
+      deploy: true,
     },
     USDC: {
       decimals: 6,
       transferGasLimit: 200 * 1000,
+      deploy: true,
     },
     SOL: {
       synthetic: true,
@@ -120,14 +128,17 @@ const config: {
       wrappedNative: true,
       decimals: 18,
       transferGasLimit: 200 * 1000,
+      deploy: true,
     },
     WBTC: {
       decimals: 8,
       transferGasLimit: 200 * 1000,
+      deploy: true,
     },
     USDC: {
       decimals: 6,
       transferGasLimit: 200 * 1000,
+      deploy: true,
     },
     SOL: {
       synthetic: true,
