@@ -203,7 +203,7 @@ library OracleUtils {
     // @param index the index to get the uncompacted oracle timestamp at
     // @return the uncompacted oracle timestamp
     function getUncompactedOracleTimestamp(uint256[] memory compactedOracleTimestamps, uint256 index) internal pure returns (uint256) {
-        uint256 blockNumber = Array.getUncompactedValue(
+        uint256 timestamp = Array.getUncompactedValue(
             compactedOracleTimestamps,
             index,
             COMPACTED_TIMESTAMP_BIT_LENGTH,
@@ -211,9 +211,9 @@ library OracleUtils {
             "getUncompactedOracleTimestamp"
         );
 
-        if (blockNumber == 0) { revert Errors.EmptyCompactedTimestamp(index); }
+        if (timestamp == 0) { revert Errors.EmptyCompactedTimestamp(index); }
 
-        return blockNumber;
+        return timestamp;
     }
 
     // @dev validate the signer of a price
