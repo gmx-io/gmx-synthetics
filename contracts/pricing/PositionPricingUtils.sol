@@ -420,7 +420,7 @@ library PositionPricingUtils {
             + fees.ui.uiFeeAmount
             - fees.referral.traderDiscountAmount;
 
-        fees.totalNetCostUsd = fees.totalNetCostAmount * params.collateralTokenPrice.max;
+        fees.totalNetCostUsd = fees.totalNetCostAmount * params.collateralTokenPrice.min;
 
         return fees;
     }
