@@ -62,9 +62,15 @@ library Precision {
         (uint256 a, uint256 b) = value > numerator ? (value, numerator) : (numerator, value);
 
         // for an overflow to occur, "a" must be more than 10^38
-        // reduce "a" to allow larger values to be handled
+        // reduce "a" and the denominator to allow larger values to be handled
 
         uint256 scaledDenominator = Calc.roundUpDivision(denominator, FLOAT_PRECISION_SQRT);
+
+        // if "b" is much larger than the scaledDenominator, then reduce "b" before multiplying it
+        // by the scaled down "a" value
+        if (b > scaledDenominator * FLOAT_PRECISION_SQRT) {
+            return (a / FLOAT_PRECISION_SQRT) * (b / scaledDenominator);
+        }
 
         return ((a / FLOAT_PRECISION_SQRT) * b) / scaledDenominator;
     }
@@ -114,6 +120,7 @@ library Precision {
 
         // for an overflow to occur, "value" must be more than 10^47
         // reduce "value" to allow larger values to be handled
+        // note that this can still overflow if "value" is more than 10^62
         numerator = value * FLOAT_PRECISION_SQRT;
 
         // after applying the scaling factor the numerator would be at least 10^(47 - 15) => 10^32
