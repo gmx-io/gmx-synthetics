@@ -243,12 +243,17 @@ library DecreasePositionCollateralUtils {
 
             values.remainingCollateralAmount -= collateralCache.adjustedPriceImpactDiffAmount.toInt256();
 
+            // the order.receiver is meant to allow the output of an order to be
+            // received by an address that is different from the position.account
+            // address
+            // for claimable collateral, the funds are still credited to the owner
+            // of the position indicated by order.account
             MarketUtils.incrementClaimableCollateralAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.market.marketToken,
                 params.position.collateralToken(),
-                params.order.receiver(),
+                params.order.account(),
                 collateralCache.adjustedPriceImpactDiffAmount
             );
         }

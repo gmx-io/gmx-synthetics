@@ -484,6 +484,11 @@ library PositionUtils {
         );
     }
 
+    // the order.receiver is meant to allow the output of an order to be
+    // received by an address that is different from the position.account
+    // address
+    // for funding fees, the funds are still credited to the owner
+    // of the position indicated by order.account
     function incrementClaimableFundingAmount(
         PositionUtils.UpdatePositionParams memory params,
         PositionPricingUtils.PositionFees memory fees
@@ -495,7 +500,7 @@ library PositionUtils {
                 params.contracts.eventEmitter,
                 params.market.marketToken,
                 params.market.longToken,
-                params.order.receiver(),
+                params.order.account(),
                 fees.funding.claimableLongTokenAmount
             );
         }
@@ -506,7 +511,7 @@ library PositionUtils {
                 params.contracts.eventEmitter,
                 params.market.marketToken,
                 params.market.shortToken,
-                params.order.receiver(),
+                params.order.account(),
                 fees.funding.claimableShortTokenAmount
             );
         }
