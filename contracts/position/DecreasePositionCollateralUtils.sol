@@ -177,15 +177,15 @@ library DecreasePositionCollateralUtils {
         if (values.output.outputToken == params.position.collateralToken() && values.output.outputAmount > 0) {
             if (values.output.outputAmount > fees.totalNetCostAmount) {
                 values.output.outputAmount -= fees.totalNetCostAmount;
-                fees.totalNetCostAmount = 0;
+                fees.collateralCostAmount = 0;
             } else {
-                fees.totalNetCostAmount -= values.output.outputAmount;
+                fees.collateralCostAmount -= values.output.outputAmount;
                 values.output.outputAmount = 0;
             }
         }
 
         // deduct remaining fees from the position's collateral
-        values.remainingCollateralAmount -= fees.totalNetCostAmount.toInt256();
+        values.remainingCollateralAmount -= fees.collateralCostAmount.toInt256();
 
         // if there is insufficient collateral remaining then prioritize using the collateral to pay
         // funding fees, the rest of the collateral is sent to the pool

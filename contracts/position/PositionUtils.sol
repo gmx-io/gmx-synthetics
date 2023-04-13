@@ -382,7 +382,8 @@ library PositionUtils {
 
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(getPositionFeesParams);
 
-        cache.remainingCollateralUsd = cache.collateralUsd.toInt256() + cache.positionPnlUsd + cache.priceImpactUsd - fees.totalNetCostUsd.toInt256();
+        uint256 collateralCostUsd = fees.collateralCostAmount * cache.collateralTokenPrice.min;
+        cache.remainingCollateralUsd = cache.collateralUsd.toInt256() + cache.positionPnlUsd + cache.priceImpactUsd - collateralCostUsd.toInt256();
 
         if (shouldValidateMinCollateralUsd) {
             cache.minCollateralUsd = dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256();
