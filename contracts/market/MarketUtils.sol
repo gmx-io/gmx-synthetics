@@ -630,6 +630,7 @@ library MarketUtils {
     // @param eventEmitter EventEmitter
     // @param market the market to claim for
     // @param token the token to claim
+    // @param timeKey the time key
     // @param account the account to claim for
     // @param receiver the receiver to send the amount to
     function claimCollateral(
