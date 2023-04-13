@@ -2094,15 +2094,7 @@ library MarketUtils {
     // @param marketAddress the address of the market
     function validateEnabledMarket(DataStore dataStore, address marketAddress) internal view {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
-
-        if (market.marketToken == address(0)) {
-            revert Errors.EmptyMarket();
-        }
-
-        bool isMarketDisabled = dataStore.getBool(Keys.isMarketDisabledKey(market.marketToken));
-        if (isMarketDisabled) {
-            revert Errors.DisabledMarket(market.marketToken);
-        }
+        validateEnabledMarket(dataStore, market);
     }
 
     // @dev validate that the specified market exists and is enabled
