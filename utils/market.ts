@@ -1,10 +1,12 @@
 import { calculateCreate2 } from "eth-create2-calculator";
 import { expandDecimals } from "./math";
-import { hashData } from "./hash";
+import { hashData, hashString } from "./hash";
 import { poolAmountKey, swapImpactPoolAmountKey } from "./keys";
 import * as keys from "./keys";
 
 import MarketTokenArtifact from "../artifacts/contracts/market/MarketToken.sol/MarketToken.json";
+
+export const DEFAULT_MARKET_TYPE = hashString("basic-v1");
 
 export function getMarketCount(dataStore) {
   return dataStore.getAddressCount(keys.MARKET_LIST);
@@ -63,11 +65,15 @@ export function getMarketTokenAddress(
   indexToken,
   longToken,
   shortToken,
+  marketType,
   marketFactoryAddress,
   roleStoreAddress,
   dataStoreAddress
 ) {
-  const salt = hashData(["string", "address", "address", "address"], ["GMX_MARKET", indexToken, longToken, shortToken]);
+  const salt = hashData(
+    ["string", "address", "address", "address", "bytes32"],
+    ["GMX_MARKET", indexToken, longToken, shortToken, marketType]
+  );
   const byteCode = MarketTokenArtifact.bytecode;
   return calculateCreate2(marketFactoryAddress, salt, byteCode, {
     params: [roleStoreAddress, dataStoreAddress],

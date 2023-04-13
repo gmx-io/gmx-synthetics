@@ -30,6 +30,7 @@ library IncreaseOrderUtils {
             params.swapPathMarkets,
             params.order.minOutputAmount(),
             params.order.market(),
+            params.order.uiFeeReceiver(),
             false
         ));
 

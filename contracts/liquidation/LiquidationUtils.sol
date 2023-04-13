@@ -35,6 +35,7 @@ library LiquidationUtils {
             account, // account
             account, // receiver
             address(0), // callbackContract
+            address(0), // uiFeeReceiver
             market, // market
             position.collateralToken(), // initialCollateralToken
             new address[](0) // swapPath

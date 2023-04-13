@@ -26,12 +26,12 @@ library PositionUtils {
     // @dev UpdatePositionParams struct used in increasePosition to avoid
     // stack too deep errors
     //
+    // @param contracts BaseOrderUtils.ExecuteOrderParamsContracts
     // @param market the values of the trading market
     // @param order the decrease position order
+    // @param orderKey the key of the order
     // @param position the order's position
     // @param positionKey the key of the order's position
-    // @param collateral the collateralToken of the position
-    // @param collateralDeltaAmount the amount of collateralToken deposited
     struct UpdatePositionParams {
         BaseOrderUtils.ExecuteOrderParamsContracts contracts;
         Market.Props market;
@@ -223,15 +223,6 @@ library PositionUtils {
         return (cache.positionPnlUsd, cache.sizeDeltaInTokens);
     }
 
-    // @dev convert sizeDeltaUsd to sizeDeltaInTokens
-    // @param sizeInUsd the position size in USD
-    // @param sizeInTokens the position size in tokens
-    // @param sizeDeltaUsd the position size change in USD
-    // @return the size delta in tokens
-    function getSizeDeltaInTokens(uint256 sizeInUsd, uint256 sizeInTokens, uint256 sizeDeltaUsd) internal pure returns (uint256) {
-        return sizeInTokens * sizeDeltaUsd / sizeInUsd;
-    }
-
     // @dev get the key for a position
     // @param account the position's account
     // @param market the position's market
@@ -351,7 +342,7 @@ library PositionUtils {
         // if the positive price impact is reduced should not be allowed to be created
         // as they would be easily liquidated if the price impact changes
         // cap the priceImpactUsd to zero to prevent these positions from being created
-        if (cache.priceImpactUsd > 0) {
+        if (cache.priceImpactUsd >= 0) {
             cache.priceImpactUsd = 0;
         } else {
             uint256 maxPriceImpactFactor = MarketUtils.getMaxPositionImpactFactorForLiquidations(
@@ -369,17 +360,21 @@ library PositionUtils {
             }
         }
 
-        PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
+        PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams(
             dataStore,
             referralStorage,
             position,
             cache.collateralTokenPrice,
             market.longToken,
             market.shortToken,
-            position.sizeInUsd()
+            position.sizeInUsd(),
+            address(0) // uiFeeReceiver
         );
 
-        cache.remainingCollateralUsd = cache.collateralUsd.toInt256() + cache.positionPnlUsd + cache.priceImpactUsd - fees.totalNetCostUsd.toInt256();
+        PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(getPositionFeesParams);
+
+        uint256 collateralCostUsd = fees.collateralCostAmount * cache.collateralTokenPrice.min;
+        cache.remainingCollateralUsd = cache.collateralUsd.toInt256() + cache.positionPnlUsd + cache.priceImpactUsd - collateralCostUsd.toInt256();
 
         if (shouldValidateMinCollateralUsd) {
             cache.minCollateralUsd = dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256();
@@ -471,16 +466,21 @@ library PositionUtils {
         uint256 nextPositionBorrowingFactor
     ) internal {
         MarketUtils.updateTotalBorrowing(
-            params.contracts.dataStore,
-            params.market.marketToken,
-            params.position.isLong(),
-            params.position.sizeInUsd(),
-            params.position.borrowingFactor(),
-            nextPositionSizeInUsd,
-            nextPositionBorrowingFactor
+            params.contracts.dataStore, // dataStore
+            params.market.marketToken, // market
+            params.position.isLong(), // isLong
+            params.position.sizeInUsd(), // prevPositionSizeInUsd
+            params.position.borrowingFactor(), // prevPositionBorrowingFactor
+            nextPositionSizeInUsd, // nextPositionSizeInUsd
+            nextPositionBorrowingFactor // nextPositionBorrowingFactor
         );
     }
 
+    // the order.receiver is meant to allow the output of an order to be
+    // received by an address that is different from the position.account
+    // address
+    // for funding fees, the funds are still credited to the owner
+    // of the position indicated by order.account
     function incrementClaimableFundingAmount(
         PositionUtils.UpdatePositionParams memory params,
         PositionPricingUtils.PositionFees memory fees
@@ -492,7 +492,7 @@ library PositionUtils {
                 params.contracts.eventEmitter,
                 params.market.marketToken,
                 params.market.longToken,
-                params.order.receiver(),
+                params.order.account(),
                 fees.funding.claimableLongTokenAmount
             );
         }
@@ -503,7 +503,7 @@ library PositionUtils {
                 params.contracts.eventEmitter,
                 params.market.marketToken,
                 params.market.shortToken,
-                params.order.receiver(),
+                params.order.account(),
                 fees.funding.claimableShortTokenAmount
             );
         }
@@ -541,6 +541,7 @@ library PositionUtils {
     ) internal {
         ReferralUtils.incrementAffiliateReward(
             params.contracts.dataStore,
+            params.contracts.eventEmitter,
             params.position.market(),
             params.position.collateralToken(),
             fees.referral.affiliate,

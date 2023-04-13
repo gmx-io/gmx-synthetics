@@ -202,8 +202,14 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.UPDATE_ORDER_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CANCEL_ORDER_FEATURE_DISABLED] = true;
 
+        allowedBaseKeys[Keys.CLAIM_FUNDING_FEES_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.CLAIM_COLLATERAL_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.CLAIM_UI_FEES_FEATURE_DISABLED] = true;
+
         allowedBaseKeys[Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS] = true;
         allowedBaseKeys[Keys.MAX_ORACLE_PRICE_AGE] = true;
+        allowedBaseKeys[Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR] = true;
         allowedBaseKeys[Keys.POSITION_FEE_RECEIVER_FACTOR] = true;
         allowedBaseKeys[Keys.SWAP_FEE_RECEIVER_FACTOR] = true;
         allowedBaseKeys[Keys.BORROWING_FEE_RECEIVER_FACTOR] = true;
@@ -242,6 +248,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.SWAP_IMPACT_EXPONENT_FACTOR] = true;
         allowedBaseKeys[Keys.SWAP_FEE_FACTOR] = true;
 
+        allowedBaseKeys[Keys.MAX_UI_FEE_FACTOR] = true;
+
         allowedBaseKeys[Keys.ORACLE_TYPE] = true;
 
         allowedBaseKeys[Keys.RESERVE_FACTOR] = true;
@@ -279,7 +287,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         if (
             baseKey == Keys.SWAP_FEE_FACTOR ||
-            baseKey == Keys.POSITION_FEE_FACTOR
+            baseKey == Keys.POSITION_FEE_FACTOR ||
+            baseKey == Keys.MAX_UI_FEE_FACTOR
         ) {
             // revert if value > 5%
             if (value > 5 * Precision.FLOAT_PRECISION / 100) {

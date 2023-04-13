@@ -58,7 +58,14 @@ library Order {
 
     // @param account the account of the order
     // @param receiver the receiver for any token transfers
+    // this field is meant to allow the output of an order to be
+    // received by an address that is different from the creator of the
+    // order whether this is for swaps or whether the account is the owner
+    // of a position
+    // for funding fees and claimable collateral, the funds are still
+    // credited to the owner of the position indicated by order.account
     // @param callbackContract the contract to call for callbacks
+    // @param uiFeeReceiver the ui fee receiver
     // @param market the trading market
     // @param initialCollateralToken for increase orders, initialCollateralToken
     // is the token sent in by the user, the token will be swapped through the
@@ -72,6 +79,7 @@ library Order {
         address account;
         address receiver;
         address callbackContract;
+        address uiFeeReceiver;
         address market;
         address initialCollateralToken;
         address[] swapPath;
@@ -184,6 +192,20 @@ library Order {
     // @param value the value to set to
     function setInitialCollateralToken(Props memory props, address value) internal pure {
         props.addresses.initialCollateralToken = value;
+    }
+
+    // @dev the order uiFeeReceiver
+    // @param props Props
+    // @return the order uiFeeReceiver
+    function uiFeeReceiver(Props memory props) internal pure returns (address) {
+        return props.addresses.uiFeeReceiver;
+    }
+
+    // @dev set the order uiFeeReceiver
+    // @param props Props
+    // @param value the value to set to
+    function setUiFeeReceiver(Props memory props, address value) internal pure {
+        props.addresses.uiFeeReceiver = value;
     }
 
     // @dev the order swapPath

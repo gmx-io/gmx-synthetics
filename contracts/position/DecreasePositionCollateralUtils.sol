@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../utils/Precision.sol";
-import "../errors/ErrorUtils.sol";
+import "../error/ErrorUtils.sol";
 
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
@@ -157,14 +157,19 @@ library DecreasePositionCollateralUtils {
             }
         }
 
-        PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
+        PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams(
             params.contracts.dataStore,
             params.contracts.referralStorage,
             params.position,
             collateralTokenPrice,
             params.market.longToken,
             params.market.shortToken,
-            params.order.sizeDeltaUsd()
+            params.order.sizeDeltaUsd(),
+            params.order.uiFeeReceiver()
+        );
+
+        PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
+            getPositionFeesParams
         );
 
         // if there is a positive outputAmount, use the outputAmount to pay for fees and price impact
@@ -172,15 +177,15 @@ library DecreasePositionCollateralUtils {
         if (values.output.outputToken == params.position.collateralToken() && values.output.outputAmount > 0) {
             if (values.output.outputAmount > fees.totalNetCostAmount) {
                 values.output.outputAmount -= fees.totalNetCostAmount;
-                fees.totalNetCostAmount = 0;
+                fees.collateralCostAmount = 0;
             } else {
-                fees.totalNetCostAmount -= values.output.outputAmount;
+                fees.collateralCostAmount -= values.output.outputAmount;
                 values.output.outputAmount = 0;
             }
         }
 
         // deduct remaining fees from the position's collateral
-        values.remainingCollateralAmount -= fees.totalNetCostAmount.toInt256();
+        values.remainingCollateralAmount -= fees.collateralCostAmount.toInt256();
 
         // if there is insufficient collateral remaining then prioritize using the collateral to pay
         // funding fees, the rest of the collateral is sent to the pool
@@ -238,12 +243,17 @@ library DecreasePositionCollateralUtils {
 
             values.remainingCollateralAmount -= collateralCache.adjustedPriceImpactDiffAmount.toInt256();
 
+            // the order.receiver is meant to allow the output of an order to be
+            // received by an address that is different from the position.account
+            // address
+            // for claimable collateral, the funds are still credited to the owner
+            // of the position indicated by order.account
             MarketUtils.incrementClaimableCollateralAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.market.marketToken,
                 params.position.collateralToken(),
-                params.order.receiver(),
+                params.order.account(),
                 collateralCache.adjustedPriceImpactDiffAmount
             );
         }
@@ -255,6 +265,16 @@ library DecreasePositionCollateralUtils {
             params.position.collateralToken(),
             fees.feeReceiverAmount,
             Keys.POSITION_FEE
+        );
+
+        FeeUtils.incrementClaimableUiFeeAmount(
+            params.contracts.dataStore,
+            params.contracts.eventEmitter,
+            params.order.uiFeeReceiver(),
+            params.market.marketToken,
+            params.position.collateralToken(),
+            fees.ui.uiFeeAmount,
+            Keys.UI_POSITION_FEE
         );
 
         return (values, fees);
@@ -345,8 +365,6 @@ library DecreasePositionCollateralUtils {
             values.pnlAmountForPool = (params.position.collateralAmount() - fees.funding.fundingFeeAmount).toInt256();
         }
 
-        PositionPricingUtils.PositionFees memory _fees;
-
         PositionUtils.DecreasePositionCollateralValues memory _values = PositionUtils.DecreasePositionCollateralValues(
             values.pnlTokenForPool, // pnlTokenForPool
             values.executionPrice, // executionPrice
@@ -365,6 +383,12 @@ library DecreasePositionCollateralUtils {
                 0
             )
         );
+
+        PositionPricingUtils.PositionFees memory _fees;
+
+        // allow the accumulated funding fees to still be claimable
+        _fees.funding.claimableLongTokenAmount = fees.funding.claimableLongTokenAmount;
+        _fees.funding.claimableShortTokenAmount = fees.funding.claimableShortTokenAmount;
 
         return (_values, _fees);
     }
@@ -390,6 +414,7 @@ library DecreasePositionCollateralUtils {
                     swapPathMarkets, // markets
                     0, // minOutputAmount
                     params.market.marketToken, // receiver
+                    params.order.uiFeeReceiver(), // uiFeeReceiver
                     false // shouldUnwrapNativeToken
                 )
             ) returns (address tokenOut, uint256 swapOutputAmount) {
@@ -438,6 +463,7 @@ library DecreasePositionCollateralUtils {
                     swapPathMarkets, // markets
                     0, // minOutputAmount
                     params.market.marketToken, // receiver
+                    params.order.uiFeeReceiver(), // uiFeeReceiver
                     false // shouldUnwrapNativeToken
                 )
             ) returns (address /* tokenOut */, uint256 swapOutputAmount) {

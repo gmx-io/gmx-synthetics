@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import "../errors/Errors.sol";
+import "../error/Errors.sol";
 
 /**
  * @title Array
@@ -35,7 +35,7 @@ library Array {
      * @return true if all of the elements in the array are equal to the specified value, false otherwise
      */
     function areEqualTo(uint256[] memory arr, uint256 value) internal pure returns (bool) {
-        for (uint256 i = 0; i < arr.length; i++) {
+        for (uint256 i; i < arr.length; i++) {
             if (arr[i] != value) {
                 return false;
             }
@@ -52,7 +52,7 @@ library Array {
      * @return true if all of the elements in the array are greater than the specified value, false otherwise
      */
     function areGreaterThan(uint256[] memory arr, uint256 value) internal pure returns (bool) {
-        for (uint256 i = 0; i < arr.length; i++) {
+        for (uint256 i; i < arr.length; i++) {
             if (arr[i] <= value) {
                 return false;
             }
@@ -69,7 +69,7 @@ library Array {
      * @return true if all of the elements in the array are greater than or equal to the specified value, false otherwise
      */
     function areGreaterThanOrEqualTo(uint256[] memory arr, uint256 value) internal pure returns (bool) {
-        for (uint256 i = 0; i < arr.length; i++) {
+        for (uint256 i; i < arr.length; i++) {
             if (arr[i] < value) {
                 return false;
             }
@@ -86,7 +86,7 @@ library Array {
      * @return true if all of the elements in the array are less than the specified value, false otherwise
      */
     function areLessThan(uint256[] memory arr, uint256 value) internal pure returns (bool) {
-        for (uint256 i = 0; i < arr.length; i++) {
+        for (uint256 i; i < arr.length; i++) {
             if (arr[i] >= value) {
                 return false;
             }
@@ -103,7 +103,7 @@ library Array {
      * @return true if all of the elements in the array are less than or equal to the specified value, false otherwise
      */
     function areLessThanOrEqualTo(uint256[] memory arr, uint256 value) internal pure returns (bool) {
-        for (uint256 i = 0; i < arr.length; i++) {
+        for (uint256 i; i < arr.length; i++) {
             if (arr[i] > value) {
                 return false;
             }

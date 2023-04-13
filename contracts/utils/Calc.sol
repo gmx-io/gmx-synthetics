@@ -28,12 +28,14 @@ library Calc {
     /**
      * Calculates the result of dividing the first number by the second number,
      * rounded up to the nearest integer.
+     * The rounding is purely on the magnitude of a, if a is negative the result
+     * is a larger magnitude negative
      *
      * @param a the dividend
      * @param b the divisor
      * @return the result of dividing the first number by the second number, rounded up to the nearest integer
      */
-    function roundUpDivision(int256 a, uint256 b) internal pure returns (int256) {
+    function roundUpMagnitudeDivision(int256 a, uint256 b) internal pure returns (int256) {
         if (a < 0) {
             return (a - b.toInt256() + 1) / b.toInt256();
         }

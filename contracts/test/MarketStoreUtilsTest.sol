@@ -15,8 +15,8 @@ contract MarketStoreUtilsTest {
         return market;
     }
 
-    function setMarket(DataStore dataStore, address key, Market.Props memory market) external {
-        MarketStoreUtils.set(dataStore, key, market);
+    function setMarket(DataStore dataStore, address key, bytes32 salt, Market.Props memory market) external {
+        MarketStoreUtils.set(dataStore, key, salt, market);
     }
 
     function removeMarket(DataStore dataStore, address key) external {

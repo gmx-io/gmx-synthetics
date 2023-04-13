@@ -20,11 +20,13 @@ library Deposit {
     // @param account the account depositing liquidity
     // @param receiver the address to send the liquidity tokens to
     // @param callbackContract the callback contract
+    // @param uiFeeReceiver the ui fee receiver
     // @param market the market to deposit to
     struct Addresses {
         address account;
         address receiver;
         address callbackContract;
+        address uiFeeReceiver;
         address market;
         address initialLongToken;
         address initialShortToken;
@@ -75,6 +77,14 @@ library Deposit {
 
     function setCallbackContract(Props memory props, address value) internal pure {
         props.addresses.callbackContract = value;
+    }
+
+    function uiFeeReceiver(Props memory props) internal pure returns (address) {
+        return props.addresses.uiFeeReceiver;
+    }
+
+    function setUiFeeReceiver(Props memory props, address value) internal pure {
+        props.addresses.uiFeeReceiver = value;
     }
 
     function market(Props memory props) internal pure returns (address) {

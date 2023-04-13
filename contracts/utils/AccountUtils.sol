@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "../errors/Errors.sol";
+import "../error/Errors.sol";
 
 library AccountUtils {
     function validateAccount(address account) internal pure {

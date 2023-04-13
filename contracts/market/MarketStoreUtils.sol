@@ -14,12 +14,14 @@ import "./Market.sol";
 library MarketStoreUtils {
     using Market for Market.Props;
 
+    bytes32 public constant MARKET_SALT = keccak256(abi.encode("MARKET_SALT"));
+    bytes32 public constant MARKET_KEY = keccak256(abi.encode("MARKET_KEY"));
     bytes32 public constant MARKET_TOKEN = keccak256(abi.encode("MARKET_TOKEN"));
     bytes32 public constant INDEX_TOKEN = keccak256(abi.encode("INDEX_TOKEN"));
     bytes32 public constant LONG_TOKEN = keccak256(abi.encode("LONG_TOKEN"));
     bytes32 public constant SHORT_TOKEN = keccak256(abi.encode("SHORT_TOKEN"));
 
-    function get(DataStore dataStore, address key) external view returns (Market.Props memory) {
+    function get(DataStore dataStore, address key) public view returns (Market.Props memory) {
         Market.Props memory market;
         if (!dataStore.containsAddress(Keys.MARKET_LIST, key)) {
             return market;
@@ -44,9 +46,22 @@ library MarketStoreUtils {
         return market;
     }
 
-    function set(DataStore dataStore, address key, Market.Props memory market) external {
+    function getBySalt(DataStore dataStore, bytes32 salt) external view returns (Market.Props memory) {
+        address key = dataStore.getAddress(getMarketSaltHash(salt));
+        return get(dataStore, key);
+    }
+
+    function set(DataStore dataStore, address key, bytes32 salt, Market.Props memory market) external {
         dataStore.addAddress(
             Keys.MARKET_LIST,
+            key
+        );
+
+        // the salt is based on the market props while the key gives the market's address
+        // use the salt to store a reference to the key to allow the key to be retrieved
+        // using just the salt value
+        dataStore.setAddress(
+            getMarketSaltHash(salt),
             key
         );
 
@@ -92,6 +107,10 @@ library MarketStoreUtils {
         dataStore.removeAddress(
             keccak256(abi.encode(key, SHORT_TOKEN))
         );
+    }
+
+    function getMarketSaltHash(bytes32 salt) internal pure returns (bytes32) {
+        return keccak256(abi.encode(MARKET_SALT, salt));
     }
 
     function getMarketCount(DataStore dataStore) internal view returns (uint256) {

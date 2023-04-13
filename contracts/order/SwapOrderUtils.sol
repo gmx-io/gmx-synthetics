@@ -37,6 +37,7 @@ library SwapOrderUtils {
             params.swapPathMarkets,
             params.order.minOutputAmount(),
             params.order.receiver(),
+            params.order.uiFeeReceiver(),
             params.order.shouldUnwrapNativeToken()
         ));
 

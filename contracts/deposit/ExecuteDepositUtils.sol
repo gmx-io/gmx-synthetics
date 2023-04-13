@@ -19,7 +19,7 @@ import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
-import "../errors/ErrorUtils.sol";
+import "../error/ErrorUtils.sol";
 
 // @title DepositUtils
 // @dev Library for deposit functions, to help with the depositing of liquidity
@@ -60,6 +60,7 @@ library ExecuteDepositUtils {
     // @param market the market to deposit into
     // @param account the depositing account
     // @param receiver the account to send the market tokens to
+    // @param uiFeeReceiver the ui fee receiver account
     // @param tokenIn the token to deposit, either the market.longToken or
     // market.shortToken
     // @param tokenOut the other token, if tokenIn is market.longToken then
@@ -72,6 +73,7 @@ library ExecuteDepositUtils {
         Market.Props market;
         address account;
         address receiver;
+        address uiFeeReceiver;
         address tokenIn;
         address tokenOut;
         Price.Props tokenInPrice;
@@ -129,7 +131,8 @@ library ExecuteDepositUtils {
             deposit.initialLongToken(),
             deposit.initialLongTokenAmount(),
             market.marketToken,
-            market.longToken
+            market.longToken,
+            deposit.uiFeeReceiver()
         );
 
         cache.shortTokenAmount = swap(
@@ -138,7 +141,8 @@ library ExecuteDepositUtils {
             deposit.initialShortToken(),
             deposit.initialShortTokenAmount(),
             market.marketToken,
-            market.shortToken
+            market.shortToken,
+            deposit.uiFeeReceiver()
         );
 
         if (cache.longTokenAmount == 0 && cache.shortTokenAmount == 0) {
@@ -147,8 +151,6 @@ library ExecuteDepositUtils {
 
         cache.longTokenUsd = cache.longTokenAmount * prices.longTokenPrice.midPrice();
         cache.shortTokenUsd = cache.shortTokenAmount * prices.shortTokenPrice.midPrice();
-
-        cache.receivedMarketTokens;
 
         cache.priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(
             SwapPricingUtils.GetPriceImpactUsdParams(
@@ -168,6 +170,7 @@ library ExecuteDepositUtils {
                 market,
                 deposit.account(),
                 deposit.receiver(),
+                deposit.uiFeeReceiver(),
                 market.longToken,
                 market.shortToken,
                 prices.longTokenPrice,
@@ -184,6 +187,7 @@ library ExecuteDepositUtils {
                 market,
                 deposit.account(),
                 deposit.receiver(),
+                deposit.uiFeeReceiver(),
                 market.shortToken,
                 market.longToken,
                 prices.shortTokenPrice,
@@ -201,6 +205,10 @@ library ExecuteDepositUtils {
 
         DepositStoreUtils.remove(params.dataStore, params.key, deposit.account());
 
+        // validate that internal state changes are correct before calling
+        // external callbacks
+        MarketUtils.validateMarketTokenBalance(params.dataStore, market);
+
         DepositEventUtils.emitDepositExecuted(
             params.eventEmitter,
             params.key,
@@ -213,6 +221,7 @@ library ExecuteDepositUtils {
 
         GasUtils.payExecutionFee(
             params.dataStore,
+            params.eventEmitter,
             params.depositVault,
             deposit.executionFee(),
             params.startingGas,
@@ -228,7 +237,8 @@ library ExecuteDepositUtils {
         SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
             params.dataStore,
             _params.market.marketToken,
-            _params.amount
+            _params.amount,
+            _params.uiFeeReceiver
         );
 
         FeeUtils.incrementClaimableFeeAmount(
@@ -238,6 +248,16 @@ library ExecuteDepositUtils {
             _params.tokenIn,
             fees.feeReceiverAmount,
             Keys.DEPOSIT_FEE
+        );
+
+        FeeUtils.incrementClaimableUiFeeAmount(
+            params.dataStore,
+            params.eventEmitter,
+            _params.uiFeeReceiver,
+            _params.market.marketToken,
+            _params.tokenIn,
+            fees.uiFeeAmount,
+            Keys.UI_DEPOSIT_FEE
         );
 
         SwapPricingUtils.emitSwapFeesCollected(
@@ -366,7 +386,8 @@ library ExecuteDepositUtils {
         address initialToken,
         uint256 inputAmount,
         address market,
-        address expectedOutputToken
+        address expectedOutputToken,
+        address uiFeeReceiver
     ) internal returns (uint256) {
         Market.Props[] memory swapPathMarkets = MarketUtils.getEnabledMarkets(
             params.dataStore,
@@ -385,6 +406,7 @@ library ExecuteDepositUtils {
                 swapPathMarkets, // swapPathMarkets
                 0, // minOutputAmount
                 market, // receiver
+                uiFeeReceiver, // uiFeeReceiver
                 false // shouldUnwrapNativeToken
             )
         );
@@ -392,6 +414,8 @@ library ExecuteDepositUtils {
         if (outputToken != expectedOutputToken) {
             revert Errors.InvalidSwapOutputToken(outputToken, expectedOutputToken);
         }
+
+        MarketUtils.validateMarketTokenBalance(params.dataStore, swapPathMarkets);
 
         return outputAmount;
     }

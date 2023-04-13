@@ -111,6 +111,7 @@ library OrderUtils {
         order.setCallbackContract(params.addresses.callbackContract);
         order.setMarket(params.addresses.market);
         order.setInitialCollateralToken(params.addresses.initialCollateralToken);
+        order.setUiFeeReceiver(params.addresses.uiFeeReceiver);
         order.setSwapPath(params.addresses.swapPath);
         order.setOrderType(params.orderType);
         order.setDecreasePositionSwapType(params.decreasePositionSwapType);
@@ -162,6 +163,13 @@ library OrderUtils {
 
         processOrder(params);
 
+        // validate that internal state changes are correct before calling
+        // external callbacks
+        if (params.market.marketToken != address(0)) {
+            MarketUtils.validateMarketTokenBalance(params.contracts.dataStore, params.market);
+        }
+        MarketUtils.validateMarketTokenBalance(params.contracts.dataStore, params.swapPathMarkets);
+
         OrderEventUtils.emitOrderExecuted(params.contracts.eventEmitter, params.key);
 
         CallbackUtils.afterOrderExecution(params.key, params.order);
@@ -170,6 +178,7 @@ library OrderUtils {
         // gas costs for liquidations / adl is subsidised by the treasury
         GasUtils.payExecutionFee(
             params.contracts.dataStore,
+            params.contracts.eventEmitter,
             params.contracts.orderVault,
             params.order.executionFee(),
             params.startingGas,
@@ -239,6 +248,7 @@ library OrderUtils {
 
         GasUtils.payExecutionFee(
             dataStore,
+            eventEmitter,
             orderVault,
             order.executionFee(),
             startingGas,
@@ -284,6 +294,7 @@ library OrderUtils {
 
         GasUtils.payExecutionFee(
             dataStore,
+            eventEmitter,
             orderVault,
             executionFee,
             startingGas,

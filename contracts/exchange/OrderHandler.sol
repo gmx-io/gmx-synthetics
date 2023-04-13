@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./BaseOrderHandler.sol";
-import "../errors/ErrorUtils.sol";
+import "../error/ErrorUtils.sol";
 
 // @title OrderHandler
 // @dev Contract to handle creation, execution and cancellation of orders
@@ -148,15 +148,12 @@ contract OrderHandler is BaseOrderHandler {
         withSimulatedOraclePrices(oracle, params)
         globalNonReentrant
     {
-        uint256 startingGas = gasleft();
-
         OracleUtils.SetPricesParams memory oracleParams;
 
         this._executeOrder(
             key,
             oracleParams,
-            msg.sender,
-            startingGas
+            msg.sender
         );
     }
 
@@ -176,8 +173,7 @@ contract OrderHandler is BaseOrderHandler {
         try this._executeOrder(
             key,
             oracleParams,
-            msg.sender,
-            startingGas
+            msg.sender
         ) {
         } catch (bytes memory reasonBytes) {
             _handleOrderError(key, startingGas, reasonBytes);
@@ -192,9 +188,10 @@ contract OrderHandler is BaseOrderHandler {
     function _executeOrder(
         bytes32 key,
         OracleUtils.SetPricesParams memory oracleParams,
-        address keeper,
-        uint256 startingGas
+        address keeper
     ) external onlySelf {
+        uint256 startingGas = gasleft();
+
         BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, keeper, startingGas);
         // limit swaps require frozen order keeper for execution since on creation it can fail due to output amount
         // which would automatically cause the order to be frozen

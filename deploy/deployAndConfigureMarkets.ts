@@ -1,6 +1,8 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import * as keys from "../utils/keys";
 import { setBytes32IfDifferent, setUintIfDifferent } from "../utils/dataStore";
+import { hashString } from "../utils/hash";
+import { DEFAULT_MARKET_TYPE } from "../utils/market";
 import { ethers } from "ethers";
 
 function getMarketTokenAddresses(marketConfig, tokens) {
@@ -49,8 +51,17 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       continue;
     }
 
-    log("creating market %s:%s:%s", indexToken, longToken, shortToken);
-    await execute("MarketFactory", { from: deployer, log: true }, "createMarket", indexToken, longToken, shortToken);
+    const marketType = DEFAULT_MARKET_TYPE;
+    log("creating market %s:%s:%s:%s", indexToken, longToken, shortToken, marketType);
+    await execute(
+      "MarketFactory",
+      { from: deployer, log: true },
+      "createMarket",
+      indexToken,
+      longToken,
+      shortToken,
+      marketType
+    );
   }
 
   async function setReserveFactor(marketToken: string, isLong: boolean, reserveFactor: number) {

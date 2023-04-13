@@ -26,6 +26,7 @@ library Errors {
     error InvalidTimelockDelay(uint256 timelockDelay);
     error MaxTimelockDelayExceeded(uint256 timelockDelay);
     error InvalidFeeReceiver(address receiver);
+    error InvalidOracleSigner(address receiver);
 
     // DepositUtils errors
     error EmptyDeposit();
@@ -58,6 +59,9 @@ library Errors {
     error InsufficientExecutionFee(uint256 minExecutionFee, uint256 executionFee);
     error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);
 
+    // MarketFactory errors
+    error MarketAlreadyExists(bytes32 salt, address existingMarketAddress);
+
     // MarketUtils errors
     error EmptyMarket();
     error DisabledMarket(address market);
@@ -67,6 +71,7 @@ library Errors {
     error UnexpectedPoolValueForTokenPriceCalculation(int256 poolValue);
     error UnexpectedSupplyForTokenPriceCalculation();
     error UnableToGetOppositeToken(address inputToken, address market);
+    error InvalidSwapMarket(address market);
     error UnableToGetCachedTokenPrice(address token, address market);
     error CollateralAlreadyClaimed(uint256 adjustedClaimableAmount, uint256 claimedAmount);
     error OpenInterestCannotBeUpdatedForSwapOnlyMarket(address market);
@@ -79,6 +84,10 @@ library Errors {
     error InvalidCollateralTokenForMarket(address market, address token);
     error PnlFactorExceededForLongs(int256 pnlToPoolFactor, uint256 maxPnlFactor);
     error PnlFactorExceededForShorts(int256 pnlToPoolFactor, uint256 maxPnlFactor);
+    error InvalidUiFeeFactor(uint256 uiFeeFactor, uint256 maxUiFeeFactor);
+    error EmptyAddressInMarketTokenBalanceValidation(address market, address token);
+    error InvalidMarketTokenBalance(address market, address token, uint256 balance, uint256 expectedMinBalance);
+    error InvalidMarketTokenBalanceForClaimableFunding(address market, address token, uint256 balance, uint256 claimableFundingFeeAmount);
 
     // Oracle errors
     error EmptyTokens();
@@ -95,13 +104,18 @@ library Errors {
     error InvalidFeedPrice(address token, int256 price);
     error PriceFeedNotUpdated(address token, uint256 timestamp, uint256 heartbeatDuration);
     error MaxSignerIndex(uint256 signerIndex, uint256 maxSignerIndex);
-    error DuplicateSigner(uint256 signerIndex);
     error InvalidOraclePrice(address token);
     error InvalidSignerMinMaxPrice(uint256 minPrice, uint256 maxPrice);
     error InvalidMedianMinMaxPrice(uint256 minPrice, uint256 maxPrice);
     error NonEmptyTokensWithPrices(uint256 tokensWithPricesLength);
     error EmptyPriceFeed(address token);
     error PriceAlreadySet(address token, uint256 minPrice, uint256 maxPrice);
+    error MaxRefPriceDeviationExceeded(
+        address token,
+        uint256 price,
+        uint256 refPrice,
+        uint256 maxRefPriceDeviationFactor
+    );
 
     // OracleModule errors
     error InvalidPrimaryPricesForSimulation(uint256 primaryTokensLength, uint256 primaryPricesLength);
@@ -193,6 +207,7 @@ library Errors {
     error InvalidClaimFundingFeesInput(uint256 marketsLength, uint256 tokensLength);
     error InvalidClaimCollateralInput(uint256 marketsLength, uint256 tokensLength, uint256 timeKeysLength);
     error InvalidClaimAffiliateRewardsInput(uint256 marketsLength, uint256 tokensLength);
+    error InvalidClaimUiFeesInput(uint256 marketsLength, uint256 tokensLength);
 
     // SwapUtils errors
     error InvalidTokenIn(address tokenIn, address market);
@@ -238,4 +253,7 @@ library Errors {
     error EmptyMarketTokenAmount();
     error InvalidPoolValueForWithdrawal(int256 poolValue);
 
+    // Uint256Mask errors
+    error MaskIndexOutOfBounds(uint256 index, string label);
+    error DuplicatedIndex(uint256 index, string label);
 }

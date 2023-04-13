@@ -31,11 +31,14 @@ library SwapUtils {
      * @param dataStore The contract that provides access to data stored on-chain.
      * @param eventEmitter The contract that emits events.
      * @param oracle The contract that provides access to price data from oracles.
+     * @param bank The contract providing the funds for the swap.
+     * @param key An identifying key for the swap.
      * @param tokenIn The address of the token that is being swapped.
      * @param amountIn The amount of the token that is being swapped.
      * @param swapPathMarkets An array of market properties, specifying the markets in which the swap should be executed.
      * @param minOutputAmount The minimum amount of tokens that should be received as part of the swap.
      * @param receiver The address to which the swapped tokens should be sent.
+     * @param uiFeeReceiver The address of the ui fee receiver.
      * @param shouldUnwrapNativeToken A boolean indicating whether the received tokens should be unwrapped from the wrapped native token (WNT) if they are wrapped.
      */
     struct SwapParams {
@@ -49,6 +52,7 @@ library SwapUtils {
         Market.Props[] swapPathMarkets;
         uint256 minOutputAmount;
         address receiver;
+        address uiFeeReceiver;
         bool shouldUnwrapNativeToken;
     }
 
@@ -123,7 +127,7 @@ library SwapUtils {
         address tokenOut = params.tokenIn;
         uint256 outputAmount = params.amountIn;
 
-        for (uint256 i = 0; i < params.swapPathMarkets.length; i++) {
+        for (uint256 i; i < params.swapPathMarkets.length; i++) {
             Market.Props memory market = params.swapPathMarkets[i];
 
             bool flagExists = params.dataStore.getBool(Keys.swapPathMarketFlagKey(market.marketToken));
@@ -152,7 +156,7 @@ library SwapUtils {
             (tokenOut, outputAmount) = _swap(params, _params);
         }
 
-        for (uint256 i = 0; i < params.swapPathMarkets.length; i++) {
+        for (uint256 i; i < params.swapPathMarkets.length; i++) {
             Market.Props memory market = params.swapPathMarkets[i];
             params.dataStore.setBool(Keys.swapPathMarketFlagKey(market.marketToken), false);
         }
@@ -178,6 +182,8 @@ library SwapUtils {
             revert Errors.InvalidTokenIn(_params.tokenIn, _params.market.marketToken);
         }
 
+        MarketUtils.validateSwapMarket(_params.market);
+
         cache.tokenOut = MarketUtils.getOppositeToken(_params.tokenIn, _params.market);
         cache.tokenInPrice = params.oracle.getLatestPrice(_params.tokenIn);
         cache.tokenOutPrice = params.oracle.getLatestPrice(cache.tokenOut);
@@ -185,7 +191,8 @@ library SwapUtils {
         SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
             params.dataStore,
             _params.market.marketToken,
-            _params.amountIn
+            _params.amountIn,
+            params.uiFeeReceiver
         );
 
         FeeUtils.incrementClaimableFeeAmount(
@@ -195,6 +202,16 @@ library SwapUtils {
             _params.tokenIn,
             fees.feeReceiverAmount,
             Keys.SWAP_FEE
+        );
+
+        FeeUtils.incrementClaimableUiFeeAmount(
+            params.dataStore,
+            params.eventEmitter,
+            params.uiFeeReceiver,
+            _params.market.marketToken,
+            _params.tokenIn,
+            fees.uiFeeAmount,
+            Keys.UI_SWAP_FEE
         );
 
         int256 priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(

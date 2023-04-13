@@ -273,11 +273,13 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
             revert Errors.InvalidClaimFundingFeesInput(markets.length, tokens.length);
         }
 
+        FeatureUtils.validateFeature(dataStore, Keys.claimFundingFeesFeatureDisabledKey(address(this)));
+
         AccountUtils.validateReceiver(receiver);
 
         address account = msg.sender;
 
-        for (uint256 i = 0; i < markets.length; i++) {
+        for (uint256 i; i < markets.length; i++) {
             MarketUtils.claimFundingFees(
                 dataStore,
                 eventEmitter,
@@ -299,11 +301,13 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
             revert Errors.InvalidClaimCollateralInput(markets.length, tokens.length, timeKeys.length);
         }
 
+        FeatureUtils.validateFeature(dataStore, Keys.claimCollateralFeatureDisabledKey(address(this)));
+
         AccountUtils.validateReceiver(receiver);
 
         address account = msg.sender;
 
-        for (uint256 i = 0; i < markets.length; i++) {
+        for (uint256 i; i < markets.length; i++) {
             MarketUtils.claimCollateral(
                 dataStore,
                 eventEmitter,
@@ -335,15 +339,47 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
             revert Errors.InvalidClaimAffiliateRewardsInput(markets.length, tokens.length);
         }
 
+        FeatureUtils.validateFeature(dataStore, Keys.claimAffiliateRewardsFeatureDisabledKey(address(this)));
+
         address account = msg.sender;
 
-        for (uint256 i = 0; i < markets.length; i++) {
+        for (uint256 i; i < markets.length; i++) {
             ReferralUtils.claimAffiliateReward(
                 dataStore,
                 eventEmitter,
                 markets[i],
                 tokens[i],
                 account,
+                receiver
+            );
+        }
+    }
+
+    function setUiFeeFactor(uint256 uiFeeFactor) external payable nonReentrant {
+        address account = msg.sender;
+        MarketUtils.setUiFeeFactor(dataStore, eventEmitter, account, uiFeeFactor);
+    }
+
+    function claimUiFees(
+        address[] memory markets,
+        address[] memory tokens,
+        address receiver
+    ) external payable nonReentrant {
+        if (markets.length != tokens.length) {
+            revert Errors.InvalidClaimUiFeesInput(markets.length, tokens.length);
+        }
+
+        FeatureUtils.validateFeature(dataStore, Keys.claimUiFeesFeatureDisabledKey(address(this)));
+
+        address uiFeeReceiver = msg.sender;
+
+        for (uint256 i; i < markets.length; i++) {
+            FeeUtils.claimUiFees(
+                dataStore,
+                eventEmitter,
+                uiFeeReceiver,
+                markets[i],
+                tokens[i],
                 receiver
             );
         }

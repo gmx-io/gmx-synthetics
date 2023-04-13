@@ -228,13 +228,14 @@ library PositionEventUtils {
         eventData.bytes32Items.setItem(0, "orderKey", orderKey);
         eventData.bytes32Items.setItem(1, "referralCode", fees.referral.referralCode);
 
-        eventData.addressItems.initItems(4);
+        eventData.addressItems.initItems(5);
         eventData.addressItems.setItem(0, "market", market);
         eventData.addressItems.setItem(1, "collateralToken", collateralToken);
         eventData.addressItems.setItem(2, "affiliate", fees.referral.affiliate);
         eventData.addressItems.setItem(3, "trader", fees.referral.trader);
+        eventData.addressItems.setItem(4, "uiFeeReceiver", fees.ui.uiFeeReceiver);
 
-        eventData.uintItems.initItems(24);
+        eventData.uintItems.initItems(26);
         eventData.uintItems.setItem(0, "collateralTokenPrice.min", fees.collateralTokenPrice.min);
         eventData.uintItems.setItem(1, "collateralTokenPrice.max", fees.collateralTokenPrice.max);
         eventData.uintItems.setItem(2, "tradeSizeUsd", tradeSizeUsd);
@@ -258,7 +259,9 @@ library PositionEventUtils {
         eventData.uintItems.setItem(20, "positionFeeAmountForPool", fees.positionFeeAmountForPool);
         eventData.uintItems.setItem(21, "positionFeeAmount", fees.positionFeeAmount);
         eventData.uintItems.setItem(22, "totalNetCostAmount", fees.totalNetCostAmount);
-        eventData.uintItems.setItem(23, "totalNetCostUsd", fees.totalNetCostUsd);
+        eventData.uintItems.setItem(23, "collateralCostAmount", fees.collateralCostAmount);
+        eventData.uintItems.setItem(24, "uiFeeReceiverFactor", fees.ui.uiFeeReceiverFactor);
+        eventData.uintItems.setItem(25, "uiFeeAmount", fees.ui.uiFeeAmount);
 
         eventData.intItems.initItems(2);
         eventData.intItems.setItem(0, "latestLongTokenFundingAmountPerSize", fees.funding.latestLongTokenFundingAmountPerSize);

@@ -1,7 +1,6 @@
 import { logGasUsage } from "./gas";
 import { expandDecimals, bigNumberify } from "./math";
 import { executeWithOracleParams } from "./exchange";
-import { TOKEN_ORACLE_TYPES } from "./oracle";
 
 import * as keys from "./keys";
 
@@ -28,6 +27,7 @@ export async function createWithdrawal(fixture, overrides = {}) {
   const account = overrides.account || user0;
   const receiver = overrides.receiver || account;
   const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
+  const uiFeeReceiver = overrides.uiFeeReceiver || { address: ethers.constants.AddressZero };
   const market = overrides.market || ethUsdMarket;
   const longTokenSwapPath = overrides.longTokenSwapPath || [];
   const shortTokenSwapPath = overrides.shortTokenSwapPath || [];
@@ -43,6 +43,7 @@ export async function createWithdrawal(fixture, overrides = {}) {
   const params = {
     receiver: receiver.address,
     callbackContract: callbackContract.address,
+    uiFeeReceiver: uiFeeReceiver.address,
     market: market.marketToken,
     longTokenSwapPath,
     shortTokenSwapPath,

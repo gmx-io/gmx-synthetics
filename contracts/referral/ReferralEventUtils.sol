@@ -15,13 +15,43 @@ library ReferralEventUtils {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
+    function emitAffiliateRewardUpdated(
+        EventEmitter eventEmitter,
+        address market,
+        address token,
+        address affiliate,
+        uint256 delta,
+        uint256 nextValue,
+        uint256 nextPoolValue
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(3);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "token", token);
+        eventData.addressItems.setItem(2, "affiliate", affiliate);
+
+        eventData.uintItems.initItems(3);
+        eventData.uintItems.setItem(0, "delta", delta);
+        eventData.uintItems.setItem(1, "nextValue", nextValue);
+        eventData.uintItems.setItem(2, "nextPoolValue", nextPoolValue);
+
+        eventEmitter.emitEventLog2(
+            "AffiliateRewardUpdated",
+            Cast.toBytes32(market),
+            Cast.toBytes32(affiliate),
+            eventData
+        );
+    }
+
     function emitAffiliateRewardClaimed(
         EventEmitter eventEmitter,
         address market,
         address token,
         address affiliate,
         address trader,
-        uint256 amount
+        uint256 amount,
+        uint256 nextPoolValue
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -31,8 +61,9 @@ library ReferralEventUtils {
         eventData.addressItems.setItem(2, "affiliate", affiliate);
         eventData.addressItems.setItem(3, "trader", trader);
 
-        eventData.uintItems.initItems(1);
+        eventData.uintItems.initItems(2);
         eventData.uintItems.setItem(0, "amount", amount);
+        eventData.uintItems.setItem(1, "nextPoolValue", nextPoolValue);
 
         eventEmitter.emitEventLog1(
             "AffiliateRewardClaimed",

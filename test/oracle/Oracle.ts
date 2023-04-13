@@ -149,8 +149,8 @@ describe("Oracle", () => {
         priceFeedTokens: [],
       })
     )
-      .to.be.revertedWithCustomError(errorsContract, "DuplicateSigner")
-      .withArgs(1);
+      .to.be.revertedWithCustomError(errorsContract, "DuplicatedIndex")
+      .withArgs(1, "signerIndex");
 
     let signerInfo = getSignerInfo([0, 1, 2, 3, 4, 7, 9]);
     const block = await provider.getBlock(blockNumber);
@@ -502,6 +502,8 @@ describe("Oracle", () => {
       signatures: wntSignatures,
       priceFeedTokens: [usdc.address],
     });
+
+    await dataStore.setAddress(keys.priceFeedKey(usdc.address), ethers.constants.AddressZero);
 
     await printGasUsage(provider, tx0, "oracle.withOraclePrices tx0");
 

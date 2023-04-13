@@ -25,12 +25,13 @@ library OrderEventUtils {
     ) external {
         EventUtils.EventLogData memory eventData;
 
-        eventData.addressItems.initItems(5);
+        eventData.addressItems.initItems(6);
         eventData.addressItems.setItem(0, "account", order.account());
         eventData.addressItems.setItem(1, "receiver", order.receiver());
         eventData.addressItems.setItem(2, "callbackContract", order.callbackContract());
         eventData.addressItems.setItem(3, "market", order.market());
         eventData.addressItems.setItem(4, "initialCollateralToken", order.initialCollateralToken());
+        eventData.addressItems.setItem(5, "uiFeeReceiver", order.uiFeeReceiver());
 
         eventData.addressItems.initArrayItems(1);
         eventData.addressItems.setItem(0, "swapPath", order.swapPath());

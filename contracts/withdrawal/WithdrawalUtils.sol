@@ -46,6 +46,7 @@ library WithdrawalUtils {
     struct CreateWithdrawalParams {
         address receiver;
         address callbackContract;
+        address uiFeeReceiver;
         address market;
         address[] longTokenSwapPath;
         address[] shortTokenSwapPath;
@@ -132,6 +133,7 @@ library WithdrawalUtils {
                 account,
                 params.receiver,
                 params.callbackContract,
+                params.uiFeeReceiver,
                 params.market,
                 params.longTokenSwapPath,
                 params.shortTokenSwapPath
@@ -196,6 +198,7 @@ library WithdrawalUtils {
 
         GasUtils.payExecutionFee(
             params.dataStore,
+            params.eventEmitter,
             params.withdrawalVault,
             withdrawal.executionFee(),
             params.startingGas,
@@ -236,6 +239,7 @@ library WithdrawalUtils {
 
         GasUtils.payExecutionFee(
             dataStore,
+            eventEmitter,
             withdrawalVault,
             withdrawal.executionFee(),
             startingGas,
@@ -267,7 +271,8 @@ library WithdrawalUtils {
         cache.longTokenFees = SwapPricingUtils.getSwapFees(
             params.dataStore,
             market.marketToken,
-            cache.longTokenOutputAmount
+            cache.longTokenOutputAmount,
+            withdrawal.uiFeeReceiver()
         );
 
         FeeUtils.incrementClaimableFeeAmount(
@@ -279,10 +284,21 @@ library WithdrawalUtils {
             Keys.WITHDRAWAL_FEE
         );
 
+        FeeUtils.incrementClaimableUiFeeAmount(
+            params.dataStore,
+            params.eventEmitter,
+            withdrawal.uiFeeReceiver(),
+            market.marketToken,
+            market.longToken,
+            cache.longTokenFees.uiFeeAmount,
+            Keys.UI_WITHDRAWAL_FEE
+        );
+
         cache.shortTokenFees = SwapPricingUtils.getSwapFees(
             params.dataStore,
             market.marketToken,
-            cache.shortTokenOutputAmount
+            cache.shortTokenOutputAmount,
+            withdrawal.uiFeeReceiver()
         );
 
         FeeUtils.incrementClaimableFeeAmount(
@@ -292,6 +308,16 @@ library WithdrawalUtils {
             market.shortToken,
             cache.shortTokenFees.feeReceiverAmount,
             Keys.WITHDRAWAL_FEE
+        );
+
+        FeeUtils.incrementClaimableUiFeeAmount(
+            params.dataStore,
+            params.eventEmitter,
+            withdrawal.uiFeeReceiver(),
+            market.marketToken,
+            market.shortToken,
+            cache.shortTokenFees.uiFeeAmount,
+            Keys.UI_WITHDRAWAL_FEE
         );
 
         // the pool will be reduced by the outputAmount minus the fees for the pool
@@ -351,6 +377,7 @@ library WithdrawalUtils {
             withdrawal.longTokenSwapPath(),
             withdrawal.minLongTokenAmount(),
             withdrawal.receiver(),
+            withdrawal.uiFeeReceiver(),
             withdrawal.shouldUnwrapNativeToken()
         );
 
@@ -362,6 +389,7 @@ library WithdrawalUtils {
             withdrawal.shortTokenSwapPath(),
             withdrawal.minShortTokenAmount(),
             withdrawal.receiver(),
+            withdrawal.uiFeeReceiver(),
             withdrawal.shouldUnwrapNativeToken()
         );
 
@@ -382,6 +410,8 @@ library WithdrawalUtils {
             "withdrawal",
             cache.shortTokenFees
         );
+
+        MarketUtils.validateMarketTokenBalance(params.dataStore, market);
     }
 
     function swap(
@@ -392,6 +422,7 @@ library WithdrawalUtils {
         address[] memory swapPath,
         uint256 minOutputAmount,
         address receiver,
+        address uiFeeReceiver,
         bool shouldUnwrapNativeToken
     ) internal {
         Market.Props[] memory swapPathMarkets = MarketUtils.getEnabledMarkets(params.dataStore, swapPath);
@@ -408,9 +439,14 @@ library WithdrawalUtils {
                 swapPathMarkets, // swapPathMarkets
                 minOutputAmount, // minOutputAmount
                 receiver, // receiver
+                uiFeeReceiver, // uiFeeReceiver
                 shouldUnwrapNativeToken // shouldUnwrapNativeToken
             )
         );
+
+        // validate that internal state changes are correct before calling
+        // external callbacks
+        MarketUtils.validateMarketTokenBalance(params.dataStore, swapPathMarkets);
     }
 
     function _getOutputAmounts(

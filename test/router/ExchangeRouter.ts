@@ -14,7 +14,7 @@ describe("ExchangeRouter", () => {
   const { provider } = ethers;
 
   let fixture;
-  let user0, user1, user2;
+  let user0, user1, user2, user3;
   let reader,
     dataStore,
     depositVault,
@@ -30,7 +30,7 @@ describe("ExchangeRouter", () => {
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ user0, user1, user2 } = fixture.accounts);
+    ({ user0, user1, user2, user3 } = fixture.accounts);
     ({
       reader,
       dataStore,
@@ -61,6 +61,7 @@ describe("ExchangeRouter", () => {
           {
             receiver: user1.address,
             callbackContract: user2.address,
+            uiFeeReceiver: user3.address,
             market: ethUsdMarket.marketToken,
             initialLongToken: ethUsdMarket.longToken,
             initialShortToken: ethUsdMarket.shortToken,
@@ -114,6 +115,7 @@ describe("ExchangeRouter", () => {
             addresses: {
               receiver: user1.address,
               callbackContract: user2.address,
+              uiFeeReceiver: user3.address,
               market: ethUsdMarket.marketToken,
               initialCollateralToken: ethUsdMarket.longToken,
               swapPath: [ethUsdMarket.marketToken],
@@ -177,6 +179,7 @@ describe("ExchangeRouter", () => {
           {
             receiver: user1.address,
             callbackContract: user2.address,
+            uiFeeReceiver: user3.address,
             market: ethUsdMarket.marketToken,
             longTokenSwapPath: [],
             shortTokenSwapPath: [],
@@ -236,6 +239,7 @@ describe("ExchangeRouter", () => {
             {
               receiver: user1.address,
               callbackContract: user2.address,
+              uiFeeReceiver: user3.address,
               market: ethUsdMarket.marketToken,
               initialLongToken: ethUsdMarket.longToken,
               initialShortToken: ethUsdMarket.shortToken,

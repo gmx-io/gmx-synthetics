@@ -1,7 +1,7 @@
 import { grantRoleIfNotGranted } from "../utils/role";
 import { createDeployFunction } from "../utils/deploy";
 
-const constructorContracts = ["RoleStore", "DataStore", "EventEmitter"];
+const constructorContracts = ["RoleStore", "DataStore", "EventEmitter", "OracleStore"];
 const timelockDelay = 24 * 60 * 60;
 
 const func = createDeployFunction({

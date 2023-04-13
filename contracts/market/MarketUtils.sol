@@ -130,6 +130,17 @@ library MarketUtils {
         uint256 fundingAmountPerSizeDelta_ShortCollateral_ShortPosition;
     }
 
+    struct GetExpectedMinTokenBalanceCache {
+        uint256 poolAmount;
+        uint256 collateralForLongs;
+        uint256 collateralForShorts;
+        uint256 swapImpactPoolAmount;
+        uint256 claimableCollateralAmount;
+        uint256 claimableFeeAmount;
+        uint256 claimableUiFeeAmount;
+        uint256 affiliateRewardAmount;
+    }
+
     // @dev get the market token's price
     // @param dataStore DataStore
     // @param market the market to check
@@ -194,6 +205,12 @@ library MarketUtils {
         }
 
         revert Errors.UnableToGetOppositeToken(inputToken, market.marketToken);
+    }
+
+    function validateSwapMarket(Market.Props memory market) internal pure {
+        if (market.longToken == market.shortToken) {
+            revert Errors.InvalidSwapMarket(market.marketToken);
+        }
     }
 
     // @dev get the token price from the stored MarketPrices
@@ -511,7 +528,21 @@ library MarketUtils {
             delta
         );
 
-        MarketEventUtils.emitClaimableCollateralUpdated(eventEmitter, market, token, timeKey, account, delta, nextValue);
+        uint256 nextPoolValue = dataStore.incrementUint(
+            Keys.claimableCollateralAmountKey(market, token),
+            delta
+        );
+
+        MarketEventUtils.emitClaimableCollateralUpdated(
+            eventEmitter,
+            market,
+            token,
+            timeKey,
+            account,
+            delta,
+            nextValue,
+            nextPoolValue
+        );
     }
 
     // @dev increment the claimable funding amount
@@ -534,7 +565,20 @@ library MarketUtils {
             delta
         );
 
-        MarketEventUtils.emitClaimableFundingUpdated(eventEmitter, market, token, account, delta, nextValue);
+        uint256 nextPoolValue = dataStore.incrementUint(
+            Keys.claimableFundingAmountKey(market, token),
+            delta
+        );
+
+        MarketEventUtils.emitClaimableFundingUpdated(
+            eventEmitter,
+            market,
+            token,
+            account,
+            delta,
+            nextValue,
+            nextPoolValue
+        );
     }
 
     // @dev claim funding fees
@@ -557,11 +601,18 @@ library MarketUtils {
         uint256 claimableAmount = dataStore.getUint(key);
         dataStore.setUint(key, 0);
 
+        uint256 nextPoolValue = dataStore.decrementUint(
+            Keys.claimableFundingAmountKey(market, token),
+            claimableAmount
+        );
+
         MarketToken(payable(market)).transferOut(
             token,
             receiver,
             claimableAmount
         );
+
+        validateMarketTokenBalance(dataStore, market);
 
         MarketEventUtils.emitFundingFeesClaimed(
             eventEmitter,
@@ -569,7 +620,8 @@ library MarketUtils {
             token,
             account,
             receiver,
-            claimableAmount
+            claimableAmount,
+            nextPoolValue
         );
     }
 
@@ -578,6 +630,7 @@ library MarketUtils {
     // @param eventEmitter EventEmitter
     // @param market the market to claim for
     // @param token the token to claim
+    // @param timeKey the time key
     // @param account the account to claim for
     // @param receiver the receiver to send the amount to
     function claimCollateral(
@@ -590,7 +643,11 @@ library MarketUtils {
         address receiver
     ) internal {
         uint256 claimableAmount = dataStore.getUint(Keys.claimableCollateralAmountKey(market, token, timeKey, account));
-        uint256 claimableFactor = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey, account));
+
+        uint256 claimableFactorForTime = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey));
+        uint256 claimableFactorForAccount = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey, account));
+        uint256 claimableFactor = claimableFactorForTime > claimableFactorForAccount ? claimableFactorForTime : claimableFactorForAccount;
+
         uint256 claimedAmount = dataStore.getUint(Keys.claimedCollateralAmountKey(market, token, timeKey, account));
 
         uint256 adjustedClaimableAmount = Precision.applyFactor(claimableAmount, claimableFactor);
@@ -605,11 +662,18 @@ library MarketUtils {
             adjustedClaimableAmount
         );
 
+        uint256 nextPoolValue = dataStore.decrementUint(
+            Keys.claimableCollateralAmountKey(market, token),
+            remainingClaimableAmount
+        );
+
         MarketToken(payable(market)).transferOut(
             token,
             receiver,
             remainingClaimableAmount
         );
+
+        validateMarketTokenBalance(dataStore, market);
 
         MarketEventUtils.emitCollateralClaimed(
             eventEmitter,
@@ -618,7 +682,8 @@ library MarketUtils {
             timeKey,
             account,
             receiver,
-            remainingClaimableAmount
+            remainingClaimableAmount,
+            nextPoolValue
         );
     }
 
@@ -656,7 +721,46 @@ library MarketUtils {
         return nextValue;
     }
 
-    // @dev cap the input priceImpactUsd by the available amount in the position impact pool
+    function getAdjustedSwapImpactFactor(DataStore dataStore, address market, bool isPositive) internal view returns (uint256) {
+        (uint256 positiveImpactFactor, uint256 negativeImpactFactor) = getAdjustedSwapImpactFactors(dataStore, market);
+
+        return isPositive ? positiveImpactFactor : negativeImpactFactor;
+    }
+
+    function getAdjustedSwapImpactFactors(DataStore dataStore, address market) internal view returns (uint256, uint256) {
+        uint256 positiveImpactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market, true));
+        uint256 negativeImpactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market, false));
+
+        // if the positive impact factor is more than the negative impact factor, positions could be opened
+        // and closed immediately for a profit if the difference is sufficient to cover the position fees
+        if (positiveImpactFactor > negativeImpactFactor) {
+            positiveImpactFactor = negativeImpactFactor;
+        }
+
+        return (positiveImpactFactor, negativeImpactFactor);
+    }
+
+    function getAdjustedPositionImpactFactor(DataStore dataStore, address market, bool isPositive) internal view returns (uint256) {
+        (uint256 positiveImpactFactor, uint256 negativeImpactFactor) = getAdjustedPositionImpactFactors(dataStore, market);
+
+        return isPositive ? positiveImpactFactor : negativeImpactFactor;
+    }
+
+    function getAdjustedPositionImpactFactors(DataStore dataStore, address market) internal view returns (uint256, uint256) {
+        uint256 positiveImpactFactor = dataStore.getUint(Keys.positionImpactFactorKey(market, true));
+        uint256 negativeImpactFactor = dataStore.getUint(Keys.positionImpactFactorKey(market, false));
+
+        // if the positive impact factor is more than the negative impact factor, positions could be opened
+        // and closed immediately for a profit if the difference is sufficient to cover the position fees
+        if (positiveImpactFactor > negativeImpactFactor) {
+            positiveImpactFactor = negativeImpactFactor;
+        }
+
+        return (positiveImpactFactor, negativeImpactFactor);
+    }
+
+    // @dev cap the input priceImpactUsd by the available amount in the position
+    // impact pool and the max positive position impact factor
     // @param dataStore DataStore
     // @param market the trading market
     // @param tokenPrice the price of the token
@@ -956,12 +1060,12 @@ library MarketUtils {
         // if longs pay shorts then the fundingAmountPerSize_LongCollateral_LongPosition should be increased by 0.000005
         if (result.longsPayShorts) {
             // long positions should have funding fees increased by the funding for their collateral divided by the open interest for their collateral
-            cache.fps.fundingAmountPerSizeDelta_LongCollateral_LongPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForLongCollateral, cache.oi.longOpenInterestWithLongCollateral);
-            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_LongPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForShortCollateral, cache.oi.longOpenInterestWithShortCollateral);
+            cache.fps.fundingAmountPerSizeDelta_LongCollateral_LongPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForLongCollateral, cache.oi.longOpenInterestWithLongCollateral, true);
+            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_LongPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForShortCollateral, cache.oi.longOpenInterestWithShortCollateral, true);
 
             // short positions should receive positive funding fees equivalent to the funding in the collateral paid by the long positions divided by the total short open interest
-            cache.fps.fundingAmountPerSizeDelta_LongCollateral_ShortPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForLongCollateral, cache.oi.shortOpenInterest);
-            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_ShortPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForShortCollateral, cache.oi.shortOpenInterest);
+            cache.fps.fundingAmountPerSizeDelta_LongCollateral_ShortPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForLongCollateral, cache.oi.shortOpenInterest, false);
+            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_ShortPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForShortCollateral, cache.oi.shortOpenInterest, false);
 
             // longs pay shorts
             result.fundingAmountPerSize_LongCollateral_LongPosition = Calc.boundedAdd(
@@ -985,12 +1089,12 @@ library MarketUtils {
             );
         } else {
             // short positions should have funding fees increased by the funding for their collateral divided by the open interest for their collateral
-            cache.fps.fundingAmountPerSizeDelta_LongCollateral_ShortPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForLongCollateral, cache.oi.shortOpenInterestWithLongCollateral);
-            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_ShortPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForShortCollateral, cache.oi.shortOpenInterestWithShortCollateral);
+            cache.fps.fundingAmountPerSizeDelta_LongCollateral_ShortPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForLongCollateral, cache.oi.shortOpenInterestWithLongCollateral, true);
+            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_ShortPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForShortCollateral, cache.oi.shortOpenInterestWithShortCollateral, true);
 
             // long positions should receive positive funding fees equivalent to the funding in the collateral paid by the short positions divided by the total long open interest
-            cache.fps.fundingAmountPerSizeDelta_LongCollateral_LongPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForLongCollateral, cache.oi.longOpenInterest);
-            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_LongPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForShortCollateral, cache.oi.longOpenInterest);
+            cache.fps.fundingAmountPerSizeDelta_LongCollateral_LongPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForLongCollateral, cache.oi.longOpenInterest, false);
+            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_LongPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForShortCollateral, cache.oi.longOpenInterest, false);
 
             result.fundingAmountPerSize_LongCollateral_ShortPosition = Calc.boundedAdd(
                 result.fundingAmountPerSize_LongCollateral_ShortPosition,
@@ -1018,31 +1122,14 @@ library MarketUtils {
 
     function getFundingAmountPerSizeDelta(
         uint256 fundingAmount,
-        uint256 openInterest
+        uint256 openInterest,
+        bool roundUp
     ) internal pure returns (uint256) {
-        if (openInterest == 0) { return 0; }
+        if (fundingAmount == 0 || openInterest == 0) { return 0; }
 
-        // the divisor would be zero for two cases:
-        // 1. the openInterest of the smaller side is very small
-        // 2. the openInterest of the larger side is very small
-        //
-        // if the openInterest of the smaller side is too small
-        // no funding fees would be received by the smaller side
-        // the larger side may still pay funding fees, this would
-        // result in some excess tokens in the market for this case
-        //
-        // if the openInterest of the larger side is too small
-        // then no funding fees would be paid from that side
-        // though it is possible for the smaller side to still receive
-        // a small amount of funding fees, this may result in a small
-        // amount of excess tokens being deducted from the market
-        //
-        // if a minimum position size of at least 1 USD is set, then
-        // these cases should not occur
-        uint256 divisor = openInterest / Precision.FLOAT_PRECISION_SQRT;
-        if (divisor == 0) { return 0; }
+        uint256 divisor = Calc.roundUpDivision(openInterest, Precision.FLOAT_PRECISION_SQRT);
 
-        return Precision.toFactor(fundingAmount, divisor);
+        return Precision.toFactor(fundingAmount, divisor, roundUp);
     }
 
     // @dev update the cumulative borrowing factor for a market
@@ -1224,7 +1311,7 @@ library MarketUtils {
             }
         } else {
             // round negative impactAmount up, this will be deducted from the user
-            impactAmount = Calc.roundUpDivision(priceImpactUsd, price);
+            impactAmount = Calc.roundUpMagnitudeDivision(priceImpactUsd, price);
         }
 
         // if there is a positive impact, the impact pool amount should be reduced
@@ -1280,7 +1367,7 @@ library MarketUtils {
         // this could lead to large additional charges if the token has a low number of decimals
         // or if the token's value is very high, so care should be taken to inform user's if that
         // is the case
-        return Calc.roundUpDivision(numerator, Precision.FLOAT_PRECISION);
+        return Calc.roundUpMagnitudeDivision(numerator, Precision.FLOAT_PRECISION);
     }
 
     // @dev get the borrowing fees for a position, assumes that cumulativeBorrowingFactor
@@ -1541,7 +1628,20 @@ library MarketUtils {
     // @param market the market to check
     // @param isPositive whether the price impact is positive or negative
     function getMaxPositionImpactFactor(DataStore dataStore, address market, bool isPositive) internal view returns (uint256) {
-        return dataStore.getUint(Keys.maxPositionImpactFactorKey(market, isPositive));
+        (uint256 maxPositiveImpactFactor, uint256 maxNegativeImpactFactor) = getMaxPositionImpactFactors(dataStore, market);
+
+        return isPositive ? maxPositiveImpactFactor : maxNegativeImpactFactor;
+    }
+
+    function getMaxPositionImpactFactors(DataStore dataStore, address market) internal view returns (uint256, uint256) {
+        uint256 maxPositiveImpactFactor = dataStore.getUint(Keys.maxPositionImpactFactorKey(market, true));
+        uint256 maxNegativeImpactFactor = dataStore.getUint(Keys.maxPositionImpactFactorKey(market, false));
+
+        if (maxPositiveImpactFactor > maxNegativeImpactFactor) {
+            maxPositiveImpactFactor = maxNegativeImpactFactor;
+        }
+
+        return (maxPositiveImpactFactor, maxNegativeImpactFactor);
     }
 
     // @dev get the max position impact factor for liquidations
@@ -1995,15 +2095,7 @@ library MarketUtils {
     // @param marketAddress the address of the market
     function validateEnabledMarket(DataStore dataStore, address marketAddress) internal view {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
-
-        if (market.marketToken == address(0)) {
-            revert Errors.EmptyMarket();
-        }
-
-        bool isMarketDisabled = dataStore.getBool(Keys.isMarketDisabledKey(market.marketToken));
-        if (isMarketDisabled) {
-            revert Errors.DisabledMarket(market.marketToken);
-        }
+        validateEnabledMarket(dataStore, market);
     }
 
     // @dev validate that the specified market exists and is enabled
@@ -2071,7 +2163,7 @@ library MarketUtils {
     function getEnabledMarkets(DataStore dataStore, address[] memory swapPath) internal view returns (Market.Props[] memory) {
         Market.Props[] memory markets = new Market.Props[](swapPath.length);
 
-        for (uint256 i = 0; i < swapPath.length; i++) {
+        for (uint256 i; i < swapPath.length; i++) {
             address marketAddress = swapPath[i];
             markets[i] = getEnabledMarket(dataStore, marketAddress);
         }
@@ -2085,7 +2177,7 @@ library MarketUtils {
             revert Errors.MaxSwapPathLengthExceeded(swapPath.length, maxSwapPathLength);
         }
 
-        for (uint256 i = 0; i < swapPath.length; i++) {
+        for (uint256 i; i < swapPath.length; i++) {
             address marketAddress = swapPath[i];
             validateEnabledMarket(dataStore, marketAddress);
         }
@@ -2172,5 +2264,120 @@ library MarketUtils {
         bool isExceeded = pnlToPoolFactor > 0 && pnlToPoolFactor.toUint256() > maxPnlFactor;
 
         return (isExceeded, pnlToPoolFactor, maxPnlFactor);
+    }
+
+    function getUiFeeFactor(DataStore dataStore, address account) internal view returns (uint256) {
+        uint256 maxUiFeeFactor = dataStore.getUint(Keys.MAX_UI_FEE_FACTOR);
+        uint256 uiFeeFactor = dataStore.getUint(Keys.uiFeeFactorKey(account));
+
+        return uiFeeFactor < maxUiFeeFactor ? uiFeeFactor : maxUiFeeFactor;
+    }
+
+    function setUiFeeFactor(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address account,
+        uint256 uiFeeFactor
+    ) internal {
+        uint256 maxUiFeeFactor = dataStore.getUint(Keys.MAX_UI_FEE_FACTOR);
+
+        if (uiFeeFactor > maxUiFeeFactor) {
+            revert Errors.InvalidUiFeeFactor(uiFeeFactor, maxUiFeeFactor);
+        }
+
+        dataStore.setUint(
+            Keys.uiFeeFactorKey(account),
+            uiFeeFactor
+        );
+
+        MarketEventUtils.emitUiFeeFactorUpdated(eventEmitter, account, uiFeeFactor);
+    }
+
+    function validateMarketTokenBalance(
+        DataStore dataStore,
+        Market.Props[] memory markets
+    ) public view {
+        for (uint256 i; i < markets.length; i++) {
+            validateMarketTokenBalance(dataStore, markets[i]);
+        }
+    }
+
+    function validateMarketTokenBalance(
+        DataStore dataStore,
+        address _market
+    ) public view {
+        Market.Props memory market = getEnabledMarket(dataStore, _market);
+        validateMarketTokenBalance(dataStore, market);
+    }
+
+    function validateMarketTokenBalance(
+        DataStore dataStore,
+        Market.Props memory market
+    ) public view {
+        validateMarketTokenBalance(dataStore, market, market.longToken);
+
+        if (market.longToken == market.shortToken) {
+            return;
+        }
+
+        validateMarketTokenBalance(dataStore, market, market.shortToken);
+    }
+
+    function validateMarketTokenBalance(
+        DataStore dataStore,
+        Market.Props memory market,
+        address token
+    ) internal view {
+        if (market.marketToken == address(0) || token == address(0)) {
+            revert Errors.EmptyAddressInMarketTokenBalanceValidation(market.marketToken, token);
+        }
+
+        uint256 balance = IERC20(token).balanceOf(market.marketToken);
+        uint256 expectedMinBalance = getExpectedMinTokenBalance(dataStore, market, token);
+
+        if (balance < expectedMinBalance) {
+            revert Errors.InvalidMarketTokenBalance(market.marketToken, token, balance, expectedMinBalance);
+        }
+
+        // since funding fees are excluded from the expectedMinBalance
+        // separately check that claimable funding fees do not exceed the token balance
+        uint256 claimableFundingFeeAmount = dataStore.getUint(Keys.claimableFundingAmountKey(market.marketToken, token));
+
+        if (balance < claimableFundingFeeAmount) {
+            revert Errors.InvalidMarketTokenBalanceForClaimableFunding(market.marketToken, token, balance, claimableFundingFeeAmount);
+        }
+    }
+
+    function getExpectedMinTokenBalance(
+        DataStore dataStore,
+        Market.Props memory market,
+        address token
+    ) internal view returns (uint256) {
+        GetExpectedMinTokenBalanceCache memory cache;
+
+        // get the pool amount directly as MarketUtils.getPoolAmount will divide the amount by 2
+        // for markets with the same long and short token
+        cache.poolAmount = dataStore.getUint(Keys.poolAmountKey(market.marketToken, token));
+        cache.collateralForLongs = getCollateralSum(dataStore, market.marketToken, token, true);
+        cache.collateralForShorts = getCollateralSum(dataStore, market.marketToken, token, false);
+        cache.swapImpactPoolAmount = getSwapImpactPoolAmount(dataStore, market.marketToken, token);
+        cache.claimableCollateralAmount = dataStore.getUint(Keys.claimableCollateralAmountKey(market.marketToken, token));
+        cache.claimableFeeAmount = dataStore.getUint(Keys.claimableFeeAmountKey(market.marketToken, token));
+        cache.claimableUiFeeAmount = dataStore.getUint(Keys.claimableUiFeeAmountKey(market.marketToken, token));
+        cache.affiliateRewardAmount = dataStore.getUint(Keys.affiliateRewardKey(market.marketToken, token));
+
+        // funding fees are excluded from this summation as claimable funding fees
+        // are incremented without a corresponding decrease of the collateral of
+        // other positions, the collateral of other positions is decreased when
+        // those positions are updated
+        return
+            cache.poolAmount
+            + cache.collateralForLongs
+            + cache.collateralForShorts
+            + cache.swapImpactPoolAmount
+            + cache.claimableCollateralAmount
+            + cache.claimableFeeAmount
+            + cache.claimableUiFeeAmount
+            + cache.affiliateRewardAmount;
     }
 }

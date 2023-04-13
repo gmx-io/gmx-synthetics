@@ -17,6 +17,7 @@ library OrderStoreUtils {
     bytes32 public constant ACCOUNT = keccak256(abi.encode("ACCOUNT"));
     bytes32 public constant RECEIVER = keccak256(abi.encode("RECEIVER"));
     bytes32 public constant CALLBACK_CONTRACT = keccak256(abi.encode("CALLBACK_CONTRACT"));
+    bytes32 public constant UI_FEE_RECEIVER = keccak256(abi.encode("UI_FEE_RECEIVER"));
     bytes32 public constant MARKET = keccak256(abi.encode("MARKET"));
     bytes32 public constant INITIAL_COLLATERAL_TOKEN = keccak256(abi.encode("INITIAL_COLLATERAL_TOKEN"));
     bytes32 public constant SWAP_PATH = keccak256(abi.encode("SWAP_PATH"));
@@ -52,6 +53,10 @@ library OrderStoreUtils {
 
         order.setCallbackContract(dataStore.getAddress(
             keccak256(abi.encode(key, CALLBACK_CONTRACT))
+        ));
+
+        order.setUiFeeReceiver(dataStore.getAddress(
+            keccak256(abi.encode(key, UI_FEE_RECEIVER))
         ));
 
         order.setMarket(dataStore.getAddress(
@@ -145,6 +150,11 @@ library OrderStoreUtils {
         dataStore.setAddress(
             keccak256(abi.encode(key, CALLBACK_CONTRACT)),
             order.callbackContract()
+        );
+
+        dataStore.setAddress(
+            keccak256(abi.encode(key, UI_FEE_RECEIVER)),
+            order.uiFeeReceiver()
         );
 
         dataStore.setAddress(
@@ -249,6 +259,10 @@ library OrderStoreUtils {
 
         dataStore.removeAddress(
             keccak256(abi.encode(key, CALLBACK_CONTRACT))
+        );
+
+        dataStore.removeAddress(
+            keccak256(abi.encode(key, UI_FEE_RECEIVER))
         );
 
         dataStore.removeAddress(
