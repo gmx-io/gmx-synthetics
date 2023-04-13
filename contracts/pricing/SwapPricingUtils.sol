@@ -276,6 +276,7 @@ library SwapPricingUtils {
         eventData.uintItems.setItem(0, "tokenInPrice", tokenInPrice);
         eventData.uintItems.setItem(1, "tokenOutPrice", tokenOutPrice);
         eventData.uintItems.setItem(2, "amountIn", amountIn);
+        // note that amountInAfterFees includes negative price impact
         eventData.uintItems.setItem(3, "amountInAfterFees", amountInAfterFees);
         eventData.uintItems.setItem(4, "amountOut", amountOut);
 
