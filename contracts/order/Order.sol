@@ -58,6 +58,12 @@ library Order {
 
     // @param account the account of the order
     // @param receiver the receiver for any token transfers
+    // this field is meant to allow the output of an order to be
+    // received by an address that is different from the creator of the
+    // order whether this is for swaps or whether the account is the owner
+    // of a position
+    // for funding fees and claimable collateral, the funds are still
+    // credited to the owner of the position indicated by order.account
     // @param callbackContract the contract to call for callbacks
     // @param uiFeeReceiver the ui fee receiver
     // @param market the trading market
