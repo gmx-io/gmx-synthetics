@@ -214,7 +214,7 @@ contract Oracle is RoleModule {
 
         Uint256Mask.Mask memory signerIndexMask;
 
-        for (uint256 i = 0; i < signers.length; i++) {
+        for (uint256 i; i < signers.length; i++) {
             uint256 signerIndex = params.signerInfo >> (16 + 16 * i) & Bits.BITMASK_16;
 
             if (signerIndex >= MAX_SIGNER_INDEX) {
@@ -264,7 +264,7 @@ contract Oracle is RoleModule {
     // @dev clear all prices
     function clearAllPrices() external onlyController {
         uint256 length = tokensWithPrices.length();
-        for (uint256 i = 0; i < length; i++) {
+        for (uint256 i; i < length; i++) {
             address token = tokensWithPrices.at(0);
             delete primaryPrices[token];
             delete secondaryPrices[token];
@@ -413,7 +413,7 @@ contract Oracle is RoleModule {
         cache.maxPriceAge = dataStore.getUint(Keys.MAX_ORACLE_PRICE_AGE);
         cache.maxRefPriceDeviationFactor = dataStore.getUint(Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR);
 
-        for (uint256 i = 0; i < params.tokens.length; i++) {
+        for (uint256 i; i < params.tokens.length; i++) {
             OracleUtils.ReportInfo memory reportInfo;
             SetPricesInnerCache memory innerCache;
 
@@ -619,7 +619,7 @@ contract Oracle is RoleModule {
     // @param eventEmitter EventEmitter
     // @param priceFeedTokens the tokens to set the prices using the price feeds for
     function _setPricesFromPriceFeeds(DataStore dataStore, EventEmitter eventEmitter, address[] memory priceFeedTokens) internal {
-        for (uint256 i = 0; i < priceFeedTokens.length; i++) {
+        for (uint256 i; i < priceFeedTokens.length; i++) {
             address token = priceFeedTokens[i];
 
             if (!primaryPrices[token].isEmpty()) {

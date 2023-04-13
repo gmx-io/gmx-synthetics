@@ -124,7 +124,7 @@ library SwapUtils {
         address tokenOut = params.tokenIn;
         uint256 outputAmount = params.amountIn;
 
-        for (uint256 i = 0; i < params.swapPathMarkets.length; i++) {
+        for (uint256 i; i < params.swapPathMarkets.length; i++) {
             Market.Props memory market = params.swapPathMarkets[i];
 
             bool flagExists = params.dataStore.getBool(Keys.swapPathMarketFlagKey(market.marketToken));
@@ -153,7 +153,7 @@ library SwapUtils {
             (tokenOut, outputAmount) = _swap(params, _params);
         }
 
-        for (uint256 i = 0; i < params.swapPathMarkets.length; i++) {
+        for (uint256 i; i < params.swapPathMarkets.length; i++) {
             Market.Props memory market = params.swapPathMarkets[i];
             params.dataStore.setBool(Keys.swapPathMarketFlagKey(market.marketToken), false);
         }

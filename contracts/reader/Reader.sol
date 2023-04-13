@@ -78,7 +78,7 @@ contract Reader {
     ) external view returns (Position.Props[] memory) {
         bytes32[] memory positionKeys = PositionStoreUtils.getAccountPositionKeys(dataStore, account, start, end);
         Position.Props[] memory positions = new Position.Props[](positionKeys.length);
-        for (uint256 i = 0; i < positionKeys.length; i++) {
+        for (uint256 i; i < positionKeys.length; i++) {
             bytes32 positionKey = positionKeys[i];
             positions[i] = PositionStoreUtils.get(dataStore, positionKey);
         }
@@ -94,7 +94,7 @@ contract Reader {
         address uiFeeReceiver
     ) external view returns (PositionInfo[] memory) {
         PositionInfo[] memory positionInfoList = new PositionInfo[](positionKeys.length);
-        for (uint256 i = 0; i < positionKeys.length; i++) {
+        for (uint256 i; i < positionKeys.length; i++) {
             bytes32 positionKey = positionKeys[i];
             positionInfoList[i] = getPositionInfo(
                 dataStore,
@@ -181,7 +181,7 @@ contract Reader {
     ) external view returns (Order.Props[] memory) {
         bytes32[] memory orderKeys = OrderStoreUtils.getAccountOrderKeys(dataStore, account, start, end);
         Order.Props[] memory orders = new Order.Props[](orderKeys.length);
-        for (uint256 i = 0; i < orderKeys.length; i++) {
+        for (uint256 i; i < orderKeys.length; i++) {
             bytes32 orderKey = orderKeys[i];
             orders[i] = OrderStoreUtils.get(dataStore, orderKey);
         }
@@ -196,7 +196,7 @@ contract Reader {
     ) external view returns (Market.Props[] memory) {
         address[] memory marketKeys = MarketStoreUtils.getMarketKeys(dataStore, start, end);
         Market.Props[] memory markets = new Market.Props[](marketKeys.length);
-        for (uint256 i = 0; i < marketKeys.length; i++) {
+        for (uint256 i; i < marketKeys.length; i++) {
             address marketKey = marketKeys[i];
             Market.Props memory market = MarketStoreUtils.get(dataStore, marketKey);
             markets[i] = market;
@@ -213,7 +213,7 @@ contract Reader {
     ) external view returns (MarketInfo[] memory) {
         address[] memory marketKeys = MarketStoreUtils.getMarketKeys(dataStore, start, end);
         MarketInfo[] memory marketInfoList = new MarketInfo[](marketKeys.length);
-        for (uint256 i = 0; i < marketKeys.length; i++) {
+        for (uint256 i; i < marketKeys.length; i++) {
             MarketUtils.MarketPrices memory prices = marketPricesList[i];
             address marketKey = marketKeys[i];
             marketInfoList[i] = getMarketInfo(dataStore, prices, marketKey);
