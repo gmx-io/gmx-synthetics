@@ -307,6 +307,16 @@ library PositionPricingUtils {
             longOpenInterest = (-virtualInventory).toUint256();
         }
 
+        // the virtual long and short open interest is adjusted by the usdDelta
+        // to prevent an overflow in getNextOpenInterestParams
+        // price impact depends on the change in USD balance, so offsetting both
+        // values equally should not change the price impact calculation
+        if (params.usdDelta < 0) {
+            uint256 offset = (-params.usdDelta).toUint256();
+            longOpenInterest += offset;
+            shortOpenInterest += offset;
+        }
+
         return getNextOpenInterestParams(params, longOpenInterest, shortOpenInterest);
     }
 
