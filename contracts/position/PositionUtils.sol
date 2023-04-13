@@ -26,12 +26,12 @@ library PositionUtils {
     // @dev UpdatePositionParams struct used in increasePosition to avoid
     // stack too deep errors
     //
+    // @param contracts BaseOrderUtils.ExecuteOrderParamsContracts
     // @param market the values of the trading market
     // @param order the decrease position order
+    // @param orderKey the key of the order
     // @param position the order's position
     // @param positionKey the key of the order's position
-    // @param collateral the collateralToken of the position
-    // @param collateralDeltaAmount the amount of collateralToken deposited
     struct UpdatePositionParams {
         BaseOrderUtils.ExecuteOrderParamsContracts contracts;
         Market.Props market;

@@ -29,6 +29,7 @@ library BaseOrderUtils {
     // @param addresses address values
     // @param numbers number values
     // @param orderType for order.orderType
+    // @param decreasePositionSwapType for order.decreasePositionSwapType
     // @param isLong for order.isLong
     // @param shouldUnwrapNativeToken for order.shouldUnwrapNativeToken
     struct CreateOrderParams {
@@ -74,10 +75,12 @@ library BaseOrderUtils {
     // @dev ExecuteOrderParams struct used in executeOrder to avoid stack
     // too deep errors
     //
+    // @param contracts ExecuteOrderParamsContracts
     // @param key the key of the order to execute
     // @param order the order to execute
     // @param swapPathMarkets the market values of the markets in the swapPath
-    // @param oracleBlockNumbers the oracle block numbers for the prices in the oracle
+    // @param minOracleBlockNumbers the min oracle block numbers
+    // @param maxOracleBlockNumbers the max oracle block numbers
     // @param market market values of the trading market
     // @param keeper the keeper sending the transaction
     // @param startingGas the starting gas
