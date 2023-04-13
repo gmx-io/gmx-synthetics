@@ -273,6 +273,8 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
             revert Errors.InvalidClaimFundingFeesInput(markets.length, tokens.length);
         }
 
+        FeatureUtils.validateFeature(dataStore, Keys.claimFundingFeesFeatureDisabledKey(address(this)));
+
         AccountUtils.validateReceiver(receiver);
 
         address account = msg.sender;
@@ -298,6 +300,8 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         if (markets.length != tokens.length || tokens.length != timeKeys.length) {
             revert Errors.InvalidClaimCollateralInput(markets.length, tokens.length, timeKeys.length);
         }
+
+        FeatureUtils.validateFeature(dataStore, Keys.claimCollateralFeatureDisabledKey(address(this)));
 
         AccountUtils.validateReceiver(receiver);
 
@@ -335,6 +339,8 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
             revert Errors.InvalidClaimAffiliateRewardsInput(markets.length, tokens.length);
         }
 
+        FeatureUtils.validateFeature(dataStore, Keys.claimAffiliateRewardsFeatureDisabledKey(address(this)));
+
         address account = msg.sender;
 
         for (uint256 i = 0; i < markets.length; i++) {
@@ -362,6 +368,8 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         if (markets.length != tokens.length) {
             revert Errors.InvalidClaimUiFeesInput(markets.length, tokens.length);
         }
+
+        FeatureUtils.validateFeature(dataStore, Keys.claimUiFeesFeatureDisabledKey(address(this)));
 
         address uiFeeReceiver = msg.sender;
 

@@ -103,6 +103,15 @@ library Keys {
     // @dev key for whether the cancel order feature is disabled
     bytes32 public constant CANCEL_ORDER_FEATURE_DISABLED = keccak256(abi.encode("CANCEL_ORDER_FEATURE_DISABLED"));
 
+    // @dev key for whether the claim funding fees feature is disabled
+    bytes32 public constant CLAIM_FUNDING_FEES_FEATURE_DISABLED = keccak256(abi.encode("CLAIM_FUNDING_FEES_FEATURE_DISABLED"));
+    // @dev key for whether the claim collateral feature is disabled
+    bytes32 public constant CLAIM_COLLATERAL_FEATURE_DISABLED = keccak256(abi.encode("CLAIM_COLLATERAL_FEATURE_DISABLED"));
+    // @dev key for whether the claim affiliate rewards feature is disabled
+    bytes32 public constant CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED = keccak256(abi.encode("CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED"));
+    // @dev key for whether the claim ui fees feature is disabled
+    bytes32 public constant CLAIM_UI_FEES_FEATURE_DISABLED = keccak256(abi.encode("CLAIM_UI_FEES_FEATURE_DISABLED"));
+
     // @dev key for the minimum required oracle signers for an oracle observation
     bytes32 public constant MIN_ORACLE_SIGNERS = keccak256(abi.encode("MIN_ORACLE_SIGNERS"));
     // @dev key for the minimum block confirmations before blockhash can be excluded for oracle signature validation
@@ -361,9 +370,9 @@ library Keys {
         ));
     }
 
-    // @dev key for whether create deposit is enabled
+    // @dev key for whether create deposit is disabled
     // @param the create deposit module
-    // @return key for whether create deposit is enabled
+    // @return key for whether create deposit is disabled
     function createDepositFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             CREATE_DEPOSIT_FEATURE_DISABLED,
@@ -371,9 +380,9 @@ library Keys {
         ));
     }
 
-    // @dev key for whether cancel deposit is enabled
+    // @dev key for whether cancel deposit is disabled
     // @param the cancel deposit module
-    // @return key for whether cancel deposit is enabled
+    // @return key for whether cancel deposit is disabled
     function cancelDepositFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             CANCEL_DEPOSIT_FEATURE_DISABLED,
@@ -381,9 +390,9 @@ library Keys {
         ));
     }
 
-    // @dev key for whether execute deposit is enabled
+    // @dev key for whether execute deposit is disabled
     // @param the execute deposit module
-    // @return key for whether execute deposit is enabled
+    // @return key for whether execute deposit is disabled
     function executeDepositFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             EXECUTE_DEPOSIT_FEATURE_DISABLED,
@@ -391,9 +400,9 @@ library Keys {
         ));
     }
 
-    // @dev key for whether create withdrawal is enabled
+    // @dev key for whether create withdrawal is disabled
     // @param the create withdrawal module
-    // @return key for whether create withdrawal is enabled
+    // @return key for whether create withdrawal is disabled
     function createWithdrawalFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             CREATE_WITHDRAWAL_FEATURE_DISABLED,
@@ -401,9 +410,9 @@ library Keys {
         ));
     }
 
-    // @dev key for whether cancel withdrawal is enabled
+    // @dev key for whether cancel withdrawal is disabled
     // @param the cancel withdrawal module
-    // @return key for whether cancel withdrawal is enabled
+    // @return key for whether cancel withdrawal is disabled
     function cancelWithdrawalFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             CANCEL_WITHDRAWAL_FEATURE_DISABLED,
@@ -411,9 +420,9 @@ library Keys {
         ));
     }
 
-    // @dev key for whether execute withdrawal is enabled
+    // @dev key for whether execute withdrawal is disabled
     // @param the execute withdrawal module
-    // @return key for whether execute withdrawal is enabled
+    // @return key for whether execute withdrawal is disabled
     function executeWithdrawalFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             EXECUTE_WITHDRAWAL_FEATURE_DISABLED,
@@ -421,9 +430,9 @@ library Keys {
         ));
     }
 
-    // @dev key for whether create order is enabled
+    // @dev key for whether create order is disabled
     // @param the create order module
-    // @return key for whether create order is enabled
+    // @return key for whether create order is disabled
     function createOrderFeatureDisabledKey(address module, uint256 orderType) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             CREATE_ORDER_FEATURE_DISABLED,
@@ -432,9 +441,9 @@ library Keys {
         ));
     }
 
-    // @dev key for whether execute order is enabled
+    // @dev key for whether execute order is disabled
     // @param the execute order module
-    // @return key for whether execute order is enabled
+    // @return key for whether execute order is disabled
     function executeOrderFeatureDisabledKey(address module, uint256 orderType) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             EXECUTE_ORDER_FEATURE_DISABLED,
@@ -443,9 +452,9 @@ library Keys {
         ));
     }
 
-    // @dev key for whether execute adl is enabled
+    // @dev key for whether execute adl is disabled
     // @param the execute adl module
-    // @return key for whether execute adl is enabled
+    // @return key for whether execute adl is disabled
     function executeAdlFeatureDisabledKey(address module, uint256 orderType) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             EXECUTE_ADL_FEATURE_DISABLED,
@@ -454,9 +463,9 @@ library Keys {
         ));
     }
 
-    // @dev key for whether update order is enabled
+    // @dev key for whether update order is disabled
     // @param the update order module
-    // @return key for whether update order is enabled
+    // @return key for whether update order is disabled
     function updateOrderFeatureDisabledKey(address module, uint256 orderType) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             UPDATE_ORDER_FEATURE_DISABLED,
@@ -465,14 +474,50 @@ library Keys {
         ));
     }
 
-    // @dev key for whether cancel order is enabled
+    // @dev key for whether cancel order is disabled
     // @param the cancel order module
-    // @return key for whether cancel order is enabled
+    // @return key for whether cancel order is disabled
     function cancelOrderFeatureDisabledKey(address module, uint256 orderType) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             CANCEL_ORDER_FEATURE_DISABLED,
             module,
             orderType
+        ));
+    }
+
+    // @dev key for whether claim funding fees is disabled
+    // @param the claim funding fees module
+    function claimFundingFeesFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CLAIM_FUNDING_FEES_FEATURE_DISABLED,
+            module
+        ));
+    }
+
+    // @dev key for whether claim colltareral is disabled
+    // @param the claim funding fees module
+    function claimCollateralFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CLAIM_COLLATERAL_FEATURE_DISABLED,
+            module
+        ));
+    }
+
+    // @dev key for whether claim affiliate rewards is disabled
+    // @param the claim affiliate rewards module
+    function claimAffiliateRewardsFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED,
+            module
+        ));
+    }
+
+    // @dev key for whether claim ui fees is disabled
+    // @param the claim ui fees module
+    function claimUiFeesFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CLAIM_UI_FEES_FEATURE_DISABLED,
+            module
         ));
     }
 
