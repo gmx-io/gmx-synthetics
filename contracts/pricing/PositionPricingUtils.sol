@@ -493,6 +493,10 @@ library PositionPricingUtils {
     ) internal view returns (PositionUiFees memory) {
         PositionUiFees memory uiFees;
 
+        if (uiFeeReceiver == address(0)) {
+            return uiFees;
+        }
+
         uiFees.uiFeeReceiver = uiFeeReceiver;
         uiFees.uiFeeReceiverFactor = MarketUtils.getUiFeeFactor(dataStore, uiFeeReceiver);
         uiFees.uiFeeAmount = Precision.applyFactor(sizeDeltaUsd, uiFees.uiFeeReceiverFactor) / collateralTokenPrice.min;
