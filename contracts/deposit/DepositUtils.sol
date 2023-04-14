@@ -93,7 +93,7 @@ library DepositUtils {
         }
 
         if (initialLongTokenAmount == 0 && initialShortTokenAmount == 0) {
-            revert Errors.EmptyDeposit();
+            revert Errors.EmptyDepositAmounts();
         }
 
         AccountUtils.validateReceiver(params.receiver);
@@ -160,6 +160,15 @@ library DepositUtils {
             revert Errors.EmptyDeposit();
         }
 
+        if (
+            deposit.initialLongTokenAmount() == 0 &&
+            deposit.initialShortTokenAmount() == 0
+        ) {
+            revert Errors.EmptyDepositAmounts();
+        }
+
+        DepositStoreUtils.remove(dataStore, key, deposit.account());
+
         if (deposit.initialLongTokenAmount() > 0) {
             depositVault.transferOut(
                 deposit.initialLongToken(),
@@ -177,8 +186,6 @@ library DepositUtils {
                 deposit.shouldUnwrapNativeToken()
             );
         }
-
-        DepositStoreUtils.remove(dataStore, key, deposit.account());
 
         DepositEventUtils.emitDepositCancelled(eventEmitter, key, reason, reasonBytes);
 

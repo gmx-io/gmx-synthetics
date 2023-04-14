@@ -133,7 +133,7 @@ describe("Exchange.Deposit", () => {
     // in addition to the 1000 wnt was minted and 500 wnt minted for the execution fee
     expect(deposit.numbers.executionFee).eq("1700");
 
-    await expect(createDeposit(fixture, params)).to.be.revertedWithCustomError(errorsContract, "EmptyDeposit");
+    await expect(createDeposit(fixture, params)).to.be.revertedWithCustomError(errorsContract, "EmptyDepositAmounts");
 
     await expect(
       createDeposit(fixture, { ...params, longTokenAmount: bigNumberify(1), receiver: { address: AddressZero } })
