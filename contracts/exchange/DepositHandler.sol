@@ -97,6 +97,10 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         onlyOrderKeeper
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
+        // startingGas is measured after withOraclePrices
+        // withOraclePrices may consume a significant amount of gas
+        // the baseGasLimit used to calculate the execution cost
+        // should be adjusted to account for this
         uint256 startingGas = gasleft();
 
         try this._executeDeposit(
