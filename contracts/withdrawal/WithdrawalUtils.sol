@@ -36,7 +36,6 @@ library WithdrawalUtils {
      * @param receiver The address that will receive the withdrawal tokens.
      * @param callbackContract The contract that will be called back.
      * @param market The market on which the withdrawal will be executed.
-     * @param marketTokenAmount The amount of market tokens that will be withdrawn.
      * @param minLongTokenAmount The minimum amount of long tokens that must be withdrawn.
      * @param minShortTokenAmount The minimum amount of short tokens that must be withdrawn.
      * @param shouldUnwrapNativeToken Whether the native token should be unwrapped when executing the withdrawal.
@@ -50,7 +49,6 @@ library WithdrawalUtils {
         address market;
         address[] longTokenSwapPath;
         address[] shortTokenSwapPath;
-        uint256 marketTokenAmount;
         uint256 minLongTokenAmount;
         uint256 minShortTokenAmount;
         bool shouldUnwrapNativeToken;
@@ -118,8 +116,10 @@ library WithdrawalUtils {
 
         AccountUtils.validateReceiver(params.receiver);
 
-        if (params.marketTokenAmount == 0) {
-            revert Errors.EmptyMarketTokenAmount();
+        uint256 marketTokenAmount = withdrawalVault.recordTransferIn(params.market);
+
+        if (marketTokenAmount == 0) {
+            revert Errors.EmptyWithdrawalAmount();
         }
 
         params.executionFee = wntAmount;
@@ -139,7 +139,7 @@ library WithdrawalUtils {
                 params.shortTokenSwapPath
             ),
             Withdrawal.Numbers(
-                params.marketTokenAmount,
+                marketTokenAmount,
                 params.minLongTokenAmount,
                 params.minShortTokenAmount,
                 Chain.currentBlockNumber(),
@@ -176,7 +176,7 @@ library WithdrawalUtils {
             revert Errors.EmptyWithdrawal();
         }
         if (withdrawal.marketTokenAmount() == 0) {
-            revert Errors.EmptyMarketTokenAmount();
+            revert Errors.EmptyWithdrawalAmount();
         }
 
         OracleUtils.validateBlockNumberWithinRange(
@@ -185,7 +185,7 @@ library WithdrawalUtils {
             withdrawal.updatedAtBlock()
         );
 
-        uint256 marketTokensBalance = MarketToken(payable(withdrawal.market())).balanceOf(withdrawal.account());
+        uint256 marketTokensBalance = MarketToken(payable(withdrawal.market())).balanceOf(address(params.withdrawalVault));
         if (marketTokensBalance < withdrawal.marketTokenAmount()) {
             revert Errors.InsufficientMarketTokens(marketTokensBalance, withdrawal.marketTokenAmount());
         }
@@ -231,7 +231,18 @@ library WithdrawalUtils {
             revert Errors.EmptyWithdrawal();
         }
 
+        if (withdrawal.marketTokenAmount() == 0) {
+            revert Errors.EmptyWithdrawalAmount();
+        }
+
         WithdrawalStoreUtils.remove(dataStore, key, withdrawal.account());
+
+        withdrawalVault.transferOut(
+            withdrawal.market(),
+            withdrawal.account(),
+            withdrawal.marketTokenAmount(),
+            false // shouldUnwrapNativeToken
+        );
 
         WithdrawalEventUtils.emitWithdrawalCancelled(eventEmitter, key, reason, reasonBytes);
 
@@ -367,7 +378,12 @@ library WithdrawalUtils {
 
         WithdrawalStoreUtils.remove(params.dataStore, params.key, withdrawal.account());
 
-        MarketToken(payable(market.marketToken)).burn(withdrawal.account(), withdrawal.marketTokenAmount());
+        MarketToken(payable(market.marketToken)).burn(
+            address(params.withdrawalVault),
+            withdrawal.marketTokenAmount()
+        );
+
+        params.withdrawalVault.syncTokenBalance(market.marketToken);
 
         swap(
             params,

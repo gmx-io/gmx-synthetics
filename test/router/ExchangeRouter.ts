@@ -1,10 +1,12 @@
 import { expect } from "chai";
 
+import { contractAt } from "../../utils/deploy";
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { logGasUsage } from "../../utils/gas";
 import { getDepositKeys } from "../../utils/deposit";
 import { getWithdrawalKeys } from "../../utils/withdrawal";
+import { handleDeposit } from "../../utils/deposit";
 import { hashString } from "../../utils/hash";
 import { getNextKey } from "../../utils/nonce";
 import { errorsContract } from "../../utils/error";
@@ -172,9 +174,24 @@ describe("ExchangeRouter", () => {
   });
 
   it("createWithdrawal", async () => {
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+      },
+    });
+
+    const marketToken = await contractAt("MarketToken", ethUsdMarket.marketToken);
+    await marketToken.connect(user0).approve(router.address, expandDecimals(50 * 1000, 18));
+
     const tx = await exchangeRouter.connect(user0).multicall(
       [
         exchangeRouter.interface.encodeFunctionData("sendWnt", [withdrawalVault.address, expandDecimals(1, 18)]),
+        exchangeRouter.interface.encodeFunctionData("sendTokens", [
+          ethUsdMarket.marketToken,
+          withdrawalVault.address,
+          700,
+        ]),
         exchangeRouter.interface.encodeFunctionData("createWithdrawal", [
           {
             receiver: user1.address,

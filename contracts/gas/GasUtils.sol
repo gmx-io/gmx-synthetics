@@ -95,6 +95,10 @@ library GasUtils {
     // @param dataStore DataStore
     // @param gasUsed the amount of gas used
     function adjustGasUsage(DataStore dataStore, uint256 gasUsed) internal view returns (uint256) {
+        // gas measurements are done after the call to withOraclePrices
+        // withOraclePrices may consume a significant amount of gas
+        // the baseGasLimit used to calculate the execution cost
+        // should be adjusted to account for this
         uint256 baseGasLimit = dataStore.getUint(Keys.EXECUTION_GAS_FEE_BASE_AMOUNT);
         uint256 multiplierFactor = dataStore.getUint(Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR);
         uint256 gasLimit = baseGasLimit + Precision.applyFactor(gasUsed, multiplierFactor);
@@ -107,6 +111,9 @@ library GasUtils {
     // @param estimatedGasLimit the estimated gas limit
     function adjustGasLimitForEstimate(DataStore dataStore, uint256 estimatedGasLimit) internal view returns (uint256) {
         uint256 baseGasLimit = dataStore.getUint(Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT);
+        // the gas cost is estimated based on the gasprice of the request txn
+        // the actual cost may be higher due if the gasprice is higher in the execution txn
+        // the multiplierFactor should be adjusted to account for this
         uint256 multiplierFactor = dataStore.getUint(Keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR);
         uint256 gasLimit = baseGasLimit + Precision.applyFactor(estimatedGasLimit, multiplierFactor);
         return gasLimit;
