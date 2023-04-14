@@ -45,7 +45,7 @@ export async function getMarketTokenPriceWithPoolValue(fixture, overrides: any =
     max: expandDecimals(5000, 4 + 8),
   };
 
-  const shortTokenPrice = overrides.longTokenPrice || {
+  const shortTokenPrice = overrides.shortTokenPrice || {
     min: expandDecimals(1, 6 + 18),
     max: expandDecimals(1, 6 + 18),
   };
