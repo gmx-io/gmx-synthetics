@@ -473,6 +473,8 @@ After the initial setup:
 
 - Order keepers are expected to validate whether a transaction will revert before sending the transaction to minimize gas wastage
 
+- Order keepers may cause requests to be cancelled instead of executed by executing the request with insufficient gas
+
 - A user can reduce price impact by using high leverage positions, this is partially mitigated with the MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER value
 
 - Price impact can be reduced by using positions and swaps and trading across markets, chains, forks, other protocols, this is partially mitigated with virtual inventory tracking
