@@ -73,6 +73,13 @@ contract AdlHandler is BaseOrderHandler {
     }
 
     // @dev auto-deleverages a position
+    // there is no validation that ADL is executed in order of position profit
+    // or position size, this is due to the limitation of the gas overhead
+    // required to check this ordering
+    //
+    // ADL keepers could be separately incentivised using a rebate based on
+    // position profit, this is not implemented within the contracts at the moment
+    //
     // @param account the position's account
     // @param market the position's market
     // @param collateralToken the position's collateralToken
