@@ -88,7 +88,9 @@ library DecreasePositionUtils {
             }
         }
 
-        if (params.order.sizeDeltaUsd() < params.position.sizeInUsd() && params.order.initialCollateralDeltaAmount() > 0) {
+        // if the position will be partially decreased then do a check on the
+        // remaining collateral amount and update the order attributes if needed
+        if (params.order.sizeDeltaUsd() < params.position.sizeInUsd()) {
             // estimate pnl based on indexTokenPrice
             (cache.estimatedPositionPnlUsd, /* uint256 sizeDeltaInTokens */) = PositionUtils.getPositionPnlUsd(
                 params.contracts.dataStore,
@@ -105,7 +107,6 @@ library DecreasePositionUtils {
             PositionUtils.WillPositionCollateralBeSufficientValues memory positionValues = PositionUtils.WillPositionCollateralBeSufficientValues(
                 params.position.sizeInUsd() - params.order.sizeDeltaUsd(), // positionSizeInUsd
                 params.position.collateralAmount() - params.order.initialCollateralDeltaAmount(), // positionCollateralAmount
-                cache.estimatedRemainingPnlUsd, // positionPnlUsd
                 cache.estimatedRealizedPnlUsd,  // realizedPnlUsd
                 -params.order.sizeDeltaUsd().toInt256() // openInterestDelta
             );
@@ -119,6 +120,8 @@ library DecreasePositionUtils {
                 positionValues
             );
 
+            // do not allow withdrawal of collateral if it would lead to the position
+            // having an insufficient amount of collateral
             if (!willBeSufficient) {
                 if (params.order.sizeDeltaUsd() == 0) {
                     revert Errors.UnableToWithdrawCollateralDueToLeverage(estimatedRemainingCollateralUsd);
@@ -134,8 +137,13 @@ library DecreasePositionUtils {
                 params.order.setInitialCollateralDeltaAmount(0);
             }
 
-            // if the remaining collateral will be below the min collateral usd value, then close the position
-            if (estimatedRemainingCollateralUsd < params.contracts.dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256()) {
+            // if the remaining collateral including position pnl will be below
+            // the min collateral usd value, then close the position
+            //
+            // if the position has sufficient remaining collateral including pnl
+            // then allow the position to be partially closed and the updated
+            // position to remain open
+            if ((estimatedRemainingCollateralUsd + cache.estimatedRemainingPnlUsd) < params.contracts.dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256()) {
                 OrderEventUtils.emitOrderSizeDeltaAutoUpdated(
                     params.contracts.eventEmitter,
                     params.orderKey,
@@ -214,6 +222,15 @@ library DecreasePositionUtils {
             params.position.setShortTokenFundingAmountPerSize(fees.funding.latestShortTokenFundingAmountPerSize);
             params.position.setBorrowingFactor(cache.nextPositionBorrowingFactor);
 
+            // validate position which validates liquidation state is only called
+            // if the remaining position size is not zero
+            // due to this, a user can still manually close their position if
+            // it is in a partially liquidatable state
+            // this should not cause any issues as a liquidation is the same
+            // as automatically closing a position
+            // the only difference is that if the position has insufficient / negative
+            // collateral a liquidation transaction should still complete
+            // while a manual close transaction should revert
             PositionUtils.validatePosition(
                 params.contracts.dataStore,
                 params.contracts.referralStorage,
