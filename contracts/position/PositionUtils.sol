@@ -397,6 +397,8 @@ library PositionUtils {
         cache.minCollateralFactor = MarketUtils.getMinCollateralFactor(dataStore, market.marketToken);
 
         // validate if (remaining collateral) / position.size is less than the min collateral factor (max leverage exceeded)
+        // this validation includes the position fee to be paid when closing the position
+        // i.e. if the position does not have sufficient collateral after closing fees it is considered a liquidatable position
         cache.minCollateralUsdForLeverage = Precision.applyFactor(position.sizeInUsd(), cache.minCollateralFactor).toInt256();
 
         if (cache.remainingCollateralUsd < cache.minCollateralUsdForLeverage) {
