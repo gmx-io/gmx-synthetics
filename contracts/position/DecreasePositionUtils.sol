@@ -281,6 +281,9 @@ library DecreasePositionUtils {
             fees.feeAmountForPool.toInt256()
         );
 
+        // affiliate rewards are still distributed even if the order is a liquidation order
+        // this is expected as a partial liquidation is considered the same as an automatic
+        // closing of a position
         PositionUtils.handleReferral(params, fees);
 
         PositionEventUtils.emitPositionFeesCollected(
