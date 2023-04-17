@@ -255,6 +255,8 @@ contract OrderHandler is BaseOrderHandler {
             // instead of cancelling / freezing the orders
             // if features are not frequently disabled, the amount of front-running
             // from this should not be significant
+            // based on this it may also be advisable to disable the cancelling of orders
+            // if the execution of orders is disabled
             errorSelector == Errors.DisabledFeature.selector ||
             errorSelector == Errors.InvalidKeeperForFrozenOrder.selector ||
             errorSelector == Errors.UnsupportedOrderType.selector ||
