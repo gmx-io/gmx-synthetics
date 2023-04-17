@@ -122,6 +122,8 @@ library DecreasePositionUtils {
 
             // do not allow withdrawal of collateral if it would lead to the position
             // having an insufficient amount of collateral
+            // this helps to prevent gaming by opening a position then reducing collateral
+            // to increase the leverage of the position
             if (!willBeSufficient) {
                 if (params.order.sizeDeltaUsd() == 0) {
                     revert Errors.UnableToWithdrawCollateralDueToLeverage(estimatedRemainingCollateralUsd);

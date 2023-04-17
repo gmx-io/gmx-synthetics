@@ -422,6 +422,14 @@ library PositionUtils {
             prices
         );
 
+        // the min collateral factor will increase as the open interest for a market increases
+        // this may lead to previously created limit increase orders not being executable
+        //
+        // price impact could be gamed by opening high leverage positions, if the price impact
+        // that should be charged is higher than the amount of collateral in the position
+        // then a user could pay less price impact than what is required
+        //
+        // this check helps to prevent gaming of price impact
         uint256 minCollateralFactor = MarketUtils.getMinCollateralFactorForOpenInterest(
             dataStore,
             market,
