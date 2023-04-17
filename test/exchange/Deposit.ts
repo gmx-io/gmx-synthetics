@@ -876,7 +876,7 @@ describe("Exchange.Deposit", () => {
     expect(await getSupplyOf(ethUsdMarket.marketToken)).eq(0);
   });
 
-  it("deposit into a single token market", async () => {
+  it("single token market", async () => {
     await handleDeposit(fixture, {
       create: {
         market: ethUsdSingleTokenMarket,
