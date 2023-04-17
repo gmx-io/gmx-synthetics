@@ -108,6 +108,13 @@ library AdlUtils {
         );
 
         setIsAdlEnabled(dataStore, market, isLong, shouldEnableAdl);
+        // the latest ADL block is always updated, an ADL keeper could continually
+        // cause the latest ADL block to be updated and prevent ADL orders
+        // from being executed, however, this may be preferrable over a case
+        // where stale prices could be used by ADL keepers to execute orders
+        // as such updating of the ADL block is allowed and it is expected
+        // that ADL keepers will keep this block updated so that latest prices
+        // will be used for ADL
         setLatestAdlBlock(dataStore, market, isLong, Chain.currentBlockNumber());
 
         emitAdlStateUpdated(eventEmitter, market, isLong, pnlToPoolFactor, maxPnlFactor, shouldEnableAdl);
