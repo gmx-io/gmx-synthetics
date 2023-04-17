@@ -148,6 +148,11 @@ library AdlUtils {
             new address[](0) // swapPath
         );
 
+        // no slippage is set for this order, it may be preferrable for ADL orders
+        // to be executed, in case of large price impact, the user could be refunded
+        // through a protocol fund if required, this amount could later be claimed
+        // from the price impact pool, this claiming process should be added if
+        // required
         Order.Numbers memory numbers = Order.Numbers(
             Order.OrderType.MarketDecrease, // orderType
             Order.DecreasePositionSwapType.SwapPnlTokenToCollateralToken, // decreasePositionSwapType
