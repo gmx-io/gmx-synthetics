@@ -56,7 +56,6 @@ library PositionUtils {
     struct WillPositionCollateralBeSufficientValues {
         uint256 positionSizeInUsd;
         uint256 positionCollateralAmount;
-        int256 positionPnlUsd;
         int256 realizedPnlUsd;
         int256 openInterestDelta;
     }
@@ -430,8 +429,8 @@ library PositionUtils {
 
         int256 remainingCollateralUsd = values.positionCollateralAmount.toInt256() * collateralTokenPrice.min.toInt256();
 
-        remainingCollateralUsd += values.positionPnlUsd;
-
+        // deduct realized pnl if it is negative since this would be paid from
+        // the position's collateral
         if (values.realizedPnlUsd < 0) {
             remainingCollateralUsd = remainingCollateralUsd + values.realizedPnlUsd;
         }
