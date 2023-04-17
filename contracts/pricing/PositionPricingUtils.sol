@@ -221,6 +221,17 @@ library PositionPricingUtils {
 
         int256 priceImpactUsd = _getPriceImpactUsd(params.dataStore, params.market.marketToken, openInterestParams);
 
+        // the virtual price impact calculation is skipped if the price impact
+        // is positive since the action is helping to balance the pool
+        //
+        // in case two virtual pools are unbalanced in a different direction
+        // e.g. pool0 has more longs than shorts while pool1 has less longs
+        // than shorts
+        // not skipping the virtual price impact calculation would lead to
+        // a negative price impact for any trade on either pools and would
+        // disincentivise the balancing of pools
+        if (priceImpactUsd >= 0) { return priceImpactUsd; }
+
         (bool hasVirtualInventory, int256 virtualInventory) = MarketUtils.getVirtualInventoryForPositions(params.dataStore, params.market.indexToken);
         if (!hasVirtualInventory) { return priceImpactUsd; }
 
