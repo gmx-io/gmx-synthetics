@@ -339,6 +339,8 @@ library DecreasePositionCollateralUtils {
         return (executionPrice, priceImpactAmount, priceImpactDiffUsd);
     }
 
+    // for simplicity all fee values are set to zero in case there is insufficient
+    // collateral to cover all fees
     function getLiquidationValues(
         PositionUtils.UpdatePositionParams memory params,
         PositionUtils.DecreasePositionCollateralValues memory values,
