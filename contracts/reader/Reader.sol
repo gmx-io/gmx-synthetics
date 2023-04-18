@@ -18,6 +18,8 @@ import "../order/OrderStoreUtils.sol";
 import "../market/MarketUtils.sol";
 import "../market/Market.sol";
 
+import "./ReaderUtils.sol";
+
 // @title Reader
 // @dev Library for read functions
 contract Reader {
@@ -122,15 +124,15 @@ contract Reader {
 
         // borrowing and funding fees need to be overwritten with pending values otherwise they
         // would be using storage values that have not yet been updated
-        uint256 pendingBorrowingFeeUsd = MarketUtils.getNextBorrowingFees(dataStore, position, market, prices);
+        uint256 pendingBorrowingFeeUsd = ReaderUtils.getNextBorrowingFees(dataStore, position, market, prices);
 
-        fees.borrowing = PositionPricingUtils.getBorrowingFees(
+        fees.borrowing = ReaderUtils.getBorrowingFees(
             dataStore,
             collateralTokenPrice,
             pendingBorrowingFeeUsd
         );
 
-        MarketUtils.GetNextFundingAmountPerSizeResult memory nextFundingAmountResult = MarketUtils.getNextFundingAmountPerSize(dataStore, market, prices);
+        MarketUtils.GetNextFundingAmountPerSizeResult memory nextFundingAmountResult = ReaderUtils.getNextFundingAmountPerSize(dataStore, market, prices);
 
         int256 latestLongTokenFundingAmountPerSize;
         int256 latestShortTokenFundingAmountPerSize;
@@ -143,7 +145,7 @@ contract Reader {
             latestShortTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_ShortCollateral_ShortPosition;
         }
 
-        fees.funding = PositionPricingUtils.getFundingFees(
+        fees.funding = ReaderUtils.getFundingFees(
             position,
             market.longToken,
             market.shortToken,
@@ -224,7 +226,7 @@ contract Reader {
             false
         );
 
-        MarketUtils.GetNextFundingAmountPerSizeResult memory funding = MarketUtils.getNextFundingAmountPerSize(
+        MarketUtils.GetNextFundingAmountPerSizeResult memory funding = ReaderUtils.getNextFundingAmountPerSize(
             dataStore,
             market,
             prices
