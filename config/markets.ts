@@ -116,13 +116,13 @@ const baseMarketConfig: BaseMarketConfig = {
 
   minCollateralUsd: decimalToFloat(1, 0), // 1 USD
 
-  borrowingFactorForLongs: decimalToFloat(1, 7), // 0.00001% / second
-  borrowingFactorForShorts: decimalToFloat(1, 7), // 0.00001% / second
+  borrowingFactorForLongs: decimalToFloat(1, 5), // 0.001% / second
+  borrowingFactorForShorts: decimalToFloat(1, 5), // 0.001% / second
 
   borrowingExponentFactorForLongs: decimalToFloat(1),
   borrowingExponentFactorForShorts: decimalToFloat(1),
 
-  fundingFactor: decimalToFloat(5, 7), // 0.00005% / second
+  fundingFactor: decimalToFloat(1, 6), // 0.0001% / second
   fundingExponentFactor: decimalToFloat(1),
 };
 

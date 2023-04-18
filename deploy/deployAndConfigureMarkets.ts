@@ -1,5 +1,4 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { getMarketTokenAddress } from "../utils/market";
 import * as keys from "../utils/keys";
 import { setUintIfDifferent } from "../utils/dataStore";
 import { ethers } from "ethers";
@@ -13,31 +12,39 @@ function getMarketTokenAddresses(marketConfig, tokens) {
   return [indexToken, longToken, shortToken];
 }
 
-const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRuntimeEnvironment) => {
-  const { execute, get, log } = deployments;
+function getMarketKey(indexToken: string, longToken: string, shortToken: string) {
+  return [indexToken, longToken, shortToken].join(":");
+}
+
+async function getOnchainMarketsByTokens(read: (...args: any[]) => any, dataStoreAddress: string) {
+  const onchainMarkets = await read("Reader", "getMarkets", dataStoreAddress, 0, 1000);
+  return Object.fromEntries(
+    onchainMarkets.map((market) => {
+      const { indexToken, longToken, shortToken } = market;
+      return [[indexToken, longToken, shortToken].join(":"), market];
+    })
+  );
+}
+
+const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnvironment) => {
+  const { execute, get, read, log } = deployments;
+
   const { deployer } = await getNamedAccounts();
 
   const tokens = await gmx.getTokens();
   const markets = await gmx.getMarkets();
 
-  const marketFactory = await get("MarketFactory");
-  const roleStore = await get("RoleStore");
   const dataStore = await get("DataStore");
+
+  let onchainMarketsByTokens = await getOnchainMarketsByTokens(read, dataStore.address);
 
   for (const marketConfig of markets) {
     const [indexToken, longToken, shortToken] = getMarketTokenAddresses(marketConfig, tokens);
 
-    const marketToken = getMarketTokenAddress(
-      indexToken,
-      longToken,
-      shortToken,
-      marketFactory.address,
-      roleStore.address,
-      dataStore.address
-    );
-    const code = await ethers.provider.getCode(marketToken);
-    if (code !== "0x") {
-      log("market %s:%s:%s already exists at %s", indexToken, longToken, shortToken, marketToken);
+    const marketKey = getMarketKey(indexToken, longToken, shortToken);
+    const onchainMarket = onchainMarketsByTokens[marketKey];
+    if (onchainMarket) {
+      log("market %s:%s:%s already exists at %s", indexToken, longToken, shortToken, onchainMarket.marketToken);
       continue;
     }
 
@@ -82,17 +89,13 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
     );
   }
 
+  onchainMarketsByTokens = await getOnchainMarketsByTokens(read, dataStore.address);
+
   for (const marketConfig of markets) {
     const [indexToken, longToken, shortToken] = getMarketTokenAddresses(marketConfig, tokens);
-
-    const marketToken = getMarketTokenAddress(
-      indexToken,
-      longToken,
-      shortToken,
-      marketFactory.address,
-      roleStore.address,
-      dataStore.address
-    );
+    const marketKey = getMarketKey(indexToken, longToken, shortToken);
+    const onchainMarket = onchainMarketsByTokens[marketKey];
+    const marketToken = onchainMarket.marketToken;
 
     await setMinCollateralFactor(marketToken, marketConfig.minCollateralFactor);
 
