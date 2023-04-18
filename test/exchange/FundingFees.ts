@@ -136,17 +136,21 @@ describe("Exchange.FundingFees", () => {
     );
 
     expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, wnt.address, true))).eq(
-      "8064019999"
+      "8064019999999995000000000"
     );
     expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, wnt.address, false))).eq(
-      "-16128039999"
+      "-16128039999999990000000000"
     );
-    expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, usdc.address, true))).eq("0");
-    expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, usdc.address, false))).eq("0");
+    expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, usdc.address, true))).eq(
+      "-2400000000000"
+    );
+    expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, usdc.address, false))).eq(
+      "240000000000"
+    );
 
     expect(
       await dataStore.getUint(keys.claimableFundingAmountKey(ethUsdMarket.marketToken, wnt.address, user1.address))
-    ).eq("1612803999900000");
+    ).eq("1612803999999999");
 
     await expectTokenBalanceIncrease({
       token: wnt,
@@ -154,7 +158,7 @@ describe("Exchange.FundingFees", () => {
       sendTxn: async () => {
         await exchangeRouter.connect(user1).claimFundingFees([ethUsdMarket.marketToken], [wnt.address], user2.address);
       },
-      increaseAmount: "1612803999900000",
+      increaseAmount: "1612803999999999",
     });
 
     await time.increase(14 * 24 * 60 * 60);
@@ -194,16 +198,16 @@ describe("Exchange.FundingFees", () => {
     });
 
     expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, wnt.address, true))).eq(
-      "8064019999"
+      "8064019999999995000000000"
     ); // 0.000000008064019999 ETH, 0.00004032009 USD
     expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, wnt.address, false))).eq(
-      "-16128039999"
+      "-16128039999999990000000000"
     ); // -0.000000016128039999 ETH, -0.00008064019 USD
     expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, usdc.address, true))).eq(
-      "-80"
+      "-80642700000000000"
     ); // -0.00008 USD
     expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, usdc.address, false))).eq(
-      "40" // 0.00004 USD
+      "40320390000000000" // 0.00004 USD
     );
   });
 });
