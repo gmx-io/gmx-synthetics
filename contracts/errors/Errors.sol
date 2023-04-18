@@ -165,6 +165,7 @@ library Errors {
     error LiquidatablePosition();
     error EmptyPosition();
     error InvalidPositionSizeValues(uint256 sizeInUsd, uint256 sizeInTokens);
+    error MinPositionSize(uint256 positionSizeInUsd, uint256 minPositionSizeUsd);
 
     // PositionPricingUtils errors
     error UsdDeltaExceedsLongOpenInterest(int256 usdDelta, uint256 longOpenInterest);
