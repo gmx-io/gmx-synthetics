@@ -122,7 +122,11 @@ library GasUtils {
     // @param dataStore DataStore
     // @param withdrawal the withdrawal to estimate the gas limit for
     function estimateExecuteWithdrawalGasLimit(DataStore dataStore, Withdrawal.Props memory withdrawal) internal view returns (uint256) {
-        return dataStore.getUint(Keys.withdrawalGasLimitKey(false)) + withdrawal.callbackGasLimit();
+        uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
+        uint256 swapCount = withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length;
+        uint256 gasForSwaps = swapCount * gasPerSwap;
+
+        return dataStore.getUint(Keys.withdrawalGasLimitKey(false)) + withdrawal.callbackGasLimit() + gasForSwaps;
     }
 
     // @dev the estimated gas limit for orders
