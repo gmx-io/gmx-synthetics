@@ -141,29 +141,6 @@ library ExecuteDepositUtils {
             revert Errors.EmptyDepositAmountsAfterSwap();
         }
 
-        // if the market.longToken and market.shortToken are the same, there are two cases to consider:
-        // 1. the user is depositing the market.longToken directly
-        // 2. the user is depositing an initialLongToken and swapping it to the market.longToken
-        // for both cases, we expect the cache.shortTokenAmount to be zero, because it is unlikely that
-        // the user provides different initialLongTokens and initialShortTokens to be swapped to the same
-        // token, so that flow is not supported
-        // for the first case, the deposited token will be recorded in initialLongTokenAmount, it is not possible
-        // to have an initialShortTokenAmount because recordTransferIn records a single difference in balance of the token
-        // after all transfers
-        // for both cases, split the longTokenAmount into longTokenAmount and shortTokenAmount to minimize
-        // price impact for the user
-        if (market.longToken == market.shortToken) {
-            if (cache.shortTokenAmount > 0) {
-                revert Errors.UnexpectedNonZeroShortAmount();
-            }
-
-            (cache.longTokenAmount, cache.shortTokenAmount) = getAdjustedLongAndShortTokenAmounts(
-                params.dataStore,
-                market,
-                cache.longTokenAmount
-            );
-        }
-
         cache.longTokenUsd = cache.longTokenAmount * prices.longTokenPrice.midPrice();
         cache.shortTokenUsd = cache.shortTokenAmount * prices.shortTokenPrice.midPrice();
 
@@ -172,7 +149,7 @@ library ExecuteDepositUtils {
         cache.priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(
             SwapPricingUtils.GetPriceImpactUsdParams(
                 params.dataStore,
-                market.marketToken,
+                market,
                 market.longToken,
                 market.shortToken,
                 prices.longTokenPrice.midPrice(),
@@ -363,54 +340,13 @@ library ExecuteDepositUtils {
 
         MarketUtils.validatePoolAmount(
             params.dataStore,
-            _params.market.marketToken,
+            _params.market,
             _params.tokenIn
         );
 
         MarketToken(payable(_params.market.marketToken)).mint(_params.receiver, mintAmount);
 
         return mintAmount;
-    }
-
-    // @dev this should only be called if the long and short tokens are the same
-    // calculate the long and short amounts that would lead to the smallest amount
-    // of price impact by helping to balance the pool
-    // @param dataStore DataStore
-    // @param market the market for the deposit
-    // @param longTokenAmount the long token amount
-    function getAdjustedLongAndShortTokenAmounts(
-        DataStore dataStore,
-        Market.Props memory market,
-        uint256 longTokenAmount
-    ) internal view returns (uint256, uint256) {
-        uint256 poolLongTokenAmount = MarketUtils.getPoolAmount(dataStore, market.marketToken, market.longToken);
-        uint256 poolShortTokenAmount = MarketUtils.getPoolAmount(dataStore, market.marketToken, market.shortToken);
-
-        uint256 adjustedLongTokenAmount;
-        uint256 adjustedShortTokenAmount;
-
-        if (poolLongTokenAmount < poolShortTokenAmount) {
-            uint256 diff = poolLongTokenAmount - poolShortTokenAmount;
-
-            if (diff < poolLongTokenAmount) {
-                adjustedLongTokenAmount = diff + (longTokenAmount - diff) / 2;
-                adjustedShortTokenAmount = longTokenAmount - adjustedLongTokenAmount;
-            } else {
-                adjustedLongTokenAmount = longTokenAmount;
-            }
-        } else {
-            uint256 diff = poolShortTokenAmount - poolLongTokenAmount;
-
-            if (diff < poolShortTokenAmount) {
-                adjustedShortTokenAmount = diff + (longTokenAmount - diff) / 2;
-                adjustedLongTokenAmount - longTokenAmount - adjustedShortTokenAmount;
-            } else {
-                adjustedLongTokenAmount = 0;
-                adjustedShortTokenAmount = longTokenAmount;
-            }
-        }
-
-        return (adjustedLongTokenAmount, adjustedShortTokenAmount);
     }
 
     function swap(

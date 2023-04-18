@@ -182,7 +182,7 @@ library SwapUtils {
         int256 priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(
             SwapPricingUtils.GetPriceImpactUsdParams(
                 params.dataStore,
-                _params.market.marketToken,
+                _params.market,
                 _params.tokenIn,
                 cache.tokenOut,
                 cache.tokenInPrice.midPrice(),
@@ -271,7 +271,7 @@ library SwapUtils {
 
         MarketUtils.validatePoolAmount(
             params.dataStore,
-            _params.market.marketToken,
+            _params.market,
             _params.tokenIn
         );
 

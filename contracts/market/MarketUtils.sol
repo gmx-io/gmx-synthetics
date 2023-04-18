@@ -250,7 +250,7 @@ library MarketUtils {
         bool isLong
     ) internal view returns (uint256) {
         address token = isLong ? market.longToken : market.shortToken;
-        uint256 poolAmount = getPoolAmount(dataStore, market.marketToken, token);
+        uint256 poolAmount = getPoolAmount(dataStore, market, token);
         uint256 tokenPrice = isLong ? prices.longTokenPrice.min : prices.shortTokenPrice.min;
         return poolAmount * tokenPrice;
     }
@@ -277,8 +277,8 @@ library MarketUtils {
     ) internal view returns (MarketPoolValueInfo.Props memory) {
         MarketPoolValueInfo.Props memory result;
 
-        result.longTokenAmount = getPoolAmount(dataStore, market.marketToken, market.longToken);
-        result.shortTokenAmount = getPoolAmount(dataStore, market.marketToken, market.shortToken);
+        result.longTokenAmount = getPoolAmount(dataStore, market, market.longToken);
+        result.shortTokenAmount = getPoolAmount(dataStore, market, market.shortToken);
 
         result.longTokenUsd = result.longTokenAmount * longTokenPrice.pickPrice(maximize);
         result.shortTokenUsd = result.shortTokenAmount * shortTokenPrice.pickPrice(maximize);
@@ -454,8 +454,12 @@ library MarketUtils {
     // @param market the market to check
     // @param token the token to check
     // @return the amount of tokens in the pool
-    function getPoolAmount(DataStore dataStore, address market, address token) internal view returns (uint256) {
-        return dataStore.getUint(Keys.poolAmountKey(market, token));
+    function getPoolAmount(DataStore dataStore, Market.Props memory market, address token) internal view returns (uint256) {
+        /* Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress); */
+        // if the longToken and shortToken are the same, return half of the token amount, so that
+        // calculations of pool value, etc would be correct
+        uint256 divisor = getPoolDivisor(market.longToken, market.shortToken);
+        return dataStore.getUint(Keys.poolAmountKey(market.marketToken, token)) / divisor;
     }
 
     // @dev get the max amount of tokens allowed to be in the pool
@@ -870,10 +874,12 @@ library MarketUtils {
         GetNextFundingAmountPerSizeResult memory result;
         GetNextFundingAmountPerSizeCache memory cache;
 
-        cache.oi.longOpenInterestWithLongCollateral = getOpenInterest(dataStore, market.marketToken, market.longToken, true);
-        cache.oi.longOpenInterestWithShortCollateral = getOpenInterest(dataStore, market.marketToken, market.shortToken, true);
-        cache.oi.shortOpenInterestWithLongCollateral = getOpenInterest(dataStore, market.marketToken, market.longToken, false);
-        cache.oi.shortOpenInterestWithShortCollateral = getOpenInterest(dataStore, market.marketToken, market.shortToken, false);
+        uint256 divisor = getPoolDivisor(market.longToken, market.shortToken);
+
+        cache.oi.longOpenInterestWithLongCollateral = getOpenInterest(dataStore, market.marketToken, market.longToken, true, divisor);
+        cache.oi.longOpenInterestWithShortCollateral = getOpenInterest(dataStore, market.marketToken, market.shortToken, true, divisor);
+        cache.oi.shortOpenInterestWithLongCollateral = getOpenInterest(dataStore, market.marketToken, market.longToken, false, divisor);
+        cache.oi.shortOpenInterestWithShortCollateral = getOpenInterest(dataStore, market.marketToken, market.shortToken, false, divisor);
 
         cache.oi.longOpenInterest = cache.oi.longOpenInterestWithLongCollateral + cache.oi.longOpenInterestWithShortCollateral;
         cache.oi.shortOpenInterest = cache.oi.shortOpenInterestWithLongCollateral + cache.oi.shortOpenInterestWithShortCollateral;
@@ -1083,11 +1089,11 @@ library MarketUtils {
     // @param token the token to check
     function validatePoolAmount(
         DataStore dataStore,
-        address market,
+        Market.Props memory market,
         address token
     ) internal view {
         uint256 poolAmount = getPoolAmount(dataStore, market, token);
-        uint256 maxPoolAmount = getMaxPoolAmount(dataStore, market, token);
+        uint256 maxPoolAmount = getMaxPoolAmount(dataStore, market.marketToken, token);
 
         if (poolAmount > maxPoolAmount) {
             revert Errors.MaxPoolAmountExceeded(poolAmount, maxPoolAmount);
@@ -1388,8 +1394,9 @@ library MarketUtils {
         address shortToken,
         bool isLong
     ) internal view returns (uint256) {
-        uint256 openInterestUsingLongTokenAsCollateral = getOpenInterest(dataStore, market, longToken, isLong);
-        uint256 openInterestUsingShortTokenAsCollateral = getOpenInterest(dataStore, market, shortToken, isLong);
+        uint256 divisor = getPoolDivisor(longToken, shortToken);
+        uint256 openInterestUsingLongTokenAsCollateral = getOpenInterest(dataStore, market, longToken, isLong, divisor);
+        uint256 openInterestUsingShortTokenAsCollateral = getOpenInterest(dataStore, market, shortToken, isLong, divisor);
 
         return openInterestUsingLongTokenAsCollateral + openInterestUsingShortTokenAsCollateral;
     }
@@ -1403,9 +1410,17 @@ library MarketUtils {
         DataStore dataStore,
         address market,
         address collateralToken,
-        bool isLong
+        bool isLong,
+        uint256 divisor
     ) internal view returns (uint256) {
-        return dataStore.getUint(Keys.openInterestKey(market, collateralToken, isLong));
+        return dataStore.getUint(Keys.openInterestKey(market, collateralToken, isLong)) / divisor;
+    }
+
+    // this is used to divide the values of getPoolAmount and getOpenInterest
+    // if the longToken and shortToken are the same, then these values have to be divided by two
+    // to avoid double counting
+    function getPoolDivisor(address longToken, address shortToken) internal pure returns (uint256) {
+        return longToken == shortToken ? 2 : 1;
     }
 
     // @dev the long and short open interest in tokens for a market
@@ -1990,6 +2005,18 @@ library MarketUtils {
         }
 
         return markets;
+    }
+
+    function validateSwapPath(DataStore dataStore, address[] memory swapPath) internal view returns (Market.Props[] memory) {
+        uint256 maxSwapPathLength = dataStore.getUint(Keys.MAX_SWAP_PATH_LENGTH);
+        if (swapPath.length > maxSwapPathLength) {
+            revert Errors.MaxSwapPathLengthExceeded(swapPath.length, maxSwapPathLength);
+        }
+
+        for (uint256 i = 0; i < swapPath.length; i++) {
+            address marketAddress = swapPath[i];
+            validateEnabledMarket(dataStore, marketAddress);
+        }
     }
 
     // @dev validate that the pending pnl is below the allowed amount
