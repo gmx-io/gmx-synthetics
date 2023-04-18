@@ -265,19 +265,22 @@ library PositionUtils {
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
         bool isIncrease,
+        bool shouldValidateMinPositionSize,
         bool shouldValidateMinCollateralUsd
     ) public view {
         if (position.sizeInUsd() == 0 || position.sizeInTokens() == 0) {
             revert Errors.InvalidPositionSizeValues(position.sizeInUsd(), position.sizeInTokens());
         }
 
-        uint256 minPositionSizeUsd = dataStore.getUint(Keys.MIN_POSITION_SIZE_USD);
-        if (position.sizeInUsd() < minPositionSizeUsd) {
-            revert Errors.MinPositionSize(position.sizeInUsd(), minPositionSizeUsd);
-        }
-
         MarketUtils.validateEnabledMarket(dataStore, market.marketToken);
         MarketUtils.validateMarketCollateralToken(market, position.collateralToken());
+
+        if (shouldValidateMinPositionSize) {
+            uint256 minPositionSizeUsd = dataStore.getUint(Keys.MIN_POSITION_SIZE_USD);
+            if (position.sizeInUsd() < minPositionSizeUsd) {
+                revert Errors.MinPositionSize(position.sizeInUsd(), minPositionSizeUsd);
+            }
+        }
 
         if (isPositionLiquidatable(
             dataStore,
