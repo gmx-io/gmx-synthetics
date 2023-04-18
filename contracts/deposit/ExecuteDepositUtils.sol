@@ -249,9 +249,9 @@ library ExecuteDepositUtils {
         MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(
             params.dataStore,
             _params.market,
+            params.oracle.getPrimaryPrice(_params.market.indexToken),
             _params.tokenIn == _params.market.longToken ? _params.tokenInPrice : _params.tokenOutPrice,
             _params.tokenIn == _params.market.shortToken ? _params.tokenInPrice : _params.tokenOutPrice,
-            params.oracle.getPrimaryPrice(_params.market.indexToken),
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
             true
         );

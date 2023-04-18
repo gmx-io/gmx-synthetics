@@ -424,9 +424,9 @@ library WithdrawalUtils {
         MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(
             params.dataStore,
             market,
+            params.oracle.getPrimaryPrice(market.indexToken),
             prices.longTokenPrice,
             prices.shortTokenPrice,
-            params.oracle.getPrimaryPrice(market.indexToken),
             Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
             false
         );
