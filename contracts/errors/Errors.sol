@@ -194,6 +194,7 @@ library Errors {
 
     // SwapUtils errors
     error InvalidTokenIn(address tokenIn, address market);
+    error InsufficientOutputAmount(uint256 outputAmount, uint256 minOutputAmount);
     error InsufficientSwapOutputAmount(uint256 outputAmount, uint256 minOutputAmount);
     error DuplicatedMarketInSwapPath(address market);
 
