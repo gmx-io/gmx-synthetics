@@ -288,8 +288,8 @@ library MarketUtils {
 
         uint256 poolValue = result.longTokenUsd + result.shortTokenUsd;
 
-        result.totalBorrowingFees = getTotalBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, true);
-        result.totalBorrowingFees += getTotalBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, false);
+        result.totalBorrowingFees = getTotalPendingBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, true);
+        result.totalBorrowingFees += getTotalPendingBorrowingFees(dataStore, market.marketToken, market.longToken, market.shortToken, false);
 
         result.borrowingFeeReceiverFactor = dataStore.getUint(Keys.BORROWING_FEE_RECEIVER_FACTOR);
         poolValue += Precision.applyFactor(result.totalBorrowingFees, result.borrowingFeeReceiverFactor);
@@ -1752,6 +1752,7 @@ library MarketUtils {
     }
 
     // @dev update the total borrowing amount after a position changes size
+    // this is the sum of all position.borrowingFactor * position.sizeInUsd
     // @param dataStore DataStore
     // @param market the market to update
     // @param isLong whether to update the long or short side
@@ -1799,8 +1800,9 @@ library MarketUtils {
         uint256 nextPositionBorrowingFactor
     ) internal view returns (uint256) {
         uint256 totalBorrowing = getTotalBorrowing(dataStore, market, isLong);
-        totalBorrowing -= prevPositionSizeInUsd * prevPositionBorrowingFactor;
-        totalBorrowing += nextPositionSizeInUsd * nextPositionBorrowingFactor;
+        // divide by Precision.FLOAT_PRECISION to reduce the risk of overflow
+        totalBorrowing -= prevPositionSizeInUsd * prevPositionBorrowingFactor / Precision.FLOAT_PRECISION;
+        totalBorrowing += nextPositionSizeInUsd * nextPositionBorrowingFactor / Precision.FLOAT_PRECISION;
 
         return totalBorrowing;
     }
@@ -1868,21 +1870,21 @@ library MarketUtils {
         return Precision.applyFactor(reservedUsdToPoolFactor, borrowingFactor);
     }
 
-    // @dev get the total borrowing fees
+    // @dev get the total pending borrowing fees
     // @param dataStore DataStore
     // @param market the market to check
     // @param longToken the long token of the market
     // @param shortToken the short token of the market
     // @param isLong whether to check the long or short side
-    function getTotalBorrowingFees(DataStore dataStore, address market, address longToken, address shortToken, bool isLong) internal view returns (uint256) {
+    function getTotalPendingBorrowingFees(DataStore dataStore, address market, address longToken, address shortToken, bool isLong) internal view returns (uint256) {
         uint256 openInterest = getOpenInterest(dataStore, market, longToken, shortToken, isLong);
         uint256 cumulativeBorrowingFactor = getCumulativeBorrowingFactor(dataStore, market, isLong);
         uint256 totalBorrowing = getTotalBorrowing(dataStore, market, isLong);
-        return openInterest * cumulativeBorrowingFactor - totalBorrowing;
+        return (openInterest * cumulativeBorrowingFactor) / Precision.FLOAT_PRECISION - totalBorrowing;
     }
 
     // @dev get the total borrowing value
-    // the total borrowing value is the sum of position.borrowingFactor * position.size
+    // the total borrowing value is the sum of position.borrowingFactor * position.size / (10 ^ 30)
     // for all positions of the market
     // if borrowing APR is 1000% for 100 years, the cumulativeBorrowingFactor could be as high as 100 * 1000 * (10 ** 30)
     // since position.size is a USD value with 30 decimals, under this scenario, there may be overflow issues
