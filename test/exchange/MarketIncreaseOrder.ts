@@ -1,7 +1,10 @@
 import { expect } from "chai";
 
+import { usingResult } from "../../utils/use";
+import { getMarketTokenPriceWithPoolValue } from "../../utils/market";
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
+import { getSupplyOf } from "../../utils/token";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, getOrderCount, getOrderKeys, createOrder, executeOrder, handleOrder } from "../../utils/order";
 import { getPositionCount, getAccountPositionCount } from "../../utils/position";
@@ -14,13 +17,13 @@ describe("Exchange.MarketIncreaseOrder", () => {
 
   let fixture;
   let user0, user1;
-  let reader, dataStore, ethUsdMarket, btcUsdMarket, wnt, wbtc, usdc;
+  let reader, dataStore, ethUsdMarket, ethUsdSingleTokenMarket, btcUsdMarket, wnt, wbtc, usdc;
   let executionFee;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1 } = fixture.accounts);
-    ({ reader, dataStore, ethUsdMarket, btcUsdMarket, wnt, wbtc, usdc } = fixture.contracts);
+    ({ reader, dataStore, ethUsdMarket, ethUsdSingleTokenMarket, btcUsdMarket, wnt, wbtc, usdc } = fixture.contracts);
     ({ executionFee } = fixture.props);
 
     await handleDeposit(fixture, {
@@ -366,5 +369,77 @@ describe("Exchange.MarketIncreaseOrder", () => {
         expectedCancellationReason: "LiquidatablePosition",
       },
     });
+  });
+
+  it("single token market", async () => {
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdSingleTokenMarket,
+        shortTokenAmount: expandDecimals(20 * 1000, 6),
+      },
+    });
+
+    expect(await getSupplyOf(ethUsdSingleTokenMarket.marketToken)).eq(expandDecimals(20 * 1000, 18));
+    await usingResult(
+      getMarketTokenPriceWithPoolValue(fixture, {
+        market: ethUsdSingleTokenMarket,
+        longTokenPrice: {
+          min: expandDecimals(1, 6 + 18),
+          max: expandDecimals(1, 6 + 18),
+        },
+      }),
+      async ([marketTokenPrice, poolValueInfo]) => {
+        expect(marketTokenPrice).eq(expandDecimals(1, 30));
+        expect(poolValueInfo.poolValue).eq(expandDecimals(20 * 1000, 30));
+      }
+    );
+
+    await handleOrder(fixture, {
+      create: {
+        market: ethUsdSingleTokenMarket,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: expandDecimals(5000, 6),
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(1000),
+        acceptablePrice: expandDecimals(5001, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+      },
+      execute: {
+        ...getExecuteParams(fixture, { tokens: [wnt, usdc] }),
+      },
+    });
+
+    await usingResult(
+      getMarketTokenPriceWithPoolValue(fixture, {
+        market: ethUsdSingleTokenMarket,
+        longTokenPrice: {
+          min: expandDecimals(1, 6 + 18),
+          max: expandDecimals(1, 6 + 18),
+        },
+      }),
+      async ([marketTokenPrice, poolValueInfo]) => {
+        expect(marketTokenPrice).eq(expandDecimals(1, 30));
+        expect(poolValueInfo.poolValue).eq(expandDecimals(20 * 1000, 30));
+      }
+    );
+
+    await usingResult(
+      getMarketTokenPriceWithPoolValue(fixture, {
+        market: ethUsdSingleTokenMarket,
+        indexTokenPrice: {
+          min: expandDecimals(6000, 4 + 8),
+          max: expandDecimals(6000, 4 + 8),
+        },
+        longTokenPrice: {
+          min: expandDecimals(1, 6 + 18),
+          max: expandDecimals(1, 6 + 18),
+        },
+      }),
+      async ([marketTokenPrice, poolValueInfo]) => {
+        expect(marketTokenPrice).eq(expandDecimals(99, 28));
+        expect(poolValueInfo.poolValue).eq(expandDecimals(19800, 30));
+      }
+    );
   });
 });

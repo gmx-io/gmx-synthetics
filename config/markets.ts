@@ -199,6 +199,9 @@ const config: {
     {
       tokens: { indexToken: "SOL", longToken: "WETH", shortToken: "USDC" },
     },
+    {
+      tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "USDC" },
+    },
   ],
   localhost: [
     {

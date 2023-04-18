@@ -1,6 +1,10 @@
+import { expect } from "chai";
 import { logGasUsage } from "./gas";
+import { contractAt } from "./deploy";
 import { expandDecimals, bigNumberify } from "./math";
 import { executeWithOracleParams } from "./exchange";
+import { parseLogs } from "./event";
+import { getCancellationReason, getErrorString } from "./error";
 
 import * as keys from "./keys";
 
@@ -39,6 +43,9 @@ export async function createWithdrawal(fixture, overrides = {}) {
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
 
   await wnt.mint(withdrawalVault.address, executionFee);
+
+  const marketToken = await contractAt("MarketToken", market.marketToken);
+  await marketToken.connect(account).transfer(withdrawalVault.address, marketTokenAmount);
 
   const params = {
     receiver: receiver.address,
@@ -82,7 +89,30 @@ export async function executeWithdrawal(fixture, overrides = {}) {
     gasUsageLabel,
   };
 
-  await executeWithOracleParams(fixture, params);
+  const txReceipt = await executeWithOracleParams(fixture, params);
+  const logs = parseLogs(fixture, txReceipt);
+
+  const cancellationReason = await getCancellationReason({
+    logs,
+    eventName: "WithdrawalCancelled",
+  });
+
+  if (cancellationReason) {
+    if (overrides.expectedCancellationReason) {
+      expect(cancellationReason.name).eq(overrides.expectedCancellationReason);
+    } else {
+      throw new Error(`Withdrawal was cancelled: ${getErrorString(cancellationReason)}`);
+    }
+  } else {
+    if (overrides.expectedCancellationReason) {
+      throw new Error(
+        `Withdrawal was not cancelled, expected cancellation with reason: ${overrides.expectedCancellationReason}`
+      );
+    }
+  }
+
+  const result = { txReceipt, logs };
+  return result;
 }
 
 export async function handleWithdrawal(fixture, overrides = {}) {

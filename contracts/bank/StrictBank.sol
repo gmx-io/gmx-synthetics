@@ -33,6 +33,18 @@ contract StrictBank is Bank {
         return _recordTransferIn(token);
     }
 
+    // @dev this can be used to update the tokenBalances in case of token burns
+    // or similar balance changes
+    // the prevBalance is not validated to be more than the nextBalance as this
+    // could allow someone to block this call by transferring into the contract
+    // @param token the token to record the burn for
+    // @return the new balance
+    function syncTokenBalance(address token) external onlyController returns (uint256) {
+        uint256 nextBalance = IERC20(token).balanceOf(address(this));
+        tokenBalances[token] = nextBalance;
+        return nextBalance;
+    }
+
     // @dev records a token transfer into the contract
     // @param token the token to record the transfer for
     // @return the amount of tokens transferred in

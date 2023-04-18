@@ -1,7 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import * as keys from "../utils/keys";
 import { setBytes32IfDifferent, setUintIfDifferent } from "../utils/dataStore";
-import { hashString } from "../utils/hash";
 import { DEFAULT_MARKET_TYPE } from "../utils/market";
 import { ethers } from "ethers";
 
@@ -31,6 +30,7 @@ async function getOnchainMarkets(read: (...args: any[]) => any, dataStoreAddress
 
 const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnvironment) => {
   const { execute, get, read, log } = deployments;
+  const generalConfig = await gmx.getGeneral();
 
   const { deployer } = await getNamedAccounts();
 
@@ -195,6 +195,12 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       marketToken,
       false,
       marketConfig.maxPnlFactorForWithdrawalsShorts
+    );
+
+    await setUintIfDifferent(
+      keys.tokenTransferGasLimit(marketToken),
+      generalConfig.tokenTransferGasLimit,
+      `market token transfer gas limit`
     );
 
     for (const name of ["positionFeeFactor", "positionImpactExponentFactor", "fundingFactor"]) {

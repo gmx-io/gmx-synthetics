@@ -155,23 +155,14 @@ library IncreasePositionUtils {
             params.market,
             prices,
             true, // isIncrease
+            true, // shouldValidateMinPositionSize
             true // shouldValidateMinCollateralUsd
         );
 
         if (params.order.sizeDeltaUsd() > 0) {
-            (int256 positionPnlUsd, /* uint256 sizeDeltaInTokens */) = PositionUtils.getPositionPnlUsd(
-                params.contracts.dataStore,
-                params.market,
-                prices,
-                params.position,
-                cache.executionPrice,
-                params.position.sizeInUsd()
-            );
-
             PositionUtils.WillPositionCollateralBeSufficientValues memory positionValues = PositionUtils.WillPositionCollateralBeSufficientValues(
                 params.position.sizeInUsd(), // positionSizeInUsd
                 params.position.collateralAmount(), // positionCollateralAmount
-                positionPnlUsd, // positionPnlUsd
                 0,  // realizedPnlUsd
                 0 // openInterestDelta
             );
