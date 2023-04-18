@@ -623,6 +623,8 @@ library MarketUtils {
     }
 
     // @dev apply a delta to the pool amount
+    // validatePoolAmount is not called in this function since applyDeltaToPoolAmount
+    // is called when receiving fees
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
     // @param market the market to apply to
