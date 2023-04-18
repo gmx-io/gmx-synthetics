@@ -128,7 +128,12 @@ library Errors {
     // BaseOrderUtils errors
     error EmptyOrder();
     error UnsupportedOrderType();
-    error InvalidOrderPrices(
+    error InvalidLimitOrderPrices(
+        uint256 primaryPrice,
+        uint256 triggerPrice,
+        bool shouldValidateSmallerPrimaryPrice
+    );
+    error InvalidStopLossOrderPrices(
         uint256 primaryPrice,
         uint256 secondaryPrice,
         uint256 triggerPrice,

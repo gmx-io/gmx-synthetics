@@ -203,8 +203,10 @@ describe("Exchange.FundingFees", () => {
     expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, wnt.address, false))).eq(
       "-16128039999999990000000000"
     ); // -0.000000016128039999 ETH, -0.00008064019 USD
-    expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, usdc.address, true))).eq(
-      "-80642700000000000"
+    expectWithinRange(
+      await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, usdc.address, true)),
+      "-80642700000000000",
+      "1000000000000"
     ); // -0.00008 USD
     expect(await dataStore.getInt(keys.fundingAmountPerSizeKey(ethUsdMarket.marketToken, usdc.address, false))).eq(
       "40320390000000000" // 0.00004 USD

@@ -114,16 +114,7 @@ export async function createOrder(fixture, overrides) {
 export async function executeOrder(fixture, overrides = {}) {
   const { wnt, usdc } = fixture.contracts;
   const { gasUsageLabel, oracleBlockNumberOffset } = overrides;
-  const {
-    reader,
-    dataStore,
-    orderHandler,
-    baseOrderUtils,
-    increaseOrderUtils,
-    increasePositionUtils,
-    positionUtils,
-    marketUtils,
-  } = fixture.contracts;
+  const { reader, dataStore, orderHandler } = fixture.contracts;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];

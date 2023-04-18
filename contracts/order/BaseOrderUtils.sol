@@ -225,45 +225,62 @@ library BaseOrderUtils {
         }
 
         if (orderType == Order.OrderType.LimitIncrease ||
-            orderType == Order.OrderType.LimitDecrease ||
-            orderType == Order.OrderType.StopLossDecrease
+            orderType == Order.OrderType.LimitDecrease
         ) {
+            uint256 primaryPrice = oracle.getPrimaryPrice(indexToken).pickPrice(shouldUseMaxPrice);
+
+            // for limit increase orders:
+            //      - long: validate primaryPrice < triggerPrice
+            //      - short: validate primaryPrice > triggerPrice
+            // for limit decrease orders:
+            //      - long: validate primaryPrice > triggerPrice
+            //      - short: validate primaryPrice < triggerPrice
+            bool shouldValidateSmallerPrimaryPrice = shouldUseMaxPrice;
+
+            bool ok = shouldValidateSmallerPrimaryPrice ? primaryPrice <= triggerPrice : primaryPrice >= triggerPrice;
+
+            if (!ok) {
+                revert Errors.InvalidLimitOrderPrices(primaryPrice, triggerPrice, shouldValidateSmallerPrimaryPrice);
+            }
+
+            if (shouldValidateSmallerPrimaryPrice) {
+                oracle.setCustomPrice(indexToken, Price.Props(
+                    primaryPrice, // min price that order can be executed with
+                    triggerPrice // max price that order can be executed with
+                ));
+            } else {
+                oracle.setCustomPrice(indexToken, Price.Props(
+                    triggerPrice, // min price that order can be executed with
+                    primaryPrice // max price that order can be executed with
+                ));
+            }
+
+            return;
+        }
+
+        if (orderType == Order.OrderType.StopLossDecrease) {
             uint256 primaryPrice = oracle.getPrimaryPrice(indexToken).pickPrice(shouldUseMaxPrice);
             uint256 secondaryPrice = oracle.getSecondaryPrice(indexToken).pickPrice(shouldUseMaxPrice);
 
-            bool shouldValidateAscendingPrice;
-            if (orderType == Order.OrderType.LimitIncrease || orderType == Order.OrderType.StopLossDecrease) {
-                // for limit increase / stop-loss decrease order:
-                //     - long: validate descending price
-                //     - short: validate ascending price
-                shouldValidateAscendingPrice = !isLong;
-            } else {
-                // for limit decrease order:
-                //     - long: validate ascending price
-                //     - short: validate descending price
-                shouldValidateAscendingPrice = isLong;
+            // for stop-loss decrease orders:
+            //     - long: validate descending price
+            //     - short: validate ascending price
+            bool shouldValidateAscendingPrice = !isLong;
+
+            bool ok = shouldValidateAscendingPrice ?
+                (primaryPrice <= triggerPrice && triggerPrice <= secondaryPrice) :
+                (primaryPrice >= triggerPrice && triggerPrice >= secondaryPrice);
+
+            if (!ok) {
+                revert Errors.InvalidStopLossOrderPrices(primaryPrice, secondaryPrice, triggerPrice, shouldValidateAscendingPrice);
             }
 
             if (shouldValidateAscendingPrice) {
-                // check that the earlier price (primaryPrice) is smaller than the triggerPrice
-                // and that the later price (secondaryPrice) is larger than the triggerPrice
-                bool ok = primaryPrice <= triggerPrice && triggerPrice <= secondaryPrice;
-                if (!ok) {
-                    revert Errors.InvalidOrderPrices(primaryPrice, secondaryPrice, triggerPrice, shouldValidateAscendingPrice);
-                }
-
                 oracle.setCustomPrice(indexToken, Price.Props(
                     triggerPrice, // min price that order can be executed with
                     secondaryPrice // max price that order can be executed with
                 ));
             } else {
-                // check that the earlier price (primaryPrice) is larger than the triggerPrice
-                // and that the later price (secondaryPrice) is smaller than the triggerPrice
-                bool ok = primaryPrice >= triggerPrice && triggerPrice >= secondaryPrice;
-                if (!ok) {
-                    revert Errors.InvalidOrderPrices(primaryPrice, secondaryPrice, triggerPrice, shouldValidateAscendingPrice);
-                }
-
                 oracle.setCustomPrice(indexToken, Price.Props(
                     secondaryPrice, // min price that order can be executed with
                     triggerPrice // max price that order can be executed with

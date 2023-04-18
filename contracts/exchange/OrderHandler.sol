@@ -228,15 +228,6 @@ contract OrderHandler is BaseOrderHandler {
 
         if (
             OracleUtils.isOracleError(errorSelector) ||
-            errorSelector == Errors.EmptyOrder.selector ||
-            errorSelector == Errors.DisabledFeature.selector ||
-            errorSelector == Errors.InvalidKeeperForFrozenOrder.selector ||
-            errorSelector == Errors.UnsupportedOrderType.selector ||
-            // InvalidOrderPrices error should only be raised for limit, trigger orders
-            // it should not be raised for market orders
-            // The transaction is reverted in this case since the oracle prices do not fulfill
-            // the specified trigger price
-            errorSelector == Errors.InvalidOrderPrices.selector ||
             // if the order is already frozen, revert with the custom error to provide more information
             // on why the order cannot be executed
             order.isFrozen() ||
@@ -246,7 +237,16 @@ contract OrderHandler is BaseOrderHandler {
             // being reverted instead
             // if the position is created or increased later, the oracle prices used to fulfill the order
             // must be after the position was last increased, this is validated in DecreaseOrderUtils
-            (!isMarketOrder && errorSelector == Errors.EmptyPosition.selector)
+            (!isMarketOrder && errorSelector == Errors.EmptyPosition.selector) ||
+            errorSelector == Errors.EmptyOrder.selector ||
+            errorSelector == Errors.DisabledFeature.selector ||
+            errorSelector == Errors.InvalidKeeperForFrozenOrder.selector ||
+            errorSelector == Errors.UnsupportedOrderType.selector ||
+            // the transaction is reverted for InvalidLimitOrderPrices and
+            // InvalidStopLossOrderPrices errors since since the oracle prices
+            // do not fulfill the specified trigger price
+            errorSelector == Errors.InvalidLimitOrderPrices.selector ||
+            errorSelector == Errors.InvalidStopLossOrderPrices.selector
         ) {
             ErrorUtils.revertWithCustomError(reasonBytes);
         }
