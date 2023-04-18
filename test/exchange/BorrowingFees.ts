@@ -94,5 +94,55 @@ describe("Exchange.BorrowingFees", () => {
 
     expect(position0.pendingBorrowingFees).eq("967683200000000000000000000000000"); // $967.6832
     expect(position1.pendingBorrowingFees).eq("10886400000000000000000000000000000"); // $10,886.4
+
+    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, true))).eq(0);
+    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, false))).eq(0);
+
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(1, 18),
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(1000),
+        acceptablePrice: expandDecimals(5050, 12),
+        executionFee: expandDecimals(1, 15),
+        minOutputAmount: 0,
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+        shouldUnwrapNativeToken: false,
+      },
+    });
+
+    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, true))).eq(
+      "4838432000000000000000000000"
+    );
+    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, false))).eq(0);
+
+    await handleOrder(fixture, {
+      create: {
+        account: user1,
+        market: ethUsdMarket,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: expandDecimals(1000, 6),
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(1000),
+        acceptablePrice: expandDecimals(4950, 12),
+        executionFee: expandDecimals(1, 15),
+        minOutputAmount: 0,
+        orderType: OrderType.MarketIncrease,
+        isLong: false,
+        shouldUnwrapNativeToken: false,
+      },
+    });
+
+    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, true))).eq(
+      "4838432000000000000000000000"
+    );
+
+    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, false))).eq(
+      "72576480000000000000000000000"
+    );
   });
 });

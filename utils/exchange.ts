@@ -1,6 +1,6 @@
 import { logGasUsage } from "./gas";
 import { bigNumberify, expandDecimals } from "./math";
-import { getOracleParams, TOKEN_ORACLE_TYPES } from "./oracle";
+import { getOracleParams, getOracleParamsForSimulation, TOKEN_ORACLE_TYPES } from "./oracle";
 
 export function getExecuteParams(fixture, { tokens }) {
   const { wnt, wbtc, usdc } = fixture.contracts;
@@ -95,7 +95,12 @@ export async function executeWithOracleParams(fixture, overrides) {
     priceFeedTokens: [],
   };
 
-  const oracleParams = await getOracleParams(args);
+  let oracleParams;
+  if (overrides.simulate) {
+    oracleParams = await getOracleParamsForSimulation(args);
+  } else {
+    oracleParams = await getOracleParams(args);
+  }
 
   return await logGasUsage({
     tx: execute(key, oracleParams),

@@ -1,6 +1,10 @@
+import { expect } from "chai";
+import { mine } from "@nomicfoundation/hardhat-network-helpers";
+
 import { logGasUsage } from "./gas";
 import { bigNumberify, expandDecimals } from "./math";
 import { executeWithOracleParams } from "./exchange";
+import { getCancellationReason } from "./error";
 
 import * as keys from "./keys";
 
@@ -105,8 +109,8 @@ export async function createOrder(fixture, overrides) {
 
 export async function executeOrder(fixture, overrides = {}) {
   const { wnt, usdc } = fixture.contracts;
-  const { gasUsageLabel } = overrides;
-  const { reader, dataStore, orderHandler } = fixture.contracts;
+  const { gasUsageLabel, oracleBlockNumberOffset } = overrides;
+  const { reader, dataStore, orderHandler, increaseOrderUtils } = fixture.contracts;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
@@ -114,6 +118,8 @@ export async function executeOrder(fixture, overrides = {}) {
   const orderKeys = await getOrderKeys(dataStore, 0, 10);
   const orderKey = orderKeys[orderKeys.length - 1];
   const order = await reader.getOrder(dataStore.address, orderKey);
+  let oracleBlockNumber = overrides.oracleBlockNumber || order.numbers.updatedAtBlock;
+  oracleBlockNumber = bigNumberify(oracleBlockNumber);
 
   const oracleBlocks = overrides.oracleBlocks;
   const minOracleBlockNumbers = overrides.minOracleBlockNumbers;
@@ -121,14 +127,23 @@ export async function executeOrder(fixture, overrides = {}) {
   const oracleTimestamps = overrides.oracleTimestamps;
   const blockHashes = overrides.blockHashes;
 
+  if (oracleBlockNumberOffset) {
+    if (oracleBlockNumberOffset > 0) {
+      mine(oracleBlockNumberOffset);
+    }
+
+    oracleBlockNumber = oracleBlockNumber.add(oracleBlockNumberOffset);
+  }
+
   const params = {
     key: orderKey,
-    oracleBlockNumber: order.numbers.updatedAtBlock,
+    oracleBlockNumber,
     tokens,
     precisions,
     minPrices,
     maxPrices,
-    execute: orderHandler.executeOrder,
+    simulate: overrides.simulate,
+    execute: overrides.simulate ? orderHandler.simulateExecuteOrder : orderHandler.executeOrder,
     gasUsageLabel,
     oracleBlocks,
     minOracleBlockNumbers,
@@ -137,7 +152,23 @@ export async function executeOrder(fixture, overrides = {}) {
     blockHashes,
   };
 
-  return await executeWithOracleParams(fixture, params);
+  const txReceipt = await executeWithOracleParams(fixture, params);
+  const cancellationReason = await getCancellationReason({
+    fixture,
+    txReceipt,
+    eventName: "OrderCancelled",
+    contracts: [orderHandler, increaseOrderUtils],
+  });
+
+  if (cancellationReason) {
+    if (overrides.expectedCancellationReason) {
+      expect(cancellationReason.name).eq(overrides.expectedCancellationReason);
+    } else {
+      throw new Error(`Order was cancelled: ${JSON.stringify(cancellationReason)}`);
+    }
+  }
+
+  return txReceipt;
 }
 
 export async function handleOrder(fixture, overrides = {}) {

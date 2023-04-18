@@ -141,6 +141,13 @@ library DecreasePositionUtils {
 
             // if the remaining collateral will be below the min collateral usd value, then close the position
             if (estimatedRemainingCollateralUsd < params.contracts.dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256()) {
+                OrderEventUtils.emitOrderSizeDeltaAutoUpdated(
+                    params.contracts.eventEmitter,
+                    params.orderKey,
+                    params.order.sizeDeltaUsd(),
+                    params.position.sizeInUsd()
+                );
+
                 params.order.setSizeDeltaUsd(params.position.sizeInUsd());
             }
         }
