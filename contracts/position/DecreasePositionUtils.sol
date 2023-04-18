@@ -161,6 +161,8 @@ library DecreasePositionUtils {
             params.order.setDecreasePositionSwapType(Order.DecreasePositionSwapType.NoSwap);
         }
 
+        PositionUtils.updateFundingAndBorrowingState(params, cache.prices);
+
         if (BaseOrderUtils.isLiquidationOrder(params.order.orderType()) && !PositionUtils.isPositionLiquidatable(
             params.contracts.dataStore,
             params.contracts.referralStorage,
@@ -172,8 +174,6 @@ library DecreasePositionUtils {
         )) {
             revert Errors.PositionShouldNotBeLiquidated();
         }
-
-        PositionUtils.updateFundingAndBorrowingState(params, cache.prices);
 
         cache.initialCollateralAmount = params.position.collateralAmount();
         (
