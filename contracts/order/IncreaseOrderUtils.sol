@@ -56,8 +56,7 @@ library IncreaseOrderUtils {
             params.minOracleBlockNumbers,
             params.maxOracleBlockNumbers,
             params.order.orderType(),
-            params.order.updatedAtBlock(),
-            position.increasedAtBlock()
+            params.order.updatedAtBlock()
         );
 
         IncreasePositionUtils.increasePosition(
@@ -80,13 +79,11 @@ library IncreaseOrderUtils {
     // @param maxOracleBlockNumbers the max oracle block numbers
     // @param orderType the order type
     // @param orderUpdatedAtBlock the block at which the order was last updated
-    // @param positionIncreasedAtBlock the block at which the position was last increased
     function validateOracleBlockNumbers(
         uint256[] memory minOracleBlockNumbers,
         uint256[] memory maxOracleBlockNumbers,
         Order.OrderType orderType,
-        uint256 orderUpdatedAtBlock,
-        uint256 positionIncreasedAtBlock
+        uint256 orderUpdatedAtBlock
     ) internal pure {
         if (orderType == Order.OrderType.MarketIncrease) {
             OracleUtils.validateBlockNumberWithinRange(
@@ -98,9 +95,15 @@ library IncreaseOrderUtils {
         }
 
         if (orderType == Order.OrderType.LimitIncrease) {
-            uint256 laterBlock = orderUpdatedAtBlock > positionIncreasedAtBlock ? orderUpdatedAtBlock : positionIncreasedAtBlock;
-            if (!minOracleBlockNumbers.areGreaterThan(laterBlock)) {
-                revert Errors.OracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, laterBlock);
+            // since the oracle blocks are only validated against the orderUpdatedAtBlock
+            // it is possible to cause a limit increase order to become executable by
+            // having the order have an initial collateral amount of zero then opening
+            // a position and depositing collateral if the limit order is desired to be executed
+            // for this case, when the limit order price is reached, the order should be frozen
+            // the frozen order keepers should only execute frozen orders if the latest prices
+            // fulfill the limit price
+            if (!minOracleBlockNumbers.areGreaterThan(orderUpdatedAtBlock)) {
+                revert Errors.OracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, orderUpdatedAtBlock);
             }
             return;
         }
