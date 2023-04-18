@@ -276,7 +276,7 @@ library ExecuteDepositUtils {
 
         uint256 mintAmount;
 
-        int256 _poolValue = MarketUtils.getPoolValue(
+        MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(
             params.dataStore,
             _params.market,
             _params.tokenIn == _params.market.longToken ? _params.tokenInPrice : _params.tokenOutPrice,
@@ -286,13 +286,20 @@ library ExecuteDepositUtils {
             true
         );
 
-        if (_poolValue < 0) {
-            revert InvalidPoolValueForDeposit(_poolValue);
+        if (poolValueInfo.poolValue < 0) {
+            revert InvalidPoolValueForDeposit(poolValueInfo.poolValue);
         }
 
-        uint256 poolValue = _poolValue.toUint256();
+        uint256 poolValue = poolValueInfo.poolValue.toUint256();
 
-        uint256 supply = MarketUtils.getMarketTokenSupply(MarketToken(payable(_params.market.marketToken)));
+        uint256 marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(_params.market.marketToken)));
+
+        MarketEventUtils.emitMarketPoolValueInfo(
+            params.eventEmitter,
+            _params.market.marketToken,
+            poolValueInfo,
+            marketTokensSupply
+        );
 
         if (_params.priceImpactUsd > 0) {
             // when there is a positive price impact factor,
@@ -319,7 +326,7 @@ library ExecuteDepositUtils {
             mintAmount += MarketUtils.usdToMarketTokenAmount(
                 positiveImpactAmount.toUint256() * _params.tokenOutPrice.min,
                 poolValue,
-                supply
+                marketTokensSupply
             );
 
             // deposit the token out, that was withdrawn from the impact pool, to mint market tokens
@@ -350,7 +357,7 @@ library ExecuteDepositUtils {
         mintAmount += MarketUtils.usdToMarketTokenAmount(
             fees.amountAfterFees * _params.tokenInPrice.min,
             poolValue,
-            supply
+            marketTokensSupply
         );
 
         MarketUtils.applyDeltaToPoolAmount(
