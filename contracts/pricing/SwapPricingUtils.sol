@@ -104,7 +104,8 @@ library SwapPricingUtils {
 
         PoolParams memory poolParamsForVirtualInventory = getNextPoolAmountsUsdForVirtualInventory(params);
         int256 priceImpactUsdForVirtualInventory = _getPriceImpactUsd(params.dataStore, params.market, poolParamsForVirtualInventory);
-        int256 thresholdPriceImpactUsd = Precision.applyFactor(params.usdDeltaForTokenA.abs() + params.usdDeltaForTokenB.abs(), thresholdImpactFactorForVirtualInventory);
+        uint256 largerUsdDelta = params.usdDeltaForTokenA.abs() > params.usdDeltaForTokenB.abs() ? params.usdDeltaForTokenA.abs() : params.usdDeltaForTokenB.abs();
+        int256 thresholdPriceImpactUsd = Precision.applyFactor(largerUsdDelta, thresholdImpactFactorForVirtualInventory);
 
         if (priceImpactUsdForVirtualInventory > thresholdPriceImpactUsd) {
             return priceImpactUsd;

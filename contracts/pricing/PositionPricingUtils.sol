@@ -223,6 +223,8 @@ library PositionPricingUtils {
         int256 priceImpactUsdForVirtualInventory = _getPriceImpactUsd(params.dataStore, params.market.marketToken, openInterestParamsForVirtualInventory);
         int256 thresholdPriceImpactUsd = Precision.applyFactor(params.usdDelta.abs(), thresholdImpactFactorForVirtualInventory);
 
+        // the thresholdPositionImpactFactorForVirtualInventoryKey can be set to small a negative value, e.g. -0.1%
+        // if the price impact for virtual inventory is small, e.g. -0.08%, the normal price impact is used instead, e.g. -0.02%
         if (priceImpactUsdForVirtualInventory > thresholdPriceImpactUsd) {
             return priceImpactUsd;
         }
