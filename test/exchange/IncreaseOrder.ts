@@ -5,7 +5,8 @@ import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, getOrderCount, getOrderKeys, createOrder, executeOrder, handleOrder } from "../../utils/order";
 import { getPositionCount, getAccountPositionCount } from "../../utils/position";
-import { hashString } from "../../utils/hash";
+import { getExecuteParams } from "../../utils/exchange";
+import { validateCancellationReason } from "../../utils/error";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.IncreaseOrder", () => {
@@ -13,20 +14,30 @@ describe("Exchange.IncreaseOrder", () => {
 
   let fixture;
   let user0, user1;
-  let reader, dataStore, referralStorage, ethUsdMarket, wnt;
+  let reader, dataStore, increaseOrderUtils, ethUsdMarket, btcUsdMarket, wnt, wbtc, usdc;
   let executionFee;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1 } = fixture.accounts);
-    ({ reader, dataStore, referralStorage, ethUsdMarket, wnt } = fixture.contracts);
+    ({ reader, dataStore, increaseOrderUtils, ethUsdMarket, btcUsdMarket, wnt, wbtc, usdc } = fixture.contracts);
     ({ executionFee } = fixture.props);
 
     await handleDeposit(fixture, {
       create: {
         market: ethUsdMarket,
         longTokenAmount: expandDecimals(1000, 18),
+        shortTokenAmount: expandDecimals(50 * 1000, 6),
       },
+    });
+
+    await handleDeposit(fixture, {
+      create: {
+        market: btcUsdMarket,
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(50 * 1000, 6),
+      },
+      execute: getExecuteParams(fixture, { tokens: [wbtc, usdc] }),
     });
   });
 
@@ -69,6 +80,41 @@ describe("Exchange.IncreaseOrder", () => {
     expect(order.numbers.updatedAtBlock).eq(block.number);
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
+  });
+
+  it("executeOrder validations", async () => {
+    const params = {
+      account: user0,
+      market: ethUsdMarket,
+      initialCollateralToken: wnt,
+      initialCollateralDeltaAmount: expandDecimals(1, 18),
+      swapPath: [],
+      sizeDeltaUsd: decimalToFloat(1000),
+      acceptablePrice: expandDecimals(5001, 12),
+      executionFee: expandDecimals(1, 15),
+      minOutputAmount: 0,
+      orderType: OrderType.MarketIncrease,
+      isLong: true,
+      shouldUnwrapNativeToken: false,
+    };
+
+    const handleOrderResult = await handleOrder(fixture, {
+      create: {
+        ...params,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: expandDecimals(5000, 6),
+        swapPath: [btcUsdMarket.marketToken],
+      },
+      execute: getExecuteParams(fixture, { tokens: [wnt, wbtc, usdc] }),
+    });
+
+    validateCancellationReason({
+      fixture,
+      txReceipt: handleOrderResult.executeResult,
+      eventName: "OrderCancelled",
+      contract: increaseOrderUtils,
+      expectedReason: "InvalidCollateralToken",
+    });
   });
 
   it("executeOrder", async () => {

@@ -37,11 +37,6 @@ describe("Exchange.AdlOrder", () => {
         orderType: OrderType.MarketIncrease,
         isLong: true,
       },
-      execute: {
-        tokens: [wnt.address, usdc.address],
-        minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-        maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-      },
     });
 
     const maxPnlFactorForAdlKey = keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_ADL, ethUsdMarket.marketToken, true);

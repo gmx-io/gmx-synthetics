@@ -97,7 +97,7 @@ export async function createOrder(fixture, overrides) {
     referralCode,
   };
 
-  await logGasUsage({
+  return await logGasUsage({
     tx: orderHandler.connect(sender).createOrder(account.address, params),
     label: gasUsageLabel,
   });
@@ -111,8 +111,9 @@ export async function executeOrder(fixture, overrides = {}) {
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
-  const orderKeys = await getOrderKeys(dataStore, 0, 1);
-  const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+  const orderKeys = await getOrderKeys(dataStore, 0, 10);
+  const orderKey = orderKeys[orderKeys.length - 1];
+  const order = await reader.getOrder(dataStore.address, orderKey);
 
   const oracleBlocks = overrides.oracleBlocks;
   const minOracleBlockNumbers = overrides.minOracleBlockNumbers;
@@ -121,7 +122,7 @@ export async function executeOrder(fixture, overrides = {}) {
   const blockHashes = overrides.blockHashes;
 
   const params = {
-    key: orderKeys[0],
+    key: orderKey,
     oracleBlockNumber: order.numbers.updatedAtBlock,
     tokens,
     precisions,
@@ -136,10 +137,11 @@ export async function executeOrder(fixture, overrides = {}) {
     blockHashes,
   };
 
-  await executeWithOracleParams(fixture, params);
+  return await executeWithOracleParams(fixture, params);
 }
 
 export async function handleOrder(fixture, overrides = {}) {
-  await createOrder(fixture, overrides.create);
-  await executeOrder(fixture, overrides.execute);
+  const createResult = await createOrder(fixture, overrides.create);
+  const executeResult = await executeOrder(fixture, overrides.execute);
+  return { createResult, executeResult };
 }

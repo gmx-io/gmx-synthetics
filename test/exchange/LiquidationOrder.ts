@@ -41,8 +41,6 @@ describe("Exchange.LiquidationOrder", () => {
       },
       execute: {
         tokens: [wnt.address, usdc.address],
-        minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-        maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
       },
     });
 
