@@ -258,32 +258,26 @@ contract Reader {
 
     function getNetPnl(
         DataStore dataStore,
-        address market,
-        address longToken,
-        address shortToken,
+        Market.Props memory market,
         Price.Props memory indexTokenPrice,
         bool maximize
     ) external view returns (int256) {
-        return MarketUtils.getNetPnl(dataStore, market, longToken, shortToken, indexTokenPrice, maximize);
+        return MarketUtils.getNetPnl(dataStore, market, indexTokenPrice, maximize);
     }
 
     function getPnl(
         DataStore dataStore,
-        address market,
-        address longToken,
-        address shortToken,
+        Market.Props memory market,
         Price.Props memory indexTokenPrice,
         bool isLong,
         bool maximize
     ) external view returns (int256) {
-        return MarketUtils.getPnl(dataStore, market, longToken, shortToken, indexTokenPrice, isLong, maximize);
+        return MarketUtils.getPnl(dataStore, market, indexTokenPrice, isLong, maximize);
     }
 
     function getOpenInterestWithPnl(
         DataStore dataStore,
-        address market,
-        address longToken,
-        address shortToken,
+        Market.Props memory market,
         Price.Props memory indexTokenPrice,
         bool isLong,
         bool maximize
@@ -292,8 +286,6 @@ contract Reader {
             MarketUtils.getOpenInterestWithPnl(
                 dataStore,
                 market,
-                longToken,
-                shortToken,
                 indexTokenPrice,
                 isLong,
                 maximize

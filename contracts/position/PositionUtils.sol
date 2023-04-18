@@ -186,9 +186,7 @@ library PositionUtils {
             cache.poolTokenUsd = cache.poolTokenAmount * cache.poolTokenPrice;
             cache.poolPnl = MarketUtils.getPnl(
                 dataStore,
-                market.marketToken,
-                market.longToken,
-                market.shortToken,
+                market,
                 indexTokenPrice,
                 position.isLong(),
                 true
@@ -344,10 +342,7 @@ library PositionUtils {
         cache.priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
                 dataStore,
-                market.marketToken,
-                market.indexToken,
-                market.longToken,
-                market.shortToken,
+                market,
                 cache.usdDeltaForPriceImpact,
                 position.isLong()
             )
@@ -426,9 +421,7 @@ library PositionUtils {
 
         uint256 minCollateralFactor = MarketUtils.getMinCollateralFactorForOpenInterest(
             dataStore,
-            market.marketToken,
-            market.longToken,
-            market.shortToken,
+            market,
             values.openInterestDelta,
             isLong
         );
@@ -526,8 +519,7 @@ library PositionUtils {
             MarketUtils.applyDeltaToOpenInterest(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
-                params.market.marketToken,
-                params.market.indexToken,
+                params.market,
                 params.position.collateralToken(),
                 params.position.isLong(),
                 sizeDeltaUsd

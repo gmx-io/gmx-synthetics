@@ -267,10 +267,7 @@ library DecreasePositionCollateralUtils {
         int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
                 params.contracts.dataStore,
-                params.market.marketToken,
-                params.market.indexToken,
-                params.market.longToken,
-                params.market.shortToken,
+                params.market,
                 -sizeDeltaUsd.toInt256(),
                 params.order.isLong()
             )

@@ -319,9 +319,7 @@ library MarketUtils {
 
         result.longPnl = getPnl(
             dataStore,
-            market.marketToken,
-            market.longToken,
-            market.shortToken,
+            market,
             indexTokenPrice,
             true,
             !maximize
@@ -338,9 +336,7 @@ library MarketUtils {
 
         result.shortPnl = getPnl(
             dataStore,
-            market.marketToken,
-            market.longToken,
-            market.shortToken,
+            market,
             indexTokenPrice,
             false,
             !maximize
@@ -371,14 +367,12 @@ library MarketUtils {
     // @return the net pending pnl for a market
     function getNetPnl(
         DataStore dataStore,
-        address market,
-        address longToken,
-        address shortToken,
+        Market.Props memory market,
         Price.Props memory indexTokenPrice,
         bool maximize
     ) internal view returns (int256) {
-        int256 longPnl = getPnl(dataStore, market, longToken, shortToken, indexTokenPrice, true, maximize);
-        int256 shortPnl = getPnl(dataStore, market, longToken, shortToken, indexTokenPrice, false, maximize);
+        int256 longPnl = getPnl(dataStore, market, indexTokenPrice, true, maximize);
+        int256 shortPnl = getPnl(dataStore, market, indexTokenPrice, false, maximize);
 
         return longPnl + shortPnl;
     }
@@ -416,9 +410,7 @@ library MarketUtils {
     // @param maximize whether to maximize or minimize the pnl
     function getPnl(
         DataStore dataStore,
-        address market,
-        address longToken,
-        address shortToken,
+        Market.Props memory market,
         uint256 indexTokenPrice,
         bool isLong,
         bool maximize
@@ -428,8 +420,6 @@ library MarketUtils {
         return getPnl(
             dataStore,
             market,
-            longToken,
-            shortToken,
             _indexTokenPrice,
             isLong,
             maximize
@@ -447,15 +437,13 @@ library MarketUtils {
     // @return the pending pnl for a market for either longs or shorts
     function getPnl(
         DataStore dataStore,
-        address market,
-        address longToken,
-        address shortToken,
+        Market.Props memory market,
         Price.Props memory indexTokenPrice,
         bool isLong,
         bool maximize
     ) internal view returns (int256) {
-        int256 openInterest = getOpenInterest(dataStore, market, longToken, shortToken, isLong).toInt256();
-        uint256 openInterestInTokens = getOpenInterestInTokens(dataStore, market, longToken, shortToken, isLong);
+        int256 openInterest = getOpenInterest(dataStore, market, isLong).toInt256();
+        uint256 openInterestInTokens = getOpenInterestInTokens(dataStore, market, isLong);
         if (openInterest == 0 || openInterestInTokens == 0) {
             return 0;
         }
@@ -770,18 +758,17 @@ library MarketUtils {
     function applyDeltaToOpenInterest(
         DataStore dataStore,
         EventEmitter eventEmitter,
-        address market,
-        address indexToken,
+        Market.Props memory market,
         address collateralToken,
         bool isLong,
         int256 delta
     ) internal returns (uint256) {
-        if (indexToken == address(0)) {
-            revert Errors.OpenInterestCannotBeUpdatedForSwapOnlyMarket(market);
+        if (market.indexToken == address(0)) {
+            revert Errors.OpenInterestCannotBeUpdatedForSwapOnlyMarket(market.marketToken);
         }
 
         uint256 nextValue = dataStore.applyDeltaToUint(
-            Keys.openInterestKey(market, collateralToken, isLong),
+            Keys.openInterestKey(market.marketToken, collateralToken, isLong),
             delta,
             "Invalid state: negative open interest"
         );
@@ -797,11 +784,19 @@ library MarketUtils {
         applyDeltaToVirtualInventoryForPositions(
             dataStore,
             eventEmitter,
-            indexToken,
+            market.indexToken,
             isLong ? -delta : delta
         );
 
-        MarketEventUtils.emitOpenInterestUpdated(eventEmitter, market, collateralToken, isLong, delta, nextValue);
+        if (delta > 0) {
+            validateOpenInterest(
+                dataStore,
+                market,
+                isLong
+            );
+        }
+
+        MarketEventUtils.emitOpenInterestUpdated(eventEmitter, market.marketToken, collateralToken, isLong, delta, nextValue);
 
         return nextValue;
     }
@@ -1124,9 +1119,7 @@ library MarketUtils {
 
         int256 pnl = getPnl(
             dataStore,
-            market.marketToken,
-            market.longToken,
-            market.shortToken,
+            market,
             prices.indexTokenPrice,
             isLong,
             maximize
@@ -1137,13 +1130,11 @@ library MarketUtils {
 
     function validateOpenInterest(
         DataStore dataStore,
-        address market,
-        address longToken,
-        address shortToken,
+        Market.Props memory market,
         bool isLong
     ) internal view {
-        uint256 openInterest = getOpenInterest(dataStore, market, longToken, shortToken, isLong);
-        uint256 maxOpenInterest = getMaxOpenInterest(dataStore, market, isLong);
+        uint256 openInterest = getOpenInterest(dataStore, market, isLong);
+        uint256 maxOpenInterest = getMaxOpenInterest(dataStore, market.marketToken, isLong);
 
         if (openInterest > maxOpenInterest) {
             revert Errors.MaxOpenInterestExceeded(openInterest, maxOpenInterest);
@@ -1327,13 +1318,13 @@ library MarketUtils {
             // this also works for e.g. a SOL / USD market with long collateral token as WETH
             // if the price of SOL increases more than the price of ETH, additional amounts would be
             // automatically reserved
-            uint256 openInterestInTokens = getOpenInterestInTokens(dataStore, market.marketToken, market.longToken, market.shortToken, isLong);
+            uint256 openInterestInTokens = getOpenInterestInTokens(dataStore, market, isLong);
             reservedUsd = openInterestInTokens * prices.indexTokenPrice.max;
         } else {
             // for shorts use the open interest as the reserved USD value
             // this works well for e.g. an ETH / USD market with short collateral token as USDC
             // the available amount to be reserved would not change with the price of ETH
-            reservedUsd = getOpenInterest(dataStore, market.marketToken, market.longToken, market.shortToken, isLong);
+            reservedUsd = getOpenInterest(dataStore, market, isLong);
         }
 
         return reservedUsd;
@@ -1440,12 +1431,10 @@ library MarketUtils {
     // @param shortToken the short token of the market
     function getOpenInterest(
         DataStore dataStore,
-        address market,
-        address longToken,
-        address shortToken
+        Market.Props memory market
     ) internal view returns (uint256) {
-        uint256 longOpenInterest = getOpenInterest(dataStore, market, longToken, shortToken, true);
-        uint256 shortOpenInterest = getOpenInterest(dataStore, market, longToken, shortToken, false);
+        uint256 longOpenInterest = getOpenInterest(dataStore, market, true);
+        uint256 shortOpenInterest = getOpenInterest(dataStore, market, false);
 
         return longOpenInterest + shortOpenInterest;
     }
@@ -1459,14 +1448,12 @@ library MarketUtils {
     // @return the long or short open interest for a market
     function getOpenInterest(
         DataStore dataStore,
-        address market,
-        address longToken,
-        address shortToken,
+        Market.Props memory market,
         bool isLong
     ) internal view returns (uint256) {
-        uint256 divisor = getPoolDivisor(longToken, shortToken);
-        uint256 openInterestUsingLongTokenAsCollateral = getOpenInterest(dataStore, market, longToken, isLong, divisor);
-        uint256 openInterestUsingShortTokenAsCollateral = getOpenInterest(dataStore, market, shortToken, isLong, divisor);
+        uint256 divisor = getPoolDivisor(market.longToken, market.shortToken);
+        uint256 openInterestUsingLongTokenAsCollateral = getOpenInterest(dataStore, market.marketToken, market.longToken, isLong, divisor);
+        uint256 openInterestUsingShortTokenAsCollateral = getOpenInterest(dataStore, market.marketToken, market.shortToken, isLong, divisor);
 
         return openInterestUsingLongTokenAsCollateral + openInterestUsingShortTokenAsCollateral;
     }
@@ -1501,13 +1488,11 @@ library MarketUtils {
     // @param isLong whether to check the long or short side
     function getOpenInterestInTokens(
         DataStore dataStore,
-        address market,
-        address longToken,
-        address shortToken,
+        Market.Props memory market,
         bool isLong
     ) internal view returns (uint256) {
-        uint256 openInterestUsingLongTokenAsCollateral = getOpenInterestInTokens(dataStore, market, longToken, isLong);
-        uint256 openInterestUsingShortTokenAsCollateral = getOpenInterestInTokens(dataStore, market, shortToken, isLong);
+        uint256 openInterestUsingLongTokenAsCollateral = getOpenInterestInTokens(dataStore, market.marketToken, market.longToken, isLong);
+        uint256 openInterestUsingShortTokenAsCollateral = getOpenInterestInTokens(dataStore, market.marketToken, market.shortToken, isLong);
 
         return openInterestUsingLongTokenAsCollateral + openInterestUsingShortTokenAsCollateral;
     }
@@ -1539,15 +1524,13 @@ library MarketUtils {
     // @return the sum of open interest and pnl for a market
     function getOpenInterestWithPnl(
         DataStore dataStore,
-        address market,
-        address longToken,
-        address shortToken,
+        Market.Props memory market,
         Price.Props memory indexTokenPrice,
         bool isLong,
         bool maximize
     ) internal view returns (int256) {
-        uint256 openInterest = getOpenInterest(dataStore, market, longToken, shortToken, isLong);
-        int256 pnl = getPnl(dataStore, market, longToken, shortToken, indexTokenPrice, isLong, maximize);
+        uint256 openInterest = getOpenInterest(dataStore, market, isLong);
+        int256 pnl = getPnl(dataStore, market, indexTokenPrice, isLong, maximize);
         return Calc.sumReturnInt256(openInterest, pnl);
     }
 
@@ -1590,15 +1573,13 @@ library MarketUtils {
     // @param isLong whether it is for the long or short side
     function getMinCollateralFactorForOpenInterest(
         DataStore dataStore,
-        address market,
-        address longToken,
-        address shortToken,
+        Market.Props memory market,
         int256 openInterestDelta,
         bool isLong
     ) internal view returns (uint256) {
-        uint256 openInterest = getOpenInterest(dataStore, market, longToken, shortToken, isLong);
+        uint256 openInterest = getOpenInterest(dataStore, market, isLong);
         openInterest = Calc.sumReturnUint256(openInterest, openInterestDelta);
-        uint256 multiplierFactor = getMinCollateralFactorForOpenInterestMultiplier(dataStore, market, isLong);
+        uint256 multiplierFactor = getMinCollateralFactorForOpenInterestMultiplier(dataStore, market.marketToken, isLong);
         return Precision.applyFactor(openInterest, multiplierFactor);
     }
 
@@ -1933,9 +1914,7 @@ library MarketUtils {
     ) internal view returns (uint256) {
         uint256 openInterest = getOpenInterest(
             dataStore,
-            market.marketToken,
-            market.longToken,
-            market.shortToken,
+            market,
             isLong
         );
 
