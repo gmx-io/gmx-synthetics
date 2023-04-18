@@ -99,9 +99,10 @@ library PositionPricingUtils {
     }
 
     struct PositionBorrowingFees {
-      uint256 borrowingFeeAmount;
-      uint256 borrowingFeeReceiverFactor;
-      uint256 borrowingFeeAmountForFeeReceiver;
+        uint256 borrowingFeeUsd;
+        uint256 borrowingFeeAmount;
+        uint256 borrowingFeeReceiverFactor;
+        uint256 borrowingFeeAmountForFeeReceiver;
     }
 
     // @param fundingFeeAmount the position's funding fee amount
@@ -380,10 +381,13 @@ library PositionPricingUtils {
             sizeDeltaUsd
         );
 
-        fees.borrowing.borrowingFeeAmount = MarketUtils.getBorrowingFees(dataStore, position) / collateralTokenPrice.min;
+        uint256 borrowingFeeUsd = MarketUtils.getBorrowingFees(dataStore, position);
 
-        fees.borrowing.borrowingFeeReceiverFactor = dataStore.getUint(Keys.BORROWING_FEE_RECEIVER_FACTOR);
-        fees.borrowing.borrowingFeeAmountForFeeReceiver = Precision.applyFactor(fees.borrowing.borrowingFeeAmount, fees.borrowing.borrowingFeeReceiverFactor);
+        fees.borrowing = getBorrowingFees(
+            dataStore,
+            collateralTokenPrice,
+            borrowingFeeUsd
+        );
 
         fees.feeAmountForPool = fees.positionFeeAmountForPool + fees.borrowing.borrowingFeeAmount - fees.borrowing.borrowingFeeAmountForFeeReceiver;
         fees.feeReceiverAmount += fees.borrowing.borrowingFeeAmountForFeeReceiver;
@@ -403,6 +407,21 @@ library PositionPricingUtils {
         fees.totalNetCostUsd = fees.totalNetCostAmount * collateralTokenPrice.max;
 
         return fees;
+    }
+
+    function getBorrowingFees(
+        DataStore dataStore,
+        Price.Props memory collateralTokenPrice,
+        uint256 borrowingFeeUsd
+    ) internal view returns (PositionBorrowingFees memory) {
+        PositionBorrowingFees memory borrowingFees;
+
+        borrowingFees.borrowingFeeUsd = borrowingFeeUsd;
+        borrowingFees.borrowingFeeAmount = borrowingFeeUsd / collateralTokenPrice.min;
+        borrowingFees.borrowingFeeReceiverFactor = dataStore.getUint(Keys.BORROWING_FEE_RECEIVER_FACTOR);
+        borrowingFees.borrowingFeeAmountForFeeReceiver = Precision.applyFactor(borrowingFees.borrowingFeeAmount, borrowingFees.borrowingFeeReceiverFactor);
+
+        return borrowingFees;
     }
 
     function getFundingFees(

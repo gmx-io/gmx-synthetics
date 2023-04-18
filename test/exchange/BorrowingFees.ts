@@ -13,12 +13,12 @@ describe("Exchange.BorrowingFees", () => {
   const { provider } = ethers;
   let fixture;
   let user0, user1;
-  let reader, dataStore, ethUsdMarket, wnt, usdc;
+  let reader, dataStore, referralStorage, ethUsdMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1 } = fixture.accounts);
-    ({ reader, dataStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ reader, dataStore, referralStorage, ethUsdMarket, wnt, usdc } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -100,11 +100,34 @@ describe("Exchange.BorrowingFees", () => {
     };
 
     const positionKeys = await getPositionKeys(dataStore, 0, 10);
-    const position0 = await reader.getPositionInfo(dataStore.address, positionKeys[0], prices);
-    const position1 = await reader.getPositionInfo(dataStore.address, positionKeys[1], prices);
+    const position0 = await reader.getPositionInfo(
+      dataStore.address,
+      referralStorage.address,
+      positionKeys[0],
+      prices,
+      0,
+      true
+    );
+    const position1 = await reader.getPositionInfo(
+      dataStore.address,
+      referralStorage.address,
+      positionKeys[1],
+      prices,
+      0,
+      true
+    );
 
-    expectWithinRange(position0.pendingBorrowingFees, "967684000000000000000000000000000", decimalToFloat(10, 3)); // $967.684
-    expectWithinRange(position1.pendingBorrowingFees, "10886400000000000000000000000000000", decimalToFloat(10, 3)); // $10,886.4
+    expectWithinRange(
+      position0.fees.borrowing.borrowingFeeUsd,
+      "967684000000000000000000000000000",
+      decimalToFloat(10, 3)
+    ); // $967.684
+
+    expectWithinRange(
+      position1.fees.borrowing.borrowingFeeUsd,
+      "10886400000000000000000000000000000",
+      decimalToFloat(10, 3)
+    ); // $10,886.4
 
     expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, true))).eq(0);
     expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, false))).eq(0);
