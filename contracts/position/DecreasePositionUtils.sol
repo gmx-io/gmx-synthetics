@@ -159,6 +159,20 @@ library DecreasePositionUtils {
 
                 params.order.setSizeDeltaUsd(params.position.sizeInUsd());
             }
+
+            if (
+                params.position.sizeInUsd() > params.order.sizeDeltaUsd()  &&
+                params.position.sizeInUsd() - params.order.sizeDeltaUsd() < params.contracts.dataStore.getUint(Keys.MIN_POSITION_SIZE_USD)
+            ) {
+                OrderEventUtils.emitOrderSizeDeltaAutoUpdated(
+                    params.contracts.eventEmitter,
+                    params.orderKey,
+                    params.order.sizeDeltaUsd(),
+                    params.position.sizeInUsd()
+                );
+
+                params.order.setSizeDeltaUsd(params.position.sizeInUsd());
+            }
         }
 
         // if the position will be closed, set the initial collateral delta amount
@@ -244,6 +258,7 @@ library DecreasePositionUtils {
                 params.market,
                 cache.prices,
                 false, // isIncrease
+                false, // shouldValidateMinPositionSize
                 false // shouldValidateMinCollateralUsd
             );
 
