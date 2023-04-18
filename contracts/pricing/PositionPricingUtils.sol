@@ -191,7 +191,7 @@ library PositionPricingUtils {
         bool shouldFlipPriceDiff = isIncrease ? !isLong : isLong;
         if (shouldFlipPriceDiff) { priceDiff = -priceDiff; }
 
-        int256 priceImpactUsd = size.toInt256() * priceDiff / _latestPrice.toInt256();
+        int256 priceImpactUsd = size.toInt256() * priceDiff / executionPrice.toInt256();
 
         // round positive price impact up, this will be deducted from the position impact pool
         if (priceImpactUsd > 0) {
