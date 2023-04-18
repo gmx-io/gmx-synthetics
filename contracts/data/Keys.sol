@@ -59,6 +59,7 @@ library Keys {
 
     // @dev key for the max swap path length allowed
     bytes32 public constant MAX_SWAP_PATH_LENGTH = keccak256(abi.encode("MAX_SWAP_PATH_LENGTH"));
+    bytes32 public constant SWAP_PATH_MARKET_FLAG = keccak256(abi.encode("SWAP_PATH_MARKET_FLAG"));
 
     // @dev key for whether the create deposit feature is disabled
     bytes32 public constant CREATE_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("CREATE_DEPOSIT_FEATURE_DISABLED"));
@@ -179,6 +180,8 @@ library Keys {
     bytes32 public constant COLLATERAL_SUM = keccak256(abi.encode("COLLATERAL_SUM"));
     // @dev key for pool amount
     bytes32 public constant POOL_AMOUNT = keccak256(abi.encode("POOL_AMOUNT"));
+    // @dev key for pool amount adjustment
+    bytes32 public constant POOL_AMOUNT_ADJUSTMENT = keccak256(abi.encode("POOL_AMOUNT_ADJUSTMENT"));
     // @dev key for max pool amount
     bytes32 public constant MAX_POOL_AMOUNT = keccak256(abi.encode("MAX_POOL_AMOUNT"));
     // @dev key for max open interest
@@ -318,6 +321,13 @@ library Keys {
     // @return key for swap order gas limit
     function swapOrderGasLimitKey() internal pure returns (bytes32) {
         return SWAP_ORDER_GAS_LIMIT;
+    }
+
+    function swapPathMarketFlagKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            SWAP_PATH_MARKET_FLAG,
+            market
+        ));
     }
 
     // @dev key for whether create deposit is enabled
@@ -663,6 +673,18 @@ library Keys {
     // @param token the token to check
     // @return key for amount of tokens in a market's pool
     function poolAmountKey(address market, address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            POOL_AMOUNT,
+            market,
+            token
+        ));
+    }
+
+    // @dev key for token adjustment amount for a market
+    // @param market the market to adjust
+    // @param token the token to adjust
+    // @return key for the token adjustment amount for a market
+    function poolAmountAdjustmentKey(address market, address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             POOL_AMOUNT,
             market,
