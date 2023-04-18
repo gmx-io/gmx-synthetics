@@ -368,6 +368,7 @@ library WithdrawalUtils {
             params.eventEmitter,
             market.marketToken,
             market.longToken,
+            prices.longTokenPrice.min,
             "withdrawal",
             cache.longTokenFees
         );
@@ -376,6 +377,7 @@ library WithdrawalUtils {
             params.eventEmitter,
             market.marketToken,
             market.shortToken,
+            prices.shortTokenPrice.min,
             "withdrawal",
             cache.shortTokenFees
         );
