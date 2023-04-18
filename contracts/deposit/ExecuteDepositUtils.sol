@@ -111,11 +111,15 @@ library ExecuteDepositUtils {
 
         // deposits should improve the pool state but it should be checked if
         // the max pnl factor for deposits is exceeded as this would lead to the
-        // price of the market token decreasing below the allowed amount
+        // price of the market token decreasing below a target minimum percentage
+        // due to pnl
+        // note that this is just a validation for deposits, there is no actual
+        // minimum price for a market token
         MarketUtils.validateMaxPnl(
             params.dataStore,
             market,
             prices,
+            Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS
         );
 

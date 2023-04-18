@@ -104,7 +104,7 @@ library AdlUtils {
             _market,
             prices,
             isLong,
-            Keys.MAX_PNL_FACTOR
+            Keys.MAX_PNL_FACTOR_FOR_ADL
         );
 
         setIsAdlEnabled(dataStore, market, isLong, shouldEnableAdl);
