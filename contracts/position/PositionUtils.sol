@@ -284,6 +284,9 @@ library PositionUtils {
             revert Errors.InvalidPositionSizeValues(position.sizeInUsd(), position.sizeInTokens());
         }
 
+        MarketUtils.validateEnabledMarket(dataStore, market.marketToken);
+        MarketUtils.validateMarketCollateralToken(market, position.collateralToken());
+
         if (isPositionLiquidatable(
             dataStore,
             referralStorage,
