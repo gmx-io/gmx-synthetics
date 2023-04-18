@@ -70,12 +70,15 @@ export async function createDeposit(fixture, overrides: any = {}) {
     callbackGasLimit,
   };
 
-  return await logGasUsage({
+  const txReceipt = await logGasUsage({
     tx: depositHandler.connect(sender).createDeposit(account.address, params, {
       gasLimit: "1000000",
     }),
     label: overrides.gasUsageLabel,
   });
+
+  const result = { txReceipt };
+  return result;
 }
 
 export async function executeDeposit(fixture, overrides: any = {}) {
@@ -125,9 +128,16 @@ export async function executeDeposit(fixture, overrides: any = {}) {
     } else {
       throw new Error(`Deposit was cancelled: ${JSON.stringify(cancellationReason)}`);
     }
+  } else {
+    if (overrides.expectedCancellationReason) {
+      throw new Error(
+        `Deposit was not cancelled, expected cancellation with reason: ${overrides.expectedCancellationReason}`
+      );
+    }
   }
 
-  return txReceipt;
+  const result = { txReceipt };
+  return result;
 }
 
 export async function handleDeposit(fixture, overrides: any = {}) {
