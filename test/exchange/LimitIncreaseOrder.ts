@@ -15,12 +15,12 @@ describe("Exchange.LimitIncreaseOrder", () => {
 
   let fixture;
   let user0;
-  let reader, dataStore, oracle, baseOrderUtils, increaseOrderUtils, ethUsdMarket, wnt, usdc;
+  let reader, dataStore, ethUsdMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0 } = fixture.accounts);
-    ({ reader, dataStore, oracle, baseOrderUtils, increaseOrderUtils, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ reader, dataStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {

@@ -5,6 +5,7 @@ import { deployFixture } from "../../utils/fixture";
 import { deployContract } from "../../utils/deploy";
 import { expandDecimals } from "../../utils/math";
 import { printGasUsage } from "../../utils/gas";
+import { errorsContract } from "../../utils/error";
 import { getDepositCount, getDepositKeys, createDeposit } from "../../utils/deposit";
 import * as keys from "../../utils/keys";
 
@@ -14,14 +15,13 @@ describe("Exchange.CancelDeposit", () => {
 
   let fixture;
   let user0, user1;
-  let reader, dataStore, exchangeRouter, depositHandler, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc;
+  let reader, dataStore, exchangeRouter, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
     ({ user0, user1 } = fixture.accounts);
-    ({ reader, dataStore, exchangeRouter, depositHandler, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc } =
-      fixture.contracts);
+    ({ reader, dataStore, exchangeRouter, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc } = fixture.contracts);
   });
 
   it("cancelDeposit", async () => {
@@ -66,13 +66,13 @@ describe("Exchange.CancelDeposit", () => {
     expect(deposit.flags.shouldUnwrapNativeToken).eq(false);
 
     await expect(exchangeRouter.connect(user1).cancelDeposit(depositKeys[0]))
-      .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user1.address, "account for cancelDeposit");
 
     expect(await getDepositCount(dataStore)).eq(1);
 
     await expect(exchangeRouter.connect(user0).cancelDeposit(depositKeys[0]))
-      .to.be.revertedWithCustomError(depositHandler, "RequestNotYetCancellable")
+      .to.be.revertedWithCustomError(errorsContract, "RequestNotYetCancellable")
       .withArgs(2, 10, "Deposit");
 
     expect(await getDepositCount(dataStore)).eq(1);
@@ -109,7 +109,7 @@ describe("Exchange.CancelDeposit", () => {
     expect(await getDepositCount(dataStore)).eq(0);
 
     await expect(exchangeRouter.connect(user0).cancelDeposit(depositKeys[0])).to.be.revertedWithCustomError(
-      exchangeRouter,
+      errorsContract,
       "EmptyDeposit"
     );
   });
