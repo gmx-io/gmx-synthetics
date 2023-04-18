@@ -343,13 +343,14 @@ library DecreasePositionCollateralUtils {
                 params.position.collateralAmount()
             );
         } else {
+            values.pnlTokenForPool = params.position.collateralToken();
             values.pnlAmountForPool = (params.position.collateralAmount() - fees.funding.fundingFeeAmount).toInt256();
         }
 
         PositionPricingUtils.PositionFees memory _fees;
 
         PositionUtils.DecreasePositionCollateralValues memory _values = PositionUtils.DecreasePositionCollateralValues(
-            values.pnlTokenForPool,
+            values.pnlTokenForPool, // pnlTokenForPool
             values.executionPrice, // executionPrice
             0, // remainingCollateralAmount
             values.positionPnlUsd, // positionPnlUsd

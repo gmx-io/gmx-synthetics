@@ -17,7 +17,7 @@ export function createDeployFunction({
   libraryNames = null,
   afterDeploy,
 }) {
-  const func = async ({ getNamedAccounts, deployments, gmx }: HardhatRuntimeEnvironment) => {
+  const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRuntimeEnvironment) => {
     const { deploy, get } = deployments;
     const { deployer } = await getNamedAccounts();
 
@@ -69,7 +69,7 @@ export function createDeployFunction({
     }
 
     if (afterDeploy) {
-      await afterDeploy({ deployedContract, deployer, getNamedAccounts, deployments, gmx });
+      await afterDeploy({ deployedContract, deployer, getNamedAccounts, deployments, gmx, network });
     }
   };
 
