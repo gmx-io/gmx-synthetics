@@ -5,6 +5,7 @@ import { poolAmountKey, swapImpactPoolAmountKey } from "./keys";
 import * as keys from "./keys";
 
 import MarketTokenArtifact from "../artifacts/contracts/market/MarketToken.sol/MarketToken.json";
+import { ethers } from "ethers";
 
 export const DEFAULT_MARKET_TYPE = hashString("basic-v1");
 
@@ -79,4 +80,28 @@ export function getMarketTokenAddress(
     params: [roleStoreAddress, dataStoreAddress],
     types: ["address", "address"],
   });
+}
+
+export function getMarketKey(indexToken: string, longToken: string, shortToken: string) {
+  return [indexToken, longToken, shortToken].join(":");
+}
+
+export async function getOnchainMarkets(read: (...args: any[]) => any, dataStoreAddress: string) {
+  const onchainMarkets = await read("Reader", "getMarkets", dataStoreAddress, 0, 1000);
+  return Object.fromEntries(
+    onchainMarkets.map((market) => {
+      const { indexToken, longToken, shortToken } = market;
+      const marketKey = getMarketKey(indexToken, longToken, shortToken);
+      return [marketKey, market];
+    })
+  );
+}
+
+export function getMarketTokenAddresses(marketConfig, tokens) {
+  const indexToken = marketConfig.swapOnly
+    ? ethers.constants.AddressZero
+    : tokens[marketConfig.tokens.indexToken].address;
+  const longToken = tokens[marketConfig.tokens.longToken].address;
+  const shortToken = tokens[marketConfig.tokens.shortToken].address;
+  return [indexToken, longToken, shortToken];
 }

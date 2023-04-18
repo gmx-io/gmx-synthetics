@@ -1,32 +1,9 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import * as keys from "../utils/keys";
 import { setBytes32IfDifferent, setUintIfDifferent } from "../utils/dataStore";
-import { DEFAULT_MARKET_TYPE } from "../utils/market";
+import { DEFAULT_MARKET_TYPE, getMarketTokenAddresses } from "../utils/market";
 import { ethers } from "ethers";
-
-function getMarketTokenAddresses(marketConfig, tokens) {
-  const indexToken = marketConfig.swapOnly
-    ? ethers.constants.AddressZero
-    : tokens[marketConfig.tokens.indexToken].address;
-  const longToken = tokens[marketConfig.tokens.longToken].address;
-  const shortToken = tokens[marketConfig.tokens.shortToken].address;
-  return [indexToken, longToken, shortToken];
-}
-
-function getMarketKey(indexToken: string, longToken: string, shortToken: string) {
-  return [indexToken, longToken, shortToken].join(":");
-}
-
-async function getOnchainMarkets(read: (...args: any[]) => any, dataStoreAddress: string) {
-  const onchainMarkets = await read("Reader", "getMarkets", dataStoreAddress, 0, 1000);
-  return Object.fromEntries(
-    onchainMarkets.map((market) => {
-      const { indexToken, longToken, shortToken } = market;
-      const marketKey = getMarketKey(indexToken, longToken, shortToken);
-      return [marketKey, market];
-    })
-  );
-}
+import { getMarketKey, getOnchainMarkets } from "../utils/market";
 
 const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnvironment) => {
   const { execute, get, read, log } = deployments;

@@ -126,6 +126,8 @@ export const CUMULATIVE_BORROWING_FACTOR_UPDATED_AT = hashString("CUMULATIVE_BOR
 export const VIRTUAL_TOKEN_ID = hashString("VIRTUAL_TOKEN_ID");
 export const VIRTUAL_MARKET_ID = hashString("VIRTUAL_MARKET_ID");
 
+const VIRTUAL_INVENTORY_FOR_SWAPS = hashString("VIRTUAL_INVENTORY_FOR_SWAPS");
+
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
 }
@@ -366,4 +368,8 @@ export function virtualTokenIdKey(token: string) {
 
 export function virtualMarketIdKey(market: string) {
   return hashData(["bytes32", "address"], [VIRTUAL_MARKET_ID, market]);
+}
+
+export function virtualInventoryForSwapsKey(virtualMarketId: string, token: string) {
+  return hashData(["bytes32", "bytes32", "address"], [VIRTUAL_INVENTORY_FOR_SWAPS, virtualMarketId, token]);
 }
