@@ -516,7 +516,7 @@ library MarketUtils {
         uint256 delta
     ) internal {
         uint256 divisor = dataStore.getUint(Keys.CLAIMABLE_COLLATERAL_TIME_DIVISOR);
-        uint256 timeKey = block.timestamp / divisor;
+        uint256 timeKey = Chain.currentTimestamp() / divisor;
 
         uint256 nextValue = dataStore.incrementUint(
             Keys.claimableCollateralAmountKey(market, token, timeKey, account),
@@ -877,7 +877,7 @@ library MarketUtils {
         setFundingAmountPerSize(dataStore, eventEmitter, market.marketToken, market.shortToken, true, result.fundingAmountPerSize_ShortCollateral_LongPosition);
         setFundingAmountPerSize(dataStore, eventEmitter, market.marketToken, market.shortToken, false, result.fundingAmountPerSize_ShortCollateral_ShortPosition);
 
-        dataStore.setUint(Keys.fundingUpdatedAtKey(market.marketToken), block.timestamp);
+        dataStore.setUint(Keys.fundingUpdatedAtKey(market.marketToken), Chain.currentTimestamp());
     }
 
     // @dev get the next funding amount per size values
@@ -1075,7 +1075,7 @@ library MarketUtils {
             delta
         );
 
-        dataStore.setUint(Keys.cumulativeBorrowingFactorUpdatedAtKey(market.marketToken, isLong), block.timestamp);
+        dataStore.setUint(Keys.cumulativeBorrowingFactorUpdatedAtKey(market.marketToken, isLong), Chain.currentTimestamp());
     }
 
     // @dev get the ratio of pnl to pool value
@@ -1696,7 +1696,7 @@ library MarketUtils {
     function getSecondsSinceFundingUpdated(DataStore dataStore, address market) internal view returns (uint256) {
         uint256 updatedAt = dataStore.getUint(Keys.fundingUpdatedAtKey(market));
         if (updatedAt == 0) { return 0; }
-        return block.timestamp - updatedAt;
+        return Chain.currentTimestamp() - updatedAt;
     }
 
     // @dev get the funding factor per second
@@ -1797,7 +1797,7 @@ library MarketUtils {
     function getSecondsSinceCumulativeBorrowingFactorUpdated(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
         uint256 updatedAt = getCumulativeBorrowingFactorUpdatedAt(dataStore, market, isLong);
         if (updatedAt == 0) { return 0; }
-        return block.timestamp - updatedAt;
+        return Chain.currentTimestamp() - updatedAt;
     }
 
     // @dev update the total borrowing amount after a position changes size
