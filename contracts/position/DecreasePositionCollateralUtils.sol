@@ -199,6 +199,7 @@ library DecreasePositionCollateralUtils {
         if (BaseOrderUtils.isLiquidationOrder(params.order.orderType()) && values.remainingCollateralAmount < 0) {
             PositionPricingUtils.emitPositionFeesInfo(
                 params.contracts.eventEmitter,
+                params.orderKey,
                 params.market.marketToken,
                 params.position.collateralToken(),
                 false,
@@ -386,6 +387,7 @@ library DecreasePositionCollateralUtils {
                     params.contracts.eventEmitter,
                     params.contracts.oracle,
                     Bank(payable(params.market.marketToken)),
+                    params.orderKey,
                     params.position.collateralToken(), // tokenIn
                     values.output.outputAmount, // amountIn
                     swapPathMarkets, // markets
@@ -428,6 +430,7 @@ library DecreasePositionCollateralUtils {
                     params.contracts.eventEmitter,
                     params.contracts.oracle,
                     Bank(payable(params.market.marketToken)),
+                    params.orderKey,
                     pnlToken, // tokenIn
                     profitAmount, // amountIn
                     swapPathMarkets, // markets

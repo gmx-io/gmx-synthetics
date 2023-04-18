@@ -86,6 +86,7 @@ library DecreaseOrderUtils {
                     params.contracts.eventEmitter,
                     params.contracts.oracle,
                     Bank(payable(order.market())),
+                    params.key,
                     result.outputToken,
                     result.outputAmount,
                     params.swapPathMarkets,

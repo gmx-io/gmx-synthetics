@@ -408,6 +408,7 @@ library WithdrawalUtils {
                 params.eventEmitter, // eventEmitter
                 params.oracle, // oracle
                 Bank(payable(market.marketToken)), // bank
+                params.key, // key
                 tokenIn, // tokenIn
                 amountIn, // amountIn
                 swapPathMarkets, // swapPathMarkets

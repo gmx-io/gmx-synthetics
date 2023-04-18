@@ -210,23 +210,26 @@ library IncreasePositionUtils {
 
         PositionPricingUtils.emitPositionFeesCollected(
             params.contracts.eventEmitter,
+            params.orderKey,
             params.market.marketToken,
             params.position.collateralToken(),
             true,
             fees
         );
 
-        PositionEventUtils.emitPositionIncrease(
-            params.contracts.eventEmitter,
-            params.positionKey,
-            params.position,
-            cache.executionPrice,
-            params.order.sizeDeltaUsd(),
-            cache.sizeDeltaInTokens,
-            cache.collateralDeltaAmount,
-            cache.priceImpactAmount,
-            params.order.orderType()
-        );
+        PositionEventUtils.PositionIncreaseParams memory eventParams;
+        eventParams.eventEmitter = params.contracts.eventEmitter;
+        eventParams.orderKey = params.orderKey;
+        eventParams.positionKey = params.positionKey;
+        eventParams.position = params.position;
+        eventParams.executionPrice = cache.executionPrice;
+        eventParams.sizeDeltaUsd = params.order.sizeDeltaUsd();
+        eventParams.sizeDeltaInTokens = cache.sizeDeltaInTokens;
+        eventParams.collateralDeltaAmount = cache.collateralDeltaAmount;
+        eventParams.priceImpactAmount = cache.priceImpactAmount;
+        eventParams.orderType = params.order.orderType();
+
+        PositionEventUtils.emitPositionIncrease(eventParams);
     }
 
     // @dev handle the collateral changes of the position

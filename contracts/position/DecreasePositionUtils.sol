@@ -156,7 +156,7 @@ library DecreasePositionUtils {
 
         if (params.order.decreasePositionSwapType() != Order.DecreasePositionSwapType.NoSwap &&
             cache.pnlToken == params.position.collateralToken()) {
-            revert InvalidDecreasePositionSwapType(params.order.decreasePositionSwapType());
+            params.order.setDecreasePositionSwapType(Order.DecreasePositionSwapType.NoSwap);
         }
 
         if (BaseOrderUtils.isLiquidationOrder(params.order.orderType()) && !PositionUtils.isPositionLiquidatable(
@@ -262,6 +262,7 @@ library DecreasePositionUtils {
 
         PositionPricingUtils.emitPositionFeesCollected(
             params.contracts.eventEmitter,
+            params.orderKey,
             params.market.marketToken,
             params.position.collateralToken(),
             false,
@@ -270,6 +271,7 @@ library DecreasePositionUtils {
 
         PositionEventUtils.emitPositionDecrease(
             params.contracts.eventEmitter,
+            params.orderKey,
             params.positionKey,
             params.position,
             params.order.sizeDeltaUsd(),

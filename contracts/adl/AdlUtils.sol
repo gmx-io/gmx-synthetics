@@ -141,7 +141,7 @@ library AdlUtils {
 
         Order.Numbers memory numbers = Order.Numbers(
             Order.OrderType.MarketDecrease, // orderType
-            Order.DecreasePositionSwapType.NoSwap, // decreasePositionSwapType
+            Order.DecreasePositionSwapType.SwapPnlTokenToCollateralToken, // decreasePositionSwapType
             params.sizeDeltaUsd, // sizeDeltaUsd
             0, // initialCollateralDeltaAmount
             0, // triggerPrice
