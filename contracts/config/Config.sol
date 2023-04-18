@@ -28,10 +28,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @dev the base keys that can be set
     mapping (bytes32 => bool) public allowedBaseKeys;
 
-    error InvalidBaseKey(bytes32 baseKey);
-    error InvalidFeeFactor(bytes32 baseKey, uint256 value);
-    error InvalidFactor(bytes32 baseKey, uint256 value);
-
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
@@ -261,7 +257,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param baseKey the base key to validate
     function _validateKey(bytes32 baseKey) internal view {
         if (!allowedBaseKeys[baseKey]) {
-            revert InvalidBaseKey(baseKey);
+            revert Errors.InvalidBaseKey(baseKey);
         }
     }
 
@@ -273,7 +269,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.SWAP_FEE_FACTOR ||
             baseKey == Keys.POSITION_FEE_FACTOR
         ) {
-            revert InvalidFeeFactor(baseKey, value);
+            revert Errors.InvalidFeeFactor(baseKey, value);
         }
 
         if (
@@ -287,7 +283,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.FUNDING_FACTOR ||
             baseKey == Keys.BORROWING_FACTOR
         ) {
-            revert InvalidFactor(baseKey, value);
+            revert Errors.InvalidFactor(baseKey, value);
         }
     }
 }

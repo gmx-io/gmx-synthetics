@@ -37,10 +37,6 @@ library OrderUtils {
     using Price for Price.Props;
     using Array for uint256[];
 
-    error OrderTypeCannotBeCreated(Order.OrderType orderType);
-    error OrderAlreadyFrozen();
-    error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);
-
     // @dev creates an order in the order store
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
@@ -76,7 +72,7 @@ library OrderUtils {
             initialCollateralDeltaAmount = orderVault.recordTransferIn(params.addresses.initialCollateralToken);
             if (params.addresses.initialCollateralToken == wnt) {
                 if (initialCollateralDeltaAmount < params.numbers.executionFee) {
-                    revert InsufficientWntAmountForExecutionFee(initialCollateralDeltaAmount, params.numbers.executionFee);
+                    revert Errors.InsufficientWntAmountForExecutionFee(initialCollateralDeltaAmount, params.numbers.executionFee);
                 }
                 initialCollateralDeltaAmount -= params.numbers.executionFee;
                 shouldRecordSeparateExecutionFeeTransfer = false;
@@ -89,13 +85,13 @@ library OrderUtils {
             // for decrease orders, the initialCollateralDeltaAmount is based on the passed in value
             initialCollateralDeltaAmount = params.numbers.initialCollateralDeltaAmount;
         } else {
-            revert OrderTypeCannotBeCreated(params.orderType);
+            revert Errors.OrderTypeCannotBeCreated(uint256(params.orderType));
         }
 
         if (shouldRecordSeparateExecutionFeeTransfer) {
             uint256 wntAmount = orderVault.recordTransferIn(wnt);
             if (wntAmount < params.numbers.executionFee) {
-                revert InsufficientWntAmountForExecutionFee(wntAmount, params.numbers.executionFee);
+                revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.numbers.executionFee);
             }
 
             params.numbers.executionFee = wntAmount;
@@ -134,7 +130,7 @@ library OrderUtils {
         AccountUtils.validateReceiver(order.receiver());
 
         if (order.initialCollateralDeltaAmount() == 0 && order.sizeDeltaUsd() == 0) {
-            revert BaseOrderUtils.EmptyOrder();
+            revert Errors.EmptyOrder();
         }
 
         CallbackUtils.validateCallbackGasLimit(dataStore, order.callbackGasLimit());
@@ -203,7 +199,7 @@ library OrderUtils {
             return;
         }
 
-        BaseOrderUtils.revertUnsupportedOrderType();
+        revert Errors.UnsupportedOrderType();
     }
 
     // @dev cancels an order
@@ -276,7 +272,7 @@ library OrderUtils {
         BaseOrderUtils.validateNonEmptyOrder(order);
 
         if (order.isFrozen()) {
-            revert OrderAlreadyFrozen();
+            revert Errors.OrderAlreadyFrozen();
         }
 
         uint256 executionFee = order.executionFee();

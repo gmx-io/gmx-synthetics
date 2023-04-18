@@ -15,9 +15,6 @@ contract Bank is RoleModule {
 
     DataStore public immutable dataStore;
 
-    error SelfTransferNotSupported(address receiver);
-    error InvalidNativeTokenSender(address msgSender);
-
     constructor(RoleStore _roleStore, DataStore _dataStore) RoleModule(_roleStore) {
         dataStore = _dataStore;
     }
@@ -25,7 +22,7 @@ contract Bank is RoleModule {
     receive() external payable {
         address wnt = TokenUtils.wnt(dataStore);
         if (msg.sender != wnt) {
-            revert InvalidNativeTokenSender(msg.sender);
+            revert Errors.InvalidNativeTokenSender(msg.sender);
         }
     }
 
@@ -91,7 +88,7 @@ contract Bank is RoleModule {
         uint256 amount
     ) internal {
         if (receiver == address(this)) {
-            revert SelfTransferNotSupported(receiver);
+            revert Errors.SelfTransferNotSupported(receiver);
         }
 
         TokenUtils.transfer(dataStore, token, receiver, amount);
@@ -111,7 +108,7 @@ contract Bank is RoleModule {
         uint256 amount
     ) internal {
         if (receiver == address(this)) {
-            revert SelfTransferNotSupported(receiver);
+            revert Errors.SelfTransferNotSupported(receiver);
         }
 
         TokenUtils.withdrawAndSendNativeToken(

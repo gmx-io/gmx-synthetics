@@ -1,5 +1,7 @@
 import { getEventDataValue } from "./event";
 
+import Errors from "../artifacts/contracts/errors/Errors.sol/Errors.json";
+
 export function getErrorString(error) {
   return JSON.stringify({
     name: error.name,
@@ -7,24 +9,17 @@ export function getErrorString(error) {
   });
 }
 
-export function getCancellationReason({ logs, eventName, contracts }) {
+export function getCancellationReason({ logs, eventName }) {
   const reasonBytes = getEventDataValue(logs, eventName, "reasonBytes");
   if (!reasonBytes) {
     return;
   }
 
-  return parseError(reasonBytes, contracts);
-}
-
-function parseError(errorBytes, contracts) {
-  for (let i = 0; i < contracts.length; i++) {
-    try {
-      const reason = contracts[i].interface.parseError(errorBytes);
-      return reason;
-    } catch (e) {
-      // ignore error
-    }
+  const errors = new ethers.utils.Interface(Errors.abi);
+  try {
+    const reason = errors.parseError(reasonBytes);
+    return reason;
+  } catch (e) {
+    throw new Error(`Could not parse errorBytes ${reasonBytes}`);
   }
-
-  throw new Error(`Could not parse errorBytes ${errorBytes}`);
 }

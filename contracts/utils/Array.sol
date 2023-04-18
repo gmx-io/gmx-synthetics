@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import "../errors/Errors.sol";
 
 /**
  * @title Array
@@ -10,25 +11,6 @@ import "@openzeppelin/contracts/utils/math/SafeCast.sol";
  */
 library Array {
     using SafeCast for int256;
-
-    error CompactedArrayOutOfBounds(
-        uint256[] compactedValues,
-        uint256 index,
-        uint256 slotIndex,
-        string label
-    );
-
-    error ArrayOutOfBoundsUint256(
-        uint256[] values,
-        uint256 index,
-        string label
-    );
-
-    error ArrayOutOfBoundsBytes(
-        bytes[] values,
-        uint256 index,
-        string label
-    );
 
     /**
      * @dev Gets the value of the element at the specified index in the given array. If the index is out of bounds, returns 0.
@@ -164,7 +146,7 @@ library Array {
 
         uint256 slotIndex = index / compactedValuesPerSlot;
         if (slotIndex >= compactedValues.length) {
-            revert CompactedArrayOutOfBounds(compactedValues, index, slotIndex, label);
+            revert Errors.CompactedArrayOutOfBounds(compactedValues, index, slotIndex, label);
         }
 
         uint256 slotBits = compactedValues[slotIndex];
@@ -173,13 +155,5 @@ library Array {
         uint256 value = (slotBits >> offset) & bitmask;
 
         return value;
-    }
-
-    function revertArrayOutOfBounds(uint256[] memory values, uint256 index, string memory label) internal pure {
-        revert ArrayOutOfBoundsUint256(values, index, label);
-    }
-
-    function revertArrayOutOfBounds(bytes[] memory values, uint256 index, string memory label) internal pure {
-        revert ArrayOutOfBoundsBytes(values, index, label);
     }
 }

@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
-import "../utils/ErrorUtils.sol";
+import "../errors/ErrorUtils.sol";
 
 import "./IOrderCallbackReceiver.sol";
 import "./IDepositCallbackReceiver.sol";
@@ -41,8 +41,6 @@ library CallbackUtils {
     event AfterOrderCancellationError(bytes32 key, Order.Props order, string reason, bytes reasonBytes);
     event AfterOrderFrozenError(bytes32 key, Order.Props order, string reason, bytes reasonBytes);
 
-    error MaxCallbackGasLimitExceeded(uint256 callbackGasLimit, uint256 maxCallbackGasLimit);
-
     // @dev validate that the callbackGasLimit is less than the max specified value
     // this is to prevent callback gas limits which are larger than the max gas limits per block
     // as this would allow for callback contracts that can consume all gas and conditionally cause
@@ -52,7 +50,7 @@ library CallbackUtils {
     function validateCallbackGasLimit(DataStore dataStore, uint256 callbackGasLimit) internal view {
         uint256 maxCallbackGasLimit = dataStore.getUint(Keys.MAX_CALLBACK_GAS_LIMIT);
         if (callbackGasLimit > maxCallbackGasLimit) {
-            revert MaxCallbackGasLimitExceeded(callbackGasLimit, maxCallbackGasLimit);
+            revert Errors.MaxCallbackGasLimitExceeded(callbackGasLimit, maxCallbackGasLimit);
         }
     }
 

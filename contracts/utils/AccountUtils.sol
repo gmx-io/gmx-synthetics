@@ -2,19 +2,18 @@
 
 pragma solidity ^0.8.0;
 
-library AccountUtils {
-    error EmptyAccount();
-    error EmptyReceiver();
+import "../errors/Errors.sol";
 
+library AccountUtils {
     function validateAccount(address account) internal pure {
         if (account == address(0)) {
-            revert EmptyAccount();
+            revert Errors.EmptyAccount();
         }
     }
 
     function validateReceiver(address receiver) internal pure {
         if (receiver == address(0)) {
-            revert EmptyReceiver();
+            revert Errors.EmptyReceiver();
         }
     }
 }

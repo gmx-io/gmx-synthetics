@@ -189,7 +189,7 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
 
         if (
             OracleUtils.isOracleError(errorSelector) ||
-            errorSelector == FeatureUtils.DisabledFeature.selector
+            errorSelector == Errors.DisabledFeature.selector
         ) {
             ErrorUtils.revertWithCustomError(reasonBytes);
         }

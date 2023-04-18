@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "./ErrorUtils.sol";
+import "../errors/ErrorUtils.sol";
 
 /**
  * @title BasicMulticall

@@ -19,7 +19,7 @@ import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
-import "../utils/ErrorUtils.sol";
+import "../errors/ErrorUtils.sol";
 
 // @title DepositUtils
 // @dev Library for deposit functions, to help with the depositing of liquidity
@@ -89,13 +89,6 @@ library ExecuteDepositUtils {
         int256 priceImpactUsd;
     }
 
-    error EmptyDeposit();
-    error MinMarketTokens(uint256 received, uint256 expected);
-    error EmptyDepositAmountsAfterSwap();
-    error UnexpectedNonZeroShortAmount();
-    error InvalidPoolValueForDeposit(int256 poolValue);
-    error InvalidSwapOutputToken(address outputToken, address expectedOutputToken);
-
     // @dev executes a deposit
     // @param params ExecuteDepositParams
     function executeDeposit(ExecuteDepositParams memory params) external {
@@ -103,7 +96,7 @@ library ExecuteDepositUtils {
         ExecuteDepositCache memory cache;
 
         if (deposit.account() == address(0)) {
-            revert EmptyDeposit();
+            revert Errors.EmptyDeposit();
         }
 
         OracleUtils.validateBlockNumberWithinRange(
@@ -145,7 +138,7 @@ library ExecuteDepositUtils {
         );
 
         if (cache.longTokenAmount == 0 && cache.shortTokenAmount == 0) {
-            revert EmptyDepositAmountsAfterSwap();
+            revert Errors.EmptyDepositAmountsAfterSwap();
         }
 
         // if the market.longToken and market.shortToken are the same, there are two cases to consider:
@@ -161,7 +154,7 @@ library ExecuteDepositUtils {
         // price impact for the user
         if (market.longToken == market.shortToken) {
             if (cache.shortTokenAmount > 0) {
-                revert UnexpectedNonZeroShortAmount();
+                revert Errors.UnexpectedNonZeroShortAmount();
             }
 
             (cache.longTokenAmount, cache.shortTokenAmount) = getAdjustedLongAndShortTokenAmounts(
@@ -222,7 +215,7 @@ library ExecuteDepositUtils {
         }
 
         if (cache.receivedMarketTokens < deposit.minMarketTokens()) {
-            revert MinMarketTokens(cache.receivedMarketTokens, deposit.minMarketTokens());
+            revert Errors.MinMarketTokens(cache.receivedMarketTokens, deposit.minMarketTokens());
         }
 
         DepositStoreUtils.remove(params.dataStore, params.key, deposit.account());
@@ -287,7 +280,7 @@ library ExecuteDepositUtils {
         );
 
         if (poolValueInfo.poolValue < 0) {
-            revert InvalidPoolValueForDeposit(poolValueInfo.poolValue);
+            revert Errors.InvalidPoolValueForDeposit(poolValueInfo.poolValue);
         }
 
         uint256 poolValue = poolValueInfo.poolValue.toUint256();
@@ -450,7 +443,7 @@ library ExecuteDepositUtils {
         );
 
         if (outputToken != expectedOutputToken) {
-            revert InvalidSwapOutputToken(outputToken, expectedOutputToken);
+            revert Errors.InvalidSwapOutputToken(outputToken, expectedOutputToken);
         }
 
         return outputAmount;

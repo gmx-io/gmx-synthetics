@@ -69,8 +69,6 @@ library SwapPricingUtils {
         uint256 amountAfterFees;
     }
 
-    error UsdDeltaExceedsPoolValue(int256 usdDelta, uint256 poolUsd);
-
     // @dev get the price impact in USD
     //
     // note that there will be some difference between the pool amounts used for
@@ -193,11 +191,11 @@ library SwapPricingUtils {
         uint256 poolUsdForTokenB = poolAmountForTokenB * params.priceForTokenB;
 
         if (params.usdDeltaForTokenA < 0 && (-params.usdDeltaForTokenA).toUint256() > poolUsdForTokenA) {
-            revert UsdDeltaExceedsPoolValue(params.usdDeltaForTokenA, poolUsdForTokenA);
+            revert Errors.UsdDeltaExceedsPoolValue(params.usdDeltaForTokenA, poolUsdForTokenA);
         }
 
         if (params.usdDeltaForTokenB < 0 && (-params.usdDeltaForTokenB).toUint256() > poolUsdForTokenB) {
-            revert UsdDeltaExceedsPoolValue(params.usdDeltaForTokenB, poolUsdForTokenB);
+            revert Errors.UsdDeltaExceedsPoolValue(params.usdDeltaForTokenB, poolUsdForTokenB);
         }
 
         uint256 nextPoolUsdForTokenA = Calc.sumReturnUint256(poolUsdForTokenA, params.usdDeltaForTokenA);
