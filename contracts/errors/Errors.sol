@@ -191,6 +191,7 @@ library Errors {
     error InsufficientSwapOutputAmount(uint256 outputAmount, uint256 minOutputAmount);
 
     // TokenUtils errors
+    error EmptyTokenTranferGasLimit(address token);
     error TokenTransferError(address token, address receiver, uint256 amount);
     error EmptyHoldingAddress();
 

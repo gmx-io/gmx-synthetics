@@ -55,6 +55,9 @@ library TokenUtils {
         AccountUtils.validateReceiver(receiver);
 
         uint256 gasLimit = dataStore.getUint(Keys.tokenTransferGasLimit(token));
+        if (gasLimit == 0) {
+            revert Errors.EmptyTokenTranferGasLimit(token);
+        }
 
         (bool success0, /* bytes memory returndata */) = nonRevertingTransferWithGasLimit(
             IERC20(token),
