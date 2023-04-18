@@ -314,9 +314,9 @@ Funding fees incentivise the balancing of long and short positions, the side wit
 
 Funding fees for the larger side is calculated as `(funding factor per second) * (open interest imbalance) ^ (funding exponent factor) / (total open interest)`.
 
-For example if the funding factor per second is 1 / 50,000, and the funding exponent factor is 1, and the long open interest is $150,000 and the short open interest is $50,000 then the funding fee per second for longs would be `(1 / 50,000) * 150,000 / 200,000 => 0.000015 => 0.0015%`.
+For example if the funding factor per second is 1 / 50,000, and the funding exponent factor is 1, and the long open interest is $150,000 and the short open interest is $50,000 then the funding fee per second for longs would be `(1 / 50,000) * 100,000 / 200,000 => 0.00001 => 0.001%`.
 
-The funding fee per second for shorts would be `0.000015 * 150,000 / 50,000 => 0.000045 => 0.0045%`.
+The funding fee per second for shorts would be `-0.00001 * 150,000 / 50,000 => 0.00003 => -0.003%`.
 
 # Borrowing Fees
 
