@@ -80,14 +80,15 @@ library OracleUtils {
     uint256 public constant COMPACTED_PRICE_INDEX_BIT_LENGTH = 8;
     uint256 public constant COMPACTED_PRICE_INDEX_BITMASK = Bits.BITMASK_8;
 
+    error EmptyCompactedPrice(uint256 index);
+    error EmptyCompactedBlockNumber(uint256 index);
+    error EmptyCompactedTimestamp(uint256 index);
+    error InvalidSignature(address recoveredSigner, address expectedSigner);
+
     error EmptyPrimaryPrice(address token);
     error EmptySecondaryPrice(address token);
     error EmptyLatestPrice(address token);
     error EmptyCustomPrice(address token);
-
-    error EmptyCompactedPrice(uint256 index);
-    error EmptyCompactedBlockNumber(uint256 index);
-    error EmptyCompactedTimestamp(uint256 index);
 
     error OracleBlockNumbersAreNotEqual(uint256[] oracleBlockNumbers, uint256 expectedBlockNumber);
     error OracleBlockNumbersAreSmallerThanRequired(uint256[] oracleBlockNumbers, uint256 expectedBlockNumber);
@@ -96,8 +97,6 @@ library OracleUtils {
         uint256[] maxOracleBlockNumbers,
         uint256 blockNumber
     );
-
-    error InvalidSignature(address recoveredSigner, address expectedSigner);
 
     function validateBlockNumberWithinRange(
         uint256[] memory minOracleBlockNumbers,
@@ -289,6 +288,18 @@ library OracleUtils {
         revert OracleBlockNumberNotWithinRange(minOracleBlockNumbers, maxOracleBlockNumbers, blockNumber);
     }
 
+    function isOracleError(bytes4 errorSelector) internal pure returns (bool) {
+        if (isOracleBlockNumberError(errorSelector)) {
+            return true;
+        }
+
+        if (isEmptyPriceError(errorSelector)) {
+            return true;
+        }
+
+        return false;
+    }
+
     function isEmptyPriceError(bytes4 errorSelector) internal pure returns (bool) {
         if (errorSelector == EmptyPrimaryPrice.selector) {
             return true;
@@ -303,6 +314,22 @@ library OracleUtils {
         }
 
         if (errorSelector == EmptyCustomPrice.selector) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function isOracleBlockNumberError(bytes4 errorSelector) internal pure returns (bool) {
+        if (errorSelector == OracleBlockNumbersAreNotEqual.selector) {
+            return true;
+        }
+
+        if (errorSelector == OracleBlockNumbersAreSmallerThanRequired.selector) {
+            return true;
+        }
+
+        if (errorSelector == OracleBlockNumberNotWithinRange.selector) {
             return true;
         }
 

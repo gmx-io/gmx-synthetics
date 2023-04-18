@@ -1,4 +1,5 @@
 import { logGasUsage } from "./gas";
+import { bigNumberify } from "./math";
 import { getOracleParams, TOKEN_ORACLE_TYPES } from "./oracle";
 
 export async function executeWithOracleParams(fixture, overrides) {
@@ -8,7 +9,7 @@ export async function executeWithOracleParams(fixture, overrides) {
   const { signers } = fixture.accounts;
   const { oracleSalt, signerIndexes } = fixture.props;
 
-  const block = await provider.getBlock(oracleBlockNumber.toNumber());
+  const block = await provider.getBlock(bigNumberify(oracleBlockNumber).toNumber());
   const tokenOracleTypes =
     overrides.tokenOracleTypes || Array(tokens.length).fill(TOKEN_ORACLE_TYPES.DEFAULT, 0, tokens.length);
 
@@ -55,7 +56,7 @@ export async function executeWithOracleParams(fixture, overrides) {
 
   const oracleParams = await getOracleParams(args);
 
-  await logGasUsage({
+  return await logGasUsage({
     tx: execute(key, oracleParams),
     label: gasUsageLabel,
   });

@@ -125,6 +125,10 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
 
     function cancelDeposit(bytes32 key) external payable nonReentrant {
         Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
+        if (deposit.account() == address(0)) {
+            revert DepositUtils.EmptyDeposit();
+        }
+
         if (deposit.account() != msg.sender) {
             revert Unauthorized(msg.sender, "account for cancelDeposit");
         }

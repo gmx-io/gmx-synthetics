@@ -10,9 +10,6 @@ library Keys {
     // @dev key for the nonce value used in NonceUtils
     bytes32 public constant NONCE = keccak256(abi.encode("NONCE"));
 
-    // @dev for holding excess execution fees
-    bytes32 public constant HOLDING_ACCOUNT = keccak256(abi.encode("HOLDING_ACCOUNT"));
-
     // @dev for sending received fees
     bytes32 public constant FEE_RECEIVER = keccak256(abi.encode("FEE_RECEIVER"));
 

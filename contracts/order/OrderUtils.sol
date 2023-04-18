@@ -37,6 +37,7 @@ library OrderUtils {
     using Price for Price.Props;
     using Array for uint256[];
 
+    error EmptyOrderAccount();
     error OrderTypeCannotBeCreated(Order.OrderType orderType);
     error OrderAlreadyFrozen();
     error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);
@@ -55,6 +56,10 @@ library OrderUtils {
         address account,
         BaseOrderUtils.CreateOrderParams memory params
     ) external returns (bytes32) {
+        if (account == address(0)) {
+            revert EmptyOrderAccount();
+        }
+
         ReferralUtils.setTraderReferralCode(referralStorage, account, params.referralCode);
 
         uint256 initialCollateralDeltaAmount;
@@ -93,12 +98,7 @@ library OrderUtils {
                 revert InsufficientWntAmountForExecutionFee(wntAmount, params.numbers.executionFee);
             }
 
-            GasUtils.handleExcessExecutionFee(
-                dataStore,
-                orderVault,
-                wntAmount,
-                params.numbers.executionFee
-            );
+            params.numbers.executionFee = wntAmount;
         }
 
         // validate swap path markets

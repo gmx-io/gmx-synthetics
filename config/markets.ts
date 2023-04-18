@@ -186,6 +186,9 @@ const config: {
       swapOnly: true,
     },
     {
+      tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "USDC" },
+    },
+    {
       tokens: { indexToken: "SOL", longToken: "WETH", shortToken: "USDC" },
     },
   ],

@@ -50,6 +50,7 @@ library DepositUtils {
         uint256 callbackGasLimit;
     }
 
+    error EmptyDepositAccount();
     error EmptyDeposit();
     error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);
 
@@ -67,6 +68,10 @@ library DepositUtils {
         address account,
         CreateDepositParams memory params
     ) external returns (bytes32) {
+        if (account == address(0)) {
+            revert EmptyDepositAccount();
+        }
+
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, params.market);
 
         uint256 initialLongTokenAmount = depositVault.recordTransferIn(params.initialLongToken);
@@ -74,9 +79,9 @@ library DepositUtils {
 
         address wnt = TokenUtils.wnt(dataStore);
 
-        if (market.longToken == wnt) {
+        if (params.initialLongToken == wnt) {
             initialLongTokenAmount -= params.executionFee;
-        } else if (market.shortToken == wnt) {
+        } else if (params.initialShortToken == wnt) {
             initialShortTokenAmount -= params.executionFee;
         } else {
             uint256 wntAmount = depositVault.recordTransferIn(wnt);
@@ -84,12 +89,7 @@ library DepositUtils {
                 revert InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
             }
 
-            GasUtils.handleExcessExecutionFee(
-                dataStore,
-                depositVault,
-                wntAmount,
-                params.executionFee
-            );
+            params.executionFee = wntAmount;
         }
 
         if (initialLongTokenAmount == 0 && initialShortTokenAmount == 0) {

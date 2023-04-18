@@ -224,7 +224,7 @@ contract OrderHandler is BaseOrderHandler {
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
         if (
-            OracleUtils.isEmptyPriceError(errorSelector) ||
+            OracleUtils.isOracleError(errorSelector) ||
             errorSelector == FeatureUtils.DisabledFeature.selector ||
             errorSelector == InvalidKeeperForFrozenOrder.selector ||
             // InvalidOrderPrices error should only be raised for limit, trigger orders
