@@ -67,6 +67,8 @@ library DepositUtils {
         AccountUtils.validateAccount(account);
 
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, params.market);
+        MarketUtils.validateSwapPath(dataStore, params.longTokenSwapPath);
+        MarketUtils.validateSwapPath(dataStore, params.shortTokenSwapPath);
 
         // if the initialLongToken and initialShortToken are the same, only the initialLongTokenAmount would
         // be non-zero, the initialShortTokenAmount would be zero
