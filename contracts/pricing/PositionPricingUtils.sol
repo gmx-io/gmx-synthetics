@@ -71,6 +71,10 @@ library PositionPricingUtils {
     struct PositionFees {
         PositionReferralFees referral;
         PositionFundingFees funding;
+        Price.Props collateralTokenPrice;
+        uint256 positionFeeFactor;
+        uint256 protocolFeeAmount;
+        uint256 positionFeeReceiverFactor;
         uint256 feeReceiverAmount;
         uint256 feeAmountForPool;
         uint256 positionFeeAmountForPool;
@@ -84,7 +88,12 @@ library PositionPricingUtils {
     // @param traderDiscountAmount the discount amount for the trader
     // @param affiliateRewardAmount the affiliate reward amount
     struct PositionReferralFees {
+        bytes32 referralCode;
         address affiliate;
+        address trader;
+        uint256 totalRebateFactor;
+        uint256 traderDiscountFactor;
+        uint256 totalRebateAmount;
         uint256 traderDiscountAmount;
         uint256 affiliateRewardAmount;
     }
@@ -139,7 +148,6 @@ library PositionPricingUtils {
         uint256 traderDiscountAmount;
         uint256 affiliateRewardAmount;
     }
-
 
     error UsdDeltaExceedsLongOpenInterest(int256 usdDelta, uint256 longOpenInterest);
     error UsdDeltaExceedsShortOpenInterest(int256 usdDelta, uint256 shortOpenInterest);
@@ -357,15 +365,7 @@ library PositionPricingUtils {
         address shortToken,
         uint256 sizeDeltaUsd
     ) internal view returns (PositionFees memory) {
-        PositionFees memory fees;
-
-        (
-            fees.referral.affiliate,
-            fees.referral.traderDiscountAmount,
-            fees.referral.affiliateRewardAmount,
-            fees.feeReceiverAmount,
-            fees.positionFeeAmountForPool
-        ) = getPositionFeesAfterReferral(
+        PositionFees memory fees = getPositionFeesAfterReferral(
             dataStore,
             referralStorage,
             collateralTokenPrice,
@@ -462,25 +462,34 @@ library PositionPricingUtils {
         address account,
         address market,
         uint256 sizeDeltaUsd
-    ) internal view returns (address, uint256, uint256, uint256, uint256) {
-        GetPositionFeesAfterReferralCache memory cache;
+    ) internal view returns (PositionFees memory) {
+        PositionFees memory fees;
 
-        (cache.referral.affiliate, cache.referral.totalRebateFactor, cache.referral.traderDiscountFactor) = ReferralUtils.getReferralInfo(referralStorage, account);
+        fees.collateralTokenPrice = collateralTokenPrice;
 
-        cache.feeFactor = dataStore.getUint(Keys.positionFeeFactorKey(market));
-        cache.positionFeeAmount = Precision.applyFactor(sizeDeltaUsd, cache.feeFactor) / collateralTokenPrice.min;
+        fees.referral.trader = account;
 
-        cache.referral.totalRebateAmount = Precision.applyFactor(cache.positionFeeAmount, cache.referral.totalRebateFactor);
-        cache.referral.traderDiscountAmount = Precision.applyFactor(cache.referral.totalRebateAmount, cache.referral.traderDiscountFactor);
-        cache.referral.affiliateRewardAmount = cache.referral.totalRebateAmount - cache.referral.traderDiscountAmount;
+        (
+            fees.referral.referralCode,
+            fees.referral.affiliate,
+            fees.referral.totalRebateFactor,
+            fees.referral.traderDiscountFactor
+        ) = ReferralUtils.getReferralInfo(referralStorage, account);
 
-        cache.protocolFeeAmount = cache.positionFeeAmount - cache.referral.totalRebateAmount;
+        fees.positionFeeFactor = dataStore.getUint(Keys.positionFeeFactorKey(market));
+        fees.positionFeeAmount = Precision.applyFactor(sizeDeltaUsd, fees.positionFeeFactor) / collateralTokenPrice.min;
 
-        cache.positionFeeReceiverFactor = dataStore.getUint(Keys.POSITION_FEE_RECEIVER_FACTOR);
-        cache.feeReceiverAmount = Precision.applyFactor(cache.protocolFeeAmount, cache.positionFeeReceiverFactor);
-        cache.positionFeeAmountForPool = cache.protocolFeeAmount - cache.feeReceiverAmount;
+        fees.referral.totalRebateAmount = Precision.applyFactor(fees.positionFeeAmount, fees.referral.totalRebateFactor);
+        fees.referral.traderDiscountAmount = Precision.applyFactor(fees.referral.totalRebateAmount, fees.referral.traderDiscountFactor);
+        fees.referral.affiliateRewardAmount = fees.referral.totalRebateAmount - fees.referral.traderDiscountAmount;
 
-        return (cache.referral.affiliate, cache.referral.traderDiscountAmount, cache.referral.affiliateRewardAmount, cache.feeReceiverAmount, cache.positionFeeAmountForPool);
+        fees.protocolFeeAmount = fees.positionFeeAmount - fees.referral.totalRebateAmount;
+
+        fees.positionFeeReceiverFactor = dataStore.getUint(Keys.POSITION_FEE_RECEIVER_FACTOR);
+        fees.feeReceiverAmount = Precision.applyFactor(fees.protocolFeeAmount, fees.positionFeeReceiverFactor);
+        fees.positionFeeAmountForPool = fees.protocolFeeAmount - fees.feeReceiverAmount;
+
+        return fees;
     }
 
     function emitPositionFeesCollected(
@@ -488,6 +497,7 @@ library PositionPricingUtils {
         bytes32 orderKey,
         address market,
         address collateralToken,
+        uint256 tradeSizeUsd,
         bool isIncrease,
         PositionFees memory fees
     ) external {
@@ -496,6 +506,7 @@ library PositionPricingUtils {
             orderKey,
             market,
             collateralToken,
+            tradeSizeUsd,
             isIncrease,
             fees,
             "PositionFeesCollected"
@@ -507,6 +518,7 @@ library PositionPricingUtils {
         bytes32 orderKey,
         address market,
         address collateralToken,
+        uint256 tradeSizeUsd,
         bool isIncrease,
         PositionFees memory fees
     ) external {
@@ -515,6 +527,7 @@ library PositionPricingUtils {
             orderKey,
             market,
             collateralToken,
+            tradeSizeUsd,
             isIncrease,
             fees,
             "PositionFeesInfo"
@@ -526,6 +539,7 @@ library PositionPricingUtils {
         bytes32 orderKey,
         address market,
         address collateralToken,
+        uint256 tradeSizeUsd,
         bool isIncrease,
         PositionFees memory fees,
         string memory eventName
@@ -535,24 +549,34 @@ library PositionPricingUtils {
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "orderKey", orderKey);
 
-        eventData.addressItems.initItems(3);
+        eventData.addressItems.initItems(4);
         eventData.addressItems.setItem(0, "market", market);
         eventData.addressItems.setItem(1, "collateralToken", collateralToken);
         eventData.addressItems.setItem(2, "affiliate", fees.referral.affiliate);
+        eventData.addressItems.setItem(3, "trader", fees.referral.trader);
 
-        eventData.uintItems.initItems(13);
-        eventData.uintItems.setItem(0, "traderDiscountAmount", fees.referral.traderDiscountAmount);
-        eventData.uintItems.setItem(1, "affiliateRewardAmount", fees.referral.affiliateRewardAmount);
-        eventData.uintItems.setItem(3, "fundingFeeAmount", fees.funding.fundingFeeAmount);
-        eventData.uintItems.setItem(4, "claimableLongTokenAmount", fees.funding.claimableLongTokenAmount);
-        eventData.uintItems.setItem(5, "claimableShortTokenAmount", fees.funding.claimableShortTokenAmount);
-        eventData.uintItems.setItem(6, "feeReceiverAmount", fees.feeReceiverAmount);
-        eventData.uintItems.setItem(7, "feeAmountForPool", fees.feeAmountForPool);
-        eventData.uintItems.setItem(8, "positionFeeAmountForPool", fees.positionFeeAmountForPool);
-        eventData.uintItems.setItem(9, "positionFeeAmount", fees.positionFeeAmount);
-        eventData.uintItems.setItem(10, "borrowingFeeAmount", fees.borrowingFeeAmount);
-        eventData.uintItems.setItem(11, "totalNetCostAmount", fees.totalNetCostAmount);
-        eventData.uintItems.setItem(12, "totalNetCostUsd", fees.totalNetCostUsd);
+        eventData.uintItems.initItems(21);
+        eventData.uintItems.setItem(0, "collateralTokenPrice.min", fees.collateralTokenPrice.min);
+        eventData.uintItems.setItem(1, "collateralTokenPrice.max", fees.collateralTokenPrice.max);
+        eventData.uintItems.setItem(2, "tradeSizeUsd", tradeSizeUsd);
+        eventData.uintItems.setItem(3, "totalRebateFactor", fees.referral.totalRebateFactor);
+        eventData.uintItems.setItem(4, "traderDiscountFactor", fees.referral.traderDiscountFactor);
+        eventData.uintItems.setItem(5, "totalRebateAmount", fees.referral.totalRebateAmount);
+        eventData.uintItems.setItem(6, "traderDiscountAmount", fees.referral.traderDiscountAmount);
+        eventData.uintItems.setItem(7, "affiliateRewardAmount", fees.referral.affiliateRewardAmount);
+        eventData.uintItems.setItem(8, "fundingFeeAmount", fees.funding.fundingFeeAmount);
+        eventData.uintItems.setItem(9, "claimableLongTokenAmount", fees.funding.claimableLongTokenAmount);
+        eventData.uintItems.setItem(10, "claimableShortTokenAmount", fees.funding.claimableShortTokenAmount);
+        eventData.uintItems.setItem(11, "positionFeeFactor", fees.positionFeeFactor);
+        eventData.uintItems.setItem(12, "protocolFeeAmount", fees.protocolFeeAmount);
+        eventData.uintItems.setItem(13, "positionFeeReceiverFactor", fees.positionFeeReceiverFactor);
+        eventData.uintItems.setItem(14, "feeReceiverAmount", fees.feeReceiverAmount);
+        eventData.uintItems.setItem(15, "feeAmountForPool", fees.feeAmountForPool);
+        eventData.uintItems.setItem(16, "positionFeeAmountForPool", fees.positionFeeAmountForPool);
+        eventData.uintItems.setItem(17, "positionFeeAmount", fees.positionFeeAmount);
+        eventData.uintItems.setItem(18, "borrowingFeeAmount", fees.borrowingFeeAmount);
+        eventData.uintItems.setItem(19, "totalNetCostAmount", fees.totalNetCostAmount);
+        eventData.uintItems.setItem(20, "totalNetCostUsd", fees.totalNetCostUsd);
 
         eventData.intItems.initItems(2);
         eventData.intItems.setItem(0, "latestLongTokenFundingAmountPerSize", fees.funding.latestLongTokenFundingAmountPerSize);
@@ -562,6 +586,9 @@ library PositionPricingUtils {
         eventData.boolItems.setItem(0, "hasPendingLongTokenFundingFee", fees.funding.hasPendingLongTokenFundingFee);
         eventData.boolItems.setItem(1, "hasPendingShortTokenFundingFee", fees.funding.hasPendingShortTokenFundingFee);
         eventData.boolItems.setItem(2, "isIncrease", isIncrease);
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "referralCode", fees.referral.referralCode);
 
         eventEmitter.emitEventLog1(
             eventName,

@@ -13,7 +13,7 @@ import "../nonce/NonceUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
-import "../utils/ReceiverUtils.sol";
+import "../utils/AccountUtils.sol";
 
 // @title DepositUtils
 // @dev Library for deposit functions, to help with the depositing of liquidity
@@ -50,7 +50,6 @@ library DepositUtils {
         uint256 callbackGasLimit;
     }
 
-    error EmptyDepositAccount();
     error EmptyDeposit();
     error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);
 
@@ -68,12 +67,12 @@ library DepositUtils {
         address account,
         CreateDepositParams memory params
     ) external returns (bytes32) {
-        if (account == address(0)) {
-            revert EmptyDepositAccount();
-        }
+        AccountUtils.validateAccount(account);
 
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, params.market);
 
+        // if the initialLongToken and initialShortToken are the same, only the initialLongTokenAmount would
+        // be non-zero, the initialShortTokenAmount would be zero
         uint256 initialLongTokenAmount = depositVault.recordTransferIn(params.initialLongToken);
         uint256 initialShortTokenAmount = depositVault.recordTransferIn(params.initialShortToken);
 
@@ -96,7 +95,7 @@ library DepositUtils {
             revert EmptyDeposit();
         }
 
-        ReceiverUtils.validateReceiver(params.receiver);
+        AccountUtils.validateReceiver(params.receiver);
 
         Deposit.Props memory deposit = Deposit.Props(
             Deposit.Addresses(

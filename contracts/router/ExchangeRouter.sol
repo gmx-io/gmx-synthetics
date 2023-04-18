@@ -11,7 +11,7 @@ import "../exchange/WithdrawalHandler.sol";
 import "../exchange/OrderHandler.sol";
 
 import "../utils/PayableMulticall.sol";
-import "../utils/ReceiverUtils.sol";
+import "../utils/AccountUtils.sol";
 
 import "./Router.sol";
 
@@ -92,13 +92,13 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
 
     // @dev Wraps the specified amount of native tokens into WNT then sends the WNT to the specified address
     function sendWnt(address receiver, uint256 amount) external payable nonReentrant {
-        ReceiverUtils.validateReceiver(receiver);
+        AccountUtils.validateReceiver(receiver);
         TokenUtils.depositAndSendWrappedNativeToken(dataStore, receiver, amount);
     }
 
     // @dev Sends the given amount of tokens to the given address
     function sendTokens(address token, address receiver, uint256 amount) external payable nonReentrant {
-        ReceiverUtils.validateReceiver(receiver);
+        AccountUtils.validateReceiver(receiver);
         address account = msg.sender;
         router.pluginTransfer(token, account, receiver, amount);
     }
@@ -273,7 +273,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
             revert InvalidClaimFundingFeesInput(markets.length, tokens.length);
         }
 
-        ReceiverUtils.validateReceiver(receiver);
+        AccountUtils.validateReceiver(receiver);
 
         address account = msg.sender;
 
@@ -299,7 +299,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
             revert InvalidClaimCollateralInput(markets.length, tokens.length, timeKeys.length);
         }
 
-        ReceiverUtils.validateReceiver(receiver);
+        AccountUtils.validateReceiver(receiver);
 
         address account = msg.sender;
 

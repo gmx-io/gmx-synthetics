@@ -19,7 +19,7 @@ import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
-import "../utils/ReceiverUtils.sol";
+import "../utils/AccountUtils.sol";
 
 /**
  * @title WithdrawalUtils
@@ -89,7 +89,6 @@ library WithdrawalUtils {
         uint256 shortTokenPoolAmountDelta;
     }
 
-    error EmptyWithdrawalAccount();
     error EmptyWithdrawal();
     error MinLongTokens(uint256 received, uint256 expected);
     error MinShortTokens(uint256 received, uint256 expected);
@@ -115,9 +114,7 @@ library WithdrawalUtils {
         address account,
         CreateWithdrawalParams memory params
     ) external returns (bytes32) {
-        if (account == address(0)) {
-            revert EmptyWithdrawalAccount();
-        }
+        AccountUtils.validateAccount(account);
 
         address wnt = TokenUtils.wnt(dataStore);
         uint256 wntAmount = withdrawalVault.recordTransferIn(wnt);
@@ -126,7 +123,7 @@ library WithdrawalUtils {
             revert InsufficientWntAmount(wntAmount, params.executionFee);
         }
 
-        ReceiverUtils.validateReceiver(params.receiver);
+        AccountUtils.validateReceiver(params.receiver);
 
         if (params.marketTokenAmount == 0) {
             revert EmptyMarketTokenAmount();

@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
 import "../utils/ErrorUtils.sol";
-import "../utils/ReceiverUtils.sol";
+import "../utils/AccountUtils.sol";
 
 import "./IWNT.sol";
 
@@ -58,7 +58,7 @@ library TokenUtils {
         uint256 amount
     ) internal {
         if (amount == 0) { return; }
-        ReceiverUtils.validateReceiver(receiver);
+        AccountUtils.validateReceiver(receiver);
 
         uint256 gasLimit = dataStore.getUint(Keys.tokenTransferGasLimit(token));
 
@@ -91,7 +91,7 @@ library TokenUtils {
         uint256 amount
     ) internal {
         if (amount == 0) { return; }
-        ReceiverUtils.validateReceiver(receiver);
+        AccountUtils.validateReceiver(receiver);
 
         address _wnt = wnt(dataStore);
         IWNT(_wnt).deposit{value: amount}();
@@ -124,7 +124,7 @@ library TokenUtils {
         uint256 amount
     ) internal {
         if (amount == 0) { return; }
-        ReceiverUtils.validateReceiver(receiver);
+        AccountUtils.validateReceiver(receiver);
 
         IWNT(_wnt).withdraw(amount);
 

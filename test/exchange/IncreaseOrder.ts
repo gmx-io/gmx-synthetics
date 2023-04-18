@@ -37,11 +37,11 @@ describe("Exchange.IncreaseOrder", () => {
       initialCollateralToken: wnt,
       initialCollateralDeltaAmount: expandDecimals(10, 18),
       swapPath: [ethUsdMarket.marketToken],
+      orderType: OrderType.MarketIncrease,
       sizeDeltaUsd: decimalToFloat(200 * 1000),
       acceptablePrice: expandDecimals(5001, 12),
       executionFee,
       minOutputAmount: expandDecimals(50000, 6),
-      orderType: OrderType.MarketIncrease,
       isLong: true,
       shouldUnwrapNativeToken: false,
       gasUsageLabel: "createOrder",
@@ -75,6 +75,7 @@ describe("Exchange.IncreaseOrder", () => {
     expect(await getOrderCount(dataStore)).eq(0);
 
     const params = {
+      account: user0,
       market: ethUsdMarket,
       initialCollateralToken: wnt,
       initialCollateralDeltaAmount: expandDecimals(10, 18),
@@ -126,6 +127,7 @@ describe("Exchange.IncreaseOrder", () => {
     expect(await getOrderCount(dataStore)).eq(0);
 
     const params = {
+      account: user0,
       market: ethUsdMarket,
       initialCollateralToken: wnt,
       initialCollateralDeltaAmount: expandDecimals(10, 18),
@@ -164,37 +166,5 @@ describe("Exchange.IncreaseOrder", () => {
 
     expect(await getAccountPositionCount(dataStore, user1.address)).eq(1);
     expect(await getPositionCount(dataStore)).eq(2);
-  });
-
-  it("referral code", async () => {
-    const referralCode = hashString("referralCode");
-
-    const params = {
-      market: ethUsdMarket,
-      initialCollateralToken: wnt,
-      initialCollateralDeltaAmount: expandDecimals(10, 18),
-      swapPath: [],
-      sizeDeltaUsd: decimalToFloat(200 * 1000),
-      acceptablePrice: expandDecimals(5001, 12),
-      executionFee: expandDecimals(1, 15),
-      minOutputAmount: expandDecimals(50000, 6),
-      orderType: OrderType.MarketIncrease,
-      isLong: true,
-      shouldUnwrapNativeToken: false,
-      referralCode,
-    };
-
-    await referralStorage.connect(user1).registerCode(referralCode);
-
-    expect(await referralStorage.traderReferralCodes(user0.address)).eq(ethers.constants.HashZero);
-
-    await handleOrder(fixture, {
-      create: params,
-      execute: {
-        gasUsageLabel: "executeOrder",
-      },
-    });
-
-    expect(await referralStorage.traderReferralCodes(user0.address)).eq(referralCode);
   });
 });

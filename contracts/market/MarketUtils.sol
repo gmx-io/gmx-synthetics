@@ -1982,10 +1982,17 @@ library MarketUtils {
 
     // @dev validate that the positions can be opened in the given market
     // @param market the market to check
-    function validatePositionMarket(Market.Props memory market) internal pure {
+    function validatePositionMarket(DataStore dataStore, Market.Props memory market) internal view {
+        validateEnabledMarket(dataStore, market);
+
         if (isSwapOnlyMarket(market)) {
             revert InvalidPositionMarket(market.marketToken);
         }
+    }
+
+    function validatePositionMarket(DataStore dataStore, address marketAddress) internal view {
+        Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
+        validatePositionMarket(dataStore, market);
     }
 
     // @dev check if a market only supports swaps and not positions

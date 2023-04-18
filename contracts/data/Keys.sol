@@ -73,6 +73,8 @@ library Keys {
     // @dev key for whether the execute order feature is disabled
     bytes32 public constant EXECUTE_ORDER_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_ORDER_FEATURE_DISABLED"));
     // @dev key for whether the execute adl feature is disabled
+    // for liquidations, it can be disabled by using the EXECUTE_ORDER_FEATURE_DISABLED key with the Liquidation
+    // order type, ADL orders have a MarketDecrease order type, so a separate key is needed to disable it
     bytes32 public constant EXECUTE_ADL_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_ADL_FEATURE_DISABLED"));
     // @dev key for whether the update order feature is disabled
     bytes32 public constant UPDATE_ORDER_FEATURE_DISABLED = keccak256(abi.encode("UPDATE_ORDER_FEATURE_DISABLED"));
