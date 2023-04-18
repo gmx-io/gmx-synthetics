@@ -321,6 +321,14 @@ contract Oracle is RoleModule {
     function getLatestPrice(address token) external view returns (Price.Props memory) {
         if (token == address(0)) { return Price.Props(0, 0); }
 
+        Price.Props memory customPrice = customPrices[token];
+
+        // treat the custom price as a latest price for consistency in cases where
+        // the trigger price or acceptable price is used as the custom price
+        if (!customPrice.isEmpty()) {
+            return customPrice;
+        }
+
         Price.Props memory secondaryPrice = secondaryPrices[token];
 
         if (!secondaryPrice.isEmpty()) {
