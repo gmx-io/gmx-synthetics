@@ -106,7 +106,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
       },
       execute: {
         ...getExecuteParams(fixture, { tokens: [wnt, wbtc, usdc] }),
-        expectedCancellationReason: "InvalidCollateralToken",
+        expectedCancellationReason: "InvalidCollateralTokenForMarket",
       },
     });
 
