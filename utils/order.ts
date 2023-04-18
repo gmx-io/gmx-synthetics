@@ -5,7 +5,7 @@ import { logGasUsage } from "./gas";
 import { bigNumberify, expandDecimals } from "./math";
 import { executeWithOracleParams } from "./exchange";
 import { parseLogs } from "./event";
-import { getCancellationReason } from "./error";
+import { getCancellationReason, getErrorString } from "./error";
 
 import * as keys from "./keys";
 
@@ -114,7 +114,16 @@ export async function createOrder(fixture, overrides) {
 export async function executeOrder(fixture, overrides = {}) {
   const { wnt, usdc } = fixture.contracts;
   const { gasUsageLabel, oracleBlockNumberOffset } = overrides;
-  const { reader, dataStore, orderHandler, baseOrderUtils, increaseOrderUtils, marketUtils } = fixture.contracts;
+  const {
+    reader,
+    dataStore,
+    orderHandler,
+    baseOrderUtils,
+    increaseOrderUtils,
+    increasePositionUtils,
+    positionUtils,
+    marketUtils,
+  } = fixture.contracts;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
@@ -161,14 +170,14 @@ export async function executeOrder(fixture, overrides = {}) {
   const cancellationReason = await getCancellationReason({
     logs,
     eventName: "OrderCancelled",
-    contracts: [orderHandler, baseOrderUtils, increaseOrderUtils, marketUtils],
+    contracts: [orderHandler, baseOrderUtils, increaseOrderUtils, increasePositionUtils, positionUtils, marketUtils],
   });
 
   if (cancellationReason) {
     if (overrides.expectedCancellationReason) {
       expect(cancellationReason.name).eq(overrides.expectedCancellationReason);
     } else {
-      throw new Error(`Order was cancelled: ${JSON.stringify(cancellationReason)}`);
+      throw new Error(`Order was cancelled: ${getErrorString(cancellationReason)}`);
     }
   } else {
     if (overrides.expectedCancellationReason) {
@@ -188,7 +197,7 @@ export async function executeOrder(fixture, overrides = {}) {
     if (overrides.expectedFrozenReason) {
       expect(frozenReason.name).eq(overrides.expectedFrozenReason);
     } else {
-      throw new Error(`Order was frozen: ${JSON.stringify(frozenReason)}`);
+      throw new Error(`Order was frozen: ${getErrorString(frozenReason)}`);
     }
   } else {
     if (overrides.expectedFrozenReason) {

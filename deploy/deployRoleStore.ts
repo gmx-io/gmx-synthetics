@@ -4,7 +4,7 @@ import { createDeployFunction } from "../utils/deploy";
 const func = createDeployFunction({
   contractName: "RoleStore",
   afterDeploy: async ({ deployer }) => {
-    for (const role of ["CONTROLLER", "ORDER_KEEPER", "MARKET_KEEPER", "FROZEN_ORDER_KEEPER"]) {
+    for (const role of ["CONTROLLER", "ORDER_KEEPER", "LIQUIDATION_KEEPER", "MARKET_KEEPER", "FROZEN_ORDER_KEEPER"]) {
       await grantRoleIfNotGranted(deployer, role);
     }
   },

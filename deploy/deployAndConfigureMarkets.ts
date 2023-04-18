@@ -54,8 +54,8 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
     );
   }
 
-  async function setMinCollateralFactor(marketToken: string, minCollateralFactor: number, isLong: boolean) {
-    const key = keys.minCollateralFactorKey(marketToken, isLong);
+  async function setMinCollateralFactor(marketToken: string, minCollateralFactor: number) {
+    const key = keys.minCollateralFactorKey(marketToken);
     await setUintIfDifferent(key, minCollateralFactor, `min collateral factor ${marketToken.toString()}`);
   }
 
@@ -94,8 +94,7 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
       dataStore.address
     );
 
-    await setMinCollateralFactor(marketToken, marketConfig.minCollateralFactorForLongs, true);
-    await setMinCollateralFactor(marketToken, marketConfig.minCollateralFactorForShorts, false);
+    await setMinCollateralFactor(marketToken, marketConfig.minCollateralFactor);
 
     await setMaxPoolAmount(marketToken, longToken, marketConfig.maxLongTokenPoolAmount);
     await setMaxPoolAmount(marketToken, shortToken, marketConfig.maxShortTokenPoolAmount);
@@ -166,6 +165,15 @@ const func = async ({ deployments, getNamedAccounts, gmx, ethers }: HardhatRunti
         key,
         marketConfig.borrowingFactorForLongs,
         `borrowing factor for longs for ${marketToken.toString()}`
+      );
+    }
+
+    if (marketConfig.fundingExponentFactor) {
+      const key = keys.fundingExponentFactorKey(marketToken);
+      await setUintIfDifferent(
+        key,
+        marketConfig.fundingExponentFactor,
+        `funding exponent factor for ${marketToken.toString()}`
       );
     }
 

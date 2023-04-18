@@ -7,8 +7,7 @@ export type BaseMarketConfig = {
   reserveFactorLongs: BigNumberish;
   reserveFactorShorts: BigNumberish;
 
-  minCollateralFactorForLongs: BigNumberish;
-  minCollateralFactorForShorts: BigNumberish;
+  minCollateralFactor: BigNumberish;
 
   maxLongTokenPoolAmount: BigNumberish;
   maxShortTokenPoolAmount: BigNumberish;
@@ -79,8 +78,7 @@ const baseMarketConfig: BaseMarketConfig = {
   reserveFactorLongs: decimalToFloat(5, 1), // 50%,
   reserveFactorShorts: decimalToFloat(5, 1), // 50%,
 
-  minCollateralFactorForLongs: decimalToFloat(1, 2), // 1%
-  minCollateralFactorForShorts: decimalToFloat(1, 2), // 1%
+  minCollateralFactor: decimalToFloat(1, 2), // 1%
 
   maxLongTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
   maxShortTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
@@ -111,7 +109,7 @@ const baseMarketConfig: BaseMarketConfig = {
   positiveMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%
   negativeMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%
 
-  swapFeeFactor: decimalToFloat(1, 3), // 0.1%,
+  swapFeeFactor: decimalToFloat(5, 4), // 0.05%,
   positiveSwapImpactFactor: decimalToFloat(2, 5), // 0.002 %
   negativeSwapImpactFactor: decimalToFloat(1, 5), // 0.001 %
   swapImpactExponentFactor: decimalToFloat(2, 0), // 2
@@ -124,7 +122,7 @@ const baseMarketConfig: BaseMarketConfig = {
   borrowingExponentFactorForLongs: decimalToFloat(1),
   borrowingExponentFactorForShorts: decimalToFloat(1),
 
-  fundingFactor: decimalToFloat(1, 7), // 0.00001% / second
+  fundingFactor: decimalToFloat(1, 5), // 0.001% / second
   fundingExponentFactor: decimalToFloat(1),
 };
 
@@ -132,8 +130,7 @@ const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
   reserveFactorLongs: decimalToFloat(5, 1), // 50%,
   reserveFactorShorts: decimalToFloat(5, 1), // 50%,
 
-  minCollateralFactorForLongs: decimalToFloat(1, 2), // 1%
-  minCollateralFactorForShorts: decimalToFloat(1, 2), // 1%
+  minCollateralFactor: decimalToFloat(1, 2), // 1%
 
   maxLongTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
   maxShortTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
