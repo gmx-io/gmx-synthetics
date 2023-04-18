@@ -6,6 +6,7 @@ import tokensConfig from "./tokens";
 import marketsConfig from "./markets";
 import oracleConfig from "./oracle";
 import generalConfig from "./general";
+import rolesConfig from "./roles";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 extendEnvironment(async (hre: HardhatRuntimeEnvironment) => {
@@ -16,5 +17,6 @@ extendEnvironment(async (hre: HardhatRuntimeEnvironment) => {
     getOracle: _.memoize(async () => oracleConfig(hre)),
     getMarkets: _.memoize(async () => marketsConfig(hre)),
     getGeneral: _.memoize(async () => generalConfig(hre)),
+    getRoles: _.memoize(async () => rolesConfig(hre)),
   };
 });

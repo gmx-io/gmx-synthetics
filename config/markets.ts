@@ -122,7 +122,7 @@ const baseMarketConfig: BaseMarketConfig = {
   borrowingExponentFactorForLongs: decimalToFloat(1),
   borrowingExponentFactorForShorts: decimalToFloat(1),
 
-  fundingFactor: decimalToFloat(1, 5), // 0.001% / second
+  fundingFactor: decimalToFloat(5, 7), // 0.00005% / second
   fundingExponentFactor: decimalToFloat(1),
 };
 
