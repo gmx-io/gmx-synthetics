@@ -85,7 +85,7 @@ contract OrderHandler is BaseOrderHandler {
         order.setMinOutputAmount(minOutputAmount);
         order.setIsFrozen(false);
 
-        // allow topping up of executionFee as partially filled or frozen orders
+        // allow topping up of executionFee as frozen orders
         // will have their executionFee reduced
         address wnt = TokenUtils.wnt(dataStore);
         uint256 receivedWnt = orderVault.recordTransferIn(wnt);
@@ -257,7 +257,13 @@ contract OrderHandler is BaseOrderHandler {
             // being reverted instead
             // if the position is created or increased later, the oracle prices used to fulfill the order
             // must be after the position was last increased, this is validated in DecreaseOrderUtils
-            if (errorSelector == PositionUtils.EmptyPosition.selector) {
+            //
+            // if the order is already frozen, revert with the custom error to provide more information
+            // on why the order cannot be executed
+            if (
+                errorSelector == PositionUtils.EmptyPosition.selector ||
+                order.isFrozen()
+            ) {
                 ErrorUtils.revertWithCustomError(reasonBytes);
             }
 

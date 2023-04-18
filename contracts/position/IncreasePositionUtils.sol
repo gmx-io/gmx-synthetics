@@ -208,7 +208,7 @@ library IncreasePositionUtils {
 
         PositionUtils.handleReferral(params, fees);
 
-        PositionPricingUtils.emitPositionFeesCollected(
+        PositionEventUtils.emitPositionFeesCollected(
             params.contracts.eventEmitter,
             params.orderKey,
             params.market.marketToken,
