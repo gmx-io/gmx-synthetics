@@ -1,7 +1,6 @@
-import { parseLogs, getEventDataValue } from "./event";
+import { getEventDataValue } from "./event";
 
-export function getCancellationReason({ fixture, txReceipt, eventName, contracts }) {
-  const logs = parseLogs(fixture, txReceipt);
+export function getCancellationReason({ logs, eventName, contracts }) {
   const reasonBytes = getEventDataValue(logs, eventName, "reasonBytes");
   if (!reasonBytes) {
     return;

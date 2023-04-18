@@ -66,6 +66,7 @@ export async function deployFixture() {
   const router = await hre.ethers.getContract("Router");
   const exchangeRouter = await hre.ethers.getContract("ExchangeRouter");
   const oracle = await hre.ethers.getContract("Oracle");
+  const marketUtils = await hre.ethers.getContract("MarketUtils");
   const marketStoreUtils = await hre.ethers.getContract("MarketStoreUtils");
   const depositStoreUtils = await hre.ethers.getContract("DepositStoreUtils");
   const withdrawalStoreUtils = await hre.ethers.getContract("WithdrawalStoreUtils");
@@ -165,6 +166,7 @@ export async function deployFixture() {
       router,
       exchangeRouter,
       oracle,
+      marketUtils,
       marketStoreUtils,
       depositStoreUtils,
       withdrawalStoreUtils,
