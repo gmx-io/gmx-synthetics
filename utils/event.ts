@@ -29,6 +29,19 @@ export function getEventData(parsedLogs, eventName) {
   }
 }
 
+export function getEventDataArray(parsedLogs, eventName) {
+  const eventDataArray = [];
+
+  for (let i = 0; i < parsedLogs.length; i++) {
+    const log = parsedLogs[i];
+    if (log.parsedEventInfo?.eventName === eventName) {
+      eventDataArray.push(log.parsedEventData);
+    }
+  }
+
+  return eventDataArray;
+}
+
 export function getEventDataValue(parsedLogs, eventName, key) {
   const eventData = getEventData(parsedLogs, eventName);
   if (eventData) {
