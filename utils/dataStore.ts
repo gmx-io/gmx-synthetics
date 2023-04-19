@@ -24,7 +24,7 @@ export async function setBoolIfDifferent(key: string, value: boolean, label?: st
 }
 
 async function setIfDifferent(
-  type: "uint" | "address" | "data" | "bool",
+  type: "uint" | "address" | "data" | "bool" | "bytes32",
   key: string,
   value: any,
   { compare, label }: { compare?: (a: any, b: any) => boolean; label?: string } = {}
@@ -42,9 +42,9 @@ async function setIfDifferent(
 
   const currentValue: string = await read("DataStore", getMethod, key);
   if (compare ? !compare(currentValue, value) : currentValue != value) {
-    log("setting %s %s to %s", type, label || key, value.toString());
+    log("setting %s %s (%s) to %s", type, label, key, value.toString());
     await execute("DataStore", { from: deployer, log: true }, setMethod, key, value);
   } else {
-    log("skipping %s %s as it is already set to %s", type, label || key, value.toString());
+    log("skipping %s %s (%s) as it is already set to %s", type, label, key, value.toString());
   }
 }
