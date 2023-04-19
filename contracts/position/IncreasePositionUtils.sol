@@ -265,7 +265,7 @@ library IncreasePositionUtils {
             Keys.UI_POSITION_FEE
         );
 
-        collateralDeltaAmount -= fees.totalNetCostAmount.toInt256();
+        collateralDeltaAmount -= fees.collateralCostAmount.toInt256();
 
         MarketUtils.applyDeltaToCollateralSum(
             params.contracts.dataStore,

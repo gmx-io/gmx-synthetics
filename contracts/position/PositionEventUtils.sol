@@ -259,7 +259,7 @@ library PositionEventUtils {
         eventData.uintItems.setItem(20, "positionFeeAmountForPool", fees.positionFeeAmountForPool);
         eventData.uintItems.setItem(21, "positionFeeAmount", fees.positionFeeAmount);
         eventData.uintItems.setItem(22, "totalNetCostAmount", fees.totalNetCostAmount);
-        eventData.uintItems.setItem(23, "totalNetCostUsd", fees.totalNetCostUsd);
+        eventData.uintItems.setItem(23, "collateralCostAmount", fees.collateralCostAmount);
         eventData.uintItems.setItem(24, "uiFeeReceiverFactor", fees.ui.uiFeeReceiverFactor);
         eventData.uintItems.setItem(25, "uiFeeAmount", fees.ui.uiFeeAmount);
 
