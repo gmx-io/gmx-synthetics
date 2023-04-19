@@ -149,8 +149,8 @@ describe("Oracle", () => {
         priceFeedTokens: [],
       })
     )
-      .to.be.revertedWithCustomError(errorsContract, "DuplicateSigner")
-      .withArgs(1);
+      .to.be.revertedWithCustomError(errorsContract, "DuplicatedIndex")
+      .withArgs(1, "signerIndex");
 
     let signerInfo = getSignerInfo([0, 1, 2, 3, 4, 7, 9]);
     const block = await provider.getBlock(blockNumber);
