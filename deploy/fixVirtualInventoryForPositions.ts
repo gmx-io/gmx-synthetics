@@ -1,14 +1,12 @@
-import { MarketConfig } from "../config/markets";
 import { bigNumberify } from "../utils/math";
 import * as keys from "../utils/keys";
 import { TokenConfig } from "../config/tokens";
 
-import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../utils/market";
+import { getOnchainMarkets } from "../utils/market";
 import { setIntIfDifferent } from "../utils/dataStore";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 const func = async ({ deployments, gmx }: HardhatRuntimeEnvironment) => {
-  const allMarkets: MarketConfig[] = await gmx.getMarkets();
   const tokens: Record<string, TokenConfig> = await gmx.getTokens();
 
   const { read, get, log } = deployments;
