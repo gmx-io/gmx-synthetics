@@ -253,6 +253,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.BORROWING_FACTOR] = true;
 
         allowedBaseKeys[Keys.CLAIMABLE_COLLATERAL_FACTOR] = true;
+
+        allowedBaseKeys[Keys.PRICE_FEED_HEARTBEAT_DURATION] = true;
     }
 
     // @dev validate that the baseKey is allowed to be used

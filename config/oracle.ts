@@ -4,6 +4,7 @@ import { TOKEN_ORACLE_TYPES } from "../utils/oracle";
 type OracleRealPriceFeed = {
   address: string;
   decimals: number;
+  heartbeatDuration: number;
   deploy?: never;
   initPrice?: never;
 };
@@ -11,6 +12,7 @@ type OracleRealPriceFeed = {
 type OracleTestPriceFeed = {
   address?: never;
   decimals: number;
+  heartbeatDuration: number;
   deploy: true;
   initPrice: string;
 };
@@ -55,6 +57,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
         USDC: {
           priceFeed: {
             decimals: 8,
+            heartbeatDuration: 24 * 60 * 60,
             deploy: true,
             initPrice: "100000000",
           },
@@ -75,6 +78,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             // this is USDT price feed, there is no USDC feed on Avalanche Fuji
             address: "0x7898AcCC83587C3C55116c5230C17a6Cd9C71bad",
             decimals: 8,
+            heartbeatDuration: 24 * 60 * 60,
           },
         },
       },
