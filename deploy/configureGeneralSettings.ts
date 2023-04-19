@@ -63,12 +63,6 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
   );
 
   await setUintIfDifferent(
-    keys.TOKEN_TRANSFER_GAS_LIMIT,
-    generalConfig.tokenTransferGasLimit,
-    "token transfer gas limit"
-  );
-
-  await setUintIfDifferent(
     keys.ESTIMATED_GAS_FEE_BASE_AMOUNT,
     generalConfig.estimatedGasFeeBaseAmount,
     "estimated gas fee base amount"

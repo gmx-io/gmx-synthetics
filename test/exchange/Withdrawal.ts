@@ -33,6 +33,14 @@ describe("Exchange.Withdrawal", () => {
   it("createWithdrawal", async () => {
     expect(await getWithdrawalCount(dataStore)).eq(0);
 
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(10 * 5000, 6),
+      },
+    });
+
     await createWithdrawal(fixture, {
       account: user0,
       receiver: user1,
@@ -75,15 +83,6 @@ describe("Exchange.Withdrawal", () => {
       },
     });
 
-    await createWithdrawal(fixture, {
-      receiver: user0,
-      market: ethUsdMarket,
-      marketTokenAmount: expandDecimals(1000, 18),
-      minLongTokenAmount: 100,
-      minShortTokenAmount: 50,
-      shouldUnwrapNativeToken: false,
-      gasUsageLabel: "createWithdrawal",
-    });
     expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(100 * 1000, 18));
     expect(await wnt.balanceOf(withdrawalHandler.address)).eq(0);
     expect(await usdc.balanceOf(withdrawalHandler.address)).eq(0);
@@ -94,6 +93,16 @@ describe("Exchange.Withdrawal", () => {
 
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(expandDecimals(10, 18));
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(50 * 1000, 6));
+
+    await createWithdrawal(fixture, {
+      receiver: user0,
+      market: ethUsdMarket,
+      marketTokenAmount: expandDecimals(1000, 18),
+      minLongTokenAmount: 100,
+      minShortTokenAmount: 50,
+      shouldUnwrapNativeToken: false,
+      gasUsageLabel: "createWithdrawal",
+    });
 
     const withdrawalKeys = await getWithdrawalKeys(dataStore, 0, 1);
     let withdrawal = await reader.getWithdrawal(dataStore.address, withdrawalKeys[0]);
@@ -275,15 +284,27 @@ describe("Exchange.Withdrawal", () => {
   });
 
   it("handle withdrawal error", async () => {
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+      },
+    });
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(50 * 1000, 18));
+
     await handleWithdrawal(fixture, {
       create: {
         market: ethUsdMarket,
         marketTokenAmount: expandDecimals(49940, 18),
-        minLongTokenAmount: 100,
+        minLongTokenAmount: expandDecimals(11, 18),
       },
       execute: {
         gasUsageLabel: "executeWithdrawal",
+        expectedCancellationReason: "InsufficientOutputAmount",
       },
     });
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(50 * 1000, 18));
   });
 });

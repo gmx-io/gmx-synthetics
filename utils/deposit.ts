@@ -83,7 +83,7 @@ export async function createDeposit(fixture, overrides: any = {}) {
 }
 
 export async function executeDeposit(fixture, overrides: any = {}) {
-  const { reader, dataStore, depositHandler, executeDepositUtils, wnt, usdc } = fixture.contracts;
+  const { reader, dataStore, depositHandler, wnt, usdc } = fixture.contracts;
   const { gasUsageLabel } = overrides;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
   const precisions = overrides.precisions || [8, 18];
