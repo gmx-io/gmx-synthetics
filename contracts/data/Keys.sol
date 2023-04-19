@@ -754,7 +754,7 @@ library Keys {
     // @return key for the token adjustment amount for a market
     function poolAmountAdjustmentKey(address market, address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            POOL_AMOUNT,
+            POOL_AMOUNT_ADJUSTMENT,
             market,
             token
         ));
