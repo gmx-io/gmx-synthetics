@@ -1310,7 +1310,7 @@ library MarketUtils {
             }
         } else {
             // round negative impactAmount up, this will be deducted from the user
-            impactAmount = Calc.roundUpDivision(priceImpactUsd, price);
+            impactAmount = Calc.roundUpMagnitudeDivision(priceImpactUsd, price);
         }
 
         // if there is a positive impact, the impact pool amount should be reduced
@@ -1366,7 +1366,7 @@ library MarketUtils {
         // this could lead to large additional charges if the token has a low number of decimals
         // or if the token's value is very high, so care should be taken to inform user's if that
         // is the case
-        return Calc.roundUpDivision(numerator, Precision.FLOAT_PRECISION);
+        return Calc.roundUpMagnitudeDivision(numerator, Precision.FLOAT_PRECISION);
     }
 
     // @dev get the borrowing fees for a position, assumes that cumulativeBorrowingFactor
