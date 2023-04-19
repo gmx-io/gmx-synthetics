@@ -11,7 +11,14 @@ import "./MarketUtils.sol";
 contract MarketFactory is RoleModule {
     using Market for Market.Props;
 
-    event MarketCreated(address marketToken, address indexToken, address longToken, address shortToken);
+    event MarketCreated(
+        address marketToken,
+        bytes32 salt,
+        address indexToken,
+        address longToken,
+        address
+        shortToken
+    );
 
     DataStore public immutable dataStore;
 
@@ -38,7 +45,7 @@ contract MarketFactory is RoleModule {
             marketType
         ));
 
-        address existingMarketAddress = dataStore.getAddress(salt);
+        address existingMarketAddress = dataStore.getAddress(MarketStoreUtils.getMarketSaltHash(salt));
         if (existingMarketAddress != address(0)) {
             revert Errors.MarketAlreadyExists(salt, existingMarketAddress);
         }
@@ -56,7 +63,7 @@ contract MarketFactory is RoleModule {
 
         MarketStoreUtils.set(dataStore, address(marketToken), salt, market);
 
-        emit MarketCreated(address(marketToken), indexToken, longToken, shortToken);
+        emit MarketCreated(address(marketToken), salt, indexToken, longToken, shortToken);
 
         return market;
     }

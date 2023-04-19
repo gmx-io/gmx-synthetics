@@ -14,6 +14,7 @@ import "./Market.sol";
 library MarketStoreUtils {
     using Market for Market.Props;
 
+    bytes32 public constant MARKET_SALT = keccak256(abi.encode("MARKET_SALT"));
     bytes32 public constant MARKET_KEY = keccak256(abi.encode("MARKET_KEY"));
     bytes32 public constant MARKET_TOKEN = keccak256(abi.encode("MARKET_TOKEN"));
     bytes32 public constant INDEX_TOKEN = keccak256(abi.encode("INDEX_TOKEN"));
@@ -46,7 +47,7 @@ library MarketStoreUtils {
     }
 
     function getBySalt(DataStore dataStore, bytes32 salt) external view returns (Market.Props memory) {
-        address key = dataStore.getAddress(salt);
+        address key = dataStore.getAddress(getMarketSaltHash(salt));
         return get(dataStore, key);
     }
 
@@ -60,7 +61,7 @@ library MarketStoreUtils {
         // use the salt to store a reference to the key to allow the key to be retrieved
         // using just the salt value
         dataStore.setAddress(
-            salt,
+            getMarketSaltHash(salt),
             key
         );
 
@@ -106,6 +107,10 @@ library MarketStoreUtils {
         dataStore.removeAddress(
             keccak256(abi.encode(key, SHORT_TOKEN))
         );
+    }
+
+    function getMarketSaltHash(bytes32 salt) internal pure returns (bytes32) {
+        return keccak256(abi.encode(MARKET_SALT, salt));
     }
 
     function getMarketCount(DataStore dataStore) internal view returns (uint256) {
