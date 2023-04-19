@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./BaseOrderHandler.sol";
-import "../errors/ErrorUtils.sol";
+import "../error/ErrorUtils.sol";
 
 // @title OrderHandler
 // @dev Contract to handle creation, execution and cancellation of orders
