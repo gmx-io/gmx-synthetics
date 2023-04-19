@@ -1580,8 +1580,9 @@ library MarketUtils {
         Market.Props memory market,
         bool isLong
     ) internal view returns (uint256) {
-        uint256 openInterestUsingLongTokenAsCollateral = getOpenInterestInTokens(dataStore, market.marketToken, market.longToken, isLong);
-        uint256 openInterestUsingShortTokenAsCollateral = getOpenInterestInTokens(dataStore, market.marketToken, market.shortToken, isLong);
+        uint256 divisor = getPoolDivisor(market.longToken, market.shortToken);
+        uint256 openInterestUsingLongTokenAsCollateral = getOpenInterestInTokens(dataStore, market.marketToken, market.longToken, isLong, divisor);
+        uint256 openInterestUsingShortTokenAsCollateral = getOpenInterestInTokens(dataStore, market.marketToken, market.shortToken, isLong, divisor);
 
         return openInterestUsingLongTokenAsCollateral + openInterestUsingShortTokenAsCollateral;
     }
@@ -1595,9 +1596,10 @@ library MarketUtils {
         DataStore dataStore,
         address market,
         address collateralToken,
-        bool isLong
+        bool isLong,
+        uint256 divisor
     ) internal view returns (uint256) {
-        return dataStore.getUint(Keys.openInterestInTokensKey(market, collateralToken, isLong));
+        return dataStore.getUint(Keys.openInterestInTokensKey(market, collateralToken, isLong)) / divisor;
     }
 
     // @dev get the sum of open interest and pnl for a market
@@ -1691,8 +1693,8 @@ library MarketUtils {
     // @param collateralToken the collateralToken to check
     // @param isLong whether to get the value for longs or shorts
     // @return the total amount of position collateral for a market
-    function getCollateralSum(DataStore dataStore, address market, address collateralToken, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.collateralSumKey(market, collateralToken, isLong));
+    function getCollateralSum(DataStore dataStore, address market, address collateralToken, bool isLong, uint256 divisor) internal view returns (uint256) {
+        return dataStore.getUint(Keys.collateralSumKey(market, collateralToken, isLong)) / divisor;
     }
 
     // @dev get the reserve factor for a market
@@ -2358,8 +2360,10 @@ library MarketUtils {
         // get the pool amount directly as MarketUtils.getPoolAmount will divide the amount by 2
         // for markets with the same long and short token
         cache.poolAmount = dataStore.getUint(Keys.poolAmountKey(market.marketToken, token));
-        cache.collateralForLongs = getCollateralSum(dataStore, market.marketToken, token, true);
-        cache.collateralForShorts = getCollateralSum(dataStore, market.marketToken, token, false);
+        // use 1 for the getCollateralSum divisor since getCollateralSum does not sum over both the
+        // longToken and shortToken
+        cache.collateralForLongs = getCollateralSum(dataStore, market.marketToken, token, true, 1);
+        cache.collateralForShorts = getCollateralSum(dataStore, market.marketToken, token, false, 1);
         cache.swapImpactPoolAmount = getSwapImpactPoolAmount(dataStore, market.marketToken, token);
         cache.claimableCollateralAmount = dataStore.getUint(Keys.claimableCollateralAmountKey(market.marketToken, token));
         cache.claimableFeeAmount = dataStore.getUint(Keys.claimableFeeAmountKey(market.marketToken, token));

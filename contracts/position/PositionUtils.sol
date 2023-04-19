@@ -374,7 +374,15 @@ library PositionUtils {
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(getPositionFeesParams);
 
         uint256 collateralCostUsd = fees.collateralCostAmount * cache.collateralTokenPrice.min;
-        cache.remainingCollateralUsd = cache.collateralUsd.toInt256() + cache.positionPnlUsd + cache.priceImpactUsd - collateralCostUsd.toInt256();
+
+        // the position's pnl is counted as collateral for the liquidation check
+        // as a position in profit should not be liquidated if the pnl is sufficient
+        // to cover the position's fees
+        cache.remainingCollateralUsd =
+            cache.collateralUsd.toInt256()
+            + cache.positionPnlUsd
+            + cache.priceImpactUsd
+            - collateralCostUsd.toInt256();
 
         if (shouldValidateMinCollateralUsd) {
             cache.minCollateralUsd = dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256();
