@@ -204,6 +204,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS] = true;
         allowedBaseKeys[Keys.MAX_ORACLE_PRICE_AGE] = true;
+        allowedBaseKeys[Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR] = true;
         allowedBaseKeys[Keys.POSITION_FEE_RECEIVER_FACTOR] = true;
         allowedBaseKeys[Keys.SWAP_FEE_RECEIVER_FACTOR] = true;
         allowedBaseKeys[Keys.BORROWING_FEE_RECEIVER_FACTOR] = true;

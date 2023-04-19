@@ -503,6 +503,8 @@ describe("Oracle", () => {
       priceFeedTokens: [usdc.address],
     });
 
+    await dataStore.setAddress(keys.priceFeedKey(usdc.address), ethers.constants.AddressZero);
+
     await printGasUsage(provider, tx0, "oracle.withOraclePrices tx0");
 
     const tx1 = await oracleModuleTest.withOraclePricesTest(oracle.address, dataStore.address, eventEmitter.address, {

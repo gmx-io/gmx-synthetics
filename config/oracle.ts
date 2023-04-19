@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { TOKEN_ORACLE_TYPES } from "../utils/oracle";
+import { decimalToFloat } from "../utils/math";
 
 type OracleRealPriceFeed = {
   address: string;
@@ -24,6 +25,7 @@ export type OracleConfig = {
   minOracleSigners: number;
   minOracleBlockConfirmations: number;
   maxOraclePriceAge: number;
+  maxRefPriceDeviationFactor: number;
   tokens?: {
     [tokenSymbol: string]: {
       priceFeed?: OraclePriceFeed;
@@ -46,6 +48,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
       minOracleSigners: 0,
       minOracleBlockConfirmations: 100,
       maxOraclePriceAge: 60 * 60 * 24,
+      maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
     },
 
     hardhat: {
@@ -53,6 +56,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
       minOracleSigners: 0,
       minOracleBlockConfirmations: 100,
       maxOraclePriceAge: 60 * 60,
+      maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       tokens: {
         USDC: {
           priceFeed: {
@@ -68,6 +72,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     avalancheFuji: {
       signers: ["0xFb11f15f206bdA02c224EDC744b0E50E46137046", "0x23247a1A80D01b9482E9d734d2EB780a3b5c8E6c"],
       maxOraclePriceAge: 60 * 60,
+      maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       minOracleBlockConfirmations: 100,
       minOracleSigners: 1,
 
