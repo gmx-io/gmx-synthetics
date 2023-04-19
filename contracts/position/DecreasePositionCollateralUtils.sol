@@ -365,8 +365,6 @@ library DecreasePositionCollateralUtils {
             values.pnlAmountForPool = (params.position.collateralAmount() - fees.funding.fundingFeeAmount).toInt256();
         }
 
-        PositionPricingUtils.PositionFees memory _fees;
-
         PositionUtils.DecreasePositionCollateralValues memory _values = PositionUtils.DecreasePositionCollateralValues(
             values.pnlTokenForPool, // pnlTokenForPool
             values.executionPrice, // executionPrice
@@ -385,6 +383,12 @@ library DecreasePositionCollateralUtils {
                 0
             )
         );
+
+        PositionPricingUtils.PositionFees memory _fees;
+
+        // allow the accumulated funding fees to still be claimable
+        _fees.funding.claimableLongTokenAmount = fees.funding.claimableLongTokenAmount;
+        _fees.funding.claimableShortTokenAmount = fees.funding.claimableShortTokenAmount;
 
         return (_values, _fees);
     }
