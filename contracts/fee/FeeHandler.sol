@@ -35,7 +35,7 @@ contract FeeHandler is ReentrancyGuard, RoleModule {
 
         address receiver = dataStore.getAddress(Keys.FEE_RECEIVER);
 
-        for (uint256 i = 0; i < markets.length; i++) {
+        for (uint256 i; i < markets.length; i++) {
             FeeUtils.claimFees(
                 dataStore,
                 eventEmitter,

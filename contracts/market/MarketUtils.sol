@@ -630,6 +630,7 @@ library MarketUtils {
     // @param eventEmitter EventEmitter
     // @param market the market to claim for
     // @param token the token to claim
+    // @param timeKey the time key
     // @param account the account to claim for
     // @param receiver the receiver to send the amount to
     function claimCollateral(
@@ -2094,15 +2095,7 @@ library MarketUtils {
     // @param marketAddress the address of the market
     function validateEnabledMarket(DataStore dataStore, address marketAddress) internal view {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
-
-        if (market.marketToken == address(0)) {
-            revert Errors.EmptyMarket();
-        }
-
-        bool isMarketDisabled = dataStore.getBool(Keys.isMarketDisabledKey(market.marketToken));
-        if (isMarketDisabled) {
-            revert Errors.DisabledMarket(market.marketToken);
-        }
+        validateEnabledMarket(dataStore, market);
     }
 
     // @dev validate that the specified market exists and is enabled
@@ -2170,7 +2163,7 @@ library MarketUtils {
     function getEnabledMarkets(DataStore dataStore, address[] memory swapPath) internal view returns (Market.Props[] memory) {
         Market.Props[] memory markets = new Market.Props[](swapPath.length);
 
-        for (uint256 i = 0; i < swapPath.length; i++) {
+        for (uint256 i; i < swapPath.length; i++) {
             address marketAddress = swapPath[i];
             markets[i] = getEnabledMarket(dataStore, marketAddress);
         }
@@ -2184,7 +2177,7 @@ library MarketUtils {
             revert Errors.MaxSwapPathLengthExceeded(swapPath.length, maxSwapPathLength);
         }
 
-        for (uint256 i = 0; i < swapPath.length; i++) {
+        for (uint256 i; i < swapPath.length; i++) {
             address marketAddress = swapPath[i];
             validateEnabledMarket(dataStore, marketAddress);
         }
@@ -2304,7 +2297,7 @@ library MarketUtils {
         DataStore dataStore,
         Market.Props[] memory markets
     ) public view {
-        for (uint256 i = 0; i < markets.length; i++) {
+        for (uint256 i; i < markets.length; i++) {
             validateMarketTokenBalance(dataStore, markets[i]);
         }
     }

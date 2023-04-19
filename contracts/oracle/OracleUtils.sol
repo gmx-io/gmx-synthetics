@@ -173,7 +173,7 @@ library OracleUtils {
     function getUncompactedOracleBlockNumbers(uint256[] memory compactedOracleBlockNumbers, uint256 length) internal pure returns (uint256[] memory) {
         uint256[] memory blockNumbers = new uint256[](length);
 
-        for (uint256 i = 0; i < length; i++) {
+        for (uint256 i; i < length; i++) {
             blockNumbers[i] = getUncompactedOracleBlockNumber(compactedOracleBlockNumbers, i);
         }
 

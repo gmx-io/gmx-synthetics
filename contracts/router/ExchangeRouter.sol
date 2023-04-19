@@ -279,7 +279,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
 
         address account = msg.sender;
 
-        for (uint256 i = 0; i < markets.length; i++) {
+        for (uint256 i; i < markets.length; i++) {
             MarketUtils.claimFundingFees(
                 dataStore,
                 eventEmitter,
@@ -307,7 +307,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
 
         address account = msg.sender;
 
-        for (uint256 i = 0; i < markets.length; i++) {
+        for (uint256 i; i < markets.length; i++) {
             MarketUtils.claimCollateral(
                 dataStore,
                 eventEmitter,
@@ -343,7 +343,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
 
         address account = msg.sender;
 
-        for (uint256 i = 0; i < markets.length; i++) {
+        for (uint256 i; i < markets.length; i++) {
             ReferralUtils.claimAffiliateReward(
                 dataStore,
                 eventEmitter,
@@ -373,7 +373,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
 
         address uiFeeReceiver = msg.sender;
 
-        for (uint256 i = 0; i < markets.length; i++) {
+        for (uint256 i; i < markets.length; i++) {
             FeeUtils.claimUiFees(
                 dataStore,
                 eventEmitter,
