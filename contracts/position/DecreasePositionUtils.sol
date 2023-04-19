@@ -95,7 +95,7 @@ library DecreasePositionUtils {
                 params.market,
                 cache.prices,
                 params.position,
-                cache.prices.indexTokenPrice.midPrice(),
+                cache.prices.indexTokenPrice.pickPriceForPnl(params.position.isLong(), false),
                 params.position.sizeInUsd()
             );
 

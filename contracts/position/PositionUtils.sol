@@ -474,13 +474,13 @@ library PositionUtils {
         uint256 nextPositionBorrowingFactor
     ) internal {
         MarketUtils.updateTotalBorrowing(
-            params.contracts.dataStore,
-            params.market.marketToken,
-            params.position.isLong(),
-            params.position.sizeInUsd(),
-            params.position.borrowingFactor(),
-            nextPositionSizeInUsd,
-            nextPositionBorrowingFactor
+            params.contracts.dataStore, // dataStore
+            params.market.marketToken, // market
+            params.position.isLong(), // isLong
+            params.position.sizeInUsd(), // prevPositionSizeInUsd
+            params.position.borrowingFactor(), // prevPositionBorrowingFactor
+            nextPositionSizeInUsd, // nextPositionSizeInUsd
+            nextPositionBorrowingFactor // nextPositionBorrowingFactor
         );
     }
 
