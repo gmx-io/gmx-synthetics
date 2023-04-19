@@ -2342,6 +2342,14 @@ library MarketUtils {
         if (balance < expectedMinBalance) {
             revert Errors.InvalidMarketTokenBalance(market.marketToken, token, balance, expectedMinBalance);
         }
+
+        // since funding fees are excluded from the expectedMinBalance
+        // separately check that claimable funding fees do not exceed the token balance
+        uint256 claimableFundingFeeAmount = dataStore.getUint(Keys.claimableFundingAmountKey(market.marketToken, token));
+
+        if (balance < claimableFundingFeeAmount) {
+            revert Errors.InvalidMarketTokenBalanceForClaimableFunding(market.marketToken, token, balance, claimableFundingFeeAmount);
+        }
     }
 
     function getExpectedMinTokenBalance(
