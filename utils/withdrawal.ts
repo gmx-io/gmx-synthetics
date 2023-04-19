@@ -3,7 +3,6 @@ import { logGasUsage } from "./gas";
 import { contractAt } from "./deploy";
 import { expandDecimals, bigNumberify } from "./math";
 import { executeWithOracleParams } from "./exchange";
-import { getBalanceOf } from "./token";
 import { parseLogs } from "./event";
 import { getCancellationReason, getErrorString } from "./error";
 

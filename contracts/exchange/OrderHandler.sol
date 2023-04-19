@@ -57,6 +57,16 @@ contract OrderHandler is BaseOrderHandler {
      * transferred to the contract is added to the order's execution fee. The updated order is then saved
      * in the order store, and an `OrderUpdated` event is emitted.
      *
+     * A user may be able to observe exchange prices and prevent order execution by updating the order's
+     * trigger price or acceptable price
+     *
+     * The main front-running concern is if a user knows whether the price is going to move up or down
+     * then positions accordingly, e.g. if price is going to move up then the user opens a long position
+     *
+     * With updating of orders, a user may know that price could be lower and delays the execution of an
+     * order by updating it, this should not be a significant front-running concern since it is similar
+     * to observing prices then creating a market order as price is decreasing
+     *
      * @param key The unique ID of the order to be updated
      * @param sizeDeltaUsd The new size delta for the order
      * @param acceptablePrice The new acceptable price for the order

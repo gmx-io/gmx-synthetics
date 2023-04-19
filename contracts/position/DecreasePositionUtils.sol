@@ -134,6 +134,10 @@ library DecreasePositionUtils {
                     0
                 );
 
+                // the estimatedRemainingCollateralUsd subtracts the initialCollateralDeltaAmount
+                // since the initialCollateralDeltaAmount will be set to zero, the initialCollateralDeltaAmount
+                // should be added back to the estimatedRemainingCollateralUsd
+                estimatedRemainingCollateralUsd += params.order.initialCollateralDeltaAmount().toInt256();
                 params.order.setInitialCollateralDeltaAmount(0);
             }
 
