@@ -28,33 +28,33 @@ library FeeUtils {
     // @param eventEmitter EventEmitter
     // @param market the market to increment claimable fees for
     // @param token the fee token
-    // @param feeReceiverAmount the amount to increment
+    // @param delta the amount to increment
     // @param feeType the type of the fee
     function incrementClaimableFeeAmount(
         DataStore dataStore,
         EventEmitter eventEmitter,
         address market,
         address token,
-        uint256 feeReceiverAmount,
+        uint256 delta,
         bytes32 feeType
     ) external {
-        if (feeReceiverAmount == 0) {
+        if (delta == 0) {
             return;
         }
 
         bytes32 key = Keys.claimableFeeAmountKey(market, token);
 
-        uint256 nextClaimableFeeAmount = dataStore.incrementUint(
+        uint256 nextValue = dataStore.incrementUint(
             key,
-            feeReceiverAmount
+            delta
         );
 
         emitClaimableFeeAmountUpdated(
             eventEmitter,
             market,
             token,
-            feeReceiverAmount,
-            nextClaimableFeeAmount,
+            delta,
+            nextValue,
             feeType
         );
     }
@@ -65,18 +65,21 @@ library FeeUtils {
         address uiFeeReceiver,
         address market,
         address token,
-        uint256 feeReceiverAmount,
+        uint256 delta,
         bytes32 feeType
     ) external {
-        if (feeReceiverAmount == 0) {
+        if (delta == 0) {
             return;
         }
 
-        bytes32 key = Keys.claimableUiFeeAmountKey(uiFeeReceiver, market, token);
+        uint256 nextValue = dataStore.incrementUint(
+            Keys.claimableUiFeeAmountKey(market, token, uiFeeReceiver),
+            delta
+        );
 
-        uint256 nextClaimableFeeAmount = dataStore.incrementUint(
-            key,
-            feeReceiverAmount
+        uint256 nextPoolValue = dataStore.incrementUint(
+            Keys.claimableUiFeeAmountKey(market, token),
+            delta
         );
 
         emitClaimableUiFeeAmountUpdated(
@@ -84,8 +87,9 @@ library FeeUtils {
             uiFeeReceiver,
             market,
             token,
-            feeReceiverAmount,
-            nextClaimableFeeAmount,
+            delta,
+            nextValue,
+            nextPoolValue,
             feeType
         );
     }
@@ -116,6 +120,8 @@ library FeeUtils {
             feeAmount
         );
 
+        MarketUtils.validateMarketTokenBalance(dataStore, market);
+
         emitFeesClaimed(
             eventEmitter,
             market,
@@ -134,10 +140,15 @@ library FeeUtils {
     ) internal {
         AccountUtils.validateReceiver(receiver);
 
-        bytes32 key = Keys.claimableUiFeeAmountKey(uiFeeReceiver, market, token);
+        bytes32 key = Keys.claimableUiFeeAmountKey(market, token, uiFeeReceiver);
 
         uint256 feeAmount = dataStore.getUint(key);
         dataStore.setUint(key, 0);
+
+        uint256 nextPoolValue = dataStore.decrementUint(
+            Keys.claimableUiFeeAmountKey(market, token),
+            feeAmount
+        );
 
         MarketToken(payable(market)).transferOut(
             token,
@@ -145,12 +156,15 @@ library FeeUtils {
             feeAmount
         );
 
+        MarketUtils.validateMarketTokenBalance(dataStore, market);
+
         emitUiFeesClaimed(
             eventEmitter,
             uiFeeReceiver,
             market,
             receiver,
-            feeAmount
+            feeAmount,
+            nextPoolValue
         );
     }
 
@@ -190,6 +204,7 @@ library FeeUtils {
         address token,
         uint256 delta,
         uint256 nextValue,
+        uint256 nextPoolValue,
         bytes32 feeType
     ) internal {
         EventUtils.EventLogData memory eventData;
@@ -199,9 +214,10 @@ library FeeUtils {
         eventData.addressItems.setItem(1, "market", market);
         eventData.addressItems.setItem(2, "token", token);
 
-        eventData.uintItems.initItems(2);
+        eventData.uintItems.initItems(3);
         eventData.uintItems.setItem(0, "delta", delta);
         eventData.uintItems.setItem(1, "nextValue", nextValue);
+        eventData.uintItems.setItem(2, "nextPoolValue", nextPoolValue);
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "feeType", feeType);
@@ -241,7 +257,8 @@ library FeeUtils {
         address uiFeeReceiver,
         address market,
         address receiver,
-        uint256 feeAmount
+        uint256 feeAmount,
+        uint256 nextPoolValue
     ) internal {
         EventUtils.EventLogData memory eventData;
 
@@ -250,8 +267,9 @@ library FeeUtils {
         eventData.addressItems.setItem(1, "market", market);
         eventData.addressItems.setItem(2, "receiver", receiver);
 
-        eventData.uintItems.initItems(1);
+        eventData.uintItems.initItems(2);
         eventData.uintItems.setItem(0, "feeAmount", feeAmount);
+        eventData.uintItems.setItem(1, "nextPoolValue", nextPoolValue);
 
         eventEmitter.emitEventLog1(
             "UiFeesClaimed",

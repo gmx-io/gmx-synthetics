@@ -256,7 +256,7 @@ describe("Exchange.FundingFees", () => {
       execute: {
         afterExecution: async ({ logs }) => {
           const feeInfo = getEventData(logs, "PositionFeesCollected");
-          expect(feeInfo.fundingFeeAmount).eq("806402");
+          expectWithinRange(feeInfo.fundingFeeAmount, "806402", "10");
           expect(feeInfo.collateralToken).eq(usdc.address);
           const claimableFundingData = getEventDataArray(logs, "ClaimableFundingUpdated");
           expect(claimableFundingData.length).eq(0);

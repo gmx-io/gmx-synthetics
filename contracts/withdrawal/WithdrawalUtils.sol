@@ -410,6 +410,8 @@ library WithdrawalUtils {
             "withdrawal",
             cache.shortTokenFees
         );
+
+        MarketUtils.validateMarketTokenBalance(params.dataStore, market);
     }
 
     function swap(
@@ -441,6 +443,10 @@ library WithdrawalUtils {
                 shouldUnwrapNativeToken // shouldUnwrapNativeToken
             )
         );
+
+        // validate that internal state changes are correct before calling
+        // external callbacks
+        MarketUtils.validateMarketTokenBalance(params.dataStore, swapPathMarkets);
     }
 
     function _getOutputAmounts(
