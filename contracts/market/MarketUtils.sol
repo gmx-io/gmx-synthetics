@@ -146,8 +146,8 @@ library MarketUtils {
         Price.Props memory shortTokenPrice,
         bytes32 pnlFactorType,
         bool maximize
-    ) external view returns (int256) {
-        int256 poolValue = getPoolValueInfo(
+    ) external view returns (int256, MarketPoolValueInfo.Props memory) {
+        MarketPoolValueInfo.Props memory poolValueInfo = getPoolValueInfo(
             dataStore,
             market,
             indexTokenPrice,
@@ -155,12 +155,12 @@ library MarketUtils {
             shortTokenPrice,
             pnlFactorType,
             maximize
-        ).poolValue;
+        );
 
-        if (poolValue == 0) { return 0; }
+        if (poolValueInfo.poolValue == 0) { return (0, poolValueInfo); }
 
-        if (poolValue < 0) {
-            revert Errors.UnexpectedPoolValueForTokenPriceCalculation(poolValue);
+        if (poolValueInfo.poolValue < 0) {
+            revert Errors.UnexpectedPoolValueForTokenPriceCalculation(poolValueInfo.poolValue);
         }
 
         uint256 supply = getMarketTokenSupply(MarketToken(payable(market.marketToken)));
@@ -169,7 +169,7 @@ library MarketUtils {
             revert Errors.UnexpectedSupplyForTokenPriceCalculation();
         }
 
-        return poolValue * Precision.WEI_PRECISION.toInt256() / supply.toInt256();
+        return (poolValueInfo.poolValue * Precision.WEI_PRECISION.toInt256() / supply.toInt256(), poolValueInfo);
     }
 
     // @dev get the total supply of the marketToken

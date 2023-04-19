@@ -243,7 +243,7 @@ contract Reader {
         Price.Props memory shortTokenPrice,
         bytes32 pnlFactorType,
         bool maximize
-    ) external view returns (int256) {
+    ) external view returns (int256, MarketPoolValueInfo.Props memory) {
         return
             MarketUtils.getMarketTokenPrice(
                 dataStore,
