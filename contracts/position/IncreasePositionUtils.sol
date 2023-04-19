@@ -155,6 +155,7 @@ library IncreasePositionUtils {
             params.market,
             prices,
             true, // isIncrease
+            true, // shouldValidateMinPositionSize
             true // shouldValidateMinCollateralUsd
         );
 
