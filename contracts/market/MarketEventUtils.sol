@@ -462,4 +462,25 @@ library MarketEventUtils {
             eventData
         );
     }
+
+    function emitUiFeeFactorUpdated(
+        EventEmitter eventEmitter,
+        address account,
+        uint256 uiFeeFactor
+    ) external {
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "uiFeeFactor", uiFeeFactor);
+
+        eventEmitter.emitEventLog1(
+            "UiFeeFactorUpdated",
+            Cast.toBytes32(account),
+            eventData
+        );
+    }
 }

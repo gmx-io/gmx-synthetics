@@ -30,6 +30,7 @@ library DepositUtils {
     //
     // @param receiver the address to send the market tokens to
     // @param callbackContract the callback contract
+    // @param uiFeeReceiver the ui fee receiver
     // @param market the market to deposit into
     // @param minMarketTokens the minimum acceptable number of liquidity tokens
     // @param shouldUnwrapNativeToken whether to unwrap the native token when
@@ -39,6 +40,7 @@ library DepositUtils {
     struct CreateDepositParams {
         address receiver;
         address callbackContract;
+        address uiFeeReceiver;
         address market;
         address initialLongToken;
         address initialShortToken;
@@ -101,6 +103,7 @@ library DepositUtils {
                 account,
                 params.receiver,
                 params.callbackContract,
+                params.uiFeeReceiver,
                 market.marketToken,
                 params.initialLongToken,
                 params.initialShortToken,

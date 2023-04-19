@@ -243,6 +243,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.SWAP_IMPACT_EXPONENT_FACTOR] = true;
         allowedBaseKeys[Keys.SWAP_FEE_FACTOR] = true;
 
+        allowedBaseKeys[Keys.MAX_UI_FEE_FACTOR] = true;
+
         allowedBaseKeys[Keys.ORACLE_TYPE] = true;
 
         allowedBaseKeys[Keys.RESERVE_FACTOR] = true;
@@ -280,7 +282,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         if (
             baseKey == Keys.SWAP_FEE_FACTOR ||
-            baseKey == Keys.POSITION_FEE_FACTOR
+            baseKey == Keys.POSITION_FEE_FACTOR ||
+            baseKey == Keys.MAX_UI_FEE_FACTOR
         ) {
             // revert if value > 5%
             if (value > 5 * Precision.FLOAT_PRECISION / 100) {

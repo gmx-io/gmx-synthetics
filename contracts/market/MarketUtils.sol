@@ -596,7 +596,11 @@ library MarketUtils {
         address receiver
     ) internal {
         uint256 claimableAmount = dataStore.getUint(Keys.claimableCollateralAmountKey(market, token, timeKey, account));
-        uint256 claimableFactor = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey, account));
+
+        uint256 claimableFactorForTime = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey));
+        uint256 claimableFactorForAccount = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey, account));
+        uint256 claimableFactor = claimableFactorForTime > claimableFactorForAccount ? claimableFactorForTime : claimableFactorForAccount;
+
         uint256 claimedAmount = dataStore.getUint(Keys.claimedCollateralAmountKey(market, token, timeKey, account));
 
         uint256 adjustedClaimableAmount = Precision.applyFactor(claimableAmount, claimableFactor);
@@ -2230,5 +2234,29 @@ library MarketUtils {
         bool isExceeded = pnlToPoolFactor > 0 && pnlToPoolFactor.toUint256() > maxPnlFactor;
 
         return (isExceeded, pnlToPoolFactor, maxPnlFactor);
+    }
+
+    function getUiFeeFactor(DataStore dataStore, address account) internal view returns (uint256) {
+        return dataStore.getUint(Keys.uiFeeFactorKey(account));
+    }
+
+    function setUiFeeFactor(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address account,
+        uint256 uiFeeFactor
+    ) internal {
+        uint256 maxUiFeeFactor = dataStore.getUint(Keys.MAX_UI_FEE_FACTOR);
+
+        if (uiFeeFactor > maxUiFeeFactor) {
+            revert Errors.InvalidUiFeeFactor(uiFeeFactor, maxUiFeeFactor);
+        }
+
+        dataStore.setUint(
+            Keys.uiFeeFactorKey(account),
+            uiFeeFactor
+        );
+
+        MarketEventUtils.emitUiFeeFactorUpdated(eventEmitter, account, uiFeeFactor);
     }
 }

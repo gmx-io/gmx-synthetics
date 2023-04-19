@@ -22,11 +22,13 @@ library Withdrawal {
      // @param account The account to withdraw for.
      // @param receiver The address that will receive the withdrawn tokens.
      // @param callbackContract The contract that will be called back.
+     // @param uiFeeReceiver The ui fee receiver.
      // @param market The market on which the withdrawal will be executed.
     struct Addresses {
         address account;
         address receiver;
         address callbackContract;
+        address uiFeeReceiver;
         address market;
         address[] longTokenSwapPath;
         address[] shortTokenSwapPath;
@@ -74,6 +76,14 @@ library Withdrawal {
 
     function setCallbackContract(Props memory props, address value) internal pure {
         props.addresses.callbackContract = value;
+    }
+
+    function uiFeeReceiver(Props memory props) internal pure returns (address) {
+        return props.addresses.uiFeeReceiver;
+    }
+
+    function setUiFeeReceiver(Props memory props, address value) internal pure {
+        props.addresses.uiFeeReceiver = value;
     }
 
     function market(Props memory props) internal pure returns (address) {

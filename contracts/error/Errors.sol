@@ -84,6 +84,7 @@ library Errors {
     error InvalidCollateralTokenForMarket(address market, address token);
     error PnlFactorExceededForLongs(int256 pnlToPoolFactor, uint256 maxPnlFactor);
     error PnlFactorExceededForShorts(int256 pnlToPoolFactor, uint256 maxPnlFactor);
+    error InvalidUiFeeFactor(uint256 uiFeeFactor, uint256 maxUiFeeFactor);
 
     // Oracle errors
     error EmptyTokens();
@@ -203,6 +204,7 @@ library Errors {
     error InvalidClaimFundingFeesInput(uint256 marketsLength, uint256 tokensLength);
     error InvalidClaimCollateralInput(uint256 marketsLength, uint256 tokensLength, uint256 timeKeysLength);
     error InvalidClaimAffiliateRewardsInput(uint256 marketsLength, uint256 tokensLength);
+    error InvalidClaimUiFeesInput(uint256 marketsLength, uint256 tokensLength);
 
     // SwapUtils errors
     error InvalidTokenIn(address tokenIn, address market);

@@ -348,4 +348,32 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
             );
         }
     }
+
+    function setUiFeeFactor(uint256 uiFeeFactor) external payable nonReentrant {
+        address account = msg.sender;
+        MarketUtils.setUiFeeFactor(dataStore, eventEmitter, account, uiFeeFactor);
+    }
+
+    function claimUiFees(
+        address[] memory markets,
+        address[] memory tokens,
+        address receiver
+    ) external payable nonReentrant {
+        if (markets.length != tokens.length) {
+            revert Errors.InvalidClaimUiFeesInput(markets.length, tokens.length);
+        }
+
+        address uiFeeReceiver = msg.sender;
+
+        for (uint256 i = 0; i < markets.length; i++) {
+            FeeUtils.claimUiFees(
+                dataStore,
+                eventEmitter,
+                uiFeeReceiver,
+                markets[i],
+                tokens[i],
+                receiver
+            );
+        }
+    }
 }

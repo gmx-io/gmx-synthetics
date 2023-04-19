@@ -49,6 +49,7 @@ library SwapUtils {
         Market.Props[] swapPathMarkets;
         uint256 minOutputAmount;
         address receiver;
+        address uiFeeReceiver;
         bool shouldUnwrapNativeToken;
     }
 
@@ -187,7 +188,8 @@ library SwapUtils {
         SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
             params.dataStore,
             _params.market.marketToken,
-            _params.amountIn
+            _params.amountIn,
+            params.uiFeeReceiver
         );
 
         FeeUtils.incrementClaimableFeeAmount(
@@ -197,6 +199,16 @@ library SwapUtils {
             _params.tokenIn,
             fees.feeReceiverAmount,
             Keys.SWAP_FEE
+        );
+
+        FeeUtils.incrementClaimableUiFeeAmount(
+            params.dataStore,
+            params.eventEmitter,
+            params.uiFeeReceiver,
+            _params.market.marketToken,
+            _params.tokenIn,
+            fees.uiFeeAmount,
+            Keys.UI_SWAP_FEE
         );
 
         int256 priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(

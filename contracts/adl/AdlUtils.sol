@@ -131,6 +131,7 @@ library AdlUtils {
             params.account, // account
             params.account, // receiver
             address(0), // callbackContract
+            address(0), // uiFeeReceiver
             params.market, // market
             position.collateralToken(), // initialCollateralToken
             new address[](0) // swapPath

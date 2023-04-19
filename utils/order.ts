@@ -54,6 +54,7 @@ export async function createOrder(fixture, overrides) {
   const receiver = overrides.receiver || account;
   const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
   const market = overrides.market || { marketToken: ethers.constants.AddressZero };
+  const uiFeeReceiver = overrides.uiFeeReceiver || { address: ethers.constants.AddressZero };
   const sizeDeltaUsd = overrides.sizeDeltaUsd || "0";
   const initialCollateralDeltaAmount = overrides.initialCollateralDeltaAmount || "0";
   const swapPath = overrides.swapPath || [];
@@ -82,6 +83,7 @@ export async function createOrder(fixture, overrides) {
     addresses: {
       receiver: receiver.address,
       callbackContract: callbackContract.address,
+      uiFeeReceiver: uiFeeReceiver.address,
       market: market.marketToken,
       initialCollateralToken: initialCollateralToken.address,
       swapPath,
