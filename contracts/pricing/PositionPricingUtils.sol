@@ -202,28 +202,11 @@ library PositionPricingUtils {
 
         int256 priceImpactUsd = _getPriceImpactUsd(params.dataStore, params.market.marketToken, openInterestParams);
 
-        if (priceImpactUsd >= 0) {
-            return priceImpactUsd;
-        }
+        (bool hasVirtualInventory, int256 virtualInventory) = MarketUtils.getVirtualInventoryForPositions(params.dataStore, params.market.indexToken);
+        if (!hasVirtualInventory) { return priceImpactUsd; }
 
-        (bool hasVirtualInventory, int256 thresholdImpactFactorForVirtualInventory) = MarketUtils.getThresholdPositionImpactFactorForVirtualInventory(
-            params.dataStore,
-            params.market.indexToken
-        );
-
-        if (!hasVirtualInventory) {
-            return priceImpactUsd;
-        }
-
-        OpenInterestParams memory openInterestParamsForVirtualInventory = getNextOpenInterestForVirtualInventory(params);
+        OpenInterestParams memory openInterestParamsForVirtualInventory = getNextOpenInterestForVirtualInventory(params, virtualInventory);
         int256 priceImpactUsdForVirtualInventory = _getPriceImpactUsd(params.dataStore, params.market.marketToken, openInterestParamsForVirtualInventory);
-        int256 thresholdPriceImpactUsd = Precision.applyFactor(params.usdDelta.abs(), thresholdImpactFactorForVirtualInventory);
-
-        // the thresholdPositionImpactFactorForVirtualInventoryKey can be set to small a negative value, e.g. -0.1%
-        // if the price impact for virtual inventory is small, e.g. -0.08%, the normal price impact is used instead, e.g. -0.02%
-        if (priceImpactUsdForVirtualInventory > thresholdPriceImpactUsd) {
-            return priceImpactUsd;
-        }
 
         return priceImpactUsdForVirtualInventory < priceImpactUsd ? priceImpactUsdForVirtualInventory : priceImpactUsd;
     }
@@ -289,10 +272,9 @@ library PositionPricingUtils {
     }
 
     function getNextOpenInterestForVirtualInventory(
-        GetPriceImpactUsdParams memory params
-    ) internal view returns (OpenInterestParams memory) {
-        (/* bool hasVirtualInventory */, int256 virtualInventory) = MarketUtils.getVirtualInventoryForPositions(params.dataStore, params.market.indexToken);
-
+        GetPriceImpactUsdParams memory params,
+        int256 virtualInventory
+    ) internal pure returns (OpenInterestParams memory) {
         uint256 longOpenInterest;
         uint256 shortOpenInterest;
 

@@ -1372,30 +1372,6 @@ library MarketUtils {
         return (true, dataStore.getInt(Keys.virtualInventoryForPositionsKey(tokenId)));
     }
 
-    // @dev get the threshold position impact for virtual inventory
-    // @param dataStore DataStore
-    // @param token the token to check
-    function getThresholdPositionImpactFactorForVirtualInventory(DataStore dataStore, address token) internal view returns (bool, int256) {
-        bytes32 tokenId = dataStore.getBytes32(Keys.virtualTokenIdKey(token));
-        if (tokenId == bytes32(0)) {
-            return (false, 0);
-        }
-
-        return (true, dataStore.getInt(Keys.thresholdPositionImpactFactorForVirtualInventoryKey(tokenId)));
-    }
-
-    // @dev get the threshold swap impact for virtual inventory
-    // @param dataStore DataStore
-    // @param token the token to check
-    function getThresholdSwapImpactFactorForVirtualInventory(DataStore dataStore, address market) internal view returns (bool, int256) {
-        bytes32 marketId = dataStore.getBytes32(Keys.virtualMarketIdKey(market));
-        if (marketId == bytes32(0)) {
-            return (false, 0);
-        }
-
-        return (true, dataStore.getInt(Keys.thresholdSwapImpactFactorForVirtualInventoryKey(marketId)));
-    }
-
     // @dev update the virtual inventory for swaps
     // @param dataStore DataStore
     // @param market the market to update
