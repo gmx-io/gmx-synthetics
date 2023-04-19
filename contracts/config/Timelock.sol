@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../role/RoleModule.sol";
 import "../event/EventEmitter.sol";
 import "../utils/BasicMulticall.sol";
+import "../oracle/OracleStore.sol";
 
 // @title Timelock
 contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
@@ -22,6 +23,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
+    OracleStore public immutable oracleStore;
     uint256 public timelockDelay;
 
     mapping (bytes32 => uint256) public pendingActions;
@@ -30,10 +32,12 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
+        OracleStore _oracleStore,
         uint256 _timelockDelay
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
+        oracleStore = _oracleStore;
         timelockDelay = _timelockDelay;
     }
 
@@ -58,6 +62,74 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         timelockDelay = _timelockDelay;
     }
 
+    function signalAddOracleSigner(address account) external onlyTimelockAdmin nonReentrant {
+        if (account == address(0)) {
+            revert Errors.InvalidOracleSigner(account);
+        }
+
+        bytes32 actionKey = _addOracleSignerActionKey(account);
+        _signalPendingAction(actionKey, "addOracleSigner");
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+        eventEmitter.emitEventLog1(
+            "SignalAddOracleSigner",
+            actionKey,
+            eventData
+        );
+    }
+
+    function addOracleSignerAfterSignal(address account) external onlyTimelockAdmin nonReentrant {
+        bytes32 actionKey = _addOracleSignerActionKey(account);
+        _validateAndClearAction(actionKey, "addOracleSigner");
+
+        oracleStore.addSigner(account);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+        eventEmitter.emitEventLog1(
+            "AddOracleSigner",
+            actionKey,
+            eventData
+        );
+    }
+
+    function signalRemoveOracleSigner(address account) external onlyTimelockAdmin nonReentrant {
+        if (account == address(0)) {
+            revert Errors.InvalidOracleSigner(account);
+        }
+
+        bytes32 actionKey = _removeOracleSignerActionKey(account);
+        _signalPendingAction(actionKey, "removeOracleSigner");
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+        eventEmitter.emitEventLog1(
+            "SignalRemoveOracleSigner",
+            actionKey,
+            eventData
+        );
+    }
+
+    function removeOracleSignerAfterSignal(address account) external onlyTimelockAdmin nonReentrant {
+        bytes32 actionKey = _addOracleSignerActionKey(account);
+        _validateAndClearAction(actionKey, "removeOracleSigner");
+
+        oracleStore.removeSigner(account);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+        eventEmitter.emitEventLog1(
+            "RemoveOracleSigner",
+            actionKey,
+            eventData
+        );
+    }
+
     // @dev signal setting of the fee receiver
     // @param account the new fee receiver
     function signalSetFeeReceiver(address account) external onlyTimelockAdmin nonReentrant {
@@ -66,7 +138,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         }
 
         bytes32 actionKey = _setFeeReceiverActionKey(account);
-        _signalPendingAction(actionKey, "signalSetFeeReceiver");
+        _signalPendingAction(actionKey, "setFeeReceiver");
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);
@@ -82,7 +154,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param account the new fee receiver
     function setFeeReceiverAfterSignal(address account) external onlyTimelockAdmin nonReentrant {
         bytes32 actionKey = _setFeeReceiverActionKey(account);
-        _validateAndClearAction(actionKey, "setFeeReceiverAfterSignal");
+        _validateAndClearAction(actionKey, "setFeeReceiver");
 
         dataStore.setAddress(Keys.FEE_RECEIVER, account);
 
@@ -101,7 +173,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param roleKey the role to grant
     function signalGrantRole(address account, bytes32 roleKey) external onlyTimelockAdmin nonReentrant {
         bytes32 actionKey = _grantRoleActionKey(account, roleKey);
-        _signalPendingAction(actionKey, "signalGrantRole");
+        _signalPendingAction(actionKey, "grantRole");
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);
@@ -120,7 +192,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param roleKey the role to grant
     function grantRoleAfterSignal(address account, bytes32 roleKey) external onlyTimelockAdmin nonReentrant {
         bytes32 actionKey = _grantRoleActionKey(account, roleKey);
-        _validateAndClearAction(actionKey, "grantRoleAfterSignal");
+        _validateAndClearAction(actionKey, "grantRole");
 
         roleStore.grantRole(account, roleKey);
 
@@ -141,7 +213,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param roleKey the role to revoke
     function signalRevokeRole(address account, bytes32 roleKey) external onlyTimelockAdmin nonReentrant {
         bytes32 actionKey = _revokeRoleActionKey(account, roleKey);
-        _signalPendingAction(actionKey, "signalRevokeRole");
+        _signalPendingAction(actionKey, "revokeRole");
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);
@@ -160,7 +232,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param roleKey the role to revoke
     function revokeRoleAfterSignal(address account, bytes32 roleKey) external onlyTimelockAdmin nonReentrant {
         bytes32 actionKey = _revokeRoleActionKey(account, roleKey);
-        _validateAndClearAction(actionKey, "revokeRoleAfterSignal");
+        _validateAndClearAction(actionKey, "revokeRole");
 
         roleStore.revokeRole(account, roleKey);
 
@@ -196,7 +268,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
             stablePrice
         );
 
-        _signalPendingAction(actionKey, "signalSetPriceFeed");
+        _signalPendingAction(actionKey, "setPriceFeed");
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(2);
@@ -233,7 +305,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
             stablePrice
         );
 
-        _validateAndClearAction(actionKey, "signalSetPriceFeed");
+        _validateAndClearAction(actionKey, "setPriceFeed");
 
         dataStore.setAddress(Keys.priceFeedKey(token), priceFeed);
         dataStore.setUint(Keys.priceFeedMultiplierKey(token), priceFeedMultiplier);
@@ -284,6 +356,16 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
             actionKey,
             eventData
         );
+    }
+
+    // @dev the key for the addOracleSigner action
+    function _addOracleSignerActionKey(address account) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("addOracleSigner", account));
+    }
+
+    // @dev the key for the removeOracleSigner action
+    function _removeOracleSignerActionKey(address account) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("removeOracleSigner", account));
     }
 
     // @dev the key for the setFeeReceiver action

@@ -26,6 +26,7 @@ library Errors {
     error InvalidTimelockDelay(uint256 timelockDelay);
     error MaxTimelockDelayExceeded(uint256 timelockDelay);
     error InvalidFeeReceiver(address receiver);
+    error InvalidOracleSigner(address receiver);
 
     // DepositUtils errors
     error EmptyDeposit();

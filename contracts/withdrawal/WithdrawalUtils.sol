@@ -196,6 +196,7 @@ library WithdrawalUtils {
 
         GasUtils.payExecutionFee(
             params.dataStore,
+            params.eventEmitter,
             params.withdrawalVault,
             withdrawal.executionFee(),
             params.startingGas,
@@ -236,6 +237,7 @@ library WithdrawalUtils {
 
         GasUtils.payExecutionFee(
             dataStore,
+            eventEmitter,
             withdrawalVault,
             withdrawal.executionFee(),
             startingGas,
