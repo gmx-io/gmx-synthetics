@@ -86,7 +86,20 @@ export function getMarketKey(indexToken: string, longToken: string, shortToken: 
   return [indexToken, longToken, shortToken].join(":");
 }
 
-export async function getOnchainMarkets(read: (...args: any[]) => any, dataStoreAddress: string) {
+export async function getOnchainMarkets(
+  read: (...args: any[]) => any,
+  dataStoreAddress: string
+): Promise<
+  Record<
+    string,
+    {
+      indexToken: string;
+      longToken: string;
+      shortToken: string;
+      marketToken: string;
+    }
+  >
+> {
   const onchainMarkets = await read("Reader", "getMarkets", dataStoreAddress, 0, 1000);
   return Object.fromEntries(
     onchainMarkets.map((market) => {
