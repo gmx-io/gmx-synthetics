@@ -251,6 +251,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS] = true;
         allowedBaseKeys[Keys.FUNDING_FACTOR] = true;
         allowedBaseKeys[Keys.BORROWING_FACTOR] = true;
+
+        allowedBaseKeys[Keys.CLAIMABLE_COLLATERAL_FACTOR] = true;
     }
 
     // @dev validate that the baseKey is allowed to be used
@@ -291,7 +293,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.BORROWING_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.MIN_COLLATERAL_FACTOR ||
             baseKey == Keys.MAX_PNL_FACTOR ||
-            baseKey == Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS
+            baseKey == Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS ||
+            baseKey == Keys.CLAIMABLE_COLLATERAL_FACTOR
         ) {
             // revert if value > 100%
             if (value > Precision.FLOAT_PRECISION) {
