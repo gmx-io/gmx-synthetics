@@ -38,26 +38,17 @@ const func = async ({ deployments, gmx }: HardhatRuntimeEnvironment) => {
     for (const indexToken of indexTokens) {
       const markets = marketsByIndexToken[indexToken];
       for (const market of markets) {
-        const openInterest_Long_CollateralLong = await read(
-          "DataStore",
-          "getUint",
-          keys.openInterestKey(market.marketToken, market.longToken, true)
-        );
-        const openInterest_Long_CollateralShort = await read(
-          "DataStore",
-          "getUint",
-          keys.openInterestKey(market.marketToken, market.shortToken, true)
-        );
-        const openInterest_Short_CollateralLong = await read(
-          "DataStore",
-          "getUint",
-          keys.openInterestKey(market.marketToken, market.longToken, false)
-        );
-        const openInterest_Short_CollateralShort = await read(
-          "DataStore",
-          "getUint",
-          keys.openInterestKey(market.marketToken, market.shortToken, false)
-        );
+        const [
+          openInterest_Long_CollateralLong,
+          openInterest_Long_CollateralShort,
+          openInterest_Short_CollateralLong,
+          openInterest_Short_CollateralShort,
+        ] = await Promise.all([
+          read("DataStore", "getUint", keys.openInterestKey(market.marketToken, market.longToken, true)),
+          read("DataStore", "getUint", keys.openInterestKey(market.marketToken, market.shortToken, true)),
+          read("DataStore", "getUint", keys.openInterestKey(market.marketToken, market.longToken, false)),
+          read("DataStore", "getUint", keys.openInterestKey(market.marketToken, market.shortToken, false)),
+        ]);
 
         log(
           "market %s\n\tlong OI, long collateral: %s\n\tlong OI, short collateral: %s\n\tshort OI, long collateral: %s\n\tshort OI, short collateral: %s\n\tnet: %s",
