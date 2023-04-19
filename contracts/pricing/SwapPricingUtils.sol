@@ -134,7 +134,7 @@ library SwapPricingUtils {
 
         if (isSameSideRebalance) {
             bool hasPositiveImpact = nextDiffUsd < initialDiffUsd;
-            uint256 impactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market.marketToken, hasPositiveImpact));
+            uint256 impactFactor = MarketUtils.getAdjustedSwapImpactFactor(dataStore, market.marketToken, hasPositiveImpact);
 
             return PricingUtils.getPriceImpactUsdForSameSideRebalance(
                 initialDiffUsd,
@@ -143,8 +143,7 @@ library SwapPricingUtils {
                 impactExponentFactor
             );
         } else {
-            uint256 positiveImpactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market.marketToken, true));
-            uint256 negativeImpactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market.marketToken, false));
+            (uint256 positiveImpactFactor, uint256 negativeImpactFactor) = MarketUtils.getAdjustedSwapImpactFactors(dataStore, market.marketToken);
 
             return PricingUtils.getPriceImpactUsdForCrossoverRebalance(
                 initialDiffUsd,

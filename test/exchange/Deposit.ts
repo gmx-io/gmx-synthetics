@@ -631,9 +631,10 @@ describe("Exchange.Deposit", () => {
       "4999375000000000" // 0.004999375 ETH, 24.996875 USD
     );
 
-    // increase positive price impact to 0.2% for every $50,000 of token imbalance
+    // increase positive and negative price impact to 0.2% for every $50,000 of token imbalance
     // 0.2% => 0.002
     // 0.002 / 50,000 => 4 * (10 ** -8)
+    await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(4, 8));
     await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(4, 8));
     await dataStore.setUint(keys.swapImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 

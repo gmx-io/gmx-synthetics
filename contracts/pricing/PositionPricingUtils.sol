@@ -228,7 +228,7 @@ library PositionPricingUtils {
 
         if (isSameSideRebalance) {
             bool hasPositiveImpact = nextDiffUsd < initialDiffUsd;
-            uint256 impactFactor = dataStore.getUint(Keys.positionImpactFactorKey(market, hasPositiveImpact));
+            uint256 impactFactor = MarketUtils.getAdjustedPositionImpactFactor(dataStore, market, hasPositiveImpact);
 
             return PricingUtils.getPriceImpactUsdForSameSideRebalance(
                 initialDiffUsd,
@@ -237,8 +237,7 @@ library PositionPricingUtils {
                 impactExponentFactor
             );
         } else {
-            uint256 positiveImpactFactor = dataStore.getUint(Keys.positionImpactFactorKey(market, true));
-            uint256 negativeImpactFactor = dataStore.getUint(Keys.positionImpactFactorKey(market, false));
+            (uint256 positiveImpactFactor, uint256 negativeImpactFactor) = MarketUtils.getAdjustedPositionImpactFactors(dataStore, market);
 
             return PricingUtils.getPriceImpactUsdForCrossoverRebalance(
                 initialDiffUsd,
