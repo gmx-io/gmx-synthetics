@@ -246,6 +246,17 @@ contract OrderHandler is BaseOrderHandler {
             // must be after the position was last increased, this is validated in DecreaseOrderUtils
             (!isMarketOrder && errorSelector == Errors.EmptyPosition.selector) ||
             errorSelector == Errors.EmptyOrder.selector ||
+            // if the order execution feature is disabled, it may be possible
+            // for a user to cancel their orders after the feature is re-enabled
+            // or they may be able to execute the order at an outdated price
+            // depending on the order keeper
+            // disabling of features should be a rare occurrence, it may be
+            // preferrable to still execute the orders when the feature is re-enabled
+            // instead of cancelling / freezing the orders
+            // if features are not frequently disabled, the amount of front-running
+            // from this should not be significant
+            // based on this it may also be advisable to disable the cancelling of orders
+            // if the execution of orders is disabled
             errorSelector == Errors.DisabledFeature.selector ||
             errorSelector == Errors.InvalidKeeperForFrozenOrder.selector ||
             errorSelector == Errors.UnsupportedOrderType.selector ||

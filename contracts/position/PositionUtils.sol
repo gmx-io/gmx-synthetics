@@ -397,6 +397,8 @@ library PositionUtils {
         cache.minCollateralFactor = MarketUtils.getMinCollateralFactor(dataStore, market.marketToken);
 
         // validate if (remaining collateral) / position.size is less than the min collateral factor (max leverage exceeded)
+        // this validation includes the position fee to be paid when closing the position
+        // i.e. if the position does not have sufficient collateral after closing fees it is considered a liquidatable position
         cache.minCollateralUsdForLeverage = Precision.applyFactor(position.sizeInUsd(), cache.minCollateralFactor).toInt256();
 
         if (cache.remainingCollateralUsd < cache.minCollateralUsdForLeverage) {
@@ -420,6 +422,14 @@ library PositionUtils {
             prices
         );
 
+        // the min collateral factor will increase as the open interest for a market increases
+        // this may lead to previously created limit increase orders not being executable
+        //
+        // price impact could be gamed by opening high leverage positions, if the price impact
+        // that should be charged is higher than the amount of collateral in the position
+        // then a user could pay less price impact than what is required
+        //
+        // this check helps to prevent gaming of price impact
         uint256 minCollateralFactor = MarketUtils.getMinCollateralFactorForOpenInterest(
             dataStore,
             market,

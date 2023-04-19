@@ -26,6 +26,10 @@ import "../utils/Uint256Mask.sol";
 
 // @title Oracle
 // @dev Contract to validate and store signed values
+// Some calculations e.g. calculating the size in tokens for a position
+// may not work with zero / negative prices
+// as a result, zero / negative prices are considered empty / invalid
+// A market may need to be manually settled in this case
 contract Oracle is RoleModule {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableValues for EnumerableSet.AddressSet;

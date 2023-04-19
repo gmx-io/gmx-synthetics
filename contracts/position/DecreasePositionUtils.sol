@@ -122,6 +122,8 @@ library DecreasePositionUtils {
 
             // do not allow withdrawal of collateral if it would lead to the position
             // having an insufficient amount of collateral
+            // this helps to prevent gaming by opening a position then reducing collateral
+            // to increase the leverage of the position
             if (!willBeSufficient) {
                 if (params.order.sizeDeltaUsd() == 0) {
                     revert Errors.UnableToWithdrawCollateralDueToLeverage(estimatedRemainingCollateralUsd);
@@ -279,6 +281,9 @@ library DecreasePositionUtils {
             fees.feeAmountForPool.toInt256()
         );
 
+        // affiliate rewards are still distributed even if the order is a liquidation order
+        // this is expected as a partial liquidation is considered the same as an automatic
+        // closing of a position
         PositionUtils.handleReferral(params, fees);
 
         PositionEventUtils.emitPositionFeesCollected(

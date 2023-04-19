@@ -99,6 +99,10 @@ library AdlUtils {
 
         Market.Props memory _market = MarketUtils.getEnabledMarket(dataStore, market);
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(oracle, _market);
+        // if the MAX_PNL_FACTOR_FOR_ADL is set to be higher than MAX_PNL_FACTOR_FOR_WITHDRAWALS
+        // it is possible for a pool to be in a state where withdrawals and ADL is not allowed
+        // this is similar to the case where there is a large amount of open positions relative
+        // to the amount of tokens in the pool
         (bool shouldEnableAdl, int256 pnlToPoolFactor, uint256 maxPnlFactor) = MarketUtils.isPnlFactorExceeded(
             dataStore,
             _market,
@@ -108,6 +112,13 @@ library AdlUtils {
         );
 
         setIsAdlEnabled(dataStore, market, isLong, shouldEnableAdl);
+        // the latest ADL block is always updated, an ADL keeper could continually
+        // cause the latest ADL block to be updated and prevent ADL orders
+        // from being executed, however, this may be preferrable over a case
+        // where stale prices could be used by ADL keepers to execute orders
+        // as such updating of the ADL block is allowed and it is expected
+        // that ADL keepers will keep this block updated so that latest prices
+        // will be used for ADL
         setLatestAdlBlock(dataStore, market, isLong, Chain.currentBlockNumber());
 
         emitAdlStateUpdated(eventEmitter, market, isLong, pnlToPoolFactor, maxPnlFactor, shouldEnableAdl);
@@ -137,6 +148,11 @@ library AdlUtils {
             new address[](0) // swapPath
         );
 
+        // no slippage is set for this order, it may be preferrable for ADL orders
+        // to be executed, in case of large price impact, the user could be refunded
+        // through a protocol fund if required, this amount could later be claimed
+        // from the price impact pool, this claiming process should be added if
+        // required
         Order.Numbers memory numbers = Order.Numbers(
             Order.OrderType.MarketDecrease, // orderType
             Order.DecreasePositionSwapType.SwapPnlTokenToCollateralToken, // decreasePositionSwapType

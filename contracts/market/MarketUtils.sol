@@ -1022,6 +1022,9 @@ library MarketUtils {
             return result;
         }
 
+        // if the blockchain is not progressing / a market is disabled, funding fees
+        // will continue to accumulate
+        // this should be a rare occurrence so funding fees are not adjusted for this case
         cache.durationInSeconds = getSecondsSinceFundingUpdated(dataStore, market.marketToken);
 
         cache.diffUsd = Calc.diff(cache.oi.longOpenInterest, cache.oi.shortOpenInterest);
