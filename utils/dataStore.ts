@@ -8,6 +8,13 @@ export async function setUintIfDifferent(key: string, value: BigNumber | string 
   });
 }
 
+export async function setIntIfDifferent(key: string, value: BigNumber | string | number, label?: string) {
+  await setIfDifferent("int", key, value, {
+    compare: (a, b) => a.eq(b),
+    label,
+  });
+}
+
 export async function setAddressIfDifferent(key: string, value: string, label?: string) {
   await setIfDifferent("address", key, value, {
     compare: (a, b) => a.toLowerCase() == b.toLowerCase(),
@@ -24,7 +31,7 @@ export async function setBoolIfDifferent(key: string, value: boolean, label?: st
 }
 
 async function setIfDifferent(
-  type: "uint" | "address" | "data" | "bool" | "bytes32",
+  type: "uint" | "int" | "address" | "data" | "bool" | "bytes32",
   key: string,
   value: any,
   { compare, label }: { compare?: (a: any, b: any) => boolean; label?: string } = {}
