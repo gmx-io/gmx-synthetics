@@ -103,8 +103,7 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         try this._executeWithdrawal(
             key,
             oracleParams,
-            msg.sender,
-            startingGas
+            msg.sender
         ) {
         } catch (bytes memory reasonBytes) {
             _handleWithdrawalError(
@@ -127,14 +126,12 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         globalNonReentrant
     {
 
-        uint256 startingGas = gasleft();
         OracleUtils.SetPricesParams memory oracleParams;
 
         this._executeWithdrawal(
             key,
             oracleParams,
-            msg.sender,
-            startingGas
+            msg.sender
         );
     }
 
@@ -145,9 +142,10 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
     function _executeWithdrawal(
         bytes32 key,
         OracleUtils.SetPricesParams memory oracleParams,
-        address keeper,
-        uint256 startingGas
+        address keeper
     ) external onlySelf {
+        uint256 startingGas = gasleft();
+
         FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureDisabledKey(address(this)));
 
         uint256[] memory minOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
