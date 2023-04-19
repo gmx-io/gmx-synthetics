@@ -906,7 +906,7 @@ library MarketUtils {
 
         // get the current funding amount per size values
         // funding amount per size represents the amount of tokens to be paid as
-        // funding per (Precision.LOW_FLOAT_PRECISION / Precision.FLOAT_PRECISION) USD of position size
+        // funding per (Precision.FLOAT_PRECISION_SQRT / Precision.FLOAT_PRECISION) USD of position size
         result.fundingAmountPerSize_LongCollateral_LongPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.longToken, true);
         result.fundingAmountPerSize_ShortCollateral_LongPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.shortToken, true);
         result.fundingAmountPerSize_LongCollateral_ShortPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.longToken, false);
@@ -929,7 +929,8 @@ library MarketUtils {
             cache.diffUsd,
             cache.totalOpenInterest
         );
-        cache.fundingUsd = (cache.sizeOfLargerSide / Precision.FLOAT_PRECISION) * cache.durationInSeconds * result.fundingFactorPerSecond;
+
+        cache.fundingUsd = Precision.applyFactor(cache.sizeOfLargerSide, cache.durationInSeconds * result.fundingFactorPerSecond);
 
         result.longsPayShorts = cache.oi.longOpenInterest > cache.oi.shortOpenInterest;
 
@@ -939,11 +940,11 @@ library MarketUtils {
         // should be paid from long positions using short collateral
         // short positions should receive $100 of funding fees in long collateral and $400 of funding fees in short collateral
         if (result.longsPayShorts) {
-            cache.fundingUsdForLongCollateral = cache.fundingUsd * cache.oi.longOpenInterestWithLongCollateral / cache.oi.longOpenInterest;
-            cache.fundingUsdForShortCollateral = cache.fundingUsd * cache.oi.longOpenInterestWithShortCollateral / cache.oi.longOpenInterest;
+            cache.fundingUsdForLongCollateral = Precision.applyFraction(cache.fundingUsd, cache.oi.longOpenInterestWithLongCollateral, cache.oi.longOpenInterest);
+            cache.fundingUsdForShortCollateral = Precision.applyFraction(cache.fundingUsd, cache.oi.longOpenInterestWithShortCollateral, cache.oi.longOpenInterest);
         } else {
-            cache.fundingUsdForLongCollateral = cache.fundingUsd * cache.oi.shortOpenInterestWithLongCollateral / cache.oi.shortOpenInterest;
-            cache.fundingUsdForShortCollateral = cache.fundingUsd * cache.oi.shortOpenInterestWithShortCollateral / cache.oi.shortOpenInterest;
+            cache.fundingUsdForLongCollateral = Precision.applyFraction(cache.fundingUsd, cache.oi.shortOpenInterestWithLongCollateral, cache.oi.shortOpenInterest);
+            cache.fundingUsdForShortCollateral = Precision.applyFraction(cache.fundingUsd, cache.oi.shortOpenInterestWithShortCollateral, cache.oi.shortOpenInterest);
         }
 
         cache.fundingAmountForLongCollateral = cache.fundingUsdForLongCollateral / prices.longTokenPrice.max;
@@ -1038,7 +1039,7 @@ library MarketUtils {
         //
         // if a minimum position size of at least 1 USD is set, then
         // these cases should not occur
-        uint256 divisor = openInterest / Precision.LOW_FLOAT_PRECISION;
+        uint256 divisor = openInterest / Precision.FLOAT_PRECISION_SQRT;
         if (divisor == 0) { return 0; }
 
         return Precision.toFactor(fundingAmount, divisor);
@@ -1253,13 +1254,13 @@ library MarketUtils {
     ) internal pure returns (int256) {
         int256 fundingDiffFactor = (latestFundingAmountPerSize - positionFundingAmountPerSize);
 
-        // divide the positionSizeInUsd by Precision.LOW_FLOAT_PRECISION as the fundingAmountPerSize values
-        // are stored based on LOW_FLOAT_PRECISION values instead of FLOAT_PRECISION to reduce the chance
+        // divide the positionSizeInUsd by Precision.FLOAT_PRECISION_SQRT as the fundingAmountPerSize values
+        // are stored based on FLOAT_PRECISION_SQRT values instead of FLOAT_PRECISION to reduce the chance
         // of overflows
-        // adjustedPositionSizeInUsd will always be zero if positionSizeInUsd is less than Precision.LOW_FLOAT_PRECISION
+        // adjustedPositionSizeInUsd will always be zero if positionSizeInUsd is less than Precision.FLOAT_PRECISION_SQRT
         // position sizes should be validated to be above a minimum amount
         // to prevent gaming by using small positions to avoid paying funding fees
-        uint256 adjustedPositionSizeInUsd = positionSizeInUsd / Precision.LOW_FLOAT_PRECISION;
+        uint256 adjustedPositionSizeInUsd = positionSizeInUsd / Precision.FLOAT_PRECISION_SQRT;
 
         int256 numerator = adjustedPositionSizeInUsd.toInt256() * fundingDiffFactor;
 
