@@ -73,13 +73,11 @@ export const POSITION_IMPACT_POOL_AMOUNT = hashString("POSITION_IMPACT_POOL_AMOU
 export const SWAP_IMPACT_POOL_AMOUNT = hashString("SWAP_IMPACT_POOL_AMOUNT");
 
 export const POSITION_FEE_RECEIVER_FACTOR = hashString("POSITION_FEE_RECEIVER_FACTOR");
-export const SWAP_FEE_RECEIVER_FACTOR = hashString("SWAP_FEE_RECEIVER_FACTOR");
 export const BORROWING_FEE_RECEIVER_FACTOR = hashString("BORROWING_FEE_RECEIVER_FACTOR");
 
 export const SWAP_FEE_FACTOR = hashString("SWAP_FEE_FACTOR");
 export const SWAP_IMPACT_FACTOR = hashString("SWAP_IMPACT_FACTOR");
 export const SWAP_IMPACT_EXPONENT_FACTOR = hashString("SWAP_IMPACT_EXPONENT_FACTOR");
-export const SWAP_IMPACT_POOL_AMOUNT = hashString("SWAP_IMPACT_POOL_AMOUNT");
 
 export const POSITION_IMPACT_FACTOR = hashString("POSITION_IMPACT_FACTOR");
 export const POSITION_IMPACT_EXPONENT_FACTOR = hashString("POSITION_IMPACT_EXPONENT_FACTOR");
@@ -127,6 +125,7 @@ export const VIRTUAL_TOKEN_ID = hashString("VIRTUAL_TOKEN_ID");
 export const VIRTUAL_MARKET_ID = hashString("VIRTUAL_MARKET_ID");
 
 const VIRTUAL_INVENTORY_FOR_SWAPS = hashString("VIRTUAL_INVENTORY_FOR_SWAPS");
+const VIRTUAL_INVENTORY_FOR_POSITIONS = hashString("VIRTUAL_INVENTORY_FOR_POSITIONS");
 
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
@@ -372,4 +371,8 @@ export function virtualMarketIdKey(market: string) {
 
 export function virtualInventoryForSwapsKey(virtualMarketId: string, token: string) {
   return hashData(["bytes32", "bytes32", "address"], [VIRTUAL_INVENTORY_FOR_SWAPS, virtualMarketId, token]);
+}
+
+export function virtualInventoryForPositionsKey(virtualTokenId: string) {
+  return hashData(["bytes32", "bytes32"], [VIRTUAL_INVENTORY_FOR_POSITIONS, virtualTokenId]);
 }
