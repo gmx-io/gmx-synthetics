@@ -370,10 +370,14 @@ describe("Exchange.Withdrawal", () => {
       }
     );
 
+    expect(await usdc.balanceOf(ethUsdSingleTokenMarket.marketToken)).eq(expandDecimals(50 * 1000, 6));
+    expect(await usdc.balanceOf(user2.address)).eq(0);
+
     await handleWithdrawal(fixture, {
       create: {
         market: ethUsdSingleTokenMarket,
         marketTokenAmount: expandDecimals(5000, 18),
+        receiver: user2,
       },
       execute: {
         gasUsageLabel: "executeWithdrawal",
@@ -382,6 +386,9 @@ describe("Exchange.Withdrawal", () => {
 
     expect(await getBalanceOf(ethUsdSingleTokenMarket.marketToken, user0.address)).eq(expandDecimals(45 * 1000, 18));
     expect(await getSupplyOf(ethUsdSingleTokenMarket.marketToken)).eq(expandDecimals(45 * 1000, 18));
+
+    expect(await usdc.balanceOf(ethUsdSingleTokenMarket.marketToken)).eq(expandDecimals(45 * 1000, 6));
+    expect(await usdc.balanceOf(user2.address)).eq(expandDecimals(5 * 1000, 6));
 
     await usingResult(
       getMarketTokenPriceWithPoolValue(fixture, {
