@@ -310,6 +310,9 @@ library SwapUtils {
             _params.tokenIn
         );
 
+        // for single token markets cache.tokenOut will always equal _params.market.longToken
+        // so only the reserve for longs will be validated
+        // swaps should be disabled for single token markets so this should not be an issue
         MarketUtils.validateReserve(
             params.dataStore,
             _params.market,
