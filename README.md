@@ -483,6 +483,8 @@ After the initial setup:
 
 - If an execution transaction requires a large amount of gas that may be close to the maximum block gas limit, it may be possible to stuff blocks to prevent the transaction from being included in blocks
 
+- In certain blockchains it is possible for the keeper to have control over the tx.gasprice used to execute a transaction
+
 # Feature Development
 
 If new features are added, tests should be added for the different market types, e.g. spot only markets, single token markets.
