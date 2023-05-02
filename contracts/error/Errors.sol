@@ -91,7 +91,6 @@ library Errors {
     error InvalidMarketTokenBalanceForClaimableFunding(address market, address token, uint256 balance, uint256 claimableFundingFeeAmount);
 
     // Oracle errors
-    error EmptyTokens();
     error EmptySigner(uint256 signerIndex);
     error InvalidBlockNumber(uint256 blockNumber);
     error InvalidMinMaxBlockNumber(uint256 minOracleBlockNumber, uint256 maxOracleBlockNumber);
