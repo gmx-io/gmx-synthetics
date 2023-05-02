@@ -49,7 +49,7 @@ library ReferralEventUtils {
         address market,
         address token,
         address affiliate,
-        address trader,
+        address receiver,
         uint256 amount,
         uint256 nextPoolValue
     ) external {
@@ -59,7 +59,7 @@ library ReferralEventUtils {
         eventData.addressItems.setItem(0, "market", market);
         eventData.addressItems.setItem(1, "token", token);
         eventData.addressItems.setItem(2, "affiliate", affiliate);
-        eventData.addressItems.setItem(3, "trader", trader);
+        eventData.addressItems.setItem(3, "receiver", receiver);
 
         eventData.uintItems.initItems(2);
         eventData.uintItems.setItem(0, "amount", amount);
