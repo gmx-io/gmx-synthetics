@@ -115,7 +115,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     }
 
     function removeOracleSignerAfterSignal(address account) external onlyTimelockAdmin nonReentrant {
-        bytes32 actionKey = _addOracleSignerActionKey(account);
+        bytes32 actionKey = _removeOracleSignerActionKey(account);
         _validateAndClearAction(actionKey, "removeOracleSigner");
 
         oracleStore.removeSigner(account);
