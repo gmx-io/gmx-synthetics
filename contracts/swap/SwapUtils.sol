@@ -201,7 +201,7 @@ library SwapUtils {
             _params.market.marketToken,
             _params.tokenIn,
             fees.feeReceiverAmount,
-            Keys.SWAP_FEE
+            Keys.SWAP_FEE_TYPE
         );
 
         FeeUtils.incrementClaimableUiFeeAmount(
@@ -211,7 +211,7 @@ library SwapUtils {
             _params.market.marketToken,
             _params.tokenIn,
             fees.uiFeeAmount,
-            Keys.UI_SWAP_FEE
+            Keys.UI_SWAP_FEE_TYPE
         );
 
         int256 priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(

@@ -20,21 +20,21 @@ library Keys {
     bytes32 public constant REENTRANCY_GUARD_STATUS = keccak256(abi.encode("REENTRANCY_GUARD_STATUS"));
 
     // @dev key for deposit fees
-    bytes32 public constant DEPOSIT_FEE = keccak256(abi.encode("DEPOSIT_FEE"));
+    bytes32 public constant DEPOSIT_FEE_TYPE = keccak256(abi.encode("DEPOSIT_FEE_TYPE"));
     // @dev key for withdrawal fees
-    bytes32 public constant WITHDRAWAL_FEE = keccak256(abi.encode("WITHDRAWAL_FEE"));
+    bytes32 public constant WITHDRAWAL_FEE_TYPE = keccak256(abi.encode("WITHDRAWAL_FEE_TYPE"));
     // @dev key for swap fees
-    bytes32 public constant SWAP_FEE = keccak256(abi.encode("SWAP_FEE"));
+    bytes32 public constant SWAP_FEE_TYPE = keccak256(abi.encode("SWAP_FEE_TYPE"));
     // @dev key for position fees
-    bytes32 public constant POSITION_FEE = keccak256(abi.encode("POSITION_FEE"));
+    bytes32 public constant POSITION_FEE_TYPE = keccak256(abi.encode("POSITION_FEE_TYPE"));
     // @dev key for ui deposit fees
-    bytes32 public constant UI_DEPOSIT_FEE = keccak256(abi.encode("UI_DEPOSIT_FEE"));
+    bytes32 public constant UI_DEPOSIT_FEE_TYPE = keccak256(abi.encode("UI_DEPOSIT_FEE_TYPE"));
     // @dev key for ui withdrawal fees
-    bytes32 public constant UI_WITHDRAWAL_FEE = keccak256(abi.encode("UI_WITHDRAWAL_FEE"));
+    bytes32 public constant UI_WITHDRAWAL_FEE_TYPE = keccak256(abi.encode("UI_WITHDRAWAL_FEE_TYPE"));
     // @dev key for ui swap fees
-    bytes32 public constant UI_SWAP_FEE = keccak256(abi.encode("UI_SWAP_FEE"));
+    bytes32 public constant UI_SWAP_FEE_TYPE = keccak256(abi.encode("UI_SWAP_FEE_TYPE"));
     // @dev key for ui position fees
-    bytes32 public constant UI_POSITION_FEE = keccak256(abi.encode("UI_POSITION_FEE"));
+    bytes32 public constant UI_POSITION_FEE_TYPE = keccak256(abi.encode("UI_POSITION_FEE_TYPE"));
 
     // @dev key for ui fee factor
     bytes32 public constant UI_FEE_FACTOR = keccak256(abi.encode("UI_FEE_FACTOR"));
@@ -74,6 +74,7 @@ library Keys {
 
     // @dev key for the max swap path length allowed
     bytes32 public constant MAX_SWAP_PATH_LENGTH = keccak256(abi.encode("MAX_SWAP_PATH_LENGTH"));
+    // @dev key used to store markets observed in a swap path, to ensure that a swap path contains unique markets
     bytes32 public constant SWAP_PATH_MARKET_FLAG = keccak256(abi.encode("SWAP_PATH_MARKET_FLAG"));
 
     // @dev key for whether the create deposit feature is disabled
