@@ -2,6 +2,9 @@
 
 pragma solidity ^0.8.0;
 
+// there is a known issue with prb-math v3.x releases
+// https://github.com/PaulRBerg/prb-math/issues/178
+// due to this, either prb-math v2.x or v4.x versions should be used instead
 import "prb-math/contracts/PRBMathUD60x18.sol";
 
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
