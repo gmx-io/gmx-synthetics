@@ -292,7 +292,7 @@ library WithdrawalUtils {
             market.marketToken,
             market.longToken,
             cache.longTokenFees.feeReceiverAmount,
-            Keys.WITHDRAWAL_FEE
+            Keys.WITHDRAWAL_FEE_TYPE
         );
 
         FeeUtils.incrementClaimableUiFeeAmount(
@@ -302,7 +302,7 @@ library WithdrawalUtils {
             market.marketToken,
             market.longToken,
             cache.longTokenFees.uiFeeAmount,
-            Keys.UI_WITHDRAWAL_FEE
+            Keys.UI_WITHDRAWAL_FEE_TYPE
         );
 
         cache.shortTokenFees = SwapPricingUtils.getSwapFees(
@@ -318,7 +318,7 @@ library WithdrawalUtils {
             market.marketToken,
             market.shortToken,
             cache.shortTokenFees.feeReceiverAmount,
-            Keys.WITHDRAWAL_FEE
+            Keys.WITHDRAWAL_FEE_TYPE
         );
 
         FeeUtils.incrementClaimableUiFeeAmount(
@@ -328,7 +328,7 @@ library WithdrawalUtils {
             market.marketToken,
             market.shortToken,
             cache.shortTokenFees.uiFeeAmount,
-            Keys.UI_WITHDRAWAL_FEE
+            Keys.UI_WITHDRAWAL_FEE_TYPE
         );
 
         // the pool will be reduced by the outputAmount minus the fees for the pool

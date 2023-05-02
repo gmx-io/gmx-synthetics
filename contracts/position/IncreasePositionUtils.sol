@@ -243,7 +243,7 @@ library IncreasePositionUtils {
             params.market.marketToken,
             params.position.collateralToken(),
             fees.feeReceiverAmount,
-            Keys.POSITION_FEE
+            Keys.POSITION_FEE_TYPE
         );
 
         FeeUtils.incrementClaimableUiFeeAmount(
@@ -253,7 +253,7 @@ library IncreasePositionUtils {
             params.market.marketToken,
             params.position.collateralToken(),
             fees.ui.uiFeeAmount,
-            Keys.UI_POSITION_FEE
+            Keys.UI_POSITION_FEE_TYPE
         );
 
         collateralDeltaAmount -= fees.collateralCostAmount.toInt256();

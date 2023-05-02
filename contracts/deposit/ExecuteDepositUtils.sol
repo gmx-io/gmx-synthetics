@@ -247,7 +247,7 @@ library ExecuteDepositUtils {
             _params.market.marketToken,
             _params.tokenIn,
             fees.feeReceiverAmount,
-            Keys.DEPOSIT_FEE
+            Keys.DEPOSIT_FEE_TYPE
         );
 
         FeeUtils.incrementClaimableUiFeeAmount(
@@ -257,7 +257,7 @@ library ExecuteDepositUtils {
             _params.market.marketToken,
             _params.tokenIn,
             fees.uiFeeAmount,
-            Keys.UI_DEPOSIT_FEE
+            Keys.UI_DEPOSIT_FEE_TYPE
         );
 
         SwapPricingUtils.emitSwapFeesCollected(
