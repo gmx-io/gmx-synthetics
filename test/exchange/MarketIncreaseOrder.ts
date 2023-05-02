@@ -331,7 +331,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 6));
 
     await handleOrder(fixture, {
-      create: { ...params, initialCollateralDeltaAmount: expandDecimals(1000, 6), account: user0 },
+      create: { ...params, initialCollateralDeltaAmount: 0, minOutputAmount: 0, account: user0 },
       execute: {
         expectedCancellationReason: "LiquidatablePosition",
       },
