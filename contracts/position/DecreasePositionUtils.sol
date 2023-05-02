@@ -197,7 +197,6 @@ library DecreasePositionUtils {
             params.position,
             params.market,
             cache.prices,
-            false, // isIncrease
             true // shouldValidateMinCollateralUsd
         )) {
             revert Errors.PositionShouldNotBeLiquidated();
@@ -242,26 +241,6 @@ library DecreasePositionUtils {
             params.position.setShortTokenFundingAmountPerSize(fees.funding.latestShortTokenFundingAmountPerSize);
             params.position.setBorrowingFactor(cache.nextPositionBorrowingFactor);
 
-            // validate position which validates liquidation state is only called
-            // if the remaining position size is not zero
-            // due to this, a user can still manually close their position if
-            // it is in a partially liquidatable state
-            // this should not cause any issues as a liquidation is the same
-            // as automatically closing a position
-            // the only difference is that if the position has insufficient / negative
-            // collateral a liquidation transaction should still complete
-            // while a manual close transaction should revert
-            PositionUtils.validatePosition(
-                params.contracts.dataStore,
-                params.contracts.referralStorage,
-                params.position,
-                params.market,
-                cache.prices,
-                false, // isIncrease
-                false, // shouldValidateMinPositionSize
-                false // shouldValidateMinCollateralUsd
-            );
-
             PositionStoreUtils.set(params.contracts.dataStore, params.positionKey, params.position);
         }
 
@@ -300,6 +279,29 @@ library DecreasePositionUtils {
         // this is expected as a partial liquidation is considered the same as an automatic
         // closing of a position
         PositionUtils.handleReferral(params, fees);
+
+        // validatePosition should be called after open interest and all other market variables
+        // have been updated
+        if (params.position.sizeInUsd() != 0 || params.position.sizeInTokens() != 0) {
+            // validate position which validates liquidation state is only called
+            // if the remaining position size is not zero
+            // due to this, a user can still manually close their position if
+            // it is in a partially liquidatable state
+            // this should not cause any issues as a liquidation is the same
+            // as automatically closing a position
+            // the only difference is that if the position has insufficient / negative
+            // collateral a liquidation transaction should still complete
+            // while a manual close transaction should revert
+            PositionUtils.validatePosition(
+                params.contracts.dataStore,
+                params.contracts.referralStorage,
+                params.position,
+                params.market,
+                cache.prices,
+                false, // shouldValidateMinPositionSize
+                false // shouldValidateMinCollateralUsd
+            );
+        }
 
         PositionEventUtils.emitPositionFeesCollected(
             params.contracts.eventEmitter,

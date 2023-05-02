@@ -264,7 +264,6 @@ library PositionUtils {
         Position.Props memory position,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
-        bool isIncrease,
         bool shouldValidateMinPositionSize,
         bool shouldValidateMinCollateralUsd
     ) public view {
@@ -288,7 +287,6 @@ library PositionUtils {
             position,
             market,
             prices,
-            isIncrease,
             shouldValidateMinCollateralUsd
         )) {
             revert Errors.LiquidatablePosition();
@@ -307,7 +305,6 @@ library PositionUtils {
         Position.Props memory position,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
-        bool isIncrease,
         bool shouldValidateMinCollateralUsd
     ) public view returns (bool) {
         IsPositionLiquidatableCache memory cache;
@@ -329,7 +326,8 @@ library PositionUtils {
 
         cache.collateralUsd = position.collateralAmount() * cache.collateralTokenPrice.min;
 
-        cache.usdDeltaForPriceImpact = isIncrease ? position.sizeInUsd().toInt256() : -position.sizeInUsd().toInt256();
+        // calculate the usdDeltaForPriceImpact for fully closing the position
+        cache.usdDeltaForPriceImpact = -position.sizeInUsd().toInt256();
 
         cache.priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(

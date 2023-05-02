@@ -148,17 +148,6 @@ library IncreasePositionUtils {
             params.order.isLong()
         );
 
-        PositionUtils.validatePosition(
-            params.contracts.dataStore,
-            params.contracts.referralStorage,
-            params.position,
-            params.market,
-            prices,
-            true, // isIncrease
-            true, // shouldValidateMinPositionSize
-            true // shouldValidateMinCollateralUsd
-        );
-
         if (params.order.sizeDeltaUsd() > 0) {
             PositionUtils.WillPositionCollateralBeSufficientValues memory positionValues = PositionUtils.WillPositionCollateralBeSufficientValues(
                 params.position.sizeInUsd(), // positionSizeInUsd
@@ -182,6 +171,18 @@ library IncreasePositionUtils {
         }
 
         PositionUtils.handleReferral(params, fees);
+
+        // validatePosition should be called after open interest and all other market variables
+        // have been updated
+        PositionUtils.validatePosition(
+            params.contracts.dataStore,
+            params.contracts.referralStorage,
+            params.position,
+            params.market,
+            prices,
+            true, // shouldValidateMinPositionSize
+            true // shouldValidateMinCollateralUsd
+        );
 
         PositionEventUtils.emitPositionFeesCollected(
             params.contracts.eventEmitter,
