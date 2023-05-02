@@ -485,6 +485,8 @@ After the initial setup:
 
 - In certain blockchains it is possible for the keeper to have control over the tx.gasprice used to execute a transaction which would affect the execution fee paid to the keeper
 
+- For L2s with sequencers, there is no contract validation to check if the L2 sequencer is active, oracle keepers should stop signing prices if no blocks are being created by the sequencer, if the sequencer resumes regular operation, the oracle keepers should sign prices for the latest blocks using the latest fetched prices
+
 # Feature Development
 
 If new features are added, tests should be added for the different market types, e.g. spot only markets, single token markets.
