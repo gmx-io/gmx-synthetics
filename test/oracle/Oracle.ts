@@ -56,23 +56,6 @@ describe("Oracle", () => {
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user0.address, "CONTROLLER");
 
-    await expect(
-      oracle.setPrices(dataStore.address, eventEmitter.address, {
-        signerInfo: 2,
-        tokens: [],
-        compactedMinOracleBlockNumbers: [],
-        compactedMaxOracleBlockNumbers: [],
-        compactedOracleTimestamps: [],
-        compactedDecimals: [],
-        compactedMinPrices: [],
-        compactedMinPricesIndexes: [],
-        compactedMaxPrices: [],
-        compactedMaxPricesIndexes: [],
-        signatures: [],
-        priceFeedTokens: [],
-      })
-    ).to.be.revertedWithCustomError(errorsContract, "EmptyTokens");
-
     const blockNumber = (await provider.getBlock()).number;
     const blockTimestamp = (await provider.getBlock()).timestamp;
 

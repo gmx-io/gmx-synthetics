@@ -203,7 +203,11 @@ contract Oracle is RoleModule {
             revert Errors.NonEmptyTokensWithPrices(tokensWithPrices.length());
         }
 
-        if (params.tokens.length == 0) { revert Errors.EmptyTokens(); }
+        _setPricesFromPriceFeeds(dataStore, eventEmitter, params.priceFeedTokens);
+
+        // it is possible for transactions to be executed using just params.priceFeedTokens
+        // in this case if params.tokens is empty, the function can return
+        if (params.tokens.length == 0) { return; }
 
         // first 16 bits of signer info contains the number of signers
         address[] memory signers = new address[](params.signerInfo & Bits.BITMASK_16);
@@ -240,8 +244,6 @@ contract Oracle is RoleModule {
             signers,
             params
         );
-
-        _setPricesFromPriceFeeds(dataStore, eventEmitter, params.priceFeedTokens);
     }
 
     // @dev set the primary price
