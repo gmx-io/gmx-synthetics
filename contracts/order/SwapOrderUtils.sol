@@ -64,7 +64,7 @@ library SwapOrderUtils {
         }
 
         if (orderType == Order.OrderType.LimitSwap) {
-            if (!minOracleBlockNumbers.areGreaterThan(orderUpdatedAtBlock)) {
+            if (!minOracleBlockNumbers.areGreaterThanOrEqualTo(orderUpdatedAtBlock)) {
                 revert Errors.OracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, orderUpdatedAtBlock);
             }
             return;
