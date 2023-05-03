@@ -151,6 +151,8 @@ library OrderUtils {
     // @dev executes an order
     // @param params BaseOrderUtils.ExecuteOrderParams
     function executeOrder(BaseOrderUtils.ExecuteOrderParams memory params) external {
+        OrderStoreUtils.remove(params.contracts.dataStore, params.key, params.order.account());
+
         BaseOrderUtils.validateNonEmptyOrder(params.order);
 
         BaseOrderUtils.setExactOrderPrice(

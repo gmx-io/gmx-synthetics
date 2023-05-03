@@ -40,8 +40,6 @@ library SwapOrderUtils {
             params.order.uiFeeReceiver(),
             params.order.shouldUnwrapNativeToken()
         ));
-
-        OrderStoreUtils.remove(params.contracts.dataStore, params.key, params.order.account());
     }
 
     // @dev validate the oracle block numbers used for the prices in the oracle

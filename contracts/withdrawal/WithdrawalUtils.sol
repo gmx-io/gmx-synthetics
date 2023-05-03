@@ -172,6 +172,8 @@ library WithdrawalUtils {
      */
     function executeWithdrawal(ExecuteWithdrawalParams memory params) external {
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(params.dataStore, params.key);
+        WithdrawalStoreUtils.remove(params.dataStore, params.key, withdrawal.account());
+
         if (withdrawal.account() == address(0)) {
             revert Errors.EmptyWithdrawal();
         }
@@ -375,8 +377,6 @@ library WithdrawalUtils {
             Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
             Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS
         );
-
-        WithdrawalStoreUtils.remove(params.dataStore, params.key, withdrawal.account());
 
         MarketToken(payable(market.marketToken)).burn(
             address(params.withdrawalVault),
