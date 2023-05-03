@@ -45,8 +45,6 @@ library DecreaseOrderUtils {
             )
         );
 
-        OrderStoreUtils.remove(params.contracts.dataStore, params.key, order.account());
-
         // if the pnlToken and the collateralToken are different
         // and if a swap fails or no swap was requested
         // then it is possible to receive two separate tokens from decreasing
