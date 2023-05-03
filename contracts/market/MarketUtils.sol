@@ -2346,10 +2346,24 @@ library MarketUtils {
             revert Errors.InvalidMarketTokenBalance(market.marketToken, token, balance, expectedMinBalance);
         }
 
-        // since funding fees are excluded from the expectedMinBalance
-        // separately check that claimable funding fees do not exceed the token balance
+        // funding fees can be claimed even if the collateral for positions that should pay funding fees
+        // hasn't been reduced yet
+        // due to that, funding fees and collateral is excluded from the expectedMinBalance calculation
+        // and validated separately
+
+        // use 1 for the getCollateralSum divisor since getCollateralSum does not sum over both the
+        // longToken and shortToken
+        uint256 collateralAmount = getCollateralSum(dataStore, market.marketToken, token, true, 1);
+        collateralAmount += getCollateralSum(dataStore, market.marketToken, token, false, 1);
+
+        if (balance < collateralAmount) {
+            revert Errors.InvalidMarketTokenBalanceForCollateralAmount(market.marketToken, token, balance, collateralAmount);
+        }
+
         uint256 claimableFundingFeeAmount = dataStore.getUint(Keys.claimableFundingAmountKey(market.marketToken, token));
 
+        // in case of late liquidations, it may be possible for the claimableFundingFeeAmount to exceed the market token balance
+        // but this should be very rare
         if (balance < claimableFundingFeeAmount) {
             revert Errors.InvalidMarketTokenBalanceForClaimableFunding(market.marketToken, token, balance, claimableFundingFeeAmount);
         }
@@ -2365,10 +2379,6 @@ library MarketUtils {
         // get the pool amount directly as MarketUtils.getPoolAmount will divide the amount by 2
         // for markets with the same long and short token
         cache.poolAmount = dataStore.getUint(Keys.poolAmountKey(market.marketToken, token));
-        // use 1 for the getCollateralSum divisor since getCollateralSum does not sum over both the
-        // longToken and shortToken
-        cache.collateralForLongs = getCollateralSum(dataStore, market.marketToken, token, true, 1);
-        cache.collateralForShorts = getCollateralSum(dataStore, market.marketToken, token, false, 1);
         cache.swapImpactPoolAmount = getSwapImpactPoolAmount(dataStore, market.marketToken, token);
         cache.claimableCollateralAmount = dataStore.getUint(Keys.claimableCollateralAmountKey(market.marketToken, token));
         cache.claimableFeeAmount = dataStore.getUint(Keys.claimableFeeAmountKey(market.marketToken, token));

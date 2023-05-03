@@ -88,6 +88,7 @@ library Errors {
     error InvalidUiFeeFactor(uint256 uiFeeFactor, uint256 maxUiFeeFactor);
     error EmptyAddressInMarketTokenBalanceValidation(address market, address token);
     error InvalidMarketTokenBalance(address market, address token, uint256 balance, uint256 expectedMinBalance);
+    error InvalidMarketTokenBalanceForCollateralAmount(address market, address token, uint256 balance, uint256 collateralAmount);
     error InvalidMarketTokenBalanceForClaimableFunding(address market, address token, uint256 balance, uint256 claimableFundingFeeAmount);
     error UnexpectedPoolValue(int256 poolValue);
 
