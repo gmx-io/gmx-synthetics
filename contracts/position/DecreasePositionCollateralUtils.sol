@@ -116,6 +116,14 @@ library DecreasePositionCollateralUtils {
             values.pnlTokenForPool = params.position.collateralToken();
             values.pnlAmountForPool = -values.positionPnlUsd / collateralTokenPrice.min.toInt256();
             values.remainingCollateralAmount -= values.pnlAmountForPool;
+
+            MarketUtils.applyDeltaToPoolAmount(
+                params.contracts.dataStore,
+                params.contracts.eventEmitter,
+                params.market.marketToken,
+                values.pnlTokenForPool,
+                values.pnlAmountForPool
+            );
         } else {
             // position realizes a profit
             // deduct the pnl from the pool
@@ -136,13 +144,20 @@ library DecreasePositionCollateralUtils {
                 );
             }
 
+            MarketUtils.applyDeltaToPoolAmount(
+                params.contracts.dataStore,
+                params.contracts.eventEmitter,
+                params.market.marketToken,
+                values.pnlTokenForPool,
+                values.pnlAmountForPool
+            );
+
             // swap profit to the collateral token here so that the profit can be used
             // to pay for the totalNetCostAmount from the fees
             (bool wasSwapped, uint256 swapOutputAmount) = swapProfitToCollateralToken(
                 params,
                 cache.pnlToken,
-                values.pnlAmountForUser,
-                values.pnlAmountForPool
+                values.pnlAmountForUser
             );
 
             if (wasSwapped) {
@@ -218,7 +233,7 @@ library DecreasePositionCollateralUtils {
                 values.remainingCollateralAmount
             );
 
-            return getLiquidationValues(params, values, fees);
+            return processLiquidation(params, values, fees);
         }
 
         if (values.remainingCollateralAmount < 0) {
@@ -341,7 +356,7 @@ library DecreasePositionCollateralUtils {
 
     // for simplicity all fee values are set to zero in case there is insufficient
     // collateral to cover all fees
-    function getLiquidationValues(
+    function processLiquidation(
         PositionUtils.UpdatePositionParams memory params,
         PositionUtils.DecreasePositionCollateralValues memory values,
         PositionPricingUtils.PositionFees memory fees
@@ -365,6 +380,14 @@ library DecreasePositionCollateralUtils {
         } else {
             values.pnlTokenForPool = params.position.collateralToken();
             values.pnlAmountForPool = (params.position.collateralAmount() - fees.funding.fundingFeeAmount).toInt256();
+
+            MarketUtils.applyDeltaToPoolAmount(
+                params.contracts.dataStore,
+                params.contracts.eventEmitter,
+                params.market.marketToken,
+                values.pnlTokenForPool,
+                values.pnlAmountForPool
+            );
         }
 
         PositionUtils.DecreasePositionCollateralValues memory _values = PositionUtils.DecreasePositionCollateralValues(
@@ -442,16 +465,11 @@ library DecreasePositionCollateralUtils {
     function swapProfitToCollateralToken(
         PositionUtils.UpdatePositionParams memory params,
         address pnlToken,
-        uint256 profitAmount,
-        int256 poolAmountDelta
+        uint256 profitAmount
     ) internal returns (bool, uint256) {
         if (params.order.decreasePositionSwapType() == Order.DecreasePositionSwapType.SwapPnlTokenToCollateralToken) {
             Market.Props[] memory swapPathMarkets = new Market.Props[](1);
             swapPathMarkets[0] = params.market;
-
-            // adjust the pool amount by the poolAmountDelta so that the price impact of the swap will be
-            // more accurately calculated
-            params.contracts.dataStore.setInt(Keys.poolAmountAdjustmentKey(params.market.marketToken, pnlToken), poolAmountDelta);
 
             try params.contracts.swapHandler.swap(
                 SwapUtils.SwapParams(
@@ -476,8 +494,6 @@ library DecreasePositionCollateralUtils {
                 (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
                 emit SwapUtils.SwapReverted(reason, reasonBytes);
             }
-
-            params.contracts.dataStore.setInt(Keys.poolAmountAdjustmentKey(params.market.marketToken, pnlToken), 0);
         }
 
         return (false, 0);
