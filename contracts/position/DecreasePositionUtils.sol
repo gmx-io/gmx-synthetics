@@ -264,6 +264,10 @@ library DecreasePositionUtils {
             -values.sizeDeltaInTokens.toInt256()
         );
 
+        // there may be a large amount of borrowing fees that could have been accumulated
+        // these fees could cause the pool to become unbalanced, price impact is not paid for causing
+        // this imbalance
+        // the swap impact pool should be built up to help handle this case
         MarketUtils.applyDeltaToPoolAmount(
             params.contracts.dataStore,
             params.contracts.eventEmitter,
