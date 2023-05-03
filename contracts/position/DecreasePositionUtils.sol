@@ -268,14 +268,6 @@ library DecreasePositionUtils {
             params.contracts.dataStore,
             params.contracts.eventEmitter,
             params.market.marketToken,
-            values.pnlTokenForPool,
-            values.pnlAmountForPool
-        );
-
-        MarketUtils.applyDeltaToPoolAmount(
-            params.contracts.dataStore,
-            params.contracts.eventEmitter,
-            params.market.marketToken,
             params.position.collateralToken(),
             fees.feeAmountForPool.toInt256()
         );

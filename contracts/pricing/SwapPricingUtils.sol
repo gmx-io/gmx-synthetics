@@ -205,20 +205,6 @@ library SwapPricingUtils {
         uint256 nextPoolUsdForTokenA = Calc.sumReturnUint256(poolUsdForTokenA, params.usdDeltaForTokenA);
         uint256 nextPoolUsdForTokenB = Calc.sumReturnUint256(poolUsdForTokenB, params.usdDeltaForTokenB);
 
-        int256 poolUsdAdjustmentForTokenA = params.dataStore.getInt(Keys.poolAmountAdjustmentKey(params.market.marketToken, params.tokenA)) * params.priceForTokenA.toInt256();
-        int256 poolUsdAdjustmentForTokenB = params.dataStore.getInt(Keys.poolAmountAdjustmentKey(params.market.marketToken, params.tokenB)) * params.priceForTokenB.toInt256();
-
-        if (poolUsdAdjustmentForTokenA < 0 && poolUsdAdjustmentForTokenA.abs() > nextPoolUsdForTokenA) {
-            revert Errors.InvalidPoolAdjustment(params.tokenA, nextPoolUsdForTokenA, poolUsdAdjustmentForTokenA);
-        }
-
-        if (poolUsdAdjustmentForTokenB < 0 && poolUsdAdjustmentForTokenB.abs() > nextPoolUsdForTokenB) {
-            revert Errors.InvalidPoolAdjustment(params.tokenB, nextPoolUsdForTokenB, poolUsdAdjustmentForTokenB);
-        }
-
-        nextPoolUsdForTokenA = Calc.sumReturnUint256(nextPoolUsdForTokenA, poolUsdAdjustmentForTokenA);
-        nextPoolUsdForTokenB = Calc.sumReturnUint256(nextPoolUsdForTokenB, poolUsdAdjustmentForTokenB);
-
         PoolParams memory poolParams = PoolParams(
             poolUsdForTokenA,
             poolUsdForTokenB,

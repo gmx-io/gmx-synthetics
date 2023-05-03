@@ -203,8 +203,6 @@ library Keys {
     bytes32 public constant COLLATERAL_SUM = keccak256(abi.encode("COLLATERAL_SUM"));
     // @dev key for pool amount
     bytes32 public constant POOL_AMOUNT = keccak256(abi.encode("POOL_AMOUNT"));
-    // @dev key for pool amount adjustment
-    bytes32 public constant POOL_AMOUNT_ADJUSTMENT = keccak256(abi.encode("POOL_AMOUNT_ADJUSTMENT"));
     // @dev key for max pool amount
     bytes32 public constant MAX_POOL_AMOUNT = keccak256(abi.encode("MAX_POOL_AMOUNT"));
     // @dev key for max open interest
@@ -744,18 +742,6 @@ library Keys {
     function poolAmountKey(address market, address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             POOL_AMOUNT,
-            market,
-            token
-        ));
-    }
-
-    // @dev key for token adjustment amount for a market
-    // @param market the market to adjust
-    // @param token the token to adjust
-    // @return key for the token adjustment amount for a market
-    function poolAmountAdjustmentKey(address market, address token) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            POOL_AMOUNT_ADJUSTMENT,
             market,
             token
         ));
