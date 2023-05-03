@@ -190,7 +190,7 @@ library SwapPricingUtils {
         GetPriceImpactUsdParams memory params,
         uint256 poolAmountForTokenA,
         uint256 poolAmountForTokenB
-    ) internal view returns (PoolParams memory) {
+    ) internal pure returns (PoolParams memory) {
         uint256 poolUsdForTokenA = poolAmountForTokenA * params.priceForTokenA;
         uint256 poolUsdForTokenB = poolAmountForTokenB * params.priceForTokenB;
 
