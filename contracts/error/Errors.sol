@@ -89,6 +89,7 @@ library Errors {
     error EmptyAddressInMarketTokenBalanceValidation(address market, address token);
     error InvalidMarketTokenBalance(address market, address token, uint256 balance, uint256 expectedMinBalance);
     error InvalidMarketTokenBalanceForClaimableFunding(address market, address token, uint256 balance, uint256 claimableFundingFeeAmount);
+    error UnexpectedPoolValue(int256 poolValue);
 
     // Oracle errors
     error EmptySigner(uint256 signerIndex);
