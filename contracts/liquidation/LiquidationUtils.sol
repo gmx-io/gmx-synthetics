@@ -49,6 +49,13 @@ library LiquidationUtils {
         // required
         // setting a maximum price impact that will work for majority of cases
         // may also be challenging since the price impact would vary based on the
+        //
+        // note that the decreasePositionSwapType should be SwapPnlTokenToCollateralToken
+        // because fees are calculated with reference to the collateral token
+        // fees are deducted from the output amount if the output token is the same as the
+        // collateral token
+        // swapping the pnl token to the collateral token allows fees to be deducted from
+        // the realized profit
         Order.Numbers memory numbers = Order.Numbers(
             Order.OrderType.Liquidation, // orderType
             Order.DecreasePositionSwapType.SwapPnlTokenToCollateralToken, // decreasePositionSwapType

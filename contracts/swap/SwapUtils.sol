@@ -98,6 +98,10 @@ library SwapUtils {
      * part of the swap and the amount of the received token.
      */
     function swap(SwapParams memory params) external returns (address, uint256) {
+        if (params.amountIn == 0) {
+            return (params.tokenIn, params.amountIn);
+        }
+
         if (params.swapPathMarkets.length == 0) {
             if (params.amountIn < params.minOutputAmount) {
                 revert Errors.InsufficientOutputAmount(params.amountIn, params.minOutputAmount);
