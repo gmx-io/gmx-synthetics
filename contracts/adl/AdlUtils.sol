@@ -153,6 +153,9 @@ library AdlUtils {
         // through a protocol fund if required, this amount could later be claimed
         // from the price impact pool, this claiming process should be added if
         // required
+        // setting a maximum price impact that will work for majority of cases
+        // may also be challenging since the price impact would vary based on the
+        // amount of collateral being swapped
         Order.Numbers memory numbers = Order.Numbers(
             Order.OrderType.MarketDecrease, // orderType
             Order.DecreasePositionSwapType.SwapPnlTokenToCollateralToken, // decreasePositionSwapType
