@@ -62,6 +62,9 @@ library DecreasePositionCollateralUtils {
 
         Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.order.initialCollateralToken(), params.market, cache.prices);
 
+        // priceImpactDiffUsd is the difference between the maximum price impact and the originally calculated price impact
+        // e.g. if the originally calculated price impact is -$100, but the capped price impact is -$80
+        // then priceImpactUsd would be $20
         (values.executionPrice, values.priceImpactAmount, values.priceImpactDiffUsd) = getExecutionPrice(params, cache.prices, params.order.sizeDeltaUsd());
 
         (values.positionPnlUsd, values.sizeDeltaInTokens) = PositionUtils.getPositionPnlUsd(
@@ -78,22 +81,29 @@ library DecreasePositionCollateralUtils {
 
         if (values.positionPnlUsd > 0 && values.priceImpactDiffUsd > 0) {
             if (values.positionPnlUsd > values.priceImpactDiffUsd.toInt256()) {
+                // if the position is realizing a profit, adjust the pnl by the price impact difference
                 collateralCache.adjustedPositionPnlUsd = values.positionPnlUsd - values.priceImpactDiffUsd.toInt256();
                 collateralCache.adjustedPriceImpactDiffUsd = 0;
             } else {
+                // since the price impact difference is more than the realized pnl, set the adjusted pnl to zero
+                // set the adjusted price impact to the initial priceImpactDiffUsd reduced by the realized pnl
                 collateralCache.adjustedPositionPnlUsd = 0;
                 collateralCache.adjustedPriceImpactDiffUsd = values.priceImpactDiffUsd - values.positionPnlUsd.toUint256();
             }
         }
 
+        // calculate the amount that should be deducted by the position's collateral for the price impact
         collateralCache.adjustedPriceImpactDiffAmount = collateralCache.adjustedPriceImpactDiffUsd / collateralTokenPrice.max;
 
         if (collateralCache.adjustedPriceImpactDiffUsd > 0 && params.order.initialCollateralDeltaAmount() > 0) {
             uint256 initialCollateralDeltaAmount = params.order.initialCollateralDeltaAmount();
 
             if (collateralCache.adjustedPriceImpactDiffAmount > params.order.initialCollateralDeltaAmount()) {
+                // if the adjustedPriceImpactDiffAmount is more than the initialCollateralDeltaAmount then set
+                // the initial collateral delta amount to zero
                 params.order.setInitialCollateralDeltaAmount(0);
             } else {
+                // reduce the initialCollateralDeltaAmount by the adjustedPriceImpactDiffAmount
                 params.order.setInitialCollateralDeltaAmount(params.order.initialCollateralDeltaAmount() - collateralCache.adjustedPriceImpactDiffAmount);
             }
 
@@ -131,7 +141,7 @@ library DecreasePositionCollateralUtils {
             values.pnlAmountForPool = -values.positionPnlUsd / cache.pnlTokenPrice.max.toInt256();
             values.pnlAmountForUser = collateralCache.adjustedPositionPnlUsd.toUint256() / cache.pnlTokenPrice.max;
 
-            // if the price impact was capped send the difference to a holding area
+            // if the price impact for pnl was capped send the difference to a holding area
             collateralCache.pnlDiffAmount = (-values.pnlAmountForPool - values.pnlAmountForUser.toInt256()).toUint256();
             if (collateralCache.pnlDiffAmount > 0) {
                 MarketUtils.incrementClaimableCollateralAmount(
@@ -139,7 +149,7 @@ library DecreasePositionCollateralUtils {
                     params.contracts.eventEmitter,
                     params.market.marketToken,
                     cache.pnlToken,
-                    params.order.receiver(),
+                    params.order.account(),
                     collateralCache.pnlDiffAmount
                 );
             }
@@ -249,20 +259,17 @@ library DecreasePositionCollateralUtils {
             -values.priceImpactAmount
         );
 
-        // if the price impact was capped, deduct the difference from the collateral
-        // and send it to a holding area
+        // the adjustedPriceImpactDiffAmount has been reduced based on the realized pnl
+        // if the realized pnl was not sufficient then further reduce the position's collateral
+        // allow the difference to be claimable
         if (collateralCache.adjustedPriceImpactDiffAmount > 0) {
+            // cap the adjustedPriceImpactDiffAmount to the remainingCollateralAmount
             if (values.remainingCollateralAmount.toUint256() < collateralCache.adjustedPriceImpactDiffAmount) {
                 collateralCache.adjustedPriceImpactDiffAmount = values.remainingCollateralAmount.toUint256();
             }
 
             values.remainingCollateralAmount -= collateralCache.adjustedPriceImpactDiffAmount.toInt256();
 
-            // the order.receiver is meant to allow the output of an order to be
-            // received by an address that is different from the position.account
-            // address
-            // for claimable collateral, the funds are still credited to the owner
-            // of the position indicated by order.account
             MarketUtils.incrementClaimableCollateralAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
@@ -387,6 +394,18 @@ library DecreasePositionCollateralUtils {
                 params.market.marketToken,
                 values.pnlTokenForPool,
                 values.pnlAmountForPool
+            );
+        }
+
+
+        if (values.output.secondaryOutputAmount != 0) {
+            MarketUtils.incrementClaimableCollateralAmount(
+                params.contracts.dataStore,
+                params.contracts.eventEmitter,
+                params.market.marketToken,
+                values.output.secondaryOutputToken,
+                params.order.account(),
+                values.output.secondaryOutputAmount
             );
         }
 
