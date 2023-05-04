@@ -99,8 +99,9 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
         uint256 startingGas = gasleft();
+        uint256 minHandleErrorGas = GasUtils.getMinHandleExecutionErrorGas(dataStore);
 
-        try this._executeWithdrawal(
+        try this._executeWithdrawal{ gas: startingGas - minHandleErrorGas }(
             key,
             oracleParams,
             msg.sender

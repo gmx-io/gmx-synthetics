@@ -16,6 +16,9 @@ library Keys {
     // @dev for holding tokens that could not be sent out
     bytes32 public constant HOLDING_ADDRESS = keccak256(abi.encode("HOLDING_ADDRESS"));
 
+    // @dev key for the minimum gas that should be forwarded for execution error handling
+    bytes32 public constant MIN_HANDLE_EXECUTION_ERROR_GAS = keccak256(abi.encode("MIN_HANDLE_EXECUTION_ERROR_GAS"));
+
     // @dev for a global reentrancy guard
     bytes32 public constant REENTRANCY_GUARD_STATUS = keccak256(abi.encode("REENTRANCY_GUARD_STATUS"));
 
