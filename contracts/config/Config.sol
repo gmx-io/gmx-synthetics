@@ -188,6 +188,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     function _initAllowedBaseKeys() internal {
         allowedBaseKeys[Keys.HOLDING_ADDRESS] = true;
 
+        allowedBaseKeys[Keys.MIN_HANDLE_EXECUTION_ERROR_GAS] = true;
+
         allowedBaseKeys[Keys.IS_MARKET_DISABLED] = true;
 
         allowedBaseKeys[Keys.MAX_SWAP_PATH_LENGTH] = true;

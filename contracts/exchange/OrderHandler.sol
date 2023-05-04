@@ -179,8 +179,9 @@ contract OrderHandler is BaseOrderHandler {
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
         uint256 startingGas = gasleft();
+        uint256 minHandleErrorGas = GasUtils.getMinHandleExecutionErrorGas(dataStore);
 
-        try this._executeOrder(
+        try this._executeOrder{ gas: startingGas - minHandleErrorGas }(
             key,
             oracleParams,
             msg.sender

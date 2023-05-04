@@ -35,6 +35,10 @@ library GasUtils {
     // @param amount the amount of execution fee refunded
     event UserRefundFee(address user, uint256 amount);
 
+    function getMinHandleExecutionErrorGas(DataStore dataStore) internal view returns (uint256) {
+        return dataStore.getUint(Keys.MIN_HANDLE_EXECUTION_ERROR_GAS);
+    }
+
     // @dev pay the keeper the execution fee and refund any excess amount to the user
     //
     // @param dataStore DataStore
