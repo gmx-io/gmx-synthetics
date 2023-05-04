@@ -2,9 +2,12 @@ import { hashString, hashData } from "./hash";
 
 export const WNT = hashString("WNT");
 export const NONCE = hashString("NONCE");
-export const MAX_LEVERAGE = hashString("MAX_LEVERAGE");
 
 export const FEE_RECEIVER = hashString("FEE_RECEIVER");
+export const HOLDING_ADDRESS = hashString("HOLDING_ADDRESS");
+export const MIN_HANDLE_EXECUTION_ERROR_GAS = hashString("MIN_HANDLE_EXECUTION_ERROR_GAS");
+
+export const MAX_LEVERAGE = hashString("MAX_LEVERAGE");
 
 export const MARKET_LIST = hashString("MARKET_LIST");
 
