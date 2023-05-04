@@ -81,18 +81,18 @@ library DecreasePositionCollateralUtils {
 
         if (values.positionPnlUsd > 0 && values.priceImpactDiffUsd > 0) {
             if (values.positionPnlUsd > values.priceImpactDiffUsd.toInt256()) {
-                // if the position is realizing a profit, adjust the pnl by the price impact difference
+                // if the position is realizing a profit, reduce the pnl by the price impact difference
                 collateralCache.adjustedPositionPnlUsd = values.positionPnlUsd - values.priceImpactDiffUsd.toInt256();
                 collateralCache.adjustedPriceImpactDiffUsd = 0;
             } else {
-                // since the price impact difference is more than the realized pnl, set the adjusted pnl to zero
+                // if the price impact difference is more than the realized pnl, set the adjusted pnl to zero
                 // set the adjusted price impact to the initial priceImpactDiffUsd reduced by the realized pnl
                 collateralCache.adjustedPositionPnlUsd = 0;
                 collateralCache.adjustedPriceImpactDiffUsd = values.priceImpactDiffUsd - values.positionPnlUsd.toUint256();
             }
         }
 
-        // calculate the amount that should be deducted by the position's collateral for the price impact
+        // calculate the amount that should be deducted from the position's collateral for the price impact
         collateralCache.adjustedPriceImpactDiffAmount = collateralCache.adjustedPriceImpactDiffUsd / collateralTokenPrice.max;
 
         if (collateralCache.adjustedPriceImpactDiffUsd > 0 && params.order.initialCollateralDeltaAmount() > 0) {
@@ -124,6 +124,7 @@ library DecreasePositionCollateralUtils {
             // position realizes a loss
             // deduct collateral from user, transfer it to the pool
             values.pnlTokenForPool = params.position.collateralToken();
+            // if positionPnlUsd is < 0, then it should be equal to adjustedPositionPnlUsd
             values.pnlAmountForPool = -values.positionPnlUsd / collateralTokenPrice.min.toInt256();
             values.remainingCollateralAmount -= values.pnlAmountForPool;
 
@@ -138,11 +139,21 @@ library DecreasePositionCollateralUtils {
             // position realizes a profit
             // deduct the pnl from the pool
             values.pnlTokenForPool = cache.pnlToken;
+            // update pnlAmountForPool using positionPnlUsd instead of adjustedPositionPnlUsd
+            // as the full realized profit should be deducted from the pool
             values.pnlAmountForPool = -values.positionPnlUsd / cache.pnlTokenPrice.max.toInt256();
             values.pnlAmountForUser = collateralCache.adjustedPositionPnlUsd.toUint256() / cache.pnlTokenPrice.max;
 
             // if the price impact for pnl was capped send the difference to a holding area
             collateralCache.pnlDiffAmount = (-values.pnlAmountForPool - values.pnlAmountForUser.toInt256()).toUint256();
+
+            // pnlDiffAmount is deducted from the position's pnl and made to be claimable
+            // this is called before the liquidation check
+            // it is possible that the reduction in pnl causes the position to have insufficient
+            // pnl to pay for fees
+            // however, calling this before the liquidation check is necessary as only the
+            // adjustedPositionPnlUsd value should be used to be swapped to the collateral token
+            // for cases where the pnlToken is different from the collateral token
             if (collateralCache.pnlDiffAmount > 0) {
                 MarketUtils.incrementClaimableCollateralAmount(
                     params.contracts.dataStore,
@@ -262,6 +273,12 @@ library DecreasePositionCollateralUtils {
         // the adjustedPriceImpactDiffAmount has been reduced based on the realized pnl
         // if the realized pnl was not sufficient then further reduce the position's collateral
         // allow the difference to be claimable
+        // the adjustedPriceImpactDiffAmount is stored to be claimable after the liquidation check
+        // a position is only liquidated if the remaining collateral is insufficient to cover losses
+        // and fees, if this were called before the liquidation check, it would reduce the amount of collateral
+        // available to pay for fees, etc
+        // this is called after the remainingCollateralAmount < 0 check and the adjustedPriceImpactDiffAmount
+        // is capped to the remainingCollateralAmount the remainingCollateralAmount should not become negative
         if (collateralCache.adjustedPriceImpactDiffAmount > 0) {
             // cap the adjustedPriceImpactDiffAmount to the remainingCollateralAmount
             if (values.remainingCollateralAmount.toUint256() < collateralCache.adjustedPriceImpactDiffAmount) {
