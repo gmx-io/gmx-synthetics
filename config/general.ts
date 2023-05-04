@@ -4,8 +4,8 @@ import { decimalToFloat, expandDecimals } from "../utils/math";
 export default async function ({ network }: HardhatRuntimeEnvironment) {
   if (network.name === "hardhat") {
     return {
-      feeReceiver: "0x49B373D422BdA4C6BfCdd5eC1E48A9a26fdA2F8b",
-      holdingAddress: "0x49B373D422BdA4C6BfCdd5eC1E48A9a26fdA2F8b",
+      feeReceiver: "0x0000000000000000000000000000000000000000",
+      holdingAddress: "0x0000000000000000000000000000000000000000",
       minHandleExecutionErrorGas: 1000000,
 
       depositGasLimitSingle: 0,

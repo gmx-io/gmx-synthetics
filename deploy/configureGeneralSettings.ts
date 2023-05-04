@@ -7,7 +7,8 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
 
   await setAddressIfDifferent(keys.FEE_RECEIVER, generalConfig.feeReceiver, "fee receiver");
   await setAddressIfDifferent(keys.HOLDING_ADDRESS, generalConfig.holdingAddress, "holding address");
-  await setAddressIfDifferent(
+
+  await setUintIfDifferent(
     keys.MIN_HANDLE_EXECUTION_ERROR_GAS,
     generalConfig.minHandleExecutionErrorGas,
     "min handle execution error gas"
