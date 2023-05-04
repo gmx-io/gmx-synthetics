@@ -4,6 +4,10 @@ import { decimalToFloat, expandDecimals } from "../utils/math";
 export default async function ({ network }: HardhatRuntimeEnvironment) {
   if (network.name === "hardhat") {
     return {
+      feeReceiver: "0x49B373D422BdA4C6BfCdd5eC1E48A9a26fdA2F8b",
+      holdingAddress: "0x49B373D422BdA4C6BfCdd5eC1E48A9a26fdA2F8b",
+      minHandleExecutionErrorGas: 1000000,
+
       depositGasLimitSingle: 0,
       depositGasLimitMultiple: 0,
       withdrawalGasLimitSingle: 0,
@@ -30,6 +34,10 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     };
   } else {
     return {
+      feeReceiver: "0x49B373D422BdA4C6BfCdd5eC1E48A9a26fdA2F8b",
+      holdingAddress: "0x49B373D422BdA4C6BfCdd5eC1E48A9a26fdA2F8b",
+      minHandleExecutionErrorGas: 1000000,
+
       depositGasLimitSingle: 10000,
       depositGasLimitMultiple: 10000,
       withdrawalGasLimitSingle: 10000,
