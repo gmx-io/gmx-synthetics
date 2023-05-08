@@ -189,8 +189,8 @@ library SwapUtils {
         MarketUtils.validateSwapMarket(_params.market);
 
         cache.tokenOut = MarketUtils.getOppositeToken(_params.tokenIn, _params.market);
-        cache.tokenInPrice = params.oracle.getLatestPrice(_params.tokenIn);
-        cache.tokenOutPrice = params.oracle.getLatestPrice(cache.tokenOut);
+        cache.tokenInPrice = params.oracle.getPrimaryPrice(_params.tokenIn);
+        cache.tokenOutPrice = params.oracle.getPrimaryPrice(cache.tokenOut);
 
         SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
             params.dataStore,
@@ -303,7 +303,7 @@ library SwapUtils {
         );
 
         MarketUtils.MarketPrices memory prices = MarketUtils.MarketPrices(
-            params.oracle.getLatestPrice(_params.market.indexToken),
+            params.oracle.getPrimaryPrice(_params.market.indexToken),
             _params.tokenIn == _params.market.longToken ? cache.tokenInPrice : cache.tokenOutPrice,
             _params.tokenIn == _params.market.shortToken ? cache.tokenInPrice : cache.tokenOutPrice
         );

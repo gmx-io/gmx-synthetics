@@ -155,7 +155,7 @@ library OrderUtils {
 
         BaseOrderUtils.validateNonEmptyOrder(params.order);
 
-        BaseOrderUtils.setExactOrderPrice(
+        BaseOrderUtils.validateOrderPrice(
             params.contracts.oracle,
             params.market.indexToken,
             params.order.orderType(),

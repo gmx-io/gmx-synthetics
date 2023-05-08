@@ -109,6 +109,7 @@ library Errors {
     error InvalidOraclePrice(address token);
     error InvalidSignerMinMaxPrice(uint256 minPrice, uint256 maxPrice);
     error InvalidMedianMinMaxPrice(uint256 minPrice, uint256 maxPrice);
+    error DuplicateTokenPrice(address token);
     error NonEmptyTokensWithPrices(uint256 tokensWithPricesLength);
     error EmptyPriceFeed(address token);
     error PriceAlreadySet(address token, uint256 minPrice, uint256 maxPrice);
@@ -121,7 +122,6 @@ library Errors {
 
     // OracleModule errors
     error InvalidPrimaryPricesForSimulation(uint256 primaryTokensLength, uint256 primaryPricesLength);
-    error InvalidSecondaryPricesForSimulation(uint256 secondaryTokensLength, uint256 secondaryPricesLength);
     error EndOfOracleSimulation();
 
     // OracleUtils errors
@@ -131,9 +131,6 @@ library Errors {
     error InvalidSignature(address recoveredSigner, address expectedSigner);
 
     error EmptyPrimaryPrice(address token);
-    error EmptySecondaryPrice(address token);
-    error EmptyLatestPrice(address token);
-    error EmptyCustomPrice(address token);
 
     error OracleBlockNumbersAreNotEqual(uint256[] oracleBlockNumbers, uint256 expectedBlockNumber);
     error OracleBlockNumbersAreSmallerThanRequired(uint256[] oracleBlockNumbers, uint256 expectedBlockNumber);
@@ -146,16 +143,11 @@ library Errors {
     // BaseOrderUtils errors
     error EmptyOrder();
     error UnsupportedOrderType();
-    error InvalidLimitOrderPrices(
-        uint256 primaryPrice,
+    error InvalidOrderPrices(
+        uint256 primaryPriceMin,
+        uint256 primaryPriceMax,
         uint256 triggerPrice,
-        bool shouldValidateSmallerPrimaryPrice
-    );
-    error InvalidStopLossOrderPrices(
-        uint256 primaryPrice,
-        uint256 secondaryPrice,
-        uint256 triggerPrice,
-        bool shouldValidateAscendingPrice
+        uint256 orderType
     );
     error PriceImpactLargerThanOrderSize(int256 priceImpactUsdForPriceAdjustment, uint256 sizeDeltaUsd);
     error OrderNotFulfillableDueToPriceImpact(uint256 price, uint256 acceptablePrice);

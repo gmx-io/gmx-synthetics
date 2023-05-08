@@ -65,7 +65,7 @@ library DecreasePositionUtils {
     ) external returns (DecreasePositionResult memory) {
         PositionUtils.DecreasePositionCache memory cache;
 
-        cache.prices = MarketUtils.getMarketPricesForPosition(
+        cache.prices = MarketUtils.getMarketPrices(
             params.contracts.oracle,
             params.market
         );

@@ -359,7 +359,7 @@ library DecreasePositionCollateralUtils {
         }
 
         uint256 executionPrice = BaseOrderUtils.getExecutionPrice(
-            params.contracts.oracle.getCustomPrice(params.market.indexToken),
+            params.contracts.oracle.getPrimaryPrice(params.market.indexToken),
             sizeDeltaUsd,
             priceImpactUsd,
             params.order.acceptablePrice(),
