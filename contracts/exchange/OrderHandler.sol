@@ -261,11 +261,9 @@ contract OrderHandler is BaseOrderHandler {
             errorSelector == Errors.DisabledFeature.selector ||
             errorSelector == Errors.InvalidKeeperForFrozenOrder.selector ||
             errorSelector == Errors.UnsupportedOrderType.selector ||
-            // the transaction is reverted for InvalidLimitOrderPrices and
-            // InvalidStopLossOrderPrices errors since since the oracle prices
+            // the transaction is reverted for InvalidOrderPrices since the oracle prices
             // do not fulfill the specified trigger price
-            errorSelector == Errors.InvalidLimitOrderPrices.selector ||
-            errorSelector == Errors.InvalidStopLossOrderPrices.selector
+            errorSelector == Errors.InvalidOrderPrices.selector
         ) {
             ErrorUtils.revertWithCustomError(reasonBytes);
         }

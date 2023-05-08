@@ -507,25 +507,27 @@ describe("Oracle", () => {
 
     await printGasUsage(provider, tx1, "oracle.withOraclePrices tx1");
 
-    const tx2 = await oracleModuleTest.withOraclePricesTest(oracle.address, dataStore.address, eventEmitter.address, {
-      signerInfo,
-      tokens: [wnt.address, wnt.address, usdc.address],
-      compactedMinOracleBlockNumbers: getCompactedOracleBlockNumbers([block.number, block.number, block.number]),
-      compactedMaxOracleBlockNumbers: getCompactedOracleBlockNumbers([block.number, block.number, block.number]),
-      compactedOracleTimestamps: getCompactedOracleTimestamps([block.timestamp, block.timestamp, block.timestamp]),
-      compactedDecimals: getCompactedDecimals([1, 1, 6]),
-      compactedMinPrices: getCompactedPrices(wntPrices.concat(wntPrices).concat(usdcPrices)),
-      compactedMinPricesIndexes: getCompactedPriceIndexes([
-        0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6,
-      ]),
-      compactedMaxPrices: getCompactedPrices(wntPrices.concat(wntPrices).concat(usdcPrices)),
-      compactedMaxPricesIndexes: getCompactedPriceIndexes([
-        0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6,
-      ]),
-      signatures: wntSignatures.concat(wntSignatures).concat(usdcSignatures),
-      priceFeedTokens: [],
-    });
-
-    await printGasUsage(provider, tx2, "oracle.withOraclePrices tx2");
+    await expect(
+      oracleModuleTest.withOraclePricesTest(oracle.address, dataStore.address, eventEmitter.address, {
+        signerInfo,
+        tokens: [wnt.address, wnt.address, usdc.address],
+        compactedMinOracleBlockNumbers: getCompactedOracleBlockNumbers([block.number, block.number, block.number]),
+        compactedMaxOracleBlockNumbers: getCompactedOracleBlockNumbers([block.number, block.number, block.number]),
+        compactedOracleTimestamps: getCompactedOracleTimestamps([block.timestamp, block.timestamp, block.timestamp]),
+        compactedDecimals: getCompactedDecimals([1, 1, 6]),
+        compactedMinPrices: getCompactedPrices(wntPrices.concat(wntPrices).concat(usdcPrices)),
+        compactedMinPricesIndexes: getCompactedPriceIndexes([
+          0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6,
+        ]),
+        compactedMaxPrices: getCompactedPrices(wntPrices.concat(wntPrices).concat(usdcPrices)),
+        compactedMaxPricesIndexes: getCompactedPriceIndexes([
+          0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6,
+        ]),
+        signatures: wntSignatures.concat(wntSignatures).concat(usdcSignatures),
+        priceFeedTokens: [],
+      })
+    )
+      .to.be.revertedWithCustomError(errorsContract, "DuplicateTokenPrice")
+      .withArgs(wnt.address);
   });
 });

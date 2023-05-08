@@ -44,8 +44,6 @@ library OracleUtils {
     struct SimulatePricesParams {
         address[] primaryTokens;
         Price.Props[] primaryPrices;
-        address[] secondaryTokens;
-        Price.Props[] secondaryPrices;
     }
 
     struct ReportInfo {
@@ -280,18 +278,6 @@ library OracleUtils {
 
     function isEmptyPriceError(bytes4 errorSelector) internal pure returns (bool) {
         if (errorSelector == Errors.EmptyPrimaryPrice.selector) {
-            return true;
-        }
-
-        if (errorSelector == Errors.EmptySecondaryPrice.selector) {
-            return true;
-        }
-
-        if (errorSelector == Errors.EmptyLatestPrice.selector) {
-            return true;
-        }
-
-        if (errorSelector == Errors.EmptyCustomPrice.selector) {
             return true;
         }
 

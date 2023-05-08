@@ -232,19 +232,6 @@ library MarketUtils {
         revert Errors.UnableToGetCachedTokenPrice(token, market.marketToken);
     }
 
-    // @dev return the latest prices for the market tokens
-    // the secondary price for market.indexToken is overwritten for certain order
-    // types, use this value instead of the primary price for positions
-    // @param oracle Oracle
-    // @param market the market values
-    function getMarketPricesForPosition(Oracle oracle, Market.Props memory market) internal view returns (MarketPrices memory) {
-        return MarketPrices(
-            oracle.getLatestPrice(market.indexToken),
-            oracle.getLatestPrice(market.longToken),
-            oracle.getLatestPrice(market.shortToken)
-        );
-    }
-
     // @dev return the primary prices for the market tokens
     // @param oracle Oracle
     // @param market the market values
