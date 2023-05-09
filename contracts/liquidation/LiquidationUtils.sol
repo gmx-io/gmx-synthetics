@@ -49,6 +49,7 @@ library LiquidationUtils {
         // required
         // setting a maximum price impact that will work for majority of cases
         // may also be challenging since the price impact would vary based on the
+        // amount of collateral being swapped
         //
         // note that the decreasePositionSwapType should be SwapPnlTokenToCollateralToken
         // because fees are calculated with reference to the collateral token
