@@ -27,11 +27,18 @@ contract Reader {
     using SafeCast for uint256;
     using Position for Position.Props;
 
+    struct VirtualInventory {
+        uint256 virtualPoolAmountForLongToken;
+        uint256 virtualPoolAmountForShortToken;
+        int256 virtualInventoryForPositions;
+    }
+
     struct MarketInfo {
         Market.Props market;
         uint256 borrowingFactorPerSecondForLongs;
         uint256 borrowingFactorPerSecondForShorts;
         MarketUtils.GetNextFundingAmountPerSizeResult funding;
+        VirtualInventory virtualInventory;
     }
 
     function getMarket(DataStore dataStore, address key) external view returns (Market.Props memory) {
@@ -194,7 +201,15 @@ contract Reader {
             prices
         );
 
-        return MarketInfo(market, borrowingFactorPerSecondForLongs, borrowingFactorPerSecondForShorts, funding);
+        VirtualInventory memory virtualInventory = getVirtualInventory(dataStore, market);
+
+        return MarketInfo(
+            market,
+            borrowingFactorPerSecondForLongs,
+            borrowingFactorPerSecondForShorts,
+            funding,
+            virtualInventory
+        );
     }
 
     function getMarketTokenPrice(
@@ -283,10 +298,20 @@ contract Reader {
         );
     }
 
-    struct VirtualInventory {
-        uint256 virtualPoolAmountForLongToken;
-        uint256 virtualPoolAmountForShortToken;
-        int256 virtualInventoryForPositions;
+    function getVirtualInventory(
+        DataStore dataStore,
+        Market.Props memory market
+    ) internal view returns (VirtualInventory memory) {
+
+        (, uint256 virtualPoolAmountForLongToken) = MarketUtils.getVirtualInventoryForSwaps(dataStore, market.marketToken, market.longToken);
+        (, uint256 virtualPoolAmountForShortToken) = MarketUtils.getVirtualInventoryForSwaps(dataStore, market.marketToken, market.shortToken);
+        (, int256 virtualInventoryForPositions) = MarketUtils.getVirtualInventoryForPositions(dataStore, market.indexToken);
+
+        return VirtualInventory(
+            virtualPoolAmountForLongToken,
+            virtualPoolAmountForShortToken,
+            virtualInventoryForPositions
+        );
     }
 
     function getVirtualInventories(
@@ -297,16 +322,7 @@ contract Reader {
         for (uint256 i; i < marketKeys.length; i++) {
             address marketKey = marketKeys[i];
             Market.Props memory market = MarketStoreUtils.get(dataStore, marketKey);
-
-            (, uint256 virtualPoolAmountForLongToken) = MarketUtils.getVirtualInventoryForSwaps(dataStore, marketKey, market.longToken);
-            (, uint256 virtualPoolAmountForShortToken) = MarketUtils.getVirtualInventoryForSwaps(dataStore, marketKey, market.shortToken);
-            (, int256 virtualInventoryForPositions) = MarketUtils.getVirtualInventoryForPositions(dataStore, market.indexToken);
-
-            virtualInventories[i] = VirtualInventory(
-                virtualPoolAmountForLongToken,
-                virtualPoolAmountForShortToken,
-                virtualInventoryForPositions
-            );
+            virtualInventories[i] = getVirtualInventory(dataStore, market);
         }
         return virtualInventories;
     }
