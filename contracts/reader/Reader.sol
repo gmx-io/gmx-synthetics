@@ -302,7 +302,6 @@ contract Reader {
         DataStore dataStore,
         Market.Props memory market
     ) internal view returns (VirtualInventory memory) {
-
         (, uint256 virtualPoolAmountForLongToken) = MarketUtils.getVirtualInventoryForSwaps(dataStore, market.marketToken, market.longToken);
         (, uint256 virtualPoolAmountForShortToken) = MarketUtils.getVirtualInventoryForSwaps(dataStore, market.marketToken, market.shortToken);
         (, int256 virtualInventoryForPositions) = MarketUtils.getVirtualInventoryForPositions(dataStore, market.indexToken);
@@ -314,16 +313,41 @@ contract Reader {
         );
     }
 
-    function getVirtualInventories(
+    function getExecutionPrice(
         DataStore dataStore,
-        address[] memory marketKeys
-    ) external view returns (VirtualInventory[] memory) {
-        VirtualInventory[] memory virtualInventories = new VirtualInventory[](marketKeys.length);
-        for (uint256 i; i < marketKeys.length; i++) {
-            address marketKey = marketKeys[i];
-            Market.Props memory market = MarketStoreUtils.get(dataStore, marketKey);
-            virtualInventories[i] = getVirtualInventory(dataStore, market);
-        }
-        return virtualInventories;
+        address marketKey,
+        Price.Props memory indexTokenPrice,
+        int256 sizeDeltaUsd,
+        bool isLong
+    ) external view returns (ReaderUtils.ExecutionPriceResult memory) {
+        Market.Props memory market = MarketStoreUtils.get(dataStore, marketKey);
+        return ReaderUtils.getExecutionPrice(
+            dataStore,
+            market,
+            indexTokenPrice,
+            sizeDeltaUsd,
+            isLong
+        );
+    }
+
+    function getSwapPriceImpact(
+        DataStore dataStore,
+        address marketKey,
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        Price.Props memory tokenInPrice,
+        Price.Props memory tokenOutPrice
+    ) external view returns (int256, int256) {
+        Market.Props memory market = MarketStoreUtils.get(dataStore, marketKey);
+        return ReaderUtils.getSwapPriceImpact(
+            dataStore,
+            market,
+            tokenIn,
+            tokenOut,
+            amountIn,
+            tokenInPrice,
+            tokenOutPrice
+        );
     }
 }
