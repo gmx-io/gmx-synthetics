@@ -245,4 +245,119 @@ library ReaderUtils {
 
         return (cache.amountOut, impactAmount, fees);
     }
+
+    struct ExecutionPriceResult {
+        int256 priceImpactUsdBeforeCap;
+        int256 priceImpactUsdAfterCap;
+        int256 priceImpactUsd;
+        uint256 priceImpactDiffUsd;
+        uint256 executionPrice;
+    }
+
+    function getExecutionPrice(
+        DataStore dataStore,
+        Market.Props memory market,
+        Price.Props memory indexTokenPrice,
+        int256 sizeDeltaUsd,
+        bool isLong
+    ) internal view returns (ExecutionPriceResult memory result) {
+        result.priceImpactUsdBeforeCap = PositionPricingUtils.getPriceImpactUsd(
+            PositionPricingUtils.GetPriceImpactUsdParams(
+                dataStore,
+                market,
+                sizeDeltaUsd,
+                isLong
+            )
+        );
+        result.priceImpactUsdAfterCap = MarketUtils.getCappedPositionImpactUsd(
+            dataStore,
+            market.marketToken,
+            indexTokenPrice,
+            result.priceImpactUsdBeforeCap,
+            (sizeDeltaUsd < 0 ? -sizeDeltaUsd : sizeDeltaUsd).toUint256()
+        );
+
+        result.priceImpactUsd = result.priceImpactUsdAfterCap;
+        if (result.priceImpactUsd < 0) {
+            uint256 maxPriceImpactFactor = MarketUtils.getMaxPositionImpactFactor(
+                dataStore,
+                market.marketToken,
+                false
+            );
+
+            // convert the max price impact to the min negative value
+            int256 minPriceImpactUsd = -Precision.applyFactor(
+                (sizeDeltaUsd < 0 ? -sizeDeltaUsd : sizeDeltaUsd).toUint256(),
+                maxPriceImpactFactor
+            ).toInt256();
+
+            if (result.priceImpactUsd < minPriceImpactUsd) {
+                result.priceImpactDiffUsd = (minPriceImpactUsd - result.priceImpactUsd).toUint256();
+                result.priceImpactUsd = minPriceImpactUsd;
+            }
+        }
+
+        bool isIncrease = sizeDeltaUsd > 0;
+        bool shouldPriceBeSmaller = isIncrease ? isLong : !isLong;
+        result.executionPrice = BaseOrderUtils.getExecutionPrice(
+            indexTokenPrice,
+            (sizeDeltaUsd < 0 ? -sizeDeltaUsd : sizeDeltaUsd).toUint256(),
+            result.priceImpactUsd,
+            shouldPriceBeSmaller ? type(uint256).max : 0,
+            isLong,
+            isIncrease
+        );
+
+        return result;
+    }
+
+    function getSwapPriceImpact(
+        DataStore dataStore,
+        Market.Props memory market,
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        Price.Props memory tokenInPrice,
+        Price.Props memory tokenOutPrice
+    ) external view returns (int256 priceImpactUsdBeforeCap, int256 priceImpactAmount) {
+        SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
+            dataStore,
+            market.marketToken,
+            amountIn,
+            address(0)
+        );
+
+        priceImpactUsdBeforeCap = SwapPricingUtils.getPriceImpactUsd(
+            SwapPricingUtils.GetPriceImpactUsdParams(
+                dataStore,
+                market,
+                tokenIn,
+                tokenOut,
+                tokenInPrice.midPrice(),
+                tokenOutPrice.midPrice(),
+                (fees.amountAfterFees * tokenInPrice.midPrice()).toInt256(),
+                -(fees.amountAfterFees * tokenInPrice.midPrice()).toInt256()
+            )
+        );
+
+        if (priceImpactUsdBeforeCap > 0) {
+            priceImpactAmount = MarketUtils.getSwapImpactAmountWithCap(
+                dataStore,
+                market.marketToken,
+                tokenOut,
+                tokenOutPrice,
+                priceImpactUsdBeforeCap
+            );
+        } else {
+            priceImpactAmount = MarketUtils.getSwapImpactAmountWithCap(
+                dataStore,
+                market.marketToken,
+                tokenIn,
+                tokenInPrice,
+                priceImpactUsdBeforeCap
+            );
+        }
+
+        return (priceImpactUsdBeforeCap, priceImpactAmount);
+    }
 }
