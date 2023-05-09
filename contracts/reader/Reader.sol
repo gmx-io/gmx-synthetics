@@ -319,4 +319,22 @@ contract Reader {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
         return MarketUtils.getPnlToPoolFactor(dataStore, market, prices, isLong, maximize);
     }
+
+    function getSwapAmountOut(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketUtils.MarketPrices memory prices,
+        address tokenIn,
+        uint256 amountIn,
+        address uiFeeReceiver
+    ) external view returns (uint256, int256, SwapPricingUtils.SwapFees memory fees) {
+        return ReaderUtils.getSwapAmountOut(
+            dataStore,
+            market,
+            prices,
+            tokenIn,
+            amountIn,
+            uiFeeReceiver
+        );
+    }
 }
