@@ -65,6 +65,28 @@ const config: {
       transferGasLimit: 200 * 1000,
     },
   },
+  arbitrumGoerli: {
+    WETH: {
+      address: "0xEe01c0CD76354C383B8c7B4e65EA88D00B06f36f",
+      decimals: 18,
+      wrappedNative: true,
+      transferGasLimit: 200 * 1000,
+    },
+    WBTC: {
+      decimals: 8,
+      transferGasLimit: 200 * 1000,
+      deploy: true,
+    },
+    USDC: {
+      decimals: 6,
+      transferGasLimit: 200 * 1000,
+      deploy: true,
+    },
+    TEST: {
+      synthetic: true,
+      decimals: 18,
+    },
+  },
   avalanche: {
     WAVAX: {
       address: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
@@ -78,6 +100,10 @@ const config: {
       wrappedNative: true,
       decimals: 18,
       transferGasLimit: 200 * 1000,
+    },
+    TEST: {
+      synthetic: true,
+      decimals: 18,
     },
     SOL: {
       synthetic: true,
@@ -93,11 +119,28 @@ const config: {
       transferGasLimit: 200 * 1000,
       deploy: true,
     },
+    DAI: {
+      decimals: 6,
+      transferGasLimit: 200 * 1000,
+      deploy: true,
+    },
     WETH: {
       address: "0x82F0b3695Ed2324e55bbD9A9554cB4192EC3a514",
       decimals: 18,
       virtualTokenId: "0x275d2a6e341e6a078d4eee59b08907d1e50825031c5481f9551284f4b7ee2fb9",
       transferGasLimit: 200 * 1000,
+    },
+    BNB: {
+      decimals: 18,
+      synthetic: true,
+    },
+    DOGE: {
+      decimals: 8,
+      synthetic: true,
+    },
+    LINK: {
+      decimals: 18,
+      synthetic: true,
     },
   },
   // token addresses are retrieved in runtime for hardhat and localhost networks
@@ -152,7 +195,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensCo
 
   for (const [tokenSymbol, token] of Object.entries(tokens as TokensConfig)) {
     if (token.synthetic) {
-      (token as any).address = getSyntheticTokenAddress(tokenSymbol);
+      (token as any).address = getSyntheticTokenAddress(hre.network.config.chainId, tokenSymbol);
     }
     if (token.address) {
       (token as any).address = ethers.utils.getAddress(token.address);
