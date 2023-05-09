@@ -1,11 +1,12 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { decimalToFloat, expandDecimals } from "../utils/math";
+import ethers from "ethers";
 
 export default async function ({ network }: HardhatRuntimeEnvironment) {
   if (network.name === "hardhat") {
     return {
-      feeReceiver: "0x0000000000000000000000000000000000000000",
-      holdingAddress: "0x0000000000000000000000000000000000000000",
+      feeReceiver: ethers.constants.AddressZero,
+      holdingAddress: ethers.constants.AddressZero,
       minHandleExecutionErrorGas: 1000000,
 
       depositGasLimitSingle: 0,
@@ -30,6 +31,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       maxSwapPathLength: 5,
       maxCallbackGasLimit: 2000000,
       minCollateralUsd: decimalToFloat(1),
+
+      minPositionSizeUsd: decimalToFloat(1),
       claimableCollateralTimeDivisor: 60 * 60,
     };
   } else {
@@ -59,6 +62,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
       maxSwapPathLength: 5,
       maxCallbackGasLimit: 2 * 1000 * 1000,
+      minPositionSizeUsd: decimalToFloat(1),
       minCollateralUsd: decimalToFloat(1),
       claimableCollateralTimeDivisor: 60 * 60,
     };

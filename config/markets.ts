@@ -163,7 +163,17 @@ const config: {
   [network: string]: MarketConfig[];
 } = {
   arbitrum: [],
-  arbitrumGoerli: [],
+  arbitrumGoerli: [
+    {
+      tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
+    },
+    {
+      tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "USDC" },
+    },
+    {
+      tokens: { indexToken: "TEST", longToken: "WETH", shortToken: "USDC" },
+    },
+  ],
   avalanche: [],
   avalancheFuji: [
     {
@@ -183,6 +193,28 @@ const config: {
     {
       tokens: { longToken: "USDC", shortToken: "USDT" },
       swapOnly: true,
+    },
+    {
+      tokens: {
+        indexToken: "TEST",
+        longToken: "WAVAX",
+        shortToken: "USDC",
+      },
+      positivePositionImpactFactor: decimalToFloat(25, 6), // 0.0025 %
+      negativePositionImpactFactor: decimalToFloat(5, 5), // 0.005 %
+      positionImpactExponentFactor: decimalToFloat(2, 0), // 2
+      positiveSwapImpactFactor: decimalToFloat(1, 5), // 0.001 %
+      negativeSwapImpactFactor: decimalToFloat(2, 5), // 0.002 %
+      swapImpactExponentFactor: decimalToFloat(2, 0), // 2
+    },
+    {
+      tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "DAI" },
+    },
+    {
+      tokens: { indexToken: "LINK", longToken: "WETH", shortToken: "DAI" },
+    },
+    {
+      tokens: { indexToken: "BNB", longToken: "WETH", shortToken: "DAI" },
     },
   ],
   hardhat: [

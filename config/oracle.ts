@@ -1,6 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { TOKEN_ORACLE_TYPES } from "../utils/oracle";
 import { decimalToFloat } from "../utils/math";
+import { BigNumberish } from "ethers";
 
 type OracleRealPriceFeed = {
   address: string;
@@ -25,7 +26,7 @@ export type OracleConfig = {
   minOracleSigners: number;
   minOracleBlockConfirmations: number;
   maxOraclePriceAge: number;
-  maxRefPriceDeviationFactor: number;
+  maxRefPriceDeviationFactor: BigNumberish;
   tokens?: {
     [tokenSymbol: string]: {
       priceFeed?: OraclePriceFeed;
@@ -69,6 +70,25 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
       },
     },
 
+    arbitrumGoerli: {
+      signers: ["0xFb11f15f206bdA02c224EDC744b0E50E46137046", "0x23247a1A80D01b9482E9d734d2EB780a3b5c8E6c"],
+      maxOraclePriceAge: 60 * 60,
+      maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
+      minOracleBlockConfirmations: 255,
+      minOracleSigners: 1,
+
+      // price feeds https://docs.chain.link/data-feeds/price-feeds/addresses/?network=arbitrum#Arbitrum%20Goerli
+      tokens: {
+        USDC: {
+          priceFeed: {
+            address: "0x1692Bdd32F31b831caAc1b0c9fAF68613682813b",
+            decimals: 8,
+            heartbeatDuration: 24 * 60 * 60,
+          },
+        },
+      },
+    },
+
     avalancheFuji: {
       signers: ["0xFb11f15f206bdA02c224EDC744b0E50E46137046", "0x23247a1A80D01b9482E9d734d2EB780a3b5c8E6c"],
       maxOraclePriceAge: 60 * 60,
@@ -78,7 +98,24 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
 
       // price feeds https://docs.chain.link/data-feeds/price-feeds/addresses?network=avalanche#Avalanche%20Testnet
       tokens: {
+        // using the same price feed for all stablecoins since Chainlink has only USDT feed on Avalanche Fuji
         USDC: {
+          priceFeed: {
+            // this is USDT price feed, there is no USDC feed on Avalanche Fuji
+            address: "0x7898AcCC83587C3C55116c5230C17a6Cd9C71bad",
+            decimals: 8,
+            heartbeatDuration: 24 * 60 * 60,
+          },
+        },
+        USDT: {
+          priceFeed: {
+            // this is USDT price feed, there is no USDC feed on Avalanche Fuji
+            address: "0x7898AcCC83587C3C55116c5230C17a6Cd9C71bad",
+            decimals: 8,
+            heartbeatDuration: 24 * 60 * 60,
+          },
+        },
+        DAI: {
           priceFeed: {
             // this is USDT price feed, there is no USDC feed on Avalanche Fuji
             address: "0x7898AcCC83587C3C55116c5230C17a6Cd9C71bad",
