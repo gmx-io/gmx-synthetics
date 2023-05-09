@@ -1287,6 +1287,34 @@ library MarketUtils {
         Price.Props memory tokenPrice,
         int256 priceImpactUsd
     ) internal returns (int256) {
+        int256 impactAmount = getSwapImpactAmountWithCap(
+            dataStore,
+            market,
+            token,
+            tokenPrice,
+            priceImpactUsd
+        );
+
+        // if there is a positive impact, the impact pool amount should be reduced
+        // if there is a negative impact, the impact pool amount should be increased
+        applyDeltaToSwapImpactPool(
+            dataStore,
+            eventEmitter,
+            market,
+            token,
+            -impactAmount
+        );
+
+        return impactAmount;
+    }
+
+    function getSwapImpactAmountWithCap(
+        DataStore dataStore,
+        address market,
+        address token,
+        Price.Props memory tokenPrice,
+        int256 priceImpactUsd
+    ) internal view returns (int256) {
         // positive impact: minimize impactAmount, use tokenPrice.max
         // negative impact: maximize impactAmount, use tokenPrice.min
         uint256 price = priceImpactUsd > 0 ? tokenPrice.max : tokenPrice.min;
@@ -1305,16 +1333,6 @@ library MarketUtils {
             // round negative impactAmount up, this will be deducted from the user
             impactAmount = Calc.roundUpMagnitudeDivision(priceImpactUsd, price);
         }
-
-        // if there is a positive impact, the impact pool amount should be reduced
-        // if there is a negative impact, the impact pool amount should be increased
-        applyDeltaToSwapImpactPool(
-            dataStore,
-            eventEmitter,
-            market,
-            token,
-            -impactAmount
-        );
 
         return impactAmount;
     }
