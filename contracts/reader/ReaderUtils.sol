@@ -23,6 +23,9 @@ import "../market/Market.sol";
 // convers some internal library functions into external functions to reduce
 // the Reader contract size
 library ReaderUtils {
+    using SafeCast for uint256;
+    using SafeCast for int256;
+    using Price for Price.Props;
     using Position for Position.Props;
 
     function getNextBorrowingFees(
@@ -77,5 +80,92 @@ library ReaderUtils {
             latestLongTokenFundingAmountPerSize,
             latestShortTokenFundingAmountPerSize
         );
+    }
+
+    // returns amountOut, price impact, fees
+    function getSwapAmountOut(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketUtils.MarketPrices memory prices,
+        address tokenIn,
+        uint256 amountIn,
+        address uiFeeReceiver
+    ) external view returns (uint256, int256, SwapPricingUtils.SwapFees memory) {
+        SwapUtils.SwapCache memory cache;
+
+        if (tokenIn != market.longToken && tokenIn != market.shortToken) {
+            revert Errors.InvalidTokenIn(tokenIn, market.marketToken);
+        }
+
+        MarketUtils.validateSwapMarket(market);
+
+        cache.tokenOut = MarketUtils.getOppositeToken(tokenIn, market);
+        cache.tokenInPrice = MarketUtils.getCachedTokenPrice(tokenIn, market, prices);
+        cache.tokenOutPrice = MarketUtils.getCachedTokenPrice(cache.tokenOut, market, prices);
+
+        SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
+            dataStore,
+            market.marketToken,
+            amountIn,
+            uiFeeReceiver
+        );
+
+        int256 priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(
+            SwapPricingUtils.GetPriceImpactUsdParams(
+                dataStore,
+                market,
+                tokenIn,
+                cache.tokenOut,
+                cache.tokenInPrice.midPrice(),
+                cache.tokenOutPrice.midPrice(),
+                (fees.amountAfterFees * cache.tokenInPrice.midPrice()).toInt256(),
+                -(fees.amountAfterFees * cache.tokenInPrice.midPrice()).toInt256()
+            )
+        );
+
+        int256 impactAmount;
+
+        if (priceImpactUsd > 0) {
+            // when there is a positive price impact factor, additional tokens from the swap impact pool
+            // are withdrawn for the user
+            // for example, if 50,000 USDC is swapped out and there is a positive price impact
+            // an additional 100 USDC may be sent to the user
+            // the swap impact pool is decreased by the used amount
+
+            cache.amountIn = fees.amountAfterFees;
+            // round amountOut down
+            cache.amountOut = cache.amountIn * cache.tokenInPrice.min / cache.tokenOutPrice.max;
+            cache.poolAmountOut = cache.amountOut;
+
+            impactAmount = MarketUtils.getSwapImpactAmountWithCap(
+                dataStore,
+                market.marketToken,
+                cache.tokenOut,
+                cache.tokenOutPrice,
+                priceImpactUsd
+            );
+
+            cache.amountOut += impactAmount.toUint256();
+        } else {
+            // when there is a negative price impact factor,
+            // less of the input amount is sent to the pool
+            // for example, if 10 ETH is swapped in and there is a negative price impact
+            // only 9.995 ETH may be swapped in
+            // the remaining 0.005 ETH will be stored in the swap impact pool
+
+            impactAmount = MarketUtils.getSwapImpactAmountWithCap(
+                dataStore,
+                market.marketToken,
+                tokenIn,
+                cache.tokenInPrice,
+                priceImpactUsd
+            );
+
+            cache.amountIn = fees.amountAfterFees - (-impactAmount).toUint256();
+            cache.amountOut = cache.amountIn * cache.tokenInPrice.min / cache.tokenOutPrice.max;
+            cache.poolAmountOut = cache.amountOut;
+        }
+
+        return (cache.amountOut, impactAmount, fees);
     }
 }
