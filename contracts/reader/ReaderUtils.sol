@@ -18,6 +18,11 @@ import "../order/OrderStoreUtils.sol";
 import "../market/MarketUtils.sol";
 import "../market/Market.sol";
 
+struct PositionInfo {
+    Position.Props position;
+    PositionPricingUtils.PositionFees fees;
+}
+
 // @title ReaderUtils
 // @dev Library for read utils functions
 // convers some internal library functions into external functions to reduce
@@ -28,12 +33,21 @@ library ReaderUtils {
     using Price for Price.Props;
     using Position for Position.Props;
 
+    struct GetPositionInfoCache {
+        Position.Props position;
+        Market.Props market;
+        Price.Props collateralTokenPrice;
+        uint256 pendingBorrowingFeeUsd;
+        int256 latestLongTokenFundingAmountPerSize;
+        int256 latestShortTokenFundingAmountPerSize;
+    }
+
     function getNextBorrowingFees(
         DataStore dataStore,
         Position.Props memory position,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices
-    ) external view returns (uint256) {
+    ) internal view returns (uint256) {
         return MarketUtils.getNextBorrowingFees(
             dataStore,
             position,
@@ -46,7 +60,7 @@ library ReaderUtils {
         DataStore dataStore,
         Price.Props memory collateralTokenPrice,
         uint256 borrowingFeeUsd
-    ) external view returns (PositionPricingUtils.PositionBorrowingFees memory) {
+    ) internal view returns (PositionPricingUtils.PositionBorrowingFees memory) {
         return PositionPricingUtils.getBorrowingFees(
             dataStore,
             collateralTokenPrice,
@@ -58,7 +72,7 @@ library ReaderUtils {
         DataStore dataStore,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices
-    ) external view returns (MarketUtils.GetNextFundingAmountPerSizeResult memory) {
+    ) public view returns (MarketUtils.GetNextFundingAmountPerSizeResult memory) {
         return MarketUtils.getNextFundingAmountPerSize(
             dataStore,
             market,
@@ -72,7 +86,7 @@ library ReaderUtils {
         address shortToken,
         int256 latestLongTokenFundingAmountPerSize,
         int256 latestShortTokenFundingAmountPerSize
-    ) external pure returns (PositionPricingUtils.PositionFundingFees memory) {
+    ) internal pure returns (PositionPricingUtils.PositionFundingFees memory) {
         return PositionPricingUtils.getFundingFees(
             position,
             longToken,
@@ -80,6 +94,69 @@ library ReaderUtils {
             latestLongTokenFundingAmountPerSize,
             latestShortTokenFundingAmountPerSize
         );
+    }
+
+    function getPositionInfo(
+        DataStore dataStore,
+        IReferralStorage referralStorage,
+        bytes32 positionKey,
+        MarketUtils.MarketPrices memory prices,
+        uint256 sizeDeltaUsd,
+        address uiFeeReceiver,
+        bool usePositionSizeAsSizeDeltaUsd
+    ) external view returns (PositionInfo memory) {
+        GetPositionInfoCache memory cache;
+
+        cache.position = PositionStoreUtils.get(dataStore, positionKey);
+        cache.market = MarketStoreUtils.get(dataStore, cache.position.market());
+        cache.collateralTokenPrice = MarketUtils.getCachedTokenPrice(cache.position.collateralToken(), cache.market, prices);
+
+        if (usePositionSizeAsSizeDeltaUsd) {
+            sizeDeltaUsd = cache.position.sizeInUsd();
+        }
+
+        PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams(
+            dataStore,
+            referralStorage,
+            cache.position,
+            cache.collateralTokenPrice,
+            cache.market.longToken,
+            cache.market.shortToken,
+            sizeDeltaUsd,
+            uiFeeReceiver
+        );
+
+        PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(getPositionFeesParams);
+
+        // borrowing and funding fees need to be overwritten with pending values otherwise they
+        // would be using storage values that have not yet been updated
+        cache.pendingBorrowingFeeUsd = getNextBorrowingFees(dataStore, cache.position, cache.market, prices);
+
+        fees.borrowing = getBorrowingFees(
+            dataStore,
+            cache.collateralTokenPrice,
+            cache.pendingBorrowingFeeUsd
+        );
+
+        MarketUtils.GetNextFundingAmountPerSizeResult memory nextFundingAmountResult = getNextFundingAmountPerSize(dataStore, cache.market, prices);
+
+        if (cache.position.isLong()) {
+            cache.latestLongTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_LongCollateral_LongPosition;
+            cache.latestShortTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_ShortCollateral_LongPosition;
+        } else {
+            cache.latestLongTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_LongCollateral_ShortPosition;
+            cache.latestShortTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_ShortCollateral_ShortPosition;
+        }
+
+        fees.funding = getFundingFees(
+            cache.position,
+            cache.market.longToken,
+            cache.market.shortToken,
+            cache.latestLongTokenFundingAmountPerSize,
+            cache.latestShortTokenFundingAmountPerSize
+        );
+
+        return PositionInfo(cache.position, fees);
     }
 
     // returns amountOut, price impact, fees
