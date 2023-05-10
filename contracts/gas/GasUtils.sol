@@ -39,6 +39,15 @@ library GasUtils {
         return dataStore.getUint(Keys.MIN_HANDLE_EXECUTION_ERROR_GAS);
     }
 
+    function getExecutionGas(DataStore dataStore, uint256 startingGas) internal view returns (uint256) {
+        uint256 minHandleErrorGas = GasUtils.getMinHandleExecutionErrorGas(dataStore);
+        if (startingGas < minHandleErrorGas) {
+            revert Errors.InsufficientExecutionGas(startingGas, minHandleErrorGas);
+        }
+
+        return startingGas - minHandleErrorGas;
+    }
+
     // @dev pay the keeper the execution fee and refund any excess amount to the user
     //
     // @param dataStore DataStore
