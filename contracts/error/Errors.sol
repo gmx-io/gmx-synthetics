@@ -169,13 +169,13 @@ library Errors {
 
     // DecreasePositionUtils errors
     error InvalidDecreaseOrderSize(uint256 sizeDeltaUsd, uint256 positionSizeInUsd);
-    error UnableToWithdrawCollateralDueToLeverage(int256 estimatedRemainingCollateralUsd);
+    error UnableToWithdrawCollateral(int256 estimatedRemainingCollateralUsd);
     error InvalidDecreasePositionSwapType(uint256 decreasePositionSwapType);
     error PositionShouldNotBeLiquidated();
 
     // IncreasePositionUtils errors
     error InsufficientCollateralAmount(uint256 collateralAmount, int256 collateralDeltaAmount);
-    error InsufficientCollateralForOpenInterestLeverage(int256 remainingCollateralUsd);
+    error InsufficientCollateralUsd(int256 remainingCollateralUsd);
 
     // PositionUtils errors
     error LiquidatablePosition();

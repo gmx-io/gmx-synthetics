@@ -423,6 +423,18 @@ library PositionUtils {
             prices
         );
 
+        int256 remainingCollateralUsd = values.positionCollateralAmount.toInt256() * collateralTokenPrice.min.toInt256();
+
+        // deduct realized pnl if it is negative since this would be paid from
+        // the position's collateral
+        if (values.realizedPnlUsd < 0) {
+            remainingCollateralUsd = remainingCollateralUsd + values.realizedPnlUsd;
+        }
+
+        if (remainingCollateralUsd < 0) {
+            return (false, remainingCollateralUsd);
+        }
+
         // the min collateral factor will increase as the open interest for a market increases
         // this may lead to previously created limit increase orders not being executable
         //
@@ -438,16 +450,10 @@ library PositionUtils {
             isLong
         );
 
-        int256 remainingCollateralUsd = values.positionCollateralAmount.toInt256() * collateralTokenPrice.min.toInt256();
-
-        // deduct realized pnl if it is negative since this would be paid from
-        // the position's collateral
-        if (values.realizedPnlUsd < 0) {
-            remainingCollateralUsd = remainingCollateralUsd + values.realizedPnlUsd;
-        }
-
-        if (remainingCollateralUsd < 0) {
-            return (false, remainingCollateralUsd);
+        uint256 minCollateralFactorForMarket = MarketUtils.getMinCollateralFactor(dataStore, market.marketToken);
+        // use the minCollateralFactor for the market if it is larger
+        if (minCollateralFactorForMarket > minCollateralFactor) {
+            minCollateralFactor = minCollateralFactorForMarket;
         }
 
         int256 minCollateralUsdForLeverage = Precision.applyFactor(values.positionSizeInUsd, minCollateralFactor).toInt256();
