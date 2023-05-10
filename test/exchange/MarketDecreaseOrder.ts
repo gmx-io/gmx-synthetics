@@ -168,6 +168,22 @@ describe("Exchange.MarketDecreaseOrder", () => {
         expect(event.nextCollateralDeltaAmount).eq("0");
       }
     );
+
+    await dataStore.setUint(keys.MIN_POSITION_SIZE_USD, decimalToFloat(50 * 1000));
+
+    await usingResult(
+      handleOrder(fixture, {
+        create: {
+          ...params,
+          sizeDeltaUsd: decimalToFloat(190 * 1000),
+        },
+      }),
+      (result) => {
+        const event = getEventData(result.executeResult.logs, "OrderSizeDeltaAutoUpdated");
+        expect(event.sizeDeltaUsd).eq(decimalToFloat(190 * 1000));
+        expect(event.nextSizeDeltaUsd).eq(decimalToFloat(199 * 1000));
+      }
+    );
   });
 
   it("executeOrder", async () => {
