@@ -1,12 +1,14 @@
 import { expect } from "chai";
 
 import { deployFixture } from "../../utils/fixture";
+import { getEventData } from "../../utils/event";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, getOrderCount, getOrderKeys, createOrder, handleOrder } from "../../utils/order";
 import { getAccountPositionCount } from "../../utils/position";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
+import { usingResult } from "../../utils/use";
 
 describe("Exchange.MarketDecreaseOrder", () => {
   const { provider } = ethers;
@@ -123,6 +125,49 @@ describe("Exchange.MarketDecreaseOrder", () => {
         },
       })
     ).to.be.revertedWithCustomError(errorsContract, "OracleBlockNumberNotWithinRange");
+
+    await handleOrder(fixture, {
+      create: {
+        ...params,
+        sizeDeltaUsd: decimalToFloat(1000 * 1000),
+      },
+      execute: {
+        expectedCancellationReason: "InvalidDecreaseOrderSize",
+      },
+    });
+
+    // if we want to have a min collateral factor of 0.1 when open interest is 200,000
+    // then minCollateralFactorForOpenInterestMultiplier * 200,000 = 0.1
+    // minCollateralFactorForOpenInterestMultiplier: 0.1 / 200,000 = 5e-7
+    await dataStore.setUint(
+      keys.minCollateralFactorForOpenInterestMultiplierKey(ethUsdMarket.marketToken, true),
+      decimalToFloat(5, 7)
+    );
+
+    await handleOrder(fixture, {
+      create: {
+        ...params,
+        sizeDeltaUsd: 0,
+        initialCollateralDeltaAmount: "9910000000000000000", // 9.91 ETH
+      },
+      execute: {
+        expectedCancellationReason: "UnableToWithdrawCollateralDueToLeverage",
+      },
+    });
+
+    await usingResult(
+      handleOrder(fixture, {
+        create: {
+          ...params,
+          initialCollateralDeltaAmount: "9910000000000000000", // 9.91 ETH
+        },
+      }),
+      (result) => {
+        const event = getEventData(result.executeResult.logs, "OrderCollateralDeltaAmountAutoUpdated");
+        expect(event.collateralDeltaAmount).eq("9910000000000000000");
+        expect(event.nextCollateralDeltaAmount).eq("0");
+      }
+    );
   });
 
   it("executeOrder", async () => {

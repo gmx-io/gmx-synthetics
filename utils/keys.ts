@@ -46,6 +46,9 @@ export const MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR = hashString("MAX_ORACLE_REF_
 export const MIN_ORACLE_SIGNERS = hashString("MIN_ORACLE_SIGNERS");
 
 export const MIN_COLLATERAL_FACTOR = hashString("MIN_COLLATERAL_FACTOR");
+export const MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER = hashString(
+  "MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER"
+);
 export const MIN_COLLATERAL_USD = hashString("MIN_COLLATERAL_USD");
 
 export const SWAP_FEE_RECEIVER_FACTOR = hashString("SWAP_FEE_RECEIVER_FACTOR");
@@ -227,6 +230,10 @@ export function openInterestInTokensKey(market: string, collateralToken: string,
 
 export function minCollateralFactorKey(market: string) {
   return hashData(["bytes32", "address"], [MIN_COLLATERAL_FACTOR, market]);
+}
+
+export function minCollateralFactorForOpenInterestMultiplierKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER, market, isLong]);
 }
 
 export function reserveFactorKey(market: string, isLong: boolean) {
