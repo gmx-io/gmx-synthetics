@@ -16,11 +16,11 @@ import "./config";
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.16",
+    version: "0.8.19",
     settings: {
       optimizer: {
         enabled: true,
-        runs: 1,
+        runs: 10,
         details: {
           constantOptimizer: true,
         },
