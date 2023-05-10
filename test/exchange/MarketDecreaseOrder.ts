@@ -151,7 +151,7 @@ describe("Exchange.MarketDecreaseOrder", () => {
         initialCollateralDeltaAmount: "9910000000000000000", // 9.91 ETH
       },
       execute: {
-        expectedCancellationReason: "UnableToWithdrawCollateralDueToLeverage",
+        expectedCancellationReason: "UnableToWithdrawCollateral",
       },
     });
 

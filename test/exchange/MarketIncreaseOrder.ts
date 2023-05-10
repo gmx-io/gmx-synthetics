@@ -366,7 +366,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
     await handleOrder(fixture, {
       create: params,
       execute: {
-        expectedCancellationReason: "LiquidatablePosition",
+        expectedCancellationReason: "InsufficientCollateralUsd",
       },
     });
   });

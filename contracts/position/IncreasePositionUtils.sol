@@ -166,7 +166,7 @@ library IncreasePositionUtils {
             );
 
             if (!willBeSufficient) {
-                revert Errors.InsufficientCollateralForOpenInterestLeverage(remainingCollateralUsd);
+                revert Errors.InsufficientCollateralUsd(remainingCollateralUsd);
             }
         }
 
