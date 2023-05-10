@@ -1,11 +1,13 @@
 import { expect } from "chai";
 import { mine } from "@nomicfoundation/hardhat-network-helpers";
 
+import { getEventData } from "../../utils/event";
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, createOrder, executeOrder, handleOrder } from "../../utils/order";
 import { errorsContract } from "../../utils/error";
+import { usingResult } from "../../utils/use";
 
 describe("Exchange.LimitDecreaseOrder", () => {
   const { provider } = ethers;
@@ -81,5 +83,30 @@ describe("Exchange.LimitDecreaseOrder", () => {
         oracleBlocks: [block0, block0],
       })
     ).to.be.revertedWithCustomError(errorsContract, "OracleBlockNumbersAreSmallerThanRequired");
+
+    const block1 = await provider.getBlock();
+
+    await executeOrder(fixture, {
+      tokens: [wnt.address, usdc.address],
+      minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+      maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+      precisions: [8, 18],
+      oracleBlocks: [block1, block1],
+    });
+
+    await usingResult(
+      handleOrder(fixture, {
+        create: {
+          ...params,
+          sizeDeltaUsd: decimalToFloat(1000 * 1000),
+        },
+        execute: {},
+      }),
+      (result) => {
+        const event = getEventData(result.executeResult.logs, "OrderSizeDeltaAutoUpdated");
+        expect(event.sizeDeltaUsd).eq(decimalToFloat(1000 * 1000));
+        expect(event.nextSizeDeltaUsd).eq(decimalToFloat(399 * 1000));
+      }
+    );
   });
 });
