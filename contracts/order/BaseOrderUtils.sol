@@ -241,7 +241,7 @@ library BaseOrderUtils {
         // for limit decrease short positions:
         //      - the order should be executed when the oracle price is <= triggerPrice
         //      - primaryPrice.max should be used for the oracle price
-        if (orderType == Order.OrderType.LimitIncrease) {
+        if (orderType == Order.OrderType.LimitDecrease) {
             bool ok = isLong ? primaryPrice.min >= triggerPrice : primaryPrice.max <= triggerPrice;
 
             if (!ok) {
