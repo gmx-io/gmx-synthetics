@@ -12,8 +12,8 @@ export async function getSupplyOf(tokenAddress) {
   return await token.totalSupply();
 }
 
-export function getSyntheticTokenAddress(tokenSymbol: string) {
-  return "0x" + hashData(["string"], [tokenSymbol]).substring(26);
+export function getSyntheticTokenAddress(chainId: number, tokenSymbol: string) {
+  return "0x" + hashData(["uint256", "string"], [chainId, tokenSymbol]).substring(26);
 }
 
 export async function expectTokenBalanceIncrease(params) {
