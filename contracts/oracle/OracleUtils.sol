@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "../utils/Array.sol";
 import "../utils/Bits.sol";
 import "../price/Price.sol";
+import "../utils/Printer.sol";
 
 // @title OracleUtils
 // @dev Library for oracle functions
@@ -226,14 +227,14 @@ library OracleUtils {
     // @param signature the signer's signature
     // @param expectedSigner the address of the expected signer
     function validateSigner(
-        bytes32 SALT,
+        bytes32 salt,
         ReportInfo memory info,
         bytes memory signature,
         address expectedSigner
     ) internal pure {
         bytes32 digest = ECDSA.toEthSignedMessageHash(
             keccak256(abi.encode(
-                SALT,
+                salt,
                 info.minOracleBlockNumber,
                 info.maxOracleBlockNumber,
                 info.oracleTimestamp,

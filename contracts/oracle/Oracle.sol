@@ -369,8 +369,8 @@ contract Oracle is RoleModule {
             }
             cache.prevMinOracleBlockNumber = reportInfo.minOracleBlockNumber;
 
-            if (Chain.currentBlockNumber() - reportInfo.minOracleBlockNumber <= cache.minBlockConfirmations) {
-                reportInfo.blockHash = Chain.getBlockHash(reportInfo.minOracleBlockNumber);
+            if (Chain.currentBlockNumber() - reportInfo.maxOracleBlockNumber <= cache.minBlockConfirmations) {
+                reportInfo.blockHash = Chain.getBlockHash(reportInfo.maxOracleBlockNumber);
             }
 
             reportInfo.token = params.tokens[i];
