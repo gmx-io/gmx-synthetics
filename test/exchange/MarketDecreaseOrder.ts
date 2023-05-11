@@ -4,7 +4,14 @@ import { deployFixture } from "../../utils/fixture";
 import { getEventData } from "../../utils/event";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
-import { OrderType, getOrderCount, getOrderKeys, createOrder, handleOrder } from "../../utils/order";
+import {
+  OrderType,
+  DecreasePositionSwapType,
+  getOrderCount,
+  getOrderKeys,
+  createOrder,
+  handleOrder,
+} from "../../utils/order";
 import { getAccountPositionCount } from "../../utils/position";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
@@ -15,6 +22,23 @@ describe("Exchange.MarketDecreaseOrder", () => {
   let fixture;
   let user0;
   let dataStore, reader, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc;
+
+  const getParams = () => {
+    return {
+      account: user0,
+      market: ethUsdMarket,
+      initialCollateralToken: wnt,
+      initialCollateralDeltaAmount: expandDecimals(1, 18),
+      swapPath: [],
+      sizeDeltaUsd: decimalToFloat(1000),
+      acceptablePrice: expandDecimals(4995, 12),
+      executionFee: expandDecimals(1, 15),
+      minOutputAmount: 0,
+      orderType: OrderType.MarketDecrease,
+      isLong: true,
+      shouldUnwrapNativeToken: false,
+    };
+  };
 
   beforeEach(async () => {
     fixture = await deployFixture();
@@ -61,7 +85,7 @@ describe("Exchange.MarketDecreaseOrder", () => {
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
   });
 
-  it("executeOrder validations", async () => {
+  it("executeOrder validations 0", async () => {
     await handleOrder(fixture, {
       create: {
         market: ethUsdMarket,
@@ -74,20 +98,7 @@ describe("Exchange.MarketDecreaseOrder", () => {
       },
     });
 
-    const params = {
-      account: user0,
-      market: ethUsdMarket,
-      initialCollateralToken: wnt,
-      initialCollateralDeltaAmount: expandDecimals(1, 18),
-      swapPath: [],
-      sizeDeltaUsd: decimalToFloat(1000),
-      acceptablePrice: expandDecimals(4995, 12),
-      executionFee: expandDecimals(1, 15),
-      minOutputAmount: 0,
-      orderType: OrderType.MarketDecrease,
-      isLong: true,
-      shouldUnwrapNativeToken: false,
-    };
+    const params = getParams();
 
     await expect(
       createOrder(fixture, {
@@ -184,6 +195,38 @@ describe("Exchange.MarketDecreaseOrder", () => {
         expect(event.nextSizeDeltaUsd).eq(decimalToFloat(199 * 1000));
       }
     );
+  });
+
+  it("executeOrder validations 1", async () => {
+    await handleOrder(fixture, {
+      create: {
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        sizeDeltaUsd: decimalToFloat(200 * 1000),
+        acceptablePrice: expandDecimals(5001, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+      },
+    });
+
+    const params = getParams();
+
+    expect(await wnt.balanceOf(user0.address)).eq(0);
+    expect(await usdc.balanceOf(user0.address)).eq(0);
+
+    // request a swap using decreasePositionSwapType even though the pnlToken and
+    // collateralToken are the same, the order should still execute and return
+    // the correct output amounts
+    await handleOrder(fixture, {
+      create: {
+        ...params,
+        decreasePositionSwapType: DecreasePositionSwapType.SwapPnlTokenToCollateralToken,
+      },
+    });
+
+    expect(await wnt.balanceOf(user0.address)).eq(expandDecimals(1, 18));
+    expect(await usdc.balanceOf(user0.address)).eq(0);
   });
 
   it("executeOrder", async () => {
