@@ -7,7 +7,7 @@ import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { getSupplyOf } from "../../utils/token";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, getOrderCount, getOrderKeys, createOrder, executeOrder, handleOrder } from "../../utils/order";
-import { getPositionCount, getAccountPositionCount } from "../../utils/position";
+import { getPositionCount, getAccountPositionCount, getPositionKeys } from "../../utils/position";
 import { getExecuteParams } from "../../utils/exchange";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
@@ -17,13 +17,14 @@ describe("Exchange.MarketIncreaseOrder", () => {
 
   let fixture;
   let user0, user1;
-  let reader, dataStore, ethUsdMarket, ethUsdSingleTokenMarket, btcUsdMarket, wnt, wbtc, usdc;
+  let reader, dataStore, referralStorage, ethUsdMarket, ethUsdSingleTokenMarket, btcUsdMarket, wnt, wbtc, usdc;
   let executionFee;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1 } = fixture.accounts);
-    ({ reader, dataStore, ethUsdMarket, ethUsdSingleTokenMarket, btcUsdMarket, wnt, wbtc, usdc } = fixture.contracts);
+    ({ reader, dataStore, referralStorage, ethUsdMarket, ethUsdSingleTokenMarket, btcUsdMarket, wnt, wbtc, usdc } =
+      fixture.contracts);
     ({ executionFee } = fixture.props);
 
     await handleDeposit(fixture, {
@@ -369,6 +370,65 @@ describe("Exchange.MarketIncreaseOrder", () => {
         expectedCancellationReason: "InsufficientCollateralUsd",
       },
     });
+  });
+
+  it("swaps tokens", async () => {
+    const params = {
+      market: ethUsdMarket,
+      initialCollateralToken: wnt,
+      initialCollateralDeltaAmount: expandDecimals(10, 18),
+      swapPath: [ethUsdMarket.marketToken],
+      orderType: OrderType.MarketIncrease,
+      sizeDeltaUsd: decimalToFloat(200 * 1000),
+      acceptablePrice: expandDecimals(5001, 12),
+      executionFee,
+      minOutputAmount: expandDecimals(50000, 6),
+      isLong: true,
+      shouldUnwrapNativeToken: false,
+    };
+
+    await handleOrder(fixture, { create: params });
+
+    const block = await provider.getBlock();
+
+    const prices = {
+      indexTokenPrice: {
+        min: expandDecimals(5000, 12),
+        max: expandDecimals(5000, 12),
+      },
+      longTokenPrice: {
+        min: expandDecimals(5000, 12),
+        max: expandDecimals(5000, 12),
+      },
+      shortTokenPrice: {
+        min: expandDecimals(1, 24),
+        max: expandDecimals(1, 24),
+      },
+    };
+
+    const positionKeys = await getPositionKeys(dataStore, 0, 10);
+    const position0 = await reader.getPositionInfo(
+      dataStore.address,
+      referralStorage.address,
+      positionKeys[positionKeys.length - 1],
+      prices,
+      0, // sizeDeltaUsd
+      ethers.constants.AddressZero,
+      true // usePositionSizeAsSizeDeltaUsd
+    );
+
+    expect(position0.position.addresses.account).eq(user0.address);
+    expect(position0.position.addresses.market).eq(ethUsdMarket.marketToken);
+    expect(position0.position.addresses.collateralToken).eq(usdc.address);
+    expect(position0.position.numbers.sizeInUsd).eq(decimalToFloat(200 * 1000));
+    expect(position0.position.numbers.sizeInTokens).eq(expandDecimals(40, 18));
+    expect(position0.position.numbers.collateralAmount).eq(expandDecimals(50000, 6));
+    expect(position0.position.numbers.borrowingFactor).eq(0);
+    expect(position0.position.numbers.longTokenFundingAmountPerSize).eq(0);
+    expect(position0.position.numbers.shortTokenFundingAmountPerSize).eq(0);
+    expect(position0.position.numbers.increasedAtBlock).eq(block.number);
+    expect(position0.position.numbers.decreasedAtBlock).eq(0);
+    expect(position0.position.flags.isLong).eq(true);
   });
 
   it("single token market", async () => {
