@@ -107,6 +107,7 @@ async function main() {
     longTokenSwapPath: [],
     initialShortToken: usdc.address,
     shortTokenSwapPath: [],
+    uiFeeReceiver: ethers.constants.AddressZero,
   };
   console.log("exchange router %s", exchangeRouter.address);
   console.log("deposit store %s", depositVault.address);
