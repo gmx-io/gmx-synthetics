@@ -31,10 +31,10 @@ contract OracleModuleTest is OracleModule {
         DataStore dataStore,
         OracleUtils.SetPricesParams memory params
     ) external view returns (OracleUtils.ReportInfo[] memory) {
-        Oracle.SetPricesInnerCache memory innerCache;
         OracleUtils.ReportInfo[] memory result = new OracleUtils.ReportInfo[](params.tokens.length);
 
         for (uint256 i; i < params.tokens.length; i++) {
+            Oracle.SetPricesInnerCache memory innerCache;
             OracleUtils.ReportInfo memory reportInfo;
             reportInfo.minOracleBlockNumber = OracleUtils.getUncompactedOracleBlockNumber(params.compactedMinOracleBlockNumbers, i);
             reportInfo.maxOracleBlockNumber = OracleUtils.getUncompactedOracleBlockNumber(params.compactedMaxOracleBlockNumbers, i);
