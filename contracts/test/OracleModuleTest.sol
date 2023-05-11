@@ -19,13 +19,13 @@ contract OracleModuleTest is OracleModule {
     }
 
     function validateSigner(
-        bytes32 SALT,
+        bytes32 salt,
         OracleUtils.ReportInfo memory info,
         bytes memory signature,
         address expectedSigner
     ) external pure {
         OracleUtils.validateSigner(
-            SALT,
+            salt,
             info,
             signature,
             expectedSigner
