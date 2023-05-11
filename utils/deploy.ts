@@ -15,7 +15,7 @@ export function createDeployFunction({
   dependencyNames = null,
   getDeployArgs = null,
   libraryNames = null,
-  afterDeploy,
+  afterDeploy = null,
 }) {
   const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRuntimeEnvironment) => {
     const { deploy, get } = deployments;

@@ -18,7 +18,7 @@ contract OracleModuleTest is OracleModule {
     ) external withOraclePrices(oracle, dataStore, eventEmitter, oracleParams) {
     }
 
-    function validateSigner(
+    function validateSignerWithSalt(
         bytes32 SALT,
         OracleUtils.ReportInfo memory info,
         bytes memory signature,
@@ -30,5 +30,22 @@ contract OracleModuleTest is OracleModule {
             signature,
             expectedSigner
         );
+    }
+
+    function validateSigner(
+        OracleUtils.ReportInfo memory info,
+        bytes memory signature,
+        address expectedSigner
+    ) external view {
+        OracleUtils.validateSigner(
+            getSalt(),
+            info,
+            signature,
+            expectedSigner
+        );
+    }
+
+    function getSalt() public view returns (bytes32) {
+        return keccak256(abi.encode(block.chainid, "xget-oracle-v1"));
     }
 }

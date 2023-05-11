@@ -17,7 +17,7 @@ const func = async ({ gmx, deployments }: HardhatRuntimeEnvironment) => {
       const { priceFeed, oracleType } = oracleConfig.tokens[tokenSymbol];
 
       const oracleTypeKey = keys.oracleTypeKey(token.address);
-      await setBytes32IfDifferent(oracleTypeKey, oracleType);
+      await setBytes32IfDifferent(oracleTypeKey, oracleType, "oracle type");
 
       if (!priceFeed) {
         continue;

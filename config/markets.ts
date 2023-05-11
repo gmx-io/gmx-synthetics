@@ -197,7 +197,7 @@ const config: {
     {
       tokens: {
         indexToken: "TEST",
-        longToken: "WAVAX",
+        longToken: "WETH",
         shortToken: "USDC",
       },
       positivePositionImpactFactor: decimalToFloat(25, 6), // 0.0025 %
