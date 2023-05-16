@@ -168,50 +168,17 @@ library PositionPricingUtils {
         uint256 affiliateRewardAmount;
     }
 
-    // @dev get the price impact amount for a position increase / decrease
-    // @param size the change in position size
-    // @param executionPrice the execution price of the index token
-    // @param latestPrice the latest price of the index token
-    // @param isLong whether the position is long or short
-    // @param isIncrease whether it is an increase or decrease position
-    // @return the price impact amount for a position increase / decrease
     function getPriceImpactAmount(
-        uint256 size,
-        uint256 executionPrice,
-        Price.Props memory latestPrice,
-        bool isLong,
-        bool isIncrease
+        int256 priceImpactUsd,
+        uint256 executionPrice
     ) internal pure returns (int256) {
-        uint256 _latestPrice;
-        if (isIncrease) {
-            _latestPrice = isLong ? latestPrice.max : latestPrice.min;
-        } else {
-            _latestPrice = isLong ? latestPrice.min : latestPrice.max;
-        }
-
-        // increase order:
-        //     - long: price impact is size * (_latestPrice - executionPrice) / _latestPrice
-        //             when executionPrice is smaller than _latestPrice there is a positive price impact
-        //     - short: price impact is size * (executionPrice - _latestPrice) / _latestPrice
-        //              when executionPrice is larger than _latestPrice there is a positive price impact
-        // decrease order:
-        //     - long: price impact is size * (executionPrice - _latestPrice) / _latestPrice
-        //             when executionPrice is larger than _latestPrice there is a positive price impact
-        //     - short: price impact is size * (_latestPrice - executionPrice) / _latestPrice
-        //              when executionPrice is smaller than _latestPrice there is a positive price impact
-        int256 priceDiff = _latestPrice.toInt256() - executionPrice.toInt256();
-        bool shouldFlipPriceDiff = isIncrease ? !isLong : isLong;
-        if (shouldFlipPriceDiff) { priceDiff = -priceDiff; }
-
-        int256 priceImpactUsd = size.toInt256() * priceDiff / executionPrice.toInt256();
-
-        // round positive price impact up, this will be deducted from the position impact pool
         if (priceImpactUsd > 0) {
-            return Calc.roundUpMagnitudeDivision(priceImpactUsd, _latestPrice);
+            // round positive price impact up, this will be deducted from the position impact pool
+            return Calc.roundUpMagnitudeDivision(priceImpactUsd, executionPrice);
         }
 
         // round negative price impact down, this will be stored in the position impact pool
-        return priceImpactUsd / _latestPrice.toInt256();
+        return priceImpactUsd / executionPrice.toInt256();
     }
 
     // @dev get the price impact in USD for a position increase / decrease
