@@ -318,6 +318,8 @@ library ExecuteDepositUtils {
 
             // calculate the usd amount using positiveImpactAmount since it may
             // be capped by the max available amount in the impact pool
+            // use tokenOutPrice.max to get the USD value since the positiveImpactAmount
+            // was calculated using a USD value divided by tokenOutPrice.max
             mintAmount += MarketUtils.usdToMarketTokenAmount(
                 positiveImpactAmount.toUint256() * _params.tokenOutPrice.max,
                 poolValue,
