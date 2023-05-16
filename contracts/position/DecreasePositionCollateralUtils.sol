@@ -258,6 +258,14 @@ library DecreasePositionCollateralUtils {
             return processLiquidation(params, values, fees);
         }
 
+        // it is possible that this reverts if the swapProfitToCollateralToken
+        // did not succeed due to insufficient liquidity, etc.
+        // this should be rare since only the profit amount needs to be swapped
+        // but it could lead to ADLs orders failing
+        // the reserve and max cap values should be carefully configured to minimize
+        // the risk of swapProfitToCollateralToken failing
+        // alternatively, an external system to provide liquidity in times when
+        // these swaps are needed could be setup
         if (values.remainingCollateralAmount < 0) {
             revert Errors.InsufficientCollateral(values.remainingCollateralAmount);
         }
@@ -420,6 +428,18 @@ library DecreasePositionCollateralUtils {
         }
 
         if (values.output.secondaryOutputAmount != 0) {
+            // it is possible for a large amount of borrowing fees / funding fees
+            // to be unpaid if the swapProfitToCollateralToken did not succeed
+            // this could lead to an unexpected change in the price of the market token
+            // this case should be rare since only the profit needs to be swapped
+            //
+            // the reserve and max cap values should be carefully configured to minimize
+            // the risk of swapProfitToCollateralToken failing
+            // alternatively, an external system to provide liquidity in times when
+            // these swaps are needed could be setup
+            //
+            // additionally, a separate flow could be setup to gradually distribute
+            // this value back to market token holders
             MarketUtils.incrementClaimableCollateralAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
