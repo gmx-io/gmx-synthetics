@@ -124,7 +124,7 @@ export async function deployFixture() {
   const btcUsdMarket = await reader.getMarket(dataStore.address, btcUsdMarketAddress);
 
   const solUsdMarketAddress = getMarketTokenAddress(
-    getSyntheticTokenAddress("SOL"),
+    getSyntheticTokenAddress(hre.network.config.chainId, "SOL"),
     wnt.address,
     usdc.address,
     DEFAULT_MARKET_TYPE,
