@@ -144,7 +144,7 @@ library DecreasePositionCollateralUtils {
             values.pnlAmountForPool = -values.positionPnlUsd / cache.pnlTokenPrice.max.toInt256();
             values.pnlAmountForUser = collateralCache.adjustedPositionPnlUsd.toUint256() / cache.pnlTokenPrice.max;
 
-            // if the price impact for pnl was capped send the difference to a holding area
+            // if the price impact for pnl was capped keep the difference to allow it to be claimable later
             collateralCache.pnlDiffAmount = (-values.pnlAmountForPool - values.pnlAmountForUser.toInt256()).toUint256();
 
             // pnlDiffAmount is deducted from the position's pnl and made to be claimable
@@ -235,6 +235,7 @@ library DecreasePositionCollateralUtils {
         // paying of price impact should also be safe to skip, it would be the same as
         // closing the position with zero price impact, just that if there were any collateral that could
         // partially pay for negative price impact, it would be sent to the pool instead
+        // the outputAmount should be zero here since it was not sufficient to pay for the totalNetCostAmount
         if (BaseOrderUtils.isLiquidationOrder(params.order.orderType()) && values.remainingCollateralAmount < 0) {
             PositionEventUtils.emitPositionFeesInfo(
                 params.contracts.eventEmitter,
@@ -285,6 +286,10 @@ library DecreasePositionCollateralUtils {
                 collateralCache.adjustedPriceImpactDiffAmount = values.remainingCollateralAmount.toUint256();
             }
 
+            // while the remainingCollateralAmount should not become negative, it is possible for it to
+            // become zero or to be reduced below the min collateral usd value
+            // it is also possible for the position's remaining size to be greater than zero
+            // in this case the position should become liquidatable and should be liquidated
             values.remainingCollateralAmount -= collateralCache.adjustedPriceImpactDiffAmount.toInt256();
 
             MarketUtils.incrementClaimableCollateralAmount(
@@ -414,7 +419,6 @@ library DecreasePositionCollateralUtils {
             );
         }
 
-
         if (values.output.secondaryOutputAmount != 0) {
             MarketUtils.incrementClaimableCollateralAmount(
                 params.contracts.dataStore,
@@ -438,10 +442,10 @@ library DecreasePositionCollateralUtils {
             0, // priceImpactDiffUsd
             0, // priceImpactDiffAmount
             PositionUtils.DecreasePositionCollateralValuesOutput(
-                address(0),
-                0,
-                address(0),
-                0
+                address(0), // outputToken
+                0, // outputAmount
+                address(0), // secondaryOutputToken
+                0 // secondaryOutputAmount
             )
         );
 
