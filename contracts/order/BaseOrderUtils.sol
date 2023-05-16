@@ -350,6 +350,9 @@ library BaseOrderUtils {
         // their position, this gives the user the option to cancel the pending order if
         // prices do not move in their favour or to close their position and let the order
         // execute if prices move in their favour
+        //
+        // it may also be possible for users to prevent the execution of orders from other users
+        // by manipulating the price impact, though this should be costly
         revert Errors.OrderNotFulfillableDueToPriceImpact(price, acceptablePrice);
     }
 

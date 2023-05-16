@@ -317,13 +317,20 @@ library MarketUtils {
 
         // !maximize should be used for net pnl as a larger pnl leads to a smaller pool value
         // and a smaller pnl leads to a larger pool value
+        //
+        // while positions will always be closed at the less favourable price
+        // using the inverse of maximize for the getPnl calls would help prevent
+        // gaming of market token values by increasing the spread
+        //
+        // liquidations could be triggerred by manipulating a large spread but
+        // that should be more difficult to execute
 
         result.longPnl = getPnl(
             dataStore,
             market,
             indexTokenPrice,
-            true,
-            !maximize
+            true, // isLong
+            !maximize // maximize
         );
 
         result.longPnl = getCappedPnl(
@@ -339,8 +346,8 @@ library MarketUtils {
             dataStore,
             market,
             indexTokenPrice,
-            false,
-            !maximize
+            false, // isLong
+            !maximize // maximize
         );
 
         result.shortPnl = getCappedPnl(
@@ -356,6 +363,7 @@ library MarketUtils {
         result.poolValue = result.poolValue - result.netPnl;
 
         result.impactPoolAmount = getPositionImpactPoolAmount(dataStore, market.marketToken);
+        // use !maximize for pickPrice since the impactPoolUsd is deducted from the poolValue
         uint256 impactPoolUsd = result.impactPoolAmount * indexTokenPrice.pickPrice(maximize);
 
         result.poolValue -= impactPoolUsd.toInt256();
