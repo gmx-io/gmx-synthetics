@@ -297,7 +297,7 @@ library DecreasePositionCollateralUtils {
             // while the remainingCollateralAmount should not become negative, it is possible for it to
             // become zero or to be reduced below the min collateral usd value
             // it is also possible for the position's remaining size to be greater than zero
-            // in this case the position should become liquidatable and should be liquidated
+            // in this case the position could become liquidatable if there is insufficient positive pending pnl
             values.remainingCollateralAmount -= collateralCache.adjustedPriceImpactDiffAmount.toInt256();
 
             MarketUtils.incrementClaimableCollateralAmount(
