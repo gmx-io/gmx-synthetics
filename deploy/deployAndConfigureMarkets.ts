@@ -256,6 +256,15 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       );
     }
 
+    if (marketConfig.maxPositionImpactFactorForLiquidations) {
+      const key = keys.maxPositionImpactFactorForLiquidationsKey(marketToken);
+      await setUintIfDifferent(
+        key,
+        marketConfig.maxPositionImpactFactorForLiquidations,
+        `max position impact factor for liquidations for ${marketToken.toString()}`
+      );
+    }
+
     if (marketConfig.positiveMaxPositionImpactFactor) {
       const key = keys.maxPositionImpactFactorKey(marketToken, true);
       await setUintIfDifferent(

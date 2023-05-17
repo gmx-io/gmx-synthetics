@@ -37,6 +37,7 @@ export type BaseMarketConfig = {
 
   positiveMaxPositionImpactFactor: BigNumberish;
   negativeMaxPositionImpactFactor: BigNumberish;
+  maxPositionImpactFactorForLiquidations: BigNumberish;
 
   swapFeeFactor: BigNumberish;
   positiveSwapImpactFactor: BigNumberish;
@@ -110,6 +111,7 @@ const baseMarketConfig: BaseMarketConfig = {
 
   positiveMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%
   negativeMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%
+  maxPositionImpactFactorForLiquidations: decimalToFloat(1, 2), // 1%
 
   swapFeeFactor: decimalToFloat(5, 4), // 0.05%,
   positiveSwapImpactFactor: decimalToFloat(1, 5), // 0.001 %
@@ -157,6 +159,7 @@ const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
 
   positiveMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%
   negativeMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%
+  maxPositionImpactFactorForLiquidations: decimalToFloat(1, 2), // 1%
 };
 
 const config: {
