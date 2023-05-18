@@ -8,6 +8,8 @@ import "./ArbSys.sol";
 // @dev Wrap the calls to retrieve chain variables to handle differences
 // between chain implementations
 library Chain {
+    // if the ARBITRUM_CHAIN_ID changes, a new version of this library
+    // and contracts depending on it would need to be deployed
     uint256 constant public ARBITRUM_CHAIN_ID = 42161;
     uint256 constant public ARBITRUM_RINKEBY_CHAIN_ID = 421611;
 
