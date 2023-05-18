@@ -39,6 +39,7 @@ contract Reader {
         uint256 borrowingFactorPerSecondForShorts;
         MarketUtils.GetNextFundingAmountPerSizeResult funding;
         VirtualInventory virtualInventory;
+        bool isDisabled;
     }
 
     function getMarket(DataStore dataStore, address key) external view returns (Market.Props memory) {
@@ -203,12 +204,15 @@ contract Reader {
 
         VirtualInventory memory virtualInventory = getVirtualInventory(dataStore, market);
 
+        bool isMarketDisabled = dataStore.getBool(Keys.isMarketDisabledKey(market.marketToken));
+
         return MarketInfo(
             market,
             borrowingFactorPerSecondForLongs,
             borrowingFactorPerSecondForShorts,
             funding,
-            virtualInventory
+            virtualInventory,
+            isMarketDisabled
         );
     }
 
