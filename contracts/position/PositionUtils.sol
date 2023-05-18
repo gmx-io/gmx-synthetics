@@ -443,6 +443,11 @@ library PositionUtils {
         // then a user could pay less price impact than what is required
         //
         // this check helps to prevent gaming of price impact
+        //
+        // since this is the primary reason for this check, the position's pnl is not factored into the
+        // remainingCollateralUsd value
+        // factoring in a positive pnl may allow the user to manipulate price and bypass this check
+        // it may be useful to factor in a negative pnl for this check, this can be added if required
         uint256 minCollateralFactor = MarketUtils.getMinCollateralFactorForOpenInterest(
             dataStore,
             market,
