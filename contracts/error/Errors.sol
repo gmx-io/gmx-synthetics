@@ -221,6 +221,7 @@ library Errors {
     error InsufficientOutputAmount(uint256 outputAmount, uint256 minOutputAmount);
     error InsufficientSwapOutputAmount(uint256 outputAmount, uint256 minOutputAmount);
     error DuplicatedMarketInSwapPath(address market);
+    error SwapPriceImpactExceedsAmountIn(uint256 amountAfterFees, int256 negativeImpactAmount);
 
     // TokenUtils errors
     error EmptyTokenTranferGasLimit(address token);
