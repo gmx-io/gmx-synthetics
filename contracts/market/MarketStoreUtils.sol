@@ -87,6 +87,10 @@ library MarketStoreUtils {
     }
 
     function remove(DataStore dataStore, address key) external {
+        if (!dataStore.containsAddress(Keys.MARKET_LIST, key)) {
+            revert Errors.MarketNotFound(key);
+        }
+
         dataStore.removeAddress(
             Keys.MARKET_LIST,
             key
