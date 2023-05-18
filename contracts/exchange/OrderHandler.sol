@@ -227,8 +227,6 @@ contract OrderHandler is BaseOrderHandler {
         uint256 startingGas,
         bytes memory reasonBytes
     ) internal {
-        (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
@@ -267,6 +265,8 @@ contract OrderHandler is BaseOrderHandler {
         ) {
             ErrorUtils.revertWithCustomError(reasonBytes);
         }
+
+        (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
 
         if (
             isMarketOrder ||

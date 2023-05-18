@@ -528,7 +528,7 @@ contract Oracle is RoleModule {
         }
 
         uint256 heartbeatDuration = dataStore.getUint(Keys.priceFeedHeartbeatDurationKey(token));
-        if (block.timestamp > timestamp && block.timestamp - timestamp > heartbeatDuration) {
+        if (Chain.currentTimestamp() > timestamp && Chain.currentTimestamp() - timestamp > heartbeatDuration) {
             revert Errors.PriceFeedNotUpdated(token, timestamp, heartbeatDuration);
         }
 

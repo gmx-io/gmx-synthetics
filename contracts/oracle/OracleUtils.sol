@@ -253,10 +253,6 @@ library OracleUtils {
         }
     }
 
-    function revertOracleBlockNumbersAreNotEqual(uint256[] memory oracleBlockNumbers, uint256 expectedBlockNumber) internal pure {
-        revert Errors.OracleBlockNumbersAreNotEqual(oracleBlockNumbers, expectedBlockNumber);
-    }
-
     function revertOracleBlockNumberNotWithinRange(
         uint256[] memory minOracleBlockNumbers,
         uint256[] memory maxOracleBlockNumbers,
@@ -286,10 +282,6 @@ library OracleUtils {
     }
 
     function isOracleBlockNumberError(bytes4 errorSelector) internal pure returns (bool) {
-        if (errorSelector == Errors.OracleBlockNumbersAreNotEqual.selector) {
-            return true;
-        }
-
         if (errorSelector == Errors.OracleBlockNumbersAreSmallerThanRequired.selector) {
             return true;
         }

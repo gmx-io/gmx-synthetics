@@ -467,7 +467,7 @@ After the initial setup:
 
 - Collateral tokens need to be whitelisted with a configured TOKEN_TRANSFER_GAS_LIMIT
 
-- Rebasing tokens, tokens that change balance on transfer, with token burns, etc, are not compatible with the system and should not be whitelisted
+- Rebasing tokens, tokens that change balance on transfer, with token burns, tokens with callbacks e.g. ERC-777 tokens, etc, are not compatible with the system and should not be whitelisted
 
 - Order keepers can use prices from different blocks for limit orders with a swap, which would lead to different output amounts
 
