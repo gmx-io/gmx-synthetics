@@ -28,6 +28,9 @@ library Errors {
     error InvalidFeeReceiver(address receiver);
     error InvalidOracleSigner(address receiver);
 
+    // DepositStoreUtils errors
+    error DepositNotFound(bytes32 key);
+
     // DepositUtils errors
     error EmptyDeposit();
     error EmptyDepositAmounts();
@@ -63,6 +66,9 @@ library Errors {
 
     // MarketFactory errors
     error MarketAlreadyExists(bytes32 salt, address existingMarketAddress);
+
+    // MarketStoreUtils errors
+    error MarketNotFound(address key);
 
     // MarketUtils errors
     error EmptyMarket();
@@ -160,6 +166,9 @@ library Errors {
     error OrderTypeCannotBeCreated(uint256 orderType);
     error OrderAlreadyFrozen();
 
+    // OrderStoreUtils errors
+    error OrderNotFound(bytes32 key);
+
     // SwapOrderUtils errors
     error UnexpectedMarket();
 
@@ -176,6 +185,9 @@ library Errors {
     // IncreasePositionUtils errors
     error InsufficientCollateralAmount(uint256 collateralAmount, int256 collateralDeltaAmount);
     error InsufficientCollateralUsd(int256 remainingCollateralUsd);
+
+    // PositionStoreUtils errors
+    error PositionNotFound(bytes32 key);
 
     // PositionUtils errors
     error LiquidatablePosition();
@@ -238,6 +250,9 @@ library Errors {
         uint256 index,
         string label
     );
+
+    // WithdrawalStoreUtils errors
+    error WithdrawalNotFound(bytes32 key);
 
     // WithdrawalUtils errors
     error EmptyWithdrawal();

@@ -159,6 +159,10 @@ library PositionStoreUtils {
     }
 
     function remove(DataStore dataStore, bytes32 key, address account) external {
+        if (!dataStore.containsBytes32(Keys.POSITION_LIST, key)) {
+            revert Errors.PositionNotFound(key);
+        }
+
         dataStore.removeBytes32(
             Keys.POSITION_LIST,
             key
