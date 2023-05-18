@@ -505,6 +505,8 @@ contract Oracle is RoleModule {
         }
     }
 
+    // there is a small risk of stale pricing due to latency in price updates or if the chain is down
+    // this is meant to be for temporary use until low latency price feeds are supported for all tokens
     function _getPriceFeedPrice(DataStore dataStore, address token) internal view returns (bool, uint256) {
         address priceFeedAddress = dataStore.getAddress(Keys.priceFeedKey(token));
         if (priceFeedAddress == address(0)) {
