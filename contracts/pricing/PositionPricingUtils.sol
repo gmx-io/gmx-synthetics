@@ -45,8 +45,6 @@ library PositionPricingUtils {
     // too deep errors
     // @param dataStore DataStore
     // @param market the market to check
-    // @param longToken the longToken of the market
-    // @param shortToken the shortToken of the market
     // @param usdDelta the change in position size in USD
     // @param isLong whether the position is long or short
     struct GetPriceImpactUsdParams {
@@ -287,7 +285,7 @@ library PositionPricingUtils {
         }
 
         // the virtual long and short open interest is adjusted by the usdDelta
-        // to prevent an overflow in getNextOpenInterestParams
+        // to prevent an underflow in getNextOpenInterestParams
         // price impact depends on the change in USD balance, so offsetting both
         // values equally should not change the price impact calculation
         if (params.usdDelta < 0) {

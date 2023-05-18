@@ -900,7 +900,6 @@ library Keys {
     // @dev key for claimable funding amount
     // @param market the market to check
     // @param token the token to check
-    // @param account the account to check
     // @return key for claimable funding amount
     function claimableFundingAmountKey(address market, address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(

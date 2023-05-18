@@ -84,7 +84,6 @@ library BaseOrderUtils {
     // @param market market values of the trading market
     // @param keeper the keeper sending the transaction
     // @param startingGas the starting gas
-    // @param positionKey the key of the order's position
     struct ExecuteOrderParams {
         ExecuteOrderParamsContracts contracts;
         bytes32 key;
@@ -95,7 +94,6 @@ library BaseOrderUtils {
         Market.Props market;
         address keeper;
         uint256 startingGas;
-        bytes32 positionKey;
     }
 
     // @param dataStore DataStore

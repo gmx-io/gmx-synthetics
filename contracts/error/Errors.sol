@@ -17,7 +17,6 @@ library Errors {
     // Config errors
     error InvalidBaseKey(bytes32 baseKey);
     error InvalidFeeFactor(bytes32 baseKey, uint256 value);
-    error InvalidFactor(bytes32 baseKey, uint256 value);
 
     // Timelock errors
     error ActionAlreadySignalled();
@@ -139,7 +138,6 @@ library Errors {
 
     error EmptyPrimaryPrice(address token);
 
-    error OracleBlockNumbersAreNotEqual(uint256[] oracleBlockNumbers, uint256 expectedBlockNumber);
     error OracleBlockNumbersAreSmallerThanRequired(uint256[] oracleBlockNumbers, uint256 expectedBlockNumber);
     error OracleBlockNumberNotWithinRange(
         uint256[] minOracleBlockNumbers,

@@ -162,8 +162,8 @@ library ExecuteDepositUtils {
                 market.shortToken,
                 prices.longTokenPrice.midPrice(),
                 prices.shortTokenPrice.midPrice(),
-                (cache.longTokenAmount * prices.longTokenPrice.midPrice()).toInt256(),
-                (cache.shortTokenAmount * prices.shortTokenPrice.midPrice()).toInt256()
+                cache.longTokenUsd.toInt256(),
+                cache.shortTokenUsd.toInt256()
             )
         );
 
