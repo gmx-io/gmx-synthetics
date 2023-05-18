@@ -487,6 +487,8 @@ After the initial setup:
 
 - For L2s with sequencers, there is no contract validation to check if the L2 sequencer is active, oracle keepers should stop signing prices if no blocks are being created by the sequencer, if the sequencer resumes regular operation, the oracle keepers should sign prices for the latest blocks using the latest fetched prices
 
+- Orders may be prevented from execution by a malicious user intentionally causing a market to be unbalanced resulting in a high price impact, this should be costly and difficult to benefit from
+
 # Feature Development
 
 If new features are added, tests should be added for the different market types, e.g. spot only markets, single token markets.
