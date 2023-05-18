@@ -1,4 +1,5 @@
 {
   "fixVirtualInventoryForPositions": 1681913322,
-  "fixVirtualInventoryForSwaps": 1681913322
+  "fixVirtualInventoryForSwaps": 1681913322,
+  "DisableOldTestMarketOnAvalancheFuji": 1684368031
 }
