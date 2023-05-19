@@ -80,7 +80,7 @@ library PositionUtils {
     struct DecreasePositionCollateralValues {
         address pnlTokenForPool;
         uint256 executionPrice;
-        int256 remainingCollateralAmount;
+        uint256 remainingCollateralAmount;
         int256 positionPnlUsd;
         int256 pnlAmountForPool;
         uint256 pnlAmountForUser;
