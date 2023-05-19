@@ -227,7 +227,7 @@ library DecreasePositionUtils {
 
         params.position.setSizeInUsd(cache.nextPositionSizeInUsd);
         params.position.setSizeInTokens(params.position.sizeInTokens() - values.sizeDeltaInTokens);
-        params.position.setCollateralAmount(values.remainingCollateralAmount.toUint256());
+        params.position.setCollateralAmount(values.remainingCollateralAmount);
         params.position.setDecreasedAtBlock(Chain.currentBlockNumber());
 
         PositionUtils.incrementClaimableFundingAmount(params, fees);
