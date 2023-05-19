@@ -23,8 +23,8 @@ library PositionUtils {
     using Position for Position.Props;
     using Order for Order.Props;
 
-    // @dev UpdatePositionParams struct used in increasePosition to avoid
-    // stack too deep errors
+    // @dev UpdatePositionParams struct used in increasePosition and decreasePosition
+    // to avoid stack too deep errors
     //
     // @param contracts BaseOrderUtils.ExecuteOrderParamsContracts
     // @param market the values of the trading market
@@ -39,6 +39,7 @@ library PositionUtils {
         bytes32 orderKey;
         Position.Props position;
         bytes32 positionKey;
+        Order.SecondaryOrderType secondaryOrderType;
     }
 
     // @param dataStore DataStore

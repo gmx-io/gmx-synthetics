@@ -203,7 +203,13 @@ contract OrderHandler is BaseOrderHandler {
     ) external onlySelf {
         uint256 startingGas = gasleft();
 
-        BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, keeper, startingGas);
+        BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(
+            key,
+            oracleParams,
+            keeper,
+            startingGas,
+            Order.SecondaryOrderType.None
+        );
         // limit swaps require frozen order keeper for execution since on creation it can fail due to output amount
         // which would automatically cause the order to be frozen
         // limit increase and limit / trigger decrease orders may fail due to output amount as well and become frozen

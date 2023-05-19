@@ -149,19 +149,19 @@ library PositionEventUtils {
     function emitInsufficientFundingFeePayment(
         EventEmitter eventEmitter,
         address market,
-        address collateralToken,
-        uint256 fundingFeeAmount,
-        uint256 collateralAmount
+        address token,
+        uint256 expectedAmount,
+        uint256 availableAmount
     ) external {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(2);
         eventData.addressItems.setItem(0, "market", market);
-        eventData.addressItems.setItem(1, "collateralToken", collateralToken);
+        eventData.addressItems.setItem(1, "token", token);
 
         eventData.uintItems.initItems(2);
-        eventData.uintItems.setItem(0, "fundingFeeAmount", fundingFeeAmount);
-        eventData.uintItems.setItem(1, "collateralAmount", collateralAmount);
+        eventData.uintItems.setItem(0, "expectedAmount", expectedAmount);
+        eventData.uintItems.setItem(1, "availableAmount", availableAmount);
 
         eventEmitter.emitEventLog1(
             "InsufficientFundingFeePayment",
