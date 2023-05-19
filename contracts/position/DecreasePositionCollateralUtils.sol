@@ -432,7 +432,7 @@ library DecreasePositionCollateralUtils {
             // alternatively, an external system to provide liquidity in times when
             // these swaps are needed could be setup
             //
-            // additionally, a separate flow could be setup to gradually distribute
+            // a separate flow could also be setup to gradually distribute
             // this value back to market token holders
             MarketUtils.incrementClaimableCollateralAmount(
                 params.contracts.dataStore,
