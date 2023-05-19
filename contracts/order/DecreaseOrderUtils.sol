@@ -41,7 +41,8 @@ library DecreaseOrderUtils {
                 order,
                 params.key,
                 position,
-                positionKey
+                positionKey,
+                params.secondaryOrderType
             )
         );
 
