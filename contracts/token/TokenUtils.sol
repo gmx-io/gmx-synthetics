@@ -74,6 +74,9 @@ library TokenUtils {
             revert Errors.EmptyHoldingAddress();
         }
 
+        // in case transfers to the receiver fail due to blacklisting or other reasons
+        // send the tokens to a holding address to avoid possible gaming through reverting
+        // transfers
         (bool success1, bytes memory returndata) = nonRevertingTransferWithGasLimit(
             IERC20(token),
             holdingAddress,
