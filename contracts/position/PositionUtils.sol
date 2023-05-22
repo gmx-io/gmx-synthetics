@@ -170,13 +170,13 @@ library PositionUtils {
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
         Position.Props memory position,
-        uint256 indexTokenPrice,
+        uint256 executionPrice,
         uint256 sizeDeltaUsd
     ) public view returns (int256, uint256) {
         GetPositionPnlUsdCache memory cache;
 
         // position.sizeInUsd is the cost of the tokens, positionValue is the current worth of the tokens
-        cache.positionValue = (position.sizeInTokens() * indexTokenPrice).toInt256();
+        cache.positionValue = (position.sizeInTokens() * executionPrice).toInt256();
         cache.totalPositionPnl = position.isLong() ? cache.positionValue - position.sizeInUsd().toInt256() : position.sizeInUsd().toInt256() - cache.positionValue;
 
         if (cache.totalPositionPnl > 0) {
@@ -184,10 +184,12 @@ library PositionUtils {
             cache.poolTokenAmount = MarketUtils.getPoolAmount(dataStore, market, cache.pnlToken);
             cache.poolTokenPrice = position.isLong() ? prices.longTokenPrice.min : prices.shortTokenPrice.min;
             cache.poolTokenUsd = cache.poolTokenAmount * cache.poolTokenPrice;
+            // use the indexTokenPrice instead of the executionPrice to calculate the pnl
+            // as the executionPrice has been adjusted by the price impact for the current order
             cache.poolPnl = MarketUtils.getPnl(
                 dataStore,
                 market,
-                indexTokenPrice,
+                prices.indexTokenPrice,
                 position.isLong(),
                 true
             );
