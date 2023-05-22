@@ -305,29 +305,39 @@ library BaseOrderUtils {
         //     - short: price should be smaller than acceptablePrice
         bool shouldPriceBeSmaller = isIncrease ? isLong : !isLong;
 
-        // the executionPrice should be updated such that the priceImpactAmount
-        // calculated as sizeDeltaUsd
-        // sizeDeltaUsd / price - priceImpactUsd / price = sizeDeltaUsd / executionPrice
-
-        // the execution price should be updated such that
-        // sizeDeltaInTokens * price - sizeDeltaUsd = priceImpactUsd
-        // for increase position, sizeDeltaInTokens is calculated as:
-        // => sizeDeltaUsd / executionPrice
-        // for decrease position, sizeDeltaInTokens is not calculated based on
-        // the executionPrice, instead it is calculated as:
-        // => position.sizeInTokens * sizeDeltaUsd / position.sizeInUsd
+        // using opening of long positions as an example
+        // pnl is calculated as: position.sizeInTokens * price - position.sizeInUsd
+        // priceImpactUsd should adjust the execution price such that:
+        // position.sizeInTokens * price - position.sizeInUsd = pnl = priceImpactUsd
+        // position.sizeInUsd = sizeDeltaUsd
+        // position.sizeInTokens = sizeDeltaUsd / executionPrice
+        // sizeDeltaUsd / executionPrice * price - sizeDeltaUsd = priceImpactUsd
+        // sizeDeltaUsd / executionPrice * price = sizeDeltaUsd + priceImpactUsd
+        // sizeDeltaUsd / executionPrice = (sizeDeltaUsd + priceImpactUsd) / price
+        // executionPrice / sizeDeltaUsd = price / (sizeDeltaUsd + priceImpactUsd)
+        // executionPrice = price * sizeDeltaUsd / (sizeDeltaUsd + priceImpactUsd)
         //
-        // e.g. if price is $2000, sizeDeltaUsd is $5000, priceImpactUsd is $1000
-        // sizeDeltaInTokens * 2000 - 5000 = 1000
-        // sizeDeltaInTokens = 1000 + 5000
+        // e.g. if price is $2000, sizeDeltaUsd is $5000, priceImpactUsd is -$1000
+        // executionPrice = 2000 * 5000 / (5000 - 1000) = 2500
+        //
+        // checking pnl: (5000 / 2500) * 2000 - 5000 = -1000
 
-        // increase order:
-        //     - long: lower price for positive impact, higher price for negative impact
-        //     - short: higher price for positive impact, lower price for negative impact
-        // decrease order:
-        //     - long: higher price for positive impact, lower price for negative impact
-        //     - short: lower price for positive impact, higher price for negative impact
-        bool shouldFlipPriceImpactUsd = isIncrease ? isLong : !isLong;
+        // a positive priceImpactUsdForPriceAdjustment would decrease the executionPrice
+        // a negative priceImpactUsdForPriceAdjustment would increase the executionPrice
+
+        // increase long order:
+        //      - if price impact is positive, priceImpactUsdForPriceAdjustment should be positive, to decrease the executionPrice
+        //      - if price impact is negative, priceImpactUsdForPriceAdjustment should be negative, to increase the executionPrice
+        // increase short order:
+        //      - if price impact is positive, priceImpactUsdForPriceAdjustment should be negative, to increase the executionPrice
+        //      - if price impact is negative, priceImpactUsdForPriceAdjustment should be positive, to decrease the executionPrice
+        // decrease long order:
+        //      - if price impact is positive, priceImpactUsdForPriceAdjustment should be negative, to increase the executionPrice
+        //      - if price impact is negative, priceImpactUsdForPriceAdjustment should be positive, to decrease the executionPrice
+        // decrease short order:
+        //      - if price impact is positive, priceImpactUsdForPriceAdjustment should be positive, to decrease the executionPrice
+        //      - if price impact is negative, priceImpactUsdForPriceAdjustment should be negative, to increase the executionPrice
+        bool shouldFlipPriceImpactUsd = isIncrease ? !isLong : isLong;
         int256 priceImpactUsdForPriceAdjustment = shouldFlipPriceImpactUsd ? -priceImpactUsd : priceImpactUsd;
 
         if (priceImpactUsdForPriceAdjustment < 0 && (-priceImpactUsdForPriceAdjustment).toUint256() > sizeDeltaUsd) {
@@ -336,7 +346,7 @@ library BaseOrderUtils {
 
         // adjust price by price impact
         if (sizeDeltaUsd > 0) {
-            price = price * Calc.sumReturnUint256(sizeDeltaUsd, priceImpactUsdForPriceAdjustment) / sizeDeltaUsd;
+            price = price * sizeDeltaUsd / Calc.sumReturnUint256(sizeDeltaUsd, priceImpactUsdForPriceAdjustment);
         }
 
         if (
