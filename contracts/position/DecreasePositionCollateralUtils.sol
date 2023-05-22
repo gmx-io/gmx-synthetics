@@ -389,10 +389,15 @@ library DecreasePositionCollateralUtils {
             priceImpactUsd,
             params.order.acceptablePrice(),
             params.position.isLong(),
-            false
+            false // isIncrease
         );
 
-        int256 priceImpactAmount = PositionPricingUtils.getPriceImpactAmount(priceImpactUsd, executionPrice);
+        int256 priceImpactAmount = PositionPricingUtils.getPriceImpactAmount(
+            priceImpactUsd,
+            prices.indexTokenPrice,
+            params.position.isLong(),
+            false // isIncrease
+        );
 
         return (executionPrice, priceImpactAmount, priceImpactDiffUsd);
     }
