@@ -81,7 +81,7 @@ library DecreasePositionCollateralUtils {
         collateralCache.adjustedPositionPnlUsd = values.positionPnlUsd;
         collateralCache.adjustedPriceImpactDiffUsd = values.priceImpactDiffUsd;
 
-        // adjust the pnl value used to calculate the output amount, the difference should be made claimable
+        // adjust the pnl value by the priceImpactDiffUsd, the difference should be made claimable
         if (values.positionPnlUsd > 0 && values.priceImpactDiffUsd > 0) {
             if (values.positionPnlUsd > values.priceImpactDiffUsd.toInt256()) {
                 // if the position is realizing a profit, reduce the pnl by the price impact difference
@@ -98,7 +98,9 @@ library DecreasePositionCollateralUtils {
         // calculate the amount that should be deducted from the position's collateral for the price impact
         collateralCache.adjustedPriceImpactDiffAmount = collateralCache.adjustedPriceImpactDiffUsd / collateralTokenPrice.max;
 
-        if (collateralCache.adjustedPriceImpactDiffUsd > 0 && params.order.initialCollateralDeltaAmount() > 0) {
+        // adjust the initialCollateralDeltaAmount by the adjustedPriceImpactDiffAmount to reduce the chance that
+        // the position's collateral / leverage gets adjusted by an unexpected amount
+        if (collateralCache.adjustedPriceImpactDiffAmount > 0 && params.order.initialCollateralDeltaAmount() > 0) {
             uint256 initialCollateralDeltaAmount = params.order.initialCollateralDeltaAmount();
 
             if (collateralCache.adjustedPriceImpactDiffAmount > params.order.initialCollateralDeltaAmount()) {
@@ -173,19 +175,28 @@ library DecreasePositionCollateralUtils {
 
             // swap profit to the collateral token here so that the profit can be used
             // to pay for the totalNetCostAmount from the fees
+            // if the decreasePositionSwapType was set to NoSwap or if the swap fails due
+            // to insufficient liquidity or other reasons then it is possible that
+            // the profit remains in a different token from the collateral token
             (bool wasSwapped, uint256 swapOutputAmount) = swapProfitToCollateralToken(
                 params,
                 cache.pnlToken,
                 values.pnlAmountForUser
             );
 
+            // if the swap was successful the profit should have been swapped
+            // to the collateral token
             if (wasSwapped) {
                 values.output.outputAmount += swapOutputAmount;
             } else {
+                // if there was no swap or the swap failed but the pnlToken
+                //  is the same as the collateral token then update the outputAmount
+                // with the profit amount
                 if (params.position.collateralToken() == cache.pnlToken) {
                     values.output.outputAmount += values.pnlAmountForUser;
                 } else {
-                    // store the pnlAmountForUser separately as it differs from the collateralToken
+                    // if there was no swap or the swap failed and the pnlToken is not the same
+                    // asthe collateral token then store the pnlAmountForUser separately
                     values.output.secondaryOutputAmount = values.pnlAmountForUser;
                 }
             }
@@ -204,6 +215,7 @@ library DecreasePositionCollateralUtils {
         }
 
         uint256 pendingCollateralDeduction = fees.collateralCostAmount;
+        // increase the pendingCollateralDeduction by the realized pnl if the pnl is negative
         if (collateralCache.adjustedPositionPnlUsd < 0) {
             pendingCollateralDeduction += (-collateralCache.adjustedPositionPnlUsd).toUint256() / collateralTokenPrice.min;
         }
@@ -225,20 +237,17 @@ library DecreasePositionCollateralUtils {
                 // any difference in pending negative PnL should similarly be accounted for
                 // through the transfer fo collateral to the pool and by the update of the
                 // pending pnl
-                // paying of price impact should also be safe to skip, it would be the same as
+                // updating of the position impact pool should also be safe to skip, it would be the same as
                 // closing the position with zero price impact, just that if there were any collateral that could
-                // partially pay for negative price impact, it would be sent to the pool instead
+                // partially pay for negative price impact, it would be sent to the pool instead of the position impact pool
                 // the outputAmount should be zero here since it was not sufficient to pay for the totalNetCostAmount
                 return processInsolventClose(params, values, fees);
             } else {
                 // it is possible that this reverts if the swapProfitToCollateralToken
                 // did not succeed due to insufficient liquidity, etc.
                 // this should be rare since only the profit amount needs to be swapped
-                // but it could lead to ADLs orders failing
                 // the reserve and max cap values should be carefully configured to minimize
                 // the risk of swapProfitToCollateralToken failing
-                // alternatively, an external system to provide liquidity in times when
-                // these swaps are needed could be setup
                 revert Errors.InsufficientCollateral(params.position.collateralAmount(), pendingCollateralDeduction);
             }
         }
