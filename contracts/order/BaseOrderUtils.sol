@@ -305,6 +305,22 @@ library BaseOrderUtils {
         //     - short: price should be smaller than acceptablePrice
         bool shouldPriceBeSmaller = isIncrease ? isLong : !isLong;
 
+        // the executionPrice should be updated such that the priceImpactAmount
+        // calculated as sizeDeltaUsd
+        // sizeDeltaUsd / price - priceImpactUsd / price = sizeDeltaUsd / executionPrice
+
+        // the execution price should be updated such that
+        // sizeDeltaInTokens * price - sizeDeltaUsd = priceImpactUsd
+        // for increase position, sizeDeltaInTokens is calculated as:
+        // => sizeDeltaUsd / executionPrice
+        // for decrease position, sizeDeltaInTokens is not calculated based on
+        // the executionPrice, instead it is calculated as:
+        // => position.sizeInTokens * sizeDeltaUsd / position.sizeInUsd
+        //
+        // e.g. if price is $2000, sizeDeltaUsd is $5000, priceImpactUsd is $1000
+        // sizeDeltaInTokens * 2000 - 5000 = 1000
+        // sizeDeltaInTokens = 1000 + 5000
+
         // increase order:
         //     - long: lower price for positive impact, higher price for negative impact
         //     - short: higher price for positive impact, lower price for negative impact
