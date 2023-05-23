@@ -171,7 +171,7 @@ library Errors {
     error UnexpectedMarket();
 
     // DecreasePositionCollateralUtils errors
-    error InsufficientCollateral(int256 remainingCollateralAmount);
+    error InsufficientCollateral(uint256 collateralAmount, uint256 pendingCollateralDeduction);
     error InvalidOutputToken(address tokenOut, address expectedTokenOut);
 
     // DecreasePositionUtils errors
@@ -188,7 +188,7 @@ library Errors {
     error PositionNotFound(bytes32 key);
 
     // PositionUtils errors
-    error LiquidatablePosition();
+    error LiquidatablePosition(string reason);
     error EmptyPosition();
     error InvalidPositionSizeValues(uint256 sizeInUsd, uint256 sizeInTokens);
     error MinPositionSize(uint256 positionSizeInUsd, uint256 minPositionSizeUsd);

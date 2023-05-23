@@ -31,6 +31,12 @@ library Order {
         Liquidation
     }
 
+    // to help further differentiate orders
+    enum SecondaryOrderType {
+        None,
+        Adl
+    }
+
     enum DecreasePositionSwapType {
         NoSwap,
         SwapPnlTokenToCollateralToken,

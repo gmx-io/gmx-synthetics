@@ -196,14 +196,16 @@ library DecreasePositionUtils {
 
         PositionUtils.updateFundingAndBorrowingState(params, cache.prices);
 
-        if (BaseOrderUtils.isLiquidationOrder(params.order.orderType()) && !PositionUtils.isPositionLiquidatable(
+        (bool isLiquidatable, /* string memory reason */) = PositionUtils.isPositionLiquidatable(
             params.contracts.dataStore,
             params.contracts.referralStorage,
             params.position,
             params.market,
             cache.prices,
             true // shouldValidateMinCollateralUsd
-        )) {
+        );
+
+        if (BaseOrderUtils.isLiquidationOrder(params.order.orderType()) && !isLiquidatable) {
             revert Errors.PositionShouldNotBeLiquidated();
         }
 
@@ -227,7 +229,7 @@ library DecreasePositionUtils {
 
         params.position.setSizeInUsd(cache.nextPositionSizeInUsd);
         params.position.setSizeInTokens(params.position.sizeInTokens() - values.sizeDeltaInTokens);
-        params.position.setCollateralAmount(values.remainingCollateralAmount.toUint256());
+        params.position.setCollateralAmount(values.remainingCollateralAmount);
         params.position.setDecreasedAtBlock(Chain.currentBlockNumber());
 
         PositionUtils.incrementClaimableFundingAmount(params, fees);
@@ -325,7 +327,7 @@ library DecreasePositionUtils {
             values
         );
 
-        values = DecreasePositionCollateralUtils.swapWithdrawnCollateralToPnlToken(params, values);
+        values = DecreasePositionSwapUtils.swapWithdrawnCollateralToPnlToken(params, values);
 
         return DecreasePositionResult(
             values.output.outputToken,
