@@ -173,6 +173,7 @@ library BaseOrderUtils {
     }
 
     // @dev validate the price for increase / decrease orders based on the triggerPrice
+    // the acceptablePrice for increase / decrease orders is validated in getExecutionPrice
     //
     // it is possible to update the oracle to support a primaryPrice and a secondaryPrice
     // which would allow for stop-loss orders to be executed at exactly the triggerPrice
@@ -202,7 +203,7 @@ library BaseOrderUtils {
     // @param orderType the order type
     // @param triggerPrice the order's triggerPrice
     // @param isLong whether the order is for a long or short
-    function validateOrderPrice(
+    function validateOrderTriggerPrice(
         Oracle oracle,
         address indexToken,
         Order.OrderType orderType,

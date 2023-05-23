@@ -151,7 +151,7 @@ library OrderUtils {
 
         BaseOrderUtils.validateNonEmptyOrder(params.order);
 
-        BaseOrderUtils.validateOrderPrice(
+        BaseOrderUtils.validateOrderTriggerPrice(
             params.contracts.oracle,
             params.market.indexToken,
             params.order.orderType(),
