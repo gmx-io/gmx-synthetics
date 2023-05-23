@@ -9,6 +9,7 @@ const func = createDeployFunction({
     "PositionPricingUtils",
     "PositionEventUtils",
     "OrderEventUtils",
+    "DecreasePositionSwapUtils",
   ],
 });
 

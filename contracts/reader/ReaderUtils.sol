@@ -260,7 +260,7 @@ library ReaderUtils {
         Price.Props memory indexTokenPrice,
         int256 sizeDeltaUsd,
         bool isLong
-    ) internal view returns (ExecutionPriceResult memory result) {
+    ) external view returns (ExecutionPriceResult memory result) {
         result.priceImpactUsdBeforeCap = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
                 dataStore,

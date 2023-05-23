@@ -21,6 +21,7 @@ library PositionPricingUtils {
     using SafeCast for uint256;
     using SafeCast for int256;
     using Position for Position.Props;
+    using Price for Price.Props;
 
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
@@ -201,7 +202,7 @@ library PositionPricingUtils {
 
     // @dev get the price impact in USD for a position increase / decrease
     // @param params GetPriceImpactUsdParams
-    function getPriceImpactUsd(GetPriceImpactUsdParams memory params) internal view returns (int256) {
+    function getPriceImpactUsd(GetPriceImpactUsdParams memory params) external view returns (int256) {
         OpenInterestParams memory openInterestParams = getNextOpenInterest(params);
 
         int256 priceImpactUsd = _getPriceImpactUsd(params.dataStore, params.market.marketToken, openInterestParams);
@@ -233,6 +234,10 @@ library PositionPricingUtils {
     function _getPriceImpactUsd(DataStore dataStore, address market, OpenInterestParams memory openInterestParams) internal view returns (int256) {
         uint256 initialDiffUsd = Calc.diff(openInterestParams.longOpenInterest, openInterestParams.shortOpenInterest);
         uint256 nextDiffUsd = Calc.diff(openInterestParams.nextLongOpenInterest, openInterestParams.nextShortOpenInterest);
+        console.log("longOpenInterest, shortOpenInterest", openInterestParams.longOpenInterest, openInterestParams.shortOpenInterest);
+        console.log("nextLongOpenInterest, nextShortOpenInterest", openInterestParams.nextLongOpenInterest, openInterestParams.nextShortOpenInterest);
+        console.log("initialDiffUsd", initialDiffUsd);
+        console.log("nextDiffUsd", nextDiffUsd);
 
         // check whether an improvement in balance comes from causing the balance to switch sides
         // for example, if there is $2000 of ETH and $1000 of USDC in the pool

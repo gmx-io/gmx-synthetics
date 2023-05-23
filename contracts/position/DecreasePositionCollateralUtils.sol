@@ -19,6 +19,7 @@ import "../order/BaseOrderUtils.sol";
 import "../order/OrderEventUtils.sol";
 
 import "../swap/SwapUtils.sol";
+import "./DecreasePositionSwapUtils.sol";
 
 // @title DecreasePositionCollateralUtils
 // @dev Library for functions to help with the calculations when decreasing a position
@@ -43,6 +44,14 @@ library DecreasePositionCollateralUtils {
         uint256 adjustedPriceImpactDiffUsd;
         uint256 adjustedPriceImpactDiffAmount;
         uint256 pnlDiffAmount;
+        uint256 deductionAmountForPool;
+        uint256 pnlAmountForUser;
+    }
+
+    struct ProcessForceCloseCache {
+        uint256 remainingFundingFeeAmount;
+        uint256 remainingCostAmount;
+        address holdingAddress;
     }
 
     // @dev handle the collateral changes of the position
@@ -64,11 +73,19 @@ library DecreasePositionCollateralUtils {
 
         Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.order.initialCollateralToken(), params.market, cache.prices);
 
+        // in case price impact is too high it is capped and the difference is made to be claimable
+        // the execution price is based on the capped price impact so it may be a better price than what it should be
         // priceImpactDiffUsd is the difference between the maximum price impact and the originally calculated price impact
         // e.g. if the originally calculated price impact is -$100, but the capped price impact is -$80
         // then priceImpactUsd would be $20
         (values.executionPrice, values.priceImpactAmount, values.priceImpactDiffUsd) = getExecutionPrice(params, cache.prices, params.order.sizeDeltaUsd());
 
+        // the position's total pnl is calculated based on the execution price
+        // since the execution price may be better than it should be, the position's positive pnl may be higher than it should be
+        // or the position's negative pnl may be lower than it should be
+        // the sizeDeltaInTokens is calculated as position.sizeInTokens() * sizeDeltaUsd / position.sizeInUsd()
+        // the positionPnlUsd is the pnl to be realized, and is calculated as:
+        // totalPositionPnl * sizeDeltaInTokens / position.sizeInTokens()
         (values.positionPnlUsd, values.sizeDeltaInTokens) = PositionUtils.getPositionPnlUsd(
             params.contracts.dataStore,
             params.market,
@@ -81,10 +98,11 @@ library DecreasePositionCollateralUtils {
         collateralCache.adjustedPositionPnlUsd = values.positionPnlUsd;
         collateralCache.adjustedPriceImpactDiffUsd = values.priceImpactDiffUsd;
 
-        // adjust the pnl value by the priceImpactDiffUsd, the difference should be made claimable
+        // if the position's pnl is positive, use the position's pnl to pay for the priceImpactDiffUsd
+        // the difference should be made claimable
         if (values.positionPnlUsd > 0 && values.priceImpactDiffUsd > 0) {
             if (values.positionPnlUsd > values.priceImpactDiffUsd.toInt256()) {
-                // if the position is realizing a profit, reduce the pnl by the price impact difference
+                // reduce the pnl by the price impact difference
                 collateralCache.adjustedPositionPnlUsd = values.positionPnlUsd - values.priceImpactDiffUsd.toInt256();
                 collateralCache.adjustedPriceImpactDiffUsd = 0;
             } else {
@@ -135,17 +153,15 @@ library DecreasePositionCollateralUtils {
             getPositionFeesParams
         );
 
+        // position realizes a profit, deduct the pnl from the pool
         if (collateralCache.adjustedPositionPnlUsd > 0) {
-            // position realizes a profit
-            // deduct the pnl from the pool
-            values.pnlTokenForPool = cache.pnlToken;
-            // update pnlAmountForPool using positionPnlUsd instead of adjustedPositionPnlUsd
+            // calculate deductionAmountForPool using positionPnlUsd instead of adjustedPositionPnlUsd
             // as the full realized profit should be deducted from the pool
-            values.pnlAmountForPool = -values.positionPnlUsd / cache.pnlTokenPrice.max.toInt256();
-            values.pnlAmountForUser = collateralCache.adjustedPositionPnlUsd.toUint256() / cache.pnlTokenPrice.max;
+            collateralCache.deductionAmountForPool = values.positionPnlUsd.toUint256() / cache.pnlTokenPrice.max;
+            collateralCache.pnlAmountForUser = collateralCache.adjustedPositionPnlUsd.toUint256() / cache.pnlTokenPrice.max;
 
             // if the price impact for pnl was capped keep the difference to allow it to be claimable later
-            collateralCache.pnlDiffAmount = (-values.pnlAmountForPool - values.pnlAmountForUser.toInt256()).toUint256();
+            collateralCache.pnlDiffAmount = collateralCache.deductionAmountForPool - collateralCache.pnlAmountForUser;
 
             // pnlDiffAmount is deducted from the position's pnl and made to be claimable
             // this is called before the liquidation check
@@ -169,8 +185,8 @@ library DecreasePositionCollateralUtils {
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.market.marketToken,
-                values.pnlTokenForPool,
-                values.pnlAmountForPool
+                cache.pnlToken,
+                -collateralCache.deductionAmountForPool.toInt256()
             );
 
             // swap profit to the collateral token here so that the profit can be used
@@ -178,10 +194,10 @@ library DecreasePositionCollateralUtils {
             // if the decreasePositionSwapType was set to NoSwap or if the swap fails due
             // to insufficient liquidity or other reasons then it is possible that
             // the profit remains in a different token from the collateral token
-            (bool wasSwapped, uint256 swapOutputAmount) = swapProfitToCollateralToken(
+            (bool wasSwapped, uint256 swapOutputAmount) = DecreasePositionSwapUtils.swapProfitToCollateralToken(
                 params,
                 cache.pnlToken,
-                values.pnlAmountForUser
+                collateralCache.pnlAmountForUser
             );
 
             // if the swap was successful the profit should have been swapped
@@ -190,14 +206,14 @@ library DecreasePositionCollateralUtils {
                 values.output.outputAmount += swapOutputAmount;
             } else {
                 // if there was no swap or the swap failed but the pnlToken
-                //  is the same as the collateral token then update the outputAmount
+                // is the same as the collateral token then update the outputAmount
                 // with the profit amount
                 if (params.position.collateralToken() == cache.pnlToken) {
-                    values.output.outputAmount += values.pnlAmountForUser;
+                    values.output.outputAmount += collateralCache.pnlAmountForUser;
                 } else {
                     // if there was no swap or the swap failed and the pnlToken is not the same
-                    // asthe collateral token then store the pnlAmountForUser separately
-                    values.output.secondaryOutputAmount = values.pnlAmountForUser;
+                    // as the collateral token then store the pnlAmountForUser separately
+                    values.output.secondaryOutputAmount = collateralCache.pnlAmountForUser;
                 }
             }
         }
@@ -214,13 +230,15 @@ library DecreasePositionCollateralUtils {
             }
         }
 
-        uint256 pendingCollateralDeduction = fees.collateralCostAmount;
+        values.pendingCollateralDeduction = fees.collateralCostAmount;
         // increase the pendingCollateralDeduction by the realized pnl if the pnl is negative
         if (collateralCache.adjustedPositionPnlUsd < 0) {
-            pendingCollateralDeduction += (-collateralCache.adjustedPositionPnlUsd).toUint256() / collateralTokenPrice.min;
+            values.pendingCollateralDeduction += (-collateralCache.adjustedPositionPnlUsd).toUint256() / collateralTokenPrice.min;
         }
 
-        if (pendingCollateralDeduction > params.position.collateralAmount()) {
+        values.remainingCollateralAmount = params.position.collateralAmount();
+
+        if (values.pendingCollateralDeduction > values.remainingCollateralAmount) {
             if (
                 params.order.sizeDeltaUsd() == params.position.sizeInUsd() &&
                 (
@@ -241,34 +259,30 @@ library DecreasePositionCollateralUtils {
                 // closing the position with zero price impact, just that if there were any collateral that could
                 // partially pay for negative price impact, it would be sent to the pool instead of the position impact pool
                 // the outputAmount should be zero here since it was not sufficient to pay for the totalNetCostAmount
-                return processInsolventClose(params, values, fees);
+                return processForceClose(params, values, fees, cache.prices, collateralTokenPrice);
             } else {
                 // it is possible that this reverts if the swapProfitToCollateralToken
                 // did not succeed due to insufficient liquidity, etc.
                 // this should be rare since only the profit amount needs to be swapped
                 // the reserve and max cap values should be carefully configured to minimize
                 // the risk of swapProfitToCollateralToken failing
-                revert Errors.InsufficientCollateral(params.position.collateralAmount(), pendingCollateralDeduction);
+                revert Errors.InsufficientCollateral(params.position.collateralAmount(), values.pendingCollateralDeduction);
             }
         }
 
-        values.remainingCollateralAmount = params.position.collateralAmount();
-
+        // position realizes a loss
+        // deduct collateral from user, transfer it to the pool
         if (collateralCache.adjustedPositionPnlUsd < 0) {
-            // position realizes a loss
-            // deduct collateral from user, transfer it to the pool
-            values.pnlTokenForPool = params.position.collateralToken();
-
             // if positionPnlUsd is < 0, then it should be equal to adjustedPositionPnlUsd
-            values.pnlAmountForPool = -values.positionPnlUsd / collateralTokenPrice.min.toInt256();
-            values.remainingCollateralAmount -= values.pnlAmountForPool.toUint256();
+            uint256 amountForPool = (-values.positionPnlUsd).toUint256() / collateralTokenPrice.min;
+            values.remainingCollateralAmount -= amountForPool;
 
             MarketUtils.applyDeltaToPoolAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.market.marketToken,
-                values.pnlTokenForPool,
-                values.pnlAmountForPool
+                params.position.collateralToken(),
+                amountForPool.toInt256()
             );
         }
 
@@ -288,7 +302,7 @@ library DecreasePositionCollateralUtils {
         // if the realized pnl was not sufficient then further reduce the position's collateral
         // allow the difference to be claimable
         // the adjustedPriceImpactDiffAmount is stored to be claimable after the liquidation check
-        // a position is only liquidated if the remaining collateral is insufficient to cover losses
+        // a position is liquidated if the remaining collateral is insufficient to cover losses
         // and fees, if this were called before the liquidation check, it would reduce the amount of collateral
         // available to pay for fees, etc
         // this is called after the remainingCollateralAmount < 0 check and the adjustedPriceImpactDiffAmount
@@ -402,18 +416,23 @@ library DecreasePositionCollateralUtils {
         return (executionPrice, priceImpactAmount, priceImpactDiffUsd);
     }
 
-    // for simplicity all fee values are set to zero in case there is insufficient
-    // collateral to cover all fees
-    // due to the secondary output amount, it is possible for the transaction to still be solvent
-    function processInsolventClose(
+    function processForceClose(
         PositionUtils.UpdatePositionParams memory params,
         PositionUtils.DecreasePositionCollateralValues memory values,
         PositionPricingUtils.PositionFees memory fees,
+        MarketUtils.MarketPrices memory prices,
         Price.Props memory collateralTokenPrice
     ) internal returns (
         PositionUtils.DecreasePositionCollateralValues memory,
         PositionPricingUtils.PositionFees memory
     ) {
+        ProcessForceCloseCache memory cache;
+
+        // values.output.outputAmount should be zero here
+        // since if the outputAmount was positive and more than
+        // the pendingCollateralDeduction, the position should not need
+        // to be force closed
+
         PositionEventUtils.emitPositionFeesInfo(
             params.contracts.eventEmitter,
             params.orderKey,
@@ -424,25 +443,21 @@ library DecreasePositionCollateralUtils {
             fees
         );
 
-        PositionEventUtils.emitLiquidationInfo(
+        PositionEventUtils.emitForceCloseInfo(
             params.contracts.eventEmitter,
             params.orderKey,
             params.position.collateralAmount(),
             values.positionPnlUsd,
-            values.remainingCollateralAmount
+            values.pendingCollateralDeduction
         );
 
-        uint256 remainingFundingFeeAmount;
-        uint256 remainingCostAmount = fees.totalNetCostAmount - fees.funding.fundingFeeAmount;
-
-        if (values.positionPnlUsd < 0) {
-            remainingCostAmount += values.positionPnlUsd / collateralTokenPrice.min;
-        }
+        // separate the funding fee amount and remaining cost
+        // since the funding fee should be attempted to be paid first
+        cache.remainingCostAmount = values.pendingCollateralDeduction - fees.funding.fundingFeeAmount;
 
         if (fees.funding.fundingFeeAmount > values.remainingCollateralAmount) {
-            remainingFundingFeeAmount = fees.funding.fundingFeeAmount - params.position.collateralAmount();
+            cache.remainingFundingFeeAmount = fees.funding.fundingFeeAmount - values.remainingCollateralAmount;
 
-            values.pnlAmountForPool = 0;
             // the case where this is insufficient collateral to pay funding fees
             // should be rare, and the difference should be small
             // in case it happens, the pool should be topped up with the required amount using
@@ -452,40 +467,40 @@ library DecreasePositionCollateralUtils {
                 params.market.marketToken,
                 params.position.collateralToken(),
                 fees.funding.fundingFeeAmount,
-                params.position.collateralAmount()
+                values.remainingCollateralAmount
             );
         } else {
-            values.pnlTokenForPool = params.position.collateralToken();
-            values.pnlAmountForPool = (params.position.collateralAmount() - fees.funding.fundingFeeAmount).toInt256();
+            uint256 amountForPool = values.remainingCollateralAmount - fees.funding.fundingFeeAmount;
+            cache.remainingFundingFeeAmount = 0;
 
-            // the pnlAmountForPool should be used to cover the fees and position losses
-            // reduce the remainingCostAmount by pnlAmountForPool since those costs should be covered
-            if (remainingCostAmount > values.pnlAmountForPool ) {
-                remainingCostAmount -= values.pnlAmountForPool;
+            // the amountForPool should be used to cover the fees and position losses
+            // reduce the remainingCostAmount by amountForPool since those costs should be covered
+            if (cache.remainingCostAmount > amountForPool ) {
+                cache.remainingCostAmount -= amountForPool;
             } else {
-                remainingCostAmount = 0;
+                cache.remainingCostAmount = 0;
             }
 
             MarketUtils.applyDeltaToPoolAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.market.marketToken,
-                values.pnlTokenForPool,
-                values.pnlAmountForPool
+                params.position.collateralToken(),
+                amountForPool.toInt256()
             );
         }
 
-        // TODO: get secondary token price
-        Price.Props memory secondaryTokenPrice;
+        Price.Props memory secondaryTokenPrice = MarketUtils.getCachedTokenPrice(values.output.secondaryOutputToken, params.market, prices);
 
-        if (values.output.secondaryOutputAmount > 0 && remainingFundingFeeAmount > 0) {
-            address holdingAddress = dataStore.getAddress(Keys.HOLDING_ADDRESS);
-            if (holdingAddress == address(0)) {
+        if (values.output.secondaryOutputAmount > 0 && cache.remainingFundingFeeAmount > 0) {
+            cache.holdingAddress = params.contracts.dataStore.getAddress(Keys.HOLDING_ADDRESS);
+            if (cache.holdingAddress == address(0)) {
                 revert Errors.EmptyHoldingAddress();
             }
 
-            uint256 secondaryFundingFeeAmount = remainingFundingFeeAmount.mul(collateralTokenPrice.max).div(secondaryTokenPrice);
-            if (values.output.secondaryOutputAmount > secondaryFundingFeeAmount) {
+            uint256 secondaryFundingFeeAmount = cache.remainingFundingFeeAmount * collateralTokenPrice.max / secondaryTokenPrice.min;
+
+            if (values.output.secondaryOutputAmount >= secondaryFundingFeeAmount) {
                 values.output.secondaryOutputAmount -= secondaryFundingFeeAmount;
             } else {
                 PositionEventUtils.emitInsufficientFundingFeePayment(
@@ -493,69 +508,58 @@ library DecreasePositionCollateralUtils {
                     params.market.marketToken,
                     values.output.secondaryOutputToken,
                     secondaryFundingFeeAmount,
-                    values.output.secondaryOutputAmount()
+                    values.output.secondaryOutputAmount
                 );
 
-                values.output.secondaryOutputAmount = 0;
                 secondaryFundingFeeAmount = values.output.secondaryOutputAmount;
+                values.output.secondaryOutputAmount = 0;
             }
 
             // send the funding fee amount to the holding address
+            // this funding fee amount should be swapped to the required token
+            // and the resulting tokens should be deposited back into the pool
             MarketUtils.incrementClaimableCollateralAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.market.marketToken,
                 values.output.secondaryOutputToken,
-                holdingAddress,
-                values.output.secondaryFundingFeeAmount
+                cache.holdingAddress,
+                secondaryFundingFeeAmount
             );
         }
 
-            if (values.output.secondaryOutputAmount > 0 && remainingDeductionAmount > 0) {
-                if (values.output.secondaryOutputAmount > remainingDeductionAmount) {
-                    values.output.secondaryOutputAmount -= remainingDeductionAmount;
-                }
+        if (values.output.secondaryOutputAmount > 0 && cache.remainingCostAmount > 0) {
+            uint256 secondaryAmountForPool = cache.remainingCostAmount * collateralTokenPrice.max / secondaryTokenPrice.min;
 
+            if (values.output.secondaryOutputAmount > secondaryAmountForPool) {
+                values.output.secondaryOutputAmount -= secondaryAmountForPool;
+            } else {
+                secondaryAmountForPool = values.output.secondaryOutputAmount;
+                values.output.secondaryOutputAmount = 0;
             }
 
-            // it is possible for a large amount of borrowing fees / funding fees
-            // to be unpaid if the swapProfitToCollateralToken did not succeed
-            // this could lead to an unexpected change in the price of the market token
-            // this case should be rare since only the profit needs to be swapped
-            //
-            // the reserve and max cap values should be carefully configured to minimize
-            // the risk of swapProfitToCollateralToken failing
-            // alternatively, an external system to provide liquidity in times when
-            // these swaps are needed could be setup
-            //
-            // a separate flow could also be setup to gradually distribute
-            // this value back to market token holders
-            MarketUtils.incrementClaimableCollateralAmount(
+            MarketUtils.applyDeltaToPoolAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.market.marketToken,
                 values.output.secondaryOutputToken,
-                params.order.account(),
-                values.output.secondaryOutputAmount
+                secondaryAmountForPool.toInt256()
             );
         }
 
         PositionUtils.DecreasePositionCollateralValues memory _values = PositionUtils.DecreasePositionCollateralValues(
-            values.pnlTokenForPool, // pnlTokenForPool
             values.executionPrice, // executionPrice
             0, // remainingCollateralAmount
             values.positionPnlUsd, // positionPnlUsd
-            values.pnlAmountForPool, // pnlAmountForPool
-            0, // pnlAmountForUser
             values.sizeDeltaInTokens, // sizeDeltaInTokens
             values.priceImpactAmount, // priceImpactAmount
             0, // priceImpactDiffUsd
-            0, // priceImpactDiffAmount
+            0, // pendingCollateralDeduction
             PositionUtils.DecreasePositionCollateralValuesOutput(
                 address(0), // outputToken
                 0, // outputAmount
-                address(0), // secondaryOutputToken
-                0 // secondaryOutputAmount
+                values.output.secondaryOutputToken, // secondaryOutputToken
+                values.output.secondaryOutputAmount // secondaryOutputAmount
             )
         );
 
@@ -568,84 +572,4 @@ library DecreasePositionCollateralUtils {
         return (_values, _fees);
     }
 
-    // swap the withdrawn collateral from collateralToken to pnlToken if needed
-    function swapWithdrawnCollateralToPnlToken(
-        PositionUtils.UpdatePositionParams memory params,
-        PositionUtils.DecreasePositionCollateralValues memory values
-    ) external returns (PositionUtils.DecreasePositionCollateralValues memory) {
-        if (params.order.decreasePositionSwapType() == Order.DecreasePositionSwapType.SwapCollateralTokenToPnlToken) {
-            Market.Props[] memory swapPathMarkets = new Market.Props[](1);
-            swapPathMarkets[0] = params.market;
-
-            try params.contracts.swapHandler.swap(
-                SwapUtils.SwapParams(
-                    params.contracts.dataStore,
-                    params.contracts.eventEmitter,
-                    params.contracts.oracle,
-                    Bank(payable(params.market.marketToken)),
-                    params.orderKey,
-                    params.position.collateralToken(), // tokenIn
-                    values.output.outputAmount, // amountIn
-                    swapPathMarkets, // markets
-                    0, // minOutputAmount
-                    params.market.marketToken, // receiver
-                    params.order.uiFeeReceiver(), // uiFeeReceiver
-                    false // shouldUnwrapNativeToken
-                )
-            ) returns (address tokenOut, uint256 swapOutputAmount) {
-                if (tokenOut != values.output.secondaryOutputToken) {
-                    revert Errors.InvalidOutputToken(tokenOut, values.output.secondaryOutputToken);
-                }
-                // combine the values into outputToken and outputAmount
-                values.output.outputToken = tokenOut;
-                values.output.outputAmount = values.output.secondaryOutputAmount + swapOutputAmount;
-                values.output.secondaryOutputAmount = 0;
-            } catch Error(string memory reason) {
-                emit SwapUtils.SwapReverted(reason, "");
-            } catch (bytes memory reasonBytes) {
-                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-                emit SwapUtils.SwapReverted(reason, reasonBytes);
-            }
-        }
-
-        return values;
-    }
-
-    // swap the realized profit from the pnlToken to the collateralToken if needed
-    function swapProfitToCollateralToken(
-        PositionUtils.UpdatePositionParams memory params,
-        address pnlToken,
-        uint256 profitAmount
-    ) internal returns (bool, uint256) {
-        if (params.order.decreasePositionSwapType() == Order.DecreasePositionSwapType.SwapPnlTokenToCollateralToken) {
-            Market.Props[] memory swapPathMarkets = new Market.Props[](1);
-            swapPathMarkets[0] = params.market;
-
-            try params.contracts.swapHandler.swap(
-                SwapUtils.SwapParams(
-                    params.contracts.dataStore,
-                    params.contracts.eventEmitter,
-                    params.contracts.oracle,
-                    Bank(payable(params.market.marketToken)),
-                    params.orderKey,
-                    pnlToken, // tokenIn
-                    profitAmount, // amountIn
-                    swapPathMarkets, // markets
-                    0, // minOutputAmount
-                    params.market.marketToken, // receiver
-                    params.order.uiFeeReceiver(), // uiFeeReceiver
-                    false // shouldUnwrapNativeToken
-                )
-            ) returns (address /* tokenOut */, uint256 swapOutputAmount) {
-                return (true, swapOutputAmount);
-            } catch Error(string memory reason) {
-                emit SwapUtils.SwapReverted(reason, "");
-            } catch (bytes memory reasonBytes) {
-                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-                emit SwapUtils.SwapReverted(reason, reasonBytes);
-            }
-        }
-
-        return (false, 0);
-    }
 }

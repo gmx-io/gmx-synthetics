@@ -121,27 +121,27 @@ library PositionEventUtils {
         );
     }
 
-    function emitLiquidationInfo(
+    function emitForceCloseInfo(
         EventEmitter eventEmitter,
         bytes32 orderKey,
         uint256 positionCollateralAmount,
         int256 positionPnlUsd,
-        int256 remainingCollateralAmount
+        uint256 pendingCollateralDeduction
     ) external {
         EventUtils.EventLogData memory eventData;
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "orderKey", orderKey);
 
-        eventData.uintItems.initItems(1);
+        eventData.uintItems.initItems(2);
         eventData.uintItems.setItem(0, "positionCollateralAmount", positionCollateralAmount);
+        eventData.uintItems.setItem(1, "pendingCollateralDeduction", pendingCollateralDeduction);
 
-        eventData.intItems.initItems(2);
+        eventData.intItems.initItems(1);
         eventData.intItems.setItem(0, "positionPnlUsd", positionPnlUsd);
-        eventData.intItems.setItem(1, "remainingCollateralAmount", remainingCollateralAmount);
 
         eventEmitter.emitEventLog(
-            "LiquidationInfo",
+            "ForceClose",
             eventData
         );
     }

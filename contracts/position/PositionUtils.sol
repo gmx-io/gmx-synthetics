@@ -71,23 +71,20 @@ library PositionUtils {
     // @dev ProcessCollateralValues struct used to contain the values in processCollateral
     // @param executionPrice the order execution price
     // @param remainingCollateralAmount the remaining collateral amount of the position
-    // @param outputAmount the output amount
     // @param positionPnlUsd the pnl of the position in USD
-    // @param pnlAmountForPool the pnl for the pool in token amount
-    // @param pnlAmountForUser the pnl for the user in token amount
     // @param sizeDeltaInTokens the change in position size in tokens
     // @param priceImpactAmount the price impact in tokens
+    // @param priceImpactDiffUsd the price impact difference in USD
+    // @param pendingCollateralDeduction the pending collateral deduction
+    // @param output DecreasePositionCollateralValuesOutput
     struct DecreasePositionCollateralValues {
-        address pnlTokenForPool;
         uint256 executionPrice;
         uint256 remainingCollateralAmount;
         int256 positionPnlUsd;
-        int256 pnlAmountForPool;
-        uint256 pnlAmountForUser;
         uint256 sizeDeltaInTokens;
         int256 priceImpactAmount;
         uint256 priceImpactDiffUsd;
-        uint256 priceImpactDiffAmount;
+        uint256 pendingCollateralDeduction;
         DecreasePositionCollateralValuesOutput output;
     }
 
@@ -284,15 +281,17 @@ library PositionUtils {
             }
         }
 
-        if (isPositionLiquidatable(
+        (bool isLiquidatable, string memory reason) = isPositionLiquidatable(
             dataStore,
             referralStorage,
             position,
             market,
             prices,
             shouldValidateMinCollateralUsd
-        )) {
-            revert Errors.LiquidatablePosition();
+        );
+
+        if (isLiquidatable) {
+            revert Errors.LiquidatablePosition(reason);
         }
     }
 
@@ -309,7 +308,7 @@ library PositionUtils {
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
         bool shouldValidateMinCollateralUsd
-    ) public view returns (bool) {
+    ) public view returns (bool, string memory) {
         IsPositionLiquidatableCache memory cache;
 
         (cache.positionPnlUsd, ) = getPositionPnlUsd(
@@ -390,12 +389,12 @@ library PositionUtils {
         if (shouldValidateMinCollateralUsd) {
             cache.minCollateralUsd = dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256();
             if (cache.remainingCollateralUsd < cache.minCollateralUsd) {
-                return true;
+                return (true, "min collateral");
             }
         }
 
         if (cache.remainingCollateralUsd <= 0) {
-            return true;
+            return (true, "< 0");
         }
 
         cache.minCollateralFactor = MarketUtils.getMinCollateralFactor(dataStore, market.marketToken);
@@ -406,10 +405,10 @@ library PositionUtils {
         cache.minCollateralUsdForLeverage = Precision.applyFactor(position.sizeInUsd(), cache.minCollateralFactor).toInt256();
 
         if (cache.remainingCollateralUsd < cache.minCollateralUsdForLeverage) {
-            return true;
+            return (true, "min collateral for leverage");
         }
 
-        return false;
+        return (false, "");
     }
 
     function willPositionCollateralBeSufficient(
