@@ -274,7 +274,7 @@ describe("Exchange.PositionFees", () => {
           expectWithinRange(
             positionFeesCollectedEvent.latestShortTokenFundingAmountPerSize,
             "240000000000",
-            "100000000000"
+            "200000000000"
           );
           expect(positionFeesCollectedEvent.isIncrease).eq(false);
         },

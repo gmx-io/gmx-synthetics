@@ -234,10 +234,6 @@ library PositionPricingUtils {
     function _getPriceImpactUsd(DataStore dataStore, address market, OpenInterestParams memory openInterestParams) internal view returns (int256) {
         uint256 initialDiffUsd = Calc.diff(openInterestParams.longOpenInterest, openInterestParams.shortOpenInterest);
         uint256 nextDiffUsd = Calc.diff(openInterestParams.nextLongOpenInterest, openInterestParams.nextShortOpenInterest);
-        console.log("longOpenInterest, shortOpenInterest", openInterestParams.longOpenInterest, openInterestParams.shortOpenInterest);
-        console.log("nextLongOpenInterest, nextShortOpenInterest", openInterestParams.nextLongOpenInterest, openInterestParams.nextShortOpenInterest);
-        console.log("initialDiffUsd", initialDiffUsd);
-        console.log("nextDiffUsd", nextDiffUsd);
 
         // check whether an improvement in balance comes from causing the balance to switch sides
         // for example, if there is $2000 of ETH and $1000 of USDC in the pool
