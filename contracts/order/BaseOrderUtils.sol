@@ -286,7 +286,7 @@ library BaseOrderUtils {
         uint256 acceptablePrice,
         bool isLong,
         bool isIncrease
-    ) internal view returns (uint256) {
+    ) internal pure returns (uint256) {
         // increase order:
         //     - long: use the larger price
         //     - short: use the smaller price
@@ -340,8 +340,6 @@ library BaseOrderUtils {
         bool shouldFlipPriceImpactUsd = isIncrease ? !isLong : isLong;
         int256 priceImpactUsdForPriceAdjustment = shouldFlipPriceImpactUsd ? -priceImpactUsd : priceImpactUsd;
 
-        Printer.log("priceImpactUsdForPriceAdjustment", priceImpactUsdForPriceAdjustment);
-        console.log("sizeDeltaUsd", sizeDeltaUsd);
         if (priceImpactUsdForPriceAdjustment < 0 && (-priceImpactUsdForPriceAdjustment).toUint256() > sizeDeltaUsd) {
             revert Errors.PriceImpactLargerThanOrderSize(priceImpactUsdForPriceAdjustment, sizeDeltaUsd);
         }
