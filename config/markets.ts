@@ -179,16 +179,13 @@ const config: {
   ],
   avalanche: [],
   avalancheFuji: [
-    {
-      tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" },
-    },
+    { tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" } },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
       virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
     },
-    {
-      tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "USDC" },
-    },
+    { tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "USDC" } },
+    { tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "USDC" } },
     {
       tokens: { indexToken: "SOL", longToken: "WETH", shortToken: "USDC" },
       virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
@@ -197,6 +194,14 @@ const config: {
       tokens: { longToken: "USDC", shortToken: "USDT" },
       swapOnly: true,
     },
+    { tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "DAI" } },
+    { tokens: { indexToken: "LINK", longToken: "WETH", shortToken: "DAI" } },
+    { tokens: { indexToken: "BNB", longToken: "WETH", shortToken: "DAI" } },
+    { tokens: { indexToken: "ADA", longToken: "WETH", shortToken: "DAI" } },
+    { tokens: { indexToken: "TRX", longToken: "WETH", shortToken: "DAI" } },
+    { tokens: { indexToken: "MATIC", longToken: "WETH", shortToken: "USDC" } },
+    { tokens: { indexToken: "DOT", longToken: "WETH", shortToken: "USDC" } },
+    { tokens: { indexToken: "UNI", longToken: "WETH", shortToken: "USDC" } },
     {
       tokens: {
         indexToken: "TEST",
@@ -209,15 +214,6 @@ const config: {
       positiveSwapImpactFactor: decimalToFloat(1, 5), // 0.001 %
       negativeSwapImpactFactor: decimalToFloat(2, 5), // 0.002 %
       swapImpactExponentFactor: decimalToFloat(2, 0), // 2
-    },
-    {
-      tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "DAI" },
-    },
-    {
-      tokens: { indexToken: "LINK", longToken: "WETH", shortToken: "DAI" },
-    },
-    {
-      tokens: { indexToken: "BNB", longToken: "WETH", shortToken: "DAI" },
     },
   ],
   hardhat: [
@@ -257,8 +253,14 @@ export default async function (hre: HardhatRuntimeEnvironment) {
   const tokens = await hre.gmx.getTokens();
   const defaultMarketConfig = hre.network.name === "hardhat" ? hardhatBaseMarketConfig : baseMarketConfig;
   if (markets) {
+    const seen = new Set<string>();
     for (const market of markets) {
       const tokenSymbols = Object.values(market.tokens);
+      const tokenSymbolsKey = tokenSymbols.join(":");
+      if (seen.has(tokenSymbolsKey)) {
+        throw new Error(`Duplicate market: ${tokenSymbolsKey}`);
+      }
+      seen.add(tokenSymbolsKey);
       for (const tokenSymbol of tokenSymbols) {
         if (!tokens[tokenSymbol]) {
           throw new Error(`Market ${tokenSymbols.join(":")} uses token that does not exist: ${tokenSymbol}`);
