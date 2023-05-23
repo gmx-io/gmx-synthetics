@@ -202,7 +202,7 @@ library PositionPricingUtils {
 
     // @dev get the price impact in USD for a position increase / decrease
     // @param params GetPriceImpactUsdParams
-    function getPriceImpactUsd(GetPriceImpactUsdParams memory params) external view returns (int256) {
+    function getPriceImpactUsd(GetPriceImpactUsdParams memory params) internal view returns (int256) {
         OpenInterestParams memory openInterestParams = getNextOpenInterest(params);
 
         int256 priceImpactUsd = _getPriceImpactUsd(params.dataStore, params.market.marketToken, openInterestParams);
