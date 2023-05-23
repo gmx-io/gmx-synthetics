@@ -40,15 +40,15 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       holdingAddress: "0x49B373D422BdA4C6BfCdd5eC1E48A9a26fdA2F8b",
       minHandleExecutionErrorGas: 1000000,
 
-      depositGasLimitSingle: 10000,
-      depositGasLimitMultiple: 10000,
-      withdrawalGasLimitSingle: 10000,
-      withdrawalGasLimitMultiple: 10000,
+      depositGasLimitSingle: 1500000,
+      depositGasLimitMultiple: 1800000,
+      withdrawalGasLimitSingle: 1500000,
+      withdrawalGasLimitMultiple: 1800000,
 
-      singleSwapGasLimit: 10000,
-      increaseOrderGasLimit: 10000,
-      decreaseOrderGasLimit: 10000,
-      swapOrderGasLimit: 10000,
+      singleSwapGasLimit: 2500000,
+      increaseOrderGasLimit: 5000000,
+      decreaseOrderGasLimit: 5000000,
+      swapOrderGasLimit: 3000000,
 
       tokenTransferGasLimit: 200000,
       nativeTokenTransferGasLimit: 200000,
