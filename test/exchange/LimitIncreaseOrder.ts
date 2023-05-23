@@ -208,7 +208,7 @@ describe("Exchange.LimitIncreaseOrder", () => {
       gasUsageLabel: "executeOrder",
       afterExecution: ({ logs }) => {
         const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-        expect(positionIncreaseEvent.executionPrice).eq("4989959999999999"); // ~4989.96
+        expect(positionIncreaseEvent.executionPrice).eq("4989979959919839"); // ~4989.97
       },
     });
   });

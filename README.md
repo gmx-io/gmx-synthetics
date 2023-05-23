@@ -493,6 +493,10 @@ After the initial setup:
 
 - Block re-orgs could allow a user to retroactively cancel an order after it has been executed if price did not move favourably for the user, care should be taken to handle this case if using the contracts on chains where long re-orgs are possible
 
+- Updating and cancellation of orders could be front-run to prevent order execution, this should not be an issue if the probability of a successful front-running is less than or equal to 50%, if the probability is higher than 50%, fees and price impact should be adjusted to ensure that the strategy is not net profitable, adjusting the ui fee or referral discount could similarly be used to cause order cancellations
+
+- Decrease position orders could output two tokens instead of a single token, in case the decrease position swap fails, it is also possible that the output amount and collateral may not be sufficient to cover fees, causing the order to not be executed
+
 # Feature Development
 
 If new features are added, tests should be added for the different market types, e.g. spot only markets, single token markets.
