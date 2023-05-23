@@ -84,7 +84,7 @@ library BaseOrderUtils {
     // @param market market values of the trading market
     // @param keeper the keeper sending the transaction
     // @param startingGas the starting gas
-    // @param positionKey the key of the order's position
+    // @param secondaryOrderType the secondary order type
     struct ExecuteOrderParams {
         ExecuteOrderParamsContracts contracts;
         bytes32 key;
@@ -95,7 +95,7 @@ library BaseOrderUtils {
         Market.Props market;
         address keeper;
         uint256 startingGas;
-        bytes32 positionKey;
+        Order.SecondaryOrderType secondaryOrderType;
     }
 
     // @param dataStore DataStore
@@ -173,6 +173,7 @@ library BaseOrderUtils {
     }
 
     // @dev validate the price for increase / decrease orders based on the triggerPrice
+    // the acceptablePrice for increase / decrease orders is validated in getExecutionPrice
     //
     // it is possible to update the oracle to support a primaryPrice and a secondaryPrice
     // which would allow for stop-loss orders to be executed at exactly the triggerPrice
@@ -202,7 +203,7 @@ library BaseOrderUtils {
     // @param orderType the order type
     // @param triggerPrice the order's triggerPrice
     // @param isLong whether the order is for a long or short
-    function validateOrderPrice(
+    function validateOrderTriggerPrice(
         Oracle oracle,
         address indexToken,
         Order.OrderType orderType,
@@ -305,13 +306,39 @@ library BaseOrderUtils {
         //     - short: price should be smaller than acceptablePrice
         bool shouldPriceBeSmaller = isIncrease ? isLong : !isLong;
 
-        // increase order:
-        //     - long: lower price for positive impact, higher price for negative impact
-        //     - short: higher price for positive impact, lower price for negative impact
-        // decrease order:
-        //     - long: higher price for positive impact, lower price for negative impact
-        //     - short: lower price for positive impact, higher price for negative impact
-        bool shouldFlipPriceImpactUsd = isIncrease ? isLong : !isLong;
+        // using opening of long positions as an example
+        // pnl is calculated as: position.sizeInTokens * price - position.sizeInUsd
+        // priceImpactUsd should adjust the execution price such that:
+        // position.sizeInTokens * price - position.sizeInUsd = pnl = priceImpactUsd
+        // position.sizeInUsd = sizeDeltaUsd
+        // position.sizeInTokens = sizeDeltaUsd / executionPrice
+        // sizeDeltaUsd / executionPrice * price - sizeDeltaUsd = priceImpactUsd
+        // sizeDeltaUsd / executionPrice * price = sizeDeltaUsd + priceImpactUsd
+        // sizeDeltaUsd / executionPrice = (sizeDeltaUsd + priceImpactUsd) / price
+        // executionPrice / sizeDeltaUsd = price / (sizeDeltaUsd + priceImpactUsd)
+        // executionPrice = price * sizeDeltaUsd / (sizeDeltaUsd + priceImpactUsd)
+        //
+        // e.g. if price is $2000, sizeDeltaUsd is $5000, priceImpactUsd is -$1000
+        // executionPrice = 2000 * 5000 / (5000 - 1000) = 2500
+        //
+        // checking pnl: (5000 / 2500) * 2000 - 5000 = -1000
+
+        // a positive priceImpactUsdForPriceAdjustment would decrease the executionPrice
+        // a negative priceImpactUsdForPriceAdjustment would increase the executionPrice
+
+        // increase long order:
+        //      - if price impact is positive, priceImpactUsdForPriceAdjustment should be positive, to decrease the executionPrice
+        //      - if price impact is negative, priceImpactUsdForPriceAdjustment should be negative, to increase the executionPrice
+        // increase short order:
+        //      - if price impact is positive, priceImpactUsdForPriceAdjustment should be negative, to increase the executionPrice
+        //      - if price impact is negative, priceImpactUsdForPriceAdjustment should be positive, to decrease the executionPrice
+        // decrease long order:
+        //      - if price impact is positive, priceImpactUsdForPriceAdjustment should be negative, to increase the executionPrice
+        //      - if price impact is negative, priceImpactUsdForPriceAdjustment should be positive, to decrease the executionPrice
+        // decrease short order:
+        //      - if price impact is positive, priceImpactUsdForPriceAdjustment should be positive, to decrease the executionPrice
+        //      - if price impact is negative, priceImpactUsdForPriceAdjustment should be negative, to increase the executionPrice
+        bool shouldFlipPriceImpactUsd = isIncrease ? !isLong : isLong;
         int256 priceImpactUsdForPriceAdjustment = shouldFlipPriceImpactUsd ? -priceImpactUsd : priceImpactUsd;
 
         if (priceImpactUsdForPriceAdjustment < 0 && (-priceImpactUsdForPriceAdjustment).toUint256() > sizeDeltaUsd) {
@@ -320,7 +347,7 @@ library BaseOrderUtils {
 
         // adjust price by price impact
         if (sizeDeltaUsd > 0) {
-            price = price * Calc.sumReturnUint256(sizeDeltaUsd, priceImpactUsdForPriceAdjustment) / sizeDeltaUsd;
+            price = price * sizeDeltaUsd / Calc.sumReturnUint256(sizeDeltaUsd, priceImpactUsdForPriceAdjustment);
         }
 
         if (

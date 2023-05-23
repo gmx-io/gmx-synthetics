@@ -203,7 +203,13 @@ contract OrderHandler is BaseOrderHandler {
     ) external onlySelf {
         uint256 startingGas = gasleft();
 
-        BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, keeper, startingGas);
+        BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(
+            key,
+            oracleParams,
+            keeper,
+            startingGas,
+            Order.SecondaryOrderType.None
+        );
         // limit swaps require frozen order keeper for execution since on creation it can fail due to output amount
         // which would automatically cause the order to be frozen
         // limit increase and limit / trigger decrease orders may fail due to output amount as well and become frozen
@@ -227,8 +233,6 @@ contract OrderHandler is BaseOrderHandler {
         uint256 startingGas,
         bytes memory reasonBytes
     ) internal {
-        (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
@@ -267,6 +271,8 @@ contract OrderHandler is BaseOrderHandler {
         ) {
             ErrorUtils.revertWithCustomError(reasonBytes);
         }
+
+        (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
 
         if (
             isMarketOrder ||

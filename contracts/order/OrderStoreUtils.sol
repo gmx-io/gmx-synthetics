@@ -239,6 +239,10 @@ library OrderStoreUtils {
     }
 
     function remove(DataStore dataStore, bytes32 key, address account) external {
+        if (!dataStore.containsBytes32(Keys.ORDER_LIST, key)) {
+            revert Errors.OrderNotFound(key);
+        }
+
         dataStore.removeBytes32(
             Keys.ORDER_LIST,
             key

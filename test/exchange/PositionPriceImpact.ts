@@ -9,7 +9,7 @@ import { getExecuteParams } from "../../utils/exchange";
 import { getEventData } from "../../utils/event";
 import * as keys from "../../utils/keys";
 
-describe("Exchange.MarketIncreaseOrder", () => {
+describe("Exchange.PositionPriceImpact", () => {
   let fixture;
   let user0, user1;
   let reader, dataStore, ethUsdMarket, btcUsdMarket, wnt, wbtc, usdc;
@@ -70,20 +70,20 @@ describe("Exchange.MarketIncreaseOrder", () => {
         gasUsageLabel: "executeOrder",
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-          expect(positionIncreaseEvent.executionPrice).eq("5009999999999999"); // ~5010
+          expect(positionIncreaseEvent.executionPrice).eq("5010020040080160"); // ~5010
         },
       },
     });
 
     // increase long position was executed with price above oracle price
     // the impact pool amount should increase
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("79840319361277459"); // 0.079840319361277459 ETH, 399.201596806 USD
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("79999999999999998"); // 0.079999999999999998 ETH, 400 USD
 
     let positionKeys = await getPositionKeys(dataStore, 0, 10);
     const position0 = await reader.getPosition(dataStore.address, positionKeys[0]);
     expect(position0.numbers.sizeInUsd).eq(decimalToFloat(200 * 1000));
-    // 200,000 / 5009.999999999999 => 39.9201596806
-    expect(position0.numbers.sizeInTokens).eq("39920159680638730522"); // 39.920159680638730522 ETH
+    // 200,000 / 5010.020040080160 => 39.92
+    expect(position0.numbers.sizeInTokens).eq("39920000000000002554"); // 39.920000000000002554 ETH
 
     await handleOrder(fixture, {
       create: { ...params, account: user1, acceptablePrice: expandDecimals(5020, 12) },
@@ -92,7 +92,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
       },
     });
 
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("79840319361277459"); // 0.079840319361277459 ETH, 399.201596806 USD
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("79999999999999998"); // 0.079999999999999998 ETH, 400 USD
 
     await handleOrder(fixture, {
       create: { ...params, account: user1, acceptablePrice: expandDecimals(5050, 12) },
@@ -100,7 +100,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
         gasUsageLabel: "executeOrder",
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-          expect(positionIncreaseEvent.executionPrice).eq("5029999999999999"); // ~5030
+          expect(positionIncreaseEvent.executionPrice).eq("5030181086519114"); // ~5030
         },
       },
     });
@@ -108,8 +108,8 @@ describe("Exchange.MarketIncreaseOrder", () => {
     // increase long position was executed with price above oracle price
     // the impact pool amount should increase
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
-      "318408907830462392"
-    ); // 0.318408907830462392 ETH, 1592.04453915 USD
+      "319999999999999993"
+    ); // 0.319999999999999993 ETH, 1600 USD
 
     expect(await getAccountPositionCount(dataStore, user1.address)).eq(1);
     expect(await getPositionCount(dataStore)).eq(2);
@@ -119,21 +119,29 @@ describe("Exchange.MarketIncreaseOrder", () => {
 
     expect(position1.numbers.sizeInUsd).eq(decimalToFloat(200 * 1000));
     // 200,000 / 5029.999999999999 => 39.7614314115
-    expect(position1.numbers.sizeInTokens).eq("39761431411530823014"); // 39.761431411530823014 ETH
+    expect(position1.numbers.sizeInTokens).eq("39760000000000005439"); // 39.760000000000005439 ETH
 
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 4));
 
     await handleOrder(fixture, {
-      create: { ...params, isLong: false, sizeDeltaUsd: decimalToFloat(500 * 1000) },
+      create: { ...params, isLong: true, sizeDeltaUsd: decimalToFloat(500 * 1000) },
       execute: {
         gasUsageLabel: "executeOrder",
         expectedCancellationReason: "PriceImpactLargerThanOrderSize",
       },
     });
 
+    await handleOrder(fixture, {
+      create: { ...params, isLong: false, sizeDeltaUsd: decimalToFloat(500 * 1000) },
+      execute: {
+        gasUsageLabel: "executeOrder",
+        expectedCancellationReason: "OrderNotFulfillableDueToPriceImpact",
+      },
+    });
+
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
-      "318408907830462392"
-    ); // 0.318408907830462392 ETH, 1592.04453915 USD
+      "319999999999999993"
+    ); // 0.319999999999999993 ETH, 1600 USD
 
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
 
@@ -148,7 +156,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
         gasUsageLabel: "executeOrder",
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-          expect(positionIncreaseEvent.executionPrice).eq("5019750000000000"); // 5019.75
+          expect(positionIncreaseEvent.executionPrice).eq("5019828321871391"); // 5019.82
         },
       },
     });
@@ -156,8 +164,8 @@ describe("Exchange.MarketIncreaseOrder", () => {
     // increase short position was executed with price above oracle price
     // the impact pool amount should decrease
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
-      "310539990055672810"
-    ); // 0.310539990055672810 ETH, 1552.69995028 USD
+      "312099999999999992"
+    ); // 0.312099999999999992 ETH, 1560.5 USD
 
     await handleOrder(fixture, {
       create: {
@@ -171,8 +179,8 @@ describe("Exchange.MarketIncreaseOrder", () => {
         gasUsageLabel: "executeOrder",
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("5039500000000000"); // 5039.5
-          expect(positionDecreaseEvent.pnlUsd).eq("-39344588873947906550500000000000"); // -39.3445888739
+          expect(positionDecreaseEvent.executionPrice).eq("5039814534825118"); // 5039.81
+          expect(positionDecreaseEvent.pnlUsd).eq("-39814534825119568606370325571846"); // -39.814534825119568606370325571846
         },
       },
     });
@@ -180,8 +188,8 @@ describe("Exchange.MarketIncreaseOrder", () => {
     // decrease short position was executed with price above oracle price
     // the impact pool amount should increase
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
-      "326216148404715373"
-    ); // 0.326216148404715373 ETH, 1631.08074202 USD
+      "327899999999999992"
+    ); // 0.327899999999999992 ETH, 1639.5 USD
 
     await handleOrder(fixture, {
       create: {
@@ -194,7 +202,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
         gasUsageLabel: "executeOrder",
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-          expect(positionIncreaseEvent.executionPrice).eq("5006999999999999"); // ~5007
+          expect(positionIncreaseEvent.executionPrice).eq("5007009813739234"); // ~5007
         },
       },
     });
@@ -202,8 +210,8 @@ describe("Exchange.MarketIncreaseOrder", () => {
     // increase short position was executed with price above oracle price
     // the impact pool amount should decrease
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
-      "186411874388338275"
-    ); // 0.186411874388338275 ETH, 932.059371942 USD
+      "187899999999999994"
+    ); // 0.187899999999999994 ETH, 939.5 USD
 
     await handleOrder(fixture, {
       create: {
@@ -216,7 +224,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
         gasUsageLabel: "executeOrder",
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-          expect(positionIncreaseEvent.executionPrice).eq("4985000000000000"); // ~4985
+          expect(positionIncreaseEvent.executionPrice).eq("4985044865403788"); // ~4985.04
         },
       },
     });
@@ -224,8 +232,8 @@ describe("Exchange.MarketIncreaseOrder", () => {
     // increase short position was executed with price below oracle price
     // the impact pool amount should increase
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
-      "246592416013212897"
-    ); // 0.246592416013212897 ETH, 1232.96208007 USD
+      "247899999999999992"
+    ); // 0.247899999999999992 ETH, 1239.5 USD
 
     await handleOrder(fixture, {
       create: {
@@ -237,7 +245,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
         gasUsageLabel: "executeOrder",
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-          expect(positionIncreaseEvent.executionPrice).eq("4992500000000000"); // ~4992.5
+          expect(positionIncreaseEvent.executionPrice).eq("4992511233150274"); // ~4992.5
         },
       },
     });
@@ -245,8 +253,8 @@ describe("Exchange.MarketIncreaseOrder", () => {
     // increase long position was executed with price below oracle price
     // the impact pool amount should decrease
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
-      "216547348411810794"
-    ); // 0.216547348411810794 ETH, 1082.73674206 USD
+      "217899999999999992"
+    ); // 0.217899999999999992 ETH, 1089.5 USD
   });
 
   it("capped price impact", async () => {
@@ -280,7 +288,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
         gasUsageLabel: "executeOrder",
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-          expect(positionIncreaseEvent.executionPrice).eq("5009999999999999"); // ~5010
+          expect(positionIncreaseEvent.executionPrice).eq("5010020040080160"); // ~5010
         },
       },
     });
@@ -291,7 +299,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
         gasUsageLabel: "executeOrder",
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-          expect(positionIncreaseEvent.executionPrice).eq("5004999999999999"); // ~5005
+          expect(positionIncreaseEvent.executionPrice).eq("5005005005005005"); // ~5005
         },
       },
     });
@@ -304,7 +312,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
         gasUsageLabel: "executeOrder",
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-          expect(positionIncreaseEvent.executionPrice).eq("5009999999999999"); // ~5010
+          expect(positionIncreaseEvent.executionPrice).eq("5010020040080160"); // ~5010
         },
       },
     });
@@ -315,7 +323,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
         gasUsageLabel: "executeOrder",
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-          expect(positionIncreaseEvent.executionPrice).eq("5000500000000000"); // ~5000.5
+          expect(positionIncreaseEvent.executionPrice).eq("5000500050005000"); // ~5000.5
         },
       },
     });

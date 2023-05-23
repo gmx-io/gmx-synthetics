@@ -179,6 +179,10 @@ library WithdrawalStoreUtils {
     }
 
     function remove(DataStore dataStore, bytes32 key, address account) external {
+        if (!dataStore.containsBytes32(Keys.WITHDRAWAL_LIST, key)) {
+            revert Errors.WithdrawalNotFound(key);
+        }
+
         dataStore.removeBytes32(
             Keys.WITHDRAWAL_LIST,
             key

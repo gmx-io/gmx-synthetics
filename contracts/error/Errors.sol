@@ -17,7 +17,6 @@ library Errors {
     // Config errors
     error InvalidBaseKey(bytes32 baseKey);
     error InvalidFeeFactor(bytes32 baseKey, uint256 value);
-    error InvalidFactor(bytes32 baseKey, uint256 value);
 
     // Timelock errors
     error ActionAlreadySignalled();
@@ -27,6 +26,9 @@ library Errors {
     error MaxTimelockDelayExceeded(uint256 timelockDelay);
     error InvalidFeeReceiver(address receiver);
     error InvalidOracleSigner(address receiver);
+
+    // DepositStoreUtils errors
+    error DepositNotFound(bytes32 key);
 
     // DepositUtils errors
     error EmptyDeposit();
@@ -63,6 +65,9 @@ library Errors {
 
     // MarketFactory errors
     error MarketAlreadyExists(bytes32 salt, address existingMarketAddress);
+
+    // MarketStoreUtils errors
+    error MarketNotFound(address key);
 
     // MarketUtils errors
     error EmptyMarket();
@@ -133,7 +138,6 @@ library Errors {
 
     error EmptyPrimaryPrice(address token);
 
-    error OracleBlockNumbersAreNotEqual(uint256[] oracleBlockNumbers, uint256 expectedBlockNumber);
     error OracleBlockNumbersAreSmallerThanRequired(uint256[] oracleBlockNumbers, uint256 expectedBlockNumber);
     error OracleBlockNumberNotWithinRange(
         uint256[] minOracleBlockNumbers,
@@ -160,11 +164,14 @@ library Errors {
     error OrderTypeCannotBeCreated(uint256 orderType);
     error OrderAlreadyFrozen();
 
+    // OrderStoreUtils errors
+    error OrderNotFound(bytes32 key);
+
     // SwapOrderUtils errors
     error UnexpectedMarket();
 
     // DecreasePositionCollateralUtils errors
-    error InsufficientCollateral(int256 remainingCollateralAmount);
+    error InsufficientCollateral(uint256 collateralAmount, uint256 pendingCollateralDeduction);
     error InvalidOutputToken(address tokenOut, address expectedTokenOut);
 
     // DecreasePositionUtils errors
@@ -177,8 +184,11 @@ library Errors {
     error InsufficientCollateralAmount(uint256 collateralAmount, int256 collateralDeltaAmount);
     error InsufficientCollateralUsd(int256 remainingCollateralUsd);
 
+    // PositionStoreUtils errors
+    error PositionNotFound(bytes32 key);
+
     // PositionUtils errors
-    error LiquidatablePosition();
+    error LiquidatablePosition(string reason);
     error EmptyPosition();
     error InvalidPositionSizeValues(uint256 sizeInUsd, uint256 sizeInTokens);
     error MinPositionSize(uint256 positionSizeInUsd, uint256 minPositionSizeUsd);
@@ -209,6 +219,7 @@ library Errors {
     error InsufficientOutputAmount(uint256 outputAmount, uint256 minOutputAmount);
     error InsufficientSwapOutputAmount(uint256 outputAmount, uint256 minOutputAmount);
     error DuplicatedMarketInSwapPath(address market);
+    error SwapPriceImpactExceedsAmountIn(uint256 amountAfterFees, int256 negativeImpactAmount);
 
     // TokenUtils errors
     error EmptyTokenTranferGasLimit(address token);
@@ -238,6 +249,9 @@ library Errors {
         uint256 index,
         string label
     );
+
+    // WithdrawalStoreUtils errors
+    error WithdrawalNotFound(bytes32 key);
 
     // WithdrawalUtils errors
     error EmptyWithdrawal();

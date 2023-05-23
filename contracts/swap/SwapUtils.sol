@@ -269,6 +269,10 @@ library SwapUtils {
                 priceImpactUsd
             );
 
+            if (fees.amountAfterFees <= (-negativeImpactAmount).toUint256()) {
+                revert Errors.SwapPriceImpactExceedsAmountIn(fees.amountAfterFees, negativeImpactAmount);
+            }
+
             cache.amountIn = fees.amountAfterFees - (-negativeImpactAmount).toUint256();
             cache.amountOut = cache.amountIn * cache.tokenInPrice.min / cache.tokenOutPrice.max;
             cache.poolAmountOut = cache.amountOut;

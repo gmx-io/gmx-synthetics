@@ -429,6 +429,9 @@ library WithdrawalUtils {
             cache.shortTokenFees
         );
 
+        // if the native token was transferred to the receiver in a swap
+        // it may be possible to invoke external contracts before the validations
+        // are called
         MarketUtils.validateMarketTokenBalance(params.dataStore, market);
     }
 

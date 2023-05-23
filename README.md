@@ -467,7 +467,7 @@ After the initial setup:
 
 - Collateral tokens need to be whitelisted with a configured TOKEN_TRANSFER_GAS_LIMIT
 
-- Rebasing tokens, tokens that change balance on transfer, with token burns, etc, are not compatible with the system and should not be whitelisted
+- Rebasing tokens, tokens that change balance on transfer, with token burns, tokens with callbacks e.g. ERC-777 tokens, etc, are not compatible with the system and should not be whitelisted
 
 - Order keepers can use prices from different blocks for limit orders with a swap, which would lead to different output amounts
 
@@ -486,6 +486,16 @@ After the initial setup:
 - In certain blockchains it is possible for the keeper to have control over the tx.gasprice used to execute a transaction which would affect the execution fee paid to the keeper
 
 - For L2s with sequencers, there is no contract validation to check if the L2 sequencer is active, oracle keepers should stop signing prices if no blocks are being created by the sequencer, if the sequencer resumes regular operation, the oracle keepers should sign prices for the latest blocks using the latest fetched prices
+
+- For transactions that can be executed entirely using on-chain price feeds, it may be possible to take advantage of stale pricing due to price latency or the chain being down, usage of on-chain price feeds should be temporary and low latency feeds should be used instead once all tokens are supported
+
+- Orders may be prevented from execution by a malicious user intentionally causing a market to be unbalanced resulting in a high price impact, this should be costly and difficult to benefit from
+
+- Block re-orgs could allow a user to retroactively cancel an order after it has been executed if price did not move favourably for the user, care should be taken to handle this case if using the contracts on chains where long re-orgs are possible
+
+- Updating and cancellation of orders could be front-run to prevent order execution, this should not be an issue if the probability of a successful front-running is less than or equal to 50%, if the probability is higher than 50%, fees and price impact should be adjusted to ensure that the strategy is not net profitable, adjusting the ui fee or referral discount could similarly be used to cause order cancellations
+
+- Decrease position orders could output two tokens instead of a single token, in case the decrease position swap fails, it is also possible that the output amount and collateral may not be sufficient to cover fees, causing the order to not be executed
 
 # Feature Development
 
