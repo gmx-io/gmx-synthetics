@@ -34,7 +34,7 @@ async function main() {
   for (const deployment of Object.values(allDeployments)) {
     const start = Date.now();
     try {
-      const { address, args } = deployment;
+      const { address, args, storageLayout } = deployment;
       await setTimeout(200);
       const isContractVerified = await getIsContractVerified(address);
 
@@ -44,19 +44,23 @@ async function main() {
       }
 
       console.log("Verifying contract %s %s", address, args.join(" "));
+      const contractArg = `--contract ${storageLayout.storage[0].contract}`;
 
       await new Promise((resolve, reject) => {
-        exec(`npx hardhat verify --network ${hre.network.name} ${address} ${args.join(" ")}`, (ex, stdout, stderr) => {
-          if (ex) {
-            reject(ex);
-            return;
+        exec(
+          `npx hardhat verify ${contractArg} --network ${hre.network.name} ${address} ${args.join(" ")}`,
+          (ex, stdout, stderr) => {
+            if (ex) {
+              reject(ex);
+              return;
+            }
+            if (stderr) {
+              reject(stderr);
+              return;
+            }
+            resolve(stdout);
           }
-          if (stderr) {
-            reject(stderr);
-            return;
-          }
-          resolve(stdout);
-        });
+        );
       });
       console.log("Verified contract %s in %ss", deployment.address, (Date.now() - start) / 1000);
     } catch (ex) {
