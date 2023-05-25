@@ -66,6 +66,26 @@ contract Reader {
         return OrderStoreUtils.get(dataStore, key);
     }
 
+    function getPositionPnlUsd(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketUtils.MarketPrices memory prices,
+        bytes32 positionKey,
+        uint256 executionPrice,
+        uint256 sizeDeltaUsd
+    ) external view returns (int256, uint256) {
+        Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
+
+        return PositionUtils.getPositionPnlUsd(
+            dataStore,
+            market,
+            prices,
+            position,
+            executionPrice,
+            sizeDeltaUsd
+        );
+    }
+
     function getAccountPositions(
         DataStore dataStore,
         address account,
@@ -321,6 +341,8 @@ contract Reader {
         DataStore dataStore,
         address marketKey,
         Price.Props memory indexTokenPrice,
+        uint256 positionSizeInUsd,
+        uint256 positionSizeInTokens,
         int256 sizeDeltaUsd,
         bool isLong
     ) external view returns (ReaderUtils.ExecutionPriceResult memory) {
@@ -329,6 +351,8 @@ contract Reader {
             dataStore,
             market,
             indexTokenPrice,
+            positionSizeInUsd,
+            positionSizeInTokens,
             sizeDeltaUsd,
             isLong
         );

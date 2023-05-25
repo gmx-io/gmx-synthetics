@@ -54,6 +54,13 @@ library DecreasePositionCollateralUtils {
         address holdingAddress;
     }
 
+    struct GetExecutionPriceCache {
+        int256 priceImpactUsd;
+        uint256 priceImpactDiffUsd;
+        uint256 executionPrice;
+        int256 priceImpactAmount;
+    }
+
     // @dev handle the collateral changes of the position
     // @param params PositionUtils.UpdatePositionParams
     // @param cache DecreasePositionCache
@@ -363,7 +370,9 @@ library DecreasePositionCollateralUtils {
         MarketUtils.MarketPrices memory prices,
         uint256 sizeDeltaUsd
     ) internal view returns (uint256, int256, uint256) {
-        int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
+        GetExecutionPriceCache memory cache;
+
+        cache.priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
                 params.contracts.dataStore,
                 params.market,
@@ -372,16 +381,16 @@ library DecreasePositionCollateralUtils {
             )
         );
 
-        priceImpactUsd = MarketUtils.getCappedPositionImpactUsd(
+        cache.priceImpactUsd = MarketUtils.getCappedPositionImpactUsd(
             params.contracts.dataStore,
             params.market.marketToken,
             prices.indexTokenPrice,
-            priceImpactUsd,
+            cache.priceImpactUsd,
             sizeDeltaUsd
         );
 
-        uint256 priceImpactDiffUsd;
-        if (priceImpactUsd < 0) {
+        cache.priceImpactDiffUsd;
+        if (cache.priceImpactUsd < 0) {
             uint256 maxPriceImpactFactor = MarketUtils.getMaxPositionImpactFactor(
                 params.contracts.dataStore,
                 params.market.marketToken,
@@ -391,29 +400,31 @@ library DecreasePositionCollateralUtils {
             // convert the max price impact to the min negative value
             int256 minPriceImpactUsd = -Precision.applyFactor(sizeDeltaUsd, maxPriceImpactFactor).toInt256();
 
-            if (priceImpactUsd < minPriceImpactUsd) {
-                priceImpactDiffUsd = (minPriceImpactUsd - priceImpactUsd).toUint256();
-                priceImpactUsd = minPriceImpactUsd;
+            if (cache.priceImpactUsd < minPriceImpactUsd) {
+                cache.priceImpactDiffUsd = (minPriceImpactUsd - cache.priceImpactUsd).toUint256();
+                cache.priceImpactUsd = minPriceImpactUsd;
             }
         }
 
-        uint256 executionPrice = BaseOrderUtils.getExecutionPrice(
+        cache.executionPrice = BaseOrderUtils.getExecutionPrice(
             params.contracts.oracle.getPrimaryPrice(params.market.indexToken),
+            params.position.sizeInUsd(),
+            params.position.sizeInTokens(),
             sizeDeltaUsd,
-            priceImpactUsd,
+            cache.priceImpactUsd,
             params.order.acceptablePrice(),
             params.position.isLong(),
             false // isIncrease
         );
 
-        int256 priceImpactAmount = PositionPricingUtils.getPriceImpactAmount(
-            priceImpactUsd,
+        cache.priceImpactAmount = PositionPricingUtils.getPriceImpactAmount(
+            cache.priceImpactUsd,
             prices.indexTokenPrice,
             params.position.isLong(),
             false // isIncrease
         );
 
-        return (executionPrice, priceImpactAmount, priceImpactDiffUsd);
+        return (cache.executionPrice, cache.priceImpactAmount, cache.priceImpactDiffUsd);
     }
 
     function processForceClose(

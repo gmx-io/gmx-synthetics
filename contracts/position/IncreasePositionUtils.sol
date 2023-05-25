@@ -303,6 +303,8 @@ library IncreasePositionUtils {
 
         uint256 executionPrice = BaseOrderUtils.getExecutionPrice(
             params.contracts.oracle.getPrimaryPrice(params.market.indexToken),
+            params.position.sizeInUsd(),
+            params.position.sizeInTokens(),
             params.order.sizeDeltaUsd(),
             priceImpactUsd,
             params.order.acceptablePrice(),

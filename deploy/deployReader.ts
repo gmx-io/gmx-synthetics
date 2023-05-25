@@ -8,6 +8,7 @@ const func = createDeployFunction({
     "DepositStoreUtils",
     "WithdrawalStoreUtils",
     "PositionStoreUtils",
+    "PositionUtils",
     "OrderStoreUtils",
     "ReaderUtils",
   ],

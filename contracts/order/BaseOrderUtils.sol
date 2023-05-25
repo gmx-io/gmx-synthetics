@@ -113,6 +113,14 @@ library BaseOrderUtils {
         IReferralStorage referralStorage;
     }
 
+    struct GetExecutionPriceCache {
+        bool shouldUseMaxPrice;
+        uint256 price;
+        uint256 executionPrice;
+        bool shouldPriceBeSmaller;
+        int256 priceImpactUsdForPriceAdjustment;
+    }
+
     // @dev check if an orderType is a market order
     // @param orderType the order type
     // @return whether an orderType is a market order
@@ -282,20 +290,25 @@ library BaseOrderUtils {
     // @return the execution price
     function getExecutionPrice(
         Price.Props memory primaryPrice,
+        uint256 positionSizeInUsd,
+        uint256 positionSizeInTokens,
         uint256 sizeDeltaUsd,
         int256 priceImpactUsd,
         uint256 acceptablePrice,
         bool isLong,
         bool isIncrease
     ) internal pure returns (uint256) {
+        GetExecutionPriceCache memory cache;
+
         // increase order:
         //     - long: use the larger price
         //     - short: use the smaller price
         // decrease order:
         //     - long: use the smaller price
         //     - short: use the larger price
-        bool shouldUseMaxPrice = isIncrease ? isLong : !isLong;
-        uint256 price = primaryPrice.pickPrice(shouldUseMaxPrice);
+        cache.shouldUseMaxPrice = isIncrease ? isLong : !isLong;
+        cache.price = primaryPrice.pickPrice(cache.shouldUseMaxPrice);
+        cache.executionPrice = cache.price;
 
         // should price be smaller than acceptablePrice
         // increase order:
@@ -304,14 +317,14 @@ library BaseOrderUtils {
         // decrease order:
         //     - long: price should be larger than acceptablePrice
         //     - short: price should be smaller than acceptablePrice
-        bool shouldPriceBeSmaller = isIncrease ? isLong : !isLong;
+        cache.shouldPriceBeSmaller = isIncrease ? isLong : !isLong;
 
         // using opening of long positions as an example
-        // pnl is calculated as: position.sizeInTokens * price - position.sizeInUsd
+        // after the order is executed the change in the position's pnl would be equal to:
+        // sizeDeltaInTokens * price - sizeDeltaUsd
+        //
+        // sizeDeltaInTokens = sizeDeltaUsd / executionPrice
         // priceImpactUsd should adjust the execution price such that:
-        // position.sizeInTokens * price - position.sizeInUsd = pnl = priceImpactUsd
-        // position.sizeInUsd = sizeDeltaUsd
-        // position.sizeInTokens = sizeDeltaUsd / executionPrice
         // sizeDeltaUsd / executionPrice * price - sizeDeltaUsd = priceImpactUsd
         // sizeDeltaUsd / executionPrice * price = sizeDeltaUsd + priceImpactUsd
         // sizeDeltaUsd / executionPrice = (sizeDeltaUsd + priceImpactUsd) / price
@@ -323,38 +336,87 @@ library BaseOrderUtils {
         //
         // checking pnl: (5000 / 2500) * 2000 - 5000 = -1000
 
+        // using closing of long positions as an example
+        // realized pnl is calculated as totalPositionPnl * sizeDeltaInTokens / position.sizeInTokens
+        // totalPositionPnl: position.sizeInTokens * executionPrice - position.sizeInUsd
+        // sizeDeltaInTokens: position.sizeInTokens * sizeDeltaUsd / position.sizeInUsd
+        // realized pnl: (position.sizeInTokens * executionPrice - position.sizeInUsd) * (position.sizeInTokens * sizeDeltaUsd / position.sizeInUsd) / position.sizeInTokens
+        // realized pnl: (position.sizeInTokens * executionPrice - position.sizeInUsd) * (sizeDeltaUsd / position.sizeInUsd)
+        // priceImpactUsd should adjust the execution price such that:
+        // [(position.sizeInTokens * executionPrice - position.sizeInUsd) * (sizeDeltaUsd / position.sizeInUsd)] -
+        // [(position.sizeInTokens * price - position.sizeInUsd) * (sizeDeltaUsd / position.sizeInUsd)] = priceImpactUsd
+        //
+        // (position.sizeInTokens * executionPrice - position.sizeInUsd) - (position.sizeInTokens * price - position.sizeInUsd)
+        // = priceImpactUsd / (sizeDeltaUsd / position.sizeInUsd)
+        // = priceImpactUsd * position.sizeInUsd / sizeDeltaUsd
+        //
+        // position.sizeInTokens * executionPrice - position.sizeInTokens * price = priceImpactUsd * position.sizeInUsd / sizeDeltaUsd
+        // position.sizeInTokens * (executionPrice - price) = priceImpactUsd * position.sizeInUsd / sizeDeltaUsd
+        // executionPrice - price = (priceImpactUsd * position.sizeInUsd) / (sizeDeltaUsd * position.sizeInTokens)
+        // executionPrice = price + (priceImpactUsd * position.sizeInUsd) / (sizeDeltaUsd * position.sizeInTokens)
+        // executionPrice = price + (priceImpactUsd / sizeDeltaUsd) * (position.sizeInUsd / position.sizeInTokens)
+        // executionPrice = price + (priceImpactUsd * position.sizeInUsd / position.sizeInTokens) / sizeDeltaUsd
+        //
+        // e.g. if price is $2000, sizeDeltaUsd is $5000, priceImpactUsd is -$1000, position.sizeInUsd is $10,000, position.sizeInTokens is 5
+        // executionPrice = 2000 + (-1000 * 10,000 / 5) / 5000 = 1600
+        // realizedPnl based on price, without price impact: 0
+        // realizedPnl based on executionPrice, with price impact: (5 * 1600 - 10,000) * (5 * 5000 / 10,000) / 5 => -1000
+
         // a positive priceImpactUsdForPriceAdjustment would decrease the executionPrice
         // a negative priceImpactUsdForPriceAdjustment would increase the executionPrice
 
+        // for increase orders, the priceImpactUsdForPriceAdjustment is added to the divisor
+        // a positive priceImpactUsdForPriceAdjustment would increase the divisor and decrease the executionPrice
         // increase long order:
         //      - if price impact is positive, priceImpactUsdForPriceAdjustment should be positive, to decrease the executionPrice
         //      - if price impact is negative, priceImpactUsdForPriceAdjustment should be negative, to increase the executionPrice
         // increase short order:
         //      - if price impact is positive, priceImpactUsdForPriceAdjustment should be negative, to increase the executionPrice
         //      - if price impact is negative, priceImpactUsdForPriceAdjustment should be positive, to decrease the executionPrice
-        // decrease long order:
-        //      - if price impact is positive, priceImpactUsdForPriceAdjustment should be negative, to increase the executionPrice
-        //      - if price impact is negative, priceImpactUsdForPriceAdjustment should be positive, to decrease the executionPrice
-        // decrease short order:
-        //      - if price impact is positive, priceImpactUsdForPriceAdjustment should be positive, to decrease the executionPrice
-        //      - if price impact is negative, priceImpactUsdForPriceAdjustment should be negative, to increase the executionPrice
-        bool shouldFlipPriceImpactUsd = isIncrease ? !isLong : isLong;
-        int256 priceImpactUsdForPriceAdjustment = shouldFlipPriceImpactUsd ? -priceImpactUsd : priceImpactUsd;
 
-        if (priceImpactUsdForPriceAdjustment < 0 && (-priceImpactUsdForPriceAdjustment).toUint256() > sizeDeltaUsd) {
-            revert Errors.PriceImpactLargerThanOrderSize(priceImpactUsdForPriceAdjustment, sizeDeltaUsd);
+        // for decrease orders, the priceImpactUsdForPriceAdjustment adjusts the numerator
+        // a positive priceImpactUsdForPriceAdjustment would increase the divisor and increase the executionPrice
+        // decrease long order:
+        //      - if price impact is positive, priceImpactUsdForPriceAdjustment should be positive, to increase the executionPrice
+        //      - if price impact is negative, priceImpactUsdForPriceAdjustment should be negative, to decrease the executionPrice
+        // decrease short order:
+        //      - if price impact is positive, priceImpactUsdForPriceAdjustment should be negative, to decrease the executionPrice
+        //      - if price impact is negative, priceImpactUsdForPriceAdjustment should be positive, to increase the executionPrice
+        cache.priceImpactUsdForPriceAdjustment = isLong ? priceImpactUsd : -priceImpactUsd;
+
+        if (cache.priceImpactUsdForPriceAdjustment < 0 && (-cache.priceImpactUsdForPriceAdjustment).toUint256() > sizeDeltaUsd) {
+            revert Errors.PriceImpactLargerThanOrderSize(cache.priceImpactUsdForPriceAdjustment, sizeDeltaUsd);
         }
 
         // adjust price by price impact
         if (sizeDeltaUsd > 0) {
-            price = price * sizeDeltaUsd / Calc.sumReturnUint256(sizeDeltaUsd, priceImpactUsdForPriceAdjustment);
+            if (isIncrease) {
+                int256 _executionPrice = cache.price.toInt256() * sizeDeltaUsd.toInt256() / Calc.sumReturnInt256(sizeDeltaUsd, cache.priceImpactUsdForPriceAdjustment);
+
+                if (_executionPrice < 0) {
+                    revert Errors.NegativeExecutionPrice(_executionPrice, cache.price, positionSizeInUsd, priceImpactUsd, sizeDeltaUsd);
+                }
+
+                cache.executionPrice = _executionPrice.toUint256();
+            } else {
+                if (positionSizeInTokens > 0) {
+                    int256 adjustment = Precision.applyFraction(positionSizeInUsd, priceImpactUsd, positionSizeInTokens) / sizeDeltaUsd.toInt256();
+                    int256 _executionPrice = cache.price.toInt256() + adjustment;
+
+                    if (_executionPrice < 0) {
+                        revert Errors.NegativeExecutionPrice(_executionPrice, cache.price, positionSizeInUsd, priceImpactUsd, sizeDeltaUsd);
+                    }
+
+                    cache.executionPrice = _executionPrice.toUint256();
+                }
+            }
         }
 
         if (
-            (shouldPriceBeSmaller && price <= acceptablePrice)  ||
-            (!shouldPriceBeSmaller && price >= acceptablePrice)
+            (cache.shouldPriceBeSmaller && cache.executionPrice <= acceptablePrice)  ||
+            (!cache.shouldPriceBeSmaller && cache.executionPrice >= acceptablePrice)
         ) {
-            return price;
+            return cache.executionPrice;
         }
 
         // the validateOrderPrice function should have validated if the price fulfills
@@ -380,7 +442,7 @@ library BaseOrderUtils {
         //
         // it may also be possible for users to prevent the execution of orders from other users
         // by manipulating the price impact, though this should be costly
-        revert Errors.OrderNotFulfillableDueToPriceImpact(price, acceptablePrice);
+        revert Errors.OrderNotFulfillableDueToPriceImpact(cache.executionPrice, acceptablePrice);
     }
 
     // @dev validate that an order exists
