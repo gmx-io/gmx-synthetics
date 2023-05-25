@@ -46,8 +46,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       withdrawalGasLimitMultiple: 1800000,
 
       singleSwapGasLimit: 2500000,
-      increaseOrderGasLimit: 5000000,
-      decreaseOrderGasLimit: 5000000,
+      increaseOrderGasLimit: 4000000,
+      decreaseOrderGasLimit: 4000000,
       swapOrderGasLimit: 3000000,
 
       tokenTransferGasLimit: 200_000,

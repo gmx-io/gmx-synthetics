@@ -6,7 +6,7 @@ export async function deployContract(name, args, contractOptions = {}) {
 }
 
 export async function contractAt(name, address, provider) {
-  const contractFactory = await ethers.getContractFactory(name);
+  let contractFactory = await ethers.getContractFactory(name);
   if (provider) {
     contractFactory = contractFactory.connect(provider);
   }
@@ -15,10 +15,25 @@ export async function contractAt(name, address, provider) {
 
 export function createDeployFunction({
   contractName,
-  dependencyNames = null,
+  dependencyNames = [],
   getDeployArgs = null,
-  libraryNames = null,
+  libraryNames = [],
   afterDeploy = null,
+  id,
+}: {
+  contractName: string;
+  dependencyNames?: string[];
+  getDeployArgs?: (args: { dependencyContracts: any }) => Promise<any[]>;
+  libraryNames?: string[];
+  afterDeploy?: (args: {
+    deployedContract: any;
+    deployer: string;
+    getNamedAccounts: () => Promise<any>;
+    deployments: any;
+    gmx: any;
+    network: any;
+  }) => Promise<void>;
+  id?: string;
 }) {
   const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRuntimeEnvironment) => {
     const { deploy, get } = deployments;
@@ -74,6 +89,12 @@ export function createDeployFunction({
     if (afterDeploy) {
       await afterDeploy({ deployedContract, deployer, getNamedAccounts, deployments, gmx, network });
     }
+
+    if (id) {
+      // hardhat-deploy would not redeploy a contract if it already exists with the same id
+      // with `id` it's possible to control whether a contract should be redeployed
+      return true;
+    }
   };
 
   let dependencies = [];
@@ -84,6 +105,9 @@ export function createDeployFunction({
     dependencies = dependencies.concat(libraryNames);
   }
 
+  if (id) {
+    func.id = id;
+  }
   func.tags = [contractName];
   func.dependencies = dependencies;
 
