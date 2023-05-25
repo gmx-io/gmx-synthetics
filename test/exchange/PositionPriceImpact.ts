@@ -168,6 +168,7 @@ describe("Exchange.PositionPriceImpact", () => {
       "312099999999999992"
     ); // 0.312099999999999992 ETH, 1560.5 USD
 
+    // test
     await handleOrder(fixture, {
       create: {
         ...params,
@@ -180,8 +181,8 @@ describe("Exchange.PositionPriceImpact", () => {
         gasUsageLabel: "executeOrder",
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("5039814534825118"); // 5039.81
-          expect(positionDecreaseEvent.pnlUsd).eq("-39814534825119568606370325571846"); // -39.814534825119568606370325571846
+          expect(positionDecreaseEvent.executionPrice).eq("5039656643742783"); // 5039.65664374
+          expect(positionDecreaseEvent.pnlUsd).eq("-39500000000000015043687565884851"); // -39.5
         },
       },
     });

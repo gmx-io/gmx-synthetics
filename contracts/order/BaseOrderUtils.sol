@@ -394,17 +394,17 @@ library BaseOrderUtils {
                 int256 _executionPrice = cache.price.toInt256() * sizeDeltaUsd.toInt256() / Calc.sumReturnInt256(sizeDeltaUsd, cache.priceImpactUsdForPriceAdjustment);
 
                 if (_executionPrice < 0) {
-                    revert Errors.NegativeExecutionPrice(_executionPrice, cache.price, positionSizeInUsd, priceImpactUsd, sizeDeltaUsd);
+                    revert Errors.NegativeExecutionPrice(_executionPrice, cache.price, positionSizeInUsd, cache.priceImpactUsdForPriceAdjustment, sizeDeltaUsd);
                 }
 
                 cache.executionPrice = _executionPrice.toUint256();
             } else {
                 if (positionSizeInTokens > 0) {
-                    int256 adjustment = Precision.applyFraction(positionSizeInUsd, priceImpactUsd, positionSizeInTokens) / sizeDeltaUsd.toInt256();
+                    int256 adjustment = Precision.applyFraction(positionSizeInUsd, cache.priceImpactUsdForPriceAdjustment, positionSizeInTokens) / sizeDeltaUsd.toInt256();
                     int256 _executionPrice = cache.price.toInt256() + adjustment;
 
                     if (_executionPrice < 0) {
-                        revert Errors.NegativeExecutionPrice(_executionPrice, cache.price, positionSizeInUsd, priceImpactUsd, sizeDeltaUsd);
+                        revert Errors.NegativeExecutionPrice(_executionPrice, cache.price, positionSizeInUsd, cache.priceImpactUsdForPriceAdjustment, sizeDeltaUsd);
                     }
 
                     cache.executionPrice = _executionPrice.toUint256();
@@ -419,7 +419,7 @@ library BaseOrderUtils {
             return cache.executionPrice;
         }
 
-        // the validateOrderPrice function should have validated if the price fulfills
+        // the validateOrderTriggerPrice function should have validated if the price fulfills
         // the order's trigger price
         //
         // for decrease orders, the price impact should already be capped, so if the user
