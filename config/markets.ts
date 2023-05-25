@@ -169,12 +169,38 @@ const config: {
   arbitrumGoerli: [
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
+      virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
+    },
+    { tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "USDC" } },
+    { tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "USDC" } },
+    {
+      tokens: { indexToken: "SOL", longToken: "WBTC", shortToken: "USDC" },
+      virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
     },
     {
-      tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "USDC" },
+      tokens: { longToken: "USDC", shortToken: "USDT" },
+      swapOnly: true,
     },
+    { tokens: { indexToken: "DOGE", longToken: "WBTC", shortToken: "DAI" } },
+    { tokens: { indexToken: "LINK", longToken: "WBTC", shortToken: "DAI" } },
+    { tokens: { indexToken: "BNB", longToken: "WBTC", shortToken: "DAI" } },
+    { tokens: { indexToken: "ADA", longToken: "WBTC", shortToken: "DAI" } },
+    { tokens: { indexToken: "TRX", longToken: "WBTC", shortToken: "DAI" } },
+    { tokens: { indexToken: "MATIC", longToken: "WBTC", shortToken: "USDC" } },
+    { tokens: { indexToken: "DOT", longToken: "WBTC", shortToken: "USDC" } },
+    { tokens: { indexToken: "UNI", longToken: "WBTC", shortToken: "USDC" } },
     {
-      tokens: { indexToken: "TEST", longToken: "WETH", shortToken: "USDC" },
+      tokens: {
+        indexToken: "TEST",
+        longToken: "WBTC",
+        shortToken: "USDC",
+      },
+      positivePositionImpactFactor: decimalToFloat(25, 6), // 0.0025 %
+      negativePositionImpactFactor: decimalToFloat(5, 5), // 0.005 %
+      positionImpactExponentFactor: decimalToFloat(2, 0), // 2
+      positiveSwapImpactFactor: decimalToFloat(1, 5), // 0.001 %
+      negativeSwapImpactFactor: decimalToFloat(2, 5), // 0.002 %
+      swapImpactExponentFactor: decimalToFloat(2, 0), // 2
     },
   ],
   avalanche: [],

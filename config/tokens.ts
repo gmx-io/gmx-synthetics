@@ -82,9 +82,55 @@ const config: {
       transferGasLimit: 200 * 1000,
       deploy: true,
     },
+    SOL: {
+      synthetic: true,
+      decimals: 18,
+    },
+    USDT: {
+      decimals: 6,
+      transferGasLimit: 200 * 1000,
+      deploy: true,
+    },
+    DAI: {
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      deploy: true,
+    },
     TEST: {
       synthetic: true,
       decimals: 18,
+    },
+    BNB: {
+      decimals: 18,
+      synthetic: true,
+    },
+    DOGE: {
+      decimals: 8,
+      synthetic: true,
+    },
+    LINK: {
+      decimals: 18,
+      synthetic: true,
+    },
+    ADA: {
+      decimals: 18,
+      synthetic: true,
+    },
+    DOT: {
+      decimals: 18,
+      synthetic: true,
+    },
+    MATIC: {
+      decimals: 18,
+      synthetic: true,
+    },
+    UNI: {
+      decimals: 18,
+      synthetic: true,
+    },
+    TRX: {
+      decimals: 18,
+      synthetic: true,
     },
   },
   avalanche: {
