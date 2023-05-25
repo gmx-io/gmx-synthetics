@@ -155,6 +155,7 @@ library Errors {
         uint256 orderType
     );
     error PriceImpactLargerThanOrderSize(int256 priceImpactUsdForPriceAdjustment, uint256 sizeDeltaUsd);
+    error NegativeExecutionPrice(int256 executionPrice, uint256 price, uint256 positionSizeInUsd, int256 priceImpactUsd, uint256 sizeDeltaUsd);
     error OrderNotFulfillableDueToPriceImpact(uint256 price, uint256 acceptablePrice);
 
     // IncreaseOrderUtils errors

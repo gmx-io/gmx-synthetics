@@ -258,6 +258,8 @@ library ReaderUtils {
         DataStore dataStore,
         Market.Props memory market,
         Price.Props memory indexTokenPrice,
+        uint256 positionSizeInUsd,
+        uint256 positionSizeInTokens,
         int256 sizeDeltaUsd,
         bool isLong
     ) external view returns (ExecutionPriceResult memory result) {
@@ -301,6 +303,8 @@ library ReaderUtils {
         bool shouldPriceBeSmaller = isIncrease ? isLong : !isLong;
         result.executionPrice = BaseOrderUtils.getExecutionPrice(
             indexTokenPrice,
+            positionSizeInUsd,
+            positionSizeInTokens,
             (sizeDeltaUsd < 0 ? -sizeDeltaUsd : sizeDeltaUsd).toUint256(),
             result.priceImpactUsd,
             shouldPriceBeSmaller ? type(uint256).max : 0,
