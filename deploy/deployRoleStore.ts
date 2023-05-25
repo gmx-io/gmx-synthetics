@@ -4,7 +4,6 @@ import { createDeployFunction } from "../utils/deploy";
 const func = createDeployFunction({
   contractName: "RoleStore",
   id: "RoleStore",
-  dependencyNames: ["FundAccounts"],
   afterDeploy: async ({ gmx }) => {
     const rolesConfig = await gmx.getRoles();
     for (const { account, roles } of rolesConfig) {
@@ -14,5 +13,7 @@ const func = createDeployFunction({
     }
   },
 });
+
+func.dependencies = func.dependencies.concat(["FundAccounts"]);
 
 export default func;
