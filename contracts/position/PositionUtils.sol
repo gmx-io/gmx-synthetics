@@ -80,10 +80,11 @@ library PositionUtils {
     struct DecreasePositionCollateralValues {
         uint256 executionPrice;
         uint256 remainingCollateralAmount;
-        int256 positionPnlUsd;
+        int256 basePnlUsd;
         uint256 sizeDeltaInTokens;
-        int256 priceImpactAmount;
+        int256 priceImpactUsd;
         uint256 priceImpactDiffUsd;
+        int256 priceImpactAmount;
         uint256 pendingCollateralDeduction;
         DecreasePositionCollateralValuesOutput output;
     }
