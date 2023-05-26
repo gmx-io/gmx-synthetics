@@ -48,6 +48,10 @@ library DecreasePositionCollateralUtils {
         uint256 pnlAmountForUser;
     }
 
+    struct PayForCostResult {
+
+    }
+
     struct ProcessForceCloseCache {
         uint256 remainingFundingFeeAmount;
         uint256 remainingCostAmount;
@@ -167,10 +171,34 @@ library DecreasePositionCollateralUtils {
             values.output.secondaryOutputAmount = 0;
         }
 
+        values.remainingCollateralAmount = params.position.collateralAmount();
+
+        PayForCostResult memory result;
+
         // pay for funding fees
         //  - payment should be in collateral token
         //  - if the payment is in the secondaryOutputToken then let the holding
         //  address claim the token
+        (values, result) = payForCost(
+            params,
+            values,
+            cache.prices,
+            collateralTokenPrice,
+            // use collateralTokenPrice.min because the payForCost
+            // will divide the USD value by the price.min as well
+            fees.funding.fundingFeeAmount * collateralTokenPrice.min
+        );
+
+        if (result.amountPaidInSecondaryOutputToken > 0) {
+            // let the holding address claim the token
+            // emit insufficient funding fees event
+        }
+
+        if (result.remainingCostUsd > 0) {
+            // set fees to zero
+            // emit insufficient funding fees event
+            // return
+        }
 
         // pay for negative pnl
         //  - update pool amount
@@ -506,7 +534,57 @@ library DecreasePositionCollateralUtils {
         Price.Props memory collateralTokenPrice,
         uint256 costUsd
     ) internal returns (PositionUtils.DecreasePositionCollateralValues memory) {
+        if (costUsd == 0) { return (values, result); }
 
+        uint256 remainingCostInOutputToken = Calc.roundUpDivision(costUsd, collateralTokenPrice.min);
+
+        if (values.output.outputAmount > 0) {
+            if (values.output.outputAmount > remainingCostInOutputToken) {
+                result.amountPaidInCollateralToken += remainingCostInOutputToken;
+                values.output.outputAmount -= remainingCostInOutputToken;
+                remainingCostInOutputToken = 0;
+            } else {
+                result.amountPaidInCollateralToken += values.output.outputAmount;
+                remainingCostInOutputToken -= values.output.outputAmount;
+                values.output.outputAmount = 0;
+            }
+        }
+
+        if (remainingCostInOutputToken == 0) { return (values, result); }
+
+        if (values.remainingCollateralAmount > 0) {
+            if (values.remainingCollateralAmount > remainingCostInOutputToken) {
+                result.amountPaidInCollateralToken += remainingCostInOutputToken;
+                values.remainingCollateralAmount -= remainingCostInOutputToken;
+                remainingCostInOutputToken = 0;
+            } else {
+                result.amountPaidInCollateralToken += values.remainingCollateralAmount;
+                remainingCostInOutputToken -= values.remainingCollateralAmount;
+                values.remainingCollateralAmount = 0;
+            }
+        }
+
+        if (remainingCostInOutputToken == 0) { return (values, result); }
+
+        Price.Props memory secondaryOutputTokenPrice = MarketUtils.getCachedTokenPrice(values.output.secondaryOutputToken, params.market, prices);
+
+        uint256 remainingCostInSecondaryOutputToken = remainingCostInOutputToken * collateralTokenPrice.min / secondaryOutputTokenPrice.min;
+
+        if (values.output.secondaryOutputAmount > 0) {
+            if (values.output.secondaryOutputAmount > remainingCostInSecondaryOutputToken) {
+                result.amountPaidInSecondaryOutputToken += remainingCostInSecondaryOutputToken;
+                values.output.secondaryOutputAmount -= remainingCostInSecondaryOutputToken;
+                remainingCostInSecondaryOutputToken = 0;
+            } else {
+                result.amountPaidInSecondaryOutputToken += values.output.secondaryOutputAmount;
+                remainingCostInSecondaryOutputToken -= values.output.secondaryOutputAmount;
+                values.output.secondaryOutputAmount = 0;
+            }
+        }
+
+        result.remainingCostUsd = remainingCostInSecondaryOutputToken * secondaryOutputTokenPrice.min;
+
+        return (values, result);
     }
 
     function processForceClose(
