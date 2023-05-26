@@ -24,7 +24,7 @@ library Chain {
     // @dev return the current block's number
     // @return the current block's number
     function currentBlockNumber() internal view returns (uint256) {
-        if (block.chainid == ARBITRUM_CHAIN_ID || block.chainid == ARBITRUM_GOERLI_CHAIN_ID) {
+        if (shouldUseArbSysValues()) {
             return arbSys.arbBlockNumber();
         }
 
@@ -34,10 +34,15 @@ library Chain {
     // @dev return the current block's hash
     // @return the current block's hash
     function getBlockHash(uint256 blockNumber) internal view returns (bytes32) {
-        if (block.chainid == ARBITRUM_CHAIN_ID || block.chainid == ARBITRUM_GOERLI_CHAIN_ID) {
+        if (shouldUseArbSysValues()) {
             return arbSys.arbBlockHash(blockNumber);
         }
 
         return blockhash(blockNumber);
+    }
+
+    function shouldUseArbSysValues() internal view returns (bool) {
+        return block.chainid == ARBITRUM_CHAIN_ID || block.chainid == ARBITRUM_GOERLI_CHAIN_ID;
+
     }
 }
