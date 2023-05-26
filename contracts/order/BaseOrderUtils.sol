@@ -7,6 +7,7 @@ import "../market/Market.sol";
 
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
+import "../referral/IReferralStorage.sol";
 
 import "../order/OrderVault.sol";
 

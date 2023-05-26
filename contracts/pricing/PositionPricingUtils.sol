@@ -73,9 +73,7 @@ library PositionPricingUtils {
     // @param positionFeeAmountForPool the position fee amount for the pool
     // @param positionFeeAmount the fee amount for increasing / decreasing the position
     // @param borrowingFeeAmount the borrowing fee amount
-    // @param totalNetCostAmount the total net cost amount in tokens
-    // @param collateralCostAmount this value is based on the totalNetCostAmount
-    // and any deductions due to output amounts
+    // @param totalCostAmount the total cost amount in tokens
     struct PositionFees {
         PositionReferralFees referral;
         PositionFundingFees funding;
@@ -89,8 +87,8 @@ library PositionPricingUtils {
         uint256 feeAmountForPool;
         uint256 positionFeeAmountForPool;
         uint256 positionFeeAmount;
-        uint256 totalNetCostAmount;
-        uint256 collateralCostAmount;
+        uint256 totalCostAmountExcludingFunding;
+        uint256 totalCostAmount;
     }
 
     // @param affiliate the referral affiliate of the trader
@@ -378,14 +376,15 @@ library PositionPricingUtils {
             params.uiFeeReceiver
         );
 
-        fees.totalNetCostAmount =
+        fees.totalCostAmountExcludingFunding =
             fees.positionFeeAmount
-            + fees.funding.fundingFeeAmount
             + fees.borrowing.borrowingFeeAmount
             + fees.ui.uiFeeAmount
             - fees.referral.traderDiscountAmount;
 
-        fees.collateralCostAmount = fees.totalNetCostAmount;
+        fees.totalCostAmount =
+            fees.totalCostAmountExcludingFunding
+            + fees.funding.fundingFeeAmount;
 
         return fees;
     }

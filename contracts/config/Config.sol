@@ -9,6 +9,7 @@ import "../data/Keys.sol";
 import "../role/RoleModule.sol";
 import "../event/EventEmitter.sol";
 import "../utils/BasicMulticall.sol";
+import "../utils/Precision.sol";
 
 // @title Config
 contract Config is ReentrancyGuard, RoleModule, BasicMulticall {

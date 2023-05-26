@@ -113,7 +113,7 @@ library PositionEventUtils {
         eventData.intItems.setItem(0, "longTokenFundingAmountPerSize", position.longTokenFundingAmountPerSize());
         eventData.intItems.setItem(1, "shortTokenFundingAmountPerSize", position.shortTokenFundingAmountPerSize());
         eventData.intItems.setItem(2, "priceImpactUsd", values.priceImpactUsd);
-        eventData.intItems.setItem(3, "pnlUsd", values.positionPnlUsd);
+        eventData.intItems.setItem(3, "basePnlUsd", values.basePnlUsd);
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "isLong", position.isLong());
@@ -133,8 +133,8 @@ library PositionEventUtils {
         EventEmitter eventEmitter,
         bytes32 orderKey,
         uint256 positionCollateralAmount,
-        int256 positionPnlUsd,
-        uint256 pendingCollateralDeduction
+        int256 basePnlUsd,
+        uint256 remainingCostUsd
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -143,10 +143,10 @@ library PositionEventUtils {
 
         eventData.uintItems.initItems(2);
         eventData.uintItems.setItem(0, "positionCollateralAmount", positionCollateralAmount);
-        eventData.uintItems.setItem(1, "pendingCollateralDeduction", pendingCollateralDeduction);
+        eventData.uintItems.setItem(1, "remainingCostUsd", remainingCostUsd);
 
         eventData.intItems.initItems(1);
-        eventData.intItems.setItem(0, "positionPnlUsd", positionPnlUsd);
+        eventData.intItems.setItem(0, "basePnlUsd", basePnlUsd);
 
         eventEmitter.emitEventLog(
             "ForceClose",
@@ -243,7 +243,7 @@ library PositionEventUtils {
         eventData.addressItems.setItem(3, "trader", fees.referral.trader);
         eventData.addressItems.setItem(4, "uiFeeReceiver", fees.ui.uiFeeReceiver);
 
-        eventData.uintItems.initItems(26);
+        eventData.uintItems.initItems(25);
         eventData.uintItems.setItem(0, "collateralTokenPrice.min", fees.collateralTokenPrice.min);
         eventData.uintItems.setItem(1, "collateralTokenPrice.max", fees.collateralTokenPrice.max);
         eventData.uintItems.setItem(2, "tradeSizeUsd", tradeSizeUsd);
@@ -266,10 +266,9 @@ library PositionEventUtils {
         eventData.uintItems.setItem(19, "feeAmountForPool", fees.feeAmountForPool);
         eventData.uintItems.setItem(20, "positionFeeAmountForPool", fees.positionFeeAmountForPool);
         eventData.uintItems.setItem(21, "positionFeeAmount", fees.positionFeeAmount);
-        eventData.uintItems.setItem(22, "totalNetCostAmount", fees.totalNetCostAmount);
-        eventData.uintItems.setItem(23, "collateralCostAmount", fees.collateralCostAmount);
-        eventData.uintItems.setItem(24, "uiFeeReceiverFactor", fees.ui.uiFeeReceiverFactor);
-        eventData.uintItems.setItem(25, "uiFeeAmount", fees.ui.uiFeeAmount);
+        eventData.uintItems.setItem(22, "totalCostAmount", fees.totalCostAmount);
+        eventData.uintItems.setItem(23, "uiFeeReceiverFactor", fees.ui.uiFeeReceiverFactor);
+        eventData.uintItems.setItem(24, "uiFeeAmount", fees.ui.uiFeeAmount);
 
         eventData.intItems.initItems(2);
         eventData.intItems.setItem(0, "latestLongTokenFundingAmountPerSize", fees.funding.latestLongTokenFundingAmountPerSize);

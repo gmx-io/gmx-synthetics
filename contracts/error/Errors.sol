@@ -172,7 +172,7 @@ library Errors {
     error UnexpectedMarket();
 
     // DecreasePositionCollateralUtils errors
-    error InsufficientCollateral(uint256 collateralAmount, uint256 pendingCollateralDeduction);
+    error InsufficientFundsToPayForCosts(uint256 remainingCostUsd, string step);
     error InvalidOutputToken(address tokenOut, address expectedTokenOut);
 
     // DecreasePositionUtils errors

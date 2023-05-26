@@ -8,6 +8,9 @@ import "../role/RoleModule.sol";
 import "../event/EventEmitter.sol";
 import "../utils/BasicMulticall.sol";
 import "../oracle/OracleStore.sol";
+import "../data/DataStore.sol";
+import "../data/Keys.sol";
+import "../chain/Chain.sol";
 
 // @title Timelock
 contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
