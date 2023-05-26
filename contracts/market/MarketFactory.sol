@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 
 import "./MarketToken.sol";
 import "./Market.sol";
-import "./MarketUtils.sol";
 import "../event/EventEmitter.sol";
 
 // @title MarketFactory
