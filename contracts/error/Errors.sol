@@ -100,9 +100,9 @@ library Errors {
 
     // Oracle errors
     error EmptySigner(uint256 signerIndex);
-    error InvalidBlockNumber(uint256 blockNumber);
+    error InvalidBlockNumber(uint256 minOracleBlockNumber, uint256 currentBlockNumber);
     error InvalidMinMaxBlockNumber(uint256 minOracleBlockNumber, uint256 maxOracleBlockNumber);
-    error MaxPriceAgeExceeded(uint256 oracleTimestamp);
+    error MaxPriceAgeExceeded(uint256 oracleTimestamp, uint256 currentTimestamp);
     error MinOracleSigners(uint256 oracleSigners, uint256 minOracleSigners);
     error MaxOracleSigners(uint256 oracleSigners, uint256 maxOracleSigners);
     error BlockNumbersNotSorted(uint256 minOracleBlockNumber, uint256 prevMinOracleBlockNumber);

@@ -168,7 +168,6 @@ describe("Exchange.PositionPriceImpact", () => {
       "312099999999999992"
     ); // 0.312099999999999992 ETH, 1560.5 USD
 
-    // test
     await handleOrder(fixture, {
       create: {
         ...params,

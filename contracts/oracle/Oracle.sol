@@ -356,11 +356,11 @@ contract Oracle is RoleModule {
             reportInfo.oracleTimestamp = OracleUtils.getUncompactedOracleTimestamp(params.compactedOracleTimestamps, i);
 
             if (reportInfo.minOracleBlockNumber > Chain.currentBlockNumber()) {
-                revert Errors.InvalidBlockNumber(reportInfo.minOracleBlockNumber);
+                revert Errors.InvalidBlockNumber(reportInfo.minOracleBlockNumber, Chain.currentBlockNumber());
             }
 
             if (reportInfo.oracleTimestamp + cache.maxPriceAge < Chain.currentTimestamp()) {
-                revert Errors.MaxPriceAgeExceeded(reportInfo.oracleTimestamp);
+                revert Errors.MaxPriceAgeExceeded(reportInfo.oracleTimestamp, Chain.currentTimestamp());
             }
 
             // block numbers must be in ascending order
