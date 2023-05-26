@@ -9,6 +9,7 @@ import "../event/EventEmitter.sol";
 import "../event/EventUtils.sol";
 import "../utils/Cast.sol";
 import "../utils/AccountUtils.sol";
+import "../market/MarketUtils.sol";
 
 import "../market/MarketToken.sol";
 

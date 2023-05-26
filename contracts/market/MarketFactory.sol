@@ -4,7 +4,9 @@ pragma solidity ^0.8.0;
 
 import "./MarketToken.sol";
 import "./Market.sol";
+import "./MarketStoreUtils.sol";
 import "../event/EventEmitter.sol";
+import "../utils/Cast.sol";
 
 // @title MarketFactory
 // @dev Contract to create markets
