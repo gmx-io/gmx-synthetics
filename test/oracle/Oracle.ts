@@ -76,7 +76,7 @@ describe("Oracle", () => {
       })
     )
       .to.be.revertedWithCustomError(errorsContract, "InvalidBlockNumber")
-      .withArgs(blockNumber + 10);
+      .withArgs(blockNumber + 10, blockNumber + 1);
 
     await expect(
       oracle.setPrices(dataStore.address, eventEmitter.address, {
