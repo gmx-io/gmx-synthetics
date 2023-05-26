@@ -85,22 +85,109 @@ library DecreasePositionCollateralUtils {
         // priceImpactDiffUsd is the difference between the maximum price impact and the originally calculated price impact
         // e.g. if the originally calculated price impact is -$100, but the capped price impact is -$80
         // then priceImpactUsd would be $20
-        (values.executionPrice, values.priceImpactAmount, values.priceImpactDiffUsd) = getExecutionPrice(params, cache.prices, params.order.sizeDeltaUsd());
+        (values.priceImpactUsd, values.priceImpactDiffUsd, values.executionPrice) = getExecutionPrice(params, cache.prices, params.order.sizeDeltaUsd());
 
-        // the position's total pnl is calculated based on the execution price
-        // since the execution price may be better than it should be, the position's positive pnl may be higher than it should be
-        // or the position's negative pnl may be lower than it should be
+        // the totalPositionPnl is calculated based on the current indexTokenPrice of the executionPrice
+        // since the execution price factors in price impact which should be accounted for separately
         // the sizeDeltaInTokens is calculated as position.sizeInTokens() * sizeDeltaUsd / position.sizeInUsd()
-        // the positionPnlUsd is the pnl to be realized, and is calculated as:
+        // the basePnlUsd is the pnl to be realized, and is calculated as:
         // totalPositionPnl * sizeDeltaInTokens / position.sizeInTokens()
-        (values.positionPnlUsd, values.sizeDeltaInTokens) = PositionUtils.getPositionPnlUsd(
+        (values.basePnlUsd, values.sizeDeltaInTokens) = PositionUtils.getPositionPnlUsd(
             params.contracts.dataStore,
             params.market,
             cache.prices,
             params.position,
-            values.executionPrice,
+            cache.prices.indexTokenPrice.pickPrice(!params.position.isLong()), // use the smaller price for long positions and larger price for short positions
             params.order.sizeDeltaUsd()
         );
+
+        PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams(
+            params.contracts.dataStore,
+            params.contracts.referralStorage,
+            params.position,
+            collateralTokenPrice,
+            params.market.longToken,
+            params.market.shortToken,
+            params.order.sizeDeltaUsd(),
+            params.order.uiFeeReceiver()
+        );
+
+        PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
+            getPositionFeesParams
+        );
+
+        // if the pnl is positive, deduct the pnl amount from the pool
+        if (values.basePnlUsd > 0) {
+            uint256 deductionAmountForPool = values.basePnlUsd.toUint256() / cache.pnlTokenPrice.max;
+            MarketUtils.applyDeltaToPoolAmount(
+                params.contracts.dataStore,
+                params.contracts.eventEmitter,
+                params.market.marketToken,
+                cache.pnlToken,
+                -deductionAmountForPool.toInt256()
+            );
+
+            if (values.output.outputToken == cache.pnlToken) {
+                values.output.outputAmount += deductionAmountForPool;
+            } else {
+                values.output.secondaryOutputAmount += deductionAmountForPool;
+            }
+        }
+
+        if (values.priceImpactUsd > 0) {
+            // reduce the position impact pool by the max amount
+            uint256 deductionAmountForImpactPool = Calc.roundUpDivision(values.priceImpactUsd.toUint256(), cache.prices.indexTokenPrice.min);
+
+            MarketUtils.applyDeltaToPositionImpactPool(
+                params.contracts.dataStore,
+                params.contracts.eventEmitter,
+                params.market.marketToken,
+                -deductionAmountForImpactPool.toInt256()
+            );
+
+            // the price impact can be paid out in the collateral token directly since
+            // it is not associated with the long or short token
+            values.output.outputAmount += values.priceImpactUsd.toUint256() / collateralTokenPrice.max;
+        }
+
+        // swap profit to the collateral token
+        // if the decreasePositionSwapType was set to NoSwap or if the swap fails due
+        // to insufficient liquidity or other reasons then it is possible that
+        // the profit remains in a different token from the collateral token
+        (bool wasSwapped, uint256 swapOutputAmount) = DecreasePositionSwapUtils.swapProfitToCollateralToken(
+            params,
+            cache.pnlToken,
+            values.output.secondaryOutputAmount
+        );
+
+        // if the swap was successful the profit should have been swapped
+        // to the collateral token
+        if (wasSwapped) {
+            values.output.outputAmount += swapOutputAmount;
+            values.output.secondaryOutputAmount = 0;
+        }
+
+        // pay for funding fees
+        //  - payment should be in collateral token
+        //  - if the payment is in the secondaryOutputToken then let the holding
+        //  address claim the token
+
+        // pay for negative pnl
+        //  - update pool amount
+        //  - payment can be in any token
+
+        // pay for fees
+        //  - update fee amounts if needed
+        //  - if payment is not sufficient then deduct the extra amount from the secondary output token
+        //  and set the fee amount to zero
+
+        // pay for price impact diff
+        //  - update claimable amount
+        //  - payment can be in any token
+
+        // pay for negative price impact
+        //  - update position impact pool amount
+        //  - payment can be in any token
 
         collateralCache.adjustedPositionPnlUsd = values.positionPnlUsd;
         collateralCache.adjustedPriceImpactDiffUsd = values.priceImpactDiffUsd;
@@ -144,21 +231,6 @@ library DecreasePositionCollateralUtils {
                 params.order.initialCollateralDeltaAmount()
             );
         }
-
-        PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams(
-            params.contracts.dataStore,
-            params.contracts.referralStorage,
-            params.position,
-            collateralTokenPrice,
-            params.market.longToken,
-            params.market.shortToken,
-            params.order.sizeDeltaUsd(),
-            params.order.uiFeeReceiver()
-        );
-
-        PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
-            getPositionFeesParams
-        );
 
         // position realizes a profit, deduct the pnl from the pool
         if (collateralCache.adjustedPositionPnlUsd > 0) {
@@ -365,11 +437,12 @@ library DecreasePositionCollateralUtils {
         return (values, fees);
     }
 
+    // returns priceImpactUsd, priceImpactDiffUsd, executionPrice
     function getExecutionPrice(
         PositionUtils.UpdatePositionParams memory params,
         MarketUtils.MarketPrices memory prices,
         uint256 sizeDeltaUsd
-    ) internal view returns (uint256, int256, uint256) {
+    ) internal view returns (int256, uint256, uint256) {
         GetExecutionPriceCache memory cache;
 
         cache.priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
@@ -381,6 +454,7 @@ library DecreasePositionCollateralUtils {
             )
         );
 
+        // cap priceImpactUsd based on the amount available in the position impact pool
         cache.priceImpactUsd = MarketUtils.getCappedPositionImpactUsd(
             params.contracts.dataStore,
             params.market.marketToken,
@@ -398,33 +472,41 @@ library DecreasePositionCollateralUtils {
             );
 
             // convert the max price impact to the min negative value
+            // e.g. if sizeDeltaUsd is 10,000 and maxPriceImpactFactor is 2%
+            // then minPriceImpactUsd = -200
             int256 minPriceImpactUsd = -Precision.applyFactor(sizeDeltaUsd, maxPriceImpactFactor).toInt256();
 
+            // cap priceImpactUsd to the min negative value and store the difference in priceImpactDiffUsd
+            // e.g. if priceImpactUsd is -500 and minPriceImpactUsd is -200
+            // then set priceImpactDiffUsd to -200 - -500 = 300
+            // set priceImpactUsd to -200
             if (cache.priceImpactUsd < minPriceImpactUsd) {
                 cache.priceImpactDiffUsd = (minPriceImpactUsd - cache.priceImpactUsd).toUint256();
                 cache.priceImpactUsd = minPriceImpactUsd;
             }
         }
 
-        cache.executionPrice = BaseOrderUtils.getExecutionPrice(
+        cache.executionPrice = BaseOrderUtils.getExecutionPriceForDecrease(
             params.contracts.oracle.getPrimaryPrice(params.market.indexToken),
             params.position.sizeInUsd(),
             params.position.sizeInTokens(),
             sizeDeltaUsd,
             cache.priceImpactUsd,
             params.order.acceptablePrice(),
-            params.position.isLong(),
-            false // isIncrease
+            params.position.isLong()
         );
 
-        cache.priceImpactAmount = PositionPricingUtils.getPriceImpactAmount(
-            cache.priceImpactUsd,
-            prices.indexTokenPrice,
-            params.position.isLong(),
-            false // isIncrease
-        );
+        return (cache.priceImpactUsd, cache.priceImpactDiffUsd, cache.executionPrice);
+    }
 
-        return (cache.executionPrice, cache.priceImpactAmount, cache.priceImpactDiffUsd);
+    function payForCost(
+        PositionUtils.UpdatePositionParams memory params,
+        PositionUtils.DecreasePositionCollateralValues memory values,
+        MarketUtils.MarketPrices memory prices,
+        Price.Props memory collateralTokenPrice,
+        uint256 costUsd
+    ) internal returns (PositionUtils.DecreasePositionCollateralValues memory) {
+
     }
 
     function processForceClose(

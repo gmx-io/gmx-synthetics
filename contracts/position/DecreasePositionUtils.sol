@@ -324,7 +324,8 @@ library DecreasePositionUtils {
             params.order.sizeDeltaUsd(),
             cache.initialCollateralAmount - params.position.collateralAmount(),
             params.order.orderType(),
-            values
+            values,
+            cache.prices.indexTokenPrice
         );
 
         values = DecreasePositionSwapUtils.swapWithdrawnCollateralToPnlToken(params, values);

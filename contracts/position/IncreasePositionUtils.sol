@@ -307,7 +307,7 @@ library IncreasePositionUtils {
             )
         );
 
-        // cap price impact usd based on the amount available in the position impact pool
+        // cap priceImpactUsd based on the amount available in the position impact pool
         priceImpactUsd = MarketUtils.getCappedPositionImpactUsd(
             params.contracts.dataStore,
             params.market.marketToken,
@@ -342,13 +342,12 @@ library IncreasePositionUtils {
             priceImpactAmount = Calc.roundUpMagnitudeDivision(priceImpactUsd, prices.indexTokenPrice.min);
         }
 
-        uint256 executionPrice = BaseOrderUtils.getExecutionPrice(
+        uint256 executionPrice = BaseOrderUtils.getExecutionPriceForIncrease(
             prices.indexTokenPrice,
             params.order.sizeDeltaUsd(),
             priceImpactAmount,
             params.order.acceptablePrice(),
-            params.order.isLong(),
-            true // isIncrease
+            params.order.isLong()
         );
 
         return (priceImpactUsd, priceImpactAmount, executionPrice);

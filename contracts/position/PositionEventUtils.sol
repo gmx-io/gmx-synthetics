@@ -85,7 +85,8 @@ library PositionEventUtils {
         uint256 sizeDeltaUsd,
         uint256 collateralDeltaAmount,
         Order.OrderType orderType,
-        PositionUtils.DecreasePositionCollateralValues memory values
+        PositionUtils.DecreasePositionCollateralValues memory values,
+        Price.Props memory indexTokenPrice
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -99,17 +100,19 @@ library PositionEventUtils {
         eventData.uintItems.setItem(1, "sizeInTokens", position.sizeInTokens());
         eventData.uintItems.setItem(2, "collateralAmount", position.collateralAmount());
         eventData.uintItems.setItem(3, "borrowingFactor", position.borrowingFactor());
-        eventData.uintItems.setItem(6, "executionPrice", values.executionPrice);
+        eventData.uintItems.setItem(4, "executionPrice", values.executionPrice);
+        eventData.uintItems.setItem(5, "indexTokenPrice.max", indexTokenPrice.max);
+        eventData.uintItems.setItem(6, "indexTokenPrice.min", indexTokenPrice.min);
         eventData.uintItems.setItem(7, "sizeDeltaUsd", sizeDeltaUsd);
         eventData.uintItems.setItem(8, "sizeDeltaInTokens", values.sizeDeltaInTokens);
         eventData.uintItems.setItem(9, "collateralDeltaAmount", collateralDeltaAmount);
-        eventData.uintItems.setItem(10, "priceImpactDiffUsd", values.priceImpactDiffUsd);
+        eventData.uintItems.setItem(10, "values.priceImpactDiffUsd", values.priceImpactDiffUsd);
         eventData.uintItems.setItem(11, "orderType", uint256(orderType));
 
         eventData.intItems.initItems(4);
         eventData.intItems.setItem(0, "longTokenFundingAmountPerSize", position.longTokenFundingAmountPerSize());
         eventData.intItems.setItem(1, "shortTokenFundingAmountPerSize", position.shortTokenFundingAmountPerSize());
-        eventData.intItems.setItem(2, "priceImpactAmount", values.priceImpactAmount);
+        eventData.intItems.setItem(2, "priceImpactUsd", values.priceImpactUsd);
         eventData.intItems.setItem(3, "pnlUsd", values.positionPnlUsd);
 
         eventData.boolItems.initItems(1);
