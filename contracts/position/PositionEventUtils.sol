@@ -26,10 +26,12 @@ library PositionEventUtils {
         bytes32 orderKey;
         bytes32 positionKey;
         Position.Props position;
+        Price.Props indexTokenPrice;
         uint256 executionPrice;
         uint256 sizeDeltaUsd;
         uint256 sizeDeltaInTokens;
         int256 collateralDeltaAmount;
+        int256 priceImpactUsd;
         int256 priceImpactAmount;
         Order.OrderType orderType;
     }
@@ -42,21 +44,24 @@ library PositionEventUtils {
         eventData.addressItems.setItem(1, "market", params.position.market());
         eventData.addressItems.setItem(2, "collateralToken", params.position.collateralToken());
 
-        eventData.uintItems.initItems(8);
+        eventData.uintItems.initItems(10);
         eventData.uintItems.setItem(0, "sizeInUsd", params.position.sizeInUsd());
         eventData.uintItems.setItem(1, "sizeInTokens", params.position.sizeInTokens());
         eventData.uintItems.setItem(2, "collateralAmount", params.position.collateralAmount());
         eventData.uintItems.setItem(3, "borrowingFactor", params.position.borrowingFactor());
-        eventData.uintItems.setItem(4, "executionPrice", params.executionPrice);
-        eventData.uintItems.setItem(5, "sizeDeltaUsd", params.sizeDeltaUsd);
-        eventData.uintItems.setItem(6, "sizeDeltaInTokens", params.sizeDeltaInTokens);
-        eventData.uintItems.setItem(7, "orderType", uint256(params.orderType));
+        eventData.uintItems.setItem(4, "indexTokenPrice.max", params.indexTokenPrice.max);
+        eventData.uintItems.setItem(5, "indexTokenPrice.min", params.indexTokenPrice.min);
+        eventData.uintItems.setItem(6, "executionPrice", params.executionPrice);
+        eventData.uintItems.setItem(7, "sizeDeltaUsd", params.sizeDeltaUsd);
+        eventData.uintItems.setItem(8, "sizeDeltaInTokens", params.sizeDeltaInTokens);
+        eventData.uintItems.setItem(9, "orderType", uint256(params.orderType));
 
-        eventData.intItems.initItems(4);
+        eventData.intItems.initItems(5);
         eventData.intItems.setItem(0, "longTokenFundingAmountPerSize", params.position.longTokenFundingAmountPerSize());
         eventData.intItems.setItem(1, "shortTokenFundingAmountPerSize", params.position.shortTokenFundingAmountPerSize());
         eventData.intItems.setItem(2, "collateralDeltaAmount", params.collateralDeltaAmount);
-        eventData.intItems.setItem(3, "priceImpactAmount", params.priceImpactAmount);
+        eventData.intItems.setItem(3, "priceImpactUsd", params.priceImpactUsd);
+        eventData.intItems.setItem(4, "priceImpactAmount", params.priceImpactAmount);
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "isLong", params.position.isLong());

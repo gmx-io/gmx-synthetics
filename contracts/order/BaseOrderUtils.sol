@@ -279,6 +279,106 @@ library BaseOrderUtils {
         revert Errors.UnsupportedOrderType();
     }
 
+    function getExecutionPrice(
+        Price.Props memory indexTokenPrice,
+        uint256 sizeDeltaUsd,
+        int256 priceImpactAmount,
+        uint256 acceptablePrice,
+        bool isLong,
+        bool isIncrease
+    ) internal pure returns (uint256) {
+        // using increase of long positions as an example
+        //
+        // sizeDeltaInTokens1 = sizeDeltaUsd / price
+        // sizeDeltaInTokens2 = sizeDeltaUsd / executionPrice
+        // sizeDeltaInTokens2 - sizeDeltaInTokens1 = priceImpactAmount
+        // sizeDeltaUsd / executionPrice - sizeDeltaUsd / price = priceImpactAmount
+        // sizeDeltaUsd / executionPrice = priceImpactAmount + sizeDeltaUsd / price
+        // sizeDeltaUsd / executionPrice = (priceImpactAmount * price + sizeDeltaUsd) / price
+        // executionPrice / sizeDeltaUsd = price / (priceImpactAmount * price + sizeDeltaUsd)
+        // executionPrice = (price * sizeDeltaUsd) / (priceImpactAmount * price + sizeDeltaUsd)
+        //
+        // e.g. if price is $2000, sizeDeltaUsd is $5000, priceImpactUsd is -$1000
+        // priceImpactAmount = -1000 / 2000 = -0.5
+        // sizeDeltaInTokens1 = 5000 / 2000 = 2.5
+        // sizeDeltaInTokens2 = 2.5 - 5000 / executionPrice
+        // 2000 * 5000 / (5000 + -0.5 * 2000) => 2500
+
+        // since the priceImpactAmount is in the denominator of the formula
+        // for increase long positions
+        //      - if priceImpactAmount is positive, adjustedPriceImpactAmount should be positive to decrease the execution price
+        //      - if priceImpactAmount is negative, adjustedPriceImpactAmount should be negative to increase the execution price
+        // for increase short positions
+        //      - if priceImpactAmount is positive, adjustedPriceImpactAmount should be negative to increase the execution price
+        //      - if priceImpactAmount is negative, adjustedPriceImpactAmount should be positive to decrease the execution price
+        // for decrease long positions
+        //      - if priceImpactAmount is positive, adjustedPriceImpactAmount should be negative to increase the execution price
+        //      - if priceImpactAmount is negative, adjustedPriceImpactAmount should be positive to decrease the execution price
+        // for increase short positions
+        //      - if priceImpactAmount is positive, adjustedPriceImpactAmount should be positive to decrease the execution price
+        //      - if priceImpactAmount is negative, adjustedPriceImpactAmount should be negative to increase the execution price
+        int256 adjustedPriceImpactAmount;
+        if (isIncrease) {
+            adjustedPriceImpactAmount = isLong ? priceImpactAmount : -priceImpactAmount;
+        } else {
+            adjustedPriceImpactAmount = isLong ? -priceImpactAmount : priceImpactAmount;
+        }
+
+        // use isIncrease as the maximize param for pickPriceForPnl
+        // if position is increasing, the price should be picked to maximized the position's pnl
+        // e.g. if increasing long, the max price should be used
+        uint256 price = indexTokenPrice.pickPriceForPnl(isLong, isIncrease);
+        int256 priceImpactUsd = adjustedPriceImpactAmount * price.toInt256();
+
+        if (priceImpactUsd < 0 && (-priceImpactUsd).toUint256() >= sizeDeltaUsd) {
+            revert Errors.PriceImpactLargerThanOrderSize(priceImpactUsd, sizeDeltaUsd);
+        }
+
+        uint256 denominator = Calc.sumReturnUint256(sizeDeltaUsd, priceImpactUsd);
+        uint256 executionPrice = Precision.applyFraction(price, sizeDeltaUsd, denominator);
+
+        // should executionPrice be smaller than acceptablePrice
+        // increase order:
+        //     - long: executionPrice should be smaller than acceptablePrice
+        //     - short: executionPrice should be larger than acceptablePrice
+        // decrease order:
+        //     - long: executionPrice should be larger than acceptablePrice
+        //     - short: executionPrice should be smaller than acceptablePrice
+        bool shouldExecutionPriceBeSmaller = isIncrease ? isLong : !isLong;
+
+        if (
+            (shouldExecutionPriceBeSmaller && executionPrice <= acceptablePrice)  ||
+            (!shouldExecutionPriceBeSmaller && executionPrice >= acceptablePrice)
+        ) {
+            return executionPrice;
+        }
+
+        // the validateOrderTriggerPrice function should have validated if the price fulfills
+        // the order's trigger price
+        //
+        // for decrease orders, the price impact should already be capped, so if the user
+        // had set an acceptable price within the range of the capped price impact, then
+        // the order should be fulfillable at the acceptable price
+        //
+        // for increase orders, the negative price impact is not capped
+        //
+        // for both increase and decrease orders, if it is due to price impact that the
+        // order cannot be fulfilled then the order should be frozen
+        //
+        // this is to prevent gaming by manipulation of the price impact value
+        //
+        // usually it should be costly to game the price impact value
+        // however, for certain cases, e.g. a user already has a large position opened
+        // the user may create limit orders that would only trigger after they close
+        // their position, this gives the user the option to cancel the pending order if
+        // prices do not move in their favour or to close their position and let the order
+        // execute if prices move in their favour
+        //
+        // it may also be possible for users to prevent the execution of orders from other users
+        // by manipulating the price impact, though this should be costly
+        revert Errors.OrderNotFulfillableDueToPriceImpact(executionPrice, acceptablePrice);
+    }
+
     // @dev get the execution price for an order after factoring in price impact
     //
     // @param primaryPrice the primary price of the index token
