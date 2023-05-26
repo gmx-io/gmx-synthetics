@@ -213,6 +213,10 @@ library DecreasePositionCollateralUtils {
         }
 
         if (collateralCache.result.amountPaidInCollateralToken < fees.funding.fundingFeeAmount) {
+            // the case where this is insufficient collateral to pay funding fees
+            // should be rare, and the difference should be small
+            // in case it happens, the pool should be topped up with the required amount using
+            // the claimable amount sent to the holding address, an insurance fund, or similar mechanism
             PositionEventUtils.emitInsufficientFundingFeePayment(
                 params.contracts.eventEmitter,
                 params.market.marketToken,
@@ -273,6 +277,10 @@ library DecreasePositionCollateralUtils {
         );
 
         if (collateralCache.result.remainingCostUsd == 0 && collateralCache.result.amountPaidInSecondaryOutputToken == 0) {
+            // there may be a large amount of borrowing fees that could have been accumulated
+            // these fees could cause the pool to become unbalanced, price impact is not paid for causing
+            // this imbalance
+            // the swap impact pool should be built up to help handle this case
             MarketUtils.applyDeltaToPoolAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
@@ -381,6 +389,42 @@ library DecreasePositionCollateralUtils {
             if (collateralCache.result.remainingCostUsd > 0) {
                 return processEarlyReturn(params, values, fees, collateralCache.result.remainingCostUsd, collateralCache.isForceCloseAllowed, "price impact");
             }
+        }
+
+        // adjust the initialCollateralDeltaAmount by the adjustedPriceImpactDiffAmount to reduce the chance that
+        // the position's collateral / leverage gets adjusted by an unexpected amount
+        if (params.order.initialCollateralDeltaAmount() > 0 && values.priceImpactDiffUsd > 0) {
+            uint256 initialCollateralDeltaAmount = params.order.initialCollateralDeltaAmount();
+
+            uint256 priceImpactDiffAmount = values.priceImpactDiffUsd / collateralCache.collateralTokenPrice.min;
+            if (initialCollateralDeltaAmount > priceImpactDiffAmount) {
+                params.order.setInitialCollateralDeltaAmount(initialCollateralDeltaAmount - priceImpactDiffAmount);
+            } else {
+                params.order.setInitialCollateralDeltaAmount(0);
+            }
+
+            OrderEventUtils.emitOrderCollateralDeltaAmountAutoUpdated(
+                params.contracts.eventEmitter,
+                params.orderKey,
+                initialCollateralDeltaAmount, // collateralDeltaAmount
+                params.order.initialCollateralDeltaAmount() // nextCollateralDeltaAmount
+            );
+        }
+
+        if (params.order.initialCollateralDeltaAmount() > values.remainingCollateralAmount) {
+            OrderEventUtils.emitOrderCollateralDeltaAmountAutoUpdated(
+                params.contracts.eventEmitter,
+                params.orderKey,
+                params.order.initialCollateralDeltaAmount(), // collateralDeltaAmount
+                values.remainingCollateralAmount // nextCollateralDeltaAmount
+            );
+
+            params.order.setInitialCollateralDeltaAmount(values.remainingCollateralAmount);
+        }
+
+        if (params.order.initialCollateralDeltaAmount() > 0) {
+            values.remainingCollateralAmount -= params.order.initialCollateralDeltaAmount();
+            values.output.outputAmount += params.order.initialCollateralDeltaAmount();
         }
 
         return (values, fees);
