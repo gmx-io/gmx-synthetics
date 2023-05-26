@@ -157,9 +157,21 @@ library DecreasePositionCollateralUtils {
                 -deductionAmountForImpactPool.toInt256()
             );
 
-            // the price impact can be paid out in the collateral token directly since
-            // it is not associated with the long or short token
-            values.output.outputAmount += values.priceImpactUsd.toUint256() / collateralCache.collateralTokenPrice.max;
+            uint256 deductionAmountForPool = values.priceImpactUsd.toUint256() / cache.pnlTokenPrice.max;
+
+            MarketUtils.applyDeltaToPoolAmount(
+                params.contracts.dataStore,
+                params.contracts.eventEmitter,
+                params.market.marketToken,
+                cache.pnlToken,
+                -deductionAmountForPool.toInt256()
+            );
+
+            if (values.output.outputToken == cache.pnlToken) {
+                values.output.outputAmount += deductionAmountForPool;
+            } else {
+                values.output.secondaryOutputAmount += deductionAmountForPool;
+            }
         }
 
         // swap profit to the collateral token
