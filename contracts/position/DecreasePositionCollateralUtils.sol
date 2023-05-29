@@ -236,7 +236,13 @@ library DecreasePositionCollateralUtils {
         }
 
         if (collateralCache.result.remainingCostUsd > 0) {
-            return processEarlyReturn(params, values, fees, collateralCache.result.remainingCostUsd, collateralCache.isForceCloseAllowed, "funding");
+            return handleEarlyReturn(
+                params,
+                values,
+                fees,
+                collateralCache,
+                "funding"
+            );
         }
 
         // pay for negative pnl
@@ -270,7 +276,13 @@ library DecreasePositionCollateralUtils {
             }
 
             if (collateralCache.result.remainingCostUsd > 0) {
-                return processEarlyReturn(params, values, fees, collateralCache.result.remainingCostUsd, collateralCache.isForceCloseAllowed, "pnl");
+                return handleEarlyReturn(
+                    params,
+                    values,
+                    fees,
+                    collateralCache,
+                    "pnl"
+                );
             }
         }
 
@@ -282,7 +294,7 @@ library DecreasePositionCollateralUtils {
             cache.collateralTokenPrice,
             // use collateralTokenPrice.min because the payForCost
             // will divide the USD value by the price.min as well
-            fees.totalCostAmount * cache.collateralTokenPrice.min
+            fees.totalCostAmountExcludingFunding * cache.collateralTokenPrice.min
         );
 
         if (collateralCache.result.remainingCostUsd == 0 && collateralCache.result.amountPaidInSecondaryOutputToken == 0) {
@@ -296,6 +308,25 @@ library DecreasePositionCollateralUtils {
                 params.market.marketToken,
                 params.position.collateralToken(),
                 fees.feeAmountForPool.toInt256()
+            );
+
+            FeeUtils.incrementClaimableFeeAmount(
+                params.contracts.dataStore,
+                params.contracts.eventEmitter,
+                params.market.marketToken,
+                params.position.collateralToken(),
+                fees.feeReceiverAmount,
+                Keys.POSITION_FEE_TYPE
+            );
+
+            FeeUtils.incrementClaimableUiFeeAmount(
+                params.contracts.dataStore,
+                params.contracts.eventEmitter,
+                params.order.uiFeeReceiver(),
+                params.market.marketToken,
+                params.position.collateralToken(),
+                fees.ui.uiFeeAmount,
+                Keys.UI_POSITION_FEE_TYPE
             );
         } else {
             // the fees are expected to be paid in the collateral token
@@ -325,7 +356,13 @@ library DecreasePositionCollateralUtils {
         }
 
         if (collateralCache.result.remainingCostUsd > 0) {
-            return processEarlyReturn(params, values, fees, collateralCache.result.remainingCostUsd, collateralCache.isForceCloseAllowed, "fees");
+            return handleEarlyReturn(
+                params,
+                values,
+                fees,
+                collateralCache,
+                "fees"
+            );
         }
 
         // pay for price impact diff
@@ -361,12 +398,18 @@ library DecreasePositionCollateralUtils {
             }
 
             if (collateralCache.result.remainingCostUsd > 0) {
-                return processEarlyReturn(params, values, fees, collateralCache.result.remainingCostUsd, collateralCache.isForceCloseAllowed, "diff");
+                return handleEarlyReturn(
+                    params,
+                    values,
+                    fees,
+                    collateralCache,
+                    "diff"
+                );
             }
         }
 
         // pay for negative price impact
-        if (values.priceImpactAmount < 0) {
+        if (values.priceImpactUsd < 0) {
             (values, collateralCache.result) = payForCost(
                 params,
                 values,
@@ -374,7 +417,7 @@ library DecreasePositionCollateralUtils {
                 cache.collateralTokenPrice,
                 // use pnlTokenPrice.min because the payForCost
                 // will divide the USD value by the price.min as well
-                (-values.priceImpactAmount).toUint256() * cache.pnlTokenPrice.min
+                (-values.priceImpactUsd).toUint256() * cache.pnlTokenPrice.min
             );
 
             if (collateralCache.result.amountPaidInCollateralToken > 0) {
@@ -396,7 +439,13 @@ library DecreasePositionCollateralUtils {
             }
 
             if (collateralCache.result.remainingCostUsd > 0) {
-                return processEarlyReturn(params, values, fees, collateralCache.result.remainingCostUsd, collateralCache.isForceCloseAllowed, "price impact");
+                return handleEarlyReturn(
+                    params,
+                    values,
+                    fees,
+                    collateralCache,
+                    "impact"
+                );
             }
         }
 
@@ -563,16 +612,15 @@ library DecreasePositionCollateralUtils {
         return (values, result);
     }
 
-    function processEarlyReturn(
+    function handleEarlyReturn(
         PositionUtils.UpdatePositionParams memory params,
         PositionUtils.DecreasePositionCollateralValues memory values,
         PositionPricingUtils.PositionFees memory fees,
-        uint256 remainingCostUsd,
-        bool isForceCloseAllowed,
+        ProcessCollateralCache memory collateralCache,
         string memory step
     ) internal returns (PositionUtils.DecreasePositionCollateralValues memory, PositionPricingUtils.PositionFees memory) {
-        if (!isForceCloseAllowed) {
-            revert Errors.InsufficientFundsToPayForCosts(remainingCostUsd, step);
+        if (!collateralCache.isForceCloseAllowed) {
+            revert Errors.InsufficientFundsToPayForCosts(collateralCache.result.remainingCostUsd, step);
         }
 
         PositionEventUtils.emitPositionFeesInfo(
@@ -590,7 +638,7 @@ library DecreasePositionCollateralUtils {
             params.orderKey,
             params.position.collateralAmount(),
             values.basePnlUsd,
-            remainingCostUsd
+            collateralCache.result.remainingCostUsd
         );
 
         return (values, getEmptyFees(fees));
@@ -599,6 +647,8 @@ library DecreasePositionCollateralUtils {
     function getEmptyFees(
         PositionPricingUtils.PositionFees memory fees
     ) internal pure returns (PositionPricingUtils.PositionFees memory) {
+        // all fees are zeroed even though funding may have been paid
+        // the funding fee amount value may not be accurate in the events due to this
         PositionPricingUtils.PositionFees memory _fees;
 
         // allow the accumulated funding fees to still be claimable

@@ -249,6 +249,8 @@ library PositionEventUtils {
         eventData.addressItems.setItem(3, "trader", fees.referral.trader);
         eventData.addressItems.setItem(4, "uiFeeReceiver", fees.ui.uiFeeReceiver);
 
+        // in case the position was force closed, the fundingFeeAmount and feeAmountForPool
+        // values may not be accurate
         eventData.uintItems.initItems(25);
         eventData.uintItems.setItem(0, "collateralTokenPrice.min", fees.collateralTokenPrice.min);
         eventData.uintItems.setItem(1, "collateralTokenPrice.max", fees.collateralTokenPrice.max);
