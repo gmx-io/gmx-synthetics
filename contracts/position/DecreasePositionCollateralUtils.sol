@@ -76,7 +76,7 @@ library DecreasePositionCollateralUtils {
         values.output.outputToken = params.position.collateralToken();
         values.output.secondaryOutputToken = cache.pnlToken;
 
-        // only allow force closing if it is a liquidation or ADL order
+        // only allow insolvent closing if it is a liquidation or ADL order
         // isInsolventCloseAllowed is used in handleEarlyReturn to determine
         // whether the txn should revert if the remainingCostUsd is below zero
         //
