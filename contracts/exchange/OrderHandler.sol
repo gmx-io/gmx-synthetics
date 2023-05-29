@@ -112,10 +112,9 @@ contract OrderHandler is BaseOrderHandler {
 
     /**
      * @dev Cancels the given order. The `cancelOrder()` feature must be enabled for the given order
-     * type. The caller must be the owner of the order, and the order must not be a market order. The
-     * order is cancelled by calling the `cancelOrder()` function in the `OrderUtils` contract. This
-     * function also records the starting gas amount and the reason for cancellation, which is passed to
-     * the `cancelOrder()` function.
+     * type. The caller must be the owner of the order. The order is cancelled by calling the `cancelOrder()`
+     * function in the `OrderUtils` contract. This function also records the starting gas amount and the
+     * reason for cancellation, which is passed to the `cancelOrder()` function.
      *
      * @param key The unique ID of the order to be cancelled
      */
