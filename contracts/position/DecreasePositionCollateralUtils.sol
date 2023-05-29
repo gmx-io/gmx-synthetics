@@ -431,9 +431,7 @@ library DecreasePositionCollateralUtils {
                 values,
                 cache.prices,
                 cache.collateralTokenPrice,
-                // use pnlTokenPrice.min because the payForCost
-                // will divide the USD value by the price.min as well
-                (-values.priceImpactUsd).toUint256() * cache.pnlTokenPrice.min
+                (-values.priceImpactUsd).toUint256()
             );
 
             if (collateralCache.result.amountPaidInCollateralToken > 0) {
