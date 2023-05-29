@@ -70,6 +70,12 @@ library DecreasePositionUtils {
             params.market
         );
 
+        cache.collateralTokenPrice = MarketUtils.getCachedTokenPrice(
+            params.order.initialCollateralToken(),
+            params.market,
+            cache.prices
+        );
+
         // cap the order size to the position size
         if (params.order.sizeDeltaUsd() > params.position.sizeInUsd()) {
             if (params.order.orderType() == Order.OrderType.LimitDecrease ||
@@ -313,7 +319,8 @@ library DecreasePositionUtils {
             cache.initialCollateralAmount - params.position.collateralAmount(),
             params.order.orderType(),
             values,
-            cache.prices.indexTokenPrice
+            cache.prices.indexTokenPrice,
+            cache.collateralTokenPrice
         );
 
         values = DecreasePositionSwapUtils.swapWithdrawnCollateralToPnlToken(params, values);

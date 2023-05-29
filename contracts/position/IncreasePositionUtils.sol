@@ -37,6 +37,7 @@ library IncreasePositionUtils {
     struct IncreasePositionCache {
         int256 collateralDeltaAmount;
         uint256 executionPrice;
+        Price.Props collateralTokenPrice;
         int256 priceImpactUsd;
         int256 priceImpactAmount;
         uint256 baseSizeDeltaInTokens;
@@ -67,6 +68,12 @@ library IncreasePositionUtils {
         // create a new cache for holding intermediate results
         IncreasePositionCache memory cache;
 
+        cache.collateralTokenPrice = MarketUtils.getCachedTokenPrice(
+            params.position.collateralToken(),
+            params.market,
+            prices
+        );
+
         if (params.position.sizeInUsd() == 0) {
             params.position.setLongTokenFundingAmountPerSize(
                 MarketUtils.getFundingAmountPerSize(params.contracts.dataStore, params.market.marketToken, params.market.longToken, params.position.isLong())
@@ -80,7 +87,7 @@ library IncreasePositionUtils {
         PositionPricingUtils.PositionFees memory fees;
         (cache.collateralDeltaAmount, fees) = processCollateral(
             params,
-            prices,
+            cache.collateralTokenPrice,
             collateralIncrementAmount.toInt256()
         );
 
@@ -213,6 +220,7 @@ library IncreasePositionUtils {
         eventParams.position = params.position;
         eventParams.indexTokenPrice = prices.indexTokenPrice;
         eventParams.executionPrice = cache.executionPrice;
+        eventParams.collateralTokenPrice = cache.collateralTokenPrice;
         eventParams.sizeDeltaUsd = params.order.sizeDeltaUsd();
         eventParams.sizeDeltaInTokens = cache.sizeDeltaInTokens;
         eventParams.collateralDeltaAmount = cache.collateralDeltaAmount;
@@ -230,15 +238,9 @@ library IncreasePositionUtils {
     // @param collateralDeltaAmount the change in the position's collateral
     function processCollateral(
         PositionUtils.UpdatePositionParams memory params,
-        MarketUtils.MarketPrices memory prices,
+        Price.Props memory collateralTokenPrice,
         int256 collateralDeltaAmount
     ) internal returns (int256, PositionPricingUtils.PositionFees memory) {
-        Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(
-            params.position.collateralToken(),
-            params.market,
-            prices
-        );
-
         PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams(
             params.contracts.dataStore,
             params.contracts.referralStorage,

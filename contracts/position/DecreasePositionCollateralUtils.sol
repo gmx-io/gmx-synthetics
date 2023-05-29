@@ -41,7 +41,6 @@ library DecreasePositionCollateralUtils {
 
     struct ProcessCollateralCache {
         bool isForceCloseAllowed;
-        Price.Props collateralTokenPrice;
         bool wasSwapped;
         uint256 swapOutputAmount;
         PayForCostResult result;
@@ -90,8 +89,6 @@ library DecreasePositionCollateralUtils {
                 params.secondaryOrderType == Order.SecondaryOrderType.Adl
             );
 
-        collateralCache.collateralTokenPrice = MarketUtils.getCachedTokenPrice(params.order.initialCollateralToken(), params.market, cache.prices);
-
         // in case price impact is too high it is capped and the difference is made to be claimable
         // the execution price is based on the capped price impact so it may be a better price than what it should be
         // priceImpactDiffUsd is the difference between the maximum price impact and the originally calculated price impact
@@ -117,7 +114,7 @@ library DecreasePositionCollateralUtils {
             params.contracts.dataStore,
             params.contracts.referralStorage,
             params.position,
-            collateralCache.collateralTokenPrice,
+            cache.collateralTokenPrice,
             params.market.longToken,
             params.market.shortToken,
             params.order.sizeDeltaUsd(),
@@ -198,10 +195,10 @@ library DecreasePositionCollateralUtils {
             params,
             values,
             cache.prices,
-            collateralCache.collateralTokenPrice,
+            cache.collateralTokenPrice,
             // use collateralTokenPrice.min because the payForCost
             // will divide the USD value by the price.min as well
-            fees.funding.fundingFeeAmount * collateralCache.collateralTokenPrice.min
+            fees.funding.fundingFeeAmount * cache.collateralTokenPrice.min
         );
 
         if (collateralCache.result.amountPaidInSecondaryOutputToken > 0) {
@@ -248,7 +245,7 @@ library DecreasePositionCollateralUtils {
                 params,
                 values,
                 cache.prices,
-                collateralCache.collateralTokenPrice,
+                cache.collateralTokenPrice,
                 (-values.basePnlUsd).toUint256()
             );
 
@@ -282,10 +279,10 @@ library DecreasePositionCollateralUtils {
             params,
             values,
             cache.prices,
-            collateralCache.collateralTokenPrice,
+            cache.collateralTokenPrice,
             // use collateralTokenPrice.min because the payForCost
             // will divide the USD value by the price.min as well
-            fees.totalCostAmount * collateralCache.collateralTokenPrice.min
+            fees.totalCostAmount * cache.collateralTokenPrice.min
         );
 
         if (collateralCache.result.remainingCostUsd == 0 && collateralCache.result.amountPaidInSecondaryOutputToken == 0) {
@@ -337,7 +334,7 @@ library DecreasePositionCollateralUtils {
                 params,
                 values,
                 cache.prices,
-                collateralCache.collateralTokenPrice,
+                cache.collateralTokenPrice,
                 values.priceImpactDiffUsd
             );
 
@@ -374,7 +371,7 @@ library DecreasePositionCollateralUtils {
                 params,
                 values,
                 cache.prices,
-                collateralCache.collateralTokenPrice,
+                cache.collateralTokenPrice,
                 // use pnlTokenPrice.min because the payForCost
                 // will divide the USD value by the price.min as well
                 (-values.priceImpactAmount).toUint256() * cache.pnlTokenPrice.min
@@ -385,7 +382,7 @@ library DecreasePositionCollateralUtils {
                     params.contracts.dataStore,
                     params.contracts.eventEmitter,
                     params.market.marketToken,
-                    (collateralCache.result.amountPaidInCollateralToken * collateralCache.collateralTokenPrice.min / cache.prices.indexTokenPrice.max).toInt256()
+                    (collateralCache.result.amountPaidInCollateralToken * cache.collateralTokenPrice.min / cache.prices.indexTokenPrice.max).toInt256()
                 );
             }
 
@@ -408,7 +405,7 @@ library DecreasePositionCollateralUtils {
         if (params.order.initialCollateralDeltaAmount() > 0 && values.priceImpactDiffUsd > 0) {
             uint256 initialCollateralDeltaAmount = params.order.initialCollateralDeltaAmount();
 
-            uint256 priceImpactDiffAmount = values.priceImpactDiffUsd / collateralCache.collateralTokenPrice.min;
+            uint256 priceImpactDiffAmount = values.priceImpactDiffUsd / cache.collateralTokenPrice.min;
             if (initialCollateralDeltaAmount > priceImpactDiffAmount) {
                 params.order.setInitialCollateralDeltaAmount(initialCollateralDeltaAmount - priceImpactDiffAmount);
             } else {

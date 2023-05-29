@@ -105,6 +105,7 @@ library PositionUtils {
         int256 estimatedRemainingPnlUsd;
         address pnlToken;
         Price.Props pnlTokenPrice;
+        Price.Props collateralTokenPrice;
         uint256 initialCollateralAmount;
         uint256 nextPositionSizeInUsd;
         uint256 nextPositionBorrowingFactor;
