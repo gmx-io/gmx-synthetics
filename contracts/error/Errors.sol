@@ -154,7 +154,7 @@ library Errors {
         uint256 triggerPrice,
         uint256 orderType
     );
-    error PriceImpactLargerThanOrderSize(int256 priceImpactUsdForPriceAdjustment, uint256 sizeDeltaUsd);
+    error PriceImpactLargerThanOrderSize(int256 priceImpactUsd, uint256 sizeDeltaUsd);
     error NegativeExecutionPrice(int256 executionPrice, uint256 price, uint256 positionSizeInUsd, int256 priceImpactUsd, uint256 sizeDeltaUsd);
     error OrderNotFulfillableDueToPriceImpact(uint256 price, uint256 acceptablePrice);
 
@@ -172,7 +172,7 @@ library Errors {
     error UnexpectedMarket();
 
     // DecreasePositionCollateralUtils errors
-    error InsufficientCollateral(uint256 collateralAmount, uint256 pendingCollateralDeduction);
+    error InsufficientFundsToPayForCosts(uint256 remainingCostUsd, string step);
     error InvalidOutputToken(address tokenOut, address expectedTokenOut);
 
     // DecreasePositionUtils errors
@@ -184,6 +184,7 @@ library Errors {
     // IncreasePositionUtils errors
     error InsufficientCollateralAmount(uint256 collateralAmount, int256 collateralDeltaAmount);
     error InsufficientCollateralUsd(int256 remainingCollateralUsd);
+    error NegativeSizeDeltaInTokens(uint256 baseSizeDeltaInTokens, int256 priceImpactAmount);
 
     // PositionStoreUtils errors
     error PositionNotFound(bytes32 key);

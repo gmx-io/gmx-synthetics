@@ -301,16 +301,36 @@ library ReaderUtils {
 
         bool isIncrease = sizeDeltaUsd > 0;
         bool shouldPriceBeSmaller = isIncrease ? isLong : !isLong;
-        result.executionPrice = BaseOrderUtils.getExecutionPrice(
-            indexTokenPrice,
-            positionSizeInUsd,
-            positionSizeInTokens,
-            (sizeDeltaUsd < 0 ? -sizeDeltaUsd : sizeDeltaUsd).toUint256(),
-            result.priceImpactUsd,
-            shouldPriceBeSmaller ? type(uint256).max : 0,
-            isLong,
-            isIncrease
-        );
+
+        if (isIncrease) {
+            int256 priceImpactAmount;
+
+            if (result.priceImpactUsd > 0) {
+                // use indexTokenPrice.max and round down to minimize the priceImpactAmount
+                priceImpactAmount = result.priceImpactUsd / indexTokenPrice.max.toInt256();
+            } else {
+                // use indexTokenPrice.min and round up to maximize the priceImpactAmount
+                priceImpactAmount = Calc.roundUpMagnitudeDivision(result.priceImpactUsd, indexTokenPrice.min);
+            }
+
+            result.executionPrice = BaseOrderUtils.getExecutionPriceForIncrease(
+                indexTokenPrice,
+                sizeDeltaUsd.toUint256(),
+                priceImpactAmount,
+                shouldPriceBeSmaller ? type(uint256).max : 0,
+                isLong
+            );
+        } else {
+            result.executionPrice = BaseOrderUtils.getExecutionPriceForDecrease(
+                indexTokenPrice,
+                positionSizeInUsd,
+                positionSizeInTokens,
+                (sizeDeltaUsd < 0 ? -sizeDeltaUsd : sizeDeltaUsd).toUint256(),
+                result.priceImpactUsd,
+                shouldPriceBeSmaller ? type(uint256).max : 0,
+                isLong
+            );
+        }
 
         return result;
     }

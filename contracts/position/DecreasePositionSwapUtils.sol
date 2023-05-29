@@ -13,7 +13,7 @@ library DecreasePositionSwapUtils {
         PositionUtils.UpdatePositionParams memory params,
         PositionUtils.DecreasePositionCollateralValues memory values
     ) external returns (PositionUtils.DecreasePositionCollateralValues memory) {
-        if (params.order.decreasePositionSwapType() == Order.DecreasePositionSwapType.SwapCollateralTokenToPnlToken) {
+        if (values.output.outputAmount > 0 && params.order.decreasePositionSwapType() == Order.DecreasePositionSwapType.SwapCollateralTokenToPnlToken) {
             Market.Props[] memory swapPathMarkets = new Market.Props[](1);
             swapPathMarkets[0] = params.market;
 
@@ -57,7 +57,7 @@ library DecreasePositionSwapUtils {
         address pnlToken,
         uint256 profitAmount
     ) external returns (bool, uint256) {
-        if (params.order.decreasePositionSwapType() == Order.DecreasePositionSwapType.SwapPnlTokenToCollateralToken) {
+        if (profitAmount > 0 && params.order.decreasePositionSwapType() == Order.DecreasePositionSwapType.SwapPnlTokenToCollateralToken) {
             Market.Props[] memory swapPathMarkets = new Market.Props[](1);
             swapPathMarkets[0] = params.market;
 

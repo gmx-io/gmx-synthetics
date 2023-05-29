@@ -37,7 +37,10 @@ library IncreasePositionUtils {
     struct IncreasePositionCache {
         int256 collateralDeltaAmount;
         uint256 executionPrice;
+        Price.Props collateralTokenPrice;
+        int256 priceImpactUsd;
         int256 priceImpactAmount;
+        uint256 baseSizeDeltaInTokens;
         uint256 sizeDeltaInTokens;
         uint256 nextPositionSizeInUsd;
         uint256 nextPositionBorrowingFactor;
@@ -65,6 +68,12 @@ library IncreasePositionUtils {
         // create a new cache for holding intermediate results
         IncreasePositionCache memory cache;
 
+        cache.collateralTokenPrice = MarketUtils.getCachedTokenPrice(
+            params.position.collateralToken(),
+            params.market,
+            prices
+        );
+
         if (params.position.sizeInUsd() == 0) {
             params.position.setLongTokenFundingAmountPerSize(
                 MarketUtils.getFundingAmountPerSize(params.contracts.dataStore, params.market.marketToken, params.market.longToken, params.position.isLong())
@@ -78,7 +87,7 @@ library IncreasePositionUtils {
         PositionPricingUtils.PositionFees memory fees;
         (cache.collateralDeltaAmount, fees) = processCollateral(
             params,
-            prices,
+            cache.collateralTokenPrice,
             collateralIncrementAmount.toInt256()
         );
 
@@ -91,7 +100,25 @@ library IncreasePositionUtils {
         }
         params.position.setCollateralAmount(Calc.sumReturnUint256(params.position.collateralAmount(), cache.collateralDeltaAmount));
 
-        (cache.executionPrice, cache.priceImpactAmount) = getExecutionPrice(params, prices);
+        (cache.priceImpactUsd, cache.priceImpactAmount, cache.executionPrice) = getExecutionPrice(params, prices);
+
+        if (params.position.isLong()) {
+            // round the number of tokens for long positions down
+            cache.baseSizeDeltaInTokens = params.order.sizeDeltaUsd() / prices.indexTokenPrice.max;
+        } else {
+            // round the number of tokens for short positions up
+            cache.baseSizeDeltaInTokens = Calc.roundUpDivision(params.order.sizeDeltaUsd(), prices.indexTokenPrice.min);
+        }
+
+        if (params.position.isLong()) {
+            cache.sizeDeltaInTokens = Calc.sumReturnUint256(cache.baseSizeDeltaInTokens, cache.priceImpactAmount);
+        } else {
+            cache.sizeDeltaInTokens = Calc.sumReturnUint256(cache.baseSizeDeltaInTokens, -cache.priceImpactAmount);
+        }
+
+        if (cache.sizeDeltaInTokens < 0) {
+            revert Errors.NegativeSizeDeltaInTokens(cache.baseSizeDeltaInTokens, cache.priceImpactAmount);
+        }
 
         // if there is a positive impact, the impact pool amount should be reduced
         // if there is a negative impact, the impact pool amount should be increased
@@ -101,14 +128,6 @@ library IncreasePositionUtils {
             params.market.marketToken,
             -cache.priceImpactAmount
         );
-
-        if (params.position.isLong()) {
-            // round the number of tokens for long positions down
-            cache.sizeDeltaInTokens = params.order.sizeDeltaUsd() / cache.executionPrice;
-        } else {
-            // round the number of tokens for short positions up
-            cache.sizeDeltaInTokens = Calc.roundUpDivision(params.order.sizeDeltaUsd(), cache.executionPrice);
-        }
 
         cache.nextPositionSizeInUsd = params.position.sizeInUsd() + params.order.sizeDeltaUsd();
         cache.nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(
@@ -199,10 +218,13 @@ library IncreasePositionUtils {
         eventParams.orderKey = params.orderKey;
         eventParams.positionKey = params.positionKey;
         eventParams.position = params.position;
+        eventParams.indexTokenPrice = prices.indexTokenPrice;
         eventParams.executionPrice = cache.executionPrice;
+        eventParams.collateralTokenPrice = cache.collateralTokenPrice;
         eventParams.sizeDeltaUsd = params.order.sizeDeltaUsd();
         eventParams.sizeDeltaInTokens = cache.sizeDeltaInTokens;
         eventParams.collateralDeltaAmount = cache.collateralDeltaAmount;
+        eventParams.priceImpactUsd = cache.priceImpactUsd;
         eventParams.priceImpactAmount = cache.priceImpactAmount;
         eventParams.orderType = params.order.orderType();
 
@@ -216,15 +238,9 @@ library IncreasePositionUtils {
     // @param collateralDeltaAmount the change in the position's collateral
     function processCollateral(
         PositionUtils.UpdatePositionParams memory params,
-        MarketUtils.MarketPrices memory prices,
+        Price.Props memory collateralTokenPrice,
         int256 collateralDeltaAmount
     ) internal returns (int256, PositionPricingUtils.PositionFees memory) {
-        Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(
-            params.position.collateralToken(),
-            params.market,
-            prices
-        );
-
         PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams(
             params.contracts.dataStore,
             params.contracts.referralStorage,
@@ -257,7 +273,7 @@ library IncreasePositionUtils {
             Keys.UI_POSITION_FEE_TYPE
         );
 
-        collateralDeltaAmount -= fees.collateralCostAmount.toInt256();
+        collateralDeltaAmount -= fees.totalCostAmount.toInt256();
 
         MarketUtils.applyDeltaToCollateralSum(
             params.contracts.dataStore,
@@ -279,10 +295,11 @@ library IncreasePositionUtils {
         return (collateralDeltaAmount, fees);
     }
 
+    // returns priceImpactUsd, priceImpactAmount, executionPrice
     function getExecutionPrice(
         PositionUtils.UpdatePositionParams memory params,
         MarketUtils.MarketPrices memory prices
-    ) internal view returns (uint256, int256) {
+    ) internal view returns (int256, int256, uint256) {
         int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
                 params.contracts.dataStore,
@@ -292,7 +309,7 @@ library IncreasePositionUtils {
             )
         );
 
-        // cap price impact usd based on the amount available in the position impact pool
+        // cap priceImpactUsd based on the amount available in the position impact pool
         priceImpactUsd = MarketUtils.getCappedPositionImpactUsd(
             params.contracts.dataStore,
             params.market.marketToken,
@@ -301,24 +318,40 @@ library IncreasePositionUtils {
             params.order.sizeDeltaUsd()
         );
 
-        uint256 executionPrice = BaseOrderUtils.getExecutionPrice(
-            params.contracts.oracle.getPrimaryPrice(params.market.indexToken),
-            params.position.sizeInUsd(),
-            params.position.sizeInTokens(),
-            params.order.sizeDeltaUsd(),
-            priceImpactUsd,
-            params.order.acceptablePrice(),
-            params.order.isLong(),
-            true
-        );
+        // for long positions
+        //
+        // if price impact is positive, the sizeDeltaInTokens would be increased by the priceImpactAmount
+        // the priceImpactAmount should be minimized
+        //
+        // if price impact is negative, the sizeDeltaInTokens would be decreased by the priceImpactAmount
+        // the priceImpactAmount should be maximized
 
-        int256 priceImpactAmount = PositionPricingUtils.getPriceImpactAmount(
-            priceImpactUsd,
+        // for short positions
+        //
+        // if price impact is positive, the sizeDeltaInTokens would be decreased by the priceImpactAmount
+        // the priceImpactAmount should be minimized
+        //
+        // if price impact is negative, the sizeDeltaInTokens would be increased by the priceImpactAmount
+        // the priceImpactAmount should be maximized
+
+        int256 priceImpactAmount;
+
+        if (priceImpactUsd > 0) {
+            // use indexTokenPrice.max and round down to minimize the priceImpactAmount
+            priceImpactAmount = priceImpactUsd / prices.indexTokenPrice.max.toInt256();
+        } else {
+            // use indexTokenPrice.min and round up to maximize the priceImpactAmount
+            priceImpactAmount = Calc.roundUpMagnitudeDivision(priceImpactUsd, prices.indexTokenPrice.min);
+        }
+
+        uint256 executionPrice = BaseOrderUtils.getExecutionPriceForIncrease(
             prices.indexTokenPrice,
-            params.order.isLong(),
-            true // isIncrease
+            params.order.sizeDeltaUsd(),
+            priceImpactAmount,
+            params.order.acceptablePrice(),
+            params.order.isLong()
         );
 
-        return (executionPrice, priceImpactAmount);
+        return (priceImpactUsd, priceImpactAmount, executionPrice);
     }
 }

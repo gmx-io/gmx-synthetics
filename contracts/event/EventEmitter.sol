@@ -3,11 +3,6 @@
 pragma solidity ^0.8.0;
 
 import "../role/RoleModule.sol";
-import "../order/Order.sol";
-import "../deposit/Deposit.sol";
-import "../withdrawal/Withdrawal.sol";
-import "../pricing/SwapPricingUtils.sol";
-import "../pricing/PositionPricingUtils.sol";
 import "./EventUtils.sol";
 
 // @title EventEmitter

@@ -497,6 +497,8 @@ After the initial setup:
 
 - Decrease position orders could output two tokens instead of a single token, in case the decrease position swap fails, it is also possible that the output amount and collateral may not be sufficient to cover fees, causing the order to not be executed
 
+- If there is a large spread, it is possible that opening / closing a position can significantly change the min and max price of the market token, this should not be manipulatable in a profitable way
+
 # Feature Development
 
 If new features are added, tests should be added for the different market types, e.g. spot only markets, single token markets.

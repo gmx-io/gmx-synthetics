@@ -364,7 +364,7 @@ library MarketUtils {
 
         result.impactPoolAmount = getPositionImpactPoolAmount(dataStore, market.marketToken);
         // use !maximize for pickPrice since the impactPoolUsd is deducted from the poolValue
-        uint256 impactPoolUsd = result.impactPoolAmount * indexTokenPrice.pickPrice(maximize);
+        uint256 impactPoolUsd = result.impactPoolAmount * indexTokenPrice.pickPrice(!maximize);
 
         result.poolValue -= impactPoolUsd.toInt256();
 
@@ -766,7 +766,7 @@ library MarketUtils {
     function getCappedPositionImpactUsd(
         DataStore dataStore,
         address market,
-        Price.Props memory tokenPrice,
+        Price.Props memory indexTokenPrice,
         int256 priceImpactUsd,
         uint256 sizeDeltaUsd
     ) internal view returns (int256) {
@@ -775,7 +775,7 @@ library MarketUtils {
         }
 
         uint256 impactPoolAmount = getPositionImpactPoolAmount(dataStore, market);
-        int256 maxPriceImpactUsdBasedOnImpactPool = (impactPoolAmount * tokenPrice.min).toInt256();
+        int256 maxPriceImpactUsdBasedOnImpactPool = (impactPoolAmount * indexTokenPrice.min).toInt256();
 
         if (priceImpactUsd > maxPriceImpactUsdBasedOnImpactPool) {
             priceImpactUsd = maxPriceImpactUsdBasedOnImpactPool;
