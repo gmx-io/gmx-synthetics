@@ -135,7 +135,7 @@ library PositionEventUtils {
         );
     }
 
-    function emitForceCloseInfo(
+    function emitInsolventCloseInfo(
         EventEmitter eventEmitter,
         bytes32 orderKey,
         uint256 positionCollateralAmount,
@@ -155,7 +155,7 @@ library PositionEventUtils {
         eventData.intItems.setItem(0, "basePnlUsd", basePnlUsd);
 
         eventEmitter.emitEventLog(
-            "ForceClose",
+            "InsolventClose",
             eventData
         );
     }

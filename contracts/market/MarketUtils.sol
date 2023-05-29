@@ -364,7 +364,7 @@ library MarketUtils {
 
         result.impactPoolAmount = getPositionImpactPoolAmount(dataStore, market.marketToken);
         // use !maximize for pickPrice since the impactPoolUsd is deducted from the poolValue
-        uint256 impactPoolUsd = result.impactPoolAmount * indexTokenPrice.pickPrice(maximize);
+        uint256 impactPoolUsd = result.impactPoolAmount * indexTokenPrice.pickPrice(!maximize);
 
         result.poolValue -= impactPoolUsd.toInt256();
 

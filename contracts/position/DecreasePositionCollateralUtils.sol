@@ -40,7 +40,7 @@ library DecreasePositionCollateralUtils {
     using EventUtils for EventUtils.StringItems;
 
     struct ProcessCollateralCache {
-        bool isForceCloseAllowed;
+        bool isInsolventCloseAllowed;
         bool wasSwapped;
         uint256 swapOutputAmount;
         PayForCostResult result;
@@ -50,12 +50,6 @@ library DecreasePositionCollateralUtils {
         uint256 amountPaidInCollateralToken;
         uint256 amountPaidInSecondaryOutputToken;
         uint256 remainingCostUsd;
-    }
-
-    struct ProcessForceCloseCache {
-        uint256 remainingFundingFeeAmount;
-        uint256 remainingCostAmount;
-        address holdingAddress;
     }
 
     struct GetExecutionPriceCache {
@@ -82,7 +76,15 @@ library DecreasePositionCollateralUtils {
         values.output.outputToken = params.position.collateralToken();
         values.output.secondaryOutputToken = cache.pnlToken;
 
-        collateralCache.isForceCloseAllowed =
+        // only allow force closing if it is a liquidation or ADL order
+        // isInsolventCloseAllowed is used in handleEarlyReturn to determine
+        // whether the txn should revert if the remainingCostUsd is below zero
+        //
+        // for isInsolventCloseAllowed to be true, the sizeDeltaUsd must equal
+        // the position size, otherwise there may be pending positive pnl that
+        // could be used to pay for fees and the position would be undercharged
+        // if the position is not fully closed
+        collateralCache.isInsolventCloseAllowed =
             params.order.sizeDeltaUsd() == params.position.sizeInUsd() &&
             (
                 BaseOrderUtils.isLiquidationOrder(params.order.orderType()) ||
@@ -96,8 +98,8 @@ library DecreasePositionCollateralUtils {
         // then priceImpactUsd would be $20
         (values.priceImpactUsd, values.priceImpactDiffUsd, values.executionPrice) = getExecutionPrice(params, cache.prices, params.order.sizeDeltaUsd());
 
-        // the totalPositionPnl is calculated based on the current indexTokenPrice of the executionPrice
-        // since the execution price factors in price impact which should be accounted for separately
+        // the totalPositionPnl is calculated based on the current indexTokenPrice instead of the executionPrice
+        // since the executionPrice factors in price impact which should be accounted for separately
         // the sizeDeltaInTokens is calculated as position.sizeInTokens() * sizeDeltaUsd / position.sizeInUsd()
         // the basePnlUsd is the pnl to be realized, and is calculated as:
         // totalPositionPnl * sizeDeltaInTokens / position.sizeInTokens()
@@ -127,7 +129,9 @@ library DecreasePositionCollateralUtils {
 
         // if the pnl is positive, deduct the pnl amount from the pool
         if (values.basePnlUsd > 0) {
+            // use pnlTokenPrice.max to minimize the tokens paid out
             uint256 deductionAmountForPool = values.basePnlUsd.toUint256() / cache.pnlTokenPrice.max;
+
             MarketUtils.applyDeltaToPoolAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
@@ -144,7 +148,7 @@ library DecreasePositionCollateralUtils {
         }
 
         if (values.priceImpactUsd > 0) {
-            // reduce the position impact pool by the max amount
+            // use indexTokenPrice.min to maximize the position impact pool reduction
             uint256 deductionAmountForImpactPool = Calc.roundUpDivision(values.priceImpactUsd.toUint256(), cache.prices.indexTokenPrice.min);
 
             MarketUtils.applyDeltaToPositionImpactPool(
@@ -154,6 +158,14 @@ library DecreasePositionCollateralUtils {
                 -deductionAmountForImpactPool.toInt256()
             );
 
+            // use pnlTokenPrice.max to minimize the payout from the pool
+            // some impact pool value may be transferred to the market token pool if there is a
+            // large spread between min and max prices
+            // since if there is a positive priceImpactUsd, the impact pool would be reduced using indexTokenPrice.min to
+            // maximize the deduction value, while the market token pool is reduced using the pnlTokenPrice.max to minimize
+            // the deduction value
+            // the pool value is calculated by subtracting the worth of the tokens in the position impact pool
+            // so this transfer of value would increase the price of the market token
             uint256 deductionAmountForPool = values.priceImpactUsd.toUint256() / cache.pnlTokenPrice.max;
 
             MarketUtils.applyDeltaToPoolAmount(
@@ -202,7 +214,6 @@ library DecreasePositionCollateralUtils {
         );
 
         if (collateralCache.result.amountPaidInSecondaryOutputToken > 0) {
-            // let the holding address claim the token
             address holdingAddress = params.contracts.dataStore.getAddress(Keys.HOLDING_ADDRESS);
             if (holdingAddress == address(0)) {
                 revert Errors.EmptyHoldingAddress();
@@ -297,11 +308,13 @@ library DecreasePositionCollateralUtils {
             fees.totalCostAmountExcludingFunding * cache.collateralTokenPrice.min
         );
 
+        // if fees were fully paid in the collateral token, update the pool and claimable fee amounts
         if (collateralCache.result.remainingCostUsd == 0 && collateralCache.result.amountPaidInSecondaryOutputToken == 0) {
             // there may be a large amount of borrowing fees that could have been accumulated
             // these fees could cause the pool to become unbalanced, price impact is not paid for causing
             // this imbalance
-            // the swap impact pool should be built up to help handle this case
+            // the swap impact pool should be built up so that it can be used to pay for positive price impact
+            // for re-balancing to help handle this case
             MarketUtils.applyDeltaToPoolAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
@@ -352,6 +365,9 @@ library DecreasePositionCollateralUtils {
                 );
             }
 
+            // empty the fees since the amount was entirely paid to the pool instead of for fees
+            // it is possible for the txn execution to still complete even in this case
+            // as long as the remainingCostUsd is still zero
             fees = getEmptyFees(fees);
         }
 
@@ -421,6 +437,14 @@ library DecreasePositionCollateralUtils {
             );
 
             if (collateralCache.result.amountPaidInCollateralToken > 0) {
+                MarketUtils.applyDeltaToPoolAmount(
+                    params.contracts.dataStore,
+                    params.contracts.eventEmitter,
+                    params.market.marketToken,
+                    params.position.collateralToken(),
+                    collateralCache.result.amountPaidInCollateralToken.toInt256()
+                );
+
                 MarketUtils.applyDeltaToPositionImpactPool(
                     params.contracts.dataStore,
                     params.contracts.eventEmitter,
@@ -430,6 +454,14 @@ library DecreasePositionCollateralUtils {
             }
 
             if (collateralCache.result.amountPaidInSecondaryOutputToken > 0) {
+                MarketUtils.applyDeltaToPoolAmount(
+                    params.contracts.dataStore,
+                    params.contracts.eventEmitter,
+                    params.market.marketToken,
+                    values.output.secondaryOutputToken,
+                    collateralCache.result.amountPaidInSecondaryOutputToken.toInt256()
+                );
+
                 MarketUtils.applyDeltaToPositionImpactPool(
                     params.contracts.dataStore,
                     params.contracts.eventEmitter,
@@ -449,8 +481,10 @@ library DecreasePositionCollateralUtils {
             }
         }
 
-        // adjust the initialCollateralDeltaAmount by the adjustedPriceImpactDiffAmount to reduce the chance that
-        // the position's collateral / leverage gets adjusted by an unexpected amount
+        // the priceImpactDiffUsd has been deducted from the output amount or the position's collateral
+        // to reduce the chance that the position's collateral is reduced by an unexpected amount, adjust the
+        // initialCollateralDeltaAmount by the priceImpactDiffAmount
+        // this would also help to prevent the position's leverage from being unexpectedly increased
         if (params.order.initialCollateralDeltaAmount() > 0 && values.priceImpactDiffUsd > 0) {
             uint256 initialCollateralDeltaAmount = params.order.initialCollateralDeltaAmount();
 
@@ -469,6 +503,7 @@ library DecreasePositionCollateralUtils {
             );
         }
 
+        // cap the withdrawable amount to the remainingCollateralAmount
         if (params.order.initialCollateralDeltaAmount() > values.remainingCollateralAmount) {
             OrderEventUtils.emitOrderCollateralDeltaAmountAutoUpdated(
                 params.contracts.eventEmitter,
@@ -619,7 +654,7 @@ library DecreasePositionCollateralUtils {
         ProcessCollateralCache memory collateralCache,
         string memory step
     ) internal returns (PositionUtils.DecreasePositionCollateralValues memory, PositionPricingUtils.PositionFees memory) {
-        if (!collateralCache.isForceCloseAllowed) {
+        if (!collateralCache.isInsolventCloseAllowed) {
             revert Errors.InsufficientFundsToPayForCosts(collateralCache.result.remainingCostUsd, step);
         }
 
@@ -633,7 +668,7 @@ library DecreasePositionCollateralUtils {
             fees
         );
 
-        PositionEventUtils.emitForceCloseInfo(
+        PositionEventUtils.emitInsolventCloseInfo(
             params.contracts.eventEmitter,
             params.orderKey,
             params.position.collateralAmount(),
