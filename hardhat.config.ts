@@ -14,6 +14,9 @@ import "@nomiclabs/hardhat-ethers";
 // extends hre with gmx domain data
 import "./config";
 
+// add test helper methods
+import "./utils/test";
+
 const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.18",
