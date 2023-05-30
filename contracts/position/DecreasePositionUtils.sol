@@ -202,17 +202,19 @@ library DecreasePositionUtils {
 
         PositionUtils.updateFundingAndBorrowingState(params, cache.prices);
 
-        (bool isLiquidatable, /* string memory reason */) = PositionUtils.isPositionLiquidatable(
-            params.contracts.dataStore,
-            params.contracts.referralStorage,
-            params.position,
-            params.market,
-            cache.prices,
-            true // shouldValidateMinCollateralUsd
-        );
+        if (BaseOrderUtils.isLiquidationOrder(params.order.orderType())) {
+            (bool isLiquidatable, /* string memory reason */) = PositionUtils.isPositionLiquidatable(
+                params.contracts.dataStore,
+                params.contracts.referralStorage,
+                params.position,
+                params.market,
+                cache.prices,
+                true // shouldValidateMinCollateralUsd
+            );
 
-        if (BaseOrderUtils.isLiquidationOrder(params.order.orderType()) && !isLiquidatable) {
-            revert Errors.PositionShouldNotBeLiquidated();
+            if (!isLiquidatable) {
+                revert Errors.PositionShouldNotBeLiquidated();
+            }
         }
 
         cache.initialCollateralAmount = params.position.collateralAmount();
