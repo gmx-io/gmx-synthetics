@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/utils/math/SignedMath.sol";
+
 import "../data/Keys.sol";
 
 import "../market/MarketStoreUtils.sol";
@@ -12,29 +14,41 @@ import "../withdrawal/WithdrawalStoreUtils.sol";
 import "../position/Position.sol";
 import "../position/PositionUtils.sol";
 import "../position/PositionStoreUtils.sol";
+import "../position/IncreasePositionUtils.sol";
+import "../position/DecreasePositionUtils.sol";
 
 import "../order/OrderStoreUtils.sol";
 
 import "../market/MarketUtils.sol";
 import "../market/Market.sol";
 
-struct PositionInfo {
-    Position.Props position;
-    PositionPricingUtils.PositionFees fees;
-}
-
 // @title ReaderUtils
 // @dev Library for read utils functions
 // convers some internal library functions into external functions to reduce
 // the Reader contract size
 library ReaderUtils {
+    using SignedMath for int256;
     using SafeCast for uint256;
     using SafeCast for int256;
     using Price for Price.Props;
     using Position for Position.Props;
+    using Order for Order.Props;
+
+    struct ExecutionPriceResult {
+        int256 priceImpactUsd;
+        uint256 priceImpactDiffUsd;
+        uint256 executionPrice;
+    }
+
+    struct PositionInfo {
+        Position.Props position;
+        PositionPricingUtils.PositionFees fees;
+        ExecutionPriceResult executionPriceResult;
+        int256 basePnlUsd;
+        int256 pnlAfterPriceImpactUsd;
+    }
 
     struct GetPositionInfoCache {
-        Position.Props position;
         Market.Props market;
         Price.Props collateralTokenPrice;
         uint256 pendingBorrowingFeeUsd;
@@ -105,20 +119,21 @@ library ReaderUtils {
         address uiFeeReceiver,
         bool usePositionSizeAsSizeDeltaUsd
     ) external view returns (PositionInfo memory) {
+        PositionInfo memory positionInfo;
         GetPositionInfoCache memory cache;
 
-        cache.position = PositionStoreUtils.get(dataStore, positionKey);
-        cache.market = MarketStoreUtils.get(dataStore, cache.position.market());
-        cache.collateralTokenPrice = MarketUtils.getCachedTokenPrice(cache.position.collateralToken(), cache.market, prices);
+        positionInfo.position = PositionStoreUtils.get(dataStore, positionKey);
+        cache.market = MarketStoreUtils.get(dataStore, positionInfo.position.market());
+        cache.collateralTokenPrice = MarketUtils.getCachedTokenPrice(positionInfo.position.collateralToken(), cache.market, prices);
 
         if (usePositionSizeAsSizeDeltaUsd) {
-            sizeDeltaUsd = cache.position.sizeInUsd();
+            sizeDeltaUsd = positionInfo.position.sizeInUsd();
         }
 
         PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams(
             dataStore,
             referralStorage,
-            cache.position,
+            positionInfo.position,
             cache.collateralTokenPrice,
             cache.market.longToken,
             cache.market.shortToken,
@@ -126,13 +141,13 @@ library ReaderUtils {
             uiFeeReceiver
         );
 
-        PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(getPositionFeesParams);
+        positionInfo.fees = PositionPricingUtils.getPositionFees(getPositionFeesParams);
 
         // borrowing and funding fees need to be overwritten with pending values otherwise they
         // would be using storage values that have not yet been updated
-        cache.pendingBorrowingFeeUsd = getNextBorrowingFees(dataStore, cache.position, cache.market, prices);
+        cache.pendingBorrowingFeeUsd = getNextBorrowingFees(dataStore, positionInfo.position, cache.market, prices);
 
-        fees.borrowing = getBorrowingFees(
+        positionInfo.fees.borrowing = getBorrowingFees(
             dataStore,
             cache.collateralTokenPrice,
             cache.pendingBorrowingFeeUsd
@@ -140,7 +155,7 @@ library ReaderUtils {
 
         MarketUtils.GetNextFundingAmountPerSizeResult memory nextFundingAmountResult = getNextFundingAmountPerSize(dataStore, cache.market, prices);
 
-        if (cache.position.isLong()) {
+        if (positionInfo.position.isLong()) {
             cache.latestLongTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_LongCollateral_LongPosition;
             cache.latestShortTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_ShortCollateral_LongPosition;
         } else {
@@ -148,15 +163,36 @@ library ReaderUtils {
             cache.latestShortTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_ShortCollateral_ShortPosition;
         }
 
-        fees.funding = getFundingFees(
-            cache.position,
+        positionInfo.fees.funding = getFundingFees(
+            positionInfo.position,
             cache.market.longToken,
             cache.market.shortToken,
             cache.latestLongTokenFundingAmountPerSize,
             cache.latestShortTokenFundingAmountPerSize
         );
 
-        return PositionInfo(cache.position, fees);
+        positionInfo.executionPriceResult = getExecutionPrice(
+            dataStore,
+            cache.market,
+            prices.indexTokenPrice,
+            positionInfo.position.sizeInUsd(),
+            positionInfo.position.sizeInTokens(),
+            -sizeDeltaUsd.toInt256(),
+            positionInfo.position.isLong()
+        );
+
+        (positionInfo.basePnlUsd, /* sizeDeltaInTokens */) = PositionUtils.getPositionPnlUsd(
+            dataStore,
+            cache.market,
+            prices,
+            positionInfo.position,
+            positionInfo.position.isLong() ? prices.indexTokenPrice.min : prices.indexTokenPrice.max,
+            sizeDeltaUsd
+        );
+
+        positionInfo.pnlAfterPriceImpactUsd = positionInfo.executionPriceResult.priceImpactUsd + positionInfo.basePnlUsd;
+
+        return positionInfo;
     }
 
     // returns amountOut, price impact, fees
@@ -246,14 +282,6 @@ library ReaderUtils {
         return (cache.amountOut, impactAmount, fees);
     }
 
-    struct ExecutionPriceResult {
-        int256 priceImpactUsdBeforeCap;
-        int256 priceImpactUsdAfterCap;
-        int256 priceImpactUsd;
-        uint256 priceImpactDiffUsd;
-        uint256 executionPrice;
-    }
-
     function getExecutionPrice(
         DataStore dataStore,
         Market.Props memory market,
@@ -262,73 +290,38 @@ library ReaderUtils {
         uint256 positionSizeInTokens,
         int256 sizeDeltaUsd,
         bool isLong
-    ) external view returns (ExecutionPriceResult memory result) {
-        result.priceImpactUsdBeforeCap = PositionPricingUtils.getPriceImpactUsd(
-            PositionPricingUtils.GetPriceImpactUsdParams(
-                dataStore,
-                market,
-                sizeDeltaUsd,
-                isLong
-            )
-        );
-        result.priceImpactUsdAfterCap = MarketUtils.getCappedPositionImpactUsd(
-            dataStore,
-            market.marketToken,
-            indexTokenPrice,
-            result.priceImpactUsdBeforeCap,
-            (sizeDeltaUsd < 0 ? -sizeDeltaUsd : sizeDeltaUsd).toUint256()
-        );
+    ) public view returns (ExecutionPriceResult memory) {
+        PositionUtils.UpdatePositionParams memory params;
 
-        result.priceImpactUsd = result.priceImpactUsdAfterCap;
-        if (result.priceImpactUsd < 0) {
-            uint256 maxPriceImpactFactor = MarketUtils.getMaxPositionImpactFactor(
-                dataStore,
-                market.marketToken,
-                false
-            );
+        params.contracts.dataStore = dataStore;
+        params.market = market;
 
-            // convert the max price impact to the min negative value
-            int256 minPriceImpactUsd = -Precision.applyFactor(
-                (sizeDeltaUsd < 0 ? -sizeDeltaUsd : sizeDeltaUsd).toUint256(),
-                maxPriceImpactFactor
-            ).toInt256();
-
-            if (result.priceImpactUsd < minPriceImpactUsd) {
-                result.priceImpactDiffUsd = (minPriceImpactUsd - result.priceImpactUsd).toUint256();
-                result.priceImpactUsd = minPriceImpactUsd;
-            }
-        }
+        Order.Props memory order;
+        order.setSizeDeltaUsd(sizeDeltaUsd.abs());
+        order.setIsLong(isLong);
 
         bool isIncrease = sizeDeltaUsd > 0;
         bool shouldPriceBeSmaller = isIncrease ? isLong : !isLong;
+        order.setAcceptablePrice(shouldPriceBeSmaller ? type(uint256).max : 0);
 
-        if (isIncrease) {
-            int256 priceImpactAmount;
+        Position.Props memory position;
+        position.setSizeInUsd(positionSizeInUsd);
+        position.setSizeInTokens(positionSizeInTokens);
+        position.setIsLong(isLong);
 
-            if (result.priceImpactUsd > 0) {
-                // use indexTokenPrice.max and round down to minimize the priceImpactAmount
-                priceImpactAmount = result.priceImpactUsd / indexTokenPrice.max.toInt256();
-            } else {
-                // use indexTokenPrice.min and round up to maximize the priceImpactAmount
-                priceImpactAmount = Calc.roundUpMagnitudeDivision(result.priceImpactUsd, indexTokenPrice.min);
-            }
+        params.order = order;
 
-            result.executionPrice = BaseOrderUtils.getExecutionPriceForIncrease(
-                indexTokenPrice,
-                sizeDeltaUsd.toUint256(),
-                priceImpactAmount,
-                shouldPriceBeSmaller ? type(uint256).max : 0,
-                isLong
+        ExecutionPriceResult memory result;
+
+        if (sizeDeltaUsd > 0) {
+            (result.priceImpactUsd, /* priceImpactAmount */, result.executionPrice) = IncreasePositionUtils.getExecutionPrice(
+                params,
+                indexTokenPrice
             );
         } else {
-            result.executionPrice = BaseOrderUtils.getExecutionPriceForDecrease(
-                indexTokenPrice,
-                positionSizeInUsd,
-                positionSizeInTokens,
-                (sizeDeltaUsd < 0 ? -sizeDeltaUsd : sizeDeltaUsd).toUint256(),
-                result.priceImpactUsd,
-                shouldPriceBeSmaller ? type(uint256).max : 0,
-                isLong
+             (result.priceImpactUsd, result.priceImpactDiffUsd, result.executionPrice) = DecreasePositionCollateralUtils.getExecutionPrice(
+                params,
+                indexTokenPrice
             );
         }
 

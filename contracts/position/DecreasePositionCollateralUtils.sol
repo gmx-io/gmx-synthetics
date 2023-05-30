@@ -56,7 +56,6 @@ library DecreasePositionCollateralUtils {
         int256 priceImpactUsd;
         uint256 priceImpactDiffUsd;
         uint256 executionPrice;
-        int256 priceImpactAmount;
     }
 
     // @dev handle the collateral changes of the position
@@ -96,7 +95,7 @@ library DecreasePositionCollateralUtils {
         // priceImpactDiffUsd is the difference between the maximum price impact and the originally calculated price impact
         // e.g. if the originally calculated price impact is -$100, but the capped price impact is -$80
         // then priceImpactUsd would be $20
-        (values.priceImpactUsd, values.priceImpactDiffUsd, values.executionPrice) = getExecutionPrice(params, cache.prices, params.order.sizeDeltaUsd());
+        (values.priceImpactUsd, values.priceImpactDiffUsd, values.executionPrice) = getExecutionPrice(params, cache.prices.indexTokenPrice);
 
         // the totalPositionPnl is calculated based on the current indexTokenPrice instead of the executionPrice
         // since the executionPrice factors in price impact which should be accounted for separately
@@ -524,10 +523,10 @@ library DecreasePositionCollateralUtils {
     // returns priceImpactUsd, priceImpactDiffUsd, executionPrice
     function getExecutionPrice(
         PositionUtils.UpdatePositionParams memory params,
-        MarketUtils.MarketPrices memory prices,
-        uint256 sizeDeltaUsd
+        Price.Props memory indexTokenPrice
     ) internal view returns (int256, uint256, uint256) {
         GetExecutionPriceCache memory cache;
+        uint256 sizeDeltaUsd = params.order.sizeDeltaUsd();
 
         cache.priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
@@ -542,7 +541,7 @@ library DecreasePositionCollateralUtils {
         cache.priceImpactUsd = MarketUtils.getCappedPositionImpactUsd(
             params.contracts.dataStore,
             params.market.marketToken,
-            prices.indexTokenPrice,
+            indexTokenPrice,
             cache.priceImpactUsd,
             sizeDeltaUsd
         );

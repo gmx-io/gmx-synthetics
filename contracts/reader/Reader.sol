@@ -19,7 +19,6 @@ import "../market/MarketUtils.sol";
 import "../market/Market.sol";
 
 import "./ReaderUtils.sol";
-import { PositionInfo } from "./ReaderUtils.sol";
 
 // @title Reader
 // @dev Library for read functions
@@ -108,8 +107,8 @@ contract Reader {
         bytes32[] memory positionKeys,
         MarketUtils.MarketPrices[] memory prices,
         address uiFeeReceiver
-    ) external view returns (PositionInfo[] memory) {
-        PositionInfo[] memory positionInfoList = new PositionInfo[](positionKeys.length);
+    ) external view returns (ReaderUtils.PositionInfo[] memory) {
+        ReaderUtils.PositionInfo[] memory positionInfoList = new ReaderUtils.PositionInfo[](positionKeys.length);
         for (uint256 i; i < positionKeys.length; i++) {
             bytes32 positionKey = positionKeys[i];
             positionInfoList[i] = getPositionInfo(
@@ -134,7 +133,7 @@ contract Reader {
         uint256 sizeDeltaUsd,
         address uiFeeReceiver,
         bool usePositionSizeAsSizeDeltaUsd
-    ) public view returns (PositionInfo memory) {
+    ) public view returns (ReaderUtils.PositionInfo memory) {
         return ReaderUtils.getPositionInfo(
             dataStore,
             referralStorage,
