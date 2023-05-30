@@ -181,6 +181,7 @@ library ReaderUtils {
             positionInfo.position.isLong()
         );
 
+
         (positionInfo.basePnlUsd, /* sizeDeltaInTokens */) = PositionUtils.getPositionPnlUsd(
             dataStore,
             cache.market,
@@ -296,20 +297,16 @@ library ReaderUtils {
         params.contracts.dataStore = dataStore;
         params.market = market;
 
-        Order.Props memory order;
-        order.setSizeDeltaUsd(sizeDeltaUsd.abs());
-        order.setIsLong(isLong);
+        params.order.setSizeDeltaUsd(sizeDeltaUsd.abs());
+        params.order.setIsLong(isLong);
 
         bool isIncrease = sizeDeltaUsd > 0;
-        bool shouldPriceBeSmaller = isIncrease ? isLong : !isLong;
-        order.setAcceptablePrice(shouldPriceBeSmaller ? type(uint256).max : 0);
+        bool shouldExecutionPriceBeSmaller = isIncrease ? isLong : !isLong;
+        params.order.setAcceptablePrice(shouldExecutionPriceBeSmaller ? type(uint256).max : 0);
 
-        Position.Props memory position;
-        position.setSizeInUsd(positionSizeInUsd);
-        position.setSizeInTokens(positionSizeInTokens);
-        position.setIsLong(isLong);
-
-        params.order = order;
+        params.position.setSizeInUsd(positionSizeInUsd);
+        params.position.setSizeInTokens(positionSizeInTokens);
+        params.position.setIsLong(isLong);
 
         ExecutionPriceResult memory result;
 

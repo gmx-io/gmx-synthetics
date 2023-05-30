@@ -117,7 +117,6 @@ library BaseOrderUtils {
     struct GetExecutionPriceCache {
         uint256 price;
         uint256 executionPrice;
-        bool shouldPriceBeSmaller;
         int256 adjustedPriceImpactUsd;
     }
 

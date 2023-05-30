@@ -546,7 +546,6 @@ library DecreasePositionCollateralUtils {
             sizeDeltaUsd
         );
 
-        cache.priceImpactDiffUsd;
         if (cache.priceImpactUsd < 0) {
             uint256 maxPriceImpactFactor = MarketUtils.getMaxPositionImpactFactor(
                 params.contracts.dataStore,
@@ -570,7 +569,7 @@ library DecreasePositionCollateralUtils {
         }
 
         cache.executionPrice = BaseOrderUtils.getExecutionPriceForDecrease(
-            params.contracts.oracle.getPrimaryPrice(params.market.indexToken),
+            indexTokenPrice,
             params.position.sizeInUsd(),
             params.position.sizeInTokens(),
             sizeDeltaUsd,
