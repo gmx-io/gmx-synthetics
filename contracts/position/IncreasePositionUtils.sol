@@ -100,7 +100,7 @@ library IncreasePositionUtils {
         }
         params.position.setCollateralAmount(Calc.sumReturnUint256(params.position.collateralAmount(), cache.collateralDeltaAmount));
 
-        (cache.priceImpactUsd, cache.priceImpactAmount, cache.executionPrice) = getExecutionPrice(params, prices);
+        (cache.priceImpactUsd, cache.priceImpactAmount, cache.executionPrice) = getExecutionPrice(params, prices.indexTokenPrice);
 
         if (params.position.isLong()) {
             // round the number of tokens for long positions down
@@ -298,7 +298,7 @@ library IncreasePositionUtils {
     // returns priceImpactUsd, priceImpactAmount, executionPrice
     function getExecutionPrice(
         PositionUtils.UpdatePositionParams memory params,
-        MarketUtils.MarketPrices memory prices
+        Price.Props memory indexTokenPrice
     ) internal view returns (int256, int256, uint256) {
         int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
@@ -313,7 +313,7 @@ library IncreasePositionUtils {
         priceImpactUsd = MarketUtils.getCappedPositionImpactUsd(
             params.contracts.dataStore,
             params.market.marketToken,
-            prices.indexTokenPrice,
+            indexTokenPrice,
             priceImpactUsd,
             params.order.sizeDeltaUsd()
         );
@@ -338,14 +338,14 @@ library IncreasePositionUtils {
 
         if (priceImpactUsd > 0) {
             // use indexTokenPrice.max and round down to minimize the priceImpactAmount
-            priceImpactAmount = priceImpactUsd / prices.indexTokenPrice.max.toInt256();
+            priceImpactAmount = priceImpactUsd / indexTokenPrice.max.toInt256();
         } else {
             // use indexTokenPrice.min and round up to maximize the priceImpactAmount
-            priceImpactAmount = Calc.roundUpMagnitudeDivision(priceImpactUsd, prices.indexTokenPrice.min);
+            priceImpactAmount = Calc.roundUpMagnitudeDivision(priceImpactUsd, indexTokenPrice.min);
         }
 
         uint256 executionPrice = BaseOrderUtils.getExecutionPriceForIncrease(
-            prices.indexTokenPrice,
+            indexTokenPrice,
             params.order.sizeDeltaUsd(),
             priceImpactAmount,
             params.order.acceptablePrice(),
