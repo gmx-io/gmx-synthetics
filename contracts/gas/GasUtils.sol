@@ -48,14 +48,18 @@ library GasUtils {
         return startingGas - minHandleErrorGas;
     }
 
-    // @dev pay the keeper the execution fee and refund any excess amount to the user
+    // @dev pay the keeper the execution fee and refund any excess amount
+    // the refundReceiver should be specified to be the deposit.receiver,
+    // order.receiver, or withdrawal.receiver
+    // this would help to allow integrations to keep track of output tokens
+    // by using an intermediate contract as a receiver
     //
     // @param dataStore DataStore
     // @param bank the StrictBank contract holding the execution fee
     // @param executionFee the executionFee amount
     // @param startingGas the starting gas
     // @param keeper the keeper to pay
-    // @param user the user to refund
+    // @param refundReceiver the account that should receive any excess gas refunds
     function payExecutionFee(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -63,7 +67,7 @@ library GasUtils {
         uint256 executionFee,
         uint256 startingGas,
         address keeper,
-        address user
+        address refundReceiver
     ) external {
         uint256 gasUsed = startingGas - gasleft();
         uint256 executionFeeForKeeper = adjustGasUsage(dataStore, gasUsed) * tx.gasprice;
@@ -85,11 +89,11 @@ library GasUtils {
         }
 
         bank.transferOutNativeToken(
-            user,
+            refundReceiver,
             refundFeeAmount
         );
 
-        emitExecutionFeeRefund(eventEmitter, user, refundFeeAmount);
+        emitExecutionFeeRefund(eventEmitter, refundReceiver, refundFeeAmount);
     }
 
     // @dev validate that the provided executionFee is sufficient based on the estimatedGasLimit
@@ -226,20 +230,20 @@ library GasUtils {
 
     function emitExecutionFeeRefund(
         EventEmitter eventEmitter,
-        address account,
+        address receiver,
         uint256 refundFeeAmount
     ) internal {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(1);
-        eventData.addressItems.setItem(0, "account", account);
+        eventData.addressItems.setItem(0, "receiver", receiver);
 
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "refundFeeAmount", refundFeeAmount);
 
         eventEmitter.emitEventLog1(
             "ExecutionFeeRefund",
-            Cast.toBytes32(account),
+            Cast.toBytes32(receiver),
             eventData
         );
     }
