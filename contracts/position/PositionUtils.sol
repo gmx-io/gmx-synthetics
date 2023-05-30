@@ -205,8 +205,6 @@ library PositionUtils {
             }
         }
 
-        cache.sizeDeltaInTokens;
-
         if (position.sizeInUsd() == sizeDeltaUsd) {
             cache.sizeDeltaInTokens = position.sizeInTokens();
         } else {
