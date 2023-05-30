@@ -2,7 +2,7 @@ import { createDeployFunction } from "../utils/deploy";
 
 const func = createDeployFunction({
   contractName: "ReaderUtils",
-  libraryNames: ["BaseOrderUtils", "MarketStoreUtils", "PositionStoreUtils", "PositionPricingUtils"],
+  libraryNames: ["MarketStoreUtils", "PositionStoreUtils", "PositionUtils"],
 });
 
 export default func;
