@@ -10,14 +10,23 @@ import "../error/ErrorUtils.sol";
 
 // @title DecreaseOrderUtils
 // @dev Library for functions to help with processing a decrease order
+// note that any updates to the eventData
 library DecreaseOrderUtils {
     using Position for Position.Props;
     using Order for Order.Props;
     using Array for uint256[];
 
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
+
     // @dev process a decrease order
     // @param params BaseOrderUtils.ExecuteOrderParams
-    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external {
+    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external returns (EventUtils.EventLogData memory) {
         Order.Props memory order = params.order;
         MarketUtils.validatePositionMarket(params.contracts.dataStore, params.market);
 
@@ -76,7 +85,12 @@ library DecreaseOrderUtils {
                 order.shouldUnwrapNativeToken()
             );
 
-            return;
+            return getOutputEventData(
+                result.outputToken,
+                result.outputAmount,
+                result.secondaryOutputToken,
+                result.secondaryOutputAmount
+            );
         }
 
         try params.contracts.swapHandler.swap(
@@ -101,6 +115,13 @@ library DecreaseOrderUtils {
                 swapOutputAmount,
                 order.minOutputAmount()
             );
+
+            return getOutputEventData(
+                tokenOut,
+                swapOutputAmount,
+                address(0),
+                0
+            );
         } catch (bytes memory reasonBytes) {
             (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
 
@@ -110,6 +131,13 @@ library DecreaseOrderUtils {
                 result,
                 reason,
                 reasonBytes
+            );
+
+            return getOutputEventData(
+                result.outputToken,
+                result.outputAmount,
+                address(0),
+                0
             );
         }
     }
@@ -226,5 +254,23 @@ library DecreaseOrderUtils {
             result.outputAmount,
             order.shouldUnwrapNativeToken()
         );
+    }
+
+    function getOutputEventData(
+        address outputToken,
+        uint256 outputAmount,
+        address secondaryOutputToken,
+        uint256 secondaryOutputAmount
+    ) internal pure returns (EventUtils.EventLogData memory) {
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "outputToken", outputToken);
+        eventData.addressItems.setItem(1, "secondaryOutputToken", secondaryOutputToken);
+
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "outputAmount", outputAmount);
+        eventData.uintItems.setItem(1, "secondaryOutputAmount", secondaryOutputAmount);
+
+        return eventData;
     }
 }

@@ -196,7 +196,8 @@ library WithdrawalUtils {
 
         WithdrawalEventUtils.emitWithdrawalExecuted(params.eventEmitter, params.key);
 
-        CallbackUtils.afterWithdrawalExecution(params.key, withdrawal);
+        EventUtils.EventLogData memory eventData;
+        CallbackUtils.afterWithdrawalExecution(params.key, withdrawal, eventData);
 
         GasUtils.payExecutionFee(
             params.dataStore,
@@ -248,7 +249,8 @@ library WithdrawalUtils {
 
         WithdrawalEventUtils.emitWithdrawalCancelled(eventEmitter, key, reason, reasonBytes);
 
-        CallbackUtils.afterWithdrawalCancellation(key, withdrawal);
+        EventUtils.EventLogData memory eventData;
+        CallbackUtils.afterWithdrawalCancellation(key, withdrawal, eventData);
 
         GasUtils.payExecutionFee(
             dataStore,

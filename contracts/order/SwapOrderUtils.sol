@@ -14,7 +14,7 @@ library SwapOrderUtils {
 
     // @dev process a swap order
     // @param params BaseOrderUtils.ExecuteOrderParams
-    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external {
+    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external returns (EventUtils.EventLogData memory) {
         if (params.order.market() != address(0)) {
             revert Errors.UnexpectedMarket();
         }
@@ -40,6 +40,9 @@ library SwapOrderUtils {
             params.order.uiFeeReceiver(),
             params.order.shouldUnwrapNativeToken()
         ));
+
+        EventUtils.EventLogData memory eventData;
+        return eventData;
     }
 
     // @dev validate the oracle block numbers used for the prices in the oracle

@@ -159,7 +159,7 @@ library OrderUtils {
             params.order.isLong()
         );
 
-        processOrder(params);
+        EventUtils.EventLogData memory eventData = processOrder(params);
 
         // validate that internal state changes are correct before calling
         // external callbacks
@@ -173,7 +173,7 @@ library OrderUtils {
 
         OrderEventUtils.emitOrderExecuted(params.contracts.eventEmitter, params.key);
 
-        CallbackUtils.afterOrderExecution(params.key, params.order);
+        CallbackUtils.afterOrderExecution(params.key, params.order, eventData);
 
         // the order.executionFee for liquidation / adl orders is zero
         // gas costs for liquidations / adl is subsidised by the treasury
@@ -190,20 +190,17 @@ library OrderUtils {
 
     // @dev process an order execution
     // @param params BaseOrderUtils.ExecuteOrderParams
-    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) internal {
+    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) internal returns (EventUtils.EventLogData memory) {
         if (BaseOrderUtils.isIncreaseOrder(params.order.orderType())) {
-            IncreaseOrderUtils.processOrder(params);
-            return;
+            return IncreaseOrderUtils.processOrder(params);
         }
 
         if (BaseOrderUtils.isDecreaseOrder(params.order.orderType())) {
-            DecreaseOrderUtils.processOrder(params);
-            return;
+            return DecreaseOrderUtils.processOrder(params);
         }
 
         if (BaseOrderUtils.isSwapOrder(params.order.orderType())) {
-            SwapOrderUtils.processOrder(params);
-            return;
+            return SwapOrderUtils.processOrder(params);
         }
 
         revert Errors.UnsupportedOrderType();
@@ -245,7 +242,8 @@ library OrderUtils {
 
         OrderEventUtils.emitOrderCancelled(eventEmitter, key, reason, reasonBytes);
 
-        CallbackUtils.afterOrderCancellation(key, order);
+        EventUtils.EventLogData memory eventData;
+        CallbackUtils.afterOrderCancellation(key, order, eventData);
 
         GasUtils.payExecutionFee(
             dataStore,
@@ -291,7 +289,8 @@ library OrderUtils {
 
         OrderEventUtils.emitOrderFrozen(eventEmitter, key, reason, reasonBytes);
 
-        CallbackUtils.afterOrderFrozen(key, order);
+        EventUtils.EventLogData memory eventData;
+        CallbackUtils.afterOrderFrozen(key, order, eventData);
 
         GasUtils.payExecutionFee(
             dataStore,

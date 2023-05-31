@@ -501,7 +501,11 @@ After the initial setup:
 
 # Feature Development
 
-If new features are added, tests should be added for the different market types, e.g. spot only markets, single token markets.
+For the development of new features, a few things should be noted:
+
+- tests should be added for the different market types, e.g. spot only markets, single token markets
+
+- the ordering of values in the eventData for callbacks should not be modified unless strictly necessary, since callback contracts may reference the values by a fixed index
 
 # Commands
 
