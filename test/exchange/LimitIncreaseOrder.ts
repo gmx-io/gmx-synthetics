@@ -151,11 +151,8 @@ describe("Exchange.LimitIncreaseOrder", () => {
   });
 
   it("uses execution price with price impact", async () => {
-    // set price impact to 0.1% for every $50,000 of token imbalance
-    // 0.1% => 0.001
-    // 0.001 / 50,000 => 2 * (10 ** -8)
-    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
-    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 9));
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
     await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
     const params = {

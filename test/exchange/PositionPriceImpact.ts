@@ -39,11 +39,8 @@ describe("Exchange.PositionPriceImpact", () => {
   });
 
   it("price impact", async () => {
-    // set price impact to 0.1% for every $50,000 of token imbalance
-    // 0.1% => 0.001
-    // 0.001 / 50,000 => 2 * (10 ** -8)
-    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
-    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 9));
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
     await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
     expect(await getOrderCount(dataStore)).eq(0);
@@ -122,7 +119,7 @@ describe("Exchange.PositionPriceImpact", () => {
     // 200,000 / 5029.999999999999 => 39.7614314115
     expect(position1.numbers.sizeInTokens).eq("39760000000000000004"); // 39.760000000000000004 ETH
 
-    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 4));
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 4));
 
     await handleOrder(fixture, {
       create: { ...params, isLong: true, sizeDeltaUsd: decimalToFloat(500 * 1000) },
@@ -144,7 +141,7 @@ describe("Exchange.PositionPriceImpact", () => {
       "319999999999999995"
     ); // 0.319999999999999995 ETH, 1600 USD
 
-    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
 
     await handleOrder(fixture, {
       create: {
@@ -263,8 +260,8 @@ describe("Exchange.PositionPriceImpact", () => {
     // set price impact to 0.1% for every $50,000 of token imbalance
     // 0.1% => 0.001
     // 0.001 / 50,000 => 2 * (10 ** -8)
-    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
-    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 9));
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
     await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
     expect(await getOrderCount(dataStore)).eq(0);
@@ -332,8 +329,8 @@ describe("Exchange.PositionPriceImpact", () => {
   });
 
   it("difference in pnl should be equal to price impact amount", async () => {
-    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
-    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 9));
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
     await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
     const marketPrices = {

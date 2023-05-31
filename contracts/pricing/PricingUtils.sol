@@ -114,9 +114,6 @@ library PricingUtils {
         uint256 impactExponentFactor
     ) internal pure returns (uint256) {
         uint256 exponentValue = Precision.applyExponentFactor(diffUsd, impactExponentFactor);
-        // we divide by 2 here to more easily translate liquidity into the appropriate impactFactor values
-        // for example, if the impactExponentFactor is 2 and we want to have an impact of 0.1% for $2 million of difference
-        // we can set the impactFactor to be 0.1% / 2 million, in factor form that would be 0.001 / 2,000,000 * (10 ^ 30)
-        return Precision.applyFactor(exponentValue, impactFactor) / 2;
+        return Precision.applyFactor(exponentValue, impactFactor);
     }
 }

@@ -291,8 +291,8 @@ describe("Exchange.MarketIncreaseOrder", () => {
   });
 
   it("validates position", async () => {
-    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
-    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 9));
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
     await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
     await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken), decimalToFloat(5, 4)); // 0.05%
 
@@ -329,7 +329,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
       },
     });
 
-    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 6));
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 7));
 
     await handleOrder(fixture, {
       create: { ...params, initialCollateralDeltaAmount: 0, minOutputAmount: 0, account: user0 },
@@ -347,7 +347,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
       create: { ...params, initialCollateralDeltaAmount: expandDecimals(1000, 6), account: user0 },
     });
 
-    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
 
     await dataStore.setUint(keys.MIN_COLLATERAL_USD, decimalToFloat(5000));
 
