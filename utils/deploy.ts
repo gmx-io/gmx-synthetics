@@ -1,3 +1,4 @@
+import { DeployFunction } from "hardhat-deploy/dist/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 export async function deployContract(name, args, contractOptions = {}) {
@@ -34,7 +35,7 @@ export function createDeployFunction({
     network: any;
   }) => Promise<void>;
   id?: string;
-}) {
+}): DeployFunction {
   const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRuntimeEnvironment) => {
     const { deploy, get } = deployments;
     const { deployer } = await getNamedAccounts();
