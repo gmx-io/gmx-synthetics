@@ -301,6 +301,5 @@ library OrderUtils {
             keeper,
             order.receiver()
         );
-
     }
 }
