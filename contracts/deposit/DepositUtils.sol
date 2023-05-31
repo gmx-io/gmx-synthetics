@@ -189,7 +189,8 @@ library DepositUtils {
 
         DepositEventUtils.emitDepositCancelled(eventEmitter, key, reason, reasonBytes);
 
-        CallbackUtils.afterDepositCancellation(key, deposit);
+        EventUtils.EventLogData memory eventData;
+        CallbackUtils.afterDepositCancellation(key, deposit, eventData);
 
         GasUtils.payExecutionFee(
             dataStore,

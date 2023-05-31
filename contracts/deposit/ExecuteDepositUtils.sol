@@ -217,7 +217,8 @@ library ExecuteDepositUtils {
             cache.receivedMarketTokens
         );
 
-        CallbackUtils.afterDepositExecution(params.key, deposit);
+        EventUtils.EventLogData memory eventData;
+        CallbackUtils.afterDepositExecution(params.key, deposit, eventData);
 
         GasUtils.payExecutionFee(
             params.dataStore,
