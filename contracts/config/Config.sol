@@ -199,8 +199,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.MIN_POSITION_SIZE_USD] = true;
         allowedBaseKeys[Keys.MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS] = true;
 
-        allowedBaseKeys[Keys.MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS] = true;
-
         allowedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
         allowedBaseKeys[Keys.MAX_OPEN_INTEREST] = true;
 
