@@ -1,19 +1,16 @@
-import { expect } from "chai";
-
-import { usingResult } from "../../utils/use";
-import { getMarketTokenPriceWithPoolValue } from "../../utils/market";
+// import { expect } from "chai";
+import { scenes } from "../scenes";
 import { deployFixture } from "../../utils/fixture";
-import { expandDecimals, decimalToFloat } from "../../utils/math";
-import { getSupplyOf } from "../../utils/token";
-import { handleDeposit } from "../../utils/deposit";
-import { OrderType, getOrderCount, getOrderKeys, createOrder, executeOrder, handleOrder } from "../../utils/order";
-import { getPositionCount, getAccountPositionCount, getPositionKeys } from "../../utils/position";
-import { getExecuteParams } from "../../utils/exchange";
-import { errorsContract } from "../../utils/error";
-import * as keys from "../../utils/keys";
 
 // check collateral amount, market token price, pool amount, position impact pool amount, fees
 describe("Exchange.DecreasePosition", () => {
+  let fixture;
+
+  beforeEach(async () => {
+    fixture = await deployFixture();
+    await scenes.deposit(fixture);
+  });
+
   it("DecreasePositionSwapType: SwapPnlTokenToCollateralToken, positive pnl", async () => {
     // to be added
   });

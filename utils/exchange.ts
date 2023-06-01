@@ -1,10 +1,11 @@
 import { logGasUsage } from "./gas";
 import { bigNumberify, expandDecimals } from "./math";
 import { getOracleParams, getOracleParamsForSimulation, TOKEN_ORACLE_TYPES } from "./oracle";
+import { prices } from "./prices";
 
-export function getExecuteParams(fixture, { tokens }) {
+export function getExecuteParams(fixture, { tokens, prices }) {
   const { wnt, wbtc, usdc } = fixture.contracts;
-  const priceInfoItems = {
+  const defaultPriceInfoItems = {
     [wnt.address]: {
       precision: 8,
       minPrice: expandDecimals(5000, 4),
@@ -29,15 +30,28 @@ export function getExecuteParams(fixture, { tokens }) {
     maxPrices: [],
   };
 
-  for (let i = 0; i < tokens.length; i++) {
-    const priceInfoItem = priceInfoItems[tokens[i].address];
-    if (!priceInfoItem) {
-      throw new Error("Missing price info");
+  if (tokens) {
+    for (let i = 0; i < tokens.length; i++) {
+      const priceInfoItem = defaultPriceInfoItems[tokens[i].address];
+      if (!priceInfoItem) {
+        throw new Error("Missing price info");
+      }
+      params.tokens.push(tokens[i].address);
+      params.precisions.push(priceInfoItem.precision);
+      params.minPrices.push(priceInfoItem.minPrice);
+      params.maxPrices.push(priceInfoItem.maxPrice);
     }
-    params.tokens.push(tokens[i].address);
-    params.precisions.push(priceInfoItem.precision);
-    params.minPrices.push(priceInfoItem.minPrice);
-    params.maxPrices.push(priceInfoItem.maxPrice);
+  }
+
+  if (prices) {
+    for (let i = 0; i < prices.length; i++) {
+      const priceInfoItem = prices[i];
+      const token = fixture.contracts[priceInfoItem.contractName];
+      params.tokens.push(token.address);
+      params.precisions.push(priceInfoItem.precision);
+      params.minPrices.push(priceInfoItem.minPrice);
+      params.maxPrices.push(priceInfoItem.maxPrice);
+    }
   }
 
   return params;
