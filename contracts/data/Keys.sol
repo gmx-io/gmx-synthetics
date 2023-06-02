@@ -242,6 +242,8 @@ library Keys {
     bytes32 public constant IS_ADL_ENABLED = keccak256(abi.encode("IS_ADL_ENABLED"));
     // @dev key for funding factor
     bytes32 public constant FUNDING_FACTOR = keccak256(abi.encode("FUNDING_FACTOR"));
+    // @dev key for stable funding factor
+    bytes32 public constant STABLE_FUNDING_FACTOR = keccak256(abi.encode("STABLE_FUNDING_FACTOR"));
     // @dev key for funding exponent factor
     bytes32 public constant FUNDING_EXPONENT_FACTOR = keccak256(abi.encode("FUNDING_EXPONENT_FACTOR"));
     // @dev key for funding amount per size
@@ -860,6 +862,16 @@ library Keys {
     function fundingFactorKey(address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             FUNDING_FACTOR,
+            market
+        ));
+    }
+
+    // @dev key for stable funding factor
+    // @param market the market to check
+    // @return key for stable funding factor
+    function stableFundingFactorKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            STABLE_FUNDING_FACTOR,
             market
         ));
     }

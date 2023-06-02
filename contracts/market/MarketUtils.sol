@@ -1813,6 +1813,10 @@ library MarketUtils {
         uint256 diffUsd,
         uint256 totalOpenInterest
     ) internal view returns (uint256) {
+        uint256 stableFundingFactor = dataStore.getUint(Keys.stableFundingFactorKey(market));
+
+        if (stableFundingFactor > 0) { return stableFundingFactor; }
+
         if (diffUsd == 0) { return 0; }
 
         if (totalOpenInterest == 0) {
