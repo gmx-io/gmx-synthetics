@@ -33,6 +33,10 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
       minPositionSizeUsd: decimalToFloat(1),
       claimableCollateralTimeDivisor: 60 * 60,
+
+      positionFeeReceiverFactor: 0,
+      swapFeeReceiverFactor: 0,
+      borrowingFeeReceiverFactor: 0,
     };
   } else {
     return {
@@ -61,9 +65,14 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
       maxSwapPathLength: 5,
       maxCallbackGasLimit: 2_000_000,
-      minPositionSizeUsd: decimalToFloat(1),
       minCollateralUsd: decimalToFloat(1),
+
+      minPositionSizeUsd: decimalToFloat(1),
       claimableCollateralTimeDivisor: 60 * 60,
+
+      positionFeeReceiverFactor: decimalToFloat(63, 2), // 63%
+      swapFeeReceiverFactor: decimalToFloat(63, 2), // 63%
+      borrowingFeeReceiverFactor: decimalToFloat(63, 2), // 63%
     };
   }
 }

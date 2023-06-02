@@ -20,6 +20,20 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
   await setUintIfDifferent(keys.MIN_COLLATERAL_USD, generalConfig.minCollateralUsd, "min collateral USD");
   await setUintIfDifferent(keys.MIN_POSITION_SIZE_USD, generalConfig.minPositionSizeUsd, "min position size USD");
 
+  await setUintIfDifferent(keys.SWAP_FEE_RECEIVER_FACTOR, generalConfig.swapFeeReceiverFactor, "swapFeeReceiverFactor");
+
+  await setUintIfDifferent(
+    keys.POSITION_FEE_RECEIVER_FACTOR,
+    generalConfig.positionFeeReceiverFactor,
+    "positionFeeReceiverFactor"
+  );
+
+  await setUintIfDifferent(
+    keys.BORROWING_FEE_RECEIVER_FACTOR,
+    generalConfig.borrowingFeeReceiverFactor,
+    "borrowingFeeReceiverFactor"
+  );
+
   await setUintIfDifferent(
     keys.CLAIMABLE_COLLATERAL_TIME_DIVISOR,
     generalConfig.claimableCollateralTimeDivisor,
