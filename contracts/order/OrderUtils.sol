@@ -184,7 +184,7 @@ library OrderUtils {
             params.order.executionFee(),
             params.startingGas,
             params.keeper,
-            params.order.receiver()
+            params.order.account()
         );
     }
 
@@ -252,7 +252,7 @@ library OrderUtils {
             order.executionFee(),
             startingGas,
             keeper,
-            order.receiver()
+            order.account()
         );
     }
 
@@ -299,7 +299,7 @@ library OrderUtils {
             executionFee,
             startingGas,
             keeper,
-            order.receiver()
+            order.account()
         );
     }
 }

@@ -206,7 +206,7 @@ library WithdrawalUtils {
             withdrawal.executionFee(),
             params.startingGas,
             params.keeper,
-            withdrawal.receiver()
+            withdrawal.account()
         );
     }
 
@@ -259,7 +259,7 @@ library WithdrawalUtils {
             withdrawal.executionFee(),
             startingGas,
             keeper,
-            withdrawal.receiver()
+            withdrawal.account()
         );
     }
 
