@@ -276,6 +276,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS] = true;
 
         allowedBaseKeys[Keys.FUNDING_FACTOR] = true;
+        allowedBaseKeys[Keys.STABLE_FUNDING_FACTOR] = true;
         allowedBaseKeys[Keys.FUNDING_EXPONENT_FACTOR] = true;
 
         allowedBaseKeys[Keys.BORROWING_FACTOR] = true;
