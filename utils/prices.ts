@@ -9,6 +9,13 @@ prices.wnt = {
   maxPrice: expandDecimals(5000, 4),
 };
 
+prices.wnt.withSpread = {
+  contractName: "wnt",
+  precision: 8,
+  minPrice: expandDecimals(4090, 4),
+  maxPrice: expandDecimals(5010, 4),
+};
+
 prices.wnt.increased = {
   contractName: "wnt",
   precision: 8,
@@ -16,11 +23,25 @@ prices.wnt.increased = {
   maxPrice: expandDecimals(5020, 4),
 };
 
+prices.wnt.increased.withSpread = {
+  contractName: "wnt",
+  precision: 8,
+  minPrice: expandDecimals(5010, 4),
+  maxPrice: expandDecimals(5030, 4),
+};
+
 prices.wnt.decreased = {
   contractName: "wnt",
   precision: 8,
   minPrice: expandDecimals(4080, 4),
   maxPrice: expandDecimals(4080, 4),
+};
+
+prices.wnt.decreased.withSpread = {
+  contractName: "wnt",
+  precision: 8,
+  minPrice: expandDecimals(4070, 4),
+  maxPrice: expandDecimals(4090, 4),
 };
 
 prices.usdc = {

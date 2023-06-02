@@ -1,5 +1,7 @@
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { OrderType, handleOrder } from "../../utils/order";
+import { prices } from "../../utils/prices";
+import { getExecuteParams } from "../../utils/exchange";
 
 export const increasePosition = {};
 
@@ -51,5 +53,23 @@ increasePosition.short = async (fixture) => {
 
   await handleOrder(fixture, {
     create: params,
+  });
+};
+
+increasePosition.long.withSpread = async (fixture) => {
+  const params = increasePosition.getOrderParams.long();
+
+  await handleOrder(fixture, {
+    create: params,
+    execute: getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.withSpread] }),
+  });
+};
+
+increasePosition.short.withSpread = async (fixture) => {
+  const params = increasePosition.getOrderParams.short();
+
+  await handleOrder(fixture, {
+    create: params,
+    execute: getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.withSpread] }),
   });
 };

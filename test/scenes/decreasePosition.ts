@@ -45,54 +45,122 @@ decreasePosition.getOrderParams.short = (fixture) => {
   };
 };
 
-decreasePosition.long = async (fixture) => {
+decreasePosition.long = async (fixture, overrides) => {
   const params = decreasePosition.getOrderParams.long();
 
   await handleOrder(fixture, {
-    create: params,
+    create: { ...params, ...overrides.create },
+    execute: overrides.execute,
   });
 };
 
-decreasePosition.short = async (fixture) => {
+decreasePosition.short = async (fixture, overrides) => {
   const params = decreasePosition.getOrderParams.short();
 
   await handleOrder(fixture, {
-    create: params,
+    create: { ...params, ...overrides.create },
+    execute: overrides.execute,
   });
 };
 
-decreasePosition.long.positivePnl = async (fixture) => {
+decreasePosition.long.withSpread = async (fixture, overrides) => {
   const params = decreasePosition.getOrderParams.long();
 
   await handleOrder(fixture, {
-    create: params,
-    execute: getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.increased] }),
+    create: { ...params, ...overrides.create },
+    execute: { ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.withSpread] }), ...overrides.execute },
   });
 };
 
-decreasePosition.long.negativePnl = async (fixture) => {
+decreasePosition.short.withSpread = async (fixture, overrides) => {
+  const params = decreasePosition.getOrderParams.short();
+
+  await handleOrder(fixture, {
+    create: { ...params, ...overrides.create },
+    execute: { ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.withSpread] }), ...overrides.execute },
+  });
+};
+
+decreasePosition.long.positivePnl = async (fixture, overrides) => {
   const params = decreasePosition.getOrderParams.long();
 
   await handleOrder(fixture, {
-    create: params,
-    execute: getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.decreased] }),
+    create: { ...params, ...overrides.create },
+    execute: { ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.increased] }), ...overrides.execute },
   });
 };
 
-decreasePosition.short.positivePnl = async (fixture) => {
-  const params = decreasePosition.getOrderParams.short();
+decreasePosition.long.negativePnl = async (fixture, overrides) => {
+  const params = decreasePosition.getOrderParams.long();
 
   await handleOrder(fixture, {
-    create: params,
-    execute: getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.decreased] }),
+    create: { ...params, ...overrides.create },
+    execute: { ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.decreased] }), ...overrides.execute },
   });
 };
 
-decreasePosition.short.negativePnl = async (fixture) => {
+decreasePosition.short.positivePnl = async (fixture, overrides) => {
   const params = decreasePosition.getOrderParams.short();
 
   await handleOrder(fixture, {
-    create: params,
-    execute: getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.increased] }),
+    create: { ...params, ...overrides.create },
+    execute: { ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.decreased] }), ...overrides.execute },
+  });
+};
+
+decreasePosition.short.negativePnl = async (fixture, overrides) => {
+  const params = decreasePosition.getOrderParams.short();
+
+  await handleOrder(fixture, {
+    create: { ...params, ...overrides.create },
+    execute: { ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.increased] }), ...overrides.execute },
+  });
+};
+
+decreasePosition.long.positivePnl.withSpread = async (fixture, overrides) => {
+  const params = decreasePosition.getOrderParams.long();
+
+  await handleOrder(fixture, {
+    create: { ...params, ...overrides.create },
+    execute: {
+      ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.increased.withSpread] }),
+      ...overrides.execute,
+    },
+  });
+};
+
+decreasePosition.long.negativePnl.withSpread = async (fixture, overrides) => {
+  const params = decreasePosition.getOrderParams.long();
+
+  await handleOrder(fixture, {
+    create: { ...params, ...overrides.create },
+    execute: {
+      ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.decreased.withSpread] }),
+      ...overrides.execute,
+    },
+  });
+};
+
+decreasePosition.short.positivePnl.withSpread = async (fixture, overrides) => {
+  const params = decreasePosition.getOrderParams.short();
+
+  await handleOrder(fixture, {
+    create: { ...params, ...overrides.create },
+    execute: {
+      ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.decreased.withSpread] }),
+      ...overrides.execute,
+    },
+  });
+};
+
+decreasePosition.short.negativePnl.withSpread = async (fixture, overrides) => {
+  const params = decreasePosition.getOrderParams.short();
+
+  await handleOrder(fixture, {
+    create: { ...params, ...overrides.create },
+    execute: {
+      ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.increased.withSpread] }),
+      ...overrides.execute,
+    },
   });
 };
