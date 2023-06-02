@@ -242,7 +242,7 @@ contract Oracle is RoleModule {
     // @param token the token to set the price for
     // @param price the price value to set to
     function setPrimaryPrice(address token, Price.Props memory price) external onlyController {
-        primaryPrices[token] = price;
+        _setPrimaryPrice(token, price);
     }
 
     // @dev clear all prices
@@ -250,8 +250,7 @@ contract Oracle is RoleModule {
         uint256 length = tokensWithPrices.length();
         for (uint256 i; i < length; i++) {
             address token = tokensWithPrices.at(0);
-            delete primaryPrices[token];
-            tokensWithPrices.remove(token);
+            _removePrimaryPrice(token);
         }
     }
 
@@ -471,12 +470,10 @@ contract Oracle is RoleModule {
 
             emitOraclePriceUpdated(eventEmitter, reportInfo.token, medianMinPrice, medianMaxPrice, true, false);
 
-            primaryPrices[reportInfo.token] = Price.Props(
+            _setPrimaryPrice(reportInfo.token, Price.Props(
                 medianMinPrice,
                 medianMaxPrice
-            );
-
-            tokensWithPrices.add(reportInfo.token);
+            ));
         }
     }
 
@@ -503,6 +500,16 @@ contract Oracle is RoleModule {
                 maxRefPriceDeviationFactor
             );
         }
+    }
+
+    function _setPrimaryPrice(address token, Price.Props memory price) internal {
+        primaryPrices[token] = price;
+        tokensWithPrices.add(token);
+    }
+
+    function _removePrimaryPrice(address token) internal {
+        delete primaryPrices[token];
+        tokensWithPrices.remove(token);
     }
 
     // there is a small risk of stale pricing due to latency in price updates or if the chain is down
@@ -574,9 +581,7 @@ contract Oracle is RoleModule {
                 );
             }
 
-            primaryPrices[token] = priceProps;
-
-            tokensWithPrices.add(token);
+            _setPrimaryPrice(token, priceProps);
 
             emitOraclePriceUpdated(eventEmitter, token, priceProps.min, priceProps.max, true, true);
         }
@@ -608,6 +613,5 @@ contract Oracle is RoleModule {
             Cast.toBytes32(token),
             eventData
         );
-
     }
 }
