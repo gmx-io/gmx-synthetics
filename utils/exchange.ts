@@ -1,26 +1,14 @@
 import { logGasUsage } from "./gas";
-import { bigNumberify, expandDecimals } from "./math";
+import { bigNumberify } from "./math";
 import { getOracleParams, getOracleParamsForSimulation, TOKEN_ORACLE_TYPES } from "./oracle";
-import { prices } from "./prices";
+import { prices as refPrices } from "./prices";
 
 export function getExecuteParams(fixture, { tokens, prices }) {
   const { wnt, wbtc, usdc } = fixture.contracts;
   const defaultPriceInfoItems = {
-    [wnt.address]: {
-      precision: 8,
-      minPrice: expandDecimals(5000, 4),
-      maxPrice: expandDecimals(5000, 4),
-    },
-    [wbtc.address]: {
-      precision: 20,
-      minPrice: expandDecimals(50000, 2),
-      maxPrice: expandDecimals(50000, 2),
-    },
-    [usdc.address]: {
-      precision: 18,
-      minPrice: expandDecimals(1, 6),
-      maxPrice: expandDecimals(1, 6),
-    },
+    [wnt.address]: refPrices.wnt,
+    [wbtc.address]: refPrices.wbtc,
+    [usdc.address]: refPrices.usdc,
   };
 
   const params = {
