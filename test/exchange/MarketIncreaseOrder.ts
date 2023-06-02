@@ -17,14 +17,33 @@ describe("Exchange.MarketIncreaseOrder", () => {
 
   let fixture;
   let user0, user1;
-  let reader, dataStore, referralStorage, ethUsdMarket, ethUsdSingleTokenMarket, btcUsdMarket, wnt, wbtc, usdc;
+  let reader,
+    dataStore,
+    orderVault,
+    referralStorage,
+    ethUsdMarket,
+    ethUsdSingleTokenMarket,
+    btcUsdMarket,
+    wnt,
+    wbtc,
+    usdc;
   let executionFee;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1 } = fixture.accounts);
-    ({ reader, dataStore, referralStorage, ethUsdMarket, ethUsdSingleTokenMarket, btcUsdMarket, wnt, wbtc, usdc } =
-      fixture.contracts);
+    ({
+      reader,
+      dataStore,
+      orderVault,
+      referralStorage,
+      ethUsdMarket,
+      ethUsdSingleTokenMarket,
+      btcUsdMarket,
+      wnt,
+      wbtc,
+      usdc,
+    } = fixture.contracts);
     ({ executionFee } = fixture.props);
 
     await handleDeposit(fixture, {
@@ -501,5 +520,25 @@ describe("Exchange.MarketIncreaseOrder", () => {
         expect(poolValueInfo.poolValue).eq(expandDecimals(19800, 30));
       }
     );
+  });
+
+  it("refunds execution fees, even if receiver is orderVault", async () => {
+    const params = {
+      account: user0,
+      receiver: orderVault,
+      market: ethUsdMarket,
+      initialCollateralToken: usdc,
+      initialCollateralDeltaAmount: expandDecimals(100 * 1000, 6),
+      swapPath: [],
+      sizeDeltaUsd: decimalToFloat(150 * 1000),
+      acceptablePrice: expandDecimals(4990, 12),
+      executionFee: expandDecimals(10, 18),
+      minOutputAmount: expandDecimals(50000, 6),
+      orderType: OrderType.MarketIncrease,
+      isLong: false,
+      shouldUnwrapNativeToken: false,
+    };
+
+    await handleOrder(fixture, { create: params });
   });
 });

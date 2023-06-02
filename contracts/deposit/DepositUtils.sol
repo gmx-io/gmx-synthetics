@@ -199,7 +199,7 @@ library DepositUtils {
             deposit.executionFee(),
             startingGas,
             keeper,
-            deposit.receiver()
+            deposit.account()
         );
     }
 }

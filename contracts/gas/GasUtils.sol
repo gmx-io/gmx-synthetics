@@ -49,10 +49,6 @@ library GasUtils {
     }
 
     // @dev pay the keeper the execution fee and refund any excess amount
-    // the refundReceiver should be specified to be the deposit.receiver,
-    // order.receiver, or withdrawal.receiver
-    // this would help to allow integrations to keep track of output tokens
-    // by using an intermediate contract as a receiver
     //
     // @param dataStore DataStore
     // @param bank the StrictBank contract holding the execution fee
