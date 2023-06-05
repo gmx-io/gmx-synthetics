@@ -281,6 +281,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.BORROWING_FACTOR] = true;
         allowedBaseKeys[Keys.BORROWING_EXPONENT_FACTOR] = true;
+        allowedBaseKeys[Keys.SKIP_BORROWING_FEE_FOR_SMALLER_SIDE] = true;
 
         allowedBaseKeys[Keys.CLAIMABLE_COLLATERAL_FACTOR] = true;
 
