@@ -132,8 +132,6 @@ library MarketUtils {
 
     struct GetExpectedMinTokenBalanceCache {
         uint256 poolAmount;
-        uint256 collateralForLongs;
-        uint256 collateralForShorts;
         uint256 swapImpactPoolAmount;
         uint256 claimableCollateralAmount;
         uint256 claimableFeeAmount;
@@ -2407,8 +2405,6 @@ library MarketUtils {
         // those positions are updated
         return
             cache.poolAmount
-            + cache.collateralForLongs
-            + cache.collateralForShorts
             + cache.swapImpactPoolAmount
             + cache.claimableCollateralAmount
             + cache.claimableFeeAmount
