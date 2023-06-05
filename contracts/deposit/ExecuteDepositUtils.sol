@@ -32,6 +32,14 @@ library ExecuteDepositUtils {
     using Price for Price.Props;
     using Deposit for Deposit.Props;
 
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
+
     // @dev ExecuteDepositParams struct used in executeDeposit to avoid stack
     // too deep errors
     //
@@ -218,6 +226,8 @@ library ExecuteDepositUtils {
         );
 
         EventUtils.EventLogData memory eventData;
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "receivedMarketTokens", cache.receivedMarketTokens);
         CallbackUtils.afterDepositExecution(params.key, deposit, eventData);
 
         GasUtils.payExecutionFee(

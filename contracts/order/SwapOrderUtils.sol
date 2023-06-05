@@ -12,6 +12,14 @@ library SwapOrderUtils {
     using Order for Order.Props;
     using Array for uint256[];
 
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
+
     // @dev process a swap order
     // @param params BaseOrderUtils.ExecuteOrderParams
     function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external returns (EventUtils.EventLogData memory) {
@@ -26,7 +34,7 @@ library SwapOrderUtils {
             params.order.updatedAtBlock()
         );
 
-        SwapUtils.swap(SwapUtils.SwapParams(
+        (address outputToken, uint256 outputAmount) = SwapUtils.swap(SwapUtils.SwapParams(
             params.contracts.dataStore,
             params.contracts.eventEmitter,
             params.contracts.oracle,
@@ -42,6 +50,10 @@ library SwapOrderUtils {
         ));
 
         EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "outputToken", outputToken);
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "outputAmount", outputAmount);
         return eventData;
     }
 
