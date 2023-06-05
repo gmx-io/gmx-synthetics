@@ -6,6 +6,7 @@ import "./BaseOrderUtils.sol";
 import "../swap/SwapUtils.sol";
 import "../position/IncreasePositionUtils.sol";
 import "../order/OrderStoreUtils.sol";
+import "../callback/CallbackUtils.sol";
 
 // @title IncreaseOrderUtils
 // @dev Library for functions to help with processing an increase order
@@ -69,6 +70,14 @@ library IncreaseOrderUtils {
                 params.secondaryOrderType
             ),
             collateralIncrementAmount
+        );
+
+        // save the callback contract based on the account and market so that it can be called on liquidations and ADLs
+        CallbackUtils.setSavedCallbackContract(
+            params.contracts.dataStore,
+            params.order.account(),
+            params.order.market(),
+            params.order.callbackContract()
         );
 
         EventUtils.EventLogData memory eventData;

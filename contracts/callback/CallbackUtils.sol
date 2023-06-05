@@ -57,6 +57,14 @@ library CallbackUtils {
         }
     }
 
+    function setSavedCallbackContract(DataStore dataStore, address account, address market, address callbackContract) internal {
+        dataStore.setAddress(Keys.savedCallbackContract(account, market), callbackContract);
+    }
+
+    function getSavedCallbackContract(DataStore dataStore, address account, address market) internal view returns (address) {
+        return dataStore.getAddress(Keys.savedCallbackContract(account, market));
+    }
+
     // @dev called after a deposit execution
     // @param key the key of the deposit
     // @param deposit the deposit that was executed

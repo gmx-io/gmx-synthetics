@@ -161,6 +161,7 @@ library Keys {
     bytes32 public constant REQUEST_EXPIRATION_BLOCK_AGE = keccak256(abi.encode("REQUEST_EXPIRATION_BLOCK_AGE"));
 
     bytes32 public constant MAX_CALLBACK_GAS_LIMIT = keccak256(abi.encode("MAX_CALLBACK_GAS_LIMIT"));
+    bytes32 public constant SAVED_CALLBACK_CONTRACT = keccak256(abi.encode("SAVED_CALLBACK_CONTRACT"));
 
     // @dev key for the min collateral factor
     bytes32 public constant MIN_COLLATERAL_FACTOR = keccak256(abi.encode("MIN_COLLATERAL_FACTOR"));
@@ -543,6 +544,18 @@ library Keys {
             TOKEN_TRANSFER_GAS_LIMIT,
             token
         ));
+   }
+
+   // @dev the default callback contract
+   // @param account the user's account
+   // @param market the address of the market
+   // @param callbackContract the callback contract
+   function savedCallbackContract(address account, address market) internal pure returns (bytes32) {
+       return keccak256(abi.encode(
+           SAVED_CALLBACK_CONTRACT,
+           account,
+           market
+       ));
    }
 
    // @dev the min collateral factor key
