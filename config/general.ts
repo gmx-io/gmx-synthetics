@@ -6,6 +6,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     return {
       feeReceiver: ethers.constants.AddressZero,
       holdingAddress: ethers.constants.AddressZero,
+      maxUiFeeFactor: decimalToFloat(5, 5), // 0.005%
       minHandleExecutionErrorGas: 1000000,
 
       depositGasLimitSingle: 0,
@@ -42,6 +43,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     return {
       feeReceiver: "0x49B373D422BdA4C6BfCdd5eC1E48A9a26fdA2F8b",
       holdingAddress: "0x49B373D422BdA4C6BfCdd5eC1E48A9a26fdA2F8b",
+      maxUiFeeFactor: decimalToFloat(5, 5), // 0.005%
       minHandleExecutionErrorGas: 1000000,
 
       depositGasLimitSingle: 1500000,
