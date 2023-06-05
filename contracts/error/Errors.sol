@@ -201,7 +201,6 @@ library Errors {
 
     // SwapPricingUtils errors
     error UsdDeltaExceedsPoolValue(int256 usdDelta, uint256 poolUsd);
-    error InvalidPoolAdjustment(address token, uint256 poolUsdForToken, int256 poolUsdAdjustmentForToken);
 
     // RoleModule errors
     error Unauthorized(address msgSender, string role);

@@ -468,7 +468,7 @@ contract Oracle is RoleModule {
                 revert Errors.DuplicateTokenPrice(reportInfo.token);
             }
 
-            emitOraclePriceUpdated(eventEmitter, reportInfo.token, medianMinPrice, medianMaxPrice, true, false);
+            emitOraclePriceUpdated(eventEmitter, reportInfo.token, medianMinPrice, medianMaxPrice, false);
 
             _setPrimaryPrice(reportInfo.token, Price.Props(
                 medianMinPrice,
@@ -583,7 +583,7 @@ contract Oracle is RoleModule {
 
             _setPrimaryPrice(token, priceProps);
 
-            emitOraclePriceUpdated(eventEmitter, token, priceProps.min, priceProps.max, true, true);
+            emitOraclePriceUpdated(eventEmitter, token, priceProps.min, priceProps.max, true);
         }
     }
 
@@ -592,7 +592,6 @@ contract Oracle is RoleModule {
         address token,
         uint256 minPrice,
         uint256 maxPrice,
-        bool isPrimary,
         bool isPriceFeed
     ) internal {
         EventUtils.EventLogData memory eventData;
@@ -604,9 +603,8 @@ contract Oracle is RoleModule {
         eventData.uintItems.setItem(0, "minPrice", minPrice);
         eventData.uintItems.setItem(1, "maxPrice", maxPrice);
 
-        eventData.boolItems.initItems(2);
-        eventData.boolItems.setItem(0, "isPrimary", isPrimary);
-        eventData.boolItems.setItem(1, "isPriceFeed", isPriceFeed);
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "isPriceFeed", isPriceFeed);
 
         eventEmitter.emitEventLog1(
             "OraclePriceUpdate",

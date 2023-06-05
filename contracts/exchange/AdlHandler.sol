@@ -146,7 +146,8 @@ contract AdlHandler is BaseOrderHandler {
 
         BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(
             cache.key,
-            oracleParams, msg.sender,
+            oracleParams,
+            msg.sender,
             cache.startingGas,
             Order.SecondaryOrderType.Adl
         );
