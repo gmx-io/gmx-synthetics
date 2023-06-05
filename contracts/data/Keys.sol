@@ -265,6 +265,8 @@ library Keys {
     bytes32 public constant BORROWING_FACTOR = keccak256(abi.encode("BORROWING_FACTOR"));
     // @dev key for borrowing factor
     bytes32 public constant BORROWING_EXPONENT_FACTOR = keccak256(abi.encode("BORROWING_EXPONENT_FACTOR"));
+    // @dev key for skipping the borrowing factor for the smaller side
+    bytes32 public constant SKIP_BORROWING_FEE_FOR_SMALLER_SIDE = keccak256(abi.encode("SKIP_BORROWING_FEE_FOR_SMALLER_SIDE"));
     // @dev key for cumulative borrowing factor
     bytes32 public constant CUMULATIVE_BORROWING_FACTOR = keccak256(abi.encode("CUMULATIVE_BORROWING_FACTOR"));
     // @dev key for when the cumulative borrowing factor was last updated at

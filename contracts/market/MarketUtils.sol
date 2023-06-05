@@ -2001,8 +2001,6 @@ library MarketUtils {
         MarketPrices memory prices,
         bool isLong
     ) internal view returns (uint256) {
-        uint256 borrowingFactor = getBorrowingFactor(dataStore, market.marketToken, isLong);
-
         uint256 reservedUsd = getReservedUsd(
             dataStore,
             market,
@@ -2011,6 +2009,27 @@ library MarketUtils {
         );
 
         if (reservedUsd == 0) { return 0; }
+
+        // check if the borrowing fee for the smaller side should be skipped
+        // if skipBorrowingFeeForSmallerSide is true, and the longOpenInterest is exactly the same as the shortOpenInterest
+        // then the borrowing fee would be charged for both sides, this should be very rare
+        bool skipBorrowingFeeForSmallerSide = dataStore.getBool(Keys.SKIP_BORROWING_FEE_FOR_SMALLER_SIDE);
+        if (skipBorrowingFeeForSmallerSide) {
+            uint256 longOpenInterest = getOpenInterest(dataStore, market, true);
+            uint256 shortOpenInterest = getOpenInterest(dataStore, market, false);
+
+            // if getting the borrowing factor for longs and if the longOpenInterest
+            // is smaller than the shortOpenInterest, then return zero
+            if (isLong && longOpenInterest < shortOpenInterest) {
+                return 0;
+            }
+
+            // if getting the borrowing factor for shorts and if the shortOpenInterest
+            // is smaller than the longOpenInterest, then return zero
+            if (!isLong && shortOpenInterest < longOpenInterest) {
+                return 0;
+            }
+        }
 
         uint256 poolUsd = getPoolUsdWithoutPnl(dataStore, market, prices, isLong);
 
@@ -2022,6 +2041,8 @@ library MarketUtils {
         uint256 reservedUsdAfterExponent = Precision.applyExponentFactor(reservedUsd, borrowingExponentFactor);
 
         uint256 reservedUsdToPoolFactor = Precision.toFactor(reservedUsdAfterExponent, poolUsd);
+        uint256 borrowingFactor = getBorrowingFactor(dataStore, market.marketToken, isLong);
+
         return Precision.applyFactor(reservedUsdToPoolFactor, borrowingFactor);
     }
 

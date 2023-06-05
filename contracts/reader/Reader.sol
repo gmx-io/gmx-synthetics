@@ -311,7 +311,7 @@ contract Reader {
         uint256 amountIn,
         address uiFeeReceiver
     ) external view returns (uint256, int256, SwapPricingUtils.SwapFees memory fees) {
-        return ReaderUtils.getSwapAmountOut(
+        return ReaderPricingUtils.getSwapAmountOut(
             dataStore,
             market,
             prices,
@@ -344,9 +344,9 @@ contract Reader {
         uint256 positionSizeInTokens,
         int256 sizeDeltaUsd,
         bool isLong
-    ) external view returns (ReaderUtils.ExecutionPriceResult memory) {
+    ) external view returns (ReaderPricingUtils.ExecutionPriceResult memory) {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketKey);
-        return ReaderUtils.getExecutionPrice(
+        return ReaderPricingUtils.getExecutionPrice(
             dataStore,
             market,
             indexTokenPrice,
@@ -367,7 +367,7 @@ contract Reader {
         Price.Props memory tokenOutPrice
     ) external view returns (int256, int256) {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketKey);
-        return ReaderUtils.getSwapPriceImpact(
+        return ReaderPricingUtils.getSwapPriceImpact(
             dataStore,
             market,
             tokenIn,
