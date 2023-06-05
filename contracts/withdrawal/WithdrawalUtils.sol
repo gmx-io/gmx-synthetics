@@ -32,6 +32,14 @@ library WithdrawalUtils {
     using Price for Price.Props;
     using Withdrawal for Withdrawal.Props;
 
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
+
     /**
      * @param receiver The address that will receive the withdrawal tokens.
      * @param callbackContract The contract that will be called back.
@@ -86,6 +94,20 @@ library WithdrawalUtils {
         SwapPricingUtils.SwapFees shortTokenFees;
         uint256 longTokenPoolAmountDelta;
         uint256 shortTokenPoolAmountDelta;
+    }
+
+    struct ExecuteWithdrawalResult {
+        address outputToken;
+        uint256 outputAmount;
+        address secondaryOutputToken;
+        uint256 secondaryOutputAmount;
+    }
+
+    struct SwapCache {
+        Market.Props[] swapPathMarkets;
+        SwapUtils.SwapParams swapParams;
+        address outputToken;
+        uint256 outputAmount;
     }
 
     /**
@@ -192,11 +214,17 @@ library WithdrawalUtils {
             revert Errors.InsufficientMarketTokens(marketTokensBalance, withdrawal.marketTokenAmount());
         }
 
-        _executeWithdrawal(params, withdrawal);
+        ExecuteWithdrawalResult memory result = _executeWithdrawal(params, withdrawal);
 
         WithdrawalEventUtils.emitWithdrawalExecuted(params.eventEmitter, params.key);
 
         EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "outputToken", result.outputToken);
+        eventData.addressItems.setItem(1, "secondaryOutputToken", result.secondaryOutputToken);
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "outputAmount", result.outputAmount);
+        eventData.uintItems.setItem(1, "secondaryOutputAmount", result.secondaryOutputAmount);
         CallbackUtils.afterWithdrawalExecution(params.key, withdrawal, eventData);
 
         GasUtils.payExecutionFee(
@@ -271,7 +299,7 @@ library WithdrawalUtils {
     function _executeWithdrawal(
         ExecuteWithdrawalParams memory params,
         Withdrawal.Props memory withdrawal
-    ) internal {
+    ) internal returns (ExecuteWithdrawalResult memory) {
         Market.Props memory market = MarketUtils.getEnabledMarket(params.dataStore, withdrawal.market());
 
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(
@@ -389,7 +417,8 @@ library WithdrawalUtils {
 
         params.withdrawalVault.syncTokenBalance(market.marketToken);
 
-        swap(
+        ExecuteWithdrawalResult memory result;
+        (result.outputToken, result.outputAmount) = swap(
             params,
             market,
             market.longToken,
@@ -401,7 +430,7 @@ library WithdrawalUtils {
             withdrawal.shouldUnwrapNativeToken()
         );
 
-        swap(
+        (result.secondaryOutputToken, result.secondaryOutputAmount) = swap(
             params,
             market,
             market.shortToken,
@@ -435,6 +464,8 @@ library WithdrawalUtils {
         // it may be possible to invoke external contracts before the validations
         // are called
         MarketUtils.validateMarketTokenBalance(params.dataStore, market);
+
+        return result;
     }
 
     function swap(
@@ -447,29 +478,31 @@ library WithdrawalUtils {
         address receiver,
         address uiFeeReceiver,
         bool shouldUnwrapNativeToken
-    ) internal {
-        Market.Props[] memory swapPathMarkets = MarketUtils.getEnabledMarkets(params.dataStore, swapPath);
+    ) internal returns (address, uint256) {
+        SwapCache memory cache;
 
-        SwapUtils.swap(
-            SwapUtils.SwapParams(
-                params.dataStore, // dataStore
-                params.eventEmitter, // eventEmitter
-                params.oracle, // oracle
-                Bank(payable(market.marketToken)), // bank
-                params.key, // key
-                tokenIn, // tokenIn
-                amountIn, // amountIn
-                swapPathMarkets, // swapPathMarkets
-                minOutputAmount, // minOutputAmount
-                receiver, // receiver
-                uiFeeReceiver, // uiFeeReceiver
-                shouldUnwrapNativeToken // shouldUnwrapNativeToken
-            )
-        );
+        cache.swapPathMarkets = MarketUtils.getEnabledMarkets(params.dataStore, swapPath);
+
+        cache.swapParams.dataStore = params.dataStore;
+        cache.swapParams.eventEmitter = params.eventEmitter;
+        cache.swapParams.oracle = params.oracle;
+        cache.swapParams.bank = Bank(payable(market.marketToken));
+        cache.swapParams.key = params.key;
+        cache.swapParams.tokenIn = tokenIn;
+        cache.swapParams.amountIn = amountIn;
+        cache.swapParams.swapPathMarkets = cache.swapPathMarkets;
+        cache.swapParams.minOutputAmount = minOutputAmount;
+        cache.swapParams.receiver = receiver;
+        cache.swapParams.uiFeeReceiver = uiFeeReceiver;
+        cache.swapParams.shouldUnwrapNativeToken = shouldUnwrapNativeToken;
+
+        (cache.outputToken, cache.outputAmount) = SwapUtils.swap(cache.swapParams);
 
         // validate that internal state changes are correct before calling
         // external callbacks
-        MarketUtils.validateMarketTokenBalance(params.dataStore, swapPathMarkets);
+        MarketUtils.validateMarketTokenBalance(params.dataStore, cache.swapPathMarkets);
+
+        return (cache.outputToken, cache.outputAmount);
     }
 
     function _getOutputAmounts(
