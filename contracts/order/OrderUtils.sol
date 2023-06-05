@@ -227,6 +227,8 @@ library OrderUtils {
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         BaseOrderUtils.validateNonEmptyOrder(order);
 
+        OrderStoreUtils.remove(dataStore, key, order.account());
+
         if (BaseOrderUtils.isIncreaseOrder(order.orderType()) || BaseOrderUtils.isSwapOrder(order.orderType())) {
             if (order.initialCollateralDeltaAmount() > 0) {
                 orderVault.transferOut(
@@ -237,8 +239,6 @@ library OrderUtils {
                 );
             }
         }
-
-        OrderStoreUtils.remove(dataStore, key, order.account());
 
         OrderEventUtils.emitOrderCancelled(eventEmitter, key, reason, reasonBytes);
 
