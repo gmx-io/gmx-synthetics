@@ -373,6 +373,11 @@ contract Oracle is RoleModule {
             }
 
             reportInfo.token = params.tokens[i];
+
+            if (!primaryPrices[reportInfo.token].isEmpty()) {
+                revert Errors.DuplicateTokenPrice(reportInfo.token);
+            }
+
             reportInfo.precision = 10 ** OracleUtils.getUncompactedDecimal(params.compactedDecimals, i);
             reportInfo.tokenOracleType = dataStore.getBytes32(Keys.oracleTypeKey(reportInfo.token));
 
@@ -462,10 +467,6 @@ contract Oracle is RoleModule {
 
             if (medianMinPrice > medianMaxPrice) {
                 revert Errors.InvalidMedianMinMaxPrice(medianMinPrice, medianMaxPrice);
-            }
-
-            if (!primaryPrices[reportInfo.token].isEmpty()) {
-                revert Errors.DuplicateTokenPrice(reportInfo.token);
             }
 
             emitOraclePriceUpdated(eventEmitter, reportInfo.token, medianMinPrice, medianMaxPrice, false);
