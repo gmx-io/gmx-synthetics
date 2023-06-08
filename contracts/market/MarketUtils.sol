@@ -168,14 +168,12 @@ library MarketUtils {
 
         if (poolValueInfo.poolValue == 0) { return (0, poolValueInfo); }
 
-        if (poolValueInfo.poolValue < 0) {
-            revert Errors.UnexpectedPoolValueForTokenPriceCalculation(poolValueInfo.poolValue);
-        }
-
         uint256 supply = getMarketTokenSupply(MarketToken(payable(market.marketToken)));
 
+        // if the poolValue is more than zero but the supply is zero, then treat the market
+        // token price as 1 USD
         if (supply == 0) {
-            revert Errors.UnexpectedSupplyForTokenPriceCalculation();
+            return (Precision.FLOAT_PRECISION.toInt256(), poolValueInfo);
         }
 
         return (poolValueInfo.poolValue * Precision.WEI_PRECISION.toInt256() / supply.toInt256(), poolValueInfo);
