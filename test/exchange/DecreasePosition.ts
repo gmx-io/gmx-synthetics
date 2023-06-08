@@ -152,7 +152,7 @@ describe("Exchange.DecreasePosition", () => {
       (positionInfo) => {
         expect(positionInfo.position.numbers.collateralAmount).eq(expandDecimals("49920", 6));
         expect(positionInfo.position.numbers.sizeInTokens).eq(expandDecimals(36, 18));
-        expect(positionInfo.position.numbers.sizeInUsd).eq(decimalToFloat(180_000, 30));
+        expect(positionInfo.position.numbers.sizeInUsd).eq(decimalToFloat(180_000));
       }
     );
   });
