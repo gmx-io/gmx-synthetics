@@ -156,6 +156,8 @@ library MarketUtils {
         bytes32 pnlFactorType,
         bool maximize
     ) external view returns (int256, MarketPoolValueInfo.Props memory) {
+        uint256 supply = getMarketTokenSupply(MarketToken(payable(market.marketToken)));
+
         MarketPoolValueInfo.Props memory poolValueInfo = getPoolValueInfo(
             dataStore,
             market,
@@ -166,15 +168,12 @@ library MarketUtils {
             maximize
         );
 
-        if (poolValueInfo.poolValue == 0) { return (0, poolValueInfo); }
-
-        uint256 supply = getMarketTokenSupply(MarketToken(payable(market.marketToken)));
-
-        // if the poolValue is more than zero but the supply is zero, then treat the market
-        // token price as 1 USD
+        // if the supply is zero then treat the market token price as 1 USD
         if (supply == 0) {
             return (Precision.FLOAT_PRECISION.toInt256(), poolValueInfo);
         }
+
+        if (poolValueInfo.poolValue == 0) { return (0, poolValueInfo); }
 
         return (poolValueInfo.poolValue * Precision.WEI_PRECISION.toInt256() / supply.toInt256(), poolValueInfo);
     }
@@ -2107,8 +2106,16 @@ library MarketUtils {
         uint256 poolValue,
         uint256 supply
     ) internal pure returns (uint256) {
-        if (supply == 0 || poolValue == 0) {
+        // if the supply and poolValue is zero, use 1 USD as the token price
+        if (supply == 0 && poolValue == 0) {
             return Precision.floatToWei(usdValue);
+        }
+
+        // if the supply is zero and the poolValue is more than zero,
+        // then include the poolValue for the amount of tokens minted so that
+        // the market token price after mint would be 1 USD
+        if (supply == 0 && poolValue > 0) {
+            return Precision.floatToWei(poolValue + usdValue);
         }
 
         // round market tokens down
@@ -2125,9 +2132,7 @@ library MarketUtils {
         uint256 poolValue,
         uint256 supply
     ) internal pure returns (uint256) {
-        if (supply == 0 || poolValue == 0) {
-            return 0;
-        }
+        if (supply == 0) { revert Errors.EmptyMarketTokenSupply(); }
 
         return marketTokenAmount * poolValue / supply;
     }

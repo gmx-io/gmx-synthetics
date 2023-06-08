@@ -532,7 +532,6 @@ library WithdrawalUtils {
 
         uint256 poolValue = poolValueInfo.poolValue.toUint256();
         uint256 marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
-        uint256 marketTokensUsd = MarketUtils.marketTokenAmountToUsd(marketTokenAmount, poolValue, marketTokensSupply);
 
         MarketEventUtils.emitMarketPoolValueInfo(
             params.eventEmitter,
@@ -544,10 +543,16 @@ library WithdrawalUtils {
         uint256 longTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market, market.longToken);
         uint256 shortTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market, market.shortToken);
 
+        if (marketTokenAmount == marketTokensSupply) {
+            return (longTokenPoolAmount, shortTokenPoolAmount);
+        }
+
         uint256 longTokenPoolUsd = longTokenPoolAmount * prices.longTokenPrice.max;
         uint256 shortTokenPoolUsd = shortTokenPoolAmount * prices.shortTokenPrice.max;
 
         uint256 totalPoolUsd = longTokenPoolUsd + shortTokenPoolUsd;
+
+        uint256 marketTokensUsd = MarketUtils.marketTokenAmountToUsd(marketTokenAmount, poolValue, marketTokensSupply);
 
         uint256 longTokenOutputUsd = Precision.applyFraction(marketTokensUsd, longTokenPoolUsd, totalPoolUsd);
         uint256 shortTokenOutputUsd = Precision.applyFraction(marketTokensUsd, shortTokenPoolUsd, totalPoolUsd);
