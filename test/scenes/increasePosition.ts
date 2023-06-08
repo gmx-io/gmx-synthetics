@@ -7,16 +7,16 @@ export const increasePosition = {};
 
 increasePosition.getOrderParams = (fixture) => {
   const { user0 } = fixture.accounts;
-  const { ethUsdMarket, wnt } = fixture.contracts;
+  const { ethUsdMarket, usdc } = fixture.contracts;
 
   return {
     account: user0,
     market: ethUsdMarket,
-    initialCollateralToken: wnt,
-    initialCollateralDeltaAmount: expandDecimals(10, 18),
+    initialCollateralToken: usdc,
+    initialCollateralDeltaAmount: expandDecimals(50_000, 6),
     swapPath: [],
     sizeDeltaUsd: decimalToFloat(200 * 1000),
-    acceptablePrice: expandDecimals(5020, 12),
+    acceptablePrice: expandDecimals(5100, 12),
     executionFee: expandDecimals(1, 15),
     minOutputAmount: 0,
     orderType: OrderType.MarketIncrease,
@@ -30,46 +30,49 @@ increasePosition.getOrderParams.long = (fixture) => {
 };
 
 increasePosition.getOrderParams.short = (fixture) => {
-  const { usdc } = fixture.contracts;
+  const { wnt } = fixture.contracts;
 
   return {
     ...increasePosition.getOrderParams(fixture),
-    initialCollateralToken: usdc,
-    initialCollateralDeltaAmount: expandDecimals(50_000, 6),
-    acceptablePrice: expandDecimals(4980, 12),
+    initialCollateralToken: wnt,
+    initialCollateralDeltaAmount: expandDecimals(10, 18),
+    acceptablePrice: expandDecimals(4900, 12),
+    isLong: false,
   };
 };
 
-increasePosition.long = async (fixture) => {
-  const params = increasePosition.getOrderParams.long();
+increasePosition.long = async (fixture, overrides = {}) => {
+  const params = increasePosition.getOrderParams.long(fixture);
 
   await handleOrder(fixture, {
-    create: params,
+    create: { ...params, ...overrides.create },
+    execute: overrides.execute,
   });
 };
 
-increasePosition.short = async (fixture) => {
-  const params = increasePosition.getOrderParams.short();
+increasePosition.short = async (fixture, overrides = {}) => {
+  const params = increasePosition.getOrderParams.short(fixture);
 
   await handleOrder(fixture, {
-    create: params,
+    create: { ...params, ...overrides.create },
+    execute: overrides.execute,
   });
 };
 
-increasePosition.long.withSpread = async (fixture) => {
-  const params = increasePosition.getOrderParams.long();
+increasePosition.long.withSpread = async (fixture, overrides = {}) => {
+  const params = increasePosition.getOrderParams.long(fixture);
 
   await handleOrder(fixture, {
-    create: params,
-    execute: getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.withSpread] }),
+    create: { ...params, ...overrides.create },
+    execute: { ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.withSpread] }), ...overrides.execute },
   });
 };
 
-increasePosition.short.withSpread = async (fixture) => {
-  const params = increasePosition.getOrderParams.short();
+increasePosition.short.withSpread = async (fixture, overrides = {}) => {
+  const params = increasePosition.getOrderParams.short(fixture);
 
   await handleOrder(fixture, {
-    create: params,
-    execute: getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.withSpread] }),
+    create: { ...params, ...overrides.create },
+    execute: { ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.withSpread] }), ...overrides.execute },
   });
 };

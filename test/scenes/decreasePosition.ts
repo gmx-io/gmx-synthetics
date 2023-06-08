@@ -8,18 +8,18 @@ export const decreasePosition = {};
 
 decreasePosition.getOrderParams = (fixture) => {
   const { user0 } = fixture.accounts;
-  const { ethUsdMarket, wnt } = fixture.contracts;
+  const { ethUsdMarket } = fixture.contracts;
 
-  const increasePositionParams = increasePosition.getOrderParams.long();
+  const increasePositionParams = increasePosition.getOrderParams.long(fixture);
 
   return {
     account: user0,
     market: ethUsdMarket,
-    initialCollateralToken: wnt,
+    initialCollateralToken: increasePositionParams.initialCollateralToken,
     initialCollateralDeltaAmount: increasePositionParams.initialCollateralDeltaAmount.div(10),
     swapPath: [],
     sizeDeltaUsd: increasePositionParams.sizeDeltaUsd.div(10),
-    acceptablePrice: expandDecimals(4980, 12),
+    acceptablePrice: expandDecimals(4900, 12),
     executionFee: expandDecimals(1, 15),
     minOutputAmount: 0,
     orderType: OrderType.MarketDecrease,
@@ -33,20 +33,20 @@ decreasePosition.getOrderParams.long = (fixture) => {
 };
 
 decreasePosition.getOrderParams.short = (fixture) => {
-  const { usdc } = fixture.contracts;
-  const increasePositionParams = increasePosition.getOrderParams.long();
+  const increasePositionParams = increasePosition.getOrderParams.short(fixture);
 
   return {
     ...decreasePosition.getOrderParams(fixture),
-    initialCollateralToken: usdc,
+    initialCollateralToken: increasePositionParams.initialCollateralToken,
     initialCollateralDeltaAmount: increasePositionParams.initialCollateralDeltaAmount.div(10),
     sizeDeltaUsd: increasePositionParams.sizeDeltaUsd.div(10),
-    acceptablePrice: expandDecimals(5020, 12),
+    acceptablePrice: expandDecimals(5100, 12),
+    isLong: false,
   };
 };
 
-decreasePosition.long = async (fixture, overrides) => {
-  const params = decreasePosition.getOrderParams.long();
+decreasePosition.long = async (fixture, overrides = {}) => {
+  const params = decreasePosition.getOrderParams.long(fixture);
 
   await handleOrder(fixture, {
     create: { ...params, ...overrides.create },
@@ -54,8 +54,8 @@ decreasePosition.long = async (fixture, overrides) => {
   });
 };
 
-decreasePosition.short = async (fixture, overrides) => {
-  const params = decreasePosition.getOrderParams.short();
+decreasePosition.short = async (fixture, overrides = {}) => {
+  const params = decreasePosition.getOrderParams.short(fixture);
 
   await handleOrder(fixture, {
     create: { ...params, ...overrides.create },
@@ -63,8 +63,8 @@ decreasePosition.short = async (fixture, overrides) => {
   });
 };
 
-decreasePosition.long.withSpread = async (fixture, overrides) => {
-  const params = decreasePosition.getOrderParams.long();
+decreasePosition.long.withSpread = async (fixture, overrides = {}) => {
+  const params = decreasePosition.getOrderParams.long(fixture);
 
   await handleOrder(fixture, {
     create: { ...params, ...overrides.create },
@@ -72,8 +72,8 @@ decreasePosition.long.withSpread = async (fixture, overrides) => {
   });
 };
 
-decreasePosition.short.withSpread = async (fixture, overrides) => {
-  const params = decreasePosition.getOrderParams.short();
+decreasePosition.short.withSpread = async (fixture, overrides = {}) => {
+  const params = decreasePosition.getOrderParams.short(fixture);
 
   await handleOrder(fixture, {
     create: { ...params, ...overrides.create },
@@ -81,8 +81,8 @@ decreasePosition.short.withSpread = async (fixture, overrides) => {
   });
 };
 
-decreasePosition.long.positivePnl = async (fixture, overrides) => {
-  const params = decreasePosition.getOrderParams.long();
+decreasePosition.long.positivePnl = async (fixture, overrides = {}) => {
+  const params = decreasePosition.getOrderParams.long(fixture);
 
   await handleOrder(fixture, {
     create: { ...params, ...overrides.create },
@@ -90,8 +90,8 @@ decreasePosition.long.positivePnl = async (fixture, overrides) => {
   });
 };
 
-decreasePosition.long.negativePnl = async (fixture, overrides) => {
-  const params = decreasePosition.getOrderParams.long();
+decreasePosition.long.negativePnl = async (fixture, overrides = {}) => {
+  const params = decreasePosition.getOrderParams.long(fixture);
 
   await handleOrder(fixture, {
     create: { ...params, ...overrides.create },
@@ -99,8 +99,8 @@ decreasePosition.long.negativePnl = async (fixture, overrides) => {
   });
 };
 
-decreasePosition.short.positivePnl = async (fixture, overrides) => {
-  const params = decreasePosition.getOrderParams.short();
+decreasePosition.short.positivePnl = async (fixture, overrides = {}) => {
+  const params = decreasePosition.getOrderParams.short(fixture);
 
   await handleOrder(fixture, {
     create: { ...params, ...overrides.create },
@@ -108,8 +108,8 @@ decreasePosition.short.positivePnl = async (fixture, overrides) => {
   });
 };
 
-decreasePosition.short.negativePnl = async (fixture, overrides) => {
-  const params = decreasePosition.getOrderParams.short();
+decreasePosition.short.negativePnl = async (fixture, overrides = {}) => {
+  const params = decreasePosition.getOrderParams.short(fixture);
 
   await handleOrder(fixture, {
     create: { ...params, ...overrides.create },
@@ -117,8 +117,8 @@ decreasePosition.short.negativePnl = async (fixture, overrides) => {
   });
 };
 
-decreasePosition.long.positivePnl.withSpread = async (fixture, overrides) => {
-  const params = decreasePosition.getOrderParams.long();
+decreasePosition.long.positivePnl.withSpread = async (fixture, overrides = {}) => {
+  const params = decreasePosition.getOrderParams.long(fixture);
 
   await handleOrder(fixture, {
     create: { ...params, ...overrides.create },
@@ -129,8 +129,8 @@ decreasePosition.long.positivePnl.withSpread = async (fixture, overrides) => {
   });
 };
 
-decreasePosition.long.negativePnl.withSpread = async (fixture, overrides) => {
-  const params = decreasePosition.getOrderParams.long();
+decreasePosition.long.negativePnl.withSpread = async (fixture, overrides = {}) => {
+  const params = decreasePosition.getOrderParams.long(fixture);
 
   await handleOrder(fixture, {
     create: { ...params, ...overrides.create },
@@ -141,8 +141,8 @@ decreasePosition.long.negativePnl.withSpread = async (fixture, overrides) => {
   });
 };
 
-decreasePosition.short.positivePnl.withSpread = async (fixture, overrides) => {
-  const params = decreasePosition.getOrderParams.short();
+decreasePosition.short.positivePnl.withSpread = async (fixture, overrides = {}) => {
+  const params = decreasePosition.getOrderParams.short(fixture);
 
   await handleOrder(fixture, {
     create: { ...params, ...overrides.create },
@@ -153,8 +153,8 @@ decreasePosition.short.positivePnl.withSpread = async (fixture, overrides) => {
   });
 };
 
-decreasePosition.short.negativePnl.withSpread = async (fixture, overrides) => {
-  const params = decreasePosition.getOrderParams.short();
+decreasePosition.short.negativePnl.withSpread = async (fixture, overrides = {}) => {
+  const params = decreasePosition.getOrderParams.short(fixture);
 
   await handleOrder(fixture, {
     create: { ...params, ...overrides.create },
