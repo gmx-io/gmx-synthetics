@@ -59,7 +59,16 @@ prices.wbtc = {
 };
 
 prices.ethUsdMarket = {
-  indexTokenPrice: prices.wnt,
-  longTokenPrice: prices.wnt,
-  shortTokenPrice: prices.usdc,
+  indexTokenPrice: {
+    min: expandDecimals(5000, 12),
+    max: expandDecimals(5000, 12),
+  },
+  longTokenPrice: {
+    min: expandDecimals(5000, 12),
+    max: expandDecimals(5000, 12),
+  },
+  shortTokenPrice: {
+    min: expandDecimals(1, 6),
+    max: expandDecimals(1, 6),
+  },
 };
