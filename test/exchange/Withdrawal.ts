@@ -268,10 +268,9 @@ describe("Exchange.Withdrawal", () => {
     expect(await getClaimableFeeAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq("1499774632447446"); // 0.001499774632447446
     expect(await getClaimableFeeAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq("0");
 
-    await expect(getMarketTokenPrice(fixture)).to.be.revertedWithCustomError(
-      errorsContract,
-      "UnexpectedSupplyForTokenPriceCalculation"
-    );
+    await usingResult(getMarketTokenPrice(fixture), (marketTokenPrice) => {
+      expect(marketTokenPrice).eq(decimalToFloat(1));
+    });
 
     expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq("0");
     expect(await getSupplyOf(ethUsdMarket.marketToken)).eq("0");

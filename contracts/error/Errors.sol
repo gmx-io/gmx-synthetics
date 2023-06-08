@@ -76,6 +76,7 @@ library Errors {
     error InsufficientPoolAmount(uint256 poolAmount, uint256 amount);
     error InsufficientReserve(uint256 reservedUsd, uint256 maxReservedUsd);
     error UnableToGetOppositeToken(address inputToken, address market);
+    error EmptyMarketTokenSupply();
     error InvalidSwapMarket(address market);
     error UnableToGetCachedTokenPrice(address token, address market);
     error CollateralAlreadyClaimed(uint256 adjustedClaimableAmount, uint256 claimedAmount);

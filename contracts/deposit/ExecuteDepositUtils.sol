@@ -300,6 +300,10 @@ library ExecuteDepositUtils {
 
         uint256 marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(_params.market.marketToken)));
 
+        if (poolValueInfo.poolValue == 0 && marketTokensSupply > 0) {
+            revert Errors.InvalidPoolValueForDeposit(poolValueInfo.poolValue);
+        }
+
         MarketEventUtils.emitMarketPoolValueInfo(
             params.eventEmitter,
             _params.market.marketToken,
