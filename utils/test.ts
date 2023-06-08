@@ -1,6 +1,6 @@
 import { use } from "chai";
 
-const debug = false;
+const debug = true;
 
 function overwriteEq(functionName, readableName, readableNegativeName, _super, chaiUtils) {
   return function (this, ...args: any[]) {
