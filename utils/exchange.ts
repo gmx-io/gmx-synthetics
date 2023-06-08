@@ -26,8 +26,8 @@ export function getExecuteParams(fixture, { tokens, prices }) {
       }
       params.tokens.push(tokens[i].address);
       params.precisions.push(priceInfoItem.precision);
-      params.minPrices.push(priceInfoItem.minPrice);
-      params.maxPrices.push(priceInfoItem.maxPrice);
+      params.minPrices.push(priceInfoItem.min);
+      params.maxPrices.push(priceInfoItem.max);
     }
   }
 
@@ -37,8 +37,8 @@ export function getExecuteParams(fixture, { tokens, prices }) {
       const token = fixture.contracts[priceInfoItem.contractName];
       params.tokens.push(token.address);
       params.precisions.push(priceInfoItem.precision);
-      params.minPrices.push(priceInfoItem.minPrice);
-      params.maxPrices.push(priceInfoItem.maxPrice);
+      params.minPrices.push(priceInfoItem.min);
+      params.maxPrices.push(priceInfoItem.max);
     }
   }
 
