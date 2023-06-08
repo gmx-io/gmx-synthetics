@@ -19,7 +19,6 @@ import {
   executeWithdrawal,
   handleWithdrawal,
 } from "../../utils/withdrawal";
-import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.Withdrawal", () => {
