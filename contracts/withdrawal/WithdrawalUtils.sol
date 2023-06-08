@@ -543,10 +543,6 @@ library WithdrawalUtils {
         uint256 longTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market, market.longToken);
         uint256 shortTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market, market.shortToken);
 
-        if (marketTokenAmount == marketTokensSupply) {
-            return (longTokenPoolAmount, shortTokenPoolAmount);
-        }
-
         uint256 longTokenPoolUsd = longTokenPoolAmount * prices.longTokenPrice.max;
         uint256 shortTokenPoolUsd = shortTokenPoolAmount * prices.shortTokenPrice.max;
 
