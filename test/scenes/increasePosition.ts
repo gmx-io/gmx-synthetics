@@ -16,7 +16,7 @@ increasePosition.getOrderParams = (fixture) => {
     initialCollateralDeltaAmount: expandDecimals(50_000, 6),
     swapPath: [],
     sizeDeltaUsd: decimalToFloat(200 * 1000),
-    acceptablePrice: expandDecimals(5100, 12),
+    acceptablePrice: expandDecimals(5200, 12),
     executionFee: expandDecimals(1, 15),
     minOutputAmount: 0,
     orderType: OrderType.MarketIncrease,
@@ -36,7 +36,7 @@ increasePosition.getOrderParams.short = (fixture) => {
     ...increasePosition.getOrderParams(fixture),
     initialCollateralToken: wnt,
     initialCollateralDeltaAmount: expandDecimals(10, 18),
-    acceptablePrice: expandDecimals(4900, 12),
+    acceptablePrice: expandDecimals(4800, 12),
     isLong: false,
   };
 };
