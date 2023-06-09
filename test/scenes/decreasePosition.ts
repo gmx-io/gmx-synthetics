@@ -19,7 +19,7 @@ decreasePosition.getOrderParams = (fixture) => {
     initialCollateralDeltaAmount: increasePositionParams.initialCollateralDeltaAmount.div(10),
     swapPath: [],
     sizeDeltaUsd: increasePositionParams.sizeDeltaUsd.div(10),
-    acceptablePrice: expandDecimals(4900, 12),
+    acceptablePrice: expandDecimals(4800, 12),
     executionFee: expandDecimals(1, 15),
     minOutputAmount: 0,
     orderType: OrderType.MarketDecrease,
@@ -40,7 +40,7 @@ decreasePosition.getOrderParams.short = (fixture) => {
     initialCollateralToken: increasePositionParams.initialCollateralToken,
     initialCollateralDeltaAmount: increasePositionParams.initialCollateralDeltaAmount.div(10),
     sizeDeltaUsd: increasePositionParams.sizeDeltaUsd.div(10),
-    acceptablePrice: expandDecimals(5100, 12),
+    acceptablePrice: expandDecimals(5200, 12),
     isLong: false,
   };
 };
