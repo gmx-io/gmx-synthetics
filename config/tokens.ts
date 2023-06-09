@@ -67,7 +67,7 @@ const config: {
   },
   arbitrumGoerli: {
     WETH: {
-      address: "0xEe01c0CD76354C383B8c7B4e65EA88D00B06f36f",
+      address: "0xe39Ab88f8A4777030A534146A9Ca3B52bd5D43A3",
       decimals: 18,
       wrappedNative: true,
       transferGasLimit: 200 * 1000,
