@@ -53,6 +53,8 @@ export async function getMarketTokenPriceWithPoolValue(fixture, overrides: any =
     max: expandDecimals(1, 6 + 18),
   };
 
+  const maximize = overrides.maximize === undefined ? true : overrides.maximize;
+
   return await reader.getMarketTokenPrice(
     dataStore.address,
     market,
@@ -60,7 +62,7 @@ export async function getMarketTokenPriceWithPoolValue(fixture, overrides: any =
     longTokenPrice,
     shortTokenPrice,
     pnlFactorType,
-    true
+    maximize
   );
 }
 
