@@ -462,9 +462,11 @@ describe("Exchange.MarketIncreaseOrder", () => {
     await usingResult(
       getMarketTokenPriceWithPoolValue(fixture, {
         market: ethUsdSingleTokenMarket,
-        longTokenPrice: {
-          min: expandDecimals(1, 6 + 18),
-          max: expandDecimals(1, 6 + 18),
+        prices: {
+          longTokenPrice: {
+            min: expandDecimals(1, 6 + 18),
+            max: expandDecimals(1, 6 + 18),
+          },
         },
       }),
       async ([marketTokenPrice, poolValueInfo]) => {
@@ -492,9 +494,11 @@ describe("Exchange.MarketIncreaseOrder", () => {
     await usingResult(
       getMarketTokenPriceWithPoolValue(fixture, {
         market: ethUsdSingleTokenMarket,
-        longTokenPrice: {
-          min: expandDecimals(1, 6 + 18),
-          max: expandDecimals(1, 6 + 18),
+        prices: {
+          longTokenPrice: {
+            min: expandDecimals(1, 6 + 18),
+            max: expandDecimals(1, 6 + 18),
+          },
         },
       }),
       async ([marketTokenPrice, poolValueInfo]) => {
@@ -506,13 +510,15 @@ describe("Exchange.MarketIncreaseOrder", () => {
     await usingResult(
       getMarketTokenPriceWithPoolValue(fixture, {
         market: ethUsdSingleTokenMarket,
-        indexTokenPrice: {
-          min: expandDecimals(6000, 4 + 8),
-          max: expandDecimals(6000, 4 + 8),
-        },
-        longTokenPrice: {
-          min: expandDecimals(1, 6 + 18),
-          max: expandDecimals(1, 6 + 18),
+        prices: {
+          indexTokenPrice: {
+            min: expandDecimals(6000, 4 + 8),
+            max: expandDecimals(6000, 4 + 8),
+          },
+          longTokenPrice: {
+            min: expandDecimals(1, 6 + 18),
+            max: expandDecimals(1, 6 + 18),
+          },
         },
       }),
       async ([marketTokenPrice, poolValueInfo]) => {

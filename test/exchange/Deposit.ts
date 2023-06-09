@@ -891,9 +891,11 @@ describe("Exchange.Deposit", () => {
     await usingResult(
       getMarketTokenPriceWithPoolValue(fixture, {
         market: ethUsdSingleTokenMarket,
-        longTokenPrice: {
-          min: expandDecimals(1, 6 + 18),
-          max: expandDecimals(1, 6 + 18),
+        prices: {
+          longTokenPrice: {
+            min: expandDecimals(1, 6 + 18),
+            max: expandDecimals(1, 6 + 18),
+          },
         },
       }),
       async ([marketTokenPrice, poolValueInfo]) => {
@@ -916,9 +918,11 @@ describe("Exchange.Deposit", () => {
     await usingResult(
       getMarketTokenPriceWithPoolValue(fixture, {
         market: ethUsdSingleTokenMarket,
-        longTokenPrice: {
-          min: expandDecimals(1, 6 + 18),
-          max: expandDecimals(1, 6 + 18),
+        prices: {
+          longTokenPrice: {
+            min: expandDecimals(1, 6 + 18),
+            max: expandDecimals(1, 6 + 18),
+          },
         },
       }),
       async ([marketTokenPrice, poolValueInfo]) => {
