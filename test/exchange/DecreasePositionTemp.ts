@@ -38,38 +38,6 @@ describe("Exchange.DecreasePosition", () => {
     await scenes.deposit(fixture);
   });
 
-  it("capped price impact, positive pnl", async () => {
-    // to be added
-  });
-
-  it("capped price impact, negative pnl", async () => {
-    // to be added
-  });
-
-  it("spread, positive pnl", async () => {
-    // to be added
-  });
-
-  it("spread, negative pnl", async () => {
-    // to be added
-  });
-
-  it("spread, positive pnl, positive price impact, capped price impact", async () => {
-    // to be added
-  });
-
-  it("spread, positive pnl, negative price impact", async () => {
-    // to be added
-  });
-
-  it("spread, negative pnl, positive price impact, capped price impact", async () => {
-    // to be added
-  });
-
-  it("spread, negative pnl, negative price impact", async () => {
-    // to be added
-  });
-
   it("liquidation due to pnl", async () => {
     // to be added
   });
