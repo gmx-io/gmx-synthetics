@@ -68,7 +68,37 @@ prices.ethUsdMarket = {
     max: expandDecimals(5000, 12),
   },
   shortTokenPrice: {
-    min: expandDecimals(1, 6),
-    max: expandDecimals(1, 6),
+    min: expandDecimals(1, 24),
+    max: expandDecimals(1, 24),
+  },
+};
+
+prices.ethUsdMarket.increased = {
+  indexTokenPrice: {
+    min: expandDecimals(5020, 12),
+    max: expandDecimals(5020, 12),
+  },
+  longTokenPrice: {
+    min: expandDecimals(5020, 12),
+    max: expandDecimals(5020, 12),
+  },
+  shortTokenPrice: {
+    min: expandDecimals(1, 24),
+    max: expandDecimals(1, 24),
+  },
+};
+
+prices.ethUsdMarket.decreased = {
+  indexTokenPrice: {
+    min: expandDecimals(4980, 12),
+    max: expandDecimals(4980, 12),
+  },
+  longTokenPrice: {
+    min: expandDecimals(4980, 12),
+    max: expandDecimals(4980, 12),
+  },
+  shortTokenPrice: {
+    min: expandDecimals(1, 24),
+    max: expandDecimals(1, 24),
   },
 };
