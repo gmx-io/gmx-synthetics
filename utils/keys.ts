@@ -35,6 +35,8 @@ export const CANCEL_ORDER_FEATURE_DISABLED = hashString("CANCEL_ORDER_FEATURE_DI
 
 export const CLAIMABLE_FEE_AMOUNT = hashString("CLAIMABLE_FEE_AMOUNT");
 export const CLAIMABLE_FUNDING_AMOUNT = hashString("CLAIMABLE_FUNDING_AMOUNT");
+export const CLAIMABLE_COLLATERAL_AMOUNT = hashString("CLAIMABLE_COLLATERAL_AMOUNT");
+export const CLAIMABLE_COLLATERAL_FACTOR = hashString("CLAIMABLE_COLLATERAL_FACTOR");
 export const CLAIMABLE_COLLATERAL_TIME_DIVISOR = hashString("CLAIMABLE_COLLATERAL_TIME_DIVISOR");
 
 export const MAX_UI_FEE_FACTOR = hashString("MAX_UI_FEE_FACTOR");
@@ -194,6 +196,17 @@ export function claimableFeeAmountKey(market: string, token: string) {
 
 export function claimableFundingAmountKey(market: string, token: string, account: string) {
   return hashData(["bytes32", "address", "address", "address"], [CLAIMABLE_FUNDING_AMOUNT, market, token, account]);
+}
+
+export function claimableCollateralAmountKey(market: string, token: string, timeKey: number, account: string) {
+  return hashData(
+    ["bytes32", "address", "address", "uint256", "address"],
+    [CLAIMABLE_COLLATERAL_AMOUNT, market, token, timeKey, account]
+  );
+}
+
+export function claimableCollateralFactorKey(market: string, token: string, timeKey: number) {
+  return hashData(["bytes32", "address", "address", "uint256"], [CLAIMABLE_COLLATERAL_FACTOR, market, token, timeKey]);
 }
 
 export function tokenTransferGasLimit(token: string) {
