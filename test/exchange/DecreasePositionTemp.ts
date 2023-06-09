@@ -38,18 +38,6 @@ describe("Exchange.DecreasePosition", () => {
     await scenes.deposit(fixture);
   });
 
-  it("positive price impact, negative pnl", async () => {
-    // to be added
-  });
-
-  it("negative price impact, positive pnl", async () => {
-    // to be added
-  });
-
-  it("negative price impact, negative pnl", async () => {
-    // to be added
-  });
-
   it("capped price impact, positive pnl", async () => {
     // to be added
   });
