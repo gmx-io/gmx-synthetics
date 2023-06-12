@@ -15,7 +15,7 @@ increasePosition.getOrderParams = (fixture) => {
     initialCollateralToken: usdc,
     initialCollateralDeltaAmount: expandDecimals(50_000, 6),
     swapPath: [],
-    sizeDeltaUsd: decimalToFloat(200 * 1000),
+    sizeDeltaUsd: decimalToFloat(200_000),
     acceptablePrice: expandDecimals(5200, 12),
     executionFee: expandDecimals(1, 15),
     minOutputAmount: 0,
