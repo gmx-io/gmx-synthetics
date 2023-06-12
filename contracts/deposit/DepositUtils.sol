@@ -197,7 +197,7 @@ library DepositUtils {
             eventEmitter,
             depositVault,
             deposit.executionFee(),
-            startingGas,
+            startingGas - gasleft(),
             keeper,
             deposit.account()
         );

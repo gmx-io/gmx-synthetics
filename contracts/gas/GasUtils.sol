@@ -61,11 +61,10 @@ library GasUtils {
         EventEmitter eventEmitter,
         StrictBank bank,
         uint256 executionFee,
-        uint256 startingGas,
+        uint256 gasUsed,
         address keeper,
         address refundReceiver
     ) external {
-        uint256 gasUsed = startingGas - gasleft();
         uint256 executionFeeForKeeper = adjustGasUsage(dataStore, gasUsed) * tx.gasprice;
 
         if (executionFeeForKeeper > executionFee) {
