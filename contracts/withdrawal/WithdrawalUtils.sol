@@ -232,7 +232,7 @@ library WithdrawalUtils {
             params.eventEmitter,
             params.withdrawalVault,
             withdrawal.executionFee(),
-            params.startingGas,
+            params.startingGas - gasleft(),
             params.keeper,
             withdrawal.account()
         );
@@ -285,7 +285,7 @@ library WithdrawalUtils {
             eventEmitter,
             withdrawalVault,
             withdrawal.executionFee(),
-            startingGas,
+            startingGas - gasleft(),
             keeper,
             withdrawal.account()
         );
