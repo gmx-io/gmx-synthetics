@@ -373,6 +373,9 @@ library PositionUtils {
 
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(getPositionFeesParams);
 
+        // the totalCostAmount is in tokens, use collateralTokenPrice.min to calculate the cost in USD
+        // since in PositionPricingUtils.getPositionFees the totalCostAmount in tokens was calculated
+        // using collateralTokenPrice.min
         uint256 collateralCostUsd = fees.totalCostAmount * cache.collateralTokenPrice.min;
 
         // the position's pnl is counted as collateral for the liquidation check

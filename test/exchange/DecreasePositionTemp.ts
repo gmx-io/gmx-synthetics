@@ -38,6 +38,10 @@ describe("Exchange.DecreasePosition", () => {
     await scenes.deposit(fixture);
   });
 
+  it("capped pnl", async () => {
+    // to be added
+  });
+
   it("liquidation due to pnl", async () => {
     // to be added
   });

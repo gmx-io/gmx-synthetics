@@ -182,7 +182,7 @@ library OrderUtils {
             params.contracts.eventEmitter,
             params.contracts.orderVault,
             params.order.executionFee(),
-            params.startingGas,
+            params.startingGas - gasleft(),
             params.keeper,
             params.order.account()
         );
@@ -250,7 +250,7 @@ library OrderUtils {
             eventEmitter,
             orderVault,
             order.executionFee(),
-            startingGas,
+            startingGas - gasleft(),
             keeper,
             order.account()
         );
@@ -297,7 +297,7 @@ library OrderUtils {
             eventEmitter,
             orderVault,
             executionFee,
-            startingGas,
+            startingGas - gasleft(),
             keeper,
             order.account()
         );

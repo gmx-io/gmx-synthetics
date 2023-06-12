@@ -235,7 +235,7 @@ library ExecuteDepositUtils {
             params.eventEmitter,
             params.depositVault,
             deposit.executionFee(),
-            params.startingGas,
+            params.startingGas - gasleft(),
             params.keeper,
             deposit.account()
         );
