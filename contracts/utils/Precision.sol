@@ -52,6 +52,10 @@ library Precision {
         return applyFraction(value, factor, FLOAT_PRECISION);
     }
 
+    function applyFactor(uint256 value, int256 factor, bool roundUpMagnitude) internal pure returns (int256) {
+        return applyFraction(value, factor, FLOAT_PRECISION, roundUpMagnitude);
+    }
+
     function applyFraction(uint256 value, uint256 numerator, uint256 denominator) internal pure returns (uint256) {
         return Math.mulDiv(value, numerator, denominator);
     }
@@ -59,6 +63,19 @@ library Precision {
     function applyFraction(uint256 value, int256 numerator, uint256 denominator) internal pure returns (int256) {
         uint256 result = applyFraction(value, numerator.abs(), denominator);
         return numerator > 0 ? result.toInt256() : -result.toInt256();
+    }
+
+    function applyFraction(uint256 value, int256 numerator, uint256 denominator, bool roundUpMagnitude) internal pure returns (int256) {
+        uint256 result = applyFraction(value, numerator.abs(), denominator, roundUpMagnitude);
+        return numerator > 0 ? result.toInt256() : -result.toInt256();
+    }
+
+    function applyFraction(uint256 value, uint256 numerator, uint256 denominator, bool roundUpMagnitude) internal pure returns (uint256) {
+        if (roundUpMagnitude) {
+            return Math.mulDiv(value, numerator, denominator, Math.Rounding.Up);
+        }
+
+        return Math.mulDiv(value, numerator, denominator);
     }
 
     function applyExponentFactor(
@@ -84,10 +101,10 @@ library Precision {
         return weiToFloat(weiValue);
     }
 
-    function toFactor(uint256 value, uint256 divisor, bool roundUp) internal pure returns (uint256) {
+    function toFactor(uint256 value, uint256 divisor, bool roundUpMagnitude) internal pure returns (uint256) {
         if (value == 0) { return 0; }
 
-        if (roundUp) {
+        if (roundUpMagnitude) {
             return Math.mulDiv(value, FLOAT_PRECISION, divisor, Math.Rounding.Up);
         }
 
