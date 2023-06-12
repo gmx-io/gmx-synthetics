@@ -27,9 +27,10 @@ async function main() {
       for (const type of ["address", "uint", "int", "bool", "bytes32", "bytes", "string"]) {
         const key = `${type}Items`;
         for (const item of eventData[key].items) {
-          console.log("  %s: %s", item.key, item.value);
+          console.log("  %s: %s (%s)", item.key, item.value, type);
         }
       }
+      console.log("");
     } catch (ex) {
       console.info("Can't parse log %s", i);
     }
