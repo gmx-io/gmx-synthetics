@@ -23,11 +23,17 @@ async function main() {
       const parsedLog = eventEmitterInterface.parseLog(log);
       const eventName = parsedLog.args[1];
       const eventData = parsedLog.args[parsedLog.args.length - 1];
-      console.log("\nLog %s:", i, eventName);
+      console.log("\nLog %s %s: %s", i, parsedLog.name, eventName);
+
+      for (const [i, topic] of log.topics.entries()) {
+        console.log("  Topic %s: %s", i, topic);
+      }
+
+      console.log("  Data:");
       for (const type of ["address", "uint", "int", "bool", "bytes32", "bytes", "string"]) {
         const key = `${type}Items`;
         for (const item of eventData[key].items) {
-          console.log("  %s: %s (%s)", item.key, item.value, type);
+          console.log("    %s: %s (%s)", item.key, item.value, type);
         }
       }
       console.log("");
