@@ -53,7 +53,7 @@ library GasUtils {
     // @param dataStore DataStore
     // @param bank the StrictBank contract holding the execution fee
     // @param executionFee the executionFee amount
-    // @param startingGas the starting gas
+    // @param gasUsed the amount of gas used
     // @param keeper the keeper to pay
     // @param refundReceiver the account that should receive any excess gas refunds
     function payExecutionFee(
