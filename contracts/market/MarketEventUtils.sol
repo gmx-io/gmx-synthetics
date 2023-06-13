@@ -161,7 +161,7 @@ library MarketEventUtils {
         EventEmitter eventEmitter,
         address market,
         address token,
-        bytes32 marketId,
+        bytes32 virtualMarketId,
         int256 delta,
         uint256 nextValue
     ) external {
@@ -172,7 +172,7 @@ library MarketEventUtils {
         eventData.addressItems.setItem(1, "market", market);
 
         eventData.bytes32Items.initItems(1);
-        eventData.bytes32Items.setItem(0, "marketId", marketId);
+        eventData.bytes32Items.setItem(0, "virtualMarketId", virtualMarketId);
 
         eventData.intItems.initItems(1);
         eventData.intItems.setItem(0, "delta", delta);
@@ -183,7 +183,7 @@ library MarketEventUtils {
         eventEmitter.emitEventLog2(
             "VirtualSwapInventoryUpdated",
             Cast.toBytes32(market),
-            marketId,
+            virtualMarketId,
             eventData
         );
     }
@@ -191,7 +191,7 @@ library MarketEventUtils {
     function emitVirtualPositionInventoryUpdated(
         EventEmitter eventEmitter,
         address token,
-        bytes32 tokenId,
+        bytes32 virtualTokenId,
         int256 delta,
         int256 nextValue
     ) external {
@@ -201,7 +201,7 @@ library MarketEventUtils {
         eventData.addressItems.setItem(0, "token", token);
 
         eventData.bytes32Items.initItems(1);
-        eventData.bytes32Items.setItem(0, "tokenId", tokenId);
+        eventData.bytes32Items.setItem(0, "virtualTokenId", virtualTokenId);
 
         eventData.intItems.initItems(2);
         eventData.intItems.setItem(0, "delta", delta);
@@ -210,7 +210,7 @@ library MarketEventUtils {
         eventEmitter.emitEventLog2(
             "VirtualPositionInventoryUpdated",
             Cast.toBytes32(token),
-            tokenId,
+            virtualTokenId,
             eventData
         );
     }
