@@ -5872,9 +5872,9 @@ posix-character-classes@^0.1.0:
   resolved "https://registry.npmjs.org/posix-character-classes/-/posix-character-classes-0.1.1.tgz"
   integrity sha512-xTgYBc3fuo7Yt7JbiuFxSYGToMoz8fLoE6TC9Wx1P/u+LfeThMOAqmuyECnlBaaJb+u1m9hHiXUEtwW4OzfUJg==
 
-prb-math@^2.4.3:
+prb-math@2.4.3:
   version "2.4.3"
-  resolved "https://registry.npmjs.org/prb-math/-/prb-math-2.4.3.tgz"
+  resolved "https://registry.yarnpkg.com/prb-math/-/prb-math-2.4.3.tgz#a0121111aeae49fe5686db4aef422b785101bf7b"
   integrity sha512-t5jncEscKmWg7COkMkmbXXxSeDI6Xl21rxx5e+oxUCqskNvsu6Q9RqdVfGY6y+sMwyMQE8DJ/OOyQ9ExH1yfbw==
   dependencies:
     "@ethersproject/bignumber" "^5.5.0"
