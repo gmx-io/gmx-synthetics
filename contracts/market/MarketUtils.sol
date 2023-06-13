@@ -1448,24 +1448,24 @@ library MarketUtils {
     // @param market the market to check
     // @param token the token to check
     function getVirtualInventoryForSwaps(DataStore dataStore, address market, address token) internal view returns (bool, uint256) {
-        bytes32 marketId = dataStore.getBytes32(Keys.virtualMarketIdKey(market));
-        if (marketId == bytes32(0)) {
+        bytes32 virtualMarketId = dataStore.getBytes32(Keys.virtualMarketIdKey(market));
+        if (virtualMarketId == bytes32(0)) {
             return (false, 0);
         }
 
-        return (true, dataStore.getUint(Keys.virtualInventoryForSwapsKey(marketId, token)));
+        return (true, dataStore.getUint(Keys.virtualInventoryForSwapsKey(virtualMarketId, token)));
     }
 
     // @dev get the virtual inventory for positions
     // @param dataStore DataStore
     // @param token the token to check
     function getVirtualInventoryForPositions(DataStore dataStore, address token) internal view returns (bool, int256) {
-        bytes32 tokenId = dataStore.getBytes32(Keys.virtualTokenIdKey(token));
-        if (tokenId == bytes32(0)) {
+        bytes32 virtualTokenId = dataStore.getBytes32(Keys.virtualTokenIdKey(token));
+        if (virtualTokenId == bytes32(0)) {
             return (false, 0);
         }
 
-        return (true, dataStore.getInt(Keys.virtualInventoryForPositionsKey(tokenId)));
+        return (true, dataStore.getInt(Keys.virtualInventoryForPositionsKey(virtualTokenId)));
     }
 
     // @dev update the virtual inventory for swaps
@@ -1480,17 +1480,17 @@ library MarketUtils {
         address token,
         int256 delta
     ) internal returns (bool, uint256) {
-        bytes32 marketId = dataStore.getBytes32(Keys.virtualMarketIdKey(market));
-        if (marketId == bytes32(0)) {
+        bytes32 virtualMarketId = dataStore.getBytes32(Keys.virtualMarketIdKey(market));
+        if (virtualMarketId == bytes32(0)) {
             return (false, 0);
         }
 
         uint256 nextValue = dataStore.applyBoundedDeltaToUint(
-            Keys.virtualInventoryForSwapsKey(marketId, token),
+            Keys.virtualInventoryForSwapsKey(virtualMarketId, token),
             delta
         );
 
-        MarketEventUtils.emitVirtualSwapInventoryUpdated(eventEmitter, market, token, marketId, delta, nextValue);
+        MarketEventUtils.emitVirtualSwapInventoryUpdated(eventEmitter, market, token, virtualMarketId, delta, nextValue);
 
         return (true, nextValue);
     }
@@ -1506,17 +1506,17 @@ library MarketUtils {
         address token,
         int256 delta
     ) internal returns (bool, int256) {
-        bytes32 tokenId = dataStore.getBytes32(Keys.virtualTokenIdKey(token));
-        if (tokenId == bytes32(0)) {
+        bytes32 virtualTokenId = dataStore.getBytes32(Keys.virtualTokenIdKey(token));
+        if (virtualTokenId == bytes32(0)) {
             return (false, 0);
         }
 
         int256 nextValue = dataStore.applyDeltaToInt(
-            Keys.virtualInventoryForPositionsKey(tokenId),
+            Keys.virtualInventoryForPositionsKey(virtualTokenId),
             delta
         );
 
-        MarketEventUtils.emitVirtualPositionInventoryUpdated(eventEmitter, token, tokenId, delta, nextValue);
+        MarketEventUtils.emitVirtualPositionInventoryUpdated(eventEmitter, token, virtualTokenId, delta, nextValue);
 
         return (true, nextValue);
     }
