@@ -53,7 +53,7 @@ library GasUtils {
     // @param dataStore DataStore
     // @param bank the StrictBank contract holding the execution fee
     // @param executionFee the executionFee amount
-    // @param gasUsed the amount of gas used
+    // @param startingGas the starting gas
     // @param keeper the keeper to pay
     // @param refundReceiver the account that should receive any excess gas refunds
     function payExecutionFee(
@@ -61,10 +61,15 @@ library GasUtils {
         EventEmitter eventEmitter,
         StrictBank bank,
         uint256 executionFee,
-        uint256 gasUsed,
+        uint256 startingGas,
         address keeper,
         address refundReceiver
     ) external {
+        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
+        startingGas -= gasleft() / 63;
+        uint256 gasUsed = startingGas - gasleft();
+
+        // each external call forwards 63/64 of the remaining gas
         uint256 executionFeeForKeeper = adjustGasUsage(dataStore, gasUsed) * tx.gasprice;
 
         if (executionFeeForKeeper > executionFee) {

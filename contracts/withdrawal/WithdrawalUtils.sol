@@ -193,6 +193,9 @@ library WithdrawalUtils {
      * @param params The parameters for executing the withdrawal.
      */
     function executeWithdrawal(ExecuteWithdrawalParams memory params) external {
+        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
+        params.startingGas -= gasleft() / 63;
+
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(params.dataStore, params.key);
         WithdrawalStoreUtils.remove(params.dataStore, params.key, withdrawal.account());
 
@@ -232,7 +235,7 @@ library WithdrawalUtils {
             params.eventEmitter,
             params.withdrawalVault,
             withdrawal.executionFee(),
-            params.startingGas - gasleft(),
+            params.startingGas,
             params.keeper,
             withdrawal.account()
         );
@@ -257,6 +260,9 @@ library WithdrawalUtils {
         string memory reason,
         bytes memory reasonBytes
     ) external {
+        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
+        startingGas -= gasleft() / 63;
+
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
         if (withdrawal.account() == address(0)) {
             revert Errors.EmptyWithdrawal();
@@ -285,7 +291,7 @@ library WithdrawalUtils {
             eventEmitter,
             withdrawalVault,
             withdrawal.executionFee(),
-            startingGas - gasleft(),
+            startingGas,
             keeper,
             withdrawal.account()
         );
