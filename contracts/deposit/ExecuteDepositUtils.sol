@@ -189,7 +189,7 @@ library ExecuteDepositUtils {
                 prices.longTokenPrice,
                 prices.shortTokenPrice,
                 cache.longTokenAmount,
-                Precision.mulDiv(cache.longTokenUsd, cache.priceImpactUsd, cache.longTokenUsd + cache.shortTokenUsd)
+                Precision.mulDiv(cache.priceImpactUsd, cache.longTokenUsd, cache.longTokenUsd + cache.shortTokenUsd)
             );
 
             cache.receivedMarketTokens += _executeDeposit(params, _params);
@@ -206,7 +206,7 @@ library ExecuteDepositUtils {
                 prices.shortTokenPrice,
                 prices.longTokenPrice,
                 cache.shortTokenAmount,
-                Precision.mulDiv(cache.shortTokenUsd, cache.priceImpactUsd, cache.longTokenUsd + cache.shortTokenUsd)
+                Precision.mulDiv(cache.priceImpactUsd, cache.shortTokenUsd, cache.longTokenUsd + cache.shortTokenUsd)
             );
 
             cache.receivedMarketTokens += _executeDeposit(params, _params);

@@ -543,7 +543,7 @@ contract Oracle is RoleModule {
         uint256 price = SafeCast.toUint256(_price);
         uint256 precision = getPriceFeedMultiplier(dataStore, token);
 
-        uint256 adjustedPrice = price * precision / Precision.FLOAT_PRECISION;
+        uint256 adjustedPrice = Precision.mulDiv(price, precision, Precision.FLOAT_PRECISION);
 
         return (true, adjustedPrice);
     }
