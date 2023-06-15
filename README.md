@@ -318,6 +318,8 @@ For example if the funding factor per second is 1 / 50,000, and the funding expo
 
 The funding fee per second for shorts would be `-0.00001 * 150,000 / 50,000 => 0.00003 => -0.003%`.
 
+It is also possible to set a stableFundingFactor, this would result in the specified funding factor being used instead of the dynamic funding factor.
+
 # Borrowing Fees
 
 There is a borrowing fee paid to liquidity providers, this helps prevent users from opening both long and short positions to take up pool capacity without paying any fees.
@@ -325,6 +327,8 @@ There is a borrowing fee paid to liquidity providers, this helps prevent users f
 Borrowing fees are calculated as `borrowing factor * (open interest in usd + pending pnl) ^ (borrowing exponent factor) / (pool usd)` for longs and `borrowing factor * (open interest in usd) ^ (borrowing exponent factor) / (pool usd)` for shorts.
 
 For example if the borrowing factor per second is 1 / 50,000, and the borrowing exponent factor is 1, and the long open interest is $150,000 with +$50,000 of pending pnl, and the pool has $250,000 worth of tokens, the borrowing fee per second for longs would be `(1 / 50,000) * (150,000 + 50,000) / 250,000 => 0.000016 => 0.0016%`.
+
+There is also an option to set a skipBorrowingFeeForSmallerSide flag, this would result in the borrowing fee for the smaller side being set to zero. For example, if there are more longs than shorts and skipBorrowingFeeForSmallerSide is true, then the borrowing fee for shorts would be zero.
 
 ## Price Impact
 
@@ -500,6 +504,8 @@ After the initial setup:
 - Decrease position orders could output two tokens instead of a single token, in case the decrease position swap fails, it is also possible that the output amount and collateral may not be sufficient to cover fees, causing the order to not be executed
 
 - If there is a large spread, it is possible that opening / closing a position can significantly change the min and max price of the market token, this should not be manipulatable in a profitable way
+
+- Changes in config values such as FUNDING_FACTOR, STABLE_FUNDING_FACTOR, BORROWING_FACTOR, SKIP_BORROWING_FEE_FOR_SMALLER_SIDE, BORROWING_FEE_RECEIVER_FACTOR, could lead to additional charges for users, it could also result in a change in the price of market tokens
 
 # Feature Development
 
