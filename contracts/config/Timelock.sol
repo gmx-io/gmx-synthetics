@@ -42,6 +42,8 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         eventEmitter = _eventEmitter;
         oracleStore = _oracleStore;
         timelockDelay = _timelockDelay;
+
+        _validateTimelockDelay();
     }
 
     // @dev immediately revoke the role of an account
@@ -58,11 +60,9 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
             revert Errors.InvalidTimelockDelay(_timelockDelay);
         }
 
-        if (_timelockDelay > MAX_TIMELOCK_DELAY) {
-            revert Errors.MaxTimelockDelayExceeded(_timelockDelay);
-        }
-
         timelockDelay = _timelockDelay;
+
+        _validateTimelockDelay();
     }
 
     function signalAddOracleSigner(address account) external onlyTimelockAdmin nonReentrant {
@@ -442,5 +442,11 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
             actionKey,
             eventData
         );
+    }
+
+    function _validateTimelockDelay() internal {
+        if (timelockDelay > MAX_TIMELOCK_DELAY) {
+            revert Errors.MaxTimelockDelayExceeded(timelockDelay);
+        }
     }
 }
