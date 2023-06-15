@@ -11,8 +11,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
       depositGasLimitSingle: 0,
       depositGasLimitMultiple: 0,
-      withdrawalGasLimitSingle: 0,
-      withdrawalGasLimitMultiple: 0,
+      withdrawalGasLimit: 0,
 
       singleSwapGasLimit: 0,
       increaseOrderGasLimit: 0,
@@ -48,8 +47,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
       depositGasLimitSingle: 1500000,
       depositGasLimitMultiple: 1800000,
-      withdrawalGasLimitSingle: 1500000,
-      withdrawalGasLimitMultiple: 1800000,
+      withdrawalGasLimit: 1500000,
 
       singleSwapGasLimit: 2500000,
       increaseOrderGasLimit: 4000000,

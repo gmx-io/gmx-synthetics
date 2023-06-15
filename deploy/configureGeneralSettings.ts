@@ -53,17 +53,7 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
     "deposit gas limit multiple"
   );
 
-  await setUintIfDifferent(
-    keys.withdrawalGasLimitKey(true),
-    generalConfig.withdrawalGasLimitSingle,
-    "withdrawal gas limit single"
-  );
-
-  await setUintIfDifferent(
-    keys.withdrawalGasLimitKey(false),
-    generalConfig.withdrawalGasLimitMultiple,
-    "withdrawal gas limit multiple"
-  );
+  await setUintIfDifferent(keys.withdrawalGasLimitKey(), generalConfig.withdrawalGasLimit, "withdrawal gas limit");
 
   await setUintIfDifferent(keys.singleSwapGasLimitKey(), generalConfig.singleSwapGasLimit, "single swap gas limit");
 

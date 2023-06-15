@@ -162,7 +162,7 @@ library GasUtils {
         uint256 swapCount = withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length;
         uint256 gasForSwaps = swapCount * gasPerSwap;
 
-        return dataStore.getUint(Keys.withdrawalGasLimitKey(false)) + withdrawal.callbackGasLimit() + gasForSwaps;
+        return dataStore.getUint(Keys.withdrawalGasLimitKey()) + withdrawal.callbackGasLimit() + gasForSwaps;
     }
 
     // @dev the estimated gas limit for orders

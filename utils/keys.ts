@@ -359,8 +359,8 @@ export function depositGasLimitKey(singleToken: boolean) {
   return hashData(["bytes32", "bool"], [DEPOSIT_GAS_LIMIT, singleToken]);
 }
 
-export function withdrawalGasLimitKey(singleToken: boolean) {
-  return hashData(["bytes32", "bool"], [WITHDRAWAL_GAS_LIMIT, singleToken]);
+export function withdrawalGasLimitKey() {
+  return hashData(["bytes32"], [WITHDRAWAL_GAS_LIMIT]);
 }
 
 export function singleSwapGasLimitKey() {

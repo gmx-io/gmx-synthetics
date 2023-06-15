@@ -337,12 +337,10 @@ library Keys {
     }
 
     // @dev key for withdrawal gas limit
-    // @param singleToken whether a single token or pair tokens are being withdrawn
     // @return key for withdrawal gas limit
-    function withdrawalGasLimitKey(bool singleToken) internal pure returns (bytes32) {
+    function withdrawalGasLimitKey() internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            WITHDRAWAL_GAS_LIMIT,
-            singleToken
+            WITHDRAWAL_GAS_LIMIT
         ));
     }
 
