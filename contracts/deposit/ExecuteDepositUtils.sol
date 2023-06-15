@@ -102,6 +102,9 @@ library ExecuteDepositUtils {
     // @dev executes a deposit
     // @param params ExecuteDepositParams
     function executeDeposit(ExecuteDepositParams memory params) external {
+        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
+        params.startingGas -= gasleft() / 63;
+
         Deposit.Props memory deposit = DepositStoreUtils.get(params.dataStore, params.key);
         DepositStoreUtils.remove(params.dataStore, params.key, deposit.account());
 
@@ -235,7 +238,7 @@ library ExecuteDepositUtils {
             params.eventEmitter,
             params.depositVault,
             deposit.executionFee(),
-            params.startingGas - gasleft(),
+            params.startingGas,
             params.keeper,
             deposit.account()
         );

@@ -147,6 +147,9 @@ library OrderUtils {
     // @dev executes an order
     // @param params BaseOrderUtils.ExecuteOrderParams
     function executeOrder(BaseOrderUtils.ExecuteOrderParams memory params) external {
+        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
+        params.startingGas -= gasleft() / 63;
+
         OrderStoreUtils.remove(params.contracts.dataStore, params.key, params.order.account());
 
         BaseOrderUtils.validateNonEmptyOrder(params.order);
@@ -182,7 +185,7 @@ library OrderUtils {
             params.contracts.eventEmitter,
             params.contracts.orderVault,
             params.order.executionFee(),
-            params.startingGas - gasleft(),
+            params.startingGas,
             params.keeper,
             params.order.account()
         );
@@ -224,6 +227,9 @@ library OrderUtils {
         string memory reason,
         bytes memory reasonBytes
     ) external {
+        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
+        startingGas -= gasleft() / 63;
+
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         BaseOrderUtils.validateNonEmptyOrder(order);
 
@@ -250,7 +256,7 @@ library OrderUtils {
             eventEmitter,
             orderVault,
             order.executionFee(),
-            startingGas - gasleft(),
+            startingGas,
             keeper,
             order.account()
         );
@@ -274,6 +280,9 @@ library OrderUtils {
         string memory reason,
         bytes memory reasonBytes
     ) external {
+        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
+        startingGas -= gasleft() / 63;
+
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         BaseOrderUtils.validateNonEmptyOrder(order);
 
@@ -297,7 +306,7 @@ library OrderUtils {
             eventEmitter,
             orderVault,
             executionFee,
-            startingGas - gasleft(),
+            startingGas,
             keeper,
             order.account()
         );
