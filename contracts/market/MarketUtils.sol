@@ -249,11 +249,19 @@ library MarketUtils {
         DataStore dataStore,
         Market.Props memory market,
         MarketPrices memory prices,
-        bool isLong
+        bool isLong,
+        bool maximize
     ) internal view returns (uint256) {
         address token = isLong ? market.longToken : market.shortToken;
         uint256 poolAmount = getPoolAmount(dataStore, market, token);
-        uint256 tokenPrice = isLong ? prices.longTokenPrice.min : prices.shortTokenPrice.min;
+        uint256 tokenPrice;
+
+        if (maximize) {
+            tokenPrice = isLong ? prices.longTokenPrice.max : prices.shortTokenPrice.max;
+        } else {
+            tokenPrice = isLong ? prices.longTokenPrice.min : prices.shortTokenPrice.min;
+        }
+
         return poolAmount * tokenPrice;
     }
 
@@ -1205,7 +1213,7 @@ library MarketUtils {
         bool isLong,
         bool maximize
     ) internal view returns (int256) {
-        uint256 poolUsd = getPoolUsdWithoutPnl(dataStore, market, prices, isLong);
+        uint256 poolUsd = getPoolUsdWithoutPnl(dataStore, market, prices, isLong, !maximize);
 
         if (poolUsd == 0) {
             return 0;
@@ -1266,7 +1274,7 @@ library MarketUtils {
     ) internal view {
         // poolUsd is used instead of pool amount as the indexToken may not match the longToken
         // additionally, the shortToken may not be a stablecoin
-        uint256 poolUsd = getPoolUsdWithoutPnl(dataStore, market, prices, isLong);
+        uint256 poolUsd = getPoolUsdWithoutPnl(dataStore, market, prices, isLong, false);
         uint256 reserveFactor = getReserveFactor(dataStore, market.marketToken, isLong);
         uint256 maxReservedUsd = Precision.applyFactor(poolUsd, reserveFactor);
 
@@ -2023,7 +2031,7 @@ library MarketUtils {
             }
         }
 
-        uint256 poolUsd = getPoolUsdWithoutPnl(dataStore, market, prices, isLong);
+        uint256 poolUsd = getPoolUsdWithoutPnl(dataStore, market, prices, isLong, false);
 
         if (poolUsd == 0) {
             revert Errors.UnableToGetBorrowingFactorEmptyPoolUsd();
