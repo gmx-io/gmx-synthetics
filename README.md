@@ -507,6 +507,8 @@ After the initial setup:
 
 - Changes in config values such as FUNDING_FACTOR, STABLE_FUNDING_FACTOR, BORROWING_FACTOR, SKIP_BORROWING_FEE_FOR_SMALLER_SIDE, BORROWING_FEE_RECEIVER_FACTOR, could lead to additional charges for users, it could also result in a change in the price of market tokens
 
+- Calculation of price impact values do not account for fees and the effects resulting from the price impact itself, for most cases the effect on the price impact calculation should be small
+
 # Feature Development
 
 For the development of new features, a few things should be noted:
