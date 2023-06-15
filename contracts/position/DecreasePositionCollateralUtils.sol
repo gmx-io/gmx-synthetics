@@ -83,6 +83,10 @@ library DecreasePositionCollateralUtils {
         // the position size, otherwise there may be pending positive pnl that
         // could be used to pay for fees and the position would be undercharged
         // if the position is not fully closed
+        //
+        // for ADLs it may be possible that a position needs to be closed by a larger
+        // size to fully pay for fees, but closing by that larger size could cause a PnlOvercorrected
+        // error to be thrown in AdlHandler, this case should be rare
         collateralCache.isInsolventCloseAllowed =
             params.order.sizeDeltaUsd() == params.position.sizeInUsd() &&
             (
