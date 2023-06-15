@@ -556,8 +556,8 @@ library WithdrawalUtils {
 
         uint256 marketTokensUsd = MarketUtils.marketTokenAmountToUsd(marketTokenAmount, poolValue, marketTokensSupply);
 
-        uint256 longTokenOutputUsd = Precision.applyFraction(marketTokensUsd, longTokenPoolUsd, totalPoolUsd);
-        uint256 shortTokenOutputUsd = Precision.applyFraction(marketTokensUsd, shortTokenPoolUsd, totalPoolUsd);
+        uint256 longTokenOutputUsd = Precision.mulDiv(marketTokensUsd, longTokenPoolUsd, totalPoolUsd);
+        uint256 shortTokenOutputUsd = Precision.mulDiv(marketTokensUsd, shortTokenPoolUsd, totalPoolUsd);
 
         return (
             longTokenOutputUsd / prices.longTokenPrice.max,
