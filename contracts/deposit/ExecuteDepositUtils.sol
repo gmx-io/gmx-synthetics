@@ -324,7 +324,11 @@ library ExecuteDepositUtils {
             // priceImpactUsd is calculated based on pricing assuming only depositAmount of tokenIn
             // was added to the pool
             // since impactAmount of tokenOut is added to the pool here, the calculation of
-            // the tokenInPrice would not be entirely accurate
+            // the price impact would not be entirely accurate
+            //
+            // it is possible that the addition of the positive impact amount of tokens into the pool
+            // could increase the imbalance of the pool, for most cases this should not be a significant
+            // change compared to the improvement of balance from the actual deposit
             int256 positiveImpactAmount = MarketUtils.applySwapImpactWithCap(
                 params.dataStore,
                 params.eventEmitter,
