@@ -324,7 +324,7 @@ library BaseOrderUtils {
             }
 
             uint256 denominator = Calc.sumReturnUint256(sizeDeltaUsd, priceImpactUsd);
-            executionPrice = Precision.applyFraction(price, sizeDeltaUsd, denominator);
+            executionPrice = Precision.mulDiv(price, sizeDeltaUsd, denominator);
         }
 
         // increase order:
@@ -430,7 +430,7 @@ library BaseOrderUtils {
                 revert Errors.PriceImpactLargerThanOrderSize(cache.adjustedPriceImpactUsd, sizeDeltaUsd);
             }
 
-            int256 adjustment = Precision.applyFraction(positionSizeInUsd, cache.adjustedPriceImpactUsd, positionSizeInTokens) / sizeDeltaUsd.toInt256();
+            int256 adjustment = Precision.mulDiv(positionSizeInUsd, cache.adjustedPriceImpactUsd, positionSizeInTokens) / sizeDeltaUsd.toInt256();
             int256 _executionPrice = cache.price.toInt256() + adjustment;
 
             if (_executionPrice < 0) {

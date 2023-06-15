@@ -1047,11 +1047,11 @@ library MarketUtils {
         // should be paid from long positions using short collateral
         // short positions should receive $100 of funding fees in long collateral and $400 of funding fees in short collateral
         if (result.longsPayShorts) {
-            cache.fundingUsdForLongCollateral = Precision.applyFraction(cache.fundingUsd, cache.oi.longOpenInterestWithLongCollateral, cache.oi.longOpenInterest);
-            cache.fundingUsdForShortCollateral = Precision.applyFraction(cache.fundingUsd, cache.oi.longOpenInterestWithShortCollateral, cache.oi.longOpenInterest);
+            cache.fundingUsdForLongCollateral = Precision.mulDiv(cache.fundingUsd, cache.oi.longOpenInterestWithLongCollateral, cache.oi.longOpenInterest);
+            cache.fundingUsdForShortCollateral = Precision.mulDiv(cache.fundingUsd, cache.oi.longOpenInterestWithShortCollateral, cache.oi.longOpenInterest);
         } else {
-            cache.fundingUsdForLongCollateral = Precision.applyFraction(cache.fundingUsd, cache.oi.shortOpenInterestWithLongCollateral, cache.oi.shortOpenInterest);
-            cache.fundingUsdForShortCollateral = Precision.applyFraction(cache.fundingUsd, cache.oi.shortOpenInterestWithShortCollateral, cache.oi.shortOpenInterest);
+            cache.fundingUsdForLongCollateral = Precision.mulDiv(cache.fundingUsd, cache.oi.shortOpenInterestWithLongCollateral, cache.oi.shortOpenInterest);
+            cache.fundingUsdForShortCollateral = Precision.mulDiv(cache.fundingUsd, cache.oi.shortOpenInterestWithShortCollateral, cache.oi.shortOpenInterest);
         }
 
         cache.fundingAmountForLongCollateral = cache.fundingUsdForLongCollateral / prices.longTokenPrice.max;
