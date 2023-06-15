@@ -60,6 +60,10 @@ library Precision {
         return Math.mulDiv(value, numerator, denominator);
     }
 
+    function mulDiv(int256 value, uint256 numerator, uint256 denominator) internal pure returns (int256) {
+        return mulDiv(numerator, value, denominator);
+    }
+
     function mulDiv(uint256 value, int256 numerator, uint256 denominator) internal pure returns (int256) {
         uint256 result = mulDiv(value, numerator.abs(), denominator);
         return numerator > 0 ? result.toInt256() : -result.toInt256();

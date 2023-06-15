@@ -215,7 +215,7 @@ library PositionUtils {
             }
         }
 
-        cache.positionPnlUsd = cache.totalPositionPnl * cache.sizeDeltaInTokens.toInt256() / position.sizeInTokens().toInt256();
+        cache.positionPnlUsd = Precision.mulDiv(cache.totalPositionPnl, cache.sizeDeltaInTokens, position.sizeInTokens());
 
         return (cache.positionPnlUsd, cache.sizeDeltaInTokens);
     }

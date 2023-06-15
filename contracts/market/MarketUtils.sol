@@ -146,7 +146,7 @@ library MarketUtils {
     // @param shortTokenPrice the price of the short token
     // @param indexTokenPrice the price of the index token
     // @param maximize whether to maximize or minimize the market token price
-    // @return returns the market token's price
+    // @return returns (the market token's price, MarketPoolValueInfo.Props)
     function getMarketTokenPrice(
         DataStore dataStore,
         Market.Props memory market,
@@ -175,7 +175,8 @@ library MarketUtils {
 
         if (poolValueInfo.poolValue == 0) { return (0, poolValueInfo); }
 
-        return (poolValueInfo.poolValue * Precision.WEI_PRECISION.toInt256() / supply.toInt256(), poolValueInfo);
+        int256 marketTokenPrice = Precision.mulDiv(Precision.WEI_PRECISION, poolValueInfo.poolValue, supply);
+        return (marketTokenPrice, poolValueInfo);
     }
 
     // @dev get the total supply of the marketToken
@@ -2073,7 +2074,7 @@ library MarketUtils {
 
         uint256 totalBorrowing = getTotalBorrowing(dataStore, market.marketToken, isLong);
 
-        return (openInterest * nextCumulativeBorrowingFactor) / Precision.FLOAT_PRECISION - totalBorrowing;
+        return Precision.applyFactor(openInterest, nextCumulativeBorrowingFactor) - totalBorrowing;
     }
 
     // @dev get the total borrowing value
@@ -2122,7 +2123,7 @@ library MarketUtils {
         }
 
         // round market tokens down
-        return supply * usdValue / poolValue;
+        return Precision.mulDiv(supply, usdValue, poolValue);
     }
 
     // @dev convert a number of market tokens to its USD value
@@ -2137,7 +2138,7 @@ library MarketUtils {
     ) internal pure returns (uint256) {
         if (supply == 0) { revert Errors.EmptyMarketTokenSupply(); }
 
-        return marketTokenAmount * poolValue / supply;
+        return Precision.mulDiv(poolValue, marketTokenAmount, supply);
     }
 
     // @dev validate that the specified market exists and is enabled
