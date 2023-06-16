@@ -1470,7 +1470,7 @@ library MarketUtils {
     }
 
     function getIsLongToken(Market.Props memory market, address token) internal pure returns (bool) {
-        if (token != market.longToken || token != market.shortToken) {
+        if (token != market.longToken && token != market.shortToken) {
             revert Errors.UnexpectedTokenForVirtualInventory(token, market.marketToken);
         }
 
