@@ -4,11 +4,12 @@ import { getOracleParams, getOracleParamsForSimulation, TOKEN_ORACLE_TYPES } fro
 import { prices as refPrices } from "./prices";
 
 export function getExecuteParams(fixture, { tokens, prices }) {
-  const { wnt, wbtc, usdc } = fixture.contracts;
+  const { wnt, wbtc, usdc, usdt } = fixture.contracts;
   const defaultPriceInfoItems = {
     [wnt.address]: refPrices.wnt,
     [wbtc.address]: refPrices.wbtc,
     [usdc.address]: refPrices.usdc,
+    [usdt.address]: refPrices.usdt,
   };
 
   const params = {
