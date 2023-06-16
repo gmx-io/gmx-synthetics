@@ -37,9 +37,13 @@ export async function deployFixture() {
 
   const wbtc = await hre.ethers.getContract("WBTC");
   const usdc = await hre.ethers.getContract("USDC");
+  const usdt = await hre.ethers.getContract("USDT");
 
   const usdcPriceFeed = await hre.ethers.getContract("USDCPriceFeed");
   await usdcPriceFeed.setAnswer(expandDecimals(1, 8));
+
+  const usdtPriceFeed = await hre.ethers.getContract("USDTPriceFeed");
+  await usdtPriceFeed.setAnswer(expandDecimals(1, 8));
 
   const oracleSalt = hashData(["uint256", "string"], [chainId, "xget-oracle-v1"]);
 
@@ -89,6 +93,17 @@ export async function deployFixture() {
     dataStore.address
   );
   const ethUsdMarket = await reader.getMarket(dataStore.address, ethUsdMarketAddress);
+
+  const ethUsdtMarketAddress = getMarketTokenAddress(
+    wnt.address,
+    wnt.address,
+    usdt.address,
+    DEFAULT_MARKET_TYPE,
+    marketFactory.address,
+    roleStore.address,
+    dataStore.address
+  );
+  const ethUsdtMarket = await reader.getMarket(dataStore.address, ethUsdtMarketAddress);
 
   const ethUsdSpotOnlyMarketAddress = getMarketTokenAddress(
     ethers.constants.AddressZero,
@@ -202,7 +217,9 @@ export async function deployFixture() {
       wnt,
       wbtc,
       usdc,
+      usdt,
       ethUsdMarket,
+      ethUsdtMarket,
       ethUsdSpotOnlyMarket,
       ethUsdSingleTokenMarket,
       btcUsdMarket,

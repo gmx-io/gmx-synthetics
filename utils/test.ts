@@ -1,5 +1,4 @@
 import { use } from "chai";
-import { RUN_TESTS_IN_DEBUG_MODE } from "../command.config";
 
 function overwriteEq(functionName, readableName, readableNegativeName, _super, chaiUtils) {
   return function (this, ...args: any[]) {
@@ -33,6 +32,6 @@ export function debugMatchers(chai, utils) {
   supportDebugEq(chai.Assertion, utils);
 }
 
-if (RUN_TESTS_IN_DEBUG_MODE) {
+if (process.env.DEBUG_TESTS) {
   use(debugMatchers);
 }

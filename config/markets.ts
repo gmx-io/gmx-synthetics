@@ -267,6 +267,9 @@ const config: {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
     },
     {
+      tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDT" },
+    },
+    {
       tokens: { longToken: "WETH", shortToken: "USDC" },
       swapOnly: true,
     },
