@@ -76,6 +76,7 @@ const config: {
       decimals: 8,
       transferGasLimit: 200 * 1000,
       deploy: true,
+      virtualTokenId: "0x04533137e2e8ae1c11111111a0dd36e023e0d6217198f889f9eb9c2a6727481d",
     },
     USDC: {
       decimals: 6,
@@ -155,6 +156,7 @@ const config: {
       decimals: 8,
       transferGasLimit: 200 * 1000,
       deploy: true,
+      virtualTokenId: "0x04533137e2e8ae1c11111111a0dd36e023e0d6217198f889f9eb9c2a6727481d",
     },
     SOL: {
       synthetic: true,
