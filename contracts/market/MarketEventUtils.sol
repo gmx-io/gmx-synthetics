@@ -160,16 +160,18 @@ library MarketEventUtils {
     function emitVirtualSwapInventoryUpdated(
         EventEmitter eventEmitter,
         address market,
-        address token,
+        bool isLongToken,
         bytes32 virtualMarketId,
         int256 delta,
         uint256 nextValue
     ) external {
         EventUtils.EventLogData memory eventData;
 
-        eventData.addressItems.initItems(2);
-        eventData.addressItems.setItem(0, "token", token);
-        eventData.addressItems.setItem(1, "market", market);
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "market", market);
+
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "isLongToken", isLongToken);
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "virtualMarketId", virtualMarketId);

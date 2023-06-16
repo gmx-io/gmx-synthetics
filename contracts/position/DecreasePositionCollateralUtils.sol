@@ -138,7 +138,7 @@ library DecreasePositionCollateralUtils {
             MarketUtils.applyDeltaToPoolAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
-                params.market.marketToken,
+                params.market,
                 cache.pnlToken,
                 -deductionAmountForPool.toInt256()
             );
@@ -174,7 +174,7 @@ library DecreasePositionCollateralUtils {
             MarketUtils.applyDeltaToPoolAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
-                params.market.marketToken,
+                params.market,
                 cache.pnlToken,
                 -deductionAmountForPool.toInt256()
             );
@@ -273,7 +273,7 @@ library DecreasePositionCollateralUtils {
                 MarketUtils.applyDeltaToPoolAmount(
                     params.contracts.dataStore,
                     params.contracts.eventEmitter,
-                    params.market.marketToken,
+                    params.market,
                     params.position.collateralToken(),
                     collateralCache.result.amountPaidInCollateralToken.toInt256()
                 );
@@ -283,7 +283,7 @@ library DecreasePositionCollateralUtils {
                 MarketUtils.applyDeltaToPoolAmount(
                     params.contracts.dataStore,
                     params.contracts.eventEmitter,
-                    params.market.marketToken,
+                    params.market,
                     values.output.secondaryOutputToken,
                     collateralCache.result.amountPaidInSecondaryOutputToken.toInt256()
                 );
@@ -321,7 +321,7 @@ library DecreasePositionCollateralUtils {
             MarketUtils.applyDeltaToPoolAmount(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
-                params.market.marketToken,
+                params.market,
                 params.position.collateralToken(),
                 fees.feeAmountForPool.toInt256()
             );
@@ -352,7 +352,7 @@ library DecreasePositionCollateralUtils {
                 MarketUtils.applyDeltaToPoolAmount(
                     params.contracts.dataStore,
                     params.contracts.eventEmitter,
-                    params.market.marketToken,
+                    params.market,
                     params.position.collateralToken(),
                     collateralCache.result.amountPaidInCollateralToken.toInt256()
                 );
@@ -362,7 +362,7 @@ library DecreasePositionCollateralUtils {
                 MarketUtils.applyDeltaToPoolAmount(
                     params.contracts.dataStore,
                     params.contracts.eventEmitter,
-                    params.market.marketToken,
+                    params.market,
                     values.output.secondaryOutputToken,
                     collateralCache.result.amountPaidInSecondaryOutputToken.toInt256()
                 );
@@ -441,7 +441,7 @@ library DecreasePositionCollateralUtils {
                 MarketUtils.applyDeltaToPoolAmount(
                     params.contracts.dataStore,
                     params.contracts.eventEmitter,
-                    params.market.marketToken,
+                    params.market,
                     params.position.collateralToken(),
                     collateralCache.result.amountPaidInCollateralToken.toInt256()
                 );
@@ -458,7 +458,7 @@ library DecreasePositionCollateralUtils {
                 MarketUtils.applyDeltaToPoolAmount(
                     params.contracts.dataStore,
                     params.contracts.eventEmitter,
-                    params.market.marketToken,
+                    params.market,
                     values.output.secondaryOutputToken,
                     collateralCache.result.amountPaidInSecondaryOutputToken.toInt256()
                 );

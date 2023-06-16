@@ -325,8 +325,7 @@ contract Reader {
         DataStore dataStore,
         Market.Props memory market
     ) internal view returns (VirtualInventory memory) {
-        (, uint256 virtualPoolAmountForLongToken) = MarketUtils.getVirtualInventoryForSwaps(dataStore, market.marketToken, market.longToken);
-        (, uint256 virtualPoolAmountForShortToken) = MarketUtils.getVirtualInventoryForSwaps(dataStore, market.marketToken, market.shortToken);
+        (, uint256 virtualPoolAmountForLongToken, uint256 virtualPoolAmountForShortToken) = MarketUtils.getVirtualInventoryForSwaps(dataStore, market.marketToken);
         (, int256 virtualInventoryForPositions) = MarketUtils.getVirtualInventoryForPositions(dataStore, market.indexToken);
 
         return VirtualInventory(
