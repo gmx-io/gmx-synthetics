@@ -58,9 +58,9 @@ export async function createOrder(fixture, overrides) {
   const sizeDeltaUsd = overrides.sizeDeltaUsd || "0";
   const initialCollateralDeltaAmount = overrides.initialCollateralDeltaAmount || "0";
   const swapPath = overrides.swapPath || [];
-  const acceptablePrice = overrides.acceptablePrice || "0";
+  const acceptablePrice = overrides.acceptablePrice || expandDecimals(5200, 12);
   const triggerPrice = overrides.triggerPrice || "0";
-  const isLong = overrides.isLong || false;
+  const isLong = overrides.isLong === undefined ? true : overrides.isLong;
   const executionFee = overrides.executionFee || fixture.props.executionFee;
   const executionFeeToMint = overrides.executionFeeToMint || executionFee;
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
