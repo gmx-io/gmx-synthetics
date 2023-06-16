@@ -253,7 +253,7 @@ describe("Exchange.MarketDecreaseOrder", () => {
         initialCollateralToken: wnt,
         initialCollateralDeltaAmount: 0,
         sizeDeltaUsd: decimalToFloat(200 * 1000),
-        acceptablePrice: 0,
+        acceptablePrice: expandDecimals(4800, 12),
         orderType: OrderType.MarketDecrease,
         isLong: true,
         gasUsageLabel: "orderHandler.createOrder",
