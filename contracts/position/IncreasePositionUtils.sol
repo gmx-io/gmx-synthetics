@@ -287,7 +287,7 @@ library IncreasePositionUtils {
         MarketUtils.applyDeltaToPoolAmount(
             params.contracts.dataStore,
             params.contracts.eventEmitter,
-            params.market.marketToken,
+            params.market,
             params.position.collateralToken(),
             fees.feeAmountForPool.toInt256()
         );

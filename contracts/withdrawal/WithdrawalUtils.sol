@@ -381,7 +381,7 @@ library WithdrawalUtils {
         MarketUtils.applyDeltaToPoolAmount(
             params.dataStore,
             params.eventEmitter,
-            market.marketToken,
+            market,
             market.longToken,
             -cache.longTokenPoolAmountDelta.toInt256()
         );
@@ -389,7 +389,7 @@ library WithdrawalUtils {
         MarketUtils.applyDeltaToPoolAmount(
             params.dataStore,
             params.eventEmitter,
-            market.marketToken,
+            market,
             market.shortToken,
             -cache.shortTokenPoolAmountDelta.toInt256()
         );

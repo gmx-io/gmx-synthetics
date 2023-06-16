@@ -104,20 +104,24 @@ library SwapPricingUtils {
         // disincentivise the balancing of pools
         if (priceImpactUsd >= 0) { return priceImpactUsd; }
 
-        (bool hasVirtualInventoryTokenA, uint256 virtualPoolAmountForTokenA) = MarketUtils.getVirtualInventoryForSwaps(
+        (bool hasVirtualInventory, uint256 virtualPoolAmountForLongToken, uint256 virtualPoolAmountForShortToken) = MarketUtils.getVirtualInventoryForSwaps(
             params.dataStore,
-            params.market.marketToken,
-            params.tokenA
+            params.market.marketToken
         );
 
-        (bool hasVirtualInventoryTokenB, uint256 virtualPoolAmountForTokenB) = MarketUtils.getVirtualInventoryForSwaps(
-            params.dataStore,
-            params.market.marketToken,
-            params.tokenB
-        );
-
-        if (!hasVirtualInventoryTokenA || !hasVirtualInventoryTokenB) {
+        if (!hasVirtualInventory) {
             return priceImpactUsd;
+        }
+
+        uint256 virtualPoolAmountForTokenA;
+        uint256 virtualPoolAmountForTokenB;
+
+        if (params.tokenA == params.market.longToken) {
+            virtualPoolAmountForTokenA = virtualPoolAmountForLongToken;
+            virtualPoolAmountForTokenB = virtualPoolAmountForShortToken;
+        } else {
+            virtualPoolAmountForTokenA = virtualPoolAmountForShortToken;
+            virtualPoolAmountForTokenB = virtualPoolAmountForLongToken;
         }
 
         PoolParams memory poolParamsForVirtualInventory = getNextPoolAmountsParams(
