@@ -14,7 +14,8 @@ async function main() {
   const reader = await hre.ethers.getContract("Reader");
   const dataStore = await hre.ethers.getContract("DataStore");
   console.log("reading data from DataStore %s Reader %s", dataStore.address, reader.address);
-  const markets = await reader.getMarkets(dataStore.address, 0, 100);
+  const markets = [...(await reader.getMarkets(dataStore.address, 0, 100))];
+  markets.sort((a, b) => a.indexToken.localeCompare(b.indexToken));
   for (const market of markets) {
     const indexTokenSymbol = addressToSymbol[market.indexToken];
     const longTokenSymbol = addressToSymbol[market.longToken];

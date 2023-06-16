@@ -176,11 +176,15 @@ const config: {
       virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
     },
     { tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "USDC" } },
-    { tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "USDC" } },
-    { tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "DAI" } },
+    {
+      tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "USDC" },
+      virtualMarketId: "0x11111137e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481f",
+    },
+    {
+      tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "DAI" },
+    },
     {
       tokens: { indexToken: "SOL", longToken: "WBTC", shortToken: "USDC" },
-      virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDT" },
@@ -220,8 +224,14 @@ const config: {
       virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
     },
     { tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "USDC" } },
-    { tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "USDC" } },
-    { tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "DAI" } },
+    {
+      tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "USDC" },
+      virtualMarketId: "0x11111137e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481f",
+    },
+    {
+      tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "DAI" },
+      virtualMarketId: "0x11111137e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481f",
+    },
     {
       tokens: { indexToken: "SOL", longToken: "WETH", shortToken: "USDC" },
       virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
