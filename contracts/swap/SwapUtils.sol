@@ -291,7 +291,7 @@ library SwapUtils {
         MarketUtils.applyDeltaToPoolAmount(
             params.dataStore,
             params.eventEmitter,
-            _params.market.marketToken,
+            _params.market,
             _params.tokenIn,
             (cache.amountIn + fees.feeAmountForPool).toInt256()
         );
@@ -301,7 +301,7 @@ library SwapUtils {
         MarketUtils.applyDeltaToPoolAmount(
             params.dataStore,
             params.eventEmitter,
-            _params.market.marketToken,
+            _params.market,
             cache.tokenOut,
             -cache.poolAmountOut.toInt256()
         );

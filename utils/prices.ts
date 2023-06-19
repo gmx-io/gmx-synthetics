@@ -51,6 +51,13 @@ prices.usdc = {
   max: expandDecimals(1, 6),
 };
 
+prices.usdt = {
+  contractName: "usdt",
+  precision: 18,
+  min: expandDecimals(1, 6),
+  max: expandDecimals(1, 6),
+};
+
 prices.wbtc = {
   contractName: "wbtc",
   precision: 20,

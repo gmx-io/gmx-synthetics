@@ -234,6 +234,11 @@ const config: {
       transferGasLimit: 200 * 1000,
       deploy: true,
     },
+    USDT: {
+      decimals: 6,
+      transferGasLimit: 200 * 1000,
+      deploy: true,
+    },
     SOL: {
       synthetic: true,
       decimals: 18,
@@ -252,6 +257,11 @@ const config: {
       deploy: true,
     },
     USDC: {
+      decimals: 6,
+      transferGasLimit: 200 * 1000,
+      deploy: true,
+    },
+    USDT: {
       decimals: 6,
       transferGasLimit: 200 * 1000,
       deploy: true,

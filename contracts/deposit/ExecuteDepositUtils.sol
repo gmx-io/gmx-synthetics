@@ -358,7 +358,7 @@ library ExecuteDepositUtils {
             MarketUtils.applyDeltaToPoolAmount(
                 params.dataStore,
                 params.eventEmitter,
-                _params.market.marketToken,
+                _params.market,
                 _params.tokenOut,
                 positiveImpactAmount
             );
@@ -394,7 +394,7 @@ library ExecuteDepositUtils {
         MarketUtils.applyDeltaToPoolAmount(
             params.dataStore,
             params.eventEmitter,
-            _params.market.marketToken,
+            _params.market,
             _params.tokenIn,
             (fees.amountAfterFees + fees.feeAmountForPool).toInt256()
         );

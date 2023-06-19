@@ -699,12 +699,12 @@ library MarketUtils {
     function applyDeltaToPoolAmount(
         DataStore dataStore,
         EventEmitter eventEmitter,
-        address market,
+        Market.Props memory market,
         address token,
         int256 delta
     ) internal returns (uint256) {
         uint256 nextValue = dataStore.applyDeltaToUint(
-            Keys.poolAmountKey(market, token),
+            Keys.poolAmountKey(market.marketToken, token),
             delta,
             "Invalid state, negative poolAmount"
         );
@@ -717,7 +717,7 @@ library MarketUtils {
             delta
         );
 
-        MarketEventUtils.emitPoolAmountUpdated(eventEmitter, market, token, delta, nextValue);
+        MarketEventUtils.emitPoolAmountUpdated(eventEmitter, market.marketToken, token, delta, nextValue);
 
         return nextValue;
     }
@@ -1455,14 +1455,26 @@ library MarketUtils {
     // @dev get the virtual inventory for swaps
     // @param dataStore DataStore
     // @param market the market to check
-    // @param token the token to check
-    function getVirtualInventoryForSwaps(DataStore dataStore, address market, address token) internal view returns (bool, uint256) {
+    // @return returns (has virtual inventory, virtual long token inventory, virtual short token inventory)
+    function getVirtualInventoryForSwaps(DataStore dataStore, address market) internal view returns (bool, uint256, uint256) {
         bytes32 virtualMarketId = dataStore.getBytes32(Keys.virtualMarketIdKey(market));
         if (virtualMarketId == bytes32(0)) {
-            return (false, 0);
+            return (false, 0, 0);
         }
 
-        return (true, dataStore.getUint(Keys.virtualInventoryForSwapsKey(virtualMarketId, token)));
+        return (
+            true,
+            dataStore.getUint(Keys.virtualInventoryForSwapsKey(virtualMarketId, true)),
+            dataStore.getUint(Keys.virtualInventoryForSwapsKey(virtualMarketId, false))
+        );
+    }
+
+    function getIsLongToken(Market.Props memory market, address token) internal pure returns (bool) {
+        if (token != market.longToken && token != market.shortToken) {
+            revert Errors.UnexpectedTokenForVirtualInventory(token, market.marketToken);
+        }
+
+        return token == market.longToken;
     }
 
     // @dev get the virtual inventory for positions
@@ -1479,27 +1491,29 @@ library MarketUtils {
 
     // @dev update the virtual inventory for swaps
     // @param dataStore DataStore
-    // @param market the market to update
+    // @param marketAddress the market to update
     // @param token the token to update
     // @param delta the update amount
     function applyDeltaToVirtualInventoryForSwaps(
         DataStore dataStore,
         EventEmitter eventEmitter,
-        address market,
+        Market.Props memory market,
         address token,
         int256 delta
     ) internal returns (bool, uint256) {
-        bytes32 virtualMarketId = dataStore.getBytes32(Keys.virtualMarketIdKey(market));
+        bytes32 virtualMarketId = dataStore.getBytes32(Keys.virtualMarketIdKey(market.marketToken));
         if (virtualMarketId == bytes32(0)) {
             return (false, 0);
         }
 
+        bool isLongToken = getIsLongToken(market, token);
+
         uint256 nextValue = dataStore.applyBoundedDeltaToUint(
-            Keys.virtualInventoryForSwapsKey(virtualMarketId, token),
+            Keys.virtualInventoryForSwapsKey(virtualMarketId, isLongToken),
             delta
         );
 
-        MarketEventUtils.emitVirtualSwapInventoryUpdated(eventEmitter, market, token, virtualMarketId, delta, nextValue);
+        MarketEventUtils.emitVirtualSwapInventoryUpdated(eventEmitter, market.marketToken, isLongToken, virtualMarketId, delta, nextValue);
 
         return (true, nextValue);
     }

@@ -607,11 +607,11 @@ library Keys {
    // @dev the key for the virtual inventory for swaps
    // @param the virtualMarketId the virtual market id
    // @param the token to check the inventory for
-   function virtualInventoryForSwapsKey(bytes32 virtualMarketId, address token) internal pure returns (bytes32) {
+   function virtualInventoryForSwapsKey(bytes32 virtualMarketId, bool isLongToken) internal pure returns (bytes32) {
        return keccak256(abi.encode(
            VIRTUAL_INVENTORY_FOR_SWAPS,
            virtualMarketId,
-           token
+           isLongToken
        ));
    }
 
