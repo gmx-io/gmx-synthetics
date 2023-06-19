@@ -16,9 +16,9 @@ function getAvalancheFujiValues() {
 
 function getArbibtrumGoerliValues() {
   return {
-    readerAddress: ethers.constants.AddressZero,
-    dataStoreAddress: ethers.constants.AddressZero,
-    referralStorageAddress: ethers.constants.AddressZero,
+    readerAddress: "0x6242BB44BBD282B98dE507F2b6c03062CfD3fF6c",
+    dataStoreAddress: "0xF2B6e9BAbCdD8812Dd8f93D9BA8aF5112df5A05C",
+    referralStorageAddress: "0x91C55cE4221bE83e1934D1654193e41028A75EA1",
     oracleApi: "https://gmx-oracle-keeper-arbitrum-goerli-ro-glyu6psrea-ew.a.run.app/prices/",
   };
 }
