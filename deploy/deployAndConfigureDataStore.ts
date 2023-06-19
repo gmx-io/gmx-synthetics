@@ -1,5 +1,3 @@
-import { setUintIfDifferent } from "../utils/dataStore";
-import { hashString } from "../utils/hash";
 import { createDeployFunction } from "../utils/deploy";
 
 const constructorContracts = ["RoleStore"];
