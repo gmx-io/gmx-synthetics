@@ -44,7 +44,8 @@ async function main() {
 
   const tickers: any[] = await got(`${oracleApi}prices/tickers`).json();
 
-  const prices = [market.indexToken, market.longToken, market.shortToken].reduce((acc, token) => {
+  const prices = ["index", "long", "short"].reduce((acc, key) => {
+    const token = market[`${key}Token`];
     const priceData = tickers.find((data) => {
       return data.tokenAddress === token;
     });
@@ -56,12 +57,12 @@ async function main() {
     } else {
       minPrice = maxPrice = expandDecimals(1, 24); // stablecoin
     }
-    acc.push({
+    acc[`${key}TokenPrice`] = {
       min: minPrice,
       max: maxPrice,
-    });
+    };
     return acc;
-  }, [] as any[]);
+  }, {} as any[]);
 
   const positionInfo = await reader.getPositionInfo(
     dataStoreAddress,
@@ -74,6 +75,7 @@ async function main() {
   );
 
   console.log(toLoggableObject(positionInfo));
+  console.log("prices", toLoggableObject(prices));
 }
 
 function toLoggableObject(obj: any): any {
@@ -82,7 +84,6 @@ function toLoggableObject(obj: any): any {
   } else if (typeof obj === "object") {
     const newObj: any = {};
     for (const key of Object.keys(obj)) {
-      console.log("key", key);
       if (isNaN(Number(key))) {
         newObj[key] = toLoggableObject(obj[key]);
       } else {
