@@ -104,6 +104,14 @@ library SwapPricingUtils {
         // disincentivise the balancing of pools
         if (priceImpactUsd >= 0) { return priceImpactUsd; }
 
+        // note that the virtual pool for the long token / short token may be different across pools
+        // e.g. ETH/USDC, ETH/USDT would have USDC and USDT as the short tokens
+        // the short token amount is multiplied by the price of the token in the current pool, e.g. if the swap
+        // is for the ETH/USDC pool, the combined USDC and USDT short token amounts is multiplied by the price of
+        // USDC to calculate the price impact, this should be reasonable most of the time unless there is a
+        // large depeg of one of the tokens, in which case it may be necessary to remove that market from being a virtual
+        // market, removal of virtual markets may lead to incorrect virtual token accounting, the feature to correct for
+        // this can be added if needed
         (bool hasVirtualInventory, uint256 virtualPoolAmountForLongToken, uint256 virtualPoolAmountForShortToken) = MarketUtils.getVirtualInventoryForSwaps(
             params.dataStore,
             params.market.marketToken
