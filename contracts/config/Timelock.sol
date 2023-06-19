@@ -444,7 +444,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         );
     }
 
-    function _validateTimelockDelay() internal {
+    function _validateTimelockDelay() internal view {
         if (timelockDelay > MAX_TIMELOCK_DELAY) {
             revert Errors.MaxTimelockDelayExceeded(timelockDelay);
         }

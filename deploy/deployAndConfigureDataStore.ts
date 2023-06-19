@@ -11,7 +11,7 @@ const func = createDeployFunction({
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
   libraryNames: ["GasUtils", "OrderUtils", "AdlUtils", "PositionStoreUtils", "OrderStoreUtils"],
-  id: "DataStore",
+  id: "DataStore_2",
 });
 
 export default func;

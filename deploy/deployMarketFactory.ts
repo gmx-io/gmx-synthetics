@@ -13,7 +13,7 @@ const func = createDeployFunction({
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
   },
-  id: "MarketFactory",
+  id: "MarketFactory_2",
 });
 
 export default func;

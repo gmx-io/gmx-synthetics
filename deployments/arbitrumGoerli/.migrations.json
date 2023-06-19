@@ -4,5 +4,10 @@
   "OracleStore": 1685618751,
   "ReferralStorage": 1685618983,
   "MarketFactory": 1685619112,
-  "AddVirtualTokenIdToBtcMarketsTestnet": 1686933577
+  "AddVirtualTokenIdToBtcMarketsTestnet": 1686933577,
+  "RoleStore_2": 1687182002,
+  "DataStore_2": 1687182110,
+  "OracleStore_2": 1687182244,
+  "ReferralStorage_2": 1687182622,
+  "MarketFactory_2": 1687182639
 }

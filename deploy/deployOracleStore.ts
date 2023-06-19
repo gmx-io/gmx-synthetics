@@ -5,7 +5,7 @@ const constructorContracts = ["RoleStore", "EventEmitter"];
 
 const func = createDeployFunction({
   contractName: "OracleStore",
-  id: "OracleStore",
+  id: "OracleStore_2",
   dependencyNames: constructorContracts,
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
