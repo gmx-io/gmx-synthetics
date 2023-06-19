@@ -3,7 +3,7 @@ import { createDeployFunction } from "../utils/deploy";
 
 const func = createDeployFunction({
   contractName: "ReferralStorage",
-  id: "ReferralStorage",
+  id: "ReferralStorage_2",
 });
 
 func.skip = async ({ network }: HardhatRuntimeEnvironment) => {
