@@ -144,8 +144,15 @@ library IncreasePositionUtils {
 
         params.position.setSizeInUsd(cache.nextPositionSizeInUsd);
         params.position.setSizeInTokens(params.position.sizeInTokens() + cache.sizeDeltaInTokens);
-        params.position.setLongTokenFundingAmountPerSize(fees.funding.latestLongTokenFundingAmountPerSize);
-        params.position.setShortTokenFundingAmountPerSize(fees.funding.latestShortTokenFundingAmountPerSize);
+
+        params.position = PositionUtils.setPositionFundingAmountPerSizeValues(
+            params.position,
+            params.market,
+            fees.funding.latestLongTokenFundingAmountPerSize,
+            fees.funding.latestShortTokenFundingAmountPerSize
+        );
+        /* params.position.setLongTokenFundingAmountPerSize(fees.funding.latestLongTokenFundingAmountPerSize);
+        params.position.setShortTokenFundingAmountPerSize(fees.funding.latestShortTokenFundingAmountPerSize); */
 
         PositionUtils.incrementClaimableFundingAmount(params, fees);
 
