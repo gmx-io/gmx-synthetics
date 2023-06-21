@@ -252,8 +252,13 @@ library DecreasePositionUtils {
 
             PositionStoreUtils.remove(params.contracts.dataStore, params.positionKey, params.order.account());
         } else {
-            params.position.setLongTokenFundingAmountPerSize(fees.funding.latestLongTokenFundingAmountPerSize);
-            params.position.setShortTokenFundingAmountPerSize(fees.funding.latestShortTokenFundingAmountPerSize);
+            params.position = PositionUtils.setPositionFundingAmountPerSizeValues(
+                params.position,
+                params.market,
+                fees.funding.latestLongTokenFundingAmountPerSize,
+                fees.funding.latestShortTokenFundingAmountPerSize
+            );
+
             params.position.setBorrowingFactor(cache.nextPositionBorrowingFactor);
 
             PositionStoreUtils.set(params.contracts.dataStore, params.positionKey, params.position);

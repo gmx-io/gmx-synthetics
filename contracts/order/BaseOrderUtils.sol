@@ -356,7 +356,7 @@ library BaseOrderUtils {
         //
         // it may also be possible for users to prevent the execution of orders from other users
         // by manipulating the price impact, though this should be costly
-        revert Errors.OrderNotFulfillableDueToPriceImpact(executionPrice, acceptablePrice);
+        revert Errors.OrderNotFulfillableAtAcceptablePrice(executionPrice, acceptablePrice);
     }
 
     function getExecutionPriceForDecrease(
@@ -473,7 +473,7 @@ library BaseOrderUtils {
         //
         // it may also be possible for users to prevent the execution of orders from other users
         // by manipulating the price impact, though this should be costly
-        revert Errors.OrderNotFulfillableDueToPriceImpact(cache.executionPrice, acceptablePrice);
+        revert Errors.OrderNotFulfillableAtAcceptablePrice(cache.executionPrice, acceptablePrice);
     }
 
     // @dev validate that an order exists

@@ -156,7 +156,7 @@ library Errors {
     );
     error PriceImpactLargerThanOrderSize(int256 priceImpactUsd, uint256 sizeDeltaUsd);
     error NegativeExecutionPrice(int256 executionPrice, uint256 price, uint256 positionSizeInUsd, int256 priceImpactUsd, uint256 sizeDeltaUsd);
-    error OrderNotFulfillableDueToPriceImpact(uint256 price, uint256 acceptablePrice);
+    error OrderNotFulfillableAtAcceptablePrice(uint256 price, uint256 acceptablePrice);
 
     // IncreaseOrderUtils errors
     error UnexpectedPositionState();
