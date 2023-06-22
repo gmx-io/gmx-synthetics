@@ -371,9 +371,7 @@ library PositionPricingUtils {
 
         fees.funding = getFundingFees(
             fees.funding,
-            params.position,
-            params.longToken,
-            params.shortToken
+            params.position
         );
 
         fees.ui = getUiFees(
@@ -413,9 +411,7 @@ library PositionPricingUtils {
 
     function getFundingFees(
         PositionFundingFees memory fundingFees,
-        Position.Props memory position,
-        address longToken,
-        address shortToken
+        Position.Props memory position
     ) internal pure returns (PositionFundingFees memory) {
         fundingFees.fundingFeeAmount = MarketUtils.getFundingAmount(
             fundingFees.latestFundingFeeAmountPerSize,

@@ -331,7 +331,7 @@ library MarketEventUtils {
         );
     }
 
-    function emitClaimableAmountPerSizeUpdated(
+    function emitClaimableFundingAmountPerSizeUpdated(
         EventEmitter eventEmitter,
         address market,
         address collateralToken,
