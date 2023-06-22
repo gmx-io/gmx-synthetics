@@ -1049,7 +1049,36 @@ library MarketUtils {
             cache.totalOpenInterest
         );
 
+        // for single token markets, if there is $200,000 long open interest
+        // and $100,000 short open interest and if the fundingUsd is $8:
+        // fundingUsdForLongCollateral: $4
+        // fundingUsdForShortCollateral: $4
+        // fundingFeeAmountPerSizeDelta.long.longToken: 4 / 100,000
+        // fundingFeeAmountPerSizeDelta.long.shortToken: 4 / 100,000
+        // claimableFundingAmountPerSizeDelta.short.longToken: 4 / 100,000
+        // claimableFundingAmountPerSizeDelta.short.shortToken: 4 / 100,000
+        //
+        // the divisor for fundingFeeAmountPerSizeDelta is 100,000 because the
+        // cache.openInterest.long.longOpenInterest and cache.openInterest.long.shortOpenInterest is divided by 2
+        //
+        // when the fundingFeeAmountPerSize value is incremented, it would be incremented twice:
+        // 4 / 100,000 + 4 / 100,000 = 8 / 100,000
+        //
+        // since the actual long open interest is $200,000, this would result in a total of 8 / 100,000 * 200,000 = $16 being charged
+        //
+        // when the claimableFundingAmountPerSize value is incremented, it would similarly be incremented twice:
+        // 4 / 100,000 + 4 / 100,000 = 8 / 100,000
+        //
+        // when calculating the amount to be claimed, the longTokenClaimableFundingAmountPerSize and shortTokenClaimableFundingAmountPerSize
+        // are compared against the market's claimableFundingAmountPerSize for the longToken and claimableFundingAmountPerSize for the shortToken
+        //
+        // since both these values will be duplicated, the amount claimable would be:
+        // (8 / 100,000 + 8 / 100,000) * 100,000 = $16
+        //
+        // due to these, the fundingUsd should be divided by the divisor
+
         cache.fundingUsd = Precision.applyFactor(cache.sizeOfLargerSide, cache.durationInSeconds * result.fundingFactorPerSecond);
+        cache.fundingUsd = cache.fundingUsd / divisor;
 
         result.longsPayShorts = cache.longOpenInterest > cache.shortOpenInterest;
 
