@@ -80,6 +80,21 @@ prices.ethUsdMarket = {
   },
 };
 
+prices.ethUsdSingleTokenMarket = {
+  indexTokenPrice: {
+    min: expandDecimals(5000, 12),
+    max: expandDecimals(5000, 12),
+  },
+  longTokenPrice: {
+    min: expandDecimals(1, 24),
+    max: expandDecimals(1, 24),
+  },
+  shortTokenPrice: {
+    min: expandDecimals(1, 24),
+    max: expandDecimals(1, 24),
+  },
+};
+
 prices.ethUsdMarket.withSpread = {
   indexTokenPrice: {
     min: expandDecimals(4990, 12),

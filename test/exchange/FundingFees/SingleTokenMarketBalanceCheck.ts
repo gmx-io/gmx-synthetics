@@ -8,23 +8,15 @@ import { OrderType, handleOrder } from "../../../utils/order";
 import { getEventData, getEventDataArray } from "../../../utils/event";
 import * as keys from "../../../utils/keys";
 
-describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
+describe("Exchange.FundingFees.SingleTokenMarketBalanceCheck", () => {
   let fixture;
   let user0, user1, user2, user3, user4;
-  let dataStore, ethUsdMarket, ethUsdSingleTokenMarket, exchangeRouter, wnt, usdc;
+  let dataStore, ethUsdSingleTokenMarket, exchangeRouter, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2, user3, user4 } = fixture.accounts);
-    ({ dataStore, ethUsdMarket, ethUsdSingleTokenMarket, exchangeRouter, wnt, usdc } = fixture.contracts);
-
-    await handleDeposit(fixture, {
-      create: {
-        market: ethUsdMarket,
-        longTokenAmount: expandDecimals(10_000, 18),
-        shortTokenAmount: expandDecimals(5_000_000, 6),
-      },
-    });
+    ({ dataStore, ethUsdSingleTokenMarket, exchangeRouter, usdc } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -36,19 +28,19 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
   });
 
   it("funding fees after funding switches sides", async () => {
-    await dataStore.setUint(keys.fundingFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 7));
-    await dataStore.setUint(keys.fundingExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(1));
+    await dataStore.setUint(keys.fundingFactorKey(ethUsdSingleTokenMarket.marketToken), decimalToFloat(1, 7));
+    await dataStore.setUint(keys.fundingExponentFactorKey(ethUsdSingleTokenMarket.marketToken), decimalToFloat(1));
 
-    expect(await dataStore.getUint(keys.fundingUpdatedAtKey(ethUsdMarket.marketToken))).eq(0);
+    expect(await dataStore.getUint(keys.fundingUpdatedAtKey(ethUsdSingleTokenMarket.marketToken))).eq(0);
 
     // ORDER 1
-    // user0 opens a $200k long position, using wnt as collateral
+    // user0 opens a $200k long position, using usdc as collateral
     await handleOrder(fixture, {
       create: {
         account: user0,
-        market: ethUsdMarket,
-        initialCollateralToken: wnt,
-        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        market: ethUsdSingleTokenMarket,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: expandDecimals(50_000, 6),
         swapPath: [],
         sizeDeltaUsd: decimalToFloat(200_000),
         acceptablePrice: expandDecimals(5050, 12),
@@ -61,13 +53,13 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
     });
 
     // ORDER 2
-    // user1 opens a $100k long position, using wnt as collateral
+    // user1 opens a $100k long position, using usdc as collateral
     await handleOrder(fixture, {
       create: {
         account: user1,
-        market: ethUsdMarket,
-        initialCollateralToken: wnt,
-        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        market: ethUsdSingleTokenMarket,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: expandDecimals(50_000, 6),
         swapPath: [],
         sizeDeltaUsd: decimalToFloat(100_000),
         acceptablePrice: expandDecimals(5050, 12),
@@ -84,7 +76,7 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
     await handleOrder(fixture, {
       create: {
         account: user2,
-        market: ethUsdMarket,
+        market: ethUsdSingleTokenMarket,
         initialCollateralToken: usdc,
         initialCollateralDeltaAmount: expandDecimals(50_000, 6),
         swapPath: [],
@@ -99,30 +91,11 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
     });
 
     // ORDER 4
-    // user3 opens a $100k short position, using wnt as collateral
+    // user3 opens a $100k short position, using usdc as collateral
     await handleOrder(fixture, {
       create: {
         account: user3,
-        market: ethUsdMarket,
-        initialCollateralToken: wnt,
-        initialCollateralDeltaAmount: expandDecimals(5, 18),
-        swapPath: [],
-        sizeDeltaUsd: decimalToFloat(100_000),
-        acceptablePrice: expandDecimals(4950, 12),
-        executionFee: expandDecimals(1, 15),
-        minOutputAmount: 0,
-        orderType: OrderType.MarketIncrease,
-        isLong: false,
-        shouldUnwrapNativeToken: false,
-      },
-    });
-
-    // ORDER 5
-    // user4 opens a $100k short position, using wnt as collateral
-    await handleOrder(fixture, {
-      create: {
-        account: user4,
-        market: ethUsdMarket,
+        market: ethUsdSingleTokenMarket,
         initialCollateralToken: usdc,
         initialCollateralDeltaAmount: expandDecimals(25_000, 6),
         swapPath: [],
@@ -136,30 +109,37 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
       },
     });
 
-    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, wnt.address, true))).eq(
-      decimalToFloat(300_000)
+    // ORDER 5
+    // user4 opens a $100k short position, using usdc as collateral
+    await handleOrder(fixture, {
+      create: {
+        account: user4,
+        market: ethUsdSingleTokenMarket,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: expandDecimals(25_000, 6),
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(100_000),
+        acceptablePrice: expandDecimals(4950, 12),
+        executionFee: expandDecimals(1, 15),
+        minOutputAmount: 0,
+        orderType: OrderType.MarketIncrease,
+        isLong: false,
+        shouldUnwrapNativeToken: false,
+      },
+    });
+
+    expect(await dataStore.getUint(keys.openInterestKey(ethUsdSingleTokenMarket.marketToken, usdc.address, true))).eq(
+      decimalToFloat(400_000)
     );
-    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, usdc.address, true))).eq(
-      decimalToFloat(100_000)
-    );
-    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, wnt.address, false))).eq(
-      decimalToFloat(100_000)
-    );
-    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, usdc.address, false))).eq(
-      decimalToFloat(100_000)
+    expect(await dataStore.getUint(keys.openInterestKey(ethUsdSingleTokenMarket.marketToken, usdc.address, false))).eq(
+      decimalToFloat(200_000)
     );
 
-    expect(await dataStore.getUint(keys.collateralSumKey(ethUsdMarket.marketToken, wnt.address, true))).eq(
-      expandDecimals(20, 18)
+    expect(await dataStore.getUint(keys.collateralSumKey(ethUsdSingleTokenMarket.marketToken, usdc.address, true))).eq(
+      expandDecimals(150_000, 6)
     );
-    expect(await dataStore.getUint(keys.collateralSumKey(ethUsdMarket.marketToken, usdc.address, true))).eq(
+    expect(await dataStore.getUint(keys.collateralSumKey(ethUsdSingleTokenMarket.marketToken, usdc.address, false))).eq(
       expandDecimals(50_000, 6)
-    );
-    expect(await dataStore.getUint(keys.collateralSumKey(ethUsdMarket.marketToken, wnt.address, false))).eq(
-      expandDecimals(5, 18)
-    );
-    expect(await dataStore.getUint(keys.collateralSumKey(ethUsdMarket.marketToken, usdc.address, false))).eq(
-      expandDecimals(25_000, 6)
     );
 
     await time.increase(14 * 24 * 60 * 60);
@@ -169,8 +149,8 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
     await handleOrder(fixture, {
       create: {
         account: user0,
-        market: ethUsdMarket,
-        initialCollateralToken: wnt,
+        market: ethUsdSingleTokenMarket,
+        initialCollateralToken: usdc,
         initialCollateralDeltaAmount: 0,
         swapPath: [],
         sizeDeltaUsd: decimalToFloat(200_000),
@@ -188,7 +168,7 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
     await handleOrder(fixture, {
       create: {
         account: user0,
-        market: ethUsdMarket,
+        market: ethUsdSingleTokenMarket,
         initialCollateralToken: usdc,
         initialCollateralDeltaAmount: expandDecimals(50_000, 6),
         swapPath: [],
@@ -207,8 +187,8 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
     await handleOrder(fixture, {
       create: {
         account: user1,
-        market: ethUsdMarket,
-        initialCollateralToken: wnt,
+        market: ethUsdSingleTokenMarket,
+        initialCollateralToken: usdc,
         initialCollateralDeltaAmount: 0,
         swapPath: [],
         sizeDeltaUsd: decimalToFloat(1),
@@ -222,11 +202,11 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
       execute: {
         afterExecution: async ({ logs }) => {
           const feeInfo = getEventData(logs, "PositionFeesCollected");
-          expect(feeInfo.fundingFeeAmount).eq("806406800000000000"); // 0.8064068 ETH, 4032.034 USD
-          expect(feeInfo.collateralToken).eq(wnt.address);
+          expect(feeInfo.fundingFeeAmount).closeTo("4032040000", "100000"); // 4032.04 USD
+          expect(feeInfo.collateralToken).eq(usdc.address);
           const claimableFundingData = getEventDataArray(logs, "ClaimableFundingUpdated");
           expect(claimableFundingData.length).eq(2);
-          expect(claimableFundingData[0].token).eq(wnt.address);
+          expect(claimableFundingData[0].token).eq(usdc.address);
           expect(claimableFundingData[0].delta).closeTo(0, "1000000000000");
         },
       },
@@ -237,7 +217,7 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
     await handleOrder(fixture, {
       create: {
         account: user4,
-        market: ethUsdMarket,
+        market: ethUsdSingleTokenMarket,
         initialCollateralToken: usdc,
         initialCollateralDeltaAmount: 0,
         swapPath: [],
@@ -258,34 +238,19 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
       },
     });
 
-    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, wnt.address, true))).eq(
-      decimalToFloat(99_999)
+    expect(await dataStore.getUint(keys.openInterestKey(ethUsdSingleTokenMarket.marketToken, usdc.address, true))).eq(
+      decimalToFloat(199_999)
     );
-    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, usdc.address, true))).eq(
-      decimalToFloat(100_000)
-    );
-    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, wnt.address, false))).eq(
-      decimalToFloat(100_000)
-    );
-    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, usdc.address, false))).eq(
-      decimalToFloat(300_001)
+    expect(await dataStore.getUint(keys.openInterestKey(ethUsdSingleTokenMarket.marketToken, usdc.address, false))).eq(
+      decimalToFloat(400_001)
     );
 
     await time.increase(28 * 24 * 60 * 60);
 
-    expect(await wnt.balanceOf(user0.address)).eq("8387186400000000000");
-    expect(await usdc.balanceOf(user0.address)).eq(0);
-
-    expect(await wnt.balanceOf(user1.address)).eq(0);
+    expect(await usdc.balanceOf(user0.address)).closeTo("41935920000", "100000"); // 41,935.92
     expect(await usdc.balanceOf(user1.address)).eq(0);
-
-    expect(await wnt.balanceOf(user2.address)).eq(0);
     expect(await usdc.balanceOf(user2.address)).eq(0);
-
-    expect(await wnt.balanceOf(user3.address)).eq(0);
     expect(await usdc.balanceOf(user3.address)).eq(0);
-
-    expect(await wnt.balanceOf(user4.address)).eq(0);
     expect(await usdc.balanceOf(user4.address)).eq(0);
 
     // ORDER 9
@@ -293,7 +258,7 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
     await handleOrder(fixture, {
       create: {
         account: user0,
-        market: ethUsdMarket,
+        market: ethUsdSingleTokenMarket,
         initialCollateralToken: usdc,
         initialCollateralDeltaAmount: 0,
         swapPath: [],
@@ -312,8 +277,8 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
     await handleOrder(fixture, {
       create: {
         account: user1,
-        market: ethUsdMarket,
-        initialCollateralToken: wnt,
+        market: ethUsdSingleTokenMarket,
+        initialCollateralToken: usdc,
         initialCollateralDeltaAmount: 0,
         swapPath: [],
         sizeDeltaUsd: decimalToFloat(99_999),
@@ -331,7 +296,7 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
     await handleOrder(fixture, {
       create: {
         account: user2,
-        market: ethUsdMarket,
+        market: ethUsdSingleTokenMarket,
         initialCollateralToken: usdc,
         initialCollateralDeltaAmount: 0,
         swapPath: [],
@@ -350,8 +315,8 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
     await handleOrder(fixture, {
       create: {
         account: user3,
-        market: ethUsdMarket,
-        initialCollateralToken: wnt,
+        market: ethUsdSingleTokenMarket,
+        initialCollateralToken: usdc,
         initialCollateralDeltaAmount: 0,
         swapPath: [],
         sizeDeltaUsd: decimalToFloat(100_000),
@@ -369,7 +334,7 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
     await handleOrder(fixture, {
       create: {
         account: user4,
-        market: ethUsdMarket,
+        market: ethUsdSingleTokenMarket,
         initialCollateralToken: usdc,
         initialCollateralDeltaAmount: 0,
         swapPath: [],
@@ -383,84 +348,55 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
       },
     });
 
-    expect(await wnt.balanceOf(user0.address)).eq("8387186400000000000"); // 8.3871864 ETH
-    expect(await usdc.balanceOf(user0.address)).eq("33871772052"); // 33,871.772054 USDC
+    expect(await usdc.balanceOf(user0.address)).closeTo("75807692052", "1000000"); // 75,807.692052
+    expect(await usdc.balanceOf(user1.address)).closeTo("45967960000", "1000000"); // 45,967.96
+    expect(await usdc.balanceOf(user2.address)).closeTo("45967960000", "1000000"); // 45,967.96
+    expect(await usdc.balanceOf(user3.address)).closeTo("16935876026", "1000000"); // 16,935.876026
+    expect(await usdc.balanceOf(user4.address)).closeTo("16935795384", "1000000"); // 16,935.795384
 
-    expect(await wnt.balanceOf(user1.address)).eq("9193593200000000000"); // 9.1935932 ETH
-    expect(await usdc.balanceOf(user1.address)).eq(0);
-
-    expect(await wnt.balanceOf(user2.address)).eq(0);
-    expect(await usdc.balanceOf(user2.address)).eq("45967966000"); // 45,967.966 USDC
-
-    expect(await wnt.balanceOf(user3.address)).eq("3387175205252222237"); // 3.387175205252222237 ETH
-    expect(await usdc.balanceOf(user3.address)).eq(0);
-
-    expect(await wnt.balanceOf(user4.address)).eq(0);
-    expect(await usdc.balanceOf(user4.address)).eq("16935795384"); // 16,935.795384 USDC
-
-    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, wnt.address, true))).eq(0);
-    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, usdc.address, true))).eq(0);
-    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, wnt.address, false))).eq(0);
-    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, usdc.address, false))).eq(0);
-
-    expect(await dataStore.getUint(keys.collateralSumKey(ethUsdMarket.marketToken, wnt.address, true))).eq(0);
-    expect(await dataStore.getUint(keys.collateralSumKey(ethUsdMarket.marketToken, usdc.address, true))).eq(0);
-    expect(await dataStore.getUint(keys.collateralSumKey(ethUsdMarket.marketToken, wnt.address, false))).eq(0);
-    expect(await dataStore.getUint(keys.collateralSumKey(ethUsdMarket.marketToken, usdc.address, false))).eq(0);
+    expect(await dataStore.getUint(keys.openInterestKey(ethUsdSingleTokenMarket.marketToken, usdc.address, true))).eq(
+      0
+    );
+    expect(await dataStore.getUint(keys.openInterestKey(ethUsdSingleTokenMarket.marketToken, usdc.address, false))).eq(
+      0
+    );
+    expect(await dataStore.getUint(keys.collateralSumKey(ethUsdSingleTokenMarket.marketToken, usdc.address, true))).eq(
+      0
+    );
+    expect(await dataStore.getUint(keys.collateralSumKey(ethUsdSingleTokenMarket.marketToken, usdc.address, false))).eq(
+      0
+    );
 
     const users = [user0, user1, user2, user3, user4];
     for (let i = 0; i < users.length; i++) {
       await exchangeRouter
         .connect(users[i])
-        .claimFundingFees(
-          [ethUsdMarket.marketToken, ethUsdMarket.marketToken],
-          [wnt.address, usdc.address],
-          users[i].address
-        );
+        .claimFundingFees([ethUsdSingleTokenMarket.marketToken], [usdc.address], users[i].address);
     }
 
-    // 41,935.932 + 33,871.772054 = 75,807.704054
-    // total initial collateral amount: 10 ETH, 50,000 USDC (50,000 + 50,000 = $100,000)
-    // diff: 75,807.6973862 - 100,000 = -24,192.3026138
-    expect(await wnt.balanceOf(user0.address)).eq("8387186400000000000"); // 8.3871864 ETH, 41,935.932 USD
-    expect(await usdc.balanceOf(user0.address)).eq("33871772052"); // 33,871.772052 USDC
+    // total initial collateral amount: 50,000 + 50,000 = 100,000
+    // diff: 75,807.692052 - 100,000 = -24,192.307948
+    expect(await usdc.balanceOf(user0.address)).closeTo("75807692052", "1000000"); // 75,807.692052
 
-    // 50,000.0028265 + 12,096.150798 = 62,096.1536245
-    // initial collateral amount: 10 ETH ($50,000), diff: 62,096.1536245 - 50,000 = 12,096.1536245
-    expect(await wnt.balanceOf(user1.address)).eq("10000000565295075039"); // 10.000000565295075039 ETH, 50,000.0028265 USD
-    expect(await usdc.balanceOf(user1.address)).eq("12096150798"); // 12,096.150798 USDC
+    // initial collateral amount: 50,000, diff: 62,096.147624 - 50,000 = 12,096.147624
+    expect(await usdc.balanceOf(user1.address)).closeTo("62096147624", "1000000"); // 62,096.147624
 
-    // 4032.08714726 + 58,064.247762 = 62,096.3349093
-    // initial collateral amount: 50,000 USDC, diff: 62,096.3349093 - 50,000 = 12,096.3349093
-    expect(await wnt.balanceOf(user2.address)).eq("806417429452702722"); // 0.806417429452702722 ETH, 4032.08714726 USD
-    expect(await usdc.balanceOf(user2.address)).eq("58064247762"); // 58,064.247762 USDC
+    // initial collateral amount: 50,000, diff: 62,096.328908 - 50,000 = 12,096.328908
+    expect(await usdc.balanceOf(user2.address)).closeTo("62096328908", "1000000"); // 62,096.328908
 
-    // 22,983.9630263 + 2016.028999 = 24,999.9920253  USD
-    // initial collateral amount: 5 ETH ($25,000), diff: 24,999.9920253 - 25,000 = -0.0079747
-    expect(await wnt.balanceOf(user3.address)).eq("4596792605252222236"); // 4.596792605252222236 ETH, 22,983.9630263 USD
-    expect(await usdc.balanceOf(user3.address)).eq("2016028999"); // 2016.028999
+    // initial collateral amount: 25,000, diff: 25,000.016024 - 25,000 = 0.016024
+    expect(await usdc.balanceOf(user3.address)).closeTo("25000016024", "1000000"); // 25000.016024
 
-    // 6048.015 + 18,951.800383 = 24,999.815383
-    // initial collateral amount: 25,000, diff: 24,999.7920526 - 25,000 = -0.20794739999
-    expect(await wnt.balanceOf(user4.address)).eq("1209602999999999999"); // 1.209602999999999999 ETH, 6048.015 USD
-    expect(await usdc.balanceOf(user4.address)).eq("18951800383"); // 18,951.800383 USDC
+    // initial collateral amount: 25,000, diff: 24,999.815382 - 25,000 = -0.18461799999
+    expect(await usdc.balanceOf(user4.address)).closeTo("24999815382", "1000000"); // 24,999.815382
 
-    // total ETH collateral: 10 (user0) + 10 (user1) + 5 (user3) = 25 ETH
-    // total USDC collateral: 50,000 (user0) + 50,000 (user2) + 25,000 (user4) = 125,000 USDC
-    expect(
-      (await wnt.balanceOf(user0.address))
-        .add(await wnt.balanceOf(user1.address))
-        .add(await wnt.balanceOf(user2.address))
-        .add(await wnt.balanceOf(user3.address))
-        .add(await wnt.balanceOf(user4.address))
-    ).eq("24999999999999999996"); // 24.999999999999999996 ETH
-
+    // total USDC collateral: 100,000 (user0) + 50,000 (user1) + 50,000 (user2) + 25,000 (user3) + 25,000 (user4) = 250,000 USDC
     expect(
       (await usdc.balanceOf(user0.address))
         .add(await usdc.balanceOf(user1.address))
         .add(await usdc.balanceOf(user2.address))
         .add(await usdc.balanceOf(user3.address))
         .add(await usdc.balanceOf(user4.address))
-    ).eq("124999999994"); // 12,4999.999994 USDC
+    ).closeTo("249999999990", "10"); // 249,999.99999
   });
 });

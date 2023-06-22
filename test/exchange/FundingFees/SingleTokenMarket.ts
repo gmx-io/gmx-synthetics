@@ -5,21 +5,18 @@ import { deployFixture } from "../../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../../utils/math";
 import { handleDeposit } from "../../../utils/deposit";
 import { OrderType, handleOrder } from "../../../utils/order";
-import { getPositionCount, getAccountPositionCount } from "../../../utils/position";
-import { expectTokenBalanceIncrease } from "../../../utils/token";
 import { getEventData, getEventDataArray } from "../../../utils/event";
 import * as keys from "../../../utils/keys";
 
 describe("Exchange.FundingFees.SingleTokenMarket", () => {
-  const { provider } = ethers;
   let fixture;
-  let user0, user1, user2, user3, user4;
-  let dataStore, ethUsdMarket, ethUsdSingleTokenMarket, exchangeRouter, wnt, usdc;
+  let user0, user1;
+  let dataStore, ethUsdMarket, ethUsdSingleTokenMarket, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ user0, user1, user2, user3, user4 } = fixture.accounts);
-    ({ dataStore, ethUsdMarket, ethUsdSingleTokenMarket, exchangeRouter, wnt, usdc } = fixture.contracts);
+    ({ user0, user1 } = fixture.accounts);
+    ({ dataStore, ethUsdMarket, ethUsdSingleTokenMarket, usdc } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {

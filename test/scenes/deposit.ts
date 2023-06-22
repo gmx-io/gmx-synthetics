@@ -7,7 +7,7 @@ export const deposit = async (fixture) => {
     create: {
       market: ethUsdMarket,
       longTokenAmount: expandDecimals(1000, 18),
-      shortTokenAmount: expandDecimals(1000 * 1000, 6),
+      shortTokenAmount: expandDecimals(1_000_000, 6),
     },
   });
 };
