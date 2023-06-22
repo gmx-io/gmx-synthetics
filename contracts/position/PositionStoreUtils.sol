@@ -72,7 +72,7 @@ library PositionStoreUtils {
             keccak256(abi.encode(key, LONG_TOKEN_CLAIMABLE_FUNDING_AMOUNT_PER_SIZE))
         ));
 
-        position.setShortTokenFundingAmountPerSize(dataStore.getUint(
+        position.setShortTokenClaimableFundingAmountPerSize(dataStore.getUint(
             keccak256(abi.encode(key, SHORT_TOKEN_CLAIMABLE_FUNDING_AMOUNT_PER_SIZE))
         ));
 

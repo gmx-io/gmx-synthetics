@@ -45,26 +45,27 @@ library PositionEventUtils {
         eventData.addressItems.setItem(1, "market", params.position.market());
         eventData.addressItems.setItem(2, "collateralToken", params.position.collateralToken());
 
-        eventData.uintItems.initItems(12);
+        eventData.uintItems.initItems(15);
         eventData.uintItems.setItem(0, "sizeInUsd", params.position.sizeInUsd());
         eventData.uintItems.setItem(1, "sizeInTokens", params.position.sizeInTokens());
         eventData.uintItems.setItem(2, "collateralAmount", params.position.collateralAmount());
         eventData.uintItems.setItem(3, "borrowingFactor", params.position.borrowingFactor());
-        eventData.uintItems.setItem(4, "executionPrice", params.executionPrice);
-        eventData.uintItems.setItem(5, "indexTokenPrice.max", params.indexTokenPrice.max);
-        eventData.uintItems.setItem(6, "indexTokenPrice.min", params.indexTokenPrice.min);
-        eventData.uintItems.setItem(7, "collateralTokenPrice.max", params.collateralTokenPrice.max);
-        eventData.uintItems.setItem(8, "collateralTokenPrice.min", params.collateralTokenPrice.min);
-        eventData.uintItems.setItem(9, "sizeDeltaUsd", params.sizeDeltaUsd);
-        eventData.uintItems.setItem(10, "sizeDeltaInTokens", params.sizeDeltaInTokens);
-        eventData.uintItems.setItem(11, "orderType", uint256(params.orderType));
+        eventData.uintItems.setItem(4, "fundingFeeAmountPerSize", params.position.fundingFeeAmountPerSize());
+        eventData.uintItems.setItem(5, "longTokenClaimableFundingAmountPerSize", params.position.longTokenClaimableFundingAmountPerSize());
+        eventData.uintItems.setItem(6, "shortTokenClaimableFundingAmountPerSize", params.position.shortTokenClaimableFundingAmountPerSize());
+        eventData.uintItems.setItem(7, "executionPrice", params.executionPrice);
+        eventData.uintItems.setItem(8, "indexTokenPrice.max", params.indexTokenPrice.max);
+        eventData.uintItems.setItem(9, "indexTokenPrice.min", params.indexTokenPrice.min);
+        eventData.uintItems.setItem(10, "collateralTokenPrice.max", params.collateralTokenPrice.max);
+        eventData.uintItems.setItem(11, "collateralTokenPrice.min", params.collateralTokenPrice.min);
+        eventData.uintItems.setItem(12, "sizeDeltaUsd", params.sizeDeltaUsd);
+        eventData.uintItems.setItem(13, "sizeDeltaInTokens", params.sizeDeltaInTokens);
+        eventData.uintItems.setItem(14, "orderType", uint256(params.orderType));
 
-        eventData.intItems.initItems(5);
-        eventData.intItems.setItem(0, "longTokenFundingAmountPerSize", params.position.longTokenFundingAmountPerSize());
-        eventData.intItems.setItem(1, "shortTokenFundingAmountPerSize", params.position.shortTokenFundingAmountPerSize());
-        eventData.intItems.setItem(2, "collateralDeltaAmount", params.collateralDeltaAmount);
-        eventData.intItems.setItem(3, "priceImpactUsd", params.priceImpactUsd);
-        eventData.intItems.setItem(4, "priceImpactAmount", params.priceImpactAmount);
+        eventData.intItems.initItems(3);
+        eventData.intItems.setItem(0, "collateralDeltaAmount", params.collateralDeltaAmount);
+        eventData.intItems.setItem(1, "priceImpactUsd", params.priceImpactUsd);
+        eventData.intItems.setItem(2, "priceImpactAmount", params.priceImpactAmount);
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "isLong", params.position.isLong());
@@ -99,27 +100,28 @@ library PositionEventUtils {
         eventData.addressItems.setItem(1, "market", position.market());
         eventData.addressItems.setItem(2, "collateralToken", position.collateralToken());
 
-        eventData.uintItems.initItems(14);
+        eventData.uintItems.initItems(17);
         eventData.uintItems.setItem(0, "sizeInUsd", position.sizeInUsd());
         eventData.uintItems.setItem(1, "sizeInTokens", position.sizeInTokens());
         eventData.uintItems.setItem(2, "collateralAmount", position.collateralAmount());
         eventData.uintItems.setItem(3, "borrowingFactor", position.borrowingFactor());
-        eventData.uintItems.setItem(4, "executionPrice", values.executionPrice);
-        eventData.uintItems.setItem(5, "indexTokenPrice.max", indexTokenPrice.max);
-        eventData.uintItems.setItem(6, "indexTokenPrice.min", indexTokenPrice.min);
-        eventData.uintItems.setItem(7, "collateralTokenPrice.max", collateralTokenPrice.max);
-        eventData.uintItems.setItem(8, "collateralTokenPrice.min", collateralTokenPrice.min);
-        eventData.uintItems.setItem(9, "sizeDeltaUsd", sizeDeltaUsd);
-        eventData.uintItems.setItem(10, "sizeDeltaInTokens", values.sizeDeltaInTokens);
-        eventData.uintItems.setItem(11, "collateralDeltaAmount", collateralDeltaAmount);
-        eventData.uintItems.setItem(12, "values.priceImpactDiffUsd", values.priceImpactDiffUsd);
-        eventData.uintItems.setItem(13, "orderType", uint256(orderType));
+        eventData.uintItems.setItem(4, "fundingFeeAmountPerSize", position.fundingFeeAmountPerSize());
+        eventData.uintItems.setItem(5, "longTokenClaimableFundingAmountPerSize", position.longTokenClaimableFundingAmountPerSize());
+        eventData.uintItems.setItem(6, "shortTokenClaimableFundingAmountPerSize", position.shortTokenClaimableFundingAmountPerSize());
+        eventData.uintItems.setItem(7, "executionPrice", values.executionPrice);
+        eventData.uintItems.setItem(8, "indexTokenPrice.max", indexTokenPrice.max);
+        eventData.uintItems.setItem(9, "indexTokenPrice.min", indexTokenPrice.min);
+        eventData.uintItems.setItem(10, "collateralTokenPrice.max", collateralTokenPrice.max);
+        eventData.uintItems.setItem(11, "collateralTokenPrice.min", collateralTokenPrice.min);
+        eventData.uintItems.setItem(12, "sizeDeltaUsd", sizeDeltaUsd);
+        eventData.uintItems.setItem(13, "sizeDeltaInTokens", values.sizeDeltaInTokens);
+        eventData.uintItems.setItem(14, "collateralDeltaAmount", collateralDeltaAmount);
+        eventData.uintItems.setItem(15, "values.priceImpactDiffUsd", values.priceImpactDiffUsd);
+        eventData.uintItems.setItem(16, "orderType", uint256(orderType));
 
-        eventData.intItems.initItems(4);
-        eventData.intItems.setItem(0, "longTokenFundingAmountPerSize", position.longTokenFundingAmountPerSize());
-        eventData.intItems.setItem(1, "shortTokenFundingAmountPerSize", position.shortTokenFundingAmountPerSize());
-        eventData.intItems.setItem(2, "priceImpactUsd", values.priceImpactUsd);
-        eventData.intItems.setItem(3, "basePnlUsd", values.basePnlUsd);
+        eventData.intItems.initItems(2);
+        eventData.intItems.setItem(0, "priceImpactUsd", values.priceImpactUsd);
+        eventData.intItems.setItem(1, "basePnlUsd", values.basePnlUsd);
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "isLong", position.isLong());
@@ -251,7 +253,7 @@ library PositionEventUtils {
 
         // in case the position was insolvent, the fundingFeeAmount and feeAmountForPool
         // values may not be accurate
-        eventData.uintItems.initItems(25);
+        eventData.uintItems.initItems(28);
         eventData.uintItems.setItem(0, "collateralTokenPrice.min", fees.collateralTokenPrice.min);
         eventData.uintItems.setItem(1, "collateralTokenPrice.max", fees.collateralTokenPrice.max);
         eventData.uintItems.setItem(2, "tradeSizeUsd", tradeSizeUsd);
@@ -263,24 +265,23 @@ library PositionEventUtils {
         eventData.uintItems.setItem(8, "fundingFeeAmount", fees.funding.fundingFeeAmount);
         eventData.uintItems.setItem(9, "claimableLongTokenAmount", fees.funding.claimableLongTokenAmount);
         eventData.uintItems.setItem(10, "claimableShortTokenAmount", fees.funding.claimableShortTokenAmount);
-        eventData.uintItems.setItem(11, "borrowingFeeUsd", fees.borrowing.borrowingFeeUsd);
-        eventData.uintItems.setItem(12, "borrowingFeeAmount", fees.borrowing.borrowingFeeAmount);
-        eventData.uintItems.setItem(13, "borrowingFeeReceiverFactor", fees.borrowing.borrowingFeeReceiverFactor);
-        eventData.uintItems.setItem(14, "borrowingFeeAmountForFeeReceiver", fees.borrowing.borrowingFeeAmountForFeeReceiver);
-        eventData.uintItems.setItem(15, "positionFeeFactor", fees.positionFeeFactor);
-        eventData.uintItems.setItem(16, "protocolFeeAmount", fees.protocolFeeAmount);
-        eventData.uintItems.setItem(17, "positionFeeReceiverFactor", fees.positionFeeReceiverFactor);
-        eventData.uintItems.setItem(18, "feeReceiverAmount", fees.feeReceiverAmount);
-        eventData.uintItems.setItem(19, "feeAmountForPool", fees.feeAmountForPool);
-        eventData.uintItems.setItem(20, "positionFeeAmountForPool", fees.positionFeeAmountForPool);
-        eventData.uintItems.setItem(21, "positionFeeAmount", fees.positionFeeAmount);
-        eventData.uintItems.setItem(22, "totalCostAmount", fees.totalCostAmount);
-        eventData.uintItems.setItem(23, "uiFeeReceiverFactor", fees.ui.uiFeeReceiverFactor);
-        eventData.uintItems.setItem(24, "uiFeeAmount", fees.ui.uiFeeAmount);
-
-        eventData.intItems.initItems(2);
-        eventData.intItems.setItem(0, "latestLongTokenFundingAmountPerSize", fees.funding.latestLongTokenFundingAmountPerSize);
-        eventData.intItems.setItem(1, "latestShortTokenFundingAmountPerSize", fees.funding.latestShortTokenFundingAmountPerSize);
+        eventData.uintItems.setItem(11, "latestFundingFeeAmountPerSize", fees.funding.latestFundingFeeAmountPerSize);
+        eventData.uintItems.setItem(12, "latestLongTokenClaimableFundingAmountPerSize", fees.funding.latestLongTokenClaimableFundingAmountPerSize);
+        eventData.uintItems.setItem(13, "latestShortTokenClaimableFundingAmountPerSize", fees.funding.latestShortTokenClaimableFundingAmountPerSize);
+        eventData.uintItems.setItem(14, "borrowingFeeUsd", fees.borrowing.borrowingFeeUsd);
+        eventData.uintItems.setItem(15, "borrowingFeeAmount", fees.borrowing.borrowingFeeAmount);
+        eventData.uintItems.setItem(16, "borrowingFeeReceiverFactor", fees.borrowing.borrowingFeeReceiverFactor);
+        eventData.uintItems.setItem(17, "borrowingFeeAmountForFeeReceiver", fees.borrowing.borrowingFeeAmountForFeeReceiver);
+        eventData.uintItems.setItem(18, "positionFeeFactor", fees.positionFeeFactor);
+        eventData.uintItems.setItem(19, "protocolFeeAmount", fees.protocolFeeAmount);
+        eventData.uintItems.setItem(20, "positionFeeReceiverFactor", fees.positionFeeReceiverFactor);
+        eventData.uintItems.setItem(21, "feeReceiverAmount", fees.feeReceiverAmount);
+        eventData.uintItems.setItem(22, "feeAmountForPool", fees.feeAmountForPool);
+        eventData.uintItems.setItem(23, "positionFeeAmountForPool", fees.positionFeeAmountForPool);
+        eventData.uintItems.setItem(24, "positionFeeAmount", fees.positionFeeAmount);
+        eventData.uintItems.setItem(25, "totalCostAmount", fees.totalCostAmount);
+        eventData.uintItems.setItem(26, "uiFeeReceiverFactor", fees.ui.uiFeeReceiverFactor);
+        eventData.uintItems.setItem(27, "uiFeeAmount", fees.ui.uiFeeAmount);
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "isIncrease", isIncrease);

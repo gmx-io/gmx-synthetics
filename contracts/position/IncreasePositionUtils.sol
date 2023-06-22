@@ -75,11 +75,31 @@ library IncreasePositionUtils {
         );
 
         if (params.position.sizeInUsd() == 0) {
-            params.position.setLongTokenFundingAmountPerSize(
-                MarketUtils.getFundingAmountPerSize(params.contracts.dataStore, params.market.marketToken, params.market.longToken, params.position.isLong())
+            params.position.setFundingFeeAmountPerSize(
+                MarketUtils.getFundingFeeAmountPerSize(
+                    params.contracts.dataStore,
+                    params.market.marketToken,
+                    params.position.collateralToken(),
+                    params.position.isLong()
+                )
             );
-            params.position.setShortTokenFundingAmountPerSize(
-                MarketUtils.getFundingAmountPerSize(params.contracts.dataStore, params.market.marketToken, params.market.shortToken, params.position.isLong())
+
+            params.position.setLongTokenClaimableFundingAmountPerSize(
+                MarketUtils.getClaimableFundingAmountPerSize(
+                    params.contracts.dataStore,
+                    params.market.marketToken,
+                    params.market.longToken,
+                    params.position.isLong()
+                )
+            );
+
+            params.position.setShortTokenClaimableFundingAmountPerSize(
+                MarketUtils.getClaimableFundingAmountPerSize(
+                    params.contracts.dataStore,
+                    params.market.marketToken,
+                    params.market.shortToken,
+                    params.position.isLong()
+                )
             );
         }
 
@@ -147,9 +167,9 @@ library IncreasePositionUtils {
         params.position.setSizeInUsd(cache.nextPositionSizeInUsd);
         params.position.setSizeInTokens(params.position.sizeInTokens() + cache.sizeDeltaInTokens);
 
-        params.position.setFundingFeeAmountPerSize(fees.funding.fundingFeeAmountPerSize);
-        params.position.setLongTokenClaimableFundingAmountPerSize(fees.funding.longTokenClaimableFundingAmountPerSize);
-        params.position.setShortTokenClaimableFundingAmountPerSize(fees.funding.shortTokenClaimableFundingAmountPerSize);
+        params.position.setFundingFeeAmountPerSize(fees.funding.latestFundingFeeAmountPerSize);
+        params.position.setLongTokenClaimableFundingAmountPerSize(fees.funding.latestLongTokenClaimableFundingAmountPerSize);
+        params.position.setShortTokenClaimableFundingAmountPerSize(fees.funding.latestShortTokenClaimableFundingAmountPerSize);
 
         params.position.setBorrowingFactor(cache.nextPositionBorrowingFactor);
         params.position.setIncreasedAtBlock(Chain.currentBlockNumber());

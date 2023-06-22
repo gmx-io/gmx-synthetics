@@ -1062,8 +1062,8 @@ library MarketUtils {
             cache.fundingUsdForLongCollateral = Precision.mulDiv(cache.fundingUsd, cache.openInterest.long.longToken, cache.longOpenInterest);
             cache.fundingUsdForShortCollateral = Precision.mulDiv(cache.fundingUsd, cache.openInterest.long.shortToken, cache.longOpenInterest);
         } else {
-            cache.fundingUsdForLongCollateral = Precision.mulDiv(cache.fundingUsd, cache.openInterest.short.longToken, cache.oi.shortOpenInterest);
-            cache.fundingUsdForShortCollateral = Precision.mulDiv(cache.fundingUsd, cache.openInterest.short.shortToken, cache.oi.shortOpenInterest);
+            cache.fundingUsdForLongCollateral = Precision.mulDiv(cache.fundingUsd, cache.openInterest.short.longToken, cache.shortOpenInterest);
+            cache.fundingUsdForShortCollateral = Precision.mulDiv(cache.fundingUsd, cache.openInterest.short.shortToken, cache.shortOpenInterest);
         }
 
         // calculate the change in funding amount per size values
@@ -1388,11 +1388,11 @@ library MarketUtils {
     //
     // @return fundingAmount
     function getFundingAmount(
-        int256 latestFundingAmountPerSize,
-        int256 positionFundingAmountPerSize,
+        uint256 latestFundingAmountPerSize,
+        uint256 positionFundingAmountPerSize,
         uint256 positionSizeInUsd,
         bool roundUpMagnitude
-    ) internal pure returns (int256) {
+    ) internal pure returns (uint256) {
         uint256 fundingDiffFactor = (latestFundingAmountPerSize - positionFundingAmountPerSize);
 
         // a user could avoid paying funding fees by continually updating the position
@@ -1804,8 +1804,8 @@ library MarketUtils {
     // @param collateralToken the collateralToken to check
     // @param isLong whether to check the long or short size
     // @return the funding fee amount per size for a market based on collateralToken
-    function getFundingFeeAmountPerSize(DataStore dataStore, address market, address collateralToken, bool isLong) internal view returns (int256) {
-        return dataStore.getInt(Keys.fundingFeeAmountPerSizeKey(market, collateralToken, isLong));
+    function getFundingFeeAmountPerSize(DataStore dataStore, address market, address collateralToken, bool isLong) internal view returns (uint256) {
+        return dataStore.getUint(Keys.fundingFeeAmountPerSizeKey(market, collateralToken, isLong));
     }
 
     // @dev get the claimable funding amount per size for a market
@@ -1814,8 +1814,8 @@ library MarketUtils {
     // @param collateralToken the collateralToken to check
     // @param isLong whether to check the long or short size
     // @return the claimable funding amount per size for a market based on collateralToken
-    function getClaimableFundingAmountPerSize(DataStore dataStore, address market, address collateralToken, bool isLong) internal view returns (int256) {
-        return dataStore.getInt(Keys.claimableFundingAmountPerSizeKey(market, collateralToken, isLong));
+    function getClaimableFundingAmountPerSize(DataStore dataStore, address market, address collateralToken, bool isLong) internal view returns (uint256) {
+        return dataStore.getUint(Keys.claimableFundingAmountPerSizeKey(market, collateralToken, isLong));
     }
 
     // @dev apply delta to the funding fee amount per size for a market
@@ -1823,7 +1823,7 @@ library MarketUtils {
     // @param market the market to set
     // @param collateralToken the collateralToken to set
     // @param isLong whether to set it for the long or short side
-    // @param value the value to set the funding amount per size to
+    // @param delta the delta to increment by
     function applyDeltaToFundingFeeAmountPerSize(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -1831,10 +1831,8 @@ library MarketUtils {
         address collateralToken,
         bool isLong,
         uint256 delta
-    ) internal returns (uint256) {
-        if (delta == 0) {
-            return;
-        }
+    ) internal {
+        if (delta == 0) { return; }
 
         uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.fundingFeeAmountPerSizeKey(market, collateralToken, isLong),
@@ -1847,10 +1845,8 @@ library MarketUtils {
             collateralToken,
             isLong,
             delta,
-            value
+            nextValue
         );
-
-        return nextValue;
     }
 
     // @dev apply delta to the claimable funding amount per size for a market
@@ -1858,18 +1854,16 @@ library MarketUtils {
     // @param market the market to set
     // @param collateralToken the collateralToken to set
     // @param isLong whether to set it for the long or short side
-    // @param value the value to set the funding amount per size to
-    function applyDeltaToFundingFeeAmountPerSize(
+    // @param delta the delta to increment by
+    function applyDeltaToClaimableFundingAmountPerSize(
         DataStore dataStore,
         EventEmitter eventEmitter,
         address market,
         address collateralToken,
         bool isLong,
         uint256 delta
-    ) internal returns (uint256) {
-        if (delta == 0) {
-            return;
-        }
+    ) internal {
+        if (delta == 0) { return; }
 
         uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.claimableFundingAmountPerSizeKey(market, collateralToken, isLong),
@@ -1882,10 +1876,8 @@ library MarketUtils {
             collateralToken,
             isLong,
             delta,
-            value
+            nextValue
         );
-
-        return nextValue;
     }
 
     // @dev get the number of seconds since funding was updated for a market

@@ -237,6 +237,7 @@ contract Reader {
             market,
             borrowingFactorPerSecondForLongs,
             borrowingFactorPerSecondForShorts,
+            baseFunding,
             nextFunding,
             virtualInventory,
             isMarketDisabled
