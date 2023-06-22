@@ -475,7 +475,7 @@ library PositionUtils {
         MarketUtils.MarketPrices memory prices
     ) internal {
         // update the funding amount per size for the market
-        MarketUtils.updateFundingAmountPerSize(
+        MarketUtils.updateFundingState(
             params.contracts.dataStore,
             params.contracts.eventEmitter,
             params.market,
@@ -579,38 +579,5 @@ library PositionUtils {
             fees.referral.affiliate,
             fees.referral.affiliateRewardAmount
         );
-    }
-
-    function setPositionFundingAmountPerSizeValues(
-        Position.Props memory position,
-        Market.Props memory market,
-        int256 latestLongTokenFundingAmountPerSize,
-        int256 latestShortTokenFundingAmountPerSize
-    ) internal pure returns (Position.Props memory) {
-        // if the latestLongTokenFundingAmountPerSize < position.longTokenFundingAmountPerSize
-        // it means that the position has earned positive funding fees, and the claimable funding amount
-        // for the position should have been updated
-        // so the position's longTokenFundingAmountPerSize should be updated
-        if (latestLongTokenFundingAmountPerSize < position.longTokenFundingAmountPerSize()) {
-            position.setLongTokenFundingAmountPerSize(latestLongTokenFundingAmountPerSize);
-        } else {
-            // if the latestLongTokenFundingAmountPerSize <= position.longTokenFundingAmountPerSize
-            // and if the position's collateral is in the long token of the market
-            // it means that the position should have paid funding fees
-            // so the position's longTokenFundingAmountPerSize should be updated
-            if (position.collateralToken() == market.longToken) {
-                position.setLongTokenFundingAmountPerSize(latestLongTokenFundingAmountPerSize);
-            }
-        }
-
-        if (latestShortTokenFundingAmountPerSize < position.shortTokenFundingAmountPerSize()) {
-            position.setShortTokenFundingAmountPerSize(latestShortTokenFundingAmountPerSize);
-        } else {
-            if (position.collateralToken() == market.shortToken) {
-                position.setShortTokenFundingAmountPerSize(latestShortTokenFundingAmountPerSize);
-            }
-        }
-
-        return position;
     }
 }

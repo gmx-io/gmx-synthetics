@@ -47,8 +47,11 @@ library ReaderUtils {
         Market.Props market;
         Price.Props collateralTokenPrice;
         uint256 pendingBorrowingFeeUsd;
-        int256 latestLongTokenFundingAmountPerSize;
-        int256 latestShortTokenFundingAmountPerSize;
+    }
+
+    struct BaseFundingValues {
+        MarketUtils.PositionType fundingFeeAmountPerSize;
+        MarketUtils.PositionType claimableFundingAmountPerSize;
     }
 
     function getNextBorrowingFees(
@@ -77,6 +80,68 @@ library ReaderUtils {
         );
     }
 
+    function getBaseFundingValues(DataStore dataStore, Market.Props memory market) public view returns (BaseFundingValues) {
+        BaseFundingValues memory values;
+
+        values.fundingFeeAmountPerSize.long.longToken = MarketUtils.getFundingFeeAmountPerSize(
+            dataStore,
+            market.marketToken,
+            market.longToken,
+            true // isLong
+        );
+
+        values.fundingFeeAmountPerSize.long.shortToken = MarketUtils.getFundingFeeAmountPerSize(
+            dataStore,
+            market.marketToken,
+            market.shortToken,
+            true // isLong
+        );
+
+        values.fundingFeeAmountPerSize.short.longToken = MarketUtils.getFundingFeeAmountPerSize(
+            dataStore,
+            market.marketToken,
+            market.longToken,
+            false // isLong
+        );
+
+        values.fundingFeeAmountPerSize.short.shortToken = MarketUtils.getFundingFeeAmountPerSize(
+            dataStore,
+            market.marketToken,
+            market.shortToken,
+            false // isLong
+        );
+
+        values.claimableFundingAmountPerSize.long.longToken = MarketUtils.getFundingFeeAmountPerSize(
+            dataStore,
+            market.marketToken,
+            market.longToken,
+            true // isLong
+        );
+
+        values.claimableFundingAmountPerSize.long.shortToken = MarketUtils.getFundingFeeAmountPerSize(
+            dataStore,
+            market.marketToken,
+            market.shortToken,
+            true // isLong
+        );
+
+        values.claimableFundingAmountPerSize.short.longToken = MarketUtils.getFundingFeeAmountPerSize(
+            dataStore,
+            market.marketToken,
+            market.longToken,
+            false // isLong
+        );
+
+        values.claimableFundingAmountPerSize.short.shortToken = MarketUtils.getFundingFeeAmountPerSize(
+            dataStore,
+            market.marketToken,
+            market.shortToken,
+            false // isLong
+        );
+
+        return values;
+    }
+
     function getNextFundingAmountPerSize(
         DataStore dataStore,
         Market.Props memory market,
@@ -90,18 +155,16 @@ library ReaderUtils {
     }
 
     function getFundingFees(
+        PositionFundingFees memory fundingFees,
         Position.Props memory position,
         address longToken,
-        address shortToken,
-        int256 latestLongTokenFundingAmountPerSize,
-        int256 latestShortTokenFundingAmountPerSize
+        address shortToken
     ) internal pure returns (PositionPricingUtils.PositionFundingFees memory) {
         return PositionPricingUtils.getFundingFees(
+            fundingFees,
             position,
             longToken,
-            shortToken,
-            latestLongTokenFundingAmountPerSize,
-            latestShortTokenFundingAmountPerSize
+            shortToken
         );
     }
 
@@ -150,20 +213,52 @@ library ReaderUtils {
 
         MarketUtils.GetNextFundingAmountPerSizeResult memory nextFundingAmountResult = getNextFundingAmountPerSize(dataStore, cache.market, prices);
 
+        positionInfo.fees.funding.latestFundingFeeAmountPerSize = MarketUtils.getFundingFeeAmountPerSize(
+            dataStore,
+            positionInfo.position.market(),
+            positionInfo.position.collateralToken(),
+            positionInfo.position.isLong()
+        );
+
+        positionInfo.fees.funding.latestLongTokenClaimableFundingAmountPerSize = MarketUtils.getClaimableFundingAmountPerSize(
+            dataStore,
+            positionInfo.position.market(),
+            cache.market.longToken,
+            positionInfo.position.isLong()
+        );
+
+        positionInfo.fees.funding.latestShortTokenClaimableFundingAmountPerSize = MarketUtils.getClaimableFundingAmountPerSize(
+            dataStore,
+            positionInfo.position.market(),
+            cache.market.shortToken,
+            positionInfo.position.isLong()
+        );
+
         if (positionInfo.position.isLong()) {
-            cache.latestLongTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_LongCollateral_LongPosition;
-            cache.latestShortTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_ShortCollateral_LongPosition;
+            positionInfo.fees.funding.latestLongTokenClaimableFundingAmountPerSize += nextFundingAmountResult.claimableFundingAmountPerSize.long.longToken;
+            positionInfo.fees.funding.latestShortTokenClaimableFundingAmountPerSize += nextFundingAmountResult.claimableFundingAmountPerSize.long.shortToken;
+
+            if (positionInfo.position.collateralToken() == cache.market.longToken) {
+                positionInfo.fees.funding.latestFundingFeeAmountPerSize += nextFundingAmountResult.fundingFeeAmountPerSizeDelta.long.longToken;
+            } else {
+                positionInfo.fees.funding.latestFundingFeeAmountPerSize += nextFundingAmountResult.fundingFeeAmountPerSizeDelta.long.shortToken;
+            }
         } else {
-            cache.latestLongTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_LongCollateral_ShortPosition;
-            cache.latestShortTokenFundingAmountPerSize = nextFundingAmountResult.fundingAmountPerSize_ShortCollateral_ShortPosition;
+            positionInfo.fees.funding.latestLongTokenClaimableFundingAmountPerSize += nextFundingAmountResult.claimableFundingAmountPerSize.short.longToken;
+            positionInfo.fees.funding.latestShortTokenClaimableFundingAmountPerSize += nextFundingAmountResult.claimableFundingAmountPerSize.short.shortToken;
+
+            if (positionInfo.position.collateralToken() == cache.market.longToken) {
+                positionInfo.fees.funding.latestFundingFeeAmountPerSize += nextFundingAmountResult.fundingFeeAmountPerSizeDelta.short.longToken;
+            } else {
+                positionInfo.fees.funding.latestFundingFeeAmountPerSize += nextFundingAmountResult.fundingFeeAmountPerSizeDelta.short.shortToken;
+            }
         }
 
         positionInfo.fees.funding = getFundingFees(
+            positionInfo.fees.funding,
             positionInfo.position,
             cache.market.longToken,
-            cache.market.shortToken,
-            cache.latestLongTokenFundingAmountPerSize,
-            cache.latestShortTokenFundingAmountPerSize
+            cache.market.shortToken
         );
 
         positionInfo.executionPriceResult = ReaderPricingUtils.getExecutionPrice(
@@ -175,7 +270,6 @@ library ReaderUtils {
             -sizeDeltaUsd.toInt256(),
             positionInfo.position.isLong()
         );
-
 
         (positionInfo.basePnlUsd, /* sizeDeltaInTokens */) = PositionUtils.getPositionPnlUsd(
             dataStore,
