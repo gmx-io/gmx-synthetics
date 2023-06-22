@@ -188,6 +188,7 @@ library DecreaseOrderUtils {
         revert Errors.UnsupportedOrderType();
     }
 
+    // note that minOutputAmount is treated as a USD value for this validation
     function _validateOutputAmount(
         Oracle oracle,
         address outputToken,
@@ -211,6 +212,7 @@ library DecreaseOrderUtils {
         }
     }
 
+    // note that minOutputAmount is treated as a USD value for this validation
     function _validateOutputAmount(
         Oracle oracle,
         address outputToken,
