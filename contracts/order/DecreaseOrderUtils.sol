@@ -188,21 +188,13 @@ library DecreaseOrderUtils {
         revert Errors.UnsupportedOrderType();
     }
 
+    // note that minOutputAmount is treated as a USD value for this validation
     function _validateOutputAmount(
         Oracle oracle,
         address outputToken,
         uint256 outputAmount,
         uint256 minOutputAmount
     ) internal view {
-        // for limit / stop-loss orders, the latest price may be the triggerPrice of the order
-        // it is possible that the valuation of the token using this price may not be precise
-        // and the condition for the order execution to revert may not be accurate
-        // this could cause orders to be frozen even if they could be executed, and orders
-        // to be executed even if the received amount of tokens is less than what the user
-        // expected
-        // the user should be informed of this possibility through documentation
-        // it is likely preferred that decrease orders are still executed if the trigger price
-        // is reached and the acceptable price is fulfillable
         uint256 outputTokenPrice = oracle.getPrimaryPrice(outputToken).min;
         uint256 outputUsd = outputAmount * outputTokenPrice;
 
@@ -211,6 +203,7 @@ library DecreaseOrderUtils {
         }
     }
 
+    // note that minOutputAmount is treated as a USD value for this validation
     function _validateOutputAmount(
         Oracle oracle,
         address outputToken,

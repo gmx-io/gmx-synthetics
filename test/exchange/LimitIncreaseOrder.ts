@@ -189,7 +189,7 @@ describe("Exchange.LimitIncreaseOrder", () => {
       precisions: [8, 18],
       oracleBlocks: [block0, block1],
       gasUsageLabel: "executeOrder",
-      expectedFrozenReason: "OrderNotFulfillableDueToPriceImpact",
+      expectedFrozenReason: "OrderNotFulfillableAtAcceptablePrice",
     });
 
     order = await reader.getOrder(dataStore.address, orderKeys[0]);

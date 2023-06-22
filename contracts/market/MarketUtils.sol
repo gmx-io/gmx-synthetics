@@ -44,39 +44,33 @@ library MarketUtils {
         Price.Props shortTokenPrice;
     }
 
+    struct CollateralType {
+        uint256 longToken;
+        uint256 shortToken;
+    }
+
+    struct PositionType {
+        CollateralType long;
+        CollateralType short;
+    }
+
     // @dev struct for the result of the getNextFundingAmountPerSize call
     // @param longsPayShorts whether longs pay shorts or shorts pay longs
-    // @param fundingAmountPerSize_LongCollateral_LongPosition funding amount per
-    // size for users with a long position using long collateral
-    // @param fundingAmountPerSize_LongCollateral_ShortPosition funding amount per
-    // size for users with a short position using long collateral
-    // @param fundingAmountPerSize_ShortCollateral_LongPosition funding amount per
-    // size for users with a long position using short collateral
-    // @param fundingAmountPerSize_ShortCollateral_ShortPosition funding amount per
-    // size for users with a short position using short collateral
+    // @param fundingFeeAmountPerSizeDelta funding fee amount per size delta values
+    // @param claimableFundingAmountPerSize claimable funding per size delta values
     struct GetNextFundingAmountPerSizeResult {
         bool longsPayShorts;
         uint256 fundingFactorPerSecond;
-        int256 fundingAmountPerSize_LongCollateral_LongPosition;
-        int256 fundingAmountPerSize_LongCollateral_ShortPosition;
-        int256 fundingAmountPerSize_ShortCollateral_LongPosition;
-        int256 fundingAmountPerSize_ShortCollateral_ShortPosition;
+
+        PositionType fundingFeeAmountPerSizeDelta;
+        PositionType claimableFundingAmountPerSizeDelta;
     }
 
-    // @dev GetNextFundingAmountPerSizeCache struct used in getNextFundingAmountPerSize
-    // to avoid stack too deep errors
-    //
-    // @param durationInSeconds duration in seconds since the last funding update
-    //
-    // @param diffUsd the absolute difference in long and short open interest for the market
-    // @param totalOpenInterest the total long and short open interest for the market
-    // @param fundingUsd the funding amount in USD
-    //
-    // @param fundingUsdForLongCollateral the funding amount in USD for positions using the long token as collateral
-    // @param fundingUsdForShortCollateral the funding amount in USD for positions using the short token as collateral
     struct GetNextFundingAmountPerSizeCache {
-        GetNextFundingAmountPerSizeOpenInterestCache oi;
-        GetNextFundingAmountPerSizeFundingPerSizeCache fps;
+        PositionType openInterest;
+
+        uint256 longOpenInterest;
+        uint256 shortOpenInterest;
 
         uint256 durationInSeconds;
 
@@ -87,47 +81,6 @@ library MarketUtils {
 
         uint256 fundingUsdForLongCollateral;
         uint256 fundingUsdForShortCollateral;
-
-        uint256 fundingAmountForLongCollateral;
-        uint256 fundingAmountForShortCollateral;
-    }
-
-    // @param longOpenInterestWithLongCollateral amount of long open interest using the long token as collateral
-    // @param longOpenInterestWithShortCollateral amount of long open interest using the short token as collateral
-    // @param shortOpenInterestWithLongCollateral amount of short open interest using the long token as collateral
-    // @param shortOpenInterestWithShortCollateral amount of short open interest using the short token as collateral
-    //
-    // @param longOpenInterest total long open interest for the market
-    // @param shortOpenInterest total short open interest for the market
-    struct GetNextFundingAmountPerSizeOpenInterestCache {
-        uint256 longOpenInterestWithLongCollateral;
-        uint256 longOpenInterestWithShortCollateral;
-        uint256 shortOpenInterestWithLongCollateral;
-        uint256 shortOpenInterestWithShortCollateral;
-
-        uint256 longOpenInterest;
-        uint256 shortOpenInterest;
-    }
-
-    // @param fundingAmountPerSize_LongCollateral_LongPosition funding per size for longs using the long token as collateral
-    // @param fundingAmountPerSize_LongCollateral_ShortPosition funding per size for shorts using the long token as collateral
-    // @param fundingAmountPerSize_ShortCollateral_LongPosition funding per size for longs using the short token as collateral
-    // @param fundingAmountPerSize_ShortCollateral_ShortPosition funding per size for shorts using the short token as collateral
-    //
-    // @param fundingAmountPerSizeDelta_LongCollateral_LongPosition the next funding amount per size for longs using the long token as collateral
-    // @param fundingAmountPerSizeDelta_LongCollateral_ShortPosition the next funding amount per size for longs using the short token as collateral
-    // @param fundingAmountPerSizeDelta_ShortCollateral_LongPosition the next funding amount per size for shorts using the long token as collateral
-    // @param fundingAmountPerSizeDelta_ShortCollateral_ShortPosition the next funding amount per size for shorts using the short token as collateral
-    struct GetNextFundingAmountPerSizeFundingPerSizeCache {
-        int256 fundingAmountPerSize_LongCollateral_LongPosition;
-        int256 fundingAmountPerSize_ShortCollateral_LongPosition;
-        int256 fundingAmountPerSize_LongCollateral_ShortPosition;
-        int256 fundingAmountPerSize_ShortCollateral_ShortPosition;
-
-        uint256 fundingAmountPerSizeDelta_LongCollateral_LongPosition;
-        uint256 fundingAmountPerSizeDelta_ShortCollateral_LongPosition;
-        uint256 fundingAmountPerSizeDelta_LongCollateral_ShortPosition;
-        uint256 fundingAmountPerSizeDelta_ShortCollateral_ShortPosition;
     }
 
     struct GetExpectedMinTokenBalanceCache {
@@ -254,6 +207,8 @@ library MarketUtils {
         bool maximize
     ) internal view returns (uint256) {
         address token = isLong ? market.longToken : market.shortToken;
+        // note that if it is a single token market, the poolAmount returned will be
+        // the amount of tokens in the pool divided by 2
         uint256 poolAmount = getPoolAmount(dataStore, market, token);
         uint256 tokenPrice;
 
@@ -596,7 +551,7 @@ library MarketUtils {
         address token,
         address account,
         address receiver
-    ) internal {
+    ) internal returns (uint256) {
         bytes32 key = Keys.claimableFundingAmountKey(market, token, account);
 
         uint256 claimableAmount = dataStore.getUint(key);
@@ -624,6 +579,8 @@ library MarketUtils {
             claimableAmount,
             nextPoolValue
         );
+
+        return claimableAmount;
     }
 
     // @dev claim collateral
@@ -642,12 +599,16 @@ library MarketUtils {
         uint256 timeKey,
         address account,
         address receiver
-    ) internal {
+    ) internal returns (uint256) {
         uint256 claimableAmount = dataStore.getUint(Keys.claimableCollateralAmountKey(market, token, timeKey, account));
 
-        uint256 claimableFactorForTime = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey));
-        uint256 claimableFactorForAccount = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey, account));
-        uint256 claimableFactor = claimableFactorForTime > claimableFactorForAccount ? claimableFactorForTime : claimableFactorForAccount;
+        uint256 claimableFactor;
+
+        {
+            uint256 claimableFactorForTime = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey));
+            uint256 claimableFactorForAccount = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey, account));
+            claimableFactor = claimableFactorForTime > claimableFactorForAccount ? claimableFactorForTime : claimableFactorForAccount;
+        }
 
         uint256 claimedAmount = dataStore.getUint(Keys.claimedCollateralAmountKey(market, token, timeKey, account));
 
@@ -656,7 +617,7 @@ library MarketUtils {
             revert Errors.CollateralAlreadyClaimed(adjustedClaimableAmount, claimedAmount);
         }
 
-        uint256 remainingClaimableAmount = adjustedClaimableAmount - claimedAmount;
+        uint256 amountToBeClaimed = adjustedClaimableAmount - claimedAmount;
 
         dataStore.setUint(
             Keys.claimedCollateralAmountKey(market, token, timeKey, account),
@@ -665,13 +626,13 @@ library MarketUtils {
 
         uint256 nextPoolValue = dataStore.decrementUint(
             Keys.claimableCollateralAmountKey(market, token),
-            remainingClaimableAmount
+            amountToBeClaimed
         );
 
         MarketToken(payable(market)).transferOut(
             token,
             receiver,
-            remainingClaimableAmount
+            amountToBeClaimed
         );
 
         validateMarketTokenBalance(dataStore, market);
@@ -683,9 +644,11 @@ library MarketUtils {
             timeKey,
             account,
             receiver,
-            remainingClaimableAmount,
+            amountToBeClaimed,
             nextPoolValue
         );
+
+        return amountToBeClaimed;
     }
 
     // @dev apply a delta to the pool amount
@@ -961,13 +924,11 @@ library MarketUtils {
         return nextValue;
     }
 
-    // @dev update the funding amount per size values
+    // @dev update the funding state
     // @param dataStore DataStore
-    // @param prices the prices of the market tokens
     // @param market the market to update
-    // @param longToken the market's long token
-    // @param shortToken the market's short token
-    function updateFundingAmountPerSize(
+    // @param prices the prices of the market tokens
+    function updateFundingState(
         DataStore dataStore,
         EventEmitter eventEmitter,
         Market.Props memory market,
@@ -975,10 +936,77 @@ library MarketUtils {
     ) external {
         GetNextFundingAmountPerSizeResult memory result = getNextFundingAmountPerSize(dataStore, market, prices);
 
-        setFundingAmountPerSize(dataStore, eventEmitter, market.marketToken, market.longToken, true, result.fundingAmountPerSize_LongCollateral_LongPosition);
-        setFundingAmountPerSize(dataStore, eventEmitter, market.marketToken, market.longToken, false, result.fundingAmountPerSize_LongCollateral_ShortPosition);
-        setFundingAmountPerSize(dataStore, eventEmitter, market.marketToken, market.shortToken, true, result.fundingAmountPerSize_ShortCollateral_LongPosition);
-        setFundingAmountPerSize(dataStore, eventEmitter, market.marketToken, market.shortToken, false, result.fundingAmountPerSize_ShortCollateral_ShortPosition);
+        applyDeltaToFundingFeeAmountPerSize(
+            dataStore,
+            eventEmitter,
+            market.marketToken,
+            market.longToken,
+            true,
+            result.fundingFeeAmountPerSizeDelta.long.longToken
+        );
+
+        applyDeltaToFundingFeeAmountPerSize(
+            dataStore,
+            eventEmitter,
+            market.marketToken,
+            market.longToken,
+            false,
+            result.fundingFeeAmountPerSizeDelta.short.longToken
+        );
+
+        applyDeltaToFundingFeeAmountPerSize(
+            dataStore,
+            eventEmitter,
+            market.marketToken,
+            market.shortToken,
+            true,
+            result.fundingFeeAmountPerSizeDelta.long.shortToken
+        );
+
+        applyDeltaToFundingFeeAmountPerSize(
+            dataStore,
+            eventEmitter,
+            market.marketToken,
+            market.shortToken,
+            false,
+            result.fundingFeeAmountPerSizeDelta.short.shortToken
+        );
+
+        applyDeltaToClaimableFundingAmountPerSize(
+            dataStore,
+            eventEmitter,
+            market.marketToken,
+            market.longToken,
+            true,
+            result.claimableFundingAmountPerSizeDelta.long.longToken
+        );
+
+        applyDeltaToClaimableFundingAmountPerSize(
+            dataStore,
+            eventEmitter,
+            market.marketToken,
+            market.longToken,
+            false,
+            result.claimableFundingAmountPerSizeDelta.short.longToken
+        );
+
+        applyDeltaToClaimableFundingAmountPerSize(
+            dataStore,
+            eventEmitter,
+            market.marketToken,
+            market.shortToken,
+            true,
+            result.claimableFundingAmountPerSizeDelta.long.shortToken
+        );
+
+        applyDeltaToClaimableFundingAmountPerSize(
+            dataStore,
+            eventEmitter,
+            market.marketToken,
+            market.shortToken,
+            false,
+            result.claimableFundingAmountPerSizeDelta.short.shortToken
+        );
 
         dataStore.setUint(Keys.fundingUpdatedAtKey(market.marketToken), Chain.currentTimestamp());
     }
@@ -1000,26 +1028,18 @@ library MarketUtils {
         uint256 divisor = getPoolDivisor(market.longToken, market.shortToken);
 
         // get the open interest values by long / short and by collateral used
-        cache.oi.longOpenInterestWithLongCollateral = getOpenInterest(dataStore, market.marketToken, market.longToken, true, divisor);
-        cache.oi.longOpenInterestWithShortCollateral = getOpenInterest(dataStore, market.marketToken, market.shortToken, true, divisor);
-        cache.oi.shortOpenInterestWithLongCollateral = getOpenInterest(dataStore, market.marketToken, market.longToken, false, divisor);
-        cache.oi.shortOpenInterestWithShortCollateral = getOpenInterest(dataStore, market.marketToken, market.shortToken, false, divisor);
+        cache.openInterest.long.longToken = getOpenInterest(dataStore, market.marketToken, market.longToken, true, divisor);
+        cache.openInterest.long.shortToken = getOpenInterest(dataStore, market.marketToken, market.shortToken, true, divisor);
+        cache.openInterest.short.longToken = getOpenInterest(dataStore, market.marketToken, market.longToken, false, divisor);
+        cache.openInterest.short.shortToken = getOpenInterest(dataStore, market.marketToken, market.shortToken, false, divisor);
 
         // sum the open interest values to get the total long and short open interest values
-        cache.oi.longOpenInterest = cache.oi.longOpenInterestWithLongCollateral + cache.oi.longOpenInterestWithShortCollateral;
-        cache.oi.shortOpenInterest = cache.oi.shortOpenInterestWithLongCollateral + cache.oi.shortOpenInterestWithShortCollateral;
-
-        // get the current funding amount per size values
-        // funding amount per size represents the amount of tokens to be paid as
-        // funding per (Precision.FLOAT_PRECISION_SQRT / Precision.FLOAT_PRECISION) USD of position size
-        result.fundingAmountPerSize_LongCollateral_LongPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.longToken, true);
-        result.fundingAmountPerSize_ShortCollateral_LongPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.shortToken, true);
-        result.fundingAmountPerSize_LongCollateral_ShortPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.longToken, false);
-        result.fundingAmountPerSize_ShortCollateral_ShortPosition = getFundingAmountPerSize(dataStore, market.marketToken, market.shortToken, false);
+        cache.longOpenInterest = cache.openInterest.long.longToken + cache.openInterest.long.shortToken;
+        cache.shortOpenInterest = cache.openInterest.short.longToken + cache.openInterest.short.shortToken;
 
         // if either long or short open interest is zero, then funding should not be updated
         // as there would not be any user to pay the funding to
-        if (cache.oi.longOpenInterest == 0 || cache.oi.shortOpenInterest == 0) {
+        if (cache.longOpenInterest == 0 || cache.shortOpenInterest == 0) {
             return result;
         }
 
@@ -1028,9 +1048,10 @@ library MarketUtils {
         // this should be a rare occurrence so funding fees are not adjusted for this case
         cache.durationInSeconds = getSecondsSinceFundingUpdated(dataStore, market.marketToken);
 
-        cache.diffUsd = Calc.diff(cache.oi.longOpenInterest, cache.oi.shortOpenInterest);
-        cache.totalOpenInterest = cache.oi.longOpenInterest + cache.oi.shortOpenInterest;
-        cache.sizeOfLargerSide = cache.oi.longOpenInterest > cache.oi.shortOpenInterest ? cache.oi.longOpenInterest : cache.oi.shortOpenInterest;
+        cache.diffUsd = Calc.diff(cache.longOpenInterest, cache.shortOpenInterest);
+        cache.totalOpenInterest = cache.longOpenInterest + cache.shortOpenInterest;
+        cache.sizeOfLargerSide = cache.longOpenInterest > cache.shortOpenInterest ? cache.longOpenInterest : cache.shortOpenInterest;
+
         result.fundingFactorPerSecond = getFundingFactorPerSecond(
             dataStore,
             market.marketToken,
@@ -1038,9 +1059,38 @@ library MarketUtils {
             cache.totalOpenInterest
         );
 
-        cache.fundingUsd = Precision.applyFactor(cache.sizeOfLargerSide, cache.durationInSeconds * result.fundingFactorPerSecond);
+        // for single token markets, if there is $200,000 long open interest
+        // and $100,000 short open interest and if the fundingUsd is $8:
+        // fundingUsdForLongCollateral: $4
+        // fundingUsdForShortCollateral: $4
+        // fundingFeeAmountPerSizeDelta.long.longToken: 4 / 100,000
+        // fundingFeeAmountPerSizeDelta.long.shortToken: 4 / 100,000
+        // claimableFundingAmountPerSizeDelta.short.longToken: 4 / 100,000
+        // claimableFundingAmountPerSizeDelta.short.shortToken: 4 / 100,000
+        //
+        // the divisor for fundingFeeAmountPerSizeDelta is 100,000 because the
+        // cache.openInterest.long.longOpenInterest and cache.openInterest.long.shortOpenInterest is divided by 2
+        //
+        // when the fundingFeeAmountPerSize value is incremented, it would be incremented twice:
+        // 4 / 100,000 + 4 / 100,000 = 8 / 100,000
+        //
+        // since the actual long open interest is $200,000, this would result in a total of 8 / 100,000 * 200,000 = $16 being charged
+        //
+        // when the claimableFundingAmountPerSize value is incremented, it would similarly be incremented twice:
+        // 4 / 100,000 + 4 / 100,000 = 8 / 100,000
+        //
+        // when calculating the amount to be claimed, the longTokenClaimableFundingAmountPerSize and shortTokenClaimableFundingAmountPerSize
+        // are compared against the market's claimableFundingAmountPerSize for the longToken and claimableFundingAmountPerSize for the shortToken
+        //
+        // since both these values will be duplicated, the amount claimable would be:
+        // (8 / 100,000 + 8 / 100,000) * 100,000 = $16
+        //
+        // due to these, the fundingUsd should be divided by the divisor
 
-        result.longsPayShorts = cache.oi.longOpenInterest > cache.oi.shortOpenInterest;
+        cache.fundingUsd = Precision.applyFactor(cache.sizeOfLargerSide, cache.durationInSeconds * result.fundingFactorPerSecond);
+        cache.fundingUsd = cache.fundingUsd / divisor;
+
+        result.longsPayShorts = cache.longOpenInterest > cache.shortOpenInterest;
 
         // split the fundingUsd value by long and short collateral
         // e.g. if the fundingUsd value is $500, and there is $1000 of long open interest using long collateral and $4000 of long open interest
@@ -1048,100 +1098,111 @@ library MarketUtils {
         // should be paid from long positions using short collateral
         // short positions should receive $100 of funding fees in long collateral and $400 of funding fees in short collateral
         if (result.longsPayShorts) {
-            cache.fundingUsdForLongCollateral = Precision.mulDiv(cache.fundingUsd, cache.oi.longOpenInterestWithLongCollateral, cache.oi.longOpenInterest);
-            cache.fundingUsdForShortCollateral = Precision.mulDiv(cache.fundingUsd, cache.oi.longOpenInterestWithShortCollateral, cache.oi.longOpenInterest);
+            cache.fundingUsdForLongCollateral = Precision.mulDiv(cache.fundingUsd, cache.openInterest.long.longToken, cache.longOpenInterest);
+            cache.fundingUsdForShortCollateral = Precision.mulDiv(cache.fundingUsd, cache.openInterest.long.shortToken, cache.longOpenInterest);
         } else {
-            cache.fundingUsdForLongCollateral = Precision.mulDiv(cache.fundingUsd, cache.oi.shortOpenInterestWithLongCollateral, cache.oi.shortOpenInterest);
-            cache.fundingUsdForShortCollateral = Precision.mulDiv(cache.fundingUsd, cache.oi.shortOpenInterestWithShortCollateral, cache.oi.shortOpenInterest);
+            cache.fundingUsdForLongCollateral = Precision.mulDiv(cache.fundingUsd, cache.openInterest.short.longToken, cache.shortOpenInterest);
+            cache.fundingUsdForShortCollateral = Precision.mulDiv(cache.fundingUsd, cache.openInterest.short.shortToken, cache.shortOpenInterest);
         }
 
-        cache.fundingAmountForLongCollateral = cache.fundingUsdForLongCollateral / prices.longTokenPrice.max;
-        cache.fundingAmountForShortCollateral = cache.fundingUsdForShortCollateral / prices.shortTokenPrice.max;
-
         // calculate the change in funding amount per size values
-        // for example, if the fundingUsdForLongCollateral is $100, the longToken price is $2000, the longOpenInterest is $10,000
-        // then the fundingAmountPerSize_LongCollateral_LongPosition would be 0.05 tokens per $10,000 or 0.000005 tokens per $1
-        // if longs pay shorts then the fundingAmountPerSize_LongCollateral_LongPosition should be increased by 0.000005
+        // for example, if the fundingUsdForLongCollateral is $100, the longToken price is $2000, the longOpenInterest is $10,000, shortOpenInterest is $5000
+        // if longs pay shorts then the fundingFeeAmountPerSize.long.longToken should be increased by 0.05 tokens per $10,000 or 0.000005 tokens per $1
+        // the claimableFundingAmountPerSize.short.longToken should be increased by 0.05 tokens per $5000 or 0.00001 tokens per $1
         if (result.longsPayShorts) {
-            // long positions should have funding fees increased by the funding for their collateral divided by the open interest for their collateral
-            cache.fps.fundingAmountPerSizeDelta_LongCollateral_LongPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForLongCollateral, cache.oi.longOpenInterestWithLongCollateral, true);
-            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_LongPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForShortCollateral, cache.oi.longOpenInterestWithShortCollateral, true);
-
-            // short positions should receive positive funding fees equivalent to the funding in the collateral paid by the long positions divided by the total short open interest
-            cache.fps.fundingAmountPerSizeDelta_LongCollateral_ShortPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForLongCollateral, cache.oi.shortOpenInterest, false);
-            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_ShortPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForShortCollateral, cache.oi.shortOpenInterest, false);
-
-            // longs pay shorts
-            result.fundingAmountPerSize_LongCollateral_LongPosition = Calc.boundedAdd(
-                result.fundingAmountPerSize_LongCollateral_LongPosition,
-                cache.fps.fundingAmountPerSizeDelta_LongCollateral_LongPosition.toInt256()
+            // use the same longTokenPrice.max and shortTokenPrice.max to calculate the amount to be paid and received
+            // positions only pay funding in the position's collateral token
+            // so the fundingUsdForLongCollateral is divided by the total long open interest for long positions using the longToken as collateral
+            // and the fundingUsdForShortCollateral is divided by the total long open interest for long positions using the shortToken as collateral
+            result.fundingFeeAmountPerSizeDelta.long.longToken = getFundingAmountPerSizeDelta(
+                cache.fundingUsdForLongCollateral,
+                cache.openInterest.long.longToken,
+                prices.longTokenPrice.max,
+                true // roundUpMagnitude
             );
 
-            result.fundingAmountPerSize_ShortCollateral_LongPosition = Calc.boundedAdd(
-                result.fundingAmountPerSize_ShortCollateral_LongPosition,
-                cache.fps.fundingAmountPerSizeDelta_ShortCollateral_LongPosition.toInt256()
+            result.fundingFeeAmountPerSizeDelta.long.shortToken = getFundingAmountPerSizeDelta(
+                cache.fundingUsdForShortCollateral,
+                cache.openInterest.long.shortToken,
+                prices.shortTokenPrice.max,
+                true // roundUpMagnitude
             );
 
-            result.fundingAmountPerSize_LongCollateral_ShortPosition = Calc.boundedSub(
-                result.fundingAmountPerSize_LongCollateral_ShortPosition,
-                cache.fps.fundingAmountPerSizeDelta_LongCollateral_ShortPosition.toInt256()
+            // positions receive funding in both the longToken and shortToken
+            // so the fundingUsdForLongCollateral and fundingUsdForShortCollateral is divided by the total short open interest
+            result.claimableFundingAmountPerSizeDelta.short.longToken = getFundingAmountPerSizeDelta(
+                cache.fundingUsdForLongCollateral,
+                cache.shortOpenInterest,
+                prices.longTokenPrice.max,
+                false // roundUpMagnitude
             );
 
-            result.fundingAmountPerSize_ShortCollateral_ShortPosition = Calc.boundedSub(
-                result.fundingAmountPerSize_ShortCollateral_ShortPosition,
-                cache.fps.fundingAmountPerSizeDelta_ShortCollateral_ShortPosition.toInt256()
+            result.claimableFundingAmountPerSizeDelta.short.shortToken = getFundingAmountPerSizeDelta(
+                cache.fundingUsdForShortCollateral,
+                cache.shortOpenInterest,
+                prices.shortTokenPrice.max,
+                false // roundUpMagnitude
             );
         } else {
-            // short positions should have funding fees increased by the funding for their collateral divided by the open interest for their collateral
-            cache.fps.fundingAmountPerSizeDelta_LongCollateral_ShortPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForLongCollateral, cache.oi.shortOpenInterestWithLongCollateral, true);
-            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_ShortPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForShortCollateral, cache.oi.shortOpenInterestWithShortCollateral, true);
-
-            // long positions should receive positive funding fees equivalent to the funding in the collateral paid by the short positions divided by the total long open interest
-            cache.fps.fundingAmountPerSizeDelta_LongCollateral_LongPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForLongCollateral, cache.oi.longOpenInterest, false);
-            cache.fps.fundingAmountPerSizeDelta_ShortCollateral_LongPosition = getFundingAmountPerSizeDelta(cache.fundingAmountForShortCollateral, cache.oi.longOpenInterest, false);
-
-            result.fundingAmountPerSize_LongCollateral_ShortPosition = Calc.boundedAdd(
-                result.fundingAmountPerSize_LongCollateral_ShortPosition,
-                cache.fps.fundingAmountPerSizeDelta_LongCollateral_ShortPosition.toInt256()
+            // use the same longTokenPrice.max and shortTokenPrice.max to calculate the amount to be paid and received
+            // positions only pay funding in the position's collateral token
+            // so the fundingUsdForLongCollateral is divided by the total short open interest for short positions using the longToken as collateral
+            // and the fundingUsdForShortCollateral is divided by the total short open interest for short positions using the shortToken as collateral
+            result.fundingFeeAmountPerSizeDelta.short.longToken = getFundingAmountPerSizeDelta(
+                cache.fundingUsdForLongCollateral,
+                cache.openInterest.short.longToken,
+                prices.longTokenPrice.max,
+                true // roundUpMagnitude
             );
 
-            result.fundingAmountPerSize_ShortCollateral_ShortPosition = Calc.boundedAdd(
-                result.fundingAmountPerSize_ShortCollateral_ShortPosition,
-                cache.fps.fundingAmountPerSizeDelta_ShortCollateral_ShortPosition.toInt256()
+            result.fundingFeeAmountPerSizeDelta.short.shortToken = getFundingAmountPerSizeDelta(
+                cache.fundingUsdForShortCollateral,
+                cache.openInterest.short.shortToken,
+                prices.shortTokenPrice.max,
+                true // roundUpMagnitude
             );
 
-            result.fundingAmountPerSize_LongCollateral_LongPosition = Calc.boundedSub(
-                result.fundingAmountPerSize_LongCollateral_LongPosition,
-                cache.fps.fundingAmountPerSizeDelta_LongCollateral_LongPosition.toInt256()
+            // positions receive funding in both the longToken and shortToken
+            // so the fundingUsdForLongCollateral and fundingUsdForShortCollateral is divided by the total long open interest
+            result.claimableFundingAmountPerSizeDelta.long.longToken = getFundingAmountPerSizeDelta(
+                cache.fundingUsdForLongCollateral,
+                cache.longOpenInterest,
+                prices.longTokenPrice.max,
+                false // roundUpMagnitude
             );
 
-            result.fundingAmountPerSize_ShortCollateral_LongPosition = Calc.boundedSub(
-                result.fundingAmountPerSize_ShortCollateral_LongPosition,
-                cache.fps.fundingAmountPerSizeDelta_ShortCollateral_LongPosition.toInt256()
+            result.claimableFundingAmountPerSizeDelta.long.shortToken = getFundingAmountPerSizeDelta(
+                cache.fundingUsdForShortCollateral,
+                cache.longOpenInterest,
+                prices.shortTokenPrice.max,
+                false // roundUpMagnitude
             );
         }
 
         return result;
     }
 
+    // store funding values as token amount per (Precision.FLOAT_PRECISION_SQRT / Precision.FLOAT_PRECISION) of USD size
     function getFundingAmountPerSizeDelta(
-        uint256 fundingAmount,
+        uint256 fundingUsd,
         uint256 openInterest,
+        uint256 tokenPrice,
         bool roundUpMagnitude
     ) internal pure returns (uint256) {
-        if (fundingAmount == 0 || openInterest == 0) { return 0; }
+        if (fundingUsd == 0 || openInterest == 0) { return 0; }
 
-        uint256 divisor;
+        uint256 fundingUsdPerSize = Precision.mulDiv(
+            fundingUsd,
+            Precision.FLOAT_PRECISION * Precision.FLOAT_PRECISION_SQRT,
+            openInterest,
+            roundUpMagnitude
+        );
 
-        // if the magnitude should be rounded up, then round the divisor down
-        // if the magnitude should not be rounded up, then round the divisor up
         if (roundUpMagnitude) {
-            divisor = openInterest / Precision.FLOAT_PRECISION_SQRT;
+            return Calc.roundUpDivision(fundingUsdPerSize, tokenPrice);
         } else {
-            divisor = Calc.roundUpDivision(openInterest, Precision.FLOAT_PRECISION_SQRT);
+            return fundingUsdPerSize / tokenPrice;
         }
-
-        return Precision.toFactor(fundingAmount, divisor, roundUpMagnitude);
     }
 
     // @dev update the cumulative borrowing factor for a market
@@ -1357,34 +1418,39 @@ library MarketUtils {
         return impactAmount;
     }
 
-    // @dev get the funding fee amount to be deducted or distributed
+    // @dev get the funding amount to be deducted or distributed
     //
     // @param latestFundingAmountPerSize the latest funding amount per size
     // @param positionFundingAmountPerSize the funding amount per size for the position
     // @param positionSizeInUsd the position size in USD
+    // @param roundUpMagnitude whether the round up the result
     //
-    // @return fundingFeeAmount
-    function getFundingFeeAmount(
-        int256 latestFundingAmountPerSize,
-        int256 positionFundingAmountPerSize,
-        uint256 positionSizeInUsd
-    ) internal pure returns (int256) {
-        int256 fundingDiffFactor = (latestFundingAmountPerSize - positionFundingAmountPerSize);
+    // @return fundingAmount
+    function getFundingAmount(
+        uint256 latestFundingAmountPerSize,
+        uint256 positionFundingAmountPerSize,
+        uint256 positionSizeInUsd,
+        bool roundUpMagnitude
+    ) internal pure returns (uint256) {
+        uint256 fundingDiffFactor = (latestFundingAmountPerSize - positionFundingAmountPerSize);
 
         // a user could avoid paying funding fees by continually updating the position
         // before the funding fee becomes large enough to be chargeable
-        // to avoid this, the funding fee amount is rounded up if it is positive
+        // to avoid this, funding fee amounts should be rounded up
         //
         // this could lead to large additional charges if the token has a low number of decimals
         // or if the token's value is very high, so care should be taken to inform users of this
         //
-        // if the fundingDiffFactor is negative, it means this amount should be claimable
-        // by the user round the funding fee amount down for this case
-        bool roundUpMagnitude = fundingDiffFactor > 0;
+        // if the calculation is for the claimable amount, the amount should be rounded down instead
 
-        // divide the result by Precision.FLOAT_PRECISION_SQRT as the fundingAmountPerSize values
+        // divide the result by Precision.FLOAT_PRECISION * Precision.FLOAT_PRECISION_SQRT as the fundingAmountPerSize values
         // are stored based on FLOAT_PRECISION_SQRT values
-        return Precision.applyFactor(positionSizeInUsd, fundingDiffFactor, roundUpMagnitude) / Precision.FLOAT_PRECISION_SQRT.toInt256();
+        return Precision.mulDiv(
+            positionSizeInUsd,
+            fundingDiffFactor,
+            Precision.FLOAT_PRECISION * Precision.FLOAT_PRECISION_SQRT,
+            roundUpMagnitude
+        );
     }
 
     // @dev get the borrowing fees for a position, assumes that cumulativeBorrowingFactor
@@ -1771,39 +1837,86 @@ library MarketUtils {
         return dataStore.getUint(Keys.fundingExponentFactorKey(market));
     }
 
-    // @dev get the funding amount per size for a market based on collateralToken
+    // @dev get the funding fee amount per size for a market
     // @param dataStore DataStore
     // @param market the market to check
     // @param collateralToken the collateralToken to check
     // @param isLong whether to check the long or short size
-    // @return the funding amount per size for a market based on collateralToken
-    function getFundingAmountPerSize(DataStore dataStore, address market, address collateralToken, bool isLong) internal view returns (int256) {
-        return dataStore.getInt(Keys.fundingAmountPerSizeKey(market, collateralToken, isLong));
+    // @return the funding fee amount per size for a market based on collateralToken
+    function getFundingFeeAmountPerSize(DataStore dataStore, address market, address collateralToken, bool isLong) internal view returns (uint256) {
+        return dataStore.getUint(Keys.fundingFeeAmountPerSizeKey(market, collateralToken, isLong));
     }
 
-    // @dev set the funding amount per size for a market based on collateralToken
+    // @dev get the claimable funding amount per size for a market
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param collateralToken the collateralToken to check
+    // @param isLong whether to check the long or short size
+    // @return the claimable funding amount per size for a market based on collateralToken
+    function getClaimableFundingAmountPerSize(DataStore dataStore, address market, address collateralToken, bool isLong) internal view returns (uint256) {
+        return dataStore.getUint(Keys.claimableFundingAmountPerSizeKey(market, collateralToken, isLong));
+    }
+
+    // @dev apply delta to the funding fee amount per size for a market
     // @param dataStore DataStore
     // @param market the market to set
     // @param collateralToken the collateralToken to set
     // @param isLong whether to set it for the long or short side
-    // @param value the value to set the funding amount per size to
-    function setFundingAmountPerSize(
+    // @param delta the delta to increment by
+    function applyDeltaToFundingFeeAmountPerSize(
         DataStore dataStore,
         EventEmitter eventEmitter,
         address market,
         address collateralToken,
         bool isLong,
-        int256 value
-    ) internal returns (int256) {
-        MarketEventUtils.emitFundingAmountPerSizeUpdated(
+        uint256 delta
+    ) internal {
+        if (delta == 0) { return; }
+
+        uint256 nextValue = dataStore.applyDeltaToUint(
+            Keys.fundingFeeAmountPerSizeKey(market, collateralToken, isLong),
+            delta
+        );
+
+        MarketEventUtils.emitFundingFeeAmountPerSizeUpdated(
             eventEmitter,
             market,
             collateralToken,
             isLong,
-            value
+            delta,
+            nextValue
+        );
+    }
+
+    // @dev apply delta to the claimable funding amount per size for a market
+    // @param dataStore DataStore
+    // @param market the market to set
+    // @param collateralToken the collateralToken to set
+    // @param isLong whether to set it for the long or short side
+    // @param delta the delta to increment by
+    function applyDeltaToClaimableFundingAmountPerSize(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address collateralToken,
+        bool isLong,
+        uint256 delta
+    ) internal {
+        if (delta == 0) { return; }
+
+        uint256 nextValue = dataStore.applyDeltaToUint(
+            Keys.claimableFundingAmountPerSizeKey(market, collateralToken, isLong),
+            delta
         );
 
-        return dataStore.setInt(Keys.fundingAmountPerSizeKey(market, collateralToken, isLong), value);
+        MarketEventUtils.emitClaimableFundingAmountPerSizeUpdated(
+            eventEmitter,
+            market,
+            collateralToken,
+            isLong,
+            delta,
+            nextValue
+        );
     }
 
     // @dev get the number of seconds since funding was updated for a market
