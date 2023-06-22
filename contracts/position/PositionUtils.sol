@@ -475,7 +475,7 @@ library PositionUtils {
         MarketUtils.MarketPrices memory prices
     ) internal {
         // update the funding amount per size for the market
-        MarketUtils.updateFundingAmountPerSize(
+        MarketUtils.updateFundingState(
             params.contracts.dataStore,
             params.contracts.eventEmitter,
             params.market,

@@ -247,8 +247,10 @@ library Keys {
     bytes32 public constant STABLE_FUNDING_FACTOR = keccak256(abi.encode("STABLE_FUNDING_FACTOR"));
     // @dev key for funding exponent factor
     bytes32 public constant FUNDING_EXPONENT_FACTOR = keccak256(abi.encode("FUNDING_EXPONENT_FACTOR"));
-    // @dev key for funding amount per size
-    bytes32 public constant FUNDING_AMOUNT_PER_SIZE = keccak256(abi.encode("FUNDING_AMOUNT_PER_SIZE"));
+    // @dev key for funding fee amount per size
+    bytes32 public constant FUNDING_FEE_AMOUNT_PER_SIZE = keccak256(abi.encode("FUNDING_FEE_AMOUNT_PER_SIZE"));
+    // @dev key for claimable funding amount per size
+    bytes32 public constant CLAIMABLE_FUNDING_AMOUNT_PER_SIZE = keccak256(abi.encode("CLAIMABLE_FUNDING_AMOUNT_PER_SIZE"));
     // @dev key for when funding was last updated at
     bytes32 public constant FUNDING_UPDATED_AT = keccak256(abi.encode("FUNDING_UPDATED_AT"));
     // @dev key for claimable funding amount
@@ -898,14 +900,28 @@ library Keys {
         ));
     }
 
-    // @dev key for funding amount per size
+    // @dev key for funding fee amount per size
     // @param market the market to check
     // @param collateralToken the collateralToken to get the key for
     // @param isLong whether to get the key for the long or short side
-    // @return key for funding amount per size
-    function fundingAmountPerSizeKey(address market, address collateralToken, bool isLong) internal pure returns (bytes32) {
+    // @return key for funding fee amount per size
+    function fundingFeeAmountPerSizeKey(address market, address collateralToken, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            FUNDING_AMOUNT_PER_SIZE,
+            FUNDING_FEE_AMOUNT_PER_SIZE,
+            market,
+            collateralToken,
+            isLong
+        ));
+    }
+
+    // @dev key for claimabel funding amount per size
+    // @param market the market to check
+    // @param collateralToken the collateralToken to get the key for
+    // @param isLong whether to get the key for the long or short side
+    // @return key for claimable funding amount per size
+    function claimableFundingAmountPerSizeKey(address market, address collateralToken, bool isLong) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CLAIMABLE_FUNDING_AMOUNT_PER_SIZE,
             market,
             collateralToken,
             isLong

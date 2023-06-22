@@ -443,8 +443,9 @@ describe("Exchange.MarketIncreaseOrder", () => {
     expect(position0.position.numbers.sizeInTokens).eq(expandDecimals(40, 18));
     expect(position0.position.numbers.collateralAmount).eq(expandDecimals(50000, 6));
     expect(position0.position.numbers.borrowingFactor).eq(0);
-    expect(position0.position.numbers.longTokenFundingAmountPerSize).eq(0);
-    expect(position0.position.numbers.shortTokenFundingAmountPerSize).eq(0);
+    expect(position0.position.numbers.fundingFeeAmountPerSize).eq(0);
+    expect(position0.position.numbers.longTokenClaimableFundingAmountPerSize).eq(0);
+    expect(position0.position.numbers.shortTokenClaimableFundingAmountPerSize).eq(0);
     expect(position0.position.numbers.increasedAtBlock).eq(block.number);
     expect(position0.position.numbers.decreasedAtBlock).eq(0);
     expect(position0.position.flags.isLong).eq(true);
