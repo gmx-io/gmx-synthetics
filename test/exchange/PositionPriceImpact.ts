@@ -86,7 +86,7 @@ describe("Exchange.PositionPriceImpact", () => {
     await handleOrder(fixture, {
       create: { ...params, account: user1, acceptablePrice: expandDecimals(5020, 12) },
       execute: {
-        expectedCancellationReason: "OrderNotFulfillableDueToPriceImpact",
+        expectedCancellationReason: "OrderNotFulfillableAtAcceptablePrice",
       },
     });
 
@@ -133,7 +133,7 @@ describe("Exchange.PositionPriceImpact", () => {
       create: { ...params, isLong: false, sizeDeltaUsd: decimalToFloat(500 * 1000) },
       execute: {
         gasUsageLabel: "executeOrder",
-        expectedCancellationReason: "OrderNotFulfillableDueToPriceImpact",
+        expectedCancellationReason: "OrderNotFulfillableAtAcceptablePrice",
       },
     });
 
