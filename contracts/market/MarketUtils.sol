@@ -207,6 +207,8 @@ library MarketUtils {
         bool maximize
     ) internal view returns (uint256) {
         address token = isLong ? market.longToken : market.shortToken;
+        // note that if it is a single token market, the poolAmount returned will be
+        // the amount of tokens in the pool divided by 2
         uint256 poolAmount = getPoolAmount(dataStore, market, token);
         uint256 tokenPrice;
 

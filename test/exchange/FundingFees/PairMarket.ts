@@ -13,12 +13,12 @@ import * as keys from "../../../utils/keys";
 describe("Exchange.FundingFees.PairMarket", () => {
   const { provider } = ethers;
   let fixture;
-  let user0, user1, user2, user3, user4;
+  let user0, user1, user2;
   let dataStore, ethUsdMarket, ethUsdSingleTokenMarket, exchangeRouter, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ user0, user1, user2, user3, user4 } = fixture.accounts);
+    ({ user0, user1, user2 } = fixture.accounts);
     ({ dataStore, ethUsdMarket, ethUsdSingleTokenMarket, exchangeRouter, wnt, usdc } = fixture.contracts);
 
     await handleDeposit(fixture, {
