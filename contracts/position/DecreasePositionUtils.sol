@@ -252,14 +252,11 @@ library DecreasePositionUtils {
 
             PositionStoreUtils.remove(params.contracts.dataStore, params.positionKey, params.order.account());
         } else {
-            params.position = PositionUtils.setPositionFundingAmountPerSizeValues(
-                params.position,
-                params.market,
-                fees.funding.latestLongTokenFundingAmountPerSize,
-                fees.funding.latestShortTokenFundingAmountPerSize
-            );
-
             params.position.setBorrowingFactor(cache.nextPositionBorrowingFactor);
+
+            params.position.setFundingFeeAmountPerSize(fees.funding.fundingFeeAmountPerSize);
+            params.position.setLongTokenClaimableFundingAmountPerSize(fees.funding.longTokenClaimableFundingAmountPerSize);
+            params.position.setShortTokenClaimableFundingAmountPerSize(fees.funding.shortTokenClaimableFundingAmountPerSize);
 
             PositionStoreUtils.set(params.contracts.dataStore, params.positionKey, params.position);
         }

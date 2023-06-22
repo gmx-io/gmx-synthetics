@@ -142,19 +142,14 @@ library IncreasePositionUtils {
             cache.nextPositionBorrowingFactor
         );
 
+        PositionUtils.incrementClaimableFundingAmount(params, fees);
+
         params.position.setSizeInUsd(cache.nextPositionSizeInUsd);
         params.position.setSizeInTokens(params.position.sizeInTokens() + cache.sizeDeltaInTokens);
 
-        params.position = PositionUtils.setPositionFundingAmountPerSizeValues(
-            params.position,
-            params.market,
-            fees.funding.latestLongTokenFundingAmountPerSize,
-            fees.funding.latestShortTokenFundingAmountPerSize
-        );
-        /* params.position.setLongTokenFundingAmountPerSize(fees.funding.latestLongTokenFundingAmountPerSize);
-        params.position.setShortTokenFundingAmountPerSize(fees.funding.latestShortTokenFundingAmountPerSize); */
-
-        PositionUtils.incrementClaimableFundingAmount(params, fees);
+        params.position.setFundingFeeAmountPerSize(fees.funding.fundingFeeAmountPerSize);
+        params.position.setLongTokenClaimableFundingAmountPerSize(fees.funding.longTokenClaimableFundingAmountPerSize);
+        params.position.setShortTokenClaimableFundingAmountPerSize(fees.funding.shortTokenClaimableFundingAmountPerSize);
 
         params.position.setBorrowingFactor(cache.nextPositionBorrowingFactor);
         params.position.setIncreasedAtBlock(Chain.currentBlockNumber());

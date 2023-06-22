@@ -89,6 +89,17 @@ contract DataStore is RoleModule {
         return nextUint;
     }
 
+    // @dev add the input uint value to the existing uint value
+    // @param key the key of the value
+    // @param value the input int value
+    // @return the new uint value
+    function applyDeltaToUint(bytes32 key, uint256 value) external onlyController returns (uint256) {
+        uint256 currValue = uintValues[key];
+        uint256 nextUint = currValue + value;
+        uintValues[key] = nextUint;
+        return nextUint;
+    }
+
     // @dev add the input int value to the existing uint value, prevent the uint
     // value from becoming negative
     // @param key the key of the value

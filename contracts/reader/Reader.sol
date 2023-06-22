@@ -36,7 +36,10 @@ contract Reader {
         Market.Props market;
         uint256 borrowingFactorPerSecondForLongs;
         uint256 borrowingFactorPerSecondForShorts;
-        MarketUtils.GetNextFundingAmountPerSizeResult funding;
+
+        ReaderUtils.BaseFundingValues baseFunding;
+        MarketUtils.GetNextFundingAmountPerSizeResult nextFunding;
+
         VirtualInventory virtualInventory;
         bool isDisabled;
     }
@@ -215,7 +218,12 @@ contract Reader {
             false
         );
 
-        MarketUtils.GetNextFundingAmountPerSizeResult memory funding = ReaderUtils.getNextFundingAmountPerSize(
+        ReaderUtils.BaseFundingValues memory baseFunding = ReaderUtils.getBaseFundingValues(
+            dataStore,
+            market
+        );
+
+        MarketUtils.GetNextFundingAmountPerSizeResult memory nextFunding = ReaderUtils.getNextFundingAmountPerSize(
             dataStore,
             market,
             prices
@@ -229,7 +237,7 @@ contract Reader {
             market,
             borrowingFactorPerSecondForLongs,
             borrowingFactorPerSecondForShorts,
-            funding,
+            nextFunding,
             virtualInventory,
             isMarketDisabled
         );

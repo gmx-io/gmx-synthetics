@@ -303,12 +303,13 @@ library MarketEventUtils {
         );
     }
 
-    function emitFundingAmountPerSizeUpdated(
+    function emitFundingFeeAmountPerSizeUpdated(
         EventEmitter eventEmitter,
         address market,
         address collateralToken,
         bool isLong,
-        int256 value
+        uint256 delta,
+        uint256 value
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -319,11 +320,40 @@ library MarketEventUtils {
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "isLong", isLong);
 
-        eventData.intItems.initItems(1);
-        eventData.intItems.setItem(0, "value", value);
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "delta", delta);
+        eventData.uintItems.setItem(1, "value", value);
 
         eventEmitter.emitEventLog1(
-            "FundingAmountPerSizeUpdated",
+            "FundingFeeAmountPerSizeUpdated",
+            Cast.toBytes32(market),
+            eventData
+        );
+    }
+
+    function emitClaimableAmountPerSizeUpdated(
+        EventEmitter eventEmitter,
+        address market,
+        address collateralToken,
+        bool isLong,
+        uint256 delta,
+        uint256 value
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "collateralToken", collateralToken);
+
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "isLong", isLong);
+
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "delta", delta);
+        eventData.uintItems.setItem(1, "value", value);
+
+        eventEmitter.emitEventLog1(
+            "ClaimableFundingAmountPerSizeUpdated",
             Cast.toBytes32(market),
             eventData
         );
