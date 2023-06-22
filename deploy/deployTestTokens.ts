@@ -18,7 +18,15 @@ const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRunt
     }
 
     if (network.live) {
-      log("WARN: Deploying token on live network");
+      console.warn("WARN: Deploying token on live network");
+    }
+
+    const existingToken = await deployments.getOrNull(tokenSymbol);
+    if (existingToken) {
+      log(`Reusing ${tokenSymbol} at ${existingToken.address}`);
+      console.warn(`WARN: bytecode diff is not checked`);
+      tokens[tokenSymbol].address = existingToken.address;
+      continue;
     }
 
     const { address, newlyDeployed } = await deploy(tokenSymbol, {
