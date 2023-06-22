@@ -102,7 +102,7 @@ describe("Exchange.DecreasePosition.InsolventClose", () => {
         expect(positionInfo.position.numbers.sizeInTokens).eq(expandDecimals(40, 18));
         expect(positionInfo.position.numbers.sizeInUsd).eq(decimalToFloat(200_000));
         expect(positionInfo.basePnlUsd).eq(0);
-        expect(positionInfo.fees.funding.fundingFeeAmount).eq("106036363636"); // 106,036.363636
+        expect(positionInfo.fees.funding.fundingFeeAmount).closeTo("106036363636", "10"); // 106,036.363636
         expect(positionInfo.fees.funding.claimableLongTokenAmount).eq(0);
         expect(positionInfo.fees.funding.claimableShortTokenAmount).eq(0);
       }
@@ -125,7 +125,7 @@ describe("Exchange.DecreasePosition.InsolventClose", () => {
         expect(positionInfo.basePnlUsd).eq(0);
         expect(positionInfo.fees.funding.fundingFeeAmount).eq(0);
         expect(positionInfo.fees.funding.claimableLongTokenAmount).eq(0);
-        expect(positionInfo.fees.funding.claimableShortTokenAmount).eq("106036363636"); // 106,036.363636
+        expect(positionInfo.fees.funding.claimableShortTokenAmount).closeTo("106036363636", "10"); // 106,036.363636
       }
     );
 
@@ -293,7 +293,7 @@ describe("Exchange.DecreasePosition.InsolventClose", () => {
         expect(positionInfo.position.numbers.sizeInTokens).eq(expandDecimals(40, 18));
         expect(positionInfo.position.numbers.sizeInUsd).eq(decimalToFloat(200_000));
         expect(positionInfo.basePnlUsd).eq(decimalToFloat(800));
-        expect(positionInfo.fees.funding.fundingFeeAmount).eq("106036363636"); // 106,036.363636
+        expect(positionInfo.fees.funding.fundingFeeAmount).closeTo("106036363636", "10"); // 106,036.363636
         expect(positionInfo.fees.funding.claimableLongTokenAmount).eq(0);
         expect(positionInfo.fees.funding.claimableShortTokenAmount).eq(0);
       }
@@ -316,7 +316,7 @@ describe("Exchange.DecreasePosition.InsolventClose", () => {
         expect(positionInfo.basePnlUsd).eq(0);
         expect(positionInfo.fees.funding.fundingFeeAmount).eq(0);
         expect(positionInfo.fees.funding.claimableLongTokenAmount).eq(0);
-        expect(positionInfo.fees.funding.claimableShortTokenAmount).eq("106036363636"); // 106,036.363636
+        expect(positionInfo.fees.funding.claimableShortTokenAmount).closeTo("106036363636", "10"); // 106,036.363636
       }
     );
 

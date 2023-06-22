@@ -6,7 +6,6 @@ import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, handleOrder } from "../../utils/order";
 import { getPositionCount, getAccountPositionCount, getPositionKeys } from "../../utils/position";
-import { expectWithinRange } from "../../utils/validation";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.BorrowingFees", () => {
@@ -72,8 +71,7 @@ describe("Exchange.BorrowingFees", () => {
     });
 
     const block = await provider.getBlock();
-    expectWithinRange(
-      await dataStore.getUint(keys.cumulativeBorrowingFactorUpdatedAtKey(ethUsdMarket.marketToken, true)),
+    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorUpdatedAtKey(ethUsdMarket.marketToken, true))).closeTo(
       block.timestamp,
       100
     );
@@ -119,14 +117,12 @@ describe("Exchange.BorrowingFees", () => {
       true // usePositionSizeAsSizeDeltaUsd
     );
 
-    expectWithinRange(
-      position0.fees.borrowing.borrowingFeeUsd,
+    expect(position0.fees.borrowing.borrowingFeeUsd).closeTo(
       "967684000000000000000000000000000",
       decimalToFloat(10, 3)
     ); // $967.684
 
-    expectWithinRange(
-      position1.fees.borrowing.borrowingFeeUsd,
+    expect(position1.fees.borrowing.borrowingFeeUsd).closeTo(
       "10886400000000000000000000000000000",
       decimalToFloat(10, 3)
     ); // $10,886.4
@@ -151,8 +147,7 @@ describe("Exchange.BorrowingFees", () => {
       },
     });
 
-    expectWithinRange(
-      await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, true)),
+    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, true))).closeTo(
       "4838432000000000000000000000",
       decimalToFloat(10, 8)
     );
@@ -175,14 +170,12 @@ describe("Exchange.BorrowingFees", () => {
       },
     });
 
-    expectWithinRange(
-      await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, true)),
+    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, true))).closeTo(
       "4838432000000000000000000000",
       decimalToFloat(10, 8)
     );
 
-    expectWithinRange(
-      await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, false)),
+    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, false))).closeTo(
       "72576480000000000000000000000",
       decimalToFloat(10, 8)
     );
