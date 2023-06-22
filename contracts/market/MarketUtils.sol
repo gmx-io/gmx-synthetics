@@ -549,7 +549,7 @@ library MarketUtils {
         address token,
         address account,
         address receiver
-    ) internal {
+    ) internal returns (uint256) {
         bytes32 key = Keys.claimableFundingAmountKey(market, token, account);
 
         uint256 claimableAmount = dataStore.getUint(key);
@@ -577,6 +577,8 @@ library MarketUtils {
             claimableAmount,
             nextPoolValue
         );
+
+        return claimableAmount;
     }
 
     // @dev claim collateral
@@ -595,12 +597,16 @@ library MarketUtils {
         uint256 timeKey,
         address account,
         address receiver
-    ) internal {
+    ) internal returns (uint256) {
         uint256 claimableAmount = dataStore.getUint(Keys.claimableCollateralAmountKey(market, token, timeKey, account));
 
-        uint256 claimableFactorForTime = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey));
-        uint256 claimableFactorForAccount = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey, account));
-        uint256 claimableFactor = claimableFactorForTime > claimableFactorForAccount ? claimableFactorForTime : claimableFactorForAccount;
+        uint256 claimableFactor;
+
+        {
+            uint256 claimableFactorForTime = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey));
+            uint256 claimableFactorForAccount = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey, account));
+            claimableFactor = claimableFactorForTime > claimableFactorForAccount ? claimableFactorForTime : claimableFactorForAccount;
+        }
 
         uint256 claimedAmount = dataStore.getUint(Keys.claimedCollateralAmountKey(market, token, timeKey, account));
 
@@ -639,6 +645,8 @@ library MarketUtils {
             amountToBeClaimed,
             nextPoolValue
         );
+
+        return amountToBeClaimed;
     }
 
     // @dev apply a delta to the pool amount
