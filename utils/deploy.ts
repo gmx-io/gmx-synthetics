@@ -1,4 +1,4 @@
-import { DeployFunction } from "hardhat-deploy/dist/types";
+import { DeployFunction, DeployResult, DeploymentsExtension } from "hardhat-deploy/dist/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 export async function deployContract(name, args, contractOptions = {}) {
@@ -27,10 +27,10 @@ export function createDeployFunction({
   getDeployArgs?: (args: { dependencyContracts: any }) => Promise<any[]>;
   libraryNames?: string[];
   afterDeploy?: (args: {
-    deployedContract: any;
+    deployedContract: DeployResult;
     deployer: string;
-    getNamedAccounts: () => Promise<any>;
-    deployments: any;
+    getNamedAccounts: () => Promise<Record<string, string>>;
+    deployments: DeploymentsExtension;
     gmx: any;
     network: any;
   }) => Promise<void>;
@@ -63,7 +63,7 @@ export function createDeployFunction({
       }
     }
 
-    let deployedContract;
+    let deployedContract: DeployResult;
 
     try {
       deployedContract = await deploy(contractName, {
