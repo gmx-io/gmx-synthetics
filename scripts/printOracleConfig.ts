@@ -5,9 +5,6 @@ import * as keys from "../utils/keys";
 async function main() {
   const tokens = await hre.gmx.getTokens();
   const dataStore = await hre.ethers.getContract("DataStore");
-  const oracle = await hre.ethers.getContract("Oracle");
-
-  console.log("Oracle salt", await oracle.SALT());
 
   for (const [tokenSymbol, tokenConfig] of Object.entries(tokens)) {
     let tokenAddress = tokenConfig.address;

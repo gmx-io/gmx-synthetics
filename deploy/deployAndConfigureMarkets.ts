@@ -69,13 +69,15 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     );
   }
 
-  async function setMaxPnlFactor(pnlFactorType: string, marketToken: string, isLong: boolean, maxPnlFactor: number) {
+  async function setMaxPnlFactor(
+    pnlFactorType: string,
+    marketToken: string,
+    isLong: boolean,
+    maxPnlFactor: number,
+    label: string
+  ) {
     const key = keys.maxPnlFactorKey(pnlFactorType, marketToken, isLong);
-    await setUintIfDifferent(
-      key,
-      maxPnlFactor,
-      `max pnl factor ${marketToken.toString()} ${isLong ? "long" : "short"}`
-    );
+    await setUintIfDifferent(key, maxPnlFactor, `${label} ${marketToken.toString()} ${isLong ? "long" : "short"}`);
   }
 
   onchainMarketsByTokens = await getOnchainMarkets(read, dataStore.address);
@@ -134,44 +136,75 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     await setReserveFactor(marketToken, true, marketConfig.reserveFactorLongs);
     await setReserveFactor(marketToken, false, marketConfig.reserveFactorShorts);
 
-    await setMaxPnlFactor(keys.MAX_PNL_FACTOR_FOR_TRADERS, marketToken, true, marketConfig.maxPnlFactorForTradersLongs);
+    await setMaxPnlFactor(
+      keys.MAX_PNL_FACTOR_FOR_TRADERS,
+      marketToken,
+      true,
+      marketConfig.maxPnlFactorForTradersLongs,
+      "max pnl factor for traders"
+    );
     await setMaxPnlFactor(
       keys.MAX_PNL_FACTOR_FOR_TRADERS,
       marketToken,
       false,
-      marketConfig.maxPnlFactorForTradersShorts
+      marketConfig.maxPnlFactorForTradersShorts,
+      "max pnl factor for traders"
     );
 
-    await setMaxPnlFactor(keys.MAX_PNL_FACTOR_FOR_ADL, marketToken, true, marketConfig.maxPnlFactorForAdlLongs);
-    await setMaxPnlFactor(keys.MAX_PNL_FACTOR_FOR_ADL, marketToken, false, marketConfig.maxPnlFactorForAdlShorts);
+    await setMaxPnlFactor(
+      keys.MAX_PNL_FACTOR_FOR_ADL,
+      marketToken,
+      true,
+      marketConfig.maxPnlFactorForAdlLongs,
+      "max pnl factor for adl"
+    );
+    await setMaxPnlFactor(
+      keys.MAX_PNL_FACTOR_FOR_ADL,
+      marketToken,
+      false,
+      marketConfig.maxPnlFactorForAdlShorts,
+      "max pnl factor for adl"
+    );
 
-    await setMaxPnlFactor(keys.MIN_PNL_FACTOR_AFTER_ADL, marketToken, true, marketConfig.minPnlFactorAfterAdlLongs);
-    await setMaxPnlFactor(keys.MIN_PNL_FACTOR_AFTER_ADL, marketToken, false, marketConfig.minPnlFactorAfterAdlShorts);
+    await setUintIfDifferent(
+      keys.minPnlFactorAfterAdl(marketToken, true),
+      marketConfig.minPnlFactorAfterAdlLongs,
+      `min pnl factor after adl ${marketToken.toString()} long`
+    );
+    await setUintIfDifferent(
+      keys.minPnlFactorAfterAdl(marketToken, false),
+      marketConfig.minPnlFactorAfterAdlShorts,
+      `min pnl factor after adl ${marketToken.toString()} short`
+    );
 
     await setMaxPnlFactor(
       keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
       marketToken,
       true,
-      marketConfig.maxPnlFactorForDepositsLongs
+      marketConfig.maxPnlFactorForDepositsLongs,
+      "max pnl factor for deposits"
     );
     await setMaxPnlFactor(
       keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
       marketToken,
       false,
-      marketConfig.maxPnlFactorForDepositsShorts
+      marketConfig.maxPnlFactorForDepositsShorts,
+      "max pnl factor for deposits"
     );
 
     await setMaxPnlFactor(
       keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
       marketToken,
       true,
-      marketConfig.maxPnlFactorForWithdrawalsLongs
+      marketConfig.maxPnlFactorForWithdrawalsLongs,
+      "max pnl factor for withdrawals"
     );
     await setMaxPnlFactor(
       keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
       marketToken,
       false,
-      marketConfig.maxPnlFactorForWithdrawalsShorts
+      marketConfig.maxPnlFactorForWithdrawalsShorts,
+      "max pnl factor for withdrawals"
     );
 
     await setUintIfDifferent(

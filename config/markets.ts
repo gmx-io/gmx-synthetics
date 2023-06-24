@@ -210,6 +210,12 @@ const config: {
       positiveSwapImpactFactor: decimalToFloat(5, 6), // 0.0005 %
       negativeSwapImpactFactor: decimalToFloat(1, 5), // 0.001 %
       swapImpactExponentFactor: decimalToFloat(2, 0), // 2
+
+      maxPnlFactorForAdlLongs: decimalToFloat(2, 2), // 2%
+      maxPnlFactorForAdlShorts: decimalToFloat(2, 2), // 2%
+
+      minPnlFactorAfterAdlLongs: decimalToFloat(1, 2), // 1%
+      minPnlFactorAfterAdlShorts: decimalToFloat(1, 2), // 1%
     },
   ],
   avalanche: [],
@@ -260,6 +266,12 @@ const config: {
       positiveSwapImpactFactor: decimalToFloat(5, 6), // 0.0005 %
       negativeSwapImpactFactor: decimalToFloat(1, 5), // 0.001 %
       swapImpactExponentFactor: decimalToFloat(2, 0), // 2
+
+      maxPnlFactorForAdlLongs: decimalToFloat(2, 2), // 2%
+      maxPnlFactorForAdlShorts: decimalToFloat(2, 2), // 2%
+
+      minPnlFactorAfterAdlLongs: decimalToFloat(1, 2), // 1%
+      minPnlFactorAfterAdlShorts: decimalToFloat(1, 2), // 1%
     },
   ],
   hardhat: [

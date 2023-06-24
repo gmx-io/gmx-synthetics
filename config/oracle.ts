@@ -91,21 +91,21 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
           priceFeed: {
             address: "0x1692Bdd32F31b831caAc1b0c9fAF68613682813b",
             decimals: 8,
-            heartbeatDuration: 24 * 60 * 60,
+            heartbeatDuration: 3 * 24 * 60 * 60,
           },
         },
         USDT: {
           priceFeed: {
             address: "0x0a023a3423D9b27A0BE48c768CCF2dD7877fEf5E",
             decimals: 8,
-            heartbeatDuration: 24 * 60 * 60,
+            heartbeatDuration: 3 * 24 * 60 * 60,
           },
         },
         DAI: {
           priceFeed: {
             address: "0x103b53E977DA6E4Fa92f76369c8b7e20E7fb7fe1",
             decimals: 8,
-            heartbeatDuration: 24 * 60 * 60,
+            heartbeatDuration: 3 * 24 * 60 * 60,
           },
         },
       },
@@ -126,7 +126,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             // this is USDT price feed, there is no USDC feed on Avalanche Fuji
             address: "0x7898AcCC83587C3C55116c5230C17a6Cd9C71bad",
             decimals: 8,
-            heartbeatDuration: 24 * 60 * 60,
+            heartbeatDuration: 3 * 24 * 60 * 60,
           },
         },
         USDT: {
@@ -134,7 +134,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             // this is USDT price feed, there is no USDC feed on Avalanche Fuji
             address: "0x7898AcCC83587C3C55116c5230C17a6Cd9C71bad",
             decimals: 8,
-            heartbeatDuration: 24 * 60 * 60,
+            heartbeatDuration: 3 * 24 * 60 * 60,
           },
         },
         DAI: {
@@ -142,7 +142,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             // this is USDT price feed, there is no USDC feed on Avalanche Fuji
             address: "0x7898AcCC83587C3C55116c5230C17a6Cd9C71bad",
             decimals: 8,
-            heartbeatDuration: 24 * 60 * 60,
+            heartbeatDuration: 3 * 24 * 60 * 60,
           },
         },
       },

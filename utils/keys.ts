@@ -261,6 +261,10 @@ export function maxPnlFactorKey(pnlFactorType: string, market: string, isLong: b
   return hashData(["bytes32", "bytes32", "address", "bool"], [MAX_PNL_FACTOR, pnlFactorType, market, isLong]);
 }
 
+export function minPnlFactorAfterAdl(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [MIN_PNL_FACTOR_AFTER_ADL, market, isLong]);
+}
+
 export function collateralSumKey(market: string, collateralToken: string, isLong: boolean) {
   return hashData(["bytes32", "address", "address", "bool"], [COLLATERAL_SUM, market, collateralToken, isLong]);
 }
