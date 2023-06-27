@@ -110,8 +110,8 @@ describe("Config", () => {
 
     await config
       .connect(user0)
-      .setInt(keys.SWAP_IMPACT_FACTOR, encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]), 500);
+      .setInt(keys.SWAP_IMPACT_FACTOR, encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]), -500);
 
-    expect(await dataStore.getInt(key)).eq(500);
+    expect(await dataStore.getInt(key)).eq(-500);
   });
 });

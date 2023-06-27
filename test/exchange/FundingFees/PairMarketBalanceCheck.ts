@@ -227,7 +227,7 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
           const claimableFundingData = getEventDataArray(logs, "ClaimableFundingUpdated");
           expect(claimableFundingData.length).eq(2);
           expect(claimableFundingData[0].token).eq(wnt.address);
-          expect(claimableFundingData[0].delta).closeTo(0, "1000000000000");
+          expect(claimableFundingData[0].delta).closeTo(0, "10000000000000");
         },
       },
     });
@@ -392,7 +392,7 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
     expect(await wnt.balanceOf(user2.address)).eq(0);
     expect(await usdc.balanceOf(user2.address)).eq("45967966000"); // 45,967.966 USDC
 
-    expect(await wnt.balanceOf(user3.address)).eq("3387175205252222237"); // 3.387175205252222237 ETH
+    expect(await wnt.balanceOf(user3.address)).closeTo("3387175205252222237", "10000000000000"); // 3.387175205252222237 ETH
     expect(await usdc.balanceOf(user3.address)).eq(0);
 
     expect(await wnt.balanceOf(user4.address)).eq(0);

@@ -23,6 +23,13 @@ prices.wnt.increased = {
   max: expandDecimals(5020, 4),
 };
 
+prices.wnt.increased.byFiftyPercent = {
+  contractName: "wnt",
+  precision: 8,
+  min: expandDecimals(7500, 4),
+  max: expandDecimals(7500, 4),
+};
+
 prices.wnt.increased.withSpread = {
   contractName: "wnt",
   precision: 8,
@@ -84,6 +91,23 @@ prices.ethUsdSingleTokenMarket = {
   indexTokenPrice: {
     min: expandDecimals(5000, 12),
     max: expandDecimals(5000, 12),
+  },
+  longTokenPrice: {
+    min: expandDecimals(1, 24),
+    max: expandDecimals(1, 24),
+  },
+  shortTokenPrice: {
+    min: expandDecimals(1, 24),
+    max: expandDecimals(1, 24),
+  },
+};
+
+prices.ethUsdSingleTokenMarket.increased = {};
+
+prices.ethUsdSingleTokenMarket.increased.byFiftyPercent = {
+  indexTokenPrice: {
+    min: expandDecimals(7500, 12),
+    max: expandDecimals(7500, 12),
   },
   longTokenPrice: {
     min: expandDecimals(1, 24),
