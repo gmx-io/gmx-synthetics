@@ -18,6 +18,8 @@ import "../order/OrderStoreUtils.sol";
 import "../market/MarketUtils.sol";
 import "../market/Market.sol";
 
+import "../adl/AdlUtils.sol";
+
 import "./ReaderUtils.sol";
 
 // @title Reader
@@ -36,10 +38,8 @@ contract Reader {
         Market.Props market;
         uint256 borrowingFactorPerSecondForLongs;
         uint256 borrowingFactorPerSecondForShorts;
-
         ReaderUtils.BaseFundingValues baseFunding;
         MarketUtils.GetNextFundingAmountPerSizeResult nextFunding;
-
         VirtualInventory virtualInventory;
         bool isDisabled;
     }
@@ -78,14 +78,7 @@ contract Reader {
     ) external view returns (int256, uint256) {
         Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
 
-        return PositionUtils.getPositionPnlUsd(
-            dataStore,
-            market,
-            prices,
-            position,
-            executionPrice,
-            sizeDeltaUsd
-        );
+        return PositionUtils.getPositionPnlUsd(dataStore, market, prices, position, executionPrice, sizeDeltaUsd);
     }
 
     function getAccountPositions(
@@ -137,15 +130,16 @@ contract Reader {
         address uiFeeReceiver,
         bool usePositionSizeAsSizeDeltaUsd
     ) public view returns (ReaderUtils.PositionInfo memory) {
-        return ReaderUtils.getPositionInfo(
-            dataStore,
-            referralStorage,
-            positionKey,
-            prices,
-            sizeDeltaUsd,
-            uiFeeReceiver,
-            usePositionSizeAsSizeDeltaUsd
-        );
+        return
+            ReaderUtils.getPositionInfo(
+                dataStore,
+                referralStorage,
+                positionKey,
+                prices,
+                sizeDeltaUsd,
+                uiFeeReceiver,
+                usePositionSizeAsSizeDeltaUsd
+            );
     }
 
     function getAccountOrders(
@@ -164,11 +158,7 @@ contract Reader {
         return orders;
     }
 
-    function getMarkets(
-        DataStore dataStore,
-        uint256 start,
-        uint256 end
-    ) external view returns (Market.Props[] memory) {
+    function getMarkets(DataStore dataStore, uint256 start, uint256 end) external view returns (Market.Props[] memory) {
         address[] memory marketKeys = MarketStoreUtils.getMarketKeys(dataStore, start, end);
         Market.Props[] memory markets = new Market.Props[](marketKeys.length);
         for (uint256 i; i < marketKeys.length; i++) {
@@ -218,10 +208,7 @@ contract Reader {
             false
         );
 
-        ReaderUtils.BaseFundingValues memory baseFunding = ReaderUtils.getBaseFundingValues(
-            dataStore,
-            market
-        );
+        ReaderUtils.BaseFundingValues memory baseFunding = ReaderUtils.getBaseFundingValues(dataStore, market);
 
         MarketUtils.GetNextFundingAmountPerSizeResult memory nextFunding = ReaderUtils.getNextFundingAmountPerSize(
             dataStore,
@@ -233,15 +220,16 @@ contract Reader {
 
         bool isMarketDisabled = dataStore.getBool(Keys.isMarketDisabledKey(market.marketToken));
 
-        return MarketInfo(
-            market,
-            borrowingFactorPerSecondForLongs,
-            borrowingFactorPerSecondForShorts,
-            baseFunding,
-            nextFunding,
-            virtualInventory,
-            isMarketDisabled
-        );
+        return
+            MarketInfo(
+                market,
+                borrowingFactorPerSecondForLongs,
+                borrowingFactorPerSecondForShorts,
+                baseFunding,
+                nextFunding,
+                virtualInventory,
+                isMarketDisabled
+            );
     }
 
     function getMarketTokenPrice(
@@ -291,14 +279,7 @@ contract Reader {
         bool isLong,
         bool maximize
     ) external view returns (int256) {
-        return
-            MarketUtils.getOpenInterestWithPnl(
-                dataStore,
-                market,
-                indexTokenPrice,
-                isLong,
-                maximize
-            );
+        return MarketUtils.getOpenInterestWithPnl(dataStore, market, indexTokenPrice, isLong, maximize);
     }
 
     function getPnlToPoolFactor(
@@ -320,28 +301,26 @@ contract Reader {
         uint256 amountIn,
         address uiFeeReceiver
     ) external view returns (uint256, int256, SwapPricingUtils.SwapFees memory fees) {
-        return ReaderPricingUtils.getSwapAmountOut(
-            dataStore,
-            market,
-            prices,
-            tokenIn,
-            amountIn,
-            uiFeeReceiver
-        );
+        return ReaderPricingUtils.getSwapAmountOut(dataStore, market, prices, tokenIn, amountIn, uiFeeReceiver);
     }
 
     function getVirtualInventory(
         DataStore dataStore,
         Market.Props memory market
     ) internal view returns (VirtualInventory memory) {
-        (, uint256 virtualPoolAmountForLongToken, uint256 virtualPoolAmountForShortToken) = MarketUtils.getVirtualInventoryForSwaps(dataStore, market.marketToken);
-        (, int256 virtualInventoryForPositions) = MarketUtils.getVirtualInventoryForPositions(dataStore, market.indexToken);
-
-        return VirtualInventory(
-            virtualPoolAmountForLongToken,
-            virtualPoolAmountForShortToken,
-            virtualInventoryForPositions
+        (, uint256 virtualPoolAmountForLongToken, uint256 virtualPoolAmountForShortToken) = MarketUtils
+            .getVirtualInventoryForSwaps(dataStore, market.marketToken);
+        (, int256 virtualInventoryForPositions) = MarketUtils.getVirtualInventoryForPositions(
+            dataStore,
+            market.indexToken
         );
+
+        return
+            VirtualInventory(
+                virtualPoolAmountForLongToken,
+                virtualPoolAmountForShortToken,
+                virtualInventoryForPositions
+            );
     }
 
     function getExecutionPrice(
@@ -354,15 +333,16 @@ contract Reader {
         bool isLong
     ) external view returns (ReaderPricingUtils.ExecutionPriceResult memory) {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketKey);
-        return ReaderPricingUtils.getExecutionPrice(
-            dataStore,
-            market,
-            indexTokenPrice,
-            positionSizeInUsd,
-            positionSizeInTokens,
-            sizeDeltaUsd,
-            isLong
-        );
+        return
+            ReaderPricingUtils.getExecutionPrice(
+                dataStore,
+                market,
+                indexTokenPrice,
+                positionSizeInUsd,
+                positionSizeInTokens,
+                sizeDeltaUsd,
+                isLong
+            );
     }
 
     function getSwapPriceImpact(
@@ -375,14 +355,35 @@ contract Reader {
         Price.Props memory tokenOutPrice
     ) external view returns (int256, int256) {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketKey);
-        return ReaderPricingUtils.getSwapPriceImpact(
+        return
+            ReaderPricingUtils.getSwapPriceImpact(
+                dataStore,
+                market,
+                tokenIn,
+                tokenOut,
+                amountIn,
+                tokenInPrice,
+                tokenOutPrice
+            );
+    }
+
+    function getAdlState(
+        DataStore dataStore,
+        address market,
+        bool isLong,
+        MarketUtils.MarketPrices memory prices
+    ) external view returns (uint256, bool, int256, uint256) {
+        uint256 latestAdlBlock = AdlUtils.getLatestAdlBlock(dataStore, market, isLong);
+        Market.Props memory _market = MarketUtils.getEnabledMarket(dataStore, market);
+
+        (bool shouldEnableAdl, int256 pnlToPoolFactor, uint256 maxPnlFactor) = MarketUtils.isPnlFactorExceeded(
             dataStore,
-            market,
-            tokenIn,
-            tokenOut,
-            amountIn,
-            tokenInPrice,
-            tokenOutPrice
+            _market,
+            prices,
+            isLong,
+            Keys.MAX_PNL_FACTOR_FOR_ADL
         );
+
+        return (latestAdlBlock, shouldEnableAdl, pnlToPoolFactor, maxPnlFactor);
     }
 }
