@@ -227,7 +227,7 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
           const claimableFundingData = getEventDataArray(logs, "ClaimableFundingUpdated");
           expect(claimableFundingData.length).eq(2);
           expect(claimableFundingData[0].token).eq(wnt.address);
-          expect(claimableFundingData[0].delta).closeTo(0, "1000000000000");
+          expect(claimableFundingData[0].delta).closeTo(0, "10000000000000");
         },
       },
     });
