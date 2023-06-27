@@ -7,18 +7,12 @@ const ethers = hre.ethers;
 
 function getAvalancheFujiValues() {
   return {
-    readerAddress: "0xD195592155886b46A2A379430425A1958bE6A0Db",
-    dataStoreAddress: "0x79d3d467b5f4Fc63Df52178583643d4b63a5648B",
-    referralStorageAddress: "0x41037500DF49EdCD24Df6E19D4e0c4ae8879cE58",
     oracleApi: "https://gmx-oracle-keeper-ro-avalanche-fuji-glyu6psrea-ew.a.run.app/",
   };
 }
 
 function getArbibtrumGoerliValues() {
   return {
-    readerAddress: "0x6242BB44BBD282B98dE507F2b6c03062CfD3fF6c",
-    dataStoreAddress: "0xF2B6e9BAbCdD8812Dd8f93D9BA8aF5112df5A05C",
-    referralStorageAddress: "0x91C55cE4221bE83e1934D1654193e41028A75EA1",
     oracleApi: "https://gmx-oracle-keeper-arbitrum-goerli-ro-glyu6psrea-ew.a.run.app/prices/",
   };
 }
@@ -33,14 +27,17 @@ function getValues() {
 }
 
 async function main() {
-  const { readerAddress, dataStoreAddress, referralStorageAddress, oracleApi } = getValues();
+  const { oracleApi } = getValues();
 
-  const reader = (await hre.ethers.getContractAt("Reader", readerAddress)) as Reader;
+  const dataStoreDeployment = await hre.deployments.get("DataStore");
+  const referralStorageDeployment = await hre.deployments.get("ReferralStorage");
+
+  const reader = (await hre.ethers.getContract("Reader")) as Reader;
   const positionKey = process.env.POSITION_KEY || ethers.constants.HashZero;
 
-  const position = await reader.getPosition(dataStoreAddress, positionKey);
+  const position = await reader.getPosition(dataStoreDeployment.address, positionKey);
   const marketAddress = position.addresses.market;
-  const market = await reader.getMarket(dataStoreAddress, marketAddress);
+  const market = await reader.getMarket(dataStoreDeployment.address, marketAddress);
 
   const tickers: any[] = await got(`${oracleApi}prices/tickers`).json();
 
@@ -65,8 +62,8 @@ async function main() {
   }, {} as any[]);
 
   const positionInfo = await reader.getPositionInfo(
-    dataStoreAddress,
-    referralStorageAddress,
+    dataStoreDeployment.address,
+    referralStorageDeployment.address,
     positionKey,
     prices as any,
     0,
