@@ -487,13 +487,22 @@ library PositionUtils {
             prices
         );
 
-        // update the cumulative borrowing factor for the market
+        // update the cumulative borrowing factor for longs
         MarketUtils.updateCumulativeBorrowingFactor(
             params.contracts.dataStore,
             params.contracts.eventEmitter,
             params.market,
             prices,
-            params.order.isLong()
+            true // isLong
+        );
+
+        // update the cumulative borrowing factor for shorts
+        MarketUtils.updateCumulativeBorrowingFactor(
+            params.contracts.dataStore,
+            params.contracts.eventEmitter,
+            params.market,
+            prices,
+            false // isLong
         );
     }
 
