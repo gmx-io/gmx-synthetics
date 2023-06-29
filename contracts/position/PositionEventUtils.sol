@@ -119,9 +119,10 @@ library PositionEventUtils {
         eventData.uintItems.setItem(15, "values.priceImpactDiffUsd", values.priceImpactDiffUsd);
         eventData.uintItems.setItem(16, "orderType", uint256(orderType));
 
-        eventData.intItems.initItems(2);
+        eventData.intItems.initItems(3);
         eventData.intItems.setItem(0, "priceImpactUsd", values.priceImpactUsd);
         eventData.intItems.setItem(1, "basePnlUsd", values.basePnlUsd);
+        eventData.intItems.setItem(2, "uncappedBasePnlUsd", values.uncappedBasePnlUsd);
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "isLong", position.isLong());

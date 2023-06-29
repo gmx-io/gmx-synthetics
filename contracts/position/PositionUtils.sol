@@ -81,6 +81,7 @@ library PositionUtils {
         uint256 executionPrice;
         uint256 remainingCollateralAmount;
         int256 basePnlUsd;
+        int256 uncappedBasePnlUsd;
         uint256 sizeDeltaInTokens;
         int256 priceImpactUsd;
         uint256 priceImpactDiffUsd;
@@ -113,6 +114,7 @@ library PositionUtils {
     struct GetPositionPnlUsdCache {
         int256 positionValue;
         int256 totalPositionPnl;
+        int256 uncappedTotalPositionPnl;
         address pnlToken;
         uint256 poolTokenAmount;
         uint256 poolTokenPrice;
@@ -121,6 +123,7 @@ library PositionUtils {
         int256 cappedPoolPnl;
         uint256 sizeDeltaInTokens;
         int256 positionPnlUsd;
+        int256 uncappedPositionPnlUsd;
     }
 
     // @dev IsPositionLiquidatableCache struct used in isPositionLiquidatable
@@ -161,7 +164,7 @@ library PositionUtils {
     // @param sizeDeltaUsd the change in position size
     // @param indexTokenPrice the price of the index token
     //
-    // @return (positionPnlUsd, sizeDeltaInTokens)
+    // @return (positionPnlUsd, uncappedPositionPnlUsd, sizeDeltaInTokens)
     function getPositionPnlUsd(
         DataStore dataStore,
         Market.Props memory market,
@@ -169,12 +172,13 @@ library PositionUtils {
         Position.Props memory position,
         uint256 executionPrice,
         uint256 sizeDeltaUsd
-    ) public view returns (int256, uint256) {
+    ) public view returns (int256, int256, uint256) {
         GetPositionPnlUsdCache memory cache;
 
         // position.sizeInUsd is the cost of the tokens, positionValue is the current worth of the tokens
         cache.positionValue = (position.sizeInTokens() * executionPrice).toInt256();
         cache.totalPositionPnl = position.isLong() ? cache.positionValue - position.sizeInUsd().toInt256() : position.sizeInUsd().toInt256() - cache.positionValue;
+        cache.uncappedTotalPositionPnl = cache.totalPositionPnl;
 
         if (cache.totalPositionPnl > 0) {
             cache.pnlToken = position.isLong() ? market.longToken : market.shortToken;
@@ -216,8 +220,9 @@ library PositionUtils {
         }
 
         cache.positionPnlUsd = Precision.mulDiv(cache.totalPositionPnl, cache.sizeDeltaInTokens, position.sizeInTokens());
+        cache.uncappedPositionPnlUsd = Precision.mulDiv(cache.uncappedTotalPositionPnl, cache.sizeDeltaInTokens, position.sizeInTokens());
 
-        return (cache.positionPnlUsd, cache.sizeDeltaInTokens);
+        return (cache.positionPnlUsd, cache.uncappedPositionPnlUsd, cache.sizeDeltaInTokens);
     }
 
     // @dev get the key for a position
@@ -309,7 +314,7 @@ library PositionUtils {
     ) public view returns (bool, string memory) {
         IsPositionLiquidatableCache memory cache;
 
-        (cache.positionPnlUsd, ) = getPositionPnlUsd(
+        (cache.positionPnlUsd, /* int256 uncappedBasePnlUsd */,  /* uint256 sizeDeltaInTokens */) = getPositionPnlUsd(
             dataStore,
             market,
             prices,

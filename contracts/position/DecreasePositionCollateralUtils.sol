@@ -106,7 +106,7 @@ library DecreasePositionCollateralUtils {
         // the sizeDeltaInTokens is calculated as position.sizeInTokens() * sizeDeltaUsd / position.sizeInUsd()
         // the basePnlUsd is the pnl to be realized, and is calculated as:
         // totalPositionPnl * sizeDeltaInTokens / position.sizeInTokens()
-        (values.basePnlUsd, values.sizeDeltaInTokens) = PositionUtils.getPositionPnlUsd(
+        (values.basePnlUsd, values.uncappedBasePnlUsd, values.sizeDeltaInTokens) = PositionUtils.getPositionPnlUsd(
             params.contracts.dataStore,
             params.market,
             cache.prices,

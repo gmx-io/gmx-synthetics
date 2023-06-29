@@ -75,7 +75,7 @@ contract Reader {
         bytes32 positionKey,
         uint256 executionPrice,
         uint256 sizeDeltaUsd
-    ) external view returns (int256, uint256) {
+    ) external view returns (int256, int256, uint256) {
         Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
 
         return PositionUtils.getPositionPnlUsd(dataStore, market, prices, position, executionPrice, sizeDeltaUsd);
