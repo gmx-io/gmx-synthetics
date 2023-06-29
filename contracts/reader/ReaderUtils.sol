@@ -40,6 +40,7 @@ library ReaderUtils {
         PositionPricingUtils.PositionFees fees;
         ReaderPricingUtils.ExecutionPriceResult executionPriceResult;
         int256 basePnlUsd;
+        int256 uncappedBasePnlUsd;
         int256 pnlAfterPriceImpactUsd;
     }
 
@@ -255,7 +256,7 @@ library ReaderUtils {
             positionInfo.position.isLong()
         );
 
-        (positionInfo.basePnlUsd, /* sizeDeltaInTokens */) = PositionUtils.getPositionPnlUsd(
+        (positionInfo.basePnlUsd, positionInfo.uncappedBasePnlUsd, /* sizeDeltaInTokens */) = PositionUtils.getPositionPnlUsd(
             dataStore,
             cache.market,
             prices,
