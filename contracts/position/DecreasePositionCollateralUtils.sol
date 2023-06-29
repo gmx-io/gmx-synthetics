@@ -98,7 +98,7 @@ library DecreasePositionCollateralUtils {
         // the execution price is based on the capped price impact so it may be a better price than what it should be
         // priceImpactDiffUsd is the difference between the maximum price impact and the originally calculated price impact
         // e.g. if the originally calculated price impact is -$100, but the capped price impact is -$80
-        // then priceImpactUsd would be $20
+        // then priceImpactDiffUsd would be $20
         (values.priceImpactUsd, values.priceImpactDiffUsd, values.executionPrice) = getExecutionPrice(params, cache.prices.indexTokenPrice);
 
         // the totalPositionPnl is calculated based on the current indexTokenPrice instead of the executionPrice
@@ -245,7 +245,8 @@ library DecreasePositionCollateralUtils {
                 params.market.marketToken,
                 params.position.collateralToken(),
                 fees.funding.fundingFeeAmount,
-                collateralCache.result.amountPaidInCollateralToken
+                collateralCache.result.amountPaidInCollateralToken,
+                collateralCache.result.amountPaidInSecondaryOutputToken
             );
         }
 

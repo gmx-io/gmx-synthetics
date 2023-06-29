@@ -279,53 +279,16 @@ library BaseOrderUtils {
     }
 
     function getExecutionPriceForIncrease(
-        Price.Props memory indexTokenPrice,
         uint256 sizeDeltaUsd,
-        int256 priceImpactAmount,
+        uint256 sizeDeltaInTokens,
         uint256 acceptablePrice,
         bool isLong
     ) internal pure returns (uint256) {
-        // using increase of long positions as an example
-        //
-        // sizeDeltaInTokens1 = sizeDeltaUsd / price
-        // sizeDeltaInTokens2 = sizeDeltaUsd / executionPrice
-        // sizeDeltaInTokens2 - sizeDeltaInTokens1 = priceImpactAmount
-        // sizeDeltaUsd / executionPrice - sizeDeltaUsd / price = priceImpactAmount
-        // sizeDeltaUsd / executionPrice = priceImpactAmount + sizeDeltaUsd / price
-        // sizeDeltaUsd / executionPrice = (priceImpactAmount * price + sizeDeltaUsd) / price
-        // executionPrice / sizeDeltaUsd = price / (priceImpactAmount * price + sizeDeltaUsd)
-        // executionPrice = (price * sizeDeltaUsd) / (priceImpactAmount * price + sizeDeltaUsd)
-        //
-        // e.g. if price is $2000, sizeDeltaUsd is $5000, priceImpactUsd is -$1000
-        // priceImpactAmount = -1000 / 2000 = -0.5
-        // sizeDeltaInTokens1 = 5000 / 2000 = 2.5
-        // sizeDeltaInTokens2 = 2.5 - 5000 / executionPrice
-        // 2000 * 5000 / (5000 + -0.5 * 2000) => 2500
-
-        // use true for the maximize param for pickPriceForPnl
-        // e.g. if increasing long, the max price should be used
-        uint256 price = indexTokenPrice.pickPriceForPnl(isLong, true);
-        uint256 executionPrice = price;
-
-        if (sizeDeltaUsd > 0) {
-            // since the priceImpactAmount is in the denominator of the formula
-            // for increase long positions
-            //      - if priceImpactAmount is positive, adjustedPriceImpactAmount should be positive to decrease the execution price
-            //      - if priceImpactAmount is negative, adjustedPriceImpactAmount should be negative to increase the execution price
-            // for increase short positions
-            //      - if priceImpactAmount is positive, adjustedPriceImpactAmount should be negative to increase the execution price
-            //      - if priceImpactAmount is negative, adjustedPriceImpactAmount should be positive to decrease the execution price
-            int256 adjustedPriceImpactAmount = isLong ? priceImpactAmount : -priceImpactAmount;
-
-            int256 priceImpactUsd = adjustedPriceImpactAmount * price.toInt256();
-
-            if (priceImpactUsd < 0 && (-priceImpactUsd).toUint256() >= sizeDeltaUsd) {
-                revert Errors.PriceImpactLargerThanOrderSize(priceImpactUsd, sizeDeltaUsd);
-            }
-
-            uint256 denominator = Calc.sumReturnUint256(sizeDeltaUsd, priceImpactUsd);
-            executionPrice = Precision.mulDiv(price, sizeDeltaUsd, denominator);
+        if (sizeDeltaInTokens == 0) {
+            revert Errors.EmptySizeDeltaInTokens();
         }
+
+        uint256 executionPrice = sizeDeltaUsd / sizeDeltaInTokens;
 
         // increase order:
         //     - long: executionPrice should be smaller than acceptablePrice

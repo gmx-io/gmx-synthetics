@@ -396,7 +396,7 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
     expect(await usdc.balanceOf(user3.address)).eq(0);
 
     expect(await wnt.balanceOf(user4.address)).eq(0);
-    expect(await usdc.balanceOf(user4.address)).eq("16935795384"); // 16,935.795384 USDC
+    expect(await usdc.balanceOf(user4.address)).closeTo("16935795384", "10000"); // 16,935.795384 USDC
 
     expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, wnt.address, true))).eq(0);
     expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, usdc.address, true))).eq(0);

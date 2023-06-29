@@ -1939,7 +1939,7 @@ library MarketUtils {
         uint256 diffUsd,
         uint256 totalOpenInterest
     ) internal view returns (uint256) {
-        // if there is a stable funding factor then used that instead of the open interest
+        // if there is a stable funding factor then use that instead of the open interest
         // dependent funding factor
         uint256 stableFundingFactor = dataStore.getUint(Keys.stableFundingFactorKey(market));
 
