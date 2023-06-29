@@ -384,49 +384,6 @@ library DecreasePositionCollateralUtils {
             );
         }
 
-        // pay for price impact diff
-        if (values.priceImpactDiffUsd > 0) {
-            (values, collateralCache.result) = payForCost(
-                params,
-                values,
-                cache.prices,
-                cache.collateralTokenPrice,
-                values.priceImpactDiffUsd
-            );
-
-            if (collateralCache.result.amountPaidInCollateralToken > 0) {
-                MarketUtils.incrementClaimableCollateralAmount(
-                    params.contracts.dataStore,
-                    params.contracts.eventEmitter,
-                    params.market.marketToken,
-                    params.position.collateralToken(),
-                    params.order.account(),
-                    collateralCache.result.amountPaidInCollateralToken
-                );
-            }
-
-            if (collateralCache.result.amountPaidInSecondaryOutputToken > 0) {
-                MarketUtils.incrementClaimableCollateralAmount(
-                    params.contracts.dataStore,
-                    params.contracts.eventEmitter,
-                    params.market.marketToken,
-                    values.output.secondaryOutputToken,
-                    params.order.account(),
-                    collateralCache.result.amountPaidInSecondaryOutputToken
-                );
-            }
-
-            if (collateralCache.result.remainingCostUsd > 0) {
-                return handleEarlyReturn(
-                    params,
-                    values,
-                    fees,
-                    collateralCache,
-                    "diff"
-                );
-            }
-        }
-
         // pay for negative price impact
         if (values.priceImpactUsd < 0) {
             (values, collateralCache.result) = payForCost(
@@ -478,6 +435,49 @@ library DecreasePositionCollateralUtils {
                     fees,
                     collateralCache,
                     "impact"
+                );
+            }
+        }
+
+        // pay for price impact diff
+        if (values.priceImpactDiffUsd > 0) {
+            (values, collateralCache.result) = payForCost(
+                params,
+                values,
+                cache.prices,
+                cache.collateralTokenPrice,
+                values.priceImpactDiffUsd
+            );
+
+            if (collateralCache.result.amountPaidInCollateralToken > 0) {
+                MarketUtils.incrementClaimableCollateralAmount(
+                    params.contracts.dataStore,
+                    params.contracts.eventEmitter,
+                    params.market.marketToken,
+                    params.position.collateralToken(),
+                    params.order.account(),
+                    collateralCache.result.amountPaidInCollateralToken
+                );
+            }
+
+            if (collateralCache.result.amountPaidInSecondaryOutputToken > 0) {
+                MarketUtils.incrementClaimableCollateralAmount(
+                    params.contracts.dataStore,
+                    params.contracts.eventEmitter,
+                    params.market.marketToken,
+                    values.output.secondaryOutputToken,
+                    params.order.account(),
+                    collateralCache.result.amountPaidInSecondaryOutputToken
+                );
+            }
+
+            if (collateralCache.result.remainingCostUsd > 0) {
+                return handleEarlyReturn(
+                    params,
+                    values,
+                    fees,
+                    collateralCache,
+                    "diff"
                 );
             }
         }
