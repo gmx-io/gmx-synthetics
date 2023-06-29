@@ -168,7 +168,8 @@ library PositionEventUtils {
         address market,
         address token,
         uint256 expectedAmount,
-        uint256 availableAmount
+        uint256 amountPaidInCollateralToken,
+        uint256 amountPaidInSecondaryOutputToken
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -176,9 +177,10 @@ library PositionEventUtils {
         eventData.addressItems.setItem(0, "market", market);
         eventData.addressItems.setItem(1, "token", token);
 
-        eventData.uintItems.initItems(2);
+        eventData.uintItems.initItems(3);
         eventData.uintItems.setItem(0, "expectedAmount", expectedAmount);
-        eventData.uintItems.setItem(1, "availableAmount", availableAmount);
+        eventData.uintItems.setItem(1, "amountPaidInCollateralToken", amountPaidInCollateralToken);
+        eventData.uintItems.setItem(2, "amountPaidInSecondaryOutputToken", amountPaidInSecondaryOutputToken);
 
         eventEmitter.emitEventLog1(
             "InsufficientFundingFeePayment",

@@ -168,7 +168,7 @@ library ReaderPricingUtils {
         ExecutionPriceResult memory result;
 
         if (sizeDeltaUsd > 0) {
-            (result.priceImpactUsd, /* priceImpactAmount */, result.executionPrice) = IncreasePositionUtils.getExecutionPrice(
+            (result.priceImpactUsd, /* priceImpactAmount */, /* sizeDeltaInTokens */, result.executionPrice) = IncreasePositionUtils.getExecutionPrice(
                 params,
                 indexTokenPrice
             );
