@@ -449,7 +449,7 @@ const config: {
       fundingFactor: expandDecimals(3, 15), // 1% per year for 100,000 USD of imbalance
     },
     {
-      tokens: { indexToken: "AVAX", longToken: "WAVAX", shortToken: "USDC" },
+      tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" },
       virtualMarketId: hashString("PERP:AVAX/USD"),
 
       ...baseMarketConfig,
