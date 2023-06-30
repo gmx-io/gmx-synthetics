@@ -122,10 +122,6 @@ const config: {
       decimals: 8,
       transferGasLimit: 200 * 1000,
     },
-    ETH: {
-      synthetic: true,
-      decimals: 18,
-    },
     "WETH.e": {
       address: "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB",
       decimals: 18,
