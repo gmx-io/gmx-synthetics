@@ -340,13 +340,13 @@ const config: {
       fundingFactor: expandDecimals(3, 15), // 1% per year for 100,000 USD of imbalance
     },
     {
-      tokens: { longToken: "USDC", shortToken: "USDT" },
+      tokens: { longToken: "USDC", shortToken: "USDC.e" },
 
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
     },
     {
-      tokens: { longToken: "USDC", shortToken: "USDC.e" },
+      tokens: { longToken: "USDC", shortToken: "USDT" },
 
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
@@ -466,13 +466,19 @@ const config: {
       fundingFactor: expandDecimals(3, 15), // 1% per year for 100,000 USD of imbalance
     },
     {
-      tokens: { longToken: "USDC", shortToken: "USDT" },
+      tokens: { longToken: "USDC", shortToken: "USDT.e" },
 
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDC.e" },
+
+      ...baseMarketConfig,
+      ...stablecoinSwapMarketConfig,
+    },
+    {
+      tokens: { longToken: "USDT", shortToken: "USDT.e" },
 
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
