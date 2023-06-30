@@ -87,7 +87,71 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
 
       // price feeds https://docs.chain.link/data-feeds/price-feeds/addresses/?network=arbitrum#Arbitrum%20Mainnet
       tokens: {
+        BTC: {
+          priceFeed: {
+            address: "0x6ce185860a4963106506C203335A2910413708e9",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+        WBTC: {
+          priceFeed: {
+            // use the BTC price feed since the oracle would report the BTC price as well
+            address: "0x6ce185860a4963106506C203335A2910413708e9",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+        WETH: {
+          priceFeed: {
+            address: "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+        DOGE: {
+          priceFeed: {
+            address: "0x9A7FB1b3950837a8D9b40517626E11D4127C098C",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+        SOL: {
+          priceFeed: {
+            address: "0x24ceA4b8ce57cdA5058b924B9B9987992450590c",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+        UNI: {
+          priceFeed: {
+            address: "0x9C917083fDb403ab5ADbEC26Ee294f6EcAda2720",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+        LINK: {
+          priceFeed: {
+            address: "0x86E53CF1B870786351Da77A57575e79CB55812CB",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+        ARB: {
+          priceFeed: {
+            address: "0xb2A824043730FE05F3DA2efaFa1CBbe83fa548D6",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
         USDC: {
+          priceFeed: {
+            address: "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+        "USDC.e": {
           priceFeed: {
             address: "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",
             decimals: 8,
@@ -120,6 +184,27 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
 
       // price feeds https://docs.chain.link/data-feeds/price-feeds/addresses/?network=avalanche#Avalanche%20Mainnet
       tokens: {
+        "BTC.b": {
+          priceFeed: {
+            address: "0x2779D32d5166BAaa2B2b658333bA7e6Ec0C65743",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+        "WETH.e": {
+          priceFeed: {
+            address: "0x976B3D034E162d8bD72D6b9C989d545b839003b0",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+        WAVAX: {
+          priceFeed: {
+            address: "0x0A77230d17318075983913bC2145DB16C7366156",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
         USDC: {
           priceFeed: {
             address: "0xF096872672F44d6EBA71458D74fe67F9a77a23B9",
@@ -127,7 +212,21 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             heartbeatDuration: (24 + 1) * 60 * 60,
           },
         },
+        "USDC.e": {
+          priceFeed: {
+            address: "0xF096872672F44d6EBA71458D74fe67F9a77a23B9",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
         USDT: {
+          priceFeed: {
+            address: "0xEBE676ee90Fe1112671f19b6B7459bC678B67e8a",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+        "USDT.e": {
           priceFeed: {
             address: "0xEBE676ee90Fe1112671f19b6B7459bC678B67e8a",
             decimals: 8,
