@@ -78,6 +78,72 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
       },
     },
 
+    arbitrum: {
+      signers: ["0x9f169c2189a2d975c18965de985936361b4a9de9"],
+      maxOraclePriceAge: 60 * 60,
+      maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
+      minOracleBlockConfirmations: 255,
+      minOracleSigners: 1,
+
+      // price feeds https://docs.chain.link/data-feeds/price-feeds/addresses/?network=arbitrum#Arbitrum%20Mainnet
+      tokens: {
+        USDC: {
+          priceFeed: {
+            address: "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+        USDT: {
+          priceFeed: {
+            address: "0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+        DAI: {
+          priceFeed: {
+            address: "0xc5C8E77B397E531B8EC06BFb0048328B30E9eCfB",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+      },
+    },
+
+    avalanche: {
+      signers: ["0x9f169c2189a2d975c18965de985936361b4a9de9"],
+      maxOraclePriceAge: 60 * 60,
+      maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
+      minOracleBlockConfirmations: 255,
+      minOracleSigners: 1,
+
+      // price feeds https://docs.chain.link/data-feeds/price-feeds/addresses/?network=avalanche#Avalanche%20Mainnet
+      tokens: {
+        USDC: {
+          priceFeed: {
+            address: "0xF096872672F44d6EBA71458D74fe67F9a77a23B9",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+        USDT: {
+          priceFeed: {
+            address: "0xEBE676ee90Fe1112671f19b6B7459bC678B67e8a",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+        DAI: {
+          priceFeed: {
+            address: "0x51D7180edA2260cc4F6e4EebB82FEF5c3c2B8300",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+      },
+    },
+
     arbitrumGoerli: {
       signers: ["0xFb11f15f206bdA02c224EDC744b0E50E46137046", "0x23247a1A80D01b9482E9d734d2EB780a3b5c8E6c"],
       maxOraclePriceAge: 60 * 60,
