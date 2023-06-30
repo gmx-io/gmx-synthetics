@@ -217,7 +217,7 @@ const config: {
       fundingFactor: expandDecimals(3, 16), // 1% per year for 1,000,000 USD of imbalance
     },
     {
-      tokens: { indexToken: "ETH", longToken: "WETH", shortToken: "USDC" },
+      tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
       virtualMarketId: hashString("PERP:ETH/USD"),
 
       ...baseMarketConfig,
@@ -360,7 +360,7 @@ const config: {
   ],
   avalanche: [
     {
-      tokens: { indexToken: "BTC", longToken: "BTC.b", shortToken: "USDC" },
+      tokens: { indexToken: "BTC.b", longToken: "BTC.b", shortToken: "USDC" },
       virtualMarketId: hashString("PERP:BTC/USD"),
 
       ...baseMarketConfig,
@@ -377,7 +377,7 @@ const config: {
       fundingFactor: expandDecimals(3, 16), // 1% per year for 1,000,000 USD of imbalance
     },
     {
-      tokens: { indexToken: "ETH", longToken: "WETH.e", shortToken: "USDC" },
+      tokens: { indexToken: "WETH.e", longToken: "WETH.e", shortToken: "USDC" },
       virtualMarketId: hashString("PERP:ETH/USD"),
 
       ...baseMarketConfig,
