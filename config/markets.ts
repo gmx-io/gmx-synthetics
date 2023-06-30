@@ -151,6 +151,18 @@ const synthethicMarketConfig: Partial<BaseMarketConfig> = {
   maxPnlFactorForWithdrawalsShorts: decimalToFloat(3, 1), // 30%
 };
 
+const stablecoinSwapMarketConfig: Partial<BaseMarketConfig> = {
+  swapOnly: true,
+
+  maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
+  maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
+
+  swapFeeFactor: decimalToFloat(1, 4), // 0.01%,
+
+  negativeSwapImpactFactor: expandDecimals(1, 10), // 0.01% for 1,000,000 USD of imbalance
+  positiveSwapImpactFactor: expandDecimals(1, 10), // 0.01% for 1,000,000 USD of imbalance
+};
+
 const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
   reserveFactorLongs: decimalToFloat(5, 1), // 50%,
   reserveFactorShorts: decimalToFloat(5, 1), // 50%,
@@ -246,7 +258,7 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(50_000),
+      maxLongTokenPoolAmount: expandDecimals(50_000, 9),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
       negativePositionImpactFactor: expandDecimals(375, 11), // 0.3% for 800,000 USD of imbalance
@@ -264,7 +276,7 @@ const config: {
       ...baseMarketConfig,
       ...synthethicMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(500),
+      maxLongTokenPoolAmount: expandDecimals(500, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
       negativePositionImpactFactor: expandDecimals(15, 10), // 0.3% for 2,000,000 USD of imbalance
@@ -282,7 +294,7 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(200_000),
+      maxLongTokenPoolAmount: expandDecimals(200_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
       negativePositionImpactFactor: expandDecimals(2, 8), // 0.3% for 150,000 USD of imbalance
@@ -299,7 +311,7 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(200_000),
+      maxLongTokenPoolAmount: expandDecimals(200_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
       negativePositionImpactFactor: expandDecimals(6, 9), // 0.3% for 500,000 USD of imbalance
@@ -316,7 +328,7 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(1_000_000),
+      maxLongTokenPoolAmount: expandDecimals(1_000_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
       negativePositionImpactFactor: expandDecimals(6, 9), // 0.3% for 500,000 USD of imbalance
@@ -326,6 +338,24 @@ const config: {
       positiveSwapImpactFactor: expandDecimals(6, 9), // 0.15% for 500,000 USD of imbalance
 
       fundingFactor: expandDecimals(3, 15), // 1% per year for 100,000 USD of imbalance
+    },
+    {
+      tokens: { longToken: "USDC", shortToken: "USDT" },
+
+      ...baseMarketConfig,
+      ...stablecoinSwapMarketConfig,
+    },
+    {
+      tokens: { longToken: "USDC", shortToken: "USDC.e" },
+
+      ...baseMarketConfig,
+      ...stablecoinSwapMarketConfig,
+    },
+    {
+      tokens: { longToken: "USDC", shortToken: "DAI" },
+
+      ...baseMarketConfig,
+      ...stablecoinSwapMarketConfig,
     },
   ],
   avalanche: [
@@ -388,7 +418,7 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(50_000),
+      maxLongTokenPoolAmount: expandDecimals(50_000, 9),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
       negativePositionImpactFactor: expandDecimals(375, 11), // 0.3% for 800,000 USD of imbalance
@@ -424,7 +454,7 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(200_000),
+      maxLongTokenPoolAmount: expandDecimals(200_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
       negativePositionImpactFactor: expandDecimals(1, 8), // 0.3% for 300,000 USD of imbalance
@@ -434,6 +464,24 @@ const config: {
       positiveSwapImpactFactor: expandDecimals(5, 9), // 0.15% for 300,000,000 USD of imbalance
 
       fundingFactor: expandDecimals(3, 15), // 1% per year for 100,000 USD of imbalance
+    },
+    {
+      tokens: { longToken: "USDC", shortToken: "USDT" },
+
+      ...baseMarketConfig,
+      ...stablecoinSwapMarketConfig,
+    },
+    {
+      tokens: { longToken: "USDC", shortToken: "USDC.e" },
+
+      ...baseMarketConfig,
+      ...stablecoinSwapMarketConfig,
+    },
+    {
+      tokens: { longToken: "USDC", shortToken: "DAI" },
+
+      ...baseMarketConfig,
+      ...stablecoinSwapMarketConfig,
     },
   ],
   arbitrumGoerli: [
