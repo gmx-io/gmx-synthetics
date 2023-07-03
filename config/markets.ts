@@ -154,9 +154,6 @@ const synthethicMarketConfig: Partial<BaseMarketConfig> = {
 const stablecoinSwapMarketConfig: Partial<BaseMarketConfig> = {
   swapOnly: true,
 
-  maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
-  maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
-
   swapFeeFactor: decimalToFloat(1, 4), // 0.01%,
 
   negativeSwapImpactFactor: expandDecimals(1, 10), // 0.01% for 1,000,000 USD of imbalance
@@ -344,18 +341,27 @@ const config: {
 
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDT" },
 
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
     },
     {
       tokens: { longToken: "USDC", shortToken: "DAI" },
 
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 18),
     },
   ],
   avalanche: [
@@ -470,24 +476,36 @@ const config: {
 
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDC.e" },
 
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
     },
     {
       tokens: { longToken: "USDT", shortToken: "USDT.e" },
 
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
     },
     {
       tokens: { longToken: "USDC", shortToken: "DAI" },
 
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 18),
     },
   ],
   arbitrumGoerli: [
