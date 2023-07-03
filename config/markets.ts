@@ -60,6 +60,7 @@ export type BaseMarketConfig = {
   fundingExponentFactor: BigNumberish;
 
   virtualMarketId?: string;
+  virtualTokenIdForIndexToken?: string;
 };
 
 export type MarketConfig = Partial<BaseMarketConfig> &
@@ -210,7 +211,8 @@ const config: {
   arbitrum: [
     {
       tokens: { indexToken: "BTC", longToken: "WBTC", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:BTC/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:BTC/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
 
       ...baseMarketConfig,
 
@@ -227,7 +229,8 @@ const config: {
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:ETH/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:ETH/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...baseMarketConfig,
 
@@ -244,7 +247,8 @@ const config: {
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:DOGE/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:DOGE/USD"),
+      virtualMarketId: hashString("SPOT:DOGE/USD"),
 
       ...baseMarketConfig,
       ...synthethicMarketConfig,
@@ -263,7 +267,8 @@ const config: {
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:SOL/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:SOL/USD"),
+      virtualMarketId: hashString("SPOT:SOL/USD"),
 
       ...baseMarketConfig,
 
@@ -280,7 +285,8 @@ const config: {
     },
     {
       tokens: { indexToken: "LTC", longToken: "WETH", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:LTC/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:LTC/USD"),
+      virtualMarketId: hashString("SPOT:LTC/USD"),
 
       ...baseMarketConfig,
       ...synthethicMarketConfig,
@@ -299,7 +305,8 @@ const config: {
     },
     {
       tokens: { indexToken: "UNI", longToken: "UNI", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:UNI/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:UNI/USD"),
+      virtualMarketId: hashString("SPOT:UNI/USD"),
 
       ...baseMarketConfig,
 
@@ -316,7 +323,8 @@ const config: {
     },
     {
       tokens: { indexToken: "LINK", longToken: "LINK", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:LINK/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:LINK/USD"),
+      virtualMarketId: hashString("SPOT:LINK/USD"),
 
       ...baseMarketConfig,
 
@@ -333,7 +341,8 @@ const config: {
     },
     {
       tokens: { indexToken: "ARB", longToken: "ARB", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:ARB/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:ARB/USD"),
+      virtualMarketId: hashString("SPOT:ARB/USD"),
 
       ...baseMarketConfig,
 
@@ -379,7 +388,8 @@ const config: {
   avalanche: [
     {
       tokens: { indexToken: "BTC.b", longToken: "BTC.b", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:BTC/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:BTC/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
 
       ...baseMarketConfig,
 
@@ -396,7 +406,8 @@ const config: {
     },
     {
       tokens: { indexToken: "WETH.e", longToken: "WETH.e", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:ETH/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:ETH/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...baseMarketConfig,
 
@@ -413,7 +424,8 @@ const config: {
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WAVAX", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:DOGE/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:DOGE/USD"),
+      virtualMarketId: hashString("SPOT:DOGE/USD"),
 
       ...baseMarketConfig,
       ...synthethicMarketConfig,
@@ -432,7 +444,8 @@ const config: {
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:SOL/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:SOL/USD"),
+      virtualMarketId: hashString("SPOT:SOL/USD"),
 
       ...baseMarketConfig,
 
@@ -449,7 +462,8 @@ const config: {
     },
     {
       tokens: { indexToken: "LTC", longToken: "WAVAX", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:LTC/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:LTC/USD"),
+      virtualMarketId: hashString("SPOT:LTC/USD"),
 
       ...baseMarketConfig,
       ...synthethicMarketConfig,
@@ -468,7 +482,8 @@ const config: {
     },
     {
       tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:AVAX/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:AVAX/USD"),
+      virtualMarketId: hashString("SPOT:AVAX/USD"),
 
       ...baseMarketConfig,
 

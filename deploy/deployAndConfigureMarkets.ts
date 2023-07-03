@@ -125,11 +125,19 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       );
     }
 
+    // set virtual market id for swaps
     const virtualMarketId = marketConfig.virtualMarketId || ethers.constants.HashZero;
     await setBytes32IfDifferent(
       keys.virtualMarketIdKey(marketToken),
       virtualMarketId,
       `virtual market id for market ${marketToken.toString()}`
+    );
+
+    const virtualTokenId = marketConfig.virtualTokenIdForIndexToken || ethers.constants.HashZero;
+    await setBytes32IfDifferent(
+      keys.virtualTokenIdKey(indexToken),
+      virtualTokenId,
+      `virtual token id for indexToken ${indexToken.toString()}`
     );
 
     // the rest params are not used for swap-only markets
