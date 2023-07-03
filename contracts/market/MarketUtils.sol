@@ -1322,7 +1322,7 @@ library MarketUtils {
         }
     }
 
-    // @dev validate that the amount of tokens required to be reserved for positions
+    // @dev validate that the amount of tokens required to be reserved
     // is below the configured threshold
     // @param dataStore DataStore
     // @param market the market values
@@ -1349,6 +1349,36 @@ library MarketUtils {
 
         if (reservedUsd > maxReservedUsd) {
             revert Errors.InsufficientReserve(reservedUsd, maxReservedUsd);
+        }
+    }
+
+    // @dev validate that the amount of tokens required to be reserved for open interest
+    // is below the configured threshold
+    // @param dataStore DataStore
+    // @param market the market values
+    // @param prices the prices of the market tokens
+    // @param isLong whether to check the long or short side
+    function validateOpenInterestReserve(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketPrices memory prices,
+        bool isLong
+    ) internal view {
+        // poolUsd is used instead of pool amount as the indexToken may not match the longToken
+        // additionally, the shortToken may not be a stablecoin
+        uint256 poolUsd = getPoolUsdWithoutPnl(dataStore, market, prices, isLong, false);
+        uint256 reserveFactor = getOpenInterestReserveFactor(dataStore, market.marketToken, isLong);
+        uint256 maxReservedUsd = Precision.applyFactor(poolUsd, reserveFactor);
+
+        uint256 reservedUsd = getReservedUsd(
+            dataStore,
+            market,
+            prices,
+            isLong
+        );
+
+        if (reservedUsd > maxReservedUsd) {
+            revert Errors.InsufficientReserveForOpenInterest(reservedUsd, maxReservedUsd);
         }
     }
 
@@ -1801,6 +1831,15 @@ library MarketUtils {
     // @return the reserve factor for a market
     function getReserveFactor(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
         return dataStore.getUint(Keys.reserveFactorKey(market, isLong));
+    }
+
+    // @dev get the open interest reserve factor for a market
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param isLong whether to get the value for longs or shorts
+    // @return the open interest reserve factor for a market
+    function getOpenInterestReserveFactor(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
+        return dataStore.getUint(Keys.openInterestReserveFactorKey(market, isLong));
     }
 
     // @dev get the max pnl factor for a market
