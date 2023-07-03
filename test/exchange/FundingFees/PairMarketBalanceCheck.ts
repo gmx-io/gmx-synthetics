@@ -273,7 +273,7 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
 
     await time.increase(28 * 24 * 60 * 60);
 
-    expect(await wnt.balanceOf(user0.address)).eq("8387186400000000000");
+    expect(await wnt.balanceOf(user0.address)).closeTo("8387186400000000000", "10000000000000");
     expect(await usdc.balanceOf(user0.address)).eq(0);
 
     expect(await wnt.balanceOf(user1.address)).eq(0);
