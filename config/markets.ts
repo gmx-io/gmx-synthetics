@@ -630,7 +630,13 @@ const config: {
 
       minPnlFactorAfterAdlLongs: decimalToFloat(1, 2), // 1%
       minPnlFactorAfterAdlShorts: decimalToFloat(1, 2), // 1%
+
+      maxLongTokenPoolAmount: expandDecimals(10, 18),
+      maxShortTokenPoolAmount: expandDecimals(300_000, 6),
     },
+
+    { tokens: { indexToken: "WBTC", longToken: "USDC", shortToken: "USDT" } },
+    { tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "DAI" } },
   ],
   avalancheFuji: [
     { tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" } },
@@ -685,7 +691,13 @@ const config: {
 
       minPnlFactorAfterAdlLongs: decimalToFloat(1, 2), // 1%
       minPnlFactorAfterAdlShorts: decimalToFloat(1, 2), // 1%
+
+      maxLongTokenPoolAmount: expandDecimals(10, 18),
+      maxShortTokenPoolAmount: expandDecimals(300_000, 6),
     },
+
+    { tokens: { indexToken: "WBTC", longToken: "USDC", shortToken: "USDT" } },
+    { tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "DAI" } },
   ],
   hardhat: [
     {
