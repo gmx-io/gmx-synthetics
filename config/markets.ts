@@ -246,7 +246,7 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(50_000),
+      maxLongTokenPoolAmount: expandDecimals(50_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
       negativePositionImpactFactor: expandDecimals(375, 11), // 0.3% for 800,000 USD of imbalance
@@ -264,7 +264,7 @@ const config: {
       ...baseMarketConfig,
       ...synthethicMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(500),
+      maxLongTokenPoolAmount: expandDecimals(500, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
       negativePositionImpactFactor: expandDecimals(15, 10), // 0.3% for 2,000,000 USD of imbalance
@@ -282,7 +282,7 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(200_000),
+      maxLongTokenPoolAmount: expandDecimals(200_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
       negativePositionImpactFactor: expandDecimals(2, 8), // 0.3% for 150,000 USD of imbalance
@@ -299,7 +299,7 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(200_000),
+      maxLongTokenPoolAmount: expandDecimals(200_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
       negativePositionImpactFactor: expandDecimals(6, 9), // 0.3% for 500,000 USD of imbalance
@@ -316,7 +316,7 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(1_000_000),
+      maxLongTokenPoolAmount: expandDecimals(1_000_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
       negativePositionImpactFactor: expandDecimals(6, 9), // 0.3% for 500,000 USD of imbalance
@@ -388,7 +388,7 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(50_000),
+      maxLongTokenPoolAmount: expandDecimals(50_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
       negativePositionImpactFactor: expandDecimals(375, 11), // 0.3% for 800,000 USD of imbalance
@@ -424,7 +424,7 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(200_000),
+      maxLongTokenPoolAmount: expandDecimals(200_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
       negativePositionImpactFactor: expandDecimals(1, 8), // 0.3% for 300,000 USD of imbalance
@@ -486,9 +486,14 @@ const config: {
 
       minPnlFactorAfterAdlLongs: decimalToFloat(1, 2), // 1%
       minPnlFactorAfterAdlShorts: decimalToFloat(1, 2), // 1%
+
+      maxLongTokenPoolAmount: expandDecimals(10, 18),
+      maxShortTokenPoolAmount: expandDecimals(300_000, 6),
     },
+
+    { tokens: { indexToken: "WBTC", longToken: "USDC", shortToken: "USDT" } },
+    { tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "DAI" } },
   ],
-  avalanche: [],
   avalancheFuji: [
     { tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" } },
     {
@@ -542,7 +547,13 @@ const config: {
 
       minPnlFactorAfterAdlLongs: decimalToFloat(1, 2), // 1%
       minPnlFactorAfterAdlShorts: decimalToFloat(1, 2), // 1%
+
+      maxLongTokenPoolAmount: expandDecimals(10, 18),
+      maxShortTokenPoolAmount: expandDecimals(300_000, 6),
     },
+
+    { tokens: { indexToken: "WBTC", longToken: "USDC", shortToken: "USDT" } },
+    { tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "DAI" } },
   ],
   hardhat: [
     {
