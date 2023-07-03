@@ -75,6 +75,7 @@ library Errors {
     error MaxSwapPathLengthExceeded(uint256 swapPathLengh, uint256 maxSwapPathLength);
     error InsufficientPoolAmount(uint256 poolAmount, uint256 amount);
     error InsufficientReserve(uint256 reservedUsd, uint256 maxReservedUsd);
+    error InsufficientReserveForOpenInterest(uint256 reservedUsd, uint256 maxReservedUsd);
     error UnableToGetOppositeToken(address inputToken, address market);
     error UnexpectedTokenForVirtualInventory(address token, address market);
     error EmptyMarketTokenSupply();

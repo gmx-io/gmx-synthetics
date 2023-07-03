@@ -172,6 +172,13 @@ library IncreasePositionUtils {
             params.order.isLong()
         );
 
+        MarketUtils.validateOpenInterestReserve(
+            params.contracts.dataStore,
+            params.market,
+            prices,
+            params.order.isLong()
+        );
+
         if (params.order.sizeDeltaUsd() > 0) {
             PositionUtils.WillPositionCollateralBeSufficientValues memory positionValues = PositionUtils.WillPositionCollateralBeSufficientValues(
                 params.position.sizeInUsd(), // positionSizeInUsd

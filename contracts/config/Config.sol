@@ -267,6 +267,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.ORACLE_TYPE] = true;
 
         allowedBaseKeys[Keys.RESERVE_FACTOR] = true;
+        allowedBaseKeys[Keys.OPEN_INTEREST_RESERVE_FACTOR] = true;
 
         allowedBaseKeys[Keys.MAX_PNL_FACTOR] = true;
         allowedBaseKeys[Keys.MAX_PNL_FACTOR_FOR_TRADERS] = true;

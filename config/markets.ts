@@ -8,6 +8,9 @@ export type BaseMarketConfig = {
   reserveFactorLongs: BigNumberish;
   reserveFactorShorts: BigNumberish;
 
+  openInterestReserveFactorLongs: BigNumberish;
+  openInterestReserveFactorShorts: BigNumberish;
+
   minCollateralFactor: BigNumberish;
 
   maxLongTokenPoolAmount: BigNumberish;
@@ -87,23 +90,26 @@ const baseMarketConfig: BaseMarketConfig = {
   maxOpenInterestForLongs: decimalToFloat(1_000_000_000),
   maxOpenInterestForShorts: decimalToFloat(1_000_000_000),
 
-  reserveFactorLongs: decimalToFloat(7, 1), // 70%,
-  reserveFactorShorts: decimalToFloat(7, 1), // 70%,
+  reserveFactorLongs: decimalToFloat(90, 2), // 90%,
+  reserveFactorShorts: decimalToFloat(90, 2), // 90%,
 
-  maxPnlFactorForTradersLongs: decimalToFloat(7, 1), // 70%
-  maxPnlFactorForTradersShorts: decimalToFloat(7, 1), // 70%
+  openInterestReserveFactorLongs: decimalToFloat(8, 1), // 80%,
+  openInterestReserveFactorShorts: decimalToFloat(8, 1), // 80%,
 
-  maxPnlFactorForAdlLongs: decimalToFloat(7, 1), // 70%, no ADL until normal operation
-  maxPnlFactorForAdlShorts: decimalToFloat(7, 1), // 70%, no ADL until normal operation
+  maxPnlFactorForTradersLongs: decimalToFloat(8, 1), // 80%
+  maxPnlFactorForTradersShorts: decimalToFloat(8, 1), // 80%
 
-  minPnlFactorAfterAdlLongs: decimalToFloat(7, 1), // 70%, no ADL until normal operation
-  minPnlFactorAfterAdlShorts: decimalToFloat(7, 1), // 70%, no ADL until normal operation
+  maxPnlFactorForAdlLongs: decimalToFloat(8, 1), // 80%, no ADL until normal operation
+  maxPnlFactorForAdlShorts: decimalToFloat(8, 1), // 80%, no ADL until normal operation
 
-  maxPnlFactorForDepositsLongs: decimalToFloat(7, 1), // 70%
-  maxPnlFactorForDepositsShorts: decimalToFloat(7, 1), // 70%
+  minPnlFactorAfterAdlLongs: decimalToFloat(8, 1), // 80%, no ADL until normal operation
+  minPnlFactorAfterAdlShorts: decimalToFloat(8, 1), // 80%, no ADL until normal operation
 
-  maxPnlFactorForWithdrawalsLongs: decimalToFloat(7, 1), // 70%
-  maxPnlFactorForWithdrawalsShorts: decimalToFloat(7, 1), // 70%
+  maxPnlFactorForDepositsLongs: decimalToFloat(8, 1), // 80%
+  maxPnlFactorForDepositsShorts: decimalToFloat(8, 1), // 80%
+
+  maxPnlFactorForWithdrawalsLongs: decimalToFloat(8, 1), // 80%
+  maxPnlFactorForWithdrawalsShorts: decimalToFloat(8, 1), // 80%
 
   positionFeeFactor: decimalToFloat(5, 4), // 0.05%
   negativePositionImpactFactor: decimalToFloat(1, 7), // 0.00001%
@@ -132,8 +138,11 @@ const baseMarketConfig: BaseMarketConfig = {
 };
 
 const synthethicMarketConfig: Partial<BaseMarketConfig> = {
-  reserveFactorLongs: decimalToFloat(7, 1), // 50%,
-  reserveFactorShorts: decimalToFloat(7, 1), // 50%,
+  reserveFactorLongs: decimalToFloat(7, 1), // 70%,
+  reserveFactorShorts: decimalToFloat(7, 1), // 70%,
+
+  openInterestReserveFactorLongs: decimalToFloat(6, 1), // 60%,
+  openInterestReserveFactorShorts: decimalToFloat(6, 1), // 60%,
 
   maxPnlFactorForTradersLongs: decimalToFloat(5, 1), // 50%
   maxPnlFactorForTradersShorts: decimalToFloat(5, 1), // 50%
@@ -163,6 +172,9 @@ const stablecoinSwapMarketConfig: Partial<BaseMarketConfig> = {
 const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
   reserveFactorLongs: decimalToFloat(5, 1), // 50%,
   reserveFactorShorts: decimalToFloat(5, 1), // 50%,
+
+  openInterestReserveFactorLongs: decimalToFloat(5, 1), // 50%,
+  openInterestReserveFactorShorts: decimalToFloat(5, 1), // 50%,
 
   minCollateralFactor: decimalToFloat(1, 2), // 1%
 

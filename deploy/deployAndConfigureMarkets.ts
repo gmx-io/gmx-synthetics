@@ -50,6 +50,15 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     );
   }
 
+  async function setOpenInterestReserveFactor(marketToken: string, isLong: boolean, reserveFactor: number) {
+    const key = keys.openInterestReserveFactorKey(marketToken, isLong);
+    await setUintIfDifferent(
+      key,
+      reserveFactor,
+      `reserve factor ${marketToken.toString()} ${isLong ? "long" : "short"}`
+    );
+  }
+
   async function setMinCollateralFactor(marketToken: string, minCollateralFactor: number) {
     const key = keys.minCollateralFactorKey(marketToken);
     await setUintIfDifferent(key, minCollateralFactor, `min collateral factor ${marketToken.toString()}`);
@@ -135,6 +144,9 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
 
     await setReserveFactor(marketToken, true, marketConfig.reserveFactorLongs);
     await setReserveFactor(marketToken, false, marketConfig.reserveFactorShorts);
+
+    await setOpenInterestReserveFactor(marketToken, true, marketConfig.openInterestReserveFactorLongs);
+    await setOpenInterestReserveFactor(marketToken, false, marketConfig.openInterestReserveFactorShorts);
 
     await setMaxPnlFactor(
       keys.MAX_PNL_FACTOR_FOR_TRADERS,

@@ -97,6 +97,8 @@ export const MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS = hashString("MAX_POSIT
 export const POSITION_FEE_FACTOR = hashString("POSITION_FEE_FACTOR");
 
 export const RESERVE_FACTOR = hashString("RESERVE_FACTOR");
+export const OPEN_INTEREST_RESERVE_FACTOR = hashString("OPEN_INTEREST_RESERVE_FACTOR");
+
 export const MAX_PNL_FACTOR = hashString("MAX_PNL_FACTOR");
 export const MAX_PNL_FACTOR_FOR_TRADERS = hashString("MAX_PNL_FACTOR_FOR_TRADERS");
 export const MAX_PNL_FACTOR_FOR_ADL = hashString("MAX_PNL_FACTOR_FOR_ADL");
@@ -255,6 +257,10 @@ export function minCollateralFactorForOpenInterestMultiplierKey(market: string, 
 
 export function reserveFactorKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [RESERVE_FACTOR, market, isLong]);
+}
+
+export function openInterestReserveFactorKey(market: string, isLong: boolean) {
+  return hashData(["bytes32", "address", "bool"], [OPEN_INTEREST_RESERVE_FACTOR, market, isLong]);
 }
 
 export function maxPnlFactorKey(pnlFactorType: string, market: string, isLong: boolean) {
