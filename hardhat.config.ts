@@ -96,7 +96,7 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       // hardhat-etherscan plugin uses "avalancheFujiTestnet" name
-      arbitrum: process.env.ARBISCAN_API_KEY,
+      arbitrumOne: process.env.ARBISCAN_API_KEY,
       avalanche: process.env.SNOWTRACE_API_KEY,
       arbitrumGoerli: process.env.ARBISCAN_API_KEY,
       avalancheFujiTestnet: process.env.SNOWTRACE_API_KEY,
