@@ -240,6 +240,11 @@ library SwapPricingUtils {
     ) internal view returns (SwapFees memory) {
         SwapFees memory fees;
 
+        // note that since it is possible to incur both positive and negative price impact values
+        // and the negative price impact factor may be larger than the positive impact factor
+        // it is possible for the balance to be improved overall but for the price impact to still be negative
+        // in this case the fee factor for the negative price impact would be charged
+        // a user could split the order into two, to incur a smaller fee, reducing the fee through this should not be a large issue
         uint256 feeFactor = dataStore.getUint(Keys.swapFeeFactorKey(marketToken, forPositiveImpact));
         uint256 swapFeeReceiverFactor = dataStore.getUint(Keys.SWAP_FEE_RECEIVER_FACTOR);
 

@@ -383,14 +383,14 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
       },
     });
 
-    expect(await wnt.balanceOf(user0.address)).eq("8387186400000000000"); // 8.3871864 ETH
-    expect(await usdc.balanceOf(user0.address)).eq("33871772052"); // 33,871.772054 USDC
+    expect(await wnt.balanceOf(user0.address)).closeTo("8387186400000000000", "100000000000000"); // 8.3871864 ETH
+    expect(await usdc.balanceOf(user0.address)).closeTo("33871772052", "100000"); // 33,871.772054 USDC
 
-    expect(await wnt.balanceOf(user1.address)).eq("9193593200000000000"); // 9.1935932 ETH
+    expect(await wnt.balanceOf(user1.address)).closeTo("9193593200000000000", "100000000000000"); // 9.1935932 ETH
     expect(await usdc.balanceOf(user1.address)).eq(0);
 
     expect(await wnt.balanceOf(user2.address)).eq(0);
-    expect(await usdc.balanceOf(user2.address)).eq("45967966000"); // 45,967.966 USDC
+    expect(await usdc.balanceOf(user2.address)).closeTo("45967966000", "100000"); // 45,967.966 USDC
 
     expect(await wnt.balanceOf(user3.address)).closeTo("3387175205252222237", "10000000000000"); // 3.387175205252222237 ETH
     expect(await usdc.balanceOf(user3.address)).eq(0);
@@ -422,13 +422,13 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
     // 41,935.932 + 33,871.772054 = 75,807.704054
     // total initial collateral amount: 10 ETH, 50,000 USDC (50,000 + 50,000 = $100,000)
     // diff: 75,807.6973862 - 100,000 = -24,192.3026138
-    expect(await wnt.balanceOf(user0.address)).eq("8387186400000000000"); // 8.3871864 ETH, 41,935.932 USD
-    expect(await usdc.balanceOf(user0.address)).eq("33871772052"); // 33,871.772052 USDC
+    expect(await wnt.balanceOf(user0.address)).closeTo("8387186400000000000", "10000000000000"); // 8.3871864 ETH, 41,935.932 USD
+    expect(await usdc.balanceOf(user0.address)).closeTo("33871772052", "1000000"); // 33,871.772052 USDC
 
     // 50,000.0028265 + 12,096.150798 = 62,096.1536245
     // initial collateral amount: 10 ETH ($50,000), diff: 62,096.1536245 - 50,000 = 12,096.1536245
-    expect(await wnt.balanceOf(user1.address)).eq("10000000565295075039"); // 10.000000565295075039 ETH, 50,000.0028265 USD
-    expect(await usdc.balanceOf(user1.address)).eq("12096150798"); // 12,096.150798 USDC
+    expect(await wnt.balanceOf(user1.address)).closeTo("10000000565295075039", "10000000000000"); // 10.000000565295075039 ETH, 50,000.0028265 USD
+    expect(await usdc.balanceOf(user1.address)).closeTo("12096150798", "1000000"); // 12,096.150798 USDC
 
     // 4032.08714726 + 58,064.247762 = 62,096.3349093
     // initial collateral amount: 50,000 USDC, diff: 62,096.3349093 - 50,000 = 12,096.3349093

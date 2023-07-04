@@ -669,8 +669,8 @@ library Keys {
     function positionFeeFactorKey(address market, bool forPositiveImpact) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             POSITION_FEE_FACTOR,
-            forPositiveImpact,
-            market
+            market,
+            forPositiveImpact
         ));
     }
 
