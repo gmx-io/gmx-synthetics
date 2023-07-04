@@ -64,6 +64,19 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     await setUintIfDifferent(key, minCollateralFactor, `min collateral factor ${marketToken.toString()}`);
   }
 
+  async function setMinCollateralFactorForOpenInterestMultiplier(
+    marketToken: string,
+    minCollateralFactorForOpenInterestMultiplier: number,
+    isLong: boolean
+  ) {
+    const key = keys.minCollateralFactorForOpenInterestMultiplierKey(marketToken, isLong);
+    await setUintIfDifferent(
+      key,
+      minCollateralFactorForOpenInterestMultiplier,
+      `min collateral factor for open interest multiplier ${marketToken.toString()}`
+    );
+  }
+
   async function setMaxPoolAmount(marketToken: string, token: string, maxPoolAmount: number) {
     const key = keys.maxPoolAmountKey(marketToken, token);
     await setUintIfDifferent(key, maxPoolAmount, `max pool amount ${marketToken.toString()} ${token.toString()}`);
@@ -164,6 +177,17 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     }
 
     await setMinCollateralFactor(marketToken, marketConfig.minCollateralFactor);
+
+    await setMinCollateralFactorForOpenInterestMultiplier(
+      marketToken,
+      marketConfig.minCollateralFactorForOpenInterestMultiplierLong,
+      true
+    );
+    await setMinCollateralFactorForOpenInterestMultiplier(
+      marketToken,
+      marketConfig.minCollateralFactorForOpenInterestMultiplierShort,
+      false
+    );
 
     await setMaxOpenInterest(marketToken, true, marketConfig.maxOpenInterestForLongs);
     await setMaxOpenInterest(marketToken, false, marketConfig.maxOpenInterestForShorts);

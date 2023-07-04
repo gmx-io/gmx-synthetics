@@ -150,6 +150,8 @@ describe("Exchange.MarketDecreaseOrder", () => {
     // if we want to have a min collateral factor of 0.1 when open interest is 200,000
     // then minCollateralFactorForOpenInterestMultiplier * 200,000 = 0.1
     // minCollateralFactorForOpenInterestMultiplier: 0.1 / 200,000 = 5e-7
+    // 0.1 is divided by 200,000 instead of 200,000 * (10^30) because the open interest
+    // is divided (10^30) when applying the minCollateralFactorForOpenInterestMultiplier
     await dataStore.setUint(
       keys.minCollateralFactorForOpenInterestMultiplierKey(ethUsdMarket.marketToken, true),
       decimalToFloat(5, 7)
