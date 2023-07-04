@@ -227,11 +227,11 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(350, 8),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
-      negativePositionImpactFactor: expandDecimals(5, 11), // 0.3% for 60,000,000 USD of imbalance
-      positivePositionImpactFactor: expandDecimals(25, 12), // 0.15% for 60,000,000 USD of imbalance
+      negativePositionImpactFactor: expandDecimals(12, 11), // 0.3% for 25,000,000 USD of imbalance
+      positivePositionImpactFactor: expandDecimals(12, 11), // 0.3% for 25,000,000 USD of imbalance
 
-      negativeSwapImpactFactor: expandDecimals(5, 11), // 0.3% for 60,000,000 USD of imbalance
-      positiveSwapImpactFactor: expandDecimals(25, 12), // 0.15% for 60,000,000 USD of imbalance
+      negativeSwapImpactFactor: expandDecimals(12, 11), // 0.3% for 25,000,000 USD of imbalance
+      positiveSwapImpactFactor: expandDecimals(12, 11), // 0.3% for 25,000,000 USD of imbalance
 
       fundingFactor: expandDecimals(3, 16), // 1% per year for 1,000,000 USD of imbalance
     },
@@ -246,10 +246,10 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
       negativePositionImpactFactor: expandDecimals(12, 11), // 0.3% for 25,000,000 USD of imbalance
-      positivePositionImpactFactor: expandDecimals(6, 11), // 0.15% for 25,000,000 USD of imbalance
+      positivePositionImpactFactor: expandDecimals(12, 11), // 0.3% for 25,000,000 USD of imbalance
 
       negativeSwapImpactFactor: expandDecimals(12, 11), // 0.3% for 25,000,000 USD of imbalance
-      positiveSwapImpactFactor: expandDecimals(6, 11), // 0.15% for 25,000,000 USD of imbalance
+      positiveSwapImpactFactor: expandDecimals(12, 11), //0.3% for 25,000,000 USD of imbalance
 
       fundingFactor: expandDecimals(3, 16), // 1% per year for 1,000,000 USD of imbalance
     },
@@ -404,11 +404,11 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(350, 8),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
-      negativePositionImpactFactor: expandDecimals(5, 11), // 0.3% for 60,000,000 USD of imbalance
-      positivePositionImpactFactor: expandDecimals(25, 12), // 0.15% for 60,000,000 USD of imbalance
+      negativePositionImpactFactor: expandDecimals(12, 11), // 0.3% for 25,000,000 USD of imbalance
+      positivePositionImpactFactor: expandDecimals(12, 11), // 0.3% for 25,000,000 USD of imbalance
 
-      negativeSwapImpactFactor: expandDecimals(5, 11), // 0.3% for 60,000,000 USD of imbalance
-      positiveSwapImpactFactor: expandDecimals(25, 12), // 0.15% for 60,000,000 USD of imbalance
+      negativeSwapImpactFactor: expandDecimals(12, 11), // 0.3% for 25,000,000 USD of imbalance
+      positiveSwapImpactFactor: expandDecimals(12, 11), //0.3% for 25,000,000 USD of imbalance
 
       fundingFactor: expandDecimals(3, 16), // 1% per year for 1,000,000 USD of imbalance
     },
@@ -423,10 +423,10 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
       negativePositionImpactFactor: expandDecimals(12, 11), // 0.3% for 25,000,000 USD of imbalance
-      positivePositionImpactFactor: expandDecimals(6, 11), // 0.15% for 25,000,000 USD of imbalance
+      positivePositionImpactFactor: expandDecimals(12, 11), // 0.3% for 25,000,000 USD of imbalance
 
       negativeSwapImpactFactor: expandDecimals(12, 11), // 0.3% for 25,000,000 USD of imbalance
-      positiveSwapImpactFactor: expandDecimals(6, 11), // 0.15% for 25,000,000 USD of imbalance
+      positiveSwapImpactFactor: expandDecimals(12, 11), //0.3% for 25,000,000 USD of imbalance
 
       fundingFactor: expandDecimals(3, 16), // 1% per year for 1,000,000 USD of imbalance
     },
