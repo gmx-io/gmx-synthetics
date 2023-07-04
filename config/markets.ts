@@ -227,7 +227,7 @@ const config: {
 } = {
   arbitrum: [
     {
-      tokens: { indexToken: "BTC", longToken: "WBTC", shortToken: "USDC" },
+      tokens: { indexToken: "BTC", longToken: "WBTC.e", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:BTC/USD"),
       virtualMarketId: hashString("SPOT:BTC/USD"),
 
@@ -599,7 +599,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
     },
     {
-      tokens: { longToken: "USDC", shortToken: "DAI" },
+      tokens: { longToken: "USDC", shortToken: "DAI.e" },
 
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
@@ -660,7 +660,6 @@ const config: {
       minPnlFactorAfterAdlShorts: decimalToFloat(1, 2), // 1%
     },
   ],
-  avalanche: [],
   avalancheFuji: [
     { tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" } },
     {
