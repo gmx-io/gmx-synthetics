@@ -147,7 +147,7 @@ const baseMarketConfig: BaseMarketConfig = {
   borrowingExponentFactorForLongs: decimalToFloat(1),
   borrowingExponentFactorForShorts: decimalToFloat(1),
 
-  fundingFactor: decimalToFloat(1, 6), // 0.0001% / second
+  fundingFactor: decimalToFloat(16, 9), // ~50% per year for a 100% skew
   fundingExponentFactor: decimalToFloat(1),
 };
 
@@ -245,8 +245,6 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
-
-      fundingFactor: decimalToFloat(3, 16), // 1% per year for 1,000,000 USD of imbalance
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
@@ -267,8 +265,6 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
-
-      fundingFactor: decimalToFloat(3, 16), // 1% per year for 1,000,000 USD of imbalance
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "USDC" },
@@ -291,8 +287,6 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 2,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
-
-      fundingFactor: decimalToFloat(3, 15), // 1% per year for 100,000 USD of imbalance
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
@@ -313,8 +307,6 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 2,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
-
-      fundingFactor: decimalToFloat(3, 15), // 1% per year for 100,000 USD of imbalance
     },
     {
       tokens: { indexToken: "LTC", longToken: "WETH", shortToken: "USDC" },
@@ -337,8 +329,6 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(25, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(25, 10),
-
-      fundingFactor: decimalToFloat(3, 15), // 1% per year for 100,000 USD of imbalance
     },
     {
       tokens: { indexToken: "UNI", longToken: "UNI", shortToken: "USDC" },
@@ -359,8 +349,6 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 250,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(4, 8),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(4, 8),
-
-      fundingFactor: decimalToFloat(3, 15), // 1% per year for 100,000 USD of imbalance
     },
     {
       tokens: { indexToken: "LINK", longToken: "LINK", shortToken: "USDC" },
@@ -381,8 +369,6 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 1,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(1, 8),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(1, 8),
-
-      fundingFactor: decimalToFloat(3, 15), // 1% per year for 100,000 USD of imbalance
     },
     {
       tokens: { indexToken: "ARB", longToken: "ARB", shortToken: "USDC" },
@@ -403,8 +389,6 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 1,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(1, 8),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(1, 8),
-
-      fundingFactor: decimalToFloat(3, 15), // 1% per year for 100,000 USD of imbalance
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDC.e" },
@@ -454,8 +438,6 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
-
-      fundingFactor: decimalToFloat(3, 16), // 1% per year for 1,000,000 USD of imbalance
     },
     {
       tokens: { indexToken: "WETH.e", longToken: "WETH.e", shortToken: "USDC" },
@@ -476,8 +458,6 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
-
-      fundingFactor: decimalToFloat(3, 16), // 1% per year for 1,000,000 USD of imbalance
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WAVAX", shortToken: "USDC" },
@@ -500,8 +480,6 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 2,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
-
-      fundingFactor: decimalToFloat(3, 15), // 1% per year for 100,000 USD of imbalance
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
@@ -522,8 +500,6 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 2,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
-
-      fundingFactor: decimalToFloat(3, 15), // 1% per year for 100,000 USD of imbalance
     },
     {
       tokens: { indexToken: "LTC", longToken: "WAVAX", shortToken: "USDC" },
@@ -546,8 +522,6 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(25, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(25, 10),
-
-      fundingFactor: decimalToFloat(3, 15), // 1% per year for 100,000 USD of imbalance
     },
     {
       tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" },
@@ -568,8 +542,6 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 500,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 8),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 8),
-
-      fundingFactor: decimalToFloat(3, 15), // 1% per year for 100,000 USD of imbalance
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDT.e" },
