@@ -134,6 +134,7 @@ const baseMarketConfig: BaseMarketConfig = {
 
   swapFeeFactorForPositiveImpact: decimalToFloat(5, 4), // 0.05%,
   swapFeeFactorForNegativeImpact: decimalToFloat(5, 4), // 0.05%,
+
   negativeSwapImpactFactor: decimalToFloat(1, 5), // 0.001%
   positiveSwapImpactFactor: decimalToFloat(5, 6), // 0.0005%
   swapImpactExponentFactor: decimalToFloat(2, 0), // 2
@@ -285,7 +286,7 @@ const config: {
 
       // use the swap impact factor for WETH
       negativeSwapImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(6, 11), // 0.15% for 25,000,000 USD of imbalance
+      positiveSwapImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
 
       // minCollateralFactor of 0.01 (1%) when open interest is 2,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
@@ -331,7 +332,7 @@ const config: {
 
       // use the swap impact factor for WETH
       negativeSwapImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(6, 11), // 0.15% for 25,000,000 USD of imbalance
+      positiveSwapImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
 
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(25, 10),
@@ -372,10 +373,10 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(6, 9), // 0.3% for 500,000 USD of imbalance
-      positivePositionImpactFactor: decimalToFloat(6, 9), // 0.15% for 500,000 USD of imbalance
+      positivePositionImpactFactor: decimalToFloat(3, 9), // 0.15% for 500,000 USD of imbalance
 
       negativeSwapImpactFactor: decimalToFloat(6, 9), // 0.3% for 500,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(6, 9), // 0.15% for 500,000 USD of imbalance
+      positiveSwapImpactFactor: decimalToFloat(3, 9), // 0.15% for 500,000 USD of imbalance
 
       // minCollateralFactor of 0.01 (1%) when open interest is 1,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(1, 8),
@@ -394,10 +395,10 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(6, 9), // 0.3% for 500,000 USD of imbalance
-      positivePositionImpactFactor: decimalToFloat(6, 9), // 0.15% for 500,000 USD of imbalance
+      positivePositionImpactFactor: decimalToFloat(3, 9), // 0.15% for 500,000 USD of imbalance
 
       negativeSwapImpactFactor: decimalToFloat(6, 9), // 0.3% for 500,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(6, 9), // 0.15% for 500,000 USD of imbalance
+      positiveSwapImpactFactor: decimalToFloat(3, 9), // 0.15% for 500,000 USD of imbalance
 
       // minCollateralFactor of 0.01 (1%) when open interest is 1,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(1, 8),
