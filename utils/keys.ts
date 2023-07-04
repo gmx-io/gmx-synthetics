@@ -301,8 +301,8 @@ export function swapImpactPoolAmountKey(market: string, token: string) {
   return hashData(["bytes32", "address", "address"], [SWAP_IMPACT_POOL_AMOUNT, market, token]);
 }
 
-export function swapFeeFactorKey(market: string) {
-  return hashData(["bytes32", "address"], [SWAP_FEE_FACTOR, market]);
+export function swapFeeFactorKey(market: string, forPositiveImpact: boolean) {
+  return hashData(["bytes32", "address", "bool"], [SWAP_FEE_FACTOR, market, forPositiveImpact]);
 }
 
 export function swapImpactFactorKey(market: string, isPositive: boolean) {
@@ -329,8 +329,8 @@ export function maxPositionImpactFactorForLiquidationsKey(market: string) {
   return hashData(["bytes32", "address"], [MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS, market]);
 }
 
-export function positionFeeFactorKey(market: string) {
-  return hashData(["bytes32", "address"], [POSITION_FEE_FACTOR, market]);
+export function positionFeeFactorKey(market: string, forPositiveImpact: boolean) {
+  return hashData(["bytes32", "address", "bool"], [POSITION_FEE_FACTOR, market, forPositiveImpact]);
 }
 
 export function latestAdlBlockKey(market: string, isLong: boolean) {

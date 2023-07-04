@@ -94,7 +94,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             heartbeatDuration: (24 + 1) * 60 * 60,
           },
         },
-        WBTC: {
+        "WBTC.e": {
           priceFeed: {
             // use the BTC price feed since the oracle would report the BTC price as well
             address: "0x6ce185860a4963106506C203335A2910413708e9",
@@ -233,7 +233,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             heartbeatDuration: (24 + 1) * 60 * 60,
           },
         },
-        DAI: {
+        "DAI.e": {
           priceFeed: {
             address: "0x51D7180edA2260cc4F6e4EebB82FEF5c3c2B8300",
             decimals: 8,

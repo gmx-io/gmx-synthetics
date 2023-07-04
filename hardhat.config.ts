@@ -43,6 +43,27 @@ const config: HardhatUserConfig = {
     },
     arbitrum: {
       url: "https://arb1.arbitrum.io/rpc",
+      chainId: 42161,
+      accounts: [process.env.DEPLOYER_KEY].filter(Boolean),
+      verify: {
+        etherscan: {
+          apiUrl: "https://arbiscan.io/",
+          apiKey: process.env.ARBISCAN_API_KEY,
+        },
+      },
+      blockGasLimit: 20_000_000,
+    },
+    avalanche: {
+      url: "https://api.avax.network/ext/bc/C/rpc",
+      chainId: 43114,
+      accounts: [process.env.DEPLOYER_KEY].filter(Boolean),
+      verify: {
+        etherscan: {
+          apiUrl: "https://snowtrace.io/",
+          apiKey: process.env.SNOWTRACE_API_KEY,
+        },
+      },
+      blockGasLimit: 15_000_000,
     },
     arbitrumGoerli: {
       url: "https://goerli-rollup.arbitrum.io/rpc",
@@ -75,8 +96,10 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       // hardhat-etherscan plugin uses "avalancheFujiTestnet" name
-      avalancheFujiTestnet: process.env.SNOWTRACE_API_KEY,
+      arbitrumOne: process.env.ARBISCAN_API_KEY,
+      avalanche: process.env.SNOWTRACE_API_KEY,
       arbitrumGoerli: process.env.ARBISCAN_API_KEY,
+      avalancheFujiTestnet: process.env.SNOWTRACE_API_KEY,
     },
   },
   gasReporter: {

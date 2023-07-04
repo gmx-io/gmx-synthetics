@@ -2,8 +2,6 @@ import { ethers } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { getSyntheticTokenAddress } from "../utils/token";
 
-// https://docs.chain.link/data-feeds/price-feeds/addresses?network=avalanche
-
 // synthetic token without corresponding token
 // address will be generated in runtime in hardhat.config.ts
 // should not be deployed
@@ -52,7 +50,7 @@ const config: {
       synthetic: true,
       decimals: 8,
     },
-    WBTC: {
+    "WBTC.e": {
       address: "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
       decimals: 8,
       transferGasLimit: 200 * 1000,
@@ -143,6 +141,7 @@ const config: {
     WAVAX: {
       address: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
       decimals: 18,
+      wrappedNative: true,
       transferGasLimit: 200 * 1000,
     },
     USDC: {
@@ -165,7 +164,7 @@ const config: {
       decimals: 6,
       transferGasLimit: 200 * 1000,
     },
-    DAI: {
+    "DAI.e": {
       address: "0xd586E7F844cEa2F87f50152665BCbc2C279D8d70",
       decimals: 18,
       transferGasLimit: 200 * 1000,

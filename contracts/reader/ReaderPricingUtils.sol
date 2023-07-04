@@ -74,13 +74,6 @@ library ReaderPricingUtils {
         cache.tokenInPrice = MarketUtils.getCachedTokenPrice(tokenIn, market, prices);
         cache.tokenOutPrice = MarketUtils.getCachedTokenPrice(cache.tokenOut, market, prices);
 
-        SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
-            dataStore,
-            market.marketToken,
-            amountIn,
-            uiFeeReceiver
-        );
-
         int256 priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(
             SwapPricingUtils.GetPriceImpactUsdParams(
                 dataStore,
@@ -89,9 +82,17 @@ library ReaderPricingUtils {
                 cache.tokenOut,
                 cache.tokenInPrice.midPrice(),
                 cache.tokenOutPrice.midPrice(),
-                (fees.amountAfterFees * cache.tokenInPrice.midPrice()).toInt256(),
-                -(fees.amountAfterFees * cache.tokenInPrice.midPrice()).toInt256()
+                (amountIn * cache.tokenInPrice.midPrice()).toInt256(),
+                -(amountIn * cache.tokenInPrice.midPrice()).toInt256()
             )
+        );
+
+        SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
+            dataStore,
+            market.marketToken,
+            amountIn,
+            priceImpactUsd > 0, // forPositiveImpact
+            uiFeeReceiver
         );
 
         int256 impactAmount;
@@ -191,13 +192,6 @@ library ReaderPricingUtils {
         Price.Props memory tokenInPrice,
         Price.Props memory tokenOutPrice
     ) external view returns (int256 priceImpactUsdBeforeCap, int256 priceImpactAmount) {
-        SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
-            dataStore,
-            market.marketToken,
-            amountIn,
-            address(0)
-        );
-
         priceImpactUsdBeforeCap = SwapPricingUtils.getPriceImpactUsd(
             SwapPricingUtils.GetPriceImpactUsdParams(
                 dataStore,
@@ -206,8 +200,8 @@ library ReaderPricingUtils {
                 tokenOut,
                 tokenInPrice.midPrice(),
                 tokenOutPrice.midPrice(),
-                (fees.amountAfterFees * tokenInPrice.midPrice()).toInt256(),
-                -(fees.amountAfterFees * tokenInPrice.midPrice()).toInt256()
+                (amountIn * tokenInPrice.midPrice()).toInt256(),
+                -(amountIn * tokenInPrice.midPrice()).toInt256()
             )
         );
 
