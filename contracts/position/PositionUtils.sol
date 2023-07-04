@@ -366,13 +366,14 @@ library PositionUtils {
         }
 
         PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams(
-            dataStore,
-            referralStorage,
-            position,
-            cache.collateralTokenPrice,
-            market.longToken,
-            market.shortToken,
-            position.sizeInUsd(),
+            dataStore, // dataStore
+            referralStorage, // referralStorage
+            position, // position
+            cache.collateralTokenPrice, //collateralTokenPrice
+            cache.priceImpactUsd >= 0, // forPositiveImpact
+            market.longToken, // longToken
+            market.shortToken, // shortToken
+            position.sizeInUsd(), // sizeDeltaUsd
             address(0) // uiFeeReceiver
         );
 

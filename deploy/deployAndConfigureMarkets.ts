@@ -233,12 +233,30 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       `market token transfer gas limit`
     );
 
-    for (const name of ["positionFeeFactor", "positionImpactExponentFactor", "fundingFactor"]) {
+    for (const name of ["positionImpactExponentFactor", "fundingFactor"]) {
       if (marketConfig[name]) {
         const value = marketConfig[name];
         const key = keys[`${name}Key`](marketToken);
         await setUintIfDifferent(key, value, `${name} for ${marketToken.toString()}`);
       }
+    }
+
+    if (marketConfig.positionFeeFactorForPositiveImpact) {
+      const key = keys.positionFeeFactor(marketToken, true);
+      await setUintIfDifferent(
+        key,
+        marketConfig.positionFeeFactorForPositiveImpact,
+        `positionFeeFactorForPositiveImpact ${marketToken.toString()}`
+      );
+    }
+
+    if (marketConfig.positionFeeFactorForNegativeImpact) {
+      const key = keys.positionFeeFactor(marketToken, false);
+      await setUintIfDifferent(
+        key,
+        marketConfig.positionFeeFactorForNegativeImpact,
+        `positionFeeFactorForPositiveImpact ${marketToken.toString()}`
+      );
     }
 
     if (marketConfig.borrowingFactorForLongs) {

@@ -329,8 +329,8 @@ export function maxPositionImpactFactorForLiquidationsKey(market: string) {
   return hashData(["bytes32", "address"], [MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS, market]);
 }
 
-export function positionFeeFactorKey(market: string) {
-  return hashData(["bytes32", "address"], [POSITION_FEE_FACTOR, market]);
+export function positionFeeFactorKey(market: string, forPositivePriceImpact: boolean) {
+  return hashData(["bytes32", "address", "bool"], [POSITION_FEE_FACTOR, market, forPositivePriceImpact]);
 }
 
 export function latestAdlBlockKey(market: string, isLong: boolean) {

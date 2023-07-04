@@ -36,6 +36,7 @@ library PositionPricingUtils {
         IReferralStorage referralStorage;
         Position.Props position;
         Price.Props collateralTokenPrice;
+        bool forPositiveImpact;
         address longToken;
         address shortToken;
         uint256 sizeDeltaUsd;
@@ -332,6 +333,7 @@ library PositionPricingUtils {
             params.dataStore,
             params.referralStorage,
             params.collateralTokenPrice,
+            params.forPositiveImpact,
             params.position.account(),
             params.position.market(),
             params.sizeDeltaUsd
@@ -468,6 +470,7 @@ library PositionPricingUtils {
         DataStore dataStore,
         IReferralStorage referralStorage,
         Price.Props memory collateralTokenPrice,
+        bool forPositiveImpact,
         address account,
         address market,
         uint256 sizeDeltaUsd
@@ -485,7 +488,7 @@ library PositionPricingUtils {
             fees.referral.traderDiscountFactor
         ) = ReferralUtils.getReferralInfo(referralStorage, account);
 
-        fees.positionFeeFactor = dataStore.getUint(Keys.positionFeeFactorKey(market));
+        fees.positionFeeFactor = dataStore.getUint(Keys.positionFeeFactorKey(market, forPositiveImpact));
         fees.positionFeeAmount = Precision.applyFactor(sizeDeltaUsd, fees.positionFeeFactor) / collateralTokenPrice.min;
 
         fees.referral.totalRebateAmount = Precision.applyFactor(fees.positionFeeAmount, fees.referral.totalRebateFactor);

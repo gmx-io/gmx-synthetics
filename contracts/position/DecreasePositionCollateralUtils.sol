@@ -116,14 +116,15 @@ library DecreasePositionCollateralUtils {
         );
 
         PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams(
-            params.contracts.dataStore,
-            params.contracts.referralStorage,
-            params.position,
-            cache.collateralTokenPrice,
-            params.market.longToken,
-            params.market.shortToken,
-            params.order.sizeDeltaUsd(),
-            params.order.uiFeeReceiver()
+            params.contracts.dataStore, // dataStore
+            params.contracts.referralStorage, // referralStorage
+            params.position, // position
+            cache.collateralTokenPrice, // collateralTokenPrice
+            values.priceImpactUsd >= 0, // forPositiveImpact
+            params.market.longToken, // longToken
+            params.market.shortToken, // shortToken
+            params.order.sizeDeltaUsd(), // sizeDeltaUsd
+            params.order.uiFeeReceiver() // uiFeeReceiver
         );
 
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
