@@ -260,7 +260,7 @@ library IncreasePositionUtils {
             params.contracts.referralStorage, // referralStorage
             params.position, // position
             collateralTokenPrice, // collateralTokenPrice
-            priceImpactUsd >= 0, // forPositiveImpact
+            priceImpactUsd > 0, // forPositiveImpact
             params.market.longToken, // longToken
             params.market.shortToken, // shortToken
             params.order.sizeDeltaUsd(), // sizeDeltaUsd
