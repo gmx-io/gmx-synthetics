@@ -34,7 +34,9 @@ export type BaseMarketConfig = {
   maxPnlFactorForWithdrawalsLongs: BigNumberish;
   maxPnlFactorForWithdrawalsShorts: BigNumberish;
 
-  positionFeeFactor: BigNumberish;
+  positionFeeFactorForPositiveImpact: BigNumberish;
+  positionFeeFactorForNegativeImpact: BigNumberish;
+
   negativePositionImpactFactor: BigNumberish;
   positivePositionImpactFactor: BigNumberish;
   positionImpactExponentFactor: BigNumberish;
@@ -112,7 +114,9 @@ const baseMarketConfig: BaseMarketConfig = {
   maxPnlFactorForWithdrawalsLongs: decimalToFloat(8, 1), // 80%
   maxPnlFactorForWithdrawalsShorts: decimalToFloat(8, 1), // 80%
 
-  positionFeeFactor: decimalToFloat(5, 4), // 0.05%
+  positionFeeFactorForPositiveImpact: decimalToFloat(5, 4), // 0.05%
+  positionFeeFactorForNegativeImpact: decimalToFloat(5, 4), // 0.05%
+
   negativePositionImpactFactor: decimalToFloat(1, 7), // 0.00001%
   positivePositionImpactFactor: decimalToFloat(5, 8), // 0.000005%
   positionImpactExponentFactor: decimalToFloat(2, 0), // 2

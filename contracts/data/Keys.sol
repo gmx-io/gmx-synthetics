@@ -664,10 +664,12 @@ library Keys {
 
     // @dev key for position fee factor
     // @param market the market address to check
+    // @param forPositiveImpact whether the fee is for an action that has a positive price impact
     // @return key for position fee factor
-    function positionFeeFactorKey(address market) internal pure returns (bytes32) {
+    function positionFeeFactorKey(address market, bool forPositiveImpact) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             POSITION_FEE_FACTOR,
+            forPositiveImpact,
             market
         ));
     }

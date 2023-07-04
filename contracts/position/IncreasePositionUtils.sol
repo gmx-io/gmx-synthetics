@@ -104,12 +104,15 @@ library IncreasePositionUtils {
             );
         }
 
+        (cache.priceImpactUsd, cache.priceImpactAmount, cache.sizeDeltaInTokens, cache.executionPrice) = getExecutionPrice(params, prices.indexTokenPrice);
+
         // process the collateral for the given position and order
         PositionPricingUtils.PositionFees memory fees;
         (cache.collateralDeltaAmount, fees) = processCollateral(
             params,
             cache.collateralTokenPrice,
-            collateralIncrementAmount.toInt256()
+            collateralIncrementAmount.toInt256(),
+            cache.priceImpactUsd
         );
 
         // check if there is sufficient collateral for the position
@@ -120,8 +123,6 @@ library IncreasePositionUtils {
             revert Errors.InsufficientCollateralAmount(params.position.collateralAmount(), cache.collateralDeltaAmount);
         }
         params.position.setCollateralAmount(Calc.sumReturnUint256(params.position.collateralAmount(), cache.collateralDeltaAmount));
-
-        (cache.priceImpactUsd, cache.priceImpactAmount, cache.sizeDeltaInTokens, cache.executionPrice) = getExecutionPrice(params, prices.indexTokenPrice);
 
         // if there is a positive impact, the impact pool amount should be reduced
         // if there is a negative impact, the impact pool amount should be increased
@@ -251,17 +252,19 @@ library IncreasePositionUtils {
     function processCollateral(
         PositionUtils.UpdatePositionParams memory params,
         Price.Props memory collateralTokenPrice,
-        int256 collateralDeltaAmount
+        int256 collateralDeltaAmount,
+        int256 priceImpactUsd
     ) internal returns (int256, PositionPricingUtils.PositionFees memory) {
         PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams(
-            params.contracts.dataStore,
-            params.contracts.referralStorage,
-            params.position,
-            collateralTokenPrice,
-            params.market.longToken,
-            params.market.shortToken,
-            params.order.sizeDeltaUsd(),
-            params.order.uiFeeReceiver()
+            params.contracts.dataStore, // dataStore
+            params.contracts.referralStorage, // referralStorage
+            params.position, // position
+            collateralTokenPrice, // collateralTokenPrice
+            priceImpactUsd >= 0, // forPositiveImpact
+            params.market.longToken, // longToken
+            params.market.shortToken, // shortToken
+            params.order.sizeDeltaUsd(), // sizeDeltaUsd
+            params.order.uiFeeReceiver() // uiFeeReceiver
         );
 
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(getPositionFeesParams);
