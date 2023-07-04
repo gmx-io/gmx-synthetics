@@ -45,7 +45,9 @@ export type BaseMarketConfig = {
   positiveMaxPositionImpactFactor: BigNumberish;
   maxPositionImpactFactorForLiquidations: BigNumberish;
 
-  swapFeeFactor: BigNumberish;
+  swapFeeFactorForPositiveImpact: BigNumberish;
+  swapFeeFactorForNegativeImpact: BigNumberish;
+
   negativeSwapImpactFactor: BigNumberish;
   positiveSwapImpactFactor: BigNumberish;
   swapImpactExponentFactor: BigNumberish;
@@ -125,7 +127,8 @@ const baseMarketConfig: BaseMarketConfig = {
   positiveMaxPositionImpactFactor: decimalToFloat(1, 2), // 1%
   maxPositionImpactFactorForLiquidations: decimalToFloat(1, 2), // 1%
 
-  swapFeeFactor: decimalToFloat(5, 4), // 0.05%,
+  swapFeeFactorForPositiveImpact: decimalToFloat(5, 4), // 0.05%,
+  swapFeeFactorForNegativeImpact: decimalToFloat(5, 4), // 0.05%,
   negativeSwapImpactFactor: decimalToFloat(1, 5), // 0.001%
   positiveSwapImpactFactor: decimalToFloat(5, 6), // 0.0005%
   swapImpactExponentFactor: decimalToFloat(2, 0), // 2
@@ -168,7 +171,8 @@ const synthethicMarketConfig: Partial<BaseMarketConfig> = {
 const stablecoinSwapMarketConfig: Partial<BaseMarketConfig> = {
   swapOnly: true,
 
-  swapFeeFactor: decimalToFloat(1, 4), // 0.01%,
+  swapFeeFactorForPositiveImpact: decimalToFloat(1, 4), // 0.01%,
+  swapFeeFactorForNegativeImpact: decimalToFloat(1, 4), // 0.01%,
 
   negativeSwapImpactFactor: expandDecimals(1, 10), // 0.01% for 1,000,000 USD of imbalance
   positiveSwapImpactFactor: expandDecimals(1, 10), // 0.01% for 1,000,000 USD of imbalance

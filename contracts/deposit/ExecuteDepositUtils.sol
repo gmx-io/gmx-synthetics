@@ -252,6 +252,7 @@ library ExecuteDepositUtils {
             params.dataStore,
             _params.market.marketToken,
             _params.amount,
+            _params.priceImpactUsd > 0, // forPositiveImpact
             _params.uiFeeReceiver
         );
 

@@ -235,11 +235,12 @@ library SwapPricingUtils {
         DataStore dataStore,
         address marketToken,
         uint256 amount,
+        bool forPositiveImpact,
         address uiFeeReceiver
     ) internal view returns (SwapFees memory) {
         SwapFees memory fees;
 
-        uint256 feeFactor = dataStore.getUint(Keys.swapFeeFactorKey(marketToken));
+        uint256 feeFactor = dataStore.getUint(Keys.swapFeeFactorKey(marketToken, forPositiveImpact));
         uint256 swapFeeReceiverFactor = dataStore.getUint(Keys.SWAP_FEE_RECEIVER_FACTOR);
 
         uint256 feeAmount = Precision.applyFactor(amount, feeFactor);

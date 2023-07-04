@@ -700,10 +700,11 @@ library Keys {
     // @dev key for swap fee factor
     // @param market the market address to check
     // @return key for swap fee factor
-    function swapFeeFactorKey(address market) internal pure returns (bytes32) {
+    function swapFeeFactorKey(address market, bool forPositiveImpact) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             SWAP_FEE_FACTOR,
-            market
+            market,
+            forPositiveImpact
         ));
     }
 

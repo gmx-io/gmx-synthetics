@@ -192,10 +192,26 @@ library SwapUtils {
         cache.tokenInPrice = params.oracle.getPrimaryPrice(_params.tokenIn);
         cache.tokenOutPrice = params.oracle.getPrimaryPrice(cache.tokenOut);
 
+        // note that this may not be entirely accurate since the effect of the
+        // swap fees are not accounted for
+        int256 priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(
+            SwapPricingUtils.GetPriceImpactUsdParams(
+                params.dataStore,
+                _params.market,
+                _params.tokenIn,
+                cache.tokenOut,
+                cache.tokenInPrice.midPrice(),
+                cache.tokenOutPrice.midPrice(),
+                (_params.amountIn * cache.tokenInPrice.midPrice()).toInt256(),
+                -(_params.amountIn * cache.tokenInPrice.midPrice()).toInt256()
+            )
+        );
+
         SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
             params.dataStore,
             _params.market.marketToken,
             _params.amountIn,
+            priceImpactUsd > 0, // forPositiveImpact
             params.uiFeeReceiver
         );
 
@@ -216,19 +232,6 @@ library SwapUtils {
             _params.tokenIn,
             fees.uiFeeAmount,
             Keys.UI_SWAP_FEE_TYPE
-        );
-
-        int256 priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(
-            SwapPricingUtils.GetPriceImpactUsdParams(
-                params.dataStore,
-                _params.market,
-                _params.tokenIn,
-                cache.tokenOut,
-                cache.tokenInPrice.midPrice(),
-                cache.tokenOutPrice.midPrice(),
-                (fees.amountAfterFees * cache.tokenInPrice.midPrice()).toInt256(),
-                -(fees.amountAfterFees * cache.tokenInPrice.midPrice()).toInt256()
-            )
         );
 
         if (priceImpactUsd > 0) {

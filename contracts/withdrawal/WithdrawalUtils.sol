@@ -321,6 +321,7 @@ library WithdrawalUtils {
             params.dataStore,
             market.marketToken,
             cache.longTokenOutputAmount,
+            false, // forPositiveImpact
             withdrawal.uiFeeReceiver()
         );
 
@@ -347,6 +348,7 @@ library WithdrawalUtils {
             params.dataStore,
             market.marketToken,
             cache.shortTokenOutputAmount,
+            false, // forPositiveImpact
             withdrawal.uiFeeReceiver()
         );
 
