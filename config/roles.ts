@@ -26,13 +26,13 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     arbitrum: [
       {
         account: "0xe7bfff2ab721264887230037940490351700a068",
-        roles: ["CONTROLLER"],
+        roles: ["CONTROLLER", "MARKET_KEEPER"],
       },
     ],
     avalanche: [
       {
         account: "0xe7bfff2ab721264887230037940490351700a068",
-        roles: ["CONTROLLER"],
+        roles: ["CONTROLLER", "MARKET_KEEPER"],
       },
     ],
     arbitrumGoerli: [

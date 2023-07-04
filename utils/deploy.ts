@@ -1,5 +1,6 @@
 import { DeployFunction, DeployResult, DeploymentsExtension } from "hardhat-deploy/dist/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { getExistingContractAddresses } from "../config/overwrite";
 
 export async function deployContract(name, args, contractOptions = {}) {
   const contractFactory = await ethers.getContractFactory(name, contractOptions);
@@ -40,18 +41,20 @@ export function createDeployFunction({
     const { deploy, get } = deployments;
     const { deployer } = await getNamedAccounts();
 
-    const dependencyContracts = {};
+    const dependencyContracts = getExistingContractAddresses(network);
 
     if (dependencyNames) {
       for (let i = 0; i < dependencyNames.length; i++) {
         const dependencyName = dependencyNames[i];
-        dependencyContracts[dependencyName] = await get(dependencyName);
+        if (dependencyContracts[dependencyName] === undefined) {
+          dependencyContracts[dependencyName] = await get(dependencyName);
+        }
       }
     }
 
     let deployArgs = [];
     if (getDeployArgs) {
-      deployArgs = await getDeployArgs({ dependencyContracts });
+      deployArgs = await getDeployArgs({ dependencyContracts, network });
     }
 
     const libraries = {};
