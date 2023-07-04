@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import * as keys from "../utils/keys";
-import { setAddressIfDifferent, setUintIfDifferent } from "../utils/dataStore";
+import { setAddressIfDifferent, setUintIfDifferent, setBoolIfDifferent } from "../utils/dataStore";
 
 const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
   const generalConfig = await gmx.getGeneral();
@@ -99,6 +99,12 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
     keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR,
     generalConfig.executionGasFeeMultiplierFactor,
     "execution gas fee multiplier factor"
+  );
+
+  await setBoolIfDifferent(
+    keys.SKIP_BORROWING_FEE_FOR_SMALLER_SIDE,
+    generalConfig.skipBorrowingFeeForSmallerSide,
+    "skip borrowing fee for smaller side"
   );
 };
 

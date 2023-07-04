@@ -50,6 +50,15 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     );
   }
 
+  async function setOpenInterestReserveFactor(marketToken: string, isLong: boolean, reserveFactor: number) {
+    const key = keys.openInterestReserveFactorKey(marketToken, isLong);
+    await setUintIfDifferent(
+      key,
+      reserveFactor,
+      `reserve factor ${marketToken.toString()} ${isLong ? "long" : "short"}`
+    );
+  }
+
   async function setMinCollateralFactor(marketToken: string, minCollateralFactor: number) {
     const key = keys.minCollateralFactorKey(marketToken);
     await setUintIfDifferent(key, minCollateralFactor, `min collateral factor ${marketToken.toString()}`);
@@ -116,11 +125,19 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       );
     }
 
+    // set virtual market id for swaps
     const virtualMarketId = marketConfig.virtualMarketId || ethers.constants.HashZero;
     await setBytes32IfDifferent(
       keys.virtualMarketIdKey(marketToken),
       virtualMarketId,
       `virtual market id for market ${marketToken.toString()}`
+    );
+
+    const virtualTokenId = marketConfig.virtualTokenIdForIndexToken || ethers.constants.HashZero;
+    await setBytes32IfDifferent(
+      keys.virtualTokenIdKey(indexToken),
+      virtualTokenId,
+      `virtual token id for indexToken ${indexToken.toString()}`
     );
 
     // the rest params are not used for swap-only markets
@@ -135,6 +152,9 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
 
     await setReserveFactor(marketToken, true, marketConfig.reserveFactorLongs);
     await setReserveFactor(marketToken, false, marketConfig.reserveFactorShorts);
+
+    await setOpenInterestReserveFactor(marketToken, true, marketConfig.openInterestReserveFactorLongs);
+    await setOpenInterestReserveFactor(marketToken, false, marketConfig.openInterestReserveFactorShorts);
 
     await setMaxPnlFactor(
       keys.MAX_PNL_FACTOR_FOR_TRADERS,

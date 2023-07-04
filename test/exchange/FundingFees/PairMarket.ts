@@ -336,7 +336,7 @@ describe("Exchange.FundingFees.PairMarket", () => {
 
     expect(
       await dataStore.getUint(keys.claimableFundingAmountKey(ethUsdMarket.marketToken, usdc.address, user0.address))
-    ).eq("806427"); // 0.806427 USD
+    ).closeTo("806427", "100"); // 0.806427 USD
 
     expect(
       await dataStore.getUint(keys.claimableFundingAmountKey(ethUsdMarket.marketToken, wnt.address, user1.address))

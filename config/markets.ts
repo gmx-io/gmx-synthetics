@@ -8,6 +8,9 @@ export type BaseMarketConfig = {
   reserveFactorLongs: BigNumberish;
   reserveFactorShorts: BigNumberish;
 
+  openInterestReserveFactorLongs: BigNumberish;
+  openInterestReserveFactorShorts: BigNumberish;
+
   minCollateralFactor: BigNumberish;
 
   maxLongTokenPoolAmount: BigNumberish;
@@ -57,26 +60,27 @@ export type BaseMarketConfig = {
   fundingExponentFactor: BigNumberish;
 
   virtualMarketId?: string;
+  virtualTokenIdForIndexToken?: string;
 };
 
-export type MarketConfig = Partial<BaseMarketConfig> &
-  (
-    | {
-        tokens: {
-          indexToken: string;
-          longToken: string;
-          shortToken: string;
-        };
-        swapOnly?: never;
-      }
-    | {
-        tokens: {
-          longToken: string;
-          shortToken: string;
-        };
-        swapOnly: true;
-      }
-  );
+export type SpotMarketConfig = Partial<BaseMarketConfig> & {
+  tokens: {
+    longToken: string;
+    shortToken: string;
+  };
+  swapOnly: true;
+};
+
+export type PerpMarketConfig = Partial<BaseMarketConfig> & {
+  tokens: {
+    indexToken: string;
+    longToken: string;
+    shortToken: string;
+  };
+  swapOnly?: never;
+};
+
+export type MarketConfig = SpotMarketConfig | PerpMarketConfig;
 
 const baseMarketConfig: BaseMarketConfig = {
   minCollateralFactor: decimalToFloat(1, 2), // 1%
@@ -87,23 +91,26 @@ const baseMarketConfig: BaseMarketConfig = {
   maxOpenInterestForLongs: decimalToFloat(1_000_000_000),
   maxOpenInterestForShorts: decimalToFloat(1_000_000_000),
 
-  reserveFactorLongs: decimalToFloat(7, 1), // 70%,
-  reserveFactorShorts: decimalToFloat(7, 1), // 70%,
+  reserveFactorLongs: decimalToFloat(90, 2), // 90%,
+  reserveFactorShorts: decimalToFloat(90, 2), // 90%,
 
-  maxPnlFactorForTradersLongs: decimalToFloat(7, 1), // 70%
-  maxPnlFactorForTradersShorts: decimalToFloat(7, 1), // 70%
+  openInterestReserveFactorLongs: decimalToFloat(8, 1), // 80%,
+  openInterestReserveFactorShorts: decimalToFloat(8, 1), // 80%,
 
-  maxPnlFactorForAdlLongs: decimalToFloat(7, 1), // 70%, no ADL until normal operation
-  maxPnlFactorForAdlShorts: decimalToFloat(7, 1), // 70%, no ADL until normal operation
+  maxPnlFactorForTradersLongs: decimalToFloat(8, 1), // 80%
+  maxPnlFactorForTradersShorts: decimalToFloat(8, 1), // 80%
 
-  minPnlFactorAfterAdlLongs: decimalToFloat(7, 1), // 70%, no ADL until normal operation
-  minPnlFactorAfterAdlShorts: decimalToFloat(7, 1), // 70%, no ADL until normal operation
+  maxPnlFactorForAdlLongs: decimalToFloat(8, 1), // 80%, no ADL until normal operation
+  maxPnlFactorForAdlShorts: decimalToFloat(8, 1), // 80%, no ADL until normal operation
 
-  maxPnlFactorForDepositsLongs: decimalToFloat(7, 1), // 70%
-  maxPnlFactorForDepositsShorts: decimalToFloat(7, 1), // 70%
+  minPnlFactorAfterAdlLongs: decimalToFloat(8, 1), // 80%, no ADL until normal operation
+  minPnlFactorAfterAdlShorts: decimalToFloat(8, 1), // 80%, no ADL until normal operation
 
-  maxPnlFactorForWithdrawalsLongs: decimalToFloat(7, 1), // 70%
-  maxPnlFactorForWithdrawalsShorts: decimalToFloat(7, 1), // 70%
+  maxPnlFactorForDepositsLongs: decimalToFloat(8, 1), // 80%
+  maxPnlFactorForDepositsShorts: decimalToFloat(8, 1), // 80%
+
+  maxPnlFactorForWithdrawalsLongs: decimalToFloat(8, 1), // 80%
+  maxPnlFactorForWithdrawalsShorts: decimalToFloat(8, 1), // 80%
 
   positionFeeFactor: decimalToFloat(5, 4), // 0.05%
   negativePositionImpactFactor: decimalToFloat(1, 7), // 0.00001%
@@ -132,8 +139,11 @@ const baseMarketConfig: BaseMarketConfig = {
 };
 
 const synthethicMarketConfig: Partial<BaseMarketConfig> = {
-  reserveFactorLongs: decimalToFloat(7, 1), // 50%,
-  reserveFactorShorts: decimalToFloat(7, 1), // 50%,
+  reserveFactorLongs: decimalToFloat(7, 1), // 70%,
+  reserveFactorShorts: decimalToFloat(7, 1), // 70%,
+
+  openInterestReserveFactorLongs: decimalToFloat(6, 1), // 60%,
+  openInterestReserveFactorShorts: decimalToFloat(6, 1), // 60%,
 
   maxPnlFactorForTradersLongs: decimalToFloat(5, 1), // 50%
   maxPnlFactorForTradersShorts: decimalToFloat(5, 1), // 50%
@@ -151,9 +161,23 @@ const synthethicMarketConfig: Partial<BaseMarketConfig> = {
   maxPnlFactorForWithdrawalsShorts: decimalToFloat(3, 1), // 30%
 };
 
-const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
+const stablecoinSwapMarketConfig: Partial<SpotMarketConfig> & {
+  swapOnly: true;
+} = {
+  swapOnly: true,
+
+  swapFeeFactor: decimalToFloat(1, 4), // 0.01%,
+
+  negativeSwapImpactFactor: expandDecimals(1, 10), // 0.01% for 1,000,000 USD of imbalance
+  positiveSwapImpactFactor: expandDecimals(1, 10), // 0.01% for 1,000,000 USD of imbalance
+};
+
+const hardhatBaseMarketConfig: Partial<MarketConfig> = {
   reserveFactorLongs: decimalToFloat(5, 1), // 50%,
   reserveFactorShorts: decimalToFloat(5, 1), // 50%,
+
+  openInterestReserveFactorLongs: decimalToFloat(5, 1), // 50%,
+  openInterestReserveFactorShorts: decimalToFloat(5, 1), // 50%,
 
   minCollateralFactor: decimalToFloat(1, 2), // 1%
 
@@ -189,7 +213,8 @@ const config: {
   arbitrum: [
     {
       tokens: { indexToken: "BTC", longToken: "WBTC", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:BTC/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:BTC/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
 
       ...baseMarketConfig,
 
@@ -205,8 +230,9 @@ const config: {
       fundingFactor: expandDecimals(3, 16), // 1% per year for 1,000,000 USD of imbalance
     },
     {
-      tokens: { indexToken: "ETH", longToken: "WETH", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:ETH/USD"),
+      tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:ETH/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...baseMarketConfig,
 
@@ -223,7 +249,8 @@ const config: {
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:DOGE/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:DOGE/USD"),
+      virtualMarketId: hashString("SPOT:DOGE/USD"),
 
       ...baseMarketConfig,
       ...synthethicMarketConfig,
@@ -242,11 +269,12 @@ const config: {
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:SOL/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:SOL/USD"),
+      virtualMarketId: hashString("SPOT:SOL/USD"),
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(50_000, 18),
+      maxLongTokenPoolAmount: expandDecimals(50_000, 9),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
       negativePositionImpactFactor: expandDecimals(375, 11), // 0.3% for 800,000 USD of imbalance
@@ -259,7 +287,8 @@ const config: {
     },
     {
       tokens: { indexToken: "LTC", longToken: "WETH", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:LTC/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:LTC/USD"),
+      virtualMarketId: hashString("SPOT:LTC/USD"),
 
       ...baseMarketConfig,
       ...synthethicMarketConfig,
@@ -278,7 +307,8 @@ const config: {
     },
     {
       tokens: { indexToken: "UNI", longToken: "UNI", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:UNI/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:UNI/USD"),
+      virtualMarketId: hashString("SPOT:UNI/USD"),
 
       ...baseMarketConfig,
 
@@ -295,7 +325,8 @@ const config: {
     },
     {
       tokens: { indexToken: "LINK", longToken: "LINK", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:LINK/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:LINK/USD"),
+      virtualMarketId: hashString("SPOT:LINK/USD"),
 
       ...baseMarketConfig,
 
@@ -312,7 +343,8 @@ const config: {
     },
     {
       tokens: { indexToken: "ARB", longToken: "ARB", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:ARB/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:ARB/USD"),
+      virtualMarketId: hashString("SPOT:ARB/USD"),
 
       ...baseMarketConfig,
 
@@ -327,11 +359,39 @@ const config: {
 
       fundingFactor: expandDecimals(3, 15), // 1% per year for 100,000 USD of imbalance
     },
+    {
+      tokens: { longToken: "USDC", shortToken: "USDC.e" },
+
+      ...baseMarketConfig,
+      ...stablecoinSwapMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
+    },
+    {
+      tokens: { longToken: "USDC", shortToken: "USDT" },
+
+      ...baseMarketConfig,
+      ...stablecoinSwapMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
+    },
+    {
+      tokens: { longToken: "USDC", shortToken: "DAI" },
+
+      ...baseMarketConfig,
+      ...stablecoinSwapMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 18),
+    },
   ],
   avalanche: [
     {
-      tokens: { indexToken: "BTC", longToken: "BTC.b", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:BTC/USD"),
+      tokens: { indexToken: "BTC.b", longToken: "BTC.b", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:BTC/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
 
       ...baseMarketConfig,
 
@@ -347,8 +407,9 @@ const config: {
       fundingFactor: expandDecimals(3, 16), // 1% per year for 1,000,000 USD of imbalance
     },
     {
-      tokens: { indexToken: "ETH", longToken: "WETH.e", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:ETH/USD"),
+      tokens: { indexToken: "WETH.e", longToken: "WETH.e", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:ETH/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...baseMarketConfig,
 
@@ -365,7 +426,8 @@ const config: {
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WAVAX", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:DOGE/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:DOGE/USD"),
+      virtualMarketId: hashString("SPOT:DOGE/USD"),
 
       ...baseMarketConfig,
       ...synthethicMarketConfig,
@@ -384,11 +446,12 @@ const config: {
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:SOL/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:SOL/USD"),
+      virtualMarketId: hashString("SPOT:SOL/USD"),
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(50_000, 18),
+      maxLongTokenPoolAmount: expandDecimals(50_000, 9),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
       negativePositionImpactFactor: expandDecimals(375, 11), // 0.3% for 800,000 USD of imbalance
@@ -401,7 +464,8 @@ const config: {
     },
     {
       tokens: { indexToken: "LTC", longToken: "WAVAX", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:LTC/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:LTC/USD"),
+      virtualMarketId: hashString("SPOT:LTC/USD"),
 
       ...baseMarketConfig,
       ...synthethicMarketConfig,
@@ -419,8 +483,9 @@ const config: {
       fundingFactor: expandDecimals(3, 15), // 1% per year for 100,000 USD of imbalance
     },
     {
-      tokens: { indexToken: "AVAX", longToken: "WAVAX", shortToken: "USDC" },
-      virtualMarketId: hashString("PERP:AVAX/USD"),
+      tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:AVAX/USD"),
+      virtualMarketId: hashString("SPOT:AVAX/USD"),
 
       ...baseMarketConfig,
 
@@ -434,6 +499,42 @@ const config: {
       positiveSwapImpactFactor: expandDecimals(5, 9), // 0.15% for 300,000,000 USD of imbalance
 
       fundingFactor: expandDecimals(3, 15), // 1% per year for 100,000 USD of imbalance
+    },
+    {
+      tokens: { longToken: "USDC", shortToken: "USDT.e" },
+
+      ...baseMarketConfig,
+      ...stablecoinSwapMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
+    },
+    {
+      tokens: { longToken: "USDC", shortToken: "USDC.e" },
+
+      ...baseMarketConfig,
+      ...stablecoinSwapMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
+    },
+    {
+      tokens: { longToken: "USDT", shortToken: "USDT.e" },
+
+      ...baseMarketConfig,
+      ...stablecoinSwapMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
+    },
+    {
+      tokens: { longToken: "USDC", shortToken: "DAI" },
+
+      ...baseMarketConfig,
+      ...stablecoinSwapMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 18),
     },
   ],
   arbitrumGoerli: [

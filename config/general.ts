@@ -37,6 +37,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       positionFeeReceiverFactor: 0,
       swapFeeReceiverFactor: 0,
       borrowingFeeReceiverFactor: 0,
+
+      skipBorrowingFeeForSmallerSide: false,
     };
   }
 
@@ -75,6 +77,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       positionFeeReceiverFactor: decimalToFloat(37, 2), // 37%
       swapFeeReceiverFactor: decimalToFloat(37, 2), // 37%
       borrowingFeeReceiverFactor: decimalToFloat(37, 2), // 37%
+
+      skipBorrowingFeeForSmallerSide: true,
     };
   }
 
@@ -112,5 +116,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     positionFeeReceiverFactor: decimalToFloat(63, 2), // 63%
     swapFeeReceiverFactor: decimalToFloat(63, 2), // 63%
     borrowingFeeReceiverFactor: decimalToFloat(63, 2), // 63%
+
+    skipBorrowingFeeForSmallerSide: true,
   };
 }

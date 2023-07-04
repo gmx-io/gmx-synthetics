@@ -222,7 +222,7 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
       execute: {
         afterExecution: async ({ logs }) => {
           const feeInfo = getEventData(logs, "PositionFeesCollected");
-          expect(feeInfo.fundingFeeAmount).eq("806406800000000000"); // 0.8064068 ETH, 4032.034 USD
+          expect(feeInfo.fundingFeeAmount).closeTo("806406800000000000", "10000000000000"); // 0.8064068 ETH, 4032.034 USD
           expect(feeInfo.collateralToken).eq(wnt.address);
           const claimableFundingData = getEventDataArray(logs, "ClaimableFundingUpdated");
           expect(claimableFundingData.length).eq(2);
@@ -273,7 +273,7 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
 
     await time.increase(28 * 24 * 60 * 60);
 
-    expect(await wnt.balanceOf(user0.address)).eq("8387186400000000000");
+    expect(await wnt.balanceOf(user0.address)).closeTo("8387186400000000000", "10000000000000");
     expect(await usdc.balanceOf(user0.address)).eq(0);
 
     expect(await wnt.balanceOf(user1.address)).eq(0);

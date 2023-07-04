@@ -48,20 +48,126 @@ const config: {
   [network: string]: TokensConfig;
 } = {
   arbitrum: {
-    WETH: {
-      address: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
-      decimals: 18,
-      wrappedNative: true,
-      transferGasLimit: 200 * 1000,
+    BTC: {
+      synthetic: true,
+      decimals: 8,
     },
     WBTC: {
       address: "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
       decimals: 8,
       transferGasLimit: 200 * 1000,
     },
+    WETH: {
+      address: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+      decimals: 18,
+      wrappedNative: true,
+      transferGasLimit: 200 * 1000,
+    },
+    DOGE: {
+      synthetic: true,
+      decimals: 8,
+    },
+    SOL: {
+      address: "0x2bcC6D6CdBbDC0a4071e48bb3B969b06B3330c07",
+      decimals: 9,
+      transferGasLimit: 200 * 1000,
+    },
+    LTC: {
+      synthetic: true,
+      decimals: 8,
+    },
+    UNI: {
+      address: "0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+    },
+    LINK: {
+      address: "0xf97f4df75117a78c1A5a0DBb814Af92458539FB4",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+    },
+    ARB: {
+      address: "0x912CE59144191C1204E64559FE8253a0e49E6548",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+    },
     USDC: {
+      address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+      decimals: 6,
+      transferGasLimit: 200 * 1000,
+    },
+    "USDC.e": {
       address: "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
       decimals: 6,
+      transferGasLimit: 200 * 1000,
+    },
+    USDT: {
+      address: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+      decimals: 6,
+      transferGasLimit: 200 * 1000,
+    },
+    DAI: {
+      address: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+    },
+  },
+  avalanche: {
+    BTC: {
+      synthetic: true,
+      decimals: 8,
+    },
+    "BTC.b": {
+      address: "0x152b9d0FdC40C096757F570A51E494bd4b943E50",
+      decimals: 8,
+      transferGasLimit: 200 * 1000,
+    },
+    "WETH.e": {
+      address: "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+    },
+    DOGE: {
+      synthetic: true,
+      decimals: 8,
+    },
+    SOL: {
+      address: "0xFE6B19286885a4F7F55AdAD09C3Cd1f906D2478F",
+      decimals: 9,
+      transferGasLimit: 200 * 1000,
+    },
+    LTC: {
+      synthetic: true,
+      decimals: 8,
+    },
+    WAVAX: {
+      address: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+    },
+    USDC: {
+      address: "0xb97ef9ef8734c71904d8002f8b6bc66dd9c48a6e",
+      decimals: 6,
+      transferGasLimit: 200 * 1000,
+    },
+    "USDC.e": {
+      address: "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+      decimals: 6,
+      transferGasLimit: 200 * 1000,
+    },
+    USDT: {
+      address: "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7",
+      decimals: 6,
+      transferGasLimit: 200 * 1000,
+    },
+    "USDT.e": {
+      address: "0xc7198437980c041c805A1EDcbA50c1Ce5db95118",
+      decimals: 6,
+      transferGasLimit: 200 * 1000,
+    },
+    DAI: {
+      address: "0xd586E7F844cEa2F87f50152665BCbc2C279D8d70",
+      decimals: 18,
       transferGasLimit: 200 * 1000,
     },
   },
@@ -132,13 +238,6 @@ const config: {
     TRX: {
       decimals: 18,
       synthetic: true,
-    },
-  },
-  avalanche: {
-    WAVAX: {
-      address: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
-      decimals: 18,
-      transferGasLimit: 200 * 1000,
     },
   },
   avalancheFuji: {
