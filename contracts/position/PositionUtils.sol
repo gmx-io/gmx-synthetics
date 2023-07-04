@@ -143,6 +143,7 @@ library PositionUtils {
         uint256 collateralUsd;
         int256 usdDeltaForPriceImpact;
         int256 priceImpactUsd;
+        bool hasPositiveImpact;
         int256 minCollateralUsd;
         int256 minCollateralUsdForLeverage;
         int256 remainingCollateralUsd;
@@ -343,6 +344,8 @@ library PositionUtils {
             )
         );
 
+        cache.hasPositiveImpact = cache.priceImpactUsd > 0;
+
         // even if there is a large positive price impact, positions that would be liquidated
         // if the positive price impact is reduced should not be allowed to be created
         // as they would be easily liquidated if the price impact changes
@@ -370,7 +373,7 @@ library PositionUtils {
             referralStorage, // referralStorage
             position, // position
             cache.collateralTokenPrice, //collateralTokenPrice
-            cache.priceImpactUsd >= 0, // forPositiveImpact
+            cache.hasPositiveImpact, // forPositiveImpact
             market.longToken, // longToken
             market.shortToken, // shortToken
             position.sizeInUsd(), // sizeDeltaUsd

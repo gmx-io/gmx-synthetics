@@ -120,7 +120,7 @@ library DecreasePositionCollateralUtils {
             params.contracts.referralStorage, // referralStorage
             params.position, // position
             cache.collateralTokenPrice, // collateralTokenPrice
-            values.priceImpactUsd >= 0, // forPositiveImpact
+            values.priceImpactUsd > 0, // forPositiveImpact
             params.market.longToken, // longToken
             params.market.shortToken, // shortToken
             params.order.sizeDeltaUsd(), // sizeDeltaUsd

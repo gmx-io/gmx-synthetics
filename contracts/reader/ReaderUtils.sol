@@ -190,7 +190,7 @@ library ReaderUtils {
             referralStorage, // referralStorage
             positionInfo.position, // position
             cache.collateralTokenPrice, // collateralTokenPrice
-            positionInfo.executionPriceResult.priceImpactUsd >= 0, // forPositiveImpact
+            positionInfo.executionPriceResult.priceImpactUsd > 0, // forPositiveImpact
             cache.market.longToken, // longToken
             cache.market.shortToken, // shortToken
             sizeDeltaUsd, // sizeDeltaUsd
