@@ -2,8 +2,6 @@ import { ethers } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { getSyntheticTokenAddress } from "../utils/token";
 
-// https://docs.chain.link/data-feeds/price-feeds/addresses?network=avalanche
-
 // synthetic token without corresponding token
 // address will be generated in runtime in hardhat.config.ts
 // should not be deployed

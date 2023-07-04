@@ -18,10 +18,14 @@ const func = createDeployFunction({
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
   libraryNames: ["MarketStoreUtils", "OrderUtils", "OrderStoreUtils", "OrderEventUtils"],
-  afterDeploy: async ({ deployedContract, getNamedAccounts, deployments }) => {
+  afterDeploy: async ({ deployedContract, getNamedAccounts, deployments, network }) => {
     const { deployer } = await getNamedAccounts();
     const { execute } = deployments;
-    await execute("ReferralStorage", { from: deployer, log: true }, "setHandler", deployedContract.address, true);
+
+    if (!["arbitrum", "avalanche"].includes(network.name)) {
+      await execute("ReferralStorage", { from: deployer, log: true }, "setHandler", deployedContract.address, true);
+    }
+
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
   },
 });
