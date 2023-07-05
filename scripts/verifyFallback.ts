@@ -22,6 +22,13 @@ async function getIsContractVerified(address: string) {
     if (res.result?.includes("rate limit reached")) {
       throw new Error("Rate limit reached");
     }
+    if (res.result?.includes("Invalid API URL endpoint")) {
+      throw new Error("Invalid API URL endpoint");
+    }
+
+    if (!res.result?.includes("Contract source code not verified")) {
+      console.warn("%s: %s", res.message, res.result);
+    }
   }
 
   return res.status === "1";

@@ -47,7 +47,7 @@ const config: HardhatUserConfig = {
       accounts: [process.env.DEPLOYER_KEY].filter(Boolean),
       verify: {
         etherscan: {
-          apiUrl: "https://arbiscan.io/",
+          apiUrl: "https://api.arbiscan.io/",
           apiKey: process.env.ARBISCAN_API_KEY,
         },
       },
@@ -59,7 +59,7 @@ const config: HardhatUserConfig = {
       accounts: [process.env.DEPLOYER_KEY].filter(Boolean),
       verify: {
         etherscan: {
-          apiUrl: "https://snowtrace.io/",
+          apiUrl: "https://api.snowtrace.io/",
           apiKey: process.env.SNOWTRACE_API_KEY,
         },
       },

@@ -69,24 +69,24 @@ export type BaseMarketConfig = {
   virtualTokenIdForIndexToken?: string;
 };
 
-export type MarketConfig = Partial<BaseMarketConfig> &
-  (
-    | {
-        tokens: {
-          indexToken: string;
-          longToken: string;
-          shortToken: string;
-        };
-        swapOnly?: never;
-      }
-    | {
-        tokens: {
-          longToken: string;
-          shortToken: string;
-        };
-        swapOnly: true;
-      }
-  );
+export type SpotMarketConfig = Partial<BaseMarketConfig> & {
+  tokens: {
+    longToken: string;
+    shortToken: string;
+  };
+  swapOnly: true;
+};
+
+export type PerpMarketConfig = Partial<BaseMarketConfig> & {
+  tokens: {
+    indexToken: string;
+    longToken: string;
+    shortToken: string;
+  };
+  swapOnly?: never;
+};
+
+export type MarketConfig = SpotMarketConfig | PerpMarketConfig;
 
 const baseMarketConfig: BaseMarketConfig = {
   minCollateralFactor: decimalToFloat(1, 2), // 1%
@@ -174,7 +174,9 @@ const synthethicMarketConfig: Partial<BaseMarketConfig> = {
   maxPnlFactorForWithdrawalsShorts: decimalToFloat(3, 1), // 30%
 };
 
-const stablecoinSwapMarketConfig: Partial<BaseMarketConfig> = {
+const stablecoinSwapMarketConfig: Partial<SpotMarketConfig> & {
+  swapOnly: true;
+} = {
   swapOnly: true,
 
   swapFeeFactorForPositiveImpact: decimalToFloat(1, 4), // 0.01%,
@@ -184,7 +186,7 @@ const stablecoinSwapMarketConfig: Partial<BaseMarketConfig> = {
   positiveSwapImpactFactor: expandDecimals(1, 10), // 0.01% for 1,000,000 USD of imbalance
 };
 
-const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
+const hardhatBaseMarketConfig: Partial<MarketConfig> = {
   reserveFactorLongs: decimalToFloat(5, 1), // 50%,
   reserveFactorShorts: decimalToFloat(5, 1), // 50%,
 
@@ -630,7 +632,13 @@ const config: {
 
       minPnlFactorAfterAdlLongs: decimalToFloat(1, 2), // 1%
       minPnlFactorAfterAdlShorts: decimalToFloat(1, 2), // 1%
+
+      maxLongTokenPoolAmount: expandDecimals(10, 18),
+      maxShortTokenPoolAmount: expandDecimals(300_000, 6),
     },
+
+    { tokens: { indexToken: "WBTC", longToken: "USDC", shortToken: "USDT" } },
+    { tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "DAI" } },
   ],
   avalancheFuji: [
     { tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" } },
@@ -685,7 +693,13 @@ const config: {
 
       minPnlFactorAfterAdlLongs: decimalToFloat(1, 2), // 1%
       minPnlFactorAfterAdlShorts: decimalToFloat(1, 2), // 1%
+
+      maxLongTokenPoolAmount: expandDecimals(10, 18),
+      maxShortTokenPoolAmount: expandDecimals(300_000, 6),
     },
+
+    { tokens: { indexToken: "WBTC", longToken: "USDC", shortToken: "USDT" } },
+    { tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "DAI" } },
   ],
   hardhat: [
     {
