@@ -7,8 +7,7 @@ export type BaseMarketConfig = {
   reserveFactorLongs: BigNumberish;
   reserveFactorShorts: BigNumberish;
 
-  minCollateralFactorForLongs: BigNumberish;
-  minCollateralFactorForShorts: BigNumberish;
+  minCollateralFactor: BigNumberish;
 
   maxLongTokenPoolAmount: BigNumberish;
   maxShortTokenPoolAmount: BigNumberish;
@@ -54,6 +53,8 @@ export type BaseMarketConfig = {
 
   fundingFactor: BigNumberish;
   fundingExponentFactor: BigNumberish;
+
+  virtualMarketId?: string;
 };
 
 export type MarketConfig = Partial<BaseMarketConfig> &
@@ -79,8 +80,7 @@ const baseMarketConfig: BaseMarketConfig = {
   reserveFactorLongs: decimalToFloat(5, 1), // 50%,
   reserveFactorShorts: decimalToFloat(5, 1), // 50%,
 
-  minCollateralFactorForLongs: decimalToFloat(1, 2), // 1%
-  minCollateralFactorForShorts: decimalToFloat(1, 2), // 1%
+  minCollateralFactor: decimalToFloat(1, 2), // 1%
 
   maxLongTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
   maxShortTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
@@ -104,27 +104,27 @@ const baseMarketConfig: BaseMarketConfig = {
   maxPnlFactorForWithdrawalsShorts: decimalToFloat(3, 1), // 30%
 
   positionFeeFactor: decimalToFloat(5, 4), // 0.05%
-  positivePositionImpactFactor: decimalToFloat(2, 7), // 0.00002 %
-  negativePositionImpactFactor: decimalToFloat(1, 7), // 0.00001 %
+  positivePositionImpactFactor: decimalToFloat(1, 7), // 0.00001 %
+  negativePositionImpactFactor: decimalToFloat(2, 7), // 0.00002 %
   positionImpactExponentFactor: decimalToFloat(2, 0), // 2
 
   positiveMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%
   negativeMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%
 
-  swapFeeFactor: decimalToFloat(1, 3), // 0.1%,
-  positiveSwapImpactFactor: decimalToFloat(2, 5), // 0.002 %
-  negativeSwapImpactFactor: decimalToFloat(1, 5), // 0.001 %
+  swapFeeFactor: decimalToFloat(5, 4), // 0.05%,
+  positiveSwapImpactFactor: decimalToFloat(1, 5), // 0.001 %
+  negativeSwapImpactFactor: decimalToFloat(2, 5), // 0.002 %
   swapImpactExponentFactor: decimalToFloat(2, 0), // 2
 
   minCollateralUsd: decimalToFloat(1, 0), // 1 USD
 
-  borrowingFactorForLongs: decimalToFloat(1, 7), // 0.00001% / second
-  borrowingFactorForShorts: decimalToFloat(1, 7), // 0.00001% / second
+  borrowingFactorForLongs: decimalToFloat(1, 5), // 0.001% / second
+  borrowingFactorForShorts: decimalToFloat(1, 5), // 0.001% / second
 
   borrowingExponentFactorForLongs: decimalToFloat(1),
   borrowingExponentFactorForShorts: decimalToFloat(1),
 
-  fundingFactor: decimalToFloat(1, 7), // 0.00001% / second
+  fundingFactor: decimalToFloat(1, 6), // 0.0001% / second
   fundingExponentFactor: decimalToFloat(1),
 };
 
@@ -132,8 +132,7 @@ const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
   reserveFactorLongs: decimalToFloat(5, 1), // 50%,
   reserveFactorShorts: decimalToFloat(5, 1), // 50%,
 
-  minCollateralFactorForLongs: decimalToFloat(1, 2), // 1%
-  minCollateralFactorForShorts: decimalToFloat(1, 2), // 1%
+  minCollateralFactor: decimalToFloat(1, 2), // 1%
 
   maxLongTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
   maxShortTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
@@ -172,9 +171,18 @@ const config: {
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
+      virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
+    },
+    {
+      tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "USDC" },
     },
     {
       tokens: { indexToken: "SOL", longToken: "WETH", shortToken: "USDC" },
+      virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
+    },
+    {
+      tokens: { longToken: "USDC", shortToken: "USDT" },
+      swapOnly: true,
     },
   ],
   hardhat: [
@@ -186,7 +194,13 @@ const config: {
       swapOnly: true,
     },
     {
+      tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "USDC" },
+    },
+    {
       tokens: { indexToken: "SOL", longToken: "WETH", shortToken: "USDC" },
+    },
+    {
+      tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "USDC" },
     },
   ],
   localhost: [

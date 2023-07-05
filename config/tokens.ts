@@ -15,6 +15,7 @@ type SyntheticTokenConfig = {
   wrappedNative?: never;
   deploy?: never;
   transferGasLimit?: never;
+  virtualTokenId?: string;
 };
 
 type RealTokenConfig = {
@@ -24,6 +25,7 @@ type RealTokenConfig = {
   synthetic?: never;
   wrappedNative?: true;
   deploy?: never;
+  virtualTokenId?: string;
 };
 
 // test token to deploy in local and test networks
@@ -33,9 +35,10 @@ export type TestTokenConfig = {
   address?: never;
   decimals: number;
   transferGasLimit: number;
-  deploy?: true;
+  deploy: true;
   wrappedNative?: boolean;
   synthetic?: never;
+  virtualTokenId?: string;
 };
 
 export type TokenConfig = SyntheticTokenConfig | RealTokenConfig | TestTokenConfig;
@@ -81,13 +84,19 @@ const config: {
       decimals: 18,
     },
     USDC: {
+      address: "0x3eBDeaA0DB3FfDe96E7a0DBBAFEC961FC50F725F",
       decimals: 6,
-      deploy: true,
       transferGasLimit: 200 * 1000,
     },
-    WETH: {
-      decimals: 18,
+    USDT: {
+      decimals: 6,
+      transferGasLimit: 200 * 1000,
       deploy: true,
+    },
+    WETH: {
+      address: "0x82F0b3695Ed2324e55bbD9A9554cB4192EC3a514",
+      decimals: 18,
+      virtualTokenId: "0x275d2a6e341e6a078d4eee59b08907d1e50825031c5481f9551284f4b7ee2fb9",
       transferGasLimit: 200 * 1000,
     },
   },
@@ -97,14 +106,17 @@ const config: {
       wrappedNative: true,
       decimals: 18,
       transferGasLimit: 200 * 1000,
+      deploy: true,
     },
     WBTC: {
       decimals: 8,
       transferGasLimit: 200 * 1000,
+      deploy: true,
     },
     USDC: {
       decimals: 6,
       transferGasLimit: 200 * 1000,
+      deploy: true,
     },
     SOL: {
       synthetic: true,
@@ -116,14 +128,17 @@ const config: {
       wrappedNative: true,
       decimals: 18,
       transferGasLimit: 200 * 1000,
+      deploy: true,
     },
     WBTC: {
       decimals: 8,
       transferGasLimit: 200 * 1000,
+      deploy: true,
     },
     USDC: {
       decimals: 6,
       transferGasLimit: 200 * 1000,
+      deploy: true,
     },
     SOL: {
       synthetic: true,

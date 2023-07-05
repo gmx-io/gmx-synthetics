@@ -38,8 +38,6 @@ describe("Exchange.SwapOrder", () => {
         gasUsageLabel: "orderHandler.createOrder",
       },
       execute: {
-        tokens: [wnt.address, usdc.address],
-        prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
         gasUsageLabel: "orderHandler.executeOrder",
       },
     });
@@ -70,8 +68,6 @@ describe("Exchange.SwapOrder", () => {
         gasUsageLabel: "orderHandler.createOrder",
       },
       execute: {
-        tokens: [wnt.address, usdc.address],
-        prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
         gasUsageLabel: "orderHandler.executeOrder",
       },
     });

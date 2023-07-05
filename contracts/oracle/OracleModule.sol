@@ -10,10 +10,6 @@ import "../event/EventEmitter.sol";
 contract OracleModule {
     event OracleError(string reason);
 
-    error InvalidPrimaryPricesForSimulation(uint256 primaryTokensLength, uint256 primaryPricesLength);
-    error InvalidSecondaryPricesForSimulation(uint256 secondaryTokensLength, uint256 secondaryPricesLength);
-    error EndOfOracleSimulation();
-
     // @dev sets oracle prices, perform any additional tasks required,
     // and clear the oracle prices after
     //
@@ -54,20 +50,20 @@ contract OracleModule {
         OracleUtils.SimulatePricesParams memory params
     ) {
         if (params.primaryTokens.length != params.primaryPrices.length) {
-            revert InvalidPrimaryPricesForSimulation(params.primaryTokens.length, params.primaryPrices.length);
+            revert Errors.InvalidPrimaryPricesForSimulation(params.primaryTokens.length, params.primaryPrices.length);
         }
 
         if (params.secondaryTokens.length != params.secondaryPrices.length) {
-            revert InvalidSecondaryPricesForSimulation(params.secondaryTokens.length, params.secondaryPrices.length);
+            revert Errors.InvalidSecondaryPricesForSimulation(params.secondaryTokens.length, params.secondaryPrices.length);
         }
 
-        for (uint256 i = 0; i < params.primaryTokens.length; i++) {
+        for (uint256 i; i < params.primaryTokens.length; i++) {
             address token = params.primaryTokens[i];
             Price.Props memory price = params.primaryPrices[i];
             oracle.setPrimaryPrice(token, price);
         }
 
-        for (uint256 i = 0; i < params.secondaryTokens.length; i++) {
+        for (uint256 i; i < params.secondaryTokens.length; i++) {
             address token = params.secondaryTokens[i];
             Price.Props memory price = params.secondaryPrices[i];
             oracle.setSecondaryPrice(token, price);
@@ -75,6 +71,6 @@ contract OracleModule {
 
         _;
 
-        revert EndOfOracleSimulation();
+        revert Errors.EndOfOracleSimulation();
     }
 }

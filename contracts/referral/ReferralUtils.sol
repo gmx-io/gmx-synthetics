@@ -7,6 +7,7 @@ import "../data/Keys.sol";
 
 import "../event/EventEmitter.sol";
 import "../market/MarketToken.sol";
+import "../market/MarketUtils.sol";
 
 import "./IReferralStorage.sol";
 import "./ReferralTier.sol";
@@ -47,15 +48,22 @@ library ReferralUtils {
         address market,
         address token,
         address affiliate,
-        address trader,
         uint256 delta
     ) internal {
-        if (delta == 0) {
-            return;
-        }
+        if (delta == 0) { return; }
 
-        dataStore.incrementUint(Keys.affiliateRewardKey(market, token, affiliate), delta);
-        ReferralEventUtils.emitAffiliateRewardEarned(eventEmitter, market, token, affiliate, trader, delta);
+        uint256 nextValue = dataStore.incrementUint(Keys.affiliateRewardKey(market, token, affiliate), delta);
+        uint256 nextPoolValue = dataStore.incrementUint(Keys.affiliateRewardKey(market, token), delta);
+
+        ReferralEventUtils.emitAffiliateRewardUpdated(
+            eventEmitter,
+            market,
+            token,
+            affiliate,
+            delta,
+            nextValue,
+            nextPoolValue
+        );
     }
 
     // @dev Gets the referral information for the specified trader.
@@ -65,7 +73,7 @@ library ReferralUtils {
     function getReferralInfo(
         IReferralStorage referralStorage,
         address trader
-    ) internal view returns (address, uint256, uint256) {
+    ) internal view returns (bytes32, address, uint256, uint256) {
         bytes32 code = referralStorage.traderReferralCodes(trader);
         address affiliate;
         uint256 totalRebate;
@@ -83,6 +91,7 @@ library ReferralUtils {
         }
 
         return (
+            code,
             affiliate,
             Precision.basisPointsToFloat(totalRebate),
             Precision.basisPointsToFloat(discountShare)
@@ -109,11 +118,15 @@ library ReferralUtils {
         uint256 rewardAmount = dataStore.getUint(key);
         dataStore.setUint(key, 0);
 
+        uint256 nextPoolValue = dataStore.decrementUint(Keys.affiliateRewardKey(market, token), rewardAmount);
+
         MarketToken(payable(market)).transferOut(
             token,
             receiver,
             rewardAmount
         );
+
+        MarketUtils.validateMarketTokenBalance(dataStore, market);
 
         ReferralEventUtils.emitAffiliateRewardClaimed(
             eventEmitter,
@@ -121,7 +134,8 @@ library ReferralUtils {
             token,
             account,
             receiver,
-            rewardAmount
+            rewardAmount,
+            nextPoolValue
         );
     }
 }

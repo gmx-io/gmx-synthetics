@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "./ErrorUtils.sol";
+import "../error/ErrorUtils.sol";
 
 /**
  * @title PayableMulticall
@@ -18,7 +18,7 @@ abstract contract PayableMulticall {
     function multicall(bytes[] calldata data) external payable virtual returns (bytes[] memory results) {
         results = new bytes[](data.length);
 
-        for (uint256 i = 0; i < data.length; i++) {
+        for (uint256 i; i < data.length; i++) {
             (bool success, bytes memory result) = address(this).delegatecall(data[i]);
 
             if (!success) {

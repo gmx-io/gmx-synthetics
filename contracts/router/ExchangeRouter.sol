@@ -11,7 +11,7 @@ import "../exchange/WithdrawalHandler.sol";
 import "../exchange/OrderHandler.sol";
 
 import "../utils/PayableMulticall.sol";
-import "../utils/ReceiverUtils.sol";
+import "../utils/AccountUtils.sol";
 
 import "./Router.sol";
 
@@ -66,10 +66,6 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     WithdrawalHandler public immutable withdrawalHandler;
     OrderHandler public immutable orderHandler;
 
-    error InvalidClaimFundingFeesInput(uint256 marketsLength, uint256 tokensLength);
-    error InvalidClaimCollateralInput(uint256 marketsLength, uint256 tokensLength, uint256 timeKeysLength);
-    error InvalidClaimAffiliateRewardsInput(uint256 marketsLength, uint256 tokensLength);
-
     // @dev Constructor that initializes the contract with the provided Router, RoleStore, DataStore,
     // EventEmitter, DepositHandler, WithdrawalHandler, OrderHandler, and OrderStore instances
     constructor(
@@ -92,13 +88,13 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
 
     // @dev Wraps the specified amount of native tokens into WNT then sends the WNT to the specified address
     function sendWnt(address receiver, uint256 amount) external payable nonReentrant {
-        ReceiverUtils.validateReceiver(receiver);
+        AccountUtils.validateReceiver(receiver);
         TokenUtils.depositAndSendWrappedNativeToken(dataStore, receiver, amount);
     }
 
     // @dev Sends the given amount of tokens to the given address
     function sendTokens(address token, address receiver, uint256 amount) external payable nonReentrant {
-        ReceiverUtils.validateReceiver(receiver);
+        AccountUtils.validateReceiver(receiver);
         address account = msg.sender;
         router.pluginTransfer(token, account, receiver, amount);
     }
@@ -125,8 +121,12 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
 
     function cancelDeposit(bytes32 key) external payable nonReentrant {
         Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
+        if (deposit.account() == address(0)) {
+            revert Errors.EmptyDeposit();
+        }
+
         if (deposit.account() != msg.sender) {
-            revert Unauthorized(msg.sender, "account for cancelDeposit");
+            revert Errors.Unauthorized(msg.sender, "account for cancelDeposit");
         }
 
         depositHandler.cancelDeposit(key);
@@ -153,7 +153,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     function cancelWithdrawal(bytes32 key) external payable nonReentrant {
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
         if (withdrawal.account() != msg.sender) {
-            revert Unauthorized(msg.sender, "account for cancelWithdrawal");
+            revert Errors.Unauthorized(msg.sender, "account for cancelWithdrawal");
         }
 
         withdrawalHandler.cancelWithdrawal(key);
@@ -219,7 +219,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     ) external payable nonReentrant {
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         if (order.account() != msg.sender) {
-            revert Unauthorized(msg.sender, "account for updateOrder");
+            revert Errors.Unauthorized(msg.sender, "account for updateOrder");
         }
 
         orderHandler.updateOrder(
@@ -243,8 +243,12 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
      */
     function cancelOrder(bytes32 key) external payable nonReentrant {
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+        if (order.account() == address(0)) {
+            revert Errors.EmptyOrder();
+        }
+
         if (order.account() != msg.sender) {
-            revert Unauthorized(msg.sender, "account for cancelOrder");
+            revert Errors.Unauthorized(msg.sender, "account for cancelOrder");
         }
 
         orderHandler.cancelOrder(key);
@@ -266,14 +270,16 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         address receiver
     ) external payable nonReentrant {
         if (markets.length != tokens.length) {
-            revert InvalidClaimFundingFeesInput(markets.length, tokens.length);
+            revert Errors.InvalidClaimFundingFeesInput(markets.length, tokens.length);
         }
 
-        ReceiverUtils.validateReceiver(receiver);
+        FeatureUtils.validateFeature(dataStore, Keys.claimFundingFeesFeatureDisabledKey(address(this)));
+
+        AccountUtils.validateReceiver(receiver);
 
         address account = msg.sender;
 
-        for (uint256 i = 0; i < markets.length; i++) {
+        for (uint256 i; i < markets.length; i++) {
             MarketUtils.claimFundingFees(
                 dataStore,
                 eventEmitter,
@@ -292,14 +298,16 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         address receiver
     ) external payable nonReentrant {
         if (markets.length != tokens.length || tokens.length != timeKeys.length) {
-            revert InvalidClaimCollateralInput(markets.length, tokens.length, timeKeys.length);
+            revert Errors.InvalidClaimCollateralInput(markets.length, tokens.length, timeKeys.length);
         }
 
-        ReceiverUtils.validateReceiver(receiver);
+        FeatureUtils.validateFeature(dataStore, Keys.claimCollateralFeatureDisabledKey(address(this)));
+
+        AccountUtils.validateReceiver(receiver);
 
         address account = msg.sender;
 
-        for (uint256 i = 0; i < markets.length; i++) {
+        for (uint256 i; i < markets.length; i++) {
             MarketUtils.claimCollateral(
                 dataStore,
                 eventEmitter,
@@ -328,18 +336,50 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         address receiver
     ) external payable nonReentrant {
         if (markets.length != tokens.length) {
-            revert InvalidClaimAffiliateRewardsInput(markets.length, tokens.length);
+            revert Errors.InvalidClaimAffiliateRewardsInput(markets.length, tokens.length);
         }
+
+        FeatureUtils.validateFeature(dataStore, Keys.claimAffiliateRewardsFeatureDisabledKey(address(this)));
 
         address account = msg.sender;
 
-        for (uint256 i = 0; i < markets.length; i++) {
+        for (uint256 i; i < markets.length; i++) {
             ReferralUtils.claimAffiliateReward(
                 dataStore,
                 eventEmitter,
                 markets[i],
                 tokens[i],
                 account,
+                receiver
+            );
+        }
+    }
+
+    function setUiFeeFactor(uint256 uiFeeFactor) external payable nonReentrant {
+        address account = msg.sender;
+        MarketUtils.setUiFeeFactor(dataStore, eventEmitter, account, uiFeeFactor);
+    }
+
+    function claimUiFees(
+        address[] memory markets,
+        address[] memory tokens,
+        address receiver
+    ) external payable nonReentrant {
+        if (markets.length != tokens.length) {
+            revert Errors.InvalidClaimUiFeesInput(markets.length, tokens.length);
+        }
+
+        FeatureUtils.validateFeature(dataStore, Keys.claimUiFeesFeatureDisabledKey(address(this)));
+
+        address uiFeeReceiver = msg.sender;
+
+        for (uint256 i; i < markets.length; i++) {
+            FeeUtils.claimUiFees(
+                dataStore,
+                eventEmitter,
+                uiFeeReceiver,
+                markets[i],
+                tokens[i],
                 receiver
             );
         }

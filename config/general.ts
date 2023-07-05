@@ -14,8 +14,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       decreaseOrderGasLimit: 0,
       swapOrderGasLimit: 0,
 
-      tokenTransferGasLimit: 0,
-      nativeTokenTransferGasLimit: 0,
+      tokenTransferGasLimit: 200000,
+      nativeTokenTransferGasLimit: 200000,
 
       estimatedGasFeeBaseAmount: 0,
       estimatedGasFeeMultiplierFactor: 0,
@@ -23,6 +23,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       executionGasFeeBaseAmount: 0,
       executionGasFeeMultiplierFactor: 0,
 
+      maxSwapPathLength: 5,
       maxCallbackGasLimit: 2000000,
       minCollateralUsd: decimalToFloat(1),
       claimableCollateralTimeDivisor: 60 * 60,
@@ -39,8 +40,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       decreaseOrderGasLimit: 10000,
       swapOrderGasLimit: 10000,
 
-      tokenTransferGasLimit: 10000,
-      nativeTokenTransferGasLimit: 10000,
+      tokenTransferGasLimit: 200000,
+      nativeTokenTransferGasLimit: 200000,
 
       estimatedGasFeeBaseAmount: 10000,
       estimatedGasFeeMultiplierFactor: expandDecimals(1, 30),
@@ -48,6 +49,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       executionGasFeeBaseAmount: 10000,
       executionGasFeeMultiplierFactor: expandDecimals(1, 30),
 
+      maxSwapPathLength: 5,
       maxCallbackGasLimit: 2 * 1000 * 1000,
       minCollateralUsd: decimalToFloat(1),
       claimableCollateralTimeDivisor: 60 * 60,

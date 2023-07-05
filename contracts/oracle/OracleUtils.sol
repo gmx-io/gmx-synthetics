@@ -80,25 +80,6 @@ library OracleUtils {
     uint256 public constant COMPACTED_PRICE_INDEX_BIT_LENGTH = 8;
     uint256 public constant COMPACTED_PRICE_INDEX_BITMASK = Bits.BITMASK_8;
 
-    error EmptyPrimaryPrice(address token);
-    error EmptySecondaryPrice(address token);
-    error EmptyLatestPrice(address token);
-    error EmptyCustomPrice(address token);
-
-    error EmptyCompactedPrice(uint256 index);
-    error EmptyCompactedBlockNumber(uint256 index);
-    error EmptyCompactedTimestamp(uint256 index);
-
-    error OracleBlockNumbersAreNotEqual(uint256[] oracleBlockNumbers, uint256 expectedBlockNumber);
-    error OracleBlockNumbersAreSmallerThanRequired(uint256[] oracleBlockNumbers, uint256 expectedBlockNumber);
-    error OracleBlockNumberNotWithinRange(
-        uint256[] minOracleBlockNumbers,
-        uint256[] maxOracleBlockNumbers,
-        uint256 blockNumber
-    );
-
-    error InvalidSignature(address recoveredSigner, address expectedSigner);
-
     function validateBlockNumberWithinRange(
         uint256[] memory minOracleBlockNumbers,
         uint256[] memory maxOracleBlockNumbers,
@@ -109,7 +90,7 @@ library OracleUtils {
                 maxOracleBlockNumbers,
                 blockNumber
         )) {
-            revertOracleBlockNumberNotWithinRange(
+            revert Errors.OracleBlockNumberNotWithinRange(
                 minOracleBlockNumbers,
                 maxOracleBlockNumbers,
                 blockNumber
@@ -146,7 +127,7 @@ library OracleUtils {
             "getUncompactedPrice"
         );
 
-        if (price == 0) { revert EmptyCompactedPrice(index); }
+        if (price == 0) { revert Errors.EmptyCompactedPrice(index); }
 
         return price;
     }
@@ -192,7 +173,7 @@ library OracleUtils {
     function getUncompactedOracleBlockNumbers(uint256[] memory compactedOracleBlockNumbers, uint256 length) internal pure returns (uint256[] memory) {
         uint256[] memory blockNumbers = new uint256[](length);
 
-        for (uint256 i = 0; i < length; i++) {
+        for (uint256 i; i < length; i++) {
             blockNumbers[i] = getUncompactedOracleBlockNumber(compactedOracleBlockNumbers, i);
         }
 
@@ -212,7 +193,7 @@ library OracleUtils {
             "getUncompactedOracleBlockNumber"
         );
 
-        if (blockNumber == 0) { revert EmptyCompactedBlockNumber(index); }
+        if (blockNumber == 0) { revert Errors.EmptyCompactedBlockNumber(index); }
 
         return blockNumber;
     }
@@ -222,7 +203,7 @@ library OracleUtils {
     // @param index the index to get the uncompacted oracle timestamp at
     // @return the uncompacted oracle timestamp
     function getUncompactedOracleTimestamp(uint256[] memory compactedOracleTimestamps, uint256 index) internal pure returns (uint256) {
-        uint256 blockNumber = Array.getUncompactedValue(
+        uint256 timestamp = Array.getUncompactedValue(
             compactedOracleTimestamps,
             index,
             COMPACTED_TIMESTAMP_BIT_LENGTH,
@@ -230,9 +211,9 @@ library OracleUtils {
             "getUncompactedOracleTimestamp"
         );
 
-        if (blockNumber == 0) { revert EmptyCompactedTimestamp(index); }
+        if (timestamp == 0) { revert Errors.EmptyCompactedTimestamp(index); }
 
-        return blockNumber;
+        return timestamp;
     }
 
     // @dev validate the signer of a price
@@ -269,16 +250,12 @@ library OracleUtils {
 
         address recoveredSigner = ECDSA.recover(digest, signature);
         if (recoveredSigner != expectedSigner) {
-            revert InvalidSignature(recoveredSigner, expectedSigner);
+            revert Errors.InvalidSignature(recoveredSigner, expectedSigner);
         }
     }
 
     function revertOracleBlockNumbersAreNotEqual(uint256[] memory oracleBlockNumbers, uint256 expectedBlockNumber) internal pure {
-        revert OracleBlockNumbersAreNotEqual(oracleBlockNumbers, expectedBlockNumber);
-    }
-
-    function revertOracleBlockNumbersAreSmallerThanRequired(uint256[] memory oracleBlockNumbers, uint256 expectedBlockNumber) internal pure {
-        revert OracleBlockNumbersAreSmallerThanRequired(oracleBlockNumbers, expectedBlockNumber);
+        revert Errors.OracleBlockNumbersAreNotEqual(oracleBlockNumbers, expectedBlockNumber);
     }
 
     function revertOracleBlockNumberNotWithinRange(
@@ -286,23 +263,51 @@ library OracleUtils {
         uint256[] memory maxOracleBlockNumbers,
         uint256 blockNumber
     ) internal pure {
-        revert OracleBlockNumberNotWithinRange(minOracleBlockNumbers, maxOracleBlockNumbers, blockNumber);
+        revert Errors.OracleBlockNumberNotWithinRange(minOracleBlockNumbers, maxOracleBlockNumbers, blockNumber);
+    }
+
+    function isOracleError(bytes4 errorSelector) internal pure returns (bool) {
+        if (isOracleBlockNumberError(errorSelector)) {
+            return true;
+        }
+
+        if (isEmptyPriceError(errorSelector)) {
+            return true;
+        }
+
+        return false;
     }
 
     function isEmptyPriceError(bytes4 errorSelector) internal pure returns (bool) {
-        if (errorSelector == EmptyPrimaryPrice.selector) {
+        if (errorSelector == Errors.EmptyPrimaryPrice.selector) {
             return true;
         }
 
-        if (errorSelector == EmptySecondaryPrice.selector) {
+        if (errorSelector == Errors.EmptySecondaryPrice.selector) {
             return true;
         }
 
-        if (errorSelector == EmptyLatestPrice.selector) {
+        if (errorSelector == Errors.EmptyLatestPrice.selector) {
             return true;
         }
 
-        if (errorSelector == EmptyCustomPrice.selector) {
+        if (errorSelector == Errors.EmptyCustomPrice.selector) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function isOracleBlockNumberError(bytes4 errorSelector) internal pure returns (bool) {
+        if (errorSelector == Errors.OracleBlockNumbersAreNotEqual.selector) {
+            return true;
+        }
+
+        if (errorSelector == Errors.OracleBlockNumbersAreSmallerThanRequired.selector) {
+            return true;
+        }
+
+        if (errorSelector == Errors.OracleBlockNumberNotWithinRange.selector) {
             return true;
         }
 

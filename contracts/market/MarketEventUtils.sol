@@ -6,6 +6,8 @@ import "../event/EventEmitter.sol";
 import "../event/EventUtils.sol";
 import "../utils/Cast.sol";
 
+import "./MarketPoolValueInfo.sol";
+
 library MarketEventUtils {
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
@@ -14,6 +16,40 @@ library MarketEventUtils {
     using EventUtils for EventUtils.Bytes32Items;
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
+
+    function emitMarketPoolValueInfo(
+        EventEmitter eventEmitter,
+        address market,
+        MarketPoolValueInfo.Props memory props,
+        uint256 marketTokensSupply
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "market", market);
+
+        eventData.intItems.initItems(4);
+        eventData.intItems.setItem(0, "poolValue", props.poolValue);
+        eventData.intItems.setItem(1, "longPnl", props.longPnl);
+        eventData.intItems.setItem(2, "shortPnl", props.shortPnl);
+        eventData.intItems.setItem(3, "netPnl", props.netPnl);
+
+        eventData.uintItems.initItems(8);
+        eventData.uintItems.setItem(0, "longTokenAmount", props.longTokenAmount);
+        eventData.uintItems.setItem(1, "shortTokenAmount", props.shortTokenAmount);
+        eventData.uintItems.setItem(2, "longTokenUsd", props.longTokenUsd);
+        eventData.uintItems.setItem(3, "shortTokenUsd", props.shortTokenUsd);
+        eventData.uintItems.setItem(4, "totalBorrowingFees", props.totalBorrowingFees);
+        eventData.uintItems.setItem(5, "borrowingFeePoolFactor", props.borrowingFeePoolFactor);
+        eventData.uintItems.setItem(6, "impactPoolAmount", props.impactPoolAmount);
+        eventData.uintItems.setItem(7, "marketTokensSupply", marketTokensSupply);
+
+        eventEmitter.emitEventLog1(
+            "MarketPoolValueInfo",
+            Cast.toBytes32(market),
+            eventData
+        );
+    }
 
     function emitPoolAmountUpdated(
         EventEmitter eventEmitter,
@@ -297,7 +333,8 @@ library MarketEventUtils {
         address token,
         address account,
         uint256 delta,
-        uint256 nextValue
+        uint256 nextValue,
+        uint256 nextPoolValue
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -306,9 +343,10 @@ library MarketEventUtils {
         eventData.addressItems.setItem(1, "token", token);
         eventData.addressItems.setItem(2, "account", account);
 
-        eventData.uintItems.initItems(2);
+        eventData.uintItems.initItems(3);
         eventData.uintItems.setItem(0, "delta", delta);
         eventData.uintItems.setItem(1, "nextValue", nextValue);
+        eventData.uintItems.setItem(2, "nextPoolValue", nextPoolValue);
 
         eventEmitter.emitEventLog1(
             "ClaimableFundingUpdated",
@@ -323,7 +361,8 @@ library MarketEventUtils {
         address token,
         address account,
         address receiver,
-        uint256 amount
+        uint256 amount,
+        uint256 nextPoolValue
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -333,8 +372,9 @@ library MarketEventUtils {
         eventData.addressItems.setItem(2, "account", account);
         eventData.addressItems.setItem(3, "receiver", receiver);
 
-        eventData.uintItems.initItems(1);
+        eventData.uintItems.initItems(2);
         eventData.uintItems.setItem(0, "amount", amount);
+        eventData.uintItems.setItem(1, "nextPoolValue", nextPoolValue);
 
         eventEmitter.emitEventLog1(
             "FundingFeesClaimed",
@@ -378,7 +418,8 @@ library MarketEventUtils {
         uint256 timeKey,
         address account,
         uint256 delta,
-        uint256 nextValue
+        uint256 nextValue,
+        uint256 nextPoolValue
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -387,10 +428,11 @@ library MarketEventUtils {
         eventData.addressItems.setItem(1, "token", token);
         eventData.addressItems.setItem(2, "account", account);
 
-        eventData.uintItems.initItems(3);
+        eventData.uintItems.initItems(4);
         eventData.uintItems.setItem(0, "timeKey", timeKey);
         eventData.uintItems.setItem(1, "delta", delta);
         eventData.uintItems.setItem(2, "nextValue", nextValue);
+        eventData.uintItems.setItem(3, "nextPoolValue", nextPoolValue);
 
         eventEmitter.emitEventLog1(
             "ClaimableCollateralUpdated",
@@ -406,7 +448,8 @@ library MarketEventUtils {
         uint256 timeKey,
         address account,
         address receiver,
-        uint256 amount
+        uint256 amount,
+        uint256 nextPoolValue
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -416,12 +459,34 @@ library MarketEventUtils {
         eventData.addressItems.setItem(2, "account", account);
         eventData.addressItems.setItem(3, "receiver", receiver);
 
-        eventData.uintItems.initItems(2);
+        eventData.uintItems.initItems(3);
         eventData.uintItems.setItem(0, "timeKey", timeKey);
         eventData.uintItems.setItem(1, "amount", amount);
+        eventData.uintItems.setItem(2, "nextPoolValue", nextPoolValue);
 
         eventEmitter.emitEventLog1(
             "CollateralClaimed",
+            Cast.toBytes32(account),
+            eventData
+        );
+    }
+
+    function emitUiFeeFactorUpdated(
+        EventEmitter eventEmitter,
+        address account,
+        uint256 uiFeeFactor
+    ) external {
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "uiFeeFactor", uiFeeFactor);
+
+        eventEmitter.emitEventLog1(
+            "UiFeeFactorUpdated",
             Cast.toBytes32(account),
             eventData
         );

@@ -28,10 +28,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @dev the base keys that can be set
     mapping (bytes32 => bool) public allowedBaseKeys;
 
-    error InvalidBaseKey(bytes32 baseKey);
-    error InvalidFeeFactor(bytes32 baseKey, uint256 value);
-    error InvalidFactor(bytes32 baseKey, uint256 value);
-
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
@@ -206,8 +202,14 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.UPDATE_ORDER_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CANCEL_ORDER_FEATURE_DISABLED] = true;
 
+        allowedBaseKeys[Keys.CLAIM_FUNDING_FEES_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.CLAIM_COLLATERAL_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.CLAIM_UI_FEES_FEATURE_DISABLED] = true;
+
         allowedBaseKeys[Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS] = true;
         allowedBaseKeys[Keys.MAX_ORACLE_PRICE_AGE] = true;
+        allowedBaseKeys[Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR] = true;
         allowedBaseKeys[Keys.POSITION_FEE_RECEIVER_FACTOR] = true;
         allowedBaseKeys[Keys.SWAP_FEE_RECEIVER_FACTOR] = true;
         allowedBaseKeys[Keys.BORROWING_FEE_RECEIVER_FACTOR] = true;
@@ -236,8 +238,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.VIRTUAL_MARKET_ID] = true;
         allowedBaseKeys[Keys.VIRTUAL_INVENTORY_FOR_SWAPS] = true;
         allowedBaseKeys[Keys.VIRTUAL_INVENTORY_FOR_POSITIONS] = true;
-        allowedBaseKeys[Keys.THRESHOLD_POSITION_IMPACT_FACTOR_FOR_VIRTUAL_INVENTORY] = true;
-        allowedBaseKeys[Keys.THRESHOLD_SWAP_IMPACT_FACTOR_FOR_VIRTUAL_INVENTORY] = true;
 
         allowedBaseKeys[Keys.POSITION_IMPACT_FACTOR] = true;
         allowedBaseKeys[Keys.POSITION_IMPACT_EXPONENT_FACTOR] = true;
@@ -248,6 +248,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.SWAP_IMPACT_EXPONENT_FACTOR] = true;
         allowedBaseKeys[Keys.SWAP_FEE_FACTOR] = true;
 
+        allowedBaseKeys[Keys.MAX_UI_FEE_FACTOR] = true;
+
         allowedBaseKeys[Keys.ORACLE_TYPE] = true;
 
         allowedBaseKeys[Keys.RESERVE_FACTOR] = true;
@@ -255,13 +257,17 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS] = true;
         allowedBaseKeys[Keys.FUNDING_FACTOR] = true;
         allowedBaseKeys[Keys.BORROWING_FACTOR] = true;
+
+        allowedBaseKeys[Keys.CLAIMABLE_COLLATERAL_FACTOR] = true;
+
+        allowedBaseKeys[Keys.PRICE_FEED_HEARTBEAT_DURATION] = true;
     }
 
     // @dev validate that the baseKey is allowed to be used
     // @param baseKey the base key to validate
     function _validateKey(bytes32 baseKey) internal view {
         if (!allowedBaseKeys[baseKey]) {
-            revert InvalidBaseKey(baseKey);
+            revert Errors.InvalidBaseKey(baseKey);
         }
     }
 
@@ -270,10 +276,24 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param value the value to be set
     function _validateRange(bytes32 baseKey, uint256 value) internal pure {
         if (
-            baseKey == Keys.SWAP_FEE_FACTOR ||
-            baseKey == Keys.POSITION_FEE_FACTOR
+            baseKey == Keys.FUNDING_FACTOR ||
+            baseKey == Keys.BORROWING_FACTOR
         ) {
-            revert InvalidFeeFactor(baseKey, value);
+            // revert if value > 1%
+            if (value > 1 * Precision.FLOAT_PRECISION / 100) {
+                revert Errors.InvalidFeeFactor(baseKey, value);
+            }
+        }
+
+        if (
+            baseKey == Keys.SWAP_FEE_FACTOR ||
+            baseKey == Keys.POSITION_FEE_FACTOR ||
+            baseKey == Keys.MAX_UI_FEE_FACTOR
+        ) {
+            // revert if value > 5%
+            if (value > 5 * Precision.FLOAT_PRECISION / 100) {
+                revert Errors.InvalidFeeFactor(baseKey, value);
+            }
         }
 
         if (
@@ -281,13 +301,14 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.SWAP_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.BORROWING_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.MIN_COLLATERAL_FACTOR ||
-            baseKey == Keys.RESERVE_FACTOR ||
             baseKey == Keys.MAX_PNL_FACTOR ||
             baseKey == Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS ||
-            baseKey == Keys.FUNDING_FACTOR ||
-            baseKey == Keys.BORROWING_FACTOR
+            baseKey == Keys.CLAIMABLE_COLLATERAL_FACTOR
         ) {
-            revert InvalidFactor(baseKey, value);
+            // revert if value > 100%
+            if (value > Precision.FLOAT_PRECISION) {
+                revert Errors.InvalidFeeFactor(baseKey, value);
+            }
         }
     }
 }

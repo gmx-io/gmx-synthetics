@@ -29,6 +29,7 @@ library BaseOrderUtils {
     // @param addresses address values
     // @param numbers number values
     // @param orderType for order.orderType
+    // @param decreasePositionSwapType for order.decreasePositionSwapType
     // @param isLong for order.isLong
     // @param shouldUnwrapNativeToken for order.shouldUnwrapNativeToken
     struct CreateOrderParams {
@@ -49,6 +50,7 @@ library BaseOrderUtils {
     struct CreateOrderParamsAddresses {
         address receiver;
         address callbackContract;
+        address uiFeeReceiver;
         address market;
         address initialCollateralToken;
         address[] swapPath;
@@ -73,10 +75,12 @@ library BaseOrderUtils {
     // @dev ExecuteOrderParams struct used in executeOrder to avoid stack
     // too deep errors
     //
+    // @param contracts ExecuteOrderParamsContracts
     // @param key the key of the order to execute
     // @param order the order to execute
     // @param swapPathMarkets the market values of the markets in the swapPath
-    // @param oracleBlockNumbers the oracle block numbers for the prices in the oracle
+    // @param minOracleBlockNumbers the min oracle block numbers
+    // @param maxOracleBlockNumbers the max oracle block numbers
     // @param market market values of the trading market
     // @param keeper the keeper sending the transaction
     // @param startingGas the starting gas
@@ -108,17 +112,6 @@ library BaseOrderUtils {
         SwapHandler swapHandler;
         IReferralStorage referralStorage;
     }
-
-    error EmptyOrder();
-    error UnsupportedOrderType();
-    error InvalidOrderPrices(
-        uint256 primaryPrice,
-        uint256 secondaryPrice,
-        uint256 triggerPrice,
-        bool shouldValidateAscendingPrice
-    );
-    error PriceImpactLargerThanOrderSize(int256 priceImpactUsdForPriceAdjustment, uint256 sizeDeltaUsd);
-    error OrderNotFulfillableDueToPriceImpact(uint256 price, uint256 acceptablePrice);
 
     // @dev check if an orderType is a market order
     // @param orderType the order type
@@ -182,17 +175,23 @@ library BaseOrderUtils {
     // @dev set the price for increase / decrease position orders
     //
     // for market orders, set the min and max values of the customPrice for the indexToken
-    // to either secondaryPrice.min or secondaryPrice.max depending on whether the order
+    // to either primaryPrice.min or primaryPrice.max depending on whether the order
     // is an increase or decrease and whether it is for a long or short
     //
     // customPrice.min and customPrice.max will be equal in this case
     // this is because in getExecutionPrice the function will try to use the closest price which can fulfill
-    // the order, if customPrice.min is set to secondaryPrice.min and customPrice.max is set to secondaryPrice.max
+    // the order, if customPrice.min is set to primaryPrice.min and customPrice.max is set to primaryPrice.max
     // getExecutionPrice will pick a better price than what should be possible
     //
-    // for limit / stop-loss orders, the min and max value will be set to the triggerPrice
-    // and latest secondaryPrice value, this represents the price that the user desired the order
-    // to be fulfilled at and the best oracle price that the order could be fulfilled at
+    // for limit orders, the the min and max value will be set to the triggerPrice
+    // and primaryPrice value, this represents the price that the user desired the order
+    // to be fulfilled at and the best oracle price that the order can be fulfilled at
+    //
+    // for stop-loss orders, the min and max value will be set to the triggerPrice value
+    // the primaryPrice and secondaryPrice are not used because the primaryPrice is a stale
+    // value and cannot be used as it would result in executing at a better price than what
+    // should be possible, the secondaryPrice is a worse price than the triggerPrice, so
+    // it should not need to be considered
     //
     // getExecutionPrice handles the logic for selecting the execution price to use
     //
@@ -236,47 +235,64 @@ library BaseOrderUtils {
         }
 
         if (orderType == Order.OrderType.LimitIncrease ||
-            orderType == Order.OrderType.LimitDecrease ||
-            orderType == Order.OrderType.StopLossDecrease
+            orderType == Order.OrderType.LimitDecrease
         ) {
+            uint256 primaryPrice = oracle.getPrimaryPrice(indexToken).pickPrice(shouldUseMaxPrice);
+
+            // for limit increase orders:
+            //      - long: validate primaryPrice < triggerPrice
+            //      - short: validate primaryPrice > triggerPrice
+            // for limit decrease orders:
+            //      - long: validate primaryPrice > triggerPrice
+            //      - short: validate primaryPrice < triggerPrice
+            bool shouldValidateSmallerPrimaryPrice = shouldUseMaxPrice;
+
+            bool ok = shouldValidateSmallerPrimaryPrice ? primaryPrice <= triggerPrice : primaryPrice >= triggerPrice;
+
+            if (!ok) {
+                revert Errors.InvalidLimitOrderPrices(primaryPrice, triggerPrice, shouldValidateSmallerPrimaryPrice);
+            }
+
+            if (shouldValidateSmallerPrimaryPrice) {
+                oracle.setCustomPrice(indexToken, Price.Props(
+                    primaryPrice, // min price that order can be executed with
+                    triggerPrice // max price that order can be executed with
+                ));
+            } else {
+                oracle.setCustomPrice(indexToken, Price.Props(
+                    triggerPrice, // min price that order can be executed with
+                    primaryPrice // max price that order can be executed with
+                ));
+            }
+
+            return;
+        }
+
+        if (orderType == Order.OrderType.StopLossDecrease) {
             uint256 primaryPrice = oracle.getPrimaryPrice(indexToken).pickPrice(shouldUseMaxPrice);
             uint256 secondaryPrice = oracle.getSecondaryPrice(indexToken).pickPrice(shouldUseMaxPrice);
 
-            bool shouldValidateAscendingPrice;
-            if (orderType == Order.OrderType.LimitIncrease || orderType == Order.OrderType.StopLossDecrease) {
-                // for limit increase / stop-loss decrease order:
-                //     - long: validate descending price
-                //     - short: validate ascending price
-                shouldValidateAscendingPrice = !isLong;
-            } else {
-                // for limit decrease order:
-                //     - long: validate ascending price
-                //     - short: validate descending price
-                shouldValidateAscendingPrice = isLong;
+            // for stop-loss decrease orders:
+            //     - long: validate descending price
+            //     - short: validate ascending price
+            bool shouldValidateAscendingPrice = !isLong;
+
+            bool ok = shouldValidateAscendingPrice ?
+                (primaryPrice <= triggerPrice && triggerPrice <= secondaryPrice) :
+                (primaryPrice >= triggerPrice && triggerPrice >= secondaryPrice);
+
+            if (!ok) {
+                revert Errors.InvalidStopLossOrderPrices(primaryPrice, secondaryPrice, triggerPrice, shouldValidateAscendingPrice);
             }
 
             if (shouldValidateAscendingPrice) {
-                // check that the earlier price (primaryPrice) is smaller than the triggerPrice
-                // and that the later price (secondaryPrice) is larger than the triggerPrice
-                bool ok = primaryPrice <= triggerPrice && triggerPrice <= secondaryPrice;
-                if (!ok) {
-                    revert InvalidOrderPrices(primaryPrice, secondaryPrice, triggerPrice, shouldValidateAscendingPrice);
-                }
-
                 oracle.setCustomPrice(indexToken, Price.Props(
                     triggerPrice, // min price that order can be executed with
-                    secondaryPrice // max price that order can be executed with
+                    triggerPrice // max price that order can be executed with
                 ));
             } else {
-                // check that the earlier price (primaryPrice) is larger than the triggerPrice
-                // and that the later price (secondaryPrice) is smaller than the triggerPrice
-                bool ok = primaryPrice >= triggerPrice && triggerPrice >= secondaryPrice;
-                if (!ok) {
-                    revert InvalidOrderPrices(primaryPrice, secondaryPrice, triggerPrice, shouldValidateAscendingPrice);
-                }
-
                 oracle.setCustomPrice(indexToken, Price.Props(
-                    secondaryPrice, // min price that order can be executed with
+                    triggerPrice, // min price that order can be executed with
                     triggerPrice // max price that order can be executed with
                 ));
             }
@@ -284,7 +300,7 @@ library BaseOrderUtils {
             return;
         }
 
-        revertUnsupportedOrderType();
+        revert Errors.UnsupportedOrderType();
     }
 
     // @dev get the execution price for an order
@@ -346,7 +362,7 @@ library BaseOrderUtils {
         int256 priceImpactUsdForPriceAdjustment = shouldFlipPriceImpactUsd ? -priceImpactUsd : priceImpactUsd;
 
         if (priceImpactUsdForPriceAdjustment < 0 && (-priceImpactUsdForPriceAdjustment).toUint256() > sizeDeltaUsd) {
-            revert PriceImpactLargerThanOrderSize(priceImpactUsdForPriceAdjustment, sizeDeltaUsd);
+            revert Errors.PriceImpactLargerThanOrderSize(priceImpactUsdForPriceAdjustment, sizeDeltaUsd);
         }
 
         // adjust price by price impact
@@ -399,19 +415,18 @@ library BaseOrderUtils {
         // their position, this gives the user the option to cancel the pending order if
         // prices do not move in their favour or to close their position and let the order
         // execute if prices move in their favour
-        revert OrderNotFulfillableDueToPriceImpact(price, acceptablePrice);
+        revert Errors.OrderNotFulfillableDueToPriceImpact(price, acceptablePrice);
     }
 
     // @dev validate that an order exists
     // @param order the order to check
     function validateNonEmptyOrder(Order.Props memory order) internal pure {
         if (order.account() == address(0)) {
-            revert EmptyOrder();
+            revert Errors.EmptyOrder();
         }
-    }
 
-    // @dev throw an unsupported order type error
-    function revertUnsupportedOrderType() internal pure {
-        revert UnsupportedOrderType();
+        if (order.sizeDeltaUsd() == 0 && order.initialCollateralDeltaAmount() == 0) {
+            revert Errors.EmptyOrder();
+        }
     }
 }

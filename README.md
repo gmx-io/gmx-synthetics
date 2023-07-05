@@ -459,7 +459,7 @@ After the initial setup:
 
 - It is expected that the timelock multisig should revoke the permissions of malicious or compromised accounts
 
-- Order keepers and frozen order keepers could potentially extract value through transaction ordering, delayed transaction execution etc, this will be partially mitigated with a keeper network
+- Order keepers and frozen order keepers could potentially extract value through transaction ordering, delayed transaction execution, ADL execution, etc, this will be partially mitigated with a keeper network
 
 - Oracle signers are expected to accurately report the price of tokens
 
@@ -473,11 +473,21 @@ After the initial setup:
 
 - Order keepers are expected to validate whether a transaction will revert before sending the transaction to minimize gas wastage
 
+- Order keepers may cause requests to be cancelled instead of executed by executing the request with insufficient gas
+
 - A user can reduce price impact by using high leverage positions, this is partially mitigated with the MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER value
 
 - Price impact can be reduced by using positions and swaps and trading across markets, chains, forks, other protocols, this is partially mitigated with virtual inventory tracking
 
 - Virtual IDs must be set on market creation / token whitelisting, if it is set after trading for the token / market is done, the tracking would not be accurate and may need to be adjusted
+
+- If an execution transaction requires a large amount of gas that may be close to the maximum block gas limit, it may be possible to stuff blocks to prevent the transaction from being included in blocks
+
+- In certain blockchains it is possible for the keeper to have control over the tx.gasprice used to execute a transaction
+
+# Feature Development
+
+If new features are added, tests should be added for the different market types, e.g. spot only markets, single token markets.
 
 # Commands
 

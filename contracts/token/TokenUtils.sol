@@ -8,8 +8,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
-import "../utils/ErrorUtils.sol";
-import "../utils/ReceiverUtils.sol";
+import "../error/ErrorUtils.sol";
+import "../utils/AccountUtils.sol";
 
 import "./IWNT.sol";
 
@@ -24,12 +24,6 @@ library TokenUtils {
 
     event TokenTransferReverted(string reason, bytes returndata);
     event NativeTokenTransferReverted(string reason);
-
-    // throw custom errors to prevent spoofing of errors
-    // this is necessary because contracts like DepositHandler, WithdrawalHandler, OrderHandler
-    // do not cancel requests for specific errors
-    error TokenTransferError(address token, address receiver, uint256 amount);
-    error NativeTokenTransferError(address receiver, uint256 amount);
 
     /**
      * @dev Returns the address of the WNT token.
@@ -58,23 +52,44 @@ library TokenUtils {
         uint256 amount
     ) internal {
         if (amount == 0) { return; }
-        ReceiverUtils.validateReceiver(receiver);
+        AccountUtils.validateReceiver(receiver);
 
         uint256 gasLimit = dataStore.getUint(Keys.tokenTransferGasLimit(token));
+        if (gasLimit == 0) {
+            revert Errors.EmptyTokenTranferGasLimit(token);
+        }
 
-        (bool success, bytes memory returndata) = nonRevertingTransferWithGasLimit(
+        (bool success0, /* bytes memory returndata */) = nonRevertingTransferWithGasLimit(
             IERC20(token),
             receiver,
             amount,
             gasLimit
         );
 
-        if (success) { return; }
+        if (success0) { return; }
+
+        address holdingAddress = dataStore.getAddress(Keys.HOLDING_ADDRESS);
+
+        if (holdingAddress == address(0)) {
+            revert Errors.EmptyHoldingAddress();
+        }
+
+        (bool success1, bytes memory returndata) = nonRevertingTransferWithGasLimit(
+            IERC20(token),
+            holdingAddress,
+            amount,
+            gasLimit
+        );
+
+        if (success1) { return; }
 
         (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(returndata);
         emit TokenTransferReverted(reason, returndata);
 
-        revert TokenTransferError(token, receiver, amount);
+        // throw custom errors to prevent spoofing of errors
+        // this is necessary because contracts like DepositHandler, WithdrawalHandler, OrderHandler
+        // do not cancel requests for specific errors
+        revert Errors.TokenTransferError(token, receiver, amount);
     }
 
     /**
@@ -91,7 +106,7 @@ library TokenUtils {
         uint256 amount
     ) internal {
         if (amount == 0) { return; }
-        ReceiverUtils.validateReceiver(receiver);
+        AccountUtils.validateReceiver(receiver);
 
         address _wnt = wnt(dataStore);
         IWNT(_wnt).deposit{value: amount}();
@@ -124,13 +139,27 @@ library TokenUtils {
         uint256 amount
     ) internal {
         if (amount == 0) { return; }
-        ReceiverUtils.validateReceiver(receiver);
+        AccountUtils.validateReceiver(receiver);
 
         IWNT(_wnt).withdraw(amount);
 
         uint256 gasLimit = dataStore.getUint(Keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT);
 
-        (bool success, /* bytes memory data */) = payable(receiver).call{ value: amount, gas: gasLimit }("");
+        bool success;
+        // use an assembly call to avoid loading large data into memory
+        // input mem[in…(in+insize)]
+        // output area mem[out…(out+outsize))]
+        assembly {
+            success := call(
+                gasLimit, // gas limit
+                receiver, // receiver
+                amount, // value
+                0, // in
+                0, // insize
+                0, // out
+                0 // outsize
+            )
+        }
 
         if (success) { return; }
 

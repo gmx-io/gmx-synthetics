@@ -12,10 +12,6 @@ contract AdlHandler is BaseOrderHandler {
     using Order for Order.Props;
     using Array for uint256[];
 
-    error AdlNotRequired(int256 pnlToPoolFactor, uint256 maxPnlFactorForAdl);
-    error InvalidAdl(int256 nextPnlToPoolFactor, int256 pnlToPoolFactor);
-    error PnlOvercorrected(int256 nextPnlToPoolFactor, uint256 minPnlFactorForAdl);
-
     // @dev ExecuteAdlCache struct used in executeAdl to avoid
     // stack too deep errors
     struct ExecuteAdlCache {
@@ -77,6 +73,13 @@ contract AdlHandler is BaseOrderHandler {
     }
 
     // @dev auto-deleverages a position
+    // there is no validation that ADL is executed in order of position profit
+    // or position size, this is due to the limitation of the gas overhead
+    // required to check this ordering
+    //
+    // ADL keepers could be separately incentivised using a rebate based on
+    // position profit, this is not implemented within the contracts at the moment
+    //
     // @param account the position's account
     // @param market the position's market
     // @param collateralToken the position's collateralToken
@@ -125,7 +128,7 @@ contract AdlHandler is BaseOrderHandler {
         );
 
         if (!cache.shouldAllowAdl) {
-            revert AdlNotRequired(cache.pnlToPoolFactor, cache.maxPnlFactorForAdl);
+            revert Errors.AdlNotRequired(cache.pnlToPoolFactor, cache.maxPnlFactorForAdl);
         }
 
         cache.key = AdlUtils.createAdlOrder(
@@ -150,13 +153,13 @@ contract AdlHandler is BaseOrderHandler {
         // validate that the ratio of pending pnl to pool value was decreased
         cache.nextPnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, oracle, market, isLong, true);
         if (cache.nextPnlToPoolFactor >= cache.pnlToPoolFactor) {
-            revert InvalidAdl(cache.nextPnlToPoolFactor, cache.pnlToPoolFactor);
+            revert Errors.InvalidAdl(cache.nextPnlToPoolFactor, cache.pnlToPoolFactor);
         }
 
         cache.minPnlFactorForAdl = MarketUtils.getMinPnlFactorAfterAdl(dataStore, market, isLong);
 
         if (cache.nextPnlToPoolFactor < cache.minPnlFactorForAdl.toInt256()) {
-            revert PnlOvercorrected(cache.nextPnlToPoolFactor, cache.minPnlFactorForAdl);
+            revert Errors.PnlOvercorrected(cache.nextPnlToPoolFactor, cache.minPnlFactorForAdl);
         }
     }
 }

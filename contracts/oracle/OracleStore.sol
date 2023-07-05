@@ -3,6 +3,9 @@
 pragma solidity ^0.8.0;
 
 import "../role/RoleModule.sol";
+import "../event/EventEmitter.sol";
+import "../event/EventUtils.sol";
+import "../utils/Cast.sol";
 
 // @title OracleStore
 // @dev Stores the list of oracle signers
@@ -10,25 +13,52 @@ contract OracleStore is RoleModule {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableValues for EnumerableSet.AddressSet;
 
-    event SignerAdded(address signer);
-    event SignerRemoved(address signer);
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
+
+    EventEmitter public immutable eventEmitter;
 
     EnumerableSet.AddressSet internal signers;
 
-    constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
+    constructor(RoleStore _roleStore, EventEmitter _eventEmitter) RoleModule(_roleStore) {
+        eventEmitter = _eventEmitter;
+    }
 
     // @dev adds a signer
     // @param account address of the signer to add
     function addSigner(address account) external onlyController {
         signers.add(account);
-        emit SignerAdded(account);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+
+        eventEmitter.emitEventLog1(
+            "SignerAdded",
+            Cast.toBytes32(account),
+            eventData
+        );
     }
 
     // @dev removes a signer
     // @param account address of the signer to remove
     function removeSigner(address account) external onlyController {
         signers.remove(account);
-        emit SignerRemoved(account);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+
+        eventEmitter.emitEventLog1(
+            "SignerRemoved",
+            Cast.toBytes32(account),
+            eventData
+        );
     }
 
     // @dev get the total number of signers

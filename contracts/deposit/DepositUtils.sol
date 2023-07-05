@@ -13,7 +13,7 @@ import "../nonce/NonceUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
-import "../utils/ReceiverUtils.sol";
+import "../utils/AccountUtils.sol";
 
 // @title DepositUtils
 // @dev Library for deposit functions, to help with the depositing of liquidity
@@ -30,6 +30,7 @@ library DepositUtils {
     //
     // @param receiver the address to send the market tokens to
     // @param callbackContract the callback contract
+    // @param uiFeeReceiver the ui fee receiver
     // @param market the market to deposit into
     // @param minMarketTokens the minimum acceptable number of liquidity tokens
     // @param shouldUnwrapNativeToken whether to unwrap the native token when
@@ -39,6 +40,7 @@ library DepositUtils {
     struct CreateDepositParams {
         address receiver;
         address callbackContract;
+        address uiFeeReceiver;
         address market;
         address initialLongToken;
         address initialShortToken;
@@ -49,9 +51,6 @@ library DepositUtils {
         uint256 executionFee;
         uint256 callbackGasLimit;
     }
-
-    error EmptyDeposit();
-    error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);
 
     // @dev creates a deposit
     //
@@ -67,42 +66,44 @@ library DepositUtils {
         address account,
         CreateDepositParams memory params
     ) external returns (bytes32) {
-        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, params.market);
+        AccountUtils.validateAccount(account);
 
+        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, params.market);
+        MarketUtils.validateSwapPath(dataStore, params.longTokenSwapPath);
+        MarketUtils.validateSwapPath(dataStore, params.shortTokenSwapPath);
+
+        // if the initialLongToken and initialShortToken are the same, only the initialLongTokenAmount would
+        // be non-zero, the initialShortTokenAmount would be zero
         uint256 initialLongTokenAmount = depositVault.recordTransferIn(params.initialLongToken);
         uint256 initialShortTokenAmount = depositVault.recordTransferIn(params.initialShortToken);
 
         address wnt = TokenUtils.wnt(dataStore);
 
-        if (market.longToken == wnt) {
+        if (params.initialLongToken == wnt) {
             initialLongTokenAmount -= params.executionFee;
-        } else if (market.shortToken == wnt) {
+        } else if (params.initialShortToken == wnt) {
             initialShortTokenAmount -= params.executionFee;
         } else {
             uint256 wntAmount = depositVault.recordTransferIn(wnt);
             if (wntAmount < params.executionFee) {
-                revert InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
+                revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
             }
 
-            GasUtils.handleExcessExecutionFee(
-                dataStore,
-                depositVault,
-                wntAmount,
-                params.executionFee
-            );
+            params.executionFee = wntAmount;
         }
 
         if (initialLongTokenAmount == 0 && initialShortTokenAmount == 0) {
-            revert EmptyDeposit();
+            revert Errors.EmptyDepositAmounts();
         }
 
-        ReceiverUtils.validateReceiver(params.receiver);
+        AccountUtils.validateReceiver(params.receiver);
 
         Deposit.Props memory deposit = Deposit.Props(
             Deposit.Addresses(
                 account,
                 params.receiver,
                 params.callbackContract,
+                params.uiFeeReceiver,
                 market.marketToken,
                 params.initialLongToken,
                 params.initialShortToken,
@@ -156,8 +157,17 @@ library DepositUtils {
     ) external {
         Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
         if (deposit.account() == address(0)) {
-            revert EmptyDeposit();
+            revert Errors.EmptyDeposit();
         }
+
+        if (
+            deposit.initialLongTokenAmount() == 0 &&
+            deposit.initialShortTokenAmount() == 0
+        ) {
+            revert Errors.EmptyDepositAmounts();
+        }
+
+        DepositStoreUtils.remove(dataStore, key, deposit.account());
 
         if (deposit.initialLongTokenAmount() > 0) {
             depositVault.transferOut(
@@ -177,14 +187,13 @@ library DepositUtils {
             );
         }
 
-        DepositStoreUtils.remove(dataStore, key, deposit.account());
-
         DepositEventUtils.emitDepositCancelled(eventEmitter, key, reason, reasonBytes);
 
         CallbackUtils.afterDepositCancellation(key, deposit);
 
         GasUtils.payExecutionFee(
             dataStore,
+            eventEmitter,
             depositVault,
             deposit.executionFee(),
             startingGas,

@@ -1,7 +1,10 @@
+import { expect } from "chai";
 import { logGasUsage } from "./gas";
+import { contractAt } from "./deploy";
 import { expandDecimals, bigNumberify } from "./math";
 import { executeWithOracleParams } from "./exchange";
-import { TOKEN_ORACLE_TYPES } from "./oracle";
+import { parseLogs } from "./event";
+import { getCancellationReason, getErrorString } from "./error";
 
 import * as keys from "./keys";
 
@@ -28,6 +31,7 @@ export async function createWithdrawal(fixture, overrides = {}) {
   const account = overrides.account || user0;
   const receiver = overrides.receiver || account;
   const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
+  const uiFeeReceiver = overrides.uiFeeReceiver || { address: ethers.constants.AddressZero };
   const market = overrides.market || ethUsdMarket;
   const longTokenSwapPath = overrides.longTokenSwapPath || [];
   const shortTokenSwapPath = overrides.shortTokenSwapPath || [];
@@ -40,9 +44,13 @@ export async function createWithdrawal(fixture, overrides = {}) {
 
   await wnt.mint(withdrawalVault.address, executionFee);
 
+  const marketToken = await contractAt("MarketToken", market.marketToken);
+  await marketToken.connect(account).transfer(withdrawalVault.address, marketTokenAmount);
+
   const params = {
     receiver: receiver.address,
     callbackContract: callbackContract.address,
+    uiFeeReceiver: uiFeeReceiver.address,
     market: market.marketToken,
     longTokenSwapPath,
     shortTokenSwapPath,
@@ -81,7 +89,30 @@ export async function executeWithdrawal(fixture, overrides = {}) {
     gasUsageLabel,
   };
 
-  await executeWithOracleParams(fixture, params);
+  const txReceipt = await executeWithOracleParams(fixture, params);
+  const logs = parseLogs(fixture, txReceipt);
+
+  const cancellationReason = await getCancellationReason({
+    logs,
+    eventName: "WithdrawalCancelled",
+  });
+
+  if (cancellationReason) {
+    if (overrides.expectedCancellationReason) {
+      expect(cancellationReason.name).eq(overrides.expectedCancellationReason);
+    } else {
+      throw new Error(`Withdrawal was cancelled: ${getErrorString(cancellationReason)}`);
+    }
+  } else {
+    if (overrides.expectedCancellationReason) {
+      throw new Error(
+        `Withdrawal was not cancelled, expected cancellation with reason: ${overrides.expectedCancellationReason}`
+      );
+    }
+  }
+
+  const result = { txReceipt, logs };
+  return result;
 }
 
 export async function handleWithdrawal(fixture, overrides = {}) {
