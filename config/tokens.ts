@@ -111,10 +111,6 @@ const config: {
     },
   },
   avalanche: {
-    BTC: {
-      synthetic: true,
-      decimals: 8,
-    },
     "BTC.b": {
       address: "0x152b9d0FdC40C096757F570A51E494bd4b943E50",
       decimals: 8,
