@@ -36,6 +36,8 @@ export async function deployFixture() {
   await wnt.deposit({ value: expandDecimals(50, 18) });
 
   const wbtc = await hre.ethers.getContract("WBTC");
+  const sol = { address: getSyntheticTokenAddress(hre.network.config.chainId, "SOL") };
+
   const usdc = await hre.ethers.getContract("USDC");
   const usdt = await hre.ethers.getContract("USDT");
 
@@ -139,7 +141,7 @@ export async function deployFixture() {
   const btcUsdMarket = await reader.getMarket(dataStore.address, btcUsdMarketAddress);
 
   const solUsdMarketAddress = getMarketTokenAddress(
-    getSyntheticTokenAddress(hre.network.config.chainId, "SOL"),
+    sol.address,
     wnt.address,
     usdc.address,
     DEFAULT_MARKET_TYPE,
@@ -216,6 +218,7 @@ export async function deployFixture() {
       usdcPriceFeed,
       wnt,
       wbtc,
+      sol,
       usdc,
       usdt,
       ethUsdMarket,

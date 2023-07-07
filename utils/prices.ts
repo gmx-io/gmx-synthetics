@@ -72,6 +72,13 @@ prices.wbtc = {
   max: expandDecimals(50000, 2),
 };
 
+prices.sol = {
+  contractName: "sol",
+  precision: 16,
+  min: expandDecimals(50, 5),
+  max: expandDecimals(50, 5),
+};
+
 prices.ethUsdMarket = {
   indexTokenPrice: {
     min: expandDecimals(5000, 12),
