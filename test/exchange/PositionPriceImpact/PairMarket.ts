@@ -1,24 +1,23 @@
 import { expect } from "chai";
 
-import { usingResult } from "../../utils/use";
-import { deployFixture } from "../../utils/fixture";
-import { expandDecimals, decimalToFloat } from "../../utils/math";
-import { handleDeposit } from "../../utils/deposit";
-import { OrderType, getOrderCount, handleOrder } from "../../utils/order";
-import { getPositionCount, getAccountPositionCount, getPositionKeys, getPositionKey } from "../../utils/position";
-import { getExecuteParams } from "../../utils/exchange";
-import { getEventData } from "../../utils/event";
-import * as keys from "../../utils/keys";
+import { usingResult } from "../../../utils/use";
+import { deployFixture } from "../../../utils/fixture";
+import { expandDecimals, decimalToFloat } from "../../../utils/math";
+import { handleDeposit } from "../../../utils/deposit";
+import { OrderType, getOrderCount, handleOrder } from "../../../utils/order";
+import { getPositionCount, getAccountPositionCount, getPositionKeys, getPositionKey } from "../../../utils/position";
+import { getEventData } from "../../../utils/event";
+import * as keys from "../../../utils/keys";
 
-describe("Exchange.PositionPriceImpact", () => {
+describe("Exchange.PositionPriceImpact.PairMarket", () => {
   let fixture;
   let user0, user1;
-  let reader, dataStore, referralStorage, ethUsdMarket, btcUsdMarket, wnt, wbtc, usdc;
+  let reader, dataStore, referralStorage, ethUsdMarket, wnt;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1 } = fixture.accounts);
-    ({ reader, dataStore, referralStorage, ethUsdMarket, btcUsdMarket, wnt, wbtc, usdc } = fixture.contracts);
+    ({ reader, dataStore, referralStorage, ethUsdMarket, wnt } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -26,15 +25,6 @@ describe("Exchange.PositionPriceImpact", () => {
         longTokenAmount: expandDecimals(1000, 18),
         shortTokenAmount: expandDecimals(2000 * 1000, 6),
       },
-    });
-
-    await handleDeposit(fixture, {
-      create: {
-        market: btcUsdMarket,
-        longTokenAmount: expandDecimals(1, 18),
-        shortTokenAmount: expandDecimals(50 * 1000, 6),
-      },
-      execute: getExecuteParams(fixture, { tokens: [wbtc, usdc] }),
     });
   });
 
