@@ -13,7 +13,6 @@ type SyntheticTokenConfig = {
   wrappedNative?: never;
   deploy?: never;
   transferGasLimit?: never;
-  virtualTokenId?: string;
 };
 
 type RealTokenConfig = {
@@ -23,7 +22,6 @@ type RealTokenConfig = {
   synthetic?: never;
   wrappedNative?: true;
   deploy?: never;
-  virtualTokenId?: string;
 };
 
 // test token to deploy in local and test networks
@@ -36,7 +34,6 @@ export type TestTokenConfig = {
   deploy: true;
   wrappedNative?: boolean;
   synthetic?: never;
-  virtualTokenId?: string;
 };
 
 export type TokenConfig = SyntheticTokenConfig | RealTokenConfig | TestTokenConfig;
@@ -177,7 +174,6 @@ const config: {
       decimals: 8,
       transferGasLimit: 200 * 1000,
       deploy: true,
-      virtualTokenId: "0x04533137e2e8ae1c11111111a0dd36e023e0d6217198f889f9eb9c2a6727481d",
     },
     USDC: {
       decimals: 6,
@@ -250,7 +246,6 @@ const config: {
       decimals: 8,
       transferGasLimit: 200 * 1000,
       deploy: true,
-      virtualTokenId: "0x04533137e2e8ae1c11111111a0dd36e023e0d6217198f889f9eb9c2a6727481d",
     },
     SOL: {
       synthetic: true,
@@ -274,7 +269,6 @@ const config: {
     WETH: {
       address: "0x82F0b3695Ed2324e55bbD9A9554cB4192EC3a514",
       decimals: 18,
-      virtualTokenId: "0x275d2a6e341e6a078d4eee59b08907d1e50825031c5481f9551284f4b7ee2fb9",
       transferGasLimit: 200 * 1000,
     },
     BNB: {
