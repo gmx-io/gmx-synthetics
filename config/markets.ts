@@ -638,8 +638,22 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(300_000, 6),
     },
 
-    { tokens: { indexToken: "WBTC", longToken: "USDC", shortToken: "USDT" } },
-    { tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "DAI" } },
+    {
+      tokens: { indexToken: "WBTC", longToken: "USDC", shortToken: "USDT" },
+
+      borrowingFactorForLongs: decimalToFloat(3, 7), // 0.0000003, 0.00003% / second, 946% per year if the pool is 100% utilized
+      borrowingFactorForShorts: decimalToFloat(3, 7), // 0.0000003, 0.00003% / second, 946% per year if the pool is 100% utilized
+
+      fundingFactor: decimalToFloat(16, 7), // ~5000% per year for a 100% skew
+    },
+    {
+      tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "DAI" },
+
+      borrowingFactorForLongs: decimalToFloat(3, 7), // 0.0000003, 0.00003% / second, 946% per year if the pool is 100% utilized
+      borrowingFactorForShorts: decimalToFloat(3, 7), // 0.0000003, 0.00003% / second, 946% per year if the pool is 100% utilized
+
+      fundingFactor: decimalToFloat(16, 7), // ~5000% per year for a 100% skew
+    },
   ],
   avalancheFuji: [
     { tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" } },
@@ -704,8 +718,22 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(300_000, 6),
     },
 
-    { tokens: { indexToken: "WBTC", longToken: "USDC", shortToken: "USDT" } },
-    { tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "DAI" } },
+    {
+      tokens: { indexToken: "WBTC", longToken: "USDC", shortToken: "USDT" },
+
+      borrowingFactorForLongs: decimalToFloat(3, 7), // 0.0000003, 0.00003% / second, 946% per year if the pool is 100% utilized
+      borrowingFactorForShorts: decimalToFloat(3, 7), // 0.0000003, 0.00003% / second, 946% per year if the pool is 100% utilized
+
+      fundingFactor: decimalToFloat(16, 7), // ~5000% per year for a 100% skew
+    },
+    {
+      tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "DAI" },
+
+      borrowingFactorForLongs: decimalToFloat(3, 7), // 0.0000003, 0.00003% / second, 946% per year if the pool is 100% utilized
+      borrowingFactorForShorts: decimalToFloat(3, 7), // 0.0000003, 0.00003% / second, 946% per year if the pool is 100% utilized
+
+      fundingFactor: decimalToFloat(16, 7), // ~5000% per year for a 100% skew
+    },
   ],
   hardhat: [
     {
