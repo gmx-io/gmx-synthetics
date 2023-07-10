@@ -8,6 +8,10 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
   const { execute, get, read, log } = deployments;
   const generalConfig = await gmx.getGeneral();
 
+  if (process.env.SKIP_NEW_MARKETS) {
+    log("WARN: new markets will be skipped");
+  }
+
   const { deployer } = await getNamedAccounts();
 
   const tokens = await gmx.getTokens();
@@ -24,6 +28,11 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     const onchainMarket = onchainMarketsByTokens[marketKey];
     if (onchainMarket) {
       log("market %s:%s:%s already exists at %s", indexToken, longToken, shortToken, onchainMarket.marketToken);
+      continue;
+    }
+
+    if (process.env.SKIP_NEW_MARKETS) {
+      log("WARN: new market %s:%s:%s skipped", indexToken, longToken, shortToken);
       continue;
     }
 
