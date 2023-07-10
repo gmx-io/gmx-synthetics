@@ -2,7 +2,6 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import * as keys from "../utils/keys";
 import { setBytes32IfDifferent, setUintIfDifferent } from "../utils/dataStore";
 import { DEFAULT_MARKET_TYPE, getMarketTokenAddresses } from "../utils/market";
-import { ethers } from "ethers";
 import { getMarketKey, getOnchainMarkets } from "../utils/market";
 
 const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnvironment) => {
