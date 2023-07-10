@@ -513,6 +513,8 @@ After the initial setup:
 
 - Due to the difference in positive and negative position price impact, there can be a build up of virtual token amounts in the position impact pool which would affect the pricing of market tokens, the feature to gradually reduce these virtual tokens should be added if needed
 
+- Contracts with the "CONTROLLER" role have access to important functions such as setting DataStore values, due to this, care should be taken to ensure that such contracts do not have generic functions or functions that can be intentionally used to change important values
+
 # Feature Development
 
 For the development of new features, a few things should be noted:
