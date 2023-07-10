@@ -109,6 +109,33 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     const onchainMarket = onchainMarketsByTokens[marketKey];
     const marketToken = onchainMarket.marketToken;
 
+    // if trades are done before virtual IDs are set, the tracking of virtual
+    // inventories may not be accurate
+    //
+    // so virtual IDs should be set before other market configurations e.g.
+    // max pool amounts, this would help to ensure that no trades can be done
+    // before virtual IDs are set
+
+    // set virtual market id for swaps
+    const virtualMarketId = marketConfig.virtualMarketId;
+    if (virtualMarketId) {
+      await setBytes32IfDifferent(
+        keys.virtualMarketIdKey(marketToken),
+        virtualMarketId,
+        `virtual market id for market ${marketToken.toString()}`
+      );
+    }
+
+    // set virtual token id for perps
+    const virtualTokenId = marketConfig.virtualTokenIdForIndexToken;
+    if (virtualTokenId) {
+      await setBytes32IfDifferent(
+        keys.virtualTokenIdKey(indexToken),
+        virtualTokenId,
+        `virtual token id for indexToken ${indexToken.toString()}`
+      );
+    }
+
     await setMaxPoolAmount(marketToken, longToken, marketConfig.maxLongTokenPoolAmount);
     await setMaxPoolAmount(marketToken, shortToken, marketConfig.maxShortTokenPoolAmount);
 
@@ -152,25 +179,6 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
         key,
         marketConfig.negativeSwapImpactFactor,
         `negative swap impact factor for ${marketToken.toString()}`
-      );
-    }
-
-    // set virtual market id for swaps
-    const virtualMarketId = marketConfig.virtualMarketId;
-    if (virtualMarketId) {
-      await setBytes32IfDifferent(
-        keys.virtualMarketIdKey(marketToken),
-        virtualMarketId,
-        `virtual market id for market ${marketToken.toString()}`
-      );
-    }
-
-    const virtualTokenId = marketConfig.virtualTokenIdForIndexToken;
-    if (virtualTokenId) {
-      await setBytes32IfDifferent(
-        keys.virtualTokenIdKey(indexToken),
-        virtualTokenId,
-        `virtual token id for indexToken ${indexToken.toString()}`
       );
     }
 
