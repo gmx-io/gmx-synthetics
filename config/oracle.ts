@@ -80,7 +80,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
 
     arbitrum: {
       signers: ["0x9f169c2189a2d975c18965de985936361b4a9de9"],
-      maxOraclePriceAge: 60 * 60,
+      maxOraclePriceAge: 5 * 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       minOracleBlockConfirmations: 255,
       minOracleSigners: 1,
@@ -177,7 +177,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
 
     avalanche: {
       signers: ["0x9f169c2189a2d975c18965de985936361b4a9de9"],
-      maxOraclePriceAge: 60 * 60,
+      maxOraclePriceAge: 5 * 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       minOracleBlockConfirmations: 255,
       minOracleSigners: 1,
@@ -245,7 +245,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
 
     arbitrumGoerli: {
       signers: ["0xFb11f15f206bdA02c224EDC744b0E50E46137046", "0x23247a1A80D01b9482E9d734d2EB780a3b5c8E6c"],
-      maxOraclePriceAge: 60 * 60,
+      maxOraclePriceAge: 5 * 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       minOracleBlockConfirmations: 255,
       minOracleSigners: 1,
@@ -278,7 +278,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
 
     avalancheFuji: {
       signers: ["0xFb11f15f206bdA02c224EDC744b0E50E46137046", "0x23247a1A80D01b9482E9d734d2EB780a3b5c8E6c"],
-      maxOraclePriceAge: 60 * 60,
+      maxOraclePriceAge: 5 * 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       minOracleBlockConfirmations: 255,
       minOracleSigners: 1,
