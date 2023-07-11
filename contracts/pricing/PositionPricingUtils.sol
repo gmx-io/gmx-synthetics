@@ -135,38 +135,6 @@ library PositionPricingUtils {
         uint256 uiFeeAmount;
     }
 
-    // @dev GetPositionFeesAfterReferralCache struct used in getPositionFees
-    // to avoid stack too deep errors
-    // @param feeFactor the fee factor
-    // @param positionFeeAmount the fee amount for increasing / decreasing the position
-    // @param protocolFeeAmount the protocol fee
-    // @param feeReceiverAmount the amount for the fee receiver
-    // @param positionFeeAmountForPool the position fee amount for the pool in tokens
-    struct GetPositionFeesAfterReferralCache {
-        GetPositionFeesAfterReferralCacheReferral referral;
-        uint256 feeFactor;
-        uint256 positionFeeAmount;
-        uint256 protocolFeeAmount;
-        uint256 positionFeeReceiverFactor;
-        uint256 feeReceiverAmount;
-        uint256 positionFeeAmountForPool;
-    }
-
-    // @param affiliate the referral affiliate
-    // @param totalRebateFactor the total referral rebate factor
-    // @param traderDiscountFactor the trader referral discount factor
-    // @param totalRebateAmount the total referral rebate amount in tokens
-    // @param traderDiscountAmount the trader discount amount in tokens
-    // @param affiliateRewardAmount the affiliate reward amount in tokens
-    struct GetPositionFeesAfterReferralCacheReferral {
-        address affiliate;
-        uint256 totalRebateFactor;
-        uint256 traderDiscountFactor;
-        uint256 totalRebateAmount;
-        uint256 traderDiscountAmount;
-        uint256 affiliateRewardAmount;
-    }
-
     // @dev get the price impact in USD for a position increase / decrease
     // @param params GetPriceImpactUsdParams
     function getPriceImpactUsd(GetPriceImpactUsdParams memory params) internal view returns (int256) {
