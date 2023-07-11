@@ -531,8 +531,18 @@ library DecreasePositionCollateralUtils {
         PositionUtils.UpdatePositionParams memory params,
         Price.Props memory indexTokenPrice
     ) internal view returns (int256, uint256, uint256) {
-        GetExecutionPriceCache memory cache;
         uint256 sizeDeltaUsd = params.order.sizeDeltaUsd();
+
+        // note that the executionPrice is not validated against the order.acceptablePrice value
+        // if the sizeDeltaUsd is zero
+        if (sizeDeltaUsd == 0) {
+            // decrease order:
+            //     - long: use the smaller price
+            //     - short: use the larger price
+            return (0, 0, indexTokenPrice.pickPrice(!params.position.isLong()));
+        }
+
+        GetExecutionPriceCache memory cache;
 
         cache.priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
