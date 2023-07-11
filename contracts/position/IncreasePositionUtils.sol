@@ -315,6 +315,15 @@ library IncreasePositionUtils {
         PositionUtils.UpdatePositionParams memory params,
         Price.Props memory indexTokenPrice
     ) internal view returns (int256, int256, uint256, uint256) {
+        // note that the executionPrice is not validated against the order.acceptablePrice value
+        // if the sizeDeltaUsd is zero
+        if (params.order.sizeDeltaUsd() == 0) {
+            // increase order:
+            //     - long: use the larger price
+            //     - short: use the smaller price
+            return (0, 0, 0, indexTokenPrice.pickPrice(params.position.isLong()));
+        }
+
         int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
                 params.contracts.dataStore,
