@@ -66,12 +66,16 @@ library OrderEventUtils {
 
     function emitOrderExecuted(
         EventEmitter eventEmitter,
-        bytes32 key
+        bytes32 key,
+        Order.SecondaryOrderType secondaryOrderType
     ) external {
         EventUtils.EventLogData memory eventData;
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "secondaryOrderType", uint256(secondaryOrderType));
 
         eventEmitter.emitEventLog1(
             "OrderExecuted",

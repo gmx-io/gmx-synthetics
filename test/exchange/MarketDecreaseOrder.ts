@@ -262,6 +262,10 @@ describe("Exchange.MarketDecreaseOrder", () => {
       },
       execute: {
         gasUsageLabel: "orderHandler.executeOrder",
+        afterExecution: ({ logs }) => {
+          const orderExecutedEvent = getEventData(logs, "OrderExecuted");
+          expect(orderExecutedEvent.secondaryOrderType).eq(0);
+        },
       },
     });
 
