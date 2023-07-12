@@ -156,7 +156,14 @@ library MarketUtils {
         revert Errors.UnableToGetOppositeToken(inputToken, market.marketToken);
     }
 
-    function validateSwapMarket(Market.Props memory market) internal pure {
+    function validateSwapMarket(DataStore dataStore, address marketAddress) internal view {
+        Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
+        validateSwapMarket(dataStore, market);
+    }
+
+    function validateSwapMarket(DataStore dataStore, Market.Props memory market) internal view {
+        validateEnabledMarket(dataStore, market);
+
         if (market.longToken == market.shortToken) {
             revert Errors.InvalidSwapMarket(market.marketToken);
         }
@@ -2375,14 +2382,20 @@ library MarketUtils {
         return market;
     }
 
+    function getSwapPathMarket(DataStore dataStore, address marketAddress) internal view returns (Market.Props memory) {
+        Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
+        validateSwapMarket(dataStore, market);
+        return market;
+    }
+
     // @dev get a list of market values based on an input array of market addresses
     // @param swapPath list of market addresses
-    function getEnabledMarkets(DataStore dataStore, address[] memory swapPath) internal view returns (Market.Props[] memory) {
+    function getSwapPathMarkets(DataStore dataStore, address[] memory swapPath) internal view returns (Market.Props[] memory) {
         Market.Props[] memory markets = new Market.Props[](swapPath.length);
 
         for (uint256 i; i < swapPath.length; i++) {
             address marketAddress = swapPath[i];
-            markets[i] = getEnabledMarket(dataStore, marketAddress);
+            markets[i] = getSwapPathMarket(dataStore, marketAddress);
         }
 
         return markets;
@@ -2396,7 +2409,7 @@ library MarketUtils {
 
         for (uint256 i; i < swapPath.length; i++) {
             address marketAddress = swapPath[i];
-            validateEnabledMarket(dataStore, marketAddress);
+            validateSwapMarket(dataStore, marketAddress);
         }
     }
 

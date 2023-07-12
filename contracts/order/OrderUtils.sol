@@ -174,7 +174,11 @@ library OrderUtils {
         }
         MarketUtils.validateMarketTokenBalance(params.contracts.dataStore, params.swapPathMarkets);
 
-        OrderEventUtils.emitOrderExecuted(params.contracts.eventEmitter, params.key);
+        OrderEventUtils.emitOrderExecuted(
+            params.contracts.eventEmitter,
+            params.key,
+            params.secondaryOrderType
+        );
 
         CallbackUtils.afterOrderExecution(params.key, params.order, eventData);
 

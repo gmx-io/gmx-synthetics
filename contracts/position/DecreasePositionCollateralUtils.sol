@@ -111,7 +111,6 @@ library DecreasePositionCollateralUtils {
             params.market,
             cache.prices,
             params.position,
-            cache.prices.indexTokenPrice.pickPrice(!params.position.isLong()), // use the smaller price for long positions and larger price for short positions
             params.order.sizeDeltaUsd()
         );
 
@@ -488,6 +487,9 @@ library DecreasePositionCollateralUtils {
         // to reduce the chance that the position's collateral is reduced by an unexpected amount, adjust the
         // initialCollateralDeltaAmount by the priceImpactDiffAmount
         // this would also help to prevent the position's leverage from being unexpectedly increased
+        //
+        // note that this calculation may not be entirely accurate since it is possible that the priceImpactDiffUsd
+        // could have been paid with one of or a combination of collateral / outputAmount / secondaryOutputAmount
         if (params.order.initialCollateralDeltaAmount() > 0 && values.priceImpactDiffUsd > 0) {
             uint256 initialCollateralDeltaAmount = params.order.initialCollateralDeltaAmount();
 
@@ -531,8 +533,19 @@ library DecreasePositionCollateralUtils {
         PositionUtils.UpdatePositionParams memory params,
         Price.Props memory indexTokenPrice
     ) internal view returns (int256, uint256, uint256) {
-        GetExecutionPriceCache memory cache;
         uint256 sizeDeltaUsd = params.order.sizeDeltaUsd();
+
+        // note that the executionPrice is not validated against the order.acceptablePrice value
+        // if the sizeDeltaUsd is zero
+        // for limit orders the order.triggerPrice should still have been validated
+        if (sizeDeltaUsd == 0) {
+            // decrease order:
+            //     - long: use the smaller price
+            //     - short: use the larger price
+            return (0, 0, indexTokenPrice.pickPrice(!params.position.isLong()));
+        }
+
+        GetExecutionPriceCache memory cache;
 
         cache.priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
@@ -574,6 +587,10 @@ library DecreasePositionCollateralUtils {
             }
         }
 
+        // the executionPrice is calculated after the price impact is capped
+        // so the output amount directly received by the user may not match
+        // the executionPrice, the difference would be in the stored as a
+        // claimable amount
         cache.executionPrice = BaseOrderUtils.getExecutionPriceForDecrease(
             indexTokenPrice,
             params.position.sizeInUsd(),

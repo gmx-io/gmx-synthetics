@@ -262,7 +262,6 @@ library ReaderUtils {
             cache.market,
             prices,
             positionInfo.position,
-            positionInfo.position.isLong() ? prices.indexTokenPrice.min : prices.indexTokenPrice.max,
             sizeDeltaUsd
         );
 

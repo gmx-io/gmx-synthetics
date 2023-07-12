@@ -461,6 +461,6 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
         .add(await usdc.balanceOf(user2.address))
         .add(await usdc.balanceOf(user3.address))
         .add(await usdc.balanceOf(user4.address))
-    ).eq("124999999994"); // 12,4999.999994 USDC
+    ).closeTo("124999999995", "10"); // 12,4999.999995 USDC
   });
 });

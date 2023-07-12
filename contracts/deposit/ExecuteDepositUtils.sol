@@ -448,7 +448,7 @@ library ExecuteDepositUtils {
         address expectedOutputToken,
         address uiFeeReceiver
     ) internal returns (uint256) {
-        Market.Props[] memory swapPathMarkets = MarketUtils.getEnabledMarkets(
+        Market.Props[] memory swapPathMarkets = MarketUtils.getSwapPathMarkets(
             params.dataStore,
             swapPath
         );

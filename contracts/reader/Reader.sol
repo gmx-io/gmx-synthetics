@@ -73,12 +73,11 @@ contract Reader {
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
         bytes32 positionKey,
-        uint256 executionPrice,
         uint256 sizeDeltaUsd
     ) external view returns (int256, int256, uint256) {
         Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
 
-        return PositionUtils.getPositionPnlUsd(dataStore, market, prices, position, executionPrice, sizeDeltaUsd);
+        return PositionUtils.getPositionPnlUsd(dataStore, market, prices, position, sizeDeltaUsd);
     }
 
     function getAccountPositions(

@@ -68,7 +68,7 @@ library ReaderPricingUtils {
             revert Errors.InvalidTokenIn(tokenIn, market.marketToken);
         }
 
-        MarketUtils.validateSwapMarket(market);
+        MarketUtils.validateSwapMarket(dataStore, market);
 
         cache.tokenOut = MarketUtils.getOppositeToken(tokenIn, market);
         cache.tokenInPrice = MarketUtils.getCachedTokenPrice(tokenIn, market, prices);
