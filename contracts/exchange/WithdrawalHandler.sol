@@ -19,9 +19,11 @@ import "../withdrawal/WithdrawalUtils.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 
+import "./IWithdrawalHandler.sol";
+
 // @title WithdrawalHandler
 // @dev Contract to handle creation, execution and cancellation of withdrawals
-contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
+contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleModule, OracleModule {
     using Withdrawal for Withdrawal.Props;
 
     EventEmitter public immutable eventEmitter;
@@ -46,7 +48,7 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
     function createWithdrawal(
         address account,
         WithdrawalUtils.CreateWithdrawalParams calldata params
-    ) external globalNonReentrant onlyController returns (bytes32) {
+    ) external override globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createWithdrawalFeatureDisabledKey(address(this)));
 
         return WithdrawalUtils.createWithdrawal(
@@ -60,7 +62,7 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
 
     // @dev cancels a withdrawal
     // @param key the withdrawal key
-    function cancelWithdrawal(bytes32 key) external globalNonReentrant onlyController {
+    function cancelWithdrawal(bytes32 key) external override globalNonReentrant onlyController {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
@@ -122,6 +124,7 @@ contract WithdrawalHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         bytes32 key,
         OracleUtils.SimulatePricesParams memory params
     ) external
+        override
         onlyController
         withSimulatedOraclePrices(oracle, params)
         globalNonReentrant

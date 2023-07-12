@@ -6,12 +6,14 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import "../exchange/DepositHandler.sol";
-import "../exchange/WithdrawalHandler.sol";
-import "../exchange/OrderHandler.sol";
+import "../exchange/IDepositHandler.sol";
+import "../exchange/IWithdrawalHandler.sol";
+import "../exchange/IOrderHandler.sol";
 
 import "../utils/PayableMulticall.sol";
 import "../utils/AccountUtils.sol";
+
+import "../feature/FeatureUtils.sol";
 
 import "./Router.sol";
 
@@ -62,20 +64,20 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     Router public immutable router;
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
-    DepositHandler public immutable depositHandler;
-    WithdrawalHandler public immutable withdrawalHandler;
-    OrderHandler public immutable orderHandler;
+    IDepositHandler public immutable depositHandler;
+    IWithdrawalHandler public immutable withdrawalHandler;
+    IOrderHandler public immutable orderHandler;
 
     // @dev Constructor that initializes the contract with the provided Router, RoleStore, DataStore,
-    // EventEmitter, DepositHandler, WithdrawalHandler, OrderHandler, and OrderStore instances
+    // EventEmitter, IDepositHandler, IWithdrawalHandler, IOrderHandler, and OrderStore instances
     constructor(
         Router _router,
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        DepositHandler _depositHandler,
-        WithdrawalHandler _withdrawalHandler,
-        OrderHandler _orderHandler
+        IDepositHandler _depositHandler,
+        IWithdrawalHandler _withdrawalHandler,
+        IOrderHandler _orderHandler
     ) RoleModule(_roleStore) {
         router = _router;
         dataStore = _dataStore;
