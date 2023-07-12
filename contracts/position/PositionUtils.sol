@@ -421,6 +421,26 @@ library PositionUtils {
         return (false, "");
     }
 
+    // fees and price impact are not included for the willPositionCollateralBeSufficient validation
+    // this is because this validation is meant to guard against a specific scenario of price impact
+    // gaming
+    //
+    // price impact could be gamed by opening high leverage positions, if the price impact
+    // that should be charged is higher than the amount of collateral in the position
+    // then a user could pay less price impact than what is required, and there is a risk that
+    // price manipulation could be profitable if the price impact cost is less than it should be
+    //
+    // this check should be sufficient even without factoring in fees as fees should have a minimal impact
+    // it may be possible that funding or borrowing fees are accumulated and need to be deducted which could
+    // lead to a user paying less price impact than they should, however gaming of this form should be difficult
+    // since the funding and borrowing fees would still add up for the user's cost
+    //
+    // another possibility would be if a user opens a large amount of both long and short positions, and
+    // funding fees are paid from one side to the other, but since most of the open interest is owned by the
+    // user the user earns most of the paid cost, in this scenario the borrowing fees should still be significant
+    // since some time would be required for the funding fees to accumulate
+    //
+    // fees and price impact are validated in the validatePosition check
     function willPositionCollateralBeSufficient(
         DataStore dataStore,
         Market.Props memory market,
@@ -450,14 +470,7 @@ library PositionUtils {
         // the min collateral factor will increase as the open interest for a market increases
         // this may lead to previously created limit increase orders not being executable
         //
-        // price impact could be gamed by opening high leverage positions, if the price impact
-        // that should be charged is higher than the amount of collateral in the position
-        // then a user could pay less price impact than what is required
-        //
-        // this check helps to prevent gaming of price impact
-        //
-        // since this is the primary reason for this check, the position's pnl is not factored into the
-        // remainingCollateralUsd value
+        // the position's pnl is not factored into the remainingCollateralUsd value, since
         // factoring in a positive pnl may allow the user to manipulate price and bypass this check
         // it may be useful to factor in a negative pnl for this check, this can be added if required
         uint256 minCollateralFactor = MarketUtils.getMinCollateralFactorForOpenInterest(
