@@ -111,7 +111,6 @@ library DecreasePositionCollateralUtils {
             params.market,
             cache.prices,
             params.position,
-            cache.prices.indexTokenPrice.pickPrice(!params.position.isLong()), // use the smaller price for long positions and larger price for short positions
             params.order.sizeDeltaUsd()
         );
 
@@ -488,6 +487,9 @@ library DecreasePositionCollateralUtils {
         // to reduce the chance that the position's collateral is reduced by an unexpected amount, adjust the
         // initialCollateralDeltaAmount by the priceImpactDiffAmount
         // this would also help to prevent the position's leverage from being unexpectedly increased
+        //
+        // note that this calculation may not be entirely accurate since it is possible that the priceImpactDiffUsd
+        // could have been paid with one of or a combination of collateral / outputAmount / secondaryOutputAmount
         if (params.order.initialCollateralDeltaAmount() > 0 && values.priceImpactDiffUsd > 0) {
             uint256 initialCollateralDeltaAmount = params.order.initialCollateralDeltaAmount();
 
