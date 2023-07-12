@@ -535,6 +535,7 @@ library DecreasePositionCollateralUtils {
 
         // note that the executionPrice is not validated against the order.acceptablePrice value
         // if the sizeDeltaUsd is zero
+        // for limit orders the order.triggerPrice should still have been validated
         if (sizeDeltaUsd == 0) {
             // decrease order:
             //     - long: use the smaller price
@@ -584,6 +585,10 @@ library DecreasePositionCollateralUtils {
             }
         }
 
+        // the executionPrice is calculated after the price impact is capped
+        // so the output amount directly received by the user may not match
+        // the executionPrice, the difference would be in the stored as a
+        // claimable amount
         cache.executionPrice = BaseOrderUtils.getExecutionPriceForDecrease(
             indexTokenPrice,
             params.position.sizeInUsd(),
