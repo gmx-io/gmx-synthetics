@@ -274,7 +274,8 @@ library SwapPricingUtils {
         uint256 amountIn,
         uint256 amountInAfterFees,
         uint256 amountOut,
-        int256 priceImpactUsd
+        int256 priceImpactUsd,
+        int256 priceImpactAmount
     ) internal {
         EventUtils.EventLogData memory eventData;
 
@@ -295,8 +296,9 @@ library SwapPricingUtils {
         eventData.uintItems.setItem(3, "amountInAfterFees", amountInAfterFees);
         eventData.uintItems.setItem(4, "amountOut", amountOut);
 
-        eventData.intItems.initItems(1);
+        eventData.intItems.initItems(2);
         eventData.intItems.setItem(0, "priceImpactUsd", priceImpactUsd);
+        eventData.intItems.setItem(1, "priceImpactAmount", priceImpactAmount);
 
         eventEmitter.emitEventLog1(
             "SwapInfo",

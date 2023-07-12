@@ -489,7 +489,7 @@ library WithdrawalUtils {
     ) internal returns (address, uint256) {
         SwapCache memory cache;
 
-        cache.swapPathMarkets = MarketUtils.getEnabledMarkets(params.dataStore, swapPath);
+        cache.swapPathMarkets = MarketUtils.getSwapPathMarkets(params.dataStore, swapPath);
 
         cache.swapParams.dataStore = params.dataStore;
         cache.swapParams.eventEmitter = params.eventEmitter;
