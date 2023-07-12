@@ -162,11 +162,11 @@ library MarketUtils {
     }
 
     function validateSwapMarket(DataStore dataStore, Market.Props memory market) internal view {
+        validateEnabledMarket(dataStore, market);
+
         if (market.longToken == market.shortToken) {
             revert Errors.InvalidSwapMarket(market.marketToken);
         }
-
-        validateEnabledMarket(dataStore, market);
     }
 
     // @dev get the token price from the stored MarketPrices

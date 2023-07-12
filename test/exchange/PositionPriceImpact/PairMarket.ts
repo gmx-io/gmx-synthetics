@@ -510,7 +510,6 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         ethUsdMarket,
         marketPrices,
         positionKey0,
-        expandDecimals(5000, 12),
         increaseOrderParams.sizeDeltaUsd
       ),
       (pnl) => {
@@ -549,14 +548,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
     );
 
     await usingResult(
-      reader.getPositionPnlUsd(
-        dataStore.address,
-        ethUsdMarket,
-        marketPrices,
-        positionKey0,
-        expandDecimals(5000, 12),
-        decimalToFloat(300_000)
-      ),
+      reader.getPositionPnlUsd(dataStore.address, ethUsdMarket, marketPrices, positionKey0, decimalToFloat(300_000)),
       (pnl) => {
         expect(pnl[0]).eq("-899999999999999990000000000000000"); // -900 USD
       }
@@ -616,14 +608,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
     );
 
     await usingResult(
-      reader.getPositionPnlUsd(
-        dataStore.address,
-        ethUsdMarket,
-        marketPrices,
-        positionKey0,
-        expandDecimals(5000, 12),
-        decimalToFloat(150_000)
-      ),
+      reader.getPositionPnlUsd(dataStore.address, ethUsdMarket, marketPrices, positionKey0, decimalToFloat(150_000)),
       (pnl) => {
         expect(pnl[0]).eq("-449999999999999995000000000000000"); // -450 USD
       }

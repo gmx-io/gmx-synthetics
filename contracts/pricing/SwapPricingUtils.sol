@@ -262,6 +262,9 @@ library SwapPricingUtils {
         return fees;
     }
 
+    // note that the priceImpactUsd may not be entirely accurate since it is the
+    // base calculation and the actual price impact may be capped by the available
+    // amount in the swap impact pool
     function emitSwapInfo(
         EventEmitter eventEmitter,
         bytes32 orderKey,
