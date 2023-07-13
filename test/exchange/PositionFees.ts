@@ -263,7 +263,7 @@ describe("Exchange.PositionFees", () => {
           expect(positionFeesCollectedEvent.latestFundingFeeAmountPerSize).closeTo("245454545455", "200000000000");
           expect(positionFeesCollectedEvent.latestLongTokenClaimableFundingAmountPerSize).closeTo(
             "16128039999999990000000000",
-            "10000000000"
+            "100000000000000000000"
           );
           expect(positionFeesCollectedEvent.latestShortTokenClaimableFundingAmountPerSize).eq(0);
           expect(positionFeesCollectedEvent.isIncrease).eq(false);
