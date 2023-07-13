@@ -44,6 +44,12 @@ contract Oracle is RoleModule {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
+    struct ValidatedPrice {
+        address token;
+        uint256 min;
+        uint256 max;
+    }
+
     // @dev SetPricesCache struct used in setPrices to avoid stack too deep errors
     // @param prevMinOracleBlockNumber the previous oracle block number of the loop
     // @param priceIndex the current price index to retrieve from compactedMinPrices and compactedMaxPrices
@@ -60,6 +66,7 @@ contract Oracle is RoleModule {
         uint256 maxPriceAge;
         uint256 maxRefPriceDeviationFactor;
         uint256 prevMinOracleBlockNumber;
+        ValidatedPrice[] validatedPrices;
     }
 
     struct SetPricesInnerCache {
@@ -201,39 +208,9 @@ contract Oracle is RoleModule {
         // in this case if params.tokens is empty, the function can return
         if (params.tokens.length == 0) { return; }
 
-        // first 16 bits of signer info contains the number of signers
-        address[] memory signers = new address[](params.signerInfo & Bits.BITMASK_16);
-
-        if (signers.length < dataStore.getUint(Keys.MIN_ORACLE_SIGNERS)) {
-            revert Errors.MinOracleSigners(signers.length, dataStore.getUint(Keys.MIN_ORACLE_SIGNERS));
-        }
-
-        if (signers.length > MAX_SIGNERS) {
-            revert Errors.MaxOracleSigners(signers.length, MAX_SIGNERS);
-        }
-
-        Uint256Mask.Mask memory signerIndexMask;
-
-        for (uint256 i; i < signers.length; i++) {
-            uint256 signerIndex = params.signerInfo >> (16 + 16 * i) & Bits.BITMASK_16;
-
-            if (signerIndex >= MAX_SIGNER_INDEX) {
-                revert Errors.MaxSignerIndex(signerIndex, MAX_SIGNER_INDEX);
-            }
-
-            signerIndexMask.validateUniqueAndSetIndex(signerIndex, "signerIndex");
-
-            signers[i] = oracleStore.getSigner(signerIndex);
-
-            if (signers[i] == address(0)) {
-                revert Errors.EmptySigner(signerIndex);
-            }
-        }
-
         _setPrices(
             dataStore,
             eventEmitter,
-            signers,
             params
         );
     }
@@ -312,6 +289,13 @@ contract Oracle is RoleModule {
         return multiplier;
     }
 
+    function validatePrices(
+        DataStore dataStore,
+        OracleUtils.SetPricesParams memory params
+    ) external view returns (ValidatedPrice[] memory) {
+        return _validatePrices(dataStore, params);
+    }
+
     // @dev validate and set prices
     // The _setPrices() function is a helper function that is called by the
     // setPrices() function. It takes in several parameters: a DataStore contract
@@ -333,10 +317,35 @@ contract Oracle is RoleModule {
     function _setPrices(
         DataStore dataStore,
         EventEmitter eventEmitter,
-        address[] memory signers,
         OracleUtils.SetPricesParams memory params
     ) internal {
+        ValidatedPrice[] memory validatedPrices = _validatePrices(dataStore, params);
+
+        for (uint256 i = 0; i < validatedPrices.length; i++) {
+            ValidatedPrice memory validatedPrice = validatedPrices[i];
+
+            if (!primaryPrices[validatedPrice.token].isEmpty()) {
+                revert Errors.DuplicateTokenPrice(validatedPrice.token);
+            }
+
+            emitOraclePriceUpdated(eventEmitter, validatedPrice.token, validatedPrice.min, validatedPrice.max, false);
+
+            _setPrimaryPrice(validatedPrice.token, Price.Props(
+                validatedPrice.min,
+                validatedPrice.max
+            ));
+        }
+    }
+
+    function _validatePrices(
+        DataStore dataStore,
+        OracleUtils.SetPricesParams memory params
+    ) internal view returns (ValidatedPrice[] memory) {
+        address[] memory signers = _getSigners(dataStore, params);
+
         SetPricesCache memory cache;
+
+        cache.validatedPrices = new ValidatedPrice[](params.tokens.length);
         cache.minBlockConfirmations = dataStore.getUint(Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS);
         cache.maxPriceAge = dataStore.getUint(Keys.MAX_ORACLE_PRICE_AGE);
         cache.maxRefPriceDeviationFactor = dataStore.getUint(Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR);
@@ -373,10 +382,6 @@ contract Oracle is RoleModule {
             }
 
             reportInfo.token = params.tokens[i];
-
-            if (!primaryPrices[reportInfo.token].isEmpty()) {
-                revert Errors.DuplicateTokenPrice(reportInfo.token);
-            }
 
             reportInfo.precision = 10 ** OracleUtils.getUncompactedDecimal(params.compactedDecimals, i);
             reportInfo.tokenOracleType = dataStore.getBytes32(Keys.oracleTypeKey(reportInfo.token));
@@ -469,13 +474,47 @@ contract Oracle is RoleModule {
                 revert Errors.InvalidMedianMinMaxPrice(medianMinPrice, medianMaxPrice);
             }
 
-            emitOraclePriceUpdated(eventEmitter, reportInfo.token, medianMinPrice, medianMaxPrice, false);
 
-            _setPrimaryPrice(reportInfo.token, Price.Props(
-                medianMinPrice,
-                medianMaxPrice
-            ));
+            cache.validatedPrices[i] = ValidatedPrice(reportInfo.token, medianMinPrice, medianMaxPrice);
         }
+
+        return cache.validatedPrices;
+    }
+
+    function _getSigners(
+        DataStore dataStore,
+        OracleUtils.SetPricesParams memory params
+    ) internal view returns (address[] memory) {
+        // first 16 bits of signer info contains the number of signers
+        address[] memory signers = new address[](params.signerInfo & Bits.BITMASK_16);
+
+        if (signers.length < dataStore.getUint(Keys.MIN_ORACLE_SIGNERS)) {
+            revert Errors.MinOracleSigners(signers.length, dataStore.getUint(Keys.MIN_ORACLE_SIGNERS));
+        }
+
+        if (signers.length > MAX_SIGNERS) {
+            revert Errors.MaxOracleSigners(signers.length, MAX_SIGNERS);
+        }
+
+        Uint256Mask.Mask memory signerIndexMask;
+
+        for (uint256 i; i < signers.length; i++) {
+            uint256 signerIndex = params.signerInfo >> (16 + 16 * i) & Bits.BITMASK_16;
+
+            if (signerIndex >= MAX_SIGNER_INDEX) {
+                revert Errors.MaxSignerIndex(signerIndex, MAX_SIGNER_INDEX);
+            }
+
+            signerIndexMask.validateUniqueAndSetIndex(signerIndex, "signerIndex");
+
+            signers[i] = oracleStore.getSigner(signerIndex);
+
+            if (signers[i] == address(0)) {
+                revert Errors.EmptySigner(signerIndex);
+            }
+        }
+
+        return signers;
     }
 
     // it might be possible for the block.chainid to change due to a fork or similar
