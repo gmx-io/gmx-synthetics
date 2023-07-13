@@ -248,6 +248,8 @@ library ExecuteDepositUtils {
     // @param params ExecuteDepositParams
     // @param _params _ExecuteDepositParams
     function _executeDeposit(ExecuteDepositParams memory params, _ExecuteDepositParams memory _params) internal returns (uint256) {
+        // for markets where longToken == shortToken, the price impact factor should be set to zero
+        // in which case, the priceImpactUsd would always equal zero
         SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
             params.dataStore,
             _params.market.marketToken,
