@@ -166,21 +166,21 @@ library IncreasePositionUtils {
             cache.sizeDeltaInTokens.toInt256()
         );
 
-        MarketUtils.validateReserve(
-            params.contracts.dataStore,
-            params.market,
-            prices,
-            params.order.isLong()
-        );
-
-        MarketUtils.validateOpenInterestReserve(
-            params.contracts.dataStore,
-            params.market,
-            prices,
-            params.order.isLong()
-        );
-
         if (params.order.sizeDeltaUsd() > 0) {
+            MarketUtils.validateReserve(
+                params.contracts.dataStore,
+                params.market,
+                prices,
+                params.order.isLong()
+            );
+
+            MarketUtils.validateOpenInterestReserve(
+                params.contracts.dataStore,
+                params.market,
+                prices,
+                params.order.isLong()
+            );
+
             PositionUtils.WillPositionCollateralBeSufficientValues memory positionValues = PositionUtils.WillPositionCollateralBeSufficientValues(
                 params.position.sizeInUsd(), // positionSizeInUsd
                 params.position.collateralAmount(), // positionCollateralAmount
