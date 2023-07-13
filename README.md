@@ -515,6 +515,8 @@ After the initial setup:
 
 - Contracts with the "CONTROLLER" role have access to important functions such as setting DataStore values, due to this, care should be taken to ensure that such contracts do not have generic functions or functions that can be intentionally used to change important values
 
+- If new contracts are added that may lead to a difference in pricing, e.g. of market tokens between the old and new contracts, then care should be taken to disable the old contracts before the new contracts are enabled
+
 - If the contracts are used to support equity synthetic markets, care should be taken to ensure that stock splits and similar changes can be handled
 
 # Feature Development
