@@ -301,6 +301,7 @@ library DecreasePositionUtils {
         PositionEventUtils.emitPositionFeesCollected(
             params.contracts.eventEmitter,
             params.orderKey,
+            params.positionKey,
             params.market.marketToken,
             params.position.collateralToken(),
             params.order.sizeDeltaUsd(),
