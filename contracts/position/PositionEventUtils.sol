@@ -248,7 +248,7 @@ library PositionEventUtils {
     ) internal {
         EventUtils.EventLogData memory eventData;
 
-        eventData.bytes32Items.initItems(2);
+        eventData.bytes32Items.initItems(3);
         eventData.bytes32Items.setItem(0, "orderKey", orderKey);
         eventData.bytes32Items.setItem(1, "positionKey", positionKey);
         eventData.bytes32Items.setItem(2, "referralCode", fees.referral.referralCode);
