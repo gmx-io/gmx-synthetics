@@ -167,6 +167,9 @@ library IncreasePositionUtils {
         );
 
         if (params.order.sizeDeltaUsd() > 0) {
+            // reserves are only validated if the sizeDeltaUsd is more than zero
+            // this helps to ensure that deposits of collateral into positions
+            // should still succeed even if pool tokens are fully reserved
             MarketUtils.validateReserve(
                 params.contracts.dataStore,
                 params.market,
