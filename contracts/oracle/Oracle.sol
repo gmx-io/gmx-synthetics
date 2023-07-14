@@ -48,6 +48,9 @@ contract Oracle is RoleModule {
         address token;
         uint256 min;
         uint256 max;
+        uint256 timestamp;
+        uint256 minBlockNumber;
+        uint256 maxBlockNumber;
     }
 
     // @dev SetPricesCache struct used in setPrices to avoid stack too deep errors
@@ -475,7 +478,14 @@ contract Oracle is RoleModule {
             }
 
 
-            cache.validatedPrices[i] = ValidatedPrice(reportInfo.token, medianMinPrice, medianMaxPrice);
+            cache.validatedPrices[i] = ValidatedPrice(
+                reportInfo.token, // token
+                medianMinPrice, // min
+                medianMaxPrice, // max
+                reportInfo.oracleTimestamp, // timestamp
+                reportInfo.minOracleBlockNumber, // minBlockNumber
+                reportInfo.maxOracleBlockNumber // maxBlockNumber
+            );
         }
 
         return cache.validatedPrices;
