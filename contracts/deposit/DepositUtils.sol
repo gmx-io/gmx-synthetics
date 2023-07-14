@@ -155,6 +155,9 @@ library DepositUtils {
         string memory reason,
         bytes memory reasonBytes
     ) external {
+        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
+        startingGas -= gasleft() / 63;
+
         Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
         if (deposit.account() == address(0)) {
             revert Errors.EmptyDeposit();
@@ -189,7 +192,8 @@ library DepositUtils {
 
         DepositEventUtils.emitDepositCancelled(eventEmitter, key, reason, reasonBytes);
 
-        CallbackUtils.afterDepositCancellation(key, deposit);
+        EventUtils.EventLogData memory eventData;
+        CallbackUtils.afterDepositCancellation(key, deposit, eventData);
 
         GasUtils.payExecutionFee(
             dataStore,

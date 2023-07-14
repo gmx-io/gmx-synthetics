@@ -2,12 +2,15 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import * as keys from "../utils/keys";
 import { setBytes32IfDifferent, setUintIfDifferent } from "../utils/dataStore";
 import { DEFAULT_MARKET_TYPE, getMarketTokenAddresses } from "../utils/market";
-import { ethers } from "ethers";
 import { getMarketKey, getOnchainMarkets } from "../utils/market";
 
 const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnvironment) => {
   const { execute, get, read, log } = deployments;
   const generalConfig = await gmx.getGeneral();
+
+  if (process.env.SKIP_NEW_MARKETS) {
+    log("WARN: new markets will be skipped");
+  }
 
   const { deployer } = await getNamedAccounts();
 
@@ -25,6 +28,11 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     const onchainMarket = onchainMarketsByTokens[marketKey];
     if (onchainMarket) {
       log("market %s:%s:%s already exists at %s", indexToken, longToken, shortToken, onchainMarket.marketToken);
+      continue;
+    }
+
+    if (process.env.SKIP_NEW_MARKETS) {
+      log("WARN: new market %s:%s:%s skipped", indexToken, longToken, shortToken);
       continue;
     }
 
@@ -50,9 +58,31 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     );
   }
 
+  async function setOpenInterestReserveFactor(marketToken: string, isLong: boolean, reserveFactor: number) {
+    const key = keys.openInterestReserveFactorKey(marketToken, isLong);
+    await setUintIfDifferent(
+      key,
+      reserveFactor,
+      `reserve factor ${marketToken.toString()} ${isLong ? "long" : "short"}`
+    );
+  }
+
   async function setMinCollateralFactor(marketToken: string, minCollateralFactor: number) {
     const key = keys.minCollateralFactorKey(marketToken);
     await setUintIfDifferent(key, minCollateralFactor, `min collateral factor ${marketToken.toString()}`);
+  }
+
+  async function setMinCollateralFactorForOpenInterestMultiplier(
+    marketToken: string,
+    minCollateralFactorForOpenInterestMultiplier: number,
+    isLong: boolean
+  ) {
+    const key = keys.minCollateralFactorForOpenInterestMultiplierKey(marketToken, isLong);
+    await setUintIfDifferent(
+      key,
+      minCollateralFactorForOpenInterestMultiplier,
+      `min collateral factor for open interest multiplier ${marketToken.toString()}`
+    );
   }
 
   async function setMaxPoolAmount(marketToken: string, token: string, maxPoolAmount: number) {
@@ -69,13 +99,15 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     );
   }
 
-  async function setMaxPnlFactor(pnlFactorType: string, marketToken: string, isLong: boolean, maxPnlFactor: number) {
+  async function setMaxPnlFactor(
+    pnlFactorType: string,
+    marketToken: string,
+    isLong: boolean,
+    maxPnlFactor: number,
+    label: string
+  ) {
     const key = keys.maxPnlFactorKey(pnlFactorType, marketToken, isLong);
-    await setUintIfDifferent(
-      key,
-      maxPnlFactor,
-      `max pnl factor ${marketToken.toString()} ${isLong ? "long" : "short"}`
-    );
+    await setUintIfDifferent(key, maxPnlFactor, `${label} ${marketToken.toString()} ${isLong ? "long" : "short"}`);
   }
 
   onchainMarketsByTokens = await getOnchainMarkets(read, dataStore.address);
@@ -86,15 +118,60 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     const onchainMarket = onchainMarketsByTokens[marketKey];
     const marketToken = onchainMarket.marketToken;
 
+    // if trades are done before virtual IDs are set, the tracking of virtual
+    // inventories may not be accurate
+    //
+    // so virtual IDs should be set before other market configurations e.g.
+    // max pool amounts, this would help to ensure that no trades can be done
+    // before virtual IDs are set
+
+    // set virtual market id for swaps
+    const virtualMarketId = marketConfig.virtualMarketId;
+    if (virtualMarketId) {
+      await setBytes32IfDifferent(
+        keys.virtualMarketIdKey(marketToken),
+        virtualMarketId,
+        `virtual market id for market ${marketToken.toString()}`
+      );
+    }
+
+    // set virtual token id for perps
+    const virtualTokenId = marketConfig.virtualTokenIdForIndexToken;
+    if (virtualTokenId) {
+      await setBytes32IfDifferent(
+        keys.virtualTokenIdKey(indexToken),
+        virtualTokenId,
+        `virtual token id for indexToken ${indexToken.toString()}`
+      );
+    }
+
     await setMaxPoolAmount(marketToken, longToken, marketConfig.maxLongTokenPoolAmount);
     await setMaxPoolAmount(marketToken, shortToken, marketConfig.maxShortTokenPoolAmount);
 
-    for (const name of ["swapFeeFactor", "swapImpactExponentFactor"]) {
+    for (const name of ["swapImpactExponentFactor"]) {
       if (marketConfig[name]) {
         const value = marketConfig[name];
         const key = keys[`${name}Key`](marketToken);
         await setUintIfDifferent(key, value, `${name} for ${marketToken.toString()}`);
       }
+    }
+
+    if (marketConfig.swapFeeFactorForPositiveImpact) {
+      const key = keys.swapFeeFactorKey(marketToken, true);
+      await setUintIfDifferent(
+        key,
+        marketConfig.swapFeeFactorForPositiveImpact,
+        `swapFeeFactorForPositiveImpact for ${marketToken.toString()}`
+      );
+    }
+
+    if (marketConfig.swapFeeFactorForNegativeImpact) {
+      const key = keys.swapFeeFactorKey(marketToken, false);
+      await setUintIfDifferent(
+        key,
+        marketConfig.swapFeeFactorForNegativeImpact,
+        `swapFeeFactorForNegativeImpact for ${marketToken.toString()}`
+      );
     }
 
     if (marketConfig.positiveSwapImpactFactor) {
@@ -114,13 +191,6 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       );
     }
 
-    const virtualMarketId = marketConfig.virtualMarketId || ethers.constants.HashZero;
-    await setBytes32IfDifferent(
-      keys.virtualMarketIdKey(marketToken),
-      virtualMarketId,
-      `virtual market id for market ${marketToken.toString()}`
-    );
-
     // the rest params are not used for swap-only markets
     if (marketConfig.swapOnly) {
       continue;
@@ -128,50 +198,95 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
 
     await setMinCollateralFactor(marketToken, marketConfig.minCollateralFactor);
 
+    await setMinCollateralFactorForOpenInterestMultiplier(
+      marketToken,
+      marketConfig.minCollateralFactorForOpenInterestMultiplierLong,
+      true
+    );
+    await setMinCollateralFactorForOpenInterestMultiplier(
+      marketToken,
+      marketConfig.minCollateralFactorForOpenInterestMultiplierShort,
+      false
+    );
+
     await setMaxOpenInterest(marketToken, true, marketConfig.maxOpenInterestForLongs);
     await setMaxOpenInterest(marketToken, false, marketConfig.maxOpenInterestForShorts);
 
     await setReserveFactor(marketToken, true, marketConfig.reserveFactorLongs);
     await setReserveFactor(marketToken, false, marketConfig.reserveFactorShorts);
 
-    await setMaxPnlFactor(keys.MAX_PNL_FACTOR_FOR_TRADERS, marketToken, true, marketConfig.maxPnlFactorForTradersLongs);
+    await setOpenInterestReserveFactor(marketToken, true, marketConfig.openInterestReserveFactorLongs);
+    await setOpenInterestReserveFactor(marketToken, false, marketConfig.openInterestReserveFactorShorts);
+
+    await setMaxPnlFactor(
+      keys.MAX_PNL_FACTOR_FOR_TRADERS,
+      marketToken,
+      true,
+      marketConfig.maxPnlFactorForTradersLongs,
+      "max pnl factor for traders"
+    );
     await setMaxPnlFactor(
       keys.MAX_PNL_FACTOR_FOR_TRADERS,
       marketToken,
       false,
-      marketConfig.maxPnlFactorForTradersShorts
+      marketConfig.maxPnlFactorForTradersShorts,
+      "max pnl factor for traders"
     );
 
-    await setMaxPnlFactor(keys.MAX_PNL_FACTOR_FOR_ADL, marketToken, true, marketConfig.maxPnlFactorForAdlLongs);
-    await setMaxPnlFactor(keys.MAX_PNL_FACTOR_FOR_ADL, marketToken, false, marketConfig.maxPnlFactorForAdlShorts);
+    await setMaxPnlFactor(
+      keys.MAX_PNL_FACTOR_FOR_ADL,
+      marketToken,
+      true,
+      marketConfig.maxPnlFactorForAdlLongs,
+      "max pnl factor for adl"
+    );
+    await setMaxPnlFactor(
+      keys.MAX_PNL_FACTOR_FOR_ADL,
+      marketToken,
+      false,
+      marketConfig.maxPnlFactorForAdlShorts,
+      "max pnl factor for adl"
+    );
 
-    await setMaxPnlFactor(keys.MIN_PNL_FACTOR_AFTER_ADL, marketToken, true, marketConfig.minPnlFactorAfterAdlLongs);
-    await setMaxPnlFactor(keys.MIN_PNL_FACTOR_AFTER_ADL, marketToken, false, marketConfig.minPnlFactorAfterAdlShorts);
+    await setUintIfDifferent(
+      keys.minPnlFactorAfterAdl(marketToken, true),
+      marketConfig.minPnlFactorAfterAdlLongs,
+      `min pnl factor after adl ${marketToken.toString()} long`
+    );
+    await setUintIfDifferent(
+      keys.minPnlFactorAfterAdl(marketToken, false),
+      marketConfig.minPnlFactorAfterAdlShorts,
+      `min pnl factor after adl ${marketToken.toString()} short`
+    );
 
     await setMaxPnlFactor(
       keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
       marketToken,
       true,
-      marketConfig.maxPnlFactorForDepositsLongs
+      marketConfig.maxPnlFactorForDepositsLongs,
+      "max pnl factor for deposits"
     );
     await setMaxPnlFactor(
       keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
       marketToken,
       false,
-      marketConfig.maxPnlFactorForDepositsShorts
+      marketConfig.maxPnlFactorForDepositsShorts,
+      "max pnl factor for deposits"
     );
 
     await setMaxPnlFactor(
       keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
       marketToken,
       true,
-      marketConfig.maxPnlFactorForWithdrawalsLongs
+      marketConfig.maxPnlFactorForWithdrawalsLongs,
+      "max pnl factor for withdrawals"
     );
     await setMaxPnlFactor(
       keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
       marketToken,
       false,
-      marketConfig.maxPnlFactorForWithdrawalsShorts
+      marketConfig.maxPnlFactorForWithdrawalsShorts,
+      "max pnl factor for withdrawals"
     );
 
     await setUintIfDifferent(
@@ -180,12 +295,30 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       `market token transfer gas limit`
     );
 
-    for (const name of ["positionFeeFactor", "positionImpactExponentFactor", "fundingFactor"]) {
+    for (const name of ["positionImpactExponentFactor", "fundingFactor"]) {
       if (marketConfig[name]) {
         const value = marketConfig[name];
         const key = keys[`${name}Key`](marketToken);
         await setUintIfDifferent(key, value, `${name} for ${marketToken.toString()}`);
       }
+    }
+
+    if (marketConfig.positionFeeFactorForPositiveImpact) {
+      const key = keys.positionFeeFactorKey(marketToken, true);
+      await setUintIfDifferent(
+        key,
+        marketConfig.positionFeeFactorForPositiveImpact,
+        `positionFeeFactorForPositiveImpact ${marketToken.toString()}`
+      );
+    }
+
+    if (marketConfig.positionFeeFactorForNegativeImpact) {
+      const key = keys.positionFeeFactorKey(marketToken, false);
+      await setUintIfDifferent(
+        key,
+        marketConfig.positionFeeFactorForNegativeImpact,
+        `positionFeeFactorForPositiveImpact ${marketToken.toString()}`
+      );
     }
 
     if (marketConfig.borrowingFactorForLongs) {
@@ -247,6 +380,15 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
         key,
         marketConfig.negativePositionImpactFactor,
         `negative position impact factor for ${marketToken.toString()}`
+      );
+    }
+
+    if (marketConfig.maxPositionImpactFactorForLiquidations) {
+      const key = keys.maxPositionImpactFactorForLiquidationsKey(marketToken);
+      await setUintIfDifferent(
+        key,
+        marketConfig.maxPositionImpactFactorForLiquidations,
+        `max position impact factor for liquidations for ${marketToken.toString()}`
       );
     }
 

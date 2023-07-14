@@ -57,13 +57,29 @@ library CallbackUtils {
         }
     }
 
+    function setSavedCallbackContract(DataStore dataStore, address account, address market, address callbackContract) internal {
+        dataStore.setAddress(Keys.savedCallbackContract(account, market), callbackContract);
+    }
+
+    function getSavedCallbackContract(DataStore dataStore, address account, address market) internal view returns (address) {
+        return dataStore.getAddress(Keys.savedCallbackContract(account, market));
+    }
+
     // @dev called after a deposit execution
     // @param key the key of the deposit
     // @param deposit the deposit that was executed
-    function afterDepositExecution(bytes32 key, Deposit.Props memory deposit) internal {
+    function afterDepositExecution(
+        bytes32 key,
+        Deposit.Props memory deposit,
+        EventUtils.EventLogData memory eventData
+    ) internal {
         if (!isValidCallbackContract(deposit.callbackContract())) { return; }
 
-        try IDepositCallbackReceiver(deposit.callbackContract()).afterDepositExecution{ gas: deposit.callbackGasLimit() }(key, deposit) {
+        try IDepositCallbackReceiver(deposit.callbackContract()).afterDepositExecution{ gas: deposit.callbackGasLimit() }(
+            key,
+            deposit,
+            eventData
+        ) {
         } catch {
             emit AfterDepositExecutionError(key, deposit);
         }
@@ -72,10 +88,18 @@ library CallbackUtils {
     // @dev called after a deposit cancellation
     // @param key the key of the deposit
     // @param deposit the deposit that was cancelled
-    function afterDepositCancellation(bytes32 key, Deposit.Props memory deposit) internal {
+    function afterDepositCancellation(
+        bytes32 key,
+        Deposit.Props memory deposit,
+        EventUtils.EventLogData memory eventData
+    ) internal {
         if (!isValidCallbackContract(deposit.callbackContract())) { return; }
 
-        try IDepositCallbackReceiver(deposit.callbackContract()).afterDepositCancellation{ gas: deposit.callbackGasLimit() }(key, deposit) {
+        try IDepositCallbackReceiver(deposit.callbackContract()).afterDepositCancellation{ gas: deposit.callbackGasLimit() }(
+            key,
+            deposit,
+            eventData
+        ) {
         } catch {
             emit AfterDepositCancellationError(key, deposit);
         }
@@ -84,10 +108,18 @@ library CallbackUtils {
     // @dev called after a withdrawal execution
     // @param key the key of the withdrawal
     // @param withdrawal the withdrawal that was executed
-    function afterWithdrawalExecution(bytes32 key, Withdrawal.Props memory withdrawal) internal {
+    function afterWithdrawalExecution(
+        bytes32 key,
+        Withdrawal.Props memory withdrawal,
+        EventUtils.EventLogData memory eventData
+    ) internal {
         if (!isValidCallbackContract(withdrawal.callbackContract())) { return; }
 
-        try IWithdrawalCallbackReceiver(withdrawal.callbackContract()).afterWithdrawalExecution{ gas: withdrawal.callbackGasLimit() }(key, withdrawal) {
+        try IWithdrawalCallbackReceiver(withdrawal.callbackContract()).afterWithdrawalExecution{ gas: withdrawal.callbackGasLimit() }(
+            key,
+            withdrawal,
+            eventData
+        ) {
         } catch {
             emit AfterWithdrawalExecutionError(key, withdrawal);
         }
@@ -96,22 +128,41 @@ library CallbackUtils {
     // @dev called after a withdrawal cancellation
     // @param key the key of the withdrawal
     // @param withdrawal the withdrawal that was cancelled
-    function afterWithdrawalCancellation(bytes32 key, Withdrawal.Props memory withdrawal) internal {
+    function afterWithdrawalCancellation(
+        bytes32 key,
+        Withdrawal.Props memory withdrawal,
+        EventUtils.EventLogData memory eventData
+    ) internal {
         if (!isValidCallbackContract(withdrawal.callbackContract())) { return; }
 
-        try IWithdrawalCallbackReceiver(withdrawal.callbackContract()).afterWithdrawalCancellation{ gas: withdrawal.callbackGasLimit() }(key, withdrawal) {
+        try IWithdrawalCallbackReceiver(withdrawal.callbackContract()).afterWithdrawalCancellation{ gas: withdrawal.callbackGasLimit() }(
+            key,
+            withdrawal,
+            eventData
+        ) {
         } catch {
             emit AfterWithdrawalCancellationError(key, withdrawal);
         }
     }
 
     // @dev called after an order execution
+    // note that the order.size, order.initialCollateralDeltaAmount and other
+    // properties may be updated during execution, the new values may not be
+    // updated in the order object for the callback
     // @param key the key of the order
     // @param order the order that was executed
-    function afterOrderExecution(bytes32 key, Order.Props memory order) internal {
+    function afterOrderExecution(
+        bytes32 key,
+        Order.Props memory order,
+        EventUtils.EventLogData memory eventData
+    ) internal {
         if (!isValidCallbackContract(order.callbackContract())) { return; }
 
-        try IOrderCallbackReceiver(order.callbackContract()).afterOrderExecution{ gas: order.callbackGasLimit() }(key, order) {
+        try IOrderCallbackReceiver(order.callbackContract()).afterOrderExecution{ gas: order.callbackGasLimit() }(
+            key,
+            order,
+            eventData
+        ) {
         } catch {
             emit AfterOrderExecutionError(key, order);
         }
@@ -120,10 +171,18 @@ library CallbackUtils {
     // @dev called after an order cancellation
     // @param key the key of the order
     // @param order the order that was cancelled
-    function afterOrderCancellation(bytes32 key, Order.Props memory order) internal {
+    function afterOrderCancellation(
+        bytes32 key,
+        Order.Props memory order,
+        EventUtils.EventLogData memory eventData
+    ) internal {
         if (!isValidCallbackContract(order.callbackContract())) { return; }
 
-        try IOrderCallbackReceiver(order.callbackContract()).afterOrderCancellation{ gas: order.callbackGasLimit() }(key, order) {
+        try IOrderCallbackReceiver(order.callbackContract()).afterOrderCancellation{ gas: order.callbackGasLimit() }(
+            key,
+            order,
+            eventData
+        ) {
         } catch {
             emit AfterOrderCancellationError(key, order);
         }
@@ -132,10 +191,18 @@ library CallbackUtils {
     // @dev called after an order has been frozen, see OrderUtils.freezeOrder in OrderHandler for more info
     // @param key the key of the order
     // @param order the order that was frozen
-    function afterOrderFrozen(bytes32 key, Order.Props memory order) internal {
+    function afterOrderFrozen(
+        bytes32 key,
+        Order.Props memory order,
+        EventUtils.EventLogData memory eventData
+    ) internal {
         if (!isValidCallbackContract(order.callbackContract())) { return; }
 
-        try IOrderCallbackReceiver(order.callbackContract()).afterOrderFrozen{ gas: order.callbackGasLimit() }(key, order) {
+        try IOrderCallbackReceiver(order.callbackContract()).afterOrderFrozen{ gas: order.callbackGasLimit() }(
+            key,
+            order,
+            eventData
+        ) {
         } catch {
             emit AfterOrderFrozenError(key, order);
         }

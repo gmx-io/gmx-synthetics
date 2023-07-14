@@ -6,12 +6,14 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import "../exchange/DepositHandler.sol";
-import "../exchange/WithdrawalHandler.sol";
-import "../exchange/OrderHandler.sol";
+import "../exchange/IDepositHandler.sol";
+import "../exchange/IWithdrawalHandler.sol";
+import "../exchange/IOrderHandler.sol";
 
 import "../utils/PayableMulticall.sol";
 import "../utils/AccountUtils.sol";
+
+import "../feature/FeatureUtils.sol";
 
 import "./Router.sol";
 
@@ -62,20 +64,20 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
     Router public immutable router;
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
-    DepositHandler public immutable depositHandler;
-    WithdrawalHandler public immutable withdrawalHandler;
-    OrderHandler public immutable orderHandler;
+    IDepositHandler public immutable depositHandler;
+    IWithdrawalHandler public immutable withdrawalHandler;
+    IOrderHandler public immutable orderHandler;
 
     // @dev Constructor that initializes the contract with the provided Router, RoleStore, DataStore,
-    // EventEmitter, DepositHandler, WithdrawalHandler, OrderHandler, and OrderStore instances
+    // EventEmitter, IDepositHandler, IWithdrawalHandler, IOrderHandler, and OrderStore instances
     constructor(
         Router _router,
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        DepositHandler _depositHandler,
-        WithdrawalHandler _withdrawalHandler,
-        OrderHandler _orderHandler
+        IDepositHandler _depositHandler,
+        IWithdrawalHandler _withdrawalHandler,
+        IOrderHandler _orderHandler
     ) RoleModule(_roleStore) {
         router = _router;
         dataStore = _dataStore;
@@ -268,7 +270,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         address[] memory markets,
         address[] memory tokens,
         address receiver
-    ) external payable nonReentrant {
+    ) external payable nonReentrant returns (uint256[] memory) {
         if (markets.length != tokens.length) {
             revert Errors.InvalidClaimFundingFeesInput(markets.length, tokens.length);
         }
@@ -279,8 +281,10 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
 
         address account = msg.sender;
 
+        uint256[] memory claimedAmounts = new uint256[](markets.length);
+
         for (uint256 i; i < markets.length; i++) {
-            MarketUtils.claimFundingFees(
+            claimedAmounts[i] = MarketUtils.claimFundingFees(
                 dataStore,
                 eventEmitter,
                 markets[i],
@@ -289,6 +293,8 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
                 receiver
             );
         }
+
+        return claimedAmounts;
     }
 
     function claimCollateral(
@@ -296,7 +302,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         address[] memory tokens,
         uint256[] memory timeKeys,
         address receiver
-    ) external payable nonReentrant {
+    ) external payable nonReentrant returns (uint256[] memory) {
         if (markets.length != tokens.length || tokens.length != timeKeys.length) {
             revert Errors.InvalidClaimCollateralInput(markets.length, tokens.length, timeKeys.length);
         }
@@ -307,8 +313,10 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
 
         address account = msg.sender;
 
+        uint256[] memory claimedAmounts = new uint256[](markets.length);
+
         for (uint256 i; i < markets.length; i++) {
-            MarketUtils.claimCollateral(
+            claimedAmounts[i] = MarketUtils.claimCollateral(
                 dataStore,
                 eventEmitter,
                 markets[i],
@@ -318,6 +326,8 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
                 receiver
             );
         }
+
+        return claimedAmounts;
     }
 
     /**
@@ -334,7 +344,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         address[] memory markets,
         address[] memory tokens,
         address receiver
-    ) external payable nonReentrant {
+    ) external payable nonReentrant returns (uint256[] memory) {
         if (markets.length != tokens.length) {
             revert Errors.InvalidClaimAffiliateRewardsInput(markets.length, tokens.length);
         }
@@ -343,8 +353,10 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
 
         address account = msg.sender;
 
+        uint256[] memory claimedAmounts = new uint256[](markets.length);
+
         for (uint256 i; i < markets.length; i++) {
-            ReferralUtils.claimAffiliateReward(
+            claimedAmounts[i] = ReferralUtils.claimAffiliateReward(
                 dataStore,
                 eventEmitter,
                 markets[i],
@@ -353,6 +365,8 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
                 receiver
             );
         }
+
+        return claimedAmounts;
     }
 
     function setUiFeeFactor(uint256 uiFeeFactor) external payable nonReentrant {
@@ -364,7 +378,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         address[] memory markets,
         address[] memory tokens,
         address receiver
-    ) external payable nonReentrant {
+    ) external payable nonReentrant returns (uint256[] memory) {
         if (markets.length != tokens.length) {
             revert Errors.InvalidClaimUiFeesInput(markets.length, tokens.length);
         }
@@ -373,8 +387,10 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
 
         address uiFeeReceiver = msg.sender;
 
+        uint256[] memory claimedAmounts = new uint256[](markets.length);
+
         for (uint256 i; i < markets.length; i++) {
-            FeeUtils.claimUiFees(
+            claimedAmounts[i] = FeeUtils.claimUiFees(
                 dataStore,
                 eventEmitter,
                 uiFeeReceiver,
@@ -383,5 +399,7 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
                 receiver
             );
         }
+
+        return claimedAmounts;
     }
 }

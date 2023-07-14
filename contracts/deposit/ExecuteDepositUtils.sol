@@ -32,6 +32,14 @@ library ExecuteDepositUtils {
     using Price for Price.Props;
     using Deposit for Deposit.Props;
 
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
+
     // @dev ExecuteDepositParams struct used in executeDeposit to avoid stack
     // too deep errors
     //
@@ -94,7 +102,12 @@ library ExecuteDepositUtils {
     // @dev executes a deposit
     // @param params ExecuteDepositParams
     function executeDeposit(ExecuteDepositParams memory params) external {
+        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
+        params.startingGas -= gasleft() / 63;
+
         Deposit.Props memory deposit = DepositStoreUtils.get(params.dataStore, params.key);
+        DepositStoreUtils.remove(params.dataStore, params.key, deposit.account());
+
         ExecuteDepositCache memory cache;
 
         if (deposit.account() == address(0)) {
@@ -160,8 +173,8 @@ library ExecuteDepositUtils {
                 market.shortToken,
                 prices.longTokenPrice.midPrice(),
                 prices.shortTokenPrice.midPrice(),
-                (cache.longTokenAmount * prices.longTokenPrice.midPrice()).toInt256(),
-                (cache.shortTokenAmount * prices.shortTokenPrice.midPrice()).toInt256()
+                cache.longTokenUsd.toInt256(),
+                cache.shortTokenUsd.toInt256()
             )
         );
 
@@ -176,7 +189,7 @@ library ExecuteDepositUtils {
                 prices.longTokenPrice,
                 prices.shortTokenPrice,
                 cache.longTokenAmount,
-                cache.priceImpactUsd * cache.longTokenUsd.toInt256() / (cache.longTokenUsd + cache.shortTokenUsd).toInt256()
+                Precision.mulDiv(cache.priceImpactUsd, cache.longTokenUsd, cache.longTokenUsd + cache.shortTokenUsd)
             );
 
             cache.receivedMarketTokens += _executeDeposit(params, _params);
@@ -193,7 +206,7 @@ library ExecuteDepositUtils {
                 prices.shortTokenPrice,
                 prices.longTokenPrice,
                 cache.shortTokenAmount,
-                cache.priceImpactUsd * cache.shortTokenUsd.toInt256() / (cache.longTokenUsd + cache.shortTokenUsd).toInt256()
+                Precision.mulDiv(cache.priceImpactUsd, cache.shortTokenUsd, cache.longTokenUsd + cache.shortTokenUsd)
             );
 
             cache.receivedMarketTokens += _executeDeposit(params, _params);
@@ -202,8 +215,6 @@ library ExecuteDepositUtils {
         if (cache.receivedMarketTokens < deposit.minMarketTokens()) {
             revert Errors.MinMarketTokens(cache.receivedMarketTokens, deposit.minMarketTokens());
         }
-
-        DepositStoreUtils.remove(params.dataStore, params.key, deposit.account());
 
         // validate that internal state changes are correct before calling
         // external callbacks
@@ -217,7 +228,10 @@ library ExecuteDepositUtils {
             cache.receivedMarketTokens
         );
 
-        CallbackUtils.afterDepositExecution(params.key, deposit);
+        EventUtils.EventLogData memory eventData;
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "receivedMarketTokens", cache.receivedMarketTokens);
+        CallbackUtils.afterDepositExecution(params.key, deposit, eventData);
 
         GasUtils.payExecutionFee(
             params.dataStore,
@@ -234,10 +248,13 @@ library ExecuteDepositUtils {
     // @param params ExecuteDepositParams
     // @param _params _ExecuteDepositParams
     function _executeDeposit(ExecuteDepositParams memory params, _ExecuteDepositParams memory _params) internal returns (uint256) {
+        // for markets where longToken == shortToken, the price impact factor should be set to zero
+        // in which case, the priceImpactUsd would always equal zero
         SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
             params.dataStore,
             _params.market.marketToken,
             _params.amount,
+            _params.priceImpactUsd > 0, // forPositiveImpact
             _params.uiFeeReceiver
         );
 
@@ -247,7 +264,7 @@ library ExecuteDepositUtils {
             _params.market.marketToken,
             _params.tokenIn,
             fees.feeReceiverAmount,
-            Keys.DEPOSIT_FEE
+            Keys.DEPOSIT_FEE_TYPE
         );
 
         FeeUtils.incrementClaimableUiFeeAmount(
@@ -257,7 +274,7 @@ library ExecuteDepositUtils {
             _params.market.marketToken,
             _params.tokenIn,
             fees.uiFeeAmount,
-            Keys.UI_DEPOSIT_FEE
+            Keys.UI_DEPOSIT_FEE_TYPE
         );
 
         SwapPricingUtils.emitSwapFeesCollected(
@@ -289,12 +306,41 @@ library ExecuteDepositUtils {
 
         uint256 marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(_params.market.marketToken)));
 
+        if (poolValueInfo.poolValue == 0 && marketTokensSupply > 0) {
+            revert Errors.InvalidPoolValueForDeposit(poolValueInfo.poolValue);
+        }
+
         MarketEventUtils.emitMarketPoolValueInfo(
             params.eventEmitter,
             _params.market.marketToken,
             poolValueInfo,
             marketTokensSupply
         );
+
+        // the poolValue and marketTokensSupply is cached for the mintAmount calculation below
+        // so the effect of any positive price impact on the poolValue and marketTokensSupply
+        // would not be accounted for
+        //
+        // for most cases, this should not be an issue, since the poolValue and marketTokensSupply
+        // should have been proportionately increased
+        //
+        // e.g. if the poolValue is $100 and marketTokensSupply is 100, and there is a positive price impact
+        // of $10, the poolValue should have increased by $10 and the marketTokensSupply should have been increased by 10
+        //
+        // there is a case where this may be an issue which is when all tokens are withdrawn from an existing market
+        // and the marketTokensSupply is reset to zero, but the poolValue is not entirely zero
+        // the case where this happens should be very rare and during withdrawal the poolValue should be close to zero
+        //
+        // however, in case this occurs, the usdToMarketTokenAmount will mint an additional number of market tokens
+        // proportional to the existing poolValue
+        //
+        // since the poolValue and marketTokensSupply is cached, this could occur once during positive price impact
+        // and again when calculating the mintAmount
+        //
+        // to avoid this, set the priceImpactUsd to be zero for this case
+        if (_params.priceImpactUsd > 0 && marketTokensSupply == 0) {
+            _params.priceImpactUsd = 0;
+        }
 
         if (_params.priceImpactUsd > 0) {
             // when there is a positive price impact factor,
@@ -306,7 +352,11 @@ library ExecuteDepositUtils {
             // priceImpactUsd is calculated based on pricing assuming only depositAmount of tokenIn
             // was added to the pool
             // since impactAmount of tokenOut is added to the pool here, the calculation of
-            // the tokenInPrice would not be entirely accurate
+            // the price impact would not be entirely accurate
+            //
+            // it is possible that the addition of the positive impact amount of tokens into the pool
+            // could increase the imbalance of the pool, for most cases this should not be a significant
+            // change compared to the improvement of balance from the actual deposit
             int256 positiveImpactAmount = MarketUtils.applySwapImpactWithCap(
                 params.dataStore,
                 params.eventEmitter,
@@ -318,8 +368,16 @@ library ExecuteDepositUtils {
 
             // calculate the usd amount using positiveImpactAmount since it may
             // be capped by the max available amount in the impact pool
+            // use tokenOutPrice.max to get the USD value since the positiveImpactAmount
+            // was calculated using a USD value divided by tokenOutPrice.max
+            //
+            // for the initial deposit, the pool value and token supply would be zero
+            // so the market token price is treated as 1 USD
+            //
+            // it is possible for the pool value to be more than zero and the token supply
+            // to be zero, in that case, the market token price is also treated as 1 USD
             mintAmount += MarketUtils.usdToMarketTokenAmount(
-                positiveImpactAmount.toUint256() * _params.tokenOutPrice.min,
+                positiveImpactAmount.toUint256() * _params.tokenOutPrice.max,
                 poolValue,
                 marketTokensSupply
             );
@@ -328,7 +386,7 @@ library ExecuteDepositUtils {
             MarketUtils.applyDeltaToPoolAmount(
                 params.dataStore,
                 params.eventEmitter,
-                _params.market.marketToken,
+                _params.market,
                 _params.tokenOut,
                 positiveImpactAmount
             );
@@ -338,7 +396,9 @@ library ExecuteDepositUtils {
                 _params.market,
                 _params.tokenOut
             );
-        } else {
+        }
+
+        if (_params.priceImpactUsd < 0) {
             // when there is a negative price impact factor,
             // less of the deposit amount is used to mint market tokens
             // for example, if 10 ETH is deposited and there is a negative price impact
@@ -352,6 +412,7 @@ library ExecuteDepositUtils {
                 _params.tokenInPrice,
                 _params.priceImpactUsd
             );
+
             fees.amountAfterFees -= (-negativeImpactAmount).toUint256();
         }
 
@@ -364,7 +425,7 @@ library ExecuteDepositUtils {
         MarketUtils.applyDeltaToPoolAmount(
             params.dataStore,
             params.eventEmitter,
-            _params.market.marketToken,
+            _params.market,
             _params.tokenIn,
             (fees.amountAfterFees + fees.feeAmountForPool).toInt256()
         );
@@ -389,7 +450,7 @@ library ExecuteDepositUtils {
         address expectedOutputToken,
         address uiFeeReceiver
     ) internal returns (uint256) {
-        Market.Props[] memory swapPathMarkets = MarketUtils.getEnabledMarkets(
+        Market.Props[] memory swapPathMarkets = MarketUtils.getSwapPathMarkets(
             params.dataStore,
             swapPath
         );

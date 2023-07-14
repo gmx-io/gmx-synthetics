@@ -19,9 +19,11 @@ import "../deposit/ExecuteDepositUtils.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 
+import "./IDepositHandler.sol";
+
 // @title DepositHandler
 // @dev Contract to handle creation, execution and cancellation of deposits
-contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
+contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, OracleModule {
     using Deposit for Deposit.Props;
 
     EventEmitter public immutable eventEmitter;
@@ -46,7 +48,7 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
     function createDeposit(
         address account,
         DepositUtils.CreateDepositParams calldata params
-    ) external globalNonReentrant onlyController returns (bytes32) {
+    ) external override globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createDepositFeatureDisabledKey(address(this)));
 
         return DepositUtils.createDeposit(
@@ -60,7 +62,7 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
 
     // @dev cancels a deposit
     // @param key the deposit key
-    function cancelDeposit(bytes32 key) external globalNonReentrant onlyController {
+    function cancelDeposit(bytes32 key) external override globalNonReentrant onlyController {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
@@ -98,8 +100,9 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
         uint256 startingGas = gasleft();
+        uint256 executionGas = GasUtils.getExecutionGas(dataStore, startingGas);
 
-        try this._executeDeposit(
+        try this._executeDeposit{ gas: executionGas }(
             key,
             oracleParams,
             msg.sender
@@ -120,6 +123,7 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         bytes32 key,
         OracleUtils.SimulatePricesParams memory params
     ) external
+        override
         onlyController
         withSimulatedOraclePrices(oracle, params)
         globalNonReentrant
@@ -181,8 +185,6 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         uint256 startingGas,
         bytes memory reasonBytes
     ) internal {
-        (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
         if (
@@ -191,6 +193,8 @@ contract DepositHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         ) {
             ErrorUtils.revertWithCustomError(reasonBytes);
         }
+
+        (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
 
         DepositUtils.cancelDeposit(
             dataStore,

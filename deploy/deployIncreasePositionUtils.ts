@@ -5,12 +5,10 @@ const func = createDeployFunction({
   libraryNames: [
     "FeeUtils",
     "MarketUtils",
-    "MarketStoreUtils",
     "MarketEventUtils",
     "PositionUtils",
     "PositionStoreUtils",
     "PositionEventUtils",
-    "PositionPricingUtils",
     "ReferralEventUtils",
   ],
 });

@@ -6,6 +6,7 @@ import "./BaseOrderUtils.sol";
 import "../swap/SwapUtils.sol";
 import "../position/IncreasePositionUtils.sol";
 import "../order/OrderStoreUtils.sol";
+import "../callback/CallbackUtils.sol";
 
 // @title IncreaseOrderUtils
 // @dev Library for functions to help with processing an increase order
@@ -16,7 +17,7 @@ library IncreaseOrderUtils {
 
     // @dev process an increase order
     // @param params BaseOrderUtils.ExecuteOrderParams
-    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external {
+    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external returns (EventUtils.EventLogData memory) {
         MarketUtils.validatePositionMarket(params.contracts.dataStore, params.market);
 
         (address collateralToken, uint256 collateralIncrementAmount) = SwapUtils.swap(SwapUtils.SwapParams(
@@ -65,12 +66,22 @@ library IncreaseOrderUtils {
                 params.order,
                 params.key,
                 position,
-                positionKey
+                positionKey,
+                params.secondaryOrderType
             ),
             collateralIncrementAmount
         );
 
-        OrderStoreUtils.remove(params.contracts.dataStore, params.key, params.order.account());
+        // save the callback contract based on the account and market so that it can be called on liquidations and ADLs
+        CallbackUtils.setSavedCallbackContract(
+            params.contracts.dataStore,
+            params.order.account(),
+            params.order.market(),
+            params.order.callbackContract()
+        );
+
+        EventUtils.EventLogData memory eventData;
+        return eventData;
     }
 
     // @dev validate the oracle block numbers used for the prices in the oracle

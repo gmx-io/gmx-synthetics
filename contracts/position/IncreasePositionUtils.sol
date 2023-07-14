@@ -30,6 +30,8 @@ library IncreasePositionUtils {
     // avoid stack too deep errors
     // @param collateralDeltaAmount the change in collateral amount
     // @param executionPrice the execution price
+    // @param collateralTokenPrice the price of the collateral token
+    // @param priceImpactUsd the price impact in USD
     // @param priceImpactAmount the price impact of the position increase in tokens
     // @param sizeDeltaInTokens the change in position size in tokens
     // @param nextPositionSizeInUsd the new position size in USD
@@ -37,6 +39,8 @@ library IncreasePositionUtils {
     struct IncreasePositionCache {
         int256 collateralDeltaAmount;
         uint256 executionPrice;
+        Price.Props collateralTokenPrice;
+        int256 priceImpactUsd;
         int256 priceImpactAmount;
         uint256 sizeDeltaInTokens;
         uint256 nextPositionSizeInUsd;
@@ -55,7 +59,7 @@ library IncreasePositionUtils {
         uint256 collateralIncrementAmount
     ) external {
         // get the market prices for the given position
-        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPricesForPosition(
+        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(
             params.contracts.oracle,
             params.market
         );
@@ -65,21 +69,50 @@ library IncreasePositionUtils {
         // create a new cache for holding intermediate results
         IncreasePositionCache memory cache;
 
+        cache.collateralTokenPrice = MarketUtils.getCachedTokenPrice(
+            params.position.collateralToken(),
+            params.market,
+            prices
+        );
+
         if (params.position.sizeInUsd() == 0) {
-            params.position.setLongTokenFundingAmountPerSize(
-                MarketUtils.getFundingAmountPerSize(params.contracts.dataStore, params.market.marketToken, params.market.longToken, params.position.isLong())
+            params.position.setFundingFeeAmountPerSize(
+                MarketUtils.getFundingFeeAmountPerSize(
+                    params.contracts.dataStore,
+                    params.market.marketToken,
+                    params.position.collateralToken(),
+                    params.position.isLong()
+                )
             );
-            params.position.setShortTokenFundingAmountPerSize(
-                MarketUtils.getFundingAmountPerSize(params.contracts.dataStore, params.market.marketToken, params.market.shortToken, params.position.isLong())
+
+            params.position.setLongTokenClaimableFundingAmountPerSize(
+                MarketUtils.getClaimableFundingAmountPerSize(
+                    params.contracts.dataStore,
+                    params.market.marketToken,
+                    params.market.longToken,
+                    params.position.isLong()
+                )
+            );
+
+            params.position.setShortTokenClaimableFundingAmountPerSize(
+                MarketUtils.getClaimableFundingAmountPerSize(
+                    params.contracts.dataStore,
+                    params.market.marketToken,
+                    params.market.shortToken,
+                    params.position.isLong()
+                )
             );
         }
+
+        (cache.priceImpactUsd, cache.priceImpactAmount, cache.sizeDeltaInTokens, cache.executionPrice) = getExecutionPrice(params, prices.indexTokenPrice);
 
         // process the collateral for the given position and order
         PositionPricingUtils.PositionFees memory fees;
         (cache.collateralDeltaAmount, fees) = processCollateral(
             params,
-            prices,
-            collateralIncrementAmount.toInt256()
+            cache.collateralTokenPrice,
+            collateralIncrementAmount.toInt256(),
+            cache.priceImpactUsd
         );
 
         // check if there is sufficient collateral for the position
@@ -91,8 +124,6 @@ library IncreasePositionUtils {
         }
         params.position.setCollateralAmount(Calc.sumReturnUint256(params.position.collateralAmount(), cache.collateralDeltaAmount));
 
-        (cache.executionPrice, cache.priceImpactAmount) = getExecutionPrice(params, prices);
-
         // if there is a positive impact, the impact pool amount should be reduced
         // if there is a negative impact, the impact pool amount should be increased
         MarketUtils.applyDeltaToPositionImpactPool(
@@ -101,14 +132,6 @@ library IncreasePositionUtils {
             params.market.marketToken,
             -cache.priceImpactAmount
         );
-
-        if (params.position.isLong()) {
-            // round the number of tokens for long positions down
-            cache.sizeDeltaInTokens = params.order.sizeDeltaUsd() / cache.executionPrice;
-        } else {
-            // round the number of tokens for short positions up
-            cache.sizeDeltaInTokens = Calc.roundUpDivision(params.order.sizeDeltaUsd(), cache.executionPrice);
-        }
 
         cache.nextPositionSizeInUsd = params.position.sizeInUsd() + params.order.sizeDeltaUsd();
         cache.nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(
@@ -123,12 +146,14 @@ library IncreasePositionUtils {
             cache.nextPositionBorrowingFactor
         );
 
+        PositionUtils.incrementClaimableFundingAmount(params, fees);
+
         params.position.setSizeInUsd(cache.nextPositionSizeInUsd);
         params.position.setSizeInTokens(params.position.sizeInTokens() + cache.sizeDeltaInTokens);
-        params.position.setLongTokenFundingAmountPerSize(fees.funding.latestLongTokenFundingAmountPerSize);
-        params.position.setShortTokenFundingAmountPerSize(fees.funding.latestShortTokenFundingAmountPerSize);
 
-        PositionUtils.incrementClaimableFundingAmount(params, fees);
+        params.position.setFundingFeeAmountPerSize(fees.funding.latestFundingFeeAmountPerSize);
+        params.position.setLongTokenClaimableFundingAmountPerSize(fees.funding.latestLongTokenClaimableFundingAmountPerSize);
+        params.position.setShortTokenClaimableFundingAmountPerSize(fees.funding.latestShortTokenClaimableFundingAmountPerSize);
 
         params.position.setBorrowingFactor(cache.nextPositionBorrowingFactor);
         params.position.setIncreasedAtBlock(Chain.currentBlockNumber());
@@ -141,25 +166,24 @@ library IncreasePositionUtils {
             cache.sizeDeltaInTokens.toInt256()
         );
 
-        MarketUtils.validateReserve(
-            params.contracts.dataStore,
-            params.market,
-            prices,
-            params.order.isLong()
-        );
-
-        PositionUtils.validatePosition(
-            params.contracts.dataStore,
-            params.contracts.referralStorage,
-            params.position,
-            params.market,
-            prices,
-            true, // isIncrease
-            true, // shouldValidateMinPositionSize
-            true // shouldValidateMinCollateralUsd
-        );
-
         if (params.order.sizeDeltaUsd() > 0) {
+            // reserves are only validated if the sizeDeltaUsd is more than zero
+            // this helps to ensure that deposits of collateral into positions
+            // should still succeed even if pool tokens are fully reserved
+            MarketUtils.validateReserve(
+                params.contracts.dataStore,
+                params.market,
+                prices,
+                params.order.isLong()
+            );
+
+            MarketUtils.validateOpenInterestReserve(
+                params.contracts.dataStore,
+                params.market,
+                prices,
+                params.order.isLong()
+            );
+
             PositionUtils.WillPositionCollateralBeSufficientValues memory positionValues = PositionUtils.WillPositionCollateralBeSufficientValues(
                 params.position.sizeInUsd(), // positionSizeInUsd
                 params.position.collateralAmount(), // positionCollateralAmount
@@ -177,15 +201,28 @@ library IncreasePositionUtils {
             );
 
             if (!willBeSufficient) {
-                revert Errors.InsufficientCollateralForOpenInterestLeverage(remainingCollateralUsd);
+                revert Errors.InsufficientCollateralUsd(remainingCollateralUsd);
             }
         }
 
         PositionUtils.handleReferral(params, fees);
 
+        // validatePosition should be called after open interest and all other market variables
+        // have been updated
+        PositionUtils.validatePosition(
+            params.contracts.dataStore,
+            params.contracts.referralStorage,
+            params.position,
+            params.market,
+            prices,
+            true, // shouldValidateMinPositionSize
+            true // shouldValidateMinCollateralUsd
+        );
+
         PositionEventUtils.emitPositionFeesCollected(
             params.contracts.eventEmitter,
             params.orderKey,
+            params.positionKey,
             params.market.marketToken,
             params.position.collateralToken(),
             params.order.sizeDeltaUsd(),
@@ -198,10 +235,13 @@ library IncreasePositionUtils {
         eventParams.orderKey = params.orderKey;
         eventParams.positionKey = params.positionKey;
         eventParams.position = params.position;
+        eventParams.indexTokenPrice = prices.indexTokenPrice;
         eventParams.executionPrice = cache.executionPrice;
+        eventParams.collateralTokenPrice = cache.collateralTokenPrice;
         eventParams.sizeDeltaUsd = params.order.sizeDeltaUsd();
         eventParams.sizeDeltaInTokens = cache.sizeDeltaInTokens;
         eventParams.collateralDeltaAmount = cache.collateralDeltaAmount;
+        eventParams.priceImpactUsd = cache.priceImpactUsd;
         eventParams.priceImpactAmount = cache.priceImpactAmount;
         eventParams.orderType = params.order.orderType();
 
@@ -215,24 +255,20 @@ library IncreasePositionUtils {
     // @param collateralDeltaAmount the change in the position's collateral
     function processCollateral(
         PositionUtils.UpdatePositionParams memory params,
-        MarketUtils.MarketPrices memory prices,
-        int256 collateralDeltaAmount
+        Price.Props memory collateralTokenPrice,
+        int256 collateralDeltaAmount,
+        int256 priceImpactUsd
     ) internal returns (int256, PositionPricingUtils.PositionFees memory) {
-        Price.Props memory collateralTokenPrice = MarketUtils.getCachedTokenPrice(
-            params.position.collateralToken(),
-            params.market,
-            prices
-        );
-
         PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams(
-            params.contracts.dataStore,
-            params.contracts.referralStorage,
-            params.position,
-            collateralTokenPrice,
-            params.market.longToken,
-            params.market.shortToken,
-            params.order.sizeDeltaUsd(),
-            params.order.uiFeeReceiver()
+            params.contracts.dataStore, // dataStore
+            params.contracts.referralStorage, // referralStorage
+            params.position, // position
+            collateralTokenPrice, // collateralTokenPrice
+            priceImpactUsd > 0, // forPositiveImpact
+            params.market.longToken, // longToken
+            params.market.shortToken, // shortToken
+            params.order.sizeDeltaUsd(), // sizeDeltaUsd
+            params.order.uiFeeReceiver() // uiFeeReceiver
         );
 
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(getPositionFeesParams);
@@ -243,7 +279,7 @@ library IncreasePositionUtils {
             params.market.marketToken,
             params.position.collateralToken(),
             fees.feeReceiverAmount,
-            Keys.POSITION_FEE
+            Keys.POSITION_FEE_TYPE
         );
 
         FeeUtils.incrementClaimableUiFeeAmount(
@@ -253,10 +289,10 @@ library IncreasePositionUtils {
             params.market.marketToken,
             params.position.collateralToken(),
             fees.ui.uiFeeAmount,
-            Keys.UI_POSITION_FEE
+            Keys.UI_POSITION_FEE_TYPE
         );
 
-        collateralDeltaAmount -= fees.collateralCostAmount.toInt256();
+        collateralDeltaAmount -= fees.totalCostAmount.toInt256();
 
         MarketUtils.applyDeltaToCollateralSum(
             params.contracts.dataStore,
@@ -270,7 +306,7 @@ library IncreasePositionUtils {
         MarketUtils.applyDeltaToPoolAmount(
             params.contracts.dataStore,
             params.contracts.eventEmitter,
-            params.market.marketToken,
+            params.market,
             params.position.collateralToken(),
             fees.feeAmountForPool.toInt256()
         );
@@ -278,10 +314,21 @@ library IncreasePositionUtils {
         return (collateralDeltaAmount, fees);
     }
 
+    // returns priceImpactUsd, priceImpactAmount, sizeDeltaInTokens, executionPrice
     function getExecutionPrice(
         PositionUtils.UpdatePositionParams memory params,
-        MarketUtils.MarketPrices memory prices
-    ) internal view returns (uint256, int256) {
+        Price.Props memory indexTokenPrice
+    ) internal view returns (int256, int256, uint256, uint256) {
+        // note that the executionPrice is not validated against the order.acceptablePrice value
+        // if the sizeDeltaUsd is zero
+        // for limit orders the order.triggerPrice should still have been validated
+        if (params.order.sizeDeltaUsd() == 0) {
+            // increase order:
+            //     - long: use the larger price
+            //     - short: use the smaller price
+            return (0, 0, 0, indexTokenPrice.pickPrice(params.position.isLong()));
+        }
+
         int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
                 params.contracts.dataStore,
@@ -291,32 +338,75 @@ library IncreasePositionUtils {
             )
         );
 
-        // cap price impact usd based on the amount available in the position impact pool
+        // cap priceImpactUsd based on the amount available in the position impact pool
         priceImpactUsd = MarketUtils.getCappedPositionImpactUsd(
             params.contracts.dataStore,
             params.market.marketToken,
-            prices.indexTokenPrice,
+            indexTokenPrice,
             priceImpactUsd,
             params.order.sizeDeltaUsd()
         );
 
-        uint256 executionPrice = BaseOrderUtils.getExecutionPrice(
-            params.contracts.oracle.getCustomPrice(params.market.indexToken),
+        // for long positions
+        //
+        // if price impact is positive, the sizeDeltaInTokens would be increased by the priceImpactAmount
+        // the priceImpactAmount should be minimized
+        //
+        // if price impact is negative, the sizeDeltaInTokens would be decreased by the priceImpactAmount
+        // the priceImpactAmount should be maximized
+
+        // for short positions
+        //
+        // if price impact is positive, the sizeDeltaInTokens would be decreased by the priceImpactAmount
+        // the priceImpactAmount should be minimized
+        //
+        // if price impact is negative, the sizeDeltaInTokens would be increased by the priceImpactAmount
+        // the priceImpactAmount should be maximized
+
+        int256 priceImpactAmount;
+
+        if (priceImpactUsd > 0) {
+            // use indexTokenPrice.max and round down to minimize the priceImpactAmount
+            priceImpactAmount = priceImpactUsd / indexTokenPrice.max.toInt256();
+        } else {
+            // use indexTokenPrice.min and round up to maximize the priceImpactAmount
+            priceImpactAmount = Calc.roundUpMagnitudeDivision(priceImpactUsd, indexTokenPrice.min);
+        }
+
+        uint256 baseSizeDeltaInTokens;
+
+        if (params.position.isLong()) {
+            // round the number of tokens for long positions down
+            baseSizeDeltaInTokens = params.order.sizeDeltaUsd() / indexTokenPrice.max;
+        } else {
+            // round the number of tokens for short positions up
+            baseSizeDeltaInTokens = Calc.roundUpDivision(params.order.sizeDeltaUsd(), indexTokenPrice.min);
+        }
+
+        int256 sizeDeltaInTokens;
+        if (params.position.isLong()) {
+            sizeDeltaInTokens = baseSizeDeltaInTokens.toInt256() + priceImpactAmount;
+        } else {
+            sizeDeltaInTokens = baseSizeDeltaInTokens.toInt256() - priceImpactAmount;
+        }
+
+        if (sizeDeltaInTokens < 0) {
+            revert Errors.PriceImpactLargerThanOrderSize(priceImpactUsd, params.order.sizeDeltaUsd());
+        }
+
+        // using increase of long positions as an example
+        // if price is $2000, sizeDeltaUsd is $5000, priceImpactUsd is -$1000
+        // priceImpactAmount = -1000 / 2000 = -0.5
+        // baseSizeDeltaInTokens = 5000 / 2000 = 2.5
+        // sizeDeltaInTokens = 2.5 - 0.5 = 2
+        // executionPrice = 5000 / 2 = $2500
+        uint256 executionPrice = BaseOrderUtils.getExecutionPriceForIncrease(
             params.order.sizeDeltaUsd(),
-            priceImpactUsd,
+            sizeDeltaInTokens.toUint256(),
             params.order.acceptablePrice(),
-            params.order.isLong(),
-            true
+            params.position.isLong()
         );
 
-        int256 priceImpactAmount = PositionPricingUtils.getPriceImpactAmount(
-            params.order.sizeDeltaUsd(),
-            executionPrice,
-            prices.indexTokenPrice,
-            params.order.isLong(),
-            true
-        );
-
-        return (executionPrice, priceImpactAmount);
+        return (priceImpactUsd, priceImpactAmount, sizeDeltaInTokens.toUint256(), executionPrice);
     }
 }

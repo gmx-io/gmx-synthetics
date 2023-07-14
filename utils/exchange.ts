@@ -1,25 +1,15 @@
 import { logGasUsage } from "./gas";
-import { bigNumberify, expandDecimals } from "./math";
+import { bigNumberify } from "./math";
 import { getOracleParams, getOracleParamsForSimulation, TOKEN_ORACLE_TYPES } from "./oracle";
+import { prices as refPrices } from "./prices";
 
-export function getExecuteParams(fixture, { tokens }) {
-  const { wnt, wbtc, usdc } = fixture.contracts;
-  const priceInfoItems = {
-    [wnt.address]: {
-      precision: 8,
-      minPrice: expandDecimals(5000, 4),
-      maxPrice: expandDecimals(5000, 4),
-    },
-    [wbtc.address]: {
-      precision: 20,
-      minPrice: expandDecimals(50000, 2),
-      maxPrice: expandDecimals(50000, 2),
-    },
-    [usdc.address]: {
-      precision: 18,
-      minPrice: expandDecimals(1, 6),
-      maxPrice: expandDecimals(1, 6),
-    },
+export function getExecuteParams(fixture, { tokens, prices }) {
+  const { wnt, wbtc, usdc, usdt } = fixture.contracts;
+  const defaultPriceInfoItems = {
+    [wnt.address]: refPrices.wnt,
+    [wbtc.address]: refPrices.wbtc,
+    [usdc.address]: refPrices.usdc,
+    [usdt.address]: refPrices.usdt,
   };
 
   const params = {
@@ -29,15 +19,28 @@ export function getExecuteParams(fixture, { tokens }) {
     maxPrices: [],
   };
 
-  for (let i = 0; i < tokens.length; i++) {
-    const priceInfoItem = priceInfoItems[tokens[i].address];
-    if (!priceInfoItem) {
-      throw new Error("Missing price info");
+  if (tokens) {
+    for (let i = 0; i < tokens.length; i++) {
+      const priceInfoItem = defaultPriceInfoItems[tokens[i].address];
+      if (!priceInfoItem) {
+        throw new Error("Missing price info");
+      }
+      params.tokens.push(tokens[i].address);
+      params.precisions.push(priceInfoItem.precision);
+      params.minPrices.push(priceInfoItem.min);
+      params.maxPrices.push(priceInfoItem.max);
     }
-    params.tokens.push(tokens[i].address);
-    params.precisions.push(priceInfoItem.precision);
-    params.minPrices.push(priceInfoItem.minPrice);
-    params.maxPrices.push(priceInfoItem.maxPrice);
+  }
+
+  if (prices) {
+    for (let i = 0; i < prices.length; i++) {
+      const priceInfoItem = prices[i];
+      const token = fixture.contracts[priceInfoItem.contractName];
+      params.tokens.push(token.address);
+      params.precisions.push(priceInfoItem.precision);
+      params.minPrices.push(priceInfoItem.min);
+      params.maxPrices.push(priceInfoItem.max);
+    }
   }
 
   return params;

@@ -65,9 +65,15 @@ library DecreasePositionUtils {
     ) external returns (DecreasePositionResult memory) {
         PositionUtils.DecreasePositionCache memory cache;
 
-        cache.prices = MarketUtils.getMarketPricesForPosition(
+        cache.prices = MarketUtils.getMarketPrices(
             params.contracts.oracle,
             params.market
+        );
+
+        cache.collateralTokenPrice = MarketUtils.getCachedTokenPrice(
+            params.order.initialCollateralToken(),
+            params.market,
+            cache.prices
         );
 
         // cap the order size to the position size
@@ -92,16 +98,15 @@ library DecreasePositionUtils {
         // remaining collateral amount and update the order attributes if needed
         if (params.order.sizeDeltaUsd() < params.position.sizeInUsd()) {
             // estimate pnl based on indexTokenPrice
-            (cache.estimatedPositionPnlUsd, /* uint256 sizeDeltaInTokens */) = PositionUtils.getPositionPnlUsd(
+            (cache.estimatedPositionPnlUsd, /* int256 uncappedBasePnlUsd */,  /* uint256 sizeDeltaInTokens */) = PositionUtils.getPositionPnlUsd(
                 params.contracts.dataStore,
                 params.market,
                 cache.prices,
                 params.position,
-                cache.prices.indexTokenPrice.pickPriceForPnl(params.position.isLong(), false),
                 params.position.sizeInUsd()
             );
 
-            cache.estimatedRealizedPnlUsd = cache.estimatedPositionPnlUsd * params.order.sizeDeltaUsd().toInt256() / params.position.sizeInUsd().toInt256();
+            cache.estimatedRealizedPnlUsd = Precision.mulDiv(cache.estimatedPositionPnlUsd, params.order.sizeDeltaUsd(), params.position.sizeInUsd());
             cache.estimatedRemainingPnlUsd = cache.estimatedPositionPnlUsd - cache.estimatedRealizedPnlUsd;
 
             PositionUtils.WillPositionCollateralBeSufficientValues memory positionValues = PositionUtils.WillPositionCollateralBeSufficientValues(
@@ -126,7 +131,7 @@ library DecreasePositionUtils {
             // to increase the leverage of the position
             if (!willBeSufficient) {
                 if (params.order.sizeDeltaUsd() == 0) {
-                    revert Errors.UnableToWithdrawCollateralDueToLeverage(estimatedRemainingCollateralUsd);
+                    revert Errors.UnableToWithdrawCollateral(estimatedRemainingCollateralUsd);
                 }
 
                 OrderEventUtils.emitOrderCollateralDeltaAmountAutoUpdated(
@@ -139,7 +144,7 @@ library DecreasePositionUtils {
                 // the estimatedRemainingCollateralUsd subtracts the initialCollateralDeltaAmount
                 // since the initialCollateralDeltaAmount will be set to zero, the initialCollateralDeltaAmount
                 // should be added back to the estimatedRemainingCollateralUsd
-                estimatedRemainingCollateralUsd += params.order.initialCollateralDeltaAmount().toInt256();
+                estimatedRemainingCollateralUsd += (params.order.initialCollateralDeltaAmount() * cache.collateralTokenPrice.min).toInt256();
                 params.order.setInitialCollateralDeltaAmount(0);
             }
 
@@ -191,16 +196,19 @@ library DecreasePositionUtils {
 
         PositionUtils.updateFundingAndBorrowingState(params, cache.prices);
 
-        if (BaseOrderUtils.isLiquidationOrder(params.order.orderType()) && !PositionUtils.isPositionLiquidatable(
-            params.contracts.dataStore,
-            params.contracts.referralStorage,
-            params.position,
-            params.market,
-            cache.prices,
-            false, // isIncrease
-            true // shouldValidateMinCollateralUsd
-        )) {
-            revert Errors.PositionShouldNotBeLiquidated();
+        if (BaseOrderUtils.isLiquidationOrder(params.order.orderType())) {
+            (bool isLiquidatable, /* string memory reason */) = PositionUtils.isPositionLiquidatable(
+                params.contracts.dataStore,
+                params.contracts.referralStorage,
+                params.position,
+                params.market,
+                cache.prices,
+                true // shouldValidateMinCollateralUsd
+            );
+
+            if (!isLiquidatable) {
+                revert Errors.PositionShouldNotBeLiquidated();
+            }
         }
 
         cache.initialCollateralAmount = params.position.collateralAmount();
@@ -223,7 +231,7 @@ library DecreasePositionUtils {
 
         params.position.setSizeInUsd(cache.nextPositionSizeInUsd);
         params.position.setSizeInTokens(params.position.sizeInTokens() - values.sizeDeltaInTokens);
-        params.position.setCollateralAmount(values.remainingCollateralAmount.toUint256());
+        params.position.setCollateralAmount(values.remainingCollateralAmount);
         params.position.setDecreasedAtBlock(Chain.currentBlockNumber());
 
         PositionUtils.incrementClaimableFundingAmount(params, fees);
@@ -238,29 +246,11 @@ library DecreasePositionUtils {
 
             PositionStoreUtils.remove(params.contracts.dataStore, params.positionKey, params.order.account());
         } else {
-            params.position.setLongTokenFundingAmountPerSize(fees.funding.latestLongTokenFundingAmountPerSize);
-            params.position.setShortTokenFundingAmountPerSize(fees.funding.latestShortTokenFundingAmountPerSize);
             params.position.setBorrowingFactor(cache.nextPositionBorrowingFactor);
 
-            // validate position which validates liquidation state is only called
-            // if the remaining position size is not zero
-            // due to this, a user can still manually close their position if
-            // it is in a partially liquidatable state
-            // this should not cause any issues as a liquidation is the same
-            // as automatically closing a position
-            // the only difference is that if the position has insufficient / negative
-            // collateral a liquidation transaction should still complete
-            // while a manual close transaction should revert
-            PositionUtils.validatePosition(
-                params.contracts.dataStore,
-                params.contracts.referralStorage,
-                params.position,
-                params.market,
-                cache.prices,
-                false, // isIncrease
-                false, // shouldValidateMinPositionSize
-                false // shouldValidateMinCollateralUsd
-            );
+            params.position.setFundingFeeAmountPerSize(fees.funding.latestFundingFeeAmountPerSize);
+            params.position.setLongTokenClaimableFundingAmountPerSize(fees.funding.latestLongTokenClaimableFundingAmountPerSize);
+            params.position.setShortTokenClaimableFundingAmountPerSize(fees.funding.latestShortTokenClaimableFundingAmountPerSize);
 
             PositionStoreUtils.set(params.contracts.dataStore, params.positionKey, params.position);
         }
@@ -280,30 +270,38 @@ library DecreasePositionUtils {
             -values.sizeDeltaInTokens.toInt256()
         );
 
-        MarketUtils.applyDeltaToPoolAmount(
-            params.contracts.dataStore,
-            params.contracts.eventEmitter,
-            params.market.marketToken,
-            values.pnlTokenForPool,
-            values.pnlAmountForPool
-        );
-
-        MarketUtils.applyDeltaToPoolAmount(
-            params.contracts.dataStore,
-            params.contracts.eventEmitter,
-            params.market.marketToken,
-            params.position.collateralToken(),
-            fees.feeAmountForPool.toInt256()
-        );
-
         // affiliate rewards are still distributed even if the order is a liquidation order
         // this is expected as a partial liquidation is considered the same as an automatic
         // closing of a position
         PositionUtils.handleReferral(params, fees);
 
+        // validatePosition should be called after open interest and all other market variables
+        // have been updated
+        if (params.position.sizeInUsd() != 0 || params.position.sizeInTokens() != 0) {
+            // validate position which validates liquidation state is only called
+            // if the remaining position size is not zero
+            // due to this, a user can still manually close their position if
+            // it is in a partially liquidatable state
+            // this should not cause any issues as a liquidation is the same
+            // as automatically closing a position
+            // the only difference is that if the position has insufficient / negative
+            // collateral a liquidation transaction should still complete
+            // while a manual close transaction should revert
+            PositionUtils.validatePosition(
+                params.contracts.dataStore,
+                params.contracts.referralStorage,
+                params.position,
+                params.market,
+                cache.prices,
+                false, // shouldValidateMinPositionSize
+                false // shouldValidateMinCollateralUsd
+            );
+        }
+
         PositionEventUtils.emitPositionFeesCollected(
             params.contracts.eventEmitter,
             params.orderKey,
+            params.positionKey,
             params.market.marketToken,
             params.position.collateralToken(),
             params.order.sizeDeltaUsd(),
@@ -319,10 +317,12 @@ library DecreasePositionUtils {
             params.order.sizeDeltaUsd(),
             cache.initialCollateralAmount - params.position.collateralAmount(),
             params.order.orderType(),
-            values
+            values,
+            cache.prices.indexTokenPrice,
+            cache.collateralTokenPrice
         );
 
-        values = DecreasePositionCollateralUtils.swapWithdrawnCollateralToPnlToken(params, values);
+        values = DecreasePositionSwapUtils.swapWithdrawnCollateralToPnlToken(params, values);
 
         return DecreasePositionResult(
             values.output.outputToken,

@@ -1,14 +1,39 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import * as keys from "../utils/keys";
-import { setUintIfDifferent } from "../utils/dataStore";
+import { setAddressIfDifferent, setUintIfDifferent, setBoolIfDifferent } from "../utils/dataStore";
 
 const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
   const generalConfig = await gmx.getGeneral();
+
+  await setAddressIfDifferent(keys.FEE_RECEIVER, generalConfig.feeReceiver, "fee receiver");
+  await setAddressIfDifferent(keys.HOLDING_ADDRESS, generalConfig.holdingAddress, "holding address");
+  await setUintIfDifferent(keys.MAX_UI_FEE_FACTOR, generalConfig.maxUiFeeFactor, "maxUiFeeFactor");
+
+  await setUintIfDifferent(
+    keys.MIN_HANDLE_EXECUTION_ERROR_GAS,
+    generalConfig.minHandleExecutionErrorGas,
+    "min handle execution error gas"
+  );
 
   await setUintIfDifferent(keys.MAX_CALLBACK_GAS_LIMIT, generalConfig.maxCallbackGasLimit, "max callback gas limit");
   await setUintIfDifferent(keys.MAX_SWAP_PATH_LENGTH, generalConfig.maxSwapPathLength, "max swap path length");
 
   await setUintIfDifferent(keys.MIN_COLLATERAL_USD, generalConfig.minCollateralUsd, "min collateral USD");
+  await setUintIfDifferent(keys.MIN_POSITION_SIZE_USD, generalConfig.minPositionSizeUsd, "min position size USD");
+
+  await setUintIfDifferent(keys.SWAP_FEE_RECEIVER_FACTOR, generalConfig.swapFeeReceiverFactor, "swapFeeReceiverFactor");
+
+  await setUintIfDifferent(
+    keys.POSITION_FEE_RECEIVER_FACTOR,
+    generalConfig.positionFeeReceiverFactor,
+    "positionFeeReceiverFactor"
+  );
+
+  await setUintIfDifferent(
+    keys.BORROWING_FEE_RECEIVER_FACTOR,
+    generalConfig.borrowingFeeReceiverFactor,
+    "borrowingFeeReceiverFactor"
+  );
 
   await setUintIfDifferent(
     keys.CLAIMABLE_COLLATERAL_TIME_DIVISOR,
@@ -28,17 +53,7 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
     "deposit gas limit multiple"
   );
 
-  await setUintIfDifferent(
-    keys.withdrawalGasLimitKey(true),
-    generalConfig.withdrawalGasLimitSingle,
-    "withdrawal gas limit single"
-  );
-
-  await setUintIfDifferent(
-    keys.withdrawalGasLimitKey(false),
-    generalConfig.withdrawalGasLimitMultiple,
-    "withdrawal gas limit multiple"
-  );
+  await setUintIfDifferent(keys.withdrawalGasLimitKey(), generalConfig.withdrawalGasLimit, "withdrawal gas limit");
 
   await setUintIfDifferent(keys.singleSwapGasLimitKey(), generalConfig.singleSwapGasLimit, "single swap gas limit");
 
@@ -84,6 +99,12 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
     keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR,
     generalConfig.executionGasFeeMultiplierFactor,
     "execution gas fee multiplier factor"
+  );
+
+  await setBoolIfDifferent(
+    keys.SKIP_BORROWING_FEE_FOR_SMALLER_SIDE,
+    generalConfig.skipBorrowingFeeForSmallerSide,
+    "skip borrowing fee for smaller side"
   );
 };
 

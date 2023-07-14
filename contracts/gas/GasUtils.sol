@@ -35,14 +35,27 @@ library GasUtils {
     // @param amount the amount of execution fee refunded
     event UserRefundFee(address user, uint256 amount);
 
-    // @dev pay the keeper the execution fee and refund any excess amount to the user
+    function getMinHandleExecutionErrorGas(DataStore dataStore) internal view returns (uint256) {
+        return dataStore.getUint(Keys.MIN_HANDLE_EXECUTION_ERROR_GAS);
+    }
+
+    function getExecutionGas(DataStore dataStore, uint256 startingGas) internal view returns (uint256) {
+        uint256 minHandleErrorGas = GasUtils.getMinHandleExecutionErrorGas(dataStore);
+        if (startingGas < minHandleErrorGas) {
+            revert Errors.InsufficientExecutionGas(startingGas, minHandleErrorGas);
+        }
+
+        return startingGas - minHandleErrorGas;
+    }
+
+    // @dev pay the keeper the execution fee and refund any excess amount
     //
     // @param dataStore DataStore
     // @param bank the StrictBank contract holding the execution fee
     // @param executionFee the executionFee amount
     // @param startingGas the starting gas
     // @param keeper the keeper to pay
-    // @param user the user to refund
+    // @param refundReceiver the account that should receive any excess gas refunds
     function payExecutionFee(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -50,9 +63,13 @@ library GasUtils {
         uint256 executionFee,
         uint256 startingGas,
         address keeper,
-        address user
+        address refundReceiver
     ) external {
+        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
+        startingGas -= gasleft() / 63;
         uint256 gasUsed = startingGas - gasleft();
+
+        // each external call forwards 63/64 of the remaining gas
         uint256 executionFeeForKeeper = adjustGasUsage(dataStore, gasUsed) * tx.gasprice;
 
         if (executionFeeForKeeper > executionFee) {
@@ -72,11 +89,11 @@ library GasUtils {
         }
 
         bank.transferOutNativeToken(
-            user,
+            refundReceiver,
             refundFeeAmount
         );
 
-        emitExecutionFeeRefund(eventEmitter, user, refundFeeAmount);
+        emitExecutionFeeRefund(eventEmitter, refundReceiver, refundFeeAmount);
     }
 
     // @dev validate that the provided executionFee is sufficient based on the estimatedGasLimit
@@ -145,7 +162,7 @@ library GasUtils {
         uint256 swapCount = withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length;
         uint256 gasForSwaps = swapCount * gasPerSwap;
 
-        return dataStore.getUint(Keys.withdrawalGasLimitKey(false)) + withdrawal.callbackGasLimit() + gasForSwaps;
+        return dataStore.getUint(Keys.withdrawalGasLimitKey()) + withdrawal.callbackGasLimit() + gasForSwaps;
     }
 
     // @dev the estimated gas limit for orders
@@ -180,6 +197,10 @@ library GasUtils {
     // @param order the order to estimate the gas limit for
     function estimateExecuteDecreaseOrderGasLimit(DataStore dataStore, Order.Props memory order) internal view returns (uint256) {
         uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
+        if (order.decreasePositionSwapType() != Order.DecreasePositionSwapType.NoSwap) {
+            gasPerSwap += 1;
+        }
+
         return dataStore.getUint(Keys.decreaseOrderGasLimitKey()) + gasPerSwap * order.swapPath().length + order.callbackGasLimit();
     }
 
@@ -213,20 +234,20 @@ library GasUtils {
 
     function emitExecutionFeeRefund(
         EventEmitter eventEmitter,
-        address account,
+        address receiver,
         uint256 refundFeeAmount
     ) internal {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(1);
-        eventData.addressItems.setItem(0, "account", account);
+        eventData.addressItems.setItem(0, "receiver", receiver);
 
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "refundFeeAmount", refundFeeAmount);
 
         eventEmitter.emitEventLog1(
             "ExecutionFeeRefund",
-            Cast.toBytes32(account),
+            Cast.toBytes32(receiver),
             eventData
         );
     }

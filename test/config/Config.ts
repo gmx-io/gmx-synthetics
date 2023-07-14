@@ -1,10 +1,12 @@
 import { expect } from "chai";
 import { deployFixture } from "../../utils/fixture";
 
+import { EXCLUDED_CONFIG_KEYS } from "../../utils/config";
 import { grantRole } from "../../utils/role";
-import { encodeData } from "../../utils/hash";
+import { encodeData, hashString } from "../../utils/hash";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 import * as keys from "../../utils/keys";
+import Keys from "../../artifacts/contracts/data/Keys.sol/Keys.json";
 
 describe("Config", () => {
   let fixture;
@@ -17,6 +19,36 @@ describe("Config", () => {
     ({ user0 } = fixture.accounts);
 
     await grantRole(roleStore, user0.address, "CONFIG_KEEPER");
+  });
+
+  it("allows required keys", async () => {
+    const keys = Keys.abi.map((i) => i.name);
+    console.info(`checking ${keys.length} keys`);
+
+    const excludedKeys = [];
+
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i];
+      const hash = hashString(key);
+
+      const isAllowed = (await config.allowedBaseKeys(hash)) === true;
+      if (!isAllowed) {
+        excludedKeys.push({ key, hash });
+      }
+    }
+
+    const missingKeys = [];
+
+    for (let i = 0; i < excludedKeys.length; i++) {
+      const excludedKey = excludedKeys[i];
+      if (!EXCLUDED_CONFIG_KEYS[excludedKey.key]) {
+        missingKeys.push(excludedKey);
+      }
+    }
+
+    if (missingKeys.length > 0) {
+      throw new Error(`missing config keys: ${missingKeys.map((i) => i.key).join(", ")}`);
+    }
   });
 
   it("setBool", async () => {
@@ -78,8 +110,8 @@ describe("Config", () => {
 
     await config
       .connect(user0)
-      .setInt(keys.SWAP_IMPACT_FACTOR, encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]), 500);
+      .setInt(keys.SWAP_IMPACT_FACTOR, encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]), -500);
 
-    expect(await dataStore.getInt(key)).eq(500);
+    expect(await dataStore.getInt(key)).eq(-500);
   });
 });

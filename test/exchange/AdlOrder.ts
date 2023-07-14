@@ -6,6 +6,7 @@ import { handleDeposit } from "../../utils/deposit";
 import { OrderType, handleOrder } from "../../utils/order";
 import { getIsAdlEnabled, updateAdlState, executeAdl } from "../../utils/adl";
 import { grantRole } from "../../utils/role";
+import { getEventData } from "../../utils/event";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.AdlOrder", () => {
@@ -40,7 +41,7 @@ describe("Exchange.AdlOrder", () => {
     });
 
     const maxPnlFactorForAdlKey = keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_ADL, ethUsdMarket.marketToken, true);
-    const minPnlFactorAfterAdlKey = keys.maxPnlFactorKey(keys.MIN_PNL_FACTOR_AFTER_ADL, ethUsdMarket.marketToken, true);
+    const minPnlFactorAfterAdlKey = keys.minPnlFactorAfterAdl(ethUsdMarket.marketToken, true);
 
     await dataStore.setUint(maxPnlFactorForAdlKey, decimalToFloat(10, 2)); // 10%
     await dataStore.setUint(minPnlFactorAfterAdlKey, decimalToFloat(2, 2)); // 2%
@@ -67,6 +68,10 @@ describe("Exchange.AdlOrder", () => {
       minPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
       maxPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
       gasUsageLabel: "executeAdl",
+      afterExecution: ({ logs }) => {
+        const orderExecutedEvent = getEventData(logs, "OrderExecuted");
+        expect(orderExecutedEvent.secondaryOrderType).eq(1);
+      },
     });
   });
 });

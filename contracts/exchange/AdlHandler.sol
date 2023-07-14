@@ -144,7 +144,13 @@ contract AdlHandler is BaseOrderHandler {
             )
         );
 
-        BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(cache.key, oracleParams, msg.sender, cache.startingGas);
+        BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(
+            cache.key,
+            oracleParams,
+            msg.sender,
+            cache.startingGas,
+            Order.SecondaryOrderType.Adl
+        );
 
         FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeAdlFeatureDisabledKey(address(this), uint256(params.order.orderType())));
 

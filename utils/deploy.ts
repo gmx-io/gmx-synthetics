@@ -1,38 +1,60 @@
+import { DeployFunction, DeployResult, DeploymentsExtension } from "hardhat-deploy/dist/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { getExistingContractAddresses } from "../config/overwrite";
 
 export async function deployContract(name, args, contractOptions = {}) {
   const contractFactory = await ethers.getContractFactory(name, contractOptions);
   return await contractFactory.deploy(...args);
 }
 
-export async function contractAt(name, address) {
-  const contractFactory = await ethers.getContractFactory(name);
+export async function contractAt(name, address, provider) {
+  let contractFactory = await ethers.getContractFactory(name);
+  if (provider) {
+    contractFactory = contractFactory.connect(provider);
+  }
   return await contractFactory.attach(address);
 }
 
 export function createDeployFunction({
   contractName,
-  dependencyNames = null,
+  dependencyNames = [],
   getDeployArgs = null,
-  libraryNames = null,
-  afterDeploy,
-}) {
+  libraryNames = [],
+  afterDeploy = null,
+  id,
+}: {
+  contractName: string;
+  dependencyNames?: string[];
+  getDeployArgs?: (args: { dependencyContracts: any }) => Promise<any[]>;
+  libraryNames?: string[];
+  afterDeploy?: (args: {
+    deployedContract: DeployResult;
+    deployer: string;
+    getNamedAccounts: () => Promise<Record<string, string>>;
+    deployments: DeploymentsExtension;
+    gmx: any;
+    network: any;
+  }) => Promise<void>;
+  id?: string;
+}): DeployFunction {
   const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRuntimeEnvironment) => {
     const { deploy, get } = deployments;
     const { deployer } = await getNamedAccounts();
 
-    const dependencyContracts = {};
+    const dependencyContracts = getExistingContractAddresses(network);
 
     if (dependencyNames) {
       for (let i = 0; i < dependencyNames.length; i++) {
         const dependencyName = dependencyNames[i];
-        dependencyContracts[dependencyName] = await get(dependencyName);
+        if (dependencyContracts[dependencyName] === undefined) {
+          dependencyContracts[dependencyName] = await get(dependencyName);
+        }
       }
     }
 
     let deployArgs = [];
     if (getDeployArgs) {
-      deployArgs = await getDeployArgs({ dependencyContracts });
+      deployArgs = await getDeployArgs({ dependencyContracts, network });
     }
 
     const libraries = {};
@@ -44,7 +66,7 @@ export function createDeployFunction({
       }
     }
 
-    let deployedContract;
+    let deployedContract: DeployResult;
 
     try {
       deployedContract = await deploy(contractName, {
@@ -71,6 +93,12 @@ export function createDeployFunction({
     if (afterDeploy) {
       await afterDeploy({ deployedContract, deployer, getNamedAccounts, deployments, gmx, network });
     }
+
+    if (id) {
+      // hardhat-deploy would not redeploy a contract if it already exists with the same id
+      // with `id` it's possible to control whether a contract should be redeployed
+      return true;
+    }
   };
 
   let dependencies = [];
@@ -81,6 +109,9 @@ export function createDeployFunction({
     dependencies = dependencies.concat(libraryNames);
   }
 
+  if (id) {
+    func.id = id;
+  }
   func.tags = [contractName];
   func.dependencies = dependencies;
 

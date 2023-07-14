@@ -9,6 +9,7 @@ import "../data/Keys.sol";
 import "../role/RoleModule.sol";
 import "../event/EventEmitter.sol";
 import "../utils/BasicMulticall.sol";
+import "../utils/Precision.sol";
 
 // @title Config
 contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
@@ -186,7 +187,20 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
     // @dev initialize the allowed base keys
     function _initAllowedBaseKeys() internal {
+        allowedBaseKeys[Keys.HOLDING_ADDRESS] = true;
+
+        allowedBaseKeys[Keys.MIN_HANDLE_EXECUTION_ERROR_GAS] = true;
+
         allowedBaseKeys[Keys.IS_MARKET_DISABLED] = true;
+
+        allowedBaseKeys[Keys.MAX_SWAP_PATH_LENGTH] = true;
+        allowedBaseKeys[Keys.MAX_CALLBACK_GAS_LIMIT] = true;
+
+        allowedBaseKeys[Keys.MIN_POSITION_SIZE_USD] = true;
+        allowedBaseKeys[Keys.MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS] = true;
+
+        allowedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
+        allowedBaseKeys[Keys.MAX_OPEN_INTEREST] = true;
 
         allowedBaseKeys[Keys.CREATE_DEPOSIT_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CANCEL_DEPOSIT_FEATURE_DISABLED] = true;
@@ -253,10 +267,22 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.ORACLE_TYPE] = true;
 
         allowedBaseKeys[Keys.RESERVE_FACTOR] = true;
+        allowedBaseKeys[Keys.OPEN_INTEREST_RESERVE_FACTOR] = true;
+
         allowedBaseKeys[Keys.MAX_PNL_FACTOR] = true;
+        allowedBaseKeys[Keys.MAX_PNL_FACTOR_FOR_TRADERS] = true;
+        allowedBaseKeys[Keys.MAX_PNL_FACTOR_FOR_ADL] = true;
+        allowedBaseKeys[Keys.MIN_PNL_FACTOR_AFTER_ADL] = true;
+        allowedBaseKeys[Keys.MAX_PNL_FACTOR_FOR_DEPOSITS] = true;
         allowedBaseKeys[Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS] = true;
+
         allowedBaseKeys[Keys.FUNDING_FACTOR] = true;
+        allowedBaseKeys[Keys.STABLE_FUNDING_FACTOR] = true;
+        allowedBaseKeys[Keys.FUNDING_EXPONENT_FACTOR] = true;
+
         allowedBaseKeys[Keys.BORROWING_FACTOR] = true;
+        allowedBaseKeys[Keys.BORROWING_EXPONENT_FACTOR] = true;
+        allowedBaseKeys[Keys.SKIP_BORROWING_FEE_FOR_SMALLER_SIDE] = true;
 
         allowedBaseKeys[Keys.CLAIMABLE_COLLATERAL_FACTOR] = true;
 

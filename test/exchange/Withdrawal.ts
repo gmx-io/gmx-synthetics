@@ -19,7 +19,6 @@ import {
   executeWithdrawal,
   handleWithdrawal,
 } from "../../utils/withdrawal";
-import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.Withdrawal", () => {
@@ -186,13 +185,14 @@ describe("Exchange.Withdrawal", () => {
 
   it("price impact, fees", async () => {
     // 0.05%: 0.0005
-    await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 4));
 
-    // set price impact to 0.1% for every $50,000 of token imbalance
+    // set price impact to 0.1% for every $100,000 of token imbalance
     // 0.1% => 0.001
-    // 0.001 / 50,000 => 2 * (10 ** -8)
-    await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 8));
-    await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 8));
+    // 0.001 / 100,000 => 1 * (10 ** -8)
+    await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
+    await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
     await dataStore.setUint(keys.swapImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
     await handleDeposit(fixture, {
@@ -268,10 +268,9 @@ describe("Exchange.Withdrawal", () => {
     expect(await getClaimableFeeAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq("1499774632447446"); // 0.001499774632447446
     expect(await getClaimableFeeAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq("0");
 
-    await expect(getMarketTokenPrice(fixture)).to.be.revertedWithCustomError(
-      errorsContract,
-      "UnexpectedSupplyForTokenPriceCalculation"
-    );
+    await usingResult(getMarketTokenPrice(fixture), (marketTokenPrice) => {
+      expect(marketTokenPrice).eq(decimalToFloat(1));
+    });
 
     expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq("0");
     expect(await getSupplyOf(ethUsdMarket.marketToken)).eq("0");
@@ -332,9 +331,11 @@ describe("Exchange.Withdrawal", () => {
     await usingResult(
       getMarketTokenPriceWithPoolValue(fixture, {
         market: ethUsdSingleTokenMarket,
-        longTokenPrice: {
-          min: expandDecimals(1, 6 + 18),
-          max: expandDecimals(1, 6 + 18),
+        prices: {
+          longTokenPrice: {
+            min: expandDecimals(1, 6 + 18),
+            max: expandDecimals(1, 6 + 18),
+          },
         },
       }),
       async ([marketTokenPrice, poolValueInfo]) => {
@@ -359,9 +360,11 @@ describe("Exchange.Withdrawal", () => {
     await usingResult(
       getMarketTokenPriceWithPoolValue(fixture, {
         market: ethUsdSingleTokenMarket,
-        longTokenPrice: {
-          min: expandDecimals(1, 6 + 18),
-          max: expandDecimals(1, 6 + 18),
+        prices: {
+          longTokenPrice: {
+            min: expandDecimals(1, 6 + 18),
+            max: expandDecimals(1, 6 + 18),
+          },
         },
       }),
       async ([marketTokenPrice, poolValueInfo]) => {
@@ -393,9 +396,11 @@ describe("Exchange.Withdrawal", () => {
     await usingResult(
       getMarketTokenPriceWithPoolValue(fixture, {
         market: ethUsdSingleTokenMarket,
-        longTokenPrice: {
-          min: expandDecimals(1, 6 + 18),
-          max: expandDecimals(1, 6 + 18),
+        prices: {
+          longTokenPrice: {
+            min: expandDecimals(1, 6 + 18),
+            max: expandDecimals(1, 6 + 18),
+          },
         },
       }),
       async ([marketTokenPrice, poolValueInfo]) => {

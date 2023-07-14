@@ -58,9 +58,9 @@ export async function createOrder(fixture, overrides) {
   const sizeDeltaUsd = overrides.sizeDeltaUsd || "0";
   const initialCollateralDeltaAmount = overrides.initialCollateralDeltaAmount || "0";
   const swapPath = overrides.swapPath || [];
-  const acceptablePrice = overrides.acceptablePrice || "0";
+  const acceptablePrice = overrides.acceptablePrice || expandDecimals(5200, 12);
   const triggerPrice = overrides.triggerPrice || "0";
-  const isLong = overrides.isLong || false;
+  const isLong = overrides.isLong === undefined ? true : overrides.isLong;
   const executionFee = overrides.executionFee || fixture.props.executionFee;
   const executionFeeToMint = overrides.executionFeeToMint || executionFee;
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
@@ -121,7 +121,7 @@ export async function executeOrder(fixture, overrides = {}) {
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
-  const orderKeys = await getOrderKeys(dataStore, 0, 10);
+  const orderKeys = await getOrderKeys(dataStore, 0, 20);
   const orderKey = orderKeys[orderKeys.length - 1];
   const order = await reader.getOrder(dataStore.address, orderKey);
   let oracleBlockNumber = overrides.oracleBlockNumber || order.numbers.updatedAtBlock;

@@ -110,6 +110,7 @@ library Calc {
 
     /**
      * Returns a - b, the result is bounded to prevent overflows.
+     * Note that this will revert if b is type(int256).min because of the usage of "-b".
      *
      * @param a the first number
      * @param b the second number

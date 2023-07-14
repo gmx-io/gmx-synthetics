@@ -44,6 +44,15 @@ contract Oracle is RoleModule {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
+    struct ValidatedPrice {
+        address token;
+        uint256 min;
+        uint256 max;
+        uint256 timestamp;
+        uint256 minBlockNumber;
+        uint256 maxBlockNumber;
+    }
+
     // @dev SetPricesCache struct used in setPrices to avoid stack too deep errors
     // @param prevMinOracleBlockNumber the previous oracle block number of the loop
     // @param priceIndex the current price index to retrieve from compactedMinPrices and compactedMaxPrices
@@ -60,6 +69,7 @@ contract Oracle is RoleModule {
         uint256 maxPriceAge;
         uint256 maxRefPriceDeviationFactor;
         uint256 prevMinOracleBlockNumber;
+        ValidatedPrice[] validatedPrices;
     }
 
     struct SetPricesInnerCache {
@@ -85,15 +95,7 @@ contract Oracle is RoleModule {
     // this is used in clearAllPrices to help ensure that all token prices
     // set in setPrices are cleared after use
     EnumerableSet.AddressSet internal tokensWithPrices;
-    // prices for the same token can be sent multiple times in one txn
-    // the prices can be for different block numbers
-    // the first occurrence of the token's price will be stored in primaryPrices
-    // the second occurrence will be stored in secondaryPrices
     mapping(address => Price.Props) public primaryPrices;
-    mapping(address => Price.Props) public secondaryPrices;
-    // customPrices can be used to store custom price values
-    // these prices will be cleared in clearAllPrices
-    mapping(address => Price.Props) public customPrices;
 
     constructor(
         RoleStore _roleStore,
@@ -203,66 +205,24 @@ contract Oracle is RoleModule {
             revert Errors.NonEmptyTokensWithPrices(tokensWithPrices.length());
         }
 
-        if (params.tokens.length == 0) { revert Errors.EmptyTokens(); }
+        _setPricesFromPriceFeeds(dataStore, eventEmitter, params.priceFeedTokens);
 
-        // first 16 bits of signer info contains the number of signers
-        address[] memory signers = new address[](params.signerInfo & Bits.BITMASK_16);
-
-        if (signers.length < dataStore.getUint(Keys.MIN_ORACLE_SIGNERS)) {
-            revert Errors.MinOracleSigners(signers.length, dataStore.getUint(Keys.MIN_ORACLE_SIGNERS));
-        }
-
-        if (signers.length > MAX_SIGNERS) {
-            revert Errors.MaxOracleSigners(signers.length, MAX_SIGNERS);
-        }
-
-        Uint256Mask.Mask memory signerIndexMask;
-
-        for (uint256 i; i < signers.length; i++) {
-            uint256 signerIndex = params.signerInfo >> (16 + 16 * i) & Bits.BITMASK_16;
-
-            if (signerIndex >= MAX_SIGNER_INDEX) {
-                revert Errors.MaxSignerIndex(signerIndex, MAX_SIGNER_INDEX);
-            }
-
-            signerIndexMask.validateUniqueAndSetIndex(signerIndex, "signerIndex");
-
-            signers[i] = oracleStore.getSigner(signerIndex);
-
-            if (signers[i] == address(0)) {
-                revert Errors.EmptySigner(signerIndex);
-            }
-        }
+        // it is possible for transactions to be executed using just params.priceFeedTokens
+        // in this case if params.tokens is empty, the function can return
+        if (params.tokens.length == 0) { return; }
 
         _setPrices(
             dataStore,
             eventEmitter,
-            signers,
             params
         );
-
-        _setPricesFromPriceFeeds(dataStore, eventEmitter, params.priceFeedTokens);
     }
 
     // @dev set the primary price
     // @param token the token to set the price for
     // @param price the price value to set to
     function setPrimaryPrice(address token, Price.Props memory price) external onlyController {
-        primaryPrices[token] = price;
-    }
-
-    // @dev set the secondary price
-    // @param token the token to set the price for
-    // @param price the price value to set to
-    function setSecondaryPrice(address token, Price.Props memory price) external onlyController {
-        secondaryPrices[token] = price;
-    }
-
-    // @dev set a custom price
-    // @param token the token to set the price for
-    // @param price the price value to set to
-    function setCustomPrice(address token, Price.Props memory price) external onlyController {
-        customPrices[token] = price;
+        _setPrimaryPrice(token, price);
     }
 
     // @dev clear all prices
@@ -270,10 +230,7 @@ contract Oracle is RoleModule {
         uint256 length = tokensWithPrices.length();
         for (uint256 i; i < length; i++) {
             address token = tokensWithPrices.at(0);
-            delete primaryPrices[token];
-            delete secondaryPrices[token];
-            delete customPrices[token];
-            tokensWithPrices.remove(token);
+            _removePrimaryPrice(token);
         }
     }
 
@@ -302,59 +259,6 @@ contract Oracle is RoleModule {
             revert Errors.EmptyPrimaryPrice(token);
         }
 
-        return price;
-    }
-
-    // @dev get the secondary price of a token
-    // @param token the token to get the price for
-    // @return the secondary price of a token
-    function getSecondaryPrice(address token) external view returns (Price.Props memory) {
-        if (token == address(0)) { return Price.Props(0, 0); }
-
-        Price.Props memory price = secondaryPrices[token];
-        if (price.isEmpty()) {
-            revert Errors.EmptySecondaryPrice(token);
-        }
-
-        return price;
-    }
-
-    // @dev get the latest price of a token
-    // @param token the token to get the price for
-    // @return the latest price of a token
-    function getLatestPrice(address token) external view returns (Price.Props memory) {
-        if (token == address(0)) { return Price.Props(0, 0); }
-
-        Price.Props memory customPrice = customPrices[token];
-
-        // treat the custom price as a latest price for consistency in cases where
-        // the trigger price or acceptable price is used as the custom price
-        if (!customPrice.isEmpty()) {
-            return customPrice;
-        }
-
-        Price.Props memory secondaryPrice = secondaryPrices[token];
-
-        if (!secondaryPrice.isEmpty()) {
-            return secondaryPrice;
-        }
-
-        Price.Props memory primaryPrice = primaryPrices[token];
-        if (!primaryPrice.isEmpty()) {
-            return primaryPrice;
-        }
-
-        revert Errors.EmptyLatestPrice(token);
-    }
-
-    // @dev get the custom price of a token
-    // @param token the token to get the price for
-    // @return the custom price of a token
-    function getCustomPrice(address token) external view returns (Price.Props memory) {
-        Price.Props memory price = customPrices[token];
-        if (price.isEmpty()) {
-            revert Errors.EmptyCustomPrice(token);
-        }
         return price;
     }
 
@@ -388,6 +292,13 @@ contract Oracle is RoleModule {
         return multiplier;
     }
 
+    function validatePrices(
+        DataStore dataStore,
+        OracleUtils.SetPricesParams memory params
+    ) external view returns (ValidatedPrice[] memory) {
+        return _validatePrices(dataStore, params);
+    }
+
     // @dev validate and set prices
     // The _setPrices() function is a helper function that is called by the
     // setPrices() function. It takes in several parameters: a DataStore contract
@@ -409,10 +320,35 @@ contract Oracle is RoleModule {
     function _setPrices(
         DataStore dataStore,
         EventEmitter eventEmitter,
-        address[] memory signers,
         OracleUtils.SetPricesParams memory params
     ) internal {
+        ValidatedPrice[] memory validatedPrices = _validatePrices(dataStore, params);
+
+        for (uint256 i = 0; i < validatedPrices.length; i++) {
+            ValidatedPrice memory validatedPrice = validatedPrices[i];
+
+            if (!primaryPrices[validatedPrice.token].isEmpty()) {
+                revert Errors.DuplicateTokenPrice(validatedPrice.token);
+            }
+
+            emitOraclePriceUpdated(eventEmitter, validatedPrice.token, validatedPrice.min, validatedPrice.max, false);
+
+            _setPrimaryPrice(validatedPrice.token, Price.Props(
+                validatedPrice.min,
+                validatedPrice.max
+            ));
+        }
+    }
+
+    function _validatePrices(
+        DataStore dataStore,
+        OracleUtils.SetPricesParams memory params
+    ) internal view returns (ValidatedPrice[] memory) {
+        address[] memory signers = _getSigners(dataStore, params);
+
         SetPricesCache memory cache;
+
+        cache.validatedPrices = new ValidatedPrice[](params.tokens.length);
         cache.minBlockConfirmations = dataStore.getUint(Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS);
         cache.maxPriceAge = dataStore.getUint(Keys.MAX_ORACLE_PRICE_AGE);
         cache.maxRefPriceDeviationFactor = dataStore.getUint(Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR);
@@ -431,11 +367,11 @@ contract Oracle is RoleModule {
             reportInfo.oracleTimestamp = OracleUtils.getUncompactedOracleTimestamp(params.compactedOracleTimestamps, i);
 
             if (reportInfo.minOracleBlockNumber > Chain.currentBlockNumber()) {
-                revert Errors.InvalidBlockNumber(reportInfo.minOracleBlockNumber);
+                revert Errors.InvalidBlockNumber(reportInfo.minOracleBlockNumber, Chain.currentBlockNumber());
             }
 
             if (reportInfo.oracleTimestamp + cache.maxPriceAge < Chain.currentTimestamp()) {
-                revert Errors.MaxPriceAgeExceeded(reportInfo.oracleTimestamp);
+                revert Errors.MaxPriceAgeExceeded(reportInfo.oracleTimestamp, Chain.currentTimestamp());
             }
 
             // block numbers must be in ascending order
@@ -444,11 +380,12 @@ contract Oracle is RoleModule {
             }
             cache.prevMinOracleBlockNumber = reportInfo.minOracleBlockNumber;
 
-            if (Chain.currentBlockNumber() - reportInfo.minOracleBlockNumber <= cache.minBlockConfirmations) {
-                reportInfo.blockHash = Chain.getBlockHash(reportInfo.minOracleBlockNumber);
+            if (Chain.currentBlockNumber() - reportInfo.maxOracleBlockNumber <= cache.minBlockConfirmations) {
+                reportInfo.blockHash = Chain.getBlockHash(reportInfo.maxOracleBlockNumber);
             }
 
             reportInfo.token = params.tokens[i];
+
             reportInfo.precision = 10 ** OracleUtils.getUncompactedDecimal(params.compactedDecimals, i);
             reportInfo.tokenOracleType = dataStore.getBytes32(Keys.oracleTypeKey(reportInfo.token));
 
@@ -540,24 +477,54 @@ contract Oracle is RoleModule {
                 revert Errors.InvalidMedianMinMaxPrice(medianMinPrice, medianMaxPrice);
             }
 
-            if (primaryPrices[reportInfo.token].isEmpty()) {
-                emitOraclePriceUpdated(eventEmitter, reportInfo.token, medianMinPrice, medianMaxPrice, true, false);
 
-                primaryPrices[reportInfo.token] = Price.Props(
-                    medianMinPrice,
-                    medianMaxPrice
-                );
-            } else {
-                emitOraclePriceUpdated(eventEmitter, reportInfo.token, medianMinPrice, medianMaxPrice, false, false);
+            cache.validatedPrices[i] = ValidatedPrice(
+                reportInfo.token, // token
+                medianMinPrice, // min
+                medianMaxPrice, // max
+                reportInfo.oracleTimestamp, // timestamp
+                reportInfo.minOracleBlockNumber, // minBlockNumber
+                reportInfo.maxOracleBlockNumber // maxBlockNumber
+            );
+        }
 
-                secondaryPrices[reportInfo.token] = Price.Props(
-                    medianMinPrice,
-                    medianMaxPrice
-                );
+        return cache.validatedPrices;
+    }
+
+    function _getSigners(
+        DataStore dataStore,
+        OracleUtils.SetPricesParams memory params
+    ) internal view returns (address[] memory) {
+        // first 16 bits of signer info contains the number of signers
+        address[] memory signers = new address[](params.signerInfo & Bits.BITMASK_16);
+
+        if (signers.length < dataStore.getUint(Keys.MIN_ORACLE_SIGNERS)) {
+            revert Errors.MinOracleSigners(signers.length, dataStore.getUint(Keys.MIN_ORACLE_SIGNERS));
+        }
+
+        if (signers.length > MAX_SIGNERS) {
+            revert Errors.MaxOracleSigners(signers.length, MAX_SIGNERS);
+        }
+
+        Uint256Mask.Mask memory signerIndexMask;
+
+        for (uint256 i; i < signers.length; i++) {
+            uint256 signerIndex = params.signerInfo >> (16 + 16 * i) & Bits.BITMASK_16;
+
+            if (signerIndex >= MAX_SIGNER_INDEX) {
+                revert Errors.MaxSignerIndex(signerIndex, MAX_SIGNER_INDEX);
             }
 
-            tokensWithPrices.add(reportInfo.token);
+            signerIndexMask.validateUniqueAndSetIndex(signerIndex, "signerIndex");
+
+            signers[i] = oracleStore.getSigner(signerIndex);
+
+            if (signers[i] == address(0)) {
+                revert Errors.EmptySigner(signerIndex);
+            }
         }
+
+        return signers;
     }
 
     // it might be possible for the block.chainid to change due to a fork or similar
@@ -585,6 +552,18 @@ contract Oracle is RoleModule {
         }
     }
 
+    function _setPrimaryPrice(address token, Price.Props memory price) internal {
+        primaryPrices[token] = price;
+        tokensWithPrices.add(token);
+    }
+
+    function _removePrimaryPrice(address token) internal {
+        delete primaryPrices[token];
+        tokensWithPrices.remove(token);
+    }
+
+    // there is a small risk of stale pricing due to latency in price updates or if the chain is down
+    // this is meant to be for temporary use until low latency price feeds are supported for all tokens
     function _getPriceFeedPrice(DataStore dataStore, address token) internal view returns (bool, uint256) {
         address priceFeedAddress = dataStore.getAddress(Keys.priceFeedKey(token));
         if (priceFeedAddress == address(0)) {
@@ -606,14 +585,14 @@ contract Oracle is RoleModule {
         }
 
         uint256 heartbeatDuration = dataStore.getUint(Keys.priceFeedHeartbeatDurationKey(token));
-        if (block.timestamp > timestamp && block.timestamp - timestamp > heartbeatDuration) {
+        if (Chain.currentTimestamp() > timestamp && Chain.currentTimestamp() - timestamp > heartbeatDuration) {
             revert Errors.PriceFeedNotUpdated(token, timestamp, heartbeatDuration);
         }
 
         uint256 price = SafeCast.toUint256(_price);
         uint256 precision = getPriceFeedMultiplier(dataStore, token);
 
-        uint256 adjustedPrice = price * precision / Precision.FLOAT_PRECISION;
+        uint256 adjustedPrice = Precision.mulDiv(price, precision, Precision.FLOAT_PRECISION);
 
         return (true, adjustedPrice);
     }
@@ -652,11 +631,9 @@ contract Oracle is RoleModule {
                 );
             }
 
-            primaryPrices[token] = priceProps;
+            _setPrimaryPrice(token, priceProps);
 
-            tokensWithPrices.add(token);
-
-            emitOraclePriceUpdated(eventEmitter, token, priceProps.min, priceProps.max, true, true);
+            emitOraclePriceUpdated(eventEmitter, token, priceProps.min, priceProps.max, true);
         }
     }
 
@@ -665,7 +642,6 @@ contract Oracle is RoleModule {
         address token,
         uint256 minPrice,
         uint256 maxPrice,
-        bool isPrimary,
         bool isPriceFeed
     ) internal {
         EventUtils.EventLogData memory eventData;
@@ -677,15 +653,13 @@ contract Oracle is RoleModule {
         eventData.uintItems.setItem(0, "minPrice", minPrice);
         eventData.uintItems.setItem(1, "maxPrice", maxPrice);
 
-        eventData.boolItems.initItems(2);
-        eventData.boolItems.setItem(0, "isPrimary", isPrimary);
-        eventData.boolItems.setItem(1, "isPriceFeed", isPriceFeed);
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "isPriceFeed", isPriceFeed);
 
         eventEmitter.emitEventLog1(
             "OraclePriceUpdate",
             Cast.toBytes32(token),
             eventData
         );
-
     }
 }

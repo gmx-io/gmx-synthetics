@@ -37,6 +37,9 @@ const func = async ({ deployments, gmx }: HardhatRuntimeEnvironment) => {
     let virtualInventoryForPosition = bigNumberify(0);
     for (const indexToken of indexTokens) {
       const markets = marketsByIndexToken[indexToken];
+      if (!markets) {
+        continue;
+      }
       for (const market of markets) {
         const [
           openInterest_Long_CollateralLong,

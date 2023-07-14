@@ -1,0 +1,18 @@
+{
+  "RoleStore": 1685618625,
+  "DataStore": 1685618641,
+  "OracleStore": 1685618751,
+  "ReferralStorage": 1685618983,
+  "MarketFactory": 1685619112,
+  "AddVirtualTokenIdToBtcMarketsTestnet": 1686933577,
+  "RoleStore_2": 1687287399,
+  "DataStore_2": 1687287528,
+  "OracleStore_2": 1687287678,
+  "ReferralStorage_2": 1687287908,
+  "MarketFactory_2": 1687287924,
+  "RoleStore_3": 1687446597,
+  "DataStore_3": 1687446715,
+  "OracleStore_3": 1687446838,
+  "MarketFactory_3": 1687448700,
+  "Multicall3": 1687452193
+}

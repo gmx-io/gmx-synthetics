@@ -8,6 +8,9 @@ import "../role/RoleModule.sol";
 import "../event/EventEmitter.sol";
 import "../utils/BasicMulticall.sol";
 import "../oracle/OracleStore.sol";
+import "../data/DataStore.sol";
+import "../data/Keys.sol";
+import "../chain/Chain.sol";
 
 // @title Timelock
 contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
@@ -39,6 +42,8 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         eventEmitter = _eventEmitter;
         oracleStore = _oracleStore;
         timelockDelay = _timelockDelay;
+
+        _validateTimelockDelay();
     }
 
     // @dev immediately revoke the role of an account
@@ -55,11 +60,9 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
             revert Errors.InvalidTimelockDelay(_timelockDelay);
         }
 
-        if (_timelockDelay > MAX_TIMELOCK_DELAY) {
-            revert Errors.MaxTimelockDelayExceeded(_timelockDelay);
-        }
-
         timelockDelay = _timelockDelay;
+
+        _validateTimelockDelay();
     }
 
     function signalAddOracleSigner(address account) external onlyTimelockAdmin nonReentrant {
@@ -115,7 +118,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     }
 
     function removeOracleSignerAfterSignal(address account) external onlyTimelockAdmin nonReentrant {
-        bytes32 actionKey = _addOracleSignerActionKey(account);
+        bytes32 actionKey = _removeOracleSignerActionKey(account);
         _validateAndClearAction(actionKey, "removeOracleSigner");
 
         oracleStore.removeSigner(account);
@@ -439,5 +442,11 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
             actionKey,
             eventData
         );
+    }
+
+    function _validateTimelockDelay() internal view {
+        if (timelockDelay > MAX_TIMELOCK_DELAY) {
+            revert Errors.MaxTimelockDelayExceeded(timelockDelay);
+        }
     }
 }

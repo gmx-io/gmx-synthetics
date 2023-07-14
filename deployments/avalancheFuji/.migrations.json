@@ -1,3 +1,22 @@
 {
-  "fixVirtualInventoryForPositions": 1681913322
+  "fixVirtualInventoryForPositions": 1685041916,
+  "fixVirtualInventoryForSwaps": 1685041916,
+  "DisableOldTestMarketOnAvalancheFuji": 1685042175,
+  "RoleStore": 1685488057,
+  "DataStore": 1685488075,
+  "OracleStore": 1685488261,
+  "ReferralStorage": 1685488610,
+  "MarketFactory": 1685488635,
+  "AddVirtualTokenIdToBtcMarketsTestnet": 1686933594,
+  "RoleStore_2": 1687267896,
+  "DataStore_2": 1687268136,
+  "OracleStore_2": 1687268310,
+  "ReferralStorage_2": 1687270383,
+  "MarketFactory_2": 1687270414,
+  "RoleStore_3": 1687426331,
+  "DataStore_3": 1687426517,
+  "OracleStore_3": 1687426698,
+  "MarketFactory_3": 1687427954,
+  "Multicall3": 1687428156,
+  "DataStore_4": 1688631988
 }

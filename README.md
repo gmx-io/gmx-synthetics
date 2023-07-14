@@ -318,6 +318,8 @@ For example if the funding factor per second is 1 / 50,000, and the funding expo
 
 The funding fee per second for shorts would be `-0.00001 * 150,000 / 50,000 => 0.00003 => -0.003%`.
 
+It is also possible to set a stableFundingFactor, this would result in the specified funding factor being used instead of the dynamic funding factor.
+
 # Borrowing Fees
 
 There is a borrowing fee paid to liquidity providers, this helps prevent users from opening both long and short positions to take up pool capacity without paying any fees.
@@ -326,6 +328,8 @@ Borrowing fees are calculated as `borrowing factor * (open interest in usd + pen
 
 For example if the borrowing factor per second is 1 / 50,000, and the borrowing exponent factor is 1, and the long open interest is $150,000 with +$50,000 of pending pnl, and the pool has $250,000 worth of tokens, the borrowing fee per second for longs would be `(1 / 50,000) * (150,000 + 50,000) / 250,000 => 0.000016 => 0.0016%`.
 
+There is also an option to set a skipBorrowingFeeForSmallerSide flag, this would result in the borrowing fee for the smaller side being set to zero. For example, if there are more longs than shorts and skipBorrowingFeeForSmallerSide is true, then the borrowing fee for shorts would be zero.
+
 ## Price Impact
 
 The code for price impact can be found in the `/pricing` contracts.
@@ -333,7 +337,7 @@ The code for price impact can be found in the `/pricing` contracts.
 Price impact is calculated as:
 
 ```
-(initial USD difference) ^ (price impact exponent) * (price impact factor / 2) - (next USD difference) ^ (price impact exponent) * (price impact factor / 2)
+(initial USD difference) ^ (price impact exponent) * (price impact factor) - (next USD difference) ^ (price impact exponent) * (price impact factor)
 ```
 
 For swaps, imbalance is calculated as the difference in the worth of the long tokens and short tokens.
@@ -346,9 +350,9 @@ For example:
 - The pool is equally balanced with $50,000 of long tokens and $50,000 of short tokens
 - If a user deposits 10 long tokens, the pool would now have $100,000 of long tokens and $50,000 of short tokens
 - The change in imbalance would be from $0 to -$50,000
-- There would be negative price impact charged on the user's deposit, calculated as `0 ^ 2 * (0.01 / 50,000 / 2) - 50,000 ^ 2 * (0.01 / 50,000 / 2) => -$250`
+- There would be negative price impact charged on the user's deposit, calculated as `0 ^ 2 * (0.01 / 50,000) - 50,000 ^ 2 * (0.01 / 50,000) => -$500`
 - If the user now withdraws 5 long tokens, the balance would change from -$50,000 to -$25,000, a net change of +$25,000
-- There would be a positive price impact rebated to the user in the form of additional long tokens, calculated as `50,000 ^ 2 * (0.01 / 50,000 / 2) - 25,000 ^ 2 * (0.01 / 50,000 / 2) => $187.5`
+- There would be a positive price impact rebated to the user in the form of additional long tokens, calculated as `50,000 ^ 2 * (0.01 / 50,000) - 25,000 ^ 2 * (0.01 / 50,000) => $375`
 
 For position actions (increase / decrease position), imbalance is calculated as the difference in the long and short open interest.
 
@@ -467,7 +471,7 @@ After the initial setup:
 
 - Collateral tokens need to be whitelisted with a configured TOKEN_TRANSFER_GAS_LIMIT
 
-- Rebasing tokens, tokens that change balance on transfer, with token burns, etc, are not compatible with the system and should not be whitelisted
+- Rebasing tokens, tokens that change balance on transfer, with token burns, tokens with callbacks e.g. ERC-777 tokens, etc, are not compatible with the system and should not be whitelisted
 
 - Order keepers can use prices from different blocks for limit orders with a swap, which would lead to different output amounts
 
@@ -479,15 +483,49 @@ After the initial setup:
 
 - Price impact can be reduced by using positions and swaps and trading across markets, chains, forks, other protocols, this is partially mitigated with virtual inventory tracking
 
-- Virtual IDs must be set on market creation / token whitelisting, if it is set after trading for the token / market is done, the tracking would not be accurate and may need to be adjusted
+- Virtual IDs must be set before market creation / token whitelisting, if it is set after trading for the token / market is done, the tracking would not be accurate and may need to be adjusted
 
 - If an execution transaction requires a large amount of gas that may be close to the maximum block gas limit, it may be possible to stuff blocks to prevent the transaction from being included in blocks
 
-- In certain blockchains it is possible for the keeper to have control over the tx.gasprice used to execute a transaction
+- In certain blockchains it is possible for the keeper to have control over the tx.gasprice used to execute a transaction which would affect the execution fee paid to the keeper
+
+- For L2s with sequencers, there is no contract validation to check if the L2 sequencer is active, oracle keepers should stop signing prices if no blocks are being created by the sequencer, if the sequencer resumes regular operation, the oracle keepers should sign prices for the latest blocks using the latest fetched prices
+
+- In case an L2 sequencer is down, it may prevent deposits into positions to prevent liquidations
+
+- For transactions that can be executed entirely using on-chain price feeds, it may be possible to take advantage of stale pricing due to price latency or the chain being down, usage of on-chain price feeds should be temporary and low latency feeds should be used instead once all tokens are supported
+
+- Orders may be prevented from execution by a malicious user intentionally causing a market to be unbalanced resulting in a high price impact, this should be costly and difficult to benefit from
+
+- Block re-orgs could allow a user to retroactively cancel an order after it has been executed if price did not move favourably for the user, care should be taken to handle this case if using the contracts on chains where long re-orgs are possible
+
+- Updating and cancellation of orders could be front-run to prevent order execution, this should not be an issue if the probability of a successful front-running is less than or equal to 50%, if the probability is higher than 50%, fees and price impact should be adjusted to ensure that the strategy is not net profitable, adjusting the ui fee or referral discount could similarly be used to cause order cancellations
+
+- Decrease position orders could output two tokens instead of a single token, in case the decrease position swap fails, it is also possible that the output amount and collateral may not be sufficient to cover fees, causing the order to not be executed
+
+- If there is a large spread, it is possible that opening / closing a position can significantly change the min and max price of the market token, this should not be manipulatable in a profitable way
+
+- Changes in config values such as FUNDING_FACTOR, STABLE_FUNDING_FACTOR, BORROWING_FACTOR, SKIP_BORROWING_FEE_FOR_SMALLER_SIDE, BORROWING_FEE_RECEIVER_FACTOR, could lead to additional charges for users, it could also result in a change in the price of market tokens
+
+- Calculation of price impact values do not account for fees and the effects resulting from the price impact itself, for most cases the effect on the price impact calculation should be small
+
+- If trader PnL is capped, positions that are closed earlier may receive a lower PnL ratio compared to positions that are closed later
+
+- Due to the difference in positive and negative position price impact, there can be a build up of virtual token amounts in the position impact pool which would affect the pricing of market tokens, the feature to gradually reduce these virtual tokens should be added if needed
+
+- Contracts with the "CONTROLLER" role have access to important functions such as setting DataStore values, due to this, care should be taken to ensure that such contracts do not have generic functions or functions that can be intentionally used to change important values
+
+- If new contracts are added that may lead to a difference in pricing, e.g. of market tokens between the old and new contracts, then care should be taken to disable the old contracts before the new contracts are enabled
+
+- If the contracts are used to support equity synthetic markets, care should be taken to ensure that stock splits and similar changes can be handled
 
 # Feature Development
 
-If new features are added, tests should be added for the different market types, e.g. spot only markets, single token markets.
+For the development of new features, a few things should be noted:
+
+- tests should be added for the different market types, e.g. spot only markets, single token markets
+
+- the ordering of values in the eventData for callbacks should not be modified unless strictly necessary, since callback contracts may reference the values by a fixed index
 
 # Commands
 

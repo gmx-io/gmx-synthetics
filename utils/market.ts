@@ -36,20 +36,24 @@ export async function getMarketTokenPriceWithPoolValue(fixture, overrides: any =
   const market = overrides.market || ethUsdMarket;
   const pnlFactorType = overrides.pnlFactorType || keys.MAX_PNL_FACTOR_FOR_TRADERS;
 
-  const indexTokenPrice = overrides.indexTokenPrice || {
+  const overridePrices = overrides.prices || {};
+
+  const indexTokenPrice = overridePrices.indexTokenPrice || {
     min: expandDecimals(5000, 4 + 8),
     max: expandDecimals(5000, 4 + 8),
   };
 
-  const longTokenPrice = overrides.longTokenPrice || {
+  const longTokenPrice = overridePrices.longTokenPrice || {
     min: expandDecimals(5000, 4 + 8),
     max: expandDecimals(5000, 4 + 8),
   };
 
-  const shortTokenPrice = overrides.shortTokenPrice || {
+  const shortTokenPrice = overridePrices.shortTokenPrice || {
     min: expandDecimals(1, 6 + 18),
     max: expandDecimals(1, 6 + 18),
   };
+
+  const maximize = overrides.maximize === undefined ? true : overrides.maximize;
 
   return await reader.getMarketTokenPrice(
     dataStore.address,
@@ -58,7 +62,7 @@ export async function getMarketTokenPriceWithPoolValue(fixture, overrides: any =
     longTokenPrice,
     shortTokenPrice,
     pnlFactorType,
-    true
+    maximize
   );
 }
 

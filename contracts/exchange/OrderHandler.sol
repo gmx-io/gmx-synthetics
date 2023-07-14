@@ -4,10 +4,11 @@ pragma solidity ^0.8.0;
 
 import "./BaseOrderHandler.sol";
 import "../error/ErrorUtils.sol";
+import "./IOrderHandler.sol";
 
 // @title OrderHandler
 // @dev Contract to handle creation, execution and cancellation of orders
-contract OrderHandler is BaseOrderHandler {
+contract OrderHandler is IOrderHandler, BaseOrderHandler {
     using SafeCast for uint256;
     using Order for Order.Props;
     using Array for uint256[];
@@ -36,7 +37,7 @@ contract OrderHandler is BaseOrderHandler {
     function createOrder(
         address account,
         BaseOrderUtils.CreateOrderParams calldata params
-    ) external globalNonReentrant onlyController returns (bytes32) {
+    ) external override globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureDisabledKey(address(this), uint256(params.orderType)));
 
         return OrderUtils.createOrder(
@@ -79,7 +80,7 @@ contract OrderHandler is BaseOrderHandler {
         uint256 triggerPrice,
         uint256 minOutputAmount,
         Order.Props memory order
-    ) external payable globalNonReentrant onlyController {
+    ) external override globalNonReentrant onlyController {
         FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
 
         if (BaseOrderUtils.isMarketOrder(order.orderType())) {
@@ -112,14 +113,13 @@ contract OrderHandler is BaseOrderHandler {
 
     /**
      * @dev Cancels the given order. The `cancelOrder()` feature must be enabled for the given order
-     * type. The caller must be the owner of the order, and the order must not be a market order. The
-     * order is cancelled by calling the `cancelOrder()` function in the `OrderUtils` contract. This
-     * function also records the starting gas amount and the reason for cancellation, which is passed to
-     * the `cancelOrder()` function.
+     * type. The caller must be the owner of the order. The order is cancelled by calling the `cancelOrder()`
+     * function in the `OrderUtils` contract. This function also records the starting gas amount and the
+     * reason for cancellation, which is passed to the `cancelOrder()` function.
      *
      * @param key The unique ID of the order to be cancelled
      */
-    function cancelOrder(bytes32 key) external globalNonReentrant onlyController {
+    function cancelOrder(bytes32 key) external override globalNonReentrant onlyController {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
@@ -154,6 +154,7 @@ contract OrderHandler is BaseOrderHandler {
         bytes32 key,
         OracleUtils.SimulatePricesParams memory params
     ) external
+        override
         onlyController
         withSimulatedOraclePrices(oracle, params)
         globalNonReentrant
@@ -179,8 +180,9 @@ contract OrderHandler is BaseOrderHandler {
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
         uint256 startingGas = gasleft();
+        uint256 executionGas = GasUtils.getExecutionGas(dataStore, startingGas);
 
-        try this._executeOrder(
+        try this._executeOrder{ gas: executionGas }(
             key,
             oracleParams,
             msg.sender
@@ -202,7 +204,13 @@ contract OrderHandler is BaseOrderHandler {
     ) external onlySelf {
         uint256 startingGas = gasleft();
 
-        BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(key, oracleParams, keeper, startingGas);
+        BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(
+            key,
+            oracleParams,
+            keeper,
+            startingGas,
+            Order.SecondaryOrderType.None
+        );
         // limit swaps require frozen order keeper for execution since on creation it can fail due to output amount
         // which would automatically cause the order to be frozen
         // limit increase and limit / trigger decrease orders may fail due to output amount as well and become frozen
@@ -226,8 +234,6 @@ contract OrderHandler is BaseOrderHandler {
         uint256 startingGas,
         bytes memory reasonBytes
     ) internal {
-        (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
@@ -260,14 +266,14 @@ contract OrderHandler is BaseOrderHandler {
             errorSelector == Errors.DisabledFeature.selector ||
             errorSelector == Errors.InvalidKeeperForFrozenOrder.selector ||
             errorSelector == Errors.UnsupportedOrderType.selector ||
-            // the transaction is reverted for InvalidLimitOrderPrices and
-            // InvalidStopLossOrderPrices errors since since the oracle prices
+            // the transaction is reverted for InvalidOrderPrices since the oracle prices
             // do not fulfill the specified trigger price
-            errorSelector == Errors.InvalidLimitOrderPrices.selector ||
-            errorSelector == Errors.InvalidStopLossOrderPrices.selector
+            errorSelector == Errors.InvalidOrderPrices.selector
         ) {
             ErrorUtils.revertWithCustomError(reasonBytes);
         }
+
+        (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
 
         if (
             isMarketOrder ||

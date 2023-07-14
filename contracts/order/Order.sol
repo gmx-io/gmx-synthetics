@@ -10,13 +10,6 @@ library Order {
     using Order for Props;
 
     enum OrderType {
-        // @dev for LimitIncrease, LimitDecrease, StopLossDecrease orders, two prices for the
-        // index token need to be recorded in the oracle
-        // the price with the smaller block number is stored as the primary price while the price with the
-        // larger block number is stored as the secondary price
-        // the triggerPrice must be validated to be between the primary price and secondary price
-        // LimitDecrease and StopLossDecrease are reduce-only orders
-
         // @dev MarketSwap: swap token A to token B at the current market price
         // the order will be cancelled if the minOutputAmount cannot be fulfilled
         MarketSwap,
@@ -36,6 +29,12 @@ library Order {
         StopLossDecrease,
         // @dev Liquidation: allows liquidation of positions if the criteria for liquidation are met
         Liquidation
+    }
+
+    // to help further differentiate orders
+    enum SecondaryOrderType {
+        None,
+        Adl
     }
 
     enum DecreasePositionSwapType {

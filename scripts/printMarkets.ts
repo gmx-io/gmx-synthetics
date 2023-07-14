@@ -12,18 +12,20 @@ async function main() {
   }
 
   const reader = await hre.ethers.getContract("Reader");
-  const marketStore = await hre.ethers.getContract("MarketStore");
-  const markets = await reader.getMarkets(marketStore.address, 0, 1000);
+  const dataStore = await hre.ethers.getContract("DataStore");
+  console.log("reading data from DataStore %s Reader %s", dataStore.address, reader.address);
+  const markets = [...(await reader.getMarkets(dataStore.address, 0, 100))];
+  markets.sort((a, b) => a.indexToken.localeCompare(b.indexToken));
   for (const market of markets) {
     const indexTokenSymbol = addressToSymbol[market.indexToken];
     const longTokenSymbol = addressToSymbol[market.longToken];
     const shortTokenSymbol = addressToSymbol[market.shortToken];
     console.log(
-      "%s indexToken: %s longToken: %s shortToken: %s",
+      "%s index: %s long: %s short: %s",
       market.marketToken,
-      indexTokenSymbol.padEnd(5),
-      longTokenSymbol.padEnd(5),
-      shortTokenSymbol.padEnd(5)
+      indexTokenSymbol?.padEnd(5) || "(swap only)",
+      longTokenSymbol?.padEnd(5),
+      shortTokenSymbol?.padEnd(5)
     );
   }
 }

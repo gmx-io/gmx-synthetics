@@ -2,6 +2,9 @@
 
 pragma solidity ^0.8.0;
 
+// there is a known issue with prb-math v3.x releases
+// https://github.com/PaulRBerg/prb-math/issues/178
+// due to this, either prb-math v2.x or v4.x versions should be used instead
 import "prb-math/contracts/PRBMathUD60x18.sol";
 
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -35,7 +38,7 @@ library Precision {
      * @return The result of applying the factor to the value.
      */
     function applyFactor(uint256 value, uint256 factor) internal pure returns (uint256) {
-        return applyFraction(value, factor, FLOAT_PRECISION);
+        return mulDiv(value, factor, FLOAT_PRECISION);
     }
 
     /**
@@ -46,16 +49,37 @@ library Precision {
      * @return The result of applying the factor to the value.
      */
     function applyFactor(uint256 value, int256 factor) internal pure returns (int256) {
-        return applyFraction(value, factor, FLOAT_PRECISION);
+        return mulDiv(value, factor, FLOAT_PRECISION);
     }
 
-    function applyFraction(uint256 value, uint256 numerator, uint256 denominator) internal pure returns (uint256) {
+    function applyFactor(uint256 value, int256 factor, bool roundUpMagnitude) internal pure returns (int256) {
+        return mulDiv(value, factor, FLOAT_PRECISION, roundUpMagnitude);
+    }
+
+    function mulDiv(uint256 value, uint256 numerator, uint256 denominator) internal pure returns (uint256) {
         return Math.mulDiv(value, numerator, denominator);
     }
 
-    function applyFraction(uint256 value, int256 numerator, uint256 denominator) internal pure returns (int256) {
-        uint256 result = applyFraction(value, numerator.abs(), denominator);
+    function mulDiv(int256 value, uint256 numerator, uint256 denominator) internal pure returns (int256) {
+        return mulDiv(numerator, value, denominator);
+    }
+
+    function mulDiv(uint256 value, int256 numerator, uint256 denominator) internal pure returns (int256) {
+        uint256 result = mulDiv(value, numerator.abs(), denominator);
         return numerator > 0 ? result.toInt256() : -result.toInt256();
+    }
+
+    function mulDiv(uint256 value, int256 numerator, uint256 denominator, bool roundUpMagnitude) internal pure returns (int256) {
+        uint256 result = mulDiv(value, numerator.abs(), denominator, roundUpMagnitude);
+        return numerator > 0 ? result.toInt256() : -result.toInt256();
+    }
+
+    function mulDiv(uint256 value, uint256 numerator, uint256 denominator, bool roundUpMagnitude) internal pure returns (uint256) {
+        if (roundUpMagnitude) {
+            return Math.mulDiv(value, numerator, denominator, Math.Rounding.Up);
+        }
+
+        return Math.mulDiv(value, numerator, denominator);
     }
 
     function applyExponentFactor(
@@ -81,10 +105,10 @@ library Precision {
         return weiToFloat(weiValue);
     }
 
-    function toFactor(uint256 value, uint256 divisor, bool roundUp) internal pure returns (uint256) {
+    function toFactor(uint256 value, uint256 divisor, bool roundUpMagnitude) internal pure returns (uint256) {
         if (value == 0) { return 0; }
 
-        if (roundUp) {
+        if (roundUpMagnitude) {
             return Math.mulDiv(value, FLOAT_PRECISION, divisor, Math.Rounding.Up);
         }
 

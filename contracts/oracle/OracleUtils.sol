@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "../utils/Array.sol";
 import "../utils/Bits.sol";
 import "../price/Price.sol";
+import "../utils/Printer.sol";
 
 // @title OracleUtils
 // @dev Library for oracle functions
@@ -44,8 +45,6 @@ library OracleUtils {
     struct SimulatePricesParams {
         address[] primaryTokens;
         Price.Props[] primaryPrices;
-        address[] secondaryTokens;
-        Price.Props[] secondaryPrices;
     }
 
     struct ReportInfo {
@@ -228,14 +227,14 @@ library OracleUtils {
     // @param signature the signer's signature
     // @param expectedSigner the address of the expected signer
     function validateSigner(
-        bytes32 SALT,
+        bytes32 salt,
         ReportInfo memory info,
         bytes memory signature,
         address expectedSigner
     ) internal pure {
         bytes32 digest = ECDSA.toEthSignedMessageHash(
             keccak256(abi.encode(
-                SALT,
+                salt,
                 info.minOracleBlockNumber,
                 info.maxOracleBlockNumber,
                 info.oracleTimestamp,
@@ -252,10 +251,6 @@ library OracleUtils {
         if (recoveredSigner != expectedSigner) {
             revert Errors.InvalidSignature(recoveredSigner, expectedSigner);
         }
-    }
-
-    function revertOracleBlockNumbersAreNotEqual(uint256[] memory oracleBlockNumbers, uint256 expectedBlockNumber) internal pure {
-        revert Errors.OracleBlockNumbersAreNotEqual(oracleBlockNumbers, expectedBlockNumber);
     }
 
     function revertOracleBlockNumberNotWithinRange(
@@ -283,26 +278,10 @@ library OracleUtils {
             return true;
         }
 
-        if (errorSelector == Errors.EmptySecondaryPrice.selector) {
-            return true;
-        }
-
-        if (errorSelector == Errors.EmptyLatestPrice.selector) {
-            return true;
-        }
-
-        if (errorSelector == Errors.EmptyCustomPrice.selector) {
-            return true;
-        }
-
         return false;
     }
 
     function isOracleBlockNumberError(bytes4 errorSelector) internal pure returns (bool) {
-        if (errorSelector == Errors.OracleBlockNumbersAreNotEqual.selector) {
-            return true;
-        }
-
         if (errorSelector == Errors.OracleBlockNumbersAreSmallerThanRequired.selector) {
             return true;
         }
