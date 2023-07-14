@@ -192,6 +192,7 @@ library PositionEventUtils {
     function emitPositionFeesCollected(
         EventEmitter eventEmitter,
         bytes32 orderKey,
+        bytes32 positionKey,
         address market,
         address collateralToken,
         uint256 tradeSizeUsd,
@@ -201,6 +202,7 @@ library PositionEventUtils {
         _emitPositionFees(
             eventEmitter,
             orderKey,
+            positionKey,
             market,
             collateralToken,
             tradeSizeUsd,
@@ -213,6 +215,7 @@ library PositionEventUtils {
     function emitPositionFeesInfo(
         EventEmitter eventEmitter,
         bytes32 orderKey,
+        bytes32 positionKey,
         address market,
         address collateralToken,
         uint256 tradeSizeUsd,
@@ -222,6 +225,7 @@ library PositionEventUtils {
         _emitPositionFees(
             eventEmitter,
             orderKey,
+            positionKey,
             market,
             collateralToken,
             tradeSizeUsd,
@@ -234,6 +238,7 @@ library PositionEventUtils {
     function _emitPositionFees(
         EventEmitter eventEmitter,
         bytes32 orderKey,
+        bytes32 positionKey,
         address market,
         address collateralToken,
         uint256 tradeSizeUsd,
@@ -245,7 +250,8 @@ library PositionEventUtils {
 
         eventData.bytes32Items.initItems(2);
         eventData.bytes32Items.setItem(0, "orderKey", orderKey);
-        eventData.bytes32Items.setItem(1, "referralCode", fees.referral.referralCode);
+        eventData.bytes32Items.setItem(1, "positionKey", positionKey);
+        eventData.bytes32Items.setItem(2, "referralCode", fees.referral.referralCode);
 
         eventData.addressItems.initItems(5);
         eventData.addressItems.setItem(0, "market", market);
