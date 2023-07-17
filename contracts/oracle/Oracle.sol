@@ -477,7 +477,6 @@ contract Oracle is RoleModule {
                 revert Errors.InvalidMedianMinMaxPrice(medianMinPrice, medianMaxPrice);
             }
 
-
             cache.validatedPrices[i] = ValidatedPrice(
                 reportInfo.token, // token
                 medianMinPrice, // min
