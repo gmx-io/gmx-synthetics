@@ -72,14 +72,6 @@ library IncreaseOrderUtils {
             collateralIncrementAmount
         );
 
-        // save the callback contract based on the account and market so that it can be called on liquidations and ADLs
-        CallbackUtils.setSavedCallbackContract(
-            params.contracts.dataStore,
-            params.order.account(),
-            params.order.market(),
-            params.order.callbackContract()
-        );
-
         EventUtils.EventLogData memory eventData;
         return eventData;
     }
