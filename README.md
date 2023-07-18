@@ -519,6 +519,32 @@ After the initial setup:
 
 - If the contracts are used to support equity synthetic markets, care should be taken to ensure that stock splits and similar changes can be handled
 
+- It is rare but possible for a pool's value to become negative, this can happen since the impactPoolAmount and pending PnL is subtracted from the worth of the tokens in the pool
+
+- Event data may be passed to callback contracts, the ordering of the params in the eventData will be attempted to be unchanged, so params can be accessed by index, for safety the key of the param should still be validated before use to check if it matches the expected value
+
+- Some parameters such as order.sizeDelta and order.initialCollateralDeltaAmount may be updated during execution, the updated values may not be passed to the callback contract
+
+- When creating a callback contract, the callback contract may need to whitelist the DepositHandler, OrderHandler or WithdrawalHandler, it should be noted that these handlers may change as new code is added to the handlers, it is also possible for two handlers to temporarily exist at the same time, e.g. OrderHandler(1), OrderHandler(2), due to this, the callback contract should be able to whitelist and accept callbacks from multiple DepositHandlers, OrderHandlers and WithdrawalHandlers
+
+- While the code has been structured to minimize the risk of [read-only reentrancy](https://officercia.mirror.xyz/DBzFiDuxmDOTQEbfXhvLdK0DXVpKu1Nkurk0Cqk3QKc), care should be taken to guard against this possibility
+
+- In case of downtime of the blockchain or oracle, orders may be executed at significantly different prices or may not execute if the order's acceptable price cannot be fulfilled
+
+- Swaps for decrease orders may not be successful, this could result in two output tokens, one output in the collateral token and another in the profit token
+
+- Accounts may receive ETH for ADLs / liquidations, if the account cannot receive ETH then WETH would be sent instead
+
+- Positive price impact may be capped by configuration and the amount of tokens in the impact pools
+
+- Negative price impact may be capped by configuration
+
+- If negative price impact is capped, the additional amount would be kept in the claimable collateral pool, this needs to be manually claimed using the ExchangeRouter.claimCollateral function
+
+- Positive funding fees need to be manually claimed using the ExchangeRouter.claimFundingFees function
+
+- Affiliate rewards need to be manually claimed using the ExchangeRouter.claimAffiliateRewards function
+
 # Feature Development
 
 For the development of new features, a few things should be noted:
