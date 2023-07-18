@@ -57,7 +57,7 @@ library CallbackUtils {
         }
     }
 
-    function setSavedCallbackContract(DataStore dataStore, address account, address market, address callbackContract) internal {
+    function setSavedCallbackContract(DataStore dataStore, address account, address market, address callbackContract) external {
         dataStore.setAddress(Keys.savedCallbackContract(account, market), callbackContract);
     }
 
