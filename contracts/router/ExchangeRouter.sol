@@ -178,6 +178,20 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         );
     }
 
+    function setSavedCallbackContract(
+        address market,
+        address callbackContract
+    ) external payable nonReentrant {
+        // save the callback contract based on the account and market so that
+        // it can be called on liquidations and ADLs
+        CallbackUtils.setSavedCallbackContract(
+            dataStore,
+            msg.sender, // account
+            market,
+            callbackContract
+        );
+    }
+
     function simulateExecuteDeposit(
         bytes32 key,
         OracleUtils.SimulatePricesParams memory simulatedOracleParams
