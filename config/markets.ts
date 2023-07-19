@@ -267,6 +267,28 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
     },
     {
+      tokens: { indexToken: "XRP", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:XRP/USD"),
+      virtualMarketId: hashString("SPOT:XRP/USD"),
+
+      ...baseMarketConfig,
+      ...synthethicMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(500, 18),
+      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
+
+      negativePositionImpactFactor: decimalToFloat(15, 10), // 0.3% for 2,000,000 USD of imbalance
+      positivePositionImpactFactor: decimalToFloat(75, 11), // 0.15% for 2,000,000 USD of imbalance
+
+      // use the swap impact factor for WETH
+      negativeSwapImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
+      positiveSwapImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
+
+      // minCollateralFactor of 0.01 (1%) when open interest is 5,000,000 USD
+      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 9),
+      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 9),
+    },
+    {
       tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:DOGE/USD"),
       virtualMarketId: hashString("SPOT:DOGE/USD"),
@@ -458,6 +480,28 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
+    },
+    {
+      tokens: { indexToken: "XRP", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:XRP/USD"),
+      virtualMarketId: hashString("SPOT:XRP/USD"),
+
+      ...baseMarketConfig,
+      ...synthethicMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(75_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
+
+      negativePositionImpactFactor: decimalToFloat(15, 10), // 0.3% for 2,000,000 USD of imbalance
+      positivePositionImpactFactor: decimalToFloat(75, 11), // 0.15% for 2,000,000 USD of imbalance
+
+      // use the swap impact factor for WAVAX
+      negativeSwapImpactFactor: decimalToFloat(1, 8), // 0.3% for 300,000 USD of imbalance
+      positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.15% for 300,000,000 USD of imbalance
+
+      // minCollateralFactor of 0.01 (1%) when open interest is 5,000,000 USD
+      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 9),
+      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 9),
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WAVAX", shortToken: "USDC" },
