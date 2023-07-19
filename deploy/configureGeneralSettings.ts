@@ -106,6 +106,14 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
     generalConfig.skipBorrowingFeeForSmallerSide,
     "skip borrowing fee for smaller side"
   );
+
+  if (generalConfig.requestExpirationBlockAge !== undefined) {
+    await setUintIfDifferent(
+      keys.REQUEST_EXPIRATION_BLOCK_AGE,
+      generalConfig.requestExpirationBlockAge,
+      "request expiration block age"
+    );
+  }
 };
 
 func.tags = ["GeneralSettings"];

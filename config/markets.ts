@@ -482,7 +482,7 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
     },
     {
-      tokens: { indexToken: "XRP", longToken: "WETH", shortToken: "USDC" },
+      tokens: { indexToken: "XRP", longToken: "WAVAX", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:XRP/USD"),
       virtualMarketId: hashString("SPOT:XRP/USD"),
 
