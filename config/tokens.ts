@@ -58,6 +58,10 @@ const config: {
       wrappedNative: true,
       transferGasLimit: 200 * 1000,
     },
+    XRP: {
+      synthetic: true,
+      decimals: 6,
+    },
     DOGE: {
       synthetic: true,
       decimals: 8,
@@ -117,6 +121,10 @@ const config: {
       address: "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB",
       decimals: 18,
       transferGasLimit: 200 * 1000,
+    },
+    XRP: {
+      synthetic: true,
+      decimals: 6,
     },
     DOGE: {
       synthetic: true,

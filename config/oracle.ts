@@ -7,6 +7,7 @@ type OracleRealPriceFeed = {
   address: string;
   decimals: number;
   heartbeatDuration: number;
+  stablePrice?: number;
   deploy?: never;
   initPrice?: never;
 };
@@ -15,6 +16,7 @@ type OracleTestPriceFeed = {
   address?: never;
   decimals: number;
   heartbeatDuration: number;
+  stablePrice?: number;
   deploy: true;
   initPrice: string;
 };
@@ -149,6 +151,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             address: "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",
             decimals: 8,
             heartbeatDuration: (24 + 1) * 60 * 60,
+            stablePrice: decimalToFloat(1),
           },
         },
         "USDC.e": {
@@ -156,6 +159,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             address: "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",
             decimals: 8,
             heartbeatDuration: (24 + 1) * 60 * 60,
+            stablePrice: decimalToFloat(1),
           },
         },
         USDT: {
@@ -163,6 +167,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             address: "0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7",
             decimals: 8,
             heartbeatDuration: (24 + 1) * 60 * 60,
+            stablePrice: decimalToFloat(1),
           },
         },
         DAI: {
@@ -170,6 +175,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             address: "0xc5C8E77B397E531B8EC06BFb0048328B30E9eCfB",
             decimals: 8,
             heartbeatDuration: (24 + 1) * 60 * 60,
+            stablePrice: decimalToFloat(1),
           },
         },
       },
@@ -210,6 +216,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             address: "0xF096872672F44d6EBA71458D74fe67F9a77a23B9",
             decimals: 8,
             heartbeatDuration: (24 + 1) * 60 * 60,
+            stablePrice: decimalToFloat(1),
           },
         },
         "USDC.e": {
@@ -217,6 +224,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             address: "0xF096872672F44d6EBA71458D74fe67F9a77a23B9",
             decimals: 8,
             heartbeatDuration: (24 + 1) * 60 * 60,
+            stablePrice: decimalToFloat(1),
           },
         },
         USDT: {
@@ -224,6 +232,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             address: "0xEBE676ee90Fe1112671f19b6B7459bC678B67e8a",
             decimals: 8,
             heartbeatDuration: (24 + 1) * 60 * 60,
+            stablePrice: decimalToFloat(1),
           },
         },
         "USDT.e": {
@@ -231,6 +240,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             address: "0xEBE676ee90Fe1112671f19b6B7459bC678B67e8a",
             decimals: 8,
             heartbeatDuration: (24 + 1) * 60 * 60,
+            stablePrice: decimalToFloat(1),
           },
         },
         "DAI.e": {
@@ -238,6 +248,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             address: "0x51D7180edA2260cc4F6e4EebB82FEF5c3c2B8300",
             decimals: 8,
             heartbeatDuration: (24 + 1) * 60 * 60,
+            stablePrice: decimalToFloat(1),
           },
         },
       },

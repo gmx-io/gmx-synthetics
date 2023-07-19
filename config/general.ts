@@ -42,7 +42,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     };
   }
 
-  return {
+  const generalConfig = {
     feeReceiver: "0x49B373D422BdA4C6BfCdd5eC1E48A9a26fdA2F8b",
     holdingAddress: "0x49B373D422BdA4C6BfCdd5eC1E48A9a26fdA2F8b",
     maxUiFeeFactor: decimalToFloat(2, 4), // 0.0002, 0.02%
@@ -79,4 +79,25 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
     skipBorrowingFeeForSmallerSide: true,
   };
+
+  const networkConfig = {
+    arbitrumGoerli: {
+      requestExpirationBlockAge: 1200, // about 5 minutes assuming 4 blocks per second
+    },
+    avalancheFuji: {
+      requestExpirationBlockAge: 200, // about 5 minutes assuming 1 block per 3 seconds
+    },
+    arbitrum: {
+      requestExpirationBlockAge: 1200, // about 5 minutes assuming 4 blocks per second
+    },
+    avalanche: {
+      requestExpirationBlockAge: 200, // about 5 minutes assuming 1 block per 3 seconds
+    },
+  }[network.name];
+
+  if (!networkConfig) {
+    throw new Error(`Network config not defined for ${network.name}`);
+  }
+
+  return { ...generalConfig, ...networkConfig };
 }
