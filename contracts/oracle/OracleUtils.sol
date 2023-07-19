@@ -216,6 +216,8 @@ library OracleUtils {
     }
 
     // @dev validate the signer of a price
+    // before calling this function, the expectedSigner should be validated to
+    // ensure that it is not the zero address
     // @param minOracleBlockNumber the min block number used for the signed message hash
     // @param maxOracleBlockNumber the max block number used for the signed message hash
     // @param oracleTimestamp the timestamp used for the signed message hash
