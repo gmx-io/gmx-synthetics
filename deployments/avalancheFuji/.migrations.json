@@ -1,5 +1,8 @@
 {
   "EventEmitter_1": 1688460263,
+  "OrderVault_1": 1688460263,
+  "DepositVault_1": 1688460263,
+  "WithdrawalVault_1": 1688460263,
   "fixVirtualInventoryForPositions": 1685041916,
   "fixVirtualInventoryForSwaps": 1685041916,
   "DisableOldTestMarketOnAvalancheFuji": 1685042175,
