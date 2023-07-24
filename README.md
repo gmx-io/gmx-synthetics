@@ -525,7 +525,11 @@ After the initial setup:
 
 - Some parameters such as order.sizeDelta and order.initialCollateralDeltaAmount may be updated during execution, the updated values may not be passed to the callback contract
 
-- When creating a callback contract, the callback contract may need to whitelist the DepositHandler, OrderHandler or WithdrawalHandler, it should be noted that these handlers may change as new code is added to the handlers, it is also possible for two handlers to temporarily exist at the same time, e.g. OrderHandler(1), OrderHandler(2), due to this, the callback contract should be able to whitelist and accept callbacks from multiple DepositHandlers, OrderHandlers and WithdrawalHandlers
+- When creating a callback contract, the callback contract may need to whitelist the DepositHandler, OrderHandler or WithdrawalHandler, it should be noted that new versions of these handlers may be deployed as new code is added to the handlers, it is also possible for two handlers to temporarily exist at the same time, e.g. OrderHandler(1), OrderHandler(2), due to this, the callback contract should be able to whitelist and simultaneously accept callbacks from multiple DepositHandlers, OrderHandlers and WithdrawalHandlers
+
+- New versions of the ExchangeRouter contract may be deployed, in this case two ExchangeRouters may exist at the same time, contracts should send requests to the new ExchangeRouter once it becomes available
+
+- New versions of the Oracle contract may be deployed, in this case validation of prices should be updated to use the new Oracle contract
 
 - While the code has been structured to minimize the risk of [read-only reentrancy](https://officercia.mirror.xyz/DBzFiDuxmDOTQEbfXhvLdK0DXVpKu1Nkurk0Cqk3QKc), care should be taken to guard against this possibility
 
