@@ -141,13 +141,13 @@ const baseMarketConfig: BaseMarketConfig = {
 
   minCollateralUsd: decimalToFloat(1, 0), // 1 USD
 
-  borrowingFactorForLongs: decimalToFloat(3, 9), // 0.000000003, 0.0000003% / second, 9.462% per year if the pool is 100% utilized
-  borrowingFactorForShorts: decimalToFloat(3, 9), // 0.000000003, 0.0000003% / second, 9.462% per year if the pool is 100% utilized
+  borrowingFactorForLongs: decimalToFloat(5, 9), // 0.000000003, 0.0000003% / second, 15.77% per year if the pool is 100% utilized
+  borrowingFactorForShorts: decimalToFloat(5, 9), // 0.000000003, 0.0000003% / second, 15.77% per year if the pool is 100% utilized
 
   borrowingExponentFactorForLongs: decimalToFloat(1),
   borrowingExponentFactorForShorts: decimalToFloat(1),
 
-  fundingFactor: decimalToFloat(16, 9), // ~50% per year for a 100% skew
+  fundingFactor: decimalToFloat(2, 8), // ~63% per year for a 100% skew
   fundingExponentFactor: decimalToFloat(1),
 };
 
@@ -155,8 +155,8 @@ const synthethicMarketConfig: Partial<BaseMarketConfig> = {
   reserveFactorLongs: decimalToFloat(7, 1), // 70%,
   reserveFactorShorts: decimalToFloat(7, 1), // 70%,
 
-  openInterestReserveFactorLongs: decimalToFloat(6, 1), // 60%,
-  openInterestReserveFactorShorts: decimalToFloat(6, 1), // 60%,
+  openInterestReserveFactorLongs: decimalToFloat(5, 1), // 50%,
+  openInterestReserveFactorShorts: decimalToFloat(5, 1), // 50%,
 
   maxPnlFactorForTradersLongs: decimalToFloat(5, 1), // 50%
   maxPnlFactorForTradersShorts: decimalToFloat(5, 1), // 50%
