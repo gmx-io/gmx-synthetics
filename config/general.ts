@@ -43,8 +43,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
   }
 
   const generalConfig = {
-    feeReceiver: "0x49B373D422BdA4C6BfCdd5eC1E48A9a26fdA2F8b",
-    holdingAddress: "0x49B373D422BdA4C6BfCdd5eC1E48A9a26fdA2F8b",
+    feeReceiver: "0x43ce1d475e06c65dd879f4ec644b8e0e10ff2b6d",
+    holdingAddress: "0x3f59203ea1c66527422998b54287e1efcacbe2c5",
     maxUiFeeFactor: decimalToFloat(2, 4), // 0.0002, 0.02%
     minHandleExecutionErrorGas: 1_000_000, // measured gas required for an order cancellation: ~600,000
 
