@@ -277,8 +277,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(500, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
-      negativePositionImpactFactor: decimalToFloat(15, 10), // 0.3% for 2,000,000 USD of imbalance
-      positivePositionImpactFactor: decimalToFloat(75, 11), // 0.15% for 2,000,000 USD of imbalance
+      negativePositionImpactFactor: decimalToFloat(4, 9), // 0.3% for 750,000 USD of imbalance
+      positivePositionImpactFactor: decimalToFloat(2, 9), // 0.15% for 750,000 USD of imbalance
 
       // use the swap impact factor for WETH
       negativeSwapImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
@@ -299,8 +299,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(500, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
-      negativePositionImpactFactor: decimalToFloat(3, 9), // 0.3% for 1,000,000 USD of imbalance
-      positivePositionImpactFactor: decimalToFloat(15, 10), // 0.15% for 1,000,000 USD of imbalance
+      negativePositionImpactFactor: decimalToFloat(4, 9), // 0.3% for 750,000 USD of imbalance
+      positivePositionImpactFactor: decimalToFloat(2, 9), // 0.15% for 750,000 USD of imbalance
 
       // use the swap impact factor for WETH
       negativeSwapImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
@@ -341,8 +341,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(500, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
-      negativePositionImpactFactor: decimalToFloat(15, 10), // 0.3% for 2,000,000 USD of imbalance
-      positivePositionImpactFactor: decimalToFloat(75, 11), // 0.15% for 2,000,000 USD of imbalance
+      negativePositionImpactFactor: decimalToFloat(4, 9), // 0.3% for 750,000 USD of imbalance
+      positivePositionImpactFactor: decimalToFloat(2, 9), // 0.15% for 750,000 USD of imbalance
 
       // use the swap impact factor for WETH
       negativeSwapImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
@@ -492,8 +492,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(75_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
-      negativePositionImpactFactor: decimalToFloat(15, 10), // 0.3% for 2,000,000 USD of imbalance
-      positivePositionImpactFactor: decimalToFloat(75, 11), // 0.15% for 2,000,000 USD of imbalance
+      negativePositionImpactFactor: decimalToFloat(4, 9), // 0.3% for 750,000 USD of imbalance
+      positivePositionImpactFactor: decimalToFloat(2, 9), // 0.15% for 750,000 USD of imbalance
 
       // use the swap impact factor for WAVAX
       negativeSwapImpactFactor: decimalToFloat(1, 8), // 0.3% for 300,000 USD of imbalance
@@ -514,8 +514,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(75_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
-      negativePositionImpactFactor: decimalToFloat(3, 9), // 0.3% for 1,000,000 USD of imbalance
-      positivePositionImpactFactor: decimalToFloat(15, 10), // 0.15% for 1,000,000 USD of imbalance
+      negativePositionImpactFactor: decimalToFloat(4, 9), // 0.3% for 750,000 USD of imbalance
+      positivePositionImpactFactor: decimalToFloat(2, 9), // 0.15% for 750,000 USD of imbalance
 
       // use the swap impact factor for WAVAX
       negativeSwapImpactFactor: decimalToFloat(1, 8), // 0.3% for 300,000 USD of imbalance
@@ -556,8 +556,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(75_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
-      negativePositionImpactFactor: decimalToFloat(15, 10), // 0.3% for 2,000,000 USD of imbalance
-      positivePositionImpactFactor: decimalToFloat(75, 11), // 0.15% for 2,000,000 USD of imbalance
+      negativePositionImpactFactor: decimalToFloat(4, 9), // 0.3% for 750,000 USD of imbalance
+      positivePositionImpactFactor: decimalToFloat(2, 9), // 0.15% for 750,000 USD of imbalance
 
       // use the swap impact factor for WAVAX
       negativeSwapImpactFactor: decimalToFloat(1, 8), // 0.3% for 300,000 USD of imbalance
