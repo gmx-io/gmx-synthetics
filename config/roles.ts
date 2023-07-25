@@ -34,6 +34,18 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       },
       {
         account: "0xE47b36382DC50b90bCF6176Ddb159C4b9333A7AB",
+        roles: ["CONFIG_KEEPER"],
+      },
+      {
+        account: "0xe97e935d4f5a533e61baaf0a3cc85db33ac71636",
+        roles: ["CONFIG_KEEPER", "MARKET_KEEPER", "TIMELOCK_ADMIN"],
+      },
+      {
+        account: "0x1c81F9dFD3DE4f9Bd2C11924D60f18a09Af13165",
+        roles: ["CONFIG_KEEPER", "TIMELOCK_ADMIN", "TIMELOCK_MULTISIG"],
+      },
+      {
+        account: "0xE47b36382DC50b90bCF6176Ddb159C4b9333A7AB",
         roles: ["ORDER_KEEPER", "ADL_KEEPER", "LIQUIDATION_KEEPER", "FROZEN_ORDER_KEEPER"],
       },
       {
@@ -49,6 +61,22 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       {
         account: "0xe7bfff2ab721264887230037940490351700a068",
         roles: ["CONTROLLER", "MARKET_KEEPER"],
+      },
+      {
+        account: "0x43ce1d475e06c65dd879f4ec644b8e0e10ff2b6d",
+        roles: ["FEE_RECEIVER"],
+      },
+      {
+        account: "0xE47b36382DC50b90bCF6176Ddb159C4b9333A7AB",
+        roles: ["CONFIG_KEEPER"],
+      },
+      {
+        account: "0xe97e935d4f5a533e61baaf0a3cc85db33ac71636",
+        roles: ["CONFIG_KEEPER", "MARKET_KEEPER", "TIMELOCK_ADMIN"],
+      },
+      {
+        account: "0x1c81F9dFD3DE4f9Bd2C11924D60f18a09Af13165",
+        roles: ["CONFIG_KEEPER", "TIMELOCK_ADMIN", "TIMELOCK_MULTISIG"],
       },
       {
         account: "0xE47b36382DC50b90bCF6176Ddb159C4b9333A7AB",
