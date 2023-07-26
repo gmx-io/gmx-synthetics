@@ -15,7 +15,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     },
     {
       account: "0x43ce1d475e06c65dd879f4ec644b8e0e10ff2b6d",
-      roles: ["FEE_RECEIVER"],
+      roles: ["FEE_KEEPER"],
     },
     {
       account: "0xE47b36382DC50b90bCF6176Ddb159C4b9333A7AB",
