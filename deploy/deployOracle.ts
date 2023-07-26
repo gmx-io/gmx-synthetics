@@ -24,6 +24,8 @@ const func = createDeployFunction({
       oracleConfig.maxRefPriceDeviationFactor,
       "max ref price deviation factor"
     );
+
+    // the Oracle contract requires the CONTROLLER to emit events
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER", "oracle");
   },
 });
