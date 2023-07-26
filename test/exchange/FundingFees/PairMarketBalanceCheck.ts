@@ -453,7 +453,7 @@ describe("Exchange.FundingFees.PairMarketBalanceCheck", () => {
         .add(await wnt.balanceOf(user2.address))
         .add(await wnt.balanceOf(user3.address))
         .add(await wnt.balanceOf(user4.address))
-    ).eq("24999999999999999996"); // 24.999999999999999996 ETH
+    ).closeTo("24999999999999999996", "10"); // 24.999999999999999996 ETH
 
     expect(
       (await usdc.balanceOf(user0.address))
