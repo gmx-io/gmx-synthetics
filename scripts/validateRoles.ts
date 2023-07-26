@@ -62,7 +62,54 @@ async function main() {
         "0x3b070aa6847bd0fb56efadb351f49bbb7619dbc2": true, // ExchangeRouter1
         "0x8921e1b2fb2e2b95f1df68a774bc523327e98e9f": true, // FeeHandler1
         "0xb665b6dbb45ceaf3b126cec98adb1e611b6a6aea": true, // LiquidationHandler1
-        "0x9f5982374e63e5B011317451a424bE9E1275a03f": true, // Oracle1
+      },
+    },
+    avalanche: {
+      ADL_KEEPER: syntheticKeepers,
+      FROZEN_ORDER_KEEPER: syntheticKeepers,
+      LIQUIDATION_KEEPER: syntheticKeepers,
+      ORDER_KEEPER: syntheticKeepers,
+      CONFIG_KEEPER: {
+        "0xE47b36382DC50b90bCF6176Ddb159C4b9333A7AB": true, // general_keeper_1
+        "0xE97e935d4F5a533E61BaaF0a3CC85DB33ac71636": true, // general_keeper_2
+        "0xc40CdB401468419D701Bc87BA7bb9C67DFf5b110": true, // multisig_1
+      },
+      FEE_KEEPER: {
+        "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
+      },
+      MARKET_KEEPER: {
+        "0xE7BfFf2aB721264887230037940490351700a068": true, // deployer
+        "0xE97e935d4F5a533E61BaaF0a3CC85DB33ac71636": true, // general_keeper_2
+      },
+      ROLE_ADMIN: {
+        "0xE7BfFf2aB721264887230037940490351700a068": true, // deployer
+        "0x768c0E31CC87eF5e2c3E2cdB85A4B34148cC63E5": true, // Timelock1
+      },
+      ROUTER_PLUGIN: {
+        "0x79be2F4eC8A4143BaF963206cF133f3710856D0a": true, // ExchangeRouter1
+      },
+      TIMELOCK_ADMIN: {
+        "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
+        "0xc40CdB401468419D701Bc87BA7bb9C67DFf5b110": true, // multisig_1
+      },
+      TIMELOCK_MULTISIG: {
+        "0xc40CdB401468419D701Bc87BA7bb9C67DFf5b110": true, // multisig_1
+      },
+      CONTROLLER: {
+        "0xe7bfff2ab721264887230037940490351700a068": true, // deployer
+        "0xa6ac2e08c6d6bbd9b237e0daaecd7577996f4e84": true, // OracleStore1
+        "0xc57c155faccd93f62546f329d1483e0e5b9c1241": true, // MarketFactory1
+        "0x31ef83a530fde1b38ee9a18093a333d8bbbc40d5": true, // Config1
+        "0x768c0e31cc87ef5e2c3e2cdb85a4b34148cc63e5": true, // Timelock1
+        "0x62e1c8f56c7de5eb5adf313e97c4bbb4e7fd956b": true, // Oracle1
+        "0x8f236681c8a86eb9649b9a3dcb1bb4e05deab8a3": true, // SwapHandler1
+        "0x9308e03009b62a3a7cc293b2366c36b7dbe99eee": true, // AdlHandler1
+        "0x65d406bdb91813e8bc55090a7fcfed971737ce05": true, // DepositHandler1
+        "0x884513492829d94ef752740c03ec3ac892ef389f": true, // WithdrawalHandler1
+        "0x5ddfac1aa195fbfb72b06d3e4fc387bd11fce82f": true, // OrderHandler1
+        "0x79be2f4ec8a4143baf963206cf133f3710856d0a": true, // ExchangeRouter1
+        "0x6edf06cd12f48b2bf0fa6e5f98c334810b142814": true, // FeeHandler1
+        "0xdfddd3a1545e34c16d2c3ab13bc3388cf9afcce3": true, // LiquidationHandler1
       },
     },
   };
