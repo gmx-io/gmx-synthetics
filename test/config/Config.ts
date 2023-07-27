@@ -4,8 +4,9 @@ import { deployFixture } from "../../utils/fixture";
 import { EXCLUDED_CONFIG_KEYS } from "../../utils/config";
 import { grantRole } from "../../utils/role";
 import { encodeData, hashString } from "../../utils/hash";
-import { decimalToFloat } from "../../utils/math";
+import { decimalToFloat, expandDecimals } from "../../utils/math";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
+import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import Keys from "../../artifacts/contracts/data/Keys.sol/Keys.json";
 
@@ -51,6 +52,20 @@ describe("Config", () => {
     if (missingKeys.length > 0) {
       throw new Error(`missing config keys: ${missingKeys.map((i) => i.key).join(", ")}`);
     }
+  });
+
+  it("reverts for unwhitelisted keys", async () => {
+    await expect(
+      config
+        .connect(user0)
+        .setUint(
+          keys.POOL_AMOUNT,
+          encodeData(["address", "address"], [ethUsdMarket.marketToken, wnt.address]),
+          expandDecimals(100_000, 18)
+        )
+    )
+      .to.be.revertedWithCustomError(errorsContract, "InvalidBaseKey")
+      .withArgs(keys.POOL_AMOUNT);
   });
 
   it("setBool", async () => {
