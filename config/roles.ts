@@ -65,8 +65,8 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         ],
       },
     ],
-    arbitrum: [...getMainnetRoles({ multisigAccount: "0xe3764a841e4a5EDa05422e1aC7FaF1266DE079e7" })],
-    avalanche: [...getMainnetRoles({ multisigAccount: "0xc40CdB401468419D701Bc87BA7bb9C67DFf5b110" })],
+    arbitrum: [...getMainnetRoles({ multisigAccount: "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9" })],
+    avalanche: [...getMainnetRoles({ multisigAccount: "0x15F9eBC71c539926B8f652a534d29B4Af57CaD55" })],
     arbitrumGoerli: [
       {
         account: "0xC84f3398eDf6336E1Ef55b50Ca3F9f9f96B8b504",
