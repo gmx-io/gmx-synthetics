@@ -8,6 +8,9 @@ review_notes.md
 typechain
 typechain-types
 .DS_store
+tmp
+keys
+.rpcs.json
 
 #Hardhat files
 cache
