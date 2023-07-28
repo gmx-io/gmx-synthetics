@@ -4,37 +4,37 @@ const rolesToRemove = {
   arbitrum: [
     {
       role: "CONFIG_KEEPER",
-      member: "0xe3764a841e4a5EDa05422e1aC7FaF1266DE079e7",
+      member: "0xE47b36382DC50b90bCF6176Ddb159C4b9333A7AB",
+    },
+    {
+      role: "CONFIG_KEEPER",
+      member: "0xE97e935d4F5a533E61BaaF0a3CC85DB33ac71636",
     },
     {
       role: "CONTROLLER",
-      member: "0x1302668D7Fd4b5d060e0555c1ADDB6AfC92eFfC7",
+      member: "0xcfd64885462ebFa4215e2F1F956D8083e688d33F",
     },
     {
-      role: "TIMELOCK_ADMIN",
-      member: "0xe3764a841e4a5EDa05422e1aC7FaF1266DE079e7",
-    },
-    {
-      role: "TIMELOCK_MULTISIG",
-      member: "0xe3764a841e4a5EDa05422e1aC7FaF1266DE079e7",
+      role: "MARKET_KEEPER",
+      member: "0xE97e935d4F5a533E61BaaF0a3CC85DB33ac71636",
     },
   ],
   avalanche: [
     {
       role: "CONFIG_KEEPER",
-      member: "0xc40CdB401468419D701Bc87BA7bb9C67DFf5b110",
+      member: "0xE47b36382DC50b90bCF6176Ddb159C4b9333A7AB",
+    },
+    {
+      role: "CONFIG_KEEPER",
+      member: "0xE97e935d4F5a533E61BaaF0a3CC85DB33ac71636",
     },
     {
       role: "CONTROLLER",
-      member: "0x31eF83a530Fde1B38EE9A18093A333D8Bbbc40D5",
+      member: "0x61B6ae0dd5f5F4fC79D94f118fd4ab2864f0eEf9",
     },
     {
-      role: "TIMELOCK_ADMIN",
-      member: "0xc40CdB401468419D701Bc87BA7bb9C67DFf5b110",
-    },
-    {
-      role: "TIMELOCK_MULTISIG",
-      member: "0xc40CdB401468419D701Bc87BA7bb9C67DFf5b110",
+      role: "MARKET_KEEPER",
+      member: "0xE97e935d4F5a533E61BaaF0a3CC85DB33ac71636",
     },
   ],
 };

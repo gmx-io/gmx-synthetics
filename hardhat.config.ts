@@ -1,6 +1,10 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import path from "path";
+import fs from "fs";
+import { ethers } from "ethers";
+
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-contract-sizer";
@@ -16,6 +20,47 @@ import "./config";
 
 // add test helper methods
 import "./utils/test";
+
+const getRpcUrl = (network) => {
+  const defaultRpcs = {
+    arbitrum: "https://arb1.arbitrum.io/rpc",
+    avalanche: "https://api.avax.network/ext/bc/C/rpc",
+    arbitrumGoerli: "https://goerli-rollup.arbitrum.io/rpc",
+    avalancheFuji: "https://api.avax-test.network/ext/bc/C/rpc",
+  };
+
+  let rpc = defaultRpcs[network];
+
+  const filepath = path.join("./.rpcs.json");
+  if (fs.existsSync(filepath)) {
+    const data = JSON.parse(fs.readFileSync(filepath));
+    if (data[network]) {
+      rpc = data[network];
+    }
+  }
+
+  return rpc;
+};
+
+const getEnvAccounts = () => {
+  const { DEPLOYER_KEY, DEPLOYER_KEY_FILE } = process.env;
+
+  if (DEPLOYER_KEY) {
+    return [DEPLOYER_KEY];
+  }
+
+  if (DEPLOYER_KEY_FILE) {
+    const filepath = path.join("./keys/", DEPLOYER_KEY_FILE);
+    const data = JSON.parse(fs.readFileSync(filepath));
+    if (!data || !data.mnemonic) {
+      throw new Error("Invalid key file");
+    }
+    const wallet = ethers.Wallet.fromMnemonic(data.mnemonic);
+    return [wallet.privateKey];
+  }
+
+  return [];
+};
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -42,9 +87,9 @@ const config: HardhatUserConfig = {
       saveDeployments: true,
     },
     arbitrum: {
-      url: "https://arb1.arbitrum.io/rpc",
+      url: getRpcUrl("arbitrum"),
       chainId: 42161,
-      accounts: [process.env.DEPLOYER_KEY].filter(Boolean),
+      accounts: getEnvAccounts(),
       verify: {
         etherscan: {
           apiUrl: "https://api.arbiscan.io/",
@@ -54,9 +99,9 @@ const config: HardhatUserConfig = {
       blockGasLimit: 20_000_000,
     },
     avalanche: {
-      url: "https://api.avax.network/ext/bc/C/rpc",
+      url: getRpcUrl("avalanche"),
       chainId: 43114,
-      accounts: [process.env.DEPLOYER_KEY].filter(Boolean),
+      accounts: getEnvAccounts(),
       verify: {
         etherscan: {
           apiUrl: "https://api.snowtrace.io/",
@@ -66,9 +111,9 @@ const config: HardhatUserConfig = {
       blockGasLimit: 15_000_000,
     },
     arbitrumGoerli: {
-      url: "https://goerli-rollup.arbitrum.io/rpc",
+      url: getRpcUrl("arbitrumGoerli"),
       chainId: 421613,
-      accounts: [process.env.DEPLOYER_KEY].filter(Boolean),
+      accounts: getEnvAccounts(),
       verify: {
         etherscan: {
           apiUrl: "https://api-goerli.arbiscan.io/",
@@ -78,9 +123,9 @@ const config: HardhatUserConfig = {
       blockGasLimit: 10000000,
     },
     avalancheFuji: {
-      url: "https://api.avax-test.network/ext/bc/C/rpc",
+      url: getRpcUrl("avalancheFuji"),
       chainId: 43113,
-      accounts: [process.env.DEPLOYER_KEY].filter(Boolean),
+      accounts: getEnvAccounts(),
       verify: {
         etherscan: {
           apiUrl: "https://api-testnet.snowtrace.io/",
