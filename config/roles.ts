@@ -19,11 +19,11 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         roles: ["FEE_KEEPER"],
       },
       {
-        account: "0xE47b36382DC50b90bCF6176Ddb159C4b9333A7AB",
+        account: "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745",
         roles: ["CONFIG_KEEPER"],
       },
       {
-        account: "0xE97e935d4F5a533E61BaaF0a3CC85DB33ac71636",
+        account: "0x0765678B4f2B45fa9604264a63762E2fE460df64",
         roles: ["CONFIG_KEEPER", "MARKET_KEEPER"],
       },
       {

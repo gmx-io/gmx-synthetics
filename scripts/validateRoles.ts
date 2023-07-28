@@ -22,8 +22,8 @@ async function main() {
       LIQUIDATION_KEEPER: syntheticKeepers,
       ORDER_KEEPER: syntheticKeepers,
       CONFIG_KEEPER: {
-        "0xE47b36382DC50b90bCF6176Ddb159C4b9333A7AB": true, // general_keeper_1
-        "0xE97e935d4F5a533E61BaaF0a3CC85DB33ac71636": true, // general_keeper_2
+        "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
+        "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
         "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9": true, // multisig_1
       },
       FEE_KEEPER: {
@@ -31,7 +31,7 @@ async function main() {
       },
       MARKET_KEEPER: {
         "0xE7BfFf2aB721264887230037940490351700a068": true, // deployer
-        "0xE97e935d4F5a533E61BaaF0a3CC85DB33ac71636": true, // general_keeper_2
+        "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
       },
       ROLE_ADMIN: {
         "0xE7BfFf2aB721264887230037940490351700a068": true, // deployer
@@ -51,7 +51,7 @@ async function main() {
         "0xe7bfff2ab721264887230037940490351700a068": true, // deployer
         "0xa8af9b86fc47deade1bc66b12673706615e2b011": true, // OracleStore1
         "0xf5f30b10141e1f63fc11ed772931a8294a591996": true, // MarketFactory1
-        "0xcfd64885462ebFa4215e2F1F956D8083e688d33F": true, // Config1
+        "0xf86aE903B5866bCf8723B9C3642758C87f2F3Ef2": true, // Config1
         "0x9d44b89eb6fb382b712c562dfafd8825829b422e": true, // Timelock1
         "0x9f5982374e63e5b011317451a424be9e1275a03f": true, // Oracle1
         "0xd795e1894dd5ac85072c986d3eb9aba410998696": true, // SwapHandler1
@@ -70,8 +70,8 @@ async function main() {
       LIQUIDATION_KEEPER: syntheticKeepers,
       ORDER_KEEPER: syntheticKeepers,
       CONFIG_KEEPER: {
-        "0xE47b36382DC50b90bCF6176Ddb159C4b9333A7AB": true, // general_keeper_1
-        "0xE97e935d4F5a533E61BaaF0a3CC85DB33ac71636": true, // general_keeper_2
+        "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
+        "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
         "0x15F9eBC71c539926B8f652a534d29B4Af57CaD55": true, // multisig_1
       },
       FEE_KEEPER: {
@@ -79,7 +79,7 @@ async function main() {
       },
       MARKET_KEEPER: {
         "0xE7BfFf2aB721264887230037940490351700a068": true, // deployer
-        "0xE97e935d4F5a533E61BaaF0a3CC85DB33ac71636": true, // general_keeper_2
+        "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
       },
       ROLE_ADMIN: {
         "0xE7BfFf2aB721264887230037940490351700a068": true, // deployer
@@ -99,7 +99,7 @@ async function main() {
         "0xe7bfff2ab721264887230037940490351700a068": true, // deployer
         "0xa6ac2e08c6d6bbd9b237e0daaecd7577996f4e84": true, // OracleStore1
         "0xc57c155faccd93f62546f329d1483e0e5b9c1241": true, // MarketFactory1
-        "0x61B6ae0dd5f5F4fC79D94f118fd4ab2864f0eEf9": true, // Config1
+        "0x854AD2894658c5CdBcBf04d6aBb4b5680406BFB5": true, // Config1
         "0x768c0e31cc87ef5e2c3e2cdb85a4b34148cc63e5": true, // Timelock1
         "0x62e1c8f56c7de5eb5adf313e97c4bbb4e7fd956b": true, // Oracle1
         "0x8f236681c8a86eb9649b9a3dcb1bb4e05deab8a3": true, // SwapHandler1
