@@ -527,6 +527,8 @@ After the initial setup:
 
 - When creating a callback contract, the callback contract may need to whitelist the DepositHandler, OrderHandler or WithdrawalHandler, it should be noted that new versions of these handlers may be deployed as new code is added to the handlers, it is also possible for two handlers to temporarily exist at the same time, e.g. OrderHandler(1), OrderHandler(2), due to this, the callback contract should be able to whitelist and simultaneously accept callbacks from multiple DepositHandlers, OrderHandlers and WithdrawalHandlers
 
+- For callback contracts instead of maintaining a separate whitelist for DepositHandlers, OrderHandlers, WithdrawalHandlers, a possible solution would be to validate the role of the msg.sender in the RoleStore, e.g. `RoleStore.hasRole(msg.sender, Role.CONTROLLER)`, this would check that the msg.sender is a valid handler
+
 - New versions of the ExchangeRouter contract may be deployed, in this case two ExchangeRouters may exist at the same time, contracts should send requests to the new ExchangeRouter once it becomes available
 
 - New versions of the Oracle contract may be deployed, in this case validation of prices should be updated to use the new Oracle contract

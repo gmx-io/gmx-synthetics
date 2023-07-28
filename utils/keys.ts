@@ -384,19 +384,19 @@ export function withdrawalGasLimitKey() {
 }
 
 export function singleSwapGasLimitKey() {
-  return hashData(["bytes32"], [SINGLE_SWAP_GAS_LIMIT]);
+  return SINGLE_SWAP_GAS_LIMIT;
 }
 
 export function increaseOrderGasLimitKey() {
-  return hashData(["bytes32"], [INCREASE_ORDER_GAS_LIMIT]);
+  return INCREASE_ORDER_GAS_LIMIT;
 }
 
 export function decreaseOrderGasLimitKey() {
-  return hashData(["bytes32"], [DECREASE_ORDER_GAS_LIMIT]);
+  return DECREASE_ORDER_GAS_LIMIT;
 }
 
 export function swapOrderGasLimitKey() {
-  return hashData(["bytes32"], [SWAP_ORDER_GAS_LIMIT]);
+  return SWAP_ORDER_GAS_LIMIT;
 }
 
 export function cumulativeBorrowingFactorKey(market: string, isLong: boolean) {

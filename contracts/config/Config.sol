@@ -243,7 +243,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR] = true;
 
         allowedBaseKeys[Keys.DEPOSIT_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.WITHDRAWAL_GAS_LIMIT] = true;
+        // use Keys.withdrawalGasLimitKey() here because it is double hashed
+        allowedBaseKeys[Keys.withdrawalGasLimitKey()] = true;
         allowedBaseKeys[Keys.SINGLE_SWAP_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.INCREASE_ORDER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.DECREASE_ORDER_GAS_LIMIT] = true;
@@ -278,6 +279,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.OPEN_INTEREST_RESERVE_FACTOR] = true;
 
         allowedBaseKeys[Keys.MAX_PNL_FACTOR] = true;
+        allowedBaseKeys[Keys.MIN_PNL_FACTOR_AFTER_ADL] = true;
 
         allowedBaseKeys[Keys.FUNDING_FACTOR] = true;
         allowedBaseKeys[Keys.STABLE_FUNDING_FACTOR] = true;
@@ -331,7 +333,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.BORROWING_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.MIN_COLLATERAL_FACTOR ||
             baseKey == Keys.MAX_PNL_FACTOR ||
-            baseKey == Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS ||
+            baseKey == Keys.MIN_PNL_FACTOR_AFTER_ADL ||
             baseKey == Keys.CLAIMABLE_COLLATERAL_FACTOR
         ) {
             // revert if value > 100%
