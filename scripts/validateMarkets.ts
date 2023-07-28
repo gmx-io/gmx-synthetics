@@ -127,11 +127,15 @@ async function main() {
       keys.positionImpactFactorKey(market.marketToken, true)
     );
 
-    const percentageOfPerpImpactRecommendation = recommendedPerpConfig.negativeImpactFactor
+    const percentageOfPerpImpactRecommendation = negativePositionImpactFactor
       .mul(100)
-      .div(negativePositionImpactFactor);
+      .div(recommendedPerpConfig.negativeImpactFactor);
 
-    console.log(`Position impact % of recommendation: ${percentageOfPerpImpactRecommendation}%`);
+    console.log(
+      `Position impact compared to recommendation: ${
+        parseFloat(percentageOfPerpImpactRecommendation.toNumber()) / 100
+      }x smallest safe value`
+    );
 
     if (!negativePositionImpactFactor.eq(positivePositionImpactFactor.mul(recommendedPerpConfig.expectedImpactRatio))) {
       throw new Error(`Invalid position impact factors for ${indexTokenSymbol}`);
@@ -156,11 +160,15 @@ async function main() {
     const negativeSwapImpactFactor = await dataStore.getUint(keys.swapImpactFactorKey(market.marketToken, false));
     const positiveSwapImpactFactor = await dataStore.getUint(keys.swapImpactFactorKey(market.marketToken, true));
 
-    const percentageOfSwapImpactRecommendation = recommendedSwapConfig.negativeImpactFactor
+    const percentageOfSwapImpactRecommendation = negativeSwapImpactFactor
       .mul(100)
-      .div(negativeSwapImpactFactor);
+      .div(recommendedSwapConfig.negativeImpactFactor);
 
-    console.log(`Swap impact % of recommendation: ${percentageOfSwapImpactRecommendation}%`);
+    console.log(
+      `Swap impact compared to recommendation: ${
+        parseFloat(percentageOfSwapImpactRecommendation.toNumber()) / 100
+      }x smallest safe value`
+    );
 
     if (!negativeSwapImpactFactor.eq(positiveSwapImpactFactor.mul(recommendedSwapConfig.expectedImpactRatio))) {
       throw new Error(`Invalid swap impact factors for ${longTokenSymbol}`);
