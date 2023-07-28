@@ -71,6 +71,10 @@ describe("Config", () => {
   it("setBool", async () => {
     const key = keys.isMarketDisabledKey(ethUsdMarket.marketToken);
 
+    await expect(
+      config.connect(user1).setBool(keys.IS_MARKET_DISABLED, encodeData(["address"], [ethUsdMarket.marketToken]), true)
+    ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
+
     expect(await dataStore.getBool(key)).eq(false);
 
     await config
@@ -83,6 +87,12 @@ describe("Config", () => {
   it("setAddress", async () => {
     const key = keys.isMarketDisabledKey(ethUsdMarket.marketToken);
 
+    await expect(
+      config
+        .connect(user1)
+        .setAddress(keys.IS_MARKET_DISABLED, encodeData(["address"], [ethUsdMarket.marketToken]), wnt.address)
+    ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
+
     expect(await dataStore.getAddress(key)).eq(AddressZero);
 
     await config
@@ -94,6 +104,16 @@ describe("Config", () => {
 
   it("setBytes32", async () => {
     const key = keys.oracleTypeKey(wnt.address);
+
+    await expect(
+      config
+        .connect(user1)
+        .setBytes32(
+          keys.ORACLE_TYPE,
+          encodeData(["address"], [wnt.address]),
+          "0x0000000000000000000000000000000000000000000000000000000000000123"
+        )
+    ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
 
     expect(await dataStore.getBytes32(key)).eq(TOKEN_ORACLE_TYPES.DEFAULT);
 
@@ -111,6 +131,12 @@ describe("Config", () => {
   it("setUint", async () => {
     const key = keys.swapImpactFactorKey(ethUsdMarket.marketToken, true);
 
+    await expect(
+      config
+        .connect(user1)
+        .setUint(keys.SWAP_IMPACT_FACTOR, encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]), 700)
+    ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
+
     expect(await dataStore.getUint(key)).eq(0);
 
     await config
@@ -122,6 +148,12 @@ describe("Config", () => {
 
   it("setInt", async () => {
     const key = keys.swapImpactFactorKey(ethUsdMarket.marketToken, true);
+
+    await expect(
+      config
+        .connect(user1)
+        .setInt(keys.SWAP_IMPACT_FACTOR, encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]), -500)
+    ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
 
     expect(await dataStore.getInt(key)).eq(0);
 
