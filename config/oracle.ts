@@ -81,7 +81,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     },
 
     arbitrum: {
-      signers: ["0x9f169c2189a2d975c18965de985936361b4a9de9"],
+      signers: ["0x0F711379095f2F0a6fdD1e8Fccd6eBA0833c1F1f"],
       maxOraclePriceAge: 5 * 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       minOracleBlockConfirmations: 255,
@@ -182,7 +182,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     },
 
     avalanche: {
-      signers: ["0x9f169c2189a2d975c18965de985936361b4a9de9"],
+      signers: ["0x7f2CA7713AACD279f7753F804163189E4831c1EE"],
       maxOraclePriceAge: 5 * 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       minOracleBlockConfirmations: 255,
