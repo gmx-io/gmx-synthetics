@@ -39,6 +39,8 @@ export const CLAIMABLE_COLLATERAL_AMOUNT = hashString("CLAIMABLE_COLLATERAL_AMOU
 export const CLAIMABLE_COLLATERAL_FACTOR = hashString("CLAIMABLE_COLLATERAL_FACTOR");
 export const CLAIMABLE_COLLATERAL_TIME_DIVISOR = hashString("CLAIMABLE_COLLATERAL_TIME_DIVISOR");
 
+export const CLAIMABLE_UI_FEE_AMOUNT = hashString("CLAIMABLE_UI_FEE_AMOUNT");
+export const AFFILIATE_REWARD = hashString("AFFILIATE_REWARD");
 export const MAX_UI_FEE_FACTOR = hashString("MAX_UI_FEE_FACTOR");
 
 export const IS_MARKET_DISABLED = hashString("IS_MARKET_DISABLED");
@@ -212,6 +214,17 @@ export function claimableCollateralAmountKey(market: string, token: string, time
 
 export function claimableCollateralFactorKey(market: string, token: string, timeKey: number) {
   return hashData(["bytes32", "address", "address", "uint256"], [CLAIMABLE_COLLATERAL_FACTOR, market, token, timeKey]);
+}
+
+export function claimableUiFeeAmountKey(market: string, token: string, uiFeeReceiver: string) {
+  return hashData(
+    ["bytes32", "address", "address", "address"],
+    [CLAIMABLE_UI_FEE_AMOUNT, market, token, uiFeeReceiver]
+  );
+}
+
+export function affiliateRewardKey(market: string, token: string, account: string) {
+  return hashData(["bytes32", "address", "address", "address"], [AFFILIATE_REWARD, market, token, account]);
 }
 
 export function tokenTransferGasLimit(token: string) {
