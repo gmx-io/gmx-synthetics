@@ -243,7 +243,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR] = true;
 
         allowedBaseKeys[Keys.DEPOSIT_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.WITHDRAWAL_GAS_LIMIT] = true;
+        // use Keys.withdrawalGasLimitKey() here because it is double hashed
+        allowedBaseKeys[Keys.withdrawalGasLimitKey()] = true;
         allowedBaseKeys[Keys.SINGLE_SWAP_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.INCREASE_ORDER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.DECREASE_ORDER_GAS_LIMIT] = true;
