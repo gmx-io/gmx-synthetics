@@ -122,7 +122,7 @@ const baseMarketConfig: BaseMarketConfig = {
   maxPnlFactorForWithdrawalsShorts: decimalToFloat(8, 1), // 80%
 
   positionFeeFactorForPositiveImpact: decimalToFloat(5, 4), // 0.05%
-  positionFeeFactorForNegativeImpact: decimalToFloat(5, 4), // 0.05%
+  positionFeeFactorForNegativeImpact: decimalToFloat(7, 4), // 0.07%
 
   negativePositionImpactFactor: decimalToFloat(1, 7), // 0.00001%
   positivePositionImpactFactor: decimalToFloat(5, 8), // 0.000005%
@@ -133,7 +133,7 @@ const baseMarketConfig: BaseMarketConfig = {
   maxPositionImpactFactorForLiquidations: decimalToFloat(1, 2), // 1%
 
   swapFeeFactorForPositiveImpact: decimalToFloat(5, 4), // 0.05%,
-  swapFeeFactorForNegativeImpact: decimalToFloat(5, 4), // 0.05%,
+  swapFeeFactorForNegativeImpact: decimalToFloat(7, 4), // 0.07%,
 
   negativeSwapImpactFactor: decimalToFloat(1, 5), // 0.001%
   positiveSwapImpactFactor: decimalToFloat(5, 6), // 0.0005%
