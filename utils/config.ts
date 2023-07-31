@@ -1,3 +1,6 @@
+import hre from "hardhat";
+import { BigNumber } from "ethers";
+
 export const EXCLUDED_CONFIG_KEYS = {
   ACCOUNT_DEPOSIT_LIST: true,
   ACCOUNT_ORDER_LIST: true,
@@ -57,3 +60,116 @@ export const EXCLUDED_CONFIG_KEYS = {
   WITHDRAWAL_LIST: true,
   WNT: true,
 };
+
+export async function appendUintConfigIfDifferent(
+  list: Array,
+  dataCache: Map,
+  baseKey: string,
+  keyData: string,
+  value: BigNumber | string | number,
+  label?: string
+) {
+  await appendConfigIfDifferent(list, dataCache, "uint", baseKey, keyData, value, {
+    compare: (a, b) => a.eq(b),
+    label,
+  });
+}
+
+export async function appendIntConfigIfDifferent(
+  list: Array,
+  dataCache: Map,
+  baseKey: string,
+  keyData: string,
+  value: BigNumber | string | number,
+  label?: string
+) {
+  await appendConfigIfDifferent(list, dataCache, "int", baseKey, keyData, value, {
+    compare: (a, b) => a.eq(b),
+    label,
+  });
+}
+
+export async function appendAddressConfigIfDifferent(
+  list: Array,
+  dataCache: Map,
+  baseKey: string,
+  keyData: string,
+  value: string,
+  label?: string
+) {
+  await appendConfigIfDifferent(list, dataCache, "address", baseKey, keyData, value, {
+    compare: (a, b) => a.toLowerCase() == b.toLowerCase(),
+    label,
+  });
+}
+
+export async function appendBytes32ConfigIfDifferent(
+  list: Array,
+  dataCache: Map,
+  baseKey: string,
+  keyData: string,
+  value: string,
+  label?: string
+) {
+  await appendConfigIfDifferent(list, dataCache, "bytes32", baseKey, keyData, value, { label });
+}
+
+export async function appendBoolConfigIfDifferent(
+  list: Array,
+  dataCache: Map,
+  baseKey: string,
+  keyData: string,
+  value: boolean,
+  label?: string
+) {
+  await appendConfigIfDifferent(list, dataCache, "bool", baseKey, keyData, value, { label });
+}
+
+async function appendConfigIfDifferent(
+  list: Array,
+  dataCache: Map,
+  type: "uint" | "int" | "address" | "data" | "bool" | "bytes32",
+  baseKey: string,
+  keyData: string,
+  value: any,
+  { compare, label }: { compare?: (a: any, b: any) => boolean; label?: string } = {}
+) {
+  if (value === undefined) {
+    throw new Error(`Value for ${label || key} of type ${type} is undefined`);
+  }
+
+  const config = await hre.ethers.getContract("Config");
+
+  const key = getFullKey(baseKey, keyData);
+
+  const setMethod = `set${type[0].toUpperCase()}${type.slice(1)}`;
+
+  const currentValue: string = dataCache[key];
+  if (currentValue === undefined) {
+    throw new Error(`currentValue is undefined for ${label}`);
+  }
+
+  if (compare ? !compare(currentValue, value) : currentValue != value) {
+    console.log(
+      "appending config %s %s (%s) to %s, prev: %s",
+      type,
+      label,
+      key,
+      value.toString(),
+      currentValue.toString()
+    );
+    list.push(config.interface.encodeFunctionData(setMethod, [baseKey, keyData, value]));
+  } else {
+    console.log("skipping config %s %s (%s) as it is already set to %s", type, label, key, value.toString());
+  }
+}
+
+export function getFullKey(baseKey: string, keyData: string) {
+  if (keyData === "0x") {
+    return baseKey;
+  }
+
+  const keyArray = ethers.utils.concat([ethers.utils.arrayify(baseKey), ethers.utils.arrayify(keyData)]);
+
+  return ethers.utils.keccak256(keyArray);
+}
