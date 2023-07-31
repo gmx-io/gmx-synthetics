@@ -191,7 +191,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       );
     }
 
-    // the rest params are not used for swap-only markets
+    // the rest of the params are not used for swap-only markets
     if (marketConfig.swapOnly) {
       continue;
     }
@@ -303,6 +303,15 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       }
     }
 
+    if (marketConfig.fundingExponentFactor) {
+      const key = keys.fundingExponentFactorKey(marketToken);
+      await setUintIfDifferent(
+        key,
+        marketConfig.fundingExponentFactor,
+        `funding exponent factor for ${marketToken.toString()}`
+      );
+    }
+
     if (marketConfig.positionFeeFactorForPositiveImpact) {
       const key = keys.positionFeeFactorKey(marketToken, true);
       await setUintIfDifferent(
@@ -327,15 +336,6 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
         key,
         marketConfig.borrowingFactorForLongs,
         `borrowing factor for longs for ${marketToken.toString()}`
-      );
-    }
-
-    if (marketConfig.fundingExponentFactor) {
-      const key = keys.fundingExponentFactorKey(marketToken);
-      await setUintIfDifferent(
-        key,
-        marketConfig.fundingExponentFactor,
-        `funding exponent factor for ${marketToken.toString()}`
       );
     }
 
