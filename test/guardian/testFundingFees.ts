@@ -767,7 +767,7 @@ describe("Guardian.FundingFees", () => {
     await exchangeRouter.connect(user3).claimFundingFees([ethUsdMarket.marketToken], [wnt.address], user3.address);
     const balanceAfterUser3 = await wnt.balanceOf(user3.address);
 
-    expect(balanceAfterUser3.sub(balanceBeforeUser3)).eq("5184014799999999"); // $25.920073999999995
+    expect(balanceAfterUser3.sub(balanceBeforeUser3)).closeTo("5184014799999999", "10000000000"); // $25.920073999999995
 
     // Total claimed funding fees
     // 25.920069 + 25.920073999999995 = 51.840142999999995

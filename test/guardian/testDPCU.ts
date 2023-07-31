@@ -100,7 +100,7 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(1_000_000, 6));
 
     // Position fee factor set which will be emptied on getEmptyFees
-    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken), decimalToFloat(5, 2)); // 5%
+    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 2)); // 5%
 
     // Because of Positive PnL, order passes validatePosition
     // even if entire collateral was used to pay fees.
@@ -170,7 +170,7 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(1_000_000, 6));
 
     // Position fee factor set which will be emptied on getEmptyFees
-    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken), decimalToFloat(5, 2)); // 5%
+    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 2)); // 5%
 
     // Entire collateral used to pay fees,
     // so initialCollateralDeltaAmount of 1 USDC will be enough to trigger auto-update
@@ -251,7 +251,7 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(2_000_000, 6));
 
     // Position fee factor set which will be emptied on getEmptyFees
-    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken), decimalToFloat(5, 2)); // 5%
+    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 2)); // 5%
     await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 3));
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 8));
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
@@ -332,7 +332,7 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(expandDecimals(1000, 18));
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(1_000_000, 6));
 
-    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken), decimalToFloat(75, 3));
+    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(75, 3));
 
     // User decreases long by $200,000 to experience positive price impact. Because of the reserves in the market,
     // the swap will fail and the price impact will go to the secondaryOutputAmount.
@@ -379,7 +379,7 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(1_000_000, 6));
 
     // Make fees very high to force early return for fees
-    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken), decimalToFloat(5, 1)); // 50%
+    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 1)); // 50%
 
     // User will have insufficient funds to pay for fees
     const params = {
