@@ -10,6 +10,7 @@ import { executeLiquidation } from "../../utils/liquidation";
 import { getSyntheticTokenAddress } from "../../utils/token";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 import { getPoolAmount } from "../../utils/market";
+import { errorsContract } from "../../utils/error";
 import hre from "hardhat";
 
 describe("Guardian.Liquidation", () => {
@@ -17,14 +18,13 @@ describe("Guardian.Liquidation", () => {
 
   let fixture;
   let user1, wallet;
-  let dataStore, solUsdMarket, solAddr, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc, roleStore, decreasePositionUtils;
+  let dataStore, solUsdMarket, solAddr, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc, roleStore;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
     ({ wallet, user1 } = fixture.accounts);
-    ({ dataStore, solUsdMarket, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, decreasePositionUtils, usdc, roleStore } =
-      fixture.contracts);
+    ({ dataStore, solUsdMarket, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc, roleStore } = fixture.contracts);
 
     await grantRole(roleStore, wallet.address, "LIQUIDATION_KEEPER");
 
@@ -104,7 +104,7 @@ describe("Guardian.Liquidation", () => {
         minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
         maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
       })
-    ).to.be.revertedWithCustomError(decreasePositionUtils, "PositionShouldNotBeLiquidated");
+    ).to.be.revertedWithCustomError(errorsContract, "PositionShouldNotBeLiquidated");
 
     expect(await getOrderCount(dataStore)).to.eq(0);
     expect(await getPositionCount(dataStore)).to.eq(1);
@@ -159,7 +159,7 @@ describe("Guardian.Liquidation", () => {
         minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(15, 4)],
         maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(15, 4)],
       })
-    ).to.be.revertedWithCustomError(decreasePositionUtils, "PositionShouldNotBeLiquidated");
+    ).to.be.revertedWithCustomError(errorsContract, "PositionShouldNotBeLiquidated");
 
     expect(await getOrderCount(dataStore)).to.eq(0);
     expect(await getPositionCount(dataStore)).to.eq(1);
@@ -230,7 +230,7 @@ describe("Guardian.Liquidation", () => {
         minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(15, 4)],
         maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(15, 4)],
       })
-    ).to.be.revertedWithCustomError(decreasePositionUtils, "PositionShouldNotBeLiquidated");
+    ).to.be.revertedWithCustomError(errorsContract, "PositionShouldNotBeLiquidated");
 
     expect(await getOrderCount(dataStore)).to.eq(0);
     expect(await getPositionCount(dataStore)).to.eq(1);
@@ -307,7 +307,7 @@ describe("Guardian.Liquidation", () => {
         minPrices: [expandDecimals(4501, 4), expandDecimals(1, 6), expandDecimals(15, 4)],
         maxPrices: [expandDecimals(4501, 4), expandDecimals(1, 6), expandDecimals(15, 4)],
       })
-    ).to.be.revertedWithCustomError(decreasePositionUtils, "PositionShouldNotBeLiquidated");
+    ).to.be.revertedWithCustomError(errorsContract, "PositionShouldNotBeLiquidated");
 
     expect(await getOrderCount(dataStore)).to.eq(0);
     expect(await getPositionCount(dataStore)).to.eq(1);
@@ -378,7 +378,7 @@ describe("Guardian.Liquidation", () => {
         minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(15, 4)],
         maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(15, 4)],
       })
-    ).to.be.revertedWithCustomError(decreasePositionUtils, "PositionShouldNotBeLiquidated");
+    ).to.be.revertedWithCustomError(errorsContract, "PositionShouldNotBeLiquidated");
 
     expect(await getOrderCount(dataStore)).to.eq(0);
     expect(await getPositionCount(dataStore)).to.eq(1);
@@ -400,7 +400,7 @@ describe("Guardian.Liquidation", () => {
         minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(15016, 1)],
         maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(15016, 1)],
       })
-    ).to.be.revertedWithCustomError(decreasePositionUtils, "PositionShouldNotBeLiquidated");
+    ).to.be.revertedWithCustomError(errorsContract, "PositionShouldNotBeLiquidated");
 
     await executeLiquidation(fixture, {
       account: user1.address,
@@ -472,7 +472,7 @@ describe("Guardian.Liquidation", () => {
         minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(15, 4)],
         maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(15, 4)],
       })
-    ).to.be.revertedWithCustomError(decreasePositionUtils, "PositionShouldNotBeLiquidated");
+    ).to.be.revertedWithCustomError(errorsContract, "PositionShouldNotBeLiquidated");
 
     expect(await getOrderCount(dataStore)).to.eq(0);
     expect(await getPositionCount(dataStore)).to.eq(1);
@@ -495,7 +495,7 @@ describe("Guardian.Liquidation", () => {
         minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(15016, 1)],
         maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(15016, 1)],
       })
-    ).to.be.revertedWithCustomError(decreasePositionUtils, "PositionShouldNotBeLiquidated");
+    ).to.be.revertedWithCustomError(errorsContract, "PositionShouldNotBeLiquidated");
 
     await executeLiquidation(fixture, {
       account: user1.address,

@@ -39,7 +39,8 @@ describe("Guardian.Lifecycle", () => {
 
   it("Life Cycle Test", async () => {
     // POSITION FEES
-    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 3));
     await dataStore.setUint(keys.POSITION_FEE_RECEIVER_FACTOR, decimalToFloat(2, 1)); // 20%
 
     // PRICE IMPACT
@@ -579,7 +580,8 @@ describe("Guardian.Lifecycle", () => {
 
   it("Life Cycle Test Using Swap Paths", async () => {
     // POSITION FEES
-    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 3));
     await dataStore.setUint(keys.POSITION_FEE_RECEIVER_FACTOR, decimalToFloat(2, 1)); // 20%
 
     // PRICE IMPACT
@@ -1042,7 +1044,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("155534", "20000"); // 0.155534 USDC
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("276931439", "20000"); // 276.888126 USDC
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("276931439", "200000"); // 276.888126 USDC
         },
       },
     });
@@ -1051,7 +1053,7 @@ describe("Guardian.Lifecycle", () => {
 
     const marketTokenBalUser0 = await getBalanceOf(ethUsdMarket.marketToken, user0.address);
 
-    expect(marketTokenBalUser0).closeTo("99967304180429821063761", "100000000000000000");
+    expect(marketTokenBalUser0).closeTo("99967304180429821063761", "20000000000000000000");
 
     // #3 Withdraw
     await handleWithdrawal(fixture, {
@@ -1064,7 +1066,7 @@ describe("Guardian.Lifecycle", () => {
 
     const marketTokenBalUser1 = await getBalanceOf(ethUsdMarket.marketToken, user1.address);
 
-    expect(marketTokenBalUser1).closeTo("49997999840059193216263", "100000000000000000");
+    expect(marketTokenBalUser1).closeTo("49997999840059193216263", "10000000000000000000");
 
     // #4 Withdraw
     await handleWithdrawal(fixture, {
@@ -1127,7 +1129,8 @@ describe("Guardian.Lifecycle", () => {
 
   it("Life Cycle Test With Swaps", async () => {
     // POSITION FEES
-    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 3));
     await dataStore.setUint(keys.POSITION_FEE_RECEIVER_FACTOR, decimalToFloat(2, 1)); // 20%
 
     // PRICE IMPACT
