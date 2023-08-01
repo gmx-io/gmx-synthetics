@@ -428,8 +428,8 @@ export function virtualMarketIdKey(market: string) {
   return hashData(["bytes32", "address"], [VIRTUAL_MARKET_ID, market]);
 }
 
-export function virtualInventoryForSwapsKey(virtualMarketId: string, token: string) {
-  return hashData(["bytes32", "bytes32", "address"], [VIRTUAL_INVENTORY_FOR_SWAPS, virtualMarketId, token]);
+export function virtualInventoryForSwapsKey(virtualMarketId: string, isLongToken: boolean) {
+  return hashData(["bytes32", "bytes32", "bool"], [VIRTUAL_INVENTORY_FOR_SWAPS, virtualMarketId, isLongToken]);
 }
 
 export function virtualInventoryForPositionsKey(virtualTokenId: string) {
