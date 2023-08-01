@@ -67,6 +67,8 @@ export type BaseMarketConfig = {
 
   virtualMarketId?: string;
   virtualTokenIdForIndexToken?: string;
+
+  isDisabled?: boolean;
 };
 
 export type MarketConfig = Partial<BaseMarketConfig> &
