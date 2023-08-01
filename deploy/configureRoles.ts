@@ -3,38 +3,22 @@ import { grantRoleIfNotGranted, revokeRoleIfGranted } from "../utils/role";
 const rolesToRemove = {
   arbitrum: [
     {
-      role: "CONFIG_KEEPER",
-      member: "0xE47b36382DC50b90bCF6176Ddb159C4b9333A7AB",
-    },
-    {
-      role: "CONFIG_KEEPER",
-      member: "0xE97e935d4F5a533E61BaaF0a3CC85DB33ac71636",
-    },
-    {
       role: "CONTROLLER",
-      member: "0xcfd64885462ebFa4215e2F1F956D8083e688d33F",
+      member: "0xE7BfFf2aB721264887230037940490351700a068",
     },
     {
       role: "MARKET_KEEPER",
-      member: "0xE97e935d4F5a533E61BaaF0a3CC85DB33ac71636",
+      member: "0xE7BfFf2aB721264887230037940490351700a068",
     },
   ],
   avalanche: [
     {
-      role: "CONFIG_KEEPER",
-      member: "0xE47b36382DC50b90bCF6176Ddb159C4b9333A7AB",
-    },
-    {
-      role: "CONFIG_KEEPER",
-      member: "0xE97e935d4F5a533E61BaaF0a3CC85DB33ac71636",
-    },
-    {
       role: "CONTROLLER",
-      member: "0x61B6ae0dd5f5F4fC79D94f118fd4ab2864f0eEf9",
+      member: "0xE7BfFf2aB721264887230037940490351700a068",
     },
     {
       role: "MARKET_KEEPER",
-      member: "0xE97e935d4F5a533E61BaaF0a3CC85DB33ac71636",
+      member: "0xE7BfFf2aB721264887230037940490351700a068",
     },
   ],
 };
