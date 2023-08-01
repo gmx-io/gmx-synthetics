@@ -2,7 +2,6 @@ import hre from "hardhat";
 
 import { encodeData } from "../utils/hash";
 import { bigNumberify } from "../utils/math";
-import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../utils/market";
 import { getFullKey, appendUintConfigIfDifferent } from "../utils/config";
 import * as keys from "../utils/keys";
 
