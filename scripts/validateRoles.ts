@@ -33,7 +33,6 @@ async function main() {
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
       },
       ROLE_ADMIN: {
-        "0xE7BfFf2aB721264887230037940490351700a068": true, // deployer
         "0x9d44B89Eb6FB382b712C562DfaFD8825829b422e": true, // timelock_1
       },
       ROUTER_PLUGIN: {
@@ -79,7 +78,6 @@ async function main() {
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
       },
       ROLE_ADMIN: {
-        "0xE7BfFf2aB721264887230037940490351700a068": true, // deployer
         "0x768c0E31CC87eF5e2c3E2cdB85A4B34148cC63E5": true, // Timelock1
       },
       ROUTER_PLUGIN: {
@@ -129,7 +127,7 @@ async function main() {
   for (const role of roles) {
     const roleKey = hashString(role);
     const members = await roleStore.getRoleMembers(roleKey, 0, 100);
-    console.log(`${role} role: ${members.length}`);
+    console.log(`${role} role (${roleKey}): ${members.length}`);
     for (const member of members) {
       console.log(`   ${member}`);
       if (!expectedRoles[hre.network.name][role][member.toLowerCase()]) {
