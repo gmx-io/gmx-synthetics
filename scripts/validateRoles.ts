@@ -129,6 +129,13 @@ async function main() {
     const members = await roleStore.getRoleMembers(roleKey, 0, 100);
     console.log(`${role} role (${roleKey}): ${members.length}`);
     for (const member of members) {
+      if (["ROLE_ADMIN", "TIMELOCK_MULTISIG", "CONTROLLER"].includes(role)) {
+        const code = await ethers.provider.getCode(member);
+        if (code === "0x") {
+          throw new Error(`EOA (Externally Owned Account) with ${role} role`);
+        }
+      }
+
       console.log(`   ${member}`);
       if (!expectedRoles[hre.network.name][role][member.toLowerCase()]) {
         rolesToRemove.push({
