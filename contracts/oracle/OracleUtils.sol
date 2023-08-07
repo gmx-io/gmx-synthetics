@@ -14,6 +14,12 @@ import "../utils/Printer.sol";
 library OracleUtils {
     using Array for uint256[];
 
+    enum PriceSourceType {
+        InternalFeed,
+        PriceFeed,
+        RealtimeFeed
+    }
+
     // @dev SetPricesParams struct for values required in Oracle.setPrices
     // @param signerInfo compacted indexes of signers, the index is used to retrieve
     // the signer address from the OracleStore
@@ -40,6 +46,8 @@ library OracleUtils {
         uint256[] compactedMaxPricesIndexes;
         bytes[] signatures;
         address[] priceFeedTokens;
+        address[] realtimeFeedTokens;
+        bytes[] realtimeFeedData;
     }
 
     struct SimulatePricesParams {
@@ -57,6 +65,31 @@ library OracleUtils {
         uint256 precision;
         uint256 minPrice;
         uint256 maxPrice;
+    }
+
+    // bid: min price
+    // ask: max price
+    struct RealtimeFeedReport {
+        // The feed ID the report has data for
+        bytes32 feedId;
+        // The time the median value was observed on
+        uint32 observationsTimestamp;
+        // The median value agreed in an OCR round
+        int192 median;
+        // The best bid value agreed in an OCR round
+        // bid is the highest price the a buyer will pay
+        int192 bid;
+        // The best ask value agreed in an OCR round
+        // ask is the lowest price a seller will sell
+        int192 ask;
+        // The upper bound of the block range the median value was observed within
+        uint64 blocknumberUpperBound;
+        // The blockhash for the upper bound of block range (ensures correct blockchain)
+        bytes32 upperBlockhash;
+        // The lower bound of the block range the median value was observed within
+        uint64 blocknumberLowerBound;
+        // The timestamp of the current (upperbound) block number
+        uint64 currentBlockTimestamp;
     }
 
     // compacted prices have a length of 32 bits
