@@ -103,6 +103,14 @@ library Errors {
     error EmptySigner(uint256 signerIndex);
     error InvalidBlockNumber(uint256 minOracleBlockNumber, uint256 currentBlockNumber);
     error InvalidMinMaxBlockNumber(uint256 minOracleBlockNumber, uint256 maxOracleBlockNumber);
+    error HasRealtimeFeedId(address token, bytes32 feedId);
+    error InvalidRealtimeFeedLenghts(uint256 tokensLength, uint256 dataLength);
+    error EmptyRealtimeFeedId(address token);
+    error InvalidRealtimeFeedId(address token, bytes32 feedId, bytes32 expectedFeedId);
+    error InvalidRealtimeBidAsk(address token, int192 bid, int192 ask);
+    error InvalidRealtimeBlockHash(address token, bytes32 blockHash, bytes32 expectedBlockHash);
+    error InvalidRealtimePrices(address token, int192 bid, int192 ask);
+    error RealtimeMaxPriceAgeExceeded(address token, uint256 oracleTimestamp, uint256 currentTimestamp);
     error MaxPriceAgeExceeded(uint256 oracleTimestamp, uint256 currentTimestamp);
     error MinOracleSigners(uint256 oracleSigners, uint256 minOracleSigners);
     error MaxOracleSigners(uint256 oracleSigners, uint256 maxOracleSigners);
