@@ -537,6 +537,8 @@ After the initial setup:
 
 - While the code has been structured to minimize the risk of [read-only reentrancy](https://officercia.mirror.xyz/DBzFiDuxmDOTQEbfXhvLdK0DXVpKu1Nkurk0Cqk3QKc), care should be taken to guard against this possibility
 
+- Token airdrops may occur to the accounts of GM token holders, integrating contracts holding GM tokens must be able to claim these tokens otherwise the tokens would be locked, the exact implementation for this will vary depending on the integrating contract, one possibility is to allow claiming of tokens that are not market tokens, this can be checked using the `Keys.MARKET_LIST` value
+
 - In case of downtime of the blockchain or oracle, orders may be executed at significantly different prices or may not execute if the order's acceptable price cannot be fulfilled
 
 - Swaps for decrease orders may not be successful, this could result in two output tokens, one output in the collateral token and another in the profit token
