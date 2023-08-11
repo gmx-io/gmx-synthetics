@@ -647,8 +647,8 @@ contract Oracle is RoleModule {
                 largestMinBlockNumber = validatedPrice.minBlockNumber;
             }
 
-            if (validatedPrice.maxBlockNumber < largestMinBlockNumber) {
-                largestMinBlockNumber = validatedPrice.maxBlockNumber;
+            if (validatedPrice.maxBlockNumber < smallestMaxBlockNumber) {
+                smallestMaxBlockNumber = validatedPrice.maxBlockNumber;
             }
         }
 
