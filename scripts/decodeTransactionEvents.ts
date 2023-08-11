@@ -35,6 +35,9 @@ async function main() {
         for (const item of eventData[key].items) {
           console.log("    %s: %s (%s)", item.key, item.value, type);
         }
+        for (const item of eventData[key].arrayItems) {
+          console.log("    %s: %j (%s)", item.key, item.value, type);
+        }
       }
       console.log("");
     } catch (ex) {
