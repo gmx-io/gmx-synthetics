@@ -184,8 +184,8 @@ const stablecoinSwapMarketConfig: Partial<SpotMarketConfig> & {
   swapFeeFactorForPositiveImpact: decimalToFloat(1, 4), // 0.01%,
   swapFeeFactorForNegativeImpact: decimalToFloat(1, 4), // 0.01%,
 
-  negativeSwapImpactFactor: expandDecimals(1, 10), // 0.01% for 1,000,000 USD of imbalance
-  positiveSwapImpactFactor: expandDecimals(1, 10), // 0.01% for 1,000,000 USD of imbalance
+  negativeSwapImpactFactor: decimalToFloat(1, 10), // 0.01% for 1,000,000 USD of imbalance
+  positiveSwapImpactFactor: decimalToFloat(1, 10), // 0.01% for 1,000,000 USD of imbalance
 };
 
 const hardhatBaseMarketConfig: Partial<MarketConfig> = {
