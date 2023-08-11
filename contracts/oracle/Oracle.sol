@@ -91,8 +91,8 @@ contract Oracle is RoleModule {
     // signer indexes are recorded in a signerIndexFlags uint256 value to check for uniqueness
     uint256 public constant MAX_SIGNER_INDEX = 256;
 
-    OracleStore immutable oracleStore;
-    IRealtimeFeedVerifier immutable realtimeFeedVerifier;
+    OracleStore public immutable oracleStore;
+    IRealtimeFeedVerifier public immutable realtimeFeedVerifier;
 
     // tokensWithPrices stores the tokens with prices that have been set
     // this is used in clearAllPrices to help ensure that all token prices
