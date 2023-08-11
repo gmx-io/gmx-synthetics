@@ -135,6 +135,7 @@ library Errors {
         uint256 refPrice,
         uint256 maxRefPriceDeviationFactor
     );
+    error InvalidBlockRangeSet(uint256 largestMinBlockNumber, uint256 smallestMaxBlockNumber);
 
     // OracleModule errors
     error InvalidPrimaryPricesForSimulation(uint256 primaryTokensLength, uint256 primaryPricesLength);

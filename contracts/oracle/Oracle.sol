@@ -212,18 +212,15 @@ contract Oracle is RoleModule {
 
         _setPricesFromPriceFeeds(dataStore, eventEmitter, params.priceFeedTokens);
 
-        _setPricesFromRealtimeFeeds(dataStore, eventEmitter, params);
+        OracleUtils.RealtimeFeedReport[] memory reports = _setPricesFromRealtimeFeeds(dataStore, eventEmitter, params);
 
-        // it is possible for transactions to be executed using just params.priceFeedTokens
-        // or just params.realtimeFeedTokens
-        // in this case if params.tokens is empty, the function can return
-        if (params.tokens.length == 0) { return; }
-
-        _setPrices(
+        ValidatedPrice[] memory validatedPrices = _setPrices(
             dataStore,
             eventEmitter,
             params
         );
+
+        _validateBlockRanges(reports, validatedPrices);
     }
 
     // @dev set the primary price
@@ -347,7 +344,7 @@ contract Oracle is RoleModule {
         DataStore dataStore,
         EventEmitter eventEmitter,
         OracleUtils.SetPricesParams memory params
-    ) internal {
+    ) internal returns (ValidatedPrice[] memory) {
         ValidatedPrice[] memory validatedPrices = _validatePrices(dataStore, params);
 
         for (uint256 i; i < validatedPrices.length; i++) {
@@ -364,12 +361,21 @@ contract Oracle is RoleModule {
                 validatedPrice.max
             ));
         }
+
+        return validatedPrices;
     }
 
     function _validatePrices(
         DataStore dataStore,
         OracleUtils.SetPricesParams memory params
     ) internal view returns (ValidatedPrice[] memory) {
+        // it is possible for transactions to be executed using just params.priceFeedTokens
+        // or just params.realtimeFeedTokens
+        // in this case if params.tokens is empty, the function can return
+        if (params.tokens.length == 0) {
+            return new ValidatedPrice[](0);
+        }
+
         address[] memory signers = _getSigners(dataStore, params);
 
         SetPricesCache memory cache;
@@ -615,6 +621,42 @@ contract Oracle is RoleModule {
         return signers;
     }
 
+    function _validateBlockRanges(
+        OracleUtils.RealtimeFeedReport[] memory reports,
+        ValidatedPrice[] memory validatedPrices
+    ) internal pure {
+        uint256 largestMinBlockNumber; // defaults to zero
+        uint256 smallestMaxBlockNumber = type(uint256).max;
+
+        for (uint256 i; i < reports.length; i++) {
+            OracleUtils.RealtimeFeedReport memory report = reports[i];
+
+            if (report.blocknumberLowerBound > largestMinBlockNumber) {
+                largestMinBlockNumber = report.blocknumberLowerBound;
+            }
+
+            if (report.blocknumberUpperBound < smallestMaxBlockNumber) {
+                smallestMaxBlockNumber = report.blocknumberUpperBound;
+            }
+        }
+
+        for (uint256 i; i < validatedPrices.length; i++) {
+            ValidatedPrice memory validatedPrice = validatedPrices[i];
+
+            if (validatedPrice.minBlockNumber > largestMinBlockNumber) {
+                largestMinBlockNumber = validatedPrice.minBlockNumber;
+            }
+
+            if (validatedPrice.maxBlockNumber < largestMinBlockNumber) {
+                largestMinBlockNumber = validatedPrice.maxBlockNumber;
+            }
+        }
+
+        if (largestMinBlockNumber > smallestMaxBlockNumber) {
+            revert Errors.InvalidBlockRangeSet(largestMinBlockNumber, smallestMaxBlockNumber);
+        }
+    }
+
     // it might be possible for the block.chainid to change due to a fork or similar
     // for this reason, this salt is not cached
     function _getSalt() internal view returns (bytes32) {
@@ -689,7 +731,7 @@ contract Oracle is RoleModule {
         DataStore dataStore,
         EventEmitter eventEmitter,
         OracleUtils.SetPricesParams memory params
-    ) internal {
+    ) internal returns (OracleUtils.RealtimeFeedReport[] memory) {
         OracleUtils.RealtimeFeedReport[] memory reports = _validateRealtimeFeeds(
             dataStore,
             params.realtimeFeedTokens,
@@ -718,6 +760,8 @@ contract Oracle is RoleModule {
 
             emitOraclePriceUpdated(eventEmitter, token, priceProps.min, priceProps.max, OracleUtils.PriceSourceType.RealtimeFeed);
         }
+
+        return reports;
     }
 
     // @dev set prices using external price feeds to save costs for tokens with stable prices
