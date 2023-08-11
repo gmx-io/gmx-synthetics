@@ -79,6 +79,8 @@ describe("Oracle", () => {
 
     const params = {
       priceFeedTokens: [],
+      realtimeFeedTokens: [],
+      realtimeFeedData: [],
       signerInfo,
       tokens: [wnt.address, wbtc.address],
       compactedMinOracleBlockNumbers: getCompactedOracleBlockNumbers([block0.number - 10, block1.number - 7]),
@@ -126,6 +128,8 @@ describe("Oracle", () => {
         compactedMaxPricesIndexes: [],
         signatures: [],
         priceFeedTokens: [],
+        realtimeFeedTokens: [],
+        realtimeFeedData: [],
       })
     )
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
@@ -148,6 +152,8 @@ describe("Oracle", () => {
         compactedMaxPricesIndexes: [],
         signatures: [],
         priceFeedTokens: [],
+        realtimeFeedTokens: [],
+        realtimeFeedData: [],
       })
     )
       .to.be.revertedWithCustomError(errorsContract, "InvalidBlockNumber")
@@ -167,6 +173,8 @@ describe("Oracle", () => {
         compactedMaxPricesIndexes: getCompactedPriceIndexes([0, 1]),
         signatures: ["0x00", "0x00"],
         priceFeedTokens: [],
+        realtimeFeedTokens: [],
+        realtimeFeedData: [],
       })
     ).to.be.revertedWith("ECDSA: invalid signature length");
 
@@ -186,6 +194,8 @@ describe("Oracle", () => {
         compactedMaxPricesIndexes: getCompactedPriceIndexes([0, 1]),
         signatures: ["0x00", "0x00"],
         priceFeedTokens: [],
+        realtimeFeedTokens: [],
+        realtimeFeedData: [],
       })
     )
       .to.be.revertedWithCustomError(errorsContract, "MinOracleSigners")
@@ -205,6 +215,8 @@ describe("Oracle", () => {
         compactedMaxPricesIndexes: getCompactedPriceIndexes([0, 1]),
         signatures: ["0x00", "0x00"],
         priceFeedTokens: [],
+        realtimeFeedTokens: [],
+        realtimeFeedData: [],
       })
     )
       .to.be.revertedWithCustomError(errorsContract, "DuplicatedIndex")
@@ -242,6 +254,8 @@ describe("Oracle", () => {
         compactedMaxPricesIndexes: getCompactedPriceIndexes([0, 1, 2, 3, 4, 5, 6]),
         signatures: signatures,
         priceFeedTokens: [],
+        realtimeFeedTokens: [],
+        realtimeFeedData: [],
       })
     )
       .to.be.revertedWithCustomError(errorsContract, "EmptyCompactedPrice")
@@ -267,6 +281,8 @@ describe("Oracle", () => {
     await expect(
       oracle.setPrices(dataStore.address, eventEmitter.address, {
         priceFeedTokens: [],
+        realtimeFeedTokens: [],
+        realtimeFeedData: [],
         signerInfo,
         tokens: [wnt.address],
         compactedMinOracleBlockNumbers: [blockNumber],
@@ -303,6 +319,8 @@ describe("Oracle", () => {
     await expect(
       oracle.setPrices(dataStore.address, eventEmitter.address, {
         priceFeedTokens: [],
+        realtimeFeedTokens: [],
+        realtimeFeedData: [],
         signerInfo,
         tokens: [wnt.address],
         compactedMinOracleBlockNumbers: [blockNumber],
@@ -341,6 +359,8 @@ describe("Oracle", () => {
     await expect(
       oracle.setPrices(dataStore.address, eventEmitter.address, {
         priceFeedTokens: [],
+        realtimeFeedTokens: [],
+        realtimeFeedData: [],
         signerInfo,
         tokens: [wnt.address],
         compactedMinOracleBlockNumbers: [blockNumber],
@@ -374,6 +394,8 @@ describe("Oracle", () => {
 
     const tx0 = await oracle.setPrices(dataStore.address, eventEmitter.address, {
       priceFeedTokens: [],
+      realtimeFeedTokens: [],
+      realtimeFeedData: [],
       signerInfo,
       tokens: [wnt.address],
       compactedMinOracleBlockNumbers: [blockNumber],
@@ -429,6 +451,8 @@ describe("Oracle", () => {
     await expect(
       oracle.setPrices(dataStore.address, eventEmitter.address, {
         priceFeedTokens: [],
+        realtimeFeedTokens: [],
+        realtimeFeedData: [],
         signerInfo,
         tokens: [wnt.address, wbtc.address],
         compactedMinOracleBlockNumbers: [blockNumber],
@@ -450,6 +474,8 @@ describe("Oracle", () => {
     await expect(
       oracle.setPrices(dataStore.address, eventEmitter.address, {
         priceFeedTokens: [],
+        realtimeFeedTokens: [],
+        realtimeFeedData: [],
         signerInfo,
         tokens: [wnt.address, wbtc.address],
         compactedMinOracleBlockNumbers: getCompactedOracleBlockNumbers([blockNumber]),
@@ -467,6 +493,8 @@ describe("Oracle", () => {
     await expect(
       oracle.setPrices(dataStore.address, eventEmitter.address, {
         priceFeedTokens: [],
+        realtimeFeedTokens: [],
+        realtimeFeedData: [],
         signerInfo,
         tokens: [wbtc.address, wnt.address],
         compactedMinOracleBlockNumbers: getCompactedOracleBlockNumbers([blockNumber, blockNumber]),
@@ -483,6 +511,8 @@ describe("Oracle", () => {
 
     const params = {
       priceFeedTokens: [],
+      realtimeFeedTokens: [],
+      realtimeFeedData: [],
       signerInfo,
       tokens: [wnt.address, wbtc.address],
       compactedMinOracleBlockNumbers: getCompactedOracleBlockNumbers([blockNumber, blockNumber]),
@@ -544,6 +574,8 @@ describe("Oracle", () => {
 
     await oracle.setPrices(dataStore.address, eventEmitter.address, {
       priceFeedTokens: [],
+      realtimeFeedTokens: [],
+      realtimeFeedData: [],
       signerInfo,
       tokens: [wnt.address, wbtc.address],
       compactedMinOracleBlockNumbers: getCompactedOracleBlockNumbers([block0.number - 10, block1.number - 5]),
@@ -610,6 +642,8 @@ describe("Oracle", () => {
       compactedMaxPricesIndexes: getCompactedPriceIndexes([0, 1, 2, 3, 4, 5, 6]),
       signatures: wntSignatures,
       priceFeedTokens: [usdc.address],
+      realtimeFeedTokens: [],
+      realtimeFeedData: [],
     });
 
     await dataStore.setAddress(keys.priceFeedKey(usdc.address), ethers.constants.AddressZero);
@@ -629,6 +663,8 @@ describe("Oracle", () => {
       compactedMaxPricesIndexes: getCompactedPriceIndexes([0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6]),
       signatures: wntSignatures.concat(usdcSignatures),
       priceFeedTokens: [],
+      realtimeFeedTokens: [],
+      realtimeFeedData: [],
     });
 
     await printGasUsage(provider, tx1, "oracle.withOraclePrices tx1");
@@ -651,6 +687,8 @@ describe("Oracle", () => {
         ]),
         signatures: wntSignatures.concat(wntSignatures).concat(usdcSignatures),
         priceFeedTokens: [],
+        realtimeFeedTokens: [],
+        realtimeFeedData: [],
       })
     )
       .to.be.revertedWithCustomError(errorsContract, "DuplicateTokenPrice")

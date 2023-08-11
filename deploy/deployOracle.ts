@@ -8,8 +8,11 @@ const constructorContracts = ["RoleStore", "OracleStore"];
 const func = createDeployFunction({
   contractName: "Oracle",
   dependencyNames: constructorContracts,
-  getDeployArgs: async ({ dependencyContracts }) => {
-    return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
+  getDeployArgs: async ({ dependencyContracts, gmx }) => {
+    const oracleConfig = await gmx.getOracle();
+    return constructorContracts
+      .map((dependencyName) => dependencyContracts[dependencyName].address)
+      .concat(oracleConfig.realtimeFeedVerifier);
   },
   afterDeploy: async ({ deployedContract, gmx }) => {
     const oracleConfig = await gmx.getOracle();
