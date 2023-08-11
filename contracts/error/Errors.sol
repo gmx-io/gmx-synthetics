@@ -144,6 +144,7 @@ library Errors {
     error EmptyCompactedPrice(uint256 index);
     error EmptyCompactedBlockNumber(uint256 index);
     error EmptyCompactedTimestamp(uint256 index);
+    error UnsupportedOracleBlockNumberType(uint256 oracleBlockNumberType);
     error InvalidSignature(address recoveredSigner, address expectedSigner);
 
     error EmptyPrimaryPrice(address token);

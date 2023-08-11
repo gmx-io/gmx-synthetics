@@ -151,14 +151,24 @@ contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, O
 
         FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureDisabledKey(address(this)));
 
+        OracleUtils.RealtimeFeedReport[] memory reports = oracle.validateRealtimeFeeds(
+            dataStore,
+            oracleParams.realtimeFeedTokens,
+            oracleParams.realtimeFeedData
+        );
+
         uint256[] memory minOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
             oracleParams.compactedMinOracleBlockNumbers,
-            oracleParams.tokens.length
+            oracleParams.tokens.length,
+            reports,
+            OracleUtils.OracleBlockNumberType.Min
         );
 
         uint256[] memory maxOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
             oracleParams.compactedMaxOracleBlockNumbers,
-            oracleParams.tokens.length
+            oracleParams.tokens.length,
+            reports,
+            OracleUtils.OracleBlockNumberType.Max
         );
 
         ExecuteDepositUtils.ExecuteDepositParams memory params = ExecuteDepositUtils.ExecuteDepositParams(

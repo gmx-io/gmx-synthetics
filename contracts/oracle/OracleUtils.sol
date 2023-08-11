@@ -20,6 +20,11 @@ library OracleUtils {
         RealtimeFeed
     }
 
+    enum OracleBlockNumberType {
+        Min,
+        Max
+    }
+
     // @dev SetPricesParams struct for values required in Oracle.setPrices
     // @param signerInfo compacted indexes of signers, the index is used to retrieve
     // the signer address from the OracleStore
@@ -202,11 +207,28 @@ library OracleUtils {
     // @param compactedOracleBlockNumbers the compacted oracle block numbers
     // @param length the length of the uncompacted oracle block numbers
     // @return the uncompacted oracle block numbers
-    function getUncompactedOracleBlockNumbers(uint256[] memory compactedOracleBlockNumbers, uint256 length) internal pure returns (uint256[] memory) {
-        uint256[] memory blockNumbers = new uint256[](length);
+    function getUncompactedOracleBlockNumbers(
+        uint256[] memory compactedOracleBlockNumbers,
+        uint256 compactedOracleBlockNumbersLength,
+        OracleUtils.RealtimeFeedReport[] memory reports,
+        OracleBlockNumberType oracleBlockNumberType
+    ) internal pure returns (uint256[] memory) {
+        uint256[] memory blockNumbers = new uint256[](compactedOracleBlockNumbersLength + reports.length);
 
-        for (uint256 i; i < length; i++) {
+        for (uint256 i; i < compactedOracleBlockNumbersLength; i++) {
             blockNumbers[i] = getUncompactedOracleBlockNumber(compactedOracleBlockNumbers, i);
+        }
+
+        if (oracleBlockNumberType == OracleBlockNumberType.Min) {
+            for (uint256 i; i < reports.length; i++) {
+                blockNumbers[compactedOracleBlockNumbersLength + i] = reports[i].blocknumberLowerBound;
+            }
+        } else if (oracleBlockNumberType == OracleBlockNumberType.Max) {
+            for (uint256 i; i < reports.length; i++) {
+                blockNumbers[compactedOracleBlockNumbersLength + i] = reports[i].blocknumberUpperBound;
+            }
+        } else {
+            revert Errors.UnsupportedOracleBlockNumberType(uint256(oracleBlockNumberType));
         }
 
         return blockNumbers;

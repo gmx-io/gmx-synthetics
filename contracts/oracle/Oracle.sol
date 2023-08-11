@@ -350,7 +350,7 @@ contract Oracle is RoleModule {
     ) internal {
         ValidatedPrice[] memory validatedPrices = _validatePrices(dataStore, params);
 
-        for (uint256 i = 0; i < validatedPrices.length; i++) {
+        for (uint256 i; i < validatedPrices.length; i++) {
             ValidatedPrice memory validatedPrice = validatedPrices[i];
 
             if (!primaryPrices[validatedPrice.token].isEmpty()) {
@@ -536,7 +536,7 @@ contract Oracle is RoleModule {
         uint256 minBlockConfirmations = dataStore.getUint(Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS);
         uint256 maxPriceAge = dataStore.getUint(Keys.MAX_ORACLE_PRICE_AGE);
 
-        for (uint256 i = 0; i < realtimeFeedTokens.length; i++) {
+        for (uint256 i; i < realtimeFeedTokens.length; i++) {
             address token = realtimeFeedTokens[i];
             bytes32 feedId = dataStore.getBytes32(Keys.realtimeFeedIdKey(token));
             if (feedId == bytes32(0)) {
