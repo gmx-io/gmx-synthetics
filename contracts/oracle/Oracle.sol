@@ -300,6 +300,16 @@ contract Oracle is RoleModule {
         return multiplier;
     }
 
+    function getRealtimeFeedMultiplier(DataStore dataStore, address token) public view returns (uint256) {
+        uint256 multiplier = dataStore.getUint(Keys.realtimeFeedMultiplierKey(token));
+
+        if (multiplier == 0) {
+            revert Errors.EmptyRealtimeFeedMultiplier(token);
+        }
+
+        return multiplier;
+    }
+
     function validatePrices(
         DataStore dataStore,
         OracleUtils.SetPricesParams memory params
@@ -538,6 +548,8 @@ contract Oracle is RoleModule {
 
             OracleUtils.RealtimeFeedReport memory report = abi.decode(verifierResponse, (OracleUtils.RealtimeFeedReport));
 
+            // feedIds are unique per chain so this validation also ensures that the price was signed
+            // for the current chain
             if (feedId != report.feedId) {
                 revert Errors.InvalidRealtimeFeedId(token, report.feedId, feedId);
             }
@@ -693,10 +705,13 @@ contract Oracle is RoleModule {
 
             OracleUtils.RealtimeFeedReport memory report = reports[i];
 
-            // TODO: convert prices for decimals
+            uint256 precision = getRealtimeFeedMultiplier(dataStore, token);
+            uint256 adjustedBidPrice = Precision.mulDiv(uint256(uint192(report.bid)), precision, Precision.FLOAT_PRECISION);
+            uint256 adjustedAskPrice = Precision.mulDiv(uint256(uint192(report.ask)), precision, Precision.FLOAT_PRECISION);
+
             Price.Props memory priceProps = Price.Props(
-                uint256(uint192(report.bid)),
-                uint256(uint192(report.ask))
+                adjustedBidPrice,
+                adjustedAskPrice
             );
 
             _setPrimaryPrice(token, priceProps);

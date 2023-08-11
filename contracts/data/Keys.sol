@@ -219,6 +219,8 @@ library Keys {
     bytes32 public constant PRICE_FEED = keccak256(abi.encode("PRICE_FEED"));
     // @dev key for realtime feed id
     bytes32 public constant REALTIME_FEED_ID = keccak256(abi.encode("REALTIME_FEED_ID"));
+    // @dev key for realtime feed multipler
+    bytes32 public constant REALTIME_FEED_MULTIPLIER = keccak256(abi.encode("REALTIME_FEED_MULTIPLIER"));
     // @dev key for price feed multiplier
     bytes32 public constant PRICE_FEED_MULTIPLIER = keccak256(abi.encode("PRICE_FEED_MULTIPLIER"));
     // @dev key for price feed heartbeat
@@ -1171,6 +1173,16 @@ library Keys {
     function realtimeFeedIdKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             REALTIME_FEED_ID,
+            token
+        ));
+    }
+
+    // @dev key for realtime feed multiplier
+    // @param token the token to get the key for
+    // @return key for realtime feed multiplier
+    function realtimeFeedMultiplierKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            REALTIME_FEED_MULTIPLIER,
             token
         ));
     }
