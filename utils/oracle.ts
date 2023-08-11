@@ -300,5 +300,7 @@ export async function getOracleParams({
     compactedMaxPricesIndexes: getCompactedPriceIndexes(maxPriceIndexes),
     signatures,
     priceFeedTokens,
+    realtimeFeedTokens: [],
+    realtimeFeedData: [],
   };
 }

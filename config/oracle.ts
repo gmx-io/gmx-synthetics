@@ -24,6 +24,7 @@ type OracleTestPriceFeed = {
 type OraclePriceFeed = OracleRealPriceFeed | OracleTestPriceFeed;
 
 export type OracleConfig = {
+  realtimeFeedVerifier: string;
   signers: string[];
   minOracleSigners: number;
   minOracleBlockConfirmations: number;
@@ -47,6 +48,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
 
   const config: { [network: string]: OracleConfig } = {
     localhost: {
+      realtimeFeedVerifier: ethers.constants.AddressZero,
       signers: testSigners,
       minOracleSigners: 0,
       minOracleBlockConfirmations: 255,
@@ -55,6 +57,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     },
 
     hardhat: {
+      realtimeFeedVerifier: ethers.constants.AddressZero,
       signers: testSigners,
       minOracleSigners: 0,
       minOracleBlockConfirmations: 255,
@@ -81,6 +84,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     },
 
     arbitrum: {
+      realtimeFeedVerifier: "0xDBaeB34DF0AcfA564a49e13840C5CE2894C4b886",
       signers: ["0x0F711379095f2F0a6fdD1e8Fccd6eBA0833c1F1f"],
       maxOraclePriceAge: 5 * 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
@@ -182,6 +186,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     },
 
     avalanche: {
+      realtimeFeedVerifier: ethers.constants.AddressZero,
       signers: ["0x7f2CA7713AACD279f7753F804163189E4831c1EE"],
       maxOraclePriceAge: 5 * 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
@@ -255,6 +260,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     },
 
     arbitrumGoerli: {
+      realtimeFeedVerifier: "0x09DFf56A4fF44e0f4436260A04F5CFa65636A481",
       signers: ["0xFb11f15f206bdA02c224EDC744b0E50E46137046", "0x23247a1A80D01b9482E9d734d2EB780a3b5c8E6c"],
       maxOraclePriceAge: 5 * 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
@@ -288,6 +294,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     },
 
     avalancheFuji: {
+      realtimeFeedVerifier: ethers.constants.AddressZero,
       signers: ["0xFb11f15f206bdA02c224EDC744b0E50E46137046", "0x23247a1A80D01b9482E9d734d2EB780a3b5c8E6c"],
       maxOraclePriceAge: 5 * 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%

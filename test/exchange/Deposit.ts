@@ -248,6 +248,8 @@ describe("Exchange.Deposit", () => {
         compactedMaxPricesIndexes: [],
         signatures: [],
         priceFeedTokens: [],
+        realtimeFeedTokens: [],
+        realtimeFeedData: [],
       })
     )
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
@@ -416,6 +418,8 @@ describe("Exchange.Deposit", () => {
           compactedMaxPricesIndexes: [],
           signatures: [],
           priceFeedTokens: [],
+          realtimeFeedTokens: [],
+          realtimeFeedData: [],
         },
         user0.address
       )
