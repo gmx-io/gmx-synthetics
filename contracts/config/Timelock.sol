@@ -330,6 +330,71 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         );
     }
 
+    // @dev signal setting of a realtime feed
+    // @param token the token to set the realtime feed for
+    // @param feedId the ID of the realtime feed
+    // @param realtimeFeedMultiplier the multiplier to apply to the realtime feed results
+    function signalSetRealtimeFeed(
+        address token,
+        bytes32 feedId,
+        uint256 realtimeFeedMultiplier
+    ) external onlyTimelockAdmin nonReentrant {
+        bytes32 actionKey = _setRealtimeFeedActionKey(
+            token,
+            feedId,
+            realtimeFeedMultiplier
+        );
+
+        _signalPendingAction(actionKey, "setRealtimeFeed");
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "token", token);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "feedId", feedId);
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "realtimeFeedMultiplier", realtimeFeedMultiplier);
+        eventEmitter.emitEventLog1(
+            "SignalSetRealtimeFeed",
+            actionKey,
+            eventData
+        );
+    }
+
+    // @dev sets a realtime feed
+    // @param token the token to set the realtime feed for
+    // @param feedId the ID of the realtime feed
+    // @param realtimeFeedMultiplier the multiplier to apply to the realtime feed results
+    function setRealtimeFeedAfterSignal(
+        address token,
+        bytes32 feedId,
+        uint256 realtimeFeedMultiplier
+    ) external onlyTimelockAdmin nonReentrant {
+        bytes32 actionKey = _setRealtimeFeedActionKey(
+            token,
+            feedId,
+            realtimeFeedMultiplier
+        );
+
+        _validateAndClearAction(actionKey, "setRealtimeFeed");
+
+        dataStore.setBytes32(Keys.realtimeFeedIdKey(token), feedId);
+        dataStore.setUint(Keys.realtimeFeedMultiplierKey(token), realtimeFeedMultiplier);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "token", token);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "feedId", feedId);
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "realtimeFeedMultiplier", realtimeFeedMultiplier);
+        eventEmitter.emitEventLog1(
+            "SetRealtimeFeed",
+            actionKey,
+            eventData
+        );
+    }
+
     // @dev cancels a previously signalled pending action
     // @param actionKey the key of the action to cancel
     function cancelAction(bytes32 actionKey) external onlyTimelockAdmin nonReentrant {
@@ -401,6 +466,20 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
             priceFeedMultiplier,
             priceFeedHeartbeatDuration,
             stablePrice
+        ));
+    }
+
+    // @dev the key for the setRealtimeFeed action
+    function _setRealtimeFeedActionKey(
+        address token,
+        bytes32 feedId,
+        uint256 realtimeFeedMultiplier
+    ) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(
+            "setPriceFeed",
+            token,
+            feedId,
+            realtimeFeedMultiplier
         ));
     }
 
