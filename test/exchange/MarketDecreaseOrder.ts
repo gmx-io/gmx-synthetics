@@ -119,8 +119,7 @@ describe("Exchange.MarketDecreaseOrder", () => {
       },
     });
 
-    const block1 = await provider.getBlock();
-    const block0 = await provider.getBlock(block1.number - 1);
+    const block0 = await provider.getBlock();
 
     await expect(
       handleOrder(fixture, {
@@ -132,7 +131,7 @@ describe("Exchange.MarketDecreaseOrder", () => {
           minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
           maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
           precisions: [8, 18],
-          oracleBlocks: [block0, block1],
+          oracleBlocks: [block0, block0],
         },
       })
     ).to.be.revertedWithCustomError(errorsContract, "OracleBlockNumberNotWithinRange");

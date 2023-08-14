@@ -47,8 +47,7 @@ describe("Exchange.LimitIncreaseOrder", () => {
       shouldUnwrapNativeToken: false,
     };
 
-    const block1 = await provider.getBlock();
-    const block0 = await provider.getBlock(block1.number - 1);
+    const block0 = await provider.getBlock();
 
     await expect(
       handleOrder(fixture, {
@@ -62,7 +61,7 @@ describe("Exchange.LimitIncreaseOrder", () => {
           minPrices: [expandDecimals(4995, 4), expandDecimals(1, 6)],
           maxPrices: [expandDecimals(4995, 4), expandDecimals(1, 6)],
           precisions: [8, 18],
-          oracleBlocks: [block0, block1],
+          oracleBlocks: [block0, block0],
         },
       })
     ).to.be.revertedWithCustomError(errorsContract, "OracleBlockNumbersAreSmallerThanRequired");
@@ -79,7 +78,7 @@ describe("Exchange.LimitIncreaseOrder", () => {
           minPrices: [expandDecimals(5005, 4), expandDecimals(1, 6)],
           maxPrices: [expandDecimals(5005, 4), expandDecimals(1, 6)],
           precisions: [8, 18],
-          oracleBlocks: [block0, block1],
+          oracleBlocks: [block0, block0],
         },
       })
     )
@@ -99,7 +98,7 @@ describe("Exchange.LimitIncreaseOrder", () => {
           minPrices: [expandDecimals(4995, 4), expandDecimals(1, 6)],
           maxPrices: [expandDecimals(4995, 4), expandDecimals(1, 6)],
           precisions: [8, 18],
-          oracleBlocks: [block0, block1],
+          oracleBlocks: [block0, block0],
         },
       })
     )
@@ -133,15 +132,14 @@ describe("Exchange.LimitIncreaseOrder", () => {
 
     await mine(5);
 
-    const block1 = await provider.getBlock();
-    const block0 = await provider.getBlock(block1.number - 1);
+    const block0 = await provider.getBlock();
 
     await executeOrder(fixture, {
       tokens: [wnt.address, usdc.address],
       minPrices: [expandDecimals(4995, 4), expandDecimals(1, 6)],
       maxPrices: [expandDecimals(4995, 4), expandDecimals(1, 6)],
       precisions: [8, 18],
-      oracleBlocks: [block0, block1],
+      oracleBlocks: [block0, block0],
       gasUsageLabel: "executeOrder",
     });
 
@@ -174,8 +172,7 @@ describe("Exchange.LimitIncreaseOrder", () => {
 
     await mine(5);
 
-    const block1 = await provider.getBlock();
-    const block0 = await provider.getBlock(block1.number - 1);
+    const block0 = await provider.getBlock();
 
     const orderKeys = await getOrderKeys(dataStore, 0, 1);
     let order = await reader.getOrder(dataStore.address, orderKeys[0]);
@@ -187,7 +184,7 @@ describe("Exchange.LimitIncreaseOrder", () => {
       minPrices: [expandDecimals(4995, 4), expandDecimals(1, 6)],
       maxPrices: [expandDecimals(4995, 4), expandDecimals(1, 6)],
       precisions: [8, 18],
-      oracleBlocks: [block0, block1],
+      oracleBlocks: [block0, block0],
       gasUsageLabel: "executeOrder",
       expectedFrozenReason: "OrderNotFulfillableAtAcceptablePrice",
     });
@@ -201,7 +198,7 @@ describe("Exchange.LimitIncreaseOrder", () => {
       minPrices: [expandDecimals(4980, 4), expandDecimals(1, 6)],
       maxPrices: [expandDecimals(4980, 4), expandDecimals(1, 6)],
       precisions: [8, 18],
-      oracleBlocks: [block1, block1],
+      oracleBlocks: [block0, block0],
       gasUsageLabel: "executeOrder",
       afterExecution: ({ logs }) => {
         const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
