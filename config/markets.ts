@@ -184,8 +184,8 @@ const stablecoinSwapMarketConfig: Partial<SpotMarketConfig> & {
   swapFeeFactorForPositiveImpact: decimalToFloat(1, 4), // 0.01%,
   swapFeeFactorForNegativeImpact: decimalToFloat(1, 4), // 0.01%,
 
-  negativeSwapImpactFactor: decimalToFloat(1, 10), // 0.01% for 1,000,000 USD of imbalance
-  positiveSwapImpactFactor: decimalToFloat(1, 10), // 0.01% for 1,000,000 USD of imbalance
+  negativeSwapImpactFactor: decimalToFloat(5, 10), // 0.01% for 200,000 USD of imbalance
+  positiveSwapImpactFactor: decimalToFloat(5, 10), // 0.01% for 200,000 USD of imbalance
 };
 
 const hardhatBaseMarketConfig: Partial<MarketConfig> = {
@@ -243,8 +243,8 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
 
-      negativeSwapImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(2, 10), // 0.5% for 25,000,000 USD of imbalance
+      positiveSwapImpactFactor: decimalToFloat(2, 10), // 0.5% for 25,000,000 USD of imbalance
 
       // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
@@ -263,8 +263,8 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
 
-      negativeSwapImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(12, 11), //0.3% for 25,000,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(2, 10), // 0.5% for 25,000,000 USD of imbalance
+      positiveSwapImpactFactor: decimalToFloat(2, 10), // 0.5% for 25,000,000 USD of imbalance
 
       // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
@@ -284,9 +284,8 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(8, 9), // 0.3% for 375,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(4, 9), // 0.15% for 375,000 USD of imbalance
 
-      // use the swap impact factor for WETH
-      negativeSwapImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
+      positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
 
       // minCollateralFactor of 0.01 (1%) when open interest is 5,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 9),
@@ -306,9 +305,8 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(8, 9), // 0.3% for 375,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(4, 9), // 0.15% for 375,000 USD of imbalance
 
-      // use the swap impact factor for WETH
-      negativeSwapImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
+      positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
 
       // minCollateralFactor of 0.01 (1%) when open interest is 2,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
@@ -348,9 +346,8 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(8, 9), // 0.3% for 375,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(4, 9), // 0.15% for 375,000 USD of imbalance
 
-      // use the swap impact factor for WETH
-      negativeSwapImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(12, 11), // 0.3% for 25,000,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
+      positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
 
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(25, 10),
