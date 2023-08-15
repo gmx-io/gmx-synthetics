@@ -350,10 +350,6 @@ contract Oracle is RoleModule {
         for (uint256 i; i < validatedPrices.length; i++) {
             ValidatedPrice memory validatedPrice = validatedPrices[i];
 
-            if (!primaryPrices[validatedPrice.token].isEmpty()) {
-                revert Errors.DuplicateTokenPrice(validatedPrice.token);
-            }
-
             emitOraclePriceUpdated(eventEmitter, validatedPrice.token, validatedPrice.min, validatedPrice.max, OracleUtils.PriceSourceType.InternalFeed);
 
             _setPrimaryPrice(validatedPrice.token, Price.Props(
@@ -683,6 +679,12 @@ contract Oracle is RoleModule {
     }
 
     function _setPrimaryPrice(address token, Price.Props memory price) internal {
+        Price.Props memory existingPrice = primaryPrices[token];
+
+        if (!existingPrice.isEmpty()) {
+            revert Errors.PriceAlreadySet(token, existingPrice.min, existingPrice.max);
+        }
+
         primaryPrices[token] = price;
         tokensWithPrices.add(token);
     }
@@ -741,10 +743,6 @@ contract Oracle is RoleModule {
         for (uint256 i; i < params.realtimeFeedTokens.length; i++) {
             address token = params.realtimeFeedTokens[i];
 
-            if (!primaryPrices[token].isEmpty()) {
-                revert Errors.PriceAlreadySet(token, primaryPrices[token].min, primaryPrices[token].max);
-            }
-
             OracleUtils.RealtimeFeedReport memory report = reports[i];
 
             uint256 precision = getRealtimeFeedMultiplier(dataStore, token);
@@ -771,10 +769,6 @@ contract Oracle is RoleModule {
     function _setPricesFromPriceFeeds(DataStore dataStore, EventEmitter eventEmitter, address[] memory priceFeedTokens) internal {
         for (uint256 i; i < priceFeedTokens.length; i++) {
             address token = priceFeedTokens[i];
-
-            if (!primaryPrices[token].isEmpty()) {
-                revert Errors.PriceAlreadySet(token, primaryPrices[token].min, primaryPrices[token].max);
-            }
 
             (bool hasPriceFeed, uint256 price) = _getPriceFeedPrice(dataStore, token);
 
