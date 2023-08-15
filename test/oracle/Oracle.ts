@@ -1,5 +1,4 @@
 import { expect } from "chai";
-import { mine } from "@nomicfoundation/hardhat-network-helpers";
 
 import { deployContract } from "../../utils/deploy";
 import { deployFixture } from "../../utils/fixture";

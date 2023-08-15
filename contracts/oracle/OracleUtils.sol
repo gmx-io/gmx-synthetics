@@ -72,8 +72,8 @@ library OracleUtils {
         uint256 maxPrice;
     }
 
-    // bid: min price
-    // ask: max price
+    // bid: min price, highest buy price
+    // ask: max price, lowest sell price
     struct RealtimeFeedReport {
         // The feed ID the report has data for
         bytes32 feedId;
