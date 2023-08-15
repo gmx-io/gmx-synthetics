@@ -66,7 +66,7 @@ contract BaseOrderHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         address keeper,
         uint256 startingGas,
         Order.SecondaryOrderType secondaryOrderType
-    ) internal view returns (BaseOrderUtils.ExecuteOrderParams memory) {
+    ) internal returns (BaseOrderUtils.ExecuteOrderParams memory) {
         BaseOrderUtils.ExecuteOrderParams memory params;
 
         params.key = key;

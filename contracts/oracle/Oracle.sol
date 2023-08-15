@@ -318,7 +318,7 @@ contract Oracle is RoleModule {
         DataStore dataStore,
         address[] memory realtimeFeedTokens,
         bytes[] memory realtimeFeedData
-    ) external view returns (OracleUtils.RealtimeFeedReport[] memory) {
+    ) external returns (OracleUtils.RealtimeFeedReport[] memory) {
         return _validateRealtimeFeeds(dataStore, realtimeFeedTokens, realtimeFeedData);
     }
 
@@ -532,9 +532,9 @@ contract Oracle is RoleModule {
         DataStore dataStore,
         address[] memory realtimeFeedTokens,
         bytes[] memory realtimeFeedData
-    ) internal view returns (OracleUtils.RealtimeFeedReport[] memory) {
+    ) internal returns (OracleUtils.RealtimeFeedReport[] memory) {
         if (realtimeFeedTokens.length != realtimeFeedData.length) {
-            revert Errors.InvalidRealtimeFeedLenghts(realtimeFeedTokens.length, realtimeFeedData.length);
+            revert Errors.InvalidRealtimeFeedLengths(realtimeFeedTokens.length, realtimeFeedData.length);
         }
 
         OracleUtils.RealtimeFeedReport[] memory reports = new OracleUtils.RealtimeFeedReport[](realtimeFeedTokens.length);

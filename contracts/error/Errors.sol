@@ -104,7 +104,7 @@ library Errors {
     error InvalidBlockNumber(uint256 minOracleBlockNumber, uint256 currentBlockNumber);
     error InvalidMinMaxBlockNumber(uint256 minOracleBlockNumber, uint256 maxOracleBlockNumber);
     error HasRealtimeFeedId(address token, bytes32 feedId);
-    error InvalidRealtimeFeedLenghts(uint256 tokensLength, uint256 dataLength);
+    error InvalidRealtimeFeedLengths(uint256 tokensLength, uint256 dataLength);
     error EmptyRealtimeFeedId(address token);
     error InvalidRealtimeFeedId(address token, bytes32 feedId, bytes32 expectedFeedId);
     error InvalidRealtimeBidAsk(address token, int192 bid, int192 ask);
