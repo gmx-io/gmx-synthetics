@@ -49,7 +49,6 @@ describe("Oracle.RealtimeFeeds", () => {
 
   it("realtime feed validations", async () => {
     const block = await provider.getBlock();
-
     const baseRealtimeData = getBaseRealtimeData(block);
 
     await expect(
@@ -83,6 +82,21 @@ describe("Oracle.RealtimeFeeds", () => {
     )
       .to.be.revertedWithCustomError(errorsContract, "InvalidRealtimeFeedId")
       .withArgs(wnt.address, hashString("feedId"), hashString("WNT"));
+
+    await dataStore.setBytes32(keys.realtimeFeedIdKey(wbtc.address), hashString("WBTC"));
+
+    await expect(
+      oracle.setPrices(dataStore.address, eventEmitter.address, {
+        ...baseSetPricesParams,
+        realtimeFeedTokens: [wnt.address, wbtc.address],
+        realtimeFeedData: [
+          encodeRealtimeData({ ...baseRealtimeData, feedId: hashString("WNT") }),
+          encodeRealtimeData({ ...baseRealtimeData, feedId: hashString("WBTC2") }),
+        ],
+      })
+    )
+      .to.be.revertedWithCustomError(errorsContract, "InvalidRealtimeFeedId")
+      .withArgs(wbtc.address, hashString("WBTC2"), hashString("WBTC"));
 
     await expect(
       oracle.setPrices(dataStore.address, eventEmitter.address, {
@@ -120,15 +134,6 @@ describe("Oracle.RealtimeFeeds", () => {
     )
       .to.be.revertedWithCustomError(errorsContract, "EmptyRealtimeFeedMultiplier")
       .withArgs(wnt.address);
-
-    // the number of realtime decimals: 8
-    // the number of token decimals for WNT: 18
-    // realtimePrice: price * (10 ^ 8)
-    // the price per unit of token: realtimePrice / (10 ^ 8) / (10 ^ 18) * (10 ^ 30)
-    // e.g. (5000 * (10 ^ 8)) / (10 ^ 8) / (10 ^ 18) * (10 ^ 30) = 5000 * (10 ^ 12)
-    // the stored oracle price is: realtimePrice * multiplier / (10 ^ 30)
-    // in this case the multiplier should be (10 ^ 22)
-    // e.g. (5000 * (10 ^ 8)) * (10 ^ 34) / (10 ^ 30) = 5000 * (10 ^ 12)
 
     await dataStore.setUint(keys.realtimeFeedMultiplierKey(wnt.address), expandDecimals(1, 34));
 
@@ -168,4 +173,76 @@ describe("Oracle.RealtimeFeeds", () => {
       })
     ).to.be.revertedWithCustomError(errorsContract, "RealtimeMaxPriceAgeExceeded");
   });
+
+  it("sets prices with realtime feeds", async () => {
+    const block = await provider.getBlock();
+    const baseRealtimeData = getBaseRealtimeData(block);
+
+    await dataStore.setBytes32(keys.realtimeFeedIdKey(wnt.address), hashString("WNT"));
+    await dataStore.setBytes32(keys.realtimeFeedIdKey(wbtc.address), hashString("WBTC"));
+
+    await dataStore.setUint(keys.realtimeFeedMultiplierKey(wnt.address), expandDecimals(1, 34));
+    await dataStore.setUint(keys.realtimeFeedMultiplierKey(wbtc.address), expandDecimals(1, 44));
+
+    await oracle.setPrices(dataStore.address, eventEmitter.address, {
+      ...baseSetPricesParams,
+      realtimeFeedTokens: [wnt.address, wbtc.address],
+      realtimeFeedData: [
+        encodeRealtimeData({
+          ...baseRealtimeData,
+          feedId: hashString("WNT"),
+          bid: expandDecimals(5000, 8),
+          ask: expandDecimals(5002, 8),
+        }),
+        encodeRealtimeData({
+          ...baseRealtimeData,
+          feedId: hashString("WBTC"),
+          bid: expandDecimals(75_000, 8),
+          ask: expandDecimals(75_020, 8),
+        }),
+      ],
+    });
+
+    expect((await oracle.getPrimaryPrice(wnt.address)).min).eq(expandDecimals(5000, 12));
+    expect((await oracle.getPrimaryPrice(wnt.address)).max).eq(expandDecimals(5002, 12));
+
+    expect((await oracle.getPrimaryPrice(wbtc.address)).min).eq(expandDecimals(75_000, 22));
+    expect((await oracle.getPrimaryPrice(wbtc.address)).max).eq(expandDecimals(75_020, 22));
+  });
+
+  // it("sets prices with regular and realtime feeds", async () => {
+  //   const block = await provider.getBlock();
+  //   const baseRealtimeData = getBaseRealtimeData(block);
+  //
+  //   await dataStore.setBytes32(keys.realtimeFeedIdKey(wnt.address), hashString("WNT"));
+  //   await dataStore.setBytes32(keys.realtimeFeedIdKey(wbtc.address), hashString("WBTC"));
+  //
+  //   await dataStore.setUint(keys.realtimeFeedMultiplierKey(wnt.address), expandDecimals(1, 34));
+  //   await dataStore.setUint(keys.realtimeFeedMultiplierKey(wbtc.address), expandDecimals(1, 44));
+  //
+  //   await oracle.setPrices(dataStore.address, eventEmitter.address, {
+  //     ...baseSetPricesParams,
+  //     realtimeFeedTokens: [wnt.address, wbtc.address],
+  //     realtimeFeedData: [
+  //       encodeRealtimeData({
+  //         ...baseRealtimeData,
+  //         feedId: hashString("WNT"),
+  //         bid: expandDecimals(5000, 8),
+  //         ask: expandDecimals(5002, 8),
+  //       }),
+  //       encodeRealtimeData({
+  //         ...baseRealtimeData,
+  //         feedId: hashString("WBTC"),
+  //         bid: expandDecimals(75_000, 8),
+  //         ask: expandDecimals(75_020, 8),
+  //       }),
+  //     ],
+  //   });
+  //
+  //   expect((await oracle.getPrimaryPrice(wnt.address)).min).eq(expandDecimals(5000, 12));
+  //   expect((await oracle.getPrimaryPrice(wnt.address)).max).eq(expandDecimals(5002, 12));
+  //
+  //   expect((await oracle.getPrimaryPrice(wbtc.address)).min).eq(expandDecimals(75_000, 22));
+  //   expect((await oracle.getPrimaryPrice(wbtc.address)).max).eq(expandDecimals(75_020, 22));
+  // });
 });

@@ -690,7 +690,7 @@ describe("Oracle", () => {
         realtimeFeedData: [],
       })
     )
-      .to.be.revertedWithCustomError(errorsContract, "DuplicateTokenPrice")
-      .withArgs(wnt.address);
+      .to.be.revertedWithCustomError(errorsContract, "PriceAlreadySet")
+      .withArgs(wnt.address, 60100, 60100);
   });
 });
