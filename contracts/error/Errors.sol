@@ -126,6 +126,7 @@ library Errors {
     error InvalidSignerMinMaxPrice(uint256 minPrice, uint256 maxPrice);
     error InvalidMedianMinMaxPrice(uint256 minPrice, uint256 maxPrice);
     error NonEmptyTokensWithPrices(uint256 tokensWithPricesLength);
+    error InvalidMinMaxForPrice(address token, uint256 min, uint256 max);
     error EmptyPriceFeed(address token);
     error PriceAlreadySet(address token, uint256 minPrice, uint256 maxPrice);
     error MaxRefPriceDeviationExceeded(

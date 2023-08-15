@@ -1,6 +1,7 @@
 import { expect } from "chai";
 
 import { deployContract } from "../../utils/deploy";
+import { hashString } from "../../utils/hash";
 import { deployFixture } from "../../utils/fixture";
 import {
   TOKEN_ORACLE_TYPES,
@@ -390,6 +391,31 @@ describe("Oracle", () => {
       minPrices,
       maxPrices,
     });
+
+    await dataStore.setBytes32(keys.realtimeFeedIdKey(wnt.address), hashString("WNT"));
+
+    await expect(
+      oracle.setPrices(dataStore.address, eventEmitter.address, {
+        priceFeedTokens: [],
+        realtimeFeedTokens: [],
+        realtimeFeedData: [],
+        signerInfo,
+        tokens: [wnt.address],
+        compactedMinOracleBlockNumbers: [blockNumber],
+        compactedMaxOracleBlockNumbers: [blockNumber],
+        compactedOracleTimestamps: [blockTimestamp],
+        compactedDecimals: getCompactedDecimals([1]),
+        compactedMinPrices: getCompactedPrices(minPrices),
+        compactedMinPricesIndexes: getCompactedPriceIndexes([0, 1, 2, 3, 4, 5, 6]),
+        compactedMaxPrices: getCompactedPrices(maxPrices),
+        compactedMaxPricesIndexes: getCompactedPriceIndexes([0, 1, 2, 3, 4, 5, 6]),
+        signatures,
+      })
+    )
+      .to.be.revertedWithCustomError(errorsContract, "HasRealtimeFeedId")
+      .withArgs(wnt.address, hashString("WNT"));
+
+    await dataStore.setBytes32(keys.realtimeFeedIdKey(wnt.address), ethers.constants.HashZero);
 
     const tx0 = await oracle.setPrices(dataStore.address, eventEmitter.address, {
       priceFeedTokens: [],

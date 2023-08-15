@@ -679,6 +679,10 @@ contract Oracle is RoleModule {
     }
 
     function _setPrimaryPrice(address token, Price.Props memory price) internal {
+        if (price.min > price.max) {
+            revert Errors.InvalidMinMaxForPrice(token, price.min, price.max);
+        }
+
         Price.Props memory existingPrice = primaryPrices[token];
 
         if (!existingPrice.isEmpty()) {
