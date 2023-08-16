@@ -13,7 +13,14 @@ function getAvalancheFujiValues() {
 
 function getArbibtrumGoerliValues() {
   return {
-    oracleApi: "https://gmx-oracle-keeper-arbitrum-goerli-ro-glyu6psrea-ew.a.run.app/prices/",
+    oracleApi: "https://gmx-oracle-keeper-arbitrum-goerli-ro-glyu6psrea-ew.a.run.app/",
+  };
+}
+
+function getArbitrumValues() {
+  return {
+    oracleApi: "https://arbitrum.gmx-oracle.io/",
+    referralStorageAddress: "0xe6fab3F0c7199b0d34d7FbE83394fc0e0D06e99d",
   };
 }
 
@@ -22,15 +29,21 @@ function getValues() {
     return getAvalancheFujiValues();
   } else if (hre.network.name === "arbitrumGoerli") {
     return getArbibtrumGoerliValues();
+  } else if (hre.network.name === "arbitrum") {
+    return getArbitrumValues();
   }
   throw new Error("Unsupported network");
 }
 
 async function main() {
-  const { oracleApi } = getValues();
+  const { oracleApi, referralStorageAddress: _referralStorageAddess } = getValues();
 
   const dataStoreDeployment = await hre.deployments.get("DataStore");
-  const referralStorageDeployment = await hre.deployments.get("ReferralStorage");
+
+  let referralStorageAddress = _referralStorageAddess;
+  if (!referralStorageAddress) {
+    referralStorageAddress = await hre.deployments.get("ReferralStorage");
+  }
 
   const reader = (await hre.ethers.getContract("Reader")) as Reader;
   const positionKey = process.env.POSITION_KEY || ethers.constants.HashZero;
@@ -63,7 +76,7 @@ async function main() {
 
   const positionInfo = await reader.getPositionInfo(
     dataStoreDeployment.address,
-    referralStorageDeployment.address,
+    referralStorageAddress,
     positionKey,
     prices as any,
     0,
