@@ -79,8 +79,8 @@ const config: HardhatUserConfig = {
     hardhat: {
       saveDeployments: true,
       // forking: {
-      //   url: `https://api.avax-test.network/ext/bc/C/rpc`,
-      //   blockNumber: 22005219,
+      //   url: `https://rpc.ankr.com/avalanche`,
+      //   blockNumber: 33963320,
       // },
     },
     localhost: {
