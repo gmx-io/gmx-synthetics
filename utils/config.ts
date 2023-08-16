@@ -153,12 +153,13 @@ async function appendConfigIfDifferent(
 
   if (compare ? !compare(currentValue, value) : currentValue != value) {
     console.log(
-      "appending config %s %s (%s) to %s, prev: %s",
+      "appending config %s %s (%s) to %s, prev: %s (change %sx)",
       type,
       label,
       key,
       value.toString(),
-      currentValue.toString()
+      currentValue.toString(),
+      (Number(value.toString()) / Number(currentValue.toString())).toFixed(4)
     );
     list.push(config.interface.encodeFunctionData(setMethod, [baseKey, keyData, value]));
   } else {
