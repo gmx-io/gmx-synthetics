@@ -1,4 +1,5 @@
 import { impersonateAccount } from "@nomicfoundation/hardhat-network-helpers";
+import { expandDecimals } from "../utils/math";
 // import { errorsInterface } from "../utils/error";
 
 // function printErrorReason() {
@@ -7,48 +8,31 @@ import { impersonateAccount } from "@nomicfoundation/hardhat-network-helpers";
 //   console.info("reason", reason);
 // }
 
+// to run the script:
+// 1. add the "forking" info to the hardhat network in hardhat.config.ts
+// 2. npx hardhat run scripts/simulateExecuteOrder.ts
+//
+// note that the RPC URL must be working otherwise the script may fail
+// with unrelated errors, e.g. OnlyHardhatNetworkError
 async function main() {
-  const address = "0xc84f3398edf6336e1ef55b50ca3f9f9f96b8b504";
+  const address = "0xe47b36382dc50b90bcf6176ddb159c4b9333a7ab";
   await impersonateAccount(address);
   const impersonatedSigner = await ethers.getSigner(address);
-  const orderHandler = await ethers.getContractAt(
-    "OrderHandler",
-    "0x392e63463c63107bCD726bCaee27e2DD2d8426d2",
+  const exchangeRouter = await ethers.getContractAt(
+    "ExchangeRouter",
+    "0x79be2F4eC8A4143BaF963206cF133f3710856D0a",
     impersonatedSigner
   );
-  await orderHandler.simulateExecuteOrder("0xd6bbb63354f338c9dc5a7f04d5314b6a726deaf263b8b2aae4ae5997b25df365", {
-    primaryTokens: [
-      "0x1D308089a2D1Ced3f1Ce36B1FcaF815b07217be3",
-      "0x82F0b3695Ed2324e55bbD9A9554cB4192EC3a514",
-      "0x42DD131E1086FFCc59bAE9498D71E20E0C889B14",
-      "0x3eBDeaA0DB3FfDe96E7a0DBBAFEC961FC50F725F",
-      "0x50df4892Bd13f01E4e1Cd077ff394A8fa1A3fD7c",
-      "0x51290cb93bE5062A6497f16D9cd3376Adf54F920",
-    ],
+  await exchangeRouter.simulateExecuteOrder("0x590df51732f141ce1b88dcb1f7c8a79cb617ed4604ef85e303087fcf0be34e2f", {
+    primaryTokens: ["0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7", "0xb97ef9ef8734c71904d8002f8b6bc66dd9c48a6e"],
     primaryPrices: [
       {
-        min: "14802072000000",
-        max: "14802072000000",
+        min: expandDecimals(1187, 10),
+        max: expandDecimals(1187, 10),
       },
       {
-        min: "1796651400000000",
-        max: "1796651400000000",
-      },
-      {
-        min: "966708760000",
-        max: "976424430000",
-      },
-      {
-        min: "1000000000000000000000000",
-        max: "1000000000000000000000000",
-      },
-      {
-        min: "1000000000000000000000000",
-        max: "1000000000000000000000000",
-      },
-      {
-        min: "1000000000000000000000000",
-        max: "1000000000000000000000000",
+        min: expandDecimals(1, 24),
+        max: expandDecimals(1, 24),
       },
     ],
   });
