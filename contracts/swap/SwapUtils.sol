@@ -359,6 +359,7 @@ library SwapUtils {
 
         SwapPricingUtils.emitSwapFeesCollected(
             params.eventEmitter,
+            params.key,
             _params.market.marketToken,
             _params.tokenIn,
             cache.tokenInPrice.min,

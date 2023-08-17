@@ -52,8 +52,9 @@ library DepositEventUtils {
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
 
-        eventEmitter.emitEventLog1(
+        eventEmitter.emitEventLog2(
             "DepositCreated",
+            key,
             Cast.toBytes32(deposit.account()),
             eventData
         );
@@ -62,6 +63,7 @@ library DepositEventUtils {
     function emitDepositExecuted(
         EventEmitter eventEmitter,
         bytes32 key,
+        address account,
         uint256 longTokenAmount,
         uint256 shortTokenAmount,
         uint256 receivedMarketTokens
@@ -71,13 +73,18 @@ library DepositEventUtils {
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
 
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+
         eventData.uintItems.initItems(3);
         eventData.uintItems.setItem(0, "longTokenAmount", longTokenAmount);
         eventData.uintItems.setItem(1, "shortTokenAmount", shortTokenAmount);
         eventData.uintItems.setItem(2, "receivedMarketTokens", receivedMarketTokens);
 
-        eventEmitter.emitEventLog(
+        eventEmitter.emitEventLog2(
             "DepositExecuted",
+            key,
+            Cast.toBytes32(account),
             eventData
         );
     }

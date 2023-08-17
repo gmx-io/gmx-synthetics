@@ -312,6 +312,7 @@ library SwapPricingUtils {
 
     function emitSwapFeesCollected(
         EventEmitter eventEmitter,
+        bytes32 tradeKey,
         address market,
         address token,
         uint256 tokenPrice,
@@ -319,6 +320,9 @@ library SwapPricingUtils {
         SwapFees memory fees
     ) internal {
         EventUtils.EventLogData memory eventData;
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "tradeKey", tradeKey);
 
         eventData.addressItems.initItems(3);
         eventData.addressItems.setItem(0, "uiFeeReceiver", fees.uiFeeReceiver);
