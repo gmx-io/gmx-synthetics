@@ -411,7 +411,8 @@ async function main() {
 
   console.log(`updating ${multicallWriteParams.length} params`);
   console.log("multicallWriteParams", multicallWriteParams);
-  await config.multicall(multicallWriteParams);
+  const tx = await config.multicall(multicallWriteParams);
+  console.log(`tx sent: ${tx.hash}`);
 }
 
 main()
