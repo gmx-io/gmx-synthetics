@@ -197,11 +197,12 @@ library GasUtils {
     // @param order the order to estimate the gas limit for
     function estimateExecuteDecreaseOrderGasLimit(DataStore dataStore, Order.Props memory order) internal view returns (uint256) {
         uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
+        uint256 swapCount = order.swapPath().length;
         if (order.decreasePositionSwapType() != Order.DecreasePositionSwapType.NoSwap) {
-            gasPerSwap += 1;
+            swapCount += 1;
         }
 
-        return dataStore.getUint(Keys.decreaseOrderGasLimitKey()) + gasPerSwap * order.swapPath().length + order.callbackGasLimit();
+        return dataStore.getUint(Keys.decreaseOrderGasLimitKey()) + gasPerSwap * swapCount + order.callbackGasLimit();
     }
 
     // @dev the estimated gas limit for swap orders
