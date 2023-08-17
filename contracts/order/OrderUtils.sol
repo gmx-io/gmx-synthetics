@@ -177,6 +177,7 @@ library OrderUtils {
         OrderEventUtils.emitOrderExecuted(
             params.contracts.eventEmitter,
             params.key,
+            params.order.account(),
             params.secondaryOrderType
         );
 

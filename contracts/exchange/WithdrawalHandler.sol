@@ -16,6 +16,7 @@ import "../withdrawal/Withdrawal.sol";
 import "../withdrawal/WithdrawalVault.sol";
 import "../withdrawal/WithdrawalStoreUtils.sol";
 import "../withdrawal/WithdrawalUtils.sol";
+import "../withdrawal/ExecuteWithdrawalUtils.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 
@@ -172,7 +173,7 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
             OracleUtils.OracleBlockNumberType.Max
         );
 
-        WithdrawalUtils.ExecuteWithdrawalParams memory params = WithdrawalUtils.ExecuteWithdrawalParams(
+        ExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params = ExecuteWithdrawalUtils.ExecuteWithdrawalParams(
             dataStore,
             eventEmitter,
             withdrawalVault,
@@ -184,7 +185,7 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
             startingGas
         );
 
-        WithdrawalUtils.executeWithdrawal(params);
+        ExecuteWithdrawalUtils.executeWithdrawal(params);
     }
 
     function _handleWithdrawalError(

@@ -223,9 +223,30 @@ library ExecuteDepositUtils {
         DepositEventUtils.emitDepositExecuted(
             params.eventEmitter,
             params.key,
+            deposit.account(),
             cache.longTokenAmount,
             cache.shortTokenAmount,
             cache.receivedMarketTokens
+        );
+
+        MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(
+            params.dataStore,
+            market,
+            prices.indexTokenPrice,
+            prices.longTokenPrice,
+            prices.shortTokenPrice,
+            Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
+            true
+        );
+
+        uint256 marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
+
+        MarketEventUtils.emitMarketPoolValueUpdated(
+            params.eventEmitter,
+            params.key,
+            market.marketToken,
+            poolValueInfo,
+            marketTokensSupply
         );
 
         EventUtils.EventLogData memory eventData;
@@ -279,11 +300,12 @@ library ExecuteDepositUtils {
 
         SwapPricingUtils.emitSwapFeesCollected(
             params.eventEmitter,
-             _params.market.marketToken,
-             _params.tokenIn,
-             _params.tokenInPrice.min,
-             "deposit",
-             fees
+            params.key,
+            _params.market.marketToken,
+            _params.tokenIn,
+            _params.tokenInPrice.min,
+            "deposit",
+            fees
          );
 
         uint256 mintAmount;
@@ -312,6 +334,7 @@ library ExecuteDepositUtils {
 
         MarketEventUtils.emitMarketPoolValueInfo(
             params.eventEmitter,
+            params.key,
             _params.market.marketToken,
             poolValueInfo,
             marketTokensSupply
