@@ -29,6 +29,22 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       `maxShortTokenPoolAmount ${marketToken}, ${shortToken}`
     );
 
+    // await handleConfig(
+    //   "uint",
+    //   keys.MAX_POOL_AMOUNT_FOR_DEPOSIT,
+    //   encodeData(["address", "address"], [marketToken, longToken]),
+    //   marketConfig.maxLongTokenPoolAmountForDeposit,
+    //   `maxLongTokenPoolAmountForDeposit ${marketToken}, ${longToken}`
+    // );
+    //
+    // await handleConfig(
+    //   "uint",
+    //   keys.MAX_POOL_AMOUNT_FOR_DEPOSIT,
+    //   encodeData(["address", "address"], [marketToken, shortToken]),
+    //   marketConfig.maxShortTokenPoolAmountForDeposit,
+    //   `maxShortTokenPoolAmountForDeposit ${marketToken}, ${shortToken}`
+    // );
+
     await handleConfig(
       "uint",
       keys.SWAP_IMPACT_EXPONENT_FACTOR,
