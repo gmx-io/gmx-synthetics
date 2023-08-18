@@ -385,7 +385,7 @@ contract Oracle is RoleModule {
 
             reportInfo.oracleTimestamp = OracleUtils.getUncompactedOracleTimestamp(params.compactedOracleTimestamps, i);
 
-            if (reportInfo.minOracleBlockNumber > Chain.currentBlockNumber()) {
+            if (reportInfo.maxOracleBlockNumber >= Chain.currentBlockNumber()) {
                 revert Errors.InvalidBlockNumber(reportInfo.minOracleBlockNumber, Chain.currentBlockNumber());
             }
 
