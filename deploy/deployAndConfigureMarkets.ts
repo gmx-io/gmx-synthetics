@@ -90,6 +90,15 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     await setUintIfDifferent(key, maxPoolAmount, `max pool amount ${marketToken.toString()} ${token.toString()}`);
   }
 
+  async function setMaxPoolAmountForDeposit(marketToken: string, token: string, maxPoolAmount: number) {
+    const key = keys.maxPoolAmountForDepositKey(marketToken, token);
+    await setUintIfDifferent(
+      key,
+      maxPoolAmount,
+      `max pool amount for deposit ${marketToken.toString()} ${token.toString()}`
+    );
+  }
+
   async function setMaxOpenInterest(marketToken: string, isLong: boolean, maxOpenInterest: number) {
     const key = keys.maxOpenInterestKey(marketToken, isLong);
     await setUintIfDifferent(
@@ -147,6 +156,9 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
 
     await setMaxPoolAmount(marketToken, longToken, marketConfig.maxLongTokenPoolAmount);
     await setMaxPoolAmount(marketToken, shortToken, marketConfig.maxShortTokenPoolAmount);
+
+    await setMaxPoolAmountForDeposit(marketToken, longToken, marketConfig.maxLongTokenPoolAmountForDeposit);
+    await setMaxPoolAmountForDeposit(marketToken, shortToken, marketConfig.maxShortTokenPoolAmountForDeposit);
 
     for (const name of ["swapImpactExponentFactor"]) {
       if (marketConfig[name]) {

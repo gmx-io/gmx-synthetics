@@ -82,6 +82,7 @@ export const OPEN_INTEREST_IN_TOKENS = hashString("OPEN_INTEREST_IN_TOKENS");
 export const COLLATERAL_SUM = hashString("COLLATERAL_SUM");
 export const POOL_AMOUNT = hashString("POOL_AMOUNT");
 export const MAX_POOL_AMOUNT = hashString("MAX_POOL_AMOUNT");
+export const MAX_POOL_AMOUNT_FOR_DEPOSIT = hashString("MAX_POOL_AMOUNT_FOR_DEPOSIT");
 export const MAX_OPEN_INTEREST = hashString("MAX_OPEN_INTEREST");
 
 export const POSITION_IMPACT_POOL_AMOUNT = hashString("POSITION_IMPACT_POOL_AMOUNT");
@@ -306,6 +307,10 @@ export function poolAmountKey(market: string, token: string) {
 
 export function maxPoolAmountKey(market: string, token: string) {
   return hashData(["bytes32", "address", "address"], [MAX_POOL_AMOUNT, market, token]);
+}
+
+export function maxPoolAmountForDepositKey(market: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [MAX_POOL_AMOUNT_FOR_DEPOSIT, market, token]);
 }
 
 export function maxOpenInterestKey(market: string, isLong: boolean) {

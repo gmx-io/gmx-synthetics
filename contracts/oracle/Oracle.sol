@@ -341,7 +341,14 @@ contract Oracle is RoleModule {
         for (uint256 i; i < validatedPrices.length; i++) {
             ValidatedPrice memory validatedPrice = validatedPrices[i];
 
-            emitOraclePriceUpdated(eventEmitter, validatedPrice.token, validatedPrice.min, validatedPrice.max, OracleUtils.PriceSourceType.InternalFeed);
+            emitOraclePriceUpdated(
+                eventEmitter,
+                validatedPrice.token,
+                validatedPrice.min,
+                validatedPrice.max,
+                validatedPrice.timestamp,
+                OracleUtils.PriceSourceType.InternalFeed
+            );
 
             _setPrimaryPrice(validatedPrice.token, Price.Props(
                 validatedPrice.min,
@@ -751,7 +758,14 @@ contract Oracle is RoleModule {
 
             _setPrimaryPrice(token, priceProps);
 
-            emitOraclePriceUpdated(eventEmitter, token, priceProps.min, priceProps.max, OracleUtils.PriceSourceType.RealtimeFeed);
+            emitOraclePriceUpdated(
+                eventEmitter,
+                token,
+                priceProps.min,
+                priceProps.max,
+                report.currentBlockTimestamp,
+                OracleUtils.PriceSourceType.RealtimeFeed
+            );
         }
 
         return reports;
@@ -789,7 +803,14 @@ contract Oracle is RoleModule {
 
             _setPrimaryPrice(token, priceProps);
 
-            emitOraclePriceUpdated(eventEmitter, token, priceProps.min, priceProps.max, OracleUtils.PriceSourceType.PriceFeed);
+            emitOraclePriceUpdated(
+                eventEmitter,
+                token,
+                priceProps.min,
+                priceProps.max,
+                Chain.currentTimestamp(),
+                OracleUtils.PriceSourceType.PriceFeed
+            );
         }
     }
 
@@ -798,6 +819,7 @@ contract Oracle is RoleModule {
         address token,
         uint256 minPrice,
         uint256 maxPrice,
+        uint256 timestamp,
         OracleUtils.PriceSourceType priceSourceType
     ) internal {
         EventUtils.EventLogData memory eventData;
@@ -805,10 +827,11 @@ contract Oracle is RoleModule {
         eventData.addressItems.initItems(1);
         eventData.addressItems.setItem(0, "token", token);
 
-        eventData.uintItems.initItems(3);
+        eventData.uintItems.initItems(4);
         eventData.uintItems.setItem(0, "minPrice", minPrice);
         eventData.uintItems.setItem(1, "maxPrice", maxPrice);
-        eventData.uintItems.setItem(2, "priceSourceType", uint256(priceSourceType));
+        eventData.uintItems.setItem(2, "timestamp", timestamp);
+        eventData.uintItems.setItem(3, "priceSourceType", uint256(priceSourceType));
 
         eventEmitter.emitEventLog1(
             "OraclePriceUpdate",

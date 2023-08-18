@@ -459,6 +459,15 @@ library MarketUtils {
         return dataStore.getUint(Keys.maxPoolAmountKey(market, token));
     }
 
+    // @dev get the max amount of tokens allowed to be deposited in the pool
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param token the token to check
+    // @return the max amount of tokens that can be deposited in the pool
+    function getMaxPoolAmountForDeposit(DataStore dataStore, address market, address token) internal view returns (uint256) {
+        return dataStore.getUint(Keys.maxPoolAmountForDepositKey(market, token));
+    }
+
     // @dev get the max open interest allowed for the market
     // @param dataStore DataStore
     // @param market the market to check
@@ -1326,6 +1335,23 @@ library MarketUtils {
 
         if (poolAmount > maxPoolAmount) {
             revert Errors.MaxPoolAmountExceeded(poolAmount, maxPoolAmount);
+        }
+    }
+
+    // @dev validate that the pool amount is within the max allowed deposit amount
+    // @param dataStore DataStore
+    // @param market the market to check
+    // @param token the token to check
+    function validatePoolAmountForDeposit(
+        DataStore dataStore,
+        Market.Props memory market,
+        address token
+    ) internal view {
+        uint256 poolAmount = getPoolAmount(dataStore, market, token);
+        uint256 maxPoolAmount = getMaxPoolAmountForDeposit(dataStore, market.marketToken, token);
+
+        if (poolAmount > maxPoolAmount) {
+            revert Errors.MaxPoolAmountForDepositExceeded(poolAmount, maxPoolAmount);
         }
     }
 
