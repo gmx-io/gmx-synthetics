@@ -589,7 +589,7 @@ library DecreasePositionCollateralUtils {
 
         // the executionPrice is calculated after the price impact is capped
         // so the output amount directly received by the user may not match
-        // the executionPrice, the difference would be in the stored as a
+        // the executionPrice, the difference would be stored as a
         // claimable amount
         cache.executionPrice = BaseOrderUtils.getExecutionPriceForDecrease(
             indexTokenPrice,

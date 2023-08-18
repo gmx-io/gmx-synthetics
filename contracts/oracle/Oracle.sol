@@ -55,15 +55,6 @@ contract Oracle is RoleModule {
     }
 
     // @dev SetPricesCache struct used in setPrices to avoid stack too deep errors
-    // @param prevMinOracleBlockNumber the previous oracle block number of the loop
-    // @param priceIndex the current price index to retrieve from compactedMinPrices and compactedMaxPrices
-    // to construct the minPrices and maxPrices array
-    // @param signatureIndex the current signature index to retrieve from the signatures array
-    // @param maxPriceAge the max allowed age of price values
-    // @param minPriceIndex the index of the min price in minPrices for the current signer
-    // @param maxPriceIndex the index of the max price in maxPrices for the current signer
-    // @param minPrices the min prices
-    // @param maxPrices the max prices
     struct SetPricesCache {
         OracleUtils.ReportInfo info;
         uint256 minBlockConfirmations;
