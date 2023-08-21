@@ -414,12 +414,6 @@ library ExecuteDepositUtils {
                 positiveImpactAmount
             );
 
-            MarketUtils.validatePoolAmountForDeposit(
-                params.dataStore,
-                _params.market,
-                _params.tokenOut
-            );
-
             MarketUtils.validatePoolAmount(
                 params.dataStore,
                 _params.market,
@@ -457,6 +451,12 @@ library ExecuteDepositUtils {
             _params.market,
             _params.tokenIn,
             (fees.amountAfterFees + fees.feeAmountForPool).toInt256()
+        );
+
+        MarketUtils.validatePoolAmountForDeposit(
+            params.dataStore,
+            _params.market,
+            _params.tokenIn
         );
 
         MarketUtils.validatePoolAmount(

@@ -316,4 +316,30 @@ describe("Exchange.MarketDecreaseOrder", () => {
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
     expect(await getOrderCount(dataStore)).eq(0);
   });
+
+  it("automatically adjusts initialCollateralDeltaAmount", async () => {
+    await handleOrder(fixture, {
+      create: {
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        sizeDeltaUsd: decimalToFloat(200 * 1000),
+        acceptablePrice: expandDecimals(5050, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+      },
+    });
+
+    await handleOrder(fixture, {
+      create: {
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10 + 1, 18),
+        sizeDeltaUsd: decimalToFloat(190 * 1000),
+        acceptablePrice: expandDecimals(4950, 12),
+        orderType: OrderType.MarketDecrease,
+        isLong: true,
+      },
+    });
+  });
 });
