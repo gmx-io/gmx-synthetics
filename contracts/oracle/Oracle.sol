@@ -309,7 +309,7 @@ contract Oracle is RoleModule {
         DataStore dataStore,
         address[] memory realtimeFeedTokens,
         bytes[] memory realtimeFeedData
-    ) external returns (OracleUtils.RealtimeFeedReport[] memory) {
+    ) external onlyController returns (OracleUtils.RealtimeFeedReport[] memory) {
         return _validateRealtimeFeeds(dataStore, realtimeFeedTokens, realtimeFeedData);
     }
 

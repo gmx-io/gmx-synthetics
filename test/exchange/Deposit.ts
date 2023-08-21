@@ -318,6 +318,34 @@ describe("Exchange.Deposit", () => {
         gasUsageLabel: "executeDeposit",
       })
     ).to.be.revertedWithCustomError(errorsContract, "EmptyDeposit");
+
+    await dataStore.setUint(keys.maxPoolAmountKey(ethUsdMarket.marketToken, wnt.address), expandDecimals(1, 18));
+
+    await handleDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(2, 18),
+        shortTokenAmount: expandDecimals(10_000, 6),
+      },
+      execute: {
+        expectedCancellationReason: "MaxPoolAmountExceeded",
+      },
+    });
+
+    await dataStore.setUint(keys.maxPoolAmountKey(ethUsdMarket.marketToken, wnt.address), expandDecimals(20, 18));
+    await dataStore.setUint(
+      keys.maxPoolAmountForDepositKey(ethUsdMarket.marketToken, wnt.address),
+      expandDecimals(1, 18)
+    );
+
+    await handleDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(2, 18),
+        shortTokenAmount: expandDecimals(10_000, 6),
+      },
+      execute: {
+        expectedCancellationReason: "MaxPoolAmountForDepositExceeded",
+      },
+    });
   });
 
   it("executeDeposit with swap", async () => {
