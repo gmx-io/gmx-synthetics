@@ -145,6 +145,26 @@ library MarketEventUtils {
         );
     }
 
+    function emitPositionImpactPoolDistributed(
+        EventEmitter eventEmitter,
+        address market,
+        uint256 distributionAmount
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "market", market);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "distributionAmount", distributionAmount);
+
+        eventEmitter.emitEventLog1(
+            "PositionImpactPoolDistributed",
+            Cast.toBytes32(market),
+            eventData
+        );
+    }
+
     function emitPositionImpactPoolAmountUpdated(
         EventEmitter eventEmitter,
         address market,

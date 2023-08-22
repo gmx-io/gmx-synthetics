@@ -2246,6 +2246,73 @@ library MarketUtils {
         return Precision.applyFactor(reservedUsdToPoolFactor, borrowingFactor);
     }
 
+    function distributePositionImpactPool(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market
+    ) internal {
+        (uint256 distributionAmount, /* uint256 nextPositionImpactPoolAmount */) = getPendingPositionImpactPoolDistributionAmount(dataStore, market);
+
+        applyDeltaToPositionImpactPool(
+            dataStore,
+            eventEmitter,
+            market,
+            -distributionAmount.toInt256()
+        );
+
+        MarketEventUtils.emitPositionImpactPoolDistributed(
+            eventEmitter,
+            market,
+            distributionAmount
+        );
+
+        dataStore.setUint(Keys.positionImpactPoolDistributedAtKey(market), Chain.currentTimestamp());
+    }
+
+    function getNextPositionImpactPoolAmount(
+        DataStore dataStore,
+        address market
+    ) internal view returns (uint256) {
+        (/* uint256 distributionAmount */, uint256 nextPositionImpactPoolAmount) = getPendingPositionImpactPoolDistributionAmount(dataStore, market);
+
+        return nextPositionImpactPoolAmount;
+    }
+
+    // @return (distributionAmount, nextPositionImpactPoolAmount)
+    function getPendingPositionImpactPoolDistributionAmount(
+        DataStore dataStore,
+        address market
+    ) internal view returns (uint256, uint256) {
+        uint256 positionImpactPoolAmount = getPositionImpactPoolAmount(dataStore, market);
+        if (positionImpactPoolAmount == 0) { return (0, positionImpactPoolAmount); }
+
+        uint256 minPositionImpactPoolAmount = dataStore.getUint(Keys.minPositionImpactPoolAmountKey(market));
+        if (positionImpactPoolAmount <= minPositionImpactPoolAmount) {
+            return (0, positionImpactPoolAmount);
+        }
+
+        uint256 maxDistributionAmount = positionImpactPoolAmount - minPositionImpactPoolAmount;
+
+        uint256 durationInSeconds = getSecondsSincePositionImpactPoolDistributed(dataStore, market);
+        uint256 distributionRate = dataStore.getUint(Keys.positionImpactPoolDistributionRateKey(market));
+        uint256 distributionAmount = Precision.applyFactor(durationInSeconds, distributionRate);
+
+        if (distributionAmount > maxDistributionAmount) {
+            distributionAmount = maxDistributionAmount;
+        }
+
+        return (distributionAmount, positionImpactPoolAmount - distributionAmount);
+    }
+
+    function getSecondsSincePositionImpactPoolDistributed(
+        DataStore dataStore,
+        address market
+    ) internal view returns (uint256) {
+        uint256 distributedAt = dataStore.getUint(Keys.positionImpactPoolDistributedAtKey(market));
+        if (distributedAt == 0) { return 0; }
+        return Chain.currentTimestamp() - distributedAt;
+    }
+
     // @dev get the total pending borrowing fees
     // @param dataStore DataStore
     // @param market the market to check

@@ -215,6 +215,12 @@ library Keys {
     bytes32 public constant MAX_OPEN_INTEREST = keccak256(abi.encode("MAX_OPEN_INTEREST"));
     // @dev key for position impact pool amount
     bytes32 public constant POSITION_IMPACT_POOL_AMOUNT = keccak256(abi.encode("POSITION_IMPACT_POOL_AMOUNT"));
+    // @dev key for min position impact pool amount
+    bytes32 public constant MIN_POSITION_IMPACT_POOL_AMOUNT = keccak256(abi.encode("MIN_POSITION_IMPACT_POOL_AMOUNT"));
+    // @dev key for position impact pool distribution rate
+    bytes32 public constant POSITION_IMPACT_POOL_DISTRIBUTION_RATE = keccak256(abi.encode("POSITION_IMPACT_POOL_DISTRIBUTION_RATE"));
+    // @dev key for position impact pool distributed at
+    bytes32 public constant POSITION_IMPACT_POOL_DISTRIBUTED_AT = keccak256(abi.encode("POSITION_IMPACT_POOL_DISTRIBUTED_AT"));
     // @dev key for swap impact pool amount
     bytes32 public constant SWAP_IMPACT_POOL_AMOUNT = keccak256(abi.encode("SWAP_IMPACT_POOL_AMOUNT"));
     // @dev key for price feed
@@ -817,6 +823,36 @@ library Keys {
     function positionImpactPoolAmountKey(address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             POSITION_IMPACT_POOL_AMOUNT,
+            market
+        ));
+    }
+
+    // @dev key for min amount of tokens in a market's position impact pool
+    // @param market the market to check
+    // @return key for min amount of tokens in a market's position impact pool
+    function minPositionImpactPoolAmountKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MIN_POSITION_IMPACT_POOL_AMOUNT,
+            market
+        ));
+    }
+
+    // @dev key for position impact pool distribution rate
+    // @param market the market to check
+    // @return key for position impact pool distribution rate
+    function positionImpactPoolDistributionRateKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            POSITION_IMPACT_POOL_DISTRIBUTION_RATE,
+            market
+        ));
+    }
+
+    // @dev key for position impact pool distributed at
+    // @param market the market to check
+    // @return key for position impact pool distributed at
+    function positionImpactPoolDistributedAtKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            POSITION_IMPACT_POOL_DISTRIBUTED_AT,
             market
         ));
     }
