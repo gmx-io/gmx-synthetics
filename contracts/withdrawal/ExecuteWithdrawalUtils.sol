@@ -107,6 +107,12 @@ library ExecuteWithdrawalUtils {
             withdrawal.updatedAtBlock()
         );
 
+        MarketUtils.distributePositionImpactPool(
+            params.dataStore,
+            params.eventEmitter,
+            withdrawal.market()
+        );
+
         uint256 marketTokensBalance = MarketToken(payable(withdrawal.market())).balanceOf(address(params.withdrawalVault));
         if (marketTokensBalance < withdrawal.marketTokenAmount()) {
             revert Errors.InsufficientMarketTokens(marketTokensBalance, withdrawal.marketTokenAmount());

@@ -11,6 +11,7 @@ const func = createDeployFunction({
     "WithdrawalStoreUtils",
     "WithdrawalEventUtils",
     "SwapUtils",
+    "SwapPricingUtils",
   ],
 });
 

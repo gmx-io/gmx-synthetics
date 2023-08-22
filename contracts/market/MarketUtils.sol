@@ -328,7 +328,7 @@ library MarketUtils {
         result.netPnl = result.longPnl + result.shortPnl;
         result.poolValue = result.poolValue - result.netPnl;
 
-        result.impactPoolAmount = getPositionImpactPoolAmount(dataStore, market.marketToken);
+        result.impactPoolAmount = getNextPositionImpactPoolAmount(dataStore, market.marketToken);
         // use !maximize for pickPrice since the impactPoolUsd is deducted from the poolValue
         uint256 impactPoolUsd = result.impactPoolAmount * indexTokenPrice.pickPrice(!maximize);
 
@@ -2250,7 +2250,7 @@ library MarketUtils {
         DataStore dataStore,
         EventEmitter eventEmitter,
         address market
-    ) internal {
+    ) external {
         (uint256 distributionAmount, /* uint256 nextPositionImpactPoolAmount */) = getPendingPositionImpactPoolDistributionAmount(dataStore, market);
 
         applyDeltaToPositionImpactPool(
@@ -2286,15 +2286,15 @@ library MarketUtils {
         uint256 positionImpactPoolAmount = getPositionImpactPoolAmount(dataStore, market);
         if (positionImpactPoolAmount == 0) { return (0, positionImpactPoolAmount); }
 
+        uint256 distributionRate = dataStore.getUint(Keys.positionImpactPoolDistributionRateKey(market));
+        if (distributionRate == 0) { return (0, positionImpactPoolAmount); }
+
         uint256 minPositionImpactPoolAmount = dataStore.getUint(Keys.minPositionImpactPoolAmountKey(market));
-        if (positionImpactPoolAmount <= minPositionImpactPoolAmount) {
-            return (0, positionImpactPoolAmount);
-        }
+        if (positionImpactPoolAmount <= minPositionImpactPoolAmount) { return (0, positionImpactPoolAmount); }
 
         uint256 maxDistributionAmount = positionImpactPoolAmount - minPositionImpactPoolAmount;
 
         uint256 durationInSeconds = getSecondsSincePositionImpactPoolDistributed(dataStore, market);
-        uint256 distributionRate = dataStore.getUint(Keys.positionImpactPoolDistributionRateKey(market));
         uint256 distributionAmount = Precision.applyFactor(durationInSeconds, distributionRate);
 
         if (distributionAmount > maxDistributionAmount) {

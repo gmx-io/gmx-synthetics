@@ -318,7 +318,7 @@ library SwapPricingUtils {
         uint256 tokenPrice,
         string memory action,
         SwapFees memory fees
-    ) internal {
+    ) external {
         EventUtils.EventLogData memory eventData;
 
         eventData.bytes32Items.initItems(1);

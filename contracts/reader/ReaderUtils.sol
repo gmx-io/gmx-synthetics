@@ -35,6 +35,22 @@ library ReaderUtils {
     using Position for Position.Props;
     using Order for Order.Props;
 
+    struct VirtualInventory {
+        uint256 virtualPoolAmountForLongToken;
+        uint256 virtualPoolAmountForShortToken;
+        int256 virtualInventoryForPositions;
+    }
+
+    struct MarketInfo {
+        Market.Props market;
+        uint256 borrowingFactorPerSecondForLongs;
+        uint256 borrowingFactorPerSecondForShorts;
+        BaseFundingValues baseFunding;
+        MarketUtils.GetNextFundingAmountPerSizeResult nextFunding;
+        VirtualInventory virtualInventory;
+        bool isDisabled;
+    }
+
     struct PositionInfo {
         Position.Props position;
         PositionPricingUtils.PositionFees fees;
@@ -153,6 +169,70 @@ library ReaderUtils {
             market,
             prices
         );
+    }
+
+    function getMarketInfo(
+        DataStore dataStore,
+        MarketUtils.MarketPrices memory prices,
+        address marketKey
+    ) external view returns (MarketInfo memory) {
+        Market.Props memory market = MarketStoreUtils.get(dataStore, marketKey);
+
+        uint256 borrowingFactorPerSecondForLongs = MarketUtils.getBorrowingFactorPerSecond(
+            dataStore,
+            market,
+            prices,
+            true
+        );
+
+        uint256 borrowingFactorPerSecondForShorts = MarketUtils.getBorrowingFactorPerSecond(
+            dataStore,
+            market,
+            prices,
+            false
+        );
+
+        BaseFundingValues memory baseFunding = getBaseFundingValues(dataStore, market);
+
+        MarketUtils.GetNextFundingAmountPerSizeResult memory nextFunding = getNextFundingAmountPerSize(
+            dataStore,
+            market,
+            prices
+        );
+
+        VirtualInventory memory virtualInventory = getVirtualInventory(dataStore, market);
+
+        bool isMarketDisabled = dataStore.getBool(Keys.isMarketDisabledKey(market.marketToken));
+
+        return
+            MarketInfo(
+                market,
+                borrowingFactorPerSecondForLongs,
+                borrowingFactorPerSecondForShorts,
+                baseFunding,
+                nextFunding,
+                virtualInventory,
+                isMarketDisabled
+            );
+    }
+
+    function getVirtualInventory(
+        DataStore dataStore,
+        Market.Props memory market
+    ) internal view returns (VirtualInventory memory) {
+        (, uint256 virtualPoolAmountForLongToken, uint256 virtualPoolAmountForShortToken) = MarketUtils
+            .getVirtualInventoryForSwaps(dataStore, market.marketToken);
+        (, int256 virtualInventoryForPositions) = MarketUtils.getVirtualInventoryForPositions(
+            dataStore,
+            market.indexToken
+        );
+
+        return
+            VirtualInventory(
+                virtualPoolAmountForLongToken,
+                virtualPoolAmountForShortToken,
+                virtualInventoryForPositions
+            );
     }
 
     function getPositionInfo(

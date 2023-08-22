@@ -52,12 +52,6 @@ library DecreasePositionCollateralUtils {
         uint256 remainingCostUsd;
     }
 
-    struct GetExecutionPriceCache {
-        int256 priceImpactUsd;
-        uint256 priceImpactDiffUsd;
-        uint256 executionPrice;
-    }
-
     // @dev handle the collateral changes of the position
     // @param params PositionUtils.UpdatePositionParams
     // @param cache DecreasePositionCache
@@ -99,7 +93,7 @@ library DecreasePositionCollateralUtils {
         // priceImpactDiffUsd is the difference between the maximum price impact and the originally calculated price impact
         // e.g. if the originally calculated price impact is -$100, but the capped price impact is -$80
         // then priceImpactDiffUsd would be $20
-        (values.priceImpactUsd, values.priceImpactDiffUsd, values.executionPrice) = getExecutionPrice(params, cache.prices.indexTokenPrice);
+        (values.priceImpactUsd, values.priceImpactDiffUsd, values.executionPrice) = PositionUtils.getExecutionPriceForDecrease(params, cache.prices.indexTokenPrice);
 
         // the totalPositionPnl is calculated based on the current indexTokenPrice instead of the executionPrice
         // since the executionPrice factors in price impact which should be accounted for separately
@@ -526,82 +520,6 @@ library DecreasePositionCollateralUtils {
         }
 
         return (values, fees);
-    }
-
-    // returns priceImpactUsd, priceImpactDiffUsd, executionPrice
-    function getExecutionPrice(
-        PositionUtils.UpdatePositionParams memory params,
-        Price.Props memory indexTokenPrice
-    ) internal view returns (int256, uint256, uint256) {
-        uint256 sizeDeltaUsd = params.order.sizeDeltaUsd();
-
-        // note that the executionPrice is not validated against the order.acceptablePrice value
-        // if the sizeDeltaUsd is zero
-        // for limit orders the order.triggerPrice should still have been validated
-        if (sizeDeltaUsd == 0) {
-            // decrease order:
-            //     - long: use the smaller price
-            //     - short: use the larger price
-            return (0, 0, indexTokenPrice.pickPrice(!params.position.isLong()));
-        }
-
-        GetExecutionPriceCache memory cache;
-
-        cache.priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
-            PositionPricingUtils.GetPriceImpactUsdParams(
-                params.contracts.dataStore,
-                params.market,
-                -sizeDeltaUsd.toInt256(),
-                params.order.isLong()
-            )
-        );
-
-        // cap priceImpactUsd based on the amount available in the position impact pool
-        cache.priceImpactUsd = MarketUtils.getCappedPositionImpactUsd(
-            params.contracts.dataStore,
-            params.market.marketToken,
-            indexTokenPrice,
-            cache.priceImpactUsd,
-            sizeDeltaUsd
-        );
-
-        if (cache.priceImpactUsd < 0) {
-            uint256 maxPriceImpactFactor = MarketUtils.getMaxPositionImpactFactor(
-                params.contracts.dataStore,
-                params.market.marketToken,
-                false
-            );
-
-            // convert the max price impact to the min negative value
-            // e.g. if sizeDeltaUsd is 10,000 and maxPriceImpactFactor is 2%
-            // then minPriceImpactUsd = -200
-            int256 minPriceImpactUsd = -Precision.applyFactor(sizeDeltaUsd, maxPriceImpactFactor).toInt256();
-
-            // cap priceImpactUsd to the min negative value and store the difference in priceImpactDiffUsd
-            // e.g. if priceImpactUsd is -500 and minPriceImpactUsd is -200
-            // then set priceImpactDiffUsd to -200 - -500 = 300
-            // set priceImpactUsd to -200
-            if (cache.priceImpactUsd < minPriceImpactUsd) {
-                cache.priceImpactDiffUsd = (minPriceImpactUsd - cache.priceImpactUsd).toUint256();
-                cache.priceImpactUsd = minPriceImpactUsd;
-            }
-        }
-
-        // the executionPrice is calculated after the price impact is capped
-        // so the output amount directly received by the user may not match
-        // the executionPrice, the difference would be stored as a
-        // claimable amount
-        cache.executionPrice = BaseOrderUtils.getExecutionPriceForDecrease(
-            indexTokenPrice,
-            params.position.sizeInUsd(),
-            params.position.sizeInTokens(),
-            sizeDeltaUsd,
-            cache.priceImpactUsd,
-            params.order.acceptablePrice(),
-            params.position.isLong()
-        );
-
-        return (cache.priceImpactUsd, cache.priceImpactDiffUsd, cache.executionPrice);
     }
 
     function payForCost(

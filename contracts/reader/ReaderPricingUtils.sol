@@ -169,12 +169,12 @@ library ReaderPricingUtils {
         ExecutionPriceResult memory result;
 
         if (sizeDeltaUsd > 0) {
-            (result.priceImpactUsd, /* priceImpactAmount */, /* sizeDeltaInTokens */, result.executionPrice) = IncreasePositionUtils.getExecutionPrice(
+            (result.priceImpactUsd, /* priceImpactAmount */, /* sizeDeltaInTokens */, result.executionPrice) = PositionUtils.getExecutionPriceForIncrease(
                 params,
                 indexTokenPrice
             );
         } else {
-             (result.priceImpactUsd, result.priceImpactDiffUsd, result.executionPrice) = DecreasePositionCollateralUtils.getExecutionPrice(
+             (result.priceImpactUsd, result.priceImpactDiffUsd, result.executionPrice) = PositionUtils.getExecutionPriceForDecrease(
                 params,
                 indexTokenPrice
             );

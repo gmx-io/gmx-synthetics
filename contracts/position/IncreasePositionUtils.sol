@@ -64,6 +64,12 @@ library IncreasePositionUtils {
             params.market
         );
 
+        MarketUtils.distributePositionImpactPool(
+            params.contracts.dataStore,
+            params.contracts.eventEmitter,
+            params.market.marketToken
+        );
+
         PositionUtils.updateFundingAndBorrowingState(params, prices);
 
         // create a new cache for holding intermediate results
@@ -104,7 +110,7 @@ library IncreasePositionUtils {
             );
         }
 
-        (cache.priceImpactUsd, cache.priceImpactAmount, cache.sizeDeltaInTokens, cache.executionPrice) = getExecutionPrice(params, prices.indexTokenPrice);
+        (cache.priceImpactUsd, cache.priceImpactAmount, cache.sizeDeltaInTokens, cache.executionPrice) = PositionUtils.getExecutionPriceForIncrease(params, prices.indexTokenPrice);
 
         // process the collateral for the given position and order
         PositionPricingUtils.PositionFees memory fees;
@@ -312,101 +318,5 @@ library IncreasePositionUtils {
         );
 
         return (collateralDeltaAmount, fees);
-    }
-
-    // returns priceImpactUsd, priceImpactAmount, sizeDeltaInTokens, executionPrice
-    function getExecutionPrice(
-        PositionUtils.UpdatePositionParams memory params,
-        Price.Props memory indexTokenPrice
-    ) internal view returns (int256, int256, uint256, uint256) {
-        // note that the executionPrice is not validated against the order.acceptablePrice value
-        // if the sizeDeltaUsd is zero
-        // for limit orders the order.triggerPrice should still have been validated
-        if (params.order.sizeDeltaUsd() == 0) {
-            // increase order:
-            //     - long: use the larger price
-            //     - short: use the smaller price
-            return (0, 0, 0, indexTokenPrice.pickPrice(params.position.isLong()));
-        }
-
-        int256 priceImpactUsd = PositionPricingUtils.getPriceImpactUsd(
-            PositionPricingUtils.GetPriceImpactUsdParams(
-                params.contracts.dataStore,
-                params.market,
-                params.order.sizeDeltaUsd().toInt256(),
-                params.order.isLong()
-            )
-        );
-
-        // cap priceImpactUsd based on the amount available in the position impact pool
-        priceImpactUsd = MarketUtils.getCappedPositionImpactUsd(
-            params.contracts.dataStore,
-            params.market.marketToken,
-            indexTokenPrice,
-            priceImpactUsd,
-            params.order.sizeDeltaUsd()
-        );
-
-        // for long positions
-        //
-        // if price impact is positive, the sizeDeltaInTokens would be increased by the priceImpactAmount
-        // the priceImpactAmount should be minimized
-        //
-        // if price impact is negative, the sizeDeltaInTokens would be decreased by the priceImpactAmount
-        // the priceImpactAmount should be maximized
-
-        // for short positions
-        //
-        // if price impact is positive, the sizeDeltaInTokens would be decreased by the priceImpactAmount
-        // the priceImpactAmount should be minimized
-        //
-        // if price impact is negative, the sizeDeltaInTokens would be increased by the priceImpactAmount
-        // the priceImpactAmount should be maximized
-
-        int256 priceImpactAmount;
-
-        if (priceImpactUsd > 0) {
-            // use indexTokenPrice.max and round down to minimize the priceImpactAmount
-            priceImpactAmount = priceImpactUsd / indexTokenPrice.max.toInt256();
-        } else {
-            // use indexTokenPrice.min and round up to maximize the priceImpactAmount
-            priceImpactAmount = Calc.roundUpMagnitudeDivision(priceImpactUsd, indexTokenPrice.min);
-        }
-
-        uint256 baseSizeDeltaInTokens;
-
-        if (params.position.isLong()) {
-            // round the number of tokens for long positions down
-            baseSizeDeltaInTokens = params.order.sizeDeltaUsd() / indexTokenPrice.max;
-        } else {
-            // round the number of tokens for short positions up
-            baseSizeDeltaInTokens = Calc.roundUpDivision(params.order.sizeDeltaUsd(), indexTokenPrice.min);
-        }
-
-        int256 sizeDeltaInTokens;
-        if (params.position.isLong()) {
-            sizeDeltaInTokens = baseSizeDeltaInTokens.toInt256() + priceImpactAmount;
-        } else {
-            sizeDeltaInTokens = baseSizeDeltaInTokens.toInt256() - priceImpactAmount;
-        }
-
-        if (sizeDeltaInTokens < 0) {
-            revert Errors.PriceImpactLargerThanOrderSize(priceImpactUsd, params.order.sizeDeltaUsd());
-        }
-
-        // using increase of long positions as an example
-        // if price is $2000, sizeDeltaUsd is $5000, priceImpactUsd is -$1000
-        // priceImpactAmount = -1000 / 2000 = -0.5
-        // baseSizeDeltaInTokens = 5000 / 2000 = 2.5
-        // sizeDeltaInTokens = 2.5 - 0.5 = 2
-        // executionPrice = 5000 / 2 = $2500
-        uint256 executionPrice = BaseOrderUtils.getExecutionPriceForIncrease(
-            params.order.sizeDeltaUsd(),
-            sizeDeltaInTokens.toUint256(),
-            params.order.acceptablePrice(),
-            params.position.isLong()
-        );
-
-        return (priceImpactUsd, priceImpactAmount, sizeDeltaInTokens.toUint256(), executionPrice);
     }
 }

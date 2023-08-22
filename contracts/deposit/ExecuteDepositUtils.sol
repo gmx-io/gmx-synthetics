@@ -124,6 +124,12 @@ library ExecuteDepositUtils {
 
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(params.oracle, market);
 
+        MarketUtils.distributePositionImpactPool(
+            params.dataStore,
+            params.eventEmitter,
+            market.marketToken
+        );
+
         // deposits should improve the pool state but it should be checked if
         // the max pnl factor for deposits is exceeded as this would lead to the
         // price of the market token decreasing below a target minimum percentage

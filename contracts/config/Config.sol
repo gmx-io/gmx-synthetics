@@ -211,6 +211,9 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.MAX_POOL_AMOUNT_FOR_DEPOSIT] = true;
         allowedBaseKeys[Keys.MAX_OPEN_INTEREST] = true;
 
+        allowedBaseKeys[Keys.MIN_POSITION_IMPACT_POOL_AMOUNT] = true;
+        allowedBaseKeys[Keys.POSITION_IMPACT_POOL_DISTRIBUTION_RATE] = true;
+
         allowedBaseKeys[Keys.CREATE_DEPOSIT_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CANCEL_DEPOSIT_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.EXECUTE_DEPOSIT_FEATURE_DISABLED] = true;
