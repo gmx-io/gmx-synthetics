@@ -462,8 +462,8 @@ const config: {
       maxLongTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
 
-      negativeSwapImpactFactor: decimalToFloat(15, 8), // 0.03% for 200,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(15, 8), // 0.03% for 200,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(15, 10), // 0.03% for 200,000 USD of imbalance
+      positiveSwapImpactFactor: decimalToFloat(15, 10), // 0.03% for 200,000 USD of imbalance
 
       swapFeeFactorForPositiveImpact: decimalToFloat(5, 5), // 0.005%,
       swapFeeFactorForNegativeImpact: decimalToFloat(2, 4), // 0.02%,
