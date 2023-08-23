@@ -13,6 +13,7 @@ type SyntheticTokenConfig = {
   wrappedNative?: never;
   deploy?: never;
   transferGasLimit?: never;
+  realtimeFeedId?: string;
 };
 
 type RealTokenConfig = {
@@ -22,6 +23,7 @@ type RealTokenConfig = {
   synthetic?: never;
   wrappedNative?: true;
   deploy?: never;
+  realtimeFeedId?: string;
 };
 
 // test token to deploy in local and test networks
@@ -34,6 +36,7 @@ export type TestTokenConfig = {
   deploy: true;
   wrappedNative?: boolean;
   synthetic?: never;
+  realtimeFeedId?: string;
 };
 
 export type TokenConfig = SyntheticTokenConfig | RealTokenConfig | TestTokenConfig;
@@ -177,16 +180,19 @@ const config: {
       decimals: 18,
       wrappedNative: true,
       transferGasLimit: 200 * 1000,
+      realtimeFeedId: "0x4554482d5553442d415242495452554d2d544553544e45540000000000000000",
     },
     WBTC: {
       decimals: 8,
       transferGasLimit: 200 * 1000,
       deploy: true,
+      realtimeFeedId: "0x4254432d5553442d415242495452554d2d544553544e45540000000000000000",
     },
     USDC: {
       decimals: 6,
       transferGasLimit: 200 * 1000,
       deploy: true,
+      realtimeFeedId: "0x555344432d5553442d415242495452554d2d544553544e455400000000000000",
     },
     SOL: {
       synthetic: true,
@@ -196,11 +202,13 @@ const config: {
       decimals: 6,
       transferGasLimit: 200 * 1000,
       deploy: true,
+      realtimeFeedId: "0x12be1859ee43f46bab53750915f20855f54e891f88ddd524f26a72d6f4deed1d",
     },
     DAI: {
       decimals: 18,
       transferGasLimit: 200 * 1000,
       deploy: true,
+      realtimeFeedId: "0xbf1febc8c335cb236c1995c1007a928a3f7ae8307a1a20cb31334e6d316c62d1",
     },
     TEST: {
       synthetic: true,
@@ -209,14 +217,17 @@ const config: {
     BNB: {
       decimals: 18,
       synthetic: true,
+      realtimeFeedId: "0x26c16f2054b7a1d77ae83a0429dace9f3000ba4dbf1690236e8f575742e98f66",
     },
     DOGE: {
       decimals: 8,
       synthetic: true,
+      realtimeFeedId: "0x4ce52cf28e49f4673198074968aeea280f13b5f897c687eb713bcfc1eeab89ba",
     },
     LINK: {
       decimals: 18,
       synthetic: true,
+      realtimeFeedId: "0x14e044f932bb959cc2aa8dc1ba110c09224e639aae00264c1ffc2a0830904a3c",
     },
     ADA: {
       decimals: 18,
