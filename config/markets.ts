@@ -465,7 +465,7 @@ const config: {
       negativeSwapImpactFactor: decimalToFloat(15, 8), // 0.03% for 200,000 USD of imbalance
       positiveSwapImpactFactor: decimalToFloat(15, 8), // 0.03% for 200,000 USD of imbalance
 
-      swapFeeFactorForPositiveImpact: decimalToFloat(1, 4), // 0.01%,
+      swapFeeFactorForPositiveImpact: decimalToFloat(5, 5), // 0.005%,
       swapFeeFactorForNegativeImpact: decimalToFloat(2, 4), // 0.02%,
     },
     {
@@ -483,7 +483,7 @@ const config: {
       negativeSwapImpactFactor: decimalToFloat(5, 9), // 0.1% for 200,000 USD of imbalance
       positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.1% for 200,000 USD of imbalance
 
-      swapFeeFactorForPositiveImpact: decimalToFloat(1, 4), // 0.01%,
+      swapFeeFactorForPositiveImpact: decimalToFloat(5, 5), // 0.005%,
       swapFeeFactorForNegativeImpact: decimalToFloat(2, 4), // 0.02%,
     },
     {
@@ -501,7 +501,7 @@ const config: {
       negativeSwapImpactFactor: decimalToFloat(5, 9), // 0.1% for 200,000 USD of imbalance
       positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.1% for 200,000 USD of imbalance
 
-      swapFeeFactorForPositiveImpact: decimalToFloat(1, 4), // 0.01%,
+      swapFeeFactorForPositiveImpact: decimalToFloat(5, 5), // 0.005%,
       swapFeeFactorForNegativeImpact: decimalToFloat(2, 4), // 0.02%,
     },
   ],
