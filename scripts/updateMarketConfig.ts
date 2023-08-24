@@ -427,8 +427,13 @@ async function main() {
 
   console.log(`updating ${multicallWriteParams.length} params`);
   console.log("multicallWriteParams", multicallWriteParams);
-  const tx = await config.multicall(multicallWriteParams);
-  console.log(`tx sent: ${tx.hash}`);
+
+  if (process.env.WRITE === true) {
+    const tx = await config.multicall(multicallWriteParams);
+    console.log(`tx sent: ${tx.hash}`);
+  } else {
+    console.log("NOTE: executed in read-only mode, no transactions were sent");
+  }
 }
 
 main()
