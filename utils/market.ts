@@ -90,6 +90,18 @@ export function getMarketKey(indexToken: string, longToken: string, shortToken: 
   return [indexToken, longToken, shortToken].join(":");
 }
 
+export function createMarketConfigByKey({ marketConfigs, tokens }) {
+  const marketConfigByKey = {};
+
+  for (const marketConfig of marketConfigs) {
+    const [indexToken, longToken, shortToken] = getMarketTokenAddresses(marketConfig, tokens);
+    const marketKey = getMarketKey(indexToken, longToken, shortToken);
+    marketConfigByKey[marketKey] = marketConfig;
+  }
+
+  return marketConfigByKey;
+}
+
 export async function getOnchainMarkets(
   read: (...args: any[]) => any,
   dataStoreAddress: string
