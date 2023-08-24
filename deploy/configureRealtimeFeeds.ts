@@ -2,7 +2,10 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { TokenConfig } from "../config/tokens";
 
 import * as keys from "../utils/keys";
-import { setBytes32IfDifferent } from "../utils/dataStore";
+import { setBytes32IfDifferent, setUintIfDifferent } from "../utils/dataStore";
+import { expandDecimals } from "../utils/math";
+
+const CHAINLINK_PRICE_DECIMALS = 8;
 
 const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
   const { getTokens } = gmx;
@@ -22,9 +25,16 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
       token.realtimeFeedId,
       `realtime feed id for ${tokenSymbol} ${token.address}`
     );
+
+    const realtimeFeedMultiplier = expandDecimals(1, 60 - token.decimals - CHAINLINK_PRICE_DECIMALS);
+    await setUintIfDifferent(
+      keys.realtimeFeedMultiplierKey(token.address),
+      realtimeFeedMultiplier,
+      `realtime feed multiplier for ${tokenSymbol} ${token.address}`
+    );
   }
 };
 
-func.tags = ["RealtimeFeedIds"];
+func.tags = ["RealtimeFeeds"];
 func.dependencies = ["Tokens"];
 export default func;
