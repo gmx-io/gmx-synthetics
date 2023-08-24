@@ -1,5 +1,6 @@
 import hre from "hardhat";
 
+import { validateMarketConfigs } from "./validateMarketConfigsUtils";
 import { encodeData } from "../utils/hash";
 import { bigNumberify } from "../utils/math";
 import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../utils/market";
@@ -365,6 +366,11 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
 };
 
 async function main() {
+  const { errors } = validateMarketConfigs();
+  if (errors.length !== 0) {
+    throw new Error("Invalid market configs");
+  }
+
   const { read } = hre.deployments;
 
   const generalConfig = await hre.gmx.getGeneral();
