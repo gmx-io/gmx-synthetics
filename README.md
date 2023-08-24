@@ -332,7 +332,7 @@ Example calculation for WBTC:
 - in this case the multiplier should be (10 ^ 44)
 - e.g. `(50,000 * (10 ^ 8)) * (10 ^ 44) / (10 ^ 30) = 50,000 * (10 ^ 22)`
 
-The formula for the multipler is: `60 - realtimeDecimals - tokenDecimals`
+The formula for the multipler is: `10 ^ (60 - realtimeDecimals - tokenDecimals)`
 
 # Funding Fees
 
