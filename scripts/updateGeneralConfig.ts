@@ -197,7 +197,7 @@ async function main() {
   console.log(`updating ${multicallWriteParams.length} params`);
   console.log("multicallWriteParams", multicallWriteParams);
 
-  if (process.env.WRITE === true) {
+  if (process.env.WRITE === "true") {
     await config.multicall(multicallWriteParams);
   } else {
     console.log("NOTE: executed in read-only mode, no transactions were sent");

@@ -119,7 +119,7 @@ async function validatePerpConfig({ market, marketConfig, indexTokenSymbol, data
   let positivePositionImpactFactor = marketConfig.positivePositionImpactFactor;
   let positionImpactExponentFactor = marketConfig.positionImpactExponentFactor;
 
-  if (process.env.READ_FROM_CHAIN === true) {
+  if (process.env.READ_FROM_CHAIN === "true") {
     negativePositionImpactFactor = await dataStore.getUint(keys.positionImpactFactorKey(market.marketToken, false));
     positivePositionImpactFactor = await dataStore.getUint(keys.positionImpactFactorKey(market.marketToken, true));
     positionImpactExponentFactor = await dataStore.getUint(keys.positionImpactExponentFactorKey(market.marketToken));
@@ -199,7 +199,7 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
   let positiveSwapImpactFactor = marketConfig.positiveSwapImpactFactor;
   let swapImpactExponentFactor = marketConfig.swapImpactExponentFactor;
 
-  if (process.env.READ_FROM_CHAIN === true) {
+  if (process.env.READ_FROM_CHAIN === "true") {
     negativeSwapImpactFactor = await dataStore.getUint(keys.swapImpactFactorKey(market.marketToken, false));
     positiveSwapImpactFactor = await dataStore.getUint(keys.swapImpactFactorKey(market.marketToken, true));
     swapImpactExponentFactor = await dataStore.getUint(keys.swapImpactExponentFactorKey(market.marketToken));
