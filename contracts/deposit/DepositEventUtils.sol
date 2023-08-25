@@ -92,6 +92,7 @@ library DepositEventUtils {
     function emitDepositCancelled(
         EventEmitter eventEmitter,
         bytes32 key,
+        address account,
         string memory reason,
         bytes memory reasonBytes
     ) external {
@@ -100,14 +101,19 @@ library DepositEventUtils {
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
 
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+
         eventData.stringItems.initItems(1);
         eventData.stringItems.setItem(0, "reason", reason);
 
         eventData.bytesItems.initItems(1);
         eventData.bytesItems.setItem(0, "reasonBytes", reasonBytes);
 
-        eventEmitter.emitEventLog(
+        eventEmitter.emitEventLog2(
             "DepositCancelled",
+            key,
+            Cast.toBytes32(account),
             eventData
         );
     }

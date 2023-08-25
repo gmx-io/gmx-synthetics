@@ -190,7 +190,13 @@ library DepositUtils {
             );
         }
 
-        DepositEventUtils.emitDepositCancelled(eventEmitter, key, reason, reasonBytes);
+        DepositEventUtils.emitDepositCancelled(
+            eventEmitter,
+            key,
+            deposit.account(),
+            reason,
+            reasonBytes
+        );
 
         EventUtils.EventLogData memory eventData;
         CallbackUtils.afterDepositCancellation(key, deposit, eventData);

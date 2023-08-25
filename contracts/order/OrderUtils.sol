@@ -251,7 +251,13 @@ library OrderUtils {
             }
         }
 
-        OrderEventUtils.emitOrderCancelled(eventEmitter, key, reason, reasonBytes);
+        OrderEventUtils.emitOrderCancelled(
+            eventEmitter,
+            key,
+            order.account(),
+            reason,
+            reasonBytes
+        );
 
         EventUtils.EventLogData memory eventData;
         CallbackUtils.afterOrderCancellation(key, order, eventData);
@@ -301,7 +307,13 @@ library OrderUtils {
         order.setIsFrozen(true);
         OrderStoreUtils.set(dataStore, key, order);
 
-        OrderEventUtils.emitOrderFrozen(eventEmitter, key, reason, reasonBytes);
+        OrderEventUtils.emitOrderFrozen(
+            eventEmitter,
+            key,
+            order.account(),
+            reason,
+            reasonBytes
+        );
 
         EventUtils.EventLogData memory eventData;
         CallbackUtils.afterOrderFrozen(key, order, eventData);

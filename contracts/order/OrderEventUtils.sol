@@ -92,6 +92,7 @@ library OrderEventUtils {
     function emitOrderUpdated(
         EventEmitter eventEmitter,
         bytes32 key,
+        address account,
         uint256 sizeDeltaUsd,
         uint256 acceptablePrice,
         uint256 triggerPrice,
@@ -102,15 +103,19 @@ library OrderEventUtils {
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
 
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+
         eventData.uintItems.initItems(4);
         eventData.uintItems.setItem(0, "sizeDeltaUsd", sizeDeltaUsd);
         eventData.uintItems.setItem(1, "acceptablePrice", acceptablePrice);
         eventData.uintItems.setItem(2, "triggerPrice", triggerPrice);
         eventData.uintItems.setItem(3, "minOutputAmount", minOutputAmount);
 
-        eventEmitter.emitEventLog1(
+        eventEmitter.emitEventLog2(
             "OrderUpdated",
             key,
+            Cast.toBytes32(account),
             eventData
         );
     }
@@ -162,6 +167,7 @@ library OrderEventUtils {
     function emitOrderCancelled(
         EventEmitter eventEmitter,
         bytes32 key,
+        address account,
         string memory reason,
         bytes memory reasonBytes
     ) external {
@@ -170,15 +176,19 @@ library OrderEventUtils {
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
 
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+
         eventData.stringItems.initItems(1);
         eventData.stringItems.setItem(0, "reason", reason);
 
         eventData.bytesItems.initItems(1);
         eventData.bytesItems.setItem(0, "reasonBytes", reasonBytes);
 
-        eventEmitter.emitEventLog1(
+        eventEmitter.emitEventLog2(
             "OrderCancelled",
             key,
+            Cast.toBytes32(account),
             eventData
         );
     }
@@ -186,6 +196,7 @@ library OrderEventUtils {
     function emitOrderFrozen(
         EventEmitter eventEmitter,
         bytes32 key,
+        address account,
         string memory reason,
         bytes memory reasonBytes
     ) external {
@@ -194,15 +205,19 @@ library OrderEventUtils {
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
 
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+
         eventData.stringItems.initItems(1);
         eventData.stringItems.setItem(0, "reason", reason);
 
         eventData.bytesItems.initItems(1);
         eventData.bytesItems.setItem(0, "reasonBytes", reasonBytes);
 
-        eventEmitter.emitEventLog1(
+        eventEmitter.emitEventLog2(
             "OrderFrozen",
             key,
+            Cast.toBytes32(account),
             eventData
         );
     }

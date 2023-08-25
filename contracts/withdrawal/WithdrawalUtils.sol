@@ -181,7 +181,13 @@ library WithdrawalUtils {
             false // shouldUnwrapNativeToken
         );
 
-        WithdrawalEventUtils.emitWithdrawalCancelled(eventEmitter, key, reason, reasonBytes);
+        WithdrawalEventUtils.emitWithdrawalCancelled(
+            eventEmitter,
+            key,
+            withdrawal.account(),
+            reason,
+            reasonBytes
+        );
 
         EventUtils.EventLogData memory eventData;
         CallbackUtils.afterWithdrawalCancellation(key, withdrawal, eventData);

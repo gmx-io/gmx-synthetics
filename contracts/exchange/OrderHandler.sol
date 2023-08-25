@@ -108,7 +108,15 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
 
         OrderStoreUtils.set(dataStore, key, order);
 
-        OrderEventUtils.emitOrderUpdated(eventEmitter, key, sizeDeltaUsd, acceptablePrice, triggerPrice, minOutputAmount);
+        OrderEventUtils.emitOrderUpdated(
+            eventEmitter,
+            key,
+            order.account(),
+            sizeDeltaUsd,
+            acceptablePrice,
+            triggerPrice,
+            minOutputAmount
+        );
     }
 
     /**
