@@ -9,7 +9,7 @@ import { getEventData } from "../../../utils/event";
 import { prices } from "../../../utils/prices";
 import * as keys from "../../../utils/keys";
 
-describe("Exchange.PositionPriceImpact", () => {
+describe("Exchange.PositionPriceImpact.SyntheticMarket", () => {
   let fixture;
   let user0;
   let dataStore, solUsdMarket, wnt;

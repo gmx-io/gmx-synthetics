@@ -10,6 +10,8 @@ import "../role/RoleModule.sol";
 import "../event/EventEmitter.sol";
 import "../utils/BasicMulticall.sol";
 import "../utils/Precision.sol";
+import "../utils/Cast.sol";
+import "../market/MarketUtils.sol";
 
 // @title Config
 contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
@@ -38,6 +40,32 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventEmitter = _eventEmitter;
 
         _initAllowedBaseKeys();
+    }
+
+    function setPositionImpactDistributionRate(
+        address market,
+        uint256 minPositionImpactPoolAmount,
+        uint256 positionImpactPoolDistributionRate
+    ) external onlyConfigKeeper nonReentrant {
+        MarketUtils.distributePositionImpactPool(dataStore, eventEmitter, market);
+
+        dataStore.setUint(Keys.minPositionImpactPoolAmountKey(market), minPositionImpactPoolAmount);
+        dataStore.setUint(Keys.positionImpactPoolDistributionRateKey(market), positionImpactPoolDistributionRate);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "market", market);
+
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "minPositionImpactPoolAmount", minPositionImpactPoolAmount);
+        eventData.uintItems.setItem(1, "positionImpactPoolDistributionRate", positionImpactPoolDistributionRate);
+
+        eventEmitter.emitEventLog1(
+            "SetPositionImpactPoolDistributionRate",
+            Cast.toBytes32(market),
+            eventData
+        );
     }
 
     // @dev set a bool value
@@ -210,9 +238,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
         allowedBaseKeys[Keys.MAX_POOL_AMOUNT_FOR_DEPOSIT] = true;
         allowedBaseKeys[Keys.MAX_OPEN_INTEREST] = true;
-
-        allowedBaseKeys[Keys.MIN_POSITION_IMPACT_POOL_AMOUNT] = true;
-        allowedBaseKeys[Keys.POSITION_IMPACT_POOL_DISTRIBUTION_RATE] = true;
 
         allowedBaseKeys[Keys.CREATE_DEPOSIT_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CANCEL_DEPOSIT_FEATURE_DISABLED] = true;
