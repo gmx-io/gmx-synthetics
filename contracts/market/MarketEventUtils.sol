@@ -17,6 +17,9 @@ library MarketEventUtils {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
+    // this event is emitted before a deposit or withdrawal
+    // it provides information of the pool state so that the amount
+    // of market tokens minted or amount withdrawn from the pool can be checked
     function emitMarketPoolValueInfo(
         EventEmitter eventEmitter,
         bytes32 tradeKey,
@@ -55,6 +58,11 @@ library MarketEventUtils {
         );
     }
 
+    // this event is emitted after a deposit or withdrawal
+    // it provides information of the updated pool state
+    // note that the pool state can change even without a deposit / withdrawal
+    // e.g. borrowing fees can increase the pool's value with time, trader pnl
+    // will change as index prices change
     function emitMarketPoolValueUpdated(
         EventEmitter eventEmitter,
         bytes32 tradeKey,
