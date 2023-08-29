@@ -311,8 +311,13 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.MIN_PNL_FACTOR_AFTER_ADL] = true;
 
         allowedBaseKeys[Keys.FUNDING_FACTOR] = true;
-        allowedBaseKeys[Keys.STABLE_FUNDING_FACTOR] = true;
         allowedBaseKeys[Keys.FUNDING_EXPONENT_FACTOR] = true;
+        allowedBaseKeys[Keys.FUNDING_INCREASE_FACTOR] = true;
+        allowedBaseKeys[Keys.FUNDING_DECREASE_FACTOR] = true;
+        allowedBaseKeys[Keys.MIN_FUNDING_FACTOR] = true;
+        allowedBaseKeys[Keys.MAX_FUNDING_FACTOR] = true;
+        allowedBaseKeys[Keys.THRESHOLD_FOR_STABLE_FUNDING] = true;
+        allowedBaseKeys[Keys.THRESHOLD_FOR_DECREASE_FUNDING] = true;
 
         allowedBaseKeys[Keys.BORROWING_FACTOR] = true;
         allowedBaseKeys[Keys.BORROWING_EXPONENT_FACTOR] = true;

@@ -13,6 +13,22 @@ library Calc {
     using SignedMath for int256;
     using SafeCast for uint256;
 
+    function boundMagnitude(int256 value, uint256 min, uint256 max) internal pure returns (int256) {
+        uint256 magnitude = value.abs();
+
+        if (magnitude < min) {
+            magnitude = min;
+        }
+
+        if (magnitude > max) {
+            magnitude = max;
+        }
+
+        int256 sign = value / magnitude.toInt256();
+
+        return magnitude.toInt256() * sign;
+    }
+
     /**
      * @dev Calculates the result of dividing the first number by the second number,
      * rounded up to the nearest integer.
