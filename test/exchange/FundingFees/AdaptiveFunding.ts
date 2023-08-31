@@ -342,5 +342,26 @@ describe("Exchange.FundingFees.AdaptiveFunding", () => {
         ); // -0.00115%
       }
     );
+
+    await time.increase(10 * 60);
+
+    await usingResult(
+      reader.getMarketInfo(dataStore.address, prices.ethUsdMarket, ethUsdMarket.marketToken),
+      (marketInfo) => {
+        // diff in open interest: 12k / 200k = 6%
+        // fundingIncreaseFactorPerSecond: 0.0001%
+        // increase in funding: - 6% * 0.0001% * 600 = -0.0036%
+        // new funding = -0.00116% + -0.0036% = -0.00476%
+        expect(marketInfo.nextFunding.longsPayShorts).eq(false);
+        expect(marketInfo.nextFunding.fundingFactorPerSecond).closeTo(
+          "47533010594450302147780558",
+          "100000000000000000000000"
+        ); // 0.00475%
+        expect(marketInfo.nextFunding.nextSavedFundingFactorPerSecond).closeTo(
+          "-47533010594450302147780558",
+          "100000000000000000000000"
+        ); // -0.00475%
+      }
+    );
   });
 });
