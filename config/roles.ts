@@ -90,6 +90,11 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
           "FROZEN_ORDER_KEEPER",
         ],
       },
+      {
+        // Chainlink keeper
+        account: "0x5051FD154320584c9Cc2071aed772656E8fcd855",
+        roles: ["ORDER_KEEPER"],
+      },
     ],
     avalancheFuji: [
       {
