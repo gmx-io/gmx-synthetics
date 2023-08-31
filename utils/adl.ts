@@ -16,6 +16,9 @@ export async function updateAdlState(fixture, overrides = {}) {
   const { market, isLong, gasUsageLabel } = overrides;
   const { wnt, usdc } = fixture.contracts;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
+  const realtimeFeedTokens = overrides.realtimeFeedTokens || [];
+  const realtimeFeedData = overrides.realtimeFeedData || [];
+  const priceFeedTokens = overrides.priceFeedTokens || [];
   const tokenOracleTypes = overrides.tokenOracleTypes || [TOKEN_ORACLE_TYPES.DEFAULT, TOKEN_ORACLE_TYPES.DEFAULT];
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
@@ -30,6 +33,9 @@ export async function updateAdlState(fixture, overrides = {}) {
     precisions,
     minPrices,
     maxPrices,
+    realtimeFeedTokens,
+    realtimeFeedData,
+    priceFeedTokens,
     execute: async (key, oracleParams) => {
       return await adlHandler.updateAdlState(market.marketToken, isLong, oracleParams);
     },
@@ -44,6 +50,9 @@ export async function executeAdl(fixture, overrides = {}) {
   const { account, market, collateralToken, isLong, sizeDeltaUsd, gasUsageLabel } = overrides;
   const { wnt, usdc } = fixture.contracts;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
+  const realtimeFeedTokens = overrides.realtimeFeedTokens || [];
+  const realtimeFeedData = overrides.realtimeFeedData || [];
+  const priceFeedTokens = overrides.priceFeedTokens || [];
   const tokenOracleTypes = overrides.tokenOracleTypes || [TOKEN_ORACLE_TYPES.DEFAULT, TOKEN_ORACLE_TYPES.DEFAULT];
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
@@ -58,6 +67,9 @@ export async function executeAdl(fixture, overrides = {}) {
     precisions,
     minPrices,
     maxPrices,
+    realtimeFeedTokens,
+    realtimeFeedData,
+    priceFeedTokens,
     execute: async (key, oracleParams) => {
       return await adlHandler.executeAdl(
         account,

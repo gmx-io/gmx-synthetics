@@ -72,6 +72,9 @@ export async function executeWithdrawal(fixture, overrides = {}) {
   const { reader, dataStore, withdrawalHandler, wnt, usdc } = fixture.contracts;
   const { gasUsageLabel } = overrides;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
+  const realtimeFeedTokens = overrides.realtimeFeedTokens || [];
+  const realtimeFeedData = overrides.realtimeFeedData || [];
+  const priceFeedTokens = overrides.priceFeedTokens || [];
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
@@ -87,6 +90,9 @@ export async function executeWithdrawal(fixture, overrides = {}) {
     maxPrices,
     execute: withdrawalHandler.executeWithdrawal,
     gasUsageLabel,
+    realtimeFeedTokens,
+    realtimeFeedData,
+    priceFeedTokens,
   };
 
   const txReceipt = await executeWithOracleParams(fixture, params);

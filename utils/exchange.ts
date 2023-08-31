@@ -47,8 +47,20 @@ export function getExecuteParams(fixture, { tokens, prices }) {
 }
 
 export async function executeWithOracleParams(fixture, overrides) {
-  const { key, oracleBlocks, oracleBlockNumber, tokens, precisions, minPrices, maxPrices, execute, gasUsageLabel } =
-    overrides;
+  const {
+    key,
+    oracleBlocks,
+    oracleBlockNumber,
+    tokens,
+    precisions,
+    minPrices,
+    maxPrices,
+    execute,
+    gasUsageLabel,
+    realtimeFeedTokens,
+    realtimeFeedData,
+    priceFeedTokens,
+  } = overrides;
   const { provider } = ethers;
   const { signers } = fixture.accounts;
   const { oracleSalt, signerIndexes } = fixture.props;
@@ -95,7 +107,9 @@ export async function executeWithOracleParams(fixture, overrides) {
     minPrices,
     maxPrices,
     signers,
-    priceFeedTokens: [],
+    realtimeFeedTokens,
+    realtimeFeedData,
+    priceFeedTokens,
   };
 
   let oracleParams;

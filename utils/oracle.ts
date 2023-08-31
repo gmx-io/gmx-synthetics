@@ -244,6 +244,8 @@ export async function getOracleParams({
   minPrices,
   maxPrices,
   signers,
+  realtimeFeedTokens,
+  realtimeFeedData,
   priceFeedTokens,
 }) {
   const signerInfo = getSignerInfo(signerIndexes);
@@ -300,12 +302,12 @@ export async function getOracleParams({
     compactedMaxPricesIndexes: getCompactedPriceIndexes(maxPriceIndexes),
     signatures,
     priceFeedTokens,
-    realtimeFeedTokens: [],
-    realtimeFeedData: [],
+    realtimeFeedTokens,
+    realtimeFeedData,
   };
 }
 
-export async function encodeRealtimeData(data) {
+export function encodeRealtimeData(data) {
   const {
     feedId,
     observationsTimestamp,
