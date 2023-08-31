@@ -121,6 +121,14 @@ export const IS_ADL_ENABLED = hashString("IS_ADL_ENABLED");
 export const FUNDING_FACTOR = hashString("FUNDING_FACTOR");
 export const FUNDING_EXPONENT_FACTOR = hashString("FUNDING_EXPONENT_FACTOR");
 
+export const SAVED_FUNDING_FACTOR_PER_SECOND = hashString("SAVED_FUNDING_FACTOR_PER_SECOND");
+export const FUNDING_INCREASE_FACTOR_PER_SECOND = hashString("FUNDING_INCREASE_FACTOR_PER_SECOND");
+export const FUNDING_DECREASE_FACTOR_PER_SECOND = hashString("FUNDING_DECREASE_FACTOR_PER_SECOND");
+export const MIN_FUNDING_FACTOR_PER_SECOND = hashString("MIN_FUNDING_FACTOR_PER_SECOND");
+export const MAX_FUNDING_FACTOR_PER_SECOND = hashString("MAX_FUNDING_FACTOR_PER_SECOND");
+export const THRESHOLD_FOR_STABLE_FUNDING = hashString("THRESHOLD_FOR_STABLE_FUNDING");
+export const THRESHOLD_FOR_DECREASE_FUNDING = hashString("THRESHOLD_FOR_DECREASE_FUNDING");
+
 export const FUNDING_FEE_AMOUNT_PER_SIZE = hashString("FUNDING_FEE_AMOUNT_PER_SIZE");
 export const CLAIMABLE_FUNDING_AMOUNT_PER_SIZE = hashString("CLAIMABLE_FUNDING_AMOUNT_PER_SIZE");
 export const FUNDING_UPDATED_AT = hashString("FUNDING_UPDATED_AT");
@@ -395,6 +403,34 @@ export function fundingFactorKey(market: string) {
 
 export function fundingExponentFactorKey(market: string) {
   return hashData(["bytes32", "address"], [FUNDING_EXPONENT_FACTOR, market]);
+}
+
+export function savedFundingFactorPerSecondKey(market: string) {
+  return hashData(["bytes32", "address"], [SAVED_FUNDING_FACTOR_PER_SECOND, market]);
+}
+
+export function fundingIncreaseFactorPerSecondKey(market: string) {
+  return hashData(["bytes32", "address"], [FUNDING_INCREASE_FACTOR_PER_SECOND, market]);
+}
+
+export function fundingDecreaseFactorPerSecondKey(market: string) {
+  return hashData(["bytes32", "address"], [FUNDING_DECREASE_FACTOR_PER_SECOND, market]);
+}
+
+export function minFundingFactorPerSecondKey(market: string) {
+  return hashData(["bytes32", "address"], [MIN_FUNDING_FACTOR_PER_SECOND, market]);
+}
+
+export function maxFundingFactorPerSecondKey(market: string) {
+  return hashData(["bytes32", "address"], [MAX_FUNDING_FACTOR_PER_SECOND, market]);
+}
+
+export function thresholdForStableFundingKey(market: string) {
+  return hashData(["bytes32", "address"], [THRESHOLD_FOR_STABLE_FUNDING, market]);
+}
+
+export function thresholdForDecreaseFundingKey(market: string) {
+  return hashData(["bytes32", "address"], [THRESHOLD_FOR_DECREASE_FUNDING, market]);
 }
 
 export function fundingFeeAmountPerSizeKey(market: string, collateralToken: string, isLong: boolean) {
