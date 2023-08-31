@@ -35,6 +35,12 @@ library MarketUtils {
     using Order for Order.Props;
     using Price for Price.Props;
 
+    enum FundingRateChangeType {
+        NoChange,
+        Increase,
+        Decrease
+    }
+
     // @dev struct to store the prices of tokens of a market
     // @param indexTokenPrice price of the market's index token
     // @param longTokenPrice price of the market's long token
@@ -2072,6 +2078,7 @@ library MarketUtils {
         if (configCache.fundingIncreaseFactor == 0) {
             cache.fundingFactor = getFundingFactor(dataStore, market);
 
+            // if there is no fundingIncreaseFactor then return the static fundingFactor based on open interest difference
             return (
                 Precision.applyFactor(cache.diffUsdToOpenInterestFactor, cache.fundingFactor),
                 longOpenInterest > shortOpenInterest,
@@ -2084,18 +2091,96 @@ library MarketUtils {
         cache.savedFundingFactor = getSavedFundingFactor(dataStore, market);
         cache.savedFundingFactorMagnitude = cache.savedFundingFactor.abs();
 
+        // savedFundingFactor should be adjusted if the difference is more than the thresholdForDecreaseFunding
+        // or if the skew is in the opposite direction from the current funding
+        //
+        // e.g. given the state:
+        // - thresholdForDecreaseFunding is 3%
+        // - thresholdForStableFunding is 5%
+        // - fundingIncreaseFactor is 0.01%
+        // - fundingDecreaseFactor is 0.0002%
+        // - durationInSeconds is 600 seconds
+        // - longs are paying shorts funding
+        // - there are more longs than shorts
+        // - diffUsdToOpenInterestFactor is 6%
+        // since diffUsdToOpenInterestFactor > thresholdForStableFunding
+        // savedFundingFactor should increase by 0.01% * 6% * 600 = 0.36%
+        //
+        // if the state is:
+        // - thresholdForDecreaseFunding is 3%
+        // - thresholdForStableFunding is 5%
+        // - fundingIncreaseFactor is 0.01%
+        // - fundingDecreaseFactor is 0.0002%
+        // - durationInSeconds is 600 seconds
+        // - longs are paying shorts funding
+        // - there are more longs than shorts
+        // - diffUsdToOpenInterestFactor is 4%
+        // since longs are already paying shorts, the skew is the same,
+        // and the diffUsdToOpenInterestFactor < thresholdForStableFunding
+        // savedFundingFactor should not change
+        //
+        // if the state is:
+        // - thresholdForDecreaseFunding is 3%
+        // - thresholdForStableFunding is 5%
+        // - fundingIncreaseFactor is 0.01%
+        // - fundingDecreaseFactor is 0.0002%
+        // - durationInSeconds is 600 seconds
+        // - longs are paying shorts funding
+        // - there are more longs than shorts
+        // - diffUsdToOpenInterestFactor is 2%
+        // since diffUsdToOpenInterestFactor < thresholdForDecreaseFunding
+        // savedFundingFactor should decrease by 0.0002% * 600 = 0.12%
+        //
+        // if the state is:
+        // - thresholdForDecreaseFunding is 3%
+        // - thresholdForStableFunding is 5%
+        // - fundingIncreaseFactor is 0.01%
+        // - fundingDecreaseFactor is 0.0002%
+        // - durationInSeconds is 600 seconds
+        // - longs are paying shorts funding
+        // - there are more shorts than longs
+        // - diffUsdToOpenInterestFactor is 1%
+        // since the skew is in the other direction
+        // savedFundingFactor should decrease by 0.01% * 1% * 600 = 0.06%
+
         configCache.thresholdForStableFunding = dataStore.getUint(Keys.thresholdForStableFundingKey(market));
         configCache.thresholdForDecreaseFunding = dataStore.getUint(Keys.thresholdForDecreaseFundingKey(market));
 
         // set the default of nextSavedFundingFactor as the savedFundingFactor
         cache.nextSavedFundingFactor = cache.savedFundingFactor;
 
-        if (cache.diffUsdToOpenInterestFactor < configCache.thresholdForDecreaseFunding) {
-            // if the diffUsdToOpenInterestFactor is less than the thresholdForDecreaseFunding
-            // then reduce the funding rate
+        // the default will be NoChange
+        FundingRateChangeType fundingRateChangeType;
 
+        bool isSkewTheSameDirectionAsFunding = (cache.savedFundingFactor > 0 && longOpenInterest > shortOpenInterest) || (cache.savedFundingFactor < 0 && shortOpenInterest > longOpenInterest);
+
+        if (isSkewTheSameDirectionAsFunding) {
+            if (cache.diffUsdToOpenInterestFactor > configCache.thresholdForStableFunding) {
+                fundingRateChangeType = FundingRateChangeType.Increase;
+            } else if (cache.diffUsdToOpenInterestFactor < configCache.thresholdForDecreaseFunding) {
+                fundingRateChangeType = FundingRateChangeType.Decrease;
+            }
+        } else {
+            // if the skew has changed, then the funding should increase in the opposite direction
+            fundingRateChangeType = FundingRateChangeType.Increase;
+        }
+
+        if (fundingRateChangeType == FundingRateChangeType.Increase) {
+            // increase funding rate
+            int256 increaseValue = Precision.applyFactor(cache.diffUsdToOpenInterestFactor, configCache.fundingIncreaseFactor).toInt256() * durationInSeconds.toInt256();
+
+            // if there are more longs than shorts, then the savedFundingFactor should increase
+            // otherwise the savedFundingFactor should increase in the opposite direction / decrease
+            if (longOpenInterest < shortOpenInterest) {
+                increaseValue = -increaseValue;
+            }
+
+            cache.nextSavedFundingFactor = cache.savedFundingFactor + increaseValue;
+        }
+
+        if (fundingRateChangeType == FundingRateChangeType.Decrease) {
             configCache.fundingDecreaseFactor = dataStore.getUint(Keys.fundingDecreaseFactorKey(market));
-            uint256 decreaseValue = Precision.applyFactor(cache.diffUsdToOpenInterestFactor, configCache.fundingDecreaseFactor) * durationInSeconds;
+            uint256 decreaseValue = configCache.fundingDecreaseFactor * durationInSeconds;
 
             if (cache.savedFundingFactorMagnitude < decreaseValue) {
                 // set the funding factor to 1 or -1 depending on the original savedFundingFactor
@@ -2105,20 +2190,6 @@ library MarketUtils {
                 int256 sign = cache.savedFundingFactor / cache.savedFundingFactorMagnitude.toInt256();
                 cache.nextSavedFundingFactor = (cache.savedFundingFactorMagnitude - decreaseValue).toInt256() * sign;
             }
-        } else if (cache.diffUsdToOpenInterestFactor < configCache.thresholdForStableFunding) {
-            // stable funding rate
-            // no update needed
-        } else {
-            // increase funding rate
-            int256 increaseValue = Precision.applyFactor(cache.diffUsdToOpenInterestFactor, configCache.fundingIncreaseFactor).toInt256() * durationInSeconds.toInt256();
-
-            // if there are more longs than shorts, then the savedFundingFactor should increase
-            // otherwise the savedFundingFactor should decrease
-            if (longOpenInterest < shortOpenInterest) {
-                increaseValue = -increaseValue;
-            }
-
-            cache.nextSavedFundingFactor = cache.savedFundingFactor + increaseValue;
         }
 
         configCache.minFundingFactor = dataStore.getUint(Keys.minFundingFactorKey(market));
