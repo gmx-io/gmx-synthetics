@@ -742,6 +742,8 @@ contract Oracle is RoleModule {
             params.realtimeFeedData
         );
 
+        uint256 maxRefPriceDeviationFactor = dataStore.getUint(Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR);
+
         for (uint256 i; i < params.realtimeFeedTokens.length; i++) {
             address token = params.realtimeFeedTokens[i];
 
@@ -751,9 +753,26 @@ contract Oracle is RoleModule {
             uint256 adjustedBidPrice = Precision.mulDiv(uint256(uint192(report.bid)), precision, Precision.FLOAT_PRECISION);
             uint256 adjustedAskPrice = Precision.mulDiv(uint256(uint192(report.ask)), precision, Precision.FLOAT_PRECISION);
 
+            (bool hasPriceFeed, uint256 refPrice) = _getPriceFeedPrice(dataStore, token);
+            if (hasPriceFeed) {
+                validateRefPrice(
+                    token,
+                    adjustedBidPrice,
+                    refPrice,
+                    maxRefPriceDeviationFactor
+                );
+
+                validateRefPrice(
+                    token,
+                    adjustedAskPrice,
+                    refPrice,
+                    maxRefPriceDeviationFactor
+                );
+            }
+
             Price.Props memory priceProps = Price.Props(
-                adjustedBidPrice,
-                adjustedAskPrice
+                adjustedBidPrice, // min
+                adjustedAskPrice // max
             );
 
             _setPrimaryPrice(token, priceProps);
