@@ -185,13 +185,13 @@ const config: {
     WBTC: {
       decimals: 8,
       transferGasLimit: 200 * 1000,
-      deploy: true,
+      address: "0xCcF73F4Dcbbb573296BFA656b754Fe94BB957d62",
       realtimeFeedId: "0x4254432d5553442d415242495452554d2d544553544e45540000000000000000",
     },
     USDC: {
       decimals: 6,
       transferGasLimit: 200 * 1000,
-      deploy: true,
+      address: "0x04FC936a15352a1b15b3B9c56EA002051e3DB3e5",
       realtimeFeedId: "0x555344432d5553442d415242495452554d2d544553544e455400000000000000",
     },
     SOL: {
@@ -201,13 +201,13 @@ const config: {
     USDT: {
       decimals: 6,
       transferGasLimit: 200 * 1000,
-      deploy: true,
+      address: "0xBFcBcdCbcc1b765843dCe4DF044B92FE68182a62",
       realtimeFeedId: "0x12be1859ee43f46bab53750915f20855f54e891f88ddd524f26a72d6f4deed1d",
     },
     DAI: {
       decimals: 18,
       transferGasLimit: 200 * 1000,
-      deploy: true,
+      address: "0x7b7c6c49fA99b37270077FBFA398748c27046984",
       realtimeFeedId: "0xbf1febc8c335cb236c1995c1007a928a3f7ae8307a1a20cb31334e6d316c62d1",
     },
     TEST: {
@@ -263,8 +263,8 @@ const config: {
     },
     WBTC: {
       decimals: 8,
+      address: "0x3Bd8e00c25B12E6E60fc8B6f1E1E2236102073Ca",
       transferGasLimit: 200 * 1000,
-      deploy: true,
     },
     SOL: {
       synthetic: true,
@@ -277,13 +277,13 @@ const config: {
     },
     USDT: {
       decimals: 6,
+      address: "0x50df4892Bd13f01E4e1Cd077ff394A8fa1A3fD7c",
       transferGasLimit: 200 * 1000,
-      deploy: true,
     },
     DAI: {
       decimals: 6,
       transferGasLimit: 200 * 1000,
-      deploy: true,
+      address: "0x51290cb93bE5062A6497f16D9cd3376Adf54F920",
     },
     WETH: {
       address: "0x82F0b3695Ed2324e55bbD9A9554cB4192EC3a514",
