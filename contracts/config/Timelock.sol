@@ -51,6 +51,28 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param roleKey the role to revoke
     function revokeRole(address account, bytes32 roleKey) external onlyTimelockMultisig nonReentrant {
         roleStore.revokeRole(account, roleKey);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "roleKey", roleKey);
+        eventEmitter.emitEventLog(
+            "RevokeRole",
+            eventData
+        );
+    }
+
+    function setInStrictPriceFeedMode(bool value) external onlyTimelockMultisig nonReentrant {
+        dataStore.setBool(Keys.IN_STRICT_PRICE_FEED_MODE, value);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "value", value);
+        eventEmitter.emitEventLog(
+            "SetInStrictPriceFeedMode",
+            eventData
+        );
     }
 
     // @dev increase the timelock delay
@@ -63,6 +85,14 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         timelockDelay = _timelockDelay;
 
         _validateTimelockDelay();
+
+        EventUtils.EventLogData memory eventData;
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "_timelockDelay", _timelockDelay);
+        eventEmitter.emitEventLog(
+            "IncreaseTimelockDelay",
+            eventData
+        );
     }
 
     function signalAddOracleSigner(address account) external onlyTimelockAdmin nonReentrant {
@@ -476,7 +506,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         uint256 realtimeFeedMultiplier
     ) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(
-            "setPriceFeed",
+            "setRealtimeFeed",
             token,
             feedId,
             realtimeFeedMultiplier

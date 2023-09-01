@@ -314,22 +314,8 @@ contract Oracle is RoleModule {
     }
 
     // @dev validate and set prices
-    // The _setPrices() function is a helper function that is called by the
-    // setPrices() function. It takes in several parameters: a DataStore contract
-    // instance, an EventEmitter contract instance, an array of signers, and an
-    // OracleUtils.SetPricesParams struct containing information about the tokens
-    // and their prices.
-    // The function first initializes a SetPricesCache struct to store some temporary
-    // values that will be used later in the function. It then loops through the array
-    // of tokens and sets the corresponding values in the cache struct. For each token,
-    // the function also loops through the array of signers and validates the signatures
-    // for the min and max prices for that token. If the signatures are valid, the
-    // function calculates the median min and max prices and sets them in the DataStore
-    // contract.
-    // Finally, the function emits an event to signal that the prices have been set.
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
-    // @param signers the signers of the prices
     // @param params OracleUtils.SetPricesParams
     function _setPrices(
         DataStore dataStore,
@@ -393,7 +379,7 @@ contract Oracle is RoleModule {
             reportInfo.oracleTimestamp = OracleUtils.getUncompactedOracleTimestamp(params.compactedOracleTimestamps, i);
 
             if (reportInfo.maxOracleBlockNumber >= Chain.currentBlockNumber()) {
-                revert Errors.InvalidBlockNumber(reportInfo.minOracleBlockNumber, Chain.currentBlockNumber());
+                revert Errors.InvalidBlockNumber(reportInfo.maxOracleBlockNumber, Chain.currentBlockNumber());
             }
 
             if (reportInfo.oracleTimestamp + cache.maxPriceAge < Chain.currentTimestamp()) {
@@ -413,9 +399,11 @@ contract Oracle is RoleModule {
             reportInfo.token = params.tokens[i];
 
             // only allow internal feeds if the token does not have a realtime feed id
-            innerCache.feedId = dataStore.getBytes32(Keys.realtimeFeedIdKey(reportInfo.token));
-            if (innerCache.feedId != bytes32(0)) {
-                revert Errors.HasRealtimeFeedId(reportInfo.token, innerCache.feedId);
+            if (dataStore.getBool(Keys.IN_STRICT_PRICE_FEED_MODE)) {
+                innerCache.feedId = dataStore.getBytes32(Keys.realtimeFeedIdKey(reportInfo.token));
+                if (innerCache.feedId != bytes32(0)) {
+                    revert Errors.HasRealtimeFeedId(reportInfo.token, innerCache.feedId);
+                }
             }
 
             reportInfo.precision = 10 ** OracleUtils.getUncompactedDecimal(params.compactedDecimals, i);

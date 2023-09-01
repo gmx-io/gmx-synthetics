@@ -330,8 +330,8 @@ library ExecuteWithdrawalUtils {
             prices.indexTokenPrice,
             prices.longTokenPrice,
             prices.shortTokenPrice,
-            Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-            true
+            Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
+            false
         );
 
         uint256 marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));

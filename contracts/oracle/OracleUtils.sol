@@ -82,10 +82,10 @@ library OracleUtils {
         // The median value agreed in an OCR round
         int192 median;
         // The best bid value agreed in an OCR round
-        // bid is the highest price the a buyer will pay
+        // bid is the highest price that a buyer will buy at
         int192 bid;
         // The best ask value agreed in an OCR round
-        // ask is the lowest price a seller will sell
+        // ask is the lowest price that a seller will sell at
         int192 ask;
         // The upper bound of the block range the median value was observed within
         uint64 blocknumberUpperBound;
@@ -204,9 +204,7 @@ library OracleUtils {
     }
 
     // @dev get the uncompacted oracle block numbers
-    // @param compactedOracleBlockNumbers the compacted oracle block numbers
-    // @param length the length of the uncompacted oracle block numbers
-    // @return the uncompacted oracle block numbers
+    // note that the returned block numbers may not be sorted
     function getUncompactedOracleBlockNumbers(
         uint256[] memory compactedOracleBlockNumbers,
         uint256 compactedOracleBlockNumbersLength,

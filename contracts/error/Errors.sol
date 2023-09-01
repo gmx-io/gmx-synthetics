@@ -39,6 +39,8 @@ library Errors {
     error EmptyDepositAmountsAfterSwap();
     error InvalidPoolValueForDeposit(int256 poolValue);
     error InvalidSwapOutputToken(address outputToken, address expectedOutputToken);
+    error InvalidReceiverForFirstDeposit(address receiver, address expectedReceiver);
+    error InvalidMinMarketTokensForFirstDeposit(uint256 minMarketTokens, uint256 expectedMinMarketTokens);
 
     // AdlHandler errors
     error AdlNotRequired(int256 pnlToPoolFactor, uint256 maxPnlFactorForAdl);
@@ -193,7 +195,12 @@ library Errors {
     error InvalidDecreaseOrderSize(uint256 sizeDeltaUsd, uint256 positionSizeInUsd);
     error UnableToWithdrawCollateral(int256 estimatedRemainingCollateralUsd);
     error InvalidDecreasePositionSwapType(uint256 decreasePositionSwapType);
-    error PositionShouldNotBeLiquidated();
+    error PositionShouldNotBeLiquidated(
+        string reason,
+        int256 remainingCollateralUsd,
+        int256 minCollateralUsd,
+        int256 minCollateralUsdForLeverage
+    );
 
     // IncreasePositionUtils errors
     error InsufficientCollateralAmount(uint256 collateralAmount, int256 collateralDeltaAmount);
@@ -203,7 +210,13 @@ library Errors {
     error PositionNotFound(bytes32 key);
 
     // PositionUtils errors
-    error LiquidatablePosition(string reason);
+    error LiquidatablePosition(
+        string reason,
+        int256 remainingCollateralUsd,
+        int256 minCollateralUsd,
+        int256 minCollateralUsdForLeverage
+    );
+
     error EmptyPosition();
     error InvalidPositionSizeValues(uint256 sizeInUsd, uint256 sizeInTokens);
     error MinPositionSize(uint256 positionSizeInUsd, uint256 minPositionSizeUsd);

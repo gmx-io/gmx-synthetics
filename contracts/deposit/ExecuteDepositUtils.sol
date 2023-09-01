@@ -99,6 +99,8 @@ library ExecuteDepositUtils {
         int256 priceImpactUsd;
     }
 
+    address public constant RECEIVER_FOR_FIRST_DEPOSIT = address(1);
+
     // @dev executes a deposit
     // @param params ExecuteDepositParams
     function executeDeposit(ExecuteDepositParams memory params) external {
@@ -121,6 +123,8 @@ library ExecuteDepositUtils {
         );
 
         Market.Props memory market = MarketUtils.getEnabledMarket(params.dataStore, deposit.market());
+
+        _validateFirstDeposit(params, deposit, market);
 
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(params.oracle, market);
 
@@ -420,6 +424,12 @@ library ExecuteDepositUtils {
                 positiveImpactAmount
             );
 
+            MarketUtils.validatePoolAmountForDeposit(
+                params.dataStore,
+                _params.market,
+                _params.tokenOut
+            );
+
             MarketUtils.validatePoolAmount(
                 params.dataStore,
                 _params.market,
@@ -514,5 +524,29 @@ library ExecuteDepositUtils {
         MarketUtils.validateMarketTokenBalance(params.dataStore, swapPathMarkets);
 
         return outputAmount;
+    }
+
+    function _validateFirstDeposit(
+        ExecuteDepositParams memory params,
+        Deposit.Props memory deposit,
+        Market.Props memory market
+    ) internal {
+        uint256 initialMarketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
+
+        // return if this is not the first deposit
+        if (initialMarketTokensSupply != 0) { return; }
+
+        uint256 minMarketTokens = params.dataStore.getUint(Keys.minMarketTokensForFirstDeposit(market.marketToken));
+
+        // return if there is no minMarketTokens requirement
+        if (minMarketTokens == 0) { return; }
+
+        if (deposit.receiver() != RECEIVER_FOR_FIRST_DEPOSIT) {
+            revert Errors.InvalidReceiverForFirstDeposit(deposit.receiver(), RECEIVER_FOR_FIRST_DEPOSIT);
+        }
+
+        if (deposit.minMarketTokens() < minMarketTokens) {
+            revert Errors.InvalidMinMarketTokensForFirstDeposit(deposit.minMarketTokens(), minMarketTokens);
+        }
     }
 }

@@ -16,6 +16,9 @@ library Keys {
     // @dev for holding tokens that could not be sent out
     bytes32 public constant HOLDING_ADDRESS = keccak256(abi.encode("HOLDING_ADDRESS"));
 
+    // @dev key for in strict price feed mode
+    bytes32 public constant IN_STRICT_PRICE_FEED_MODE = keccak256(abi.encode("IN_STRICT_PRICE_FEED_MODE"));
+
     // @dev key for the minimum gas that should be forwarded for execution error handling
     bytes32 public constant MIN_HANDLE_EXECUTION_ERROR_GAS = keccak256(abi.encode("MIN_HANDLE_EXECUTION_ERROR_GAS"));
 
@@ -79,6 +82,8 @@ library Keys {
     bytes32 public constant MAX_SWAP_PATH_LENGTH = keccak256(abi.encode("MAX_SWAP_PATH_LENGTH"));
     // @dev key used to store markets observed in a swap path, to ensure that a swap path contains unique markets
     bytes32 public constant SWAP_PATH_MARKET_FLAG = keccak256(abi.encode("SWAP_PATH_MARKET_FLAG"));
+    // @dev key used to store the min market tokens for the first deposit for a market
+    bytes32 public constant MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT = keccak256(abi.encode("MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT"));
 
     // @dev key for whether the create deposit feature is disabled
     bytes32 public constant CREATE_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("CREATE_DEPOSIT_FEATURE_DISABLED"));
@@ -1267,6 +1272,16 @@ library Keys {
     function isMarketDisabledKey(address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             IS_MARKET_DISABLED,
+            market
+        ));
+    }
+
+    // @dev key for min market tokens for first deposit
+    // @param market the market to check
+    // @return key for min market tokens for first deposit
+    function minMarketTokensForFirstDeposit(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT,
             market
         ));
     }

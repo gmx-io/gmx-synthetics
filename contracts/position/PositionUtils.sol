@@ -126,6 +126,12 @@ library PositionUtils {
         int256 uncappedPositionPnlUsd;
     }
 
+    struct IsPositionLiquidatableInfo {
+        int256 remainingCollateralUsd;
+        int256 minCollateralUsd;
+        int256 minCollateralUsdForLeverage;
+    }
+
     // @dev IsPositionLiquidatableCache struct used in isPositionLiquidatable
     // to avoid stack too deep errors
     // @param positionPnlUsd the position's pnl in USD
@@ -134,8 +140,6 @@ library PositionUtils {
     // @param collateralUsd the position's collateral in USD
     // @param usdDeltaForPriceImpact the usdDelta value for the price impact calculation
     // @param priceImpactUsd the price impact of closing the position in USD
-    // @param minCollateralUsd the minimum allowed collateral in USD
-    // @param remainingCollateralUsd the remaining position collateral in USD
     struct IsPositionLiquidatableCache {
         int256 positionPnlUsd;
         uint256 minCollateralFactor;
@@ -144,9 +148,6 @@ library PositionUtils {
         int256 usdDeltaForPriceImpact;
         int256 priceImpactUsd;
         bool hasPositiveImpact;
-        int256 minCollateralUsd;
-        int256 minCollateralUsdForLeverage;
-        int256 remainingCollateralUsd;
     }
 
     struct GetExecutionPriceForDecreaseCache {
@@ -290,7 +291,7 @@ library PositionUtils {
             }
         }
 
-        (bool isLiquidatable, string memory reason) = isPositionLiquidatable(
+        (bool isLiquidatable, string memory reason, IsPositionLiquidatableInfo memory info) = isPositionLiquidatable(
             dataStore,
             referralStorage,
             position,
@@ -300,7 +301,12 @@ library PositionUtils {
         );
 
         if (isLiquidatable) {
-            revert Errors.LiquidatablePosition(reason);
+            revert Errors.LiquidatablePosition(
+                reason,
+                info.remainingCollateralUsd,
+                info.minCollateralUsd,
+                info.minCollateralUsdForLeverage
+            );
         }
     }
 
@@ -317,8 +323,9 @@ library PositionUtils {
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
         bool shouldValidateMinCollateralUsd
-    ) public view returns (bool, string memory) {
+    ) public view returns (bool, string memory, IsPositionLiquidatableInfo memory) {
         IsPositionLiquidatableCache memory cache;
+        IsPositionLiquidatableInfo memory info;
 
         (cache.positionPnlUsd, /* int256 uncappedBasePnlUsd */,  /* uint256 sizeDeltaInTokens */) = getPositionPnlUsd(
             dataStore,
@@ -394,21 +401,21 @@ library PositionUtils {
         // the position's pnl is counted as collateral for the liquidation check
         // as a position in profit should not be liquidated if the pnl is sufficient
         // to cover the position's fees
-        cache.remainingCollateralUsd =
+        info.remainingCollateralUsd =
             cache.collateralUsd.toInt256()
             + cache.positionPnlUsd
             + cache.priceImpactUsd
             - collateralCostUsd.toInt256();
 
         if (shouldValidateMinCollateralUsd) {
-            cache.minCollateralUsd = dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256();
-            if (cache.remainingCollateralUsd < cache.minCollateralUsd) {
-                return (true, "min collateral");
+            info.minCollateralUsd = dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256();
+            if (info.remainingCollateralUsd < info.minCollateralUsd) {
+                return (true, "min collateral", info);
             }
         }
 
-        if (cache.remainingCollateralUsd <= 0) {
-            return (true, "< 0");
+        if (info.remainingCollateralUsd <= 0) {
+            return (true, "< 0", info);
         }
 
         cache.minCollateralFactor = MarketUtils.getMinCollateralFactor(dataStore, market.marketToken);
@@ -416,13 +423,13 @@ library PositionUtils {
         // validate if (remaining collateral) / position.size is less than the min collateral factor (max leverage exceeded)
         // this validation includes the position fee to be paid when closing the position
         // i.e. if the position does not have sufficient collateral after closing fees it is considered a liquidatable position
-        cache.minCollateralUsdForLeverage = Precision.applyFactor(position.sizeInUsd(), cache.minCollateralFactor).toInt256();
+        info.minCollateralUsdForLeverage = Precision.applyFactor(position.sizeInUsd(), cache.minCollateralFactor).toInt256();
 
-        if (cache.remainingCollateralUsd < cache.minCollateralUsdForLeverage) {
-            return (true, "min collateral for leverage");
+        if (info.remainingCollateralUsd < info.minCollateralUsdForLeverage) {
+            return (true, "min collateral for leverage", info);
         }
 
-        return (false, "");
+        return (false, "", info);
     }
 
     // fees and price impact are not included for the willPositionCollateralBeSufficient validation

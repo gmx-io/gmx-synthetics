@@ -215,7 +215,7 @@ library DecreasePositionUtils {
         PositionUtils.updateFundingAndBorrowingState(params, cache.prices);
 
         if (BaseOrderUtils.isLiquidationOrder(params.order.orderType())) {
-            (bool isLiquidatable, /* string memory reason */) = PositionUtils.isPositionLiquidatable(
+            (bool isLiquidatable, string memory reason, PositionUtils.IsPositionLiquidatableInfo memory info) = PositionUtils.isPositionLiquidatable(
                 params.contracts.dataStore,
                 params.contracts.referralStorage,
                 params.position,
@@ -225,7 +225,12 @@ library DecreasePositionUtils {
             );
 
             if (!isLiquidatable) {
-                revert Errors.PositionShouldNotBeLiquidated();
+                revert Errors.PositionShouldNotBeLiquidated(
+                    reason,
+                    info.remainingCollateralUsd,
+                    info.minCollateralUsd,
+                    info.minCollateralUsdForLeverage
+                );
             }
         }
 
