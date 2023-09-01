@@ -1,10 +1,10 @@
 import hre from "hardhat";
 
-import { getMarketTokenAddress, DEFAULT_MARKET_TYPE } from "../utils/market";
 import { bigNumberify, expandDecimals } from "../utils/math";
 
 import { WNT, ExchangeRouter, MintableToken } from "../typechain-types";
 import { DepositUtils } from "../typechain-types/contracts/exchange/DepositHandler";
+import { DEFAULT_MARKET_TYPE, getMarketTokenAddress } from "../utils/market";
 
 const { ethers } = hre;
 
@@ -14,6 +14,10 @@ async function getValues(): Promise<{
   if (hre.network.name === "avalancheFuji") {
     return {
       wnt: await ethers.getContractAt("WNT", "0x1D308089a2D1Ced3f1Ce36B1FcaF815b07217be3"),
+    };
+  } else if (hre.network.name === "arbitrumGoerli") {
+    return {
+      wnt: await ethers.getContractAt("WNT", "0xe39Ab88f8A4777030A534146A9Ca3B52bd5D43A3"),
     };
   } else if (hre.network.name === "localhost") {
     return {
@@ -63,6 +67,7 @@ async function main() {
   }
   console.log("USDC balance %s", await usdc.balanceOf(wallet.address));
 
+  // WETH market 0x70d95587d40A2caf56bd97485aB3Eec10Bee6336
   const wntUsdMarketAddress = await getMarketTokenAddress(
     wnt.address,
     wnt.address,
@@ -86,6 +91,7 @@ async function main() {
     longTokenSwapPath: [],
     initialShortToken: usdc.address,
     shortTokenSwapPath: [],
+    uiFeeReceiver: ethers.constants.AddressZero,
   };
   console.log("exchange router %s", exchangeRouter.address);
   console.log("creating deposit %s", JSON.stringify(params));
@@ -97,9 +103,16 @@ async function main() {
   ];
   console.log("multicall args", multicallArgs);
 
+  const result = await exchangeRouter.callStatic.multicall(multicallArgs, {
+    value: longTokenAmount.add(executionFee),
+    gasLimit: 8000000,
+  });
+
+  console.log("call result: %s", result);
+
   const tx = await exchangeRouter.multicall(multicallArgs, {
     value: longTokenAmount.add(executionFee),
-    gasLimit: 2500000,
+    gasLimit: 8000000,
   });
 
   console.log("transaction sent", tx.hash);

@@ -91,8 +91,18 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         ],
       },
       {
-        // Chainlink keeper
-        account: "0x5051FD154320584c9Cc2071aed772656E8fcd855",
+        // Chainlink order executor
+        account: "0xE0886d9baAaD385F37d460A4ec7b32b79a3731e0",
+        roles: ["ORDER_KEEPER"],
+      },
+      {
+        // Chainlink deposit executor
+        account: "0x239878637fA148819e32Fb8799152bf54F5A34a6",
+        roles: ["ORDER_KEEPER"],
+      },
+      {
+        // Chainlink withdrawal executor
+        account: "0x6b2e203597Fe6D28Ad44CEFb10Df34d6Ba00721A",
         roles: ["ORDER_KEEPER"],
       },
     ],

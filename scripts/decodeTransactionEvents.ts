@@ -23,7 +23,7 @@ async function main() {
       const parsedLog = eventEmitterInterface.parseLog(log);
       const eventName = parsedLog.args[1];
       const eventData = parsedLog.args[parsedLog.args.length - 1];
-      console.log("\nLog %s %s: %s", i, parsedLog.name, eventName);
+      console.log("\nLog %s %s: %s emitted by %s", i, parsedLog.name, eventName, log.address);
 
       for (const [i, topic] of log.topics.entries()) {
         console.log("  Topic %s: %s", i, topic);
