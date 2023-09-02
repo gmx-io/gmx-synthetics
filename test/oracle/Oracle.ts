@@ -394,6 +394,8 @@ describe("Oracle", () => {
 
     await dataStore.setBytes32(keys.realtimeFeedIdKey(wnt.address), hashString("WNT"));
 
+    await dataStore.setBool(keys.IN_STRICT_PRICE_FEED_MODE, true);
+
     await expect(
       oracle.setPrices(dataStore.address, eventEmitter.address, {
         priceFeedTokens: [],

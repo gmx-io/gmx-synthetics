@@ -530,7 +530,7 @@ library ExecuteDepositUtils {
         ExecuteDepositParams memory params,
         Deposit.Props memory deposit,
         Market.Props memory market
-    ) internal {
+    ) internal view {
         uint256 initialMarketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
 
         // return if this is not the first deposit
