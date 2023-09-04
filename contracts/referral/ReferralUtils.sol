@@ -27,9 +27,10 @@ library ReferralUtils {
         address account,
         bytes32 referralCode
     ) internal {
-        if (referralCode == bytes32(0)) {
-            return;
-        }
+        if (referralCode == bytes32(0)) { return; }
+
+        // skip setting of the referral code if the user already has a referral code
+        if (referralStorage.traderReferralCodes(account) != bytes32(0)) { return; }
 
         referralStorage.setTraderReferralCode(account, referralCode);
     }
