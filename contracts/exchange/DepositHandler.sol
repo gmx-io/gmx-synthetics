@@ -100,10 +100,16 @@ contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, O
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
         uint256 startingGas = gasleft();
+
+        Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
+        uint256 estimatedGasLimit = GasUtils.estimateExecuteDepositGasLimit(dataStore, deposit);
+        GasUtils.validateExecutionGas(dataStore, startingGas, estimatedGasLimit);
+
         uint256 executionGas = GasUtils.getExecutionGas(dataStore, startingGas);
 
         try this._executeDeposit{ gas: executionGas }(
             key,
+            deposit,
             oracleParams,
             msg.sender
         ) {
@@ -128,11 +134,12 @@ contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, O
         withSimulatedOraclePrices(oracle, params)
         globalNonReentrant
     {
-
         OracleUtils.SetPricesParams memory oracleParams;
+        Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
 
         this._executeDeposit(
             key,
+            deposit,
             oracleParams,
             msg.sender
         );
@@ -144,6 +151,7 @@ contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, O
     // @param startingGas the starting gas
     function _executeDeposit(
         bytes32 key,
+        Deposit.Props memory deposit,
         OracleUtils.SetPricesParams memory oracleParams,
         address keeper
     ) external onlySelf {
@@ -183,7 +191,7 @@ contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, O
             startingGas
         );
 
-        ExecuteDepositUtils.executeDeposit(params);
+        ExecuteDepositUtils.executeDeposit(params, deposit);
     }
 
     // @dev handle errors from deposits

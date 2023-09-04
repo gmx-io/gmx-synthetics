@@ -102,10 +102,16 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
         withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
     {
         uint256 startingGas = gasleft();
+
+        Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
+        uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(dataStore, withdrawal);
+        GasUtils.validateExecutionGas(dataStore, startingGas, estimatedGasLimit);
+
         uint256 executionGas = GasUtils.getExecutionGas(dataStore, startingGas);
 
         try this._executeWithdrawal{ gas: executionGas }(
             key,
+            withdrawal,
             oracleParams,
             msg.sender
         ) {
@@ -132,9 +138,11 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
     {
 
         OracleUtils.SetPricesParams memory oracleParams;
+        Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
 
         this._executeWithdrawal(
             key,
+            withdrawal,
             oracleParams,
             msg.sender
         );
@@ -146,6 +154,7 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
     // @param startingGas the starting gas
     function _executeWithdrawal(
         bytes32 key,
+        Withdrawal.Props memory withdrawal,
         OracleUtils.SetPricesParams memory oracleParams,
         address keeper
     ) external onlySelf {
@@ -185,7 +194,7 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
             startingGas
         );
 
-        ExecuteWithdrawalUtils.executeWithdrawal(params);
+        ExecuteWithdrawalUtils.executeWithdrawal(params, withdrawal);
     }
 
     function _handleWithdrawalError(

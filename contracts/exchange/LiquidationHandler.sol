@@ -57,8 +57,11 @@ contract LiquidationHandler is BaseOrderHandler {
             isLong
         );
 
+        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+
         BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(
             key,
+            order,
             oracleParams,
             msg.sender,
             startingGas,

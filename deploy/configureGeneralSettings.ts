@@ -12,7 +12,13 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
   await setUintIfDifferent(
     keys.MIN_HANDLE_EXECUTION_ERROR_GAS,
     generalConfig.minHandleExecutionErrorGas,
-    "min handle execution error gas"
+    "minHandleExecutionErrorGas"
+  );
+
+  await setUintIfDifferent(
+    keys.MIN_ADDITIONAL_GAS_FOR_EXECUTION,
+    generalConfig.minAdditionalGasForExecution,
+    "minAdditionalGasForExecution"
   );
 
   await setUintIfDifferent(keys.MAX_CALLBACK_GAS_LIMIT, generalConfig.maxCallbackGasLimit, "max callback gas limit");

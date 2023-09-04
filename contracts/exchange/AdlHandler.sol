@@ -162,8 +162,11 @@ contract AdlHandler is BaseOrderHandler {
             )
         );
 
+        Order.Props memory order = OrderStoreUtils.get(dataStore, cache.key);
+
         BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(
             cache.key,
+            order,
             oracleParams,
             msg.sender,
             cache.startingGas,

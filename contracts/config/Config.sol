@@ -226,6 +226,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.HOLDING_ADDRESS] = true;
 
         allowedBaseKeys[Keys.MIN_HANDLE_EXECUTION_ERROR_GAS] = true;
+        allowedBaseKeys[Keys.MIN_ADDITIONAL_GAS_FOR_EXECUTION] = true;
 
         allowedBaseKeys[Keys.IS_MARKET_DISABLED] = true;
 

@@ -39,13 +39,24 @@ library GasUtils {
         return dataStore.getUint(Keys.MIN_HANDLE_EXECUTION_ERROR_GAS);
     }
 
+    function getMinAdditionalGasForExecution(DataStore dataStore) internal view returns (uint256) {
+        return dataStore.getUint(Keys.MIN_ADDITIONAL_GAS_FOR_EXECUTION);
+    }
+
     function getExecutionGas(DataStore dataStore, uint256 startingGas) internal view returns (uint256) {
         uint256 minHandleErrorGas = GasUtils.getMinHandleExecutionErrorGas(dataStore);
         if (startingGas < minHandleErrorGas) {
-            revert Errors.InsufficientExecutionGas(startingGas, minHandleErrorGas);
+            revert Errors.InsufficientExecutionGasForErrorHandling(startingGas, minHandleErrorGas);
         }
 
         return startingGas - minHandleErrorGas;
+    }
+
+    function validateExecutionGas(DataStore dataStore, uint256 startingGas, uint256 estimatedGasLimit) internal view {
+        uint256 minAdditionalGasForExecution = getMinAdditionalGasForExecution(dataStore);
+        if (startingGas < estimatedGasLimit + minAdditionalGasForExecution) {
+            revert Errors.InsufficientExecutionGas(startingGas, estimatedGasLimit, minAdditionalGasForExecution);
+        }
     }
 
     // @dev pay the keeper the execution fee and refund any excess amount

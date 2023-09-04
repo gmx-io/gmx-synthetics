@@ -22,6 +22,9 @@ library Keys {
     // @dev key for the minimum gas that should be forwarded for execution error handling
     bytes32 public constant MIN_HANDLE_EXECUTION_ERROR_GAS = keccak256(abi.encode("MIN_HANDLE_EXECUTION_ERROR_GAS"));
 
+    // @dev key for the min additional gas for execution
+    bytes32 public constant MIN_ADDITIONAL_GAS_FOR_EXECUTION = keccak256(abi.encode("MIN_ADDITIONAL_GAS_FOR_EXECUTION"));
+
     // @dev for a global reentrancy guard
     bytes32 public constant REENTRANCY_GUARD_STATUS = keccak256(abi.encode("REENTRANCY_GUARD_STATUS"));
 

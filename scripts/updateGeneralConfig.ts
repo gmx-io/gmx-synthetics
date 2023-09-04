@@ -18,6 +18,14 @@ const processGeneralConfig = async ({ generalConfig, handleConfig }) => {
 
   await handleConfig(
     "uint",
+    keys.MIN_ADDITIONAL_GAS_FOR_EXECUTION,
+    "0x",
+    generalConfig.minAdditionalGasForExecution,
+    `minAdditionalGasForExecution`
+  );
+
+  await handleConfig(
+    "uint",
     keys.MAX_CALLBACK_GAS_LIMIT,
     "0x",
     generalConfig.maxCallbackGasLimit,

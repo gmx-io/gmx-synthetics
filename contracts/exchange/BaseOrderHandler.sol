@@ -62,6 +62,7 @@ contract BaseOrderHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
     // @return the required BaseOrderUtils.ExecuteOrderParams params to execute the order
     function _getExecuteOrderParams(
         bytes32 key,
+        Order.Props memory order,
         OracleUtils.SetPricesParams memory oracleParams,
         address keeper,
         uint256 startingGas,
@@ -70,7 +71,7 @@ contract BaseOrderHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         BaseOrderUtils.ExecuteOrderParams memory params;
 
         params.key = key;
-        params.order = OrderStoreUtils.get(dataStore, key);
+        params.order = order;
         params.swapPathMarkets = MarketUtils.getSwapPathMarkets(
             dataStore,
             params.order.swapPath()

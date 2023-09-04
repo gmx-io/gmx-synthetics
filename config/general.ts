@@ -7,7 +7,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       feeReceiver: ethers.constants.AddressZero,
       holdingAddress: ethers.constants.AddressZero,
       maxUiFeeFactor: decimalToFloat(5, 5), // 0.005%
-      minHandleExecutionErrorGas: 1000000,
+      minHandleExecutionErrorGas: 1_000_000,
+      minAdditionalGasForExecution: 1_000_000,
 
       depositGasLimitSingle: 0,
       depositGasLimitMultiple: 0,

@@ -6,7 +6,9 @@ export const NONCE = hashString("NONCE");
 export const FEE_RECEIVER = hashString("FEE_RECEIVER");
 export const HOLDING_ADDRESS = hashString("HOLDING_ADDRESS");
 export const IN_STRICT_PRICE_FEED_MODE = hashString("IN_STRICT_PRICE_FEED_MODE");
+
 export const MIN_HANDLE_EXECUTION_ERROR_GAS = hashString("MIN_HANDLE_EXECUTION_ERROR_GAS");
+export const MIN_ADDITIONAL_GAS_FOR_EXECUTION = hashString("MIN_ADDITIONAL_GAS_FOR_EXECUTION");
 
 export const MAX_LEVERAGE = hashString("MAX_LEVERAGE");
 

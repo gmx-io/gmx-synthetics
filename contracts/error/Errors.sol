@@ -63,7 +63,8 @@ library Errors {
     // GasUtils errors
     error InsufficientExecutionFee(uint256 minExecutionFee, uint256 executionFee);
     error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);
-    error InsufficientExecutionGas(uint256 startingGas, uint256 minHandleErrorGas);
+    error InsufficientExecutionGasForErrorHandling(uint256 startingGas, uint256 minHandleErrorGas);
+    error InsufficientExecutionGas(uint256 startingGas, uint256 estimatedGasLimit, uint256 minAdditionalGasForExecution);
 
     // MarketFactory errors
     error MarketAlreadyExists(bytes32 salt, address existingMarketAddress);

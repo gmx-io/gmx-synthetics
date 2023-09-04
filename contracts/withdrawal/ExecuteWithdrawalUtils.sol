@@ -87,11 +87,10 @@ library ExecuteWithdrawalUtils {
      *
      * @param params The parameters for executing the withdrawal.
      */
-    function executeWithdrawal(ExecuteWithdrawalParams memory params) external {
+    function executeWithdrawal(ExecuteWithdrawalParams memory params, Withdrawal.Props memory withdrawal) external {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
-        Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(params.dataStore, params.key);
         WithdrawalStoreUtils.remove(params.dataStore, params.key, withdrawal.account());
 
         if (withdrawal.account() == address(0)) {
