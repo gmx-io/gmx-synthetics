@@ -344,7 +344,66 @@ For example if the funding factor per second is 1 / 50,000, and the funding expo
 
 The funding fee per second for shorts would be `-0.00001 * 150,000 / 50,000 => 0.00003 => -0.003%`.
 
-It is also possible to set a stableFundingFactor, this would result in the specified funding factor being used instead of the dynamic funding factor.
+It is also possible to set a fundingIncreaseFactorPerSecond value, this would result in the following funding logic:
+
+- The `longShortImbalance` is calculated as `[abs(longOpenInterest - shortOpenInterest) / totalOpenInterest] ^ fundingExponentFactor`
+- If the current `longShortImbalance` is more than the `thresholdForStableFunding`, then the funding rate will increase by `longShortImbalance * fundingIncreaseFactorPerSecond`
+- If the current `longShortImbalance` is more than `thresholdForDecreaseFunding` and less than `thresholdForStableFunding` and the skew is in the same direction as the funding, then the funding rate will not change
+- If the current `longShortImbalance` is less than `thresholdForDecreaseFunding` and the skew is in the same direction as the funding, then the funding rate will decrease by `fundingDecreaseFactorPerSecond`
+
+## Examples
+
+### Example 1
+
+- thresholdForDecreaseFunding is 3%
+- thresholdForStableFunding is 5%
+- fundingIncreaseFactorPerSecond is 0.0001%
+- fundingDecreaseFactorPerSecond is 0.000002%
+- durationInSeconds is 600 seconds
+- longs are paying shorts funding
+- there are more longs than shorts
+- diffUsdToOpenInterestFactor is 6%
+
+Since diffUsdToOpenInterestFactor > thresholdForStableFunding, savedFundingFactorPerSecond should increase by `0.0001% * 6% * 600 = 0.0036%`
+
+### Example 2
+
+- thresholdForDecreaseFunding is 3%
+- thresholdForStableFunding is 5%
+- fundingIncreaseFactorPerSecond is 0.0001%
+- fundingDecreaseFactorPerSecond is 0.000002%
+- durationInSeconds is 600 seconds
+- longs are paying shorts funding
+- there are more longs than shorts
+- diffUsdToOpenInterestFactor is 4%
+
+Since longs are already paying shorts, the skew is the same, and the diffUsdToOpenInterestFactor < thresholdForStableFunding, savedFundingFactorPerSecond should not change
+
+### Example 3
+
+- thresholdForDecreaseFunding is 3%
+- thresholdForStableFunding is 5%
+- fundingIncreaseFactorPerSecond is 0.0001%
+- fundingDecreaseFactorPerSecond is 0.000002%
+- durationInSeconds is 600 seconds
+- longs are paying shorts funding
+- there are more longs than shorts
+- diffUsdToOpenInterestFactor is 2%
+
+Since diffUsdToOpenInterestFactor < thresholdForDecreaseFunding, savedFundingFactorPerSecond should decrease by `0.000002% * 600 = 0.0012%`
+
+### Example 4
+
+- thresholdForDecreaseFunding is 3%
+- thresholdForStableFunding is 5%
+- fundingIncreaseFactorPerSecond is 0.0001%
+- fundingDecreaseFactorPerSecond is 0.000002%
+- durationInSeconds is 600 seconds
+- longs are paying shorts funding
+- there are more shorts than longs
+- diffUsdToOpenInterestFactor is 1%
+
+Since the skew is in the other direction, savedFundingFactorPerSecond should decrease by `0.0001% * 1% * 600 = 0.0006%`
 
 # Borrowing Fees
 
