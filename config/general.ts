@@ -48,6 +48,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     holdingAddress: "0x3f59203ea1c66527422998b54287e1efcacbe2c5",
     maxUiFeeFactor: decimalToFloat(2, 4), // 0.0002, 0.02%
     minHandleExecutionErrorGas: 1_000_000, // measured gas required for an order cancellation: ~600,000
+    minAdditionalGasForExecution: 1_000_000,
 
     depositGasLimitSingle: 1_500_000,
     depositGasLimitMultiple: 1_800_000,
