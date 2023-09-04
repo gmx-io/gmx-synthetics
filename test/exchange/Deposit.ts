@@ -28,6 +28,7 @@ describe("Exchange.Deposit", () => {
     dataStore,
     depositVault,
     depositHandler,
+    depositStoreUtilsTest,
     ethUsdMarket,
     ethUsdSpotOnlyMarket,
     ethUsdSingleTokenMarket,
@@ -45,6 +46,7 @@ describe("Exchange.Deposit", () => {
       dataStore,
       depositVault,
       depositHandler,
+      depositStoreUtilsTest,
       ethUsdMarket,
       ethUsdSpotOnlyMarket,
       ethUsdSingleTokenMarket,
@@ -430,9 +432,12 @@ describe("Exchange.Deposit", () => {
   });
 
   it("_executeDeposit", async () => {
+    const emptyDeposit = depositStoreUtilsTest.getEmptyDeposit();
+
     await expect(
       depositHandler.connect(user0)._executeDeposit(
         HashZero,
+        emptyDeposit,
         {
           signerInfo: 0,
           tokens: [],
