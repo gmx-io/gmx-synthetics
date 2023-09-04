@@ -28,7 +28,7 @@ describe("Exchange.Deposit", () => {
     dataStore,
     depositVault,
     depositHandler,
-    depositStoreUtilsTest,
+    depositStoreUtils,
     ethUsdMarket,
     ethUsdSpotOnlyMarket,
     ethUsdSingleTokenMarket,
@@ -46,7 +46,7 @@ describe("Exchange.Deposit", () => {
       dataStore,
       depositVault,
       depositHandler,
-      depositStoreUtilsTest,
+      depositStoreUtils,
       ethUsdMarket,
       ethUsdSpotOnlyMarket,
       ethUsdSingleTokenMarket,
@@ -432,7 +432,13 @@ describe("Exchange.Deposit", () => {
   });
 
   it("_executeDeposit", async () => {
-    const emptyDeposit = depositStoreUtilsTest.getEmptyDeposit();
+    const depositStoreUtilsTest = await deployContract("DepositStoreUtilsTest", [], {
+      libraries: {
+        DepositStoreUtils: depositStoreUtils.address,
+      },
+    });
+
+    const emptyDeposit = await depositStoreUtilsTest.getEmptyDeposit();
 
     await expect(
       depositHandler.connect(user0)._executeDeposit(
