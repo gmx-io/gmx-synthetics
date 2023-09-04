@@ -39,21 +39,21 @@ library GasUtils {
         return dataStore.getUint(Keys.MIN_HANDLE_EXECUTION_ERROR_GAS);
     }
 
+    function getMinHandleExecutionErrorGasToForward(DataStore dataStore) internal view returns (uint256) {
+        return dataStore.getUint(Keys.MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD);
+    }
+
     function getMinAdditionalGasForExecution(DataStore dataStore) internal view returns (uint256) {
         return dataStore.getUint(Keys.MIN_ADDITIONAL_GAS_FOR_EXECUTION);
     }
 
-    function getMinAdditionalGasForExecutionError(DataStore dataStore) internal view returns (uint256) {
-        return dataStore.getUint(Keys.MIN_ADDITIONAL_GAS_FOR_EXECUTION_ERROR);
-    }
-
     function getExecutionGas(DataStore dataStore, uint256 startingGas) internal view returns (uint256) {
-        uint256 minHandleErrorGas = GasUtils.getMinHandleExecutionErrorGas(dataStore);
-        if (startingGas < minHandleErrorGas) {
-            revert Errors.InsufficientExecutionGasForErrorHandling(startingGas, minHandleErrorGas);
+        uint256 minHandleExecutionErrorGasToForward = GasUtils.getMinHandleExecutionErrorGasToForward(dataStore);
+        if (startingGas < minHandleExecutionErrorGasToForward) {
+            revert Errors.InsufficientExecutionGasForErrorHandling(startingGas, minHandleExecutionErrorGasToForward);
         }
 
-        return startingGas - minHandleErrorGas;
+        return startingGas - minHandleExecutionErrorGasToForward;
     }
 
     function validateExecutionGas(DataStore dataStore, uint256 startingGas, uint256 estimatedGasLimit) internal view {
@@ -71,17 +71,19 @@ library GasUtils {
     // this could lead to invalid cancellations due to insufficient gas used by keepers
     //
     // to help prevent this, out of gas errors are attempted to be caught and reverted for estimateGas calls
+    //
+    // a malicious user could cause the estimateGas call of a keeper to fail, in which case the keeper could
+    // still attempt to execute the transaction with a reasonable gas limit
     function validateExecutionErrorGas(DataStore dataStore, bytes memory reasonBytes) internal view {
         // skip the validation if the execution did not fail due to an out of gas error
         // also skip the validation if this is not invoked in an estimateGas call (tx.gasprice != 0)
         if (reasonBytes.length != 0 || tx.gasprice != 0) { return; }
 
         uint256 gas = gasleft();
-        uint256 minHandleErrorGas = getMinHandleExecutionErrorGas(dataStore);
-        uint256 minAdditionalGasForExecutionError = getMinAdditionalGasForExecutionError(dataStore);
+        uint256 minHandleExecutionErrorGas = getMinHandleExecutionErrorGas(dataStore);
 
-        if (gas < minHandleErrorGas + minAdditionalGasForExecutionError) {
-            revert Errors.InsufficientExecutionErrorGas(gas, minHandleErrorGas, minAdditionalGasForExecutionError);
+        if (gas < minHandleExecutionErrorGas) {
+            revert Errors.InsufficientHandleExecutionErrorGas(gas, minHandleExecutionErrorGas);
         }
     }
 

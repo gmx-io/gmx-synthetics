@@ -19,11 +19,11 @@ library Keys {
     // @dev key for in strict price feed mode
     bytes32 public constant IN_STRICT_PRICE_FEED_MODE = keccak256(abi.encode("IN_STRICT_PRICE_FEED_MODE"));
 
-    // @dev key for the minimum gas that should be forwarded for execution error handling
+    // @dev key for the minimum gas for execution error
     bytes32 public constant MIN_HANDLE_EXECUTION_ERROR_GAS = keccak256(abi.encode("MIN_HANDLE_EXECUTION_ERROR_GAS"));
 
-    // @dev key for the min additional gas for execution error
-    bytes32 public constant MIN_ADDITIONAL_GAS_FOR_EXECUTION_ERROR = keccak256(abi.encode("MIN_ADDITIONAL_GAS_FOR_EXECUTION_ERROR"));
+    // @dev key for the minimum gas that should be forwarded for execution error handling
+    bytes32 public constant MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD = keccak256(abi.encode("MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD"));
 
     // @dev key for the min additional gas for execution
     bytes32 public constant MIN_ADDITIONAL_GAS_FOR_EXECUTION = keccak256(abi.encode("MIN_ADDITIONAL_GAS_FOR_EXECUTION"));

@@ -183,7 +183,7 @@ describe("Config", () => {
       },
       {
         key: keys.MIN_HANDLE_EXECUTION_ERROR_GAS,
-        initial: 1_000_000,
+        initial: 1_200_000,
         type: "Uint",
       },
       {

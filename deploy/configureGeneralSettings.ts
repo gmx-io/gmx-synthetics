@@ -16,15 +16,15 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
   );
 
   await setUintIfDifferent(
-    keys.MIN_ADDITIONAL_GAS_FOR_EXECUTION,
-    generalConfig.minAdditionalGasForExecution,
-    "minAdditionalGasForExecution"
+    keys.MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD,
+    generalConfig.minHandleExecutionErrorGasToForward,
+    "minHandleExecutionErrorGasToForward"
   );
 
   await setUintIfDifferent(
-    keys.MIN_ADDITIONAL_GAS_FOR_EXECUTION_ERROR,
-    generalConfig.minAdditionalGasForExecutionError,
-    "minAdditionalGasForExecutionError"
+    keys.MIN_ADDITIONAL_GAS_FOR_EXECUTION,
+    generalConfig.minAdditionalGasForExecution,
+    "minAdditionalGasForExecution"
   );
 
   await setUintIfDifferent(keys.MAX_CALLBACK_GAS_LIMIT, generalConfig.maxCallbackGasLimit, "max callback gas limit");

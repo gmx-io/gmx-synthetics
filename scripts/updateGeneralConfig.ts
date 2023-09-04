@@ -18,6 +18,14 @@ const processGeneralConfig = async ({ generalConfig, handleConfig }) => {
 
   await handleConfig(
     "uint",
+    keys.MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD,
+    "0x",
+    generalConfig.minHandleExecutionErrorGasToForward,
+    `minHandleExecutionErrorGasToForward`
+  );
+
+  await handleConfig(
+    "uint",
     keys.MIN_ADDITIONAL_GAS_FOR_EXECUTION,
     "0x",
     generalConfig.minAdditionalGasForExecution,
