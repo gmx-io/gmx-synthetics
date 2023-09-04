@@ -1274,60 +1274,6 @@ library MarketUtils {
         cache.savedFundingFactorPerSecond = getSavedFundingFactorPerSecond(dataStore, market);
         cache.savedFundingFactorPerSecondMagnitude = cache.savedFundingFactorPerSecond.abs();
 
-        // savedFundingFactorPerSecond should be adjusted if the difference is more than the thresholdForDecreaseFunding
-        // or if the skew is in the opposite direction from the current funding
-        //
-        // note that the savedFundingFactorPerSecond is the factor per second
-        //
-        // e.g. given the state:
-        // - thresholdForDecreaseFunding is 3%
-        // - thresholdForStableFunding is 5%
-        // - fundingIncreaseFactorPerSecond is 0.0001%
-        // - fundingDecreaseFactorPerSecond is 0.000002%
-        // - durationInSeconds is 600 seconds
-        // - longs are paying shorts funding
-        // - there are more longs than shorts
-        // - diffUsdToOpenInterestFactor is 6%
-        // since diffUsdToOpenInterestFactor > thresholdForStableFunding
-        // savedFundingFactorPerSecond should increase by 0.0001% * 6% * 600 = 0.0036%
-        //
-        // if the state is:
-        // - thresholdForDecreaseFunding is 3%
-        // - thresholdForStableFunding is 5%
-        // - fundingIncreaseFactorPerSecond is 0.0001%
-        // - fundingDecreaseFactorPerSecond is 0.000002%
-        // - durationInSeconds is 600 seconds
-        // - longs are paying shorts funding
-        // - there are more longs than shorts
-        // - diffUsdToOpenInterestFactor is 4%
-        // since longs are already paying shorts, the skew is the same,
-        // and the diffUsdToOpenInterestFactor < thresholdForStableFunding
-        // savedFundingFactorPerSecond should not change
-        //
-        // if the state is:
-        // - thresholdForDecreaseFunding is 3%
-        // - thresholdForStableFunding is 5%
-        // - fundingIncreaseFactorPerSecond is 0.0001%
-        // - fundingDecreaseFactorPerSecond is 0.000002%
-        // - durationInSeconds is 600 seconds
-        // - longs are paying shorts funding
-        // - there are more longs than shorts
-        // - diffUsdToOpenInterestFactor is 2%
-        // since diffUsdToOpenInterestFactor < thresholdForDecreaseFunding
-        // savedFundingFactorPerSecond should decrease by 0.000002% * 600 = 0.0012%
-        //
-        // if the state is:
-        // - thresholdForDecreaseFunding is 3%
-        // - thresholdForStableFunding is 5%
-        // - fundingIncreaseFactorPerSecond is 0.0001%
-        // - fundingDecreaseFactorPerSecond is 0.000002%
-        // - durationInSeconds is 600 seconds
-        // - longs are paying shorts funding
-        // - there are more shorts than longs
-        // - diffUsdToOpenInterestFactor is 1%
-        // since the skew is in the other direction
-        // savedFundingFactorPerSecond should decrease by 0.0001% * 1% * 600 = 0.0006%
-
         configCache.thresholdForStableFunding = dataStore.getUint(Keys.thresholdForStableFundingKey(market));
         configCache.thresholdForDecreaseFunding = dataStore.getUint(Keys.thresholdForDecreaseFundingKey(market));
 
