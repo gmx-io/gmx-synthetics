@@ -203,6 +203,8 @@ contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, O
         uint256 startingGas,
         bytes memory reasonBytes
     ) internal {
+        GasUtils.validateExecutionErrorGas(dataStore, reasonBytes);
+
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
         if (

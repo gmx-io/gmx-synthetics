@@ -21,6 +21,12 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
     "minAdditionalGasForExecution"
   );
 
+  await setUintIfDifferent(
+    keys.MIN_ADDITIONAL_GAS_FOR_EXECUTION_ERROR,
+    generalConfig.minAdditionalGasForExecutionError,
+    "minAdditionalGasForExecutionError"
+  );
+
   await setUintIfDifferent(keys.MAX_CALLBACK_GAS_LIMIT, generalConfig.maxCallbackGasLimit, "max callback gas limit");
   await setUintIfDifferent(keys.MAX_SWAP_PATH_LENGTH, generalConfig.maxSwapPathLength, "max swap path length");
 

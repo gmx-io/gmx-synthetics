@@ -43,6 +43,10 @@ library GasUtils {
         return dataStore.getUint(Keys.MIN_ADDITIONAL_GAS_FOR_EXECUTION);
     }
 
+    function getMinAdditionalGasForExecutionError(DataStore dataStore) internal view returns (uint256) {
+        return dataStore.getUint(Keys.MIN_ADDITIONAL_GAS_FOR_EXECUTION_ERROR);
+    }
+
     function getExecutionGas(DataStore dataStore, uint256 startingGas) internal view returns (uint256) {
         uint256 minHandleErrorGas = GasUtils.getMinHandleExecutionErrorGas(dataStore);
         if (startingGas < minHandleErrorGas) {
@@ -56,6 +60,28 @@ library GasUtils {
         uint256 minAdditionalGasForExecution = getMinAdditionalGasForExecution(dataStore);
         if (startingGas < estimatedGasLimit + minAdditionalGasForExecution) {
             revert Errors.InsufficientExecutionGas(startingGas, estimatedGasLimit, minAdditionalGasForExecution);
+        }
+    }
+
+    // a minimum amount of gas is required to be left for cancellation
+    // to prevent potential blocking of cancellations by malicious contracts using e.g. large revert reasons
+    //
+    // during the estimateGas call by keepers, an insufficient amount of gas may be estimated
+    // the amount estimated may be insufficient for execution but sufficient for cancellaton
+    // this could lead to invalid cancellations due to insufficient gas used by keepers
+    //
+    // to help prevent this, out of gas errors are attempted to be caught and reverted for estimateGas calls
+    function validateExecutionErrorGas(DataStore dataStore, bytes memory reasonBytes) internal view {
+        // skip the validation if the execution did not fail due to an out of gas error
+        // also skip the validation if this is not invoked in an estimateGas call (tx.gasprice != 0)
+        if (reasonBytes.length != 0 || tx.gasprice != 0) { return; }
+
+        uint256 gas = gasleft();
+        uint256 minHandleErrorGas = getMinHandleExecutionErrorGas(dataStore);
+        uint256 minAdditionalGasForExecutionError = getMinAdditionalGasForExecutionError(dataStore);
+
+        if (gas < minHandleErrorGas + minAdditionalGasForExecutionError) {
+            revert Errors.InsufficientExecutionErrorGas(gas, minHandleErrorGas, minAdditionalGasForExecutionError);
         }
     }
 

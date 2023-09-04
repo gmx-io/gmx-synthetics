@@ -252,6 +252,8 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         uint256 startingGas,
         bytes memory reasonBytes
     ) internal {
+        GasUtils.validateExecutionErrorGas(dataStore, reasonBytes);
+
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);

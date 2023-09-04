@@ -65,6 +65,7 @@ library Errors {
     error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);
     error InsufficientExecutionGasForErrorHandling(uint256 startingGas, uint256 minHandleErrorGas);
     error InsufficientExecutionGas(uint256 startingGas, uint256 estimatedGasLimit, uint256 minAdditionalGasForExecution);
+    error InsufficientExecutionErrorGas(uint256 gas, uint256 minHandleErrorGas, uint256 minAdditionalGasForExecutionError);
 
     // MarketFactory errors
     error MarketAlreadyExists(bytes32 salt, address existingMarketAddress);

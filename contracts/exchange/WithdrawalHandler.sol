@@ -202,6 +202,8 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
         uint256 startingGas,
         bytes memory reasonBytes
     ) internal {
+        GasUtils.validateExecutionErrorGas(dataStore, reasonBytes);
+
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
         if (
