@@ -366,7 +366,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
 };
 
 async function main() {
-  const { errors } = validateMarketConfigs();
+  const { errors } = await validateMarketConfigs();
   if (errors.length !== 0) {
     throw new Error("Invalid market configs");
   }
