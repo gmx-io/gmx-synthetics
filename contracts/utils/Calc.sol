@@ -24,7 +24,7 @@ library Calc {
             magnitude = max;
         }
 
-        int256 sign = magnitude == 0 ? int256(1) : value / magnitude.toInt256();
+        int256 sign = value == 0 ? int256(1) : value / value.abs().toInt256();
 
         return magnitude.toInt256() * sign;
     }
