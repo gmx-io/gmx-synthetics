@@ -550,7 +550,13 @@ contract Oracle is RoleModule {
                 revert Errors.InvalidRealtimeBidAsk(token, report.bid, report.ask);
             }
 
-            if (Chain.currentBlockNumber() - report.blocknumberUpperBound <= minBlockConfirmations) {
+            // only check the block hash if this is not an estimate gas call (tx.origin != address(0))
+            // this helps to prevent estimate gas from failing when executed in the context of the block
+            // that the deposit / order / withdrawal was created in
+            if (
+                !(tx.origin == address(0) && Chain.currentBlockNumber() == report.blocknumberUpperBound) &&
+                (Chain.currentBlockNumber() - report.blocknumberUpperBound <= minBlockConfirmations)
+            ) {
                 bytes32 blockHash = Chain.getBlockHash(report.blocknumberUpperBound);
                 if (report.upperBlockhash != blockHash) {
                     revert Errors.InvalidRealtimeBlockHash(token, report.upperBlockhash, blockHash);

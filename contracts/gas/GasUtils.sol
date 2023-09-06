@@ -76,8 +76,8 @@ library GasUtils {
     // still attempt to execute the transaction with a reasonable gas limit
     function validateExecutionErrorGas(DataStore dataStore, bytes memory reasonBytes) internal view {
         // skip the validation if the execution did not fail due to an out of gas error
-        // also skip the validation if this is not invoked in an estimateGas call (tx.gasprice != 0)
-        if (reasonBytes.length != 0 || tx.gasprice != 0) { return; }
+        // also skip the validation if this is not invoked in an estimateGas call (tx.origin != address(0))
+        if (reasonBytes.length != 0 || tx.origin != address(0)) { return; }
 
         uint256 gas = gasleft();
         uint256 minHandleExecutionErrorGas = getMinHandleExecutionErrorGas(dataStore);
