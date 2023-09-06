@@ -8,7 +8,19 @@ async function main() {
 
   const keyFn = process.env.KEY_FN;
   if (keyFn) {
-    const params = process.env.KEY_PARAMS.split(",");
+    const _params = process.env.KEY_PARAMS.split(",");
+    const params = [];
+
+    for (let param of _params) {
+      if (param === "true") {
+        param = true;
+      }
+      if (param === "false") {
+        param = false;
+      }
+      params.push(param);
+    }
+
     console.log(`keyFn(${keyFn}): ${keys[keyFn](...params)}`);
   }
 }
