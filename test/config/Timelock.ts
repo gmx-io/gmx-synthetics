@@ -45,6 +45,22 @@ describe("Timelock", () => {
     expect(await roleStore.hasRole(user3.address, orderKeeperRole)).eq(false);
   });
 
+  it("setInStrictPriceFeedMode", async () => {
+    await expect(timelock.connect(timelockAdmin).setInStrictPriceFeedMode(true))
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
+      .withArgs(timelockAdmin.address, "TIMELOCK_MULTISIG");
+
+    expect(await dataStore.getBool(keys.IN_STRICT_PRICE_FEED_MODE)).eq(false);
+
+    await timelock.connect(timelockMultisig).setInStrictPriceFeedMode(true);
+
+    expect(await dataStore.getBool(keys.IN_STRICT_PRICE_FEED_MODE)).eq(true);
+
+    await timelock.connect(timelockMultisig).setInStrictPriceFeedMode(false);
+
+    expect(await dataStore.getBool(keys.IN_STRICT_PRICE_FEED_MODE)).eq(false);
+  });
+
   it("increaseTimelockDelay", async () => {
     await expect(timelock.connect(user2).increaseTimelockDelay(2 * 24 * 60 * 60))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")

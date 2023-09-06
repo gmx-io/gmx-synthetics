@@ -1,5 +1,6 @@
 import { expect } from "chai";
 
+import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { deployContract } from "../../utils/deploy";
 import { hashString } from "../../utils/hash";
 import { deployFixture } from "../../utils/fixture";
@@ -417,7 +418,36 @@ describe("Oracle", () => {
       .to.be.revertedWithCustomError(errorsContract, "HasRealtimeFeedId")
       .withArgs(wnt.address, hashString("WNT"));
 
-    await dataStore.setBytes32(keys.realtimeFeedIdKey(wnt.address), ethers.constants.HashZero);
+    await dataStore.setBool(keys.IN_STRICT_PRICE_FEED_MODE, false);
+
+    const wntPriceFeed = await deployContract("MockPriceFeed", []);
+    await dataStore.setAddress(keys.priceFeedKey(wnt.address), wntPriceFeed.address);
+    await dataStore.setUint(keys.priceFeedMultiplierKey(wnt.address), expandDecimals(1, 31));
+    await dataStore.setUint(keys.priceFeedHeartbeatDurationKey(wnt.address), 60 * 60);
+    await dataStore.setUint(keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR, decimalToFloat(5, 1)); // 50%
+
+    await wntPriceFeed.setAnswer(12_000);
+
+    await expect(
+      oracle.setPrices(dataStore.address, eventEmitter.address, {
+        priceFeedTokens: [],
+        realtimeFeedTokens: [],
+        realtimeFeedData: [],
+        signerInfo,
+        tokens: [wnt.address],
+        compactedMinOracleBlockNumbers: [blockNumber],
+        compactedMaxOracleBlockNumbers: [blockNumber],
+        compactedOracleTimestamps: [blockTimestamp],
+        compactedDecimals: getCompactedDecimals([1]),
+        compactedMinPrices: getCompactedPrices(minPrices),
+        compactedMinPricesIndexes: getCompactedPriceIndexes([0, 1, 2, 3, 4, 5, 6]),
+        compactedMaxPrices: getCompactedPrices(maxPrices),
+        compactedMaxPricesIndexes: getCompactedPriceIndexes([0, 1, 2, 3, 4, 5, 6]),
+        signatures,
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "MaxRefPriceDeviationExceeded");
+
+    await wntPriceFeed.setAnswer(5000);
 
     const tx0 = await oracle.setPrices(dataStore.address, eventEmitter.address, {
       priceFeedTokens: [],

@@ -49,6 +49,7 @@ export const MAX_UI_FEE_FACTOR = hashString("MAX_UI_FEE_FACTOR");
 
 export const IS_MARKET_DISABLED = hashString("IS_MARKET_DISABLED");
 export const MAX_SWAP_PATH_LENGTH = hashString("MAX_SWAP_PATH_LENGTH");
+export const MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT = hashString("MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT");
 
 export const MIN_ORACLE_BLOCK_CONFIRMATIONS = hashString("MIN_ORACLE_BLOCK_CONFIRMATIONS");
 export const MAX_ORACLE_PRICE_AGE = hashString("MAX_ORACLE_PRICE_AGE");
@@ -182,6 +183,10 @@ export function accountOrderListKey(account) {
 
 export function isMarketDisabledKey(market) {
   return hashData(["bytes32", "address"], [IS_MARKET_DISABLED, market]);
+}
+
+export function minMarketTokensForFirstDeposit(market) {
+  return hashData(["bytes32", "address"], [MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT, market]);
 }
 
 export function createDepositFeatureDisabledKey(contract) {

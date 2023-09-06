@@ -1,8 +1,9 @@
 import { expect } from "chai";
 import { time, mine } from "@nomicfoundation/hardhat-network-helpers";
 
+import { deployContract } from "../../utils/deploy";
 import { hashString } from "../../utils/hash";
-import { expandDecimals } from "../../utils/math";
+import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { deployFixture } from "../../utils/fixture";
 import {
   TOKEN_ORACLE_TYPES,
@@ -183,6 +184,31 @@ describe("Oracle.RealtimeFeeds", () => {
     )
       .to.be.revertedWithCustomError(errorsContract, "InvalidRealtimeBlockHash")
       .withArgs(wnt.address, hashString("block.hash"), block.hash);
+
+    const wntPriceFeed = await deployContract("MockPriceFeed", []);
+    await dataStore.setAddress(keys.priceFeedKey(wnt.address), wntPriceFeed.address);
+    await dataStore.setUint(keys.priceFeedMultiplierKey(wnt.address), expandDecimals(1, 42));
+    await dataStore.setUint(keys.priceFeedHeartbeatDurationKey(wnt.address), 60 * 60);
+    await dataStore.setUint(keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR, decimalToFloat(5, 1)); // 50%
+
+    await wntPriceFeed.setAnswer(12_000);
+
+    await expect(
+      oracle.setPrices(dataStore.address, eventEmitter.address, {
+        ...baseSetPricesParams,
+        realtimeFeedTokens: [wnt.address],
+        realtimeFeedData: [
+          encodeRealtimeData({
+            ...baseRealtimeData,
+            feedId: hashString("WNT"),
+            bid: expandDecimals(5000, 8),
+            ask: expandDecimals(5002, 8),
+          }),
+        ],
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "MaxRefPriceDeviationExceeded");
+
+    await wntPriceFeed.setAnswer(10_000);
 
     await time.increase(60 * 60 + 10);
     await mine(1);
