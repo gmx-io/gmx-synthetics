@@ -1,0 +1,23 @@
+import * as keys from "../utils/keys";
+
+async function main() {
+  const keyName = process.env.KEY_NAME;
+  if (keyName) {
+    console.log(`keyHash(${keyName}): ${keys[keyName]}`);
+  }
+
+  const keyFn = process.env.KEY_FN;
+  if (keyFn) {
+    const params = process.env.KEY_PARAMS.split(",");
+    console.log(`keyFn(${keyFn}): ${keys[keyFn](...params)}`);
+  }
+}
+
+main()
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((ex) => {
+    console.error(ex);
+    process.exit(1);
+  });
