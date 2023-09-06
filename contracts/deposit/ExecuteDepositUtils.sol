@@ -525,6 +525,11 @@ library ExecuteDepositUtils {
         return outputAmount;
     }
 
+    // this method validates that a specified minimum number of market tokens are locked
+    // this can be used to help ensure a minimum amount of liquidity for a market
+    // this also helps to prevent manipulation of the market token price by the first depositor
+    // since it may be possible to deposit a small amount of tokens on the first deposit
+    // to cause a high market token price due to rounding of the amount of tokens minted
     function _validateFirstDeposit(
         ExecuteDepositParams memory params,
         Deposit.Props memory deposit,
