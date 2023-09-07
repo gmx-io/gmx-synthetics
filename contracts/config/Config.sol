@@ -262,6 +262,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CLAIM_UI_FEES_FEATURE_DISABLED] = true;
 
+        allowedBaseKeys[Keys.SUBACCOUNT_FEATURE_DISABLED] = true;
+
         allowedBaseKeys[Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS] = true;
         allowedBaseKeys[Keys.MAX_ORACLE_PRICE_AGE] = true;
         allowedBaseKeys[Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR] = true;

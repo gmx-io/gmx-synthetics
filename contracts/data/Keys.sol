@@ -81,6 +81,9 @@ library Keys {
     // @dev key for the account order list
     bytes32 public constant ACCOUNT_ORDER_LIST = keccak256(abi.encode("ACCOUNT_ORDER_LIST"));
 
+    // @dev key for the subaccount list
+    bytes32 public constant SUBACCOUNT_LIST = keccak256(abi.encode("SUBACCOUNT_LIST"));
+
     // @dev key for is market disabled
     bytes32 public constant IS_MARKET_DISABLED = keccak256(abi.encode("IS_MARKET_DISABLED"));
 
@@ -316,6 +319,12 @@ library Keys {
     bytes32 public constant TOTAL_BORROWING = keccak256(abi.encode("TOTAL_BORROWING"));
     // @dev key for affiliate reward
     bytes32 public constant AFFILIATE_REWARD = keccak256(abi.encode("AFFILIATE_REWARD"));
+    // @dev key for max allowed subaccount action count
+    bytes32 public constant MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT = keccak256(abi.encode("MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT"));
+    // @dev key for subaccount action count
+    bytes32 public constant SUBACCOUNT_ACTION_COUNT = keccak256(abi.encode("SUBACCOUNT_ACTION_COUNT"));
+    // @dev key for subaccount create order action
+    bytes32 public constant SUBACCOUNT_CREATE_ORDER_ACTION = keccak256(abi.encode("SUBACCOUNT_CREATE_ORDER_ACTION"));
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
@@ -342,6 +351,12 @@ library Keys {
     // @param account the account for the list
     function accountOrderListKey(address account) internal pure returns (bytes32) {
         return keccak256(abi.encode(ACCOUNT_ORDER_LIST, account));
+    }
+
+    // @dev key for the subaccount list
+    // @param account the account for the list
+    function subaccountListKey(address account) internal pure returns (bytes32) {
+        return keccak256(abi.encode(SUBACCOUNT_LIST, account));
     }
 
     // @dev key for the claimable fee amount
@@ -1266,6 +1281,24 @@ library Keys {
             AFFILIATE_REWARD,
             market,
             token
+        ));
+    }
+
+    function maxAllowedSubaccountActionCountKey(address account, address subaccount, bytes32 actionType) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT,
+            account,
+            subaccount,
+            actionType
+        ));
+    }
+
+    function subaccountActionCountKey(address account, address subaccount, bytes32 actionType) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            SUBACCOUNT_ACTION_COUNT,
+            account,
+            subaccount,
+            actionType
         ));
     }
 

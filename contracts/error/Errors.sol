@@ -250,6 +250,13 @@ library Errors {
     error DuplicatedMarketInSwapPath(address market);
     error SwapPriceImpactExceedsAmountIn(uint256 amountAfterFees, int256 negativeImpactAmount);
 
+    // SubaccountRouter errors
+    error InvalidReceiverForSubaccountOrder(address receiver, address expectedReceiver);
+
+    // SubaccountUtils errors
+    error SubaccountNotAuthorized(address account, address subaccount);
+    error MaxSubaccountActionCountExceeded(address account, address subaccount, uint256 count, uint256 maxCount);
+
     // TokenUtils errors
     error EmptyTokenTranferGasLimit(address token);
     error TokenTransferError(address token, address receiver, uint256 amount);
