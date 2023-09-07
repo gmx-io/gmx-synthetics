@@ -2,20 +2,13 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-
 import "../exchange/IDepositHandler.sol";
 import "../exchange/IWithdrawalHandler.sol";
 import "../exchange/IOrderHandler.sol";
 
-import "../utils/PayableMulticall.sol";
-import "../utils/AccountUtils.sol";
-
 import "../feature/FeatureUtils.sol";
 
-import "./Router.sol";
+import "./BaseRouter.sol";
 
 /**
  * @title ExchangeRouter
@@ -55,15 +48,11 @@ import "./Router.sol";
  * - Order keepers would bundle the signature and price data for token A
  * then execute the order
  */
-contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
-    using SafeERC20 for IERC20;
+contract ExchangeRouter is BaseRouter {
     using Deposit for Deposit.Props;
     using Withdrawal for Withdrawal.Props;
     using Order for Order.Props;
 
-    Router public immutable router;
-    DataStore public immutable dataStore;
-    EventEmitter public immutable eventEmitter;
     IDepositHandler public immutable depositHandler;
     IWithdrawalHandler public immutable withdrawalHandler;
     IOrderHandler public immutable orderHandler;
@@ -78,27 +67,10 @@ contract ExchangeRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         IDepositHandler _depositHandler,
         IWithdrawalHandler _withdrawalHandler,
         IOrderHandler _orderHandler
-    ) RoleModule(_roleStore) {
-        router = _router;
-        dataStore = _dataStore;
-        eventEmitter = _eventEmitter;
-
+    ) BaseRouter(_router, _roleStore, _dataStore, _eventEmitter) {
         depositHandler = _depositHandler;
         withdrawalHandler = _withdrawalHandler;
         orderHandler = _orderHandler;
-    }
-
-    // @dev Wraps the specified amount of native tokens into WNT then sends the WNT to the specified address
-    function sendWnt(address receiver, uint256 amount) external payable nonReentrant {
-        AccountUtils.validateReceiver(receiver);
-        TokenUtils.depositAndSendWrappedNativeToken(dataStore, receiver, amount);
-    }
-
-    // @dev Sends the given amount of tokens to the given address
-    function sendTokens(address token, address receiver, uint256 amount) external payable nonReentrant {
-        AccountUtils.validateReceiver(receiver);
-        address account = msg.sender;
-        router.pluginTransfer(token, account, receiver, amount);
     }
 
     /**
