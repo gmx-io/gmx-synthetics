@@ -1,6 +1,8 @@
 import hre from "hardhat";
 import { decimalToFloat, bigNumberify, formatAmount } from "../utils/math";
 import { createMarketConfigByKey, getMarketKey } from "../utils/market";
+import { performMulticall } from "../utils/multicall";
+import { SECONDS_PER_YEAR } from "../utils/constants";
 import * as keys from "../utils/keys";
 
 const priceImpactBpsList = [1, 5, 10];
@@ -198,11 +200,121 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
   let negativeSwapImpactFactor = marketConfig.negativeSwapImpactFactor;
   let positiveSwapImpactFactor = marketConfig.positiveSwapImpactFactor;
   let swapImpactExponentFactor = marketConfig.swapImpactExponentFactor;
+  let openInterestReserveFactorLongs = marketConfig.openInterestReserveFactorLongs;
+  let openInterestReserveFactorShorts = marketConfig.openInterestReserveFactorShorts;
+  let borrowingFactorForLongs = marketConfig.borrowingFactorForLongs;
+  let borrowingExponentFactorForLongs = marketConfig.borrowingExponentFactorForLongs;
+  let borrowingFactorForShorts = marketConfig.borrowingFactorForShorts;
+  let borrowingExponentFactorForShorts = marketConfig.borrowingExponentFactorForShorts;
+  let fundingFactor = marketConfig.fundingFactor;
+  let fundingExponentFactor = marketConfig.fundingExponentFactor;
 
   if (process.env.READ_FROM_CHAIN === "true") {
-    negativeSwapImpactFactor = await dataStore.getUint(keys.swapImpactFactorKey(market.marketToken, false));
-    positiveSwapImpactFactor = await dataStore.getUint(keys.swapImpactFactorKey(market.marketToken, true));
-    swapImpactExponentFactor = await dataStore.getUint(keys.swapImpactExponentFactorKey(market.marketToken));
+    const multicallReadParams = [];
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [
+        keys.swapImpactFactorKey(market.marketToken, false),
+      ]),
+      label: "negativeSwapImpactFactor",
+    });
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [keys.swapImpactFactorKey(market.marketToken, true)]),
+      label: "positiveSwapImpactFactor",
+    });
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [
+        keys.swapImpactExponentFactorKey(market.marketToken),
+      ]),
+      label: "swapImpactExponentFactor",
+    });
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [
+        keys.openInterestReserveFactorKey(market.marketToken, true),
+      ]),
+      label: "openInterestReserveFactorLongs",
+    });
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [
+        keys.openInterestReserveFactorKey(market.marketToken, false),
+      ]),
+      label: "openInterestReserveFactorShorts",
+    });
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [keys.borrowingFactorKey(market.marketToken, true)]),
+      label: "borrowingFactorForLongs",
+    });
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [
+        keys.borrowingExponentFactorKey(market.marketToken, true),
+      ]),
+      label: "borrowingExponentFactorForLongs",
+    });
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [keys.borrowingFactorKey(market.marketToken, false)]),
+      label: "borrowingFactorForShorts",
+    });
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [
+        keys.borrowingExponentFactorKey(market.marketToken, false),
+      ]),
+      label: "borrowingExponentFactorForShorts",
+    });
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [keys.fundingFactorKey(market.marketToken)]),
+      label: "fundingFactor",
+    });
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [keys.fundingExponentFactorKey(market.marketToken)]),
+      label: "fundingExponentFactor",
+    });
+
+    const { bigNumberResults } = await performMulticall({ multicallReadParams });
+    ({
+      negativeSwapImpactFactor,
+      positiveSwapImpactFactor,
+      swapImpactExponentFactor,
+      openInterestReserveFactorLongs,
+      openInterestReserveFactorShorts,
+      borrowingFactorForLongs,
+      borrowingExponentFactorForLongs,
+      borrowingFactorForShorts,
+      borrowingExponentFactorForShorts,
+      fundingFactor,
+      fundingExponentFactor,
+    } = bigNumberResults);
   }
 
   const percentageOfSwapImpactRecommendation = negativeSwapImpactFactor
@@ -250,6 +362,48 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
       actual: negativeSwapImpactFactor,
     });
   }
+
+  if (!borrowingExponentFactorForLongs.eq(decimalToFloat(1))) {
+    throw new Error("borrowingExponentFactorForLongs != 1");
+  }
+
+  if (!borrowingExponentFactorForShorts.eq(decimalToFloat(1))) {
+    throw new Error("borrowingExponentFactorForShorts != 1");
+  }
+
+  const maxBorrowingFactorForLongsPerYear = borrowingFactorForLongs
+    .mul(openInterestReserveFactorLongs)
+    .div(decimalToFloat(1))
+    .mul(SECONDS_PER_YEAR);
+
+  if (maxBorrowingFactorForLongsPerYear.gt(decimalToFloat(1))) {
+    throw new Error("maxBorrowingFactorForLongsPerYear is more than 100%");
+  }
+
+  console.log(`    maxBorrowingFactorForLongsPerYear: ${formatAmount(maxBorrowingFactorForLongsPerYear, 28)}%`);
+
+  const maxBorrowingFactorForShortsPerYear = borrowingFactorForShorts
+    .mul(openInterestReserveFactorShorts)
+    .div(decimalToFloat(1))
+    .mul(SECONDS_PER_YEAR);
+
+  if (maxBorrowingFactorForShortsPerYear.gt(decimalToFloat(1))) {
+    throw new Error("maxBorrowingFactorForShortsPerYear is more than 100%");
+  }
+
+  console.log(`    maxBorrowingFactorForShortsPerYear: ${formatAmount(maxBorrowingFactorForShortsPerYear, 28)}%`);
+
+  if (!fundingExponentFactor.eq(decimalToFloat(1))) {
+    throw new Error("fundingExponentFactor != 1");
+  }
+
+  const maxFundingFactorPerYear = fundingFactor.mul(SECONDS_PER_YEAR);
+
+  if (maxFundingFactorPerYear.gt(decimalToFloat(1))) {
+    throw new Error("maxFundingFactorPerYear is more than 100%");
+  }
+
+  console.log(`    maxFundingFactorPerYear: ${formatAmount(maxFundingFactorPerYear, 28)}%`);
 }
 
 export async function validateMarketConfigs() {
