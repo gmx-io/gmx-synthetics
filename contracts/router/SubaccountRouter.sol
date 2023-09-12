@@ -123,9 +123,14 @@ contract SubaccountRouter is BaseRouter {
             return;
         }
 
-        address wnt = dataStore.getAddress(Keys.WNT);
+
+        IERC20 wnt = IERC20(dataStore.getAddress(Keys.WNT));
+
+        if (wnt.allowance(account, address(router)) < amount) { return; }
+        if (wnt.balanceOf(account) < amount) { return; }
+
         router.pluginTransfer(
-            wnt, // token
+            address(wnt), // token
             account, // account
             subaccount, // receiver
             amount // amount

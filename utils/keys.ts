@@ -27,6 +27,8 @@ export const ACCOUNT_POSITION_LIST = hashString("ACCOUNT_POSITION_LIST");
 export const ORDER_LIST = hashString("ORDER_LIST");
 export const ACCOUNT_ORDER_LIST = hashString("ACCOUNT_ORDER_LIST");
 
+export const SUBACCOUNT_LIST = hashString("SUBACCOUNT_LIST");
+
 export const CREATE_DEPOSIT_FEATURE_DISABLED = hashString("CREATE_DEPOSIT_FEATURE_DISABLED");
 export const CANCEL_DEPOSIT_FEATURE_DISABLED = hashString("CANCEL_DEPOSIT_FEATURE_DISABLED");
 export const EXECUTE_DEPOSIT_FEATURE_DISABLED = hashString("EXECUTE_DEPOSIT_FEATURE_DISABLED");
@@ -162,8 +164,13 @@ export const CUMULATIVE_BORROWING_FACTOR_UPDATED_AT = hashString("CUMULATIVE_BOR
 export const VIRTUAL_TOKEN_ID = hashString("VIRTUAL_TOKEN_ID");
 export const VIRTUAL_MARKET_ID = hashString("VIRTUAL_MARKET_ID");
 
-const VIRTUAL_INVENTORY_FOR_SWAPS = hashString("VIRTUAL_INVENTORY_FOR_SWAPS");
-const VIRTUAL_INVENTORY_FOR_POSITIONS = hashString("VIRTUAL_INVENTORY_FOR_POSITIONS");
+export const VIRTUAL_INVENTORY_FOR_SWAPS = hashString("VIRTUAL_INVENTORY_FOR_SWAPS");
+export const VIRTUAL_INVENTORY_FOR_POSITIONS = hashString("VIRTUAL_INVENTORY_FOR_POSITIONS");
+
+export const MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT = hashString("MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT");
+export const SUBACCOUNT_ACTION_COUNT = hashString("SUBACCOUNT_ACTION_COUNT");
+export const SUBACCOUNT_AUTO_TOP_UP_AMOUNT = hashString("SUBACCOUNT_AUTO_TOP_UP_AMOUNT");
+export const SUBACCOUNT_CREATE_ORDER_ACTION = hashString("SUBACCOUNT_CREATE_ORDER_ACTION");
 
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
@@ -179,6 +186,10 @@ export function accountPositionListKey(account) {
 
 export function accountOrderListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_ORDER_LIST, account]);
+}
+
+export function subaccountListKey(account) {
+  return hashData(["bytes32", "address"], [SUBACCOUNT_LIST, account]);
 }
 
 export function isMarketDisabledKey(market) {
@@ -514,4 +525,22 @@ export function virtualInventoryForSwapsKey(virtualMarketId: string, isLongToken
 
 export function virtualInventoryForPositionsKey(virtualTokenId: string) {
   return hashData(["bytes32", "bytes32"], [VIRTUAL_INVENTORY_FOR_POSITIONS, virtualTokenId]);
+}
+
+export function maxAllowedSubaccountActionCountKey(account: string, subaccount: string, actionType: string) {
+  return hashData(
+    ["bytes32", "address", "address", "bytes32"],
+    [MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT, account, subaccount, actionType]
+  );
+}
+
+export function subaccountActionCountKey(account: string, subaccount: string, actionType: string) {
+  return hashData(
+    ["bytes32", "address", "address", "bytes32"],
+    [SUBACCOUNT_ACTION_COUNT, account, subaccount, actionType]
+  );
+}
+
+export function subaccountAutoTopUpAmountKey(account: string, subaccount: string) {
+  return hashData(["bytes32", "address", "address"], [SUBACCOUNT_AUTO_TOP_UP_AMOUNT, account, subaccount]);
 }
