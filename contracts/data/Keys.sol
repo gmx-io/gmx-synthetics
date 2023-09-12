@@ -323,6 +323,8 @@ library Keys {
     bytes32 public constant MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT = keccak256(abi.encode("MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT"));
     // @dev key for subaccount action count
     bytes32 public constant SUBACCOUNT_ACTION_COUNT = keccak256(abi.encode("SUBACCOUNT_ACTION_COUNT"));
+    // @dev key for subaccount auto top up amount
+    bytes32 public constant SUBACCOUNT_AUTO_TOP_UP_AMOUNT = keccak256(abi.encode("SUBACCOUNT_AUTO_TOP_UP_AMOUNT"));
     // @dev key for subaccount create order action
     bytes32 public constant SUBACCOUNT_CREATE_ORDER_ACTION = keccak256(abi.encode("SUBACCOUNT_CREATE_ORDER_ACTION"));
 
@@ -1299,6 +1301,14 @@ library Keys {
             account,
             subaccount,
             actionType
+        ));
+    }
+
+    function subaccountAutoTopUpAmountKey(address account, address subaccount) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            SUBACCOUNT_AUTO_TOP_UP_AMOUNT,
+            account,
+            subaccount
         ));
     }
 

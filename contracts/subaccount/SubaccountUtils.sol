@@ -142,4 +142,41 @@ library SubaccountUtils {
             revert Errors.SubaccountNotAuthorized(account, subaccount);
         }
     }
+
+    function getSubaccountAutoTopUpAmount(
+        DataStore dataStore,
+        address account,
+        address subaccount
+    ) internal view returns (uint256) {
+        bytes32 key = Keys.subaccountAutoTopUpAmountKey(account, subaccount);
+        return dataStore.getUint(key);
+    }
+
+    function setSubaccountAutoTopUpAmount(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address account,
+        address subaccount,
+        uint256 amount
+    ) internal {
+        bytes32 key = Keys.subaccountAutoTopUpAmountKey(account, subaccount);
+
+        dataStore.setUint(key, amount);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "account", account);
+        eventData.addressItems.setItem(1, "subaccount", subaccount);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "amount", amount);
+
+        eventEmitter.emitEventLog2(
+            "SetSubaccountAutoTopUpAmount",
+            Cast.toBytes32(account),
+            Cast.toBytes32(subaccount),
+            eventData
+        );
+    }
 }

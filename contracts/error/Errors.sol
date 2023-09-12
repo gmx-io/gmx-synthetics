@@ -11,6 +11,9 @@ library Errors {
     error SelfTransferNotSupported(address receiver);
     error InvalidNativeTokenSender(address msgSender);
 
+    // BaseRouter
+    error CouldNotSendNativeToken(address receiver, uint256 amount);
+
     // CallbackUtils errors
     error MaxCallbackGasLimitExceeded(uint256 callbackGasLimit, uint256 maxCallbackGasLimit);
 

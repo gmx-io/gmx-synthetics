@@ -95,6 +95,43 @@ library TokenUtils {
         revert Errors.TokenTransferError(token, receiver, amount);
     }
 
+    function sendNativeToken(
+        DataStore dataStore,
+        address receiver,
+        uint256 amount
+    ) internal {
+        if (amount == 0) { return; }
+
+        AccountUtils.validateReceiver(receiver);
+
+        uint256 gasLimit = dataStore.getUint(Keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT);
+
+        bool success;
+        // use an assembly call to avoid loading large data into memory
+        // input mem[in…(in+insize)]
+        // output area mem[out…(out+outsize))]
+        assembly {
+            success := call(
+                gasLimit, // gas limit
+                receiver, // receiver
+                amount, // value
+                0, // in
+                0, // insize
+                0, // out
+                0 // outsize
+            )
+        }
+
+        if (success) { return; }
+
+        // if the transfer failed, re-wrap the token and send it to the receiver
+        depositAndSendWrappedNativeToken(
+            dataStore,
+            receiver,
+            amount
+        );
+    }
+
     /**
      * Deposits the specified amount of native token and sends the specified
      * amount of wrapped native token to the specified receiver address.

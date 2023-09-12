@@ -45,4 +45,9 @@ contract BaseRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         address account = msg.sender;
         router.pluginTransfer(token, account, receiver, amount);
     }
+
+    function sendNativeToken(address receiver, uint256 amount) external payable nonReentrant {
+        AccountUtils.validateReceiver(receiver);
+        TokenUtils.sendNativeToken(dataStore, receiver, amount);
+    }
 }

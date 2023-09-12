@@ -6,18 +6,30 @@ import "./BaseRouter.sol";
 import "../exchange/IOrderHandler.sol";
 import "../feature/FeatureUtils.sol";
 import "../subaccount/SubaccountUtils.sol";
+import "../order/OrderVault.sol";
 
 contract SubaccountRouter is BaseRouter {
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
+
     IOrderHandler public immutable orderHandler;
+    OrderVault public immutable orderVault;
 
     constructor(
         Router _router,
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        IOrderHandler _orderHandler
+        IOrderHandler _orderHandler,
+        OrderVault _orderVault
     ) BaseRouter(_router, _roleStore, _dataStore, _eventEmitter) {
         orderHandler = _orderHandler;
+        orderVault = _orderVault;
     }
 
     function addSubaccount(address subaccount) external payable nonReentrant {
@@ -47,6 +59,21 @@ contract SubaccountRouter is BaseRouter {
         );
     }
 
+    function setSubaccountAutoTopUpAmount(
+        address subaccount,
+        uint256 amount
+    ) external payable nonReentrant {
+        address account = msg.sender;
+
+        SubaccountUtils.setSubaccountAutoTopUpAmount(
+            dataStore,
+            eventEmitter,
+            account,
+            subaccount,
+            amount
+        );
+    }
+
     function createOrderForAccount(
         address account,
         BaseOrderUtils.CreateOrderParams calldata params
@@ -60,6 +87,20 @@ contract SubaccountRouter is BaseRouter {
             revert Errors.InvalidReceiverForSubaccountOrder(params.addresses.receiver, account);
         }
 
+        if (
+            params.orderType == Order.OrderType.MarketSwap ||
+            params.orderType == Order.OrderType.LimitSwap ||
+            params.orderType == Order.OrderType.MarketIncrease ||
+            params.orderType == Order.OrderType.LimitIncrease
+        ) {
+            router.pluginTransfer(
+                params.addresses.initialCollateralToken, // token
+                account, // account
+                address(orderVault), // receiver
+                params.numbers.initialCollateralDeltaAmount // amount
+            );
+        }
+
         SubaccountUtils.incrementSubaccountActionCount(
             dataStore,
             eventEmitter,
@@ -68,9 +109,42 @@ contract SubaccountRouter is BaseRouter {
             Keys.SUBACCOUNT_CREATE_ORDER_ACTION
         );
 
+        autoTopUpSubaccount(account, subaccount);
+
         return orderHandler.createOrder(
             account,
             params
+        );
+    }
+
+    function autoTopUpSubaccount(address account, address subaccount) internal {
+        uint256 amount = SubaccountUtils.getSubaccountAutoTopUpAmount(dataStore, account, subaccount);
+        if (amount == 0) {
+            return;
+        }
+
+        address wnt = dataStore.getAddress(Keys.WNT);
+        router.pluginTransfer(
+            wnt, // token
+            account, // account
+            subaccount, // receiver
+            amount // amount
+        );
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "account", account);
+        eventData.addressItems.setItem(1, "subaccount", subaccount);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "amount", amount);
+
+        eventEmitter.emitEventLog2(
+            "SubaccountAutoTopUp",
+            Cast.toBytes32(account),
+            Cast.toBytes32(subaccount),
+            eventData
         );
     }
 }
