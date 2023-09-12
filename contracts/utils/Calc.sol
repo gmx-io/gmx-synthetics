@@ -13,6 +13,7 @@ library Calc {
     using SignedMath for int256;
     using SafeCast for uint256;
 
+    // this method assumes that min is less than max
     function boundMagnitude(int256 value, uint256 min, uint256 max) internal pure returns (int256) {
         uint256 magnitude = value.abs();
 

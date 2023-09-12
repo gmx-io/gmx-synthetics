@@ -62,9 +62,8 @@ library MarketUtils {
     }
 
     // @dev struct for the result of the getNextFundingAmountPerSize call
-    // @param longsPayShorts whether longs pay shorts or shorts pay longs
-    // @param fundingFeeAmountPerSizeDelta funding fee amount per size delta values
-    // @param claimableFundingAmountPerSize claimable funding per size delta values
+    // note that abs(nextSavedFundingFactorPerSecond) may not equal the fundingFactorPerSecond
+    // see getNextFundingFactorPerSecond for more info
     struct GetNextFundingAmountPerSizeResult {
         bool longsPayShorts;
         uint256 fundingFactorPerSecond;
@@ -103,6 +102,7 @@ library MarketUtils {
         uint256 savedFundingFactorPerSecondMagnitude;
 
         int256 nextSavedFundingFactorPerSecond;
+        int256 nextSavedFundingFactorPerSecondWithMinBound;
     }
 
     struct FundingConfigCache {
@@ -1231,6 +1231,11 @@ library MarketUtils {
     }
 
     // @dev get the next funding factor per second
+    // in case the minFundingFactorPerSecond is not zero, and the long / short skew has flipped
+    // if orders are being created frequently it is possible that the minFundingFactorPerSecond prevents
+    // the nextSavedFundingFactorPerSecond from being decreased fast enough for the sign to eventually flip
+    // if it is bound by minFundingFactorPerSecond
+    // for that reason, the nextSavedFundingFactorPerSecond
     // @return nextFundingFactorPerSecond, longsPayShorts, nextSavedFundingFactorPerSecond
     function getNextFundingFactorPerSecond(
         DataStore dataStore,
@@ -1313,7 +1318,7 @@ library MarketUtils {
             configCache.fundingDecreaseFactorPerSecond = dataStore.getUint(Keys.fundingDecreaseFactorPerSecondKey(market));
             uint256 decreaseValue = configCache.fundingDecreaseFactorPerSecond * durationInSeconds;
 
-            if (cache.savedFundingFactorPerSecondMagnitude < decreaseValue) {
+            if (cache.savedFundingFactorPerSecondMagnitude <= decreaseValue) {
                 // set the funding factor to 1 or -1 depending on the original savedFundingFactorPerSecond
                 cache.nextSavedFundingFactorPerSecond = cache.savedFundingFactorPerSecond / cache.savedFundingFactorPerSecondMagnitude.toInt256();
             } else {
@@ -1326,13 +1331,21 @@ library MarketUtils {
         configCache.minFundingFactorPerSecond = dataStore.getUint(Keys.minFundingFactorPerSecondKey(market));
         configCache.maxFundingFactorPerSecond = dataStore.getUint(Keys.maxFundingFactorPerSecondKey(market));
 
-        // the nextSavedFundingFactorPerSecond represents the funding factor per second
-        // bound the nextSavedFundingFactorPerSecond by the minFundingFactorPerSecond and maxFundingFactorPerSecond per second
-        cache.nextSavedFundingFactorPerSecond = Calc.boundMagnitude(cache.nextSavedFundingFactorPerSecond, configCache.minFundingFactorPerSecond, configCache.maxFundingFactorPerSecond);
+        cache.nextSavedFundingFactorPerSecond = Calc.boundMagnitude(
+            cache.nextSavedFundingFactorPerSecond,
+            0,
+            configCache.maxFundingFactorPerSecond
+        );
+
+        cache.nextSavedFundingFactorPerSecondWithMinBound = Calc.boundMagnitude(
+            cache.nextSavedFundingFactorPerSecond,
+            configCache.minFundingFactorPerSecond,
+            configCache.maxFundingFactorPerSecond
+        );
 
         return (
-            cache.nextSavedFundingFactorPerSecond.abs(),
-            cache.nextSavedFundingFactorPerSecond > 0,
+            cache.nextSavedFundingFactorPerSecondWithMinBound.abs(),
+            cache.nextSavedFundingFactorPerSecondWithMinBound > 0,
             cache.nextSavedFundingFactorPerSecond
         );
     }
