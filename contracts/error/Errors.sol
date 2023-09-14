@@ -3,6 +3,11 @@
 pragma solidity ^0.8.0;
 
 library Errors {
+    // AdlHandler errors
+    error AdlNotRequired(int256 pnlToPoolFactor, uint256 maxPnlFactorForAdl);
+    error InvalidAdl(int256 nextPnlToPoolFactor, int256 pnlToPoolFactor);
+    error PnlOvercorrected(int256 nextPnlToPoolFactor, uint256 minPnlFactorForAdl);
+
     // AdlUtils errors
     error InvalidSizeDeltaForAdl(uint256 sizeDeltaUsd, uint256 positionSizeInUsd);
     error AdlNotEnabled();
@@ -45,13 +50,13 @@ library Errors {
     error InvalidReceiverForFirstDeposit(address receiver, address expectedReceiver);
     error InvalidMinMarketTokensForFirstDeposit(uint256 minMarketTokens, uint256 expectedMinMarketTokens);
 
-    // AdlHandler errors
-    error AdlNotRequired(int256 pnlToPoolFactor, uint256 maxPnlFactorForAdl);
-    error InvalidAdl(int256 nextPnlToPoolFactor, int256 pnlToPoolFactor);
-    error PnlOvercorrected(int256 nextPnlToPoolFactor, uint256 minPnlFactorForAdl);
-
     // ExchangeUtils errors
     error RequestNotYetCancellable(uint256 requestAge, uint256 requestExpirationAge, string requestType);
+
+    // GlpMigrator errors
+    error InvalidGlpAmount(uint256 totalGlpAmountToRedeem, uint256 totalGlpAmount);
+    error InvalidLongTokenForMigration(address market, address migrationLongToken, address marketLongToken);
+    error InvalidShortTokenForMigration(address market, address migrationShortToken, address marketShortToken);
 
     // OrderHandler errors
     error OrderNotUpdatable(uint256 orderType);
