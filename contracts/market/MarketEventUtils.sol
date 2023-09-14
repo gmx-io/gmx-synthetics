@@ -65,6 +65,7 @@ library MarketEventUtils {
     // will change as index prices change
     function emitMarketPoolValueUpdated(
         EventEmitter eventEmitter,
+        bytes32 actionType,
         bytes32 tradeKey,
         address market,
         MarketPoolValueInfo.Props memory props,
@@ -72,8 +73,9 @@ library MarketEventUtils {
     ) external {
         EventUtils.EventLogData memory eventData;
 
-        eventData.bytes32Items.initItems(1);
-        eventData.bytes32Items.setItem(0, "tradeKey", tradeKey);
+        eventData.bytes32Items.initItems(2);
+        eventData.bytes32Items.setItem(0, "actionType", actionType);
+        eventData.bytes32Items.setItem(1, "tradeKey", tradeKey);
 
         eventData.addressItems.initItems(1);
         eventData.addressItems.setItem(0, "market", market);

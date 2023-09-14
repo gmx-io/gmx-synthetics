@@ -252,6 +252,7 @@ library ExecuteDepositUtils {
 
         MarketEventUtils.emitMarketPoolValueUpdated(
             params.eventEmitter,
+            keccak256(abi.encode("DEPOSIT")),
             params.key,
             market.marketToken,
             poolValueInfo,

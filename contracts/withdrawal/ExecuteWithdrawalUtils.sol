@@ -337,6 +337,7 @@ library ExecuteWithdrawalUtils {
 
         MarketEventUtils.emitMarketPoolValueUpdated(
             params.eventEmitter,
+            keccak256(abi.encode("WITHDRAWAL")),
             params.key,
             market.marketToken,
             poolValueInfo,
