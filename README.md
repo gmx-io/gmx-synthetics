@@ -362,9 +362,9 @@ It is also possible to set a fundingIncreaseFactorPerSecond value, this would re
 - durationInSeconds is 600 seconds
 - longs are paying shorts funding
 - there are more longs than shorts
-- diffUsdToOpenInterestFactor is 6%
+- longShortImbalance is 6%
 
-Since diffUsdToOpenInterestFactor > thresholdForStableFunding, savedFundingFactorPerSecond should increase by `0.0001% * 6% * 600 = 0.0036%`
+Since longShortImbalance > thresholdForStableFunding, savedFundingFactorPerSecond should increase by `0.0001% * 6% * 600 = 0.0036%`
 
 ### Example 2
 
@@ -375,9 +375,9 @@ Since diffUsdToOpenInterestFactor > thresholdForStableFunding, savedFundingFacto
 - durationInSeconds is 600 seconds
 - longs are paying shorts funding
 - there are more longs than shorts
-- diffUsdToOpenInterestFactor is 4%
+- longShortImbalance is 4%
 
-Since longs are already paying shorts, the skew is the same, and the diffUsdToOpenInterestFactor < thresholdForStableFunding, savedFundingFactorPerSecond should not change
+Since longs are already paying shorts, the skew is the same, and the longShortImbalance < thresholdForStableFunding, savedFundingFactorPerSecond should not change
 
 ### Example 3
 
@@ -388,9 +388,9 @@ Since longs are already paying shorts, the skew is the same, and the diffUsdToOp
 - durationInSeconds is 600 seconds
 - longs are paying shorts funding
 - there are more longs than shorts
-- diffUsdToOpenInterestFactor is 2%
+- longShortImbalance is 2%
 
-Since diffUsdToOpenInterestFactor < thresholdForDecreaseFunding, savedFundingFactorPerSecond should decrease by `0.000002% * 600 = 0.0012%`
+Since longShortImbalance < thresholdForDecreaseFunding, savedFundingFactorPerSecond should decrease by `0.000002% * 600 = 0.0012%`
 
 ### Example 4
 
@@ -401,7 +401,7 @@ Since diffUsdToOpenInterestFactor < thresholdForDecreaseFunding, savedFundingFac
 - durationInSeconds is 600 seconds
 - longs are paying shorts funding
 - there are more shorts than longs
-- diffUsdToOpenInterestFactor is 1%
+- longShortImbalance is 1%
 
 Since the skew is in the other direction, savedFundingFactorPerSecond should decrease by `0.0001% * 1% * 600 = 0.0006%`
 
