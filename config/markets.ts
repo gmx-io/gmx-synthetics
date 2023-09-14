@@ -771,6 +771,7 @@ const config: {
     },
     {
       tokens: { indexToken: "SOL", longToken: "WBTC", shortToken: "USDC" },
+      isDisabled: true,
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDT" },
@@ -778,12 +779,12 @@ const config: {
     },
     { tokens: { indexToken: "DOGE", longToken: "WBTC", shortToken: "DAI" } },
     { tokens: { indexToken: "LINK", longToken: "WBTC", shortToken: "DAI" } },
-    { tokens: { indexToken: "BNB", longToken: "WBTC", shortToken: "DAI" } },
-    { tokens: { indexToken: "ADA", longToken: "WBTC", shortToken: "DAI" } },
-    { tokens: { indexToken: "TRX", longToken: "WBTC", shortToken: "DAI" } },
-    { tokens: { indexToken: "MATIC", longToken: "WBTC", shortToken: "USDC" } },
-    { tokens: { indexToken: "DOT", longToken: "WBTC", shortToken: "USDC" } },
-    { tokens: { indexToken: "UNI", longToken: "WBTC", shortToken: "USDC" } },
+    { tokens: { indexToken: "BNB", longToken: "WBTC", shortToken: "DAI" }, isDisabled: true },
+    { tokens: { indexToken: "ADA", longToken: "WBTC", shortToken: "DAI" }, isDisabled: true },
+    { tokens: { indexToken: "TRX", longToken: "WBTC", shortToken: "DAI" }, isDisabled: true },
+    { tokens: { indexToken: "MATIC", longToken: "WBTC", shortToken: "USDC" }, isDisabled: true },
+    { tokens: { indexToken: "DOT", longToken: "WBTC", shortToken: "USDC" }, isDisabled: true },
+    { tokens: { indexToken: "UNI", longToken: "WBTC", shortToken: "USDC" }, isDisabled: true },
     {
       tokens: {
         indexToken: "TEST",
@@ -808,6 +809,7 @@ const config: {
 
       maxLongTokenPoolAmountForDeposit: expandDecimals(10, 18),
       maxShortTokenPoolAmountForDeposit: expandDecimals(300_000, 6),
+      isDisabled: true,
     },
 
     {

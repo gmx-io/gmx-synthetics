@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import * as keys from "../utils/keys";
-import { setBytes32IfDifferent, setUintIfDifferent } from "../utils/dataStore";
+import { setBoolIfDifferent, setBytes32IfDifferent, setUintIfDifferent } from "../utils/dataStore";
 import { DEFAULT_MARKET_TYPE, getMarketTokenAddresses } from "../utils/market";
 import { getMarketKey, getOnchainMarkets } from "../utils/market";
 
@@ -166,6 +166,11 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
         const key = keys[`${name}Key`](marketToken);
         await setUintIfDifferent(key, value, `${name} for ${marketToken.toString()}`);
       }
+    }
+
+    if (marketConfig.isDisabled !== undefined) {
+      const key = keys.isMarketDisabledKey(marketToken);
+      await setBoolIfDifferent(key, marketConfig.isDisabled, `isDisabled for ${marketToken}`);
     }
 
     if (marketConfig.swapFeeFactorForPositiveImpact) {
