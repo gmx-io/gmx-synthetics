@@ -22,6 +22,7 @@ import "../adl/AdlUtils.sol";
 
 import "./ReaderUtils.sol";
 import "./ReaderDepositUtils.sol";
+import "./ReaderWithdrawalUtils.sol";
 
 // @title Reader
 // @dev Library for read functions
@@ -333,6 +334,22 @@ contract Reader {
             prices,
             longTokenAmount,
             shortTokenAmount,
+            uiFeeReceiver
+        );
+    }
+
+    function getWithdrawalAmountOut(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketUtils.MarketPrices memory prices,
+        uint256 marketTokenAmount,
+        address uiFeeReceiver
+    ) external view returns (uint256, uint256) {
+        return ReaderWithdrawalUtils.getWithdrawalAmountOut(
+            dataStore,
+            market,
+            prices,
+            marketTokenAmount,
             uiFeeReceiver
         );
     }

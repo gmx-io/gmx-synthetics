@@ -17,6 +17,7 @@ import { getExecuteParams } from "../../utils/exchange";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
+import { prices } from "../../utils/prices";
 
 describe("Exchange.Deposit", () => {
   const { provider } = ethers;
@@ -591,6 +592,28 @@ describe("Exchange.Deposit", () => {
     await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
     await dataStore.setUint(keys.swapImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 9));
     await dataStore.setUint(keys.swapImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+
+    expect(
+      await reader.getDepositAmountOut(
+        dataStore.address,
+        ethUsdMarket,
+        prices.ethUsdMarket,
+        expandDecimals(10, 18), // longTokenAmount
+        0, // shortTokenAmount
+        AddressZero
+      )
+    ).eq("49975000000000000000000");
+
+    expect(
+      await reader.getDepositAmountOut(
+        dataStore.address,
+        ethUsdMarket,
+        prices.ethUsdMarket,
+        expandDecimals(10, 18), // longTokenAmount
+        expandDecimals(1000, 6), // shortTokenAmount
+        AddressZero
+      )
+    ).eq("50975989999313725490000");
 
     await handleDeposit(fixture, {
       create: {
