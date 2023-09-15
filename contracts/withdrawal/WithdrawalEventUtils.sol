@@ -32,6 +32,10 @@ library WithdrawalEventUtils {
         eventData.addressItems.setItem(2, "callbackContract", withdrawal.callbackContract());
         eventData.addressItems.setItem(3, "market", withdrawal.market());
 
+        eventData.addressItems.initArrayItems(2);
+        eventData.addressItems.setItem(0, "longTokenSwapPath", withdrawal.longTokenSwapPath());
+        eventData.addressItems.setItem(1, "shortTokenSwapPath", withdrawal.shortTokenSwapPath());
+
         eventData.uintItems.initItems(6);
         eventData.uintItems.setItem(0, "marketTokenAmount", withdrawal.marketTokenAmount());
         eventData.uintItems.setItem(1, "minLongTokenAmount", withdrawal.minLongTokenAmount());
