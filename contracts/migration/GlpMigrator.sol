@@ -51,6 +51,15 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
 
         GlpRedemption long;
         GlpRedemption short;
+
+        uint256 minMarketTokens;
+    }
+
+    struct MigrateCache {
+        Market.Props market;
+        uint256 redeemedLongTokenAmount;
+        uint256 redeemedShortTokenAmount;
+        bytes32 depositKey;
     }
 
     modifier withReducedRedemptionFees() {
@@ -142,25 +151,26 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
 
         for (uint256 i = 0; i < migrationItems.length; i++) {
             MigrationItem memory migrationItem = migrationItems[i];
+            MigrateCache memory cache;
 
-            Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, migrationItem.market);
+            cache.market = MarketUtils.getEnabledMarket(dataStore, migrationItem.market);
 
-            if (migrationItem.long.token != market.longToken) {
-                revert Errors.InvalidLongTokenForMigration(migrationItem.market, migrationItem.long.token, market.longToken);
+            if (migrationItem.long.token != cache.market.longToken) {
+                revert Errors.InvalidLongTokenForMigration(migrationItem.market, migrationItem.long.token, cache.market.longToken);
             }
 
-            if (migrationItem.short.token != market.shortToken) {
-                revert Errors.InvalidShortTokenForMigration(migrationItem.market, migrationItem.short.token, market.shortToken);
+            if (migrationItem.short.token != cache.market.shortToken) {
+                revert Errors.InvalidShortTokenForMigration(migrationItem.market, migrationItem.short.token, cache.market.shortToken);
             }
 
-            glpRewardRouter.unstakeAndRedeemGlp(
+            cache.redeemedLongTokenAmount = glpRewardRouter.unstakeAndRedeemGlp(
                 migrationItem.long.token, // tokenOut
                 migrationItem.long.glpAmount, // glpAmount
                 migrationItem.long.minOut, // minOut
                 address(depositVault) // receiver
             );
 
-            glpRewardRouter.unstakeAndRedeemGlp(
+            cache.redeemedShortTokenAmount = glpRewardRouter.unstakeAndRedeemGlp(
                 migrationItem.short.token, // tokenOut
                 migrationItem.short.glpAmount, // glpAmount
                 migrationItem.short.minOut, // minOut
@@ -173,34 +183,51 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
                 executionFee
             );
 
-            address[] memory emptySwapPath;
-
-            uint256 minMarketTokens;
-            // TODO estimate minMarketTokens
-            // TODO validate max deposit amount
-
+            // a user could set a minMarketTokens to force the deposit to fail
+            // or set a market where the deposited amount would exceed the caps and
+            // the deposit would fail
+            // glp should be adjusted such that only redemptions are allowed so
+            // any arbitrage / benefit of doing this should be minimal
             DepositUtils.CreateDepositParams memory depositParams =  DepositUtils.CreateDepositParams(
                 account, // receiver;
                 address(0), // callbackContract;
                 address(0), // uiFeeReceiver;
                 migrationItem.market, // market;
-                market.longToken, // initialLongToken;
-                market.shortToken, // initialShortToken;
-                emptySwapPath, // longTokenSwapPath;
-                emptySwapPath, // shortTokenSwapPath;
-                minMarketTokens, // minMarketTokens;
+                cache.market.longToken, // initialLongToken;
+                cache.market.shortToken, // initialShortToken;
+                new address[](0), // longTokenSwapPath;
+                new address[](0), // shortTokenSwapPath;
+                migrationItem.minMarketTokens, // minMarketTokens;
                 false, // shouldUnwrapNativeToken;
                 executionFee, // executionFee;
                 0 // callbackGasLimit;
             );
 
-            depositHandler.createDeposit(
+            cache.depositKey = depositHandler.createDeposit(
                 account,
                 depositParams
             );
-        }
 
-        // TODO: emit event
+            EventUtils.EventLogData memory eventData;
+
+            eventData.bytes32Items.initItems(1);
+            eventData.bytes32Items.setItem(0, "depositKey", cache.depositKey);
+
+            eventData.addressItems.initItems(1);
+            eventData.addressItems.setItem(0, "market", cache.market.marketToken);
+
+            eventData.uintItems.initItems(4);
+            eventData.uintItems.setItem(0, "glpLongAmount", migrationItem.long.glpAmount);
+            eventData.uintItems.setItem(1, "glpShortAmount", migrationItem.short.glpAmount);
+            eventData.uintItems.setItem(2, "redeemedLongTokenAmount", cache.redeemedLongTokenAmount);
+            eventData.uintItems.setItem(3, "redeemedShortTokenAmount", cache.redeemedShortTokenAmount);
+
+            eventEmitter.emitEventLog1(
+                "GlpMigration",
+                Cast.toBytes32(cache.market.marketToken),
+                eventData
+            );
+        }
     }
 
 }
