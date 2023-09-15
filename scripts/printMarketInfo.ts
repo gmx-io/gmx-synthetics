@@ -81,7 +81,6 @@ async function main() {
   const dataStore = await hre.ethers.getContract("DataStore");
 
   const markets = [...(await reader.getMarkets(dataStore.address, 0, 100))];
-  markets.sort((a, b) => a.indexToken.localeCompare(b.indexToken));
 
   const marketPricesList = [];
 
