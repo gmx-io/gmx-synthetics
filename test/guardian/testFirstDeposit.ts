@@ -10,37 +10,15 @@ import { prices } from "../../utils/prices";
 import { getMarketTokenPriceWithPoolValue } from "../../utils/market";
 import { getSupplyOf } from "../../utils/token";
 
-describe("Guardian.FirstDeposit", () => {
+describe.only("Guardian.FirstDeposit", () => {
   let fixture;
-  let wallet, user0, user1;
-  let roleStore,
-    dataStore,
-    wnt,
-    usdc,
-    config,
-    ethUsdMarket,
-    referralStorage,
-    exchangeRouter,
-    feeHandler,
-    reader,
-    decreasePositionUtils;
+  let wallet;
+  let roleStore, wnt, usdc, config, ethUsdMarket;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ wallet, user0, user1 } = fixture.accounts);
-    ({
-      roleStore,
-      dataStore,
-      ethUsdMarket,
-      wnt,
-      usdc,
-      referralStorage,
-      exchangeRouter,
-      feeHandler,
-      reader,
-      config,
-      decreasePositionUtils,
-    } = fixture.contracts);
+    ({ wallet } = fixture.accounts);
+    ({ roleStore, ethUsdMarket, wnt, usdc, config } = fixture.contracts);
   });
 
   it("First deposits may go through if there is no requirement configured", async () => {
