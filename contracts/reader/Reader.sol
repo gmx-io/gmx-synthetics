@@ -21,6 +21,7 @@ import "../market/Market.sol";
 import "../adl/AdlUtils.sol";
 
 import "./ReaderUtils.sol";
+import "./ReaderDepositUtils.sol";
 
 // @title Reader
 // @dev Library for read functions
@@ -316,5 +317,23 @@ contract Reader {
         );
 
         return (latestAdlBlock, shouldEnableAdl, pnlToPoolFactor, maxPnlFactor);
+    }
+
+    function getDepositAmountOut(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketUtils.MarketPrices memory prices,
+        uint256 longTokenAmount,
+        uint256 shortTokenAmount,
+        address uiFeeReceiver
+    ) external view returns (uint256) {
+        return ReaderDepositUtils.getDepositAmountOut(
+            dataStore,
+            market,
+            prices,
+            longTokenAmount,
+            shortTokenAmount,
+            uiFeeReceiver
+        );
     }
 }
