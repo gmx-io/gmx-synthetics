@@ -10,7 +10,7 @@ import { prices } from "../../utils/prices";
 import { getMarketTokenPriceWithPoolValue } from "../../utils/market";
 import { getSupplyOf } from "../../utils/token";
 
-describe.only("Guardian.FirstDeposit", () => {
+describe("Guardian.FirstDeposit", () => {
   let fixture;
   let wallet;
   let roleStore, wnt, usdc, config, ethUsdMarket;
