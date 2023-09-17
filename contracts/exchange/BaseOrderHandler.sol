@@ -55,10 +55,6 @@ contract BaseOrderHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
     }
 
     // @dev get the BaseOrderUtils.ExecuteOrderParams to execute an order
-    // @param key the key of the order to execute
-    // @param oracleParams OracleUtils.SetPricesParams
-    // @param keeper the keeper executing the order
-    // @param startingGas the starting gas
     // @return the required BaseOrderUtils.ExecuteOrderParams params to execute the order
     function _getExecuteOrderParams(
         bytes32 key,
