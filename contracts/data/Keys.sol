@@ -1339,7 +1339,7 @@ library Keys {
     // @dev key for min market tokens for first deposit
     // @param market the market to check
     // @return key for min market tokens for first deposit
-    function minMarketTokensForFirstDeposit(address market) internal pure returns (bytes32) {
+    function minMarketTokensForFirstDepositKey(address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT,
             market

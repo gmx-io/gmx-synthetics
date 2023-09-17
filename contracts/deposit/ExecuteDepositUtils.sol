@@ -541,7 +541,7 @@ library ExecuteDepositUtils {
         // return if this is not the first deposit
         if (initialMarketTokensSupply != 0) { return; }
 
-        uint256 minMarketTokens = params.dataStore.getUint(Keys.minMarketTokensForFirstDeposit(market.marketToken));
+        uint256 minMarketTokens = params.dataStore.getUint(Keys.minMarketTokensForFirstDepositKey(market.marketToken));
 
         // return if there is no minMarketTokens requirement
         if (minMarketTokens == 0) { return; }
