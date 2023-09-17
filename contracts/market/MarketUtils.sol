@@ -2385,7 +2385,7 @@ library MarketUtils {
         EventEmitter eventEmitter,
         address market
     ) external {
-        (uint256 distributionAmount, /* uint256 nextPositionImpactPoolAmount */) = getPendingPositionImpactPoolDistributionAmount(dataStore, market);
+        (uint256 distributionAmount, uint256 nextPositionImpactPoolAmount) = getPendingPositionImpactPoolDistributionAmount(dataStore, market);
 
         applyDeltaToPositionImpactPool(
             dataStore,
@@ -2397,7 +2397,8 @@ library MarketUtils {
         MarketEventUtils.emitPositionImpactPoolDistributed(
             eventEmitter,
             market,
-            distributionAmount
+            distributionAmount,
+            nextPositionImpactPoolAmount
         );
 
         dataStore.setUint(Keys.positionImpactPoolDistributedAtKey(market), Chain.currentTimestamp());

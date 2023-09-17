@@ -158,15 +158,17 @@ library MarketEventUtils {
     function emitPositionImpactPoolDistributed(
         EventEmitter eventEmitter,
         address market,
-        uint256 distributionAmount
+        uint256 distributionAmount,
+        uint256 nextPositionImpactPoolAmount
     ) external {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(1);
         eventData.addressItems.setItem(0, "market", market);
 
-        eventData.uintItems.initItems(1);
+        eventData.uintItems.initItems(2);
         eventData.uintItems.setItem(0, "distributionAmount", distributionAmount);
+        eventData.uintItems.setItem(1, "nextPositionImpactPoolAmount", nextPositionImpactPoolAmount);
 
         eventEmitter.emitEventLog1(
             "PositionImpactPoolDistributed",
