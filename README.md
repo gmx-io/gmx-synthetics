@@ -405,9 +405,11 @@ Since longShortImbalance < thresholdForDecreaseFunding, savedFundingFactorPerSec
 
 Since the skew is in the other direction, savedFundingFactorPerSecond should decrease by `0.0001% * 1% * 600 = 0.0006%`
 
-Note that there are possible ways to game the funding fees, the funding factors should be adjusted to minimize this possibility.
+Note that there are possible ways to game the funding fees, the funding factors should be adjusted to minimize this possibility:
 
-An example would be if longOpenInterest > shortOpenInterest and longShortImbalance is within thresholdForStableFunding, a user holding a short position could open a long position to increase the longShortImbalance and attempt to cause the funding fee to increase. In an active market, it should be difficult to predict when an opposing short position would be opened by someone else to earn the increased funding fee which should make this gaming difficult, the funding factors can also be adjusted to help minimize the benefit of this gaming.
+- If longOpenInterest > shortOpenInterest and longShortImbalance is within thresholdForStableFunding, a user holding a short position could open a long position to increase the longShortImbalance and attempt to cause the funding fee to increase. In an active market, it should be difficult to predict when an opposing short position would be opened by someone else to earn the increased funding fee which should make this gaming difficult, the funding factors can also be adjusted to help minimize the benefit of this gaming.
+
+- If longOpenInterest > shortOpenInterest and longShortImbalance > thresholdForStableFunding, a trader holding a long position could make multiple small trades during this time to ensure that the funding factor is continually updated instead of a larger value being used for the entirety of the duration, this should minimize the funding fee for long positions but should not decrease the funding fee below the expected rates.
 
 # Borrowing Fees
 
