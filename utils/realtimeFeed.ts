@@ -7,9 +7,6 @@ import hre from "hardhat";
 
 const coder = ethers.utils.defaultAbiCoder;
 
-const clientId = process.env.REALTIME_FEED_CLIENT_ID;
-const clientSecret = process.env.REALTIME_FEED_CLIENT_SECRET;
-
 export type RealtimeFeedReport = {
   feedId: string;
   observationTimestamp: number;
@@ -32,7 +29,7 @@ function getBaseUrl() {
   throw new Error("Unsupported network");
 }
 
-function generateHmacString(url: string, body: string, timestamp: number) {
+function generateHmacString(url: string, body: string, timestamp: number, clientId: string) {
   const method = "GET";
   const parsedUrl = urlLib.parse(url);
 
@@ -42,21 +39,21 @@ function generateHmacString(url: string, body: string, timestamp: number) {
   return authString;
 }
 
-function computeHmacSignature(message: string) {
+function computeHmacSignature(message: string, clientSecret: string) {
   return crypto
     .createHmac("sha256", clientSecret as string)
     .update(message)
     .digest("hex");
 }
 
-function signRequest(url: string) {
+function signRequest(url: string, clientId: string, clientSecret: string) {
   if (!clientId || !clientSecret) {
     throw new Error("clientId and clientSecret are required");
   }
 
   const timestamp = Date.now();
-  const signatureString = generateHmacString(url, "", timestamp);
-  const signature = computeHmacSignature(signatureString);
+  const signatureString = generateHmacString(url, "", timestamp, clientId);
+  const signature = computeHmacSignature(signatureString, clientSecret);
 
   return {
     timestamp,
@@ -67,30 +64,6 @@ function signRequest(url: string) {
 type ClientBulkResponse = {
   chainlinkBlob: string[];
 };
-
-export async function fetchLastReport(feedId: string, latestBlockNumber: number) {
-  const baseUrl = getBaseUrl();
-  const url = `${baseUrl}/client/bulk?feedIdHex=${feedId}&limit=20&afterBlockNumber=${latestBlockNumber - 10}`;
-  const { timestamp, signature } = signRequest(url);
-
-  const headers = {
-    Authorization: clientId,
-    "X-Authorization-Timestamp": String(timestamp),
-    "X-Authorization-Signature-SHA256": signature,
-  };
-
-  const res = await got(url, {
-    headers: headers,
-    timeout: 30000,
-  }).json();
-  const data = res as ClientBulkResponse;
-  const reports = data.chainlinkBlob.map((blob) => {
-    const decoded = decodeBlob(blob);
-    return decoded.report;
-  });
-
-  return reports[reports.length - 1];
-}
 
 export function decodeBlob(blob: string): {
   reportContext: string[];
@@ -149,14 +122,26 @@ export function decodeBlob(blob: string): {
   };
 }
 
-async function main() {
-  const feedId = "0xb43dc495134fa357725f93539511c5a4febeadf56e7c29c96566c825094f0b20"; // ARB
-  const lastBlockNumber = await hre.ethers.provider.getBlockNumber();
+export async function fetchRealtimeFeedReport({ feedId, blockNumber, clientId, clientSecret }) {
+  const baseUrl = getBaseUrl();
+  const url = `${baseUrl}/client/bulk?feedIdHex=${feedId}&limit=20&afterBlockNumber=${blockNumber - 10}`;
+  const { timestamp, signature } = signRequest(url, clientId, clientSecret);
 
-  const report = await fetchLastReport(feedId, lastBlockNumber);
-  console.log("report", report);
-}
+  const headers = {
+    Authorization: clientId,
+    "X-Authorization-Timestamp": String(timestamp),
+    "X-Authorization-Signature-SHA256": signature,
+  };
 
-if (process.env.REALTIME_FEED_TEST) {
-  main();
+  const res = await got(url, {
+    headers: headers,
+    timeout: 30000,
+  }).json();
+  const data = res as ClientBulkResponse;
+  const reports = data.chainlinkBlob.map((blob) => {
+    const decoded = decodeBlob(blob);
+    return decoded.report;
+  });
+
+  return reports[reports.length - 1];
 }
