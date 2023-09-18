@@ -2,7 +2,9 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 export type RolesConfig = {
   account: string;
-  roles: string[];
+  label?: string;
+  roles?: string[];
+  rolesToRemove?: string[];
 }[];
 
 export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesConfig> {
@@ -65,8 +67,29 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         ],
       },
     ],
-    arbitrum: [...getMainnetRoles({ multisigAccount: "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9" })],
-    avalanche: [...getMainnetRoles({ multisigAccount: "0x15F9eBC71c539926B8f652a534d29B4Af57CaD55" })],
+    arbitrum: [
+      ...getMainnetRoles({ multisigAccount: "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9" }),
+
+      {
+        rolesToRemove: ["CONTROLLER"],
+        account: "0xE7BfFf2aB721264887230037940490351700a068",
+      },
+      {
+        rolesToRemove: ["MARKET_KEEPER"],
+        account: "0xE7BfFf2aB721264887230037940490351700a068",
+      },
+    ],
+    avalanche: [
+      ...getMainnetRoles({ multisigAccount: "0x15F9eBC71c539926B8f652a534d29B4Af57CaD55" }),
+      {
+        rolesToRemove: ["CONTROLLER"],
+        account: "0xE7BfFf2aB721264887230037940490351700a068",
+      },
+      {
+        rolesToRemove: ["MARKET_KEEPER"],
+        account: "0xE7BfFf2aB721264887230037940490351700a068",
+      },
+    ],
     arbitrumGoerli: [
       {
         account: "0xC84f3398eDf6336E1Ef55b50Ca3F9f9f96B8b504",
@@ -93,34 +116,54 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       {
         // Chainlink order executor
         account: "0xE0886d9baAaD385F37d460A4ec7b32b79a3731e0",
-        roles: ["ORDER_KEEPER"],
+        rolesToRemove: ["ORDER_KEEPER"],
       },
       {
         // Chainlink deposit executor
         account: "0x239878637fA148819e32Fb8799152bf54F5A34a6",
-        roles: ["ORDER_KEEPER"],
+        rolesToRemove: ["ORDER_KEEPER"],
       },
       {
         // Chainlink withdrawal executor
         account: "0x6b2e203597Fe6D28Ad44CEFb10Df34d6Ba00721A",
-        roles: ["ORDER_KEEPER"],
+        rolesToRemove: ["ORDER_KEEPER"],
       },
 
       // new
       {
         // Chainlink order executor
         account: "0x30213e04b9c86492c044e6803315e82d86efbd09",
-        roles: ["ORDER_KEEPER"],
+        label: "chainlink market orders keeper",
+        rolesToRemove: ["ORDER_KEEPER"],
       },
       {
         // Chainlink deposit executor
         account: "0x5a686c999d6083a183a2a8d459e96e65fc864c96",
-        roles: ["ORDER_KEEPER"],
+        label: "chainlink deposits keeper",
+        rolesToRemove: ["ORDER_KEEPER"],
       },
       {
         // Chainlink withdrawal executor
         account: "0x27cce6af7ad5990014235ace4ddacd489e583b56",
-        roles: ["ORDER_KEEPER"],
+        label: "chainlink withdrawals keeper",
+        rolesToRemove: ["ORDER_KEEPER"],
+      },
+
+      // delist old handlers
+      {
+        // deposit handler
+        account: "0x5B074a1874Ca3bA78e47DE3f3836A120C7ED8DF1",
+        rolesToRemove: ["CONTROLLER"],
+      },
+      {
+        // order handler
+        account: "0xC710E73201100FE6d7Ee73fcC5f8A7Cd51566588",
+        rolesToRemove: ["CONTROLLER"],
+      },
+      {
+        // withdrawal handler
+        account: "0x8d860ac6F995aB811a2239E9423447254c05Cd59",
+        rolesToRemove: ["CONTROLLER"],
       },
     ],
     avalancheFuji: [

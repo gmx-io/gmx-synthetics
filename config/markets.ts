@@ -771,7 +771,7 @@ const config: {
     },
     {
       tokens: { indexToken: "SOL", longToken: "WBTC", shortToken: "USDC" },
-      isDisabled: true,
+      isDisabled: false,
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDT" },
@@ -809,7 +809,7 @@ const config: {
 
       maxLongTokenPoolAmountForDeposit: expandDecimals(10, 18),
       maxShortTokenPoolAmountForDeposit: expandDecimals(300_000, 6),
-      isDisabled: true,
+      isDisabled: false,
     },
 
     {
