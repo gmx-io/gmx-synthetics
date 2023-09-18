@@ -151,19 +151,19 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
 
       // delist old handlers
       {
-        // deposit handler
         account: "0x5B074a1874Ca3bA78e47DE3f3836A120C7ED8DF1",
-        rolesToRemove: ["CONTROLLER"],
+        label: "deposit handler A",
+        roles: ["CONTROLLER"],
       },
       {
-        // order handler
         account: "0xC710E73201100FE6d7Ee73fcC5f8A7Cd51566588",
-        rolesToRemove: ["CONTROLLER"],
+        label: "order handler A",
+        roles: ["CONTROLLER"],
       },
       {
-        // withdrawal handler
         account: "0x8d860ac6F995aB811a2239E9423447254c05Cd59",
-        rolesToRemove: ["CONTROLLER"],
+        label: "withdrawal handler A",
+        roles: ["CONTROLLER"],
       },
     ],
     avalancheFuji: [
