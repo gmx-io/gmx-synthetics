@@ -157,4 +157,6 @@ async function main() {
   console.log("report", report);
 }
 
-main();
+if (process.env.REALTIME_FEED_TEST) {
+  main();
+}
