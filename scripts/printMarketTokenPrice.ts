@@ -2,16 +2,17 @@ import hre from "hardhat";
 
 import * as keys from "../utils/keys";
 import { toLoggableObject } from "./utils";
+import got from "got";
+import { expandDecimals } from "../utils/math";
 
 function getArbValues() {
   return {
     marketToken: "0x70d95587d40A2caf56bd97485aB3Eec10Bee6336",
     indexToken: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
-    indexTokenPrice: "1800000000000000",
     longToken: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
-    longTokenPrice: "1800000000000000",
     shortToken: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
     shortTokenPrice: "1000000000000000000000000",
+    tickersUrl: "https://arbitrum.gmx-oracle.io/prices/tickers",
   };
 }
 
@@ -26,8 +27,18 @@ async function main() {
   const dataStore = await hre.ethers.getContract("DataStore");
   const reader = await hre.ethers.getContract("Reader");
 
-  const { marketToken, indexToken, indexTokenPrice, longToken, longTokenPrice, shortToken, shortTokenPrice } =
-    getValues();
+  const { tickersUrl, marketToken, indexToken, longToken, shortToken, shortTokenPrice } = getValues();
+
+  const tickers = (await got(tickersUrl).json()) as any[];
+  const tickerByToken = Object.fromEntries(tickers.map((t) => [t.tokenAddress, t]));
+
+  const indexTokenTicker = tickerByToken[indexToken];
+  const indexTokenPriceMax = expandDecimals(indexTokenTicker.maxPrice, indexTokenTicker.oracleDecimals);
+  const indexTokenPriceMin = expandDecimals(indexTokenTicker.minPrice, indexTokenTicker.oracleDecimals);
+
+  const longTokenTicker = tickerByToken[longToken];
+  const longTokenPriceMax = expandDecimals(longTokenTicker.maxPrice, longTokenTicker.oracleDecimals);
+  const longTokenPriceMin = expandDecimals(longTokenTicker.minPrice, longTokenTicker.oracleDecimals);
 
   const pnlFactorType = keys.MAX_PNL_FACTOR_FOR_TRADERS;
   const maximize = true;
@@ -45,12 +56,12 @@ async function main() {
       shortToken,
     },
     {
-      min: indexTokenPrice,
-      max: indexTokenPrice,
+      min: indexTokenPriceMin,
+      max: indexTokenPriceMax,
     },
     {
-      min: longTokenPrice,
-      max: longTokenPrice,
+      min: longTokenPriceMin,
+      max: longTokenPriceMax,
     },
     {
       min: shortTokenPrice,
