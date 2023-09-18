@@ -638,6 +638,8 @@ After the initial setup:
 
 - Accounts may receive ETH for ADLs / liquidations, if the account cannot receive ETH then WETH would be sent instead
 
+- If profit is capped due to MAX_PNL_FACTOR_FOR_TRADERS, the percentage of profit paid out to traders may differ depending on the ordering of when positions are decreased / closed since the cap is re-calculated based on the current state of the pool
+
 - Positive price impact may be capped by configuration and the amount of tokens in the impact pools
 
 - Negative price impact may be capped by configuration
