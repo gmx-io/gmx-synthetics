@@ -1235,7 +1235,8 @@ library MarketUtils {
     // if orders are being created frequently it is possible that the minFundingFactorPerSecond prevents
     // the nextSavedFundingFactorPerSecond from being decreased fast enough for the sign to eventually flip
     // if it is bound by minFundingFactorPerSecond
-    // for that reason, the nextSavedFundingFactorPerSecond
+    // for that reason, only the nextFundingFactorPerSecond is bound by minFundingFactorPerSecond
+    // and the nextSavedFundingFactorPerSecond is not bound by minFundingFactorPerSecond
     // @return nextFundingFactorPerSecond, longsPayShorts, nextSavedFundingFactorPerSecond
     function getNextFundingFactorPerSecond(
         DataStore dataStore,
