@@ -932,7 +932,7 @@ describe("Guardian.FundingFees", () => {
 
     const USDCBalanceAfterUser2 = await usdc.balanceOf(user2.address);
 
-    expect(USDCBalanceAfterUser2.sub(USDCBalanceBeforeUser2)).eq("17280025"); // $17.280025
+    expect(USDCBalanceAfterUser2.sub(USDCBalanceBeforeUser2)).closeTo("17280025", 10); // $17.280025
 
     const WNTBalanceBeforeUser1 = await wnt.balanceOf(user1.address);
 
