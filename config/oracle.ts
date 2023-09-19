@@ -186,7 +186,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     },
 
     avalanche: {
-      realtimeFeedVerifier: ethers.constants.AddressZero,
+      realtimeFeedVerifier: "0xaaf548a3A74939650d7A5d7550Cf785975ed400a",
       signers: ["0x7f2CA7713AACD279f7753F804163189E4831c1EE"],
       maxOraclePriceAge: 5 * 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
@@ -294,7 +294,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     },
 
     avalancheFuji: {
-      realtimeFeedVerifier: ethers.constants.AddressZero,
+      realtimeFeedVerifier: "0x5f64394a2Ab3AcE9eCC071568Fc552489a8de7AF",
       signers: ["0xFb11f15f206bdA02c224EDC744b0E50E46137046", "0x23247a1A80D01b9482E9d734d2EB780a3b5c8E6c"],
       maxOraclePriceAge: 5 * 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
