@@ -1,9 +1,12 @@
 import hre from "hardhat";
+import { validatePriceFeeds } from "./validatePriceFeedsUtils";
 import { getFrameSigner } from "../utils/signer";
 
 const expectedTimelockMethods = ["signalSetRealtimeFeed", "setRealtimeFeedAfterSignal"];
 
 async function main() {
+  await validatePriceFeeds();
+
   const signer = await getFrameSigner();
   const timelock = await hre.ethers.getContract("Timelock", signer);
 
