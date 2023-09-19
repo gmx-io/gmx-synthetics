@@ -604,7 +604,7 @@ After the initial setup:
 
 - If trader PnL is capped, positions that are closed earlier may receive a lower PnL ratio compared to positions that are closed later
 
-- Due to the difference in positive and negative position price impact, there can be a build up of virtual token amounts in the position impact pool which would affect the pricing of market tokens, the position impact pool should be gradually decreased if needed
+- Due to the difference in positive and negative position price impact, there can be a build up of virtual token amounts in the position impact pool which would affect the pricing of market tokens, the position impact pool should be gradually distributed if needed
 
 - Contracts with the "CONTROLLER" role have access to important functions such as setting DataStore values, due to this, care should be taken to ensure that such contracts do not have generic functions or functions that can be intentionally used to change important values
 
