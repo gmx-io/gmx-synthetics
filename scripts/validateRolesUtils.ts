@@ -42,10 +42,12 @@ export async function validateRoles() {
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
       },
       ROLE_ADMIN: {
-        "0x9d44B89Eb6FB382b712C562DfaFD8825829b422e": true, // timelock_1
+        "0x9d44b89eb6fb382b712c562dfafd8825829b422e": true, // Timelock1
+        "0x62aB76Ed722C507f297f2B97920dCA04518fe274": true, // Timelock2
       },
       ROUTER_PLUGIN: {
-        "0x3B070aA6847bd0fB56eFAdB351f49BBb7619dbc2": true, // ExchangeRouter
+        "0x3B070aA6847bd0fB56eFAdB351f49BBb7619dbc2": true, // ExchangeRouter1
+        "0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8": true, // ExchangeRouter2
       },
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
@@ -68,6 +70,18 @@ export async function validateRoles() {
         "0x3b070aa6847bd0fb56efadb351f49bbb7619dbc2": true, // ExchangeRouter1
         "0x8921e1b2fb2e2b95f1df68a774bc523327e98e9f": true, // FeeHandler1
         "0xb665b6dbb45ceaf3b126cec98adb1e611b6a6aea": true, // LiquidationHandler1
+
+        "0x226ED647C6eA2C0cE4C08578e2F37b8c2F922849": true, // Config2
+        "0x62aB76Ed722C507f297f2B97920dCA04518fe274": true, // Timelock2
+        "0xa11B501c2dd83Acd29F6727570f2502FAaa617F2": true, // Oracle2
+        "0xF6b804F6Cc847a22F2D022C9b0373190850bE34D": true, // SwapHandler2
+        "0x8514fc704317057FA86961Ba9b9490956993A5ed": true, // AdlHandler2
+        "0x9Dc4f12Eb2d8405b499FB5B8AF79a5f64aB8a457": true, // DepositHandler2
+        "0x9E32088F3c1a5EB38D32d1Ec6ba0bCBF499DC9ac": true, // WithdrawalHandler2
+        "0x352f684ab9e97a6321a13CF03A61316B681D9fD2": true, // OrderHandler2
+        "0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8": true, // ExchangeRouter2
+        "0xbF56A2F030C3F920F0E2aD9Cf456B9954c49383a": true, // FeeHandler2
+        "0x9e0521C3dbB18E849F4955087E065E5C9C879917": true, // LiquidationHandler2
       },
     },
     avalanche: {

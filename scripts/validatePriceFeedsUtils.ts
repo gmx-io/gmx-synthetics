@@ -13,6 +13,114 @@ const expectedRealtimeFeedIds = {
   },
 };
 
+async function validateRealtimeFeedConfig({
+  token,
+  tokenSymbol,
+  dataStore,
+  blockNumber,
+  clientId,
+  clientSecret,
+  tickerPrices,
+}) {
+  if (
+    expectedRealtimeFeedIds[hre.network.name] &&
+    expectedRealtimeFeedIds[hre.network.name][tokenSymbol] &&
+    expectedRealtimeFeedIds[hre.network.name][tokenSymbol] !== token.realtimeFeedId
+  ) {
+    throw new Error(`realtimeFeedId for ${tokenSymbol} does not match expected value`);
+  }
+
+  if (!token.address) {
+    throw new Error(`token ${tokenSymbol} has no address`);
+  }
+
+  if (!token.decimals) {
+    throw new Error(`token ${tokenSymbol} has no decimals`);
+  }
+
+  if (!token.realtimeFeedDecimals) {
+    throw new Error(`token ${tokenSymbol} has no realtimeFeedDecimals`);
+  }
+
+  const realtimeFeedMultiplier = expandDecimals(1, 60 - token.decimals - token.realtimeFeedDecimals);
+  const report = await fetchRealtimeFeedReport({ feedId: token.realtimeFeedId, blockNumber, clientId, clientSecret });
+
+  const storedRealtimeFeedId = await dataStore.getBytes32(keys.realtimeFeedIdKey(token.address));
+
+  const pricePerUnit = {
+    min: report.minPrice.mul(realtimeFeedMultiplier).div(expandDecimals(1, 30)),
+    max: report.maxPrice.mul(realtimeFeedMultiplier).div(expandDecimals(1, 30)),
+    median: report.medianPrice.mul(realtimeFeedMultiplier).div(expandDecimals(1, 30)),
+  };
+
+  const pricePerToken = {
+    min: pricePerUnit.min.mul(expandDecimals(1, token.decimals)),
+    max: pricePerUnit.max.mul(expandDecimals(1, token.decimals)),
+    median: pricePerUnit.median.mul(expandDecimals(1, token.decimals)),
+  };
+
+  const tickerPrice = tickerPrices[token.address.toLowerCase()];
+  if (!tickerPrice) {
+    throw new Error(`could not fetch ticker price for ${tokenSymbol}`);
+  }
+
+  const minMaxSpread = pricePerUnit.max.sub(pricePerUnit.min).mul(10_000).div(pricePerUnit.min);
+
+  if (minMaxSpread.gt(50)) {
+    throw new Error("minMaxSpread exceeds 0.5%");
+  }
+
+  const tickerPricePerToken = {
+    min: tickerPrice.min.mul(expandDecimals(1, token.decimals)),
+    max: tickerPrice.max.mul(expandDecimals(1, token.decimals)),
+  };
+
+  const tickerSpreadMin = pricePerToken.min.sub(tickerPricePerToken.min).mul(10_000).div(tickerPricePerToken.min).abs();
+
+  const tickerSpreadMax = pricePerToken.min.sub(tickerPricePerToken.min).mul(10_000).div(tickerPricePerToken.max).abs();
+
+  if (tickerSpreadMin.gt(50)) {
+    throw new Error("tickerSpreadMin exceeds 0.5%");
+  }
+
+  if (tickerSpreadMax.gt(50)) {
+    throw new Error("tickerSpreadMax exceeds 0.5%");
+  }
+
+  console.log(tokenSymbol);
+  console.log(
+    `    `,
+    formatAmount(pricePerToken.min, 30, 4, true),
+    formatAmount(pricePerToken.max, 30, 4, true),
+    formatAmount(pricePerToken.median, 30, 4, true)
+  );
+  console.log(
+    `    `,
+    formatAmount(tickerPricePerToken.min, 30, 4, true),
+    formatAmount(tickerPricePerToken.max, 30, 4, true)
+  );
+
+  console.log(
+    `    `,
+    `minMaxSpread: ${formatAmount(minMaxSpread, 2, 2)}%, tickerSpreadMin: ${formatAmount(
+      tickerSpreadMin,
+      2,
+      2
+    )}%, tickerSpreadMax: ${formatAmount(tickerSpreadMax, 2, 2)}%`
+  );
+
+  if (storedRealtimeFeedId !== ethers.constants.HashZero) {
+    if (storedRealtimeFeedId === token.realtimeFeedId) {
+      console.log(`skipping ${tokenSymbol} as the stored realtimeFeedId already matches the config`);
+      return { shouldUpdate: false };
+    }
+
+    throw new Error(`${tokenSymbol}'s stored realtimeFeedId does not match the config'`);
+  }
+
+  return { shouldUpdate: true, realtimeFeedMultiplier };
+}
+
 export async function validatePriceFeeds() {
   if (process.env.SKIP_TOKEN_VALIDATION === undefined) {
     await validateTokens();
@@ -26,114 +134,33 @@ export async function validatePriceFeeds() {
   const tokens = await hre.gmx.getTokens();
   const tickerPrices = await fetchTickerPrices();
 
-  for (const [tokenSymbol, token] of Object.entries(tokens)) {
-    if (
-      expectedRealtimeFeedIds[hre.network.name] &&
-      expectedRealtimeFeedIds[hre.network.name][tokenSymbol] &&
-      expectedRealtimeFeedIds[hre.network.name][tokenSymbol] !== token.realtimeFeedId
-    ) {
-      throw new Error(`realtimeFeedId for ${tokenSymbol} does not match expected value`);
-    }
+  const realtimeFeedConfigs = [];
 
+  for (const [tokenSymbol, token] of Object.entries(tokens)) {
     if (!token.realtimeFeedId) {
       console.log(`skipping ${tokenSymbol} as it does not have a realtimeFeedId`);
       continue;
     }
 
-    if (!token.address) {
-      throw new Error(`token ${tokenSymbol} has no address`);
-    }
+    const { shouldUpdate, realtimeFeedMultiplier } = await validateRealtimeFeedConfig({
+      token,
+      tokenSymbol,
+      dataStore,
+      blockNumber,
+      clientId,
+      clientSecret,
+      tickerPrices,
+    });
 
-    if (!token.decimals) {
-      throw new Error(`token ${tokenSymbol} has no decimals`);
-    }
-
-    if (!token.realtimeFeedDecimals) {
-      throw new Error(`token ${tokenSymbol} has no realtimeFeedDecimals`);
-    }
-
-    const realtimeFeedMultiplier = expandDecimals(1, 60 - token.decimals - token.realtimeFeedDecimals);
-    const report = await fetchRealtimeFeedReport({ feedId: token.realtimeFeedId, blockNumber, clientId, clientSecret });
-
-    const storedRealtimeFeedId = await dataStore.getBytes32(keys.realtimeFeedIdKey(token.address));
-
-    const pricePerUnit = {
-      min: report.minPrice.mul(realtimeFeedMultiplier).div(expandDecimals(1, 30)),
-      max: report.maxPrice.mul(realtimeFeedMultiplier).div(expandDecimals(1, 30)),
-      median: report.medianPrice.mul(realtimeFeedMultiplier).div(expandDecimals(1, 30)),
-    };
-
-    const pricePerToken = {
-      min: pricePerUnit.min.mul(expandDecimals(1, token.decimals)),
-      max: pricePerUnit.max.mul(expandDecimals(1, token.decimals)),
-      median: pricePerUnit.median.mul(expandDecimals(1, token.decimals)),
-    };
-
-    const tickerPrice = tickerPrices[token.address.toLowerCase()];
-    if (!tickerPrice) {
-      throw new Error(`could not fetch ticker price for ${tokenSymbol}`);
-    }
-
-    const minMaxSpread = pricePerUnit.max.sub(pricePerUnit.min).mul(10_000).div(pricePerUnit.min);
-
-    if (minMaxSpread.gt(50)) {
-      throw new Error("minMaxSpread exceeds 0.5%");
-    }
-
-    const tickerPricePerToken = {
-      min: tickerPrice.min.mul(expandDecimals(1, token.decimals)),
-      max: tickerPrice.max.mul(expandDecimals(1, token.decimals)),
-    };
-
-    const tickerSpreadMin = pricePerToken.min
-      .sub(tickerPricePerToken.min)
-      .mul(10_000)
-      .div(tickerPricePerToken.min)
-      .abs();
-
-    const tickerSpreadMax = pricePerToken.min
-      .sub(tickerPricePerToken.min)
-      .mul(10_000)
-      .div(tickerPricePerToken.max)
-      .abs();
-
-    if (tickerSpreadMin.gt(50)) {
-      throw new Error("tickerSpreadMin exceeds 0.5%");
-    }
-
-    if (tickerSpreadMax.gt(50)) {
-      throw new Error("tickerSpreadMax exceeds 0.5%");
-    }
-
-    console.log(tokenSymbol);
-    console.log(
-      `    `,
-      formatAmount(pricePerToken.min, 30, 4, true),
-      formatAmount(pricePerToken.max, 30, 4, true),
-      formatAmount(pricePerToken.median, 30, 4, true)
-    );
-    console.log(
-      `    `,
-      formatAmount(tickerPricePerToken.min, 30, 4, true),
-      formatAmount(tickerPricePerToken.max, 30, 4, true)
-    );
-
-    console.log(
-      `    `,
-      `minMaxSpread: ${formatAmount(minMaxSpread, 2, 2)}%, tickerSpreadMin: ${formatAmount(
-        tickerSpreadMin,
-        2,
-        2
-      )}%, tickerSpreadMax: ${formatAmount(tickerSpreadMax, 2, 2)}%`
-    );
-
-    if (storedRealtimeFeedId !== ethers.constants.HashZero) {
-      if (storedRealtimeFeedId === token.realtimeFeedId) {
-        console.log(`skipping ${tokenSymbol} as the stored realtimeFeedId already matches the config`);
-        continue;
-      }
-
-      throw new Error(`${tokenSymbol}'s stored realtimeFeedId does not match the config'`);
+    if (shouldUpdate) {
+      realtimeFeedConfigs.push({
+        token: token.address,
+        feedId: token.realtimeFeedId,
+        realtimeFeedMultiplier: realtimeFeedMultiplier.toString(),
+      });
     }
   }
+
+  console.log(`${realtimeFeedConfigs.length} realtimeFeedConfigs`);
+  console.log(realtimeFeedConfigs);
 }
