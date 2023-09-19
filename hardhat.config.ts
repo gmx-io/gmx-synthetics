@@ -52,9 +52,18 @@ const getEnvAccounts = () => {
   if (DEPLOYER_KEY_FILE) {
     const filepath = path.join("./keys/", DEPLOYER_KEY_FILE);
     const data = JSON.parse(fs.readFileSync(filepath));
-    if (!data || !data.mnemonic) {
+    if (!data) {
       throw new Error("Invalid key file");
     }
+
+    if (data.key) {
+      return [data.key];
+    }
+
+    if (!data.mnemonic) {
+      throw new Error("Invalid mnemonic");
+    }
+
     const wallet = ethers.Wallet.fromMnemonic(data.mnemonic);
     return [wallet.privateKey];
   }
