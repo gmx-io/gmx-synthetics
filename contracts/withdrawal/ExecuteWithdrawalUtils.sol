@@ -304,7 +304,7 @@ library ExecuteWithdrawalUtils {
             market.marketToken,
             market.longToken,
             prices.longTokenPrice.min,
-            "withdrawal",
+            Keys.WITHDRAWAL_FEE_TYPE,
             cache.longTokenFees
         );
 
@@ -314,7 +314,7 @@ library ExecuteWithdrawalUtils {
             market.marketToken,
             market.shortToken,
             prices.shortTokenPrice.min,
-            "withdrawal",
+            Keys.WITHDRAWAL_FEE_TYPE,
             cache.shortTokenFees
         );
 

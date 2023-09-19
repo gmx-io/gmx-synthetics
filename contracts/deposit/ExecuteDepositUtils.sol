@@ -314,7 +314,7 @@ library ExecuteDepositUtils {
             _params.market.marketToken,
             _params.tokenIn,
             _params.tokenInPrice.min,
-            "deposit",
+            Keys.DEPOSIT_FEE_TYPE,
             fees
          );
 
