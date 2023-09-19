@@ -1,4 +1,34 @@
-import { expandDecimals } from "./math";
+import fetch from "node-fetch";
+import hre from "hardhat";
+import { expandDecimals, bigNumberify } from "./math";
+
+export async function fetchTickerPrices() {
+  const tickersUrl = getTickersUrl();
+  const tokenPricesResponse = await fetch(tickersUrl);
+  const tokenPrices = await tokenPricesResponse.json();
+  const pricesByTokenAddress = {};
+
+  for (const tokenPrice of tokenPrices) {
+    pricesByTokenAddress[tokenPrice.tokenAddress.toLowerCase()] = {
+      min: bigNumberify(tokenPrice.minPrice).mul(expandDecimals(1, tokenPrice.oracleDecimals)),
+      max: bigNumberify(tokenPrice.maxPrice).mul(expandDecimals(1, tokenPrice.oracleDecimals)),
+    };
+  }
+
+  return pricesByTokenAddress;
+}
+
+export function getTickersUrl() {
+  if (hre.network.name === "arbitrum") {
+    return "https://arbitrum.gmx-oracle.io/prices/tickers";
+  }
+
+  if (hre.network.name === "avalanche") {
+    return "https://avalanche.gmx-oracle.io/prices/tickers";
+  }
+
+  throw new Error("Unsupported network");
+}
 
 export const prices = {};
 
