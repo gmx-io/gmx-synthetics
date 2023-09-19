@@ -40,6 +40,10 @@ async function setIfDifferent(
     throw new Error(`Value for ${label || key} of type ${type} is undefined`);
   }
 
+  if (process.env.FOR_EXISTING_MAINNET_DEPLOYMENT) {
+    return;
+  }
+
   const { read, execute, log } = hre.deployments;
   const { getNamedAccounts } = hre;
   const { deployer } = await getNamedAccounts();
