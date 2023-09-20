@@ -71,7 +71,7 @@ async function main() {
     );
   }
 
-  console.log(`updating ${multicallWriteParams.length} roles`);
+  console.log(`updating ${multicallWriteParams.length} feeds`);
   console.log("multicallWriteParams", multicallWriteParams);
 
   if (process.env.WRITE === "true") {
