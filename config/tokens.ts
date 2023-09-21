@@ -130,6 +130,8 @@ const config: {
       address: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
       decimals: 18,
       transferGasLimit: 200 * 1000,
+      realtimeFeedId: "0x2cdd4aea8298f5d2e7f8505b91e3313e3aa04376a81f401b4a48c5aab78ee5cf",
+      realtimeFeedDecimals: 8,
     },
   },
   avalanche: {
