@@ -51,6 +51,7 @@ export async function validateRoles() {
       },
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
+        "0xE014cbD60A793901546178E1c16ad9132C927483": true, // timelock_admin_2
         "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9": true, // multisig_1
       },
       TIMELOCK_MULTISIG: {
@@ -108,6 +109,7 @@ export async function validateRoles() {
       },
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
+        "0xE014cbD60A793901546178E1c16ad9132C927483": true, // timelock_admin_2
         "0x15F9eBC71c539926B8f652a534d29B4Af57CaD55": true, // multisig_1
       },
       TIMELOCK_MULTISIG: {
