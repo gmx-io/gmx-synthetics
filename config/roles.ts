@@ -165,6 +165,25 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         label: "withdrawal handler A",
         roles: ["CONTROLLER"],
       },
+
+      {
+        // Chainlink order executor
+        account: "0x35837c595aA4f304C38ea32EB49EfB198a58e613",
+        label: "chainlink market orders keeper B",
+        roles: ["ORDER_KEEPER"],
+      },
+      {
+        // Chainlink deposit executor
+        account: "0x7a98919E470fAeD2fBc7F0505a4b71d07e562E9C",
+        label: "chainlink deposits keeper B",
+        roles: ["ORDER_KEEPER"],
+      },
+      {
+        // Chainlink withdrawal executor
+        account: "0x416eE83799534fDb15A500999D34B9cd7Fcf38C8",
+        label: "chainlink withdrawals keeper B",
+        roles: ["ORDER_KEEPER"],
+      },
     ],
     avalancheFuji: [
       {
