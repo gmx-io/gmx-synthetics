@@ -5,10 +5,24 @@ import { hashString } from "../utils/hash";
 
 const expectedTimelockMethods = ["signalGrantRole", "grantRoleAfterSignal"];
 
+async function getTimelock({ signer }) {
+  const network = hre.network.name;
+
+  if (network === "arbitrum") {
+    return await contractAt("Timelock", "0x9d44B89Eb6FB382b712C562DfaFD8825829b422e", signer);
+  }
+
+  if (network === "avalanche") {
+    return await contractAt("Timelock", "0x768c0E31CC87eF5e2c3E2cdB85A4B34148cC63E5", signer);
+  }
+
+  throw new Error("Unsupported network");
+}
+
 async function main() {
   const signer = await getFrameSigner();
   // NOTE: the existing Timelock needs to be used to grant roles to new contracts including new Timelocks
-  const timelock = await contractAt("Timelock", "0x9d44B89Eb6FB382b712C562DfaFD8825829b422e", signer);
+  const timelock = await getTimelock({ signer });
 
   const rolesToAdd = {
     arbitrum: [
