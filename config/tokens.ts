@@ -14,6 +14,7 @@ type SyntheticTokenConfig = {
   deploy?: never;
   transferGasLimit?: never;
   realtimeFeedId?: string;
+  realtimeFeedDecimals?: number;
 };
 
 type RealTokenConfig = {
@@ -24,6 +25,7 @@ type RealTokenConfig = {
   wrappedNative?: true;
   deploy?: never;
   realtimeFeedId?: string;
+  realtimeFeedDecimals?: number;
 };
 
 // test token to deploy in local and test networks
@@ -70,6 +72,8 @@ const config: {
     XRP: {
       synthetic: true,
       decimals: 6,
+      realtimeFeedId: "0x0001c2a85041d51394ea4772d8f5d1940b67d71c2efd2ef58607392b4e7ce829",
+      realtimeFeedDecimals: 8,
     },
     DOGE: {
       synthetic: true,
@@ -81,15 +85,21 @@ const config: {
       address: "0x2bcC6D6CdBbDC0a4071e48bb3B969b06B3330c07",
       decimals: 9,
       transferGasLimit: 200 * 1000,
+      realtimeFeedId: "0x000110856f6b45c76060b8518245a06bc4a6cdbc1b450b112f02c00cf2bde7ca",
+      realtimeFeedDecimals: 8,
     },
     LTC: {
       synthetic: true,
       decimals: 8,
+      realtimeFeedId: "0x0001ba61bb3d44104e7636dd9f8e4baf5bc27edf7ee182db5843febe2bb9706c",
+      realtimeFeedDecimals: 8,
     },
     UNI: {
       address: "0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0",
       decimals: 18,
       transferGasLimit: 200 * 1000,
+      realtimeFeedId: "0x0001bb84346cbd081f57593a19a124d45b5a194ba86fea1c3e8eadbfbff9702f",
+      realtimeFeedDecimals: 8,
     },
     LINK: {
       address: "0xf97f4df75117a78c1A5a0DBb814Af92458539FB4",
