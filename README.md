@@ -636,6 +636,8 @@ After the initial setup:
 
 - Swaps for decrease orders may not be successful, this could result in two output tokens, one output in the collateral token and another in the profit token
 
+- ETH transfers are sent with NATIVE_TOKEN_TRANSFER_GAS_LIMIT for the gas limit, if the transfer fails due to insufficient gas or other errors, the ETH is send as WETH instead
+
 - Accounts may receive ETH for ADLs / liquidations, if the account cannot receive ETH then WETH would be sent instead
 
 - If profit is capped due to MAX_PNL_FACTOR_FOR_TRADERS, the percentage of profit paid out to traders may differ depending on the ordering of when positions are decreased / closed since the cap is re-calculated based on the current state of the pool
