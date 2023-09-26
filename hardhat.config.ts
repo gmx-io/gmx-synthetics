@@ -43,14 +43,14 @@ const getRpcUrl = (network) => {
 };
 
 const getEnvAccounts = () => {
-  const { DEPLOYER_KEY, DEPLOYER_KEY_FILE } = process.env;
+  const { ACCOUNT_KEY, ACCOUNT_KEY_FILE } = process.env;
 
-  if (DEPLOYER_KEY) {
-    return [DEPLOYER_KEY];
+  if (ACCOUNT_KEY) {
+    return [ACCOUNT_KEY];
   }
 
-  if (DEPLOYER_KEY_FILE) {
-    const filepath = path.join("./keys/", DEPLOYER_KEY_FILE);
+  if (ACCOUNT_KEY_FILE) {
+    const filepath = path.join("./keys/", ACCOUNT_KEY_FILE);
     const data = JSON.parse(fs.readFileSync(filepath));
     if (!data) {
       throw new Error("Invalid key file");
