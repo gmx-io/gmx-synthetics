@@ -498,6 +498,18 @@ If a market has a long collateral token that is different from the index token, 
 
 Markets have a reserve factor that allows open interest to be capped to a percentage of the pool size, this reduces the impact of profits of short positions and reduces the risk that long positions cannot be fully paid out.
 
+# Market Token Price
+
+The price of a market token depends on the worth of the assets in the pool, and the net pending PnL of traders' open positions.
+
+It is possible for pending PnL to be capped, the caps used to calculate the market token price can differ depending on the activity:
+
+- Keys.MAX_PNL_FACTOR_FOR_DEPOSITS: this is the PnL factor cap when calculating the market token price for deposits
+
+- Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS: this is the PnL factor cap when calculating the market token price for withdrawals
+
+- Keys.MAX_PNL_FACTOR_FOR_TRADERS: this is the PnL factor cap when calculating the market token price for closing a position
+
 # Parameters
 
 - minCollateralFactor: This determines the minimum allowed ratio of (position collateral) / (position size)
