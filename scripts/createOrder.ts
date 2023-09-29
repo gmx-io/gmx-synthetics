@@ -21,6 +21,7 @@ import { contractAt } from "../utils/deploy";
 //
 // after running the script the position should be viewable on
 // https://chainlink-workshop.gmx-interface.pages.dev/#/actions/v2/<your account address>
+// note that the network should be switched to the network that the txn was sent on
 
 // additional information about parameters:
 // https://docs.gmx.io/docs/api/contracts-v2#exchangerouter
@@ -149,7 +150,7 @@ async function main() {
     sizeDeltaUsd: decimalToFloat(100), // 100 USD
     triggerPrice: 0, // not needed for market order
     acceptablePrice,
-    isLong: true,
+    isLong: false,
     orderType: OrderType.MarketIncrease,
     decreasePositionSwapType: DecreasePositionSwapType.NoSwap,
   });
