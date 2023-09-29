@@ -12,16 +12,20 @@ export function getErrorString(error) {
   });
 }
 
-export function getCancellationReason({ logs, eventName }) {
-  const reasonBytes = getEventDataValue(logs, eventName, "reasonBytes");
-  if (!reasonBytes) {
-    return;
-  }
-
+export function parseError(reasonBytes) {
   try {
     const reason = errorsInterface.parseError(reasonBytes);
     return reason;
   } catch (e) {
     throw new Error(`Could not parse errorBytes ${reasonBytes}`);
   }
+}
+
+export function getCancellationReason({ logs, eventName }) {
+  const reasonBytes = getEventDataValue(logs, eventName, "reasonBytes");
+  if (!reasonBytes) {
+    return;
+  }
+
+  return parseError(reasonBytes);
 }

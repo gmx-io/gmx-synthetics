@@ -148,7 +148,7 @@ async function main() {
     initialCollateralDeltaAmount: expandDecimals(10, 6), // 10 USDC
     sizeDeltaUsd: decimalToFloat(100), // 100 USD
     triggerPrice: 0, // not needed for market order
-    acceptablePrice, // 10,000 USD
+    acceptablePrice,
     isLong: true,
     orderType: OrderType.MarketIncrease,
     decreasePositionSwapType: DecreasePositionSwapType.NoSwap,
