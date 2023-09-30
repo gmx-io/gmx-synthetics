@@ -27,7 +27,7 @@ async function main() {
     }
   }
 
-  if (process.env.write !== "true") {
+  if (process.env.WRITE !== "true") {
     console.log("skip sending transaction");
   }
 }
