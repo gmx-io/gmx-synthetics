@@ -195,6 +195,7 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
             // the deposit would fail
             // glp should be adjusted such that only redemptions are allowed so
             // any arbitrage / benefit of doing this should be minimal
+            // glp mint fees should also help to discourage this
             DepositUtils.CreateDepositParams memory depositParams =  DepositUtils.CreateDepositParams(
                 account, // receiver;
                 address(0), // callbackContract;
