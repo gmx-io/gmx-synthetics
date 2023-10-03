@@ -162,7 +162,7 @@ async function appendConfigIfDifferent(
   }
 
   if (compare ? !compare(currentValue, value) : currentValue != value) {
-    console.log(
+    console.info(
       "appending config %s %s (%s) to %s, prev: %s (change %sx)",
       type,
       label,
@@ -173,7 +173,7 @@ async function appendConfigIfDifferent(
     );
     list.push(config.interface.encodeFunctionData(setMethod, [baseKey, keyData, value]));
   } else {
-    console.log("skipping config %s %s (%s) as it is already set to %s", type, label, key, value.toString());
+    console.info("skipping config %s %s (%s) as it is already set to %s", type, label, key, value.toString());
   }
 }
 

@@ -2,10 +2,15 @@ import { expect } from "chai";
 
 import { deployContract } from "../../utils/deploy";
 import { deployFixture } from "../../utils/fixture";
-import { errorsContract } from "../../utils/error";
+import { expandDecimals } from "../../utils/math";
+import { getBalanceOf } from "../../utils/token";
+import { getExecuteParams } from "../../utils/exchange";
+import { prices } from "../../utils/prices";
 
 import { grantRole } from "../../utils/role";
-// import { getDepositCount, getDepositKeys, getAccountDepositCount, getAccountDepositKeys } from "../../utils/deposit";
+import { getDepositCount, executeDeposit } from "../../utils/deposit";
+
+import { errorsContract } from "../../utils/error";
 
 describe("GlpMigrator", () => {
   let fixture;
@@ -20,14 +25,31 @@ describe("GlpMigrator", () => {
     glpVault,
     glpTimelock,
     glpRewardRouter,
-    glpMigrator;
+    glpMigrator,
+    ethUsdMarket,
+    btcUsdMarket,
+    wnt,
+    wbtc,
+    usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
     ({ user0 } = fixture.accounts);
 
-    ({ roleStore, dataStore, eventEmitter, depositVault, depositHandler, marketStoreUtils } = fixture.contracts);
+    ({
+      roleStore,
+      dataStore,
+      eventEmitter,
+      depositVault,
+      depositHandler,
+      marketStoreUtils,
+      ethUsdMarket,
+      btcUsdMarket,
+      wnt,
+      usdc,
+      wbtc,
+    } = fixture.contracts);
 
     stakedGlp = await deployContract("MintableToken", ["stakedGlp", "sGLP", 18]);
     glpVault = await deployContract("MockGlpVault", []);
@@ -81,5 +103,253 @@ describe("GlpMigrator", () => {
     expect(await glpMigrator.reducedMintBurnFeeBasisPoints()).eq(5);
     await glpMigrator.connect(user0).setReducedMintBurnFeeBasisPoints(20);
     expect(await glpMigrator.reducedMintBurnFeeBasisPoints()).eq(20);
+  });
+
+  it("migrate", async () => {
+    await stakedGlp.mint(user0.address, expandDecimals(12_000, 18));
+    await stakedGlp.connect(user0).approve(glpMigrator.address, expandDecimals(12_000, 18));
+    await wnt.mint(glpRewardRouter.address, expandDecimals(2, 18));
+    await usdc.mint(glpRewardRouter.address, expandDecimals(2000, 6));
+    await wbtc.mint(glpRewardRouter.address, expandDecimals(1, 7));
+
+    expect(await getDepositCount(dataStore)).eq(0);
+
+    await expect(
+      glpMigrator.connect(user0).migrate(
+        expandDecimals(12_000, 18), // 12,000 GLP
+        [
+          {
+            market: ethUsdMarket.marketToken,
+            long: {
+              token: wnt.address,
+              glpAmount: expandDecimals(5000, 18),
+              minOut: expandDecimals(1, 18), // 1 ETH
+            },
+            short: {
+              token: usdc.address,
+              glpAmount: expandDecimals(1000, 18),
+              minOut: expandDecimals(1000, 6),
+            },
+            minMarketTokens: expandDecimals(6000, 18),
+          },
+          {
+            market: btcUsdMarket.marketToken,
+            long: {
+              token: wbtc.address,
+              glpAmount: expandDecimals(5000, 18),
+              minOut: expandDecimals(1, 7), // 0.1 WBTC
+            },
+            short: {
+              token: usdc.address,
+              glpAmount: expandDecimals(500, 18),
+              minOut: expandDecimals(500, 6),
+            },
+            minMarketTokens: expandDecimals(5500, 18),
+          },
+        ],
+        "100000000000000",
+        { value: "200000000000000" }
+      )
+    ).to.be.revertedWithCustomError(errorsContract, "InvalidGlpAmount");
+
+    await expect(
+      glpMigrator.connect(user0).migrate(
+        expandDecimals(11_500, 18), // 11,500 GLP
+        [
+          {
+            market: ethUsdMarket.marketToken,
+            long: {
+              token: wnt.address,
+              glpAmount: expandDecimals(5000, 18),
+              minOut: expandDecimals(1, 18), // 1 ETH
+            },
+            short: {
+              token: usdc.address,
+              glpAmount: expandDecimals(1000, 18),
+              minOut: expandDecimals(1000, 6),
+            },
+            minMarketTokens: expandDecimals(6000, 18),
+          },
+          {
+            market: btcUsdMarket.marketToken,
+            long: {
+              token: wnt.address,
+              glpAmount: expandDecimals(5000, 18),
+              minOut: expandDecimals(1, 7), // 0.1 WBTC
+            },
+            short: {
+              token: usdc.address,
+              glpAmount: expandDecimals(500, 18),
+              minOut: expandDecimals(500, 6),
+            },
+            minMarketTokens: expandDecimals(5500, 18),
+          },
+        ],
+        "100000000000000",
+        { value: "200000000000000" }
+      )
+    ).to.be.revertedWithCustomError(errorsContract, "InvalidLongTokenForMigration");
+
+    await expect(
+      glpMigrator.connect(user0).migrate(
+        expandDecimals(11_500, 18), // 11,500 GLP
+        [
+          {
+            market: ethUsdMarket.marketToken,
+            long: {
+              token: wnt.address,
+              glpAmount: expandDecimals(5000, 18),
+              minOut: expandDecimals(1, 18), // 1 ETH
+            },
+            short: {
+              token: wbtc.address,
+              glpAmount: expandDecimals(1000, 18),
+              minOut: expandDecimals(1000, 6),
+            },
+            minMarketTokens: expandDecimals(6000, 18),
+          },
+          {
+            market: btcUsdMarket.marketToken,
+            long: {
+              token: wbtc.address,
+              glpAmount: expandDecimals(5000, 18),
+              minOut: expandDecimals(1, 7), // 0.1 WBTC
+            },
+            short: {
+              token: usdc.address,
+              glpAmount: expandDecimals(500, 18),
+              minOut: expandDecimals(500, 6),
+            },
+            minMarketTokens: expandDecimals(5500, 18),
+          },
+        ],
+        "100000000000000",
+        { value: "200000000000000" }
+      )
+    ).to.be.revertedWithCustomError(errorsContract, "InvalidShortTokenForMigration");
+
+    await glpMigrator.connect(user0).migrate(
+      expandDecimals(11_500, 18), // 11,500 GLP
+      [
+        {
+          market: ethUsdMarket.marketToken,
+          long: {
+            token: wnt.address,
+            glpAmount: expandDecimals(5000, 18),
+            minOut: expandDecimals(1, 18), // 1 ETH
+          },
+          short: {
+            token: usdc.address,
+            glpAmount: expandDecimals(1000, 18),
+            minOut: expandDecimals(1000, 6),
+          },
+          minMarketTokens: expandDecimals(6000, 18),
+        },
+        {
+          market: btcUsdMarket.marketToken,
+          long: {
+            token: wbtc.address,
+            glpAmount: expandDecimals(5000, 18),
+            minOut: expandDecimals(1, 7), // 0.1 WBTC
+          },
+          short: {
+            token: usdc.address,
+            glpAmount: expandDecimals(500, 18),
+            minOut: expandDecimals(500, 6),
+          },
+          minMarketTokens: expandDecimals(5500, 18),
+        },
+      ],
+      "100000000000000",
+      { value: "200000000000000" }
+    );
+
+    expect(await getDepositCount(dataStore)).eq(2);
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(0);
+    expect(await getBalanceOf(btcUsdMarket.marketToken, user0.address)).eq(0);
+
+    await executeDeposit(fixture, {});
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(6000, 18));
+    expect(await getBalanceOf(btcUsdMarket.marketToken, user0.address)).eq(0);
+
+    await executeDeposit(fixture, {
+      ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wbtc] }),
+    });
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(6000, 18));
+    expect(await getBalanceOf(btcUsdMarket.marketToken, user0.address)).eq(expandDecimals(5500, 18));
+  });
+
+  it("handles cancellations", async () => {
+    await stakedGlp.mint(user0.address, expandDecimals(12_000, 18));
+    await stakedGlp.connect(user0).approve(glpMigrator.address, expandDecimals(12_000, 18));
+    await wnt.mint(glpRewardRouter.address, expandDecimals(2, 18));
+    await usdc.mint(glpRewardRouter.address, expandDecimals(2000, 6));
+    await wbtc.mint(glpRewardRouter.address, expandDecimals(1, 7));
+
+    expect(await getDepositCount(dataStore)).eq(0);
+
+    await glpMigrator.connect(user0).migrate(
+      expandDecimals(11_500, 18), // 11,500 GLP
+      [
+        {
+          market: ethUsdMarket.marketToken,
+          long: {
+            token: wnt.address,
+            glpAmount: expandDecimals(5000, 18),
+            minOut: expandDecimals(1, 18), // 1 ETH
+          },
+          short: {
+            token: usdc.address,
+            glpAmount: expandDecimals(1000, 18),
+            minOut: expandDecimals(1000, 6),
+          },
+          minMarketTokens: expandDecimals(6000, 18),
+        },
+        {
+          market: btcUsdMarket.marketToken,
+          long: {
+            token: wbtc.address,
+            glpAmount: expandDecimals(5000, 18),
+            minOut: expandDecimals(1, 7), // 0.1 WBTC
+          },
+          short: {
+            token: usdc.address,
+            glpAmount: expandDecimals(500, 18),
+            minOut: expandDecimals(500, 6),
+          },
+          minMarketTokens: expandDecimals(6000, 18),
+        },
+      ],
+      "100000000000000",
+      { value: "200000000000000" }
+    );
+
+    expect(await getDepositCount(dataStore)).eq(2);
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(0);
+    expect(await getBalanceOf(btcUsdMarket.marketToken, user0.address)).eq(0);
+
+    await executeDeposit(fixture, {});
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(6000, 18));
+    expect(await getBalanceOf(btcUsdMarket.marketToken, user0.address)).eq(0);
+
+    expect(await wnt.balanceOf(user0.address)).eq(0);
+    expect(await usdc.balanceOf(user0.address)).eq(0);
+    expect(await wbtc.balanceOf(user0.address)).eq(0);
+
+    await executeDeposit(fixture, {
+      ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wbtc] }),
+      expectedCancellationReason: "MinMarketTokens",
+    });
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(6000, 18));
+    expect(await getBalanceOf(btcUsdMarket.marketToken, user0.address)).eq(0);
+
+    expect(await wnt.balanceOf(user0.address)).eq(0);
+    expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(500, 6));
+    expect(await wbtc.balanceOf(user0.address)).eq(expandDecimals(1, 7));
   });
 });
