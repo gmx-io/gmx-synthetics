@@ -32,7 +32,6 @@ async function run() {
     "./contracts/withdrawal/WithdrawalEventUtils.sol",
 
     // temp skip files
-    "./contracts/migration",
     "./contracts/router/SubaccountRouter.sol",
     "./contracts/subaccout/SubaccountUtils.sol",
   ];
