@@ -121,6 +121,14 @@ async function main() {
         keys.swapImpactPoolAmountKey(market.marketToken, market.shortToken),
       ]),
     });
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [
+        keys.positionImpactPoolDistributionRateKey(market.marketToken),
+      ]),
+    });
   }
 
   const multicallReadResult = await multicall.callStatic.aggregate3(multicallReadParams);
@@ -141,9 +149,10 @@ async function main() {
       shortTokenSymbol?.padEnd(5)
     );
 
-    const positionImpactPoolAmount = bigNumberify(multicallReadResult[i * 3].returnData);
-    const swapImpactPoolAmountForLongToken = bigNumberify(multicallReadResult[i * 3 + 1].returnData);
-    const swapImpactPoolAmountForShortToken = bigNumberify(multicallReadResult[i * 3 + 2].returnData);
+    const positionImpactPoolAmount = bigNumberify(multicallReadResult[i * 4].returnData);
+    const swapImpactPoolAmountForLongToken = bigNumberify(multicallReadResult[i * 4 + 1].returnData);
+    const swapImpactPoolAmountForShortToken = bigNumberify(multicallReadResult[i * 4 + 2].returnData);
+    const positionImpactPoolDistributionRate = bigNumberify(multicallReadResult[i * 4 + 3].returnData);
 
     console.log(
       `    positionImpactPoolAmount: $${formatAmount(
@@ -170,6 +179,14 @@ async function main() {
         2,
         true
       )}`
+    );
+
+    console.log(
+      `    positionImpactPoolDistributionRate: ${formatAmount(
+        bigNumberify(positionImpactPoolDistributionRate).mul(100),
+        30,
+        4
+      )}%`
     );
   }
 }

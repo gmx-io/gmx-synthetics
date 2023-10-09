@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { BigNumberish, ethers } from "ethers";
 
 export const MAX_UINT8 = "255"; // 2^8 - 1
 export const MAX_UINT32 = "4294967295"; // 2^32 - 1
@@ -59,7 +59,13 @@ function numberWithCommas(x) {
   return parts.join(".");
 }
 
-export function formatAmount(amount, tokenDecimals, displayDecimals, useCommas, defaultValue) {
+export function formatAmount(
+  amount: BigNumberish,
+  tokenDecimals: number,
+  displayDecimals: number,
+  useCommas = false,
+  defaultValue?: any
+) {
   if (!defaultValue) {
     defaultValue = "...";
   }
