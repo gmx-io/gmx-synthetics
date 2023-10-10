@@ -1,4 +1,4 @@
-import hre from "hardhat";
+import hre, { network } from "hardhat";
 
 import { validateMarketConfigs } from "./validateMarketConfigsUtils";
 import { encodeData } from "../utils/hash";
@@ -277,6 +277,54 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
 
     await handleConfig(
       "uint",
+      keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
+      encodeData(["address"], [marketToken]),
+      marketConfig.fundingIncreaseFactorPerSecond,
+      `fundingIncreaseFactorPerSecond ${marketToken}`
+    );
+
+    await handleConfig(
+      "uint",
+      keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
+      encodeData(["address"], [marketToken]),
+      marketConfig.fundingDecreaseFactorPerSecond,
+      `fundingDecreaseFactorPerSecond ${marketToken}`
+    );
+
+    await handleConfig(
+      "uint",
+      keys.MIN_FUNDING_FACTOR_PER_SECOND,
+      encodeData(["address"], [marketToken]),
+      marketConfig.minFundingFactorPerSecond,
+      `minFundingFactorPerSecond ${marketToken}`
+    );
+
+    await handleConfig(
+      "uint",
+      keys.MAX_FUNDING_FACTOR_PER_SECOND,
+      encodeData(["address"], [marketToken]),
+      marketConfig.maxFundingFactorPerSecond,
+      `maxFundingFactorPerSecond ${marketToken}`
+    );
+
+    await handleConfig(
+      "uint",
+      keys.THRESHOLD_FOR_STABLE_FUNDING,
+      encodeData(["address"], [marketToken]),
+      marketConfig.thresholdForStableFunding,
+      `thresholdForStableFunding ${marketToken}`
+    );
+
+    await handleConfig(
+      "uint",
+      keys.THRESHOLD_FOR_DECREASE_FUNDING,
+      encodeData(["address"], [marketToken]),
+      marketConfig.thresholdForDecreaseFunding,
+      `thresholdForDecreaseFunding ${marketToken}`
+    );
+
+    await handleConfig(
+      "uint",
       keys.POSITION_FEE_FACTOR,
       encodeData(["address", "bool"], [marketToken, true]),
       marketConfig.positionFeeFactorForPositiveImpact,
@@ -366,9 +414,11 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
 };
 
 async function main() {
-  const { errors } = await validateMarketConfigs();
-  if (errors.length !== 0) {
-    throw new Error("Invalid market configs");
+  if (!["arbitrumGoerli", "avalancheFuji"].includes(network.name)) {
+    const { errors } = await validateMarketConfigs();
+    if (errors.length !== 0) {
+      throw new Error("Invalid market configs");
+    }
   }
 
   const { read } = hre.deployments;

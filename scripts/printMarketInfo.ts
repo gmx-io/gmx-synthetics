@@ -137,12 +137,14 @@ async function main() {
     const marketInfo = marketInfoList[i];
     const marketPrices = marketPricesList[i];
 
+    const { fundingFactorPerSecond } = marketInfo.nextFunding;
+
     const indexTokenSymbol = addressToSymbol[marketInfo.market.indexToken];
     const longTokenSymbol = addressToSymbol[marketInfo.market.longToken];
     const shortTokenSymbol = addressToSymbol[marketInfo.market.shortToken];
 
     console.log(
-      "%s index: %s long: %s short: %s",
+      "%s index: %s long: %s short: %s fundingFactorPerSecond %s%",
       marketInfo.market.marketToken,
       indexTokenSymbol?.padEnd(5) || "(swap only)",
       longTokenSymbol?.padEnd(5),
@@ -153,6 +155,8 @@ async function main() {
     const swapImpactPoolAmountForLongToken = bigNumberify(multicallReadResult[i * 4 + 1].returnData);
     const swapImpactPoolAmountForShortToken = bigNumberify(multicallReadResult[i * 4 + 2].returnData);
     const positionImpactPoolDistributionRate = bigNumberify(multicallReadResult[i * 4 + 3].returnData);
+
+    console.log("    funding factor per second: %s%", formatAmount(fundingFactorPerSecond, 28, 10));
 
     console.log(
       `    positionImpactPoolAmount: $${formatAmount(

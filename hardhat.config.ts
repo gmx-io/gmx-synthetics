@@ -33,7 +33,7 @@ const getRpcUrl = (network) => {
 
   const filepath = path.join("./.rpcs.json");
   if (fs.existsSync(filepath)) {
-    const data = JSON.parse(fs.readFileSync(filepath));
+    const data = JSON.parse(fs.readFileSync(filepath).toString());
     if (data[network]) {
       rpc = data[network];
     }

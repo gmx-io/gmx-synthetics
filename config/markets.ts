@@ -67,6 +67,12 @@ export type BaseMarketConfig = {
 
   fundingFactor: BigNumberish;
   fundingExponentFactor: BigNumberish;
+  fundingIncreaseFactorPerSecond: BigNumberish;
+  fundingDecreaseFactorPerSecond: BigNumberish;
+  thresholdForStableFunding: BigNumberish;
+  thresholdForDecreaseFunding: BigNumberish;
+  minFundingFactorPerSecond: BigNumberish;
+  maxFundingFactorPerSecond: BigNumberish;
 
   virtualMarketId?: string;
   virtualTokenIdForIndexToken?: string;
@@ -158,6 +164,13 @@ const baseMarketConfig: BaseMarketConfig = {
 
   fundingFactor: decimalToFloat(2, 8), // ~63% per year for a 100% skew
   fundingExponentFactor: decimalToFloat(1),
+
+  fundingIncreaseFactorPerSecond: 0,
+  fundingDecreaseFactorPerSecond: 0,
+  thresholdForStableFunding: 0,
+  thresholdForDecreaseFunding: 0,
+  minFundingFactorPerSecond: 0,
+  maxFundingFactorPerSecond: 0,
 };
 
 const synthethicMarketConfig: Partial<BaseMarketConfig> = {
@@ -755,6 +768,14 @@ const config: {
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
       virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(1, 4), // 0.01% per second, 36% per hour
+      fundingDecreaseFactorPerSecond: decimalToFloat(5, 5), // 0.005% per second, 18% per hour
+      minFundingFactorPerSecond: decimalToFloat(1, 9), // 0,0000001% per second, 0.00036% per hour
+      maxFundingFactorPerSecond: decimalToFloat(3, 8), // 0,000003% per second, 0,0108% per hour
+
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(2, 2), // 2%
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "DAI" },
@@ -791,7 +812,7 @@ const config: {
         longToken: "WBTC",
         shortToken: "USDC",
       },
-      negativePositionImpactFactor: decimalToFloat(25, 6), // 0.0025 %
+      negativePositionImpactFactor: decimalToFloat(26, 6), // 0.0025 %
       positivePositionImpactFactor: decimalToFloat(125, 7), // 0.00125 %
       positionImpactExponentFactor: decimalToFloat(2, 0), // 2
       negativeSwapImpactFactor: decimalToFloat(1, 5), // 0.001 %
