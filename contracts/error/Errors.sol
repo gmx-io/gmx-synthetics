@@ -55,6 +55,7 @@ library Errors {
 
     // GlpMigrator errors
     error InvalidGlpAmount(uint256 totalGlpAmountToRedeem, uint256 totalGlpAmount);
+    error InvalidExecutionFeeForMigration(uint256 totalExecutionFee, uint256 msgValue);
     error InvalidLongTokenForMigration(address market, address migrationLongToken, address marketLongToken);
     error InvalidShortTokenForMigration(address market, address migrationShortToken, address marketShortToken);
 

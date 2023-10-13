@@ -131,6 +131,7 @@ describe("GlpMigrator", () => {
               minOut: expandDecimals(1000, 6),
             },
             minMarketTokens: expandDecimals(6000, 18),
+            executionFee: "100000000000000",
           },
           {
             market: btcUsdMarket.marketToken,
@@ -145,9 +146,9 @@ describe("GlpMigrator", () => {
               minOut: expandDecimals(500, 6),
             },
             minMarketTokens: expandDecimals(5500, 18),
+            executionFee: "100000000000000",
           },
         ],
-        "100000000000000",
         { value: "200000000000000" }
       )
     ).to.be.revertedWithCustomError(errorsContract, "InvalidGlpAmount");
@@ -169,6 +170,7 @@ describe("GlpMigrator", () => {
               minOut: expandDecimals(1000, 6),
             },
             minMarketTokens: expandDecimals(6000, 18),
+            executionFee: "100000000000000",
           },
           {
             market: btcUsdMarket.marketToken,
@@ -183,9 +185,9 @@ describe("GlpMigrator", () => {
               minOut: expandDecimals(500, 6),
             },
             minMarketTokens: expandDecimals(5500, 18),
+            executionFee: "100000000000000",
           },
         ],
-        "100000000000000",
         { value: "200000000000000" }
       )
     ).to.be.revertedWithCustomError(errorsContract, "InvalidLongTokenForMigration");
@@ -207,6 +209,7 @@ describe("GlpMigrator", () => {
               minOut: expandDecimals(1000, 6),
             },
             minMarketTokens: expandDecimals(6000, 18),
+            executionFee: "100000000000000",
           },
           {
             market: btcUsdMarket.marketToken,
@@ -221,9 +224,9 @@ describe("GlpMigrator", () => {
               minOut: expandDecimals(500, 6),
             },
             minMarketTokens: expandDecimals(5500, 18),
+            executionFee: "100000000000000",
           },
         ],
-        "100000000000000",
         { value: "200000000000000" }
       )
     ).to.be.revertedWithCustomError(errorsContract, "InvalidShortTokenForMigration");
@@ -244,6 +247,7 @@ describe("GlpMigrator", () => {
             minOut: expandDecimals(1000, 6),
           },
           minMarketTokens: expandDecimals(6000, 18),
+          executionFee: "100000000000000",
         },
         {
           market: btcUsdMarket.marketToken,
@@ -258,9 +262,9 @@ describe("GlpMigrator", () => {
             minOut: expandDecimals(500, 6),
           },
           minMarketTokens: expandDecimals(5500, 18),
+          executionFee: "100000000000000",
         },
       ],
-      "100000000000000",
       { value: "200000000000000" }
     );
 
@@ -306,6 +310,7 @@ describe("GlpMigrator", () => {
             minOut: expandDecimals(1000, 6),
           },
           minMarketTokens: expandDecimals(6000, 18),
+          executionFee: "100000000000000",
         },
         {
           market: btcUsdMarket.marketToken,
@@ -320,9 +325,9 @@ describe("GlpMigrator", () => {
             minOut: expandDecimals(500, 6),
           },
           minMarketTokens: expandDecimals(6000, 18),
+          executionFee: "100000000000000",
         },
       ],
-      "100000000000000",
       { value: "200000000000000" }
     );
 

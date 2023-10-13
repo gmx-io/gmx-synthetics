@@ -53,6 +53,7 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
         GlpRedemption short;
 
         uint256 minMarketTokens;
+        uint256 executionFee;
     }
 
     struct MigrateCache {
@@ -70,7 +71,7 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
         uint256 stableSwapFeeBasisPoints = glpVault.stableSwapFeeBasisPoints();
         uint256 _reducedMintBurnFeeBasisPoints = reducedMintBurnFeeBasisPoints;
 
-        bool shouldUpdateFees = _reducedMintBurnFeeBasisPoints != mintBurnFeeBasisPoints;
+        bool shouldUpdateFees = _reducedMintBurnFeeBasisPoints < mintBurnFeeBasisPoints;
 
         if (shouldUpdateFees) {
             glpTimelock.setSwapFees(
@@ -138,22 +139,28 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
 
     function migrate(
         uint256 totalGlpAmount,
-        MigrationItem[] memory migrationItems,
-        uint256 executionFee
+        MigrationItem[] memory migrationItems
     ) external payable nonReentrant withReducedRedemptionFees {
         address account = msg.sender;
         stakedGlp.transferFrom(account, address(this), totalGlpAmount);
 
         uint256 totalGlpAmountToRedeem;
+        uint256 totalExecutionFee;
 
         for (uint256 i = 0; i < migrationItems.length; i++) {
             MigrationItem memory migrationItem = migrationItems[i];
             totalGlpAmountToRedeem += migrationItem.long.glpAmount;
             totalGlpAmountToRedeem += migrationItem.short.glpAmount;
+
+            totalExecutionFee += migrationItem.executionFee;
         }
 
         if (totalGlpAmountToRedeem != totalGlpAmount) {
             revert Errors.InvalidGlpAmount(totalGlpAmountToRedeem, totalGlpAmount);
+        }
+
+        if (msg.value != totalExecutionFee) {
+            revert Errors.InvalidExecutionFeeForMigration(totalExecutionFee, msg.value);
         }
 
         for (uint256 i = 0; i < migrationItems.length; i++) {
@@ -170,24 +177,28 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
                 revert Errors.InvalidShortTokenForMigration(migrationItem.market, migrationItem.short.token, cache.market.shortToken);
             }
 
-            cache.redeemedLongTokenAmount = glpRewardRouter.unstakeAndRedeemGlp(
-                migrationItem.long.token, // tokenOut
-                migrationItem.long.glpAmount, // glpAmount
-                migrationItem.long.minOut, // minOut
-                address(depositVault) // receiver
-            );
+            if (migrationItem.long.glpAmount > 0) {
+                cache.redeemedLongTokenAmount = glpRewardRouter.unstakeAndRedeemGlp(
+                    migrationItem.long.token, // tokenOut
+                    migrationItem.long.glpAmount, // glpAmount
+                    migrationItem.long.minOut, // minOut
+                    address(depositVault) // receiver
+                );
+            }
 
-            cache.redeemedShortTokenAmount = glpRewardRouter.unstakeAndRedeemGlp(
-                migrationItem.short.token, // tokenOut
-                migrationItem.short.glpAmount, // glpAmount
-                migrationItem.short.minOut, // minOut
-                address(depositVault) // receiver
-            );
+            if (migrationItem.short.glpAmount > 0) {
+                cache.redeemedShortTokenAmount = glpRewardRouter.unstakeAndRedeemGlp(
+                    migrationItem.short.token, // tokenOut
+                    migrationItem.short.glpAmount, // glpAmount
+                    migrationItem.short.minOut, // minOut
+                    address(depositVault) // receiver
+                );
+            }
 
             TokenUtils.depositAndSendWrappedNativeToken(
                 dataStore,
                 address(depositVault),
-                executionFee
+                migrationItem.executionFee
             );
 
             // a user could set a minMarketTokens to force the deposit to fail
@@ -207,7 +218,7 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
                 new address[](0), // shortTokenSwapPath;
                 migrationItem.minMarketTokens, // minMarketTokens;
                 false, // shouldUnwrapNativeToken;
-                executionFee, // executionFee;
+                migrationItem.executionFee, // executionFee;
                 0 // callbackGasLimit;
             );
 
