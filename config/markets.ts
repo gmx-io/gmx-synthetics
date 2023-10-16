@@ -1,4 +1,4 @@
-import { BigNumberish } from "ethers";
+import { BigNumberish, ethers } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { expandDecimals, decimalToFloat } from "../utils/math";
@@ -74,30 +74,34 @@ export type BaseMarketConfig = {
   minFundingFactorPerSecond: BigNumberish;
   maxFundingFactorPerSecond: BigNumberish;
 
+  positionImpactPoolDistributionRate: BigNumberish;
+  minPositionImpactPoolAmount: BigNumberish;
+
   virtualMarketId?: string;
   virtualTokenIdForIndexToken?: string;
 
   isDisabled?: boolean;
 };
 
-export type MarketConfig = Partial<BaseMarketConfig> &
-  (
-    | {
-        tokens: {
-          indexToken: string;
-          longToken: string;
-          shortToken: string;
-        };
-        swapOnly?: never;
-      }
-    | {
-        tokens: {
-          longToken: string;
-          shortToken: string;
-        };
-        swapOnly: true;
-      }
-  );
+export type SpotMarketConfig = Partial<BaseMarketConfig> & {
+  tokens: {
+    longToken: string;
+    shortToken: string;
+    indexToken?: never;
+  };
+  swapOnly: true;
+};
+
+export type PerpMarketConfig = Partial<BaseMarketConfig> & {
+  tokens: {
+    indexToken: string;
+    longToken: string;
+    shortToken: string;
+  };
+  swapOnly?: never;
+};
+
+export type MarketConfig = SpotMarketConfig | PerpMarketConfig;
 
 const baseMarketConfig: BaseMarketConfig = {
   minCollateralFactor: decimalToFloat(1, 2), // 1%
@@ -171,6 +175,9 @@ const baseMarketConfig: BaseMarketConfig = {
   thresholdForDecreaseFunding: 0,
   minFundingFactorPerSecond: 0,
   maxFundingFactorPerSecond: 0,
+
+  positionImpactPoolDistributionRate: 0,
+  minPositionImpactPoolAmount: 0,
 };
 
 const synthethicMarketConfig: Partial<BaseMarketConfig> = {
@@ -779,27 +786,66 @@ const config: {
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "DAI" },
-      virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
+      virtualMarketId: ethers.constants.HashZero,
     },
     { tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "USDC" } },
     {
       tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "USDC" },
       virtualMarketId: "0x11111137e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481f",
       virtualTokenIdForIndexToken: "0x04533137e2e8ae1c11111111a0dd36e023e0d6217198f889f9eb9c2a6727481d",
+      positionImpactPoolDistributionRate: expandDecimals(1, 30), // 1 sat per second
+
+      negativePositionImpactFactor: decimalToFloat(1, 9),
+      positivePositionImpactFactor: decimalToFloat(5, 10),
+      negativeSwapImpactFactor: decimalToFloat(1, 7),
+      positiveSwapImpactFactor: decimalToFloat(5, 8),
     },
     {
       tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "DAI" },
+
+      negativePositionImpactFactor: decimalToFloat(1, 9),
+      positivePositionImpactFactor: decimalToFloat(5, 10),
+      negativeSwapImpactFactor: decimalToFloat(1, 7),
+      positiveSwapImpactFactor: decimalToFloat(5, 8),
     },
     {
       tokens: { indexToken: "SOL", longToken: "WBTC", shortToken: "USDC" },
       isDisabled: false,
+
+      negativePositionImpactFactor: decimalToFloat(1, 9),
+      positivePositionImpactFactor: decimalToFloat(5, 10),
+      negativeSwapImpactFactor: decimalToFloat(1, 7),
+      positiveSwapImpactFactor: decimalToFloat(5, 8),
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDT" },
       swapOnly: true,
+
+      negativeSwapImpactFactor: decimalToFloat(2, 8),
+      positiveSwapImpactFactor: decimalToFloat(1, 8),
     },
-    { tokens: { indexToken: "DOGE", longToken: "WBTC", shortToken: "DAI" } },
-    { tokens: { indexToken: "LINK", longToken: "WBTC", shortToken: "DAI" } },
+    {
+      tokens: {
+        indexToken: "DOGE",
+        longToken: "WBTC",
+        shortToken: "DAI",
+      },
+      positionImpactPoolDistributionRate: expandDecimals(1, 38), // 1 DOGE / second
+      minPositionImpactPoolAmount: expandDecimals(8000, 8), // 8000 DOGE
+
+      negativePositionImpactFactor: decimalToFloat(1, 9),
+      positivePositionImpactFactor: decimalToFloat(5, 10),
+      negativeSwapImpactFactor: decimalToFloat(1, 7),
+      positiveSwapImpactFactor: decimalToFloat(5, 8),
+    },
+    {
+      tokens: { indexToken: "LINK", longToken: "WBTC", shortToken: "DAI" },
+
+      negativePositionImpactFactor: decimalToFloat(1, 9),
+      positivePositionImpactFactor: decimalToFloat(5, 10),
+      negativeSwapImpactFactor: decimalToFloat(1, 7),
+      positiveSwapImpactFactor: decimalToFloat(5, 8),
+    },
     { tokens: { indexToken: "BNB", longToken: "WBTC", shortToken: "DAI" }, isDisabled: true },
     { tokens: { indexToken: "ADA", longToken: "WBTC", shortToken: "DAI" }, isDisabled: true },
     { tokens: { indexToken: "TRX", longToken: "WBTC", shortToken: "DAI" }, isDisabled: true },
@@ -858,7 +904,7 @@ const config: {
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "DAI" },
-      virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
+      virtualMarketId: hashString("SPOT:AVAX/USD"),
       virtualTokenIdForIndexToken: "0x275d2a6e341e6a078d4eee59b08907d1e50825031c5481f9551284f4b7ee2fb9",
     },
     {

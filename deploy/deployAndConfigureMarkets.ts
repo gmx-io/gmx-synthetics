@@ -321,6 +321,8 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       "maxFundingFactorPerSecond",
       "thresholdForStableFunding",
       "thresholdForDecreaseFunding",
+      "positionImpactPoolDistributionRate",
+      "minPositionImpactPoolAmount",
     ]) {
       if (marketConfig[name]) {
         const value = marketConfig[name];

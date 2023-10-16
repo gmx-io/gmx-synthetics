@@ -20,9 +20,11 @@ function getTickersUrl() {
   const networkName = hre.network.name;
 
   if (networkName === "arbitrum") {
-    return "https://arbitrum.gmx-oracle.io/prices/tickers";
+    return "https://arbitrum-api.gmxinfra.io/prices/tickers";
   } else if (networkName === "avalanche") {
-    return "https://avalanche.gmx-oracle.io/prices/tickers";
+    return "https://avalanche-api.gmxinfra.io/prices/tickers";
+  } else if (networkName === "arbitrumGoerli") {
+    return "https://gmx-synthetics-api-arb-goerli-4vgxk.ondigitalocean.app/prices/tickers";
   } else {
     throw new Error(`Unsupported network: ${networkName}`);
   }
@@ -61,8 +63,8 @@ async function main() {
 
   for (const tokenPrice of tokenPrices) {
     pricesByTokenAddress[tokenPrice.tokenAddress.toLowerCase()] = {
-      min: bigNumberify(tokenPrice.minPrice).mul(expandDecimals(1, tokenPrice.oracleDecimals)),
-      max: bigNumberify(tokenPrice.maxPrice).mul(expandDecimals(1, tokenPrice.oracleDecimals)),
+      min: bigNumberify(tokenPrice.minPrice),
+      max: bigNumberify(tokenPrice.maxPrice),
     };
   }
 
@@ -96,6 +98,7 @@ async function main() {
   const marketInfoList = await reader.getMarketInfoList(dataStore.address, marketPricesList, 0, 100);
 
   const multicallReadParams = [];
+  let propsCount = 0;
 
   for (const market of markets) {
     multicallReadParams.push({
@@ -129,6 +132,18 @@ async function main() {
         keys.positionImpactPoolDistributionRateKey(market.marketToken),
       ]),
     });
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [
+        keys.minPositionImpactPoolAmountKey(market.marketToken),
+      ]),
+    });
+
+    if (propsCount === 0) {
+      propsCount = multicallReadParams.length;
+    }
   }
 
   const multicallReadResult = await multicall.callStatic.aggregate3(multicallReadParams);
@@ -140,32 +155,43 @@ async function main() {
     const { fundingFactorPerSecond } = marketInfo.nextFunding;
 
     const indexTokenSymbol = addressToSymbol[marketInfo.market.indexToken];
+    const indexToken = tokens[indexTokenSymbol];
     const longTokenSymbol = addressToSymbol[marketInfo.market.longToken];
     const shortTokenSymbol = addressToSymbol[marketInfo.market.shortToken];
 
     console.log(
-      "%s index: %s long: %s short: %s fundingFactorPerSecond %s%",
+      "%s index: %s long: %s short: %s",
       marketInfo.market.marketToken,
       indexTokenSymbol?.padEnd(5) || "(swap only)",
       longTokenSymbol?.padEnd(5),
       shortTokenSymbol?.padEnd(5)
     );
 
-    const positionImpactPoolAmount = bigNumberify(multicallReadResult[i * 4].returnData);
-    const swapImpactPoolAmountForLongToken = bigNumberify(multicallReadResult[i * 4 + 1].returnData);
-    const swapImpactPoolAmountForShortToken = bigNumberify(multicallReadResult[i * 4 + 2].returnData);
-    const positionImpactPoolDistributionRate = bigNumberify(multicallReadResult[i * 4 + 3].returnData);
+    const positionImpactPoolAmount = bigNumberify(multicallReadResult[i * propsCount].returnData);
+    const swapImpactPoolAmountForLongToken = bigNumberify(multicallReadResult[i * propsCount + 1].returnData);
+    const swapImpactPoolAmountForShortToken = bigNumberify(multicallReadResult[i * propsCount + 2].returnData);
+    const positionImpactPoolDistributionRate = bigNumberify(multicallReadResult[i * propsCount + 3].returnData);
+    const minPositionImpactPoolAmount = bigNumberify(multicallReadResult[i * propsCount + 4].returnData);
 
-    console.log("    funding factor per second: %s%", formatAmount(fundingFactorPerSecond, 28, 10));
+    console.log("    funding factor: %s% per hour", formatAmount(fundingFactorPerSecond.mul(3600), 28, 10));
 
-    console.log(
-      `    positionImpactPoolAmount: $${formatAmount(
-        positionImpactPoolAmount.mul(marketPrices.indexTokenPrice.max),
-        30,
-        2,
-        true
-      )}`
-    );
+    if (indexToken) {
+      console.log(
+        "    positionImpactPoolAmount: %s ($%s)",
+        formatAmount(positionImpactPoolAmount, indexToken.decimals, 4, true),
+        formatAmount(positionImpactPoolAmount.mul(marketPrices.indexTokenPrice.max), 30, 2, true)
+      );
+
+      console.log(
+        "    positionImpactPoolDistributionRate: %s per hour",
+        formatAmount(bigNumberify(positionImpactPoolDistributionRate).mul(3600), indexToken.decimals + 30, 10)
+      );
+
+      console.log(
+        "    minPositionImpactPoolAmount: %s",
+        formatAmount(minPositionImpactPoolAmount, indexToken.decimals, 4, true)
+      );
+    }
 
     console.log(
       `    swapImpactPoolAmountForLongToken: $${formatAmount(
@@ -183,14 +209,6 @@ async function main() {
         2,
         true
       )}`
-    );
-
-    console.log(
-      `    positionImpactPoolDistributionRate: ${formatAmount(
-        bigNumberify(positionImpactPoolDistributionRate).mul(100),
-        30,
-        4
-      )}%`
     );
   }
 }
