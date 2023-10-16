@@ -48,7 +48,6 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
         uint256 minOut;
 
         address receiver;
-        address spenderToApprove;
         address[] externalCallTargets;
         bytes[] externalCallDataList;
     }
@@ -256,10 +255,6 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
             redemptionInfo.minOut, // minOut
             redemptionInfo.receiver // receiver
         );
-
-        if (redemptionInfo.spenderToApprove != address(0)) {
-            IERC20(redemptionInfo.token).approve(redemptionInfo.spenderToApprove, redeemedTokenAmount);
-        }
 
         for (uint256 i; i < redemptionInfo.externalCallTargets.length; i++) {
             externalHandler.makeExternalCall(
