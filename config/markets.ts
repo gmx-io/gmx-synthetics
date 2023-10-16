@@ -181,11 +181,11 @@ const baseMarketConfig: BaseMarketConfig = {
 };
 
 const synthethicMarketConfig: Partial<BaseMarketConfig> = {
-  reserveFactorLongs: decimalToFloat(7, 1), // 70%,
-  reserveFactorShorts: decimalToFloat(7, 1), // 70%,
+  reserveFactorLongs: decimalToFloat(8, 1), // 80%,
+  reserveFactorShorts: decimalToFloat(8, 1), // 80%,
 
-  openInterestReserveFactorLongs: decimalToFloat(5, 1), // 50%,
-  openInterestReserveFactorShorts: decimalToFloat(5, 1), // 50%,
+  openInterestReserveFactorLongs: decimalToFloat(7, 1), // 70%,
+  openInterestReserveFactorShorts: decimalToFloat(7, 1), // 70%,
 
   maxPnlFactorForTradersLongs: decimalToFloat(5, 1), // 50%
   maxPnlFactorForTradersShorts: decimalToFloat(5, 1), // 50%
