@@ -53,6 +53,9 @@ library Errors {
     // ExchangeUtils errors
     error RequestNotYetCancellable(uint256 requestAge, uint256 requestExpirationAge, string requestType);
 
+    // ExternalHandler errors
+    error ExternalCallFailed(bytes data);
+
     // GlpMigrator errors
     error InvalidGlpAmount(uint256 totalGlpAmountToRedeem, uint256 totalGlpAmount);
     error InvalidExecutionFeeForMigration(uint256 totalExecutionFee, uint256 msgValue);

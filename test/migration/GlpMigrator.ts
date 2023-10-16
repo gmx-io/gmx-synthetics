@@ -20,6 +20,7 @@ describe("GlpMigrator", () => {
     eventEmitter,
     depositVault,
     depositHandler,
+    externalHandler,
     marketStoreUtils,
     stakedGlp,
     glpVault,
@@ -31,6 +32,30 @@ describe("GlpMigrator", () => {
     wnt,
     wbtc,
     usdc;
+
+  const getRedemptionInfo = ({
+    token,
+    glpAmount,
+    minOut,
+    receiver,
+    spenderToApprove = ethers.constants.AddressZero,
+    externalCallTargets = [],
+    externalCallDataList = [],
+  }) => {
+    if (!receiver) {
+      receiver = depositVault.address;
+    }
+
+    return {
+      token,
+      glpAmount,
+      minOut,
+      receiver,
+      spenderToApprove,
+      externalCallTargets,
+      externalCallDataList,
+    };
+  };
 
   beforeEach(async () => {
     fixture = await deployFixture();
@@ -51,6 +76,7 @@ describe("GlpMigrator", () => {
       wbtc,
     } = fixture.contracts);
 
+    externalHandler = await deployContract("ExternalHandler", []);
     stakedGlp = await deployContract("MintableToken", ["stakedGlp", "sGLP", 18]);
     glpVault = await deployContract("MockGlpVault", []);
     glpTimelock = await deployContract("MockGlpTimelock", []);
@@ -63,6 +89,7 @@ describe("GlpMigrator", () => {
         eventEmitter.address,
         depositVault.address,
         depositHandler.address,
+        externalHandler.address,
         stakedGlp.address,
         glpVault.address,
         glpTimelock.address,
@@ -120,31 +147,31 @@ describe("GlpMigrator", () => {
         [
           {
             market: ethUsdMarket.marketToken,
-            long: {
+            long: getRedemptionInfo({
               token: wnt.address,
               glpAmount: expandDecimals(5000, 18),
               minOut: expandDecimals(1, 18), // 1 ETH
-            },
-            short: {
+            }),
+            short: getRedemptionInfo({
               token: usdc.address,
               glpAmount: expandDecimals(1000, 18),
               minOut: expandDecimals(1000, 6),
-            },
+            }),
             minMarketTokens: expandDecimals(6000, 18),
             executionFee: "100000000000000",
           },
           {
             market: btcUsdMarket.marketToken,
-            long: {
+            long: getRedemptionInfo({
               token: wbtc.address,
               glpAmount: expandDecimals(5000, 18),
               minOut: expandDecimals(1, 7), // 0.1 WBTC
-            },
-            short: {
+            }),
+            short: getRedemptionInfo({
               token: usdc.address,
               glpAmount: expandDecimals(500, 18),
               minOut: expandDecimals(500, 6),
-            },
+            }),
             minMarketTokens: expandDecimals(5500, 18),
             executionFee: "100000000000000",
           },
@@ -159,31 +186,31 @@ describe("GlpMigrator", () => {
         [
           {
             market: ethUsdMarket.marketToken,
-            long: {
+            long: getRedemptionInfo({
               token: wnt.address,
               glpAmount: expandDecimals(5000, 18),
               minOut: expandDecimals(1, 18), // 1 ETH
-            },
-            short: {
+            }),
+            short: getRedemptionInfo({
               token: usdc.address,
               glpAmount: expandDecimals(1000, 18),
               minOut: expandDecimals(1000, 6),
-            },
+            }),
             minMarketTokens: expandDecimals(6000, 18),
             executionFee: "100000000000000",
           },
           {
             market: btcUsdMarket.marketToken,
-            long: {
+            long: getRedemptionInfo({
               token: wnt.address,
               glpAmount: expandDecimals(5000, 18),
               minOut: expandDecimals(1, 7), // 0.1 WBTC
-            },
-            short: {
+            }),
+            short: getRedemptionInfo({
               token: usdc.address,
               glpAmount: expandDecimals(500, 18),
               minOut: expandDecimals(500, 6),
-            },
+            }),
             minMarketTokens: expandDecimals(5500, 18),
             executionFee: "100000000000000",
           },
@@ -198,31 +225,31 @@ describe("GlpMigrator", () => {
         [
           {
             market: ethUsdMarket.marketToken,
-            long: {
+            long: getRedemptionInfo({
               token: wnt.address,
               glpAmount: expandDecimals(5000, 18),
               minOut: expandDecimals(1, 18), // 1 ETH
-            },
-            short: {
+            }),
+            short: getRedemptionInfo({
               token: wbtc.address,
               glpAmount: expandDecimals(1000, 18),
               minOut: expandDecimals(1000, 6),
-            },
+            }),
             minMarketTokens: expandDecimals(6000, 18),
             executionFee: "100000000000000",
           },
           {
             market: btcUsdMarket.marketToken,
-            long: {
+            long: getRedemptionInfo({
               token: wbtc.address,
               glpAmount: expandDecimals(5000, 18),
               minOut: expandDecimals(1, 7), // 0.1 WBTC
-            },
-            short: {
+            }),
+            short: getRedemptionInfo({
               token: usdc.address,
               glpAmount: expandDecimals(500, 18),
               minOut: expandDecimals(500, 6),
-            },
+            }),
             minMarketTokens: expandDecimals(5500, 18),
             executionFee: "100000000000000",
           },
@@ -236,31 +263,31 @@ describe("GlpMigrator", () => {
       [
         {
           market: ethUsdMarket.marketToken,
-          long: {
+          long: getRedemptionInfo({
             token: wnt.address,
             glpAmount: expandDecimals(5000, 18),
             minOut: expandDecimals(1, 18), // 1 ETH
-          },
-          short: {
+          }),
+          short: getRedemptionInfo({
             token: usdc.address,
             glpAmount: expandDecimals(1000, 18),
             minOut: expandDecimals(1000, 6),
-          },
+          }),
           minMarketTokens: expandDecimals(6000, 18),
           executionFee: "100000000000000",
         },
         {
           market: btcUsdMarket.marketToken,
-          long: {
+          long: getRedemptionInfo({
             token: wbtc.address,
             glpAmount: expandDecimals(5000, 18),
             minOut: expandDecimals(1, 7), // 0.1 WBTC
-          },
-          short: {
+          }),
+          short: getRedemptionInfo({
             token: usdc.address,
             glpAmount: expandDecimals(500, 18),
             minOut: expandDecimals(500, 6),
-          },
+          }),
           minMarketTokens: expandDecimals(5500, 18),
           executionFee: "100000000000000",
         },
@@ -299,31 +326,31 @@ describe("GlpMigrator", () => {
       [
         {
           market: ethUsdMarket.marketToken,
-          long: {
+          long: getRedemptionInfo({
             token: wnt.address,
             glpAmount: expandDecimals(5000, 18),
             minOut: expandDecimals(1, 18), // 1 ETH
-          },
-          short: {
+          }),
+          short: getRedemptionInfo({
             token: usdc.address,
             glpAmount: expandDecimals(1000, 18),
             minOut: expandDecimals(1000, 6),
-          },
+          }),
           minMarketTokens: expandDecimals(6000, 18),
           executionFee: "100000000000000",
         },
         {
           market: btcUsdMarket.marketToken,
-          long: {
+          long: getRedemptionInfo({
             token: wbtc.address,
             glpAmount: expandDecimals(5000, 18),
             minOut: expandDecimals(1, 7), // 0.1 WBTC
-          },
-          short: {
+          }),
+          short: getRedemptionInfo({
             token: usdc.address,
             glpAmount: expandDecimals(500, 18),
             minOut: expandDecimals(500, 6),
-          },
+          }),
           minMarketTokens: expandDecimals(6000, 18),
           executionFee: "100000000000000",
         },

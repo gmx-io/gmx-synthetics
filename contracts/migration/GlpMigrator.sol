@@ -16,6 +16,7 @@ import "../event/EventEmitter.sol";
 
 import "../deposit/DepositVault.sol";
 import "../exchange/DepositHandler.sol";
+import "../external/ExternalHandler.sol";
 
 contract GlpMigrator is ReentrancyGuard, RoleModule {
     using EventUtils for EventUtils.AddressItems;
@@ -32,6 +33,7 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
     EventEmitter public immutable eventEmitter;
     DepositVault public immutable depositVault;
     DepositHandler public immutable depositHandler;
+    ExternalHandler public immutable externalHandler;
 
     IERC20 public immutable stakedGlp;
     IGlpVault public immutable glpVault;
@@ -44,6 +46,11 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
         address token;
         uint256 glpAmount;
         uint256 minOut;
+
+        address receiver;
+        address spenderToApprove;
+        address[] externalCallTargets;
+        bytes[] externalCallDataList;
     }
 
     struct MigrationItem {
@@ -104,6 +111,7 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
         EventEmitter _eventEmitter,
         DepositVault _depositVault,
         DepositHandler _depositHandler,
+        ExternalHandler _externalHandler,
         IERC20 _stakedGlp,
         IGlpVault _glpVault,
         IGlpTimelock _glpTimelock,
@@ -114,6 +122,7 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
         eventEmitter = _eventEmitter;
         depositVault = _depositVault;
         depositHandler = _depositHandler;
+        externalHandler = _externalHandler;
 
         stakedGlp = _stakedGlp;
         glpVault = _glpVault;
@@ -177,23 +186,8 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
                 revert Errors.InvalidShortTokenForMigration(migrationItem.market, migrationItem.short.token, cache.market.shortToken);
             }
 
-            if (migrationItem.long.glpAmount > 0) {
-                cache.redeemedLongTokenAmount = glpRewardRouter.unstakeAndRedeemGlp(
-                    migrationItem.long.token, // tokenOut
-                    migrationItem.long.glpAmount, // glpAmount
-                    migrationItem.long.minOut, // minOut
-                    address(depositVault) // receiver
-                );
-            }
-
-            if (migrationItem.short.glpAmount > 0) {
-                cache.redeemedShortTokenAmount = glpRewardRouter.unstakeAndRedeemGlp(
-                    migrationItem.short.token, // tokenOut
-                    migrationItem.short.glpAmount, // glpAmount
-                    migrationItem.short.minOut, // minOut
-                    address(depositVault) // receiver
-                );
-            }
+            cache.redeemedLongTokenAmount = _redeemGlp(migrationItem.long);
+            cache.redeemedShortTokenAmount = _redeemGlp(migrationItem.short);
 
             TokenUtils.depositAndSendWrappedNativeToken(
                 dataStore,
@@ -249,4 +243,31 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
         }
     }
 
+    function _redeemGlp(
+        GlpRedemption memory redemptionInfo
+    ) internal returns (uint256) {
+        if (redemptionInfo.glpAmount == 0) {
+            return 0;
+        }
+
+        uint256 redeemedTokenAmount = glpRewardRouter.unstakeAndRedeemGlp(
+            redemptionInfo.token, // tokenOut
+            redemptionInfo.glpAmount, // glpAmount
+            redemptionInfo.minOut, // minOut
+            redemptionInfo.receiver // receiver
+        );
+
+        if (redemptionInfo.spenderToApprove != address(0)) {
+            IERC20(redemptionInfo.token).approve(redemptionInfo.spenderToApprove, redeemedTokenAmount);
+        }
+
+        for (uint256 i; i < redemptionInfo.externalCallTargets.length; i++) {
+            externalHandler.makeExternalCall(
+                redemptionInfo.externalCallTargets[i],
+                redemptionInfo.externalCallDataList[i]
+            );
+        }
+
+        return redeemedTokenAmount;
+    }
 }
