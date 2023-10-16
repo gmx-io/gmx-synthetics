@@ -50,6 +50,8 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
         address receiver;
         address[] externalCallTargets;
         bytes[] externalCallDataList;
+        address[] refundTokens;
+        address[] refundReceivers;
     }
 
     struct MigrationItem {
@@ -256,12 +258,12 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
             redemptionInfo.receiver // receiver
         );
 
-        for (uint256 i; i < redemptionInfo.externalCallTargets.length; i++) {
-            externalHandler.makeExternalCall(
-                redemptionInfo.externalCallTargets[i],
-                redemptionInfo.externalCallDataList[i]
-            );
-        }
+        externalHandler.makeExternalCalls(
+            redemptionInfo.externalCallTargets,
+            redemptionInfo.externalCallDataList,
+            redemptionInfo.refundTokens,
+            redemptionInfo.refundReceivers
+        );
 
         return redeemedTokenAmount;
     }

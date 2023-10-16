@@ -40,6 +40,8 @@ describe("GlpMigrator", () => {
     receiver,
     externalCallTargets = [],
     externalCallDataList = [],
+    refundTokens = [],
+    refundReceivers = [],
   }) => {
     if (!receiver) {
       receiver = depositVault.address;
@@ -52,6 +54,8 @@ describe("GlpMigrator", () => {
       receiver,
       externalCallTargets,
       externalCallDataList,
+      refundTokens,
+      refundReceivers,
     };
   };
 
