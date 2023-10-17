@@ -7,7 +7,7 @@ async function main() {
 
   const reader = (await hre.ethers.getContract("Reader")) as Reader;
 
-  const orderKey = "0x590df51732f141ce1b88dcb1f7c8a79cb617ed4604ef85e303087fcf0be34e2f";
+  const orderKey = process.env.ORDER_KEY;
 
   const order = await reader.getOrder(dataStoreDeployment.address, orderKey);
 
