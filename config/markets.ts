@@ -776,10 +776,10 @@ const config: {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
       virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(1, 4), // 0.01% per second, 36% per hour
-      fundingDecreaseFactorPerSecond: decimalToFloat(5, 5), // 0.005% per second, 18% per hour
+      fundingIncreaseFactorPerSecond: decimalToFloat(1, 11), // 0.000000001% per second,  0,0000036% per hour
+      fundingDecreaseFactorPerSecond: decimalToFloat(5, 12), // 0.0000000005% per second, 0,0000018% per hour
       minFundingFactorPerSecond: decimalToFloat(1, 9), // 0,0000001% per second, 0.00036% per hour
-      maxFundingFactorPerSecond: decimalToFloat(3, 8), // 0,000003% per second, 0,0108% per hour
+      maxFundingFactorPerSecond: decimalToFloat(3, 8), // 0,000003% per second,  0,0108% per hour
 
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(2, 2), // 2%
