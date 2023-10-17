@@ -227,8 +227,10 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
             eventData.bytes32Items.initItems(1);
             eventData.bytes32Items.setItem(0, "depositKey", cache.depositKey);
 
-            eventData.addressItems.initItems(1);
+            eventData.addressItems.initItems(3);
             eventData.addressItems.setItem(0, "market", cache.market.marketToken);
+            eventData.addressItems.setItem(1, "redeemedLongToken", migrationItem.long.token);
+            eventData.addressItems.setItem(2, "redeemedShortToken", migrationItem.short.token);
 
             eventData.uintItems.initItems(4);
             eventData.uintItems.setItem(0, "glpLongAmount", migrationItem.long.glpAmount);
