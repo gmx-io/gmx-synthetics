@@ -141,6 +141,36 @@ async function main() {
       ]),
     });
 
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getInt", [
+        keys.savedFundingFactorPerSecondKey(market.marketToken),
+      ]),
+    });
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [
+        keys.fundingIncreaseFactorPerSecondKey(market.marketToken),
+      ]),
+    });
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [
+        keys.fundingDecreaseFactorPerSecondKey(market.marketToken),
+      ]),
+    });
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [keys.fundingUpdatedAtKey(market.marketToken)]),
+    });
+
     if (propsCount === 0) {
       propsCount = multicallReadParams.length;
     }
@@ -166,20 +196,25 @@ async function main() {
     const swapImpactPoolAmountForShortToken = bigNumberify(multicallReadResult[i * propsCount + 2].returnData);
     const positionImpactPoolDistributionRate = bigNumberify(multicallReadResult[i * propsCount + 3].returnData);
     const minPositionImpactPoolAmount = bigNumberify(multicallReadResult[i * propsCount + 4].returnData);
+    const savedFundingFactorPerSecond = bigNumberify(multicallReadResult[i * propsCount + 5].returnData);
+    const fundingIncreaseFactorPerSecond = bigNumberify(multicallReadResult[i * propsCount + 6].returnData);
+    const fundingDecreaseFactorPerSecond = bigNumberify(multicallReadResult[i * propsCount + 7].returnData);
+    const fundingUpdatedAt = bigNumberify(multicallReadResult[i * propsCount + 8].returnData);
+
+    const marketLabel = `${indexTokenSymbol || "spot"} [${longTokenSymbol}-${shortTokenSymbol}]`;
 
     let data: any = {
-      market: `${indexTokenSymbol || "spot"} [${longTokenSymbol}-${shortTokenSymbol}]`,
-      "funding fee / h": `${formatAmount(fundingFactorPerSecond.mul(3600), 28, 6)}%`,
-      "swap impact pool, l": formatAmount(
+      market: marketLabel,
+      "swp impct pool l": formatAmount(
         swapImpactPoolAmountForLongToken.mul(marketPrices.longTokenPrice.max),
         30,
-        2,
+        0,
         true
       ),
-      "swap impact pool, s": formatAmount(
+      "swp impct pool s": formatAmount(
         swapImpactPoolAmountForShortToken.mul(marketPrices.shortTokenPrice.max),
         30,
-        2,
+        0,
         true
       ),
     };
@@ -187,18 +222,23 @@ async function main() {
     if (indexToken) {
       data = {
         ...data,
-        "impact pool": `${formatAmount(positionImpactPoolAmount, indexToken.decimals, 4, true)} ($${formatAmount(
+        "impct pool": `${formatAmount(positionImpactPoolAmount, indexToken.decimals, 2, true)} ($${formatAmount(
           positionImpactPoolAmount.mul(marketPrices.indexTokenPrice.max),
           30,
-          2,
+          0,
           true
         )})`,
-        "impact distribution": formatAmount(
+        "impct distr": formatAmount(
           bigNumberify(positionImpactPoolDistributionRate).mul(3600),
           indexToken.decimals + 30,
           10
         ),
-        "min impact pool": formatAmount(minPositionImpactPoolAmount, indexToken.decimals, 4, true),
+        "min impct pool": formatAmount(minPositionImpactPoolAmount, indexToken.decimals, 4, true),
+        "fund fee h": `${formatAmount(fundingFactorPerSecond.mul(3600), 28, 6)}%`,
+        "fund incr rate h": formatAmount(fundingIncreaseFactorPerSecond.mul(3600), 30, 10, true),
+        "fund decr rate h": formatAmount(fundingDecreaseFactorPerSecond.mul(3600), 30, 10, true),
+        "saved fund h": savedFundingFactorPerSecond.toString(), // formatAmount(savedFundingFactorPerSecond.mul(3600), 60, 10, true),
+        "fund updated": fundingUpdatedAt.toNumber(),
       };
     }
 
