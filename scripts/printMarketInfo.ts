@@ -171,6 +171,22 @@ async function main() {
       callData: dataStore.interface.encodeFunctionData("getUint", [keys.fundingUpdatedAtKey(market.marketToken)]),
     });
 
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [
+        keys.minFundingFactorPerSecondKey(market.marketToken),
+      ]),
+    });
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [
+        keys.maxFundingFactorPerSecondKey(market.marketToken),
+      ]),
+    });
+
     if (propsCount === 0) {
       propsCount = multicallReadParams.length;
     }
@@ -200,8 +216,10 @@ async function main() {
     const fundingIncreaseFactorPerSecond = bigNumberify(multicallReadResult[i * propsCount + 6].returnData);
     const fundingDecreaseFactorPerSecond = bigNumberify(multicallReadResult[i * propsCount + 7].returnData);
     const fundingUpdatedAt = bigNumberify(multicallReadResult[i * propsCount + 8].returnData);
+    const minFundingFactorPerSecond = bigNumberify(multicallReadResult[i * propsCount + 9].returnData);
+    const maxFundingFactorPerSecond = bigNumberify(multicallReadResult[i * propsCount + 10].returnData);
 
-    const marketLabel = `${indexTokenSymbol || "spot"} [${longTokenSymbol}-${shortTokenSymbol}]`;
+    const marketLabel = `${indexTokenSymbol || "spot"} ${longTokenSymbol}-${shortTokenSymbol}`;
 
     let data: any = {
       market: marketLabel,
@@ -231,13 +249,15 @@ async function main() {
         "impct distr": formatAmount(
           bigNumberify(positionImpactPoolDistributionRate).mul(3600),
           indexToken.decimals + 30,
-          10
+          6
         ),
-        "min impct pool": formatAmount(minPositionImpactPoolAmount, indexToken.decimals, 4, true),
-        "fund fee h": `${formatAmount(fundingFactorPerSecond.mul(3600), 28, 6)}%`,
-        "fund incr rate h": formatAmount(fundingIncreaseFactorPerSecond.mul(3600), 30, 10, true),
-        "fund decr rate h": formatAmount(fundingDecreaseFactorPerSecond.mul(3600), 30, 10, true),
-        "saved fund h": savedFundingFactorPerSecond.toString(), // formatAmount(savedFundingFactorPerSecond.mul(3600), 60, 10, true),
+        "min impct pool": formatAmount(minPositionImpactPoolAmount, indexToken.decimals, 3, true),
+        "fund rate h": formatAmount(fundingFactorPerSecond.mul(3600), 30, 10),
+        "fund incr rate h": formatAmount(fundingIncreaseFactorPerSecond.mul(3600), 30, 10),
+        "fund decr rate h": formatAmount(fundingDecreaseFactorPerSecond.mul(3600), 30, 10),
+        "min fund rate h": formatAmount(minFundingFactorPerSecond.mul(3600), 30, 10),
+        "max fund rate h": formatAmount(maxFundingFactorPerSecond.mul(3600), 30, 10),
+        "saved fund h": formatAmount(savedFundingFactorPerSecond.mul(3600), 30, 10),
         "fund updated": fundingUpdatedAt.toNumber(),
       };
     }
