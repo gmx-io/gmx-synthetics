@@ -3,7 +3,12 @@ import { getFrameSigner } from "../utils/signer";
 import { contractAt } from "../utils/deploy";
 import { hashString } from "../utils/hash";
 
-const expectedTimelockMethods = ["signalGrantRole", "grantRoleAfterSignal"];
+const expectedTimelockMethods = [
+  "signalGrantRole",
+  "grantRoleAfterSignal",
+  "signalRevokeRole",
+  "revokeRoleAfterSignal",
+];
 
 async function getTimelock({ signer }) {
   const network = hre.network.name;
@@ -91,6 +96,64 @@ async function main() {
     ],
   };
 
+  const rolesToRemove = {
+    arbitrum: [],
+    avalanche: [
+      {
+        role: "CONTROLLER",
+        member: "0x768c0E31CC87eF5e2c3E2cdB85A4B34148cC63E5",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0xDFDDd3a1545E34c16d2C3AB13bC3388cf9AFCCE3",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x6EDF06Cd12F48b2bf0Fa6e5F98C334810B142814",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x79be2F4eC8A4143BaF963206cF133f3710856D0a",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x854AD2894658c5CdBcBf04d6aBb4b5680406BFB5",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x5dDfaC1aA195FBfb72B06d3E4FC387BD11fce82F",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x884513492829d94ef752740c03ec3ac892ef389f",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x65D406BDb91813E8bC55090A7FcFEd971737CE05",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x9308E03009B62a3A7cC293b2366c36B7DbE99eee",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x8f236681c8a86EB9649b9A3DCb1bb4e05deAB8a3",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x62e1C8F56c7de5Eb5aDf313e97C4BBB4E7Fd956b",
+      },
+      {
+        role: "ROLE_ADMIN",
+        member: "0x768c0E31CC87eF5e2c3E2cdB85A4B34148cC63E5",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0x79be2F4eC8A4143BaF963206cF133f3710856D0a",
+      },
+    ],
+  };
+
   const multicallWriteParams = [];
 
   const timelockMethod = process.env.TIMELOCK_METHOD;
@@ -98,14 +161,33 @@ async function main() {
     throw new Error(`Unexpected TIMELOCK_METHOD: ${timelockMethod}`);
   }
 
-  for (const { member, role } of rolesToAdd[hre.network.name]) {
-    multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [member, hashString(role)]));
+  if (["signalGrantRole", "grantRoleAfterSignal"].includes(timelockMethod)) {
+    for (const { member, role } of rolesToAdd[hre.network.name]) {
+      multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [member, hashString(role)]));
+    }
+  }
+
+  if (timelockMethod === "signalRevokeRole") {
+    for (const { member, role } of rolesToRemove[hre.network.name]) {
+      multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [member, hashString(role)]));
+      // signalGrantRole in case the revocation of the role needs to be reverted
+      multicallWriteParams.push(timelock.interface.encodeFunctionData("signalGrantRole", [member, hashString(role)]));
+    }
+  }
+
+  if (timelockMethod === "revokeRoleAfterSignal") {
+    for (const { member, role } of rolesToRemove[hre.network.name]) {
+      multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [member, hashString(role)]));
+    }
   }
 
   console.log(`updating ${multicallWriteParams.length} roles`);
   console.log("multicallWriteParams", multicallWriteParams);
 
   if (process.env.WRITE === "true") {
+    if (multicallWriteParams.length === 0) {
+      throw new Error("multicallWriteParams is empty");
+    }
     await timelock.multicall(multicallWriteParams);
   } else {
     console.log("NOTE: executed in read-only mode, no transactions were sent");
