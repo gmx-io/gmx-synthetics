@@ -29,6 +29,11 @@ async function main() {
   const roleCount = await roleStore.getRoleCount();
   const roles = await roleStore.getRoles(0, roleCount);
 
+  for (const [roleHash, role] of Object.entries(knownRoles)) {
+    console.log("%s %s", role, roleHash);
+  }
+  console.log(""); // newline
+
   for (const role of roles) {
     const roleMemberCount = await roleStore.getRoleMemberCount(role);
     const roleMembers = await roleStore.getRoleMembers(role, 0, roleMemberCount);
