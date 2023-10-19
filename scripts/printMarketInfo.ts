@@ -212,7 +212,9 @@ async function main() {
     const swapImpactPoolAmountForShortToken = bigNumberify(multicallReadResult[i * propsCount + 2].returnData);
     const positionImpactPoolDistributionRate = bigNumberify(multicallReadResult[i * propsCount + 3].returnData);
     const minPositionImpactPoolAmount = bigNumberify(multicallReadResult[i * propsCount + 4].returnData);
-    const savedFundingFactorPerSecond = bigNumberify(multicallReadResult[i * propsCount + 5].returnData);
+    const savedFundingFactorPerSecond = bigNumberify(
+      dataStore.interface.decodeFunctionResult("getInt", multicallReadResult[i * propsCount + 5].returnData).toString()
+    );
     const fundingIncreaseFactorPerSecond = bigNumberify(multicallReadResult[i * propsCount + 6].returnData);
     const fundingDecreaseFactorPerSecond = bigNumberify(multicallReadResult[i * propsCount + 7].returnData);
     const fundingUpdatedAt = bigNumberify(multicallReadResult[i * propsCount + 8].returnData);
