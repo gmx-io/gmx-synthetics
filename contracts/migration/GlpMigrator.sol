@@ -179,14 +179,6 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
 
             cache.market = MarketUtils.getEnabledMarket(dataStore, migrationItem.market);
 
-            if (migrationItem.long.token != cache.market.longToken) {
-                revert Errors.InvalidLongTokenForMigration(migrationItem.market, migrationItem.long.token, cache.market.longToken);
-            }
-
-            if (migrationItem.short.token != cache.market.shortToken) {
-                revert Errors.InvalidShortTokenForMigration(migrationItem.market, migrationItem.short.token, cache.market.shortToken);
-            }
-
             cache.redeemedLongTokenAmount = _redeemGlp(migrationItem.long);
             cache.redeemedShortTokenAmount = _redeemGlp(migrationItem.short);
 

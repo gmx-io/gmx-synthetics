@@ -2,11 +2,12 @@
 
 pragma solidity ^0.8.0;
 
-import "../error/Errors.sol";
-
+import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
+import "../error/Errors.sol";
 
 // contracts with a CONTROLLER role or other roles may need to call external
 // contracts, since these roles may be able to directly change DataStore values
@@ -20,6 +21,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 // can be changed, this should be taken into account if calling approve is required for
 // these tokens
 contract ExternalHandler is ReentrancyGuard {
+    using Address for address;
     using SafeERC20 for IERC20;
 
     function makeExternalCalls(
@@ -28,6 +30,14 @@ contract ExternalHandler is ReentrancyGuard {
         address[] memory refundTokens,
         address[] memory refundReceivers
     ) external nonReentrant {
+        if (targets.length != dataList.length) {
+            revert Errors.InvalidExternalCallInput(targets.length, dataList.length);
+        }
+
+        if (refundTokens.length != refundReceivers.length) {
+            revert Errors.InvalidExternalReceiversInput(refundTokens.length, refundReceivers.length);
+        }
+
         for (uint256 i; i < targets.length; i++) {
             _makeExternalCall(
                 targets[i],
@@ -39,7 +49,7 @@ contract ExternalHandler is ReentrancyGuard {
             IERC20 refundToken = IERC20(refundTokens[i]);
             uint256 balance = refundToken.balanceOf(address(this));
             if (balance > 0) {
-                refundToken.transfer(refundReceivers[i], balance);
+                refundToken.safeTransfer(refundReceivers[i], balance);
             }
         }
     }
@@ -48,6 +58,10 @@ contract ExternalHandler is ReentrancyGuard {
         address target,
         bytes memory data
     ) internal {
+        if (!target.isContract()) {
+            revert Errors.InvalidExternalCallTarget(target);
+        }
+
         (bool success, bytes memory returndata) = target.call(data);
 
         if (!success) {
