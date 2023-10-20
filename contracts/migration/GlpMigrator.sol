@@ -199,6 +199,8 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
             // a user could set a minMarketTokens to force the deposit to fail
             // or set a market where the deposited amount would exceed the caps and
             // the deposit would fail
+            // or use the externalHandler calls to set the receiver of tokens
+            // directly to an account they own or control
             // glp should be adjusted such that only redemptions are allowed so
             // any arbitrage / benefit of doing this should be minimal
             // glp mint fees should also help to discourage this
