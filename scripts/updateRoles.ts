@@ -14,11 +14,11 @@ async function getTimelock({ signer }) {
   const network = hre.network.name;
 
   if (network === "arbitrum") {
-    return await contractAt("Timelock", "0x9d44B89Eb6FB382b712C562DfaFD8825829b422e", signer);
+    return await contractAt("Timelock", "0x62aB76Ed722C507f297f2B97920dCA04518fe274", signer);
   }
 
   if (network === "avalanche") {
-    return await contractAt("Timelock", "0x768c0E31CC87eF5e2c3E2cdB85A4B34148cC63E5", signer);
+    return await contractAt("Timelock", "0x4Db91a1Fa4ba3c75510B2885d7d7da48E0209F38", signer);
   }
 
   throw new Error("Unsupported network");
@@ -108,52 +108,8 @@ async function main() {
         member: "0x768c0E31CC87eF5e2c3E2cdB85A4B34148cC63E5",
       },
       {
-        role: "CONTROLLER",
-        member: "0xDFDDd3a1545E34c16d2C3AB13bC3388cf9AFCCE3",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x6EDF06Cd12F48b2bf0Fa6e5F98C334810B142814",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x79be2F4eC8A4143BaF963206cF133f3710856D0a",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x854AD2894658c5CdBcBf04d6aBb4b5680406BFB5",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x5dDfaC1aA195FBfb72B06d3E4FC387BD11fce82F",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x884513492829d94ef752740c03ec3ac892ef389f",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x65D406BDb91813E8bC55090A7FcFEd971737CE05",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x9308E03009B62a3A7cC293b2366c36B7DbE99eee",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x8f236681c8a86EB9649b9A3DCb1bb4e05deAB8a3",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x62e1C8F56c7de5Eb5aDf313e97C4BBB4E7Fd956b",
-      },
-      {
         role: "ROLE_ADMIN",
         member: "0x768c0E31CC87eF5e2c3E2cdB85A4B34148cC63E5",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x79be2F4eC8A4143BaF963206cF133f3710856D0a",
       },
     ],
   };
@@ -192,6 +148,7 @@ async function main() {
     if (multicallWriteParams.length === 0) {
       throw new Error("multicallWriteParams is empty");
     }
+
     await timelock.multicall(multicallWriteParams);
   } else {
     console.log("NOTE: executed in read-only mode, no transactions were sent");
