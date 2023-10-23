@@ -24,12 +24,20 @@ export async function validateRoles() {
     "0xf1e1B2F4796d984CCb8485d43db0c64B83C1FA6d": true,
   };
 
+  const chainlinkKeepers = {
+    arbitrum: {
+      "0x5051fd154320584c9cc2071aed772656e8fcd855": true,
+      "0xe0886d9baaad385f37d460a4ec7b32b79a3731e0": true,
+      "0x49d30b3035c647bf57f3845da287bd84d80bda2c": true,
+    },
+  };
+
   const _expectedRoles = {
     arbitrum: {
       ADL_KEEPER: syntheticKeepers,
       FROZEN_ORDER_KEEPER: syntheticKeepers,
       LIQUIDATION_KEEPER: syntheticKeepers,
-      ORDER_KEEPER: syntheticKeepers,
+      ORDER_KEEPER: { ...syntheticKeepers, ...chainlinkKeepers.arbitrum },
       CONFIG_KEEPER: {
         "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
