@@ -7,6 +7,7 @@ import "../exchange/IOrderHandler.sol";
 import "../feature/FeatureUtils.sol";
 import "../subaccount/SubaccountUtils.sol";
 import "../order/OrderVault.sol";
+import "../order/OrderStoreUtils.sol";
 
 contract SubaccountRouter is BaseRouter {
     using EventUtils for EventUtils.AddressItems;
@@ -16,6 +17,8 @@ contract SubaccountRouter is BaseRouter {
     using EventUtils for EventUtils.Bytes32Items;
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
+
+    using Order for Order.Props;
 
     IOrderHandler public immutable orderHandler;
     OrderVault public immutable orderVault;
@@ -78,10 +81,7 @@ contract SubaccountRouter is BaseRouter {
         address account,
         BaseOrderUtils.CreateOrderParams calldata params
     ) external payable nonReentrant returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.subaccountFeatureDisabledKey(address(this)));
-
-        address subaccount = msg.sender;
-        SubaccountUtils.validateSubaccount(dataStore, account, subaccount);
+        _handleSubaccountAction(account, Keys.SUBACCOUNT_ORDER_ACTION);
 
         if (params.addresses.receiver != account) {
             revert Errors.InvalidReceiverForSubaccountOrder(params.addresses.receiver, account);
@@ -101,28 +101,69 @@ contract SubaccountRouter is BaseRouter {
             );
         }
 
-        SubaccountUtils.incrementSubaccountActionCount(
-            dataStore,
-            eventEmitter,
-            account,
-            subaccount,
-            Keys.SUBACCOUNT_CREATE_ORDER_ACTION
-        );
-
-        autoTopUpSubaccount(account, subaccount);
-
         return orderHandler.createOrder(
             account,
             params
         );
     }
 
-    function autoTopUpSubaccount(address account, address subaccount) internal {
+    function updateOrder(
+        bytes32 key,
+        uint256 sizeDeltaUsd,
+        uint256 acceptablePrice,
+        uint256 triggerPrice,
+        uint256 minOutputAmount
+    ) external payable nonReentrant {
+        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+
+        _handleSubaccountAction(order.account(), Keys.SUBACCOUNT_ORDER_ACTION);
+
+        orderHandler.updateOrder(
+            key,
+            sizeDeltaUsd,
+            acceptablePrice,
+            triggerPrice,
+            minOutputAmount,
+            order
+        );
+    }
+
+    function cancelOrder(
+        bytes32 key
+    ) external payable nonReentrant {
+        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+
+        if (order.account() == address(0)) {
+            revert Errors.EmptyOrder();
+        }
+
+        _handleSubaccountAction(order.account(), Keys.SUBACCOUNT_ORDER_ACTION);
+
+        orderHandler.cancelOrder(key);
+    }
+
+    function _handleSubaccountAction(address account, bytes32 actionType) internal {
+        FeatureUtils.validateFeature(dataStore, Keys.subaccountFeatureDisabledKey(address(this)));
+
+        address subaccount = msg.sender;
+        SubaccountUtils.validateSubaccount(dataStore, account, subaccount);
+
+        SubaccountUtils.incrementSubaccountActionCount(
+            dataStore,
+            eventEmitter,
+            account,
+            subaccount,
+            actionType
+        );
+
+        _autoTopUpSubaccount(account, subaccount);
+    }
+
+    function _autoTopUpSubaccount(address account, address subaccount) internal {
         uint256 amount = SubaccountUtils.getSubaccountAutoTopUpAmount(dataStore, account, subaccount);
         if (amount == 0) {
             return;
         }
-
 
         IERC20 wnt = IERC20(dataStore.getAddress(Keys.WNT));
 

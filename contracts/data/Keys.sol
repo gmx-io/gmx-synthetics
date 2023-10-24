@@ -325,8 +325,8 @@ library Keys {
     bytes32 public constant SUBACCOUNT_ACTION_COUNT = keccak256(abi.encode("SUBACCOUNT_ACTION_COUNT"));
     // @dev key for subaccount auto top up amount
     bytes32 public constant SUBACCOUNT_AUTO_TOP_UP_AMOUNT = keccak256(abi.encode("SUBACCOUNT_AUTO_TOP_UP_AMOUNT"));
-    // @dev key for subaccount create order action
-    bytes32 public constant SUBACCOUNT_CREATE_ORDER_ACTION = keccak256(abi.encode("SUBACCOUNT_CREATE_ORDER_ACTION"));
+    // @dev key for subaccount order action
+    bytes32 public constant SUBACCOUNT_ORDER_ACTION = keccak256(abi.encode("SUBACCOUNT_ORDER_ACTION"));
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
