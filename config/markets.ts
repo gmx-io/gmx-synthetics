@@ -789,6 +789,7 @@ const config: {
       virtualMarketId: ethers.constants.HashZero,
     },
     { tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "USDC" } },
+    { tokens: { indexToken: "BTC", longToken: "WBTC", shortToken: "USDC" } },
     {
       tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "USDC" },
       virtualMarketId: "0x11111137e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481f",

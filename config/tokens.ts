@@ -213,6 +213,12 @@ const config: {
       realtimeFeedId: "0x4554482d5553442d415242495452554d2d544553544e45540000000000000000",
       realtimeFeedDecimals: 8,
     },
+    BTC: {
+      synthetic: true,
+      decimals: 8,
+      realtimeFeedId: "0x4254432d5553442d415242495452554d2d544553544e45540000000000000000",
+      realtimeFeedDecimals: 8,
+    },
     WBTC: {
       decimals: 8,
       transferGasLimit: 200 * 1000,
