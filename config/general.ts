@@ -66,10 +66,10 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     nativeTokenTransferGasLimit: 50_000,
 
     estimatedGasFeeBaseAmount: 500_000, // measured gas for an order execution without any main logic: ~500,000
-    estimatedGasFeeMultiplierFactor: expandDecimals(115, 28),
+    estimatedGasFeeMultiplierFactor: expandDecimals(12, 29), // 1.2x
 
     executionGasFeeBaseAmount: 500_000, // measured gas for an order execution without any main logic: ~500,000
-    executionGasFeeMultiplierFactor: expandDecimals(115, 28),
+    executionGasFeeMultiplierFactor: expandDecimals(12, 29), // 1.2x
 
     maxSwapPathLength: 3,
     maxCallbackGasLimit: 2_000_000,
