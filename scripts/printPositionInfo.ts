@@ -1,25 +1,24 @@
 import hre from "hardhat";
 import { Reader } from "../typechain-types";
 import got from "got";
-import { expandDecimals } from "../utils/math";
 import { toLoggableObject } from "./utils";
 const ethers = hre.ethers;
 
 function getAvalancheFujiValues() {
   return {
-    oracleApi: "https://gmx-oracle-keeper-ro-avalanche-fuji-glyu6psrea-ew.a.run.app/",
+    oracleApi: "https://synthetics-api-avax-fuji-upovm.ondigitalocean.app/",
   };
 }
 
 function getArbibtrumGoerliValues() {
   return {
-    oracleApi: "https://gmx-oracle-keeper-arbitrum-goerli-ro-glyu6psrea-ew.a.run.app/",
+    oracleApi: "https://gmx-synthetics-api-arb-goerli-4vgxk.ondigitalocean.app/",
   };
 }
 
 function getArbitrumValues() {
   return {
-    oracleApi: "https://arbitrum.gmx-oracle.io/",
+    oracleApi: "https://arbitrum-api.gmxinfra.io/",
     referralStorageAddress: "0xe6fab3F0c7199b0d34d7FbE83394fc0e0D06e99d",
   };
 }
@@ -45,12 +44,30 @@ async function main() {
     referralStorageAddress = await hre.deployments.get("ReferralStorage");
   }
 
+  if (!referralStorageAddress) {
+    throw new Error("no referralStorageAddress");
+  }
+
   const reader = (await hre.ethers.getContract("Reader")) as Reader;
-  const positionKey = process.env.POSITION_KEY || ethers.constants.HashZero;
+  const positionKey = process.env.POSITION_KEY;
+
+  if (!positionKey) {
+    throw new Error("POSITION_KEY is required");
+  }
 
   const position = await reader.getPosition(dataStoreDeployment.address, positionKey);
+
+  if (position.addresses.market === ethers.constants.AddressZero) {
+    console.log("position %s does not exist", positionKey);
+    return;
+  }
+
+  console.log("position", toLoggableObject(position));
+
   const marketAddress = position.addresses.market;
   const market = await reader.getMarket(dataStoreDeployment.address, marketAddress);
+
+  console.log("market %s %s %s", market.indexToken, market.longToken, market.shortToken);
 
   const tickers: any[] = await got(`${oracleApi}prices/tickers`).json();
 
@@ -62,10 +79,10 @@ async function main() {
     let minPrice;
     let maxPrice;
     if (priceData) {
-      minPrice = expandDecimals(priceData.minPrice, priceData.oracleDecimals);
-      maxPrice = expandDecimals(priceData.minPrice, priceData.oracleDecimals);
+      minPrice = priceData.minPrice;
+      maxPrice = priceData.minPrice;
     } else {
-      minPrice = maxPrice = expandDecimals(1, 24); // stablecoin
+      throw new Error(`no price data for ${key} token ${token}`);
     }
     acc[`${key}TokenPrice`] = {
       min: minPrice,
@@ -73,6 +90,12 @@ async function main() {
     };
     return acc;
   }, {} as any[]);
+
+  console.log("prices", toLoggableObject(prices));
+
+  console.log("reader %s", reader.address);
+  console.log("dataStore %s", dataStoreDeployment.address);
+  console.log("referralStorageAddress %s", referralStorageAddress);
 
   const positionInfo = await reader.getPositionInfo(
     dataStoreDeployment.address,
@@ -85,7 +108,6 @@ async function main() {
   );
 
   console.log(toLoggableObject(positionInfo));
-  console.log("prices", toLoggableObject(prices));
 }
 
 main()
