@@ -101,7 +101,60 @@ async function main() {
   };
 
   const rolesToRemove = {
-    arbitrum: [],
+    arbitrum: [
+      {
+        role: "CONTROLLER",
+        member: "0x9d44B89Eb6FB382b712C562DfaFD8825829b422e",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0xB665B6dBB45ceAf3b126cec98aDB1E611b6a6aea",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x8921e1B2FB2e2b95F1dF68A774BC523327E98E9f",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x3B070aA6847bd0fB56eFAdB351f49BBb7619dbc2",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0xf86aE903B5866bCf8723B9C3642758C87f2F3Ef2",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x51e210dC8391728E2017B2Ec050e40b2f458090e",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x79B99855676dB97e488F33CF52DaCF552102A950",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0xD9AebEA68DE4b4A3B58833e1bc2AEB9682883AB0",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x12CA21bd73b5887f4d2A0054Ca52510523f18c60",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0xD795E1894DD5ac85072c986D3eB9ABA410998696",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x9f5982374e63e5B011317451a424bE9E1275a03f",
+      },
+      {
+        role: "ROLE_ADMIN",
+        member: "0x9d44B89Eb6FB382b712C562DfaFD8825829b422e",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0x3B070aA6847bd0fB56eFAdB351f49BBb7619dbc2",
+      },
+    ],
     avalanche: [
       {
         role: "CONTROLLER",
