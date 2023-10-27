@@ -94,6 +94,22 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         account: "0x49d30b3035c647bf57f3845da287bd84d80bda2c",
         label: "Chainlink withdrawal keeper",
       },
+
+      {
+        roles: ["ORDER_KEEPER"],
+        account: "0xbD88efB162a4157d5B223Bc99CE1bc80E740152f",
+        label: "Chainlink market order keeper 2",
+      },
+      {
+        roles: ["ORDER_KEEPER"],
+        account: "0x8e36C6106B053aD32D20a426f3faF2d32b49cFBd",
+        label: "Chainlink deposit keeper 2",
+      },
+      {
+        roles: ["ORDER_KEEPER"],
+        account: "0x0BA63427862eBEc8492d0236EEc065D6f9978ad6",
+        label: "Chainlink withdrawal keeper 2",
+      },
     ],
     avalanche: [
       ...getMainnetRoles({ multisigAccount: "0x15F9eBC71c539926B8f652a534d29B4Af57CaD55" }),

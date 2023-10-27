@@ -29,6 +29,10 @@ export async function validateRoles() {
       "0x5051fd154320584c9cc2071aed772656e8fcd855": true,
       "0xe0886d9baaad385f37d460a4ec7b32b79a3731e0": true,
       "0x49d30b3035c647bf57f3845da287bd84d80bda2c": true,
+
+      "0xbD88efB162a4157d5B223Bc99CE1bc80E740152f": true, // market orders
+      "0x8e36C6106B053aD32D20a426f3faF2d32b49cFBd": true, // deposits
+      "0x0BA63427862eBEc8492d0236EEc065D6f9978ad6": true, // withdrawals
     },
   };
 
