@@ -25,6 +25,8 @@ function getTickersUrl() {
     return "https://avalanche-api.gmxinfra.io/prices/tickers";
   } else if (networkName === "arbitrumGoerli") {
     return "https://gmx-synthetics-api-arb-goerli-4vgxk.ondigitalocean.app/prices/tickers";
+  } else if (networkName === "avalancheFuji") {
+    return "https://synthetics-api-avax-fuji-upovm.ondigitalocean.app/prices/tickers";
   } else {
     throw new Error(`Unsupported network: ${networkName}`);
   }
