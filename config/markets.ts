@@ -902,6 +902,9 @@ const config: {
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
       virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
+
+      positionImpactPoolDistributionRate: expandDecimals(3, 11), // ~0.026 ETH per day
+      minPositionImpactPoolAmount: expandDecimals(1, 16), // 0.01 ETH
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "DAI" },
