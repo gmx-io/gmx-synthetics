@@ -1612,23 +1612,21 @@ library MarketUtils {
         Price.Props memory tokenPrice,
         int256 priceImpactUsd
     ) internal view returns (int256) {
-        // positive impact: minimize impactAmount, use tokenPrice.max
-        // negative impact: maximize impactAmount, use tokenPrice.min
-        uint256 price = priceImpactUsd > 0 ? tokenPrice.max : tokenPrice.min;
-
         int256 impactAmount;
 
         if (priceImpactUsd > 0) {
+            // positive impact: minimize impactAmount, use tokenPrice.max
             // round positive impactAmount down, this will be deducted from the swap impact pool for the user
-            impactAmount = priceImpactUsd / price.toInt256();
+            impactAmount = priceImpactUsd / tokenPrice.max.toInt256();
 
             int256 maxImpactAmount = getSwapImpactPoolAmount(dataStore, market, token).toInt256();
             if (impactAmount > maxImpactAmount) {
                 impactAmount = maxImpactAmount;
             }
         } else {
+            // negative impact: maximize impactAmount, use tokenPrice.min
             // round negative impactAmount up, this will be deducted from the user
-            impactAmount = Calc.roundUpMagnitudeDivision(priceImpactUsd, price);
+            impactAmount = Calc.roundUpMagnitudeDivision(priceImpactUsd, tokenPrice.min);
         }
 
         return impactAmount;
