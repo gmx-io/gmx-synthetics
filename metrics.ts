@@ -30,10 +30,6 @@ async function run() {
     "./contracts/position/PositionEventUtils.sol",
     "./contracts/referral/ReferralEventUtils.sol",
     "./contracts/withdrawal/WithdrawalEventUtils.sol",
-
-    // temp skip files
-    "./contracts/router/SubaccountRouter.sol",
-    "./contracts/subaccout/SubaccountUtils.sol",
   ];
 
   const patternedFiles = [
