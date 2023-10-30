@@ -634,13 +634,9 @@ After the initial setup:
 
 - For callback contracts instead of maintaining a separate whitelist for DepositHandlers, OrderHandlers, WithdrawalHandlers, a possible solution would be to validate the role of the msg.sender in the RoleStore, e.g. `RoleStore.hasRole(msg.sender, Role.CONTROLLER)`, this would check that the msg.sender is a valid handler
 
-- If using other contracts such as the Oracle or Reader do note that their addresses may change as new logic is added
+- If using contracts such as the ExchangeRouter, Oracle or Reader do note that their addresses will change as new logic is added
 
 - The RoleStore and DataStore for deployments should not change, if they are changed a migration of funds from the previous contracts to the new contracts will likely be needed
-
-- New versions of the ExchangeRouter contract may be deployed, in this case two ExchangeRouters may exist at the same time, contracts should send requests to the new ExchangeRouter once it becomes available
-
-- New versions of the Oracle contract may be deployed, in this case validation of prices should be updated to use the new Oracle contract
 
 - While the code has been structured to minimize the risk of [read-only reentrancy](https://officercia.mirror.xyz/DBzFiDuxmDOTQEbfXhvLdK0DXVpKu1Nkurk0Cqk3QKc), care should be taken to guard against this possibility
 
