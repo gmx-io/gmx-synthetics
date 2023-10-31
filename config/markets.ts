@@ -332,6 +332,9 @@ const config: {
       // factor in open interest reserve factor 50%
       borrowingFactorForLongs: decimalToFloat(15, 9), // 0.000000015 * 50% =  0.0000000075, 0.00000075% / second, 23,65% per year if the pool is 100% utilized
       borrowingFactorForShorts: decimalToFloat(15, 9), // 0,000000015 * 50% = 0.0000000075, 0.00000075% / second, 23.65% per year if the pool is 100% utilized
+
+      positionImpactPoolDistributionRate: 811, // ~70 XPR/day
+      minPositionImpactPoolAmount: expandDecimals(64, 6),
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "USDC" },
@@ -361,6 +364,9 @@ const config: {
       // factor in open interest reserve factor 50%
       borrowingFactorForLongs: decimalToFloat(15, 9), // 0.000000015 * 50% =  0.0000000075, 0.00000075% / second, 23,65% per year if the pool is 100% utilized
       borrowingFactorForShorts: decimalToFloat(15, 9), // 0,000000015 * 50% = 0.0000000075, 0.00000075% / second, 23.65% per year if the pool is 100% utilized
+
+      positionImpactPoolDistributionRate: expandDecimals(53, 4), // ~458 DOGE/day
+      minPositionImpactPoolAmount: expandDecimals(756, 8),
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
@@ -388,6 +394,9 @@ const config: {
       // factor in open interest reserve factor 80%
       borrowingFactorForLongs: decimalToFloat(94, 10), // 0.0000000094 * 80% = 0.0000000075, 0.00000075% / second, 23,65% per year if the pool is 100% utilized
       borrowingFactorForShorts: decimalToFloat(94, 10), // 0.0000000094 * 80% = 0.0000000075, 0.00000075% / second, 23.65% per year if the pool is 100% utilized
+
+      positionImpactPoolDistributionRate: expandDecimals(11, 4), // ~9.5 SOL/day
+      minPositionImpactPoolAmount: expandDecimals(100, 9),
     },
     {
       tokens: { indexToken: "LTC", longToken: "WETH", shortToken: "USDC" },
@@ -417,6 +426,9 @@ const config: {
       // factor in open interest reserve factor 50%
       borrowingFactorForLongs: decimalToFloat(15, 9), // 0.000000015 * 50% =  0.0000000075, 0.00000075% / second, 23,65% per year if the pool is 100% utilized
       borrowingFactorForShorts: decimalToFloat(15, 9), // 0,000000015 * 50% = 0.0000000075, 0.00000075% / second, 23.65% per year if the pool is 100% utilized
+
+      positionImpactPoolDistributionRate: 266, // ~0.22 LTC/day
+      minPositionImpactPoolAmount: expandDecimals(39, 6), // 0.39 LTC
     },
     {
       tokens: { indexToken: "UNI", longToken: "UNI", shortToken: "USDC" },
@@ -444,6 +456,9 @@ const config: {
       // factor in open interest reserve factor 80%
       borrowingFactorForLongs: decimalToFloat(94, 10), // 0.0000000094 * 80% = 0.0000000075, 0.00000075% / second, 23,65% per year if the pool is 100% utilized
       borrowingFactorForShorts: decimalToFloat(94, 10), // 0.0000000094 * 80% = 0.0000000075, 0.00000075% / second, 23.65% per year if the pool is 100% utilized
+
+      positionImpactPoolDistributionRate: expandDecimals(70, 13), // ~60 UNI/day
+      minPositionImpactPoolAmount: expandDecimals(132, 18),
     },
     {
       tokens: { indexToken: "LINK", longToken: "LINK", shortToken: "USDC" },
@@ -471,6 +486,9 @@ const config: {
       // factor in open interest reserve factor 80%
       borrowingFactorForLongs: decimalToFloat(94, 10), // 0.0000000094 * 80% = 0.0000000075, 0.00000075% / second, 23,65% per year if the pool is 100% utilized
       borrowingFactorForShorts: decimalToFloat(94, 10), // 0.0000000094 * 80% = 0.0000000075, 0.00000075% / second, 23.65% per year if the pool is 100% utilized
+
+      positionImpactPoolDistributionRate: expandDecimals(167, 13), // ~144 LINK/day
+      minPositionImpactPoolAmount: expandDecimals(700, 18),
     },
     {
       tokens: { indexToken: "ARB", longToken: "ARB", shortToken: "USDC" },
@@ -505,6 +523,9 @@ const config: {
       maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+
+      positionImpactPoolDistributionRate: expandDecimals(176, 14), // ~1526 ARB/day
+      minPositionImpactPoolAmount: expandDecimals(6200, 18),
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDC.e" },
