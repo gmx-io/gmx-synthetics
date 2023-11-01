@@ -333,7 +333,7 @@ const config: {
       borrowingFactorForLongs: decimalToFloat(15, 9), // 0.000000015 * 50% =  0.0000000075, 0.00000075% / second, 23,65% per year if the pool is 100% utilized
       borrowingFactorForShorts: decimalToFloat(15, 9), // 0,000000015 * 50% = 0.0000000075, 0.00000075% / second, 23.65% per year if the pool is 100% utilized
 
-      positionImpactPoolDistributionRate: 811, // ~70 XPR/day
+      positionImpactPoolDistributionRate: 811, // ~70 XRP/day
       minPositionImpactPoolAmount: expandDecimals(64, 6),
     },
     {
