@@ -333,7 +333,7 @@ const config: {
       borrowingFactorForLongs: decimalToFloat(15, 9), // 0.000000015 * 50% =  0.0000000075, 0.00000075% / second, 23,65% per year if the pool is 100% utilized
       borrowingFactorForShorts: decimalToFloat(15, 9), // 0,000000015 * 50% = 0.0000000075, 0.00000075% / second, 23.65% per year if the pool is 100% utilized
 
-      positionImpactPoolDistributionRate: 811, // ~70 XRP/day
+      positionImpactPoolDistributionRate: expandDecimals(811, 30), // ~70 XRP/day
       minPositionImpactPoolAmount: expandDecimals(64, 6),
     },
     {
@@ -365,7 +365,7 @@ const config: {
       borrowingFactorForLongs: decimalToFloat(15, 9), // 0.000000015 * 50% =  0.0000000075, 0.00000075% / second, 23,65% per year if the pool is 100% utilized
       borrowingFactorForShorts: decimalToFloat(15, 9), // 0,000000015 * 50% = 0.0000000075, 0.00000075% / second, 23.65% per year if the pool is 100% utilized
 
-      positionImpactPoolDistributionRate: expandDecimals(53, 4), // ~458 DOGE/day
+      positionImpactPoolDistributionRate: expandDecimals(53, 34), // ~458 DOGE/day
       minPositionImpactPoolAmount: expandDecimals(756, 8),
     },
     {
@@ -395,7 +395,7 @@ const config: {
       borrowingFactorForLongs: decimalToFloat(94, 10), // 0.0000000094 * 80% = 0.0000000075, 0.00000075% / second, 23,65% per year if the pool is 100% utilized
       borrowingFactorForShorts: decimalToFloat(94, 10), // 0.0000000094 * 80% = 0.0000000075, 0.00000075% / second, 23.65% per year if the pool is 100% utilized
 
-      positionImpactPoolDistributionRate: expandDecimals(11, 4), // ~9.5 SOL/day
+      positionImpactPoolDistributionRate: expandDecimals(11, 34), // ~9.5 SOL/day
       minPositionImpactPoolAmount: expandDecimals(100, 9),
     },
     {
@@ -427,7 +427,7 @@ const config: {
       borrowingFactorForLongs: decimalToFloat(15, 9), // 0.000000015 * 50% =  0.0000000075, 0.00000075% / second, 23,65% per year if the pool is 100% utilized
       borrowingFactorForShorts: decimalToFloat(15, 9), // 0,000000015 * 50% = 0.0000000075, 0.00000075% / second, 23.65% per year if the pool is 100% utilized
 
-      positionImpactPoolDistributionRate: 266, // ~0.22 LTC/day
+      positionImpactPoolDistributionRate: expandDecimals(266, 30), // ~0.22 LTC/day
       minPositionImpactPoolAmount: expandDecimals(39, 6), // 0.39 LTC
     },
     {
@@ -457,7 +457,7 @@ const config: {
       borrowingFactorForLongs: decimalToFloat(94, 10), // 0.0000000094 * 80% = 0.0000000075, 0.00000075% / second, 23,65% per year if the pool is 100% utilized
       borrowingFactorForShorts: decimalToFloat(94, 10), // 0.0000000094 * 80% = 0.0000000075, 0.00000075% / second, 23.65% per year if the pool is 100% utilized
 
-      positionImpactPoolDistributionRate: expandDecimals(70, 13), // ~60 UNI/day
+      positionImpactPoolDistributionRate: expandDecimals(70, 43), // ~60 UNI/day
       minPositionImpactPoolAmount: expandDecimals(132, 18),
     },
     {
@@ -487,7 +487,7 @@ const config: {
       borrowingFactorForLongs: decimalToFloat(94, 10), // 0.0000000094 * 80% = 0.0000000075, 0.00000075% / second, 23,65% per year if the pool is 100% utilized
       borrowingFactorForShorts: decimalToFloat(94, 10), // 0.0000000094 * 80% = 0.0000000075, 0.00000075% / second, 23.65% per year if the pool is 100% utilized
 
-      positionImpactPoolDistributionRate: expandDecimals(167, 13), // ~144 LINK/day
+      positionImpactPoolDistributionRate: expandDecimals(167, 43), // ~144 LINK/day
       minPositionImpactPoolAmount: expandDecimals(700, 18),
     },
     {
@@ -524,7 +524,7 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      positionImpactPoolDistributionRate: expandDecimals(176, 14), // ~1526 ARB/day
+      positionImpactPoolDistributionRate: expandDecimals(176, 44), // ~1526 ARB/day
       minPositionImpactPoolAmount: expandDecimals(6200, 18),
     },
     {
