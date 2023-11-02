@@ -410,20 +410,6 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       marketConfig.negativeMaxPositionImpactFactor,
       `negativeMaxPositionImpactFactor ${marketToken}`
     );
-
-    await handleConfig(
-      "uint",
-      keys.POSITION_IMPACT_POOL_DISTRIBUTION_RATE,
-      encodeData(["address"], [marketToken]),
-      marketConfig.positionImpactPoolDistributionRate
-    );
-
-    await handleConfig(
-      "uint",
-      keys.MIN_POSITION_IMPACT_POOL_AMOUNT,
-      encodeData(["address"], [marketToken]),
-      marketConfig.minPositionImpactPoolAmount
-    );
   }
 };
 
