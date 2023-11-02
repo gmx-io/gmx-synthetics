@@ -82,15 +82,13 @@ async function main() {
     }
 
     if (wasChanged) {
-      multicallWriteParams.push({
-        target: config.address,
-        allowFailure: false,
-        callData: config.interface.encodeFunctionData("setPositionImpactDistributionRate", [
+      multicallWriteParams.push(
+        config.interface.encodeFunctionData("setPositionImpactDistributionRate", [
           marketToken,
           marketConfig.minPositionImpactPoolAmount,
           marketConfig.positionImpactPoolDistributionRate,
-        ]),
-      });
+        ])
+      );
     }
   }
 
