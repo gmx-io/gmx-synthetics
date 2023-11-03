@@ -967,7 +967,11 @@ const config: {
       tokens: { longToken: "USDC", shortToken: "USDT" },
       swapOnly: true,
     },
-    { tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "DAI" } },
+    {
+      tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "DAI" },
+      positionImpactPoolDistributionRate: expandDecimals(12, 33), // ~10 DOGE per day
+      minPositionImpactPoolAmount: expandDecimals(1, 8),
+    },
     { tokens: { indexToken: "LINK", longToken: "WETH", shortToken: "DAI" } },
     { tokens: { indexToken: "BNB", longToken: "WETH", shortToken: "DAI" } },
     { tokens: { indexToken: "ADA", longToken: "WETH", shortToken: "DAI" } },
