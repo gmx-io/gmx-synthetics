@@ -626,7 +626,7 @@ After the initial setup:
 
 - In case of downtime of the blockchain or oracle, orders may be executed at significantly different prices or may not execute if the order's acceptable price cannot be fulfilled
 
-# Upgrade Notes
+## Upgrade Notes
 
 - If new contracts are added that may lead to a difference in pricing, e.g. of market tokens between the old and new contracts, then care should be taken to disable the old contracts before the new contracts are enabled
 
@@ -700,11 +700,11 @@ After the initial setup:
 
 ### Deposit Notes
 
-- Consider PnL Factor carefully when estimating GM price
+- Consider PnL Factor when estimating GM price
 
 - Handle deposit cancellations
 
-- Ensure only the GMX handlers can call the afterDepositExecution and afterDepositCancellation callback functions
+- Ensure only handlers with the CONTROLLER role can call the afterDepositExecution and afterDepositCancellation callback functions
 
 - Ensure only the correct deposit execution can call callback functions
 
@@ -726,7 +726,7 @@ After the initial setup:
 
 - Handle withdrawal cancellations
 
-- Ensure only the GMX handlers can call the afterWithdrawalExecution and afterWithdrawalCancellation callback functions
+- Ensure only handlers with the CONTROLLER role can call the afterWithdrawalExecution and afterWithdrawalCancellation callback functions
 
 - Ensure only the correct withdrawal execution can call callback functions
 
@@ -748,7 +748,7 @@ After the initial setup:
 
 - Orders can become frozen
 
-- Ensure only the GMX handlers can call the afterOrderExecution, afterOrderCancellation and afterOrderFrozen callback functions
+- Ensure only handlers with the CONTROLLER role can call the afterOrderExecution, afterOrderCancellation and afterOrderFrozen callback functions
 
 - Ensure only the correct order execution can call callback functions
 
