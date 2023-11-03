@@ -572,9 +572,13 @@ After the initial setup:
 
 # Known Issues
 
+## Tokens
+
 - Collateral tokens need to be whitelisted with a configured TOKEN_TRANSFER_GAS_LIMIT
 
 - Rebasing tokens, tokens that change balance on transfer, with token burns, tokens with callbacks e.g. ERC-777 tokens, etc, are not compatible with the system and should not be whitelisted
+
+## Keepers
 
 - Order keepers can use prices from different blocks for limit orders with a swap, which would lead to different output amounts
 
@@ -582,17 +586,33 @@ After the initial setup:
 
 - Order keepers may cause requests to be cancelled instead of executed by executing the request with insufficient gas
 
-- A user can reduce price impact by using high leverage positions, this is partially mitigated with the MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER value
+- If an execution transaction requires a large amount of gas that is close to the maximum block gas limit, it may be possible to stuff blocks to prevent the transaction from being included in blocks
+
+- In certain blockchains it is possible for the keeper to have control over the tx.gasprice used to execute a transaction which would affect the execution fee paid to the keeper
+
+- Orders may be prevented from execution by a malicious user intentionally causing a market to be unbalanced resulting in a high price impact, this should be costly and difficult to benefit from
+
+## Price Impact
 
 - Price impact can be reduced by using positions and swaps and trading across markets, chains, forks, other protocols, this is partially mitigated with virtual inventory tracking
+
+- A user can reduce price impact by using high leverage positions, this is partially mitigated with the MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER value
+
+- Calculation of price impact values do not account for fees and the effects resulting from the price impact itself, for most cases the effect on the price impact calculation should be small
+
+## Market Token Price
+
+- It is rare but possible for a pool's value to become negative, this can happen since the impactPoolAmount and pending PnL is subtracted from the worth of the tokens in the pool
+
+- Due to the difference in positive and negative position price impact, there can be a build up of virtual token amounts in the position impact pool which would affect the pricing of market tokens, the position impact pool should be gradually distributed if needed
+
+## Virtual Inventory
 
 - Virtual inventory tracks the amount of tokens in pools, it must be ensured that the tokens in each grouping are the same type and have the same decimals, i.e. the long tokens across pools in the group should have the same decimals, the short tokens across pools in the group should have the same decimals, assuming USDC has 6 decimals and DAI has 18 decimals, markets like ETH-USDC, ETH-DAI should not be grouped
 
 - Virtual IDs must be set before market creation / token whitelisting, if it is set after trading for the token / market is done, the tracking would not be accurate and may need to be adjusted
 
-- If an execution transaction requires a large amount of gas that may be close to the maximum block gas limit, it may be possible to stuff blocks to prevent the transaction from being included in blocks
-
-- In certain blockchains it is possible for the keeper to have control over the tx.gasprice used to execute a transaction which would affect the execution fee paid to the keeper
+## Blockchain
 
 - For L2s with sequencers, there is no contract validation to check if the L2 sequencer is active, oracle keepers should stop signing prices if no blocks are being created by the sequencer, if the sequencer resumes regular operation, the oracle keepers should sign prices for the latest blocks using the latest fetched prices
 
@@ -600,31 +620,33 @@ After the initial setup:
 
 - For transactions that can be executed entirely using on-chain price feeds, it may be possible to take advantage of stale pricing due to price latency or the chain being down, usage of on-chain price feeds should be temporary and low latency feeds should be used instead once all tokens are supported
 
-- Orders may be prevented from execution by a malicious user intentionally causing a market to be unbalanced resulting in a high price impact, this should be costly and difficult to benefit from
-
 - Block re-orgs could allow a user to retroactively cancel an order after it has been executed if price did not move favourably for the user, care should be taken to handle this case if using the contracts on chains where long re-orgs are possible
 
 - Updating and cancellation of orders could be front-run to prevent order execution, this should not be an issue if the probability of a successful front-running is less than or equal to 50%, if the probability is higher than 50%, fees and price impact should be adjusted to ensure that the strategy is not net profitable, adjusting the ui fee or referral discount could similarly be used to cause order cancellations
 
-- Decrease position orders could output two tokens instead of a single token, in case the decrease position swap fails, it is also possible that the output amount and collateral may not be sufficient to cover fees, causing the order to not be executed
+- In case of downtime of the blockchain or oracle, orders may be executed at significantly different prices or may not execute if the order's acceptable price cannot be fulfilled
 
-- If there is a large spread, it is possible that opening / closing a position can significantly change the min and max price of the market token, this should not be manipulatable in a profitable way
-
-- Changes in config values such as FUNDING_FACTOR, STABLE_FUNDING_FACTOR, BORROWING_FACTOR, SKIP_BORROWING_FEE_FOR_SMALLER_SIDE, BORROWING_FEE_RECEIVER_FACTOR, could lead to additional charges for users, it could also result in a change in the price of market tokens
-
-- Calculation of price impact values do not account for fees and the effects resulting from the price impact itself, for most cases the effect on the price impact calculation should be small
-
-- If trader PnL is capped, positions that are closed earlier may receive a lower PnL ratio compared to positions that are closed later
-
-- Due to the difference in positive and negative position price impact, there can be a build up of virtual token amounts in the position impact pool which would affect the pricing of market tokens, the position impact pool should be gradually distributed if needed
-
-- Contracts with the "CONTROLLER" role have access to important functions such as setting DataStore values, due to this, care should be taken to ensure that such contracts do not have generic functions or functions that can be intentionally used to change important values
+# Upgrade Notes
 
 - If new contracts are added that may lead to a difference in pricing, e.g. of market tokens between the old and new contracts, then care should be taken to disable the old contracts before the new contracts are enabled
 
 - If the contracts are used to support equity synthetic markets, care should be taken to ensure that stock splits and similar changes can be handled
 
-- It is rare but possible for a pool's value to become negative, this can happen since the impactPoolAmount and pending PnL is subtracted from the worth of the tokens in the pool
+- Contracts with the "CONTROLLER" role have access to important functions such as setting DataStore values, due to this, care should be taken to ensure that such contracts do not have generic functions or functions that can be intentionally used to change important values
+
+- Tests should be added for the different market types, e.g. spot only markets, single token markets
+
+- The ordering of values in the eventData for callbacks should not be modified unless strictly necessary, since callback contracts may reference the values by a fixed index
+
+## Integration Notes
+
+- Decrease position orders can output two tokens instead of a single token, in case the decrease position swap fails, it is also possible that the output amount and collateral may not be sufficient to cover fees, causing the order to not be executed
+
+- If there is a large spread, it is possible that opening / closing a position can significantly change the min and max price of the market token, this should not be manipulatable in a profitable way
+
+- Changes in config values such as FUNDING_FACTOR, STABLE_FUNDING_FACTOR, BORROWING_FACTOR, SKIP_BORROWING_FEE_FOR_SMALLER_SIDE, BORROWING_FEE_RECEIVER_FACTOR, could lead to additional charges for users, it could also result in a change in the price of market tokens
+
+- If trader PnL is capped due to MAX_PNL_FACTOR_FOR_TRADERS, the percentage of profit paid out to traders may differ depending on the ordering of when positions are decreased / closed since the cap is re-calculated based on the current state of the pool
 
 - Event data may be passed to callback contracts, the ordering of the params in the eventData will be attempted to be unchanged, so params can be accessed by index, for safety the key of the param should still be validated before use to check if it matches the expected value
 
@@ -642,19 +664,13 @@ After the initial setup:
 
 - Token airdrops may occur to the accounts of GM token holders, integrating contracts holding GM tokens must be able to claim these tokens otherwise the tokens would be locked, the exact implementation for this will vary depending on the integrating contract, one possibility is to allow claiming of tokens that are not market tokens, this can be checked using the `Keys.MARKET_LIST` value
 
-- In case of downtime of the blockchain or oracle, orders may be executed at significantly different prices or may not execute if the order's acceptable price cannot be fulfilled
-
-- Swaps for decrease orders may not be successful, this could result in two output tokens, one output in the collateral token and another in the profit token
-
 - ETH transfers are sent with NATIVE_TOKEN_TRANSFER_GAS_LIMIT for the gas limit, if the transfer fails due to insufficient gas or other errors, the ETH is send as WETH instead
 
 - Accounts may receive ETH for ADLs / liquidations, if the account cannot receive ETH then WETH would be sent instead
 
-- If profit is capped due to MAX_PNL_FACTOR_FOR_TRADERS, the percentage of profit paid out to traders may differ depending on the ordering of when positions are decreased / closed since the cap is re-calculated based on the current state of the pool
+- Positive price impact is capped by the amount of tokens in the impact pools and based on configured values
 
-- Positive price impact may be capped by configuration and the amount of tokens in the impact pools
-
-- Negative price impact may be capped by configuration
+- Negative price impact may be capped by configured values
 
 - If negative price impact is capped, the additional amount would be kept in the claimable collateral pool, this needs to be manually claimed using the ExchangeRouter.claimCollateral function
 
@@ -662,13 +678,111 @@ After the initial setup:
 
 - Affiliate rewards need to be manually claimed using the ExchangeRouter.claimAffiliateRewards function
 
-# Feature Development
+- Markets or features may be disabled
 
-For the development of new features, a few things should be noted:
+- Execution will still continue even if a callback reverts
 
-- tests should be added for the different market types, e.g. spot only markets, single token markets
+- Ensure callbacks have sufficient gas
 
-- the ordering of values in the eventData for callbacks should not be modified unless strictly necessary, since callback contracts may reference the values by a fixed index
+- Subaccounts can create, update, and cancel any order for an account
+
+- Subaccounts can spend wnt and collateral from the account
+
+- UI fees can be changed
+
+- Referral discounts can be changed
+
+- Funds for blacklisted addresses will be kept within the protocol
+
+- The index token is not always guaranteed to be the long token
+
+- Fee rates change depending on whether there is a positive or negative impact
+
+### Deposit Notes
+
+- Consider PnL Factor carefully when estimating GM price
+
+- Handle deposit cancellations
+
+- Ensure only the GMX handlers can call the afterDepositExecution and afterDepositCancellation callback functions
+
+- Ensure only the correct deposit execution can call callback functions
+
+- Consider markets with the same long and short token, swaps are not supported for these markets
+
+- Consider positive and negative price impact
+
+- There is a request cancellation period for a configured number of blocks where deposit requests cannot be cancelled
+
+- Output amounts are subject to price impact and fees
+
+- Deposits are not allowed above the MAX_PNL_FACTOR_FOR_DEPOSITS
+
+- The first deposit in any market must go to the RECEIVER_FOR_FIRST_DEPOSIT
+
+### Withdrawal Notes
+
+- Two minimum outputs must be used for withdrawals
+
+- Handle withdrawal cancellations
+
+- Ensure only the GMX handlers can call the afterWithdrawalExecution and afterWithdrawalCancellation callback functions
+
+- Ensure only the correct withdrawal execution can call callback functions
+
+- Consider markets with the same long and short token, swaps are not supported for these markets
+
+- Consider positive and negative price impact
+
+- There is a request cancellation period for a configured number of blocks where withdrawal requests cannot be cancelled
+
+- Output amounts are subject to price impact and fees
+
+- Withdrawals are not allowed above the MAX_PNL_FACTOR_FOR_WITHDRAWALS
+
+### Order Notes
+
+- Handle order cancellations
+
+- Liquidations and ADLs can trigger the saved callback contract
+
+- Orders can become frozen
+
+- Ensure only the GMX handlers can call the afterOrderExecution, afterOrderCancellation and afterOrderFrozen callback functions
+
+- Ensure only the correct order execution can call callback functions
+
+- Consider markets with the same long and short token, swaps are not supported for these markets
+
+- Consider positive and negative price impact
+
+- Saved callback contracts can be changed
+
+- There is a request cancellation period for a configured number of blocks where order requests cannot be cancelled
+
+- Output amounts are subject to price impact and fees
+
+- The position impact pool is distributed to liquidity providers over time
+
+- If attempting to compute price impact, the virtual inventory should be consulted
+
+- Trader PnL is capped above the MAX_PNL_FACTOR_FOR_TRADERS
+
+- Negative Price Impact can be capped on position decreases
+
+- Decrease order sizeDelta and collateralDelta will be auto-updated if they are greater than the position can handle
+
+- Consider willPositionCollateralBeSufficient validation
+
+- Consider decreasePositionSwapTypes
+
+- Consider the minimum collateral amount
+
+- Referrals are still paid out during liquidation
+
+- It is possible for positions to have zero collateral
+
+- Positions with zero size cannot exist
 
 # Commands
 
