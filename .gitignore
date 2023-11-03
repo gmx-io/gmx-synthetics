@@ -16,3 +16,4 @@ keys
 cache
 artifacts
 deployments/localhost
+scripts/incentives/distributions/*
