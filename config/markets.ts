@@ -342,8 +342,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(811, 30), // ~70 XRP/day
       minPositionImpactPoolAmount: expandDecimals(64, 6),
 
-      maxOpenInterestForLongs: decimalToFloat(2_000_000),
-      maxOpenInterestForShorts: decimalToFloat(2_000_000),
+      maxOpenInterestForLongs: decimalToFloat(1_000_000),
+      maxOpenInterestForShorts: decimalToFloat(1_000_000),
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "USDC" },
@@ -377,8 +377,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(53, 34), // ~458 DOGE/day
       minPositionImpactPoolAmount: expandDecimals(756, 8),
 
-      maxOpenInterestForLongs: decimalToFloat(2_000_000),
-      maxOpenInterestForShorts: decimalToFloat(2_000_000),
+      maxOpenInterestForLongs: decimalToFloat(1_000_000),
+      maxOpenInterestForShorts: decimalToFloat(1_000_000),
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
@@ -445,8 +445,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(266, 30), // ~0.22 LTC/day
       minPositionImpactPoolAmount: expandDecimals(39, 6), // 0.39 LTC
 
-      maxOpenInterestForLongs: decimalToFloat(2_000_000),
-      maxOpenInterestForShorts: decimalToFloat(2_000_000),
+      maxOpenInterestForLongs: decimalToFloat(1_000_000),
+      maxOpenInterestForShorts: decimalToFloat(1_000_000),
     },
     {
       tokens: { indexToken: "UNI", longToken: "UNI", shortToken: "USDC" },
@@ -478,8 +478,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(70, 43), // ~60 UNI/day
       minPositionImpactPoolAmount: expandDecimals(132, 18),
 
-      maxOpenInterestForLongs: decimalToFloat(2_000_000),
-      maxOpenInterestForShorts: decimalToFloat(2_000_000),
+      maxOpenInterestForLongs: decimalToFloat(1_000_000),
+      maxOpenInterestForShorts: decimalToFloat(1_000_000),
     },
     {
       tokens: { indexToken: "LINK", longToken: "LINK", shortToken: "USDC" },
