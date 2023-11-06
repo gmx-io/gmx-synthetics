@@ -203,7 +203,7 @@ const synthethicMarketConfig: Partial<BaseMarketConfig> = {
   maxPnlFactorForWithdrawalsShorts: decimalToFloat(3, 1), // 30%
 };
 
-const stablecoinSwapMarketConfig: Partial<BaseMarketConfig> = {
+const stablecoinSwapMarketConfig: Partial<SpotMarketConfig> = {
   swapOnly: true,
 
   swapFeeFactorForPositiveImpact: decimalToFloat(1, 4), // 0.01%,
@@ -280,6 +280,9 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
+
+      maxOpenInterestForLongs: decimalToFloat(64_000_000),
+      maxOpenInterestForShorts: decimalToFloat(64_000_000),
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
@@ -303,6 +306,9 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
+
+      maxOpenInterestForLongs: decimalToFloat(64_000_000),
+      maxOpenInterestForShorts: decimalToFloat(64_000_000),
     },
     {
       tokens: { indexToken: "XRP", longToken: "WETH", shortToken: "USDC" },
@@ -335,6 +341,9 @@ const config: {
 
       positionImpactPoolDistributionRate: expandDecimals(811, 30), // ~70 XRP/day
       minPositionImpactPoolAmount: expandDecimals(64, 6),
+
+      maxOpenInterestForLongs: decimalToFloat(2_000_000),
+      maxOpenInterestForShorts: decimalToFloat(2_000_000),
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "USDC" },
@@ -367,6 +376,9 @@ const config: {
 
       positionImpactPoolDistributionRate: expandDecimals(53, 34), // ~458 DOGE/day
       minPositionImpactPoolAmount: expandDecimals(756, 8),
+
+      maxOpenInterestForLongs: decimalToFloat(2_000_000),
+      maxOpenInterestForShorts: decimalToFloat(2_000_000),
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
@@ -397,6 +409,9 @@ const config: {
 
       positionImpactPoolDistributionRate: expandDecimals(11, 34), // ~9.5 SOL/day
       minPositionImpactPoolAmount: expandDecimals(100, 9),
+
+      maxOpenInterestForLongs: decimalToFloat(2_000_000),
+      maxOpenInterestForShorts: decimalToFloat(2_000_000),
     },
     {
       tokens: { indexToken: "LTC", longToken: "WETH", shortToken: "USDC" },
@@ -429,6 +444,9 @@ const config: {
 
       positionImpactPoolDistributionRate: expandDecimals(266, 30), // ~0.22 LTC/day
       minPositionImpactPoolAmount: expandDecimals(39, 6), // 0.39 LTC
+
+      maxOpenInterestForLongs: decimalToFloat(2_000_000),
+      maxOpenInterestForShorts: decimalToFloat(2_000_000),
     },
     {
       tokens: { indexToken: "UNI", longToken: "UNI", shortToken: "USDC" },
@@ -459,6 +477,9 @@ const config: {
 
       positionImpactPoolDistributionRate: expandDecimals(70, 43), // ~60 UNI/day
       minPositionImpactPoolAmount: expandDecimals(132, 18),
+
+      maxOpenInterestForLongs: decimalToFloat(2_000_000),
+      maxOpenInterestForShorts: decimalToFloat(2_000_000),
     },
     {
       tokens: { indexToken: "LINK", longToken: "LINK", shortToken: "USDC" },
@@ -489,6 +510,9 @@ const config: {
 
       positionImpactPoolDistributionRate: expandDecimals(167, 43), // ~144 LINK/day
       minPositionImpactPoolAmount: expandDecimals(700, 18),
+
+      maxOpenInterestForLongs: decimalToFloat(2_000_000),
+      maxOpenInterestForShorts: decimalToFloat(2_000_000),
     },
     {
       tokens: { indexToken: "ARB", longToken: "ARB", shortToken: "USDC" },
@@ -526,6 +550,9 @@ const config: {
 
       positionImpactPoolDistributionRate: expandDecimals(176, 44), // ~1526 ARB/day
       minPositionImpactPoolAmount: expandDecimals(6200, 18),
+
+      maxOpenInterestForLongs: decimalToFloat(2_000_000),
+      maxOpenInterestForShorts: decimalToFloat(2_000_000),
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDC.e" },
