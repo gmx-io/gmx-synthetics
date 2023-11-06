@@ -33,6 +33,11 @@ library Role {
     bytes32 public constant CONTROLLER = keccak256(abi.encode("CONTROLLER"));
 
     /**
+     * @dev The GOV_TOKEN_CONTROLLER role.
+     */
+    bytes32 public constant GOV_TOKEN_CONTROLLER = keccak256(abi.encode("GOV_TOKEN_CONTROLLER"));
+
+    /**
      * @dev The ROUTER_PLUGIN role.
      */
     bytes32 public constant ROUTER_PLUGIN = keccak256(abi.encode("ROUTER_PLUGIN"));

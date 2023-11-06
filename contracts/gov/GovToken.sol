@@ -53,14 +53,14 @@ contract GovToken is ERC20, ERC20Permit, ERC20Votes, RoleModule {
     // @dev mint tokens to an account
     // @param account the account to mint to
     // @param amount the amount of tokens to mint
-    function mint(address account, uint256 amount) external onlyController {
+    function mint(address account, uint256 amount) external onlyGovTokenController {
         _mint(account, amount);
     }
 
     // @dev burn tokens from an account
     // @param account the account to burn tokens for
     // @param amount the amount of tokens to burn
-    function burn(address account, uint256 amount) external onlyController {
+    function burn(address account, uint256 amount) external onlyGovTokenController {
         _burn(account, amount);
     }
 
