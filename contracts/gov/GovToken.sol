@@ -40,16 +40,6 @@ contract GovToken is ERC20, ERC20Permit, ERC20Votes, RoleModule {
         return _decimals;
     }
 
-    function transfer(address /* to */, uint256 /* amount */) public pure override returns (bool) {
-       // if needed transfers should be done using mint and burn instead
-       revert Errors.NonTransferrableToken();
-    }
-
-    function transferFrom(address /* from */, address /* to */, uint256 /* amount */) public pure override returns (bool) {
-       // if needed transfers should be done using mint and burn instead
-       revert Errors.NonTransferrableToken();
-    }
-
     // @dev mint tokens to an account
     // @param account the account to mint to
     // @param amount the amount of tokens to mint
@@ -62,6 +52,15 @@ contract GovToken is ERC20, ERC20Permit, ERC20Votes, RoleModule {
     // @param amount the amount of tokens to burn
     function burn(address account, uint256 amount) external onlyGovTokenController {
         _burn(account, amount);
+    }
+
+    function _transfer(address from, address to, uint256 amount) internal override {
+        // only allow GOV_TOKEN_CONTROLLERs to make transfers
+        // the user would need to approve the GOV_TOKEN_CONTROLLER contract
+        // the GOV_TOKEN_CONTROLLER contract can then call transferFrom to transfer tokens
+        _validateRole(Role.GOV_TOKEN_CONTROLLER, "GOV_TOKEN_CONTROLLER");
+
+        super._transfer(from, to, amount);
     }
 
     // The functions below are overrides required by Solidity.
