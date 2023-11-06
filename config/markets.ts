@@ -387,11 +387,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(52_000, 9),
-      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(65_000, 9),
+      maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(52_000, 9),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(2_000_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(65_000, 9),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(2_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(76, 10),
       positivePositionImpactFactor: decimalToFloat(38, 10),
