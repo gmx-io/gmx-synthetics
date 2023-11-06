@@ -80,6 +80,9 @@ library Errors {
     error InsufficientExecutionGas(uint256 startingGas, uint256 estimatedGasLimit, uint256 minAdditionalGasForExecution);
     error InsufficientHandleExecutionErrorGas(uint256 gas, uint256 minHandleExecutionErrorGas);
 
+    // GovToken errors
+    error NonTransferrableToken();
+
     // MarketFactory errors
     error MarketAlreadyExists(bytes32 salt, address existingMarketAddress);
 
