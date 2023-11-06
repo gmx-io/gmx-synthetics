@@ -25,27 +25,27 @@ contract GovToken is ERC20, ERC20Permit, ERC20Votes, RoleModule {
         _decimals = decimals_;
     }
 
-    function clock() public view virtual override returns (uint48) {
+    function clock() public view override returns (uint48) {
         return SafeCast.toUint48(Chain.currentTimestamp());
     }
 
     // solhint-disable-next-line func-name-mixedcase
-    function CLOCK_MODE() public view virtual override returns (string memory) {
+    function CLOCK_MODE() public view override returns (string memory) {
         // Check that the clock was not modified
         require(clock() == block.timestamp, "ERC20Votes: broken clock mode");
         return "mode=timestamp";
     }
 
-    function decimals() public view virtual override returns (uint8) {
+    function decimals() public view override returns (uint8) {
         return _decimals;
     }
 
-    function transfer(address /* to */, uint256 /* amount */) public virtual override(ERC20) returns (bool) {
+    function transfer(address /* to */, uint256 /* amount */) public pure override returns (bool) {
        // if needed transfers should be done using mint and burn instead
        revert Errors.NonTransferrableToken();
     }
 
-    function transferFrom(address /* from */, address /* to */, uint256 /* amount */) public virtual override returns (bool) {
+    function transferFrom(address /* from */, address /* to */, uint256 /* amount */) public pure override returns (bool) {
        // if needed transfers should be done using mint and burn instead
        revert Errors.NonTransferrableToken();
     }
