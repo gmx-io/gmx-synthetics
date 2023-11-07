@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import hre from "hardhat";
-import { bigNumberify, decimalToFloat, expandDecimals, formatAmount } from "../../utils/math";
+import { bigNumberify, expandDecimals, formatAmount } from "../../utils/math";
 import { STIP_MIGRATION_DISTRIBUTION_TYPE_ID, requestPrices, requestSubgraph } from "./helpers";
 
 const BASIS_POINTS_DIVISOR = 10000;
@@ -81,10 +81,9 @@ async function main() {
   let usersBelowThreshold = 0;
 
   for (const item of migrationData) {
-    const rebateableGlpRedemptionUsd = item.glpRedemptionUsd;
-    if (rebateableGlpRedemptionUsd.lt(item.gmDepositUsd)) {
-      rebateableGlpRedemptionUsd.mul(decimalToFloat(1)).div(item.gmDepositUsd);
-    }
+    const rebateableGlpRedemptionUsd = item.glpRedemptionUsd.lt(item.gmDepositUsd)
+      ? item.glpRedemptionUsd
+      : item.gmDepositUsd;
 
     const rebatesUsd = rebateableGlpRedemptionUsd
       .mul(item.glpRedemptionWeightedAverageFeeBps)
