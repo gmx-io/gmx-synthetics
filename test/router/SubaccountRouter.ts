@@ -16,13 +16,16 @@ import * as keys from "../../utils/keys";
 describe("SubaccountRouter", () => {
   let fixture;
   let user0, user1, user2;
-  let reader, dataStore, referralStorage, router, subaccountRouter, orderVault, ethUsdMarket, usdc;
+  let reader, dataStore, referralStorage, router, subaccountRouter, orderVault, ethUsdMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ reader, dataStore, referralStorage, router, subaccountRouter, orderVault, ethUsdMarket, usdc } =
+    ({ reader, dataStore, referralStorage, router, subaccountRouter, orderVault, ethUsdMarket, wnt, usdc } =
       fixture.contracts);
+
+    await wnt.mint(user0.address, expandDecimals(1, 18));
+    await wnt.connect(user0).approve(router.address, expandDecimals(1000, 18));
 
     await handleDeposit(fixture, {
       create: {
@@ -101,7 +104,7 @@ describe("SubaccountRouter", () => {
           ]),
           subaccountRouter.interface.encodeFunctionData("setSubaccountAutoTopUpAmount", [
             subaccount.address,
-            expandDecimals(1, 17),
+            expandDecimals(2, 17),
           ]),
         ],
         { value: expandDecimals(1, 18) }
@@ -115,7 +118,7 @@ describe("SubaccountRouter", () => {
       )
     ).eq(20);
     expect(await dataStore.getUint(keys.subaccountAutoTopUpAmountKey(user0.address, subaccount.address))).eq(
-      expandDecimals(1, 17)
+      expandDecimals(2, 17)
     );
 
     await subaccountRouter.connect(user0).removeSubaccount(subaccount.address);
@@ -150,13 +153,13 @@ describe("SubaccountRouter", () => {
       referralCode,
     };
 
-    await expect(subaccountRouter.connect(subaccount).createOrderForAccount(user0.address, { ...params }))
+    await expect(subaccountRouter.connect(subaccount).createOrder(user0.address, { ...params }))
       .to.be.revertedWithCustomError(errorsContract, "SubaccountNotAuthorized")
       .withArgs(user0.address, subaccount.address);
 
     await subaccountRouter.connect(user0).addSubaccount(subaccount.address);
 
-    await expect(subaccountRouter.connect(subaccount).createOrderForAccount(user0.address, params))
+    await expect(subaccountRouter.connect(subaccount).createOrder(user0.address, params))
       .to.be.revertedWithCustomError(errorsContract, "MaxSubaccountActionCountExceeded")
       .withArgs(user0.address, subaccount.address, 1, 0);
 
@@ -164,19 +167,19 @@ describe("SubaccountRouter", () => {
       .connect(user0)
       .setMaxAllowedSubaccountActionCount(subaccount.address, keys.SUBACCOUNT_ORDER_ACTION, 1);
 
-    await expect(subaccountRouter.connect(subaccount).createOrderForAccount(user0.address, params))
+    await expect(subaccountRouter.connect(subaccount).createOrder(user0.address, params))
       .to.be.revertedWithCustomError(errorsContract, "InvalidReceiverForSubaccountOrder")
       .withArgs(subaccount.address, user0.address);
 
     await expect(
-      subaccountRouter.connect(subaccount).createOrderForAccount(user0.address, {
+      subaccountRouter.connect(subaccount).createOrder(user0.address, {
         ...params,
         addresses: { ...params.addresses, receiver: user0.address },
       })
     ).to.be.revertedWithCustomError(errorsContract, "OrderTypeCannotBeCreated");
 
     await expect(
-      subaccountRouter.connect(subaccount).createOrderForAccount(user0.address, {
+      subaccountRouter.connect(subaccount).createOrder(user0.address, {
         ...params,
         addresses: { ...params.addresses, receiver: user0.address },
         orderType: OrderType.MarketIncrease,
@@ -186,7 +189,7 @@ describe("SubaccountRouter", () => {
     await usdc.connect(user0).approve(router.address, expandDecimals(200, 6));
 
     await expect(
-      subaccountRouter.connect(subaccount).createOrderForAccount(user0.address, {
+      subaccountRouter.connect(subaccount).createOrder(user0.address, {
         ...params,
         addresses: { ...params.addresses, receiver: user0.address },
         orderType: OrderType.MarketIncrease,
@@ -196,7 +199,7 @@ describe("SubaccountRouter", () => {
     await usdc.mint(user0.address, expandDecimals(101, 6));
 
     await expect(
-      subaccountRouter.connect(subaccount).createOrderForAccount(user0.address, {
+      subaccountRouter.connect(subaccount).createOrder(user0.address, {
         ...params,
         addresses: { ...params.addresses, receiver: user0.address },
         orderType: OrderType.MarketIncrease,
@@ -209,10 +212,13 @@ describe("SubaccountRouter", () => {
       )
     ).eq(0);
 
+    const initialWntBalance0 = await wnt.balanceOf(user0.address);
+    const initialWntBalance1 = await wnt.balanceOf(subaccount.address);
+
     await subaccountRouter.connect(subaccount).multicall(
       [
         subaccountRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, expandDecimals(1, 17)]),
-        subaccountRouter.interface.encodeFunctionData("createOrderForAccount", [
+        subaccountRouter.interface.encodeFunctionData("createOrder", [
           user0.address,
           {
             ...params,
@@ -223,6 +229,16 @@ describe("SubaccountRouter", () => {
       ],
       { value: expandDecimals(1, 17) }
     );
+
+    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo(
+      "101679245508955976",
+      "1000000000000000"
+    ); // 0.101679245508955976 ETH
+
+    expect((await wnt.balanceOf(subaccount.address)).sub(initialWntBalance1)).closeTo(
+      "101679245508955976",
+      "1000000000000000"
+    ); // 0.101679245508955976 ETH
 
     const orderKeys = await getOrderKeys(dataStore, 0, 1);
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
@@ -309,7 +325,7 @@ describe("SubaccountRouter", () => {
       .multicall(
         [
           subaccountRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, expandDecimals(1, 17)]),
-          subaccountRouter.interface.encodeFunctionData("createOrderForAccount", [user0.address, params]),
+          subaccountRouter.interface.encodeFunctionData("createOrder", [user0.address, params]),
         ],
         { value: expandDecimals(1, 17) }
       );
@@ -343,7 +359,7 @@ describe("SubaccountRouter", () => {
     await subaccountRouter.connect(subaccount).multicall(
       [
         subaccountRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, expandDecimals(1, 17)]),
-        subaccountRouter.interface.encodeFunctionData("createOrderForAccount", [
+        subaccountRouter.interface.encodeFunctionData("createOrder", [
           user0.address,
           {
             ...params,
@@ -441,7 +457,7 @@ describe("SubaccountRouter", () => {
       .multicall(
         [
           subaccountRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, expandDecimals(1, 17)]),
-          subaccountRouter.interface.encodeFunctionData("createOrderForAccount", [user0.address, params]),
+          subaccountRouter.interface.encodeFunctionData("createOrder", [user0.address, params]),
         ],
         { value: expandDecimals(1, 17) }
       );
@@ -464,6 +480,9 @@ describe("SubaccountRouter", () => {
       expect(order.numbers.minOutputAmount).eq(700);
     });
 
+    const initialWntBalance0 = await wnt.balanceOf(user0.address);
+    const initialWntBalance1 = await wnt.balanceOf(subaccount.address);
+
     await subaccountRouter.connect(subaccount).updateOrder(
       orderKey, // key
       decimalToFloat(1200), // sizeDeltaUsd
@@ -471,6 +490,13 @@ describe("SubaccountRouter", () => {
       expandDecimals(4850, 12), // triggerPrice
       800 // minOutputAmount
     );
+
+    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("588774003140128", "100000000000000"); // 0.000588774003140128 ETH
+
+    expect((await wnt.balanceOf(subaccount.address)).sub(initialWntBalance1)).closeTo(
+      "588774003140128",
+      "100000000000000"
+    ); // 0.000588774003140128 ETH
 
     expect(
       await dataStore.getUint(
@@ -566,7 +592,7 @@ describe("SubaccountRouter", () => {
       .multicall(
         [
           subaccountRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, expandDecimals(1, 17)]),
-          subaccountRouter.interface.encodeFunctionData("createOrderForAccount", [user0.address, params]),
+          subaccountRouter.interface.encodeFunctionData("createOrder", [user0.address, params]),
         ],
         { value: expandDecimals(1, 17) }
       );
@@ -591,7 +617,19 @@ describe("SubaccountRouter", () => {
 
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(1, 6));
 
+    const initialWntBalance0 = await wnt.balanceOf(user0.address);
+    const initialWntBalance1 = await wnt.balanceOf(subaccount.address);
+
     await subaccountRouter.connect(subaccount).cancelOrder(orderKey);
+
+    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("998934005327648", "10000000000000"); // 0.000998934005327648 ETH
+
+    expect((await wnt.balanceOf(subaccount.address)).sub(initialWntBalance1)).closeTo(
+      "998934005327648",
+      "10000000000000"
+    ); // 0.000998934005327648 ETH
+
+    expect((await wnt.balanceOf(subaccount.address)).sub(initialWntBalance1));
 
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(101, 6));
 
