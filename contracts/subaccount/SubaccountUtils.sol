@@ -82,6 +82,9 @@ library SubaccountUtils {
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "nextValue", nextValue);
 
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "actionType", actionType);
+
         eventEmitter.emitEventLog2(
             "IncrementSubaccountActionCount",
             Cast.toBytes32(account),

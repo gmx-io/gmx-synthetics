@@ -16,13 +16,16 @@ import * as keys from "../../utils/keys";
 describe("SubaccountRouter", () => {
   let fixture;
   let user0, user1, user2;
-  let reader, dataStore, referralStorage, router, subaccountRouter, orderVault, ethUsdMarket, usdc;
+  let reader, dataStore, referralStorage, router, subaccountRouter, orderVault, ethUsdMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ reader, dataStore, referralStorage, router, subaccountRouter, orderVault, ethUsdMarket, usdc } =
+    ({ reader, dataStore, referralStorage, router, subaccountRouter, orderVault, ethUsdMarket, wnt, usdc } =
       fixture.contracts);
+
+    await wnt.mint(user0.address, expandDecimals(1, 18));
+    await wnt.connect(user0).approve(router.address, expandDecimals(1000, 18));
 
     await handleDeposit(fixture, {
       create: {
@@ -101,7 +104,7 @@ describe("SubaccountRouter", () => {
           ]),
           subaccountRouter.interface.encodeFunctionData("setSubaccountAutoTopUpAmount", [
             subaccount.address,
-            expandDecimals(1, 17),
+            expandDecimals(2, 17),
           ]),
         ],
         { value: expandDecimals(1, 18) }
@@ -115,7 +118,7 @@ describe("SubaccountRouter", () => {
       )
     ).eq(20);
     expect(await dataStore.getUint(keys.subaccountAutoTopUpAmountKey(user0.address, subaccount.address))).eq(
-      expandDecimals(1, 17)
+      expandDecimals(2, 17)
     );
 
     await subaccountRouter.connect(user0).removeSubaccount(subaccount.address);
@@ -209,6 +212,9 @@ describe("SubaccountRouter", () => {
       )
     ).eq(0);
 
+    const initialWntBalance0 = await wnt.balanceOf(user0.address);
+    const initialWntBalance1 = await wnt.balanceOf(subaccount.address);
+
     await subaccountRouter.connect(subaccount).multicall(
       [
         subaccountRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, expandDecimals(1, 17)]),
@@ -223,6 +229,16 @@ describe("SubaccountRouter", () => {
       ],
       { value: expandDecimals(1, 17) }
     );
+
+    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo(
+      "101679245508955976",
+      "1000000000000000"
+    ); // 0.101679245508955976 ETH
+
+    expect((await wnt.balanceOf(subaccount.address)).sub(initialWntBalance1)).closeTo(
+      "101679245508955976",
+      "1000000000000000"
+    ); // 0.101679245508955976 ETH
 
     const orderKeys = await getOrderKeys(dataStore, 0, 1);
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
@@ -464,6 +480,9 @@ describe("SubaccountRouter", () => {
       expect(order.numbers.minOutputAmount).eq(700);
     });
 
+    const initialWntBalance0 = await wnt.balanceOf(user0.address);
+    const initialWntBalance1 = await wnt.balanceOf(subaccount.address);
+
     await subaccountRouter.connect(subaccount).updateOrder(
       orderKey, // key
       decimalToFloat(1200), // sizeDeltaUsd
@@ -471,6 +490,13 @@ describe("SubaccountRouter", () => {
       expandDecimals(4850, 12), // triggerPrice
       800 // minOutputAmount
     );
+
+    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("588774003140128", "100000000000000"); // 0.000588774003140128 ETH
+
+    expect((await wnt.balanceOf(subaccount.address)).sub(initialWntBalance1)).closeTo(
+      "588774003140128",
+      "100000000000000"
+    ); // 0.000588774003140128 ETH
 
     expect(
       await dataStore.getUint(
@@ -591,7 +617,19 @@ describe("SubaccountRouter", () => {
 
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(1, 6));
 
+    const initialWntBalance0 = await wnt.balanceOf(user0.address);
+    const initialWntBalance1 = await wnt.balanceOf(subaccount.address);
+
     await subaccountRouter.connect(subaccount).cancelOrder(orderKey);
+
+    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("998934005327648", "10000000000000"); // 0.000998934005327648 ETH
+
+    expect((await wnt.balanceOf(subaccount.address)).sub(initialWntBalance1)).closeTo(
+      "998934005327648",
+      "10000000000000"
+    ); // 0.000998934005327648 ETH
+
+    expect((await wnt.balanceOf(subaccount.address)).sub(initialWntBalance1));
 
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(101, 6));
 

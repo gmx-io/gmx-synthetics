@@ -81,6 +81,8 @@ contract SubaccountRouter is BaseRouter {
         address account,
         BaseOrderUtils.CreateOrderParams calldata params
     ) external payable nonReentrant returns (bytes32) {
+        uint256 startingGas = gasleft();
+
         _handleSubaccountAction(account, Keys.SUBACCOUNT_ORDER_ACTION);
 
         if (params.addresses.receiver != account) {
@@ -101,10 +103,19 @@ contract SubaccountRouter is BaseRouter {
             );
         }
 
-        return orderHandler.createOrder(
+        bytes32 key = orderHandler.createOrder(
             account,
             params
         );
+
+        _autoTopUpSubaccount(
+            account, // account
+            msg.sender, // subaccount
+            startingGas, // startingGas
+            params.numbers.executionFee // executionFee
+        );
+
+        return key;
     }
 
     function updateOrder(
@@ -114,7 +125,11 @@ contract SubaccountRouter is BaseRouter {
         uint256 triggerPrice,
         uint256 minOutputAmount
     ) external payable nonReentrant {
+        uint256 startingGas = gasleft();
+
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+
+        if (order.account() == address(0)) { revert Errors.EmptyOrder(); }
 
         _handleSubaccountAction(order.account(), Keys.SUBACCOUNT_ORDER_ACTION);
 
@@ -126,20 +141,34 @@ contract SubaccountRouter is BaseRouter {
             minOutputAmount,
             order
         );
+
+        _autoTopUpSubaccount(
+            order.account(), // account
+            msg.sender, // subaccount
+            startingGas, // startingGas
+            0 // executionFee
+        );
     }
 
     function cancelOrder(
         bytes32 key
     ) external payable nonReentrant {
+        uint256 startingGas = gasleft();
+
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
 
-        if (order.account() == address(0)) {
-            revert Errors.EmptyOrder();
-        }
+        if (order.account() == address(0)) { revert Errors.EmptyOrder(); }
 
         _handleSubaccountAction(order.account(), Keys.SUBACCOUNT_ORDER_ACTION);
 
         orderHandler.cancelOrder(key);
+
+        _autoTopUpSubaccount(
+            order.account(), // account
+            msg.sender, // subaccount
+            startingGas, // startingGas
+            0 // executionFee
+        );
     }
 
     function _handleSubaccountAction(address account, bytes32 actionType) internal {
@@ -155,11 +184,11 @@ contract SubaccountRouter is BaseRouter {
             subaccount,
             actionType
         );
-
-        _autoTopUpSubaccount(account, subaccount);
     }
 
-    function _autoTopUpSubaccount(address account, address subaccount) internal {
+    // the subaccount is topped up with wrapped native tokens
+    // the subaccount should separately unwrap the token as needed
+    function _autoTopUpSubaccount(address account, address subaccount, uint256 startingGas, uint256 executionFee) internal {
         uint256 amount = SubaccountUtils.getSubaccountAutoTopUpAmount(dataStore, account, subaccount);
         if (amount == 0) {
             return;
@@ -169,6 +198,10 @@ contract SubaccountRouter is BaseRouter {
 
         if (wnt.allowance(account, address(router)) < amount) { return; }
         if (wnt.balanceOf(account) < amount) { return; }
+
+        // cap the top up amount to the amount of native tokens used
+        uint256 nativeTokensUsed = (startingGas - gasleft()) * tx.gasprice + executionFee;
+        if (nativeTokensUsed < amount) { amount = nativeTokensUsed; }
 
         router.pluginTransfer(
             address(wnt), // token
