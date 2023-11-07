@@ -77,7 +77,7 @@ contract SubaccountRouter is BaseRouter {
         );
     }
 
-    function createOrderForAccount(
+    function createOrder(
         address account,
         BaseOrderUtils.CreateOrderParams calldata params
     ) external payable nonReentrant returns (bytes32) {

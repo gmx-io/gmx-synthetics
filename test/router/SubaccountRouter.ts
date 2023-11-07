@@ -150,13 +150,13 @@ describe("SubaccountRouter", () => {
       referralCode,
     };
 
-    await expect(subaccountRouter.connect(subaccount).createOrderForAccount(user0.address, { ...params }))
+    await expect(subaccountRouter.connect(subaccount).createOrder(user0.address, { ...params }))
       .to.be.revertedWithCustomError(errorsContract, "SubaccountNotAuthorized")
       .withArgs(user0.address, subaccount.address);
 
     await subaccountRouter.connect(user0).addSubaccount(subaccount.address);
 
-    await expect(subaccountRouter.connect(subaccount).createOrderForAccount(user0.address, params))
+    await expect(subaccountRouter.connect(subaccount).createOrder(user0.address, params))
       .to.be.revertedWithCustomError(errorsContract, "MaxSubaccountActionCountExceeded")
       .withArgs(user0.address, subaccount.address, 1, 0);
 
@@ -164,19 +164,19 @@ describe("SubaccountRouter", () => {
       .connect(user0)
       .setMaxAllowedSubaccountActionCount(subaccount.address, keys.SUBACCOUNT_ORDER_ACTION, 1);
 
-    await expect(subaccountRouter.connect(subaccount).createOrderForAccount(user0.address, params))
+    await expect(subaccountRouter.connect(subaccount).createOrder(user0.address, params))
       .to.be.revertedWithCustomError(errorsContract, "InvalidReceiverForSubaccountOrder")
       .withArgs(subaccount.address, user0.address);
 
     await expect(
-      subaccountRouter.connect(subaccount).createOrderForAccount(user0.address, {
+      subaccountRouter.connect(subaccount).createOrder(user0.address, {
         ...params,
         addresses: { ...params.addresses, receiver: user0.address },
       })
     ).to.be.revertedWithCustomError(errorsContract, "OrderTypeCannotBeCreated");
 
     await expect(
-      subaccountRouter.connect(subaccount).createOrderForAccount(user0.address, {
+      subaccountRouter.connect(subaccount).createOrder(user0.address, {
         ...params,
         addresses: { ...params.addresses, receiver: user0.address },
         orderType: OrderType.MarketIncrease,
@@ -186,7 +186,7 @@ describe("SubaccountRouter", () => {
     await usdc.connect(user0).approve(router.address, expandDecimals(200, 6));
 
     await expect(
-      subaccountRouter.connect(subaccount).createOrderForAccount(user0.address, {
+      subaccountRouter.connect(subaccount).createOrder(user0.address, {
         ...params,
         addresses: { ...params.addresses, receiver: user0.address },
         orderType: OrderType.MarketIncrease,
@@ -196,7 +196,7 @@ describe("SubaccountRouter", () => {
     await usdc.mint(user0.address, expandDecimals(101, 6));
 
     await expect(
-      subaccountRouter.connect(subaccount).createOrderForAccount(user0.address, {
+      subaccountRouter.connect(subaccount).createOrder(user0.address, {
         ...params,
         addresses: { ...params.addresses, receiver: user0.address },
         orderType: OrderType.MarketIncrease,
@@ -212,7 +212,7 @@ describe("SubaccountRouter", () => {
     await subaccountRouter.connect(subaccount).multicall(
       [
         subaccountRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, expandDecimals(1, 17)]),
-        subaccountRouter.interface.encodeFunctionData("createOrderForAccount", [
+        subaccountRouter.interface.encodeFunctionData("createOrder", [
           user0.address,
           {
             ...params,
@@ -309,7 +309,7 @@ describe("SubaccountRouter", () => {
       .multicall(
         [
           subaccountRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, expandDecimals(1, 17)]),
-          subaccountRouter.interface.encodeFunctionData("createOrderForAccount", [user0.address, params]),
+          subaccountRouter.interface.encodeFunctionData("createOrder", [user0.address, params]),
         ],
         { value: expandDecimals(1, 17) }
       );
@@ -343,7 +343,7 @@ describe("SubaccountRouter", () => {
     await subaccountRouter.connect(subaccount).multicall(
       [
         subaccountRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, expandDecimals(1, 17)]),
-        subaccountRouter.interface.encodeFunctionData("createOrderForAccount", [
+        subaccountRouter.interface.encodeFunctionData("createOrder", [
           user0.address,
           {
             ...params,
@@ -441,7 +441,7 @@ describe("SubaccountRouter", () => {
       .multicall(
         [
           subaccountRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, expandDecimals(1, 17)]),
-          subaccountRouter.interface.encodeFunctionData("createOrderForAccount", [user0.address, params]),
+          subaccountRouter.interface.encodeFunctionData("createOrder", [user0.address, params]),
         ],
         { value: expandDecimals(1, 17) }
       );
@@ -566,7 +566,7 @@ describe("SubaccountRouter", () => {
       .multicall(
         [
           subaccountRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, expandDecimals(1, 17)]),
-          subaccountRouter.interface.encodeFunctionData("createOrderForAccount", [user0.address, params]),
+          subaccountRouter.interface.encodeFunctionData("createOrder", [user0.address, params]),
         ],
         { value: expandDecimals(1, 17) }
       );
