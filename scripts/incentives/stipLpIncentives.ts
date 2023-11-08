@@ -2,60 +2,8 @@ import fs from "fs";
 import path from "path";
 import { BigNumber, ethers } from "ethers";
 import hre from "hardhat";
-import fetch from "node-fetch";
 import { bigNumberify, expandDecimals, formatAmount } from "../../utils/math";
-
-const ARBITRUM_SUBGRAPH_ENDPOINT =
-  "https://subgraph.satsuma-prod.com/3b2ced13c8d9/gmx/synthetics-arbitrum-stats/version/incentives3-231101071410-21be98d/api";
-const API_ENDPOINT = "https://arbitrum-api.gmxinfra.io/incentives/stip/lp";
-
-async function requestSubgraph(query: string) {
-  const payload = JSON.stringify({ query });
-  const res = await fetch(ARBITRUM_SUBGRAPH_ENDPOINT, {
-    method: "POST",
-    body: payload,
-    headers: { "Content-Type": "application/json" },
-  });
-
-  const j = await res.json();
-  if (j.errors) {
-    throw new Error(JSON.stringify(j));
-  }
-
-  return j.data;
-}
-
-function guessBlockNumberByTimestamp(block: ethers.providers.Block, timestamp: number) {
-  return block.number - Math.floor((block.timestamp - timestamp) * 3.75);
-}
-
-async function getBlockByTimestamp(timestamp: number) {
-  const tolerance = 30; // 30 seconds
-  const latestBlock = await hre.ethers.provider.getBlock("latest");
-  let nextBlockNumber = guessBlockNumberByTimestamp(latestBlock, timestamp);
-
-  console.log("latest block: %s %s", latestBlock.number, latestBlock.timestamp);
-
-  const i = 0;
-  while (i < 10) {
-    console.log("requesting next block %s", nextBlockNumber);
-    const block = await hre.ethers.provider.getBlock(nextBlockNumber);
-    if (Math.abs(block.timestamp - timestamp) < tolerance) {
-      console.log("found block %s %s diff %s", block.number, block.timestamp, block.timestamp - timestamp);
-      return block;
-    }
-
-    console.log("%s seconds away", block.timestamp - timestamp);
-
-    nextBlockNumber = guessBlockNumberByTimestamp(block, timestamp);
-
-    if (block.number === nextBlockNumber) {
-      console.log("search stopped");
-      return block;
-    }
-  }
-  throw new Error("block is not found");
-}
+import { STIP_LP_DISTRIBUTION_TYPE_ID, getBlockByTimestamp, requestAllocationData, requestSubgraph } from "./helpers";
 
 async function requestBalancesData(fromTimestamp: number, toBlockNumber: number) {
   const data: {
@@ -169,40 +117,16 @@ async function requestBalancesData(fromTimestamp: number, toBlockNumber: number)
   return dataByMarket;
 }
 
-async function requestAllocationData(timestamp: number) {
-  const url = new URL(API_ENDPOINT);
-  url.searchParams.set("timestamp", String(timestamp));
-  if (process.env.IGNORE_START_DATE) {
-    url.searchParams.set("ignoreStartDate", "1");
-  }
-  const res = await fetch(url);
-  const data = (await res.json()) as {
-    isActive: boolean;
-    totalRewards: string;
-    period: number;
-    rewardsPerMarket: Record<string, string>;
-  };
-
-  return {
-    isActive: data.isActive,
-    totalRewards: data.totalRewards && bigNumberify(data.totalRewards),
-    period: data.period,
-    rewardsPerMarket:
-      data.rewardsPerMarket &&
-      Object.fromEntries(
-        Object.entries(data.rewardsPerMarket).map(([marketAddress, rewards]) => {
-          return [marketAddress, bigNumberify(rewards)];
-        })
-      ),
-  };
-}
-
 /*
 Example of usage:
 ...
 */
 
 async function main() {
+  if (hre.network.name !== "arbitrum") {
+    throw new Error("Unsupported network");
+  }
+
   if (!process.env.FROM_DATE) {
     throw new Error("FROM_DATE is required");
   }
@@ -215,6 +139,11 @@ async function main() {
   const fromTimestamp = Math.floor(+fromDate / 1000);
 
   const toTimestamp = fromTimestamp + 86400 * 7;
+
+  if (toTimestamp > Date.now() / 1000) {
+    throw new Error("Epoch has not ended");
+  }
+
   const toDate = new Date(toTimestamp * 1000);
 
   const toBlock = await getBlockByTimestamp(toTimestamp);
@@ -229,15 +158,17 @@ async function main() {
     requestAllocationData(fromTimestamp),
   ]);
 
-  console.log("allocationData", allocationData);
+  const lpAllocationData = allocationData.lp;
 
-  if (!allocationData.isActive) {
+  console.log("allocationData", lpAllocationData);
+
+  if (!lpAllocationData.isActive) {
     throw new Error(`There is no incentives for week starting on ${fromDate}`);
   }
 
   const usersDistributionResult: Record<string, BigNumber> = {};
 
-  for (const marketAddress of Object.keys(allocationData.rewardsPerMarket)) {
+  for (const marketAddress of Object.keys(lpAllocationData.rewardsPerMarket)) {
     if (!(marketAddress in balancesData)) {
       throw new Error(`No balances data for market ${marketAddress}`);
     }
@@ -253,16 +184,16 @@ async function main() {
         "Sum of user balances and market tokens supply don't match." +
           `market ${marketAddress} ${marketTokensSupply} vs ${userBalancesSum}`
       );
-    } else {
-      console.log(
-        "market %s userBalancesSum: %s marketTokensSupply: %s",
-        marketAddress,
-        userBalancesSum,
-        marketTokensSupply
-      );
     }
 
-    const marketRewards = allocationData.rewardsPerMarket[marketAddress];
+    console.log(
+      "market %s userBalancesSum: %s marketTokensSupply: %s",
+      marketAddress,
+      userBalancesSum,
+      marketTokensSupply
+    );
+
+    const marketRewards = lpAllocationData.rewardsPerMarket[marketAddress];
     for (const [userAccount, userBalance] of Object.entries(userBalances)) {
       if (!(userAccount in usersDistributionResult)) {
         usersDistributionResult[userAccount] = bigNumberify(0);
@@ -275,7 +206,7 @@ async function main() {
 
   const REWARD_THRESHOLD = expandDecimals(1, 17); // 0.1 ARB
   let userTotalRewards = bigNumberify(0);
-  const jsonResult = {};
+  const jsonResult: Record<string, string> = {};
   let usersBelowThreshold = 0;
 
   for (const [userAccount, userRewards] of Object.entries(usersDistributionResult)) {
@@ -288,9 +219,9 @@ async function main() {
     jsonResult[userAccount] = userRewards.toString();
   }
 
-  if (userTotalRewards.gt(allocationData.totalRewards)) {
+  if (userTotalRewards.gt(lpAllocationData.totalRewards)) {
     throw new Error(
-      "Sum of user rewards exceeds total allocated rewards." + `${userTotalRewards} > ${allocationData.totalRewards}`
+      "Sum of user rewards exceeds total allocated rewards." + `${userTotalRewards} > ${lpAllocationData.totalRewards}`
     );
   }
 
@@ -300,12 +231,12 @@ async function main() {
 
   // userTotalRewards can be slightly lower than allocated rewards because of rounding
   console.log("sum of user rewards: %s ARB", formatAmount(userTotalRewards, 18, 2));
-  console.log("allocated rewards: %s ARB", formatAmount(allocationData.totalRewards, 18, 2));
+  console.log("allocated rewards: %s ARB", formatAmount(lpAllocationData.totalRewards, 18, 2));
 
   const filename = path.join(
     __dirname,
     "distributions",
-    `stipGmIncentivesDistribution_${fromDate.toISOString().substring(0, 10)}.json`
+    `stipLpIncentivesDistribution_${fromDate.toISOString().substring(0, 10)}.json`
   );
   const tokens = await hre.gmx.getTokens();
   const arbToken = tokens.ARB;
@@ -315,8 +246,10 @@ async function main() {
     JSON.stringify(
       {
         token: arbToken.address,
-        distributionTypeId: 1001,
+        distributionTypeId: STIP_LP_DISTRIBUTION_TYPE_ID,
         amounts: jsonResult,
+        fromTimestamp,
+        toTimestamp,
       },
       null,
       4

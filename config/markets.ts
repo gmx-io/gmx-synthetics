@@ -203,7 +203,7 @@ const synthethicMarketConfig: Partial<BaseMarketConfig> = {
   maxPnlFactorForWithdrawalsShorts: decimalToFloat(3, 1), // 30%
 };
 
-const stablecoinSwapMarketConfig: Partial<BaseMarketConfig> = {
+const stablecoinSwapMarketConfig: Partial<SpotMarketConfig> = {
   swapOnly: true,
 
   swapFeeFactorForPositiveImpact: decimalToFloat(1, 4), // 0.01%,
@@ -265,11 +265,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(590, 8),
-      maxShortTokenPoolAmount: expandDecimals(20_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(870, 8),
+      maxShortTokenPoolAmount: expandDecimals(30_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(590, 8),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(20_000_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(870, 8),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(30_000_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(12, 11), // 0.05% for ~4,200,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(12, 11), // 0.05% for ~4,200,000 USD of imbalance
@@ -280,6 +280,9 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
+
+      maxOpenInterestForLongs: decimalToFloat(64_000_000),
+      maxOpenInterestForShorts: decimalToFloat(64_000_000),
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
@@ -288,11 +291,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(11_200, 18),
-      maxShortTokenPoolAmount: expandDecimals(20_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(16_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(30_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(11_200, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(20_000_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(16_000, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(30_000_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(12, 11), // 0.05% for 4,166,667 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(12, 11), // 0.05% for 4,166,667 USD of imbalance
@@ -303,6 +306,9 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
+
+      maxOpenInterestForLongs: decimalToFloat(64_000_000),
+      maxOpenInterestForShorts: decimalToFloat(64_000_000),
     },
     {
       tokens: { indexToken: "XRP", longToken: "WETH", shortToken: "USDC" },
@@ -312,11 +318,11 @@ const config: {
       ...baseMarketConfig,
       ...synthethicMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(500, 18),
-      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(800, 18),
+      maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(500, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(1_000_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(800, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(1_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(28, 9),
       positivePositionImpactFactor: decimalToFloat(14, 9),
@@ -335,6 +341,9 @@ const config: {
 
       positionImpactPoolDistributionRate: expandDecimals(811, 30), // ~70 XRP/day
       minPositionImpactPoolAmount: expandDecimals(64, 6),
+
+      maxOpenInterestForLongs: decimalToFloat(1_000_000),
+      maxOpenInterestForShorts: decimalToFloat(1_000_000),
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "USDC" },
@@ -344,11 +353,11 @@ const config: {
       ...baseMarketConfig,
       ...synthethicMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(500, 18),
-      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(800, 18),
+      maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(500, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(1_000_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(800, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(1_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(26, 9),
       positivePositionImpactFactor: decimalToFloat(13, 9),
@@ -367,6 +376,9 @@ const config: {
 
       positionImpactPoolDistributionRate: expandDecimals(53, 34), // ~458 DOGE/day
       minPositionImpactPoolAmount: expandDecimals(756, 8),
+
+      maxOpenInterestForLongs: decimalToFloat(1_000_000),
+      maxOpenInterestForShorts: decimalToFloat(1_000_000),
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
@@ -375,11 +387,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(50_000, 9),
-      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(65_000, 9),
+      maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(50_000, 9),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(1_000_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(65_000, 9),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(2_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(76, 10),
       positivePositionImpactFactor: decimalToFloat(38, 10),
@@ -397,6 +409,9 @@ const config: {
 
       positionImpactPoolDistributionRate: expandDecimals(11, 34), // ~9.5 SOL/day
       minPositionImpactPoolAmount: expandDecimals(100, 9),
+
+      maxOpenInterestForLongs: decimalToFloat(2_000_000),
+      maxOpenInterestForShorts: decimalToFloat(2_000_000),
     },
     {
       tokens: { indexToken: "LTC", longToken: "WETH", shortToken: "USDC" },
@@ -406,11 +421,11 @@ const config: {
       ...baseMarketConfig,
       ...synthethicMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(500, 18),
-      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(800, 18),
+      maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(500, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(1_000_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(800, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(1_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(36, 9),
       positivePositionImpactFactor: decimalToFloat(18, 9),
@@ -429,6 +444,9 @@ const config: {
 
       positionImpactPoolDistributionRate: expandDecimals(266, 30), // ~0.22 LTC/day
       minPositionImpactPoolAmount: expandDecimals(39, 6), // 0.39 LTC
+
+      maxOpenInterestForLongs: decimalToFloat(1_000_000),
+      maxOpenInterestForShorts: decimalToFloat(1_000_000),
     },
     {
       tokens: { indexToken: "UNI", longToken: "UNI", shortToken: "USDC" },
@@ -437,11 +455,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(200_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(300_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(200_000, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(1_000_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(300_000, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(1_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(42, 9),
       positivePositionImpactFactor: decimalToFloat(21, 9),
@@ -459,6 +477,9 @@ const config: {
 
       positionImpactPoolDistributionRate: expandDecimals(70, 43), // ~60 UNI/day
       minPositionImpactPoolAmount: expandDecimals(132, 18),
+
+      maxOpenInterestForLongs: decimalToFloat(1_000_000),
+      maxOpenInterestForShorts: decimalToFloat(1_000_000),
     },
     {
       tokens: { indexToken: "LINK", longToken: "LINK", shortToken: "USDC" },
@@ -467,11 +488,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(227_000, 18), // 1,500,000 USD at $6,60
-      maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(220_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(227_000, 18), // 1,500,000 USD at $6,60
-      maxShortTokenPoolAmountForDeposit: expandDecimals(1_500_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(220_000, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(2_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(8, 9), // 0.05% for 62,500 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(4, 9), // 0.05% for 125,000 USD of imbalance
@@ -489,6 +510,9 @@ const config: {
 
       positionImpactPoolDistributionRate: expandDecimals(167, 43), // ~144 LINK/day
       minPositionImpactPoolAmount: expandDecimals(700, 18),
+
+      maxOpenInterestForLongs: decimalToFloat(2_000_000),
+      maxOpenInterestForShorts: decimalToFloat(2_000_000),
     },
     {
       tokens: { indexToken: "ARB", longToken: "ARB", shortToken: "USDC" },
@@ -497,11 +521,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(2_250_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(2_500_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(2_250_000, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(2_000_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(2_500_000, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(2_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(8, 9), // 0.05% for 62,500 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(4, 9), // 0.05% for 125,000 USD of imbalance
@@ -526,6 +550,9 @@ const config: {
 
       positionImpactPoolDistributionRate: expandDecimals(176, 44), // ~1526 ARB/day
       minPositionImpactPoolAmount: expandDecimals(6200, 18),
+
+      maxOpenInterestForLongs: decimalToFloat(2_000_000),
+      maxOpenInterestForShorts: decimalToFloat(2_000_000),
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDC.e" },

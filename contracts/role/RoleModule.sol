@@ -63,6 +63,14 @@ contract RoleModule {
     }
 
     /**
+     * @dev Only allows addresses with the GOV_TOKEN_CONTROLLER role to call the function.
+     */
+    modifier onlyGovTokenController() {
+        _validateRole(Role.GOV_TOKEN_CONTROLLER, "GOV_TOKEN_CONTROLLER");
+        _;
+    }
+
+    /**
      * @dev Only allows addresses with the ROUTER_PLUGIN role to call the function.
      */
     modifier onlyRouterPlugin() {
