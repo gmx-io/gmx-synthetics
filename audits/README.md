@@ -1,0 +1,1 @@
+8 Nov 2023 Update: The https://github.com/gmx-io/gmx-synthetics repo has been rebased, some of the commit hashes have been changed and may not match the commit hashes in the audits, this should be fixed in 1-2 weeks
