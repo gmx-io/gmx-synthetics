@@ -265,11 +265,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(870, 8),
-      maxShortTokenPoolAmount: expandDecimals(30_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(1150, 8),
+      maxShortTokenPoolAmount: expandDecimals(40_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(870, 8),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(30_000_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(1150, 8),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(40_000_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(12, 11), // 0.05% for ~4,200,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(12, 11), // 0.05% for ~4,200,000 USD of imbalance
@@ -521,11 +521,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(2_500_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(3_000_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(2_500_000, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(2_500_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(3_000_000, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(3_000_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(8, 9), // 0.05% for 62,500 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(4, 9), // 0.05% for 125,000 USD of imbalance
@@ -551,8 +551,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(176, 44), // ~1526 ARB/day
       minPositionImpactPoolAmount: expandDecimals(6200, 18),
 
-      maxOpenInterestForLongs: decimalToFloat(2_000_000),
-      maxOpenInterestForShorts: decimalToFloat(2_000_000),
+      maxOpenInterestForLongs: decimalToFloat(2_500_000),
+      maxOpenInterestForShorts: decimalToFloat(2_500_000),
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDC.e" },
