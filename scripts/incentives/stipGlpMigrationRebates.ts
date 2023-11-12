@@ -2,7 +2,8 @@ import fs from "fs";
 import path from "path";
 import hre from "hardhat";
 import { bigNumberify, expandDecimals, formatAmount } from "../../utils/math";
-import { STIP_MIGRATION_DISTRIBUTION_TYPE_ID, getBlockByTimestamp, requestPrices, requestSubgraph } from "./helpers";
+import { STIP_MIGRATION_DISTRIBUTION_TYPE_ID, getBlockByTimestamp, requestSubgraph } from "./helpers";
+import { getBatchSenderCalldata } from "./batchSend";
 
 const BASIS_POINTS_DIVISOR = 10000;
 
@@ -114,21 +115,21 @@ async function main() {
   const highestRebateBps = Math.max(...userGlpGmMigrationStats.map((data) => data.glpRedemptionWeightedAverageFeeBps));
   console.log("highest rebate bps: %s", highestRebateBps);
 
-  const amounts: Record<string, string> = {};
+  const jsonResult: Record<string, string> = {};
   const MIN_REWARD_THRESHOLD = expandDecimals(1, 17); // 0.1 ARB
-  let userTotalRewardsInArb = bigNumberify(0);
+  let userTotalRewards = bigNumberify(0);
   let usersBelowThreshold = 0;
   let glpRedemptionWeightedAverageFeeBpsSum = 0;
   let userEligableRedemptionInArb = bigNumberify(0);
 
   for (const item of userGlpGmMigrationStats) {
-    const rebatesInArb = item.eligableRedemptionInArb
+    const userRebates = item.eligableRedemptionInArb
       .mul(item.glpRedemptionWeightedAverageFeeBps)
       .div(BASIS_POINTS_DIVISOR);
 
     userEligableRedemptionInArb = userEligableRedemptionInArb.add(item.eligableRedemptionInArb);
 
-    userTotalRewardsInArb = userTotalRewardsInArb.add(rebatesInArb);
+    userTotalRewards = userTotalRewards.add(userRebates);
     glpRedemptionWeightedAverageFeeBpsSum += item.glpRedemptionWeightedAverageFeeBps;
 
     console.log(
@@ -141,12 +142,12 @@ async function main() {
       formatAmount(item.gmDepositUsd, 30, 2, true).padEnd(12)
     );
 
-    if (rebatesInArb.lt(MIN_REWARD_THRESHOLD)) {
+    if (userRebates.lt(MIN_REWARD_THRESHOLD)) {
       usersBelowThreshold++;
       continue;
     }
 
-    amounts[item.account] = rebatesInArb.toString();
+    jsonResult[item.account] = userRebates.toString();
   }
 
   console.log(
@@ -154,7 +155,7 @@ async function main() {
     (glpRedemptionWeightedAverageFeeBpsSum / userGlpGmMigrationStats.length).toFixed(2)
   );
   console.log("min reward threshold: %s ARB", formatAmount(MIN_REWARD_THRESHOLD, 18, 2));
-  console.log("eligable users: %s", Object.keys(amounts).length);
+  console.log("eligable users: %s", Object.keys(jsonResult).length);
   console.log("users below threshold: %s", usersBelowThreshold);
 
   console.log(
@@ -164,15 +165,16 @@ async function main() {
     formatAmount(eligableRedemptionInArbAfter.sub(eligableRedemptionInArbBefore), 18, 2, true)
   );
   console.log("sum of user eligable redemptions: %s ARB", formatAmount(userEligableRedemptionInArb, 18, 2, true));
-  console.log("sum of user rewards: %s ARB", formatAmount(userTotalRewardsInArb, 18, 2));
+  console.log("sum of user rewards: %s ARB", formatAmount(userTotalRewards, 18, 2));
 
-  const filename = path.join(
-    __dirname,
-    "distributions",
-    `stipGlpMigrationRebatesDistribution_${fromDate.toISOString().substring(0, 10)}.json`
-  );
   const tokens = await hre.gmx.getTokens();
   const arbToken = tokens.ARB;
+
+  const dirpath = path.join(__dirname, "distributions", `epoch_${fromDate.toISOString().substring(0, 10)}`);
+  if (!fs.existsSync(dirpath)) {
+    fs.mkdirSync(dirpath);
+  }
+  const filename = path.join(dirpath, `stipGlpMigrationRebatesDistribution.json`);
 
   fs.writeFileSync(
     filename,
@@ -180,7 +182,7 @@ async function main() {
       {
         token: arbToken.address,
         distributionTypeId: STIP_MIGRATION_DISTRIBUTION_TYPE_ID,
-        amounts,
+        amounts: jsonResult,
         fromTimestamp,
         toTimestamp,
       },
@@ -190,7 +192,29 @@ async function main() {
   );
   console.log("data is saved to %s", filename);
 
-  // console.log("migrationData", migrationData);
+  const amounts = Object.values(jsonResult);
+  const recipients = Object.keys(jsonResult);
+  const batchSenderCalldata = getBatchSenderCalldata(
+    arbToken.address,
+    recipients,
+    amounts,
+    STIP_MIGRATION_DISTRIBUTION_TYPE_ID
+  );
+  const filename2 = path.join(dirpath, `stipGlpMigrationRebatesDistribution_transactionData.json`);
+  fs.writeFileSync(
+    filename2,
+    JSON.stringify(
+      {
+        userTotalRewards: userTotalRewards.toString(),
+        batchSenderCalldata,
+      },
+      null,
+      4
+    )
+  );
+
+  console.log("send batches: %s", Object.keys(batchSenderCalldata).length);
+  console.log("batch sender calldata saved to %s", filename2);
 }
 
 main()
