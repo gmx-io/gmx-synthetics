@@ -269,7 +269,7 @@ The price of one unit of BTC is `60,000 / (10 ^ 8), 6 * (10 ^ -4)`.
 
 Price would be stored as `60,000 / (10 ^ 8) * (10 ^ 30) => 6 * (10 ^ 26) => 60,000 * (10 ^ 22)`.
 
-BTC prices maximum value: `(2 ^ 64) / (10 ^ 2) => 4,294,967,296 / (10 ^ 2) => 42,949,672.96`.
+BTC prices maximum value: `(2 ^ 32) / (10 ^ 2) => 4,294,967,296 / (10 ^ 2) => 42,949,672.96`.
 
 Decimals of precision: 2.
 
@@ -281,7 +281,7 @@ The price of one unit of USDC is `1 / (10 ^ 6), 1 * (10 ^ -6)`.
 
 Price would be stored as `1 / (10 ^ 6) * (10 ^ 30) => 1 * (10 ^ 24)`.
 
-USDC prices maximum value: `(2 ^ 64) / (10 ^ 6) => 4,294,967,296 / (10 ^ 6) => 4294.967296`.
+USDC prices maximum value: `(2 ^ 32) / (10 ^ 6) => 4,294,967,296 / (10 ^ 6) => 4294.967296`.
 
 Decimals of precision: 6.
 
@@ -293,7 +293,7 @@ The price of one unit of DG is `0.00000001 / (10 ^ 18), 1 * (10 ^ -26)`.
 
 Price would be stored as `1 * (10 ^ -26) * (10 ^ 30) => 1 * (10 ^ 3)`.
 
-DG prices maximum value: `(2 ^ 64) / (10 ^ 11) => 4,294,967,296 / (10 ^ 11) => 0.04294967296`.
+DG prices maximum value: `(2 ^ 32) / (10 ^ 11) => 4,294,967,296 / (10 ^ 11) => 0.04294967296`.
 
 Decimals of precision: 11.
 
