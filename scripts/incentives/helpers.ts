@@ -4,7 +4,7 @@ import { bigNumberify } from "../../utils/math";
 import fetch from "node-fetch";
 
 const ARBITRUM_SUBGRAPH_ENDPOINT =
-  "https://subgraph.satsuma-prod.com/3b2ced13c8d9/gmx/synthetics-arbitrum-stats/version/incentives3-231107223152-5284f8c/api";
+  "https://subgraph.satsuma-prod.com/3b2ced13c8d9/gmx/synthetics-arbitrum-stats/version/incentives3-231111223914-53032d8/api";
 const API_ENDPOINT = "https://arbitrum-api.gmxinfra.io";
 
 export const STIP_LP_DISTRIBUTION_TYPE_ID = 1001;
@@ -34,6 +34,7 @@ export function guessBlockNumberByTimestamp(block: ethers.providers.Block, times
 export async function getBlockByTimestamp(timestamp: number) {
   const tolerance = 30; // 30 seconds
   const latestBlock = await hre.ethers.provider.getBlock("latest");
+
   let nextBlockNumber = guessBlockNumberByTimestamp(latestBlock, timestamp);
 
   console.log("latest block: %s %s", latestBlock.number, latestBlock.timestamp);
@@ -42,6 +43,7 @@ export async function getBlockByTimestamp(timestamp: number) {
   while (i < 10) {
     console.log("requesting next block %s", nextBlockNumber);
     const block = await hre.ethers.provider.getBlock(nextBlockNumber);
+
     if (Math.abs(block.timestamp - timestamp) < tolerance) {
       console.log("found block %s %s diff %s", block.number, block.timestamp, block.timestamp - timestamp);
       return block;

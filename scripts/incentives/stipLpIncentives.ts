@@ -138,10 +138,11 @@ async function main() {
 
   const fromTimestamp = Math.floor(+fromDate / 1000);
 
-  const toTimestamp = fromTimestamp + 86400 * 7;
+  let toTimestamp = fromTimestamp + 86400 * 7;
 
   if (toTimestamp > Date.now() / 1000) {
-    throw new Error("Epoch has not ended");
+    console.warn("WARN: epoch has not ended yet");
+    toTimestamp = Math.floor(Date.now() / 1000) - 60;
   }
 
   const toDate = new Date(toTimestamp * 1000);
@@ -189,8 +190,8 @@ async function main() {
     console.log(
       "market %s userBalancesSum: %s marketTokensSupply: %s",
       marketAddress,
-      userBalancesSum,
-      marketTokensSupply
+      formatAmount(userBalancesSum, 18, 2, true),
+      formatAmount(marketTokensSupply, 18, 2, true)
     );
 
     const marketRewards = lpAllocationData.rewardsPerMarket[marketAddress];
@@ -204,18 +205,18 @@ async function main() {
     }
   }
 
-  const REWARD_THRESHOLD = expandDecimals(1, 17); // 0.1 ARB
+  const MIN_REWARD_THRESHOLD = expandDecimals(1, 17); // 0.1 ARB
   let userTotalRewards = bigNumberify(0);
   const jsonResult: Record<string, string> = {};
   let usersBelowThreshold = 0;
 
   for (const [userAccount, userRewards] of Object.entries(usersDistributionResult)) {
     userTotalRewards = userTotalRewards.add(userRewards);
-    if (userRewards.lt(REWARD_THRESHOLD)) {
+    if (userRewards.lt(MIN_REWARD_THRESHOLD)) {
       usersBelowThreshold++;
       continue;
     }
-    console.log("user: %s rewards: %s ARB", userAccount, formatAmount(userRewards, 18, 2));
+    console.log("user: %s rewards: %s ARB", userAccount, formatAmount(userRewards, 18, 2, true));
     jsonResult[userAccount] = userRewards.toString();
   }
 
@@ -225,13 +226,13 @@ async function main() {
     );
   }
 
-  console.log("min reward threshold: %s ARB", formatAmount(REWARD_THRESHOLD, 18, 2));
+  console.log("min reward threshold: %s ARB", formatAmount(MIN_REWARD_THRESHOLD, 18, 2));
   console.log("eligable users: %s", Object.keys(jsonResult).length);
   console.log("users below threshold: %s", usersBelowThreshold);
 
   // userTotalRewards can be slightly lower than allocated rewards because of rounding
-  console.log("sum of user rewards: %s ARB", formatAmount(userTotalRewards, 18, 2));
-  console.log("allocated rewards: %s ARB", formatAmount(lpAllocationData.totalRewards, 18, 2));
+  console.log("sum of user rewards: %s ARB", formatAmount(userTotalRewards, 18, 2, true));
+  console.log("allocated rewards: %s ARB", formatAmount(lpAllocationData.totalRewards, 18, 2, true));
 
   const filename = path.join(
     __dirname,
