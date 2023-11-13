@@ -5,6 +5,7 @@ import {
   STIP_LP_DISTRIBUTION_TYPE_ID,
   getBlockByTimestamp,
   overrideReceivers,
+  processArgs,
   requestAllocationData,
   requestSubgraph,
   saveDistribution,
@@ -128,29 +129,7 @@ Example of usage:
 */
 
 async function main() {
-  if (hre.network.name !== "arbitrum") {
-    throw new Error("Unsupported network");
-  }
-
-  if (!process.env.FROM_DATE) {
-    throw new Error("FROM_DATE is required");
-  }
-
-  const fromDate = new Date(process.env.FROM_DATE);
-  if (fromDate.getDay() !== 3) {
-    throw Error("Start date should start from Wednesday");
-  }
-
-  const fromTimestamp = Math.floor(+fromDate / 1000);
-
-  let toTimestamp = fromTimestamp + 86400 * 7;
-
-  if (toTimestamp > Date.now() / 1000) {
-    console.warn("WARN: epoch has not ended yet");
-    toTimestamp = Math.floor(Date.now() / 1000) - 60;
-  }
-
-  const toDate = new Date(toTimestamp * 1000);
+  const { fromTimestamp, fromDate, toTimestamp, toDate } = processArgs();
 
   const toBlock = await getBlockByTimestamp(toTimestamp);
   console.log("found toBlock %s %s for timestamp %s", toBlock.number, toBlock.timestamp, toTimestamp);

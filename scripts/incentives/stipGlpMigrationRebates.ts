@@ -4,6 +4,7 @@ import {
   STIP_MIGRATION_DISTRIBUTION_TYPE_ID,
   getBlockByTimestamp,
   overrideReceivers,
+  processArgs,
   requestSubgraph,
   saveDistribution,
 } from "./helpers";
@@ -76,27 +77,7 @@ async function requestMigrationData(fromTimestamp: number, fromBlockNumber: numb
 }
 
 async function main() {
-  if (hre.network.name !== "arbitrum") {
-    throw new Error("Unsupported network");
-  }
-
-  if (!process.env.FROM_DATE) {
-    throw new Error("FROM_DATE is required");
-  }
-
-  const fromDate = new Date(process.env.FROM_DATE);
-  if (fromDate.getDay() !== 3) {
-    throw Error(`FROM_DATE should be Wednesday: ${fromDate.getDay()}`);
-  }
-
-  const fromTimestamp = Math.floor(+fromDate / 1000);
-
-  let toTimestamp = fromTimestamp + 86400 * 7;
-  if (toTimestamp > Date.now() / 1000) {
-    console.warn("WARN: epoch has not ended yet");
-    toTimestamp = Math.floor(Date.now() / 1000) - 60;
-  }
-  const toDate = new Date(toTimestamp * 1000);
+  const { fromTimestamp, fromDate, toTimestamp, toDate } = processArgs();
 
   const [fromBlock, toBlock] = await Promise.all([
     getBlockByTimestamp(fromTimestamp),

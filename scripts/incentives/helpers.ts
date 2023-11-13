@@ -9,8 +9,12 @@ import fetch from "node-fetch";
 import receiverOverridesMap from "./receiverOverrides";
 import { getBatchSenderCalldata } from "./batchSend";
 
-for (const key of Object.keys(receiverOverridesMap)) {
-  receiverOverridesMap[key.toLowerCase()] = receiverOverridesMap[key];
+for (const address of Object.keys(receiverOverridesMap)) {
+  const checksumAddress = ethers.utils.getAddress(address);
+  if (checksumAddress !== address) {
+    receiverOverridesMap[checksumAddress] = receiverOverridesMap[address];
+    delete receiverOverridesMap[address];
+  }
 }
 
 const ARBITRUM_SUBGRAPH_ENDPOINT =
@@ -148,8 +152,8 @@ export async function getFrameSigner() {
 
 export function overrideReceivers(data: Record<string, string>): void {
   for (const [receiver, amount] of Object.entries(data)) {
-    const key = receiver.toLocaleLowerCase();
-    const newReceiver = receiverOverridesMap[key];
+    const checksumReceiver = ethers.utils.getAddress(receiver);
+    const newReceiver = receiverOverridesMap[checksumReceiver];
     if (!newReceiver) {
       continue;
     }
@@ -209,4 +213,51 @@ export function saveDistribution(
 
   console.log("send batches: %s", Object.keys(batchSenderCalldata).length);
   console.log("batch sender transaction is data saved to %s", filename2);
+}
+
+export function processArgs() {
+  if (hre.network.name !== "arbitrum") {
+    throw new Error("Unsupported network");
+  }
+
+  if (!process.env.FROM_DATE) {
+    throw new Error("FROM_DATE is required");
+  }
+
+  const fromDate = new Date(process.env.FROM_DATE);
+  if (fromDate.getDay() !== 3) {
+    throw Error(`FROM_DATE should be Wednesday: ${fromDate.getDay()}`);
+  }
+
+  const fromTimestamp = Math.floor(+fromDate / 1000);
+
+  let toTimestamp = fromTimestamp + 86400 * 7;
+
+  if (toTimestamp > Date.now() / 1000) {
+    if (!process.env.SKIP_EPOCH_VALIDATION) {
+      throw new Error("Epoch has not ended yet. Run with SKIP_EPOCH_VALIDATION=1 if this is expected");
+    }
+
+    console.warn("WARN: epoch has not ended yet");
+    toTimestamp = Math.floor(Date.now() / 1000) - 60;
+  }
+
+  const secondsSinceEpochEnded = Date.now() / 1000 - toTimestamp;
+  if (secondsSinceEpochEnded > 86400 * 7) {
+    const days = Math.floor(secondsSinceEpochEnded / 86400);
+    if (!process.env.SKIP_EPOCH_VALIDATION) {
+      throw new Error(`Epoch is old ended ${days} days ago. Run with SKIP_EPOCH_VALIDATION=1 if this is expected`);
+    }
+
+    console.warn("WARN: epoch is old ended %s days ago", days);
+  }
+
+  const toDate = new Date(toTimestamp * 1000);
+
+  return {
+    fromTimestamp,
+    fromDate,
+    toTimestamp,
+    toDate,
+  };
 }
