@@ -4,7 +4,7 @@ import { bigNumberify } from "../../utils/math";
 import fetch from "node-fetch";
 
 const ARBITRUM_SUBGRAPH_ENDPOINT =
-  "https://subgraph.satsuma-prod.com/3b2ced13c8d9/gmx/synthetics-arbitrum-stats/version/incentives3-231111223914-53032d8/api";
+  "https://subgraph.satsuma-prod.com/3b2ced13c8d9/gmx/synthetics-arbitrum-stats/version/incentives3-231112224933-94f769d/api";
 const API_ENDPOINT = "https://arbitrum-api.gmxinfra.io";
 
 export const STIP_LP_DISTRIBUTION_TYPE_ID = 1001;

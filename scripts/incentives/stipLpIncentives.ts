@@ -228,7 +228,7 @@ async function main() {
   }
 
   console.log("min reward threshold: %s ARB", formatAmount(MIN_REWARD_THRESHOLD, 18, 2));
-  console.log("eligable users: %s", Object.keys(jsonResult).length);
+  console.log("eligible users: %s", Object.keys(jsonResult).length);
   console.log("users below threshold: %s", usersBelowThreshold);
 
   // userTotalRewards can be slightly lower than allocated rewards because of rounding

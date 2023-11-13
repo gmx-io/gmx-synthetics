@@ -12,16 +12,16 @@ async function requestMigrationData(fromTimestamp: number, fromBlockNumber: numb
     userGlpGmMigrationStats: {
       gmDepositUsd: string;
       glpRedemptionUsd: string;
-      eligableRedemptionInArb: string;
-      eligableRedemptionUsd: string;
+      eligibleRedemptionInArb: string;
+      eligibleRedemptionUsd: string;
       glpRedemptionWeightedAverageFeeBps: number;
       account: string;
     }[];
     glpGmMigrationStatBefore: {
-      eligableRedemptionInArb: string;
+      eligibleRedemptionInArb: string;
     };
     glpGmMigrationStatAfter: {
-      eligableRedemptionInArb: string;
+      eligibleRedemptionInArb: string;
     };
   } = await requestSubgraph(`{
     userGlpGmMigrationStats(
@@ -29,14 +29,14 @@ async function requestMigrationData(fromTimestamp: number, fromBlockNumber: numb
       where: {
         timestamp: ${fromTimestamp},
         period: "1w"
-        eligableRedemptionInArb_gt: 0
+        eligibleRedemptionInArb_gt: 0
       }
     ) {
       gmDepositUsd
       glpRedemptionUsd
       glpRedemptionWeightedAverageFeeBps
-      eligableRedemptionInArb
-      eligableRedemptionUsd
+      eligibleRedemptionInArb
+      eligibleRedemptionUsd
       account
     }
     glpGmMigrationStatBefore: glpGmMigrationStat(
@@ -45,7 +45,7 @@ async function requestMigrationData(fromTimestamp: number, fromBlockNumber: numb
         number: ${fromBlockNumber}
       }
     ) {
-      eligableRedemptionInArb
+      eligibleRedemptionInArb
     }
     glpGmMigrationStatAfter: glpGmMigrationStat(
       id:"total",
@@ -53,7 +53,7 @@ async function requestMigrationData(fromTimestamp: number, fromBlockNumber: numb
         number: ${toBlockNumber}
       }
     ) {
-      eligableRedemptionInArb
+      eligibleRedemptionInArb
     }
   }`);
 
@@ -63,12 +63,12 @@ async function requestMigrationData(fromTimestamp: number, fromBlockNumber: numb
         ...item,
         gmDepositUsd: bigNumberify(item.gmDepositUsd),
         glpRedemptionUsd: bigNumberify(item.glpRedemptionUsd),
-        eligableRedemptionInArb: bigNumberify(item.eligableRedemptionInArb),
-        eligableRedemptionUsd: bigNumberify(item.eligableRedemptionUsd),
+        eligibleRedemptionInArb: bigNumberify(item.eligibleRedemptionInArb),
+        eligibleRedemptionUsd: bigNumberify(item.eligibleRedemptionUsd),
       };
     }),
-    eligableRedemptionInArbBefore: bigNumberify(data.glpGmMigrationStatBefore.eligableRedemptionInArb),
-    eligableRedemptionInArbAfter: bigNumberify(data.glpGmMigrationStatAfter.eligableRedemptionInArb),
+    eligibleRedemptionInArbBefore: bigNumberify(data.glpGmMigrationStatBefore?.eligibleRedemptionInArb ?? 0),
+    eligibleRedemptionInArbAfter: bigNumberify(data.glpGmMigrationStatAfter.eligibleRedemptionInArb),
   };
 }
 
@@ -104,7 +104,7 @@ async function main() {
   console.log("From: %s (timestamp %s)", fromDate.toISOString().substring(0, 19), fromTimestamp);
   console.log("To: %s (timestamp %s)", toDate.toISOString().substring(0, 19), toTimestamp);
 
-  const { userGlpGmMigrationStats, eligableRedemptionInArbAfter, eligableRedemptionInArbBefore } =
+  const { userGlpGmMigrationStats, eligibleRedemptionInArbAfter, eligibleRedemptionInArbBefore } =
     await requestMigrationData(fromTimestamp, fromBlock.number, toBlock.number);
 
   if (userGlpGmMigrationStats.length === 0) {
@@ -120,23 +120,23 @@ async function main() {
   let userTotalRewards = bigNumberify(0);
   let usersBelowThreshold = 0;
   let glpRedemptionWeightedAverageFeeBpsSum = 0;
-  let userEligableRedemptionInArb = bigNumberify(0);
+  let userEligibleRedemptionInArb = bigNumberify(0);
 
   for (const item of userGlpGmMigrationStats) {
-    const userRebates = item.eligableRedemptionInArb
+    const userRebates = item.eligibleRedemptionInArb
       .mul(item.glpRedemptionWeightedAverageFeeBps)
       .div(BASIS_POINTS_DIVISOR);
 
-    userEligableRedemptionInArb = userEligableRedemptionInArb.add(item.eligableRedemptionInArb);
+    userEligibleRedemptionInArb = userEligibleRedemptionInArb.add(item.eligibleRedemptionInArb);
 
     userTotalRewards = userTotalRewards.add(userRebates);
     glpRedemptionWeightedAverageFeeBpsSum += item.glpRedemptionWeightedAverageFeeBps;
 
     console.log(
-      "user %s eligable rebate: %s %s redeemed glp: $%s rebates fee bps: %s gm deposit: $%s",
+      "user %s eligible rebate: %s %s redeemed glp: $%s rebates fee bps: %s gm deposit: $%s",
       item.account,
-      `${formatAmount(item.eligableRedemptionInArb, 18, 2, true)} ARB`.padEnd(13),
-      `($${formatAmount(item.eligableRedemptionUsd, 30, 2, true)})`.padEnd(12),
+      `${formatAmount(item.eligibleRedemptionInArb, 18, 2, true)} ARB`.padEnd(13),
+      `($${formatAmount(item.eligibleRedemptionUsd, 30, 2, true)})`.padEnd(12),
       formatAmount(item.glpRedemptionUsd, 30, 2, true).padEnd(12),
       item.glpRedemptionWeightedAverageFeeBps.toString().padEnd(2),
       formatAmount(item.gmDepositUsd, 30, 2, true).padEnd(12)
@@ -155,16 +155,16 @@ async function main() {
     (glpRedemptionWeightedAverageFeeBpsSum / userGlpGmMigrationStats.length).toFixed(2)
   );
   console.log("min reward threshold: %s ARB", formatAmount(MIN_REWARD_THRESHOLD, 18, 2));
-  console.log("eligable users: %s", Object.keys(jsonResult).length);
+  console.log("eligible users: %s", Object.keys(jsonResult).length);
   console.log("users below threshold: %s", usersBelowThreshold);
 
   console.log(
-    "global eligable redemptions before: %s ARB after: %s ARB (%s ARB)",
-    formatAmount(eligableRedemptionInArbBefore, 18, 2, true),
-    formatAmount(eligableRedemptionInArbAfter, 18, 2, true),
-    formatAmount(eligableRedemptionInArbAfter.sub(eligableRedemptionInArbBefore), 18, 2, true)
+    "global eligible redemptions before: %s ARB after: %s ARB (+%s ARB)",
+    formatAmount(eligibleRedemptionInArbBefore, 18, 2, true),
+    formatAmount(eligibleRedemptionInArbAfter, 18, 2, true),
+    formatAmount(eligibleRedemptionInArbAfter.sub(eligibleRedemptionInArbBefore), 18, 2, true)
   );
-  console.log("sum of user eligable redemptions: %s ARB", formatAmount(userEligableRedemptionInArb, 18, 2, true));
+  console.log("sum of user eligible redemptions: %s ARB", formatAmount(userEligibleRedemptionInArb, 18, 2, true));
   console.log("sum of user rewards: %s ARB", formatAmount(userTotalRewards, 18, 2));
 
   const tokens = await hre.gmx.getTokens();
