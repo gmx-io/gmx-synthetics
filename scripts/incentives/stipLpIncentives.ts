@@ -1,10 +1,14 @@
-import fs from "fs";
-import path from "path";
 import { BigNumber, ethers } from "ethers";
 import hre from "hardhat";
 import { bigNumberify, expandDecimals, formatAmount } from "../../utils/math";
-import { STIP_LP_DISTRIBUTION_TYPE_ID, getBlockByTimestamp, requestAllocationData, requestSubgraph } from "./helpers";
-import { getBatchSenderCalldata } from "./batchSend";
+import {
+  STIP_LP_DISTRIBUTION_TYPE_ID,
+  getBlockByTimestamp,
+  overrideReceivers,
+  requestAllocationData,
+  requestSubgraph,
+  saveDistribution,
+} from "./helpers";
 
 async function requestBalancesData(fromTimestamp: number, toBlockNumber: number) {
   const data: {
@@ -218,6 +222,7 @@ async function main() {
       continue;
     }
     console.log("user: %s rewards: %s ARB", userAccount, formatAmount(userRewards, 18, 2, true));
+
     jsonResult[userAccount] = userRewards.toString();
   }
 
@@ -226,6 +231,8 @@ async function main() {
       "Sum of user rewards exceeds total allocated rewards." + `${userTotalRewards} > ${lpAllocationData.totalRewards}`
     );
   }
+
+  overrideReceivers(jsonResult);
 
   console.log("min reward threshold: %s ARB", formatAmount(MIN_REWARD_THRESHOLD, 18, 2));
   console.log("eligible users: %s", Object.keys(jsonResult).length);
@@ -238,51 +245,7 @@ async function main() {
   const tokens = await hre.gmx.getTokens();
   const arbToken = tokens.ARB;
 
-  const dirpath = path.join(__dirname, "distributions", `epoch_${fromDate.toISOString().substring(0, 10)}`);
-  if (!fs.existsSync(dirpath)) {
-    fs.mkdirSync(dirpath);
-  }
-  const filename = path.join(dirpath, `stipLpIncentivesDistribution.json`);
-
-  fs.writeFileSync(
-    filename,
-    JSON.stringify(
-      {
-        token: arbToken.address,
-        distributionTypeId: STIP_LP_DISTRIBUTION_TYPE_ID,
-        amounts: jsonResult,
-        fromTimestamp,
-        toTimestamp,
-      },
-      null,
-      4
-    )
-  );
-  console.log("data is saved to %s", filename);
-
-  const amounts = Object.values(jsonResult);
-  const recipients = Object.keys(jsonResult);
-  const batchSenderCalldata = getBatchSenderCalldata(
-    arbToken.address,
-    recipients,
-    amounts,
-    STIP_LP_DISTRIBUTION_TYPE_ID
-  );
-  const filename2 = path.join(dirpath, `stipLpIncentivesDistribution_transactionData.json`);
-  fs.writeFileSync(
-    filename2,
-    JSON.stringify(
-      {
-        userTotalRewards: userTotalRewards.toString(),
-        batchSenderCalldata,
-      },
-      null,
-      4
-    )
-  );
-
-  console.log("send batches: %s", Object.keys(batchSenderCalldata).length);
-  console.log("batch sender calldata saved to %s", filename2);
+  saveDistribution(fromDate, "stipLpIncentives", arbToken.address, jsonResult, STIP_LP_DISTRIBUTION_TYPE_ID);
 }
 
 main()

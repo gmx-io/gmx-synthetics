@@ -1,9 +1,12 @@
-import fs from "fs";
-import path from "path";
 import hre from "hardhat";
 import { bigNumberify, expandDecimals, formatAmount } from "../../utils/math";
-import { STIP_MIGRATION_DISTRIBUTION_TYPE_ID, getBlockByTimestamp, requestSubgraph } from "./helpers";
-import { getBatchSenderCalldata } from "./batchSend";
+import {
+  STIP_MIGRATION_DISTRIBUTION_TYPE_ID,
+  getBlockByTimestamp,
+  overrideReceivers,
+  requestSubgraph,
+  saveDistribution,
+} from "./helpers";
 
 const BASIS_POINTS_DIVISOR = 10000;
 
@@ -135,8 +138,8 @@ async function main() {
     console.log(
       "user %s eligible rebate: %s %s redeemed glp: $%s rebates fee bps: %s gm deposit: $%s",
       item.account,
-      `${formatAmount(item.eligibleRedemptionInArb, 18, 2, true)} ARB`.padEnd(13),
-      `($${formatAmount(item.eligibleRedemptionUsd, 30, 2, true)})`.padEnd(12),
+      `${formatAmount(item.eligibleRedemptionInArb, 18, 2, true)} ARB`.padEnd(15),
+      `($${formatAmount(item.eligibleRedemptionUsd, 30, 2, true)})`.padEnd(14),
       formatAmount(item.glpRedemptionUsd, 30, 2, true).padEnd(12),
       item.glpRedemptionWeightedAverageFeeBps.toString().padEnd(2),
       formatAmount(item.gmDepositUsd, 30, 2, true).padEnd(12)
@@ -149,6 +152,8 @@ async function main() {
 
     jsonResult[item.account] = userRebates.toString();
   }
+
+  overrideReceivers(jsonResult);
 
   console.log(
     "average redemption bps: %s",
@@ -165,56 +170,18 @@ async function main() {
     formatAmount(eligibleRedemptionInArbAfter.sub(eligibleRedemptionInArbBefore), 18, 2, true)
   );
   console.log("sum of user eligible redemptions: %s ARB", formatAmount(userEligibleRedemptionInArb, 18, 2, true));
-  console.log("sum of user rewards: %s ARB", formatAmount(userTotalRewards, 18, 2));
+  console.log("sum of user rewards: %s ARB", formatAmount(userTotalRewards, 18, 2, true));
 
   const tokens = await hre.gmx.getTokens();
   const arbToken = tokens.ARB;
 
-  const dirpath = path.join(__dirname, "distributions", `epoch_${fromDate.toISOString().substring(0, 10)}`);
-  if (!fs.existsSync(dirpath)) {
-    fs.mkdirSync(dirpath);
-  }
-  const filename = path.join(dirpath, `stipGlpMigrationRebatesDistribution.json`);
-
-  fs.writeFileSync(
-    filename,
-    JSON.stringify(
-      {
-        token: arbToken.address,
-        distributionTypeId: STIP_MIGRATION_DISTRIBUTION_TYPE_ID,
-        amounts: jsonResult,
-        fromTimestamp,
-        toTimestamp,
-      },
-      null,
-      4
-    )
-  );
-  console.log("data is saved to %s", filename);
-
-  const amounts = Object.values(jsonResult);
-  const recipients = Object.keys(jsonResult);
-  const batchSenderCalldata = getBatchSenderCalldata(
+  saveDistribution(
+    fromDate,
+    "stipGlpMigrationRebates",
     arbToken.address,
-    recipients,
-    amounts,
+    jsonResult,
     STIP_MIGRATION_DISTRIBUTION_TYPE_ID
   );
-  const filename2 = path.join(dirpath, `stipGlpMigrationRebatesDistribution_transactionData.json`);
-  fs.writeFileSync(
-    filename2,
-    JSON.stringify(
-      {
-        userTotalRewards: userTotalRewards.toString(),
-        batchSenderCalldata,
-      },
-      null,
-      4
-    )
-  );
-
-  console.log("send batches: %s", Object.keys(batchSenderCalldata).length);
-  console.log("batch sender calldata saved to %s", filename2);
 }
 
 main()

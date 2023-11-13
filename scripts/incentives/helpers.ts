@@ -1,7 +1,17 @@
+import fs from "fs";
+import path from "path";
+
 import { ethers } from "ethers";
 import hre from "hardhat";
 import { bigNumberify } from "../../utils/math";
 import fetch from "node-fetch";
+
+import receiverOverridesMap from "./receiverOverrides";
+import { getBatchSenderCalldata } from "./batchSend";
+
+for (const key of Object.keys(receiverOverridesMap)) {
+  receiverOverridesMap[key.toLowerCase()] = receiverOverridesMap[key];
+}
 
 const ARBITRUM_SUBGRAPH_ENDPOINT =
   "https://subgraph.satsuma-prod.com/3b2ced13c8d9/gmx/synthetics-arbitrum-stats/version/incentives3-231112224933-94f769d/api";
@@ -134,4 +144,69 @@ export async function getFrameSigner() {
   } catch (e) {
     throw new Error(`getFrameSigner error: ${e.toString()}`);
   }
+}
+
+export function overrideReceivers(data: Record<string, string>): void {
+  for (const [receiver, amount] of Object.entries(data)) {
+    const key = receiver.toLocaleLowerCase();
+    const newReceiver = receiverOverridesMap[key];
+    if (!newReceiver) {
+      continue;
+    }
+    console.warn("WARN: override receiver %s -> %s", receiver, newReceiver);
+    delete data[receiver];
+    if (newReceiver in data) {
+      data[newReceiver] = bigNumberify(data[newReceiver]).add(amount).toString();
+    } else {
+      data[newReceiver] = amount;
+    }
+  }
+}
+
+export function saveDistribution(
+  fromDate: Date,
+  name: string,
+  tokenAddress: string,
+  jsonResult: Record<string, string>,
+  distributionTypeId: number
+) {
+  const dirpath = path.join(__dirname, "distributions", `epoch_${fromDate.toISOString().substring(0, 10)}`);
+  if (!fs.existsSync(dirpath)) {
+    fs.mkdirSync(dirpath);
+  }
+  const filename = path.join(dirpath, `${name}_distribution.json`);
+
+  fs.writeFileSync(
+    filename,
+    JSON.stringify(
+      {
+        token: tokenAddress,
+        distributionTypeId,
+        amounts: jsonResult,
+      },
+      null,
+      4
+    )
+  );
+  console.log("distribution data is saved to %s", filename);
+
+  const amounts = Object.values(jsonResult);
+  const totalAmount = amounts.reduce((acc, amount) => acc.add(amount), bigNumberify(0));
+  const recipients = Object.keys(jsonResult);
+  const batchSenderCalldata = getBatchSenderCalldata(tokenAddress, recipients, amounts, distributionTypeId);
+  const filename2 = path.join(dirpath, `${name}_transactionData.json`);
+  fs.writeFileSync(
+    filename2,
+    JSON.stringify(
+      {
+        totalAmount,
+        batchSenderCalldata,
+      },
+      null,
+      4
+    )
+  );
+
+  console.log("send batches: %s", Object.keys(batchSenderCalldata).length);
+  console.log("batch sender transaction is data saved to %s", filename2);
 }
