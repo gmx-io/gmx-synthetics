@@ -4,6 +4,7 @@ import { BigNumber, ethers } from "ethers";
 import hre from "hardhat";
 import { bigNumberify, expandDecimals, formatAmount } from "../../utils/math";
 import { STIP_LP_DISTRIBUTION_TYPE_ID, getBlockByTimestamp, requestAllocationData, requestSubgraph } from "./helpers";
+import { getBatchSenderCalldata } from "./batchSend";
 
 async function requestBalancesData(fromTimestamp: number, toBlockNumber: number) {
   const data: {
@@ -138,10 +139,11 @@ async function main() {
 
   const fromTimestamp = Math.floor(+fromDate / 1000);
 
-  const toTimestamp = fromTimestamp + 86400 * 7;
+  let toTimestamp = fromTimestamp + 86400 * 7;
 
   if (toTimestamp > Date.now() / 1000) {
-    throw new Error("Epoch has not ended");
+    console.warn("WARN: epoch has not ended yet");
+    toTimestamp = Math.floor(Date.now() / 1000) - 60;
   }
 
   const toDate = new Date(toTimestamp * 1000);
@@ -189,8 +191,8 @@ async function main() {
     console.log(
       "market %s userBalancesSum: %s marketTokensSupply: %s",
       marketAddress,
-      userBalancesSum,
-      marketTokensSupply
+      formatAmount(userBalancesSum, 18, 2, true),
+      formatAmount(marketTokensSupply, 18, 2, true)
     );
 
     const marketRewards = lpAllocationData.rewardsPerMarket[marketAddress];
@@ -204,18 +206,18 @@ async function main() {
     }
   }
 
-  const REWARD_THRESHOLD = expandDecimals(1, 17); // 0.1 ARB
+  const MIN_REWARD_THRESHOLD = expandDecimals(1, 17); // 0.1 ARB
   let userTotalRewards = bigNumberify(0);
   const jsonResult: Record<string, string> = {};
   let usersBelowThreshold = 0;
 
   for (const [userAccount, userRewards] of Object.entries(usersDistributionResult)) {
     userTotalRewards = userTotalRewards.add(userRewards);
-    if (userRewards.lt(REWARD_THRESHOLD)) {
+    if (userRewards.lt(MIN_REWARD_THRESHOLD)) {
       usersBelowThreshold++;
       continue;
     }
-    console.log("user: %s rewards: %s ARB", userAccount, formatAmount(userRewards, 18, 2));
+    console.log("user: %s rewards: %s ARB", userAccount, formatAmount(userRewards, 18, 2, true));
     jsonResult[userAccount] = userRewards.toString();
   }
 
@@ -225,21 +227,22 @@ async function main() {
     );
   }
 
-  console.log("min reward threshold: %s ARB", formatAmount(REWARD_THRESHOLD, 18, 2));
+  console.log("min reward threshold: %s ARB", formatAmount(MIN_REWARD_THRESHOLD, 18, 2));
   console.log("eligable users: %s", Object.keys(jsonResult).length);
   console.log("users below threshold: %s", usersBelowThreshold);
 
   // userTotalRewards can be slightly lower than allocated rewards because of rounding
-  console.log("sum of user rewards: %s ARB", formatAmount(userTotalRewards, 18, 2));
-  console.log("allocated rewards: %s ARB", formatAmount(lpAllocationData.totalRewards, 18, 2));
+  console.log("sum of user rewards: %s ARB", formatAmount(userTotalRewards, 18, 2, true));
+  console.log("allocated rewards: %s ARB", formatAmount(lpAllocationData.totalRewards, 18, 2, true));
 
-  const filename = path.join(
-    __dirname,
-    "distributions",
-    `stipLpIncentivesDistribution_${fromDate.toISOString().substring(0, 10)}.json`
-  );
   const tokens = await hre.gmx.getTokens();
   const arbToken = tokens.ARB;
+
+  const dirpath = path.join(__dirname, "distributions", `epoch_${fromDate.toISOString().substring(0, 10)}`);
+  if (!fs.existsSync(dirpath)) {
+    fs.mkdirSync(dirpath);
+  }
+  const filename = path.join(dirpath, `stipLpIncentivesDistribution.json`);
 
   fs.writeFileSync(
     filename,
@@ -257,7 +260,29 @@ async function main() {
   );
   console.log("data is saved to %s", filename);
 
-  //
+  const amounts = Object.values(jsonResult);
+  const recipients = Object.keys(jsonResult);
+  const batchSenderCalldata = getBatchSenderCalldata(
+    arbToken.address,
+    recipients,
+    amounts,
+    STIP_LP_DISTRIBUTION_TYPE_ID
+  );
+  const filename2 = path.join(dirpath, `stipLpIncentivesDistribution_transactionData.json`);
+  fs.writeFileSync(
+    filename2,
+    JSON.stringify(
+      {
+        userTotalRewards: userTotalRewards.toString(),
+        batchSenderCalldata,
+      },
+      null,
+      4
+    )
+  );
+
+  console.log("send batches: %s", Object.keys(batchSenderCalldata).length);
+  console.log("batch sender calldata saved to %s", filename2);
 }
 
 main()
