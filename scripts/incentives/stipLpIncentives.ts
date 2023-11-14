@@ -44,7 +44,7 @@ async function requestBalancesData(fromTimestamp: number, toBlockNumber: number)
       weightedAverageMarketTokensBalance
     }
     marketIncentivesStats(
-      first: 100
+      first: 1000
       where: {
         timestamp: ${fromTimestamp}
         period: "1w"
@@ -64,7 +64,7 @@ async function requestBalancesData(fromTimestamp: number, toBlockNumber: number)
       marketTokensBalance
     }
     marketInfos(
-      first: 100
+      first: 1000
       block: {
         number: ${toBlockNumber}
       }
@@ -87,7 +87,6 @@ async function requestBalancesData(fromTimestamp: number, toBlockNumber: number)
       const userBalances: Record<string, BigNumber> = {};
       for (const lpStat of data.liquidityProviderIncentivesStats) {
         if (lpStat.marketAddress === marketInfo.marketToken) {
-          // console.log("set 1 %s", lpStat.weightedAverageMarketTokensBalance)
           userBalances[ethers.utils.getAddress(lpStat.account)] = bigNumberify(
             lpStat.weightedAverageMarketTokensBalance
           );
@@ -193,6 +192,7 @@ async function main() {
   let userTotalRewards = bigNumberify(0);
   const jsonResult: Record<string, string> = {};
   let usersBelowThreshold = 0;
+  let eligibleUsers = 0;
 
   for (const [userAccount, userRewards] of Object.entries(usersDistributionResult)) {
     userTotalRewards = userTotalRewards.add(userRewards);
@@ -200,6 +200,7 @@ async function main() {
       usersBelowThreshold++;
       continue;
     }
+    eligibleUsers++;
     console.log("user: %s rewards: %s ARB", userAccount, formatAmount(userRewards, 18, 2, true));
 
     jsonResult[userAccount] = userRewards.toString();
@@ -223,7 +224,8 @@ async function main() {
   console.log("allocated rewards: %s ARB", formatAmount(lpAllocationData.totalRewards, 18, 2, true));
 
   console.log("min reward threshold: %s ARB", formatAmount(MIN_REWARD_THRESHOLD, 18, 2, true));
-  console.log("eligible users: %s", Object.keys(jsonResult).length);
+  console.log("total users: %s", eligibleUsers + usersBelowThreshold);
+  console.log("eligible users: %s", eligibleUsers);
   console.log("users below threshold: %s", usersBelowThreshold);
 
   // userTotalRewards can be slightly lower than allocated rewards because of rounding

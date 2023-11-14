@@ -103,6 +103,7 @@ async function main() {
   const MIN_REWARD_THRESHOLD = expandDecimals(1, 17); // 0.1 ARB
   let userTotalRewards = bigNumberify(0);
   let usersBelowThreshold = 0;
+  let eligibleUsers = 0;
   let glpRedemptionWeightedAverageFeeBpsSum = 0;
   let userEligibleRedemptionInArb = bigNumberify(0);
 
@@ -130,6 +131,7 @@ async function main() {
       usersBelowThreshold++;
       continue;
     }
+    eligibleUsers++;
 
     jsonResult[item.account] = userRebates.toString();
   }
@@ -141,7 +143,7 @@ async function main() {
     (glpRedemptionWeightedAverageFeeBpsSum / userGlpGmMigrationStats.length).toFixed(2)
   );
   console.log("min reward threshold: %s ARB", formatAmount(MIN_REWARD_THRESHOLD, 18, 2));
-  console.log("eligible users: %s", Object.keys(jsonResult).length);
+  console.log("eligible users: %s", eligibleUsers);
   console.log("users below threshold: %s", usersBelowThreshold);
 
   console.log(
