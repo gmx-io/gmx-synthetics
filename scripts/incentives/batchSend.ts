@@ -6,7 +6,7 @@ import { range } from "lodash";
 import { bigNumberify } from "../../utils/math";
 import path from "path";
 import BatchSenderAbi from "./abi/BatchSender";
-import { getFrameSigner } from "./helpers";
+import { getDistributionTypeName, getFrameSigner } from "./helpers";
 
 /*
 Example of usage:
@@ -54,6 +54,10 @@ async function main() {
   if (!data.distributionTypeId) {
     throw new Error("Invalid file format. It should contain `distributionTypeId` number");
   }
+  const distributionTypeName = getDistributionTypeName(data.distributionTypeId);
+  if (!distributionTypeName) {
+    throw new Error(`Unknown distribution type id ${data.distributionTypeId}`);
+  }
 
   const { batchSenderAddress } = getValues();
 
@@ -70,7 +74,7 @@ async function main() {
   console.log("token %s", data.token);
   console.log("total amount %s", totalAmount.toString());
   console.log("recipients %s", recipients.length);
-  console.log("distribution type id %s", data.distributionTypeId);
+  console.log("distribution type %s %s", data.distributionTypeId, distributionTypeName);
 
   if (shouldSendTxn) {
     console.warn("WARN: sending transaction");

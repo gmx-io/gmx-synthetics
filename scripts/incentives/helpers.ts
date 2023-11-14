@@ -25,6 +25,14 @@ export const STIP_LP_DISTRIBUTION_TYPE_ID = 1001;
 export const STIP_MIGRATION_DISTRIBUTION_TYPE_ID = 1002;
 export const STIP_TRADING_INCENTIVES_DISTRIBUTION_TYPE_ID = 1003;
 
+export function getDistributionTypeName(distributionTypeId: number) {
+  return {
+    [STIP_LP_DISTRIBUTION_TYPE_ID]: "STIP LP",
+    [STIP_MIGRATION_DISTRIBUTION_TYPE_ID]: "STIP MIGRATION",
+    [STIP_TRADING_INCENTIVES_DISTRIBUTION_TYPE_ID]: "STIP TRADING INCENTIVES",
+  }[distributionTypeId];
+}
+
 export async function requestSubgraph(query: string) {
   const payload = JSON.stringify({ query });
   const res = await fetch(ARBITRUM_SUBGRAPH_ENDPOINT, {
