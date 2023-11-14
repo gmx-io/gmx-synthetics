@@ -7,6 +7,7 @@ async function main() {
   const reader = await hre.ethers.getContract("Reader");
   const withdrawalCount = await getWithdrawalCount(dataStore);
   const withdrawalKeys = await getWithdrawalKeys(dataStore, 0, withdrawalCount);
+  console.log(`${withdrawalKeys.length} withdrawals`);
   for (const key of withdrawalKeys) {
     const withdrawal = await reader.getWithdrawal(dataStore.address, key);
     console.log("key: %s", key);
