@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import { Reader } from "../typechain-types";
 import got from "got";
-import { toLoggableObject } from "./utils";
+import { toLoggableObject } from "../utils/print";
 const ethers = hre.ethers;
 
 function getAvalancheFujiValues() {

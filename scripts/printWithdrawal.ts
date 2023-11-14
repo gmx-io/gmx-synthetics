@@ -1,6 +1,6 @@
 import hre from "hardhat";
 import { getWithdrawalCount, getWithdrawalKeys } from "../utils/withdrawal";
-import { toLoggableObject } from "./utils";
+import { toLoggableObject } from "../utils/print";
 
 async function main() {
   const dataStore = await hre.ethers.getContract("DataStore");
