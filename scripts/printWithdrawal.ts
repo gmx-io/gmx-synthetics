@@ -1,5 +1,6 @@
 import hre from "hardhat";
 import { getWithdrawalCount, getWithdrawalKeys } from "../utils/withdrawal";
+import { toLoggableObject } from "./utils";
 
 async function main() {
   const dataStore = await hre.ethers.getContract("DataStore");
@@ -8,13 +9,8 @@ async function main() {
   const withdrawalKeys = await getWithdrawalKeys(dataStore, 0, withdrawalCount);
   for (const key of withdrawalKeys) {
     const withdrawal = await reader.getWithdrawal(dataStore.address, key);
-    console.log("%s", key);
-    for (const prop of Object.keys(withdrawal)) {
-      if (!isNaN(Number(prop))) {
-        continue;
-      }
-      console.log(" . %s: %s", prop, withdrawal[prop].toString());
-    }
+    console.log("key: %s", key);
+    console.log(toLoggableObject(withdrawal));
   }
 }
 
