@@ -179,6 +179,14 @@ async function main() {
 
     const marketRewards = lpAllocationData.rewardsPerMarket[marketAddress];
     for (const [userAccount, userBalance] of Object.entries(userBalances)) {
+      console.log(
+        "market %s user %s avg balance %s (%s%)",
+        marketAddress,
+        userAccount,
+        formatAmount(userBalance, 18, 2, true).padStart(12),
+        formatAmount(userBalance.mul(10000).div(marketTokensSupply), 2, 2)
+      );
+
       if (!(userAccount in usersDistributionResult)) {
         usersDistributionResult[userAccount] = bigNumberify(0);
       }
@@ -194,14 +202,22 @@ async function main() {
   let usersBelowThreshold = 0;
   let eligibleUsers = 0;
 
-  for (const [userAccount, userRewards] of Object.entries(usersDistributionResult)) {
+  for (const [userAccount, userRewards] of Object.entries(usersDistributionResult).sort((a, b) => {
+    return a[1].lt(b[1]) ? -1 : 1;
+  })) {
     userTotalRewards = userTotalRewards.add(userRewards);
     if (userRewards.lt(MIN_REWARD_THRESHOLD)) {
+      console.log("user %s rewards: %s ARB below threshold", userAccount, formatAmount(userRewards, 18, 2, true));
       usersBelowThreshold++;
       continue;
     }
     eligibleUsers++;
-    console.log("user: %s rewards: %s ARB", userAccount, formatAmount(userRewards, 18, 2, true));
+    console.log(
+      "user: %s rewards: %s ARB (%s%)",
+      userAccount,
+      formatAmount(userRewards, 18, 2, true),
+      formatAmount(userRewards.mul(10000).div(lpAllocationData.totalRewards), 2, 2)
+    );
 
     jsonResult[userAccount] = userRewards.toString();
   }

@@ -62,15 +62,17 @@ async function requestMigrationData(fromTimestamp: number, fromBlockNumber: numb
   }`);
 
   return {
-    userGlpGmMigrationStats: data.userGlpGmMigrationStats.map((item) => {
-      return {
-        ...item,
-        gmDepositUsd: bigNumberify(item.gmDepositUsd),
-        glpRedemptionUsd: bigNumberify(item.glpRedemptionUsd),
-        eligibleRedemptionInArb: bigNumberify(item.eligibleRedemptionInArb),
-        eligibleRedemptionUsd: bigNumberify(item.eligibleRedemptionUsd),
-      };
-    }),
+    userGlpGmMigrationStats: data.userGlpGmMigrationStats
+      .map((item) => {
+        return {
+          ...item,
+          gmDepositUsd: bigNumberify(item.gmDepositUsd),
+          glpRedemptionUsd: bigNumberify(item.glpRedemptionUsd),
+          eligibleRedemptionInArb: bigNumberify(item.eligibleRedemptionInArb),
+          eligibleRedemptionUsd: bigNumberify(item.eligibleRedemptionUsd),
+        };
+      })
+      .sort((a, b) => (a.eligibleRedemptionInArb.lt(b.eligibleRedemptionInArb) ? -1 : 1)),
     eligibleRedemptionInArbBefore: bigNumberify(data.glpGmMigrationStatBefore?.eligibleRedemptionInArb ?? 0),
     eligibleRedemptionInArbAfter: bigNumberify(data.glpGmMigrationStatAfter.eligibleRedemptionInArb),
   };
