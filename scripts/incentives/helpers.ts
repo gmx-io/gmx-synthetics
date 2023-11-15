@@ -3,7 +3,7 @@ import path from "path";
 
 import { ethers } from "ethers";
 import hre from "hardhat";
-import { bigNumberify } from "../../utils/math";
+import { bigNumberify, formatAmount } from "../../utils/math";
 import fetch from "node-fetch";
 
 import receiverOverridesMap from "./receiverOverrides";
@@ -54,7 +54,7 @@ export function guessBlockNumberByTimestamp(block: ethers.providers.Block, times
 }
 
 export async function getBlockByTimestamp(timestamp: number) {
-  const tolerance = 30; // 30 seconds
+  const tolerance = 10; // 10 seconds
   const latestBlock = await hre.ethers.provider.getBlock("latest");
 
   let nextBlockNumber = guessBlockNumberByTimestamp(latestBlock, timestamp);
@@ -221,6 +221,14 @@ export function saveDistribution(
 
   console.log("send batches: %s", Object.keys(batchSenderCalldata).length);
   console.log("batch sender transaction is data saved to %s", filename2);
+
+  const csv = ["recipient,amount"];
+  const filename3 = path.join(dirpath, `${name}_distribution.csv`);
+  for (const [recipient, amount] of Object.entries(jsonResult)) {
+    csv.push(`${recipient},${formatAmount(amount, 18, 2)}`);
+  }
+  fs.writeFileSync(filename3, csv.join("\n"));
+  console.log("csv data saved to %s", filename3);
 }
 
 export function processArgs() {
