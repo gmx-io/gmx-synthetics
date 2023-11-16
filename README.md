@@ -502,13 +502,15 @@ Markets have a reserve factor that allows open interest to be capped to a percen
 
 The price of a market token depends on the worth of the assets in the pool, and the net pending PnL of traders' open positions.
 
-It is possible for pending PnL to be capped, the caps used to calculate the market token price can differ depending on the activity:
+It is possible for the pending PnL to be capped, the factors used to calculate the market token price can differ depending on the activity:
 
 - Keys.MAX_PNL_FACTOR_FOR_DEPOSITS: this is the PnL factor cap when calculating the market token price for deposits
 
 - Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS: this is the PnL factor cap when calculating the market token price for withdrawals
 
 - Keys.MAX_PNL_FACTOR_FOR_TRADERS: this is the PnL factor cap when calculating the market token price for closing a position
+
+These different factors can be configured to help liquidity providers manage risk and to incentivise deposits when needed, e.g. capping of trader PnL helps cap the amount the market token price can be decreased by due to trader PnL, capping of PnL for deposits and withdrawals can lead to a lower market token price for deposits compared to withdrawals which can incentivise deposits when pending PnL is high.
 
 # Parameters
 
