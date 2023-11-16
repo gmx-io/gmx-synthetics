@@ -1,10 +1,15 @@
-import fs from "fs";
-import path from "path";
 import { BigNumber, ethers } from "ethers";
 import hre from "hardhat";
 import { bigNumberify, expandDecimals, formatAmount } from "../../utils/math";
-import { STIP_LP_DISTRIBUTION_TYPE_ID, getBlockByTimestamp, requestAllocationData, requestSubgraph } from "./helpers";
-import { getBatchSenderCalldata } from "./batchSend";
+import {
+  STIP_LP_DISTRIBUTION_TYPE_ID,
+  getBlockByTimestamp,
+  overrideReceivers,
+  processArgs,
+  requestAllocationData,
+  requestSubgraph,
+  saveDistribution,
+} from "./helpers";
 
 async function requestBalancesData(fromTimestamp: number, toBlockNumber: number) {
   const data: {
@@ -39,7 +44,7 @@ async function requestBalancesData(fromTimestamp: number, toBlockNumber: number)
       weightedAverageMarketTokensBalance
     }
     marketIncentivesStats(
-      first: 100
+      first: 1000
       where: {
         timestamp: ${fromTimestamp}
         period: "1w"
@@ -59,7 +64,7 @@ async function requestBalancesData(fromTimestamp: number, toBlockNumber: number)
       marketTokensBalance
     }
     marketInfos(
-      first: 100
+      first: 1000
       block: {
         number: ${toBlockNumber}
       }
@@ -82,7 +87,6 @@ async function requestBalancesData(fromTimestamp: number, toBlockNumber: number)
       const userBalances: Record<string, BigNumber> = {};
       for (const lpStat of data.liquidityProviderIncentivesStats) {
         if (lpStat.marketAddress === marketInfo.marketToken) {
-          // console.log("set 1 %s", lpStat.weightedAverageMarketTokensBalance)
           userBalances[ethers.utils.getAddress(lpStat.account)] = bigNumberify(
             lpStat.weightedAverageMarketTokensBalance
           );
@@ -124,29 +128,7 @@ Example of usage:
 */
 
 async function main() {
-  if (hre.network.name !== "arbitrum") {
-    throw new Error("Unsupported network");
-  }
-
-  if (!process.env.FROM_DATE) {
-    throw new Error("FROM_DATE is required");
-  }
-
-  const fromDate = new Date(process.env.FROM_DATE);
-  if (fromDate.getDay() !== 3) {
-    throw Error("Start date should start from Wednesday");
-  }
-
-  const fromTimestamp = Math.floor(+fromDate / 1000);
-
-  let toTimestamp = fromTimestamp + 86400 * 7;
-
-  if (toTimestamp > Date.now() / 1000) {
-    console.warn("WARN: epoch has not ended yet");
-    toTimestamp = Math.floor(Date.now() / 1000) - 60;
-  }
-
-  const toDate = new Date(toTimestamp * 1000);
+  const { fromTimestamp, fromDate, toTimestamp, toDate } = processArgs();
 
   const toBlock = await getBlockByTimestamp(toTimestamp);
   console.log("found toBlock %s %s for timestamp %s", toBlock.number, toBlock.timestamp, toTimestamp);
@@ -210,6 +192,7 @@ async function main() {
   let userTotalRewards = bigNumberify(0);
   const jsonResult: Record<string, string> = {};
   let usersBelowThreshold = 0;
+  let eligibleUsers = 0;
 
   for (const [userAccount, userRewards] of Object.entries(usersDistributionResult)) {
     userTotalRewards = userTotalRewards.add(userRewards);
@@ -217,7 +200,9 @@ async function main() {
       usersBelowThreshold++;
       continue;
     }
+    eligibleUsers++;
     console.log("user: %s rewards: %s ARB", userAccount, formatAmount(userRewards, 18, 2, true));
+
     jsonResult[userAccount] = userRewards.toString();
   }
 
@@ -227,62 +212,29 @@ async function main() {
     );
   }
 
-  console.log("min reward threshold: %s ARB", formatAmount(MIN_REWARD_THRESHOLD, 18, 2));
-  console.log("eligable users: %s", Object.keys(jsonResult).length);
+  overrideReceivers(jsonResult);
+
+  for (const marketAddress of Object.keys(lpAllocationData.rewardsPerMarket)) {
+    console.log(
+      "market %s allocation: %s",
+      marketAddress,
+      formatAmount(lpAllocationData.rewardsPerMarket[marketAddress], 18, 2, true)
+    );
+  }
+  console.log("allocated rewards: %s ARB", formatAmount(lpAllocationData.totalRewards, 18, 2, true));
+
+  console.log("min reward threshold: %s ARB", formatAmount(MIN_REWARD_THRESHOLD, 18, 2, true));
+  console.log("total users: %s", eligibleUsers + usersBelowThreshold);
+  console.log("eligible users: %s", eligibleUsers);
   console.log("users below threshold: %s", usersBelowThreshold);
 
   // userTotalRewards can be slightly lower than allocated rewards because of rounding
   console.log("sum of user rewards: %s ARB", formatAmount(userTotalRewards, 18, 2, true));
-  console.log("allocated rewards: %s ARB", formatAmount(lpAllocationData.totalRewards, 18, 2, true));
 
   const tokens = await hre.gmx.getTokens();
   const arbToken = tokens.ARB;
 
-  const dirpath = path.join(__dirname, "distributions", `epoch_${fromDate.toISOString().substring(0, 10)}`);
-  if (!fs.existsSync(dirpath)) {
-    fs.mkdirSync(dirpath);
-  }
-  const filename = path.join(dirpath, `stipLpIncentivesDistribution.json`);
-
-  fs.writeFileSync(
-    filename,
-    JSON.stringify(
-      {
-        token: arbToken.address,
-        distributionTypeId: STIP_LP_DISTRIBUTION_TYPE_ID,
-        amounts: jsonResult,
-        fromTimestamp,
-        toTimestamp,
-      },
-      null,
-      4
-    )
-  );
-  console.log("data is saved to %s", filename);
-
-  const amounts = Object.values(jsonResult);
-  const recipients = Object.keys(jsonResult);
-  const batchSenderCalldata = getBatchSenderCalldata(
-    arbToken.address,
-    recipients,
-    amounts,
-    STIP_LP_DISTRIBUTION_TYPE_ID
-  );
-  const filename2 = path.join(dirpath, `stipLpIncentivesDistribution_transactionData.json`);
-  fs.writeFileSync(
-    filename2,
-    JSON.stringify(
-      {
-        userTotalRewards: userTotalRewards.toString(),
-        batchSenderCalldata,
-      },
-      null,
-      4
-    )
-  );
-
-  console.log("send batches: %s", Object.keys(batchSenderCalldata).length);
-  console.log("batch sender calldata saved to %s", filename2);
+  saveDistribution(fromDate, "stipLpIncentives", arbToken.address, jsonResult, STIP_LP_DISTRIBUTION_TYPE_ID);
 }
 
 main()

@@ -1,6 +1,6 @@
 import hre from "hardhat";
 import { Reader } from "../typechain-types";
-import { toLoggableObject } from "./utils";
+import { toLoggableObject } from "../utils/print";
 
 async function main() {
   const dataStoreDeployment = await hre.deployments.get("DataStore");

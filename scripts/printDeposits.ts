@@ -1,18 +1,17 @@
 import hre from "hardhat";
+import { getDepositCount, getDepositKeys } from "../utils/deposit";
+import { toLoggableObject } from "../utils/print";
 
 async function main() {
-  const depositStore = await hre.ethers.getContract("DepositStore");
-  const depositCount = await depositStore.getDepositCount();
-  const depositKeys = await depositStore.getDepositKeys(0, depositCount);
+  const dataStore = await hre.ethers.getContract("DataStore");
+  const reader = await hre.ethers.getContract("Reader");
+  const depositCount = await getDepositCount(dataStore);
+  const depositKeys = await getDepositKeys(dataStore, 0, depositCount);
+  console.log(`${depositKeys.length} deposits`);
   for (const key of depositKeys) {
-    const deposit = await depositStore.get(key);
-    console.log("%s", key);
-    for (const prop of Object.keys(deposit)) {
-      if (!isNaN(Number(prop))) {
-        continue;
-      }
-      console.log(" . %s: %s", prop, deposit[prop].toString());
-    }
+    const deposit = await reader.getDeposit(dataStore.address, key);
+    console.log("key: %s", key);
+    console.log(toLoggableObject(deposit));
   }
 }
 

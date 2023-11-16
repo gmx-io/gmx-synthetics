@@ -1,7 +1,7 @@
 import hre from "hardhat";
 
 import * as keys from "../utils/keys";
-import { toLoggableObject } from "./utils";
+import { toLoggableObject } from "../utils/print";
 import got from "got";
 import { expandDecimals } from "../utils/math";
 

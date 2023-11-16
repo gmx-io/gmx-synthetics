@@ -1,9 +1,13 @@
-import fs from "fs";
-import path from "path";
 import hre from "hardhat";
 import { bigNumberify, expandDecimals, formatAmount } from "../../utils/math";
-import { STIP_MIGRATION_DISTRIBUTION_TYPE_ID, getBlockByTimestamp, requestSubgraph } from "./helpers";
-import { getBatchSenderCalldata } from "./batchSend";
+import {
+  STIP_MIGRATION_DISTRIBUTION_TYPE_ID,
+  getBlockByTimestamp,
+  overrideReceivers,
+  processArgs,
+  requestSubgraph,
+  saveDistribution,
+} from "./helpers";
 
 const BASIS_POINTS_DIVISOR = 10000;
 
@@ -12,16 +16,16 @@ async function requestMigrationData(fromTimestamp: number, fromBlockNumber: numb
     userGlpGmMigrationStats: {
       gmDepositUsd: string;
       glpRedemptionUsd: string;
-      eligableRedemptionInArb: string;
-      eligableRedemptionUsd: string;
+      eligibleRedemptionInArb: string;
+      eligibleRedemptionUsd: string;
       glpRedemptionWeightedAverageFeeBps: number;
       account: string;
     }[];
     glpGmMigrationStatBefore: {
-      eligableRedemptionInArb: string;
+      eligibleRedemptionInArb: string;
     };
     glpGmMigrationStatAfter: {
-      eligableRedemptionInArb: string;
+      eligibleRedemptionInArb: string;
     };
   } = await requestSubgraph(`{
     userGlpGmMigrationStats(
@@ -29,14 +33,14 @@ async function requestMigrationData(fromTimestamp: number, fromBlockNumber: numb
       where: {
         timestamp: ${fromTimestamp},
         period: "1w"
-        eligableRedemptionInArb_gt: 0
+        eligibleRedemptionInArb_gt: 0
       }
     ) {
       gmDepositUsd
       glpRedemptionUsd
       glpRedemptionWeightedAverageFeeBps
-      eligableRedemptionInArb
-      eligableRedemptionUsd
+      eligibleRedemptionInArb
+      eligibleRedemptionUsd
       account
     }
     glpGmMigrationStatBefore: glpGmMigrationStat(
@@ -45,7 +49,7 @@ async function requestMigrationData(fromTimestamp: number, fromBlockNumber: numb
         number: ${fromBlockNumber}
       }
     ) {
-      eligableRedemptionInArb
+      eligibleRedemptionInArb
     }
     glpGmMigrationStatAfter: glpGmMigrationStat(
       id:"total",
@@ -53,7 +57,7 @@ async function requestMigrationData(fromTimestamp: number, fromBlockNumber: numb
         number: ${toBlockNumber}
       }
     ) {
-      eligableRedemptionInArb
+      eligibleRedemptionInArb
     }
   }`);
 
@@ -63,37 +67,17 @@ async function requestMigrationData(fromTimestamp: number, fromBlockNumber: numb
         ...item,
         gmDepositUsd: bigNumberify(item.gmDepositUsd),
         glpRedemptionUsd: bigNumberify(item.glpRedemptionUsd),
-        eligableRedemptionInArb: bigNumberify(item.eligableRedemptionInArb),
-        eligableRedemptionUsd: bigNumberify(item.eligableRedemptionUsd),
+        eligibleRedemptionInArb: bigNumberify(item.eligibleRedemptionInArb),
+        eligibleRedemptionUsd: bigNumberify(item.eligibleRedemptionUsd),
       };
     }),
-    eligableRedemptionInArbBefore: bigNumberify(data.glpGmMigrationStatBefore.eligableRedemptionInArb),
-    eligableRedemptionInArbAfter: bigNumberify(data.glpGmMigrationStatAfter.eligableRedemptionInArb),
+    eligibleRedemptionInArbBefore: bigNumberify(data.glpGmMigrationStatBefore?.eligibleRedemptionInArb ?? 0),
+    eligibleRedemptionInArbAfter: bigNumberify(data.glpGmMigrationStatAfter.eligibleRedemptionInArb),
   };
 }
 
 async function main() {
-  if (hre.network.name !== "arbitrum") {
-    throw new Error("Unsupported network");
-  }
-
-  if (!process.env.FROM_DATE) {
-    throw new Error("FROM_DATE is required");
-  }
-
-  const fromDate = new Date(process.env.FROM_DATE);
-  if (fromDate.getDay() !== 3) {
-    throw Error(`FROM_DATE should be Wednesday: ${fromDate.getDay()}`);
-  }
-
-  const fromTimestamp = Math.floor(+fromDate / 1000);
-
-  let toTimestamp = fromTimestamp + 86400 * 7;
-  if (toTimestamp > Date.now() / 1000) {
-    console.warn("WARN: epoch has not ended yet");
-    toTimestamp = Math.floor(Date.now() / 1000) - 60;
-  }
-  const toDate = new Date(toTimestamp * 1000);
+  const { fromTimestamp, fromDate, toTimestamp, toDate } = processArgs();
 
   const [fromBlock, toBlock] = await Promise.all([
     getBlockByTimestamp(fromTimestamp),
@@ -104,7 +88,7 @@ async function main() {
   console.log("From: %s (timestamp %s)", fromDate.toISOString().substring(0, 19), fromTimestamp);
   console.log("To: %s (timestamp %s)", toDate.toISOString().substring(0, 19), toTimestamp);
 
-  const { userGlpGmMigrationStats, eligableRedemptionInArbAfter, eligableRedemptionInArbBefore } =
+  const { userGlpGmMigrationStats, eligibleRedemptionInArbAfter, eligibleRedemptionInArbBefore } =
     await requestMigrationData(fromTimestamp, fromBlock.number, toBlock.number);
 
   if (userGlpGmMigrationStats.length === 0) {
@@ -119,24 +103,25 @@ async function main() {
   const MIN_REWARD_THRESHOLD = expandDecimals(1, 17); // 0.1 ARB
   let userTotalRewards = bigNumberify(0);
   let usersBelowThreshold = 0;
+  let eligibleUsers = 0;
   let glpRedemptionWeightedAverageFeeBpsSum = 0;
-  let userEligableRedemptionInArb = bigNumberify(0);
+  let userEligibleRedemptionInArb = bigNumberify(0);
 
   for (const item of userGlpGmMigrationStats) {
-    const userRebates = item.eligableRedemptionInArb
+    const userRebates = item.eligibleRedemptionInArb
       .mul(item.glpRedemptionWeightedAverageFeeBps)
       .div(BASIS_POINTS_DIVISOR);
 
-    userEligableRedemptionInArb = userEligableRedemptionInArb.add(item.eligableRedemptionInArb);
+    userEligibleRedemptionInArb = userEligibleRedemptionInArb.add(item.eligibleRedemptionInArb);
 
     userTotalRewards = userTotalRewards.add(userRebates);
     glpRedemptionWeightedAverageFeeBpsSum += item.glpRedemptionWeightedAverageFeeBps;
 
     console.log(
-      "user %s eligable rebate: %s %s redeemed glp: $%s rebates fee bps: %s gm deposit: $%s",
+      "user %s eligible rebate: %s %s redeemed glp: $%s rebates fee bps: %s gm deposit: $%s",
       item.account,
-      `${formatAmount(item.eligableRedemptionInArb, 18, 2, true)} ARB`.padEnd(13),
-      `($${formatAmount(item.eligableRedemptionUsd, 30, 2, true)})`.padEnd(12),
+      `${formatAmount(item.eligibleRedemptionInArb, 18, 2, true)} ARB`.padEnd(15),
+      `($${formatAmount(item.eligibleRedemptionUsd, 30, 2, true)})`.padEnd(14),
       formatAmount(item.glpRedemptionUsd, 30, 2, true).padEnd(12),
       item.glpRedemptionWeightedAverageFeeBps.toString().padEnd(2),
       formatAmount(item.gmDepositUsd, 30, 2, true).padEnd(12)
@@ -146,75 +131,40 @@ async function main() {
       usersBelowThreshold++;
       continue;
     }
+    eligibleUsers++;
 
     jsonResult[item.account] = userRebates.toString();
   }
+
+  overrideReceivers(jsonResult);
 
   console.log(
     "average redemption bps: %s",
     (glpRedemptionWeightedAverageFeeBpsSum / userGlpGmMigrationStats.length).toFixed(2)
   );
   console.log("min reward threshold: %s ARB", formatAmount(MIN_REWARD_THRESHOLD, 18, 2));
-  console.log("eligable users: %s", Object.keys(jsonResult).length);
+  console.log("eligible users: %s", eligibleUsers);
   console.log("users below threshold: %s", usersBelowThreshold);
 
   console.log(
-    "global eligable redemptions before: %s ARB after: %s ARB (%s ARB)",
-    formatAmount(eligableRedemptionInArbBefore, 18, 2, true),
-    formatAmount(eligableRedemptionInArbAfter, 18, 2, true),
-    formatAmount(eligableRedemptionInArbAfter.sub(eligableRedemptionInArbBefore), 18, 2, true)
+    "global eligible redemptions before: %s ARB after: %s ARB (+%s ARB)",
+    formatAmount(eligibleRedemptionInArbBefore, 18, 2, true),
+    formatAmount(eligibleRedemptionInArbAfter, 18, 2, true),
+    formatAmount(eligibleRedemptionInArbAfter.sub(eligibleRedemptionInArbBefore), 18, 2, true)
   );
-  console.log("sum of user eligable redemptions: %s ARB", formatAmount(userEligableRedemptionInArb, 18, 2, true));
-  console.log("sum of user rewards: %s ARB", formatAmount(userTotalRewards, 18, 2));
+  console.log("sum of user eligible redemptions: %s ARB", formatAmount(userEligibleRedemptionInArb, 18, 2, true));
+  console.log("sum of user rewards: %s ARB", formatAmount(userTotalRewards, 18, 2, true));
 
   const tokens = await hre.gmx.getTokens();
   const arbToken = tokens.ARB;
 
-  const dirpath = path.join(__dirname, "distributions", `epoch_${fromDate.toISOString().substring(0, 10)}`);
-  if (!fs.existsSync(dirpath)) {
-    fs.mkdirSync(dirpath);
-  }
-  const filename = path.join(dirpath, `stipGlpMigrationRebatesDistribution.json`);
-
-  fs.writeFileSync(
-    filename,
-    JSON.stringify(
-      {
-        token: arbToken.address,
-        distributionTypeId: STIP_MIGRATION_DISTRIBUTION_TYPE_ID,
-        amounts: jsonResult,
-        fromTimestamp,
-        toTimestamp,
-      },
-      null,
-      4
-    )
-  );
-  console.log("data is saved to %s", filename);
-
-  const amounts = Object.values(jsonResult);
-  const recipients = Object.keys(jsonResult);
-  const batchSenderCalldata = getBatchSenderCalldata(
+  saveDistribution(
+    fromDate,
+    "stipGlpMigrationRebates",
     arbToken.address,
-    recipients,
-    amounts,
+    jsonResult,
     STIP_MIGRATION_DISTRIBUTION_TYPE_ID
   );
-  const filename2 = path.join(dirpath, `stipGlpMigrationRebatesDistribution_transactionData.json`);
-  fs.writeFileSync(
-    filename2,
-    JSON.stringify(
-      {
-        userTotalRewards: userTotalRewards.toString(),
-        batchSenderCalldata,
-      },
-      null,
-      4
-    )
-  );
-
-  console.log("send batches: %s", Object.keys(batchSenderCalldata).length);
-  console.log("batch sender calldata saved to %s", filename2);
 }
 
 main()
