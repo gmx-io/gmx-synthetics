@@ -120,8 +120,9 @@ async function main() {
     glpRedemptionWeightedAverageFeeBpsSum += item.glpRedemptionWeightedAverageFeeBps;
 
     console.log(
-      "user %s eligible rebate: %s %s redeemed glp: $%s rebates fee bps: %s gm deposit: $%s",
+      "user %s rebate %s: eligible redemption: %s %s redeemed glp: $%s rebates fee bps: %s gm deposit: $%s",
       item.account,
+      formatAmount(userRebates, 18, 2, true),
       `${formatAmount(item.eligibleRedemptionInArb, 18, 2, true)} ARB`.padEnd(15),
       `($${formatAmount(item.eligibleRedemptionUsd, 30, 2, true)})`.padEnd(14),
       formatAmount(item.glpRedemptionUsd, 30, 2, true).padEnd(12),

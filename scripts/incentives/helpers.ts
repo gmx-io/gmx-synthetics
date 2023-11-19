@@ -24,12 +24,14 @@ const API_ENDPOINT = "https://arbitrum-api.gmxinfra.io";
 export const STIP_LP_DISTRIBUTION_TYPE_ID = 1001;
 export const STIP_MIGRATION_DISTRIBUTION_TYPE_ID = 1002;
 export const STIP_TRADING_INCENTIVES_DISTRIBUTION_TYPE_ID = 1003;
+const TEST_DISTRIBUTION_TYPE_ID = 9876;
 
 export function getDistributionTypeName(distributionTypeId: number) {
   return {
     [STIP_LP_DISTRIBUTION_TYPE_ID]: "STIP LP",
     [STIP_MIGRATION_DISTRIBUTION_TYPE_ID]: "STIP MIGRATION",
     [STIP_TRADING_INCENTIVES_DISTRIBUTION_TYPE_ID]: "STIP TRADING INCENTIVES",
+    [TEST_DISTRIBUTION_TYPE_ID]: "TEST",
   }[distributionTypeId];
 }
 
@@ -182,11 +184,13 @@ export function saveDistribution(
   jsonResult: Record<string, string>,
   distributionTypeId: number
 ) {
-  const dirpath = path.join(__dirname, "distributions", `epoch_${fromDate.toISOString().substring(0, 10)}`);
+  const dateStr = fromDate.toISOString().substring(0, 10);
+  const dirpath = path.join(__dirname, "distributions", `epoch_${dateStr}`);
   if (!fs.existsSync(dirpath)) {
     fs.mkdirSync(dirpath);
   }
   const filename = path.join(dirpath, `${name}_distribution.json`);
+  const id = `${dateStr}_${distributionTypeId}`;
 
   fs.writeFileSync(
     filename,
@@ -194,6 +198,7 @@ export function saveDistribution(
       {
         token: tokenAddress,
         distributionTypeId,
+        id,
         amounts: jsonResult,
       },
       null,
@@ -211,7 +216,7 @@ export function saveDistribution(
     filename2,
     JSON.stringify(
       {
-        totalAmount,
+        totalAmount: totalAmount.toString(),
         batchSenderCalldata,
       },
       null,

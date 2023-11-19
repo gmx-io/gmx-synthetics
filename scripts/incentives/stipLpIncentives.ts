@@ -170,28 +170,31 @@ async function main() {
       );
     }
 
+    const marketRewards = lpAllocationData.rewardsPerMarket[marketAddress];
     console.log(
-      "market %s userBalancesSum: %s marketTokensSupply: %s",
+      "market %s allocation %s userBalancesSum: %s marketTokensSupply: %s",
       marketAddress,
+      formatAmount(marketRewards, 18, 2, true),
       formatAmount(userBalancesSum, 18, 2, true),
       formatAmount(marketTokensSupply, 18, 2, true)
     );
 
-    const marketRewards = lpAllocationData.rewardsPerMarket[marketAddress];
     for (const [userAccount, userBalance] of Object.entries(userBalances)) {
-      console.log(
-        "market %s user %s avg balance %s (%s%)",
-        marketAddress,
-        userAccount,
-        formatAmount(userBalance, 18, 2, true).padStart(12),
-        formatAmount(userBalance.mul(10000).div(marketTokensSupply), 2, 2)
-      );
-
       if (!(userAccount in usersDistributionResult)) {
         usersDistributionResult[userAccount] = bigNumberify(0);
       }
 
       const userRewards = userBalance.mul(marketRewards).div(marketTokensSupply);
+
+      console.log(
+        "market %s user %s rewards %s ARB avg balance %s (%s%)",
+        marketAddress,
+        userAccount,
+        formatAmount(userRewards, 18, 2, true).padStart(8),
+        formatAmount(userBalance, 18, 2, true).padStart(12),
+        formatAmount(userBalance.mul(10000).div(marketTokensSupply), 2, 2)
+      );
+
       usersDistributionResult[userAccount] = usersDistributionResult[userAccount].add(userRewards);
     }
   }
