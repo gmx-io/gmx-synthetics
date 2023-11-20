@@ -127,11 +127,11 @@ const baseMarketConfig: BaseMarketConfig = {
   maxPnlFactorForTradersLongs: decimalToFloat(8, 1), // 80%
   maxPnlFactorForTradersShorts: decimalToFloat(8, 1), // 80%
 
-  maxPnlFactorForAdlLongs: decimalToFloat(1, 0), // 100%, no ADL until normal operation
-  maxPnlFactorForAdlShorts: decimalToFloat(1, 0), // 100%, no ADL until normal operation
+  maxPnlFactorForAdlLongs: decimalToFloat(1, 0), // 100%, no ADL under normal operation
+  maxPnlFactorForAdlShorts: decimalToFloat(1, 0), // 100%, no ADL under normal operation
 
-  minPnlFactorAfterAdlLongs: decimalToFloat(8, 1), // 80%, no ADL until normal operation
-  minPnlFactorAfterAdlShorts: decimalToFloat(8, 1), // 80%, no ADL until normal operation
+  minPnlFactorAfterAdlLongs: decimalToFloat(8, 1), // 80%, no ADL under normal operation
+  minPnlFactorAfterAdlShorts: decimalToFloat(8, 1), // 80%, no ADL under normal operation
 
   maxPnlFactorForDepositsLongs: decimalToFloat(8, 1), // 80%
   maxPnlFactorForDepositsShorts: decimalToFloat(8, 1), // 80%
