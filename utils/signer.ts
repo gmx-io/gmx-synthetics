@@ -15,13 +15,17 @@ export async function signExternally(unsignedTransaction) {
   const app = express();
   app.use(cors());
 
+  const server = app.listen(port, () => {
+    console.log(`server started at port ${port}`);
+  });
+
   app.get("/", (req, res) => {
     res.contentType("text/plain");
     res.send(unsignedTransactionStr);
   });
 
-  app.listen(port, () => {
-    console.log(`server started at port ${port}`);
+  app.post("/completed", () => {
+    server.close();
   });
 }
 

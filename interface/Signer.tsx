@@ -1,38 +1,42 @@
 import React from "react";
 import useSWR from "swr";
-import "@rainbow-me/rainbowkit/styles.css";
 import { useSendTransaction } from "wagmi";
+import { toast } from "react-toastify";
 
-import { getDefaultWallets, RainbowKitProvider } from "@rainbow-me/rainbowkit";
-import { configureChains, createConfig, WagmiConfig } from "wagmi";
-import { publicProvider } from "wagmi/providers/public";
-import { arbitrum, avalanche } from "wagmi/chains";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
-const { chains, publicClient } = configureChains([arbitrum, avalanche], [publicProvider()]);
-
-const { connectors } = getDefaultWallets({
-  appName: "GMX Synthetics",
-  projectId: "gmx-synthetics",
-  chains,
-});
-
-const wagmiConfig = createConfig({
-  autoConnect: true,
-  connectors,
-  publicClient,
-});
+const toastConfig = {
+  position: "bottom-right",
+  autoClose: 5000,
+  hideProgressBar: true,
+  closeOnClick: true,
+  pauseOnHover: true,
+  draggable: false,
+  progress: undefined,
+  theme: "light",
+};
 
 export default function Signer() {
   const { data: unsignedTransaction, error } = useSWR("http://localhost:3030/", fetcher);
   if (error) {
-    console.log("error", error);
+    console.error("error", error);
   }
 
   const { sendTransaction } = useSendTransaction({
-    request: unsignedTransaction,
+    ...unsignedTransaction,
+    onError: (error) => {
+      toast.error(`Transaction failed: ${error}`, toastConfig);
+    },
+    onSuccess: (data) => {
+      toast.success(`Transaction sent: ${data}`, toastConfig);
+      fetch("http://localhost:3030/completed", {
+        method: "post",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ unsignedTransaction }),
+      });
+    },
   });
 
   const onClickPrimary = () => {
@@ -41,31 +45,28 @@ export default function Signer() {
 
   return (
     <>
-      <WagmiConfig config={wagmiConfig}>
-        <RainbowKitProvider chains={chains}>
-          <h1>Signer</h1>
-          <ConnectButton />
-          <br />
-          <div>Transaction Data</div>
-          <div style={{ overflowWrap: "break-word", width: "100%" }}>{JSON.stringify(unsignedTransaction)}</div>
-          <br />
-          <button
-            style={{
-              backgroundColor: "rgb(14, 118, 253)",
-              width: "100px",
-              padding: "14px 0",
-              border: "none",
-              borderRadius: "14px",
-              color: "white",
-              fontWeight: "700",
-              fontSize: "16px",
-            }}
-            onClick={onClickPrimary}
-          >
-            Sign
-          </button>
-        </RainbowKitProvider>
-      </WagmiConfig>
+      <h1>Signer</h1>
+      <ConnectButton />
+      <br />
+      <div>Transaction Data</div>
+      <div style={{ overflowWrap: "break-word", width: "100%" }}>{JSON.stringify(unsignedTransaction)}</div>
+      <br />
+      <button
+        style={{
+          backgroundColor: "rgb(14, 118, 253)",
+          width: "100px",
+          padding: "14px 0",
+          border: "none",
+          borderRadius: "14px",
+          color: "white",
+          fontWeight: "700",
+          fontSize: "16px",
+          cursor: "pointer",
+        }}
+        onClick={onClickPrimary}
+      >
+        Sign
+      </button>
     </>
   );
 }
