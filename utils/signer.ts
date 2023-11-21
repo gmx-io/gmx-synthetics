@@ -1,4 +1,24 @@
 import hre from "hardhat";
+import express from "express";
+import cors from "cors";
+
+export async function signExternally(unsignedTransaction) {
+  const unsignedTransactionStr = JSON.stringify(unsignedTransaction);
+  console.log("Transaction to be signed: ", unsignedTransactionStr);
+  const port = 3030;
+
+  const app = express();
+  app.use(cors());
+
+  app.get("/", (req, res) => {
+    res.contentType("text/plain");
+    res.send(unsignedTransactionStr);
+  });
+
+  app.listen(port, () => {
+    console.log(`server started at port ${port}`);
+  });
+}
 
 export async function getFrameSigner() {
   try {

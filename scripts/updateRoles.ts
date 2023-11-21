@@ -1,7 +1,6 @@
 import hre from "hardhat";
-import { getFrameSigner } from "../utils/signer";
-import { contractAt } from "../utils/deploy";
 import { hashString } from "../utils/hash";
+import { signExternally } from "../utils/signer";
 
 const expectedTimelockMethods = [
   "signalGrantRole",
@@ -11,15 +10,15 @@ const expectedTimelockMethods = [
   "cancelGrantRole",
 ];
 
-async function getTimelock({ signer }) {
+async function getTimelock() {
   const network = hre.network.name;
 
   if (network === "arbitrum") {
-    return await contractAt("Timelock", "0x62aB76Ed722C507f297f2B97920dCA04518fe274", signer);
+    return await ethers.getContractAt("Timelock", "0x62aB76Ed722C507f297f2B97920dCA04518fe274");
   }
 
   if (network === "avalanche") {
-    return await contractAt("Timelock", "0x4Db91a1Fa4ba3c75510B2885d7d7da48E0209F38", signer);
+    return await ethers.getContractAt("Timelock", "0x4Db91a1Fa4ba3c75510B2885d7d7da48E0209F38");
   }
 
   throw new Error("Unsupported network");
@@ -34,7 +33,7 @@ async function write({ timelock, multicallWriteParams }) {
       throw new Error("multicallWriteParams is empty");
     }
 
-    await timelock.multicall(multicallWriteParams);
+    await signExternally(await timelock.populateTransaction.multicall(multicallWriteParams));
   } else {
     console.log("NOTE: executed in read-only mode, no transactions were sent");
   }
@@ -66,14 +65,17 @@ async function getGrantRoleActionKeysToCancel({ timelock }) {
       if (eventName === "SignalGrantRole") {
         const actionKey = log.topics[2];
         const timestamp = await timelock.pendingActions(actionKey);
-        if (timestamp === 0) {
+        if (timestamp.gt(0)) {
+          actionKeys.push(actionKey);
+        } else {
           console.warn(`No pending action found for ${actionKey}`);
         }
       }
     } catch (ex) {
-      console.info("Can't parse log %s", i);
+      console.info("Can't parse log %s", i, ex);
     }
   }
+  console.log("actionKeys", actionKeys);
 
   return actionKeys;
 }
@@ -83,9 +85,8 @@ async function getGrantRoleActionKeysToCancel({ timelock }) {
 // update rolesToAdd and rolesToRemove here
 // then run e.g. TIMELOCK_METHOD=signalGrantRole npx hardhat run --network arbitrum scripts/updateRoles.ts
 async function main() {
-  const signer = await getFrameSigner();
   // NOTE: the existing Timelock needs to be used to grant roles to new contracts including new Timelocks
-  const timelock = await getTimelock({ signer });
+  const timelock = await getTimelock();
 
   const rolesToAdd = {
     arbitrum: [
@@ -249,7 +250,7 @@ async function main() {
   }
 
   if (timelockMethod === "cancelGrantRole") {
-    const actionKeys = getGrantRoleActionKeysToCancel({ timelock });
+    const actionKeys = await getGrantRoleActionKeysToCancel({ timelock });
     for (const actionKey of actionKeys) {
       multicallWriteParams.push(timelock.interface.encodeFunctionData("cancelAction", [actionKey]));
     }
@@ -258,11 +259,7 @@ async function main() {
   await write({ timelock, multicallWriteParams });
 }
 
-main()
-  .then(() => {
-    process.exit(0);
-  })
-  .catch((ex) => {
-    console.error(ex);
-    process.exit(1);
-  });
+main().catch((ex) => {
+  console.error(ex);
+  process.exit(1);
+});
