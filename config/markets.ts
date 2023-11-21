@@ -283,6 +283,13 @@ const config: {
 
       maxOpenInterestForLongs: decimalToFloat(64_000_000),
       maxOpenInterestForShorts: decimalToFloat(64_000_000),
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(8, 13), // 0.0000000000008, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(1, 8), // 0.000001%,  0.0036% per hour, 31.5% per year
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
@@ -309,6 +316,13 @@ const config: {
 
       maxOpenInterestForLongs: decimalToFloat(64_000_000),
       maxOpenInterestForShorts: decimalToFloat(64_000_000),
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(8, 13), // 0.0000000000008, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(1, 8), // 0.000001%,  0.0036% per hour, 31.5% per year
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "XRP", longToken: "WETH", shortToken: "USDC" },
@@ -344,6 +358,13 @@ const config: {
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
       maxOpenInterestForShorts: decimalToFloat(1_000_000),
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "USDC" },
@@ -379,6 +400,13 @@ const config: {
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
       maxOpenInterestForShorts: decimalToFloat(1_000_000),
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
@@ -412,6 +440,13 @@ const config: {
 
       maxOpenInterestForLongs: decimalToFloat(2_000_000),
       maxOpenInterestForShorts: decimalToFloat(2_000_000),
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "LTC", longToken: "WETH", shortToken: "USDC" },
@@ -447,6 +482,13 @@ const config: {
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
       maxOpenInterestForShorts: decimalToFloat(1_000_000),
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "UNI", longToken: "UNI", shortToken: "USDC" },
@@ -480,6 +522,13 @@ const config: {
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
       maxOpenInterestForShorts: decimalToFloat(1_000_000),
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "LINK", longToken: "LINK", shortToken: "USDC" },
@@ -513,6 +562,13 @@ const config: {
 
       maxOpenInterestForLongs: decimalToFloat(2_000_000),
       maxOpenInterestForShorts: decimalToFloat(2_000_000),
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "ARB", longToken: "ARB", shortToken: "USDC" },
@@ -541,7 +597,7 @@ const config: {
       borrowingFactorForLongs: decimalToFloat(94, 10), // 0.0000000094 * 80% = 0.0000000075, 0.00000075% / second, 23,65% per year if the pool is 100% utilized
       borrowingFactorForShorts: decimalToFloat(94, 10), // 0.0000000094 * 80% = 0.0000000075, 0.00000075% / second, 23.65% per year if the pool is 100% utilized
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(1, 12), // 0.000000000001, at least 5.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
       maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
@@ -632,6 +688,13 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(8, 13), // 0.0000000000008, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(1, 8), // 0.000001%,  0.0036% per hour, 31.5% per year
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "WETH.e", longToken: "WETH.e", shortToken: "USDC" },
@@ -655,6 +718,13 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(8, 13), // 0.0000000000008, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(1, 8), // 0.000001%,  0.0036% per hour, 31.5% per year
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "XRP", longToken: "WAVAX", shortToken: "USDC" },
@@ -680,6 +750,13 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 5,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 9),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 9),
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WAVAX", shortToken: "USDC" },
@@ -705,6 +782,13 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 2,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
@@ -728,6 +812,13 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 2,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "LTC", longToken: "WAVAX", shortToken: "USDC" },
@@ -753,6 +844,13 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(25, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(25, 10),
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" },
@@ -777,7 +875,7 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 8),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 8),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(1, 12), // 0.000000000001, at least 5.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
       maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
