@@ -24,7 +24,7 @@ async function getTimelock({ signer }) {
   throw new Error("Unsupported network");
 }
 
-// update roles in scripts/validateRoles.ts
+// update roles in config/roles.ts
 // then run scripts/validateRoles.ts, it should output the role changes
 // update rolesToAdd and rolesToRemove here
 // then run e.g. TIMELOCK_METHOD=signalGrantRole npx hardhat run --network arbitrum scripts/updateRoles.ts
