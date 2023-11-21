@@ -8,6 +8,7 @@ const expectedTimelockMethods = [
   "grantRoleAfterSignal",
   "signalRevokeRole",
   "revokeRoleAfterSignal",
+  "cancelGrantRole",
 ];
 
 async function getTimelock({ signer }) {
@@ -22,6 +23,59 @@ async function getTimelock({ signer }) {
   }
 
   throw new Error("Unsupported network");
+}
+
+async function write({ timelock, multicallWriteParams }) {
+  console.log(`updating ${multicallWriteParams.length} roles`);
+  console.log("multicallWriteParams", multicallWriteParams);
+
+  if (process.env.WRITE === "true") {
+    if (multicallWriteParams.length === 0) {
+      throw new Error("multicallWriteParams is empty");
+    }
+
+    await timelock.multicall(multicallWriteParams);
+  } else {
+    console.log("NOTE: executed in read-only mode, no transactions were sent");
+  }
+}
+
+async function getGrantRoleActionKeysToCancel({ timelock }) {
+  const txHash = process.env.TX;
+  if (!txHash) {
+    throw new Error(
+      "Missing TX env var. Example of usage: `TX=0x123... npx hardhat run scripts/decodeTransactionEvents.ts`"
+    );
+  }
+
+  console.log("Retrieving transaction %s", txHash);
+
+  const receipt = await hre.ethers.provider.getTransactionReceipt(txHash);
+  if (!receipt) {
+    throw new Error("Transaction not found");
+  }
+
+  const artifact = await hre.deployments.getArtifact("EventEmitter");
+  const eventEmitterInterface = new hre.ethers.utils.Interface(artifact.abi);
+
+  const actionKeys = [];
+  for (const [i, log] of receipt.logs.entries()) {
+    try {
+      const parsedLog = eventEmitterInterface.parseLog(log);
+      const eventName = parsedLog.args[1];
+      if (eventName === "SignalGrantRole") {
+        const actionKey = log.topics[2];
+        const timestamp = await timelock.pendingActions(actionKey);
+        if (timestamp === 0) {
+          console.warn(`No pending action found for ${actionKey}`);
+        }
+      }
+    } catch (ex) {
+      console.info("Can't parse log %s", i);
+    }
+  }
+
+  return actionKeys;
 }
 
 // update roles in config/roles.ts
@@ -194,18 +248,14 @@ async function main() {
     }
   }
 
-  console.log(`updating ${multicallWriteParams.length} roles`);
-  console.log("multicallWriteParams", multicallWriteParams);
-
-  if (process.env.WRITE === "true") {
-    if (multicallWriteParams.length === 0) {
-      throw new Error("multicallWriteParams is empty");
+  if (timelockMethod === "cancelGrantRole") {
+    const actionKeys = getGrantRoleActionKeysToCancel({ timelock });
+    for (const actionKey of actionKeys) {
+      multicallWriteParams.push(timelock.interface.encodeFunctionData("cancelAction", [actionKey]));
     }
-
-    await timelock.multicall(multicallWriteParams);
-  } else {
-    console.log("NOTE: executed in read-only mode, no transactions were sent");
   }
+
+  await write({ timelock, multicallWriteParams });
 }
 
 main()
