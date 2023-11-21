@@ -9,16 +9,7 @@ const func = createDeployFunction({
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
-  libraryNames: [
-    "CallbackUtils",
-    "DepositStoreUtils",
-    "FeeUtils",
-    "MarketEventUtils",
-    "MarketStoreUtils",
-    "OrderStoreUtils",
-    "ReferralUtils",
-    "WithdrawalStoreUtils",
-  ],
+  libraryNames: ["OrderStoreUtils"],
   afterDeploy: async ({ deployedContract, network, deployments }) => {
     if (!["avalancheFuji", "arbitrumGoerli", "hardhat"].includes(network.name)) {
       deployments.log("skip granting roles to SubaccountRouter");
