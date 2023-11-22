@@ -1,11 +1,10 @@
 import hre from "hardhat";
-import { getFrameSigner } from "../utils/signer";
+import { timelockWriteMulticall } from "../utils/timelock";
 
 const expectedTimelockMethods = ["signalSetRealtimeFeed", "setRealtimeFeedAfterSignal"];
 
 async function main() {
-  const signer = await getFrameSigner();
-  const timelock = await hre.ethers.getContract("Timelock", signer);
+  const timelock = await hre.ethers.getContract("Timelock");
   console.log("timelock", timelock.address);
 
   const realtimeFeedConfig = {
@@ -77,13 +76,7 @@ async function main() {
   }
 
   console.log(`updating ${multicallWriteParams.length} feeds`);
-  console.log("multicallWriteParams", multicallWriteParams);
-
-  if (process.env.WRITE === "true") {
-    await timelock.multicall(multicallWriteParams);
-  } else {
-    console.log("NOTE: executed in read-only mode, no transactions were sent");
-  }
+  timelockWriteMulticall({ timelock, multicallWriteParams });
 }
 
 main()

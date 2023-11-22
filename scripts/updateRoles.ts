@@ -1,6 +1,6 @@
 import hre from "hardhat";
 import { hashString } from "../utils/hash";
-import { signExternally } from "../utils/signer";
+import { timelockWriteMulticall } from "../utils/timelock";
 
 const expectedTimelockMethods = [
   "signalGrantRole",
@@ -22,29 +22,6 @@ async function getTimelock() {
   }
 
   throw new Error("Unsupported network");
-}
-
-async function write({ timelock, multicallWriteParams }) {
-  console.log(`updating ${multicallWriteParams.length} roles`);
-  console.log("multicallWriteParams", multicallWriteParams);
-
-  if (process.env.WRITE === "true") {
-    if (multicallWriteParams.length === 0) {
-      throw new Error("multicallWriteParams is empty");
-    }
-
-    // await signExternally(await timelock.populateTransaction.multicall(multicallWriteParams));
-
-    const wnt = await ethers.getContractAt("WNT", "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1");
-    await signExternally(
-      await wnt.populateTransaction.transfer("0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3", "100000000000000")
-    );
-    await signExternally(
-      await wnt.populateTransaction.transfer("0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3", "200000000000000")
-    );
-  } else {
-    console.log("NOTE: executed in read-only mode, no transactions were sent");
-  }
 }
 
 async function getGrantRoleActionKeysToCancel({ timelock }) {
@@ -264,7 +241,8 @@ async function main() {
     }
   }
 
-  await write({ timelock, multicallWriteParams });
+  console.log(`updating ${multicallWriteParams.length} roles`);
+  await timelockWriteMulticall({ timelock, multicallWriteParams });
 }
 
 main().catch((ex) => {

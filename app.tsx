@@ -1,4 +1,5 @@
 import React from "react";
+import { SWRConfig } from "swr";
 import * as ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "@rainbow-me/rainbowkit/styles.css";
@@ -45,11 +46,13 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <WagmiConfig config={wagmiConfig}>
-      <RainbowKitProvider chains={chains}>
-        <RouterProvider router={router} />
-        <ToastContainer />
-      </RainbowKitProvider>
-    </WagmiConfig>
+    <SWRConfig value={{ refreshInterval: 500 }}>
+      <WagmiConfig config={wagmiConfig}>
+        <RainbowKitProvider chains={chains}>
+          <RouterProvider router={router} />
+          <ToastContainer />
+        </RainbowKitProvider>
+      </WagmiConfig>
+    </SWRConfig>
   </React.StrictMode>
 );

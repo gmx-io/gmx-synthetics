@@ -23,8 +23,10 @@ export default function Signer() {
       <h1>Signer</h1>
       <ConnectButton />
       <br />
+      {error && <div>{error.toString()}</div>}
       <div className="Signer-transactionList">
-        {dataToSign &&
+        {!error &&
+          dataToSign &&
           dataToSign.unsignedTransactionList &&
           dataToSign.unsignedTransactionList.map((item) => {
             return (
