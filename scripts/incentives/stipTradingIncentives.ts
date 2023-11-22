@@ -126,6 +126,12 @@ async function main() {
 
   overrideReceivers(jsonResult);
 
+  console.log(
+    "Trading incentives for period from %s to %s",
+    fromDate.toISOString().substring(0, 10),
+    toDate.toISOString().substring(0, 10)
+  );
+
   console.log("min reward threshold: %s ARB", formatAmount(MIN_REWARD_THRESHOLD, 18, 2));
   console.log("eligible users: %s", eligibleUsers);
   console.log("users below threshold: %s", usersBelowThreshold);

@@ -233,6 +233,12 @@ async function main() {
 
   overrideReceivers(jsonResult);
 
+  console.log(
+    "Liquidity incentives for period from %s to %s",
+    fromDate.toISOString().substring(0, 10),
+    toDate.toISOString().substring(0, 10)
+  );
+
   for (const marketAddress of Object.keys(lpAllocationData.rewardsPerMarket)) {
     console.log(
       "market %s allocation: %s",

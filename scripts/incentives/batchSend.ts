@@ -114,9 +114,19 @@ async function main() {
         );
       }
 
-      const tx = await batchSender.sendAndEmit(data.token, batchRecipients, batchAmounts, data.distributionTypeId);
-      console.log("sent batch txn %s, waiting...", tx.hash);
-      await tx.wait();
+      if (process.env.DRY_RUN) {
+        const result = await batchSender.callStatic.sendAndEmit(
+          data.token,
+          batchRecipients,
+          batchAmounts,
+          data.distributionTypeId
+        );
+        console.log("result %s", result);
+      } else {
+        const tx = await batchSender.sendAndEmit(data.token, batchRecipients, batchAmounts, data.distributionTypeId);
+        console.log("sent batch txn %s, waiting...", tx.hash);
+        await tx.wait();
+      }
       console.log("done");
     }
 

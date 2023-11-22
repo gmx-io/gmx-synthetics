@@ -142,6 +142,12 @@ async function main() {
   overrideReceivers(jsonResult);
 
   console.log(
+    "GLP to GM migration for period from %s to %s",
+    fromDate.toISOString().substring(0, 10),
+    toDate.toISOString().substring(0, 10)
+  );
+
+  console.log(
     "average redemption bps: %s",
     (glpRedemptionWeightedAverageFeeBpsSum / userGlpGmMigrationStats.length).toFixed(2)
   );
