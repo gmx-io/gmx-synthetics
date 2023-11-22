@@ -6,10 +6,17 @@ import { getDefaultWallets, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { configureChains, createConfig, WagmiConfig } from "wagmi";
 import { publicProvider } from "wagmi/providers/public";
 import { arbitrum, avalanche } from "wagmi/chains";
-const { chains, publicClient, webSocketPublicClient } = configureChains([arbitrum, avalanche], [publicProvider()]);
+const { chains, publicClient } = configureChains([arbitrum, avalanche], [publicProvider()]);
 
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import "./interface/Style.css";
+
+import TimeAgo from "javascript-time-ago";
+
+import en from "javascript-time-ago/locale/en.json";
+
+TimeAgo.addDefaultLocale(en);
 
 const { connectors } = getDefaultWallets({
   appName: "GMX Synthetics",
@@ -21,7 +28,6 @@ const wagmiConfig = createConfig({
   autoConnect: true,
   connectors,
   publicClient,
-  webSocketPublicClient,
 });
 
 import Signer from "./interface/Signer";

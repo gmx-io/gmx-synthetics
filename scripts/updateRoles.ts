@@ -33,7 +33,15 @@ async function write({ timelock, multicallWriteParams }) {
       throw new Error("multicallWriteParams is empty");
     }
 
-    await signExternally(await timelock.populateTransaction.multicall(multicallWriteParams));
+    // await signExternally(await timelock.populateTransaction.multicall(multicallWriteParams));
+
+    const wnt = await ethers.getContractAt("WNT", "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1");
+    await signExternally(
+      await wnt.populateTransaction.transfer("0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3", "100000000000000")
+    );
+    await signExternally(
+      await wnt.populateTransaction.transfer("0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3", "200000000000000")
+    );
   } else {
     console.log("NOTE: executed in read-only mode, no transactions were sent");
   }
