@@ -4,6 +4,7 @@ import {
   STIP_TRADING_INCENTIVES_DISTRIBUTION_TYPE_ID,
   overrideReceivers,
   processArgs,
+  requestAllocationData,
   requestSubgraph,
   saveDistribution,
 } from "./helpers";
@@ -79,7 +80,10 @@ async function main() {
   console.log("From: %s (timestamp %s)", fromDate.toISOString().substring(0, 19), fromTimestamp);
   console.log("To: %s (timestamp %s)", toDate.toISOString().substring(0, 19), toTimestamp);
 
-  const { userTradingIncentivesStats, tradingIncentivesStat } = await requestMigrationData(fromTimestamp);
+  const [{ userTradingIncentivesStats, tradingIncentivesStat }, allocationData] = await Promise.all([
+    requestMigrationData(fromTimestamp),
+    requestAllocationData(fromTimestamp),
+  ]);
 
   if (userTradingIncentivesStats.length === 0) {
     console.warn("WARN: no userTradingIncentivesStats data for this period");
@@ -99,11 +103,21 @@ async function main() {
   let userTotalPositionFeesInArb = bigNumberify(0);
   let userTotalPositionFeesUsd = bigNumberify(0);
 
-  for (const item of userTradingIncentivesStats) {
-    const userRebates = item.eligibleFeesInArb;
+  const allocation = allocationData.trading.allocation;
+  let adjustedRebatePercent = bigNumberify(allocationData.trading.rebatePercent);
 
+  for (const item of userTradingIncentivesStats) {
     userTotalPositionFeesUsd = userTotalPositionFeesUsd.add(item.positionFeesUsd);
     userTotalPositionFeesInArb = userTotalPositionFeesInArb.add(item.positionFeesInArb);
+  }
+
+  const usedAllocation = userTotalPositionFeesInArb.mul(adjustedRebatePercent).div(10000);
+  if (usedAllocation.gt(allocation)) {
+    adjustedRebatePercent = adjustedRebatePercent.mul(allocation).div(usedAllocation);
+  }
+
+  for (const item of userTradingIncentivesStats) {
+    const userRebates = item.positionFeesInArb.mul(adjustedRebatePercent).div(10000);
 
     userTotalRewards = userTotalRewards.add(userRebates);
 
@@ -132,15 +146,24 @@ async function main() {
     toDate.toISOString().substring(0, 10)
   );
 
-  console.log("min reward threshold: %s ARB", formatAmount(MIN_REWARD_THRESHOLD, 18, 2));
-  console.log("eligible users: %s", eligibleUsers);
-  console.log("users below threshold: %s", usersBelowThreshold);
-
   console.log(
     "sum of position fees paid: %s ARB ($%s)",
     formatAmount(userTotalPositionFeesUsd, 30, 2, true),
     formatAmount(userTotalPositionFeesInArb, 18, 2, true)
   );
+
+  console.log("allocation: %s ARB", formatAmount(allocationData.trading.allocation, 18, 2));
+  console.log("used allocation %s ARB", formatAmount(usedAllocation, 18, 2));
+
+  console.log(
+    "initial rebate percent: %s%, adjusted rebate percent: %s%",
+    formatAmount(allocationData.trading.rebatePercent, 2, 2),
+    formatAmount(adjustedRebatePercent, 2, 2)
+  );
+  console.log("min reward threshold: %s ARB", formatAmount(MIN_REWARD_THRESHOLD, 18, 2));
+  console.log("eligible users: %s", eligibleUsers);
+  console.log("users below threshold: %s", usersBelowThreshold);
+
   console.log("sum of user rewards: %s ARB", formatAmount(userTotalRewards, 18, 2, true));
 
   const tokens = await hre.gmx.getTokens();

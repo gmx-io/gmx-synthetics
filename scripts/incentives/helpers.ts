@@ -117,6 +117,12 @@ export async function requestAllocationData(timestamp: number) {
       maxRebateBps: number;
       period: number;
     };
+    trading: {
+      isActive: boolean;
+      rebatePercent: number;
+      allocation: string;
+      period: number;
+    };
   };
 
   return {
@@ -132,6 +138,10 @@ export async function requestAllocationData(timestamp: number) {
         ),
     },
     migration: data.migration,
+    trading: {
+      ...data.trading,
+      allocation: bigNumberify(data.trading.allocation),
+    },
   };
 }
 
