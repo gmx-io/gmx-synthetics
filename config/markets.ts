@@ -416,10 +416,10 @@ const config: {
       ...baseMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(65_000, 9),
-      maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(3_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(65_000, 9),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(2_500_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(55_000, 9),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(3_000_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(76, 10),
       positivePositionImpactFactor: decimalToFloat(38, 10),
@@ -537,11 +537,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(260_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(316_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(4_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(260_000, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(3_000_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(280_000, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(4_000_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(8, 9), // 0.05% for 62,500 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(4, 9), // 0.05% for 125,000 USD of imbalance
@@ -577,10 +577,10 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(4_600_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(5_500_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(5_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(4_600_000, 18),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(5_000_000, 18),
       maxShortTokenPoolAmountForDeposit: expandDecimals(5_000_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(8, 9), // 0.05% for 62,500 USD of imbalance
