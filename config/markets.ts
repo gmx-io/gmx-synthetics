@@ -682,8 +682,8 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(12, 11), // 0.05% for ~4,200,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(12, 11), // 0.05% for ~4,200,000 USD of imbalance
 
-      negativeSwapImpactFactor: decimalToFloat(12, 11), // 0.05% for ~4,200,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(12, 11), // 0.05% for ~4,200,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(24, 11), // 0.05% for ~2,100,000 USD of imbalance
+      positiveSwapImpactFactor: decimalToFloat(24, 11), // 0.05% for ~2,100,000 USD of imbalance
 
       // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
@@ -712,8 +712,8 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(12, 11), // 0.05% for ~4,200,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(12, 11), // 0.05% for ~4,200,000 USD of imbalance
 
-      negativeSwapImpactFactor: decimalToFloat(12, 11), // 0.05% for ~4,200,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(12, 11), // 0.05% for ~4,200,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(24, 11), // 0.05% for ~2,100,000 USD of imbalance
+      positiveSwapImpactFactor: decimalToFloat(24, 11), // 0.05% for ~2,100,000 USD of imbalance
 
       // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
@@ -874,6 +874,9 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 500,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 8),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 8),
+
+      positionImpactPoolDistributionRate: expandDecimals(166, 43), // ~331 LINK/day
+      minPositionImpactPoolAmount: expandDecimals(993, 18),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
