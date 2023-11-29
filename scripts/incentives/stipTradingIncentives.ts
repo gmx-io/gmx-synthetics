@@ -106,6 +106,9 @@ async function main() {
   const allocation = allocationData.trading.allocation;
   let adjustedRebatePercent = bigNumberify(allocationData.trading.rebatePercent);
 
+  userTradingIncentivesStats.sort((a, b) => {
+    return a.positionFeesInArb.lt(b.positionFeesInArb) ? -1 : 1;
+  });
   for (const item of userTradingIncentivesStats) {
     userTotalPositionFeesUsd = userTotalPositionFeesUsd.add(item.positionFeesUsd);
     userTotalPositionFeesInArb = userTotalPositionFeesInArb.add(item.positionFeesInArb);

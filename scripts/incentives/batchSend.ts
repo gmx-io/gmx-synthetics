@@ -7,6 +7,7 @@ import { bigNumberify, formatAmount } from "../../utils/math";
 import path from "path";
 import BatchSenderAbi from "./abi/BatchSender";
 import { getDistributionTypeName } from "./helpers";
+import { setTimeout } from "timers/promises";
 
 /*
 Example of usage:
@@ -15,6 +16,7 @@ FILENAME=distribution_2023-10-18.json npx hardhat --network arbitrum run batchSe
 */
 
 const shouldSendTxn = process.env.WRITE === "true";
+const dryRun = process.env.DRY_RUN === "true";
 
 function getArbValues() {
   return {
@@ -31,6 +33,10 @@ function getValues() {
 }
 
 async function main() {
+  if (shouldSendTxn && dryRun) {
+    throw new Error("Can only either WRITE or DRY_RUN");
+  }
+
   const { data, distributionTypeName } = readDistributionFile();
 
   const migrations = readMigrations();
@@ -41,7 +47,7 @@ async function main() {
   }
 
   let signer: Wallet;
-  if (shouldSendTxn) {
+  if (shouldSendTxn || dryRun) {
     if (!process.env.BATCH_SENDER_KEY) {
       throw new Error("BATCH_SENDER_KEY is required");
     }
@@ -67,8 +73,11 @@ async function main() {
   console.log("recipients %s", recipients.length);
   console.log("distribution type %s %s", data.distributionTypeId, distributionTypeName);
 
-  if (shouldSendTxn) {
-    console.warn("WARN: sending transaction");
+  if (shouldSendTxn || dryRun) {
+    if (shouldSendTxn) {
+      console.warn("WARN: sending real transaction...");
+      await setTimeout(5000);
+    }
 
     const signerAddress = await signer.getAddress();
     console.log("signer address: %s", signerAddress);
@@ -81,11 +90,29 @@ async function main() {
       return acc.add(amount);
     }, bigNumberify(0));
 
+    const balance = await tokenContract.balanceOf(signerAddress);
+    if (balance.lt(totalAmount)) {
+      throw new Error(
+        `Current balance ${formatAmount(balance, 18, 2, true)} is lower than required ${formatAmount(
+          totalAmount,
+          18,
+          2,
+          true
+        )}`
+      );
+    }
+    console.log("balance is %s", formatAmount(balance, 18, 2, true));
+
     const allowance = await tokenContract.allowance(signerAddress, batchSenderAddress);
-    console.log("total amount to send: %s", totalAmount);
-    console.log("current allowance is %s", allowance);
+    console.log("total amount to send: %s", formatAmount(totalAmount, 18, 2, true));
+    console.log("current allowance is %s", formatAmount(allowance, 18, 2, true));
     if (allowance.lt(totalAmount)) {
-      console.log("approving token %s amount %s spender %s", data.token, totalAmount, batchSenderAddress);
+      console.log(
+        "approving token %s amount %s spender %s",
+        data.token,
+        formatAmount(totalAmount, 18, 2),
+        batchSenderAddress
+      );
       const tx = await tokenContract.approve(batchSenderAddress, totalAmount);
       console.log("sent approve txn %s, waiting...", tx.hash);
       await tx.wait();
@@ -94,6 +121,7 @@ async function main() {
 
     let i = 0;
     const seenRecipients = new Set();
+    const txHashes = [];
     for (const from of range(0, amounts.length, batchSize)) {
       const to = Math.min(from + batchSize, amounts.length);
       const batchAmounts = amounts.slice(from, to);
@@ -114,7 +142,7 @@ async function main() {
         );
       }
 
-      if (process.env.DRY_RUN) {
+      if (dryRun) {
         const result = await batchSender.callStatic.sendAndEmit(
           data.token,
           batchRecipients,
@@ -125,13 +153,23 @@ async function main() {
       } else {
         const tx = await batchSender.sendAndEmit(data.token, batchRecipients, batchAmounts, data.distributionTypeId);
         console.log("sent batch txn %s, waiting...", tx.hash);
+        txHashes.push(tx.hash);
         await tx.wait();
       }
-      console.log("done");
+      console.log("batch done");
     }
 
-    migrations[data.id] = Math.floor(Date.now() / 1000);
-    saveMigrations(migrations);
+    if (txHashes.length) {
+      console.log("sent %s transactions:", txHashes.length);
+      for (const txHash of txHashes) {
+        console.log(txHash);
+      }
+    }
+
+    if (!dryRun) {
+      migrations[data.id] = Math.floor(Date.now() / 1000);
+      saveMigrations(migrations);
+    }
   } else {
     console.warn("WARN: read-only mode. skip sending transaction");
   }
