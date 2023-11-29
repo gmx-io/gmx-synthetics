@@ -876,7 +876,7 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 8),
 
       positionImpactPoolDistributionRate: expandDecimals(166, 43), // ~166 AVAX/day
-      minPositionImpactPoolAmount: expandDecimals(993, 18),
+      minPositionImpactPoolAmount: expandDecimals(141, 18),
 
       maxOpenInterestForLongs: decimalToFloat(1_500_000),
       maxOpenInterestForShorts: decimalToFloat(1_500_000),
