@@ -577,11 +577,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(5_500_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(5_500_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(6_500_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(6_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(5_000_000, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(5_000_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(6_000_000, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(6_000_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(8, 9), // 0.05% for 62,500 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(4, 9), // 0.05% for 125,000 USD of imbalance
@@ -607,8 +607,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(304, 44), // ~2634 ARB/day
       minPositionImpactPoolAmount: expandDecimals(47961, 18),
 
-      maxOpenInterestForLongs: decimalToFloat(3_000_000),
-      maxOpenInterestForShorts: decimalToFloat(3_000_000),
+      maxOpenInterestForLongs: decimalToFloat(3_500_000),
+      maxOpenInterestForShorts: decimalToFloat(3_500_000),
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDC.e" },
