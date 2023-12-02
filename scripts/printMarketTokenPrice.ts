@@ -3,23 +3,20 @@ import hre from "hardhat";
 import * as keys from "../utils/keys";
 import { toLoggableObject } from "../utils/print";
 import got from "got";
-import { expandDecimals } from "../utils/math";
-
-function getArbValues() {
-  return {
-    marketToken: "0x70d95587d40A2caf56bd97485aB3Eec10Bee6336",
-    indexToken: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
-    longToken: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
-    shortToken: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
-    shortTokenPrice: "1000000000000000000000000",
-    tickersUrl: "https://arbitrum.gmx-oracle.io/prices/tickers",
-  };
-}
 
 function getValues() {
   if (hre.network.name === "arbitrum") {
-    return getArbValues();
+    return {
+      tickersUrl: "https://arbitrum-api.gmxinfra.io/prices/tickers",
+    };
   }
+
+  if (hre.network.name === "avalanche") {
+    return {
+      tickersUrl: "https://avalanche-api.gmxinfra.io/prices/tickers",
+    };
+  }
+
   throw new Error("Unsupported network");
 }
 
@@ -27,45 +24,39 @@ async function main() {
   const dataStore = await hre.ethers.getContract("DataStore");
   const reader = await hre.ethers.getContract("Reader");
 
-  const { tickersUrl, marketToken, indexToken, longToken, shortToken, shortTokenPrice } = getValues();
+  const { tickersUrl } = getValues();
+
+  const marketToken = process.env.MARKET;
+  const market = await reader.getMarket(dataStore.address, marketToken);
 
   const tickers = (await got(tickersUrl).json()) as any[];
   const tickerByToken = Object.fromEntries(tickers.map((t) => [t.tokenAddress, t]));
 
-  const indexTokenTicker = tickerByToken[indexToken];
-  const indexTokenPriceMax = expandDecimals(indexTokenTicker.maxPrice, indexTokenTicker.oracleDecimals);
-  const indexTokenPriceMin = expandDecimals(indexTokenTicker.minPrice, indexTokenTicker.oracleDecimals);
+  const indexTokenTicker = tickerByToken[market.indexToken];
+  const longTokenTicker = tickerByToken[market.longToken];
+  const shortTokenTicker = tickerByToken[market.shortToken];
 
-  const longTokenTicker = tickerByToken[longToken];
-  const longTokenPriceMax = expandDecimals(longTokenTicker.maxPrice, longTokenTicker.oracleDecimals);
-  const longTokenPriceMin = expandDecimals(longTokenTicker.minPrice, longTokenTicker.oracleDecimals);
-
-  const pnlFactorType = keys.MAX_PNL_FACTOR_FOR_TRADERS;
-  const maximize = true;
+  const pnlFactorType = keys[process.env.PNL_FACTOR_TYPE];
+  const maximize = process.env.MAXIMIZE === "true" ? true : false;
 
   console.log("Getting price data for market %s", marketToken);
-  console.log("indexToken: %s longToken: %s shortToken: %s", indexToken, longToken, shortToken);
+  console.log("indexToken: %s longToken: %s shortToken: %s", market.indexToken, market.longToken, market.shortToken);
   console.log("pnlFactorType: %s maximize: %s", pnlFactorType, maximize);
 
   const data = await reader.getMarketTokenPrice(
     dataStore.address,
+    market,
     {
-      marketToken,
-      indexToken,
-      longToken,
-      shortToken,
+      min: indexTokenTicker.minPrice,
+      max: indexTokenTicker.maxPrice,
     },
     {
-      min: indexTokenPriceMin,
-      max: indexTokenPriceMax,
+      min: longTokenTicker.minPrice,
+      max: longTokenTicker.maxPrice,
     },
     {
-      min: longTokenPriceMin,
-      max: longTokenPriceMax,
-    },
-    {
-      min: shortTokenPrice,
-      max: shortTokenPrice,
+      min: shortTokenTicker.minPrice,
+      max: shortTokenTicker.maxPrice,
     },
     pnlFactorType,
     maximize
