@@ -415,10 +415,10 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(101_000, 9),
-      maxShortTokenPoolAmount: expandDecimals(6_300_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(100_000, 9),
+      maxShortTokenPoolAmount: expandDecimals(6_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(96_200, 9),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(93_000, 9),
       maxShortTokenPoolAmountForDeposit: expandDecimals(6_000_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(76, 10),
@@ -438,8 +438,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(136, 34), // ~117 SOL/day
       minPositionImpactPoolAmount: expandDecimals(248, 9),
 
-      maxOpenInterestForLongs: decimalToFloat(3_500_000),
-      maxOpenInterestForShorts: decimalToFloat(3_500_000),
+      maxOpenInterestForLongs: decimalToFloat(4_500_000),
+      maxOpenInterestForShorts: decimalToFloat(4_500_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -537,11 +537,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(316_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(4_500_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(350_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(5_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(280_000, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(4_000_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(315_000, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(5_000_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(8, 9), // 0.05% for 62,500 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(4, 9), // 0.05% for 125,000 USD of imbalance
@@ -560,8 +560,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(383, 43), // ~331 LINK/day
       minPositionImpactPoolAmount: expandDecimals(993, 18),
 
-      maxOpenInterestForLongs: decimalToFloat(2_500_000),
-      maxOpenInterestForShorts: decimalToFloat(2_500_000),
+      maxOpenInterestForLongs: decimalToFloat(3_500_000),
+      maxOpenInterestForShorts: decimalToFloat(3_500_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -607,8 +607,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(304, 44), // ~2634 ARB/day
       minPositionImpactPoolAmount: expandDecimals(47961, 18),
 
-      maxOpenInterestForLongs: decimalToFloat(3_500_000),
-      maxOpenInterestForShorts: decimalToFloat(3_500_000),
+      maxOpenInterestForLongs: decimalToFloat(4_500_000),
+      maxOpenInterestForShorts: decimalToFloat(4_500_000),
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDC.e" },
