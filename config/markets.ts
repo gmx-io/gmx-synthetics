@@ -266,10 +266,10 @@ const config: {
       ...baseMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(1500, 8),
-      maxShortTokenPoolAmount: expandDecimals(55_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(65_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(1350, 8),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(50_000_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(1450, 8),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(60_000_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(12, 11), // 0.05% for ~4,200,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(12, 11), // 0.05% for ~4,200,000 USD of imbalance
@@ -299,10 +299,10 @@ const config: {
       ...baseMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(27_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(50_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(55_000_000, 6),
 
       maxLongTokenPoolAmountForDeposit: expandDecimals(25_000, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(45_000_000, 6),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(50_000_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(12, 11), // 0.05% for 4,166,667 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(12, 11), // 0.05% for 4,166,667 USD of imbalance
@@ -438,8 +438,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(136, 34), // ~117 SOL/day
       minPositionImpactPoolAmount: expandDecimals(248, 9),
 
-      maxOpenInterestForLongs: decimalToFloat(4_500_000),
-      maxOpenInterestForShorts: decimalToFloat(4_500_000),
+      maxOpenInterestForLongs: decimalToFloat(5_000_000),
+      maxOpenInterestForShorts: decimalToFloat(5_000_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
