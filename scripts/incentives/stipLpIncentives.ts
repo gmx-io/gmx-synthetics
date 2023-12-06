@@ -10,6 +10,7 @@ import {
   requestSubgraph,
   saveDistribution,
 } from "./helpers";
+import { toLoggableObject } from "../../utils/print";
 
 async function requestBalancesData(fromTimestamp: number, toBlockNumber: number) {
   const data: {
@@ -144,7 +145,7 @@ async function main() {
 
   const lpAllocationData = allocationData.lp;
 
-  console.log("allocationData", lpAllocationData);
+  console.log("allocationData", toLoggableObject(lpAllocationData));
 
   if (!lpAllocationData.isActive) {
     throw new Error(`There is no incentives for week starting on ${fromDate}`);
@@ -163,11 +164,16 @@ async function main() {
 
     const { marketTokensSupply } = balancesData[marketAddress];
 
-    if (userBalancesSum.sub(marketTokensSupply).abs().gt(expandDecimals(1, 18))) {
-      throw Error(
-        "Sum of user balances and market tokens supply don't match." +
-          `market ${marketAddress} ${marketTokensSupply} vs ${userBalancesSum}`
+    const diff = marketTokensSupply.sub(userBalancesSum);
+    if (diff.abs().gt(marketTokensSupply.div(100))) {
+      console.error(
+        "Sum of user balances %s and market tokens supply %s differs too much %s market %s",
+        marketAddress,
+        formatAmount(userBalancesSum, 18, 2, true),
+        formatAmount(marketTokensSupply, 18, 2, true),
+        formatAmount(diff, 18, 2, true)
       );
+      throw Error("Sum of user balances and market tokens supply don't match.");
     }
 
     const marketRewards = lpAllocationData.rewardsPerMarket[marketAddress];
@@ -184,7 +190,7 @@ async function main() {
         usersDistributionResult[userAccount] = bigNumberify(0);
       }
 
-      const userRewards = userBalance.mul(marketRewards).div(marketTokensSupply);
+      const userRewards = userBalance.mul(marketRewards).div(userBalancesSum);
 
       console.log(
         "market %s user %s rewards %s ARB avg balance %s (%s%)",

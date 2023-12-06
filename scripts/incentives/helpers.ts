@@ -17,7 +17,8 @@ for (const address of Object.keys(receiverOverridesMap)) {
   }
 }
 
-const ARBITRUM_SUBGRAPH_ENDPOINT = "https://subgraph.satsuma-prod.com/3b2ced13c8d9/gmx/synthetics-arbitrum-stats/api";
+const ARBITRUM_SUBGRAPH_ENDPOINT =
+  "https://subgraph.satsuma-prod.com/3b2ced13c8d9/gmx/synthetics-arbitrum-stats/version/master-231205224917-64e70d5/api";
 const API_ENDPOINT = "https://arbitrum-api.gmxinfra.io";
 
 export const STIP_LP_DISTRIBUTION_TYPE_ID = 1001;
