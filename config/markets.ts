@@ -274,7 +274,7 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(15, 11), // 0.05% for ~1,600,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(9, 11), // 0.05% for ~2,700,000 USD of imbalance
 
-      positionImpactPoolDistributionRate: expandDecimals(17, 36), // ~0.17 BTC/day
+      positionImpactPoolDistributionRate: expandDecimals(197, 30), // ~0.17 BTC/day
       minPositionImpactPoolAmount: expandDecimals(188, 6), // 1.88 BTC
 
       negativeSwapImpactFactor: decimalToFloat(2, 10), // 0.05% for 2,500,000 USD of imbalance
@@ -310,7 +310,7 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(15, 11), // 0.05% for ~1,600,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(9, 11), // 0.05% for ~2,700,000 USD of imbalance
 
-      positionImpactPoolDistributionRate: expandDecimals(221, 46), // ~2.21 ETH/day
+      positionImpactPoolDistributionRate: expandDecimals(256, 41), // ~2.21 ETH/day
       minPositionImpactPoolAmount: expandDecimals(24, 18), // 24 ETH
 
       negativeSwapImpactFactor: decimalToFloat(2, 10), // 0.05% for 2,500,000 USD of imbalance
