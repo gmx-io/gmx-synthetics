@@ -62,7 +62,7 @@ function numberWithCommas(x) {
 export function formatAmount(
   amount: BigNumberish,
   tokenDecimals: number,
-  displayDecimals: number,
+  displayDecimals?: number,
   useCommas = false,
   defaultValue?: any
 ) {
