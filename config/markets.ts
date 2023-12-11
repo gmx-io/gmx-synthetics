@@ -578,8 +578,8 @@ const config: {
       borrowingFactorForLongs: decimalToFloat(615, 14), // 6.15E-12, 33.12% at 100% utilisation
       borrowingFactorForShorts: decimalToFloat(615, 14), // 6.15E-12, 33.12% at 100% utilisation
 
-      borrowingExponentFactorForLongs: decimalToFloat(1, 5), // 1.5
-      borrowingExponentFactorForShorts: decimalToFloat(1, 5), // 1.5
+      borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
+      borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
       positionImpactPoolDistributionRate: expandDecimals(383, 43), // ~331 LINK/day
       minPositionImpactPoolAmount: expandDecimals(993, 18),
@@ -621,8 +621,8 @@ const config: {
       borrowingFactorForLongs: decimalToFloat(510, 14), // 5.10E-12, 33.21% at 100% utilisation
       borrowingFactorForShorts: decimalToFloat(510, 14), // 5.10E-12, 33.21% at 100% utilisation
 
-      borrowingExponentFactorForLongs: decimalToFloat(1, 5), // 1.5
-      borrowingExponentFactorForShorts: decimalToFloat(1, 5), // 1.5
+      borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
+      borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
       fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0

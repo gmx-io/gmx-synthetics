@@ -385,12 +385,28 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
     });
   }
 
-  if (!borrowingExponentFactorForLongs.eq(decimalToFloat(1))) {
-    throw new Error("borrowingExponentFactorForLongs != 1");
+  if (
+    borrowingExponentFactorForLongs.lt(decimalToFloat(1)) ||
+    borrowingExponentFactorForLongs.gt(decimalToFloat(15, 1))
+  ) {
+    throw new Error(
+      `borrowingExponentFactorForLongs should be in range 1 – 1.5, provided ${formatAmount(
+        borrowingExponentFactorForLongs,
+        30
+      )}`
+    );
   }
 
-  if (!borrowingExponentFactorForShorts.eq(decimalToFloat(1))) {
-    throw new Error("borrowingExponentFactorForShorts != 1");
+  if (
+    borrowingExponentFactorForShorts.lt(decimalToFloat(1)) ||
+    borrowingExponentFactorForShorts.gt(decimalToFloat(15, 1))
+  ) {
+    throw new Error(
+      `borrowingExponentFactorForShorts should be in range 1 – 1.5, provided ${formatAmount(
+        borrowingExponentFactorForShorts,
+        30
+      )}`
+    );
   }
 
   const maxBorrowingFactorForLongsPerYear = borrowingFactorForLongs
