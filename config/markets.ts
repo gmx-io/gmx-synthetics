@@ -535,8 +535,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(4, 8),
 
       // factor in open interest reserve factor 80%
-      borrowingFactorForLongs: decimalToFloat(94, 10), // 0.0000000094 * 80% = 0.0000000075, 0.00000075% / second, 23,65% per year if the pool is 100% utilized
-      borrowingFactorForShorts: decimalToFloat(94, 10), // 0.0000000094 * 80% = 0.0000000075, 0.00000075% / second, 23.65% per year if the pool is 100% utilized
+      borrowingFactorForLongs: decimalToFloat(94, 10), // 0.0000000094 * 90% = 0,0000000085, 0.00000085% / second, 26,81% per year if the pool is 100% utilized
+      borrowingFactorForShorts: decimalToFloat(94, 10), // 0.0000000094 * 90% = 0,0000000085, 0.00000085% / second, 26,81% per year if the pool is 100% utilized
 
       positionImpactPoolDistributionRate: expandDecimals(206, 43), // ~178 UNI/day
       minPositionImpactPoolAmount: expandDecimals(362, 18),

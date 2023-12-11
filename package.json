@@ -53,6 +53,7 @@
     "bn.js": "^5.2.1",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
+    "decimal.js": "^10.4.3",
     "dotenv": "16.0.3",
     "eslint-plugin-chai-friendly": "^0.7.2",
     "ethers-proxies": "^1.0.0",

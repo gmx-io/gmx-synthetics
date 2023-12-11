@@ -1,5 +1,5 @@
 import hre from "hardhat";
-import { decimalToFloat, bigNumberify, formatAmount } from "../utils/math";
+import { decimalToFloat, bigNumberify, formatAmount, pow, FLOAT_PRECISION } from "../utils/math";
 import { createMarketConfigByKey, getMarketKey } from "../utils/market";
 import { performMulticall } from "../utils/multicall";
 import { SECONDS_PER_YEAR } from "../utils/constants";
@@ -227,6 +227,8 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
   let borrowingExponentFactorForShorts = marketConfig.borrowingExponentFactorForShorts;
   let fundingFactor = marketConfig.fundingFactor;
   let fundingExponentFactor = marketConfig.fundingExponentFactor;
+  const maxOpenInterestForLongs = marketConfig.maxOpenInterestForLongs;
+  const maxOpenInterestForShorts = marketConfig.maxOpenInterestForShorts;
 
   if (process.env.READ_FROM_CHAIN === "true") {
     const multicallReadParams = [];
@@ -409,11 +411,12 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
     );
   }
 
-  // TODO this works for borrowing exponent = 1
-  // otherwise to calculate borrowing rate current pool size should be known
-  const maxBorrowingFactorForLongsPerYear = borrowingFactorForLongs
-    .mul(openInterestReserveFactorLongs)
-    .div(decimalToFloat(1))
+  const maxLongTokenPoolUsdBasedOnMaxOpenInterest = maxOpenInterestForLongs
+    .mul(FLOAT_PRECISION)
+    .div(openInterestReserveFactorLongs);
+  const maxBorrowingFactorForLongsPerYear = pow(maxOpenInterestForLongs, borrowingExponentFactorForLongs)
+    .mul(borrowingFactorForLongs)
+    .div(maxLongTokenPoolUsdBasedOnMaxOpenInterest)
     .mul(SECONDS_PER_YEAR);
 
   if (maxBorrowingFactorForLongsPerYear.gt(decimalToFloat(1))) {
@@ -422,9 +425,12 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
 
   console.log(`    maxBorrowingFactorForLongsPerYear: ${formatAmount(maxBorrowingFactorForLongsPerYear, 28)}%`);
 
-  const maxBorrowingFactorForShortsPerYear = borrowingFactorForShorts
-    .mul(openInterestReserveFactorShorts)
-    .div(decimalToFloat(1))
+  const maxShortTokenPoolUsdBasedOnMaxOpenInterest = maxOpenInterestForShorts
+    .mul(FLOAT_PRECISION)
+    .div(openInterestReserveFactorShorts);
+  const maxBorrowingFactorForShortsPerYear = pow(maxOpenInterestForShorts, borrowingExponentFactorForShorts)
+    .mul(borrowingFactorForShorts)
+    .div(maxShortTokenPoolUsdBasedOnMaxOpenInterest)
     .mul(SECONDS_PER_YEAR);
 
   if (maxBorrowingFactorForShortsPerYear.gt(decimalToFloat(1))) {
