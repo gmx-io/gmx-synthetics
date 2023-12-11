@@ -409,6 +409,8 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
     );
   }
 
+  // TODO this works for borrowing exponent = 1
+  // otherwise to calculate borrowing rate current pool size should be known
   const maxBorrowingFactorForLongsPerYear = borrowingFactorForLongs
     .mul(openInterestReserveFactorLongs)
     .div(decimalToFloat(1))
