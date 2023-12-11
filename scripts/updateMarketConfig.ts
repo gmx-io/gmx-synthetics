@@ -360,7 +360,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.BORROWING_EXPONENT_FACTOR,
       encodeData(["address", "bool"], [marketToken, true]),
       marketConfig.borrowingExponentFactorForLongs,
-      `borrowingFactorForLongs ${marketToken}`
+      `borrowingExponentFactorForLongs ${marketToken}`
     );
 
     await handleConfig(
@@ -368,7 +368,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.BORROWING_EXPONENT_FACTOR,
       encodeData(["address", "bool"], [marketToken, false]),
       marketConfig.borrowingExponentFactorForShorts,
-      `borrowingFactorForShorts ${marketToken}`
+      `borrowingExponentFactorForShorts ${marketToken}`
     );
 
     await handleConfig(
