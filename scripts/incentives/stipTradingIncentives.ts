@@ -155,8 +155,8 @@ async function main() {
     formatAmount(userTotalPositionFeesInArb, 18, 2, true)
   );
 
-  console.log("allocation: %s ARB", formatAmount(allocationData.trading.allocation, 18, 2));
-  console.log("used allocation %s ARB", formatAmount(usedAllocation, 18, 2));
+  console.log("allocation: %s ARB", formatAmount(allocationData.trading.allocation, 18, 2, true));
+  console.log("used allocation %s ARB", formatAmount(usedAllocation, 18, 2, true));
 
   console.log(
     "initial rebate percent: %s%, adjusted rebate percent: %s%",
