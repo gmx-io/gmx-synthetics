@@ -121,6 +121,7 @@ export async function requestAllocationData(timestamp: number) {
     lp: {
       isActive: boolean;
       totalRewards: string;
+      totalShare: number;
       period: number;
       rewardsPerMarket: Record<string, string>;
     };

@@ -97,7 +97,6 @@ async function main() {
 
   const jsonResult: Record<string, string> = {};
   const MIN_REWARD_THRESHOLD = expandDecimals(1, 17); // 0.1 ARB
-  let userTotalRewards = bigNumberify(0);
   let usersBelowThreshold = 0;
   let eligibleUsers = 0;
   let userTotalPositionFeesInArb = bigNumberify(0);
@@ -119,21 +118,28 @@ async function main() {
     adjustedRebatePercent = adjustedRebatePercent.mul(allocation).div(usedAllocation);
   }
 
+  let userTotalRewards = bigNumberify(0);
   for (const item of userTradingIncentivesStats) {
     const userRebates = item.positionFeesInArb.mul(adjustedRebatePercent).div(10000);
 
     userTotalRewards = userTotalRewards.add(userRebates);
+  }
+
+  for (const item of userTradingIncentivesStats) {
+    const userRebates = item.positionFeesInArb.mul(adjustedRebatePercent).div(10000);
 
     console.log(
-      "user %s rebate %s position fee: %s %s",
+      "user %s rebate %s (%s%) position fee: %s %s",
       item.account,
       `${formatAmount(userRebates, 18, 2, true)} ARB`.padEnd(14),
+      formatAmount(userRebates.mul(10000).div(userTotalRewards), 2, 2),
       `${formatAmount(item.positionFeesInArb, 18, 2, true)} ARB`.padEnd(15),
       `($${formatAmount(item.positionFeesUsd, 30, 2, true)})`.padEnd(14)
     );
 
     if (userRebates.lt(MIN_REWARD_THRESHOLD)) {
       usersBelowThreshold++;
+      console.log("skip user %s", item.account);
       continue;
     }
     eligibleUsers++;
