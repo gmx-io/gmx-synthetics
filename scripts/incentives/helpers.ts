@@ -3,7 +3,7 @@ import path from "path";
 
 import { ethers } from "ethers";
 import hre from "hardhat";
-import { bigNumberify } from "../../utils/math";
+import { bigNumberify, formatAmount } from "../../utils/math";
 import fetch from "node-fetch";
 
 import receiverOverridesMap from "./receiverOverrides";
@@ -18,18 +18,20 @@ for (const address of Object.keys(receiverOverridesMap)) {
 }
 
 const ARBITRUM_SUBGRAPH_ENDPOINT =
-  "https://subgraph.satsuma-prod.com/3b2ced13c8d9/gmx/synthetics-arbitrum-stats/version/incentives3-231113223003-25eb066/api";
+  "https://subgraph.satsuma-prod.com/3b2ced13c8d9/gmx/synthetics-arbitrum-stats/version/master-231205224917-64e70d5/api";
 const API_ENDPOINT = "https://arbitrum-api.gmxinfra.io";
 
 export const STIP_LP_DISTRIBUTION_TYPE_ID = 1001;
 export const STIP_MIGRATION_DISTRIBUTION_TYPE_ID = 1002;
 export const STIP_TRADING_INCENTIVES_DISTRIBUTION_TYPE_ID = 1003;
+const TEST_DISTRIBUTION_TYPE_ID = 9876;
 
 export function getDistributionTypeName(distributionTypeId: number) {
   return {
     [STIP_LP_DISTRIBUTION_TYPE_ID]: "STIP LP",
     [STIP_MIGRATION_DISTRIBUTION_TYPE_ID]: "STIP MIGRATION",
     [STIP_TRADING_INCENTIVES_DISTRIBUTION_TYPE_ID]: "STIP TRADING INCENTIVES",
+    [TEST_DISTRIBUTION_TYPE_ID]: "TEST",
   }[distributionTypeId];
 }
 
@@ -54,7 +56,7 @@ export function guessBlockNumberByTimestamp(block: ethers.providers.Block, times
 }
 
 export async function getBlockByTimestamp(timestamp: number) {
-  const tolerance = 30; // 30 seconds
+  const tolerance = 10; // 10 seconds
   const latestBlock = await hre.ethers.provider.getBlock("latest");
 
   let nextBlockNumber = guessBlockNumberByTimestamp(latestBlock, timestamp);
@@ -115,6 +117,12 @@ export async function requestAllocationData(timestamp: number) {
       maxRebateBps: number;
       period: number;
     };
+    trading: {
+      isActive: boolean;
+      rebatePercent: number;
+      allocation: string;
+      period: number;
+    };
   };
 
   return {
@@ -130,6 +138,10 @@ export async function requestAllocationData(timestamp: number) {
         ),
     },
     migration: data.migration,
+    trading: {
+      ...data.trading,
+      allocation: bigNumberify(data.trading.allocation),
+    },
   };
 }
 
@@ -182,11 +194,13 @@ export function saveDistribution(
   jsonResult: Record<string, string>,
   distributionTypeId: number
 ) {
-  const dirpath = path.join(__dirname, "distributions", `epoch_${fromDate.toISOString().substring(0, 10)}`);
+  const dateStr = fromDate.toISOString().substring(0, 10);
+  const dirpath = path.join(__dirname, "distributions", `epoch_${dateStr}`);
   if (!fs.existsSync(dirpath)) {
     fs.mkdirSync(dirpath);
   }
   const filename = path.join(dirpath, `${name}_distribution.json`);
+  const id = `${dateStr}_${distributionTypeId}`;
 
   fs.writeFileSync(
     filename,
@@ -194,6 +208,7 @@ export function saveDistribution(
       {
         token: tokenAddress,
         distributionTypeId,
+        id,
         amounts: jsonResult,
       },
       null,
@@ -211,7 +226,7 @@ export function saveDistribution(
     filename2,
     JSON.stringify(
       {
-        totalAmount,
+        totalAmount: totalAmount.toString(),
         batchSenderCalldata,
       },
       null,
@@ -221,6 +236,14 @@ export function saveDistribution(
 
   console.log("send batches: %s", Object.keys(batchSenderCalldata).length);
   console.log("batch sender transaction is data saved to %s", filename2);
+
+  const csv = ["recipient,amount"];
+  const filename3 = path.join(dirpath, `${name}_distribution.csv`);
+  for (const [recipient, amount] of Object.entries(jsonResult)) {
+    csv.push(`${recipient},${formatAmount(amount, 18, 2)}`);
+  }
+  fs.writeFileSync(filename3, csv.join("\n"));
+  console.log("csv data saved to %s", filename3);
 }
 
 export function processArgs() {

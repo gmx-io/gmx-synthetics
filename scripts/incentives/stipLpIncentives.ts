@@ -10,6 +10,7 @@ import {
   requestSubgraph,
   saveDistribution,
 } from "./helpers";
+import { toLoggableObject } from "../../utils/print";
 
 async function requestBalancesData(fromTimestamp: number, toBlockNumber: number) {
   const data: {
@@ -144,7 +145,7 @@ async function main() {
 
   const lpAllocationData = allocationData.lp;
 
-  console.log("allocationData", lpAllocationData);
+  console.log("allocationData", toLoggableObject(lpAllocationData));
 
   if (!lpAllocationData.isActive) {
     throw new Error(`There is no incentives for week starting on ${fromDate}`);
@@ -163,27 +164,43 @@ async function main() {
 
     const { marketTokensSupply } = balancesData[marketAddress];
 
-    if (userBalancesSum.sub(marketTokensSupply).abs().gt(expandDecimals(1, 18))) {
-      throw Error(
-        "Sum of user balances and market tokens supply don't match." +
-          `market ${marketAddress} ${marketTokensSupply} vs ${userBalancesSum}`
+    const diff = marketTokensSupply.sub(userBalancesSum);
+    if (diff.abs().gt(marketTokensSupply.div(100))) {
+      console.error(
+        "Sum of user balances %s and market tokens supply %s differs too much %s market %s",
+        marketAddress,
+        formatAmount(userBalancesSum, 18, 2, true),
+        formatAmount(marketTokensSupply, 18, 2, true),
+        formatAmount(diff, 18, 2, true)
       );
+      throw Error("Sum of user balances and market tokens supply don't match.");
     }
 
+    const marketRewards = lpAllocationData.rewardsPerMarket[marketAddress];
     console.log(
-      "market %s userBalancesSum: %s marketTokensSupply: %s",
+      "market %s allocation %s userBalancesSum: %s marketTokensSupply: %s",
       marketAddress,
+      formatAmount(marketRewards, 18, 2, true),
       formatAmount(userBalancesSum, 18, 2, true),
       formatAmount(marketTokensSupply, 18, 2, true)
     );
 
-    const marketRewards = lpAllocationData.rewardsPerMarket[marketAddress];
     for (const [userAccount, userBalance] of Object.entries(userBalances)) {
       if (!(userAccount in usersDistributionResult)) {
         usersDistributionResult[userAccount] = bigNumberify(0);
       }
 
-      const userRewards = userBalance.mul(marketRewards).div(marketTokensSupply);
+      const userRewards = userBalance.mul(marketRewards).div(userBalancesSum);
+
+      console.log(
+        "market %s user %s rewards %s ARB avg balance %s (%s%)",
+        marketAddress,
+        userAccount,
+        formatAmount(userRewards, 18, 2, true).padStart(8),
+        formatAmount(userBalance, 18, 2, true).padStart(12),
+        formatAmount(userBalance.mul(10000).div(marketTokensSupply), 2, 2)
+      );
+
       usersDistributionResult[userAccount] = usersDistributionResult[userAccount].add(userRewards);
     }
   }
@@ -194,14 +211,22 @@ async function main() {
   let usersBelowThreshold = 0;
   let eligibleUsers = 0;
 
-  for (const [userAccount, userRewards] of Object.entries(usersDistributionResult)) {
+  for (const [userAccount, userRewards] of Object.entries(usersDistributionResult).sort((a, b) => {
+    return a[1].lt(b[1]) ? -1 : 1;
+  })) {
     userTotalRewards = userTotalRewards.add(userRewards);
     if (userRewards.lt(MIN_REWARD_THRESHOLD)) {
+      console.log("user %s rewards: %s ARB below threshold", userAccount, formatAmount(userRewards, 18, 2, true));
       usersBelowThreshold++;
       continue;
     }
     eligibleUsers++;
-    console.log("user: %s rewards: %s ARB", userAccount, formatAmount(userRewards, 18, 2, true));
+    console.log(
+      "user: %s rewards: %s ARB (%s%)",
+      userAccount,
+      formatAmount(userRewards, 18, 2, true),
+      formatAmount(userRewards.mul(10000).div(lpAllocationData.totalRewards), 2, 2)
+    );
 
     jsonResult[userAccount] = userRewards.toString();
   }
@@ -213,6 +238,12 @@ async function main() {
   }
 
   overrideReceivers(jsonResult);
+
+  console.log(
+    "Liquidity incentives for period from %s to %s",
+    fromDate.toISOString().substring(0, 10),
+    toDate.toISOString().substring(0, 10)
+  );
 
   for (const marketAddress of Object.keys(lpAllocationData.rewardsPerMarket)) {
     console.log(

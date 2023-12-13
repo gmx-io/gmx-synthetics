@@ -1,4 +1,5 @@
-import { BigNumberish, ethers } from "ethers";
+import { BigNumber, BigNumberish, ethers } from "ethers";
+import Decimal from "decimal.js";
 
 export const MAX_UINT8 = "255"; // 2^8 - 1
 export const MAX_UINT32 = "4294967295"; // 2^32 - 1
@@ -16,6 +17,18 @@ export function expandDecimals(n, decimals) {
 
 export function decimalToFloat(value, decimals = 0) {
   return expandDecimals(value, 30 - decimals);
+}
+
+export function applyFactor(n: BigNumberish, factor: BigNumberish) {
+  return BigNumber.from(n).mul(factor).div(FLOAT_PRECISION);
+}
+
+// both `base` and `exponent` should have 30 decimals
+export function pow(base: BigNumberish, exponent: BigNumberish) {
+  const baseDecimal = new Decimal(base.toString()).div(FLOAT_PRECISION.toString());
+  const exponentDecimal = new Decimal(exponent.toString()).div(FLOAT_PRECISION.toString());
+
+  return BigNumber.from(baseDecimal.pow(exponentDecimal).mul(FLOAT_PRECISION.toString()).toFixed(0));
 }
 
 const limitDecimals = (amount, maxDecimals) => {
@@ -62,7 +75,7 @@ function numberWithCommas(x) {
 export function formatAmount(
   amount: BigNumberish,
   tokenDecimals: number,
-  displayDecimals: number,
+  displayDecimals?: number,
   useCommas = false,
   defaultValue?: any
 ) {

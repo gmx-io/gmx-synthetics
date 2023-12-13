@@ -35,6 +35,13 @@ contract SubaccountRouter is BaseRouter {
         orderVault = _orderVault;
     }
 
+    receive() external payable {
+        address wnt = TokenUtils.wnt(dataStore);
+        if (msg.sender != wnt) {
+            revert Errors.InvalidNativeTokenSender(msg.sender);
+        }
+    }
+
     function addSubaccount(address subaccount) external payable nonReentrant {
         address account = msg.sender;
         SubaccountUtils.addSubaccount(dataStore, eventEmitter, account, subaccount);
@@ -206,8 +213,15 @@ contract SubaccountRouter is BaseRouter {
         router.pluginTransfer(
             address(wnt), // token
             account, // account
-            subaccount, // receiver
+            address(this), // receiver
             amount // amount
+        );
+
+        TokenUtils.withdrawAndSendNativeToken(
+            dataStore,
+            address(wnt),
+            subaccount,
+            amount
         );
 
         EventUtils.EventLogData memory eventData;

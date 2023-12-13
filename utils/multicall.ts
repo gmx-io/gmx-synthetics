@@ -1,5 +1,6 @@
 import hre from "hardhat";
 import { bigNumberify } from "./math";
+import { BigNumber } from "ethers";
 
 export async function performMulticall({ multicallReadParams }) {
   const multicall = await hre.ethers.getContract("Multicall3");
@@ -14,7 +15,7 @@ export async function performMulticall({ multicallReadParams }) {
   }
 
   const callResult = await multicall.callStatic.aggregate3(multicallReadParams);
-  const bigNumberResults = {};
+  const bigNumberResults: Record<string, BigNumber> = {};
 
   for (let i = 0; i < multicallReadParams.length; i++) {
     const item = multicallReadParams[i];

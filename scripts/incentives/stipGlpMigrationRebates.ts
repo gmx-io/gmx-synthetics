@@ -62,15 +62,17 @@ async function requestMigrationData(fromTimestamp: number, fromBlockNumber: numb
   }`);
 
   return {
-    userGlpGmMigrationStats: data.userGlpGmMigrationStats.map((item) => {
-      return {
-        ...item,
-        gmDepositUsd: bigNumberify(item.gmDepositUsd),
-        glpRedemptionUsd: bigNumberify(item.glpRedemptionUsd),
-        eligibleRedemptionInArb: bigNumberify(item.eligibleRedemptionInArb),
-        eligibleRedemptionUsd: bigNumberify(item.eligibleRedemptionUsd),
-      };
-    }),
+    userGlpGmMigrationStats: data.userGlpGmMigrationStats
+      .map((item) => {
+        return {
+          ...item,
+          gmDepositUsd: bigNumberify(item.gmDepositUsd),
+          glpRedemptionUsd: bigNumberify(item.glpRedemptionUsd),
+          eligibleRedemptionInArb: bigNumberify(item.eligibleRedemptionInArb),
+          eligibleRedemptionUsd: bigNumberify(item.eligibleRedemptionUsd),
+        };
+      })
+      .sort((a, b) => (a.eligibleRedemptionInArb.lt(b.eligibleRedemptionInArb) ? -1 : 1)),
     eligibleRedemptionInArbBefore: bigNumberify(data.glpGmMigrationStatBefore?.eligibleRedemptionInArb ?? 0),
     eligibleRedemptionInArbAfter: bigNumberify(data.glpGmMigrationStatAfter.eligibleRedemptionInArb),
   };
@@ -118,8 +120,9 @@ async function main() {
     glpRedemptionWeightedAverageFeeBpsSum += item.glpRedemptionWeightedAverageFeeBps;
 
     console.log(
-      "user %s eligible rebate: %s %s redeemed glp: $%s rebates fee bps: %s gm deposit: $%s",
+      "user %s rebate %s: eligible redemption: %s %s redeemed glp: $%s rebates fee bps: %s gm deposit: $%s",
       item.account,
+      formatAmount(userRebates, 18, 2, true),
       `${formatAmount(item.eligibleRedemptionInArb, 18, 2, true)} ARB`.padEnd(15),
       `($${formatAmount(item.eligibleRedemptionUsd, 30, 2, true)})`.padEnd(14),
       formatAmount(item.glpRedemptionUsd, 30, 2, true).padEnd(12),
@@ -137,6 +140,12 @@ async function main() {
   }
 
   overrideReceivers(jsonResult);
+
+  console.log(
+    "GLP to GM migration for period from %s to %s",
+    fromDate.toISOString().substring(0, 10),
+    toDate.toISOString().substring(0, 10)
+  );
 
   console.log(
     "average redemption bps: %s",

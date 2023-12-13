@@ -86,6 +86,14 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       `negativeSwapImpactFactor ${marketToken}`
     );
 
+    await handleConfig(
+      "uint",
+      keys.TOKEN_TRANSFER_GAS_LIMIT,
+      encodeData(["address"], [marketToken]),
+      generalConfig.tokenTransferGasLimit,
+      `tokenTransferGasLimit ${marketToken}`
+    );
+
     // the rest of the params are not used for swap-only markets
     if (marketConfig.swapOnly) {
       continue;
@@ -245,14 +253,6 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
 
     await handleConfig(
       "uint",
-      keys.TOKEN_TRANSFER_GAS_LIMIT,
-      encodeData(["address"], [marketToken]),
-      generalConfig.tokenTransferGasLimit,
-      `tokenTransferGasLimit ${marketToken}`
-    );
-
-    await handleConfig(
-      "uint",
       keys.POSITION_IMPACT_EXPONENT_FACTOR,
       encodeData(["address"], [marketToken]),
       marketConfig.positionImpactExponentFactor,
@@ -360,7 +360,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.BORROWING_EXPONENT_FACTOR,
       encodeData(["address", "bool"], [marketToken, true]),
       marketConfig.borrowingExponentFactorForLongs,
-      `borrowingFactorForLongs ${marketToken}`
+      `borrowingExponentFactorForLongs ${marketToken}`
     );
 
     await handleConfig(
@@ -368,7 +368,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.BORROWING_EXPONENT_FACTOR,
       encodeData(["address", "bool"], [marketToken, false]),
       marketConfig.borrowingExponentFactorForShorts,
-      `borrowingFactorForShorts ${marketToken}`
+      `borrowingExponentFactorForShorts ${marketToken}`
     );
 
     await handleConfig(

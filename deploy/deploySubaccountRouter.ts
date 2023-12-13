@@ -1,4 +1,3 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { grantRoleIfNotGranted } from "../utils/role";
 import { createDeployFunction } from "../utils/deploy";
 
@@ -10,25 +9,16 @@ const func = createDeployFunction({
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
-  libraryNames: [
-    "CallbackUtils",
-    "DepositStoreUtils",
-    "FeeUtils",
-    "MarketEventUtils",
-    "MarketStoreUtils",
-    "OrderStoreUtils",
-    "ReferralUtils",
-    "WithdrawalStoreUtils",
-  ],
-  afterDeploy: async ({ deployedContract }) => {
+  libraryNames: ["OrderStoreUtils"],
+  afterDeploy: async ({ deployedContract, network, deployments }) => {
+    if (!["avalancheFuji", "arbitrumGoerli", "hardhat"].includes(network.name)) {
+      deployments.log("skip granting roles to SubaccountRouter");
+      return;
+    }
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
     await grantRoleIfNotGranted(deployedContract.address, "ROUTER_PLUGIN");
   },
+  id: "SubaccountRouter_1",
 });
-
-func.skip = async ({ network }: HardhatRuntimeEnvironment) => {
-  const shouldDeployForNetwork = ["avalancheFuji", "arbitrumGoerli", "hardhat"];
-  return !shouldDeployForNetwork.includes(network.name);
-};
 
 export default func;

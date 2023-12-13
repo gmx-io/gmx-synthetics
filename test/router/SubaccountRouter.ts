@@ -213,7 +213,6 @@ describe("SubaccountRouter", () => {
     ).eq(0);
 
     const initialWntBalance0 = await wnt.balanceOf(user0.address);
-    const initialWntBalance1 = await wnt.balanceOf(subaccount.address);
 
     await subaccountRouter.connect(subaccount).multicall(
       [
@@ -231,11 +230,6 @@ describe("SubaccountRouter", () => {
     );
 
     expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo(
-      "101679245508955976",
-      "1000000000000000"
-    ); // 0.101679245508955976 ETH
-
-    expect((await wnt.balanceOf(subaccount.address)).sub(initialWntBalance1)).closeTo(
       "101679245508955976",
       "1000000000000000"
     ); // 0.101679245508955976 ETH
@@ -481,7 +475,6 @@ describe("SubaccountRouter", () => {
     });
 
     const initialWntBalance0 = await wnt.balanceOf(user0.address);
-    const initialWntBalance1 = await wnt.balanceOf(subaccount.address);
 
     await subaccountRouter.connect(subaccount).updateOrder(
       orderKey, // key
@@ -492,11 +485,6 @@ describe("SubaccountRouter", () => {
     );
 
     expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("588774003140128", "100000000000000"); // 0.000588774003140128 ETH
-
-    expect((await wnt.balanceOf(subaccount.address)).sub(initialWntBalance1)).closeTo(
-      "588774003140128",
-      "100000000000000"
-    ); // 0.000588774003140128 ETH
 
     expect(
       await dataStore.getUint(
@@ -618,18 +606,10 @@ describe("SubaccountRouter", () => {
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(1, 6));
 
     const initialWntBalance0 = await wnt.balanceOf(user0.address);
-    const initialWntBalance1 = await wnt.balanceOf(subaccount.address);
 
     await subaccountRouter.connect(subaccount).cancelOrder(orderKey);
 
     expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("998934005327648", "10000000000000"); // 0.000998934005327648 ETH
-
-    expect((await wnt.balanceOf(subaccount.address)).sub(initialWntBalance1)).closeTo(
-      "998934005327648",
-      "10000000000000"
-    ); // 0.000998934005327648 ETH
-
-    expect((await wnt.balanceOf(subaccount.address)).sub(initialWntBalance1));
 
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(101, 6));
 

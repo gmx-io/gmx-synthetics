@@ -54,7 +54,7 @@ export function createDeployFunction({
 
     let deployArgs = [];
     if (getDeployArgs) {
-      deployArgs = await getDeployArgs({ dependencyContracts, network, gmx, get });
+      deployArgs = await getDeployArgs({ dependencyContracts, network, gmx, get, getNamedAccounts });
     }
 
     const libraries = {};

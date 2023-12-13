@@ -12,4 +12,6 @@ const func = createDeployFunction({
   id: "DataStore_3",
 });
 
+func.dependencies = func.dependencies.concat(["Roles"]);
+
 export default func;

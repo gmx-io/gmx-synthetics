@@ -1,5 +1,5 @@
 import hre from "hardhat";
-import { decimalToFloat, bigNumberify, formatAmount } from "../utils/math";
+import { decimalToFloat, bigNumberify, formatAmount, pow, FLOAT_PRECISION } from "../utils/math";
 import { createMarketConfigByKey, getMarketKey } from "../utils/market";
 import { performMulticall } from "../utils/multicall";
 import { SECONDS_PER_YEAR } from "../utils/constants";
@@ -16,78 +16,96 @@ const stablecoinSymbols = {
   "DAI.e": true,
 };
 
+const BASIS_POINTS_DIVISOR = 10000;
+
 const recommendedStablecoinSwapConfig = {
   negativeImpactFactor: decimalToFloat(1, 9).div(2),
-  expectedImpactRatio: 1,
+  expectedSwapImpactRatio: 10000,
 };
 
 const recommendedMarketConfig = {
   arbitrum: {
     BTC: {
       negativeImpactFactor: decimalToFloat(5, 11).div(2),
-      expectedImpactRatio: 1,
+      expectedSwapImpactRatio: 10000,
+      expectedPositionImpactRatio: 16666,
     },
     WETH: {
       negativeImpactFactor: decimalToFloat(5, 11).div(2),
-      expectedImpactRatio: 1,
+      expectedSwapImpactRatio: 10000,
+      expectedPositionImpactRatio: 16666,
     },
     LINK: {
       negativeImpactFactor: decimalToFloat(8, 9).div(2),
-      expectedImpactRatio: 2,
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
     },
     ARB: {
       negativeImpactFactor: decimalToFloat(8, 9).div(2),
-      expectedImpactRatio: 2,
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
     },
     UNI: {
       negativeImpactFactor: decimalToFloat(4, 8).div(2),
-      expectedImpactRatio: 2,
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
     },
     LTC: {
       negativeImpactFactor: decimalToFloat(8, 9).div(2),
-      expectedImpactRatio: 2,
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
     },
     DOGE: {
       negativeImpactFactor: decimalToFloat(8, 9).div(2),
-      expectedImpactRatio: 2,
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
     },
     SOL: {
       negativeImpactFactor: decimalToFloat(5, 9).div(2),
-      expectedImpactRatio: 2,
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
     },
     XRP: {
       negativeImpactFactor: decimalToFloat(5, 9).div(2),
-      expectedImpactRatio: 2,
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
     },
   },
   avalanche: {
     "BTC.b": {
       negativeImpactFactor: decimalToFloat(5, 11).div(2),
-      expectedImpactRatio: 1,
+      expectedSwapImpactRatio: 10000,
+      expectedPositionImpactRatio: 16666,
     },
     "WETH.e": {
       negativeImpactFactor: decimalToFloat(5, 11).div(2),
-      expectedImpactRatio: 1,
+      expectedSwapImpactRatio: 10000,
+      expectedPositionImpactRatio: 16666,
     },
     WAVAX: {
       negativeImpactFactor: decimalToFloat(1, 8).div(2),
-      expectedImpactRatio: 2,
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
     },
     LTC: {
       negativeImpactFactor: decimalToFloat(8, 9).div(2),
-      expectedImpactRatio: 2,
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
     },
     DOGE: {
       negativeImpactFactor: decimalToFloat(8, 9).div(2),
-      expectedImpactRatio: 2,
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
     },
     SOL: {
       negativeImpactFactor: decimalToFloat(5, 9).div(2),
-      expectedImpactRatio: 2,
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
     },
     XRP: {
       negativeImpactFactor: decimalToFloat(5, 9).div(2),
-      expectedImpactRatio: 2,
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
     },
   },
 };
@@ -161,7 +179,8 @@ async function validatePerpConfig({ market, marketConfig, indexTokenSymbol, data
     );
   }
 
-  if (!negativePositionImpactFactor.eq(positivePositionImpactFactor.mul(recommendedPerpConfig.expectedImpactRatio))) {
+  const impactRatio = negativePositionImpactFactor.mul(BASIS_POINTS_DIVISOR).div(positivePositionImpactFactor);
+  if (impactRatio.sub(recommendedPerpConfig.expectedPositionImpactRatio).abs().gt(100)) {
     throw new Error(`Invalid position impact factors for ${indexTokenSymbol}`);
   }
 
@@ -208,6 +227,8 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
   let borrowingExponentFactorForShorts = marketConfig.borrowingExponentFactorForShorts;
   let fundingFactor = marketConfig.fundingFactor;
   let fundingExponentFactor = marketConfig.fundingExponentFactor;
+  const maxOpenInterestForLongs = marketConfig.maxOpenInterestForLongs;
+  const maxOpenInterestForShorts = marketConfig.maxOpenInterestForShorts;
 
   if (process.env.READ_FROM_CHAIN === "true") {
     const multicallReadParams = [];
@@ -351,8 +372,11 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
     );
   }
 
-  if (!negativeSwapImpactFactor.eq(positiveSwapImpactFactor.mul(recommendedSwapConfig.expectedImpactRatio))) {
-    throw new Error(`Invalid swap impact factors for ${longTokenSymbol}`);
+  const impactRatio = negativeSwapImpactFactor.mul(BASIS_POINTS_DIVISOR).div(positiveSwapImpactFactor);
+  if (impactRatio.sub(recommendedSwapConfig.expectedSwapImpactRatio).abs().gt(100)) {
+    throw new Error(
+      `Invalid position impact factors for ${longTokenSymbol}: ${impactRatio} expected ${recommendedSwapConfig.expectedSwapImpactRatio}`
+    );
   }
 
   if (negativeSwapImpactFactor.lt(recommendedSwapConfig.negativeImpactFactor)) {
@@ -363,17 +387,36 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
     });
   }
 
-  if (!borrowingExponentFactorForLongs.eq(decimalToFloat(1))) {
-    throw new Error("borrowingExponentFactorForLongs != 1");
+  if (
+    borrowingExponentFactorForLongs.lt(decimalToFloat(1)) ||
+    borrowingExponentFactorForLongs.gt(decimalToFloat(15, 1))
+  ) {
+    throw new Error(
+      `borrowingExponentFactorForLongs should be in range 1 – 1.5, provided ${formatAmount(
+        borrowingExponentFactorForLongs,
+        30
+      )}`
+    );
   }
 
-  if (!borrowingExponentFactorForShorts.eq(decimalToFloat(1))) {
-    throw new Error("borrowingExponentFactorForShorts != 1");
+  if (
+    borrowingExponentFactorForShorts.lt(decimalToFloat(1)) ||
+    borrowingExponentFactorForShorts.gt(decimalToFloat(15, 1))
+  ) {
+    throw new Error(
+      `borrowingExponentFactorForShorts should be in range 1 – 1.5, provided ${formatAmount(
+        borrowingExponentFactorForShorts,
+        30
+      )}`
+    );
   }
 
-  const maxBorrowingFactorForLongsPerYear = borrowingFactorForLongs
-    .mul(openInterestReserveFactorLongs)
-    .div(decimalToFloat(1))
+  const maxLongTokenPoolUsdBasedOnMaxOpenInterest = maxOpenInterestForLongs
+    .mul(FLOAT_PRECISION)
+    .div(openInterestReserveFactorLongs);
+  const maxBorrowingFactorForLongsPerYear = pow(maxOpenInterestForLongs, borrowingExponentFactorForLongs)
+    .mul(borrowingFactorForLongs)
+    .div(maxLongTokenPoolUsdBasedOnMaxOpenInterest)
     .mul(SECONDS_PER_YEAR);
 
   if (maxBorrowingFactorForLongsPerYear.gt(decimalToFloat(1))) {
@@ -382,9 +425,12 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
 
   console.log(`    maxBorrowingFactorForLongsPerYear: ${formatAmount(maxBorrowingFactorForLongsPerYear, 28)}%`);
 
-  const maxBorrowingFactorForShortsPerYear = borrowingFactorForShorts
-    .mul(openInterestReserveFactorShorts)
-    .div(decimalToFloat(1))
+  const maxShortTokenPoolUsdBasedOnMaxOpenInterest = maxOpenInterestForShorts
+    .mul(FLOAT_PRECISION)
+    .div(openInterestReserveFactorShorts);
+  const maxBorrowingFactorForShortsPerYear = pow(maxOpenInterestForShorts, borrowingExponentFactorForShorts)
+    .mul(borrowingFactorForShorts)
+    .div(maxShortTokenPoolUsdBasedOnMaxOpenInterest)
     .mul(SECONDS_PER_YEAR);
 
   if (maxBorrowingFactorForShortsPerYear.gt(decimalToFloat(1))) {

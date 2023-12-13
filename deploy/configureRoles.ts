@@ -1,23 +1,36 @@
 import { grantRoleIfNotGranted, revokeRoleIfGranted } from "../utils/role";
 
-const func = async ({ gmx }) => {
+// example rolesToRemove format:
+// {
+//   arbitrum: [
+//     {
+//       role: "CONTROLLER",
+//       member: "0x9d44B89Eb6FB382b712C562DfaFD8825829b422e",
+//     },
+//   ],
+// };
+
+const rolesToRemove = {
+  hardhat: [],
+  arbitrum: [],
+  avalanche: [],
+  avalancheFuji: [],
+  arbitrumGoerli: [],
+  avalancheFuji: [],
+};
+
+const func = async ({ gmx, network }) => {
   const rolesConfig = await gmx.getRoles();
-  for (const { account, label, roles, rolesToRemove } of rolesConfig) {
-    if (!roles && !rolesToRemove) {
-      console.warn("WARN: No roles and rolesToRemove for %s", account);
+  for (const role in rolesConfig) {
+    const accounts = rolesConfig[role];
+    for (const account in accounts) {
+      await grantRoleIfNotGranted(account, role);
     }
+  }
 
-    if (roles) {
-      for (const role of roles) {
-        await grantRoleIfNotGranted(account, role, label);
-      }
-    }
-
-    if (rolesToRemove) {
-      for (const roleToRemove of rolesToRemove) {
-        await revokeRoleIfGranted(account, roleToRemove, label);
-      }
-    }
+  const _rolesToRemove = rolesToRemove[network.name];
+  for (const { account, role } of _rolesToRemove) {
+    await revokeRoleIfGranted(account, role);
   }
 };
 
