@@ -56,20 +56,32 @@ export function guessBlockNumberByTimestamp(block: ethers.providers.Block, times
 }
 
 export async function getBlockByTimestamp(timestamp: number) {
-  const tolerance = 10; // 10 seconds
+  const tolerance = 0; // in seconds
   const latestBlock = await hre.ethers.provider.getBlock("latest");
+
+  console.log(
+    "searching block by timestamp %s (%s) latest block: %s %s",
+    timestamp,
+    new Date(timestamp * 1000).toISOString(),
+    latestBlock.number,
+    latestBlock.timestamp
+  );
 
   let nextBlockNumber = guessBlockNumberByTimestamp(latestBlock, timestamp);
 
-  console.log("latest block: %s %s", latestBlock.number, latestBlock.timestamp);
-
   const i = 0;
-  while (i < 10) {
+  while (i < 15) {
     console.log("requesting next block %s", nextBlockNumber);
     const block = await hre.ethers.provider.getBlock(nextBlockNumber);
 
     if (Math.abs(block.timestamp - timestamp) < tolerance) {
-      console.log("found block %s %s diff %s", block.number, block.timestamp, block.timestamp - timestamp);
+      console.log(
+        "found block %s %s diff %s",
+        block.number,
+        block.timestamp,
+        new Date(block.timestamp * 1000).toISOString(),
+        block.timestamp - timestamp
+      );
       return block;
     }
 
