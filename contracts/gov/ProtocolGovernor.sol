@@ -48,7 +48,7 @@ contract ProtocolGovernor is
     // solhint-disable-next-line func-name-mixedcase
     function CLOCK_MODE() public view override(GovernorVotes, IGovernor) returns (string memory) {
         // Check that the clock was not modified
-        require(clock() == block.timestamp, "ERC20Votes: broken clock mode");
+        require(clock() == Chain.currentTimestamp(), "ERC20Votes: broken clock mode");
         return "mode=timestamp";
     }
 

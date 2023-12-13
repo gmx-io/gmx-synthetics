@@ -1,4 +1,5 @@
 import { createDeployFunction } from "../utils/deploy";
+import { expandDecimals } from "../utils/math";
 
 const func = createDeployFunction({
   contractName: "ProtocolGovernor",
@@ -12,7 +13,7 @@ const func = createDeployFunction({
       "v2.0", // version
       24 * 60 * 60, // votingDelay
       5 * 24 * 60 * 60, // votingPeriod
-      30_000, // proposalThreshold
+      expandDecimals(30_000, 18), // proposalThreshold
       4, // quorumNumeratorValue
     ];
   },
