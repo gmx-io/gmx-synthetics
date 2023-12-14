@@ -367,9 +367,14 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 9),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 9),
 
-      // factor in open interest reserve factor 50%
-      borrowingFactorForLongs: decimalToFloat(15, 9), // 0.000000015 * 50% =  0.0000000075, 0.00000075% / second, 23,65% per year if the pool is 100% utilized
-      borrowingFactorForShorts: decimalToFloat(15, 9), // 0,000000015 * 50% = 0.0000000075, 0.00000075% / second, 23.65% per year if the pool is 100% utilized
+      openInterestReserveFactorLongs: decimalToFloat(75, 2), // 75%,
+      openInterestReserveFactorShorts: decimalToFloat(75, 2), // 75%,
+
+      // factor in open interest reserve factor 75%
+      borrowingFactorForLongs: decimalToFloat(225, 13), // 2.25E-11, ~40.77% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(225, 13), // 2.25E-11, ~40.77% at 100% utilisation
+      borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
+      borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
       positionImpactPoolDistributionRate: expandDecimals(6666, 30), // ~576 XRP/day
       minPositionImpactPoolAmount: expandDecimals(671, 6),
@@ -409,9 +414,14 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
 
-      // factor in open interest reserve factor 50%
-      borrowingFactorForLongs: decimalToFloat(15, 9), // 0.000000015 * 50% =  0.0000000075, 0.00000075% / second, 23,65% per year if the pool is 100% utilized
-      borrowingFactorForShorts: decimalToFloat(15, 9), // 0,000000015 * 50% = 0.0000000075, 0.00000075% / second, 23.65% per year if the pool is 100% utilized
+      openInterestReserveFactorLongs: decimalToFloat(75, 2), // 75%,
+      openInterestReserveFactorShorts: decimalToFloat(75, 2), // 75%,
+
+      // factor in open interest reserve factor 75%
+      borrowingFactorForLongs: decimalToFloat(23, 12), // 2.30-11, 40.80% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(23, 12), // 2.30-11, 40.80% at 100% utilisation
+      borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
+      borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
       positionImpactPoolDistributionRate: expandDecimals(475, 34), // ~4104 DOGE/day
       minPositionImpactPoolAmount: expandDecimals(5808, 8),
@@ -494,9 +504,17 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(25, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(25, 10),
 
-      // factor in open interest reserve factor 50%
-      borrowingFactorForLongs: decimalToFloat(15, 9), // 0.000000015 * 50% =  0.0000000075, 0.00000075% / second, 23,65% per year if the pool is 100% utilized
-      borrowingFactorForShorts: decimalToFloat(15, 9), // 0,000000015 * 50% = 0.0000000075, 0.00000075% / second, 23.65% per year if the pool is 100% utilized
+      reserveFactorLongs: decimalToFloat(85, 2), // 85%,
+      reserveFactorShorts: decimalToFloat(85, 2), // 85%,
+
+      openInterestReserveFactorLongs: decimalToFloat(8, 1), // 80%,
+      openInterestReserveFactorShorts: decimalToFloat(8, 1), // 80%,
+
+      // factor in open interest reserve factor 80%
+      borrowingFactorForLongs: decimalToFloat(235, 13), // 2.35E-11, ~41.08% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(235, 13), // 2.35E-11, ~41.08% at 100% utilisation
+      borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
+      borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
       positionImpactPoolDistributionRate: expandDecimals(2715, 30), // ~2.34 LTC/day
       minPositionImpactPoolAmount: expandDecimals(66, 7), // 6.6 LTC
