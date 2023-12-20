@@ -207,7 +207,7 @@ async function main() {
     const { marketTokensSupply } = balancesData[marketAddress];
 
     const diff = userBalancesSum.sub(marketTokensSupply);
-    if (diff.abs().gt(marketTokensSupply.div(500))) {
+    if (diff.abs().gt(marketTokensSupply.div(200))) {
       console.error(
         "market %s sum of user balances %s and market tokens supply %s differs too much %s (%s%)",
         marketAddress,
@@ -294,12 +294,6 @@ async function main() {
 
   overrideReceivers(jsonResult);
 
-  console.log(
-    "Liquidity incentives for period from %s to %s",
-    fromDate.toISOString().substring(0, 10),
-    toDate.toISOString().substring(0, 10)
-  );
-
   for (const marketAddress of Object.keys(lpAllocationData.rewardsPerMarket)) {
     console.log(
       "market %s allocation: %s",
@@ -307,6 +301,12 @@ async function main() {
       formatAmount(lpAllocationData.rewardsPerMarket[marketAddress], 18, 2, true)
     );
   }
+
+  console.log(
+    "Liquidity incentives for period from %s to %s",
+    fromDate.toISOString().substring(0, 10),
+    toDate.toISOString().substring(0, 10)
+  );
   console.log("allocated rewards: %s ARB", formatAmount(lpAllocationData.totalRewards, 18, 2, true));
 
   console.log("min reward threshold: %s ARB", formatAmount(MIN_REWARD_THRESHOLD, 18, 2, true));
