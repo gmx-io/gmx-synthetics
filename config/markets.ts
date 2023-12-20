@@ -443,11 +443,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(137_300, 9),
-      maxShortTokenPoolAmount: expandDecimals(10_200_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(135_500, 9),
+      maxShortTokenPoolAmount: expandDecimals(10_700_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(127_800, 9),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(9_500_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(126_600, 9),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(76, 10),
       positivePositionImpactFactor: decimalToFloat(38, 10),
@@ -576,11 +576,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(463_700, 18),
-      maxShortTokenPoolAmount: expandDecimals(6_600_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(493_500, 18),
+      maxShortTokenPoolAmount: expandDecimals(7_200_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(421_000, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(6_000_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(445_500, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(6_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~45,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~90,000 USD of imbalance
@@ -603,8 +603,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(383, 43), // ~331 LINK/day
       minPositionImpactPoolAmount: expandDecimals(993, 18),
 
-      maxOpenInterestForLongs: decimalToFloat(5_000_000),
-      maxOpenInterestForShorts: decimalToFloat(5_000_000),
+      maxOpenInterestForLongs: decimalToFloat(5_500_000),
+      maxOpenInterestForShorts: decimalToFloat(5_500_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
