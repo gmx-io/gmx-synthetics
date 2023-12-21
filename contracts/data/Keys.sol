@@ -61,6 +61,9 @@ library Keys {
     // @dev key for the market list
     bytes32 public constant MARKET_LIST = keccak256(abi.encode("MARKET_LIST"));
 
+    // @dev key for the fee batch list
+    bytes32 public constant FEE_BATCH_LIST = keccak256(abi.encode("FEE_BATCH_LIST"));
+
     // @dev key for the deposit list
     bytes32 public constant DEPOSIT_LIST = keccak256(abi.encode("DEPOSIT_LIST"));
     // @dev key for the account deposit list

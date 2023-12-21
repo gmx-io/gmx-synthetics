@@ -95,6 +95,14 @@ contract RoleModule {
     }
 
     /**
+     * @dev Only allows addresses with the FEE_DISTRIBUTION_KEEPER role to call the function.
+     */
+    modifier onlyFeeDistributionKeeper() {
+        _validateRole(Role.FEE_DISTRIBUTION_KEEPER, "FEE_DISTRIBUTION_KEEPER");
+        _;
+    }
+
+    /**
      * @dev Only allows addresses with the ORDER_KEEPER role to call the function.
      */
     modifier onlyOrderKeeper() {
