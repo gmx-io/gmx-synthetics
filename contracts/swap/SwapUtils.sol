@@ -174,6 +174,35 @@ library SwapUtils {
         return (tokenOut, outputAmount);
     }
 
+    function validateSwapOutputToken(
+        DataStore dataStore,
+        address[] memory swapPath,
+        address inputToken,
+        address expectedOutputToken
+    ) internal view {
+        address outputToken = getOutputToken(dataStore, swapPath, inputToken);
+        if (outputToken != expectedOutputToken) {
+            revert Errors.InvalidSwapOutputToken(outputToken, expectedOutputToken);
+        }
+    }
+
+    function getOutputToken(
+        DataStore dataStore,
+        address[] memory swapPath,
+        address inputToken
+    ) internal view returns (address) {
+        address outputToken = inputToken;
+        Market.Props[] memory markets = MarketUtils.getSwapPathMarkets(dataStore, swapPath);
+        uint256 marketCount = markets.length;
+
+        for (uint256 i; i < marketCount; i++) {
+            Market.Props memory market = markets[i];
+            outputToken = MarketUtils.getOppositeToken(outputToken, market);
+        }
+
+        return outputToken;
+    }
+
     /**
      * Performs a swap on a single market.
      *

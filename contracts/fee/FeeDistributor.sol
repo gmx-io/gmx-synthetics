@@ -10,19 +10,25 @@ import "../v1/IRouterV1.sol";
 import "../data/DataStore.sol";
 import "../role/RoleModule.sol";
 import "../fee/FeeUtils.sol";
+import "../fee/FeeSwapUtils.sol";
 import "../fee/FeeBatchStoreUtils.sol";
 import "../market/Market.sol";
 import "../nonce/NonceUtils.sol";
+import "../router/IExchangeRouter.sol";
 
 // @title FeeDistributor
 contract FeeDistributor is ReentrancyGuard, RoleModule {
     using Market for Market.Props;
+    using Order for Order.Props;
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
 
     IVaultV1 public immutable vaultV1;
     IRouterV1 public immutable routerV1;
+
+    address public immutable routerV2;
+    IExchangeRouter public immutable exchangeRouterV2;
 
     address public immutable bridgingToken;
 
@@ -32,6 +38,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         EventEmitter _eventEmitter,
         IVaultV1 _vaultV1,
         IRouterV1 _routerV1,
+        address _routerV2,
+        IExchangeRouter _exchangeRouterV2,
         address _bridgingToken
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
@@ -39,6 +47,9 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
 
         vaultV1 = _vaultV1;
         routerV1 = _routerV1;
+
+        routerV2 = _routerV2;
+        exchangeRouterV2 = _exchangeRouterV2;
 
         bridgingToken = _bridgingToken;
     }
@@ -76,29 +87,62 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         bytes32 feeBatchKey,
         uint256 tokenIndex,
         address[] memory path,
-        uint256 amountIn,
+        uint256 swapAmount,
         uint256 minOut
     ) external {
-        FeeBatch.Props memory feeBatch = FeeBatchStoreUtils.get(dataStore, feeBatchKey);
-        if (tokenIndex > feeBatch.feeTokens.length) {
-            revert Errors.InvalidFeeBatchTokenIndex(tokenIndex, feeBatch.feeTokens.length);
-        }
-
-        address tokenIn = feeBatch.feeTokens[tokenIndex];
-        uint256 remainingAmount = feeBatch.remainingAmounts[tokenIndex];
-        if (amountIn > remainingAmount) {
-            revert Errors.InvalidAmountInForFeeBatch(amountIn, remainingAmount);
-        }
-
-        if (path[path.length - 1] != bridgingToken) {
-            revert Errors.InvalidSwapPathForV1(path, bridgingToken);
-        }
-
-        IERC20(tokenIn).approve(address(routerV1), amountIn);
-
-        routerV1.swap(path, amountIn, minOut, address(this));
+        FeeSwapUtils.swapFeesUsingV1(
+            dataStore,
+            routerV1,
+            bridgingToken,
+            feeBatchKey,
+            tokenIndex,
+            path,
+            swapAmount,
+            minOut
+        );
     }
 
+    function swapFeesUsingV2(
+        bytes32 feeBatchKey,
+        uint256 tokenIndex,
+        address market,
+        address[] memory swapPath,
+        uint256 swapAmount,
+        uint256 executionFee,
+        uint256 minOut
+    ) external payable {
+        FeeSwapUtils.swapFeesUsingV2(
+            dataStore,
+            routerV2,
+            exchangeRouterV2,
+            bridgingToken,
+            feeBatchKey,
+            tokenIndex,
+            market,
+            swapPath,
+            swapAmount,
+            executionFee,
+            minOut
+        );
+    }
+
+    // handle order cancellation callbacks
+    function afterOrderCancellation(
+        bytes32 orderKey,
+        Order.Props memory order,
+        EventUtils.EventLogData memory /* eventData */
+    ) external {
+        // validate that the caller has a controller role, the only controller that
+        // should call this function is the OrderHandler
+        _validateRole(Role.CONTROLLER, "CONTROLLER");
+
+        bytes32 feeBatchKey = dataStore.getBytes32(Keys.feeDistributorSwapFeeBatchKey(orderKey));
+        uint256 tokenIndex = dataStore.getUint(Keys.feeDistributorSwapTokenIndexKey(orderKey));
+
+        FeeBatch.Props memory feeBatch = FeeBatchStoreUtils.get(dataStore, feeBatchKey);
+        feeBatch.remainingAmounts[tokenIndex] += order.initialCollateralDeltaAmount();
+        FeeBatchStoreUtils.set(dataStore, feeBatchKey, feeBatch);
+    }
 
     function _claimFeesV1(FeeBatch.Props memory feeBatch, uint256 count) internal returns (FeeBatch.Props memory) {
         for (uint256 i; i < count; i++) {
@@ -154,4 +198,5 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
 
         return feeBatch;
     }
+
 }

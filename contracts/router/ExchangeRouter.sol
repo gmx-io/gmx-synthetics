@@ -9,6 +9,7 @@ import "../exchange/IOrderHandler.sol";
 import "../feature/FeatureUtils.sol";
 
 import "./BaseRouter.sol";
+import "./IExchangeRouter.sol";
 
 /**
  * @title ExchangeRouter
@@ -48,7 +49,7 @@ import "./BaseRouter.sol";
  * - Order keepers would bundle the signature and price data for token A
  * then execute the order
  */
-contract ExchangeRouter is BaseRouter {
+contract ExchangeRouter is IExchangeRouter, BaseRouter {
     using Deposit for Deposit.Props;
     using Withdrawal for Withdrawal.Props;
     using Order for Order.Props;
@@ -84,7 +85,7 @@ contract ExchangeRouter is BaseRouter {
      */
     function createDeposit(
         DepositUtils.CreateDepositParams calldata params
-    ) external payable nonReentrant returns (bytes32) {
+    ) external override payable nonReentrant returns (bytes32) {
         address account = msg.sender;
 
         return depositHandler.createDeposit(
@@ -93,7 +94,7 @@ contract ExchangeRouter is BaseRouter {
         );
     }
 
-    function cancelDeposit(bytes32 key) external payable nonReentrant {
+    function cancelDeposit(bytes32 key) external override payable nonReentrant {
         Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
         if (deposit.account() == address(0)) {
             revert Errors.EmptyDeposit();
@@ -115,7 +116,7 @@ contract ExchangeRouter is BaseRouter {
      */
     function createWithdrawal(
         WithdrawalUtils.CreateWithdrawalParams calldata params
-    ) external payable nonReentrant returns (bytes32) {
+    ) external override payable nonReentrant returns (bytes32) {
         address account = msg.sender;
 
         return withdrawalHandler.createWithdrawal(
@@ -124,7 +125,7 @@ contract ExchangeRouter is BaseRouter {
         );
     }
 
-    function cancelWithdrawal(bytes32 key) external payable nonReentrant {
+    function cancelWithdrawal(bytes32 key) external override payable nonReentrant {
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
         if (withdrawal.account() != msg.sender) {
             revert Errors.Unauthorized(msg.sender, "account for cancelWithdrawal");
@@ -141,7 +142,7 @@ contract ExchangeRouter is BaseRouter {
      */
     function createOrder(
         BaseOrderUtils.CreateOrderParams calldata params
-    ) external payable nonReentrant returns (bytes32) {
+    ) external override payable nonReentrant returns (bytes32) {
         address account = msg.sender;
 
         return orderHandler.createOrder(
