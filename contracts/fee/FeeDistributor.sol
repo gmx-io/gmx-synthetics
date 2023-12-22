@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "../v1/IVaultV1.sol";
+import "../v1/IRouterV1.sol";
 
 import "../data/DataStore.sol";
 import "../role/RoleModule.sol";
@@ -21,16 +22,25 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     EventEmitter public immutable eventEmitter;
 
     IVaultV1 public immutable vaultV1;
+    IRouterV1 public immutable routerV1;
+
+    address public immutable bridgingToken;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        IVaultV1 _vaultV1
+        IVaultV1 _vaultV1,
+        IRouterV1 _routerV1,
+        address _bridgingToken
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
+
         vaultV1 = _vaultV1;
+        routerV1 = _routerV1;
+
+        bridgingToken = _bridgingToken;
     }
 
     // the startIndexV2 and endIndexV2 is passed into the function instead of iterating
@@ -61,6 +71,34 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         bytes32 key = NonceUtils.getNextKey(dataStore);
         FeeBatchStoreUtils.set(dataStore, key, feeBatch);
     }
+
+    function swapFeesUsingV1(
+        bytes32 feeBatchKey,
+        uint256 tokenIndex,
+        address[] memory path,
+        uint256 amountIn,
+        uint256 minOut
+    ) external {
+        FeeBatch.Props memory feeBatch = FeeBatchStoreUtils.get(dataStore, feeBatchKey);
+        if (tokenIndex > feeBatch.feeTokens.length) {
+            revert Errors.InvalidFeeBatchTokenIndex(tokenIndex, feeBatch.feeTokens.length);
+        }
+
+        address tokenIn = feeBatch.feeTokens[tokenIndex];
+        uint256 remainingAmount = feeBatch.remainingAmounts[tokenIndex];
+        if (amountIn > remainingAmount) {
+            revert Errors.InvalidAmountInForFeeBatch(amountIn, remainingAmount);
+        }
+
+        if (path[path.length - 1] != bridgingToken) {
+            revert Errors.InvalidSwapPathForV1(path, bridgingToken);
+        }
+
+        IERC20(tokenIn).approve(address(routerV1), amountIn);
+
+        routerV1.swap(path, amountIn, minOut, address(this));
+    }
+
 
     function _claimFeesV1(FeeBatch.Props memory feeBatch, uint256 count) internal returns (FeeBatch.Props memory) {
         for (uint256 i; i < count; i++) {
