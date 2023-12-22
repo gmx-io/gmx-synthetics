@@ -53,6 +53,11 @@ library Role {
     bytes32 public constant FEE_KEEPER = keccak256(abi.encode("FEE_KEEPER"));
 
     /**
+     * @dev The FEE_DISTRIBUTION_KEEPER role.
+     */
+    bytes32 public constant FEE_DISTRIBUTION_KEEPER = keccak256(abi.encode("FEE_DISTRIBUTION_KEEPER"));
+
+    /**
      * @dev The ORDER_KEEPER role.
      */
     bytes32 public constant ORDER_KEEPER = keccak256(abi.encode("ORDER_KEEPER"));

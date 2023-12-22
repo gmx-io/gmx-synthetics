@@ -32,7 +32,7 @@ contract GovToken is ERC20, ERC20Permit, ERC20Votes, RoleModule {
     // solhint-disable-next-line func-name-mixedcase
     function CLOCK_MODE() public view override returns (string memory) {
         // Check that the clock was not modified
-        require(clock() == block.timestamp, "ERC20Votes: broken clock mode");
+        require(clock() == Chain.currentTimestamp(), "ERC20Votes: broken clock mode");
         return "mode=timestamp";
     }
 

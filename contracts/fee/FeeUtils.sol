@@ -107,7 +107,7 @@ library FeeUtils {
         address market,
         address token,
         address receiver
-    ) internal {
+    ) internal returns (uint256) {
         AccountUtils.validateReceiver(receiver);
 
         bytes32 key = Keys.claimableFeeAmountKey(market, token);
@@ -129,6 +129,8 @@ library FeeUtils {
             receiver,
             feeAmount
         );
+
+        return feeAmount;
     }
 
     function claimUiFees(

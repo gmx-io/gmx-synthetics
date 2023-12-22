@@ -59,6 +59,14 @@ library Errors {
     error InvalidExternalReceiversInput(uint256 refundTokensLength, uint256 refundReceiversLength);
     error InvalidExternalCallTarget(address target);
 
+    // FeeBatchStoreUtils errors
+    error FeeBatchNotFound(bytes32 key);
+
+    // FeeDistributor errors
+    error InvalidFeeBatchTokenIndex(uint256 tokenIndex, uint256 feeBatchTokensLength);
+    error InvalidAmountInForFeeBatch(uint256 amountIn, uint256 remainingAmount);
+    error InvalidSwapPathForV1(address[] path, address bridgingToken);
+
     // GlpMigrator errors
     error InvalidGlpAmount(uint256 totalGlpAmountToRedeem, uint256 totalGlpAmount);
     error InvalidExecutionFeeForMigration(uint256 totalExecutionFee, uint256 msgValue);

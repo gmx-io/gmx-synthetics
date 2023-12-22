@@ -61,6 +61,9 @@ library Keys {
     // @dev key for the market list
     bytes32 public constant MARKET_LIST = keccak256(abi.encode("MARKET_LIST"));
 
+    // @dev key for the fee batch list
+    bytes32 public constant FEE_BATCH_LIST = keccak256(abi.encode("FEE_BATCH_LIST"));
+
     // @dev key for the deposit list
     bytes32 public constant DEPOSIT_LIST = keccak256(abi.encode("DEPOSIT_LIST"));
     // @dev key for the account deposit list
@@ -327,6 +330,10 @@ library Keys {
     bytes32 public constant SUBACCOUNT_AUTO_TOP_UP_AMOUNT = keccak256(abi.encode("SUBACCOUNT_AUTO_TOP_UP_AMOUNT"));
     // @dev key for subaccount order action
     bytes32 public constant SUBACCOUNT_ORDER_ACTION = keccak256(abi.encode("SUBACCOUNT_ORDER_ACTION"));
+    // @dev key for fee distributor swap order token index
+    bytes32 public constant FEE_DISTRIBUTOR_SWAP_TOKEN_INDEX = keccak256(abi.encode("FEE_DISTRIBUTOR_SWAP_TOKEN_INDEX"));
+    // @dev key for fee distributor swap fee batch
+    bytes32 public constant FEE_DISTRIBUTOR_SWAP_FEE_BATCH = keccak256(abi.encode("FEE_DISTRIBUTOR_SWAP_FEE_BATCH"));
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
@@ -1400,6 +1407,26 @@ library Keys {
         return keccak256(abi.encode(
             STABLE_PRICE,
             token
+        ));
+    }
+
+    // @dev key for fee distributor swap token index
+    // @param orderKey the swap order key
+    // @return key for fee distributor swap token index
+    function feeDistributorSwapTokenIndexKey(bytes32 orderKey) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            FEE_DISTRIBUTOR_SWAP_TOKEN_INDEX,
+            orderKey
+        ));
+    }
+
+    // @dev key for fee distributor swap fee batch key
+    // @param orderKey the swap order key
+    // @return key for fee distributor swap fee batch key
+    function feeDistributorSwapFeeBatchKey(bytes32 orderKey) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            FEE_DISTRIBUTOR_SWAP_FEE_BATCH,
+            orderKey
         ));
     }
 }
