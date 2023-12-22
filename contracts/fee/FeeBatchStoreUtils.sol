@@ -14,14 +14,9 @@ import "./FeeBatch.sol";
 library FeeBatchStoreUtils {
     using FeeBatch for FeeBatch.Props;
 
-    bytes32 public constant FEE_TOKENS_V1 = keccak256(abi.encode("FEE_TOKENS_V1"));
-    bytes32 public constant FEE_AMOUNTS_V1 = keccak256(abi.encode("FEE_AMOUNTS_V1"));
-    bytes32 public constant REMAINING_AMOUNTS_V1 = keccak256(abi.encode("REMAINING_AMOUNTS_V1"));
-
-    bytes32 public constant FEE_TOKENS_V2 = keccak256(abi.encode("FEE_TOKENS_V2"));
-    bytes32 public constant FEE_AMOUNTS_V2 = keccak256(abi.encode("FEE_AMOUNTS_V2"));
-    bytes32 public constant REMAINING_AMOUNTS_V2 = keccak256(abi.encode("REMAINING_AMOUNTS_V2"));
-
+    bytes32 public constant FEE_TOKENS = keccak256(abi.encode("FEE_TOKENS"));
+    bytes32 public constant FEE_AMOUNTS = keccak256(abi.encode("FEE_AMOUNTS"));
+    bytes32 public constant REMAINING_AMOUNTS = keccak256(abi.encode("REMAINING_AMOUNTS"));
     bytes32 public constant CREATED_AT = keccak256(abi.encode("CREATED_AT"));
 
     function get(DataStore dataStore, bytes32 key) public view returns (FeeBatch.Props memory) {
@@ -30,28 +25,16 @@ library FeeBatchStoreUtils {
             return feeBatch;
         }
 
-        feeBatch.feeTokensV1 = dataStore.getAddressArray(
-            keccak256(abi.encode(key, FEE_TOKENS_V1))
+        feeBatch.feeTokens = dataStore.getAddressArray(
+            keccak256(abi.encode(key, FEE_TOKENS))
         );
 
-        feeBatch.feeAmountsV1 = dataStore.getUintArray(
-            keccak256(abi.encode(key, FEE_AMOUNTS_V1))
+        feeBatch.feeAmounts = dataStore.getUintArray(
+            keccak256(abi.encode(key, FEE_AMOUNTS))
         );
 
-        feeBatch.remainingAmountsV1 = dataStore.getUintArray(
-            keccak256(abi.encode(key, REMAINING_AMOUNTS_V1))
-        );
-
-        feeBatch.feeTokensV2 = dataStore.getAddressArray(
-            keccak256(abi.encode(key, FEE_TOKENS_V2))
-        );
-
-        feeBatch.feeAmountsV2 = dataStore.getUintArray(
-            keccak256(abi.encode(key, FEE_AMOUNTS_V2))
-        );
-
-        feeBatch.remainingAmountsV2 = dataStore.getUintArray(
-            keccak256(abi.encode(key, REMAINING_AMOUNTS_V2))
+        feeBatch.remainingAmounts = dataStore.getUintArray(
+            keccak256(abi.encode(key, REMAINING_AMOUNTS))
         );
 
         feeBatch.createdAt = dataStore.getUint(
@@ -68,33 +51,18 @@ library FeeBatchStoreUtils {
         );
 
         dataStore.setAddressArray(
-            keccak256(abi.encode(key, FEE_TOKENS_V1)),
-            feeBatch.feeTokensV1
+            keccak256(abi.encode(key, FEE_TOKENS)),
+            feeBatch.feeTokens
         );
 
         dataStore.setUintArray(
-            keccak256(abi.encode(key, FEE_AMOUNTS_V1)),
-            feeBatch.feeAmountsV1
+            keccak256(abi.encode(key, FEE_AMOUNTS)),
+            feeBatch.feeAmounts
         );
 
         dataStore.setUintArray(
-            keccak256(abi.encode(key, REMAINING_AMOUNTS_V1)),
-            feeBatch.remainingAmountsV1
-        );
-
-        dataStore.setAddressArray(
-            keccak256(abi.encode(key, FEE_TOKENS_V2)),
-            feeBatch.feeTokensV2
-        );
-
-        dataStore.setUintArray(
-            keccak256(abi.encode(key, FEE_AMOUNTS_V2)),
-            feeBatch.feeAmountsV2
-        );
-
-        dataStore.setUintArray(
-            keccak256(abi.encode(key, REMAINING_AMOUNTS_V2)),
-            feeBatch.remainingAmountsV2
+            keccak256(abi.encode(key, REMAINING_AMOUNTS)),
+            feeBatch.remainingAmounts
         );
 
         dataStore.setUint(
@@ -114,27 +82,15 @@ library FeeBatchStoreUtils {
         );
 
         dataStore.removeAddressArray(
-            keccak256(abi.encode(key, FEE_TOKENS_V1))
+            keccak256(abi.encode(key, FEE_TOKENS))
         );
 
         dataStore.removeUintArray(
-            keccak256(abi.encode(key, FEE_AMOUNTS_V1))
+            keccak256(abi.encode(key, FEE_AMOUNTS))
         );
 
         dataStore.removeUintArray(
-            keccak256(abi.encode(key, REMAINING_AMOUNTS_V1))
-        );
-
-        dataStore.removeAddressArray(
-            keccak256(abi.encode(key, FEE_TOKENS_V2))
-        );
-
-        dataStore.removeUintArray(
-            keccak256(abi.encode(key, FEE_AMOUNTS_V2))
-        );
-
-        dataStore.removeUintArray(
-            keccak256(abi.encode(key, REMAINING_AMOUNTS_V2))
+            keccak256(abi.encode(key, REMAINING_AMOUNTS))
         );
 
         dataStore.removeUint(

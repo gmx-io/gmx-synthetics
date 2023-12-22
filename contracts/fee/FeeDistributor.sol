@@ -44,44 +44,46 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     ) external nonReentrant onlyFeeDistributionKeeper {
         FeeBatch.Props memory feeBatch;
 
-        feeBatch = _claimFeesV1(feeBatch);
-        feeBatch = _claimFeesV2(feeBatch, startIndexV2, endIndexV2);
+        uint256 countV1 = vaultV1.allWhitelistedTokensLength();
+
+        address[] memory marketKeysV2 = MarketStoreUtils.getMarketKeys(dataStore, startIndexV2, endIndexV2);
+        uint256 countV2 = marketKeysV2.length;
+
+        uint256 totalCount = countV1 + countV2 * 2;
+        feeBatch.feeTokens = new address[](totalCount);
+        feeBatch.feeAmounts = new uint256[](totalCount);
+        feeBatch.remainingAmounts = new uint256[](totalCount);
+
+        feeBatch = _claimFeesV1(feeBatch, countV1);
+        feeBatch = _claimFeesV2(feeBatch, marketKeysV2, countV1, countV2);
         feeBatch.createdAt = Chain.currentTimestamp();
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
         FeeBatchStoreUtils.set(dataStore, key, feeBatch);
     }
 
-    function _claimFeesV1(FeeBatch.Props memory feeBatch) internal returns (FeeBatch.Props memory) {
-        uint256 count = vaultV1.allWhitelistedTokensLength();
-
-        feeBatch.feeTokensV1 = new address[](count);
-        feeBatch.feeAmountsV1 = new uint256[](count);
-        feeBatch.remainingAmountsV1 = new uint256[](count);
-
+    function _claimFeesV1(FeeBatch.Props memory feeBatch, uint256 count) internal returns (FeeBatch.Props memory) {
         for (uint256 i; i < count; i++) {
             // it is possible for the token to be address(0) the withdrawFees
             // function should just return 0 in that case
             address token = vaultV1.allWhitelistedTokens(i);
             uint256 amount = vaultV1.withdrawFees(token, address(this));
 
-            feeBatch.feeTokensV1[i] = token;
-            feeBatch.feeAmountsV1[i] = amount;
-            feeBatch.remainingAmountsV1[i] = amount;
+            feeBatch.feeTokens[i] = token;
+            feeBatch.feeAmounts[i] = amount;
+            feeBatch.remainingAmounts[i] = amount;
         }
 
         return feeBatch;
     }
 
-    function _claimFeesV2(FeeBatch.Props memory feeBatch, uint256 start, uint256 end) internal returns (FeeBatch.Props memory) {
-        address[] memory marketKeys = MarketStoreUtils.getMarketKeys(dataStore, start, end);
-        uint256 count = marketKeys.length;
-
-        feeBatch.feeTokensV2 = new address[](count);
-        feeBatch.feeAmountsV2 = new uint256[](count);
-        feeBatch.remainingAmountsV2 = new uint256[](count);
-
-        for (uint256 i; i < count; i++) {
+    function _claimFeesV2(
+        FeeBatch.Props memory feeBatch,
+        address[] memory marketKeys,
+        uint256 countV1,
+        uint256 countV2
+    ) internal returns (FeeBatch.Props memory) {
+        for (uint256 i; i < countV2; i++) {
             address marketKey = marketKeys[i];
             Market.Props memory market = MarketStoreUtils.get(dataStore, marketKey);
 
@@ -101,13 +103,15 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
                 address(this)
             );
 
-            feeBatch.feeTokensV2[i * 2] = market.longToken;
-            feeBatch.feeAmountsV2[i * 2] = longTokenFeeAmount;
-            feeBatch.remainingAmountsV2[i * 2] = longTokenFeeAmount;
+            uint256 baseIndex = countV1 + i * 2;
 
-            feeBatch.feeTokensV2[i * 2 + 1] = market.shortToken;
-            feeBatch.feeAmountsV2[i * 2 + 1] = shortTokenFeeAmount;
-            feeBatch.remainingAmountsV2[i * 2 + 1] = shortTokenFeeAmount;
+            feeBatch.feeTokens[baseIndex] = market.longToken;
+            feeBatch.feeAmounts[baseIndex] = longTokenFeeAmount;
+            feeBatch.remainingAmounts[baseIndex] = longTokenFeeAmount;
+
+            feeBatch.feeTokens[baseIndex + 1] = market.shortToken;
+            feeBatch.feeAmounts[baseIndex + 1] = shortTokenFeeAmount;
+            feeBatch.remainingAmounts[baseIndex + 1] = shortTokenFeeAmount;
         }
 
         return feeBatch;
