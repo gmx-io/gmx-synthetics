@@ -443,10 +443,10 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(119_500, 9),
+      maxLongTokenPoolAmount: expandDecimals(129_500, 9),
       maxShortTokenPoolAmount: expandDecimals(14_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(111_500, 9),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(120_500, 9),
       maxShortTokenPoolAmountForDeposit: expandDecimals(13_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(76, 10),
@@ -469,8 +469,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(270, 34), // ~233 SOL/day
       minPositionImpactPoolAmount: expandDecimals(1500, 9),
 
-      maxOpenInterestForLongs: decimalToFloat(9_500_000),
-      maxOpenInterestForShorts: decimalToFloat(9_500_000),
+      maxOpenInterestForLongs: decimalToFloat(10_000_000),
+      maxOpenInterestForShorts: decimalToFloat(10_000_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
