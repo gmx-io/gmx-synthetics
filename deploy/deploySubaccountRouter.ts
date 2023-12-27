@@ -6,7 +6,7 @@ const constructorContracts = ["Router", "RoleStore", "DataStore", "EventEmitter"
 const func = createDeployFunction({
   contractName: "SubaccountRouter",
   dependencyNames: constructorContracts,
-  dependencies: () => {
+  getDependencies: () => {
     if (process.env.FOR_EXISTING_MAINNET_DEPLOYMENT) {
       return ["OrderStoreUtils"];
     }
