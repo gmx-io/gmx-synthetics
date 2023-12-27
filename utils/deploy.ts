@@ -18,6 +18,7 @@ export async function contractAt(name, address, provider) {
 export function createDeployFunction({
   contractName,
   dependencyNames = [],
+  getDependencies,
   getDeployArgs = null,
   libraryNames = [],
   afterDeploy = null,
@@ -101,12 +102,20 @@ export function createDeployFunction({
     }
   };
 
-  let dependencies = [];
-  if (dependencyNames) {
-    dependencies = dependencies.concat(dependencyNames);
+  let dependencies = false;
+
+  if (getDependencies !== undefined) {
+    dependencies = getDependencies();
   }
-  if (libraryNames) {
-    dependencies = dependencies.concat(libraryNames);
+
+  if (dependencies === false) {
+    dependencies = [];
+    if (dependencyNames) {
+      dependencies = dependencies.concat(dependencyNames);
+    }
+    if (libraryNames) {
+      dependencies = dependencies.concat(libraryNames);
+    }
   }
 
   if (id) {
