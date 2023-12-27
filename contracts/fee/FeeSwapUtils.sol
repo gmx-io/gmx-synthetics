@@ -65,7 +65,7 @@ library FeeSwapUtils {
 
         SwapUtils.validateSwapOutputToken(dataStore, swapPath, tokenIn, bridgingToken);
 
-        BaseOrderUtils.CreateOrderParams memory params = _getSwapOrderParamsV2(
+        IBaseOrderUtils.CreateOrderParams memory params = _getSwapOrderParamsV2(
             dataStore,
             market,
             tokenIn,
@@ -114,7 +114,7 @@ library FeeSwapUtils {
         uint256 executionFee,
         uint256 minOut
     ) internal view returns (BaseOrderUtils.CreateOrderParams memory) {
-        BaseOrderUtils.CreateOrderParamsAddresses memory addresses = BaseOrderUtils.CreateOrderParamsAddresses(
+        IBaseOrderUtils.CreateOrderParamsAddresses memory addresses = BaseOrderUtils.CreateOrderParamsAddresses(
             address(this), // receiver
             address(this), // callbackContract
             address(0), // uiFeeReceiver
@@ -125,7 +125,7 @@ library FeeSwapUtils {
 
         uint256 maxCallbackGasLimit = dataStore.getUint(Keys.MAX_CALLBACK_GAS_LIMIT);
 
-        BaseOrderUtils.CreateOrderParamsNumbers memory numbers = BaseOrderUtils.CreateOrderParamsNumbers(
+        IBaseOrderUtils.CreateOrderParamsNumbers memory numbers = BaseOrderUtils.CreateOrderParamsNumbers(
             0, // sizeDeltaUsd
             swapAmount, // initialCollateralDeltaAmount
             0, // triggerPrice
@@ -135,7 +135,7 @@ library FeeSwapUtils {
             minOut // minOutputAmount
         );
 
-        BaseOrderUtils.CreateOrderParams memory params = BaseOrderUtils.CreateOrderParams(
+        IBaseOrderUtils.CreateOrderParams memory params = BaseOrderUtils.CreateOrderParams(
             addresses, // addresses
             numbers, // numbers
             Order.OrderType.MarketSwap, // orderType

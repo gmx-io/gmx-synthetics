@@ -6,6 +6,13 @@ const constructorContracts = ["Router", "RoleStore", "DataStore", "EventEmitter"
 const func = createDeployFunction({
   contractName: "SubaccountRouter",
   dependencyNames: constructorContracts,
+  dependencies: () => {
+    if (process.env.FOR_EXISTING_MAINNET_DEPLOYMENT) {
+      return ["OrderStoreUtils"];
+    }
+
+    return false;
+  },
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },

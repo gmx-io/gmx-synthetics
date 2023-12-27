@@ -111,6 +111,7 @@ const config: HardhatUserConfig = {
       url: getRpcUrl("avalanche"),
       chainId: 43114,
       accounts: getEnvAccounts(),
+      gasPrice: 200000000000,
       verify: {
         etherscan: {
           apiUrl: "https://api.snowtrace.io/",

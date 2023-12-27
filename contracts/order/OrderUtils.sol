@@ -42,14 +42,14 @@ library OrderUtils {
     // @param eventEmitter EventEmitter
     // @param orderVault OrderVault
     // @param account the order account
-    // @param params BaseOrderUtils.CreateOrderParams
+    // @param params IBaseOrderUtils.CreateOrderParams
     function createOrder(
         DataStore dataStore,
         EventEmitter eventEmitter,
         OrderVault orderVault,
         IReferralStorage referralStorage,
         address account,
-        BaseOrderUtils.CreateOrderParams memory params
+        IBaseOrderUtils.CreateOrderParams memory params
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
 
