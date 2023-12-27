@@ -86,7 +86,7 @@ contract SubaccountRouter is BaseRouter {
 
     function createOrder(
         address account,
-        BaseOrderUtils.CreateOrderParams calldata params
+        IBaseOrderUtils.CreateOrderParams calldata params
     ) external payable nonReentrant returns (bytes32) {
         uint256 startingGas = gasleft();
 

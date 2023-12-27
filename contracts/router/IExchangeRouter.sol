@@ -20,7 +20,7 @@ interface IExchangeRouter {
     function cancelWithdrawal(bytes32 key) external payable;
 
     function createOrder(
-        BaseOrderUtils.CreateOrderParams calldata params
+        IBaseOrderUtils.CreateOrderParams calldata params
     ) external payable returns (bytes32);
 
     function updateOrder(

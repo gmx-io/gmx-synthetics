@@ -6,15 +6,18 @@ const constructorContracts = ["Router", "RoleStore", "DataStore", "EventEmitter"
 const func = createDeployFunction({
   contractName: "SubaccountRouter",
   dependencyNames: constructorContracts,
+  getDependencies: () => {
+    if (process.env.FOR_EXISTING_MAINNET_DEPLOYMENT) {
+      return ["OrderStoreUtils"];
+    }
+
+    return false;
+  },
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
   libraryNames: ["OrderStoreUtils"],
-  afterDeploy: async ({ deployedContract, network, deployments }) => {
-    if (!["avalancheFuji", "arbitrumGoerli", "hardhat"].includes(network.name)) {
-      deployments.log("skip granting roles to SubaccountRouter");
-      return;
-    }
+  afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
     await grantRoleIfNotGranted(deployedContract.address, "ROUTER_PLUGIN");
   },

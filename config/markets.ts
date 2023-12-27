@@ -397,11 +397,11 @@ const config: {
       ...baseMarketConfig,
       ...synthethicMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(800, 18),
-      maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(1100, 18),
+      maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(800, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(1_500_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(900, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(2_000_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(26, 9),
       positivePositionImpactFactor: decimalToFloat(13, 9),
@@ -443,11 +443,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(124_500, 9),
-      maxShortTokenPoolAmount: expandDecimals(11_700_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(119_500, 9),
+      maxShortTokenPoolAmount: expandDecimals(14_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(117_000, 9),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(11_000_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(111_500, 9),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(13_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(76, 10),
       positivePositionImpactFactor: decimalToFloat(38, 10),
@@ -469,8 +469,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(270, 34), // ~233 SOL/day
       minPositionImpactPoolAmount: expandDecimals(1500, 9),
 
-      maxOpenInterestForLongs: decimalToFloat(8_000_000),
-      maxOpenInterestForShorts: decimalToFloat(8_000_000),
+      maxOpenInterestForLongs: decimalToFloat(9_500_000),
+      maxOpenInterestForShorts: decimalToFloat(9_500_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -620,11 +620,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(5_900_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(8_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(6_000_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(8_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(5_300_000, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(7_200_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(5_800_000, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(8_000_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~45,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~90,000 USD of imbalance

@@ -141,7 +141,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
      * referral code is also set on the caller's account using the referral storage contract.
      */
     function createOrder(
-        BaseOrderUtils.CreateOrderParams calldata params
+        IBaseOrderUtils.CreateOrderParams calldata params
     ) external override payable nonReentrant returns (bytes32) {
         address account = msg.sender;
 
