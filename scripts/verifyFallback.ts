@@ -108,6 +108,7 @@ async function main() {
         );
       });
       console.log("Verified contract %s %s in %ss", name, address, (Date.now() - start) / 1000);
+      cache[address] = true;
     } catch (ex) {
       console.error("Failed to verify contract %s in %ss", address, (Date.now() - start) / 1000);
       console.error(ex);

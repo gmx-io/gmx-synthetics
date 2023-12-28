@@ -10,6 +10,5 @@ export function readJsonFile(path) {
 }
 
 export function writeJsonFile(path, content) {
-  console.log("writeJsonFile", path, content);
   return fs.writeFileSync(path, JSON.stringify(content));
 }
