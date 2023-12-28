@@ -287,10 +287,10 @@ const config: {
       maxOpenInterestForLongs: decimalToFloat(64_000_000),
       maxOpenInterestForShorts: decimalToFloat(64_000_000),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(8, 13), // 0.0000000000008, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(104, 14), // 0.00000000000104, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(1, 8), // 0.000001%,  0.0036% per hour, 31.5% per year
+      maxFundingFactorPerSecond: decimalToFloat(13, 9), // 0.0000013%,  0.00468% per hour, 41% per year
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
@@ -329,10 +329,10 @@ const config: {
       maxOpenInterestForLongs: decimalToFloat(64_000_000),
       maxOpenInterestForShorts: decimalToFloat(64_000_000),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(8, 13), // 0.0000000000008, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(104, 14), // 0.00000000000104, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(1, 8), // 0.000001%,  0.0036% per hour, 31.5% per year
+      maxFundingFactorPerSecond: decimalToFloat(13, 9), // 0.0000013%,  0.00468% per hour, 41% per year
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
@@ -443,10 +443,10 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(119_500, 9),
+      maxLongTokenPoolAmount: expandDecimals(129_500, 9),
       maxShortTokenPoolAmount: expandDecimals(14_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(111_500, 9),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(120_500, 9),
       maxShortTokenPoolAmountForDeposit: expandDecimals(13_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(76, 10),
@@ -469,8 +469,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(270, 34), // ~233 SOL/day
       minPositionImpactPoolAmount: expandDecimals(1500, 9),
 
-      maxOpenInterestForLongs: decimalToFloat(9_500_000),
-      maxOpenInterestForShorts: decimalToFloat(9_500_000),
+      maxOpenInterestForLongs: decimalToFloat(10_000_000),
+      maxOpenInterestForShorts: decimalToFloat(10_000_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0

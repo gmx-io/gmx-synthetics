@@ -128,28 +128,28 @@ library ReaderUtils {
             false // isLong
         );
 
-        values.claimableFundingAmountPerSize.long.longToken = MarketUtils.getFundingFeeAmountPerSize(
+        values.claimableFundingAmountPerSize.long.longToken = MarketUtils.getClaimableFundingAmountPerSize(
             dataStore,
             market.marketToken,
             market.longToken,
             true // isLong
         );
 
-        values.claimableFundingAmountPerSize.long.shortToken = MarketUtils.getFundingFeeAmountPerSize(
+        values.claimableFundingAmountPerSize.long.shortToken = MarketUtils.getClaimableFundingAmountPerSize(
             dataStore,
             market.marketToken,
             market.shortToken,
             true // isLong
         );
 
-        values.claimableFundingAmountPerSize.short.longToken = MarketUtils.getFundingFeeAmountPerSize(
+        values.claimableFundingAmountPerSize.short.longToken = MarketUtils.getClaimableFundingAmountPerSize(
             dataStore,
             market.marketToken,
             market.longToken,
             false // isLong
         );
 
-        values.claimableFundingAmountPerSize.short.shortToken = MarketUtils.getFundingFeeAmountPerSize(
+        values.claimableFundingAmountPerSize.short.shortToken = MarketUtils.getClaimableFundingAmountPerSize(
             dataStore,
             market.marketToken,
             market.shortToken,
