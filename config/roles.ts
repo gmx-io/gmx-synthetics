@@ -77,6 +77,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       },
       ROUTER_PLUGIN: {
         "0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8": true, // ExchangeRouter2
+        "0x78F414436148B8588BDEe4771EA5eB75148668aa": true, // SubaccountRouter1
       },
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
@@ -101,6 +102,8 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8": true, // ExchangeRouter2
         "0xbF56A2F030C3F920F0E2aD9Cf456B9954c49383a": true, // FeeHandler2
         "0x9e0521C3dbB18E849F4955087E065E5C9C879917": true, // LiquidationHandler2
+
+        "0x78F414436148B8588BDEe4771EA5eB75148668aa": true, // SubaccountRouter1
       },
     },
     avalanche: {
@@ -124,6 +127,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       },
       ROUTER_PLUGIN: {
         "0x11E590f6092D557bF71BaDEd50D81521674F8275": true, // ExchangeRouter2
+        "0xA60862ecc8bd976519e56231bDfAF697C5ce2156": true, // SubaccountRouter1
       },
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
@@ -148,6 +152,8 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x11E590f6092D557bF71BaDEd50D81521674F8275": true, // ExchangeRouter2
         "0xc7D8E3561f1247EBDa491bA5f042699C2807C33C": true, // FeeHandler2
         "0x931C18AF613f56289253F0EeD57F315dE7dbAFcd": true, // LiquidationHandler2
+
+        "0xA60862ecc8bd976519e56231bDfAF697C5ce2156": true, // SubaccountRouter1
       },
     },
     arbitrumGoerli: testnetConfig,

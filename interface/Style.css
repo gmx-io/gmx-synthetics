@@ -21,4 +21,5 @@
 
 .primary-button.disabled {
   background-color: rgb(150, 150, 150);
+  cursor: not-allowed;
 }

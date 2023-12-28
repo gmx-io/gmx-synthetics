@@ -5,7 +5,8 @@ import toast from "./Toast";
 import "./Signer.css";
 import "./Toast.ts";
 
-export default function SignerButton({ unsignedTransaction, transactionKey, isDisabled }) {
+export default function SignerButton({ unsignedTransaction, transactionKey, transactionHash }) {
+  const isDisabled = transactionHash !== undefined;
   const { sendTransaction } = useSendTransaction({
     ...unsignedTransaction,
     onError: (error) => {
@@ -17,7 +18,7 @@ export default function SignerButton({ unsignedTransaction, transactionKey, isDi
       fetch("http://localhost:3030/completed", {
         method: "post",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ unsignedTransaction, transactionKey, data }),
+        body: JSON.stringify({ unsignedTransaction, transactionKey, data, transactionHash: data.hash }),
       });
     },
   });
@@ -29,6 +30,7 @@ export default function SignerButton({ unsignedTransaction, transactionKey, isDi
   return (
     <button
       className={`primary-button Signer-sign-button ${isDisabled ? "disabled" : ""}`}
+      disabled={isDisabled}
       onClick={() => onClickPrimary()}
     >
       {isDisabled ? "Signed" : "Sign"}
