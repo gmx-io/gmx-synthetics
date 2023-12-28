@@ -1,10 +1,19 @@
 import { setTimeout } from "timers/promises";
 import { exec } from "child_process";
+import { readJsonFile, writeJsonFile } from "../utils/file";
 
 import hre from "hardhat";
 import got from "got";
 
-const { apiUrl, apiKey } = hre.network.config.verify.etherscan;
+let apiUrl, apiKey;
+
+if (hre.network.name === "snowtrace") {
+  apiUrl = "https://api.snowtrace.io";
+  apiKey = process.env.SNOWTRACE_API_KEY;
+} else {
+  apiUrl = hre.network.config.verify.etherscan.apiUrl;
+  apiKey = hre.network.config.verify.etherscan.apiKey;
+}
 
 // a custom argument file may be needed for complex arguments
 // https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify#complex-arguments
@@ -52,6 +61,12 @@ function encodeArg(arg) {
 }
 
 async function main() {
+  const cacheFilePath = `./scripts/cache/${hre.network.name}.json`;
+  let cache = readJsonFile(cacheFilePath);
+  if (cache === undefined) {
+    cache = {};
+  }
+
   const allDeployments = await hre.deployments.all();
   console.log("Verifying %s contracts", Object.keys(allDeployments).length);
 
@@ -62,9 +77,10 @@ async function main() {
 
     try {
       await setTimeout(200);
-      const isContractVerified = await getIsContractVerified(address);
+      const isContractVerified = cache[address] || (await getIsContractVerified(address));
 
       if (isContractVerified) {
+        cache[address] = true;
         console.log("Contract %s %s is already verified", name, address);
         continue;
       }
@@ -98,6 +114,7 @@ async function main() {
     }
   }
 
+  writeJsonFile(cacheFilePath, cache);
   console.log("Done");
 }
 
