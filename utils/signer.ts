@@ -42,12 +42,12 @@ export async function createSigningServer() {
 
   app.post("/completed", (req, res) => {
     console.log("transaction completed", JSON.stringify(req.body));
-    signedTransactions[req.body.transactionKey] = true;
+    signedTransactions[req.body.transactionKey] = req.body.transactionHash;
     res.send("ok");
 
     let hasPendingTransaction = false;
     for (const { transactionKey } of unsignedTransactionList) {
-      if (signedTransactions[transactionKey] !== true) {
+      if (signedTransactions[transactionKey] === undefined) {
         hasPendingTransaction = true;
         break;
       }

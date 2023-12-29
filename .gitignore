@@ -14,6 +14,6 @@ keys
 out
 
 #Hardhat files
-cache
+/cache/
 artifacts
 deployments/localhost
