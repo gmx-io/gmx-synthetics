@@ -1,3 +1,4 @@
+import "@nomicfoundation/hardhat-foundry";
 import dotenv from "dotenv";
 dotenv.config();
 
