@@ -94,8 +94,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     },
     arbitrum: {
       requestExpirationBlockAge: 1200, // about 5 minutes assuming 4 blocks per second
-      estimatedGasFeeBaseAmount: 17_000_000,
-      executionGasFeeBaseAmount: 17_000_000,
+      estimatedGasFeeBaseAmount: 12_000_000,
+      executionGasFeeBaseAmount: 12_000_000,
     },
     avalanche: {
       requestExpirationBlockAge: 150, // about 5 minutes assuming 1 block per 2 seconds
