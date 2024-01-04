@@ -61,7 +61,7 @@ const recommendedMarketConfig = {
       expectedPositionImpactRatio: 20000,
     },
     SOL: {
-      negativeImpactFactor: decimalToFloat(5, 9).div(2),
+      negativeImpactFactor: decimalToFloat(65, 12).div(2),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
