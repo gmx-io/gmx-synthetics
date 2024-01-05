@@ -1182,7 +1182,12 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(1, 8),
     },
     { tokens: { indexToken: "LINK", longToken: "WETH", shortToken: "DAI" } },
-    { tokens: { indexToken: "BNB", longToken: "WETH", shortToken: "DAI" } },
+    {
+      tokens: { indexToken: "BNB", longToken: "WETH", shortToken: "DAI" },
+      negativeMaxPositionImpactFactor: decimalToFloat(5, 4), // 0.05%
+      positiveMaxPositionImpactFactor: decimalToFloat(5, 4), // 0.05%
+      maxPositionImpactFactorForLiquidations: decimalToFloat(5, 4), // 0.05%
+    },
     { tokens: { indexToken: "ADA", longToken: "WETH", shortToken: "DAI" } },
     { tokens: { indexToken: "TRX", longToken: "WETH", shortToken: "DAI" } },
     { tokens: { indexToken: "MATIC", longToken: "WETH", shortToken: "USDC" } },
