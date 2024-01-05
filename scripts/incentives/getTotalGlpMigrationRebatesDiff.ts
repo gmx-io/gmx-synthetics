@@ -2,6 +2,9 @@ import fs from "fs";
 import path from "path";
 import { BigNumber } from "ethers";
 import { formatAmount } from "../../utils/math";
+import { STIP_MIGRATION_DISTRIBUTION_TYPE_ID } from "./helpers";
+
+const ARB_ADDRESS = "0x912CE59144191C1204E64559FE8253a0e49E6548";
 
 export async function main() {
   if (!process.env.OLD_FILENAME) {
@@ -67,13 +70,23 @@ export async function main() {
     Object.keys(totalDiff).length
   );
 
-  const jsonData: Record<string, string> = {};
+  const jsonData: {
+    id: string;
+    token: string;
+    distributionTypeId: number;
+    amounts: Record<string, string>;
+  } = {
+    id: "2023-12-27_1003_fix_for_glp_weth_withdrawals",
+    token: ARB_ADDRESS,
+    distributionTypeId: STIP_MIGRATION_DISTRIBUTION_TYPE_ID,
+    amounts: {},
+  };
   for (const [account, amount] of Object.entries(totalDiff).sort(([, a], [, b]) =>
     BigNumber.from(a).lt(BigNumber.from(b)) ? -1 : 1
   )) {
-    jsonData[account] = amount;
+    jsonData.amounts[account] = amount;
   }
-  const outputFilepath = path.join(__dirname, "glpMigrationRebatesDiffDistribution.json");
+  const outputFilepath = path.join(__dirname, "distributions", "glpMigrationRebatesDiff_distribution.json");
   fs.writeFileSync(outputFilepath, JSON.stringify(jsonData, null, "\t"));
   console.log("diff saved to %s", outputFilepath);
 }
