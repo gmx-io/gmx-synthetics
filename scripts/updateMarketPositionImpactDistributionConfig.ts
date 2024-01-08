@@ -3,7 +3,7 @@ import hre from "hardhat";
 import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../utils/market";
 
 import * as keys from "../utils/keys";
-import { bigNumberify } from "../utils/math";
+import { bigNumberify, formatAmount } from "../utils/math";
 
 async function main() {
   const dataStore = await hre.ethers.getContract("DataStore");
@@ -62,22 +62,30 @@ async function main() {
     let wasChanged = false;
 
     if (!currentPositionImpactPoolDistributionRate.eq(marketConfig.positionImpactPoolDistributionRate)) {
+      const change = bigNumberify(marketConfig.positionImpactPoolDistributionRate)
+        .mul(10000)
+        .div(currentPositionImpactPoolDistributionRate);
       wasChanged = true;
       console.log(
-        "positionImpactPoolDistributionRate was changed for market %s. prev value %s new value %s",
+        "positionImpactPoolDistributionRate was changed for market %s. prev value %s new value %s (%sx)",
         marketToken,
         currentPositionImpactPoolDistributionRate,
-        marketConfig.positionImpactPoolDistributionRate
+        marketConfig.positionImpactPoolDistributionRate,
+        formatAmount(change, 4)
       );
     }
 
     if (!currentMinPositionImpactPoolAmount.eq(marketConfig.minPositionImpactPoolAmount)) {
+      const change = bigNumberify(marketConfig.minPositionImpactPoolAmount)
+        .mul(10000)
+        .div(currentMinPositionImpactPoolAmount);
       wasChanged = true;
       console.log(
-        "minPositionImpactPoolAmount was changed for market %s. prev value %s new value %s",
+        "minPositionImpactPoolAmount was changed for market %s. prev value %s new value %s (%sx)",
         marketToken,
         currentMinPositionImpactPoolAmount,
-        marketConfig.minPositionImpactPoolAmount
+        marketConfig.minPositionImpactPoolAmount,
+        formatAmount(change, 4)
       );
     }
 
