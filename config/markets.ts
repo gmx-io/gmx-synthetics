@@ -443,10 +443,10 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(132_600, 9),
+      maxLongTokenPoolAmount: expandDecimals(160_000, 9),
       maxShortTokenPoolAmount: expandDecimals(14_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(123_500, 9),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(150_000, 9),
       maxShortTokenPoolAmountForDeposit: expandDecimals(13_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(65, 12), // 6.5e-11
@@ -577,10 +577,10 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(483_900, 18),
+      maxLongTokenPoolAmount: expandDecimals(600_000, 18),
       maxShortTokenPoolAmount: expandDecimals(8_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(438_700, 18),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(550_000, 18),
       maxShortTokenPoolAmountForDeposit: expandDecimals(7_200_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~45,000 USD of imbalance
