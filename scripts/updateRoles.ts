@@ -74,7 +74,12 @@ async function main() {
   const timelock = await getTimelock();
 
   const rolesToAdd = {
-    arbitrum: [],
+    arbitrum: [
+      {
+        role: "GOV_TOKEN_CONTROLLER",
+        member: "0x159854e14a862df9e39e1d128b8e5f70b4a3ce9b",
+      },
+    ],
     avalanche: [],
   };
 
