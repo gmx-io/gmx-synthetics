@@ -76,8 +76,11 @@ async function main() {
     const argStr = args.map((arg) => encodeArg(arg)).join(" ");
 
     try {
-      await setTimeout(200);
-      const isContractVerified = cache[address] || (await getIsContractVerified(address));
+      let isContractVerified = cache[address];
+      if (!isContractVerified) {
+        await setTimeout(200);
+        isContractVerified = await getIsContractVerified(address);
+      }
 
       if (isContractVerified) {
         cache[address] = true;
