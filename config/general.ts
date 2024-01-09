@@ -99,8 +99,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     },
     avalanche: {
       requestExpirationBlockAge: 150, // about 5 minutes assuming 1 block per 2 seconds
-      estimatedGasFeeBaseAmount: 1_000_000,
-      executionGasFeeBaseAmount: 1_000_000,
+      estimatedGasFeeBaseAmount: 1_500_000,
+      executionGasFeeBaseAmount: 1_500_000,
     },
   }[network.name];
 
