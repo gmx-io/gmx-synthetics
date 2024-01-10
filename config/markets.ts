@@ -925,10 +925,10 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(110_000, 18),
+      maxLongTokenPoolAmount: expandDecimals(128_500, 18),
       maxShortTokenPoolAmount: expandDecimals(4_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(97_500, 18),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(114_000, 18),
       maxShortTokenPoolAmountForDeposit: expandDecimals(4_000_000, 6),
 
       reserveFactorLongs: decimalToFloat(9, 1), // 90%,
