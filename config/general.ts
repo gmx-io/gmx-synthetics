@@ -66,10 +66,10 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     nativeTokenTransferGasLimit: 50_000,
 
     estimatedGasFeeBaseAmount: 500_000, // measured gas for an order execution without any main logic: ~500,000
-    estimatedGasFeeMultiplierFactor: expandDecimals(125, 28), // 1.25x
+    estimatedGasFeeMultiplierFactor: expandDecimals(1, 30), // 1x
 
     executionGasFeeBaseAmount: 500_000, // measured gas for an order execution without any main logic: ~500,000
-    executionGasFeeMultiplierFactor: expandDecimals(125, 28), // 1.25x
+    executionGasFeeMultiplierFactor: expandDecimals(1, 30), // 1x
 
     maxSwapPathLength: 3,
     maxCallbackGasLimit: 2_000_000,
@@ -94,13 +94,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     },
     arbitrum: {
       requestExpirationBlockAge: 1200, // about 5 minutes assuming 4 blocks per second
-      estimatedGasFeeBaseAmount: 5_000_000,
-      executionGasFeeBaseAmount: 5_000_000,
+      estimatedGasFeeBaseAmount: 7_000_000,
+      executionGasFeeBaseAmount: 7_000_000,
     },
     avalanche: {
       requestExpirationBlockAge: 150, // about 5 minutes assuming 1 block per 2 seconds
-      estimatedGasFeeMultiplierFactor: expandDecimals(1, 30), // 1x
-      executionGasFeeMultiplierFactor: expandDecimals(1, 30), // 1x
       estimatedGasFeeBaseAmount: 1_500_000,
       executionGasFeeBaseAmount: 1_500_000,
     },
