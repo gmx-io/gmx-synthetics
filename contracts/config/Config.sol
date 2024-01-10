@@ -42,6 +42,66 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         _initAllowedBaseKeys();
     }
 
+    function setClaimableCollateralFactorForTime(
+        address market,
+        address token,
+        uint256 timeKey,
+        uint256 factor
+    ) external onlyConfigKeeper nonReentrant {
+        if (factor > Precision.FLOAT_PRECISION) { revert Errors.InvalidClaimableFactor(factor); }
+
+        bytes32 key = Keys.claimableCollateralFactorKey(market, token, timeKey);
+        dataStore.setUint(key, factor);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "token", token);
+
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "timeKey", timeKey);
+        eventData.uintItems.setItem(1, "factor", factor);
+
+        eventEmitter.emitEventLog2(
+            "SetClaimableCollateralFactorForTime",
+            Cast.toBytes32(market),
+            Cast.toBytes32(token),
+            eventData
+        );
+    }
+
+    function setClaimableCollateralFactorForAccount(
+        address market,
+        address token,
+        uint256 timeKey,
+        address account,
+        uint256 factor
+    ) external onlyConfigKeeper nonReentrant {
+        if (factor > Precision.FLOAT_PRECISION) { revert Errors.InvalidClaimableFactor(factor); }
+
+        bytes32 key = Keys.claimableCollateralFactorKey(market, token, timeKey, account);
+        dataStore.setUint(key, factor);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(3);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "token", token);
+        eventData.addressItems.setItem(2, "account", account);
+
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "timeKey", timeKey);
+        eventData.uintItems.setItem(1, "factor", factor);
+
+        eventEmitter.emitEventLog2(
+            "SetClaimableCollateralFactorForTime",
+            Cast.toBytes32(market),
+            Cast.toBytes32(token),
+            eventData
+        );
+    }
+
     function setPositionImpactDistributionRate(
         address market,
         uint256 minPositionImpactPoolAmount,
@@ -329,8 +389,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.BORROWING_EXPONENT_FACTOR] = true;
         allowedBaseKeys[Keys.SKIP_BORROWING_FEE_FOR_SMALLER_SIDE] = true;
 
-        allowedBaseKeys[Keys.CLAIMABLE_COLLATERAL_FACTOR] = true;
-
         allowedBaseKeys[Keys.PRICE_FEED_HEARTBEAT_DURATION] = true;
     }
 
@@ -373,8 +431,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.BORROWING_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.MIN_COLLATERAL_FACTOR ||
             baseKey == Keys.MAX_PNL_FACTOR ||
-            baseKey == Keys.MIN_PNL_FACTOR_AFTER_ADL ||
-            baseKey == Keys.CLAIMABLE_COLLATERAL_FACTOR
+            baseKey == Keys.MIN_PNL_FACTOR_AFTER_ADL
         ) {
             // revert if value > 100%
             if (value > Precision.FLOAT_PRECISION) {

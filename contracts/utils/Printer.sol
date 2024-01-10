@@ -12,7 +12,7 @@ import "hardhat/console.sol";
 library Printer {
     using SafeCast for int256;
 
-    function log(string memory label, int256 value) internal view {
+    function log(string memory label, int256 value) internal pure {
         if (value < 0) {
             console.log(
                 "%s -%s",
