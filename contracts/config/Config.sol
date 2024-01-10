@@ -95,7 +95,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.uintItems.setItem(1, "factor", factor);
 
         eventEmitter.emitEventLog2(
-            "SetClaimableCollateralFactorForTime",
+            "SetClaimableCollateralFactorForAccount",
             Cast.toBytes32(market),
             Cast.toBytes32(token),
             eventData
