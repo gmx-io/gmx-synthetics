@@ -30,6 +30,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
     // @dev the base keys that can be set
     mapping (bytes32 => bool) public allowedBaseKeys;
+    // @dev the general base keys that can be set
+    mapping (bytes32 => bool) public allowedGeneralBaseKeys;
 
     constructor(
         RoleStore _roleStore,
@@ -40,6 +42,18 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventEmitter = _eventEmitter;
 
         _initAllowedBaseKeys();
+        _initAllowedGeneralBaseKeys();
+    }
+
+    modifier onlyKeeper() {
+        if (
+            !roleStore.hasRole(msg.sender, Role.GENERAL_CONFIG_KEEPER) &&
+            !roleStore.hasRole(msg.sender, Role.CONFIG_KEEPER)
+        ) {
+            revert Errors.Unauthorized(msg.sender, "GENERAL / CONFIG KEEPER");
+        }
+
+        _;
     }
 
     function setClaimableCollateralFactorForTime(
@@ -132,7 +146,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param baseKey the base key of the value to set
     // @param data the additional data to be combined with the base key
     // @param value the bool value
-    function setBool(bytes32 baseKey, bytes memory data, bool value) external onlyConfigKeeper nonReentrant {
+    function setBool(bytes32 baseKey, bytes memory data, bool value) external onlyKeeper nonReentrant {
         _validateKey(baseKey);
 
         bytes32 fullKey = _getFullKey(baseKey, data);
@@ -161,7 +175,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param baseKey the base key of the value to set
     // @param data the additional data to be combined with the base key
     // @param value the address value
-    function setAddress(bytes32 baseKey, bytes memory data, address value) external onlyConfigKeeper nonReentrant {
+    function setAddress(bytes32 baseKey, bytes memory data, address value) external onlyKeeper nonReentrant {
         _validateKey(baseKey);
 
         bytes32 fullKey = _getFullKey(baseKey, data);
@@ -190,7 +204,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param baseKey the base key of the value to set
     // @param data the additional data to be combined with the base key
     // @param value the bytes32 value
-    function setBytes32(bytes32 baseKey, bytes memory data, bytes32 value) external onlyConfigKeeper nonReentrant {
+    function setBytes32(bytes32 baseKey, bytes memory data, bytes32 value) external onlyKeeper nonReentrant {
         _validateKey(baseKey);
 
         bytes32 fullKey = _getFullKey(baseKey, data);
@@ -217,7 +231,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param basekey the base key of the value to set
     // @param data the additional data to be combined with the base key
     // @param value the uint256 value
-    function setUint(bytes32 baseKey, bytes memory data, uint256 value) external onlyConfigKeeper nonReentrant {
+    function setUint(bytes32 baseKey, bytes memory data, uint256 value) external onlyKeeper nonReentrant {
         _validateKey(baseKey);
 
         bytes32 fullKey = _getFullKey(baseKey, data);
@@ -248,7 +262,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param basekey the base key of the value to set
     // @param data the additional data to be combined with the base key
     // @param value the int256 value
-    function setInt(bytes32 baseKey, bytes memory data, int256 value) external onlyConfigKeeper nonReentrant {
+    function setInt(bytes32 baseKey, bytes memory data, int256 value) external onlyKeeper nonReentrant {
         _validateKey(baseKey);
 
         bytes32 fullKey = _getFullKey(baseKey, data);
@@ -392,12 +406,35 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.PRICE_FEED_HEARTBEAT_DURATION] = true;
     }
 
+    function _initAllowedGeneralBaseKeys() internal {
+        allowedGeneralBaseKeys[Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT] = true;
+        allowedGeneralBaseKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT] = true;
+
+        allowedGeneralBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
+        allowedGeneralBaseKeys[Keys.MAX_POOL_AMOUNT_FOR_DEPOSIT] = true;
+        allowedGeneralBaseKeys[Keys.MAX_OPEN_INTEREST] = true;
+    }
+
     // @dev validate that the baseKey is allowed to be used
     // @param baseKey the base key to validate
     function _validateKey(bytes32 baseKey) internal view {
-        if (!allowedBaseKeys[baseKey]) {
-            revert Errors.InvalidBaseKey(baseKey);
+        if (roleStore.hasRole(msg.sender, Role.CONFIG_KEEPER)) {
+            if (!allowedBaseKeys[baseKey]) {
+                revert Errors.InvalidBaseKey(baseKey);
+            }
+
+            return;
         }
+
+        if (roleStore.hasRole(msg.sender, Role.GENERAL_CONFIG_KEEPER)) {
+            if (!allowedGeneralBaseKeys[baseKey]) {
+                revert Errors.InvalidBaseKey(baseKey);
+            }
+
+            return;
+        }
+
+        revert Errors.InvalidBaseKey(baseKey);
     }
 
     // @dev validate that the value is within the allowed range

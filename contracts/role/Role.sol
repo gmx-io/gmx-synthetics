@@ -28,6 +28,11 @@ library Role {
     bytes32 public constant CONFIG_KEEPER = keccak256(abi.encode("CONFIG_KEEPER"));
 
     /**
+     * @dev The GENERAL_CONFIG_KEEPER role.
+     */
+    bytes32 public constant GENERAL_CONFIG_KEEPER = keccak256(abi.encode("GENERAL_CONFIG_KEEPER"));
+
+    /**
      * @dev The CONTROLLER role.
      */
     bytes32 public constant CONTROLLER = keccak256(abi.encode("CONTROLLER"));
