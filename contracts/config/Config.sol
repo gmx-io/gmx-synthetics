@@ -30,8 +30,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
     // @dev the base keys that can be set
     mapping (bytes32 => bool) public allowedBaseKeys;
-    // @dev the general base keys that can be set
-    mapping (bytes32 => bool) public allowedGeneralBaseKeys;
+    // @dev the limited base keys that can be set
+    mapping (bytes32 => bool) public allowedLimitedBaseKeys;
 
     constructor(
         RoleStore _roleStore,
@@ -42,15 +42,15 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventEmitter = _eventEmitter;
 
         _initAllowedBaseKeys();
-        _initAllowedGeneralBaseKeys();
+        _initAllowedLimitedBaseKeys();
     }
 
     modifier onlyKeeper() {
         if (
-            !roleStore.hasRole(msg.sender, Role.GENERAL_CONFIG_KEEPER) &&
+            !roleStore.hasRole(msg.sender, Role.LIMITED_CONFIG_KEEPER) &&
             !roleStore.hasRole(msg.sender, Role.CONFIG_KEEPER)
         ) {
-            revert Errors.Unauthorized(msg.sender, "GENERAL / CONFIG KEEPER");
+            revert Errors.Unauthorized(msg.sender, "LIMITED / CONFIG KEEPER");
         }
 
         _;
@@ -406,13 +406,13 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.PRICE_FEED_HEARTBEAT_DURATION] = true;
     }
 
-    function _initAllowedGeneralBaseKeys() internal {
-        allowedGeneralBaseKeys[Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT] = true;
-        allowedGeneralBaseKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT] = true;
+    function _initAllowedLimitedBaseKeys() internal {
+        allowedLimitedBaseKeys[Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT] = true;
+        allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT] = true;
 
-        allowedGeneralBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
-        allowedGeneralBaseKeys[Keys.MAX_POOL_AMOUNT_FOR_DEPOSIT] = true;
-        allowedGeneralBaseKeys[Keys.MAX_OPEN_INTEREST] = true;
+        allowedLimitedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
+        allowedLimitedBaseKeys[Keys.MAX_POOL_AMOUNT_FOR_DEPOSIT] = true;
+        allowedLimitedBaseKeys[Keys.MAX_OPEN_INTEREST] = true;
     }
 
     // @dev validate that the baseKey is allowed to be used
@@ -426,8 +426,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             return;
         }
 
-        if (roleStore.hasRole(msg.sender, Role.GENERAL_CONFIG_KEEPER)) {
-            if (!allowedGeneralBaseKeys[baseKey]) {
+        if (roleStore.hasRole(msg.sender, Role.LIMITED_CONFIG_KEEPER)) {
+            if (!allowedLimitedBaseKeys[baseKey]) {
                 revert Errors.InvalidBaseKey(baseKey);
             }
 

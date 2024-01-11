@@ -22,7 +22,7 @@ describe("Config", () => {
     ({ user0, user1, user2 } = fixture.accounts);
 
     await grantRole(roleStore, user0.address, "CONFIG_KEEPER");
-    await grantRole(roleStore, user2.address, "GENERAL_CONFIG_KEEPER");
+    await grantRole(roleStore, user2.address, "LIMITED_CONFIG_KEEPER");
   });
 
   it("allows required keys", async () => {
@@ -69,7 +69,7 @@ describe("Config", () => {
       .withArgs(keys.POOL_AMOUNT);
   });
 
-  it("allows general config keeper to set allowedGeneralBaseKeys", async () => {
+  it("allows LIMITED_CONFIG_KEEPER to set allowedLimitedBaseKeys", async () => {
     expect(await dataStore.getAddress(keys.HOLDING_ADDRESS)).eq(AddressZero);
     await config.connect(user0).setAddress(keys.HOLDING_ADDRESS, "0x", user1.address);
     expect(await dataStore.getAddress(keys.HOLDING_ADDRESS)).eq(user1.address);
