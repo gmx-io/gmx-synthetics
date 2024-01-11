@@ -12,16 +12,17 @@ import Keys from "../../artifacts/contracts/data/Keys.sol/Keys.json";
 
 describe("Config", () => {
   let fixture;
-  let user0, user1;
+  let user0, user1, user2;
   let config, dataStore, roleStore, ethUsdMarket, wnt;
   const { AddressZero } = ethers.constants;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ config, dataStore, roleStore, ethUsdMarket, wnt } = fixture.contracts);
-    ({ user0, user1 } = fixture.accounts);
+    ({ user0, user1, user2 } = fixture.accounts);
 
     await grantRole(roleStore, user0.address, "CONFIG_KEEPER");
+    await grantRole(roleStore, user2.address, "GENERAL_CONFIG_KEEPER");
   });
 
   it("allows required keys", async () => {
@@ -66,6 +67,20 @@ describe("Config", () => {
     )
       .to.be.revertedWithCustomError(errorsContract, "InvalidBaseKey")
       .withArgs(keys.POOL_AMOUNT);
+  });
+
+  it("allows general config keeper to set allowedGeneralBaseKeys", async () => {
+    expect(await dataStore.getAddress(keys.HOLDING_ADDRESS)).eq(AddressZero);
+    await config.connect(user0).setAddress(keys.HOLDING_ADDRESS, "0x", user1.address);
+    expect(await dataStore.getAddress(keys.HOLDING_ADDRESS)).eq(user1.address);
+
+    await expect(config.connect(user2).setAddress(keys.HOLDING_ADDRESS, "0x", user2.address))
+      .to.be.revertedWithCustomError(errorsContract, "InvalidBaseKey")
+      .withArgs(keys.HOLDING_ADDRESS);
+
+    expect(await dataStore.getUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT), 0);
+    await config.connect(user2).setUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT, "0x", 200);
+    expect(await dataStore.getUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT), 200);
   });
 
   it("setBool", async () => {
