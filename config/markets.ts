@@ -274,7 +274,7 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(15, 11), // 0.05% for ~1,600,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(9, 11), // 0.05% for ~2,700,000 USD of imbalance
 
-      positionImpactPoolDistributionRate: expandDecimals(500, 30), // ~0.432 BTC/day
+      positionImpactPoolDistributionRate: expandDecimals(600, 30), // ~0.518 BTC/day
       minPositionImpactPoolAmount: expandDecimals(2, 8), // 2 BTC
 
       negativeSwapImpactFactor: decimalToFloat(2, 10), // 0.05% for 2,500,000 USD of imbalance
@@ -316,7 +316,7 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(15, 11), // 0.05% for ~1,600,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(9, 11), // 0.05% for ~2,700,000 USD of imbalance
 
-      positionImpactPoolDistributionRate: expandDecimals(75, 42), // ~6.48 ETH/day
+      positionImpactPoolDistributionRate: expandDecimals(100, 42), // ~8.64 ETH/day
       minPositionImpactPoolAmount: expandDecimals(30, 18), // 30 ETH
 
       negativeSwapImpactFactor: decimalToFloat(2, 10), // 0.05% for 2,500,000 USD of imbalance
@@ -467,7 +467,7 @@ const config: {
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
-      positionImpactPoolDistributionRate: expandDecimals(200, 34), // ~173 SOL/day
+      positionImpactPoolDistributionRate: expandDecimals(180, 34), // ~156 SOL/day
       minPositionImpactPoolAmount: expandDecimals(1500, 9),
 
       maxOpenInterestForLongs: decimalToFloat(12_000_000),
@@ -517,7 +517,7 @@ const config: {
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
-      positionImpactPoolDistributionRate: expandDecimals(55, 32), // ~4.75 LTC/day
+      positionImpactPoolDistributionRate: expandDecimals(40, 32), // ~3.45 LTC/day
       minPositionImpactPoolAmount: expandDecimals(66, 7), // 6.6 LTC
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
@@ -557,7 +557,7 @@ const config: {
       borrowingFactorForLongs: decimalToFloat(94, 10), // 0.0000000094 * 90% = 0,0000000085, 0.00000085% / second, 26,81% per year if the pool is 100% utilized
       borrowingFactorForShorts: decimalToFloat(94, 10), // 0.0000000094 * 90% = 0,0000000085, 0.00000085% / second, 26,81% per year if the pool is 100% utilized
 
-      positionImpactPoolDistributionRate: expandDecimals(200, 43), // ~173 UNI/day
+      positionImpactPoolDistributionRate: expandDecimals(50, 43), // ~43 UNI/day
       minPositionImpactPoolAmount: expandDecimals(362, 18),
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
@@ -652,7 +652,7 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      positionImpactPoolDistributionRate: expandDecimals(600, 44), // ~5184 ARB/day
+      positionImpactPoolDistributionRate: expandDecimals(660, 44), // ~5702 ARB/day
       minPositionImpactPoolAmount: expandDecimals(47961, 18),
 
       maxOpenInterestForLongs: decimalToFloat(5_500_000),
