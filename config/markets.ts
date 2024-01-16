@@ -265,10 +265,10 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(1810, 8),
+      maxLongTokenPoolAmount: expandDecimals(2016, 8),
       maxShortTokenPoolAmount: expandDecimals(86_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(1642, 8),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(1829, 8),
       maxShortTokenPoolAmountForDeposit: expandDecimals(78_000_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(15, 11), // 0.05% for ~1,600,000 USD of imbalance
@@ -307,11 +307,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(30_280, 18),
+      maxLongTokenPoolAmount: expandDecimals(31_860, 18),
       maxShortTokenPoolAmount: expandDecimals(80_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(27_240, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(72_000_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(29_870, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(75_000_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(15, 11), // 0.05% for ~1,600,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(9, 11), // 0.05% for ~2,700,000 USD of imbalance
@@ -443,11 +443,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(150_500, 9),
-      maxShortTokenPoolAmount: expandDecimals(15_500_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(167_700, 9),
+      maxShortTokenPoolAmount: expandDecimals(16_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(136_000, 9),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(14_000_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(152_000, 9),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(14_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(65, 12), // 6.5e-11
       positivePositionImpactFactor: decimalToFloat(325, 13), // 3.25e-11
@@ -621,11 +621,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(5_200_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(11_500_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(6_010_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(12_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(5_000_000, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(11_000_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(5_530_000, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(11_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~45,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~90,000 USD of imbalance
@@ -925,11 +925,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(172_100, 18),
-      maxShortTokenPoolAmount: expandDecimals(6_600_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(199_670, 18),
+      maxShortTokenPoolAmount: expandDecimals(7_200_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(156_450, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(6_000_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(180_255, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(6_500_000, 6),
 
       reserveFactorLongs: decimalToFloat(9, 1), // 90%,
       reserveFactorShorts: decimalToFloat(9, 1), // 90%,
@@ -1184,8 +1184,8 @@ const config: {
     { tokens: { indexToken: "LINK", longToken: "WETH", shortToken: "DAI" } },
     {
       tokens: { indexToken: "BNB", longToken: "WETH", shortToken: "DAI" },
-      negativeMaxPositionImpactFactor: decimalToFloat(5, 4), // 0.05%
-      positiveMaxPositionImpactFactor: decimalToFloat(5, 4), // 0.05%
+      negativeMaxPositionImpactFactor: decimalToFloat(1, 5), // 0.001%
+      positiveMaxPositionImpactFactor: decimalToFloat(1, 5), // 0.001%
       maxPositionImpactFactorForLiquidations: decimalToFloat(5, 4), // 0.05%
     },
     { tokens: { indexToken: "ADA", longToken: "WETH", shortToken: "DAI" } },
