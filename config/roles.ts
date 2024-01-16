@@ -158,6 +158,9 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
 
         "0xA60862ecc8bd976519e56231bDfAF697C5ce2156": true, // SubaccountRouter_1
       },
+      GOV_TOKEN_CONTROLLER: {
+        "0xa192D0681E2b9484d1fA48083D36B8A2D0Da1809": true, // RewardRouterV2_1
+      },
     },
     arbitrumGoerli: testnetConfig,
     avalancheFuji: {

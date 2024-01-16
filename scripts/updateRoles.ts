@@ -74,13 +74,13 @@ async function main() {
   const timelock = await getTimelock();
 
   const rolesToAdd = {
-    arbitrum: [
+    arbitrum: [],
+    avalanche: [
       {
         role: "GOV_TOKEN_CONTROLLER",
-        member: "0x159854e14a862df9e39e1d128b8e5f70b4a3ce9b",
+        member: "0xa192d0681e2b9484d1fa48083d36b8a2d0da1809",
       },
     ],
-    avalanche: [],
   };
 
   const rolesToRemove = {
