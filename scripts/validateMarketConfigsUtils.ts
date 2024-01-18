@@ -138,87 +138,6 @@ async function validatePerpConfig({ market, marketConfig, indexTokenSymbol, data
   let negativePositionImpactFactor = marketConfig.negativePositionImpactFactor;
   let positivePositionImpactFactor = marketConfig.positivePositionImpactFactor;
   let positionImpactExponentFactor = marketConfig.positionImpactExponentFactor;
-
-  if (process.env.READ_FROM_CHAIN === "true") {
-    negativePositionImpactFactor = await dataStore.getUint(keys.positionImpactFactorKey(market.marketToken, false));
-    positivePositionImpactFactor = await dataStore.getUint(keys.positionImpactFactorKey(market.marketToken, true));
-    positionImpactExponentFactor = await dataStore.getUint(keys.positionImpactExponentFactorKey(market.marketToken));
-  }
-
-  const percentageOfPerpImpactRecommendation = negativePositionImpactFactor
-    .mul(100)
-    .div(recommendedPerpConfig.negativeImpactFactor);
-
-  console.log(
-    `    Position impact compared to recommendation: ${
-      parseFloat(percentageOfPerpImpactRecommendation.toNumber()) / 100
-    }x smallest safe value`
-  );
-
-  for (const priceImpactBps of priceImpactBpsList) {
-    console.log(
-      `    Negative (${formatAmount(priceImpactBps, 2, 2)}%): $${formatAmount(
-        getTradeSizeForImpact({
-          priceImpactBps,
-          impactExponentFactor: positionImpactExponentFactor,
-          impactFactor: negativePositionImpactFactor,
-        }),
-        0,
-        0,
-        true
-      )}, Positive (${formatAmount(priceImpactBps, 2, 2)}%): $${formatAmount(
-        getTradeSizeForImpact({
-          priceImpactBps,
-          impactExponentFactor: positionImpactExponentFactor,
-          impactFactor: positivePositionImpactFactor,
-        }),
-        0,
-        0,
-        true
-      )}`
-    );
-  }
-
-  const impactRatio = negativePositionImpactFactor.mul(BASIS_POINTS_DIVISOR).div(positivePositionImpactFactor);
-  if (impactRatio.sub(recommendedPerpConfig.expectedPositionImpactRatio).abs().gt(100)) {
-    throw new Error(`Invalid position impact factors for ${indexTokenSymbol}`);
-  }
-
-  if (negativePositionImpactFactor.lt(recommendedPerpConfig.negativeImpactFactor)) {
-    errors.push({
-      message: `Invalid negativePositionImpactFactor for ${indexTokenSymbol}`,
-      expected: recommendedPerpConfig.negativeImpactFactor,
-      actual: negativePositionImpactFactor,
-    });
-  }
-}
-
-async function validateSwapConfig({ market, marketConfig, longTokenSymbol, shortTokenSymbol, dataStore, errors }) {
-  const isStablecoinMarket = stablecoinSymbols[longTokenSymbol] && stablecoinSymbols[shortTokenSymbol];
-
-  let recommendedSwapConfig;
-
-  if (isStablecoinMarket) {
-    recommendedSwapConfig = recommendedStablecoinSwapConfig;
-  } else {
-    // first try to get config for longToken
-    // if that is empty try to get config for longToken after re-mapping it using configTokenMapping
-    recommendedSwapConfig =
-      recommendedMarketConfig[hre.network.name][longTokenSymbol] ||
-      recommendedMarketConfig[hre.network.name][configTokenMapping[hre.network.name][longTokenSymbol]];
-  }
-
-  if (!recommendedSwapConfig) {
-    throw new Error(`Empty recommendedSwapConfig for ${longTokenSymbol}`);
-  }
-
-  if (!stablecoinSymbols[shortTokenSymbol]) {
-    throw new Error(`Short token has not been categorized as a stablecoin`);
-  }
-
-  let negativeSwapImpactFactor = marketConfig.negativeSwapImpactFactor;
-  let positiveSwapImpactFactor = marketConfig.positiveSwapImpactFactor;
-  let swapImpactExponentFactor = marketConfig.swapImpactExponentFactor;
   let openInterestReserveFactorLongs = marketConfig.openInterestReserveFactorLongs;
   let openInterestReserveFactorShorts = marketConfig.openInterestReserveFactorShorts;
   let borrowingFactorForLongs = marketConfig.borrowingFactorForLongs;
@@ -230,6 +149,14 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
   const maxOpenInterestForLongs = marketConfig.maxOpenInterestForLongs;
   const maxOpenInterestForShorts = marketConfig.maxOpenInterestForShorts;
 
+  if (maxOpenInterestForLongs === undefined) {
+    throw new Error(`Empty maxOpenInterestForLongs for ${indexTokenSymbol}`);
+  }
+
+  if (maxOpenInterestForShorts === undefined) {
+    throw new Error(`Empty maxOpenInterestForShorts for ${indexTokenSymbol}`);
+  }
+
   if (process.env.READ_FROM_CHAIN === "true") {
     const multicallReadParams = [];
 
@@ -237,25 +164,27 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
       target: dataStore.address,
       allowFailure: false,
       callData: dataStore.interface.encodeFunctionData("getUint", [
-        keys.swapImpactFactorKey(market.marketToken, false),
+        keys.positionImpactFactorKey(market.marketToken, false),
       ]),
-      label: "negativeSwapImpactFactor",
-    });
-
-    multicallReadParams.push({
-      target: dataStore.address,
-      allowFailure: false,
-      callData: dataStore.interface.encodeFunctionData("getUint", [keys.swapImpactFactorKey(market.marketToken, true)]),
-      label: "positiveSwapImpactFactor",
+      label: "negativePositionImpactFactor",
     });
 
     multicallReadParams.push({
       target: dataStore.address,
       allowFailure: false,
       callData: dataStore.interface.encodeFunctionData("getUint", [
-        keys.swapImpactExponentFactorKey(market.marketToken),
+        keys.positionImpactFactorKey(market.marketToken, true),
       ]),
-      label: "swapImpactExponentFactor",
+      label: "positivePositionImpactFactor",
+    });
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [
+        keys.positionImpactExponentFactorKey(market.marketToken),
+      ]),
+      label: "positionImpactExponentFactor",
     });
 
     multicallReadParams.push({
@@ -324,9 +253,9 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
 
     const { bigNumberResults } = await performMulticall({ multicallReadParams });
     ({
-      negativeSwapImpactFactor,
-      positiveSwapImpactFactor,
-      swapImpactExponentFactor,
+      negativePositionImpactFactor,
+      positivePositionImpactFactor,
+      positionImpactExponentFactor,
       openInterestReserveFactorLongs,
       openInterestReserveFactorShorts,
       borrowingFactorForLongs,
@@ -338,13 +267,13 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
     } = bigNumberResults);
   }
 
-  const percentageOfSwapImpactRecommendation = negativeSwapImpactFactor
+  const percentageOfPerpImpactRecommendation = negativePositionImpactFactor
     .mul(100)
-    .div(recommendedSwapConfig.negativeImpactFactor);
+    .div(recommendedPerpConfig.negativeImpactFactor);
 
   console.log(
-    `    Swap impact compared to recommendation: ${
-      parseFloat(percentageOfSwapImpactRecommendation.toNumber()) / 100
+    `    Position impact compared to recommendation: ${
+      parseFloat(percentageOfPerpImpactRecommendation.toNumber()) / 100
     }x smallest safe value`
   );
 
@@ -353,17 +282,17 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
       `    Negative (${formatAmount(priceImpactBps, 2, 2)}%): $${formatAmount(
         getTradeSizeForImpact({
           priceImpactBps,
-          impactExponentFactor: swapImpactExponentFactor,
-          impactFactor: negativeSwapImpactFactor,
+          impactExponentFactor: positionImpactExponentFactor,
+          impactFactor: negativePositionImpactFactor,
         }),
         0,
         0,
         true
-      )}, Positive: (${formatAmount(priceImpactBps, 2, 2)}%): $${formatAmount(
+      )}, Positive (${formatAmount(priceImpactBps, 2, 2)}%): $${formatAmount(
         getTradeSizeForImpact({
           priceImpactBps,
-          impactExponentFactor: swapImpactExponentFactor,
-          impactFactor: positiveSwapImpactFactor,
+          impactExponentFactor: positionImpactExponentFactor,
+          impactFactor: positivePositionImpactFactor,
         }),
         0,
         0,
@@ -372,18 +301,16 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
     );
   }
 
-  const impactRatio = negativeSwapImpactFactor.mul(BASIS_POINTS_DIVISOR).div(positiveSwapImpactFactor);
-  if (impactRatio.sub(recommendedSwapConfig.expectedSwapImpactRatio).abs().gt(100)) {
-    throw new Error(
-      `Invalid position impact factors for ${longTokenSymbol}: ${impactRatio} expected ${recommendedSwapConfig.expectedSwapImpactRatio}`
-    );
+  const impactRatio = negativePositionImpactFactor.mul(BASIS_POINTS_DIVISOR).div(positivePositionImpactFactor);
+  if (impactRatio.sub(recommendedPerpConfig.expectedPositionImpactRatio).abs().gt(100)) {
+    throw new Error(`Invalid position impact factors for ${indexTokenSymbol}`);
   }
 
-  if (negativeSwapImpactFactor.lt(recommendedSwapConfig.negativeImpactFactor)) {
+  if (negativePositionImpactFactor.lt(recommendedPerpConfig.negativeImpactFactor)) {
     errors.push({
-      message: `Invalid negativeSwapImpactFactor for ${longTokenSymbol}`,
-      expected: recommendedSwapConfig.negativeImpactFactor,
-      actual: negativeSwapImpactFactor,
+      message: `Invalid negativePositionImpactFactor for ${indexTokenSymbol}`,
+      expected: recommendedPerpConfig.negativeImpactFactor,
+      actual: negativePositionImpactFactor,
     });
   }
 
@@ -450,6 +377,115 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
   }
 
   console.log(`    maxFundingFactorPerYear: ${formatAmount(maxFundingFactorPerYear, 28)}%`);
+}
+
+async function validateSwapConfig({ market, marketConfig, longTokenSymbol, shortTokenSymbol, dataStore, errors }) {
+  const isStablecoinMarket = stablecoinSymbols[longTokenSymbol] && stablecoinSymbols[shortTokenSymbol];
+
+  let recommendedSwapConfig;
+
+  if (isStablecoinMarket) {
+    recommendedSwapConfig = recommendedStablecoinSwapConfig;
+  } else {
+    // first try to get config for longToken
+    // if that is empty try to get config for longToken after re-mapping it using configTokenMapping
+    recommendedSwapConfig =
+      recommendedMarketConfig[hre.network.name][longTokenSymbol] ||
+      recommendedMarketConfig[hre.network.name][configTokenMapping[hre.network.name][longTokenSymbol]];
+  }
+
+  if (!recommendedSwapConfig) {
+    throw new Error(`Empty recommendedSwapConfig for ${longTokenSymbol}`);
+  }
+
+  if (!stablecoinSymbols[shortTokenSymbol]) {
+    throw new Error(`Short token has not been categorized as a stablecoin`);
+  }
+
+  let negativeSwapImpactFactor = marketConfig.negativeSwapImpactFactor;
+  let positiveSwapImpactFactor = marketConfig.positiveSwapImpactFactor;
+  let swapImpactExponentFactor = marketConfig.swapImpactExponentFactor;
+
+  if (process.env.READ_FROM_CHAIN === "true") {
+    const multicallReadParams = [];
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [
+        keys.swapImpactFactorKey(market.marketToken, false),
+      ]),
+      label: "negativeSwapImpactFactor",
+    });
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [keys.swapImpactFactorKey(market.marketToken, true)]),
+      label: "positiveSwapImpactFactor",
+    });
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [
+        keys.swapImpactExponentFactorKey(market.marketToken),
+      ]),
+      label: "swapImpactExponentFactor",
+    });
+
+    const { bigNumberResults } = await performMulticall({ multicallReadParams });
+    ({ negativeSwapImpactFactor, positiveSwapImpactFactor, swapImpactExponentFactor } = bigNumberResults);
+  }
+
+  const percentageOfSwapImpactRecommendation = negativeSwapImpactFactor
+    .mul(100)
+    .div(recommendedSwapConfig.negativeImpactFactor);
+
+  console.log(
+    `    Swap impact compared to recommendation: ${
+      parseFloat(percentageOfSwapImpactRecommendation.toNumber()) / 100
+    }x smallest safe value`
+  );
+
+  for (const priceImpactBps of priceImpactBpsList) {
+    console.log(
+      `    Negative (${formatAmount(priceImpactBps, 2, 2)}%): $${formatAmount(
+        getTradeSizeForImpact({
+          priceImpactBps,
+          impactExponentFactor: swapImpactExponentFactor,
+          impactFactor: negativeSwapImpactFactor,
+        }),
+        0,
+        0,
+        true
+      )}, Positive: (${formatAmount(priceImpactBps, 2, 2)}%): $${formatAmount(
+        getTradeSizeForImpact({
+          priceImpactBps,
+          impactExponentFactor: swapImpactExponentFactor,
+          impactFactor: positiveSwapImpactFactor,
+        }),
+        0,
+        0,
+        true
+      )}`
+    );
+  }
+
+  const impactRatio = negativeSwapImpactFactor.mul(BASIS_POINTS_DIVISOR).div(positiveSwapImpactFactor);
+  if (impactRatio.sub(recommendedSwapConfig.expectedSwapImpactRatio).abs().gt(100)) {
+    throw new Error(
+      `Invalid position impact factors for ${longTokenSymbol}: ${impactRatio} expected ${recommendedSwapConfig.expectedSwapImpactRatio}`
+    );
+  }
+
+  if (negativeSwapImpactFactor.lt(recommendedSwapConfig.negativeImpactFactor)) {
+    errors.push({
+      message: `Invalid negativeSwapImpactFactor for ${longTokenSymbol}`,
+      expected: recommendedSwapConfig.negativeImpactFactor,
+      actual: negativeSwapImpactFactor,
+    });
+  }
 }
 
 export async function validateMarketConfigs() {
