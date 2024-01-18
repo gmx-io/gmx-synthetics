@@ -92,6 +92,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xf5f30b10141e1f63fc11ed772931a8294a591996": true, // MarketFactory_1
 
         "0x226ED647C6eA2C0cE4C08578e2F37b8c2F922849": true, // Config_2
+        "0x1847C11d9B11aDDb48e4bB2b55fCE6F9D1606039": true, // Config_2A
         "0x62aB76Ed722C507f297f2B97920dCA04518fe274": true, // Timelock_2
         "0xa11B501c2dd83Acd29F6727570f2502FAaa617F2": true, // Oracle_2
         "0xF6b804F6Cc847a22F2D022C9b0373190850bE34D": true, // SwapHandler_2
@@ -145,6 +146,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xc57c155faccd93f62546f329d1483e0e5b9c1241": true, // MarketFactory_1
 
         "0x7309223E21dc2FFbb660E5Bd5aBF95ae06ba4Da0": true, // Config_2
+        "0xb964d8f746fA13024aEEDAeF1d015698bbD0cFCE": true, // Config_2A
         "0x4Db91a1Fa4ba3c75510B2885d7d7da48E0209F38": true, // Timelock_2
         "0x090FA7eb8B4647DaDbEA315E68f8f88e8E62Bd54": true, // Oracle_2
         "0xEE027373517a6D96Fe62f70E9A0A395cB5a39Eee": true, // SwapHandler_2
