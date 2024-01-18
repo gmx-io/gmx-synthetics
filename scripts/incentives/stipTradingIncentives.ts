@@ -157,8 +157,8 @@ async function main() {
 
   console.log(
     "sum of position fees paid: %s ARB ($%s)",
-    formatAmount(userTotalPositionFeesUsd, 30, 2, true),
-    formatAmount(userTotalPositionFeesInArb, 18, 2, true)
+    formatAmount(userTotalPositionFeesInArb, 18, 2, true),
+    formatAmount(userTotalPositionFeesUsd, 30, 2, true)
   );
 
   console.log("allocation: %s ARB", formatAmount(allocationData.trading.allocation, 18, 2, true));

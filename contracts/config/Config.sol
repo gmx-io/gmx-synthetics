@@ -30,6 +30,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
     // @dev the base keys that can be set
     mapping (bytes32 => bool) public allowedBaseKeys;
+    // @dev the limited base keys that can be set
+    mapping (bytes32 => bool) public allowedLimitedBaseKeys;
 
     constructor(
         RoleStore _roleStore,
@@ -40,6 +42,78 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventEmitter = _eventEmitter;
 
         _initAllowedBaseKeys();
+        _initAllowedLimitedBaseKeys();
+    }
+
+    modifier onlyKeeper() {
+        if (
+            !roleStore.hasRole(msg.sender, Role.LIMITED_CONFIG_KEEPER) &&
+            !roleStore.hasRole(msg.sender, Role.CONFIG_KEEPER)
+        ) {
+            revert Errors.Unauthorized(msg.sender, "LIMITED / CONFIG KEEPER");
+        }
+
+        _;
+    }
+
+    function setClaimableCollateralFactorForTime(
+        address market,
+        address token,
+        uint256 timeKey,
+        uint256 factor
+    ) external onlyConfigKeeper nonReentrant {
+        if (factor > Precision.FLOAT_PRECISION) { revert Errors.InvalidClaimableFactor(factor); }
+
+        bytes32 key = Keys.claimableCollateralFactorKey(market, token, timeKey);
+        dataStore.setUint(key, factor);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "token", token);
+
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "timeKey", timeKey);
+        eventData.uintItems.setItem(1, "factor", factor);
+
+        eventEmitter.emitEventLog2(
+            "SetClaimableCollateralFactorForTime",
+            Cast.toBytes32(market),
+            Cast.toBytes32(token),
+            eventData
+        );
+    }
+
+    function setClaimableCollateralFactorForAccount(
+        address market,
+        address token,
+        uint256 timeKey,
+        address account,
+        uint256 factor
+    ) external onlyConfigKeeper nonReentrant {
+        if (factor > Precision.FLOAT_PRECISION) { revert Errors.InvalidClaimableFactor(factor); }
+
+        bytes32 key = Keys.claimableCollateralFactorKey(market, token, timeKey, account);
+        dataStore.setUint(key, factor);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(3);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "token", token);
+        eventData.addressItems.setItem(2, "account", account);
+
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "timeKey", timeKey);
+        eventData.uintItems.setItem(1, "factor", factor);
+
+        eventEmitter.emitEventLog2(
+            "SetClaimableCollateralFactorForAccount",
+            Cast.toBytes32(market),
+            Cast.toBytes32(token),
+            eventData
+        );
     }
 
     function setPositionImpactDistributionRate(
@@ -72,7 +146,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param baseKey the base key of the value to set
     // @param data the additional data to be combined with the base key
     // @param value the bool value
-    function setBool(bytes32 baseKey, bytes memory data, bool value) external onlyConfigKeeper nonReentrant {
+    function setBool(bytes32 baseKey, bytes memory data, bool value) external onlyKeeper nonReentrant {
         _validateKey(baseKey);
 
         bytes32 fullKey = _getFullKey(baseKey, data);
@@ -101,7 +175,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param baseKey the base key of the value to set
     // @param data the additional data to be combined with the base key
     // @param value the address value
-    function setAddress(bytes32 baseKey, bytes memory data, address value) external onlyConfigKeeper nonReentrant {
+    function setAddress(bytes32 baseKey, bytes memory data, address value) external onlyKeeper nonReentrant {
         _validateKey(baseKey);
 
         bytes32 fullKey = _getFullKey(baseKey, data);
@@ -130,7 +204,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param baseKey the base key of the value to set
     // @param data the additional data to be combined with the base key
     // @param value the bytes32 value
-    function setBytes32(bytes32 baseKey, bytes memory data, bytes32 value) external onlyConfigKeeper nonReentrant {
+    function setBytes32(bytes32 baseKey, bytes memory data, bytes32 value) external onlyKeeper nonReentrant {
         _validateKey(baseKey);
 
         bytes32 fullKey = _getFullKey(baseKey, data);
@@ -157,7 +231,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param basekey the base key of the value to set
     // @param data the additional data to be combined with the base key
     // @param value the uint256 value
-    function setUint(bytes32 baseKey, bytes memory data, uint256 value) external onlyConfigKeeper nonReentrant {
+    function setUint(bytes32 baseKey, bytes memory data, uint256 value) external onlyKeeper nonReentrant {
         _validateKey(baseKey);
 
         bytes32 fullKey = _getFullKey(baseKey, data);
@@ -188,7 +262,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param basekey the base key of the value to set
     // @param data the additional data to be combined with the base key
     // @param value the int256 value
-    function setInt(bytes32 baseKey, bytes memory data, int256 value) external onlyConfigKeeper nonReentrant {
+    function setInt(bytes32 baseKey, bytes memory data, int256 value) external onlyKeeper nonReentrant {
         _validateKey(baseKey);
 
         bytes32 fullKey = _getFullKey(baseKey, data);
@@ -329,17 +403,38 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.BORROWING_EXPONENT_FACTOR] = true;
         allowedBaseKeys[Keys.SKIP_BORROWING_FEE_FOR_SMALLER_SIDE] = true;
 
-        allowedBaseKeys[Keys.CLAIMABLE_COLLATERAL_FACTOR] = true;
-
         allowedBaseKeys[Keys.PRICE_FEED_HEARTBEAT_DURATION] = true;
+    }
+
+    function _initAllowedLimitedBaseKeys() internal {
+        allowedLimitedBaseKeys[Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT] = true;
+        allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT] = true;
+
+        allowedLimitedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
+        allowedLimitedBaseKeys[Keys.MAX_POOL_AMOUNT_FOR_DEPOSIT] = true;
+        allowedLimitedBaseKeys[Keys.MAX_OPEN_INTEREST] = true;
     }
 
     // @dev validate that the baseKey is allowed to be used
     // @param baseKey the base key to validate
     function _validateKey(bytes32 baseKey) internal view {
-        if (!allowedBaseKeys[baseKey]) {
-            revert Errors.InvalidBaseKey(baseKey);
+        if (roleStore.hasRole(msg.sender, Role.CONFIG_KEEPER)) {
+            if (!allowedBaseKeys[baseKey]) {
+                revert Errors.InvalidBaseKey(baseKey);
+            }
+
+            return;
         }
+
+        if (roleStore.hasRole(msg.sender, Role.LIMITED_CONFIG_KEEPER)) {
+            if (!allowedLimitedBaseKeys[baseKey]) {
+                revert Errors.InvalidBaseKey(baseKey);
+            }
+
+            return;
+        }
+
+        revert Errors.InvalidBaseKey(baseKey);
     }
 
     // @dev validate that the value is within the allowed range
@@ -373,8 +468,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.BORROWING_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.MIN_COLLATERAL_FACTOR ||
             baseKey == Keys.MAX_PNL_FACTOR ||
-            baseKey == Keys.MIN_PNL_FACTOR_AFTER_ADL ||
-            baseKey == Keys.CLAIMABLE_COLLATERAL_FACTOR
+            baseKey == Keys.MIN_PNL_FACTOR_AFTER_ADL
         ) {
             // revert if value > 100%
             if (value > Precision.FLOAT_PRECISION) {

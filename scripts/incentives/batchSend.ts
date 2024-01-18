@@ -119,10 +119,25 @@ async function main() {
       console.log("done");
     }
 
-    let i = 0;
     const seenRecipients = new Set();
     const txHashes = [];
-    for (const from of range(0, amounts.length, batchSize)) {
+    const batchesInProgress = readBatchesInProgress(data.id);
+    const batchesCount = Math.ceil(amounts.length / batchSize);
+    const lastSentBatchIndex = batchesInProgress[data.id].lastSentBatchIndex;
+
+    let recipientI = (lastSentBatchIndex + 1) * batchSize;
+    if (lastSentBatchIndex >= 0) {
+      console.warn(
+        "WARN: lastSentBatchIndex is %s, starting from index %s, first recipient index: %s",
+        lastSentBatchIndex,
+        lastSentBatchIndex + 1,
+        (lastSentBatchIndex + 1) * batchSize
+      );
+      await setTimeout(5000);
+    }
+
+    for (const batchIndex of range(lastSentBatchIndex + 1, batchesCount)) {
+      const from = batchIndex * batchSize;
       const to = Math.min(from + batchSize, amounts.length);
       const batchAmounts = amounts.slice(from, to);
       const batchRecipients = recipients.slice(from, to);
@@ -135,7 +150,7 @@ async function main() {
         }
         console.log(
           "%s recipient %s amount %s (%s)",
-          i++,
+          recipientI++,
           recipient,
           formatAmount(batchAmounts[j], 18, 2, true),
           batchAmounts[j]
@@ -156,7 +171,12 @@ async function main() {
         txHashes.push(tx.hash);
         await tx.wait();
       }
-      console.log("batch done");
+      console.log("batch %s done", batchIndex);
+
+      if (!dryRun) {
+        batchesInProgress[data.id].lastSentBatchIndex = batchIndex;
+        saveBatchesInProgress(batchesInProgress);
+      }
     }
 
     if (txHashes.length) {
@@ -169,6 +189,8 @@ async function main() {
     if (!dryRun) {
       migrations[data.id] = Math.floor(Date.now() / 1000);
       saveMigrations(migrations);
+      delete batchesInProgress[data.id];
+      saveBatchesInProgress(batchesInProgress);
     }
   } else {
     console.warn("WARN: read-only mode. skip sending transaction");
@@ -196,6 +218,40 @@ function readMigrations(): Migrations {
   return JSON.parse(content.toString());
 }
 
+type BatchesInProgress = Record<string, { lastSentBatchIndex: number }>;
+
+function getBatchesInProgressFilepath(): string {
+  return path.join(__dirname, ".batchesInProgress.json");
+}
+
+function saveBatchesInProgress(batches: BatchesInProgress) {
+  const filepath = getBatchesInProgressFilepath();
+  console.log("writing batches in progress %j to file %s", batches, filepath);
+  fs.writeFileSync(filepath, JSON.stringify(batches, null, 4));
+}
+
+function readBatchesInProgress(dataId: string): BatchesInProgress {
+  const filepath = getBatchesInProgressFilepath();
+  let ret: BatchesInProgress = {};
+  if (fs.existsSync(filepath)) {
+    const content = fs.readFileSync(filepath);
+    ret = JSON.parse(content.toString());
+  }
+  if (dataId in ret) {
+    if (!("lastSentBatchIndex" in ret[dataId])) {
+      throw new Error("`lastSentBatchIndex` is missing");
+    }
+    if (ret[dataId].lastSentBatchIndex < 0) {
+      throw new Error("`lastSentBatchIndex` should be greater or equal to zero");
+    }
+  } else {
+    ret[dataId] = {
+      lastSentBatchIndex: -1, // -1 means no batches were sent before
+    };
+  }
+  return ret;
+}
+
 function readDistributionFile() {
   const filename = process.env.FILENAME;
 
@@ -209,7 +265,7 @@ function readDistributionFile() {
     token: string;
     amounts: Record<string, string>;
     distributionTypeId: number;
-    id: number;
+    id: string;
   } = JSON.parse(fs.readFileSync(filepath).toString());
 
   if (!data.token) {
@@ -245,6 +301,7 @@ export function getBatchSenderCalldata(
   batchSize = 150
 ) {
   const batchSenderCalldata = {};
+
   for (const from of range(0, amounts.length, batchSize)) {
     const to = from + batchSize;
     const amountsBatch = amounts.slice(from, to);

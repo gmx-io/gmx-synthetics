@@ -251,6 +251,18 @@ export function claimableCollateralFactorKey(market: string, token: string, time
   return hashData(["bytes32", "address", "address", "uint256"], [CLAIMABLE_COLLATERAL_FACTOR, market, token, timeKey]);
 }
 
+export function claimableCollateralFactorForAccountKey(
+  market: string,
+  token: string,
+  timeKey: number,
+  account: string
+) {
+  return hashData(
+    ["bytes32", "address", "address", "uint256", "address"],
+    [CLAIMABLE_COLLATERAL_FACTOR, market, token, timeKey, account]
+  );
+}
+
 export function claimableUiFeeAmountKey(market: string, token: string, uiFeeReceiver: string) {
   return hashData(
     ["bytes32", "address", "address", "address"],

@@ -46,12 +46,15 @@ export async function createSigningServer() {
     res.send("ok");
 
     let hasPendingTransaction = false;
-    for (const { transactionKey } of unsignedTransactionList) {
+    for (const [index, { transactionKey }] of unsignedTransactionList) {
       if (signedTransactions[transactionKey] === undefined) {
+        console.log(`pending transaction at index ${index}`);
         hasPendingTransaction = true;
         break;
       }
     }
+
+    console.log("no pending transactions left, closing server");
     if (!hasPendingTransaction) {
       server.close();
     }

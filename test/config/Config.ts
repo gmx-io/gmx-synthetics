@@ -12,16 +12,17 @@ import Keys from "../../artifacts/contracts/data/Keys.sol/Keys.json";
 
 describe("Config", () => {
   let fixture;
-  let user0, user1;
+  let user0, user1, user2;
   let config, dataStore, roleStore, ethUsdMarket, wnt;
   const { AddressZero } = ethers.constants;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ config, dataStore, roleStore, ethUsdMarket, wnt } = fixture.contracts);
-    ({ user0, user1 } = fixture.accounts);
+    ({ user0, user1, user2 } = fixture.accounts);
 
     await grantRole(roleStore, user0.address, "CONFIG_KEEPER");
+    await grantRole(roleStore, user2.address, "LIMITED_CONFIG_KEEPER");
   });
 
   it("allows required keys", async () => {
@@ -66,6 +67,20 @@ describe("Config", () => {
     )
       .to.be.revertedWithCustomError(errorsContract, "InvalidBaseKey")
       .withArgs(keys.POOL_AMOUNT);
+  });
+
+  it("allows LIMITED_CONFIG_KEEPER to set allowedLimitedBaseKeys", async () => {
+    expect(await dataStore.getAddress(keys.HOLDING_ADDRESS)).eq(AddressZero);
+    await config.connect(user0).setAddress(keys.HOLDING_ADDRESS, "0x", user1.address);
+    expect(await dataStore.getAddress(keys.HOLDING_ADDRESS)).eq(user1.address);
+
+    await expect(config.connect(user2).setAddress(keys.HOLDING_ADDRESS, "0x", user2.address))
+      .to.be.revertedWithCustomError(errorsContract, "InvalidBaseKey")
+      .withArgs(keys.HOLDING_ADDRESS);
+
+    expect(await dataStore.getUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT), 0);
+    await config.connect(user2).setUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT, "0x", 200);
+    expect(await dataStore.getUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT), 200);
   });
 
   it("setBool", async () => {
@@ -309,5 +324,94 @@ describe("Config", () => {
       );
 
     expect(await dataStore.getUint(key)).eq(700);
+  });
+
+  it("setPositionImpactDistributionRate", async () => {
+    await expect(
+      config.connect(user1).setPositionImpactDistributionRate(ethUsdMarket.marketToken, 1, 2)
+    ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
+
+    expect(await dataStore.getUint(keys.minPositionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
+    expect(await dataStore.getUint(keys.positionImpactPoolDistributionRateKey(ethUsdMarket.marketToken))).eq(0);
+
+    await config.connect(user0).setPositionImpactDistributionRate(ethUsdMarket.marketToken, 1, 2);
+
+    expect(await dataStore.getUint(keys.minPositionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(1);
+    expect(await dataStore.getUint(keys.positionImpactPoolDistributionRateKey(ethUsdMarket.marketToken))).eq(2);
+  });
+
+  it("setClaimableCollateralFactorForTime", async () => {
+    await expect(
+      config.connect(user1).setClaimableCollateralFactorForTime(
+        ethUsdMarket.marketToken, // market
+        wnt.address, // token
+        100, // timeKey
+        expandDecimals(1, 30).add(1) // factor
+      )
+    ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
+
+    expect(await dataStore.getUint(keys.claimableCollateralFactorKey(ethUsdMarket.marketToken, wnt.address, 100))).eq(
+      0
+    );
+
+    await expect(
+      config
+        .connect(user0)
+        .setClaimableCollateralFactorForTime(ethUsdMarket.marketToken, wnt.address, 100, expandDecimals(1, 30).add(1))
+    ).to.be.revertedWithCustomError(errorsContract, "InvalidClaimableFactor");
+
+    await config
+      .connect(user0)
+      .setClaimableCollateralFactorForTime(ethUsdMarket.marketToken, wnt.address, 100, expandDecimals(1, 30));
+
+    expect(await dataStore.getUint(keys.claimableCollateralFactorKey(ethUsdMarket.marketToken, wnt.address, 100))).eq(
+      expandDecimals(1, 30)
+    );
+  });
+
+  it("setClaimableCollateralFactorForAccount", async () => {
+    await expect(
+      config.connect(user1).setClaimableCollateralFactorForAccount(
+        ethUsdMarket.marketToken, // market
+        wnt.address, // token
+        100, // timeKey
+        user1.address,
+        expandDecimals(1, 30).add(1) // factor
+      )
+    ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
+
+    expect(
+      await dataStore.getUint(
+        keys.claimableCollateralFactorForAccountKey(ethUsdMarket.marketToken, wnt.address, 100, user1.address)
+      )
+    ).eq(0);
+
+    await expect(
+      config
+        .connect(user0)
+        .setClaimableCollateralFactorForAccount(
+          ethUsdMarket.marketToken,
+          wnt.address,
+          100,
+          user1.address,
+          expandDecimals(1, 30).add(1)
+        )
+    ).to.be.revertedWithCustomError(errorsContract, "InvalidClaimableFactor");
+
+    await config
+      .connect(user0)
+      .setClaimableCollateralFactorForAccount(
+        ethUsdMarket.marketToken,
+        wnt.address,
+        100,
+        user1.address,
+        expandDecimals(1, 30)
+      );
+
+    expect(
+      await dataStore.getUint(
+        keys.claimableCollateralFactorForAccountKey(ethUsdMarket.marketToken, wnt.address, 100, user1.address)
+      )
+    ).eq(expandDecimals(1, 30));
   });
 });

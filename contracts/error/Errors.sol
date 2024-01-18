@@ -25,6 +25,7 @@ library Errors {
     // Config errors
     error InvalidBaseKey(bytes32 baseKey);
     error InvalidFeeFactor(bytes32 baseKey, uint256 value);
+    error InvalidClaimableFactor(uint256 value);
 
     // Timelock errors
     error ActionAlreadySignalled();

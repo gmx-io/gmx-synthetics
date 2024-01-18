@@ -75,7 +75,12 @@ async function main() {
 
   const rolesToAdd = {
     arbitrum: [],
-    avalanche: [],
+    avalanche: [
+      {
+        role: "GOV_TOKEN_CONTROLLER",
+        member: "0xa192d0681e2b9484d1fa48083d36b8a2d0da1809",
+      },
+    ],
   };
 
   const rolesToRemove = {
