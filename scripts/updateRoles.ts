@@ -76,14 +76,30 @@ async function main() {
   const rolesToAdd = {
     arbitrum: [
       {
-        role: "CONTROLLER",
-        member: "0x1847c11d9b11addb48e4bb2b55fce6f9d1606039",
+        role: "LIMITED_CONFIG_KEEPER",
+        member: "0xe47b36382dc50b90bcf6176ddb159c4b9333a7ab",
+      },
+      {
+        role: "LIMITED_CONFIG_KEEPER",
+        member: "0xc539cb358a58ac67185baad4d5e3f7fcfc903700",
+      },
+      {
+        role: "LIMITED_CONFIG_KEEPER",
+        member: "0xf1e1b2f4796d984ccb8485d43db0c64b83c1fa6d",
       },
     ],
     avalanche: [
       {
-        role: "CONTROLLER",
-        member: "0xb964d8f746fa13024aeedaef1d015698bbd0cfce",
+        role: "LIMITED_CONFIG_KEEPER",
+        member: "0xe47b36382dc50b90bcf6176ddb159c4b9333a7ab",
+      },
+      {
+        role: "LIMITED_CONFIG_KEEPER",
+        member: "0xc539cb358a58ac67185baad4d5e3f7fcfc903700",
+      },
+      {
+        role: "LIMITED_CONFIG_KEEPER",
+        member: "0xf1e1b2f4796d984ccb8485d43db0c64b83c1fa6d",
       },
     ],
   };
