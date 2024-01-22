@@ -2,6 +2,13 @@ import hre from "hardhat";
 
 async function main() {
   const config = await hre.ethers.getContract("Config");
+
+  for (const key of ["MARKET", "TOKEN", "TIME_KEY", "FACTOR"]) {
+    if (!process.env[key]) {
+      throw new Error(`${key} env var is required`);
+    }
+  }
+
   const market = process.env.MARKET;
   const token = process.env.TOKEN;
   const timeKey = process.env.TIME_KEY;
