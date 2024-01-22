@@ -74,34 +74,8 @@ async function main() {
   const timelock = await getTimelock();
 
   const rolesToAdd = {
-    arbitrum: [
-      {
-        role: "LIMITED_CONFIG_KEEPER",
-        member: "0xe47b36382dc50b90bcf6176ddb159c4b9333a7ab",
-      },
-      {
-        role: "LIMITED_CONFIG_KEEPER",
-        member: "0xc539cb358a58ac67185baad4d5e3f7fcfc903700",
-      },
-      {
-        role: "LIMITED_CONFIG_KEEPER",
-        member: "0xf1e1b2f4796d984ccb8485d43db0c64b83c1fa6d",
-      },
-    ],
-    avalanche: [
-      {
-        role: "LIMITED_CONFIG_KEEPER",
-        member: "0xe47b36382dc50b90bcf6176ddb159c4b9333a7ab",
-      },
-      {
-        role: "LIMITED_CONFIG_KEEPER",
-        member: "0xc539cb358a58ac67185baad4d5e3f7fcfc903700",
-      },
-      {
-        role: "LIMITED_CONFIG_KEEPER",
-        member: "0xf1e1b2f4796d984ccb8485d43db0c64b83c1fa6d",
-      },
-    ],
+    arbitrum: [],
+    avalanche: [],
   };
 
   const rolesToRemove = {
