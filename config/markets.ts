@@ -340,6 +340,50 @@ const config: {
       borrowingExponentFactorForShorts: decimalToFloat(14, 1), // 1.4
     },
     {
+      tokens: { indexToken: "BNB", longToken: "BNB", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:BNB/USD"),
+      virtualMarketId: hashString("SPOT:BNB/USD"),
+
+      ...baseMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(5000, 9),
+      maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
+
+      maxLongTokenPoolAmountForDeposit: expandDecimals(3000, 9),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(900_000, 6),
+
+      negativePositionImpactFactor: decimalToFloat(38, 12), // 3.8e-11
+      positivePositionImpactFactor: decimalToFloat(19, 12), // 1.9e-11
+      positionImpactExponentFactor: decimalToFloat(236, 2), // 2.36
+
+      negativeSwapImpactFactor: decimalToFloat(1, 8), // 0.05% for 50,000 USD of imbalance
+      positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
+
+      // minCollateralFactor of 0.01 (1%) when open interest is 2,000,000 USD
+      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
+      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
+
+      // factor in open interest reserve factor 90%
+      borrowingFactorForLongs: decimalToFloat(425, 14), // 4.25e-12, 33.07% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(425, 14), // 4.25e-12, 33.07% at 100% utilisation
+
+      borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
+      borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
+
+      positionImpactPoolDistributionRate: 0,
+      minPositionImpactPoolAmount: 0,
+
+      maxOpenInterestForLongs: decimalToFloat(10_000_000),
+      maxOpenInterestForShorts: decimalToFloat(10_000_000),
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+    },
+    {
       tokens: { indexToken: "XRP", longToken: "WETH", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:XRP/USD"),
       virtualMarketId: hashString("SPOT:XRP/USD"),
