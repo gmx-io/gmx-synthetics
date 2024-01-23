@@ -14,7 +14,8 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
     const onchainMarket = onchainMarketsByTokens[marketKey];
 
     if (!onchainMarket) {
-      console.warn("market %s:%s:%s:%s does not exist. skip", marketKey, indexToken, longToken, shortToken);
+      console.warn("WARN: market %s:%s:%s:%s does not exist. skip", marketKey, indexToken, longToken, shortToken);
+      continue;
     }
 
     const marketToken = onchainMarket.marketToken;
