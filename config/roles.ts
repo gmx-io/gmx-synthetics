@@ -71,6 +71,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
       },
       MARKET_KEEPER: {
+        "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
       },
       ROLE_ADMIN: {
@@ -126,6 +127,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
       },
       MARKET_KEEPER: {
+        "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
       },
       ROLE_ADMIN: {

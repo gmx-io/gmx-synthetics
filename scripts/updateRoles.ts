@@ -74,8 +74,18 @@ async function main() {
   const timelock = await getTimelock();
 
   const rolesToAdd = {
-    arbitrum: [],
-    avalanche: [],
+    arbitrum: [
+      {
+        role: "MARKET_KEEPER",
+        member: "0xf09d66cf7debcdebf965f1ac6527e1aa5d47a745",
+      },
+    ],
+    avalanche: [
+      {
+        role: "MARKET_KEEPER",
+        member: "0xf09d66cf7debcdebf965f1ac6527e1aa5d47a745",
+      },
+    ],
   };
 
   const rolesToRemove = {
