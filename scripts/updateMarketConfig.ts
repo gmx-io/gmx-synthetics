@@ -12,6 +12,11 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
     const [indexToken, longToken, shortToken] = getMarketTokenAddresses(marketConfig, tokens);
     const marketKey = getMarketKey(indexToken, longToken, shortToken);
     const onchainMarket = onchainMarketsByTokens[marketKey];
+
+    if (!onchainMarket) {
+      console.warn("market %s:%s:%s:%s does not exist. skip", marketKey, indexToken, longToken, shortToken);
+    }
+
     const marketToken = onchainMarket.marketToken;
 
     await handleConfig(
