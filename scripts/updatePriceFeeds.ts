@@ -47,7 +47,7 @@ async function main() {
 
     multicallWriteParams.push(
       timelock.interface.encodeFunctionData(priceFeedMethod, [
-        token,
+        tokenConfig.address,
         priceFeed.address,
         priceFeedMultiplier,
         priceFeed.heartbeatDuration,
@@ -56,7 +56,11 @@ async function main() {
     );
 
     multicallWriteParams.push(
-      timelock.interface.encodeFunctionData(realtimeFeedMethod, [token, realtimeFeedId, realtimeFeedMultiplier])
+      timelock.interface.encodeFunctionData(realtimeFeedMethod, [
+        tokenConfig.address,
+        realtimeFeedId,
+        realtimeFeedMultiplier,
+      ])
     );
   }
 
