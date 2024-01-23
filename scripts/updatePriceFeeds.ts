@@ -65,14 +65,10 @@ async function main() {
   }
 
   console.log(`updating ${multicallWriteParams.length} feeds`);
-  timelockWriteMulticall({ timelock, multicallWriteParams });
+  await timelockWriteMulticall({ timelock, multicallWriteParams });
 }
 
-main()
-  .then(() => {
-    process.exit(0);
-  })
-  .catch((ex) => {
-    console.error(ex);
-    process.exit(1);
-  });
+main().catch((ex) => {
+  console.error(ex);
+  process.exit(1);
+});

@@ -21,6 +21,10 @@ async function main() {
   const longTokenAddress = tokens[tokenSymbols[1]];
   const shortTokenAddress = tokens[tokenSymbols[2]];
 
+  console.info(
+    `creating market... indexToken: ${indexTokenAddress}, longToken: ${longTokenAddress}, shortToken: ${shortTokenAddress}`
+  );
+
   await marketFactory.createMarket(indexTokenAddress, longTokenAddress, shortTokenAddress, DEFAULT_MARKET_TYPE);
 }
 
