@@ -346,7 +346,7 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(5000, 9),
+      maxLongTokenPoolAmount: expandDecimals(5000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
 
       maxLongTokenPoolAmountForDeposit: expandDecimals(3000, 9),
@@ -364,11 +364,11 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
 
       // factor in open interest reserve factor 90%
-      borrowingFactorForLongs: decimalToFloat(425, 14), // 4.25e-12, 33.07% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(425, 14), // 4.25e-12, 33.07% at 100% utilisation
+      borrowingFactorForLongs: decimalToFloat(14, 9), // 4.25e-12, 44% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(14, 9), // 4.25e-12, 44% at 100% utilisation
 
-      borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
-      borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
+      borrowingExponentFactorForLongs: decimalToFloat(1, 0), // 1
+      borrowingExponentFactorForShorts: decimalToFloat(1, 0), // 1
 
       positionImpactPoolDistributionRate: 0,
       minPositionImpactPoolAmount: 0,
