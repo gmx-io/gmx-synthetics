@@ -17,9 +17,9 @@ async function main() {
     throw new Error("Invalid MARKET_KEY");
   }
 
-  const indexTokenAddress = tokens[tokenSymbols[0]];
-  const longTokenAddress = tokens[tokenSymbols[1]];
-  const shortTokenAddress = tokens[tokenSymbols[2]];
+  const indexTokenAddress = tokens[tokenSymbols[0]].address;
+  const longTokenAddress = tokens[tokenSymbols[1]].address;
+  const shortTokenAddress = tokens[tokenSymbols[2]].address;
 
   console.info(
     `creating market... indexToken: ${indexTokenAddress}, longToken: ${longTokenAddress}, shortToken: ${shortTokenAddress}`
