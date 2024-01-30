@@ -80,7 +80,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     await setUintIfDifferent(
       key,
       minCollateralFactorForOpenInterestMultiplier,
-      `min collateral factor for open interest multiplier ${marketToken.toString()}`
+      `min collateral factor for open interest multiplier ${marketToken.toString()} ${isLong ? "long" : "short"}`
     );
   }
 

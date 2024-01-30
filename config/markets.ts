@@ -1246,6 +1246,8 @@ const config: {
       negativeMaxPositionImpactFactor: decimalToFloat(1, 5), // 0.001%
       positiveMaxPositionImpactFactor: decimalToFloat(1, 5), // 0.001%
       maxPositionImpactFactorForLiquidations: decimalToFloat(5, 4), // 0.05%
+      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(15, 7),
+      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(15, 7),
     },
     { tokens: { indexToken: "ADA", longToken: "WETH", shortToken: "DAI" } },
     { tokens: { indexToken: "TRX", longToken: "WETH", shortToken: "DAI" } },
