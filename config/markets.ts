@@ -417,7 +417,7 @@ const config: {
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
-      positionImpactPoolDistributionRate: expandDecimals(6666, 30), // ~576 XRP/day
+      positionImpactPoolDistributionRate: expandDecimals(52, 32), // ~449 XRP/day
       minPositionImpactPoolAmount: expandDecimals(671, 6),
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
@@ -464,7 +464,7 @@ const config: {
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
-      positionImpactPoolDistributionRate: expandDecimals(1, 37), // ~8640 DOGE/day
+      positionImpactPoolDistributionRate: expandDecimals(2, 36), // ~1728 DOGE/day
       minPositionImpactPoolAmount: expandDecimals(10000, 8),
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
@@ -558,7 +558,7 @@ const config: {
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
-      positionImpactPoolDistributionRate: expandDecimals(30, 32), // ~2.6 LTC/day
+      positionImpactPoolDistributionRate: expandDecimals(20, 32), // ~1.73 LTC/day
       minPositionImpactPoolAmount: expandDecimals(66, 7), // 6.6 LTC
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
@@ -598,7 +598,7 @@ const config: {
       borrowingFactorForLongs: decimalToFloat(94, 10), // 0.0000000094 * 90% = 0,0000000085, 0.00000085% / second, 26,81% per year if the pool is 100% utilized
       borrowingFactorForShorts: decimalToFloat(94, 10), // 0.0000000094 * 90% = 0,0000000085, 0.00000085% / second, 26,81% per year if the pool is 100% utilized
 
-      positionImpactPoolDistributionRate: expandDecimals(50, 43), // ~43 UNI/day
+      positionImpactPoolDistributionRate: expandDecimals(25, 43), // ~21.5 UNI/day
       minPositionImpactPoolAmount: expandDecimals(362, 18),
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
