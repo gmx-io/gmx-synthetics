@@ -23,6 +23,14 @@ const recommendedStablecoinSwapConfig = {
   expectedSwapImpactRatio: 10000,
 };
 
+// negativeImpactFactor: the recommended negative position impact factor
+// the market config should be validated to have a higher or equal value to the recommended value
+//
+// expectedSwapImpactRatio: expected ratio of negative to positive swap price impact
+// a ratio of 20000 means that the negative swap price price impact is twice the positive swap price impact
+//
+// expectedPositionImpactRatio: expected ratio of negative to positive position price impact
+// a ratio of 20000 means that the negative position price price impact is twice the positive position price impact
 const recommendedMarketConfig = {
   arbitrum: {
     BTC: {
@@ -34,6 +42,11 @@ const recommendedMarketConfig = {
       negativeImpactFactor: decimalToFloat(5, 11).div(2),
       expectedSwapImpactRatio: 10000,
       expectedPositionImpactRatio: 16666,
+    },
+    BNB: {
+      negativeImpactFactor: decimalToFloat(38, 12).div(2),
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
     },
     LINK: {
       negativeImpactFactor: decimalToFloat(5, 10).div(2),

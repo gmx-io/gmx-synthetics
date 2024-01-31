@@ -15,10 +15,14 @@ export async function main() {
     throw new Error("no NEW_FILENAME env var");
   }
 
+  if (!process.env.OUTPUT_FILENAME) {
+    throw new Error("no OUTPUT_FILENAME env var");
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const oldData: Record<string, string> = require(path.join(__dirname, process.env.OLD_FILENAME));
+  const oldData: Record<string, string> = require(path.join(process.cwd(), process.env.OLD_FILENAME)).amounts;
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const newData: Record<string, string> = require(path.join(__dirname, process.env.NEW_FILENAME));
+  const newData: Record<string, string> = require(path.join(process.cwd(), process.env.NEW_FILENAME)).amounts;
 
   const totalOldAmount = Object.values(oldData).reduce((acc, amount) => acc.add(amount), BigNumber.from(0));
   const totalNewAmount = Object.values(newData).reduce((acc, amount) => acc.add(amount), BigNumber.from(0));
@@ -76,7 +80,7 @@ export async function main() {
     distributionTypeId: number;
     amounts: Record<string, string>;
   } = {
-    id: "2023-12-27_1003_fix_for_glp_weth_withdrawals",
+    id: "2024-01-17_1003_fix_for_glp_weth_withdrawals",
     token: ARB_ADDRESS,
     distributionTypeId: STIP_MIGRATION_DISTRIBUTION_TYPE_ID,
     amounts: {},
@@ -86,7 +90,7 @@ export async function main() {
   )) {
     jsonData.amounts[account] = amount;
   }
-  const outputFilepath = path.join(__dirname, "distributions", "glpMigrationRebatesDiff_distribution.json");
+  const outputFilepath = path.join(process.cwd(), process.env.OUTPUT_FILENAME);
   fs.writeFileSync(outputFilepath, JSON.stringify(jsonData, null, "\t"));
   console.log("diff saved to %s", outputFilepath);
 }

@@ -69,6 +69,13 @@ const config: {
       realtimeFeedId: "0x74aca63821bf7ead199e924d261d277cbec96d1026ab65267d655c51b4536914",
       realtimeFeedDecimals: 8,
     },
+    BNB: {
+      address: "0xa9004A5421372E1D83fB1f85b0fc986c912f91f3",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      realtimeFeedId: "0x30f9926cdef3de98995fb38a100d5c582ae025ebbb8f9a931500596ce080280a",
+      realtimeFeedDecimals: 8,
+    },
     XRP: {
       synthetic: true,
       decimals: 6,

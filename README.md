@@ -660,6 +660,8 @@ After the initial setup:
 
 - If using contracts such as the ExchangeRouter, Oracle or Reader do note that their addresses will change as new logic is added
 
+- If contracts such as the ExchangeRouter, Oracle or Reader are updated, effort should be made to keep the function parameters the same, however, this may not always be possible, e.g. if a new order property is to be supported, the ExchangeRouter.createOrder params will have to be changed
+
 - The RoleStore and DataStore for deployments should not change, if they are changed a migration of funds from the previous contracts to the new contracts will likely be needed
 
 - While the code has been structured to minimize the risk of [read-only reentrancy](https://officercia.mirror.xyz/DBzFiDuxmDOTQEbfXhvLdK0DXVpKu1Nkurk0Cqk3QKc), care should be taken to guard against this possibility

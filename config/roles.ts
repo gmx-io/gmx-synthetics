@@ -61,6 +61,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       FROZEN_ORDER_KEEPER: syntheticKeepers.mainnet,
       LIQUIDATION_KEEPER: syntheticKeepers.mainnet,
       ORDER_KEEPER: { ...syntheticKeepers.mainnet, ...chainlinkKeepers.arbitrum },
+      LIMITED_CONFIG_KEEPER: syntheticKeepers.mainnet,
       CONFIG_KEEPER: {
         "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
@@ -70,6 +71,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
       },
       MARKET_KEEPER: {
+        "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
       },
       ROLE_ADMIN: {
@@ -92,6 +94,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xf5f30b10141e1f63fc11ed772931a8294a591996": true, // MarketFactory_1
 
         "0x226ED647C6eA2C0cE4C08578e2F37b8c2F922849": true, // Config_2
+        "0x1847C11d9B11aDDb48e4bB2b55fCE6F9D1606039": true, // Config_2A
         "0x62aB76Ed722C507f297f2B97920dCA04518fe274": true, // Timelock_2
         "0xa11B501c2dd83Acd29F6727570f2502FAaa617F2": true, // Oracle_2
         "0xF6b804F6Cc847a22F2D022C9b0373190850bE34D": true, // SwapHandler_2
@@ -114,6 +117,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       FROZEN_ORDER_KEEPER: syntheticKeepers.mainnet,
       LIQUIDATION_KEEPER: syntheticKeepers.mainnet,
       ORDER_KEEPER: syntheticKeepers.mainnet,
+      LIMITED_CONFIG_KEEPER: syntheticKeepers.mainnet,
       CONFIG_KEEPER: {
         "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
@@ -123,6 +127,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
       },
       MARKET_KEEPER: {
+        "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
       },
       ROLE_ADMIN: {
@@ -145,6 +150,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xc57c155faccd93f62546f329d1483e0e5b9c1241": true, // MarketFactory_1
 
         "0x7309223E21dc2FFbb660E5Bd5aBF95ae06ba4Da0": true, // Config_2
+        "0xb964d8f746fA13024aEEDAeF1d015698bbD0cFCE": true, // Config_2A
         "0x4Db91a1Fa4ba3c75510B2885d7d7da48E0209F38": true, // Timelock_2
         "0x090FA7eb8B4647DaDbEA315E68f8f88e8E62Bd54": true, // Oracle_2
         "0xEE027373517a6D96Fe62f70E9A0A395cB5a39Eee": true, // SwapHandler_2
@@ -167,6 +173,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       CONFIG_KEEPER: {
         "0xFb11f15f206bdA02c224EDC744b0E50E46137046": true,
         "0xc9e1CE91d3f782499cFe787b6F1d2AF0Ca76C049": true,
+        "0x03d717E27aF1B566C3efb729F1151E775B411f2B": true,
       },
       ...testnetConfig,
     },
