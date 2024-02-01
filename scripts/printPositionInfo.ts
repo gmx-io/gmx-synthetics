@@ -2,6 +2,8 @@ import hre from "hardhat";
 import { Reader } from "../typechain-types";
 import got from "got";
 import { toLoggableObject } from "../utils/print";
+import { Position } from "../typechain-types/contracts/position/PositionUtils";
+import { hashData } from "../utils/hash";
 const ethers = hre.ethers;
 
 function getAvalancheFujiValues() {
@@ -49,13 +51,27 @@ async function main() {
   }
 
   const reader = (await hre.ethers.getContract("Reader")) as Reader;
-  const positionKey = process.env.POSITION_KEY;
+  let positionKey = process.env.POSITION_KEY;
 
-  if (!positionKey) {
-    throw new Error("POSITION_KEY is required");
+  let position: Position.PropsStructOutput;
+
+  if (positionKey) {
+    position = await reader.getPosition(dataStoreDeployment.address, positionKey);
+  } else {
+    const traderAddress = "0x6744a9c6e3a9b8f7243ace5b20d51a500fcd0353";
+    console.warn("using default trader address %s", traderAddress);
+    const traderPositions = await reader.getAccountPositions(dataStoreDeployment.address, traderAddress, 0, 1);
+
+    if (traderPositions.length === 0) {
+      throw new Error("POSITION_KEY is required");
+    }
+
+    position = traderPositions[0];
+    positionKey = hashData(
+      ["address", "address", "address", "bool"],
+      [position.addresses.account, position.addresses.market, position.addresses.collateralToken, position.flags.isLong]
+    );
   }
-
-  const position = await reader.getPosition(dataStoreDeployment.address, positionKey);
 
   if (position.addresses.market === ethers.constants.AddressZero) {
     console.log("position %s does not exist", positionKey);
