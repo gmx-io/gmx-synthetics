@@ -487,14 +487,14 @@ async function main() {
     },
   });
 
-  console.log(`updating ${multicallWriteParams.length} params`);
-  console.log("multicallWriteParams", multicallWriteParams);
+  console.info(`updating ${multicallWriteParams.length} params`);
+  console.info("multicallWriteParams", multicallWriteParams);
 
   if (process.env.WRITE === "true") {
     const tx = await config.multicall(multicallWriteParams);
-    console.log(`tx sent: ${tx.hash}`);
+    console.info(`tx sent: ${tx.hash}`);
   } else {
-    console.log("NOTE: executed in read-only mode, no transactions were sent");
+    console.info("NOTE: executed in read-only mode, no transactions were sent");
   }
 }
 

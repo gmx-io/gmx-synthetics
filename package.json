@@ -46,6 +46,7 @@
     "typescript": "^4.8.4"
   },
   "dependencies": {
+    "@apollo/client": "^3.9.3",
     "@nomicfoundation/hardhat-foundry": "^1.1.1",
     "@openzeppelin/contracts": "4.9.3",
     "@poanet/solidity-flattener": "^3.0.9",
@@ -61,6 +62,7 @@
     "ethers-proxies": "^1.0.0",
     "express": "^4.18.2",
     "get-all-files": "^4.1.0",
+    "graphql": "^16.8.1",
     "hardhat-contract-sizer": "^2.6.1",
     "javascript-time-ago": "^2.5.9",
     "node-fetch": "^2.6.1",
