@@ -58,7 +58,7 @@ async function main() {
   if (positionKey) {
     position = await reader.getPosition(dataStoreDeployment.address, positionKey);
   } else {
-    const traderAddress = "0x6744a9c6e3a9b8f7243ace5b20d51a500fcd0353";
+    const traderAddress = process.env.TRADER || "0x6744a9c6e3a9b8f7243ace5b20d51a500fcd0353";
     console.warn("using default trader address %s", traderAddress);
     const traderPositions = await reader.getAccountPositions(dataStoreDeployment.address, traderAddress, 0, 1);
 

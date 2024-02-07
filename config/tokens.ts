@@ -211,6 +211,30 @@ const config: {
       transferGasLimit: 200 * 1000,
     },
   },
+  arbitrumSepolia: {
+    WETH: {
+      address: "0x980b62da83eff3d4576c647993b0c1d7faf17c73", // not verified
+      decimals: 18,
+      wrappedNative: true,
+      transferGasLimit: 200 * 1000,
+      realtimeFeedId: "0x0001d678deabc04f0494b78138727170ff1cf1daf91fca6954de59e41fa0965c",
+      realtimeFeedDecimals: 8,
+    },
+    BTC: {
+      address: "0xF79cE1Cf38A09D572b021B4C5548b75A14082F12",
+      decimals: 8,
+      transferGasLimit: 200 * 1000,
+      realtimeFeedId: "0x0001ef0379c835e64d03082e561403cc14b2779b525d93149b25df0ee3ef9456",
+      realtimeFeedDecimals: 8,
+    },
+    USDC: {
+      address: "0x3321Fd36aEaB0d5CdfD26f4A3A93E2D2aAcCB99f",
+      decimals: 6,
+      transferGasLimit: 200 * 1000,
+      realtimeFeedId: "0x0001829d7d4c7c5badcd54d2126e621c51eabf32393ffab969e311b18ed80138",
+      realtimeFeedDecimals: 8,
+    },
+  },
   arbitrumGoerli: {
     WETH: {
       address: "0xe39Ab88f8A4777030A534146A9Ca3B52bd5D43A3",

@@ -103,7 +103,7 @@ export type PerpMarketConfig = Partial<BaseMarketConfig> & {
 
 export type MarketConfig = SpotMarketConfig | PerpMarketConfig;
 
-const baseMarketConfig: BaseMarketConfig = {
+const baseMarketConfig: Partial<BaseMarketConfig> = {
   minCollateralFactor: decimalToFloat(1, 2), // 1%
 
   minCollateralFactorForOpenInterestMultiplierLong: 0,
@@ -114,6 +114,9 @@ const baseMarketConfig: BaseMarketConfig = {
 
   maxLongTokenPoolAmountForDeposit: expandDecimals(1_000_000_000, 18),
   maxShortTokenPoolAmountForDeposit: expandDecimals(1_000_000_000, 18),
+
+  maxOpenInterestForLongs: expandDecimals(1_000_000_000, 30),
+  maxOpenInterestForShorts: expandDecimals(1_000_000_000, 30),
 
   reserveFactorLongs: decimalToFloat(95, 2), // 95%,
   reserveFactorShorts: decimalToFloat(95, 2), // 95%,
@@ -1087,6 +1090,14 @@ const config: {
 
       maxLongTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmountForDeposit: expandDecimals(10_000_000, 18),
+    },
+  ],
+  arbitrumSepolia: [
+    {
+      tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
+    },
+    {
+      tokens: { indexToken: "BTC", longToken: "BTC", shortToken: "USDC" },
     },
   ],
   arbitrumGoerli: [

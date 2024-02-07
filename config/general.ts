@@ -89,6 +89,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     arbitrumGoerli: {
       requestExpirationBlockAge: 1200, // about 5 minutes assuming 4 blocks per second
     },
+    arbitrumSepolia: {
+      requestExpirationBlockAge: 1200, // about 5 minutes assuming 4 blocks per second
+    },
     avalancheFuji: {
       requestExpirationBlockAge: 150, // about 5 minutes assuming 1 block per 2 seconds
     },

@@ -266,6 +266,26 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
       },
     },
 
+    arbitrumSepolia: {
+      realtimeFeedVerifier: "0x2ff010DEbC1297f19579B4246cad07bd24F2488A",
+      signers: ["0xb38302e27bAe8932536A84ab362c3d1013420Cb4"],
+      maxOraclePriceAge: 5 * 60,
+      maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
+      minOracleBlockConfirmations: 255,
+      minOracleSigners: 1,
+
+      // price feeds https://docs.chain.link/data-feeds/price-feeds/addresses?network=arbitrum&page=1
+      tokens: {
+        USDC: {
+          priceFeed: {
+            address: "0x0153002d20B96532C639313c2d54c3dA09109309",
+            decimals: 8,
+            heartbeatDuration: 3 * 24 * 60 * 60,
+          },
+        },
+      },
+    },
+
     arbitrumGoerli: {
       realtimeFeedVerifier: "0x09DFf56A4fF44e0f4436260A04F5CFa65636A481",
       signers: ["0xFb11f15f206bdA02c224EDC744b0E50E46137046", "0x23247a1A80D01b9482E9d734d2EB780a3b5c8E6c"],

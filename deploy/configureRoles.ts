@@ -16,7 +16,7 @@ const rolesToRemove = {
   avalanche: [],
   avalancheFuji: [],
   arbitrumGoerli: [],
-  avalancheFuji: [],
+  arbitrumSepolia: [],
 };
 
 const func = async ({ gmx, network }) => {

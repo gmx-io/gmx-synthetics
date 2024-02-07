@@ -27,6 +27,7 @@ const getRpcUrl = (network) => {
     arbitrum: "https://arb1.arbitrum.io/rpc",
     avalanche: "https://api.avax.network/ext/bc/C/rpc",
     arbitrumGoerli: "https://goerli-rollup.arbitrum.io/rpc",
+    arbitrumSepolia: "https://sepolia-rollup.arbitrum.io/rpc",
     avalancheFuji: "https://api.avax-test.network/ext/bc/C/rpc",
     snowtrace: "https://api.avax.network/ext/bc/C/rpc",
   };
@@ -44,8 +45,12 @@ const getRpcUrl = (network) => {
   return rpc;
 };
 
-const getEnvAccounts = () => {
-  const { ACCOUNT_KEY, ACCOUNT_KEY_FILE } = process.env;
+const getEnvAccounts = (chainName?: string) => {
+  const { ACCOUNT_KEY, ACCOUNT_KEY_FILE, ARBITRUM_SEPOLIA_ACCOUNT_KEY } = process.env;
+
+  if (chainName === "arbitrumSepolia" && ARBITRUM_SEPOLIA_ACCOUNT_KEY) {
+    return [ARBITRUM_SEPOLIA_ACCOUNT_KEY];
+  }
 
   if (ACCOUNT_KEY) {
     return [ACCOUNT_KEY];
@@ -133,6 +138,18 @@ const config: HardhatUserConfig = {
       verify: {
         etherscan: {
           apiUrl: "https://api-goerli.arbiscan.io/",
+          apiKey: process.env.ARBISCAN_API_KEY,
+        },
+      },
+      blockGasLimit: 10000000,
+    },
+    arbitrumSepolia: {
+      url: getRpcUrl("arbitrumSepolia"),
+      chainId: 421614,
+      accounts: getEnvAccounts("arbitrumSepolia"),
+      verify: {
+        etherscan: {
+          apiUrl: "https://api-sepolia.arbiscan.io/",
           apiKey: process.env.ARBISCAN_API_KEY,
         },
       },

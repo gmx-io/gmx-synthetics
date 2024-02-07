@@ -23,7 +23,7 @@ export type RealtimeFeedReport = {
 function getBaseUrl() {
   if (hre.network.name === "arbitrum") {
     return "https://dataengine.chain.link";
-  } else if (hre.network.name === "arbitrumGoerli") {
+  } else if (hre.network.name === "arbitrumGoerli" || hre.network.name === "arbitrumSepolia") {
     return "https://mercury-arbitrum-testnet.chain.link";
   }
   throw new Error("Unsupported network");

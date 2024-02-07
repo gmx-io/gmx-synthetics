@@ -37,7 +37,7 @@ export function createDeployFunction({
     network: any;
   }) => Promise<void>;
   id?: string;
-}): DeployFunction {
+}): DeployFunction & Required<Pick<DeployFunction, "dependencies">> {
   const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRuntimeEnvironment) => {
     const { deploy, get } = deployments;
     const { deployer } = await getNamedAccounts();
