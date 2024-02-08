@@ -39,11 +39,20 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
 
   const testnetConfig = {
     CONTROLLER: testnetAdmins,
-    ORDER_KEEPER: testnetAdmins,
+    ORDER_KEEPER: {
+      "0x3053c7edC20aa08d225CdeC9688136c4ab9F9963": true,
+      ...testnetAdmins,
+    },
     ADL_KEEPER: testnetAdmins,
-    LIQUIDATION_KEEPER: testnetAdmins,
+    LIQUIDATION_KEEPER: {
+      "0x3053c7edC20aa08d225CdeC9688136c4ab9F9963": true,
+      ...testnetAdmins,
+    },
     MARKET_KEEPER: testnetAdmins,
-    FROZEN_ORDER_KEEPER: testnetAdmins,
+    FROZEN_ORDER_KEEPER: {
+      "0x3053c7edC20aa08d225CdeC9688136c4ab9F9963": true,
+      ...testnetAdmins,
+    },
   };
 
   const config: {

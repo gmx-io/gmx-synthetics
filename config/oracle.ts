@@ -267,7 +267,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     },
 
     arbitrumSepolia: {
-      realtimeFeedVerifier: "0x2ff010DEbC1297f19579B4246cad07bd24F2488A",
+      realtimeFeedVerifier: "0xF7d27557369D05ad2B3d020af78480Ed6a2ca1f9",
       signers: ["0xb38302e27bAe8932536A84ab362c3d1013420Cb4"],
       maxOraclePriceAge: 5 * 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
