@@ -10,10 +10,10 @@ import "./ArbSys.sol";
 library Chain {
     // if the ARBITRUM_CHAIN_ID changes, a new version of this library
     // and contracts depending on it would need to be deployed
-    uint256 constant public ARBITRUM_CHAIN_ID = 42161;
-    uint256 constant public ARBITRUM_GOERLI_CHAIN_ID = 421613;
+    uint256 public constant ARBITRUM_CHAIN_ID = 42161;
+    uint256 public constant ARBITRUM_SEPOLIA_CHAIN_ID = 421614;
 
-    ArbSys constant public arbSys = ArbSys(address(100));
+    ArbSys public constant arbSys = ArbSys(address(100));
 
     // @dev return the current block's timestamp
     // @return the current block's timestamp
@@ -42,7 +42,6 @@ library Chain {
     }
 
     function shouldUseArbSysValues() internal view returns (bool) {
-        return block.chainid == ARBITRUM_CHAIN_ID || block.chainid == ARBITRUM_GOERLI_CHAIN_ID;
-
+        return block.chainid == ARBITRUM_CHAIN_ID || block.chainid == ARBITRUM_SEPOLIA_CHAIN_ID;
     }
 }

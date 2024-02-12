@@ -177,6 +177,7 @@ const config: HardhatUserConfig = {
       arbitrumOne: process.env.ARBISCAN_API_KEY,
       avalanche: process.env.SNOWTRACE_API_KEY,
       arbitrumGoerli: process.env.ARBISCAN_API_KEY,
+      arbitrumSepolia: process.env.ARBISCAN_API_KEY,
       avalancheFujiTestnet: process.env.SNOWTRACE_API_KEY,
       snowtrace: "snowtrace", // apiKey is not required, just set a placeholder
     },
@@ -187,6 +188,15 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan",
           browserURL: "https://avalanche.routescan.io",
+        },
+      },
+
+      {
+        network: "arbitrumSepolia",
+        chainId: 421614,
+        urls: {
+          apiURL: "https://api-sepolia.arbiscan.io/api",
+          browserURL: "https://https://sepolia.arbiscan.io/",
         },
       },
     ],

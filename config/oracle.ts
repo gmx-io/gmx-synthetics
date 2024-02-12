@@ -281,6 +281,15 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             address: "0x0153002d20B96532C639313c2d54c3dA09109309",
             decimals: 8,
             heartbeatDuration: 3 * 24 * 60 * 60,
+            stablePrice: decimalToFloat(1),
+          },
+        },
+        BTC: {
+          priceFeed: {
+            address: "0x56a43EB56Da12C0dc1D972ACb089c06a5dEF8e69",
+            decimals: 8,
+            heartbeatDuration: 3 * 24 * 60 * 60,
+            stablePrice: decimalToFloat(44000),
           },
         },
       },
