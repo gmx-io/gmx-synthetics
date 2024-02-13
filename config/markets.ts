@@ -665,8 +665,8 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(6_650_500, 18),
-      maxShortTokenPoolAmount: expandDecimals(13_700_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(7_524_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(15_500_000, 6),
 
       maxLongTokenPoolAmountForDeposit: expandDecimals(6_796_000, 18),
       maxShortTokenPoolAmountForDeposit: expandDecimals(14_000_000, 6),
