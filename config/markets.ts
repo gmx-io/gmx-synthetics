@@ -1005,11 +1005,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(199_670, 18),
-      maxShortTokenPoolAmount: expandDecimals(7_200_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(205_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(8_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(180_255, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(6_500_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(200_000, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(8_000_000, 6),
 
       reserveFactorLongs: decimalToFloat(9, 1), // 90%,
       reserveFactorShorts: decimalToFloat(9, 1), // 90%,
@@ -1030,8 +1030,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(166, 43), // ~143 AVAX/day
       minPositionImpactPoolAmount: expandDecimals(141, 18),
 
-      maxOpenInterestForLongs: decimalToFloat(3_500_000),
-      maxOpenInterestForShorts: decimalToFloat(3_500_000),
+      maxOpenInterestForLongs: decimalToFloat(5_000_000),
+      maxOpenInterestForShorts: decimalToFloat(5_000_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
