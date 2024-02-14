@@ -124,20 +124,20 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   openInterestReserveFactorLongs: percentageToFloat("90%"), // 90%,
   openInterestReserveFactorShorts: percentageToFloat("90%"), // 90%,
 
-  maxPnlFactorForTradersLongs: percentageToFloat("80%"), // 80%
-  maxPnlFactorForTradersShorts: percentageToFloat("80%"), // 80%
+  maxPnlFactorForTradersLongs: percentageToFloat("90%"), // 90%
+  maxPnlFactorForTradersShorts: percentageToFloat("90%"), // 90%
 
   maxPnlFactorForAdlLongs: percentageToFloat("100%"), // 100%, no ADL under normal operation
   maxPnlFactorForAdlShorts: percentageToFloat("100%"), // 100%, no ADL under normal operation
 
-  minPnlFactorAfterAdlLongs: percentageToFloat("80%"), // 80%, no ADL under normal operation
-  minPnlFactorAfterAdlShorts: percentageToFloat("80%"), // 80%, no ADL under normal operation
+  minPnlFactorAfterAdlLongs: percentageToFloat("90%"), // 80%, no ADL under normal operation
+  minPnlFactorAfterAdlShorts: percentageToFloat("90%"), // 80%, no ADL under normal operation
 
-  maxPnlFactorForDepositsLongs: percentageToFloat("80%"), // 80%
-  maxPnlFactorForDepositsShorts: percentageToFloat("80%"), // 80%
+  maxPnlFactorForDepositsLongs: percentageToFloat("90%"), // 80%
+  maxPnlFactorForDepositsShorts: percentageToFloat("90%"), // 80%
 
-  maxPnlFactorForWithdrawalsLongs: percentageToFloat("80%"), // 80%
-  maxPnlFactorForWithdrawalsShorts: percentageToFloat("80%"), // 80%
+  maxPnlFactorForWithdrawalsLongs: percentageToFloat("90%"), // 80%
+  maxPnlFactorForWithdrawalsShorts: percentageToFloat("90%"), // 80%
 
   positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"), // 0.05%
   positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"), // 0.07%
