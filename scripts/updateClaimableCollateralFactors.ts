@@ -47,7 +47,6 @@ async function updateMultipleFactors() {
   }
 
   console.log("time", startTime, endTime);
-  return;
 
   const pageIndex = 0;
   const pageSize = 1000;
