@@ -1,7 +1,7 @@
 import { BigNumberish, ethers } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { expandDecimals, decimalToFloat } from "../utils/math";
+import { expandDecimals, decimalToFloat, bigNumberify } from "../utils/math";
 import { hashString } from "../utils/hash";
 
 export type BaseMarketConfig = {
@@ -146,9 +146,9 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   positivePositionImpactFactor: decimalToFloat(5, 8), // 0.000005%
   positionImpactExponentFactor: decimalToFloat(2, 0), // 2
 
-  negativeMaxPositionImpactFactor: decimalToFloat(1, 2), // 1%
-  positiveMaxPositionImpactFactor: decimalToFloat(1, 2), // 1%
-  maxPositionImpactFactorForLiquidations: decimalToFloat(1, 3), // 0.1%
+  negativeMaxPositionImpactFactor: decimalToFloat(5, 3), // 0.5%
+  positiveMaxPositionImpactFactor: decimalToFloat(5, 3), // 0.5%
+  maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
 
   swapFeeFactorForPositiveImpact: decimalToFloat(5, 4), // 0.05%,
   swapFeeFactorForNegativeImpact: decimalToFloat(7, 4), // 0.07%,
