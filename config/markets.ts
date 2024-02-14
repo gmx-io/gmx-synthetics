@@ -699,8 +699,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(660, 44), // ~5702 ARB/day
       minPositionImpactPoolAmount: expandDecimals(47961, 18),
 
-      maxOpenInterestForLongs: decimalToFloat(8_500_000),
-      maxOpenInterestForShorts: decimalToFloat(8_500_000),
+      maxOpenInterestForLongs: decimalToFloat(10_000_000),
+      maxOpenInterestForShorts: decimalToFloat(10_000_000),
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDC.e" },
