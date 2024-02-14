@@ -79,6 +79,8 @@ async function requestMigrationData(fromTimestamp: number, fromBlockNumber: numb
 }
 
 async function main() {
+  throw new Error("GLP migration incentives are ended");
+
   const { fromTimestamp, fromDate, toTimestamp, toDate } = processArgs();
 
   const [fromBlock, toBlock] = await Promise.all([
