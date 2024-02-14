@@ -1,7 +1,7 @@
 import { BigNumberish, ethers } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { expandDecimals, decimalToFloat, bigNumberify } from "../utils/math";
+import { expandDecimals, decimalToFloat, bigNumberify, percentageToFloat } from "../utils/math";
 import { hashString } from "../utils/hash";
 
 export type BaseMarketConfig = {
@@ -118,43 +118,43 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   maxOpenInterestForLongs: expandDecimals(1_000_000_000, 30),
   maxOpenInterestForShorts: expandDecimals(1_000_000_000, 30),
 
-  reserveFactorLongs: decimalToFloat(95, 2), // 95%,
-  reserveFactorShorts: decimalToFloat(95, 2), // 95%,
+  reserveFactorLongs: percentageToFloat("95%"), // 95%,
+  reserveFactorShorts: percentageToFloat("95%"), // 95%,
 
-  openInterestReserveFactorLongs: decimalToFloat(9, 1), // 90%,
-  openInterestReserveFactorShorts: decimalToFloat(9, 1), // 90%,
+  openInterestReserveFactorLongs: percentageToFloat("90%"), // 90%,
+  openInterestReserveFactorShorts: percentageToFloat("90%"), // 90%,
 
-  maxPnlFactorForTradersLongs: decimalToFloat(8, 1), // 80%
-  maxPnlFactorForTradersShorts: decimalToFloat(8, 1), // 80%
+  maxPnlFactorForTradersLongs: percentageToFloat("80%"), // 80%
+  maxPnlFactorForTradersShorts: percentageToFloat("80%"), // 80%
 
-  maxPnlFactorForAdlLongs: decimalToFloat(1, 0), // 100%, no ADL under normal operation
-  maxPnlFactorForAdlShorts: decimalToFloat(1, 0), // 100%, no ADL under normal operation
+  maxPnlFactorForAdlLongs: percentageToFloat("100%"), // 100%, no ADL under normal operation
+  maxPnlFactorForAdlShorts: percentageToFloat("100%"), // 100%, no ADL under normal operation
 
-  minPnlFactorAfterAdlLongs: decimalToFloat(8, 1), // 80%, no ADL under normal operation
-  minPnlFactorAfterAdlShorts: decimalToFloat(8, 1), // 80%, no ADL under normal operation
+  minPnlFactorAfterAdlLongs: percentageToFloat("80%"), // 80%, no ADL under normal operation
+  minPnlFactorAfterAdlShorts: percentageToFloat("80%"), // 80%, no ADL under normal operation
 
-  maxPnlFactorForDepositsLongs: decimalToFloat(8, 1), // 80%
-  maxPnlFactorForDepositsShorts: decimalToFloat(8, 1), // 80%
+  maxPnlFactorForDepositsLongs: percentageToFloat("80%"), // 80%
+  maxPnlFactorForDepositsShorts: percentageToFloat("80%"), // 80%
 
-  maxPnlFactorForWithdrawalsLongs: decimalToFloat(8, 1), // 80%
-  maxPnlFactorForWithdrawalsShorts: decimalToFloat(8, 1), // 80%
+  maxPnlFactorForWithdrawalsLongs: percentageToFloat("80%"), // 80%
+  maxPnlFactorForWithdrawalsShorts: percentageToFloat("80%"), // 80%
 
-  positionFeeFactorForPositiveImpact: decimalToFloat(5, 4), // 0.05%
-  positionFeeFactorForNegativeImpact: decimalToFloat(7, 4), // 0.07%
+  positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"), // 0.05%
+  positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"), // 0.07%
 
-  negativePositionImpactFactor: decimalToFloat(1, 7), // 0.00001%
-  positivePositionImpactFactor: decimalToFloat(5, 8), // 0.000005%
+  negativePositionImpactFactor: percentageToFloat("0.00001%"), // 0.00001%
+  positivePositionImpactFactor: percentageToFloat("0.000005%"), // 0.000005%
   positionImpactExponentFactor: decimalToFloat(2, 0), // 2
 
-  negativeMaxPositionImpactFactor: decimalToFloat(5, 3), // 0.5%
-  positiveMaxPositionImpactFactor: decimalToFloat(5, 3), // 0.5%
+  negativeMaxPositionImpactFactor: percentageToFloat("0.5%"), // 0.5%
+  positiveMaxPositionImpactFactor: percentageToFloat("0.5%"), // 0.5%
   maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
 
-  swapFeeFactorForPositiveImpact: decimalToFloat(5, 4), // 0.05%,
-  swapFeeFactorForNegativeImpact: decimalToFloat(7, 4), // 0.07%,
+  swapFeeFactorForPositiveImpact: percentageToFloat("0.05%"), // 0.05%,
+  swapFeeFactorForNegativeImpact: percentageToFloat("0.07%"), // 0.07%,
 
-  negativeSwapImpactFactor: decimalToFloat(1, 5), // 0.001%
-  positiveSwapImpactFactor: decimalToFloat(5, 6), // 0.0005%
+  negativeSwapImpactFactor: percentageToFloat("0.001%"), // 0.001%
+  positiveSwapImpactFactor: percentageToFloat("0.0005%"), // 0.0005%
   swapImpactExponentFactor: decimalToFloat(2, 0), // 2
 
   minCollateralUsd: decimalToFloat(1, 0), // 1 USD
@@ -181,26 +181,26 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
 };
 
 const synthethicMarketConfig: Partial<BaseMarketConfig> = {
-  reserveFactorLongs: decimalToFloat(8, 1), // 80%,
-  reserveFactorShorts: decimalToFloat(8, 1), // 80%,
+  reserveFactorLongs: percentageToFloat("80%"), // 80%,
+  reserveFactorShorts: percentageToFloat("80%"), // 80%,
 
-  openInterestReserveFactorLongs: decimalToFloat(7, 1), // 70%,
-  openInterestReserveFactorShorts: decimalToFloat(7, 1), // 70%,
+  openInterestReserveFactorLongs: percentageToFloat("70%"), // 70%,
+  openInterestReserveFactorShorts: percentageToFloat("70%"), // 70%,
 
-  maxPnlFactorForTradersLongs: decimalToFloat(5, 1), // 50%
-  maxPnlFactorForTradersShorts: decimalToFloat(5, 1), // 50%
+  maxPnlFactorForTradersLongs: percentageToFloat("50%"), // 50%
+  maxPnlFactorForTradersShorts: percentageToFloat("50%"), // 50%
 
-  maxPnlFactorForAdlLongs: decimalToFloat(45, 2), // 45%
-  maxPnlFactorForAdlShorts: decimalToFloat(45, 2), // 45%
+  maxPnlFactorForAdlLongs: percentageToFloat("45%"), // 45%
+  maxPnlFactorForAdlShorts: percentageToFloat("45%"), // 45%
 
-  minPnlFactorAfterAdlLongs: decimalToFloat(4, 1), // 40%
-  minPnlFactorAfterAdlShorts: decimalToFloat(4, 1), // 40%
+  minPnlFactorAfterAdlLongs: percentageToFloat("40%"), // 40%
+  minPnlFactorAfterAdlShorts: percentageToFloat("40%"), // 40%
 
-  maxPnlFactorForDepositsLongs: decimalToFloat(6, 1), // 60%
-  maxPnlFactorForDepositsShorts: decimalToFloat(6, 1), // 60%
+  maxPnlFactorForDepositsLongs: percentageToFloat("60%"), // 60%
+  maxPnlFactorForDepositsShorts: percentageToFloat("60%"), // 60%
 
-  maxPnlFactorForWithdrawalsLongs: decimalToFloat(3, 1), // 30%
-  maxPnlFactorForWithdrawalsShorts: decimalToFloat(3, 1), // 30%
+  maxPnlFactorForWithdrawalsLongs: percentageToFloat("30%"), // 30%
+  maxPnlFactorForWithdrawalsShorts: percentageToFloat("30%"), // 30%
 };
 
 const stablecoinSwapMarketConfig: Partial<SpotMarketConfig> = {
