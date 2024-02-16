@@ -316,7 +316,7 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(15, 11), // 0.05% for ~1,600,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(9, 11), // 0.05% for ~2,700,000 USD of imbalance
 
-      positionImpactPoolDistributionRate: expandDecimals(100, 42), // ~8.64 ETH/day
+      positionImpactPoolDistributionRate: expandDecimals(70, 42), // ~6.05 ETH/day
       minPositionImpactPoolAmount: expandDecimals(30, 18), // 30 ETH
 
       negativeSwapImpactFactor: decimalToFloat(2, 10), // 0.05% for 2,500,000 USD of imbalance
@@ -511,7 +511,7 @@ const config: {
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
-      positionImpactPoolDistributionRate: expandDecimals(150, 34), // ~130 SOL/day
+      positionImpactPoolDistributionRate: expandDecimals(120, 34), // ~104 SOL/day
       minPositionImpactPoolAmount: expandDecimals(1500, 9),
 
       maxOpenInterestForLongs: decimalToFloat(12_000_000),
