@@ -1,4 +1,4 @@
-import hre from "hardhat";
+import hre, { network } from "hardhat";
 
 import { encodeData } from "../utils/hash";
 import { bigNumberify } from "../utils/math";
@@ -120,13 +120,19 @@ const processGeneralConfig = async ({ generalConfig, handleConfig }) => {
     `nativeTokenTransferGasLimit`
   );
 
-  await handleConfig(
-    "uint",
-    keys.ESTIMATED_GAS_FEE_BASE_AMOUNT,
-    "0x",
-    generalConfig.estimatedGasFeeBaseAmount,
-    `estimatedGasFeeBaseAmount`
-  );
+  if (generalConfig.estimatedGasFeeBaseAmount) {
+    await handleConfig(
+      "uint",
+      keys.ESTIMATED_GAS_FEE_BASE_AMOUNT,
+      "0x",
+      generalConfig.estimatedGasFeeBaseAmount,
+      `estimatedGasFeeBaseAmount`
+    );
+
+    if (network.name === "arbitrum") {
+      throw new Error("estimatedGasFeeBaseAmount should be updated in a separate keeper");
+    }
+  }
 
   await handleConfig(
     "uint",
@@ -136,13 +142,19 @@ const processGeneralConfig = async ({ generalConfig, handleConfig }) => {
     `estimatedGasFeeMultiplierFactor`
   );
 
-  await handleConfig(
-    "uint",
-    keys.EXECUTION_GAS_FEE_BASE_AMOUNT,
-    "0x",
-    generalConfig.executionGasFeeBaseAmount,
-    `executionGasFeeBaseAmount`
-  );
+  if (generalConfig.executionGasFeeBaseAmount) {
+    await handleConfig(
+      "uint",
+      keys.EXECUTION_GAS_FEE_BASE_AMOUNT,
+      "0x",
+      generalConfig.executionGasFeeBaseAmount,
+      `executionGasFeeBaseAmount`
+    );
+
+    if (network.name === "arbitrum") {
+      throw new Error("executionGasFeeBaseAmount should be updated in a separate keeper");
+    }
+  }
 
   await handleConfig(
     "uint",
