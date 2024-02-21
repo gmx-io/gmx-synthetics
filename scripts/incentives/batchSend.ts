@@ -146,7 +146,7 @@ async function main() {
 
       for (const [j, recipient] of batchRecipients.entries()) {
         if (seenRecipients.has(recipient)) {
-          throw new Error(`Duplicated recipient ${recipient} batch ${from}-${to}`);
+          throw new Error(`Duplicated recipient ${recipient} batch ${from}-${to} (exclusive)`);
         }
         console.log(
           "%s recipient %s amount %s (%s)",
