@@ -20,11 +20,11 @@ export async function fetchTickerPrices() {
 
 export function getTickersUrl() {
   if (hre.network.name === "arbitrum") {
-    return "https://arbitrum.gmx-oracle.io/prices/tickers";
+    return "https://arbitrum-api.gmxinfra.io/prices/tickers";
   }
 
   if (hre.network.name === "avalanche") {
-    return "https://avalanche.gmx-oracle.io/prices/tickers";
+    return "https://avalanche-api.gmxinfra.io/prices/tickers";
   }
 
   throw new Error("Unsupported network");
