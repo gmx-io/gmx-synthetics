@@ -10,8 +10,8 @@ export async function fetchTickerPrices() {
 
   for (const tokenPrice of tokenPrices) {
     pricesByTokenAddress[tokenPrice.tokenAddress.toLowerCase()] = {
-      min: bigNumberify(tokenPrice.minPrice).mul(expandDecimals(1, tokenPrice.oracleDecimals)),
-      max: bigNumberify(tokenPrice.maxPrice).mul(expandDecimals(1, tokenPrice.oracleDecimals)),
+      min: bigNumberify(tokenPrice.minPrice),
+      max: bigNumberify(tokenPrice.maxPrice),
     };
   }
 

@@ -31,6 +31,12 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     },
   };
 
+  const gelatoKeepers = {
+    arbitrum: {
+      "0xcc25DCe071B75196D27aD95906dbfA45218d5eC6": true,
+    },
+  };
+
   const testnetAdmins = {
     "0xC84f3398eDf6336E1Ef55b50Ca3F9f9f96B8b504": true,
     "0xFb11f15f206bdA02c224EDC744b0E50E46137046": true,
@@ -70,7 +76,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       ADL_KEEPER: syntheticKeepers.mainnet,
       FROZEN_ORDER_KEEPER: syntheticKeepers.mainnet,
       LIQUIDATION_KEEPER: syntheticKeepers.mainnet,
-      ORDER_KEEPER: { ...syntheticKeepers.mainnet, ...chainlinkKeepers.arbitrum },
+      ORDER_KEEPER: { ...syntheticKeepers.mainnet, ...chainlinkKeepers.arbitrum, ...gelatoKeepers.arbitrum },
       LIMITED_CONFIG_KEEPER: syntheticKeepers.mainnet,
       CONFIG_KEEPER: {
         "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
