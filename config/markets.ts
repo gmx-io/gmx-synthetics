@@ -507,8 +507,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(17, 10),
 
       // factor in open interest reserve factor 90%
-      borrowingFactorForLongs: decimalToFloat(580, 14), // 5.80E-12, 50% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(580, 14), // 5.80E-12, 50% at 100% utilisation
+      borrowingFactorForLongs: decimalToFloat(715, 14), // 7.15E-12, 60% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(715, 14), // 7.15E-12, 60% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
@@ -641,8 +641,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(3, 9),
 
       // factor in open interest reserve factor 90%
-      borrowingFactorForLongs: decimalToFloat(900, 14), // 9.00E-12, ~50% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(900, 14), // 9.00E-12, ~50% at 100% utilisation
+      borrowingFactorForLongs: decimalToFloat(995, 14), // 9.95E-12, ~55% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(995, 14), // 9.95E-12, ~55% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
@@ -685,8 +685,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(38, 10),
 
       // factor in open interest reserve factor 90%
-      borrowingFactorForLongs: decimalToFloat(570, 14), // 5.70E-12, 50% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(570, 14), // 5.70E-12, 50% at 100% utilisation
+      borrowingFactorForLongs: decimalToFloat(665, 14), // 6.65E-12, 55% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(665, 14), // 6.65E-12, 55% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
