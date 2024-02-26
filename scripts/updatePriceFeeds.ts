@@ -14,7 +14,7 @@ async function main() {
   const oracleConfigs = await hre.gmx.getOracle();
 
   const tokensToUpdate = {
-    arbitrum: ["BNB"],
+    arbitrum: ["ATOM", "NEAR", "AAVE"],
   };
 
   const multicallWriteParams = [];

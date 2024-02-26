@@ -122,6 +122,25 @@ const config: {
       realtimeFeedId: "0xb43dc495134fa357725f93539511c5a4febeadf56e7c29c96566c825094f0b20",
       realtimeFeedDecimals: 8,
     },
+    ATOM: {
+      synthetic: true,
+      decimals: 6,
+      realtimeFeedId: "0x0001e9f09452b9b4711728022fef4733194ff79c101152d162e71e7f783610dc",
+      realtimeFeedDecimals: 8,
+    },
+    NEAR: {
+      synthetic: true,
+      decimals: 24,
+      realtimeFeedId: "0x00012220cd0630294b6d5c90410ef905620f98d6ea778fed3c24cc31a386d0bb",
+      realtimeFeedDecimals: 8,
+    },
+    AAVE: {
+      address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      realtimeFeedId: "0x0001d5ab28c40849614adc04418c26e6139af7bb9f653faa458a98d122196746",
+      realtimeFeedDecimals: 8,
+    },
     USDC: {
       address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
       decimals: 6,
