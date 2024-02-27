@@ -705,6 +705,150 @@ const config: {
       maxOpenInterestForShorts: decimalToFloat(10_000_000),
     },
     {
+      tokens: { indexToken: "AAVE", longToken: "AAVE", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:AAVE/USD"),
+      virtualMarketId: hashString("SPOT:AAVE/USD"),
+
+      ...baseMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(20_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6),
+
+      maxLongTokenPoolAmountForDeposit: expandDecimals(30_000, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(3_000_000, 6),
+
+      negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~45,000 USD of imbalance
+      positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~90,000 USD of imbalance
+      positionImpactExponentFactor: decimalToFloat(22, 1), // 2.2
+
+      negativeSwapImpactFactor: decimalToFloat(8, 9), // 0.05% for 62,500 USD of imbalance
+      positiveSwapImpactFactor: decimalToFloat(4, 9), // 0.05% for 125,000 USD of imbalance
+
+      // minCollateralFactor of 0.01 (1%) when open interest is 2,632,000 USD
+      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(38, 10),
+      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(38, 10),
+
+      // factor in open interest reserve factor 90%
+      borrowingFactorForLongs: decimalToFloat(51, 13), // 5.1E-13
+      borrowingFactorForShorts: decimalToFloat(51, 13), // 5.1E-13
+
+      borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
+      borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+
+      positionImpactPoolDistributionRate: decimalToFloat(0),
+      minPositionImpactPoolAmount: decimalToFloat(0),
+
+      maxOpenInterestForLongs: decimalToFloat(1_000_000),
+      maxOpenInterestForShorts: decimalToFloat(1_000_000),
+    },
+    {
+      tokens: { indexToken: "ATOM", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:ATOM/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
+
+      ...baseMarketConfig,
+      ...synthethicMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(800, 18),
+      maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
+
+      maxLongTokenPoolAmountForDeposit: expandDecimals(800, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(1_500_000, 6),
+
+      negativePositionImpactFactor: decimalToFloat(13, 9),
+      positivePositionImpactFactor: decimalToFloat(26, 9),
+
+      // the swap impact factor is for WETH-stablecoin swaps
+      negativeSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
+      positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
+
+      // minCollateralFactor of 0.01 (1%) when open interest is 2,000,000 USD
+      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
+      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
+
+      reserveFactorLongs: decimalToFloat(8, 1), // 80%,
+      reserveFactorShorts: decimalToFloat(8, 1), // 80%,
+
+      openInterestReserveFactorLongs: decimalToFloat(75, 2), // 75%,
+      openInterestReserveFactorShorts: decimalToFloat(75, 2), // 75%,
+
+      // factor in open interest reserve factor 75%
+      borrowingFactorForLongs: decimalToFloat(205, 13), // 2.05E-11
+      borrowingFactorForShorts: decimalToFloat(205, 13), // 2.05E-11
+      borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
+      borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
+
+      positionImpactPoolDistributionRate: decimalToFloat(0),
+      minPositionImpactPoolAmount: decimalToFloat(0),
+
+      maxOpenInterestForLongs: decimalToFloat(1_000_000),
+      maxOpenInterestForShorts: decimalToFloat(1_000_000),
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+    },
+    {
+      tokens: { indexToken: "NEAR", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:NEAR/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
+
+      ...baseMarketConfig,
+      ...synthethicMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(800, 18),
+      maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
+
+      maxLongTokenPoolAmountForDeposit: expandDecimals(800, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(1_500_000, 6),
+
+      negativePositionImpactFactor: decimalToFloat(13, 9),
+      positivePositionImpactFactor: decimalToFloat(26, 9),
+
+      // the swap impact factor is for WETH-stablecoin swaps
+      negativeSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
+      positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
+
+      // minCollateralFactor of 0.01 (1%) when open interest is 2,000,000 USD
+      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
+      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
+
+      reserveFactorLongs: decimalToFloat(8, 1), // 80%,
+      reserveFactorShorts: decimalToFloat(8, 1), // 80%,
+
+      openInterestReserveFactorLongs: decimalToFloat(75, 2), // 75%,
+      openInterestReserveFactorShorts: decimalToFloat(75, 2), // 75%,
+
+      // factor in open interest reserve factor 75%
+      borrowingFactorForLongs: decimalToFloat(205, 13), // 2.05E-11
+      borrowingFactorForShorts: decimalToFloat(205, 13), // 2.05E-11
+      borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
+      borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
+
+      positionImpactPoolDistributionRate: decimalToFloat(0),
+      minPositionImpactPoolAmount: decimalToFloat(0),
+
+      maxOpenInterestForLongs: decimalToFloat(1_000_000),
+      maxOpenInterestForShorts: decimalToFloat(1_000_000),
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+    },
+    {
       tokens: { longToken: "USDC", shortToken: "USDC.e" },
 
       ...baseMarketConfig,

@@ -83,6 +83,21 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
+    AAVE: {
+      negativeImpactFactor: decimalToFloat(5, 10).div(2),
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
+    },
+    ATOM: {
+      negativeImpactFactor: decimalToFloat(5, 10).div(2),
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
+    },
+    NEAR: {
+      negativeImpactFactor: decimalToFloat(5, 10).div(2),
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
+    },
   },
   avalanche: {
     "BTC.b": {
