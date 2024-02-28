@@ -756,14 +756,14 @@ const config: {
       ...baseMarketConfig,
       ...synthethicMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(800, 18),
+      maxLongTokenPoolAmount: expandDecimals(500, 18),
       maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
 
       maxLongTokenPoolAmountForDeposit: expandDecimals(800, 18),
       maxShortTokenPoolAmountForDeposit: expandDecimals(1_500_000, 6),
 
-      negativePositionImpactFactor: decimalToFloat(13, 9),
-      positivePositionImpactFactor: decimalToFloat(26, 9),
+      negativePositionImpactFactor: decimalToFloat(26, 9),
+      positivePositionImpactFactor: decimalToFloat(13, 9),
 
       // the swap impact factor is for WETH-stablecoin swaps
       negativeSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
@@ -806,14 +806,14 @@ const config: {
       ...baseMarketConfig,
       ...synthethicMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(800, 18),
+      maxLongTokenPoolAmount: expandDecimals(500, 18),
       maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
 
       maxLongTokenPoolAmountForDeposit: expandDecimals(800, 18),
       maxShortTokenPoolAmountForDeposit: expandDecimals(1_500_000, 6),
 
-      negativePositionImpactFactor: decimalToFloat(13, 9),
-      positivePositionImpactFactor: decimalToFloat(26, 9),
+      negativePositionImpactFactor: decimalToFloat(26, 9),
+      positivePositionImpactFactor: decimalToFloat(13, 9),
 
       // the swap impact factor is for WETH-stablecoin swaps
       negativeSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
