@@ -756,7 +756,7 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(500, 18),
       maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(800, 18),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(500, 18),
       maxShortTokenPoolAmountForDeposit: expandDecimals(1_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(26, 9),
@@ -777,8 +777,8 @@ const config: {
       openInterestReserveFactorShorts: decimalToFloat(75, 2), // 75%,
 
       // factor in open interest reserve factor 75%
-      borrowingFactorForLongs: decimalToFloat(180, 10), // 1.80E-08, ~50% if 100% utilized
-      borrowingFactorForShorts: decimalToFloat(180, 10), // 1.80E-08, ~50% if 100% utilized
+      borrowingFactorForLongs: decimalToFloat(215, 10), // 2.15E-08, ~50% if 100% utilized
+      borrowingFactorForShorts: decimalToFloat(215, 10), // 2.15E-08, ~50% if 100% utilized
 
       positionImpactPoolDistributionRate: decimalToFloat(0),
       minPositionImpactPoolAmount: decimalToFloat(0),
@@ -804,7 +804,7 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(500, 18),
       maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(800, 18),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(500, 18),
       maxShortTokenPoolAmountForDeposit: expandDecimals(1_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(26, 9),
@@ -825,8 +825,8 @@ const config: {
       openInterestReserveFactorShorts: decimalToFloat(75, 2), // 75%,
 
       // factor in open interest reserve factor 75%
-      borrowingFactorForLongs: decimalToFloat(180, 10), // 1.80E-08, ~50% if 100% utilized
-      borrowingFactorForShorts: decimalToFloat(180, 10), // 1.80E-08, ~50% if 100% utilized
+      borrowingFactorForLongs: decimalToFloat(215, 10), // 2.15E-08, ~50% if 100% utilized
+      borrowingFactorForShorts: decimalToFloat(215, 10), // 2.15E-08, ~50% if 100% utilized
 
       positionImpactPoolDistributionRate: decimalToFloat(0),
       minPositionImpactPoolAmount: decimalToFloat(0),
