@@ -729,11 +729,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(38, 10),
 
       // factor in open interest reserve factor 90%
-      borrowingFactorForLongs: decimalToFloat(51, 13), // 5.1E-13
-      borrowingFactorForShorts: decimalToFloat(51, 13), // 5.1E-13
-
-      borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
-      borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
+      borrowingFactorForLongs: decimalToFloat(180, 10), // 1.80E-08, ~50% if 100% utilized
+      borrowingFactorForShorts: decimalToFloat(180, 10), // 1.80E-08, ~50% if 100% utilized
 
       fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -780,10 +777,8 @@ const config: {
       openInterestReserveFactorShorts: decimalToFloat(75, 2), // 75%,
 
       // factor in open interest reserve factor 75%
-      borrowingFactorForLongs: decimalToFloat(205, 13), // 2.05E-11
-      borrowingFactorForShorts: decimalToFloat(205, 13), // 2.05E-11
-      borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
-      borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
+      borrowingFactorForLongs: decimalToFloat(180, 10), // 1.80E-08, ~50% if 100% utilized
+      borrowingFactorForShorts: decimalToFloat(180, 10), // 1.80E-08, ~50% if 100% utilized
 
       positionImpactPoolDistributionRate: decimalToFloat(0),
       minPositionImpactPoolAmount: decimalToFloat(0),
@@ -830,10 +825,8 @@ const config: {
       openInterestReserveFactorShorts: decimalToFloat(75, 2), // 75%,
 
       // factor in open interest reserve factor 75%
-      borrowingFactorForLongs: decimalToFloat(205, 13), // 2.05E-11
-      borrowingFactorForShorts: decimalToFloat(205, 13), // 2.05E-11
-      borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
-      borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
+      borrowingFactorForLongs: decimalToFloat(180, 10), // 1.80E-08, ~50% if 100% utilized
+      borrowingFactorForShorts: decimalToFloat(180, 10), // 1.80E-08, ~50% if 100% utilized
 
       positionImpactPoolDistributionRate: decimalToFloat(0),
       minPositionImpactPoolAmount: decimalToFloat(0),
