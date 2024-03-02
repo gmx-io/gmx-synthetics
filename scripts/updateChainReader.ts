@@ -2,6 +2,7 @@ import hre from "hardhat";
 
 async function main() {
   const chainReader = await hre.ethers.getContract("ChainReader");
+  console.log("chainReader", chainReader.address);
   const latestBlock = await hre.ethers.provider.getBlockNumber();
   const blockNumber = latestBlock - 1;
   console.log(`estimating gas for ${blockNumber}`);
