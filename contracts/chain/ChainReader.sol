@@ -18,7 +18,7 @@ contract ChainReader {
     function updateLatestBlockHash(uint256 blockNumber) external {
         bytes32 blockHash = getBlockHash(blockNumber);
         if (blockHash == bytes32(0)) {
-
+            revert("blockHash is empty");
         }
         latestBlockHash = blockHash;
     }
