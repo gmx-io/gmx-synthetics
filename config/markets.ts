@@ -975,8 +975,8 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      borrowingFactorForLongs: decimalToFloat(1800, 11), // 0.000000018 * 90% max reserve, 51% per year
-      borrowingFactorForShorts: decimalToFloat(1800, 11),
+      borrowingFactorForLongs: decimalToFloat(1400, 11), // 0.000000018 * 90% max reserve, 40% per year
+      borrowingFactorForShorts: decimalToFloat(1400, 11),
     },
     {
       tokens: { indexToken: "WETH.e", longToken: "WETH.e", shortToken: "USDC" },
@@ -1017,8 +1017,8 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      borrowingFactorForLongs: decimalToFloat(1800, 11), // 0.000000018 * 90% max reserve, 51% per year
-      borrowingFactorForShorts: decimalToFloat(1800, 11),
+      borrowingFactorForLongs: decimalToFloat(1400, 11), // 0.000000018 * 90% max reserve, 40% per year
+      borrowingFactorForShorts: decimalToFloat(1400, 11),
     },
     {
       tokens: { indexToken: "XRP", longToken: "WAVAX", shortToken: "USDC" },
@@ -1055,8 +1055,8 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      borrowingFactorForLongs: decimalToFloat(2400, 11), // 0.000000024 * 80% max reserve, ~60%
-      borrowingFactorForShorts: decimalToFloat(2400, 11),
+      borrowingFactorForLongs: decimalToFloat(2000, 11), // 0.000000020 * 80% max reserve, ~50%
+      borrowingFactorForShorts: decimalToFloat(2000, 11),
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WAVAX", shortToken: "USDC" },
@@ -1093,8 +1093,8 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      borrowingFactorForLongs: decimalToFloat(2400, 11), // 0.000000024 * 80% max reserve, ~60%
-      borrowingFactorForShorts: decimalToFloat(2400, 11),
+      borrowingFactorForLongs: decimalToFloat(2000, 11), // 0.000000020 * 80% max reserve, ~50%
+      borrowingFactorForShorts: decimalToFloat(2000, 11),
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
@@ -1135,8 +1135,8 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      borrowingFactorForLongs: decimalToFloat(2100, 11), // 0.000000018 * 90% max reserve, ~60% per year
-      borrowingFactorForShorts: decimalToFloat(2100, 11),
+      borrowingFactorForLongs: decimalToFloat(1800, 11), // 0.000000018 * 90% max reserve, ~51% per year
+      borrowingFactorForShorts: decimalToFloat(1800, 11),
     },
     {
       tokens: { indexToken: "LTC", longToken: "WAVAX", shortToken: "USDC" },
@@ -1173,8 +1173,8 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      borrowingFactorForLongs: decimalToFloat(2400, 11), // 0.000000024 * 80% max reserve, ~60%
-      borrowingFactorForShorts: decimalToFloat(2400, 11),
+      borrowingFactorForLongs: decimalToFloat(2000, 11), // 0.000000020 * 80% max reserve, ~50%
+      borrowingFactorForShorts: decimalToFloat(2000, 11),
     },
     {
       tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" },
