@@ -294,8 +294,8 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      borrowingFactorForLongs: decimalToFloat(850, 14), // 8.50E-12, 33.5% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(850, 14), // 8.50E-12, 33.5% at 100% utilisation
+      borrowingFactorForLongs: decimalToFloat(1010, 14), // 1.01E-11, 40% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(1010, 14), // 1.01E-11, 40% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(14, 1), // 1.4
       borrowingExponentFactorForShorts: decimalToFloat(14, 1), // 1.4
@@ -336,8 +336,8 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      borrowingFactorForLongs: decimalToFloat(920, 14), // 9.20E-12, 33.5% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(920, 14), // 9.20E-12, 33.5% at 100% utilisation
+      borrowingFactorForLongs: decimalToFloat(1090, 14), // 1.01E-11, 40% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(1090, 14), // 1.01E-11, 40% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(14, 1), // 1.4
       borrowingExponentFactorForShorts: decimalToFloat(14, 1), // 1.4
