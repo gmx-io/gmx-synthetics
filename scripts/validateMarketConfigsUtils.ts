@@ -88,6 +88,11 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
+    AVAX: {
+      negativeImpactFactor: decimalToFloat(5, 9),
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
+    },
     ATOM: {
       negativeImpactFactor: decimalToFloat(26, 9),
       expectedSwapImpactRatio: 20000,

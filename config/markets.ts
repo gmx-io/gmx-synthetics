@@ -746,6 +746,45 @@ const config: {
       maxOpenInterestForShorts: decimalToFloat(1_000_000),
     },
     {
+      tokens: { indexToken: "AVAX", longToken: "AVAX", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:AVAX/USD"),
+      virtualMarketId: hashString("SPOT:AVAX/USD"),
+
+      ...baseMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(50_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6),
+
+      maxLongTokenPoolAmountForDeposit: expandDecimals(75_000, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(3_000_000, 6),
+
+      negativePositionImpactFactor: decimalToFloat(1, 8), // 0.05% for ~45,000 USD of imbalance
+      positivePositionImpactFactor: decimalToFloat(5, 9), // 0.05% for ~90,000 USD of imbalance
+
+      negativeSwapImpactFactor: decimalToFloat(1, 8), // 0.05% for 62,500 USD of imbalance
+      positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 125,000 USD of imbalance
+
+      // minCollateralFactor of 0.01 (1%) when open interest is 500,000 USD
+      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 8),
+      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 8),
+
+      borrowingFactorForLongs: decimalToFloat(1100, 11), // 0.000000011 * 90% = 0.0000000099, 0.00000099% / second, 31.22% per year if the pool is 100% utilized
+      borrowingFactorForShorts: decimalToFloat(1100, 11),
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+
+      positionImpactPoolDistributionRate: decimalToFloat(0),
+      minPositionImpactPoolAmount: decimalToFloat(0),
+
+      maxOpenInterestForLongs: decimalToFloat(1_000_000),
+      maxOpenInterestForShorts: decimalToFloat(1_000_000),
+    },
+    {
       tokens: { indexToken: "ATOM", longToken: "WETH", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:ATOM/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
