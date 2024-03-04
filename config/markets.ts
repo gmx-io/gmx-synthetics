@@ -965,8 +965,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
 
-      maxOpenInterestForLongs: decimalToFloat(1_000_000),
-      maxOpenInterestForShorts: decimalToFloat(1_000_000),
+      maxOpenInterestForLongs: decimalToFloat(1_500_000),
+      maxOpenInterestForShorts: decimalToFloat(1_500_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(136, 14), // 0.00000000000136, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -1208,8 +1208,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(166, 43), // ~143 AVAX/day
       minPositionImpactPoolAmount: expandDecimals(141, 18),
 
-      maxOpenInterestForLongs: decimalToFloat(5_000_000),
-      maxOpenInterestForShorts: decimalToFloat(5_000_000),
+      maxOpenInterestForLongs: decimalToFloat(7_000_000),
+      maxOpenInterestForShorts: decimalToFloat(7_000_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
