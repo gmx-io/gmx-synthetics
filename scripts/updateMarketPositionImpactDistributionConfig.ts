@@ -63,6 +63,9 @@ async function main() {
     const [indexToken, longToken, shortToken] = getMarketTokenAddresses(marketConfig, tokens);
     const marketKey = getMarketKey(indexToken, longToken, shortToken);
     const onchainMarket = onchainMarketsByTokens[marketKey];
+    if (!onchainMarket) {
+      continue;
+    }
     const marketToken = onchainMarket.marketToken;
 
     if (!marketConfig.positionImpactPoolDistributionRate || !marketConfig.minPositionImpactPoolAmount) {
