@@ -11,8 +11,11 @@ async function main() {
   const config = await hre.ethers.getContract("Config");
 
   const { read } = hre.deployments;
-  const tokens = await hre.gmx.getTokens();
-  const markets = await hre.gmx.getMarkets();
+  const tokens = await (hre as any).gmx.getTokens();
+  const tokensByAddress = Object.fromEntries(
+    Object.entries(tokens).map(([symbol, t]) => [(t as any).address, { symbol, ...(t as any) }])
+  );
+  const markets = await (hre as any).gmx.getMarkets();
 
   const onchainMarketsByTokens = await getOnchainMarkets(read, dataStore.address);
   const multicallReadParams = [];
@@ -21,6 +24,16 @@ async function main() {
     const [indexToken, longToken, shortToken] = getMarketTokenAddresses(marketConfig, tokens);
     const marketKey = getMarketKey(indexToken, longToken, shortToken);
     const onchainMarket = onchainMarketsByTokens[marketKey];
+    if (!onchainMarket) {
+      console.warn(
+        "WARN onchain market with key %s does not exist. index: %s long: %s short: %s",
+        marketKey,
+        tokensByAddress[indexToken].symbol,
+        tokensByAddress[longToken].symbol,
+        tokensByAddress[shortToken].symbol
+      );
+      continue;
+    }
     const marketToken = onchainMarket.marketToken;
 
     multicallReadParams.push({
