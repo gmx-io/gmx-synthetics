@@ -949,12 +949,6 @@ const config: {
       maxLongTokenPoolAmountForDeposit: expandDecimals(350, 8),
       maxShortTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
 
-      reserveFactorLongs: decimalToFloat(9, 1), // 90%,
-      reserveFactorShorts: decimalToFloat(9, 1), // 90%,
-
-      openInterestReserveFactorLongs: decimalToFloat(8, 1), // 80%,
-      openInterestReserveFactorShorts: decimalToFloat(8, 1), // 80%,
-
       negativePositionImpactFactor: decimalToFloat(15, 11), // 0.05% for ~1,600,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(9, 11), // 0.05% for ~2,700,000 USD of imbalance
 
@@ -990,12 +984,6 @@ const config: {
 
       maxLongTokenPoolAmountForDeposit: expandDecimals(5000, 18),
       maxShortTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
-
-      reserveFactorLongs: decimalToFloat(9, 1), // 90%,
-      reserveFactorShorts: decimalToFloat(9, 1), // 90%,
-
-      openInterestReserveFactorLongs: decimalToFloat(8, 1), // 80%,
-      openInterestReserveFactorShorts: decimalToFloat(8, 1), // 80%,
 
       negativePositionImpactFactor: decimalToFloat(15, 11), // 0.05% for ~1,600,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(9, 11), // 0.05% for ~2,700,000 USD of imbalance
@@ -1033,6 +1021,12 @@ const config: {
 
       maxLongTokenPoolAmountForDeposit: expandDecimals(75_000, 18),
       maxShortTokenPoolAmountForDeposit: expandDecimals(1_000_000, 6),
+
+      reserveFactorLongs: decimalToFloat(8, 1), // 80%,
+      reserveFactorShorts: decimalToFloat(8, 1), // 80%,
+
+      openInterestReserveFactorLongs: decimalToFloat(75, 2), // 75%,
+      openInterestReserveFactorShorts: decimalToFloat(75, 2), // 75%,
 
       negativePositionImpactFactor: decimalToFloat(8, 9), // 0.05% for 62,500 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(4, 9), // 0.05% for 125,000 USD of imbalance
@@ -1072,6 +1066,12 @@ const config: {
       maxLongTokenPoolAmountForDeposit: expandDecimals(75_000, 18),
       maxShortTokenPoolAmountForDeposit: expandDecimals(1_000_000, 6),
 
+      reserveFactorLongs: decimalToFloat(8, 1), // 80%,
+      reserveFactorShorts: decimalToFloat(8, 1), // 80%,
+
+      openInterestReserveFactorLongs: decimalToFloat(75, 2), // 75%,
+      openInterestReserveFactorShorts: decimalToFloat(75, 2), // 75%,
+
       negativePositionImpactFactor: decimalToFloat(8, 9), // 0.05% for 62,500 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(4, 9), // 0.05% for 125,000 USD of imbalance
 
@@ -1108,12 +1108,6 @@ const config: {
 
       maxLongTokenPoolAmountForDeposit: expandDecimals(50_000, 9),
       maxShortTokenPoolAmountForDeposit: expandDecimals(1_000_000, 6),
-
-      reserveFactorLongs: decimalToFloat(9, 1), // 90%,
-      reserveFactorShorts: decimalToFloat(9, 1), // 90%,
-
-      openInterestReserveFactorLongs: decimalToFloat(8, 1), // 80%,
-      openInterestReserveFactorShorts: decimalToFloat(8, 1), // 80%,
 
       negativePositionImpactFactor: decimalToFloat(1, 8), // 0.05% for 50,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
@@ -1152,6 +1146,12 @@ const config: {
       maxLongTokenPoolAmountForDeposit: expandDecimals(75_000, 18),
       maxShortTokenPoolAmountForDeposit: expandDecimals(1_000_000, 6),
 
+      reserveFactorLongs: decimalToFloat(8, 1), // 80%,
+      reserveFactorShorts: decimalToFloat(8, 1), // 80%,
+
+      openInterestReserveFactorLongs: decimalToFloat(75, 2), // 75%,
+      openInterestReserveFactorShorts: decimalToFloat(75, 2), // 75%,
+
       negativePositionImpactFactor: decimalToFloat(8, 9), // 0.05% for 62,500 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(4, 9), // 0.05% for 125,000 USD of imbalance
 
@@ -1188,12 +1188,6 @@ const config: {
 
       maxLongTokenPoolAmountForDeposit: expandDecimals(246_900, 18),
       maxShortTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
-
-      reserveFactorLongs: decimalToFloat(9, 1), // 90%,
-      reserveFactorShorts: decimalToFloat(9, 1), // 90%,
-
-      openInterestReserveFactorLongs: decimalToFloat(8, 1), // 80%,
-      openInterestReserveFactorShorts: decimalToFloat(8, 1), // 80%,
 
       negativePositionImpactFactor: decimalToFloat(1, 8), // 0.05% for 50,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
