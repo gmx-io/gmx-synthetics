@@ -287,10 +287,10 @@ const config: {
       maxOpenInterestForLongs: decimalToFloat(80_000_000),
       maxOpenInterestForShorts: decimalToFloat(80_000_000),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(136, 14), // 0.00000000000136, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(158, 14), // 0.00000000000158, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(17, 9), // 0.0000017%,  0.14212% per hour, 53.61% per year
+      maxFundingFactorPerSecond: decimalToFloat(20, 9), // 0.000002%,  0.1728% per day, ~63% per year
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
@@ -329,10 +329,10 @@ const config: {
       maxOpenInterestForLongs: decimalToFloat(80_000_000),
       maxOpenInterestForShorts: decimalToFloat(80_000_000),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(136, 14), // 0.00000000000136, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(158, 14), // 0.00000000000158, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(17, 9), // 0.0000017%,  0.14212% per hour, 53.61% per year
+      maxFundingFactorPerSecond: decimalToFloat(20, 9), // 0.000002%,  0.1728% per day, ~63% per year
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
@@ -379,10 +379,10 @@ const config: {
       maxOpenInterestForLongs: decimalToFloat(10_000_000),
       maxOpenInterestForShorts: decimalToFloat(10_000_000),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(181, 14), // 0.00000000000181, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecond: decimalToFloat(23, 9), // 0.0000023%,  0.19872% per day, ~72.5% per year
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
@@ -427,10 +427,10 @@ const config: {
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
       maxOpenInterestForShorts: decimalToFloat(1_000_000),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(181, 14), // 0.00000000000181, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecond: decimalToFloat(23, 9), // 0.0000023%,  0.19872% per day, ~72.5% per year
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
@@ -475,10 +475,10 @@ const config: {
       maxOpenInterestForLongs: decimalToFloat(2_000_000),
       maxOpenInterestForShorts: decimalToFloat(2_000_000),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(181, 14), // 0.00000000000181, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecond: decimalToFloat(23, 9), // 0.0000023%,  0.19872% per day, ~72.5% per year
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
@@ -519,10 +519,10 @@ const config: {
       maxOpenInterestForLongs: decimalToFloat(12_000_000),
       maxOpenInterestForShorts: decimalToFloat(12_000_000),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(181, 14), // 0.00000000000181, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecond: decimalToFloat(23, 9), // 0.0000023%,  0.19872% per day, ~72.5% per year
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
@@ -569,10 +569,10 @@ const config: {
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
       maxOpenInterestForShorts: decimalToFloat(1_000_000),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(181, 14), // 0.00000000000181, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecond: decimalToFloat(23, 9), // 0.0000023%,  0.19872% per day, ~72.5% per year
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
@@ -609,10 +609,10 @@ const config: {
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
       maxOpenInterestForShorts: decimalToFloat(1_000_000),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(181, 14), // 0.00000000000181, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecond: decimalToFloat(23, 9), // 0.0000023%,  0.19872% per day, ~72.5% per year
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
@@ -653,10 +653,10 @@ const config: {
       maxOpenInterestForLongs: decimalToFloat(7_000_000),
       maxOpenInterestForShorts: decimalToFloat(7_000_000),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(181, 14), // 0.00000000000181, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecond: decimalToFloat(23, 9), // 0.0000023%,  0.19872% per day, ~72.5% per year
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
@@ -691,10 +691,10 @@ const config: {
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(181, 14), // 0.00000000000181, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecond: decimalToFloat(23, 9), // 0.0000023%,  0.19872% per day, ~72.5% per year
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
@@ -732,10 +732,10 @@ const config: {
       borrowingFactorForLongs: decimalToFloat(180, 10), // 1.80E-08, ~50% if 100% utilized
       borrowingFactorForShorts: decimalToFloat(180, 10), // 1.80E-08, ~50% if 100% utilized
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(181, 14), // 0.00000000000181, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecond: decimalToFloat(23, 9), // 0.0000023%,  0.19872% per day, ~72.5% per year
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
@@ -771,10 +771,10 @@ const config: {
       borrowingFactorForLongs: decimalToFloat(180, 10), // 1.80E-08, ~50% if 100% utilized
       borrowingFactorForShorts: decimalToFloat(180, 10), // 1.80E-08, ~50% if 100% utilized
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(181, 14), // 0.00000000000181, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecond: decimalToFloat(23, 9), // 0.0000023%,  0.19872% per day, ~72.5% per year
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
@@ -825,10 +825,10 @@ const config: {
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
       maxOpenInterestForShorts: decimalToFloat(1_000_000),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(181, 14), // 0.00000000000181, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(2, 8), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecond: decimalToFloat(23, 9), // 0.0000023%,  0.19872% per day, ~72.5% per year
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
