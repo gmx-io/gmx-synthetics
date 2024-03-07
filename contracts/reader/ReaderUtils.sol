@@ -347,6 +347,16 @@ library ReaderUtils {
 
         positionInfo.pnlAfterPriceImpactUsd = positionInfo.executionPriceResult.priceImpactUsd + positionInfo.basePnlUsd;
 
+        positionInfo.fees.totalCostAmountExcludingFunding =
+            positionInfo.fees.positionFeeAmount
+            + positionInfo.fees.borrowing.borrowingFeeAmount
+            + positionInfo.fees.ui.uiFeeAmount
+            - positionInfo.fees.referral.traderDiscountAmount;
+
+        positionInfo.fees.totalCostAmount =
+            positionInfo.fees.totalCostAmountExcludingFunding
+            + positionInfo.fees.funding.fundingFeeAmount;
+
         return positionInfo;
     }
 }
