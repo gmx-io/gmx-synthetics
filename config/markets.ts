@@ -643,11 +643,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      reserveFactorLongs: percentageToFloat("110%"), // 110%,
-      reserveFactorShorts: percentageToFloat("110%"), // 110%,
+      reserveFactorLongs: percentageToFloat("125%"), // 125%,
+      reserveFactorShorts: percentageToFloat("125%"), // 125%,
 
-      openInterestReserveFactorLongs: percentageToFloat("105%"), // 105%,
-      openInterestReserveFactorShorts: percentageToFloat("105%"), // 105%,
+      openInterestReserveFactorLongs: percentageToFloat("120%"), // 120%,
+      openInterestReserveFactorShorts: percentageToFloat("120%"), // 120%,
 
       maxLongTokenPoolAmount: expandDecimals(600_000, 18),
       maxShortTokenPoolAmount: expandDecimals(8_000_000, 6),
@@ -666,9 +666,9 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(3, 9),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(3, 9),
 
-      // factor in open interest reserve factor 105%
-      borrowingFactorForLongs: decimalToFloat(985, 14), // 9.85E-12, ~65% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(985, 14), // 9.85E-12, ~65% at 100% utilisation
+      // factor in open interest reserve factor 120%
+      borrowingFactorForLongs: decimalToFloat(930, 14), // 9.30E-12, ~75% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(930, 14), // 9.30E-12, ~75% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
