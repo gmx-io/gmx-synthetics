@@ -185,6 +185,13 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             heartbeatDuration: (24 + 1) * 60 * 60,
           },
         },
+        OP: {
+          priceFeed: {
+            address: "0x205aaD468a11fd5D34fA7211bC6Bad5b3deB9b98",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
         USDC: {
           priceFeed: {
             address: "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",

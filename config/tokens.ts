@@ -148,6 +148,13 @@ const config: {
       realtimeFeedId: "0xe65b31c6d5b9bdff43a8194dc5b2edc6914ddbc5e9f9e9521f605fc3738fabf5",
       realtimeFeedDecimals: 8,
     },
+    OP: {
+      address: "0xaC800FD6159c2a2CB8fC31EF74621eB430287a5A",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      realtimeFeedId: "0x0001acb89e9722914140a4e5b952cb22d43ce336d7e47659a3313de1416266cf",
+      realtimeFeedDecimals: 8,
+    },
     USDC: {
       address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
       decimals: 6,
