@@ -265,11 +265,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      reserveFactorLongs: percentageToFloat("110%"), // 110%,
-      reserveFactorShorts: percentageToFloat("110%"), // 110%,
+      reserveFactorLongs: percentageToFloat("125%"),
+      reserveFactorShorts: percentageToFloat("125%"),
 
-      openInterestReserveFactorLongs: percentageToFloat("105%"), // 105%,
-      openInterestReserveFactorShorts: percentageToFloat("105%"), // 105%,
+      openInterestReserveFactorLongs: percentageToFloat("120%"),
+      openInterestReserveFactorShorts: percentageToFloat("120%"),
 
       maxLongTokenPoolAmount: expandDecimals(2200, 8),
       maxShortTokenPoolAmount: expandDecimals(110_000_000, 6),
@@ -300,9 +300,9 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      // factor in open interest reserve factor 105%
-      borrowingFactorForLongs: decimalToFloat(895, 14), // 8.95E-12, 43% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(895, 14), // 8.95E-12, 43% at 100% utilisation
+      // factor in open interest reserve factor 120%
+      borrowingFactorForLongs: decimalToFloat(905, 14), // 9.05E-12, 51% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(905, 14), // 9.05E-12, 51% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(14, 1), // 1.4
       borrowingExponentFactorForShorts: decimalToFloat(14, 1), // 1.4
@@ -314,11 +314,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      reserveFactorLongs: percentageToFloat("110%"), // 110%,
-      reserveFactorShorts: percentageToFloat("110%"), // 110%,
+      reserveFactorLongs: percentageToFloat("125%"),
+      reserveFactorShorts: percentageToFloat("125%"),
 
-      openInterestReserveFactorLongs: percentageToFloat("105%"), // 105%,
-      openInterestReserveFactorShorts: percentageToFloat("105%"), // 105%,
+      openInterestReserveFactorLongs: percentageToFloat("120%"),
+      openInterestReserveFactorShorts: percentageToFloat("120%"),
 
       maxLongTokenPoolAmount: expandDecimals(37_792, 18),
       maxShortTokenPoolAmount: expandDecimals(100_000_000, 6),
