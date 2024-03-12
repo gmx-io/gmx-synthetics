@@ -280,7 +280,7 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(15, 11), // 0.05% for ~1,600,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(9, 11), // 0.05% for ~2,700,000 USD of imbalance
 
-      positionImpactPoolDistributionRate: expandDecimals(250, 30), // 0,216 BTC/day
+      positionImpactPoolDistributionRate: 0,
       minPositionImpactPoolAmount: expandDecimals(2, 8), // 2 BTC
 
       negativeSwapImpactFactor: decimalToFloat(2, 10), // 0.05% for 2,500,000 USD of imbalance
@@ -329,7 +329,7 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(15, 11), // 0.05% for ~1,600,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(9, 11), // 0.05% for ~2,700,000 USD of imbalance
 
-      positionImpactPoolDistributionRate: expandDecimals(23, 42), // 1.9872 ETH/day
+      positionImpactPoolDistributionRate: 0,
       minPositionImpactPoolAmount: expandDecimals(30, 18), // 30 ETH
 
       negativeSwapImpactFactor: decimalToFloat(2, 10), // 0.05% for 2,500,000 USD of imbalance
@@ -435,7 +435,7 @@ const config: {
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
-      positionImpactPoolDistributionRate: expandDecimals(25, 32), // ~216 XRP/day
+      positionImpactPoolDistributionRate: 0,
       minPositionImpactPoolAmount: expandDecimals(671, 6),
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
@@ -483,7 +483,7 @@ const config: {
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
-      positionImpactPoolDistributionRate: expandDecimals(2, 36), // ~1728 DOGE/day
+      positionImpactPoolDistributionRate: 0,
       minPositionImpactPoolAmount: expandDecimals(10000, 8),
 
       maxOpenInterestForLongs: decimalToFloat(2_000_000),
@@ -533,7 +533,7 @@ const config: {
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
-      positionImpactPoolDistributionRate: expandDecimals(18, 34), // ~15 SOL/day
+      positionImpactPoolDistributionRate: 0,
       minPositionImpactPoolAmount: expandDecimals(1500, 9),
 
       maxOpenInterestForLongs: decimalToFloat(12_000_000),
@@ -583,7 +583,7 @@ const config: {
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
-      positionImpactPoolDistributionRate: expandDecimals(9, 32), // 0.7776 LTC/day
+      positionImpactPoolDistributionRate: 0,
       minPositionImpactPoolAmount: expandDecimals(66, 7), // 6.6 LTC
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
@@ -623,7 +623,7 @@ const config: {
       borrowingFactorForLongs: decimalToFloat(180, 10), // 1.80E-08, ~50% if 100% utilized
       borrowingFactorForShorts: decimalToFloat(180, 10), // 1.80E-08, ~50% if 100% utilized
 
-      positionImpactPoolDistributionRate: expandDecimals(11, 43), // ~9.5 UNI/day
+      positionImpactPoolDistributionRate: 0,
       minPositionImpactPoolAmount: expandDecimals(362, 18),
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
@@ -673,7 +673,7 @@ const config: {
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
-      positionImpactPoolDistributionRate: expandDecimals(3, 44), // ~26 LINK/day
+      positionImpactPoolDistributionRate: 0,
       minPositionImpactPoolAmount: expandDecimals(993, 18),
 
       maxOpenInterestForLongs: decimalToFloat(7_000_000),
@@ -730,7 +730,7 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      positionImpactPoolDistributionRate: expandDecimals(90, 44), // ~777,6 ARB/day
+      positionImpactPoolDistributionRate: 0,
       minPositionImpactPoolAmount: expandDecimals(47961, 18),
 
       maxOpenInterestForLongs: decimalToFloat(10_000_000),
