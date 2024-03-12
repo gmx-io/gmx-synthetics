@@ -816,8 +816,8 @@ const config: {
       positionImpactPoolDistributionRate: decimalToFloat(0),
       minPositionImpactPoolAmount: decimalToFloat(0),
 
-      maxOpenInterestForLongs: decimalToFloat(1_000_000),
-      maxOpenInterestForShorts: decimalToFloat(1_000_000),
+      maxOpenInterestForLongs: decimalToFloat(1_500_000),
+      maxOpenInterestForShorts: decimalToFloat(1_500_000),
     },
     {
       tokens: { indexToken: "ATOM", longToken: "WETH", shortToken: "USDC" },
