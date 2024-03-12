@@ -476,8 +476,11 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
 
-      openInterestReserveFactorLongs: decimalToFloat(75, 2), // 75%,
-      openInterestReserveFactorShorts: decimalToFloat(75, 2), // 75%,
+      reserveFactorLongs: percentageToFloat("95%"),
+      reserveFactorShorts: percentageToFloat("95%"),
+
+      openInterestReserveFactorLongs: percentageToFloat("90%"),
+      openInterestReserveFactorShorts: percentageToFloat("90%"),
 
       // factor in open interest reserve factor 90%
       borrowingFactorForLongs: decimalToFloat(247, 13), // 2.47E-11, 80% at 100% utilisation
@@ -1142,11 +1145,11 @@ const config: {
       maxLongTokenPoolAmountForDeposit: expandDecimals(75_000, 18),
       maxShortTokenPoolAmountForDeposit: expandDecimals(1_000_000, 6),
 
-      reserveFactorLongs: percentageToFloat("95%"),
-      reserveFactorShorts: percentageToFloat("95%"),
+      reserveFactorLongs: decimalToFloat(8, 1), // 80%
+      reserveFactorShorts: decimalToFloat(8, 1), // 80%
 
-      openInterestReserveFactorLongs: percentageToFloat("90%"),
-      openInterestReserveFactorShorts: percentageToFloat("90%"),
+      openInterestReserveFactorLongs: decimalToFloat(75, 2), // 75%,
+      openInterestReserveFactorShorts: decimalToFloat(75, 2), // 75%,
 
       negativePositionImpactFactor: decimalToFloat(8, 9), // 0.05% for 62,500 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(4, 9), // 0.05% for 125,000 USD of imbalance
