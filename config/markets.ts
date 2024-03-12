@@ -542,8 +542,8 @@ const config: {
       positionImpactPoolDistributionRate: 0,
       minPositionImpactPoolAmount: expandDecimals(1500, 9),
 
-      maxOpenInterestForLongs: decimalToFloat(12_000_000),
-      maxOpenInterestForShorts: decimalToFloat(12_000_000),
+      maxOpenInterestForLongs: decimalToFloat(15_000_000),
+      maxOpenInterestForShorts: decimalToFloat(15_000_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(181, 14), // 0.00000000000181, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
