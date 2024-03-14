@@ -290,8 +290,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
 
-      maxOpenInterestForLongs: decimalToFloat(80_000_000),
-      maxOpenInterestForShorts: decimalToFloat(80_000_000),
+      maxOpenInterestForLongs: decimalToFloat(90_000_000),
+      maxOpenInterestForShorts: decimalToFloat(90_000_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(158, 14), // 0.00000000000158, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -819,8 +819,8 @@ const config: {
       positionImpactPoolDistributionRate: decimalToFloat(0),
       minPositionImpactPoolAmount: decimalToFloat(0),
 
-      maxOpenInterestForLongs: decimalToFloat(1_500_000),
-      maxOpenInterestForShorts: decimalToFloat(1_500_000),
+      maxOpenInterestForLongs: decimalToFloat(2_000_000),
+      maxOpenInterestForShorts: decimalToFloat(2_000_000),
     },
     {
       tokens: { indexToken: "ATOM", longToken: "WETH", shortToken: "USDC" },
