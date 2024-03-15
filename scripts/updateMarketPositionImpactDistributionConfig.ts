@@ -68,7 +68,23 @@ async function main() {
     }
     const marketToken = onchainMarket.marketToken;
 
-    if (!marketConfig.positionImpactPoolDistributionRate || !marketConfig.minPositionImpactPoolAmount) {
+    if (
+      (marketConfig.positionImpactPoolDistributionRate === undefined &&
+        marketConfig.minPositionImpactPoolAmount !== undefined) ||
+      (marketConfig.positionImpactPoolDistributionRate !== undefined &&
+        marketConfig.minPositionImpactPoolAmount === undefined)
+    ) {
+      console.warn(
+        "WARN: only one of impact fields is set for market %s positionImpactPoolDistributionRate=%s minPositionImpactPoolAmount=%s",
+        marketToken,
+        marketConfig.positionImpactExponentFactor,
+        marketConfig.minPositionImpactPoolAmount
+      );
+    }
+    if (
+      marketConfig.positionImpactPoolDistributionRate === undefined ||
+      marketConfig.minPositionImpactPoolAmount === undefined
+    ) {
       continue;
     }
 
