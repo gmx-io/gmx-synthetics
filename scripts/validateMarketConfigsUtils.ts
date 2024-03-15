@@ -385,8 +385,8 @@ async function validatePerpConfig({ market, marketConfig, indexTokenSymbol, data
     .div(maxLongTokenPoolUsdBasedOnMaxOpenInterest)
     .mul(SECONDS_PER_YEAR);
 
-  if (maxBorrowingFactorForLongsPerYear.gt(decimalToFloat(1))) {
-    throw new Error("maxBorrowingFactorForLongsPerYear is more than 100%");
+  if (maxBorrowingFactorForLongsPerYear.gt(decimalToFloat(15, 1))) {
+    throw new Error("maxBorrowingFactorForLongsPerYear is more than 150%");
   }
 
   console.log(`    maxBorrowingFactorForLongsPerYear: ${formatAmount(maxBorrowingFactorForLongsPerYear, 28)}%`);
@@ -399,8 +399,8 @@ async function validatePerpConfig({ market, marketConfig, indexTokenSymbol, data
     .div(maxShortTokenPoolUsdBasedOnMaxOpenInterest)
     .mul(SECONDS_PER_YEAR);
 
-  if (maxBorrowingFactorForShortsPerYear.gt(decimalToFloat(1))) {
-    throw new Error("maxBorrowingFactorForShortsPerYear is more than 100%");
+  if (maxBorrowingFactorForShortsPerYear.gt(decimalToFloat(15, 1))) {
+    throw new Error("maxBorrowingFactorForShortsPerYear is more than 150%");
   }
 
   console.log(`    maxBorrowingFactorForShortsPerYear: ${formatAmount(maxBorrowingFactorForShortsPerYear, 28)}%`);
