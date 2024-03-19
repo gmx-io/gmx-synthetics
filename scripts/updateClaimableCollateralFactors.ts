@@ -126,6 +126,7 @@ async function updateMultipleFactors() {
 
     if (process.env.WRITE === "true") {
       const tx = await config.multicall(multicallWriteParams);
+      await tx.wait(2);
       console.info(`tx sent: ${tx.hash}`);
     } else {
       console.info("NOTE: executed in read-only mode, no transactions were sent");
