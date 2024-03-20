@@ -23,6 +23,8 @@ const API_ENDPOINT = "https://arbitrum-api.gmxinfra.io";
 export const STIP_LP_DISTRIBUTION_TYPE_ID = 1001;
 export const STIP_MIGRATION_DISTRIBUTION_TYPE_ID = 1002;
 export const STIP_TRADING_INCENTIVES_DISTRIBUTION_TYPE_ID = 1003;
+export const EIP_4844_COMPETITION_1_ID = 2001;
+export const EIP_4844_COMPETITION_2_ID = 2002;
 const TEST_DISTRIBUTION_TYPE_ID = 9876;
 
 export function getDistributionTypeName(distributionTypeId: number) {
@@ -30,6 +32,8 @@ export function getDistributionTypeName(distributionTypeId: number) {
     [STIP_LP_DISTRIBUTION_TYPE_ID]: "STIP LP",
     [STIP_MIGRATION_DISTRIBUTION_TYPE_ID]: "STIP MIGRATION",
     [STIP_TRADING_INCENTIVES_DISTRIBUTION_TYPE_ID]: "STIP TRADING INCENTIVES",
+    [EIP_4844_COMPETITION_1_ID]: "EIP-4844 COMPETITION 1",
+    [EIP_4844_COMPETITION_2_ID]: "EIP-4844 COMPETITION 2",
     [TEST_DISTRIBUTION_TYPE_ID]: "TEST",
   }[distributionTypeId];
 }
