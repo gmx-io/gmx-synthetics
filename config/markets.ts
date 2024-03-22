@@ -425,15 +425,15 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 9),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 9),
 
-      reserveFactorLongs: percentageToFloat("115%"),
-      reserveFactorShorts: percentageToFloat("115%"),
+      reserveFactorLongs: percentageToFloat("125%"),
+      reserveFactorShorts: percentageToFloat("125%"),
 
-      openInterestReserveFactorLongs: percentageToFloat("110%"),
-      openInterestReserveFactorShorts: percentageToFloat("110%"),
+      openInterestReserveFactorLongs: percentageToFloat("120%"),
+      openInterestReserveFactorShorts: percentageToFloat("120%"),
 
-      // factor in open interest reserve factor 110%
-      borrowingFactorForLongs: decimalToFloat(230, 13), // 2.30E-11, ~85% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(230, 13), // 2.30E-11, ~85% at 100% utilisation
+      // factor in open interest reserve factor 120%
+      borrowingFactorForLongs: decimalToFloat(215, 13), // 2.15E-11, ~90% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(215, 13), // 2.15E-11, ~90% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
@@ -886,11 +886,11 @@ const config: {
       ...baseMarketConfig,
       ...synthethicMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(900, 18),
-      maxShortTokenPoolAmount: expandDecimals(3_500_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(1133, 18),
+      maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(770, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(3_000_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(991, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(3_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(26, 9),
       positivePositionImpactFactor: decimalToFloat(13, 9),
