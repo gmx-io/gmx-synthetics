@@ -886,11 +886,11 @@ const config: {
       ...baseMarketConfig,
       ...synthethicMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(1133, 18),
-      maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(1515, 18),
+      maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(991, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(3_500_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(1363, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(4_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(26, 9),
       positivePositionImpactFactor: decimalToFloat(13, 9),
