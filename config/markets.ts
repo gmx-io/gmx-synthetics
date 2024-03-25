@@ -280,8 +280,9 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(15, 11), // 0.05% for ~1,600,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(9, 11), // 0.05% for ~2,700,000 USD of imbalance
 
+      // positionImpactPoolDistributionRate: expandDecimals(1105, 29), // 1.10526E+33, 0,95494464 / day
       positionImpactPoolDistributionRate: 0,
-      minPositionImpactPoolAmount: expandDecimals(2, 8), // 2 BTC
+      minPositionImpactPoolAmount: expandDecimals(95, 6), // 0.95 BTC
 
       negativeSwapImpactFactor: decimalToFloat(2, 10), // 0.05% for 2,500,000 USD of imbalance
       positiveSwapImpactFactor: decimalToFloat(2, 10), // 0.05% for 2,500,000 USD of imbalance
@@ -630,8 +631,8 @@ const config: {
       borrowingFactorForLongs: decimalToFloat(180, 10), // 1.80E-08, ~50% if 100% utilized
       borrowingFactorForShorts: decimalToFloat(180, 10), // 1.80E-08, ~50% if 100% utilized
 
-      positionImpactPoolDistributionRate: 0,
-      minPositionImpactPoolAmount: expandDecimals(362, 18),
+      positionImpactPoolDistributionRate: expandDecimals(18632, 41), // 1.86327E+45, 160.9867934 UNI / day
+      minPositionImpactPoolAmount: expandDecimals(170, 18),
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
       maxOpenInterestForShorts: decimalToFloat(1_000_000),
