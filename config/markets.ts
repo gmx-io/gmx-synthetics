@@ -432,8 +432,8 @@ const config: {
       openInterestReserveFactorShorts: percentageToFloat("120%"),
 
       // factor in open interest reserve factor 120%
-      borrowingFactorForLongs: decimalToFloat(215, 13), // 2.15E-11, ~90% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(215, 13), // 2.15E-11, ~90% at 100% utilisation
+      borrowingFactorForLongs: decimalToFloat(215, 13), // 2.15E-11, ~91% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(215, 13), // 2.15E-11, ~91% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
@@ -476,15 +476,15 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
 
-      reserveFactorLongs: percentageToFloat("115%"),
-      reserveFactorShorts: percentageToFloat("115%"),
+      reserveFactorLongs: percentageToFloat("125%"),
+      reserveFactorShorts: percentageToFloat("125%"),
 
-      openInterestReserveFactorLongs: percentageToFloat("110%"),
-      openInterestReserveFactorShorts: percentageToFloat("110%"),
+      openInterestReserveFactorLongs: percentageToFloat("120%"),
+      openInterestReserveFactorShorts: percentageToFloat("120%"),
 
-      // factor in open interest reserve factor 110%
-      borrowingFactorForLongs: decimalToFloat(195, 13), // 1.95-11, 85% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(195, 13), // 1.95-11, 85% at 100% utilisation
+      // factor in open interest reserve factor 120%
+      borrowingFactorForLongs: decimalToFloat(183, 13), // 1.83-11, ~91% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(183, 13), // 1.83-11, ~91% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
