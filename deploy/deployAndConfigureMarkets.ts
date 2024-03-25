@@ -125,6 +125,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     const marketKey = getMarketKey(indexToken, longToken, shortToken);
     const onchainMarket = onchainMarketsByTokens[marketKey];
     const marketToken = onchainMarket.marketToken;
+    const requests: Promise<any>[] = [];
 
     // if trades are done before virtual IDs are set, the tracking of virtual
     // inventories may not be accurate
@@ -136,179 +137,218 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     // set virtual market id for swaps
     const virtualMarketId = marketConfig.virtualMarketId;
     if (virtualMarketId) {
-      await setBytes32IfDifferent(
-        keys.virtualMarketIdKey(marketToken),
-        virtualMarketId,
-        `virtual market id for market ${marketToken.toString()}`
+      requests.push(
+        setBytes32IfDifferent(
+          keys.virtualMarketIdKey(marketToken),
+          virtualMarketId,
+          `virtual market id for market ${marketToken.toString()}`
+        )
       );
     }
 
     // set virtual token id for perps
     const virtualTokenId = marketConfig.virtualTokenIdForIndexToken;
     if (virtualTokenId) {
-      await setBytes32IfDifferent(
-        keys.virtualTokenIdKey(indexToken),
-        virtualTokenId,
-        `virtual token id for indexToken ${indexToken.toString()}`
+      requests.push(
+        setBytes32IfDifferent(
+          keys.virtualTokenIdKey(indexToken),
+          virtualTokenId,
+          `virtual token id for indexToken ${indexToken.toString()}`
+        )
       );
     }
 
-    await setMaxPoolAmount(marketToken, longToken, marketConfig.maxLongTokenPoolAmount);
-    await setMaxPoolAmount(marketToken, shortToken, marketConfig.maxShortTokenPoolAmount);
+    requests.push(setMaxPoolAmount(marketToken, longToken, marketConfig.maxLongTokenPoolAmount));
+    requests.push(setMaxPoolAmount(marketToken, shortToken, marketConfig.maxShortTokenPoolAmount));
 
-    await setMaxPoolAmountForDeposit(marketToken, longToken, marketConfig.maxLongTokenPoolAmountForDeposit);
-    await setMaxPoolAmountForDeposit(marketToken, shortToken, marketConfig.maxShortTokenPoolAmountForDeposit);
+    requests.push(setMaxPoolAmountForDeposit(marketToken, longToken, marketConfig.maxLongTokenPoolAmountForDeposit));
+    requests.push(setMaxPoolAmountForDeposit(marketToken, shortToken, marketConfig.maxShortTokenPoolAmountForDeposit));
 
     for (const name of ["swapImpactExponentFactor"]) {
       if (marketConfig[name]) {
         const value = marketConfig[name];
         const key = keys[`${name}Key`](marketToken);
-        await setUintIfDifferent(key, value, `${name} for ${marketToken.toString()}`);
+        requests.push(setUintIfDifferent(key, value, `${name} for ${marketToken.toString()}`));
       }
     }
 
     if (marketConfig.isDisabled !== undefined) {
       const key = keys.isMarketDisabledKey(marketToken);
-      await setBoolIfDifferent(key, marketConfig.isDisabled, `isDisabled for ${marketToken}`);
+      requests.push(setBoolIfDifferent(key, marketConfig.isDisabled, `isDisabled for ${marketToken}`));
     }
 
     if (marketConfig.swapFeeFactorForPositiveImpact) {
       const key = keys.swapFeeFactorKey(marketToken, true);
-      await setUintIfDifferent(
-        key,
-        marketConfig.swapFeeFactorForPositiveImpact,
-        `swapFeeFactorForPositiveImpact for ${marketToken.toString()}`
+      requests.push(
+        setUintIfDifferent(
+          key,
+          marketConfig.swapFeeFactorForPositiveImpact,
+          `swapFeeFactorForPositiveImpact for ${marketToken.toString()}`
+        )
       );
     }
 
     if (marketConfig.swapFeeFactorForNegativeImpact) {
       const key = keys.swapFeeFactorKey(marketToken, false);
-      await setUintIfDifferent(
-        key,
-        marketConfig.swapFeeFactorForNegativeImpact,
-        `swapFeeFactorForNegativeImpact for ${marketToken.toString()}`
+      requests.push(
+        setUintIfDifferent(
+          key,
+          marketConfig.swapFeeFactorForNegativeImpact,
+          `swapFeeFactorForNegativeImpact for ${marketToken.toString()}`
+        )
       );
     }
 
     if (marketConfig.positiveSwapImpactFactor) {
       const key = keys.swapImpactFactorKey(marketToken, true);
-      await setUintIfDifferent(
-        key,
-        marketConfig.positiveSwapImpactFactor,
-        `positive swap impact factor for ${marketToken.toString()}`
+      requests.push(
+        setUintIfDifferent(
+          key,
+          marketConfig.positiveSwapImpactFactor,
+          `positive swap impact factor for ${marketToken.toString()}`
+        )
       );
     }
     if (marketConfig.negativeSwapImpactFactor) {
       const key = keys.swapImpactFactorKey(marketToken, false);
-      await setUintIfDifferent(
-        key,
-        marketConfig.negativeSwapImpactFactor,
-        `negative swap impact factor for ${marketToken.toString()}`
+      requests.push(
+        setUintIfDifferent(
+          key,
+          marketConfig.negativeSwapImpactFactor,
+          `negative swap impact factor for ${marketToken.toString()}`
+        )
       );
     }
 
     // the rest of the params are not used for swap-only markets
     if (marketConfig.swapOnly) {
+      await Promise.all(requests);
       continue;
     }
 
-    await setMinCollateralFactor(marketToken, marketConfig.minCollateralFactor);
+    requests.push(setMinCollateralFactor(marketToken, marketConfig.minCollateralFactor));
 
-    await setMinCollateralFactorForOpenInterestMultiplier(
-      marketToken,
-      marketConfig.minCollateralFactorForOpenInterestMultiplierLong,
-      true
+    requests.push(
+      setMinCollateralFactorForOpenInterestMultiplier(
+        marketToken,
+        marketConfig.minCollateralFactorForOpenInterestMultiplierLong,
+        true
+      )
     );
-    await setMinCollateralFactorForOpenInterestMultiplier(
-      marketToken,
-      marketConfig.minCollateralFactorForOpenInterestMultiplierShort,
-      false
-    );
-
-    await setMaxOpenInterest(marketToken, true, marketConfig.maxOpenInterestForLongs);
-    await setMaxOpenInterest(marketToken, false, marketConfig.maxOpenInterestForShorts);
-
-    await setReserveFactor(marketToken, true, marketConfig.reserveFactorLongs);
-    await setReserveFactor(marketToken, false, marketConfig.reserveFactorShorts);
-
-    await setOpenInterestReserveFactor(marketToken, true, marketConfig.openInterestReserveFactorLongs);
-    await setOpenInterestReserveFactor(marketToken, false, marketConfig.openInterestReserveFactorShorts);
-
-    await setMaxPnlFactor(
-      keys.MAX_PNL_FACTOR_FOR_TRADERS,
-      marketToken,
-      true,
-      marketConfig.maxPnlFactorForTradersLongs,
-      "max pnl factor for traders"
-    );
-    await setMaxPnlFactor(
-      keys.MAX_PNL_FACTOR_FOR_TRADERS,
-      marketToken,
-      false,
-      marketConfig.maxPnlFactorForTradersShorts,
-      "max pnl factor for traders"
+    requests.push(
+      setMinCollateralFactorForOpenInterestMultiplier(
+        marketToken,
+        marketConfig.minCollateralFactorForOpenInterestMultiplierShort,
+        false
+      )
     );
 
-    await setMaxPnlFactor(
-      keys.MAX_PNL_FACTOR_FOR_ADL,
-      marketToken,
-      true,
-      marketConfig.maxPnlFactorForAdlLongs,
-      "max pnl factor for adl"
+    requests.push(setMaxOpenInterest(marketToken, true, marketConfig.maxOpenInterestForLongs));
+    requests.push(setMaxOpenInterest(marketToken, false, marketConfig.maxOpenInterestForShorts));
+
+    requests.push(setReserveFactor(marketToken, true, marketConfig.reserveFactorLongs));
+    requests.push(setReserveFactor(marketToken, false, marketConfig.reserveFactorShorts));
+
+    requests.push(setOpenInterestReserveFactor(marketToken, true, marketConfig.openInterestReserveFactorLongs));
+    requests.push(setOpenInterestReserveFactor(marketToken, false, marketConfig.openInterestReserveFactorShorts));
+
+    requests.push(
+      setMaxPnlFactor(
+        keys.MAX_PNL_FACTOR_FOR_TRADERS,
+        marketToken,
+        true,
+        marketConfig.maxPnlFactorForTradersLongs,
+        "max pnl factor for traders"
+      )
     );
-    await setMaxPnlFactor(
-      keys.MAX_PNL_FACTOR_FOR_ADL,
-      marketToken,
-      false,
-      marketConfig.maxPnlFactorForAdlShorts,
-      "max pnl factor for adl"
+    requests.push(
+      setMaxPnlFactor(
+        keys.MAX_PNL_FACTOR_FOR_TRADERS,
+        marketToken,
+        false,
+        marketConfig.maxPnlFactorForTradersShorts,
+        "max pnl factor for traders"
+      )
     );
 
-    await setUintIfDifferent(
-      keys.minPnlFactorAfterAdl(marketToken, true),
-      marketConfig.minPnlFactorAfterAdlLongs,
-      `min pnl factor after adl ${marketToken.toString()} long`
+    requests.push(
+      setMaxPnlFactor(
+        keys.MAX_PNL_FACTOR_FOR_ADL,
+        marketToken,
+        true,
+        marketConfig.maxPnlFactorForAdlLongs,
+        "max pnl factor for adl"
+      )
     );
-    await setUintIfDifferent(
-      keys.minPnlFactorAfterAdl(marketToken, false),
-      marketConfig.minPnlFactorAfterAdlShorts,
-      `min pnl factor after adl ${marketToken.toString()} short`
-    );
-
-    await setMaxPnlFactor(
-      keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-      marketToken,
-      true,
-      marketConfig.maxPnlFactorForDepositsLongs,
-      "max pnl factor for deposits"
-    );
-    await setMaxPnlFactor(
-      keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-      marketToken,
-      false,
-      marketConfig.maxPnlFactorForDepositsShorts,
-      "max pnl factor for deposits"
+    requests.push(
+      setMaxPnlFactor(
+        keys.MAX_PNL_FACTOR_FOR_ADL,
+        marketToken,
+        false,
+        marketConfig.maxPnlFactorForAdlShorts,
+        "max pnl factor for adl"
+      )
     );
 
-    await setMaxPnlFactor(
-      keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
-      marketToken,
-      true,
-      marketConfig.maxPnlFactorForWithdrawalsLongs,
-      "max pnl factor for withdrawals"
+    requests.push(
+      setUintIfDifferent(
+        keys.minPnlFactorAfterAdl(marketToken, true),
+        marketConfig.minPnlFactorAfterAdlLongs,
+        `min pnl factor after adl ${marketToken.toString()} long`
+      )
     );
-    await setMaxPnlFactor(
-      keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
-      marketToken,
-      false,
-      marketConfig.maxPnlFactorForWithdrawalsShorts,
-      "max pnl factor for withdrawals"
+    requests.push(
+      setUintIfDifferent(
+        keys.minPnlFactorAfterAdl(marketToken, false),
+        marketConfig.minPnlFactorAfterAdlShorts,
+        `min pnl factor after adl ${marketToken.toString()} short`
+      )
     );
 
-    await setUintIfDifferent(
-      keys.tokenTransferGasLimit(marketToken),
-      generalConfig.tokenTransferGasLimit,
-      `market token transfer gas limit`
+    requests.push(
+      setMaxPnlFactor(
+        keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
+        marketToken,
+        true,
+        marketConfig.maxPnlFactorForDepositsLongs,
+        "max pnl factor for deposits"
+      )
+    );
+    requests.push(
+      setMaxPnlFactor(
+        keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
+        marketToken,
+        false,
+        marketConfig.maxPnlFactorForDepositsShorts,
+        "max pnl factor for deposits"
+      )
+    );
+
+    requests.push(
+      setMaxPnlFactor(
+        keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
+        marketToken,
+        true,
+        marketConfig.maxPnlFactorForWithdrawalsLongs,
+        "max pnl factor for withdrawals"
+      )
+    );
+    requests.push(
+      setMaxPnlFactor(
+        keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
+        marketToken,
+        false,
+        marketConfig.maxPnlFactorForWithdrawalsShorts,
+        "max pnl factor for withdrawals"
+      )
+    );
+
+    requests.push(
+      setUintIfDifferent(
+        keys.tokenTransferGasLimit(marketToken),
+        generalConfig.tokenTransferGasLimit,
+        `market token transfer gas limit`
+      )
     );
 
     for (const name of [
@@ -326,113 +366,137 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       if (marketConfig[name]) {
         const value = marketConfig[name];
         const key = keys[`${name}Key`](marketToken);
-        await setUintIfDifferent(key, value, `${name} for ${marketToken.toString()}`);
+        requests.push(setUintIfDifferent(key, value, `${name} for ${marketToken.toString()}`));
       }
     }
 
     if (marketConfig.fundingExponentFactor) {
       const key = keys.fundingExponentFactorKey(marketToken);
-      await setUintIfDifferent(
-        key,
-        marketConfig.fundingExponentFactor,
-        `funding exponent factor for ${marketToken.toString()}`
+      requests.push(
+        setUintIfDifferent(
+          key,
+          marketConfig.fundingExponentFactor,
+          `funding exponent factor for ${marketToken.toString()}`
+        )
       );
     }
 
     if (marketConfig.positionFeeFactorForPositiveImpact) {
       const key = keys.positionFeeFactorKey(marketToken, true);
-      await setUintIfDifferent(
-        key,
-        marketConfig.positionFeeFactorForPositiveImpact,
-        `positionFeeFactorForPositiveImpact ${marketToken.toString()}`
+      requests.push(
+        setUintIfDifferent(
+          key,
+          marketConfig.positionFeeFactorForPositiveImpact,
+          `positionFeeFactorForPositiveImpact ${marketToken.toString()}`
+        )
       );
     }
 
     if (marketConfig.positionFeeFactorForNegativeImpact) {
       const key = keys.positionFeeFactorKey(marketToken, false);
-      await setUintIfDifferent(
-        key,
-        marketConfig.positionFeeFactorForNegativeImpact,
-        `positionFeeFactorForPositiveImpact ${marketToken.toString()}`
+      requests.push(
+        setUintIfDifferent(
+          key,
+          marketConfig.positionFeeFactorForNegativeImpact,
+          `positionFeeFactorForPositiveImpact ${marketToken.toString()}`
+        )
       );
     }
 
     if (marketConfig.borrowingFactorForLongs) {
       const key = keys.borrowingFactorKey(marketToken, true);
-      await setUintIfDifferent(
-        key,
-        marketConfig.borrowingFactorForLongs,
-        `borrowing factor for longs for ${marketToken.toString()}`
+      requests.push(
+        setUintIfDifferent(
+          key,
+          marketConfig.borrowingFactorForLongs,
+          `borrowing factor for longs for ${marketToken.toString()}`
+        )
       );
     }
 
     if (marketConfig.borrowingFactorForShorts) {
       const key = keys.borrowingFactorKey(marketToken, false);
-      await setUintIfDifferent(
-        key,
-        marketConfig.borrowingFactorForShorts,
-        `borrowing factor for shorts for ${marketToken.toString()}`
+      requests.push(
+        setUintIfDifferent(
+          key,
+          marketConfig.borrowingFactorForShorts,
+          `borrowing factor for shorts for ${marketToken.toString()}`
+        )
       );
     }
 
     if (marketConfig.borrowingExponentFactorForLongs) {
       const key = keys.borrowingExponentFactorKey(marketToken, true);
-      await setUintIfDifferent(
-        key,
-        marketConfig.borrowingExponentFactorForLongs,
-        `borrowing exponent factor for longs for ${marketToken.toString()}`
+      requests.push(
+        setUintIfDifferent(
+          key,
+          marketConfig.borrowingExponentFactorForLongs,
+          `borrowing exponent factor for longs for ${marketToken.toString()}`
+        )
       );
     }
 
     if (marketConfig.borrowingExponentFactorForShorts) {
       const key = keys.borrowingExponentFactorKey(marketToken, false);
-      await setUintIfDifferent(
-        key,
-        marketConfig.borrowingExponentFactorForShorts,
-        `borrowing exponent factor for shorts for ${marketToken.toString()}`
+      requests.push(
+        setUintIfDifferent(
+          key,
+          marketConfig.borrowingExponentFactorForShorts,
+          `borrowing exponent factor for shorts for ${marketToken.toString()}`
+        )
       );
     }
 
     if (marketConfig.positivePositionImpactFactor) {
       const key = keys.positionImpactFactorKey(marketToken, true);
-      await setUintIfDifferent(
-        key,
-        marketConfig.positivePositionImpactFactor,
-        `positive position impact factor for ${marketToken.toString()}`
+      requests.push(
+        setUintIfDifferent(
+          key,
+          marketConfig.positivePositionImpactFactor,
+          `positive position impact factor for ${marketToken.toString()}`
+        )
       );
     }
     if (marketConfig.negativePositionImpactFactor) {
       const key = keys.positionImpactFactorKey(marketToken, false);
-      await setUintIfDifferent(
-        key,
-        marketConfig.negativePositionImpactFactor,
-        `negative position impact factor for ${marketToken.toString()}`
+      requests.push(
+        setUintIfDifferent(
+          key,
+          marketConfig.negativePositionImpactFactor,
+          `negative position impact factor for ${marketToken.toString()}`
+        )
       );
     }
 
     if (marketConfig.maxPositionImpactFactorForLiquidations) {
       const key = keys.maxPositionImpactFactorForLiquidationsKey(marketToken);
-      await setUintIfDifferent(
-        key,
-        marketConfig.maxPositionImpactFactorForLiquidations,
-        `max position impact factor for liquidations for ${marketToken.toString()}`
+      requests.push(
+        setUintIfDifferent(
+          key,
+          marketConfig.maxPositionImpactFactorForLiquidations,
+          `max position impact factor for liquidations for ${marketToken.toString()}`
+        )
       );
     }
 
     if (marketConfig.positiveMaxPositionImpactFactor) {
       const key = keys.maxPositionImpactFactorKey(marketToken, true);
-      await setUintIfDifferent(
-        key,
-        marketConfig.positiveMaxPositionImpactFactor,
-        `positive max position impact factor for ${marketToken.toString()}`
+      requests.push(
+        setUintIfDifferent(
+          key,
+          marketConfig.positiveMaxPositionImpactFactor,
+          `positive max position impact factor for ${marketToken.toString()}`
+        )
       );
     }
     if (marketConfig.negativeMaxPositionImpactFactor) {
       const key = keys.maxPositionImpactFactorKey(marketToken, false);
-      await setUintIfDifferent(
-        key,
-        marketConfig.negativeMaxPositionImpactFactor,
-        `negative max position impact factor for ${marketToken.toString()}`
+      requests.push(
+        setUintIfDifferent(
+          key,
+          marketConfig.negativeMaxPositionImpactFactor,
+          `negative max position impact factor for ${marketToken.toString()}`
+        )
       );
     }
   }
