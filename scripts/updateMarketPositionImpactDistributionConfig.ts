@@ -94,30 +94,32 @@ async function main() {
     let wasChanged = false;
 
     if (!currentPositionImpactPoolDistributionRate.eq(marketConfig.positionImpactPoolDistributionRate)) {
-      const change = bigNumberify(marketConfig.positionImpactPoolDistributionRate)
-        .mul(10000)
-        .div(currentPositionImpactPoolDistributionRate);
+      const change = currentPositionImpactPoolDistributionRate.gt(0)
+        ? bigNumberify(marketConfig.positionImpactPoolDistributionRate)
+            .mul(10000)
+            .div(currentPositionImpactPoolDistributionRate)
+        : null;
       wasChanged = true;
       console.log(
         "positionImpactPoolDistributionRate was changed for market %s. prev value %s new value %s (%sx)",
         marketToken,
         currentPositionImpactPoolDistributionRate,
         marketConfig.positionImpactPoolDistributionRate,
-        formatAmount(change, 4)
+        change ? formatAmount(change, 4) : "n/a "
       );
     }
 
     if (!currentMinPositionImpactPoolAmount.eq(marketConfig.minPositionImpactPoolAmount)) {
-      const change = bigNumberify(marketConfig.minPositionImpactPoolAmount)
-        .mul(10000)
-        .div(currentMinPositionImpactPoolAmount);
+      const change = currentMinPositionImpactPoolAmount.gt(0)
+        ? bigNumberify(marketConfig.minPositionImpactPoolAmount).mul(10000).div(currentMinPositionImpactPoolAmount)
+        : null;
       wasChanged = true;
       console.log(
         "minPositionImpactPoolAmount was changed for market %s. prev value %s new value %s (%sx)",
         marketToken,
         currentMinPositionImpactPoolAmount,
         marketConfig.minPositionImpactPoolAmount,
-        formatAmount(change, 4)
+        change ? formatAmount(change, 4) : "n/a "
       );
     }
 
