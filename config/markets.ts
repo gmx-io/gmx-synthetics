@@ -1527,6 +1527,9 @@ const config: {
     {
       tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "WBTC" },
       virtualMarketId: "0x11111137e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481f",
+
+      negativeSwapImpactFactor: 0,
+      positiveSwapImpactFactor: 0,
     },
     {
       tokens: { indexToken: "SOL", longToken: "WETH", shortToken: "USDC" },
