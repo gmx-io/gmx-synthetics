@@ -827,8 +827,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(4382, 41), // 4.38204E+44, 37.86082474 AVAX / day
       minPositionImpactPoolAmount: expandDecimals(79, 18), // 79.18 AVAX
 
-      maxOpenInterestForLongs: decimalToFloat(2_000_000),
-      maxOpenInterestForShorts: decimalToFloat(2_000_000),
+      maxOpenInterestForLongs: decimalToFloat(2_500_000),
+      maxOpenInterestForShorts: decimalToFloat(2_500_000),
     },
     {
       tokens: { indexToken: "ATOM", longToken: "WETH", shortToken: "USDC" },
@@ -916,8 +916,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(1326, 48), // 1.32649E+51, 114.6089996 NEAR / day
       minPositionImpactPoolAmount: decimalToFloat(4361), // 4361 NEAR
 
-      maxOpenInterestForLongs: decimalToFloat(2_000_000),
-      maxOpenInterestForShorts: decimalToFloat(2_000_000),
+      maxOpenInterestForLongs: decimalToFloat(2_500_000),
+      maxOpenInterestForShorts: decimalToFloat(2_500_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(181, 14), // 0.00000000000181, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
