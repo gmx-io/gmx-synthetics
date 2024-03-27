@@ -884,7 +884,7 @@ const config: {
       borrowingFactorForShorts: decimalToFloat(215, 10), // 2.15E-08, ~50% if 100% utilized
 
       positionImpactPoolDistributionRate: expandDecimals(8373, 28), // 8.3733E+31, 7.234528661 ATOM / day
-      minPositionImpactPoolAmount: decimalToFloat(611, 6), // 611 ATOM
+      minPositionImpactPoolAmount: expandDecimals(611, 6), // 611 ATOM
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
       maxOpenInterestForShorts: decimalToFloat(1_000_000),
@@ -932,7 +932,7 @@ const config: {
       borrowingFactorForShorts: decimalToFloat(245, 10), // 2.45E-08, ~70% if 100% utilized
 
       positionImpactPoolDistributionRate: expandDecimals(1326, 48), // 1.32649E+51, 114.6089996 NEAR / day
-      minPositionImpactPoolAmount: decimalToFloat(4361), // 4361 NEAR
+      minPositionImpactPoolAmount: expandDecimals(4361, 24), // 4361 NEAR
 
       maxOpenInterestForLongs: decimalToFloat(2_500_000),
       maxOpenInterestForShorts: decimalToFloat(2_500_000),
