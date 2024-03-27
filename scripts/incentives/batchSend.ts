@@ -127,11 +127,14 @@ async function main() {
 
     let recipientI = (lastSentBatchIndex + 1) * batchSize;
     if (lastSentBatchIndex >= 0) {
+      const firstRecipientIndex = (lastSentBatchIndex + 1) * batchSize;
+      const firstRecipient = recipients[firstRecipientIndex];
       console.warn(
-        "WARN: lastSentBatchIndex is %s, starting from index %s, first recipient index: %s",
+        "WARN: lastSentBatchIndex is %s, starting from index %s, first recipient: %s (%s)",
         lastSentBatchIndex,
         lastSentBatchIndex + 1,
-        (lastSentBatchIndex + 1) * batchSize
+        firstRecipientIndex,
+        firstRecipient
       );
       await setTimeout(5000);
     }
@@ -166,7 +169,16 @@ async function main() {
         );
         console.log("result %s", result);
       } else {
-        const tx = await batchSender.sendAndEmit(data.token, batchRecipients, batchAmounts, data.distributionTypeId);
+        const gasLimit = await batchSender.estimateGas.sendAndEmit(
+          data.token,
+          batchRecipients,
+          batchAmounts,
+          data.distributionTypeId
+        );
+
+        const tx = await batchSender.sendAndEmit(data.token, batchRecipients, batchAmounts, data.distributionTypeId, {
+          gasLimit: gasLimit.add(1_000_000),
+        });
         console.log("sent batch txn %s, waiting...", tx.hash);
         txHashes.push(tx.hash);
         await tx.wait();
