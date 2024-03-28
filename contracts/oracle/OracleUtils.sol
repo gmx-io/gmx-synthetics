@@ -25,6 +25,20 @@ library OracleUtils {
         Max
     }
 
+    struct SetPricesParams {
+        address[] tokens;
+        address[] providers;
+        bytes[] data;
+    }
+
+    struct ValidatedPrice {
+        address token;
+        uint256 min;
+        uint256 max;
+        uint256 timestamp;
+        address provider;
+    }
+
     // @dev SetPricesParams struct for values required in Oracle.setPrices
     // @param signerInfo compacted indexes of signers, the index is used to retrieve
     // the signer address from the OracleStore
@@ -38,7 +52,7 @@ library OracleUtils {
     // @param compactedMaxPricesIndexes compacted max price indexes
     // @param signatures signatures of the oracle signers
     // @param priceFeedTokens tokens to set prices for based on an external price feed value
-    struct SetPricesParams {
+    struct GmSetPricesParams {
         uint256 signerInfo;
         address[] tokens;
         uint256[] compactedMinOracleBlockNumbers;

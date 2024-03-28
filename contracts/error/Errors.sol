@@ -128,6 +128,8 @@ library Errors {
 
     // Oracle errors
     error EmptySigner(uint256 signerIndex);
+    error InvalidOracleSetPricesProvidersParam(uint256 tokensLength, uint256 providersLength);
+    error InvalidOracleSetPricesDataParam(uint256 tokensLength, uint256 dataLength);
     error InvalidBlockNumber(uint256 minOracleBlockNumber, uint256 currentBlockNumber);
     error InvalidMinMaxBlockNumber(uint256 minOracleBlockNumber, uint256 maxOracleBlockNumber);
     error HasRealtimeFeedId(address token, bytes32 feedId);
@@ -147,14 +149,14 @@ library Errors {
     error EmptyPriceFeedMultiplier(address token);
     error EmptyRealtimeFeedMultiplier(address token);
     error InvalidFeedPrice(address token, int256 price);
-    error PriceFeedNotUpdated(address token, uint256 timestamp, uint256 heartbeatDuration);
+    error ChainlinkPriceFeedNotUpdated(address token, uint256 timestamp, uint256 heartbeatDuration);
     error MaxSignerIndex(uint256 signerIndex, uint256 maxSignerIndex);
     error InvalidOraclePrice(address token);
     error InvalidSignerMinMaxPrice(uint256 minPrice, uint256 maxPrice);
     error InvalidMedianMinMaxPrice(uint256 minPrice, uint256 maxPrice);
     error NonEmptyTokensWithPrices(uint256 tokensWithPricesLength);
     error InvalidMinMaxForPrice(address token, uint256 min, uint256 max);
-    error EmptyPriceFeed(address token);
+    error EmptyChainlinkPriceFeed(address token);
     error PriceAlreadySet(address token, uint256 minPrice, uint256 maxPrice);
     error MaxRefPriceDeviationExceeded(
         address token,
