@@ -181,6 +181,8 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
 };
 
 const synthethicMarketConfig: Partial<BaseMarketConfig> = {
+  ...baseMarketConfig,
+
   reserveFactorLongs: percentageToFloat("80%"), // 80%,
   reserveFactorShorts: percentageToFloat("80%"), // 80%,
 
@@ -204,6 +206,8 @@ const synthethicMarketConfig: Partial<BaseMarketConfig> = {
 };
 
 const synthethicMarketConfig_IncreasedCapacity: Partial<BaseMarketConfig> = {
+  ...synthethicMarketConfig,
+
   reserveFactorLongs: percentageToFloat("125%"),
   reserveFactorShorts: percentageToFloat("125%"),
 
@@ -434,8 +438,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:XRP/USD"),
       virtualMarketId: hashString("SPOT:XRP/USD"),
 
-      ...baseMarketConfig,
-      ...synthethicMarketConfig,
+      ...synthethicMarketConfig_IncreasedCapacity,
 
       maxLongTokenPoolAmount: expandDecimals(1056, 18),
       maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
@@ -485,8 +488,6 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:DOGE/USD"),
       virtualMarketId: hashString("SPOT:DOGE/USD"),
 
-      ...baseMarketConfig,
-      ...synthethicMarketConfig,
       ...synthethicMarketConfig_IncreasedCapacity,
 
       maxLongTokenPoolAmount: expandDecimals(1220, 18),
@@ -581,7 +582,6 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:LTC/USD"),
       virtualMarketId: hashString("SPOT:LTC/USD"),
 
-      ...baseMarketConfig,
       ...synthethicMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(800, 18),
@@ -871,7 +871,6 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:ATOM/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
-      ...baseMarketConfig,
       ...synthethicMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(900, 18),
@@ -919,7 +918,6 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:NEAR/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
-      ...baseMarketConfig,
       ...synthethicMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(1515, 18),
@@ -1142,7 +1140,6 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:XRP/USD"),
       virtualMarketId: hashString("SPOT:XRP/USD"),
 
-      ...baseMarketConfig,
       ...synthethicMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(75_000, 18),
@@ -1186,7 +1183,6 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:DOGE/USD"),
       virtualMarketId: hashString("SPOT:DOGE/USD"),
 
-      ...baseMarketConfig,
       ...synthethicMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(75_000, 18),
@@ -1266,7 +1262,6 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:LTC/USD"),
       virtualMarketId: hashString("SPOT:LTC/USD"),
 
-      ...baseMarketConfig,
       ...synthethicMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(75_000, 18),
