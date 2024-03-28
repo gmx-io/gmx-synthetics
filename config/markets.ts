@@ -464,8 +464,8 @@ const config: {
       openInterestReserveFactorShorts: percentageToFloat("120%"),
 
       // factor in open interest reserve factor 120%
-      borrowingFactorForLongs: decimalToFloat(215, 13), // 2.15E-11, ~91% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(215, 13), // 2.15E-11, ~91% at 100% utilisation
+      borrowingFactorForLongs: decimalToFloat(235, 13), // 2.35E-11, ~95% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(235, 13), // 2.35E-11, ~95% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
@@ -508,8 +508,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
 
       // factor in open interest reserve factor 120%
-      borrowingFactorForLongs: decimalToFloat(183, 13), // 1.83-11, ~91% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(183, 13), // 1.83-11, ~91% at 100% utilisation
+      borrowingFactorForLongs: decimalToFloat(191, 13), // 1.91-11, ~95% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(191, 13), // 1.91-11, ~95% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
@@ -944,8 +944,8 @@ const config: {
       openInterestReserveFactorShorts: percentageToFloat("90%"),
 
       // factor in open interest reserve factor 90%
-      borrowingFactorForLongs: decimalToFloat(245, 10), // 2.45E-08, ~70% if 100% utilized
-      borrowingFactorForShorts: decimalToFloat(245, 10), // 2.45E-08, ~70% if 100% utilized
+      borrowingFactorForLongs: decimalToFloat(300, 10), // 3E-08, ~85% if 100% utilized
+      borrowingFactorForShorts: decimalToFloat(300, 10), // 3E-08, ~85% if 100% utilized
 
       positionImpactPoolDistributionRate: expandDecimals(1326, 48), // 1.32649E+51, 114.6089996 NEAR / day
       minPositionImpactPoolAmount: expandDecimals(4361, 24), // 4361 NEAR
