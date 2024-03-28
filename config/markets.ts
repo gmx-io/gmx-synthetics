@@ -203,6 +203,29 @@ const synthethicMarketConfig: Partial<BaseMarketConfig> = {
   maxPnlFactorForWithdrawalsShorts: percentageToFloat("30%"), // 30%
 };
 
+const synthethicMarketConfig_IncreasedCapacity: Partial<BaseMarketConfig> = {
+  reserveFactorLongs: percentageToFloat("125%"),
+  reserveFactorShorts: percentageToFloat("125%"),
+
+  openInterestReserveFactorLongs: percentageToFloat("120%"),
+  openInterestReserveFactorShorts: percentageToFloat("120%"),
+
+  maxPnlFactorForTradersLongs: percentageToFloat("70%"),
+  maxPnlFactorForTradersShorts: percentageToFloat("70%"),
+
+  maxPnlFactorForAdlLongs: percentageToFloat("65%"),
+  maxPnlFactorForAdlShorts: percentageToFloat("65%"),
+
+  minPnlFactorAfterAdlLongs: percentageToFloat("60%"),
+  minPnlFactorAfterAdlShorts: percentageToFloat("60%"),
+
+  maxPnlFactorForDepositsLongs: percentageToFloat("80%"),
+  maxPnlFactorForDepositsShorts: percentageToFloat("80%"),
+
+  maxPnlFactorForWithdrawalsLongs: percentageToFloat("55%"),
+  maxPnlFactorForWithdrawalsShorts: percentageToFloat("55%"),
+};
+
 const stablecoinSwapMarketConfig: Partial<SpotMarketConfig> = {
   swapOnly: true,
 
@@ -464,6 +487,7 @@ const config: {
 
       ...baseMarketConfig,
       ...synthethicMarketConfig,
+      ...synthethicMarketConfig_IncreasedCapacity,
 
       maxLongTokenPoolAmount: expandDecimals(1220, 18),
       maxShortTokenPoolAmount: expandDecimals(2_700_000, 6),
@@ -481,12 +505,6 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 2,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
-
-      reserveFactorLongs: percentageToFloat("125%"),
-      reserveFactorShorts: percentageToFloat("125%"),
-
-      openInterestReserveFactorLongs: percentageToFloat("120%"),
-      openInterestReserveFactorShorts: percentageToFloat("120%"),
 
       // factor in open interest reserve factor 120%
       borrowingFactorForLongs: decimalToFloat(183, 13), // 1.83-11, ~91% at 100% utilisation
