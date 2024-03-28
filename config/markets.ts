@@ -121,8 +121,8 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   reserveFactorLongs: percentageToFloat("95%"), // 95%,
   reserveFactorShorts: percentageToFloat("95%"), // 95%,
 
-  openInterestReserveFactorLongs: percentageToFloat("90%"), // 90%,
-  openInterestReserveFactorShorts: percentageToFloat("90%"), // 90%,
+  openInterestReserveFactorLongs: percentageToFloat("90%"),
+  openInterestReserveFactorShorts: percentageToFloat("90%"),
 
   maxPnlFactorForTradersLongs: percentageToFloat("90%"), // 90%
   maxPnlFactorForTradersShorts: percentageToFloat("90%"), // 90%
@@ -183,26 +183,26 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
 const synthethicMarketConfig: Partial<BaseMarketConfig> = {
   ...baseMarketConfig,
 
-  reserveFactorLongs: percentageToFloat("80%"), // 80%,
-  reserveFactorShorts: percentageToFloat("80%"), // 80%,
+  reserveFactorLongs: percentageToFloat("95%"),
+  reserveFactorShorts: percentageToFloat("95%"),
 
-  openInterestReserveFactorLongs: percentageToFloat("70%"), // 70%,
-  openInterestReserveFactorShorts: percentageToFloat("70%"), // 70%,
+  openInterestReserveFactorLongs: percentageToFloat("90%"),
+  openInterestReserveFactorShorts: percentageToFloat("90%"),
 
-  maxPnlFactorForTradersLongs: percentageToFloat("50%"), // 50%
-  maxPnlFactorForTradersShorts: percentageToFloat("50%"), // 50%
+  maxPnlFactorForTradersLongs: percentageToFloat("60%"),
+  maxPnlFactorForTradersShorts: percentageToFloat("60%"),
 
-  maxPnlFactorForAdlLongs: percentageToFloat("45%"), // 45%
-  maxPnlFactorForAdlShorts: percentageToFloat("45%"), // 45%
+  maxPnlFactorForAdlLongs: percentageToFloat("55%"),
+  maxPnlFactorForAdlShorts: percentageToFloat("55%"),
 
-  minPnlFactorAfterAdlLongs: percentageToFloat("40%"), // 40%
-  minPnlFactorAfterAdlShorts: percentageToFloat("40%"), // 40%
+  minPnlFactorAfterAdlLongs: percentageToFloat("50%"),
+  minPnlFactorAfterAdlShorts: percentageToFloat("50%"),
 
-  maxPnlFactorForDepositsLongs: percentageToFloat("60%"), // 60%
-  maxPnlFactorForDepositsShorts: percentageToFloat("60%"), // 60%
+  maxPnlFactorForDepositsLongs: percentageToFloat("70%"),
+  maxPnlFactorForDepositsShorts: percentageToFloat("70%"),
 
-  maxPnlFactorForWithdrawalsLongs: percentageToFloat("30%"), // 30%
-  maxPnlFactorForWithdrawalsShorts: percentageToFloat("30%"), // 30%
+  maxPnlFactorForWithdrawalsLongs: percentageToFloat("45%"),
+  maxPnlFactorForWithdrawalsShorts: percentageToFloat("45%"),
 };
 
 const synthethicMarketConfig_IncreasedCapacity: Partial<BaseMarketConfig> = {
@@ -601,12 +601,6 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(25, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(25, 10),
 
-      reserveFactorLongs: decimalToFloat(85, 2), // 85%,
-      reserveFactorShorts: decimalToFloat(85, 2), // 85%,
-
-      openInterestReserveFactorLongs: decimalToFloat(8, 1), // 80%,
-      openInterestReserveFactorShorts: decimalToFloat(8, 1), // 80%,
-
       // factor in open interest reserve factor 80%
       borrowingFactorForLongs: decimalToFloat(330, 13), // 3.30E-11, ~75% at 100% utilisation
       borrowingFactorForShorts: decimalToFloat(330, 13), // 3.30E-11, ~75% at 100% utilisation
@@ -890,12 +884,6 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
 
-      reserveFactorLongs: decimalToFloat(8, 1), // 80%,
-      reserveFactorShorts: decimalToFloat(8, 1), // 80%,
-
-      openInterestReserveFactorLongs: decimalToFloat(75, 2), // 75%,
-      openInterestReserveFactorShorts: decimalToFloat(75, 2), // 75%,
-
       // factor in open interest reserve factor 75%
       borrowingFactorForLongs: decimalToFloat(215, 10), // 2.15E-08, ~50% if 100% utilized
       borrowingFactorForShorts: decimalToFloat(215, 10), // 2.15E-08, ~50% if 100% utilized
@@ -936,12 +924,6 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 2,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
-
-      reserveFactorLongs: percentageToFloat("95%"),
-      reserveFactorShorts: percentageToFloat("95%"),
-
-      openInterestReserveFactorLongs: percentageToFloat("90%"),
-      openInterestReserveFactorShorts: percentageToFloat("90%"),
 
       // factor in open interest reserve factor 90%
       borrowingFactorForLongs: decimalToFloat(300, 10), // 3E-08, ~85% if 100% utilized
