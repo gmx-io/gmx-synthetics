@@ -175,6 +175,7 @@ contract Oracle is RoleModule {
             // TODO: validate that provider is an approved provider contract
             // TODO: validate price relative to onchain feeds
             // TODO: adjust timestamp by delay
+            // TODO: validate max timestamp age
 
             OracleUtils.ValidatedPrice memory validatedPrice = IOracleProvider(provider).getOraclePrice(
                 token,
@@ -184,7 +185,7 @@ contract Oracle is RoleModule {
             validatePrices[i] = validatedPrice;
         }
 
-        // TODO: validate timestamps
+        // TODO: validate timestamp range
 
         return validatedPrices;
     }

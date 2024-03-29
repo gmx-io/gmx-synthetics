@@ -16,6 +16,11 @@ contract ChainlinkPriceFeedProvider is IOracleProvider {
     // this is because Chainlink on-chain price feeds have a lower update frequency
     // if a Chainlink on-chain price feed is used, it is assumed that the feed
     // is sufficiently updated for the intended usage
+    //
+    // if an on-chain Chainlink price is used together with other price feeds
+    // and if the timestamp of the other price feeds are older, this could cause
+    // a MaxTimestampRangeExceeded error
+    // if this occurs, the MAX_TIMESTAMP_RANGE value may need to be increased
     function getOraclePrice(
         address token,
         bytes data
