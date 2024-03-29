@@ -42,8 +42,6 @@ contract ChainlinkPriceFeedProvider is IOracleProvider {
             );
         }
 
-        // TODO: adjust timestamp by delay
-
         return OracleUtils.ValidatedPrice({
             token: token,
             min: priceProps.min,

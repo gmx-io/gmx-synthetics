@@ -27,15 +27,15 @@ contract OracleModuleTest is OracleModule {
         return dataStore.getBytes32(Keys.oracleTypeKey(token));
     }
 
-    function getReportInfo(
+    function getGmReportInfo(
         DataStore dataStore,
         OracleUtils.SetPricesParams memory params
-    ) external view returns (OracleUtils.ReportInfo[] memory) {
-        OracleUtils.ReportInfo[] memory result = new OracleUtils.ReportInfo[](params.tokens.length);
+    ) external view returns (OracleUtils.GmReportInfo[] memory) {
+        OracleUtils.GmReportInfo[] memory result = new OracleUtils.GmReportInfo[](params.tokens.length);
 
         for (uint256 i; i < params.tokens.length; i++) {
             Oracle.SetPricesInnerCache memory innerCache;
-            OracleUtils.ReportInfo memory reportInfo;
+            OracleUtils.GmReportInfo memory reportInfo;
             reportInfo.minOracleBlockNumber = OracleUtils.getUncompactedOracleBlockNumber(params.compactedMinOracleBlockNumbers, i);
             reportInfo.maxOracleBlockNumber = OracleUtils.getUncompactedOracleBlockNumber(params.compactedMaxOracleBlockNumbers, i);
             reportInfo.oracleTimestamp = OracleUtils.getUncompactedOracleTimestamp(params.compactedOracleTimestamps, i);
@@ -74,7 +74,7 @@ contract OracleModuleTest is OracleModule {
 
     function validateSignerWithSalt(
         bytes32 SALT,
-        OracleUtils.ReportInfo memory info,
+        OracleUtils.GmReportInfo memory info,
         bytes memory signature,
         address expectedSigner
     ) external pure {
@@ -87,7 +87,7 @@ contract OracleModuleTest is OracleModule {
     }
 
     function validateSigner(
-        OracleUtils.ReportInfo memory info,
+        OracleUtils.GmReportInfo memory info,
         bytes memory signature,
         address expectedSigner
     ) external view {

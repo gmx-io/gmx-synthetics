@@ -7,5 +7,5 @@ import "./OracleUtils.sol";
 // @title IOracleProvider
 // @dev Interface for an oracle provider
 interface IOracleProvider {
-    function getOraclePrice(address token, bytes data) external view returns (OracleUtils.ValidatedPrice memory);
+    function getOraclePrice(address token, bytes data) external returns (OracleUtils.ValidatedPrice memory);
 }

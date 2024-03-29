@@ -46,151 +46,14 @@ contract Oracle is RoleModule {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
-    struct ValidatedPrice {
-        address token;
-        uint256 min;
-        uint256 max;
-        uint256 timestamp;
-    }
-
-    // @dev SetPricesCache struct used in setPrices to avoid stack too deep errors
-    struct SetPricesCache {
-        OracleUtils.ReportInfo info;
-        uint256 minBlockConfirmations;
-        uint256 maxPriceAge;
-        uint256 maxRefPriceDeviationFactor;
-        uint256 prevMinOracleBlockNumber;
-        ValidatedPrice[] validatedPrices;
-    }
-
-    struct SetPricesInnerCache {
-        bytes32 feedId;
-        uint256 priceIndex;
-        uint256 signatureIndex;
-        uint256 minPriceIndex;
-        uint256 maxPriceIndex;
-        uint256[] minPrices;
-        uint256[] maxPrices;
-        Uint256Mask.Mask minPriceIndexMask;
-        Uint256Mask.Mask maxPriceIndexMask;
-    }
-
-    uint256 public constant SIGNER_INDEX_LENGTH = 16;
-    // subtract 1 as the first slot is used to store number of signers
-    uint256 public constant MAX_SIGNERS = 256 / SIGNER_INDEX_LENGTH - 1;
-    // signer indexes are recorded in a signerIndexFlags uint256 value to check for uniqueness
-    uint256 public constant MAX_SIGNER_INDEX = 256;
-
-    OracleStore public immutable oracleStore;
-    IRealtimeFeedVerifier public immutable realtimeFeedVerifier;
-
     // tokensWithPrices stores the tokens with prices that have been set
     // this is used in clearAllPrices to help ensure that all token prices
     // set in setPrices are cleared after use
     EnumerableSet.AddressSet internal tokensWithPrices;
     mapping(address => Price.Props) public primaryPrices;
 
-    constructor(
-        RoleStore _roleStore,
-        OracleStore _oracleStore,
-        IRealtimeFeedVerifier _realtimeFeedVerifier
-    ) RoleModule(_roleStore) {
-        oracleStore = _oracleStore;
-        realtimeFeedVerifier = _realtimeFeedVerifier;
-    }
+    constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
 
-    // @dev validate and store signed prices
-    //
-    // The setPrices function is used to set the prices of tokens in the Oracle contract.
-    // It accepts an array of tokens and a signerInfo parameter. The signerInfo parameter
-    // contains information about the signers that have signed the transaction to set the prices.
-    // The first 16 bits of the signerInfo parameter contain the number of signers, and the following
-    // bits contain the index of each signer in the oracleStore. The function checks that the number
-    // of signers is greater than or equal to the minimum number of signers required, and that
-    // the signer indices are unique and within the maximum signer index. The function then calls
-    // _setPrices and _setPricesFromPriceFeeds to set the prices of the tokens.
-    //
-    // Oracle prices are signed as a value together with a precision, this allows
-    // prices to be compacted as uint32 values.
-    //
-    // The signed prices represent the price of one unit of the token using a value
-    // with 30 decimals of precision.
-    //
-    // Representing the prices in this way allows for conversions between token amounts
-    // and fiat values to be simplified, e.g. to calculate the fiat value of a given
-    // number of tokens the calculation would just be: `token amount * oracle price`,
-    // to calculate the token amount for a fiat value it would be: `fiat value / oracle price`.
-    //
-    // The trade-off of this simplicity in calculation is that tokens with a small USD
-    // price and a lot of decimals may have precision issues it is also possible that
-    // a token's price changes significantly and results in requiring higher precision.
-    //
-    // ## Example 1
-    //
-    // The price of ETH is 5000, and ETH has 18 decimals.
-    //
-    // The price of one unit of ETH is `5000 / (10 ^ 18), 5 * (10 ^ -15)`.
-    //
-    // To handle the decimals, multiply the value by `(10 ^ 30)`.
-    //
-    // Price would be stored as `5000 / (10 ^ 18) * (10 ^ 30) => 5000 * (10 ^ 12)`.
-    //
-    // For gas optimization, these prices are sent to the oracle in the form of a uint8
-    // decimal multiplier value and uint32 price value.
-    //
-    // If the decimal multiplier value is set to 8, the uint32 value would be `5000 * (10 ^ 12) / (10 ^ 8) => 5000 * (10 ^ 4)`.
-    //
-    // With this config, ETH prices can have a maximum value of `(2 ^ 32) / (10 ^ 4) => 4,294,967,296 / (10 ^ 4) => 429,496.7296` with 4 decimals of precision.
-    //
-    // ## Example 2
-    //
-    // The price of BTC is 60,000, and BTC has 8 decimals.
-    //
-    // The price of one unit of BTC is `60,000 / (10 ^ 8), 6 * (10 ^ -4)`.
-    //
-    // Price would be stored as `60,000 / (10 ^ 8) * (10 ^ 30) => 6 * (10 ^ 26) => 60,000 * (10 ^ 22)`.
-    //
-    // BTC prices maximum value: `(2 ^ 32) / (10 ^ 2) => 4,294,967,296 / (10 ^ 2) => 42,949,672.96`.
-    //
-    // Decimals of precision: 2.
-    //
-    // ## Example 3
-    //
-    // The price of USDC is 1, and USDC has 6 decimals.
-    //
-    // The price of one unit of USDC is `1 / (10 ^ 6), 1 * (10 ^ -6)`.
-    //
-    // Price would be stored as `1 / (10 ^ 6) * (10 ^ 30) => 1 * (10 ^ 24)`.
-    //
-    // USDC prices maximum value: `(2 ^ 64) / (10 ^ 6) => 4,294,967,296 / (10 ^ 6) => 4294.967296`.
-    //
-    // Decimals of precision: 6.
-    //
-    // ## Example 4
-    //
-    // The price of DG is 0.00000001, and DG has 18 decimals.
-    //
-    // The price of one unit of DG is `0.00000001 / (10 ^ 18), 1 * (10 ^ -26)`.
-    //
-    // Price would be stored as `1 * (10 ^ -26) * (10 ^ 30) => 1 * (10 ^ 3)`.
-    //
-    // DG prices maximum value: `(2 ^ 64) / (10 ^ 11) => 4,294,967,296 / (10 ^ 11) => 0.04294967296`.
-    //
-    // Decimals of precision: 11.
-    //
-    // ## Decimal Multiplier
-    //
-    // The formula to calculate what the decimal multiplier value should be set to:
-    //
-    // Decimals: 30 - (token decimals) - (number of decimals desired for precision)
-    //
-    // - ETH: 30 - 18 - 4 => 8
-    // - BTC: 30 - 8 - 2 => 20
-    // - USDC: 30 - 6 - 6 => 18
-    // - DG: 30 - 18 - 11 => 1
-    // @param dataStore DataStore
-    // @param eventEmitter EventEmitter
-    // @param params OracleUtils.SetPricesParams
     function setPrices(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -200,17 +63,13 @@ contract Oracle is RoleModule {
             revert Errors.NonEmptyTokensWithPrices(tokensWithPrices.length());
         }
 
-        _setPricesFromPriceFeeds(dataStore, eventEmitter, params.priceFeedTokens);
+        ValidatedPrice[] memory validatedPrices = _validatePrices(dataStore, params);
 
-        OracleUtils.RealtimeFeedReport[] memory reports = _setPricesFromRealtimeFeeds(dataStore, eventEmitter, params);
-
-        ValidatedPrice[] memory validatedPrices = _setPrices(
+        _setPrices(
             dataStore,
             eventEmitter,
-            params
+            validatedPrices
         );
-
-        _validateBlockRanges(reports, validatedPrices);
     }
 
     // @dev set the primary price
@@ -257,59 +116,11 @@ contract Oracle is RoleModule {
         return price;
     }
 
-    // @dev get the stable price of a token
-    // @param dataStore DataStore
-    // @param token the token to get the price for
-    // @return the stable price of the token
-    function getStablePrice(DataStore dataStore, address token) public view returns (uint256) {
-        return dataStore.getUint(Keys.stablePriceKey(token));
-    }
-
-    // @dev get the multiplier value to convert the external price feed price to the price of 1 unit of the token
-    // represented with 30 decimals
-    // for example, if USDC has 6 decimals and a price of 1 USD, one unit of USDC would have a price of
-    // 1 / (10 ^ 6) * (10 ^ 30) => 1 * (10 ^ 24)
-    // if the external price feed has 8 decimals, the price feed price would be 1 * (10 ^ 8)
-    // in this case the priceFeedMultiplier should be 10 ^ 46
-    // the conversion of the price feed price would be 1 * (10 ^ 8) * (10 ^ 46) / (10 ^ 30) => 1 * (10 ^ 24)
-    // formula for decimals for price feed multiplier: 60 - (external price feed decimals) - (token decimals)
-    //
-    // @param dataStore DataStore
-    // @param token the token to get the price feed multiplier for
-    // @return the price feed multipler
-    function getPriceFeedMultiplier(DataStore dataStore, address token) public view returns (uint256) {
-        uint256 multiplier = dataStore.getUint(Keys.priceFeedMultiplierKey(token));
-
-        if (multiplier == 0) {
-            revert Errors.EmptyPriceFeedMultiplier(token);
-        }
-
-        return multiplier;
-    }
-
-    function getRealtimeFeedMultiplier(DataStore dataStore, address token) public view returns (uint256) {
-        uint256 multiplier = dataStore.getUint(Keys.realtimeFeedMultiplierKey(token));
-
-        if (multiplier == 0) {
-            revert Errors.EmptyRealtimeFeedMultiplier(token);
-        }
-
-        return multiplier;
-    }
-
     function validatePrices(
         DataStore dataStore,
         OracleUtils.SetPricesParams memory params
     ) external onlyController returns (ValidatedPrice[] memory) {
         return _validatePrices(dataStore, params);
-    }
-
-    function validateRealtimeFeeds(
-        DataStore dataStore,
-        address[] memory realtimeFeedTokens,
-        bytes[] memory realtimeFeedData
-    ) external onlyController returns (OracleUtils.RealtimeFeedReport[] memory) {
-        return _validateRealtimeFeeds(dataStore, realtimeFeedTokens, realtimeFeedData);
     }
 
     // @dev validate and set prices
@@ -324,7 +135,12 @@ contract Oracle is RoleModule {
         for (uint256 i; i < validatedPrices.length; i++) {
             ValidatedPrice memory validatedPrice = validatedPrices[i];
 
-            emitOraclePriceUpdated(
+            _setPrimaryPrice(validatedPrice.token, Price.Props(
+                validatedPrice.min,
+                validatedPrice.max
+            ));
+
+            _emitOraclePriceUpdated(
                 eventEmitter,
                 validatedPrice.token,
                 validatedPrice.min,
@@ -332,11 +148,6 @@ contract Oracle is RoleModule {
                 validatedPrice.timestamp,
                 validatedPrice.provider
             );
-
-            _setPrimaryPrice(validatedPrice.token, Price.Props(
-                validatedPrice.min,
-                validatedPrice.max
-            ));
         }
 
         return validatedPrices;
@@ -362,6 +173,8 @@ contract Oracle is RoleModule {
             bytes data = params.data[i];
 
             // TODO: validate that provider is an approved provider contract
+            // TODO: validate price relative to onchain feeds
+            // TODO: adjust timestamp by delay
 
             OracleUtils.ValidatedPrice memory validatedPrice = IOracleProvider(provider).getOraclePrice(
                 token,
@@ -371,151 +184,12 @@ contract Oracle is RoleModule {
             validatePrices[i] = validatedPrice;
         }
 
+        // TODO: validate timestamps
+
         return validatedPrices;
     }
 
-    function _validateRealtimeFeeds(
-        DataStore dataStore,
-        address[] memory realtimeFeedTokens,
-        bytes[] memory realtimeFeedData
-    ) internal returns (OracleUtils.RealtimeFeedReport[] memory) {
-        if (realtimeFeedTokens.length != realtimeFeedData.length) {
-            revert Errors.InvalidRealtimeFeedLengths(realtimeFeedTokens.length, realtimeFeedData.length);
-        }
-
-        OracleUtils.RealtimeFeedReport[] memory reports = new OracleUtils.RealtimeFeedReport[](realtimeFeedTokens.length);
-
-        uint256 minBlockConfirmations = dataStore.getUint(Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS);
-        uint256 maxPriceAge = dataStore.getUint(Keys.MAX_ORACLE_PRICE_AGE);
-
-        for (uint256 i; i < realtimeFeedTokens.length; i++) {
-            address token = realtimeFeedTokens[i];
-            bytes32 feedId = dataStore.getBytes32(Keys.realtimeFeedIdKey(token));
-            if (feedId == bytes32(0)) {
-                revert Errors.EmptyRealtimeFeedId(token);
-            }
-
-            bytes memory data = realtimeFeedData[i];
-            bytes memory verifierResponse = realtimeFeedVerifier.verify(data);
-
-            OracleUtils.RealtimeFeedReport memory report = abi.decode(verifierResponse, (OracleUtils.RealtimeFeedReport));
-
-            // feedIds are unique per chain so this validation also ensures that the price was signed
-            // for the current chain
-            if (feedId != report.feedId) {
-                revert Errors.InvalidRealtimeFeedId(token, report.feedId, feedId);
-            }
-
-            if (report.bid <= 0 || report.ask <= 0) {
-                revert Errors.InvalidRealtimePrices(token, report.bid, report.ask);
-            }
-
-            if (report.bid > report.ask) {
-                revert Errors.InvalidRealtimeBidAsk(token, report.bid, report.ask);
-            }
-
-            // only check the block hash if this is not an estimate gas call (tx.origin != address(0))
-            // this helps to prevent estimate gas from failing when executed in the context of the block
-            // that the deposit / order / withdrawal was created in
-            if (
-                !(tx.origin == address(0) && Chain.currentBlockNumber() == report.blocknumberUpperBound) &&
-                (Chain.currentBlockNumber() - report.blocknumberUpperBound <= minBlockConfirmations)
-            ) {
-                bytes32 blockHash = Chain.getBlockHash(report.blocknumberUpperBound);
-                if (report.upperBlockhash != blockHash) {
-                    revert Errors.InvalidRealtimeBlockHash(token, report.upperBlockhash, blockHash);
-                }
-            }
-
-            if (report.currentBlockTimestamp + maxPriceAge < Chain.currentTimestamp()) {
-                revert Errors.RealtimeMaxPriceAgeExceeded(token, report.currentBlockTimestamp, Chain.currentTimestamp());
-            }
-
-            reports[i] = report;
-        }
-
-        return reports;
-    }
-
-    function _getSigners(
-        DataStore dataStore,
-        OracleUtils.SetPricesParams memory params
-    ) internal view returns (address[] memory) {
-        // first 16 bits of signer info contains the number of signers
-        address[] memory signers = new address[](params.signerInfo & Bits.BITMASK_16);
-
-        if (signers.length < dataStore.getUint(Keys.MIN_ORACLE_SIGNERS)) {
-            revert Errors.MinOracleSigners(signers.length, dataStore.getUint(Keys.MIN_ORACLE_SIGNERS));
-        }
-
-        if (signers.length > MAX_SIGNERS) {
-            revert Errors.MaxOracleSigners(signers.length, MAX_SIGNERS);
-        }
-
-        Uint256Mask.Mask memory signerIndexMask;
-
-        for (uint256 i; i < signers.length; i++) {
-            uint256 signerIndex = params.signerInfo >> (16 + 16 * i) & Bits.BITMASK_16;
-
-            if (signerIndex >= MAX_SIGNER_INDEX) {
-                revert Errors.MaxSignerIndex(signerIndex, MAX_SIGNER_INDEX);
-            }
-
-            signerIndexMask.validateUniqueAndSetIndex(signerIndex, "signerIndex");
-
-            signers[i] = oracleStore.getSigner(signerIndex);
-
-            if (signers[i] == address(0)) {
-                revert Errors.EmptySigner(signerIndex);
-            }
-        }
-
-        return signers;
-    }
-
-    function _validateBlockRanges(
-        OracleUtils.RealtimeFeedReport[] memory reports,
-        ValidatedPrice[] memory validatedPrices
-    ) internal pure {
-        uint256 largestMinBlockNumber; // defaults to zero
-        uint256 smallestMaxBlockNumber = type(uint256).max;
-
-        for (uint256 i; i < reports.length; i++) {
-            OracleUtils.RealtimeFeedReport memory report = reports[i];
-
-            if (report.blocknumberLowerBound > largestMinBlockNumber) {
-                largestMinBlockNumber = report.blocknumberLowerBound;
-            }
-
-            if (report.blocknumberUpperBound < smallestMaxBlockNumber) {
-                smallestMaxBlockNumber = report.blocknumberUpperBound;
-            }
-        }
-
-        for (uint256 i; i < validatedPrices.length; i++) {
-            ValidatedPrice memory validatedPrice = validatedPrices[i];
-
-            if (validatedPrice.minBlockNumber > largestMinBlockNumber) {
-                largestMinBlockNumber = validatedPrice.minBlockNumber;
-            }
-
-            if (validatedPrice.maxBlockNumber < smallestMaxBlockNumber) {
-                smallestMaxBlockNumber = validatedPrice.maxBlockNumber;
-            }
-        }
-
-        if (largestMinBlockNumber > smallestMaxBlockNumber) {
-            revert Errors.InvalidBlockRangeSet(largestMinBlockNumber, smallestMaxBlockNumber);
-        }
-    }
-
-    // it might be possible for the block.chainid to change due to a fork or similar
-    // for this reason, this salt is not cached
-    function _getSalt() internal view returns (bytes32) {
-        return keccak256(abi.encode(block.chainid, "xget-oracle-v1"));
-    }
-
-    function validateRefPrice(
+    function _validateRefPrice(
         address token,
         uint256 price,
         uint256 refPrice,
@@ -554,144 +228,7 @@ contract Oracle is RoleModule {
         tokensWithPrices.remove(token);
     }
 
-    // there is a small risk of stale pricing due to latency in price updates or if the chain is down
-    // this is meant to be for temporary use until low latency price feeds are supported for all tokens
-    function _getPriceFeedPrice(DataStore dataStore, address token) internal view returns (bool, uint256) {
-        address priceFeedAddress = dataStore.getAddress(Keys.priceFeedKey(token));
-        if (priceFeedAddress == address(0)) {
-            return (false, 0);
-        }
-
-        IPriceFeed priceFeed = IPriceFeed(priceFeedAddress);
-
-        (
-            /* uint80 roundID */,
-            int256 _price,
-            /* uint256 startedAt */,
-            uint256 timestamp,
-            /* uint80 answeredInRound */
-        ) = priceFeed.latestRoundData();
-
-        if (_price <= 0) {
-            revert Errors.InvalidFeedPrice(token, _price);
-        }
-
-        uint256 heartbeatDuration = dataStore.getUint(Keys.priceFeedHeartbeatDurationKey(token));
-        if (Chain.currentTimestamp() > timestamp && Chain.currentTimestamp() - timestamp > heartbeatDuration) {
-            revert Errors.PriceFeedNotUpdated(token, timestamp, heartbeatDuration);
-        }
-
-        uint256 price = SafeCast.toUint256(_price);
-        uint256 precision = getPriceFeedMultiplier(dataStore, token);
-
-        uint256 adjustedPrice = Precision.mulDiv(price, precision, Precision.FLOAT_PRECISION);
-
-        return (true, adjustedPrice);
-    }
-
-    function _setPricesFromRealtimeFeeds(
-        DataStore dataStore,
-        EventEmitter eventEmitter,
-        OracleUtils.SetPricesParams memory params
-    ) internal returns (OracleUtils.RealtimeFeedReport[] memory) {
-        OracleUtils.RealtimeFeedReport[] memory reports = _validateRealtimeFeeds(
-            dataStore,
-            params.realtimeFeedTokens,
-            params.realtimeFeedData
-        );
-
-        uint256 maxRefPriceDeviationFactor = dataStore.getUint(Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR);
-
-        for (uint256 i; i < params.realtimeFeedTokens.length; i++) {
-            address token = params.realtimeFeedTokens[i];
-
-            OracleUtils.RealtimeFeedReport memory report = reports[i];
-
-            uint256 precision = getRealtimeFeedMultiplier(dataStore, token);
-            uint256 adjustedBidPrice = Precision.mulDiv(uint256(uint192(report.bid)), precision, Precision.FLOAT_PRECISION);
-            uint256 adjustedAskPrice = Precision.mulDiv(uint256(uint192(report.ask)), precision, Precision.FLOAT_PRECISION);
-
-            (bool hasPriceFeed, uint256 refPrice) = _getPriceFeedPrice(dataStore, token);
-            if (hasPriceFeed) {
-                validateRefPrice(
-                    token,
-                    adjustedBidPrice,
-                    refPrice,
-                    maxRefPriceDeviationFactor
-                );
-
-                validateRefPrice(
-                    token,
-                    adjustedAskPrice,
-                    refPrice,
-                    maxRefPriceDeviationFactor
-                );
-            }
-
-            Price.Props memory priceProps = Price.Props(
-                adjustedBidPrice, // min
-                adjustedAskPrice // max
-            );
-
-            _setPrimaryPrice(token, priceProps);
-
-            emitOraclePriceUpdated(
-                eventEmitter,
-                token,
-                priceProps.min,
-                priceProps.max,
-                report.currentBlockTimestamp,
-                OracleUtils.PriceSourceType.RealtimeFeed
-            );
-        }
-
-        return reports;
-    }
-
-    // @dev set prices using external price feeds to save costs for tokens with stable prices
-    // @param dataStore DataStore
-    // @param eventEmitter EventEmitter
-    // @param priceFeedTokens the tokens to set the prices using the price feeds for
-    function _setPricesFromPriceFeeds(DataStore dataStore, EventEmitter eventEmitter, address[] memory priceFeedTokens) internal {
-        for (uint256 i; i < priceFeedTokens.length; i++) {
-            address token = priceFeedTokens[i];
-
-            (bool hasPriceFeed, uint256 price) = _getPriceFeedPrice(dataStore, token);
-
-            if (!hasPriceFeed) {
-                revert Errors.EmptyPriceFeed(token);
-            }
-
-            uint256 stablePrice = getStablePrice(dataStore, token);
-
-            Price.Props memory priceProps;
-
-            if (stablePrice > 0) {
-                priceProps = Price.Props(
-                    price < stablePrice ? price : stablePrice,
-                    price < stablePrice ? stablePrice : price
-                );
-            } else {
-                priceProps = Price.Props(
-                    price,
-                    price
-                );
-            }
-
-            _setPrimaryPrice(token, priceProps);
-
-            emitOraclePriceUpdated(
-                eventEmitter,
-                token,
-                priceProps.min,
-                priceProps.max,
-                Chain.currentTimestamp(),
-                OracleUtils.PriceSourceType.PriceFeed
-            );
-        }
-    }
-
-    function emitOraclePriceUpdated(
+    function _emitOraclePriceUpdated(
         EventEmitter eventEmitter,
         address token,
         uint256 minPrice,
