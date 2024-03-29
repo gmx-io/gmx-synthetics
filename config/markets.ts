@@ -121,8 +121,8 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   reserveFactorLongs: percentageToFloat("95%"), // 95%,
   reserveFactorShorts: percentageToFloat("95%"), // 95%,
 
-  openInterestReserveFactorLongs: percentageToFloat("90%"), // 90%,
-  openInterestReserveFactorShorts: percentageToFloat("90%"), // 90%,
+  openInterestReserveFactorLongs: percentageToFloat("90%"),
+  openInterestReserveFactorShorts: percentageToFloat("90%"),
 
   maxPnlFactorForTradersLongs: percentageToFloat("90%"), // 90%
   maxPnlFactorForTradersShorts: percentageToFloat("90%"), // 90%
@@ -181,29 +181,33 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
 };
 
 const synthethicMarketConfig: Partial<BaseMarketConfig> = {
-  reserveFactorLongs: percentageToFloat("80%"), // 80%,
-  reserveFactorShorts: percentageToFloat("80%"), // 80%,
+  ...baseMarketConfig,
 
-  openInterestReserveFactorLongs: percentageToFloat("70%"), // 70%,
-  openInterestReserveFactorShorts: percentageToFloat("70%"), // 70%,
+  reserveFactorLongs: percentageToFloat("95%"),
+  reserveFactorShorts: percentageToFloat("95%"),
 
-  maxPnlFactorForTradersLongs: percentageToFloat("50%"), // 50%
-  maxPnlFactorForTradersShorts: percentageToFloat("50%"), // 50%
+  openInterestReserveFactorLongs: percentageToFloat("90%"),
+  openInterestReserveFactorShorts: percentageToFloat("90%"),
 
-  maxPnlFactorForAdlLongs: percentageToFloat("45%"), // 45%
-  maxPnlFactorForAdlShorts: percentageToFloat("45%"), // 45%
+  maxPnlFactorForTradersLongs: percentageToFloat("60%"),
+  maxPnlFactorForTradersShorts: percentageToFloat("60%"),
 
-  minPnlFactorAfterAdlLongs: percentageToFloat("40%"), // 40%
-  minPnlFactorAfterAdlShorts: percentageToFloat("40%"), // 40%
+  maxPnlFactorForAdlLongs: percentageToFloat("55%"),
+  maxPnlFactorForAdlShorts: percentageToFloat("55%"),
 
-  maxPnlFactorForDepositsLongs: percentageToFloat("60%"), // 60%
-  maxPnlFactorForDepositsShorts: percentageToFloat("60%"), // 60%
+  minPnlFactorAfterAdlLongs: percentageToFloat("50%"),
+  minPnlFactorAfterAdlShorts: percentageToFloat("50%"),
 
-  maxPnlFactorForWithdrawalsLongs: percentageToFloat("30%"), // 30%
-  maxPnlFactorForWithdrawalsShorts: percentageToFloat("30%"), // 30%
+  maxPnlFactorForDepositsLongs: percentageToFloat("70%"),
+  maxPnlFactorForDepositsShorts: percentageToFloat("70%"),
+
+  maxPnlFactorForWithdrawalsLongs: percentageToFloat("45%"),
+  maxPnlFactorForWithdrawalsShorts: percentageToFloat("45%"),
 };
 
 const synthethicMarketConfig_IncreasedCapacity: Partial<BaseMarketConfig> = {
+  ...synthethicMarketConfig,
+
   reserveFactorLongs: percentageToFloat("125%"),
   reserveFactorShorts: percentageToFloat("125%"),
 
@@ -434,8 +438,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:XRP/USD"),
       virtualMarketId: hashString("SPOT:XRP/USD"),
 
-      ...baseMarketConfig,
-      ...synthethicMarketConfig,
+      ...synthethicMarketConfig_IncreasedCapacity,
 
       maxLongTokenPoolAmount: expandDecimals(1056, 18),
       maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
@@ -461,8 +464,8 @@ const config: {
       openInterestReserveFactorShorts: percentageToFloat("120%"),
 
       // factor in open interest reserve factor 120%
-      borrowingFactorForLongs: decimalToFloat(215, 13), // 2.15E-11, ~91% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(215, 13), // 2.15E-11, ~91% at 100% utilisation
+      borrowingFactorForLongs: decimalToFloat(235, 13), // 2.35E-11, ~95% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(235, 13), // 2.35E-11, ~95% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
@@ -485,8 +488,6 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:DOGE/USD"),
       virtualMarketId: hashString("SPOT:DOGE/USD"),
 
-      ...baseMarketConfig,
-      ...synthethicMarketConfig,
       ...synthethicMarketConfig_IncreasedCapacity,
 
       maxLongTokenPoolAmount: expandDecimals(1220, 18),
@@ -507,8 +508,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
 
       // factor in open interest reserve factor 120%
-      borrowingFactorForLongs: decimalToFloat(183, 13), // 1.83-11, ~91% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(183, 13), // 1.83-11, ~91% at 100% utilisation
+      borrowingFactorForLongs: decimalToFloat(191, 13), // 1.91-11, ~95% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(191, 13), // 1.91-11, ~95% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
@@ -581,7 +582,6 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:LTC/USD"),
       virtualMarketId: hashString("SPOT:LTC/USD"),
 
-      ...baseMarketConfig,
       ...synthethicMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(800, 18),
@@ -600,12 +600,6 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(25, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(25, 10),
-
-      reserveFactorLongs: decimalToFloat(85, 2), // 85%,
-      reserveFactorShorts: decimalToFloat(85, 2), // 85%,
-
-      openInterestReserveFactorLongs: decimalToFloat(8, 1), // 80%,
-      openInterestReserveFactorShorts: decimalToFloat(8, 1), // 80%,
 
       // factor in open interest reserve factor 80%
       borrowingFactorForLongs: decimalToFloat(330, 13), // 3.30E-11, ~75% at 100% utilisation
@@ -871,7 +865,6 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:ATOM/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
-      ...baseMarketConfig,
       ...synthethicMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(900, 18),
@@ -890,12 +883,6 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 2,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
-
-      reserveFactorLongs: decimalToFloat(8, 1), // 80%,
-      reserveFactorShorts: decimalToFloat(8, 1), // 80%,
-
-      openInterestReserveFactorLongs: decimalToFloat(75, 2), // 75%,
-      openInterestReserveFactorShorts: decimalToFloat(75, 2), // 75%,
 
       // factor in open interest reserve factor 75%
       borrowingFactorForLongs: decimalToFloat(215, 10), // 2.15E-08, ~50% if 100% utilized
@@ -919,7 +906,6 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:NEAR/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
-      ...baseMarketConfig,
       ...synthethicMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(1515, 18),
@@ -939,15 +925,9 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
 
-      reserveFactorLongs: percentageToFloat("95%"),
-      reserveFactorShorts: percentageToFloat("95%"),
-
-      openInterestReserveFactorLongs: percentageToFloat("90%"),
-      openInterestReserveFactorShorts: percentageToFloat("90%"),
-
       // factor in open interest reserve factor 90%
-      borrowingFactorForLongs: decimalToFloat(245, 10), // 2.45E-08, ~70% if 100% utilized
-      borrowingFactorForShorts: decimalToFloat(245, 10), // 2.45E-08, ~70% if 100% utilized
+      borrowingFactorForLongs: decimalToFloat(300, 10), // 3E-08, ~85% if 100% utilized
+      borrowingFactorForShorts: decimalToFloat(300, 10), // 3E-08, ~85% if 100% utilized
 
       positionImpactPoolDistributionRate: expandDecimals(1326, 48), // 1.32649E+51, 114.6089996 NEAR / day
       minPositionImpactPoolAmount: expandDecimals(4361, 24), // 4361 NEAR
@@ -1142,7 +1122,6 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:XRP/USD"),
       virtualMarketId: hashString("SPOT:XRP/USD"),
 
-      ...baseMarketConfig,
       ...synthethicMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(75_000, 18),
@@ -1186,7 +1165,6 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:DOGE/USD"),
       virtualMarketId: hashString("SPOT:DOGE/USD"),
 
-      ...baseMarketConfig,
       ...synthethicMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(75_000, 18),
@@ -1266,7 +1244,6 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:LTC/USD"),
       virtualMarketId: hashString("SPOT:LTC/USD"),
 
-      ...baseMarketConfig,
       ...synthethicMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(75_000, 18),

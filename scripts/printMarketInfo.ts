@@ -100,94 +100,49 @@ async function main() {
   const marketInfoList = await reader.getMarketInfoList(dataStore.address, marketPricesList, 0, 100);
 
   const multicallReadParams = [];
+  const props = [];
   let propsCount = 0;
 
   for (const market of markets) {
-    multicallReadParams.push({
-      target: dataStore.address,
-      allowFailure: false,
-      callData: dataStore.interface.encodeFunctionData("getUint", [
-        keys.positionImpactPoolAmountKey(market.marketToken),
-      ]),
-    });
-
-    multicallReadParams.push({
-      target: dataStore.address,
-      allowFailure: false,
-      callData: dataStore.interface.encodeFunctionData("getUint", [
-        keys.swapImpactPoolAmountKey(market.marketToken, market.longToken),
-      ]),
-    });
-
-    multicallReadParams.push({
-      target: dataStore.address,
-      allowFailure: false,
-      callData: dataStore.interface.encodeFunctionData("getUint", [
-        keys.swapImpactPoolAmountKey(market.marketToken, market.shortToken),
-      ]),
-    });
-
-    multicallReadParams.push({
-      target: dataStore.address,
-      allowFailure: false,
-      callData: dataStore.interface.encodeFunctionData("getUint", [
-        keys.positionImpactPoolDistributionRateKey(market.marketToken),
-      ]),
-    });
-
-    multicallReadParams.push({
-      target: dataStore.address,
-      allowFailure: false,
-      callData: dataStore.interface.encodeFunctionData("getUint", [
-        keys.minPositionImpactPoolAmountKey(market.marketToken),
-      ]),
-    });
-
-    multicallReadParams.push({
-      target: dataStore.address,
-      allowFailure: false,
-      callData: dataStore.interface.encodeFunctionData("getInt", [
-        keys.savedFundingFactorPerSecondKey(market.marketToken),
-      ]),
-    });
-
-    multicallReadParams.push({
-      target: dataStore.address,
-      allowFailure: false,
-      callData: dataStore.interface.encodeFunctionData("getUint", [
-        keys.fundingIncreaseFactorPerSecondKey(market.marketToken),
-      ]),
-    });
-
-    multicallReadParams.push({
-      target: dataStore.address,
-      allowFailure: false,
-      callData: dataStore.interface.encodeFunctionData("getUint", [
-        keys.fundingDecreaseFactorPerSecondKey(market.marketToken),
-      ]),
-    });
-
-    multicallReadParams.push({
-      target: dataStore.address,
-      allowFailure: false,
-      callData: dataStore.interface.encodeFunctionData("getUint", [keys.fundingUpdatedAtKey(market.marketToken)]),
-    });
-
-    multicallReadParams.push({
-      target: dataStore.address,
-      allowFailure: false,
-      callData: dataStore.interface.encodeFunctionData("getUint", [
-        keys.minFundingFactorPerSecondKey(market.marketToken),
-      ]),
-    });
-
-    multicallReadParams.push({
-      target: dataStore.address,
-      allowFailure: false,
-      callData: dataStore.interface.encodeFunctionData("getUint", [
-        keys.maxFundingFactorPerSecondKey(market.marketToken),
-      ]),
-    });
+    for (const [prop, key] of [
+      ["positionImpactPoolAmount", keys.positionImpactPoolAmountKey(market.marketToken)],
+      ["swapImpactPoolAmountLong", keys.swapImpactPoolAmountKey(market.marketToken, market.longToken)],
+      ["swapImpactPoolAmountShort", keys.swapImpactPoolAmountKey(market.marketToken, market.shortToken)],
+      ["positionImpactPoolDistributionRate", keys.positionImpactPoolDistributionRateKey(market.marketToken)],
+      ["minPositionImpactPoolAmount", keys.minPositionImpactPoolAmountKey(market.marketToken)],
+      ["savedFundingFactorPerSecond", keys.savedFundingFactorPerSecondKey(market.marketToken)],
+      ["fundingIncreaseFactorPerSecond", keys.fundingIncreaseFactorPerSecondKey(market.marketToken)],
+      ["fundingDecreaseFactorPerSecond", keys.fundingDecreaseFactorPerSecondKey(market.marketToken)],
+      ["fundingUpdatedAt", keys.fundingUpdatedAtKey(market.marketToken)],
+      ["minFundingFactorPerSecond", keys.minFundingFactorPerSecondKey(market.marketToken)],
+      ["maxFundingFactorPerSecond", keys.maxFundingFactorPerSecondKey(market.marketToken)],
+      ["maxPnlFactorForTradersLong", keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_TRADERS, market.marketToken, true)],
+      ["maxPnlFactorForTradersShort", keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_TRADERS, market.marketToken, false)],
+      ["maxPnlFactorForAdlLong", keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_ADL, market.marketToken, true)],
+      ["maxPnlFactorForAdlShort", keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_ADL, market.marketToken, false)],
+      ["maxPnlFactorForDepositsLong", keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_DEPOSITS, market.marketToken, true)],
+      [
+        "maxPnlFactorForDepositsShort",
+        keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_DEPOSITS, market.marketToken, false),
+      ],
+      [
+        "maxPnlFactorForWithdrawalsLong",
+        keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS, market.marketToken, true),
+      ],
+      [
+        "maxPnlFactorForWithdrawalsShort",
+        keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS, market.marketToken, false),
+      ],
+      ["minPnlFactorAfterAdlLong", keys.minPnlFactorAfterAdl(market.marketToken, true)],
+      ["minPnlFactorAfterAdlShort", keys.minPnlFactorAfterAdl(market.marketToken, false)],
+    ] as const) {
+      props.push(prop);
+      multicallReadParams.push({
+        target: dataStore.address,
+        allowFailure: false,
+        callData: dataStore.interface.encodeFunctionData("getUint", [key]),
+      });
+    }
 
     if (propsCount === 0) {
       propsCount = multicallReadParams.length;
@@ -197,6 +152,7 @@ async function main() {
   const multicallReadResult = await multicall.callStatic.aggregate3(multicallReadParams);
 
   const consoleData: any[] = [];
+  const consoleMaxPnlData: any[] = [];
 
   for (let i = 0; i < marketInfoList.length; i++) {
     const marketInfo = marketInfoList[i];
@@ -209,32 +165,24 @@ async function main() {
     const longTokenSymbol = addressToSymbol[marketInfo.market.longToken];
     const shortTokenSymbol = addressToSymbol[marketInfo.market.shortToken];
 
-    const positionImpactPoolAmount = bigNumberify(multicallReadResult[i * propsCount].returnData);
-    const swapImpactPoolAmountForLongToken = bigNumberify(multicallReadResult[i * propsCount + 1].returnData);
-    const swapImpactPoolAmountForShortToken = bigNumberify(multicallReadResult[i * propsCount + 2].returnData);
-    const positionImpactPoolDistributionRate = bigNumberify(multicallReadResult[i * propsCount + 3].returnData);
-    const minPositionImpactPoolAmount = bigNumberify(multicallReadResult[i * propsCount + 4].returnData);
-    const savedFundingFactorPerSecond = bigNumberify(
-      dataStore.interface.decodeFunctionResult("getInt", multicallReadResult[i * propsCount + 5].returnData).toString()
-    );
-    const fundingIncreaseFactorPerSecond = bigNumberify(multicallReadResult[i * propsCount + 6].returnData);
-    const fundingDecreaseFactorPerSecond = bigNumberify(multicallReadResult[i * propsCount + 7].returnData);
-    const fundingUpdatedAt = bigNumberify(multicallReadResult[i * propsCount + 8].returnData);
-    const minFundingFactorPerSecond = bigNumberify(multicallReadResult[i * propsCount + 9].returnData);
-    const maxFundingFactorPerSecond = bigNumberify(multicallReadResult[i * propsCount + 10].returnData);
+    const marketValues: any = {};
+
+    for (let j = 0; j < propsCount; j++) {
+      marketValues[props[j]] = bigNumberify(multicallReadResult[i * propsCount + j].returnData);
+    }
 
     const marketLabel = `${indexTokenSymbol || "spot"} ${longTokenSymbol}-${shortTokenSymbol}`;
 
     let data: any = {
       market: marketLabel,
       "swp impct pool l": formatAmount(
-        swapImpactPoolAmountForLongToken.mul(marketPrices.longTokenPrice.max),
+        marketValues.swapImpactPoolAmountLong.mul(marketPrices.longTokenPrice.max),
         30,
         0,
         true
       ),
       "swp impct pool s": formatAmount(
-        swapImpactPoolAmountForShortToken.mul(marketPrices.shortTokenPrice.max),
+        marketValues.swapImpactPoolAmountShort.mul(marketPrices.shortTokenPrice.max),
         30,
         0,
         true
@@ -244,32 +192,69 @@ async function main() {
     if (indexToken) {
       data = {
         ...data,
-        "impct pool": `${formatAmount(positionImpactPoolAmount, indexToken.decimals, 2, true)} ($${formatAmount(
-          positionImpactPoolAmount.mul(marketPrices.indexTokenPrice.max),
+        "impct pool": `${formatAmount(
+          marketValues.positionImpactPoolAmount,
+          indexToken.decimals,
+          2,
+          true
+        )} ($${formatAmount(
+          marketValues.positionImpactPoolAmount.mul(marketPrices.indexTokenPrice.max),
           30,
           0,
           true
         )})`,
         "impct distr": formatAmount(
-          bigNumberify(positionImpactPoolDistributionRate).mul(3600),
+          bigNumberify(marketValues.positionImpactPoolDistributionRate).mul(3600),
           indexToken.decimals + 30,
           6
         ),
-        "min impct pool": formatAmount(minPositionImpactPoolAmount, indexToken.decimals, 3, true),
+        "min impct pool": formatAmount(marketValues.minPositionImpactPoolAmount, indexToken.decimals, 3, true),
         "fund rate h": formatAmount(fundingFactorPerSecond.mul(3600), 30, 10),
-        "fund incr rate h": formatAmount(fundingIncreaseFactorPerSecond.mul(3600), 30, 10),
-        "fund decr rate h": formatAmount(fundingDecreaseFactorPerSecond.mul(3600), 30, 10),
-        "min fund rate h": formatAmount(minFundingFactorPerSecond.mul(3600), 30, 10),
-        "max fund rate h": formatAmount(maxFundingFactorPerSecond.mul(3600), 30, 10),
-        "saved fund h": formatAmount(savedFundingFactorPerSecond.mul(3600), 30, 10),
-        "fund updated": fundingUpdatedAt.toNumber(),
+        "fund incr rate h": formatAmount(marketValues.fundingIncreaseFactorPerSecond.mul(3600), 30, 10),
+        "fund decr rate h": formatAmount(marketValues.fundingDecreaseFactorPerSecond.mul(3600), 30, 10),
+        "min fund rate h": formatAmount(marketValues.minFundingFactorPerSecond.mul(3600), 30, 10),
+        "max fund rate h": formatAmount(marketValues.maxFundingFactorPerSecond.mul(3600), 30, 10),
+        "saved fund h": formatAmount(marketValues.savedFundingFactorPerSecond.mul(3600), 30, 10),
+        "fund updated": marketValues.fundingUpdatedAt.toNumber(),
       };
+
+      consoleMaxPnlData.push({
+        market: marketLabel,
+        traders: `${formatAmount(marketValues.maxPnlFactorForTradersLong, 30, 2)} / ${formatAmount(
+          marketValues.maxPnlFactorForTradersShort,
+          30,
+          2
+        )}`,
+        deposits: `${formatAmount(marketValues.maxPnlFactorForDepositsLong, 30, 2)} / ${formatAmount(
+          marketValues.maxPnlFactorForDepositsShort,
+          30,
+          2
+        )}`,
+        withdrawals: `${formatAmount(marketValues.maxPnlFactorForWithdrawalsLong, 30, 2)} / ${formatAmount(
+          marketValues.maxPnlFactorForWithdrawalsShort,
+          30,
+          2
+        )}`,
+        adl: `${formatAmount(marketValues.maxPnlFactorForAdlLong, 30, 2)} / ${formatAmount(
+          marketValues.maxPnlFactorForAdlShort,
+          30,
+          2
+        )}`,
+        minAfterAdl: `${formatAmount(marketValues.minPnlFactorAfterAdlLong, 30, 2)} / ${formatAmount(
+          marketValues.minPnlFactorAfterAdlShort,
+          30,
+          2
+        )}`,
+      });
     }
 
     consoleData.push(data);
   }
 
   console.table(consoleData);
+
+  console.log("Max pnl factors");
+  console.table(consoleMaxPnlData);
 }
 
 main()
