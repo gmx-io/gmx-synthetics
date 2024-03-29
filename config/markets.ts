@@ -1052,6 +1052,12 @@ const config: {
 
       ...baseMarketConfig,
 
+      reserveFactorLongs: percentageToFloat("105%"),
+      reserveFactorShorts: percentageToFloat("105%"),
+
+      openInterestReserveFactorLongs: percentageToFloat("100%"),
+      openInterestReserveFactorShorts: percentageToFloat("100%"),
+
       maxLongTokenPoolAmount: expandDecimals(350, 8),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
@@ -1078,8 +1084,9 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      borrowingFactorForLongs: decimalToFloat(1400, 11), // 0.000000018 * 90% max reserve, 40% per year
-      borrowingFactorForShorts: decimalToFloat(1400, 11),
+      // for OI reserve factor = 100%
+      borrowingFactorForLongs: decimalToFloat(1900, 11), // 0.000000019 * 100% max reserve, 60% per year
+      borrowingFactorForShorts: decimalToFloat(1900, 11),
     },
     {
       tokens: { indexToken: "WETH.e", longToken: "WETH.e", shortToken: "USDC" },
@@ -1087,6 +1094,12 @@ const config: {
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...baseMarketConfig,
+
+      reserveFactorLongs: percentageToFloat("105%"),
+      reserveFactorShorts: percentageToFloat("105%"),
+
+      openInterestReserveFactorLongs: percentageToFloat("100%"),
+      openInterestReserveFactorShorts: percentageToFloat("100%"),
 
       maxLongTokenPoolAmount: expandDecimals(5000, 18),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
@@ -1114,8 +1127,9 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      borrowingFactorForLongs: decimalToFloat(1400, 11), // 0.000000018 * 90% max reserve, 40% per year
-      borrowingFactorForShorts: decimalToFloat(1400, 11),
+      // for OI reserve factor = 100%
+      borrowingFactorForLongs: decimalToFloat(1900, 11), // 0.000000019 * 100% max reserve, 60% per year
+      borrowingFactorForShorts: decimalToFloat(1900, 11),
     },
     {
       tokens: { indexToken: "XRP", longToken: "WAVAX", shortToken: "USDC" },
@@ -1157,8 +1171,9 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      borrowingFactorForLongs: decimalToFloat(2000, 11), // 0.000000020 * 80% max reserve, ~50%
-      borrowingFactorForShorts: decimalToFloat(2000, 11),
+      // for OI reserve factor = 75%
+      borrowingFactorForLongs: decimalToFloat(2950, 11), // 0.0000000295 * 75% max reserve, ~70%
+      borrowingFactorForShorts: decimalToFloat(2950, 11),
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WAVAX", shortToken: "USDC" },
@@ -1200,8 +1215,9 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      borrowingFactorForLongs: decimalToFloat(2000, 11), // 0.000000020 * 80% max reserve, ~50%
-      borrowingFactorForShorts: decimalToFloat(2000, 11),
+      // for OI reserve factor = 75%
+      borrowingFactorForLongs: decimalToFloat(2950, 11), // 0.0000000295 * 75% max reserve, ~70%
+      borrowingFactorForShorts: decimalToFloat(2950, 11),
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
@@ -1209,6 +1225,12 @@ const config: {
       virtualMarketId: hashString("SPOT:SOL/USD"),
 
       ...baseMarketConfig,
+
+      reserveFactorLongs: percentageToFloat("105%"),
+      reserveFactorShorts: percentageToFloat("105%"),
+
+      openInterestReserveFactorLongs: percentageToFloat("100%"),
+      openInterestReserveFactorShorts: percentageToFloat("100%"),
 
       maxLongTokenPoolAmount: expandDecimals(50_000, 9),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
@@ -1236,8 +1258,9 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      borrowingFactorForLongs: decimalToFloat(1800, 11), // 0.000000018 * 90% max reserve, ~51% per year
-      borrowingFactorForShorts: decimalToFloat(1800, 11),
+      // for OI reserve factor = 100%
+      borrowingFactorForLongs: decimalToFloat(2220, 11), // 0.0000000222 * 100% max reserve, 70% per year
+      borrowingFactorForShorts: decimalToFloat(2220, 11),
     },
     {
       tokens: { indexToken: "LTC", longToken: "WAVAX", shortToken: "USDC" },
@@ -1279,8 +1302,9 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      borrowingFactorForLongs: decimalToFloat(2000, 11), // 0.000000020 * 80% max reserve, ~50%
-      borrowingFactorForShorts: decimalToFloat(2000, 11),
+      // for OI reserve factor = 75%
+      borrowingFactorForLongs: decimalToFloat(2950, 11), // 0.0000000295 * 75% max reserve, ~70%
+      borrowingFactorForShorts: decimalToFloat(2950, 11),
     },
     {
       tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" },
@@ -1288,6 +1312,12 @@ const config: {
       virtualMarketId: hashString("SPOT:AVAX/USD"),
 
       ...baseMarketConfig,
+
+      reserveFactorLongs: percentageToFloat("105%"),
+      reserveFactorShorts: percentageToFloat("105%"),
+
+      openInterestReserveFactorLongs: percentageToFloat("100%"),
+      openInterestReserveFactorShorts: percentageToFloat("100%"),
 
       maxLongTokenPoolAmount: expandDecimals(271_600, 18),
       maxShortTokenPoolAmount: expandDecimals(11_000_000, 6),
@@ -1318,8 +1348,9 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      borrowingFactorForLongs: decimalToFloat(1800, 11), // 0.000000018 * 90% max reserve, 51% per year
-      borrowingFactorForShorts: decimalToFloat(1800, 11),
+      // for OI reserve factor = 100%
+      borrowingFactorForLongs: decimalToFloat(2220, 11), // 0.0000000222 * 100% max reserve, 70% per year
+      borrowingFactorForShorts: decimalToFloat(2220, 11),
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDT.e" },
