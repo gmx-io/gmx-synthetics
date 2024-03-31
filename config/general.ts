@@ -96,6 +96,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       requestExpirationBlockAge: 150, // about 5 minutes assuming 1 block per 2 seconds
     },
     arbitrum: {
+      maxCallbackGasLimit: 2_500_000,
       requestExpirationBlockAge: 1200, // about 5 minutes assuming 4 blocks per second
       estimatedGasFeeBaseAmount: false,
       executionGasFeeBaseAmount: false,
