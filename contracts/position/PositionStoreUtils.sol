@@ -27,6 +27,8 @@ library PositionStoreUtils {
     bytes32 public constant SHORT_TOKEN_CLAIMABLE_FUNDING_AMOUNT_PER_SIZE = keccak256(abi.encode("SHORT_TOKEN_CLAIMABLE_FUNDING_AMOUNT_PER_SIZE"));
     bytes32 public constant INCREASED_AT_BLOCK = keccak256(abi.encode("INCREASED_AT_BLOCK"));
     bytes32 public constant DECREASED_AT_BLOCK = keccak256(abi.encode("DECREASED_AT_BLOCK"));
+    bytes32 public constant INCREASED_AT_TIME = keccak256(abi.encode("INCREASED_AT_TIME"));
+    bytes32 public constant DECREASED_AT_TIME = keccak256(abi.encode("DECREASED_AT_TIME"));
 
     bytes32 public constant IS_LONG = keccak256(abi.encode("IS_LONG"));
 
@@ -82,6 +84,14 @@ library PositionStoreUtils {
 
         position.setDecreasedAtBlock(dataStore.getUint(
             keccak256(abi.encode(key, DECREASED_AT_BLOCK))
+        ));
+
+        position.setIncreasedAtTime(dataStore.getUint(
+            keccak256(abi.encode(key, INCREASED_AT_TIME))
+        ));
+
+        position.setDecreasedAtTime(dataStore.getUint(
+            keccak256(abi.encode(key, DECREASED_AT_TIME))
         ));
 
         position.setIsLong(dataStore.getBool(
@@ -162,6 +172,16 @@ library PositionStoreUtils {
             position.decreasedAtBlock()
         );
 
+        dataStore.setUint(
+            keccak256(abi.encode(key, INCREASED_AT_TIME)),
+            position.increasedAtTime()
+        );
+
+        dataStore.setUint(
+            keccak256(abi.encode(key, DECREASED_AT_TIME)),
+            position.decreasedAtTime()
+        );
+
         dataStore.setBool(
             keccak256(abi.encode(key, IS_LONG)),
             position.isLong()
@@ -229,6 +249,14 @@ library PositionStoreUtils {
 
         dataStore.removeUint(
             keccak256(abi.encode(key, DECREASED_AT_BLOCK))
+        );
+
+        dataStore.removeUint(
+            keccak256(abi.encode(key, INCREASED_AT_TIME))
+        );
+
+        dataStore.removeUint(
+            keccak256(abi.encode(key, DECREASED_AT_TIME))
         );
 
         dataStore.removeBool(

@@ -16,8 +16,6 @@ contract AdlHandler is BaseOrderHandler {
     // stack too deep errors
     struct ExecuteAdlCache {
         uint256 startingGas;
-        uint256[] minOracleBlockNumbers;
-        uint256[] maxOracleBlockNumbers;
         bytes32 key;
         bool shouldAllowAdl;
         uint256 maxPnlFactorForAdl;
@@ -55,28 +53,14 @@ contract AdlHandler is BaseOrderHandler {
     ) external
         globalNonReentrant
         onlyAdlKeeper
-        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+        withOraclePrices(oracleParams)
     {
-        OracleUtils.RealtimeFeedReport[] memory reports = oracle.validateRealtimeFeeds(
-            dataStore,
-            oracleParams.realtimeFeedTokens,
-            oracleParams.realtimeFeedData
-        );
-
-        uint256[] memory maxOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedMaxOracleBlockNumbers,
-            oracleParams.tokens.length,
-            reports,
-            OracleUtils.OracleBlockNumberType.Max
-        );
-
         AdlUtils.updateAdlState(
             dataStore,
             eventEmitter,
             oracle,
             market,
-            isLong,
-            maxOracleBlockNumbers
+            isLong
         );
     }
 
@@ -104,37 +88,17 @@ contract AdlHandler is BaseOrderHandler {
     ) external
         globalNonReentrant
         onlyAdlKeeper
-        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+        withOraclePrices(oracleParams)
     {
         ExecuteAdlCache memory cache;
 
         cache.startingGas = gasleft();
 
-        OracleUtils.RealtimeFeedReport[] memory reports = oracle.validateRealtimeFeeds(
-            dataStore,
-            oracleParams.realtimeFeedTokens,
-            oracleParams.realtimeFeedData
-        );
-
-        cache.minOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedMinOracleBlockNumbers,
-            oracleParams.tokens.length,
-            reports,
-            OracleUtils.OracleBlockNumberType.Min
-        );
-
-        cache.maxOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedMaxOracleBlockNumbers,
-            oracleParams.tokens.length,
-            reports,
-            OracleUtils.OracleBlockNumberType.Max
-        );
-
         AdlUtils.validateAdl(
             dataStore,
+            oracle,
             market,
-            isLong,
-            cache.maxOracleBlockNumbers
+            isLong
         );
 
         (cache.shouldAllowAdl, cache.pnlToPoolFactor, cache.maxPnlFactorForAdl) = MarketUtils.isPnlFactorExceeded(
@@ -158,7 +122,8 @@ contract AdlHandler is BaseOrderHandler {
                 collateralToken,
                 isLong,
                 sizeDeltaUsd,
-                cache.minOracleBlockNumbers[0]
+                Chain.currentBlockNumber(), // updatedAtBlock
+                oracle.minTimestamp()
             )
         );
 
@@ -167,7 +132,6 @@ contract AdlHandler is BaseOrderHandler {
         BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(
             cache.key,
             order,
-            oracleParams,
             msg.sender,
             cache.startingGas,
             Order.SecondaryOrderType.Adl

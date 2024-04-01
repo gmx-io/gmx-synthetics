@@ -29,7 +29,6 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
 
     EventEmitter public immutable eventEmitter;
     WithdrawalVault public immutable withdrawalVault;
-    Oracle public immutable oracle;
 
     constructor(
         RoleStore _roleStore,
@@ -37,10 +36,9 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
         EventEmitter _eventEmitter,
         WithdrawalVault _withdrawalVault,
         Oracle _oracle
-    ) RoleModule(_roleStore) GlobalReentrancyGuard(_dataStore) {
+    ) RoleModule(_roleStore) OracleModule(_oracle) GlobalReentrancyGuard(_dataStore) {
         eventEmitter = _eventEmitter;
         withdrawalVault = _withdrawalVault;
-        oracle = _oracle;
     }
 
     // @dev creates a withdrawal in the withdrawal store
@@ -99,7 +97,7 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
         external
         globalNonReentrant
         onlyOrderKeeper
-        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+        withOraclePrices(oracleParams)
     {
         uint256 startingGas = gasleft();
 
@@ -112,7 +110,6 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
         try this._executeWithdrawal{ gas: executionGas }(
             key,
             withdrawal,
-            oracleParams,
             msg.sender
         ) {
         } catch (bytes memory reasonBytes) {
@@ -133,17 +130,14 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
     ) external
         override
         onlyController
-        withSimulatedOraclePrices(oracle, params)
+        withSimulatedOraclePrices(params)
         globalNonReentrant
     {
-
-        OracleUtils.SetPricesParams memory oracleParams;
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
 
         this._executeWithdrawal(
             key,
             withdrawal,
-            oracleParams,
             msg.sender
         );
     }
@@ -155,32 +149,11 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
     function _executeWithdrawal(
         bytes32 key,
         Withdrawal.Props memory withdrawal,
-        OracleUtils.SetPricesParams memory oracleParams,
         address keeper
     ) external onlySelf {
         uint256 startingGas = gasleft();
 
         FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureDisabledKey(address(this)));
-
-        OracleUtils.RealtimeFeedReport[] memory reports = oracle.validateRealtimeFeeds(
-            dataStore,
-            oracleParams.realtimeFeedTokens,
-            oracleParams.realtimeFeedData
-        );
-
-        uint256[] memory minOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedMinOracleBlockNumbers,
-            oracleParams.tokens.length,
-            reports,
-            OracleUtils.OracleBlockNumberType.Min
-        );
-
-        uint256[] memory maxOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedMaxOracleBlockNumbers,
-            oracleParams.tokens.length,
-            reports,
-            OracleUtils.OracleBlockNumberType.Max
-        );
 
         ExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params = ExecuteWithdrawalUtils.ExecuteWithdrawalParams(
             dataStore,
@@ -188,8 +161,6 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
             withdrawalVault,
             oracle,
             key,
-            minOracleBlockNumbers,
-            maxOracleBlockNumbers,
             keeper,
             startingGas
         );

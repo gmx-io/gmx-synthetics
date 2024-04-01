@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+pragma solidity ^0.8.0;
 
 import "../utils/Array.sol";
 import "../utils/Bits.sol";
@@ -31,10 +30,12 @@ library OracleUtils {
     struct SimulatePricesParams {
         address[] primaryTokens;
         Price.Props[] primaryPrices;
+        uint256 minTimestamp;
+        uint256 maxTimestamp;
     }
 
     function isOracleError(bytes4 errorSelector) internal pure returns (bool) {
-        if (isOracleBlockTimestampError(errorSelector)) {
+        if (isOracleTimestampError(errorSelector)) {
             return true;
         }
 
@@ -53,7 +54,7 @@ library OracleUtils {
         return false;
     }
 
-    function isOracleBlockTimestampError(bytes4 errorSelector) internal pure returns (bool) {
+    function isOracleTimestampError(bytes4 errorSelector) internal pure returns (bool) {
         if (errorSelector == Errors.OracleTimestampsAreSmallerThanRequired.selector) {
             return true;
         }

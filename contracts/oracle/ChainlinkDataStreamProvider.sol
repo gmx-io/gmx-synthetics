@@ -19,8 +19,9 @@ contract ChainlinkDataStreamProvider is IOracleProvider {
     }
 
     function getOraclePrice(
+        DataStore dataStore,
         address token,
-        bytes data
+        bytes memory data
     ) external onlyOracle returns (OracleUtils.ValidatedPrice memory) {
 
     }

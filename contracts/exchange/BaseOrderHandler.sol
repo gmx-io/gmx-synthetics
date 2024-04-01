@@ -35,7 +35,6 @@ contract BaseOrderHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
     EventEmitter public immutable eventEmitter;
     OrderVault public immutable orderVault;
     SwapHandler public immutable swapHandler;
-    Oracle public immutable oracle;
     IReferralStorage public immutable referralStorage;
 
     constructor(
@@ -46,10 +45,9 @@ contract BaseOrderHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         Oracle _oracle,
         SwapHandler _swapHandler,
         IReferralStorage _referralStorage
-    ) RoleModule(_roleStore) GlobalReentrancyGuard(_dataStore) {
+    ) RoleModule(_roleStore) OracleModule(_oracle) GlobalReentrancyGuard(_dataStore) {
         eventEmitter = _eventEmitter;
         orderVault = _orderVault;
-        oracle = _oracle;
         swapHandler = _swapHandler;
         referralStorage = _referralStorage;
     }
@@ -59,11 +57,10 @@ contract BaseOrderHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
     function _getExecuteOrderParams(
         bytes32 key,
         Order.Props memory order,
-        OracleUtils.SetPricesParams memory oracleParams,
         address keeper,
         uint256 startingGas,
         Order.SecondaryOrderType secondaryOrderType
-    ) internal returns (BaseOrderUtils.ExecuteOrderParams memory) {
+    ) internal view returns (BaseOrderUtils.ExecuteOrderParams memory) {
         BaseOrderUtils.ExecuteOrderParams memory params;
 
         params.key = key;
@@ -80,25 +77,8 @@ contract BaseOrderHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         params.contracts.swapHandler = swapHandler;
         params.contracts.referralStorage = referralStorage;
 
-        OracleUtils.RealtimeFeedReport[] memory reports = oracle.validateRealtimeFeeds(
-            dataStore,
-            oracleParams.realtimeFeedTokens,
-            oracleParams.realtimeFeedData
-        );
-
-        params.minOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedMinOracleBlockNumbers,
-            oracleParams.tokens.length,
-            reports,
-            OracleUtils.OracleBlockNumberType.Min
-        );
-
-        params.maxOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedMaxOracleBlockNumbers,
-            oracleParams.tokens.length,
-            reports,
-            OracleUtils.OracleBlockNumberType.Max
-        );
+        params.minOracleTimestamp = oracle.minTimestamp();
+        params.maxOracleTimestamp = oracle.maxTimestamp();
 
         if (params.order.market() != address(0)) {
             params.market = MarketUtils.getEnabledMarket(params.contracts.dataStore, params.order.market());

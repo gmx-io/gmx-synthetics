@@ -57,6 +57,7 @@ library AdlUtils {
         bool isLong;
         uint256 sizeDeltaUsd;
         uint256 updatedAtBlock;
+        uint256 updatedAtTime;
     }
 
     // @dev Multiple positions may need to be reduced to ensure that the pending
@@ -83,19 +84,17 @@ library AdlUtils {
     // @param oracle Oracle
     // @param market address of the market to check
     // @param isLong indicates whether to check the long or short side of the market
-    // @param maxOracleBlockNumbers the oracle block numbers for the prices stored in the oracle
     function updateAdlState(
         DataStore dataStore,
         EventEmitter eventEmitter,
         Oracle oracle,
         address market,
-        bool isLong,
-        uint256[] memory maxOracleBlockNumbers
+        bool isLong
     ) external {
-        uint256 latestAdlBlock = getLatestAdlBlock(dataStore, market, isLong);
+        uint256 latestAdlTime = getLatestAdlTime(dataStore, market, isLong);
 
-        if (!maxOracleBlockNumbers.areGreaterThanOrEqualTo(latestAdlBlock)) {
-            revert Errors.OracleBlockNumbersAreSmallerThanRequired(maxOracleBlockNumbers, latestAdlBlock);
+        if (oracle.maxTimestamp() < latestAdlTime) {
+            revert Errors.OracleTimestampsAreSmallerThanRequired(oracle.maxTimestamp(), latestAdlTime);
         }
 
         Market.Props memory _market = MarketUtils.getEnabledMarket(dataStore, market);
@@ -113,14 +112,15 @@ library AdlUtils {
         );
 
         setIsAdlEnabled(dataStore, market, isLong, shouldEnableAdl);
-        // the latest ADL block is always updated, an ADL keeper could continually
-        // cause the latest ADL block to be updated and prevent ADL orders
-        // from being executed, however, this may be preferrable over a case
-        // where stale prices could be used by ADL keepers to execute orders
-        // as such updating of the ADL block is allowed and it is expected
-        // that ADL keepers will keep this block updated so that latest prices
+        // since the latest ADL at is always updated, an ADL keeper could
+        // continually cause the latest ADL time to be updated and prevent
+        // ADL orders from being executed, however, this may be preferrable
+        // over a case where stale prices could be used by ADL keepers
+        // to execute orders
+         // as such updating of the ADL time is allowed and it is expected
+        // that ADL keepers will keep this time updated so that latest prices
         // will be used for ADL
-        setLatestAdlBlock(dataStore, market, isLong, Chain.currentBlockNumber());
+        setLatestAdlAt(dataStore, market, isLong, Chain.currentTimestamp());
 
         emitAdlStateUpdated(eventEmitter, market, isLong, pnlToPoolFactor, maxPnlFactor, shouldEnableAdl);
     }
@@ -175,7 +175,8 @@ library AdlUtils {
             0, // executionFee
             params.dataStore.getUint(Keys.MAX_CALLBACK_GAS_LIMIT), // callbackGasLimit
             0, // minOutputAmount
-            params.updatedAtBlock // updatedAtBlock
+            params.updatedAtBlock, // updatedAtBlock
+            params.updatedAtTime // updatedAtTime
         );
 
         Order.Flags memory flags = Order.Flags(
@@ -201,47 +202,47 @@ library AdlUtils {
     // @dev validate if the requested ADL can be executed
     //
     // @param dataStore DataStore
+    // @param oracle Oracle
     // @param market address of the market to check
     // @param isLong indicates whether to check the long or short side of the market
-    // @param maxOracleBlockNumbers the oracle block numbers for the prices stored in the oracle
     function validateAdl(
         DataStore dataStore,
+        Oracle oracle,
         address market,
-        bool isLong,
-        uint256[] memory maxOracleBlockNumbers
+        bool isLong
     ) external view {
         bool isAdlEnabled = AdlUtils.getIsAdlEnabled(dataStore, market, isLong);
         if (!isAdlEnabled) {
             revert Errors.AdlNotEnabled();
         }
 
-        uint256 latestAdlBlock = AdlUtils.getLatestAdlBlock(dataStore, market, isLong);
-        if (!maxOracleBlockNumbers.areGreaterThanOrEqualTo(latestAdlBlock)) {
-            revert Errors.OracleBlockNumbersAreSmallerThanRequired(maxOracleBlockNumbers, latestAdlBlock);
+        uint256 latestAdlTime = AdlUtils.getLatestAdlTime(dataStore, market, isLong);
+        if (oracle.maxTimestamp() < latestAdlTime) {
+            revert Errors.OracleTimestampsAreSmallerThanRequired(oracle.maxTimestamp(), latestAdlTime);
         }
     }
 
-    // @dev get the latest block at which the ADL flag was updated
+    // @dev get the latest time at which the ADL flag was updated
     //
     // @param dataStore DataStore
     // @param market address of the market to check
     // @param isLong indicates whether to check the long or short side of the market
     //
-    // @return the latest block at which the ADL flag was updated
-    function getLatestAdlBlock(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.latestAdlBlockKey(market, isLong));
+    // @return the latest time at which the ADL flag was updated
+    function getLatestAdlTime(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
+        return dataStore.getUint(Keys.latestAdlAtKey(market, isLong));
     }
 
-    // @dev set the latest block at which the ADL flag was updated
+    // @dev set the latest time at which the ADL flag was updated
     //
     // @param dataStore DataStore
     // @param market address of the market to check
     // @param isLong indicates whether to check the long or short side of the market
-    // @param value the latest block value
+    // @param value the latest time value
     //
-    // @return the latest block value
-    function setLatestAdlBlock(DataStore dataStore, address market, bool isLong, uint256 value) internal returns (uint256) {
-        return dataStore.setUint(Keys.latestAdlBlockKey(market, isLong), value);
+    // @return the latest time value
+    function setLatestAdlAt(DataStore dataStore, address market, bool isLong, uint256 value) internal returns (uint256) {
+        return dataStore.setUint(Keys.latestAdlAtKey(market, isLong), value);
     }
 
     // @dev get whether ADL is enabled

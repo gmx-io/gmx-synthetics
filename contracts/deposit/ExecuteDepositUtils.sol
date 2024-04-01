@@ -42,22 +42,12 @@ library ExecuteDepositUtils {
 
     // @dev ExecuteDepositParams struct used in executeDeposit to avoid stack
     // too deep errors
-    //
-    // @param dataStore DataStore
-    // @param eventEmitter EventEmitter
-    // @param oracle Oracle
-    // @param key the key of the deposit to execute
-    // @param oracleBlockNumbers the oracle block numbers for the prices in oracle
-    // @param keeper the address of the keeper executing the deposit
-    // @param startingGas the starting amount of gas
     struct ExecuteDepositParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
         DepositVault depositVault;
         Oracle oracle;
         bytes32 key;
-        uint256[] minOracleBlockNumbers;
-        uint256[] maxOracleBlockNumbers;
         address keeper;
         uint256 startingGas;
     }
@@ -115,11 +105,12 @@ library ExecuteDepositUtils {
             revert Errors.EmptyDeposit();
         }
 
-        OracleUtils.validateBlockNumberWithinRange(
-            params.minOracleBlockNumbers,
-            params.maxOracleBlockNumbers,
-            deposit.updatedAtBlock()
-        );
+        if (params.oracle.minTimestamp() < deposit.updatedAtTime()) {
+            revert Errors.OracleTimestampsAreSmallerThanRequired(
+                params.oracle.minTimestamp(),
+                deposit.updatedAtTime()
+            );
+        }
 
         Market.Props memory market = MarketUtils.getEnabledMarket(params.dataStore, deposit.market());
 

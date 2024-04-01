@@ -36,25 +36,12 @@ library ExecuteWithdrawalUtils {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
-    /**
-     * @param dataStore The data store where withdrawal data is stored.
-     * @param eventEmitter The event emitter that is used to emit events.
-     * @param withdrawalVault WithdrawalVault.
-     * @param oracle The oracle that provides market prices.
-     * @param key The unique identifier of the withdrawal to execute.
-     * @param minOracleBlockNumbers The min block numbers for the oracle prices.
-     * @param maxOracleBlockNumbers The max block numbers for the oracle prices.
-     * @param keeper The keeper that is executing the withdrawal.
-     * @param startingGas The starting gas limit for the withdrawal execution.
-     */
     struct ExecuteWithdrawalParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
         WithdrawalVault withdrawalVault;
         Oracle oracle;
         bytes32 key;
-        uint256[] minOracleBlockNumbers;
-        uint256[] maxOracleBlockNumbers;
         address keeper;
         uint256 startingGas;
     }
@@ -100,11 +87,12 @@ library ExecuteWithdrawalUtils {
             revert Errors.EmptyWithdrawalAmount();
         }
 
-        OracleUtils.validateBlockNumberWithinRange(
-            params.minOracleBlockNumbers,
-            params.maxOracleBlockNumbers,
-            withdrawal.updatedAtBlock()
-        );
+        if (params.oracle.minTimestamp() < withdrawal.updatedAtTime()) {
+            revert Errors.OracleTimestampsAreSmallerThanRequired(
+                params.oracle.minTimestamp(),
+                withdrawal.updatedAtTime()
+            );
+        }
 
         MarketUtils.distributePositionImpactPool(
             params.dataStore,

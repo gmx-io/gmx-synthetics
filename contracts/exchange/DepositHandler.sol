@@ -28,7 +28,6 @@ contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, O
 
     EventEmitter public immutable eventEmitter;
     DepositVault public immutable depositVault;
-    Oracle public immutable oracle;
 
     constructor(
         RoleStore _roleStore,
@@ -36,10 +35,9 @@ contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, O
         EventEmitter _eventEmitter,
         DepositVault _depositVault,
         Oracle _oracle
-    ) RoleModule(_roleStore) GlobalReentrancyGuard(_dataStore) {
+    ) RoleModule(_roleStore) OracleModule(_oracle) GlobalReentrancyGuard(_dataStore) {
         eventEmitter = _eventEmitter;
         depositVault = _depositVault;
-        oracle = _oracle;
     }
 
     // @dev creates a deposit in the deposit store
@@ -97,7 +95,7 @@ contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, O
     ) external
         globalNonReentrant
         onlyOrderKeeper
-        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+        withOraclePrices(oracleParams)
     {
         uint256 startingGas = gasleft();
 
@@ -110,7 +108,6 @@ contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, O
         try this._executeDeposit{ gas: executionGas }(
             key,
             deposit,
-            oracleParams,
             msg.sender
         ) {
         } catch (bytes memory reasonBytes) {
@@ -131,16 +128,14 @@ contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, O
     ) external
         override
         onlyController
-        withSimulatedOraclePrices(oracle, params)
+        withSimulatedOraclePrices(params)
         globalNonReentrant
     {
-        OracleUtils.SetPricesParams memory oracleParams;
         Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
 
         this._executeDeposit(
             key,
             deposit,
-            oracleParams,
             msg.sender
         );
     }
@@ -152,32 +147,11 @@ contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, O
     function _executeDeposit(
         bytes32 key,
         Deposit.Props memory deposit,
-        OracleUtils.SetPricesParams memory oracleParams,
         address keeper
     ) external onlySelf {
         uint256 startingGas = gasleft();
 
         FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureDisabledKey(address(this)));
-
-        OracleUtils.RealtimeFeedReport[] memory reports = oracle.validateRealtimeFeeds(
-            dataStore,
-            oracleParams.realtimeFeedTokens,
-            oracleParams.realtimeFeedData
-        );
-
-        uint256[] memory minOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedMinOracleBlockNumbers,
-            oracleParams.tokens.length,
-            reports,
-            OracleUtils.OracleBlockNumberType.Min
-        );
-
-        uint256[] memory maxOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedMaxOracleBlockNumbers,
-            oracleParams.tokens.length,
-            reports,
-            OracleUtils.OracleBlockNumberType.Max
-        );
 
         ExecuteDepositUtils.ExecuteDepositParams memory params = ExecuteDepositUtils.ExecuteDepositParams(
             dataStore,
@@ -185,8 +159,6 @@ contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, O
             depositVault,
             oracle,
             key,
-            minOracleBlockNumbers,
-            maxOracleBlockNumbers,
             keeper,
             startingGas
         );

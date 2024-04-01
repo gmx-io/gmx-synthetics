@@ -111,6 +111,7 @@ library Order {
         uint256 callbackGasLimit;
         uint256 minOutputAmount;
         uint256 updatedAtBlock;
+        uint256 updatedAtTime;
     }
 
     // @param isLong whether the order is for a long or short
@@ -353,6 +354,20 @@ library Order {
     // @param value the value to set to
     function setUpdatedAtBlock(Props memory props, uint256 value) internal pure {
         props.numbers.updatedAtBlock = value;
+    }
+
+    // @dev the order updatedAtTime
+    // @param props Props
+    // @return the order updatedAtTime
+    function updatedAtTime(Props memory props) internal pure returns (uint256) {
+        return props.numbers.updatedAtTime;
+    }
+
+    // @dev set the order updatedAtTime
+    // @param props Props
+    // @param value the value to set to
+    function setUpdatedAtTime(Props memory props, uint256 value) internal pure {
+        props.numbers.updatedAtTime = value;
     }
 
     // @dev whether the order is for a long or short

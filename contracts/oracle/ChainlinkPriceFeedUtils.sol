@@ -2,6 +2,13 @@
 
 pragma solidity ^0.8.0;
 
+import "../chain/Chain.sol";
+import "../data/DataStore.sol";
+import "../data/Keys.sol";
+import "../utils/Precision.sol";
+
+import "./IPriceFeed.sol";
+
 // @title ChainlinkPriceFeedProviderUtils
 // @dev Library for Chainlink price feed
 library ChainlinkPriceFeedUtils {

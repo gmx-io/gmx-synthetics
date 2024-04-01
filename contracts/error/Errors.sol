@@ -127,6 +127,7 @@ library Errors {
     error UnexpectedPoolValue(int256 poolValue);
 
     // Oracle errors
+    error EmptyValidatedPrices();
     error GmEmptySigner(uint256 signerIndex);
     error InvalidOracleSetPricesProvidersParam(uint256 tokensLength, uint256 providersLength);
     error InvalidOracleSetPricesDataParam(uint256 tokensLength, uint256 dataLength);
@@ -178,7 +179,7 @@ library Errors {
 
     error EmptyPrimaryPrice(address token);
 
-    error OracleTimestampsAreSmallerThanRequired(uint256[] oracleTimestamps, uint256 expectedTimestamp);
+    error OracleTimestampsAreSmallerThanRequired(uint256 maxOracleTimestamp, uint256 expectedTimestamp);
 
     // BaseOrderUtils errors
     error EmptyOrder();

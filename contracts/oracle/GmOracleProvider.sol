@@ -12,9 +12,10 @@ import "./OracleUtils.sol";
 import "./IPriceFeed.sol";
 import "./IRealtimeFeedVerifier.sol";
 import "../price/Price.sol";
+import "./GmOracleUtils.sol";
+import "./IOracleProvider.sol";
 
 import "../chain/Chain.sol";
-import "../data/DataStore.sol";
 import "../data/Keys.sol";
 import "../event/EventEmitter.sol";
 import "../event/EventUtils.sol";
@@ -31,20 +32,9 @@ import "../utils/Uint256Mask.sol";
 // may not work with zero / negative prices
 // as a result, zero / negative prices are considered empty / invalid
 // A market may need to be manually settled in this case
-contract GmOracleProvider is RoleModule {
+contract GmOracleProvider is RoleModule, IOracleProvider {
     using Price for Price.Props;
-
-    struct GetOraclePriceCache {
-        bytes32 feedId;
-        uint256 priceIndex;
-        uint256 signatureIndex;
-        uint256 minPriceIndex;
-        uint256 maxPriceIndex;
-        uint256[] minPrices;
-        uint256[] maxPrices;
-        Uint256Mask.Mask minPriceIndexMask;
-        Uint256Mask.Mask maxPriceIndexMask;
-    }
+    using Uint256Mask for Uint256Mask.Mask;
 
     uint256 public constant SIGNER_INDEX_LENGTH = 16;
     // subtract 1 as the first slot is used to store number of signers
@@ -140,10 +130,10 @@ contract GmOracleProvider is RoleModule {
     // - USDC: 30 - 6 - 6 => 18
     // - DG: 30 - 18 - 11 => 1
     function getOraclePrice(
+        DataStore dataStore,
         address token,
-        bytes data
-    ) external view {
-        GetOraclePriceCache memory cache;
+        bytes memory data
+    ) external view returns (OracleUtils.ValidatedPrice memory) {
         GmOracleUtils.Report memory report = abi.decode(data, (GmOracleUtils.Report));
         address[] memory signers = _getSigners(dataStore, report.signerInfo);
 
@@ -162,12 +152,12 @@ contract GmOracleProvider is RoleModule {
 
             // validate that minPrices are sorted in ascending order
             if (report.minPrices[i - 1] > report.minPrices[i]) {
-                revert Errors.GmMinPricesNotSorted(report.token, report.minPrices[i], report.minPrices[i - 1]);
+                revert Errors.GmMinPricesNotSorted(token, report.minPrices[i], report.minPrices[i - 1]);
             }
 
             // validate that maxPrices are sorted in ascending order
             if (report.maxPrices[i - 1] > report.maxPrices[i]) {
-                revert Errors.GmMaxPricesNotSorted(report.token, report.maxPrices[i], report.maxPrices[i - 1]);
+                revert Errors.GmMaxPricesNotSorted(token, report.maxPrices[i], report.maxPrices[i - 1]);
             }
         }
 
@@ -179,9 +169,10 @@ contract GmOracleProvider is RoleModule {
                 revert Errors.InvalidGmSignerMinMaxPrice(minPrice, maxPrice);
             }
 
-            OracleUtils.validateSigner(
+            GmOracleUtils.validateSigner(
                 _getSalt(),
                 report,
+                token,
                 minPrice,
                 maxPrice,
                 tokenOracleType,
@@ -194,7 +185,7 @@ contract GmOracleProvider is RoleModule {
         uint256 medianMaxPrice = Array.getMedian(report.maxPrices) * report.precision;
 
         if (medianMinPrice == 0 || medianMaxPrice == 0) {
-            revert Errors.InvalidGmOraclePrice(report.token);
+            revert Errors.InvalidGmOraclePrice(token);
         }
 
         if (medianMinPrice > medianMaxPrice) {
@@ -202,20 +193,20 @@ contract GmOracleProvider is RoleModule {
         }
 
         return OracleUtils.ValidatedPrice({
-            token: report.token,
+            token: token,
             min: medianMinPrice,
             max: medianMaxPrice,
             timestamp: report.oracleTimestamp,
             provider: address(this)
-        })
+        });
     }
 
     function _getSigners(
         DataStore dataStore,
-        OracleUtils.SetPricesParams memory params
+        uint256 signerInfo
     ) internal view returns (address[] memory) {
         // first 16 bits of signer info contains the number of signers
-        address[] memory signers = new address[](params.signerInfo & Bits.BITMASK_16);
+        address[] memory signers = new address[](signerInfo & Bits.BITMASK_16);
 
         if (signers.length < dataStore.getUint(Keys.MIN_ORACLE_SIGNERS)) {
             revert Errors.GmMinOracleSigners(signers.length, dataStore.getUint(Keys.MIN_ORACLE_SIGNERS));
@@ -228,7 +219,7 @@ contract GmOracleProvider is RoleModule {
         Uint256Mask.Mask memory signerIndexMask;
 
         for (uint256 i; i < signers.length; i++) {
-            uint256 signerIndex = params.signerInfo >> (16 + 16 * i) & Bits.BITMASK_16;
+            uint256 signerIndex = signerInfo >> (16 + 16 * i) & Bits.BITMASK_16;
 
             if (signerIndex >= MAX_SIGNER_INDEX) {
                 revert Errors.GmMaxSignerIndex(signerIndex, MAX_SIGNER_INDEX);

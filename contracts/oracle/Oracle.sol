@@ -46,30 +46,33 @@ contract Oracle is RoleModule {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
+    DataStore public immutable dataStore;
+    EventEmitter public immutable eventEmitter;
+
     // tokensWithPrices stores the tokens with prices that have been set
     // this is used in clearAllPrices to help ensure that all token prices
     // set in setPrices are cleared after use
     EnumerableSet.AddressSet internal tokensWithPrices;
     mapping(address => Price.Props) public primaryPrices;
 
-    constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
+    uint256 public minTimestamp;
+    uint256 public maxTimestamp;
+
+    constructor(
+        RoleStore _roleStore,
+        DataStore _dataStore,
+        EventEmitter _eventEmitter
+    ) RoleModule(_roleStore) {
+        dataStore = _dataStore;
+        eventEmitter = _eventEmitter;
+    }
 
     function setPrices(
-        DataStore dataStore,
-        EventEmitter eventEmitter,
         OracleUtils.SetPricesParams memory params
     ) external onlyController {
-        if (tokensWithPrices.length() != 0) {
-            revert Errors.NonEmptyTokensWithPrices(tokensWithPrices.length());
-        }
+        OracleUtils.ValidatedPrice[] memory prices = _validatePrices(params);
 
-        ValidatedPrice[] memory validatedPrices = _validatePrices(dataStore, params);
-
-        _setPrices(
-            dataStore,
-            eventEmitter,
-            validatedPrices
-        );
+        _setPrices(prices);
     }
 
     // @dev set the primary price
@@ -79,6 +82,11 @@ contract Oracle is RoleModule {
         _setPrimaryPrice(token, price);
     }
 
+    function setTimestamps(uint256 _minTimestamp, uint256 _maxTimestamp) external onlyController {
+        minTimestamp = _minTimestamp;
+        maxTimestamp = _maxTimestamp;
+    }
+
     // @dev clear all prices
     function clearAllPrices() external onlyController {
         uint256 length = tokensWithPrices.length();
@@ -86,6 +94,9 @@ contract Oracle is RoleModule {
             address token = tokensWithPrices.at(0);
             _removePrimaryPrice(token);
         }
+
+        minTimestamp = 0;
+        maxTimestamp = 0;
     }
 
     // @dev get the length of tokensWithPrices
@@ -117,31 +128,44 @@ contract Oracle is RoleModule {
     }
 
     function validatePrices(
-        DataStore dataStore,
         OracleUtils.SetPricesParams memory params
-    ) external onlyController returns (ValidatedPrice[] memory) {
-        return _validatePrices(dataStore, params);
+    ) external onlyController returns (OracleUtils.ValidatedPrice[] memory) {
+        return _validatePrices(params);
     }
 
     // @dev validate and set prices
-    // @param dataStore DataStore
-    // @param eventEmitter EventEmitter
     // @param params OracleUtils.SetPricesParams
     function _setPrices(
-        DataStore dataStore,
-        EventEmitter eventEmitter,
-        ValidatedPrice[] memory validatePrices
-    ) internal returns (ValidatedPrice[] memory) {
-        for (uint256 i; i < validatedPrices.length; i++) {
-            ValidatedPrice memory validatedPrice = validatedPrices[i];
+        OracleUtils.ValidatedPrice[] memory prices
+    ) internal returns (OracleUtils.ValidatedPrice[] memory) {
+        if (tokensWithPrices.length() != 0) {
+            revert Errors.NonEmptyTokensWithPrices(tokensWithPrices.length());
+        }
+
+        if (prices.length == 0) {
+            revert Errors.EmptyValidatedPrices();
+        }
+
+        uint256 _minTimestamp = prices[0].timestamp;
+        uint256 _maxTimestamp = prices[0].timestamp;
+
+        for (uint256 i; i < prices.length; i++) {
+            OracleUtils.ValidatedPrice memory validatedPrice = prices[i];
 
             _setPrimaryPrice(validatedPrice.token, Price.Props(
                 validatedPrice.min,
                 validatedPrice.max
             ));
 
+            if (validatedPrice.timestamp < _minTimestamp) {
+                _minTimestamp = validatedPrice.timestamp;
+            }
+
+            if (validatedPrice.timestamp > _maxTimestamp) {
+                _maxTimestamp = validatedPrice.timestamp;
+            }
+
             _emitOraclePriceUpdated(
-                eventEmitter,
                 validatedPrice.token,
                 validatedPrice.min,
                 validatedPrice.max,
@@ -150,27 +174,29 @@ contract Oracle is RoleModule {
             );
         }
 
-        return validatedPrices;
+        minTimestamp = _minTimestamp;
+        maxTimestamp = _maxTimestamp;
+
+        return prices;
     }
 
     function _validatePrices(
-        DataStore dataStore,
         OracleUtils.SetPricesParams memory params
-    ) internal view returns (ValidatedPrice[] memory) {
+    ) internal returns (OracleUtils.ValidatedPrice[] memory) {
         if (params.tokens.length != params.providers.length) {
-            revert InvalidOracleSetPricesProvidersParam(params.tokens.length, params.providers.length);
+            revert Errors.InvalidOracleSetPricesProvidersParam(params.tokens.length, params.providers.length);
         }
 
         if (params.tokens.length != params.data.length) {
-            revert InvalidOracleSetPricesDataParam(params.tokens.length, params.data.length);
+            revert Errors.InvalidOracleSetPricesDataParam(params.tokens.length, params.data.length);
         }
 
-        OracleUtils.ValidatedPrice[] memory validatedPrices = new ValidatedPrice[](params.tokens.length);
+        OracleUtils.ValidatedPrice[] memory prices = new OracleUtils.ValidatedPrice[](params.tokens.length);
 
         for (uint256 i; i < params.tokens.length; i++) {
             address token = params.tokens[i];
             address provider = params.providers[i];
-            bytes data = params.data[i];
+            bytes memory data = params.data[i];
 
             // TODO: validate that provider is an approved provider contract
             // TODO: validate price relative to onchain feeds
@@ -178,16 +204,17 @@ contract Oracle is RoleModule {
             // TODO: validate max timestamp age
 
             OracleUtils.ValidatedPrice memory validatedPrice = IOracleProvider(provider).getOraclePrice(
+                dataStore,
                 token,
                 data
             );
 
-            validatePrices[i] = validatedPrice;
+            prices[i] = validatedPrice;
         }
 
         // TODO: validate timestamp range
 
-        return validatedPrices;
+        return prices;
     }
 
     function _validateRefPrice(
@@ -230,7 +257,6 @@ contract Oracle is RoleModule {
     }
 
     function _emitOraclePriceUpdated(
-        EventEmitter eventEmitter,
         address token,
         uint256 minPrice,
         uint256 maxPrice,

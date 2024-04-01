@@ -2,10 +2,14 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "../error/Errors.sol";
+
 // @title GmOracleUtils
 // @dev Library for GmOracle functions
 library GmOracleUtils {
     struct Report {
+        address token;
         uint256 signerInfo;
         uint256 precision;
         uint256 minOracleBlockNumber;
@@ -33,6 +37,7 @@ library GmOracleUtils {
     function validateSigner(
         bytes32 salt,
         Report memory report,
+        address token,
         uint256 minPrice,
         uint256 maxPrice,
         bytes32 tokenOracleType,
@@ -46,7 +51,7 @@ library GmOracleUtils {
                 report.maxOracleBlockNumber,
                 report.oracleTimestamp,
                 report.blockHash,
-                report.token,
+                token,
                 tokenOracleType,
                 report.precision,
                 minPrice,

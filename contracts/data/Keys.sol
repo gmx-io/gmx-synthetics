@@ -270,8 +270,8 @@ library Keys {
     bytes32 public constant MAX_PNL_FACTOR_FOR_DEPOSITS = keccak256(abi.encode("MAX_PNL_FACTOR_FOR_DEPOSITS"));
     // @dev key for max pnl factor for withdrawals
     bytes32 public constant MAX_PNL_FACTOR_FOR_WITHDRAWALS = keccak256(abi.encode("MAX_PNL_FACTOR_FOR_WITHDRAWALS"));
-    // @dev key for latest ADL block
-    bytes32 public constant LATEST_ADL_BLOCK = keccak256(abi.encode("LATEST_ADL_BLOCK"));
+    // @dev key for latest ADL at
+    bytes32 public constant LATEST_ADL_AT = keccak256(abi.encode("LATEST_ADL_AT"));
     // @dev key for whether ADL is enabled
     bytes32 public constant IS_ADL_ENABLED = keccak256(abi.encode("IS_ADL_ENABLED"));
     // @dev key for funding factor
@@ -975,13 +975,13 @@ library Keys {
         ));
     }
 
-    // @dev key for latest adl block
+    // @dev key for latest adl time
     // @param market the market to check
     // @param isLong whether to get the key for the long or short side
-    // @return key for latest adl block
-    function latestAdlBlockKey(address market, bool isLong) internal pure returns (bytes32) {
+    // @return key for latest adl time
+    function latestAdlAtKey(address market, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            LATEST_ADL_BLOCK,
+            LATEST_ADL_AT,
             market,
             isLong
         ));

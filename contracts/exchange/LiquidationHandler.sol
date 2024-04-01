@@ -44,7 +44,7 @@ contract LiquidationHandler is BaseOrderHandler {
     ) external
         globalNonReentrant
         onlyLiquidationKeeper
-        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+        withOraclePrices(oracleParams)
     {
         uint256 startingGas = gasleft();
 
@@ -62,7 +62,6 @@ contract LiquidationHandler is BaseOrderHandler {
         BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(
             key,
             order,
-            oracleParams,
             msg.sender,
             startingGas,
             Order.SecondaryOrderType.None

@@ -164,16 +164,14 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     ) external
         override
         onlyController
-        withSimulatedOraclePrices(oracle, params)
+        withSimulatedOraclePrices(params)
         globalNonReentrant
     {
-        OracleUtils.SetPricesParams memory oracleParams;
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
 
         this._executeOrder(
             key,
             order,
-            oracleParams,
             msg.sender
         );
     }
@@ -187,7 +185,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     ) external
         globalNonReentrant
         onlyOrderKeeper
-        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+        withOraclePrices(oracleParams)
     {
         uint256 startingGas = gasleft();
 
@@ -200,7 +198,6 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         try this._executeOrder{ gas: executionGas }(
             key,
             order,
-            oracleParams,
             msg.sender
         ) {
         } catch (bytes memory reasonBytes) {
@@ -216,7 +213,6 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     function _executeOrder(
         bytes32 key,
         Order.Props memory order,
-        OracleUtils.SetPricesParams memory oracleParams,
         address keeper
     ) external onlySelf {
         uint256 startingGas = gasleft();
@@ -224,7 +220,6 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(
             key,
             order,
-            oracleParams,
             keeper,
             startingGas,
             Order.SecondaryOrderType.None

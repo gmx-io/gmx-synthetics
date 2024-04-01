@@ -115,6 +115,7 @@ library DepositUtils {
                 initialShortTokenAmount,
                 params.minMarketTokens,
                 Chain.currentBlockNumber(),
+                Chain.currentTimestamp(),
                 params.executionFee,
                 params.callbackGasLimit
             ),

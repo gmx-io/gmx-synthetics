@@ -306,7 +306,7 @@ contract Reader {
         bool isLong,
         MarketUtils.MarketPrices memory prices
     ) external view returns (uint256, bool, int256, uint256) {
-        uint256 latestAdlBlock = AdlUtils.getLatestAdlBlock(dataStore, market, isLong);
+        uint256 latestAdlTime = AdlUtils.getLatestAdlTime(dataStore, market, isLong);
         Market.Props memory _market = MarketUtils.getEnabledMarket(dataStore, market);
 
         (bool shouldEnableAdl, int256 pnlToPoolFactor, uint256 maxPnlFactor) = MarketUtils.isPnlFactorExceeded(
@@ -317,7 +317,7 @@ contract Reader {
             Keys.MAX_PNL_FACTOR_FOR_ADL
         );
 
-        return (latestAdlBlock, shouldEnableAdl, pnlToPoolFactor, maxPnlFactor);
+        return (latestAdlTime, shouldEnableAdl, pnlToPoolFactor, maxPnlFactor);
     }
 
     function getDepositAmountOut(

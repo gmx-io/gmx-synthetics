@@ -52,12 +52,12 @@ library IncreaseOrderUtils {
             position.setIsLong(params.order.isLong());
         }
 
-        validateOracleBlockNumbers(
-            params.minOracleBlockNumbers,
-            params.maxOracleBlockNumbers,
-            params.order.orderType(),
-            params.order.updatedAtBlock()
-        );
+        if (params.minOracleTimestamp < params.order.updatedAtTime()) {
+            revert Errors.OracleTimestampsAreSmallerThanRequired(
+                params.minOracleTimestamp,
+                params.order.updatedAtTime()
+            );
+        }
 
         IncreasePositionUtils.increasePosition(
             PositionUtils.UpdatePositionParams(
@@ -74,42 +74,5 @@ library IncreaseOrderUtils {
 
         EventUtils.EventLogData memory eventData;
         return eventData;
-    }
-
-    // @dev validate the oracle block numbers used for the prices in the oracle
-    // @param minOracleBlockNumbers the min oracle block numbers
-    // @param maxOracleBlockNumbers the max oracle block numbers
-    // @param orderType the order type
-    // @param orderUpdatedAtBlock the block at which the order was last updated
-    function validateOracleBlockNumbers(
-        uint256[] memory minOracleBlockNumbers,
-        uint256[] memory maxOracleBlockNumbers,
-        Order.OrderType orderType,
-        uint256 orderUpdatedAtBlock
-    ) internal pure {
-        if (orderType == Order.OrderType.MarketIncrease) {
-            OracleUtils.validateBlockNumberWithinRange(
-                minOracleBlockNumbers,
-                maxOracleBlockNumbers,
-                orderUpdatedAtBlock
-            );
-            return;
-        }
-
-        if (orderType == Order.OrderType.LimitIncrease) {
-            // since the oracle blocks are only validated against the orderUpdatedAtBlock
-            // it is possible to cause a limit increase order to become executable by
-            // having the order have an initial collateral amount of zero then opening
-            // a position and depositing collateral if the limit order is desired to be executed
-            // for this case, when the limit order price is reached, the order should be frozen
-            // the frozen order keepers should only execute frozen orders if the latest prices
-            // fulfill the limit price
-            if (!minOracleBlockNumbers.areGreaterThanOrEqualTo(orderUpdatedAtBlock)) {
-                revert Errors.OracleBlockNumbersAreSmallerThanRequired(minOracleBlockNumbers, orderUpdatedAtBlock);
-            }
-            return;
-        }
-
-        revert Errors.UnsupportedOrderType();
     }
 }

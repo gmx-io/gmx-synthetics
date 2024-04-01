@@ -71,6 +71,8 @@ library Position {
         uint256 shortTokenClaimableFundingAmountPerSize;
         uint256 increasedAtBlock;
         uint256 decreasedAtBlock;
+        uint256 increasedAtTime;
+        uint256 decreasedAtTime;
     }
 
     // @param isLong whether the position is a long or short
@@ -172,6 +174,22 @@ library Position {
 
     function setDecreasedAtBlock(Props memory props, uint256 value) internal pure {
         props.numbers.decreasedAtBlock = value;
+    }
+
+    function increasedAtTime(Props memory props) internal pure returns (uint256) {
+        return props.numbers.increasedAtTime;
+    }
+
+    function setIncreasedAtTime(Props memory props, uint256 value) internal pure {
+        props.numbers.increasedAtTime = value;
+    }
+
+    function decreasedAtTime(Props memory props) internal pure returns (uint256) {
+        return props.numbers.decreasedAtTime;
+    }
+
+    function setDecreasedAtTime(Props memory props, uint256 value) internal pure {
+        props.numbers.decreasedAtTime = value;
     }
 
     function isLong(Props memory props) internal pure returns (bool) {

@@ -32,6 +32,7 @@ library OrderStoreUtils {
     bytes32 public constant CALLBACK_GAS_LIMIT = keccak256(abi.encode("CALLBACK_GAS_LIMIT"));
     bytes32 public constant MIN_OUTPUT_AMOUNT = keccak256(abi.encode("MIN_OUTPUT_AMOUNT"));
     bytes32 public constant UPDATED_AT_BLOCK = keccak256(abi.encode("UPDATED_AT_BLOCK"));
+    bytes32 public constant UPDATED_AT_TIME = keccak256(abi.encode("UPDATED_AT_TIME"));
 
     bytes32 public constant IS_LONG = keccak256(abi.encode("IS_LONG"));
     bytes32 public constant SHOULD_UNWRAP_NATIVE_TOKEN = keccak256(abi.encode("SHOULD_UNWRAP_NATIVE_TOKEN"));
@@ -109,6 +110,10 @@ library OrderStoreUtils {
 
         order.setUpdatedAtBlock(dataStore.getUint(
             keccak256(abi.encode(key, UPDATED_AT_BLOCK))
+        ));
+
+        order.setUpdatedAtTime(dataStore.getUint(
+            keccak256(abi.encode(key, UPDATED_AT_TIME))
         ));
 
         order.setIsLong(dataStore.getBool(
@@ -222,6 +227,11 @@ library OrderStoreUtils {
             order.updatedAtBlock()
         );
 
+        dataStore.setUint(
+            keccak256(abi.encode(key, UPDATED_AT_TIME)),
+            order.updatedAtTime()
+        );
+
         dataStore.setBool(
             keccak256(abi.encode(key, IS_LONG)),
             order.isLong()
@@ -319,6 +329,10 @@ library OrderStoreUtils {
 
         dataStore.removeUint(
             keccak256(abi.encode(key, UPDATED_AT_BLOCK))
+        );
+
+        dataStore.removeUint(
+            keccak256(abi.encode(key, UPDATED_AT_TIME))
         );
 
         dataStore.removeBool(
