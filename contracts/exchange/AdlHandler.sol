@@ -123,7 +123,7 @@ contract AdlHandler is BaseOrderHandler {
                 isLong,
                 sizeDeltaUsd,
                 Chain.currentBlockNumber(), // updatedAtBlock
-                oracle.minTimestamp()
+                oracle.minTimestamp() // updatedAtTime
             )
         );
 
