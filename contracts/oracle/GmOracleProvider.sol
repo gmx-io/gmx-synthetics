@@ -10,13 +10,13 @@ import "../role/RoleModule.sol";
 import "./OracleStore.sol";
 import "./OracleUtils.sol";
 import "./IPriceFeed.sol";
-import "./IRealtimeFeedVerifier.sol";
 import "../price/Price.sol";
 import "./GmOracleUtils.sol";
 import "./IOracleProvider.sol";
 
 import "../chain/Chain.sol";
 import "../data/Keys.sol";
+import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 import "../event/EventUtils.sol";
 
@@ -42,12 +42,15 @@ contract GmOracleProvider is RoleModule, IOracleProvider {
     // signer indexes are recorded in a signerIndexFlags uint256 value to check for uniqueness
     uint256 public constant MAX_SIGNER_INDEX = 256;
 
+    DataStore public immutable dataStore;
     OracleStore public immutable oracleStore;
 
     constructor(
         RoleStore _roleStore,
+        DataStore _dataStore,
         OracleStore _oracleStore
     ) RoleModule(_roleStore) {
+        dataStore = _dataStore;
         oracleStore = _oracleStore;
     }
 
@@ -130,12 +133,11 @@ contract GmOracleProvider is RoleModule, IOracleProvider {
     // - USDC: 30 - 6 - 6 => 18
     // - DG: 30 - 18 - 11 => 1
     function getOraclePrice(
-        DataStore dataStore,
         address token,
         bytes memory data
     ) external view returns (OracleUtils.ValidatedPrice memory) {
         GmOracleUtils.Report memory report = abi.decode(data, (GmOracleUtils.Report));
-        address[] memory signers = _getSigners(dataStore, report.signerInfo);
+        address[] memory signers = _getSigners(report.signerInfo);
 
         if (report.minOracleBlockNumber > report.maxOracleBlockNumber) {
             revert Errors.GmInvalidMinMaxBlockNumber(report.minOracleBlockNumber, report.maxOracleBlockNumber);
@@ -202,7 +204,6 @@ contract GmOracleProvider is RoleModule, IOracleProvider {
     }
 
     function _getSigners(
-        DataStore dataStore,
         uint256 signerInfo
     ) internal view returns (address[] memory) {
         // first 16 bits of signer info contains the number of signers

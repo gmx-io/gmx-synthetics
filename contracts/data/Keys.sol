@@ -16,9 +16,6 @@ library Keys {
     // @dev for holding tokens that could not be sent out
     bytes32 public constant HOLDING_ADDRESS = keccak256(abi.encode("HOLDING_ADDRESS"));
 
-    // @dev key for in strict price feed mode
-    bytes32 public constant IN_STRICT_PRICE_FEED_MODE = keccak256(abi.encode("IN_STRICT_PRICE_FEED_MODE"));
-
     // @dev key for the minimum gas for execution error
     bytes32 public constant MIN_HANDLE_EXECUTION_ERROR_GAS = keccak256(abi.encode("MIN_HANDLE_EXECUTION_ERROR_GAS"));
 
@@ -141,8 +138,15 @@ library Keys {
     bytes32 public constant MIN_ORACLE_BLOCK_CONFIRMATIONS = keccak256(abi.encode("MIN_ORACLE_BLOCK_CONFIRMATIONS"));
     // @dev key for the maximum usable oracle price age in seconds
     bytes32 public constant MAX_ORACLE_PRICE_AGE = keccak256(abi.encode("MAX_ORACLE_PRICE_AGE"));
+    // @dev key for the maximum oracle timestamp range
+    bytes32 public constant MAX_ORACLE_TIMESTAMP_RANGE = keccak256(abi.encode("MAX_ORACLE_TIMESTAMP_RANGE"));
     // @dev key for the maximum oracle price deviation factor from the ref price
     bytes32 public constant MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR = keccak256(abi.encode("MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR"));
+    // @dev key for whether an oracle provider is enabled
+    bytes32 public constant IS_ORACLE_PROVIDER_ENABLED = keccak256(abi.encode("IS_ORACLE_PROVIDER_ENABLED"));
+    // @dev key for oracle timestamp adjustment
+    bytes32 public constant ORACLE_TIMESTAMP_ADJUSTMENT = keccak256(abi.encode("ORACLE_TIMESTAMP_ADJUSTMENT"));
+
     // @dev key for the percentage amount of position fees to be received
     bytes32 public constant POSITION_FEE_RECEIVER_FACTOR = keccak256(abi.encode("POSITION_FEE_RECEIVER_FACTOR"));
     // @dev key for the percentage amount of swap fees to be received
@@ -248,10 +252,10 @@ library Keys {
     bytes32 public constant PRICE_FEED_MULTIPLIER = keccak256(abi.encode("PRICE_FEED_MULTIPLIER"));
     // @dev key for price feed heartbeat
     bytes32 public constant PRICE_FEED_HEARTBEAT_DURATION = keccak256(abi.encode("PRICE_FEED_HEARTBEAT_DURATION"));
-    // @dev key for realtime feed id
-    bytes32 public constant REALTIME_FEED_ID = keccak256(abi.encode("REALTIME_FEED_ID"));
-    // @dev key for realtime feed multipler
-    bytes32 public constant REALTIME_FEED_MULTIPLIER = keccak256(abi.encode("REALTIME_FEED_MULTIPLIER"));
+    // @dev key for data stream feed id
+    bytes32 public constant DATA_STREAM_FEED_ID = keccak256(abi.encode("DATA_STREAM_FEED_ID"));
+    // @dev key for data stream feed multipler
+    bytes32 public constant DATA_STREAM_FEED_MULTIPLIER = keccak256(abi.encode("DATA_STREAM_FEED_MULTIPLIER"));
     // @dev key for stable price
     bytes32 public constant STABLE_PRICE = keccak256(abi.encode("STABLE_PRICE"));
     // @dev key for reserve factor
@@ -607,6 +611,28 @@ library Keys {
         return keccak256(abi.encode(
             UI_FEE_FACTOR,
             account
+        ));
+    }
+
+    // @dev key for whether an oracle provider is enabled
+    // @param provider the oracle provider
+    // @return key for whether an oracle provider is enabled
+    function isOracleProviderEnabledKey(address provider) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            IS_ORACLE_PROVIDER_ENABLED,
+            provider
+        ));
+    }
+
+    // @dev key for oracle timestamp adjustment
+    // @param provider the oracle provider
+    // @param token the token
+    // @return key for oracle timestamp adjustment
+    function oracleTimestampAdjustmentKey(address provider, address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            ORACLE_TIMESTAMP_ADJUSTMENT,
+            provider,
+            token
         ));
     }
 
@@ -1363,22 +1389,22 @@ library Keys {
         ));
     }
 
-    // @dev key for realtime feed ID
+    // @dev key for data stream feed ID
     // @param token the token to get the key for
-    // @return key for realtime feed ID
-    function realtimeFeedIdKey(address token) internal pure returns (bytes32) {
+    // @return key for data stream feed ID
+    function dataStreamFeedIdKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            REALTIME_FEED_ID,
+            DATA_STREAM_FEED_ID,
             token
         ));
     }
 
-    // @dev key for realtime feed multiplier
+    // @dev key for data stream feed multiplier
     // @param token the token to get the key for
-    // @return key for realtime feed multiplier
-    function realtimeFeedMultiplierKey(address token) internal pure returns (bytes32) {
+    // @return key for data stream feed multiplier
+    function dataStreamMultiplierKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            REALTIME_FEED_MULTIPLIER,
+            DATA_STREAM_FEED_MULTIPLIER,
             token
         ));
     }

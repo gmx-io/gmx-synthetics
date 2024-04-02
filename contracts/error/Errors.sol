@@ -128,26 +128,25 @@ library Errors {
 
     // Oracle errors
     error EmptyValidatedPrices();
+    error InvalidOracleProvider(address provider);
     error GmEmptySigner(uint256 signerIndex);
     error InvalidOracleSetPricesProvidersParam(uint256 tokensLength, uint256 providersLength);
     error InvalidOracleSetPricesDataParam(uint256 tokensLength, uint256 dataLength);
     error GmInvalidBlockNumber(uint256 minOracleBlockNumber, uint256 currentBlockNumber);
     error GmInvalidMinMaxBlockNumber(uint256 minOracleBlockNumber, uint256 maxOracleBlockNumber);
-    error HasRealtimeFeedId(address token, bytes32 feedId);
-    error InvalidRealtimeFeedLengths(uint256 tokensLength, uint256 dataLength);
-    error EmptyRealtimeFeedId(address token);
-    error InvalidRealtimeFeedId(address token, bytes32 feedId, bytes32 expectedFeedId);
-    error InvalidRealtimeBidAsk(address token, int192 bid, int192 ask);
-    error InvalidRealtimePrices(address token, int192 bid, int192 ask);
-    error RealtimeMaxPriceAgeExceeded(address token, uint256 oracleTimestamp, uint256 currentTimestamp);
+    error EmptyDataStreamFeedId(address token);
+    error InvalidDataStreamFeedId(address token, bytes32 feedId, bytes32 expectedFeedId);
+    error InvalidDataStreamBidAsk(address token, int192 bid, int192 ask);
+    error InvalidDataStreamPrices(address token, int192 bid, int192 ask);
     error MaxPriceAgeExceeded(uint256 oracleTimestamp, uint256 currentTimestamp);
+    error MaxOracleTimestampRangeExceeded(uint256 range, uint256 maxRange);
     error GmMinOracleSigners(uint256 oracleSigners, uint256 minOracleSigners);
     error GmMaxOracleSigners(uint256 oracleSigners, uint256 maxOracleSigners);
     error BlockNumbersNotSorted(uint256 minOracleBlockNumber, uint256 prevMinOracleBlockNumber);
     error GmMinPricesNotSorted(address token, uint256 price, uint256 prevPrice);
     error GmMaxPricesNotSorted(address token, uint256 price, uint256 prevPrice);
     error EmptyChainlinkPriceFeedMultiplier(address token);
-    error EmptyRealtimeFeedMultiplier(address token);
+    error EmptyDataStreamMultiplier(address token);
     error InvalidFeedPrice(address token, int256 price);
     error ChainlinkPriceFeedNotUpdated(address token, uint256 timestamp, uint256 heartbeatDuration);
     error GmMaxSignerIndex(uint256 signerIndex, uint256 maxSignerIndex);

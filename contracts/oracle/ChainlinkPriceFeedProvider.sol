@@ -2,10 +2,18 @@
 
 pragma solidity ^0.8.0;
 
+import "../data/DataStore.sol";
+import "../data/Keys.sol";
 import "./IOracleProvider.sol";
 import "./ChainlinkPriceFeedUtils.sol";
 
 contract ChainlinkPriceFeedProvider is IOracleProvider {
+    DataStore public immutable dataStore;
+
+    constructor(DataStore _dataStore) {
+        dataStore = _dataStore;
+    }
+
     // @dev the timestamp returned is based on the current blockchain timestamp
     // this is because Chainlink on-chain price feeds have a lower update frequency
     // if a Chainlink on-chain price feed is used, it is assumed that the feed
@@ -16,7 +24,6 @@ contract ChainlinkPriceFeedProvider is IOracleProvider {
     // a MaxTimestampRangeExceeded error
     // if this occurs, the MAX_TIMESTAMP_RANGE value may need to be increased
     function getOraclePrice(
-        DataStore dataStore,
         address token,
         bytes memory /* data */
     ) external view returns (OracleUtils.ValidatedPrice memory) {

@@ -10,8 +10,8 @@ import "../role/RoleModule.sol";
 import "./OracleStore.sol";
 import "./OracleUtils.sol";
 import "./IPriceFeed.sol";
-import "./IRealtimeFeedVerifier.sol";
 import "./IOracleProvider.sol";
+import "./ChainlinkPriceFeedUtils.sol";
 import "../price/Price.sol";
 
 import "../chain/Chain.sol";
@@ -174,6 +174,11 @@ contract Oracle is RoleModule {
             );
         }
 
+        uint256 maxRange = dataStore.getUint(Keys.MAX_ORACLE_TIMESTAMP_RANGE);
+        if (_maxTimestamp - _minTimestamp > maxRange) {
+            revert Errors.MaxOracleTimestampRangeExceeded(_maxTimestamp - _minTimestamp, maxRange);
+        }
+
         minTimestamp = _minTimestamp;
         maxTimestamp = _maxTimestamp;
 
@@ -193,26 +198,51 @@ contract Oracle is RoleModule {
 
         OracleUtils.ValidatedPrice[] memory prices = new OracleUtils.ValidatedPrice[](params.tokens.length);
 
+        uint256 maxPriceAge = dataStore.getUint(Keys.MAX_ORACLE_PRICE_AGE);
+        uint256 maxRefPriceDeviationFactor = dataStore.getUint(Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR);
+
         for (uint256 i; i < params.tokens.length; i++) {
-            address token = params.tokens[i];
             address provider = params.providers[i];
+
+            if (!dataStore.getBool(Keys.isOracleProviderEnabledKey(provider))) {
+                revert Errors.InvalidOracleProvider(provider);
+            }
+
+            address token = params.tokens[i];
             bytes memory data = params.data[i];
 
-            // TODO: validate that provider is an approved provider contract
-            // TODO: validate price relative to onchain feeds
-            // TODO: adjust timestamp by delay
-            // TODO: validate max timestamp age
-
             OracleUtils.ValidatedPrice memory validatedPrice = IOracleProvider(provider).getOraclePrice(
-                dataStore,
                 token,
                 data
             );
 
+            uint256 timestampAdjustment = dataStore.getUint(Keys.oracleTimestampAdjustmentKey(provider, token));
+            validatedPrice.timestamp -= timestampAdjustment;
+
+            if (validatedPrice.timestamp + maxPriceAge < Chain.currentTimestamp()) {
+                revert Errors.MaxPriceAgeExceeded(validatedPrice.timestamp, Chain.currentTimestamp());
+            }
+
+            (bool hasRefPrice, uint256 refPrice) = ChainlinkPriceFeedUtils.getPriceFeedPrice(dataStore, token);
+
+            if (hasRefPrice) {
+                _validateRefPrice(
+                    token,
+                    validatedPrice.min,
+                    refPrice,
+                    maxRefPriceDeviationFactor
+                );
+
+                _validateRefPrice(
+                    token,
+                    validatedPrice.max,
+                    refPrice,
+                    maxRefPriceDeviationFactor
+                );
+            }
+
             prices[i] = validatedPrice;
         }
-
-        // TODO: validate timestamp range
 
         return prices;
     }
