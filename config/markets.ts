@@ -1313,11 +1313,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      reserveFactorLongs: percentageToFloat("105%"),
-      reserveFactorShorts: percentageToFloat("105%"),
+      reserveFactorLongs: percentageToFloat("125%"),
+      reserveFactorShorts: percentageToFloat("125%"),
 
-      openInterestReserveFactorLongs: percentageToFloat("100%"),
-      openInterestReserveFactorShorts: percentageToFloat("100%"),
+      openInterestReserveFactorLongs: percentageToFloat("120%"),
+      openInterestReserveFactorShorts: percentageToFloat("120%"),
 
       maxLongTokenPoolAmount: expandDecimals(271_600, 18),
       maxShortTokenPoolAmount: expandDecimals(11_000_000, 6),
