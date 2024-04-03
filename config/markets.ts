@@ -341,11 +341,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      reserveFactorLongs: percentageToFloat("135%"),
-      reserveFactorShorts: percentageToFloat("135%"),
+      reserveFactorLongs: percentageToFloat("140%"),
+      reserveFactorShorts: percentageToFloat("140%"),
 
-      openInterestReserveFactorLongs: percentageToFloat("130%"),
-      openInterestReserveFactorShorts: percentageToFloat("130%"),
+      openInterestReserveFactorLongs: percentageToFloat("135%"),
+      openInterestReserveFactorShorts: percentageToFloat("135%"),
 
       maxLongTokenPoolAmount: expandDecimals(37_792, 18),
       maxShortTokenPoolAmount: expandDecimals(100_000_000, 6),
@@ -490,11 +490,11 @@ const config: {
 
       ...synthethicMarketConfig_IncreasedCapacity,
 
-      maxLongTokenPoolAmount: expandDecimals(1220, 18),
-      maxShortTokenPoolAmount: expandDecimals(2_700_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(923, 18),
+      maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(994, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(2_200_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(769, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(2_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(26, 9),
       positivePositionImpactFactor: decimalToFloat(13, 9),
@@ -844,8 +844,8 @@ const config: {
       openInterestReserveFactorShorts: percentageToFloat("100%"),
 
       // factor in open interest reserve factor = 100%
-      borrowingFactorForLongs: decimalToFloat(230, 10), // 2.30E-08, ~65% if 100% utilized
-      borrowingFactorForShorts: decimalToFloat(230, 10), // 2.30E-08, ~65% if 100% utilized
+      borrowingFactorForLongs: decimalToFloat(265, 10), // 2.65E-08, ~84% if 100% utilized
+      borrowingFactorForShorts: decimalToFloat(265, 10), // 2.65E-08, ~84% if 100% utilized
 
       fundingIncreaseFactorPerSecond: decimalToFloat(181, 14), // 0.00000000000181, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
