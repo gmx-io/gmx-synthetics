@@ -28,6 +28,11 @@ const func = createDeployFunction({
     );
     await setUintIfDifferent(keys.MAX_ORACLE_PRICE_AGE, oracleConfig.maxOraclePriceAge, "max oracle price age");
     await setUintIfDifferent(
+      keys.MAX_ORACLE_TIMESTAMP_RANGE,
+      oracleConfig.maxOracleTimestampRange,
+      "max oracle price age"
+    );
+    await setUintIfDifferent(
       keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR,
       oracleConfig.maxRefPriceDeviationFactor,
       "max ref price deviation factor"

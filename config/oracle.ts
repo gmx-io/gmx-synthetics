@@ -53,6 +53,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
       minOracleSigners: 0,
       minOracleBlockConfirmations: 255,
       maxOraclePriceAge: 60 * 60 * 24,
+      maxOracleTimestampRange: 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
     },
 
@@ -62,6 +63,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
       minOracleSigners: 0,
       minOracleBlockConfirmations: 255,
       maxOraclePriceAge: 60 * 60,
+      maxOracleTimestampRange: 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       tokens: {
         USDC: {
@@ -87,6 +89,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
       realtimeFeedVerifier: "0xDBaeB34DF0AcfA564a49e13840C5CE2894C4b886",
       signers: ["0x0F711379095f2F0a6fdD1e8Fccd6eBA0833c1F1f"],
       maxOraclePriceAge: 5 * 60,
+      maxOracleTimestampRange: 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       minOracleBlockConfirmations: 255,
       minOracleSigners: 1,
