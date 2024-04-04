@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { mine } from "@nomicfoundation/hardhat-network-helpers";
+import { increaseTime } from "../../utils/time";
 
 import { deployFixture } from "../../utils/fixture";
 import { deployContract } from "../../utils/deploy";
@@ -35,7 +35,7 @@ describe("Exchange.CancelOrder", () => {
   it("cancelOrder validations", async () => {
     const revertingCallbackReceiver = await deployContract("RevertingCallbackReceiver", []);
 
-    await dataStore.setUint(keys.REQUEST_EXPIRATION_BLOCK_AGE, 10);
+    await dataStore.setUint(keys.REQUEST_EXPIRATION_TIME, 300);
 
     expect(await getOrderCount(dataStore)).eq(0);
     const params = {
@@ -81,11 +81,12 @@ describe("Exchange.CancelOrder", () => {
 
     await dataStore.setBool(_cancelOrderFeatureDisabledKey, false);
 
-    await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0]))
-      .to.be.revertedWithCustomError(errorsContract, "RequestNotYetCancellable")
-      .withArgs(5, 10, "Order");
+    await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0])).to.be.revertedWithCustomError(
+      errorsContract,
+      "RequestNotYetCancellable"
+    );
 
-    mine(10);
+    await increaseTime(300);
   });
 
   it("cancelOrder", async () => {

@@ -166,10 +166,10 @@ const processGeneralConfig = async ({ generalConfig, handleConfig }) => {
 
   await handleConfig(
     "uint",
-    keys.REQUEST_EXPIRATION_BLOCK_AGE,
+    keys.REQUEST_EXPIRATION_TIME,
     "0x",
-    generalConfig.requestExpirationBlockAge,
-    `requestExpirationBlockAge`
+    generalConfig.requestExpirationTime,
+    `requestExpirationTime`
   );
 };
 

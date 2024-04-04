@@ -12,17 +12,17 @@ import "../data/Keys.sol";
 library ExchangeUtils {
     // @dev validate that sufficient time has passed for request to be cancelled
     // @param dataStore DataStore
-    // @param createdAtBlock the block the request was created at
+    // @param createdAtTime the time the request was created at
     // @param requestType the type of the request
     function validateRequestCancellation(
         DataStore dataStore,
-        uint256 createdAtBlock,
+        uint256 createdAtTime,
         string memory requestType
     ) internal view {
-        uint256 requestExpirationAge = dataStore.getUint(Keys.REQUEST_EXPIRATION_BLOCK_AGE);
-        uint256 requestAge = Chain.currentBlockNumber() - createdAtBlock;
-        if (requestAge < requestExpirationAge) {
-            revert Errors.RequestNotYetCancellable(requestAge, requestExpirationAge, requestType);
+        uint256 requestExpirationTime = dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
+        uint256 requestAge = Chain.currentTimestamp() - createdAtTime;
+        if (requestAge < requestExpirationTime) {
+            revert Errors.RequestNotYetCancellable(requestAge, requestExpirationTime, requestType);
         }
     }
 }

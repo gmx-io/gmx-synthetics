@@ -52,10 +52,23 @@ library IncreaseOrderUtils {
             position.setIsLong(params.order.isLong());
         }
 
+        uint256 requestExpirationTime = params.contracts.dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
+
         if (params.minOracleTimestamp < params.order.updatedAtTime()) {
             revert Errors.OracleTimestampsAreSmallerThanRequired(
                 params.minOracleTimestamp,
                 params.order.updatedAtTime()
+            );
+        }
+
+        if (
+            params.order.orderType() == Order.OrderType.MarketIncrease &&
+            params.maxOracleTimestamp > params.order.updatedAtTime() + requestExpirationTime
+        ) {
+            revert Errors.OracleTimestampsAreLargerThanRequestExpirationTime(
+                params.maxOracleTimestamp,
+                params.order.updatedAtTime(),
+                requestExpirationTime
             );
         }
 

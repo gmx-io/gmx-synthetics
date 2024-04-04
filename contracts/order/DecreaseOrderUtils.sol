@@ -35,11 +35,13 @@ library DecreaseOrderUtils {
         PositionUtils.validateNonEmptyPosition(position);
 
         validateOracleTimestamp(
+            params.contracts.dataStore,
             order.orderType(),
             order.updatedAtTime(),
             position.increasedAtTime(),
             position.decreasedAtTime(),
-            params.minOracleTimestamp
+            params.minOracleTimestamp,
+            params.maxOracleTimestamp
         );
 
         DecreasePositionUtils.DecreasePositionResult memory result = DecreasePositionUtils.decreasePosition(
@@ -142,15 +144,27 @@ library DecreaseOrderUtils {
     }
 
     function validateOracleTimestamp(
+        DataStore dataStore,
         Order.OrderType orderType,
         uint256 orderUpdatedAtTime,
         uint256 positionIncreasedAtTime,
         uint256 positionDecreasedAtTime,
-        uint256 minOracleTimestamp
-    ) internal pure {
+        uint256 minOracleTimestamp,
+        uint256 maxOracleTimestamp
+    ) internal view {
         if (orderType == Order.OrderType.MarketDecrease) {
             if (minOracleTimestamp < orderUpdatedAtTime) {
                 revert Errors.OracleTimestampsAreSmallerThanRequired(minOracleTimestamp, orderUpdatedAtTime);
+            }
+
+            uint256 requestExpirationTime = dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
+
+            if (maxOracleTimestamp > orderUpdatedAtTime + requestExpirationTime) {
+                revert Errors.OracleTimestampsAreLargerThanRequestExpirationTime(
+                    maxOracleTimestamp,
+                    orderUpdatedAtTime,
+                    requestExpirationTime
+                );
             }
             return;
         }

@@ -282,7 +282,7 @@ describe("Config", () => {
         type: "Uint",
       },
       {
-        key: keys.REQUEST_EXPIRATION_BLOCK_AGE,
+        key: keys.REQUEST_EXPIRATION_TIME,
         initial: 0,
         type: "Uint",
       },

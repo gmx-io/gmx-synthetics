@@ -138,7 +138,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         if (BaseOrderUtils.isMarketOrder(order.orderType())) {
             ExchangeUtils.validateRequestCancellation(
                 _dataStore,
-                order.updatedAtBlock(),
+                order.updatedAtTime(),
                 "Order"
             );
         }

@@ -54,6 +54,10 @@ library OracleUtils {
     }
 
     function isOracleTimestampError(bytes4 errorSelector) internal pure returns (bool) {
+        if (errorSelector == Errors.OracleTimestampsAreLargerThanRequestExpirationTime.selector) {
+            return true;
+        }
+
         if (errorSelector == Errors.OracleTimestampsAreSmallerThanRequired.selector) {
             return true;
         }

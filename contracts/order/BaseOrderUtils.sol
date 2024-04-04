@@ -32,8 +32,8 @@ library BaseOrderUtils {
     // @param key the key of the order to execute
     // @param order the order to execute
     // @param swapPathMarkets the market values of the markets in the swapPath
-    // @param minOracleBlockNumbers the min oracle block numbers
-    // @param maxOracleBlockNumbers the max oracle block numbers
+    // @param minOracleTimestamp the min oracle timestamp
+    // @param maxOracleTimestamp the max oracle timestamp
     // @param market market values of the trading market
     // @param keeper the keeper sending the transaction
     // @param startingGas the starting gas

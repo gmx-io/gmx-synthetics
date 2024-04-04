@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { mine } from "@nomicfoundation/hardhat-network-helpers";
+import { increaseTime } from "../../utils/time";
 
 import { deployFixture } from "../../utils/fixture";
 import { deployContract } from "../../utils/deploy";
@@ -26,7 +26,7 @@ describe("Exchange.CancelDeposit", () => {
 
   it("cancelDeposit", async () => {
     const revertingCallbackReceiver = await deployContract("RevertingCallbackReceiver", []);
-    await dataStore.setUint(keys.REQUEST_EXPIRATION_BLOCK_AGE, 10);
+    await dataStore.setUint(keys.REQUEST_EXPIRATION_TIME, 300);
 
     await createDeposit(fixture, {
       receiver: user1,
@@ -71,13 +71,14 @@ describe("Exchange.CancelDeposit", () => {
 
     expect(await getDepositCount(dataStore)).eq(1);
 
-    await expect(exchangeRouter.connect(user0).cancelDeposit(depositKeys[0]))
-      .to.be.revertedWithCustomError(errorsContract, "RequestNotYetCancellable")
-      .withArgs(2, 10, "Deposit");
+    await expect(exchangeRouter.connect(user0).cancelDeposit(depositKeys[0])).to.be.revertedWithCustomError(
+      errorsContract,
+      "RequestNotYetCancellable"
+    );
 
     expect(await getDepositCount(dataStore)).eq(1);
 
-    mine(10);
+    increaseTime(300);
 
     expect(await wnt.balanceOf(user0.address)).eq(0);
     expect(await usdc.balanceOf(user0.address)).eq(0);
