@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { createDeployFunction } from "../utils/deploy";
 
 const func = createDeployFunction({
-  contractName: "MockRealtimeFeedVerifier",
+  contractName: "MockDataStreamVerifier",
 });
 
 func.skip = async ({ network }: HardhatRuntimeEnvironment) => {

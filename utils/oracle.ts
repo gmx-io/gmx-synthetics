@@ -249,11 +249,16 @@ export async function getOracleParams({
   priceFeedTokens,
 }) {
   const signerInfo = getSignerInfo(signerIndexes);
-  const allMinPrices = [];
-  const allMaxPrices = [];
-  const minPriceIndexes = [];
-  const maxPriceIndexes = [];
-  const signatures = [];
+
+  const gmOracleProvider = await hre.ethers.getContract("GmOracleProvider");
+  const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
+  const chainlinkDataStreamFeedProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
+
+  const params = {
+    tokens: [],
+    providers: [],
+    data: [],
+  };
 
   for (let i = 0; i < tokens.length; i++) {
     const minOracleBlockNumber = minOracleBlockNumbers[i];
@@ -266,6 +271,8 @@ export async function getOracleParams({
 
     const minPrice = minPrices[i];
     const maxPrice = maxPrices[i];
+
+    const signatures = [];
 
     for (let j = 0; j < signers.length; j++) {
       const signature = await signPrice({
@@ -281,30 +288,56 @@ export async function getOracleParams({
         minPrice,
         maxPrice,
       });
-      allMinPrices.push(minPrice.toString());
-      minPriceIndexes.push(j);
-      allMaxPrices.push(maxPrice.toString());
-      maxPriceIndexes.push(j);
+
       signatures.push(signature);
     }
+
+    const data = hashData(
+      [
+        "address",
+        "uint256",
+        "uint256",
+        "uint256",
+        "uint256",
+        "uint256",
+        "bytes32",
+        "uint256[]",
+        "uint256[]",
+        "bytes[]",
+      ],
+      [
+        token,
+        signerInfo,
+        precision,
+        minOracleBlockNumber,
+        maxOracleBlockNumber,
+        oracleTimestamp,
+        blockHash,
+        [minPrice],
+        [maxPrice],
+        signatures,
+      ]
+    );
+    params.tokens.push(token);
+    params.providers.push(gmOracleProvider.address);
+    params.data.push(data);
   }
 
-  return {
-    signerInfo,
-    tokens,
-    compactedMinOracleBlockNumbers: getCompactedOracleBlockNumbers(minOracleBlockNumbers),
-    compactedMaxOracleBlockNumbers: getCompactedOracleBlockNumbers(maxOracleBlockNumbers),
-    compactedOracleTimestamps: getCompactedOracleTimestamps(oracleTimestamps),
-    compactedDecimals: getCompactedDecimals(precisions),
-    compactedMinPrices: getCompactedPrices(allMinPrices),
-    compactedMinPricesIndexes: getCompactedPriceIndexes(minPriceIndexes),
-    compactedMaxPrices: getCompactedPrices(allMaxPrices),
-    compactedMaxPricesIndexes: getCompactedPriceIndexes(maxPriceIndexes),
-    signatures,
-    priceFeedTokens,
-    realtimeFeedTokens,
-    realtimeFeedData,
-  };
+  for (let i = 0; i < priceFeedTokens.length; i++) {
+    const token = priceFeedTokens[i];
+    params.tokens.push(token);
+    params.providers.push(chainlinkPriceFeedProvider.address);
+    params.data.push("0x");
+  }
+
+  for (let i = 0; i < realtimeFeedTokens.length; i++) {
+    const token = realtimeFeedTokens[i];
+    params.tokens.push(token);
+    params.providers.push(chainlinkDataStreamFeedProvider.address);
+    params.data.push(realtimeFeedData[i]);
+  }
+
+  return params;
 }
 
 export function encodeRealtimeData(data) {

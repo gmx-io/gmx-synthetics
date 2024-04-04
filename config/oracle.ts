@@ -24,8 +24,8 @@ type OracleTestPriceFeed = {
 type OraclePriceFeed = OracleRealPriceFeed | OracleTestPriceFeed;
 
 export type OracleConfig = {
-  realtimeFeedVerifier: string;
   signers: string[];
+  dataStreamFeedVerifier?: string;
   minOracleSigners: number;
   minOracleBlockConfirmations: number;
   maxOraclePriceAge: number;
@@ -48,7 +48,6 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
 
   const config: { [network: string]: OracleConfig } = {
     localhost: {
-      realtimeFeedVerifier: ethers.constants.AddressZero,
       signers: testSigners,
       minOracleSigners: 0,
       minOracleBlockConfirmations: 255,
@@ -58,7 +57,6 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     },
 
     hardhat: {
-      realtimeFeedVerifier: ethers.constants.AddressZero,
       signers: testSigners,
       minOracleSigners: 0,
       minOracleBlockConfirmations: 255,
@@ -86,7 +84,6 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     },
 
     arbitrum: {
-      realtimeFeedVerifier: "0xDBaeB34DF0AcfA564a49e13840C5CE2894C4b886",
       signers: ["0x0F711379095f2F0a6fdD1e8Fccd6eBA0833c1F1f"],
       maxOraclePriceAge: 5 * 60,
       maxOracleTimestampRange: 60,
@@ -231,7 +228,6 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     },
 
     avalanche: {
-      realtimeFeedVerifier: "0xaaf548a3A74939650d7A5d7550Cf785975ed400a",
       signers: ["0x7f2CA7713AACD279f7753F804163189E4831c1EE"],
       maxOraclePriceAge: 5 * 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
@@ -305,7 +301,6 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     },
 
     arbitrumSepolia: {
-      realtimeFeedVerifier: "0xF7d27557369D05ad2B3d020af78480Ed6a2ca1f9",
       signers: ["0xb38302e27bAe8932536A84ab362c3d1013420Cb4"],
       maxOraclePriceAge: 5 * 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
@@ -334,7 +329,6 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     },
 
     arbitrumGoerli: {
-      realtimeFeedVerifier: "0x09DFf56A4fF44e0f4436260A04F5CFa65636A481",
       signers: ["0xFb11f15f206bdA02c224EDC744b0E50E46137046", "0x23247a1A80D01b9482E9d734d2EB780a3b5c8E6c"],
       maxOraclePriceAge: 5 * 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
@@ -368,7 +362,6 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     },
 
     avalancheFuji: {
-      realtimeFeedVerifier: "0x5f64394a2Ab3AcE9eCC071568Fc552489a8de7AF",
       signers: ["0xFb11f15f206bdA02c224EDC744b0E50E46137046", "0x23247a1A80D01b9482E9d734d2EB780a3b5c8E6c"],
       maxOraclePriceAge: 5 * 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%

@@ -3,21 +3,13 @@ import { setUintIfDifferent } from "../utils/dataStore";
 import * as keys from "../utils/keys";
 import { createDeployFunction } from "../utils/deploy";
 
-const constructorContracts = ["RoleStore", "OracleStore"];
+const constructorContracts = ["RoleStore", "DataStore", "EventEmitter"];
 
 const func = createDeployFunction({
   contractName: "Oracle",
   dependencyNames: constructorContracts,
-  getDeployArgs: async ({ dependencyContracts, network, gmx, get }) => {
-    const oracleConfig = await gmx.getOracle();
-    let realtimeFeedVerifierAddress = oracleConfig.realtimeFeedVerifier;
-    if (network.name === "hardhat") {
-      const realtimeFeedVerifier = await get("MockRealtimeFeedVerifier");
-      realtimeFeedVerifierAddress = realtimeFeedVerifier.address;
-    }
-    return constructorContracts
-      .map((dependencyName) => dependencyContracts[dependencyName].address)
-      .concat(realtimeFeedVerifierAddress);
+  getDeployArgs: async ({ dependencyContracts }) => {
+    return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
   afterDeploy: async ({ deployedContract, gmx }) => {
     const oracleConfig = await gmx.getOracle();

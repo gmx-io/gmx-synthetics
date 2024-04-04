@@ -24,6 +24,7 @@
   "globals": {
     "process": true,
     "ethers": true,
+    "hre": true,
     "describe": true,
     "it": true,
     "beforeEach": true,

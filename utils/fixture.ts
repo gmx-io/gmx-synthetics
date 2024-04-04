@@ -73,6 +73,8 @@ export async function deployFixture() {
   const exchangeRouter = await hre.ethers.getContract("ExchangeRouter");
   const subaccountRouter = await hre.ethers.getContract("SubaccountRouter");
   const oracle = await hre.ethers.getContract("Oracle");
+  const gmOracleProvider = await hre.ethers.getContract("GmOracleProvider");
+  const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
   const marketUtils = await hre.ethers.getContract("MarketUtils");
   const marketStoreUtils = await hre.ethers.getContract("MarketStoreUtils");
   const depositStoreUtils = await hre.ethers.getContract("DepositStoreUtils");
@@ -206,6 +208,8 @@ export async function deployFixture() {
       exchangeRouter,
       subaccountRouter,
       oracle,
+      gmOracleProvider,
+      chainlinkPriceFeedProvider,
       marketUtils,
       marketStoreUtils,
       depositStoreUtils,

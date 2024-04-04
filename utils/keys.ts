@@ -57,6 +57,8 @@ export const MIN_ORACLE_BLOCK_CONFIRMATIONS = hashString("MIN_ORACLE_BLOCK_CONFI
 export const MAX_ORACLE_PRICE_AGE = hashString("MAX_ORACLE_PRICE_AGE");
 export const MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR = hashString("MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR");
 export const MIN_ORACLE_SIGNERS = hashString("MIN_ORACLE_SIGNERS");
+export const MAX_ORACLE_TIMESTAMP_RANGE = hashString("MAX_ORACLE_TIMESTAMP_RANGE");
+export const IS_ORACLE_PROVIDER_ENABLED = hashString("IS_ORACLE_PROVIDER_ENABLED");
 
 export const MIN_COLLATERAL_FACTOR = hashString("MIN_COLLATERAL_FACTOR");
 export const MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER = hashString(
@@ -315,6 +317,10 @@ export function openInterestInTokensKey(market: string, collateralToken: string,
     ["bytes32", "address", "address", "bool"],
     [OPEN_INTEREST_IN_TOKENS, market, collateralToken, isLong]
   );
+}
+
+export function isOracleProviderEnabledKey(provider: string) {
+  return hashData(["bytes32", "address"], [IS_ORACLE_PROVIDER_ENABLED, provider]);
 }
 
 export function minCollateralFactorKey(market: string) {
