@@ -53,7 +53,7 @@ library GmOracleUtils {
                 report.blockHash,
                 token,
                 tokenOracleType,
-                report.precision,
+                10 ** report.precision,
                 minPrice,
                 maxPrice
             ))

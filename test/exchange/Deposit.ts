@@ -239,20 +239,9 @@ describe("Exchange.Deposit", () => {
   it("executeDeposit validations", async () => {
     await expect(
       depositHandler.connect(user0).executeDeposit(HashZero, {
-        signerInfo: 0,
         tokens: [],
-        compactedMinOracleBlockNumbers: [],
-        compactedMaxOracleBlockNumbers: [],
-        compactedOracleTimestamps: [],
-        compactedDecimals: [],
-        compactedMinPrices: [],
-        compactedMinPricesIndexes: [],
-        compactedMaxPrices: [],
-        compactedMaxPricesIndexes: [],
-        signatures: [],
-        priceFeedTokens: [],
-        realtimeFeedTokens: [],
-        realtimeFeedData: [],
+        providers: [],
+        data: [],
       })
     )
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")

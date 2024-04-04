@@ -183,8 +183,8 @@ contract GmOracleProvider is RoleModule, IOracleProvider {
             );
         }
 
-        uint256 medianMinPrice = Array.getMedian(report.minPrices) * report.precision;
-        uint256 medianMaxPrice = Array.getMedian(report.maxPrices) * report.precision;
+        uint256 medianMinPrice = Array.getMedian(report.minPrices) * (10 ** report.precision);
+        uint256 medianMaxPrice = Array.getMedian(report.maxPrices) * (10 ** report.precision);
 
         if (medianMinPrice == 0 || medianMaxPrice == 0) {
             revert Errors.InvalidGmOraclePrice(token);

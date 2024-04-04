@@ -273,6 +273,8 @@ export async function getOracleParams({
     const maxPrice = maxPrices[i];
 
     const signatures = [];
+    const signedMinPrices = [];
+    const signedMaxPrices = [];
 
     for (let j = 0; j < signers.length; j++) {
       const signature = await signPrice({
@@ -289,35 +291,29 @@ export async function getOracleParams({
         maxPrice,
       });
 
+      signedMinPrices.push(minPrice);
+      signedMaxPrices.push(maxPrice);
       signatures.push(signature);
     }
 
-    const data = hashData(
+    const data = ethers.utils.defaultAbiCoder.encode(
+      ["tuple(address, uint256, uint256, uint256, uint256, uint256, bytes32, uint256[], uint256[], bytes[])"],
       [
-        "address",
-        "uint256",
-        "uint256",
-        "uint256",
-        "uint256",
-        "uint256",
-        "bytes32",
-        "uint256[]",
-        "uint256[]",
-        "bytes[]",
-      ],
-      [
-        token,
-        signerInfo,
-        precision,
-        minOracleBlockNumber,
-        maxOracleBlockNumber,
-        oracleTimestamp,
-        blockHash,
-        [minPrice],
-        [maxPrice],
-        signatures,
+        [
+          token,
+          signerInfo,
+          precision,
+          minOracleBlockNumber,
+          maxOracleBlockNumber,
+          oracleTimestamp,
+          blockHash,
+          signedMinPrices,
+          signedMaxPrices,
+          signatures,
+        ],
       ]
     );
+
     params.tokens.push(token);
     params.providers.push(gmOracleProvider.address);
     params.data.push(data);
