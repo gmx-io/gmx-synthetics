@@ -76,11 +76,128 @@ async function main() {
   const rolesToAdd = {
     arbitrum: [
       {
+        role: "ADL_KEEPER",
+        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+      },
+      {
+        role: "ADL_KEEPER",
+        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+      },
+      {
+        role: "ADL_KEEPER",
+        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+      },
+      {
+        role: "FROZEN_ORDER_KEEPER",
+        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+      },
+      {
+        role: "FROZEN_ORDER_KEEPER",
+        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+      },
+      {
+        role: "FROZEN_ORDER_KEEPER",
+        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+      },
+      {
+        role: "LIMITED_CONFIG_KEEPER",
+        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+      },
+      {
+        role: "LIMITED_CONFIG_KEEPER",
+        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+      },
+      {
+        role: "LIMITED_CONFIG_KEEPER",
+        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+      },
+      {
+        role: "LIQUIDATION_KEEPER",
+        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+      },
+      {
+        role: "LIQUIDATION_KEEPER",
+        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+      },
+      {
+        role: "LIQUIDATION_KEEPER",
+        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+      },
+      {
         role: "ORDER_KEEPER",
-        member: "0xcc25dce071b75196d27ad95906dbfa45218d5ec6",
+        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+      },
+      {
+        role: "ORDER_KEEPER",
+        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+      },
+      {
+        role: "ORDER_KEEPER",
+        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
       },
     ],
-    avalanche: [],
+    avalanche: [
+      {
+        role: "ADL_KEEPER",
+        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+      },
+      {
+        role: "ADL_KEEPER",
+        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+      },
+      {
+        role: "ADL_KEEPER",
+        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+      },
+      {
+        role: "FROZEN_ORDER_KEEPER",
+        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+      },
+      {
+        role: "FROZEN_ORDER_KEEPER",
+        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+      },
+      {
+        role: "FROZEN_ORDER_KEEPER",
+        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+      },
+      {
+        role: "LIMITED_CONFIG_KEEPER",
+        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+      },
+      {
+        role: "LIMITED_CONFIG_KEEPER",
+        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+      },
+      {
+        role: "LIMITED_CONFIG_KEEPER",
+        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+      },
+      {
+        role: "LIQUIDATION_KEEPER",
+        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+      },
+      {
+        role: "LIQUIDATION_KEEPER",
+        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+      },
+      {
+        role: "LIQUIDATION_KEEPER",
+        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+      },
+      {
+        role: "ORDER_KEEPER",
+        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+      },
+      {
+        role: "ORDER_KEEPER",
+        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+      },
+      {
+        role: "ORDER_KEEPER",
+        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+      },
+    ],
   };
 
   const rolesToRemove = {
