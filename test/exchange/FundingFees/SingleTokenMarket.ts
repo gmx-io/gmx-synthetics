@@ -103,13 +103,6 @@ describe("Exchange.FundingFees.SingleTokenMarket", () => {
     expect(positionInfo1.fees.funding.claimableLongTokenAmount).eq("4031999");
     expect(positionInfo1.fees.funding.claimableLongTokenAmount).eq("4031999");
 
-    // fundingFeeAmount: [BigNumber],
-    // claimableLongTokenAmount: [BigNumber],
-    // claimableShortTokenAmount: [BigNumber],
-    // latestFundingFeeAmountPerSize: [BigNumber],
-    // latestLongTokenClaimableFundingAmountPerSize: [BigNumber],
-    // latestShortTokenClaimableFundingAmountPerSize: [BigNumber]
-
     // ORDER 3
     // user0 decreases the long position by $190k, remaining long position size is $10k
     await handleOrder(fixture, {
