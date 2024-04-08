@@ -65,10 +65,13 @@ async function getGrantRoleActionKeysToCancel({ timelock }) {
   return actionKeys;
 }
 
-// update roles in config/roles.ts
-// then run scripts/validateRoles.ts, it should output the role changes
-// update rolesToAdd and rolesToRemove here
-// then run e.g. TIMELOCK_METHOD=signalGrantRole npx hardhat run --network arbitrum scripts/updateRoles.ts
+// to update roles
+// 1. update roles in config/roles.ts
+// 2. then run scripts/validateRoles.ts, it should output the role changes
+// 3. update rolesToAdd and rolesToRemove here
+// 4. then run e.g. WRITE=true TIMELOCK_METHOD=signalGrantRole npx hardhat run --network arbitrum scripts/updateRoles.ts
+// 5. after the timelock delay, run WRITE=true TIMELOCK_METHOD=grantRoleAfterSignal npx hardhat run --network arbitrum scripts/updateRoles.ts
+// see utils/signer.ts for steps on how to sign the transactions
 async function main() {
   // NOTE: the existing Timelock needs to be used to grant roles to new contracts including new Timelocks
   const timelock = await getTimelock();
@@ -76,11 +79,128 @@ async function main() {
   const rolesToAdd = {
     arbitrum: [
       {
+        role: "ADL_KEEPER",
+        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+      },
+      {
+        role: "ADL_KEEPER",
+        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+      },
+      {
+        role: "ADL_KEEPER",
+        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+      },
+      {
+        role: "FROZEN_ORDER_KEEPER",
+        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+      },
+      {
+        role: "FROZEN_ORDER_KEEPER",
+        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+      },
+      {
+        role: "FROZEN_ORDER_KEEPER",
+        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+      },
+      {
+        role: "LIMITED_CONFIG_KEEPER",
+        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+      },
+      {
+        role: "LIMITED_CONFIG_KEEPER",
+        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+      },
+      {
+        role: "LIMITED_CONFIG_KEEPER",
+        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+      },
+      {
+        role: "LIQUIDATION_KEEPER",
+        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+      },
+      {
+        role: "LIQUIDATION_KEEPER",
+        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+      },
+      {
+        role: "LIQUIDATION_KEEPER",
+        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+      },
+      {
         role: "ORDER_KEEPER",
-        member: "0xcc25dce071b75196d27ad95906dbfa45218d5ec6",
+        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+      },
+      {
+        role: "ORDER_KEEPER",
+        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+      },
+      {
+        role: "ORDER_KEEPER",
+        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
       },
     ],
-    avalanche: [],
+    avalanche: [
+      {
+        role: "ADL_KEEPER",
+        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+      },
+      {
+        role: "ADL_KEEPER",
+        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+      },
+      {
+        role: "ADL_KEEPER",
+        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+      },
+      {
+        role: "FROZEN_ORDER_KEEPER",
+        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+      },
+      {
+        role: "FROZEN_ORDER_KEEPER",
+        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+      },
+      {
+        role: "FROZEN_ORDER_KEEPER",
+        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+      },
+      {
+        role: "LIMITED_CONFIG_KEEPER",
+        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+      },
+      {
+        role: "LIMITED_CONFIG_KEEPER",
+        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+      },
+      {
+        role: "LIMITED_CONFIG_KEEPER",
+        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+      },
+      {
+        role: "LIQUIDATION_KEEPER",
+        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+      },
+      {
+        role: "LIQUIDATION_KEEPER",
+        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+      },
+      {
+        role: "LIQUIDATION_KEEPER",
+        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+      },
+      {
+        role: "ORDER_KEEPER",
+        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+      },
+      {
+        role: "ORDER_KEEPER",
+        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+      },
+      {
+        role: "ORDER_KEEPER",
+        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+      },
+    ],
   };
 
   const rolesToRemove = {
