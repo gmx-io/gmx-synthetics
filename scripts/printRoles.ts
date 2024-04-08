@@ -10,10 +10,13 @@ const knownRoles = Object.fromEntries(
     "TIMELOCK_ADMIN",
     "TIMELOCK_MULTISIG",
     "CONFIG_KEEPER",
+    "LIMITED_CONFIG_KEEPER",
     "CONTROLLER",
+    "GOV_TOKEN_CONTROLLER",
     "ROUTER_PLUGIN",
     "MARKET_KEEPER",
     "FEE_KEEPER",
+    "FEE_DISTRIBUTION_KEEPER",
     "ORDER_KEEPER",
     "FROZEN_ORDER_KEEPER",
     "PRICING_KEEPER",
@@ -23,8 +26,6 @@ const knownRoles = Object.fromEntries(
 );
 
 async function main() {
-  const rolesConfig = await hre.gmx.getRoles();
-  const accountLables = Object.fromEntries(rolesConfig.map((item) => [item.account, item.label]));
   const roleStore = await ethers.getContract("RoleStore");
   const roleCount = await roleStore.getRoleCount();
   const roles = await roleStore.getRoles(0, roleCount);
@@ -37,19 +38,7 @@ async function main() {
   for (const role of roles) {
     const roleMemberCount = await roleStore.getRoleMemberCount(role);
     const roleMembers = await roleStore.getRoleMembers(role, 0, roleMemberCount);
-    console.log(
-      "%s:\n\t%s",
-      knownRoles[role] || role,
-      roleMembers
-        .map((account: string) => {
-          const label = accountLables[account];
-          if (label) {
-            return `${account} (${label})`;
-          }
-          return account;
-        })
-        .join("\n\t")
-    );
+    console.log("%s:\n\t%s", knownRoles[role] || role, roleMembers.join("\n\t"));
   }
 }
 

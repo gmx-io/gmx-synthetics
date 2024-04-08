@@ -1,6 +1,13 @@
 import { BigNumber } from "ethers";
 
 export function toLoggableObject(obj: any): any {
+  if (obj === undefined) {
+    return "undefined";
+  }
+  if (obj === null) {
+    return "null";
+  }
+
   if (obj instanceof BigNumber) {
     return obj.toString();
   }

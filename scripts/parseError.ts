@@ -35,10 +35,10 @@ async function main() {
 
   try {
     const errorReason = parseError(errorBytes);
-    console.log("error:", getErrorString(errorReason));
+    console.log("parsed:", getErrorString(errorReason));
     return;
   } catch (e) {
-    console.log(e);
+    // eslint-disable-next: no-empty
   }
 
   const panicSignature = ethers.utils.id("Panic(uint256)").slice(0, 10);
@@ -48,7 +48,7 @@ async function main() {
       ["uint256"],
       "0x" + errorBytes.slice(panicSignature.length)
     );
-    console.log("Parsed: Panic(%s): %s", panicCode.toString(), PANIC_MAP[panicCode.toString()]);
+    console.log("parsed: Panic(%s): %s", panicCode.toString(), PANIC_MAP[panicCode.toString()]);
     return;
   }
 
@@ -59,7 +59,7 @@ async function main() {
       ["string"],
       "0x" + errorBytes.slice(errorSignature.length)
     );
-    console.log('Parsed: Error("%s")', errorString);
+    console.log('parsed: Error("%s")', errorString);
     return;
   }
 

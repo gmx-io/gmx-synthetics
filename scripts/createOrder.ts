@@ -109,35 +109,16 @@ async function main() {
   const referralCode = ethers.constants.HashZero;
 
   // a list of markets can be printed using scripts/printMarkets.ts
-  const ETH_USD_MARKET = "0x1529876A9348D61C6c4a3EEe1fe6CbF1117Ca315";
-
-  // list of feed IDs can be found in config/tokens.ts
-  const ETH_FEED_ID = "0x4554482d5553442d415242495452554d2d544553544e45540000000000000000";
+  const ETH_USD_MARKET = "0x95237E65Bb82B9d8Cd710C15AEf8d9a653bC54a8";
 
   // list of tokens can be found in config/tokens.ts
-  const USDC = "0x04FC936a15352a1b15b3B9c56EA002051e3DB3e5";
-
-  const feedId = ETH_FEED_ID;
-  // reduce the latest block by 10 to allow for some buffer since it may take some time for reports to be produced
-  const blockNumber = (await hre.ethers.provider.getBlockNumber()) - 10;
-
-  const clientId = process.env.REALTIME_FEED_CLIENT_ID;
-  const clientSecret = process.env.REALTIME_FEED_CLIENT_SECRET;
-  const report = await fetchRealtimeFeedReport({ feedId, blockNumber, clientId, clientSecret });
-
-  const chainlinkFeedPrecision = expandDecimals(1, 8);
+  const USDC = "0x3321Fd36aEaB0d5CdfD26f4A3A93E2D2aAcCB99f";
 
   const market = ETH_USD_MARKET;
 
-  const currentPrice = report.minPrice.mul(FLOAT_PRECISION).div(chainlinkFeedPrecision);
-  console.log(`currentPrice: ${formatAmount(currentPrice, 30, 2, true)}`);
-
   // allow 30bps (0.3%) slippage
   // divide by 10^18 to get the price per unit of token
-  const acceptablePrice = currentPrice
-    .mul(10_000 + 30)
-    .div(10_000)
-    .div(expandDecimals(1, 18));
+  const acceptablePrice = expandDecimals(1_000_000_000, 30);
 
   const tx = await createOrder({
     router,

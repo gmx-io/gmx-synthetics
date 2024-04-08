@@ -6,17 +6,19 @@ import { expandDecimals, decimalToFloat } from "../../../utils/math";
 import { handleDeposit } from "../../../utils/deposit";
 import { OrderType, handleOrder } from "../../../utils/order";
 import { getEventData, getEventDataArray } from "../../../utils/event";
+import { getPositionKey } from "../../../utils/position";
+import { prices } from "../../../utils/prices";
 import * as keys from "../../../utils/keys";
 
 describe("Exchange.FundingFees.SingleTokenMarket", () => {
   let fixture;
   let user0, user1;
-  let dataStore, ethUsdMarket, ethUsdSingleTokenMarket, usdc;
+  let dataStore, referralStorage, reader, ethUsdMarket, ethUsdSingleTokenMarket, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1 } = fixture.accounts);
-    ({ dataStore, ethUsdMarket, ethUsdSingleTokenMarket, usdc } = fixture.contracts);
+    ({ dataStore, referralStorage, reader, ethUsdMarket, ethUsdSingleTokenMarket, usdc } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -72,6 +74,34 @@ describe("Exchange.FundingFees.SingleTokenMarket", () => {
     });
 
     await time.increase(14 * 24 * 60 * 60);
+
+    const positionInfo0 = await reader.getPositionInfo(
+      dataStore.address,
+      referralStorage.address,
+      getPositionKey(user0.address, ethUsdSingleTokenMarket.marketToken, usdc.address, true),
+      prices.ethUsdSingleTokenMarket,
+      1,
+      ethers.constants.AddressZero,
+      false
+    );
+
+    const positionInfo1 = await reader.getPositionInfo(
+      dataStore.address,
+      referralStorage.address,
+      getPositionKey(user1.address, ethUsdSingleTokenMarket.marketToken, usdc.address, false),
+      prices.ethUsdSingleTokenMarket,
+      1,
+      ethers.constants.AddressZero,
+      false
+    );
+
+    expect(positionInfo0.fees.funding.fundingFeeAmount).eq("8064000");
+    expect(positionInfo0.fees.funding.claimableLongTokenAmount).eq("0");
+    expect(positionInfo0.fees.funding.claimableLongTokenAmount).eq("0");
+
+    expect(positionInfo1.fees.funding.fundingFeeAmount).eq("0");
+    expect(positionInfo1.fees.funding.claimableLongTokenAmount).eq("4031999");
+    expect(positionInfo1.fees.funding.claimableLongTokenAmount).eq("4031999");
 
     // ORDER 3
     // user0 decreases the long position by $190k, remaining long position size is $10k

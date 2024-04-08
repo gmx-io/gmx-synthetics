@@ -1,0 +1,163 @@
+{
+  "address": "0xd95d787e437955B6a2F4ce7142860e57071053A4",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "arbSys",
+      "outputs": [
+        {
+          "internalType": "contract ArbSys",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "blockNumber",
+          "type": "uint256"
+        }
+      ],
+      "name": "getBlockHash",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "blockNumber",
+          "type": "uint256"
+        }
+      ],
+      "name": "getBlockHashAndLatestBlockNumber",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "blockNumberDiff",
+          "type": "uint256"
+        }
+      ],
+      "name": "getBlockHashWithDelayAndLatestBlockNumber",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "latestBlockHash",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "blockNumber",
+          "type": "uint256"
+        }
+      ],
+      "name": "updateLatestBlockHash",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xb2b04974cb732cee3ade0305c5b5a1ba3bcbf01f0d681af64c03523d22f43ffc",
+  "receipt": {
+    "to": null,
+    "from": "0xFb11f15f206bdA02c224EDC744b0E50E46137046",
+    "contractAddress": "0xd95d787e437955B6a2F4ce7142860e57071053A4",
+    "transactionIndex": 1,
+    "gasUsed": "8301225",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xaab2a3f7ddd45152d0d4cd4b51aad6f3003aea7e2c7f06f84a641679076d98ed",
+    "transactionHash": "0xb2b04974cb732cee3ade0305c5b5a1ba3bcbf01f0d681af64c03523d22f43ffc",
+    "logs": [],
+    "blockNumber": 190315435,
+    "cumulativeGasUsed": "8301225",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 4,
+  "solcInputHash": "73b92e37323c0c9dfcfbec5354367f68",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.18+commit.87f61d96\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"arbSys\",\"outputs\":[{\"internalType\":\"contract ArbSys\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"blockNumber\",\"type\":\"uint256\"}],\"name\":\"getBlockHash\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"blockNumber\",\"type\":\"uint256\"}],\"name\":\"getBlockHashAndLatestBlockNumber\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"blockNumberDiff\",\"type\":\"uint256\"}],\"name\":\"getBlockHashWithDelayAndLatestBlockNumber\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"latestBlockHash\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"blockNumber\",\"type\":\"uint256\"}],\"name\":\"updateLatestBlockHash\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/chain/ChainReader.sol\":\"ChainReader\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":10},\"remappings\":[]},\"sources\":{\"contracts/chain/ChainReader.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\n\\npragma solidity ^0.8.0;\\n\\n// @title ArbSys\\n// @dev Globally available variables for Arbitrum may have both an L1 and an L2\\n// value, the ArbSys interface is used to retrieve the L2 value\\ninterface ArbSys {\\n    function arbBlockNumber() external view returns (uint256);\\n\\n    function arbBlockHash(uint256 blockNumber) external view returns (bytes32);\\n}\\n\\ncontract ChainReader {\\n    ArbSys public constant arbSys = ArbSys(address(100));\\n\\n    bytes32 public latestBlockHash;\\n\\n    function updateLatestBlockHash(uint256 blockNumber) external {\\n        bytes32 blockHash = getBlockHash(blockNumber);\\n        if (blockHash == bytes32(0)) {\\n            revert(\\\"blockHash is empty\\\");\\n        }\\n        latestBlockHash = blockHash;\\n    }\\n\\n    function getBlockHash(uint256 blockNumber) public view returns (bytes32) {\\n        return arbSys.arbBlockHash(blockNumber);\\n    }\\n\\n    function getBlockHashWithDelayAndLatestBlockNumber(\\n        uint256 blockNumberDiff\\n    ) external view returns (bytes32, uint256) {\\n        return (arbSys.arbBlockHash(arbSys.arbBlockNumber() - blockNumberDiff), arbSys.arbBlockNumber());\\n    }\\n\\n    function getBlockHashAndLatestBlockNumber(uint256 blockNumber) external view returns (bytes32, uint256) {\\n        return (getBlockHash(blockNumber), arbSys.arbBlockNumber());\\n    }\\n}\\n\",\"keccak256\":\"0x02fa295547a9f0b78a3b247f99857cdac2ce4377eb734e957ebff01f1fddbdf0\",\"license\":\"BUSL-1.1\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b506103a6806100206000396000f3fe608060405234801561001057600080fd5b50600436106100625760003560e01c80631057d40f14610067578063160c59081461008c57806316ceb92b146100b45780636c4f6ba9146100c9578063e920669c146100e0578063ee82ac5e146100f3575b600080fd5b61006f606481565b6040516001600160a01b0390911681526020015b60405180910390f35b61009f61009a36600461031d565b610106565b60408051928352602083019190915201610083565b6100c76100c236600461031d565b610252565b005b6100d260005481565b604051908152602001610083565b61009f6100ee36600461031d565b6102ab565b6100d261010136600461031d565b6102b3565b60008060646001600160a01b0316632b407a828460646001600160a01b031663a3b1b31d6040518163ffffffff1660e01b8152600401602060405180830381865afa158015610159573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061017d9190610336565b610187919061034f565b6040518263ffffffff1660e01b81526004016101a591815260200190565b602060405180830381865afa1580156101c2573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906101e69190610336565b60646001600160a01b031663a3b1b31d6040518163ffffffff1660e01b8152600401602060405180830381865afa158015610225573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906102499190610336565b91509150915091565b600061025d826102b3565b9050806102a55760405162461bcd60e51b8152602060048201526012602482015271626c6f636b4861736820697320656d70747960701b604482015260640160405180910390fd5b60005550565b6000806101e6835b6040516315a03d4160e11b815260048101829052600090606490632b407a8290602401602060405180830381865afa1580156102f3573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906103179190610336565b92915050565b60006020828403121561032f57600080fd5b5035919050565b60006020828403121561034857600080fd5b5051919050565b8181038181111561031757634e487b7160e01b600052601160045260246000fdfea26469706673582212203b4d7887883dc2399649d83efd6fc1dc82fa794fe5c3349b285158fc8dde22d864736f6c63430008120033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100625760003560e01c80631057d40f14610067578063160c59081461008c57806316ceb92b146100b45780636c4f6ba9146100c9578063e920669c146100e0578063ee82ac5e146100f3575b600080fd5b61006f606481565b6040516001600160a01b0390911681526020015b60405180910390f35b61009f61009a36600461031d565b610106565b60408051928352602083019190915201610083565b6100c76100c236600461031d565b610252565b005b6100d260005481565b604051908152602001610083565b61009f6100ee36600461031d565b6102ab565b6100d261010136600461031d565b6102b3565b60008060646001600160a01b0316632b407a828460646001600160a01b031663a3b1b31d6040518163ffffffff1660e01b8152600401602060405180830381865afa158015610159573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061017d9190610336565b610187919061034f565b6040518263ffffffff1660e01b81526004016101a591815260200190565b602060405180830381865afa1580156101c2573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906101e69190610336565b60646001600160a01b031663a3b1b31d6040518163ffffffff1660e01b8152600401602060405180830381865afa158015610225573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906102499190610336565b91509150915091565b600061025d826102b3565b9050806102a55760405162461bcd60e51b8152602060048201526012602482015271626c6f636b4861736820697320656d70747960701b604482015260640160405180910390fd5b60005550565b6000806101e6835b6040516315a03d4160e11b815260048101829052600090606490632b407a8290602401602060405180830381865afa1580156102f3573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906103179190610336565b92915050565b60006020828403121561032f57600080fd5b5035919050565b60006020828403121561034857600080fd5b5051919050565b8181038181111561031757634e487b7160e01b600052601160045260246000fdfea26469706673582212203b4d7887883dc2399649d83efd6fc1dc82fa794fe5c3349b285158fc8dde22d864736f6c63430008120033",
+  "libraries": {},
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 25,
+        "contract": "contracts/chain/ChainReader.sol:ChainReader",
+        "label": "latestBlockHash",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_bytes32"
+      }
+    ],
+    "types": {
+      "t_bytes32": {
+        "encoding": "inplace",
+        "label": "bytes32",
+        "numberOfBytes": "32"
+      }
+    }
+  }
+}

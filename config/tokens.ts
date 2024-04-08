@@ -122,6 +122,39 @@ const config: {
       realtimeFeedId: "0xb43dc495134fa357725f93539511c5a4febeadf56e7c29c96566c825094f0b20",
       realtimeFeedDecimals: 8,
     },
+    ATOM: {
+      synthetic: true,
+      decimals: 6,
+      realtimeFeedId: "0x0001e9f09452b9b4711728022fef4733194ff79c101152d162e71e7f783610dc",
+      realtimeFeedDecimals: 8,
+    },
+    NEAR: {
+      synthetic: true,
+      decimals: 24,
+      realtimeFeedId: "0x00012220cd0630294b6d5c90410ef905620f98d6ea778fed3c24cc31a386d0bb",
+      realtimeFeedDecimals: 8,
+    },
+    AAVE: {
+      address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      realtimeFeedId: "0x0001d5ab28c40849614adc04418c26e6139af7bb9f653faa458a98d122196746",
+      realtimeFeedDecimals: 8,
+    },
+    AVAX: {
+      address: "0x565609fAF65B92F7be02468acF86f8979423e514",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      realtimeFeedId: "0xe65b31c6d5b9bdff43a8194dc5b2edc6914ddbc5e9f9e9521f605fc3738fabf5",
+      realtimeFeedDecimals: 8,
+    },
+    OP: {
+      address: "0xaC800FD6159c2a2CB8fC31EF74621eB430287a5A",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      realtimeFeedId: "0x0001acb89e9722914140a4e5b952cb22d43ce336d7e47659a3313de1416266cf",
+      realtimeFeedDecimals: 8,
+    },
     USDC: {
       address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
       decimals: 6,
@@ -209,6 +242,30 @@ const config: {
       address: "0xd586E7F844cEa2F87f50152665BCbc2C279D8d70",
       decimals: 18,
       transferGasLimit: 200 * 1000,
+    },
+  },
+  arbitrumSepolia: {
+    WETH: {
+      address: "0x980b62da83eff3d4576c647993b0c1d7faf17c73", // not verified
+      decimals: 18,
+      wrappedNative: true,
+      transferGasLimit: 200 * 1000,
+      realtimeFeedId: "0x0001d678deabc04f0494b78138727170ff1cf1daf91fca6954de59e41fa0965c",
+      realtimeFeedDecimals: 8,
+    },
+    BTC: {
+      address: "0xF79cE1Cf38A09D572b021B4C5548b75A14082F12",
+      decimals: 8,
+      transferGasLimit: 200 * 1000,
+      realtimeFeedId: "0x0001ef0379c835e64d03082e561403cc14b2779b525d93149b25df0ee3ef9456",
+      realtimeFeedDecimals: 8,
+    },
+    USDC: {
+      address: "0x3321Fd36aEaB0d5CdfD26f4A3A93E2D2aAcCB99f",
+      decimals: 6,
+      transferGasLimit: 200 * 1000,
+      realtimeFeedId: "0x0001829d7d4c7c5badcd54d2126e621c51eabf32393ffab969e311b18ed80138",
+      realtimeFeedDecimals: 8,
     },
   },
   arbitrumGoerli: {

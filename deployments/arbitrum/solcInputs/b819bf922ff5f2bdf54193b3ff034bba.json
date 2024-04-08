@@ -1,0 +1,38 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/chain/ChainReader.sol": {
+      "content": "// SPDX-License-Identifier: BUSL-1.1\n\npragma solidity ^0.8.0;\n\n// @title ArbSys\n// @dev Globally available variables for Arbitrum may have both an L1 and an L2\n// value, the ArbSys interface is used to retrieve the L2 value\ninterface ArbSys {\n    function arbBlockNumber() external view returns (uint256);\n    function arbBlockHash(uint256 blockNumber) external view returns (bytes32);\n}\n\ncontract ChainReader {\n    ArbSys public constant arbSys = ArbSys(address(100));\n\n    bytes32 public latestBlockHash;\n\n    function updateLatestBlockHash(uint256 blockNumber) external {\n        bytes32 blockHash = getBlockHash(blockNumber);\n        if (blockHash == bytes32(0)) {\n\n        }\n        latestBlockHash = blockHash;\n    }\n\n    function getBlockHash(uint256 blockNumber) public view returns (bytes32) {\n        return arbSys.arbBlockHash(blockNumber);\n    }\n}\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": true,
+      "runs": 10,
+      "details": {
+        "constantOptimizer": true
+      }
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}

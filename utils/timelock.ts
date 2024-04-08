@@ -1,7 +1,7 @@
 import { signExternally } from "./signer";
 
 export async function timelockWriteMulticall({ timelock, multicallWriteParams }) {
-  console.log("multicallWriteParams", multicallWriteParams);
+  console.info("multicallWriteParams", multicallWriteParams);
 
   if (process.env.WRITE === "true") {
     if (multicallWriteParams.length === 0) {
@@ -10,6 +10,6 @@ export async function timelockWriteMulticall({ timelock, multicallWriteParams })
 
     await signExternally(await timelock.populateTransaction.multicall(multicallWriteParams));
   } else {
-    console.log("NOTE: executed in read-only mode, no transactions were sent");
+    console.info("NOTE: executed in read-only mode, no transactions were sent");
   }
 }

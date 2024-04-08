@@ -1,10 +1,12 @@
 import hre from "hardhat";
 import { expandDecimals } from "../utils/math";
 import { timelockWriteMulticall } from "../utils/timelock";
+import * as keys from "../utils/keys";
 
 const expectedPhases = ["signal", "finalize"];
 
 async function main() {
+  const dataStore = await hre.ethers.getContract("DataStore");
   const timelock = await hre.ethers.getContract("Timelock");
   console.log("timelock", timelock.address);
 
@@ -12,7 +14,7 @@ async function main() {
   const oracleConfigs = await hre.gmx.getOracle();
 
   const tokensToUpdate = {
-    arbitrum: ["BNB"],
+    arbitrum: ["OP"],
   };
 
   const multicallWriteParams = [];
@@ -44,6 +46,26 @@ async function main() {
     const realtimeFeedMethod = phase === "signal" ? "signalSetRealtimeFeed" : "setRealtimeFeedAfterSignal";
 
     const stablePrice = priceFeed.stablePrice ? priceFeed.stablePrice : 0;
+
+    const currentRealtimeFeedId = await dataStore.getBytes32(keys.realtimeFeedIdKey(tokenConfig.address));
+    if (currentRealtimeFeedId !== ethers.constants.HashZero) {
+      throw new Error(`realtimeFeedId already exists for ${token}`);
+    }
+
+    const currentRealtimeFeedMultiplier = await dataStore.getUint(keys.realtimeFeedMultiplierKey(tokenConfig.address));
+    if (!currentRealtimeFeedMultiplier.eq(0)) {
+      throw new Error(`realtimeFeedMultiplier already exists for ${token}`);
+    }
+
+    const currentPriceFeed = await dataStore.getAddress(keys.priceFeedKey(tokenConfig.address));
+    if (currentPriceFeed !== ethers.constants.AddressZero) {
+      throw new Error(`priceFeed already exists for ${token}`);
+    }
+
+    const currentPriceFeedMultiplier = await dataStore.getUint(keys.priceFeedMultiplierKey(tokenConfig.address));
+    if (!currentPriceFeedMultiplier.eq(0)) {
+      throw new Error(`realtimeFeedMultiplier already exists for ${token}`);
+    }
 
     multicallWriteParams.push(
       timelock.interface.encodeFunctionData(priceFeedMethod, [

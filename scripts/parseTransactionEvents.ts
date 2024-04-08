@@ -1,4 +1,5 @@
 import hre from "hardhat";
+import { getErrorString, parseError } from "../utils/error";
 
 async function main() {
   console.log("Network: %s", hre.network.name);
@@ -34,6 +35,11 @@ async function main() {
         const key = `${type}Items`;
         for (const item of eventData[key].items) {
           console.log("    %s: %s (%s)", item.key, item.value, type);
+          if (item.key === "reasonBytes") {
+            const error = parseError(item.value, false);
+            const parsedReason = error ? getErrorString(error) : undefined;
+            console.log("      parsed: %s", parsedReason);
+          }
         }
         for (const item of eventData[key].arrayItems) {
           console.log("    %s: %j (%s)", item.key, item.value, type);

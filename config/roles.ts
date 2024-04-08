@@ -16,6 +16,9 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       "0xE47b36382DC50b90bCF6176Ddb159C4b9333A7AB": true,
       "0xC539cB358a58aC67185BaAD4d5E3f7fCfc903700": true,
       "0xf1e1B2F4796d984CCb8485d43db0c64B83C1FA6d": true,
+      "0xdE10336a5C37Ab8FBfd6cd53bdECa5b0974737ba": true,
+      "0xeB2a53FF17a747B6000041FB4919B3250f2892E3": true,
+      "0x8808c5E5Bc9317Bf8cb5eE62339594b8d95f77df": true,
     },
   };
 
@@ -31,18 +34,34 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     },
   };
 
+  const gelatoKeepers = {
+    arbitrum: {
+      "0xcc25DCe071B75196D27aD95906dbfA45218d5eC6": true,
+    },
+  };
+
   const testnetAdmins = {
     "0xC84f3398eDf6336E1Ef55b50Ca3F9f9f96B8b504": true,
     "0xFb11f15f206bdA02c224EDC744b0E50E46137046": true,
+    "0xb38302e27bAe8932536A84ab362c3d1013420Cb4": true,
   };
 
   const testnetConfig = {
     CONTROLLER: testnetAdmins,
-    ORDER_KEEPER: testnetAdmins,
+    ORDER_KEEPER: {
+      "0x3053c7edC20aa08d225CdeC9688136c4ab9F9963": true,
+      ...testnetAdmins,
+    },
     ADL_KEEPER: testnetAdmins,
-    LIQUIDATION_KEEPER: testnetAdmins,
+    LIQUIDATION_KEEPER: {
+      "0x3053c7edC20aa08d225CdeC9688136c4ab9F9963": true,
+      ...testnetAdmins,
+    },
     MARKET_KEEPER: testnetAdmins,
-    FROZEN_ORDER_KEEPER: testnetAdmins,
+    FROZEN_ORDER_KEEPER: {
+      "0x3053c7edC20aa08d225CdeC9688136c4ab9F9963": true,
+      ...testnetAdmins,
+    },
   };
 
   const config: {
@@ -60,7 +79,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       ADL_KEEPER: syntheticKeepers.mainnet,
       FROZEN_ORDER_KEEPER: syntheticKeepers.mainnet,
       LIQUIDATION_KEEPER: syntheticKeepers.mainnet,
-      ORDER_KEEPER: { ...syntheticKeepers.mainnet, ...chainlinkKeepers.arbitrum },
+      ORDER_KEEPER: { ...syntheticKeepers.mainnet, ...chainlinkKeepers.arbitrum, ...gelatoKeepers.arbitrum },
       LIMITED_CONFIG_KEEPER: syntheticKeepers.mainnet,
       CONFIG_KEEPER: {
         "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
@@ -168,12 +187,17 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xa192D0681E2b9484d1fA48083D36B8A2D0Da1809": true, // RewardRouterV2_1
       },
     },
-    arbitrumGoerli: testnetConfig,
     avalancheFuji: {
       CONFIG_KEEPER: {
         "0xFb11f15f206bdA02c224EDC744b0E50E46137046": true,
         "0xc9e1CE91d3f782499cFe787b6F1d2AF0Ca76C049": true,
         "0x03d717E27aF1B566C3efb729F1151E775B411f2B": true,
+      },
+      ...testnetConfig,
+    },
+    arbitrumSepolia: {
+      CONFIG_KEEPER: {
+        "0xb38302e27bAe8932536A84ab362c3d1013420Cb4": true,
       },
       ...testnetConfig,
     },

@@ -1,4 +1,3 @@
-import "@nomicfoundation/hardhat-foundry";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -27,6 +26,7 @@ const getRpcUrl = (network) => {
     arbitrum: "https://arb1.arbitrum.io/rpc",
     avalanche: "https://api.avax.network/ext/bc/C/rpc",
     arbitrumGoerli: "https://goerli-rollup.arbitrum.io/rpc",
+    arbitrumSepolia: "https://sepolia-rollup.arbitrum.io/rpc",
     avalancheFuji: "https://api.avax-test.network/ext/bc/C/rpc",
     snowtrace: "https://api.avax.network/ext/bc/C/rpc",
   };
@@ -44,8 +44,12 @@ const getRpcUrl = (network) => {
   return rpc;
 };
 
-const getEnvAccounts = () => {
-  const { ACCOUNT_KEY, ACCOUNT_KEY_FILE } = process.env;
+const getEnvAccounts = (chainName?: string) => {
+  const { ACCOUNT_KEY, ACCOUNT_KEY_FILE, ARBITRUM_SEPOLIA_ACCOUNT_KEY } = process.env;
+
+  if (chainName === "arbitrumSepolia" && ARBITRUM_SEPOLIA_ACCOUNT_KEY) {
+    return [ARBITRUM_SEPOLIA_ACCOUNT_KEY];
+  }
 
   if (ACCOUNT_KEY) {
     return [ACCOUNT_KEY];
@@ -138,6 +142,18 @@ const config: HardhatUserConfig = {
       },
       blockGasLimit: 10000000,
     },
+    arbitrumSepolia: {
+      url: getRpcUrl("arbitrumSepolia"),
+      chainId: 421614,
+      accounts: getEnvAccounts("arbitrumSepolia"),
+      verify: {
+        etherscan: {
+          apiUrl: "https://api-sepolia.arbiscan.io/",
+          apiKey: process.env.ARBISCAN_API_KEY,
+        },
+      },
+      blockGasLimit: 10000000,
+    },
     avalancheFuji: {
       url: getRpcUrl("avalancheFuji"),
       chainId: 43113,
@@ -160,6 +176,7 @@ const config: HardhatUserConfig = {
       arbitrumOne: process.env.ARBISCAN_API_KEY,
       avalanche: process.env.SNOWTRACE_API_KEY,
       arbitrumGoerli: process.env.ARBISCAN_API_KEY,
+      arbitrumSepolia: process.env.ARBISCAN_API_KEY,
       avalancheFujiTestnet: process.env.SNOWTRACE_API_KEY,
       snowtrace: "snowtrace", // apiKey is not required, just set a placeholder
     },
@@ -170,6 +187,15 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan",
           browserURL: "https://avalanche.routescan.io",
+        },
+      },
+
+      {
+        network: "arbitrumSepolia",
+        chainId: 421614,
+        urls: {
+          apiURL: "https://api-sepolia.arbiscan.io/api",
+          browserURL: "https://https://sepolia.arbiscan.io/",
         },
       },
     ],

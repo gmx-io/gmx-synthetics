@@ -5,7 +5,7 @@ import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { deployContract } from "../../utils/deploy";
 import { TIMELOCK_ADMIN_ROLE, PROPOSER_ROLE, EXECUTOR_ROLE, CANCELLER_ROLE } from "../../utils/gov";
 
-describe("ProtocolGovernor", () => {
+describe("GovTimelockController", () => {
   let timelock;
   let wallet, user0, user1, user2, user3;
   const { HashZero } = ethers.constants;

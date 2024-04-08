@@ -11,8 +11,11 @@ async function main() {
   const config = await hre.ethers.getContract("Config");
 
   const { read } = hre.deployments;
-  const tokens = await hre.gmx.getTokens();
-  const markets = await hre.gmx.getMarkets();
+  const tokens = await (hre as any).gmx.getTokens();
+  const tokensByAddress = Object.fromEntries(
+    Object.entries(tokens).map(([symbol, t]) => [(t as any).address, { symbol, ...(t as any) }])
+  );
+  const markets = await (hre as any).gmx.getMarkets();
 
   const onchainMarketsByTokens = await getOnchainMarkets(read, dataStore.address);
   const multicallReadParams = [];
@@ -21,6 +24,16 @@ async function main() {
     const [indexToken, longToken, shortToken] = getMarketTokenAddresses(marketConfig, tokens);
     const marketKey = getMarketKey(indexToken, longToken, shortToken);
     const onchainMarket = onchainMarketsByTokens[marketKey];
+    if (!onchainMarket) {
+      console.warn(
+        "WARN onchain market with key %s does not exist. index: %s long: %s short: %s",
+        marketKey,
+        tokensByAddress[indexToken].symbol,
+        tokensByAddress[longToken].symbol,
+        tokensByAddress[shortToken].symbol
+      );
+      continue;
+    }
     const marketToken = onchainMarket.marketToken;
 
     multicallReadParams.push({
@@ -50,9 +63,28 @@ async function main() {
     const [indexToken, longToken, shortToken] = getMarketTokenAddresses(marketConfig, tokens);
     const marketKey = getMarketKey(indexToken, longToken, shortToken);
     const onchainMarket = onchainMarketsByTokens[marketKey];
+    if (!onchainMarket) {
+      continue;
+    }
     const marketToken = onchainMarket.marketToken;
 
-    if (!marketConfig.positionImpactPoolDistributionRate || !marketConfig.minPositionImpactPoolAmount) {
+    if (
+      (marketConfig.positionImpactPoolDistributionRate === undefined &&
+        marketConfig.minPositionImpactPoolAmount !== undefined) ||
+      (marketConfig.positionImpactPoolDistributionRate !== undefined &&
+        marketConfig.minPositionImpactPoolAmount === undefined)
+    ) {
+      console.warn(
+        "WARN: only one of impact fields is set for market %s positionImpactPoolDistributionRate=%s minPositionImpactPoolAmount=%s",
+        marketToken,
+        marketConfig.positionImpactExponentFactor,
+        marketConfig.minPositionImpactPoolAmount
+      );
+    }
+    if (
+      marketConfig.positionImpactPoolDistributionRate === undefined ||
+      marketConfig.minPositionImpactPoolAmount === undefined
+    ) {
       continue;
     }
 
@@ -62,30 +94,32 @@ async function main() {
     let wasChanged = false;
 
     if (!currentPositionImpactPoolDistributionRate.eq(marketConfig.positionImpactPoolDistributionRate)) {
-      const change = bigNumberify(marketConfig.positionImpactPoolDistributionRate)
-        .mul(10000)
-        .div(currentPositionImpactPoolDistributionRate);
+      const change = currentPositionImpactPoolDistributionRate.gt(0)
+        ? bigNumberify(marketConfig.positionImpactPoolDistributionRate)
+            .mul(10000)
+            .div(currentPositionImpactPoolDistributionRate)
+        : null;
       wasChanged = true;
       console.log(
         "positionImpactPoolDistributionRate was changed for market %s. prev value %s new value %s (%sx)",
         marketToken,
         currentPositionImpactPoolDistributionRate,
         marketConfig.positionImpactPoolDistributionRate,
-        formatAmount(change, 4)
+        change ? formatAmount(change, 4) : "n/a "
       );
     }
 
     if (!currentMinPositionImpactPoolAmount.eq(marketConfig.minPositionImpactPoolAmount)) {
-      const change = bigNumberify(marketConfig.minPositionImpactPoolAmount)
-        .mul(10000)
-        .div(currentMinPositionImpactPoolAmount);
+      const change = currentMinPositionImpactPoolAmount.gt(0)
+        ? bigNumberify(marketConfig.minPositionImpactPoolAmount).mul(10000).div(currentMinPositionImpactPoolAmount)
+        : null;
       wasChanged = true;
       console.log(
         "minPositionImpactPoolAmount was changed for market %s. prev value %s new value %s (%sx)",
         marketToken,
         currentMinPositionImpactPoolAmount,
         marketConfig.minPositionImpactPoolAmount,
-        formatAmount(change, 4)
+        change ? formatAmount(change, 4) : "n/a "
       );
     }
 

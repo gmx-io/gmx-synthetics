@@ -172,7 +172,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       await setBoolIfDifferent(key, marketConfig.isDisabled, `isDisabled for ${marketToken}`);
     }
 
-    if (marketConfig.swapFeeFactorForPositiveImpact) {
+    if (marketConfig.swapFeeFactorForPositiveImpact !== undefined) {
       const key = keys.swapFeeFactorKey(marketToken, true);
       await setUintIfDifferent(
         key,
@@ -181,7 +181,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       );
     }
 
-    if (marketConfig.swapFeeFactorForNegativeImpact) {
+    if (marketConfig.swapFeeFactorForNegativeImpact !== undefined) {
       const key = keys.swapFeeFactorKey(marketToken, false);
       await setUintIfDifferent(
         key,
@@ -190,7 +190,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       );
     }
 
-    if (marketConfig.positiveSwapImpactFactor) {
+    if (marketConfig.positiveSwapImpactFactor !== undefined) {
       const key = keys.swapImpactFactorKey(marketToken, true);
       await setUintIfDifferent(
         key,
@@ -198,7 +198,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
         `positive swap impact factor for ${marketToken.toString()}`
       );
     }
-    if (marketConfig.negativeSwapImpactFactor) {
+    if (marketConfig.negativeSwapImpactFactor !== undefined) {
       const key = keys.swapImpactFactorKey(marketToken, false);
       await setUintIfDifferent(
         key,
@@ -208,7 +208,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     }
 
     // the rest of the params are not used for swap-only markets
-    if (marketConfig.swapOnly) {
+    if (marketConfig.swapOnly !== undefined) {
       continue;
     }
 
@@ -330,7 +330,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       }
     }
 
-    if (marketConfig.fundingExponentFactor) {
+    if (marketConfig.fundingExponentFactor !== undefined) {
       const key = keys.fundingExponentFactorKey(marketToken);
       await setUintIfDifferent(
         key,
@@ -339,7 +339,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       );
     }
 
-    if (marketConfig.positionFeeFactorForPositiveImpact) {
+    if (marketConfig.positionFeeFactorForPositiveImpact !== undefined) {
       const key = keys.positionFeeFactorKey(marketToken, true);
       await setUintIfDifferent(
         key,
@@ -348,7 +348,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       );
     }
 
-    if (marketConfig.positionFeeFactorForNegativeImpact) {
+    if (marketConfig.positionFeeFactorForNegativeImpact !== undefined) {
       const key = keys.positionFeeFactorKey(marketToken, false);
       await setUintIfDifferent(
         key,
@@ -357,7 +357,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       );
     }
 
-    if (marketConfig.borrowingFactorForLongs) {
+    if (marketConfig.borrowingFactorForLongs !== undefined) {
       const key = keys.borrowingFactorKey(marketToken, true);
       await setUintIfDifferent(
         key,
@@ -366,7 +366,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       );
     }
 
-    if (marketConfig.borrowingFactorForShorts) {
+    if (marketConfig.borrowingFactorForShorts !== undefined) {
       const key = keys.borrowingFactorKey(marketToken, false);
       await setUintIfDifferent(
         key,
@@ -375,7 +375,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       );
     }
 
-    if (marketConfig.borrowingExponentFactorForLongs) {
+    if (marketConfig.borrowingExponentFactorForLongs !== undefined) {
       const key = keys.borrowingExponentFactorKey(marketToken, true);
       await setUintIfDifferent(
         key,
@@ -384,7 +384,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       );
     }
 
-    if (marketConfig.borrowingExponentFactorForShorts) {
+    if (marketConfig.borrowingExponentFactorForShorts !== undefined) {
       const key = keys.borrowingExponentFactorKey(marketToken, false);
       await setUintIfDifferent(
         key,
@@ -393,7 +393,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       );
     }
 
-    if (marketConfig.positivePositionImpactFactor) {
+    if (marketConfig.positivePositionImpactFactor !== undefined) {
       const key = keys.positionImpactFactorKey(marketToken, true);
       await setUintIfDifferent(
         key,
@@ -401,7 +401,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
         `positive position impact factor for ${marketToken.toString()}`
       );
     }
-    if (marketConfig.negativePositionImpactFactor) {
+    if (marketConfig.negativePositionImpactFactor !== undefined) {
       const key = keys.positionImpactFactorKey(marketToken, false);
       await setUintIfDifferent(
         key,
@@ -410,7 +410,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       );
     }
 
-    if (marketConfig.maxPositionImpactFactorForLiquidations) {
+    if (marketConfig.maxPositionImpactFactorForLiquidations !== undefined) {
       const key = keys.maxPositionImpactFactorForLiquidationsKey(marketToken);
       await setUintIfDifferent(
         key,
@@ -419,7 +419,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       );
     }
 
-    if (marketConfig.positiveMaxPositionImpactFactor) {
+    if (marketConfig.positiveMaxPositionImpactFactor !== undefined) {
       const key = keys.maxPositionImpactFactorKey(marketToken, true);
       await setUintIfDifferent(
         key,
@@ -427,7 +427,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
         `positive max position impact factor for ${marketToken.toString()}`
       );
     }
-    if (marketConfig.negativeMaxPositionImpactFactor) {
+    if (marketConfig.negativeMaxPositionImpactFactor !== undefined) {
       const key = keys.maxPositionImpactFactorKey(marketToken, false);
       await setUintIfDifferent(
         key,

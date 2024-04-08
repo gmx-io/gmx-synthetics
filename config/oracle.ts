@@ -157,6 +157,41 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             heartbeatDuration: (24 + 1) * 60 * 60,
           },
         },
+        ATOM: {
+          priceFeed: {
+            address: "0xCDA67618e51762235eacA373894F0C79256768fa",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+        NEAR: {
+          priceFeed: {
+            address: "0xBF5C3fB2633e924598A46B9D07a174a9DBcF57C0",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+        AAVE: {
+          priceFeed: {
+            address: "0xaD1d5344AaDE45F43E596773Bcc4c423EAbdD034",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+        AVAX: {
+          priceFeed: {
+            address: "0x8bf61728eeDCE2F32c456454d87B5d6eD6150208",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+        OP: {
+          priceFeed: {
+            address: "0x205aaD468a11fd5D34fA7211bC6Bad5b3deB9b98",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
         USDC: {
           priceFeed: {
             address: "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",
@@ -261,6 +296,35 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             decimals: 8,
             heartbeatDuration: (24 + 1) * 60 * 60,
             stablePrice: decimalToFloat(1),
+          },
+        },
+      },
+    },
+
+    arbitrumSepolia: {
+      realtimeFeedVerifier: "0xF7d27557369D05ad2B3d020af78480Ed6a2ca1f9",
+      signers: ["0xb38302e27bAe8932536A84ab362c3d1013420Cb4"],
+      maxOraclePriceAge: 5 * 60,
+      maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
+      minOracleBlockConfirmations: 255,
+      minOracleSigners: 1,
+
+      // price feeds https://docs.chain.link/data-feeds/price-feeds/addresses?network=arbitrum&page=1
+      tokens: {
+        USDC: {
+          priceFeed: {
+            address: "0x0153002d20B96532C639313c2d54c3dA09109309",
+            decimals: 8,
+            heartbeatDuration: 3 * 24 * 60 * 60,
+            stablePrice: decimalToFloat(1),
+          },
+        },
+        BTC: {
+          priceFeed: {
+            address: "0x56a43EB56Da12C0dc1D972ACb089c06a5dEF8e69",
+            decimals: 8,
+            heartbeatDuration: 3 * 24 * 60 * 60,
+            stablePrice: decimalToFloat(44000),
           },
         },
       },

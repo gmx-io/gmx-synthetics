@@ -16,9 +16,12 @@ async function main() {
   const dataStore = await hre.ethers.getContract("DataStore");
   console.log("reading data from DataStore %s Reader %s", dataStore.address, reader.address);
   const markets = [...(await reader.getMarkets(dataStore.address, 0, 100))];
+  const isDisabled = await Promise.all(
+    markets.map((market) => dataStore.getBool(keys.isMarketDisabledKey(market.marketToken)))
+  );
+
   markets.sort((a, b) => a.indexToken.localeCompare(b.indexToken));
-  for (const market of markets) {
-    const isDisabled = await dataStore.getBool(keys.isMarketDisabledKey(market.marketToken));
+  for (const [i, market] of markets.entries()) {
     const indexTokenSymbol = addressToSymbol[market.indexToken];
     const longTokenSymbol = addressToSymbol[market.longToken];
     const shortTokenSymbol = addressToSymbol[market.shortToken];
@@ -28,7 +31,7 @@ async function main() {
       indexTokenSymbol?.padEnd(5) || "(swap only)",
       longTokenSymbol?.padEnd(5),
       shortTokenSymbol?.padEnd(5),
-      isDisabled
+      isDisabled[i]
     );
   }
 }

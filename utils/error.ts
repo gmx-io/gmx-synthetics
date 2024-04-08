@@ -12,11 +12,14 @@ export function getErrorString(error) {
   });
 }
 
-export function parseError(reasonBytes) {
+export function parseError(reasonBytes, shouldThrow = true) {
   try {
     const reason = errorsInterface.parseError(reasonBytes);
     return reason;
   } catch (e) {
+    if (!shouldThrow) {
+      return;
+    }
     throw new Error(`Could not parse errorBytes ${reasonBytes}`);
   }
 }

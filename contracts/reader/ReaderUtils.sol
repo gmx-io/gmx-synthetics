@@ -312,23 +312,37 @@ library ReaderUtils {
             positionInfo.position.isLong()
         );
 
+        // see MarketUtils.getNextFundingAmountPerSize for more info on why this multiplier is needed
+        // a short summary:
+        // - funding values are split based on long and short token
+        // - for single token markets, these tokens are the same
+        // - so when the funding values are applied in updateFundingState, they are applied twice
+        // - e.g.
+        //     - increase fundingFeeAmountPerSize(market, collateralToken: token0, isLong: true) by 10
+        //     - increase fundingFeeAmountPerSize(market, collateralToken: token1, isLong: true) by 10
+        //     - for a single token market, token0 is the same as token1, so the value would be increased by 20
+        // - to avoid costs being doubled, these values are halved in MarketUtils.getNextFundingAmountPerSize
+        // - the reader code needs to double the values, because in the code below the nextFundingAmountResult
+        // values are applied virtually instead of the DataStore values being updated
+        uint256 multiplier = cache.market.longToken == cache.market.shortToken ? 2 : 1;
+
         if (positionInfo.position.isLong()) {
-            positionInfo.fees.funding.latestLongTokenClaimableFundingAmountPerSize += nextFundingAmountResult.claimableFundingAmountPerSizeDelta.long.longToken;
-            positionInfo.fees.funding.latestShortTokenClaimableFundingAmountPerSize += nextFundingAmountResult.claimableFundingAmountPerSizeDelta.long.shortToken;
+            positionInfo.fees.funding.latestLongTokenClaimableFundingAmountPerSize += nextFundingAmountResult.claimableFundingAmountPerSizeDelta.long.longToken * multiplier;
+            positionInfo.fees.funding.latestShortTokenClaimableFundingAmountPerSize += nextFundingAmountResult.claimableFundingAmountPerSizeDelta.long.shortToken * multiplier;
 
             if (positionInfo.position.collateralToken() == cache.market.longToken) {
-                positionInfo.fees.funding.latestFundingFeeAmountPerSize += nextFundingAmountResult.fundingFeeAmountPerSizeDelta.long.longToken;
+                positionInfo.fees.funding.latestFundingFeeAmountPerSize += nextFundingAmountResult.fundingFeeAmountPerSizeDelta.long.longToken * multiplier;
             } else {
-                positionInfo.fees.funding.latestFundingFeeAmountPerSize += nextFundingAmountResult.fundingFeeAmountPerSizeDelta.long.shortToken;
+                positionInfo.fees.funding.latestFundingFeeAmountPerSize += nextFundingAmountResult.fundingFeeAmountPerSizeDelta.long.shortToken * multiplier;
             }
         } else {
-            positionInfo.fees.funding.latestLongTokenClaimableFundingAmountPerSize += nextFundingAmountResult.claimableFundingAmountPerSizeDelta.short.longToken;
-            positionInfo.fees.funding.latestShortTokenClaimableFundingAmountPerSize += nextFundingAmountResult.claimableFundingAmountPerSizeDelta.short.shortToken;
+            positionInfo.fees.funding.latestLongTokenClaimableFundingAmountPerSize += nextFundingAmountResult.claimableFundingAmountPerSizeDelta.short.longToken * multiplier;
+            positionInfo.fees.funding.latestShortTokenClaimableFundingAmountPerSize += nextFundingAmountResult.claimableFundingAmountPerSizeDelta.short.shortToken * multiplier;
 
             if (positionInfo.position.collateralToken() == cache.market.longToken) {
-                positionInfo.fees.funding.latestFundingFeeAmountPerSize += nextFundingAmountResult.fundingFeeAmountPerSizeDelta.short.longToken;
+                positionInfo.fees.funding.latestFundingFeeAmountPerSize += nextFundingAmountResult.fundingFeeAmountPerSizeDelta.short.longToken * multiplier;
             } else {
-                positionInfo.fees.funding.latestFundingFeeAmountPerSize += nextFundingAmountResult.fundingFeeAmountPerSizeDelta.short.shortToken;
+                positionInfo.fees.funding.latestFundingFeeAmountPerSize += nextFundingAmountResult.fundingFeeAmountPerSizeDelta.short.shortToken * multiplier;
             }
         }
 
@@ -346,6 +360,16 @@ library ReaderUtils {
         );
 
         positionInfo.pnlAfterPriceImpactUsd = positionInfo.executionPriceResult.priceImpactUsd + positionInfo.basePnlUsd;
+
+        positionInfo.fees.totalCostAmountExcludingFunding =
+            positionInfo.fees.positionFeeAmount
+            + positionInfo.fees.borrowing.borrowingFeeAmount
+            + positionInfo.fees.ui.uiFeeAmount
+            - positionInfo.fees.referral.traderDiscountAmount;
+
+        positionInfo.fees.totalCostAmount =
+            positionInfo.fees.totalCostAmountExcludingFunding
+            + positionInfo.fees.funding.fundingFeeAmount;
 
         return positionInfo;
     }

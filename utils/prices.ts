@@ -10,8 +10,8 @@ export async function fetchTickerPrices() {
 
   for (const tokenPrice of tokenPrices) {
     pricesByTokenAddress[tokenPrice.tokenAddress.toLowerCase()] = {
-      min: bigNumberify(tokenPrice.minPrice).mul(expandDecimals(1, tokenPrice.oracleDecimals)),
-      max: bigNumberify(tokenPrice.maxPrice).mul(expandDecimals(1, tokenPrice.oracleDecimals)),
+      min: bigNumberify(tokenPrice.minPrice),
+      max: bigNumberify(tokenPrice.maxPrice),
     };
   }
 
@@ -20,11 +20,11 @@ export async function fetchTickerPrices() {
 
 export function getTickersUrl() {
   if (hre.network.name === "arbitrum") {
-    return "https://arbitrum.gmx-oracle.io/prices/tickers";
+    return "https://arbitrum-api.gmxinfra.io/prices/tickers";
   }
 
   if (hre.network.name === "avalanche") {
-    return "https://avalanche.gmx-oracle.io/prices/tickers";
+    return "https://avalanche-api.gmxinfra.io/prices/tickers";
   }
 
   throw new Error("Unsupported network");
