@@ -69,6 +69,7 @@ async function getGrantRoleActionKeysToCancel({ timelock }) {
 // then run scripts/validateRoles.ts, it should output the role changes
 // update rolesToAdd and rolesToRemove here
 // then run e.g. TIMELOCK_METHOD=signalGrantRole npx hardhat run --network arbitrum scripts/updateRoles.ts
+// see utils/signer.ts for steps on how to sign the transactions
 async function main() {
   // NOTE: the existing Timelock needs to be used to grant roles to new contracts including new Timelocks
   const timelock = await getTimelock();
