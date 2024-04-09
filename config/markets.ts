@@ -1536,114 +1536,117 @@ const config: {
     },
   ],
   avalancheFuji: [
-    { tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" } },
-    {
-      tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
-      virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
+    // { tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" } },
+    // {
+    //   tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
+    //   virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
 
-      positionImpactPoolDistributionRate: expandDecimals(3, 11), // ~0.026 ETH per day
-      minPositionImpactPoolAmount: expandDecimals(1, 16), // 0.01 ETH
+    //   positionImpactPoolDistributionRate: expandDecimals(3, 11), // ~0.026 ETH per day
+    //   minPositionImpactPoolAmount: expandDecimals(1, 16), // 0.01 ETH
 
-      openInterestReserveFactorLongs: decimalToFloat(7, 1), // 70%,
-      openInterestReserveFactorShorts: decimalToFloat(7, 1), // 70%,
+    //   openInterestReserveFactorLongs: decimalToFloat(7, 1), // 70%,
+    //   openInterestReserveFactorShorts: decimalToFloat(7, 1), // 70%,
 
-      maxOpenInterestForLongs: decimalToFloat(55_000),
-      maxOpenInterestForShorts: decimalToFloat(40_000),
-    },
-    {
-      tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "DAI" },
-      virtualMarketId: hashString("SPOT:AVAX/USD"),
-      virtualTokenIdForIndexToken: "0x275d2a6e341e6a078d4eee59b08907d1e50825031c5481f9551284f4b7ee2fb9",
-    },
-    {
-      tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "USDC" },
-      virtualTokenIdForIndexToken: "0x275d2a6e341e6a078d4eee59b08907d1e50825031c5481f9551284f4b7ee2fb9",
-    },
-    {
-      tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "USDC" },
-      virtualMarketId: "0x11111137e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481f",
-      virtualTokenIdForIndexToken: "0x04533137e2e8ae1c11111111a0dd36e023e0d6217198f889f9eb9c2a6727481d",
-    },
-    {
-      tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "DAI" },
-      virtualMarketId: "0x11111137e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481f",
-    },
+    //   maxOpenInterestForLongs: decimalToFloat(55_000),
+    //   maxOpenInterestForShorts: decimalToFloat(40_000),
+    // },
+    // {
+    //   tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "DAI" },
+    //   virtualMarketId: hashString("SPOT:AVAX/USD"),
+    //   virtualTokenIdForIndexToken: "0x275d2a6e341e6a078d4eee59b08907d1e50825031c5481f9551284f4b7ee2fb9",
+    // },
+    // {
+    //   tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "USDC" },
+    //   virtualTokenIdForIndexToken: "0x275d2a6e341e6a078d4eee59b08907d1e50825031c5481f9551284f4b7ee2fb9",
+    // },
+    // {
+    //   tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "USDC" },
+    //   virtualMarketId: "0x11111137e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481f",
+    //   virtualTokenIdForIndexToken: "0x04533137e2e8ae1c11111111a0dd36e023e0d6217198f889f9eb9c2a6727481d",
+    // },
+    // {
+    //   tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "DAI" },
+    //   virtualMarketId: "0x11111137e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481f",
+    // },
     {
       tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "WBTC" },
       virtualMarketId: "0x11111137e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481f",
 
       negativeSwapImpactFactor: 0,
       positiveSwapImpactFactor: 0,
+
+      maxOpenInterestForLongs: decimalToFloat(250_000),
+      maxOpenInterestForShorts: decimalToFloat(200_000),
     },
-    {
-      tokens: { indexToken: "SOL", longToken: "WETH", shortToken: "USDC" },
-      virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
-    },
-    {
-      tokens: { longToken: "USDC", shortToken: "USDT" },
-      swapOnly: true,
-    },
-    {
-      tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "DAI" },
-      positionImpactPoolDistributionRate: expandDecimals(12, 33), // ~10 DOGE per day
-      minPositionImpactPoolAmount: expandDecimals(1, 8),
-    },
-    { tokens: { indexToken: "LINK", longToken: "WETH", shortToken: "DAI" } },
-    {
-      tokens: { indexToken: "BNB", longToken: "WETH", shortToken: "DAI" },
-      negativeMaxPositionImpactFactor: decimalToFloat(1, 5), // 0.001%
-      positiveMaxPositionImpactFactor: decimalToFloat(1, 5), // 0.001%
-      maxPositionImpactFactorForLiquidations: decimalToFloat(5, 4), // 0.05%
-      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(15, 7),
-      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(15, 7),
-    },
-    { tokens: { indexToken: "ADA", longToken: "WETH", shortToken: "DAI" } },
-    { tokens: { indexToken: "TRX", longToken: "WETH", shortToken: "DAI" } },
-    { tokens: { indexToken: "MATIC", longToken: "WETH", shortToken: "USDC" } },
-    { tokens: { indexToken: "DOT", longToken: "WETH", shortToken: "USDC" } },
-    { tokens: { indexToken: "UNI", longToken: "WETH", shortToken: "USDC" } },
-    {
-      tokens: {
-        indexToken: "TEST",
-        longToken: "WETH",
-        shortToken: "USDC",
-      },
-      negativePositionImpactFactor: decimalToFloat(25, 6), // 0.0025 %
-      positivePositionImpactFactor: decimalToFloat(125, 7), // 0.00125 %
-      positionImpactExponentFactor: decimalToFloat(2, 0), // 2
-      negativeSwapImpactFactor: decimalToFloat(1, 5), // 0.001 %
-      positiveSwapImpactFactor: decimalToFloat(5, 6), // 0.0005 %
-      swapImpactExponentFactor: decimalToFloat(2, 0), // 2
+    // {
+    //   tokens: { indexToken: "SOL", longToken: "WETH", shortToken: "USDC" },
+    //   virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
+    // },
+    // {
+    //   tokens: { longToken: "USDC", shortToken: "USDT" },
+    //   swapOnly: true,
+    // },
+    // {
+    //   tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "DAI" },
+    //   positionImpactPoolDistributionRate: expandDecimals(12, 33), // ~10 DOGE per day
+    //   minPositionImpactPoolAmount: expandDecimals(1, 8),
+    // },
+    // { tokens: { indexToken: "LINK", longToken: "WETH", shortToken: "DAI" } },
+    // {
+    //   tokens: { indexToken: "BNB", longToken: "WETH", shortToken: "DAI" },
+    //   negativeMaxPositionImpactFactor: decimalToFloat(1, 5), // 0.001%
+    //   positiveMaxPositionImpactFactor: decimalToFloat(1, 5), // 0.001%
+    //   maxPositionImpactFactorForLiquidations: decimalToFloat(5, 4), // 0.05%
+    //   minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(15, 7),
+    //   minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(15, 7),
+    // },
+    // { tokens: { indexToken: "ADA", longToken: "WETH", shortToken: "DAI" } },
+    // { tokens: { indexToken: "TRX", longToken: "WETH", shortToken: "DAI" } },
+    // { tokens: { indexToken: "MATIC", longToken: "WETH", shortToken: "USDC" } },
+    // { tokens: { indexToken: "DOT", longToken: "WETH", shortToken: "USDC" } },
+    // { tokens: { indexToken: "UNI", longToken: "WETH", shortToken: "USDC" } },
+    // {
+    //   tokens: {
+    //     indexToken: "TEST",
+    //     longToken: "WETH",
+    //     shortToken: "USDC",
+    //   },
+    //   negativePositionImpactFactor: decimalToFloat(25, 6), // 0.0025 %
+    //   positivePositionImpactFactor: decimalToFloat(125, 7), // 0.00125 %
+    //   positionImpactExponentFactor: decimalToFloat(2, 0), // 2
+    //   negativeSwapImpactFactor: decimalToFloat(1, 5), // 0.001 %
+    //   positiveSwapImpactFactor: decimalToFloat(5, 6), // 0.0005 %
+    //   swapImpactExponentFactor: decimalToFloat(2, 0), // 2
 
-      maxPnlFactorForAdlLongs: decimalToFloat(2, 2), // 2%
-      maxPnlFactorForAdlShorts: decimalToFloat(2, 2), // 2%
+    //   maxPnlFactorForAdlLongs: decimalToFloat(2, 2), // 2%
+    //   maxPnlFactorForAdlShorts: decimalToFloat(2, 2), // 2%
 
-      minPnlFactorAfterAdlLongs: decimalToFloat(1, 2), // 1%
-      minPnlFactorAfterAdlShorts: decimalToFloat(1, 2), // 1%
+    //   minPnlFactorAfterAdlLongs: decimalToFloat(1, 2), // 1%
+    //   minPnlFactorAfterAdlShorts: decimalToFloat(1, 2), // 1%
 
-      maxLongTokenPoolAmount: expandDecimals(10, 18),
-      maxShortTokenPoolAmount: expandDecimals(300_000, 6),
+    //   maxLongTokenPoolAmount: expandDecimals(10, 18),
+    //   maxShortTokenPoolAmount: expandDecimals(300_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(10, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(300_000, 6),
-    },
+    //   maxLongTokenPoolAmountForDeposit: expandDecimals(10, 18),
+    //   maxShortTokenPoolAmountForDeposit: expandDecimals(300_000, 6),
+    // },
 
-    {
-      tokens: { indexToken: "WBTC", longToken: "USDC", shortToken: "USDT" },
+    // {
+    //   tokens: { indexToken: "WBTC", longToken: "USDC", shortToken: "USDT" },
 
-      borrowingFactorForLongs: decimalToFloat(3, 7), // 0.0000003, 0.00003% / second, 946% per year if the pool is 100% utilized
-      borrowingFactorForShorts: decimalToFloat(3, 7), // 0.0000003, 0.00003% / second, 946% per year if the pool is 100% utilized
+    //   borrowingFactorForLongs: decimalToFloat(3, 7), // 0.0000003, 0.00003% / second, 946% per year if the pool is 100% utilized
+    //   borrowingFactorForShorts: decimalToFloat(3, 7), // 0.0000003, 0.00003% / second, 946% per year if the pool is 100% utilized
 
-      fundingFactor: decimalToFloat(16, 7), // ~5000% per year for a 100% skew
-    },
-    {
-      tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "DAI" },
+    //   fundingFactor: decimalToFloat(16, 7), // ~5000% per year for a 100% skew
+    // },
+    // {
+    //   tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "DAI" },
 
-      borrowingFactorForLongs: decimalToFloat(3, 7), // 0.0000003, 0.00003% / second, 946% per year if the pool is 100% utilized
-      borrowingFactorForShorts: decimalToFloat(3, 7), // 0.0000003, 0.00003% / second, 946% per year if the pool is 100% utilized
+    //   borrowingFactorForLongs: decimalToFloat(3, 7), // 0.0000003, 0.00003% / second, 946% per year if the pool is 100% utilized
+    //   borrowingFactorForShorts: decimalToFloat(3, 7), // 0.0000003, 0.00003% / second, 946% per year if the pool is 100% utilized
 
-      fundingFactor: decimalToFloat(16, 7), // ~5000% per year for a 100% skew
-    },
+    //   fundingFactor: decimalToFloat(16, 7), // ~5000% per year for a 100% skew
+    // },
   ],
   hardhat: [
     {
