@@ -146,6 +146,8 @@ library Keys {
     bytes32 public constant IS_ORACLE_PROVIDER_ENABLED = keccak256(abi.encode("IS_ORACLE_PROVIDER_ENABLED"));
     // @dev key for oracle timestamp adjustment
     bytes32 public constant ORACLE_TIMESTAMP_ADJUSTMENT = keccak256(abi.encode("ORACLE_TIMESTAMP_ADJUSTMENT"));
+    // @dev key for oracle provider for token
+    bytes32 public constant ORACLE_PROVIDER_FOR_TOKEN = keccak256(abi.encode("ORACLE_PROVIDER_FOR_TOKEN"));
 
     // @dev key for the percentage amount of position fees to be received
     bytes32 public constant POSITION_FEE_RECEIVER_FACTOR = keccak256(abi.encode("POSITION_FEE_RECEIVER_FACTOR"));
@@ -632,6 +634,16 @@ library Keys {
         return keccak256(abi.encode(
             ORACLE_TIMESTAMP_ADJUSTMENT,
             provider,
+            token
+        ));
+    }
+
+    // @dev key for oracle provider for token
+    // @param token the token
+    // @return key for oracle provider for token
+    function oracleProviderForToken(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            ORACLE_PROVIDER_FOR_TOKEN,
             token
         ));
     }

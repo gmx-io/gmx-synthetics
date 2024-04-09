@@ -129,6 +129,7 @@ library Errors {
     // Oracle errors
     error EmptyValidatedPrices();
     error InvalidOracleProvider(address provider);
+    error InvalidOracleProviderForToken(address provider, address expectedProvider);
     error GmEmptySigner(uint256 signerIndex);
     error InvalidOracleSetPricesProvidersParam(uint256 tokensLength, uint256 providersLength);
     error InvalidOracleSetPricesDataParam(uint256 tokensLength, uint256 dataLength);

@@ -209,6 +209,12 @@ contract Oracle is RoleModule {
             }
 
             address token = params.tokens[i];
+            address expectedProvider = dataStore.getAddress(Keys.oracleProviderForToken(token));
+
+            if (provider != expectedProvider) {
+                revert Errors.InvalidOracleProviderForToken(provider, expectedProvider);
+            }
+
             bytes memory data = params.data[i];
 
             OracleUtils.ValidatedPrice memory validatedPrice = IOracleProvider(provider).getOraclePrice(
