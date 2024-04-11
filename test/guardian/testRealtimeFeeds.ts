@@ -10,7 +10,7 @@ import hre from "hardhat";
 import * as keys from "../../utils/keys";
 import { hashString } from "../../utils/hash";
 
-describe("Guardian.MarketDecrease", () => {
+describe("Guardian.RealtimeFeeds", () => {
   const { provider } = ethers;
 
   let fixture;
@@ -18,16 +18,18 @@ describe("Guardian.MarketDecrease", () => {
   let reader, dataStore, solUsdMarket, solAddr, ethUsdMarket, wnt, usdc;
 
   const getBaseRealtimeData = (block) => {
+    const buffer = 2;
+    const timestamp = block.timestamp + buffer;
     return {
       feedId: hashString("feedId"),
-      observationsTimestamp: block.timestamp,
-      median: expandDecimals(5000, 8),
+      validFromTimestamp: timestamp,
+      observationsTimestamp: timestamp,
+      nativeFee: 0,
+      linkFee: 0,
+      expiresAt: timestamp,
+      price: expandDecimals(5000, 8),
       bid: expandDecimals(5000, 8),
       ask: expandDecimals(5000, 8),
-      blocknumberUpperBound: block.number,
-      upperBlockhash: block.hash,
-      blocknumberLowerBound: block.number,
-      currentBlockTimestamp: block.timestamp,
     };
   };
 

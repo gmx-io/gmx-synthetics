@@ -321,6 +321,7 @@ export async function getOracleParams({
 
   for (let i = 0; i < priceFeedTokens.length; i++) {
     const token = priceFeedTokens[i];
+    await dataStore.setAddress(keys.oracleProviderForTokenKey(token), chainlinkPriceFeedProvider.address);
     params.tokens.push(token);
     params.providers.push(chainlinkPriceFeedProvider.address);
     params.data.push("0x");
@@ -328,7 +329,7 @@ export async function getOracleParams({
 
   for (let i = 0; i < realtimeFeedTokens.length; i++) {
     const token = realtimeFeedTokens[i];
-    await dataStore.setAddress(keys.oracleProviderForTokenKey(token.address), chainlinkDataStreamFeedProvider.address);
+    await dataStore.setAddress(keys.oracleProviderForTokenKey(token), chainlinkDataStreamFeedProvider.address);
     params.tokens.push(token);
     params.providers.push(chainlinkDataStreamFeedProvider.address);
     params.data.push(realtimeFeedData[i]);
@@ -338,30 +339,10 @@ export async function getOracleParams({
 }
 
 export function encodeRealtimeData(data) {
-  const {
-    feedId,
-    observationsTimestamp,
-    median,
-    bid,
-    ask,
-    blocknumberUpperBound,
-    upperBlockhash,
-    blocknumberLowerBound,
-    currentBlockTimestamp,
-  } = data;
+  const { feedId, validFromTimestamp, observationsTimestamp, nativeFee, linkFee, expiresAt, price, bid, ask } = data;
 
   return ethers.utils.defaultAbiCoder.encode(
-    ["bytes32", "uint32", "int192", "int192", "int192", "uint64", "bytes32", "uint64", "uint64"],
-    [
-      feedId,
-      observationsTimestamp,
-      median,
-      bid,
-      ask,
-      blocknumberUpperBound,
-      upperBlockhash,
-      blocknumberLowerBound,
-      currentBlockTimestamp,
-    ]
+    ["bytes32", "uint32", "uint32", "uint192", "uint192", "uint32", "int192", "int192", "int192"],
+    [feedId, validFromTimestamp, observationsTimestamp, nativeFee, linkFee, expiresAt, price, bid, ask]
   );
 }
