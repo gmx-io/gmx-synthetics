@@ -283,7 +283,7 @@ describe("Config", () => {
       },
       {
         key: keys.REQUEST_EXPIRATION_TIME,
-        initial: 0,
+        initial: 300,
         type: "Uint",
       },
       {

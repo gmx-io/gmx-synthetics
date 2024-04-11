@@ -85,8 +85,6 @@ describe("Exchange.CancelOrder", () => {
       errorsContract,
       "RequestNotYetCancellable"
     );
-
-    await increaseTime(300);
   });
 
   it("cancelOrder", async () => {

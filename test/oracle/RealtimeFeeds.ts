@@ -101,7 +101,7 @@ describe("Oracle.RealtimeFeeds", () => {
       .to.be.revertedWithCustomError(errorsContract, "EmptyRealtimeFeedId")
       .withArgs(wnt.address);
 
-    await dataStore.setBytes32(keys.realtimeFeedIdKey(wnt.address), hashString("WNT"));
+    await dataStore.setBytes32(keys.dataStreamFeedIdKey(wnt.address), hashString("WNT"));
 
     await expect(
       oracle.setPrices(dataStore.address, eventEmitter.address, {
@@ -113,7 +113,7 @@ describe("Oracle.RealtimeFeeds", () => {
       .to.be.revertedWithCustomError(errorsContract, "InvalidRealtimeFeedId")
       .withArgs(wnt.address, hashString("feedId"), hashString("WNT"));
 
-    await dataStore.setBytes32(keys.realtimeFeedIdKey(wbtc.address), hashString("WBTC"));
+    await dataStore.setBytes32(keys.dataStreamFeedIdKey(wbtc.address), hashString("WBTC"));
 
     await expect(
       oracle.setPrices(dataStore.address, eventEmitter.address, {
@@ -165,7 +165,7 @@ describe("Oracle.RealtimeFeeds", () => {
       .to.be.revertedWithCustomError(errorsContract, "EmptyRealtimeFeedMultiplier")
       .withArgs(wnt.address);
 
-    await dataStore.setUint(keys.realtimeFeedMultiplierKey(wnt.address), expandDecimals(1, 34));
+    await dataStore.setUint(keys.dataStreamMultiplierKey(wnt.address), expandDecimals(1, 34));
 
     await expect(
       oracle.setPrices(dataStore.address, eventEmitter.address, {
@@ -233,11 +233,11 @@ describe("Oracle.RealtimeFeeds", () => {
     const block = await provider.getBlock();
     const baseRealtimeData = getBaseRealtimeData(block);
 
-    await dataStore.setBytes32(keys.realtimeFeedIdKey(wnt.address), hashString("WNT"));
-    await dataStore.setBytes32(keys.realtimeFeedIdKey(wbtc.address), hashString("WBTC"));
+    await dataStore.setBytes32(keys.dataStreamFeedIdKey(wnt.address), hashString("WNT"));
+    await dataStore.setBytes32(keys.dataStreamFeedIdKey(wbtc.address), hashString("WBTC"));
 
-    await dataStore.setUint(keys.realtimeFeedMultiplierKey(wnt.address), expandDecimals(1, 34));
-    await dataStore.setUint(keys.realtimeFeedMultiplierKey(wbtc.address), expandDecimals(1, 44));
+    await dataStore.setUint(keys.dataStreamMultiplierKey(wnt.address), expandDecimals(1, 34));
+    await dataStore.setUint(keys.dataStreamMultiplierKey(wbtc.address), expandDecimals(1, 44));
 
     await oracle.setPrices(dataStore.address, eventEmitter.address, {
       ...baseSetPricesParams,
@@ -269,8 +269,8 @@ describe("Oracle.RealtimeFeeds", () => {
     const block = await provider.getBlock();
     const baseRealtimeData = getBaseRealtimeData(block);
 
-    await dataStore.setBytes32(keys.realtimeFeedIdKey(wnt.address), hashString("WNT"));
-    await dataStore.setUint(keys.realtimeFeedMultiplierKey(wnt.address), expandDecimals(1, 34));
+    await dataStore.setBytes32(keys.dataStreamFeedIdKey(wnt.address), hashString("WNT"));
+    await dataStore.setUint(keys.dataStreamMultiplierKey(wnt.address), expandDecimals(1, 34));
 
     const wbtcMinPrices = [60100, 60101, 60102, 60110, 60200, 60300, 60500];
     const wbtcMaxPrices = [60100, 60101, 60102, 60510, 60700, 60800, 60900];
@@ -335,11 +335,11 @@ describe("Oracle.RealtimeFeeds", () => {
     const block4 = await provider.getBlock(block.number - 1);
     const block5 = block;
 
-    await dataStore.setBytes32(keys.realtimeFeedIdKey(wnt.address), hashString("WNT"));
-    await dataStore.setBytes32(keys.realtimeFeedIdKey(wbtc.address), hashString("WBTC"));
+    await dataStore.setBytes32(keys.dataStreamFeedIdKey(wnt.address), hashString("WNT"));
+    await dataStore.setBytes32(keys.dataStreamFeedIdKey(wbtc.address), hashString("WBTC"));
 
-    await dataStore.setUint(keys.realtimeFeedMultiplierKey(wnt.address), expandDecimals(1, 34));
-    await dataStore.setUint(keys.realtimeFeedMultiplierKey(wbtc.address), expandDecimals(1, 44));
+    await dataStore.setUint(keys.dataStreamMultiplierKey(wnt.address), expandDecimals(1, 34));
+    await dataStore.setUint(keys.dataStreamMultiplierKey(wbtc.address), expandDecimals(1, 44));
 
     await expect(
       oracle.setPrices(dataStore.address, eventEmitter.address, {

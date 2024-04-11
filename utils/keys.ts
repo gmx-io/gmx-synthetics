@@ -79,11 +79,12 @@ export const REQUEST_EXPIRATION_TIME = hashString("REQUEST_EXPIRATION_TIME");
 export const PRICE_FEED = hashString("PRICE_FEED");
 export const PRICE_FEED_MULTIPLIER = hashString("PRICE_FEED_MULTIPLIER");
 export const PRICE_FEED_HEARTBEAT_DURATION = hashString("PRICE_FEED_HEARTBEAT_DURATION");
-export const REALTIME_FEED_ID = hashString("REALTIME_FEED_ID");
-export const REALTIME_FEED_MULTIPLIER = hashString("REALTIME_FEED_MULTIPLIER");
+export const DATA_STREAM_FEED_ID = hashString("DATA_STREAM_FEED_ID");
+export const DATA_STREAM_FEED_MULTIPLIER = hashString("DATA_STREAM_FEED_MULTIPLIER");
 export const STABLE_PRICE = hashString("STABLE_PRICE");
 
 export const ORACLE_TYPE = hashString("ORACLE_TYPE");
+export const ORACLE_PROVIDER_FOR_TOKEN = hashString("ORACLE_PROVIDER_FOR_TOKEN");
 
 export const OPEN_INTEREST = hashString("OPEN_INTEREST");
 export const OPEN_INTEREST_IN_TOKENS = hashString("OPEN_INTEREST_IN_TOKENS");
@@ -292,12 +293,12 @@ export function priceFeedHeartbeatDurationKey(token: string) {
   return hashData(["bytes32", "address"], [PRICE_FEED_HEARTBEAT_DURATION, token]);
 }
 
-export function realtimeFeedIdKey(token: string) {
-  return hashData(["bytes32", "address"], [REALTIME_FEED_ID, token]);
+export function dataStreamFeedIdKey(token: string) {
+  return hashData(["bytes32", "address"], [DATA_STREAM_FEED_ID, token]);
 }
 
-export function realtimeFeedMultiplierKey(token: string) {
-  return hashData(["bytes32", "address"], [REALTIME_FEED_MULTIPLIER, token]);
+export function dataStreamMultiplierKey(token: string) {
+  return hashData(["bytes32", "address"], [DATA_STREAM_FEED_MULTIPLIER, token]);
 }
 
 export function stablePriceKey(token: string) {
@@ -306,6 +307,10 @@ export function stablePriceKey(token: string) {
 
 export function oracleTypeKey(token: string) {
   return hashData(["bytes32", "address"], [ORACLE_TYPE, token]);
+}
+
+export function oracleProviderForTokenKey(token: string) {
+  return hashData(["bytes32", "address"], [ORACLE_PROVIDER_FOR_TOKEN, token]);
 }
 
 export function openInterestKey(market: string, collateralToken: string, isLong: boolean) {

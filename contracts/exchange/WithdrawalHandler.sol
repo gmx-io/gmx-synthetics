@@ -71,7 +71,7 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
 
         ExchangeUtils.validateRequestCancellation(
             _dataStore,
-            withdrawal.updatedAtBlock(),
+            withdrawal.updatedAtTime(),
             "Withdrawal"
         );
 

@@ -201,12 +201,11 @@ describe("Guardian.FundingFees", () => {
     expect(homogenousMarketShortPositionInfo.position.addresses.market).to.eq(ethUsdSingleTokenMarket.marketToken);
     expect(homogenousMarketShortPositionInfo.position.flags.isLong).to.be.false;
 
-    // Notice: The Reader does not accurately value homogenous funding fees
-    expect(homogenousMarketLongPositionInfo.fees.funding.fundingFeeAmount).to.closeTo("20160000", "500");
+    expect(homogenousMarketLongPositionInfo.fees.funding.fundingFeeAmount).to.closeTo("40320000", "500");
     expect(homogenousMarketShortPositionInfo.fees.funding.fundingFeeAmount).to.eq("0");
 
-    expect(homogenousMarketShortPositionInfo.fees.funding.claimableLongTokenAmount).to.eq("10079999");
-    expect(homogenousMarketShortPositionInfo.fees.funding.claimableShortTokenAmount).to.eq("10079999");
+    expect(homogenousMarketShortPositionInfo.fees.funding.claimableLongTokenAmount).to.eq("20159999");
+    expect(homogenousMarketShortPositionInfo.fees.funding.claimableShortTokenAmount).to.eq("20159999");
 
     expect(homogenousMarketLongPositionInfo.fees.funding.claimableLongTokenAmount).to.eq(0);
     expect(homogenousMarketLongPositionInfo.fees.funding.claimableShortTokenAmount).to.eq(0);

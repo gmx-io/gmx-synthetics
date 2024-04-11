@@ -70,7 +70,7 @@ contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, O
 
         ExchangeUtils.validateRequestCancellation(
             _dataStore,
-            deposit.updatedAtBlock(),
+            deposit.updatedAtTime(),
             "Deposit"
         );
 

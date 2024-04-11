@@ -163,6 +163,7 @@ library IncreasePositionUtils {
 
         params.position.setBorrowingFactor(cache.nextPositionBorrowingFactor);
         params.position.setIncreasedAtBlock(Chain.currentBlockNumber());
+        params.position.setIncreasedAtTime(Chain.currentTimestamp());
 
         PositionStoreUtils.set(params.contracts.dataStore, params.positionKey, params.position);
 

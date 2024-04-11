@@ -30,6 +30,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       executionGasFeeBaseAmount: 0,
       executionGasFeeMultiplierFactor: 0,
 
+      requestExpirationTime: 300,
+
       maxSwapPathLength: 5,
       maxCallbackGasLimit: 2_000_000,
       minCollateralUsd: decimalToFloat(1),

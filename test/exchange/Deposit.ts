@@ -280,12 +280,6 @@ describe("Exchange.Deposit", () => {
 
     await expect(
       executeDeposit(fixture, {
-        oracleBlockNumber: (await provider.getBlock()).number - 10,
-      })
-    ).to.be.revertedWithCustomError(errorsContract, "OracleBlockNumberNotWithinRange");
-
-    await expect(
-      executeDeposit(fixture, {
         tokens: [wnt.address],
         tokenOracleTypes: [TOKEN_ORACLE_TYPES.DEFAULT],
         minPrices: [expandDecimals(5000, 4)],
@@ -425,8 +419,8 @@ describe("Exchange.Deposit", () => {
       depositHandler.connect(user0).simulateExecuteDeposit(HashZero, {
         primaryTokens: [],
         primaryPrices: [],
-        secondaryTokens: [],
-        secondaryPrices: [],
+        minTimestamp: 0,
+        maxTimestamp: 0,
       })
     )
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
@@ -442,29 +436,7 @@ describe("Exchange.Deposit", () => {
 
     const emptyDeposit = await depositStoreUtilsTest.getEmptyDeposit();
 
-    await expect(
-      depositHandler.connect(user0)._executeDeposit(
-        HashZero,
-        emptyDeposit,
-        {
-          signerInfo: 0,
-          tokens: [],
-          compactedMinOracleBlockNumbers: [],
-          compactedMaxOracleBlockNumbers: [],
-          compactedOracleTimestamps: [],
-          compactedDecimals: [],
-          compactedMinPrices: [],
-          compactedMinPricesIndexes: [],
-          compactedMaxPrices: [],
-          compactedMaxPricesIndexes: [],
-          signatures: [],
-          priceFeedTokens: [],
-          realtimeFeedTokens: [],
-          realtimeFeedData: [],
-        },
-        user0.address
-      )
-    )
+    await expect(depositHandler.connect(user0)._executeDeposit(HashZero, emptyDeposit, user0.address))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user0.address, "SELF");
   });

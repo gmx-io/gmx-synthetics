@@ -45,22 +45,6 @@ describe("Timelock", () => {
     expect(await roleStore.hasRole(user3.address, orderKeeperRole)).eq(false);
   });
 
-  it("setInStrictPriceFeedMode", async () => {
-    await expect(timelock.connect(timelockAdmin).setInStrictPriceFeedMode(true))
-      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
-      .withArgs(timelockAdmin.address, "TIMELOCK_MULTISIG");
-
-    expect(await dataStore.getBool(keys.IN_STRICT_PRICE_FEED_MODE)).eq(false);
-
-    await timelock.connect(timelockMultisig).setInStrictPriceFeedMode(true);
-
-    expect(await dataStore.getBool(keys.IN_STRICT_PRICE_FEED_MODE)).eq(true);
-
-    await timelock.connect(timelockMultisig).setInStrictPriceFeedMode(false);
-
-    expect(await dataStore.getBool(keys.IN_STRICT_PRICE_FEED_MODE)).eq(false);
-  });
-
   it("increaseTimelockDelay", async () => {
     await expect(timelock.connect(user2).increaseTimelockDelay(2 * 24 * 60 * 60))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
@@ -255,39 +239,39 @@ describe("Timelock", () => {
     expect(await dataStore.getUint(keys.stablePriceKey(wnt.address))).eq(decimalToFloat(5000));
   });
 
-  it("setRealtimeFeed", async () => {
-    await expect(timelock.connect(user2).signalSetRealtimeFeed(wnt.address, hashString("WNT"), expandDecimals(1, 34)))
+  it("setDataStream", async () => {
+    await expect(timelock.connect(user2).signalSetDataStream(wnt.address, hashString("WNT"), expandDecimals(1, 34)))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user2.address, "TIMELOCK_ADMIN");
 
-    await timelock.connect(timelockAdmin).signalSetRealtimeFeed(wnt.address, hashString("WNT"), expandDecimals(1, 34));
+    await timelock.connect(timelockAdmin).signalSetDataStream(wnt.address, hashString("WNT"), expandDecimals(1, 34));
 
     await expect(
-      timelock.connect(user2).setRealtimeFeedAfterSignal(wnt.address, hashString("WNT"), expandDecimals(1, 34))
+      timelock.connect(user2).setDataStreamAfterSignal(wnt.address, hashString("WNT"), expandDecimals(1, 34))
     )
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user2.address, "TIMELOCK_ADMIN");
 
     await expect(
-      timelock.connect(user2).setRealtimeFeedAfterSignal(wnt.address, hashString("WNT"), expandDecimals(1, 34))
+      timelock.connect(user2).setDataStreamAfterSignal(wnt.address, hashString("WNT"), expandDecimals(1, 34))
     )
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user2.address, "TIMELOCK_ADMIN");
 
     await expect(
-      timelock.connect(timelockAdmin).setRealtimeFeedAfterSignal(wnt.address, hashString("WNT"), expandDecimals(1, 34))
+      timelock.connect(timelockAdmin).setDataStreamAfterSignal(wnt.address, hashString("WNT"), expandDecimals(1, 34))
     ).to.be.revertedWithCustomError(errorsContract, "SignalTimeNotYetPassed");
 
     await time.increase(1 * 24 * 60 * 60 + 10);
 
-    expect(await dataStore.getBytes32(keys.realtimeFeedIdKey(wnt.address))).eq(ethers.constants.HashZero);
-    expect(await dataStore.getUint(keys.realtimeFeedMultiplierKey(wnt.address))).eq(0);
+    expect(await dataStore.getBytes32(keys.dataStreamFeedIdKey(wnt.address))).eq(ethers.constants.HashZero);
+    expect(await dataStore.getUint(keys.dataStreamMultiplierKey(wnt.address))).eq(0);
 
     await timelock
       .connect(timelockAdmin)
-      .setRealtimeFeedAfterSignal(wnt.address, hashString("WNT"), expandDecimals(1, 34));
+      .setDataStreamAfterSignal(wnt.address, hashString("WNT"), expandDecimals(1, 34));
 
-    expect(await dataStore.getBytes32(keys.realtimeFeedIdKey(wnt.address))).eq(hashString("WNT"));
-    expect(await dataStore.getUint(keys.realtimeFeedMultiplierKey(wnt.address))).eq(expandDecimals(1, 34));
+    expect(await dataStore.getBytes32(keys.dataStreamFeedIdKey(wnt.address))).eq(hashString("WNT"));
+    expect(await dataStore.getUint(keys.dataStreamMultiplierKey(wnt.address))).eq(expandDecimals(1, 34));
   });
 });

@@ -8,6 +8,8 @@ const func = async ({ gmx, deployments }: HardhatRuntimeEnvironment) => {
   const tokens = await gmx.getTokens();
   const { get } = deployments;
 
+  const gmOracleProvider = await get("GmOracleProvider");
+
   if (oracleConfig) {
     for (const tokenSymbol of Object.keys(oracleConfig.tokens)) {
       const token = tokens[tokenSymbol];
@@ -18,6 +20,8 @@ const func = async ({ gmx, deployments }: HardhatRuntimeEnvironment) => {
 
       const oracleTypeKey = keys.oracleTypeKey(token.address);
       await setBytes32IfDifferent(oracleTypeKey, oracleType, "oracle type");
+
+      await setAddressIfDifferent(keys.oracleProviderForTokenKey(token.address), gmOracleProvider.address);
 
       if (!priceFeed) {
         continue;
@@ -47,6 +51,6 @@ const func = async ({ gmx, deployments }: HardhatRuntimeEnvironment) => {
   }
 };
 
-func.dependencies = ["Tokens", "PriceFeeds", "DataStore"];
+func.dependencies = ["Tokens", "PriceFeeds", "DataStore", "GmOracleProvider"];
 func.tags = ["ConfigurePriceFeeds"];
 export default func;

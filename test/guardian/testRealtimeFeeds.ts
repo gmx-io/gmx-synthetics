@@ -66,10 +66,10 @@ describe("Guardian.MarketDecrease", () => {
   it("Order executes with realtime feed tokens only", async () => {
     const initialUSDCBalance = expandDecimals(50 * 1000, 6); // 50,000 USDC
     expect(await getOrderCount(dataStore)).eq(0);
-    await dataStore.setBytes32(keys.realtimeFeedIdKey(wnt.address), hashString("WNT"));
-    await dataStore.setUint(keys.realtimeFeedMultiplierKey(wnt.address), expandDecimals(1, 34));
-    await dataStore.setBytes32(keys.realtimeFeedIdKey(usdc.address), hashString("USDC"));
-    await dataStore.setUint(keys.realtimeFeedMultiplierKey(usdc.address), expandDecimals(1, 46));
+    await dataStore.setBytes32(keys.dataStreamFeedIdKey(wnt.address), hashString("WNT"));
+    await dataStore.setUint(keys.dataStreamMultiplierKey(wnt.address), expandDecimals(1, 34));
+    await dataStore.setBytes32(keys.dataStreamFeedIdKey(usdc.address), hashString("USDC"));
+    await dataStore.setUint(keys.dataStreamMultiplierKey(usdc.address), expandDecimals(1, 46));
 
     const increaseParams = {
       account: user1,
@@ -153,8 +153,8 @@ describe("Guardian.MarketDecrease", () => {
   it("Order executes with regular and realtime feed tokens", async () => {
     const initialUSDCBalance = expandDecimals(50 * 1000, 6); // 50,000 USDC
     expect(await getOrderCount(dataStore)).eq(0);
-    await dataStore.setBytes32(keys.realtimeFeedIdKey(wnt.address), hashString("WNT"));
-    await dataStore.setUint(keys.realtimeFeedMultiplierKey(wnt.address), expandDecimals(1, 34));
+    await dataStore.setBytes32(keys.dataStreamFeedIdKey(wnt.address), hashString("WNT"));
+    await dataStore.setUint(keys.dataStreamMultiplierKey(wnt.address), expandDecimals(1, 34));
 
     const increaseParams = {
       account: user1,
@@ -232,8 +232,8 @@ describe("Guardian.MarketDecrease", () => {
   it("Order executes with regular CL feeds and realtime feed tokens", async () => {
     const initialUSDCBalance = expandDecimals(50 * 1000, 6); // 50,000 USDC
     expect(await getOrderCount(dataStore)).eq(0);
-    await dataStore.setBytes32(keys.realtimeFeedIdKey(wnt.address), hashString("WNT"));
-    await dataStore.setUint(keys.realtimeFeedMultiplierKey(wnt.address), expandDecimals(1, 34));
+    await dataStore.setBytes32(keys.dataStreamFeedIdKey(wnt.address), hashString("WNT"));
+    await dataStore.setUint(keys.dataStreamMultiplierKey(wnt.address), expandDecimals(1, 34));
 
     const increaseParams = {
       account: user1,

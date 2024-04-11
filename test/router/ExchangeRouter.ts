@@ -243,6 +243,8 @@ describe("ExchangeRouter", () => {
 
     const depositKey = await getNextKey(dataStore);
 
+    const currentTimestamp = (await ethers.provider.getBlock()).timestamp + 2;
+
     await expect(
       exchangeRouter.connect(user0).multicall(
         [
@@ -282,8 +284,8 @@ describe("ExchangeRouter", () => {
                   max: expandDecimals(1, 24),
                 },
               ],
-              secondaryTokens: [],
-              secondaryPrices: [],
+              minTimestamp: currentTimestamp,
+              maxTimestamp: currentTimestamp,
             },
           ]),
         ],

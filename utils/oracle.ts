@@ -185,7 +185,7 @@ export function getCompactedOracleTimestamps(timestamps) {
   });
 }
 
-export async function getOracleParamsForSimulation({ tokens, minPrices, maxPrices, precisions }) {
+export async function getOracleParamsForSimulation({ tokens, minPrices, maxPrices, precisions, oracleTimestamps }) {
   if (tokens.length !== minPrices.length) {
     throw new Error(`Invalid input, tokens.length != minPrices.length ${tokens}, ${minPrices}`);
   }
@@ -194,40 +194,38 @@ export async function getOracleParamsForSimulation({ tokens, minPrices, maxPrice
     throw new Error(`Invalid input, tokens.length != maxPrices.length ${tokens}, ${maxPrices}`);
   }
 
+  const currentTimestamp = (await ethers.provider.getBlock()).timestamp + 2;
+  let minTimestamp = currentTimestamp;
+  let maxTimestamp = currentTimestamp;
+  for (const timestamp of oracleTimestamps) {
+    if (timestamp < minTimestamp) {
+      minTimestamp = timestamp;
+    }
+    if (timestamp > maxTimestamp) {
+      maxTimestamp = timestamp;
+    }
+  }
+
   const primaryTokens = [];
   const primaryPrices = [];
-  const secondaryTokens = [];
-  const secondaryPrices = [];
-
-  const recordedTokens = {};
 
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
     const precisionMultiplier = expandDecimals(1, precisions[i]);
     const minPrice = minPrices[i].mul(precisionMultiplier);
     const maxPrice = maxPrices[i].mul(precisionMultiplier);
-    if (!recordedTokens[token]) {
-      primaryTokens.push(token);
-      primaryPrices.push({
-        min: minPrice,
-        max: maxPrice,
-      });
-    } else {
-      secondaryTokens.push(token);
-      secondaryPrices.push({
-        min: minPrice,
-        max: maxPrice,
-      });
-    }
-
-    recordedTokens[token] = true;
+    primaryTokens.push(token);
+    primaryPrices.push({
+      min: minPrice,
+      max: maxPrice,
+    });
   }
 
   return {
     primaryTokens,
     primaryPrices,
-    secondaryTokens,
-    secondaryPrices,
+    minTimestamp,
+    maxTimestamp,
   };
 }
 

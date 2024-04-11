@@ -42,57 +42,6 @@ describe("Guardian.AdlOrder", () => {
     });
   });
 
-  it("ADL cannot execute if block numbers for price are before latestAdlBlock", async () => {
-    await handleOrder(fixture, {
-      create: {
-        market: ethUsdMarket,
-        initialCollateralToken: wnt,
-        initialCollateralDeltaAmount: expandDecimals(100, 18),
-        sizeDeltaUsd: decimalToFloat(2000 * 1000),
-        acceptablePrice: expandDecimals(5001, 12),
-        orderType: OrderType.MarketIncrease,
-        isLong: true,
-      },
-      execute: {
-        tokens: [wnt.address, usdc.address],
-        minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-        maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-      },
-    });
-
-    const maxPnlFactorForAdlKey = keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_ADL, ethUsdMarket.marketToken, true);
-    const minPnlFactorAfterAdlKey = keys.minPnlFactorAfterAdl(ethUsdMarket.marketToken, true);
-
-    await dataStore.setUint(maxPnlFactorForAdlKey, decimalToFloat(10, 2)); // 10%
-    await dataStore.setUint(minPnlFactorAfterAdlKey, decimalToFloat(2, 2)); // 2%
-    await grantRole(roleStore, wallet.address, "ADL_KEEPER");
-
-    await updateAdlState(fixture, {
-      market: ethUsdMarket,
-      isLong: true,
-      tokens: [wnt.address, usdc.address],
-      minPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
-      maxPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
-    });
-
-    expect(await getIsAdlEnabled(dataStore, ethUsdMarket.marketToken, true)).eq(true);
-    const currBlockNum = (await ethers.provider.getBlock()).number;
-    const prevBlock = await ethers.provider.getBlock(currBlockNum - 1);
-    await expect(
-      executeAdl(fixture, {
-        account: user0.address,
-        market: ethUsdMarket,
-        collateralToken: wnt,
-        isLong: true,
-        sizeDeltaUsd: decimalToFloat(100 * 1000),
-        tokens: [wnt.address, usdc.address],
-        minPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
-        maxPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
-        block: prevBlock,
-      })
-    ).to.be.revertedWithCustomError(errorsContract, "OracleBlockNumbersAreSmallerThanRequired");
-  });
-
   it("ADL cannot execute when PnL to pool ratio not exceeded", async () => {
     await handleOrder(fixture, {
       create: {

@@ -133,32 +133,6 @@ describe("Exchange.MarketIncreaseOrder", () => {
         expectedCancellationReason: "InvalidCollateralTokenForMarket",
       },
     });
-
-    await expect(
-      handleOrder(fixture, {
-        create: {
-          ...params,
-          initialCollateralToken: usdc,
-          initialCollateralDeltaAmount: expandDecimals(5000, 6),
-        },
-        execute: {
-          oracleBlockNumberOffset: -1,
-        },
-      })
-    ).to.be.revertedWithCustomError(errorsContract, "OracleBlockNumberNotWithinRange");
-
-    await expect(
-      handleOrder(fixture, {
-        create: {
-          ...params,
-          initialCollateralToken: usdc,
-          initialCollateralDeltaAmount: expandDecimals(5000, 6),
-        },
-        execute: {
-          oracleBlockNumberOffset: 5,
-        },
-      })
-    ).to.be.revertedWithCustomError(errorsContract, "OracleBlockNumberNotWithinRange");
   });
 
   it("executeOrder", async () => {

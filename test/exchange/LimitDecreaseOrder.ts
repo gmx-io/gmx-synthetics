@@ -79,16 +79,6 @@ describe("Exchange.LimitDecreaseOrder", () => {
       },
     });
 
-    await expect(
-      executeOrder(fixture, {
-        tokens: [wnt.address, usdc.address],
-        minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-        maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-        precisions: [8, 18],
-        oracleBlocks: [block0, block0],
-      })
-    ).to.be.revertedWithCustomError(errorsContract, "OracleBlockNumbersAreSmallerThanRequired");
-
     const block1 = await provider.getBlock();
 
     await executeOrder(fixture, {

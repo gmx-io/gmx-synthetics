@@ -418,5 +418,6 @@ library Order {
     // @param props Props
     function touch(Props memory props) internal view {
         props.setUpdatedAtBlock(Chain.currentBlockNumber());
+        props.setUpdatedAtTime(Chain.currentTimestamp());
     }
 }

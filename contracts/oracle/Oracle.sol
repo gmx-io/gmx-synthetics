@@ -209,7 +209,7 @@ contract Oracle is RoleModule {
             }
 
             address token = params.tokens[i];
-            address expectedProvider = dataStore.getAddress(Keys.oracleProviderForToken(token));
+            address expectedProvider = dataStore.getAddress(Keys.oracleProviderForTokenKey(token));
 
             if (provider != expectedProvider) {
                 revert Errors.InvalidOracleProviderForToken(provider, expectedProvider);
