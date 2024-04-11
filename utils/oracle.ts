@@ -1,5 +1,6 @@
 import { bigNumberify, expandDecimals, MAX_UINT8, MAX_UINT32, MAX_UINT64 } from "./math";
 import { hashString, hashData } from "./hash";
+import * as keys from "./keys";
 
 import BN from "bn.js";
 
@@ -248,6 +249,7 @@ export async function getOracleParams({
 }) {
   const signerInfo = getSignerInfo(signerIndexes);
 
+  const dataStore = await hre.ethers.getContract("DataStore");
   const gmOracleProvider = await hre.ethers.getContract("GmOracleProvider");
   const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
   const chainlinkDataStreamFeedProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
@@ -326,6 +328,7 @@ export async function getOracleParams({
 
   for (let i = 0; i < realtimeFeedTokens.length; i++) {
     const token = realtimeFeedTokens[i];
+    await dataStore.setAddress(keys.oracleProviderForTokenKey(token.address), chainlinkDataStreamFeedProvider.address);
     params.tokens.push(token);
     params.providers.push(chainlinkDataStreamFeedProvider.address);
     params.data.push(realtimeFeedData[i]);

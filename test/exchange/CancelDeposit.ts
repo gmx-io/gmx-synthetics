@@ -1,6 +1,6 @@
 import { expect } from "chai";
-import { increaseTime } from "../../utils/time";
 
+import { increaseTime } from "../../utils/time";
 import { deployFixture } from "../../utils/fixture";
 import { deployContract } from "../../utils/deploy";
 import { expandDecimals } from "../../utils/math";
@@ -78,7 +78,8 @@ describe("Exchange.CancelDeposit", () => {
 
     expect(await getDepositCount(dataStore)).eq(1);
 
-    increaseTime(300);
+    const refTime = (await ethers.provider.getBlock()).timestamp;
+    await increaseTime(refTime, 300);
 
     expect(await wnt.balanceOf(user0.address)).eq(0);
     expect(await usdc.balanceOf(user0.address)).eq(0);

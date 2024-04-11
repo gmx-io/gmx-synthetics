@@ -1,6 +1,6 @@
 import { expect } from "chai";
-import { increaseTime } from "../../utils/time";
 
+import { increaseTime } from "../../utils/time";
 import { deployFixture } from "../../utils/fixture";
 import { deployContract } from "../../utils/deploy";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
@@ -127,6 +127,9 @@ describe("Exchange.CancelOrder", () => {
     expect(order.numbers.updatedAtBlock).eq(block.number);
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
+
+    const refTime = (await ethers.provider.getBlock()).timestamp;
+    await increaseTime(refTime, 300);
 
     const txn = await exchangeRouter.connect(user0).cancelOrder(orderKeys[0]);
 
