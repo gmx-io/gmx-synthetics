@@ -118,43 +118,43 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   maxOpenInterestForLongs: expandDecimals(1_000_000_000, 30),
   maxOpenInterestForShorts: expandDecimals(1_000_000_000, 30),
 
-  reserveFactorLongs: percentageToFloat("95%"), // 95%,
-  reserveFactorShorts: percentageToFloat("95%"), // 95%,
+  reserveFactorLongs: percentageToFloat("95%"),
+  reserveFactorShorts: percentageToFloat("95%"),
 
   openInterestReserveFactorLongs: percentageToFloat("90%"),
   openInterestReserveFactorShorts: percentageToFloat("90%"),
 
-  maxPnlFactorForTradersLongs: percentageToFloat("90%"), // 90%
-  maxPnlFactorForTradersShorts: percentageToFloat("90%"), // 90%
+  maxPnlFactorForTradersLongs: percentageToFloat("90%"),
+  maxPnlFactorForTradersShorts: percentageToFloat("90%"),
 
-  maxPnlFactorForAdlLongs: percentageToFloat("100%"), // 100%, no ADL under normal operation
-  maxPnlFactorForAdlShorts: percentageToFloat("100%"), // 100%, no ADL under normal operation
+  maxPnlFactorForAdlLongs: percentageToFloat("100%"),
+  maxPnlFactorForAdlShorts: percentageToFloat("100%"),
 
-  minPnlFactorAfterAdlLongs: percentageToFloat("90%"), // 80%, no ADL under normal operation
-  minPnlFactorAfterAdlShorts: percentageToFloat("90%"), // 80%, no ADL under normal operation
+  minPnlFactorAfterAdlLongs: percentageToFloat("90%"),
+  minPnlFactorAfterAdlShorts: percentageToFloat("90%"),
 
-  maxPnlFactorForDepositsLongs: percentageToFloat("90%"), // 80%
-  maxPnlFactorForDepositsShorts: percentageToFloat("90%"), // 80%
+  maxPnlFactorForDepositsLongs: percentageToFloat("90%"),
+  maxPnlFactorForDepositsShorts: percentageToFloat("90%"),
 
-  maxPnlFactorForWithdrawalsLongs: percentageToFloat("90%"), // 80%
-  maxPnlFactorForWithdrawalsShorts: percentageToFloat("90%"), // 80%
+  maxPnlFactorForWithdrawalsLongs: percentageToFloat("90%"),
+  maxPnlFactorForWithdrawalsShorts: percentageToFloat("90%"),
 
-  positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"), // 0.05%
-  positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"), // 0.07%
+  positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
+  positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"),
 
-  negativePositionImpactFactor: percentageToFloat("0.00001%"), // 0.00001%
-  positivePositionImpactFactor: percentageToFloat("0.000005%"), // 0.000005%
+  negativePositionImpactFactor: percentageToFloat("0.00001%"),
+  positivePositionImpactFactor: percentageToFloat("0.000005%"),
   positionImpactExponentFactor: decimalToFloat(2, 0), // 2
 
-  negativeMaxPositionImpactFactor: percentageToFloat("0.5%"), // 0.5%
-  positiveMaxPositionImpactFactor: percentageToFloat("0.5%"), // 0.5%
+  negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
+  positiveMaxPositionImpactFactor: percentageToFloat("0.5%"),
   maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
 
-  swapFeeFactorForPositiveImpact: percentageToFloat("0.05%"), // 0.05%,
-  swapFeeFactorForNegativeImpact: percentageToFloat("0.07%"), // 0.07%,
+  swapFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
+  swapFeeFactorForNegativeImpact: percentageToFloat("0.07%"),
 
-  negativeSwapImpactFactor: percentageToFloat("0.001%"), // 0.001%
-  positiveSwapImpactFactor: percentageToFloat("0.0005%"), // 0.0005%
+  negativeSwapImpactFactor: percentageToFloat("0.001%"),
+  positiveSwapImpactFactor: percentageToFloat("0.0005%"),
   swapImpactExponentFactor: decimalToFloat(2, 0), // 2
 
   minCollateralUsd: decimalToFloat(1, 0), // 1 USD
@@ -186,6 +186,24 @@ const singleTokenMarketConfig: Partial<BaseMarketConfig> = {
 
   openInterestReserveFactorLongs: percentageToFloat("35%"),
   openInterestReserveFactorShorts: percentageToFloat("35%"),
+
+  maxPnlFactorForTradersLongs: percentageToFloat("90%"),
+  maxPnlFactorForTradersShorts: percentageToFloat("90%"),
+
+  maxPnlFactorForAdlLongs: percentageToFloat("95%"),
+  maxPnlFactorForAdlShorts: percentageToFloat("95%"),
+
+  minPnlFactorAfterAdlLongs: percentageToFloat("90%"),
+  minPnlFactorAfterAdlShorts: percentageToFloat("90%"),
+
+  maxPnlFactorForDepositsLongs: percentageToFloat("95%"),
+  maxPnlFactorForDepositsShorts: percentageToFloat("95%"),
+
+  maxPnlFactorForWithdrawalsLongs: percentageToFloat("85%"),
+  maxPnlFactorForWithdrawalsShorts: percentageToFloat("85%"),
+
+  swapFeeFactorForPositiveImpact: bigNumberify(0),
+  swapFeeFactorForNegativeImpact: bigNumberify(0),
 
   negativeSwapImpactFactor: bigNumberify(0),
   positiveSwapImpactFactor: bigNumberify(0),
@@ -434,11 +452,11 @@ const config: {
 
       ...singleTokenMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(20000, 18),
-      maxShortTokenPoolAmount: expandDecimals(20000, 18),
+      maxLongTokenPoolAmount: expandDecimals(20_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(20_000, 18),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(20000, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(20000, 18),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(20_000, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(20_000, 18),
 
       negativePositionImpactFactor: decimalToFloat(15, 11), // 0.05% for ~1,600,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(9, 11), // 0.05% for ~2,700,000 USD of imbalance
