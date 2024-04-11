@@ -423,6 +423,18 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
 
   let recommendedSwapConfig;
 
+  if (longTokenSymbol === shortTokenSymbol) {
+    if (!marketConfig.negativeSwapImpactFactor.eq(0)) {
+      throw new Error("negativeSwapImpactFactor should be zero");
+    }
+
+    if (!marketConfig.positiveSwapImpactFactor.eq(0)) {
+      throw new Error("negativeSwapImpactFactor should be zero");
+    }
+
+    return;
+  }
+
   if (isStablecoinMarket) {
     recommendedSwapConfig = recommendedStablecoinSwapConfig;
   } else {
