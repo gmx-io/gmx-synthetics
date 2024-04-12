@@ -14,7 +14,7 @@ import {
   getCompactedDecimals,
   getCompactedOracleBlockNumbers,
   getCompactedOracleTimestamps,
-  encodeRealtimeData,
+  encodeDataStreamData,
 } from "../../utils/oracle";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
@@ -41,7 +41,7 @@ describe("Oracle.RealtimeFeeds", () => {
     priceFeedTokens: [],
   };
 
-  const getBaseRealtimeData = (block) => {
+  const getBaseDataStreamData = (block) => {
     return {
       feedId: hashString("feedId"),
       observationsTimestamp: block.timestamp,
@@ -55,7 +55,7 @@ describe("Oracle.RealtimeFeeds", () => {
     };
   };
 
-  const getBaseRealtimeDataForBlockRange = (lowerBlock, upperBlock) => {
+  const getBaseDataStreamDataForBlockRange = (lowerBlock, upperBlock) => {
     return {
       feedId: hashString("feedId"),
       observationsTimestamp: upperBlock.timestamp,
@@ -79,13 +79,13 @@ describe("Oracle.RealtimeFeeds", () => {
 
   // it("realtime feed validations", async () => {
   //   const block = await provider.getBlock();
-  //   const baseRealtimeData = getBaseRealtimeData(block);
+  //   const baseDataStreamData = getBaseDataStreamData(block);
   //
   //   await expect(
   //     oracle.setPrices(dataStore.address, eventEmitter.address, {
   //       ...baseSetPricesParams,
-  //       realtimeFeedTokens: [wnt.address, wbtc.address],
-  //       realtimeFeedData: [encodeRealtimeData(baseRealtimeData)],
+  //       dataStreamTokens: [wnt.address, wbtc.address],
+  //       dataStreamData: [encodeDataStreamData(baseDataStreamData)],
   //     })
   //   )
   //     .to.be.revertedWithCustomError(errorsContract, "InvalidRealtimeFeedLengths")
@@ -94,34 +94,34 @@ describe("Oracle.RealtimeFeeds", () => {
   //   await expect(
   //     oracle.setPrices(dataStore.address, eventEmitter.address, {
   //       ...baseSetPricesParams,
-  //       realtimeFeedTokens: [wnt.address],
-  //       realtimeFeedData: [encodeRealtimeData(baseRealtimeData)],
+  //       dataStreamTokens: [wnt.address],
+  //       dataStreamData: [encodeDataStreamData(baseDataStreamData)],
   //     })
   //   )
   //     .to.be.revertedWithCustomError(errorsContract, "EmptyRealtimeFeedId")
   //     .withArgs(wnt.address);
   //
-  //   await dataStore.setBytes32(keys.dataStreamFeedIdKey(wnt.address), hashString("WNT"));
+  //   await dataStore.setBytes32(keys.dataStreamIdKey(wnt.address), hashString("WNT"));
   //
   //   await expect(
   //     oracle.setPrices(dataStore.address, eventEmitter.address, {
   //       ...baseSetPricesParams,
-  //       realtimeFeedTokens: [wnt.address],
-  //       realtimeFeedData: [encodeRealtimeData(baseRealtimeData)],
+  //       dataStreamTokens: [wnt.address],
+  //       dataStreamData: [encodeDataStreamData(baseDataStreamData)],
   //     })
   //   )
   //     .to.be.revertedWithCustomError(errorsContract, "InvalidRealtimeFeedId")
   //     .withArgs(wnt.address, hashString("feedId"), hashString("WNT"));
   //
-  //   await dataStore.setBytes32(keys.dataStreamFeedIdKey(wbtc.address), hashString("WBTC"));
+  //   await dataStore.setBytes32(keys.dataStreamIdKey(wbtc.address), hashString("WBTC"));
   //
   //   await expect(
   //     oracle.setPrices(dataStore.address, eventEmitter.address, {
   //       ...baseSetPricesParams,
-  //       realtimeFeedTokens: [wnt.address, wbtc.address],
-  //       realtimeFeedData: [
-  //         encodeRealtimeData({ ...baseRealtimeData, feedId: hashString("WNT") }),
-  //         encodeRealtimeData({ ...baseRealtimeData, feedId: hashString("WBTC2") }),
+  //       dataStreamTokens: [wnt.address, wbtc.address],
+  //       dataStreamData: [
+  //         encodeDataStreamData({ ...baseDataStreamData, feedId: hashString("WNT") }),
+  //         encodeDataStreamData({ ...baseDataStreamData, feedId: hashString("WBTC2") }),
   //       ],
   //     })
   //   )
@@ -131,8 +131,8 @@ describe("Oracle.RealtimeFeeds", () => {
   //   await expect(
   //     oracle.setPrices(dataStore.address, eventEmitter.address, {
   //       ...baseSetPricesParams,
-  //       realtimeFeedTokens: [wnt.address],
-  //       realtimeFeedData: [encodeRealtimeData({ ...baseRealtimeData, feedId: hashString("WNT"), bid: -10, ask: -1 })],
+  //       dataStreamTokens: [wnt.address],
+  //       dataStreamData: [encodeDataStreamData({ ...baseDataStreamData, feedId: hashString("WNT"), bid: -10, ask: -1 })],
   //     })
   //   )
   //     .to.be.revertedWithCustomError(errorsContract, "InvalidRealtimePrices")
@@ -141,8 +141,8 @@ describe("Oracle.RealtimeFeeds", () => {
   //   await expect(
   //     oracle.setPrices(dataStore.address, eventEmitter.address, {
   //       ...baseSetPricesParams,
-  //       realtimeFeedTokens: [wnt.address],
-  //       realtimeFeedData: [encodeRealtimeData({ ...baseRealtimeData, feedId: hashString("WNT"), bid: 100, ask: 10 })],
+  //       dataStreamTokens: [wnt.address],
+  //       dataStreamData: [encodeDataStreamData({ ...baseDataStreamData, feedId: hashString("WNT"), bid: 100, ask: 10 })],
   //     })
   //   )
   //     .to.be.revertedWithCustomError(errorsContract, "InvalidRealtimeBidAsk")
@@ -151,10 +151,10 @@ describe("Oracle.RealtimeFeeds", () => {
   //   await expect(
   //     oracle.setPrices(dataStore.address, eventEmitter.address, {
   //       ...baseSetPricesParams,
-  //       realtimeFeedTokens: [wnt.address],
-  //       realtimeFeedData: [
-  //         encodeRealtimeData({
-  //           ...baseRealtimeData,
+  //       dataStreamTokens: [wnt.address],
+  //       dataStreamData: [
+  //         encodeDataStreamData({
+  //           ...baseDataStreamData,
   //           feedId: hashString("WNT"),
   //           bid: expandDecimals(5000, 8),
   //           ask: expandDecimals(5002, 8),
@@ -170,10 +170,10 @@ describe("Oracle.RealtimeFeeds", () => {
   //   await expect(
   //     oracle.setPrices(dataStore.address, eventEmitter.address, {
   //       ...baseSetPricesParams,
-  //       realtimeFeedTokens: [wnt.address],
-  //       realtimeFeedData: [
-  //         encodeRealtimeData({
-  //           ...baseRealtimeData,
+  //       dataStreamTokens: [wnt.address],
+  //       dataStreamData: [
+  //         encodeDataStreamData({
+  //           ...baseDataStreamData,
   //           feedId: hashString("WNT"),
   //           bid: expandDecimals(5000, 8),
   //           ask: expandDecimals(5002, 8),
@@ -196,10 +196,10 @@ describe("Oracle.RealtimeFeeds", () => {
   //   await expect(
   //     oracle.setPrices(dataStore.address, eventEmitter.address, {
   //       ...baseSetPricesParams,
-  //       realtimeFeedTokens: [wnt.address],
-  //       realtimeFeedData: [
-  //         encodeRealtimeData({
-  //           ...baseRealtimeData,
+  //       dataStreamTokens: [wnt.address],
+  //       dataStreamData: [
+  //         encodeDataStreamData({
+  //           ...baseDataStreamData,
   //           feedId: hashString("WNT"),
   //           bid: expandDecimals(5000, 8),
   //           ask: expandDecimals(5002, 8),
@@ -216,10 +216,10 @@ describe("Oracle.RealtimeFeeds", () => {
   //   await expect(
   //     oracle.setPrices(dataStore.address, eventEmitter.address, {
   //       ...baseSetPricesParams,
-  //       realtimeFeedTokens: [wnt.address],
-  //       realtimeFeedData: [
-  //         encodeRealtimeData({
-  //           ...baseRealtimeData,
+  //       dataStreamTokens: [wnt.address],
+  //       dataStreamData: [
+  //         encodeDataStreamData({
+  //           ...baseDataStreamData,
   //           feedId: hashString("WNT"),
   //           bid: expandDecimals(5000, 8),
   //           ask: expandDecimals(5002, 8),
@@ -231,26 +231,26 @@ describe("Oracle.RealtimeFeeds", () => {
   //
   // it("sets prices with realtime feeds", async () => {
   //   const block = await provider.getBlock();
-  //   const baseRealtimeData = getBaseRealtimeData(block);
+  //   const baseDataStreamData = getBaseDataStreamData(block);
   //
-  //   await dataStore.setBytes32(keys.dataStreamFeedIdKey(wnt.address), hashString("WNT"));
-  //   await dataStore.setBytes32(keys.dataStreamFeedIdKey(wbtc.address), hashString("WBTC"));
+  //   await dataStore.setBytes32(keys.dataStreamIdKey(wnt.address), hashString("WNT"));
+  //   await dataStore.setBytes32(keys.dataStreamIdKey(wbtc.address), hashString("WBTC"));
   //
   //   await dataStore.setUint(keys.dataStreamMultiplierKey(wnt.address), expandDecimals(1, 34));
   //   await dataStore.setUint(keys.dataStreamMultiplierKey(wbtc.address), expandDecimals(1, 44));
   //
   //   await oracle.setPrices(dataStore.address, eventEmitter.address, {
   //     ...baseSetPricesParams,
-  //     realtimeFeedTokens: [wnt.address, wbtc.address],
-  //     realtimeFeedData: [
-  //       encodeRealtimeData({
-  //         ...baseRealtimeData,
+  //     dataStreamTokens: [wnt.address, wbtc.address],
+  //     dataStreamData: [
+  //       encodeDataStreamData({
+  //         ...baseDataStreamData,
   //         feedId: hashString("WNT"),
   //         bid: expandDecimals(5000, 8),
   //         ask: expandDecimals(5002, 8),
   //       }),
-  //       encodeRealtimeData({
-  //         ...baseRealtimeData,
+  //       encodeDataStreamData({
+  //         ...baseDataStreamData,
   //         feedId: hashString("WBTC"),
   //         bid: expandDecimals(75_000, 8),
   //         ask: expandDecimals(75_020, 8),
@@ -267,9 +267,9 @@ describe("Oracle.RealtimeFeeds", () => {
   //
   // it("sets prices with regular and realtime feeds", async () => {
   //   const block = await provider.getBlock();
-  //   const baseRealtimeData = getBaseRealtimeData(block);
+  //   const baseDataStreamData = getBaseDataStreamData(block);
   //
-  //   await dataStore.setBytes32(keys.dataStreamFeedIdKey(wnt.address), hashString("WNT"));
+  //   await dataStore.setBytes32(keys.dataStreamIdKey(wnt.address), hashString("WNT"));
   //   await dataStore.setUint(keys.dataStreamMultiplierKey(wnt.address), expandDecimals(1, 34));
   //
   //   const wbtcMinPrices = [60100, 60101, 60102, 60110, 60200, 60300, 60500];
@@ -293,8 +293,8 @@ describe("Oracle.RealtimeFeeds", () => {
   //
   //   await oracle.setPrices(dataStore.address, eventEmitter.address, {
   //     priceFeedTokens: [],
-  //     realtimeFeedTokens: [],
-  //     realtimeFeedData: [],
+  //     dataStreamTokens: [],
+  //     dataStreamData: [],
   //     signerInfo,
   //     tokens: [wbtc.address],
   //     compactedMinOracleBlockNumbers: getCompactedOracleBlockNumbers([block.number]),
@@ -306,10 +306,10 @@ describe("Oracle.RealtimeFeeds", () => {
   //     compactedMaxPrices: getCompactedPrices(wbtcMaxPrices),
   //     compactedMaxPricesIndexes: getCompactedPriceIndexes([0, 1, 2, 3, 4, 5, 6]),
   //     signatures: wbtcSignatures,
-  //     realtimeFeedTokens: [wnt.address],
-  //     realtimeFeedData: [
-  //       encodeRealtimeData({
-  //         ...baseRealtimeData,
+  //     dataStreamTokens: [wnt.address],
+  //     dataStreamData: [
+  //       encodeDataStreamData({
+  //         ...baseDataStreamData,
   //         feedId: hashString("WNT"),
   //         bid: expandDecimals(5000, 8),
   //         ask: expandDecimals(5002, 8),
@@ -335,8 +335,8 @@ describe("Oracle.RealtimeFeeds", () => {
   //   const block4 = await provider.getBlock(block.number - 1);
   //   const block5 = block;
   //
-  //   await dataStore.setBytes32(keys.dataStreamFeedIdKey(wnt.address), hashString("WNT"));
-  //   await dataStore.setBytes32(keys.dataStreamFeedIdKey(wbtc.address), hashString("WBTC"));
+  //   await dataStore.setBytes32(keys.dataStreamIdKey(wnt.address), hashString("WNT"));
+  //   await dataStore.setBytes32(keys.dataStreamIdKey(wbtc.address), hashString("WBTC"));
   //
   //   await dataStore.setUint(keys.dataStreamMultiplierKey(wnt.address), expandDecimals(1, 34));
   //   await dataStore.setUint(keys.dataStreamMultiplierKey(wbtc.address), expandDecimals(1, 44));
@@ -344,16 +344,16 @@ describe("Oracle.RealtimeFeeds", () => {
   //   await expect(
   //     oracle.setPrices(dataStore.address, eventEmitter.address, {
   //       ...baseSetPricesParams,
-  //       realtimeFeedTokens: [wnt.address, wbtc.address],
-  //       realtimeFeedData: [
-  //         encodeRealtimeData({
-  //           ...getBaseRealtimeDataForBlockRange(block0, block3),
+  //       dataStreamTokens: [wnt.address, wbtc.address],
+  //       dataStreamData: [
+  //         encodeDataStreamData({
+  //           ...getBaseDataStreamDataForBlockRange(block0, block3),
   //           feedId: hashString("WNT"),
   //           bid: expandDecimals(5000, 8),
   //           ask: expandDecimals(5002, 8),
   //         }),
-  //         encodeRealtimeData({
-  //           ...getBaseRealtimeDataForBlockRange(block4, block5),
+  //         encodeDataStreamData({
+  //           ...getBaseDataStreamDataForBlockRange(block4, block5),
   //           feedId: hashString("WBTC"),
   //           bid: expandDecimals(75_000, 8),
   //           ask: expandDecimals(75_020, 8),
@@ -367,16 +367,16 @@ describe("Oracle.RealtimeFeeds", () => {
   //   await expect(
   //     oracle.setPrices(dataStore.address, eventEmitter.address, {
   //       ...baseSetPricesParams,
-  //       realtimeFeedTokens: [wnt.address, wbtc.address],
-  //       realtimeFeedData: [
-  //         encodeRealtimeData({
-  //           ...getBaseRealtimeDataForBlockRange(block1, block2),
+  //       dataStreamTokens: [wnt.address, wbtc.address],
+  //       dataStreamData: [
+  //         encodeDataStreamData({
+  //           ...getBaseDataStreamDataForBlockRange(block1, block2),
   //           feedId: hashString("WNT"),
   //           bid: expandDecimals(5000, 8),
   //           ask: expandDecimals(5002, 8),
   //         }),
-  //         encodeRealtimeData({
-  //           ...getBaseRealtimeDataForBlockRange(block0, block0),
+  //         encodeDataStreamData({
+  //           ...getBaseDataStreamDataForBlockRange(block0, block0),
   //           feedId: hashString("WBTC"),
   //           bid: expandDecimals(75_000, 8),
   //           ask: expandDecimals(75_020, 8),
@@ -389,16 +389,16 @@ describe("Oracle.RealtimeFeeds", () => {
   //
   //   await oracle.setPrices(dataStore.address, eventEmitter.address, {
   //     ...baseSetPricesParams,
-  //     realtimeFeedTokens: [wnt.address, wbtc.address],
-  //     realtimeFeedData: [
-  //       encodeRealtimeData({
-  //         ...getBaseRealtimeDataForBlockRange(block0, block3),
+  //     dataStreamTokens: [wnt.address, wbtc.address],
+  //     dataStreamData: [
+  //       encodeDataStreamData({
+  //         ...getBaseDataStreamDataForBlockRange(block0, block3),
   //         feedId: hashString("WNT"),
   //         bid: expandDecimals(5000, 8),
   //         ask: expandDecimals(5002, 8),
   //       }),
-  //       encodeRealtimeData({
-  //         ...getBaseRealtimeDataForBlockRange(block3, block4),
+  //       encodeDataStreamData({
+  //         ...getBaseDataStreamDataForBlockRange(block3, block4),
   //         feedId: hashString("WBTC"),
   //         bid: expandDecimals(75_000, 8),
   //         ask: expandDecimals(75_020, 8),
@@ -416,16 +416,16 @@ describe("Oracle.RealtimeFeeds", () => {
   //
   //   await oracle.setPrices(dataStore.address, eventEmitter.address, {
   //     ...baseSetPricesParams,
-  //     realtimeFeedTokens: [wnt.address, wbtc.address],
-  //     realtimeFeedData: [
-  //       encodeRealtimeData({
-  //         ...getBaseRealtimeDataForBlockRange(block0, block5),
+  //     dataStreamTokens: [wnt.address, wbtc.address],
+  //     dataStreamData: [
+  //       encodeDataStreamData({
+  //         ...getBaseDataStreamDataForBlockRange(block0, block5),
   //         feedId: hashString("WNT"),
   //         bid: expandDecimals(5000, 8),
   //         ask: expandDecimals(5002, 8),
   //       }),
-  //       encodeRealtimeData({
-  //         ...getBaseRealtimeDataForBlockRange(block1, block2),
+  //       encodeDataStreamData({
+  //         ...getBaseDataStreamDataForBlockRange(block1, block2),
   //         feedId: hashString("WBTC"),
   //         bid: expandDecimals(75_000, 8),
   //         ask: expandDecimals(75_020, 8),
@@ -443,16 +443,16 @@ describe("Oracle.RealtimeFeeds", () => {
   //
   //   await oracle.setPrices(dataStore.address, eventEmitter.address, {
   //     ...baseSetPricesParams,
-  //     realtimeFeedTokens: [wnt.address, wbtc.address],
-  //     realtimeFeedData: [
-  //       encodeRealtimeData({
-  //         ...getBaseRealtimeDataForBlockRange(block3, block3),
+  //     dataStreamTokens: [wnt.address, wbtc.address],
+  //     dataStreamData: [
+  //       encodeDataStreamData({
+  //         ...getBaseDataStreamDataForBlockRange(block3, block3),
   //         feedId: hashString("WNT"),
   //         bid: expandDecimals(5000, 8),
   //         ask: expandDecimals(5002, 8),
   //       }),
-  //       encodeRealtimeData({
-  //         ...getBaseRealtimeDataForBlockRange(block1, block3),
+  //       encodeDataStreamData({
+  //         ...getBaseDataStreamDataForBlockRange(block1, block3),
   //         feedId: hashString("WBTC"),
   //         bid: expandDecimals(75_000, 8),
   //         ask: expandDecimals(75_020, 8),

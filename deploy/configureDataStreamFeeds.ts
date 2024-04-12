@@ -10,7 +10,7 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
   const tokens: Record<string, TokenConfig> = await getTokens();
 
   for (const [tokenSymbol, token] of Object.entries(tokens)) {
-    if (!token.realtimeFeedId) {
+    if (!token.dataStreamFeedId) {
       continue;
     }
 
@@ -22,25 +22,25 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
       throw new Error(`token ${tokenSymbol} has no decimals`);
     }
 
-    if (!token.realtimeFeedDecimals) {
-      throw new Error(`token ${tokenSymbol} has no realtimeFeedDecimals`);
+    if (!token.dataStreamFeedDecimals) {
+      throw new Error(`token ${tokenSymbol} has no dataStreamFeedDecimals`);
     }
 
     await setBytes32IfDifferent(
-      keys.realtimeFeedIdKey(token.address),
-      token.realtimeFeedId,
-      `realtime feed id for ${tokenSymbol} ${token.address}`
+      keys.dataStreamIdKey(token.address),
+      token.dataStreamFeedId,
+      `data stream feed id for ${tokenSymbol} ${token.address}`
     );
 
-    const realtimeFeedMultiplier = expandDecimals(1, 60 - token.decimals - token.realtimeFeedDecimals);
+    const dataStreamMultiplier = expandDecimals(1, 60 - token.decimals - token.dataStreamFeedDecimals);
     await setUintIfDifferent(
-      keys.realtimeFeedMultiplierKey(token.address),
-      realtimeFeedMultiplier,
-      `realtime feed multiplier for ${tokenSymbol} ${token.address}`
+      keys.dataStreamMultiplierKey(token.address),
+      dataStreamMultiplier,
+      `data stream feed multiplier for ${tokenSymbol} ${token.address}`
     );
   }
 };
 
-func.tags = ["RealtimeFeeds"];
+func.tags = ["ChainlinkDataStreamFeeds"];
 func.dependencies = ["Tokens"];
 export default func;

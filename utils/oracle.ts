@@ -243,8 +243,8 @@ export async function getOracleParams({
   minPrices,
   maxPrices,
   signers,
-  realtimeFeedTokens,
-  realtimeFeedData,
+  dataStreamTokens,
+  dataStreamData,
   priceFeedTokens,
 }) {
   const signerInfo = getSignerInfo(signerIndexes);
@@ -327,18 +327,18 @@ export async function getOracleParams({
     params.data.push("0x");
   }
 
-  for (let i = 0; i < realtimeFeedTokens.length; i++) {
-    const token = realtimeFeedTokens[i];
+  for (let i = 0; i < dataStreamTokens.length; i++) {
+    const token = dataStreamTokens[i];
     await dataStore.setAddress(keys.oracleProviderForTokenKey(token), chainlinkDataStreamFeedProvider.address);
     params.tokens.push(token);
     params.providers.push(chainlinkDataStreamFeedProvider.address);
-    params.data.push(realtimeFeedData[i]);
+    params.data.push(dataStreamData[i]);
   }
 
   return params;
 }
 
-export function encodeRealtimeData(data) {
+export function encodeDataStreamData(data) {
   const { feedId, validFromTimestamp, observationsTimestamp, nativeFee, linkFee, expiresAt, price, bid, ask } = data;
 
   return ethers.utils.defaultAbiCoder.encode(

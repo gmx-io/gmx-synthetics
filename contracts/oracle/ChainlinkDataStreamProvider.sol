@@ -50,7 +50,7 @@ contract ChainlinkDataStreamProvider is IOracleProvider {
         bytes memory data
     ) external onlyOracle returns (OracleUtils.ValidatedPrice memory) {
 
-        bytes32 feedId = dataStore.getBytes32(Keys.dataStreamFeedIdKey(token));
+        bytes32 feedId = dataStore.getBytes32(Keys.dataStreamIdKey(token));
         if (feedId == bytes32(0)) {
             revert Errors.EmptyDataStreamFeedId(token);
         }

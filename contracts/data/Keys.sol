@@ -255,9 +255,9 @@ library Keys {
     // @dev key for price feed heartbeat
     bytes32 public constant PRICE_FEED_HEARTBEAT_DURATION = keccak256(abi.encode("PRICE_FEED_HEARTBEAT_DURATION"));
     // @dev key for data stream feed id
-    bytes32 public constant DATA_STREAM_FEED_ID = keccak256(abi.encode("DATA_STREAM_FEED_ID"));
+    bytes32 public constant DATA_STREAM_ID = keccak256(abi.encode("DATA_STREAM_ID"));
     // @dev key for data stream feed multipler
-    bytes32 public constant DATA_STREAM_FEED_MULTIPLIER = keccak256(abi.encode("DATA_STREAM_FEED_MULTIPLIER"));
+    bytes32 public constant DATA_STREAM_MULTIPLIER = keccak256(abi.encode("DATA_STREAM_MULTIPLIER"));
     // @dev key for stable price
     bytes32 public constant STABLE_PRICE = keccak256(abi.encode("STABLE_PRICE"));
     // @dev key for reserve factor
@@ -1404,9 +1404,9 @@ library Keys {
     // @dev key for data stream feed ID
     // @param token the token to get the key for
     // @return key for data stream feed ID
-    function dataStreamFeedIdKey(address token) internal pure returns (bytes32) {
+    function dataStreamIdKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            DATA_STREAM_FEED_ID,
+            DATA_STREAM_ID,
             token
         ));
     }
@@ -1416,7 +1416,7 @@ library Keys {
     // @return key for data stream feed multiplier
     function dataStreamMultiplierKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            DATA_STREAM_FEED_MULTIPLIER,
+            DATA_STREAM_MULTIPLIER,
             token
         ));
     }

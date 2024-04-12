@@ -308,31 +308,31 @@ Decimals: 30 - (token decimals) - (number of decimals desired for precision)
 - USDC: 30 - 6 - 6 => 18
 - DG: 30 - 18 - 11 => 1
 
-## For Realtime Feeds
+## For Data Stream Feeds
 
 Example calculation for WNT:
 
-- The number of realtime decimals: 8
+- The number of data stream decimals: 8
 - The number of token decimals for WNT: 18
-- realtimePrice: price \* (10 ^ 8)
-- The price per unit of token: `realtimePrice / (10 ^ 8) / (10 ^ 18) * (10 ^ 30)`
+- dataStreamPrice: price \* (10 ^ 8)
+- The price per unit of token: `dataStreamPrice / (10 ^ 8) / (10 ^ 18) * (10 ^ 30)`
 - e.g. `(5000 * (10 ^ 8)) / (10 ^ 8) / (10 ^ 18) * (10 ^ 30) = 5000 * (10 ^ 12)`
-- The stored oracle price is: `realtimePrice * multiplier / (10 ^ 30)`
+- The stored oracle price is: `dataStreamPrice * multiplier / (10 ^ 30)`
 - In this case the multiplier should be (10 ^ 34)
 - e.g. `(5000 * (10 ^ 8)) * (10 ^ 34) / (10 ^ 30) = 5000 * (10 ^ 12)`
 
 Example calculation for WBTC:
 
-- The number of realtime decimals: 8
+- The number of data stream decimals: 8
 - The number of token decimals for WBTC: 8
-- realtimePrice: price \* (10 ^ 8)
-- the price per unit of token: `realtimePrice / (10 ^ 8) / (10 ^ 8) * (10 ^ 30)`
+- dataStreamPrice: price \* (10 ^ 8)
+- the price per unit of token: `dataStreamPrice / (10 ^ 8) / (10 ^ 8) * (10 ^ 30)`
 - e.g. `(50,000 * (10 ^ 8)) / (10 ^ 8) / (10 ^ 8) * (10 ^ 30) = 50,000 * (10 ^ 22)`
-- the stored oracle price is: `realtimePrice * multiplier / (10 ^ 30)`
+- the stored oracle price is: `dataStreamPrice * multiplier / (10 ^ 30)`
 - in this case the multiplier should be (10 ^ 44)
 - e.g. `(50,000 * (10 ^ 8)) * (10 ^ 44) / (10 ^ 30) = 50,000 * (10 ^ 22)`
 
-The formula for the multipler is: `10 ^ (60 - realtimeDecimals - tokenDecimals)`
+The formula for the multipler is: `10 ^ (60 - dataStreamDecimals - tokenDecimals)`
 
 # Funding Fees
 

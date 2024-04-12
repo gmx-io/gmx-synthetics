@@ -442,7 +442,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
 
         _validateAndClearAction(actionKey, "setDataStream");
 
-        dataStore.setBytes32(Keys.dataStreamFeedIdKey(token), feedId);
+        dataStore.setBytes32(Keys.dataStreamIdKey(token), feedId);
         dataStore.setUint(Keys.dataStreamMultiplierKey(token), dataStreamMultiplier);
 
         EventUtils.EventLogData memory eventData;

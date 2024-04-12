@@ -36,6 +36,6 @@ const func = createDeployFunction({
   id: "Oracle_3",
 });
 
-func.dependencies = func.dependencies.concat(["Tokens", "MockRealtimeFeedVerifier"]);
+func.dependencies = func.dependencies.concat(["Tokens", "MockDataStreamVerifier"]);
 
 export default func;

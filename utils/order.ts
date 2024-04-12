@@ -118,8 +118,8 @@ export async function executeOrder(fixture, overrides = {}) {
   const { gasUsageLabel, oracleBlockNumberOffset } = overrides;
   const { reader, dataStore, orderHandler } = fixture.contracts;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
-  const realtimeFeedTokens = overrides.realtimeFeedTokens || [];
-  const realtimeFeedData = overrides.realtimeFeedData || [];
+  const dataStreamTokens = overrides.dataStreamTokens || [];
+  const dataStreamData = overrides.dataStreamData || [];
   const priceFeedTokens = overrides.priceFeedTokens || [];
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
@@ -159,8 +159,8 @@ export async function executeOrder(fixture, overrides = {}) {
     maxOracleBlockNumbers,
     oracleTimestamps,
     blockHashes,
-    realtimeFeedTokens,
-    realtimeFeedData,
+    dataStreamTokens,
+    dataStreamData,
     priceFeedTokens,
   };
 

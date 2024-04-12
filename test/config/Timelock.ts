@@ -264,14 +264,14 @@ describe("Timelock", () => {
 
     await time.increase(1 * 24 * 60 * 60 + 10);
 
-    expect(await dataStore.getBytes32(keys.dataStreamFeedIdKey(wnt.address))).eq(ethers.constants.HashZero);
+    expect(await dataStore.getBytes32(keys.dataStreamIdKey(wnt.address))).eq(ethers.constants.HashZero);
     expect(await dataStore.getUint(keys.dataStreamMultiplierKey(wnt.address))).eq(0);
 
     await timelock
       .connect(timelockAdmin)
       .setDataStreamAfterSignal(wnt.address, hashString("WNT"), expandDecimals(1, 34));
 
-    expect(await dataStore.getBytes32(keys.dataStreamFeedIdKey(wnt.address))).eq(hashString("WNT"));
+    expect(await dataStore.getBytes32(keys.dataStreamIdKey(wnt.address))).eq(hashString("WNT"));
     expect(await dataStore.getUint(keys.dataStreamMultiplierKey(wnt.address))).eq(expandDecimals(1, 34));
   });
 });

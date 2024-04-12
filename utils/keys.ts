@@ -79,8 +79,8 @@ export const REQUEST_EXPIRATION_TIME = hashString("REQUEST_EXPIRATION_TIME");
 export const PRICE_FEED = hashString("PRICE_FEED");
 export const PRICE_FEED_MULTIPLIER = hashString("PRICE_FEED_MULTIPLIER");
 export const PRICE_FEED_HEARTBEAT_DURATION = hashString("PRICE_FEED_HEARTBEAT_DURATION");
-export const DATA_STREAM_FEED_ID = hashString("DATA_STREAM_FEED_ID");
-export const DATA_STREAM_FEED_MULTIPLIER = hashString("DATA_STREAM_FEED_MULTIPLIER");
+export const DATA_STREAM_ID = hashString("DATA_STREAM_ID");
+export const DATA_STREAM_MULTIPLIER = hashString("DATA_STREAM_MULTIPLIER");
 export const STABLE_PRICE = hashString("STABLE_PRICE");
 
 export const ORACLE_TYPE = hashString("ORACLE_TYPE");
@@ -293,12 +293,12 @@ export function priceFeedHeartbeatDurationKey(token: string) {
   return hashData(["bytes32", "address"], [PRICE_FEED_HEARTBEAT_DURATION, token]);
 }
 
-export function dataStreamFeedIdKey(token: string) {
-  return hashData(["bytes32", "address"], [DATA_STREAM_FEED_ID, token]);
+export function dataStreamIdKey(token: string) {
+  return hashData(["bytes32", "address"], [DATA_STREAM_ID, token]);
 }
 
 export function dataStreamMultiplierKey(token: string) {
-  return hashData(["bytes32", "address"], [DATA_STREAM_FEED_MULTIPLIER, token]);
+  return hashData(["bytes32", "address"], [DATA_STREAM_MULTIPLIER, token]);
 }
 
 export function stablePriceKey(token: string) {

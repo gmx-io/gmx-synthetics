@@ -5,19 +5,19 @@ import { handleDeposit } from "../../utils/deposit";
 import { getPositionCount } from "../../utils/position";
 import { expect } from "chai";
 import { getSyntheticTokenAddress } from "../../utils/token";
-import { encodeRealtimeData, TOKEN_ORACLE_TYPES } from "../../utils/oracle";
+import { encodeDataStreamData, TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 import hre from "hardhat";
 import * as keys from "../../utils/keys";
 import { hashString } from "../../utils/hash";
 
-describe("Guardian.RealtimeFeeds", () => {
+describe("Guardian.DataStreamFeeds", () => {
   const { provider } = ethers;
 
   let fixture;
   let user1;
   let reader, dataStore, solUsdMarket, solAddr, ethUsdMarket, wnt, usdc;
 
-  const getBaseRealtimeData = (block) => {
+  const getBaseDataStreamData = (block) => {
     const buffer = 2;
     const timestamp = block.timestamp + buffer;
     return {
@@ -65,12 +65,12 @@ describe("Guardian.RealtimeFeeds", () => {
     });
   });
 
-  it("Order executes with realtime feed tokens only", async () => {
+  it("Order executes with data stream feed tokens only", async () => {
     const initialUSDCBalance = expandDecimals(50 * 1000, 6); // 50,000 USDC
     expect(await getOrderCount(dataStore)).eq(0);
-    await dataStore.setBytes32(keys.dataStreamFeedIdKey(wnt.address), hashString("WNT"));
+    await dataStore.setBytes32(keys.dataStreamIdKey(wnt.address), hashString("WNT"));
     await dataStore.setUint(keys.dataStreamMultiplierKey(wnt.address), expandDecimals(1, 34));
-    await dataStore.setBytes32(keys.dataStreamFeedIdKey(usdc.address), hashString("USDC"));
+    await dataStore.setBytes32(keys.dataStreamIdKey(usdc.address), hashString("USDC"));
     await dataStore.setUint(keys.dataStreamMultiplierKey(usdc.address), expandDecimals(1, 46));
 
     const increaseParams = {
@@ -93,20 +93,20 @@ describe("Guardian.RealtimeFeeds", () => {
     let order = await reader.getOrder(dataStore.address, orderKey);
 
     let block = await provider.getBlock(parseInt(order.numbers.updatedAtBlock));
-    let baseRealtimeData = getBaseRealtimeData(block);
+    let baseDataStreamData = getBaseDataStreamData(block);
 
     await executeOrder(fixture, {
       tokens: [],
-      realtimeFeedTokens: [wnt.address, usdc.address],
-      realtimeFeedData: [
-        encodeRealtimeData({
-          ...baseRealtimeData,
+      dataStreamTokens: [wnt.address, usdc.address],
+      dataStreamData: [
+        encodeDataStreamData({
+          ...baseDataStreamData,
           feedId: hashString("WNT"),
           bid: expandDecimals(5000, 8),
           ask: expandDecimals(5002, 8),
         }),
-        encodeRealtimeData({
-          ...baseRealtimeData,
+        encodeDataStreamData({
+          ...baseDataStreamData,
           feedId: hashString("USDC"),
           bid: expandDecimals(1, 8),
           ask: expandDecimals(1, 8),
@@ -127,20 +127,20 @@ describe("Guardian.RealtimeFeeds", () => {
     order = await reader.getOrder(dataStore.address, orderKey);
 
     block = await provider.getBlock(parseInt(order.numbers.updatedAtBlock));
-    baseRealtimeData = getBaseRealtimeData(block);
+    baseDataStreamData = getBaseDataStreamData(block);
 
     await executeOrder(fixture, {
       tokens: [],
-      realtimeFeedTokens: [wnt.address, usdc.address],
-      realtimeFeedData: [
-        encodeRealtimeData({
-          ...baseRealtimeData,
+      dataStreamTokens: [wnt.address, usdc.address],
+      dataStreamData: [
+        encodeDataStreamData({
+          ...baseDataStreamData,
           feedId: hashString("WNT"),
           bid: expandDecimals(5000, 8),
           ask: expandDecimals(5000, 8),
         }),
-        encodeRealtimeData({
-          ...baseRealtimeData,
+        encodeDataStreamData({
+          ...baseDataStreamData,
           feedId: hashString("USDC"),
           bid: expandDecimals(1, 8),
           ask: expandDecimals(1, 8),
@@ -152,10 +152,10 @@ describe("Guardian.RealtimeFeeds", () => {
     expect(await getPositionCount(dataStore)).to.eq(1);
   });
 
-  it("Order executes with regular and realtime feed tokens", async () => {
+  it("Order executes with regular and data stream feed tokens", async () => {
     const initialUSDCBalance = expandDecimals(50 * 1000, 6); // 50,000 USDC
     expect(await getOrderCount(dataStore)).eq(0);
-    await dataStore.setBytes32(keys.dataStreamFeedIdKey(wnt.address), hashString("WNT"));
+    await dataStore.setBytes32(keys.dataStreamIdKey(wnt.address), hashString("WNT"));
     await dataStore.setUint(keys.dataStreamMultiplierKey(wnt.address), expandDecimals(1, 34));
 
     const increaseParams = {
@@ -178,14 +178,14 @@ describe("Guardian.RealtimeFeeds", () => {
     let order = await reader.getOrder(dataStore.address, orderKey);
 
     let block = await provider.getBlock(parseInt(order.numbers.updatedAtBlock));
-    let baseRealtimeData = getBaseRealtimeData(block);
+    let baseDataStreamData = getBaseDataStreamData(block);
 
     await executeOrder(fixture, {
       tokens: [usdc.address],
-      realtimeFeedTokens: [wnt.address],
-      realtimeFeedData: [
-        encodeRealtimeData({
-          ...baseRealtimeData,
+      dataStreamTokens: [wnt.address],
+      dataStreamData: [
+        encodeDataStreamData({
+          ...baseDataStreamData,
           feedId: hashString("WNT"),
           bid: expandDecimals(5000, 8),
           ask: expandDecimals(5002, 8),
@@ -209,14 +209,14 @@ describe("Guardian.RealtimeFeeds", () => {
     order = await reader.getOrder(dataStore.address, orderKey);
 
     block = await provider.getBlock(parseInt(order.numbers.updatedAtBlock));
-    baseRealtimeData = getBaseRealtimeData(block);
+    baseDataStreamData = getBaseDataStreamData(block);
 
     await executeOrder(fixture, {
       tokens: [usdc.address],
-      realtimeFeedTokens: [wnt.address],
-      realtimeFeedData: [
-        encodeRealtimeData({
-          ...baseRealtimeData,
+      dataStreamTokens: [wnt.address],
+      dataStreamData: [
+        encodeDataStreamData({
+          ...baseDataStreamData,
           feedId: hashString("WNT"),
           bid: expandDecimals(5000, 8),
           ask: expandDecimals(5000, 8),
@@ -231,10 +231,10 @@ describe("Guardian.RealtimeFeeds", () => {
     expect(await getPositionCount(dataStore)).to.eq(1);
   });
 
-  it("Order executes with regular CL feeds and realtime feed tokens", async () => {
+  it("Order executes with regular CL feeds and data stream feed tokens", async () => {
     const initialUSDCBalance = expandDecimals(50 * 1000, 6); // 50,000 USDC
     expect(await getOrderCount(dataStore)).eq(0);
-    await dataStore.setBytes32(keys.dataStreamFeedIdKey(wnt.address), hashString("WNT"));
+    await dataStore.setBytes32(keys.dataStreamIdKey(wnt.address), hashString("WNT"));
     await dataStore.setUint(keys.dataStreamMultiplierKey(wnt.address), expandDecimals(1, 34));
 
     const increaseParams = {
@@ -257,15 +257,15 @@ describe("Guardian.RealtimeFeeds", () => {
     let order = await reader.getOrder(dataStore.address, orderKey);
 
     let block = await provider.getBlock(parseInt(order.numbers.updatedAtBlock));
-    let baseRealtimeData = getBaseRealtimeData(block);
+    let baseDataStreamData = getBaseDataStreamData(block);
 
     await executeOrder(fixture, {
       tokens: [],
       priceFeedTokens: [usdc.address],
-      realtimeFeedTokens: [wnt.address],
-      realtimeFeedData: [
-        encodeRealtimeData({
-          ...baseRealtimeData,
+      dataStreamTokens: [wnt.address],
+      dataStreamData: [
+        encodeDataStreamData({
+          ...baseDataStreamData,
           feedId: hashString("WNT"),
           bid: expandDecimals(5000, 8),
           ask: expandDecimals(5002, 8),
@@ -286,15 +286,15 @@ describe("Guardian.RealtimeFeeds", () => {
     order = await reader.getOrder(dataStore.address, orderKey);
 
     block = await provider.getBlock(parseInt(order.numbers.updatedAtBlock));
-    baseRealtimeData = getBaseRealtimeData(block);
+    baseDataStreamData = getBaseDataStreamData(block);
 
     await executeOrder(fixture, {
       priceFeedTokens: [usdc.address],
       tokens: [],
-      realtimeFeedTokens: [wnt.address],
-      realtimeFeedData: [
-        encodeRealtimeData({
-          ...baseRealtimeData,
+      dataStreamTokens: [wnt.address],
+      dataStreamData: [
+        encodeDataStreamData({
+          ...baseDataStreamData,
           feedId: hashString("WNT"),
           bid: expandDecimals(5000, 8),
           ask: expandDecimals(5000, 8),
