@@ -586,11 +586,11 @@ const config: {
 
       ...synthethicMarketConfig_IncreasedCapacity,
 
-      maxLongTokenPoolAmount: expandDecimals(923, 18),
-      maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(1200, 18),
+      maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(769, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(2_500_000, 6),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(1060, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(3_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(26, 9),
       positivePositionImpactFactor: decimalToFloat(13, 9),
