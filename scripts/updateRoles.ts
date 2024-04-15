@@ -80,127 +80,86 @@ async function main() {
     arbitrum: [
       {
         role: "ADL_KEEPER",
-        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+        member: "0x8e66ee36f2c7b9461f50aa0b53ef0e4e47f4abbf",
       },
       {
         role: "ADL_KEEPER",
-        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+        member: "0x6a2b3a13be0c723674bcfd722d4e133b3f356e05",
       },
       {
         role: "ADL_KEEPER",
-        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+        member: "0xdd5c59b7c4e8fad38732caffbebd20a61bf9f3fc",
+      },
+      {
+        role: "ADL_KEEPER",
+        member: "0xeb2bb25ddd2b1872d5189ae72fcec9b160dd3fb2",
       },
       {
         role: "FROZEN_ORDER_KEEPER",
-        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+        member: "0x8e66ee36f2c7b9461f50aa0b53ef0e4e47f4abbf",
       },
       {
         role: "FROZEN_ORDER_KEEPER",
-        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+        member: "0x6a2b3a13be0c723674bcfd722d4e133b3f356e05",
       },
       {
         role: "FROZEN_ORDER_KEEPER",
-        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+        member: "0xdd5c59b7c4e8fad38732caffbebd20a61bf9f3fc",
+      },
+      {
+        role: "FROZEN_ORDER_KEEPER",
+        member: "0xeb2bb25ddd2b1872d5189ae72fcec9b160dd3fb2",
       },
       {
         role: "LIMITED_CONFIG_KEEPER",
-        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+        member: "0x8e66ee36f2c7b9461f50aa0b53ef0e4e47f4abbf",
       },
       {
         role: "LIMITED_CONFIG_KEEPER",
-        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+        member: "0x6a2b3a13be0c723674bcfd722d4e133b3f356e05",
       },
       {
         role: "LIMITED_CONFIG_KEEPER",
-        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+        member: "0xdd5c59b7c4e8fad38732caffbebd20a61bf9f3fc",
+      },
+      {
+        role: "LIMITED_CONFIG_KEEPER",
+        member: "0xeb2bb25ddd2b1872d5189ae72fcec9b160dd3fb2",
       },
       {
         role: "LIQUIDATION_KEEPER",
-        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+        member: "0x8e66ee36f2c7b9461f50aa0b53ef0e4e47f4abbf",
       },
       {
         role: "LIQUIDATION_KEEPER",
-        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+        member: "0x6a2b3a13be0c723674bcfd722d4e133b3f356e05",
       },
       {
         role: "LIQUIDATION_KEEPER",
-        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+        member: "0xdd5c59b7c4e8fad38732caffbebd20a61bf9f3fc",
+      },
+      {
+        role: "LIQUIDATION_KEEPER",
+        member: "0xeb2bb25ddd2b1872d5189ae72fcec9b160dd3fb2",
       },
       {
         role: "ORDER_KEEPER",
-        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
+        member: "0x8e66ee36f2c7b9461f50aa0b53ef0e4e47f4abbf",
       },
       {
         role: "ORDER_KEEPER",
-        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
+        member: "0x6a2b3a13be0c723674bcfd722d4e133b3f356e05",
       },
       {
         role: "ORDER_KEEPER",
-        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
+        member: "0xdd5c59b7c4e8fad38732caffbebd20a61bf9f3fc",
+      },
+      {
+        role: "ORDER_KEEPER",
+        member: "0xeb2bb25ddd2b1872d5189ae72fcec9b160dd3fb2",
       },
     ],
-    avalanche: [
-      {
-        role: "ADL_KEEPER",
-        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
-      },
-      {
-        role: "ADL_KEEPER",
-        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
-      },
-      {
-        role: "ADL_KEEPER",
-        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
-      },
-      {
-        role: "FROZEN_ORDER_KEEPER",
-        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
-      },
-      {
-        role: "FROZEN_ORDER_KEEPER",
-        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
-      },
-      {
-        role: "FROZEN_ORDER_KEEPER",
-        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
-      },
-      {
-        role: "LIMITED_CONFIG_KEEPER",
-        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
-      },
-      {
-        role: "LIMITED_CONFIG_KEEPER",
-        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
-      },
-      {
-        role: "LIMITED_CONFIG_KEEPER",
-        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
-      },
-      {
-        role: "LIQUIDATION_KEEPER",
-        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
-      },
-      {
-        role: "LIQUIDATION_KEEPER",
-        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
-      },
-      {
-        role: "LIQUIDATION_KEEPER",
-        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
-      },
-      {
-        role: "ORDER_KEEPER",
-        member: "0xde10336a5c37ab8fbfd6cd53bdeca5b0974737ba",
-      },
-      {
-        role: "ORDER_KEEPER",
-        member: "0xeb2a53ff17a747b6000041fb4919b3250f2892e3",
-      },
-      {
-        role: "ORDER_KEEPER",
-        member: "0x8808c5e5bc9317bf8cb5ee62339594b8d95f77df",
-      },
-    ],
+    avalanche: [],
   };
 
   const rolesToRemove = {
