@@ -126,6 +126,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         dataStore.setUint(Keys.minPositionImpactPoolAmountKey(market), minPositionImpactPoolAmount);
         dataStore.setUint(Keys.positionImpactPoolDistributionRateKey(market), positionImpactPoolDistributionRate);
 
+        dataStore.setUint(Keys.positionImpactPoolDistributedAtKey(market), Chain.currentTimestamp());
+
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(1);

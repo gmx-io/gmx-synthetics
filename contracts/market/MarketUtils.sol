@@ -659,6 +659,10 @@ library MarketUtils {
             claimableFactor = claimableFactorForTime > claimableFactorForAccount ? claimableFactorForTime : claimableFactorForAccount;
         }
 
+        if (claimableFactor > Precision.FLOAT_PRECISION) {
+            revert Errors.InvalidClaimableFactor(claimableFactor);
+        }
+
         uint256 claimedAmount = dataStore.getUint(Keys.claimedCollateralAmountKey(market, token, timeKey, account));
 
         uint256 adjustedClaimableAmount = Precision.applyFactor(claimableAmount, claimableFactor);
@@ -2386,19 +2390,21 @@ library MarketUtils {
     ) external {
         (uint256 distributionAmount, uint256 nextPositionImpactPoolAmount) = getPendingPositionImpactPoolDistributionAmount(dataStore, market);
 
-        applyDeltaToPositionImpactPool(
-            dataStore,
-            eventEmitter,
-            market,
-            -distributionAmount.toInt256()
-        );
+        if (distributionAmount != 0) {
+            applyDeltaToPositionImpactPool(
+                dataStore,
+                eventEmitter,
+                market,
+                -distributionAmount.toInt256()
+            );
 
-        MarketEventUtils.emitPositionImpactPoolDistributed(
-            eventEmitter,
-            market,
-            distributionAmount,
-            nextPositionImpactPoolAmount
-        );
+            MarketEventUtils.emitPositionImpactPoolDistributed(
+                eventEmitter,
+                market,
+                distributionAmount,
+                nextPositionImpactPoolAmount
+            );
+        }
 
         dataStore.setUint(Keys.positionImpactPoolDistributedAtKey(market), Chain.currentTimestamp());
     }
