@@ -507,7 +507,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.FUNDING_FACTOR ||
             baseKey == Keys.BORROWING_FACTOR ||
             baseKey == Keys.FUNDING_INCREASE_FACTOR_PER_SECOND ||
-            baseKey == Keys.FUNDING_DECREASE_FACTOR_PER_SECOND
+            baseKey == Keys.FUNDING_DECREASE_FACTOR_PER_SECOND ||
+            baseKey == Keys.MIN_COLLATERAL_FACTOR
         ) {
             // revert if value > 1%
             if (value > 1 * Precision.FLOAT_PRECISION / 100) {
@@ -530,7 +531,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.POSITION_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.SWAP_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.BORROWING_FEE_RECEIVER_FACTOR ||
-            baseKey == Keys.MIN_COLLATERAL_FACTOR ||
             baseKey == Keys.MAX_PNL_FACTOR ||
             baseKey == Keys.MIN_PNL_FACTOR_AFTER_ADL
         ) {
