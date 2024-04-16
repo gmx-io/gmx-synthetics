@@ -26,6 +26,8 @@ library Errors {
     error InvalidBaseKey(bytes32 baseKey);
     error InvalidFeeFactor(bytes32 baseKey, uint256 value);
     error InvalidClaimableFactor(uint256 value);
+    error PriceFeedAlreadyExistsForToken(address token);
+    error DataStreamIdAlreadyExistsForToken(address token);
 
     // Timelock errors
     error ActionAlreadySignalled();

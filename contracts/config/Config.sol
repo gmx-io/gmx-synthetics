@@ -56,6 +56,63 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         _;
     }
 
+    function setPriceFeed(
+        address token,
+        address priceFeed,
+        uint256 priceFeedMultiplier,
+        uint256 priceFeedHeartbeatDuration,
+        uint256 stablePrice
+    ) external onlyConfigKeeper nonReentrant {
+        if (dataStore.getAddress(Keys.priceFeedKey(token)) != address(0)) {
+            revert Errors.PriceFeedAlreadyExistsForToken(token);
+        }
+
+        dataStore.setAddress(Keys.priceFeedKey(token), priceFeed);
+        dataStore.setUint(Keys.priceFeedMultiplierKey(token), priceFeedMultiplier);
+        dataStore.setUint(Keys.priceFeedHeartbeatDurationKey(token), priceFeedHeartbeatDuration);
+        dataStore.setUint(Keys.stablePriceKey(token), stablePrice);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "token", token);
+        eventData.addressItems.setItem(1, "priceFeed", priceFeed);
+        eventData.uintItems.initItems(3);
+        eventData.uintItems.setItem(0, "priceFeedMultiplier", priceFeedMultiplier);
+        eventData.uintItems.setItem(1, "priceFeedHeartbeatDuration", priceFeedHeartbeatDuration);
+        eventData.uintItems.setItem(2, "stablePrice", stablePrice);
+        eventEmitter.emitEventLog1(
+            "ConfigSetPriceFeed",
+            Cast.toBytes32(token),
+            eventData
+        );
+    }
+
+    function setDataStream(
+        address token,
+        bytes32 feedId,
+        uint256 dataStreamMultiplier
+    ) external onlyTimelockAdmin nonReentrant {
+        if (Keys.dataStreamIdKey(token) != bytes32(0)) {
+            revert Errors.DataStreamIdAlreadyExistsForToken(token);
+        }
+
+        dataStore.setBytes32(Keys.dataStreamIdKey(token), feedId);
+        dataStore.setUint(Keys.dataStreamMultiplierKey(token), dataStreamMultiplier);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "token", token);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "feedId", feedId);
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "dataStreamMultiplier", dataStreamMultiplier);
+        eventEmitter.emitEventLog1(
+            "ConfigSetDataStream",
+            Cast.toBytes32(token),
+            eventData
+        );
+    }
+
     function setClaimableCollateralFactorForTime(
         address market,
         address token,
@@ -448,7 +505,9 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     function _validateRange(bytes32 baseKey, uint256 value) internal pure {
         if (
             baseKey == Keys.FUNDING_FACTOR ||
-            baseKey == Keys.BORROWING_FACTOR
+            baseKey == Keys.BORROWING_FACTOR ||
+            baseKey == Keys.FUNDING_INCREASE_FACTOR_PER_SECOND ||
+            baseKey == Keys.FUNDING_DECREASE_FACTOR_PER_SECOND
         ) {
             // revert if value > 1%
             if (value > 1 * Precision.FLOAT_PRECISION / 100) {
