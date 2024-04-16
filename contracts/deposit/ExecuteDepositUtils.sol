@@ -415,11 +415,14 @@ library ExecuteDepositUtils {
                 positiveImpactAmount
             );
 
-            MarketUtils.validatePoolAmountForDeposit(
-                params.dataStore,
-                _params.market,
-                _params.tokenOut
-            );
+            // MarketUtils.validatePoolAmountForDeposit is not called here
+            // this is to prevent unnecessary reverts
+            // for example, if the pool's long token is close to the deposit cap
+            // but the short token is not close to the cap, depositing the short
+            // token can lead to a positive price impact which can cause the
+            // long token's deposit cap to be exceeded
+            // in this case, it is preferrable that the pool can still be
+            // rebalanced even if the deposit cap may be exceeded
 
             MarketUtils.validatePoolAmount(
                 params.dataStore,
