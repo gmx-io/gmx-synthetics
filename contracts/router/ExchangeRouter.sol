@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "../exchange/IDepositHandler.sol";
 import "../exchange/IWithdrawalHandler.sol";
 import "../exchange/IOrderHandler.sol";
+import "../external/IExternalHandler.sol";
 
 import "../feature/FeatureUtils.sol";
 
@@ -57,6 +58,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
     IDepositHandler public immutable depositHandler;
     IWithdrawalHandler public immutable withdrawalHandler;
     IOrderHandler public immutable orderHandler;
+    IExternalHandler public immutable externalHandler;
 
     // @dev Constructor that initializes the contract with the provided Router, RoleStore, DataStore,
     // EventEmitter, IDepositHandler, IWithdrawalHandler, IOrderHandler, and OrderStore instances
@@ -67,11 +69,39 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         EventEmitter _eventEmitter,
         IDepositHandler _depositHandler,
         IWithdrawalHandler _withdrawalHandler,
-        IOrderHandler _orderHandler
+        IOrderHandler _orderHandler,
+        IExternalHandler _externalHandler
     ) BaseRouter(_router, _roleStore, _dataStore, _eventEmitter) {
         depositHandler = _depositHandler;
         withdrawalHandler = _withdrawalHandler;
         orderHandler = _orderHandler;
+        externalHandler = _externalHandler;
+    }
+
+    // makeExternalCalls can be used to perform an external swap before
+    // an action
+    // example:
+    // - ExchangeRouter.sendTokens(token: WETH, receiver: externalHandler, amount: 1e18)
+    // - ExchangeRouter.makeExternalCalls(
+    //     WETH.approve(spender: aggregator, amount: 1e18),
+    //     aggregator.swap(amount: 1, from: WETH, to: USDC, receiver: orderHandler)
+    // )
+    // - ExchangeRouter.createOrder
+    // the msg.sender for makeExternalCalls would be externalHandler
+    // refundTokens can be used to retrieve any excess tokens that may
+    // be left in the externalHandler
+    function makeExternalCalls(
+        address[] memory externalCallTargets,
+        bytes[] memory externalCallDataList,
+        address[] memory refundTokens,
+        address[] memory refundReceivers
+    ) external {
+        externalHandler.makeExternalCalls(
+            externalCallTargets,
+            externalCallDataList,
+            refundTokens,
+            refundReceivers
+        );
     }
 
     /**
