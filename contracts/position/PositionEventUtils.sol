@@ -143,7 +143,8 @@ library PositionEventUtils {
         bytes32 orderKey,
         uint256 positionCollateralAmount,
         int256 basePnlUsd,
-        uint256 remainingCostUsd
+        uint256 remainingCostUsd,
+        string memory step
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -156,6 +157,9 @@ library PositionEventUtils {
 
         eventData.intItems.initItems(1);
         eventData.intItems.setItem(0, "basePnlUsd", basePnlUsd);
+
+        eventData.stringItems.initItems(1);
+        eventData.stringItems.setItem(0, "step", step);
 
         eventEmitter.emitEventLog(
             "InsolventClose",

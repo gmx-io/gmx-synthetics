@@ -611,7 +611,8 @@ library DecreasePositionCollateralUtils {
             params.orderKey,
             params.position.collateralAmount(),
             values.basePnlUsd,
-            collateralCache.result.remainingCostUsd
+            collateralCache.result.remainingCostUsd,
+            step
         );
 
         return (values, getEmptyFees(fees));
