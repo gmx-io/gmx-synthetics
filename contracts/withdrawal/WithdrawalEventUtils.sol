@@ -36,13 +36,14 @@ library WithdrawalEventUtils {
         eventData.addressItems.setItem(0, "longTokenSwapPath", withdrawal.longTokenSwapPath());
         eventData.addressItems.setItem(1, "shortTokenSwapPath", withdrawal.shortTokenSwapPath());
 
-        eventData.uintItems.initItems(6);
+        eventData.uintItems.initItems(7);
         eventData.uintItems.setItem(0, "marketTokenAmount", withdrawal.marketTokenAmount());
         eventData.uintItems.setItem(1, "minLongTokenAmount", withdrawal.minLongTokenAmount());
         eventData.uintItems.setItem(2, "minShortTokenAmount", withdrawal.minShortTokenAmount());
         eventData.uintItems.setItem(3, "updatedAtBlock", withdrawal.updatedAtBlock());
-        eventData.uintItems.setItem(4, "executionFee", withdrawal.executionFee());
-        eventData.uintItems.setItem(5, "callbackGasLimit", withdrawal.callbackGasLimit());
+        eventData.uintItems.setItem(4, "updatedAtTime", withdrawal.updatedAtTime());
+        eventData.uintItems.setItem(5, "executionFee", withdrawal.executionFee());
+        eventData.uintItems.setItem(6, "callbackGasLimit", withdrawal.callbackGasLimit());
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", withdrawal.shouldUnwrapNativeToken());
