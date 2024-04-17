@@ -1,36 +1,16 @@
 import { grantRoleIfNotGranted } from "../utils/role";
 import { createDeployFunction } from "../utils/deploy";
 
-const constructorContracts = [
-  "Router",
-  "RoleStore",
-  "DataStore",
-  "EventEmitter",
-  "DepositHandler",
-  "WithdrawalHandler",
-  "OrderHandler",
-  "ExternalHandler",
-];
+const constructorContracts = ["RoleStore", "DataStore", "EventEmitter"];
 
 const func = createDeployFunction({
-  contractName: "ExchangeRouter",
+  contractName: "TimestampInitializer",
   dependencyNames: constructorContracts,
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
-  libraryNames: [
-    "CallbackUtils",
-    "DepositStoreUtils",
-    "FeeUtils",
-    "MarketEventUtils",
-    "MarketStoreUtils",
-    "OrderStoreUtils",
-    "ReferralUtils",
-    "WithdrawalStoreUtils",
-  ],
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
-    await grantRoleIfNotGranted(deployedContract.address, "ROUTER_PLUGIN");
   },
 });
 

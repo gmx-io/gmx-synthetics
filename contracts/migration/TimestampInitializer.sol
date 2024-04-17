@@ -9,7 +9,7 @@ import "../role/RoleModule.sol";
 import "../order/OrderStoreUtils.sol";
 import "../position/PositionStoreUtils.sol";
 
-contract InitializeTimestamps is RoleModule {
+contract TimestampInitializer is RoleModule {
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.IntItems;
