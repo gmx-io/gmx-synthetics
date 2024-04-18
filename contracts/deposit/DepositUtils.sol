@@ -98,6 +98,10 @@ library DepositUtils {
 
         AccountUtils.validateReceiver(params.receiver);
 
+        if (params.receiver == address(depositVault)) {
+            revert Errors.InvalidReceiver();
+        }
+
         Deposit.Props memory deposit = Deposit.Props(
             Deposit.Addresses(
                 account,
@@ -209,7 +213,7 @@ library DepositUtils {
             deposit.executionFee(),
             startingGas,
             keeper,
-            deposit.account()
+            deposit.receiver()
         );
     }
 }

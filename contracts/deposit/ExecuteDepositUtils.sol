@@ -262,7 +262,7 @@ library ExecuteDepositUtils {
             deposit.executionFee(),
             params.startingGas,
             params.keeper,
-            deposit.account()
+            deposit.receiver()
         );
     }
 

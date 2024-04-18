@@ -127,6 +127,10 @@ library OrderUtils {
 
         AccountUtils.validateReceiver(order.receiver());
 
+        if (order.receiver() == address(orderVault)) {
+            revert Errors.InvalidReceiver();
+        }
+
         CallbackUtils.validateCallbackGasLimit(dataStore, order.callbackGasLimit());
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
@@ -192,7 +196,7 @@ library OrderUtils {
             params.order.executionFee(),
             params.startingGas,
             params.keeper,
-            params.order.account()
+            params.order.receiver()
         );
     }
 
@@ -269,7 +273,7 @@ library OrderUtils {
             order.executionFee(),
             startingGas,
             keeper,
-            order.account()
+            order.receiver()
         );
     }
 
@@ -325,7 +329,7 @@ library OrderUtils {
             executionFee,
             startingGas,
             keeper,
-            order.account()
+            order.receiver()
         );
     }
 }
