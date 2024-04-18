@@ -2,11 +2,10 @@
 
 pragma solidity ^0.8.0;
 
-import "../utils/GlobalReentrancyGuard.sol";
+import "./BaseHandler.sol";
 import "../error/ErrorUtils.sol";
 
 import "./ExchangeUtils.sol";
-import "../role/RoleModule.sol";
 import "../feature/FeatureUtils.sol";
 
 import "../market/Market.sol";
@@ -17,27 +16,23 @@ import "../withdrawal/WithdrawalVault.sol";
 import "../withdrawal/WithdrawalStoreUtils.sol";
 import "../withdrawal/WithdrawalUtils.sol";
 import "../withdrawal/ExecuteWithdrawalUtils.sol";
-import "../oracle/Oracle.sol";
-import "../oracle/OracleModule.sol";
 
 import "./IWithdrawalHandler.sol";
 
 // @title WithdrawalHandler
 // @dev Contract to handle creation, execution and cancellation of withdrawals
-contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleModule, OracleModule {
+contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
     using Withdrawal for Withdrawal.Props;
 
-    EventEmitter public immutable eventEmitter;
     WithdrawalVault public immutable withdrawalVault;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        WithdrawalVault _withdrawalVault,
-        Oracle _oracle
-    ) RoleModule(_roleStore) OracleModule(_oracle) GlobalReentrancyGuard(_dataStore) {
-        eventEmitter = _eventEmitter;
+        Oracle _oracle,
+        WithdrawalVault _withdrawalVault
+    ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         withdrawalVault = _withdrawalVault;
     }
 

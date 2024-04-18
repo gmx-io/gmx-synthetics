@@ -126,6 +126,7 @@ library ExecuteWithdrawalUtils {
             params.dataStore,
             params.eventEmitter,
             params.withdrawalVault,
+            withdrawal.callbackContract(),
             withdrawal.executionFee(),
             params.startingGas,
             params.keeper,

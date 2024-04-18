@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "../callback/CallbackUtils.sol";
+
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
 import "../utils/Precision.sol";
@@ -99,6 +101,7 @@ library GasUtils {
         DataStore dataStore,
         EventEmitter eventEmitter,
         StrictBank bank,
+        address callbackContract,
         uint256 executionFee,
         uint256 startingGas,
         address keeper,
@@ -127,12 +130,25 @@ library GasUtils {
             return;
         }
 
-        bank.transferOutNativeToken(
-            refundReceiver,
+        address _wnt = dataStore.getAddress(Keys.WNT);
+        bank.transferOut(
+            _wnt,
+            address(this),
             refundFeeAmount
         );
 
-        emitExecutionFeeRefund(eventEmitter, refundReceiver, refundFeeAmount);
+        IWNT(_wnt).withdraw(refundFeeAmount);
+
+        EventUtils.EventLogData memory eventData;
+
+        bool refundWasSent = CallbackUtils.refundExecutionFee(dataStore, callbackContract, refundFeeAmount, eventData);
+
+        if (refundWasSent) {
+            emitExecutionFeeRefundCallback(eventEmitter, callbackContract, refundFeeAmount);
+        } else {
+            TokenUtils.sendNativeToken(dataStore, refundReceiver, refundFeeAmount);
+            emitExecutionFeeRefund(eventEmitter, refundReceiver, refundFeeAmount);
+        }
     }
 
     // @dev validate that the provided executionFee is sufficient based on the estimatedGasLimit
@@ -288,6 +304,26 @@ library GasUtils {
         eventEmitter.emitEventLog1(
             "ExecutionFeeRefund",
             Cast.toBytes32(receiver),
+            eventData
+        );
+    }
+
+    function emitExecutionFeeRefundCallback(
+        EventEmitter eventEmitter,
+        address callbackContract,
+        uint256 refundFeeAmount
+    ) internal {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "callbackContract", callbackContract);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "refundFeeAmount", refundFeeAmount);
+
+        eventEmitter.emitEventLog1(
+            "ExecutionFeeRefundCallback",
+            Cast.toBytes32(callbackContract),
             eventData
         );
     }

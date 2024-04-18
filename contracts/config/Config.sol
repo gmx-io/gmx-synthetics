@@ -366,6 +366,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.MAX_SWAP_PATH_LENGTH] = true;
         allowedBaseKeys[Keys.MAX_CALLBACK_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.REFUND_EXECUTION_FEE_GAS_LIMIT] = true;
 
         allowedBaseKeys[Keys.MIN_POSITION_SIZE_USD] = true;
         allowedBaseKeys[Keys.MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS] = true;

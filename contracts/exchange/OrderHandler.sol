@@ -17,16 +17,16 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        OrderVault _orderVault,
         Oracle _oracle,
+        OrderVault _orderVault,
         SwapHandler _swapHandler,
         IReferralStorage _referralStorage
     ) BaseOrderHandler(
         _roleStore,
         _dataStore,
         _eventEmitter,
-        _orderVault,
         _oracle,
+        _orderVault,
         _swapHandler,
         _referralStorage
     ) {}

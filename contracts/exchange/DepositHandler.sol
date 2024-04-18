@@ -2,11 +2,8 @@
 
 pragma solidity ^0.8.0;
 
-import "../utils/GlobalReentrancyGuard.sol";
-
+import "./BaseHandler.sol";
 import "./ExchangeUtils.sol";
-import "../role/RoleModule.sol";
-import "../event/EventEmitter.sol";
 import "../feature/FeatureUtils.sol";
 
 import "../market/Market.sol";
@@ -16,27 +13,23 @@ import "../deposit/Deposit.sol";
 import "../deposit/DepositVault.sol";
 import "../deposit/DepositUtils.sol";
 import "../deposit/ExecuteDepositUtils.sol";
-import "../oracle/Oracle.sol";
-import "../oracle/OracleModule.sol";
 
 import "./IDepositHandler.sol";
 
 // @title DepositHandler
 // @dev Contract to handle creation, execution and cancellation of deposits
-contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, OracleModule {
+contract DepositHandler is IDepositHandler, BaseHandler {
     using Deposit for Deposit.Props;
 
-    EventEmitter public immutable eventEmitter;
     DepositVault public immutable depositVault;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        DepositVault _depositVault,
-        Oracle _oracle
-    ) RoleModule(_roleStore) OracleModule(_oracle) GlobalReentrancyGuard(_dataStore) {
-        eventEmitter = _eventEmitter;
+        Oracle _oracle,
+        DepositVault _depositVault
+    ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         depositVault = _depositVault;
     }
 

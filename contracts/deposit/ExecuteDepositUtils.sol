@@ -87,6 +87,7 @@ library ExecuteDepositUtils {
         uint256 shortTokenUsd;
         uint256 receivedMarketTokens;
         int256 priceImpactUsd;
+        uint256 marketTokensSupply;
     }
 
     address public constant RECEIVER_FOR_FIRST_DEPOSIT = address(1);
@@ -239,7 +240,7 @@ library ExecuteDepositUtils {
             true
         );
 
-        uint256 marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
+        cache.marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
 
         MarketEventUtils.emitMarketPoolValueUpdated(
             params.eventEmitter,
@@ -247,7 +248,7 @@ library ExecuteDepositUtils {
             params.key,
             market.marketToken,
             poolValueInfo,
-            marketTokensSupply
+            cache.marketTokensSupply
         );
 
         EventUtils.EventLogData memory eventData;
@@ -259,6 +260,7 @@ library ExecuteDepositUtils {
             params.dataStore,
             params.eventEmitter,
             params.depositVault,
+            deposit.callbackContract(),
             deposit.executionFee(),
             params.startingGas,
             params.keeper,

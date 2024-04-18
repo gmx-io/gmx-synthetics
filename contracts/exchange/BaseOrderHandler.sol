@@ -2,10 +2,8 @@
 
 pragma solidity ^0.8.0;
 
-import "../utils/GlobalReentrancyGuard.sol";
-
+import "./BaseHandler.sol";
 import "./ExchangeUtils.sol";
-import "../role/RoleModule.sol";
 import "../feature/FeatureUtils.sol";
 import "../callback/CallbackUtils.sol";
 
@@ -19,20 +17,15 @@ import "../order/Order.sol";
 import "../order/OrderVault.sol";
 import "../order/OrderUtils.sol";
 
-import "../oracle/Oracle.sol";
-import "../oracle/OracleModule.sol";
-import "../event/EventEmitter.sol";
-
 import "../referral/IReferralStorage.sol";
 
 // @title BaseOrderHandler
 // @dev Base contract for shared order handler functions
-contract BaseOrderHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
+contract BaseOrderHandler is BaseHandler {
     using SafeCast for uint256;
     using Order for Order.Props;
     using Array for uint256[];
 
-    EventEmitter public immutable eventEmitter;
     OrderVault public immutable orderVault;
     SwapHandler public immutable swapHandler;
     IReferralStorage public immutable referralStorage;
@@ -41,12 +34,11 @@ contract BaseOrderHandler is GlobalReentrancyGuard, RoleModule, OracleModule {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        OrderVault _orderVault,
         Oracle _oracle,
+        OrderVault _orderVault,
         SwapHandler _swapHandler,
         IReferralStorage _referralStorage
-    ) RoleModule(_roleStore) OracleModule(_oracle) GlobalReentrancyGuard(_dataStore) {
-        eventEmitter = _eventEmitter;
+    ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         orderVault = _orderVault;
         swapHandler = _swapHandler;
         referralStorage = _referralStorage;

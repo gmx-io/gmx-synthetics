@@ -210,6 +210,7 @@ library DepositUtils {
             dataStore,
             eventEmitter,
             depositVault,
+            deposit.callbackContract(),
             deposit.executionFee(),
             startingGas,
             keeper,

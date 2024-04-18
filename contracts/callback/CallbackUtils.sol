@@ -11,6 +11,7 @@ import "../error/ErrorUtils.sol";
 import "./IOrderCallbackReceiver.sol";
 import "./IDepositCallbackReceiver.sol";
 import "./IWithdrawalCallbackReceiver.sol";
+import "./IExecutionFeeCallbackReceiver.sol";
 
 // @title CallbackUtils
 // @dev most features require a two step process to complete
@@ -63,6 +64,25 @@ library CallbackUtils {
 
     function getSavedCallbackContract(DataStore dataStore, address account, address market) internal view returns (address) {
         return dataStore.getAddress(Keys.savedCallbackContract(account, market));
+    }
+
+    function refundExecutionFee(
+        DataStore dataStore,
+        address callbackContract,
+        uint256 refundFeeAmount,
+        EventUtils.EventLogData memory eventData
+    ) internal returns (bool) {
+        if (!isValidCallbackContract(callbackContract)) { return false; }
+
+        uint256 gasLimit = dataStore.getUint(Keys.REFUND_EXECUTION_FEE_GAS_LIMIT);
+
+        try IExecutionFeeCallbackReceiver(callbackContract).refundExecutionFee{ gas: gasLimit, value: refundFeeAmount }(
+            eventData
+        ) {
+            return true;
+        } catch {
+            return false;
+        }
     }
 
     // @dev called after a deposit execution
