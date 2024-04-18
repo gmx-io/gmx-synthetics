@@ -19,4 +19,11 @@ contract BaseHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
     ) RoleModule(_roleStore) GlobalReentrancyGuard(_dataStore) OracleModule(_oracle) {
         eventEmitter = _eventEmitter;
     }
+
+    receive() external payable {
+        address wnt = dataStore.getAddress(Keys.WNT);
+        if (msg.sender != wnt) {
+            revert Errors.InvalidNativeTokenSender(msg.sender);
+        }
+    }
 }
