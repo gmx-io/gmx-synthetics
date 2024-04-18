@@ -523,6 +523,6 @@ describe("Exchange.MarketIncreaseOrder", () => {
       shouldUnwrapNativeToken: false,
     };
 
-    await handleOrder(fixture, { create: params });
+    await expect(createOrder(fixture, params)).to.be.revertWithCustomError("InvalidReceiver");
   });
 });
