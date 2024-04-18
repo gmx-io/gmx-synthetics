@@ -506,7 +506,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
     );
   });
 
-  it("refunds execution fees, even if receiver is orderVault", async () => {
+  it("reverts if receiver is orderVault", async () => {
     const params = {
       account: user0,
       receiver: orderVault,
@@ -523,6 +523,6 @@ describe("Exchange.MarketIncreaseOrder", () => {
       shouldUnwrapNativeToken: false,
     };
 
-    await expect(createOrder(fixture, params)).to.be.revertWithCustomError("InvalidReceiver");
+    await expect(createOrder(fixture, params)).to.be.revertedWithCustomError(errorsContract, "InvalidReceiver");
   });
 });
