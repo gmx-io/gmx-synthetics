@@ -122,6 +122,7 @@ library Order {
         bool isLong;
         bool shouldUnwrapNativeToken;
         bool isFrozen;
+        bool autoCancel;
     }
 
     // @dev the order account
@@ -412,6 +413,14 @@ library Order {
     // @param value the value to set to
     function setIsFrozen(Props memory props, bool value) internal pure {
         props.flags.isFrozen = value;
+    }
+
+    function autoCancel(Props memory props) internal pure returns (bool) {
+        return props.flags.autoCancel;
+    }
+
+    function setAutoCancel(Props memory props, bool value) internal pure {
+        props.flags.autoCancel = value;
     }
 
     // @dev set the order.updatedAtBlock to the current block number

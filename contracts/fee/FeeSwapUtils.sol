@@ -142,6 +142,7 @@ library FeeSwapUtils {
             Order.DecreasePositionSwapType.NoSwap, // decreasePositionSwapType
             false, // isLong
             false, // shouldUnwrapNativeToken
+            false, // autoCancel
             bytes32(0) // referralCode
         );
 

@@ -234,7 +234,8 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         uint256 sizeDeltaUsd,
         uint256 acceptablePrice,
         uint256 triggerPrice,
-        uint256 minOutputAmount
+        uint256 minOutputAmount,
+        bool autoCancel
     ) external payable nonReentrant {
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         if (order.account() != msg.sender) {
@@ -247,6 +248,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
             acceptablePrice,
             triggerPrice,
             minOutputAmount,
+            autoCancel,
             order
         );
     }

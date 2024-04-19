@@ -66,6 +66,7 @@ export async function createOrder(fixture, overrides) {
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
   const minOutputAmount = overrides.minOutputAmount || 0;
   const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
+  const autoCancel = overrides.autoCancel || false;
   const referralCode = overrides.referralCode || ethers.constants.HashZero;
 
   if (
@@ -101,6 +102,7 @@ export async function createOrder(fixture, overrides) {
     decreasePositionSwapType,
     isLong,
     shouldUnwrapNativeToken,
+    autoCancel,
     referralCode,
   };
 

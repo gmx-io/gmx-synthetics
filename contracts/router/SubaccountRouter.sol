@@ -130,7 +130,8 @@ contract SubaccountRouter is BaseRouter {
         uint256 sizeDeltaUsd,
         uint256 acceptablePrice,
         uint256 triggerPrice,
-        uint256 minOutputAmount
+        uint256 minOutputAmount,
+        bool autoCancel
     ) external payable nonReentrant {
         uint256 startingGas = gasleft();
 
@@ -146,6 +147,7 @@ contract SubaccountRouter is BaseRouter {
             acceptablePrice,
             triggerPrice,
             minOutputAmount,
+            autoCancel,
             order
         );
 

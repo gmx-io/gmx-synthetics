@@ -132,7 +132,7 @@ library AdlUtils {
     // @param params CreateAdlOrderParams
     // @return the key of the created order
     function createAdlOrder(CreateAdlOrderParams memory params) external returns (bytes32) {
-        bytes32 positionKey = PositionUtils.getPositionKey(params.account, params.market, params.collateralToken, params.isLong);
+        bytes32 positionKey = Position.getPositionKey(params.account, params.market, params.collateralToken, params.isLong);
         Position.Props memory position = PositionStoreUtils.get(params.dataStore, positionKey);
 
         if (params.sizeDeltaUsd > position.sizeInUsd()) {
@@ -182,7 +182,8 @@ library AdlUtils {
         Order.Flags memory flags = Order.Flags(
             position.isLong(), // isLong
             true, // shouldUnwrapNativeToken
-            false // isFrozen
+            false, // isFrozen
+            false // autoCancel
         );
 
         Order.Props memory order = Order.Props(

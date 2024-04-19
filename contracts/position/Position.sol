@@ -199,4 +199,15 @@ library Position {
     function setIsLong(Props memory props, bool value) internal pure {
         props.flags.isLong = value;
     }
+
+    // @dev get the key for a position
+    // @param account the position's account
+    // @param market the position's market
+    // @param collateralToken the position's collateralToken
+    // @param isLong whether the position is long or short
+    // @return the position key
+    function getPositionKey(address _account, address _market, address _collateralToken, bool _isLong) internal pure returns (bytes32) {
+        bytes32 _key = keccak256(abi.encode(_account, _market, _collateralToken, _isLong));
+        return _key;
+    }
 }

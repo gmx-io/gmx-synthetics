@@ -11,6 +11,7 @@ import "../referral/IReferralStorage.sol";
 
 import "../order/OrderVault.sol";
 import "../order/IBaseOrderUtils.sol";
+import "../position/PositionUtils.sol";
 
 import "../oracle/Oracle.sol";
 import "../swap/SwapHandler.sol";
@@ -401,5 +402,18 @@ library BaseOrderUtils {
         if (order.sizeDeltaUsd() == 0 && order.initialCollateralDeltaAmount() == 0) {
             revert Errors.EmptyOrder();
         }
+    }
+
+    function getPositionKey(Order.Props memory order) internal pure returns (bytes32) {
+        if (isDecreaseOrder(order.orderType())) {
+            return Position.getPositionKey(
+                order.account(),
+                order.market(),
+                order.initialCollateralToken(),
+                order.isLong()
+            );
+        }
+
+        revert Errors.UnsupportedOrderType();
     }
 }
