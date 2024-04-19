@@ -49,6 +49,8 @@ export const CLAIMABLE_UI_FEE_AMOUNT = hashString("CLAIMABLE_UI_FEE_AMOUNT");
 export const AFFILIATE_REWARD = hashString("AFFILIATE_REWARD");
 export const MAX_UI_FEE_FACTOR = hashString("MAX_UI_FEE_FACTOR");
 
+export const MAX_AUTO_CANCEL_ORDERS = hashString("MAX_AUTO_CANCEL_ORDERS");
+
 export const IS_MARKET_DISABLED = hashString("IS_MARKET_DISABLED");
 export const MAX_SWAP_PATH_LENGTH = hashString("MAX_SWAP_PATH_LENGTH");
 export const MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT = hashString("MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT");

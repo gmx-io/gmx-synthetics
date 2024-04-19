@@ -156,8 +156,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             order.account(),
             startingGas,
             Keys.USER_INITIATED_CANCEL,
-            "",
-            true
+            ""
         );
     }
 
@@ -310,8 +309,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
                 msg.sender,
                 startingGas,
                 reason,
-                reasonBytes,
-                true
+                reasonBytes
             );
 
             return;

@@ -182,6 +182,20 @@ library OrderUtils {
         }
         MarketUtils.validateMarketTokenBalance(params.contracts.dataStore, params.swapPathMarkets);
 
+        if (BaseOrderUtils.isDecreaseOrder(params.order.orderType())) {
+            bytes32 positionKey = BaseOrderUtils.getPositionKey(params.order);
+            uint256 sizeInUsd = params.contracts.dataStore.getUint(keccak256(abi.encode(positionKey, PositionStoreUtils.SIZE_IN_USD)));
+            if (sizeInUsd == 0) {
+                clearAutoCancelOrders(
+                    params.contracts.dataStore,
+                    params.contracts.eventEmitter,
+                    params.contracts.orderVault,
+                    positionKey,
+                    params.keeper
+                );
+            }
+        }
+
         updateAutoCancelList(params.contracts.dataStore, params.key, params.order, false);
 
         OrderEventUtils.emitOrderExecuted(
@@ -242,13 +256,10 @@ library OrderUtils {
         address keeper,
         uint256 startingGas,
         string memory reason,
-        bytes memory reasonBytes,
-        bool shouldRefundExecutionFee
+        bytes memory reasonBytes
     ) public {
-        if (shouldRefundExecutionFee) {
-            // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
-            startingGas -= gasleft() / 63;
-        }
+        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
+        startingGas -= gasleft() / 63;
 
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         BaseOrderUtils.validateNonEmptyOrder(order);
@@ -279,19 +290,17 @@ library OrderUtils {
         EventUtils.EventLogData memory eventData;
         CallbackUtils.afterOrderCancellation(key, order, eventData);
 
-        if (shouldRefundExecutionFee) {
-            GasUtils.payExecutionFee(
-                dataStore,
-                eventEmitter,
-                orderVault,
-                key,
-                order.callbackContract(),
-                order.executionFee(),
-                startingGas,
-                keeper,
-                order.receiver()
-            );
-        }
+        GasUtils.payExecutionFee(
+            dataStore,
+            eventEmitter,
+            orderVault,
+            key,
+            order.callbackContract(),
+            order.executionFee(),
+            startingGas,
+            keeper,
+            order.receiver()
+        );
     }
 
     // @dev freezes an order
@@ -356,8 +365,9 @@ library OrderUtils {
         DataStore dataStore,
         EventEmitter eventEmitter,
         OrderVault orderVault,
-        bytes32 positionKey
-    ) external {
+        bytes32 positionKey,
+        address keeper
+    ) internal {
         bytes32[] memory orderKeys = AutoCancelUtils.getAutoCancelOrderKeys(dataStore, positionKey);
 
         for (uint256 i; i < orderKeys.length; i++) {
@@ -366,11 +376,10 @@ library OrderUtils {
                 eventEmitter,
                 orderVault,
                 orderKeys[i],
-                msg.sender, // keeper
-                0, // startingGas
-                "AUTO_CANCEL",
-                "",
-                false // shouldRefundExecutionFee
+                keeper, // keeper
+                gasleft(), // startingGas
+                "AUTO_CANCEL", // reason
+                "" // reasonBytes
             );
         }
     }

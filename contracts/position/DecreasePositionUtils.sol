@@ -16,7 +16,6 @@ import "./PositionUtils.sol";
 import "./PositionEventUtils.sol";
 import "../order/BaseOrderUtils.sol";
 import "../order/OrderEventUtils.sol";
-import "../order/OrderUtils.sol";
 
 import "./DecreasePositionCollateralUtils.sol";
 
@@ -268,13 +267,6 @@ library DecreasePositionUtils {
             params.position.setSizeInUsd(0);
             params.position.setSizeInTokens(0);
             params.position.setCollateralAmount(0);
-
-            OrderUtils.clearAutoCancelOrders(
-                params.contracts.dataStore,
-                params.contracts.eventEmitter,
-                params.contracts.orderVault,
-                params.positionKey
-            );
 
             PositionStoreUtils.remove(params.contracts.dataStore, params.positionKey, params.order.account());
         } else {

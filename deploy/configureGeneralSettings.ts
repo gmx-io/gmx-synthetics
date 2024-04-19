@@ -8,6 +8,7 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
   await setAddressIfDifferent(keys.FEE_RECEIVER, generalConfig.feeReceiver, "fee receiver");
   await setAddressIfDifferent(keys.HOLDING_ADDRESS, generalConfig.holdingAddress, "holding address");
   await setUintIfDifferent(keys.MAX_UI_FEE_FACTOR, generalConfig.maxUiFeeFactor, "maxUiFeeFactor");
+  await setUintIfDifferent(keys.MAX_AUTO_CANCEL_ORDERS, generalConfig.maxAutoCancelOrders, "maxAutoCancelOrders");
 
   await setUintIfDifferent(
     keys.MIN_HANDLE_EXECUTION_ERROR_GAS,
