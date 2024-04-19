@@ -11,7 +11,7 @@ import "../error/ErrorUtils.sol";
 import "./IOrderCallbackReceiver.sol";
 import "./IDepositCallbackReceiver.sol";
 import "./IWithdrawalCallbackReceiver.sol";
-import "./IExecutionFeeCallbackReceiver.sol";
+import "./IGasFeeCallbackReceiver.sol";
 
 // @title CallbackUtils
 // @dev most features require a two step process to complete
@@ -68,6 +68,7 @@ library CallbackUtils {
 
     function refundExecutionFee(
         DataStore dataStore,
+        bytes32 key,
         address callbackContract,
         uint256 refundFeeAmount,
         EventUtils.EventLogData memory eventData
@@ -76,7 +77,8 @@ library CallbackUtils {
 
         uint256 gasLimit = dataStore.getUint(Keys.REFUND_EXECUTION_FEE_GAS_LIMIT);
 
-        try IExecutionFeeCallbackReceiver(callbackContract).refundExecutionFee{ gas: gasLimit, value: refundFeeAmount }(
+        try IGasFeeCallbackReceiver(callbackContract).refundExecutionFee{ gas: gasLimit, value: refundFeeAmount }(
+            key,
             eventData
         ) {
             return true;

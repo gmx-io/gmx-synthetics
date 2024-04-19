@@ -101,6 +101,7 @@ library GasUtils {
         DataStore dataStore,
         EventEmitter eventEmitter,
         StrictBank bank,
+        bytes32 key,
         address callbackContract,
         uint256 executionFee,
         uint256 startingGas,
@@ -141,7 +142,7 @@ library GasUtils {
 
         EventUtils.EventLogData memory eventData;
 
-        bool refundWasSent = CallbackUtils.refundExecutionFee(dataStore, callbackContract, refundFeeAmount, eventData);
+        bool refundWasSent = CallbackUtils.refundExecutionFee(dataStore, key, callbackContract, refundFeeAmount, eventData);
 
         if (refundWasSent) {
             emitExecutionFeeRefundCallback(eventEmitter, callbackContract, refundFeeAmount);
