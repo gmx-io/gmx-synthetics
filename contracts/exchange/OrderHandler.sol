@@ -115,7 +115,8 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             sizeDeltaUsd,
             acceptablePrice,
             triggerPrice,
-            minOutputAmount
+            minOutputAmount,
+            order.updatedAtTime()
         );
     }
 
