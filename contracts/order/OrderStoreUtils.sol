@@ -37,6 +37,7 @@ library OrderStoreUtils {
     bytes32 public constant IS_LONG = keccak256(abi.encode("IS_LONG"));
     bytes32 public constant SHOULD_UNWRAP_NATIVE_TOKEN = keccak256(abi.encode("SHOULD_UNWRAP_NATIVE_TOKEN"));
     bytes32 public constant IS_FROZEN = keccak256(abi.encode("IS_FROZEN"));
+    bytes32 public constant AUTO_CANCEL = keccak256(abi.encode("AUTO_CANCEL"));
 
     function get(DataStore dataStore, bytes32 key) external view returns (Order.Props memory) {
         Order.Props memory order;
@@ -126,6 +127,10 @@ library OrderStoreUtils {
 
         order.setIsFrozen(dataStore.getBool(
             keccak256(abi.encode(key, IS_FROZEN))
+        ));
+
+        order.setAutoCancel(dataStore.getBool(
+            keccak256(abi.encode(key, AUTO_CANCEL))
         ));
 
         return order;
@@ -246,6 +251,11 @@ library OrderStoreUtils {
             keccak256(abi.encode(key, IS_FROZEN)),
             order.isFrozen()
         );
+
+        dataStore.setBool(
+            keccak256(abi.encode(key, AUTO_CANCEL)),
+            order.autoCancel()
+        );
     }
 
     function remove(DataStore dataStore, bytes32 key, address account) external {
@@ -345,6 +355,10 @@ library OrderStoreUtils {
 
         dataStore.removeBool(
             keccak256(abi.encode(key, IS_FROZEN))
+        );
+
+        dataStore.removeBool(
+            keccak256(abi.encode(key, AUTO_CANCEL))
         );
     }
 

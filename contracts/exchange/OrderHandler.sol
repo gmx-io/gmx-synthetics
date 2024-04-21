@@ -79,6 +79,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         uint256 acceptablePrice,
         uint256 triggerPrice,
         uint256 minOutputAmount,
+        bool autoCancel,
         Order.Props memory order
     ) external override globalNonReentrant onlyController {
         FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
@@ -92,6 +93,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         order.setAcceptablePrice(acceptablePrice);
         order.setMinOutputAmount(minOutputAmount);
         order.setIsFrozen(false);
+        order.setAutoCancel(autoCancel);
 
         // allow topping up of executionFee as frozen orders
         // will have their executionFee reduced
@@ -108,6 +110,8 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
 
         OrderStoreUtils.set(dataStore, key, order);
 
+        OrderUtils.updateAutoCancelList(dataStore, key, order, autoCancel);
+
         OrderEventUtils.emitOrderUpdated(
             eventEmitter,
             key,
@@ -115,7 +119,8 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             sizeDeltaUsd,
             acceptablePrice,
             triggerPrice,
-            minOutputAmount
+            minOutputAmount,
+            order.updatedAtTime()
         );
     }
 

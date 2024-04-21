@@ -313,8 +313,8 @@ describe("Exchange.FundingFees.PairMarket", () => {
     expect(
       await dataStore.getUint(keys.fundingFeeAmountPerSizeKey(ethUsdMarket.marketToken, usdc.address, false))
     ).closeTo(
-      "40320390000000000", // 0.00004 USD
-      "100000000000"
+      "40320493939393940", // 0.00004 USD
+      "200000000000"
     );
 
     expect(

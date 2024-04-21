@@ -97,7 +97,8 @@ library OrderEventUtils {
         uint256 sizeDeltaUsd,
         uint256 acceptablePrice,
         uint256 triggerPrice,
-        uint256 minOutputAmount
+        uint256 minOutputAmount,
+        uint256 updatedAtTime
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -107,11 +108,12 @@ library OrderEventUtils {
         eventData.addressItems.initItems(1);
         eventData.addressItems.setItem(0, "account", account);
 
-        eventData.uintItems.initItems(4);
+        eventData.uintItems.initItems(5);
         eventData.uintItems.setItem(0, "sizeDeltaUsd", sizeDeltaUsd);
         eventData.uintItems.setItem(1, "acceptablePrice", acceptablePrice);
         eventData.uintItems.setItem(2, "triggerPrice", triggerPrice);
         eventData.uintItems.setItem(3, "minOutputAmount", minOutputAmount);
+        eventData.uintItems.setItem(4, "updatedAtTime", updatedAtTime);
 
         eventEmitter.emitEventLog2(
             "OrderUpdated",

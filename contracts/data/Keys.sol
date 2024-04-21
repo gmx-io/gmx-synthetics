@@ -54,6 +54,8 @@ library Keys {
     bytes32 public constant CLAIMABLE_FEE_AMOUNT = keccak256(abi.encode("CLAIMABLE_FEE_AMOUNT"));
     // @dev key for the claimable ui fee amount
     bytes32 public constant CLAIMABLE_UI_FEE_AMOUNT = keccak256(abi.encode("CLAIMABLE_UI_FEE_AMOUNT"));
+    // @dev key for the max number of auto cancel orders
+    bytes32 public constant MAX_AUTO_CANCEL_ORDERS = keccak256(abi.encode("MAX_AUTO_CANCEL_ORDERS"));
 
     // @dev key for the market list
     bytes32 public constant MARKET_LIST = keccak256(abi.encode("MARKET_LIST"));
@@ -83,6 +85,9 @@ library Keys {
 
     // @dev key for the subaccount list
     bytes32 public constant SUBACCOUNT_LIST = keccak256(abi.encode("SUBACCOUNT_LIST"));
+
+    // @dev key for the auto cancel order list
+    bytes32 public constant AUTO_CANCEL_ORDER_LIST = keccak256(abi.encode("AUTO_CANCEL_ORDER_LIST"));
 
     // @dev key for is market disabled
     bytes32 public constant IS_MARKET_DISABLED = keccak256(abi.encode("IS_MARKET_DISABLED"));
@@ -373,6 +378,12 @@ library Keys {
     // @param account the account for the list
     function subaccountListKey(address account) internal pure returns (bytes32) {
         return keccak256(abi.encode(SUBACCOUNT_LIST, account));
+    }
+
+    // @dev key for the auto cancel order list
+    // @param position key the position key for the list
+    function autoCancelOrderListKey(bytes32 positionKey) internal pure returns (bytes32) {
+        return keccak256(abi.encode(AUTO_CANCEL_ORDER_LIST, positionKey));
     }
 
     // @dev key for the claimable fee amount

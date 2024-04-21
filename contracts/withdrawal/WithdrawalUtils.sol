@@ -200,6 +200,7 @@ library WithdrawalUtils {
             dataStore,
             eventEmitter,
             withdrawalVault,
+            key,
             withdrawal.callbackContract(),
             withdrawal.executionFee(),
             startingGas,

@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.0;
 
+import "./AutoCancelUtils.sol";
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
 
@@ -124,6 +125,7 @@ library OrderUtils {
         order.setMinOutputAmount(params.numbers.minOutputAmount);
         order.setIsLong(params.isLong);
         order.setShouldUnwrapNativeToken(params.shouldUnwrapNativeToken);
+        order.setAutoCancel(params.autoCancel);
 
         AccountUtils.validateReceiver(order.receiver());
 
@@ -142,6 +144,8 @@ library OrderUtils {
 
         BaseOrderUtils.validateNonEmptyOrder(order);
         OrderStoreUtils.set(dataStore, key, order);
+
+        updateAutoCancelList(dataStore, key, order, order.autoCancel());
 
         OrderEventUtils.emitOrderCreated(eventEmitter, key, order);
 
@@ -178,6 +182,22 @@ library OrderUtils {
         }
         MarketUtils.validateMarketTokenBalance(params.contracts.dataStore, params.swapPathMarkets);
 
+        if (BaseOrderUtils.isDecreaseOrder(params.order.orderType())) {
+            bytes32 positionKey = BaseOrderUtils.getPositionKey(params.order);
+            uint256 sizeInUsd = params.contracts.dataStore.getUint(keccak256(abi.encode(positionKey, PositionStoreUtils.SIZE_IN_USD)));
+            if (sizeInUsd == 0) {
+                clearAutoCancelOrders(
+                    params.contracts.dataStore,
+                    params.contracts.eventEmitter,
+                    params.contracts.orderVault,
+                    positionKey,
+                    params.keeper
+                );
+            }
+        }
+
+        updateAutoCancelList(params.contracts.dataStore, params.key, params.order, false);
+
         OrderEventUtils.emitOrderExecuted(
             params.contracts.eventEmitter,
             params.key,
@@ -193,6 +213,7 @@ library OrderUtils {
             params.contracts.dataStore,
             params.contracts.eventEmitter,
             params.contracts.orderVault,
+            params.key,
             params.order.callbackContract(),
             params.order.executionFee(),
             params.startingGas,
@@ -236,7 +257,7 @@ library OrderUtils {
         uint256 startingGas,
         string memory reason,
         bytes memory reasonBytes
-    ) external {
+    ) public {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         startingGas -= gasleft() / 63;
 
@@ -256,6 +277,8 @@ library OrderUtils {
             }
         }
 
+        updateAutoCancelList(dataStore, key, order, false);
+
         OrderEventUtils.emitOrderCancelled(
             eventEmitter,
             key,
@@ -271,6 +294,7 @@ library OrderUtils {
             dataStore,
             eventEmitter,
             orderVault,
+            key,
             order.callbackContract(),
             order.executionFee(),
             startingGas,
@@ -328,11 +352,49 @@ library OrderUtils {
             dataStore,
             eventEmitter,
             orderVault,
+            key,
             order.callbackContract(),
             executionFee,
             startingGas,
             keeper,
             order.receiver()
         );
+    }
+
+    function clearAutoCancelOrders(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        OrderVault orderVault,
+        bytes32 positionKey,
+        address keeper
+    ) internal {
+        bytes32[] memory orderKeys = AutoCancelUtils.getAutoCancelOrderKeys(dataStore, positionKey);
+
+        for (uint256 i; i < orderKeys.length; i++) {
+            cancelOrder(
+                dataStore,
+                eventEmitter,
+                orderVault,
+                orderKeys[i],
+                keeper, // keeper
+                gasleft(), // startingGas
+                "AUTO_CANCEL", // reason
+                "" // reasonBytes
+            );
+        }
+    }
+
+    function updateAutoCancelList(DataStore dataStore, bytes32 orderKey, Order.Props memory order, bool shouldAdd) internal {
+        if (!BaseOrderUtils.isDecreaseOrder(order.orderType())) {
+            return;
+        }
+
+        bytes32 positionKey = BaseOrderUtils.getPositionKey(order);
+
+        if (shouldAdd) {
+            AutoCancelUtils.addAutoCancelOrderKey(dataStore, positionKey, orderKey);
+        } else {
+            AutoCancelUtils.removeAutoCancelOrderKey(dataStore, positionKey, orderKey);
+        }
     }
 }

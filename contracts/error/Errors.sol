@@ -12,6 +12,9 @@ library Errors {
     error InvalidSizeDeltaForAdl(uint256 sizeDeltaUsd, uint256 positionSizeInUsd);
     error AdlNotEnabled();
 
+    // AutoCancelUtils errors
+    error MaxAutoCancelOrdersExceeded(uint256 count, uint256 maxAutoCancelOrders);
+
     // Bank errors
     error SelfTransferNotSupported(address receiver);
     error InvalidNativeTokenSender(address msgSender);

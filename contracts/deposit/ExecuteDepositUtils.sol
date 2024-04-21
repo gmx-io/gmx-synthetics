@@ -88,6 +88,7 @@ library ExecuteDepositUtils {
         uint256 receivedMarketTokens;
         int256 priceImpactUsd;
         uint256 marketTokensSupply;
+        EventUtils.EventLogData callbackEventData;
     }
 
     address public constant RECEIVER_FOR_FIRST_DEPOSIT = address(1);
@@ -251,15 +252,15 @@ library ExecuteDepositUtils {
             cache.marketTokensSupply
         );
 
-        EventUtils.EventLogData memory eventData;
-        eventData.uintItems.initItems(1);
-        eventData.uintItems.setItem(0, "receivedMarketTokens", cache.receivedMarketTokens);
-        CallbackUtils.afterDepositExecution(params.key, deposit, eventData);
+        cache.callbackEventData.uintItems.initItems(1);
+        cache.callbackEventData.uintItems.setItem(0, "receivedMarketTokens", cache.receivedMarketTokens);
+        CallbackUtils.afterDepositExecution(params.key, deposit, cache.callbackEventData);
 
         GasUtils.payExecutionFee(
             params.dataStore,
             params.eventEmitter,
             params.depositVault,
+            params.key,
             deposit.callbackContract(),
             deposit.executionFee(),
             params.startingGas,

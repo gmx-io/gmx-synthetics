@@ -232,17 +232,6 @@ library PositionUtils {
         return (cache.positionPnlUsd, cache.uncappedPositionPnlUsd, cache.sizeDeltaInTokens);
     }
 
-    // @dev get the key for a position
-    // @param account the position's account
-    // @param market the position's market
-    // @param collateralToken the position's collateralToken
-    // @param isLong whether the position is long or short
-    // @return the position key
-    function getPositionKey(address account, address market, address collateralToken, bool isLong) internal pure returns (bytes32) {
-        bytes32 key = keccak256(abi.encode(account, market, collateralToken, isLong));
-        return key;
-    }
-
     // @dev validate that a position is not empty
     // @param position the position values
     function validateNonEmptyPosition(Position.Props memory position) internal pure {

@@ -29,7 +29,7 @@ library LiquidationUtils {
         address collateralToken,
         bool isLong
     ) external returns (bytes32) {
-        bytes32 positionKey = PositionUtils.getPositionKey(account, market, collateralToken, isLong);
+        bytes32 positionKey = Position.getPositionKey(account, market, collateralToken, isLong);
         Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
 
         Order.Addresses memory addresses = Order.Addresses(
@@ -76,7 +76,8 @@ library LiquidationUtils {
         Order.Flags memory flags = Order.Flags(
             position.isLong(), // isLong
             true, // shouldUnwrapNativeToken
-            false // isFrozen
+            false, // isFrozen
+            false // autoCancel
         );
 
         Order.Props memory order = Order.Props(

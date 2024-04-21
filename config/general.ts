@@ -8,6 +8,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       feeReceiver: ethers.constants.AddressZero,
       holdingAddress: ethers.constants.AddressZero,
       maxUiFeeFactor: decimalToFloat(5, 5), // 0.005%
+      maxAutoCancelOrders: 10,
       minHandleExecutionErrorGas: 1_200_000,
       minHandleExecutionErrorGasToForward: 1_000_000,
       minAdditionalGasForExecution: 1_000_000,
@@ -51,6 +52,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     feeReceiver: "0x43ce1d475e06c65dd879f4ec644b8e0e10ff2b6d",
     holdingAddress: "0x3f59203ea1c66527422998b54287e1efcacbe2c5",
     maxUiFeeFactor: percentageToFloat("0.05%"),
+    maxAutoCancelOrders: 10,
     minHandleExecutionErrorGas: 1_200_000,
     minHandleExecutionErrorGasToForward: 1_000_000, // measured gas required for an order cancellation: ~600,000
     minAdditionalGasForExecution: 1_000_000,
