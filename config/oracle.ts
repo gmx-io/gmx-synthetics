@@ -7,7 +7,7 @@ type OracleRealPriceFeed = {
   address: string;
   decimals: number;
   heartbeatDuration: number;
-  stablePrice?: number;
+  stablePrice?: BigNumberish;
   deploy?: never;
   initPrice?: never;
 };
@@ -16,7 +16,7 @@ type OracleTestPriceFeed = {
   address?: never;
   decimals: number;
   heartbeatDuration: number;
-  stablePrice?: number;
+  stablePrice?: BigNumberish;
   deploy: true;
   initPrice: string;
 };
@@ -29,6 +29,7 @@ export type OracleConfig = {
   minOracleSigners: number;
   minOracleBlockConfirmations: number;
   maxOraclePriceAge: number;
+  maxOracleTimestampRange: number;
   maxRefPriceDeviationFactor: BigNumberish;
   tokens?: {
     [tokenSymbol: string]: {
@@ -90,6 +91,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       minOracleBlockConfirmations: 255,
       minOracleSigners: 1,
+      dataStreamFeedVerifier: "0x478Aa2aC9F6D65F84e09D9185d126c3a17c2a93C",
 
       // price feeds https://docs.chain.link/data-feeds/price-feeds/addresses/?network=arbitrum#Arbitrum%20Mainnet
       tokens: {
@@ -230,9 +232,11 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     avalanche: {
       signers: ["0x7f2CA7713AACD279f7753F804163189E4831c1EE"],
       maxOraclePriceAge: 5 * 60,
+      maxOracleTimestampRange: 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       minOracleBlockConfirmations: 255,
       minOracleSigners: 1,
+      dataStreamFeedVerifier: "0x79BAa65505C6682F16F9b2C7F8afEBb1821BE3f6",
 
       // price feeds https://docs.chain.link/data-feeds/price-feeds/addresses/?network=avalanche#Avalanche%20Mainnet
       tokens: {
@@ -303,9 +307,11 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     arbitrumSepolia: {
       signers: ["0xb38302e27bAe8932536A84ab362c3d1013420Cb4"],
       maxOraclePriceAge: 5 * 60,
+      maxOracleTimestampRange: 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       minOracleBlockConfirmations: 255,
       minOracleSigners: 1,
+      dataStreamFeedVerifier: "0x2ff010DEbC1297f19579B4246cad07bd24F2488A",
 
       // price feeds https://docs.chain.link/data-feeds/price-feeds/addresses?network=arbitrum&page=1
       tokens: {
@@ -331,6 +337,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     arbitrumGoerli: {
       signers: ["0xFb11f15f206bdA02c224EDC744b0E50E46137046", "0x23247a1A80D01b9482E9d734d2EB780a3b5c8E6c"],
       maxOraclePriceAge: 5 * 60,
+      maxOracleTimestampRange: 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       minOracleBlockConfirmations: 255,
       minOracleSigners: 1,
@@ -364,9 +371,11 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     avalancheFuji: {
       signers: ["0xFb11f15f206bdA02c224EDC744b0E50E46137046", "0x23247a1A80D01b9482E9d734d2EB780a3b5c8E6c"],
       maxOraclePriceAge: 5 * 60,
+      maxOracleTimestampRange: 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       minOracleBlockConfirmations: 255,
       minOracleSigners: 1,
+      dataStreamFeedVerifier: "0x2bf612C65f5a4d388E687948bb2CF842FFb8aBB3",
 
       // price feeds https://docs.chain.link/data-feeds/price-feeds/addresses?network=avalanche#Avalanche%20Testnet
       tokens: {

@@ -14,6 +14,9 @@ const func = createDeployFunction({
       const dataStreamFeedVerifier = await get("MockDataStreamVerifier");
       dataStreamFeedVerifierAddress = dataStreamFeedVerifier.address;
     }
+    if (!dataStreamFeedVerifierAddress) {
+      throw new Error("dataStreamFeedVerifierAddress is not defined");
+    }
     return constructorContracts
       .map((dependencyName) => dependencyContracts[dependencyName].address)
       .concat(dataStreamFeedVerifierAddress);
