@@ -44,6 +44,18 @@ library ShiftUtils {
         uint256 startingGas;
     }
 
+    struct ExecuteShiftCache {
+        Withdrawal.Props withdrawal;
+        bytes32 withdrawalKey;
+        ExecuteWithdrawalUtils.ExecuteWithdrawalParams executeWithdrawalParams;
+        Market.Props depositMarket;
+        uint256 initialLongTokenAmount;
+        uint256 initialShortTokenAmount;
+        Deposit.Props deposit;
+        bytes32 depositKey;
+        ExecuteDepositUtils.ExecuteDepositParams executeDepositParams;
+    }
+
     function createShift(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -125,7 +137,8 @@ library ShiftUtils {
             revert Errors.EmptyShiftAmount();
         }
 
-        Withdrawal.Props memory withdrawal = Withdrawal.Props(
+        ExecuteShiftCache memory cache;
+        cache.withdrawal = Withdrawal.Props(
             Withdrawal.Addresses(
                 shift.account(),
                 address(params.shiftVault), // receiver
@@ -149,49 +162,49 @@ library ShiftUtils {
             )
         );
 
-        bytes32 withdrawalKey = NonceUtils.getNextKey(params.dataStore);
+        cache.withdrawalKey = NonceUtils.getNextKey(params.dataStore);
         params.dataStore.addBytes32(
             Keys.WITHDRAWAL_LIST,
-            withdrawalKey
+            cache.withdrawalKey
         );
 
-        ExecuteWithdrawalUtils.ExecuteWithdrawalParams memory executeWithdrawalParams = ExecuteWithdrawalUtils.ExecuteWithdrawalParams(
+        cache.executeWithdrawalParams = ExecuteWithdrawalUtils.ExecuteWithdrawalParams(
             params.dataStore,
             params.eventEmitter,
             WithdrawalVault(payable(params.shiftVault)),
             params.oracle,
-            withdrawalKey,
+            cache.withdrawalKey,
             params.keeper,
             params.startingGas
         );
 
         ExecuteWithdrawalUtils.executeWithdrawal(
-            executeWithdrawalParams,
-            withdrawal
+            cache.executeWithdrawalParams,
+            cache.withdrawal
         );
 
-        Market.Props memory depositMarket = MarketStoreUtils.get(params.dataStore, shift.toMarket());
+        cache.depositMarket = MarketStoreUtils.get(params.dataStore, shift.toMarket());
 
         // if the initialLongToken and initialShortToken are the same, only the initialLongTokenAmount would
         // be non-zero, the initialShortTokenAmount would be zero
-        uint256 initialLongTokenAmount = params.shiftVault.recordTransferIn(depositMarket.longToken);
-        uint256 initialShortTokenAmount = params.shiftVault.recordTransferIn(depositMarket.shortToken);
+        cache.initialLongTokenAmount = params.shiftVault.recordTransferIn(cache.depositMarket.longToken);
+        cache.initialShortTokenAmount = params.shiftVault.recordTransferIn(cache.depositMarket.shortToken);
 
-        Deposit.Props memory deposit = Deposit.Props(
+        cache.deposit = Deposit.Props(
             Deposit.Addresses(
                 shift.account(),
                 shift.receiver(),
                 address(0), // callbackContract
                 shift.uiFeeReceiver(), // uiFeeReceiver
                 shift.toMarket(), // market
-                depositMarket.longToken, // initialLongToken
-                depositMarket.shortToken, // initialShortToken
+                cache.depositMarket.longToken, // initialLongToken
+                cache.depositMarket.shortToken, // initialShortToken
                 new address[](0), // longTokenSwapPath
                 new address[](0) // shortTokenSwapPath
             ),
             Deposit.Numbers(
-                initialLongTokenAmount,
-                initialShortTokenAmount,
+                cache.initialLongTokenAmount,
+                cache.initialShortTokenAmount,
                 shift.minMarketTokens(),
                 0, // updatedAtBlock
                 shift.updatedAtTime(),
@@ -203,31 +216,34 @@ library ShiftUtils {
             )
         );
 
-        bytes32 depositKey = NonceUtils.getNextKey(params.dataStore);
+        cache.depositKey = NonceUtils.getNextKey(params.dataStore);
         params.dataStore.addBytes32(
             Keys.DEPOSIT_LIST,
-            depositKey
+            cache.depositKey
         );
 
-        ExecuteDepositUtils.ExecuteDepositParams memory executeDepositParams = ExecuteDepositUtils.ExecuteDepositParams(
+        cache.executeDepositParams = ExecuteDepositUtils.ExecuteDepositParams(
             params.dataStore,
             params.eventEmitter,
             DepositVault(payable(params.shiftVault)),
             params.oracle,
-            depositKey,
+            cache.depositKey,
             params.keeper,
             params.startingGas
         );
 
-        ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);
+        ExecuteDepositUtils.executeDeposit(
+            cache.executeDepositParams,
+            cache.deposit
+        );
 
         GasUtils.payExecutionFee(
             params.dataStore,
             params.eventEmitter,
             params.shiftVault,
             params.key,
-            deposit.callbackContract(),
-            deposit.executionFee(),
+            shift.callbackContract(),
+            shift.executionFee(),
             params.startingGas,
             params.keeper,
             shift.receiver()

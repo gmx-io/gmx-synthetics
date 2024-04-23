@@ -72,9 +72,6 @@ export const EXCLUDED_CONFIG_KEYS = {
   UI_WITHDRAWAL_FEE_TYPE: true,
   USER_INITIATED_CANCEL: true,
   WITHDRAWAL_FEE_TYPE: true,
-  // exclude the WITHDRAWAL_GAS_LIMIT key because it is the hashed version
-  // of the key that needs to be set instead
-  WITHDRAWAL_GAS_LIMIT: true,
   WITHDRAWAL_LIST: true,
   WNT: true,
 };
