@@ -182,20 +182,6 @@ library OrderUtils {
         }
         MarketUtils.validateMarketTokenBalance(params.contracts.dataStore, params.swapPathMarkets);
 
-        if (BaseOrderUtils.isDecreaseOrder(params.order.orderType())) {
-            bytes32 positionKey = BaseOrderUtils.getPositionKey(params.order);
-            uint256 sizeInUsd = params.contracts.dataStore.getUint(keccak256(abi.encode(positionKey, PositionStoreUtils.SIZE_IN_USD)));
-            if (sizeInUsd == 0) {
-                clearAutoCancelOrders(
-                    params.contracts.dataStore,
-                    params.contracts.eventEmitter,
-                    params.contracts.orderVault,
-                    positionKey,
-                    params.keeper
-                );
-            }
-        }
-
         updateAutoCancelList(params.contracts.dataStore, params.key, params.order, false);
 
         OrderEventUtils.emitOrderExecuted(
@@ -220,6 +206,27 @@ library OrderUtils {
             params.keeper,
             params.order.receiver()
         );
+
+        // clearAutoCancelOrders should be called after the main execution fee
+        // is called
+        // this is because clearAutoCancelOrders loops through each order for
+        // the associated position and calls cancelOrder, which pays the keeper
+        // based on the gas usage for each cancel order
+        if (BaseOrderUtils.isDecreaseOrder(params.order.orderType())) {
+            bytes32 positionKey = BaseOrderUtils.getPositionKey(params.order);
+            uint256 sizeInUsd = params.contracts.dataStore.getUint(
+                keccak256(abi.encode(positionKey, PositionStoreUtils.SIZE_IN_USD))
+            );
+            if (sizeInUsd == 0) {
+                clearAutoCancelOrders(
+                    params.contracts.dataStore,
+                    params.contracts.eventEmitter,
+                    params.contracts.orderVault,
+                    positionKey,
+                    params.keeper
+                );
+            }
+        }
     }
 
     // @dev process an order execution
