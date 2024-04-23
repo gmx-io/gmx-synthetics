@@ -168,6 +168,7 @@ library WithdrawalUtils {
         startingGas -= gasleft() / 63;
 
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
+
         if (withdrawal.account() == address(0)) {
             revert Errors.EmptyWithdrawal();
         }

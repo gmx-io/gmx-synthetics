@@ -73,6 +73,11 @@ library Keys {
     // @dev key for the account withdrawal list
     bytes32 public constant ACCOUNT_WITHDRAWAL_LIST = keccak256(abi.encode("ACCOUNT_WITHDRAWAL_LIST"));
 
+    // @dev key for the shift list
+    bytes32 public constant SHIFT_LIST = keccak256(abi.encode("SHIFT_LIST"));
+    // @dev key for the account shift list
+    bytes32 public constant ACCOUNT_SHIFT_LIST = keccak256(abi.encode("ACCOUNT_SHIFT_LIST"));
+
     // @dev key for the position list
     bytes32 public constant POSITION_LIST = keccak256(abi.encode("POSITION_LIST"));
     // @dev key for the account position list
@@ -175,6 +180,8 @@ library Keys {
     bytes32 public constant DEPOSIT_GAS_LIMIT = keccak256(abi.encode("DEPOSIT_GAS_LIMIT"));
     // @dev key for the estimated gas limit for withdrawals
     bytes32 public constant WITHDRAWAL_GAS_LIMIT = keccak256(abi.encode("WITHDRAWAL_GAS_LIMIT"));
+    // @dev key for the estimated gas limit for shifts
+    bytes32 public constant SHIFT_GAS_LIMIT = keccak256(abi.encode("SHIFT_GAS_LIMIT"));
     // @dev key for the estimated gas limit for single swaps
     bytes32 public constant SINGLE_SWAP_GAS_LIMIT = keccak256(abi.encode("SINGLE_SWAP_GAS_LIMIT"));
     // @dev key for the estimated gas limit for increase orders
@@ -362,6 +369,12 @@ library Keys {
         return keccak256(abi.encode(ACCOUNT_WITHDRAWAL_LIST, account));
     }
 
+    // @dev key for the account shift list
+    // @param account the account for the list
+    function accountShiftListKey(address account) internal pure returns (bytes32) {
+        return keccak256(abi.encode(ACCOUNT_SHIFT_LIST, account));
+    }
+
     // @dev key for the account position list
     // @param account the account for the list
     function accountPositionListKey(address account) internal pure returns (bytes32) {
@@ -422,9 +435,13 @@ library Keys {
     // @dev key for withdrawal gas limit
     // @return key for withdrawal gas limit
     function withdrawalGasLimitKey() internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            WITHDRAWAL_GAS_LIMIT
-        ));
+        return WITHDRAWAL_GAS_LIMIT;
+    }
+
+    // @dev key for shift gas limit
+    // @return key for shift gas limit
+    function shiftGasLimitKey() internal pure returns (bytes32) {
+        return WITHDRAWAL_GAS_LIMIT;
     }
 
     // @dev key for single swap gas limit

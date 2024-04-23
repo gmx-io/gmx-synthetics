@@ -481,7 +481,8 @@ describe("SubaccountRouter", () => {
       decimalToFloat(1200), // sizeDeltaUsd
       expandDecimals(5020, 12), // acceptablePrice
       expandDecimals(4850, 12), // triggerPrice
-      800 // minOutputAmount
+      800, // minOutputAmount
+      false // autoCancel
     );
 
     expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("588774003140128", "100000000000000"); // 0.000588774003140128 ETH
@@ -519,7 +520,8 @@ describe("SubaccountRouter", () => {
         decimalToFloat(1200), // sizeDeltaUsd
         expandDecimals(5020, 12), // acceptablePrice
         expandDecimals(4850, 12), // triggerPrice
-        800 // minOutputAmount
+        800, // minOutputAmount
+        false // autoCancel
       )
     ).to.be.revertedWithCustomError(errorsContract, "SubaccountNotAuthorized");
   });

@@ -11,6 +11,7 @@ import "../error/ErrorUtils.sol";
 import "./IOrderCallbackReceiver.sol";
 import "./IDepositCallbackReceiver.sol";
 import "./IWithdrawalCallbackReceiver.sol";
+import "./IShiftCallbackReceiver.sol";
 import "./IGasFeeCallbackReceiver.sol";
 
 // @title CallbackUtils
@@ -33,6 +34,7 @@ library CallbackUtils {
     using Address for address;
     using Deposit for Deposit.Props;
     using Withdrawal for Withdrawal.Props;
+    using Shift for Shift.Props;
     using Order for Order.Props;
 
     event AfterDepositExecutionError(bytes32 key, Deposit.Props deposit);
@@ -40,6 +42,9 @@ library CallbackUtils {
 
     event AfterWithdrawalExecutionError(bytes32 key, Withdrawal.Props withdrawal);
     event AfterWithdrawalCancellationError(bytes32 key, Withdrawal.Props withdrawal);
+
+    event AfterShiftExecutionError(bytes32 key, Shift.Props shift);
+    event AfterShiftCancellationError(bytes32 key, Shift.Props shift);
 
     event AfterOrderExecutionError(bytes32 key, Order.Props order);
     event AfterOrderCancellationError(bytes32 key, Order.Props order);
@@ -164,6 +169,39 @@ library CallbackUtils {
         ) {
         } catch {
             emit AfterWithdrawalCancellationError(key, withdrawal);
+        }
+    }
+
+    function afterShiftExecution(
+        bytes32 key,
+        Shift.Props memory shift,
+        EventUtils.EventLogData memory eventData
+    ) internal {
+        if (!isValidCallbackContract(shift.callbackContract())) { return; }
+
+        try IShiftCallbackReceiver(shift.callbackContract()).afterShiftExecution{ gas: shift.callbackGasLimit() }(
+            key,
+            shift,
+            eventData
+        ) {
+        } catch {
+            emit AfterShiftExecutionError(key, shift);
+        }
+    }
+    function afterShiftCancellation(
+        bytes32 key,
+        Shift.Props memory shift,
+        EventUtils.EventLogData memory eventData
+    ) internal {
+        if (!isValidCallbackContract(shift.callbackContract())) { return; }
+
+        try IShiftCallbackReceiver(shift.callbackContract()).afterShiftCancellation{ gas: shift.callbackGasLimit() }(
+            key,
+            shift,
+            eventData
+        ) {
+        } catch {
+            emit AfterShiftCancellationError(key, shift);
         }
     }
 

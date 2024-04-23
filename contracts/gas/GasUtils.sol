@@ -10,6 +10,7 @@ import "../utils/Precision.sol";
 
 import "../deposit/Deposit.sol";
 import "../withdrawal/Withdrawal.sol";
+import "../shift/Shift.sol";
 import "../order/Order.sol";
 import "../order/BaseOrderUtils.sol";
 
@@ -20,6 +21,7 @@ import "../bank/StrictBank.sol";
 library GasUtils {
     using Deposit for Deposit.Props;
     using Withdrawal for Withdrawal.Props;
+    using Shift for Shift.Props;
     using Order for Order.Props;
 
     using EventUtils for EventUtils.AddressItems;
@@ -108,6 +110,10 @@ library GasUtils {
         address keeper,
         address refundReceiver
     ) external {
+        if (executionFee == 0) {
+            return;
+        }
+
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         startingGas -= gasleft() / 63;
         uint256 gasUsed = startingGas - gasleft();
@@ -219,6 +225,13 @@ library GasUtils {
         uint256 gasForSwaps = swapCount * gasPerSwap;
 
         return dataStore.getUint(Keys.withdrawalGasLimitKey()) + withdrawal.callbackGasLimit() + gasForSwaps;
+    }
+
+    // @dev the estimated gas limit for shifts
+    // @param dataStore DataStore
+    // @param shift the shift to estimate the gas limit for
+    function estimateExecuteShiftGasLimit(DataStore dataStore, Shift.Props memory shift) internal view returns (uint256) {
+        return dataStore.getUint(Keys.shiftGasLimitKey()) + shift.callbackGasLimit();
     }
 
     // @dev the estimated gas limit for orders

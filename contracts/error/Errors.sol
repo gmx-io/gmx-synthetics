@@ -252,6 +252,13 @@ library Errors {
     error UsdDeltaExceedsLongOpenInterest(int256 usdDelta, uint256 longOpenInterest);
     error UsdDeltaExceedsShortOpenInterest(int256 usdDelta, uint256 shortOpenInterest);
 
+    // ShiftStoreUtils errors
+    error ShiftNotFound(bytes32 key);
+
+    // ShiftUtils errors
+    error EmptyShift();
+    error EmptyShiftAmount();
+
     // SwapPricingUtils errors
     error UsdDeltaExceedsPoolValue(int256 usdDelta, uint256 poolUsd);
 

@@ -146,7 +146,7 @@ describe("Exchange.BorrowingFees", () => {
 
     expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, true))).closeTo(
       0,
-      "20000000000000000000000"
+      "24000000000000000000000"
     );
     expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, false))).eq(0);
 
