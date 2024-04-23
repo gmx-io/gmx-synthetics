@@ -87,6 +87,7 @@ export const STABLE_PRICE = hashString("STABLE_PRICE");
 
 export const ORACLE_TYPE = hashString("ORACLE_TYPE");
 export const ORACLE_PROVIDER_FOR_TOKEN = hashString("ORACLE_PROVIDER_FOR_TOKEN");
+export const ORACLE_TIMESTAMP_ADJUSTMENT = hashString("ORACLE_TIMESTAMP_ADJUSTMENT");
 
 export const OPEN_INTEREST = hashString("OPEN_INTEREST");
 export const OPEN_INTEREST_IN_TOKENS = hashString("OPEN_INTEREST_IN_TOKENS");
@@ -309,6 +310,10 @@ export function stablePriceKey(token: string) {
 
 export function oracleTypeKey(token: string) {
   return hashData(["bytes32", "address"], [ORACLE_TYPE, token]);
+}
+
+export function oracleTimestampAdjustmentKey(provider: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [ORACLE_TIMESTAMP_ADJUSTMENT, provider, token]);
 }
 
 export function oracleProviderForTokenKey(token: string) {
