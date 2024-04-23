@@ -146,7 +146,7 @@ describe("Guardian.GasEstimation", () => {
     await grantRole(roleStore, wallet.address, "CONFIG_KEEPER");
 
     await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT, "0x", 100_000);
-    await config.connect(wallet).setUint(keys.withdrawalGasLimitKey(), "0x", 300_000);
+    await config.connect(wallet).setUint(keys.WITHDRAWAL_GAS_LIMIT, "0x", 300_000);
     await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, "0x", expandDecimals(15, 29)); // 1.5x
     await config.connect(wallet).setUint(keys.SINGLE_SWAP_GAS_LIMIT, "0x", 25_000);
 
