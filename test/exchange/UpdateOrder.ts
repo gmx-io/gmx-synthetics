@@ -68,7 +68,8 @@ describe("Exchange.UpdateOrder", () => {
           decimalToFloat(250 * 1000),
           expandDecimals(4950, 12),
           expandDecimals(5050, 12),
-          expandDecimals(52000, 6)
+          expandDecimals(52000, 6),
+          false
         )
     )
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
@@ -82,7 +83,8 @@ describe("Exchange.UpdateOrder", () => {
           decimalToFloat(250 * 1000),
           expandDecimals(4950, 12),
           expandDecimals(5050, 12),
-          expandDecimals(52000, 6)
+          expandDecimals(52000, 6),
+          false
         )
     )
       .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
@@ -98,7 +100,8 @@ describe("Exchange.UpdateOrder", () => {
           decimalToFloat(250 * 1000),
           expandDecimals(4950, 12),
           expandDecimals(5050, 12),
-          expandDecimals(52000, 6)
+          expandDecimals(52000, 6),
+          false
         )
     )
       .to.be.revertedWithCustomError(errorsContract, "OrderNotUpdatable")
@@ -156,7 +159,8 @@ describe("Exchange.UpdateOrder", () => {
         decimalToFloat(250 * 1000),
         expandDecimals(4950, 12),
         expandDecimals(5050, 12),
-        expandDecimals(52000, 6)
+        expandDecimals(52000, 6),
+        false
       );
     block = await provider.getBlock();
 
