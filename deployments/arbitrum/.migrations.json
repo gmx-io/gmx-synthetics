@@ -11,5 +11,7 @@
   "MarketFactory_3": 1688462379,
   "Multicall3": 1688462919,
   "SubaccountRouter_1": 1703667392,
-  "GovToken_1": 1704782558
+  "GovToken_1": 1704782558,
+  "GovTimelockController_1": 1713939759,
+  "ProtocolGovernor_1": 1713939766
 }
