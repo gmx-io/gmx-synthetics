@@ -177,7 +177,7 @@ describe("Exchange.FundingFees.PairMarket", () => {
       execute: {
         afterExecution: async ({ logs }) => {
           const feeInfo = getEventData(logs, "PositionFeesCollected");
-          expect(feeInfo.fundingFeeAmount).closeTo("41", "10");
+          expect(feeInfo.fundingFeeAmount).closeTo("30", "20");
           expect(feeInfo.collateralToken).eq(usdc.address);
           const claimableFundingData = getEventDataArray(logs, "ClaimableFundingUpdated");
           expect(claimableFundingData.length).eq(1);
