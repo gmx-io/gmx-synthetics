@@ -1,6 +1,7 @@
 import { ethers } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { getSyntheticTokenAddress } from "../utils/token";
+import { OracleProvider } from "./oracle";
 
 // synthetic token without corresponding token
 // address will be generated in runtime in hardhat.config.ts
@@ -15,6 +16,7 @@ type SyntheticTokenConfig = {
   transferGasLimit?: never;
   dataStreamFeedId?: string;
   dataStreamFeedDecimals?: number;
+  oracleProvider?: OracleProvider;
 };
 
 type RealTokenConfig = {
@@ -26,6 +28,7 @@ type RealTokenConfig = {
   deploy?: never;
   dataStreamFeedId?: string;
   dataStreamFeedDecimals?: number;
+  oracleProvider?: OracleProvider;
 };
 
 // test token to deploy in local and test networks
@@ -39,6 +42,7 @@ export type TestTokenConfig = {
   wrappedNative?: boolean;
   synthetic?: never;
   dataStreamFeedId?: string;
+  oracleProvider?: OracleProvider;
 };
 
 export type TokenConfig = SyntheticTokenConfig | RealTokenConfig | TestTokenConfig;
@@ -394,6 +398,7 @@ const config: {
     TEST: {
       synthetic: true,
       decimals: 18,
+      oracleProvider: "gmOracle",
     },
     WBTC: {
       decimals: 8,
@@ -457,16 +462,19 @@ const config: {
     ADA: {
       decimals: 18,
       synthetic: true,
+      oracleProvider: "gmOracle",
     },
     DOT: {
       decimals: 18,
       synthetic: true,
+      oracleProvider: "gmOracle",
     },
     MATIC: {
       decimals: 18,
       synthetic: true,
       dataStreamFeedId: "0x0003fd6ff25e1a28ddd55c85882279987be478a66a75abdf05a468beb5b8b467",
       dataStreamFeedDecimals: 18,
+      oracleProvider: "gmOracle",
     },
     UNI: {
       decimals: 18,
@@ -477,6 +485,7 @@ const config: {
     TRX: {
       decimals: 18,
       synthetic: true,
+      oracleProvider: "gmOracle",
     },
   },
   // token addresses are retrieved in runtime for hardhat and localhost networks

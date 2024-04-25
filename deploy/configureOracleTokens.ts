@@ -2,14 +2,18 @@ import { expandDecimals } from "../utils/math";
 import * as keys from "../utils/keys";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { setAddressIfDifferent, setBytes32IfDifferent, setUintIfDifferent } from "../utils/dataStore";
+import { OracleProvider } from "../config/oracle";
 
 const func = async ({ gmx, deployments, network }: HardhatRuntimeEnvironment) => {
   const oracleConfig = await gmx.getOracle();
   const tokens = await gmx.getTokens();
   const { get } = deployments;
 
-  const defaultOracleProvider =
-    network.name === "hardhat" ? await get("GmOracleProvider") : await get("ChainlinkDataStreamProvider");
+  const defaultOracleProvider: OracleProvider = network.name === "hardhat" ? "gmOracle" : "chainlinkDataStream";
+  const oracleProviders = {
+    gmOracle: (await get("GmOracleProvider")).address,
+    chainlinkDataStream: (await get("ChainlinkDataStreamProvider")).address,
+  };
 
   if (oracleConfig) {
     for (const tokenSymbol of Object.keys(oracleConfig.tokens)) {
@@ -22,10 +26,12 @@ const func = async ({ gmx, deployments, network }: HardhatRuntimeEnvironment) =>
       const oracleTypeKey = keys.oracleTypeKey(token.address);
       await setBytes32IfDifferent(oracleTypeKey, oracleType, "oracle type");
 
+      const key = token.oracleProvider || defaultOracleProvider;
+      const oracleProvider = oracleProviders[key];
       await setAddressIfDifferent(
         keys.oracleProviderForTokenKey(token.address),
-        defaultOracleProvider.address,
-        `oracle provider for ${tokenSymbol}`
+        oracleProvider,
+        `oracle provider ${key} for ${tokenSymbol}`
       );
 
       if (!priceFeed) {

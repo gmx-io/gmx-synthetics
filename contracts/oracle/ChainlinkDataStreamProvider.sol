@@ -7,6 +7,7 @@ import "../data/Keys.sol";
 import "./IOracleProvider.sol";
 import "./IChainlinkDataStreamVerifier.sol";
 import "../utils/Precision.sol";
+import "../chain/Chain.sol";
 
 contract ChainlinkDataStreamProvider is IOracleProvider {
 
@@ -55,7 +56,8 @@ contract ChainlinkDataStreamProvider is IOracleProvider {
             revert Errors.EmptyDataStreamFeedId(token);
         }
 
-        bytes memory verifierResponse = verifier.verify(data, "");
+        bytes memory payloadParameter = _getPayloadParameter();
+        bytes memory verifierResponse = verifier.verify(data, payloadParameter);
 
         Report memory report = abi.decode(verifierResponse, (Report));
 
@@ -92,5 +94,20 @@ contract ChainlinkDataStreamProvider is IOracleProvider {
         }
 
         return multiplier;
+    }
+
+    function _getPayloadParameter() internal view returns (bytes memory) {
+        // LINK token address
+        address feeToken;
+
+        if (block.chainid == 43113) {
+            feeToken = 0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846;
+        } else if (block.chainid == 31337) {
+            feeToken = 0x99bbA657f2BbC93c02D617f8bA121cB8Fc104Acf;
+        } else {
+            revert("unsupported chain id");
+        }
+
+        return abi.encode(feeToken);
     }
 }

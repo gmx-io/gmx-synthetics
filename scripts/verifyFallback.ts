@@ -75,6 +75,11 @@ async function main() {
     const { address, args } = deployment;
     const argStr = args.map((arg) => encodeArg(arg)).join(" ");
 
+    if (process.env.CONTRACT && process.env.CONTRACT !== name) {
+      console.log("skip %s", name);
+      continue;
+    }
+
     try {
       let isContractVerified = cache[address];
       if (!isContractVerified) {
