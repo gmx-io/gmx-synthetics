@@ -370,11 +370,11 @@ const config: {
 
       ...singleTokenMarketConfig,
 
-      reserveFactorLongs: percentageToFloat("55%"),
-      reserveFactorShorts: percentageToFloat("55%"),
+      reserveFactorLongs: percentageToFloat("50%"),
+      reserveFactorShorts: percentageToFloat("50%"),
 
-      openInterestReserveFactorLongs: percentageToFloat("50%"),
-      openInterestReserveFactorShorts: percentageToFloat("50%"),
+      openInterestReserveFactorLongs: percentageToFloat("45%"),
+      openInterestReserveFactorShorts: percentageToFloat("45%"),
 
       maxLongTokenPoolAmount: expandDecimals(1000, 8),
       maxShortTokenPoolAmount: expandDecimals(1000, 8),
@@ -399,9 +399,9 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      // factor in open interest reserve factor 35%
-      borrowingFactorForLongs: decimalToFloat(450, 10), // 4.50-8, 50% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(450, 10), // 4.50-8, 50% at 100% utilisation
+      // factor in open interest reserve factor 45%
+      borrowingFactorForLongs: decimalToFloat(353, 10), // 3.53-8, 50% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(353, 10), // 3.53-8, 50% at 100% utilisation
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
