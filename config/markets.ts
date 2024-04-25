@@ -370,11 +370,11 @@ const config: {
 
       ...singleTokenMarketConfig,
 
-      reserveFactorLongs: percentageToFloat("44%"),
-      reserveFactorShorts: percentageToFloat("44%"),
+      reserveFactorLongs: percentageToFloat("55%"),
+      reserveFactorShorts: percentageToFloat("55%"),
 
-      openInterestReserveFactorLongs: percentageToFloat("38.5%"),
-      openInterestReserveFactorShorts: percentageToFloat("38.5%"),
+      openInterestReserveFactorLongs: percentageToFloat("50%"),
+      openInterestReserveFactorShorts: percentageToFloat("50%"),
 
       maxLongTokenPoolAmount: expandDecimals(1000, 8),
       maxShortTokenPoolAmount: expandDecimals(1000, 8),
