@@ -27,6 +27,7 @@ const func = createDeployFunction({
     "MarketStoreUtils",
     "OrderStoreUtils",
     "ReferralUtils",
+    "ShiftStoreUtils",
     "WithdrawalStoreUtils",
   ],
   afterDeploy: async ({ deployedContract }) => {

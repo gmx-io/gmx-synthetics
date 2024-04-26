@@ -4,11 +4,12 @@ const func = createDeployFunction({
   contractName: "ShiftUtils",
   libraryNames: [
     "GasUtils",
-    "FeeUtils",
     "MarketStoreUtils",
     "MarketEventUtils",
     "ShiftStoreUtils",
     "ShiftEventUtils",
+    "ExecuteDepositUtils",
+    "ExecuteWithdrawalUtils",
   ],
 });
 

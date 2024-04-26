@@ -88,7 +88,7 @@ library SwapPricingUtils {
     // @param params GetPriceImpactUsdParams
     //
     // @return the price impact in USD
-    function getPriceImpactUsd(GetPriceImpactUsdParams memory params) internal view returns (int256) {
+    function getPriceImpactUsd(GetPriceImpactUsdParams memory params) external view returns (int256) {
         PoolParams memory poolParams = getNextPoolAmountsUsd(params);
 
         int256 priceImpactUsd = _getPriceImpactUsd(params.dataStore, params.market, poolParams);
