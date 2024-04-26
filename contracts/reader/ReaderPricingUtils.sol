@@ -92,7 +92,8 @@ library ReaderPricingUtils {
             market.marketToken,
             amountIn,
             priceImpactUsd > 0, // forPositiveImpact
-            uiFeeReceiver
+            uiFeeReceiver,
+            false // forShift
         );
 
         int256 impactAmount;

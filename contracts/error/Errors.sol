@@ -19,7 +19,10 @@ library Errors {
     error SelfTransferNotSupported(address receiver);
     error InvalidNativeTokenSender(address msgSender);
 
-    // BaseRouter
+    // BaseHandler errors
+    error RequestNotYetCancellable(uint256 requestAge, uint256 requestExpirationAge, string requestType);
+
+    // BaseRouter errors
     error CouldNotSendNativeToken(address receiver, uint256 amount);
 
     // CallbackUtils errors
@@ -55,9 +58,6 @@ library Errors {
     error InvalidSwapOutputToken(address outputToken, address expectedOutputToken);
     error InvalidReceiverForFirstDeposit(address receiver, address expectedReceiver);
     error InvalidMinMarketTokensForFirstDeposit(uint256 minMarketTokens, uint256 expectedMinMarketTokens);
-
-    // ExchangeUtils errors
-    error RequestNotYetCancellable(uint256 requestAge, uint256 requestExpirationAge, string requestType);
 
     // ExternalHandler errors
     error ExternalCallFailed(bytes data);
@@ -258,6 +258,8 @@ library Errors {
     // ShiftUtils errors
     error EmptyShift();
     error EmptyShiftAmount();
+    error LongTokensAreNotEqual(address fromMarketLongToken, address toMarketLongToken);
+    error ShortTokensAreNotEqual(address fromMarketLongToken, address toMarketLongToken);
 
     // SwapPricingUtils errors
     error UsdDeltaExceedsPoolValue(int256 usdDelta, uint256 poolUsd);

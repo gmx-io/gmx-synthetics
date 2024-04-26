@@ -62,7 +62,8 @@ library WithdrawalEventUtils {
     function emitWithdrawalExecuted(
         EventEmitter eventEmitter,
         bytes32 key,
-        address account
+        address account,
+        bool forShift
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -71,6 +72,9 @@ library WithdrawalEventUtils {
 
         eventData.addressItems.initItems(1);
         eventData.addressItems.setItem(0, "account", account);
+
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "forShift", forShift);
 
         eventEmitter.emitEventLog2(
             "WithdrawalExecuted",

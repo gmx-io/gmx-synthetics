@@ -67,7 +67,8 @@ library DepositEventUtils {
         address account,
         uint256 longTokenAmount,
         uint256 shortTokenAmount,
-        uint256 receivedMarketTokens
+        uint256 receivedMarketTokens,
+        bool forShift
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -81,6 +82,9 @@ library DepositEventUtils {
         eventData.uintItems.setItem(0, "longTokenAmount", longTokenAmount);
         eventData.uintItems.setItem(1, "shortTokenAmount", shortTokenAmount);
         eventData.uintItems.setItem(2, "receivedMarketTokens", receivedMarketTokens);
+
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "forShift", forShift);
 
         eventEmitter.emitEventLog2(
             "DepositExecuted",

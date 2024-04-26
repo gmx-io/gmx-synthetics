@@ -42,6 +42,7 @@ library ReaderDepositUtils {
         uint256 amount;
         int256 priceImpactUsd;
         address uiFeeReceiver;
+        bool forShift;
     }
 
     function getDepositAmountOut(
@@ -50,7 +51,8 @@ library ReaderDepositUtils {
         MarketUtils.MarketPrices memory prices,
         uint256 longTokenAmount,
         uint256 shortTokenAmount,
-        address uiFeeReceiver
+        address uiFeeReceiver,
+        bool forShift
     ) external view returns (uint256) {
         uint256 longTokenUsd = longTokenAmount * prices.longTokenPrice.midPrice();
         uint256 shortTokenUsd = shortTokenAmount * prices.shortTokenPrice.midPrice();
@@ -80,7 +82,8 @@ library ReaderDepositUtils {
                 prices.shortTokenPrice,
                 longTokenAmount,
                 Precision.mulDiv(priceImpactUsd, longTokenUsd, longTokenUsd + shortTokenUsd),
-                uiFeeReceiver
+                uiFeeReceiver,
+                forShift
             )
         );
 
@@ -95,7 +98,8 @@ library ReaderDepositUtils {
                 prices.longTokenPrice,
                 shortTokenAmount,
                 Precision.mulDiv(priceImpactUsd, shortTokenUsd, longTokenUsd + shortTokenUsd),
-                uiFeeReceiver
+                uiFeeReceiver,
+                forShift
             )
         );
 
@@ -110,7 +114,8 @@ library ReaderDepositUtils {
             params.market.marketToken,
             params.amount,
             params.priceImpactUsd > 0, // forPositiveImpact
-            params.uiFeeReceiver // uiFeeReceiver
+            params.uiFeeReceiver, // uiFeeReceiver
+            params.forShift
         );
 
         uint256 mintAmount;

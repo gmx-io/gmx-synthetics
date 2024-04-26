@@ -243,7 +243,8 @@ library SwapUtils {
             _params.market.marketToken,
             _params.amountIn,
             cache.priceImpactUsd > 0, // forPositiveImpact
-            params.uiFeeReceiver
+            params.uiFeeReceiver,
+            false // forShift
         );
 
         FeeUtils.incrementClaimableFeeAmount(

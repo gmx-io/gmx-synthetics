@@ -8,6 +8,7 @@ const constructorContracts = [
   "EventEmitter",
   "DepositHandler",
   "WithdrawalHandler",
+  "ShiftHandler",
   "OrderHandler",
   "ExternalHandler",
 ];

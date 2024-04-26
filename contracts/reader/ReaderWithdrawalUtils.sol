@@ -57,7 +57,8 @@ library ReaderWithdrawalUtils {
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
         uint256 marketTokenAmount,
-        address uiFeeReceiver
+        address uiFeeReceiver,
+        bool forShift
     ) external view returns (uint256, uint256) {
         GetWithdrawalAmountOutCache memory cache;
 
@@ -99,7 +100,8 @@ library ReaderWithdrawalUtils {
             market.marketToken,
             cache.longTokenOutputAmount,
             false, // forPositiveImpact
-            uiFeeReceiver
+            uiFeeReceiver,
+            forShift
         );
 
         SwapPricingUtils.SwapFees memory shortTokenFees = SwapPricingUtils.getSwapFees(
@@ -107,7 +109,8 @@ library ReaderWithdrawalUtils {
             market.marketToken,
             cache.shortTokenOutputAmount,
             false, // forPositiveImpact
-            uiFeeReceiver
+            uiFeeReceiver,
+            forShift
         );
 
         return (

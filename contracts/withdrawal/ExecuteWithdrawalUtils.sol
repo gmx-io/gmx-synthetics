@@ -44,9 +44,16 @@ library ExecuteWithdrawalUtils {
         bytes32 key;
         address keeper;
         uint256 startingGas;
+        bool forShift;
     }
 
     struct ExecuteWithdrawalCache {
+        uint256 requestExpirationTime;
+        uint256 maxOracleTimestamp;
+        uint256 marketTokensBalance;
+    }
+
+    struct _ExecuteWithdrawalCache {
         uint256 longTokenOutputAmount;
         uint256 shortTokenOutputAmount;
         SwapPricingUtils.SwapFees longTokenFees;
@@ -94,15 +101,28 @@ library ExecuteWithdrawalUtils {
             );
         }
 
+        ExecuteWithdrawalCache memory cache;
+
+        cache.requestExpirationTime = params.dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
+        cache.maxOracleTimestamp = params.oracle.maxTimestamp();
+
+        if (cache.maxOracleTimestamp > withdrawal.updatedAtTime() + cache.requestExpirationTime) {
+            revert Errors.OracleTimestampsAreLargerThanRequestExpirationTime(
+                cache.maxOracleTimestamp,
+                withdrawal.updatedAtTime(),
+                cache.requestExpirationTime
+            );
+        }
+
         MarketUtils.distributePositionImpactPool(
             params.dataStore,
             params.eventEmitter,
             withdrawal.market()
         );
 
-        uint256 marketTokensBalance = MarketToken(payable(withdrawal.market())).balanceOf(address(params.withdrawalVault));
-        if (marketTokensBalance < withdrawal.marketTokenAmount()) {
-            revert Errors.InsufficientMarketTokens(marketTokensBalance, withdrawal.marketTokenAmount());
+        cache.marketTokensBalance = MarketToken(payable(withdrawal.market())).balanceOf(address(params.withdrawalVault));
+        if (cache.marketTokensBalance < withdrawal.marketTokenAmount()) {
+            revert Errors.InsufficientMarketTokens(cache.marketTokensBalance, withdrawal.marketTokenAmount());
         }
 
         ExecuteWithdrawalResult memory result = _executeWithdrawal(params, withdrawal);
@@ -110,7 +130,8 @@ library ExecuteWithdrawalUtils {
         WithdrawalEventUtils.emitWithdrawalExecuted(
             params.eventEmitter,
             params.key,
-            withdrawal.account()
+            withdrawal.account(),
+            params.forShift
         );
 
         EventUtils.EventLogData memory eventData;
@@ -151,7 +172,7 @@ library ExecuteWithdrawalUtils {
             market
         );
 
-        ExecuteWithdrawalCache memory cache;
+        _ExecuteWithdrawalCache memory cache;
 
         (cache.longTokenOutputAmount, cache.shortTokenOutputAmount) = _getOutputAmounts(params, market, prices, withdrawal.marketTokenAmount());
 
@@ -160,7 +181,8 @@ library ExecuteWithdrawalUtils {
             market.marketToken,
             cache.longTokenOutputAmount,
             false, // forPositiveImpact
-            withdrawal.uiFeeReceiver()
+            withdrawal.uiFeeReceiver(),
+            params.forShift
         );
 
         FeeUtils.incrementClaimableFeeAmount(
@@ -187,7 +209,8 @@ library ExecuteWithdrawalUtils {
             market.marketToken,
             cache.shortTokenOutputAmount,
             false, // forPositiveImpact
-            withdrawal.uiFeeReceiver()
+            withdrawal.uiFeeReceiver(),
+            params.forShift
         );
 
         FeeUtils.incrementClaimableFeeAmount(

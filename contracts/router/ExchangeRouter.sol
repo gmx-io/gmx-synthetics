@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "../exchange/IDepositHandler.sol";
 import "../exchange/IWithdrawalHandler.sol";
+import "../exchange/IShiftHandler.sol";
 import "../exchange/IOrderHandler.sol";
 import "../external/IExternalHandler.sol";
 
@@ -54,9 +55,11 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
     using Deposit for Deposit.Props;
     using Withdrawal for Withdrawal.Props;
     using Order for Order.Props;
+    using Shift for Shift.Props;
 
     IDepositHandler public immutable depositHandler;
     IWithdrawalHandler public immutable withdrawalHandler;
+    IShiftHandler public immutable shiftHandler;
     IOrderHandler public immutable orderHandler;
     IExternalHandler public immutable externalHandler;
 
@@ -69,11 +72,13 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         EventEmitter _eventEmitter,
         IDepositHandler _depositHandler,
         IWithdrawalHandler _withdrawalHandler,
+        IShiftHandler _shiftHandler,
         IOrderHandler _orderHandler,
         IExternalHandler _externalHandler
     ) BaseRouter(_router, _roleStore, _dataStore, _eventEmitter) {
         depositHandler = _depositHandler;
         withdrawalHandler = _withdrawalHandler;
+        shiftHandler = _shiftHandler;
         orderHandler = _orderHandler;
         externalHandler = _externalHandler;
     }
@@ -137,13 +142,13 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         depositHandler.cancelDeposit(key);
     }
 
-    /**
-     * @dev Creates a new withdrawal with the given withdrawal parameters. The withdrawal is created by
-     * calling the `createWithdrawal()` function on the withdrawal handler contract.
-     *
-     * @param params The withdrawal parameters, as specified in the `WithdrawalUtils.CreateWithdrawalParams` struct
-     * @return The unique ID of the newly created withdrawal
-     */
+    function simulateExecuteDeposit(
+        bytes32 key,
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams
+    ) external payable nonReentrant {
+        depositHandler.simulateExecuteDeposit(key, simulatedOracleParams);
+    }
+
     function createWithdrawal(
         WithdrawalUtils.CreateWithdrawalParams calldata params
     ) external override payable nonReentrant returns (bytes32) {
@@ -162,6 +167,40 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         }
 
         withdrawalHandler.cancelWithdrawal(key);
+    }
+
+    function simulateExecuteWithdrawal(
+        bytes32 key,
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams
+    ) external payable nonReentrant {
+        withdrawalHandler.simulateExecuteWithdrawal(key, simulatedOracleParams);
+    }
+
+    function createShift(
+        ShiftUtils.CreateShiftParams calldata params
+    ) external override payable nonReentrant returns (bytes32) {
+        address account = msg.sender;
+
+        return shiftHandler.createShift(
+            account,
+            params
+        );
+    }
+
+    function cancelShift(bytes32 key) external override payable nonReentrant {
+        Shift.Props memory shift = ShiftStoreUtils.get(dataStore, key);
+        if (shift.account() != msg.sender) {
+            revert Errors.Unauthorized(msg.sender, "account for cancelShift");
+        }
+
+        shiftHandler.cancelShift(key);
+    }
+
+    function simulateExecuteShift(
+        bytes32 key,
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams
+    ) external payable nonReentrant {
+        shiftHandler.simulateExecuteShift(key, simulatedOracleParams);
     }
 
     /**
@@ -193,27 +232,6 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
             market,
             callbackContract
         );
-    }
-
-    function simulateExecuteDeposit(
-        bytes32 key,
-        OracleUtils.SimulatePricesParams memory simulatedOracleParams
-    ) external payable nonReentrant {
-        depositHandler.simulateExecuteDeposit(key, simulatedOracleParams);
-    }
-
-    function simulateExecuteWithdrawal(
-        bytes32 key,
-        OracleUtils.SimulatePricesParams memory simulatedOracleParams
-    ) external payable nonReentrant {
-        withdrawalHandler.simulateExecuteWithdrawal(key, simulatedOracleParams);
-    }
-
-    function simulateExecuteOrder(
-        bytes32 key,
-        OracleUtils.SimulatePricesParams memory simulatedOracleParams
-    ) external payable nonReentrant {
-        orderHandler.simulateExecuteOrder(key, simulatedOracleParams);
     }
 
     /**
@@ -273,6 +291,13 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         }
 
         orderHandler.cancelOrder(key);
+    }
+
+    function simulateExecuteOrder(
+        bytes32 key,
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams
+    ) external payable nonReentrant {
+        orderHandler.simulateExecuteOrder(key, simulatedOracleParams);
     }
 
     /**

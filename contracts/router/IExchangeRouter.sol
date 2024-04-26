@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "../exchange/IDepositHandler.sol";
 import "../exchange/IWithdrawalHandler.sol";
+import "../exchange/IShiftHandler.sol";
 import "../exchange/IOrderHandler.sol";
 
 interface IExchangeRouter {
@@ -18,6 +19,12 @@ interface IExchangeRouter {
     ) external payable returns (bytes32);
 
     function cancelWithdrawal(bytes32 key) external payable;
+
+    function createShift(
+        ShiftUtils.CreateShiftParams calldata params
+    ) external payable returns (bytes32);
+
+    function cancelShift(bytes32 key) external payable;
 
     function createOrder(
         IBaseOrderUtils.CreateOrderParams calldata params

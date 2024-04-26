@@ -3,8 +3,6 @@
 pragma solidity ^0.8.0;
 
 import "./BaseHandler.sol";
-import "./ExchangeUtils.sol";
-import "../feature/FeatureUtils.sol";
 
 import "../market/Market.sol";
 import "../market/MarketToken.sol";
@@ -61,8 +59,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
 
         FeatureUtils.validateFeature(_dataStore, Keys.cancelDepositFeatureDisabledKey(address(this)));
 
-        ExchangeUtils.validateRequestCancellation(
-            _dataStore,
+        validateRequestCancellation(
             deposit.updatedAtTime(),
             "Deposit"
         );
@@ -153,7 +150,8 @@ contract DepositHandler is IDepositHandler, BaseHandler {
             oracle,
             key,
             keeper,
-            startingGas
+            startingGas,
+            false // forShift
         );
 
         ExecuteDepositUtils.executeDeposit(params, deposit);

@@ -23,6 +23,14 @@ library ShiftUtils {
     using Withdrawal for Withdrawal.Props;
     using Shift for Shift.Props;
 
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
+
     struct CreateShiftParams {
         address receiver;
         address callbackContract;
@@ -84,6 +92,17 @@ library ShiftUtils {
         }
 
         params.executionFee = wntAmount;
+
+        Market.Props memory fromMarket = MarketUtils.getEnabledMarket(dataStore, params.fromMarket);
+        Market.Props memory toMarket = MarketUtils.getEnabledMarket(dataStore, params.toMarket);
+
+        if (fromMarket.longToken != toMarket.longToken) {
+            revert Errors.LongTokensAreNotEqual(fromMarket.longToken, toMarket.longToken);
+        }
+
+        if (fromMarket.shortToken != toMarket.shortToken) {
+            revert Errors.ShortTokensAreNotEqual(fromMarket.shortToken, toMarket.shortToken);
+        }
 
         MarketUtils.validateEnabledMarket(dataStore, params.fromMarket);
         MarketUtils.validateEnabledMarket(dataStore, params.toMarket);
@@ -175,7 +194,8 @@ library ShiftUtils {
             params.oracle,
             cache.withdrawalKey,
             params.keeper,
-            params.startingGas
+            params.startingGas,
+            true // forShift
         );
 
         ExecuteWithdrawalUtils.executeWithdrawal(
@@ -229,13 +249,26 @@ library ShiftUtils {
             params.oracle,
             cache.depositKey,
             params.keeper,
-            params.startingGas
+            params.startingGas,
+            true // forShift
         );
 
-        ExecuteDepositUtils.executeDeposit(
+        uint256 receivedMarketTokens = ExecuteDepositUtils.executeDeposit(
             cache.executeDepositParams,
             cache.deposit
         );
+
+        ShiftEventUtils.emitShiftExecuted(
+            params.eventEmitter,
+            params.key,
+            shift.account(),
+            receivedMarketTokens
+        );
+
+        EventUtils.EventLogData memory eventData;
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "receivedMarketTokens", receivedMarketTokens);
+        CallbackUtils.afterShiftExecution(params.key, shift, eventData);
 
         GasUtils.payExecutionFee(
             params.dataStore,

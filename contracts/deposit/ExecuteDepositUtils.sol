@@ -50,6 +50,7 @@ library ExecuteDepositUtils {
         bytes32 key;
         address keeper;
         uint256 startingGas;
+        bool forShift;
     }
 
     // @dev _ExecuteDepositParams struct used in executeDeposit to avoid stack
@@ -81,6 +82,10 @@ library ExecuteDepositUtils {
     }
 
     struct ExecuteDepositCache {
+        uint256 requestExpirationTime;
+        uint256 maxOracleTimestamp;
+        Market.Props market;
+        MarketUtils.MarketPrices prices;
         uint256 longTokenAmount;
         uint256 shortTokenAmount;
         uint256 longTokenUsd;
@@ -95,7 +100,7 @@ library ExecuteDepositUtils {
 
     // @dev executes a deposit
     // @param params ExecuteDepositParams
-    function executeDeposit(ExecuteDepositParams memory params, Deposit.Props memory deposit) external {
+    function executeDeposit(ExecuteDepositParams memory params, Deposit.Props memory deposit) external returns (uint256 receivedMarketTokens) {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
@@ -114,16 +119,27 @@ library ExecuteDepositUtils {
             );
         }
 
-        Market.Props memory market = MarketUtils.getEnabledMarket(params.dataStore, deposit.market());
+        cache.requestExpirationTime = params.dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
+        cache.maxOracleTimestamp = params.oracle.maxTimestamp();
 
-        _validateFirstDeposit(params, deposit, market);
+        if (cache.maxOracleTimestamp > deposit.updatedAtTime() + cache.requestExpirationTime) {
+            revert Errors.OracleTimestampsAreLargerThanRequestExpirationTime(
+                cache.maxOracleTimestamp,
+                deposit.updatedAtTime(),
+                cache.requestExpirationTime
+            );
+        }
 
-        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(params.oracle, market);
+        cache.market = MarketUtils.getEnabledMarket(params.dataStore, deposit.market());
+
+        _validateFirstDeposit(params, deposit, cache.market);
+
+        cache.prices = MarketUtils.getMarketPrices(params.oracle, cache.market);
 
         MarketUtils.distributePositionImpactPool(
             params.dataStore,
             params.eventEmitter,
-            market.marketToken
+            cache.market.marketToken
         );
 
         // deposits should improve the pool state but it should be checked if
@@ -134,8 +150,8 @@ library ExecuteDepositUtils {
         // minimum price for a market token
         MarketUtils.validateMaxPnl(
             params.dataStore,
-            market,
-            prices,
+            cache.market,
+            cache.prices,
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS
         );
@@ -145,8 +161,8 @@ library ExecuteDepositUtils {
             deposit.longTokenSwapPath(),
             deposit.initialLongToken(),
             deposit.initialLongTokenAmount(),
-            market.marketToken,
-            market.longToken,
+            cache.market.marketToken,
+            cache.market.longToken,
             deposit.uiFeeReceiver()
         );
 
@@ -155,8 +171,8 @@ library ExecuteDepositUtils {
             deposit.shortTokenSwapPath(),
             deposit.initialShortToken(),
             deposit.initialShortTokenAmount(),
-            market.marketToken,
-            market.shortToken,
+            cache.market.marketToken,
+            cache.market.shortToken,
             deposit.uiFeeReceiver()
         );
 
@@ -164,17 +180,17 @@ library ExecuteDepositUtils {
             revert Errors.EmptyDepositAmountsAfterSwap();
         }
 
-        cache.longTokenUsd = cache.longTokenAmount * prices.longTokenPrice.midPrice();
-        cache.shortTokenUsd = cache.shortTokenAmount * prices.shortTokenPrice.midPrice();
+        cache.longTokenUsd = cache.longTokenAmount * cache.prices.longTokenPrice.midPrice();
+        cache.shortTokenUsd = cache.shortTokenAmount * cache.prices.shortTokenPrice.midPrice();
 
         cache.priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(
             SwapPricingUtils.GetPriceImpactUsdParams(
                 params.dataStore,
-                market,
-                market.longToken,
-                market.shortToken,
-                prices.longTokenPrice.midPrice(),
-                prices.shortTokenPrice.midPrice(),
+                cache.market,
+                cache.market.longToken,
+                cache.market.shortToken,
+                cache.prices.longTokenPrice.midPrice(),
+                cache.prices.shortTokenPrice.midPrice(),
                 cache.longTokenUsd.toInt256(),
                 cache.shortTokenUsd.toInt256()
             )
@@ -182,14 +198,14 @@ library ExecuteDepositUtils {
 
         if (cache.longTokenAmount > 0) {
             _ExecuteDepositParams memory _params = _ExecuteDepositParams(
-                market,
+                cache.market,
                 deposit.account(),
                 deposit.receiver(),
                 deposit.uiFeeReceiver(),
-                market.longToken,
-                market.shortToken,
-                prices.longTokenPrice,
-                prices.shortTokenPrice,
+                cache.market.longToken,
+                cache.market.shortToken,
+                cache.prices.longTokenPrice,
+                cache.prices.shortTokenPrice,
                 cache.longTokenAmount,
                 Precision.mulDiv(cache.priceImpactUsd, cache.longTokenUsd, cache.longTokenUsd + cache.shortTokenUsd)
             );
@@ -199,14 +215,14 @@ library ExecuteDepositUtils {
 
         if (cache.shortTokenAmount > 0) {
             _ExecuteDepositParams memory _params = _ExecuteDepositParams(
-                market,
+                cache.market,
                 deposit.account(),
                 deposit.receiver(),
                 deposit.uiFeeReceiver(),
-                market.shortToken,
-                market.longToken,
-                prices.shortTokenPrice,
-                prices.longTokenPrice,
+                cache.market.shortToken,
+                cache.market.longToken,
+                cache.prices.shortTokenPrice,
+                cache.prices.longTokenPrice,
                 cache.shortTokenAmount,
                 Precision.mulDiv(cache.priceImpactUsd, cache.shortTokenUsd, cache.longTokenUsd + cache.shortTokenUsd)
             );
@@ -220,7 +236,7 @@ library ExecuteDepositUtils {
 
         // validate that internal state changes are correct before calling
         // external callbacks
-        MarketUtils.validateMarketTokenBalance(params.dataStore, market);
+        MarketUtils.validateMarketTokenBalance(params.dataStore, cache.market);
 
         DepositEventUtils.emitDepositExecuted(
             params.eventEmitter,
@@ -228,26 +244,27 @@ library ExecuteDepositUtils {
             deposit.account(),
             cache.longTokenAmount,
             cache.shortTokenAmount,
-            cache.receivedMarketTokens
+            cache.receivedMarketTokens,
+            params.forShift
         );
 
         MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(
             params.dataStore,
-            market,
-            prices.indexTokenPrice,
-            prices.longTokenPrice,
-            prices.shortTokenPrice,
+            cache.market,
+            cache.prices.indexTokenPrice,
+            cache.prices.longTokenPrice,
+            cache.prices.shortTokenPrice,
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
             true
         );
 
-        cache.marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
+        cache.marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(cache.market.marketToken)));
 
         MarketEventUtils.emitMarketPoolValueUpdated(
             params.eventEmitter,
             keccak256(abi.encode("DEPOSIT")),
             params.key,
-            market.marketToken,
+            cache.market.marketToken,
             poolValueInfo,
             cache.marketTokensSupply
         );
@@ -267,6 +284,8 @@ library ExecuteDepositUtils {
             params.keeper,
             deposit.receiver()
         );
+
+        return cache.receivedMarketTokens;
     }
 
     // @dev executes a deposit
@@ -280,7 +299,8 @@ library ExecuteDepositUtils {
             _params.market.marketToken,
             _params.amount,
             _params.priceImpactUsd > 0, // forPositiveImpact
-            _params.uiFeeReceiver
+            _params.uiFeeReceiver,
+            params.forShift
         );
 
         FeeUtils.incrementClaimableFeeAmount(

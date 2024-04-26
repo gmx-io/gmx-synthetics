@@ -54,7 +54,8 @@ library ShiftEventUtils {
     function emitShiftExecuted(
         EventEmitter eventEmitter,
         bytes32 key,
-        address account
+        address account,
+        uint256 receivedMarketTokens
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -63,6 +64,9 @@ library ShiftEventUtils {
 
         eventData.addressItems.initItems(1);
         eventData.addressItems.setItem(0, "account", account);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "receivedMarketTokens", receivedMarketTokens);
 
         eventEmitter.emitEventLog2(
             "ShiftExecuted",

@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.0;
 
+import "../feature/FeatureUtils.sol";
 import "../event/EventEmitter.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
@@ -24,6 +25,17 @@ contract BaseHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
         address wnt = dataStore.getAddress(Keys.WNT);
         if (msg.sender != wnt) {
             revert Errors.InvalidNativeTokenSender(msg.sender);
+        }
+    }
+
+    function validateRequestCancellation(
+        uint256 createdAtTime,
+        string memory requestType
+    ) internal view {
+        uint256 requestExpirationTime = dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
+        uint256 requestAge = Chain.currentTimestamp() - createdAtTime;
+        if (requestAge < requestExpirationTime) {
+            revert Errors.RequestNotYetCancellable(requestAge, requestExpirationTime, requestType);
         }
     }
 }

@@ -5,9 +5,6 @@ pragma solidity ^0.8.0;
 import "./BaseHandler.sol";
 import "../error/ErrorUtils.sol";
 
-import "./ExchangeUtils.sol";
-import "../feature/FeatureUtils.sol";
-
 import "../market/Market.sol";
 import "../market/MarketToken.sol";
 
@@ -64,8 +61,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
 
         FeatureUtils.validateFeature(_dataStore, Keys.cancelWithdrawalFeatureDisabledKey(address(this)));
 
-        ExchangeUtils.validateRequestCancellation(
-            _dataStore,
+        validateRequestCancellation(
             withdrawal.updatedAtTime(),
             "Withdrawal"
         );
@@ -157,7 +153,8 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
             oracle,
             key,
             keeper,
-            startingGas
+            startingGas,
+            false // forShift
         );
 
         ExecuteWithdrawalUtils.executeWithdrawal(params, withdrawal);

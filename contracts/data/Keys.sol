@@ -118,6 +118,13 @@ library Keys {
     // @dev key for whether the execute withdrawal feature is disabled
     bytes32 public constant EXECUTE_WITHDRAWAL_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_WITHDRAWAL_FEATURE_DISABLED"));
 
+    // @dev key for whether the create shift feature is disabled
+    bytes32 public constant CREATE_SHIFT_FEATURE_DISABLED = keccak256(abi.encode("CREATE_SHIFT_FEATURE_DISABLED"));
+    // @dev key for whether the cancel shift feature is disabled
+    bytes32 public constant CANCEL_SHIFT_FEATURE_DISABLED = keccak256(abi.encode("CANCEL_SHIFT_FEATURE_DISABLED"));
+    // @dev key for whether the execute shift feature is disabled
+    bytes32 public constant EXECUTE_SHIFT_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_SHIFT_FEATURE_DISABLED"));
+
     // @dev key for whether the create order feature is disabled
     bytes32 public constant CREATE_ORDER_FEATURE_DISABLED = keccak256(abi.encode("CREATE_ORDER_FEATURE_DISABLED"));
     // @dev key for whether the execute order feature is disabled
@@ -531,6 +538,36 @@ library Keys {
     function executeWithdrawalFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             EXECUTE_WITHDRAWAL_FEATURE_DISABLED,
+            module
+        ));
+    }
+
+    // @dev key for whether create shift is disabled
+    // @param the create shift module
+    // @return key for whether create shift is disabled
+    function createShiftFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CREATE_SHIFT_FEATURE_DISABLED,
+            module
+        ));
+    }
+
+    // @dev key for whether cancel shift is disabled
+    // @param the cancel shift module
+    // @return key for whether cancel shift is disabled
+    function cancelShiftFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CANCEL_SHIFT_FEATURE_DISABLED,
+            module
+        ));
+    }
+
+    // @dev key for whether execute shift is disabled
+    // @param the execute shift module
+    // @return key for whether execute shift is disabled
+    function executeShiftFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            EXECUTE_SHIFT_FEATURE_DISABLED,
             module
         ));
     }

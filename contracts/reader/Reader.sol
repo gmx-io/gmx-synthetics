@@ -326,7 +326,8 @@ contract Reader {
         MarketUtils.MarketPrices memory prices,
         uint256 longTokenAmount,
         uint256 shortTokenAmount,
-        address uiFeeReceiver
+        address uiFeeReceiver,
+        bool forShift
     ) external view returns (uint256) {
         return ReaderDepositUtils.getDepositAmountOut(
             dataStore,
@@ -334,7 +335,8 @@ contract Reader {
             prices,
             longTokenAmount,
             shortTokenAmount,
-            uiFeeReceiver
+            uiFeeReceiver,
+            forShift
         );
     }
 
@@ -343,14 +345,16 @@ contract Reader {
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
         uint256 marketTokenAmount,
-        address uiFeeReceiver
+        address uiFeeReceiver,
+        bool forShift
     ) external view returns (uint256, uint256) {
         return ReaderWithdrawalUtils.getWithdrawalAmountOut(
             dataStore,
             market,
             prices,
             marketTokenAmount,
-            uiFeeReceiver
+            uiFeeReceiver,
+            forShift
         );
     }
 }

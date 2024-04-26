@@ -141,8 +141,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         FeatureUtils.validateFeature(_dataStore, Keys.cancelOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
 
         if (BaseOrderUtils.isMarketOrder(order.orderType())) {
-            ExchangeUtils.validateRequestCancellation(
-                _dataStore,
+            validateRequestCancellation(
                 order.updatedAtTime(),
                 "Order"
             );
