@@ -515,7 +515,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.FUNDING_EXPONENT_FACTOR ||
             baseKey == Keys.BORROWING_EXPONENT_FACTOR ||
             baseKey == Keys.POSITION_IMPACT_EXPONENT_FACTOR ||
-            baseKey == Keys.SWAP_IMPACT_EXPONENT_FACTOR ||
+            baseKey == Keys.SWAP_IMPACT_EXPONENT_FACTOR
         ) {
             // revert if value > 3
             if (value > 3 * Precision.FLOAT_PRECISION) {
