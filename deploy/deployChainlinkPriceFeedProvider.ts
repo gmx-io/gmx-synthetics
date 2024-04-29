@@ -16,6 +16,12 @@ const func = createDeployFunction({
       true,
       "isOracleProviderEnabledKey"
     );
+
+    await setBoolIfDifferent(
+      keys.isAtomicOracleProviderKey(deployedContract.address),
+      true,
+      "isAtomicOracleProviderKey"
+    );
   },
   id: "ChainlinkPriceFeedProvider_1",
 });

@@ -133,6 +133,18 @@ contract Oracle is RoleModule {
         return _validatePrices(params);
     }
 
+    function validateAtomicProviders(
+        OracleUtils.SetPricesParams calldata oracleParams
+    ) external view {
+        for (uint256 i; i < oracleParams.providers.length; i++) {
+            address provider = oracleParams.providers[i];
+            bool isAtomicProvider = dataStore.getBool(Keys.isAtomicOracleProviderKey(provider));
+            if (!isAtomicProvider) {
+                revert Errors.NonAtomicOracleProvider(provider);
+            }
+        }
+    }
+
     // @dev validate and set prices
     // @param params OracleUtils.SetPricesParams
     function _setPrices(

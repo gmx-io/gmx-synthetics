@@ -101,7 +101,8 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         try this._executeWithdrawal{ gas: executionGas }(
             key,
             withdrawal,
-            msg.sender
+            msg.sender,
+            ISwapPricingUtils.SwapPricingType.TwoStep
         ) {
         } catch (bytes memory reasonBytes) {
             _handleWithdrawalError(
@@ -112,12 +113,44 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         }
     }
 
+    function executeAtomicWithdrawal(
+        WithdrawalUtils.CreateWithdrawalParams calldata params,
+        OracleUtils.SetPricesParams calldata oracleParams
+    )
+        external
+        globalNonReentrant
+        withOraclePrices(oracleParams)
+    {
+        FeatureUtils.validateFeature(dataStore, Keys.executeAtomicWithdrawalFeatureDisabledKey(address(this)));
+        oracle.validateAtomicProviders(oracleParams);
+
+        address account = msg.sender;
+
+        bytes32 key = WithdrawalUtils.createWithdrawal(
+            dataStore,
+            eventEmitter,
+            withdrawalVault,
+            account,
+            params
+        );
+
+        Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
+
+        this._executeWithdrawal(
+            key,
+            withdrawal,
+            account,
+            ISwapPricingUtils.SwapPricingType.Atomic
+        );
+    }
+
     // @dev simulate execution of a withdrawal to check for any errors
     // @param key the withdrawal key
     // @param params OracleUtils.SimulatePricesParams
     function simulateExecuteWithdrawal(
         bytes32 key,
-        OracleUtils.SimulatePricesParams memory params
+        OracleUtils.SimulatePricesParams memory params,
+        ISwapPricingUtils.SwapPricingType swapPricingType
     ) external
         override
         onlyController
@@ -129,7 +162,8 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         this._executeWithdrawal(
             key,
             withdrawal,
-            msg.sender
+            msg.sender,
+            swapPricingType
         );
     }
 
@@ -140,7 +174,8 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
     function _executeWithdrawal(
         bytes32 key,
         Withdrawal.Props memory withdrawal,
-        address keeper
+        address keeper,
+        ISwapPricingUtils.SwapPricingType swapPricingType
     ) external onlySelf {
         uint256 startingGas = gasleft();
 
@@ -154,7 +189,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
             key,
             keeper,
             startingGas,
-            false // forShift
+            swapPricingType
         );
 
         ExecuteWithdrawalUtils.executeWithdrawal(params, withdrawal);

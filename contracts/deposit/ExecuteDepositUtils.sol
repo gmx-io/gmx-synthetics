@@ -50,7 +50,7 @@ library ExecuteDepositUtils {
         bytes32 key;
         address keeper;
         uint256 startingGas;
-        bool forShift;
+        ISwapPricingUtils.SwapPricingType swapPricingType;
     }
 
     // @dev _ExecuteDepositParams struct used in executeDeposit to avoid stack
@@ -245,7 +245,7 @@ library ExecuteDepositUtils {
             cache.longTokenAmount,
             cache.shortTokenAmount,
             cache.receivedMarketTokens,
-            params.forShift
+            params.swapPricingType
         );
 
         MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(
@@ -300,7 +300,7 @@ library ExecuteDepositUtils {
             _params.amount,
             _params.priceImpactUsd > 0, // forPositiveImpact
             _params.uiFeeReceiver,
-            params.forShift
+            params.swapPricingType
         );
 
         FeeUtils.incrementClaimableFeeAmount(

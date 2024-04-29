@@ -117,6 +117,8 @@ library Keys {
     bytes32 public constant CANCEL_WITHDRAWAL_FEATURE_DISABLED = keccak256(abi.encode("CANCEL_WITHDRAWAL_FEATURE_DISABLED"));
     // @dev key for whether the execute withdrawal feature is disabled
     bytes32 public constant EXECUTE_WITHDRAWAL_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_WITHDRAWAL_FEATURE_DISABLED"));
+    // @dev key for whether the execute atomic withdrawal feature is disabled
+    bytes32 public constant EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED"));
 
     // @dev key for whether the create shift feature is disabled
     bytes32 public constant CREATE_SHIFT_FEATURE_DISABLED = keccak256(abi.encode("CREATE_SHIFT_FEATURE_DISABLED"));
@@ -161,6 +163,8 @@ library Keys {
     bytes32 public constant MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR = keccak256(abi.encode("MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR"));
     // @dev key for whether an oracle provider is enabled
     bytes32 public constant IS_ORACLE_PROVIDER_ENABLED = keccak256(abi.encode("IS_ORACLE_PROVIDER_ENABLED"));
+    // @dev key for whether an oracle provider can be used for atomic actions
+    bytes32 public constant IS_ATOMIC_ORACLE_PROVIDER = keccak256(abi.encode("IS_ATOMIC_ORACLE_PROVIDER"));
     // @dev key for oracle timestamp adjustment
     bytes32 public constant ORACLE_TIMESTAMP_ADJUSTMENT = keccak256(abi.encode("ORACLE_TIMESTAMP_ADJUSTMENT"));
     // @dev key for oracle provider for token
@@ -244,6 +248,8 @@ library Keys {
     bytes32 public constant SWAP_IMPACT_EXPONENT_FACTOR = keccak256(abi.encode("SWAP_IMPACT_EXPONENT_FACTOR"));
     // @dev key for the swap fee factor
     bytes32 public constant SWAP_FEE_FACTOR = keccak256(abi.encode("SWAP_FEE_FACTOR"));
+    // @dev key for the atomic swap fee factor
+    bytes32 public constant ATOMIC_SWAP_FEE_FACTOR = keccak256(abi.encode("ATOMIC_SWAP_FEE_FACTOR"));
     // @dev key for the oracle type
     bytes32 public constant ORACLE_TYPE = keccak256(abi.encode("ORACLE_TYPE"));
     // @dev key for open interest
@@ -544,6 +550,16 @@ library Keys {
         ));
     }
 
+    // @dev key for whether execute atomic withdrawal is disabled
+    // @param the execute atomic withdrawal module
+    // @return key for whether execute atomic withdrawal is disabled
+    function executeAtomicWithdrawalFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED,
+            module
+        ));
+    }
+
     // @dev key for whether create shift is disabled
     // @param the create shift module
     // @return key for whether create shift is disabled
@@ -690,6 +706,16 @@ library Keys {
     function isOracleProviderEnabledKey(address provider) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             IS_ORACLE_PROVIDER_ENABLED,
+            provider
+        ));
+    }
+
+    // @dev key for whether an oracle provider is allowed to be used for atomic actions
+    // @param provider the oracle provider
+    // @return key for whether an oracle provider is allowed to be used for atomic actions
+    function isAtomicOracleProviderKey(address provider) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            IS_ATOMIC_ORACLE_PROVIDER,
             provider
         ));
     }
@@ -881,6 +907,16 @@ library Keys {
             SWAP_FEE_FACTOR,
             market,
             forPositiveImpact
+        ));
+    }
+
+    // @dev key for atomic swap fee factor
+    // @param market the market address to check
+    // @return key for atomic swap fee factor
+    function atomicSwapFeeFactorKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            ATOMIC_SWAP_FEE_FACTOR,
+            market
         ));
     }
 

@@ -190,6 +190,15 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       );
     }
 
+    if (marketConfig.atomicSwapFeeFactor !== undefined) {
+      const key = keys.atomicSwapFeeFactorKey(marketToken);
+      await setUintIfDifferent(
+        key,
+        marketConfig.atomicSwapFeeFactor,
+        `atomicSwapFeeFactor for ${marketToken.toString()}`
+      );
+    }
+
     if (marketConfig.positiveSwapImpactFactor !== undefined) {
       const key = keys.swapImpactFactorKey(marketToken, true);
       await setUintIfDifferent(

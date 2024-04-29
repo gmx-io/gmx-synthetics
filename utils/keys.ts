@@ -61,6 +61,7 @@ export const MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR = hashString("MAX_ORACLE_REF_
 export const MIN_ORACLE_SIGNERS = hashString("MIN_ORACLE_SIGNERS");
 export const MAX_ORACLE_TIMESTAMP_RANGE = hashString("MAX_ORACLE_TIMESTAMP_RANGE");
 export const IS_ORACLE_PROVIDER_ENABLED = hashString("IS_ORACLE_PROVIDER_ENABLED");
+export const IS_ATOMIC_ORACLE_PROVIDER = hashString("IS_ATOMIC_ORACLE_PROVIDER");
 export const CHAINLINK_PAYMENT_TOKEN = hashString("CHAINLINK_PAYMENT_TOKEN");
 
 export const MIN_COLLATERAL_FACTOR = hashString("MIN_COLLATERAL_FACTOR");
@@ -110,6 +111,7 @@ export const POSITION_FEE_RECEIVER_FACTOR = hashString("POSITION_FEE_RECEIVER_FA
 export const BORROWING_FEE_RECEIVER_FACTOR = hashString("BORROWING_FEE_RECEIVER_FACTOR");
 
 export const SWAP_FEE_FACTOR = hashString("SWAP_FEE_FACTOR");
+export const ATOMIC_SWAP_FEE_FACTOR = hashString("ATOMIC_SWAP_FEE_FACTOR");
 export const SWAP_IMPACT_FACTOR = hashString("SWAP_IMPACT_FACTOR");
 export const SWAP_IMPACT_EXPONENT_FACTOR = hashString("SWAP_IMPACT_EXPONENT_FACTOR");
 
@@ -336,6 +338,10 @@ export function isOracleProviderEnabledKey(provider: string) {
   return hashData(["bytes32", "address"], [IS_ORACLE_PROVIDER_ENABLED, provider]);
 }
 
+export function isAtomicOracleProviderKey(provider: string) {
+  return hashData(["bytes32", "address"], [IS_ATOMIC_ORACLE_PROVIDER, provider]);
+}
+
 export function minCollateralFactorKey(market: string) {
   return hashData(["bytes32", "address"], [MIN_COLLATERAL_FACTOR, market]);
 }
@@ -402,6 +408,10 @@ export function swapImpactPoolAmountKey(market: string, token: string) {
 
 export function swapFeeFactorKey(market: string, forPositiveImpact: boolean) {
   return hashData(["bytes32", "address", "bool"], [SWAP_FEE_FACTOR, market, forPositiveImpact]);
+}
+
+export function atomicSwapFeeFactorKey(market: string) {
+  return hashData(["bytes32", "address"], [SWAP_FEE_FACTOR, market]);
 }
 
 export function swapImpactFactorKey(market: string, isPositive: boolean) {

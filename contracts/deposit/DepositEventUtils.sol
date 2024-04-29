@@ -7,6 +7,7 @@ import "../event/EventUtils.sol";
 import "../utils/Cast.sol";
 
 import "./Deposit.sol";
+import "../pricing/ISwapPricingUtils.sol";
 
 library DepositEventUtils {
     using Deposit for Deposit.Props;
@@ -68,7 +69,7 @@ library DepositEventUtils {
         uint256 longTokenAmount,
         uint256 shortTokenAmount,
         uint256 receivedMarketTokens,
-        bool forShift
+        ISwapPricingUtils.SwapPricingType swapPricingType
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -78,13 +79,11 @@ library DepositEventUtils {
         eventData.addressItems.initItems(1);
         eventData.addressItems.setItem(0, "account", account);
 
-        eventData.uintItems.initItems(3);
+        eventData.uintItems.initItems(4);
         eventData.uintItems.setItem(0, "longTokenAmount", longTokenAmount);
         eventData.uintItems.setItem(1, "shortTokenAmount", shortTokenAmount);
         eventData.uintItems.setItem(2, "receivedMarketTokens", receivedMarketTokens);
-
-        eventData.boolItems.initItems(1);
-        eventData.boolItems.setItem(0, "forShift", forShift);
+        eventData.uintItems.setItem(3, "swapPricingType", uint256(swapPricingType));
 
         eventEmitter.emitEventLog2(
             "DepositExecuted",

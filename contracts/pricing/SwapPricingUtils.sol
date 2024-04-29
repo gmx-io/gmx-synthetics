@@ -10,6 +10,7 @@ import "../utils/Precision.sol";
 import "../utils/Calc.sol";
 
 import "./PricingUtils.sol";
+import "./ISwapPricingUtils.sol";
 
 // @title SwapPricingUtils
 // @dev Library for pricing functions
@@ -237,7 +238,7 @@ library SwapPricingUtils {
         uint256 amount,
         bool forPositiveImpact,
         address uiFeeReceiver,
-        bool forShift
+        ISwapPricingUtils.SwapPricingType swapPricingType
     ) internal view returns (SwapFees memory) {
         SwapFees memory fees;
 
@@ -246,7 +247,16 @@ library SwapPricingUtils {
         // it is possible for the balance to be improved overall but for the price impact to still be negative
         // in this case the fee factor for the negative price impact would be charged
         // a user could split the order into two, to incur a smaller fee, reducing the fee through this should not be a large issue
-        uint256 feeFactor = forShift ? 0 : dataStore.getUint(Keys.swapFeeFactorKey(marketToken, forPositiveImpact));
+        uint256 feeFactor;
+
+        if (swapPricingType == ISwapPricingUtils.SwapPricingType.TwoStep) {
+            feeFactor = dataStore.getUint(Keys.swapFeeFactorKey(marketToken, forPositiveImpact));
+        } else if (swapPricingType == ISwapPricingUtils.SwapPricingType.Free) {
+            // empty branch as feeFactor is already zero
+        } else if (swapPricingType == ISwapPricingUtils.SwapPricingType.Atomic) {
+            feeFactor = dataStore.getUint(Keys.atomicSwapFeeFactorKey(marketToken));
+        }
+
         uint256 swapFeeReceiverFactor = dataStore.getUint(Keys.SWAP_FEE_RECEIVER_FACTOR);
 
         uint256 feeAmount = Precision.applyFactor(amount, feeFactor);

@@ -171,6 +171,7 @@ library Errors {
     );
     error InvalidBlockRangeSet(uint256 largestMinBlockNumber, uint256 smallestMaxBlockNumber);
     error EmptyChainlinkPaymentToken();
+    error NonAtomicOracleProvider(address provider);
 
     // OracleModule errors
     error InvalidPrimaryPricesForSimulation(uint256 primaryTokensLength, uint256 primaryPricesLength);

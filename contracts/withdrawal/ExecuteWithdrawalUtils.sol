@@ -44,7 +44,7 @@ library ExecuteWithdrawalUtils {
         bytes32 key;
         address keeper;
         uint256 startingGas;
-        bool forShift;
+        ISwapPricingUtils.SwapPricingType swapPricingType;
     }
 
     struct ExecuteWithdrawalCache {
@@ -131,7 +131,7 @@ library ExecuteWithdrawalUtils {
             params.eventEmitter,
             params.key,
             withdrawal.account(),
-            params.forShift
+            params.swapPricingType
         );
 
         EventUtils.EventLogData memory eventData;
@@ -182,7 +182,7 @@ library ExecuteWithdrawalUtils {
             cache.longTokenOutputAmount,
             false, // forPositiveImpact
             withdrawal.uiFeeReceiver(),
-            params.forShift
+            params.swapPricingType
         );
 
         FeeUtils.incrementClaimableFeeAmount(
@@ -210,7 +210,7 @@ library ExecuteWithdrawalUtils {
             cache.shortTokenOutputAmount,
             false, // forPositiveImpact
             withdrawal.uiFeeReceiver(),
-            params.forShift
+            params.swapPricingType
         );
 
         FeeUtils.incrementClaimableFeeAmount(

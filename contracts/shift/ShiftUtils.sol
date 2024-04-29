@@ -195,7 +195,7 @@ library ShiftUtils {
             cache.withdrawalKey,
             params.keeper,
             params.startingGas,
-            true // forShift
+            ISwapPricingUtils.SwapPricingType.Free
         );
 
         ExecuteWithdrawalUtils.executeWithdrawal(
@@ -250,7 +250,7 @@ library ShiftUtils {
             cache.depositKey,
             params.keeper,
             params.startingGas,
-            true // forShift
+            ISwapPricingUtils.SwapPricingType.Free
         );
 
         uint256 receivedMarketTokens = ExecuteDepositUtils.executeDeposit(

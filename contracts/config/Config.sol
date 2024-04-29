@@ -384,6 +384,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.CREATE_WITHDRAWAL_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CANCEL_WITHDRAWAL_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.EXECUTE_WITHDRAWAL_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED] = true;
 
         allowedBaseKeys[Keys.CREATE_SHIFT_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CANCEL_SHIFT_FEATURE_DISABLED] = true;
@@ -448,6 +449,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.SWAP_IMPACT_FACTOR] = true;
         allowedBaseKeys[Keys.SWAP_IMPACT_EXPONENT_FACTOR] = true;
         allowedBaseKeys[Keys.SWAP_FEE_FACTOR] = true;
+        allowedBaseKeys[Keys.ATOMIC_SWAP_FEE_FACTOR] = true;
 
         allowedBaseKeys[Keys.MAX_UI_FEE_FACTOR] = true;
         allowedBaseKeys[Keys.MAX_AUTO_CANCEL_ORDERS] = true;
@@ -539,7 +541,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         if (
             baseKey == Keys.SWAP_FEE_FACTOR ||
             baseKey == Keys.POSITION_FEE_FACTOR ||
-            baseKey == Keys.MAX_UI_FEE_FACTOR
+            baseKey == Keys.MAX_UI_FEE_FACTOR ||
+            baseKey == Keys.ATOMIC_SWAP_FEE_FACTOR
         ) {
             // revert if value > 5%
             if (value > 5 * Precision.FLOAT_PRECISION / 100) {

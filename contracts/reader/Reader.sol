@@ -327,7 +327,7 @@ contract Reader {
         uint256 longTokenAmount,
         uint256 shortTokenAmount,
         address uiFeeReceiver,
-        bool forShift
+        ISwapPricingUtils.SwapPricingType swapPricingType
     ) external view returns (uint256) {
         return ReaderDepositUtils.getDepositAmountOut(
             dataStore,
@@ -336,7 +336,7 @@ contract Reader {
             longTokenAmount,
             shortTokenAmount,
             uiFeeReceiver,
-            forShift
+            swapPricingType
         );
     }
 
@@ -346,7 +346,7 @@ contract Reader {
         MarketUtils.MarketPrices memory prices,
         uint256 marketTokenAmount,
         address uiFeeReceiver,
-        bool forShift
+        ISwapPricingUtils.SwapPricingType swapPricingType
     ) external view returns (uint256, uint256) {
         return ReaderWithdrawalUtils.getWithdrawalAmountOut(
             dataStore,
@@ -354,7 +354,7 @@ contract Reader {
             prices,
             marketTokenAmount,
             uiFeeReceiver,
-            forShift
+            swapPricingType
         );
     }
 }

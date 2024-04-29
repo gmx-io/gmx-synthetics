@@ -20,6 +20,7 @@ import {
   handleWithdrawal,
 } from "../../utils/withdrawal";
 import { prices } from "../../utils/prices";
+import { SwapPricingType } from "../../utils/swap";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.Withdrawal", () => {
@@ -230,7 +231,7 @@ describe("Exchange.Withdrawal", () => {
       prices.ethUsdMarket,
       expandDecimals(49940, 18), // marketTokenAmount
       AddressZero,
-      false
+      SwapPricingType.TwoStep
     );
 
     expect(withdrawalAmountOut[0]).eq("9988002499499499499");

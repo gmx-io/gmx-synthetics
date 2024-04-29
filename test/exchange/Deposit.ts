@@ -17,6 +17,7 @@ import { getExecuteParams } from "../../utils/exchange";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
+import { SwapPricingType } from "../../utils/swap";
 import { prices } from "../../utils/prices";
 
 describe("Exchange.Deposit", () => {
@@ -562,7 +563,7 @@ describe("Exchange.Deposit", () => {
         expandDecimals(10, 18), // longTokenAmount
         0, // shortTokenAmount
         AddressZero,
-        false
+        SwapPricingType.TwoStep
       )
     ).eq("49975000000000000000000");
 
@@ -574,7 +575,7 @@ describe("Exchange.Deposit", () => {
         expandDecimals(10, 18), // longTokenAmount
         expandDecimals(1000, 6), // shortTokenAmount
         AddressZero,
-        false
+        SwapPricingType.TwoStep
       )
     ).eq("50975989999313725490000");
 

@@ -7,6 +7,7 @@ import "../event/EventUtils.sol";
 import "../utils/Cast.sol";
 
 import "./Withdrawal.sol";
+import "../pricing/ISwapPricingUtils.sol";
 
 library WithdrawalEventUtils {
     using Withdrawal for Withdrawal.Props;
@@ -63,7 +64,7 @@ library WithdrawalEventUtils {
         EventEmitter eventEmitter,
         bytes32 key,
         address account,
-        bool forShift
+        ISwapPricingUtils.SwapPricingType swapPricingType
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -73,8 +74,8 @@ library WithdrawalEventUtils {
         eventData.addressItems.initItems(1);
         eventData.addressItems.setItem(0, "account", account);
 
-        eventData.boolItems.initItems(1);
-        eventData.boolItems.setItem(0, "forShift", forShift);
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "swapPricingType", uint256(swapPricingType));
 
         eventEmitter.emitEventLog2(
             "WithdrawalExecuted",

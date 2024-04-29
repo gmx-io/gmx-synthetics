@@ -129,6 +129,38 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         );
     }
 
+    function signalSetAtomicOracleProvider(address provider, bool value) external onlyTimelockAdmin nonReentrant {
+        bytes32 actionKey = _setAtomicOracleProviderKey(provider, value);
+        _signalPendingAction(actionKey, "setAtomicOracleProvider");
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "provider", provider);
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "value", value);
+        eventEmitter.emitEventLog(
+            "SignalSetAtomicOracleProvider",
+            eventData
+        );
+    }
+
+    function setAtomicOracleProviderAfterSignal(address provider, bool value) external onlyTimelockAdmin nonReentrant {
+        bytes32 actionKey = _setAtomicOracleProviderKey(provider, value);
+        _validateAndClearAction(actionKey, "setAtomicOracleProvider");
+
+        dataStore.setBool(Keys.isOracleProviderEnabledKey(provider), value);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "provider", provider);
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "value", value);
+        eventEmitter.emitEventLog(
+            "SetAtomicOracleProvider",
+            eventData
+        );
+    }
+
     function signalAddOracleSigner(address account) external onlyTimelockAdmin nonReentrant {
         if (account == address(0)) {
             revert Errors.InvalidOracleSigner(account);
@@ -490,37 +522,34 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         );
     }
 
-    // @dev the key for the setOracleProviderEnabled action
     function _setOracleProviderEnabledKey(address provider, bool value) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked("setOracleProviderEnabled", provider, value));
     }
 
-    // @dev the key for the addOracleSigner action
+    function _setAtomicOracleProviderKey(address provider, bool value) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("setAtomicOracleProvider", provider, value));
+    }
+
     function _addOracleSignerActionKey(address account) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked("addOracleSigner", account));
     }
 
-    // @dev the key for the removeOracleSigner action
     function _removeOracleSignerActionKey(address account) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked("removeOracleSigner", account));
     }
 
-    // @dev the key for the setFeeReceiver action
     function _setFeeReceiverActionKey(address account) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked("setFeeReceiver", account));
     }
 
-    // @dev the key for the grantRole action
     function _grantRoleActionKey(address account, bytes32 roleKey) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked("grantRole", account, roleKey));
     }
 
-    // @dev the key for the revokeRole action
     function _revokeRoleActionKey(address account, bytes32 roleKey) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked("revokeRole", account, roleKey));
     }
 
-    // @dev the key for the setPriceFeed action
     function _setPriceFeedActionKey(
         address token,
         address priceFeed,
@@ -538,7 +567,6 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         ));
     }
 
-    // @dev the key for the setDataStream action
     function _setDataStreamActionKey(
         address token,
         bytes32 feedId,

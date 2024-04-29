@@ -31,8 +31,8 @@ const func = createDeployFunction({
     );
     await setAddressIfDifferent(
       keys.CHAINLINK_PAYMENT_TOKEN,
-      oracleConfig.maxRefPriceDeviationFactor,
-      "max ref price deviation factor"
+      oracleConfig.chainlinkPaymentToken,
+      "chainlinkPaymentToken"
     );
 
     // the Oracle contract requires the CONTROLLER to emit events
@@ -41,6 +41,6 @@ const func = createDeployFunction({
   id: "Oracle_3",
 });
 
-func.dependencies = func.dependencies.concat(["Tokens", "MockDataStreamVerifier"]);
+func.dependencies = func.dependencies.concat(["Tokens", "MockDataStreamVerifier", "ChainlinkPriceFeedProvider"]);
 
 export default func;

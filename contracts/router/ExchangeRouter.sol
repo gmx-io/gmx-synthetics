@@ -171,9 +171,10 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
 
     function simulateExecuteWithdrawal(
         bytes32 key,
-        OracleUtils.SimulatePricesParams memory simulatedOracleParams
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams,
+        ISwapPricingUtils.SwapPricingType swapPricingType
     ) external payable nonReentrant {
-        withdrawalHandler.simulateExecuteWithdrawal(key, simulatedOracleParams);
+        withdrawalHandler.simulateExecuteWithdrawal(key, simulatedOracleParams, swapPricingType);
     }
 
     function createShift(
