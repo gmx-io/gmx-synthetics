@@ -385,6 +385,10 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.CANCEL_WITHDRAWAL_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.EXECUTE_WITHDRAWAL_FEATURE_DISABLED] = true;
 
+        allowedBaseKeys[Keys.CREATE_SHIFT_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.CANCEL_SHIFT_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.EXECUTE_SHIFT_FEATURE_DISABLED] = true;
+
         allowedBaseKeys[Keys.CREATE_ORDER_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.EXECUTE_ORDER_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.EXECUTE_ADL_FEATURE_DISABLED] = true;
@@ -403,7 +407,9 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.MAX_ORACLE_TIMESTAMP_RANGE] = true;
         allowedBaseKeys[Keys.ORACLE_TIMESTAMP_ADJUSTMENT] = true;
         allowedBaseKeys[Keys.ORACLE_PROVIDER_FOR_TOKEN] = true;
+        allowedBaseKeys[Keys.CHAINLINK_PAYMENT_TOKEN] = true;
         allowedBaseKeys[Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR] = true;
+
         allowedBaseKeys[Keys.POSITION_FEE_RECEIVER_FACTOR] = true;
         allowedBaseKeys[Keys.SWAP_FEE_RECEIVER_FACTOR] = true;
         allowedBaseKeys[Keys.BORROWING_FEE_RECEIVER_FACTOR] = true;
@@ -506,6 +512,18 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param value the value to be set
     function _validateRange(bytes32 baseKey, uint256 value) internal pure {
         if (
+            baseKey == Keys.FUNDING_EXPONENT_FACTOR ||
+            baseKey == Keys.BORROWING_EXPONENT_FACTOR ||
+            baseKey == Keys.POSITION_IMPACT_EXPONENT_FACTOR ||
+            baseKey == Keys.SWAP_IMPACT_EXPONENT_FACTOR ||
+        ) {
+            // revert if value > 3
+            if (value > 3 * Precision.FLOAT_PRECISION) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (
             baseKey == Keys.FUNDING_FACTOR ||
             baseKey == Keys.BORROWING_FACTOR ||
             baseKey == Keys.FUNDING_INCREASE_FACTOR_PER_SECOND ||
@@ -514,7 +532,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         ) {
             // revert if value > 1%
             if (value > 1 * Precision.FLOAT_PRECISION / 100) {
-                revert Errors.InvalidFeeFactor(baseKey, value);
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }
 
@@ -525,7 +543,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         ) {
             // revert if value > 5%
             if (value > 5 * Precision.FLOAT_PRECISION / 100) {
-                revert Errors.InvalidFeeFactor(baseKey, value);
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }
 
@@ -538,7 +556,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         ) {
             // revert if value > 100%
             if (value > Precision.FLOAT_PRECISION) {
-                revert Errors.InvalidFeeFactor(baseKey, value);
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }
     }

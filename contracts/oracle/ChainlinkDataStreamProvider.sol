@@ -98,14 +98,10 @@ contract ChainlinkDataStreamProvider is IOracleProvider {
 
     function _getPayloadParameter() internal view returns (bytes memory) {
         // LINK token address
-        address feeToken;
+        address feeToken = dataStore.getAddress(Keys.CHAINLINK_PAYMENT_TOKEN);
 
-        if (block.chainid == 43113) {
-            feeToken = 0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846;
-        } else if (block.chainid == 31337) {
-            feeToken = 0x99bbA657f2BbC93c02D617f8bA121cB8Fc104Acf;
-        } else {
-            revert("unsupported chain id");
+        if (feeToken == address(0)) {
+            revert Errors.EmptyChainlinkPaymentToken();
         }
 
         return abi.encode(feeToken);

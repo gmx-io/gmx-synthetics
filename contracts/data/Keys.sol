@@ -165,6 +165,8 @@ library Keys {
     bytes32 public constant ORACLE_TIMESTAMP_ADJUSTMENT = keccak256(abi.encode("ORACLE_TIMESTAMP_ADJUSTMENT"));
     // @dev key for oracle provider for token
     bytes32 public constant ORACLE_PROVIDER_FOR_TOKEN = keccak256(abi.encode("ORACLE_PROVIDER_FOR_TOKEN"));
+    // @dev key for the chainlink payment token
+    bytes32 public constant CHAINLINK_PAYMENT_TOKEN = keccak256(abi.encode("CHAINLINK_PAYMENT_TOKEN"));
 
     // @dev key for the percentage amount of position fees to be received
     bytes32 public constant POSITION_FEE_RECEIVER_FACTOR = keccak256(abi.encode("POSITION_FEE_RECEIVER_FACTOR"));

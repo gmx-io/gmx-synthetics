@@ -229,7 +229,8 @@ describe("Exchange.Withdrawal", () => {
       ethUsdMarket,
       prices.ethUsdMarket,
       expandDecimals(49940, 18), // marketTokenAmount
-      AddressZero
+      AddressZero,
+      false
     );
 
     expect(withdrawalAmountOut[0]).eq("9988002499499499499");

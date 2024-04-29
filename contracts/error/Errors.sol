@@ -30,7 +30,7 @@ library Errors {
 
     // Config errors
     error InvalidBaseKey(bytes32 baseKey);
-    error InvalidFeeFactor(bytes32 baseKey, uint256 value);
+    error ConfigValueExceedsAllowedRange(bytes32 baseKey, uint256 value);
     error InvalidClaimableFactor(uint256 value);
     error PriceFeedAlreadyExistsForToken(address token);
     error DataStreamIdAlreadyExistsForToken(address token);
@@ -170,6 +170,7 @@ library Errors {
         uint256 maxRefPriceDeviationFactor
     );
     error InvalidBlockRangeSet(uint256 largestMinBlockNumber, uint256 smallestMaxBlockNumber);
+    error EmptyChainlinkPaymentToken();
 
     // OracleModule errors
     error InvalidPrimaryPricesForSimulation(uint256 primaryTokensLength, uint256 primaryPricesLength);

@@ -561,7 +561,8 @@ describe("Exchange.Deposit", () => {
         prices.ethUsdMarket,
         expandDecimals(10, 18), // longTokenAmount
         0, // shortTokenAmount
-        AddressZero
+        AddressZero,
+        false
       )
     ).eq("49975000000000000000000");
 
@@ -572,7 +573,8 @@ describe("Exchange.Deposit", () => {
         prices.ethUsdMarket,
         expandDecimals(10, 18), // longTokenAmount
         expandDecimals(1000, 6), // shortTokenAmount
-        AddressZero
+        AddressZero,
+        false
       )
     ).eq("50975989999313725490000");
 

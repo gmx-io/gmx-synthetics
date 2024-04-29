@@ -1,5 +1,5 @@
 import { grantRoleIfNotGranted } from "../utils/role";
-import { setUintIfDifferent } from "../utils/dataStore";
+import { setUintIfDifferent, setAddressIfDifferent } from "../utils/dataStore";
 import * as keys from "../utils/keys";
 import { createDeployFunction } from "../utils/deploy";
 
@@ -26,6 +26,11 @@ const func = createDeployFunction({
     );
     await setUintIfDifferent(
       keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR,
+      oracleConfig.maxRefPriceDeviationFactor,
+      "max ref price deviation factor"
+    );
+    await setAddressIfDifferent(
+      keys.CHAINLINK_PAYMENT_TOKEN,
       oracleConfig.maxRefPriceDeviationFactor,
       "max ref price deviation factor"
     );
