@@ -501,6 +501,15 @@ library MarketUtils {
         return dataStore.getUint(Keys.maxPoolAmountForDepositKey(market, token));
     }
 
+    // @return the lower of [maxReservedUsd, maxOpenInterest]
+    function getOpenInterestLimit(DataStore dataStore, address market, bool isLong, uint256 poolUsd) internal view returns (uint256) {
+        uint256 reserveFactor = getOpenInterestReserveFactor(dataStore, market, isLong);
+        uint256 maxReservedUsd = Precision.applyFactor(poolUsd, reserveFactor);
+        uint256 maxOpenInterest = getMaxOpenInterest(dataStore, market, isLong);
+
+        return maxReservedUsd < maxOpenInterest ? maxReservedUsd : maxOpenInterest;
+    }
+
     // @dev get the max open interest allowed for the market
     // @param dataStore DataStore
     // @param market the market to check
@@ -2381,9 +2390,8 @@ library MarketUtils {
         uint256 optimalUsageFactor = getOptimalUsageFactor(dataStore, market.marketToken, isLong);
 
         if (optimalUsageFactor != 0) {
-            uint256 reserveFactor = getOpenInterestReserveFactor(dataStore, market.marketToken, isLong);
-            uint256 maxReservedUsd = Precision.applyFactor(poolUsd, reserveFactor);
-            uint256 usageFactor = Precision.toFactor(reservedUsd, maxReservedUsd);
+            uint256 openInterestLimit = getOpenInterestLimit(dataStore, market.marketToken, isLong, poolUsd);
+            uint256 usageFactor = Precision.toFactor(reservedUsd, openInterestLimit);
 
             uint256 _borrowingFactor;
             if (usageFactor < optimalUsageFactor) {
