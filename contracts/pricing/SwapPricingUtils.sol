@@ -251,7 +251,7 @@ library SwapPricingUtils {
 
         if (swapPricingType == ISwapPricingUtils.SwapPricingType.TwoStep) {
             feeFactor = dataStore.getUint(Keys.swapFeeFactorKey(marketToken, forPositiveImpact));
-        } else if (swapPricingType == ISwapPricingUtils.SwapPricingType.Free) {
+        } else if (swapPricingType == ISwapPricingUtils.SwapPricingType.Shift) {
             // empty branch as feeFactor is already zero
         } else if (swapPricingType == ISwapPricingUtils.SwapPricingType.Atomic) {
             feeFactor = dataStore.getUint(Keys.atomicSwapFeeFactorKey(marketToken));
