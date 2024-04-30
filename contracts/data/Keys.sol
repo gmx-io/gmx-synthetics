@@ -342,6 +342,12 @@ library Keys {
     bytes32 public constant CLAIMABLE_COLLATERAL_TIME_DIVISOR = keccak256(abi.encode("CLAIMABLE_COLLATERAL_TIME_DIVISOR"));
     // @dev key for claimed collateral amount
     bytes32 public constant CLAIMED_COLLATERAL_AMOUNT = keccak256(abi.encode("CLAIMED_COLLATERAL_AMOUNT"));
+    // @dev key for optimal usage factor
+    bytes32 public constant OPTIMAL_USAGE_FACTOR = keccak256(abi.encode("OPTIMAL_USAGE_FACTOR"));
+    // @dev key for below optimal usage borrowing factor
+    bytes32 public constant BELOW_OPTIMAL_USAGE_BORROWING_FACTOR = keccak256(abi.encode("BELOW_OPTIMAL_USAGE_BORROWING_FACTOR"));
+    // @dev key for above optimal usage borrowing factor
+    bytes32 public constant ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR = keccak256(abi.encode("ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR"));
     // @dev key for borrowing factor
     bytes32 public constant BORROWING_FACTOR = keccak256(abi.encode("BORROWING_FACTOR"));
     // @dev key for borrowing factor
@@ -1360,6 +1366,42 @@ library Keys {
             token,
             timeKey,
             account
+        ));
+    }
+
+    // @dev key for optimal usage factor
+    // @param market the market to check
+    // @param isLong whether to get the key for the long or short side
+    // @return key for optimal usage factor
+    function optimalUsageFactorKey(address market, bool isLong) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            OPTIMAL_USAGE_FACTOR,
+            market,
+            isLong
+        ));
+    }
+
+    // @dev key for below optimal usage borrowing factor
+    // @param market the market to check
+    // @param isLong whether to get the key for the long or short side
+    // @return key for below optimal usage borrowing factor
+    function belowOptimalUsageBorrowingFactorKey(address market, bool isLong) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            BELOW_OPTIMAL_USAGE_BORROWING_FACTOR,
+            market,
+            isLong
+        ));
+    }
+
+    // @dev key for above optimal usage borrowing factor
+    // @param market the market to check
+    // @param isLong whether to get the key for the long or short side
+    // @return key for above optimal usage borrowing factor
+    function aboveOptimalUsageBorrowingFactorKey(address market, bool isLong) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR,
+            market,
+            isLong
         ));
     }
 

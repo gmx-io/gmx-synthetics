@@ -2179,6 +2179,10 @@ library MarketUtils {
         return dataStore.getUint(Keys.borrowingFactorKey(market, isLong));
     }
 
+    function getOptimalUsageFactor(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
+        return dataStore.getUint(Keys.optimalUsageFactorKey(market, isLong));
+    }
+
     // @dev get the borrowing exponent factor for a market
     // @param dataStore DataStore
     // @param market the market to check
@@ -2372,6 +2376,23 @@ library MarketUtils {
 
         if (poolUsd == 0) {
             revert Errors.UnableToGetBorrowingFactorEmptyPoolUsd();
+        }
+
+        uint256 optimalUsageFactor = getOptimalUsageFactor(dataStore, market.marketToken, isLong);
+
+        if (optimalUsageFactor != 0) {
+            uint256 reserveFactor = getOpenInterestReserveFactor(dataStore, market.marketToken, isLong);
+            uint256 maxReservedUsd = Precision.applyFactor(poolUsd, reserveFactor);
+            uint256 usageFactor = Precision.toFactor(reservedUsd, maxReservedUsd);
+
+            uint256 _borrowingFactor;
+            if (usageFactor < optimalUsageFactor) {
+                _borrowingFactor = dataStore.getUint(Keys.belowOptimalUsageBorrowingFactorKey(market.marketToken, isLong));
+            } else {
+                _borrowingFactor = dataStore.getUint(Keys.aboveOptimalUsageBorrowingFactorKey(market.marketToken, isLong));
+            }
+
+            return Precision.applyFactor(usageFactor, _borrowingFactor);
         }
 
         uint256 borrowingExponentFactor = getBorrowingExponentFactor(dataStore, market.marketToken, isLong);
