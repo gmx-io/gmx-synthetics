@@ -344,8 +344,8 @@ library Keys {
     bytes32 public constant CLAIMED_COLLATERAL_AMOUNT = keccak256(abi.encode("CLAIMED_COLLATERAL_AMOUNT"));
     // @dev key for optimal usage factor
     bytes32 public constant OPTIMAL_USAGE_FACTOR = keccak256(abi.encode("OPTIMAL_USAGE_FACTOR"));
-    // @dev key for below optimal usage borrowing factor
-    bytes32 public constant BELOW_OPTIMAL_USAGE_BORROWING_FACTOR = keccak256(abi.encode("BELOW_OPTIMAL_USAGE_BORROWING_FACTOR"));
+    // @dev key for base borrowing factor
+    bytes32 public constant BASE_BORROWING_FACTOR = keccak256(abi.encode("BASE_BORROWING_FACTOR"));
     // @dev key for above optimal usage borrowing factor
     bytes32 public constant ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR = keccak256(abi.encode("ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR"));
     // @dev key for borrowing factor
@@ -1381,13 +1381,13 @@ library Keys {
         ));
     }
 
-    // @dev key for below optimal usage borrowing factor
+    // @dev key for base borrowing factor
     // @param market the market to check
     // @param isLong whether to get the key for the long or short side
-    // @return key for below optimal usage borrowing factor
-    function belowOptimalUsageBorrowingFactorKey(address market, bool isLong) internal pure returns (bytes32) {
+    // @return key for base borrowing factor
+    function baseBorrowingFactorKey(address market, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            BELOW_OPTIMAL_USAGE_BORROWING_FACTOR,
+            BASE_BORROWING_FACTOR,
             market,
             isLong
         ));

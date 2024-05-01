@@ -472,7 +472,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.THRESHOLD_FOR_DECREASE_FUNDING] = true;
 
         allowedBaseKeys[Keys.OPTIMAL_USAGE_FACTOR] = true;
-        allowedBaseKeys[Keys.BELOW_OPTIMAL_USAGE_BORROWING_FACTOR] = true;
+        allowedBaseKeys[Keys.BASE_BORROWING_FACTOR] = true;
         allowedBaseKeys[Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR] = true;
         allowedBaseKeys[Keys.BORROWING_FACTOR] = true;
         allowedBaseKeys[Keys.BORROWING_EXPONENT_FACTOR] = true;
