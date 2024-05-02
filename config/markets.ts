@@ -288,8 +288,8 @@ const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
   maxLongTokenPoolAmount: expandDecimals(1_000_000_000, 18),
   maxShortTokenPoolAmount: expandDecimals(1_000_000_000, 18),
 
-  maxLongTokenPoolUsdForDeposit: decimalToFloat(100_000_000_000),
-  maxShortTokenPoolUsdForDeposit: decimalToFloat(100_000_000_000),
+  maxLongTokenPoolUsdForDeposit: decimalToFloat(1_000_000_000_000_000),
+  maxShortTokenPoolUsdForDeposit: decimalToFloat(1_000_000_000_000_000),
 
   maxOpenInterestForLongs: decimalToFloat(100_000_000_000),
   maxOpenInterestForShorts: decimalToFloat(100_000_000_000),
