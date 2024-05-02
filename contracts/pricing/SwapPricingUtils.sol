@@ -48,6 +48,22 @@ library SwapPricingUtils {
         int256 usdDeltaForTokenB;
     }
 
+    struct EmitSwapInfoParams {
+        bytes32 orderKey;
+        address market;
+        address receiver;
+        address tokenIn;
+        address tokenOut;
+        uint256 tokenInPrice;
+        uint256 tokenOutPrice;
+        uint256 amountIn;
+        uint256 amountInAfterFees;
+        uint256 amountOut;
+        int256 priceImpactUsd;
+        int256 priceImpactAmount;
+        int256 tokenInPriceImpactAmount;
+    }
+
     // @dev PoolParams struct to contain pool values
     // @param poolUsdForTokenA the USD value of tokenA in the pool
     // @param poolUsdForTokenB the USD value of tokenB in the pool
@@ -278,45 +294,35 @@ library SwapPricingUtils {
     // amount in the swap impact pool
     function emitSwapInfo(
         EventEmitter eventEmitter,
-        bytes32 orderKey,
-        address market,
-        address receiver,
-        address tokenIn,
-        address tokenOut,
-        uint256 tokenInPrice,
-        uint256 tokenOutPrice,
-        uint256 amountIn,
-        uint256 amountInAfterFees,
-        uint256 amountOut,
-        int256 priceImpactUsd,
-        int256 priceImpactAmount
+        EmitSwapInfoParams memory params
     ) internal {
         EventUtils.EventLogData memory eventData;
 
         eventData.bytes32Items.initItems(1);
-        eventData.bytes32Items.setItem(0, "orderKey", orderKey);
+        eventData.bytes32Items.setItem(0, "orderKey", params.orderKey);
 
         eventData.addressItems.initItems(4);
-        eventData.addressItems.setItem(0, "market", market);
-        eventData.addressItems.setItem(1, "receiver", receiver);
-        eventData.addressItems.setItem(2, "tokenIn", tokenIn);
-        eventData.addressItems.setItem(3, "tokenOut", tokenOut);
+        eventData.addressItems.setItem(0, "market", params.market);
+        eventData.addressItems.setItem(1, "receiver", params.receiver);
+        eventData.addressItems.setItem(2, "tokenIn", params.tokenIn);
+        eventData.addressItems.setItem(3, "tokenOut", params.tokenOut);
 
         eventData.uintItems.initItems(5);
-        eventData.uintItems.setItem(0, "tokenInPrice", tokenInPrice);
-        eventData.uintItems.setItem(1, "tokenOutPrice", tokenOutPrice);
-        eventData.uintItems.setItem(2, "amountIn", amountIn);
+        eventData.uintItems.setItem(0, "tokenInPrice", params.tokenInPrice);
+        eventData.uintItems.setItem(1, "tokenOutPrice", params.tokenOutPrice);
+        eventData.uintItems.setItem(2, "amountIn", params.amountIn);
         // note that amountInAfterFees includes negative price impact
-        eventData.uintItems.setItem(3, "amountInAfterFees", amountInAfterFees);
-        eventData.uintItems.setItem(4, "amountOut", amountOut);
+        eventData.uintItems.setItem(3, "amountInAfterFees", params.amountInAfterFees);
+        eventData.uintItems.setItem(4, "amountOut", params.amountOut);
 
-        eventData.intItems.initItems(2);
-        eventData.intItems.setItem(0, "priceImpactUsd", priceImpactUsd);
-        eventData.intItems.setItem(1, "priceImpactAmount", priceImpactAmount);
+        eventData.intItems.initItems(3);
+        eventData.intItems.setItem(0, "priceImpactUsd", params.priceImpactUsd);
+        eventData.intItems.setItem(1, "priceImpactAmount", params.priceImpactAmount);
+        eventData.intItems.setItem(2, "tokenInPriceImpactAmount", params.tokenInPriceImpactAmount);
 
         eventEmitter.emitEventLog1(
             "SwapInfo",
-            Cast.toBytes32(market),
+            Cast.toBytes32(params.market),
             eventData
         );
     }

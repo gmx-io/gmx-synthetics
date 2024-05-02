@@ -286,7 +286,7 @@ contract Reader {
         uint256 amountIn,
         Price.Props memory tokenInPrice,
         Price.Props memory tokenOutPrice
-    ) external view returns (int256, int256) {
+    ) external view returns (int256, int256, int256) {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketKey);
         return
             ReaderPricingUtils.getSwapPriceImpact(

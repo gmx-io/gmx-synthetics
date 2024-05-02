@@ -147,7 +147,7 @@ library ReaderDepositUtils {
         }
 
         if (params.priceImpactUsd > 0) {
-            int256 positiveImpactAmount = MarketUtils.getSwapImpactAmountWithCap(
+            (int256 positiveImpactAmount, /* uint256 cappedDiffUsd */) = MarketUtils.getSwapImpactAmountWithCap(
                 params.dataStore,
                 params.market.marketToken,
                 params.tokenOut,
@@ -163,7 +163,7 @@ library ReaderDepositUtils {
         }
 
         if (params.priceImpactUsd < 0) {
-            int256 negativeImpactAmount = MarketUtils.getSwapImpactAmountWithCap(
+            (int256 negativeImpactAmount, /* uint256 cappedDiffUsd */) = MarketUtils.getSwapImpactAmountWithCap(
                 params.dataStore,
                 params.market.marketToken,
                 params.tokenIn,

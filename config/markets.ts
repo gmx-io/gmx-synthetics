@@ -285,14 +285,14 @@ const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
   minCollateralFactorForOpenInterestMultiplierLong: 0,
   minCollateralFactorForOpenInterestMultiplierShort: 0,
 
-  maxLongTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
-  maxShortTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
+  maxLongTokenPoolAmount: expandDecimals(1_000_000_000, 18),
+  maxShortTokenPoolAmount: expandDecimals(1_000_000_000, 18),
 
-  maxLongTokenPoolUsdForDeposit: decimalToFloat(1 * 1000 * 1000 * 1000),
-  maxShortTokenPoolUsdForDeposit: decimalToFloat(1 * 1000 * 1000 * 1000),
+  maxLongTokenPoolUsdForDeposit: decimalToFloat(100_000_000_000),
+  maxShortTokenPoolUsdForDeposit: decimalToFloat(100_000_000_000),
 
-  maxOpenInterestForLongs: decimalToFloat(1 * 1000 * 1000 * 1000),
-  maxOpenInterestForShorts: decimalToFloat(1 * 1000 * 1000 * 1000),
+  maxOpenInterestForLongs: decimalToFloat(100_000_000_000),
+  maxOpenInterestForShorts: decimalToFloat(100_000_000_000),
 
   maxPnlFactorForTradersLongs: decimalToFloat(5, 1), // 50%
   maxPnlFactorForTradersShorts: decimalToFloat(5, 1), // 50%

@@ -1589,8 +1589,8 @@ library MarketUtils {
         address token,
         Price.Props memory tokenPrice,
         int256 priceImpactUsd
-    ) internal returns (int256) {
-        int256 impactAmount = getSwapImpactAmountWithCap(
+    ) internal returns (int256, uint256) {
+        (int256 impactAmount, uint256 cappedDiffUsd) = getSwapImpactAmountWithCap(
             dataStore,
             market,
             token,
@@ -1608,7 +1608,7 @@ library MarketUtils {
             -impactAmount
         );
 
-        return impactAmount;
+        return (impactAmount, cappedDiffUsd);
     }
 
     function getSwapImpactAmountWithCap(
@@ -1617,8 +1617,9 @@ library MarketUtils {
         address token,
         Price.Props memory tokenPrice,
         int256 priceImpactUsd
-    ) internal view returns (int256) {
+    ) internal view returns (int256, uint256) {
         int256 impactAmount;
+        uint256 cappedDiffUsd;
 
         if (priceImpactUsd > 0) {
             // positive impact: minimize impactAmount, use tokenPrice.max
@@ -1627,6 +1628,7 @@ library MarketUtils {
 
             int256 maxImpactAmount = getSwapImpactPoolAmount(dataStore, market, token).toInt256();
             if (impactAmount > maxImpactAmount) {
+                cappedDiffUsd = (impactAmount - maxImpactAmount).toUint256() * tokenPrice.max;
                 impactAmount = maxImpactAmount;
             }
         } else {
@@ -1635,7 +1637,7 @@ library MarketUtils {
             impactAmount = Calc.roundUpMagnitudeDivision(priceImpactUsd, tokenPrice.min);
         }
 
-        return impactAmount;
+        return (impactAmount, cappedDiffUsd);
     }
 
     // @dev get the funding amount to be deducted or distributed
