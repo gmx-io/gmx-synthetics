@@ -262,8 +262,8 @@ library Keys {
     bytes32 public constant POOL_AMOUNT = keccak256(abi.encode("POOL_AMOUNT"));
     // @dev key for max pool amount
     bytes32 public constant MAX_POOL_AMOUNT = keccak256(abi.encode("MAX_POOL_AMOUNT"));
-    // @dev key for max pool amount for deposit
-    bytes32 public constant MAX_POOL_AMOUNT_FOR_DEPOSIT = keccak256(abi.encode("MAX_POOL_AMOUNT_FOR_DEPOSIT"));
+    // @dev key for max pool usd for deposit
+    bytes32 public constant MAX_POOL_USD_FOR_DEPOSIT = keccak256(abi.encode("MAX_POOL_USD_FOR_DEPOSIT"));
     // @dev key for max open interest
     bytes32 public constant MAX_OPEN_INTEREST = keccak256(abi.encode("MAX_OPEN_INTEREST"));
     // @dev key for position impact pool amount
@@ -1001,12 +1001,12 @@ library Keys {
         ));
     }
 
-    // @dev the key for the max amount of pool tokens for deposits
+    // @dev the key for the max usd of pool tokens for deposits
     // @param market the market for the pool
     // @param token the token for the pool
-    function maxPoolAmountForDepositKey(address market, address token) internal pure returns (bytes32) {
+    function maxPoolUsdForDepositKey(address market, address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            MAX_POOL_AMOUNT_FOR_DEPOSIT,
+            MAX_POOL_USD_FOR_DEPOSIT,
             market,
             token
         ));

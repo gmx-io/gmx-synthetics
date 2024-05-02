@@ -438,7 +438,7 @@ library ExecuteDepositUtils {
                 positiveImpactAmount
             );
 
-            // MarketUtils.validatePoolAmountForDeposit is not called here
+            // MarketUtils.validatePoolUsdForDeposit is not called here
             // this is to prevent unnecessary reverts
             // for example, if the pool's long token is close to the deposit cap
             // but the short token is not close to the cap, depositing the short
@@ -486,10 +486,11 @@ library ExecuteDepositUtils {
             (fees.amountAfterFees + fees.feeAmountForPool).toInt256()
         );
 
-        MarketUtils.validatePoolAmountForDeposit(
+        MarketUtils.validatePoolUsdForDeposit(
             params.dataStore,
             _params.market,
-            _params.tokenIn
+            _params.tokenIn,
+            _params.tokenInPrice.max
         );
 
         MarketUtils.validatePoolAmount(
