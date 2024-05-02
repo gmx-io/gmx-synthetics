@@ -18,8 +18,8 @@ export type BaseMarketConfig = {
   maxLongTokenPoolAmount: BigNumberish;
   maxShortTokenPoolAmount: BigNumberish;
 
-  maxLongTokenPoolAmountForDeposit: BigNumberish;
-  maxShortTokenPoolAmountForDeposit: BigNumberish;
+  maxLongTokenPoolUsdForDeposit: BigNumberish;
+  maxShortTokenPoolUsdForDeposit: BigNumberish;
 
   maxOpenInterestForLongs: BigNumberish;
   maxOpenInterestForShorts: BigNumberish;
@@ -113,8 +113,8 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   maxLongTokenPoolAmount: expandDecimals(1_000_000_000, 18),
   maxShortTokenPoolAmount: expandDecimals(1_000_000_000, 18),
 
-  maxLongTokenPoolAmountForDeposit: expandDecimals(1_000_000_000, 18),
-  maxShortTokenPoolAmountForDeposit: expandDecimals(1_000_000_000, 18),
+  maxLongTokenPoolUsdForDeposit: decimalToFloat(1_000_000_000),
+  maxShortTokenPoolUsdForDeposit: decimalToFloat(1_000_000_000),
 
   maxOpenInterestForLongs: expandDecimals(1_000_000_000, 30),
   maxOpenInterestForShorts: expandDecimals(1_000_000_000, 30),
@@ -288,8 +288,8 @@ const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
   maxLongTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
   maxShortTokenPoolAmount: expandDecimals(1 * 1000 * 1000 * 1000, 18),
 
-  maxLongTokenPoolAmountForDeposit: expandDecimals(1 * 1000 * 1000 * 1000, 18),
-  maxShortTokenPoolAmountForDeposit: expandDecimals(1 * 1000 * 1000 * 1000, 18),
+  maxLongTokenPoolUsdForDeposit: decimalToFloat(1 * 1000 * 1000 * 1000),
+  maxShortTokenPoolUsdForDeposit: decimalToFloat(1 * 1000 * 1000 * 1000),
 
   maxOpenInterestForLongs: decimalToFloat(1 * 1000 * 1000 * 1000),
   maxOpenInterestForShorts: decimalToFloat(1 * 1000 * 1000 * 1000),
@@ -334,8 +334,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(2200, 8),
       maxShortTokenPoolAmount: expandDecimals(110_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(2000, 8),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(100_000_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(100_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(100_000_000),
 
       negativePositionImpactFactor: decimalToFloat(15, 11), // 0.05% for ~1,600,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(9, 11), // 0.05% for ~2,700,000 USD of imbalance
@@ -382,8 +382,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(1000, 8),
       maxShortTokenPoolAmount: expandDecimals(1000, 8),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(1000, 8),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(1000, 8),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(100_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(100_000_000),
 
       negativePositionImpactFactor: decimalToFloat(15, 11), // 0.05% for ~1,600,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(9, 11), // 0.05% for ~2,700,000 USD of imbalance
@@ -425,8 +425,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(37_792, 18),
       maxShortTokenPoolAmount: expandDecimals(100_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(34_013, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(90_000_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(90_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(90_000_000),
 
       negativePositionImpactFactor: decimalToFloat(15, 11), // 0.05% for ~1,600,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(9, 11), // 0.05% for ~2,700,000 USD of imbalance
@@ -467,8 +467,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(20_000, 18),
       maxShortTokenPoolAmount: expandDecimals(20_000, 18),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(20_000, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(20_000, 18),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(60_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(60_000_000),
 
       negativePositionImpactFactor: decimalToFloat(15, 11), // 0.05% for ~1,600,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(9, 11), // 0.05% for ~2,700,000 USD of imbalance
@@ -510,8 +510,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(14_120, 18),
       maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(12_700, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(4_500_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(4_500_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(4_500_000),
 
       negativePositionImpactFactor: decimalToFloat(38, 12), // 3.8e-11
       positivePositionImpactFactor: decimalToFloat(19, 12), // 1.9e-11
@@ -554,8 +554,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(1056, 18),
       maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(845, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(2_000_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(2_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(2_000_000),
 
       negativePositionImpactFactor: decimalToFloat(28, 9),
       positivePositionImpactFactor: decimalToFloat(14, 9),
@@ -604,8 +604,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(1200, 18),
       maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(1060, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(3_500_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(3_500_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(3_500_000),
 
       negativePositionImpactFactor: decimalToFloat(26, 9),
       positivePositionImpactFactor: decimalToFloat(13, 9),
@@ -648,8 +648,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(167_700, 9),
       maxShortTokenPoolAmount: expandDecimals(16_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(152_000, 9),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(14_500_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(14_500_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(14_500_000),
 
       negativePositionImpactFactor: decimalToFloat(65, 12), // 6.5e-11
       positivePositionImpactFactor: decimalToFloat(325, 13), // 3.25e-11
@@ -698,8 +698,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(800, 18),
       maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(800, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(1_500_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(1_500_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(1_500_000),
 
       negativePositionImpactFactor: decimalToFloat(36, 9),
       positivePositionImpactFactor: decimalToFloat(18, 9),
@@ -748,8 +748,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(300_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(300_000, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(1_500_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(1_500_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(1_500_000),
 
       negativePositionImpactFactor: decimalToFloat(42, 9),
       positivePositionImpactFactor: decimalToFloat(21, 9),
@@ -794,8 +794,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(600_000, 18),
       maxShortTokenPoolAmount: expandDecimals(8_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(550_000, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(7_200_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(7_200_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(7_200_000),
 
       negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~45,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~90,000 USD of imbalance
@@ -838,8 +838,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(7_524_000, 18),
       maxShortTokenPoolAmount: expandDecimals(15_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(6_796_000, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(14_000_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(14_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(14_000_000),
 
       negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~45,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~90,000 USD of imbalance
@@ -894,8 +894,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(27_800, 18),
       maxShortTokenPoolAmount: expandDecimals(3_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(24_000, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(3_000_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(3_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(3_000_000),
 
       negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~45,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~90,000 USD of imbalance
@@ -935,8 +935,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(83_300, 18),
       maxShortTokenPoolAmount: expandDecimals(3_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(71_500, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(3_000_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(3_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(3_000_000),
 
       negativePositionImpactFactor: decimalToFloat(1, 8), // 0.05% for 50,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
@@ -981,8 +981,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(900, 18),
       maxShortTokenPoolAmount: expandDecimals(3_500_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(770, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(3_000_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(3_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(3_000_000),
 
       negativePositionImpactFactor: decimalToFloat(26, 9),
       positivePositionImpactFactor: decimalToFloat(13, 9),
@@ -1022,8 +1022,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(1515, 18),
       maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(1363, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(4_500_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(4_500_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(4_500_000),
 
       negativePositionImpactFactor: decimalToFloat(26, 9),
       positivePositionImpactFactor: decimalToFloat(13, 9),
@@ -1063,8 +1063,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(750_000, 18),
       maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(500_000, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(2_000_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(2_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(2_000_000),
 
       negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~45,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~90,000 USD of imbalance
@@ -1109,8 +1109,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
 
       negativeSwapImpactFactor: decimalToFloat(15, 10), // 0.01% for 66,667 USD of imbalance
       positiveSwapImpactFactor: decimalToFloat(15, 10), // 0.01% for 66,667 USD of imbalance
@@ -1127,8 +1127,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
 
       negativeSwapImpactFactor: decimalToFloat(5, 9), // 0.01% for 20,000 USD of imbalance
       positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.01% for 20,000 USD of imbalance
@@ -1145,8 +1145,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 18),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(10_000_000, 18),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
 
       negativeSwapImpactFactor: decimalToFloat(5, 9), // 0.01% for 20,000 USD of imbalance
       positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.01% for 20,000 USD of imbalance
@@ -1172,8 +1172,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(350, 8),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(350, 8),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
 
       negativePositionImpactFactor: decimalToFloat(15, 11), // 0.05% for ~1,600,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(9, 11), // 0.05% for ~2,700,000 USD of imbalance
@@ -1215,8 +1215,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(5000, 18),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(5000, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
 
       negativePositionImpactFactor: decimalToFloat(15, 11), // 0.05% for ~1,600,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(9, 11), // 0.05% for ~2,700,000 USD of imbalance
@@ -1252,8 +1252,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(75_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(75_000, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(1_000_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(1_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(1_000_000),
 
       reserveFactorLongs: decimalToFloat(8, 1), // 80%,
       reserveFactorShorts: decimalToFloat(8, 1), // 80%,
@@ -1296,8 +1296,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(75_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(75_000, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(1_000_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(1_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(1_000_000),
 
       reserveFactorLongs: decimalToFloat(8, 1), // 80%
       reserveFactorShorts: decimalToFloat(8, 1), // 80%
@@ -1346,8 +1346,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(50_000, 9),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(50_000, 9),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(1_000_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(1_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(1_000_000),
 
       negativePositionImpactFactor: decimalToFloat(1, 8), // 0.05% for 50,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
@@ -1383,8 +1383,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(75_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(75_000, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(1_000_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(1_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(1_000_000),
 
       reserveFactorLongs: decimalToFloat(8, 1), // 80%,
       reserveFactorShorts: decimalToFloat(8, 1), // 80%,
@@ -1433,8 +1433,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(271_600, 18),
       maxShortTokenPoolAmount: expandDecimals(11_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(246_900, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
 
       negativePositionImpactFactor: decimalToFloat(1, 8), // 0.05% for 50,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
@@ -1472,8 +1472,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDC.e" },
@@ -1484,8 +1484,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
     },
     {
       tokens: { longToken: "USDT", shortToken: "USDT.e" },
@@ -1496,8 +1496,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
     },
     {
       tokens: { longToken: "USDC", shortToken: "DAI.e" },
@@ -1508,8 +1508,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 18),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(10_000_000, 6),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(10_000_000, 18),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
     },
   ],
   arbitrumSepolia: [
@@ -1624,8 +1624,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(10, 18),
       maxShortTokenPoolAmount: expandDecimals(300_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(10, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(300_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(300_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(300_000),
       isDisabled: false,
     },
 
@@ -1799,8 +1799,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(10, 18),
       maxShortTokenPoolAmount: expandDecimals(300_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(10, 18),
-      maxShortTokenPoolAmountForDeposit: expandDecimals(300_000, 6),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(300_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(300_000),
     },
 
     {
