@@ -56,6 +56,30 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         _;
     }
 
+    function setFundingRate(
+        address market,
+        uint256 maxFundingFactorPerSecond
+    ) external onlyKeeper nonReentrant {
+        uint256 limit = dataStore.getUint(Keys.MAX_FUNDING_FACTOR_PER_SECOND_LIMIT);
+
+        if (maxFundingFactorPerSecond > limit) {
+            revert Errors.MaxFundingFactorPerSecondLimitExceeded(maxFundingFactorPerSecond, limit);
+        }
+
+        dataStore.setUint(Keys.maxFundingFactorPerSecondKey(market), maxFundingFactorPerSecond);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "maxFundingFactorPerSecond", maxFundingFactorPerSecond);
+        eventEmitter.emitEventLog1(
+            "ConfigSetFundingRate",
+            Cast.toBytes32(market),
+            eventData
+        );
+    }
+
     function setPriceFeed(
         address token,
         address priceFeed,
@@ -468,6 +492,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.FUNDING_DECREASE_FACTOR_PER_SECOND] = true;
         allowedBaseKeys[Keys.MIN_FUNDING_FACTOR_PER_SECOND] = true;
         allowedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND] = true;
+        allowedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND_LIMIT] = true;
         allowedBaseKeys[Keys.THRESHOLD_FOR_STABLE_FUNDING] = true;
         allowedBaseKeys[Keys.THRESHOLD_FOR_DECREASE_FUNDING] = true;
 

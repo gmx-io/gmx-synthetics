@@ -23,6 +23,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     using EventUtils for EventUtils.StringItems;
 
     using EnumerableSet for EnumerableSet.Bytes32Set;
+    using EnumerableValues for EnumerableSet.Bytes32Set;
 
     uint256 public constant MAX_TIMELOCK_DELAY = 5 days;
 
@@ -49,7 +50,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         _validateTimelockDelay();
     }
 
-    function getPendingActionsCount() internal view returns (bytes32[] memory) {
+    function getPendingActionsCount() internal view returns (uint256) {
         return pendingActionsList.length();
     }
 

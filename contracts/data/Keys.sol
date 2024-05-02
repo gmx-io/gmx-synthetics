@@ -322,6 +322,8 @@ library Keys {
     bytes32 public constant MIN_FUNDING_FACTOR_PER_SECOND = keccak256(abi.encode("MIN_FUNDING_FACTOR_PER_SECOND"));
     // @dev key for max funding factor
     bytes32 public constant MAX_FUNDING_FACTOR_PER_SECOND = keccak256(abi.encode("MAX_FUNDING_FACTOR_PER_SECOND"));
+    // @dev key for max funding factor limit
+    bytes32 public constant MAX_FUNDING_FACTOR_PER_SECOND_LIMIT = keccak256(abi.encode("MAX_FUNDING_FACTOR_PER_SECOND_LIMIT"));
     // @dev key for threshold for stable funding
     bytes32 public constant THRESHOLD_FOR_STABLE_FUNDING = keccak256(abi.encode("THRESHOLD_FOR_STABLE_FUNDING"));
     // @dev key for threshold for decrease funding

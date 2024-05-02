@@ -34,6 +34,7 @@ library Errors {
     error InvalidClaimableFactor(uint256 value);
     error PriceFeedAlreadyExistsForToken(address token);
     error DataStreamIdAlreadyExistsForToken(address token);
+    error MaxFundingFactorPerSecondLimitExceeded(uint256 maxFundingFactorPerSecond, uint256 limit);
 
     // Timelock errors
     error ActionAlreadySignalled();
