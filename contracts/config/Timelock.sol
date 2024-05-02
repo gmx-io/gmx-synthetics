@@ -22,6 +22,8 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+
     uint256 public constant MAX_TIMELOCK_DELAY = 5 days;
 
     DataStore public immutable dataStore;
@@ -30,6 +32,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     uint256 public timelockDelay;
 
     mapping (bytes32 => uint256) public pendingActions;
+    EnumerableSet.Bytes32Set internal pendingActionsList;
 
     constructor(
         RoleStore _roleStore,
@@ -44,6 +47,14 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         timelockDelay = _timelockDelay;
 
         _validateTimelockDelay();
+    }
+
+    function getPendingActionsCount() internal view returns (bytes32[] memory) {
+        return pendingActionsList.length();
+    }
+
+    function getPendingActionsList(uint256 start, uint256 end) internal view returns (bytes32[] memory) {
+        return pendingActionsList.valuesAt(start, end);
     }
 
     // @dev immediately revoke the role of an account
@@ -506,6 +517,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         }
 
         pendingActions[actionKey] = Chain.currentTimestamp() + timelockDelay;
+        pendingActionsList.add(actionKey);
 
         EventUtils.EventLogData memory eventData;
 
@@ -604,6 +616,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
             revert Errors.ActionNotSignalled();
         }
         delete pendingActions[actionKey];
+        pendingActionsList.remove(actionKey);
 
         EventUtils.EventLogData memory eventData;
 
