@@ -21,6 +21,9 @@ export const ACCOUNT_DEPOSIT_LIST = hashString("ACCOUNT_DEPOSIT_LIST");
 export const WITHDRAWAL_LIST = hashString("WITHDRAWAL_LIST");
 export const ACCOUNT_WITHDRAWAL_LIST = hashString("ACCOUNT_WITHDRAWAL_LIST");
 
+export const SHIFT_LIST = hashString("SHIFT_LIST");
+export const ACCOUNT_SHIFT_LIST = hashString("ACCOUNT_SHIFT_LIST");
+
 export const POSITION_LIST = hashString("POSITION_LIST");
 export const ACCOUNT_POSITION_LIST = hashString("ACCOUNT_POSITION_LIST");
 
@@ -187,6 +190,10 @@ export function accountDepositListKey(account) {
 
 export function accountWithdrawalListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_WITHDRAWAL_LIST, account]);
+}
+
+export function accountShiftListKey(account) {
+  return hashData(["bytes32", "address"], [ACCOUNT_SHIFT_LIST, account]);
 }
 
 export function accountPositionListKey(account) {

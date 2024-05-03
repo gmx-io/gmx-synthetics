@@ -43,6 +43,9 @@ function setSampleItemNumbers({ emptyStoreItem, overrideValues, sampleItem }) {
 }
 
 function setSampleItemFlags({ emptyStoreItem, sampleItem, index }) {
+  if (emptyStoreItem.flags === undefined) {
+    return;
+  }
   Object.keys(emptyStoreItem.flags).forEach((key, flagIndex) => {
     if (isNaN(key)) {
       const adjustedIndex = flagIndex - Object.keys(emptyStoreItem.flags).length / 2;
@@ -67,11 +70,13 @@ async function validateFetchedItemAfterSet({ emptyStoreItem, getItem, dataStore,
     }
   });
 
-  Object.keys(emptyStoreItem.flags).forEach((key) => {
-    if (isNaN(key)) {
-      expect(fetchedItem.flags[key]).eq(sampleItem.flags[key]);
-    }
-  });
+  if (emptyStoreItem.flags !== undefined) {
+    Object.keys(emptyStoreItem.flags).forEach((key) => {
+      if (isNaN(key)) {
+        expect(fetchedItem.flags[key]).eq(sampleItem.flags[key]);
+      }
+    });
+  }
 }
 
 async function validateFetchedItemAfterRemove({ getItem, dataStore, itemKey, emptyStoreItem }) {
@@ -93,11 +98,13 @@ async function validateFetchedItemAfterRemove({ getItem, dataStore, itemKey, emp
     }
   });
 
-  Object.keys(emptyStoreItem.flags).forEach((key) => {
-    if (isNaN(key)) {
-      expect(fetchedItem.flags[key]).eq(false);
-    }
-  });
+  if (emptyStoreItem.flags !== undefined) {
+    Object.keys(emptyStoreItem.flags).forEach((key) => {
+      if (isNaN(key)) {
+        expect(fetchedItem.flags[key]).eq(false);
+      }
+    });
+  }
 }
 
 export async function validateStoreUtils({
@@ -125,7 +132,9 @@ export async function validateStoreUtils({
 
   expect(Object.keys(emptyStoreItem).length).eq(expectedPropsLength * 2);
 
-  for (let i = 0; i < Object.keys(emptyStoreItem.flags).length / 2; i++) {
+  const loopCount = emptyStoreItem.flags === undefined ? 1 : Object.keys(emptyStoreItem.flags).length / 2;
+
+  for (let i = 0; i < loopCount; i++) {
     const sampleItem = {
       addresses: {},
       numbers: {},

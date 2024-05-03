@@ -79,6 +79,7 @@ export async function deployFixture() {
   const marketStoreUtils = await hre.ethers.getContract("MarketStoreUtils");
   const depositStoreUtils = await hre.ethers.getContract("DepositStoreUtils");
   const withdrawalStoreUtils = await hre.ethers.getContract("WithdrawalStoreUtils");
+  const shiftStoreUtils = await hre.ethers.getContract("ShiftStoreUtils");
   const positionStoreUtils = await hre.ethers.getContract("PositionStoreUtils");
   const orderStoreUtils = await hre.ethers.getContract("OrderStoreUtils");
   const decreasePositionUtils = await hre.ethers.getContract("DecreasePositionUtils");
@@ -214,6 +215,7 @@ export async function deployFixture() {
       marketStoreUtils,
       depositStoreUtils,
       withdrawalStoreUtils,
+      shiftStoreUtils,
       positionStoreUtils,
       orderStoreUtils,
       decreasePositionUtils,

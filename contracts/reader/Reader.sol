@@ -8,6 +8,7 @@ import "../market/MarketStoreUtils.sol";
 
 import "../deposit/DepositStoreUtils.sol";
 import "../withdrawal/WithdrawalStoreUtils.sol";
+import "../shift/ShiftStoreUtils.sol";
 
 import "../position/Position.sol";
 import "../position/PositionUtils.sol";
@@ -44,6 +45,10 @@ contract Reader {
 
     function getWithdrawal(DataStore dataStore, bytes32 key) external view returns (Withdrawal.Props memory) {
         return WithdrawalStoreUtils.get(dataStore, key);
+    }
+
+    function getShift(DataStore dataStore, bytes32 key) external view returns (Shift.Props memory) {
+        return ShiftStoreUtils.get(dataStore, key);
     }
 
     function getPosition(DataStore dataStore, bytes32 key) external view returns (Position.Props memory) {
