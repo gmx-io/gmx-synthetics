@@ -406,6 +406,8 @@ Borrowing fees are calculated as `borrowing factor * (open interest in usd + pen
 
 For example if the borrowing factor per second is 1 / 50,000, and the borrowing exponent factor is 1, and the long open interest is $150,000 with +$50,000 of pending pnl, and the pool has $250,000 worth of tokens, the borrowing fee per second for longs would be `(1 / 50,000) * (150,000 + 50,000) / 250,000 => 0.000016 => 0.0016%`.
 
+Alternatively, OPTIMAL_USAGE_FACTOR, BASE_BORROWING_FACTOR and ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR values can be set for a market, this allows for a borrow rate that increases at a slower pace below the optimal usage factor and at a faster rate above the optimal usage factor.
+
 There is also an option to set a skipBorrowingFeeForSmallerSide flag, this would result in the borrowing fee for the smaller side being set to zero. For example, if there are more longs than shorts and skipBorrowingFeeForSmallerSide is true, then the borrowing fee for shorts would be zero.
 
 ## Price Impact
