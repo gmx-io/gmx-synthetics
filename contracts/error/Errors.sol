@@ -78,6 +78,9 @@ library Errors {
     error InvalidGlpAmount(uint256 totalGlpAmountToRedeem, uint256 totalGlpAmount);
     error InvalidExecutionFeeForMigration(uint256 totalExecutionFee, uint256 msgValue);
 
+    // GLVHandler errors
+    error InvalidGlvDepositReceiver(address receiver, address expectedReceiver);
+
     // OrderHandler errors
     error OrderNotUpdatable(uint256 orderType);
     error InvalidKeeperForFrozenOrder(address keeper);
