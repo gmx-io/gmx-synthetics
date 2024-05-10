@@ -78,6 +78,11 @@ library Keys {
     // @dev key for the account shift list
     bytes32 public constant ACCOUNT_SHIFT_LIST = keccak256(abi.encode("ACCOUNT_SHIFT_LIST"));
 
+    // @dev key for the glv deposit list
+    bytes32 public constant GLV_DEPOSIT_LIST = keccak256(abi.encode("GLV_DEPOSIT_LIST"));
+    // @dev key for the account glv deposit list
+    bytes32 public constant ACCOUNT_GLV_DEPOSIT_LIST = keccak256(abi.encode("ACCOUNT_GLV_DEPOSIT_LIST"));
+
     // @dev key for the position list
     bytes32 public constant POSITION_LIST = keccak256(abi.encode("POSITION_LIST"));
     // @dev key for the account position list
@@ -396,6 +401,12 @@ library Keys {
     // @param account the account for the list
     function accountShiftListKey(address account) internal pure returns (bytes32) {
         return keccak256(abi.encode(ACCOUNT_SHIFT_LIST, account));
+    }
+
+    // @dev key for the account glv deposit list
+    // @param account the account for the list
+    function accountGlvDepositListKey(address account) internal pure returns (bytes32) {
+        return keccak256(abi.encode(ACCOUNT_GLV_DEPOSIT_LIST, account));
     }
 
     // @dev key for the account position list
