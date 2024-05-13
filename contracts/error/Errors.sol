@@ -80,6 +80,9 @@ library Errors {
 
     // GLVHandler errors
     error InvalidGlvDepositReceiver(address receiver, address expectedReceiver);
+    error InvalidGlvDepositCallbackContract(address callbackContract, address expectedCallbackContract);
+    error GlvDepositUnwrapNativeTokenNotFalse();
+    error EmptyGlvPreDeposit(bytes32 key);
 
     // OrderHandler errors
     error OrderNotUpdatable(uint256 orderType);

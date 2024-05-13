@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../bank/StrictBank.sol";
 
-contract GLV is ERC20, StrictBank {
+contract Glv is ERC20, StrictBank {
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,

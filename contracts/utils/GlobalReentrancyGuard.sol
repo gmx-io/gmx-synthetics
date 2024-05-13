@@ -21,12 +21,12 @@ abstract contract GlobalReentrancyGuard {
     }
 
     modifier globalNonReentrant() {
-        _nonReentrantBefore();
+        _globalNonReentrantBefore();
         _;
-        _nonReentrantAfter();
+        _globalNonReentrantAfter();
     }
 
-    function _nonReentrantBefore() private {
+    function _globalNonReentrantBefore() private {
         uint256 status = dataStore.getUint(Keys.REENTRANCY_GUARD_STATUS);
 
         require(status == NOT_ENTERED, "ReentrancyGuard: reentrant call");
@@ -34,7 +34,7 @@ abstract contract GlobalReentrancyGuard {
         dataStore.setUint(Keys.REENTRANCY_GUARD_STATUS, ENTERED);
     }
 
-    function _nonReentrantAfter() private {
+    function _globalNonReentrantAfter() private {
         dataStore.setUint(Keys.REENTRANCY_GUARD_STATUS, NOT_ENTERED);
     }
 }
