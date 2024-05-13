@@ -1690,6 +1690,8 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+
+      minCollateralFactor: decimalToFloat(5, 3), // 0.5%
     },
     {
       tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "DAI" },
@@ -1707,6 +1709,8 @@ const config: {
 
       maxOpenInterestForLongs: decimalToFloat(250_000),
       maxOpenInterestForShorts: decimalToFloat(200_000),
+
+      minCollateralFactor: decimalToFloat(5, 3), // 0.5%
     },
     {
       tokens: { indexToken: "SOL", longToken: "WETH", shortToken: "USDC" },
