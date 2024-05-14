@@ -1644,7 +1644,11 @@ const config: {
     },
   ],
   avalancheFuji: [
-    { tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" } },
+    {
+      tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" },
+      negativeSwapImpactFactor: percentageToFloat("0.000001%"),
+      positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+    },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
       virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
@@ -1657,24 +1661,41 @@ const config: {
 
       maxOpenInterestForLongs: decimalToFloat(55_000),
       maxOpenInterestForShorts: decimalToFloat(40_000),
+
+      negativeSwapImpactFactor: percentageToFloat("0.000001%"),
+      positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "DAI" },
       virtualMarketId: hashString("SPOT:AVAX/USD"),
       virtualTokenIdForIndexToken: "0x275d2a6e341e6a078d4eee59b08907d1e50825031c5481f9551284f4b7ee2fb9",
+
+      negativeSwapImpactFactor: percentageToFloat("0.000001%"),
+      positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
       tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "USDC" },
       virtualTokenIdForIndexToken: "0x275d2a6e341e6a078d4eee59b08907d1e50825031c5481f9551284f4b7ee2fb9",
+
+      negativeSwapImpactFactor: percentageToFloat("0.000001%"),
+      positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
       tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "USDC" },
       virtualMarketId: "0x11111137e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481f",
       virtualTokenIdForIndexToken: "0x04533137e2e8ae1c11111111a0dd36e023e0d6217198f889f9eb9c2a6727481d",
+
+      minCollateralFactor: decimalToFloat(5, 3), // 0.5%
+
+      negativeSwapImpactFactor: percentageToFloat("0.000001%"),
+      positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
       tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "DAI" },
       virtualMarketId: "0x11111137e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481f",
+
+      negativeSwapImpactFactor: percentageToFloat("0.000001%"),
+      positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
       tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "WBTC" },
@@ -1685,19 +1706,30 @@ const config: {
 
       maxOpenInterestForLongs: decimalToFloat(250_000),
       maxOpenInterestForShorts: decimalToFloat(200_000),
+
+      minCollateralFactor: decimalToFloat(5, 3), // 0.5%
     },
     {
       tokens: { indexToken: "SOL", longToken: "WETH", shortToken: "USDC" },
       virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
+
+      negativeSwapImpactFactor: percentageToFloat("0.000001%"),
+      positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDT" },
       swapOnly: true,
+
+      negativeSwapImpactFactor: percentageToFloat("0.000001%"),
+      positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "DAI" },
       positionImpactPoolDistributionRate: expandDecimals(12, 33), // ~10 DOGE per day
       minPositionImpactPoolAmount: expandDecimals(1, 8),
+
+      negativeSwapImpactFactor: percentageToFloat("0.000001%"),
+      positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     { tokens: { indexToken: "LINK", longToken: "WETH", shortToken: "DAI" } },
     {
@@ -1707,12 +1739,40 @@ const config: {
       maxPositionImpactFactorForLiquidations: decimalToFloat(5, 4), // 0.05%
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(15, 7),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(15, 7),
+
+      negativeSwapImpactFactor: percentageToFloat("0.000001%"),
+      positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
-    { tokens: { indexToken: "ADA", longToken: "WETH", shortToken: "DAI" } },
-    { tokens: { indexToken: "TRX", longToken: "WETH", shortToken: "DAI" } },
-    { tokens: { indexToken: "MATIC", longToken: "WETH", shortToken: "USDC" } },
-    { tokens: { indexToken: "DOT", longToken: "WETH", shortToken: "USDC" } },
-    { tokens: { indexToken: "UNI", longToken: "WETH", shortToken: "USDC" } },
+    {
+      tokens: { indexToken: "ADA", longToken: "WETH", shortToken: "DAI" },
+
+      negativeSwapImpactFactor: percentageToFloat("0.000001%"),
+      positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+    },
+    {
+      tokens: { indexToken: "TRX", longToken: "WETH", shortToken: "DAI" },
+
+      negativeSwapImpactFactor: percentageToFloat("0.000001%"),
+      positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+    },
+    {
+      tokens: { indexToken: "MATIC", longToken: "WETH", shortToken: "USDC" },
+
+      negativeSwapImpactFactor: percentageToFloat("0.000001%"),
+      positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+    },
+    {
+      tokens: { indexToken: "DOT", longToken: "WETH", shortToken: "USDC" },
+
+      negativeSwapImpactFactor: percentageToFloat("0.000001%"),
+      positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+    },
+    {
+      tokens: { indexToken: "UNI", longToken: "WETH", shortToken: "USDC" },
+
+      negativeSwapImpactFactor: percentageToFloat("0.000001%"),
+      positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+    },
     {
       tokens: {
         indexToken: "TEST",
@@ -1746,6 +1806,9 @@ const config: {
       borrowingFactorForShorts: decimalToFloat(3, 7), // 0.0000003, 0.00003% / second, 946% per year if the pool is 100% utilized
 
       fundingFactor: decimalToFloat(16, 7), // ~5000% per year for a 100% skew
+
+      negativeSwapImpactFactor: percentageToFloat("0.000001%"),
+      positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
       tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "DAI" },
@@ -1754,6 +1817,9 @@ const config: {
       borrowingFactorForShorts: decimalToFloat(3, 7), // 0.0000003, 0.00003% / second, 946% per year if the pool is 100% utilized
 
       fundingFactor: decimalToFloat(16, 7), // ~5000% per year for a 100% skew
+
+      negativeSwapImpactFactor: percentageToFloat("0.000001%"),
+      positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
   ],
   hardhat: [
