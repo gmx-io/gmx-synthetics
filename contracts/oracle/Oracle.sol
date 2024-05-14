@@ -70,7 +70,15 @@ contract Oracle is RoleModule {
     function setPrices(
         OracleUtils.SetPricesParams memory params
     ) external onlyController {
-        OracleUtils.ValidatedPrice[] memory prices = _validatePrices(params);
+        OracleUtils.ValidatedPrice[] memory prices = _validatePrices(params, false);
+
+        _setPrices(prices);
+    }
+
+    function setPricesForAtomicAction(
+        OracleUtils.SetPricesParams memory params
+    ) external onlyController {
+        OracleUtils.ValidatedPrice[] memory prices = _validatePrices(params, true);
 
         _setPrices(prices);
     }
@@ -128,21 +136,10 @@ contract Oracle is RoleModule {
     }
 
     function validatePrices(
-        OracleUtils.SetPricesParams memory params
+        OracleUtils.SetPricesParams memory params,
+        bool forAtomicAction
     ) external onlyController returns (OracleUtils.ValidatedPrice[] memory) {
-        return _validatePrices(params);
-    }
-
-    function validateAtomicProviders(
-        OracleUtils.SetPricesParams calldata oracleParams
-    ) external view {
-        for (uint256 i; i < oracleParams.providers.length; i++) {
-            address provider = oracleParams.providers[i];
-            bool isAtomicProvider = dataStore.getBool(Keys.isAtomicOracleProviderKey(provider));
-            if (!isAtomicProvider) {
-                revert Errors.NonAtomicOracleProvider(provider);
-            }
-        }
+        return _validatePrices(params, forAtomicAction);
     }
 
     // @dev validate and set prices
@@ -198,7 +195,8 @@ contract Oracle is RoleModule {
     }
 
     function _validatePrices(
-        OracleUtils.SetPricesParams memory params
+        OracleUtils.SetPricesParams memory params,
+        bool forAtomicAction
     ) internal returns (OracleUtils.ValidatedPrice[] memory) {
         if (params.tokens.length != params.providers.length) {
             revert Errors.InvalidOracleSetPricesProvidersParam(params.tokens.length, params.providers.length);
@@ -221,10 +219,27 @@ contract Oracle is RoleModule {
             }
 
             address token = params.tokens[i];
-            address expectedProvider = dataStore.getAddress(Keys.oracleProviderForTokenKey(token));
 
-            if (provider != expectedProvider) {
-                revert Errors.InvalidOracleProviderForToken(provider, expectedProvider);
+            // if the action is atomic then only validate that the provider is an
+            // atomic provider
+            // else, validate that the provider matches the oracleProviderForToken
+            //
+            // since for atomic actions, any atomic provider can be used, it is
+            // recommended that only one atomic provider is configured per token
+            // otherwise there is a risk that if there is a difference in pricing
+            // between atomic oracle providers for a token, a user could use that
+            // to gain a profit by alternating actions between the two atomic
+            // providers
+            if (forAtomicAction) {
+                bool isAtomicProvider = dataStore.getBool(Keys.isAtomicOracleProviderKey(provider));
+                if (!isAtomicProvider) {
+                    revert Errors.NonAtomicOracleProvider(provider);
+                }
+            } else {
+                address expectedProvider = dataStore.getAddress(Keys.oracleProviderForTokenKey(token));
+                if (provider != expectedProvider) {
+                    revert Errors.InvalidOracleProviderForToken(provider, expectedProvider);
+                }
             }
 
             bytes memory data = params.data[i];

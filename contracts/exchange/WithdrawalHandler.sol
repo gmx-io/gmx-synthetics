@@ -119,10 +119,9 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
     )
         external
         globalNonReentrant
-        withOraclePrices(oracleParams)
+        withOraclePricesForAtomicAction(oracleParams)
     {
         FeatureUtils.validateFeature(dataStore, Keys.executeAtomicWithdrawalFeatureDisabledKey(address(this)));
-        oracle.validateAtomicProviders(oracleParams);
 
         address account = msg.sender;
 
