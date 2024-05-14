@@ -1273,11 +1273,16 @@ library MarketUtils {
         configCache.fundingIncreaseFactorPerSecond = dataStore.getUint(Keys.fundingIncreaseFactorPerSecondKey(market));
 
         if (configCache.fundingIncreaseFactorPerSecond == 0) {
-            cache.fundingFactor = getFundingFactor(dataStore, market);
+            uint256 fundingFactor = getFundingFactor(dataStore, market);
+            uint256 maxFundingFactorPerSecond = dataStore.getUint(Keys.maxFundingFactorPerSecondKey(market));
+            if (fundingFactor > maxFundingFactorPerSecond) {
+                fundingFactor = maxFundingFactorPerSecond;
+            }
 
             // if there is no fundingIncreaseFactorPerSecond then return the static fundingFactor based on open interest difference
+            uint256 fundingFactorPerSecond = Precision.applyFactor(cache.diffUsdToOpenInterestFactor, cache.fundingFactor);
             return (
-                Precision.applyFactor(cache.diffUsdToOpenInterestFactor, cache.fundingFactor),
+                fundingFactorPerSecond,
                 longOpenInterest > shortOpenInterest,
                 0
             );
