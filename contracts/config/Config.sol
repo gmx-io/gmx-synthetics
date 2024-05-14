@@ -549,6 +549,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         }
 
         if (
+            baseKey == Keys.BORROWING_FACTOR ||
             baseKey == Keys.BASE_BORROWING_FACTOR ||
             baseKey == Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR
         ) {
