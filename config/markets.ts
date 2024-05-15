@@ -1421,11 +1421,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      reserveFactorLongs: percentageToFloat("125%"),
-      reserveFactorShorts: percentageToFloat("125%"),
+      reserveFactorLongs: percentageToFloat("155%"),
+      reserveFactorShorts: percentageToFloat("155%"),
 
-      openInterestReserveFactorLongs: percentageToFloat("120%"),
-      openInterestReserveFactorShorts: percentageToFloat("120%"),
+      openInterestReserveFactorLongs: percentageToFloat("150%"),
+      openInterestReserveFactorShorts: percentageToFloat("150%"),
 
       maxLongTokenPoolAmount: expandDecimals(271_600, 18),
       maxShortTokenPoolAmount: expandDecimals(11_000_000, 6),
@@ -1456,9 +1456,9 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      // for OI reserve factor = 100%
-      borrowingFactorForLongs: decimalToFloat(2220, 11), // 0.0000000222 * 100% max reserve, 70% per year
-      borrowingFactorForShorts: decimalToFloat(2220, 11),
+      // for OI reserve factor = 150%
+      borrowingFactorForLongs: decimalToFloat(2000, 11), // 0.00000002 * 150% max reserve, 94.6% per year
+      borrowingFactorForShorts: decimalToFloat(2000, 11),
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDT.e" },
