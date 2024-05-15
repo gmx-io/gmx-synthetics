@@ -262,11 +262,14 @@ library OrderUtils {
         bytes32 key,
         address keeper,
         uint256 startingGas,
+        bool isExternalCall,
         string memory reason,
         bytes memory reasonBytes
     ) public {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
-        startingGas -= gasleft() / 63;
+        if (isExternalCall) {
+            startingGas -= gasleft() / 63;
+        }
 
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         BaseOrderUtils.validateNonEmptyOrder(order);
@@ -385,6 +388,7 @@ library OrderUtils {
                 orderKeys[i],
                 keeper, // keeper
                 gasleft(), // startingGas
+                false, // isExternalCall
                 "AUTO_CANCEL", // reason
                 "" // reasonBytes
             );
