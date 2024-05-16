@@ -114,16 +114,16 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
     }
 
     function executeAtomicWithdrawal(
+        address account,
         WithdrawalUtils.CreateWithdrawalParams calldata params,
         OracleUtils.SetPricesParams calldata oracleParams
     )
         external
         globalNonReentrant
+        onlyController
         withOraclePricesForAtomicAction(oracleParams)
     {
         FeatureUtils.validateFeature(dataStore, Keys.executeAtomicWithdrawalFeatureDisabledKey(address(this)));
-
-        address account = msg.sender;
 
         bytes32 key = WithdrawalUtils.createWithdrawal(
             dataStore,

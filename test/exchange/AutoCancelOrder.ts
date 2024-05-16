@@ -4,7 +4,14 @@ import { deployFixture } from "../../utils/fixture";
 import { getEventData } from "../../utils/event";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
-import { OrderType, getOrderCount, getAccountOrderCount, createOrder, handleOrder } from "../../utils/order";
+import {
+  OrderType,
+  getOrderCount,
+  getAccountOrderCount,
+  getOrderKeys,
+  createOrder,
+  handleOrder,
+} from "../../utils/order";
 import { getAccountPositionCount } from "../../utils/position";
 
 describe("Exchange.AutoCancelOrder", () => {
@@ -57,6 +64,34 @@ describe("Exchange.AutoCancelOrder", () => {
     expect(await getOrderCount(dataStore)).eq(1);
     expect(await getAccountOrderCount(dataStore, user0.address)).eq(1);
 
+    const { key: orderKey } = await createOrder(fixture, {
+      market: ethUsdMarket,
+      initialCollateralToken: wnt,
+      initialCollateralDeltaAmount: 0,
+      sizeDeltaUsd: decimalToFloat(200 * 1000),
+      acceptablePrice: expandDecimals(4800, 12),
+      orderType: OrderType.StopLossDecrease,
+      isLong: true,
+      autoCancel: false,
+    });
+
+    expect(await getOrderCount(dataStore)).eq(2);
+    expect(await getAccountOrderCount(dataStore, user0.address)).eq(2);
+
+    await createOrder(fixture, {
+      market: ethUsdMarket,
+      initialCollateralToken: wnt,
+      initialCollateralDeltaAmount: 0,
+      sizeDeltaUsd: decimalToFloat(200 * 1000),
+      acceptablePrice: expandDecimals(4800, 12),
+      orderType: OrderType.StopLossDecrease,
+      isLong: true,
+      autoCancel: true,
+    });
+
+    expect(await getOrderCount(dataStore)).eq(3);
+    expect(await getAccountOrderCount(dataStore, user0.address)).eq(3);
+
     await handleOrder(fixture, {
       create: {
         market: ethUsdMarket,
@@ -78,8 +113,8 @@ describe("Exchange.AutoCancelOrder", () => {
     });
 
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
-    expect(await getOrderCount(dataStore)).eq(1);
-    expect(await getAccountOrderCount(dataStore, user0.address)).eq(1);
+    expect(await getOrderCount(dataStore)).eq(3);
+    expect(await getAccountOrderCount(dataStore, user0.address)).eq(3);
 
     await handleOrder(fixture, {
       create: {
@@ -102,7 +137,8 @@ describe("Exchange.AutoCancelOrder", () => {
     });
 
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
-    expect(await getOrderCount(dataStore)).eq(0);
-    expect(await getAccountOrderCount(dataStore, user0.address)).eq(0);
+    expect(await getOrderCount(dataStore)).eq(1);
+    expect(await getAccountOrderCount(dataStore, user0.address)).eq(1);
+    expect(await getOrderKeys(dataStore, 0, 10)).eql([orderKey]);
   });
 });

@@ -4,7 +4,7 @@ import { mine } from "@nomicfoundation/hardhat-network-helpers";
 import { logGasUsage } from "./gas";
 import { bigNumberify, expandDecimals } from "./math";
 import { executeWithOracleParams } from "./exchange";
-import { parseLogs } from "./event";
+import { parseLogs, getEventDataValue } from "./event";
 import { getCancellationReason, getErrorString } from "./error";
 
 import * as keys from "./keys";
@@ -111,8 +111,11 @@ export async function createOrder(fixture, overrides) {
     label: gasUsageLabel,
   });
 
-  const result = { txReceipt };
-  return result;
+  const logs = parseLogs(fixture, txReceipt);
+
+  const key = getEventDataValue(logs, "OrderCreated", "key");
+
+  return { txReceipt, logs, key };
 }
 
 export async function executeOrder(fixture, overrides = {}) {
