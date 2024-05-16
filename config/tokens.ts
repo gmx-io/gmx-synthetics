@@ -492,6 +492,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensCo
   const tokens = config[hre.network.name];
 
   for (const [tokenSymbol, token] of Object.entries(tokens as TokensConfig)) {
+    (token as any).symbol = tokenSymbol;
     if (token.synthetic) {
       (token as any).address = getSyntheticTokenAddress(hre.network.config.chainId, tokenSymbol);
     }
