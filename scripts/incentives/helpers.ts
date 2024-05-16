@@ -7,7 +7,6 @@ import { bigNumberify, expandDecimals, formatAmount } from "../../utils/math";
 import fetch from "node-fetch";
 
 import receiverOverridesMap from "./receiverOverrides";
-import { getBatchSenderCalldata } from "./batchSend";
 
 for (const address of Object.keys(receiverOverridesMap)) {
   const checksumAddress = ethers.utils.getAddress(address);
