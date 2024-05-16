@@ -646,7 +646,7 @@ const config: {
       ...baseMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(167_700, 9),
-      maxShortTokenPoolAmount: expandDecimals(16_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(17_500_000, 6),
 
       maxLongTokenPoolUsdForDeposit: decimalToFloat(14_500_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(14_500_000),
@@ -1424,11 +1424,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      reserveFactorLongs: percentageToFloat("125%"),
-      reserveFactorShorts: percentageToFloat("125%"),
+      reserveFactorLongs: percentageToFloat("155%"),
+      reserveFactorShorts: percentageToFloat("155%"),
 
-      openInterestReserveFactorLongs: percentageToFloat("120%"),
-      openInterestReserveFactorShorts: percentageToFloat("120%"),
+      openInterestReserveFactorLongs: percentageToFloat("150%"),
+      openInterestReserveFactorShorts: percentageToFloat("150%"),
 
       maxLongTokenPoolAmount: expandDecimals(271_600, 18),
       maxShortTokenPoolAmount: expandDecimals(11_000_000, 6),
@@ -1459,9 +1459,9 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      // for OI reserve factor = 100%
-      borrowingFactorForLongs: decimalToFloat(2220, 11), // 0.0000000222 * 100% max reserve, 70% per year
-      borrowingFactorForShorts: decimalToFloat(2220, 11),
+      // for OI reserve factor = 150%
+      borrowingFactorForLongs: decimalToFloat(2000, 11), // 0.00000002 * 150% max reserve, 94.6% per year
+      borrowingFactorForShorts: decimalToFloat(2000, 11),
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDT.e" },
@@ -1688,10 +1688,10 @@ const config: {
       virtualMarketId: "0x11111137e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481f",
       virtualTokenIdForIndexToken: "0x04533137e2e8ae1c11111111a0dd36e023e0d6217198f889f9eb9c2a6727481d",
 
+      minCollateralFactor: decimalToFloat(5, 3), // 0.5%
+
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
-
-      minCollateralFactor: decimalToFloat(5, 3), // 0.5%
     },
     {
       tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "DAI" },
@@ -1736,9 +1736,6 @@ const config: {
     },
     {
       tokens: { indexToken: "LINK", longToken: "WETH", shortToken: "DAI" },
-
-      negativeSwapImpactFactor: percentageToFloat("0.000001%"),
-      positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
       tokens: { indexToken: "BNB", longToken: "WETH", shortToken: "DAI" },
