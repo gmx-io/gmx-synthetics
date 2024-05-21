@@ -116,7 +116,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         bytes32 feedId,
         uint256 dataStreamMultiplier
     ) external onlyTimelockAdmin nonReentrant {
-        if (Keys.dataStreamIdKey(token) != bytes32(0)) {
+        if (dataStore.getBytes32(Keys.dataStreamIdKey(token)) != bytes32(0)) {
             revert Errors.DataStreamIdAlreadyExistsForToken(token);
         }
 
