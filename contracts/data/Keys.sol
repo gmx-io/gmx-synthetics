@@ -475,7 +475,7 @@ library Keys {
     // @dev key for shift gas limit
     // @return key for shift gas limit
     function shiftGasLimitKey() internal pure returns (bytes32) {
-        return WITHDRAWAL_GAS_LIMIT;
+        return SHIFT_GAS_LIMIT;
     }
 
     // @dev key for single swap gas limit
