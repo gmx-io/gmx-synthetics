@@ -25,6 +25,10 @@ contract ExternalHandler is IExternalHandler, ReentrancyGuard {
     using Address for address;
     using SafeERC20 for IERC20;
 
+    // @notice refundTokens should be unique, this is because the refund loop
+    // sends the full refund token balance on each iteration, so if there are
+    // duplicate refund token addresses, then only the first refundReceiver
+    // for that token would receive the tokens
     function makeExternalCalls(
         address[] memory targets,
         bytes[] memory dataList,
