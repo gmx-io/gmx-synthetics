@@ -353,7 +353,7 @@ const config: {
       maxOpenInterestForLongs: decimalToFloat(90_000_000),
       maxOpenInterestForShorts: decimalToFloat(90_000_000),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(79, 14), // 0.0000000000079, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(71, 14), // 0.0000000000071, at least ~4 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
       maxFundingFactorPerSecond: decimalToFloat(10, 9), // 0.000001%,  0.0864% per day, ~31.5% per year
@@ -361,8 +361,8 @@ const config: {
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       // factor in open interest reserve factor 120%
-      borrowingFactorForLongs: decimalToFloat(985, 14), // 9.85E-12, 50% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(985, 14), // 9.85E-12, 50% at 100% utilisation
+      borrowingFactorForLongs: decimalToFloat(788, 14), // 7.88E-12, 40% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(788, 14), // 7.88E-12, 40% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(14, 1), // 1.4
       borrowingExponentFactorForShorts: decimalToFloat(14, 1), // 1.4
@@ -406,8 +406,8 @@ const config: {
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       // factor in open interest reserve factor 45%
-      borrowingFactorForLongs: decimalToFloat(353, 10), // 3.53-8, 50% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(353, 10), // 3.53-8, 50% at 100% utilisation
+      borrowingFactorForLongs: decimalToFloat(282, 10), // 2.82-8, 40% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(282, 10), // 2.82-8, 40% at 100% utilisation
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
@@ -444,7 +444,7 @@ const config: {
       maxOpenInterestForLongs: decimalToFloat(80_000_000),
       maxOpenInterestForShorts: decimalToFloat(80_000_000),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(79, 14), // 0.0000000000079, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(71, 14), // 0.0000000000071, at least ~4 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
       maxFundingFactorPerSecond: decimalToFloat(10, 9), // 0.000001%,  0.0864% per day, ~31.5% per year
@@ -452,8 +452,8 @@ const config: {
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       // factor in open interest reserve factor 130%
-      borrowingFactorForLongs: decimalToFloat(930, 14), // 9.30E-12, 50% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(930, 14), // 9.30E-12, 50% at 100% utilisation
+      borrowingFactorForLongs: decimalToFloat(744, 14), // 7.44E-12, 40% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(744, 14), // 7.44E-12, 40% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(14, 1), // 1.4
       borrowingExponentFactorForShorts: decimalToFloat(14, 1), // 1.4
@@ -491,8 +491,8 @@ const config: {
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       // factor in open interest reserve factor 35%
-      borrowingFactorForLongs: decimalToFloat(450, 10), // 4.50-8, 50% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(450, 10), // 4.50-8, 50% at 100% utilisation
+      borrowingFactorForLongs: decimalToFloat(360, 10), // 3.60-8, 40% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(360, 10), // 3.60-8, 40% at 100% utilisation
     },
     {
       tokens: { indexToken: "BNB", longToken: "BNB", shortToken: "USDC" },
@@ -575,8 +575,8 @@ const config: {
       openInterestReserveFactorShorts: percentageToFloat("120%"),
 
       // factor in open interest reserve factor 120%
-      borrowingFactorForLongs: decimalToFloat(223, 13), // 2.23E-11, ~80% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(223, 13), // 2.23E-11, ~80% at 100% utilisation
+      borrowingFactorForLongs: decimalToFloat(168, 13), // 1.68E-11, ~58% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(168, 13), // 1.68E-11, ~58% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
@@ -619,8 +619,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
 
       // factor in open interest reserve factor 120%
-      borrowingFactorForLongs: decimalToFloat(120, 13), // 1.20-11, ~80% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(120, 13), // 1.20-11, ~80% at 100% utilisation
+      borrowingFactorForLongs: decimalToFloat(90, 13), // 9.00-12, ~58% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(90, 13), // 9.00-12, ~58% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
@@ -646,7 +646,7 @@ const config: {
       ...baseMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(167_700, 9),
-      maxShortTokenPoolAmount: expandDecimals(17_500_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(19_000_000, 6),
 
       maxLongTokenPoolUsdForDeposit: decimalToFloat(14_500_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(14_500_000),
@@ -669,8 +669,8 @@ const config: {
       openInterestReserveFactorShorts: percentageToFloat("140%"),
 
       // factor in open interest reserve factor 140%
-      borrowingFactorForLongs: decimalToFloat(400, 14), // 4.00E-12, 65% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(400, 14), // 4.00E-12, 65% at 100% utilisation
+      borrowingFactorForLongs: decimalToFloat(260, 14), // 2.60E-12, 50% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(260, 14), // 2.60E-12, 50% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
@@ -681,7 +681,7 @@ const config: {
       maxOpenInterestForLongs: decimalToFloat(17_500_000),
       maxOpenInterestForShorts: decimalToFloat(17_500_000),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(116, 14), // 0.00000000000116, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(104, 14), // 0.00000000000104, at least ~4 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
       maxFundingFactorPerSecond: decimalToFloat(150, 10), // 0.00000150%,  0.1296% per day, ~47.3% per year
@@ -713,8 +713,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(25, 10),
 
       // factor in open interest reserve factor 90%
-      borrowingFactorForLongs: decimalToFloat(300, 13), // 3.00E-11, ~80% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(300, 13), // 3.00E-11, ~80% at 100% utilisation
+      borrowingFactorForLongs: decimalToFloat(240, 13), // 2.40E-11, ~52% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(240, 13), // 2.40E-11, ~52% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
@@ -809,8 +809,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(3, 9),
 
       // factor in open interest reserve factor 140%
-      borrowingFactorForLongs: decimalToFloat(700, 14), // 7.00E-12, ~62% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(700, 14), // 7.00E-12, ~62% at 100% utilisation
+      borrowingFactorForLongs: decimalToFloat(540, 14), // 5.40E-12, ~50% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(540, 14), // 5.40E-12, ~50% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
@@ -821,7 +821,7 @@ const config: {
       maxOpenInterestForLongs: decimalToFloat(7_000_000),
       maxOpenInterestForShorts: decimalToFloat(7_000_000),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(116, 14), // 0.00000000000116, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(104, 14), // 0.00000000000104, at least ~4 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
       maxFundingFactorPerSecond: decimalToFloat(150, 10), // 0.00000150%,  0.1296% per day, ~47.3% per year
@@ -859,13 +859,13 @@ const config: {
       openInterestReserveFactorShorts: percentageToFloat("120%"),
 
       // factor in open interest reserve factor 120%
-      borrowingFactorForLongs: decimalToFloat(750, 14), // 7.50E-12, 62% at 100% utilisation
-      borrowingFactorForShorts: decimalToFloat(750, 14), // 7.50E-12, 62% at 100% utilisation
+      borrowingFactorForLongs: decimalToFloat(630, 14), // 6.30E-12, 50% at 100% utilisation
+      borrowingFactorForShorts: decimalToFloat(630, 14), // 6.30E-12, 50% at 100% utilisation
 
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(116, 14), // 0.00000000000116, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(104, 14), // 0.00000000000104, at least ~4 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
       maxFundingFactorPerSecond: decimalToFloat(150, 10), // 0.00000150%,  0.1296% per day, ~47.3% per year
@@ -909,8 +909,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(38, 10),
 
       // factor in open interest reserve factor 90%
-      borrowingFactorForLongs: decimalToFloat(230, 10), // 2.30E-08, ~65% if 100% utilized
-      borrowingFactorForShorts: decimalToFloat(230, 10), // 2.30E-08, ~65% if 100% utilized
+      borrowingFactorForLongs: decimalToFloat(184, 10), // 1.84E-08, ~52% if 100% utilized
+      borrowingFactorForShorts: decimalToFloat(184, 10), // 1.84E-08, ~52% if 100% utilized
 
       fundingIncreaseFactorPerSecond: decimalToFloat(116, 14), // 0.00000000000116, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -996,8 +996,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
 
       // factor in open interest reserve factor 90%
-      borrowingFactorForLongs: decimalToFloat(215, 10), // 2.15E-08, ~50% if 100% utilized
-      borrowingFactorForShorts: decimalToFloat(215, 10), // 2.15E-08, ~50% if 100% utilized
+      borrowingFactorForLongs: decimalToFloat(177, 10), // 1.77E-08, ~50% if 100% utilized
+      borrowingFactorForShorts: decimalToFloat(177, 10), // 1.77E-08, ~50% if 100% utilized
 
       positionImpactPoolDistributionRate: expandDecimals(10884, 28), // 10.88529E+31, 9.4048872593 ATOM / day
       minPositionImpactPoolAmount: expandDecimals(611, 6), // 611 ATOM
@@ -1037,8 +1037,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(5, 9),
 
       // factor in open interest reserve factor 90%
-      borrowingFactorForLongs: decimalToFloat(300, 10), // 3E-08, ~85% if 100% utilized
-      borrowingFactorForShorts: decimalToFloat(300, 10), // 3E-08, ~85% if 100% utilized
+      borrowingFactorForLongs: decimalToFloat(185, 10), // 1.85E-8, ~52% if 100% utilized
+      borrowingFactorForShorts: decimalToFloat(185, 10), // 1.85E-8, ~52% if 100% utilized
 
       positionImpactPoolDistributionRate: expandDecimals(1326, 48), // 1.32649E+51, 114.6089996 NEAR / day
       minPositionImpactPoolAmount: expandDecimals(4361, 24), // 4361 NEAR
@@ -1066,8 +1066,8 @@ const config: {
       maxLongTokenPoolUsdForDeposit: decimalToFloat(2_000_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(2_000_000),
 
-      negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~45,000 USD of imbalance
-      positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~90,000 USD of imbalance
+      negativePositionImpactFactor: decimalToFloat(7, 10), // 0.05% for ~45,000 USD of imbalance
+      positivePositionImpactFactor: decimalToFloat(35, 11), // 0.05% for ~80,000 USD of imbalance
       positionImpactExponentFactor: decimalToFloat(22, 1), // 2.2
 
       negativeSwapImpactFactor: decimalToFloat(8, 9), // 0.05% for 62,500 USD of imbalance
@@ -1178,8 +1178,8 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(15, 11), // 0.05% for ~1,600,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(9, 11), // 0.05% for ~2,700,000 USD of imbalance
 
-      negativeSwapImpactFactor: decimalToFloat(24, 11), // 0.05% for ~2,100,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(24, 11), // 0.05% for ~2,100,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(50, 11),
+      positiveSwapImpactFactor: decimalToFloat(50, 11),
 
       // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
@@ -1221,8 +1221,8 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(15, 11), // 0.05% for ~1,600,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(9, 11), // 0.05% for ~2,700,000 USD of imbalance
 
-      negativeSwapImpactFactor: decimalToFloat(24, 11), // 0.05% for ~2,100,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(24, 11), // 0.05% for ~2,100,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(50, 11),
+      positiveSwapImpactFactor: decimalToFloat(50, 11),
 
       // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
@@ -1265,8 +1265,8 @@ const config: {
       positivePositionImpactFactor: decimalToFloat(4, 9), // 0.05% for 125,000 USD of imbalance
 
       // the swap impact factor is for WAVAX-stablecoin swaps
-      negativeSwapImpactFactor: decimalToFloat(1, 8), // 0.05% for 50,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(2, 8),
+      positiveSwapImpactFactor: decimalToFloat(1, 8),
 
       // minCollateralFactor of 0.01 (1%) when open interest is 5,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 9),
@@ -1309,8 +1309,8 @@ const config: {
       positivePositionImpactFactor: decimalToFloat(4, 9), // 0.05% for 125,000 USD of imbalance
 
       // the swap impact factor is for WAVAX-stablecoin swaps
-      negativeSwapImpactFactor: decimalToFloat(1, 8), // 0.05% for 50,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(2, 8),
+      positiveSwapImpactFactor: decimalToFloat(1, 8),
 
       // minCollateralFactor of 0.01 (1%) when open interest is 2,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
@@ -1352,8 +1352,8 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(1, 8), // 0.05% for 50,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
 
-      negativeSwapImpactFactor: decimalToFloat(1, 8), // 0.05% for 50,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(2, 8),
+      positiveSwapImpactFactor: decimalToFloat(1, 8),
 
       // minCollateralFactor of 0.01 (1%) when open interest is 2,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
@@ -1395,9 +1395,8 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(8, 9), // 0.05% for 62,500 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(4, 9), // 0.05% for 125,000 USD of imbalance
 
-      // the swap impact factor is for WAVAX-stablecoin swaps
-      negativeSwapImpactFactor: decimalToFloat(1, 8), // 0.05% for 50,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(2, 8),
+      positiveSwapImpactFactor: decimalToFloat(1, 8),
 
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(25, 10),
@@ -1439,8 +1438,8 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(1, 8), // 0.05% for 50,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
 
-      negativeSwapImpactFactor: decimalToFloat(1, 8), // 0.05% for 50,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(50, 10),
+      positiveSwapImpactFactor: decimalToFloat(25, 10),
 
       // minCollateralFactor of 0.01 (1%) when open interest is 500,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 8),
