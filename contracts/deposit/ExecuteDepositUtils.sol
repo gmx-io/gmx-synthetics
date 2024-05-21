@@ -142,6 +142,13 @@ library ExecuteDepositUtils {
             cache.market.marketToken
         );
 
+        PositionUtils.updateFundingAndBorrowingState(
+            params.dataStore,
+            params.eventEmitter,
+            cache.market,
+            cache.prices
+        );
+
         // deposits should improve the pool state but it should be checked if
         // the max pnl factor for deposits is exceeded as this would lead to the
         // price of the market token decreasing below a target minimum percentage

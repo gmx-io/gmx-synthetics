@@ -64,14 +64,6 @@ library IncreasePositionUtils {
             params.market
         );
 
-        MarketUtils.distributePositionImpactPool(
-            params.contracts.dataStore,
-            params.contracts.eventEmitter,
-            params.market.marketToken
-        );
-
-        PositionUtils.updateFundingAndBorrowingState(params, prices);
-
         // create a new cache for holding intermediate results
         IncreasePositionCache memory cache;
 

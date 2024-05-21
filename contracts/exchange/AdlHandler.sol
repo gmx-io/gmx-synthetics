@@ -139,7 +139,7 @@ contract AdlHandler is BaseOrderHandler {
 
         FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeAdlFeatureDisabledKey(address(this), uint256(params.order.orderType())));
 
-        OrderUtils.executeOrder(params);
+        ExecuteOrderUtils.executeOrder(params);
 
         // validate that the ratio of pending pnl to pool value was decreased
         cache.nextPnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, oracle, market, isLong, true);

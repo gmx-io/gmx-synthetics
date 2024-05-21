@@ -51,6 +51,8 @@ library ExecuteWithdrawalUtils {
         uint256 requestExpirationTime;
         uint256 maxOracleTimestamp;
         uint256 marketTokensBalance;
+        Market.Props market;
+        MarketUtils.MarketPrices prices;
     }
 
     struct _ExecuteWithdrawalCache {
@@ -120,12 +122,30 @@ library ExecuteWithdrawalUtils {
             withdrawal.market()
         );
 
+        cache.market = MarketUtils.getEnabledMarket(params.dataStore, withdrawal.market());
+        cache.prices = MarketUtils.getMarketPrices(
+            params.oracle,
+            cache.market
+        );
+
+        PositionUtils.updateFundingAndBorrowingState(
+            params.dataStore,
+            params.eventEmitter,
+            cache.market,
+            cache.prices
+        );
+
         cache.marketTokensBalance = MarketToken(payable(withdrawal.market())).balanceOf(address(params.withdrawalVault));
         if (cache.marketTokensBalance < withdrawal.marketTokenAmount()) {
             revert Errors.InsufficientMarketTokens(cache.marketTokensBalance, withdrawal.marketTokenAmount());
         }
 
-        ExecuteWithdrawalResult memory result = _executeWithdrawal(params, withdrawal);
+        ExecuteWithdrawalResult memory result = _executeWithdrawal(
+            params,
+            withdrawal,
+            cache.market,
+            cache.prices
+        );
 
         WithdrawalEventUtils.emitWithdrawalExecuted(
             params.eventEmitter,
@@ -163,15 +183,10 @@ library ExecuteWithdrawalUtils {
      */
     function _executeWithdrawal(
         ExecuteWithdrawalParams memory params,
-        Withdrawal.Props memory withdrawal
+        Withdrawal.Props memory withdrawal,
+        Market.Props memory market,
+        MarketUtils.MarketPrices memory prices
     ) internal returns (ExecuteWithdrawalResult memory) {
-        Market.Props memory market = MarketUtils.getEnabledMarket(params.dataStore, withdrawal.market());
-
-        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(
-            params.oracle,
-            market
-        );
-
         _ExecuteWithdrawalCache memory cache;
 
         (cache.longTokenOutputAmount, cache.shortTokenOutputAmount) = _getOutputAmounts(params, market, prices, withdrawal.marketTokenAmount());
