@@ -477,6 +477,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.MAX_UI_FEE_FACTOR] = true;
         allowedBaseKeys[Keys.MAX_AUTO_CANCEL_ORDERS] = true;
+        allowedBaseKeys[Keys.MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS] = true;
 
         allowedBaseKeys[Keys.ORACLE_TYPE] = true;
 

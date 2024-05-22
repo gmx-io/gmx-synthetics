@@ -18,6 +18,14 @@ const processGeneralConfig = async ({ generalConfig, handleConfig }) => {
 
   await handleConfig(
     "uint",
+    keys.MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS,
+    "0x",
+    generalConfig.maxTotalCallbackGasLimitForAutoCancelOrders,
+    `maxTotalCallbackGasLimitForAutoCancelOrders`
+  );
+
+  await handleConfig(
+    "uint",
     keys.MIN_HANDLE_EXECUTION_ERROR_GAS,
     "0x",
     generalConfig.minHandleExecutionErrorGas,

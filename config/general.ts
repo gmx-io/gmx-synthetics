@@ -8,7 +8,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       feeReceiver: ethers.constants.AddressZero,
       holdingAddress: ethers.constants.AddressZero,
       maxUiFeeFactor: decimalToFloat(5, 5), // 0.005%
-      maxAutoCancelOrders: 10,
+      maxAutoCancelOrders: 5,
+      maxTotalCallbackGasLimitForAutoCancelOrders: 5_000_000,
       minHandleExecutionErrorGas: 1_200_000,
       minHandleExecutionErrorGasToForward: 1_000_000,
       minAdditionalGasForExecution: 1_000_000,
@@ -52,7 +53,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     feeReceiver: "0x43ce1d475e06c65dd879f4ec644b8e0e10ff2b6d",
     holdingAddress: "0x3f59203ea1c66527422998b54287e1efcacbe2c5",
     maxUiFeeFactor: percentageToFloat("0.05%"),
-    maxAutoCancelOrders: 10,
+    maxAutoCancelOrders: 5,
     minHandleExecutionErrorGas: 1_200_000,
     minHandleExecutionErrorGasToForward: 1_000_000, // measured gas required for an order cancellation: ~600,000
     minAdditionalGasForExecution: 1_000_000,
@@ -95,11 +96,15 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     },
     arbitrumSepolia: {
       requestExpirationTime: 300,
+      maxAutoCancelOrders: 10,
+      maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
     },
     avalancheFuji: {
       requestExpirationTime: 300,
     },
     arbitrum: {
+      maxAutoCancelOrders: 10,
+      maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
       maxCallbackGasLimit: 3_000_000,
       requestExpirationTime: 300,
       estimatedGasFeeBaseAmount: false,

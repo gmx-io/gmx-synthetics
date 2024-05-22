@@ -147,6 +147,10 @@ library OrderUtils {
 
         updateAutoCancelList(dataStore, key, order, order.autoCancel());
 
+        bytes32 positionKey = BaseOrderUtils.getPositionKey(order);
+
+        validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, positionKey);
+
         OrderEventUtils.emitOrderCreated(eventEmitter, key, order);
 
         return key;
@@ -312,5 +316,28 @@ library OrderUtils {
         } else {
             AutoCancelUtils.removeAutoCancelOrderKey(dataStore, positionKey, orderKey);
         }
+    }
+
+    function validateTotalCallbackGasLimitForAutoCancelOrders(DataStore dataStore, bytes32 positionKey) internal view {
+        uint256 maxTotal = dataStore.getUint(Keys.MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS);
+        uint256 total = getTotalCallbackGasLimitForAutoCancelOrders(dataStore, positionKey);
+
+        if (total > maxTotal) {
+            revert Errors.MaxTotalCallbackGasLimitForAutoCancelOrdersExceeded(total, maxTotal);
+        }
+    }
+
+    function getTotalCallbackGasLimitForAutoCancelOrders(DataStore dataStore, bytes32 positionKey) internal view returns (uint256) {
+        bytes32[] memory orderKeys = AutoCancelUtils.getAutoCancelOrderKeys(dataStore, positionKey);
+
+        uint256 total;
+
+        for (uint256 i; i < orderKeys.length; i++) {
+            total += dataStore.getUint(
+                keccak256(abi.encode(orderKeys[i], OrderStoreUtils.CALLBACK_GAS_LIMIT))
+            );
+        }
+
+        return total;
     }
 }
