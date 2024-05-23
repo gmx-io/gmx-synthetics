@@ -24,14 +24,11 @@ library GmOracleUtils {
     // @dev validate the signer of a price
     // before calling this function, the expectedSigner should be validated to
     // ensure that it is not the zero address
-    // @param minOracleBlockNumber the min block number used for the signed message hash
-    // @param maxOracleBlockNumber the max block number used for the signed message hash
-    // @param oracleTimestamp the timestamp used for the signed message hash
-    // @param blockHash the block hash used for the signed message hash
+    // @param report the oracle Report data
     // @param token the token used for the signed message hash
-    // @param precision the precision used for the signed message hash
     // @param minPrice the min price used for the signed message hash
     // @param maxPrice the max price used for the signed message hash
+    // @param tokenOracleType the token oracle type used for the signed message hash
     // @param signature the signer's signature
     // @param expectedSigner the address of the expected signer
     function validateSigner(
