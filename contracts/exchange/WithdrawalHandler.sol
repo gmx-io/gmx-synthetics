@@ -113,6 +113,11 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         }
     }
 
+    // @notice this function can only be called for markets where Chainlink
+    // on-chain feeds are configured for all the tokens of the market
+    // for example, if the market has index token as DOGE, long token as WETH
+    // and short token as USDC, Chainlink on-chain feeds must be configured
+    // for DOGE, WETH, USDC for this method to be callable for the market
     function executeAtomicWithdrawal(
         address account,
         WithdrawalUtils.CreateWithdrawalParams calldata params,
