@@ -5,6 +5,7 @@ export const NONCE = hashString("NONCE");
 
 export const FEE_RECEIVER = hashString("FEE_RECEIVER");
 export const HOLDING_ADDRESS = hashString("HOLDING_ADDRESS");
+export const SEQUENCER_GRACE_DURATION = hashString("SEQUENCER_GRACE_DURATION");
 export const IN_STRICT_PRICE_FEED_MODE = hashString("IN_STRICT_PRICE_FEED_MODE");
 
 export const MIN_HANDLE_EXECUTION_ERROR_GAS = hashString("MIN_HANDLE_EXECUTION_ERROR_GAS");

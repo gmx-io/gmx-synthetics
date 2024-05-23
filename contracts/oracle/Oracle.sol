@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { AggregatorV2V3Interface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV2V3Interface.sol";
 
 import "../role/RoleModule.sol";
 
@@ -48,6 +49,7 @@ contract Oracle is RoleModule {
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
+    AggregatorV2V3Interface public immutable sequencerUptimeFeed;
 
     // tokensWithPrices stores the tokens with prices that have been set
     // this is used in clearAllPrices to help ensure that all token prices
@@ -61,10 +63,43 @@ contract Oracle is RoleModule {
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
-        EventEmitter _eventEmitter
+        EventEmitter _eventEmitter,
+        AggregatorV2V3Interface _sequencerUptimeFeed
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
+        sequencerUptimeFeed = _sequencerUptimeFeed;
+    }
+
+    function validateSequencerUp() external view {
+        if (address(sequencerUptimeFeed) == address(0)) {
+            return;
+        }
+
+        (
+            /*uint80 roundID*/,
+            int256 answer,
+            uint256 startedAt,
+            /*uint256 updatedAt*/,
+            /*uint80 answeredInRound*/
+        ) = sequencerUptimeFeed.latestRoundData();
+
+        // Answer == 0: Sequencer is up
+        // Answer == 1: Sequencer is down
+        bool isSequencerUp = answer == 0;
+        if (!isSequencerUp) {
+            revert Errors.SequencerDown();
+        }
+
+        uint256 sequencerGraceDuration = dataStore.getUint(Keys.SEQUENCER_GRACE_DURATION);
+
+        // Make sure the grace duration has passed after the
+        // sequencer is back up.
+        uint256 timeSinceUp = block.timestamp - startedAt;
+        if (timeSinceUp <= sequencerGraceDuration) {
+            revert Errors.SequencerGraceDurationNotYetPassed(timeSinceUp, sequencerGraceDuration);
+        }
+
     }
 
     function setPrices(
