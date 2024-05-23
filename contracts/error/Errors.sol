@@ -332,6 +332,9 @@ library Errors {
         string label
     );
 
+    // WithdrawalHandler errors
+    error SwapsNotAllowedForAtomicWithdrawal(uint256 longTokenSwapPathLength, uint256 shortTokenSwapPathLength);
+
     // WithdrawalStoreUtils errors
     error WithdrawalNotFound(bytes32 key);
 

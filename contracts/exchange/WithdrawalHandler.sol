@@ -130,6 +130,16 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
     {
         FeatureUtils.validateFeature(dataStore, Keys.executeAtomicWithdrawalFeatureDisabledKey(address(this)));
 
+        if (
+            params.longTokenSwapPath.length != 0 ||
+            params.shortTokenSwapPath.length != 0
+        ) {
+            revert Errors.SwapsNotAllowedForAtomicWithdrawal(
+                params.longTokenSwapPath.length,
+                params.shortTokenSwapPath.length
+            );
+        }
+
         bytes32 key = WithdrawalUtils.createWithdrawal(
             dataStore,
             eventEmitter,
