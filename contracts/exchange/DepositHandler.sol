@@ -151,7 +151,8 @@ contract DepositHandler is IDepositHandler, BaseHandler {
             key,
             keeper,
             startingGas,
-            ISwapPricingUtils.SwapPricingType.TwoStep
+            ISwapPricingUtils.SwapPricingType.TwoStep,
+            true // includeVirtualInventoryImpact
         );
 
         ExecuteDepositUtils.executeDeposit(params, deposit);

@@ -51,6 +51,7 @@ library ExecuteDepositUtils {
         address keeper;
         uint256 startingGas;
         ISwapPricingUtils.SwapPricingType swapPricingType;
+        bool includeVirtualInventoryImpact;
     }
 
     // @dev _ExecuteDepositParams struct used in executeDeposit to avoid stack
@@ -199,7 +200,8 @@ library ExecuteDepositUtils {
                 cache.prices.longTokenPrice.midPrice(),
                 cache.prices.shortTokenPrice.midPrice(),
                 cache.longTokenUsd.toInt256(),
-                cache.shortTokenUsd.toInt256()
+                cache.shortTokenUsd.toInt256(),
+                params.includeVirtualInventoryImpact
             )
         );
 

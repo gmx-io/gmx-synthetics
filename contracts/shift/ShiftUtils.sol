@@ -242,6 +242,9 @@ library ShiftUtils {
             cache.depositKey
         );
 
+        // price impact from changes in virtual inventory should be excluded
+        // since the action of withdrawing and depositing should not result in
+        // a net change of virtual inventory
         cache.executeDepositParams = ExecuteDepositUtils.ExecuteDepositParams(
             params.dataStore,
             params.eventEmitter,
@@ -250,7 +253,8 @@ library ShiftUtils {
             cache.depositKey,
             params.keeper,
             params.startingGas,
-            ISwapPricingUtils.SwapPricingType.Shift
+            ISwapPricingUtils.SwapPricingType.Shift,
+            false // includeVirtualInventoryImpact
         );
 
         uint256 receivedMarketTokens = ExecuteDepositUtils.executeDeposit(

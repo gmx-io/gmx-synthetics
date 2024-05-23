@@ -46,6 +46,7 @@ library SwapPricingUtils {
         uint256 priceForTokenB;
         int256 usdDeltaForTokenA;
         int256 usdDeltaForTokenB;
+        bool includeVirtualInventoryImpact;
     }
 
     struct EmitSwapInfoParams {
@@ -120,6 +121,10 @@ library SwapPricingUtils {
         // a negative price impact for any trade on either pools and would
         // disincentivise the balancing of pools
         if (priceImpactUsd >= 0) { return priceImpactUsd; }
+
+        if (!params.includeVirtualInventoryImpact) {
+            return priceImpactUsd;
+        }
 
         // note that the virtual pool for the long token / short token may be different across pools
         // e.g. ETH/USDC, ETH/USDT would have USDC and USDT as the short tokens
