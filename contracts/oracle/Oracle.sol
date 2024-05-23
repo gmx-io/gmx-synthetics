@@ -220,6 +220,8 @@ contract Oracle is RoleModule {
 
             address token = params.tokens[i];
 
+            bool isAtomicProvider = dataStore.getBool(Keys.isAtomicOracleProviderKey(provider));
+
             // if the action is atomic then only validate that the provider is an
             // atomic provider
             // else, validate that the provider matches the oracleProviderForToken
@@ -231,7 +233,6 @@ contract Oracle is RoleModule {
             // to gain a profit by alternating actions between the two atomic
             // providers
             if (forAtomicAction) {
-                bool isAtomicProvider = dataStore.getBool(Keys.isAtomicOracleProviderKey(provider));
                 if (!isAtomicProvider) {
                     revert Errors.NonAtomicOracleProvider(provider);
                 }
@@ -249,29 +250,37 @@ contract Oracle is RoleModule {
                 data
             );
 
-            uint256 timestampAdjustment = dataStore.getUint(Keys.oracleTimestampAdjustmentKey(provider, token));
-            validatedPrice.timestamp -= timestampAdjustment;
+            // for atomic providers, the timestamp will be the current block's timestamp
+            // the timestamp should not be adjusted
+            if (!isAtomicProvider) {
+                uint256 timestampAdjustment = dataStore.getUint(Keys.oracleTimestampAdjustmentKey(provider, token));
+                validatedPrice.timestamp -= timestampAdjustment;
+            }
 
             if (validatedPrice.timestamp + maxPriceAge < Chain.currentTimestamp()) {
                 revert Errors.MaxPriceAgeExceeded(validatedPrice.timestamp, Chain.currentTimestamp());
             }
 
-            (bool hasRefPrice, uint256 refPrice) = ChainlinkPriceFeedUtils.getPriceFeedPrice(dataStore, token);
+            // for atomic providers, assume that Chainlink would be the main provider
+            // so it would be redundant to re-fetch the Chainlink price for validation
+            if (!isAtomicProvider) {
+                (bool hasRefPrice, uint256 refPrice) = ChainlinkPriceFeedUtils.getPriceFeedPrice(dataStore, token);
 
-            if (hasRefPrice) {
-                _validateRefPrice(
-                    token,
-                    validatedPrice.min,
-                    refPrice,
-                    maxRefPriceDeviationFactor
-                );
+                if (hasRefPrice) {
+                    _validateRefPrice(
+                        token,
+                        validatedPrice.min,
+                        refPrice,
+                        maxRefPriceDeviationFactor
+                    );
 
-                _validateRefPrice(
-                    token,
-                    validatedPrice.max,
-                    refPrice,
-                    maxRefPriceDeviationFactor
-                );
+                    _validateRefPrice(
+                        token,
+                        validatedPrice.max,
+                        refPrice,
+                        maxRefPriceDeviationFactor
+                    );
+                }
             }
 
             prices[i] = validatedPrice;
