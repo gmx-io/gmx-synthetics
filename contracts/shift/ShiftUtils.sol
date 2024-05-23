@@ -73,6 +73,10 @@ library ShiftUtils {
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
 
+        if (params.fromMarket == params.toMarket) {
+            revert Errors.ShiftFromAndToMarketAreEqual(params.fromMarket);
+        }
+
         address wnt = TokenUtils.wnt(dataStore);
         uint256 wntAmount = shiftVault.recordTransferIn(wnt);
 

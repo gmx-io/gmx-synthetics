@@ -268,6 +268,7 @@ library Errors {
     // ShiftUtils errors
     error EmptyShift();
     error EmptyShiftAmount();
+    error ShiftFromAndToMarketAreEqual(address market);
     error LongTokensAreNotEqual(address fromMarketLongToken, address toMarketLongToken);
     error ShortTokensAreNotEqual(address fromMarketLongToken, address toMarketLongToken);
 
