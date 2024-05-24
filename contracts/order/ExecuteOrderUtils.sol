@@ -147,6 +147,6 @@ library ExecuteOrderUtils {
             return SwapOrderUtils.processOrder(params);
         }
 
-        revert Errors.UnsupportedOrderType();
+        revert Errors.UnsupportedOrderType(uint256(params.order.orderType()));
     }
 }

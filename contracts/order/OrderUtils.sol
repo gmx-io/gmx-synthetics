@@ -147,9 +147,10 @@ library OrderUtils {
 
         updateAutoCancelList(dataStore, key, order, order.autoCancel());
 
-        bytes32 positionKey = BaseOrderUtils.getPositionKey(order);
-
-        validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, positionKey);
+        if (BaseOrderUtils.isDecreaseOrder(order.orderType())) {
+            bytes32 positionKey = BaseOrderUtils.getPositionKey(order);
+            validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, positionKey);
+        }
 
         OrderEventUtils.emitOrderCreated(eventEmitter, key, order);
 

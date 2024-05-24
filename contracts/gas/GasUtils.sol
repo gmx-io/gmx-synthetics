@@ -250,7 +250,7 @@ library GasUtils {
             return estimateExecuteSwapOrderGasLimit(dataStore, order);
         }
 
-        revert Errors.UnsupportedOrderType();
+        revert Errors.UnsupportedOrderType(uint256(order.orderType()));
     }
 
     // @dev the estimated gas limit for increase orders

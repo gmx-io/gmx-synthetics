@@ -204,7 +204,7 @@ library DecreaseOrderUtils {
             return;
         }
 
-        revert Errors.UnsupportedOrderType();
+        revert Errors.UnsupportedOrderType(uint256(orderType));
     }
 
     // note that minOutputAmount is treated as a USD value for this validation

@@ -312,6 +312,8 @@ const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
   positiveMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%
   negativeMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%
   maxPositionImpactFactorForLiquidations: decimalToFloat(1, 2), // 1%
+
+  maxFundingFactorPerSecond: decimalToFloat(3, 8), // ~94%
 };
 
 const config: {

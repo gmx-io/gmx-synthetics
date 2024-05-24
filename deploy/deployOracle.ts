@@ -12,7 +12,7 @@ const func = createDeployFunction({
     const generalConfig = await gmx.getGeneral();
     return constructorContracts
       .map((dependencyName) => dependencyContracts[dependencyName].address)
-      .push(generalConfig.sequencerUptimeFeed);
+      .concat(generalConfig.sequencerUptimeFeed);
   },
   afterDeploy: async ({ deployedContract, gmx }) => {
     const oracleConfig = await gmx.getOracle();

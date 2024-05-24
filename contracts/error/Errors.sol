@@ -27,6 +27,7 @@ library Errors {
 
     // CallbackUtils errors
     error MaxCallbackGasLimitExceeded(uint256 callbackGasLimit, uint256 maxCallbackGasLimit);
+    error InsufficientGasLeftForCallback(uint256 gasLeft, uint256 callbackGasLimit);
 
     // Config errors
     error InvalidBaseKey(bytes32 baseKey);
@@ -200,7 +201,7 @@ library Errors {
 
     // BaseOrderUtils errors
     error EmptyOrder();
-    error UnsupportedOrderType();
+    error UnsupportedOrderType(uint256 orderType);
     error InvalidOrderPrices(
         uint256 primaryPriceMin,
         uint256 primaryPriceMax,

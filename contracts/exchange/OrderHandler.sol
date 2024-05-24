@@ -102,12 +102,6 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         order.setExecutionFee(order.executionFee() + receivedWnt);
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
-
-        bytes32 positionKey = BaseOrderUtils.getPositionKey(order);
-        uint256 totalAutoCancelCallbackGasLimit = OrderUtils.getTotalCallbackGasLimitForAutoCancelOrders(dataStore, positionKey);
-
-        estimatedGasLimit += totalAutoCancelCallbackGasLimit;
-
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee());
 
         order.touch();
