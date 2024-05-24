@@ -199,6 +199,9 @@ describe("Timelock", () => {
   });
 
   it("setPriceFeed", async () => {
+    await dataStore.setAddress(keys.priceFeedKey(wnt.address), ethers.constants.AddressZero);
+    await dataStore.setUint(keys.priceFeedMultiplierKey(wnt.address), 0);
+
     await expect(
       timelock.connect(user2).signalSetPriceFeed(wnt.address, user3.address, 1000, 24 * 60 * 60, decimalToFloat(5000))
     )

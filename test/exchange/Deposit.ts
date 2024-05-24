@@ -535,7 +535,8 @@ describe("Exchange.Deposit", () => {
         expandDecimals(10, 18), // longTokenAmount
         0, // shortTokenAmount
         AddressZero,
-        SwapPricingType.TwoStep
+        SwapPricingType.TwoStep,
+        true // includeVirtualInventoryImpact
       )
     ).eq("49975000000000000000000");
 
@@ -547,7 +548,8 @@ describe("Exchange.Deposit", () => {
         expandDecimals(10, 18), // longTokenAmount
         expandDecimals(1000, 6), // shortTokenAmount
         AddressZero,
-        SwapPricingType.TwoStep
+        SwapPricingType.TwoStep,
+        true // includeVirtualInventoryImpact
       )
     ).eq("50975989999313725490000");
 
