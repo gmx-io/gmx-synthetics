@@ -151,6 +151,7 @@ library ExecuteWithdrawalUtils {
             withdrawal.callbackContract(),
             withdrawal.executionFee(),
             params.startingGas,
+            GasUtils.getWithdrawalOracleGasMultiplier(withdrawal),
             params.keeper,
             withdrawal.receiver()
         );

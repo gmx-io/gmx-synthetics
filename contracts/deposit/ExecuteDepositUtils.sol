@@ -40,6 +40,11 @@ library ExecuteDepositUtils {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
+    enum ExecutionContext {
+        Default,
+        Nested
+    }
+
     // @dev ExecuteDepositParams struct used in executeDeposit to avoid stack
     // too deep errors
     struct ExecuteDepositParams {
@@ -51,6 +56,7 @@ library ExecuteDepositUtils {
         address keeper;
         uint256 startingGas;
         ISwapPricingUtils.SwapPricingType swapPricingType;
+        ExecutionContext executionContext;
     }
 
     // @dev _ExecuteDepositParams struct used in executeDeposit to avoid stack
@@ -112,22 +118,25 @@ library ExecuteDepositUtils {
             revert Errors.EmptyDeposit();
         }
 
-        if (params.oracle.minTimestamp() < deposit.updatedAtTime()) {
-            revert Errors.OracleTimestampsAreSmallerThanRequired(
-                params.oracle.minTimestamp(),
-                deposit.updatedAtTime()
-            );
-        }
+        if (params.executionContext != ExecutionContext.Nested) {
+            // In case of GlvDeposit execution prices are validated before calling `executeDeposit`
+            if (params.oracle.minTimestamp() < deposit.updatedAtTime()) {
+                revert Errors.OracleTimestampsAreSmallerThanRequired(
+                    params.oracle.minTimestamp(),
+                    deposit.updatedAtTime()
+                );
+            }
 
-        cache.requestExpirationTime = params.dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
-        cache.maxOracleTimestamp = params.oracle.maxTimestamp();
+            cache.requestExpirationTime = params.dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
+            cache.maxOracleTimestamp = params.oracle.maxTimestamp();
 
-        if (cache.maxOracleTimestamp > deposit.updatedAtTime() + cache.requestExpirationTime) {
-            revert Errors.OracleTimestampsAreLargerThanRequestExpirationTime(
-                cache.maxOracleTimestamp,
-                deposit.updatedAtTime(),
-                cache.requestExpirationTime
-            );
+            if (cache.maxOracleTimestamp > deposit.updatedAtTime() + cache.requestExpirationTime) {
+                revert Errors.OracleTimestampsAreLargerThanRequestExpirationTime(
+                    cache.maxOracleTimestamp,
+                    deposit.updatedAtTime(),
+                    cache.requestExpirationTime
+                );
+            }
         }
 
         cache.market = MarketUtils.getEnabledMarket(params.dataStore, deposit.market());
@@ -273,17 +282,20 @@ library ExecuteDepositUtils {
         cache.callbackEventData.uintItems.setItem(0, "receivedMarketTokens", cache.receivedMarketTokens);
         CallbackUtils.afterDepositExecution(params.key, deposit, cache.callbackEventData);
 
-        GasUtils.payExecutionFee(
-            params.dataStore,
-            params.eventEmitter,
-            params.depositVault,
-            params.key,
-            deposit.callbackContract(),
-            deposit.executionFee(),
-            params.startingGas,
-            params.keeper,
-            deposit.receiver()
-        );
+        if (params.executionContext != ExecutionContext.Nested) {
+            GasUtils.payExecutionFee(
+                params.dataStore,
+                params.eventEmitter,
+                params.depositVault,
+                params.key,
+                deposit.callbackContract(),
+                deposit.executionFee(),
+                params.startingGas,
+                GasUtils.getDepositOracleGasMultiplier(deposit),
+                params.keeper,
+                deposit.receiver()
+            );
+        }
 
         return cache.receivedMarketTokens;
     }

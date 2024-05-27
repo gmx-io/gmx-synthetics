@@ -45,6 +45,15 @@ library Errors {
     error InvalidFeeReceiver(address receiver);
     error InvalidOracleSigner(address receiver);
 
+    // GlvDepositStoreUtils errors
+    error GlvDepositNotFound(bytes32 key);
+    // GlvDepositUtils errors
+    error EmptyGlvDepositAmounts();
+    error EmptyGlvDeposit();
+    // GlvUtils errors
+    error GlvUnsupportedMarket(address glv, address market);
+    error InvalidMarketTokenPrice(address market, int256 price);
+
     // DepositStoreUtils errors
     error DepositNotFound(bytes32 key);
 
@@ -78,11 +87,9 @@ library Errors {
     error InvalidGlpAmount(uint256 totalGlpAmountToRedeem, uint256 totalGlpAmount);
     error InvalidExecutionFeeForMigration(uint256 totalExecutionFee, uint256 msgValue);
 
-    // GLVHandler errors
-    error InvalidGlvDepositReceiver(address receiver, address expectedReceiver);
-    error InvalidGlvDepositCallbackContract(address callbackContract, address expectedCallbackContract);
-    error GlvDepositUnwrapNativeTokenNotFalse();
-    error EmptyGlvPreDeposit(bytes32 key);
+    // GlvHandler errors
+    error InvalidGlvDepositInitialShortToken(address initialLongToken, address initialShortToken);
+    error InvalidGlvDepositSwapPath(uint256 longTokenSwapPathLength, uint256 shortTokenSwapPathLength);
 
     // OrderHandler errors
     error OrderNotUpdatable(uint256 orderType);

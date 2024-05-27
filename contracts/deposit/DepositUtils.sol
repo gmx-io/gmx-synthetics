@@ -214,6 +214,7 @@ library DepositUtils {
             deposit.callbackContract(),
             deposit.executionFee(),
             startingGas,
+            GasUtils.getDepositOracleGasMultiplier(deposit),
             keeper,
             deposit.receiver()
         );

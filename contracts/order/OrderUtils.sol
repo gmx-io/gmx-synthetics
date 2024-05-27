@@ -203,6 +203,7 @@ library OrderUtils {
             params.order.callbackContract(),
             params.order.executionFee(),
             params.startingGas,
+            GasUtils.getOrderOracleGasMultiplier(params.order),
             params.keeper,
             params.order.receiver()
         );
@@ -305,6 +306,7 @@ library OrderUtils {
             order.callbackContract(),
             order.executionFee(),
             startingGas,
+            GasUtils.getOrderOracleGasMultiplier(order),
             keeper,
             order.receiver()
         );
@@ -338,8 +340,6 @@ library OrderUtils {
             revert Errors.OrderAlreadyFrozen();
         }
 
-        uint256 executionFee = order.executionFee();
-
         order.setExecutionFee(0);
         order.setIsFrozen(true);
         OrderStoreUtils.set(dataStore, key, order);
@@ -361,8 +361,9 @@ library OrderUtils {
             orderVault,
             key,
             order.callbackContract(),
-            executionFee,
+            order.executionFee(),
             startingGas,
+            GasUtils.getOrderOracleGasMultiplier(order),
             keeper,
             order.receiver()
         );

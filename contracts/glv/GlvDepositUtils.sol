@@ -1,0 +1,361 @@
+// SPDX-License-Identifier: BUSL-1.1
+
+pragma solidity ^0.8.0;
+
+import "../glv/Glv.sol";
+import "../glv/GlvVault.sol";
+import "../glv/GlvUtils.sol";
+import "../glv/GlvDeposit.sol";
+import "../glv/GlvDepositEventUtils.sol";
+import "../glv/GlvDepositStoreUtils.sol";
+import "../feature/FeatureUtils.sol";
+import "../deposit/DepositVault.sol";
+import "../deposit/ExecuteDepositUtils.sol";
+import "../deposit/DepositUtils.sol";
+import "../data/DataStore.sol";
+import "../oracle/Oracle.sol";
+import "../market/Market.sol";
+import "../market/MarketUtils.sol";
+import "../data/Keys.sol";
+import "../event/EventUtils.sol";
+
+library GlvDepositUtils {
+    using GlvDeposit for GlvDeposit.Props;
+    using Deposit for Deposit.Props;
+    using SafeCast for int256;
+    using EventUtils for EventUtils.UintItems;
+
+    struct CreateGlvDepositParams {
+        address glv;
+        address receiver;
+        address callbackContract;
+        address uiFeeReceiver;
+        address market;
+        address initialLongToken;
+        address initialShortToken;
+        address[] longTokenSwapPath;
+        address[] shortTokenSwapPath;
+        uint256 minGlvTokens;
+        bool shouldUnwrapNativeToken;
+        uint256 executionFee;
+        uint256 callbackGasLimit;
+    }
+
+    struct ExecuteGlvDepositParams {
+        DataStore dataStore;
+        EventEmitter eventEmitter;
+        DepositVault depositVault;
+        GlvVault glvVault;
+        Oracle oracle;
+        bytes32 key;
+        uint256 startingGas;
+        address keeper;
+    }
+
+    struct ExecuteGlvDepositCache {
+        uint256 requestExpirationTime;
+        uint256 maxOracleTimestamp;
+        uint256 receivedMarketTokens;
+        uint256 mintAmount;
+    }
+
+    function createGlvDeposit(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        GlvVault glvVault,
+        CreateGlvDepositParams memory params
+    ) internal returns (bytes32) {
+        GlvUtils.validateMarket(dataStore, params.glv, params.market);
+
+        address wnt = TokenUtils.wnt(dataStore);
+        uint256 executionFee = glvVault.recordTransferIn(wnt);
+
+        if (params.initialLongToken == params.market) {
+            // user deposited GM tokens
+            if (params.initialShortToken != address(0)) {
+                revert Errors.InvalidGlvDepositInitialShortToken(params.initialLongToken, params.initialShortToken);
+            }
+            if (params.longTokenSwapPath.length > 0 || params.longTokenSwapPath.length > 0) {
+                revert Errors.InvalidGlvDepositSwapPath(
+                    params.longTokenSwapPath.length,
+                    params.longTokenSwapPath.length
+                );
+            }
+        }
+
+        // if the initialLongToken and initialShortToken are the same, only the initialLongTokenAmount would
+        // be non-zero, the initialShortTokenAmount would be zero
+        uint256 initialLongTokenAmount = glvVault.recordTransferIn(params.initialLongToken);
+        uint256 initialShortTokenAmount;
+        if (params.initialShortToken != address(0)) {
+            // initialShortToken could be zero address if user deposits GM token
+            initialShortTokenAmount = glvVault.recordTransferIn(params.initialShortToken);
+        }
+
+        if (initialLongTokenAmount == 0 && initialShortTokenAmount == 0) {
+            revert Errors.EmptyGlvDepositAmounts();
+        }
+
+        AccountUtils.validateReceiver(params.receiver);
+
+        if (params.receiver == address(glvVault)) {
+            revert Errors.InvalidReceiver();
+        }
+
+        GlvDeposit.Props memory glvDeposit = GlvDeposit.Props({
+            addresses: GlvDeposit.Addresses({
+                glv: params.glv,
+                account: msg.sender,
+                receiver: params.receiver,
+                callbackContract: params.callbackContract,
+                uiFeeReceiver: params.uiFeeReceiver,
+                market: params.market,
+                initialLongToken: params.initialLongToken,
+                initialShortToken: params.initialShortToken,
+                longTokenSwapPath: params.longTokenSwapPath,
+                shortTokenSwapPath: params.shortTokenSwapPath
+            }),
+            numbers: GlvDeposit.Numbers({
+                initialLongTokenAmount: initialLongTokenAmount,
+                initialShortTokenAmount: initialShortTokenAmount,
+                minGlvTokens: params.minGlvTokens,
+                updatedAtBlock: Chain.currentBlockNumber(),
+                updatedAtTime: Chain.currentTimestamp(),
+                executionFee: executionFee,
+                callbackGasLimit: params.callbackGasLimit
+            }),
+            flags: GlvDeposit.Flags({shouldUnwrapNativeToken: params.shouldUnwrapNativeToken})
+        });
+
+        CallbackUtils.validateCallbackGasLimit(dataStore, params.callbackGasLimit);
+
+        uint256 marketCount = GlvUtils.getMarketCount(dataStore, glvDeposit.glv());
+        uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvDepositGasLimit(dataStore, glvDeposit, marketCount);
+        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee);
+
+        bytes32 key = NonceUtils.getNextKey(dataStore);
+
+        GlvDepositStoreUtils.set(dataStore, key, glvDeposit);
+
+        GlvDepositEventUtils.emitGlvDepositCreated(eventEmitter, key, glvDeposit);
+
+        return key;
+    }
+
+    function executeGlvDeposit(
+        ExecuteGlvDepositParams memory params,
+        GlvDeposit.Props memory glvDeposit
+    ) internal returns (uint256) {
+        GlvDepositStoreUtils.remove(params.dataStore, params.key, glvDeposit.account());
+
+        if (glvDeposit.account() == address(0)) {
+            revert Errors.EmptyGlvDeposit();
+        }
+
+        if (params.oracle.minTimestamp() < glvDeposit.updatedAtTime()) {
+            revert Errors.OracleTimestampsAreSmallerThanRequired(
+                params.oracle.minTimestamp(),
+                glvDeposit.updatedAtTime()
+            );
+        }
+
+        ExecuteGlvDepositCache memory cache;
+
+        cache.requestExpirationTime = params.dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
+        cache.maxOracleTimestamp = params.oracle.maxTimestamp();
+
+        if (cache.maxOracleTimestamp > glvDeposit.updatedAtTime() + cache.requestExpirationTime) {
+            revert Errors.OracleTimestampsAreLargerThanRequestExpirationTime(
+                cache.maxOracleTimestamp,
+                glvDeposit.updatedAtTime(),
+                cache.requestExpirationTime
+            );
+        }
+
+        cache.receivedMarketTokens = _processDeposit(params, glvDeposit);
+        cache.mintAmount = _getMintAmount(params.dataStore, params.oracle, glvDeposit, cache.receivedMarketTokens);
+
+        if (cache.mintAmount < glvDeposit.minGlvTokens()) {
+            revert Errors.MinMarketTokens(cache.mintAmount, glvDeposit.minGlvTokens());
+        }
+
+        Glv(payable(glvDeposit.glv())).mint(glvDeposit.receiver(), cache.mintAmount);
+
+        GlvDepositEventUtils.emitGlvDepositExecuted(
+            params.eventEmitter,
+            params.key,
+            glvDeposit.account(),
+            cache.mintAmount
+        );
+
+        uint256 marketCount = GlvUtils.getMarketCount(params.dataStore, glvDeposit.glv());
+        GasUtils.payExecutionFee(
+            params.dataStore,
+            params.eventEmitter,
+            params.glvVault,
+            params.key,
+            glvDeposit.callbackContract(),
+            glvDeposit.executionFee(),
+            params.startingGas,
+            GasUtils.getGlvDepositOracleGasMultiplier(glvDeposit, marketCount),
+            params.keeper,
+            glvDeposit.receiver()
+        );
+
+        EventUtils.EventLogData memory eventData;
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "receivedGlvTokens", cache.mintAmount);
+        CallbackUtils.afterGlvDepositExecution(params.key, glvDeposit, eventData);
+
+        return cache.mintAmount;
+    }
+
+    function _getMintAmount(
+        DataStore dataStore,
+        Oracle oracle,
+        GlvDeposit.Props memory glvDeposit,
+        uint256 receivedMarketTokens
+    ) internal view returns (uint256 mintAmount) {
+        Market.Props memory market = MarketStoreUtils.get(dataStore, glvDeposit.market());
+        MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(
+            dataStore,
+            market,
+            oracle.getPrimaryPrice(market.indexToken),
+            oracle.getPrimaryPrice(market.longToken),
+            oracle.getPrimaryPrice(market.shortToken),
+            Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
+            false // maximize
+        );
+        uint256 receivedMarketTokensUsd = MarketUtils.marketTokenAmountToUsd(
+            receivedMarketTokens,
+            poolValueInfo.poolValue.toUint256(),
+            ERC20(glvDeposit.market()).totalSupply()
+        );
+
+        uint256 glvValue = GlvUtils.getValue(dataStore, oracle, Glv(payable(glvDeposit.glv())));
+        uint256 glvSupply = Glv(payable(glvDeposit.glv())).totalSupply();
+        mintAmount = GlvUtils.usdToMarketTokenAmount(receivedMarketTokensUsd, glvValue, glvSupply);
+    }
+
+    function _processDeposit(
+        ExecuteGlvDepositParams memory params,
+        GlvDeposit.Props memory glvDeposit
+    ) private returns (uint256 receivedMarketTokens) {
+        if (glvDeposit.market() == glvDeposit.initialLongToken()) {
+            // user deposited GM tokens
+            return glvDeposit.initialLongTokenAmount();
+        }
+
+        params.glvVault.transferOut(
+            glvDeposit.initialLongToken(),
+            address(params.depositVault),
+            glvDeposit.initialLongTokenAmount()
+        );
+        params.glvVault.transferOut(
+            glvDeposit.initialShortToken(),
+            address(params.depositVault),
+            glvDeposit.initialShortTokenAmount()
+        );
+
+        DepositUtils.CreateDepositParams memory createDepositParams = DepositUtils.CreateDepositParams({
+            receiver: address(params.glvVault),
+            callbackContract: address(0),
+            uiFeeReceiver: glvDeposit.uiFeeReceiver(),
+            shouldUnwrapNativeToken: false,
+            market: glvDeposit.market(),
+            initialLongToken: glvDeposit.initialLongToken(),
+            initialShortToken: glvDeposit.initialShortToken(),
+            longTokenSwapPath: glvDeposit.longTokenSwapPath(),
+            shortTokenSwapPath: glvDeposit.shortTokenSwapPath(),
+            minMarketTokens: 0, // minGlvTokens will be validated instead
+            executionFee: 10_000_000, // TODO: okay? what should be used instead?
+            callbackGasLimit: 0
+        });
+
+        bytes32 depositKey = DepositUtils.createDeposit(
+            params.dataStore,
+            params.eventEmitter,
+            params.depositVault,
+            glvDeposit.addresses.account,
+            createDepositParams
+        );
+
+        ExecuteDepositUtils.ExecuteDepositParams memory executeDepositParams = ExecuteDepositUtils.ExecuteDepositParams(
+            params.dataStore,
+            params.eventEmitter,
+            params.depositVault,
+            params.oracle,
+            depositKey,
+            params.keeper,
+            params.startingGas,
+            ISwapPricingUtils.SwapPricingType.TwoStep,
+            ExecuteDepositUtils.ExecutionContext.Nested
+        );
+        Deposit.Props memory deposit = DepositStoreUtils.get(params.dataStore, depositKey);
+
+        receivedMarketTokens = ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);
+    }
+
+    function cancelGlvDeposit(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        GlvVault glvVault,
+        bytes32 key,
+        address keeper,
+        uint256 startingGas,
+        string memory reason,
+        bytes memory reasonBytes
+    ) external {
+        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
+        startingGas -= gasleft() / 63;
+
+        GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(dataStore, key);
+        if (glvDeposit.account() == address(0)) {
+            revert Errors.EmptyGlvDeposit();
+        }
+
+        if (glvDeposit.initialLongTokenAmount() == 0 && glvDeposit.initialShortTokenAmount() == 0) {
+            revert Errors.EmptyGlvDepositAmounts();
+        }
+
+        GlvDepositStoreUtils.remove(dataStore, key, glvDeposit.account());
+
+        if (glvDeposit.initialLongTokenAmount() > 0) {
+            glvVault.transferOut(
+                glvDeposit.initialLongToken(),
+                glvDeposit.account(),
+                glvDeposit.initialLongTokenAmount(),
+                glvDeposit.shouldUnwrapNativeToken()
+            );
+        }
+
+        if (glvDeposit.initialShortTokenAmount() > 0) {
+            glvVault.transferOut(
+                glvDeposit.initialShortToken(),
+                glvDeposit.account(),
+                glvDeposit.initialShortTokenAmount(),
+                glvDeposit.shouldUnwrapNativeToken()
+            );
+        }
+
+        GlvDepositEventUtils.emitGlvDepositCancelled(eventEmitter, key, glvDeposit.account(), reason, reasonBytes);
+
+        uint256 marketsCount = GlvUtils.getMarketCount(dataStore, glvDeposit.glv());
+
+        GasUtils.payExecutionFee(
+            dataStore,
+            eventEmitter,
+            glvVault,
+            key,
+            glvDeposit.callbackContract(),
+            glvDeposit.executionFee(),
+            startingGas,
+            GasUtils.getGlvDepositOracleGasMultiplier(glvDeposit, marketsCount),
+            keeper,
+            glvDeposit.receiver()
+        );
+
+        EventUtils.EventLogData memory eventData;
+        CallbackUtils.afterGlvDepositCancellation(key, glvDeposit, eventData);
+    }
+}
