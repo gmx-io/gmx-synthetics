@@ -1098,6 +1098,53 @@ const config: {
       maxOpenInterestForShorts: decimalToFloat(1_000_000),
     },
     {
+      tokens: { indexToken: "GMX", longToken: "GMX", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:GMX/USD"),
+      virtualMarketId: hashString("SPOT:GMX/USD"),
+
+      ...baseMarketConfig,
+
+      maxLongTokenPoolAmount: expandDecimals(36_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(1_200_000, 6),
+
+      maxLongTokenPoolAmountForDeposit: expandDecimals(38_000, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(1_500_000, 6),
+
+      negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~100,000 USD of imbalance
+      positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~178,180 USD of imbalance
+      positionImpactExponentFactor: decimalToFloat(22, 1), // 2.2
+
+      negativeSwapImpactFactor: decimalToFloat(8, 9), // 0.05% for 62,500 USD of imbalance
+      positiveSwapImpactFactor: decimalToFloat(4, 9), // 0.05% for 125,000 USD of imbalance
+
+      // minCollateralFactor of 0.01 (1%) when open interest is 2,632,000 USD
+      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(38, 10),
+      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(38, 10),
+
+      reserveFactorLongs: percentageToFloat("105%"),
+      reserveFactorShorts: percentageToFloat("105%"),
+
+      openInterestReserveFactorLongs: percentageToFloat("100%"),
+      openInterestReserveFactorShorts: percentageToFloat("100%"),
+
+      // factor in open interest reserve factor 100%
+      borrowingFactorForLongs: decimalToFloat(160, 10), // 1.60E-08, ~50% if 100% utilized
+      borrowingFactorForShorts: decimalToFloat(160, 10), // 1.60E-08, ~50% if 100% utilized
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(116, 14), // 0.00000000000116, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(150, 10), // 0.00000150%,  0.1296% per day, ~47.3% per year
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+
+      positionImpactPoolDistributionRate: expandDecimals(4200, 41), // 4.20031E+44, 36.29068692 OP / day
+      minPositionImpactPoolAmount: expandDecimals(311, 18), // 311 OP
+
+      maxOpenInterestForLongs: decimalToFloat(1_000_000),
+      maxOpenInterestForShorts: decimalToFloat(1_000_000),
+    },
+    {
       tokens: { longToken: "USDC", shortToken: "USDC.e" },
 
       ...baseMarketConfig,

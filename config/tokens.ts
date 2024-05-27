@@ -155,6 +155,13 @@ const config: {
       realtimeFeedId: "0x0001acb89e9722914140a4e5b952cb22d43ce336d7e47659a3313de1416266cf",
       realtimeFeedDecimals: 8,
     },
+    GMX: {
+      address: "0xfc5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      realtimeFeedId: "0x00015d9063c63a07441cc136c742ed32bb429796068eb280b1635b4eb8d0027e",
+      realtimeFeedDecimals: 8,
+    },
     USDC: {
       address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
       decimals: 6,
