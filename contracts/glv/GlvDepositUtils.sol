@@ -63,8 +63,10 @@ library GlvDepositUtils {
         DataStore dataStore,
         EventEmitter eventEmitter,
         GlvVault glvVault,
+        address account,
         CreateGlvDepositParams memory params
     ) internal returns (bytes32) {
+        AccountUtils.validateAccount(account);
         GlvUtils.validateMarket(dataStore, params.glv, params.market);
 
         address wnt = TokenUtils.wnt(dataStore);
@@ -286,6 +288,7 @@ library GlvDepositUtils {
             Keys.DEPOSIT_LIST,
             depositKey
         );
+        DepositEventUtils.emitDepositCreated(params.eventEmitter, depositKey, deposit);
 
         ExecuteDepositUtils.ExecuteDepositParams memory executeDepositParams = ExecuteDepositUtils.ExecuteDepositParams(
             params.dataStore,

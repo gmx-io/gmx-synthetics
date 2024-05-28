@@ -6,6 +6,7 @@ import "../exchange/IDepositHandler.sol";
 import "../exchange/IWithdrawalHandler.sol";
 import "../exchange/IShiftHandler.sol";
 import "../exchange/IOrderHandler.sol";
+import "../exchange/IGlvHandler.sol";
 
 interface IExchangeRouter {
     function createDeposit(
@@ -45,4 +46,10 @@ interface IExchangeRouter {
     ) external payable;
 
     function cancelOrder(bytes32 key) external payable;
+
+    function createGlvDeposit(
+        GlvDepositUtils.CreateGlvDepositParams calldata params
+    ) external payable returns (bytes32);
+
+    function cancelGlvDeposit(bytes32 key) external payable;
 }

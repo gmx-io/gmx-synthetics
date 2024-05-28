@@ -38,10 +38,13 @@ contract GLVHandler is BaseHandler, ReentrancyGuard {
         depositVault = _depositVault;
     }
 
-    function createGlvDeposit(GlvDepositUtils.CreateGlvDepositParams calldata params) external globalNonReentrant onlyController returns (bytes32) {
+    function createGlvDeposit(
+        address account,
+        GlvDepositUtils.CreateGlvDepositParams calldata params
+    ) external globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createGlvDepositFeatureDisabledKey(address(this)));
 
-        return GlvDepositUtils.createGlvDeposit(dataStore, eventEmitter, glvVault, params);
+        return GlvDepositUtils.createGlvDeposit(dataStore, eventEmitter, glvVault, account, params);
     }
 
     function executeGlvDeposit(
@@ -57,7 +60,9 @@ contract GLVHandler is BaseHandler, ReentrancyGuard {
 
         uint256 executionGas = GasUtils.getExecutionGas(dataStore, startingGas);
 
-        try this._executeGlvDeposit{gas: executionGas}(key, glvDeposit, msg.sender) {} catch (bytes memory reasonBytes) {
+        try this._executeGlvDeposit{gas: executionGas}(key, glvDeposit, msg.sender) {} catch (
+            bytes memory reasonBytes
+        ) {
             _handleGlvDepositError(key, startingGas, reasonBytes);
         }
     }
