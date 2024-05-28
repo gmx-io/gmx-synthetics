@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./BaseHandler.sol";
 import "../callback/CallbackUtils.sol";
 import "../exchange/IDepositHandler.sol";
+import "../exchange/IShiftHandler.sol";
 
 import "../glv/Glv.sol";
 import "../glv/GlvUtils.sol";
@@ -16,13 +17,15 @@ import "../glv/GlvVault.sol";
 import "../glv/GlvDeposit.sol";
 import "../deposit/DepositUtils.sol";
 import "../deposit/ExecuteDepositUtils.sol";
+import "../shift/ShiftUtils.sol";
 
-contract GLVHandler is BaseHandler, ReentrancyGuard {
+contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
     using GlvDeposit for GlvDeposit.Props;
 
     IDepositHandler public immutable depositHandler;
+    IShiftHandler public immutable shiftHandler;
     GlvVault public immutable glvVault;
-    DepositVault public immutable depositVault;
+    ShiftVault public immutable shiftVault;
 
     constructor(
         RoleStore _roleStore,
@@ -30,12 +33,14 @@ contract GLVHandler is BaseHandler, ReentrancyGuard {
         EventEmitter _eventEmitter,
         Oracle _oracle,
         IDepositHandler _depositHandler,
+        IShiftHandler _shiftHandler,
         GlvVault _glvVault,
-        DepositVault _depositVault
+        ShiftVault _shiftVault
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         depositHandler = _depositHandler;
+        shiftHandler = _shiftHandler;
         glvVault = _glvVault;
-        depositVault = _depositVault;
+        shiftVault = _shiftVault;
     }
 
     function createGlvDeposit(
@@ -76,7 +81,6 @@ contract GLVHandler is BaseHandler, ReentrancyGuard {
             key: key,
             dataStore: dataStore,
             eventEmitter: eventEmitter,
-            depositVault: depositVault,
             glvVault: glvVault,
             oracle: oracle,
             startingGas: startingGas,
@@ -134,7 +138,31 @@ contract GLVHandler is BaseHandler, ReentrancyGuard {
         // TODO:
     }
 
-    function shift() external {
-        // TODO: allow shifting of GM tokens between markets
+    function shift(
+        address account,
+        address glv,
+        uint256 marketTokenAmount,
+        ShiftUtils.CreateShiftParams memory params
+    ) external globalNonReentrant onlyOrderKeeper {
+        FeatureUtils.validateFeature(dataStore, Keys.glvShiftFeatureDisabledKey(address(this)));
+
+        GlvUtils.createShift(
+            dataStore,
+            oracle,
+            shiftHandler,
+            shiftVault,
+            account,
+            glv,
+            marketTokenAmount,
+            params
+        );
+    }
+
+    function afterShiftExecution(bytes32 key, Shift.Props memory /* shift */, EventUtils.EventLogData memory /* eventData */) external onlyController {
+        GlvUtils.clearPendingShift(dataStore, key);
+    }
+
+    function afterShiftCancellation(bytes32 key, Shift.Props memory /* shift */, EventUtils.EventLogData memory /* eventData */) external onlyController {
+        GlvUtils.clearPendingShift(dataStore, key);
     }
 }

@@ -53,6 +53,13 @@ library Errors {
     error EmptyGlvDeposit();
     // GlvUtils errors
     error GlvUnsupportedMarket(address glv, address market);
+    error GlvUnsupportedGlv(address glv);
+    error GlvMaxMarketTokenBalanceExceeded(address glv, address market, uint256 maxMarketTokenBalanceUsd, uint256 marketTokenBalanceUsd);
+    error GlvInsufficientMarketTokenBalance(address glv, address market, uint256 marketTokenBalance, uint256 marketTokenAmount);
+    error GlvHasPendingShift(address glv);
+    error GlvShiftNotFound(bytes32 shiftKey);
+    error GlvInvalidReceiver(address glv, address receiver);
+    error GlvInvalidCallbackContract(address glvHandler, address callbackContract);
     error InvalidMarketTokenPrice(address market, int256 price);
 
     // DepositStoreUtils errors

@@ -496,7 +496,7 @@ library MarketUtils {
         return dataStore.getUint(Keys.maxPoolUsdForDepositKey(market, token));
     }
 
-    function getBorrowingUsageFactor(
+    function getUsageFactor(
         DataStore dataStore,
         Market.Props memory market,
         bool isLong,
@@ -2428,7 +2428,7 @@ library MarketUtils {
         uint256 poolUsd,
         uint256 optimalUsageFactor
     ) internal view returns (uint256) {
-        uint256 usageFactor = getBorrowingUsageFactor(
+        uint256 usageFactor = getUsageFactor(
             dataStore,
             market,
             isLong,

@@ -3,7 +3,6 @@
 pragma solidity ^0.8.0;
 
 import "../exchange/IDepositHandler.sol";
-import "../exchange/IGlvHandler.sol";
 import "../exchange/IWithdrawalHandler.sol";
 import "../exchange/IShiftHandler.sol";
 import "../exchange/IOrderHandler.sol";
@@ -57,14 +56,12 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
     using Withdrawal for Withdrawal.Props;
     using Order for Order.Props;
     using Shift for Shift.Props;
-    using GlvDeposit for GlvDeposit.Props;
 
     IDepositHandler public immutable depositHandler;
     IWithdrawalHandler public immutable withdrawalHandler;
     IShiftHandler public immutable shiftHandler;
     IOrderHandler public immutable orderHandler;
     IExternalHandler public immutable externalHandler;
-    IGlvHandler public immutable glvHandler;
 
     // @dev Constructor that initializes the contract with the provided Router, RoleStore, DataStore,
     // EventEmitter, IDepositHandler, IWithdrawalHandler, IOrderHandler, and OrderStore instances
@@ -77,15 +74,13 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         IWithdrawalHandler _withdrawalHandler,
         IShiftHandler _shiftHandler,
         IOrderHandler _orderHandler,
-        IExternalHandler _externalHandler,
-        IGlvHandler _glvHandler
+        IExternalHandler _externalHandler
     ) BaseRouter(_router, _roleStore, _dataStore, _eventEmitter) {
         depositHandler = _depositHandler;
         withdrawalHandler = _withdrawalHandler;
         shiftHandler = _shiftHandler;
         orderHandler = _orderHandler;
         externalHandler = _externalHandler;
-        glvHandler = _glvHandler;
     }
 
     // makeExternalCalls can be used to perform an external swap before
@@ -464,29 +459,5 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         }
 
         return claimedAmounts;
-    }
-
-    function createGlvDeposit(
-        GlvDepositUtils.CreateGlvDepositParams calldata params
-    ) external override payable nonReentrant returns (bytes32) {
-        address account = msg.sender;
-
-        return glvHandler.createGlvDeposit(
-            account,
-            params
-        );
-    }
-
-    function cancelGlvDeposit(bytes32 key) external override payable nonReentrant {
-        GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(dataStore, key);
-        if (glvDeposit.account() == address(0)) {
-            revert Errors.EmptyDeposit();
-        }
-
-        if (glvDeposit.account() != msg.sender) {
-            revert Errors.Unauthorized(msg.sender, "account for cancelGlvDeposit");
-        }
-
-        glvHandler.cancelGlvDeposit(key);
     }
 }

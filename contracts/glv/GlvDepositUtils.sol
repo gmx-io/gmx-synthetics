@@ -44,7 +44,6 @@ library GlvDepositUtils {
     struct ExecuteGlvDepositParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
-        DepositVault depositVault;
         GlvVault glvVault;
         Oracle oracle;
         bytes32 key;
@@ -65,8 +64,9 @@ library GlvDepositUtils {
         GlvVault glvVault,
         address account,
         CreateGlvDepositParams memory params
-    ) internal returns (bytes32) {
+    ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
+        GlvUtils.validateGlv(dataStore, params.glv);
         GlvUtils.validateMarket(dataStore, params.glv, params.market);
 
         MarketUtils.validateEnabledMarket(dataStore, params.market);
@@ -162,12 +162,16 @@ library GlvDepositUtils {
     function executeGlvDeposit(
         ExecuteGlvDepositParams memory params,
         GlvDeposit.Props memory glvDeposit
-    ) internal returns (uint256) {
+    ) external returns (uint256) {
+        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
+        params.startingGas -= gasleft() / 63;
+
         GlvDepositStoreUtils.remove(params.dataStore, params.key, glvDeposit.account());
 
         if (glvDeposit.account() == address(0)) {
             revert Errors.EmptyGlvDeposit();
         }
+
 
         if (params.oracle.minTimestamp() < glvDeposit.updatedAtTime()) {
             revert Errors.OracleTimestampsAreSmallerThanRequired(

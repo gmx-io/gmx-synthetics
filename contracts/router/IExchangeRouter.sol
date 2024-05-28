@@ -46,10 +46,4 @@ interface IExchangeRouter {
     ) external payable;
 
     function cancelOrder(bytes32 key) external payable;
-
-    function createGlvDeposit(
-        GlvDepositUtils.CreateGlvDepositParams calldata params
-    ) external payable returns (bytes32);
-
-    function cancelGlvDeposit(bytes32 key) external payable;
 }
