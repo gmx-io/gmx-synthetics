@@ -212,22 +212,33 @@ library GasUtils {
         return gasLimit;
     }
 
+    // @dev get estimated number of oracle prices for deposit
+    // @param deposit Deposit.Props the deposit to estimate number of oracle prices for
     function getDepositOraclePriceCount(Deposit.Props memory deposit) internal pure returns (uint256) {
         // each market requires 3 prices at most
         // markets in swap path share 1 price at least, 3 prices at most
+        // deposit uses 8 prices at most, 2 prices at least
         return 3 + deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length;
     }
 
+    // @dev get estimated number of oracle prices for withdrawal
+    // @param withdrawal Withdrawal.Props the withdrawal to estimate number of oracle prices for
     function getWithdrawalOraclePriceCount(Withdrawal.Props memory withdrawal) internal pure returns (uint256) {
         // each market requires 3 prices at most
         // markets in swap path share 1 price at least, 3 prices at most
+        // withdrawal uses 8 prices at most, 2 prices at least
         return 3 + withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length;
     }
 
+    // @dev get estimated number of oracle prices for order
+    // @param order Order.Props the order to estimate number of oracle prices for
     function getOrderOraclePriceCount(Order.Props memory order) internal pure returns (uint256) {
+        // order uses 6 prices at most, 2 prices at least
         return 3 + order.swapPath().length;
     }
 
+    // @dev get estimated number of oracle prices for shift
+    // @param shift Shift.Props the shift to estimate number of oracle prices for
     function getShiftOraclePriceCount(Shift.Props memory /* shift */) internal pure returns (uint256) {
         // 2 prices for the same long and short tokens
         // a price for index token of both markets
@@ -235,6 +246,8 @@ library GasUtils {
         return 4;
     }
 
+    // @dev get estimated number of oracle prices for glv deposit
+    // @param glvDeposit GlvDeposit.Props the glv deposit to estimate number of oracle prices for
     function getGlvDepositOraclePriceCount(GlvDeposit.Props memory glvDeposit, uint256 marketCount) internal pure returns (uint256) {
         return 2 + marketCount + glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length;
     }
