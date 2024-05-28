@@ -197,7 +197,7 @@ library GlvDepositUtils {
             glvDeposit.callbackContract(),
             glvDeposit.executionFee(),
             params.startingGas,
-            GasUtils.getGlvDepositOracleGasMultiplier(glvDeposit, marketCount),
+            GasUtils.getGlvDepositOraclePriceCount(glvDeposit, marketCount),
             params.keeper,
             glvDeposit.receiver()
         );
@@ -257,27 +257,34 @@ library GlvDepositUtils {
             glvDeposit.initialShortTokenAmount()
         );
 
-        DepositUtils.CreateDepositParams memory createDepositParams = DepositUtils.CreateDepositParams({
-            receiver: address(params.glvVault),
-            callbackContract: address(0),
-            uiFeeReceiver: glvDeposit.uiFeeReceiver(),
-            shouldUnwrapNativeToken: false,
-            market: glvDeposit.market(),
-            initialLongToken: glvDeposit.initialLongToken(),
-            initialShortToken: glvDeposit.initialShortToken(),
-            longTokenSwapPath: glvDeposit.longTokenSwapPath(),
-            shortTokenSwapPath: glvDeposit.shortTokenSwapPath(),
-            minMarketTokens: 0, // minGlvTokens will be validated instead
-            executionFee: 10_000_000, // TODO: okay? what should be used instead?
-            callbackGasLimit: 0
-        });
+        Deposit.Props memory deposit = Deposit.Props(
+            Deposit.Addresses({
+                account: glvDeposit.account(),
+                receiver: glvDeposit.receiver(),
+                callbackContract: address(0),
+                uiFeeReceiver: glvDeposit.uiFeeReceiver(),
+                market: glvDeposit.market(),
+                initialLongToken: glvDeposit.initialLongToken(),
+                initialShortToken: glvDeposit.initialShortToken(),
+                longTokenSwapPath: new address[](0),
+                shortTokenSwapPath: new address[](0)
+            }),
+            Deposit.Numbers({
+                initialLongTokenAmount: glvDeposit.initialLongTokenAmount(),
+                initialShortTokenAmount: glvDeposit.initialShortTokenAmount(),
+                minMarketTokens: 0,
+                updatedAtBlock: glvDeposit.updatedAtBlock(),
+                updatedAtTime: glvDeposit.updatedAtTime(),
+                executionFee: 0,
+                callbackGasLimit: 0
+            }),
+            Deposit.Flags({shouldUnwrapNativeToken: false})
+        );
 
-        bytes32 depositKey = DepositUtils.createDeposit(
-            params.dataStore,
-            params.eventEmitter,
-            params.depositVault,
-            glvDeposit.addresses.account,
-            createDepositParams
+        bytes32 depositKey = NonceUtils.getNextKey(params.dataStore);
+        params.dataStore.addBytes32(
+            Keys.DEPOSIT_LIST,
+            depositKey
         );
 
         ExecuteDepositUtils.ExecuteDepositParams memory executeDepositParams = ExecuteDepositUtils.ExecuteDepositParams(
@@ -288,10 +295,8 @@ library GlvDepositUtils {
             depositKey,
             params.keeper,
             params.startingGas,
-            ISwapPricingUtils.SwapPricingType.TwoStep,
-            ExecuteDepositUtils.ExecutionContext.Nested
+            ISwapPricingUtils.SwapPricingType.TwoStep
         );
-        Deposit.Props memory deposit = DepositStoreUtils.get(params.dataStore, depositKey);
 
         receivedMarketTokens = ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);
     }
@@ -350,7 +355,7 @@ library GlvDepositUtils {
             glvDeposit.callbackContract(),
             glvDeposit.executionFee(),
             startingGas,
-            GasUtils.getGlvDepositOracleGasMultiplier(glvDeposit, marketsCount),
+            GasUtils.getGlvDepositOraclePriceCount(glvDeposit, marketsCount),
             keeper,
             glvDeposit.receiver()
         );

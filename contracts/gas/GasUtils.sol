@@ -103,7 +103,7 @@ library GasUtils {
     // @param bank the StrictBank contract holding the execution fee
     // @param executionFee the executionFee amount
     // @param startingGas the starting gas
-    // @param oracleGasMultiplier number of oracle prices
+    // @param oraclePriceCount number of oracle prices
     // @param keeper the keeper to pay
     // @param refundReceiver the account that should receive any excess gas refunds
     function payExecutionFee(
@@ -114,7 +114,7 @@ library GasUtils {
         address callbackContract,
         uint256 executionFee,
         uint256 startingGas,
-        uint256 oracleGasMultiplier,
+        uint256 oraclePriceCount,
         address keeper,
         address refundReceiver
     ) external {
@@ -127,7 +127,7 @@ library GasUtils {
         uint256 gasUsed = startingGas - gasleft();
 
         // each external call forwards 63/64 of the remaining gas
-        uint256 executionFeeForKeeper = adjustGasUsage(dataStore, gasUsed, oracleGasMultiplier) * tx.gasprice;
+        uint256 executionFeeForKeeper = adjustGasUsage(dataStore, gasUsed, oraclePriceCount) * tx.gasprice;
 
         if (executionFeeForKeeper > executionFee) {
             executionFeeForKeeper = executionFee;
@@ -183,16 +183,16 @@ library GasUtils {
     // @dev adjust the gas usage to pay a small amount to keepers
     // @param dataStore DataStore
     // @param gasUsed the amount of gas used
-    // @param oracleGasMultiplier number of oracle prices
-    function adjustGasUsage(DataStore dataStore, uint256 gasUsed, uint256 oracleGasMultiplier) internal view returns (uint256) {
-        // gas measurements are done after the call to withOracleGass
-        // withOracleGass may consume a significant amount of gas
+    // @param oraclePriceCount number of oracle prices
+    function adjustGasUsage(DataStore dataStore, uint256 gasUsed, uint256 oraclePriceCount) internal view returns (uint256) {
+        // gas measurements are done after the call to withOraclePrices
+        // withOraclePrices may consume a significant amount of gas
         // the baseGasLimit used to calculate the execution cost
         // should be adjusted to account for this
         // additionally, a transaction could fail midway through an execution transaction
         // before being cancelled, the possibility of this additional gas cost should
         // be considered when setting the baseGasLimit
-        uint256 baseGasLimit = dataStore.getUint(Keys.EXECUTION_GAS_LIMIT_PER_ORACLE_PRICE) * oracleGasMultiplier;
+        uint256 baseGasLimit = dataStore.getUint(Keys.EXECUTION_GAS_LIMIT_PER_ORACLE_PRICE) * oraclePriceCount;
         // the gas cost is estimated based on the gasprice of the request txn
         // the actual cost may be higher if the gasprice is higher in the execution txn
         // the multiplierFactor should be adjusted to account for this
@@ -212,25 +212,30 @@ library GasUtils {
         return gasLimit;
     }
 
-    function getDepositOracleGasMultiplier(Deposit.Props memory deposit) internal pure returns (uint256) {
+    function getDepositOraclePriceCount(Deposit.Props memory deposit) internal pure returns (uint256) {
+        // each market requires 3 prices at most
+        // markets in swap path share 1 price at least, 3 prices at most
         return 3 + deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length;
     }
 
-    function getWithdrawalOracleGasMultiplier(Withdrawal.Props memory withdrawal) internal pure returns (uint256) {
+    function getWithdrawalOraclePriceCount(Withdrawal.Props memory withdrawal) internal pure returns (uint256) {
+        // each market requires 3 prices at most
+        // markets in swap path share 1 price at least, 3 prices at most
         return 3 + withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length;
     }
 
-    function getOrderOracleGasMultiplier(Order.Props memory order) internal pure returns (uint256) {
+    function getOrderOraclePriceCount(Order.Props memory order) internal pure returns (uint256) {
         return 3 + order.swapPath().length;
     }
 
-    function getShiftOracleGasMultiplier(Shift.Props memory /* shift */) internal pure returns (uint256) {
+    function getShiftOraclePriceCount(Shift.Props memory /* shift */) internal pure returns (uint256) {
         // 2 prices for the same long and short tokens
         // a price for index token of both markets
+        // shift uses 3 prices at least, 4 prices at most
         return 4;
     }
 
-    function getGlvDepositOracleGasMultiplier(GlvDeposit.Props memory glvDeposit, uint256 marketCount) internal pure returns (uint256) {
+    function getGlvDepositOraclePriceCount(GlvDeposit.Props memory glvDeposit, uint256 marketCount) internal pure returns (uint256) {
         return 2 + marketCount + glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length;
     }
 

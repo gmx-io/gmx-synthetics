@@ -250,8 +250,7 @@ library ShiftUtils {
             cache.depositKey,
             params.keeper,
             params.startingGas,
-            ISwapPricingUtils.SwapPricingType.Shift,
-            ExecuteDepositUtils.ExecutionContext.Default
+            ISwapPricingUtils.SwapPricingType.Shift
         );
 
         uint256 receivedMarketTokens = ExecuteDepositUtils.executeDeposit(
@@ -279,7 +278,7 @@ library ShiftUtils {
             shift.callbackContract(),
             shift.executionFee(),
             params.startingGas,
-            GasUtils.getShiftOracleGasMultiplier(shift),
+            GasUtils.getShiftOraclePriceCount(shift),
             params.keeper,
             shift.receiver()
         );
@@ -336,7 +335,7 @@ library ShiftUtils {
             shift.callbackContract(),
             shift.executionFee(),
             startingGas,
-            GasUtils.getShiftOracleGasMultiplier(shift),
+            GasUtils.getShiftOraclePriceCount(shift),
             keeper,
             shift.receiver()
         );

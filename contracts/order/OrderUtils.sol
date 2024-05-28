@@ -203,7 +203,7 @@ library OrderUtils {
             params.order.callbackContract(),
             params.order.executionFee(),
             params.startingGas,
-            GasUtils.getOrderOracleGasMultiplier(params.order),
+            GasUtils.getOrderOraclePriceCount(params.order),
             params.keeper,
             params.order.receiver()
         );
@@ -306,7 +306,7 @@ library OrderUtils {
             order.callbackContract(),
             order.executionFee(),
             startingGas,
-            GasUtils.getOrderOracleGasMultiplier(order),
+            GasUtils.getOrderOraclePriceCount(order),
             keeper,
             order.receiver()
         );
@@ -363,7 +363,7 @@ library OrderUtils {
             order.callbackContract(),
             order.executionFee(),
             startingGas,
-            GasUtils.getOrderOracleGasMultiplier(order),
+            GasUtils.getOrderOraclePriceCount(order),
             keeper,
             order.receiver()
         );
