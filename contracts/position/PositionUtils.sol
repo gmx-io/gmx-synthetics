@@ -493,31 +493,33 @@ library PositionUtils {
     }
 
     function updateFundingAndBorrowingState(
-        PositionUtils.UpdatePositionParams memory params,
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        Market.Props memory market,
         MarketUtils.MarketPrices memory prices
-    ) internal {
+    ) external {
         // update the funding amount per size for the market
         MarketUtils.updateFundingState(
-            params.contracts.dataStore,
-            params.contracts.eventEmitter,
-            params.market,
+            dataStore,
+            eventEmitter,
+            market,
             prices
         );
 
         // update the cumulative borrowing factor for longs
         MarketUtils.updateCumulativeBorrowingFactor(
-            params.contracts.dataStore,
-            params.contracts.eventEmitter,
-            params.market,
+            dataStore,
+            eventEmitter,
+            market,
             prices,
             true // isLong
         );
 
         // update the cumulative borrowing factor for shorts
         MarketUtils.updateCumulativeBorrowingFactor(
-            params.contracts.dataStore,
-            params.contracts.eventEmitter,
-            params.market,
+            dataStore,
+            eventEmitter,
+            market,
             prices,
             false // isLong
         );

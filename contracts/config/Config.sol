@@ -116,7 +116,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         bytes32 feedId,
         uint256 dataStreamMultiplier
     ) external onlyTimelockAdmin nonReentrant {
-        if (Keys.dataStreamIdKey(token) != bytes32(0)) {
+        if (dataStore.getBytes32(Keys.dataStreamIdKey(token)) != bytes32(0)) {
             revert Errors.DataStreamIdAlreadyExistsForToken(token);
         }
 
@@ -437,6 +437,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.ORACLE_TIMESTAMP_ADJUSTMENT] = true;
         allowedBaseKeys[Keys.ORACLE_PROVIDER_FOR_TOKEN] = true;
         allowedBaseKeys[Keys.CHAINLINK_PAYMENT_TOKEN] = true;
+        allowedBaseKeys[Keys.SEQUENCER_GRACE_DURATION] = true;
         allowedBaseKeys[Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR] = true;
 
         allowedBaseKeys[Keys.POSITION_FEE_RECEIVER_FACTOR] = true;
@@ -484,6 +485,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.MAX_UI_FEE_FACTOR] = true;
         allowedBaseKeys[Keys.MAX_AUTO_CANCEL_ORDERS] = true;
+        allowedBaseKeys[Keys.MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS] = true;
 
         allowedBaseKeys[Keys.ORACLE_TYPE] = true;
 
@@ -548,9 +550,35 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param baseKey the base key for the value
     // @param value the value to be set
     function _validateRange(bytes32 baseKey, uint256 value) internal pure {
+        if (baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND) {
+            // 0.00001% per second, ~315% per year
+            if (value > 100000000000000000000000) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (
+            baseKey == Keys.BORROWING_FACTOR ||
+            baseKey == Keys.BASE_BORROWING_FACTOR ||
+            baseKey == Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR
+        ) {
+            // 0.000005% per second, ~157% per year at 100% utilization
+            if (value > 50000000000000000000000) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
         if (
             baseKey == Keys.FUNDING_EXPONENT_FACTOR ||
-            baseKey == Keys.BORROWING_EXPONENT_FACTOR ||
+            baseKey == Keys.BORROWING_EXPONENT_FACTOR
+        ) {
+            // revert if value > 2
+            if (value > 2 * Precision.FLOAT_PRECISION) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (
             baseKey == Keys.POSITION_IMPACT_EXPONENT_FACTOR ||
             baseKey == Keys.SWAP_IMPACT_EXPONENT_FACTOR
         ) {
@@ -590,7 +618,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.SWAP_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.BORROWING_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.MAX_PNL_FACTOR ||
-            baseKey == Keys.MIN_PNL_FACTOR_AFTER_ADL
+            baseKey == Keys.MIN_PNL_FACTOR_AFTER_ADL ||
+            baseKey == Keys.OPTIMAL_USAGE_FACTOR
         ) {
             // revert if value > 100%
             if (value > Precision.FLOAT_PRECISION) {

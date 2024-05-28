@@ -52,7 +52,8 @@ library ReaderDepositUtils {
         uint256 longTokenAmount,
         uint256 shortTokenAmount,
         address uiFeeReceiver,
-        ISwapPricingUtils.SwapPricingType swapPricingType
+        ISwapPricingUtils.SwapPricingType swapPricingType,
+        bool includeVirtualInventoryImpact
     ) external view returns (uint256) {
         uint256 longTokenUsd = longTokenAmount * prices.longTokenPrice.midPrice();
         uint256 shortTokenUsd = shortTokenAmount * prices.shortTokenPrice.midPrice();
@@ -65,7 +66,8 @@ library ReaderDepositUtils {
                 prices.longTokenPrice.midPrice(),
                 prices.shortTokenPrice.midPrice(),
                 longTokenUsd.toInt256(),
-                shortTokenUsd.toInt256()
+                shortTokenUsd.toInt256(),
+                includeVirtualInventoryImpact
             )
         );
 

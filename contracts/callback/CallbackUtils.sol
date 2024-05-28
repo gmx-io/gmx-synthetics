@@ -68,6 +68,13 @@ library CallbackUtils {
         }
     }
 
+    function validateGasLeftForCallback(uint256 callbackGasLimit) internal view {
+        uint256 gasLeft = gasleft();
+        if (gasLeft < callbackGasLimit) {
+            revert Errors.InsufficientGasLeftForCallback(gasLeft, callbackGasLimit);
+        }
+    }
+
     function setSavedCallbackContract(DataStore dataStore, address account, address market, address callbackContract) external {
         dataStore.setAddress(Keys.savedCallbackContract(account, market), callbackContract);
     }
@@ -107,6 +114,8 @@ library CallbackUtils {
     ) internal {
         if (!isValidCallbackContract(deposit.callbackContract())) { return; }
 
+        validateGasLeftForCallback(deposit.callbackGasLimit());
+
         try IDepositCallbackReceiver(deposit.callbackContract()).afterDepositExecution{ gas: deposit.callbackGasLimit() }(
             key,
             deposit,
@@ -126,6 +135,8 @@ library CallbackUtils {
         EventUtils.EventLogData memory eventData
     ) internal {
         if (!isValidCallbackContract(deposit.callbackContract())) { return; }
+
+        validateGasLeftForCallback(deposit.callbackGasLimit());
 
         try IDepositCallbackReceiver(deposit.callbackContract()).afterDepositCancellation{ gas: deposit.callbackGasLimit() }(
             key,
@@ -147,6 +158,8 @@ library CallbackUtils {
     ) internal {
         if (!isValidCallbackContract(withdrawal.callbackContract())) { return; }
 
+        validateGasLeftForCallback(withdrawal.callbackGasLimit());
+
         try IWithdrawalCallbackReceiver(withdrawal.callbackContract()).afterWithdrawalExecution{ gas: withdrawal.callbackGasLimit() }(
             key,
             withdrawal,
@@ -167,6 +180,8 @@ library CallbackUtils {
     ) internal {
         if (!isValidCallbackContract(withdrawal.callbackContract())) { return; }
 
+        validateGasLeftForCallback(withdrawal.callbackGasLimit());
+
         try IWithdrawalCallbackReceiver(withdrawal.callbackContract()).afterWithdrawalCancellation{ gas: withdrawal.callbackGasLimit() }(
             key,
             withdrawal,
@@ -184,6 +199,8 @@ library CallbackUtils {
     ) internal {
         if (!isValidCallbackContract(shift.callbackContract())) { return; }
 
+        validateGasLeftForCallback(shift.callbackGasLimit());
+
         try IShiftCallbackReceiver(shift.callbackContract()).afterShiftExecution{ gas: shift.callbackGasLimit() }(
             key,
             shift,
@@ -199,6 +216,8 @@ library CallbackUtils {
         EventUtils.EventLogData memory eventData
     ) internal {
         if (!isValidCallbackContract(shift.callbackContract())) { return; }
+
+        validateGasLeftForCallback(shift.callbackGasLimit());
 
         try IShiftCallbackReceiver(shift.callbackContract()).afterShiftCancellation{ gas: shift.callbackGasLimit() }(
             key,
@@ -223,6 +242,8 @@ library CallbackUtils {
     ) internal {
         if (!isValidCallbackContract(order.callbackContract())) { return; }
 
+        validateGasLeftForCallback(order.callbackGasLimit());
+
         try IOrderCallbackReceiver(order.callbackContract()).afterOrderExecution{ gas: order.callbackGasLimit() }(
             key,
             order,
@@ -243,6 +264,8 @@ library CallbackUtils {
     ) internal {
         if (!isValidCallbackContract(order.callbackContract())) { return; }
 
+        validateGasLeftForCallback(order.callbackGasLimit());
+
         try IOrderCallbackReceiver(order.callbackContract()).afterOrderCancellation{ gas: order.callbackGasLimit() }(
             key,
             order,
@@ -262,6 +285,8 @@ library CallbackUtils {
         EventUtils.EventLogData memory eventData
     ) internal {
         if (!isValidCallbackContract(order.callbackContract())) { return; }
+
+        validateGasLeftForCallback(order.callbackGasLimit());
 
         try IOrderCallbackReceiver(order.callbackContract()).afterOrderFrozen{ gas: order.callbackGasLimit() }(
             key,

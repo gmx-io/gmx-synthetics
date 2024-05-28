@@ -3,11 +3,10 @@ import path from "path";
 
 import { ethers } from "ethers";
 import hre from "hardhat";
-import { bigNumberify, formatAmount } from "../../utils/math";
+import { bigNumberify, expandDecimals, formatAmount } from "../../utils/math";
 import fetch from "node-fetch";
 
 import receiverOverridesMap from "./receiverOverrides";
-import { getBatchSenderCalldata } from "./batchSend";
 
 for (const address of Object.keys(receiverOverridesMap)) {
   const checksumAddress = ethers.utils.getAddress(address);
@@ -17,15 +16,58 @@ for (const address of Object.keys(receiverOverridesMap)) {
   }
 }
 
-const ARBITRUM_SUBGRAPH_ENDPOINT = "https://subgraph.satsuma-prod.com/3b2ced13c8d9/gmx/synthetics-arbitrum-stats/api";
-const API_ENDPOINT = "https://arbitrum-api.gmxinfra.io";
+function getSubgraphEndpoint() {
+  if (hre.network.name === "arbitrum") {
+    return "https://subgraph.satsuma-prod.com/3b2ced13c8d9/gmx/synthetics-arbitrum-stats/api";
+  } else if (hre.network.name === "avalanche") {
+    return "https://subgraph.satsuma-prod.com/3b2ced13c8d9/gmx/synthetics-avalanche-stats/api";
+  } else {
+    throw new Error("Unsupported network");
+  }
+}
+
+function getApiEndpoint() {
+  if (hre.network.name === "arbitrum") {
+    return "https://arbitrum-api.gmxinfra.io";
+  } else if (hre.network.name === "avalanche") {
+    return "https://avalanche-api.gmxinfra.io";
+  } else {
+    throw new Error("Unsupported network");
+  }
+}
+
+export function getMinRewardThreshold(rewardToken: any) {
+  if (rewardToken.symbol === "WAVAX") {
+    return expandDecimals(3, 15);
+  } else if (rewardToken.symbol === "ARB") {
+    return expandDecimals(1, 17);
+  } else {
+    throw new Error(`Undefined min reward threshold for reward token ${rewardToken.symbol}`);
+  }
+}
 
 export const STIP_LP_DISTRIBUTION_TYPE_ID = 1001;
 export const STIP_MIGRATION_DISTRIBUTION_TYPE_ID = 1002;
 export const STIP_TRADING_INCENTIVES_DISTRIBUTION_TYPE_ID = 1003;
 export const EIP_4844_COMPETITION_1_ID = 2001;
 export const EIP_4844_COMPETITION_2_ID = 2002;
+export const ARBITRUM_STIP_B_LP_ID = 1004;
+export const ARBITRUM_STIP_B_TRADING_ID = 1005;
+export const AVALANCHE_RUSH_LP_ID = 1100;
+export const AVALANCHE_RUSH_TRADING_ID = 1101;
 const TEST_DISTRIBUTION_TYPE_ID = 9876;
+
+export const knownDistributionTypeIds = new Set([
+  STIP_LP_DISTRIBUTION_TYPE_ID,
+  STIP_MIGRATION_DISTRIBUTION_TYPE_ID,
+  STIP_TRADING_INCENTIVES_DISTRIBUTION_TYPE_ID,
+  EIP_4844_COMPETITION_1_ID,
+  EIP_4844_COMPETITION_2_ID,
+  TEST_DISTRIBUTION_TYPE_ID,
+  ARBITRUM_STIP_B_LP_ID,
+  ARBITRUM_STIP_B_TRADING_ID,
+  AVALANCHE_RUSH_LP_ID,
+]);
 
 export function getDistributionTypeName(distributionTypeId: number) {
   return {
@@ -35,12 +77,16 @@ export function getDistributionTypeName(distributionTypeId: number) {
     [EIP_4844_COMPETITION_1_ID]: "EIP-4844 COMPETITION 1",
     [EIP_4844_COMPETITION_2_ID]: "EIP-4844 COMPETITION 2",
     [TEST_DISTRIBUTION_TYPE_ID]: "TEST",
+    [ARBITRUM_STIP_B_LP_ID]: "STIP.b LP",
+    [ARBITRUM_STIP_B_TRADING_ID]: "STIP.b TRADING",
+    [AVALANCHE_RUSH_LP_ID]: "AVALANCHE RUSH LP",
+    [AVALANCHE_RUSH_TRADING_ID]: "AVALANCHE RUSH TRADING",
   }[distributionTypeId];
 }
 
 export async function requestSubgraph(query: string) {
   const payload = JSON.stringify({ query });
-  const res = await fetch(ARBITRUM_SUBGRAPH_ENDPOINT, {
+  const res = await fetch(getSubgraphEndpoint(), {
     method: "POST",
     body: payload,
     headers: { "Content-Type": "application/json" },
@@ -55,7 +101,15 @@ export async function requestSubgraph(query: string) {
 }
 
 export function guessBlockNumberByTimestamp(block: ethers.providers.Block, timestamp: number) {
-  return block.number - Math.floor((block.timestamp - timestamp) * 3.75);
+  let blocksPerSecond: number;
+  if (hre.network.name === "arbitrum") {
+    blocksPerSecond = 4;
+  } else if (hre.network.name === "avalanche") {
+    blocksPerSecond = 0.5;
+  } else {
+    throw new Error(`Unknown block interval for network ${hre.network.name}`);
+  }
+  return block.number - Math.floor((block.timestamp - timestamp) * blocksPerSecond);
 }
 
 export async function getBlockByTimestamp(timestamp: number) {
@@ -101,7 +155,7 @@ export async function getBlockByTimestamp(timestamp: number) {
 }
 
 export async function requestPrices() {
-  const url = new URL(`${API_ENDPOINT}/prices/tickers`);
+  const url = new URL(`${getApiEndpoint()}/prices/tickers`);
   const res = await fetch(url);
   const prices = (await res.json()) as {
     maxPrice: string;
@@ -114,7 +168,7 @@ export async function requestPrices() {
 }
 
 export async function requestAllocationData(timestamp: number) {
-  const url = new URL(`${API_ENDPOINT}/incentives/stip`);
+  const url = new URL(`${getApiEndpoint()}/incentives`);
   url.searchParams.set("timestamp", String(timestamp));
   if (process.env.IGNORE_START_DATE) {
     url.searchParams.set("ignoreStartDate", "1");
@@ -127,6 +181,7 @@ export async function requestAllocationData(timestamp: number) {
       totalShare: number;
       period: number;
       rewardsPerMarket: Record<string, string>;
+      token: string;
     };
     migration: {
       isActive: boolean;
@@ -138,6 +193,7 @@ export async function requestAllocationData(timestamp: number) {
       rebatePercent: number;
       allocation: string;
       period: number;
+      token: string;
     };
   };
 
@@ -156,7 +212,7 @@ export async function requestAllocationData(timestamp: number) {
     migration: data.migration,
     trading: {
       ...data.trading,
-      allocation: bigNumberify(data.trading.allocation),
+      allocation: data.trading.allocation ? bigNumberify(data.trading.allocation) : undefined,
     },
   };
 }
@@ -166,7 +222,7 @@ function getChainId() {
     return 42161;
   }
 
-  if (hre.network.name === "avax") {
+  if (hre.network.name === "avalanche") {
     return 43114;
   }
 
@@ -211,12 +267,12 @@ export function saveDistribution(
   distributionTypeId: number
 ) {
   const dateStr = fromDate.toISOString().substring(0, 10);
-  const dirpath = path.join(__dirname, "distributions", `epoch_${dateStr}`);
+  const dirpath = path.join(__dirname, "distributions", `epoch_${dateStr}_${hre.network.name}`);
   if (!fs.existsSync(dirpath)) {
     fs.mkdirSync(dirpath);
   }
   const filename = path.join(dirpath, `${name}_distribution.json`);
-  const id = `${dateStr}_${distributionTypeId}`;
+  const id = `${dateStr}_${hre.network.name}_${distributionTypeId}`;
 
   fs.writeFileSync(
     filename,
@@ -233,26 +289,6 @@ export function saveDistribution(
   );
   console.log("distribution data is saved to %s", filename);
 
-  const amounts = Object.values(jsonResult);
-  const totalAmount = amounts.reduce((acc, amount) => acc.add(amount), bigNumberify(0));
-  const recipients = Object.keys(jsonResult);
-  const batchSenderCalldata = getBatchSenderCalldata(tokenAddress, recipients, amounts, distributionTypeId);
-  const filename2 = path.join(dirpath, `${name}_transactionData.json`);
-  fs.writeFileSync(
-    filename2,
-    JSON.stringify(
-      {
-        totalAmount: totalAmount.toString(),
-        batchSenderCalldata,
-      },
-      null,
-      4
-    )
-  );
-
-  console.log("send batches: %s", Object.keys(batchSenderCalldata).length);
-  console.log("batch sender transaction is data saved to %s", filename2);
-
   const csv = ["recipient,amount"];
   const filename3 = path.join(dirpath, `${name}_distribution.csv`);
   for (const [recipient, amount] of Object.entries(jsonResult)) {
@@ -263,8 +299,17 @@ export function saveDistribution(
 }
 
 export function processArgs() {
-  if (hre.network.name !== "arbitrum") {
+  if (!["arbitrum", "avalanche"].includes(hre.network.name)) {
     throw new Error("Unsupported network");
+  }
+
+  if (!process.env.DISTRIBUTION_TYPE_ID) {
+    throw new Error("DISTRIBUTION_TYPE_ID is required");
+  }
+
+  const distributionTypeId = Number(process.env.DISTRIBUTION_TYPE_ID);
+  if (!knownDistributionTypeIds.has(distributionTypeId)) {
+    throw new Error(`unknown DISTRIBUTION_TYPE_ID ${distributionTypeId}`);
   }
 
   if (!process.env.FROM_DATE) {
@@ -306,5 +351,6 @@ export function processArgs() {
     fromDate,
     toTimestamp,
     toDate,
+    distributionTypeId,
   };
 }

@@ -53,8 +53,6 @@ describe("Exchange.BorrowingFees", () => {
       }
     );
 
-    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorUpdatedAtKey(ethUsdMarket.marketToken, true))).eq(0);
-
     // user0 increase long position by $200k
     await handleOrder(fixture, {
       create: {
@@ -275,8 +273,6 @@ describe("Exchange.BorrowingFees", () => {
       }
     );
 
-    expect(await dataStore.getUint(keys.cumulativeBorrowingFactorUpdatedAtKey(ethUsdMarket.marketToken, true))).eq(0);
-
     // user0 increase long position by $200k
     await handleOrder(fixture, {
       create: {
@@ -467,10 +463,6 @@ describe("Exchange.BorrowingFees", () => {
         expect(poolValueInfo.poolValue).eq(decimalToFloat(10_000_000));
       }
     );
-
-    expect(
-      await dataStore.getUint(keys.cumulativeBorrowingFactorUpdatedAtKey(ethUsdSingleTokenMarket.marketToken, true))
-    ).eq(0);
 
     // user0 increase long position by $200k
     await handleOrder(fixture, {

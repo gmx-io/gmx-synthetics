@@ -154,6 +154,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             key,
             order.account(),
             startingGas,
+            true, // isExternalCall
             Keys.USER_INITIATED_CANCEL,
             ""
         );
@@ -238,7 +239,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
 
         FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeOrderFeatureDisabledKey(address(this), uint256(params.order.orderType())));
 
-        OrderUtils.executeOrder(params);
+        ExecuteOrderUtils.executeOrder(params);
     }
 
     // @dev handle a caught order error
@@ -307,6 +308,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
                 key,
                 msg.sender,
                 startingGas,
+                true, // isExternalCall
                 reason,
                 reasonBytes
             );

@@ -160,7 +160,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         bytes32 actionKey = _setAtomicOracleProviderKey(provider, value);
         _validateAndClearAction(actionKey, "setAtomicOracleProvider");
 
-        dataStore.setBool(Keys.isOracleProviderEnabledKey(provider), value);
+        dataStore.setBool(Keys.isAtomicOracleProviderKey(provider), value);
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);

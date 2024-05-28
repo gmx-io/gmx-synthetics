@@ -56,6 +56,8 @@ library Keys {
     bytes32 public constant CLAIMABLE_UI_FEE_AMOUNT = keccak256(abi.encode("CLAIMABLE_UI_FEE_AMOUNT"));
     // @dev key for the max number of auto cancel orders
     bytes32 public constant MAX_AUTO_CANCEL_ORDERS = keccak256(abi.encode("MAX_AUTO_CANCEL_ORDERS"));
+    // @dev key for the max total callback gas limit for auto cancel orders
+    bytes32 public constant MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS = keccak256(abi.encode("MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS"));
 
     // @dev key for the market list
     bytes32 public constant MARKET_LIST = keccak256(abi.encode("MARKET_LIST"));
@@ -185,6 +187,8 @@ library Keys {
     bytes32 public constant ORACLE_PROVIDER_FOR_TOKEN = keccak256(abi.encode("ORACLE_PROVIDER_FOR_TOKEN"));
     // @dev key for the chainlink payment token
     bytes32 public constant CHAINLINK_PAYMENT_TOKEN = keccak256(abi.encode("CHAINLINK_PAYMENT_TOKEN"));
+    // @dev key for the sequencer grace duration
+    bytes32 public constant SEQUENCER_GRACE_DURATION = keccak256(abi.encode("SEQUENCER_GRACE_DURATION"));
 
     // @dev key for the percentage amount of position fees to be received
     bytes32 public constant POSITION_FEE_RECEIVER_FACTOR = keccak256(abi.encode("POSITION_FEE_RECEIVER_FACTOR"));
@@ -497,7 +501,7 @@ library Keys {
     // @dev key for shift gas limit
     // @return key for shift gas limit
     function shiftGasLimitKey() internal pure returns (bytes32) {
-        return WITHDRAWAL_GAS_LIMIT;
+        return SHIFT_GAS_LIMIT;
     }
 
     function glvDepositGasLimitKey() internal pure returns (bytes32) {

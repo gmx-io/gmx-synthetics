@@ -237,7 +237,8 @@ library SwapUtils {
                 cache.tokenInPrice.midPrice(),
                 cache.tokenOutPrice.midPrice(),
                 (_params.amountIn * cache.tokenInPrice.midPrice()).toInt256(),
-                -(_params.amountIn * cache.tokenInPrice.midPrice()).toInt256()
+                -(_params.amountIn * cache.tokenInPrice.midPrice()).toInt256(),
+                true // includeVirtualInventoryImpact
             )
         );
 

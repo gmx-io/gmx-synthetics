@@ -27,6 +27,7 @@ library Errors {
 
     // CallbackUtils errors
     error MaxCallbackGasLimitExceeded(uint256 callbackGasLimit, uint256 maxCallbackGasLimit);
+    error InsufficientGasLeftForCallback(uint256 gasLeft, uint256 callbackGasLimit);
 
     // Config errors
     error InvalidBaseKey(bytes32 baseKey);
@@ -146,6 +147,8 @@ library Errors {
     error UnexpectedPoolValue(int256 poolValue);
 
     // Oracle errors
+    error SequencerDown();
+    error SequencerGraceDurationNotYetPassed(uint256 timeSinceUp, uint256 sequencerGraceDuration);
     error EmptyValidatedPrices();
     error InvalidOracleProvider(address provider);
     error InvalidOracleProviderForToken(address provider, address expectedProvider);
@@ -205,7 +208,7 @@ library Errors {
 
     // BaseOrderUtils errors
     error EmptyOrder();
-    error UnsupportedOrderType();
+    error UnsupportedOrderType(uint256 orderType);
     error InvalidOrderPrices(
         uint256 primaryPriceMin,
         uint256 primaryPriceMax,
@@ -223,6 +226,7 @@ library Errors {
     // OrderUtils errors
     error OrderTypeCannotBeCreated(uint256 orderType);
     error OrderAlreadyFrozen();
+    error MaxTotalCallbackGasLimitForAutoCancelOrdersExceeded(uint256 totalCallbackGasLimit, uint256 maxTotalCallbackGasLimit);
 
     // OrderStoreUtils errors
     error OrderNotFound(bytes32 key);
@@ -274,6 +278,7 @@ library Errors {
     // ShiftUtils errors
     error EmptyShift();
     error EmptyShiftAmount();
+    error ShiftFromAndToMarketAreEqual(address market);
     error LongTokensAreNotEqual(address fromMarketLongToken, address toMarketLongToken);
     error ShortTokensAreNotEqual(address fromMarketLongToken, address toMarketLongToken);
 
@@ -336,6 +341,9 @@ library Errors {
         uint256 index,
         string label
     );
+
+    // WithdrawalHandler errors
+    error SwapsNotAllowedForAtomicWithdrawal(uint256 longTokenSwapPathLength, uint256 shortTokenSwapPathLength);
 
     // WithdrawalStoreUtils errors
     error WithdrawalNotFound(bytes32 key);

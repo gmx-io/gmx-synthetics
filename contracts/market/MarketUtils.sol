@@ -496,13 +496,22 @@ library MarketUtils {
         return dataStore.getUint(Keys.maxPoolUsdForDepositKey(market, token));
     }
 
-    // @return the lower of [maxReservedUsd, maxOpenInterest]
-    function getOpenInterestLimit(DataStore dataStore, address market, bool isLong, uint256 poolUsd) internal view returns (uint256) {
-        uint256 reserveFactor = getOpenInterestReserveFactor(dataStore, market, isLong);
+    function getBorrowingUsageFactor(
+        DataStore dataStore,
+        Market.Props memory market,
+        bool isLong,
+        uint256 reservedUsd,
+        uint256 poolUsd
+    ) internal view returns (uint256) {
+        uint256 reserveFactor = getOpenInterestReserveFactor(dataStore, market.marketToken, isLong);
         uint256 maxReservedUsd = Precision.applyFactor(poolUsd, reserveFactor);
-        uint256 maxOpenInterest = getMaxOpenInterest(dataStore, market, isLong);
+        uint256 reserveUsageFactor = Precision.toFactor(reservedUsd, maxReservedUsd);
 
-        return maxReservedUsd < maxOpenInterest ? maxReservedUsd : maxOpenInterest;
+        uint256 maxOpenInterest = getMaxOpenInterest(dataStore, market.marketToken, isLong);
+        uint256 openInterest = getOpenInterest(dataStore, market, isLong);
+        uint256 openInterestUsageFactor = Precision.toFactor(openInterest, maxOpenInterest);
+
+        return reserveUsageFactor > openInterestUsageFactor ? reserveUsageFactor : openInterestUsageFactor;
     }
 
     // @dev get the max open interest allowed for the market
@@ -1274,10 +1283,17 @@ library MarketUtils {
 
         if (configCache.fundingIncreaseFactorPerSecond == 0) {
             cache.fundingFactor = getFundingFactor(dataStore, market);
+            uint256 maxFundingFactorPerSecond = dataStore.getUint(Keys.maxFundingFactorPerSecondKey(market));
 
             // if there is no fundingIncreaseFactorPerSecond then return the static fundingFactor based on open interest difference
+            uint256 fundingFactorPerSecond = Precision.applyFactor(cache.diffUsdToOpenInterestFactor, cache.fundingFactor);
+
+            if (fundingFactorPerSecond > maxFundingFactorPerSecond) {
+                fundingFactorPerSecond = maxFundingFactorPerSecond;
+            }
+
             return (
-                Precision.applyFactor(cache.diffUsdToOpenInterestFactor, cache.fundingFactor),
+                fundingFactorPerSecond,
                 longOpenInterest > shortOpenInterest,
                 0
             );
@@ -2387,7 +2403,7 @@ library MarketUtils {
         if (optimalUsageFactor != 0) {
             return getKinkBorrowingFactor(
                 dataStore,
-                market.marketToken,
+                market,
                 isLong,
                 reservedUsd,
                 poolUsd,
@@ -2406,26 +2422,40 @@ library MarketUtils {
 
     function getKinkBorrowingFactor(
         DataStore dataStore,
-        address market,
+        Market.Props memory market,
         bool isLong,
         uint256 reservedUsd,
         uint256 poolUsd,
         uint256 optimalUsageFactor
     ) internal view returns (uint256) {
-        uint256 openInterestLimit = getOpenInterestLimit(dataStore, market, isLong, poolUsd);
-        uint256 usageFactor = Precision.toFactor(reservedUsd, openInterestLimit);
+        uint256 usageFactor = getBorrowingUsageFactor(
+            dataStore,
+            market,
+            isLong,
+            reservedUsd,
+            poolUsd
+        );
+
+        uint256 baseBorrowingFactor = dataStore.getUint(Keys.baseBorrowingFactorKey(market.marketToken, isLong));
 
         uint256 borrowingFactorPerSecond = Precision.applyFactor(
             usageFactor,
-            dataStore.getUint(Keys.baseBorrowingFactorKey(market, isLong))
+            baseBorrowingFactor
         );
 
-        if (usageFactor > optimalUsageFactor) {
+        if (usageFactor > optimalUsageFactor && Precision.FLOAT_PRECISION > optimalUsageFactor) {
             uint256 diff = usageFactor - optimalUsageFactor;
-            borrowingFactorPerSecond += Precision.applyFactor(
-                diff,
-                dataStore.getUint(Keys.aboveOptimalUsageBorrowingFactorKey(market, isLong))
-            );
+
+            uint256 aboveOptimalUsageBorrowingFactor = dataStore.getUint(Keys.aboveOptimalUsageBorrowingFactorKey(market.marketToken, isLong));
+            uint256 additionalBorrowingFactorPerSecond;
+
+            if (aboveOptimalUsageBorrowingFactor > baseBorrowingFactor) {
+                additionalBorrowingFactorPerSecond = aboveOptimalUsageBorrowingFactor - baseBorrowingFactor;
+            }
+
+            uint256 divisor = Precision.FLOAT_PRECISION - optimalUsageFactor;
+
+            borrowingFactorPerSecond += additionalBorrowingFactorPerSecond * diff / divisor;
         }
 
         return borrowingFactorPerSecond;

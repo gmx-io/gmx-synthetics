@@ -5,6 +5,7 @@ export const NONCE = hashString("NONCE");
 
 export const FEE_RECEIVER = hashString("FEE_RECEIVER");
 export const HOLDING_ADDRESS = hashString("HOLDING_ADDRESS");
+export const SEQUENCER_GRACE_DURATION = hashString("SEQUENCER_GRACE_DURATION");
 export const IN_STRICT_PRICE_FEED_MODE = hashString("IN_STRICT_PRICE_FEED_MODE");
 
 export const MIN_HANDLE_EXECUTION_ERROR_GAS = hashString("MIN_HANDLE_EXECUTION_ERROR_GAS");
@@ -53,6 +54,9 @@ export const AFFILIATE_REWARD = hashString("AFFILIATE_REWARD");
 export const MAX_UI_FEE_FACTOR = hashString("MAX_UI_FEE_FACTOR");
 
 export const MAX_AUTO_CANCEL_ORDERS = hashString("MAX_AUTO_CANCEL_ORDERS");
+export const MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS = hashString(
+  "MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS"
+);
 
 export const IS_MARKET_DISABLED = hashString("IS_MARKET_DISABLED");
 export const MAX_SWAP_PATH_LENGTH = hashString("MAX_SWAP_PATH_LENGTH");

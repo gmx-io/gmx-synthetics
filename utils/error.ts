@@ -25,6 +25,11 @@ export function parseError(reasonBytes, shouldThrow = true) {
 }
 
 export function getCancellationReason({ logs, eventName }) {
+  const reason = getEventDataValue(logs, eventName, "reason");
+  if (reason === "AUTO_CANCEL") {
+    return;
+  }
+
   const reasonBytes = getEventDataValue(logs, eventName, "reasonBytes");
   if (!reasonBytes) {
     return;

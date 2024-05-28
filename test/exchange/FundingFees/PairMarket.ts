@@ -42,8 +42,6 @@ describe("Exchange.FundingFees.PairMarket", () => {
     await dataStore.setUint(keys.fundingFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 10));
     await dataStore.setUint(keys.fundingExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(1));
 
-    expect(await dataStore.getUint(keys.fundingUpdatedAtKey(ethUsdMarket.marketToken))).eq(0);
-
     // ORDER 1
     // user0 opens a $200k long position, using wnt as collateral
     await handleOrder(fixture, {

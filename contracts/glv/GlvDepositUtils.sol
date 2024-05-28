@@ -295,7 +295,8 @@ library GlvDepositUtils {
             depositKey,
             params.keeper,
             params.startingGas,
-            ISwapPricingUtils.SwapPricingType.TwoStep
+            ISwapPricingUtils.SwapPricingType.TwoStep,
+            true // includeVirtualInventoryImpact
         );
 
         receivedMarketTokens = ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);

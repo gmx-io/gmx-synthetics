@@ -83,7 +83,8 @@ library ReaderPricingUtils {
                 cache.tokenInPrice.midPrice(),
                 cache.tokenOutPrice.midPrice(),
                 (amountIn * cache.tokenInPrice.midPrice()).toInt256(),
-                -(amountIn * cache.tokenInPrice.midPrice()).toInt256()
+                -(amountIn * cache.tokenInPrice.midPrice()).toInt256(),
+                true // includeVirtualInventoryImpact
             )
         );
 
@@ -219,7 +220,8 @@ library ReaderPricingUtils {
                 tokenInPrice.midPrice(),
                 tokenOutPrice.midPrice(),
                 (amountIn * tokenInPrice.midPrice()).toInt256(),
-                -(amountIn * tokenInPrice.midPrice()).toInt256()
+                -(amountIn * tokenInPrice.midPrice()).toInt256(),
+                true // includeVirtualInventoryImpact
             )
         );
 

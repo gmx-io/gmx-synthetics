@@ -47,6 +47,7 @@
   },
   "dependencies": {
     "@apollo/client": "^3.9.3",
+    "@chainlink/contracts": "^1.1.0",
     "@nomicfoundation/hardhat-foundry": "^1.1.1",
     "@openzeppelin/contracts": "4.9.3",
     "@poanet/solidity-flattener": "^3.0.9",

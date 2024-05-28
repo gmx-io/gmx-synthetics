@@ -8,8 +8,11 @@ const constructorContracts = ["RoleStore", "DataStore", "EventEmitter"];
 const func = createDeployFunction({
   contractName: "Oracle",
   dependencyNames: constructorContracts,
-  getDeployArgs: async ({ dependencyContracts }) => {
-    return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
+  getDeployArgs: async ({ dependencyContracts, gmx }) => {
+    const generalConfig = await gmx.getGeneral();
+    return constructorContracts
+      .map((dependencyName) => dependencyContracts[dependencyName].address)
+      .concat(generalConfig.sequencerUptimeFeed);
   },
   afterDeploy: async ({ deployedContract, gmx }) => {
     const oracleConfig = await gmx.getOracle();

@@ -2,11 +2,12 @@ import { BigNumber, ethers } from "ethers";
 import hre from "hardhat";
 import { bigNumberify, expandDecimals, formatAmount } from "../../utils/math";
 import {
-  STIP_LP_DISTRIBUTION_TYPE_ID,
   getBlockByTimestamp,
+  getMinRewardThreshold,
   overrideReceivers,
   processArgs,
   requestAllocationData,
+  requestPrices,
   requestSubgraph,
   saveDistribution,
 } from "./helpers";
@@ -166,7 +167,7 @@ Example of usage:
 */
 
 async function main() {
-  const { fromTimestamp, fromDate, toTimestamp, toDate } = processArgs();
+  const { fromTimestamp, fromDate, toTimestamp, toDate, distributionTypeId } = processArgs();
 
   const toBlock = await getBlockByTimestamp(toTimestamp);
   console.log("found toBlock %s %s for timestamp %s", toBlock.number, toBlock.timestamp, toTimestamp);
@@ -175,12 +176,29 @@ async function main() {
   console.log("From: %s (timestamp %s)", fromDate.toISOString().substring(0, 19), fromTimestamp);
   console.log("To: %s (timestamp %s)", toDate.toISOString().substring(0, 19), toTimestamp);
 
-  const [balancesData, allocationData] = await Promise.all([
+  const [balancesData, allocationData, prices] = await Promise.all([
     requestBalancesData(fromTimestamp, toBlock.number),
     requestAllocationData(fromTimestamp),
+    requestPrices()
   ]);
 
   const lpAllocationData = allocationData.lp;
+
+  if (!lpAllocationData.isActive) {
+    console.warn("WARN: LP incentives are not active for this period");
+    return;
+  }
+
+  const tokens = await hre.gmx.getTokens();
+  const rewardToken = Object.values(tokens).find((t: any) => (t.address === lpAllocationData.token)) as any;
+  console.log("rewardToken %s %s", rewardToken.symbol, rewardToken.address);
+  if (!rewardToken) {
+    throw new Error(`Unknown reward token ${lpAllocationData.token}`);
+  }
+  const rewardTokenPrice = prices.find((p) => p.tokenAddress === rewardToken.address);
+  if (!rewardTokenPrice) {
+    throw new Error(`No price for reward token ${rewardToken.symbol}`);
+  }
 
   if (Math.abs(lpAllocationData.totalShare - 1) > 0.001) {
     console.warn("WARN: total share %s of market allocations is not 1", lpAllocationData.totalShare);
@@ -211,9 +229,9 @@ async function main() {
       console.error(
         "market %s sum of user balances %s and market tokens supply %s differs too much %s (%s%)",
         marketAddress,
-        formatAmount(userBalancesSum, 18, 2, true),
-        formatAmount(marketTokensSupply, 18, 2, true),
-        formatAmount(diff, 18, 2, true),
+        formatAmount(userBalancesSum, rewardToken.decimals, 2, true),
+        formatAmount(marketTokensSupply, rewardToken.decimals, 2, true),
+        formatAmount(diff, rewardToken.decimals, 2, true),
         formatAmount(diff.mul(10000).div(userBalancesSum), 2, 2, true)
       );
       throw Error("Sum of user balances and market tokens supply don't match.");
@@ -223,9 +241,9 @@ async function main() {
     console.log(
       "market %s allocation %s userBalancesSum: %s marketTokensSupply: %s",
       marketAddress,
-      formatAmount(marketAllocation, 18, 2, true),
-      formatAmount(userBalancesSum, 18, 2, true),
-      formatAmount(marketTokensSupply, 18, 2, true)
+      formatAmount(marketAllocation, rewardToken.decimals, 2, true),
+      formatAmount(userBalancesSum, rewardToken.decimals, 2, true),
+      formatAmount(marketTokensSupply, rewardToken.decimals, 2, true)
     );
 
     let userTotalRewardsForMarket = bigNumberify(0);
@@ -238,11 +256,12 @@ async function main() {
       userTotalRewardsForMarket = userTotalRewardsForMarket.add(userRewards);
 
       console.log(
-        "market %s user %s rewards %s ARB avg balance %s (%s%)",
+        "market %s user %s rewards %s %s avg balance %s (%s%)",
         marketAddress,
         userAccount,
-        formatAmount(userRewards, 18, 2, true).padStart(8),
-        formatAmount(userBalance, 18, 2, true).padStart(12),
+        formatAmount(userRewards, rewardToken.decimals, 2, true).padStart(8),
+        rewardToken.symbol,
+        formatAmount(userBalance, rewardToken.decimals, 2, true).padStart(12),
         formatAmount(userBalance.mul(10000).div(marketTokensSupply), 2, 2)
       );
 
@@ -253,14 +272,14 @@ async function main() {
       console.error(
         "market %s user total rewards for market %s exceeds market allocation %s",
         marketAddress,
-        formatAmount(userTotalRewardsForMarket, 18, 2, true),
-        formatAmount(marketAllocation, 18, 2, true)
+        formatAmount(userTotalRewardsForMarket, rewardToken.decimals, 2, true),
+        formatAmount(marketAllocation, rewardToken.decimals, 2, true)
       );
       throw new Error("User total rewards for market exceeds market allocation");
     }
   }
+  const minRewardThreshold = getMinRewardThreshold(rewardToken);
 
-  const MIN_REWARD_THRESHOLD = expandDecimals(1, 17); // 0.1 ARB
   let userTotalRewards = bigNumberify(0);
   const jsonResult: Record<string, string> = {};
   let usersBelowThreshold = 0;
@@ -270,23 +289,29 @@ async function main() {
     return a[1].lt(b[1]) ? -1 : 1;
   })) {
     userTotalRewards = userTotalRewards.add(userRewards);
-    if (userRewards.lt(MIN_REWARD_THRESHOLD)) {
-      console.log("user %s rewards: %s ARB below threshold", userAccount, formatAmount(userRewards, 18, 2, true));
+    if (userRewards.lt(minRewardThreshold)) {
+      console.log(
+        "user %s rewards: %s %s below threshold",
+        userAccount,
+        formatAmount(userRewards, rewardToken.decimals, 2, true),
+        rewardToken.symbol
+      );
       usersBelowThreshold++;
       continue;
     }
     eligibleUsers++;
     console.log(
-      "user: %s rewards: %s ARB (%s%)",
+      "user: %s rewards: %s %s (%s%)",
       userAccount,
-      formatAmount(userRewards, 18, 2, true),
+      formatAmount(userRewards, rewardToken.decimals, 2, true),
+      rewardToken.symbol,
       formatAmount(userRewards.mul(10000).div(lpAllocationData.totalRewards), 2, 2)
     );
 
     jsonResult[userAccount] = userRewards.toString();
   }
 
-  if (userTotalRewards.sub(lpAllocationData.totalRewards).gt(expandDecimals(1, 18))) {
+  if (userTotalRewards.sub(lpAllocationData.totalRewards).gt(expandDecimals(1, rewardToken.decimals))) {
     throw new Error(
       "Sum of user rewards exceeds total allocated rewards " + `${userTotalRewards} > ${lpAllocationData.totalRewards}`
     );
@@ -298,7 +323,7 @@ async function main() {
     console.log(
       "market %s allocation: %s",
       marketAddress,
-      formatAmount(lpAllocationData.rewardsPerMarket[marketAddress], 18, 2, true)
+      formatAmount(lpAllocationData.rewardsPerMarket[marketAddress], rewardToken.decimals, 2, true)
     );
   }
 
@@ -307,20 +332,22 @@ async function main() {
     fromDate.toISOString().substring(0, 10),
     toDate.toISOString().substring(0, 10)
   );
-  console.log("allocated rewards: %s ARB", formatAmount(lpAllocationData.totalRewards, 18, 2, true));
+  console.log("allocated rewards: %s %s", formatAmount(lpAllocationData.totalRewards, rewardToken.decimals, 2, true), rewardToken.symbol);
 
-  console.log("min reward threshold: %s ARB", formatAmount(MIN_REWARD_THRESHOLD, 18, 2, true));
+  console.log(
+    "min reward threshold: %s %s ($%s)",
+    formatAmount(minRewardThreshold, rewardToken.expandDecimals, 4),
+    rewardToken.symbol,
+    formatAmount(minRewardThreshold.mul(rewardTokenPrice.maxPrice), 30, 2),
+  );
   console.log("total users: %s", eligibleUsers + usersBelowThreshold);
   console.log("eligible users: %s", eligibleUsers);
   console.log("users below threshold: %s", usersBelowThreshold);
 
   // userTotalRewards can be slightly lower than allocated rewards because of rounding
-  console.log("sum of user rewards: %s ARB", formatAmount(userTotalRewards, 18, 2, true));
+  console.log("sum of user rewards: %s %s", formatAmount(userTotalRewards, rewardToken.decimals, 2, true), rewardToken.symbol);
 
-  const tokens = await hre.gmx.getTokens();
-  const arbToken = tokens.ARB;
-
-  saveDistribution(fromDate, "stipLpIncentives", arbToken.address, jsonResult, STIP_LP_DISTRIBUTION_TYPE_ID);
+  saveDistribution(fromDate, "lpIncentives", rewardToken.address, jsonResult, distributionTypeId);
 }
 
 main()

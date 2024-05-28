@@ -332,7 +332,8 @@ contract Reader {
         uint256 longTokenAmount,
         uint256 shortTokenAmount,
         address uiFeeReceiver,
-        ISwapPricingUtils.SwapPricingType swapPricingType
+        ISwapPricingUtils.SwapPricingType swapPricingType,
+        bool includeVirtualInventoryImpact
     ) external view returns (uint256) {
         return ReaderDepositUtils.getDepositAmountOut(
             dataStore,
@@ -341,7 +342,8 @@ contract Reader {
             longTokenAmount,
             shortTokenAmount,
             uiFeeReceiver,
-            swapPricingType
+            swapPricingType,
+            includeVirtualInventoryImpact
         );
     }
 

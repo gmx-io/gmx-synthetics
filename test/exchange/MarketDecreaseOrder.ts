@@ -18,7 +18,6 @@ import * as keys from "../../utils/keys";
 import { usingResult } from "../../utils/use";
 
 describe("Exchange.MarketDecreaseOrder", () => {
-  const { provider } = ethers;
   let fixture;
   let user0;
   let dataStore, reader, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc;

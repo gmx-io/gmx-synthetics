@@ -6,6 +6,14 @@ import { getFullKey, appendUintConfigIfDifferent } from "../utils/config";
 import * as keys from "../utils/keys";
 
 const processGeneralConfig = async ({ generalConfig, handleConfig }) => {
+  await handleConfig(
+    "uint",
+    keys.SEQUENCER_GRACE_DURATION,
+    "0x",
+    generalConfig.sequencerGraceDuration,
+    `sequencerGraceDuration`
+  );
+
   await handleConfig("uint", keys.MAX_UI_FEE_FACTOR, "0x", generalConfig.maxUiFeeFactor, `maxUiFeeFactor`);
 
   await handleConfig(
@@ -14,6 +22,14 @@ const processGeneralConfig = async ({ generalConfig, handleConfig }) => {
     "0x",
     generalConfig.maxAutoCancelOrders,
     `maxAutoCancelOrders`
+  );
+
+  await handleConfig(
+    "uint",
+    keys.MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS,
+    "0x",
+    generalConfig.maxTotalCallbackGasLimitForAutoCancelOrders,
+    `maxTotalCallbackGasLimitForAutoCancelOrders`
   );
 
   await handleConfig(

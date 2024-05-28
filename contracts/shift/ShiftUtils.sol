@@ -73,6 +73,10 @@ library ShiftUtils {
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
 
+        if (params.fromMarket == params.toMarket) {
+            revert Errors.ShiftFromAndToMarketAreEqual(params.fromMarket);
+        }
+
         address wnt = TokenUtils.wnt(dataStore);
         uint256 wntAmount = shiftVault.recordTransferIn(wnt);
 
@@ -157,6 +161,21 @@ library ShiftUtils {
         }
 
         ExecuteShiftCache memory cache;
+
+        cache.depositMarket = MarketStoreUtils.get(params.dataStore, shift.toMarket());
+
+        // if a user sends tokens directly to the shiftVault
+        // the recordTransferIn after the shift withdrawal would record
+        // these additional tokens and perform a deposit on the combined
+        // token amount (tokens directly sent + tokens withdrawn)
+        //
+        // a user could use this to avoid paying deposit fees
+        //
+        // call shiftVault.recordTransferIn before the withdrawal to prevent
+        // this
+        params.shiftVault.recordTransferIn(cache.depositMarket.longToken);
+        params.shiftVault.recordTransferIn(cache.depositMarket.shortToken);
+
         cache.withdrawal = Withdrawal.Props(
             Withdrawal.Addresses(
                 shift.account(),
@@ -203,8 +222,6 @@ library ShiftUtils {
             cache.withdrawal
         );
 
-        cache.depositMarket = MarketStoreUtils.get(params.dataStore, shift.toMarket());
-
         // if the initialLongToken and initialShortToken are the same, only the initialLongTokenAmount would
         // be non-zero, the initialShortTokenAmount would be zero
         cache.initialLongTokenAmount = params.shiftVault.recordTransferIn(cache.depositMarket.longToken);
@@ -242,6 +259,9 @@ library ShiftUtils {
             cache.depositKey
         );
 
+        // price impact from changes in virtual inventory should be excluded
+        // since the action of withdrawing and depositing should not result in
+        // a net change of virtual inventory
         cache.executeDepositParams = ExecuteDepositUtils.ExecuteDepositParams(
             params.dataStore,
             params.eventEmitter,
@@ -250,7 +270,8 @@ library ShiftUtils {
             cache.depositKey,
             params.keeper,
             params.startingGas,
-            ISwapPricingUtils.SwapPricingType.Shift
+            ISwapPricingUtils.SwapPricingType.Shift,
+            false // includeVirtualInventoryImpact
         );
 
         uint256 receivedMarketTokens = ExecuteDepositUtils.executeDeposit(

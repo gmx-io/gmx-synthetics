@@ -169,6 +169,19 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         withdrawalHandler.cancelWithdrawal(key);
     }
 
+    function executeAtomicWithdrawal(
+        WithdrawalUtils.CreateWithdrawalParams calldata params,
+        OracleUtils.SetPricesParams calldata oracleParams
+    ) external override payable nonReentrant {
+        address account = msg.sender;
+
+        return withdrawalHandler.executeAtomicWithdrawal(
+            account,
+            params,
+            oracleParams
+        );
+    }
+
     function simulateExecuteWithdrawal(
         bytes32 key,
         OracleUtils.SimulatePricesParams memory simulatedOracleParams,

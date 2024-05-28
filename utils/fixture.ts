@@ -47,6 +47,9 @@ export async function deployFixture() {
   const usdtPriceFeed = await hre.ethers.getContract("USDTPriceFeed");
   await usdtPriceFeed.setAnswer(expandDecimals(1, 8));
 
+  const wethPriceFeed = await hre.ethers.getContract("WETHPriceFeed");
+  await wethPriceFeed.setAnswer(expandDecimals(5000, 8));
+
   const oracleSalt = hashData(["uint256", "string"], [chainId, "xget-oracle-v1"]);
 
   const config = await hre.ethers.getContract("Config");
@@ -229,6 +232,7 @@ export async function deployFixture() {
       swapUtils,
       referralStorage,
       usdcPriceFeed,
+      wethPriceFeed,
       wnt,
       wbtc,
       sol,

@@ -4,6 +4,7 @@ import { usingResult } from "../../utils/use";
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { getBalanceOf, getSupplyOf } from "../../utils/token";
+import { errorsContract } from "../../utils/error";
 import { getClaimableFeeAmount } from "../../utils/fee";
 import {
   getPoolAmount,
@@ -17,6 +18,7 @@ import {
   getWithdrawalKeys,
   createWithdrawal,
   executeWithdrawal,
+  executeAtomicWithdrawal,
   handleWithdrawal,
 } from "../../utils/withdrawal";
 import { prices } from "../../utils/prices";
@@ -29,13 +31,30 @@ describe("Exchange.Withdrawal", () => {
 
   let fixture;
   let user0, user1, user2;
-  let reader, dataStore, withdrawalHandler, ethUsdMarket, ethUsdSingleTokenMarket, ethUsdSpotOnlyMarket, wnt, usdc;
+  let reader,
+    dataStore,
+    withdrawalHandler,
+    ethUsdMarket,
+    ethUsdSingleTokenMarket,
+    ethUsdSpotOnlyMarket,
+    chainlinkPriceFeedProvider,
+    wnt,
+    usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ reader, dataStore, withdrawalHandler, ethUsdMarket, ethUsdSingleTokenMarket, ethUsdSpotOnlyMarket, wnt, usdc } =
-      fixture.contracts);
+    ({
+      reader,
+      dataStore,
+      withdrawalHandler,
+      ethUsdMarket,
+      ethUsdSingleTokenMarket,
+      ethUsdSpotOnlyMarket,
+      chainlinkPriceFeedProvider,
+      wnt,
+      usdc,
+    } = fixture.contracts);
   });
 
   it("createWithdrawal", async () => {
@@ -492,5 +511,76 @@ describe("Exchange.Withdrawal", () => {
 
     expect(await wnt.balanceOf(user1.address)).eq(expandDecimals(2, 17)); // 0.2 ETH => $1000
     expect(await usdc.balanceOf(user1.address)).eq(0);
+  });
+
+  it("executeAtomicWithdrawal", async () => {
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(10 * 5000, 6),
+      },
+    });
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(100 * 1000, 18));
+    expect(await wnt.balanceOf(withdrawalHandler.address)).eq(0);
+    expect(await usdc.balanceOf(withdrawalHandler.address)).eq(0);
+    expect(await wnt.balanceOf(ethUsdMarket.marketToken)).eq(expandDecimals(10, 18));
+    expect(await usdc.balanceOf(ethUsdMarket.marketToken)).eq(expandDecimals(50 * 1000, 6));
+    expect(await wnt.balanceOf(user0.address)).eq(0);
+    expect(await usdc.balanceOf(user0.address)).eq(0);
+
+    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(expandDecimals(10, 18));
+    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(50 * 1000, 6));
+
+    expect(await getWithdrawalCount(dataStore)).eq(0);
+
+    await executeAtomicWithdrawal(fixture, {
+      receiver: user0,
+      market: ethUsdMarket,
+      marketTokenAmount: expandDecimals(1000, 18),
+      minLongTokenAmount: 100,
+      minShortTokenAmount: 50,
+      shouldUnwrapNativeToken: false,
+      gasUsageLabel: "executeAtomicWithdrawal",
+    });
+
+    expect(await getWithdrawalCount(dataStore)).eq(0);
+
+    expect(await getMarketTokenPrice(fixture)).eq(expandDecimals(1, 30));
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq("99000000000000000000000"); // 99000
+    expect(await wnt.balanceOf(withdrawalHandler.address)).eq(0);
+    expect(await usdc.balanceOf(withdrawalHandler.address)).eq(0);
+    expect(await wnt.balanceOf(ethUsdMarket.marketToken)).eq("9900000000000000000"); // 9.9 ETH
+    expect(await usdc.balanceOf(ethUsdMarket.marketToken)).eq("49500000000"); // 49500 USDC
+    expect(await wnt.balanceOf(user0.address)).eq("100000000000000000"); // 0.1 ETH, 500 USD
+    expect(await usdc.balanceOf(user0.address)).eq("500000000"); // 500
+
+    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(
+      "9900000000000000000" // 9.9 ETH
+    );
+    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(
+      "49500000000" // 49500 USDC
+    );
+
+    await expect(
+      executeAtomicWithdrawal(fixture, {
+        receiver: user0,
+        market: ethUsdMarket,
+        marketTokenAmount: expandDecimals(1000, 18),
+        minLongTokenAmount: 100,
+        minShortTokenAmount: 50,
+        shouldUnwrapNativeToken: false,
+        gasUsageLabel: "executeAtomicWithdrawal",
+        oracleParams: {
+          tokens: [usdc.address],
+          providers: [chainlinkPriceFeedProvider.address],
+          data: ["0x"],
+        },
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "EmptyPrimaryPrice");
+
+    expect(await getWithdrawalCount(dataStore)).eq(0);
   });
 });

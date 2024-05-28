@@ -163,6 +163,8 @@ contract GmOracleProvider is RoleModule, IOracleProvider {
             }
         }
 
+        bytes32 salt = _getSalt();
+
         for (uint256 i = 0; i < signers.length; i++) {
             uint256 minPrice = report.minPrices[i];
             uint256 maxPrice = report.maxPrices[i];
@@ -172,7 +174,7 @@ contract GmOracleProvider is RoleModule, IOracleProvider {
             }
 
             GmOracleUtils.validateSigner(
-                _getSalt(),
+                salt,
                 report,
                 token,
                 minPrice,

@@ -147,105 +147,14 @@ library OrderUtils {
 
         updateAutoCancelList(dataStore, key, order, order.autoCancel());
 
+        if (BaseOrderUtils.isDecreaseOrder(order.orderType())) {
+            bytes32 positionKey = BaseOrderUtils.getPositionKey(order);
+            validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, positionKey);
+        }
+
         OrderEventUtils.emitOrderCreated(eventEmitter, key, order);
 
         return key;
-    }
-
-    // @dev executes an order
-    // @param params BaseOrderUtils.ExecuteOrderParams
-    function executeOrder(BaseOrderUtils.ExecuteOrderParams memory params) external {
-        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
-        params.startingGas -= gasleft() / 63;
-
-        OrderStoreUtils.remove(params.contracts.dataStore, params.key, params.order.account());
-
-        BaseOrderUtils.validateNonEmptyOrder(params.order);
-
-        BaseOrderUtils.validateOrderTriggerPrice(
-            params.contracts.oracle,
-            params.market.indexToken,
-            params.order.orderType(),
-            params.order.triggerPrice(),
-            params.order.isLong()
-        );
-
-        EventUtils.EventLogData memory eventData = processOrder(params);
-
-        // validate that internal state changes are correct before calling
-        // external callbacks
-        // if the native token was transferred to the receiver in a swap
-        // it may be possible to invoke external contracts before the validations
-        // are called
-        if (params.market.marketToken != address(0)) {
-            MarketUtils.validateMarketTokenBalance(params.contracts.dataStore, params.market);
-        }
-        MarketUtils.validateMarketTokenBalance(params.contracts.dataStore, params.swapPathMarkets);
-
-        updateAutoCancelList(params.contracts.dataStore, params.key, params.order, false);
-
-        OrderEventUtils.emitOrderExecuted(
-            params.contracts.eventEmitter,
-            params.key,
-            params.order.account(),
-            params.secondaryOrderType
-        );
-
-        CallbackUtils.afterOrderExecution(params.key, params.order, eventData);
-
-        // the order.executionFee for liquidation / adl orders is zero
-        // gas costs for liquidations / adl is subsidised by the treasury
-        GasUtils.payExecutionFee(
-            params.contracts.dataStore,
-            params.contracts.eventEmitter,
-            params.contracts.orderVault,
-            params.key,
-            params.order.callbackContract(),
-            params.order.executionFee(),
-            params.startingGas,
-            GasUtils.getOrderOraclePriceCount(params.order),
-            params.keeper,
-            params.order.receiver()
-        );
-
-        // clearAutoCancelOrders should be called after the main execution fee
-        // is called
-        // this is because clearAutoCancelOrders loops through each order for
-        // the associated position and calls cancelOrder, which pays the keeper
-        // based on the gas usage for each cancel order
-        if (BaseOrderUtils.isDecreaseOrder(params.order.orderType())) {
-            bytes32 positionKey = BaseOrderUtils.getPositionKey(params.order);
-            uint256 sizeInUsd = params.contracts.dataStore.getUint(
-                keccak256(abi.encode(positionKey, PositionStoreUtils.SIZE_IN_USD))
-            );
-            if (sizeInUsd == 0) {
-                clearAutoCancelOrders(
-                    params.contracts.dataStore,
-                    params.contracts.eventEmitter,
-                    params.contracts.orderVault,
-                    positionKey,
-                    params.keeper
-                );
-            }
-        }
-    }
-
-    // @dev process an order execution
-    // @param params BaseOrderUtils.ExecuteOrderParams
-    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) internal returns (EventUtils.EventLogData memory) {
-        if (BaseOrderUtils.isIncreaseOrder(params.order.orderType())) {
-            return IncreaseOrderUtils.processOrder(params);
-        }
-
-        if (BaseOrderUtils.isDecreaseOrder(params.order.orderType())) {
-            return DecreaseOrderUtils.processOrder(params);
-        }
-
-        if (BaseOrderUtils.isSwapOrder(params.order.orderType())) {
-            return SwapOrderUtils.processOrder(params);
-        }
-
-        revert Errors.UnsupportedOrderType();
     }
 
     // @dev cancels an order
@@ -263,11 +172,14 @@ library OrderUtils {
         bytes32 key,
         address keeper,
         uint256 startingGas,
+        bool isExternalCall,
         string memory reason,
         bytes memory reasonBytes
     ) public {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
-        startingGas -= gasleft() / 63;
+        if (isExternalCall) {
+            startingGas -= gasleft() / 63;
+        }
 
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         BaseOrderUtils.validateNonEmptyOrder(order);
@@ -295,9 +207,6 @@ library OrderUtils {
             reasonBytes
         );
 
-        EventUtils.EventLogData memory eventData;
-        CallbackUtils.afterOrderCancellation(key, order, eventData);
-
         GasUtils.payExecutionFee(
             dataStore,
             eventEmitter,
@@ -310,6 +219,9 @@ library OrderUtils {
             keeper,
             order.receiver()
         );
+
+        EventUtils.EventLogData memory eventData;
+        CallbackUtils.afterOrderCancellation(key, order, eventData);
     }
 
     // @dev freezes an order
@@ -386,6 +298,7 @@ library OrderUtils {
                 orderKeys[i],
                 keeper, // keeper
                 gasleft(), // startingGas
+                false, // isExternalCall
                 "AUTO_CANCEL", // reason
                 "" // reasonBytes
             );
@@ -404,5 +317,28 @@ library OrderUtils {
         } else {
             AutoCancelUtils.removeAutoCancelOrderKey(dataStore, positionKey, orderKey);
         }
+    }
+
+    function validateTotalCallbackGasLimitForAutoCancelOrders(DataStore dataStore, bytes32 positionKey) internal view {
+        uint256 maxTotal = dataStore.getUint(Keys.MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS);
+        uint256 total = getTotalCallbackGasLimitForAutoCancelOrders(dataStore, positionKey);
+
+        if (total > maxTotal) {
+            revert Errors.MaxTotalCallbackGasLimitForAutoCancelOrdersExceeded(total, maxTotal);
+        }
+    }
+
+    function getTotalCallbackGasLimitForAutoCancelOrders(DataStore dataStore, bytes32 positionKey) internal view returns (uint256) {
+        bytes32[] memory orderKeys = AutoCancelUtils.getAutoCancelOrderKeys(dataStore, positionKey);
+
+        uint256 total;
+
+        for (uint256 i; i < orderKeys.length; i++) {
+            total += dataStore.getUint(
+                keccak256(abi.encode(orderKeys[i], OrderStoreUtils.CALLBACK_GAS_LIMIT))
+            );
+        }
+
+        return total;
     }
 }

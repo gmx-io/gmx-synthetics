@@ -1,9 +1,8 @@
 import { createDeployFunction } from "../utils/deploy";
 
 const func = createDeployFunction({
-  contractName: "OrderUtils",
+  contractName: "ExecuteOrderUtils",
   libraryNames: [
-    "Printer",
     "MarketStoreUtils",
     "MarketUtils",
     "OrderStoreUtils",
@@ -12,6 +11,7 @@ const func = createDeployFunction({
     "DecreaseOrderUtils",
     "SwapOrderUtils",
     "GasUtils",
+    "PositionUtils",
   ],
 });
 

@@ -20,6 +20,11 @@ interface IExchangeRouter {
 
     function cancelWithdrawal(bytes32 key) external payable;
 
+    function executeAtomicWithdrawal(
+        WithdrawalUtils.CreateWithdrawalParams calldata params,
+        OracleUtils.SetPricesParams calldata oracleParams
+    ) external payable;
+
     function createShift(
         ShiftUtils.CreateShiftParams calldata params
     ) external payable returns (bytes32);

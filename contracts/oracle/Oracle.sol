@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { AggregatorV2V3Interface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV2V3Interface.sol";
 
 import "../role/RoleModule.sol";
 
@@ -48,6 +49,7 @@ contract Oracle is RoleModule {
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
+    AggregatorV2V3Interface public immutable sequencerUptimeFeed;
 
     // tokensWithPrices stores the tokens with prices that have been set
     // this is used in clearAllPrices to help ensure that all token prices
@@ -61,16 +63,57 @@ contract Oracle is RoleModule {
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
-        EventEmitter _eventEmitter
+        EventEmitter _eventEmitter,
+        AggregatorV2V3Interface _sequencerUptimeFeed
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
+        sequencerUptimeFeed = _sequencerUptimeFeed;
+    }
+
+    function validateSequencerUp() external view {
+        if (address(sequencerUptimeFeed) == address(0)) {
+            return;
+        }
+
+        (
+            /*uint80 roundID*/,
+            int256 answer,
+            uint256 startedAt,
+            /*uint256 updatedAt*/,
+            /*uint80 answeredInRound*/
+        ) = sequencerUptimeFeed.latestRoundData();
+
+        // Answer == 0: Sequencer is up
+        // Answer == 1: Sequencer is down
+        bool isSequencerUp = answer == 0;
+        if (!isSequencerUp) {
+            revert Errors.SequencerDown();
+        }
+
+        uint256 sequencerGraceDuration = dataStore.getUint(Keys.SEQUENCER_GRACE_DURATION);
+
+        // Make sure the grace duration has passed after the
+        // sequencer is back up.
+        uint256 timeSinceUp = block.timestamp - startedAt;
+        if (timeSinceUp <= sequencerGraceDuration) {
+            revert Errors.SequencerGraceDurationNotYetPassed(timeSinceUp, sequencerGraceDuration);
+        }
+
     }
 
     function setPrices(
         OracleUtils.SetPricesParams memory params
     ) external onlyController {
-        OracleUtils.ValidatedPrice[] memory prices = _validatePrices(params);
+        OracleUtils.ValidatedPrice[] memory prices = _validatePrices(params, false);
+
+        _setPrices(prices);
+    }
+
+    function setPricesForAtomicAction(
+        OracleUtils.SetPricesParams memory params
+    ) external onlyController {
+        OracleUtils.ValidatedPrice[] memory prices = _validatePrices(params, true);
 
         _setPrices(prices);
     }
@@ -128,21 +171,10 @@ contract Oracle is RoleModule {
     }
 
     function validatePrices(
-        OracleUtils.SetPricesParams memory params
+        OracleUtils.SetPricesParams memory params,
+        bool forAtomicAction
     ) external onlyController returns (OracleUtils.ValidatedPrice[] memory) {
-        return _validatePrices(params);
-    }
-
-    function validateAtomicProviders(
-        OracleUtils.SetPricesParams calldata oracleParams
-    ) external view {
-        for (uint256 i; i < oracleParams.providers.length; i++) {
-            address provider = oracleParams.providers[i];
-            bool isAtomicProvider = dataStore.getBool(Keys.isAtomicOracleProviderKey(provider));
-            if (!isAtomicProvider) {
-                revert Errors.NonAtomicOracleProvider(provider);
-            }
-        }
+        return _validatePrices(params, forAtomicAction);
     }
 
     // @dev validate and set prices
@@ -198,7 +230,8 @@ contract Oracle is RoleModule {
     }
 
     function _validatePrices(
-        OracleUtils.SetPricesParams memory params
+        OracleUtils.SetPricesParams memory params,
+        bool forAtomicAction
     ) internal returns (OracleUtils.ValidatedPrice[] memory) {
         if (params.tokens.length != params.providers.length) {
             revert Errors.InvalidOracleSetPricesProvidersParam(params.tokens.length, params.providers.length);
@@ -221,10 +254,28 @@ contract Oracle is RoleModule {
             }
 
             address token = params.tokens[i];
-            address expectedProvider = dataStore.getAddress(Keys.oracleProviderForTokenKey(token));
 
-            if (provider != expectedProvider) {
-                revert Errors.InvalidOracleProviderForToken(provider, expectedProvider);
+            bool isAtomicProvider = dataStore.getBool(Keys.isAtomicOracleProviderKey(provider));
+
+            // if the action is atomic then only validate that the provider is an
+            // atomic provider
+            // else, validate that the provider matches the oracleProviderForToken
+            //
+            // since for atomic actions, any atomic provider can be used, it is
+            // recommended that only one atomic provider is configured per token
+            // otherwise there is a risk that if there is a difference in pricing
+            // between atomic oracle providers for a token, a user could use that
+            // to gain a profit by alternating actions between the two atomic
+            // providers
+            if (forAtomicAction) {
+                if (!isAtomicProvider) {
+                    revert Errors.NonAtomicOracleProvider(provider);
+                }
+            } else {
+                address expectedProvider = dataStore.getAddress(Keys.oracleProviderForTokenKey(token));
+                if (provider != expectedProvider) {
+                    revert Errors.InvalidOracleProviderForToken(provider, expectedProvider);
+                }
             }
 
             bytes memory data = params.data[i];
@@ -234,29 +285,37 @@ contract Oracle is RoleModule {
                 data
             );
 
-            uint256 timestampAdjustment = dataStore.getUint(Keys.oracleTimestampAdjustmentKey(provider, token));
-            validatedPrice.timestamp -= timestampAdjustment;
+            // for atomic providers, the timestamp will be the current block's timestamp
+            // the timestamp should not be adjusted
+            if (!isAtomicProvider) {
+                uint256 timestampAdjustment = dataStore.getUint(Keys.oracleTimestampAdjustmentKey(provider, token));
+                validatedPrice.timestamp -= timestampAdjustment;
+            }
 
             if (validatedPrice.timestamp + maxPriceAge < Chain.currentTimestamp()) {
                 revert Errors.MaxPriceAgeExceeded(validatedPrice.timestamp, Chain.currentTimestamp());
             }
 
-            (bool hasRefPrice, uint256 refPrice) = ChainlinkPriceFeedUtils.getPriceFeedPrice(dataStore, token);
+            // for atomic providers, assume that Chainlink would be the main provider
+            // so it would be redundant to re-fetch the Chainlink price for validation
+            if (!isAtomicProvider) {
+                (bool hasRefPrice, uint256 refPrice) = ChainlinkPriceFeedUtils.getPriceFeedPrice(dataStore, token);
 
-            if (hasRefPrice) {
-                _validateRefPrice(
-                    token,
-                    validatedPrice.min,
-                    refPrice,
-                    maxRefPriceDeviationFactor
-                );
+                if (hasRefPrice) {
+                    _validateRefPrice(
+                        token,
+                        validatedPrice.min,
+                        refPrice,
+                        maxRefPriceDeviationFactor
+                    );
 
-                _validateRefPrice(
-                    token,
-                    validatedPrice.max,
-                    refPrice,
-                    maxRefPriceDeviationFactor
-                );
+                    _validateRefPrice(
+                        token,
+                        validatedPrice.max,
+                        refPrice,
+                        maxRefPriceDeviationFactor
+                    );
+                }
             }
 
             prices[i] = validatedPrice;

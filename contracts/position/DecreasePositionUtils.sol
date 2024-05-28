@@ -206,14 +206,6 @@ library DecreasePositionUtils {
             params.order.setDecreasePositionSwapType(Order.DecreasePositionSwapType.NoSwap);
         }
 
-        MarketUtils.distributePositionImpactPool(
-            params.contracts.dataStore,
-            params.contracts.eventEmitter,
-            params.market.marketToken
-        );
-
-        PositionUtils.updateFundingAndBorrowingState(params, cache.prices);
-
         if (BaseOrderUtils.isLiquidationOrder(params.order.orderType())) {
             (bool isLiquidatable, string memory reason, PositionUtils.IsPositionLiquidatableInfo memory info) = PositionUtils.isPositionLiquidatable(
                 params.contracts.dataStore,

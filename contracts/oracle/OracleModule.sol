@@ -32,6 +32,14 @@ contract OracleModule {
         oracle.clearAllPrices();
     }
 
+    modifier withOraclePricesForAtomicAction(
+        OracleUtils.SetPricesParams memory params
+    ) {
+        oracle.setPricesForAtomicAction(params);
+        _;
+        oracle.clearAllPrices();
+    }
+
     // @dev set oracle prices for a simulation
     // tokensWithPrices is not set in this function
     // it is possible for withSimulatedOraclePrices to be called and a function

@@ -84,6 +84,14 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             initPrice: "100000000",
           },
         },
+        WETH: {
+          priceFeed: {
+            decimals: 8,
+            heartbeatDuration: 24 * 60 * 60,
+            deploy: true,
+            initPrice: "500000000000",
+          },
+        },
       },
     },
 
@@ -194,6 +202,13 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
         OP: {
           priceFeed: {
             address: "0x205aaD468a11fd5D34fA7211bC6Bad5b3deB9b98",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+        GMX: {
+          priceFeed: {
+            address: "0xDB98056FecFff59D032aB628337A4887110df3dB",
             decimals: 8,
             heartbeatDuration: (24 + 1) * 60 * 60,
           },

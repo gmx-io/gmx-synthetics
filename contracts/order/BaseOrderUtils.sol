@@ -228,7 +228,7 @@ library BaseOrderUtils {
             return;
         }
 
-        revert Errors.UnsupportedOrderType();
+        revert Errors.UnsupportedOrderType(uint256(orderType));
     }
 
     function getExecutionPriceForIncrease(
@@ -414,6 +414,6 @@ library BaseOrderUtils {
             );
         }
 
-        revert Errors.UnsupportedOrderType();
+        revert Errors.UnsupportedOrderType(uint256(order.orderType()));
     }
 }
