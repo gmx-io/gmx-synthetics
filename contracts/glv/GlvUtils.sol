@@ -46,7 +46,7 @@ library GlvUtils {
     // @param glvValue the value of the pool
     // @param supply the supply of glv tokens
     // @return the number of glv tokens
-    function usdToMarketTokenAmount(
+    function usdToGlvTokenAmount(
         uint256 usdValue,
         uint256 glvValue,
         uint256 supply

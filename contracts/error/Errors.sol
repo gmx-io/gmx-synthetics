@@ -91,6 +91,7 @@ library Errors {
     // GlvHandler errors
     error InvalidGlvDepositInitialShortToken(address initialLongToken, address initialShortToken);
     error InvalidGlvDepositSwapPath(uint256 longTokenSwapPathLength, uint256 shortTokenSwapPathLength);
+    error MinGlvTokens(uint256 received, uint256 expected);
 
     // OrderHandler errors
     error OrderNotUpdatable(uint256 orderType);
