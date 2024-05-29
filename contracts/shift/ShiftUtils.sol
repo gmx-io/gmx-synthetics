@@ -227,12 +227,14 @@ library ShiftUtils {
         cache.initialLongTokenAmount = params.shiftVault.recordTransferIn(cache.depositMarket.longToken);
         cache.initialShortTokenAmount = params.shiftVault.recordTransferIn(cache.depositMarket.shortToken);
 
+        // set the uiFeeReceiver to the zero address since the ui fee was already paid
+        // while executing the withdrawal
         cache.deposit = Deposit.Props(
             Deposit.Addresses(
                 shift.account(),
                 shift.receiver(),
                 address(0), // callbackContract
-                shift.uiFeeReceiver(), // uiFeeReceiver
+                address(0), // uiFeeReceiver
                 shift.toMarket(), // market
                 cache.depositMarket.longToken, // initialLongToken
                 cache.depositMarket.shortToken, // initialShortToken
