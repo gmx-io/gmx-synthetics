@@ -405,7 +405,10 @@ library BaseOrderUtils {
     }
 
     function getPositionKey(Order.Props memory order) internal pure returns (bytes32) {
-        if (isDecreaseOrder(order.orderType())) {
+        if (
+            order.orderType() == Order.OrderType.LimitDecrease ||
+            order.orderType() == Order.OrderType.StopLossDecrease
+        ) {
             return Position.getPositionKey(
                 order.account(),
                 order.market(),
