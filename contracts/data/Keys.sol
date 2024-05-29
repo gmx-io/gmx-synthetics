@@ -412,6 +412,8 @@ library Keys {
     bytes32 public constant GLV_PENDING_SHIFT_BACKREF = keccak256(abi.encode("GLV_PENDING_SHIFT_BACKREF"));
 // @dev key for the max market token balance usd for glv
     bytes32 public constant GLV_MAX_MARKET_TOKEN_BALANCE_USD = keccak256(abi.encode("GLV_MAX_MARKET_TOKEN_BALANCE_USD"));
+    // @dev key for is glv market disabled
+    bytes32 public constant IS_GLV_MARKET_DISABLED = keccak256(abi.encode("IS_GLV_MARKET_DISABLED"));
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
@@ -1728,5 +1730,17 @@ library Keys {
     // @param market the market to check balance
     function glvMaxMarketTokenBalanceUsdKey(address glv, address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(GLV_MAX_MARKET_TOKEN_BALANCE_USD, glv, market));
+    }
+
+    // @dev key for is glv market disabled
+    // @param glv the glv to check
+    // @param market the market to check
+    // @return key for is market disabled
+    function isGlvMarketDisabledKey(address glv, address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            IS_GLV_MARKET_DISABLED,
+            glv,
+            market
+        ));
     }
 }

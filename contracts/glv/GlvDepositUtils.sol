@@ -67,7 +67,7 @@ library GlvDepositUtils {
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
         GlvUtils.validateGlv(dataStore, params.glv);
-        GlvUtils.validateMarket(dataStore, params.glv, params.market);
+        GlvUtils.validateMarket(dataStore, params.glv, params.market, true);
 
         MarketUtils.validateEnabledMarket(dataStore, params.market);
         MarketUtils.validateSwapPath(dataStore, params.longTokenSwapPath);

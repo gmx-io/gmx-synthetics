@@ -165,4 +165,12 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
     function afterShiftCancellation(bytes32 key, Shift.Props memory /* shift */, EventUtils.EventLogData memory /* eventData */) external onlyController {
         GlvUtils.clearPendingShift(dataStore, key);
     }
+
+    function addMarket(address glv, address market) external onlyConfigKeeper {
+        GlvUtils.addMarket(dataStore, glv, market);
+    }
+
+    function disableMarket(address glv, address market) external onlyConfigKeeper {
+        GlvUtils.disableMarket(dataStore, glv, market);
+    }
 }

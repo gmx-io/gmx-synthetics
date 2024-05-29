@@ -67,15 +67,21 @@ library GlvUtils {
         return Precision.mulDiv(supply, usdValue, glvValue);
     }
 
-    function validateMarket(DataStore dataStore, address glv, address market) internal view {
+    function validateMarket(DataStore dataStore, address glv, address market, bool shouldBeEnabled) internal view {
         if (!dataStore.containsAddress(Keys.glvSupportedMarketListKey(glv), market)) {
             revert Errors.GlvUnsupportedMarket(glv, market);
+        }
+
+        if (shouldBeEnabled) {
+            if (dataStore.getBool(Keys.isGlvMarketDisabledKey(glv, market))) {
+                revert Errors.GlvDisabledMarket(glv, market);
+            }
         }
     }
 
     function validateGlv(DataStore dataStore, address glv) internal view {
         if (!dataStore.containsAddress(Keys.GLV_LIST, glv)) {
-            revert Errors.GlvUnsupportedGlv(glv);
+            revert Errors.EmptyGlv(glv);
         }
     }
 
@@ -93,6 +99,10 @@ library GlvUtils {
         uint256 marketTokenAmount,
         ShiftUtils.CreateShiftParams memory params
     ) internal {
+        validateGlv(dataStore, glv);
+
+        validateMarket(dataStore, glv, params.fromMarket, false);
+        validateMarket(dataStore, glv, params.toMarket, true);
 
         if (params.receiver != address(glv)) {
             revert Errors.GlvInvalidReceiver(address(glv), params.receiver);
@@ -100,11 +110,6 @@ library GlvUtils {
         if (params.callbackContract != address(this)) {
             revert Errors.GlvInvalidCallbackContract(address(glv), params.receiver);
         }
-
-        validateGlv(dataStore, glv);
-
-        // fromMarket is not validated to allow shifting liqudity from markets that were removed from the GLV
-        validateMarket(dataStore, glv, params.toMarket);
 
         Market.Props memory fromMarket = MarketStoreUtils.get(dataStore, params.fromMarket);
         uint256 marketTokenBalance = ERC20(fromMarket.marketToken).balanceOf(glv);
@@ -199,5 +204,26 @@ library GlvUtils {
         address market
     ) internal view returns (uint256) {
         return dataStore.getUint(Keys.glvMaxMarketTokenBalanceUsdKey(glv, market));
+    }
+
+    function addMarket(DataStore dataStore, address glv, address market) internal {
+        GlvUtils.validateGlv(dataStore, glv);
+        MarketUtils.validateEnabledMarket(dataStore, market);
+
+        bytes32 key = Keys.glvSupportedMarketListKey(glv);
+        if (dataStore.containsAddress(key, market)) {
+            revert Errors.GlvMarketAlreadyExists(glv, market);
+        }
+        dataStore.addAddress(key, market);
+    }
+
+    function disableMarket(DataStore dataStore, address glv, address market) internal {
+        GlvUtils.validateGlv(dataStore, glv);
+        bytes32 key = Keys.glvSupportedMarketListKey(glv);
+        if (!dataStore.containsAddress(key, market)) {
+            revert Errors.GlvUnsupportedMarket(glv, market);
+        }
+
+        dataStore.setBool(Keys.isGlvMarketDisabledKey(glv, market), true);
     }
 }
