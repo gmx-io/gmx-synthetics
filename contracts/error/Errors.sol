@@ -22,9 +22,6 @@ library Errors {
     // BaseHandler errors
     error RequestNotYetCancellable(uint256 requestAge, uint256 requestExpirationAge, string requestType);
 
-    // BaseRouter errors
-    error CouldNotSendNativeToken(address receiver, uint256 amount);
-
     // CallbackUtils errors
     error MaxCallbackGasLimitExceeded(uint256 callbackGasLimit, uint256 maxCallbackGasLimit);
     error InsufficientGasLeftForCallback(uint256 gasLeft, uint256 callbackGasLimit);
@@ -207,10 +204,6 @@ library Errors {
     error EndOfOracleSimulation();
 
     // OracleUtils errors
-    error EmptyCompactedPrice(uint256 index);
-    error EmptyCompactedBlockNumber(uint256 index);
-    error EmptyCompactedTimestamp(uint256 index);
-    error UnsupportedOracleBlockNumberType(uint256 oracleBlockNumberType);
     error InvalidGmSignature(address recoveredSigner, address expectedSigner);
 
     error EmptyPrimaryPrice(address token);

@@ -307,7 +307,10 @@ library OrderUtils {
     }
 
     function updateAutoCancelList(DataStore dataStore, bytes32 orderKey, Order.Props memory order, bool shouldAdd) internal {
-        if (!BaseOrderUtils.isDecreaseOrder(order.orderType())) {
+        if (
+            order.orderType() != Order.OrderType.LimitDecrease &&
+            order.orderType() != Order.OrderType.StopLossDecrease
+        ) {
             return;
         }
 
