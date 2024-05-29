@@ -9,7 +9,7 @@ import "../subaccount/SubaccountUtils.sol";
 import "../order/OrderVault.sol";
 import "../order/OrderStoreUtils.sol";
 
-contract SubaccountRouter is BaseRouter {
+contract GlvRouter is BaseRouter {
     using GlvDeposit for GlvDeposit.Props;
 
     IGlvHandler public immutable glvHandler;
