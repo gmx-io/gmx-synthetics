@@ -245,7 +245,6 @@ library GasUtils {
     function estimateShiftOraclePriceCount() internal pure returns (uint256) {
         // 2 prices for the same long and short tokens
         // a price for index token of both markets
-        // assuming max swap path length of 3 the shift uses 3 prices at least, 4 prices at most
         return 4;
     }
 
