@@ -217,7 +217,7 @@ library GasUtils {
     function getDepositOraclePriceCount(Deposit.Props memory deposit) internal pure returns (uint256) {
         // each market requires 3 prices at most
         // markets in swap path share 1 price at least, 3 prices at most
-        // deposit uses 8 prices at most, 2 prices at least
+        // assuming max swap path length of 3 the deposit uses 8 prices at most, 2 prices at least
         return 3 + deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length;
     }
 
@@ -227,13 +227,14 @@ library GasUtils {
         // each market requires 3 prices at most
         // markets in swap path share 1 price at least, 3 prices at most
         // withdrawal uses 8 prices at most, 2 prices at least
+        // assuming max swap path length of 3 the withdrawal uses 8 prices at most, 2 prices at least
         return 3 + withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length;
     }
 
     // @dev get estimated number of oracle prices for order
     // @param order Order.Props the order to estimate number of oracle prices for
     function getOrderOraclePriceCount(Order.Props memory order) internal pure returns (uint256) {
-        // order uses 6 prices at most, 2 prices at least
+        // assuming max swap path length of 3 the order uses 6 prices at most, 2 prices at least
         return 3 + order.swapPath().length;
     }
 
@@ -242,7 +243,7 @@ library GasUtils {
     function getShiftOraclePriceCount(Shift.Props memory /* shift */) internal pure returns (uint256) {
         // 2 prices for the same long and short tokens
         // a price for index token of both markets
-        // shift uses 3 prices at least, 4 prices at most
+        // assuming max swap path length of 3 the shift uses 3 prices at least, 4 prices at most
         return 4;
     }
 
