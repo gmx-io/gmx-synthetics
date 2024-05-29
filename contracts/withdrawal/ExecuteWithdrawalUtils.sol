@@ -171,7 +171,7 @@ library ExecuteWithdrawalUtils {
             withdrawal.callbackContract(),
             withdrawal.executionFee(),
             params.startingGas,
-            GasUtils.getWithdrawalOraclePriceCount(withdrawal),
+            GasUtils.estimatedWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length),
             params.keeper,
             withdrawal.receiver()
         );

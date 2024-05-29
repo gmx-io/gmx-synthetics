@@ -447,8 +447,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT] = true;
         allowedBaseKeys[Keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR] = true;
 
-        allowedBaseKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT] = true;
-        allowedBaseKeys[Keys.EXECUTION_GAS_LIMIT_PER_ORACLE_PRICE] = true;
+        allowedBaseKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1] = true;
+        allowedBaseKeys[Keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE] = true;
         allowedBaseKeys[Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR] = true;
 
         allowedBaseKeys[Keys.DEPOSIT_GAS_LIMIT] = true;
@@ -517,7 +517,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
     function _initAllowedLimitedBaseKeys() internal {
         allowedLimitedBaseKeys[Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT] = true;
-        allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT] = true;
+        allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1] = true;
 
         allowedLimitedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
         allowedLimitedBaseKeys[Keys.MAX_POOL_USD_FOR_DEPOSIT] = true;

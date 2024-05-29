@@ -136,7 +136,8 @@ library OrderUtils {
         CallbackUtils.validateCallbackGasLimit(dataStore, order.callbackGasLimit());
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee());
+        uint256 oraclePriceCount = GasUtils.estimateOrderOraclePriceCount(params.addresses.swapPath.length);
+        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee(), oraclePriceCount);
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
 
@@ -215,7 +216,7 @@ library OrderUtils {
             order.callbackContract(),
             order.executionFee(),
             startingGas,
-            GasUtils.getOrderOraclePriceCount(order),
+            GasUtils.estimateOrderOraclePriceCount(order.swapPath().length),
             keeper,
             order.receiver()
         );
@@ -275,7 +276,7 @@ library OrderUtils {
             order.callbackContract(),
             order.executionFee(),
             startingGas,
-            GasUtils.getOrderOraclePriceCount(order),
+            GasUtils.estimateOrderOraclePriceCount(order.swapPath().length),
             keeper,
             order.receiver()
         );

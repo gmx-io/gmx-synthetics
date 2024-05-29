@@ -290,7 +290,7 @@ library ExecuteDepositUtils {
             deposit.callbackContract(),
             deposit.executionFee(),
             params.startingGas,
-            GasUtils.getDepositOraclePriceCount(deposit),
+            GasUtils.estimatedDepositOraclePriceCount(deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length),
             params.keeper,
             deposit.receiver()
         );

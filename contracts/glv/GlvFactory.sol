@@ -6,9 +6,9 @@ import "./Glv.sol";
 import "../event/EventEmitter.sol";
 import "../utils/Cast.sol";
 
-// @title MarketFactory
-// @dev Contract to create markets
-contract MarketFactory is RoleModule {
+// @title GlvFactory
+// @dev Contract to create glv
+contract GlvFactory is RoleModule {
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.IntItems;

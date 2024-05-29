@@ -208,10 +208,9 @@ library Keys {
     bytes32 public constant ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR"));
 
     // @dev key for the base gas limit used when calculating execution fee
-    // TODO: remove
-    bytes32 public constant EXECUTION_GAS_FEE_BASE_AMOUNT = keccak256(abi.encode("EXECUTION_GAS_FEE_BASE_AMOUNT"));
-    // @dev key for the base gas limit used when calculating execution fee
-    bytes32 public constant EXECUTION_GAS_LIMIT_PER_ORACLE_PRICE = keccak256(abi.encode("EXECUTION_GAS_LIMIT_PER_ORACLE_PRICE"));
+    bytes32 public constant EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1 = keccak256(abi.encode("EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1"));
+    // @dev key for the gas limit used for each oracle price
+    bytes32 public constant EXECUTION_GAS_FEE_PER_ORACLE_PRICE = keccak256(abi.encode("EXECUTION_GAS_FEE_PER_ORACLE_PRICE"));
     // @dev key for the multiplier used when calculating execution fee
     bytes32 public constant EXECUTION_GAS_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("EXECUTION_GAS_FEE_MULTIPLIER_FACTOR"));
 

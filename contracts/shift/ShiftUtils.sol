@@ -42,6 +42,12 @@ library ShiftUtils {
         uint256 callbackGasLimit;
     }
 
+    struct CreateShiftCache {
+        uint256 estimatedGasLimit;
+        uint256 oraclePriceCount;
+        bytes32 key;
+    }
+
     struct ExecuteShiftParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
@@ -131,16 +137,19 @@ library ShiftUtils {
 
         CallbackUtils.validateCallbackGasLimit(dataStore, shift.callbackGasLimit());
 
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteShiftGasLimit(dataStore, shift);
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee);
+        CreateShiftCache memory cache;
 
-        bytes32 key = NonceUtils.getNextKey(dataStore);
+        cache.estimatedGasLimit = GasUtils.estimateExecuteShiftGasLimit(dataStore, shift);
+        cache.oraclePriceCount = GasUtils.estimateShiftOraclePriceCount();
+        GasUtils.validateExecutionFee(dataStore, cache.estimatedGasLimit, params.executionFee, cache.oraclePriceCount);
 
-        ShiftStoreUtils.set(dataStore, key, shift);
+        cache.key = NonceUtils.getNextKey(dataStore);
 
-        ShiftEventUtils.emitShiftCreated(eventEmitter, key, shift);
+        ShiftStoreUtils.set(dataStore, cache.key, shift);
 
-        return key;
+        ShiftEventUtils.emitShiftCreated(eventEmitter, cache.key, shift);
+
+        return cache.key;
     }
 
     function executeShift(
@@ -301,7 +310,7 @@ library ShiftUtils {
             shift.callbackContract(),
             shift.executionFee(),
             params.startingGas,
-            GasUtils.getShiftOraclePriceCount(shift),
+            GasUtils.estimateShiftOraclePriceCount(),
             params.keeper,
             shift.receiver()
         );
@@ -358,7 +367,7 @@ library ShiftUtils {
             shift.callbackContract(),
             shift.executionFee(),
             startingGas,
-            GasUtils.getShiftOraclePriceCount(shift),
+            GasUtils.estimateShiftOraclePriceCount(),
             keeper,
             shift.receiver()
         );
