@@ -543,7 +543,10 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param baseKey the base key for the value
     // @param value the value to be set
     function _validateRange(bytes32 baseKey, uint256 value) internal pure {
-        if (baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND) {
+        if (
+            baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND ||
+            baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND_LIMIT
+        ) {
             // 0.00001% per second, ~315% per year
             if (value > 100000000000000000000000) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
