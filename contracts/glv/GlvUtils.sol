@@ -108,7 +108,7 @@ library GlvUtils {
             revert Errors.GlvInvalidReceiver(address(glv), params.receiver);
         }
         if (params.callbackContract != address(this)) {
-            revert Errors.GlvInvalidCallbackContract(address(glv), params.receiver);
+            revert Errors.GlvInvalidCallbackContract(address(glv), params.callbackContract);
         }
 
         Market.Props memory fromMarket = MarketStoreUtils.get(dataStore, params.fromMarket);
