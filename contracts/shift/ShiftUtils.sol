@@ -214,7 +214,12 @@ library ShiftUtils {
             Keys.WITHDRAWAL_LIST,
             cache.withdrawalKey
         );
-        WithdrawalEventUtils.emitWithdrawalCreated(params.eventEmitter, cache.withdrawalKey, cache.withdrawal);
+        WithdrawalEventUtils.emitWithdrawalCreated(
+            params.eventEmitter,
+            cache.withdrawalKey,
+            cache.withdrawal,
+            WithdrawalUtils.WithdrawalType.Shift
+        );
 
         cache.executeWithdrawalParams = ExecuteWithdrawalUtils.ExecuteWithdrawalParams(
             params.dataStore,
@@ -270,7 +275,7 @@ library ShiftUtils {
             Keys.DEPOSIT_LIST,
             cache.depositKey
         );
-        DepositEventUtils.emitDepositCreated(params.eventEmitter, cache.depositKey, cache.deposit);
+        DepositEventUtils.emitDepositCreated(params.eventEmitter, cache.depositKey, cache.deposit, DepositUtils.DepositType.Shift);
 
         // price impact from changes in virtual inventory should be excluded
         // since the action of withdrawing and depositing should not result in

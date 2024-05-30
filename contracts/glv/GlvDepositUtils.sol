@@ -303,7 +303,7 @@ library GlvDepositUtils {
 
         bytes32 depositKey = NonceUtils.getNextKey(params.dataStore);
         params.dataStore.addBytes32(Keys.DEPOSIT_LIST, depositKey);
-        DepositEventUtils.emitDepositCreated(params.eventEmitter, depositKey, deposit);
+        DepositEventUtils.emitDepositCreated(params.eventEmitter, depositKey, deposit, DepositUtils.DepositType.Glv);
 
         ExecuteDepositUtils.ExecuteDepositParams memory executeDepositParams = ExecuteDepositUtils.ExecuteDepositParams(
                 params.dataStore,

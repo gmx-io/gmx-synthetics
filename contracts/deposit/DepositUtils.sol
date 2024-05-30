@@ -25,6 +25,12 @@ library DepositUtils {
     using Price for Price.Props;
     using Deposit for Deposit.Props;
 
+    enum DepositType {
+        Normal,
+        Shift,
+        Glv
+    }
+
     // @dev CreateDepositParams struct used in createDeposit to avoid stack
     // too deep errors
     //
@@ -140,7 +146,7 @@ library DepositUtils {
 
         DepositStoreUtils.set(dataStore, key, deposit);
 
-        DepositEventUtils.emitDepositCreated(eventEmitter, key, deposit);
+        DepositEventUtils.emitDepositCreated(eventEmitter, key, deposit, DepositType.Normal);
 
         return key;
     }
