@@ -9,7 +9,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       feeReceiver: ethers.constants.AddressZero,
       holdingAddress: ethers.constants.AddressZero,
       sequencerUptimeFeed: ethers.constants.AddressZero,
-      sequencerGraceDuration: 300,
+      sequencerGraceDuration: 3600,
       maxUiFeeFactor: decimalToFloat(5, 5), // 0.005%
       maxAutoCancelOrders: 5,
       maxTotalCallbackGasLimitForAutoCancelOrders: 5_000_000,
@@ -56,7 +56,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     feeReceiver: "0x43ce1d475e06c65dd879f4ec644b8e0e10ff2b6d",
     holdingAddress: "0x3f59203ea1c66527422998b54287e1efcacbe2c5",
     sequencerUptimeFeed: ethers.constants.AddressZero,
-    sequencerGraceDuration: 300,
+    sequencerGraceDuration: 3600,
     maxUiFeeFactor: percentageToFloat("0.05%"),
     maxAutoCancelOrders: 5,
     maxTotalCallbackGasLimitForAutoCancelOrders: 5_000_000,
