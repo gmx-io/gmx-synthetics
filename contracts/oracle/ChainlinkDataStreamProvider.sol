@@ -81,7 +81,7 @@ contract ChainlinkDataStreamProvider is IOracleProvider {
             token: token,
             min: adjustedBidPrice,
             max: adjustedAskPrice,
-            timestamp: report.validFromTimestamp,
+            timestamp: report.observationsTimestamp,
             provider: address(this)
         });
     }
