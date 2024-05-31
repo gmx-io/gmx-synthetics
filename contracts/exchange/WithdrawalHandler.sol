@@ -92,6 +92,8 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
     {
         uint256 startingGas = gasleft();
 
+        oracle.validateSequencerUp();
+
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
         uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(dataStore, withdrawal);
         GasUtils.validateExecutionGas(dataStore, startingGas, estimatedGasLimit);
@@ -173,6 +175,8 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         withSimulatedOraclePrices(params)
         globalNonReentrant
     {
+        oracle.validateSequencerUp();
+
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
 
         this._executeWithdrawal(

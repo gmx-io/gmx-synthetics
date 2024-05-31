@@ -48,6 +48,8 @@ contract LiquidationHandler is BaseOrderHandler {
     {
         uint256 startingGas = gasleft();
 
+        oracle.validateSequencerUp();
+
         bytes32 key = LiquidationUtils.createLiquidationOrder(
             dataStore,
             eventEmitter,
