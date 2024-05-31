@@ -131,6 +131,7 @@ describe("SubaccountRouter", () => {
     const params = {
       addresses: {
         receiver: subaccount.address,
+        cancellationReceiver: subaccount.address,
         callbackContract: user2.address,
         uiFeeReceiver: user1.address,
         market: ethUsdMarket.marketToken,
@@ -292,6 +293,7 @@ describe("SubaccountRouter", () => {
     const params = {
       addresses: {
         receiver: user0.address,
+        cancellationReceiver: user0.address,
         callbackContract: user2.address,
         uiFeeReceiver: user1.address,
         market: ethUsdMarket.marketToken,
@@ -424,6 +426,7 @@ describe("SubaccountRouter", () => {
     const params = {
       addresses: {
         receiver: user0.address,
+        cancellationReceiver: user0.address,
         callbackContract: user2.address,
         uiFeeReceiver: user1.address,
         market: ethUsdMarket.marketToken,
@@ -555,6 +558,7 @@ describe("SubaccountRouter", () => {
     const params = {
       addresses: {
         receiver: user0.address,
+        cancellationReceiver: user0.address,
         callbackContract: user2.address,
         uiFeeReceiver: user1.address,
         market: ethUsdMarket.marketToken,
@@ -611,7 +615,7 @@ describe("SubaccountRouter", () => {
 
     await subaccountRouter.connect(subaccount).cancelOrder(orderKey);
 
-    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1087254005798688", "10000000000000"); // 0.000998934005327648 ETH
+    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1109919005919568", "10000000000000"); // 0.001109919005919568 ETH
 
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(101, 6));
 

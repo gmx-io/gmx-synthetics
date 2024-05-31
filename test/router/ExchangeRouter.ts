@@ -116,6 +116,7 @@ describe("ExchangeRouter", () => {
           {
             addresses: {
               receiver: user1.address,
+              cancellationReceiver: user1.address,
               callbackContract: user2.address,
               uiFeeReceiver: user3.address,
               market: ethUsdMarket.marketToken,
