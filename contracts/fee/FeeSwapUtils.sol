@@ -116,6 +116,7 @@ library FeeSwapUtils {
     ) internal view returns (IBaseOrderUtils.CreateOrderParams memory) {
         IBaseOrderUtils.CreateOrderParamsAddresses memory addresses = IBaseOrderUtils.CreateOrderParamsAddresses(
             address(this), // receiver
+            address(this), // cancellationReceiver
             address(this), // callbackContract
             address(0), // uiFeeReceiver
             market, // market

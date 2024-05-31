@@ -99,7 +99,6 @@ contract Oracle is RoleModule {
         if (timeSinceUp <= sequencerGraceDuration) {
             revert Errors.SequencerGraceDurationNotYetPassed(timeSinceUp, sequencerGraceDuration);
         }
-
     }
 
     function setPrices(

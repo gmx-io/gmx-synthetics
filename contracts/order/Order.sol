@@ -77,6 +77,7 @@ library Order {
     struct Addresses {
         address account;
         address receiver;
+        address cancellationReceiver;
         address callbackContract;
         address uiFeeReceiver;
         address market;
@@ -151,6 +152,14 @@ library Order {
     // @param value the value to set to
     function setReceiver(Props memory props, address value) internal pure {
         props.addresses.receiver = value;
+    }
+
+    function cancellationReceiver(Props memory props) internal pure returns (address) {
+        return props.addresses.cancellationReceiver;
+    }
+
+    function setCancellationReceiver(Props memory props, address value) internal pure {
+        props.addresses.cancellationReceiver = value;
     }
 
     // @dev the order callbackContract

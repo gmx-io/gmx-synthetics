@@ -16,6 +16,7 @@ library OrderStoreUtils {
 
     bytes32 public constant ACCOUNT = keccak256(abi.encode("ACCOUNT"));
     bytes32 public constant RECEIVER = keccak256(abi.encode("RECEIVER"));
+    bytes32 public constant CANCELLATION_RECEIVER = keccak256(abi.encode("CANCELLATION_RECEIVER"));
     bytes32 public constant CALLBACK_CONTRACT = keccak256(abi.encode("CALLBACK_CONTRACT"));
     bytes32 public constant UI_FEE_RECEIVER = keccak256(abi.encode("UI_FEE_RECEIVER"));
     bytes32 public constant MARKET = keccak256(abi.encode("MARKET"));
@@ -51,6 +52,10 @@ library OrderStoreUtils {
 
         order.setReceiver(dataStore.getAddress(
             keccak256(abi.encode(key, RECEIVER))
+        ));
+
+        order.setCancellationReceiver(dataStore.getAddress(
+            keccak256(abi.encode(key, CANCELLATION_RECEIVER))
         ));
 
         order.setCallbackContract(dataStore.getAddress(
@@ -155,6 +160,11 @@ library OrderStoreUtils {
         dataStore.setAddress(
             keccak256(abi.encode(key, RECEIVER)),
             order.receiver()
+        );
+
+        dataStore.setAddress(
+            keccak256(abi.encode(key, CANCELLATION_RECEIVER)),
+            order.cancellationReceiver()
         );
 
         dataStore.setAddress(
@@ -279,6 +289,10 @@ library OrderStoreUtils {
 
         dataStore.removeAddress(
             keccak256(abi.encode(key, RECEIVER))
+        );
+
+        dataStore.removeAddress(
+            keccak256(abi.encode(key, CANCELLATION_RECEIVER))
         );
 
         dataStore.removeAddress(

@@ -35,6 +35,7 @@ library LiquidationUtils {
         Order.Addresses memory addresses = Order.Addresses(
             account, // account
             account, // receiver
+            account, // cancellationReceiver
             CallbackUtils.getSavedCallbackContract(dataStore, account, market), // callbackContract
             address(0), // uiFeeReceiver
             market, // market

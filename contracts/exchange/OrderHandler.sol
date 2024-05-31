@@ -149,15 +149,17 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         }
 
         OrderUtils.cancelOrder(
-            dataStore,
-            eventEmitter,
-            orderVault,
-            key,
-            order.account(),
-            startingGas,
-            true, // isExternalCall
-            Keys.USER_INITIATED_CANCEL,
-            ""
+            OrderUtils.CancelOrderParams(
+                dataStore,
+                eventEmitter,
+                orderVault,
+                key,
+                order.account(),
+                startingGas,
+                true, // isExternalCall
+                Keys.USER_INITIATED_CANCEL,
+                ""
+            )
         );
     }
 
@@ -303,15 +305,17 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             errorSelector == Errors.InvalidPositionSizeValues.selector
         ) {
             OrderUtils.cancelOrder(
-                dataStore,
-                eventEmitter,
-                orderVault,
-                key,
-                msg.sender,
-                startingGas,
-                true, // isExternalCall
-                reason,
-                reasonBytes
+                OrderUtils.CancelOrderParams(
+                    dataStore,
+                    eventEmitter,
+                    orderVault,
+                    key,
+                    msg.sender,
+                    startingGas,
+                    true, // isExternalCall
+                    reason,
+                    reasonBytes
+                )
             );
 
             return;

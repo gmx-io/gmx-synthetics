@@ -52,6 +52,7 @@ export async function createOrder(fixture, overrides) {
   const sender = overrides.sender || wallet;
   const account = overrides.account || user0;
   const receiver = overrides.receiver || account;
+  const cancellationReceiver = overrides.cancellationReceiver || receiver;
   const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
   const market = overrides.market || { marketToken: ethers.constants.AddressZero };
   const uiFeeReceiver = overrides.uiFeeReceiver || { address: ethers.constants.AddressZero };
@@ -83,6 +84,7 @@ export async function createOrder(fixture, overrides) {
   const params = {
     addresses: {
       receiver: receiver.address,
+      cancellationReceiver: cancellationReceiver.address,
       callbackContract: callbackContract.address,
       uiFeeReceiver: uiFeeReceiver.address,
       market: market.marketToken,

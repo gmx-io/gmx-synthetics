@@ -38,6 +38,18 @@ library OrderUtils {
     using Price for Price.Props;
     using Array for uint256[];
 
+    struct CancelOrderParams {
+        DataStore dataStore;
+        EventEmitter eventEmitter;
+        OrderVault orderVault;
+        bytes32 key;
+        address keeper;
+        uint256 startingGas;
+        bool isExternalCall;
+        string reason;
+        bytes reasonBytes;
+    }
+
     // @dev creates an order in the order store
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
@@ -133,6 +145,10 @@ library OrderUtils {
             revert Errors.InvalidReceiver();
         }
 
+        if (order.cancellationReceiver() == address(orderVault)) {
+            revert Errors.InvalidReceiver();
+        }
+
         CallbackUtils.validateCallbackGasLimit(dataStore, order.callbackGasLimit());
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
@@ -158,71 +174,64 @@ library OrderUtils {
         return key;
     }
 
-    // @dev cancels an order
-    // @param dataStore DataStore
-    // @param eventEmitter EventEmitter
-    // @param orderVault OrderVault
-    // @param key the key of the order to cancel
-    // @param keeper the keeper sending the transaction
-    // @param startingGas the starting gas of the transaction
-    // @param reason the reason for cancellation
-    function cancelOrder(
-        DataStore dataStore,
-        EventEmitter eventEmitter,
-        OrderVault orderVault,
-        bytes32 key,
-        address keeper,
-        uint256 startingGas,
-        bool isExternalCall,
-        string memory reason,
-        bytes memory reasonBytes
-    ) public {
+    function cancelOrder(CancelOrderParams memory params) public {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
-        if (isExternalCall) {
-            startingGas -= gasleft() / 63;
+        if (params.isExternalCall) {
+            params.startingGas -= gasleft() / 63;
         }
 
-        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+        Order.Props memory order = OrderStoreUtils.get(params.dataStore, params.key);
         BaseOrderUtils.validateNonEmptyOrder(order);
 
-        OrderStoreUtils.remove(dataStore, key, order.account());
+        OrderStoreUtils.remove(params.dataStore, params.key, order.account());
 
         if (BaseOrderUtils.isIncreaseOrder(order.orderType()) || BaseOrderUtils.isSwapOrder(order.orderType())) {
             if (order.initialCollateralDeltaAmount() > 0) {
-                orderVault.transferOut(
+                address cancellationReceiver = order.cancellationReceiver();
+                if (cancellationReceiver == address(0)) {
+                    cancellationReceiver = order.account();
+                }
+
+                params.orderVault.transferOut(
                     order.initialCollateralToken(),
-                    order.account(),
+                    cancellationReceiver,
                     order.initialCollateralDeltaAmount(),
                     order.shouldUnwrapNativeToken()
                 );
             }
         }
 
-        updateAutoCancelList(dataStore, key, order, false);
+        updateAutoCancelList(params.dataStore, params.key, order, false);
 
         OrderEventUtils.emitOrderCancelled(
-            eventEmitter,
-            key,
+            params.eventEmitter,
+            params.key,
             order.account(),
-            reason,
-            reasonBytes
+            params.reason,
+            params.reasonBytes
         );
 
+        address executionFeeReceiver = order.cancellationReceiver();
+
+        if (executionFeeReceiver == address(0)) {
+            executionFeeReceiver = order.receiver();
+        }
+
         GasUtils.payExecutionFee(
-            dataStore,
-            eventEmitter,
-            orderVault,
-            key,
+            params.dataStore,
+            params.eventEmitter,
+            params.orderVault,
+            params.key,
             order.callbackContract(),
             order.executionFee(),
-            startingGas,
+            params.startingGas,
             GasUtils.estimateOrderOraclePriceCount(order.swapPath().length),
-            keeper,
-            order.receiver()
+            params.keeper,
+            executionFeeReceiver
         );
 
         EventUtils.EventLogData memory eventData;
-        CallbackUtils.afterOrderCancellation(key, order, eventData);
+        CallbackUtils.afterOrderCancellation(params.key, order, eventData);
     }
 
     // @dev freezes an order
@@ -293,15 +302,17 @@ library OrderUtils {
 
         for (uint256 i; i < orderKeys.length; i++) {
             cancelOrder(
-                dataStore,
-                eventEmitter,
-                orderVault,
-                orderKeys[i],
-                keeper, // keeper
-                gasleft(), // startingGas
-                false, // isExternalCall
-                "AUTO_CANCEL", // reason
-                "" // reasonBytes
+                CancelOrderParams(
+                    dataStore,
+                    eventEmitter,
+                    orderVault,
+                    orderKeys[i],
+                    keeper, // keeper
+                    gasleft(), // startingGas
+                    false, // isExternalCall
+                    "AUTO_CANCEL", // reason
+                    "" // reasonBytes
+                )
             );
         }
     }
