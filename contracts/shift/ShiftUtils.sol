@@ -42,6 +42,12 @@ library ShiftUtils {
         uint256 callbackGasLimit;
     }
 
+    struct CreateShiftCache {
+        uint256 estimatedGasLimit;
+        uint256 oraclePriceCount;
+        bytes32 key;
+    }
+
     struct ExecuteShiftParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
@@ -131,16 +137,19 @@ library ShiftUtils {
 
         CallbackUtils.validateCallbackGasLimit(dataStore, shift.callbackGasLimit());
 
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteShiftGasLimit(dataStore, shift);
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee);
+        CreateShiftCache memory cache;
 
-        bytes32 key = NonceUtils.getNextKey(dataStore);
+        cache.estimatedGasLimit = GasUtils.estimateExecuteShiftGasLimit(dataStore, shift);
+        cache.oraclePriceCount = GasUtils.estimateShiftOraclePriceCount();
+        GasUtils.validateExecutionFee(dataStore, cache.estimatedGasLimit, params.executionFee, cache.oraclePriceCount);
 
-        ShiftStoreUtils.set(dataStore, key, shift);
+        cache.key = NonceUtils.getNextKey(dataStore);
 
-        ShiftEventUtils.emitShiftCreated(eventEmitter, key, shift);
+        ShiftStoreUtils.set(dataStore, cache.key, shift);
 
-        return key;
+        ShiftEventUtils.emitShiftCreated(eventEmitter, cache.key, shift);
+
+        return cache.key;
     }
 
     function executeShift(
@@ -205,6 +214,12 @@ library ShiftUtils {
             Keys.WITHDRAWAL_LIST,
             cache.withdrawalKey
         );
+        WithdrawalEventUtils.emitWithdrawalCreated(
+            params.eventEmitter,
+            cache.withdrawalKey,
+            cache.withdrawal,
+            WithdrawalUtils.WithdrawalType.Shift
+        );
 
         cache.executeWithdrawalParams = ExecuteWithdrawalUtils.ExecuteWithdrawalParams(
             params.dataStore,
@@ -260,6 +275,7 @@ library ShiftUtils {
             Keys.DEPOSIT_LIST,
             cache.depositKey
         );
+        DepositEventUtils.emitDepositCreated(params.eventEmitter, cache.depositKey, cache.deposit, DepositUtils.DepositType.Shift);
 
         // price impact from changes in virtual inventory should be excluded
         // since the action of withdrawing and depositing should not result in
@@ -301,6 +317,7 @@ library ShiftUtils {
             shift.callbackContract(),
             shift.executionFee(),
             params.startingGas,
+            GasUtils.estimateShiftOraclePriceCount(),
             params.keeper,
             shift.receiver()
         );
@@ -357,6 +374,7 @@ library ShiftUtils {
             shift.callbackContract(),
             shift.executionFee(),
             startingGas,
+            GasUtils.estimateShiftOraclePriceCount(),
             keeper,
             shift.receiver()
         );

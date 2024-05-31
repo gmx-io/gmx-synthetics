@@ -6,6 +6,7 @@ import "../exchange/IDepositHandler.sol";
 import "../exchange/IWithdrawalHandler.sol";
 import "../exchange/IShiftHandler.sol";
 import "../exchange/IOrderHandler.sol";
+import "../exchange/IGlvHandler.sol";
 
 interface IExchangeRouter {
     function createDeposit(

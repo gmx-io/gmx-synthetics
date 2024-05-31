@@ -8,10 +8,8 @@ import "../bank/StrictBank.sol";
 contract Glv is ERC20, StrictBank {
     constructor(
         RoleStore _roleStore,
-        DataStore _dataStore,
-        string memory _name,
-        string memory _symbol
-    ) ERC20(_name, _symbol) StrictBank(_roleStore, _dataStore) {
+        DataStore _dataStore
+    ) ERC20("GMX Liquidity Vault", "GLV") StrictBank(_roleStore, _dataStore) {
     }
 
     function mint(address account, uint256 amount) external onlyController {

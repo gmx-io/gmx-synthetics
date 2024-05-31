@@ -80,10 +80,15 @@ library Keys {
     // @dev key for the account shift list
     bytes32 public constant ACCOUNT_SHIFT_LIST = keccak256(abi.encode("ACCOUNT_SHIFT_LIST"));
 
+    // @dev key for the glv list
+    bytes32 public constant GLV_LIST = keccak256(abi.encode("GLV_LIST"));
+
     // @dev key for the glv deposit list
     bytes32 public constant GLV_DEPOSIT_LIST = keccak256(abi.encode("GLV_DEPOSIT_LIST"));
     // @dev key for the account glv deposit list
     bytes32 public constant ACCOUNT_GLV_DEPOSIT_LIST = keccak256(abi.encode("ACCOUNT_GLV_DEPOSIT_LIST"));
+    // @dev key for the account glv supported market list
+    bytes32 public constant GLV_SUPPORTED_MARKET_LIST = keccak256(abi.encode("GLV_SUPPORTED_MARKET_LIST"));
 
     // @dev key for the position list
     bytes32 public constant POSITION_LIST = keccak256(abi.encode("POSITION_LIST"));
@@ -110,6 +115,15 @@ library Keys {
     bytes32 public constant SWAP_PATH_MARKET_FLAG = keccak256(abi.encode("SWAP_PATH_MARKET_FLAG"));
     // @dev key used to store the min market tokens for the first deposit for a market
     bytes32 public constant MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT = keccak256(abi.encode("MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT"));
+
+    // @dev key for whether the create glv deposit feature is disabled
+    bytes32 public constant CREATE_GLV_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("CREATE_GLV_DEPOSIT_FEATURE_DISABLED"));
+    // @dev key for whether the cancel glv deposit feature is disabled
+    bytes32 public constant CANCEL_GLV_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("CANCEL_GLV_DEPOSIT_FEATURE_DISABLED"));
+    // @dev key for whether the execute glv deposit feature is disabled
+    bytes32 public constant EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED"));
+    // @dev key for whether the glv shift feature is disabled
+    bytes32 public constant GLV_SHIFT_FEATURE_DISABLED = keccak256(abi.encode("GLV_SHIFT_FEATURE_DISABLED"));
 
     // @dev key for whether the create deposit feature is disabled
     bytes32 public constant CREATE_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("CREATE_DEPOSIT_FEATURE_DISABLED"));
@@ -194,7 +208,9 @@ library Keys {
     bytes32 public constant ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR"));
 
     // @dev key for the base gas limit used when calculating execution fee
-    bytes32 public constant EXECUTION_GAS_FEE_BASE_AMOUNT = keccak256(abi.encode("EXECUTION_GAS_FEE_BASE_AMOUNT"));
+    bytes32 public constant EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1 = keccak256(abi.encode("EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1"));
+    // @dev key for the gas limit used for each oracle price
+    bytes32 public constant EXECUTION_GAS_FEE_PER_ORACLE_PRICE = keccak256(abi.encode("EXECUTION_GAS_FEE_PER_ORACLE_PRICE"));
     // @dev key for the multiplier used when calculating execution fee
     bytes32 public constant EXECUTION_GAS_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("EXECUTION_GAS_FEE_MULTIPLIER_FACTOR"));
 
@@ -202,6 +218,10 @@ library Keys {
     bytes32 public constant DEPOSIT_GAS_LIMIT = keccak256(abi.encode("DEPOSIT_GAS_LIMIT"));
     // @dev key for the estimated gas limit for withdrawals
     bytes32 public constant WITHDRAWAL_GAS_LIMIT = keccak256(abi.encode("WITHDRAWAL_GAS_LIMIT"));
+    // @dev key for the estimated gas limit for each glv market
+    bytes32 public constant GLV_DEPOSIT_GAS_LIMIT = keccak256(abi.encode("GLV_DEPOSIT_GAS_LIMIT"));
+    // @dev key for the estimated gas limit for shifts
+    bytes32 public constant GLV_PER_MARKET_GAS_LIMIT = keccak256(abi.encode("GLV_PER_MARKET_GAS_LIMIT"));
     // @dev key for the estimated gas limit for shifts
     bytes32 public constant SHIFT_GAS_LIMIT = keccak256(abi.encode("SHIFT_GAS_LIMIT"));
     // @dev key for the estimated gas limit for single swaps
@@ -386,6 +406,14 @@ library Keys {
     // @dev key for fee distributor swap fee batch
     bytes32 public constant FEE_DISTRIBUTOR_SWAP_FEE_BATCH = keccak256(abi.encode("FEE_DISTRIBUTOR_SWAP_FEE_BATCH"));
 
+    // @dev key for the glv pending shift
+    bytes32 public constant GLV_PENDING_SHIFT = keccak256(abi.encode("GLV_PENDING_SHIFT"));
+    bytes32 public constant GLV_PENDING_SHIFT_BACKREF = keccak256(abi.encode("GLV_PENDING_SHIFT_BACKREF"));
+// @dev key for the max market token balance usd for glv
+    bytes32 public constant GLV_MAX_MARKET_TOKEN_BALANCE_USD = keccak256(abi.encode("GLV_MAX_MARKET_TOKEN_BALANCE_USD"));
+    // @dev key for is glv market disabled
+    bytes32 public constant IS_GLV_MARKET_DISABLED = keccak256(abi.encode("IS_GLV_MARKET_DISABLED"));
+
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
 
@@ -411,6 +439,12 @@ library Keys {
     // @param account the account for the list
     function accountGlvDepositListKey(address account) internal pure returns (bytes32) {
         return keccak256(abi.encode(ACCOUNT_GLV_DEPOSIT_LIST, account));
+    }
+
+    // @dev key for the glv supported market list
+    // @param glv the glv for the supported market list
+    function glvSupportedMarketListKey(address glv) internal pure returns (bytes32) {
+        return keccak256(abi.encode(GLV_SUPPORTED_MARKET_LIST, glv));
     }
 
     // @dev key for the account position list
@@ -482,6 +516,14 @@ library Keys {
         return SHIFT_GAS_LIMIT;
     }
 
+    function glvDepositGasLimitKey() internal pure returns (bytes32) {
+        return GLV_DEPOSIT_GAS_LIMIT;
+    }
+
+    function glvPerMarketGasLimitKey() internal pure returns (bytes32) {
+        return GLV_PER_MARKET_GAS_LIMIT;
+    }
+
     // @dev key for single swap gas limit
     // @return key for single swap gas limit
     function singleSwapGasLimitKey() internal pure returns (bytes32) {
@@ -512,6 +554,47 @@ library Keys {
             market
         ));
     }
+
+    // @dev key for whether create glv deposit is disabled
+    // @param the create deposit module
+    // @return key for whether create deposit is disabled
+    function createGlvDepositFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CREATE_GLV_DEPOSIT_FEATURE_DISABLED,
+            module
+        ));
+    }
+
+    // @dev key for whether cancel glv deposit is disabled
+    // @param the cancel deposit module
+    // @return key for whether cancel deposit is disabled
+    function cancelGlvDepositFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CANCEL_GLV_DEPOSIT_FEATURE_DISABLED,
+            module
+        ));
+    }
+
+    // @dev key for whether execute glv deposit is disabled
+    // @param the execute deposit module
+    // @return key for whether execute deposit is disabled
+    function executeGlvDepositFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED,
+            module
+        ));
+    }
+
+    // @dev key for whether shift deposit is disabled
+    // @param the execute deposit module
+    // @return key for whether execute deposit is disabled
+    function glvShiftFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            GLV_SHIFT_FEATURE_DISABLED,
+            module
+        ));
+    }
+
 
     // @dev key for whether create deposit is disabled
     // @param the create deposit module
@@ -1628,6 +1711,35 @@ library Keys {
         return keccak256(abi.encode(
             FEE_DISTRIBUTOR_SWAP_FEE_BATCH,
             orderKey
+        ));
+    }
+
+    // @dev key for glv pending shift
+    // @param glv the glv for the pending shift
+    function glvPendingShiftKey(address glv) internal pure returns (bytes32) {
+        return keccak256(abi.encode(GLV_PENDING_SHIFT, glv));
+    }
+
+    function glvPendingShiftBackrefKey(bytes32 shiftKey) internal pure returns (bytes32) {
+        return keccak256(abi.encode(GLV_PENDING_SHIFT_BACKREF, shiftKey));
+    }
+
+    // @dev key for max market token balance for glv
+    // @param glv the glv to check the market token balance for
+    // @param market the market to check balance
+    function glvMaxMarketTokenBalanceUsdKey(address glv, address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(GLV_MAX_MARKET_TOKEN_BALANCE_USD, glv, market));
+    }
+
+    // @dev key for is glv market disabled
+    // @param glv the glv to check
+    // @param market the market to check
+    // @return key for is market disabled
+    function isGlvMarketDisabledKey(address glv, address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            IS_GLV_MARKET_DISABLED,
+            glv,
+            market
         ));
     }
 }

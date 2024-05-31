@@ -169,7 +169,7 @@ const processGeneralConfig = async ({ generalConfig, handleConfig }) => {
   if (generalConfig.executionGasFeeBaseAmount) {
     await handleConfig(
       "uint",
-      keys.EXECUTION_GAS_FEE_BASE_AMOUNT,
+      keys.EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1,
       "0x",
       generalConfig.executionGasFeeBaseAmount,
       `executionGasFeeBaseAmount`

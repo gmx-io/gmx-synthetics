@@ -6,12 +6,11 @@ import "../event/EventEmitter.sol";
 import "../event/EventUtils.sol";
 import "../utils/Cast.sol";
 
-import "./Withdrawal.sol";
-import "./WithdrawalUtils.sol";
+import "./GlvDeposit.sol";
 import "../pricing/ISwapPricingUtils.sol";
 
-library WithdrawalEventUtils {
-    using Withdrawal for Withdrawal.Props;
+library GlvDepositEventUtils {
+    using GlvDeposit for GlvDeposit.Props;
 
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
@@ -21,53 +20,54 @@ library WithdrawalEventUtils {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
-    function emitWithdrawalCreated(
+    function emitGlvDepositCreated(
         EventEmitter eventEmitter,
         bytes32 key,
-        Withdrawal.Props memory withdrawal,
-        WithdrawalUtils.WithdrawalType withdrawalType
+        GlvDeposit.Props memory glvDeposit
     ) external {
         EventUtils.EventLogData memory eventData;
 
-        eventData.addressItems.initItems(4);
-        eventData.addressItems.setItem(0, "account", withdrawal.account());
-        eventData.addressItems.setItem(1, "receiver", withdrawal.receiver());
-        eventData.addressItems.setItem(2, "callbackContract", withdrawal.callbackContract());
-        eventData.addressItems.setItem(3, "market", withdrawal.market());
+        eventData.addressItems.initItems(7);
+        eventData.addressItems.setItem(0, "account", glvDeposit.account());
+        eventData.addressItems.setItem(1, "receiver", glvDeposit.receiver());
+        eventData.addressItems.setItem(2, "callbackContract", glvDeposit.callbackContract());
+        eventData.addressItems.setItem(3, "market", glvDeposit.market());
+        eventData.addressItems.setItem(4, "glv", glvDeposit.glv());
+        eventData.addressItems.setItem(5, "initialLongToken", glvDeposit.initialLongToken());
+        eventData.addressItems.setItem(6, "initialShortToken", glvDeposit.initialShortToken());
 
         eventData.addressItems.initArrayItems(2);
-        eventData.addressItems.setItem(0, "longTokenSwapPath", withdrawal.longTokenSwapPath());
-        eventData.addressItems.setItem(1, "shortTokenSwapPath", withdrawal.shortTokenSwapPath());
+        eventData.addressItems.setItem(0, "longTokenSwapPath", glvDeposit.longTokenSwapPath());
+        eventData.addressItems.setItem(1, "shortTokenSwapPath", glvDeposit.shortTokenSwapPath());
 
-        eventData.uintItems.initItems(8);
-        eventData.uintItems.setItem(0, "marketTokenAmount", withdrawal.marketTokenAmount());
-        eventData.uintItems.setItem(1, "minLongTokenAmount", withdrawal.minLongTokenAmount());
-        eventData.uintItems.setItem(2, "minShortTokenAmount", withdrawal.minShortTokenAmount());
-        eventData.uintItems.setItem(3, "updatedAtBlock", withdrawal.updatedAtBlock());
-        eventData.uintItems.setItem(4, "updatedAtTime", withdrawal.updatedAtTime());
-        eventData.uintItems.setItem(5, "executionFee", withdrawal.executionFee());
-        eventData.uintItems.setItem(6, "callbackGasLimit", withdrawal.callbackGasLimit());
-        eventData.uintItems.setItem(7, "withdrawalType", uint256(withdrawalType));
+        eventData.uintItems.initItems(7);
+        eventData.uintItems.setItem(0, "initialLongTokenAmount", glvDeposit.initialLongTokenAmount());
+        eventData.uintItems.setItem(1, "initialShortTokenAmount", glvDeposit.initialShortTokenAmount());
+        eventData.uintItems.setItem(2, "minGlvTokens", glvDeposit.minGlvTokens());
+        eventData.uintItems.setItem(3, "updatedAtBlock", glvDeposit.updatedAtBlock());
+        eventData.uintItems.setItem(4, "updatedAtTime", glvDeposit.updatedAtTime());
+        eventData.uintItems.setItem(5, "executionFee", glvDeposit.executionFee());
+        eventData.uintItems.setItem(6, "callbackGasLimit", glvDeposit.callbackGasLimit());
 
         eventData.boolItems.initItems(1);
-        eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", withdrawal.shouldUnwrapNativeToken());
+        eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", glvDeposit.shouldUnwrapNativeToken());
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
 
         eventEmitter.emitEventLog2(
-            "WithdrawalCreated",
+            "GlvDepositCreated",
             key,
-            Cast.toBytes32(withdrawal.account()),
+            Cast.toBytes32(glvDeposit.account()),
             eventData
         );
     }
 
-    function emitWithdrawalExecuted(
+    function emitGlvDepositExecuted(
         EventEmitter eventEmitter,
         bytes32 key,
         address account,
-        ISwapPricingUtils.SwapPricingType swapPricingType
+        uint256 receivedMarketTokens
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -78,17 +78,17 @@ library WithdrawalEventUtils {
         eventData.addressItems.setItem(0, "account", account);
 
         eventData.uintItems.initItems(1);
-        eventData.uintItems.setItem(0, "swapPricingType", uint256(swapPricingType));
+        eventData.uintItems.setItem(2, "receivedMarketTokens", receivedMarketTokens);
 
         eventEmitter.emitEventLog2(
-            "WithdrawalExecuted",
+            "GlvDepositExecuted",
             key,
             Cast.toBytes32(account),
             eventData
         );
     }
 
-    function emitWithdrawalCancelled(
+    function emitGlvDepositCancelled(
         EventEmitter eventEmitter,
         bytes32 key,
         address account,
@@ -110,7 +110,7 @@ library WithdrawalEventUtils {
         eventData.bytesItems.setItem(0, "reasonBytes", reasonBytes);
 
         eventEmitter.emitEventLog2(
-            "WithdrawalCancelled",
+            "GlvDepositCancelled",
             key,
             Cast.toBytes32(account),
             eventData

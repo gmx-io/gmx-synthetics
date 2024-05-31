@@ -7,33 +7,25 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./BaseHandler.sol";
 import "../callback/CallbackUtils.sol";
 import "../exchange/IDepositHandler.sol";
+import "../exchange/IShiftHandler.sol";
 
 import "../glv/Glv.sol";
+import "../glv/GlvUtils.sol";
+import "../glv/GlvDepositUtils.sol";
+import "../glv/GlvDepositStoreUtils.sol";
 import "../glv/GlvVault.sol";
+import "../glv/GlvDeposit.sol";
+import "../deposit/DepositUtils.sol";
+import "../deposit/ExecuteDepositUtils.sol";
+import "../shift/ShiftUtils.sol";
 
-contract GLVHandler is BaseHandler, ReentrancyGuard, IDepositCallbackReceiver, IGasFeeCallbackReceiver {
-    using Deposit for Deposit.Props;
+contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
+    using GlvDeposit for GlvDeposit.Props;
 
     IDepositHandler public immutable depositHandler;
-    Glv public immutable glv;
+    IShiftHandler public immutable shiftHandler;
     GlvVault public immutable glvVault;
-
-    struct GlvPreDeposit {
-        address account;
-        address receiver;
-        uint256 executionFee;
-    }
-
-    struct GlvDeposit {
-        address account;
-        address receiver;
-        uint256 executionFee;
-        address market;
-        uint256 marketTokenAmount;
-    }
-
-    mapping (bytes32 => GlvPreDeposit) public glvPreDeposits;
-    mapping (bytes32 => GlvDeposit) public glvDeposits;
+    ShiftVault public immutable shiftVault;
 
     constructor(
         RoleStore _roleStore,
@@ -41,144 +33,144 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IDepositCallbackReceiver, I
         EventEmitter _eventEmitter,
         Oracle _oracle,
         IDepositHandler _depositHandler,
-        Glv _glv,
-        GlvVault _glvVault
+        IShiftHandler _shiftHandler,
+        GlvVault _glvVault,
+        ShiftVault _shiftVault
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         depositHandler = _depositHandler;
-        glv = _glv;
+        shiftHandler = _shiftHandler;
         glvVault = _glvVault;
+        shiftVault = _shiftVault;
     }
 
-    function createDeposit(
-        DepositUtils.CreateDepositParams calldata params,
-        address receiver
-    ) external nonReentrant {
-        if (params.receiver != address(glvVault)) {
-            revert Errors.InvalidGlvDepositReceiver(params.receiver, address(glvVault));
+    function createGlvDeposit(
+        address account,
+        GlvDepositUtils.CreateGlvDepositParams calldata params
+    ) external globalNonReentrant onlyController returns (bytes32) {
+        FeatureUtils.validateFeature(dataStore, Keys.createGlvDepositFeatureDisabledKey(address(this)));
+
+        return GlvDepositUtils.createGlvDeposit(dataStore, eventEmitter, glvVault, account, params);
+    }
+
+    function executeGlvDeposit(
+        bytes32 key,
+        OracleUtils.SetPricesParams calldata oracleParams
+    ) external globalNonReentrant onlyOrderKeeper withOraclePrices(oracleParams) {
+        uint256 startingGas = gasleft();
+
+        GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(dataStore, key);
+        uint256 marketCount = GlvUtils.getMarketCount(dataStore, glvDeposit.glv());
+        uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvDepositGasLimit(dataStore, glvDeposit, marketCount);
+        GasUtils.validateExecutionGas(dataStore, startingGas, estimatedGasLimit);
+
+        uint256 executionGas = GasUtils.getExecutionGas(dataStore, startingGas);
+
+        try this._executeGlvDeposit{gas: executionGas}(key, glvDeposit, msg.sender) {} catch (
+            bytes memory reasonBytes
+        ) {
+            _handleGlvDepositError(key, startingGas, reasonBytes);
+        }
+    }
+
+    function _executeGlvDeposit(bytes32 key, GlvDeposit.Props memory glvDeposit, address keeper) external onlySelf {
+        uint256 startingGas = gasleft();
+
+        FeatureUtils.validateFeature(dataStore, Keys.executeGlvDepositFeatureDisabledKey(address(this)));
+
+        GlvDepositUtils.ExecuteGlvDepositParams memory params = GlvDepositUtils.ExecuteGlvDepositParams({
+            key: key,
+            dataStore: dataStore,
+            eventEmitter: eventEmitter,
+            glvVault: glvVault,
+            oracle: oracle,
+            startingGas: startingGas,
+            keeper: keeper
+        });
+
+        GlvDepositUtils.executeGlvDeposit(params, glvDeposit);
+    }
+
+    function _handleGlvDepositError(bytes32 key, uint256 startingGas, bytes memory reasonBytes) internal {
+        GasUtils.validateExecutionErrorGas(dataStore, reasonBytes);
+
+        bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
+
+        if (OracleUtils.isOracleError(errorSelector) || errorSelector == Errors.DisabledFeature.selector) {
+            ErrorUtils.revertWithCustomError(reasonBytes);
         }
 
-        if (params.callbackContract != address(this)) {
-            revert Errors.InvalidGlvDepositCallbackContract(params.callbackContract, address(this));
-        }
+        (string memory reason /* bool hasRevertMessage */, ) = ErrorUtils.getRevertMessage(reasonBytes);
 
-        if (params.shouldUnwrapNativeToken != false) {
-            revert Errors.GlvDepositUnwrapNativeTokenNotFalse();
-        }
+        GlvDepositUtils.cancelGlvDeposit(
+            dataStore,
+            eventEmitter,
+            glvVault,
+            key,
+            msg.sender,
+            startingGas,
+            reason,
+            reasonBytes
+        );
+    }
 
-        // TODO: validate that deposit.market is part of GLV index
+    function cancelGlvDeposit(bytes32 key) external globalNonReentrant onlyController {
+        uint256 startingGas = gasleft();
 
-        address wnt = TokenUtils.wnt(dataStore);
-        uint256 executionFee = glvVault.recordTransferIn(wnt);
+        DataStore _dataStore = dataStore;
+        FeatureUtils.validateFeature(_dataStore, Keys.cancelGlvDepositFeatureDisabledKey(address(this)));
 
-        // TODO: validate min execution fee
-        // TODO: validate callback gas limit
+        GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(_dataStore, key);
+        validateRequestCancellation(glvDeposit.updatedAtTime(), "GlvDeposit");
 
-        bytes32 key = depositHandler.createDeposit(
-            address(this), // account
+        GlvDepositUtils.cancelGlvDeposit(
+            _dataStore,
+            eventEmitter,
+            glvVault,
+            key,
+            msg.sender,
+            startingGas,
+            Keys.USER_INITIATED_CANCEL,
+            ""
+        );
+    }
+
+    function simulateExecuteGlvDeposit() external {
+        // TODO:
+    }
+
+    function shift(
+        address account,
+        address glv,
+        uint256 marketTokenAmount,
+        ShiftUtils.CreateShiftParams memory params
+    ) external globalNonReentrant onlyOrderKeeper {
+        FeatureUtils.validateFeature(dataStore, Keys.glvShiftFeatureDisabledKey(address(this)));
+
+        GlvUtils.createShift(
+            dataStore,
+            oracle,
+            shiftHandler,
+            shiftVault,
+            account,
+            glv,
+            marketTokenAmount,
             params
         );
-
-        glvPreDeposits[key] = GlvPreDeposit(
-            msg.sender,
-            receiver,
-            executionFee
-        );
     }
 
-    // @dev the below function assumes that the callback gas limit
-    // will be high enough that the function will complete execution
-    // without running out of gas
-    function afterDepositExecution(
-        bytes32 key,
-        Deposit.Props memory deposit,
-        EventUtils.EventLogData memory /* eventData */
-    ) external nonReentrant onlyController {
-        GlvPreDeposit memory glvPreDeposit = glvPreDeposits[key];
-        if (glvPreDeposit.account == address(0)) {
-            revert Errors.EmptyGlvPreDeposit(key);
-        }
-
-        delete glvPreDeposits[key];
-
-        uint256 marketTokenAmount = glvVault.recordTransferIn(deposit.market());
-
-        if (marketTokenAmount == 0) {
-            return;
-        }
-
-        bytes32 glvDepositKey = NonceUtils.getNextKey(dataStore);
-
-        glvDeposits[glvDepositKey] = GlvDeposit(
-            glvPreDeposit.account,
-            glvPreDeposit.receiver,
-            glvPreDeposit.executionFee,
-            deposit.market(),
-            marketTokenAmount
-        );
-
-        dataStore.addBytes32(
-            Keys.GLV_DEPOSIT_LIST,
-            glvDepositKey
-        );
-
-        dataStore.addBytes32(
-            Keys.accountGlvDepositListKey(glvPreDeposit.account),
-            glvDepositKey
-        );
-
-        // TODO: emit event
+    function afterShiftExecution(bytes32 key, Shift.Props memory /* shift */, EventUtils.EventLogData memory /* eventData */) external onlyController {
+        GlvUtils.clearPendingShift(dataStore, key);
     }
 
-    // @dev the below function assumes that the callback gas limit
-    // will be high enough that the function will complete execution
-    // without running out of gas
-    function afterDepositCancellation(
-        bytes32 key,
-        Deposit.Props memory deposit,
-        EventUtils.EventLogData memory /* eventData */
-    ) external nonReentrant onlyController {
-        GlvPreDeposit memory glvPreDeposit = glvPreDeposits[key];
-
-        if (glvPreDeposit.account == address(0)) {
-            revert Errors.EmptyGlvPreDeposit(key);
-        }
-
-        delete glvPreDeposits[key];
-
-        TokenUtils.transfer(
-            dataStore,
-            deposit.initialLongToken(),
-            glvPreDeposit.account,
-            deposit.initialLongTokenAmount()
-        );
-
-        TokenUtils.transfer(
-            dataStore,
-            deposit.initialShortToken(),
-            glvPreDeposit.account,
-            deposit.initialShortTokenAmount()
-        );
+    function afterShiftCancellation(bytes32 key, Shift.Props memory /* shift */, EventUtils.EventLogData memory /* eventData */) external onlyController {
+        GlvUtils.clearPendingShift(dataStore, key);
     }
 
-    function executeDeposit() external {
-        // TODO: calculate the price of GLV based on the current composition of GM tokens in the GLV index
-        // TODO: issue the corresponding amount of GLV to the user based on the
+    function addMarket(address glv, address market) external onlyConfigKeeper {
+        GlvUtils.addMarket(dataStore, glv, market);
     }
 
-    function shift() external {
-        // TODO: allow shifting of GM tokens between markets
-    }
-
-    function refundExecutionFee(
-        bytes32 key,
-        EventUtils.EventLogData memory /* eventData */
-    ) external payable onlyController {
-        address receiver = glvPreDeposits[key].account;
-
-        if (receiver == address(0)) {
-            receiver = dataStore.getAddress(Keys.HOLDING_ADDRESS);
-        }
-
-        TokenUtils.sendNativeToken(dataStore, receiver, msg.value);
+    function disableMarket(address glv, address market) external onlyConfigKeeper {
+        GlvUtils.disableMarket(dataStore, glv, market);
     }
 }

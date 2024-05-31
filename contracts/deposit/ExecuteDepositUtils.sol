@@ -107,7 +107,6 @@ library ExecuteDepositUtils {
 
         DepositStoreUtils.remove(params.dataStore, params.key, deposit.account());
 
-        ExecuteDepositCache memory cache;
 
         if (deposit.account() == address(0)) {
             revert Errors.EmptyDeposit();
@@ -120,6 +119,7 @@ library ExecuteDepositUtils {
             );
         }
 
+        ExecuteDepositCache memory cache;
         cache.requestExpirationTime = params.dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
         cache.maxOracleTimestamp = params.oracle.maxTimestamp();
 
@@ -290,6 +290,7 @@ library ExecuteDepositUtils {
             deposit.callbackContract(),
             deposit.executionFee(),
             params.startingGas,
+            GasUtils.estimatedDepositOraclePriceCount(deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length),
             params.keeper,
             deposit.receiver()
         );

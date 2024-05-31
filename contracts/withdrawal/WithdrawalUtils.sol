@@ -40,6 +40,12 @@ library WithdrawalUtils {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
+    enum WithdrawalType {
+        Normal,
+        Shift,
+        Glv
+    }
+
     /**
      * @param receiver The address that will receive the withdrawal tokens.
      * @param callbackContract The contract that will be called back.
@@ -134,13 +140,14 @@ library WithdrawalUtils {
         CallbackUtils.validateCallbackGasLimit(dataStore, withdrawal.callbackGasLimit());
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(dataStore, withdrawal);
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee);
+        uint256 oraclePriceCount = GasUtils.estimatedWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length);
+        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
 
         WithdrawalStoreUtils.set(dataStore, key, withdrawal);
 
-        WithdrawalEventUtils.emitWithdrawalCreated(eventEmitter, key, withdrawal);
+        WithdrawalEventUtils.emitWithdrawalCreated(eventEmitter, key, withdrawal, WithdrawalType.Normal);
 
         return key;
     }
@@ -205,6 +212,7 @@ library WithdrawalUtils {
             withdrawal.callbackContract(),
             withdrawal.executionFee(),
             startingGas,
+            GasUtils.estimatedWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length),
             keeper,
             withdrawal.receiver()
         );

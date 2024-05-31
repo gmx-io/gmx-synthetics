@@ -136,7 +136,8 @@ library OrderUtils {
         CallbackUtils.validateCallbackGasLimit(dataStore, order.callbackGasLimit());
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee());
+        uint256 oraclePriceCount = GasUtils.estimateOrderOraclePriceCount(params.addresses.swapPath.length);
+        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee(), oraclePriceCount);
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
 
@@ -207,9 +208,6 @@ library OrderUtils {
             reasonBytes
         );
 
-        EventUtils.EventLogData memory eventData;
-        CallbackUtils.afterOrderCancellation(key, order, eventData);
-
         GasUtils.payExecutionFee(
             dataStore,
             eventEmitter,
@@ -218,9 +216,13 @@ library OrderUtils {
             order.callbackContract(),
             order.executionFee(),
             startingGas,
+            GasUtils.estimateOrderOraclePriceCount(order.swapPath().length),
             keeper,
             order.receiver()
         );
+
+        EventUtils.EventLogData memory eventData;
+        CallbackUtils.afterOrderCancellation(key, order, eventData);
     }
 
     // @dev freezes an order
@@ -251,8 +253,6 @@ library OrderUtils {
             revert Errors.OrderAlreadyFrozen();
         }
 
-        uint256 executionFee = order.executionFee();
-
         order.setExecutionFee(0);
         order.setIsFrozen(true);
         OrderStoreUtils.set(dataStore, key, order);
@@ -274,8 +274,9 @@ library OrderUtils {
             orderVault,
             key,
             order.callbackContract(),
-            executionFee,
+            order.executionFee(),
             startingGas,
+            GasUtils.estimateOrderOraclePriceCount(order.swapPath().length),
             keeper,
             order.receiver()
         );

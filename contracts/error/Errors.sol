@@ -43,6 +43,26 @@ library Errors {
     error InvalidFeeReceiver(address receiver);
     error InvalidOracleSigner(address receiver);
 
+    // GlvDepositStoreUtils errors
+    error GlvDepositNotFound(bytes32 key);
+    // GlvDepositUtils errors
+    error EmptyGlvDepositAmounts();
+    error EmptyGlvDeposit();
+    // GlvUtils errors
+    error EmptyGlv(address glv);
+    error GlvUnsupportedMarket(address glv, address market);
+    error GlvDisabledMarket(address glv, address market);
+    error GlvMaxMarketTokenBalanceExceeded(address glv, address market, uint256 maxMarketTokenBalanceUsd, uint256 marketTokenBalanceUsd);
+    error GlvInsufficientMarketTokenBalance(address glv, address market, uint256 marketTokenBalance, uint256 marketTokenAmount);
+    error GlvHasPendingShift(address glv);
+    error GlvShiftNotFound(bytes32 shiftKey);
+    error GlvInvalidReceiver(address glv, address receiver);
+    error GlvInvalidCallbackContract(address glvHandler, address callbackContract);
+    error GlvMarketAlreadyExists(address glv, address market);
+    error InvalidMarketTokenPrice(address market, int256 price);
+    // GlvFactory
+    error GlvAlreadyExists(address glv);
+
     // DepositStoreUtils errors
     error DepositNotFound(bytes32 key);
 
@@ -76,11 +96,10 @@ library Errors {
     error InvalidGlpAmount(uint256 totalGlpAmountToRedeem, uint256 totalGlpAmount);
     error InvalidExecutionFeeForMigration(uint256 totalExecutionFee, uint256 msgValue);
 
-    // GLVHandler errors
-    error InvalidGlvDepositReceiver(address receiver, address expectedReceiver);
-    error InvalidGlvDepositCallbackContract(address callbackContract, address expectedCallbackContract);
-    error GlvDepositUnwrapNativeTokenNotFalse();
-    error EmptyGlvPreDeposit(bytes32 key);
+    // GlvHandler errors
+    error InvalidGlvDepositInitialShortToken(address initialLongToken, address initialShortToken);
+    error InvalidGlvDepositSwapPath(uint256 longTokenSwapPathLength, uint256 shortTokenSwapPathLength);
+    error MinGlvTokens(uint256 received, uint256 expected);
 
     // OrderHandler errors
     error OrderNotUpdatable(uint256 orderType);

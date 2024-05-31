@@ -405,6 +405,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.CANCEL_DEPOSIT_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.EXECUTE_DEPOSIT_FEATURE_DISABLED] = true;
 
+        allowedBaseKeys[Keys.GLV_SHIFT_FEATURE_DISABLED] = true;
+
         allowedBaseKeys[Keys.CREATE_WITHDRAWAL_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CANCEL_WITHDRAWAL_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.EXECUTE_WITHDRAWAL_FEATURE_DISABLED] = true;
@@ -419,6 +421,10 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.EXECUTE_ADL_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.UPDATE_ORDER_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CANCEL_ORDER_FEATURE_DISABLED] = true;
+
+        allowedBaseKeys[Keys.CREATE_GLV_DEPOSIT_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.CANCEL_GLV_DEPOSIT_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED] = true;
 
         allowedBaseKeys[Keys.CLAIM_FUNDING_FEES_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CLAIM_COLLATERAL_FEATURE_DISABLED] = true;
@@ -443,10 +449,13 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT] = true;
         allowedBaseKeys[Keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR] = true;
 
-        allowedBaseKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT] = true;
+        allowedBaseKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1] = true;
+        allowedBaseKeys[Keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE] = true;
         allowedBaseKeys[Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR] = true;
 
         allowedBaseKeys[Keys.DEPOSIT_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.GLV_DEPOSIT_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.GLV_PER_MARKET_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.WITHDRAWAL_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.SHIFT_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.SINGLE_SWAP_GAS_LIMIT] = true;
@@ -506,11 +515,15 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.SKIP_BORROWING_FEE_FOR_SMALLER_SIDE] = true;
 
         allowedBaseKeys[Keys.PRICE_FEED_HEARTBEAT_DURATION] = true;
+
+        allowedBaseKeys[Keys.IS_GLV_MARKET_DISABLED] = true;
+        allowedBaseKeys[Keys.GLV_MAX_MARKET_TOKEN_BALANCE_USD] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {
         allowedLimitedBaseKeys[Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT] = true;
-        allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT] = true;
+        allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE] = true;
+        allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1] = true;
 
         allowedLimitedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
         allowedLimitedBaseKeys[Keys.MAX_POOL_USD_FOR_DEPOSIT] = true;

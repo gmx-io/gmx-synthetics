@@ -25,6 +25,12 @@ library DepositUtils {
     using Price for Price.Props;
     using Deposit for Deposit.Props;
 
+    enum DepositType {
+        Normal,
+        Shift,
+        Glv
+    }
+
     // @dev CreateDepositParams struct used in createDeposit to avoid stack
     // too deep errors
     //
@@ -131,13 +137,16 @@ library DepositUtils {
         CallbackUtils.validateCallbackGasLimit(dataStore, deposit.callbackGasLimit());
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteDepositGasLimit(dataStore, deposit);
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee);
+        uint256 oraclePriceCount = GasUtils.estimatedWithdrawalOraclePriceCount(
+            deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length
+        );
+        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
 
         DepositStoreUtils.set(dataStore, key, deposit);
 
-        DepositEventUtils.emitDepositCreated(eventEmitter, key, deposit);
+        DepositEventUtils.emitDepositCreated(eventEmitter, key, deposit, DepositType.Normal);
 
         return key;
     }
@@ -214,6 +223,7 @@ library DepositUtils {
             deposit.callbackContract(),
             deposit.executionFee(),
             startingGas,
+            GasUtils.estimatedDepositOraclePriceCount(deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length),
             keeper,
             deposit.receiver()
         );

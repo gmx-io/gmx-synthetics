@@ -7,6 +7,7 @@ import "../event/EventUtils.sol";
 import "../utils/Cast.sol";
 
 import "./Deposit.sol";
+import "./DepositUtils.sol";
 import "../pricing/ISwapPricingUtils.sol";
 
 library DepositEventUtils {
@@ -23,7 +24,8 @@ library DepositEventUtils {
     function emitDepositCreated(
         EventEmitter eventEmitter,
         bytes32 key,
-        Deposit.Props memory deposit
+        Deposit.Props memory deposit,
+        DepositUtils.DepositType depositType
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -39,7 +41,7 @@ library DepositEventUtils {
         eventData.addressItems.setItem(0, "longTokenSwapPath", deposit.longTokenSwapPath());
         eventData.addressItems.setItem(1, "shortTokenSwapPath", deposit.shortTokenSwapPath());
 
-        eventData.uintItems.initItems(7);
+        eventData.uintItems.initItems(8);
         eventData.uintItems.setItem(0, "initialLongTokenAmount", deposit.initialLongTokenAmount());
         eventData.uintItems.setItem(1, "initialShortTokenAmount", deposit.initialShortTokenAmount());
         eventData.uintItems.setItem(2, "minMarketTokens", deposit.minMarketTokens());
@@ -47,6 +49,7 @@ library DepositEventUtils {
         eventData.uintItems.setItem(4, "updatedAtTime", deposit.updatedAtTime());
         eventData.uintItems.setItem(5, "executionFee", deposit.executionFee());
         eventData.uintItems.setItem(6, "callbackGasLimit", deposit.callbackGasLimit());
+        eventData.uintItems.setItem(7, "depositType", uint256(depositType));
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", deposit.shouldUnwrapNativeToken());

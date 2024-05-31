@@ -102,7 +102,8 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         order.setExecutionFee(order.executionFee() + receivedWnt);
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee());
+        uint256 oraclePriceCount = GasUtils.estimateOrderOraclePriceCount(order.swapPath().length);
+        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee(), oraclePriceCount);
 
         order.touch();
 

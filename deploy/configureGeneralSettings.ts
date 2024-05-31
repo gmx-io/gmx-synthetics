@@ -108,7 +108,7 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
   );
 
   await setUintIfDifferent(
-    keys.EXECUTION_GAS_FEE_BASE_AMOUNT,
+    keys.EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1,
     generalConfig.executionGasFeeBaseAmount,
     "execution gas fee base amount"
   );

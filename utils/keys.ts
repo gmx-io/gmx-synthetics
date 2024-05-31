@@ -164,7 +164,7 @@ export const SKIP_BORROWING_FEE_FOR_SMALLER_SIDE = hashString("SKIP_BORROWING_FE
 export const ESTIMATED_GAS_FEE_BASE_AMOUNT = hashString("ESTIMATED_GAS_FEE_BASE_AMOUNT");
 export const ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR = hashString("ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR");
 
-export const EXECUTION_GAS_FEE_BASE_AMOUNT = hashString("EXECUTION_GAS_FEE_BASE_AMOUNT");
+export const EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1 = hashString("EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1");
 export const EXECUTION_GAS_FEE_MULTIPLIER_FACTOR = hashString("EXECUTION_GAS_FEE_MULTIPLIER_FACTOR");
 
 export const DEPOSIT_GAS_LIMIT = hashString("DEPOSIT_GAS_LIMIT");
@@ -422,7 +422,7 @@ export function swapFeeFactorKey(market: string, forPositiveImpact: boolean) {
 }
 
 export function atomicSwapFeeFactorKey(market: string) {
-  return hashData(["bytes32", "address"], [SWAP_FEE_FACTOR, market]);
+  return hashData(["bytes32", "address"], [ATOMIC_SWAP_FEE_FACTOR, market]);
 }
 
 export function swapImpactFactorKey(market: string, isPositive: boolean) {

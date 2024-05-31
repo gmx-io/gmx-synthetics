@@ -106,6 +106,7 @@ library ExecuteOrderUtils {
             params.order.callbackContract(),
             params.order.executionFee(),
             params.startingGas,
+            GasUtils.estimateOrderOraclePriceCount(params.order.swapPath().length),
             params.keeper,
             params.order.receiver()
         );
