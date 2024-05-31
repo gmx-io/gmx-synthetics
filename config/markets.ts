@@ -153,7 +153,7 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
 
   swapFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
   swapFeeFactorForNegativeImpact: percentageToFloat("0.07%"),
-  atomicSwapFeeFactor: percentageToFloat("2%"),
+  atomicSwapFeeFactor: percentageToFloat("0.5%"),
 
   negativeSwapImpactFactor: percentageToFloat("0.001%"),
   positiveSwapImpactFactor: percentageToFloat("0.0005%"),
@@ -206,7 +206,7 @@ const singleTokenMarketConfig: Partial<BaseMarketConfig> = {
 
   swapFeeFactorForPositiveImpact: bigNumberify(0),
   swapFeeFactorForNegativeImpact: bigNumberify(0),
-  atomicSwapFeeFactor: percentageToFloat("2%"),
+  atomicSwapFeeFactor: percentageToFloat("0.5%"),
 
   negativeSwapImpactFactor: bigNumberify(0),
   positiveSwapImpactFactor: bigNumberify(0),

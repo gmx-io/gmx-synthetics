@@ -422,7 +422,7 @@ export function swapFeeFactorKey(market: string, forPositiveImpact: boolean) {
 }
 
 export function atomicSwapFeeFactorKey(market: string) {
-  return hashData(["bytes32", "address"], [SWAP_FEE_FACTOR, market]);
+  return hashData(["bytes32", "address"], [ATOMIC_SWAP_FEE_FACTOR, market]);
 }
 
 export function swapImpactFactorKey(market: string, isPositive: boolean) {

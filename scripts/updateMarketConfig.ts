@@ -78,6 +78,14 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
 
     await handleConfig(
       "uint",
+      keys.ATOMIC_SWAP_FEE_FACTOR,
+      encodeData(["address"], [marketToken]),
+      marketConfig.atomicSwapFeeFactor,
+      `atomicSwapFeeFactor ${marketToken}`
+    );
+
+    await handleConfig(
+      "uint",
       keys.SWAP_IMPACT_FACTOR,
       encodeData(["address", "bool"], [marketToken, true]),
       marketConfig.positiveSwapImpactFactor,
