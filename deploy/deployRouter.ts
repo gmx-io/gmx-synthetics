@@ -8,7 +8,7 @@ const func = createDeployFunction({
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
-  id: "Router_1",
+  id: "Router_2",
 });
 
 export default func;

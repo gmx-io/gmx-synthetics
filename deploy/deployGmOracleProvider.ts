@@ -17,7 +17,7 @@ const func = createDeployFunction({
       "isOracleProviderEnabledKey"
     );
   },
-  id: "GmOracleProvider_1",
+  id: "GmOracleProvider_2",
 });
 
 export default func;
