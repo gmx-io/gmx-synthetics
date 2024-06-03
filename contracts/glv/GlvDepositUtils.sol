@@ -117,10 +117,6 @@ library GlvDepositUtils {
 
         AccountUtils.validateReceiver(params.receiver);
 
-        if (params.receiver == address(glvVault)) {
-            revert Errors.InvalidReceiver();
-        }
-
         GlvDeposit.Props memory glvDeposit = GlvDeposit.Props(
             GlvDeposit.Addresses({
                 account: account,

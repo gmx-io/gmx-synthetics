@@ -91,9 +91,6 @@ library ShiftUtils {
         }
 
         AccountUtils.validateReceiver(params.receiver);
-        if (params.receiver == address(shiftVault)) {
-            revert Errors.InvalidReceiver();
-        }
 
         uint256 marketTokenAmount = shiftVault.recordTransferIn(params.fromMarket);
 

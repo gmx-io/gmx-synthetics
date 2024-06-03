@@ -97,9 +97,6 @@ library WithdrawalUtils {
         }
 
         AccountUtils.validateReceiver(params.receiver);
-        if (params.receiver == address(withdrawalVault)) {
-            revert Errors.InvalidReceiver();
-        }
 
         uint256 marketTokenAmount = withdrawalVault.recordTransferIn(params.market);
 

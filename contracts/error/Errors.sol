@@ -325,7 +325,6 @@ library Errors {
     // AccountUtils errors
     error EmptyAccount();
     error EmptyReceiver();
-    error InvalidReceiver();
 
     // Array errors
     error CompactedArrayOutOfBounds(

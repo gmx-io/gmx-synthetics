@@ -141,14 +141,6 @@ library OrderUtils {
 
         AccountUtils.validateReceiver(order.receiver());
 
-        if (order.receiver() == address(orderVault)) {
-            revert Errors.InvalidReceiver();
-        }
-
-        if (order.cancellationReceiver() == address(orderVault)) {
-            revert Errors.InvalidReceiver();
-        }
-
         CallbackUtils.validateCallbackGasLimit(dataStore, order.callbackGasLimit());
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
