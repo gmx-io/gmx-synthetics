@@ -328,11 +328,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      reserveFactorLongs: percentageToFloat("125%"),
-      reserveFactorShorts: percentageToFloat("125%"),
+      reserveFactorLongs: percentageToFloat("135%"),
+      reserveFactorShorts: percentageToFloat("135%"),
 
-      openInterestReserveFactorLongs: percentageToFloat("120%"),
-      openInterestReserveFactorShorts: percentageToFloat("120%"),
+      openInterestReserveFactorLongs: percentageToFloat("130%"),
+      openInterestReserveFactorShorts: percentageToFloat("130%"),
 
       maxLongTokenPoolAmount: expandDecimals(2200, 8),
       maxShortTokenPoolAmount: expandDecimals(110_000_000, 6),
@@ -349,9 +349,11 @@ const config: {
       negativeSwapImpactFactor: decimalToFloat(2, 10), // 0.05% for 2,500,000 USD of imbalance
       positiveSwapImpactFactor: decimalToFloat(2, 10), // 0.05% for 2,500,000 USD of imbalance
 
-      // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
-      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
-      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
+      minCollateralFactor: decimalToFloat(5, 3), // 0.5%
+
+      // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
+      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(6, 11),
+      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(6, 11),
 
       maxOpenInterestForLongs: decimalToFloat(90_000_000),
       maxOpenInterestForShorts: decimalToFloat(90_000_000),
@@ -394,9 +396,11 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(72704, 26), // 7.27041E+30, 0.006281632653 BTC / day
       minPositionImpactPoolAmount: expandDecimals(5, 6), // 0.05 BTC
 
-      // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
-      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
-      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
+      minCollateralFactor: decimalToFloat(5, 3), // 0.5%
+
+      // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
+      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(6, 11),
+      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(6, 11),
 
       maxOpenInterestForLongs: decimalToFloat(20_000_000),
       maxOpenInterestForShorts: decimalToFloat(20_000_000),
@@ -440,9 +444,11 @@ const config: {
       negativeSwapImpactFactor: decimalToFloat(2, 10), // 0.05% for 2,500,000 USD of imbalance
       positiveSwapImpactFactor: decimalToFloat(2, 10), // 0.05% for 2,500,000 USD of imbalance
 
-      // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
-      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
-      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
+      minCollateralFactor: decimalToFloat(5, 3), // 0.5%
+
+      // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
+      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(6, 11),
+      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(6, 11),
 
       maxOpenInterestForLongs: decimalToFloat(80_000_000),
       maxOpenInterestForShorts: decimalToFloat(80_000_000),
@@ -479,9 +485,11 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(46477, 37), // 4.64773E+41, 0.04015637424 ETH / day
       minPositionImpactPoolAmount: expandDecimals(5, 17), // 0.5 ETH
 
-      // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
-      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
-      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
+      minCollateralFactor: decimalToFloat(5, 3), // 0.5%
+
+      // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
+      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(6, 11),
+      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(6, 11),
 
       maxOpenInterestForLongs: decimalToFloat(20_000_000),
       maxOpenInterestForShorts: decimalToFloat(20_000_000),
@@ -520,8 +528,8 @@ const config: {
       positivePositionImpactFactor: decimalToFloat(19, 12), // 1.9e-11
       positionImpactExponentFactor: decimalToFloat(236, 2), // 2.36
 
-      negativeSwapImpactFactor: decimalToFloat(1, 8), // 0.05% for 50,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(4, 8),
+      positiveSwapImpactFactor: decimalToFloat(2, 8),
 
       // minCollateralFactor of 0.01 (1%) when open interest is 2,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
@@ -614,8 +622,8 @@ const config: {
       positivePositionImpactFactor: decimalToFloat(13, 9),
 
       // the swap impact factor is for WETH-stablecoin swaps
-      negativeSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(4, 9),
+      positiveSwapImpactFactor: decimalToFloat(4, 9),
 
       // minCollateralFactor of 0.01 (1%) when open interest is 2,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(5, 9),
@@ -658,8 +666,8 @@ const config: {
       positivePositionImpactFactor: decimalToFloat(325, 13), // 3.25e-11
       positionImpactExponentFactor: decimalToFloat(23, 1), // 2.3
 
-      negativeSwapImpactFactor: decimalToFloat(1, 8), // 0.05% for 50,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(5, 9),
+      positiveSwapImpactFactor: decimalToFloat(25, 10),
 
       // minCollateralFactor of 0.01 (1%) when open interest is 5,882,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(17, 10),
@@ -804,8 +812,8 @@ const config: {
       positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~90,000 USD of imbalance
       positionImpactExponentFactor: decimalToFloat(22, 1), // 2.2
 
-      negativeSwapImpactFactor: decimalToFloat(8, 9), // 0.05% for 62,500 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(4, 9), // 0.05% for 125,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(6, 9),
+      positiveSwapImpactFactor: decimalToFloat(3, 9),
 
       // minCollateralFactor of 0.01 (1%) when open interest is 3,333,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(3, 9),
@@ -848,8 +856,8 @@ const config: {
       positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~90,000 USD of imbalance
       positionImpactExponentFactor: decimalToFloat(22, 1), // 2.2
 
-      negativeSwapImpactFactor: decimalToFloat(8, 9), // 0.05% for 62,500 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(4, 9), // 0.05% for 125,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(5, 9),
+      positiveSwapImpactFactor: decimalToFloat(25, 10),
 
       // minCollateralFactor of 0.01 (1%) when open interest is 2,632,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(38, 10),
@@ -904,8 +912,8 @@ const config: {
       positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~90,000 USD of imbalance
       positionImpactExponentFactor: decimalToFloat(22, 1), // 2.2
 
-      negativeSwapImpactFactor: decimalToFloat(8, 9), // 0.05% for 62,500 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(4, 9), // 0.05% for 125,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(4, 9),
+      positiveSwapImpactFactor: decimalToFloat(2, 9),
 
       // minCollateralFactor of 0.01 (1%) when open interest is 2,632,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(38, 10),
@@ -944,8 +952,8 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(1, 8), // 0.05% for 50,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
 
-      negativeSwapImpactFactor: decimalToFloat(1, 8), // 0.05% for 50,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(3, 8),
+      positiveSwapImpactFactor: decimalToFloat(15, 9),
 
       // minCollateralFactor of 0.01 (1%) when open interest is 2,632,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(38, 10),
@@ -1144,8 +1152,8 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      positionImpactPoolDistributionRate: expandDecimals(4200, 41), // 4.20031E+44, 36.29068692 OP / day
-      minPositionImpactPoolAmount: expandDecimals(311, 18), // 311 OP
+      positionImpactPoolDistributionRate: bigNumberify(0),
+      minPositionImpactPoolAmount: bigNumberify(0),
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
       maxOpenInterestForShorts: decimalToFloat(1_000_000),

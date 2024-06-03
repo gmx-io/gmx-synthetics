@@ -19,13 +19,14 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
     }
 
     const marketToken = onchainMarket.marketToken;
+    const marketLabel = `${marketConfig.tokens.indexToken} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}]`;
 
     await handleConfig(
       "uint",
       keys.MAX_POOL_AMOUNT,
       encodeData(["address", "address"], [marketToken, longToken]),
       marketConfig.maxLongTokenPoolAmount,
-      `maxLongTokenPoolAmount ${marketToken}, ${longToken}`
+      `maxLongTokenPoolAmount ${marketLabel} (${marketToken}), ${longToken}`
     );
 
     await handleConfig(
@@ -33,7 +34,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MAX_POOL_AMOUNT,
       encodeData(["address", "address"], [marketToken, shortToken]),
       marketConfig.maxShortTokenPoolAmount,
-      `maxShortTokenPoolAmount ${marketToken}, ${shortToken}`
+      `maxShortTokenPoolAmount ${marketLabel} (${marketToken}), ${shortToken}`
     );
 
     await handleConfig(
@@ -41,7 +42,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MAX_POOL_AMOUNT_FOR_DEPOSIT,
       encodeData(["address", "address"], [marketToken, longToken]),
       marketConfig.maxLongTokenPoolAmountForDeposit,
-      `maxLongTokenPoolAmountForDeposit ${marketToken}, ${longToken}`
+      `maxLongTokenPoolAmountForDeposit ${marketLabel} (${marketToken}), ${longToken}`
     );
 
     await handleConfig(
@@ -49,7 +50,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MAX_POOL_AMOUNT_FOR_DEPOSIT,
       encodeData(["address", "address"], [marketToken, shortToken]),
       marketConfig.maxShortTokenPoolAmountForDeposit,
-      `maxShortTokenPoolAmountForDeposit ${marketToken}, ${shortToken}`
+      `maxShortTokenPoolAmountForDeposit ${marketLabel} (${marketToken}), ${shortToken}`
     );
 
     await handleConfig(
@@ -57,7 +58,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.SWAP_IMPACT_EXPONENT_FACTOR,
       encodeData(["address"], [marketToken]),
       marketConfig.swapImpactExponentFactor,
-      `swapImpactExponentFactor ${marketToken}`
+      `swapImpactExponentFactor ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -65,7 +66,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.SWAP_FEE_FACTOR,
       encodeData(["address", "bool"], [marketToken, true]),
       marketConfig.swapFeeFactorForPositiveImpact,
-      `swapFeeFactorForPositiveImpact ${marketToken}`
+      `swapFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -73,7 +74,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.SWAP_FEE_FACTOR,
       encodeData(["address", "bool"], [marketToken, false]),
       marketConfig.swapFeeFactorForNegativeImpact,
-      `swapFeeFactorForNegativeImpact ${marketToken}`
+      `swapFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -89,7 +90,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.SWAP_IMPACT_FACTOR,
       encodeData(["address", "bool"], [marketToken, true]),
       marketConfig.positiveSwapImpactFactor,
-      `positiveSwapImpactFactor ${marketToken}`
+      `positiveSwapImpactFactor ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -97,7 +98,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.SWAP_IMPACT_FACTOR,
       encodeData(["address", "bool"], [marketToken, false]),
       marketConfig.negativeSwapImpactFactor,
-      `negativeSwapImpactFactor ${marketToken}`
+      `negativeSwapImpactFactor ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -105,7 +106,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.TOKEN_TRANSFER_GAS_LIMIT,
       encodeData(["address"], [marketToken]),
       generalConfig.tokenTransferGasLimit,
-      `tokenTransferGasLimit ${marketToken}`
+      `tokenTransferGasLimit ${marketLabel} (${marketToken})`
     );
 
     // the rest of the params are not used for swap-only markets
@@ -118,7 +119,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MIN_COLLATERAL_FACTOR,
       encodeData(["address"], [marketToken]),
       marketConfig.minCollateralFactor,
-      `minCollateralFactor ${marketToken}`
+      `minCollateralFactor ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -126,7 +127,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER,
       encodeData(["address", "bool"], [marketToken, true]),
       marketConfig.minCollateralFactorForOpenInterestMultiplierLong,
-      `minCollateralFactorForOpenInterestMultiplierLong ${marketToken}`
+      `minCollateralFactorForOpenInterestMultiplierLong ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -134,7 +135,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER,
       encodeData(["address", "bool"], [marketToken, false]),
       marketConfig.minCollateralFactorForOpenInterestMultiplierShort,
-      `minCollateralFactorForOpenInterestMultiplierShort ${marketToken}`
+      `minCollateralFactorForOpenInterestMultiplierShort ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -142,7 +143,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MAX_OPEN_INTEREST,
       encodeData(["address", "bool"], [marketToken, true]),
       marketConfig.maxOpenInterestForLongs,
-      `maxOpenInterestForLongs ${marketToken}`
+      `maxOpenInterestForLongs ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -150,7 +151,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MAX_OPEN_INTEREST,
       encodeData(["address", "bool"], [marketToken, false]),
       marketConfig.maxOpenInterestForShorts,
-      `maxOpenInterestForShorts ${marketToken}`
+      `maxOpenInterestForShorts ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -158,7 +159,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.RESERVE_FACTOR,
       encodeData(["address", "bool"], [marketToken, true]),
       marketConfig.reserveFactorLongs,
-      `reserveFactorLongs ${marketToken}`
+      `reserveFactorLongs ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -166,7 +167,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.RESERVE_FACTOR,
       encodeData(["address", "bool"], [marketToken, false]),
       marketConfig.reserveFactorShorts,
-      `reserveFactorShorts ${marketToken}`
+      `reserveFactorShorts ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -174,7 +175,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.OPEN_INTEREST_RESERVE_FACTOR,
       encodeData(["address", "bool"], [marketToken, true]),
       marketConfig.openInterestReserveFactorLongs,
-      `openInterestReserveFactorLongs ${marketToken}`
+      `openInterestReserveFactorLongs ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -182,7 +183,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.OPEN_INTEREST_RESERVE_FACTOR,
       encodeData(["address", "bool"], [marketToken, false]),
       marketConfig.openInterestReserveFactorShorts,
-      `openInterestReserveFactorShorts ${marketToken}`
+      `openInterestReserveFactorShorts ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -190,7 +191,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MAX_PNL_FACTOR,
       encodeData(["bytes32", "address", "bool"], [keys.MAX_PNL_FACTOR_FOR_TRADERS, marketToken, true]),
       marketConfig.maxPnlFactorForTradersLongs,
-      `maxPnlFactorForTradersLongs ${marketToken}`
+      `maxPnlFactorForTradersLongs ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -198,7 +199,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MAX_PNL_FACTOR,
       encodeData(["bytes32", "address", "bool"], [keys.MAX_PNL_FACTOR_FOR_TRADERS, marketToken, false]),
       marketConfig.maxPnlFactorForTradersShorts,
-      `maxPnlFactorForTradersShorts ${marketToken}`
+      `maxPnlFactorForTradersShorts ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -206,7 +207,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MAX_PNL_FACTOR,
       encodeData(["bytes32", "address", "bool"], [keys.MAX_PNL_FACTOR_FOR_ADL, marketToken, true]),
       marketConfig.maxPnlFactorForAdlLongs,
-      `maxPnlFactorForAdlLongs ${marketToken}`
+      `maxPnlFactorForAdlLongs ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -214,7 +215,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MAX_PNL_FACTOR,
       encodeData(["bytes32", "address", "bool"], [keys.MAX_PNL_FACTOR_FOR_ADL, marketToken, false]),
       marketConfig.maxPnlFactorForAdlShorts,
-      `maxPnlFactorForAdlShorts ${marketToken}`
+      `maxPnlFactorForAdlShorts ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -222,7 +223,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MIN_PNL_FACTOR_AFTER_ADL,
       encodeData(["address", "bool"], [marketToken, true]),
       marketConfig.minPnlFactorAfterAdlLongs,
-      `minPnlFactorAfterAdlLongs ${marketToken}`
+      `minPnlFactorAfterAdlLongs ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -230,7 +231,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MIN_PNL_FACTOR_AFTER_ADL,
       encodeData(["address", "bool"], [marketToken, false]),
       marketConfig.minPnlFactorAfterAdlShorts,
-      `minPnlFactorAfterAdlShorts ${marketToken}`
+      `minPnlFactorAfterAdlShorts ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -238,7 +239,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MAX_PNL_FACTOR,
       encodeData(["bytes32", "address", "bool"], [keys.MAX_PNL_FACTOR_FOR_DEPOSITS, marketToken, true]),
       marketConfig.maxPnlFactorForDepositsLongs,
-      `maxPnlFactorForDepositsLongs ${marketToken}`
+      `maxPnlFactorForDepositsLongs ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -246,7 +247,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MAX_PNL_FACTOR,
       encodeData(["bytes32", "address", "bool"], [keys.MAX_PNL_FACTOR_FOR_DEPOSITS, marketToken, false]),
       marketConfig.maxPnlFactorForDepositsShorts,
-      `maxPnlFactorForDepositsShorts ${marketToken}`
+      `maxPnlFactorForDepositsShorts ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -254,7 +255,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MAX_PNL_FACTOR,
       encodeData(["bytes32", "address", "bool"], [keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS, marketToken, true]),
       marketConfig.maxPnlFactorForWithdrawalsLongs,
-      `maxPnlFactorForWithdrawalsLongs ${marketToken}`
+      `maxPnlFactorForWithdrawalsLongs ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -262,7 +263,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MAX_PNL_FACTOR,
       encodeData(["bytes32", "address", "bool"], [keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS, marketToken, false]),
       marketConfig.maxPnlFactorForWithdrawalsShorts,
-      `maxPnlFactorForWithdrawalsShorts ${marketToken}`
+      `maxPnlFactorForWithdrawalsShorts ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -270,7 +271,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.POSITION_IMPACT_EXPONENT_FACTOR,
       encodeData(["address"], [marketToken]),
       marketConfig.positionImpactExponentFactor,
-      `positionImpactExponentFactor ${marketToken}`
+      `positionImpactExponentFactor ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -278,7 +279,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.FUNDING_FACTOR,
       encodeData(["address"], [marketToken]),
       marketConfig.fundingFactor,
-      `fundingFactor ${marketToken}`
+      `fundingFactor ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -286,7 +287,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.FUNDING_EXPONENT_FACTOR,
       encodeData(["address"], [marketToken]),
       marketConfig.fundingExponentFactor,
-      `fundingFactor ${marketToken}`
+      `fundingFactor ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -294,7 +295,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
       encodeData(["address"], [marketToken]),
       marketConfig.fundingIncreaseFactorPerSecond,
-      `fundingIncreaseFactorPerSecond ${marketToken}`
+      `fundingIncreaseFactorPerSecond ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -302,7 +303,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
       encodeData(["address"], [marketToken]),
       marketConfig.fundingDecreaseFactorPerSecond,
-      `fundingDecreaseFactorPerSecond ${marketToken}`
+      `fundingDecreaseFactorPerSecond ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -310,7 +311,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MIN_FUNDING_FACTOR_PER_SECOND,
       encodeData(["address"], [marketToken]),
       marketConfig.minFundingFactorPerSecond,
-      `minFundingFactorPerSecond ${marketToken}`
+      `minFundingFactorPerSecond ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -318,7 +319,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MAX_FUNDING_FACTOR_PER_SECOND,
       encodeData(["address"], [marketToken]),
       marketConfig.maxFundingFactorPerSecond,
-      `maxFundingFactorPerSecond ${marketToken}`
+      `maxFundingFactorPerSecond ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -326,7 +327,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.THRESHOLD_FOR_STABLE_FUNDING,
       encodeData(["address"], [marketToken]),
       marketConfig.thresholdForStableFunding,
-      `thresholdForStableFunding ${marketToken}`
+      `thresholdForStableFunding ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -334,7 +335,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.THRESHOLD_FOR_DECREASE_FUNDING,
       encodeData(["address"], [marketToken]),
       marketConfig.thresholdForDecreaseFunding,
-      `thresholdForDecreaseFunding ${marketToken}`
+      `thresholdForDecreaseFunding ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -342,7 +343,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.POSITION_FEE_FACTOR,
       encodeData(["address", "bool"], [marketToken, true]),
       marketConfig.positionFeeFactorForPositiveImpact,
-      `positionFeeFactorForPositiveImpact ${marketToken}`
+      `positionFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -350,7 +351,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.POSITION_FEE_FACTOR,
       encodeData(["address", "bool"], [marketToken, false]),
       marketConfig.positionFeeFactorForNegativeImpact,
-      `positionFeeFactorForNegativeImpact ${marketToken}`
+      `positionFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -358,7 +359,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.BORROWING_FACTOR,
       encodeData(["address", "bool"], [marketToken, true]),
       marketConfig.borrowingFactorForLongs,
-      `borrowingFactorForLongs ${marketToken}`
+      `borrowingFactorForLongs ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -366,7 +367,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.BORROWING_FACTOR,
       encodeData(["address", "bool"], [marketToken, false]),
       marketConfig.borrowingFactorForShorts,
-      `borrowingFactorForShorts ${marketToken}`
+      `borrowingFactorForShorts ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -374,7 +375,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.BORROWING_EXPONENT_FACTOR,
       encodeData(["address", "bool"], [marketToken, true]),
       marketConfig.borrowingExponentFactorForLongs,
-      `borrowingExponentFactorForLongs ${marketToken}`
+      `borrowingExponentFactorForLongs ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -382,7 +383,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.BORROWING_EXPONENT_FACTOR,
       encodeData(["address", "bool"], [marketToken, false]),
       marketConfig.borrowingExponentFactorForShorts,
-      `borrowingExponentFactorForShorts ${marketToken}`
+      `borrowingExponentFactorForShorts ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -390,7 +391,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.POSITION_IMPACT_FACTOR,
       encodeData(["address", "bool"], [marketToken, true]),
       marketConfig.positivePositionImpactFactor,
-      `positivePositionImpactFactor ${marketToken}`
+      `positivePositionImpactFactor ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -398,7 +399,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.POSITION_IMPACT_FACTOR,
       encodeData(["address", "bool"], [marketToken, false]),
       marketConfig.negativePositionImpactFactor,
-      `negativePositionImpactFactor ${marketToken}`
+      `negativePositionImpactFactor ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -406,7 +407,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS,
       encodeData(["address"], [marketToken]),
       marketConfig.maxPositionImpactFactorForLiquidations,
-      `maxPositionImpactFactorForLiquidations ${marketToken}`
+      `maxPositionImpactFactorForLiquidations ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -414,7 +415,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MAX_POSITION_IMPACT_FACTOR,
       encodeData(["address", "bool"], [marketToken, true]),
       marketConfig.positiveMaxPositionImpactFactor,
-      `positiveMaxPositionImpactFactor ${marketToken}`
+      `positiveMaxPositionImpactFactor ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -422,7 +423,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       keys.MAX_POSITION_IMPACT_FACTOR,
       encodeData(["address", "bool"], [marketToken, false]),
       marketConfig.negativeMaxPositionImpactFactor,
-      `negativeMaxPositionImpactFactor ${marketToken}`
+      `negativeMaxPositionImpactFactor ${marketLabel} (${marketToken})`
     );
   }
 };

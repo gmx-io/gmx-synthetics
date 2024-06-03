@@ -448,7 +448,15 @@ async function validatePerpConfig({ market, marketConfig, indexTokenSymbol, data
   console.log(`    maxFundingFactorPerYear: ${formatAmount(maxFundingFactorPerYear, 28)}%`);
 }
 
-async function validateSwapConfig({ market, marketConfig, longTokenSymbol, shortTokenSymbol, dataStore, errors }) {
+async function validateSwapConfig({
+  market,
+  marketConfig,
+  indexTokenSymbol,
+  longTokenSymbol,
+  shortTokenSymbol,
+  dataStore,
+  errors,
+}) {
   const isStablecoinMarket = stablecoinSymbols[longTokenSymbol] && stablecoinSymbols[shortTokenSymbol];
 
   let recommendedSwapConfig;
@@ -556,13 +564,13 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
   const impactRatio = negativeSwapImpactFactor.mul(BASIS_POINTS_DIVISOR).div(positiveSwapImpactFactor);
   if (impactRatio.sub(recommendedSwapConfig.expectedSwapImpactRatio).abs().gt(100)) {
     throw new Error(
-      `Invalid position impact factors for ${longTokenSymbol}: ${impactRatio} expected ${recommendedSwapConfig.expectedSwapImpactRatio}`
+      `Invalid swap impact factors for ${indexTokenSymbol}: ${impactRatio} expected ${recommendedSwapConfig.expectedSwapImpactRatio} negativeSwapImpactFactor ${negativeSwapImpactFactor} positiveSwapImpactFactor ${positiveSwapImpactFactor}`
     );
   }
 
   if (negativeSwapImpactFactor.lt(recommendedSwapConfig.negativeSwapImpactFactor)) {
     errors.push({
-      message: `Invalid negativeSwapImpactFactor for ${longTokenSymbol}`,
+      message: `Invalid negativeSwapImpactFactor for ${indexTokenSymbol}`,
       expected: recommendedSwapConfig.negativeSwapImpactFactor,
       actual: negativeSwapImpactFactor,
     });
@@ -605,7 +613,7 @@ export async function validateMarketConfigs() {
     );
 
     await validatePerpConfig({ marketConfig, indexTokenSymbol, dataStore, errors });
-    await validateSwapConfig({ marketConfig, longTokenSymbol, shortTokenSymbol, dataStore, errors });
+    await validateSwapConfig({ marketConfig, indexTokenSymbol, longTokenSymbol, shortTokenSymbol, dataStore, errors });
   }
 
   for (const market of markets) {
