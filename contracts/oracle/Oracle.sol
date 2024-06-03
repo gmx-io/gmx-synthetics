@@ -71,6 +71,8 @@ contract Oracle is RoleModule {
         sequencerUptimeFeed = _sequencerUptimeFeed;
     }
 
+    // this can be used to help ensure that on-chain prices are updated
+    // before actions dependent on those on-chain prices are allowed
     function validateSequencerUp() external view {
         if (address(sequencerUptimeFeed) == address(0)) {
             return;
