@@ -1112,10 +1112,10 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(36_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(1_200_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(50_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(1_800_000, 6),
 
-      maxLongTokenPoolAmountForDeposit: expandDecimals(38_000, 18),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(41_600, 18),
       maxShortTokenPoolAmountForDeposit: expandDecimals(1_500_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~100,000 USD of imbalance
