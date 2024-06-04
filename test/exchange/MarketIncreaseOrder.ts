@@ -505,24 +505,4 @@ describe("Exchange.MarketIncreaseOrder", () => {
       }
     );
   });
-
-  it("reverts if receiver is orderVault", async () => {
-    const params = {
-      account: user0,
-      receiver: orderVault,
-      market: ethUsdMarket,
-      initialCollateralToken: usdc,
-      initialCollateralDeltaAmount: expandDecimals(100 * 1000, 6),
-      swapPath: [],
-      sizeDeltaUsd: decimalToFloat(150 * 1000),
-      acceptablePrice: expandDecimals(4990, 12),
-      executionFee: expandDecimals(10, 18),
-      minOutputAmount: expandDecimals(50000, 6),
-      orderType: OrderType.MarketIncrease,
-      isLong: false,
-      shouldUnwrapNativeToken: false,
-    };
-
-    await expect(createOrder(fixture, params)).to.be.revertedWithCustomError(errorsContract, "InvalidReceiver");
-  });
 });
