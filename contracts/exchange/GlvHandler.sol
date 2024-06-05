@@ -17,6 +17,7 @@ import "../glv/GlvWithdrawalUtils.sol";
 import "../glv/GlvWithdrawalStoreUtils.sol";
 import "../glv/GlvVault.sol";
 import "../glv/GlvDeposit.sol";
+import "../glv/GlvWithdrawal.sol";
 import "../deposit/DepositUtils.sol";
 import "../deposit/ExecuteDepositUtils.sol";
 import "../shift/ShiftUtils.sol";
@@ -236,8 +237,44 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
         );
     }
 
-    function simulateExecuteGlvDeposit() external {
-        // TODO:
+    // @dev simulate execution of a glv deposit to check for any errors
+    // @param key the glv deposit key
+    // @param params OracleUtils.SimulatePricesParams
+    function simulateExecuteDeposit(
+        bytes32 key,
+        OracleUtils.SimulatePricesParams memory params
+    ) external
+        onlyController
+        withSimulatedOraclePrices(params)
+        globalNonReentrant
+    {
+        GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(dataStore, key);
+
+        this._executeGlvDeposit(
+            key,
+            glvDeposit,
+            msg.sender
+        );
+    }
+
+    // @dev simulate execution of a glv withdrawal to check for any errors
+    // @param key the glv withdrawal key
+    // @param params OracleUtils.SimulatePricesParams
+    function simulateExecuteWithdrawal(
+        bytes32 key,
+        OracleUtils.SimulatePricesParams memory params
+    ) external
+        onlyController
+        withSimulatedOraclePrices(params)
+        globalNonReentrant
+    {
+        GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(dataStore, key);
+
+        this._executeGlvWithdrawal(
+            key,
+            glvWithdrawal,
+            msg.sender
+        );
     }
 
     function shift(
