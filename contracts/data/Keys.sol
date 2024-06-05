@@ -212,8 +212,6 @@ library Keys {
     // @dev key for the percentage amount of borrowing fees to be received
     bytes32 public constant BORROWING_FEE_RECEIVER_FACTOR = keccak256(abi.encode("BORROWING_FEE_RECEIVER_FACTOR"));
 
-    // @dev key for the base gas limit used when estimating execution fee
-    bytes32 public constant ESTIMATED_GAS_FEE_BASE_AMOUNT = keccak256(abi.encode("ESTIMATED_GAS_FEE_BASE_AMOUNT"));
     // @dev key for the multiplier used when estimating execution fee
     bytes32 public constant ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR"));
 

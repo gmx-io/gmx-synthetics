@@ -210,7 +210,7 @@ library GasUtils {
     // @param dataStore DataStore
     // @param estimatedGasLimit the estimated gas limit
     function adjustGasLimitForEstimate(DataStore dataStore, uint256 estimatedGasLimit, uint256 oraclePriceCount) internal view returns (uint256) {
-        uint256 baseGasLimit = dataStore.getUint(Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT);
+        uint256 baseGasLimit = dataStore.getUint(Keys.EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1);
         baseGasLimit += dataStore.getUint(Keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE) * oraclePriceCount;
         uint256 multiplierFactor = dataStore.getUint(Keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR);
         uint256 gasLimit = baseGasLimit + Precision.applyFactor(estimatedGasLimit, multiplierFactor);
