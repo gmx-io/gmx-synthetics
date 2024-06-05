@@ -87,6 +87,10 @@ library Keys {
     bytes32 public constant GLV_DEPOSIT_LIST = keccak256(abi.encode("GLV_DEPOSIT_LIST"));
     // @dev key for the account glv deposit list
     bytes32 public constant ACCOUNT_GLV_DEPOSIT_LIST = keccak256(abi.encode("ACCOUNT_GLV_DEPOSIT_LIST"));
+    // @dev key for the glv withdrawal list
+    bytes32 public constant GLV_WITHDRAWAL_LIST = keccak256(abi.encode("GLV_WITHDRAWAL_LIST"));
+    // @dev key for the account glv withdrawal list
+    bytes32 public constant ACCOUNT_GLV_WITHDRAWAL_LIST = keccak256(abi.encode("ACCOUNT_GLV_WITHDRAWAL_LIST"));
     // @dev key for the account glv supported market list
     bytes32 public constant GLV_SUPPORTED_MARKET_LIST = keccak256(abi.encode("GLV_SUPPORTED_MARKET_LIST"));
 
@@ -122,6 +126,12 @@ library Keys {
     bytes32 public constant CANCEL_GLV_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("CANCEL_GLV_DEPOSIT_FEATURE_DISABLED"));
     // @dev key for whether the execute glv deposit feature is disabled
     bytes32 public constant EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED"));
+    // @dev key for whether the create glv withdrawal feature is disabled
+    bytes32 public constant CREATE_GLV_WITHDRAWAL_FEATURE_DISABLED = keccak256(abi.encode("CREATE_GLV_WITHDRAWAL_FEATURE_DISABLED"));
+    // @dev key for whether the cancel glv withdrawal feature is disabled
+    bytes32 public constant CANCEL_GLV_WITHDRAWAL_FEATURE_DISABLED = keccak256(abi.encode("CANCEL_GLV_WITHDRAWAL_FEATURE_DISABLED"));
+    // @dev key for whether the execute glv withdrawal feature is disabled
+    bytes32 public constant EXECUTE_GLV_WITHDRAWAL_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_GLV_WITHDRAWAL_FEATURE_DISABLED"));
     // @dev key for whether the glv shift feature is disabled
     bytes32 public constant GLV_SHIFT_FEATURE_DISABLED = keccak256(abi.encode("GLV_SHIFT_FEATURE_DISABLED"));
 
@@ -218,9 +228,11 @@ library Keys {
     bytes32 public constant DEPOSIT_GAS_LIMIT = keccak256(abi.encode("DEPOSIT_GAS_LIMIT"));
     // @dev key for the estimated gas limit for withdrawals
     bytes32 public constant WITHDRAWAL_GAS_LIMIT = keccak256(abi.encode("WITHDRAWAL_GAS_LIMIT"));
-    // @dev key for the estimated gas limit for each glv market
+    // @dev key for the estimated gas limit for glv deposits
     bytes32 public constant GLV_DEPOSIT_GAS_LIMIT = keccak256(abi.encode("GLV_DEPOSIT_GAS_LIMIT"));
-    // @dev key for the estimated gas limit for shifts
+    // @dev key for the estimated gas limit for glv withdrawals
+    bytes32 public constant GLV_WITHDRAWAL_GAS_LIMIT = keccak256(abi.encode("GLV_WITHDRAWAL_GAS_LIMIT"));
+    // @dev key for the estimated gas limit for each glv market
     bytes32 public constant GLV_PER_MARKET_GAS_LIMIT = keccak256(abi.encode("GLV_PER_MARKET_GAS_LIMIT"));
     // @dev key for the estimated gas limit for shifts
     bytes32 public constant SHIFT_GAS_LIMIT = keccak256(abi.encode("SHIFT_GAS_LIMIT"));
@@ -441,6 +453,12 @@ library Keys {
         return keccak256(abi.encode(ACCOUNT_GLV_DEPOSIT_LIST, account));
     }
 
+    // @dev key for the account glv deposit list
+    // @param account the account for the list
+    function accountGlvWithdrawalListKey(address account) internal pure returns (bytes32) {
+        return keccak256(abi.encode(ACCOUNT_GLV_WITHDRAWAL_LIST, account));
+    }
+
     // @dev key for the glv supported market list
     // @param glv the glv for the supported market list
     function glvSupportedMarketListKey(address glv) internal pure returns (bytes32) {
@@ -520,6 +538,10 @@ library Keys {
         return GLV_DEPOSIT_GAS_LIMIT;
     }
 
+    function glvWithdrawalGasLimitKey() internal pure returns (bytes32) {
+        return GLV_WITHDRAWAL_GAS_LIMIT;
+    }
+
     function glvPerMarketGasLimitKey() internal pure returns (bytes32) {
         return GLV_PER_MARKET_GAS_LIMIT;
     }
@@ -581,6 +603,36 @@ library Keys {
     function executeGlvDepositFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED,
+            module
+        ));
+    }
+
+    // @dev key for whether create glv withdrawal is disabled
+    // @param the create withdrawal module
+    // @return key for whether create withdrawal is disabled
+    function createGlvWithdrawalFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CREATE_GLV_WITHDRAWAL_FEATURE_DISABLED,
+            module
+        ));
+    }
+
+    // @dev key for whether cancel glv withdrawal is disabled
+    // @param the cancel withdrawal module
+    // @return key for whether cancel withdrawal is disabled
+    function cancelGlvWithdrawalFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CANCEL_GLV_WITHDRAWAL_FEATURE_DISABLED,
+            module
+        ));
+    }
+
+    // @dev key for whether execute glv withdrawal is disabled
+    // @param the execute withdrawal module
+    // @return key for whether execute withdrawal is disabled
+    function executeGlvWithdrawalFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            EXECUTE_GLV_WITHDRAWAL_FEATURE_DISABLED,
             module
         ));
     }

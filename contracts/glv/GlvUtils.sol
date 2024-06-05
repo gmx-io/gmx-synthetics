@@ -18,8 +18,9 @@ library GlvUtils {
     // @param dataStore DataStore
     // @param oracle Oracle
     // @param glv Glv
+    // @param maximize
     // @return the USD value of the Glv
-    function getValue(DataStore dataStore, Oracle oracle, Glv glv) public view returns (uint256 glvValue) {
+    function getValue(DataStore dataStore, Oracle oracle, Glv glv, bool maximize) public view returns (uint256 glvValue) {
         address[] memory markets = new address[](2);
         for (uint256 i = 0; i < markets.length; i++) {
             address marketAddress = markets[i];
@@ -31,7 +32,7 @@ library GlvUtils {
                 oracle.getPrimaryPrice(market.longToken),
                 oracle.getPrimaryPrice(market.shortToken),
                 Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-                true // maximize
+                maximize
             );
 
             if (marketTokenPrice < 0) {
@@ -42,6 +43,21 @@ library GlvUtils {
 
             glvValue += balance * marketTokenPrice.toUint256();
         }
+    }
+
+    // @dev convert a number of glv tokens to its USD value
+    // @param glvTokenAmount the input number of glv tokens
+    // @param poolValue the value of the pool
+    // @param supply the supply of glv tokens
+    // @return the USD value of the glv tokens
+    function glvTokenAmountToUsd(
+        uint256 glvTokenAmount,
+        uint256 poolValue,
+        uint256 supply
+    ) internal pure returns (uint256) {
+        if (supply == 0) { revert Errors.EmptyMarketTokenSupply(); }
+
+        return Precision.mulDiv(poolValue, glvTokenAmount, supply);
     }
 
     // @dev convert a USD value to number of glv tokens

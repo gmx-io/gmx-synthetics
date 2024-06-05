@@ -48,6 +48,11 @@ library Errors {
     // GlvDepositUtils errors
     error EmptyGlvDepositAmounts();
     error EmptyGlvDeposit();
+    // GlvWithdrawalStoreUtils errors
+    error GlvWithdrawalNotFound(bytes32 key);
+    // GlvWithdrawalUtils errors
+    error EmptyGlvWithdrawal();
+    error EmptyGlvWithdrawalAmount();
     // GlvUtils errors
     error EmptyGlv(address glv);
     error GlvUnsupportedMarket(address glv, address market);

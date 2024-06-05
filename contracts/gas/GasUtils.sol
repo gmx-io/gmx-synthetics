@@ -13,6 +13,7 @@ import "../withdrawal/Withdrawal.sol";
 import "../shift/Shift.sol";
 import "../order/Order.sol";
 import "../order/BaseOrderUtils.sol";
+import "../glv/GlvWithdrawal.sol";
 
 import "../bank/StrictBank.sol";
 
@@ -24,6 +25,7 @@ library GasUtils {
     using Shift for Shift.Props;
     using Order for Order.Props;
     using GlvDeposit for GlvDeposit.Props;
+    using GlvWithdrawal for GlvWithdrawal.Props;
 
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
@@ -258,6 +260,16 @@ library GasUtils {
         return 2 + marketCount + swapsCount;
     }
 
+    // @dev get estimated number of oracle prices for glv withdrawal
+    // @param marketCount number of markets in the glv
+    // @param swapsCount number of swaps in the glv withdrawal
+    function estimateGlvWithdrawalOraclePriceCount(
+        uint256 marketCount,
+        uint256 swapsCount
+    ) internal pure returns (uint256) {
+        return 2 + marketCount + swapsCount;
+    }
+
     // @dev the estimated gas limit for deposits
     // @param dataStore DataStore
     // @param deposit the deposit to estimate the gas limit for
@@ -363,6 +375,24 @@ library GasUtils {
             return gasLimit + dataStore.getUint(Keys.depositGasLimitKey(true)) + gasForSwaps;
         }
         return gasLimit + dataStore.getUint(Keys.depositGasLimitKey(false)) + gasForSwaps;
+    }
+
+    // @dev the estimated gas limit for glv withdrawals
+    // @param dataStore DataStore
+    // @param withdrawal the withdrawal to estimate the gas limit for
+    function estimateExecuteGlvWithdrawalGasLimit(DataStore dataStore, GlvWithdrawal.Props memory glvWithdrawal, uint256 marketCount) internal view returns (uint256) {
+        // glv withdrawal execution gas consumption depends on the amount of markets
+        uint256 gasPerGlvPerMarket = dataStore.getUint(Keys.glvPerMarketGasLimitKey());
+        uint256 gasForGlvMarkets = gasPerGlvPerMarket * marketCount;
+        uint256 glvWithdrawalGasLimit = dataStore.getUint(Keys.glvWithdrawalGasLimitKey());
+
+        uint256 gasLimit = glvWithdrawalGasLimit + glvWithdrawal.callbackGasLimit() + gasForGlvMarkets;
+
+        uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
+        uint256 swapCount = glvWithdrawal.longTokenSwapPath().length + glvWithdrawal.shortTokenSwapPath().length;
+        uint256 gasForSwaps = swapCount * gasPerSwap;
+
+        return gasLimit + dataStore.getUint(Keys.withdrawalGasLimitKey()) + gasForSwaps;
     }
 
     function emitKeeperExecutionFee(
