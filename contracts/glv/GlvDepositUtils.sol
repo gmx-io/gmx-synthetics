@@ -259,7 +259,7 @@ library GlvDepositUtils {
         );
 
         Glv glv = Glv(payable(glvDeposit.glv()));
-        uint256 glvValue = GlvUtils.getValue(dataStore, oracle, glv);
+        uint256 glvValue = GlvUtils.getValue(dataStore, oracle, glv, true);
         uint256 glvSupply = glv.totalSupply();
         return GlvUtils.usdToGlvTokenAmount(receivedMarketTokensUsd, glvValue, glvSupply);
     }

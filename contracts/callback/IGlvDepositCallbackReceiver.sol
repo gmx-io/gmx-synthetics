@@ -11,10 +11,18 @@ interface IGlvDepositCallbackReceiver {
     // @dev called after a glvDeposit execution
     // @param key the key of the glvDeposit
     // @param glvDeposit the glvDeposit that was executed
-    function afterGlvDepositExecution(bytes32 key, GlvDeposit.Props memory glvDeposit, EventUtils.EventLogData memory eventData) external;
+    function afterGlvDepositExecution(
+        bytes32 key,
+        GlvDeposit.Props memory glvDeposit,
+        EventUtils.EventLogData memory eventData
+    ) external;
 
     // @dev called after a glvDeposit cancellation
     // @param key the key of the glvDeposit
     // @param glvDeposit the glvDeposit that was cancelled
-    function afterGlvDepositCancellation(bytes32 key, GlvDeposit.Props memory glvDeposit, EventUtils.EventLogData memory eventData) external;
+    function afterGlvDepositCancellation(
+        bytes32 key,
+        GlvDeposit.Props memory glvDeposit,
+        EventUtils.EventLogData memory eventData
+    ) external;
 }
