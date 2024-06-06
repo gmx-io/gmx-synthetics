@@ -137,7 +137,7 @@ library WithdrawalUtils {
         CallbackUtils.validateCallbackGasLimit(dataStore, withdrawal.callbackGasLimit());
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(dataStore, withdrawal);
-        uint256 oraclePriceCount = GasUtils.estimatedWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length);
+        uint256 oraclePriceCount = GasUtils.estimateWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length);
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
@@ -209,7 +209,7 @@ library WithdrawalUtils {
             withdrawal.callbackContract(),
             withdrawal.executionFee(),
             startingGas,
-            GasUtils.estimatedWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length),
+            GasUtils.estimateWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length),
             keeper,
             withdrawal.receiver()
         );

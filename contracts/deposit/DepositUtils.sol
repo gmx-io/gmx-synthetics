@@ -133,7 +133,7 @@ library DepositUtils {
         CallbackUtils.validateCallbackGasLimit(dataStore, deposit.callbackGasLimit());
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteDepositGasLimit(dataStore, deposit);
-        uint256 oraclePriceCount = GasUtils.estimatedWithdrawalOraclePriceCount(
+        uint256 oraclePriceCount = GasUtils.estimateWithdrawalOraclePriceCount(
             deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length
         );
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
@@ -219,7 +219,7 @@ library DepositUtils {
             deposit.callbackContract(),
             deposit.executionFee(),
             startingGas,
-            GasUtils.estimatedDepositOraclePriceCount(deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length),
+            GasUtils.estimateDepositOraclePriceCount(deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length),
             keeper,
             deposit.receiver()
         );

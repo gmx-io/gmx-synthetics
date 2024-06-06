@@ -217,7 +217,7 @@ library GasUtils {
 
     // @dev get estimated number of oracle prices for deposit
     // @param swapsCount number of swaps in the deposit
-    function estimatedDepositOraclePriceCount(uint256 swapsCount) internal pure returns (uint256) {
+    function estimateDepositOraclePriceCount(uint256 swapsCount) internal pure returns (uint256) {
         // each market requires 3 prices at most
         // markets in swap path share 1 price at least, 3 prices at most
         // assuming max swap path length of 3 the deposit uses 8 prices at most, 2 prices at least
@@ -226,7 +226,7 @@ library GasUtils {
 
     // @dev get estimated number of oracle prices for withdrawal
     // @param swapsCount number of swaps in the withdrawal
-    function estimatedWithdrawalOraclePriceCount(uint256 swapsCount) internal pure returns (uint256) {
+    function estimateWithdrawalOraclePriceCount(uint256 swapsCount) internal pure returns (uint256) {
         // each market requires 3 prices at most
         // markets in swap path share 1 price at least, 3 prices at most
         // withdrawal uses 8 prices at most, 2 prices at least
