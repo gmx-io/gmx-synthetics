@@ -1904,6 +1904,9 @@ const config: {
     {
       tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "USDC" },
     },
+    {
+      tokens: { indexToken: "WBTC", longToken: "USDC", shortToken: "USDC" },
+    },
   ],
   localhost: [
     {

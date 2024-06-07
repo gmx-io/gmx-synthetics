@@ -150,6 +150,17 @@ export async function deployFixture() {
   );
   const btcUsdMarket = await reader.getMarket(dataStore.address, btcUsdMarketAddress);
 
+  const btcUsdSingleTokenMarketAddress = getMarketTokenAddress(
+    wbtc.address,
+    usdc.address,
+    usdc.address,
+    DEFAULT_MARKET_TYPE,
+    marketFactory.address,
+    roleStore.address,
+    dataStore.address
+  );
+  const btcUsdSingleTokenMarket = await reader.getMarket(dataStore.address, btcUsdSingleTokenMarketAddress);
+
   const solUsdMarketAddress = getMarketTokenAddress(
     sol.address,
     wnt.address,
@@ -243,6 +254,7 @@ export async function deployFixture() {
       ethUsdSpotOnlyMarket,
       ethUsdSingleTokenMarket,
       btcUsdMarket,
+      btcUsdSingleTokenMarket,
       solUsdMarket,
       feeHandler,
     },
