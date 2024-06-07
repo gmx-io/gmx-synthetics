@@ -96,9 +96,15 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
   );
 
   await setUintIfDifferent(
-    keys.ESTIMATED_GAS_FEE_BASE_AMOUNT,
+    keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1,
     generalConfig.estimatedGasFeeBaseAmount,
     "estimated gas fee base amount"
+  );
+
+  await setUintIfDifferent(
+    keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE,
+    generalConfig.estimatedGasPerOraclePriceKey,
+    "estimated gas fee per oracle price"
   );
 
   await setUintIfDifferent(
@@ -111,6 +117,12 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
     keys.EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1,
     generalConfig.executionGasFeeBaseAmount,
     "execution gas fee base amount"
+  );
+
+  await setUintIfDifferent(
+    keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE,
+    generalConfig.executionGasPerOraclePriceKey,
+    "execution gas fee per oracle price"
   );
 
   await setUintIfDifferent(
