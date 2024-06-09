@@ -39,13 +39,13 @@ const recommendedMarketConfig = {
       negativePositionImpactFactor: decimalToFloat(5, 11),
       negativeSwapImpactFactor: decimalToFloat(5, 11),
       expectedSwapImpactRatio: 10000,
-      expectedPositionImpactRatio: 16666,
+      expectedPositionImpactRatio: 20000,
     },
     WETH: {
       negativePositionImpactFactor: decimalToFloat(5, 11),
       negativeSwapImpactFactor: decimalToFloat(5, 11),
       expectedSwapImpactRatio: 10000,
-      expectedPositionImpactRatio: 16666,
+      expectedPositionImpactRatio: 20000,
     },
     BNB: {
       negativePositionImpactFactor: decimalToFloat(38, 12),
@@ -54,7 +54,7 @@ const recommendedMarketConfig = {
       expectedPositionImpactRatio: 20000,
     },
     LINK: {
-      negativePositionImpactFactor: decimalToFloat(5, 10),
+      negativePositionImpactFactor: decimalToFloat(4, 10),
       negativeSwapImpactFactor: decimalToFloat(5, 10),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
