@@ -121,6 +121,7 @@ library OrderUtils {
 
         order.setAccount(account);
         order.setReceiver(params.addresses.receiver);
+        order.setCancellationReceiver(params.addresses.cancellationReceiver);
         order.setCallbackContract(params.addresses.callbackContract);
         order.setMarket(params.addresses.market);
         order.setInitialCollateralToken(params.addresses.initialCollateralToken);
