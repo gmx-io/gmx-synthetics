@@ -209,6 +209,9 @@ library OrderUtils {
             executionFeeReceiver = order.receiver();
         }
 
+        EventUtils.EventLogData memory eventData;
+        CallbackUtils.afterOrderCancellation(params.key, order, eventData);
+
         GasUtils.payExecutionFee(
             params.dataStore,
             params.eventEmitter,
@@ -221,9 +224,6 @@ library OrderUtils {
             params.keeper,
             executionFeeReceiver
         );
-
-        EventUtils.EventLogData memory eventData;
-        CallbackUtils.afterOrderCancellation(params.key, order, eventData);
     }
 
     // @dev freezes an order
