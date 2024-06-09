@@ -156,11 +156,7 @@ library OrderUtils {
         OrderStoreUtils.set(dataStore, key, order);
 
         updateAutoCancelList(dataStore, key, order, order.autoCancel());
-
-        if (BaseOrderUtils.isDecreaseOrder(order.orderType())) {
-            bytes32 positionKey = BaseOrderUtils.getPositionKey(order);
-            validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, positionKey);
-        }
+        validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, positionKey);
 
         OrderEventUtils.emitOrderCreated(eventEmitter, key, order);
 
@@ -327,7 +323,15 @@ library OrderUtils {
         }
     }
 
-    function validateTotalCallbackGasLimitForAutoCancelOrders(DataStore dataStore, bytes32 positionKey) internal view {
+    function validateTotalCallbackGasLimitForAutoCancelOrders(DataStore dataStore, Order.Props memory order) internal view {
+        if (
+            order.orderType() != Order.OrderType.LimitDecrease &&
+            order.orderType() != Order.OrderType.StopLossDecrease
+        ) {
+            return;
+        }
+
+        bytes32 positionKey = BaseOrderUtils.getPositionKey(order);
         uint256 maxTotal = dataStore.getUint(Keys.MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS);
         uint256 total = getTotalCallbackGasLimitForAutoCancelOrders(dataStore, positionKey);
 

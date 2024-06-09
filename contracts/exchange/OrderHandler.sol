@@ -112,11 +112,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         OrderStoreUtils.set(dataStore, key, order);
 
         OrderUtils.updateAutoCancelList(dataStore, key, order, autoCancel);
-
-        if (BaseOrderUtils.isDecreaseOrder(order.orderType())) {
-            bytes32 positionKey = BaseOrderUtils.getPositionKey(order);
-            OrderUtils.validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, positionKey);
-        }
+        OrderUtils.validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, order);
 
         OrderEventUtils.emitOrderUpdated(
             eventEmitter,
