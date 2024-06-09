@@ -156,7 +156,7 @@ library OrderUtils {
         OrderStoreUtils.set(dataStore, key, order);
 
         updateAutoCancelList(dataStore, key, order, order.autoCancel());
-        validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, positionKey);
+        validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, order);
 
         OrderEventUtils.emitOrderCreated(eventEmitter, key, order);
 
