@@ -233,6 +233,7 @@ library Errors {
     error OrderTypeCannotBeCreated(uint256 orderType);
     error OrderAlreadyFrozen();
     error MaxTotalCallbackGasLimitForAutoCancelOrdersExceeded(uint256 totalCallbackGasLimit, uint256 maxTotalCallbackGasLimit);
+    error InvalidReceiver(address receiver);
 
     // OrderStoreUtils errors
     error OrderNotFound(bytes32 key);

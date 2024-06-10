@@ -141,6 +141,10 @@ library OrderUtils {
         order.setAutoCancel(params.autoCancel);
 
         AccountUtils.validateReceiver(order.receiver());
+        if (order.cancellationReceiver() == address(orderVault)) {
+            // revert as funds cannot be sent back to the order vault
+            revert Errors.InvalidReceiver(order.cancellationReceiver());
+        }
 
         CallbackUtils.validateCallbackGasLimit(dataStore, order.callbackGasLimit());
 
