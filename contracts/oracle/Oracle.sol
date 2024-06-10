@@ -73,6 +73,8 @@ contract Oracle is RoleModule {
 
     // this can be used to help ensure that on-chain prices are updated
     // before actions dependent on those on-chain prices are allowed
+    // additionally, this can also be used to provide a grace period for
+    // users to top up collateral before liquidations occur
     function validateSequencerUp() external view {
         if (address(sequencerUptimeFeed) == address(0)) {
             return;

@@ -24,7 +24,7 @@ library Errors {
 
     // CallbackUtils errors
     error MaxCallbackGasLimitExceeded(uint256 callbackGasLimit, uint256 maxCallbackGasLimit);
-    error InsufficientGasLeftForCallback(uint256 gasLeft, uint256 callbackGasLimit);
+    error InsufficientGasLeftForCallback(uint256 gasToBeForwarded, uint256 callbackGasLimit);
 
     // Config errors
     error InvalidBaseKey(bytes32 baseKey);

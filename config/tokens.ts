@@ -163,8 +163,8 @@ const config: {
       address: "0xfc5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a",
       decimals: 18,
       transferGasLimit: 200 * 1000,
-      realtimeFeedId: "0x00015d9063c63a07441cc136c742ed32bb429796068eb280b1635b4eb8d0027e",
-      realtimeFeedDecimals: 8,
+      dataStreamFeedId: "0x0003169a4ebb9178e5ec6281913d1a8a4f676f414c94b60a4cb2e432f9081c60",
+      dataStreamFeedDecimals: 18,
     },
     USDC: {
       address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",

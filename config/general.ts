@@ -86,6 +86,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     executionGasPerOraclePriceKey: 50_000,
     executionGasFeeMultiplierFactor: expandDecimals(1, 30), // 1x
 
+    requestExpirationTime: 300,
+
     maxSwapPathLength: 3,
     maxCallbackGasLimit: 2_000_000,
     minCollateralUsd: decimalToFloat(1),
@@ -101,31 +103,21 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
   };
 
   const networkConfig = {
-    arbitrumGoerli: {
-      requestExpirationTime: 300,
-    },
+    arbitrumGoerli: {},
     arbitrumSepolia: {
-      requestExpirationTime: 300,
       maxAutoCancelOrders: 10,
       maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
     },
-    avalancheFuji: {
-      requestExpirationTime: 300,
-    },
+    avalancheFuji: {},
     arbitrum: {
       maxAutoCancelOrders: 10,
       maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
       maxCallbackGasLimit: 3_000_000,
-      requestExpirationTime: 300,
       estimatedGasFeeBaseAmount: false,
       executionGasFeeBaseAmount: false,
       sequencerUptimeFeed: "0xFdB631F5EE196F0ed6FAa767959853A9F217697D",
     },
-    avalanche: {
-      requestExpirationTime: 300,
-      estimatedGasFeeBaseAmount: 1_500_000,
-      executionGasFeeBaseAmount: 1_500_000,
-    },
+    avalanche: {},
   }[network.name];
 
   if (!networkConfig) {

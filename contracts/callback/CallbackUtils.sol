@@ -69,9 +69,9 @@ library CallbackUtils {
     }
 
     function validateGasLeftForCallback(uint256 callbackGasLimit) internal view {
-        uint256 gasLeft = gasleft();
-        if (gasLeft < callbackGasLimit) {
-            revert Errors.InsufficientGasLeftForCallback(gasLeft, callbackGasLimit);
+        uint256 gasToBeForwarded = gasleft() / 64 * 63;
+        if (gasToBeForwarded < callbackGasLimit) {
+            revert Errors.InsufficientGasLeftForCallback(gasToBeForwarded, callbackGasLimit);
         }
     }
 

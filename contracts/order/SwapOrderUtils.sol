@@ -36,7 +36,10 @@ library SwapOrderUtils {
 
         uint256 requestExpirationTime = params.contracts.dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
 
-        if (params.maxOracleTimestamp > params.order.updatedAtTime() + requestExpirationTime) {
+        if (
+            params.order.orderType() == Order.OrderType.MarketSwap &&
+            params.maxOracleTimestamp > params.order.updatedAtTime() + requestExpirationTime
+        ) {
             revert Errors.OracleTimestampsAreLargerThanRequestExpirationTime(
                 params.maxOracleTimestamp,
                 params.order.updatedAtTime(),
