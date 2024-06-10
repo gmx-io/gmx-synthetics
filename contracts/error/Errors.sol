@@ -117,6 +117,7 @@ library Errors {
     error InsufficientExecutionGasForErrorHandling(uint256 startingGas, uint256 minHandleErrorGas);
     error InsufficientExecutionGas(uint256 startingGas, uint256 estimatedGasLimit, uint256 minAdditionalGasForExecution);
     error InsufficientHandleExecutionErrorGas(uint256 gas, uint256 minHandleExecutionErrorGas);
+    error InsufficientGasForCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
 
     // MarketFactory errors
     error MarketAlreadyExists(bytes32 salt, address existingMarketAddress);

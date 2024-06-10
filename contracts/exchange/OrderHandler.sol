@@ -293,7 +293,8 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             // the transaction is reverted for InvalidOrderPrices since the oracle prices
             // do not fulfill the specified trigger price
             errorSelector == Errors.InvalidOrderPrices.selector ||
-            errorSelector == Errors.InsufficientGasLeftForCallback.selector
+            errorSelector == Errors.InsufficientGasLeftForCallback.selector ||
+            errorSelector == Errors.InsufficientGasForCancellation.selector
         ) {
             ErrorUtils.revertWithCustomError(reasonBytes);
         }

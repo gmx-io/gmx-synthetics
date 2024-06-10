@@ -169,6 +169,13 @@ library OrderUtils {
             params.startingGas -= gasleft() / 63;
         }
 
+        uint256 gas = gasleft();
+        uint256 minHandleExecutionErrorGas = GasUtils.getMinHandleExecutionErrorGas(params.dataStore);
+
+        if (gas < minHandleExecutionErrorGas) {
+            revert Errors.InsufficientGasForCancellation(gas, minHandleExecutionErrorGas);
+        }
+
         Order.Props memory order = OrderStoreUtils.get(params.dataStore, params.key);
         BaseOrderUtils.validateNonEmptyOrder(order);
 
