@@ -226,7 +226,8 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
 
         if (
             OracleUtils.isOracleError(errorSelector) ||
-            errorSelector == Errors.DisabledFeature.selector
+            errorSelector == Errors.DisabledFeature.selector ||
+            errorSelector == Errors.InsufficientGasLeftForCallback.selector
         ) {
 
             ErrorUtils.revertWithCustomError(reasonBytes);
