@@ -141,6 +141,10 @@ library OrderUtils {
         order.setAutoCancel(params.autoCancel);
 
         AccountUtils.validateReceiver(order.receiver());
+        if (order.cancellationReceiver() == address(orderVault)) {
+            // revert as funds cannot be sent back to the order vault
+            revert Errors.InvalidReceiver(order.cancellationReceiver());
+        }
 
         CallbackUtils.validateCallbackGasLimit(dataStore, order.callbackGasLimit());
 
@@ -167,6 +171,13 @@ library OrderUtils {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         if (params.isExternalCall) {
             params.startingGas -= gasleft() / 63;
+        }
+
+        uint256 gas = gasleft();
+        uint256 minHandleExecutionErrorGas = GasUtils.getMinHandleExecutionErrorGas(params.dataStore);
+
+        if (gas < minHandleExecutionErrorGas) {
+            revert Errors.InsufficientGasForCancellation(gas, minHandleExecutionErrorGas);
         }
 
         Order.Props memory order = OrderStoreUtils.get(params.dataStore, params.key);

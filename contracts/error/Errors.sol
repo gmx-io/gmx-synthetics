@@ -117,6 +117,7 @@ library Errors {
     error InsufficientExecutionGasForErrorHandling(uint256 startingGas, uint256 minHandleErrorGas);
     error InsufficientExecutionGas(uint256 startingGas, uint256 estimatedGasLimit, uint256 minAdditionalGasForExecution);
     error InsufficientHandleExecutionErrorGas(uint256 gas, uint256 minHandleExecutionErrorGas);
+    error InsufficientGasForCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
 
     // MarketFactory errors
     error MarketAlreadyExists(bytes32 salt, address existingMarketAddress);
@@ -232,6 +233,7 @@ library Errors {
     error OrderTypeCannotBeCreated(uint256 orderType);
     error OrderAlreadyFrozen();
     error MaxTotalCallbackGasLimitForAutoCancelOrdersExceeded(uint256 totalCallbackGasLimit, uint256 maxTotalCallbackGasLimit);
+    error InvalidReceiver(address receiver);
 
     // OrderStoreUtils errors
     error OrderNotFound(bytes32 key);
