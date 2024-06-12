@@ -58,6 +58,14 @@ const processGeneralConfig = async ({ generalConfig, handleConfig }) => {
 
   await handleConfig(
     "uint",
+    keys.REFUND_EXECUTION_FEE_GAS_LIMIT,
+    "0x",
+    generalConfig.refundExecutionFeeGasLimit,
+    `refundExecutionFeeGasLimit`
+  );
+
+  await handleConfig(
+    "uint",
     keys.MAX_CALLBACK_GAS_LIMIT,
     "0x",
     generalConfig.maxCallbackGasLimit,

@@ -12,10 +12,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       sequencerGraceDuration: 300,
       maxUiFeeFactor: decimalToFloat(5, 5), // 0.005%
       maxAutoCancelOrders: 5,
-      maxTotalCallbackGasLimitForAutoCancelOrders: 5_000_000,
+      maxTotalCallbackGasLimitForAutoCancelOrders: 3_000_000,
       minHandleExecutionErrorGas: 1_200_000,
       minHandleExecutionErrorGasToForward: 1_000_000,
       minAdditionalGasForExecution: 1_000_000,
+      refundExecutionFeeGasLimit: 200_000,
 
       depositGasLimitSingle: 0,
       depositGasLimitMultiple: 0,
