@@ -78,6 +78,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       LIQUIDATION_KEEPER: { [deployer]: true },
       MARKET_KEEPER: { [deployer]: true },
       FROZEN_ORDER_KEEPER: { [deployer]: true },
+      CONFIG_KEEPER: { [deployer]: true },
     },
     arbitrum: {
       ADL_KEEPER: syntheticKeepers.mainnet,
@@ -196,12 +197,14 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xFb11f15f206bdA02c224EDC744b0E50E46137046": true,
         "0xc9e1CE91d3f782499cFe787b6F1d2AF0Ca76C049": true,
         "0x03d717E27aF1B566C3efb729F1151E775B411f2B": true,
+        [deployer]: true,
       },
       ...testnetConfig,
     },
     arbitrumSepolia: {
       CONFIG_KEEPER: {
         "0xb38302e27bAe8932536A84ab362c3d1013420Cb4": true,
+        [deployer]: true,
       },
       ...testnetConfig,
     },

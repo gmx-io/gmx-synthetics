@@ -66,6 +66,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     minHandleExecutionErrorGas: 1_200_000,
     minHandleExecutionErrorGasToForward: 1_000_000, // measured gas required for an order cancellation: ~600,000
     minAdditionalGasForExecution: 1_000_000,
+    refundExecutionFeeGasLimit: 200_000,
 
     depositGasLimitSingle: 1_500_000,
     depositGasLimitMultiple: 1_800_000,
