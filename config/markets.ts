@@ -672,11 +672,11 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
 
-      reserveFactorLongs: percentageToFloat("145%"),
-      reserveFactorShorts: percentageToFloat("145%"),
+      reserveFactorLongs: percentageToFloat("160%"),
+      reserveFactorShorts: percentageToFloat("160%"),
 
-      openInterestReserveFactorLongs: percentageToFloat("140%"),
-      openInterestReserveFactorShorts: percentageToFloat("140%"),
+      openInterestReserveFactorLongs: percentageToFloat("155%"),
+      openInterestReserveFactorShorts: percentageToFloat("155%"),
 
       // factor in open interest reserve factor 140%
       borrowingFactorForLongs: decimalToFloat(260, 14), // 2.60E-12, 50% at 100% utilisation
