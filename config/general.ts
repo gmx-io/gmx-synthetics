@@ -4,7 +4,8 @@ import { decimalToFloat, percentageToFloat, expandDecimals } from "../utils/math
 
 export default async function ({ network }: HardhatRuntimeEnvironment) {
   if (network.name === "hardhat") {
-    // Note that this is only for the hardhat config
+    // Note that this is only for the hardhat config, the config for all
+    // other networks is separate from this
     return {
       feeReceiver: ethers.constants.AddressZero,
       holdingAddress: ethers.constants.AddressZero,

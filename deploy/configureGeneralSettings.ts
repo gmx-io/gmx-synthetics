@@ -21,6 +21,12 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
     "skip borrowing fee for smaller side"
   );
 
+  await setUintIfDifferent(
+    keys.CLAIMABLE_COLLATERAL_TIME_DIVISOR,
+    generalConfig.claimableCollateralTimeDivisor,
+    "claimable collateral time divisor"
+  );
+
   const write = process.env.FOR_EXISTING_MAINNET_DEPLOYMENT ? false : true;
   await updateGeneralConfig({ write });
 };
