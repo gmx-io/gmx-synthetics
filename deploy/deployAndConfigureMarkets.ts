@@ -18,9 +18,6 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
 
   const dataStore = await get("DataStore");
 
-  const write = process.env.FOR_EXISTING_MAINNET_DEPLOYMENT ? false : true;
-  await updateMarketConfig({ write });
-
   let onchainMarketsByTokens = await getOnchainMarkets(read, dataStore.address);
 
   for (const marketConfig of markets) {
@@ -104,6 +101,9 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       }
     }
   }
+
+  const write = process.env.FOR_EXISTING_MAINNET_DEPLOYMENT ? false : true;
+  await updateMarketConfig({ write });
 };
 
 func.skip = async ({ gmx, network }) => {

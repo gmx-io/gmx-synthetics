@@ -5,6 +5,7 @@ import { encodeData } from "../utils/hash";
 import { bigNumberify } from "../utils/math";
 import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../utils/market";
 import { getFullKey, appendUintConfigIfDifferent } from "../utils/config";
+import { handleInBatches } from "../utils/batch";
 import * as keys from "../utils/keys";
 
 const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, generalConfig, handleConfig }) => {
@@ -53,53 +54,65 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       `maxShortTokenPoolUsdForDeposit ${marketLabel} (${marketToken}), ${shortToken}`
     );
 
-    await handleConfig(
-      "uint",
-      keys.SWAP_IMPACT_EXPONENT_FACTOR,
-      encodeData(["address"], [marketToken]),
-      marketConfig.swapImpactExponentFactor,
-      `swapImpactExponentFactor ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.swapImpactExponentFactor) {
+      await handleConfig(
+        "uint",
+        keys.SWAP_IMPACT_EXPONENT_FACTOR,
+        encodeData(["address"], [marketToken]),
+        marketConfig.swapImpactExponentFactor,
+        `swapImpactExponentFactor ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.SWAP_FEE_FACTOR,
-      encodeData(["address", "bool"], [marketToken, true]),
-      marketConfig.swapFeeFactorForPositiveImpact,
-      `swapFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.swapFeeFactorForPositiveImpact) {
+      await handleConfig(
+        "uint",
+        keys.SWAP_FEE_FACTOR,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.swapFeeFactorForPositiveImpact,
+        `swapFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.SWAP_FEE_FACTOR,
-      encodeData(["address", "bool"], [marketToken, false]),
-      marketConfig.swapFeeFactorForNegativeImpact,
-      `swapFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.swapFeeFactorForNegativeImpact) {
+      await handleConfig(
+        "uint",
+        keys.SWAP_FEE_FACTOR,
+        encodeData(["address", "bool"], [marketToken, false]),
+        marketConfig.swapFeeFactorForNegativeImpact,
+        `swapFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.ATOMIC_SWAP_FEE_FACTOR,
-      encodeData(["address"], [marketToken]),
-      marketConfig.atomicSwapFeeFactor,
-      `atomicSwapFeeFactor ${marketToken}`
-    );
+    if (marketConfig.atomicSwapFeeFactor) {
+      await handleConfig(
+        "uint",
+        keys.ATOMIC_SWAP_FEE_FACTOR,
+        encodeData(["address"], [marketToken]),
+        marketConfig.atomicSwapFeeFactor,
+        `atomicSwapFeeFactor ${marketToken}`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.SWAP_IMPACT_FACTOR,
-      encodeData(["address", "bool"], [marketToken, true]),
-      marketConfig.positiveSwapImpactFactor,
-      `positiveSwapImpactFactor ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.positiveSwapImpactFactor) {
+      await handleConfig(
+        "uint",
+        keys.SWAP_IMPACT_FACTOR,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.positiveSwapImpactFactor,
+        `positiveSwapImpactFactor ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.SWAP_IMPACT_FACTOR,
-      encodeData(["address", "bool"], [marketToken, false]),
-      marketConfig.negativeSwapImpactFactor,
-      `negativeSwapImpactFactor ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.negativeSwapImpactFactor) {
+      await handleConfig(
+        "uint",
+        keys.SWAP_IMPACT_FACTOR,
+        encodeData(["address", "bool"], [marketToken, false]),
+        marketConfig.negativeSwapImpactFactor,
+        `negativeSwapImpactFactor ${marketLabel} (${marketToken})`
+      );
+    }
 
     await handleConfig(
       "uint",
@@ -266,165 +279,205 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       `maxPnlFactorForWithdrawalsShorts ${marketLabel} (${marketToken})`
     );
 
-    await handleConfig(
-      "uint",
-      keys.POSITION_IMPACT_EXPONENT_FACTOR,
-      encodeData(["address"], [marketToken]),
-      marketConfig.positionImpactExponentFactor,
-      `positionImpactExponentFactor ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.positionImpactExponentFactor) {
+      await handleConfig(
+        "uint",
+        keys.POSITION_IMPACT_EXPONENT_FACTOR,
+        encodeData(["address"], [marketToken]),
+        marketConfig.positionImpactExponentFactor,
+        `positionImpactExponentFactor ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.FUNDING_FACTOR,
-      encodeData(["address"], [marketToken]),
-      marketConfig.fundingFactor,
-      `fundingFactor ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.fundingFactor) {
+      await handleConfig(
+        "uint",
+        keys.FUNDING_FACTOR,
+        encodeData(["address"], [marketToken]),
+        marketConfig.fundingFactor,
+        `fundingFactor ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.FUNDING_EXPONENT_FACTOR,
-      encodeData(["address"], [marketToken]),
-      marketConfig.fundingExponentFactor,
-      `fundingFactor ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.fundingExponentFactor) {
+      await handleConfig(
+        "uint",
+        keys.FUNDING_EXPONENT_FACTOR,
+        encodeData(["address"], [marketToken]),
+        marketConfig.fundingExponentFactor,
+        `fundingFactor ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
-      encodeData(["address"], [marketToken]),
-      marketConfig.fundingIncreaseFactorPerSecond,
-      `fundingIncreaseFactorPerSecond ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.fundingIncreaseFactorPerSecond) {
+      await handleConfig(
+        "uint",
+        keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
+        encodeData(["address"], [marketToken]),
+        marketConfig.fundingIncreaseFactorPerSecond,
+        `fundingIncreaseFactorPerSecond ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
-      encodeData(["address"], [marketToken]),
-      marketConfig.fundingDecreaseFactorPerSecond,
-      `fundingDecreaseFactorPerSecond ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.fundingDecreaseFactorPerSecond) {
+      await handleConfig(
+        "uint",
+        keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
+        encodeData(["address"], [marketToken]),
+        marketConfig.fundingDecreaseFactorPerSecond,
+        `fundingDecreaseFactorPerSecond ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.MIN_FUNDING_FACTOR_PER_SECOND,
-      encodeData(["address"], [marketToken]),
-      marketConfig.minFundingFactorPerSecond,
-      `minFundingFactorPerSecond ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.minFundingFactorPerSecond) {
+      await handleConfig(
+        "uint",
+        keys.MIN_FUNDING_FACTOR_PER_SECOND,
+        encodeData(["address"], [marketToken]),
+        marketConfig.minFundingFactorPerSecond,
+        `minFundingFactorPerSecond ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.MAX_FUNDING_FACTOR_PER_SECOND,
-      encodeData(["address"], [marketToken]),
-      marketConfig.maxFundingFactorPerSecond,
-      `maxFundingFactorPerSecond ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.maxFundingFactorPerSecond) {
+      await handleConfig(
+        "uint",
+        keys.MAX_FUNDING_FACTOR_PER_SECOND,
+        encodeData(["address"], [marketToken]),
+        marketConfig.maxFundingFactorPerSecond,
+        `maxFundingFactorPerSecond ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.THRESHOLD_FOR_STABLE_FUNDING,
-      encodeData(["address"], [marketToken]),
-      marketConfig.thresholdForStableFunding,
-      `thresholdForStableFunding ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.thresholdForStableFunding) {
+      await handleConfig(
+        "uint",
+        keys.THRESHOLD_FOR_STABLE_FUNDING,
+        encodeData(["address"], [marketToken]),
+        marketConfig.thresholdForStableFunding,
+        `thresholdForStableFunding ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.THRESHOLD_FOR_DECREASE_FUNDING,
-      encodeData(["address"], [marketToken]),
-      marketConfig.thresholdForDecreaseFunding,
-      `thresholdForDecreaseFunding ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.thresholdForDecreaseFunding) {
+      await handleConfig(
+        "uint",
+        keys.THRESHOLD_FOR_DECREASE_FUNDING,
+        encodeData(["address"], [marketToken]),
+        marketConfig.thresholdForDecreaseFunding,
+        `thresholdForDecreaseFunding ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.POSITION_FEE_FACTOR,
-      encodeData(["address", "bool"], [marketToken, true]),
-      marketConfig.positionFeeFactorForPositiveImpact,
-      `positionFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.positionFeeFactorForPositiveImpact) {
+      await handleConfig(
+        "uint",
+        keys.POSITION_FEE_FACTOR,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.positionFeeFactorForPositiveImpact,
+        `positionFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.POSITION_FEE_FACTOR,
-      encodeData(["address", "bool"], [marketToken, false]),
-      marketConfig.positionFeeFactorForNegativeImpact,
-      `positionFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.positionFeeFactorForNegativeImpact) {
+      await handleConfig(
+        "uint",
+        keys.POSITION_FEE_FACTOR,
+        encodeData(["address", "bool"], [marketToken, false]),
+        marketConfig.positionFeeFactorForNegativeImpact,
+        `positionFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.BORROWING_FACTOR,
-      encodeData(["address", "bool"], [marketToken, true]),
-      marketConfig.borrowingFactorForLongs,
-      `borrowingFactorForLongs ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.borrowingFactorForLongs) {
+      await handleConfig(
+        "uint",
+        keys.BORROWING_FACTOR,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.borrowingFactorForLongs,
+        `borrowingFactorForLongs ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.BORROWING_FACTOR,
-      encodeData(["address", "bool"], [marketToken, false]),
-      marketConfig.borrowingFactorForShorts,
-      `borrowingFactorForShorts ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.borrowingFactorForShorts) {
+      await handleConfig(
+        "uint",
+        keys.BORROWING_FACTOR,
+        encodeData(["address", "bool"], [marketToken, false]),
+        marketConfig.borrowingFactorForShorts,
+        `borrowingFactorForShorts ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.BORROWING_EXPONENT_FACTOR,
-      encodeData(["address", "bool"], [marketToken, true]),
-      marketConfig.borrowingExponentFactorForLongs,
-      `borrowingExponentFactorForLongs ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.borrowingExponentFactorForLongs) {
+      await handleConfig(
+        "uint",
+        keys.BORROWING_EXPONENT_FACTOR,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.borrowingExponentFactorForLongs,
+        `borrowingExponentFactorForLongs ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.BORROWING_EXPONENT_FACTOR,
-      encodeData(["address", "bool"], [marketToken, false]),
-      marketConfig.borrowingExponentFactorForShorts,
-      `borrowingExponentFactorForShorts ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.borrowingExponentFactorForShorts) {
+      await handleConfig(
+        "uint",
+        keys.BORROWING_EXPONENT_FACTOR,
+        encodeData(["address", "bool"], [marketToken, false]),
+        marketConfig.borrowingExponentFactorForShorts,
+        `borrowingExponentFactorForShorts ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.POSITION_IMPACT_FACTOR,
-      encodeData(["address", "bool"], [marketToken, true]),
-      marketConfig.positivePositionImpactFactor,
-      `positivePositionImpactFactor ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.positivePositionImpactFactor) {
+      await handleConfig(
+        "uint",
+        keys.POSITION_IMPACT_FACTOR,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.positivePositionImpactFactor,
+        `positivePositionImpactFactor ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.POSITION_IMPACT_FACTOR,
-      encodeData(["address", "bool"], [marketToken, false]),
-      marketConfig.negativePositionImpactFactor,
-      `negativePositionImpactFactor ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.negativePositionImpactFactor) {
+      await handleConfig(
+        "uint",
+        keys.POSITION_IMPACT_FACTOR,
+        encodeData(["address", "bool"], [marketToken, false]),
+        marketConfig.negativePositionImpactFactor,
+        `negativePositionImpactFactor ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS,
-      encodeData(["address"], [marketToken]),
-      marketConfig.maxPositionImpactFactorForLiquidations,
-      `maxPositionImpactFactorForLiquidations ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.maxPositionImpactFactorForLiquidations) {
+      await handleConfig(
+        "uint",
+        keys.MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS,
+        encodeData(["address"], [marketToken]),
+        marketConfig.maxPositionImpactFactorForLiquidations,
+        `maxPositionImpactFactorForLiquidations ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.MAX_POSITION_IMPACT_FACTOR,
-      encodeData(["address", "bool"], [marketToken, true]),
-      marketConfig.positiveMaxPositionImpactFactor,
-      `positiveMaxPositionImpactFactor ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.positiveMaxPositionImpactFactor) {
+      await handleConfig(
+        "uint",
+        keys.MAX_POSITION_IMPACT_FACTOR,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.positiveMaxPositionImpactFactor,
+        `positiveMaxPositionImpactFactor ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.MAX_POSITION_IMPACT_FACTOR,
-      encodeData(["address", "bool"], [marketToken, false]),
-      marketConfig.negativeMaxPositionImpactFactor,
-      `negativeMaxPositionImpactFactor ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.negativeMaxPositionImpactFactor) {
+      await handleConfig(
+        "uint",
+        keys.MAX_POSITION_IMPACT_FACTOR,
+        encodeData(["address", "bool"], [marketToken, false]),
+        marketConfig.negativeMaxPositionImpactFactor,
+        `negativeMaxPositionImpactFactor ${marketLabel} (${marketToken})`
+      );
+    }
   }
 };
 
@@ -500,8 +553,10 @@ export async function updateMarketConfig({ write }) {
   console.info("multicallWriteParams", multicallWriteParams);
 
   if (write) {
-    const tx = await config.multicall(multicallWriteParams);
-    console.info(`tx sent: ${tx.hash}`);
+    await handleInBatches(multicallWriteParams, 100, async (batch) => {
+      const tx = await config.multicall(batch);
+      console.info(`tx sent: ${tx.hash}`);
+    });
   } else {
     console.info("NOTE: executed in read-only mode, no transactions were sent");
   }

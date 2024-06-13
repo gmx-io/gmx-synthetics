@@ -4,9 +4,6 @@ import { setAddressIfDifferent, setUintIfDifferent, setBoolIfDifferent } from ".
 import { updateGeneralConfig } from "../scripts/updateGeneralConfigUtils";
 
 const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
-  const write = process.env.FOR_EXISTING_MAINNET_DEPLOYMENT ? false : true;
-  await updateGeneralConfig({ write });
-
   const generalConfig = await gmx.getGeneral();
 
   await setAddressIfDifferent(keys.FEE_RECEIVER, generalConfig.feeReceiver, "fee receiver");
@@ -23,6 +20,9 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
     generalConfig.skipBorrowingFeeForSmallerSide,
     "skip borrowing fee for smaller side"
   );
+
+  const write = process.env.FOR_EXISTING_MAINNET_DEPLOYMENT ? false : true;
+  await updateGeneralConfig({ write });
 };
 
 func.tags = ["GeneralSettings"];

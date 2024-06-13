@@ -313,8 +313,7 @@ const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
   negativeMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%
   maxPositionImpactFactorForLiquidations: decimalToFloat(1, 2), // 1%
 
-  // set a high value so that the funding is not capped by default for tests
-  maxFundingFactorPerSecond: decimalToFloat(1, 0), // 100% per second
+  maxFundingFactorPerSecond: "100000000000000000000000",
 };
 
 const config: {
