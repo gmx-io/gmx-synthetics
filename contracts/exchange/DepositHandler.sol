@@ -171,13 +171,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
 
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
-        if (
-            OracleUtils.isOracleError(errorSelector) ||
-            errorSelector == Errors.DisabledFeature.selector ||
-            errorSelector == Errors.InsufficientGasLeftForCallback.selector
-        ) {
-            ErrorUtils.revertWithCustomError(reasonBytes);
-        }
+        validateNonKeeperError(errorSelector, reasonBytes);
 
         (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
 
