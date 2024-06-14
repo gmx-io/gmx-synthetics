@@ -88,8 +88,8 @@ contract Oracle is RoleModule {
             /*uint80 answeredInRound*/
         ) = sequencerUptimeFeed.latestRoundData();
 
-        // Answer == 0: Sequencer is up
-        // Answer == 1: Sequencer is down
+        // answer == 0: sequencer is up
+        // answer == 1: sequencer is down
         bool isSequencerUp = answer == 0;
         if (!isSequencerUp) {
             revert Errors.SequencerDown();
@@ -97,7 +97,7 @@ contract Oracle is RoleModule {
 
         uint256 sequencerGraceDuration = dataStore.getUint(Keys.SEQUENCER_GRACE_DURATION);
 
-        // Make sure the grace duration has passed after the
+        // ensure the grace duration has passed after the
         // sequencer is back up.
         uint256 timeSinceUp = block.timestamp - startedAt;
         if (timeSinceUp <= sequencerGraceDuration) {
