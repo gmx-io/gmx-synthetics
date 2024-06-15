@@ -4,6 +4,7 @@ import { expandDecimals } from "../../utils/math";
 import { hashString } from "../../utils/hash";
 import { deployFixture } from "../../utils/fixture";
 import { TOKEN_ORACLE_TYPES, getOracleParams, encodeDataStreamData } from "../../utils/oracle";
+import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 
 describe("Oracle", () => {
@@ -70,5 +71,13 @@ describe("Oracle", () => {
 
     expect(await oracle.minTimestamp()).eq(block.timestamp - 1);
     expect(await oracle.maxTimestamp()).gt(block.timestamp);
+
+    await expect(
+      oracle.setPrices({
+        tokens: [wnt.address],
+        providers: [wbtc.address],
+        data: ["0x"],
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "InvalidOracleProvider");
   });
 });
