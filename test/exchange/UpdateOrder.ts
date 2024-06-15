@@ -158,7 +158,6 @@ describe("Exchange.UpdateOrder", () => {
       order.flags.isLong
     );
 
-    console.log("positionKey", positionKey);
     expect(await getAutoCancelOrderKeys(dataStore, positionKey, 0, 10)).eql([]);
 
     // mint wnt to top up execution fee
