@@ -40,7 +40,7 @@ contract BaseHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
         }
     }
 
-    function validateNonKeeperError(bytes4 errorSelector, bytes memory reasonBytes) internal view {
+    function validateNonKeeperError(bytes4 errorSelector, bytes memory reasonBytes) internal pure {
         if (
             OracleUtils.isOracleError(errorSelector) ||
             errorSelector == Errors.DisabledFeature.selector ||

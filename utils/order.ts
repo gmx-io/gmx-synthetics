@@ -42,6 +42,10 @@ export function getAccountOrderKeys(dataStore, account, start, end) {
   return dataStore.getBytes32ValuesAt(keys.accountOrderListKey(account), start, end);
 }
 
+export function getAutoCancelOrderKeys(dataStore, positionKey, start, end) {
+  return dataStore.getBytes32ValuesAt(keys.autoCancelOrderListKey(positionKey), start, end);
+}
+
 export async function createOrder(fixture, overrides) {
   const { initialCollateralToken, orderType, gasUsageLabel } = overrides;
 

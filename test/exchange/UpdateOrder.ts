@@ -4,8 +4,9 @@ import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { printGasUsage } from "../../utils/gas";
 import { handleDeposit } from "../../utils/deposit";
-import { OrderType, getOrderCount, getOrderKeys, createOrder } from "../../utils/order";
+import { OrderType, getOrderCount, getOrderKeys, getAutoCancelOrderKeys, createOrder } from "../../utils/order";
 import { errorsContract } from "../../utils/error";
+import { getPositionKey } from "../../utils/position";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.UpdateOrder", () => {
@@ -120,7 +121,7 @@ describe("Exchange.UpdateOrder", () => {
       acceptablePrice: expandDecimals(5001, 12),
       executionFee,
       minOutputAmount: expandDecimals(50000, 6),
-      orderType: OrderType.LimitIncrease,
+      orderType: OrderType.StopLossDecrease,
       isLong: true,
       shouldUnwrapNativeToken: false,
     };
@@ -138,7 +139,7 @@ describe("Exchange.UpdateOrder", () => {
     expect(order.addresses.market).eq(ethUsdMarket.marketToken);
     expect(order.addresses.initialCollateralToken).eq(wnt.address);
     expect(order.addresses.swapPath).eql([ethUsdMarket.marketToken]);
-    expect(order.numbers.orderType).eq(OrderType.LimitIncrease);
+    expect(order.numbers.orderType).eq(OrderType.StopLossDecrease);
     expect(order.numbers.sizeDeltaUsd).eq(decimalToFloat(200 * 1000));
     expect(order.numbers.initialCollateralDeltaAmount).eq(expandDecimals(10, 18));
     expect(order.numbers.acceptablePrice).eq(expandDecimals(5001, 12));
@@ -148,20 +149,29 @@ describe("Exchange.UpdateOrder", () => {
     expect(order.numbers.updatedAtBlock).eq(block.number);
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
+    expect(order.flags.autoCancel).eq(false);
+
+    const positionKey = getPositionKey(
+      order.addresses.account,
+      order.addresses.market,
+      order.addresses.initialCollateralToken,
+      order.flags.isLong
+    );
+
+    console.log("positionKey", positionKey);
+    expect(await getAutoCancelOrderKeys(dataStore, positionKey, 0, 10)).eql([]);
 
     // mint wnt to top up execution fee
     await wnt.mint(orderVault.address, "700");
 
-    const txn = await exchangeRouter
-      .connect(user0)
-      .updateOrder(
-        orderKeys[0],
-        decimalToFloat(250 * 1000),
-        expandDecimals(4950, 12),
-        expandDecimals(5050, 12),
-        expandDecimals(52000, 6),
-        false
-      );
+    const txn = await exchangeRouter.connect(user0).updateOrder(
+      orderKeys[0],
+      decimalToFloat(250 * 1000),
+      expandDecimals(4950, 12),
+      expandDecimals(5050, 12),
+      expandDecimals(52000, 6),
+      true // autoCancel
+    );
     block = await provider.getBlock();
 
     await printGasUsage(provider, txn, "updateOrder");
@@ -171,7 +181,7 @@ describe("Exchange.UpdateOrder", () => {
     expect(order.addresses.market).eq(ethUsdMarket.marketToken);
     expect(order.addresses.initialCollateralToken).eq(wnt.address);
     expect(order.addresses.swapPath).eql([ethUsdMarket.marketToken]);
-    expect(order.numbers.orderType).eq(OrderType.LimitIncrease);
+    expect(order.numbers.orderType).eq(OrderType.StopLossDecrease);
     expect(order.numbers.sizeDeltaUsd).eq(decimalToFloat(250 * 1000));
     expect(order.numbers.initialCollateralDeltaAmount).eq(expandDecimals(10, 18));
     expect(order.numbers.acceptablePrice).eq(expandDecimals(4950, 12));
@@ -181,5 +191,22 @@ describe("Exchange.UpdateOrder", () => {
     expect(order.numbers.updatedAtBlock).eq(block.number);
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
+    expect(order.flags.autoCancel).eq(true);
+
+    expect(await getAutoCancelOrderKeys(dataStore, positionKey, 0, 10)).eql([orderKeys[0]]);
+
+    await exchangeRouter.connect(user0).updateOrder(
+      orderKeys[0],
+      decimalToFloat(250 * 1000),
+      expandDecimals(4950, 12),
+      expandDecimals(5050, 12),
+      expandDecimals(52000, 6),
+      false // autoCancel
+    );
+
+    order = await reader.getOrder(dataStore.address, orderKeys[0]);
+    expect(order.flags.autoCancel).eq(false);
+
+    expect(await getAutoCancelOrderKeys(dataStore, positionKey, 0, 10)).eql([]);
   });
 });

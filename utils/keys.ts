@@ -34,6 +34,8 @@ export const ACCOUNT_ORDER_LIST = hashString("ACCOUNT_ORDER_LIST");
 
 export const SUBACCOUNT_LIST = hashString("SUBACCOUNT_LIST");
 
+export const AUTO_CANCEL_ORDER_LIST = hashString("AUTO_CANCEL_ORDER_LIST");
+
 export const CREATE_DEPOSIT_FEATURE_DISABLED = hashString("CREATE_DEPOSIT_FEATURE_DISABLED");
 export const CANCEL_DEPOSIT_FEATURE_DISABLED = hashString("CANCEL_DEPOSIT_FEATURE_DISABLED");
 export const EXECUTE_DEPOSIT_FEATURE_DISABLED = hashString("EXECUTE_DEPOSIT_FEATURE_DISABLED");
@@ -213,6 +215,10 @@ export function accountOrderListKey(account) {
 
 export function subaccountListKey(account) {
   return hashData(["bytes32", "address"], [SUBACCOUNT_LIST, account]);
+}
+
+export function autoCancelOrderListKey(positionKey) {
+  return hashData(["bytes32", "bytes32"], [AUTO_CANCEL_ORDER_LIST, positionKey]);
 }
 
 export function isMarketDisabledKey(market) {
