@@ -79,6 +79,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
       isLong: true,
       shouldUnwrapNativeToken: false,
       gasUsageLabel: "createOrder",
+      cancellationReceiver: user1,
     };
 
     await createOrder(fixture, params);
@@ -94,6 +95,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
     expect(order.addresses.market).eq(ethUsdMarket.marketToken);
     expect(order.addresses.initialCollateralToken).eq(wnt.address);
     expect(order.addresses.swapPath).eql([ethUsdMarket.marketToken]);
+    expect(order.addresses.cancellationReceiver).eq(user1.address);
     expect(order.numbers.orderType).eq(OrderType.MarketIncrease);
     expect(order.numbers.sizeDeltaUsd).eq(decimalToFloat(200 * 1000));
     expect(order.numbers.initialCollateralDeltaAmount).eq(expandDecimals(10, 18));
@@ -103,6 +105,11 @@ describe("Exchange.MarketIncreaseOrder", () => {
     expect(order.numbers.updatedAtBlock).eq(block.number);
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
+
+    await expect(createOrder(fixture, { ...params, cancellationReceiver: orderVault })).to.be.revertedWithCustomError(
+      errorsContract,
+      "InvalidReceiver"
+    );
   });
 
   it("executeOrder validations", async () => {
