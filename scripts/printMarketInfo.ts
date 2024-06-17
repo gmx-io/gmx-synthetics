@@ -113,6 +113,7 @@ async function main() {
       ["positionImpactPoolAmount", keys.positionImpactPoolAmountKey(market.marketToken)],
       ["swapImpactPoolAmountLong", keys.swapImpactPoolAmountKey(market.marketToken, market.longToken)],
       ["swapImpactPoolAmountShort", keys.swapImpactPoolAmountKey(market.marketToken, market.shortToken)],
+
       ["positionImpactPoolDistributionRate", keys.positionImpactPoolDistributionRateKey(market.marketToken)],
       ["minPositionImpactPoolAmount", keys.minPositionImpactPoolAmountKey(market.marketToken)],
       ["savedFundingFactorPerSecond", keys.savedFundingFactorPerSecondKey(market.marketToken)],
@@ -140,6 +141,11 @@ async function main() {
       ],
       ["minPnlFactorAfterAdlLong", keys.minPnlFactorAfterAdl(market.marketToken, true)],
       ["minPnlFactorAfterAdlShort", keys.minPnlFactorAfterAdl(market.marketToken, false)],
+
+      ["collateralSum_collateralLong_isLong", keys.collateralSumKey(market.marketToken, market.longToken, true)],
+      ["collateralSum_collateralLong_isShort", keys.collateralSumKey(market.marketToken, market.longToken, false)],
+      ["collateralSum_collateralShort_isLong", keys.collateralSumKey(market.marketToken, market.shortToken, true)],
+      ["collateralSum_collateralShort_isShort", keys.collateralSumKey(market.marketToken, market.shortToken, false)],
     ] as const) {
       props.push(prop);
       multicallReadParams.push({
@@ -161,6 +167,8 @@ async function main() {
 
   const consoleData: any[] = [];
   const consoleMaxPnlData: any[] = [];
+  const consoleCollateralSumData: any[] = [];
+  let globalCollateralSumTotal = bigNumberify(0);
 
   for (let i = 0; i < marketInfoList.length; i++) {
     const marketInfo = marketInfoList[i];
@@ -171,7 +179,9 @@ async function main() {
     const indexTokenSymbol = addressToSymbol[marketInfo.market.indexToken];
     const indexToken = tokens[indexTokenSymbol];
     const longTokenSymbol = addressToSymbol[marketInfo.market.longToken];
+    const longToken = tokens[longTokenSymbol];
     const shortTokenSymbol = addressToSymbol[marketInfo.market.shortToken];
+    const shortToken = tokens[shortTokenSymbol];
 
     const marketValues: any = {};
 
@@ -254,6 +264,50 @@ async function main() {
           2
         )}`,
       });
+
+      const collateralSum_collateralLong_isLong = `${formatAmount(
+        marketValues.collateralSum_collateralLong_isLong,
+        longToken.decimals,
+        2,
+        true
+      )} ${longTokenSymbol}`;
+      const collateralSum_collateralLong_isShort = `${formatAmount(
+        marketValues.collateralSum_collateralLong_isShort,
+        longToken.decimals,
+        2,
+        true
+      )} ${longTokenSymbol}`;
+      const collateralSum_collateralShort_isLong = `${formatAmount(
+        marketValues.collateralSum_collateralShort_isLong,
+        shortToken.decimals,
+        2,
+        true
+      )} ${shortTokenSymbol}`;
+      const collateralSum_collateralShort_isShort = `${formatAmount(
+        marketValues.collateralSum_collateralShort_isShort,
+        shortToken.decimals,
+        2,
+        true
+      )} ${shortTokenSymbol}`;
+      console.log(marketLabel, getTokenPrice({ token: longToken.address, pricesByTokenAddress }));
+      const collateralSumTotal = marketValues.collateralSum_collateralLong_isLong
+        .add(marketValues.collateralSum_collateralLong_isShort)
+        .mul(getTokenPrice({ token: longToken.address, pricesByTokenAddress }).max)
+        .add(
+          marketValues.collateralSum_collateralShort_isLong
+            .add(marketValues.collateralSum_collateralShort_isShort)
+            .mul(getTokenPrice({ token: shortToken.address, pricesByTokenAddress }).max)
+        );
+      globalCollateralSumTotal = globalCollateralSumTotal.add(collateralSumTotal);
+
+      consoleCollateralSumData.push({
+        market: marketLabel,
+        total: `$${formatAmount(collateralSumTotal, 30, 0, true)}`,
+        collateralLong_isLong: collateralSum_collateralLong_isLong,
+        collateralLong_isShort: collateralSum_collateralLong_isShort,
+        collateralShort_isLong: collateralSum_collateralShort_isLong,
+        collateralShort_isShort: collateralSum_collateralShort_isShort,
+      });
     }
 
     consoleData.push(data);
@@ -263,6 +317,10 @@ async function main() {
 
   console.log("Max pnl factors");
   console.table(consoleMaxPnlData);
+
+  console.log("Collateral sum");
+  console.log("Global: $%s", formatAmount(globalCollateralSumTotal, 30, 0, true));
+  console.table(consoleCollateralSumData);
 }
 
 main()
