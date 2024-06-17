@@ -6,7 +6,7 @@ import fs from "fs";
 import { ethers } from "ethers";
 
 import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-verify";
 import "hardhat-contract-sizer";
 import "solidity-coverage";
 import "hardhat-gas-reporter";
@@ -29,6 +29,7 @@ const getRpcUrl = (network) => {
     arbitrumSepolia: "https://sepolia-rollup.arbitrum.io/rpc",
     avalancheFuji: "https://api.avax-test.network/ext/bc/C/rpc",
     snowtrace: "https://api.avax.network/ext/bc/C/rpc",
+    arbitrumBlockscout: "https://arb1.arbitrum.io/rpc",
   };
 
   let rpc = defaultRpcs[network];
@@ -130,6 +131,10 @@ const config: HardhatUserConfig = {
       url: getRpcUrl("snowtrace"),
       accounts: getEnvAccounts(),
     },
+    arbitrumBlockscout: {
+      url: getRpcUrl("arbitrumBlockscout"),
+      accounts: getEnvAccounts(),
+    },
     arbitrumGoerli: {
       url: getRpcUrl("arbitrumGoerli"),
       chainId: 421613,
@@ -172,13 +177,14 @@ const config: HardhatUserConfig = {
   // https://github.com/wighawag/hardhat-deploy/issues/264
   etherscan: {
     apiKey: {
-      // hardhat-etherscan plugin uses "avalancheFujiTestnet" name
+      // hardhat-verify plugin uses "avalancheFujiTestnet" name
       arbitrumOne: process.env.ARBISCAN_API_KEY,
       avalanche: process.env.SNOWTRACE_API_KEY,
       arbitrumGoerli: process.env.ARBISCAN_API_KEY,
       arbitrumSepolia: process.env.ARBISCAN_API_KEY,
       avalancheFujiTestnet: process.env.SNOWTRACE_API_KEY,
       snowtrace: "snowtrace", // apiKey is not required, just set a placeholder
+      arbitrumBlockscout: "arbitrumBlockscout",
     },
     customChains: [
       {
@@ -189,7 +195,6 @@ const config: HardhatUserConfig = {
           browserURL: "https://avalanche.routescan.io",
         },
       },
-
       {
         network: "arbitrumSepolia",
         chainId: 421614,
@@ -198,7 +203,18 @@ const config: HardhatUserConfig = {
           browserURL: "https://https://sepolia.arbiscan.io/",
         },
       },
+      {
+        network: "arbitrumBlockscout",
+        chainId: 42161,
+        urls: {
+          apiURL: "https://arbitrum.blockscout.com/api",
+          browserURL: "https://arbitrum.blockscout.com/",
+        },
+      },
     ],
+  },
+  sourcify: {
+    enabled: false,
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS ? true : false,
