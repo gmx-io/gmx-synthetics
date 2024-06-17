@@ -1,6 +1,6 @@
 const fetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
 import hre from "hardhat";
-import { bigNumberify, expandDecimals, formatAmount } from "../utils/math";
+import { FLOAT_PRECISION, bigNumberify, expandDecimals, formatAmount } from "../utils/math";
 import * as keys from "../utils/keys";
 
 const stablecoinPrices = {
@@ -141,6 +141,11 @@ async function main() {
       ["collateralSum_collateralLong_isShort", keys.collateralSumKey(market.marketToken, market.longToken, false)],
       ["collateralSum_collateralShort_isLong", keys.collateralSumKey(market.marketToken, market.shortToken, true)],
       ["collateralSum_collateralShort_isShort", keys.collateralSumKey(market.marketToken, market.shortToken, false)],
+
+      ["openInterest_collateralLong_isLong", keys.openInterestKey(market.marketToken, market.longToken, true)],
+      ["openInterest_collateralLong_isShort", keys.openInterestKey(market.marketToken, market.longToken, false)],
+      ["openInterest_collateralShort_isLong", keys.openInterestKey(market.marketToken, market.shortToken, true)],
+      ["openInterest_collateralShort_isShort", keys.openInterestKey(market.marketToken, market.shortToken, false)],
     ] as const) {
       props.push(prop);
       multicallReadParams.push({
@@ -160,7 +165,10 @@ async function main() {
   const consoleData: any[] = [];
   const consoleMaxPnlData: any[] = [];
   const consoleCollateralSumData: any[] = [];
-  let globalCollateralSumTotal = bigNumberify(0);
+  let globalCollateralSumLongTotal = bigNumberify(0);
+  let globalCollateralSumShortTotal = bigNumberify(0);
+  const globalOpenInterestLong = bigNumberify(0);
+  const globalOpenInterestShort = bigNumberify(0);
 
   for (let i = 0; i < marketInfoList.length; i++) {
     const marketInfo = marketInfoList[i];
@@ -282,23 +290,50 @@ async function main() {
         true
       )} ${shortTokenSymbol}`;
       console.log(marketLabel, getTokenPrice({ token: longToken.address, pricesByTokenAddress }));
-      const collateralSumTotal = marketValues.collateralSum_collateralLong_isLong
-        .add(marketValues.collateralSum_collateralLong_isShort)
+
+      const collateralSumLongTotal = marketValues.collateralSum_collateralLong_isLong
         .mul(getTokenPrice({ token: longToken.address, pricesByTokenAddress }).max)
         .add(
-          marketValues.collateralSum_collateralShort_isLong
-            .add(marketValues.collateralSum_collateralShort_isShort)
-            .mul(getTokenPrice({ token: shortToken.address, pricesByTokenAddress }).max)
+          marketValues.collateralSum_collateralShort_isLong.mul(
+            getTokenPrice({ token: shortToken.address, pricesByTokenAddress }).max
+          )
         );
-      globalCollateralSumTotal = globalCollateralSumTotal.add(collateralSumTotal);
+      const collateralSumShortTotal = marketValues.collateralSum_collateralLong_isShort
+        .mul(getTokenPrice({ token: longToken.address, pricesByTokenAddress }).max)
+        .add(
+          marketValues.collateralSum_collateralShort_isShort.mul(
+            getTokenPrice({ token: shortToken.address, pricesByTokenAddress }).max
+          )
+        );
+
+      globalCollateralSumLongTotal = globalCollateralSumLongTotal.add(collateralSumLongTotal);
+      globalCollateralSumShortTotal = globalCollateralSumShortTotal.add(collateralSumShortTotal);
+      const collateralSumTotal = collateralSumLongTotal.add(collateralSumShortTotal);
+
+      const openInterestLong = marketValues.openInterest_collateralLong_isLong.add(
+        marketValues.openInterest_collateralShort_isLong
+      );
+      const openInterestShort = marketValues.openInterest_collateralLong_isShort.add(
+        marketValues.openInterest_collateralShort_isShort
+      );
+      const openInterest = openInterestLong.add(openInterestShort);
 
       consoleCollateralSumData.push({
         market: marketLabel,
         total: `$${formatAmount(collateralSumTotal, 30, 0, true)}`,
-        collateralLong_isLong: collateralSum_collateralLong_isLong,
-        collateralLong_isShort: collateralSum_collateralLong_isShort,
-        collateralShort_isLong: collateralSum_collateralShort_isLong,
-        collateralShort_isShort: collateralSum_collateralShort_isShort,
+        // collateralLong_isLong: collateralSum_collateralLong_isLong,
+        // collateralLong_isShort: collateralSum_collateralLong_isShort,
+        // collateralShort_isLong: collateralSum_collateralShort_isLong,
+        // collateralShort_isShort: collateralSum_collateralShort_isShort,
+        openInterest: `$${formatAmount(openInterest, 30, 0, true)}`,
+        openInterestLong: `$${formatAmount(openInterestLong, 30, 0, true)}`,
+        openInterestShort: `$${formatAmount(openInterestShort, 30, 0, true)}`,
+        borrowed: `$${formatAmount(openInterest.sub(collateralSumTotal), 30, 0, true)}`,
+        borrowedLong: `$${formatAmount(openInterestLong.sub(collateralSumLongTotal), 30, 0, true)}`,
+        borrowedShort: `$${formatAmount(openInterestShort.sub(collateralSumShortTotal), 30, 0, true)}`,
+        lev: `${formatAmount(openInterest.mul(FLOAT_PRECISION).div(collateralSumTotal), 30, 2)}x`,
+        longLev: `${formatAmount(openInterestLong.mul(FLOAT_PRECISION).div(collateralSumLongTotal), 30, 2)}x`,
+        shortLev: `${formatAmount(openInterestShort.mul(FLOAT_PRECISION).div(collateralSumShortTotal), 30, 2)}x`,
       });
     }
 
@@ -311,7 +346,10 @@ async function main() {
   console.table(consoleMaxPnlData);
 
   console.log("Collateral sum");
-  console.log("Global: $%s", formatAmount(globalCollateralSumTotal, 30, 0, true));
+  console.log(
+    "Global: $%s",
+    formatAmount(globalCollateralSumLongTotal.add(globalCollateralSumShortTotal), 30, 0, true)
+  );
   console.table(consoleCollateralSumData);
 }
 
