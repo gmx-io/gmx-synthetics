@@ -1,7 +1,7 @@
 import { updateMarketConfig } from "./updateMarketConfigUtils";
 
 async function main() {
-  updateMarketConfig({ write: true });
+  await updateMarketConfig({ write: process.env.WRITE });
 }
 
 main()

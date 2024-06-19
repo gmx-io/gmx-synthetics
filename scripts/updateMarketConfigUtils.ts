@@ -501,7 +501,7 @@ export async function updateMarketConfig({ write }) {
 
   const onchainMarketsByTokens = await getOnchainMarkets(read, dataStore.address);
 
-  const keys = [];
+  const configKeys = [];
   const multicallReadParams = [];
 
   await processMarkets({
@@ -516,7 +516,7 @@ export async function updateMarketConfig({ write }) {
 
       const key = getFullKey(baseKey, keyData);
 
-      keys.push(key);
+      configKeys.push(key);
       multicallReadParams.push({
         target: dataStore.address,
         allowFailure: false,
@@ -527,8 +527,8 @@ export async function updateMarketConfig({ write }) {
 
   const result = await multicall.callStatic.aggregate3(multicallReadParams);
   const dataCache = {};
-  for (let i = 0; i < keys.length; i++) {
-    const key = keys[i];
+  for (let i = 0; i < configKeys.length; i++) {
+    const key = configKeys[i];
     const value = result[i].returnData;
     dataCache[key] = bigNumberify(value);
   }

@@ -230,7 +230,7 @@ export async function updateGeneralConfig({ write }) {
   const multicall = await hre.ethers.getContract("Multicall3");
   const config = await hre.ethers.getContract("Config");
 
-  const keys = [];
+  const configKeys = [];
   const multicallReadParams = [];
 
   await processGeneralConfig({
@@ -242,7 +242,7 @@ export async function updateGeneralConfig({ write }) {
 
       const key = getFullKey(baseKey, keyData);
 
-      keys.push(key);
+      configKeys.push(key);
       multicallReadParams.push({
         target: dataStore.address,
         allowFailure: false,
@@ -253,8 +253,8 @@ export async function updateGeneralConfig({ write }) {
 
   const result = await multicall.callStatic.aggregate3(multicallReadParams);
   const dataCache = {};
-  for (let i = 0; i < keys.length; i++) {
-    const key = keys[i];
+  for (let i = 0; i < configKeys.length; i++) {
+    const key = configKeys[i];
     const value = result[i].returnData;
     dataCache[key] = bigNumberify(value);
   }
