@@ -185,7 +185,6 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x3BE24AED1a4CcaDebF2956e02C27a00726D4327d": true, // ExchangeRouter_3
         "0xcf2fFD3FC8d2cf78D087681f9acD35c799E0d88d": true, // FeeHandler_3
         "0x0E9A0419e5144fe3C73fF30446a1e4d04E1224F0": true, // LiquidationHandler_3
-
         "0xe5485a4fD6527911e9b82A75A1bFEd6e47BE2241": true, // SubaccountRouter_3
 
         "0x28AD6fF2683a3D36C05F1D9ec95b907086431a27": true, // TimestampInitializer_3
