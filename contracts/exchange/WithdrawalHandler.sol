@@ -6,7 +6,6 @@ import "./BaseHandler.sol";
 import "../error/ErrorUtils.sol";
 
 import "../market/Market.sol";
-import "../market/MarketToken.sol";
 
 import "../withdrawal/Withdrawal.sol";
 import "../withdrawal/WithdrawalVault.sol";

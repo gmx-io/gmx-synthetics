@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 
 import "./BaseOrderUtils.sol";
 import "../swap/SwapUtils.sol";
-import "../order/OrderStoreUtils.sol";
 
 // @title SwapOrderUtils
 // @dev Library for functions to help with processing a swap order

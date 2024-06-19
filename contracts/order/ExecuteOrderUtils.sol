@@ -2,9 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "./AutoCancelUtils.sol";
 import "../data/DataStore.sol";
-import "../data/Keys.sol";
 
 import "./Order.sol";
 import "./OrderVault.sol";
@@ -12,9 +10,7 @@ import "./OrderStoreUtils.sol";
 import "./OrderEventUtils.sol";
 import "./OrderUtils.sol";
 
-import "../nonce/NonceUtils.sol";
 import "../oracle/Oracle.sol";
-import "../oracle/OracleUtils.sol";
 import "../event/EventEmitter.sol";
 
 import "./IncreaseOrderUtils.sol";
@@ -22,14 +18,10 @@ import "./DecreaseOrderUtils.sol";
 import "./SwapOrderUtils.sol";
 import "./BaseOrderUtils.sol";
 
-import "../swap/SwapUtils.sol";
-
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
-import "../utils/AccountUtils.sol";
-import "../referral/ReferralUtils.sol";
 
 library ExecuteOrderUtils {
     using Order for Order.Props;

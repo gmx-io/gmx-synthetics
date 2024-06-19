@@ -7,10 +7,12 @@ import "../event/EventEmitter.sol";
 
 import "../order/OrderStoreUtils.sol";
 import "../order/OrderEventUtils.sol";
-import "../position/PositionUtils.sol";
 import "../position/PositionStoreUtils.sol";
 import "../nonce/NonceUtils.sol";
 import "../callback/CallbackUtils.sol";
+import "../market/Market.sol";
+import "../market/MarketUtils.sol";
+import "../oracle/Oracle.sol";
 
 // @title AdlUtils
 // @dev Library to help with auto-deleveraging
@@ -25,7 +27,6 @@ import "../callback/CallbackUtils.sol";
 // that the system remains fully solvent
 library AdlUtils {
     using SafeCast for int256;
-    using Array for uint256[];
     using Market for Market.Props;
     using Position for Position.Props;
 

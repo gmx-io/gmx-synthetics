@@ -8,6 +8,8 @@ import "../exchange/IShiftHandler.sol";
 import "../exchange/IOrderHandler.sol";
 import "../external/IExternalHandler.sol";
 
+import "../order/OrderStoreUtils.sol";
+
 import "../feature/FeatureUtils.sol";
 
 import "./BaseRouter.sol";

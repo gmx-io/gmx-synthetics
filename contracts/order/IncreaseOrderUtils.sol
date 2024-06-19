@@ -5,8 +5,6 @@ pragma solidity ^0.8.0;
 import "./BaseOrderUtils.sol";
 import "../swap/SwapUtils.sol";
 import "../position/IncreasePositionUtils.sol";
-import "../order/OrderStoreUtils.sol";
-import "../callback/CallbackUtils.sol";
 
 // @title IncreaseOrderUtils
 // @dev Library for functions to help with processing an increase order

@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/utils/Address.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
-import "../error/ErrorUtils.sol";
 
 import "./IOrderCallbackReceiver.sol";
 import "./IDepositCallbackReceiver.sol";
