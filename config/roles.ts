@@ -99,11 +99,11 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
       },
       ROLE_ADMIN: {
-        "0x62aB76Ed722C507f297f2B97920dCA04518fe274": true, // Timelock_2
+        "0x2ECB664e934aCd5DF1EE889Dbb2E7D6C1d7CE3Cb": true, // Timelock_3
       },
       ROUTER_PLUGIN: {
-        "0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8": true, // ExchangeRouter_2
-        "0x78F414436148B8588BDEe4771EA5eB75148668aa": true, // SubaccountRouter_1
+        "0x69C527fC77291722b52649E45c838e41be8Bf5d5": true, // ExchangeRouter_3
+        "0x9F48160eDc3Ad78F4cA0E3FDF54A75D8FB228452": true, // SubaccountRouter_2
       },
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
@@ -156,11 +156,11 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
       },
       ROLE_ADMIN: {
-        "0x4Db91a1Fa4ba3c75510B2885d7d7da48E0209F38": true, // Timelock_2
+        "0x844D38f2c3875b8351feB4764718E1c64bD55c46": true, // Timelock_3
       },
       ROUTER_PLUGIN: {
-        "0x11E590f6092D557bF71BaDEd50D81521674F8275": true, // ExchangeRouter_2
-        "0xA60862ecc8bd976519e56231bDfAF697C5ce2156": true, // SubaccountRouter_1
+        "0x3BE24AED1a4CcaDebF2956e02C27a00726D4327d": true, // ExchangeRouter_3
+        "0xe5485a4fD6527911e9b82A75A1bFEd6e47BE2241": true, // SubaccountRouter_2
       },
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
