@@ -2,10 +2,18 @@ import hre, { network } from "hardhat";
 
 import { encodeData } from "../utils/hash";
 import { bigNumberify } from "../utils/math";
-import { getFullKey, appendUintConfigIfDifferent } from "../utils/config";
+import { getFullKey, appendUintConfigIfDifferent, appendAddressConfigIfDifferent } from "../utils/config";
 import * as keys from "../utils/keys";
 
-const processGeneralConfig = async ({ generalConfig, handleConfig }) => {
+const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig }) => {
+  await handleConfig(
+    "address",
+    keys.CHAINLINK_PAYMENT_TOKEN,
+    "0x",
+    oracleConfig.chainlinkPaymentToken,
+    `chainlinkPaymentToken`
+  );
+
   await handleConfig(
     "uint",
     keys.SEQUENCER_GRACE_DURATION,
@@ -225,6 +233,7 @@ const processGeneralConfig = async ({ generalConfig, handleConfig }) => {
 
 export async function updateGeneralConfig({ write }) {
   const generalConfig = await hre.gmx.getGeneral();
+  const oracleConfig = await hre.gmx.getOracle();
 
   const dataStore = await hre.ethers.getContract("DataStore");
   const multicall = await hre.ethers.getContract("Multicall3");
@@ -232,43 +241,63 @@ export async function updateGeneralConfig({ write }) {
 
   const configKeys = [];
   const multicallReadParams = [];
+  const types = [];
 
   await processGeneralConfig({
     generalConfig,
+    oracleConfig,
     handleConfig: async (type, baseKey, keyData) => {
-      if (type !== "uint") {
-        throw new Error("Unsupported type");
-      }
-
       const key = getFullKey(baseKey, keyData);
 
       configKeys.push(key);
-      multicallReadParams.push({
-        target: dataStore.address,
-        allowFailure: false,
-        callData: dataStore.interface.encodeFunctionData("getUint", [key]),
-      });
+      types.push(type);
+
+      if (type === "uint") {
+        multicallReadParams.push({
+          target: dataStore.address,
+          allowFailure: false,
+          callData: dataStore.interface.encodeFunctionData("getUint", [key]),
+        });
+      } else if (type === "address") {
+        multicallReadParams.push({
+          target: dataStore.address,
+          allowFailure: false,
+          callData: dataStore.interface.encodeFunctionData("getAddress", [key]),
+        });
+      } else {
+        throw new Error("Unsupported type");
+      }
     },
   });
 
   const result = await multicall.callStatic.aggregate3(multicallReadParams);
   const dataCache = {};
   for (let i = 0; i < configKeys.length; i++) {
+    const type = types[i];
     const key = configKeys[i];
     const value = result[i].returnData;
-    dataCache[key] = bigNumberify(value);
+    if (type === "uint") {
+      dataCache[key] = bigNumberify(value);
+    } else if (type === "address") {
+      dataCache[key] = ethers.utils.defaultAbiCoder.decode(["address"], value)[0];
+    } else {
+      throw new Error("Unsupported type");
+    }
   }
 
   const multicallWriteParams = [];
 
   await processGeneralConfig({
     generalConfig,
+    oracleConfig,
     handleConfig: async (type, baseKey, keyData, value, label) => {
-      if (type !== "uint") {
+      if (type === "uint") {
+        await appendUintConfigIfDifferent(multicallWriteParams, dataCache, baseKey, keyData, value, label);
+      } else if (type === "address") {
+        await appendAddressConfigIfDifferent(multicallWriteParams, dataCache, baseKey, keyData, value, label);
+      } else {
         throw new Error("Unsupported type");
       }
-
-      await appendUintConfigIfDifferent(multicallWriteParams, dataCache, baseKey, keyData, value, label);
     },
   });
 
