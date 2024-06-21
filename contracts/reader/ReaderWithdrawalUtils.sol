@@ -6,22 +6,12 @@ import "@openzeppelin/contracts/utils/math/SignedMath.sol";
 
 import "../data/Keys.sol";
 
-import "../market/MarketStoreUtils.sol";
-
-import "../deposit/DepositStoreUtils.sol";
-import "../withdrawal/WithdrawalStoreUtils.sol";
-
 import "../position/Position.sol";
-import "../position/PositionUtils.sol";
-import "../position/PositionStoreUtils.sol";
-import "../position/IncreasePositionUtils.sol";
-import "../position/DecreasePositionUtils.sol";
-
-import "../order/OrderStoreUtils.sol";
-
 import "../market/MarketUtils.sol";
 import "../market/Market.sol";
-import "./ReaderPricingUtils.sol";
+
+import "../pricing/ISwapPricingUtils.sol";
+import "../pricing/SwapPricingUtils.sol";
 
 library ReaderWithdrawalUtils {
     using SignedMath for int256;

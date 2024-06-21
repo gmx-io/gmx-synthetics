@@ -5,7 +5,6 @@ pragma solidity ^0.8.0;
 import "./BaseHandler.sol";
 
 import "../market/Market.sol";
-import "../market/MarketToken.sol";
 
 import "../deposit/Deposit.sol";
 import "../deposit/DepositVault.sol";

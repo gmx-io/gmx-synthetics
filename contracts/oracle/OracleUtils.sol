@@ -3,9 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../utils/Array.sol";
-import "../utils/Bits.sol";
 import "../price/Price.sol";
-import "../utils/Printer.sol";
 
 // @title OracleUtils
 // @dev Library for oracle functions

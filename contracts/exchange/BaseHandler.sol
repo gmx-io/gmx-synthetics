@@ -2,13 +2,13 @@
 
 pragma solidity ^0.8.0;
 
-import "../feature/FeatureUtils.sol";
 import "../event/EventEmitter.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 import "../role/RoleModule.sol";
 import "../utils/GlobalReentrancyGuard.sol";
 import "../error/ErrorUtils.sol";
+import "../feature/FeatureUtils.sol";
 
 contract BaseHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
     EventEmitter public immutable eventEmitter;

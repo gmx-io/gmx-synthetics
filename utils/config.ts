@@ -122,7 +122,9 @@ export async function appendAddressConfigIfDifferent(
   label?: string
 ) {
   await appendConfigIfDifferent(list, dataCache, "address", baseKey, keyData, value, {
-    compare: (a, b) => a.toLowerCase() == b.toLowerCase(),
+    compare: (a, b) => {
+      return a.toLowerCase() == b.toLowerCase();
+    },
     label,
   });
 }

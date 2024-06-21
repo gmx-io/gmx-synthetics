@@ -4,10 +4,6 @@ pragma solidity ^0.8.0;
 
 import "./BaseRouter.sol";
 import "../exchange/IGlvHandler.sol";
-import "../feature/FeatureUtils.sol";
-import "../subaccount/SubaccountUtils.sol";
-import "../order/OrderVault.sol";
-import "../order/OrderStoreUtils.sol";
 
 contract GlvRouter is BaseRouter {
     using GlvDeposit for GlvDeposit.Props;

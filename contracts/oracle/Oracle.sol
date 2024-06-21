@@ -3,14 +3,11 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { AggregatorV2V3Interface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV2V3Interface.sol";
 
 import "../role/RoleModule.sol";
 
-import "./OracleStore.sol";
 import "./OracleUtils.sol";
-import "./IPriceFeed.sol";
 import "./IOracleProvider.sol";
 import "./ChainlinkPriceFeedUtils.sol";
 import "../price/Price.sol";
@@ -21,8 +18,6 @@ import "../data/Keys.sol";
 import "../event/EventEmitter.sol";
 import "../event/EventUtils.sol";
 
-import "../utils/Bits.sol";
-import "../utils/Array.sol";
 import "../utils/Precision.sol";
 import "../utils/Cast.sol";
 import "../utils/Uint256Mask.sol";

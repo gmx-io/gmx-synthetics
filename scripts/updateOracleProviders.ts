@@ -28,10 +28,8 @@ async function main() {
     throw new Error(`Unexpected TIMELOCK_METHOD: ${timelockMethod}`);
   }
 
-  if (["signalGrantRole", "grantRoleAfterSignal"].includes(timelockMethod)) {
-    for (const provider of providersToAdd[hre.network.name]) {
-      multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [provider, true]));
-    }
+  for (const provider of providersToAdd[hre.network.name]) {
+    multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [provider, true]));
   }
 
   console.log(`updating ${multicallWriteParams.length} providers`);

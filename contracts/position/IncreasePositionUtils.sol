@@ -2,8 +2,6 @@
 
 pragma solidity ^0.8.0;
 
-import "../utils/Precision.sol";
-
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 
@@ -14,7 +12,6 @@ import "./Position.sol";
 import "./PositionStoreUtils.sol";
 import "./PositionUtils.sol";
 import "./PositionEventUtils.sol";
-import "../order/BaseOrderUtils.sol";
 
 // @title IncreasePositionUtils
 // @dev Library for functions to help with increasing a position

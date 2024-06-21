@@ -79,87 +79,32 @@ async function main() {
   const rolesToAdd = {
     arbitrum: [
       {
-        role: "ADL_KEEPER",
-        member: "0x8e66ee36f2c7b9461f50aa0b53ef0e4e47f4abbf",
+        role: "ROLE_ADMIN",
+        member: "0x2ecb664e934acd5df1ee889dbb2e7d6c1d7ce3cb",
       },
       {
-        role: "ADL_KEEPER",
-        member: "0x6a2b3a13be0c723674bcfd722d4e133b3f356e05",
+        role: "ROUTER_PLUGIN",
+        member: "0x69c527fc77291722b52649e45c838e41be8bf5d5",
       },
       {
-        role: "ADL_KEEPER",
-        member: "0xdd5c59b7c4e8fad38732caffbebd20a61bf9f3fc",
-      },
-      {
-        role: "ADL_KEEPER",
-        member: "0xeb2bb25ddd2b1872d5189ae72fcec9b160dd3fb2",
-      },
-      {
-        role: "FROZEN_ORDER_KEEPER",
-        member: "0x8e66ee36f2c7b9461f50aa0b53ef0e4e47f4abbf",
-      },
-      {
-        role: "FROZEN_ORDER_KEEPER",
-        member: "0x6a2b3a13be0c723674bcfd722d4e133b3f356e05",
-      },
-      {
-        role: "FROZEN_ORDER_KEEPER",
-        member: "0xdd5c59b7c4e8fad38732caffbebd20a61bf9f3fc",
-      },
-      {
-        role: "FROZEN_ORDER_KEEPER",
-        member: "0xeb2bb25ddd2b1872d5189ae72fcec9b160dd3fb2",
-      },
-      {
-        role: "LIMITED_CONFIG_KEEPER",
-        member: "0x8e66ee36f2c7b9461f50aa0b53ef0e4e47f4abbf",
-      },
-      {
-        role: "LIMITED_CONFIG_KEEPER",
-        member: "0x6a2b3a13be0c723674bcfd722d4e133b3f356e05",
-      },
-      {
-        role: "LIMITED_CONFIG_KEEPER",
-        member: "0xdd5c59b7c4e8fad38732caffbebd20a61bf9f3fc",
-      },
-      {
-        role: "LIMITED_CONFIG_KEEPER",
-        member: "0xeb2bb25ddd2b1872d5189ae72fcec9b160dd3fb2",
-      },
-      {
-        role: "LIQUIDATION_KEEPER",
-        member: "0x8e66ee36f2c7b9461f50aa0b53ef0e4e47f4abbf",
-      },
-      {
-        role: "LIQUIDATION_KEEPER",
-        member: "0x6a2b3a13be0c723674bcfd722d4e133b3f356e05",
-      },
-      {
-        role: "LIQUIDATION_KEEPER",
-        member: "0xdd5c59b7c4e8fad38732caffbebd20a61bf9f3fc",
-      },
-      {
-        role: "LIQUIDATION_KEEPER",
-        member: "0xeb2bb25ddd2b1872d5189ae72fcec9b160dd3fb2",
-      },
-      {
-        role: "ORDER_KEEPER",
-        member: "0x8e66ee36f2c7b9461f50aa0b53ef0e4e47f4abbf",
-      },
-      {
-        role: "ORDER_KEEPER",
-        member: "0x6a2b3a13be0c723674bcfd722d4e133b3f356e05",
-      },
-      {
-        role: "ORDER_KEEPER",
-        member: "0xdd5c59b7c4e8fad38732caffbebd20a61bf9f3fc",
-      },
-      {
-        role: "ORDER_KEEPER",
-        member: "0xeb2bb25ddd2b1872d5189ae72fcec9b160dd3fb2",
+        role: "ROUTER_PLUGIN",
+        member: "0x9f48160edc3ad78f4ca0e3fdf54a75d8fb228452",
       },
     ],
-    avalanche: [],
+    avalanche: [
+      {
+        role: "ROLE_ADMIN",
+        member: "0x844d38f2c3875b8351feb4764718e1c64bd55c46",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0x3be24aed1a4ccadebf2956e02c27a00726d4327d",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0xe5485a4fd6527911e9b82a75a1bfed6e47be2241",
+      },
+    ],
   };
 
   const rolesToRemove = {

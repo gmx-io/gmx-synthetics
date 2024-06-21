@@ -10,8 +10,6 @@ import "../event/EventEmitter.sol";
 import "../referral/IReferralStorage.sol";
 
 import "../order/OrderVault.sol";
-import "../order/IBaseOrderUtils.sol";
-import "../position/PositionUtils.sol";
 
 import "../oracle/Oracle.sol";
 import "../swap/SwapHandler.sol";

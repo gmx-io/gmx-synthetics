@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 
 import "../role/RoleModule.sol";
 import "../utils/Calc.sol";
-import "../utils/Printer.sol";
 
 // @title DataStore
 // @dev DataStore for all general state values

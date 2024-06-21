@@ -10,7 +10,6 @@ import "./IGlpVault.sol";
 import "./IGlpTimelock.sol";
 import "./IGlpRewardRouter.sol";
 
-import "../data/Keys.sol";
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 

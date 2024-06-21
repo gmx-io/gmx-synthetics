@@ -3,6 +3,8 @@
 pragma solidity ^0.8.0;
 
 import "./BaseOrderHandler.sol";
+import "../liquidation/LiquidationUtils.sol";
+import "../order/ExecuteOrderUtils.sol";
 
 // @title LiquidationHandler
 // @dev Contract to handle liquidations

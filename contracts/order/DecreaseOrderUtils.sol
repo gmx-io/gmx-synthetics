@@ -5,7 +5,6 @@ pragma solidity ^0.8.0;
 import "./BaseOrderUtils.sol";
 import "../swap/SwapUtils.sol";
 import "../position/DecreasePositionUtils.sol";
-import "../order/OrderStoreUtils.sol";
 import "../error/ErrorUtils.sol";
 
 // @title DecreaseOrderUtils

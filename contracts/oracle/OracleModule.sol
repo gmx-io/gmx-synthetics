@@ -3,7 +3,6 @@
 pragma solidity ^0.8.0;
 
 import "./Oracle.sol";
-import "../event/EventEmitter.sol";
 
 // @title OracleModule
 // @dev Provides convenience functions for interacting with the Oracle

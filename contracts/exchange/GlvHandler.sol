@@ -5,7 +5,6 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "./BaseHandler.sol";
-import "../callback/CallbackUtils.sol";
 import "../exchange/IDepositHandler.sol";
 import "../exchange/IShiftHandler.sol";
 
@@ -15,8 +14,6 @@ import "../glv/GlvDepositUtils.sol";
 import "../glv/GlvDepositStoreUtils.sol";
 import "../glv/GlvVault.sol";
 import "../glv/GlvDeposit.sol";
-import "../deposit/DepositUtils.sol";
-import "../deposit/ExecuteDepositUtils.sol";
 import "../shift/ShiftUtils.sol";
 
 contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {

@@ -10,7 +10,6 @@ import "../market/MarketToken.sol";
 import "../market/MarketUtils.sol";
 
 import "./IReferralStorage.sol";
-import "./ReferralTier.sol";
 import "./ReferralEventUtils.sol";
 
 import "../utils/Precision.sol";

@@ -3,7 +3,6 @@
 pragma solidity ^0.8.0;
 
 import "../data/DataStore.sol";
-import "../data/Keys.sol";
 
 // @title FeatureUtils
 // @dev Library to validate if a feature is enabled or disabled

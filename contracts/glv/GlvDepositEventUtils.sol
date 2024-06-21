@@ -7,7 +7,6 @@ import "../event/EventUtils.sol";
 import "../utils/Cast.sol";
 
 import "./GlvDeposit.sol";
-import "../pricing/ISwapPricingUtils.sol";
 
 library GlvDepositEventUtils {
     using GlvDeposit for GlvDeposit.Props;

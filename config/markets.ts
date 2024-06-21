@@ -176,7 +176,7 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   thresholdForStableFunding: 0,
   thresholdForDecreaseFunding: 0,
   minFundingFactorPerSecond: 0,
-  maxFundingFactorPerSecond: 0,
+  maxFundingFactorPerSecond: decimalToFloat(1, 7), // 0.00001%, 0.864% per day, 315.36% per year
 
   positionImpactPoolDistributionRate: 0,
   minPositionImpactPoolAmount: 0,

@@ -13,15 +13,10 @@ import "./OrderEventUtils.sol";
 
 import "../nonce/NonceUtils.sol";
 import "../oracle/Oracle.sol";
-import "../oracle/OracleUtils.sol";
 import "../event/EventEmitter.sol";
 
-import "./IncreaseOrderUtils.sol";
-import "./DecreaseOrderUtils.sol";
-import "./SwapOrderUtils.sol";
 import "./BaseOrderUtils.sol";
-
-import "../swap/SwapUtils.sol";
+import "./IBaseOrderUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";

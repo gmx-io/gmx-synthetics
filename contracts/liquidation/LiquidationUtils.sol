@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.0;
 
-import "../position/PositionUtils.sol";
 import "../position/PositionStoreUtils.sol";
 import "../order/OrderStoreUtils.sol";
 import "../order/OrderEventUtils.sol";

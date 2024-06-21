@@ -2,11 +2,11 @@
 
 pragma solidity ^0.8.0;
 
-import "../exchange/IDepositHandler.sol";
-import "../exchange/IWithdrawalHandler.sol";
-import "../exchange/IShiftHandler.sol";
-import "../exchange/IOrderHandler.sol";
-import "../exchange/IGlvHandler.sol";
+import "../deposit/DepositUtils.sol";
+import "../withdrawal/WithdrawalUtils.sol";
+import "../oracle/OracleUtils.sol";
+import "../shift/ShiftUtils.sol";
+import "../order/IBaseOrderUtils.sol";
 
 interface IExchangeRouter {
     function createDeposit(
