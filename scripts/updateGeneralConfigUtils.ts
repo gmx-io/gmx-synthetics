@@ -170,8 +170,8 @@ const processGeneralConfig = async ({ generalConfig, handleConfig }) => {
     "uint",
     keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE,
     "0x",
-    generalConfig.estimatedGasPerOraclePriceKey,
-    `estimatedGasPerOraclePriceKey`
+    generalConfig.estimatedGasPerOraclePrice,
+    `estimatedGasPerOraclePrice`
   );
 
   await handleConfig(
@@ -200,8 +200,8 @@ const processGeneralConfig = async ({ generalConfig, handleConfig }) => {
     "uint",
     keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE,
     "0x",
-    generalConfig.executionGasPerOraclePriceKey,
-    `executionGasPerOraclePriceKey`
+    generalConfig.executionGasPerOraclePrice,
+    `executionGasPerOraclePrice`
   );
 
   await handleConfig(

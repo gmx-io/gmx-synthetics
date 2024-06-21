@@ -32,11 +32,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       nativeTokenTransferGasLimit: 50_000,
 
       estimatedGasFeeBaseAmount: 0,
-      estimatedGasPerOraclePriceKey: 0,
+      estimatedGasPerOraclePrice: 0,
       estimatedGasFeeMultiplierFactor: 0,
 
       executionGasFeeBaseAmount: 0,
-      executionGasPerOraclePriceKey: 0,
+      executionGasPerOraclePrice: 0,
       executionGasFeeMultiplierFactor: 0,
 
       requestExpirationTime: 300,
@@ -82,11 +82,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     nativeTokenTransferGasLimit: 50_000,
 
     estimatedGasFeeBaseAmount: 400_000, // measured gas for an order execution without any main logic: ~400,000
-    estimatedGasPerOraclePriceKey: 50_000,
+    estimatedGasPerOraclePrice: 221_441,
     estimatedGasFeeMultiplierFactor: expandDecimals(1, 30), // 1x
 
     executionGasFeeBaseAmount: 400_000, // measured gas for an order execution without any main logic: ~400,000
-    executionGasPerOraclePriceKey: 50_000,
+    executionGasPerOraclePrice: 221_441,
     executionGasFeeMultiplierFactor: expandDecimals(1, 30), // 1x
 
     requestExpirationTime: 300,
