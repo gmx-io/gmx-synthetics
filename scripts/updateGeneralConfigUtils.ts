@@ -174,13 +174,19 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     }
   }
 
-  await handleConfig(
-    "uint",
-    keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE,
-    "0x",
-    generalConfig.estimatedGasPerOraclePrice,
-    `estimatedGasPerOraclePrice`
-  );
+  if (generalConfig.estimatedGasPerOraclePrice) {
+    await handleConfig(
+      "uint",
+      keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE,
+      "0x",
+      generalConfig.estimatedGasPerOraclePrice,
+      `estimatedGasPerOraclePrice`
+    );
+
+    if (network.name === "arbitrum") {
+      throw new Error("estimatedGasPerOraclePrice should be updated in a separate keeper");
+    }
+  }
 
   await handleConfig(
     "uint",
@@ -204,13 +210,19 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     }
   }
 
-  await handleConfig(
-    "uint",
-    keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE,
-    "0x",
-    generalConfig.executionGasPerOraclePrice,
-    `executionGasPerOraclePrice`
-  );
+  if (generalConfig.executionGasPerOraclePrice) {
+    await handleConfig(
+      "uint",
+      keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE,
+      "0x",
+      generalConfig.executionGasPerOraclePrice,
+      `executionGasPerOraclePrice`
+    );
+
+    if (network.name === "arbitrum") {
+      throw new Error("executionGasPerOraclePrice should be updated in a separate keeper");
+    }
+  }
 
   await handleConfig(
     "uint",
