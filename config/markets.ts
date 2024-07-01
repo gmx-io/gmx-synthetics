@@ -616,8 +616,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(1410, 18),
       maxShortTokenPoolAmount: expandDecimals(4_800_000, 6),
 
-      maxLongTokenPoolUsdForDeposit: decimalToFloat(4_300_000),
-      maxShortTokenPoolUsdForDeposit: decimalToFloat(4_300_000),
+      maxLongTokenPoolAmountForDeposit: expandDecimals(1260, 18),
+      maxShortTokenPoolAmountForDeposit: expandDecimals(4_300_000, 6),
 
       negativePositionImpactFactor: decimalToFloat(2, 8),
       positivePositionImpactFactor: decimalToFloat(1, 8),
@@ -1253,8 +1253,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
 
-      maxOpenInterestForLongs: decimalToFloat(1_500_000),
-      maxOpenInterestForShorts: decimalToFloat(1_500_000),
+      maxOpenInterestForLongs: decimalToFloat(10_000_000),
+      maxOpenInterestForShorts: decimalToFloat(10_000_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(136, 14), // 0.00000000000136, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -1291,17 +1291,17 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
 
-      // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
-      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(6, 11),
-      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(6, 11),
+      // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
+      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
+      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
 
-      maxOpenInterestForLongs: decimalToFloat(1_500_000),
-      maxOpenInterestForShorts: decimalToFloat(1_500_000),
+      maxOpenInterestForLongs: decimalToFloat(10_000_000),
+      maxOpenInterestForShorts: decimalToFloat(10_000_000),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(79, 14), // 0.0000000000079, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(136, 14), // 0.00000000000136, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(10, 9), // 0.000001%,  0.0864% per day, ~31.5% per year
+      maxFundingFactorPerSecond: decimalToFloat(17, 9), // 0.0000017%,  0.14212% per hour, 53.61% per year
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
@@ -1338,8 +1338,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
 
-      maxOpenInterestForLongs: decimalToFloat(1_000_000),
-      maxOpenInterestForShorts: decimalToFloat(1_000_000),
+      maxOpenInterestForLongs: decimalToFloat(10_000_000),
+      maxOpenInterestForShorts: decimalToFloat(10_000_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(136, 14), // 0.00000000000136, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -1370,17 +1370,17 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
 
-      // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
-      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(6, 11),
-      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(6, 11),
+      // minCollateralFactor of 0.01 (1%) when open interest is 50,000,000 USD
+      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
+      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
 
-      maxOpenInterestForLongs: decimalToFloat(1_000_000),
-      maxOpenInterestForShorts: decimalToFloat(1_000_000),
+      maxOpenInterestForLongs: decimalToFloat(10_000_000),
+      maxOpenInterestForShorts: decimalToFloat(10_000_000),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(79, 14), // 0.0000000000079, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: decimalToFloat(136, 14), // 0.00000000000136, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(10, 9), // 0.000001%,  0.0864% per day, ~31.5% per year
+      maxFundingFactorPerSecond: decimalToFloat(17, 9), // 0.0000017%,  0.14212% per hour, 53.61% per year
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
@@ -1626,6 +1626,7 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
 
+      // minCollateralFactor of 0.01 (1%) when open interest is 500,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 8),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 8),
 
