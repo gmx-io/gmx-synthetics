@@ -2,15 +2,11 @@
 
 pragma solidity ^0.8.0;
 
-import "../v1/IVaultV1.sol";
 import "../v1/IRouterV1.sol";
 
 import "../data/DataStore.sol";
-import "../role/RoleModule.sol";
-import "../fee/FeeUtils.sol";
 import "../fee/FeeBatchStoreUtils.sol";
 import "../market/Market.sol";
-import "../nonce/NonceUtils.sol";
 import "../router/IExchangeRouter.sol";
 
 // @title FeeSwapUtils
@@ -116,6 +112,7 @@ library FeeSwapUtils {
     ) internal view returns (IBaseOrderUtils.CreateOrderParams memory) {
         IBaseOrderUtils.CreateOrderParamsAddresses memory addresses = IBaseOrderUtils.CreateOrderParamsAddresses(
             address(this), // receiver
+            address(this), // cancellationReceiver
             address(this), // callbackContract
             address(0), // uiFeeReceiver
             market, // market
@@ -142,6 +139,7 @@ library FeeSwapUtils {
             Order.DecreasePositionSwapType.NoSwap, // decreasePositionSwapType
             false, // isLong
             false, // shouldUnwrapNativeToken
+            false, // autoCancel
             bytes32(0) // referralCode
         );
 

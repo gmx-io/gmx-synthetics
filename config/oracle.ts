@@ -3,11 +3,13 @@ import { TOKEN_ORACLE_TYPES } from "../utils/oracle";
 import { decimalToFloat } from "../utils/math";
 import { BigNumberish } from "ethers";
 
+export type OracleProvider = "gmOracle" | "chainlinkDataStream";
+
 type OracleRealPriceFeed = {
   address: string;
   decimals: number;
   heartbeatDuration: number;
-  stablePrice?: number;
+  stablePrice?: BigNumberish;
   deploy?: never;
   initPrice?: never;
 };
@@ -16,7 +18,7 @@ type OracleTestPriceFeed = {
   address?: never;
   decimals: number;
   heartbeatDuration: number;
-  stablePrice?: number;
+  stablePrice?: BigNumberish;
   deploy: true;
   initPrice: string;
 };
@@ -24,11 +26,12 @@ type OracleTestPriceFeed = {
 type OraclePriceFeed = OracleRealPriceFeed | OracleTestPriceFeed;
 
 export type OracleConfig = {
-  realtimeFeedVerifier: string;
   signers: string[];
+  dataStreamFeedVerifier?: string;
   minOracleSigners: number;
   minOracleBlockConfirmations: number;
   maxOraclePriceAge: number;
+  maxOracleTimestampRange: number;
   maxRefPriceDeviationFactor: BigNumberish;
   tokens?: {
     [tokenSymbol: string]: {
@@ -48,20 +51,21 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
 
   const config: { [network: string]: OracleConfig } = {
     localhost: {
-      realtimeFeedVerifier: ethers.constants.AddressZero,
       signers: testSigners,
       minOracleSigners: 0,
       minOracleBlockConfirmations: 255,
       maxOraclePriceAge: 60 * 60 * 24,
+      maxOracleTimestampRange: 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
     },
 
     hardhat: {
-      realtimeFeedVerifier: ethers.constants.AddressZero,
       signers: testSigners,
       minOracleSigners: 0,
       minOracleBlockConfirmations: 255,
       maxOraclePriceAge: 60 * 60,
+      maxOracleTimestampRange: 60,
+      chainlinkPaymentToken: "0x99bbA657f2BbC93c02D617f8bA121cB8Fc104Acf",
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       tokens: {
         USDC: {
@@ -80,16 +84,26 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             initPrice: "100000000",
           },
         },
+        WETH: {
+          priceFeed: {
+            decimals: 8,
+            heartbeatDuration: 24 * 60 * 60,
+            deploy: true,
+            initPrice: "500000000000",
+          },
+        },
       },
     },
 
     arbitrum: {
-      realtimeFeedVerifier: "0xDBaeB34DF0AcfA564a49e13840C5CE2894C4b886",
       signers: ["0x0F711379095f2F0a6fdD1e8Fccd6eBA0833c1F1f"],
       maxOraclePriceAge: 5 * 60,
+      maxOracleTimestampRange: 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       minOracleBlockConfirmations: 255,
       minOracleSigners: 1,
+      dataStreamFeedVerifier: "0x478Aa2aC9F6D65F84e09D9185d126c3a17c2a93C",
+      chainlinkPaymentToken: "0xf97f4df75117a78c1A5a0DBb814Af92458539FB4",
 
       // price feeds https://docs.chain.link/data-feeds/price-feeds/addresses/?network=arbitrum#Arbitrum%20Mainnet
       tokens: {
@@ -235,12 +249,14 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     },
 
     avalanche: {
-      realtimeFeedVerifier: "0xaaf548a3A74939650d7A5d7550Cf785975ed400a",
       signers: ["0x7f2CA7713AACD279f7753F804163189E4831c1EE"],
       maxOraclePriceAge: 5 * 60,
+      maxOracleTimestampRange: 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       minOracleBlockConfirmations: 255,
       minOracleSigners: 1,
+      dataStreamFeedVerifier: "0x79BAa65505C6682F16F9b2C7F8afEBb1821BE3f6",
+      chainlinkPaymentToken: "0x5947BB275c521040051D82396192181b413227A3",
 
       // price feeds https://docs.chain.link/data-feeds/price-feeds/addresses/?network=avalanche#Avalanche%20Mainnet
       tokens: {
@@ -309,12 +325,14 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     },
 
     arbitrumSepolia: {
-      realtimeFeedVerifier: "0xF7d27557369D05ad2B3d020af78480Ed6a2ca1f9",
       signers: ["0xb38302e27bAe8932536A84ab362c3d1013420Cb4"],
       maxOraclePriceAge: 5 * 60,
+      maxOracleTimestampRange: 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       minOracleBlockConfirmations: 255,
       minOracleSigners: 1,
+      dataStreamFeedVerifier: "0x2ff010DEbC1297f19579B4246cad07bd24F2488A",
+      chainlinkPaymentToken: "0xb1D4538B4571d411F07960EF2838Ce337FE1E80E",
 
       // price feeds https://docs.chain.link/data-feeds/price-feeds/addresses?network=arbitrum&page=1
       tokens: {
@@ -338,9 +356,9 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     },
 
     arbitrumGoerli: {
-      realtimeFeedVerifier: "0x09DFf56A4fF44e0f4436260A04F5CFa65636A481",
       signers: ["0xFb11f15f206bdA02c224EDC744b0E50E46137046", "0x23247a1A80D01b9482E9d734d2EB780a3b5c8E6c"],
       maxOraclePriceAge: 5 * 60,
+      maxOracleTimestampRange: 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       minOracleBlockConfirmations: 255,
       minOracleSigners: 1,
@@ -372,12 +390,14 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     },
 
     avalancheFuji: {
-      realtimeFeedVerifier: "0x5f64394a2Ab3AcE9eCC071568Fc552489a8de7AF",
       signers: ["0xFb11f15f206bdA02c224EDC744b0E50E46137046", "0x23247a1A80D01b9482E9d734d2EB780a3b5c8E6c"],
       maxOraclePriceAge: 5 * 60,
+      maxOracleTimestampRange: 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       minOracleBlockConfirmations: 255,
       minOracleSigners: 1,
+      dataStreamFeedVerifier: "0x2bf612C65f5a4d388E687948bb2CF842FFb8aBB3",
+      chainlinkPaymentToken: "0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846",
 
       // price feeds https://docs.chain.link/data-feeds/price-feeds/addresses?network=avalanche#Avalanche%20Testnet
       tokens: {

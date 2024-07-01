@@ -56,6 +56,87 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         _;
     }
 
+    function setFundingRate(
+        address market,
+        uint256 maxFundingFactorPerSecond
+    ) external onlyKeeper nonReentrant {
+        uint256 limit = dataStore.getUint(Keys.MAX_FUNDING_FACTOR_PER_SECOND_LIMIT);
+
+        if (maxFundingFactorPerSecond > limit) {
+            revert Errors.MaxFundingFactorPerSecondLimitExceeded(maxFundingFactorPerSecond, limit);
+        }
+
+        dataStore.setUint(Keys.maxFundingFactorPerSecondKey(market), maxFundingFactorPerSecond);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "maxFundingFactorPerSecond", maxFundingFactorPerSecond);
+        eventEmitter.emitEventLog1(
+            "ConfigSetFundingRate",
+            Cast.toBytes32(market),
+            eventData
+        );
+    }
+
+    function setPriceFeed(
+        address token,
+        address priceFeed,
+        uint256 priceFeedMultiplier,
+        uint256 priceFeedHeartbeatDuration,
+        uint256 stablePrice
+    ) external onlyConfigKeeper nonReentrant {
+        if (dataStore.getAddress(Keys.priceFeedKey(token)) != address(0)) {
+            revert Errors.PriceFeedAlreadyExistsForToken(token);
+        }
+
+        dataStore.setAddress(Keys.priceFeedKey(token), priceFeed);
+        dataStore.setUint(Keys.priceFeedMultiplierKey(token), priceFeedMultiplier);
+        dataStore.setUint(Keys.priceFeedHeartbeatDurationKey(token), priceFeedHeartbeatDuration);
+        dataStore.setUint(Keys.stablePriceKey(token), stablePrice);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "token", token);
+        eventData.addressItems.setItem(1, "priceFeed", priceFeed);
+        eventData.uintItems.initItems(3);
+        eventData.uintItems.setItem(0, "priceFeedMultiplier", priceFeedMultiplier);
+        eventData.uintItems.setItem(1, "priceFeedHeartbeatDuration", priceFeedHeartbeatDuration);
+        eventData.uintItems.setItem(2, "stablePrice", stablePrice);
+        eventEmitter.emitEventLog1(
+            "ConfigSetPriceFeed",
+            Cast.toBytes32(token),
+            eventData
+        );
+    }
+
+    function setDataStream(
+        address token,
+        bytes32 feedId,
+        uint256 dataStreamMultiplier
+    ) external onlyTimelockAdmin nonReentrant {
+        if (dataStore.getBytes32(Keys.dataStreamIdKey(token)) != bytes32(0)) {
+            revert Errors.DataStreamIdAlreadyExistsForToken(token);
+        }
+
+        dataStore.setBytes32(Keys.dataStreamIdKey(token), feedId);
+        dataStore.setUint(Keys.dataStreamMultiplierKey(token), dataStreamMultiplier);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "token", token);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "feedId", feedId);
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "dataStreamMultiplier", dataStreamMultiplier);
+        eventEmitter.emitEventLog1(
+            "ConfigSetDataStream",
+            Cast.toBytes32(token),
+            eventData
+        );
+    }
+
     function setClaimableCollateralFactorForTime(
         address market,
         address token,
@@ -125,6 +206,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         dataStore.setUint(Keys.minPositionImpactPoolAmountKey(market), minPositionImpactPoolAmount);
         dataStore.setUint(Keys.positionImpactPoolDistributionRateKey(market), positionImpactPoolDistributionRate);
+
+        dataStore.setUint(Keys.positionImpactPoolDistributedAtKey(market), Chain.currentTimestamp());
 
         EventUtils.EventLogData memory eventData;
 
@@ -307,12 +390,13 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.MAX_SWAP_PATH_LENGTH] = true;
         allowedBaseKeys[Keys.MAX_CALLBACK_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.REFUND_EXECUTION_FEE_GAS_LIMIT] = true;
 
         allowedBaseKeys[Keys.MIN_POSITION_SIZE_USD] = true;
         allowedBaseKeys[Keys.MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS] = true;
 
         allowedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
-        allowedBaseKeys[Keys.MAX_POOL_AMOUNT_FOR_DEPOSIT] = true;
+        allowedBaseKeys[Keys.MAX_POOL_USD_FOR_DEPOSIT] = true;
         allowedBaseKeys[Keys.MAX_OPEN_INTEREST] = true;
 
         allowedBaseKeys[Keys.MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT] = true;
@@ -321,15 +405,26 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.CANCEL_DEPOSIT_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.EXECUTE_DEPOSIT_FEATURE_DISABLED] = true;
 
+        allowedBaseKeys[Keys.GLV_SHIFT_FEATURE_DISABLED] = true;
+
         allowedBaseKeys[Keys.CREATE_WITHDRAWAL_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CANCEL_WITHDRAWAL_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.EXECUTE_WITHDRAWAL_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED] = true;
+
+        allowedBaseKeys[Keys.CREATE_SHIFT_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.CANCEL_SHIFT_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.EXECUTE_SHIFT_FEATURE_DISABLED] = true;
 
         allowedBaseKeys[Keys.CREATE_ORDER_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.EXECUTE_ORDER_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.EXECUTE_ADL_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.UPDATE_ORDER_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CANCEL_ORDER_FEATURE_DISABLED] = true;
+
+        allowedBaseKeys[Keys.CREATE_GLV_DEPOSIT_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.CANCEL_GLV_DEPOSIT_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED] = true;
 
         allowedBaseKeys[Keys.CLAIM_FUNDING_FEES_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CLAIM_COLLATERAL_FEATURE_DISABLED] = true;
@@ -340,20 +435,30 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS] = true;
         allowedBaseKeys[Keys.MAX_ORACLE_PRICE_AGE] = true;
+        allowedBaseKeys[Keys.MAX_ORACLE_TIMESTAMP_RANGE] = true;
+        allowedBaseKeys[Keys.ORACLE_TIMESTAMP_ADJUSTMENT] = true;
+        allowedBaseKeys[Keys.ORACLE_PROVIDER_FOR_TOKEN] = true;
+        allowedBaseKeys[Keys.CHAINLINK_PAYMENT_TOKEN] = true;
+        allowedBaseKeys[Keys.SEQUENCER_GRACE_DURATION] = true;
         allowedBaseKeys[Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR] = true;
+
         allowedBaseKeys[Keys.POSITION_FEE_RECEIVER_FACTOR] = true;
         allowedBaseKeys[Keys.SWAP_FEE_RECEIVER_FACTOR] = true;
         allowedBaseKeys[Keys.BORROWING_FEE_RECEIVER_FACTOR] = true;
 
-        allowedBaseKeys[Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT] = true;
+        allowedBaseKeys[Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1] = true;
+        allowedBaseKeys[Keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE] = true;
         allowedBaseKeys[Keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR] = true;
 
-        allowedBaseKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT] = true;
+        allowedBaseKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1] = true;
+        allowedBaseKeys[Keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE] = true;
         allowedBaseKeys[Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR] = true;
 
         allowedBaseKeys[Keys.DEPOSIT_GAS_LIMIT] = true;
-        // use Keys.withdrawalGasLimitKey() here because it is double hashed
-        allowedBaseKeys[Keys.withdrawalGasLimitKey()] = true;
+        allowedBaseKeys[Keys.GLV_DEPOSIT_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.GLV_PER_MARKET_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.WITHDRAWAL_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.SHIFT_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.SINGLE_SWAP_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.INCREASE_ORDER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.DECREASE_ORDER_GAS_LIMIT] = true;
@@ -361,7 +466,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.TOKEN_TRANSFER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT] = true;
 
-        allowedBaseKeys[Keys.REQUEST_EXPIRATION_BLOCK_AGE] = true;
+        allowedBaseKeys[Keys.REQUEST_EXPIRATION_TIME] = true;
         allowedBaseKeys[Keys.MIN_COLLATERAL_FACTOR] = true;
         allowedBaseKeys[Keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER] = true;
         allowedBaseKeys[Keys.MIN_COLLATERAL_USD] = true;
@@ -379,8 +484,11 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.SWAP_IMPACT_FACTOR] = true;
         allowedBaseKeys[Keys.SWAP_IMPACT_EXPONENT_FACTOR] = true;
         allowedBaseKeys[Keys.SWAP_FEE_FACTOR] = true;
+        allowedBaseKeys[Keys.ATOMIC_SWAP_FEE_FACTOR] = true;
 
         allowedBaseKeys[Keys.MAX_UI_FEE_FACTOR] = true;
+        allowedBaseKeys[Keys.MAX_AUTO_CANCEL_ORDERS] = true;
+        allowedBaseKeys[Keys.MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS] = true;
 
         allowedBaseKeys[Keys.ORACLE_TYPE] = true;
 
@@ -396,22 +504,34 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.FUNDING_DECREASE_FACTOR_PER_SECOND] = true;
         allowedBaseKeys[Keys.MIN_FUNDING_FACTOR_PER_SECOND] = true;
         allowedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND] = true;
+        allowedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND_LIMIT] = true;
         allowedBaseKeys[Keys.THRESHOLD_FOR_STABLE_FUNDING] = true;
         allowedBaseKeys[Keys.THRESHOLD_FOR_DECREASE_FUNDING] = true;
 
+        allowedBaseKeys[Keys.OPTIMAL_USAGE_FACTOR] = true;
+        allowedBaseKeys[Keys.BASE_BORROWING_FACTOR] = true;
+        allowedBaseKeys[Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR] = true;
         allowedBaseKeys[Keys.BORROWING_FACTOR] = true;
         allowedBaseKeys[Keys.BORROWING_EXPONENT_FACTOR] = true;
         allowedBaseKeys[Keys.SKIP_BORROWING_FEE_FOR_SMALLER_SIDE] = true;
 
         allowedBaseKeys[Keys.PRICE_FEED_HEARTBEAT_DURATION] = true;
+
+        allowedBaseKeys[Keys.IS_GLV_MARKET_DISABLED] = true;
+        allowedBaseKeys[Keys.GLV_MAX_MARKET_TOKEN_BALANCE_USD] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {
-        allowedLimitedBaseKeys[Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT] = true;
-        allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT] = true;
+        allowedLimitedBaseKeys[Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1] = true;
+        allowedLimitedBaseKeys[Keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE] = true;
+        allowedLimitedBaseKeys[Keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR] = true;
+
+        allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1] = true;
+        allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE] = true;
+        allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR] = true;
 
         allowedLimitedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
-        allowedLimitedBaseKeys[Keys.MAX_POOL_AMOUNT_FOR_DEPOSIT] = true;
+        allowedLimitedBaseKeys[Keys.MAX_POOL_USD_FOR_DEPOSIT] = true;
         allowedLimitedBaseKeys[Keys.MAX_OPEN_INTEREST] = true;
     }
 
@@ -442,23 +562,77 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param value the value to be set
     function _validateRange(bytes32 baseKey, uint256 value) internal pure {
         if (
+            baseKey == Keys.SEQUENCER_GRACE_DURATION
+        ) {
+            // 2 hours
+            if (value > 7200) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (
+            baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND ||
+            baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND_LIMIT
+        ) {
+            // 0.00001% per second, ~315% per year
+            if (value > 100000000000000000000000) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (
+            baseKey == Keys.BORROWING_FACTOR ||
+            baseKey == Keys.BASE_BORROWING_FACTOR ||
+            baseKey == Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR
+        ) {
+            // 0.000005% per second, ~157% per year at 100% utilization
+            if (value > 50000000000000000000000) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (
+            baseKey == Keys.FUNDING_EXPONENT_FACTOR ||
+            baseKey == Keys.BORROWING_EXPONENT_FACTOR
+        ) {
+            // revert if value > 2
+            if (value > 2 * Precision.FLOAT_PRECISION) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (
+            baseKey == Keys.POSITION_IMPACT_EXPONENT_FACTOR ||
+            baseKey == Keys.SWAP_IMPACT_EXPONENT_FACTOR
+        ) {
+            // revert if value > 3
+            if (value > 3 * Precision.FLOAT_PRECISION) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (
             baseKey == Keys.FUNDING_FACTOR ||
-            baseKey == Keys.BORROWING_FACTOR
+            baseKey == Keys.BORROWING_FACTOR ||
+            baseKey == Keys.FUNDING_INCREASE_FACTOR_PER_SECOND ||
+            baseKey == Keys.FUNDING_DECREASE_FACTOR_PER_SECOND ||
+            baseKey == Keys.MIN_COLLATERAL_FACTOR
         ) {
             // revert if value > 1%
             if (value > 1 * Precision.FLOAT_PRECISION / 100) {
-                revert Errors.InvalidFeeFactor(baseKey, value);
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }
 
         if (
             baseKey == Keys.SWAP_FEE_FACTOR ||
             baseKey == Keys.POSITION_FEE_FACTOR ||
-            baseKey == Keys.MAX_UI_FEE_FACTOR
+            baseKey == Keys.MAX_UI_FEE_FACTOR ||
+            baseKey == Keys.ATOMIC_SWAP_FEE_FACTOR
         ) {
             // revert if value > 5%
             if (value > 5 * Precision.FLOAT_PRECISION / 100) {
-                revert Errors.InvalidFeeFactor(baseKey, value);
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }
 
@@ -466,13 +640,13 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.POSITION_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.SWAP_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.BORROWING_FEE_RECEIVER_FACTOR ||
-            baseKey == Keys.MIN_COLLATERAL_FACTOR ||
             baseKey == Keys.MAX_PNL_FACTOR ||
-            baseKey == Keys.MIN_PNL_FACTOR_AFTER_ADL
+            baseKey == Keys.MIN_PNL_FACTOR_AFTER_ADL ||
+            baseKey == Keys.OPTIMAL_USAGE_FACTOR
         ) {
             // revert if value > 100%
             if (value > Precision.FLOAT_PRECISION) {
-                revert Errors.InvalidFeeFactor(baseKey, value);
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }
     }

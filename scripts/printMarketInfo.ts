@@ -104,6 +104,11 @@ async function main() {
   let propsCount = 0;
 
   for (const market of markets) {
+    console.log(
+      "keys.savedFundingFactorPerSecondKey(market.marketToken)",
+      market.marketToken,
+      keys.savedFundingFactorPerSecondKey(market.marketToken)
+    );
     for (const [prop, key] of [
       ["positionImpactPoolAmount", keys.positionImpactPoolAmountKey(market.marketToken)],
       ["swapImpactPoolAmountLong", keys.swapImpactPoolAmountKey(market.marketToken, market.longToken)],
@@ -151,7 +156,10 @@ async function main() {
       multicallReadParams.push({
         target: dataStore.address,
         allowFailure: false,
-        callData: dataStore.interface.encodeFunctionData("getUint", [key]),
+        callData: dataStore.interface.encodeFunctionData(
+          prop === "savedFundingFactorPerSecond" ? "getInt" : "getUint",
+          [key]
+        ),
       });
     }
 

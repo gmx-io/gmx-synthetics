@@ -47,8 +47,6 @@ describe("Exchange.FundingFees.AdaptiveFunding", () => {
     await dataStore.setUint(keys.minFundingFactorPerSecondKey(ethUsdMarket.marketToken), 0);
     await dataStore.setUint(keys.maxFundingFactorPerSecondKey(ethUsdMarket.marketToken), decimalToFloat(1));
 
-    expect(await dataStore.getUint(keys.fundingUpdatedAtKey(ethUsdMarket.marketToken))).eq(0);
-
     // user0 opens a $106k long position, using wnt as collateral
     await handleOrder(fixture, {
       create: {

@@ -2,8 +2,6 @@
 
 pragma solidity ^0.8.0;
 
-import "../adl/AdlUtils.sol";
-
 import "../data/DataStore.sol";
 
 import "./WithdrawalVault.sol";
@@ -11,9 +9,7 @@ import "./WithdrawalStoreUtils.sol";
 import "./WithdrawalEventUtils.sol";
 
 import "../nonce/NonceUtils.sol";
-import "../pricing/SwapPricingUtils.sol";
 import "../oracle/Oracle.sol";
-import "../oracle/OracleUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
@@ -39,6 +35,12 @@ library WithdrawalUtils {
     using EventUtils for EventUtils.Bytes32Items;
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
+
+    enum WithdrawalType {
+        Normal,
+        Shift,
+        Glv
+    }
 
     /**
      * @param receiver The address that will receive the withdrawal tokens.
@@ -119,6 +121,7 @@ library WithdrawalUtils {
                 params.minLongTokenAmount,
                 params.minShortTokenAmount,
                 Chain.currentBlockNumber(),
+                Chain.currentTimestamp(),
                 params.executionFee,
                 params.callbackGasLimit
             ),
@@ -130,13 +133,14 @@ library WithdrawalUtils {
         CallbackUtils.validateCallbackGasLimit(dataStore, withdrawal.callbackGasLimit());
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(dataStore, withdrawal);
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee);
+        uint256 oraclePriceCount = GasUtils.estimateWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length);
+        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
 
         WithdrawalStoreUtils.set(dataStore, key, withdrawal);
 
-        WithdrawalEventUtils.emitWithdrawalCreated(eventEmitter, key, withdrawal);
+        WithdrawalEventUtils.emitWithdrawalCreated(eventEmitter, key, withdrawal, WithdrawalType.Normal);
 
         return key;
     }
@@ -164,6 +168,7 @@ library WithdrawalUtils {
         startingGas -= gasleft() / 63;
 
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
+
         if (withdrawal.account() == address(0)) {
             revert Errors.EmptyWithdrawal();
         }
@@ -196,10 +201,13 @@ library WithdrawalUtils {
             dataStore,
             eventEmitter,
             withdrawalVault,
+            key,
+            withdrawal.callbackContract(),
             withdrawal.executionFee(),
             startingGas,
+            GasUtils.estimateWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length),
             keeper,
-            withdrawal.account()
+            withdrawal.receiver()
         );
     }
 }

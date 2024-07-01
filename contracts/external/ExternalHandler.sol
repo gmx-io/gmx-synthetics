@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+import "./IExternalHandler.sol";
 import "../error/Errors.sol";
 
 // contracts with a CONTROLLER role or other roles may need to call external
@@ -20,10 +21,14 @@ import "../error/Errors.sol";
 // e.g. some tokens require the approved amount to be zero before the approved amount
 // can be changed, this should be taken into account if calling approve is required for
 // these tokens
-contract ExternalHandler is ReentrancyGuard {
+contract ExternalHandler is IExternalHandler, ReentrancyGuard {
     using Address for address;
     using SafeERC20 for IERC20;
 
+    // @notice refundTokens should be unique, this is because the refund loop
+    // sends the full refund token balance on each iteration, so if there are
+    // duplicate refund token addresses, then only the first refundReceiver
+    // for that token would receive the tokens
     function makeExternalCalls(
         address[] memory targets,
         bytes[] memory dataList,

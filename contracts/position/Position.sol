@@ -71,6 +71,8 @@ library Position {
         uint256 shortTokenClaimableFundingAmountPerSize;
         uint256 increasedAtBlock;
         uint256 decreasedAtBlock;
+        uint256 increasedAtTime;
+        uint256 decreasedAtTime;
     }
 
     // @param isLong whether the position is a long or short
@@ -174,11 +176,38 @@ library Position {
         props.numbers.decreasedAtBlock = value;
     }
 
+    function increasedAtTime(Props memory props) internal pure returns (uint256) {
+        return props.numbers.increasedAtTime;
+    }
+
+    function setIncreasedAtTime(Props memory props, uint256 value) internal pure {
+        props.numbers.increasedAtTime = value;
+    }
+
+    function decreasedAtTime(Props memory props) internal pure returns (uint256) {
+        return props.numbers.decreasedAtTime;
+    }
+
+    function setDecreasedAtTime(Props memory props, uint256 value) internal pure {
+        props.numbers.decreasedAtTime = value;
+    }
+
     function isLong(Props memory props) internal pure returns (bool) {
         return props.flags.isLong;
     }
 
     function setIsLong(Props memory props, bool value) internal pure {
         props.flags.isLong = value;
+    }
+
+    // @dev get the key for a position
+    // @param account the position's account
+    // @param market the position's market
+    // @param collateralToken the position's collateralToken
+    // @param isLong whether the position is long or short
+    // @return the position key
+    function getPositionKey(address _account, address _market, address _collateralToken, bool _isLong) internal pure returns (bytes32) {
+        bytes32 _key = keccak256(abi.encode(_account, _market, _collateralToken, _isLong));
+        return _key;
     }
 }

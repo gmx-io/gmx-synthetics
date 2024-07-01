@@ -61,7 +61,8 @@ describe("Guardian.FrozenOrder", () => {
       decimalToFloat(10_000), // sizeDeltaUsd
       expandDecimals(5200, 12), // acceptablePrice
       expandDecimals(5200, 12), // triggerPrice
-      expandDecimals(52000, 6) // minOutputAmount
+      expandDecimals(52000, 6), // minOutputAmount
+      false // autoCancel
     );
 
     const orderPostUpdate = await reader.getOrder(dataStore.address, orderKeys[0]);
@@ -140,7 +141,8 @@ describe("Guardian.FrozenOrder", () => {
       decimalToFloat(10_000), // sizeDeltaUsd
       expandDecimals(5200, 12), // acceptablePrice
       expandDecimals(5200, 12), // triggerPrice
-      expandDecimals(52000, 6) // minOutputAmount
+      expandDecimals(52000, 6), // minOutputAmount
+      false // autoCancel
     );
 
     const orderPostUpdate = await reader.getOrder(dataStore.address, orderKeys[0]);
@@ -218,7 +220,8 @@ describe("Guardian.FrozenOrder", () => {
       decimalToFloat(10_000), // sizeDeltaUsd
       expandDecimals(5200, 12), // acceptablePrice
       expandDecimals(5200, 12), // triggerPrice
-      expandDecimals(52000, 6) // minOutputAmount
+      expandDecimals(52000, 6), // minOutputAmount
+      false // autoCancel
     );
 
     const orderPostUpdate = await reader.getOrder(dataStore.address, orderKeys[0]);

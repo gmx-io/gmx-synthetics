@@ -5,8 +5,8 @@ const constructorContracts = [
   "RoleStore",
   "DataStore",
   "EventEmitter",
-  "OrderVault",
   "Oracle",
+  "OrderVault",
   "SwapHandler",
   "ReferralStorage",
 ];
@@ -17,7 +17,7 @@ const func = createDeployFunction({
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
-  libraryNames: ["MarketStoreUtils", "OrderUtils", "OrderStoreUtils", "OrderEventUtils"],
+  libraryNames: ["MarketStoreUtils", "OrderUtils", "ExecuteOrderUtils", "OrderStoreUtils", "OrderEventUtils"],
   afterDeploy: async ({ deployedContract, getNamedAccounts, deployments, network }) => {
     const { deployer } = await getNamedAccounts();
     const { execute } = deployments;
@@ -28,7 +28,7 @@ const func = createDeployFunction({
 
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
   },
-  id: "OrderHandler_3",
+  id: "OrderHandler_6",
 });
 
 export default func;

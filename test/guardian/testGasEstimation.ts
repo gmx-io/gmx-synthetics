@@ -46,10 +46,12 @@ describe("Guardian.GasEstimation", () => {
   it("Estimates gas properly for deposits with a single token", async () => {
     // Create a deposit for a single token
     const singleTokenDepositGasLimitKey = keys.depositGasLimitKey(true);
-    const baseGasLimitKey = keys.ESTIMATED_GAS_FEE_BASE_AMOUNT;
+    const baseGasLimitKey = keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1;
+    const gasPerOraclePriceKey = keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE;
     const gasMultiplierKey = keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR;
 
-    await dataStore.setUint(baseGasLimitKey, 100_000);
+    await dataStore.setUint(baseGasLimitKey, 50_000);
+    await dataStore.setUint(gasPerOraclePriceKey, 16_600);
     await dataStore.setUint(singleTokenDepositGasLimitKey, 200_000);
     await dataStore.setUint(gasMultiplierKey, expandDecimals(15, 29)); // 1.5x
 
@@ -77,10 +79,12 @@ describe("Guardian.GasEstimation", () => {
   it("Estimates gas properly for deposits with two tokens", async () => {
     // Create a deposit for a single token
     const doubleTokenDepositGasLimitKey = keys.depositGasLimitKey(false);
-    const baseGasLimitKey = keys.ESTIMATED_GAS_FEE_BASE_AMOUNT;
+    const baseGasLimitKey = keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1;
+    const gasPerOraclePriceKey = keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE;
     const gasMultiplierKey = keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR;
 
-    await dataStore.setUint(baseGasLimitKey, 100_000);
+    await dataStore.setUint(baseGasLimitKey, 50_000);
+    await dataStore.setUint(gasPerOraclePriceKey, 16_600);
     await dataStore.setUint(doubleTokenDepositGasLimitKey, 300_000);
     await dataStore.setUint(gasMultiplierKey, expandDecimals(15, 29)); // 1.5x
 
@@ -110,12 +114,13 @@ describe("Guardian.GasEstimation", () => {
   it("Estimates gas properly for deposits with swapPaths", async () => {
     await grantRole(roleStore, wallet.address, "CONFIG_KEEPER");
 
-    await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT, "0x", 100_000);
+    await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1, "0x", 50_000);
+    await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE, "0x", 7_000);
     await config.connect(wallet).setUint(keys.DEPOSIT_GAS_LIMIT, encodeData(["bool"], [false]), 300_000);
     await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, "0x", expandDecimals(15, 29)); // 1.5x
     await config.connect(wallet).setUint(keys.SINGLE_SWAP_GAS_LIMIT, "0x", 25_000);
 
-    // Gas required is around 0.00055 ETH + (4 * 0.000025 ETH * 1.5) = 0.0007 ETH, create fails
+    // Gas required is around 50_000 + 7_000 * 7 prices + (4 swaps * 25_000 + 300_000) * 1.5 = 0.0007 ETH, create fails
     await expect(
       createDeposit(fixture, {
         market: ethUsdMarket,
@@ -145,12 +150,13 @@ describe("Guardian.GasEstimation", () => {
   it("Estimates gas properly for withdrawals with swapPaths", async () => {
     await grantRole(roleStore, wallet.address, "CONFIG_KEEPER");
 
-    await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT, "0x", 100_000);
-    await config.connect(wallet).setUint(keys.withdrawalGasLimitKey(), "0x", 300_000);
+    await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1, "0x", 50_000);
+    await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE, "0x", 7_000);
+    await config.connect(wallet).setUint(keys.WITHDRAWAL_GAS_LIMIT, "0x", 300_000);
     await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, "0x", expandDecimals(15, 29)); // 1.5x
     await config.connect(wallet).setUint(keys.SINGLE_SWAP_GAS_LIMIT, "0x", 25_000);
 
-    // Gas required is around 0.00055 ETH + (4 * 0.000025 ETH * 1.5) = 0.0007 ETH, create fails
+    // Gas required is around 50_000 + 7_000 * 7 prices + (4 swaps * 25_000 + 300_000) * 1.5 = 0.0007 ETH, create fails
     await expect(
       createWithdrawal(fixture, {
         market: ethUsdMarket,
@@ -178,12 +184,13 @@ describe("Guardian.GasEstimation", () => {
   it("Estimates gas properly for increase orders with swaps", async () => {
     await grantRole(roleStore, wallet.address, "CONFIG_KEEPER");
 
-    await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT, "0x", 100_000);
+    await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1, "0x", 50_000);
+    await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE, "0x", 7_000);
     await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, "0x", expandDecimals(15, 29)); // 1.5x
     await config.connect(wallet).setUint(keys.SINGLE_SWAP_GAS_LIMIT, "0x", 25_000);
     await config.connect(wallet).setUint(keys.INCREASE_ORDER_GAS_LIMIT, "0x", 300_000);
 
-    // Gas required is around 0.00055 ETH + (4 * 0.000025 ETH * 1.5) = 0.0007 ETH, create fails
+    // Gas required is around 50_000 + 7_000 * 7 prices + (4 swaps * 25_000 + 300_000) * 1.5 = 0.0007 ETH, create fails
     await expect(
       createOrder(fixture, {
         market: ethUsdMarket,
@@ -231,12 +238,13 @@ describe("Guardian.GasEstimation", () => {
   it("Estimates gas properly for decrease orders with swaps", async () => {
     await grantRole(roleStore, wallet.address, "CONFIG_KEEPER");
 
-    await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT, "0x", 100_000);
+    await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1, "0x", 50_000);
+    await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE, "0x", 7_000);
     await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, "0x", expandDecimals(15, 29)); // 1.5x
     await config.connect(wallet).setUint(keys.SINGLE_SWAP_GAS_LIMIT, "0x", 25_000);
     await config.connect(wallet).setUint(keys.DECREASE_ORDER_GAS_LIMIT, "0x", 300_000);
 
-    // Gas required is around 0.00055 ETH + (4 * 0.000025 ETH * 1.5) = 0.0007 ETH, create fails
+    // Gas required is around 50_000 + 7_000 * 7 prices + (4 swaps * 25_000 + 300_000) * 1.5 = 0.0007 ETH, create fails
     await expect(
       createOrder(fixture, {
         market: ethUsdMarket,
@@ -281,12 +289,13 @@ describe("Guardian.GasEstimation", () => {
   it("Estimates gas properly for swap orders", async () => {
     await grantRole(roleStore, wallet.address, "CONFIG_KEEPER");
 
-    await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT, "0x", 100_000);
+    await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1, "0x", 50_000);
+    await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE, "0x", 7_000);
     await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, "0x", expandDecimals(15, 29)); // 1.5x
     await config.connect(wallet).setUint(keys.SINGLE_SWAP_GAS_LIMIT, "0x", 25_000);
     await config.connect(wallet).setUint(keys.SWAP_ORDER_GAS_LIMIT, "0x", 300_000);
 
-    // Gas required is around 0.00055 ETH + (4 * 0.000025 ETH * 1.5) = 0.0007 ETH, create fails
+    // Gas required is around 50_000 + 7_000 * 7 prices + (4 swaps * 25_000 + 300_000) * 1.5 = 0.0007 ETH, create fails
     await expect(
       createOrder(fixture, {
         initialCollateralToken: wnt,

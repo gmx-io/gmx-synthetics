@@ -22,6 +22,9 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+    using EnumerableValues for EnumerableSet.Bytes32Set;
+
     uint256 public constant MAX_TIMELOCK_DELAY = 5 days;
 
     DataStore public immutable dataStore;
@@ -30,6 +33,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     uint256 public timelockDelay;
 
     mapping (bytes32 => uint256) public pendingActions;
+    EnumerableSet.Bytes32Set internal pendingActionsList;
 
     constructor(
         RoleStore _roleStore,
@@ -46,6 +50,14 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         _validateTimelockDelay();
     }
 
+    function getPendingActionsCount() internal view returns (uint256) {
+        return pendingActionsList.length();
+    }
+
+    function getPendingActionsList(uint256 start, uint256 end) internal view returns (bytes32[] memory) {
+        return pendingActionsList.valuesAt(start, end);
+    }
+
     // @dev immediately revoke the role of an account
     // @param account the account to revoke the role for
     // @param roleKey the role to revoke
@@ -59,18 +71,6 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.bytes32Items.setItem(0, "roleKey", roleKey);
         eventEmitter.emitEventLog(
             "RevokeRole",
-            eventData
-        );
-    }
-
-    function setInStrictPriceFeedMode(bool value) external onlyTimelockMultisig nonReentrant {
-        dataStore.setBool(Keys.IN_STRICT_PRICE_FEED_MODE, value);
-
-        EventUtils.EventLogData memory eventData;
-        eventData.boolItems.initItems(1);
-        eventData.boolItems.setItem(0, "value", value);
-        eventEmitter.emitEventLog(
-            "SetInStrictPriceFeedMode",
             eventData
         );
     }
@@ -91,6 +91,84 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.uintItems.setItem(0, "_timelockDelay", _timelockDelay);
         eventEmitter.emitEventLog(
             "IncreaseTimelockDelay",
+            eventData
+        );
+    }
+
+    function setOracleProviderEnabled(address provider, bool value) external onlyTimelockMultisig nonReentrant {
+        dataStore.setBool(Keys.isOracleProviderEnabledKey(provider), value);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "provider", provider);
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "value", value);
+        eventEmitter.emitEventLog(
+            "SetOracleProviderEnabled",
+            eventData
+        );
+    }
+
+    function signalSetOracleProviderEnabled(address provider, bool value) external onlyTimelockAdmin nonReentrant {
+        bytes32 actionKey = _setOracleProviderEnabledKey(provider, value);
+        _signalPendingAction(actionKey, "setOracleProviderEnabled");
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "provider", provider);
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "value", value);
+        eventEmitter.emitEventLog(
+            "SignalSetOracleProviderEnabled",
+            eventData
+        );
+    }
+
+    function setOracleProviderEnabledAfterSignal(address provider, bool value) external onlyTimelockAdmin nonReentrant {
+        bytes32 actionKey = _setOracleProviderEnabledKey(provider, value);
+        _validateAndClearAction(actionKey, "setOracleProviderEnabled");
+
+        dataStore.setBool(Keys.isOracleProviderEnabledKey(provider), value);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "provider", provider);
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "value", value);
+        eventEmitter.emitEventLog(
+            "SetOracleProviderEnabled",
+            eventData
+        );
+    }
+
+    function signalSetAtomicOracleProvider(address provider, bool value) external onlyTimelockAdmin nonReentrant {
+        bytes32 actionKey = _setAtomicOracleProviderKey(provider, value);
+        _signalPendingAction(actionKey, "setAtomicOracleProvider");
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "provider", provider);
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "value", value);
+        eventEmitter.emitEventLog(
+            "SignalSetAtomicOracleProvider",
+            eventData
+        );
+    }
+
+    function setAtomicOracleProviderAfterSignal(address provider, bool value) external onlyTimelockAdmin nonReentrant {
+        bytes32 actionKey = _setAtomicOracleProviderKey(provider, value);
+        _validateAndClearAction(actionKey, "setAtomicOracleProvider");
+
+        dataStore.setBool(Keys.isAtomicOracleProviderKey(provider), value);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "provider", provider);
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "value", value);
+        eventEmitter.emitEventLog(
+            "SetAtomicOracleProvider",
             eventData
         );
     }
@@ -360,22 +438,22 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         );
     }
 
-    // @dev signal setting of a realtime feed
-    // @param token the token to set the realtime feed for
-    // @param feedId the ID of the realtime feed
-    // @param realtimeFeedMultiplier the multiplier to apply to the realtime feed results
-    function signalSetRealtimeFeed(
+    // @dev signal setting of a data stream feed
+    // @param token the token to set the data stream feed for
+    // @param feedId the ID of the data stream feed
+    // @param dataStreamMultiplier the multiplier to apply to the data stream feed results
+    function signalSetDataStream(
         address token,
         bytes32 feedId,
-        uint256 realtimeFeedMultiplier
+        uint256 dataStreamMultiplier
     ) external onlyTimelockAdmin nonReentrant {
-        bytes32 actionKey = _setRealtimeFeedActionKey(
+        bytes32 actionKey = _setDataStreamActionKey(
             token,
             feedId,
-            realtimeFeedMultiplier
+            dataStreamMultiplier
         );
 
-        _signalPendingAction(actionKey, "setRealtimeFeed");
+        _signalPendingAction(actionKey, "setDataStream");
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);
@@ -383,33 +461,33 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "feedId", feedId);
         eventData.uintItems.initItems(1);
-        eventData.uintItems.setItem(0, "realtimeFeedMultiplier", realtimeFeedMultiplier);
+        eventData.uintItems.setItem(0, "dataStreamMultiplier", dataStreamMultiplier);
         eventEmitter.emitEventLog1(
-            "SignalSetRealtimeFeed",
+            "SignalSetDataStream",
             actionKey,
             eventData
         );
     }
 
-    // @dev sets a realtime feed
-    // @param token the token to set the realtime feed for
-    // @param feedId the ID of the realtime feed
-    // @param realtimeFeedMultiplier the multiplier to apply to the realtime feed results
-    function setRealtimeFeedAfterSignal(
+    // @dev sets a data stream feed
+    // @param token the token to set the data stream feed for
+    // @param feedId the ID of the data stream feed
+    // @param dataStreamMultiplier the multiplier to apply to the data stream feed results
+    function setDataStreamAfterSignal(
         address token,
         bytes32 feedId,
-        uint256 realtimeFeedMultiplier
+        uint256 dataStreamMultiplier
     ) external onlyTimelockAdmin nonReentrant {
-        bytes32 actionKey = _setRealtimeFeedActionKey(
+        bytes32 actionKey = _setDataStreamActionKey(
             token,
             feedId,
-            realtimeFeedMultiplier
+            dataStreamMultiplier
         );
 
-        _validateAndClearAction(actionKey, "setRealtimeFeed");
+        _validateAndClearAction(actionKey, "setDataStream");
 
-        dataStore.setBytes32(Keys.realtimeFeedIdKey(token), feedId);
-        dataStore.setUint(Keys.realtimeFeedMultiplierKey(token), realtimeFeedMultiplier);
+        dataStore.setBytes32(Keys.dataStreamIdKey(token), feedId);
+        dataStore.setUint(Keys.dataStreamMultiplierKey(token), dataStreamMultiplier);
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);
@@ -417,9 +495,9 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "feedId", feedId);
         eventData.uintItems.initItems(1);
-        eventData.uintItems.setItem(0, "realtimeFeedMultiplier", realtimeFeedMultiplier);
+        eventData.uintItems.setItem(0, "dataStreamMultiplier", dataStreamMultiplier);
         eventEmitter.emitEventLog1(
-            "SetRealtimeFeed",
+            "SetDataStream",
             actionKey,
             eventData
         );
@@ -440,6 +518,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         }
 
         pendingActions[actionKey] = Chain.currentTimestamp() + timelockDelay;
+        pendingActionsList.add(actionKey);
 
         EventUtils.EventLogData memory eventData;
 
@@ -456,32 +535,34 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         );
     }
 
-    // @dev the key for the addOracleSigner action
+    function _setOracleProviderEnabledKey(address provider, bool value) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("setOracleProviderEnabled", provider, value));
+    }
+
+    function _setAtomicOracleProviderKey(address provider, bool value) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("setAtomicOracleProvider", provider, value));
+    }
+
     function _addOracleSignerActionKey(address account) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked("addOracleSigner", account));
     }
 
-    // @dev the key for the removeOracleSigner action
     function _removeOracleSignerActionKey(address account) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked("removeOracleSigner", account));
     }
 
-    // @dev the key for the setFeeReceiver action
     function _setFeeReceiverActionKey(address account) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked("setFeeReceiver", account));
     }
 
-    // @dev the key for the grantRole action
     function _grantRoleActionKey(address account, bytes32 roleKey) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked("grantRole", account, roleKey));
     }
 
-    // @dev the key for the revokeRole action
     function _revokeRoleActionKey(address account, bytes32 roleKey) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked("revokeRole", account, roleKey));
     }
 
-    // @dev the key for the setPriceFeed action
     function _setPriceFeedActionKey(
         address token,
         address priceFeed,
@@ -499,17 +580,16 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         ));
     }
 
-    // @dev the key for the setRealtimeFeed action
-    function _setRealtimeFeedActionKey(
+    function _setDataStreamActionKey(
         address token,
         bytes32 feedId,
-        uint256 realtimeFeedMultiplier
+        uint256 dataStreamMultiplier
     ) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(
-            "setRealtimeFeed",
+            "setDataStream",
             token,
             feedId,
-            realtimeFeedMultiplier
+            dataStreamMultiplier
         ));
     }
 
@@ -537,6 +617,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
             revert Errors.ActionNotSignalled();
         }
         delete pendingActions[actionKey];
+        pendingActionsList.remove(actionKey);
 
         EventUtils.EventLogData memory eventData;
 

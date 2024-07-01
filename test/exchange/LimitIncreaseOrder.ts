@@ -58,23 +58,6 @@ describe("Exchange.LimitIncreaseOrder", () => {
         },
         execute: {
           tokens: [wnt.address, usdc.address],
-          minPrices: [expandDecimals(4995, 4), expandDecimals(1, 6)],
-          maxPrices: [expandDecimals(4995, 4), expandDecimals(1, 6)],
-          precisions: [8, 18],
-          oracleBlocks: [block0, block0],
-        },
-      })
-    ).to.be.revertedWithCustomError(errorsContract, "OracleBlockNumbersAreSmallerThanRequired");
-
-    await expect(
-      handleOrder(fixture, {
-        create: {
-          ...params,
-          initialCollateralToken: usdc,
-          initialCollateralDeltaAmount: expandDecimals(5000, 6),
-        },
-        execute: {
-          tokens: [wnt.address, usdc.address],
           minPrices: [expandDecimals(5005, 4), expandDecimals(1, 6)],
           maxPrices: [expandDecimals(5005, 4), expandDecimals(1, 6)],
           precisions: [8, 18],

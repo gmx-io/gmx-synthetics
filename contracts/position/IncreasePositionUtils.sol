@@ -2,8 +2,6 @@
 
 pragma solidity ^0.8.0;
 
-import "../utils/Precision.sol";
-
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 
@@ -14,7 +12,6 @@ import "./Position.sol";
 import "./PositionStoreUtils.sol";
 import "./PositionUtils.sol";
 import "./PositionEventUtils.sol";
-import "../order/BaseOrderUtils.sol";
 
 // @title IncreasePositionUtils
 // @dev Library for functions to help with increasing a position
@@ -63,14 +60,6 @@ library IncreasePositionUtils {
             params.contracts.oracle,
             params.market
         );
-
-        MarketUtils.distributePositionImpactPool(
-            params.contracts.dataStore,
-            params.contracts.eventEmitter,
-            params.market.marketToken
-        );
-
-        PositionUtils.updateFundingAndBorrowingState(params, prices);
 
         // create a new cache for holding intermediate results
         IncreasePositionCache memory cache;
@@ -163,6 +152,7 @@ library IncreasePositionUtils {
 
         params.position.setBorrowingFactor(cache.nextPositionBorrowingFactor);
         params.position.setIncreasedAtBlock(Chain.currentBlockNumber());
+        params.position.setIncreasedAtTime(Chain.currentTimestamp());
 
         PositionStoreUtils.set(params.contracts.dataStore, params.positionKey, params.position);
 

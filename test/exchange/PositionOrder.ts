@@ -308,12 +308,14 @@ describe("Exchange.PositionOrder", () => {
 
     const orderKeys = await getOrderKeys(dataStore, 0, 1);
 
+    const currentTimestamp = (await ethers.provider.getBlock()).timestamp;
+
     await expect(
       orderHandler.connect(user0).simulateExecuteOrder(orderKeys[0], {
         primaryTokens: [],
         primaryPrices: [],
-        secondaryTokens: [],
-        secondaryPrices: [],
+        minTimestamp: currentTimestamp,
+        maxTimestamp: currentTimestamp,
       })
     )
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
@@ -332,8 +334,8 @@ describe("Exchange.PositionOrder", () => {
             max: expandDecimals(1, 24),
           },
         ],
-        secondaryTokens: [],
-        secondaryPrices: [],
+        minTimestamp: currentTimestamp,
+        maxTimestamp: currentTimestamp,
       })
     ).to.be.revertedWithCustomError(errorsContract, "EndOfOracleSimulation");
   });

@@ -56,12 +56,8 @@ describe("Guardian.FundingFees", () => {
     await dataStore.setUint(keys.fundingFactorKey(ethUsdMarket.marketToken), decimalToFloat(5, 10));
     await dataStore.setUint(keys.fundingExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(1));
 
-    expect(await dataStore.getUint(keys.fundingUpdatedAtKey(ethUsdMarket.marketToken))).eq(0);
-
     await dataStore.setUint(keys.fundingFactorKey(ethUsdSingleTokenMarket.marketToken), decimalToFloat(5, 10));
     await dataStore.setUint(keys.fundingExponentFactorKey(ethUsdSingleTokenMarket.marketToken), decimalToFloat(1));
-
-    expect(await dataStore.getUint(keys.fundingUpdatedAtKey(ethUsdSingleTokenMarket.marketToken))).eq(0);
 
     // Normal Market - Long 200K
     // user0 opens a $200k long position, using usdc as collateral
@@ -201,12 +197,11 @@ describe("Guardian.FundingFees", () => {
     expect(homogenousMarketShortPositionInfo.position.addresses.market).to.eq(ethUsdSingleTokenMarket.marketToken);
     expect(homogenousMarketShortPositionInfo.position.flags.isLong).to.be.false;
 
-    // Notice: The Reader does not accurately value homogenous funding fees
-    expect(homogenousMarketLongPositionInfo.fees.funding.fundingFeeAmount).to.closeTo("20160000", "500");
+    expect(homogenousMarketLongPositionInfo.fees.funding.fundingFeeAmount).to.closeTo("40320000", "500");
     expect(homogenousMarketShortPositionInfo.fees.funding.fundingFeeAmount).to.eq("0");
 
-    expect(homogenousMarketShortPositionInfo.fees.funding.claimableLongTokenAmount).to.eq("10079999");
-    expect(homogenousMarketShortPositionInfo.fees.funding.claimableShortTokenAmount).to.eq("10079999");
+    expect(homogenousMarketShortPositionInfo.fees.funding.claimableLongTokenAmount).to.eq("20159999");
+    expect(homogenousMarketShortPositionInfo.fees.funding.claimableShortTokenAmount).to.eq("20159999");
 
     expect(homogenousMarketLongPositionInfo.fees.funding.claimableLongTokenAmount).to.eq(0);
     expect(homogenousMarketLongPositionInfo.fees.funding.claimableShortTokenAmount).to.eq(0);
@@ -425,8 +420,6 @@ describe("Guardian.FundingFees", () => {
   it("Funding fees match when paid in different directions", async function () {
     await dataStore.setUint(keys.fundingFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 10));
     await dataStore.setUint(keys.fundingExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(1));
-
-    expect(await dataStore.getUint(keys.fundingUpdatedAtKey(ethUsdMarket.marketToken))).eq(0);
 
     await handleDeposit(fixture, {
       create: {

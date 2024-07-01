@@ -12,12 +12,12 @@ import * as keys from "../../utils/keys";
 describe("Exchange.AdlOrder", () => {
   let fixture;
   let wallet, user0;
-  let roleStore, dataStore, ethUsdMarket, wnt, usdc;
+  let roleStore, dataStore, ethUsdMarket, wethPriceFeed, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ wallet, user0 } = fixture.accounts);
-    ({ roleStore, dataStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ roleStore, dataStore, ethUsdMarket, wethPriceFeed, wnt, usdc } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -46,6 +46,8 @@ describe("Exchange.AdlOrder", () => {
     await dataStore.setUint(maxPnlFactorForAdlKey, decimalToFloat(10, 2)); // 10%
     await dataStore.setUint(minPnlFactorAfterAdlKey, decimalToFloat(2, 2)); // 2%
     await grantRole(roleStore, wallet.address, "ADL_KEEPER");
+
+    await wethPriceFeed.setAnswer(expandDecimals(10000, 8));
 
     await updateAdlState(fixture, {
       market: ethUsdMarket,

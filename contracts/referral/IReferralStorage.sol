@@ -2,8 +2,6 @@
 
 pragma solidity ^0.8.0;
 
-import "./ReferralTier.sol";
-
 // @title IReferralStorage
 // @dev Interface for ReferralStorage
 interface IReferralStorage {

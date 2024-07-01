@@ -26,6 +26,7 @@ library WithdrawalStoreUtils {
     bytes32 public constant MIN_LONG_TOKEN_AMOUNT = keccak256(abi.encode("MIN_LONG_TOKEN_AMOUNT"));
     bytes32 public constant MIN_SHORT_TOKEN_AMOUNT = keccak256(abi.encode("MIN_SHORT_TOKEN_AMOUNT"));
     bytes32 public constant UPDATED_AT_BLOCK = keccak256(abi.encode("UPDATED_AT_BLOCK"));
+    bytes32 public constant UPDATED_AT_TIME = keccak256(abi.encode("UPDATED_AT_TIME"));
     bytes32 public constant EXECUTION_FEE = keccak256(abi.encode("EXECUTION_FEE"));
     bytes32 public constant CALLBACK_GAS_LIMIT = keccak256(abi.encode("CALLBACK_GAS_LIMIT"));
 
@@ -79,6 +80,10 @@ library WithdrawalStoreUtils {
 
         withdrawal.setUpdatedAtBlock(dataStore.getUint(
             keccak256(abi.encode(key, UPDATED_AT_BLOCK))
+        ));
+
+        withdrawal.setUpdatedAtTime(dataStore.getUint(
+            keccak256(abi.encode(key, UPDATED_AT_TIME))
         ));
 
         withdrawal.setExecutionFee(dataStore.getUint(
@@ -163,6 +168,11 @@ library WithdrawalStoreUtils {
         );
 
         dataStore.setUint(
+            keccak256(abi.encode(key, UPDATED_AT_TIME)),
+            withdrawal.updatedAtTime()
+        );
+
+        dataStore.setUint(
             keccak256(abi.encode(key, EXECUTION_FEE)),
             withdrawal.executionFee()
         );
@@ -235,6 +245,10 @@ library WithdrawalStoreUtils {
 
         dataStore.removeUint(
             keccak256(abi.encode(key, UPDATED_AT_BLOCK))
+        );
+
+        dataStore.removeUint(
+            keccak256(abi.encode(key, UPDATED_AT_TIME))
         );
 
         dataStore.removeUint(

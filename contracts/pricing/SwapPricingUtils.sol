@@ -10,6 +10,7 @@ import "../utils/Precision.sol";
 import "../utils/Calc.sol";
 
 import "./PricingUtils.sol";
+import "./ISwapPricingUtils.sol";
 
 // @title SwapPricingUtils
 // @dev Library for pricing functions
@@ -45,6 +46,23 @@ library SwapPricingUtils {
         uint256 priceForTokenB;
         int256 usdDeltaForTokenA;
         int256 usdDeltaForTokenB;
+        bool includeVirtualInventoryImpact;
+    }
+
+    struct EmitSwapInfoParams {
+        bytes32 orderKey;
+        address market;
+        address receiver;
+        address tokenIn;
+        address tokenOut;
+        uint256 tokenInPrice;
+        uint256 tokenOutPrice;
+        uint256 amountIn;
+        uint256 amountInAfterFees;
+        uint256 amountOut;
+        int256 priceImpactUsd;
+        int256 priceImpactAmount;
+        int256 tokenInPriceImpactAmount;
     }
 
     // @dev PoolParams struct to contain pool values
@@ -88,7 +106,7 @@ library SwapPricingUtils {
     // @param params GetPriceImpactUsdParams
     //
     // @return the price impact in USD
-    function getPriceImpactUsd(GetPriceImpactUsdParams memory params) internal view returns (int256) {
+    function getPriceImpactUsd(GetPriceImpactUsdParams memory params) external view returns (int256) {
         PoolParams memory poolParams = getNextPoolAmountsUsd(params);
 
         int256 priceImpactUsd = _getPriceImpactUsd(params.dataStore, params.market, poolParams);
@@ -103,6 +121,10 @@ library SwapPricingUtils {
         // a negative price impact for any trade on either pools and would
         // disincentivise the balancing of pools
         if (priceImpactUsd >= 0) { return priceImpactUsd; }
+
+        if (!params.includeVirtualInventoryImpact) {
+            return priceImpactUsd;
+        }
 
         // note that the virtual pool for the long token / short token may be different across pools
         // e.g. ETH/USDC, ETH/USDT would have USDC and USDT as the short tokens
@@ -236,7 +258,8 @@ library SwapPricingUtils {
         address marketToken,
         uint256 amount,
         bool forPositiveImpact,
-        address uiFeeReceiver
+        address uiFeeReceiver,
+        ISwapPricingUtils.SwapPricingType swapPricingType
     ) internal view returns (SwapFees memory) {
         SwapFees memory fees;
 
@@ -245,7 +268,16 @@ library SwapPricingUtils {
         // it is possible for the balance to be improved overall but for the price impact to still be negative
         // in this case the fee factor for the negative price impact would be charged
         // a user could split the order into two, to incur a smaller fee, reducing the fee through this should not be a large issue
-        uint256 feeFactor = dataStore.getUint(Keys.swapFeeFactorKey(marketToken, forPositiveImpact));
+        uint256 feeFactor;
+
+        if (swapPricingType == ISwapPricingUtils.SwapPricingType.TwoStep) {
+            feeFactor = dataStore.getUint(Keys.swapFeeFactorKey(marketToken, forPositiveImpact));
+        } else if (swapPricingType == ISwapPricingUtils.SwapPricingType.Shift) {
+            // empty branch as feeFactor is already zero
+        } else if (swapPricingType == ISwapPricingUtils.SwapPricingType.Atomic) {
+            feeFactor = dataStore.getUint(Keys.atomicSwapFeeFactorKey(marketToken));
+        }
+
         uint256 swapFeeReceiverFactor = dataStore.getUint(Keys.SWAP_FEE_RECEIVER_FACTOR);
 
         uint256 feeAmount = Precision.applyFactor(amount, feeFactor);
@@ -267,45 +299,35 @@ library SwapPricingUtils {
     // amount in the swap impact pool
     function emitSwapInfo(
         EventEmitter eventEmitter,
-        bytes32 orderKey,
-        address market,
-        address receiver,
-        address tokenIn,
-        address tokenOut,
-        uint256 tokenInPrice,
-        uint256 tokenOutPrice,
-        uint256 amountIn,
-        uint256 amountInAfterFees,
-        uint256 amountOut,
-        int256 priceImpactUsd,
-        int256 priceImpactAmount
+        EmitSwapInfoParams memory params
     ) internal {
         EventUtils.EventLogData memory eventData;
 
         eventData.bytes32Items.initItems(1);
-        eventData.bytes32Items.setItem(0, "orderKey", orderKey);
+        eventData.bytes32Items.setItem(0, "orderKey", params.orderKey);
 
         eventData.addressItems.initItems(4);
-        eventData.addressItems.setItem(0, "market", market);
-        eventData.addressItems.setItem(1, "receiver", receiver);
-        eventData.addressItems.setItem(2, "tokenIn", tokenIn);
-        eventData.addressItems.setItem(3, "tokenOut", tokenOut);
+        eventData.addressItems.setItem(0, "market", params.market);
+        eventData.addressItems.setItem(1, "receiver", params.receiver);
+        eventData.addressItems.setItem(2, "tokenIn", params.tokenIn);
+        eventData.addressItems.setItem(3, "tokenOut", params.tokenOut);
 
         eventData.uintItems.initItems(5);
-        eventData.uintItems.setItem(0, "tokenInPrice", tokenInPrice);
-        eventData.uintItems.setItem(1, "tokenOutPrice", tokenOutPrice);
-        eventData.uintItems.setItem(2, "amountIn", amountIn);
+        eventData.uintItems.setItem(0, "tokenInPrice", params.tokenInPrice);
+        eventData.uintItems.setItem(1, "tokenOutPrice", params.tokenOutPrice);
+        eventData.uintItems.setItem(2, "amountIn", params.amountIn);
         // note that amountInAfterFees includes negative price impact
-        eventData.uintItems.setItem(3, "amountInAfterFees", amountInAfterFees);
-        eventData.uintItems.setItem(4, "amountOut", amountOut);
+        eventData.uintItems.setItem(3, "amountInAfterFees", params.amountInAfterFees);
+        eventData.uintItems.setItem(4, "amountOut", params.amountOut);
 
-        eventData.intItems.initItems(2);
-        eventData.intItems.setItem(0, "priceImpactUsd", priceImpactUsd);
-        eventData.intItems.setItem(1, "priceImpactAmount", priceImpactAmount);
+        eventData.intItems.initItems(3);
+        eventData.intItems.setItem(0, "priceImpactUsd", params.priceImpactUsd);
+        eventData.intItems.setItem(1, "priceImpactAmount", params.priceImpactAmount);
+        eventData.intItems.setItem(2, "tokenInPriceImpactAmount", params.tokenInPriceImpactAmount);
 
         eventEmitter.emitEventLog1(
             "SwapInfo",
-            Cast.toBytes32(market),
+            Cast.toBytes32(params.market),
             eventData
         );
     }

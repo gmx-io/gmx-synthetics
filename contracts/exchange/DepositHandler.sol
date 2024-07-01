@@ -2,44 +2,32 @@
 
 pragma solidity ^0.8.0;
 
-import "../utils/GlobalReentrancyGuard.sol";
-
-import "./ExchangeUtils.sol";
-import "../role/RoleModule.sol";
-import "../event/EventEmitter.sol";
-import "../feature/FeatureUtils.sol";
+import "./BaseHandler.sol";
 
 import "../market/Market.sol";
-import "../market/MarketToken.sol";
 
 import "../deposit/Deposit.sol";
 import "../deposit/DepositVault.sol";
 import "../deposit/DepositUtils.sol";
 import "../deposit/ExecuteDepositUtils.sol";
-import "../oracle/Oracle.sol";
-import "../oracle/OracleModule.sol";
 
 import "./IDepositHandler.sol";
 
 // @title DepositHandler
 // @dev Contract to handle creation, execution and cancellation of deposits
-contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, OracleModule {
+contract DepositHandler is IDepositHandler, BaseHandler {
     using Deposit for Deposit.Props;
 
-    EventEmitter public immutable eventEmitter;
     DepositVault public immutable depositVault;
-    Oracle public immutable oracle;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        DepositVault _depositVault,
-        Oracle _oracle
-    ) RoleModule(_roleStore) GlobalReentrancyGuard(_dataStore) {
-        eventEmitter = _eventEmitter;
+        Oracle _oracle,
+        DepositVault _depositVault
+    ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         depositVault = _depositVault;
-        oracle = _oracle;
     }
 
     // @dev creates a deposit in the deposit store
@@ -70,9 +58,8 @@ contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, O
 
         FeatureUtils.validateFeature(_dataStore, Keys.cancelDepositFeatureDisabledKey(address(this)));
 
-        ExchangeUtils.validateRequestCancellation(
-            _dataStore,
-            deposit.updatedAtBlock(),
+        validateRequestCancellation(
+            deposit.updatedAtTime(),
             "Deposit"
         );
 
@@ -97,7 +84,7 @@ contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, O
     ) external
         globalNonReentrant
         onlyOrderKeeper
-        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+        withOraclePrices(oracleParams)
     {
         uint256 startingGas = gasleft();
 
@@ -110,7 +97,6 @@ contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, O
         try this._executeDeposit{ gas: executionGas }(
             key,
             deposit,
-            oracleParams,
             msg.sender
         ) {
         } catch (bytes memory reasonBytes) {
@@ -131,16 +117,14 @@ contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, O
     ) external
         override
         onlyController
-        withSimulatedOraclePrices(oracle, params)
+        withSimulatedOraclePrices(params)
         globalNonReentrant
     {
-        OracleUtils.SetPricesParams memory oracleParams;
         Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
 
         this._executeDeposit(
             key,
             deposit,
-            oracleParams,
             msg.sender
         );
     }
@@ -152,32 +136,11 @@ contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, O
     function _executeDeposit(
         bytes32 key,
         Deposit.Props memory deposit,
-        OracleUtils.SetPricesParams memory oracleParams,
         address keeper
     ) external onlySelf {
         uint256 startingGas = gasleft();
 
         FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureDisabledKey(address(this)));
-
-        OracleUtils.RealtimeFeedReport[] memory reports = oracle.validateRealtimeFeeds(
-            dataStore,
-            oracleParams.realtimeFeedTokens,
-            oracleParams.realtimeFeedData
-        );
-
-        uint256[] memory minOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedMinOracleBlockNumbers,
-            oracleParams.tokens.length,
-            reports,
-            OracleUtils.OracleBlockNumberType.Min
-        );
-
-        uint256[] memory maxOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedMaxOracleBlockNumbers,
-            oracleParams.tokens.length,
-            reports,
-            OracleUtils.OracleBlockNumberType.Max
-        );
 
         ExecuteDepositUtils.ExecuteDepositParams memory params = ExecuteDepositUtils.ExecuteDepositParams(
             dataStore,
@@ -185,10 +148,10 @@ contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, O
             depositVault,
             oracle,
             key,
-            minOracleBlockNumbers,
-            maxOracleBlockNumbers,
             keeper,
-            startingGas
+            startingGas,
+            ISwapPricingUtils.SwapPricingType.TwoStep,
+            true // includeVirtualInventoryImpact
         );
 
         ExecuteDepositUtils.executeDeposit(params, deposit);
@@ -207,12 +170,7 @@ contract DepositHandler is IDepositHandler, GlobalReentrancyGuard, RoleModule, O
 
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
-        if (
-            OracleUtils.isOracleError(errorSelector) ||
-            errorSelector == Errors.DisabledFeature.selector
-        ) {
-            ErrorUtils.revertWithCustomError(reasonBytes);
-        }
+        validateNonKeeperError(errorSelector, reasonBytes);
 
         (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
 

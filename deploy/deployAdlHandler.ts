@@ -5,8 +5,8 @@ const constructorContracts = [
   "RoleStore",
   "DataStore",
   "EventEmitter",
-  "OrderVault",
   "Oracle",
+  "OrderVault",
   "SwapHandler",
   "ReferralStorage",
 ];
@@ -17,7 +17,15 @@ const func = createDeployFunction({
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
-  libraryNames: ["GasUtils", "OrderUtils", "AdlUtils", "MarketStoreUtils", "PositionStoreUtils", "OrderStoreUtils"],
+  libraryNames: [
+    "GasUtils",
+    "OrderUtils",
+    "ExecuteOrderUtils",
+    "AdlUtils",
+    "MarketStoreUtils",
+    "PositionStoreUtils",
+    "OrderStoreUtils",
+  ],
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
   },

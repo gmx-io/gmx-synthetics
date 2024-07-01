@@ -8,7 +8,9 @@ const constructorContracts = [
   "EventEmitter",
   "DepositHandler",
   "WithdrawalHandler",
+  "ShiftHandler",
   "OrderHandler",
+  "ExternalHandler",
 ];
 
 const func = createDeployFunction({
@@ -25,6 +27,7 @@ const func = createDeployFunction({
     "MarketStoreUtils",
     "OrderStoreUtils",
     "ReferralUtils",
+    "ShiftStoreUtils",
     "WithdrawalStoreUtils",
   ],
   afterDeploy: async ({ deployedContract }) => {

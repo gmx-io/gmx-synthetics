@@ -39,6 +39,8 @@ library DecreasePositionUtils {
         uint256 outputAmount;
         address secondaryOutputToken;
         uint256 secondaryOutputAmount;
+        uint256 orderSizeDeltaUsd;
+        uint256 orderInitialCollateralDeltaAmount;
     }
 
     // @dev decreases a position
@@ -206,14 +208,6 @@ library DecreasePositionUtils {
             params.order.setDecreasePositionSwapType(Order.DecreasePositionSwapType.NoSwap);
         }
 
-        MarketUtils.distributePositionImpactPool(
-            params.contracts.dataStore,
-            params.contracts.eventEmitter,
-            params.market.marketToken
-        );
-
-        PositionUtils.updateFundingAndBorrowingState(params, cache.prices);
-
         if (BaseOrderUtils.isLiquidationOrder(params.order.orderType())) {
             (bool isLiquidatable, string memory reason, PositionUtils.IsPositionLiquidatableInfo memory info) = PositionUtils.isPositionLiquidatable(
                 params.contracts.dataStore,
@@ -256,6 +250,7 @@ library DecreasePositionUtils {
         params.position.setSizeInTokens(params.position.sizeInTokens() - values.sizeDeltaInTokens);
         params.position.setCollateralAmount(values.remainingCollateralAmount);
         params.position.setDecreasedAtBlock(Chain.currentBlockNumber());
+        params.position.setDecreasedAtTime(Chain.currentTimestamp());
 
         PositionUtils.incrementClaimableFundingAmount(params, fees);
 
@@ -351,7 +346,9 @@ library DecreasePositionUtils {
             values.output.outputToken,
             values.output.outputAmount,
             values.output.secondaryOutputToken,
-            values.output.secondaryOutputAmount
+            values.output.secondaryOutputAmount,
+            params.order.sizeDeltaUsd(),
+            params.order.initialCollateralDeltaAmount()
         );
     }
 }

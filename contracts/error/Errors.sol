@@ -12,20 +12,27 @@ library Errors {
     error InvalidSizeDeltaForAdl(uint256 sizeDeltaUsd, uint256 positionSizeInUsd);
     error AdlNotEnabled();
 
+    // AutoCancelUtils errors
+    error MaxAutoCancelOrdersExceeded(uint256 count, uint256 maxAutoCancelOrders);
+
     // Bank errors
     error SelfTransferNotSupported(address receiver);
     error InvalidNativeTokenSender(address msgSender);
 
-    // BaseRouter
-    error CouldNotSendNativeToken(address receiver, uint256 amount);
+    // BaseHandler errors
+    error RequestNotYetCancellable(uint256 requestAge, uint256 requestExpirationAge, string requestType);
 
     // CallbackUtils errors
     error MaxCallbackGasLimitExceeded(uint256 callbackGasLimit, uint256 maxCallbackGasLimit);
+    error InsufficientGasLeftForCallback(uint256 gasToBeForwarded, uint256 callbackGasLimit);
 
     // Config errors
     error InvalidBaseKey(bytes32 baseKey);
-    error InvalidFeeFactor(bytes32 baseKey, uint256 value);
+    error ConfigValueExceedsAllowedRange(bytes32 baseKey, uint256 value);
     error InvalidClaimableFactor(uint256 value);
+    error PriceFeedAlreadyExistsForToken(address token);
+    error DataStreamIdAlreadyExistsForToken(address token);
+    error MaxFundingFactorPerSecondLimitExceeded(uint256 maxFundingFactorPerSecond, uint256 limit);
 
     // Timelock errors
     error ActionAlreadySignalled();
@@ -35,6 +42,26 @@ library Errors {
     error MaxTimelockDelayExceeded(uint256 timelockDelay);
     error InvalidFeeReceiver(address receiver);
     error InvalidOracleSigner(address receiver);
+
+    // GlvDepositStoreUtils errors
+    error GlvDepositNotFound(bytes32 key);
+    // GlvDepositUtils errors
+    error EmptyGlvDepositAmounts();
+    error EmptyGlvDeposit();
+    // GlvUtils errors
+    error EmptyGlv(address glv);
+    error GlvUnsupportedMarket(address glv, address market);
+    error GlvDisabledMarket(address glv, address market);
+    error GlvMaxMarketTokenBalanceExceeded(address glv, address market, uint256 maxMarketTokenBalanceUsd, uint256 marketTokenBalanceUsd);
+    error GlvInsufficientMarketTokenBalance(address glv, address market, uint256 marketTokenBalance, uint256 marketTokenAmount);
+    error GlvHasPendingShift(address glv);
+    error GlvShiftNotFound(bytes32 shiftKey);
+    error GlvInvalidReceiver(address glv, address receiver);
+    error GlvInvalidCallbackContract(address glvHandler, address callbackContract);
+    error GlvMarketAlreadyExists(address glv, address market);
+    error InvalidMarketTokenPrice(address market, int256 price);
+    // GlvFactory
+    error GlvAlreadyExists(address glv);
 
     // DepositStoreUtils errors
     error DepositNotFound(bytes32 key);
@@ -50,9 +77,6 @@ library Errors {
     error InvalidSwapOutputToken(address outputToken, address expectedOutputToken);
     error InvalidReceiverForFirstDeposit(address receiver, address expectedReceiver);
     error InvalidMinMarketTokensForFirstDeposit(uint256 minMarketTokens, uint256 expectedMinMarketTokens);
-
-    // ExchangeUtils errors
-    error RequestNotYetCancellable(uint256 requestAge, uint256 requestExpirationAge, string requestType);
 
     // ExternalHandler errors
     error ExternalCallFailed(bytes data);
@@ -72,6 +96,11 @@ library Errors {
     error InvalidGlpAmount(uint256 totalGlpAmountToRedeem, uint256 totalGlpAmount);
     error InvalidExecutionFeeForMigration(uint256 totalExecutionFee, uint256 msgValue);
 
+    // GlvHandler errors
+    error InvalidGlvDepositInitialShortToken(address initialLongToken, address initialShortToken);
+    error InvalidGlvDepositSwapPath(uint256 longTokenSwapPathLength, uint256 shortTokenSwapPathLength);
+    error MinGlvTokens(uint256 received, uint256 expected);
+
     // OrderHandler errors
     error OrderNotUpdatable(uint256 orderType);
     error InvalidKeeperForFrozenOrder(address keeper);
@@ -88,6 +117,7 @@ library Errors {
     error InsufficientExecutionGasForErrorHandling(uint256 startingGas, uint256 minHandleErrorGas);
     error InsufficientExecutionGas(uint256 startingGas, uint256 estimatedGasLimit, uint256 minAdditionalGasForExecution);
     error InsufficientHandleExecutionErrorGas(uint256 gas, uint256 minHandleExecutionErrorGas);
+    error InsufficientGasForCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
 
     // MarketFactory errors
     error MarketAlreadyExists(bytes32 salt, address existingMarketAddress);
@@ -111,7 +141,7 @@ library Errors {
     error OpenInterestCannotBeUpdatedForSwapOnlyMarket(address market);
     error MaxOpenInterestExceeded(uint256 openInterest, uint256 maxOpenInterest);
     error MaxPoolAmountExceeded(uint256 poolAmount, uint256 maxPoolAmount);
-    error MaxPoolAmountForDepositExceeded(uint256 poolAmount, uint256 maxPoolAmountForDeposit);
+    error MaxPoolUsdForDepositExceeded(uint256 poolUsd, uint256 maxPoolUsdForDeposit);
     error UnexpectedBorrowingFactor(uint256 positionBorrowingFactor, uint256 cumulativeBorrowingFactor);
     error UnableToGetBorrowingFactorEmptyPoolUsd();
     error UnableToGetFundingFactorEmptyOpenInterest();
@@ -127,34 +157,38 @@ library Errors {
     error UnexpectedPoolValue(int256 poolValue);
 
     // Oracle errors
-    error EmptySigner(uint256 signerIndex);
-    error InvalidBlockNumber(uint256 minOracleBlockNumber, uint256 currentBlockNumber);
-    error InvalidMinMaxBlockNumber(uint256 minOracleBlockNumber, uint256 maxOracleBlockNumber);
-    error HasRealtimeFeedId(address token, bytes32 feedId);
-    error InvalidRealtimeFeedLengths(uint256 tokensLength, uint256 dataLength);
-    error EmptyRealtimeFeedId(address token);
-    error InvalidRealtimeFeedId(address token, bytes32 feedId, bytes32 expectedFeedId);
-    error InvalidRealtimeBidAsk(address token, int192 bid, int192 ask);
-    error InvalidRealtimeBlockHash(address token, bytes32 blockHash, bytes32 expectedBlockHash);
-    error InvalidRealtimePrices(address token, int192 bid, int192 ask);
-    error RealtimeMaxPriceAgeExceeded(address token, uint256 oracleTimestamp, uint256 currentTimestamp);
+    error SequencerDown();
+    error SequencerGraceDurationNotYetPassed(uint256 timeSinceUp, uint256 sequencerGraceDuration);
+    error EmptyValidatedPrices();
+    error InvalidOracleProvider(address provider);
+    error InvalidOracleProviderForToken(address provider, address expectedProvider);
+    error GmEmptySigner(uint256 signerIndex);
+    error InvalidOracleSetPricesProvidersParam(uint256 tokensLength, uint256 providersLength);
+    error InvalidOracleSetPricesDataParam(uint256 tokensLength, uint256 dataLength);
+    error GmInvalidBlockNumber(uint256 minOracleBlockNumber, uint256 currentBlockNumber);
+    error GmInvalidMinMaxBlockNumber(uint256 minOracleBlockNumber, uint256 maxOracleBlockNumber);
+    error EmptyDataStreamFeedId(address token);
+    error InvalidDataStreamFeedId(address token, bytes32 feedId, bytes32 expectedFeedId);
+    error InvalidDataStreamBidAsk(address token, int192 bid, int192 ask);
+    error InvalidDataStreamPrices(address token, int192 bid, int192 ask);
     error MaxPriceAgeExceeded(uint256 oracleTimestamp, uint256 currentTimestamp);
-    error MinOracleSigners(uint256 oracleSigners, uint256 minOracleSigners);
-    error MaxOracleSigners(uint256 oracleSigners, uint256 maxOracleSigners);
+    error MaxOracleTimestampRangeExceeded(uint256 range, uint256 maxRange);
+    error GmMinOracleSigners(uint256 oracleSigners, uint256 minOracleSigners);
+    error GmMaxOracleSigners(uint256 oracleSigners, uint256 maxOracleSigners);
     error BlockNumbersNotSorted(uint256 minOracleBlockNumber, uint256 prevMinOracleBlockNumber);
-    error MinPricesNotSorted(address token, uint256 price, uint256 prevPrice);
-    error MaxPricesNotSorted(address token, uint256 price, uint256 prevPrice);
-    error EmptyPriceFeedMultiplier(address token);
-    error EmptyRealtimeFeedMultiplier(address token);
+    error GmMinPricesNotSorted(address token, uint256 price, uint256 prevPrice);
+    error GmMaxPricesNotSorted(address token, uint256 price, uint256 prevPrice);
+    error EmptyChainlinkPriceFeedMultiplier(address token);
+    error EmptyDataStreamMultiplier(address token);
     error InvalidFeedPrice(address token, int256 price);
-    error PriceFeedNotUpdated(address token, uint256 timestamp, uint256 heartbeatDuration);
-    error MaxSignerIndex(uint256 signerIndex, uint256 maxSignerIndex);
-    error InvalidOraclePrice(address token);
-    error InvalidSignerMinMaxPrice(uint256 minPrice, uint256 maxPrice);
-    error InvalidMedianMinMaxPrice(uint256 minPrice, uint256 maxPrice);
+    error ChainlinkPriceFeedNotUpdated(address token, uint256 timestamp, uint256 heartbeatDuration);
+    error GmMaxSignerIndex(uint256 signerIndex, uint256 maxSignerIndex);
+    error InvalidGmOraclePrice(address token);
+    error InvalidGmSignerMinMaxPrice(uint256 minPrice, uint256 maxPrice);
+    error InvalidGmMedianMinMaxPrice(uint256 minPrice, uint256 maxPrice);
     error NonEmptyTokensWithPrices(uint256 tokensWithPricesLength);
     error InvalidMinMaxForPrice(address token, uint256 min, uint256 max);
-    error EmptyPriceFeed(address token);
+    error EmptyChainlinkPriceFeed(address token);
     error PriceAlreadySet(address token, uint256 minPrice, uint256 maxPrice);
     error MaxRefPriceDeviationExceeded(
         address token,
@@ -163,30 +197,24 @@ library Errors {
         uint256 maxRefPriceDeviationFactor
     );
     error InvalidBlockRangeSet(uint256 largestMinBlockNumber, uint256 smallestMaxBlockNumber);
+    error EmptyChainlinkPaymentToken();
+    error NonAtomicOracleProvider(address provider);
 
     // OracleModule errors
     error InvalidPrimaryPricesForSimulation(uint256 primaryTokensLength, uint256 primaryPricesLength);
     error EndOfOracleSimulation();
 
     // OracleUtils errors
-    error EmptyCompactedPrice(uint256 index);
-    error EmptyCompactedBlockNumber(uint256 index);
-    error EmptyCompactedTimestamp(uint256 index);
-    error UnsupportedOracleBlockNumberType(uint256 oracleBlockNumberType);
-    error InvalidSignature(address recoveredSigner, address expectedSigner);
+    error InvalidGmSignature(address recoveredSigner, address expectedSigner);
 
     error EmptyPrimaryPrice(address token);
 
-    error OracleBlockNumbersAreSmallerThanRequired(uint256[] oracleBlockNumbers, uint256 expectedBlockNumber);
-    error OracleBlockNumberNotWithinRange(
-        uint256[] minOracleBlockNumbers,
-        uint256[] maxOracleBlockNumbers,
-        uint256 blockNumber
-    );
+    error OracleTimestampsAreSmallerThanRequired(uint256 minOracleTimestamp, uint256 expectedTimestamp);
+    error OracleTimestampsAreLargerThanRequestExpirationTime(uint256 maxOracleTimestamp, uint256 requestTimestamp, uint256 requestExpirationTime);
 
     // BaseOrderUtils errors
     error EmptyOrder();
-    error UnsupportedOrderType();
+    error UnsupportedOrderType(uint256 orderType);
     error InvalidOrderPrices(
         uint256 primaryPriceMin,
         uint256 primaryPriceMax,
@@ -204,6 +232,8 @@ library Errors {
     // OrderUtils errors
     error OrderTypeCannotBeCreated(uint256 orderType);
     error OrderAlreadyFrozen();
+    error MaxTotalCallbackGasLimitForAutoCancelOrdersExceeded(uint256 totalCallbackGasLimit, uint256 maxTotalCallbackGasLimit);
+    error InvalidReceiver(address receiver);
 
     // OrderStoreUtils errors
     error OrderNotFound(bytes32 key);
@@ -248,6 +278,16 @@ library Errors {
     // PositionPricingUtils errors
     error UsdDeltaExceedsLongOpenInterest(int256 usdDelta, uint256 longOpenInterest);
     error UsdDeltaExceedsShortOpenInterest(int256 usdDelta, uint256 shortOpenInterest);
+
+    // ShiftStoreUtils errors
+    error ShiftNotFound(bytes32 key);
+
+    // ShiftUtils errors
+    error EmptyShift();
+    error EmptyShiftAmount();
+    error ShiftFromAndToMarketAreEqual(address market);
+    error LongTokensAreNotEqual(address fromMarketLongToken, address toMarketLongToken);
+    error ShortTokensAreNotEqual(address fromMarketLongToken, address toMarketLongToken);
 
     // SwapPricingUtils errors
     error UsdDeltaExceedsPoolValue(int256 usdDelta, uint256 poolUsd);
@@ -307,6 +347,9 @@ library Errors {
         uint256 index,
         string label
     );
+
+    // WithdrawalHandler errors
+    error SwapsNotAllowedForAtomicWithdrawal(uint256 longTokenSwapPathLength, uint256 shortTokenSwapPathLength);
 
     // WithdrawalStoreUtils errors
     error WithdrawalNotFound(bytes32 key);

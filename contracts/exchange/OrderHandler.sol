@@ -5,6 +5,8 @@ pragma solidity ^0.8.0;
 import "./BaseOrderHandler.sol";
 import "../error/ErrorUtils.sol";
 import "./IOrderHandler.sol";
+import "../order/OrderUtils.sol";
+import "../order/ExecuteOrderUtils.sol";
 
 // @title OrderHandler
 // @dev Contract to handle creation, execution and cancellation of orders
@@ -17,16 +19,16 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        OrderVault _orderVault,
         Oracle _oracle,
+        OrderVault _orderVault,
         SwapHandler _swapHandler,
         IReferralStorage _referralStorage
     ) BaseOrderHandler(
         _roleStore,
         _dataStore,
         _eventEmitter,
-        _orderVault,
         _oracle,
+        _orderVault,
         _swapHandler,
         _referralStorage
     ) {}
@@ -79,6 +81,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         uint256 acceptablePrice,
         uint256 triggerPrice,
         uint256 minOutputAmount,
+        bool autoCancel,
         Order.Props memory order
     ) external override globalNonReentrant onlyController {
         FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
@@ -92,6 +95,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         order.setAcceptablePrice(acceptablePrice);
         order.setMinOutputAmount(minOutputAmount);
         order.setIsFrozen(false);
+        order.setAutoCancel(autoCancel);
 
         // allow topping up of executionFee as frozen orders
         // will have their executionFee reduced
@@ -100,13 +104,17 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         order.setExecutionFee(order.executionFee() + receivedWnt);
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee());
+        uint256 oraclePriceCount = GasUtils.estimateOrderOraclePriceCount(order.swapPath().length);
+        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee(), oraclePriceCount);
 
         order.touch();
 
         BaseOrderUtils.validateNonEmptyOrder(order);
 
         OrderStoreUtils.set(dataStore, key, order);
+
+        OrderUtils.updateAutoCancelList(dataStore, key, order, autoCancel);
+        OrderUtils.validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, order);
 
         OrderEventUtils.emitOrderUpdated(
             eventEmitter,
@@ -115,7 +123,8 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             sizeDeltaUsd,
             acceptablePrice,
             triggerPrice,
-            minOutputAmount
+            minOutputAmount,
+            order.updatedAtTime()
         );
     }
 
@@ -136,22 +145,24 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         FeatureUtils.validateFeature(_dataStore, Keys.cancelOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
 
         if (BaseOrderUtils.isMarketOrder(order.orderType())) {
-            ExchangeUtils.validateRequestCancellation(
-                _dataStore,
-                order.updatedAtBlock(),
+            validateRequestCancellation(
+                order.updatedAtTime(),
                 "Order"
             );
         }
 
         OrderUtils.cancelOrder(
-            dataStore,
-            eventEmitter,
-            orderVault,
-            key,
-            order.account(),
-            startingGas,
-            Keys.USER_INITIATED_CANCEL,
-            ""
+            OrderUtils.CancelOrderParams(
+                dataStore,
+                eventEmitter,
+                orderVault,
+                key,
+                order.account(),
+                startingGas,
+                true, // isExternalCall
+                Keys.USER_INITIATED_CANCEL,
+                ""
+            )
         );
     }
 
@@ -164,16 +175,14 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     ) external
         override
         onlyController
-        withSimulatedOraclePrices(oracle, params)
+        withSimulatedOraclePrices(params)
         globalNonReentrant
     {
-        OracleUtils.SetPricesParams memory oracleParams;
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
 
         this._executeOrder(
             key,
             order,
-            oracleParams,
             msg.sender
         );
     }
@@ -187,7 +196,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     ) external
         globalNonReentrant
         onlyOrderKeeper
-        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+        withOraclePrices(oracleParams)
     {
         uint256 startingGas = gasleft();
 
@@ -200,7 +209,6 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         try this._executeOrder{ gas: executionGas }(
             key,
             order,
-            oracleParams,
             msg.sender
         ) {
         } catch (bytes memory reasonBytes) {
@@ -216,7 +224,6 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     function _executeOrder(
         bytes32 key,
         Order.Props memory order,
-        OracleUtils.SetPricesParams memory oracleParams,
         address keeper
     ) external onlySelf {
         uint256 startingGas = gasleft();
@@ -224,7 +231,6 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(
             key,
             order,
-            oracleParams,
             keeper,
             startingGas,
             Order.SecondaryOrderType.None
@@ -239,7 +245,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
 
         FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeOrderFeatureDisabledKey(address(this), uint256(params.order.orderType())));
 
-        OrderUtils.executeOrder(params);
+        ExecuteOrderUtils.executeOrder(params);
     }
 
     // @dev handle a caught order error
@@ -256,11 +262,12 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
 
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
+        validateNonKeeperError(errorSelector, reasonBytes);
+
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         bool isMarketOrder = BaseOrderUtils.isMarketOrder(order.orderType());
 
         if (
-            OracleUtils.isOracleError(errorSelector) ||
             // if the order is already frozen, revert with the custom error to provide more information
             // on why the order cannot be executed
             order.isFrozen() ||
@@ -283,7 +290,6 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             // from this should not be significant
             // based on this it may also be advisable to disable the cancelling of orders
             // if the execution of orders is disabled
-            errorSelector == Errors.DisabledFeature.selector ||
             errorSelector == Errors.InvalidKeeperForFrozenOrder.selector ||
             errorSelector == Errors.UnsupportedOrderType.selector ||
             // the transaction is reverted for InvalidOrderPrices since the oracle prices
@@ -302,14 +308,17 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             errorSelector == Errors.InvalidPositionSizeValues.selector
         ) {
             OrderUtils.cancelOrder(
-                dataStore,
-                eventEmitter,
-                orderVault,
-                key,
-                msg.sender,
-                startingGas,
-                reason,
-                reasonBytes
+                OrderUtils.CancelOrderParams(
+                    dataStore,
+                    eventEmitter,
+                    orderVault,
+                    key,
+                    msg.sender,
+                    startingGas,
+                    true, // isExternalCall
+                    reason,
+                    reasonBytes
+                )
             );
 
             return;

@@ -78,9 +78,9 @@ describe("Config", () => {
       .to.be.revertedWithCustomError(errorsContract, "InvalidBaseKey")
       .withArgs(keys.HOLDING_ADDRESS);
 
-    expect(await dataStore.getUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT), 0);
-    await config.connect(user2).setUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT, "0x", 200);
-    expect(await dataStore.getUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT), 200);
+    expect(await dataStore.getUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1), "0");
+    await config.connect(user2).setUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1, "0x", "200");
+    expect(await dataStore.getUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1), "200");
   });
 
   it("setBool", async () => {
@@ -247,7 +247,12 @@ describe("Config", () => {
         type: "Uint",
       },
       {
-        key: keys.ESTIMATED_GAS_FEE_BASE_AMOUNT,
+        key: keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1,
+        initial: 0,
+        type: "Uint",
+      },
+      {
+        key: keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE,
         initial: 0,
         type: "Uint",
       },
@@ -282,8 +287,8 @@ describe("Config", () => {
         type: "Uint",
       },
       {
-        key: keys.REQUEST_EXPIRATION_BLOCK_AGE,
-        initial: 0,
+        key: keys.REQUEST_EXPIRATION_TIME,
+        initial: 300,
         type: "Uint",
       },
       {

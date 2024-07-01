@@ -12,6 +12,10 @@ import "hardhat/console.sol";
 library Printer {
     using SafeCast for int256;
 
+    function log(string memory str) external pure {
+        console.log(str);
+    }
+
     function log(string memory label, int256 value) internal pure {
         if (value < 0) {
             console.log(

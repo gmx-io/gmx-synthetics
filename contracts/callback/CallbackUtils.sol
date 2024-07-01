@@ -6,11 +6,13 @@ import "@openzeppelin/contracts/utils/Address.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
-import "../error/ErrorUtils.sol";
 
 import "./IOrderCallbackReceiver.sol";
 import "./IDepositCallbackReceiver.sol";
 import "./IWithdrawalCallbackReceiver.sol";
+import "./IShiftCallbackReceiver.sol";
+import "./IGasFeeCallbackReceiver.sol";
+import "./IGlvDepositCallbackReceiver.sol";
 
 // @title CallbackUtils
 // @dev most features require a two step process to complete
@@ -32,7 +34,9 @@ library CallbackUtils {
     using Address for address;
     using Deposit for Deposit.Props;
     using Withdrawal for Withdrawal.Props;
+    using Shift for Shift.Props;
     using Order for Order.Props;
+    using GlvDeposit for GlvDeposit.Props;
 
     event AfterDepositExecutionError(bytes32 key, Deposit.Props deposit);
     event AfterDepositCancellationError(bytes32 key, Deposit.Props deposit);
@@ -40,9 +44,15 @@ library CallbackUtils {
     event AfterWithdrawalExecutionError(bytes32 key, Withdrawal.Props withdrawal);
     event AfterWithdrawalCancellationError(bytes32 key, Withdrawal.Props withdrawal);
 
+    event AfterShiftExecutionError(bytes32 key, Shift.Props shift);
+    event AfterShiftCancellationError(bytes32 key, Shift.Props shift);
+
     event AfterOrderExecutionError(bytes32 key, Order.Props order);
     event AfterOrderCancellationError(bytes32 key, Order.Props order);
     event AfterOrderFrozenError(bytes32 key, Order.Props order);
+
+    event AfterGlvDepositExecutionError(bytes32 key, GlvDeposit.Props glvDeposit);
+    event AfterGlvDepositCancellationError(bytes32 key, GlvDeposit.Props glvDeposit);
 
     // @dev validate that the callbackGasLimit is less than the max specified value
     // this is to prevent callback gas limits which are larger than the max gas limits per block
@@ -57,12 +67,40 @@ library CallbackUtils {
         }
     }
 
+    function validateGasLeftForCallback(uint256 callbackGasLimit) internal view {
+        uint256 gasToBeForwarded = gasleft() / 64 * 63;
+        if (gasToBeForwarded < callbackGasLimit) {
+            revert Errors.InsufficientGasLeftForCallback(gasToBeForwarded, callbackGasLimit);
+        }
+    }
+
     function setSavedCallbackContract(DataStore dataStore, address account, address market, address callbackContract) external {
         dataStore.setAddress(Keys.savedCallbackContract(account, market), callbackContract);
     }
 
     function getSavedCallbackContract(DataStore dataStore, address account, address market) internal view returns (address) {
         return dataStore.getAddress(Keys.savedCallbackContract(account, market));
+    }
+
+    function refundExecutionFee(
+        DataStore dataStore,
+        bytes32 key,
+        address callbackContract,
+        uint256 refundFeeAmount,
+        EventUtils.EventLogData memory eventData
+    ) internal returns (bool) {
+        if (!isValidCallbackContract(callbackContract)) { return false; }
+
+        uint256 gasLimit = dataStore.getUint(Keys.REFUND_EXECUTION_FEE_GAS_LIMIT);
+
+        try IGasFeeCallbackReceiver(callbackContract).refundExecutionFee{ gas: gasLimit, value: refundFeeAmount }(
+            key,
+            eventData
+        ) {
+            return true;
+        } catch {
+            return false;
+        }
     }
 
     // @dev called after a deposit execution
@@ -74,6 +112,8 @@ library CallbackUtils {
         EventUtils.EventLogData memory eventData
     ) internal {
         if (!isValidCallbackContract(deposit.callbackContract())) { return; }
+
+        validateGasLeftForCallback(deposit.callbackGasLimit());
 
         try IDepositCallbackReceiver(deposit.callbackContract()).afterDepositExecution{ gas: deposit.callbackGasLimit() }(
             key,
@@ -95,6 +135,8 @@ library CallbackUtils {
     ) internal {
         if (!isValidCallbackContract(deposit.callbackContract())) { return; }
 
+        validateGasLeftForCallback(deposit.callbackGasLimit());
+
         try IDepositCallbackReceiver(deposit.callbackContract()).afterDepositCancellation{ gas: deposit.callbackGasLimit() }(
             key,
             deposit,
@@ -114,6 +156,8 @@ library CallbackUtils {
         EventUtils.EventLogData memory eventData
     ) internal {
         if (!isValidCallbackContract(withdrawal.callbackContract())) { return; }
+
+        validateGasLeftForCallback(withdrawal.callbackGasLimit());
 
         try IWithdrawalCallbackReceiver(withdrawal.callbackContract()).afterWithdrawalExecution{ gas: withdrawal.callbackGasLimit() }(
             key,
@@ -135,6 +179,8 @@ library CallbackUtils {
     ) internal {
         if (!isValidCallbackContract(withdrawal.callbackContract())) { return; }
 
+        validateGasLeftForCallback(withdrawal.callbackGasLimit());
+
         try IWithdrawalCallbackReceiver(withdrawal.callbackContract()).afterWithdrawalCancellation{ gas: withdrawal.callbackGasLimit() }(
             key,
             withdrawal,
@@ -142,6 +188,43 @@ library CallbackUtils {
         ) {
         } catch {
             emit AfterWithdrawalCancellationError(key, withdrawal);
+        }
+    }
+
+    function afterShiftExecution(
+        bytes32 key,
+        Shift.Props memory shift,
+        EventUtils.EventLogData memory eventData
+    ) internal {
+        if (!isValidCallbackContract(shift.callbackContract())) { return; }
+
+        validateGasLeftForCallback(shift.callbackGasLimit());
+
+        try IShiftCallbackReceiver(shift.callbackContract()).afterShiftExecution{ gas: shift.callbackGasLimit() }(
+            key,
+            shift,
+            eventData
+        ) {
+        } catch {
+            emit AfterShiftExecutionError(key, shift);
+        }
+    }
+    function afterShiftCancellation(
+        bytes32 key,
+        Shift.Props memory shift,
+        EventUtils.EventLogData memory eventData
+    ) internal {
+        if (!isValidCallbackContract(shift.callbackContract())) { return; }
+
+        validateGasLeftForCallback(shift.callbackGasLimit());
+
+        try IShiftCallbackReceiver(shift.callbackContract()).afterShiftCancellation{ gas: shift.callbackGasLimit() }(
+            key,
+            shift,
+            eventData
+        ) {
+        } catch {
+            emit AfterShiftCancellationError(key, shift);
         }
     }
 
@@ -157,6 +240,8 @@ library CallbackUtils {
         EventUtils.EventLogData memory eventData
     ) internal {
         if (!isValidCallbackContract(order.callbackContract())) { return; }
+
+        validateGasLeftForCallback(order.callbackGasLimit());
 
         try IOrderCallbackReceiver(order.callbackContract()).afterOrderExecution{ gas: order.callbackGasLimit() }(
             key,
@@ -178,6 +263,8 @@ library CallbackUtils {
     ) internal {
         if (!isValidCallbackContract(order.callbackContract())) { return; }
 
+        validateGasLeftForCallback(order.callbackGasLimit());
+
         try IOrderCallbackReceiver(order.callbackContract()).afterOrderCancellation{ gas: order.callbackGasLimit() }(
             key,
             order,
@@ -198,6 +285,8 @@ library CallbackUtils {
     ) internal {
         if (!isValidCallbackContract(order.callbackContract())) { return; }
 
+        validateGasLeftForCallback(order.callbackGasLimit());
+
         try IOrderCallbackReceiver(order.callbackContract()).afterOrderFrozen{ gas: order.callbackGasLimit() }(
             key,
             order,
@@ -205,6 +294,46 @@ library CallbackUtils {
         ) {
         } catch {
             emit AfterOrderFrozenError(key, order);
+        }
+    }
+
+    // @dev called after a glvDeposit execution
+    // @param key the key of the glvDeposit
+    // @param glvDeposit the glvDeposit that was executed
+    function afterGlvDepositExecution(
+        bytes32 key,
+        GlvDeposit.Props memory glvDeposit,
+        EventUtils.EventLogData memory eventData
+    ) internal {
+        if (!isValidCallbackContract(glvDeposit.callbackContract())) { return; }
+
+        try IGlvDepositCallbackReceiver(glvDeposit.callbackContract()).afterGlvDepositExecution{ gas: glvDeposit.callbackGasLimit() }(
+            key,
+            glvDeposit,
+            eventData
+        ) {
+        } catch {
+            emit AfterGlvDepositExecutionError(key, glvDeposit);
+        }
+    }
+
+    // @dev called after a glvDeposit cancellation
+    // @param key the key of the glvDeposit
+    // @param glvDeposit the glvDeposit that was cancelled
+    function afterGlvDepositCancellation(
+        bytes32 key,
+        GlvDeposit.Props memory glvDeposit,
+        EventUtils.EventLogData memory eventData
+    ) internal {
+        if (!isValidCallbackContract(glvDeposit.callbackContract())) { return; }
+
+        try IGlvDepositCallbackReceiver(glvDeposit.callbackContract()).afterGlvDepositCancellation{ gas: glvDeposit.callbackGasLimit() }(
+            key,
+            glvDeposit,
+            eventData
+        ) {
+        } catch {
+            emit AfterGlvDepositCancellationError(key, glvDeposit);
         }
     }
 

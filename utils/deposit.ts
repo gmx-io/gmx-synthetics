@@ -90,8 +90,8 @@ export async function executeDeposit(fixture, overrides: any = {}) {
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const depositKeys = await getDepositKeys(dataStore, 0, 1);
-  const realtimeFeedTokens = overrides.realtimeFeedTokens || [];
-  const realtimeFeedData = overrides.realtimeFeedData || [];
+  const dataStreamTokens = overrides.dataStreamTokens || [];
+  const dataStreamData = overrides.dataStreamData || [];
   const priceFeedTokens = overrides.priceFeedTokens || [];
   let depositKey = overrides.depositKey;
   let oracleBlockNumber = overrides.oracleBlockNumber;
@@ -115,8 +115,8 @@ export async function executeDeposit(fixture, overrides: any = {}) {
     maxPrices,
     execute: depositHandler.executeDeposit,
     gasUsageLabel,
-    realtimeFeedTokens,
-    realtimeFeedData,
+    dataStreamTokens,
+    dataStreamData,
     priceFeedTokens,
   };
 

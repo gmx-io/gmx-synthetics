@@ -2,9 +2,6 @@
 
 pragma solidity ^0.8.0;
 
-import "../utils/Precision.sol";
-import "../error/ErrorUtils.sol";
-
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 
@@ -13,12 +10,10 @@ import "../pricing/PositionPricingUtils.sol";
 
 import "./Position.sol";
 import "./PositionEventUtils.sol";
-import "./PositionStoreUtils.sol";
 import "./PositionUtils.sol";
 import "../order/BaseOrderUtils.sol";
 import "../order/OrderEventUtils.sol";
 
-import "../swap/SwapUtils.sol";
 import "./DecreasePositionSwapUtils.sol";
 
 // @title DecreasePositionCollateralUtils
@@ -611,7 +606,8 @@ library DecreasePositionCollateralUtils {
             params.orderKey,
             params.position.collateralAmount(),
             values.basePnlUsd,
-            collateralCache.result.remainingCostUsd
+            collateralCache.result.remainingCostUsd,
+            step
         );
 
         return (values, getEmptyFees(fees));

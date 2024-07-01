@@ -45,6 +45,7 @@ library Withdrawal {
         uint256 minLongTokenAmount;
         uint256 minShortTokenAmount;
         uint256 updatedAtBlock;
+        uint256 updatedAtTime;
         uint256 executionFee;
         uint256 callbackGasLimit;
     }
@@ -140,6 +141,14 @@ library Withdrawal {
 
     function setUpdatedAtBlock(Props memory props, uint256 value) internal pure {
         props.numbers.updatedAtBlock = value;
+    }
+
+    function updatedAtTime(Props memory props) internal pure returns (uint256) {
+        return props.numbers.updatedAtTime;
+    }
+
+    function setUpdatedAtTime(Props memory props, uint256 value) internal pure {
+        props.numbers.updatedAtTime = value;
     }
 
     function executionFee(Props memory props) internal pure returns (uint256) {

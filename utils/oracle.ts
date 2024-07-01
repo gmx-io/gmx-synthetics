@@ -1,5 +1,6 @@
 import { bigNumberify, expandDecimals, MAX_UINT8, MAX_UINT32, MAX_UINT64 } from "./math";
 import { hashString, hashData } from "./hash";
+import * as keys from "./keys";
 
 import BN from "bn.js";
 
@@ -185,7 +186,7 @@ export function getCompactedOracleTimestamps(timestamps) {
   });
 }
 
-export async function getOracleParamsForSimulation({ tokens, minPrices, maxPrices, precisions }) {
+export async function getOracleParamsForSimulation({ tokens, minPrices, maxPrices, precisions, oracleTimestamps }) {
   if (tokens.length !== minPrices.length) {
     throw new Error(`Invalid input, tokens.length != minPrices.length ${tokens}, ${minPrices}`);
   }
@@ -194,40 +195,38 @@ export async function getOracleParamsForSimulation({ tokens, minPrices, maxPrice
     throw new Error(`Invalid input, tokens.length != maxPrices.length ${tokens}, ${maxPrices}`);
   }
 
+  const currentTimestamp = (await ethers.provider.getBlock()).timestamp + 2;
+  let minTimestamp = currentTimestamp;
+  let maxTimestamp = currentTimestamp;
+  for (const timestamp of oracleTimestamps) {
+    if (timestamp < minTimestamp) {
+      minTimestamp = timestamp;
+    }
+    if (timestamp > maxTimestamp) {
+      maxTimestamp = timestamp;
+    }
+  }
+
   const primaryTokens = [];
   const primaryPrices = [];
-  const secondaryTokens = [];
-  const secondaryPrices = [];
-
-  const recordedTokens = {};
 
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
     const precisionMultiplier = expandDecimals(1, precisions[i]);
     const minPrice = minPrices[i].mul(precisionMultiplier);
     const maxPrice = maxPrices[i].mul(precisionMultiplier);
-    if (!recordedTokens[token]) {
-      primaryTokens.push(token);
-      primaryPrices.push({
-        min: minPrice,
-        max: maxPrice,
-      });
-    } else {
-      secondaryTokens.push(token);
-      secondaryPrices.push({
-        min: minPrice,
-        max: maxPrice,
-      });
-    }
-
-    recordedTokens[token] = true;
+    primaryTokens.push(token);
+    primaryPrices.push({
+      min: minPrice,
+      max: maxPrice,
+    });
   }
 
   return {
     primaryTokens,
     primaryPrices,
-    secondaryTokens,
-    secondaryPrices,
+    minTimestamp,
+    maxTimestamp,
   };
 }
 
@@ -244,16 +243,22 @@ export async function getOracleParams({
   minPrices,
   maxPrices,
   signers,
-  realtimeFeedTokens,
-  realtimeFeedData,
+  dataStreamTokens,
+  dataStreamData,
   priceFeedTokens,
 }) {
   const signerInfo = getSignerInfo(signerIndexes);
-  const allMinPrices = [];
-  const allMaxPrices = [];
-  const minPriceIndexes = [];
-  const maxPriceIndexes = [];
-  const signatures = [];
+
+  const dataStore = await hre.ethers.getContract("DataStore");
+  const gmOracleProvider = await hre.ethers.getContract("GmOracleProvider");
+  const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
+  const chainlinkDataStreamFeedProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
+
+  const params = {
+    tokens: [],
+    providers: [],
+    data: [],
+  };
 
   for (let i = 0; i < tokens.length; i++) {
     const minOracleBlockNumber = minOracleBlockNumbers[i];
@@ -266,6 +271,10 @@ export async function getOracleParams({
 
     const minPrice = minPrices[i];
     const maxPrice = maxPrices[i];
+
+    const signatures = [];
+    const signedMinPrices = [];
+    const signedMaxPrices = [];
 
     for (let j = 0; j < signers.length; j++) {
       const signature = await signPrice({
@@ -281,57 +290,59 @@ export async function getOracleParams({
         minPrice,
         maxPrice,
       });
-      allMinPrices.push(minPrice.toString());
-      minPriceIndexes.push(j);
-      allMaxPrices.push(maxPrice.toString());
-      maxPriceIndexes.push(j);
+
+      signedMinPrices.push(minPrice);
+      signedMaxPrices.push(maxPrice);
       signatures.push(signature);
     }
+
+    const data = ethers.utils.defaultAbiCoder.encode(
+      ["tuple(address, uint256, uint256, uint256, uint256, uint256, bytes32, uint256[], uint256[], bytes[])"],
+      [
+        [
+          token,
+          signerInfo,
+          precision,
+          minOracleBlockNumber,
+          maxOracleBlockNumber,
+          oracleTimestamp,
+          blockHash,
+          signedMinPrices,
+          signedMaxPrices,
+          signatures,
+        ],
+      ]
+    );
+
+    params.tokens.push(token);
+    params.providers.push(gmOracleProvider.address);
+    params.data.push(data);
   }
 
-  return {
-    signerInfo,
-    tokens,
-    compactedMinOracleBlockNumbers: getCompactedOracleBlockNumbers(minOracleBlockNumbers),
-    compactedMaxOracleBlockNumbers: getCompactedOracleBlockNumbers(maxOracleBlockNumbers),
-    compactedOracleTimestamps: getCompactedOracleTimestamps(oracleTimestamps),
-    compactedDecimals: getCompactedDecimals(precisions),
-    compactedMinPrices: getCompactedPrices(allMinPrices),
-    compactedMinPricesIndexes: getCompactedPriceIndexes(minPriceIndexes),
-    compactedMaxPrices: getCompactedPrices(allMaxPrices),
-    compactedMaxPricesIndexes: getCompactedPriceIndexes(maxPriceIndexes),
-    signatures,
-    priceFeedTokens,
-    realtimeFeedTokens,
-    realtimeFeedData,
-  };
+  for (let i = 0; i < priceFeedTokens.length; i++) {
+    const token = priceFeedTokens[i];
+    await dataStore.setAddress(keys.oracleProviderForTokenKey(token), chainlinkPriceFeedProvider.address);
+    params.tokens.push(token);
+    params.providers.push(chainlinkPriceFeedProvider.address);
+    params.data.push("0x");
+  }
+
+  for (let i = 0; i < dataStreamTokens.length; i++) {
+    const token = dataStreamTokens[i];
+    await dataStore.setAddress(keys.oracleProviderForTokenKey(token), chainlinkDataStreamFeedProvider.address);
+    params.tokens.push(token);
+    params.providers.push(chainlinkDataStreamFeedProvider.address);
+    params.data.push(dataStreamData[i]);
+  }
+
+  return params;
 }
 
-export function encodeRealtimeData(data) {
-  const {
-    feedId,
-    observationsTimestamp,
-    median,
-    bid,
-    ask,
-    blocknumberUpperBound,
-    upperBlockhash,
-    blocknumberLowerBound,
-    currentBlockTimestamp,
-  } = data;
+export function encodeDataStreamData(data) {
+  const { feedId, validFromTimestamp, observationsTimestamp, nativeFee, linkFee, expiresAt, price, bid, ask } = data;
 
   return ethers.utils.defaultAbiCoder.encode(
-    ["bytes32", "uint32", "int192", "int192", "int192", "uint64", "bytes32", "uint64", "uint64"],
-    [
-      feedId,
-      observationsTimestamp,
-      median,
-      bid,
-      ask,
-      blocknumberUpperBound,
-      upperBlockhash,
-      blocknumberLowerBound,
-      currentBlockTimestamp,
-    ]
+    ["bytes32", "uint32", "uint32", "uint192", "uint192", "uint32", "int192", "int192", "int192"],
+    [feedId, validFromTimestamp, observationsTimestamp, nativeFee, linkFee, expiresAt, price, bid, ask]
   );
 }

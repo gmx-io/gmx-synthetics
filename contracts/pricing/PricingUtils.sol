@@ -2,11 +2,8 @@
 
 pragma solidity ^0.8.0;
 
-import "prb-math/contracts/PRBMathUD60x18.sol";
-
 import "../utils/Calc.sol";
 import "../utils/Precision.sol";
-import "../market/MarketUtils.sol";
 
 // @title PricingUtils
 // @dev Library for pricing functions

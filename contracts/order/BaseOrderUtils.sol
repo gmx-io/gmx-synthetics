@@ -10,7 +10,6 @@ import "../event/EventEmitter.sol";
 import "../referral/IReferralStorage.sol";
 
 import "../order/OrderVault.sol";
-import "../order/IBaseOrderUtils.sol";
 
 import "../oracle/Oracle.sol";
 import "../swap/SwapHandler.sol";
@@ -32,8 +31,8 @@ library BaseOrderUtils {
     // @param key the key of the order to execute
     // @param order the order to execute
     // @param swapPathMarkets the market values of the markets in the swapPath
-    // @param minOracleBlockNumbers the min oracle block numbers
-    // @param maxOracleBlockNumbers the max oracle block numbers
+    // @param minOracleTimestamp the min oracle timestamp
+    // @param maxOracleTimestamp the max oracle timestamp
     // @param market market values of the trading market
     // @param keeper the keeper sending the transaction
     // @param startingGas the starting gas
@@ -43,8 +42,8 @@ library BaseOrderUtils {
         bytes32 key;
         Order.Props order;
         Market.Props[] swapPathMarkets;
-        uint256[] minOracleBlockNumbers;
-        uint256[] maxOracleBlockNumbers;
+        uint256 minOracleTimestamp;
+        uint256 maxOracleTimestamp;
         Market.Props market;
         address keeper;
         uint256 startingGas;
@@ -227,7 +226,7 @@ library BaseOrderUtils {
             return;
         }
 
-        revert Errors.UnsupportedOrderType();
+        revert Errors.UnsupportedOrderType(uint256(orderType));
     }
 
     function getExecutionPriceForIncrease(
@@ -401,5 +400,18 @@ library BaseOrderUtils {
         if (order.sizeDeltaUsd() == 0 && order.initialCollateralDeltaAmount() == 0) {
             revert Errors.EmptyOrder();
         }
+    }
+
+    function getPositionKey(Order.Props memory order) internal pure returns (bytes32) {
+        if (isDecreaseOrder(order.orderType())) {
+            return Position.getPositionKey(
+                order.account(),
+                order.market(),
+                order.initialCollateralToken(),
+                order.isLong()
+            );
+        }
+
+        revert Errors.UnsupportedOrderType(uint256(order.orderType()));
     }
 }

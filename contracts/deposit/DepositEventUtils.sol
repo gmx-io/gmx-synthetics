@@ -7,6 +7,8 @@ import "../event/EventUtils.sol";
 import "../utils/Cast.sol";
 
 import "./Deposit.sol";
+import "./DepositUtils.sol";
+import "../pricing/ISwapPricingUtils.sol";
 
 library DepositEventUtils {
     using Deposit for Deposit.Props;
@@ -22,7 +24,8 @@ library DepositEventUtils {
     function emitDepositCreated(
         EventEmitter eventEmitter,
         bytes32 key,
-        Deposit.Props memory deposit
+        Deposit.Props memory deposit,
+        DepositUtils.DepositType depositType
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -38,13 +41,15 @@ library DepositEventUtils {
         eventData.addressItems.setItem(0, "longTokenSwapPath", deposit.longTokenSwapPath());
         eventData.addressItems.setItem(1, "shortTokenSwapPath", deposit.shortTokenSwapPath());
 
-        eventData.uintItems.initItems(6);
+        eventData.uintItems.initItems(8);
         eventData.uintItems.setItem(0, "initialLongTokenAmount", deposit.initialLongTokenAmount());
         eventData.uintItems.setItem(1, "initialShortTokenAmount", deposit.initialShortTokenAmount());
         eventData.uintItems.setItem(2, "minMarketTokens", deposit.minMarketTokens());
         eventData.uintItems.setItem(3, "updatedAtBlock", deposit.updatedAtBlock());
-        eventData.uintItems.setItem(4, "executionFee", deposit.executionFee());
-        eventData.uintItems.setItem(5, "callbackGasLimit", deposit.callbackGasLimit());
+        eventData.uintItems.setItem(4, "updatedAtTime", deposit.updatedAtTime());
+        eventData.uintItems.setItem(5, "executionFee", deposit.executionFee());
+        eventData.uintItems.setItem(6, "callbackGasLimit", deposit.callbackGasLimit());
+        eventData.uintItems.setItem(7, "depositType", uint256(depositType));
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", deposit.shouldUnwrapNativeToken());
@@ -66,7 +71,8 @@ library DepositEventUtils {
         address account,
         uint256 longTokenAmount,
         uint256 shortTokenAmount,
-        uint256 receivedMarketTokens
+        uint256 receivedMarketTokens,
+        ISwapPricingUtils.SwapPricingType swapPricingType
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -76,10 +82,11 @@ library DepositEventUtils {
         eventData.addressItems.initItems(1);
         eventData.addressItems.setItem(0, "account", account);
 
-        eventData.uintItems.initItems(3);
+        eventData.uintItems.initItems(4);
         eventData.uintItems.setItem(0, "longTokenAmount", longTokenAmount);
         eventData.uintItems.setItem(1, "shortTokenAmount", shortTokenAmount);
         eventData.uintItems.setItem(2, "receivedMarketTokens", receivedMarketTokens);
+        eventData.uintItems.setItem(3, "swapPricingType", uint256(swapPricingType));
 
         eventEmitter.emitEventLog2(
             "DepositExecuted",

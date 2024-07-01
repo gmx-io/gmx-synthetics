@@ -1,7 +1,7 @@
 import { grantRoleIfNotGranted } from "../utils/role";
 import { createDeployFunction } from "../utils/deploy";
 
-const constructorContracts = ["RoleStore", "DataStore", "EventEmitter", "WithdrawalVault", "Oracle"];
+const constructorContracts = ["RoleStore", "DataStore", "EventEmitter", "Oracle", "WithdrawalVault"];
 
 const func = createDeployFunction({
   contractName: "WithdrawalHandler",

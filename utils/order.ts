@@ -4,7 +4,7 @@ import { mine } from "@nomicfoundation/hardhat-network-helpers";
 import { logGasUsage } from "./gas";
 import { bigNumberify, expandDecimals } from "./math";
 import { executeWithOracleParams } from "./exchange";
-import { parseLogs } from "./event";
+import { parseLogs, getEventDataValue } from "./event";
 import { getCancellationReason, getErrorString } from "./error";
 
 import * as keys from "./keys";
@@ -42,6 +42,10 @@ export function getAccountOrderKeys(dataStore, account, start, end) {
   return dataStore.getBytes32ValuesAt(keys.accountOrderListKey(account), start, end);
 }
 
+export function getAutoCancelOrderKeys(dataStore, positionKey, start, end) {
+  return dataStore.getBytes32ValuesAt(keys.autoCancelOrderListKey(positionKey), start, end);
+}
+
 export async function createOrder(fixture, overrides) {
   const { initialCollateralToken, orderType, gasUsageLabel } = overrides;
 
@@ -52,6 +56,7 @@ export async function createOrder(fixture, overrides) {
   const sender = overrides.sender || wallet;
   const account = overrides.account || user0;
   const receiver = overrides.receiver || account;
+  const cancellationReceiver = overrides.cancellationReceiver || receiver;
   const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
   const market = overrides.market || { marketToken: ethers.constants.AddressZero };
   const uiFeeReceiver = overrides.uiFeeReceiver || { address: ethers.constants.AddressZero };
@@ -66,6 +71,7 @@ export async function createOrder(fixture, overrides) {
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
   const minOutputAmount = overrides.minOutputAmount || 0;
   const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
+  const autoCancel = overrides.autoCancel || false;
   const referralCode = overrides.referralCode || ethers.constants.HashZero;
 
   if (
@@ -82,6 +88,7 @@ export async function createOrder(fixture, overrides) {
   const params = {
     addresses: {
       receiver: receiver.address,
+      cancellationReceiver: cancellationReceiver.address,
       callbackContract: callbackContract.address,
       uiFeeReceiver: uiFeeReceiver.address,
       market: market.marketToken,
@@ -101,6 +108,7 @@ export async function createOrder(fixture, overrides) {
     decreasePositionSwapType,
     isLong,
     shouldUnwrapNativeToken,
+    autoCancel,
     referralCode,
   };
 
@@ -109,8 +117,11 @@ export async function createOrder(fixture, overrides) {
     label: gasUsageLabel,
   });
 
-  const result = { txReceipt };
-  return result;
+  const logs = parseLogs(fixture, txReceipt);
+
+  const key = getEventDataValue(logs, "OrderCreated", "key");
+
+  return { txReceipt, logs, key };
 }
 
 export async function executeOrder(fixture, overrides = {}) {
@@ -118,8 +129,8 @@ export async function executeOrder(fixture, overrides = {}) {
   const { gasUsageLabel, oracleBlockNumberOffset } = overrides;
   const { reader, dataStore, orderHandler } = fixture.contracts;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
-  const realtimeFeedTokens = overrides.realtimeFeedTokens || [];
-  const realtimeFeedData = overrides.realtimeFeedData || [];
+  const dataStreamTokens = overrides.dataStreamTokens || [];
+  const dataStreamData = overrides.dataStreamData || [];
   const priceFeedTokens = overrides.priceFeedTokens || [];
   const precisions = overrides.precisions || [8, 18];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
@@ -159,8 +170,8 @@ export async function executeOrder(fixture, overrides = {}) {
     maxOracleBlockNumbers,
     oracleTimestamps,
     blockHashes,
-    realtimeFeedTokens,
-    realtimeFeedData,
+    dataStreamTokens,
+    dataStreamData,
     priceFeedTokens,
   };
 

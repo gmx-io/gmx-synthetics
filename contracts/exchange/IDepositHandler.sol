@@ -8,5 +8,8 @@ import "../oracle/OracleUtils.sol";
 interface IDepositHandler {
     function createDeposit(address account, DepositUtils.CreateDepositParams calldata params) external returns (bytes32);
     function cancelDeposit(bytes32 key) external;
-    function simulateExecuteDeposit(bytes32 key, OracleUtils.SimulatePricesParams memory params) external;
+    function simulateExecuteDeposit(
+        bytes32 key,
+        OracleUtils.SimulatePricesParams memory params
+    ) external;
 }

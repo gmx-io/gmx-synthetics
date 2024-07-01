@@ -14,7 +14,7 @@ const func = createDeployFunction({
       24 * 60 * 60, // votingDelay
       5 * 24 * 60 * 60, // votingPeriod
       expandDecimals(30_000, 18), // proposalThreshold
-      4, // quorumNumeratorValue
+      3, // quorumNumeratorValue
     ];
   },
 });
