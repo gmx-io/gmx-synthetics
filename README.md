@@ -659,6 +659,8 @@ After the initial setup:
 
 - The ordering of values in the eventData for callbacks should not be modified unless strictly necessary, since callback contracts may reference the values by a fixed index
 
+- If the referral system is being used, the OrderHandler should be given access to update the referral code for traders
+
 ## Integration Notes
 
 - Decrease position orders can output two tokens instead of a single token, in case the decrease position swap fails, it is also possible that the output amount and collateral may not be sufficient to cover fees, causing the order to not be executed
