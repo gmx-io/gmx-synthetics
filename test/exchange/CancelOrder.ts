@@ -1,13 +1,14 @@
 import { expect } from "chai";
-import { mine } from "@nomicfoundation/hardhat-network-helpers";
 
+import { increaseTime } from "../../utils/time";
 import { deployFixture } from "../../utils/fixture";
 import { deployContract } from "../../utils/deploy";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { printGasUsage } from "../../utils/gas";
 import { handleDeposit } from "../../utils/deposit";
 import { errorsContract } from "../../utils/error";
-import { OrderType, getOrderCount, getOrderKeys, createOrder } from "../../utils/order";
+import { OrderType, getOrderCount, getOrderKeys, getAutoCancelOrderKeys, createOrder } from "../../utils/order";
+import { getPositionKey } from "../../utils/position";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.CancelOrder", () => {
@@ -35,7 +36,7 @@ describe("Exchange.CancelOrder", () => {
   it("cancelOrder validations", async () => {
     const revertingCallbackReceiver = await deployContract("RevertingCallbackReceiver", []);
 
-    await dataStore.setUint(keys.REQUEST_EXPIRATION_BLOCK_AGE, 10);
+    await dataStore.setUint(keys.REQUEST_EXPIRATION_TIME, 300);
 
     expect(await getOrderCount(dataStore)).eq(0);
     const params = {
@@ -81,11 +82,10 @@ describe("Exchange.CancelOrder", () => {
 
     await dataStore.setBool(_cancelOrderFeatureDisabledKey, false);
 
-    await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0]))
-      .to.be.revertedWithCustomError(errorsContract, "RequestNotYetCancellable")
-      .withArgs(5, 10, "Order");
-
-    mine(10);
+    await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0])).to.be.revertedWithCustomError(
+      errorsContract,
+      "RequestNotYetCancellable"
+    );
   });
 
   it("cancelOrder", async () => {
@@ -129,7 +129,76 @@ describe("Exchange.CancelOrder", () => {
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
 
+    const refTime = (await ethers.provider.getBlock()).timestamp;
+    await increaseTime(refTime, 300);
+
     const txn = await exchangeRouter.connect(user0).cancelOrder(orderKeys[0]);
+
+    await printGasUsage(provider, txn, "cancelOrder");
+    expect(await getOrderCount(dataStore)).eq(0);
+
+    await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0])).to.be.revertedWithCustomError(
+      errorsContract,
+      "EmptyOrder"
+    );
+  });
+
+  it("cancelOrder, autoCancel: true", async () => {
+    expect(await getOrderCount(dataStore)).eq(0);
+    const params = {
+      market: ethUsdMarket,
+      initialCollateralToken: wnt,
+      initialCollateralDeltaAmount: expandDecimals(10, 18),
+      swapPath: [ethUsdMarket.marketToken],
+      sizeDeltaUsd: decimalToFloat(200 * 1000),
+      triggerPrice: expandDecimals(5000, 12),
+      acceptablePrice: expandDecimals(5001, 12),
+      executionFee,
+      minOutputAmount: expandDecimals(50000, 6),
+      orderType: OrderType.LimitDecrease,
+      isLong: true,
+      shouldUnwrapNativeToken: false,
+      autoCancel: true,
+    };
+
+    await createOrder(fixture, params);
+
+    expect(await getOrderCount(dataStore)).eq(1);
+
+    const block = await provider.getBlock();
+
+    const orderKeys = await getOrderKeys(dataStore, 0, 1);
+    const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+
+    expect(order.addresses.account).eq(user0.address);
+    expect(order.addresses.market).eq(ethUsdMarket.marketToken);
+    expect(order.addresses.initialCollateralToken).eq(wnt.address);
+    expect(order.addresses.swapPath).eql([ethUsdMarket.marketToken]);
+    expect(order.numbers.orderType).eq(OrderType.LimitDecrease);
+    expect(order.numbers.sizeDeltaUsd).eq(decimalToFloat(200 * 1000));
+    expect(order.numbers.initialCollateralDeltaAmount).eq(expandDecimals(10, 18));
+    expect(order.numbers.acceptablePrice).eq(expandDecimals(5001, 12));
+    expect(order.numbers.triggerPrice).eq(expandDecimals(5000, 12));
+    expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
+    expect(order.numbers.minOutputAmount).eq(expandDecimals(50000, 6));
+    expect(order.numbers.updatedAtBlock).eq(block.number);
+    expect(order.flags.isLong).eq(true);
+    expect(order.flags.shouldUnwrapNativeToken).eq(false);
+
+    const positionKey = getPositionKey(
+      order.addresses.account,
+      order.addresses.market,
+      order.addresses.initialCollateralToken,
+      order.flags.isLong
+    );
+
+    expect(await getAutoCancelOrderKeys(dataStore, positionKey, 0, 10)).eql([orderKeys[0]]);
+
+    const refTime = (await ethers.provider.getBlock()).timestamp;
+    await increaseTime(refTime, 300);
+
+    const txn = await exchangeRouter.connect(user0).cancelOrder(orderKeys[0]);
+    expect(await getAutoCancelOrderKeys(dataStore, positionKey, 0, 10)).eql([]);
 
     await printGasUsage(provider, txn, "cancelOrder");
     expect(await getOrderCount(dataStore)).eq(0);

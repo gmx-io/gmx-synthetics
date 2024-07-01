@@ -34,15 +34,14 @@ describe("Guardian.UpdateOrder", () => {
 
     // User0 tries to update the order user1 just created
     await expect(
-      exchangeRouter
-        .connect(user0)
-        .updateOrder(
-          orderKeys[0],
-          decimalToFloat(10_000),
-          expandDecimals(5200, 12),
-          expandDecimals(5200, 12),
-          expandDecimals(52000, 6)
-        )
+      exchangeRouter.connect(user0).updateOrder(
+        orderKeys[0],
+        decimalToFloat(10_000),
+        expandDecimals(5200, 12),
+        expandDecimals(5200, 12),
+        expandDecimals(52000, 6),
+        false // autoCancel
+      )
     )
       .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
       .withArgs(user0.address, "account for updateOrder");
@@ -72,15 +71,14 @@ describe("Guardian.UpdateOrder", () => {
 
     // User0 tries to update the order user1 just created
     await expect(
-      exchangeRouter
-        .connect(user0)
-        .updateOrder(
-          orderKeys[0],
-          decimalToFloat(10_000),
-          expandDecimals(5200, 12),
-          expandDecimals(5200, 12),
-          expandDecimals(52000, 6)
-        )
+      exchangeRouter.connect(user0).updateOrder(
+        orderKeys[0],
+        decimalToFloat(10_000),
+        expandDecimals(5200, 12),
+        expandDecimals(5200, 12),
+        expandDecimals(52000, 6),
+        false // autoCancel
+      )
     )
       .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
       .withArgs(user0.address, "account for updateOrder");
@@ -110,15 +108,14 @@ describe("Guardian.UpdateOrder", () => {
 
     // User0 tries to update the order user1 just created
     await expect(
-      exchangeRouter
-        .connect(user0)
-        .updateOrder(
-          orderKeys[0],
-          decimalToFloat(10_000),
-          expandDecimals(5200, 12),
-          expandDecimals(5200, 12),
-          expandDecimals(52000, 6)
-        )
+      exchangeRouter.connect(user0).updateOrder(
+        orderKeys[0],
+        decimalToFloat(10_000),
+        expandDecimals(5200, 12),
+        expandDecimals(5200, 12),
+        expandDecimals(52000, 6),
+        false // autoCancel
+      )
     )
       .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
       .withArgs(user0.address, "account for updateOrder");
@@ -148,15 +145,14 @@ describe("Guardian.UpdateOrder", () => {
 
     // User0 tries to update the order user1 just created
     await expect(
-      exchangeRouter
-        .connect(user0)
-        .updateOrder(
-          orderKeys[0],
-          decimalToFloat(10_000),
-          expandDecimals(5200, 12),
-          expandDecimals(5200, 12),
-          expandDecimals(52000, 6)
-        )
+      exchangeRouter.connect(user0).updateOrder(
+        orderKeys[0],
+        decimalToFloat(10_000),
+        expandDecimals(5200, 12),
+        expandDecimals(5200, 12),
+        expandDecimals(52000, 6),
+        false // autoCancel
+      )
     )
       .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
       .withArgs(user0.address, "account for updateOrder");
@@ -186,15 +182,14 @@ describe("Guardian.UpdateOrder", () => {
 
     // User0 tries to update the order user1 just created
     await expect(
-      exchangeRouter
-        .connect(user0)
-        .updateOrder(
-          orderKeys[0],
-          decimalToFloat(10_000),
-          expandDecimals(5200, 12),
-          expandDecimals(5200, 12),
-          expandDecimals(52000, 6)
-        )
+      exchangeRouter.connect(user0).updateOrder(
+        orderKeys[0],
+        decimalToFloat(10_000),
+        expandDecimals(5200, 12),
+        expandDecimals(5200, 12),
+        expandDecimals(52000, 6),
+        false // autoCancel
+      )
     )
       .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
       .withArgs(user0.address, "account for updateOrder");
@@ -224,15 +219,14 @@ describe("Guardian.UpdateOrder", () => {
 
     // User0 tries to update the order user1 just created
     await expect(
-      exchangeRouter
-        .connect(user0)
-        .updateOrder(
-          orderKeys[0],
-          decimalToFloat(10_000),
-          expandDecimals(5200, 12),
-          expandDecimals(5200, 12),
-          expandDecimals(52000, 6)
-        )
+      exchangeRouter.connect(user0).updateOrder(
+        orderKeys[0],
+        decimalToFloat(10_000),
+        expandDecimals(5200, 12),
+        expandDecimals(5200, 12),
+        expandDecimals(52000, 6),
+        false // autoCancel
+      )
     )
       .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
       .withArgs(user0.address, "account for updateOrder");
@@ -266,7 +260,8 @@ describe("Guardian.UpdateOrder", () => {
       decimalToFloat(10_000), // sizeDeltaUsd
       expandDecimals(5200, 12), // acceptablePrice
       expandDecimals(5200, 12), // triggerPrice
-      expandDecimals(52000, 6) // minOutputAmount
+      expandDecimals(52000, 6), // minOutputAmount
+      false // autoCancel
     );
 
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
@@ -300,7 +295,8 @@ describe("Guardian.UpdateOrder", () => {
       decimalToFloat(10_000), // sizeDeltaUsd
       expandDecimals(5200, 12), // acceptablePrice
       expandDecimals(5200, 12), // triggerPrice
-      expandDecimals(52000, 6) // minOutputAmount
+      expandDecimals(52000, 6), // minOutputAmount
+      false // autoCancel
     );
 
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
@@ -334,7 +330,8 @@ describe("Guardian.UpdateOrder", () => {
       decimalToFloat(10_000), // sizeDeltaUsd
       expandDecimals(5200, 12), // acceptablePrice
       expandDecimals(5200, 12), // triggerPrice
-      expandDecimals(52000, 6) // minOutputAmount
+      expandDecimals(52000, 6), // minOutputAmount
+      false // autoCancel
     );
 
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
@@ -368,7 +365,8 @@ describe("Guardian.UpdateOrder", () => {
       decimalToFloat(10_000), // sizeDeltaUsd
       expandDecimals(5200, 12), // acceptablePrice
       expandDecimals(5200, 12), // triggerPrice
-      expandDecimals(52000, 6) // minOutputAmount
+      expandDecimals(52000, 6), // minOutputAmount
+      false // autoCancel
     );
 
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
@@ -402,7 +400,8 @@ describe("Guardian.UpdateOrder", () => {
       decimalToFloat(10_000), // sizeDeltaUsd
       expandDecimals(5200, 12), // acceptablePrice
       expandDecimals(5200, 12), // triggerPrice
-      expandDecimals(52000, 6) // minOutputAmount
+      expandDecimals(52000, 6), // minOutputAmount
+      false // autoCancel
     );
 
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
@@ -436,7 +435,8 @@ describe("Guardian.UpdateOrder", () => {
       decimalToFloat(10_000), // sizeDeltaUsd
       expandDecimals(5200, 12), // acceptablePrice
       expandDecimals(5200, 12), // triggerPrice
-      expandDecimals(52000, 6) // minOutputAmount
+      expandDecimals(52000, 6), // minOutputAmount
+      false // autoCancel
     );
 
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);

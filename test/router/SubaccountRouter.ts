@@ -131,6 +131,7 @@ describe("SubaccountRouter", () => {
     const params = {
       addresses: {
         receiver: subaccount.address,
+        cancellationReceiver: subaccount.address,
         callbackContract: user2.address,
         uiFeeReceiver: user1.address,
         market: ethUsdMarket.marketToken,
@@ -292,6 +293,7 @@ describe("SubaccountRouter", () => {
     const params = {
       addresses: {
         receiver: user0.address,
+        cancellationReceiver: user0.address,
         callbackContract: user2.address,
         uiFeeReceiver: user1.address,
         market: ethUsdMarket.marketToken,
@@ -424,6 +426,7 @@ describe("SubaccountRouter", () => {
     const params = {
       addresses: {
         receiver: user0.address,
+        cancellationReceiver: user0.address,
         callbackContract: user2.address,
         uiFeeReceiver: user1.address,
         market: ethUsdMarket.marketToken,
@@ -481,7 +484,8 @@ describe("SubaccountRouter", () => {
       decimalToFloat(1200), // sizeDeltaUsd
       expandDecimals(5020, 12), // acceptablePrice
       expandDecimals(4850, 12), // triggerPrice
-      800 // minOutputAmount
+      800, // minOutputAmount
+      false // autoCancel
     );
 
     expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("588774003140128", "100000000000000"); // 0.000588774003140128 ETH
@@ -519,7 +523,8 @@ describe("SubaccountRouter", () => {
         decimalToFloat(1200), // sizeDeltaUsd
         expandDecimals(5020, 12), // acceptablePrice
         expandDecimals(4850, 12), // triggerPrice
-        800 // minOutputAmount
+        800, // minOutputAmount
+        false // autoCancel
       )
     ).to.be.revertedWithCustomError(errorsContract, "SubaccountNotAuthorized");
   });
@@ -553,6 +558,7 @@ describe("SubaccountRouter", () => {
     const params = {
       addresses: {
         receiver: user0.address,
+        cancellationReceiver: user0.address,
         callbackContract: user2.address,
         uiFeeReceiver: user1.address,
         market: ethUsdMarket.marketToken,
@@ -609,7 +615,7 @@ describe("SubaccountRouter", () => {
 
     await subaccountRouter.connect(subaccount).cancelOrder(orderKey);
 
-    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("998934005327648", "10000000000000"); // 0.000998934005327648 ETH
+    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1109919005919568", "10000000000000"); // 0.001109919005919568 ETH
 
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(101, 6));
 

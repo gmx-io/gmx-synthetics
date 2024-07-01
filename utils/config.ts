@@ -5,8 +5,10 @@ export const EXCLUDED_CONFIG_KEYS = {
   ACCOUNT_DEPOSIT_LIST: true,
   ACCOUNT_ORDER_LIST: true,
   ACCOUNT_POSITION_LIST: true,
+  ACCOUNT_SHIFT_LIST: true,
   ACCOUNT_WITHDRAWAL_LIST: true,
   AFFILIATE_REWARD: true,
+  AUTO_CANCEL_ORDER_LIST: true,
   CLAIMABLE_COLLATERAL_AMOUNT: true,
   CLAIMABLE_COLLATERAL_TIME_DIVISOR: true,
   CLAIMABLE_FEE_AMOUNT: true,
@@ -17,6 +19,8 @@ export const EXCLUDED_CONFIG_KEYS = {
   COLLATERAL_SUM: true,
   CUMULATIVE_BORROWING_FACTOR: true,
   CUMULATIVE_BORROWING_FACTOR_UPDATED_AT: true,
+  DATA_STREAM_ID: true,
+  DATA_STREAM_MULTIPLIER: true,
   DEPOSIT_FEE_TYPE: true,
   DEPOSIT_LIST: true,
   FEE_RECEIVER: true,
@@ -26,9 +30,12 @@ export const EXCLUDED_CONFIG_KEYS = {
   FUNDING_FEE_AMOUNT_PER_SIZE: true,
   CLAIMABLE_FUNDING_AMOUNT_PER_SIZE: true,
   FUNDING_UPDATED_AT: true,
-  IN_STRICT_PRICE_FEED_MODE: true,
+  GLV_DEPOSIT_LIST: true,
+  ACCOUNT_GLV_DEPOSIT_LIST: true,
   IS_ADL_ENABLED: true,
-  LATEST_ADL_BLOCK: true,
+  IS_ORACLE_PROVIDER_ENABLED: true,
+  IS_ATOMIC_ORACLE_PROVIDER: true,
+  LATEST_ADL_AT: true,
   MARKET_LIST: true,
   MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT: true,
   MAX_PNL_FACTOR_FOR_TRADERS: true,
@@ -40,6 +47,7 @@ export const EXCLUDED_CONFIG_KEYS = {
   NONCE: true,
   OPEN_INTEREST: true,
   OPEN_INTEREST_IN_TOKENS: true,
+  ORACLE_TIMESTAMP_ADJUSTMENT: true,
   ORDER_LIST: true,
   POOL_AMOUNT: true,
   POSITION_FEE_TYPE: true,
@@ -49,11 +57,10 @@ export const EXCLUDED_CONFIG_KEYS = {
   POSITION_LIST: true,
   PRICE_FEED: true,
   PRICE_FEED_MULTIPLIER: true,
-  REALTIME_FEED_ID: true,
-  REALTIME_FEED_MULTIPLIER: true,
   REENTRANCY_GUARD_STATUS: true,
   SAVED_CALLBACK_CONTRACT: true,
   SAVED_FUNDING_FACTOR_PER_SECOND: true,
+  SHIFT_LIST: true,
   STABLE_PRICE: true,
   SUBACCOUNT_ACTION_COUNT: true,
   SUBACCOUNT_AUTO_TOP_UP_AMOUNT: true,
@@ -70,11 +77,12 @@ export const EXCLUDED_CONFIG_KEYS = {
   UI_WITHDRAWAL_FEE_TYPE: true,
   USER_INITIATED_CANCEL: true,
   WITHDRAWAL_FEE_TYPE: true,
-  // exclude the WITHDRAWAL_GAS_LIMIT key because it is the hashed version
-  // of the key that needs to be set instead
-  WITHDRAWAL_GAS_LIMIT: true,
   WITHDRAWAL_LIST: true,
   WNT: true,
+  GLV_LIST: true,
+  GLV_PENDING_SHIFT: true,
+  GLV_PENDING_SHIFT_BACKREF: true,
+  GLV_SUPPORTED_MARKET_LIST: true,
 };
 
 export async function appendUintConfigIfDifferent(
@@ -114,7 +122,9 @@ export async function appendAddressConfigIfDifferent(
   label?: string
 ) {
   await appendConfigIfDifferent(list, dataCache, "address", baseKey, keyData, value, {
-    compare: (a, b) => a.toLowerCase() == b.toLowerCase(),
+    compare: (a, b) => {
+      return a.toLowerCase() == b.toLowerCase();
+    },
     label,
   });
 }

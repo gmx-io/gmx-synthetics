@@ -232,17 +232,6 @@ library PositionUtils {
         return (cache.positionPnlUsd, cache.uncappedPositionPnlUsd, cache.sizeDeltaInTokens);
     }
 
-    // @dev get the key for a position
-    // @param account the position's account
-    // @param market the position's market
-    // @param collateralToken the position's collateralToken
-    // @param isLong whether the position is long or short
-    // @return the position key
-    function getPositionKey(address account, address market, address collateralToken, bool isLong) internal pure returns (bytes32) {
-        bytes32 key = keccak256(abi.encode(account, market, collateralToken, isLong));
-        return key;
-    }
-
     // @dev validate that a position is not empty
     // @param position the position values
     function validateNonEmptyPosition(Position.Props memory position) internal pure {
@@ -504,31 +493,33 @@ library PositionUtils {
     }
 
     function updateFundingAndBorrowingState(
-        PositionUtils.UpdatePositionParams memory params,
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        Market.Props memory market,
         MarketUtils.MarketPrices memory prices
-    ) internal {
+    ) external {
         // update the funding amount per size for the market
         MarketUtils.updateFundingState(
-            params.contracts.dataStore,
-            params.contracts.eventEmitter,
-            params.market,
+            dataStore,
+            eventEmitter,
+            market,
             prices
         );
 
         // update the cumulative borrowing factor for longs
         MarketUtils.updateCumulativeBorrowingFactor(
-            params.contracts.dataStore,
-            params.contracts.eventEmitter,
-            params.market,
+            dataStore,
+            eventEmitter,
+            market,
             prices,
             true // isLong
         );
 
         // update the cumulative borrowing factor for shorts
         MarketUtils.updateCumulativeBorrowingFactor(
-            params.contracts.dataStore,
-            params.contracts.eventEmitter,
-            params.market,
+            dataStore,
+            eventEmitter,
+            market,
             prices,
             false // isLong
         );

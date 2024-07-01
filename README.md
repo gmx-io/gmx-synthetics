@@ -44,22 +44,15 @@ To avoid front-running issues, most actions require two steps to execute:
 - User sends transaction with request details, e.g. deposit / withdraw liquidity, swap, increase / decrease position
 - Keepers listen for the transactions, include the prices for the request then send a transaction to execute the request
 
-Prices are provided by an off-chain oracle system:
-
-- Oracle keepers continually check the latest blocks
-- When there is a new block, oracle keepers fetch the latest prices from reference exchanges
-- Oracle keepers then sign the median price for each token together with the block hash
-- Oracle keepers then send the data and signature to archive nodes
-- Archive nodes display this information for anyone to query
+Prices are provided by an off-chain oracle system, which continually signs prices based on the time the prices were queried.
 
 Example:
 
-- Block 100 is finalized on the blockchain
-- Oracle keepers observe this block
+- Block 100 is finalized on the blockchain at time 20
 - Oracle keepers pull the latest prices from reference exchanges, token A: price 20,000, token B: price 80,000
-- Oracle keepers sign [chainId, blockhash(100), 20,000], [chainId, blockhash(100), 80,000]
-- If in block 100, there was a market order to open a long position for token A, the market order would have a block number of 100
-- The prices signed at block 100 can be used to execute this order
+- Oracle keepers sign [chainId, time(20), 20,000], [chainId, time(20), 80,000]
+- If in block 100, there was a market order to open a long position for token A, the market order would have a timestamp of 20
+- The prices signed at time 20 can be used to execute this order
 - Order keepers would bundle the signature and price data for token A then execute the order
 
 The oracle system allows for both a minimum price and a maximum price to be signed, this allows information about bid-ask spreads to be included.
@@ -76,7 +69,7 @@ Funding fees and price impact keep longs / shorts balanced while reducing the ri
 
 There are a few keepers and nodes in the system:
 
-- Oracle keepers: checks for latest finalized blocks, pull prices from reference exchanges, sign the information and publish it to Archive nodes
+- Oracle keepers: pull prices from reference exchanges, sign the information and publish it to Archive nodes
 - Archive nodes: receives oracle keeper signatures and allows querying of this information
 - Order keepers: checks for deposit / withdraw liquidity requests, order requests, bundles the signed oracle prices with the requests and executes them
 
@@ -134,7 +127,7 @@ Requests for deposits are created by calling ExchangeRouter.createDeposit, speci
 - amount of long tokens to deposit
 - amount of short tokens to deposit
 
-Deposit requests are executed using DepositHandler.executeDeposit, if the deposit was created at block `n`, it should be executed with the oracle prices at block `n`.
+Deposit requests are executed using DepositHandler.executeDeposit, if the deposit was created at timestamp `n`, it should be executed with the oracle prices after timestamp `n`.
 
 The amount of MarketTokens to be minted, before fees and price impact, is calculated as `(worth of tokens deposited) / (worth of market pool) * MarketToken.totalSupply()`.
 
@@ -148,7 +141,7 @@ Requests for withdrawals are created by calling ExchangeRouter.createWithdrawal,
 - the number of market tokens to burn for long tokens
 - the number of market tokens to burn for short tokens
 
-Withdrawal requests are executed using WithdrawalHandler.executeWithdrawal, if the withdrawal was created at block `n`, it should be executed with the oracle prices at block `n`.
+Withdrawal requests are executed using WithdrawalHandler.executeWithdrawal, if the withdrawal was created at timestamp `n`, it should be executed with the oracle prices after timestamp `n`.
 
 The amount of long or short tokens to be redeemed, before fees and price impact, is calculated as `(worth of market tokens) / (long / short token price)`.
 
@@ -166,13 +159,13 @@ Swap order requests are created by calling ExchangeRouter.createOrder, specifyin
 
 The swap output amount, before fees and price impact, `(amount of tokens in) * (token in price) / (token out price)`.
 
-Market swap order requests are executed using OrderHandler.executeOrder, if the order was created at block `n`, it should be executed with the oracle prices at block `n`.
+Market swap order requests are executed using OrderHandler.executeOrder, if the order was created at timestamp `n`, it should be executed with the oracle prices after timestamp `n`.
 
 ## Limit Swaps
 
 Passive swap orders that should be executed when the output amount matches the minimum output amount specified by the user.
 
-Limit swap order requests are executed using OrderHandler.executeOrder, if the order was created at block `n`, it should be executed with oracle prices after block `n`.
+Limit swap order requests are executed using OrderHandler.executeOrder, if the order was created at timestamp `n`, it should be executed with oracle prices after timestamp `n`.
 
 ## Market Increase
 
@@ -185,7 +178,7 @@ Market increase order requests are created by calling ExchangeRouter.createOrder
 - the amount to increase the position by
 - whether it is a long or short position
 
-Market increase order requests are executed using OrderHandler.executeOrder, if the order was created at block `n`, it should be executed with the oracle prices at block `n`.
+Market increase order requests are executed using OrderHandler.executeOrder, if the order was created at timestamp `n`, it should be executed with the oracle prices after timestamp `n`.
 
 ## Limit Increase
 
@@ -195,7 +188,7 @@ Long position example: if the current index token price is $5000, a limit increa
 
 Short position example: if the current index token price is $5000, a limit increase order can be created with acceptable price as $5010, the order can be executed when the index token price is >= $5010.
 
-Limit increase order requests are executed using OrderHandler.executeOrder, if the order was created at block `n`, it should be executed with the oracle prices after block `n`.
+Limit increase order requests are executed using OrderHandler.executeOrder, if the order was created at timestamp `n`, it should be executed with the oracle prices after timestamp `n`.
 
 ## Market Decrease
 
@@ -207,7 +200,7 @@ Market decrease order requests are created by calling ExchangeRouter.createOrder
 - the array of markets to swap through for the actual output token
 - the amount to decrease the position by
 
-Market decrease order requests are executed using OrderHandler.executeOrder, if the order was created at block `n`, it should be executed with the oracle prices at block `n`.
+Market decrease order requests are executed using OrderHandler.executeOrder, if the order was created at timestamp `n`, it should be executed with the oracle prices after timestamp `n`.
 
 ## Limit Decrease
 
@@ -217,7 +210,7 @@ Long position example: if the current index token price is $5000, a limit decrea
 
 Short position example: if the current index token price is $5000, a limit decrease order can be created with acceptable price as $4990, the order can be executed when the index token price is <= $4990.
 
-Limit decrease order requests are executed using OrderHandler.executeOrder, if the order was created at block `n`, it should be executed with the oracle prices after block `n`.
+Limit decrease order requests are executed using OrderHandler.executeOrder, if the order was created at timestamp `n`, it should be executed with the oracle prices after timestamp `n`.
 
 ## Stop-Loss Decrease
 
@@ -227,13 +220,7 @@ Long position example: if the current index token price is $5000, a stop-loss de
 
 Short position example: if the current index token price is $5000, a stop-loss decrease order can be created with acceptable price as $5010, the order can be executed when the index token price is >= $5010.
 
-Stop-loss decrease order requests are executed using OrderHandler.executeOrder, if the order was created at block `n`, it should be executed with the oracle prices after block `n`.
-
-# Order Pricing
-
-For limit swap, limit increase, limit decrease and stop-loss decrease orders, the order can be executed at the acceptable price if it is within the range of the validated oracle prices.
-
-For example, if the current index token price is $5000 and a user creates a limit long decrease order with acceptable price as $5010, the order can be executed with the index token price as $5010 if oracle prices $5008 and $5012 are validated, the blocks of the oracle prices must be after the order was updated and must be in ascending order.
+Stop-loss decrease order requests are executed using OrderHandler.executeOrder, if the order was created at timestamp `n`, it should be executed with the oracle prices after timestamp `n`.
 
 # Oracle Prices
 
@@ -308,31 +295,31 @@ Decimals: 30 - (token decimals) - (number of decimals desired for precision)
 - USDC: 30 - 6 - 6 => 18
 - DG: 30 - 18 - 11 => 1
 
-## For Realtime Feeds
+## For Data Stream Feeds
 
 Example calculation for WNT:
 
-- The number of realtime decimals: 8
+- The number of data stream decimals: 8
 - The number of token decimals for WNT: 18
-- realtimePrice: price \* (10 ^ 8)
-- The price per unit of token: `realtimePrice / (10 ^ 8) / (10 ^ 18) * (10 ^ 30)`
+- dataStreamPrice: price \* (10 ^ 8)
+- The price per unit of token: `dataStreamPrice / (10 ^ 8) / (10 ^ 18) * (10 ^ 30)`
 - e.g. `(5000 * (10 ^ 8)) / (10 ^ 8) / (10 ^ 18) * (10 ^ 30) = 5000 * (10 ^ 12)`
-- The stored oracle price is: `realtimePrice * multiplier / (10 ^ 30)`
+- The stored oracle price is: `dataStreamPrice * multiplier / (10 ^ 30)`
 - In this case the multiplier should be (10 ^ 34)
 - e.g. `(5000 * (10 ^ 8)) * (10 ^ 34) / (10 ^ 30) = 5000 * (10 ^ 12)`
 
 Example calculation for WBTC:
 
-- The number of realtime decimals: 8
+- The number of data stream decimals: 8
 - The number of token decimals for WBTC: 8
-- realtimePrice: price \* (10 ^ 8)
-- the price per unit of token: `realtimePrice / (10 ^ 8) / (10 ^ 8) * (10 ^ 30)`
+- dataStreamPrice: price \* (10 ^ 8)
+- the price per unit of token: `dataStreamPrice / (10 ^ 8) / (10 ^ 8) * (10 ^ 30)`
 - e.g. `(50,000 * (10 ^ 8)) / (10 ^ 8) / (10 ^ 8) * (10 ^ 30) = 50,000 * (10 ^ 22)`
-- the stored oracle price is: `realtimePrice * multiplier / (10 ^ 30)`
+- the stored oracle price is: `dataStreamPrice * multiplier / (10 ^ 30)`
 - in this case the multiplier should be (10 ^ 44)
 - e.g. `(50,000 * (10 ^ 8)) * (10 ^ 44) / (10 ^ 30) = 50,000 * (10 ^ 22)`
 
-The formula for the multipler is: `10 ^ (60 - realtimeDecimals - tokenDecimals)`
+The formula for the multipler is: `10 ^ (60 - dataStreamDecimals - tokenDecimals)`
 
 # Funding Fees
 
@@ -415,9 +402,39 @@ Note that there are possible ways to game the funding fees, the funding factors 
 
 There is a borrowing fee paid to liquidity providers, this helps prevent users from opening both long and short positions to take up pool capacity without paying any fees.
 
-Borrowing fees are calculated as `borrowing factor * (open interest in usd + pending pnl) ^ (borrowing exponent factor) / (pool usd)` for longs and `borrowing factor * (open interest in usd) ^ (borrowing exponent factor) / (pool usd)` for shorts.
+Borrowing fees can use a curve model or kink model.
 
-For example if the borrowing factor per second is 1 / 50,000, and the borrowing exponent factor is 1, and the long open interest is $150,000 with +$50,000 of pending pnl, and the pool has $250,000 worth of tokens, the borrowing fee per second for longs would be `(1 / 50,000) * (150,000 + 50,000) / 250,000 => 0.000016 => 0.0016%`.
+To use the curve model, the keys to configure would be `BORROWING_FACTOR` and `BORROWING_EXPONENT_FACTOR`, the borrowing factor per second would be calculated as:
+
+```
+// reservedUsd is the total USD value reserved for positions
+reservedUsd = MarketUtils.getReservedUsd(...)
+
+// poolUsd is the USD value of the pool excluding pending trader PnL
+poolUsd = MarketUtils.getPoolUsdWithoutPnl(...)
+
+// reservedUsdAfterExponent is the reservedUsd after applying the borrowingExponentFactor for the market
+
+reservedUsdAfterExponent = applyExponentFactor(reservedUsd, borrowingExponentFactor)
+
+borrowingFactorPerSecond = borrowingFactor * reservedUsdAfterExponent / poolUsd
+```
+
+To use the kink model, the keys to configure would be `OPTIMAL_USAGE_FACTOR`, `BASE_BORROWING_FACTOR` and `ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR`, the borrowing factor per second would be calculated as:
+
+```
+// usageFactor is the ratio of value reserved for positions to available value that can be reserved
+usageFactor = MarketUtils.getUsageFactor(...)
+
+borrowingFactorPerSecond = baseBorrowingFactor * usageFactor
+
+if (usageFactor > optimalUsageFactor) {
+  diff = usageFactor - optimalUsageFactor
+  additionalBorrowingFactorPerSecond = aboveOptimalUsageBorrowingFactor - baseBorrowingFactor
+
+  borrowingFactorPerSecond += additionalBorrowingFactorPerSecond * diff / (Precision.FLOAT_PRECISION - optimalUsageFactor)
+}
+```
 
 There is also an option to set a skipBorrowingFeeForSmallerSide flag, this would result in the borrowing fee for the smaller side being set to zero. For example, if there are more longs than shorts and skipBorrowingFeeForSmallerSide is true, then the borrowing fee for shorts would be zero.
 
@@ -582,7 +599,7 @@ After the initial setup:
 
 ## Keepers
 
-- Order keepers can use prices from different blocks for limit orders with a swap, which would lead to different output amounts
+- Order keepers can use prices from different timestamps for limit orders with a swap, which would lead to different output amounts
 
 - Order keepers are expected to validate whether a transaction will revert before sending the transaction to minimize gas wastage
 
@@ -628,6 +645,8 @@ After the initial setup:
 
 - In case of downtime of the blockchain or oracle, orders may be executed at significantly different prices or may not execute if the order's acceptable price cannot be fulfilled
 
+- There is a dependency on the accuracy of the block timestamp because oracle prices are validated against this value, for blockchains where the blockchain nodes have some control over the timestamp, care should be taken to set the oracleTimestampAdjustment to a value that would make manipulation of the timestamp unprofitable
+
 ## Upgrade Notes
 
 - If new contracts are added that may lead to a difference in pricing, e.g. of market tokens between the old and new contracts, then care should be taken to disable the old contracts before the new contracts are enabled
@@ -668,7 +687,7 @@ After the initial setup:
 
 - Token airdrops may occur to the accounts of GM token holders, integrating contracts holding GM tokens must be able to claim these tokens otherwise the tokens would be locked, the exact implementation for this will vary depending on the integrating contract, one possibility is to allow claiming of tokens that are not market tokens, this can be checked using the `Keys.MARKET_LIST` value
 
-- ETH transfers are sent with NATIVE_TOKEN_TRANSFER_GAS_LIMIT for the gas limit, if the transfer fails due to insufficient gas or other errors, the ETH is send as WETH instead
+- ETH transfers are sent with NATIVE_TOKEN_TRANSFER_GAS_LIMIT for the gas limit, if the transfer fails due to insufficient gas or other errors, the ETH is sent as WETH instead
 
 - Accounts may receive ETH for ADLs / liquidations, if the account cannot receive ETH then WETH would be sent instead
 
@@ -716,7 +735,7 @@ After the initial setup:
 
 - Consider positive and negative price impact
 
-- There is a request cancellation period for a configured number of blocks where deposit requests cannot be cancelled
+- There is a request cancellation period for a configured delay where deposit requests cannot be cancelled
 
 - Output amounts are subject to price impact and fees
 
@@ -738,7 +757,7 @@ After the initial setup:
 
 - Consider positive and negative price impact
 
-- There is a request cancellation period for a configured number of blocks where withdrawal requests cannot be cancelled
+- There is a request cancellation period for a configured delay where withdrawal requests cannot be cancelled
 
 - Output amounts are subject to price impact and fees
 
@@ -762,7 +781,7 @@ After the initial setup:
 
 - Saved callback contracts can be changed
 
-- There is a request cancellation period for a configured number of blocks where order requests cannot be cancelled
+- There is a request cancellation period for a configured delay where order requests cannot be cancelled
 
 - Output amounts are subject to price impact and fees
 

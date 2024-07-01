@@ -77,6 +77,7 @@ library Order {
     struct Addresses {
         address account;
         address receiver;
+        address cancellationReceiver;
         address callbackContract;
         address uiFeeReceiver;
         address market;
@@ -111,6 +112,7 @@ library Order {
         uint256 callbackGasLimit;
         uint256 minOutputAmount;
         uint256 updatedAtBlock;
+        uint256 updatedAtTime;
     }
 
     // @param isLong whether the order is for a long or short
@@ -121,6 +123,7 @@ library Order {
         bool isLong;
         bool shouldUnwrapNativeToken;
         bool isFrozen;
+        bool autoCancel;
     }
 
     // @dev the order account
@@ -149,6 +152,14 @@ library Order {
     // @param value the value to set to
     function setReceiver(Props memory props, address value) internal pure {
         props.addresses.receiver = value;
+    }
+
+    function cancellationReceiver(Props memory props) internal pure returns (address) {
+        return props.addresses.cancellationReceiver;
+    }
+
+    function setCancellationReceiver(Props memory props, address value) internal pure {
+        props.addresses.cancellationReceiver = value;
     }
 
     // @dev the order callbackContract
@@ -355,6 +366,20 @@ library Order {
         props.numbers.updatedAtBlock = value;
     }
 
+    // @dev the order updatedAtTime
+    // @param props Props
+    // @return the order updatedAtTime
+    function updatedAtTime(Props memory props) internal pure returns (uint256) {
+        return props.numbers.updatedAtTime;
+    }
+
+    // @dev set the order updatedAtTime
+    // @param props Props
+    // @param value the value to set to
+    function setUpdatedAtTime(Props memory props, uint256 value) internal pure {
+        props.numbers.updatedAtTime = value;
+    }
+
     // @dev whether the order is for a long or short
     // @param props Props
     // @return whether the order is for a long or short
@@ -399,9 +424,18 @@ library Order {
         props.flags.isFrozen = value;
     }
 
+    function autoCancel(Props memory props) internal pure returns (bool) {
+        return props.flags.autoCancel;
+    }
+
+    function setAutoCancel(Props memory props, bool value) internal pure {
+        props.flags.autoCancel = value;
+    }
+
     // @dev set the order.updatedAtBlock to the current block number
     // @param props Props
     function touch(Props memory props) internal view {
         props.setUpdatedAtBlock(Chain.currentBlockNumber());
+        props.setUpdatedAtTime(Chain.currentTimestamp());
     }
 }

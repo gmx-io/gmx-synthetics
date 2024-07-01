@@ -3,6 +3,8 @@
 pragma solidity ^0.8.0;
 
 import "./BaseOrderHandler.sol";
+import "../liquidation/LiquidationUtils.sol";
+import "../order/ExecuteOrderUtils.sol";
 
 // @title LiquidationHandler
 // @dev Contract to handle liquidations
@@ -15,16 +17,16 @@ contract LiquidationHandler is BaseOrderHandler {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        OrderVault _orderVault,
         Oracle _oracle,
+        OrderVault _orderVault,
         SwapHandler _swapHandler,
         IReferralStorage _referralStorage
     ) BaseOrderHandler(
         _roleStore,
         _dataStore,
         _eventEmitter,
-        _orderVault,
         _oracle,
+        _orderVault,
         _swapHandler,
         _referralStorage
     ) {}
@@ -44,9 +46,11 @@ contract LiquidationHandler is BaseOrderHandler {
     ) external
         globalNonReentrant
         onlyLiquidationKeeper
-        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+        withOraclePrices(oracleParams)
     {
         uint256 startingGas = gasleft();
+
+        oracle.validateSequencerUp();
 
         bytes32 key = LiquidationUtils.createLiquidationOrder(
             dataStore,
@@ -62,7 +66,6 @@ contract LiquidationHandler is BaseOrderHandler {
         BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(
             key,
             order,
-            oracleParams,
             msg.sender,
             startingGas,
             Order.SecondaryOrderType.None
@@ -70,6 +73,6 @@ contract LiquidationHandler is BaseOrderHandler {
 
         FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeOrderFeatureDisabledKey(address(this), uint256(params.order.orderType())));
 
-        OrderUtils.executeOrder(params);
+        ExecuteOrderUtils.executeOrder(params);
     }
 }

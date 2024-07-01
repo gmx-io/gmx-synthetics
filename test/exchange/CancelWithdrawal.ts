@@ -1,5 +1,6 @@
 import { expect } from "chai";
 
+import { increaseTime } from "../../utils/time";
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals } from "../../utils/math";
 import { printGasUsage } from "../../utils/gas";
@@ -67,6 +68,9 @@ describe("Exchange.Withdrawal", () => {
       .withArgs(user1.address, "account for cancelWithdrawal");
 
     expect(await getWithdrawalCount(dataStore)).eq(1);
+
+    const refTime = (await ethers.provider.getBlock()).timestamp;
+    await increaseTime(refTime, 300);
 
     const txn = await exchangeRouter.connect(user0).cancelWithdrawal(withdrawalKeys[0]);
 

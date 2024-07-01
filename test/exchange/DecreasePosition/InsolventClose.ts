@@ -27,6 +27,7 @@ describe("Exchange.DecreasePosition.InsolventClose", () => {
   });
 
   it("funding fees > collateral", async () => {
+    await dataStore.setUint(keys.maxFundingFactorPerSecondKey(ethUsdMarket.marketToken), decimalToFloat(1, 0));
     await dataStore.setUint(keys.fundingFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 10));
     await dataStore.setUint(keys.fundingExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
@@ -214,6 +215,7 @@ describe("Exchange.DecreasePosition.InsolventClose", () => {
   });
 
   it("funding fees > collateral, unable to swap", async () => {
+    await dataStore.setUint(keys.maxFundingFactorPerSecondKey(ethUsdMarket.marketToken), decimalToFloat(1, 0));
     await dataStore.setUint(keys.fundingFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 10));
     await dataStore.setUint(keys.fundingExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 

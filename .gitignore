@@ -17,3 +17,4 @@ out
 /cache/
 artifacts
 deployments/localhost
+deployments.txt

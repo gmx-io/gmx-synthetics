@@ -27,7 +27,7 @@ export async function createSigningServer() {
   app.use(bodyParser.json());
 
   const server = app.listen(port, () => {
-    console.log(`server started at port ${port}`);
+    console.info(`server started at port ${port}`);
   });
 
   app.get("/", (req, res) => {
@@ -41,22 +41,23 @@ export async function createSigningServer() {
   });
 
   app.post("/completed", (req, res) => {
-    console.log("transaction completed", JSON.stringify(req.body));
+    console.info("transaction completed", JSON.stringify(req.body));
     signedTransactions[req.body.transactionKey] = req.body.transactionHash;
     res.send("ok");
 
     let hasPendingTransaction = false;
     for (const [index, { transactionKey }] of unsignedTransactionList.entries()) {
       if (signedTransactions[transactionKey] === undefined) {
-        console.log(`pending transaction at index ${index}`);
+        console.info(`pending transaction at index ${index}`);
         hasPendingTransaction = true;
         break;
       }
     }
 
     if (!hasPendingTransaction) {
-      console.log("no pending transactions left, closing server");
+      console.info("no pending transactions left, closing server");
       server.close();
+      process.exit(1);
     }
   });
 }
@@ -70,7 +71,7 @@ export async function signExternally(unsignedTransaction) {
   const transactionKey = hashString(unsignedTransactionStr);
   unsignedTransactionList.push({ transactionKey, unsignedTransaction, timestamp: Date.now() });
 
-  console.log("Transaction to be signed: ", unsignedTransactionStr);
+  console.info("Transaction to be signed: ", unsignedTransactionStr);
 }
 
 export async function getFrameSigner() {

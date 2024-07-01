@@ -7,6 +7,8 @@ import "../event/EventUtils.sol";
 import "../utils/Cast.sol";
 
 import "./Withdrawal.sol";
+import "./WithdrawalUtils.sol";
+import "../pricing/ISwapPricingUtils.sol";
 
 library WithdrawalEventUtils {
     using Withdrawal for Withdrawal.Props;
@@ -22,7 +24,8 @@ library WithdrawalEventUtils {
     function emitWithdrawalCreated(
         EventEmitter eventEmitter,
         bytes32 key,
-        Withdrawal.Props memory withdrawal
+        Withdrawal.Props memory withdrawal,
+        WithdrawalUtils.WithdrawalType withdrawalType
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -36,13 +39,15 @@ library WithdrawalEventUtils {
         eventData.addressItems.setItem(0, "longTokenSwapPath", withdrawal.longTokenSwapPath());
         eventData.addressItems.setItem(1, "shortTokenSwapPath", withdrawal.shortTokenSwapPath());
 
-        eventData.uintItems.initItems(6);
+        eventData.uintItems.initItems(8);
         eventData.uintItems.setItem(0, "marketTokenAmount", withdrawal.marketTokenAmount());
         eventData.uintItems.setItem(1, "minLongTokenAmount", withdrawal.minLongTokenAmount());
         eventData.uintItems.setItem(2, "minShortTokenAmount", withdrawal.minShortTokenAmount());
         eventData.uintItems.setItem(3, "updatedAtBlock", withdrawal.updatedAtBlock());
-        eventData.uintItems.setItem(4, "executionFee", withdrawal.executionFee());
-        eventData.uintItems.setItem(5, "callbackGasLimit", withdrawal.callbackGasLimit());
+        eventData.uintItems.setItem(4, "updatedAtTime", withdrawal.updatedAtTime());
+        eventData.uintItems.setItem(5, "executionFee", withdrawal.executionFee());
+        eventData.uintItems.setItem(6, "callbackGasLimit", withdrawal.callbackGasLimit());
+        eventData.uintItems.setItem(7, "withdrawalType", uint256(withdrawalType));
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", withdrawal.shouldUnwrapNativeToken());
@@ -61,7 +66,8 @@ library WithdrawalEventUtils {
     function emitWithdrawalExecuted(
         EventEmitter eventEmitter,
         bytes32 key,
-        address account
+        address account,
+        ISwapPricingUtils.SwapPricingType swapPricingType
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -70,6 +76,9 @@ library WithdrawalEventUtils {
 
         eventData.addressItems.initItems(1);
         eventData.addressItems.setItem(0, "account", account);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "swapPricingType", uint256(swapPricingType));
 
         eventEmitter.emitEventLog2(
             "WithdrawalExecuted",

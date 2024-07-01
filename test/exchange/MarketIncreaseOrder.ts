@@ -1,5 +1,6 @@
 import { expect } from "chai";
 
+import { deployContract } from "../../utils/deploy";
 import { usingResult } from "../../utils/use";
 import { getMarketTokenPriceWithPoolValue } from "../../utils/market";
 import { deployFixture } from "../../utils/fixture";
@@ -79,6 +80,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
       isLong: true,
       shouldUnwrapNativeToken: false,
       gasUsageLabel: "createOrder",
+      cancellationReceiver: user1,
     };
 
     await createOrder(fixture, params);
@@ -94,6 +96,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
     expect(order.addresses.market).eq(ethUsdMarket.marketToken);
     expect(order.addresses.initialCollateralToken).eq(wnt.address);
     expect(order.addresses.swapPath).eql([ethUsdMarket.marketToken]);
+    expect(order.addresses.cancellationReceiver).eq(user1.address);
     expect(order.numbers.orderType).eq(OrderType.MarketIncrease);
     expect(order.numbers.sizeDeltaUsd).eq(decimalToFloat(200 * 1000));
     expect(order.numbers.initialCollateralDeltaAmount).eq(expandDecimals(10, 18));
@@ -103,6 +106,11 @@ describe("Exchange.MarketIncreaseOrder", () => {
     expect(order.numbers.updatedAtBlock).eq(block.number);
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
+
+    await expect(createOrder(fixture, { ...params, cancellationReceiver: orderVault })).to.be.revertedWithCustomError(
+      errorsContract,
+      "InvalidReceiver"
+    );
   });
 
   it("executeOrder validations", async () => {
@@ -133,32 +141,6 @@ describe("Exchange.MarketIncreaseOrder", () => {
         expectedCancellationReason: "InvalidCollateralTokenForMarket",
       },
     });
-
-    await expect(
-      handleOrder(fixture, {
-        create: {
-          ...params,
-          initialCollateralToken: usdc,
-          initialCollateralDeltaAmount: expandDecimals(5000, 6),
-        },
-        execute: {
-          oracleBlockNumberOffset: -1,
-        },
-      })
-    ).to.be.revertedWithCustomError(errorsContract, "OracleBlockNumberNotWithinRange");
-
-    await expect(
-      handleOrder(fixture, {
-        create: {
-          ...params,
-          initialCollateralToken: usdc,
-          initialCollateralDeltaAmount: expandDecimals(5000, 6),
-        },
-        execute: {
-          oracleBlockNumberOffset: 5,
-        },
-      })
-    ).to.be.revertedWithCustomError(errorsContract, "OracleBlockNumberNotWithinRange");
   });
 
   it("executeOrder", async () => {
@@ -254,6 +236,64 @@ describe("Exchange.MarketIncreaseOrder", () => {
         maxPrices: [expandDecimals(5500, 4), expandDecimals(1, 6)],
       },
     });
+  });
+
+  it("refunds execution fee", async () => {
+    await dataStore.setUint(keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
+
+    const params = {
+      account: user0,
+      receiver: user1,
+      market: ethUsdMarket,
+      initialCollateralToken: usdc,
+      initialCollateralDeltaAmount: expandDecimals(100 * 1000, 6),
+      swapPath: [],
+      sizeDeltaUsd: decimalToFloat(100 * 1000),
+      acceptablePrice: expandDecimals(4990, 12),
+      executionFee: expandDecimals(2, 15),
+      minOutputAmount: expandDecimals(50000, 6),
+      orderType: OrderType.MarketIncrease,
+      isLong: false,
+      shouldUnwrapNativeToken: false,
+    };
+
+    const initialBalance = await provider.getBalance(user1.address);
+
+    await handleOrder(fixture, { create: params });
+
+    expect((await provider.getBalance(user1.address)).sub(initialBalance)).closeTo("162583985300672", "10000000000000");
+  });
+
+  it("refund execution fee callback", async () => {
+    await dataStore.setUint(keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
+    const mockCallbackReceiver = await deployContract("MockCallbackReceiver", []);
+
+    const params = {
+      account: user0,
+      receiver: user1,
+      market: ethUsdMarket,
+      initialCollateralToken: usdc,
+      initialCollateralDeltaAmount: expandDecimals(100 * 1000, 6),
+      swapPath: [],
+      sizeDeltaUsd: decimalToFloat(100 * 1000),
+      acceptablePrice: expandDecimals(4990, 12),
+      executionFee: expandDecimals(2, 15),
+      minOutputAmount: expandDecimals(50000, 6),
+      orderType: OrderType.MarketIncrease,
+      isLong: false,
+      shouldUnwrapNativeToken: false,
+      callbackContract: mockCallbackReceiver,
+    };
+
+    const initialBalance = await provider.getBalance(user1.address);
+
+    expect(await provider.getBalance(mockCallbackReceiver.address)).eq("0");
+
+    await handleOrder(fixture, { create: params });
+
+    expect((await provider.getBalance(user1.address)).sub(initialBalance)).eq(0);
+
+    expect(await provider.getBalance(mockCallbackReceiver.address)).closeTo("142918985143352", "10000000000000");
   });
 
   it("validates reserve", async () => {
@@ -530,25 +570,5 @@ describe("Exchange.MarketIncreaseOrder", () => {
         expect(poolValueInfo.poolValue).eq(expandDecimals(19800, 30));
       }
     );
-  });
-
-  it("refunds execution fees, even if receiver is orderVault", async () => {
-    const params = {
-      account: user0,
-      receiver: orderVault,
-      market: ethUsdMarket,
-      initialCollateralToken: usdc,
-      initialCollateralDeltaAmount: expandDecimals(100 * 1000, 6),
-      swapPath: [],
-      sizeDeltaUsd: decimalToFloat(150 * 1000),
-      acceptablePrice: expandDecimals(4990, 12),
-      executionFee: expandDecimals(10, 18),
-      minOutputAmount: expandDecimals(50000, 6),
-      orderType: OrderType.MarketIncrease,
-      isLong: false,
-      shouldUnwrapNativeToken: false,
-    };
-
-    await handleOrder(fixture, { create: params });
   });
 });

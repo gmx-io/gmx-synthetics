@@ -6,22 +6,12 @@ import "@openzeppelin/contracts/utils/math/SignedMath.sol";
 
 import "../data/Keys.sol";
 
-import "../market/MarketStoreUtils.sol";
-
-import "../deposit/DepositStoreUtils.sol";
-import "../withdrawal/WithdrawalStoreUtils.sol";
-
 import "../position/Position.sol";
-import "../position/PositionUtils.sol";
-import "../position/PositionStoreUtils.sol";
-import "../position/IncreasePositionUtils.sol";
-import "../position/DecreasePositionUtils.sol";
-
-import "../order/OrderStoreUtils.sol";
-
 import "../market/MarketUtils.sol";
 import "../market/Market.sol";
-import "./ReaderPricingUtils.sol";
+
+import "../pricing/ISwapPricingUtils.sol";
+import "../pricing/SwapPricingUtils.sol";
 
 library ReaderWithdrawalUtils {
     using SignedMath for int256;
@@ -57,7 +47,8 @@ library ReaderWithdrawalUtils {
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
         uint256 marketTokenAmount,
-        address uiFeeReceiver
+        address uiFeeReceiver,
+        ISwapPricingUtils.SwapPricingType swapPricingType
     ) external view returns (uint256, uint256) {
         GetWithdrawalAmountOutCache memory cache;
 
@@ -99,7 +90,8 @@ library ReaderWithdrawalUtils {
             market.marketToken,
             cache.longTokenOutputAmount,
             false, // forPositiveImpact
-            uiFeeReceiver
+            uiFeeReceiver,
+            swapPricingType
         );
 
         SwapPricingUtils.SwapFees memory shortTokenFees = SwapPricingUtils.getSwapFees(
@@ -107,7 +99,8 @@ library ReaderWithdrawalUtils {
             market.marketToken,
             cache.shortTokenOutputAmount,
             false, // forPositiveImpact
-            uiFeeReceiver
+            uiFeeReceiver,
+            swapPricingType
         );
 
         return (

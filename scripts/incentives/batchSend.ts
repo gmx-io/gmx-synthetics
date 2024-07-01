@@ -303,32 +303,6 @@ function readDistributionFile() {
   };
 }
 
-const batchSenderInterface = new ethers.utils.Interface(BatchSenderAbi);
-
-export function getBatchSenderCalldata(
-  tokenAddress: string,
-  recipients: string[],
-  amounts: string[],
-  typeId: number,
-  batchSize = 150
-) {
-  const batchSenderCalldata = {};
-
-  for (const from of range(0, amounts.length, batchSize)) {
-    const to = from + batchSize;
-    const amountsBatch = amounts.slice(from, to);
-    const recipientsBatch = recipients.slice(from, to);
-    const calldata = batchSenderInterface.encodeFunctionData("sendAndEmit", [
-      tokenAddress,
-      recipientsBatch,
-      amountsBatch,
-      typeId,
-    ]);
-    batchSenderCalldata[`${from}-${Math.min(to, amounts.length) - 1}`] = calldata;
-  }
-  return batchSenderCalldata;
-}
-
 if (require.main === module) {
   main()
     .then(() => {

@@ -18,7 +18,6 @@ import * as keys from "../../utils/keys";
 import { usingResult } from "../../utils/use";
 
 describe("Exchange.MarketDecreaseOrder", () => {
-  const { provider } = ethers;
   let fixture;
   let user0;
   let dataStore, reader, ethUsdMarket, ethUsdSpotOnlyMarket, wnt, usdc;
@@ -118,23 +117,6 @@ describe("Exchange.MarketDecreaseOrder", () => {
         expectedCancellationReason: "EmptyPosition",
       },
     });
-
-    const block0 = await provider.getBlock();
-
-    await expect(
-      handleOrder(fixture, {
-        create: {
-          ...params,
-        },
-        execute: {
-          tokens: [wnt.address, usdc.address],
-          minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-          maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
-          precisions: [8, 18],
-          oracleBlocks: [block0, block0],
-        },
-      })
-    ).to.be.revertedWithCustomError(errorsContract, "OracleBlockNumberNotWithinRange");
 
     await handleOrder(fixture, {
       create: {

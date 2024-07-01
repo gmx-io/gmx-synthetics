@@ -2,10 +2,10 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import * as keys from "../utils/keys";
 import { setBoolIfDifferent, setBytes32IfDifferent, setUintIfDifferent } from "../utils/dataStore";
 import { DEFAULT_MARKET_TYPE, getMarketTokenAddresses, getMarketKey, getOnchainMarkets } from "../utils/market";
+import { updateMarketConfig } from "../scripts/updateMarketConfigUtils";
 
 const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnvironment) => {
   const { execute, get, read, log } = deployments;
-  const generalConfig = await gmx.getGeneral();
 
   if (process.env.SKIP_NEW_MARKETS) {
     log("WARN: new markets will be skipped");
@@ -48,76 +48,6 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     );
   }
 
-  async function setReserveFactor(marketToken: string, isLong: boolean, reserveFactor: number) {
-    const key = keys.reserveFactorKey(marketToken, isLong);
-    await setUintIfDifferent(
-      key,
-      reserveFactor,
-      `reserve factor ${marketToken.toString()} ${isLong ? "long" : "short"}`
-    );
-  }
-
-  async function setOpenInterestReserveFactor(marketToken: string, isLong: boolean, reserveFactor: number) {
-    const key = keys.openInterestReserveFactorKey(marketToken, isLong);
-    await setUintIfDifferent(
-      key,
-      reserveFactor,
-      `reserve factor ${marketToken.toString()} ${isLong ? "long" : "short"}`
-    );
-  }
-
-  async function setMinCollateralFactor(marketToken: string, minCollateralFactor: number) {
-    const key = keys.minCollateralFactorKey(marketToken);
-    await setUintIfDifferent(key, minCollateralFactor, `min collateral factor ${marketToken.toString()}`);
-  }
-
-  async function setMinCollateralFactorForOpenInterestMultiplier(
-    marketToken: string,
-    minCollateralFactorForOpenInterestMultiplier: number,
-    isLong: boolean
-  ) {
-    const key = keys.minCollateralFactorForOpenInterestMultiplierKey(marketToken, isLong);
-    await setUintIfDifferent(
-      key,
-      minCollateralFactorForOpenInterestMultiplier,
-      `min collateral factor for open interest multiplier ${marketToken.toString()} ${isLong ? "long" : "short"}`
-    );
-  }
-
-  async function setMaxPoolAmount(marketToken: string, token: string, maxPoolAmount: number) {
-    const key = keys.maxPoolAmountKey(marketToken, token);
-    await setUintIfDifferent(key, maxPoolAmount, `max pool amount ${marketToken.toString()} ${token.toString()}`);
-  }
-
-  async function setMaxPoolAmountForDeposit(marketToken: string, token: string, maxPoolAmount: number) {
-    const key = keys.maxPoolAmountForDepositKey(marketToken, token);
-    await setUintIfDifferent(
-      key,
-      maxPoolAmount,
-      `max pool amount for deposit ${marketToken.toString()} ${token.toString()}`
-    );
-  }
-
-  async function setMaxOpenInterest(marketToken: string, isLong: boolean, maxOpenInterest: number) {
-    const key = keys.maxOpenInterestKey(marketToken, isLong);
-    await setUintIfDifferent(
-      key,
-      maxOpenInterest,
-      `max open interest ${marketToken.toString()} ${isLong ? "long" : "short"}`
-    );
-  }
-
-  async function setMaxPnlFactor(
-    pnlFactorType: string,
-    marketToken: string,
-    isLong: boolean,
-    maxPnlFactor: number,
-    label: string
-  ) {
-    const key = keys.maxPnlFactorKey(pnlFactorType, marketToken, isLong);
-    await setUintIfDifferent(key, maxPnlFactor, `${label} ${marketToken.toString()} ${isLong ? "long" : "short"}`);
-  }
-
   onchainMarketsByTokens = await getOnchainMarkets(read, dataStore.address);
 
   for (const marketConfig of markets) {
@@ -153,58 +83,9 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       );
     }
 
-    await setMaxPoolAmount(marketToken, longToken, marketConfig.maxLongTokenPoolAmount);
-    await setMaxPoolAmount(marketToken, shortToken, marketConfig.maxShortTokenPoolAmount);
-
-    await setMaxPoolAmountForDeposit(marketToken, longToken, marketConfig.maxLongTokenPoolAmountForDeposit);
-    await setMaxPoolAmountForDeposit(marketToken, shortToken, marketConfig.maxShortTokenPoolAmountForDeposit);
-
-    for (const name of ["swapImpactExponentFactor"]) {
-      if (marketConfig[name]) {
-        const value = marketConfig[name];
-        const key = keys[`${name}Key`](marketToken);
-        await setUintIfDifferent(key, value, `${name} for ${marketToken.toString()}`);
-      }
-    }
-
     if (marketConfig.isDisabled !== undefined) {
       const key = keys.isMarketDisabledKey(marketToken);
       await setBoolIfDifferent(key, marketConfig.isDisabled, `isDisabled for ${marketToken}`);
-    }
-
-    if (marketConfig.swapFeeFactorForPositiveImpact !== undefined) {
-      const key = keys.swapFeeFactorKey(marketToken, true);
-      await setUintIfDifferent(
-        key,
-        marketConfig.swapFeeFactorForPositiveImpact,
-        `swapFeeFactorForPositiveImpact for ${marketToken.toString()}`
-      );
-    }
-
-    if (marketConfig.swapFeeFactorForNegativeImpact !== undefined) {
-      const key = keys.swapFeeFactorKey(marketToken, false);
-      await setUintIfDifferent(
-        key,
-        marketConfig.swapFeeFactorForNegativeImpact,
-        `swapFeeFactorForNegativeImpact for ${marketToken.toString()}`
-      );
-    }
-
-    if (marketConfig.positiveSwapImpactFactor !== undefined) {
-      const key = keys.swapImpactFactorKey(marketToken, true);
-      await setUintIfDifferent(
-        key,
-        marketConfig.positiveSwapImpactFactor,
-        `positive swap impact factor for ${marketToken.toString()}`
-      );
-    }
-    if (marketConfig.negativeSwapImpactFactor !== undefined) {
-      const key = keys.swapImpactFactorKey(marketToken, false);
-      await setUintIfDifferent(
-        key,
-        marketConfig.negativeSwapImpactFactor,
-        `negative swap impact factor for ${marketToken.toString()}`
-      );
     }
 
     // the rest of the params are not used for swap-only markets
@@ -212,230 +93,17 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
       continue;
     }
 
-    await setMinCollateralFactor(marketToken, marketConfig.minCollateralFactor);
-
-    await setMinCollateralFactorForOpenInterestMultiplier(
-      marketToken,
-      marketConfig.minCollateralFactorForOpenInterestMultiplierLong,
-      true
-    );
-    await setMinCollateralFactorForOpenInterestMultiplier(
-      marketToken,
-      marketConfig.minCollateralFactorForOpenInterestMultiplierShort,
-      false
-    );
-
-    await setMaxOpenInterest(marketToken, true, marketConfig.maxOpenInterestForLongs);
-    await setMaxOpenInterest(marketToken, false, marketConfig.maxOpenInterestForShorts);
-
-    await setReserveFactor(marketToken, true, marketConfig.reserveFactorLongs);
-    await setReserveFactor(marketToken, false, marketConfig.reserveFactorShorts);
-
-    await setOpenInterestReserveFactor(marketToken, true, marketConfig.openInterestReserveFactorLongs);
-    await setOpenInterestReserveFactor(marketToken, false, marketConfig.openInterestReserveFactorShorts);
-
-    await setMaxPnlFactor(
-      keys.MAX_PNL_FACTOR_FOR_TRADERS,
-      marketToken,
-      true,
-      marketConfig.maxPnlFactorForTradersLongs,
-      "max pnl factor for traders"
-    );
-    await setMaxPnlFactor(
-      keys.MAX_PNL_FACTOR_FOR_TRADERS,
-      marketToken,
-      false,
-      marketConfig.maxPnlFactorForTradersShorts,
-      "max pnl factor for traders"
-    );
-
-    await setMaxPnlFactor(
-      keys.MAX_PNL_FACTOR_FOR_ADL,
-      marketToken,
-      true,
-      marketConfig.maxPnlFactorForAdlLongs,
-      "max pnl factor for adl"
-    );
-    await setMaxPnlFactor(
-      keys.MAX_PNL_FACTOR_FOR_ADL,
-      marketToken,
-      false,
-      marketConfig.maxPnlFactorForAdlShorts,
-      "max pnl factor for adl"
-    );
-
-    await setUintIfDifferent(
-      keys.minPnlFactorAfterAdl(marketToken, true),
-      marketConfig.minPnlFactorAfterAdlLongs,
-      `min pnl factor after adl ${marketToken.toString()} long`
-    );
-    await setUintIfDifferent(
-      keys.minPnlFactorAfterAdl(marketToken, false),
-      marketConfig.minPnlFactorAfterAdlShorts,
-      `min pnl factor after adl ${marketToken.toString()} short`
-    );
-
-    await setMaxPnlFactor(
-      keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-      marketToken,
-      true,
-      marketConfig.maxPnlFactorForDepositsLongs,
-      "max pnl factor for deposits"
-    );
-    await setMaxPnlFactor(
-      keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-      marketToken,
-      false,
-      marketConfig.maxPnlFactorForDepositsShorts,
-      "max pnl factor for deposits"
-    );
-
-    await setMaxPnlFactor(
-      keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
-      marketToken,
-      true,
-      marketConfig.maxPnlFactorForWithdrawalsLongs,
-      "max pnl factor for withdrawals"
-    );
-    await setMaxPnlFactor(
-      keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
-      marketToken,
-      false,
-      marketConfig.maxPnlFactorForWithdrawalsShorts,
-      "max pnl factor for withdrawals"
-    );
-
-    await setUintIfDifferent(
-      keys.tokenTransferGasLimit(marketToken),
-      generalConfig.tokenTransferGasLimit,
-      `market token transfer gas limit`
-    );
-
-    for (const name of [
-      "positionImpactExponentFactor",
-      "fundingFactor",
-      "fundingIncreaseFactorPerSecond",
-      "fundingDecreaseFactorPerSecond",
-      "minFundingFactorPerSecond",
-      "maxFundingFactorPerSecond",
-      "thresholdForStableFunding",
-      "thresholdForDecreaseFunding",
-      "positionImpactPoolDistributionRate",
-      "minPositionImpactPoolAmount",
-    ]) {
+    for (const name of ["positionImpactPoolDistributionRate", "minPositionImpactPoolAmount"]) {
       if (marketConfig[name]) {
         const value = marketConfig[name];
         const key = keys[`${name}Key`](marketToken);
         await setUintIfDifferent(key, value, `${name} for ${marketToken.toString()}`);
       }
     }
-
-    if (marketConfig.fundingExponentFactor !== undefined) {
-      const key = keys.fundingExponentFactorKey(marketToken);
-      await setUintIfDifferent(
-        key,
-        marketConfig.fundingExponentFactor,
-        `funding exponent factor for ${marketToken.toString()}`
-      );
-    }
-
-    if (marketConfig.positionFeeFactorForPositiveImpact !== undefined) {
-      const key = keys.positionFeeFactorKey(marketToken, true);
-      await setUintIfDifferent(
-        key,
-        marketConfig.positionFeeFactorForPositiveImpact,
-        `positionFeeFactorForPositiveImpact ${marketToken.toString()}`
-      );
-    }
-
-    if (marketConfig.positionFeeFactorForNegativeImpact !== undefined) {
-      const key = keys.positionFeeFactorKey(marketToken, false);
-      await setUintIfDifferent(
-        key,
-        marketConfig.positionFeeFactorForNegativeImpact,
-        `positionFeeFactorForPositiveImpact ${marketToken.toString()}`
-      );
-    }
-
-    if (marketConfig.borrowingFactorForLongs !== undefined) {
-      const key = keys.borrowingFactorKey(marketToken, true);
-      await setUintIfDifferent(
-        key,
-        marketConfig.borrowingFactorForLongs,
-        `borrowing factor for longs for ${marketToken.toString()}`
-      );
-    }
-
-    if (marketConfig.borrowingFactorForShorts !== undefined) {
-      const key = keys.borrowingFactorKey(marketToken, false);
-      await setUintIfDifferent(
-        key,
-        marketConfig.borrowingFactorForShorts,
-        `borrowing factor for shorts for ${marketToken.toString()}`
-      );
-    }
-
-    if (marketConfig.borrowingExponentFactorForLongs !== undefined) {
-      const key = keys.borrowingExponentFactorKey(marketToken, true);
-      await setUintIfDifferent(
-        key,
-        marketConfig.borrowingExponentFactorForLongs,
-        `borrowing exponent factor for longs for ${marketToken.toString()}`
-      );
-    }
-
-    if (marketConfig.borrowingExponentFactorForShorts !== undefined) {
-      const key = keys.borrowingExponentFactorKey(marketToken, false);
-      await setUintIfDifferent(
-        key,
-        marketConfig.borrowingExponentFactorForShorts,
-        `borrowing exponent factor for shorts for ${marketToken.toString()}`
-      );
-    }
-
-    if (marketConfig.positivePositionImpactFactor !== undefined) {
-      const key = keys.positionImpactFactorKey(marketToken, true);
-      await setUintIfDifferent(
-        key,
-        marketConfig.positivePositionImpactFactor,
-        `positive position impact factor for ${marketToken.toString()}`
-      );
-    }
-    if (marketConfig.negativePositionImpactFactor !== undefined) {
-      const key = keys.positionImpactFactorKey(marketToken, false);
-      await setUintIfDifferent(
-        key,
-        marketConfig.negativePositionImpactFactor,
-        `negative position impact factor for ${marketToken.toString()}`
-      );
-    }
-
-    if (marketConfig.maxPositionImpactFactorForLiquidations !== undefined) {
-      const key = keys.maxPositionImpactFactorForLiquidationsKey(marketToken);
-      await setUintIfDifferent(
-        key,
-        marketConfig.maxPositionImpactFactorForLiquidations,
-        `max position impact factor for liquidations for ${marketToken.toString()}`
-      );
-    }
-
-    if (marketConfig.positiveMaxPositionImpactFactor !== undefined) {
-      const key = keys.maxPositionImpactFactorKey(marketToken, true);
-      await setUintIfDifferent(
-        key,
-        marketConfig.positiveMaxPositionImpactFactor,
-        `positive max position impact factor for ${marketToken.toString()}`
-      );
-    }
-    if (marketConfig.negativeMaxPositionImpactFactor !== undefined) {
-      const key = keys.maxPositionImpactFactorKey(marketToken, false);
-      await setUintIfDifferent(
-        key,
-        marketConfig.negativeMaxPositionImpactFactor,
-        `negative max position impact factor for ${marketToken.toString()}`
-      );
-    }
   }
+
+  const write = process.env.FOR_EXISTING_MAINNET_DEPLOYMENT ? false : true;
+  await updateMarketConfig({ write });
 };
 
 func.skip = async ({ gmx, network }) => {
@@ -449,5 +117,5 @@ func.skip = async ({ gmx, network }) => {
 };
 func.runAtTheEnd = true;
 func.tags = ["Markets"];
-func.dependencies = ["MarketFactory", "Tokens", "DataStore"];
+func.dependencies = ["MarketFactory", "Tokens", "DataStore", "Config", "Multicall", "Roles"];
 export default func;

@@ -36,7 +36,7 @@ async function main() {
   const longTokenTicker = tickerByToken[market.longToken];
   const shortTokenTicker = tickerByToken[market.shortToken];
 
-  const pnlFactorType = keys[process.env.PNL_FACTOR_TYPE];
+  const pnlFactorType = keys[process.env.PNL_FACTOR_TYPE || "MAX_PNL_FACTOR_FOR_TRADERS"];
   const maximize = process.env.MAXIMIZE === "true" ? true : false;
 
   console.log("Getting price data for market %s", marketToken);

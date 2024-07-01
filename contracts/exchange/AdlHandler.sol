@@ -3,6 +3,8 @@
 pragma solidity ^0.8.0;
 
 import "./BaseOrderHandler.sol";
+import "../adl/AdlUtils.sol";
+import "../order/ExecuteOrderUtils.sol";
 
 // @title AdlHandler
 // @dev Contract to handle adls
@@ -16,8 +18,6 @@ contract AdlHandler is BaseOrderHandler {
     // stack too deep errors
     struct ExecuteAdlCache {
         uint256 startingGas;
-        uint256[] minOracleBlockNumbers;
-        uint256[] maxOracleBlockNumbers;
         bytes32 key;
         bool shouldAllowAdl;
         uint256 maxPnlFactorForAdl;
@@ -30,16 +30,16 @@ contract AdlHandler is BaseOrderHandler {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        OrderVault _orderVault,
         Oracle _oracle,
+        OrderVault _orderVault,
         SwapHandler _swapHandler,
         IReferralStorage _referralStorage
     ) BaseOrderHandler(
         _roleStore,
         _dataStore,
         _eventEmitter,
-        _orderVault,
         _oracle,
+        _orderVault,
         _swapHandler,
         _referralStorage
     ) {}
@@ -55,28 +55,14 @@ contract AdlHandler is BaseOrderHandler {
     ) external
         globalNonReentrant
         onlyAdlKeeper
-        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+        withOraclePrices(oracleParams)
     {
-        OracleUtils.RealtimeFeedReport[] memory reports = oracle.validateRealtimeFeeds(
-            dataStore,
-            oracleParams.realtimeFeedTokens,
-            oracleParams.realtimeFeedData
-        );
-
-        uint256[] memory maxOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedMaxOracleBlockNumbers,
-            oracleParams.tokens.length,
-            reports,
-            OracleUtils.OracleBlockNumberType.Max
-        );
-
         AdlUtils.updateAdlState(
             dataStore,
             eventEmitter,
             oracle,
             market,
-            isLong,
-            maxOracleBlockNumbers
+            isLong
         );
     }
 
@@ -104,37 +90,17 @@ contract AdlHandler is BaseOrderHandler {
     ) external
         globalNonReentrant
         onlyAdlKeeper
-        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+        withOraclePrices(oracleParams)
     {
         ExecuteAdlCache memory cache;
 
         cache.startingGas = gasleft();
 
-        OracleUtils.RealtimeFeedReport[] memory reports = oracle.validateRealtimeFeeds(
-            dataStore,
-            oracleParams.realtimeFeedTokens,
-            oracleParams.realtimeFeedData
-        );
-
-        cache.minOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedMinOracleBlockNumbers,
-            oracleParams.tokens.length,
-            reports,
-            OracleUtils.OracleBlockNumberType.Min
-        );
-
-        cache.maxOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedMaxOracleBlockNumbers,
-            oracleParams.tokens.length,
-            reports,
-            OracleUtils.OracleBlockNumberType.Max
-        );
-
         AdlUtils.validateAdl(
             dataStore,
+            oracle,
             market,
-            isLong,
-            cache.maxOracleBlockNumbers
+            isLong
         );
 
         (cache.shouldAllowAdl, cache.pnlToPoolFactor, cache.maxPnlFactorForAdl) = MarketUtils.isPnlFactorExceeded(
@@ -158,7 +124,8 @@ contract AdlHandler is BaseOrderHandler {
                 collateralToken,
                 isLong,
                 sizeDeltaUsd,
-                cache.minOracleBlockNumbers[0]
+                Chain.currentBlockNumber(), // updatedAtBlock
+                oracle.minTimestamp() // updatedAtTime
             )
         );
 
@@ -167,7 +134,6 @@ contract AdlHandler is BaseOrderHandler {
         BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(
             cache.key,
             order,
-            oracleParams,
             msg.sender,
             cache.startingGas,
             Order.SecondaryOrderType.Adl
@@ -175,7 +141,7 @@ contract AdlHandler is BaseOrderHandler {
 
         FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeAdlFeatureDisabledKey(address(this), uint256(params.order.orderType())));
 
-        OrderUtils.executeOrder(params);
+        ExecuteOrderUtils.executeOrder(params);
 
         // validate that the ratio of pending pnl to pool value was decreased
         cache.nextPnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, oracle, market, isLong, true);

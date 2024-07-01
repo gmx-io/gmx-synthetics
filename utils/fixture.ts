@@ -47,6 +47,9 @@ export async function deployFixture() {
   const usdtPriceFeed = await hre.ethers.getContract("USDTPriceFeed");
   await usdtPriceFeed.setAnswer(expandDecimals(1, 8));
 
+  const wethPriceFeed = await hre.ethers.getContract("WETHPriceFeed");
+  await wethPriceFeed.setAnswer(expandDecimals(5000, 8));
+
   const oracleSalt = hashData(["uint256", "string"], [chainId, "xget-oracle-v1"]);
 
   const config = await hre.ethers.getContract("Config");
@@ -56,6 +59,7 @@ export async function deployFixture() {
   const dataStore = await hre.ethers.getContract("DataStore");
   const depositVault = await hre.ethers.getContract("DepositVault");
   const withdrawalVault = await hre.ethers.getContract("WithdrawalVault");
+  const shiftVault = await hre.ethers.getContract("ShiftVault");
   const eventEmitter = await hre.ethers.getContract("EventEmitter");
   const oracleStore = await hre.ethers.getContract("OracleStore");
   const orderVault = await hre.ethers.getContract("OrderVault");
@@ -64,6 +68,7 @@ export async function deployFixture() {
   const depositUtils = await hre.ethers.getContract("DepositUtils");
   const executeDepositUtils = await hre.ethers.getContract("ExecuteDepositUtils");
   const withdrawalHandler = await hre.ethers.getContract("WithdrawalHandler");
+  const shiftHandler = await hre.ethers.getContract("ShiftHandler");
   const orderHandler = await hre.ethers.getContract("OrderHandler");
   const baseOrderUtils = await hre.ethers.getContract("BaseOrderUtils");
   const orderUtils = await hre.ethers.getContract("OrderUtils");
@@ -73,10 +78,14 @@ export async function deployFixture() {
   const exchangeRouter = await hre.ethers.getContract("ExchangeRouter");
   const subaccountRouter = await hre.ethers.getContract("SubaccountRouter");
   const oracle = await hre.ethers.getContract("Oracle");
+  const gmOracleProvider = await hre.ethers.getContract("GmOracleProvider");
+  const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
+  const chainlinkDataStreamProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
   const marketUtils = await hre.ethers.getContract("MarketUtils");
   const marketStoreUtils = await hre.ethers.getContract("MarketStoreUtils");
   const depositStoreUtils = await hre.ethers.getContract("DepositStoreUtils");
   const withdrawalStoreUtils = await hre.ethers.getContract("WithdrawalStoreUtils");
+  const shiftStoreUtils = await hre.ethers.getContract("ShiftStoreUtils");
   const positionStoreUtils = await hre.ethers.getContract("PositionStoreUtils");
   const orderStoreUtils = await hre.ethers.getContract("OrderStoreUtils");
   const decreasePositionUtils = await hre.ethers.getContract("DecreasePositionUtils");
@@ -142,6 +151,17 @@ export async function deployFixture() {
   );
   const btcUsdMarket = await reader.getMarket(dataStore.address, btcUsdMarketAddress);
 
+  const btcUsdSingleTokenMarketAddress = getMarketTokenAddress(
+    wbtc.address,
+    usdc.address,
+    usdc.address,
+    DEFAULT_MARKET_TYPE,
+    marketFactory.address,
+    roleStore.address,
+    dataStore.address
+  );
+  const btcUsdSingleTokenMarket = await reader.getMarket(dataStore.address, btcUsdSingleTokenMarketAddress);
+
   const solUsdMarketAddress = getMarketTokenAddress(
     sol.address,
     wnt.address,
@@ -190,6 +210,7 @@ export async function deployFixture() {
       depositVault,
       eventEmitter,
       withdrawalVault,
+      shiftVault,
       oracleStore,
       orderVault,
       marketFactory,
@@ -197,6 +218,7 @@ export async function deployFixture() {
       depositUtils,
       executeDepositUtils,
       withdrawalHandler,
+      shiftHandler,
       orderHandler,
       baseOrderUtils,
       orderUtils,
@@ -206,10 +228,13 @@ export async function deployFixture() {
       exchangeRouter,
       subaccountRouter,
       oracle,
+      gmOracleProvider,
+      chainlinkPriceFeedProvider,
       marketUtils,
       marketStoreUtils,
       depositStoreUtils,
       withdrawalStoreUtils,
+      shiftStoreUtils,
       positionStoreUtils,
       orderStoreUtils,
       decreasePositionUtils,
@@ -219,6 +244,7 @@ export async function deployFixture() {
       swapUtils,
       referralStorage,
       usdcPriceFeed,
+      wethPriceFeed,
       wnt,
       wbtc,
       sol,
@@ -229,6 +255,7 @@ export async function deployFixture() {
       ethUsdSpotOnlyMarket,
       ethUsdSingleTokenMarket,
       btcUsdMarket,
+      btcUsdSingleTokenMarket,
       solUsdMarket,
       feeHandler,
     },

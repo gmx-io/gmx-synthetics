@@ -42,8 +42,6 @@ describe("Exchange.FundingFees.PairMarket", () => {
     await dataStore.setUint(keys.fundingFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 10));
     await dataStore.setUint(keys.fundingExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(1));
 
-    expect(await dataStore.getUint(keys.fundingUpdatedAtKey(ethUsdMarket.marketToken))).eq(0);
-
     // ORDER 1
     // user0 opens a $200k long position, using wnt as collateral
     await handleOrder(fixture, {
@@ -177,7 +175,7 @@ describe("Exchange.FundingFees.PairMarket", () => {
       execute: {
         afterExecution: async ({ logs }) => {
           const feeInfo = getEventData(logs, "PositionFeesCollected");
-          expect(feeInfo.fundingFeeAmount).closeTo("24", "10");
+          expect(feeInfo.fundingFeeAmount).closeTo("30", "20");
           expect(feeInfo.collateralToken).eq(usdc.address);
           const claimableFundingData = getEventDataArray(logs, "ClaimableFundingUpdated");
           expect(claimableFundingData.length).eq(1);
@@ -313,8 +311,8 @@ describe("Exchange.FundingFees.PairMarket", () => {
     expect(
       await dataStore.getUint(keys.fundingFeeAmountPerSizeKey(ethUsdMarket.marketToken, usdc.address, false))
     ).closeTo(
-      "40320390000000000", // 0.00004 USD
-      "100000000000"
+      "40320493939393940", // 0.00004 USD
+      "200000000000"
     );
 
     expect(

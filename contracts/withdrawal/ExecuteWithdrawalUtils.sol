@@ -2,24 +2,20 @@
 
 pragma solidity ^0.8.0;
 
-import "../adl/AdlUtils.sol";
-
 import "../data/DataStore.sol";
 
 import "./WithdrawalVault.sol";
 import "./WithdrawalStoreUtils.sol";
 import "./WithdrawalEventUtils.sol";
 
-import "../nonce/NonceUtils.sol";
 import "../pricing/SwapPricingUtils.sol";
 import "../oracle/Oracle.sol";
-import "../oracle/OracleUtils.sol";
+import "../position/PositionUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
-import "../utils/AccountUtils.sol";
 
 library ExecuteWithdrawalUtils {
     using SafeCast for uint256;
@@ -36,30 +32,26 @@ library ExecuteWithdrawalUtils {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
-    /**
-     * @param dataStore The data store where withdrawal data is stored.
-     * @param eventEmitter The event emitter that is used to emit events.
-     * @param withdrawalVault WithdrawalVault.
-     * @param oracle The oracle that provides market prices.
-     * @param key The unique identifier of the withdrawal to execute.
-     * @param minOracleBlockNumbers The min block numbers for the oracle prices.
-     * @param maxOracleBlockNumbers The max block numbers for the oracle prices.
-     * @param keeper The keeper that is executing the withdrawal.
-     * @param startingGas The starting gas limit for the withdrawal execution.
-     */
     struct ExecuteWithdrawalParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
         WithdrawalVault withdrawalVault;
         Oracle oracle;
         bytes32 key;
-        uint256[] minOracleBlockNumbers;
-        uint256[] maxOracleBlockNumbers;
         address keeper;
         uint256 startingGas;
+        ISwapPricingUtils.SwapPricingType swapPricingType;
     }
 
     struct ExecuteWithdrawalCache {
+        uint256 requestExpirationTime;
+        uint256 maxOracleTimestamp;
+        uint256 marketTokensBalance;
+        Market.Props market;
+        MarketUtils.MarketPrices prices;
+    }
+
+    struct _ExecuteWithdrawalCache {
         uint256 longTokenOutputAmount;
         uint256 shortTokenOutputAmount;
         SwapPricingUtils.SwapFees longTokenFees;
@@ -100,11 +92,25 @@ library ExecuteWithdrawalUtils {
             revert Errors.EmptyWithdrawalAmount();
         }
 
-        OracleUtils.validateBlockNumberWithinRange(
-            params.minOracleBlockNumbers,
-            params.maxOracleBlockNumbers,
-            withdrawal.updatedAtBlock()
-        );
+        if (params.oracle.minTimestamp() < withdrawal.updatedAtTime()) {
+            revert Errors.OracleTimestampsAreSmallerThanRequired(
+                params.oracle.minTimestamp(),
+                withdrawal.updatedAtTime()
+            );
+        }
+
+        ExecuteWithdrawalCache memory cache;
+
+        cache.requestExpirationTime = params.dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
+        cache.maxOracleTimestamp = params.oracle.maxTimestamp();
+
+        if (cache.maxOracleTimestamp > withdrawal.updatedAtTime() + cache.requestExpirationTime) {
+            revert Errors.OracleTimestampsAreLargerThanRequestExpirationTime(
+                cache.maxOracleTimestamp,
+                withdrawal.updatedAtTime(),
+                cache.requestExpirationTime
+            );
+        }
 
         MarketUtils.distributePositionImpactPool(
             params.dataStore,
@@ -112,17 +118,36 @@ library ExecuteWithdrawalUtils {
             withdrawal.market()
         );
 
-        uint256 marketTokensBalance = MarketToken(payable(withdrawal.market())).balanceOf(address(params.withdrawalVault));
-        if (marketTokensBalance < withdrawal.marketTokenAmount()) {
-            revert Errors.InsufficientMarketTokens(marketTokensBalance, withdrawal.marketTokenAmount());
+        cache.market = MarketUtils.getEnabledMarket(params.dataStore, withdrawal.market());
+        cache.prices = MarketUtils.getMarketPrices(
+            params.oracle,
+            cache.market
+        );
+
+        PositionUtils.updateFundingAndBorrowingState(
+            params.dataStore,
+            params.eventEmitter,
+            cache.market,
+            cache.prices
+        );
+
+        cache.marketTokensBalance = MarketToken(payable(withdrawal.market())).balanceOf(address(params.withdrawalVault));
+        if (cache.marketTokensBalance < withdrawal.marketTokenAmount()) {
+            revert Errors.InsufficientMarketTokens(cache.marketTokensBalance, withdrawal.marketTokenAmount());
         }
 
-        ExecuteWithdrawalResult memory result = _executeWithdrawal(params, withdrawal);
+        ExecuteWithdrawalResult memory result = _executeWithdrawal(
+            params,
+            withdrawal,
+            cache.market,
+            cache.prices
+        );
 
         WithdrawalEventUtils.emitWithdrawalExecuted(
             params.eventEmitter,
             params.key,
-            withdrawal.account()
+            withdrawal.account(),
+            params.swapPricingType
         );
 
         EventUtils.EventLogData memory eventData;
@@ -138,10 +163,13 @@ library ExecuteWithdrawalUtils {
             params.dataStore,
             params.eventEmitter,
             params.withdrawalVault,
+            params.key,
+            withdrawal.callbackContract(),
             withdrawal.executionFee(),
             params.startingGas,
+            GasUtils.estimateWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length),
             params.keeper,
-            withdrawal.account()
+            withdrawal.receiver()
         );
     }
 
@@ -152,16 +180,11 @@ library ExecuteWithdrawalUtils {
      */
     function _executeWithdrawal(
         ExecuteWithdrawalParams memory params,
-        Withdrawal.Props memory withdrawal
+        Withdrawal.Props memory withdrawal,
+        Market.Props memory market,
+        MarketUtils.MarketPrices memory prices
     ) internal returns (ExecuteWithdrawalResult memory) {
-        Market.Props memory market = MarketUtils.getEnabledMarket(params.dataStore, withdrawal.market());
-
-        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(
-            params.oracle,
-            market
-        );
-
-        ExecuteWithdrawalCache memory cache;
+        _ExecuteWithdrawalCache memory cache;
 
         (cache.longTokenOutputAmount, cache.shortTokenOutputAmount) = _getOutputAmounts(params, market, prices, withdrawal.marketTokenAmount());
 
@@ -170,7 +193,8 @@ library ExecuteWithdrawalUtils {
             market.marketToken,
             cache.longTokenOutputAmount,
             false, // forPositiveImpact
-            withdrawal.uiFeeReceiver()
+            withdrawal.uiFeeReceiver(),
+            params.swapPricingType
         );
 
         FeeUtils.incrementClaimableFeeAmount(
@@ -197,7 +221,8 @@ library ExecuteWithdrawalUtils {
             market.marketToken,
             cache.shortTokenOutputAmount,
             false, // forPositiveImpact
-            withdrawal.uiFeeReceiver()
+            withdrawal.uiFeeReceiver(),
+            params.swapPricingType
         );
 
         FeeUtils.incrementClaimableFeeAmount(

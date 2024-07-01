@@ -13,13 +13,13 @@ import hre from "hardhat";
 describe("Guardian.PositionUtils", () => {
   let fixture;
   let user0;
-  let dataStore, wnt, usdc, ethUsdMarket, solUsdMarket, ethUsdSingleTokenMarket;
+  let dataStore, wnt, usdc, ethUsdMarket, solUsdMarket, ethUsdSingleTokenMarket, wethPriceFeed;
   const sol = getSyntheticTokenAddress(hre.network.config.chainId, "SOL");
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0 } = fixture.accounts);
-    ({ dataStore, ethUsdMarket, wnt, usdc, solUsdMarket, ethUsdSingleTokenMarket } = fixture.contracts);
+    ({ dataStore, ethUsdMarket, wnt, usdc, solUsdMarket, ethUsdSingleTokenMarket, wethPriceFeed } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -153,6 +153,8 @@ describe("Guardian.PositionUtils", () => {
     // $500,000 - $50,000 = $450,000 profit
     // Pool amount remains (200,000/2) USDC * $1 = $100,000
     // Max PnL = 50% * $100,000 = $50,000
+
+    await wethPriceFeed.setAnswer(expandDecimals(50_000, 8));
 
     // Total Position PnL = $450,000 (position PnL) * $50,000 (capped PnL) / $450,000 (pool PnL) = $50,000
     await handleOrder(fixture, {

@@ -45,7 +45,7 @@ library PositionEventUtils {
         eventData.addressItems.setItem(1, "market", params.position.market());
         eventData.addressItems.setItem(2, "collateralToken", params.position.collateralToken());
 
-        eventData.uintItems.initItems(15);
+        eventData.uintItems.initItems(16);
         eventData.uintItems.setItem(0, "sizeInUsd", params.position.sizeInUsd());
         eventData.uintItems.setItem(1, "sizeInTokens", params.position.sizeInTokens());
         eventData.uintItems.setItem(2, "collateralAmount", params.position.collateralAmount());
@@ -61,6 +61,7 @@ library PositionEventUtils {
         eventData.uintItems.setItem(12, "sizeDeltaUsd", params.sizeDeltaUsd);
         eventData.uintItems.setItem(13, "sizeDeltaInTokens", params.sizeDeltaInTokens);
         eventData.uintItems.setItem(14, "orderType", uint256(params.orderType));
+        eventData.uintItems.setItem(15, "increasedAtTime", uint256(params.position.increasedAtTime()));
 
         eventData.intItems.initItems(3);
         eventData.intItems.setItem(0, "collateralDeltaAmount", params.collateralDeltaAmount);
@@ -100,7 +101,7 @@ library PositionEventUtils {
         eventData.addressItems.setItem(1, "market", position.market());
         eventData.addressItems.setItem(2, "collateralToken", position.collateralToken());
 
-        eventData.uintItems.initItems(17);
+        eventData.uintItems.initItems(18);
         eventData.uintItems.setItem(0, "sizeInUsd", position.sizeInUsd());
         eventData.uintItems.setItem(1, "sizeInTokens", position.sizeInTokens());
         eventData.uintItems.setItem(2, "collateralAmount", position.collateralAmount());
@@ -118,6 +119,7 @@ library PositionEventUtils {
         eventData.uintItems.setItem(14, "collateralDeltaAmount", collateralDeltaAmount);
         eventData.uintItems.setItem(15, "values.priceImpactDiffUsd", values.priceImpactDiffUsd);
         eventData.uintItems.setItem(16, "orderType", uint256(orderType));
+        eventData.uintItems.setItem(17, "decreasedAtTime", position.decreasedAtTime());
 
         eventData.intItems.initItems(3);
         eventData.intItems.setItem(0, "priceImpactUsd", values.priceImpactUsd);
@@ -143,7 +145,8 @@ library PositionEventUtils {
         bytes32 orderKey,
         uint256 positionCollateralAmount,
         int256 basePnlUsd,
-        uint256 remainingCostUsd
+        uint256 remainingCostUsd,
+        string memory step
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -156,6 +159,9 @@ library PositionEventUtils {
 
         eventData.intItems.initItems(1);
         eventData.intItems.setItem(0, "basePnlUsd", basePnlUsd);
+
+        eventData.stringItems.initItems(1);
+        eventData.stringItems.setItem(0, "step", step);
 
         eventEmitter.emitEventLog(
             "InsolventClose",

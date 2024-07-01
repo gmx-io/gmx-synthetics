@@ -2,45 +2,34 @@
 
 pragma solidity ^0.8.0;
 
-import "../utils/GlobalReentrancyGuard.sol";
+import "./BaseHandler.sol";
 import "../error/ErrorUtils.sol";
 
-import "./ExchangeUtils.sol";
-import "../role/RoleModule.sol";
-import "../feature/FeatureUtils.sol";
-
 import "../market/Market.sol";
-import "../market/MarketToken.sol";
 
 import "../withdrawal/Withdrawal.sol";
 import "../withdrawal/WithdrawalVault.sol";
 import "../withdrawal/WithdrawalStoreUtils.sol";
 import "../withdrawal/WithdrawalUtils.sol";
 import "../withdrawal/ExecuteWithdrawalUtils.sol";
-import "../oracle/Oracle.sol";
-import "../oracle/OracleModule.sol";
 
 import "./IWithdrawalHandler.sol";
 
 // @title WithdrawalHandler
 // @dev Contract to handle creation, execution and cancellation of withdrawals
-contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleModule, OracleModule {
+contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
     using Withdrawal for Withdrawal.Props;
 
-    EventEmitter public immutable eventEmitter;
     WithdrawalVault public immutable withdrawalVault;
-    Oracle public immutable oracle;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        WithdrawalVault _withdrawalVault,
-        Oracle _oracle
-    ) RoleModule(_roleStore) GlobalReentrancyGuard(_dataStore) {
-        eventEmitter = _eventEmitter;
+        Oracle _oracle,
+        WithdrawalVault _withdrawalVault
+    ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         withdrawalVault = _withdrawalVault;
-        oracle = _oracle;
     }
 
     // @dev creates a withdrawal in the withdrawal store
@@ -71,9 +60,8 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
 
         FeatureUtils.validateFeature(_dataStore, Keys.cancelWithdrawalFeatureDisabledKey(address(this)));
 
-        ExchangeUtils.validateRequestCancellation(
-            _dataStore,
-            withdrawal.updatedAtBlock(),
+        validateRequestCancellation(
+            withdrawal.updatedAtTime(),
             "Withdrawal"
         );
 
@@ -99,9 +87,11 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
         external
         globalNonReentrant
         onlyOrderKeeper
-        withOraclePrices(oracle, dataStore, eventEmitter, oracleParams)
+        withOraclePrices(oracleParams)
     {
         uint256 startingGas = gasleft();
+
+        oracle.validateSequencerUp();
 
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
         uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(dataStore, withdrawal);
@@ -112,8 +102,8 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
         try this._executeWithdrawal{ gas: executionGas }(
             key,
             withdrawal,
-            oracleParams,
-            msg.sender
+            msg.sender,
+            ISwapPricingUtils.SwapPricingType.TwoStep
         ) {
         } catch (bytes memory reasonBytes) {
             _handleWithdrawalError(
@@ -124,27 +114,75 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
         }
     }
 
-    // @dev simulate execution of a withdrawal to check for any errors
-    // @param key the withdrawal key
-    // @param params OracleUtils.SimulatePricesParams
-    function simulateExecuteWithdrawal(
-        bytes32 key,
-        OracleUtils.SimulatePricesParams memory params
-    ) external
-        override
-        onlyController
-        withSimulatedOraclePrices(oracle, params)
+    // @notice this function can only be called for markets where Chainlink
+    // on-chain feeds are configured for all the tokens of the market
+    // for example, if the market has index token as DOGE, long token as WETH
+    // and short token as USDC, Chainlink on-chain feeds must be configured
+    // for DOGE, WETH, USDC for this method to be callable for the market
+    function executeAtomicWithdrawal(
+        address account,
+        WithdrawalUtils.CreateWithdrawalParams calldata params,
+        OracleUtils.SetPricesParams calldata oracleParams
+    )
+        external
         globalNonReentrant
+        onlyController
+        withOraclePricesForAtomicAction(oracleParams)
     {
+        FeatureUtils.validateFeature(dataStore, Keys.executeAtomicWithdrawalFeatureDisabledKey(address(this)));
 
-        OracleUtils.SetPricesParams memory oracleParams;
+        oracle.validateSequencerUp();
+
+        if (
+            params.longTokenSwapPath.length != 0 ||
+            params.shortTokenSwapPath.length != 0
+        ) {
+            revert Errors.SwapsNotAllowedForAtomicWithdrawal(
+                params.longTokenSwapPath.length,
+                params.shortTokenSwapPath.length
+            );
+        }
+
+        bytes32 key = WithdrawalUtils.createWithdrawal(
+            dataStore,
+            eventEmitter,
+            withdrawalVault,
+            account,
+            params
+        );
+
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
 
         this._executeWithdrawal(
             key,
             withdrawal,
-            oracleParams,
-            msg.sender
+            account,
+            ISwapPricingUtils.SwapPricingType.Atomic
+        );
+    }
+
+    // @dev simulate execution of a withdrawal to check for any errors
+    // @param key the withdrawal key
+    // @param params OracleUtils.SimulatePricesParams
+    function simulateExecuteWithdrawal(
+        bytes32 key,
+        OracleUtils.SimulatePricesParams memory params,
+        ISwapPricingUtils.SwapPricingType swapPricingType
+    ) external
+        override
+        onlyController
+        withSimulatedOraclePrices(params)
+        globalNonReentrant
+    {
+        oracle.validateSequencerUp();
+
+        Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
+
+        this._executeWithdrawal(
+            key,
+            withdrawal,
+            msg.sender,
+            swapPricingType
         );
     }
 
@@ -155,32 +193,12 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
     function _executeWithdrawal(
         bytes32 key,
         Withdrawal.Props memory withdrawal,
-        OracleUtils.SetPricesParams memory oracleParams,
-        address keeper
+        address keeper,
+        ISwapPricingUtils.SwapPricingType swapPricingType
     ) external onlySelf {
         uint256 startingGas = gasleft();
 
         FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureDisabledKey(address(this)));
-
-        OracleUtils.RealtimeFeedReport[] memory reports = oracle.validateRealtimeFeeds(
-            dataStore,
-            oracleParams.realtimeFeedTokens,
-            oracleParams.realtimeFeedData
-        );
-
-        uint256[] memory minOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedMinOracleBlockNumbers,
-            oracleParams.tokens.length,
-            reports,
-            OracleUtils.OracleBlockNumberType.Min
-        );
-
-        uint256[] memory maxOracleBlockNumbers = OracleUtils.getUncompactedOracleBlockNumbers(
-            oracleParams.compactedMaxOracleBlockNumbers,
-            oracleParams.tokens.length,
-            reports,
-            OracleUtils.OracleBlockNumberType.Max
-        );
 
         ExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params = ExecuteWithdrawalUtils.ExecuteWithdrawalParams(
             dataStore,
@@ -188,10 +206,9 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
             withdrawalVault,
             oracle,
             key,
-            minOracleBlockNumbers,
-            maxOracleBlockNumbers,
             keeper,
-            startingGas
+            startingGas,
+            swapPricingType
         );
 
         ExecuteWithdrawalUtils.executeWithdrawal(params, withdrawal);
@@ -206,13 +223,7 @@ contract WithdrawalHandler is IWithdrawalHandler, GlobalReentrancyGuard, RoleMod
 
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
-        if (
-            OracleUtils.isOracleError(errorSelector) ||
-            errorSelector == Errors.DisabledFeature.selector
-        ) {
-
-            ErrorUtils.revertWithCustomError(reasonBytes);
-        }
+        validateNonKeeperError(errorSelector, reasonBytes);
 
         (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
 

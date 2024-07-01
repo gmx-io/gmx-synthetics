@@ -21,16 +21,13 @@ interface IBaseOrderUtils {
         Order.DecreasePositionSwapType decreasePositionSwapType;
         bool isLong;
         bool shouldUnwrapNativeToken;
+        bool autoCancel;
         bytes32 referralCode;
     }
 
-    // @param receiver for order.receiver
-    // @param callbackContract for order.callbackContract
-    // @param market for order.market
-    // @param initialCollateralToken for order.initialCollateralToken
-    // @param swapPath for order.swapPath
     struct CreateOrderParamsAddresses {
         address receiver;
+        address cancellationReceiver;
         address callbackContract;
         address uiFeeReceiver;
         address market;

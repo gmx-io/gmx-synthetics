@@ -4,21 +4,8 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/math/SignedMath.sol";
 
-import "../data/Keys.sol";
-
-import "../market/MarketStoreUtils.sol";
-
-import "../deposit/DepositStoreUtils.sol";
-import "../withdrawal/WithdrawalStoreUtils.sol";
-
 import "../position/Position.sol";
 import "../position/PositionUtils.sol";
-import "../position/PositionStoreUtils.sol";
-import "../position/IncreasePositionUtils.sol";
-import "../position/DecreasePositionUtils.sol";
-
-import "../order/OrderStoreUtils.sol";
-
 import "../market/MarketUtils.sol";
 import "../market/Market.sol";
 
@@ -83,7 +70,8 @@ library ReaderPricingUtils {
                 cache.tokenInPrice.midPrice(),
                 cache.tokenOutPrice.midPrice(),
                 (amountIn * cache.tokenInPrice.midPrice()).toInt256(),
-                -(amountIn * cache.tokenInPrice.midPrice()).toInt256()
+                -(amountIn * cache.tokenInPrice.midPrice()).toInt256(),
+                true // includeVirtualInventoryImpact
             )
         );
 
@@ -92,7 +80,8 @@ library ReaderPricingUtils {
             market.marketToken,
             amountIn,
             priceImpactUsd > 0, // forPositiveImpact
-            uiFeeReceiver
+            uiFeeReceiver,
+            ISwapPricingUtils.SwapPricingType.TwoStep
         );
 
         int256 impactAmount;
@@ -105,17 +94,34 @@ library ReaderPricingUtils {
             // the swap impact pool is decreased by the used amount
 
             cache.amountIn = fees.amountAfterFees;
-            // round amountOut down
-            cache.amountOut = cache.amountIn * cache.tokenInPrice.min / cache.tokenOutPrice.max;
-            cache.poolAmountOut = cache.amountOut;
 
-            impactAmount = MarketUtils.getSwapImpactAmountWithCap(
+            (impactAmount, cache.cappedDiffUsd) = MarketUtils.getSwapImpactAmountWithCap(
                 dataStore,
                 market.marketToken,
                 cache.tokenOut,
                 cache.tokenOutPrice,
                 priceImpactUsd
             );
+
+            if (cache.cappedDiffUsd != 0) {
+                (cache.tokenInPriceImpactAmount, /* uint256 cappedDiffUsd */) = MarketUtils.getSwapImpactAmountWithCap(
+                    dataStore,
+                    market.marketToken,
+                    tokenIn,
+                    cache.tokenInPrice,
+                    cache.cappedDiffUsd.toInt256()
+                );
+
+                // this additional amountIn is already in the Market
+                // it is subtracted from the swap impact pool amount
+                // and the market pool amount is increased by the updated
+                // amountIn below
+                cache.amountIn += cache.tokenInPriceImpactAmount.toUint256();
+            }
+
+            // round amountOut down
+            cache.amountOut = cache.amountIn * cache.tokenInPrice.min / cache.tokenOutPrice.max;
+            cache.poolAmountOut = cache.amountOut;
 
             cache.amountOut += impactAmount.toUint256();
         } else {
@@ -125,7 +131,7 @@ library ReaderPricingUtils {
             // only 9.995 ETH may be swapped in
             // the remaining 0.005 ETH will be stored in the swap impact pool
 
-            impactAmount = MarketUtils.getSwapImpactAmountWithCap(
+            (impactAmount, /* uint256 cappedDiffUsd */) = MarketUtils.getSwapImpactAmountWithCap(
                 dataStore,
                 market.marketToken,
                 tokenIn,
@@ -191,7 +197,7 @@ library ReaderPricingUtils {
         uint256 amountIn,
         Price.Props memory tokenInPrice,
         Price.Props memory tokenOutPrice
-    ) external view returns (int256 priceImpactUsdBeforeCap, int256 priceImpactAmount) {
+    ) external view returns (int256 priceImpactUsdBeforeCap, int256 priceImpactAmount, int256 tokenInPriceImpactAmount) {
         priceImpactUsdBeforeCap = SwapPricingUtils.getPriceImpactUsd(
             SwapPricingUtils.GetPriceImpactUsdParams(
                 dataStore,
@@ -201,20 +207,32 @@ library ReaderPricingUtils {
                 tokenInPrice.midPrice(),
                 tokenOutPrice.midPrice(),
                 (amountIn * tokenInPrice.midPrice()).toInt256(),
-                -(amountIn * tokenInPrice.midPrice()).toInt256()
+                -(amountIn * tokenInPrice.midPrice()).toInt256(),
+                true // includeVirtualInventoryImpact
             )
         );
 
         if (priceImpactUsdBeforeCap > 0) {
-            priceImpactAmount = MarketUtils.getSwapImpactAmountWithCap(
+            uint256 cappedDiffUsd;
+            (priceImpactAmount, cappedDiffUsd) = MarketUtils.getSwapImpactAmountWithCap(
                 dataStore,
                 market.marketToken,
                 tokenOut,
                 tokenOutPrice,
                 priceImpactUsdBeforeCap
             );
+
+            if (cappedDiffUsd != 0) {
+                (tokenInPriceImpactAmount, /* uint256 cappedDiffUsd */) = MarketUtils.getSwapImpactAmountWithCap(
+                    dataStore,
+                    market.marketToken,
+                    tokenIn,
+                    tokenInPrice,
+                    cappedDiffUsd.toInt256()
+                );
+            }
         } else {
-            priceImpactAmount = MarketUtils.getSwapImpactAmountWithCap(
+            (priceImpactAmount, /* uint256 cappedDiffUsd */) = MarketUtils.getSwapImpactAmountWithCap(
                 dataStore,
                 market.marketToken,
                 tokenIn,
@@ -223,6 +241,6 @@ library ReaderPricingUtils {
             );
         }
 
-        return (priceImpactUsdBeforeCap, priceImpactAmount);
+        return (priceImpactUsdBeforeCap, priceImpactAmount, tokenInPriceImpactAmount);
     }
 }

@@ -17,6 +17,7 @@ import { getExecuteParams } from "../../utils/exchange";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
+import { SwapPricingType } from "../../utils/swap";
 import { prices } from "../../utils/prices";
 
 describe("Exchange.Deposit", () => {
@@ -239,20 +240,9 @@ describe("Exchange.Deposit", () => {
   it("executeDeposit validations", async () => {
     await expect(
       depositHandler.connect(user0).executeDeposit(HashZero, {
-        signerInfo: 0,
         tokens: [],
-        compactedMinOracleBlockNumbers: [],
-        compactedMaxOracleBlockNumbers: [],
-        compactedOracleTimestamps: [],
-        compactedDecimals: [],
-        compactedMinPrices: [],
-        compactedMinPricesIndexes: [],
-        compactedMaxPrices: [],
-        compactedMaxPricesIndexes: [],
-        signatures: [],
-        priceFeedTokens: [],
-        realtimeFeedTokens: [],
-        realtimeFeedData: [],
+        providers: [],
+        data: [],
       })
     )
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
@@ -288,12 +278,6 @@ describe("Exchange.Deposit", () => {
       .withArgs(_executeDepositFeatureDisabledKey);
 
     await dataStore.setBool(_executeDepositFeatureDisabledKey, false);
-
-    await expect(
-      executeDeposit(fixture, {
-        oracleBlockNumber: (await provider.getBlock()).number - 10,
-      })
-    ).to.be.revertedWithCustomError(errorsContract, "OracleBlockNumberNotWithinRange");
 
     await expect(
       executeDeposit(fixture, {
@@ -334,11 +318,8 @@ describe("Exchange.Deposit", () => {
       },
     });
 
-    await dataStore.setUint(keys.maxPoolAmountKey(ethUsdMarket.marketToken, wnt.address), expandDecimals(20, 18));
-    await dataStore.setUint(
-      keys.maxPoolAmountForDepositKey(ethUsdMarket.marketToken, wnt.address),
-      expandDecimals(1, 18)
-    );
+    await dataStore.setUint(keys.maxPoolAmountKey(ethUsdMarket.marketToken, wnt.address), expandDecimals(5, 18));
+    await dataStore.setUint(keys.maxPoolUsdForDepositKey(ethUsdMarket.marketToken, wnt.address), decimalToFloat(1));
 
     await handleDeposit(fixture, {
       create: {
@@ -346,19 +327,7 @@ describe("Exchange.Deposit", () => {
         shortTokenAmount: expandDecimals(10_000, 6),
       },
       execute: {
-        expectedCancellationReason: "MaxPoolAmountForDepositExceeded",
-      },
-    });
-
-    await dataStore.setUint(keys.minMarketTokensForFirstDeposit(ethUsdMarket.marketToken), expandDecimals(1, 18));
-
-    await handleDeposit(fixture, {
-      create: {
-        longTokenAmount: expandDecimals(1, 17),
-        shortTokenAmount: expandDecimals(500, 6),
-      },
-      execute: {
-        expectedCancellationReason: "MaxPoolAmountForDepositExceeded",
+        expectedCancellationReason: "MaxPoolUsdForDepositExceeded",
       },
     });
   });
@@ -436,8 +405,8 @@ describe("Exchange.Deposit", () => {
       depositHandler.connect(user0).simulateExecuteDeposit(HashZero, {
         primaryTokens: [],
         primaryPrices: [],
-        secondaryTokens: [],
-        secondaryPrices: [],
+        minTimestamp: 0,
+        maxTimestamp: 0,
       })
     )
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
@@ -453,29 +422,7 @@ describe("Exchange.Deposit", () => {
 
     const emptyDeposit = await depositStoreUtilsTest.getEmptyDeposit();
 
-    await expect(
-      depositHandler.connect(user0)._executeDeposit(
-        HashZero,
-        emptyDeposit,
-        {
-          signerInfo: 0,
-          tokens: [],
-          compactedMinOracleBlockNumbers: [],
-          compactedMaxOracleBlockNumbers: [],
-          compactedOracleTimestamps: [],
-          compactedDecimals: [],
-          compactedMinPrices: [],
-          compactedMinPricesIndexes: [],
-          compactedMaxPrices: [],
-          compactedMaxPricesIndexes: [],
-          signatures: [],
-          priceFeedTokens: [],
-          realtimeFeedTokens: [],
-          realtimeFeedData: [],
-        },
-        user0.address
-      )
-    )
+    await expect(depositHandler.connect(user0)._executeDeposit(HashZero, emptyDeposit, user0.address))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user0.address, "SELF");
   });
@@ -600,7 +547,9 @@ describe("Exchange.Deposit", () => {
         prices.ethUsdMarket,
         expandDecimals(10, 18), // longTokenAmount
         0, // shortTokenAmount
-        AddressZero
+        AddressZero,
+        SwapPricingType.TwoStep,
+        true // includeVirtualInventoryImpact
       )
     ).eq("49975000000000000000000");
 
@@ -611,7 +560,9 @@ describe("Exchange.Deposit", () => {
         prices.ethUsdMarket,
         expandDecimals(10, 18), // longTokenAmount
         expandDecimals(1000, 6), // shortTokenAmount
-        AddressZero
+        AddressZero,
+        SwapPricingType.TwoStep,
+        true // includeVirtualInventoryImpact
       )
     ).eq("50975989999313725490000");
 

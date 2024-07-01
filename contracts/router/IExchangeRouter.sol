@@ -2,9 +2,11 @@
 
 pragma solidity ^0.8.0;
 
-import "../exchange/IDepositHandler.sol";
-import "../exchange/IWithdrawalHandler.sol";
-import "../exchange/IOrderHandler.sol";
+import "../deposit/DepositUtils.sol";
+import "../withdrawal/WithdrawalUtils.sol";
+import "../oracle/OracleUtils.sol";
+import "../shift/ShiftUtils.sol";
+import "../order/IBaseOrderUtils.sol";
 
 interface IExchangeRouter {
     function createDeposit(
@@ -19,6 +21,17 @@ interface IExchangeRouter {
 
     function cancelWithdrawal(bytes32 key) external payable;
 
+    function executeAtomicWithdrawal(
+        WithdrawalUtils.CreateWithdrawalParams calldata params,
+        OracleUtils.SetPricesParams calldata oracleParams
+    ) external payable;
+
+    function createShift(
+        ShiftUtils.CreateShiftParams calldata params
+    ) external payable returns (bytes32);
+
+    function cancelShift(bytes32 key) external payable;
+
     function createOrder(
         IBaseOrderUtils.CreateOrderParams calldata params
     ) external payable returns (bytes32);
@@ -28,7 +41,8 @@ interface IExchangeRouter {
         uint256 sizeDeltaUsd,
         uint256 acceptablePrice,
         uint256 triggerPrice,
-        uint256 minOutputAmount
+        uint256 minOutputAmount,
+        bool autoCancel
     ) external payable;
 
     function cancelOrder(bytes32 key) external payable;

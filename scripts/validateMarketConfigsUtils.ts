@@ -19,11 +19,13 @@ const stablecoinSymbols = {
 const BASIS_POINTS_DIVISOR = 10000;
 
 const recommendedStablecoinSwapConfig = {
-  negativeImpactFactor: decimalToFloat(1, 9).div(2),
+  negativeSwapImpactFactor: decimalToFloat(1, 9).div(2),
+  negativePositionImpactFactor: decimalToFloat(1, 9).div(2),
   expectedSwapImpactRatio: 10000,
 };
 
-// negativeImpactFactor: the recommended negative position impact factor
+// negativePositionImpactFactor: the recommended negative position impact factor
+// negativeSwapImpactFactor: the recommended negative swap impact factor
 // the market config should be validated to have a higher or equal value to the recommended value
 //
 // expectedSwapImpactRatio: expected ratio of negative to positive swap price impact
@@ -34,114 +36,142 @@ const recommendedStablecoinSwapConfig = {
 const recommendedMarketConfig = {
   arbitrum: {
     BTC: {
-      negativeImpactFactor: decimalToFloat(5, 11),
+      negativePositionImpactFactor: decimalToFloat(5, 11),
+      negativeSwapImpactFactor: decimalToFloat(5, 11),
       expectedSwapImpactRatio: 10000,
-      expectedPositionImpactRatio: 16666,
+      expectedPositionImpactRatio: 20000,
     },
     WETH: {
-      negativeImpactFactor: decimalToFloat(5, 11),
+      negativePositionImpactFactor: decimalToFloat(5, 11),
+      negativeSwapImpactFactor: decimalToFloat(5, 11),
       expectedSwapImpactRatio: 10000,
-      expectedPositionImpactRatio: 16666,
+      expectedPositionImpactRatio: 20000,
     },
     BNB: {
-      negativeImpactFactor: decimalToFloat(38, 12),
+      negativePositionImpactFactor: decimalToFloat(38, 12),
+      negativeSwapImpactFactor: decimalToFloat(38, 12),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
     LINK: {
-      negativeImpactFactor: decimalToFloat(5, 10),
+      negativePositionImpactFactor: decimalToFloat(4, 10),
+      negativeSwapImpactFactor: decimalToFloat(5, 10),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
     ARB: {
-      negativeImpactFactor: decimalToFloat(5, 10),
+      negativePositionImpactFactor: decimalToFloat(5, 10),
+      negativeSwapImpactFactor: decimalToFloat(5, 10),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
     UNI: {
-      negativeImpactFactor: decimalToFloat(3, 8),
+      negativePositionImpactFactor: decimalToFloat(3, 8),
+      negativeSwapImpactFactor: decimalToFloat(3, 8),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
     LTC: {
-      negativeImpactFactor: decimalToFloat(8, 9),
+      negativePositionImpactFactor: decimalToFloat(8, 9),
+      negativeSwapImpactFactor: decimalToFloat(8, 9),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
     DOGE: {
-      negativeImpactFactor: decimalToFloat(8, 9),
+      negativePositionImpactFactor: decimalToFloat(8, 9),
+      negativeSwapImpactFactor: decimalToFloat(8, 9),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
     SOL: {
-      negativeImpactFactor: decimalToFloat(65, 12),
+      negativePositionImpactFactor: decimalToFloat(65, 12),
+      negativeSwapImpactFactor: decimalToFloat(65, 12),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
     XRP: {
-      negativeImpactFactor: decimalToFloat(5, 9),
+      negativePositionImpactFactor: decimalToFloat(5, 9),
+      negativeSwapImpactFactor: decimalToFloat(5, 9),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
     AAVE: {
-      negativeImpactFactor: decimalToFloat(5, 10),
+      negativePositionImpactFactor: decimalToFloat(5, 10),
+      negativeSwapImpactFactor: decimalToFloat(5, 10),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
     AVAX: {
-      negativeImpactFactor: decimalToFloat(5, 9),
+      negativePositionImpactFactor: decimalToFloat(5, 9),
+      negativeSwapImpactFactor: decimalToFloat(5, 9),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
     ATOM: {
-      negativeImpactFactor: decimalToFloat(26, 9),
+      negativePositionImpactFactor: decimalToFloat(26, 9),
+      negativeSwapImpactFactor: decimalToFloat(26, 9),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
     NEAR: {
-      negativeImpactFactor: decimalToFloat(26, 9),
+      negativePositionImpactFactor: decimalToFloat(26, 9),
+      negativeSwapImpactFactor: decimalToFloat(26, 9),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
     OP: {
-      negativeImpactFactor: decimalToFloat(5, 10),
+      negativePositionImpactFactor: decimalToFloat(5, 10),
+      negativeSwapImpactFactor: decimalToFloat(5, 10),
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
+    },
+    GMX: {
+      negativePositionImpactFactor: decimalToFloat(5, 10),
+      negativeSwapImpactFactor: decimalToFloat(8, 9),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
   },
   avalanche: {
     "BTC.b": {
-      negativeImpactFactor: decimalToFloat(5, 11).div(2),
-      expectedSwapImpactRatio: 10000,
+      negativePositionImpactFactor: decimalToFloat(5, 11).div(2),
+      negativeSwapImpactFactor: decimalToFloat(5, 11).div(2),
+      expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 16666,
     },
     "WETH.e": {
-      negativeImpactFactor: decimalToFloat(5, 11).div(2),
-      expectedSwapImpactRatio: 10000,
+      negativePositionImpactFactor: decimalToFloat(5, 11).div(2),
+      negativeSwapImpactFactor: decimalToFloat(5, 11).div(2),
+      expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 16666,
     },
     WAVAX: {
-      negativeImpactFactor: decimalToFloat(1, 8).div(2),
+      negativePositionImpactFactor: decimalToFloat(1, 8).div(2),
+      negativeSwapImpactFactor: decimalToFloat(5, 9).div(2),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
     LTC: {
-      negativeImpactFactor: decimalToFloat(8, 9).div(2),
+      negativePositionImpactFactor: decimalToFloat(8, 9).div(2),
+      negativeSwapImpactFactor: decimalToFloat(8, 9).div(2),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
     DOGE: {
-      negativeImpactFactor: decimalToFloat(8, 9).div(2),
+      negativePositionImpactFactor: decimalToFloat(8, 9).div(2),
+      negativeSwapImpactFactor: decimalToFloat(8, 9).div(2),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
     SOL: {
-      negativeImpactFactor: decimalToFloat(5, 9).div(2),
+      negativePositionImpactFactor: decimalToFloat(5, 9).div(2),
+      negativeSwapImpactFactor: decimalToFloat(5, 9).div(2),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
     XRP: {
-      negativeImpactFactor: decimalToFloat(5, 9).div(2),
+      negativePositionImpactFactor: decimalToFloat(5, 9).div(2),
+      negativeSwapImpactFactor: decimalToFloat(5, 9).div(2),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
@@ -170,7 +200,7 @@ async function validatePerpConfig({ market, marketConfig, indexTokenSymbol, data
   console.log("validatePerpConfig", indexTokenSymbol);
   const recommendedPerpConfig = recommendedMarketConfig[hre.network.name][indexTokenSymbol];
 
-  if (!recommendedPerpConfig || !recommendedPerpConfig.negativeImpactFactor) {
+  if (!recommendedPerpConfig || !recommendedPerpConfig.negativePositionImpactFactor) {
     throw new Error(`Empty recommendedPerpConfig for ${indexTokenSymbol}`);
   }
 
@@ -308,7 +338,7 @@ async function validatePerpConfig({ market, marketConfig, indexTokenSymbol, data
 
   const percentageOfPerpImpactRecommendation = negativePositionImpactFactor
     .mul(100)
-    .div(recommendedPerpConfig.negativeImpactFactor);
+    .div(recommendedPerpConfig.negativePositionImpactFactor);
 
   console.log(
     `    Position impact compared to recommendation: ${
@@ -345,10 +375,10 @@ async function validatePerpConfig({ market, marketConfig, indexTokenSymbol, data
     throw new Error(`Invalid position impact factors for ${indexTokenSymbol}`);
   }
 
-  if (negativePositionImpactFactor.lt(recommendedPerpConfig.negativeImpactFactor)) {
+  if (negativePositionImpactFactor.lt(recommendedPerpConfig.negativePositionImpactFactor)) {
     errors.push({
       message: `Invalid negativePositionImpactFactor for ${indexTokenSymbol}`,
-      expected: recommendedPerpConfig.negativeImpactFactor,
+      expected: recommendedPerpConfig.negativePositionImpactFactor,
       actual: negativePositionImpactFactor,
     });
   }
@@ -418,10 +448,30 @@ async function validatePerpConfig({ market, marketConfig, indexTokenSymbol, data
   console.log(`    maxFundingFactorPerYear: ${formatAmount(maxFundingFactorPerYear, 28)}%`);
 }
 
-async function validateSwapConfig({ market, marketConfig, longTokenSymbol, shortTokenSymbol, dataStore, errors }) {
+async function validateSwapConfig({
+  market,
+  marketConfig,
+  indexTokenSymbol,
+  longTokenSymbol,
+  shortTokenSymbol,
+  dataStore,
+  errors,
+}) {
   const isStablecoinMarket = stablecoinSymbols[longTokenSymbol] && stablecoinSymbols[shortTokenSymbol];
 
   let recommendedSwapConfig;
+
+  if (longTokenSymbol === shortTokenSymbol) {
+    if (!marketConfig.negativeSwapImpactFactor.eq(0)) {
+      throw new Error("negativeSwapImpactFactor should be zero");
+    }
+
+    if (!marketConfig.positiveSwapImpactFactor.eq(0)) {
+      throw new Error("negativeSwapImpactFactor should be zero");
+    }
+
+    return;
+  }
 
   if (isStablecoinMarket) {
     recommendedSwapConfig = recommendedStablecoinSwapConfig;
@@ -479,7 +529,7 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
 
   const percentageOfSwapImpactRecommendation = negativeSwapImpactFactor
     .mul(100)
-    .div(recommendedSwapConfig.negativeImpactFactor);
+    .div(recommendedSwapConfig.negativeSwapImpactFactor);
 
   console.log(
     `    Swap impact compared to recommendation: ${
@@ -514,14 +564,14 @@ async function validateSwapConfig({ market, marketConfig, longTokenSymbol, short
   const impactRatio = negativeSwapImpactFactor.mul(BASIS_POINTS_DIVISOR).div(positiveSwapImpactFactor);
   if (impactRatio.sub(recommendedSwapConfig.expectedSwapImpactRatio).abs().gt(100)) {
     throw new Error(
-      `Invalid position impact factors for ${longTokenSymbol}: ${impactRatio} expected ${recommendedSwapConfig.expectedSwapImpactRatio}`
+      `Invalid swap impact factors for ${indexTokenSymbol}: ${impactRatio} expected ${recommendedSwapConfig.expectedSwapImpactRatio} negativeSwapImpactFactor ${negativeSwapImpactFactor} positiveSwapImpactFactor ${positiveSwapImpactFactor}`
     );
   }
 
-  if (negativeSwapImpactFactor.lt(recommendedSwapConfig.negativeImpactFactor)) {
+  if (negativeSwapImpactFactor.lt(recommendedSwapConfig.negativeSwapImpactFactor)) {
     errors.push({
-      message: `Invalid negativeSwapImpactFactor for ${longTokenSymbol}`,
-      expected: recommendedSwapConfig.negativeImpactFactor,
+      message: `Invalid negativeSwapImpactFactor for ${indexTokenSymbol}`,
+      expected: recommendedSwapConfig.negativeSwapImpactFactor,
       actual: negativeSwapImpactFactor,
     });
   }
@@ -563,7 +613,7 @@ export async function validateMarketConfigs() {
     );
 
     await validatePerpConfig({ marketConfig, indexTokenSymbol, dataStore, errors });
-    await validateSwapConfig({ marketConfig, longTokenSymbol, shortTokenSymbol, dataStore, errors });
+    await validateSwapConfig({ marketConfig, indexTokenSymbol, longTokenSymbol, shortTokenSymbol, dataStore, errors });
   }
 
   for (const market of markets) {

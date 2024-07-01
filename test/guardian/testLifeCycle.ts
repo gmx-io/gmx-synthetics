@@ -172,7 +172,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("2400400000000", "10000000000"); // 0.0000024004 ETH
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("2088007649694012", "100000000000"); // 0.0020880 ETH
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("2088127624896444", "100000000000"); // 0.0020881 ETH
         },
       },
     });
@@ -324,7 +324,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("225779", "20000"); // 0.225779 USDC
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("71659938", "20000"); // 71.65 USDC
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("62819931", "20000"); // 62.81 USDC
         },
       },
     });
@@ -410,7 +410,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("20738", "20000"); // 0.020738 USDC
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("31634419", "20000"); // 31.63 USDC
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("29715326", "20000"); // 29.71 USDC
         },
       },
     });
@@ -439,7 +439,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("1", "10"); // 0.000001 USDC
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("6878373", "20000"); // 6.87 USDC
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("6570522", "20000"); // 6.57 USDC
         },
       },
     });
@@ -468,7 +468,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("31107", "2000"); //  0.031107 USDC
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("43570951", "20000"); // 43.57 USDC
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("41478135", "20000"); // 41.47 USDC
         },
       },
     });
@@ -501,7 +501,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("155534", "20000"); // 0.155534 USDC
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("291821924", "500000"); // 291.82 USDC
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("281343301", "500000"); // 281.34 USDC
         },
       },
     });
@@ -713,7 +713,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("2400400000000", "10000000000000"); // 0.0000024004 ETH
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("2109097783927922", "10000000000000"); // 0.0021090 ETH
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("2091718068942536", "10000000000000"); // 0.002091 ETH
         },
       },
     });
@@ -866,7 +866,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).to.closeTo("225780", "20000"); // 0.225780 USDC
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).to.closeTo("71692885", "1000000"); // 73.737219 USDC
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).to.closeTo("61150874", "1000000"); // 61.150874 USDC
         },
       },
     });
@@ -952,7 +952,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("4147488000000", "100000000000"); // 0.00000414 ETH
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("6130220287120206", "100000000000000"); // 0.006130 ETH
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("5850796748349628", "100000000000000"); // 0.005850 ETH
         },
       },
     });
@@ -981,7 +981,7 @@ describe("Guardian.Lifecycle", () => {
           expect(positionDecreaseEvent.executionPrice).eq("4998449612403101"); // ~4998 per token
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("1413328318437226", "1000000000000"); // 0.0013217 ETH
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("1350330017638542", "1000000000000"); // 0.0013503 ETH
         },
       },
     });
@@ -1011,7 +1011,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("31107", "20000"); //  0.031107 USDC
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("41939785", "20000"); // 41.925332 USDC
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("40686012", "20000"); // 40.686012 USDC
         },
       },
     });
@@ -1044,7 +1044,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("155534", "20000"); // 0.155534 USDC
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("276931439", "200000"); // 276.888126 USDC
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("266792530", "200000"); // 266.792530 USDC
         },
       },
     });
@@ -1261,7 +1261,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("2400400000000", "100000000000"); // 0.0000024004 ETH
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("2088007649694012", "100000000000"); // 0.0020880 ETH
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("2088127624896444", "100000000000"); // 0.0020881 ETH
         },
       },
     });
@@ -1425,7 +1425,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("225782", "10000"); // 0.225782 USDC
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("69744521", "100000"); // 67.825617 USDC
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("60904483", "100000"); // 60.904483 USDC
         },
       },
     });
@@ -1522,7 +1522,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("20738", "20000"); // 0.020738 USDC
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("32618639", "20000"); // 32.61 USDC
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("30677911", "20000"); // 30.67 USDC
         },
       },
     });
@@ -1552,7 +1552,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("1", "1"); // 0.000001 USDC
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("6798477", "20000"); // 6.382766 USDC
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("6493874", "20000"); // 6.493874 USDC
         },
       },
     });
@@ -1582,7 +1582,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("31107", "20000"); //  0.031107 USDC
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("45047297", "20000"); // 44.324054 USDC
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("42921864", "20000"); // 42.921864 USDC
         },
       },
     });
@@ -1615,7 +1615,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("155534", "20000"); // 0.155534 USDC
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("296291492", "2000000"); // 296.29 USDC
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("285651448", "2000000"); // 285.651448 USDC
         },
       },
     });

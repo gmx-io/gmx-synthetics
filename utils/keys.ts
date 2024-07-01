@@ -5,11 +5,13 @@ export const NONCE = hashString("NONCE");
 
 export const FEE_RECEIVER = hashString("FEE_RECEIVER");
 export const HOLDING_ADDRESS = hashString("HOLDING_ADDRESS");
+export const SEQUENCER_GRACE_DURATION = hashString("SEQUENCER_GRACE_DURATION");
 export const IN_STRICT_PRICE_FEED_MODE = hashString("IN_STRICT_PRICE_FEED_MODE");
 
 export const MIN_HANDLE_EXECUTION_ERROR_GAS = hashString("MIN_HANDLE_EXECUTION_ERROR_GAS");
 export const MIN_ADDITIONAL_GAS_FOR_EXECUTION = hashString("MIN_ADDITIONAL_GAS_FOR_EXECUTION");
 export const MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD = hashString("MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD");
+export const REFUND_EXECUTION_FEE_GAS_LIMIT = hashString("REFUND_EXECUTION_FEE_GAS_LIMIT");
 
 export const MAX_LEVERAGE = hashString("MAX_LEVERAGE");
 
@@ -21,6 +23,9 @@ export const ACCOUNT_DEPOSIT_LIST = hashString("ACCOUNT_DEPOSIT_LIST");
 export const WITHDRAWAL_LIST = hashString("WITHDRAWAL_LIST");
 export const ACCOUNT_WITHDRAWAL_LIST = hashString("ACCOUNT_WITHDRAWAL_LIST");
 
+export const SHIFT_LIST = hashString("SHIFT_LIST");
+export const ACCOUNT_SHIFT_LIST = hashString("ACCOUNT_SHIFT_LIST");
+
 export const POSITION_LIST = hashString("POSITION_LIST");
 export const ACCOUNT_POSITION_LIST = hashString("ACCOUNT_POSITION_LIST");
 
@@ -28,6 +33,8 @@ export const ORDER_LIST = hashString("ORDER_LIST");
 export const ACCOUNT_ORDER_LIST = hashString("ACCOUNT_ORDER_LIST");
 
 export const SUBACCOUNT_LIST = hashString("SUBACCOUNT_LIST");
+
+export const AUTO_CANCEL_ORDER_LIST = hashString("AUTO_CANCEL_ORDER_LIST");
 
 export const CREATE_DEPOSIT_FEATURE_DISABLED = hashString("CREATE_DEPOSIT_FEATURE_DISABLED");
 export const CANCEL_DEPOSIT_FEATURE_DISABLED = hashString("CANCEL_DEPOSIT_FEATURE_DISABLED");
@@ -49,6 +56,11 @@ export const CLAIMABLE_UI_FEE_AMOUNT = hashString("CLAIMABLE_UI_FEE_AMOUNT");
 export const AFFILIATE_REWARD = hashString("AFFILIATE_REWARD");
 export const MAX_UI_FEE_FACTOR = hashString("MAX_UI_FEE_FACTOR");
 
+export const MAX_AUTO_CANCEL_ORDERS = hashString("MAX_AUTO_CANCEL_ORDERS");
+export const MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS = hashString(
+  "MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS"
+);
+
 export const IS_MARKET_DISABLED = hashString("IS_MARKET_DISABLED");
 export const MAX_SWAP_PATH_LENGTH = hashString("MAX_SWAP_PATH_LENGTH");
 export const MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT = hashString("MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT");
@@ -57,6 +69,10 @@ export const MIN_ORACLE_BLOCK_CONFIRMATIONS = hashString("MIN_ORACLE_BLOCK_CONFI
 export const MAX_ORACLE_PRICE_AGE = hashString("MAX_ORACLE_PRICE_AGE");
 export const MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR = hashString("MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR");
 export const MIN_ORACLE_SIGNERS = hashString("MIN_ORACLE_SIGNERS");
+export const MAX_ORACLE_TIMESTAMP_RANGE = hashString("MAX_ORACLE_TIMESTAMP_RANGE");
+export const IS_ORACLE_PROVIDER_ENABLED = hashString("IS_ORACLE_PROVIDER_ENABLED");
+export const IS_ATOMIC_ORACLE_PROVIDER = hashString("IS_ATOMIC_ORACLE_PROVIDER");
+export const CHAINLINK_PAYMENT_TOKEN = hashString("CHAINLINK_PAYMENT_TOKEN");
 
 export const MIN_COLLATERAL_FACTOR = hashString("MIN_COLLATERAL_FACTOR");
 export const MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER = hashString(
@@ -72,16 +88,18 @@ export const NATIVE_TOKEN_TRANSFER_GAS_LIMIT = hashString("NATIVE_TOKEN_TRANSFER
 
 export const MAX_CALLBACK_GAS_LIMIT = hashString("MAX_CALLBACK_GAS_LIMIT");
 
-export const REQUEST_EXPIRATION_BLOCK_AGE = hashString("REQUEST_EXPIRATION_BLOCK_AGE");
+export const REQUEST_EXPIRATION_TIME = hashString("REQUEST_EXPIRATION_TIME");
 
 export const PRICE_FEED = hashString("PRICE_FEED");
 export const PRICE_FEED_MULTIPLIER = hashString("PRICE_FEED_MULTIPLIER");
 export const PRICE_FEED_HEARTBEAT_DURATION = hashString("PRICE_FEED_HEARTBEAT_DURATION");
-export const REALTIME_FEED_ID = hashString("REALTIME_FEED_ID");
-export const REALTIME_FEED_MULTIPLIER = hashString("REALTIME_FEED_MULTIPLIER");
+export const DATA_STREAM_ID = hashString("DATA_STREAM_ID");
+export const DATA_STREAM_MULTIPLIER = hashString("DATA_STREAM_MULTIPLIER");
 export const STABLE_PRICE = hashString("STABLE_PRICE");
 
 export const ORACLE_TYPE = hashString("ORACLE_TYPE");
+export const ORACLE_PROVIDER_FOR_TOKEN = hashString("ORACLE_PROVIDER_FOR_TOKEN");
+export const ORACLE_TIMESTAMP_ADJUSTMENT = hashString("ORACLE_TIMESTAMP_ADJUSTMENT");
 
 export const OPEN_INTEREST = hashString("OPEN_INTEREST");
 export const OPEN_INTEREST_IN_TOKENS = hashString("OPEN_INTEREST_IN_TOKENS");
@@ -89,7 +107,7 @@ export const OPEN_INTEREST_IN_TOKENS = hashString("OPEN_INTEREST_IN_TOKENS");
 export const COLLATERAL_SUM = hashString("COLLATERAL_SUM");
 export const POOL_AMOUNT = hashString("POOL_AMOUNT");
 export const MAX_POOL_AMOUNT = hashString("MAX_POOL_AMOUNT");
-export const MAX_POOL_AMOUNT_FOR_DEPOSIT = hashString("MAX_POOL_AMOUNT_FOR_DEPOSIT");
+export const MAX_POOL_USD_FOR_DEPOSIT = hashString("MAX_POOL_USD_FOR_DEPOSIT");
 export const MAX_OPEN_INTEREST = hashString("MAX_OPEN_INTEREST");
 
 export const POSITION_IMPACT_POOL_AMOUNT = hashString("POSITION_IMPACT_POOL_AMOUNT");
@@ -103,6 +121,7 @@ export const POSITION_FEE_RECEIVER_FACTOR = hashString("POSITION_FEE_RECEIVER_FA
 export const BORROWING_FEE_RECEIVER_FACTOR = hashString("BORROWING_FEE_RECEIVER_FACTOR");
 
 export const SWAP_FEE_FACTOR = hashString("SWAP_FEE_FACTOR");
+export const ATOMIC_SWAP_FEE_FACTOR = hashString("ATOMIC_SWAP_FEE_FACTOR");
 export const SWAP_IMPACT_FACTOR = hashString("SWAP_IMPACT_FACTOR");
 export const SWAP_IMPACT_EXPONENT_FACTOR = hashString("SWAP_IMPACT_EXPONENT_FACTOR");
 
@@ -145,10 +164,12 @@ export const BORROWING_EXPONENT_FACTOR = hashString("BORROWING_EXPONENT_FACTOR")
 
 export const SKIP_BORROWING_FEE_FOR_SMALLER_SIDE = hashString("SKIP_BORROWING_FEE_FOR_SMALLER_SIDE");
 
-export const ESTIMATED_GAS_FEE_BASE_AMOUNT = hashString("ESTIMATED_GAS_FEE_BASE_AMOUNT");
+export const ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1 = hashString("ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1");
+export const ESTIMATED_GAS_FEE_PER_ORACLE_PRICE = hashString("ESTIMATED_GAS_FEE_PER_ORACLE_PRICE");
 export const ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR = hashString("ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR");
 
-export const EXECUTION_GAS_FEE_BASE_AMOUNT = hashString("EXECUTION_GAS_FEE_BASE_AMOUNT");
+export const EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1 = hashString("EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1");
+export const EXECUTION_GAS_FEE_PER_ORACLE_PRICE = hashString("EXECUTION_GAS_FEE_PER_ORACLE_PRICE");
 export const EXECUTION_GAS_FEE_MULTIPLIER_FACTOR = hashString("EXECUTION_GAS_FEE_MULTIPLIER_FACTOR");
 
 export const DEPOSIT_GAS_LIMIT = hashString("DEPOSIT_GAS_LIMIT");
@@ -180,6 +201,10 @@ export function accountWithdrawalListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_WITHDRAWAL_LIST, account]);
 }
 
+export function accountShiftListKey(account) {
+  return hashData(["bytes32", "address"], [ACCOUNT_SHIFT_LIST, account]);
+}
+
 export function accountPositionListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_POSITION_LIST, account]);
 }
@@ -190,6 +215,10 @@ export function accountOrderListKey(account) {
 
 export function subaccountListKey(account) {
   return hashData(["bytes32", "address"], [SUBACCOUNT_LIST, account]);
+}
+
+export function autoCancelOrderListKey(positionKey) {
+  return hashData(["bytes32", "bytes32"], [AUTO_CANCEL_ORDER_LIST, positionKey]);
 }
 
 export function isMarketDisabledKey(market) {
@@ -290,12 +319,12 @@ export function priceFeedHeartbeatDurationKey(token: string) {
   return hashData(["bytes32", "address"], [PRICE_FEED_HEARTBEAT_DURATION, token]);
 }
 
-export function realtimeFeedIdKey(token: string) {
-  return hashData(["bytes32", "address"], [REALTIME_FEED_ID, token]);
+export function dataStreamIdKey(token: string) {
+  return hashData(["bytes32", "address"], [DATA_STREAM_ID, token]);
 }
 
-export function realtimeFeedMultiplierKey(token: string) {
-  return hashData(["bytes32", "address"], [REALTIME_FEED_MULTIPLIER, token]);
+export function dataStreamMultiplierKey(token: string) {
+  return hashData(["bytes32", "address"], [DATA_STREAM_MULTIPLIER, token]);
 }
 
 export function stablePriceKey(token: string) {
@@ -304,6 +333,14 @@ export function stablePriceKey(token: string) {
 
 export function oracleTypeKey(token: string) {
   return hashData(["bytes32", "address"], [ORACLE_TYPE, token]);
+}
+
+export function oracleTimestampAdjustmentKey(provider: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [ORACLE_TIMESTAMP_ADJUSTMENT, provider, token]);
+}
+
+export function oracleProviderForTokenKey(token: string) {
+  return hashData(["bytes32", "address"], [ORACLE_PROVIDER_FOR_TOKEN, token]);
 }
 
 export function openInterestKey(market: string, collateralToken: string, isLong: boolean) {
@@ -315,6 +352,14 @@ export function openInterestInTokensKey(market: string, collateralToken: string,
     ["bytes32", "address", "address", "bool"],
     [OPEN_INTEREST_IN_TOKENS, market, collateralToken, isLong]
   );
+}
+
+export function isOracleProviderEnabledKey(provider: string) {
+  return hashData(["bytes32", "address"], [IS_ORACLE_PROVIDER_ENABLED, provider]);
+}
+
+export function isAtomicOracleProviderKey(provider: string) {
+  return hashData(["bytes32", "address"], [IS_ATOMIC_ORACLE_PROVIDER, provider]);
 }
 
 export function minCollateralFactorKey(market: string) {
@@ -353,8 +398,8 @@ export function maxPoolAmountKey(market: string, token: string) {
   return hashData(["bytes32", "address", "address"], [MAX_POOL_AMOUNT, market, token]);
 }
 
-export function maxPoolAmountForDepositKey(market: string, token: string) {
-  return hashData(["bytes32", "address", "address"], [MAX_POOL_AMOUNT_FOR_DEPOSIT, market, token]);
+export function maxPoolUsdForDepositKey(market: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [MAX_POOL_USD_FOR_DEPOSIT, market, token]);
 }
 
 export function maxOpenInterestKey(market: string, isLong: boolean) {
@@ -383,6 +428,10 @@ export function swapImpactPoolAmountKey(market: string, token: string) {
 
 export function swapFeeFactorKey(market: string, forPositiveImpact: boolean) {
   return hashData(["bytes32", "address", "bool"], [SWAP_FEE_FACTOR, market, forPositiveImpact]);
+}
+
+export function atomicSwapFeeFactorKey(market: string) {
+  return hashData(["bytes32", "address"], [ATOMIC_SWAP_FEE_FACTOR, market]);
 }
 
 export function swapImpactFactorKey(market: string, isPositive: boolean) {
@@ -488,7 +537,7 @@ export function depositGasLimitKey(singleToken: boolean) {
 }
 
 export function withdrawalGasLimitKey() {
-  return hashData(["bytes32"], [WITHDRAWAL_GAS_LIMIT]);
+  return WITHDRAWAL_GAS_LIMIT;
 }
 
 export function singleSwapGasLimitKey() {

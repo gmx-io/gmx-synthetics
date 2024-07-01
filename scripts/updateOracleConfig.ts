@@ -12,7 +12,10 @@ async function main() {
     console.log("%s: %j", key, value.toString());
   }
 
-  for (const [key, configKey] of [[keys.MAX_ORACLE_PRICE_AGE, "maxOraclePriceAge"]]) {
+  for (const [key, configKey] of [
+    [keys.MAX_ORACLE_PRICE_AGE, "maxOraclePriceAge"],
+    [keys.MAX_ORACLE_TIMESTAMP_RANGE, "maxOracleTimestampRange"],
+  ]) {
     const newValue = oracleConfig[configKey];
     const oldValue = await dataStore.getUint(key);
 

@@ -57,8 +57,8 @@ export async function executeWithOracleParams(fixture, overrides) {
     maxPrices,
     execute,
     gasUsageLabel,
-    realtimeFeedTokens,
-    realtimeFeedData,
+    dataStreamTokens,
+    dataStreamData,
     priceFeedTokens,
   } = overrides;
   const { provider } = ethers;
@@ -107,8 +107,8 @@ export async function executeWithOracleParams(fixture, overrides) {
     minPrices,
     maxPrices,
     signers,
-    realtimeFeedTokens,
-    realtimeFeedData,
+    dataStreamTokens,
+    dataStreamData,
     priceFeedTokens,
   };
 
