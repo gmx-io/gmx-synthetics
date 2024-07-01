@@ -402,11 +402,39 @@ Note that there are possible ways to game the funding fees, the funding factors 
 
 There is a borrowing fee paid to liquidity providers, this helps prevent users from opening both long and short positions to take up pool capacity without paying any fees.
 
-Borrowing fees are calculated as `borrowing factor * (open interest in usd + pending pnl) ^ (borrowing exponent factor) / (pool usd)` for longs and `borrowing factor * (open interest in usd) ^ (borrowing exponent factor) / (pool usd)` for shorts.
+Borrowing fees can use a curve model or kink model.
 
-For example if the borrowing factor per second is 1 / 50,000, and the borrowing exponent factor is 1, and the long open interest is $150,000 with +$50,000 of pending pnl, and the pool has $250,000 worth of tokens, the borrowing fee per second for longs would be `(1 / 50,000) * (150,000 + 50,000) / 250,000 => 0.000016 => 0.0016%`.
+To use the curve model, the keys to configure would be `BORROWING_FACTOR` and `BORROWING_EXPONENT_FACTOR`, the borrowing factor per second would be calculated as:
 
-Alternatively, OPTIMAL_USAGE_FACTOR, BASE_BORROWING_FACTOR and ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR values can be set for a market, this allows for a borrow rate that increases at a slower pace below the optimal usage factor and at a faster rate above the optimal usage factor.
+```
+// reservedUsd is the total USD value reserved for positions
+reservedUsd = MarketUtils.getReservedUsd(...)
+
+// poolUsd is the USD value of the pool excluding pending trader PnL
+poolUsd = MarketUtils.getPoolUsdWithoutPnl(...)
+
+// reservedUsdAfterExponent is the reservedUsd after applying the borrowingExponentFactor for the market
+
+reservedUsdAfterExponent = applyExponentFactor(reservedUsd, borrowingExponentFactor)
+
+borrowingFactorPerSecond = borrowingFactor * reservedUsdAfterExponent / poolUsd
+```
+
+To use the kink model, the keys to configure would be `OPTIMAL_USAGE_FACTOR`, `BASE_BORROWING_FACTOR` and `ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR`, the borrowing factor per second would be calculated as:
+
+```
+// usageFactor is the ratio of value reserved for positions to available value that can be reserved
+usageFactor = MarketUtils.getUsageFactor(...)
+
+borrowingFactorPerSecond = baseBorrowingFactor * usageFactor
+
+if (usageFactor > optimalUsageFactor) {
+  diff = usageFactor - optimalUsageFactor
+  additionalBorrowingFactorPerSecond = aboveOptimalUsageBorrowingFactor - baseBorrowingFactor
+
+  borrowingFactorPerSecond += additionalBorrowingFactorPerSecond * diff / (Precision.FLOAT_PRECISION - optimalUsageFactor)
+}
+```
 
 There is also an option to set a skipBorrowingFeeForSmallerSide flag, this would result in the borrowing fee for the smaller side being set to zero. For example, if there are more longs than shorts and skipBorrowingFeeForSmallerSide is true, then the borrowing fee for shorts would be zero.
 
