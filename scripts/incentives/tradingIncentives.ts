@@ -1,5 +1,5 @@
 import hre from "hardhat";
-import { bigNumberify, expandDecimals, formatAmount } from "../../utils/math";
+import { bigNumberify, formatAmount } from "../../utils/math";
 import {
   getMinRewardThreshold,
   overrideReceivers,
@@ -9,7 +9,6 @@ import {
   requestSubgraph,
   saveDistribution,
 } from "./helpers";
-import { BigNumber } from "ethers";
 
 async function requestMigrationData(fromTimestamp: number) {
   const data: {
@@ -144,7 +143,7 @@ async function main() {
     jsonResult[item.account] = userRebates.toString();
   }
 
-  overrideReceivers(jsonResult);
+  const appliedOverrides = await overrideReceivers(jsonResult);
 
   console.log(
     "Trading incentives for period from %s to %s",
@@ -175,7 +174,7 @@ async function main() {
     "min reward threshold: %s %s ($%s)",
     formatAmount(minRewardThreshold, rewardToken.expandDecimals, 4),
     rewardToken.symbol,
-    formatAmount(minRewardThreshold.mul(rewardTokenPrice.maxPrice), 30, 2),
+    formatAmount(minRewardThreshold.mul(rewardTokenPrice.maxPrice), 30, 2)
   );
   console.log("eligible users: %s", eligibleUsers);
   console.log("users below threshold: %s", usersBelowThreshold);
@@ -186,7 +185,14 @@ async function main() {
     rewardToken.symbol
   );
 
-  saveDistribution(fromDate, "tradingIncentives", rewardToken.address, jsonResult, distributionTypeId);
+  saveDistribution(
+    fromDate,
+    "tradingIncentives",
+    rewardToken.address,
+    jsonResult,
+    distributionTypeId,
+    appliedOverrides
+  );
 }
 
 main()

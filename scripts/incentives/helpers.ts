@@ -6,13 +6,17 @@ import hre from "hardhat";
 import { bigNumberify, expandDecimals, formatAmount } from "../../utils/math";
 import fetch from "node-fetch";
 
-import receiverOverridesMap from "./receiverOverrides";
+import staticReceiverOverridesMap from "./receiverOverrides";
 
-for (const address of Object.keys(receiverOverridesMap)) {
-  const checksumAddress = ethers.utils.getAddress(address);
-  if (checksumAddress !== address) {
-    receiverOverridesMap[checksumAddress] = receiverOverridesMap[address];
-    delete receiverOverridesMap[address];
+normalizeAddressesInMap(staticReceiverOverridesMap);
+
+function normalizeAddressesInMap(map: Record<string, string>) {
+  for (const address of Object.keys(map)) {
+    const checksumAddress = ethers.utils.getAddress(address);
+    if (checksumAddress !== address) {
+      map[checksumAddress] = map[address];
+      delete map[address];
+    }
   }
 }
 
@@ -67,6 +71,7 @@ export const knownDistributionTypeIds = new Set([
   ARBITRUM_STIP_B_LP_ID,
   ARBITRUM_STIP_B_TRADING_ID,
   AVALANCHE_RUSH_LP_ID,
+  AVALANCHE_RUSH_TRADING_ID,
 ]);
 
 export function getDistributionTypeName(distributionTypeId: number) {
@@ -242,7 +247,28 @@ export async function getFrameSigner() {
   }
 }
 
-export function overrideReceivers(data: Record<string, string>): void {
+async function fetchDolomiteReceiverOverrides() {
+  if (hre.network.name !== "arbitrum") {
+    return {};
+  }
+
+  console.log("fetching Dolomite overrides");
+
+  const url = "https://api.dolomite.io/isolation-mode/42161/proxy-vaults";
+  const res: { data: Record<string, string> } = await fetch(url).then((r) => r.json());
+  normalizeAddressesInMap(res.data);
+  return res.data;
+}
+
+export async function overrideReceivers(data: Record<string, string>): Promise<Record<string, string>> {
+  const dolomiteReceiverOverrides = await fetchDolomiteReceiverOverrides();
+  const receiverOverridesMap = {
+    ...staticReceiverOverridesMap,
+    ...dolomiteReceiverOverrides,
+  };
+
+  const appliedOverrides: Record<string, string> = {};
+
   for (const [receiver, amount] of Object.entries(data)) {
     const checksumReceiver = ethers.utils.getAddress(receiver);
     const newReceiver = receiverOverridesMap[checksumReceiver];
@@ -250,6 +276,7 @@ export function overrideReceivers(data: Record<string, string>): void {
       continue;
     }
     console.warn("WARN: override receiver %s -> %s", receiver, newReceiver);
+    appliedOverrides[receiver] = newReceiver;
     delete data[receiver];
     if (newReceiver in data) {
       data[newReceiver] = bigNumberify(data[newReceiver]).add(amount).toString();
@@ -257,6 +284,8 @@ export function overrideReceivers(data: Record<string, string>): void {
       data[newReceiver] = amount;
     }
   }
+
+  return appliedOverrides;
 }
 
 export function saveDistribution(
@@ -264,14 +293,15 @@ export function saveDistribution(
   name: string,
   tokenAddress: string,
   jsonResult: Record<string, string>,
-  distributionTypeId: number
+  distributionTypeId: number,
+  appliedOverrides: Record<string, string>
 ) {
   const dateStr = fromDate.toISOString().substring(0, 10);
-  const dirpath = path.join(__dirname, "distributions", `epoch_${dateStr}_${hre.network.name}`);
-  if (!fs.existsSync(dirpath)) {
-    fs.mkdirSync(dirpath);
+  const dirPath = path.join(__dirname, "distributions", `epoch_${dateStr}_${hre.network.name}`);
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath);
   }
-  const filename = path.join(dirpath, `${name}_distribution.json`);
+  const filename = path.join(dirPath, `${name}_distribution.json`);
   const id = `${dateStr}_${hre.network.name}_${distributionTypeId}`;
 
   fs.writeFileSync(
@@ -282,6 +312,7 @@ export function saveDistribution(
         distributionTypeId,
         id,
         amounts: jsonResult,
+        appliedOverrides,
       },
       null,
       4
@@ -290,7 +321,7 @@ export function saveDistribution(
   console.log("distribution data is saved to %s", filename);
 
   const csv = ["recipient,amount"];
-  const filename3 = path.join(dirpath, `${name}_distribution.csv`);
+  const filename3 = path.join(dirPath, `${name}_distribution.csv`);
   for (const [recipient, amount] of Object.entries(jsonResult)) {
     csv.push(`${recipient},${formatAmount(amount, 18, 2)}`);
   }
@@ -309,7 +340,11 @@ export function processArgs() {
 
   const distributionTypeId = Number(process.env.DISTRIBUTION_TYPE_ID);
   if (!knownDistributionTypeIds.has(distributionTypeId)) {
-    throw new Error(`unknown DISTRIBUTION_TYPE_ID ${distributionTypeId}`);
+    throw new Error(
+      `unknown DISTRIBUTION_TYPE_ID ${distributionTypeId}. Valid values:\n${Array.from(knownDistributionTypeIds)
+        .map((id) => `${id}: ${getDistributionTypeName(id)}`)
+        .join("\n")}`
+    );
   }
 
   if (!process.env.FROM_DATE) {
