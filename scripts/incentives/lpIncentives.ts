@@ -2,7 +2,6 @@ import { BigNumber, ethers } from "ethers";
 import hre from "hardhat";
 import { bigNumberify, expandDecimals, formatAmount } from "../../utils/math";
 import {
-  fetchDolomiteReceiverOverrides,
   getBlockByTimestamp,
   getMinRewardThreshold,
   overrideReceivers,

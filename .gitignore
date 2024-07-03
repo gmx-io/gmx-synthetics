@@ -18,3 +18,4 @@ out
 artifacts
 deployments/localhost
 deployments.txt
+*.log
