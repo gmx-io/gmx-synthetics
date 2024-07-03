@@ -298,7 +298,7 @@ function readDistributionFile() {
     throw new Error("Invalid file format. It should contain `id` string");
   }
   if (data.chainId !== getChainId()) {
-    throw new Error(`Invalid chain id: ${data.chainId}, expected: ${getChainId()}`);
+    throw new Error(`Invalid current chain id: ${getChainId()}, distribution chain id: ${data.chainId}`);
   }
 
   return {
