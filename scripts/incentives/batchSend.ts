@@ -6,7 +6,7 @@ import { range } from "lodash";
 import { bigNumberify, formatAmount } from "../../utils/math";
 import path from "path";
 import BatchSenderAbi from "./abi/BatchSender";
-import { getDistributionTypeName } from "./helpers";
+import { getChainId, getDistributionTypeName } from "./helpers";
 import { setTimeout } from "timers/promises";
 
 /*
@@ -276,6 +276,7 @@ function readDistributionFile() {
   const data: {
     token: string;
     amounts: Record<string, string>;
+    chainId: number;
     distributionTypeId: number;
     id: string;
   } = JSON.parse(fs.readFileSync(filepath).toString());
@@ -295,6 +296,9 @@ function readDistributionFile() {
   }
   if (!data.id) {
     throw new Error("Invalid file format. It should contain `id` string");
+  }
+  if (data.chainId !== getChainId()) {
+    throw new Error(`Invalid chain id: ${data.chainId}, expected: ${getChainId()}`);
   }
 
   return {

@@ -257,7 +257,7 @@ export async function requestAllocationData(timestamp: number) {
   };
 }
 
-function getChainId() {
+export function getChainId() {
   if (hre.network.name === "arbitrum") {
     return 42161;
   }
@@ -393,6 +393,7 @@ export function saveDistribution(
       {
         token: tokenAddress,
         distributionTypeId,
+        chainId: getChainId(),
         id,
         amounts: jsonResult,
         appliedOverrides,
