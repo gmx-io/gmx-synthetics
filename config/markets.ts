@@ -669,8 +669,8 @@ const config: {
       positivePositionImpactFactor: decimalToFloat(125, 11), // 1.25e-9
       positionImpactExponentFactor: decimalToFloat(2, 0), // 2.0
 
-      negativeSwapImpactFactor: decimalToFloat(5, 9),
-      positiveSwapImpactFactor: decimalToFloat(25, 10),
+      negativeSwapImpactFactor: decimalToFloat(35, 10),
+      positiveSwapImpactFactor: decimalToFloat(175, 11),
 
       minCollateralFactor: decimalToFloat(5, 3), // 200x leverage
       // minCollateralFactor of 0.005 (0.5%) when open interest is 25,000,000 USD
