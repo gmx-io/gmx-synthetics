@@ -254,7 +254,7 @@ async function fetchDolomiteReceiverOverrides() {
 
   console.log("fetching Dolomite overrides");
 
-  const url = "https://api.dolomite.io/isolation-mode/42161/proxy-vaults";
+  const url = "https://api.dolomite.io/isolation-mode/42161/proxy-vaults/gmx";
   const res: { data: Record<string, string> } = await fetch(url).then((r) => r.json());
   normalizeAddressesInMap(res.data);
   return res.data;
