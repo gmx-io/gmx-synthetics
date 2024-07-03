@@ -642,8 +642,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(976, 34), // 0.97608E+37, 8433 DOGE / day
       minPositionImpactPoolAmount: expandDecimals(26000, 8), // 26000 DOGE
 
-      maxOpenInterestForLongs: decimalToFloat(3_000_000),
-      maxOpenInterestForShorts: decimalToFloat(3_000_000),
+      maxOpenInterestForLongs: decimalToFloat(6_000_000),
+      maxOpenInterestForShorts: decimalToFloat(6_000_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(116, 14), // 0.00000000000116, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -836,8 +836,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(1034, 42), // 1.034245E+45, 89.36 LINK / day
       minPositionImpactPoolAmount: expandDecimals(638, 18), // 638 LINK
 
-      maxOpenInterestForLongs: decimalToFloat(7_000_000),
-      maxOpenInterestForShorts: decimalToFloat(7_000_000),
+      maxOpenInterestForLongs: decimalToFloat(10_000_000),
+      maxOpenInterestForShorts: decimalToFloat(10_000_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(846, 15), // 0.00000000000846, at least ~5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
