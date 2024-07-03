@@ -121,6 +121,9 @@ export const distributionTypes: Record<
 
 export function getDistributionTypeName(distributionTypeId: number) {
   const chainId = getChainId();
+  if (!distributionTypes[chainId][distributionTypeId]) {
+    throw new Error(`Unknown distribution with type id ${distributionTypeId} for chain id ${chainId}`);
+  }
   return distributionTypes[chainId][distributionTypeId].name;
 }
 
@@ -334,13 +337,19 @@ export async function fetchDolomiteReceiverOverrides() {
   const url = "https://api.dolomite.io/isolation-mode/42161/proxy-vaults/gmx";
   const res: { data: Record<string, string> } = await fetch(url).then((r) => r.json());
 
-  console.log("received %s overrides", Object.keys(res.data).length);
+  const overrides = Object.fromEntries(
+    Object.entries(res.data).map(([from, to]) => {
+      return [ethers.utils.getAddress(from), ethers.utils.getAddress(to)];
+    })
+  );
 
-  normalizeAddressesInMap(res.data);
+  console.log("received %s overrides", Object.keys(overrides).length);
 
-  await validateDolomiteVaults(Object.keys(res.data));
+  normalizeAddressesInMap(overrides);
 
-  return res.data;
+  await validateDolomiteVaults(Object.keys(overrides));
+
+  return overrides;
 }
 
 export async function overrideReceivers(data: Record<string, string>): Promise<Record<string, string>> {
@@ -386,6 +395,12 @@ export function saveDistribution(
   }
   const filename = path.join(dirPath, `${name}_distribution.json`);
   const id = `${dateStr}_${hre.network.name}_${distributionTypeId}`;
+
+  Object.keys(jsonResult).forEach((receiver) => {
+    if (ethers.utils.getAddress(receiver) !== receiver) {
+      throw Error(`Receiver address should be check summed: ${receiver}`);
+    }
+  });
 
   fs.writeFileSync(
     filename,
