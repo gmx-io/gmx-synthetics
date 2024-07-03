@@ -61,21 +61,8 @@ export const AVALANCHE_RUSH_LP_ID = 1100;
 export const AVALANCHE_RUSH_TRADING_ID = 1101;
 const TEST_DISTRIBUTION_TYPE_ID = 9876;
 
-export const knownDistributionTypeIds = new Set([
-  STIP_LP_DISTRIBUTION_TYPE_ID,
-  STIP_MIGRATION_DISTRIBUTION_TYPE_ID,
-  STIP_TRADING_INCENTIVES_DISTRIBUTION_TYPE_ID,
-  EIP_4844_COMPETITION_1_ID,
-  EIP_4844_COMPETITION_2_ID,
-  TEST_DISTRIBUTION_TYPE_ID,
-  ARBITRUM_STIP_B_LP_ID,
-  ARBITRUM_STIP_B_TRADING_ID,
-  AVALANCHE_RUSH_LP_ID,
-  AVALANCHE_RUSH_TRADING_ID,
-]);
-
-export function getDistributionTypeName(distributionTypeId: number) {
-  return {
+export const distributionTypes = {
+  [42161]: {
     [STIP_LP_DISTRIBUTION_TYPE_ID]: "STIP LP",
     [STIP_MIGRATION_DISTRIBUTION_TYPE_ID]: "STIP MIGRATION",
     [STIP_TRADING_INCENTIVES_DISTRIBUTION_TYPE_ID]: "STIP TRADING INCENTIVES",
@@ -84,9 +71,16 @@ export function getDistributionTypeName(distributionTypeId: number) {
     [TEST_DISTRIBUTION_TYPE_ID]: "TEST",
     [ARBITRUM_STIP_B_LP_ID]: "STIP.b LP",
     [ARBITRUM_STIP_B_TRADING_ID]: "STIP.b TRADING",
+  },
+  [43114]: {
     [AVALANCHE_RUSH_LP_ID]: "AVALANCHE RUSH LP",
     [AVALANCHE_RUSH_TRADING_ID]: "AVALANCHE RUSH TRADING",
-  }[distributionTypeId];
+  },
+};
+
+export function getDistributionTypeName(distributionTypeId: number) {
+  const chainId = getChainId();
+  return distributionTypes[chainId][distributionTypeId];
 }
 
 export async function requestSubgraph(query: string) {
@@ -247,7 +241,49 @@ export async function getFrameSigner() {
   }
 }
 
-async function fetchDolomiteReceiverOverrides() {
+async function validateDolomiteVaults(vaults: string[]) {
+  const dolomiteValidMarginAddress = "0x6Bd780E7fDf01D77e4d475c821f1e7AE05409072";
+  const multicall = await hre.ethers.getContract("Multicall3");
+  const abi = ["function DOLOMITE_MARGIN()"];
+  const iface = new ethers.utils.Interface(abi);
+  const methodName = "DOLOMITE_MARGIN";
+  const data = iface.encodeFunctionData(methodName);
+
+  const batchSize = 500;
+  const multicallRequests = new Array(Math.ceil(vaults.length / batchSize)).fill(0).map(async (_, i) => {
+    const from = i * batchSize;
+    const to = Math.min(from + batchSize, vaults.length);
+    const batch = vaults.slice(from, to);
+    const multicallData = batch.map((vault) => ({
+      target: vault,
+      callData: data,
+    }));
+    console.debug("multicallData %s %s-%s", i, from, to);
+    const result = await multicall.callStatic.aggregate3(multicallData);
+    result.forEach(({ success, returnData }, j: number) => {
+      if (!success) {
+        throw new Error("Multicall request failed");
+      }
+      const dolomiteMargin: string = ethers.utils.defaultAbiCoder.decode(["address"], returnData)[0];
+      console.log("dolomite vault %s margin %s", batch[j], dolomiteMargin);
+      if (dolomiteMargin !== dolomiteValidMarginAddress) {
+        console.error(
+          "ERROR: Dolomite vault %s has incorrect margin %s expected %s",
+          batch[j],
+          dolomiteMargin,
+          dolomiteValidMarginAddress
+        );
+        throw new Error("Dolomite vault has incorrect margin");
+      }
+    });
+  });
+
+  await Promise.all(multicallRequests);
+
+  console.log("Dolomite vaults are valid");
+}
+
+export async function fetchDolomiteReceiverOverrides() {
   if (hre.network.name !== "arbitrum") {
     return {};
   }
@@ -256,7 +292,13 @@ async function fetchDolomiteReceiverOverrides() {
 
   const url = "https://api.dolomite.io/isolation-mode/42161/proxy-vaults/gmx";
   const res: { data: Record<string, string> } = await fetch(url).then((r) => r.json());
+
+  console.log("received %s overrides", Object.keys(res.data).length);
+
   normalizeAddressesInMap(res.data);
+
+  await validateDolomiteVaults(Object.keys(res.data));
+
   return res.data;
 }
 
@@ -275,7 +317,7 @@ export async function overrideReceivers(data: Record<string, string>): Promise<R
     if (!newReceiver) {
       continue;
     }
-    console.warn("WARN: override receiver %s -> %s", receiver, newReceiver);
+    console.warn("WARN: override receiver %s -> %s amount: %s", receiver, newReceiver, amount);
     appliedOverrides[receiver] = newReceiver;
     delete data[receiver];
     if (newReceiver in data) {
@@ -339,6 +381,7 @@ export function processArgs() {
   }
 
   const distributionTypeId = Number(process.env.DISTRIBUTION_TYPE_ID);
+  const knownDistributionTypeIds = new Set(Object.keys(distributionTypes[getChainId()]).map((id) => Number(id)));
   if (!knownDistributionTypeIds.has(distributionTypeId)) {
     throw new Error(
       `unknown DISTRIBUTION_TYPE_ID ${distributionTypeId}. Valid values:\n${Array.from(knownDistributionTypeIds)

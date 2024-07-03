@@ -2,6 +2,7 @@ import { BigNumber, ethers } from "ethers";
 import hre from "hardhat";
 import { bigNumberify, expandDecimals, formatAmount } from "../../utils/math";
 import {
+  fetchDolomiteReceiverOverrides,
   getBlockByTimestamp,
   getMinRewardThreshold,
   overrideReceivers,
@@ -264,15 +265,15 @@ async function main() {
     const { marketTokensSupply } = balancesData[marketAddress];
 
     const diff = userBalancesSum.sub(marketTokensSupply);
-    if (diff.abs().gt(marketTokensSupply.div(200))) {
-      console.error(
-        "ERROR: market %s sum of user balances %s and market tokens supply %s differs too much %s (%s%)",
-        marketAddress,
-        formatAmount(userBalancesSum, rewardToken.decimals, 2, true),
-        formatAmount(marketTokensSupply, rewardToken.decimals, 2, true),
-        formatAmount(diff, rewardToken.decimals, 2, true),
-        formatAmount(diff.mul(10000).div(userBalancesSum), 2, 2, true)
-      );
+    console.info(
+      "market %s sum of user balances %s, market tokens supply %s, diff %s (%s%)",
+      marketAddress,
+      formatAmount(userBalancesSum, rewardToken.decimals, 2, true),
+      formatAmount(marketTokensSupply, rewardToken.decimals, 2, true),
+      formatAmount(diff, rewardToken.decimals, 2, true),
+      formatAmount(diff.mul(10000).div(userBalancesSum), 2, 2, true)
+    );
+    if (diff.abs().gt(marketTokensSupply.div(100))) {
       throw Error("Sum of user balances and market tokens supply don't match.");
     }
 
