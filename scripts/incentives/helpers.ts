@@ -61,26 +61,67 @@ export const AVALANCHE_RUSH_LP_ID = 1100;
 export const AVALANCHE_RUSH_TRADING_ID = 1101;
 const TEST_DISTRIBUTION_TYPE_ID = 9876;
 
-export const distributionTypes = {
+type IncentivesType = "lp" | "trading" | "glpMigration" | "competition" | "test";
+
+export const distributionTypes: Record<
+  string,
+  Record<
+    string,
+    {
+      name: string;
+      incentivesType: IncentivesType;
+    }
+  >
+> = {
   [42161]: {
-    [STIP_LP_DISTRIBUTION_TYPE_ID]: "STIP LP",
-    [STIP_MIGRATION_DISTRIBUTION_TYPE_ID]: "STIP MIGRATION",
-    [STIP_TRADING_INCENTIVES_DISTRIBUTION_TYPE_ID]: "STIP TRADING INCENTIVES",
-    [EIP_4844_COMPETITION_1_ID]: "EIP-4844 COMPETITION 1",
-    [EIP_4844_COMPETITION_2_ID]: "EIP-4844 COMPETITION 2",
-    [TEST_DISTRIBUTION_TYPE_ID]: "TEST",
-    [ARBITRUM_STIP_B_LP_ID]: "STIP.b LP",
-    [ARBITRUM_STIP_B_TRADING_ID]: "STIP.b TRADING",
+    [STIP_LP_DISTRIBUTION_TYPE_ID]: {
+      name: "STIP LP",
+      incentivesType: "lp",
+    },
+    [STIP_MIGRATION_DISTRIBUTION_TYPE_ID]: {
+      name: "STIP MIGRATION",
+      incentivesType: "glpMigration",
+    },
+    [STIP_TRADING_INCENTIVES_DISTRIBUTION_TYPE_ID]: {
+      name: "STIP TRADING INCENTIVES",
+      incentivesType: "trading",
+    },
+    [EIP_4844_COMPETITION_1_ID]: {
+      name: "EIP-4844 COMPETITION 1",
+      incentivesType: "competition",
+    },
+    [EIP_4844_COMPETITION_2_ID]: {
+      name: "EIP-4844 COMPETITION 2",
+      incentivesType: "competition",
+    },
+    [TEST_DISTRIBUTION_TYPE_ID]: {
+      name: "TEST",
+      incentivesType: "test",
+    },
+    [ARBITRUM_STIP_B_LP_ID]: {
+      name: "STIP.b LP",
+      incentivesType: "lp",
+    },
+    [ARBITRUM_STIP_B_TRADING_ID]: {
+      name: "STIP.b TRADING",
+      incentivesType: "trading",
+    },
   },
   [43114]: {
-    [AVALANCHE_RUSH_LP_ID]: "AVALANCHE RUSH LP",
-    [AVALANCHE_RUSH_TRADING_ID]: "AVALANCHE RUSH TRADING",
+    [AVALANCHE_RUSH_LP_ID]: {
+      name: "AVALANCHE RUSH LP",
+      incentivesType: "lp",
+    },
+    [AVALANCHE_RUSH_TRADING_ID]: {
+      name: "AVALANCHE RUSH TRADING",
+      incentivesType: "trading",
+    },
   },
 };
 
 export function getDistributionTypeName(distributionTypeId: number) {
   const chainId = getChainId();
-  return distributionTypes[chainId][distributionTypeId];
+  return distributionTypes[chainId][distributionTypeId].name;
 }
 
 export async function requestSubgraph(query: string) {
@@ -371,7 +412,7 @@ export function saveDistribution(
   console.log("csv data saved to %s", filename3);
 }
 
-export function processArgs() {
+export function processArgs(incentivesType?: IncentivesType) {
   if (!["arbitrum", "avalanche"].includes(hre.network.name)) {
     throw new Error("Unsupported network");
   }
@@ -380,14 +421,25 @@ export function processArgs() {
     throw new Error("DISTRIBUTION_TYPE_ID is required");
   }
 
+  const chainId = getChainId();
+
   const distributionTypeId = Number(process.env.DISTRIBUTION_TYPE_ID);
-  const knownDistributionTypeIds = new Set(Object.keys(distributionTypes[getChainId()]).map((id) => Number(id)));
+  const knownDistributionTypeIds = new Set(Object.keys(distributionTypes[chainId]).map((id) => Number(id)));
   if (!knownDistributionTypeIds.has(distributionTypeId)) {
     throw new Error(
       `unknown DISTRIBUTION_TYPE_ID ${distributionTypeId}. Valid values:\n${Array.from(knownDistributionTypeIds)
         .map((id) => `${id}: ${getDistributionTypeName(id)}`)
         .join("\n")}`
     );
+  }
+
+  if (incentivesType && distributionTypes[chainId][distributionTypeId].incentivesType !== incentivesType) {
+    console.error(
+      "ERROR: incorrect incentives type: '%s' expected: '%s'",
+      distributionTypes[chainId][distributionTypeId].incentivesType,
+      incentivesType
+    );
+    throw new Error("Incentives type don't match");
   }
 
   if (!process.env.FROM_DATE) {
