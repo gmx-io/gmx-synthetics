@@ -1614,8 +1614,8 @@ const config: {
 
       ...singleTokenMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(80_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(80_000, 18),
+      maxLongTokenPoolAmount: expandDecimals(120_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(120_000, 18),
 
       maxLongTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
