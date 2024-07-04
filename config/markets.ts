@@ -1253,8 +1253,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
 
-      maxOpenInterestForLongs: decimalToFloat(10_000_000),
-      maxOpenInterestForShorts: decimalToFloat(10_000_000),
+      maxOpenInterestForLongs: decimalToFloat(1_500_000),
+      maxOpenInterestForShorts: decimalToFloat(1_500_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(136, 14), // 0.00000000000136, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -1295,8 +1295,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
 
-      maxOpenInterestForLongs: decimalToFloat(10_000_000),
-      maxOpenInterestForShorts: decimalToFloat(10_000_000),
+      maxOpenInterestForLongs: decimalToFloat(1_500_000),
+      maxOpenInterestForShorts: decimalToFloat(1_500_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(136, 14), // 0.00000000000136, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -1338,8 +1338,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
 
-      maxOpenInterestForLongs: decimalToFloat(10_000_000),
-      maxOpenInterestForShorts: decimalToFloat(10_000_000),
+      maxOpenInterestForLongs: decimalToFloat(1_000_000),
+      maxOpenInterestForShorts: decimalToFloat(1_000_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(136, 14), // 0.00000000000136, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -1374,8 +1374,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(2, 10),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(2, 10),
 
-      maxOpenInterestForLongs: decimalToFloat(10_000_000),
-      maxOpenInterestForShorts: decimalToFloat(10_000_000),
+      maxOpenInterestForLongs: decimalToFloat(1_000_000),
+      maxOpenInterestForShorts: decimalToFloat(1_000_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(136, 14), // 0.00000000000136, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
