@@ -1,6 +1,8 @@
 node_modules
 dist
 .env
+.yarn
+.yarnrc.yml
 coverage
 coverage.json
 contracts/Test*.sol
