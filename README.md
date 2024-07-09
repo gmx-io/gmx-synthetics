@@ -663,6 +663,8 @@ After the initial setup:
 
 ## Integration Notes
 
+- Deposits, withdrawals and orders may be cancelled if the requirements specified in the request cannot be fufiled, e.g. min amount out. Do check where funds and gas refunds will be sent to on cancellation to ensure it matches expectations.
+
 - Decrease position orders can output two tokens instead of a single token, in case the decrease position swap fails, it is also possible that the output amount and collateral may not be sufficient to cover fees, causing the order to not be executed
 
 - If there is a large spread, it is possible that opening / closing a position can significantly change the min and max price of the market token, this should not be manipulatable in a profitable way
