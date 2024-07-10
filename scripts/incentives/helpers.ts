@@ -32,9 +32,9 @@ function getSubgraphEndpoint() {
 
 function getApiEndpoint() {
   if (hre.network.name === "arbitrum") {
-    return "https://arbitrum-api.gmxinfra.io";
+    return "https://arbitrum-api.gmxinfra2.io";
   } else if (hre.network.name === "avalanche") {
-    return "https://avalanche-api.gmxinfra.io";
+    return "https://avalanche-api.gmxinfra2.io";
   } else {
     throw new Error("Unsupported network");
   }
@@ -44,6 +44,8 @@ export function getMinRewardThreshold(rewardToken: any) {
   if (rewardToken.symbol === "WAVAX") {
     return expandDecimals(3, 15);
   } else if (rewardToken.symbol === "ARB") {
+    return expandDecimals(1, 17);
+  } else if (rewardToken.symbol === "GM AVAX+") {
     return expandDecimals(1, 17);
   } else {
     throw new Error(`Undefined min reward threshold for reward token ${rewardToken.symbol}`);
@@ -499,4 +501,47 @@ export function processArgs(incentivesType?: IncentivesType) {
     toDate,
     distributionTypeId,
   };
+}
+
+export function getRewardToken(tokens: any[], address: string) {
+  if (address === "0x08b25A2a89036d298D6dB8A74ace9d1ce6Db15E5") {
+    return {
+      symbol: "GM AVAX+",
+      address,
+      decimals: 18,
+    };
+  }
+
+  const rewardToken = Object.values(tokens).find((t: any) => t.address === address) as any;
+
+  if (!rewardToken) {
+    throw new Error(`Unknown reward token ${address}`);
+  }
+
+  return rewardToken;
+}
+
+export function getRewardTokenPrice(
+  prices: {
+    maxPrice: string;
+    minPrice: string;
+    tokenAddress: string;
+    tokenSymbol: string;
+  }[],
+  address: string
+) {
+  if (address === "0x08b25A2a89036d298D6dB8A74ace9d1ce6Db15E5") {
+    return {
+      maxPrice: "1026000000000",
+      minPrice: "1026000000000",
+      tokenAddress: address,
+      tokenSymbol: "GM AVAX+",
+    };
+  }
+
+  const rewardTokenPrice = prices.find((p) => p.tokenAddress === address);
+  if (!rewardTokenPrice) {
+    throw new Error(`No price for reward token ${address}`);
+  }
+  return rewardTokenPrice;
 }

@@ -1,7 +1,9 @@
-import hre from "hardhat";
+import hre, { ethers } from "hardhat";
 import { bigNumberify, formatAmount } from "../../utils/math";
 import {
   getMinRewardThreshold,
+  getRewardToken,
+  getRewardTokenPrice,
   overrideReceivers,
   processArgs,
   requestAllocationData,
@@ -39,7 +41,7 @@ async function requestMigrationData(fromTimestamp: number) {
     userTradingIncentivesStats: data.userTradingIncentivesStats
       .map((item) => {
         return {
-          ...item,
+          account: ethers.utils.getAddress(item.account),
           positionFeesUsd: bigNumberify(item.positionFeesUsd),
         };
       })
@@ -77,15 +79,9 @@ async function main() {
   }
 
   const tokens = await hre.gmx.getTokens();
-  const rewardToken = Object.values(tokens).find((t: any) => t.address === allocationData.trading.token) as any;
+  const rewardToken = getRewardToken(tokens, allocationData.trading.token);
   console.log("rewardToken %s %s", rewardToken.symbol, rewardToken.address);
-  if (!rewardToken) {
-    throw new Error(`Unknown reward token ${allocationData.trading.token}`);
-  }
-  const rewardTokenPrice = prices.find((p) => p.tokenAddress === rewardToken.address);
-  if (!rewardTokenPrice) {
-    throw new Error(`No price for reward token ${rewardToken.symbol}`);
-  }
+  const rewardTokenPrice = getRewardTokenPrice(prices, rewardToken.address);
 
   const jsonResult: Record<string, string> = {};
   const minRewardThreshold = getMinRewardThreshold(rewardToken);

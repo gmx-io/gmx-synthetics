@@ -24,9 +24,17 @@ function getArbValues() {
   };
 }
 
+function getAvaxValues() {
+  return {
+    batchSenderAddress: "0x0BEa5D3081921A08d73f150126f99cda0eb29C0e",
+  };
+}
+
 function getValues() {
   if (hre.network.name === "arbitrum") {
     return getArbValues();
+  } else if (hre.network.name === "avalanche") {
+    return getAvaxValues();
   }
 
   throw new Error(`unsupported network ${hre.network.name}`);

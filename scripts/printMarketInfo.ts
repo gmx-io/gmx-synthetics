@@ -20,9 +20,9 @@ function getTickersUrl() {
   const networkName = hre.network.name;
 
   if (networkName === "arbitrum") {
-    return "https://arbitrum-api.gmxinfra.io/prices/tickers";
+    return "https://arbitrum-api.gmxinfra2.io/prices/tickers";
   } else if (networkName === "avalanche") {
-    return "https://avalanche-api.gmxinfra.io/prices/tickers";
+    return "https://avalanche-api.gmxinfra2.io/prices/tickers";
   } else if (networkName === "arbitrumGoerli") {
     return "https://gmx-synthetics-api-arb-goerli-4vgxk.ondigitalocean.app/prices/tickers";
   } else if (networkName === "avalancheFuji") {

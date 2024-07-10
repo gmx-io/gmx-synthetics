@@ -4,6 +4,8 @@ import { bigNumberify, expandDecimals, formatAmount } from "../../utils/math";
 import {
   getBlockByTimestamp,
   getMinRewardThreshold,
+  getRewardToken,
+  getRewardTokenPrice,
   overrideReceivers,
   processArgs,
   requestAllocationData,
@@ -226,15 +228,10 @@ async function main() {
   const balancesData = await requestBalancesData(fromTimestamp, toBlock.number, marketsWithRewards);
 
   const tokens = await hre.gmx.getTokens();
-  const rewardToken = Object.values(tokens).find((t: any) => t.address === lpAllocationData.token) as any;
+  const rewardToken = getRewardToken(tokens, lpAllocationData.token);
   console.log("rewardToken %s %s", rewardToken.symbol, rewardToken.address);
-  if (!rewardToken) {
-    throw new Error(`Unknown reward token ${lpAllocationData.token}`);
-  }
-  const rewardTokenPrice = prices.find((p) => p.tokenAddress === rewardToken.address);
-  if (!rewardTokenPrice) {
-    throw new Error(`No price for reward token ${rewardToken.symbol}`);
-  }
+
+  const rewardTokenPrice = getRewardTokenPrice(prices, rewardToken.address);
 
   if (Math.abs(lpAllocationData.totalShare - 1) > 0.001) {
     console.warn("WARN: total share %s of market allocations is not 1", lpAllocationData.totalShare);
