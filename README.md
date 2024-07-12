@@ -647,6 +647,11 @@ After the initial setup:
 
 - There is a dependency on the accuracy of the block timestamp because oracle prices are validated against this value, for blockchains where the blockchain nodes have some control over the timestamp, care should be taken to set the oracleTimestampAdjustment to a value that would make manipulation of the timestamp unprofitable
 
+## Deployment Notes
+
+- `scripts/verifyFallback.ts` can be used to verify contracts
+- One MarketToken contract would need to be verified using `npx hardhat verify`, thereafter all MarketToken contracts should be verified as the source code would be the same
+
 ## Upgrade Notes
 
 - If new contracts are added that may lead to a difference in pricing, e.g. of market tokens between the old and new contracts, then care should be taken to disable the old contracts before the new contracts are enabled
@@ -663,7 +668,7 @@ After the initial setup:
 
 ## Integration Notes
 
-- Deposits, withdrawals and orders may be cancelled if the requirements specified in the request cannot be fufiled, e.g. min amount out. Do check where funds and gas refunds will be sent to on cancellation to ensure it matches expectations.
+- Deposits, withdrawals and orders may be cancelled if the requirements specified in the request cannot be fufilled, e.g. min amount out. Do check where funds and gas refunds will be sent to on cancellation to ensure it matches expectations.
 
 - Decrease position orders can output two tokens instead of a single token, in case the decrease position swap fails, it is also possible that the output amount and collateral may not be sufficient to cover fees, causing the order to not be executed
 
