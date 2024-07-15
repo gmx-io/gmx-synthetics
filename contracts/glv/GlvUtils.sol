@@ -8,6 +8,7 @@ import "../oracle/Oracle.sol";
 import "../market/Market.sol";
 import "../market/MarketUtils.sol";
 import "../shift/ShiftUtils.sol";
+import "../shift/ShiftVault.sol";
 import "../exchange/IShiftHandler.sol";
 import "../market/MarketPoolValueInfo.sol";
 
@@ -54,7 +55,7 @@ library GlvUtils {
         uint256 glvTokenAmount,
         uint256 poolValue,
         uint256 supply
-    ) internal pure returns (uint256) {
+    ) public pure returns (uint256) {
         if (supply == 0) { revert Errors.EmptyMarketTokenSupply(); }
 
         return Precision.mulDiv(poolValue, glvTokenAmount, supply);
@@ -65,7 +66,7 @@ library GlvUtils {
     // @param glvValue the value of the pool
     // @param supply the supply of glv tokens
     // @return the number of glv tokens
-    function usdToGlvTokenAmount(uint256 usdValue, uint256 glvValue, uint256 supply) internal pure returns (uint256) {
+    function usdToGlvTokenAmount(uint256 usdValue, uint256 glvValue, uint256 supply) public pure returns (uint256) {
         // if the supply and glvValue is zero, use 1 USD as the token price
         if (supply == 0 && glvValue == 0) {
             return Precision.floatToWei(usdValue);
@@ -83,7 +84,7 @@ library GlvUtils {
         return Precision.mulDiv(supply, usdValue, glvValue);
     }
 
-    function validateMarket(DataStore dataStore, address glv, address market, bool shouldBeEnabled) internal view {
+    function validateMarket(DataStore dataStore, address glv, address market, bool shouldBeEnabled) public view {
         if (!dataStore.containsAddress(Keys.glvSupportedMarketListKey(glv), market)) {
             revert Errors.GlvUnsupportedMarket(glv, market);
         }
@@ -95,13 +96,13 @@ library GlvUtils {
         }
     }
 
-    function validateGlv(DataStore dataStore, address glv) internal view {
+    function validateGlv(DataStore dataStore, address glv) public view {
         if (!dataStore.containsAddress(Keys.GLV_LIST, glv)) {
             revert Errors.EmptyGlv(glv);
         }
     }
 
-    function getMarketCount(DataStore dataStore, address glv) internal view returns (uint256) {
+    function getMarketCount(DataStore dataStore, address glv) public view returns (uint256) {
         return dataStore.getAddressCount(Keys.glvSupportedMarketListKey(glv));
     }
 
@@ -114,7 +115,7 @@ library GlvUtils {
         address glv,
         uint256 marketTokenAmount,
         ShiftUtils.CreateShiftParams memory params
-    ) internal {
+    ) public {
         validateGlv(dataStore, glv);
 
         validateMarket(dataStore, glv, params.fromMarket, false);
@@ -149,19 +150,19 @@ library GlvUtils {
         setPendingShift(dataStore, glv, shiftKey);
     }
 
-    function validatePendingShift(DataStore dataStore, address glv) internal view {
+    function validatePendingShift(DataStore dataStore, address glv) public view {
         bytes32 shiftKey = dataStore.getBytes32(Keys.glvPendingShiftKey(glv));
         if (shiftKey != bytes32(0)) {
             revert Errors.GlvHasPendingShift(glv);
         }
     }
 
-    function setPendingShift(DataStore dataStore, address glv, bytes32 shiftKey) internal {
+    function setPendingShift(DataStore dataStore, address glv, bytes32 shiftKey) public {
         dataStore.setBytes32(Keys.glvPendingShiftKey(glv), shiftKey);
         dataStore.setAddress(Keys.glvPendingShiftBackrefKey(shiftKey), glv);
     }
 
-    function clearPendingShift(DataStore dataStore, bytes32 shiftKey) internal {
+    function clearPendingShift(DataStore dataStore, bytes32 shiftKey) public {
         address glv = dataStore.getAddress(Keys.glvPendingShiftBackrefKey(shiftKey));
         if (glv == address(0)) {
             revert Errors.GlvShiftNotFound(shiftKey);
@@ -176,7 +177,7 @@ library GlvUtils {
         address glv,
         Market.Props memory market,
         uint256 marketTokenAmount
-    ) internal view {
+    ) public view {
         uint256 maxMarketTokenBalanceUsd = getGlvMaxMarketTokenBalanceUsd(dataStore, glv, market.marketToken);
         if (maxMarketTokenBalanceUsd == 0) {
             return;
@@ -218,12 +219,12 @@ library GlvUtils {
         DataStore dataStore,
         address glv,
         address market
-    ) internal view returns (uint256) {
+    ) public view returns (uint256) {
         return dataStore.getUint(Keys.glvMaxMarketTokenBalanceUsdKey(glv, market));
     }
 
-    function addMarket(DataStore dataStore, address glv, address market) internal {
-        GlvUtils.validateGlv(dataStore, glv);
+    function addMarket(DataStore dataStore, address glv, address market) public {
+        validateGlv(dataStore, glv);
         MarketUtils.validateEnabledMarket(dataStore, market);
 
         bytes32 key = Keys.glvSupportedMarketListKey(glv);
@@ -233,8 +234,8 @@ library GlvUtils {
         dataStore.addAddress(key, market);
     }
 
-    function disableMarket(DataStore dataStore, address glv, address market) internal {
-        GlvUtils.validateGlv(dataStore, glv);
+    function disableMarket(DataStore dataStore, address glv, address market) public {
+        validateGlv(dataStore, glv);
         bytes32 key = Keys.glvSupportedMarketListKey(glv);
         if (!dataStore.containsAddress(key, market)) {
             revert Errors.GlvUnsupportedMarket(glv, market);

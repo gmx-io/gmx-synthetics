@@ -274,7 +274,7 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
         );
     }
 
-    function shift(
+    function createShift(
         address account,
         address glv,
         uint256 marketTokenAmount,

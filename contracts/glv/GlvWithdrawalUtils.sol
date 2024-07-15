@@ -8,18 +8,21 @@ import "../glv/GlvUtils.sol";
 import "../glv/GlvWithdrawal.sol";
 import "../glv/GlvWithdrawalStoreUtils.sol";
 import "../glv/GlvWithdrawalEventUtils.sol";
-import "../feature/FeatureUtils.sol";
-import "../deposit/DepositVault.sol";
 import "../data/DataStore.sol";
 import "../oracle/Oracle.sol";
 import "../market/Market.sol";
 import "../market/MarketUtils.sol";
+import "../withdrawal/ExecuteWithdrawalUtils.sol";
+import "../withdrawal/WithdrawalEventUtils.sol";
+import "../withdrawal/WithdrawalUtils.sol";
 import "../data/Keys.sol";
 import "../event/EventUtils.sol";
+import "../callback/CallbackUtils.sol";
+import "../gas/GasUtils.sol";
+import "../nonce/NonceUtils.sol";
 
 library GlvWithdrawalUtils {
     using GlvWithdrawal for GlvWithdrawal.Props;
-    using Deposit for Deposit.Props;
     using SafeCast for int256;
     using EventUtils for EventUtils.UintItems;
 
