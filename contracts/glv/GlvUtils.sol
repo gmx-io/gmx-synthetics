@@ -229,7 +229,7 @@ library GlvUtils {
             true // maximize
         );
 
-        validateMaxMarketTokenBalance(dataStore, glv, cache.toMarket, marketTokenAmount, cache.toMarketTokenPrice.toUint256());
+        validateMaxMarketTokenBalanceUsd(dataStore, glv, cache.toMarket, marketTokenAmount, cache.toMarketTokenPrice.toUint256());
 
         uint256 marketTokenUsd = marketTokenAmount * cache.toMarketTokenPrice.toUint256();
         validateCumulativeDepositDeltaUsd(dataStore, glv, params.toMarket, marketTokenUsd.toInt256());
@@ -264,7 +264,7 @@ library GlvUtils {
         dataStore.removeBytes32(Keys.glvPendingShiftKey(glv));
     }
 
-    function validateMaxMarketTokenBalance(
+    function validateMaxMarketTokenBalanceUsd(
         DataStore dataStore,
         address glv,
         Market.Props memory market,
@@ -280,7 +280,7 @@ library GlvUtils {
         uint256 marketTokenBalanceUsd = ERC20(market.marketToken).balanceOf(glv) * marketTokenPrice;
         uint256 nextMarketTokenBalanceUsd = marketTokenBalanceUsd + marketTokenUsd;
         if (nextMarketTokenBalanceUsd > maxMarketTokenBalanceUsd) {
-            revert Errors.GlvMaxMarketTokenBalanceExceeded(
+            revert Errors.GlvMaxMarketTokenBalanceUsdExceeded(
                 glv,
                 market.marketToken,
                 maxMarketTokenBalanceUsd,

@@ -229,7 +229,7 @@ library GlvDepositUtils {
             true // maximize
         );
 
-        GlvUtils.validateMaxMarketTokenBalance(
+        GlvUtils.validateMaxMarketTokenBalanceUsd(
             params.dataStore,
             glvDeposit.glv(),
             cache.market,
