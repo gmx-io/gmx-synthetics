@@ -61,7 +61,10 @@ function encodeArg(arg) {
 }
 
 async function main() {
-  const cacheFilePath = `./scripts/cache/${hre.network.name}.json`;
+  const verificationNetwork = process.env.VERIFICATION_NETWORK ? process.env.VERIFICATION_NETWORK : hre.network.name;
+  const cacheFilePath = `./scripts/cache/${verificationNetwork}.json`;
+  console.log("cacheFilePath", cacheFilePath);
+
   let cache = readJsonFile(cacheFilePath);
   if (cache === undefined) {
     cache = {};
@@ -98,10 +101,10 @@ async function main() {
       const contractFQN = `${Object.keys(metadata.settings.compilationTarget)[0]}:${name}`;
       const contractArg = `--contract ${contractFQN}`;
 
-      console.log("command", `npx hardhat verify ${contractArg} --network ${hre.network.name} ${address} ${argStr}`);
+      console.log("command", `npx hardhat verify ${contractArg} --network ${verificationNetwork} ${address} ${argStr}`);
       await new Promise((resolve, reject) => {
         exec(
-          `npx hardhat verify ${contractArg} --network ${hre.network.name} ${address} ${argStr}`,
+          `npx hardhat verify ${contractArg} --network ${verificationNetwork} ${address} ${argStr}`,
           (ex, stdout, stderr) => {
             if (ex) {
               reject(ex);

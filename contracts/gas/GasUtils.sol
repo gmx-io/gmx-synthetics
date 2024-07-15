@@ -210,8 +210,8 @@ library GasUtils {
     // @param dataStore DataStore
     // @param estimatedGasLimit the estimated gas limit
     function adjustGasLimitForEstimate(DataStore dataStore, uint256 estimatedGasLimit, uint256 oraclePriceCount) internal view returns (uint256) {
-        uint256 baseGasLimit = dataStore.getUint(Keys.EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1);
-        baseGasLimit += dataStore.getUint(Keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE) * oraclePriceCount;
+        uint256 baseGasLimit = dataStore.getUint(Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1);
+        baseGasLimit += dataStore.getUint(Keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE) * oraclePriceCount;
         uint256 multiplierFactor = dataStore.getUint(Keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR);
         uint256 gasLimit = baseGasLimit + Precision.applyFactor(estimatedGasLimit, multiplierFactor);
         return gasLimit;
@@ -219,34 +219,24 @@ library GasUtils {
 
     // @dev get estimated number of oracle prices for deposit
     // @param swapsCount number of swaps in the deposit
-    function estimatedDepositOraclePriceCount(uint256 swapsCount) internal pure returns (uint256) {
-        // each market requires 3 prices at most
-        // markets in swap path share 1 price at least, 3 prices at most
-        // assuming max swap path length of 3 the deposit uses 8 prices at most, 2 prices at least
+    function estimateDepositOraclePriceCount(uint256 swapsCount) internal pure returns (uint256) {
         return 3 + swapsCount;
     }
 
     // @dev get estimated number of oracle prices for withdrawal
     // @param swapsCount number of swaps in the withdrawal
-    function estimatedWithdrawalOraclePriceCount(uint256 swapsCount) internal pure returns (uint256) {
-        // each market requires 3 prices at most
-        // markets in swap path share 1 price at least, 3 prices at most
-        // withdrawal uses 8 prices at most, 2 prices at least
-        // assuming max swap path length of 3 the withdrawal uses 8 prices at most, 2 prices at least
+    function estimateWithdrawalOraclePriceCount(uint256 swapsCount) internal pure returns (uint256) {
         return 3 + swapsCount;
     }
 
     // @dev get estimated number of oracle prices for order
     // @param swapsCount number of swaps in the order
     function estimateOrderOraclePriceCount(uint256 swapsCount) internal pure returns (uint256) {
-        // assuming max swap path length of 3 the order uses 6 prices at most, 2 prices at least
         return 3 + swapsCount;
     }
 
     // @dev get estimated number of oracle prices for shift
     function estimateShiftOraclePriceCount() internal pure returns (uint256) {
-        // 2 prices for the same long and short tokens
-        // a price for index token of both markets
         return 4;
     }
 

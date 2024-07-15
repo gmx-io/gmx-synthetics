@@ -7,13 +7,13 @@ import got from "got";
 function getValues() {
   if (hre.network.name === "arbitrum") {
     return {
-      tickersUrl: "https://arbitrum-api.gmxinfra.io/prices/tickers",
+      tickersUrl: "https://arbitrum-api.gmxinfra2.io/prices/tickers",
     };
   }
 
   if (hre.network.name === "avalanche") {
     return {
-      tickersUrl: "https://avalanche-api.gmxinfra.io/prices/tickers",
+      tickersUrl: "https://avalanche-api.gmxinfra2.io/prices/tickers",
     };
   }
 

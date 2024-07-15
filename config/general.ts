@@ -4,18 +4,20 @@ import { decimalToFloat, percentageToFloat, expandDecimals } from "../utils/math
 
 export default async function ({ network }: HardhatRuntimeEnvironment) {
   if (network.name === "hardhat") {
-    // Note that this is only for the hardhat config
+    // Note that this is only for the hardhat config, the config for all
+    // other networks is separate from this
     return {
       feeReceiver: ethers.constants.AddressZero,
       holdingAddress: ethers.constants.AddressZero,
       sequencerUptimeFeed: ethers.constants.AddressZero,
-      sequencerGraceDuration: 3600,
+      sequencerGraceDuration: 300,
       maxUiFeeFactor: decimalToFloat(5, 5), // 0.005%
       maxAutoCancelOrders: 5,
-      maxTotalCallbackGasLimitForAutoCancelOrders: 5_000_000,
+      maxTotalCallbackGasLimitForAutoCancelOrders: 3_000_000,
       minHandleExecutionErrorGas: 1_200_000,
       minHandleExecutionErrorGasToForward: 1_000_000,
       minAdditionalGasForExecution: 1_000_000,
+      refundExecutionFeeGasLimit: 200_000,
 
       depositGasLimitSingle: 0,
       depositGasLimitMultiple: 0,
@@ -30,9 +32,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       nativeTokenTransferGasLimit: 50_000,
 
       estimatedGasFeeBaseAmount: 0,
+      estimatedGasPerOraclePrice: 0,
       estimatedGasFeeMultiplierFactor: 0,
 
       executionGasFeeBaseAmount: 0,
+      executionGasPerOraclePrice: 0,
       executionGasFeeMultiplierFactor: 0,
 
       requestExpirationTime: 300,
@@ -56,13 +60,14 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     feeReceiver: "0x43ce1d475e06c65dd879f4ec644b8e0e10ff2b6d",
     holdingAddress: "0x3f59203ea1c66527422998b54287e1efcacbe2c5",
     sequencerUptimeFeed: ethers.constants.AddressZero,
-    sequencerGraceDuration: 3600,
+    sequencerGraceDuration: 300,
     maxUiFeeFactor: percentageToFloat("0.05%"),
     maxAutoCancelOrders: 5,
     maxTotalCallbackGasLimitForAutoCancelOrders: 5_000_000,
     minHandleExecutionErrorGas: 1_200_000,
     minHandleExecutionErrorGasToForward: 1_000_000, // measured gas required for an order cancellation: ~600,000
     minAdditionalGasForExecution: 1_000_000,
+    refundExecutionFeeGasLimit: 200_000,
 
     depositGasLimitSingle: 1_500_000,
     depositGasLimitMultiple: 1_800_000,
@@ -76,11 +81,15 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     tokenTransferGasLimit: 200_000,
     nativeTokenTransferGasLimit: 50_000,
 
-    estimatedGasFeeBaseAmount: 500_000, // measured gas for an order execution without any main logic: ~500,000
+    estimatedGasFeeBaseAmount: 600_000,
+    estimatedGasPerOraclePrice: 250_000,
     estimatedGasFeeMultiplierFactor: expandDecimals(1, 30), // 1x
 
-    executionGasFeeBaseAmount: 500_000, // measured gas for an order execution without any main logic: ~500,000
+    executionGasFeeBaseAmount: 600_000,
+    executionGasPerOraclePrice: 250_000,
     executionGasFeeMultiplierFactor: expandDecimals(1, 30), // 1x
+
+    requestExpirationTime: 300,
 
     maxSwapPathLength: 3,
     maxCallbackGasLimit: 2_000_000,
@@ -97,31 +106,21 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
   };
 
   const networkConfig = {
-    arbitrumGoerli: {
-      requestExpirationTime: 300,
-    },
+    arbitrumGoerli: {},
     arbitrumSepolia: {
-      requestExpirationTime: 300,
       maxAutoCancelOrders: 10,
       maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
     },
-    avalancheFuji: {
-      requestExpirationTime: 300,
-    },
+    avalancheFuji: {},
     arbitrum: {
       maxAutoCancelOrders: 10,
       maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
       maxCallbackGasLimit: 3_000_000,
-      requestExpirationTime: 300,
       estimatedGasFeeBaseAmount: false,
       executionGasFeeBaseAmount: false,
       sequencerUptimeFeed: "0xFdB631F5EE196F0ed6FAa767959853A9F217697D",
     },
-    avalanche: {
-      requestExpirationTime: 300,
-      estimatedGasFeeBaseAmount: 1_500_000,
-      executionGasFeeBaseAmount: 1_500_000,
-    },
+    avalanche: {},
   }[network.name];
 
   if (!networkConfig) {

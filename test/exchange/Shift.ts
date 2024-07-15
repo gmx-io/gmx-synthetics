@@ -27,14 +27,41 @@ describe("Exchange.Shift", () => {
 
   let fixture;
   let user0, user1, user2, user3;
-  let reader, dataStore, shiftVault, shiftHandler, shiftStoreUtils, ethUsdMarket, solUsdMarket, wnt, usdc, wbtc;
+  let reader,
+    dataStore,
+    shiftVault,
+    shiftHandler,
+    shiftStoreUtils,
+    ethUsdMarket,
+    solUsdMarket,
+    btcUsdMarket,
+    ethUsdSpotOnlyMarket,
+    ethUsdSingleTokenMarket,
+    btcUsdSingleTokenMarket,
+    wnt,
+    usdc,
+    wbtc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
     ({ user0, user1, user2, user3 } = fixture.accounts);
-    ({ reader, dataStore, shiftVault, shiftHandler, shiftStoreUtils, ethUsdMarket, solUsdMarket, wnt, usdc, wbtc } =
-      fixture.contracts);
+    ({
+      reader,
+      dataStore,
+      shiftVault,
+      shiftHandler,
+      shiftStoreUtils,
+      ethUsdMarket,
+      solUsdMarket,
+      btcUsdMarket,
+      ethUsdSpotOnlyMarket,
+      ethUsdSingleTokenMarket,
+      btcUsdSingleTokenMarket,
+      wnt,
+      usdc,
+      wbtc,
+    } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -72,12 +99,47 @@ describe("Exchange.Shift", () => {
     expect(shift.numbers.updatedAtTime).eq(block.timestamp);
     expect(shift.numbers.executionFee).eq("500");
     expect(shift.numbers.callbackGasLimit).eq("200000");
+
+    await expect(
+      createShift(fixture, {
+        receiver: user1,
+        callbackContract: user2,
+        uiFeeReceiver: user3,
+        fromMarket: ethUsdMarket,
+        toMarket: btcUsdMarket,
+        marketTokenAmount: expandDecimals(1, 18),
+        minMarketTokens: expandDecimals(1, 18),
+        executionFee: 500,
+        callbackGasLimit: 200_000,
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "LongTokensAreNotEqual");
+
+    await expect(
+      createShift(fixture, {
+        receiver: user1,
+        callbackContract: user2,
+        uiFeeReceiver: user3,
+        fromMarket: ethUsdMarket,
+        toMarket: ethUsdMarket,
+        marketTokenAmount: expandDecimals(1, 18),
+        minMarketTokens: expandDecimals(1, 18),
+        executionFee: 500,
+        callbackGasLimit: 200_000,
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "ShiftFromAndToMarketAreEqual");
   });
 
   it("cancelShift", async () => {
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(10_000, 18));
+    expect(await getBalanceOf(ethUsdMarket.marketToken, shiftVault.address)).eq(0);
+
     await createShift(fixture, {
       marketTokenAmount: expandDecimals(7500, 18),
+      minMarketTokens: expandDecimals(7501, 18),
     });
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(2500, 18));
+    expect(await getBalanceOf(ethUsdMarket.marketToken, shiftVault.address)).eq(expandDecimals(7500, 18));
 
     const shiftKeys = await getShiftKeys(dataStore, 0, 1);
 
@@ -85,7 +147,13 @@ describe("Exchange.Shift", () => {
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user0.address, "CONTROLLER");
 
-    // TODO: test refunding of market tokens after cancel
+    await executeShift(fixture, {
+      gasUsageLabel: "executeShift",
+      expectedCancellationReason: "MinMarketTokens",
+    });
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(10_000, 18));
+    expect(await getBalanceOf(ethUsdMarket.marketToken, shiftVault.address)).eq(0);
   });
 
   it("executeShift", async () => {
@@ -153,14 +221,50 @@ describe("Exchange.Shift", () => {
   });
 
   it("spot only market", async () => {
-    // TODO: test spot only market
-  });
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(10_000, 18));
+    expect(await getBalanceOf(ethUsdSpotOnlyMarket.marketToken, user0.address)).eq(0);
 
-  it("handle shift error", async () => {
-    // TODO: test handling of shift error
+    await handleShift(fixture, {
+      create: {
+        fromMarket: ethUsdMarket,
+        toMarket: ethUsdSpotOnlyMarket,
+        marketTokenAmount: expandDecimals(2000, 18),
+      },
+    });
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(8000, 18));
+    expect(await getBalanceOf(ethUsdSpotOnlyMarket.marketToken, user0.address)).eq(expandDecimals(2000, 18));
   });
 
   it("single token market", async () => {
-    // TODO: test shift for single token market
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdSingleTokenMarket,
+        longTokenAmount: expandDecimals(10_000, 6),
+        shortTokenAmount: 0,
+      },
+    });
+
+    await dataStore.setUint(keys.swapFeeFactorKey(ethUsdSingleTokenMarket.marketToken, true), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.swapFeeFactorKey(ethUsdSingleTokenMarket.marketToken, false), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.swapFeeFactorKey(btcUsdSingleTokenMarket.marketToken, true), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.swapFeeFactorKey(btcUsdSingleTokenMarket.marketToken, false), decimalToFloat(5, 4));
+
+    expect(await getBalanceOf(ethUsdSingleTokenMarket.marketToken, user0.address)).eq(expandDecimals(10_000, 18));
+    expect(await getBalanceOf(btcUsdSingleTokenMarket.marketToken, user0.address)).eq(0);
+
+    await handleShift(fixture, {
+      create: {
+        fromMarket: ethUsdSingleTokenMarket,
+        toMarket: btcUsdSingleTokenMarket,
+        marketTokenAmount: expandDecimals(3000, 18),
+      },
+      execute: {
+        ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt, prices.wbtc] }),
+      },
+    });
+
+    expect(await getBalanceOf(ethUsdSingleTokenMarket.marketToken, user0.address)).eq(expandDecimals(7000, 18));
+    expect(await getBalanceOf(btcUsdSingleTokenMarket.marketToken, user0.address)).eq(expandDecimals(3000, 18));
   });
 });

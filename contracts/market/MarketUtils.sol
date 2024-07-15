@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
-import "../bank/StrictBank.sol";
 
 import "./Market.sol";
 import "./MarketPoolValueInfo.sol";

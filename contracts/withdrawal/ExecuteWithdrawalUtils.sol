@@ -2,24 +2,20 @@
 
 pragma solidity ^0.8.0;
 
-import "../adl/AdlUtils.sol";
-
 import "../data/DataStore.sol";
 
 import "./WithdrawalVault.sol";
 import "./WithdrawalStoreUtils.sol";
 import "./WithdrawalEventUtils.sol";
 
-import "../nonce/NonceUtils.sol";
 import "../pricing/SwapPricingUtils.sol";
 import "../oracle/Oracle.sol";
-import "../oracle/OracleUtils.sol";
+import "../position/PositionUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
-import "../utils/AccountUtils.sol";
 
 library ExecuteWithdrawalUtils {
     using SafeCast for uint256;
@@ -171,7 +167,7 @@ library ExecuteWithdrawalUtils {
             withdrawal.callbackContract(),
             withdrawal.executionFee(),
             params.startingGas,
-            GasUtils.estimatedWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length),
+            GasUtils.estimateWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length),
             params.keeper,
             withdrawal.receiver()
         );

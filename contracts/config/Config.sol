@@ -446,6 +446,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.SWAP_FEE_RECEIVER_FACTOR] = true;
         allowedBaseKeys[Keys.BORROWING_FEE_RECEIVER_FACTOR] = true;
 
+        allowedBaseKeys[Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1] = true;
+        allowedBaseKeys[Keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE] = true;
         allowedBaseKeys[Keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR] = true;
 
         allowedBaseKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1] = true;
@@ -520,8 +522,13 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     }
 
     function _initAllowedLimitedBaseKeys() internal {
-        allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE] = true;
+        allowedLimitedBaseKeys[Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1] = true;
+        allowedLimitedBaseKeys[Keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE] = true;
+        allowedLimitedBaseKeys[Keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR] = true;
+
         allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1] = true;
+        allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE] = true;
+        allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR] = true;
 
         allowedLimitedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
         allowedLimitedBaseKeys[Keys.MAX_POOL_USD_FOR_DEPOSIT] = true;
@@ -554,6 +561,15 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param baseKey the base key for the value
     // @param value the value to be set
     function _validateRange(bytes32 baseKey, uint256 value) internal pure {
+        if (
+            baseKey == Keys.SEQUENCER_GRACE_DURATION
+        ) {
+            // 2 hours
+            if (value > 7200) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
         if (
             baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND ||
             baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND_LIMIT

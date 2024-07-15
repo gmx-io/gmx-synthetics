@@ -5,7 +5,6 @@ pragma solidity ^0.8.0;
 import "./BaseOrderUtils.sol";
 import "../swap/SwapUtils.sol";
 import "../position/DecreasePositionUtils.sol";
-import "../order/OrderStoreUtils.sol";
 import "../error/ErrorUtils.sol";
 
 // @title DecreaseOrderUtils
@@ -90,7 +89,9 @@ library DecreaseOrderUtils {
                 result.outputToken,
                 result.outputAmount,
                 result.secondaryOutputToken,
-                result.secondaryOutputAmount
+                result.secondaryOutputAmount,
+                result.orderSizeDeltaUsd,
+                result.orderInitialCollateralDeltaAmount
             );
         }
 
@@ -121,7 +122,9 @@ library DecreaseOrderUtils {
                 tokenOut,
                 swapOutputAmount,
                 address(0),
-                0
+                0,
+                result.orderSizeDeltaUsd,
+                result.orderInitialCollateralDeltaAmount
             );
         } catch (bytes memory reasonBytes) {
             (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
@@ -138,7 +141,9 @@ library DecreaseOrderUtils {
                 result.outputToken,
                 result.outputAmount,
                 address(0),
-                0
+                0,
+                result.orderSizeDeltaUsd,
+                result.orderInitialCollateralDeltaAmount
             );
         }
     }
@@ -272,16 +277,20 @@ library DecreaseOrderUtils {
         address outputToken,
         uint256 outputAmount,
         address secondaryOutputToken,
-        uint256 secondaryOutputAmount
+        uint256 secondaryOutputAmount,
+        uint256 orderSizeDeltaUsd,
+        uint256 orderInitialCollateralDeltaAmount
     ) internal pure returns (EventUtils.EventLogData memory) {
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(2);
         eventData.addressItems.setItem(0, "outputToken", outputToken);
         eventData.addressItems.setItem(1, "secondaryOutputToken", secondaryOutputToken);
 
-        eventData.uintItems.initItems(2);
+        eventData.uintItems.initItems(4);
         eventData.uintItems.setItem(0, "outputAmount", outputAmount);
         eventData.uintItems.setItem(1, "secondaryOutputAmount", secondaryOutputAmount);
+        eventData.uintItems.setItem(2, "orderSizeDeltaUsd", orderSizeDeltaUsd);
+        eventData.uintItems.setItem(3, "orderInitialCollateralDeltaAmount", orderInitialCollateralDeltaAmount);
 
         return eventData;
     }

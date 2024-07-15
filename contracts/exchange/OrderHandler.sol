@@ -5,6 +5,8 @@ pragma solidity ^0.8.0;
 import "./BaseOrderHandler.sol";
 import "../error/ErrorUtils.sol";
 import "./IOrderHandler.sol";
+import "../order/OrderUtils.sol";
+import "../order/ExecuteOrderUtils.sol";
 
 // @title OrderHandler
 // @dev Contract to handle creation, execution and cancellation of orders
@@ -112,6 +114,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         OrderStoreUtils.set(dataStore, key, order);
 
         OrderUtils.updateAutoCancelList(dataStore, key, order, autoCancel);
+        OrderUtils.validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, order);
 
         OrderEventUtils.emitOrderUpdated(
             eventEmitter,
@@ -259,11 +262,12 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
 
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
+        validateNonKeeperError(errorSelector, reasonBytes);
+
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         bool isMarketOrder = BaseOrderUtils.isMarketOrder(order.orderType());
 
         if (
-            OracleUtils.isOracleError(errorSelector) ||
             // if the order is already frozen, revert with the custom error to provide more information
             // on why the order cannot be executed
             order.isFrozen() ||
@@ -286,7 +290,6 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             // from this should not be significant
             // based on this it may also be advisable to disable the cancelling of orders
             // if the execution of orders is disabled
-            errorSelector == Errors.DisabledFeature.selector ||
             errorSelector == Errors.InvalidKeeperForFrozenOrder.selector ||
             errorSelector == Errors.UnsupportedOrderType.selector ||
             // the transaction is reverted for InvalidOrderPrices since the oracle prices

@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/utils/Address.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
-import "../error/ErrorUtils.sol";
 
 import "./IOrderCallbackReceiver.sol";
 import "./IDepositCallbackReceiver.sol";
@@ -73,9 +72,9 @@ library CallbackUtils {
     }
 
     function validateGasLeftForCallback(uint256 callbackGasLimit) internal view {
-        uint256 gasLeft = gasleft();
-        if (gasLeft < callbackGasLimit) {
-            revert Errors.InsufficientGasLeftForCallback(gasLeft, callbackGasLimit);
+        uint256 gasToBeForwarded = gasleft() / 64 * 63;
+        if (gasToBeForwarded < callbackGasLimit) {
+            revert Errors.InsufficientGasLeftForCallback(gasToBeForwarded, callbackGasLimit);
         }
     }
 

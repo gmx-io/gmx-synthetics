@@ -212,6 +212,10 @@ library Keys {
     // @dev key for the percentage amount of borrowing fees to be received
     bytes32 public constant BORROWING_FEE_RECEIVER_FACTOR = keccak256(abi.encode("BORROWING_FEE_RECEIVER_FACTOR"));
 
+    // @dev key for the base gas limit used when estimating execution fee
+    bytes32 public constant ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1 = keccak256(abi.encode("ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1"));
+    // @dev key for the gas limit used for each oracle price when estimating execution fee
+    bytes32 public constant ESTIMATED_GAS_FEE_PER_ORACLE_PRICE = keccak256(abi.encode("ESTIMATED_GAS_FEE_PER_ORACLE_PRICE"));
     // @dev key for the multiplier used when estimating execution fee
     bytes32 public constant ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR"));
 
@@ -419,7 +423,7 @@ library Keys {
     // @dev key for the glv pending shift
     bytes32 public constant GLV_PENDING_SHIFT = keccak256(abi.encode("GLV_PENDING_SHIFT"));
     bytes32 public constant GLV_PENDING_SHIFT_BACKREF = keccak256(abi.encode("GLV_PENDING_SHIFT_BACKREF"));
-// @dev key for the max market token balance usd for glv
+    // @dev key for the max market token balance usd for glv
     bytes32 public constant GLV_MAX_MARKET_TOKEN_BALANCE_USD = keccak256(abi.encode("GLV_MAX_MARKET_TOKEN_BALANCE_USD"));
     // @dev key for is glv market disabled
     bytes32 public constant IS_GLV_MARKET_DISABLED = keccak256(abi.encode("IS_GLV_MARKET_DISABLED"));

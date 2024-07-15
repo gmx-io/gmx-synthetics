@@ -3,7 +3,7 @@ import { TOKEN_ORACLE_TYPES } from "../utils/oracle";
 import { decimalToFloat } from "../utils/math";
 import { BigNumberish } from "ethers";
 
-export type OracleProvider = "gmOracle" | "chainlinkDataStream";
+export type OracleProvider = "gmOracle" | "chainlinkDataStream" | "chainlinkPriceFeed";
 
 type OracleRealPriceFeed = {
   address: string;

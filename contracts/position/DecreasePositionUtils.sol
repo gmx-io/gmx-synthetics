@@ -39,6 +39,8 @@ library DecreasePositionUtils {
         uint256 outputAmount;
         address secondaryOutputToken;
         uint256 secondaryOutputAmount;
+        uint256 orderSizeDeltaUsd;
+        uint256 orderInitialCollateralDeltaAmount;
     }
 
     // @dev decreases a position
@@ -344,7 +346,9 @@ library DecreasePositionUtils {
             values.output.outputToken,
             values.output.outputAmount,
             values.output.secondaryOutputToken,
-            values.output.secondaryOutputAmount
+            values.output.secondaryOutputAmount,
+            params.order.sizeDeltaUsd(),
+            params.order.initialCollateralDeltaAmount()
         );
     }
 }

@@ -11,6 +11,7 @@ export const IN_STRICT_PRICE_FEED_MODE = hashString("IN_STRICT_PRICE_FEED_MODE")
 export const MIN_HANDLE_EXECUTION_ERROR_GAS = hashString("MIN_HANDLE_EXECUTION_ERROR_GAS");
 export const MIN_ADDITIONAL_GAS_FOR_EXECUTION = hashString("MIN_ADDITIONAL_GAS_FOR_EXECUTION");
 export const MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD = hashString("MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD");
+export const REFUND_EXECUTION_FEE_GAS_LIMIT = hashString("REFUND_EXECUTION_FEE_GAS_LIMIT");
 
 export const MAX_LEVERAGE = hashString("MAX_LEVERAGE");
 
@@ -32,6 +33,8 @@ export const ORDER_LIST = hashString("ORDER_LIST");
 export const ACCOUNT_ORDER_LIST = hashString("ACCOUNT_ORDER_LIST");
 
 export const SUBACCOUNT_LIST = hashString("SUBACCOUNT_LIST");
+
+export const AUTO_CANCEL_ORDER_LIST = hashString("AUTO_CANCEL_ORDER_LIST");
 
 export const CREATE_DEPOSIT_FEATURE_DISABLED = hashString("CREATE_DEPOSIT_FEATURE_DISABLED");
 export const CANCEL_DEPOSIT_FEATURE_DISABLED = hashString("CANCEL_DEPOSIT_FEATURE_DISABLED");
@@ -161,10 +164,12 @@ export const BORROWING_EXPONENT_FACTOR = hashString("BORROWING_EXPONENT_FACTOR")
 
 export const SKIP_BORROWING_FEE_FOR_SMALLER_SIDE = hashString("SKIP_BORROWING_FEE_FOR_SMALLER_SIDE");
 
-export const ESTIMATED_GAS_FEE_BASE_AMOUNT = hashString("ESTIMATED_GAS_FEE_BASE_AMOUNT");
+export const ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1 = hashString("ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1");
+export const ESTIMATED_GAS_FEE_PER_ORACLE_PRICE = hashString("ESTIMATED_GAS_FEE_PER_ORACLE_PRICE");
 export const ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR = hashString("ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR");
 
 export const EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1 = hashString("EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1");
+export const EXECUTION_GAS_FEE_PER_ORACLE_PRICE = hashString("EXECUTION_GAS_FEE_PER_ORACLE_PRICE");
 export const EXECUTION_GAS_FEE_MULTIPLIER_FACTOR = hashString("EXECUTION_GAS_FEE_MULTIPLIER_FACTOR");
 
 export const DEPOSIT_GAS_LIMIT = hashString("DEPOSIT_GAS_LIMIT");
@@ -210,6 +215,10 @@ export function accountOrderListKey(account) {
 
 export function subaccountListKey(account) {
   return hashData(["bytes32", "address"], [SUBACCOUNT_LIST, account]);
+}
+
+export function autoCancelOrderListKey(positionKey) {
+  return hashData(["bytes32", "bytes32"], [AUTO_CANCEL_ORDER_LIST, positionKey]);
 }
 
 export function isMarketDisabledKey(market) {

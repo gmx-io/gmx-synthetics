@@ -2,8 +2,6 @@
 
 pragma solidity ^0.8.0;
 
-import "../adl/AdlUtils.sol";
-
 import "../data/DataStore.sol";
 
 import "./WithdrawalVault.sol";
@@ -11,9 +9,7 @@ import "./WithdrawalStoreUtils.sol";
 import "./WithdrawalEventUtils.sol";
 
 import "../nonce/NonceUtils.sol";
-import "../pricing/SwapPricingUtils.sol";
 import "../oracle/Oracle.sol";
-import "../oracle/OracleUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
@@ -137,7 +133,7 @@ library WithdrawalUtils {
         CallbackUtils.validateCallbackGasLimit(dataStore, withdrawal.callbackGasLimit());
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(dataStore, withdrawal);
-        uint256 oraclePriceCount = GasUtils.estimatedWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length);
+        uint256 oraclePriceCount = GasUtils.estimateWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length);
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
@@ -209,7 +205,7 @@ library WithdrawalUtils {
             withdrawal.callbackContract(),
             withdrawal.executionFee(),
             startingGas,
-            GasUtils.estimatedWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length),
+            GasUtils.estimateWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length),
             keeper,
             withdrawal.receiver()
         );

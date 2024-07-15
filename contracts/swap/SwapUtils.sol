@@ -2,12 +2,10 @@
 
 pragma solidity ^0.8.0;
 
-import "../adl/AdlUtils.sol";
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 import "../oracle/Oracle.sol";
 import "../pricing/SwapPricingUtils.sol";
-import "../token/TokenUtils.sol";
 import "../fee/FeeUtils.sol";
 
 /**

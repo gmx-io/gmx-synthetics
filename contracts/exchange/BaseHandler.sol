@@ -2,12 +2,13 @@
 
 pragma solidity ^0.8.0;
 
-import "../feature/FeatureUtils.sol";
 import "../event/EventEmitter.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/OracleModule.sol";
 import "../role/RoleModule.sol";
 import "../utils/GlobalReentrancyGuard.sol";
+import "../error/ErrorUtils.sol";
+import "../feature/FeatureUtils.sol";
 
 contract BaseHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
     EventEmitter public immutable eventEmitter;
@@ -36,6 +37,17 @@ contract BaseHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
         uint256 requestAge = Chain.currentTimestamp() - createdAtTime;
         if (requestAge < requestExpirationTime) {
             revert Errors.RequestNotYetCancellable(requestAge, requestExpirationTime, requestType);
+        }
+    }
+
+    function validateNonKeeperError(bytes4 errorSelector, bytes memory reasonBytes) internal pure {
+        if (
+            OracleUtils.isOracleError(errorSelector) ||
+            errorSelector == Errors.DisabledFeature.selector ||
+            errorSelector == Errors.InsufficientGasLeftForCallback.selector ||
+            errorSelector == Errors.InsufficientGasForCancellation.selector
+        ) {
+            ErrorUtils.revertWithCustomError(reasonBytes);
         }
     }
 }

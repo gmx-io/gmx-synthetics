@@ -80,6 +80,7 @@ export async function deployFixture() {
   const oracle = await hre.ethers.getContract("Oracle");
   const gmOracleProvider = await hre.ethers.getContract("GmOracleProvider");
   const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
+  const chainlinkDataStreamProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
   const marketUtils = await hre.ethers.getContract("MarketUtils");
   const marketStoreUtils = await hre.ethers.getContract("MarketStoreUtils");
   const depositStoreUtils = await hre.ethers.getContract("DepositStoreUtils");
@@ -149,6 +150,17 @@ export async function deployFixture() {
     dataStore.address
   );
   const btcUsdMarket = await reader.getMarket(dataStore.address, btcUsdMarketAddress);
+
+  const btcUsdSingleTokenMarketAddress = getMarketTokenAddress(
+    wbtc.address,
+    usdc.address,
+    usdc.address,
+    DEFAULT_MARKET_TYPE,
+    marketFactory.address,
+    roleStore.address,
+    dataStore.address
+  );
+  const btcUsdSingleTokenMarket = await reader.getMarket(dataStore.address, btcUsdSingleTokenMarketAddress);
 
   const solUsdMarketAddress = getMarketTokenAddress(
     sol.address,
@@ -243,6 +255,7 @@ export async function deployFixture() {
       ethUsdSpotOnlyMarket,
       ethUsdSingleTokenMarket,
       btcUsdMarket,
+      btcUsdSingleTokenMarket,
       solUsdMarket,
       feeHandler,
     },

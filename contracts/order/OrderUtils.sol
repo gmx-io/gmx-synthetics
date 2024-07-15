@@ -13,15 +13,10 @@ import "./OrderEventUtils.sol";
 
 import "../nonce/NonceUtils.sol";
 import "../oracle/Oracle.sol";
-import "../oracle/OracleUtils.sol";
 import "../event/EventEmitter.sol";
 
-import "./IncreaseOrderUtils.sol";
-import "./DecreaseOrderUtils.sol";
-import "./SwapOrderUtils.sol";
 import "./BaseOrderUtils.sol";
-
-import "../swap/SwapUtils.sol";
+import "./IBaseOrderUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
@@ -121,6 +116,7 @@ library OrderUtils {
 
         order.setAccount(account);
         order.setReceiver(params.addresses.receiver);
+        order.setCancellationReceiver(params.addresses.cancellationReceiver);
         order.setCallbackContract(params.addresses.callbackContract);
         order.setMarket(params.addresses.market);
         order.setInitialCollateralToken(params.addresses.initialCollateralToken);
@@ -140,6 +136,10 @@ library OrderUtils {
         order.setAutoCancel(params.autoCancel);
 
         AccountUtils.validateReceiver(order.receiver());
+        if (order.cancellationReceiver() == address(orderVault)) {
+            // revert as funds cannot be sent back to the order vault
+            revert Errors.InvalidReceiver(order.cancellationReceiver());
+        }
 
         CallbackUtils.validateCallbackGasLimit(dataStore, order.callbackGasLimit());
 
@@ -155,11 +155,7 @@ library OrderUtils {
         OrderStoreUtils.set(dataStore, key, order);
 
         updateAutoCancelList(dataStore, key, order, order.autoCancel());
-
-        if (BaseOrderUtils.isDecreaseOrder(order.orderType())) {
-            bytes32 positionKey = BaseOrderUtils.getPositionKey(order);
-            validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, positionKey);
-        }
+        validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, order);
 
         OrderEventUtils.emitOrderCreated(eventEmitter, key, order);
 
@@ -170,6 +166,13 @@ library OrderUtils {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         if (params.isExternalCall) {
             params.startingGas -= gasleft() / 63;
+        }
+
+        uint256 gas = gasleft();
+        uint256 minHandleExecutionErrorGas = GasUtils.getMinHandleExecutionErrorGas(params.dataStore);
+
+        if (gas < minHandleExecutionErrorGas) {
+            revert Errors.InsufficientGasForCancellation(gas, minHandleExecutionErrorGas);
         }
 
         Order.Props memory order = OrderStoreUtils.get(params.dataStore, params.key);
@@ -209,6 +212,9 @@ library OrderUtils {
             executionFeeReceiver = order.receiver();
         }
 
+        EventUtils.EventLogData memory eventData;
+        CallbackUtils.afterOrderCancellation(params.key, order, eventData);
+
         GasUtils.payExecutionFee(
             params.dataStore,
             params.eventEmitter,
@@ -221,9 +227,6 @@ library OrderUtils {
             params.keeper,
             executionFeeReceiver
         );
-
-        EventUtils.EventLogData memory eventData;
-        CallbackUtils.afterOrderCancellation(params.key, order, eventData);
     }
 
     // @dev freezes an order
@@ -326,7 +329,15 @@ library OrderUtils {
         }
     }
 
-    function validateTotalCallbackGasLimitForAutoCancelOrders(DataStore dataStore, bytes32 positionKey) internal view {
+    function validateTotalCallbackGasLimitForAutoCancelOrders(DataStore dataStore, Order.Props memory order) internal view {
+        if (
+            order.orderType() != Order.OrderType.LimitDecrease &&
+            order.orderType() != Order.OrderType.StopLossDecrease
+        ) {
+            return;
+        }
+
+        bytes32 positionKey = BaseOrderUtils.getPositionKey(order);
         uint256 maxTotal = dataStore.getUint(Keys.MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS);
         uint256 total = getTotalCallbackGasLimitForAutoCancelOrders(dataStore, positionKey);
 

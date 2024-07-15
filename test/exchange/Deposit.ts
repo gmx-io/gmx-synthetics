@@ -317,6 +317,19 @@ describe("Exchange.Deposit", () => {
         expectedCancellationReason: "MaxPoolAmountExceeded",
       },
     });
+
+    await dataStore.setUint(keys.maxPoolAmountKey(ethUsdMarket.marketToken, wnt.address), expandDecimals(5, 18));
+    await dataStore.setUint(keys.maxPoolUsdForDepositKey(ethUsdMarket.marketToken, wnt.address), decimalToFloat(1));
+
+    await handleDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(2, 18),
+        shortTokenAmount: expandDecimals(10_000, 6),
+      },
+      execute: {
+        expectedCancellationReason: "MaxPoolUsdForDepositExceeded",
+      },
+    });
   });
 
   it("executeDeposit with swap", async () => {

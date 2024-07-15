@@ -6,7 +6,6 @@ import "./BaseHandler.sol";
 import "../error/ErrorUtils.sol";
 
 import "../market/Market.sol";
-import "../market/MarketToken.sol";
 
 import "../withdrawal/Withdrawal.sol";
 import "../withdrawal/WithdrawalVault.sol";
@@ -224,13 +223,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
 
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
-        if (
-            OracleUtils.isOracleError(errorSelector) ||
-            errorSelector == Errors.DisabledFeature.selector
-        ) {
-
-            ErrorUtils.revertWithCustomError(reasonBytes);
-        }
+        validateNonKeeperError(errorSelector, reasonBytes);
 
         (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
 

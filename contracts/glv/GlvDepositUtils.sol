@@ -8,7 +8,6 @@ import "../glv/GlvUtils.sol";
 import "../glv/GlvDeposit.sol";
 import "../glv/GlvDepositEventUtils.sol";
 import "../glv/GlvDepositStoreUtils.sol";
-import "../feature/FeatureUtils.sol";
 import "../deposit/DepositVault.sol";
 import "../deposit/ExecuteDepositUtils.sol";
 import "../deposit/DepositUtils.sol";

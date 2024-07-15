@@ -17,6 +17,7 @@ type SyntheticTokenConfig = {
   dataStreamFeedId?: string;
   dataStreamFeedDecimals?: number;
   oracleProvider?: OracleProvider;
+  oracleTimestampAdjustment?: number;
 };
 
 type RealTokenConfig = {
@@ -29,6 +30,7 @@ type RealTokenConfig = {
   dataStreamFeedId?: string;
   dataStreamFeedDecimals?: number;
   oracleProvider?: OracleProvider;
+  oracleTimestampAdjustment?: number;
 };
 
 // test token to deploy in local and test networks
@@ -43,6 +45,7 @@ export type TestTokenConfig = {
   synthetic?: never;
   dataStreamFeedId?: string;
   oracleProvider?: OracleProvider;
+  oracleTimestampAdjustment?: number;
 };
 
 export type TokenConfig = SyntheticTokenConfig | RealTokenConfig | TestTokenConfig;
@@ -79,18 +82,21 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x000335fd3f3ffa06cfd9297b97367f77145d7a5f132e84c736cc471dd98621fe",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     XRP: {
       synthetic: true,
       decimals: 6,
       dataStreamFeedId: "0x0003c16c6aed42294f5cb4741f6e59ba2d728f0eae2eb9e6d3f555808c59fc45",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     DOGE: {
       synthetic: true,
       decimals: 8,
       dataStreamFeedId: "0x000356ca64d3b32135e17dc0dc721a645bf50d0303be8ceb2cdca0a50bab8fdc",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     SOL: {
       address: "0x2bcC6D6CdBbDC0a4071e48bb3B969b06B3330c07",
@@ -98,12 +104,14 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x0003b778d3f6b2ac4991302b89cb313f99a42467d6c9c5f96f57c29c0d2bc24f",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     LTC: {
       synthetic: true,
       decimals: 8,
       dataStreamFeedId: "0x00033a4f1021830ac0e7b7a03f70ed56fecb0ac2a10c8ea5328c240c847b71f3",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     UNI: {
       address: "0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0",
@@ -111,6 +119,7 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x000367a3674cdd7cc83dbbd7d19f3768b9d1329586e82e32a1bf388fc5ffd0eb",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     LINK: {
       address: "0xf97f4df75117a78c1A5a0DBb814Af92458539FB4",
@@ -118,6 +127,7 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x00036d7a1251e3f67d6658466b5e9e7fe8418af7feac9567ff322bff95cc2401",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     ARB: {
       address: "0x912CE59144191C1204E64559FE8253a0e49E6548",
@@ -125,18 +135,21 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x00030ab7d02fbba9c6304f98824524407b1f494741174320cfd17a2c22eec1de",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     ATOM: {
       synthetic: true,
       decimals: 6,
       dataStreamFeedId: "0x0003c93d9477344d0f2516c4605008399e6750d492a60ab85a9ecb2e441e87b3",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     NEAR: {
       synthetic: true,
       decimals: 24,
       dataStreamFeedId: "0x00036e9386eda6b177c6f7e9d493e60ae9ebaeb732a271b880b4d6a131d6b3f5",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
@@ -144,6 +157,7 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x0003481a2f7fe21c01d427f39035541d2b7a53db9c76234dc36082e6ad6db7f5",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     AVAX: {
       address: "0x565609fAF65B92F7be02468acF86f8979423e514",
@@ -151,6 +165,7 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x0003b1cb55b8a00a18111ff745b56d70f04c2d41e03fc7fd8d3d9b09f142aad9",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     OP: {
       address: "0xaC800FD6159c2a2CB8fC31EF74621eB430287a5A",
@@ -158,13 +173,15 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x0003ba5e477371c9cd5446281354a91e66c233dd50e26efe6abbfdc310b92dab",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     GMX: {
       address: "0xfc5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a",
       decimals: 18,
       transferGasLimit: 200 * 1000,
-      realtimeFeedId: "0x00015d9063c63a07441cc136c742ed32bb429796068eb280b1635b4eb8d0027e",
-      realtimeFeedDecimals: 8,
+      dataStreamFeedId: "0x0003169a4ebb9178e5ec6281913d1a8a4f676f414c94b60a4cb2e432f9081c60",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     USDC: {
       address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
@@ -186,6 +203,7 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x0003a910a43485e0685ff5d6d366541f5c21150f0634c5b14254392d1a1c06db",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     DAI: {
       address: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
@@ -193,6 +211,7 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x0003571a596aab1cafe1a883795dab90cd8cca48e25f53ab3665aa67d008f386",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
   },
   avalanche: {
@@ -215,12 +234,14 @@ const config: {
       decimals: 6,
       dataStreamFeedId: "0x0003c16c6aed42294f5cb4741f6e59ba2d728f0eae2eb9e6d3f555808c59fc45",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     DOGE: {
       synthetic: true,
       decimals: 8,
       dataStreamFeedId: "0x000356ca64d3b32135e17dc0dc721a645bf50d0303be8ceb2cdca0a50bab8fdc",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     SOL: {
       address: "0xFE6B19286885a4F7F55AdAD09C3Cd1f906D2478F",
@@ -228,12 +249,14 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x0003b778d3f6b2ac4991302b89cb313f99a42467d6c9c5f96f57c29c0d2bc24f",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     LTC: {
       synthetic: true,
       decimals: 8,
       dataStreamFeedId: "0x00033a4f1021830ac0e7b7a03f70ed56fecb0ac2a10c8ea5328c240c847b71f3",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     WAVAX: {
       address: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
@@ -242,6 +265,7 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x0003b1cb55b8a00a18111ff745b56d70f04c2d41e03fc7fd8d3d9b09f142aad9",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     USDC: {
       address: "0xb97ef9ef8734c71904d8002f8b6bc66dd9c48a6e",
@@ -263,6 +287,7 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x0003a910a43485e0685ff5d6d366541f5c21150f0634c5b14254392d1a1c06db",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     "USDT.e": {
       address: "0xc7198437980c041c805A1EDcbA50c1Ce5db95118",
@@ -270,6 +295,7 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x0003a910a43485e0685ff5d6d366541f5c21150f0634c5b14254392d1a1c06db",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     "DAI.e": {
       address: "0xd586E7F844cEa2F87f50152665BCbc2C279D8d70",
@@ -277,6 +303,7 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x0003571a596aab1cafe1a883795dab90cd8cca48e25f53ab3665aa67d008f386",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
   },
   arbitrumSepolia: {
@@ -401,6 +428,7 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x0003735a076086936550bd316b18e5e27fc4f280ee5b6530ce68f5aad404c796",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 3,
     },
     TEST: {
       synthetic: true,
@@ -465,11 +493,13 @@ const config: {
       synthetic: true,
       dataStreamFeedId: "0x00036fe43f87884450b4c7e093cd5ed99cac6640d8c2000e6afc02c8838d0265",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 10,
     },
     ADA: {
       decimals: 18,
       synthetic: true,
       oracleProvider: "gmOracle",
+      oracleTimestampAdjustment: 1,
     },
     DOT: {
       decimals: 18,

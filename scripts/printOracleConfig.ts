@@ -12,13 +12,24 @@ async function main() {
       tokenAddress = (await hre.ethers.getContract(tokenSymbol)).address;
     }
 
+    const oracleProviderForTokenKey = keys.oracleProviderForTokenKey(tokenAddress);
     const oracleTypeKey = keys.oracleTypeKey(tokenAddress);
-    const oracleType = await dataStore.getBytes32(oracleTypeKey);
-
     const priceFeedKey = keys.priceFeedKey(tokenAddress);
-    const priceFeed = await dataStore.getAddress(priceFeedKey);
 
-    console.log("%s %s oracleType: %s priceFeed: %s", tokenSymbol.padEnd(5), tokenAddress, oracleType, priceFeed);
+    const [oracleProviderForToken, oracleType, priceFeed] = await Promise.all([
+      dataStore.getAddress(oracleProviderForTokenKey),
+      dataStore.getBytes32(oracleTypeKey),
+      dataStore.getAddress(priceFeedKey),
+    ]);
+
+    console.log(
+      "%s %s oracleType: %s priceFeed: %s oracleProviderForToken: %s",
+      tokenSymbol.padEnd(5),
+      tokenAddress,
+      oracleType,
+      priceFeed,
+      oracleProviderForToken
+    );
   }
 }
 

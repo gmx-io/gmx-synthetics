@@ -3,14 +3,11 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { AggregatorV2V3Interface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV2V3Interface.sol";
 
 import "../role/RoleModule.sol";
 
-import "./OracleStore.sol";
 import "./OracleUtils.sol";
-import "./IPriceFeed.sol";
 import "./IOracleProvider.sol";
 import "./ChainlinkPriceFeedUtils.sol";
 import "../price/Price.sol";
@@ -21,8 +18,6 @@ import "../data/Keys.sol";
 import "../event/EventEmitter.sol";
 import "../event/EventUtils.sol";
 
-import "../utils/Bits.sol";
-import "../utils/Array.sol";
 import "../utils/Precision.sol";
 import "../utils/Cast.sol";
 import "../utils/Uint256Mask.sol";
@@ -73,6 +68,8 @@ contract Oracle is RoleModule {
 
     // this can be used to help ensure that on-chain prices are updated
     // before actions dependent on those on-chain prices are allowed
+    // additionally, this can also be used to provide a grace period for
+    // users to top up collateral before liquidations occur
     function validateSequencerUp() external view {
         if (address(sequencerUptimeFeed) == address(0)) {
             return;
@@ -86,8 +83,8 @@ contract Oracle is RoleModule {
             /*uint80 answeredInRound*/
         ) = sequencerUptimeFeed.latestRoundData();
 
-        // Answer == 0: Sequencer is up
-        // Answer == 1: Sequencer is down
+        // answer == 0: sequencer is up
+        // answer == 1: sequencer is down
         bool isSequencerUp = answer == 0;
         if (!isSequencerUp) {
             revert Errors.SequencerDown();
@@ -95,7 +92,7 @@ contract Oracle is RoleModule {
 
         uint256 sequencerGraceDuration = dataStore.getUint(Keys.SEQUENCER_GRACE_DURATION);
 
-        // Make sure the grace duration has passed after the
+        // ensure the grace duration has passed after the
         // sequencer is back up.
         uint256 timeSinceUp = block.timestamp - startedAt;
         if (timeSinceUp <= sequencerGraceDuration) {

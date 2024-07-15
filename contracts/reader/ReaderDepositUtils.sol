@@ -6,22 +6,12 @@ import "@openzeppelin/contracts/utils/math/SignedMath.sol";
 
 import "../data/Keys.sol";
 
-import "../market/MarketStoreUtils.sol";
-
-import "../deposit/DepositStoreUtils.sol";
-import "../withdrawal/WithdrawalStoreUtils.sol";
-
 import "../position/Position.sol";
-import "../position/PositionUtils.sol";
-import "../position/PositionStoreUtils.sol";
-import "../position/IncreasePositionUtils.sol";
-import "../position/DecreasePositionUtils.sol";
-
-import "../order/OrderStoreUtils.sol";
-
 import "../market/MarketUtils.sol";
 import "../market/Market.sol";
-import "./ReaderPricingUtils.sol";
+
+import "../pricing/ISwapPricingUtils.sol";
+import "../pricing/SwapPricingUtils.sol";
 
 library ReaderDepositUtils {
     using SignedMath for int256;
@@ -121,6 +111,7 @@ library ReaderDepositUtils {
         );
 
         uint256 mintAmount;
+        uint256 amountIn = fees.amountAfterFees;
 
         MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(
             params.dataStore,
@@ -149,7 +140,7 @@ library ReaderDepositUtils {
         }
 
         if (params.priceImpactUsd > 0) {
-            (int256 positiveImpactAmount, /* uint256 cappedDiffUsd */) = MarketUtils.getSwapImpactAmountWithCap(
+            (int256 positiveImpactAmount, uint256 cappedDiffUsd) = MarketUtils.getSwapImpactAmountWithCap(
                 params.dataStore,
                 params.market.marketToken,
                 params.tokenOut,
@@ -162,6 +153,18 @@ library ReaderDepositUtils {
                 poolValue,
                 marketTokensSupply
             );
+
+            if (cappedDiffUsd != 0) {
+                (int256 tokenInPriceImpactAmount, /* uint256 cappedDiffUsd */) = MarketUtils.getSwapImpactAmountWithCap(
+                    params.dataStore,
+                    params.market.marketToken,
+                    params.tokenIn,
+                    params.tokenInPrice,
+                    cappedDiffUsd.toInt256()
+                );
+
+                amountIn += tokenInPriceImpactAmount.toUint256();
+            }
         }
 
         if (params.priceImpactUsd < 0) {
@@ -173,11 +176,11 @@ library ReaderDepositUtils {
                 params.priceImpactUsd
             );
 
-            fees.amountAfterFees -= (-negativeImpactAmount).toUint256();
+            amountIn -= (-negativeImpactAmount).toUint256();
         }
 
         mintAmount += MarketUtils.usdToMarketTokenAmount(
-            fees.amountAfterFees * params.tokenInPrice.min,
+            amountIn * params.tokenInPrice.min,
             poolValue,
             marketTokensSupply
         );

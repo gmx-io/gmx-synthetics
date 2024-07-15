@@ -3,7 +3,7 @@ import * as keys from "../utils/keys";
 
 async function main() {
   const timestampInitializer = await hre.ethers.getContract("TimestampInitializer");
-  const dataStore = await hre.ethers.getContract("DateStore");
+  const dataStore = await hre.ethers.getContract("DataStore");
 
   const positionsCount = await dataStore.getBytes32Count(keys.POSITION_LIST);
 

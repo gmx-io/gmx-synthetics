@@ -1,6 +1,6 @@
 const fetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
 import hre from "hardhat";
-import { bigNumberify, expandDecimals, formatAmount } from "../utils/math";
+import { FLOAT_PRECISION, bigNumberify, expandDecimals, formatAmount } from "../utils/math";
 import * as keys from "../utils/keys";
 
 const stablecoinPrices = {
@@ -20,9 +20,9 @@ function getTickersUrl() {
   const networkName = hre.network.name;
 
   if (networkName === "arbitrum") {
-    return "https://arbitrum-api.gmxinfra.io/prices/tickers";
+    return "https://arbitrum-api.gmxinfra2.io/prices/tickers";
   } else if (networkName === "avalanche") {
-    return "https://avalanche-api.gmxinfra.io/prices/tickers";
+    return "https://avalanche-api.gmxinfra2.io/prices/tickers";
   } else if (networkName === "arbitrumGoerli") {
     return "https://gmx-synthetics-api-arb-goerli-4vgxk.ondigitalocean.app/prices/tickers";
   } else if (networkName === "avalancheFuji") {
@@ -113,6 +113,7 @@ async function main() {
       ["positionImpactPoolAmount", keys.positionImpactPoolAmountKey(market.marketToken)],
       ["swapImpactPoolAmountLong", keys.swapImpactPoolAmountKey(market.marketToken, market.longToken)],
       ["swapImpactPoolAmountShort", keys.swapImpactPoolAmountKey(market.marketToken, market.shortToken)],
+
       ["positionImpactPoolDistributionRate", keys.positionImpactPoolDistributionRateKey(market.marketToken)],
       ["minPositionImpactPoolAmount", keys.minPositionImpactPoolAmountKey(market.marketToken)],
       ["savedFundingFactorPerSecond", keys.savedFundingFactorPerSecondKey(market.marketToken)],
@@ -140,6 +141,16 @@ async function main() {
       ],
       ["minPnlFactorAfterAdlLong", keys.minPnlFactorAfterAdl(market.marketToken, true)],
       ["minPnlFactorAfterAdlShort", keys.minPnlFactorAfterAdl(market.marketToken, false)],
+
+      ["collateralSum_collateralLong_isLong", keys.collateralSumKey(market.marketToken, market.longToken, true)],
+      ["collateralSum_collateralLong_isShort", keys.collateralSumKey(market.marketToken, market.longToken, false)],
+      ["collateralSum_collateralShort_isLong", keys.collateralSumKey(market.marketToken, market.shortToken, true)],
+      ["collateralSum_collateralShort_isShort", keys.collateralSumKey(market.marketToken, market.shortToken, false)],
+
+      ["openInterest_collateralLong_isLong", keys.openInterestKey(market.marketToken, market.longToken, true)],
+      ["openInterest_collateralLong_isShort", keys.openInterestKey(market.marketToken, market.longToken, false)],
+      ["openInterest_collateralShort_isLong", keys.openInterestKey(market.marketToken, market.shortToken, true)],
+      ["openInterest_collateralShort_isShort", keys.openInterestKey(market.marketToken, market.shortToken, false)],
     ] as const) {
       props.push(prop);
       multicallReadParams.push({
@@ -161,6 +172,11 @@ async function main() {
 
   const consoleData: any[] = [];
   const consoleMaxPnlData: any[] = [];
+  const consoleCollateralSumData: any[] = [];
+  let globalCollateralSumLongTotal = bigNumberify(0);
+  let globalCollateralSumShortTotal = bigNumberify(0);
+  const globalOpenInterestLong = bigNumberify(0);
+  const globalOpenInterestShort = bigNumberify(0);
 
   for (let i = 0; i < marketInfoList.length; i++) {
     const marketInfo = marketInfoList[i];
@@ -171,7 +187,9 @@ async function main() {
     const indexTokenSymbol = addressToSymbol[marketInfo.market.indexToken];
     const indexToken = tokens[indexTokenSymbol];
     const longTokenSymbol = addressToSymbol[marketInfo.market.longToken];
+    const longToken = tokens[longTokenSymbol];
     const shortTokenSymbol = addressToSymbol[marketInfo.market.shortToken];
+    const shortToken = tokens[shortTokenSymbol];
 
     const marketValues: any = {};
 
@@ -254,6 +272,77 @@ async function main() {
           2
         )}`,
       });
+
+      const collateralSum_collateralLong_isLong = `${formatAmount(
+        marketValues.collateralSum_collateralLong_isLong,
+        longToken.decimals,
+        2,
+        true
+      )} ${longTokenSymbol}`;
+      const collateralSum_collateralLong_isShort = `${formatAmount(
+        marketValues.collateralSum_collateralLong_isShort,
+        longToken.decimals,
+        2,
+        true
+      )} ${longTokenSymbol}`;
+      const collateralSum_collateralShort_isLong = `${formatAmount(
+        marketValues.collateralSum_collateralShort_isLong,
+        shortToken.decimals,
+        2,
+        true
+      )} ${shortTokenSymbol}`;
+      const collateralSum_collateralShort_isShort = `${formatAmount(
+        marketValues.collateralSum_collateralShort_isShort,
+        shortToken.decimals,
+        2,
+        true
+      )} ${shortTokenSymbol}`;
+      console.log(marketLabel, getTokenPrice({ token: longToken.address, pricesByTokenAddress }));
+
+      const collateralSumLongTotal = marketValues.collateralSum_collateralLong_isLong
+        .mul(getTokenPrice({ token: longToken.address, pricesByTokenAddress }).max)
+        .add(
+          marketValues.collateralSum_collateralShort_isLong.mul(
+            getTokenPrice({ token: shortToken.address, pricesByTokenAddress }).max
+          )
+        );
+      const collateralSumShortTotal = marketValues.collateralSum_collateralLong_isShort
+        .mul(getTokenPrice({ token: longToken.address, pricesByTokenAddress }).max)
+        .add(
+          marketValues.collateralSum_collateralShort_isShort.mul(
+            getTokenPrice({ token: shortToken.address, pricesByTokenAddress }).max
+          )
+        );
+
+      globalCollateralSumLongTotal = globalCollateralSumLongTotal.add(collateralSumLongTotal);
+      globalCollateralSumShortTotal = globalCollateralSumShortTotal.add(collateralSumShortTotal);
+      const collateralSumTotal = collateralSumLongTotal.add(collateralSumShortTotal);
+
+      const openInterestLong = marketValues.openInterest_collateralLong_isLong.add(
+        marketValues.openInterest_collateralShort_isLong
+      );
+      const openInterestShort = marketValues.openInterest_collateralLong_isShort.add(
+        marketValues.openInterest_collateralShort_isShort
+      );
+      const openInterest = openInterestLong.add(openInterestShort);
+
+      consoleCollateralSumData.push({
+        market: marketLabel,
+        total: `$${formatAmount(collateralSumTotal, 30, 0, true)}`,
+        // collateralLong_isLong: collateralSum_collateralLong_isLong,
+        // collateralLong_isShort: collateralSum_collateralLong_isShort,
+        // collateralShort_isLong: collateralSum_collateralShort_isLong,
+        // collateralShort_isShort: collateralSum_collateralShort_isShort,
+        openInterest: `$${formatAmount(openInterest, 30, 0, true)}`,
+        openInterestLong: `$${formatAmount(openInterestLong, 30, 0, true)}`,
+        openInterestShort: `$${formatAmount(openInterestShort, 30, 0, true)}`,
+        borrowed: `$${formatAmount(openInterest.sub(collateralSumTotal), 30, 0, true)}`,
+        borrowedLong: `$${formatAmount(openInterestLong.sub(collateralSumLongTotal), 30, 0, true)}`,
+        borrowedShort: `$${formatAmount(openInterestShort.sub(collateralSumShortTotal), 30, 0, true)}`,
+        lev: `${formatAmount(openInterest.mul(FLOAT_PRECISION).div(collateralSumTotal), 30, 2)}x`,
+        longLev: `${formatAmount(openInterestLong.mul(FLOAT_PRECISION).div(collateralSumLongTotal), 30, 2)}x`,
+        shortLev: `${formatAmount(openInterestShort.mul(FLOAT_PRECISION).div(collateralSumShortTotal), 30, 2)}x`,
+      });
     }
 
     consoleData.push(data);
@@ -263,6 +352,13 @@ async function main() {
 
   console.log("Max pnl factors");
   console.table(consoleMaxPnlData);
+
+  console.log("Collateral sum");
+  console.log(
+    "Global: $%s",
+    formatAmount(globalCollateralSumLongTotal.add(globalCollateralSumShortTotal), 30, 0, true)
+  );
+  console.table(consoleCollateralSumData);
 }
 
 main()
