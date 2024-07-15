@@ -10,10 +10,18 @@ import "../market/MarketUtils.sol";
 import "../shift/ShiftUtils.sol";
 import "../shift/ShiftVault.sol";
 import "../exchange/IShiftHandler.sol";
-import "../market/MarketPoolValueInfo.sol";
+import "./GlvEventUtils.sol";
 
 library GlvUtils {
     using SafeCast for int256;
+    using SafeCast for uint256;
+
+    struct CreateShiftCache {
+        Market.Props fromMarket;
+        Market.Props toMarket;
+        int256 toMarketTokenPrice;
+        uint256 fromMarketTokenBalance;
+    }
 
     // @dev get the USD value of the Glv
     // @param dataStore DataStore
@@ -21,7 +29,12 @@ library GlvUtils {
     // @param glv Glv
     // @param maximize
     // @return the USD value of the Glv
-    function getValue(DataStore dataStore, Oracle oracle, Glv glv, bool maximize) public view returns (uint256 glvValue) {
+    function getValue(
+        DataStore dataStore,
+        Oracle oracle,
+        Glv glv,
+        bool maximize
+    ) internal view returns (uint256 glvValue) {
         address[] memory markets = new address[](2);
         for (uint256 i = 0; i < markets.length; i++) {
             address marketAddress = markets[i];
@@ -55,8 +68,10 @@ library GlvUtils {
         uint256 glvTokenAmount,
         uint256 poolValue,
         uint256 supply
-    ) public pure returns (uint256) {
-        if (supply == 0) { revert Errors.EmptyMarketTokenSupply(); }
+    ) internal pure returns (uint256) {
+        if (supply == 0) {
+            revert Errors.EmptyMarketTokenSupply();
+        }
 
         return Precision.mulDiv(poolValue, glvTokenAmount, supply);
     }
@@ -66,7 +81,7 @@ library GlvUtils {
     // @param glvValue the value of the pool
     // @param supply the supply of glv tokens
     // @return the number of glv tokens
-    function usdToGlvTokenAmount(uint256 usdValue, uint256 glvValue, uint256 supply) public pure returns (uint256) {
+    function usdToGlvTokenAmount(uint256 usdValue, uint256 glvValue, uint256 supply) internal pure returns (uint256) {
         // if the supply and glvValue is zero, use 1 USD as the token price
         if (supply == 0 && glvValue == 0) {
             return Precision.floatToWei(usdValue);
@@ -102,8 +117,67 @@ library GlvUtils {
         }
     }
 
-    function getMarketCount(DataStore dataStore, address glv) public view returns (uint256) {
+    function getMarketCount(DataStore dataStore, address glv) external view returns (uint256) {
         return dataStore.getAddressCount(Keys.glvSupportedMarketListKey(glv));
+    }
+
+    function applyDeltaToCumulativeDepositUsd(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address glv,
+        address market,
+        int256 deltaUsd
+    ) external returns (uint256) {
+        uint256 currentValue = getCumulativeDepositUsd(dataStore, glv, market);
+
+        // GM price varies over time and negeative cumulative deposited usd is possible
+        if (deltaUsd < 0 && (-deltaUsd).toUint256() > currentValue) {
+            deltaUsd = -currentValue.toInt256();
+        }
+        uint256 nextValue = Calc.sumReturnUint256(currentValue, deltaUsd);
+
+        validateCumulativeDepositUsd(dataStore, glv, market, nextValue);
+
+        GlvEventUtils.emitCumulativeDepositUsdUpdated(eventEmitter, glv, market, deltaUsd, nextValue);
+
+        return nextValue;
+    }
+
+    function validateCumulativeDepositUsd(
+        DataStore dataStore,
+        address glv,
+        address market,
+        uint256 cumulativeDepositUsd
+    ) internal view {
+        uint256 maxCumulativeDepositUsd = dataStore.getUint(Keys.glvMaxCumulativeDepositUsdKey(glv, market));
+        if (maxCumulativeDepositUsd == 0) {
+            return;
+        }
+
+        if (cumulativeDepositUsd > maxCumulativeDepositUsd) {
+            revert Errors.GlvMaxCumulativeDepositUsdExceeded(cumulativeDepositUsd, maxCumulativeDepositUsd);
+        }
+    }
+
+    function validateCumulativeDepositDeltaUsd(
+        DataStore dataStore,
+        address glv,
+        address market,
+        int256 deltaUsd
+    ) internal view {
+        uint256 currentValue = getCumulativeDepositUsd(dataStore, glv, market);
+
+        // GM price varies over time and negeative cumulative deposited usd is possible
+        if (deltaUsd < 0 && (-deltaUsd).toUint256() > currentValue) {
+            deltaUsd = -currentValue.toInt256();
+        }
+        uint256 nextValue = Calc.sumReturnUint256(currentValue, deltaUsd);
+        validateCumulativeDepositUsd(dataStore, glv, market, nextValue);
+    }
+
+    function getCumulativeDepositUsd(DataStore dataStore, address glv, address market) internal view returns (uint256) {
+        bytes32 key = Keys.glvCumulativeDepositUsdKey(glv, market);
+        return dataStore.getUint(key);
     }
 
     function createShift(
@@ -115,7 +189,7 @@ library GlvUtils {
         address glv,
         uint256 marketTokenAmount,
         ShiftUtils.CreateShiftParams memory params
-    ) public {
+    ) external returns (bytes32) {
         validateGlv(dataStore, glv);
 
         validateMarket(dataStore, glv, params.fromMarket, false);
@@ -128,41 +202,60 @@ library GlvUtils {
             revert Errors.GlvInvalidCallbackContract(address(glv), params.callbackContract);
         }
 
-        Market.Props memory fromMarket = MarketStoreUtils.get(dataStore, params.fromMarket);
-        uint256 marketTokenBalance = ERC20(fromMarket.marketToken).balanceOf(glv);
-        if (marketTokenBalance < marketTokenAmount) {
+        CreateShiftCache memory cache;
+
+        cache.fromMarket = MarketStoreUtils.get(dataStore, params.fromMarket);
+        cache.fromMarketTokenBalance = ERC20(cache.fromMarket.marketToken).balanceOf(glv);
+        if (cache.fromMarketTokenBalance < marketTokenAmount) {
             revert Errors.GlvInsufficientMarketTokenBalance(
                 glv,
-                fromMarket.marketToken,
-                marketTokenBalance,
+                cache.fromMarket.marketToken,
+                cache.fromMarketTokenBalance,
                 marketTokenAmount
             );
         }
 
         validatePendingShift(dataStore, glv);
 
-        Market.Props memory toMarket = MarketStoreUtils.get(dataStore, params.fromMarket);
-        validateMaxMarketTokenBalance(dataStore, oracle, glv, toMarket, marketTokenAmount);
+        cache.toMarket = MarketStoreUtils.get(dataStore, params.toMarket);
 
-        TokenUtils.transfer(dataStore, fromMarket.marketToken, address(shiftVault), marketTokenAmount);
+        (cache.toMarketTokenPrice,) = MarketUtils.getMarketTokenPrice(
+            dataStore,
+            cache.toMarket,
+            oracle.getPrimaryPrice(cache.toMarket.indexToken),
+            oracle.getPrimaryPrice(cache.toMarket.longToken),
+            oracle.getPrimaryPrice(cache.toMarket.shortToken),
+            Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
+            true // maximize
+        );
+
+        validateMaxMarketTokenBalance(dataStore, glv, cache.toMarket, marketTokenAmount, cache.toMarketTokenPrice.toUint256());
+
+        uint256 marketTokenUsd = marketTokenAmount * cache.toMarketTokenPrice.toUint256();
+        validateCumulativeDepositDeltaUsd(dataStore, glv, params.toMarket, marketTokenUsd.toInt256());
+        validateCumulativeDepositDeltaUsd(dataStore, glv, params.fromMarket, -marketTokenUsd.toInt256());
+
+        TokenUtils.transfer(dataStore, cache.fromMarket.marketToken, address(shiftVault), marketTokenAmount);
         bytes32 shiftKey = shiftHandler.createShift(account, params);
 
         setPendingShift(dataStore, glv, shiftKey);
+
+        return shiftKey;
     }
 
-    function validatePendingShift(DataStore dataStore, address glv) public view {
+    function validatePendingShift(DataStore dataStore, address glv) internal view {
         bytes32 shiftKey = dataStore.getBytes32(Keys.glvPendingShiftKey(glv));
         if (shiftKey != bytes32(0)) {
             revert Errors.GlvHasPendingShift(glv);
         }
     }
 
-    function setPendingShift(DataStore dataStore, address glv, bytes32 shiftKey) public {
+    function setPendingShift(DataStore dataStore, address glv, bytes32 shiftKey) internal {
         dataStore.setBytes32(Keys.glvPendingShiftKey(glv), shiftKey);
         dataStore.setAddress(Keys.glvPendingShiftBackrefKey(shiftKey), glv);
     }
 
-    function clearPendingShift(DataStore dataStore, bytes32 shiftKey) public {
+    function clearPendingShift(DataStore dataStore, bytes32 shiftKey) external {
         address glv = dataStore.getAddress(Keys.glvPendingShiftBackrefKey(shiftKey));
         if (glv == address(0)) {
             revert Errors.GlvShiftNotFound(shiftKey);
@@ -173,37 +266,18 @@ library GlvUtils {
 
     function validateMaxMarketTokenBalance(
         DataStore dataStore,
-        Oracle oracle,
         address glv,
         Market.Props memory market,
+        uint256 marketTokenPrice,
         uint256 marketTokenAmount
-    ) public view {
+    ) internal view {
         uint256 maxMarketTokenBalanceUsd = getGlvMaxMarketTokenBalanceUsd(dataStore, glv, market.marketToken);
         if (maxMarketTokenBalanceUsd == 0) {
             return;
         }
 
-        MarketPoolValueInfo.Props memory fromMarketPoolValueInfo = MarketUtils.getPoolValueInfo(
-            dataStore,
-            market,
-            oracle.getPrimaryPrice(market.indexToken),
-            oracle.getPrimaryPrice(market.longToken),
-            oracle.getPrimaryPrice(market.shortToken),
-            Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-            true // maximize
-        );
-
-        uint256 marketTokenSupply = ERC20(market.marketToken).totalSupply();
-        uint256 marketTokenUsd = MarketUtils.marketTokenAmountToUsd(
-            marketTokenAmount,
-            fromMarketPoolValueInfo.poolValue.toUint256(),
-            marketTokenSupply
-        );
-        uint256 marketTokenBalanceUsd = MarketUtils.marketTokenAmountToUsd(
-            ERC20(market.marketToken).balanceOf(glv),
-            fromMarketPoolValueInfo.poolValue.toUint256(),
-            marketTokenSupply
-        );
+        uint256 marketTokenUsd = marketTokenAmount * marketTokenPrice;
+        uint256 marketTokenBalanceUsd = ERC20(market.marketToken).balanceOf(glv) * marketTokenPrice;
         uint256 nextMarketTokenBalanceUsd = marketTokenBalanceUsd + marketTokenUsd;
         if (nextMarketTokenBalanceUsd > maxMarketTokenBalanceUsd) {
             revert Errors.GlvMaxMarketTokenBalanceExceeded(
@@ -219,11 +293,11 @@ library GlvUtils {
         DataStore dataStore,
         address glv,
         address market
-    ) public view returns (uint256) {
+    ) internal view returns (uint256) {
         return dataStore.getUint(Keys.glvMaxMarketTokenBalanceUsdKey(glv, market));
     }
 
-    function addMarket(DataStore dataStore, address glv, address market) public {
+    function addMarket(DataStore dataStore, address glv, address market) external {
         validateGlv(dataStore, glv);
         MarketUtils.validateEnabledMarket(dataStore, market);
 
@@ -234,7 +308,7 @@ library GlvUtils {
         dataStore.addAddress(key, market);
     }
 
-    function disableMarket(DataStore dataStore, address glv, address market) public {
+    function disableMarket(DataStore dataStore, address glv, address market) external {
         validateGlv(dataStore, glv);
         bytes32 key = Keys.glvSupportedMarketListKey(glv);
         if (!dataStore.containsAddress(key, market)) {

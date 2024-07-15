@@ -427,6 +427,8 @@ library Keys {
     bytes32 public constant GLV_MAX_MARKET_TOKEN_BALANCE_USD = keccak256(abi.encode("GLV_MAX_MARKET_TOKEN_BALANCE_USD"));
     // @dev key for is glv market disabled
     bytes32 public constant IS_GLV_MARKET_DISABLED = keccak256(abi.encode("IS_GLV_MARKET_DISABLED"));
+    bytes32 public constant GLV_CUMULATIVE_DEPOSITED_USD = keccak256(abi.encode("GLV_CUMULATIVE_DEPOSITED_USD"));
+    bytes32 public constant GLV_MAX_CUMULATIVE_DEPOSIT_USD = keccak256(abi.encode("GLV_MAX_CUMULATIVE_DEPOSIT_USD"));
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
@@ -1792,6 +1794,30 @@ library Keys {
     function isGlvMarketDisabledKey(address glv, address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             IS_GLV_MARKET_DISABLED,
+            glv,
+            market
+        ));
+    }
+
+    // @dev key for cumulative deposited usd for glv
+    // @param glv the glv to check
+    // @param market the market to check
+    // @return key cumulative deposited usd for glv
+    function glvCumulativeDepositUsdKey(address glv, address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            GLV_CUMULATIVE_DEPOSITED_USD,
+            glv,
+            market
+        ));
+    }
+
+    // @dev key for max cumulative deposited usd for glv
+    // @param glv the glv to check
+    // @param market the market to check
+    // @return key for max cumulative deposited usd for glv
+    function glvMaxCumulativeDepositUsdKey(address glv, address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            GLV_MAX_CUMULATIVE_DEPOSIT_USD,
             glv,
             market
         ));

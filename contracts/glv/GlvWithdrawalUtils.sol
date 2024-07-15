@@ -24,6 +24,7 @@ import "../nonce/NonceUtils.sol";
 library GlvWithdrawalUtils {
     using GlvWithdrawal for GlvWithdrawal.Props;
     using SafeCast for int256;
+    using SafeCast for uint256;
     using EventUtils for EventUtils.UintItems;
 
     struct CreateGlvWithdrawalParams {
@@ -167,7 +168,15 @@ library GlvWithdrawalUtils {
             );
         }
 
-        _processMarketWithdrawal(params, glvWithdrawal);
+        uint256 usdValue = _processMarketWithdrawal(params, glvWithdrawal);
+
+        GlvUtils.applyDeltaToCumulativeDepositUsd(
+            params.dataStore,
+            params.eventEmitter,
+            glvWithdrawal.glv(),
+            glvWithdrawal.market(),
+            -usdValue.toInt256()
+        );
 
         Glv(payable(glvWithdrawal.glv())).mint(glvWithdrawal.receiver(), cache.marketTokenAmount);
 
@@ -198,8 +207,8 @@ library GlvWithdrawalUtils {
     function _processMarketWithdrawal(
         ExecuteGlvWithdrawalParams memory params,
         GlvWithdrawal.Props memory glvWithdrawal
-    ) private {
-        uint256 marketTokenAmount = _getMarketTokenAmount(params.dataStore, params.oracle, glvWithdrawal);
+    ) private returns (uint256) {
+        (uint256 marketTokenAmount, uint256 usdValue) = _getMarketTokenAmount(params.dataStore, params.oracle, glvWithdrawal);
 
         Withdrawal.Props memory withdrawal = Withdrawal.Props(
             Withdrawal.Addresses({
@@ -245,13 +254,15 @@ library GlvWithdrawalUtils {
             );
 
         ExecuteWithdrawalUtils.executeWithdrawal(executeWithdrawalParams, withdrawal);
+
+        return usdValue;
     }
 
     function _getMarketTokenAmount(
         DataStore dataStore,
         Oracle oracle,
         GlvWithdrawal.Props memory glvWithdrawal
-    ) internal view returns (uint256) {
+    ) internal view returns (uint256 marketTokenAmount, uint256 usdValue) {
         Glv glv = Glv(payable(glvWithdrawal.glv()));
         uint256 glvValue = GlvUtils.getValue(dataStore, oracle, glv, false);
         uint256 glvSupply = glv.totalSupply();
@@ -267,12 +278,13 @@ library GlvWithdrawalUtils {
             Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
             true // maximize
         );
-        return
-            MarketUtils.usdToMarketTokenAmount(
-                glvTokenUsd,
-                poolValueInfo.poolValue.toUint256(),
-                ERC20(market.marketToken).totalSupply()
-            );
+        marketTokenAmount = MarketUtils.usdToMarketTokenAmount(
+            glvTokenUsd,
+            poolValueInfo.poolValue.toUint256(),
+            ERC20(market.marketToken).totalSupply()
+        );
+
+        return (marketTokenAmount, glvTokenUsd);
     }
 
     function cancelGlvWithdrawal(

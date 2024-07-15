@@ -22,6 +22,7 @@ library GlvDepositUtils {
     using GlvDeposit for GlvDeposit.Props;
     using Deposit for Deposit.Props;
     using SafeCast for int256;
+    using SafeCast for uint256;
     using EventUtils for EventUtils.UintItems;
 
     struct CreateGlvDepositParams {
@@ -51,10 +52,13 @@ library GlvDepositUtils {
     }
 
     struct ExecuteGlvDepositCache {
+        Market.Props market;
+        int256 marketTokenPrice;
         uint256 requestExpirationTime;
         uint256 maxOracleTimestamp;
         uint256 receivedMarketTokens;
         uint256 mintAmount;
+        uint256 receivedUsd;
         uint256 marketCount;
         uint256 oraclePriceCount;
     }
@@ -194,11 +198,44 @@ library GlvDepositUtils {
         }
 
         cache.receivedMarketTokens = _processMarketDeposit(params, glvDeposit);
-        cache.mintAmount = _getMintAmount(params.dataStore, params.oracle, glvDeposit, cache.receivedMarketTokens);
+        (cache.mintAmount, cache.receivedUsd) = _getMintAmount(
+            params.dataStore,
+            params.oracle,
+            glvDeposit,
+            cache.receivedMarketTokens
+        );
 
         if (cache.mintAmount < glvDeposit.minGlvTokens()) {
             revert Errors.MinMarketTokens(cache.mintAmount, glvDeposit.minGlvTokens());
         }
+
+        GlvUtils.applyDeltaToCumulativeDepositUsd(
+            params.dataStore,
+            params.eventEmitter,
+            glvDeposit.glv(),
+            glvDeposit.market(),
+            cache.receivedUsd.toInt256()
+        );
+
+        cache.market = MarketUtils.getEnabledMarket(params.dataStore, glvDeposit.market());
+
+        (cache.marketTokenPrice, ) = MarketUtils.getMarketTokenPrice(
+            params.dataStore,
+            cache.market,
+            params.oracle.getPrimaryPrice(cache.market.indexToken),
+            params.oracle.getPrimaryPrice(cache.market.longToken),
+            params.oracle.getPrimaryPrice(cache.market.shortToken),
+            Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
+            true // maximize
+        );
+
+        GlvUtils.validateMaxMarketTokenBalance(
+            params.dataStore,
+            glvDeposit.glv(),
+            cache.market,
+            cache.receivedMarketTokens,
+            cache.marketTokenPrice.toUint256()
+        );
 
         Glv(payable(glvDeposit.glv())).mint(glvDeposit.receiver(), cache.mintAmount);
 
@@ -240,7 +277,7 @@ library GlvDepositUtils {
         Oracle oracle,
         GlvDeposit.Props memory glvDeposit,
         uint256 receivedMarketTokens
-    ) internal view returns (uint256) {
+    ) internal view returns (uint256 glvTokenAmount, uint256 usdValue) {
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, glvDeposit.market());
         MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(
             dataStore,
@@ -260,7 +297,7 @@ library GlvDepositUtils {
         Glv glv = Glv(payable(glvDeposit.glv()));
         uint256 glvValue = GlvUtils.getValue(dataStore, oracle, glv, true);
         uint256 glvSupply = glv.totalSupply();
-        return GlvUtils.usdToGlvTokenAmount(receivedMarketTokensUsd, glvValue, glvSupply);
+        return (GlvUtils.usdToGlvTokenAmount(receivedMarketTokensUsd, glvValue, glvSupply), receivedMarketTokensUsd);
     }
 
     function _processMarketDeposit(

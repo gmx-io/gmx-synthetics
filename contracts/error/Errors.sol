@@ -65,6 +65,7 @@ library Errors {
     error GlvInvalidCallbackContract(address glvHandler, address callbackContract);
     error GlvMarketAlreadyExists(address glv, address market);
     error InvalidMarketTokenPrice(address market, int256 price);
+    error GlvMaxCumulativeDepositUsdExceeded(uint256 depositUsd, uint256 maxDepositUsd);
     // GlvFactory
     error GlvAlreadyExists(address glv);
 
