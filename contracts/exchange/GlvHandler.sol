@@ -59,12 +59,15 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
     ) external globalNonReentrant onlyOrderKeeper withOraclePrices(oracleParams) {
         uint256 startingGas = gasleft();
 
-        GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(dataStore, key);
-        uint256 marketCount = GlvUtils.getMarketCount(dataStore, glvDeposit.glv());
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvDepositGasLimit(dataStore, glvDeposit, marketCount);
-        GasUtils.validateExecutionGas(dataStore, startingGas, estimatedGasLimit);
+        DataStore _dataStore = dataStore;
+        FeatureUtils.validateFeature(_dataStore, Keys.executeGlvDepositFeatureDisabledKey(address(this)));
 
-        uint256 executionGas = GasUtils.getExecutionGas(dataStore, startingGas);
+        GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(_dataStore, key);
+        uint256 marketCount = GlvUtils.getMarketCount(_dataStore, glvDeposit.glv());
+        uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvDepositGasLimit(_dataStore, glvDeposit, marketCount);
+        GasUtils.validateExecutionGas(_dataStore, startingGas, estimatedGasLimit);
+
+        uint256 executionGas = GasUtils.getExecutionGas(_dataStore, startingGas);
 
         try this._executeGlvDeposit{gas: executionGas}(key, glvDeposit, msg.sender) {} catch (
             bytes memory reasonBytes
@@ -75,8 +78,6 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
 
     function _executeGlvDeposit(bytes32 key, GlvDeposit.Props memory glvDeposit, address keeper) external onlySelf {
         uint256 startingGas = gasleft();
-
-        FeatureUtils.validateFeature(dataStore, Keys.executeGlvDepositFeatureDisabledKey(address(this)));
 
         GlvDepositUtils.ExecuteGlvDepositParams memory params = GlvDepositUtils.ExecuteGlvDepositParams({
             key: key,
@@ -139,9 +140,10 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
         address account,
         GlvWithdrawalUtils.CreateGlvWithdrawalParams calldata params
     ) external globalNonReentrant onlyController returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.createGlvWithdrawalFeatureDisabledKey(address(this)));
+        DataStore _dataStore = dataStore;
+        FeatureUtils.validateFeature(_dataStore, Keys.createGlvWithdrawalFeatureDisabledKey(address(this)));
 
-        return GlvWithdrawalUtils.createGlvWithdrawal(dataStore, eventEmitter, glvVault, account, params);
+        return GlvWithdrawalUtils.createGlvWithdrawal(_dataStore, eventEmitter, glvVault, account, params);
     }
 
     function executeGlvWithdrawal(
@@ -150,16 +152,19 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
     ) external globalNonReentrant onlyOrderKeeper withOraclePrices(oracleParams) {
         uint256 startingGas = gasleft();
 
-        GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(dataStore, key);
-        uint256 marketCount = GlvUtils.getMarketCount(dataStore, glvWithdrawal.glv());
+        DataStore _dataStore = dataStore;
+        FeatureUtils.validateFeature(_dataStore, Keys.executeGlvWithdrawalFeatureDisabledKey(address(this)));
+
+        GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(_dataStore, key);
+        uint256 marketCount = GlvUtils.getMarketCount(_dataStore, glvWithdrawal.glv());
         uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvWithdrawalGasLimit(
-            dataStore,
+            _dataStore,
             glvWithdrawal,
             marketCount
         );
-        GasUtils.validateExecutionGas(dataStore, startingGas, estimatedGasLimit);
+        GasUtils.validateExecutionGas(_dataStore, startingGas, estimatedGasLimit);
 
-        uint256 executionGas = GasUtils.getExecutionGas(dataStore, startingGas);
+        uint256 executionGas = GasUtils.getExecutionGas(_dataStore, startingGas);
 
         try this._executeGlvWithdrawal{gas: executionGas}(key, glvWithdrawal, msg.sender) {} catch (
             bytes memory reasonBytes
@@ -174,8 +179,6 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
         address keeper
     ) external onlySelf {
         uint256 startingGas = gasleft();
-
-        FeatureUtils.validateFeature(dataStore, Keys.executeGlvWithdrawalFeatureDisabledKey(address(this)));
 
         GlvWithdrawalUtils.ExecuteGlvWithdrawalParams memory params = GlvWithdrawalUtils.ExecuteGlvWithdrawalParams({
             key: key,
@@ -237,7 +240,7 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
     // @dev simulate execution of a glv deposit to check for any errors
     // @param key the glv deposit key
     // @param params OracleUtils.SimulatePricesParams
-    function simulateExecuteDeposit(
+    function simulateExecuteGlvDeposit(
         bytes32 key,
         OracleUtils.SimulatePricesParams memory params
     ) external
@@ -257,7 +260,7 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
     // @dev simulate execution of a glv withdrawal to check for any errors
     // @param key the glv withdrawal key
     // @param params OracleUtils.SimulatePricesParams
-    function simulateExecuteWithdrawal(
+    function simulateExecuteGlvWithdrawal(
         bytes32 key,
         OracleUtils.SimulatePricesParams memory params
     ) external
