@@ -307,14 +307,4 @@ library GlvUtils {
         }
         dataStore.addAddress(key, market);
     }
-
-    function disableMarket(DataStore dataStore, address glv, address market) external {
-        validateGlv(dataStore, glv);
-        bytes32 key = Keys.glvSupportedMarketListKey(glv);
-        if (!dataStore.containsAddress(key, market)) {
-            revert Errors.GlvUnsupportedMarket(glv, market);
-        }
-
-        dataStore.setBool(Keys.isGlvMarketDisabledKey(glv, market), true);
-    }
 }

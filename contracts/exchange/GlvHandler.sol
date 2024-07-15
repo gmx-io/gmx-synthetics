@@ -304,8 +304,4 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
     function addMarket(address glv, address market) external onlyConfigKeeper {
         GlvUtils.addMarket(dataStore, glv, market);
     }
-
-    function disableMarket(address glv, address market) external onlyConfigKeeper {
-        GlvUtils.disableMarket(dataStore, glv, market);
-    }
 }
