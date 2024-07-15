@@ -59,44 +59,20 @@ library GlvUtils {
         }
     }
 
-    // @dev convert a number of glv tokens to its USD value
-    // @param glvTokenAmount the input number of glv tokens
-    // @param poolValue the value of the pool
-    // @param supply the supply of glv tokens
-    // @return the USD value of the glv tokens
-    function glvTokenAmountToUsd(
-        uint256 glvTokenAmount,
-        uint256 poolValue,
-        uint256 supply
-    ) internal pure returns (uint256) {
-        if (supply == 0) {
-            revert Errors.EmptyMarketTokenSupply();
+    function getGlvTokenPrice(
+        DataStore dataStore,
+        Oracle oracle,
+        Glv glv,
+        bool maximize
+    ) internal view returns (uint256) {
+        uint256 glvValue = GlvUtils.getValue(dataStore, oracle, glv, maximize);
+        uint256 glvSupply = glv.totalSupply();
+
+        if (glvSupply == 0) {
+            return Precision.FLOAT_TO_WEI_DIVISOR;
         }
 
-        return Precision.mulDiv(poolValue, glvTokenAmount, supply);
-    }
-
-    // @dev convert a USD value to number of glv tokens
-    // @param usdValue the input USD value
-    // @param glvValue the value of the pool
-    // @param supply the supply of glv tokens
-    // @return the number of glv tokens
-    function usdToGlvTokenAmount(uint256 usdValue, uint256 glvValue, uint256 supply) internal pure returns (uint256) {
-        // if the supply and glvValue is zero, use 1 USD as the token price
-        if (supply == 0 && glvValue == 0) {
-            return Precision.floatToWei(usdValue);
-        }
-
-        // if the supply is zero and the glvValue is more than zero,
-        // then include the glvValue for the amount of tokens minted so that
-        // the glv token price after mint would be 1 USD
-        // TODO: copy-pasted from MarketUtils, is it correct for glv?
-        if (supply == 0 && glvValue > 0) {
-            return Precision.floatToWei(glvValue + usdValue);
-        }
-
-        // round glv tokens down
-        return Precision.mulDiv(supply, usdValue, glvValue);
+        return glvValue / glvSupply;
     }
 
     function validateMarket(DataStore dataStore, address glv, address market, bool shouldBeEnabled) public view {
@@ -219,7 +195,7 @@ library GlvUtils {
 
         cache.toMarket = MarketStoreUtils.get(dataStore, params.toMarket);
 
-        (cache.toMarketTokenPrice,) = MarketUtils.getMarketTokenPrice(
+        (cache.toMarketTokenPrice, ) = MarketUtils.getMarketTokenPrice(
             dataStore,
             cache.toMarket,
             oracle.getPrimaryPrice(cache.toMarket.indexToken),
@@ -229,7 +205,13 @@ library GlvUtils {
             true // maximize
         );
 
-        validateMaxMarketTokenBalanceUsd(dataStore, glv, cache.toMarket, marketTokenAmount, cache.toMarketTokenPrice.toUint256());
+        validateMaxMarketTokenBalanceUsd(
+            dataStore,
+            glv,
+            cache.toMarket,
+            marketTokenAmount,
+            cache.toMarketTokenPrice.toUint256()
+        );
 
         uint256 marketTokenUsd = marketTokenAmount * cache.toMarketTokenPrice.toUint256();
         validateCumulativeDepositDeltaUsd(dataStore, glv, params.toMarket, marketTokenUsd.toInt256());

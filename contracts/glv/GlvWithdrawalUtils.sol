@@ -264,9 +264,8 @@ library GlvWithdrawalUtils {
         GlvWithdrawal.Props memory glvWithdrawal
     ) internal view returns (uint256 marketTokenAmount, uint256 usdValue) {
         Glv glv = Glv(payable(glvWithdrawal.glv()));
-        uint256 glvValue = GlvUtils.getValue(dataStore, oracle, glv, false);
-        uint256 glvSupply = glv.totalSupply();
-        uint256 glvTokenUsd = GlvUtils.glvTokenAmountToUsd(glvWithdrawal.glvTokenAmount(), glvValue, glvSupply);
+        uint256 glvTokenPrice = GlvUtils.getGlvTokenPrice(dataStore, oracle, glv, false);
+        uint256 glvTokenUsd = glvWithdrawal.glvTokenAmount() * glvTokenPrice;
 
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, glvWithdrawal.market());
         MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(
