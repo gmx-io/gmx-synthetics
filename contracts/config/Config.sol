@@ -405,7 +405,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.CANCEL_DEPOSIT_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.EXECUTE_DEPOSIT_FEATURE_DISABLED] = true;
 
-        allowedBaseKeys[Keys.GLV_SHIFT_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.GLV_CREATE_SHIFT_FEATURE_DISABLED] = true;
 
         allowedBaseKeys[Keys.CREATE_WITHDRAWAL_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CANCEL_WITHDRAWAL_FEATURE_DISABLED] = true;

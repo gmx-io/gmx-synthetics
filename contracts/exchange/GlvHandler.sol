@@ -280,7 +280,7 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
         uint256 marketTokenAmount,
         ShiftUtils.CreateShiftParams memory params
     ) external globalNonReentrant onlyOrderKeeper returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.glvShiftFeatureDisabledKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.glvCreateShiftFeatureDisabledKey(address(this)));
 
         return GlvUtils.createShift(dataStore, oracle, shiftHandler, shiftVault, account, glv, marketTokenAmount, params);
     }

@@ -133,7 +133,7 @@ library Keys {
     // @dev key for whether the execute glv withdrawal feature is disabled
     bytes32 public constant EXECUTE_GLV_WITHDRAWAL_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_GLV_WITHDRAWAL_FEATURE_DISABLED"));
     // @dev key for whether the glv shift feature is disabled
-    bytes32 public constant GLV_SHIFT_FEATURE_DISABLED = keccak256(abi.encode("GLV_SHIFT_FEATURE_DISABLED"));
+    bytes32 public constant GLV_CREATE_SHIFT_FEATURE_DISABLED = keccak256(abi.encode("GLV_CREATE_SHIFT_FEATURE_DISABLED"));
 
     // @dev key for whether the create deposit feature is disabled
     bytes32 public constant CREATE_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("CREATE_DEPOSIT_FEATURE_DISABLED"));
@@ -644,9 +644,9 @@ library Keys {
     // @dev key for whether shift deposit is disabled
     // @param the execute deposit module
     // @return key for whether execute deposit is disabled
-    function glvShiftFeatureDisabledKey(address module) internal pure returns (bytes32) {
+    function glvCreateShiftFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            GLV_SHIFT_FEATURE_DISABLED,
+            GLV_CREATE_SHIFT_FEATURE_DISABLED,
             module
         ));
     }
