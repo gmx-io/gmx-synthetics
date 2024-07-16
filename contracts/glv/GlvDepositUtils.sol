@@ -171,6 +171,8 @@ library GlvDepositUtils {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
+        GlvUtils.validatePendingShift(params.dataStore, glvDeposit.glv());
+
         GlvDepositStoreUtils.remove(params.dataStore, params.key, glvDeposit.account());
 
         if (glvDeposit.account() == address(0)) {

@@ -97,7 +97,11 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
 
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
-        if (OracleUtils.isOracleError(errorSelector) || errorSelector == Errors.DisabledFeature.selector) {
+        if (
+            OracleUtils.isOracleError(errorSelector) ||
+            errorSelector == Errors.DisabledFeature.selector ||
+            errorSelector == Errors.GlvHasPendingShift.selector // deposit should be executable after shift is executed
+        ) {
             ErrorUtils.revertWithCustomError(reasonBytes);
         }
 
@@ -198,7 +202,11 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
 
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
-        if (OracleUtils.isOracleError(errorSelector) || errorSelector == Errors.DisabledFeature.selector) {
+        if (
+            OracleUtils.isOracleError(errorSelector) ||
+            errorSelector == Errors.DisabledFeature.selector ||
+            errorSelector == Errors.GlvHasPendingShift.selector // withdrawal should be executable after shift is executed
+        ) {
             ErrorUtils.revertWithCustomError(reasonBytes);
         }
 
@@ -243,18 +251,10 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
     function simulateExecuteGlvDeposit(
         bytes32 key,
         OracleUtils.SimulatePricesParams memory params
-    ) external
-        onlyController
-        withSimulatedOraclePrices(params)
-        globalNonReentrant
-    {
+    ) external onlyController withSimulatedOraclePrices(params) globalNonReentrant {
         GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(dataStore, key);
 
-        this._executeGlvDeposit(
-            key,
-            glvDeposit,
-            msg.sender
-        );
+        this._executeGlvDeposit(key, glvDeposit, msg.sender);
     }
 
     // @dev simulate execution of a glv withdrawal to check for any errors
@@ -263,18 +263,10 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
     function simulateExecuteGlvWithdrawal(
         bytes32 key,
         OracleUtils.SimulatePricesParams memory params
-    ) external
-        onlyController
-        withSimulatedOraclePrices(params)
-        globalNonReentrant
-    {
+    ) external onlyController withSimulatedOraclePrices(params) globalNonReentrant {
         GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(dataStore, key);
 
-        this._executeGlvWithdrawal(
-            key,
-            glvWithdrawal,
-            msg.sender
-        );
+        this._executeGlvWithdrawal(key, glvWithdrawal, msg.sender);
     }
 
     function createShift(
@@ -285,7 +277,8 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
     ) external globalNonReentrant onlyOrderKeeper returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.glvCreateShiftFeatureDisabledKey(address(this)));
 
-        return GlvUtils.createShift(dataStore, oracle, shiftHandler, shiftVault, account, glv, marketTokenAmount, params);
+        return
+            GlvUtils.createShift(dataStore, oracle, shiftHandler, shiftVault, account, glv, marketTokenAmount, params);
     }
 
     function afterShiftExecution(
