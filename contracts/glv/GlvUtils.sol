@@ -106,7 +106,7 @@ library GlvUtils {
     ) external returns (uint256) {
         uint256 currentValue = getCumulativeDepositUsd(dataStore, glv, market);
 
-        // GM price varies over time and negeative cumulative deposited usd is possible
+        // GM price varies over time and negative cumulative deposited usd is possible
         if (deltaUsd < 0 && (-deltaUsd).toUint256() > currentValue) {
             deltaUsd = -currentValue.toInt256();
         }

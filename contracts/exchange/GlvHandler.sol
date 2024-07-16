@@ -270,7 +270,6 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
     }
 
     function createShift(
-        address account,
         address glv,
         uint256 marketTokenAmount,
         ShiftUtils.CreateShiftParams memory params
@@ -278,7 +277,7 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
         FeatureUtils.validateFeature(dataStore, Keys.glvCreateShiftFeatureDisabledKey(address(this)));
 
         return
-            GlvUtils.createShift(dataStore, oracle, shiftHandler, shiftVault, account, glv, marketTokenAmount, params);
+            GlvUtils.createShift(dataStore, oracle, shiftHandler, shiftVault, msg.sender, glv, marketTokenAmount, params);
     }
 
     function afterShiftExecution(
