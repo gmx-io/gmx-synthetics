@@ -178,6 +178,9 @@ export const SINGLE_SWAP_GAS_LIMIT = hashString("SINGLE_SWAP_GAS_LIMIT");
 export const INCREASE_ORDER_GAS_LIMIT = hashString("INCREASE_ORDER_GAS_LIMIT");
 export const DECREASE_ORDER_GAS_LIMIT = hashString("DECREASE_ORDER_GAS_LIMIT");
 export const SWAP_ORDER_GAS_LIMIT = hashString("SWAP_ORDER_GAS_LIMIT");
+export const GLV_DEPOSIT_GAS_LIMIT = hashString("GLV_DEPOSIT_GAS_LIMIT");
+export const GLV_WITHDRAWAL_GAS_LIMIT = hashString("GLV_WITHDRAWAL_GAS_LIMIT");
+export const GLV_PER_MARKET_GAS_LIMIT = hashString("GLV_PER_MARKET_GAS_LIMIT");
 
 export const CUMULATIVE_BORROWING_FACTOR = hashString("CUMULATIVE_BORROWING_FACTOR");
 export const CUMULATIVE_BORROWING_FACTOR_UPDATED_AT = hashString("CUMULATIVE_BORROWING_FACTOR_UPDATED_AT");
@@ -554,6 +557,18 @@ export function decreaseOrderGasLimitKey() {
 
 export function swapOrderGasLimitKey() {
   return SWAP_ORDER_GAS_LIMIT;
+}
+
+export function glvDepositGasLimitKey() {
+  return GLV_DEPOSIT_GAS_LIMIT;
+}
+
+export function glvWithdrawalGasLimitKey() {
+  return GLV_WITHDRAWAL_GAS_LIMIT;
+}
+
+export function glvPerMarketGasLimitKey() {
+  return GLV_PER_MARKET_GAS_LIMIT;
 }
 
 export function cumulativeBorrowingFactorKey(market: string, isLong: boolean) {

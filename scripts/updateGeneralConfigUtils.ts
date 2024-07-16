@@ -154,6 +154,14 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
 
   await handleConfig(
     "uint",
+    keys.glvPerMarketGasLimitKey(),
+    "0x",
+    generalConfig.glvPerMarketGasLimit,
+    `glvPerMarketGasLimit`
+  );
+
+  await handleConfig(
+    "uint",
     keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT,
     "0x",
     generalConfig.nativeTokenTransferGasLimit,
