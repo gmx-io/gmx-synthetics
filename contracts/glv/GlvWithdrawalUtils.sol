@@ -314,7 +314,6 @@ library GlvWithdrawalUtils {
             glvWithdrawal.market(),
             glvWithdrawal.account(),
             glvWithdrawal.glvTokenAmount(),
-            // TODO should it be false?
             false // shouldUnwrapNativeToken
         );
 
