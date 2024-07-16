@@ -171,11 +171,11 @@ library GlvUtils {
         validateMarket(dataStore, glv, params.fromMarket, false);
         validateMarket(dataStore, glv, params.toMarket, true);
 
-        if (params.receiver != address(glv)) {
-            revert Errors.GlvInvalidReceiver(address(glv), params.receiver);
+        if (params.receiver != glv) {
+            revert Errors.GlvInvalidReceiver(glv, params.receiver);
         }
         if (params.callbackContract != address(this)) {
-            revert Errors.GlvInvalidCallbackContract(address(glv), params.callbackContract);
+            revert Errors.GlvInvalidCallbackContract(glv, params.callbackContract);
         }
 
         CreateShiftCache memory cache;
