@@ -131,6 +131,18 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
+    PEPE: {
+      negativePositionImpactFactor: decimalToFloat(5, 10),
+      negativeSwapImpactFactor: decimalToFloat(3, 8),
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
+    },
+    WIF: {
+      negativePositionImpactFactor: decimalToFloat(5, 10),
+      negativeSwapImpactFactor: decimalToFloat(3, 8),
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
+    },
   },
   avalanche: {
     "BTC.b": {

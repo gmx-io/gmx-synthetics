@@ -183,6 +183,22 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    PEPE: {
+      address: "0x25d887Ce7a35172C62FeBFD67a1856F20FaEbB00",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00032fd010bde9fb3b8b53c126bd8a0bd2c3b3fbaceb33605cd46a7e461e4da8",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    WIF: {
+      address: "0x25d887Ce7a35172C62FeBFD67a1856F20FaEbB00",
+      decimals: 6,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003d5a1e39f957e312e307d535c8c28315172442ae0c39d9488e908c3762c85",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     USDC: {
       address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
       decimals: 6,
