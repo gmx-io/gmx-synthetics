@@ -5,7 +5,10 @@ import { expandDecimals } from "../utils/math";
 
 const { ethers } = hre;
 
-const amountToSend = process.env.AMOUNT ? BigNumber.from(process.env.AMOUNT) : BigNumber.from(1);
+const amountToSend = process.env.AMOUNT ? BigNumber.from(process.env.AMOUNT) : BigNumber.from(10000); // 0.00000000000001
+const minMarketTokens = process.env.MIN_MARKET_TOKENS
+  ? BigNumber.from(process.env.MIN_MARKET_TOKENS)
+  : BigNumber.from(1);
 
 function getArgs() {
   switch (hre.network.name) {
@@ -39,7 +42,7 @@ async function main() {
         uiFeeReceiver: constants.AddressZero,
         fromMarket,
         toMarket,
-        minMarketTokens: amountToSend,
+        minMarketTokens,
         executionFee,
         callbackGasLimit: BigNumber.from(0),
       },
