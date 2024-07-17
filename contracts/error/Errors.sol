@@ -60,8 +60,7 @@ library Errors {
     error GlvMaxMarketTokenBalanceUsdExceeded(address glv, address market, uint256 maxMarketTokenBalanceUsd, uint256 marketTokenBalanceUsd);
     error GlvShiftFromAndToMarketAreEqual(address market);
     error GlvInsufficientMarketTokenBalance(address glv, address market, uint256 marketTokenBalance, uint256 marketTokenAmount);
-    error GlvHasPendingShift(address glv);
-    error GlvShiftNotFound(bytes32 shiftKey);
+    error EmptyGlvShift();
     error GlvInvalidReceiver(address glv, address receiver);
     error GlvInvalidCallbackContract(address glvHandler, address callbackContract);
     error GlvMarketAlreadyExists(address glv, address market);

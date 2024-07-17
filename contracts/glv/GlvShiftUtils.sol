@@ -53,7 +53,6 @@ library GlvShiftUtils {
         Market.Props fromMarket;
         int256 fromMarketTokenPrice;
         uint256 marketTokensUsd;
-
         Market.Props toMarket;
         int256 toMarketTokenPrice;
         uint256 receivedMarketTokens;
@@ -128,6 +127,25 @@ library GlvShiftUtils {
         ExecuteGlvShiftParams memory params,
         GlvShift.Props memory glvShift
     ) external returns (uint256 receivedMarketTokens) {
+        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
+        params.startingGas -= gasleft() / 63;
+
+        GlvShiftStoreUtils.remove(params.dataStore, params.key);
+
+        if (glvShift.fromMarket() == address(0)) {
+            revert Errors.EmptyGlvShift();
+        }
+
+        uint256 fromMarketTokenBalance = ERC20(glvShift.fromMarket()).balanceOf(glvShift.glv());
+        if (fromMarketTokenBalance < glvShift.marketTokenAmount()) {
+            revert Errors.GlvInsufficientMarketTokenBalance(
+                glvShift.glv(),
+                glvShift.fromMarket(),
+                fromMarketTokenBalance,
+                glvShift.marketTokenAmount()
+            );
+        }
+
         Shift.Props memory shift = Shift.Props(
             Shift.Addresses({
                 account: glvShift.glv(),
