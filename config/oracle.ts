@@ -215,7 +215,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
         },
         PEPE: {
           priceFeed: {
-            address: "0xDB98056FecFff59D032aB628337A4887110df3dB",
+            address: "0x02DEd5a7EDDA750E3Eb240b54437a54d57b74dBE",
             decimals: 18,
             heartbeatDuration: (24 + 1) * 60 * 60,
           },

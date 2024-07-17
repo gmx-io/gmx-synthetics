@@ -192,7 +192,7 @@ const config: {
       oracleTimestampAdjustment: 1,
     },
     WIF: {
-      address: "0x25d887Ce7a35172C62FeBFD67a1856F20FaEbB00",
+      address: "0xA1b91fe9FD52141Ff8cac388Ce3F10BFDc1dE79d",
       decimals: 6,
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x0003d5a1e39f957e312e307d535c8c28315172442ae0c39d9488e908c3762c85",
