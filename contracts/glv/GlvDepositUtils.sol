@@ -83,10 +83,10 @@ library GlvDepositUtils {
             if (params.initialShortToken != address(0)) {
                 revert Errors.InvalidGlvDepositInitialShortToken(params.initialLongToken, params.initialShortToken);
             }
-            if (params.longTokenSwapPath.length > 0 || params.longTokenSwapPath.length > 0) {
+            if (params.longTokenSwapPath.length > 0 || params.shortTokenSwapPath.length > 0) {
                 revert Errors.InvalidGlvDepositSwapPath(
                     params.longTokenSwapPath.length,
-                    params.longTokenSwapPath.length
+                    params.shortTokenSwapPath.length
                 );
             }
         }
