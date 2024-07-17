@@ -15,12 +15,15 @@ import "../glv/GlvDepositStoreUtils.sol";
 import "../glv/GlvWithdrawalUtils.sol";
 import "../glv/GlvWithdrawalStoreUtils.sol";
 import "../glv/GlvVault.sol";
+import "../glv/GlvShiftUtils.sol";
 import "../glv/GlvDeposit.sol";
 import "../glv/GlvWithdrawal.sol";
-import "../shift/ShiftUtils.sol";
 
-contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
+// import "../shift/ShiftUtils.sol";
+
+contract GLVHandler is BaseHandler, ReentrancyGuard {
     using GlvDeposit for GlvDeposit.Props;
+    using GlvShift for GlvShift.Props;
     using GlvWithdrawal for GlvWithdrawal.Props;
 
     IDepositHandler public immutable depositHandler;
@@ -97,11 +100,7 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
 
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
-        if (
-            OracleUtils.isOracleError(errorSelector) ||
-            errorSelector == Errors.DisabledFeature.selector ||
-            errorSelector == Errors.GlvHasPendingShift.selector // deposit should be executable after shift is executed
-        ) {
+        if (OracleUtils.isOracleError(errorSelector) || errorSelector == Errors.DisabledFeature.selector) {
             ErrorUtils.revertWithCustomError(reasonBytes);
         }
 
@@ -202,11 +201,7 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
 
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
-        if (
-            OracleUtils.isOracleError(errorSelector) ||
-            errorSelector == Errors.DisabledFeature.selector ||
-            errorSelector == Errors.GlvHasPendingShift.selector // withdrawal should be executable after shift is executed
-        ) {
+        if (OracleUtils.isOracleError(errorSelector) || errorSelector == Errors.DisabledFeature.selector) {
             ErrorUtils.revertWithCustomError(reasonBytes);
         }
 
@@ -269,31 +264,72 @@ contract GLVHandler is BaseHandler, ReentrancyGuard, IShiftCallbackReceiver {
         this._executeGlvWithdrawal(key, glvWithdrawal, msg.sender);
     }
 
-    function createShift(
+    function createGlvShift(
         address glv,
-        uint256 marketTokenAmount,
-        ShiftUtils.CreateShiftParams memory params
+        GlvShiftUtils.CreateGlvShiftParams memory params
     ) external globalNonReentrant onlyOrderKeeper returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.glvCreateShiftFeatureDisabledKey(address(this)));
 
-        return
-            GlvUtils.createShift(dataStore, oracle, shiftHandler, shiftVault, msg.sender, glv, marketTokenAmount, params);
+        return GlvShiftUtils.createGlvShift(dataStore, eventEmitter, glvVault, glv, params);
     }
 
-    function afterShiftExecution(
+    function executeGlvShift(
         bytes32 key,
-        Shift.Props memory /* shift */,
-        EventUtils.EventLogData memory /* eventData */
-    ) external onlyController {
-        GlvUtils.clearPendingShift(dataStore, key);
+        OracleUtils.SetPricesParams calldata oracleParams
+    ) external globalNonReentrant onlyOrderKeeper withOraclePrices(oracleParams) {
+        uint256 startingGas = gasleft();
+
+        DataStore _dataStore = dataStore;
+        FeatureUtils.validateFeature(dataStore, Keys.glvExecuteShiftFeatureDisabledKey(address(this)));
+
+        GlvShift.Props memory glvShift = GlvShiftStoreUtils.get(_dataStore, key);
+        uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvShiftGasLimit(_dataStore);
+        GasUtils.validateExecutionGas(_dataStore, startingGas, estimatedGasLimit);
+
+        uint256 executionGas = GasUtils.getExecutionGas(_dataStore, startingGas);
+
+        try this._executeGlvShift{gas: executionGas}(key, glvShift, msg.sender) {} catch (bytes memory reasonBytes) {
+            _handleGlvShiftError(key, startingGas, reasonBytes);
+        }
     }
 
-    function afterShiftCancellation(
-        bytes32 key,
-        Shift.Props memory /* shift */,
-        EventUtils.EventLogData memory /* eventData */
-    ) external onlyController {
-        GlvUtils.clearPendingShift(dataStore, key);
+    function _executeGlvShift(bytes32 key, GlvShift.Props memory glvShift, address keeper) external onlySelf {
+        uint256 startingGas = gasleft();
+
+        GlvShiftUtils.ExecuteGlvShiftParams memory params = GlvShiftUtils.ExecuteGlvShiftParams({
+            key: key,
+            dataStore: dataStore,
+            eventEmitter: eventEmitter,
+            shiftVault: shiftVault,
+            oracle: oracle,
+            startingGas: startingGas,
+            keeper: keeper
+        });
+
+        GlvShiftUtils.executeGlvShift(params, glvShift);
+    }
+
+    function _handleGlvShiftError(bytes32 key, uint256 startingGas, bytes memory reasonBytes) internal {
+        GasUtils.validateExecutionErrorGas(dataStore, reasonBytes);
+
+        bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
+
+        if (OracleUtils.isOracleError(errorSelector) || errorSelector == Errors.DisabledFeature.selector) {
+            ErrorUtils.revertWithCustomError(reasonBytes);
+        }
+
+        (string memory reason /* bool hasRevertMessage */, ) = ErrorUtils.getRevertMessage(reasonBytes);
+
+        GlvShiftUtils.cancelGlvShift(
+            dataStore,
+            eventEmitter,
+            glvVault,
+            key,
+            msg.sender,
+            startingGas,
+            reason,
+            reasonBytes
+        );
     }
 
     function addMarket(address glv, address market) external onlyConfigKeeper {

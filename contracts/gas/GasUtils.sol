@@ -14,6 +14,7 @@ import "../shift/Shift.sol";
 import "../order/Order.sol";
 import "../order/BaseOrderUtils.sol";
 import "../glv/GlvWithdrawal.sol";
+import "../glv/GlvShift.sol";
 
 import "../bank/StrictBank.sol";
 
@@ -240,9 +241,6 @@ library GasUtils {
         return 4;
     }
 
-    // @dev get estimated number of oracle prices for glv deposit
-    // @param marketCount number of markets in the glv
-    // @param swapsCount number of swaps in the glv deposit
     function estimateGlvDepositOraclePriceCount(
         uint256 marketCount,
         uint256 swapsCount
@@ -250,14 +248,15 @@ library GasUtils {
         return 2 + marketCount + swapsCount;
     }
 
-    // @dev get estimated number of oracle prices for glv withdrawal
-    // @param marketCount number of markets in the glv
-    // @param swapsCount number of swaps in the glv withdrawal
     function estimateGlvWithdrawalOraclePriceCount(
         uint256 marketCount,
         uint256 swapsCount
     ) internal pure returns (uint256) {
         return 2 + marketCount + swapsCount;
+    }
+
+    function estimateGlvShiftOraclePriceCount() internal pure returns (uint256) {
+        return 4;
     }
 
     // @dev the estimated gas limit for deposits
@@ -383,6 +382,10 @@ library GasUtils {
         uint256 gasForSwaps = swapCount * gasPerSwap;
 
         return gasLimit + dataStore.getUint(Keys.withdrawalGasLimitKey()) + gasForSwaps;
+    }
+
+    function estimateExecuteGlvShiftGasLimit(DataStore dataStore) internal view returns (uint256) {
+        return dataStore.getUint(Keys.glvShiftGasLimitKey());
     }
 
     function emitKeeperExecutionFee(

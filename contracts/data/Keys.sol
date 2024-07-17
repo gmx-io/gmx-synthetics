@@ -83,8 +83,8 @@ library Keys {
     // @dev key for the glv list
     bytes32 public constant GLV_LIST = keccak256(abi.encode("GLV_LIST"));
 
-    // @dev key for the glv deposit list
     bytes32 public constant GLV_DEPOSIT_LIST = keccak256(abi.encode("GLV_DEPOSIT_LIST"));
+    bytes32 public constant GLV_SHIFT_LIST = keccak256(abi.encode("GLV_SHIFTLIST"));
     // @dev key for the account glv deposit list
     bytes32 public constant ACCOUNT_GLV_DEPOSIT_LIST = keccak256(abi.encode("ACCOUNT_GLV_DEPOSIT_LIST"));
     // @dev key for the glv withdrawal list
@@ -120,20 +120,14 @@ library Keys {
     // @dev key used to store the min market tokens for the first deposit for a market
     bytes32 public constant MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT = keccak256(abi.encode("MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT"));
 
-    // @dev key for whether the create glv deposit feature is disabled
     bytes32 public constant CREATE_GLV_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("CREATE_GLV_DEPOSIT_FEATURE_DISABLED"));
-    // @dev key for whether the cancel glv deposit feature is disabled
     bytes32 public constant CANCEL_GLV_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("CANCEL_GLV_DEPOSIT_FEATURE_DISABLED"));
-    // @dev key for whether the execute glv deposit feature is disabled
     bytes32 public constant EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED"));
-    // @dev key for whether the create glv withdrawal feature is disabled
     bytes32 public constant CREATE_GLV_WITHDRAWAL_FEATURE_DISABLED = keccak256(abi.encode("CREATE_GLV_WITHDRAWAL_FEATURE_DISABLED"));
-    // @dev key for whether the cancel glv withdrawal feature is disabled
     bytes32 public constant CANCEL_GLV_WITHDRAWAL_FEATURE_DISABLED = keccak256(abi.encode("CANCEL_GLV_WITHDRAWAL_FEATURE_DISABLED"));
-    // @dev key for whether the execute glv withdrawal feature is disabled
     bytes32 public constant EXECUTE_GLV_WITHDRAWAL_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_GLV_WITHDRAWAL_FEATURE_DISABLED"));
-    // @dev key for whether the glv shift feature is disabled
     bytes32 public constant GLV_CREATE_SHIFT_FEATURE_DISABLED = keccak256(abi.encode("GLV_CREATE_SHIFT_FEATURE_DISABLED"));
+    bytes32 public constant GLV_EXECUTE_SHIFT_FEATURE_DISABLED = keccak256(abi.encode("GLV_EXECUTE_SHIFT_FEATURE_DISABLED"));
 
     // @dev key for whether the create deposit feature is disabled
     bytes32 public constant CREATE_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("CREATE_DEPOSIT_FEATURE_DISABLED"));
@@ -230,11 +224,9 @@ library Keys {
     bytes32 public constant DEPOSIT_GAS_LIMIT = keccak256(abi.encode("DEPOSIT_GAS_LIMIT"));
     // @dev key for the estimated gas limit for withdrawals
     bytes32 public constant WITHDRAWAL_GAS_LIMIT = keccak256(abi.encode("WITHDRAWAL_GAS_LIMIT"));
-    // @dev key for the estimated gas limit for glv deposits
     bytes32 public constant GLV_DEPOSIT_GAS_LIMIT = keccak256(abi.encode("GLV_DEPOSIT_GAS_LIMIT"));
-    // @dev key for the estimated gas limit for glv withdrawals
     bytes32 public constant GLV_WITHDRAWAL_GAS_LIMIT = keccak256(abi.encode("GLV_WITHDRAWAL_GAS_LIMIT"));
-    // @dev key for the estimated gas limit for each glv market
+    bytes32 public constant GLV_SHIFT_GAS_LIMIT = keccak256(abi.encode("GLV_SHIFT_GAS_LIMIT"));
     bytes32 public constant GLV_PER_MARKET_GAS_LIMIT = keccak256(abi.encode("GLV_PER_MARKET_GAS_LIMIT"));
     // @dev key for the estimated gas limit for shifts
     bytes32 public constant SHIFT_GAS_LIMIT = keccak256(abi.encode("SHIFT_GAS_LIMIT"));
@@ -542,6 +534,10 @@ library Keys {
         return GLV_DEPOSIT_GAS_LIMIT;
     }
 
+    function glvShiftGasLimitKey() internal pure returns (bytes32) {
+        return GLV_SHIFT_GAS_LIMIT;
+    }
+
     function glvWithdrawalGasLimitKey() internal pure returns (bytes32) {
         return GLV_WITHDRAWAL_GAS_LIMIT;
     }
@@ -641,12 +637,16 @@ library Keys {
         ));
     }
 
-    // @dev key for whether shift deposit is disabled
-    // @param the execute deposit module
-    // @return key for whether execute deposit is disabled
     function glvCreateShiftFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             GLV_CREATE_SHIFT_FEATURE_DISABLED,
+            module
+        ));
+    }
+
+    function glvExecuteShiftFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            GLV_EXECUTE_SHIFT_FEATURE_DISABLED,
             module
         ));
     }

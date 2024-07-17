@@ -171,8 +171,6 @@ library GlvDepositUtils {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
-        GlvUtils.validatePendingShift(params.dataStore, glvDeposit.glv());
-
         GlvDepositStoreUtils.remove(params.dataStore, params.key, glvDeposit.account());
 
         if (glvDeposit.account() == address(0)) {
@@ -220,7 +218,6 @@ library GlvDepositUtils {
         );
 
         cache.market = MarketUtils.getEnabledMarket(params.dataStore, glvDeposit.market());
-
         (cache.marketTokenPrice, ) = MarketUtils.getMarketTokenPrice(
             params.dataStore,
             cache.market,
@@ -231,12 +228,11 @@ library GlvDepositUtils {
             true // maximize
         );
 
-        GlvUtils.validateMaxMarketTokenBalanceUsd(
+        GlvUtils.validateMarketTokenBalanceUsd(
             params.dataStore,
             glvDeposit.glv(),
             cache.market,
-            cache.receivedMarketTokens,
-            cache.marketTokenPrice.toUint256()
+            cache.receivedMarketTokens
         );
 
         Glv(payable(glvDeposit.glv())).mint(glvDeposit.receiver(), cache.mintAmount);
@@ -369,10 +365,6 @@ library GlvDepositUtils {
         GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(dataStore, key);
         if (glvDeposit.account() == address(0)) {
             revert Errors.EmptyGlvDeposit();
-        }
-
-        if (glvDeposit.initialLongTokenAmount() == 0 && glvDeposit.initialShortTokenAmount() == 0) {
-            revert Errors.EmptyGlvDepositAmounts();
         }
 
         GlvDepositStoreUtils.remove(dataStore, key, glvDeposit.account());
