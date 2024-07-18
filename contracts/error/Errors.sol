@@ -67,7 +67,7 @@ library Errors {
     error InvalidMarketTokenPrice(address market, int256 price);
     error GlvMaxCumulativeDepositUsdExceeded(uint256 depositUsd, uint256 maxDepositUsd);
     // GlvFactory
-    error GlvAlreadyExists(address glv);
+    error GlvAlreadyExists(bytes32 salt, address glv);
 
     // DepositStoreUtils errors
     error DepositNotFound(bytes32 key);

@@ -31,16 +31,11 @@ contract GlvFactory is RoleModule {
         return keccak256(abi.encode(GLV_SALT, salt));
     }
 
-    // @dev creates a market
-    // @param indexToken address of the index token for the market
-    // @param longToken address of the long token for the market
-    // @param shortToken address of the short token for the market
-    // @param marketType the type of the market
     function createGlv(bytes32 salt) external onlyMarketKeeper returns (address) {
         bytes32 saltHash = getGlvSaltHash(salt);
         address glvAddress = dataStore.getAddress(saltHash);
         if (glvAddress != address(0)) {
-            revert Errors.MarketAlreadyExists(salt, glvAddress);
+            revert Errors.GlvAlreadyExists(salt, glvAddress);
         }
 
         Glv glv = new Glv{salt: salt}(roleStore, dataStore);
