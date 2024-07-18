@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "../gas/GasUtils.sol";
 import "../nonce/NonceUtils.sol";
+import "../bank/Bank.sol";
 
 import "../event/EventEmitter.sol";
 import "../shift/ShiftUtils.sol";
@@ -81,6 +82,16 @@ library GlvShiftUtils {
             revert Errors.InsufficientWntAmount(wntAmount, params.executionFee);
         }
 
+        uint256 fromMarketTokenBalance = ERC20(params.fromMarket).balanceOf(glv);
+        if (fromMarketTokenBalance < params.marketTokenAmount) {
+            revert Errors.GlvInsufficientMarketTokenBalance(
+                glv,
+                params.fromMarket,
+                fromMarketTokenBalance,
+                params.marketTokenAmount
+            );
+        }
+
         params.executionFee = wntAmount;
 
         Market.Props memory fromMarket = MarketUtils.getEnabledMarket(dataStore, params.fromMarket);
@@ -136,15 +147,11 @@ library GlvShiftUtils {
             revert Errors.EmptyGlvShift();
         }
 
-        uint256 fromMarketTokenBalance = ERC20(glvShift.fromMarket()).balanceOf(glvShift.glv());
-        if (fromMarketTokenBalance < glvShift.marketTokenAmount()) {
-            revert Errors.GlvInsufficientMarketTokenBalance(
-                glvShift.glv(),
-                glvShift.fromMarket(),
-                fromMarketTokenBalance,
-                glvShift.marketTokenAmount()
-            );
-        }
+        Bank(payable(glvShift.glv())).transferOut(
+            glvShift.fromMarket(),
+            address(params.shiftVault),
+            glvShift.marketTokenAmount()
+        );
 
         Shift.Props memory shift = Shift.Props(
             Shift.Addresses({

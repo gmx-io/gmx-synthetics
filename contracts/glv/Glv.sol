@@ -3,13 +3,13 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../bank/StrictBank.sol";
+import "../bank/Bank.sol";
 
-contract Glv is ERC20, StrictBank {
+contract Glv is ERC20, Bank {
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore
-    ) ERC20("GMX Liquidity Vault", "GLV") StrictBank(_roleStore, _dataStore) {
+    ) ERC20("GMX Liquidity Vault", "GLV") Bank(_roleStore, _dataStore) {
     }
 
     function mint(address account, uint256 amount) external onlyController {
