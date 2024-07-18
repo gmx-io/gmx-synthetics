@@ -64,6 +64,8 @@ export async function deployFixture() {
   const oracleStore = await hre.ethers.getContract("OracleStore");
   const orderVault = await hre.ethers.getContract("OrderVault");
   const marketFactory = await hre.ethers.getContract("MarketFactory");
+  const glvFactory = await hre.ethers.getContract("GlvFactory");
+  const glvHandler = await hre.ethers.getContract("GlvHandler");
   const depositHandler = await hre.ethers.getContract("DepositHandler");
   const depositUtils = await hre.ethers.getContract("DepositUtils");
   const executeDepositUtils = await hre.ethers.getContract("ExecuteDepositUtils");
@@ -80,7 +82,6 @@ export async function deployFixture() {
   const oracle = await hre.ethers.getContract("Oracle");
   const gmOracleProvider = await hre.ethers.getContract("GmOracleProvider");
   const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
-  const chainlinkDataStreamProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
   const marketUtils = await hre.ethers.getContract("MarketUtils");
   const marketStoreUtils = await hre.ethers.getContract("MarketStoreUtils");
   const depositStoreUtils = await hre.ethers.getContract("DepositStoreUtils");
@@ -258,6 +259,8 @@ export async function deployFixture() {
       btcUsdSingleTokenMarket,
       solUsdMarket,
       feeHandler,
+      glvFactory,
+      glvHandler,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };

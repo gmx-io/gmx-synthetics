@@ -25,23 +25,27 @@ contract GlvFactory is RoleModule {
         eventEmitter = _eventEmitter;
     }
 
-    bytes32 public constant GLV_SALT = keccak256(abi.encode("GLV_SALT"));
-
-    function getGlvSaltHash(bytes32 salt, address longToken, address shortToken) internal pure returns (bytes32) {
-        return keccak256(abi.encode(GLV_SALT, salt, longToken, shortToken));
+    function getGlvSalt(address longToken, address shortToken, bytes32 glvType) internal pure returns (bytes32) {
+        return keccak256(abi.encode("GMX_GLV", longToken, shortToken, glvType));
     }
 
-    function createGlv(bytes32 salt, address longToken, address shortToken) external onlyMarketKeeper returns (address) {
-        bytes32 saltHash = getGlvSaltHash(salt, longToken, shortToken);
-        address glvAddress = dataStore.getAddress(saltHash);
+    function createGlv(
+        address longToken,
+        address shortToken,
+        bytes32 glvType
+    ) external onlyMarketKeeper returns (address) {
+        bytes32 salt = getGlvSalt(longToken, shortToken, glvType);
+        address glvAddress = dataStore.getAddress(salt);
         if (glvAddress != address(0)) {
-            revert Errors.GlvAlreadyExists(salt, glvAddress);
+            revert Errors.GlvAlreadyExists(glvType, glvAddress);
         }
 
         Glv glv = new Glv{salt: salt}(roleStore, dataStore);
 
+        // the glvType is not stored with the glv, it is mainly used to ensure
+        // glvs with the same longToken and shortToken can be created if needed
         dataStore.addAddress(Keys.GLV_LIST, address(glv));
-        dataStore.setAddress(saltHash, address(glv));
+        dataStore.setAddress(salt, address(glv));
         dataStore.setAddress(Keys.glvLongTokenKey(address(glv)), longToken);
         dataStore.setAddress(Keys.glvShortTokenKey(address(glv)), shortToken);
 

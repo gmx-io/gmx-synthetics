@@ -14,6 +14,7 @@ import "hardhat-deploy";
 
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";
+import "@nomicfoundation/hardhat-chai-matchers";
 
 // extends hre with gmx domain data
 import "./config";

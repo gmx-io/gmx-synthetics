@@ -308,8 +308,8 @@ library GlvDepositUtils {
 
         Deposit.Props memory deposit = Deposit.Props(
             Deposit.Addresses({
-                account: glvDeposit.account(),
-                receiver: glvDeposit.receiver(),
+                account: glvDeposit.glv(),
+                receiver: glvDeposit.glv(),
                 callbackContract: address(0),
                 uiFeeReceiver: glvDeposit.uiFeeReceiver(),
                 market: glvDeposit.market(),

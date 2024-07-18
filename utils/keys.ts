@@ -196,6 +196,10 @@ export const SUBACCOUNT_ACTION_COUNT = hashString("SUBACCOUNT_ACTION_COUNT");
 export const SUBACCOUNT_AUTO_TOP_UP_AMOUNT = hashString("SUBACCOUNT_AUTO_TOP_UP_AMOUNT");
 export const SUBACCOUNT_ORDER_ACTION = hashString("SUBACCOUNT_ORDER_ACTION");
 
+export const GLV_LONG_TOKEN = hashString("GLV_LONG_TOKEN");
+export const GLV_SHORT_TOKEN = hashString("GLV_SHORT_TOKEN");
+export const GLV_SUPPORTED_MARKET_LIST = hashString("GLV_SUPPORTED_MARKET_LIST");
+
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
 }
@@ -611,4 +615,16 @@ export function subaccountActionCountKey(account: string, subaccount: string, ac
 
 export function subaccountAutoTopUpAmountKey(account: string, subaccount: string) {
   return hashData(["bytes32", "address", "address"], [SUBACCOUNT_AUTO_TOP_UP_AMOUNT, account, subaccount]);
+}
+
+export function glvLongTokenKey(glv: string) {
+  return hashData(["bytes32", "address"], [GLV_LONG_TOKEN, glv]);
+}
+
+export function glvShortTokenKey(glv: string) {
+  return hashData(["bytes32", "address"], [GLV_SHORT_TOKEN, glv]);
+}
+
+export function glvSupportedMarketListKey(glv: string) {
+  return hashData(["bytes32", "address"], [GLV_SUPPORTED_MARKET_LIST, glv]);
 }

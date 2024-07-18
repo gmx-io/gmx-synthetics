@@ -21,7 +21,7 @@ library GlvEventUtils {
         address market,
         int256 delta,
         uint256 nextValue
-    ) external {
+    ) internal {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(2);

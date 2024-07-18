@@ -5,8 +5,6 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "./BaseHandler.sol";
-import "../exchange/IDepositHandler.sol";
-import "../exchange/IShiftHandler.sol";
 
 import "../glv/Glv.sol";
 import "../glv/GlvUtils.sol";
@@ -19,15 +17,11 @@ import "../glv/GlvShiftUtils.sol";
 import "../glv/GlvDeposit.sol";
 import "../glv/GlvWithdrawal.sol";
 
-// import "../shift/ShiftUtils.sol";
-
-contract GLVHandler is BaseHandler, ReentrancyGuard {
+contract GlvHandler is BaseHandler, ReentrancyGuard {
     using GlvDeposit for GlvDeposit.Props;
     using GlvShift for GlvShift.Props;
     using GlvWithdrawal for GlvWithdrawal.Props;
 
-    IDepositHandler public immutable depositHandler;
-    IShiftHandler public immutable shiftHandler;
     GlvVault public immutable glvVault;
     ShiftVault public immutable shiftVault;
 
@@ -36,13 +30,9 @@ contract GLVHandler is BaseHandler, ReentrancyGuard {
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         Oracle _oracle,
-        IDepositHandler _depositHandler,
-        IShiftHandler _shiftHandler,
         GlvVault _glvVault,
         ShiftVault _shiftVault
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
-        depositHandler = _depositHandler;
-        shiftHandler = _shiftHandler;
         glvVault = _glvVault;
         shiftVault = _shiftVault;
     }
