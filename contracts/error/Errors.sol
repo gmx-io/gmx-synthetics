@@ -69,7 +69,7 @@ library Errors {
     error GlvInvalidLongToken(address glv, address provided, address expected);
     error GlvInvalidShortToken(address glv, address provided, address expected);
     // GlvFactory
-    error GlvAlreadyExists(bytes32 saltHash, address glv);
+    error GlvAlreadyExists(bytes32 salt, address glv);
 
     // DepositStoreUtils errors
     error DepositNotFound(bytes32 key);
