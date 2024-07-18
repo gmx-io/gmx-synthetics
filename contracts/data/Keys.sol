@@ -80,18 +80,14 @@ library Keys {
     // @dev key for the account shift list
     bytes32 public constant ACCOUNT_SHIFT_LIST = keccak256(abi.encode("ACCOUNT_SHIFT_LIST"));
 
-    // @dev key for the glv list
     bytes32 public constant GLV_LIST = keccak256(abi.encode("GLV_LIST"));
-
+    bytes32 public constant GLV_LONG_TOKEN = keccak256(abi.encode("GLV_LONG_TOKEN"));
+    bytes32 public constant GLV_SHORT_TOKEN = keccak256(abi.encode("GLV_SHORT_TOKEN"));
     bytes32 public constant GLV_DEPOSIT_LIST = keccak256(abi.encode("GLV_DEPOSIT_LIST"));
     bytes32 public constant GLV_SHIFT_LIST = keccak256(abi.encode("GLV_SHIFTLIST"));
-    // @dev key for the account glv deposit list
     bytes32 public constant ACCOUNT_GLV_DEPOSIT_LIST = keccak256(abi.encode("ACCOUNT_GLV_DEPOSIT_LIST"));
-    // @dev key for the glv withdrawal list
     bytes32 public constant GLV_WITHDRAWAL_LIST = keccak256(abi.encode("GLV_WITHDRAWAL_LIST"));
-    // @dev key for the account glv withdrawal list
     bytes32 public constant ACCOUNT_GLV_WITHDRAWAL_LIST = keccak256(abi.encode("ACCOUNT_GLV_WITHDRAWAL_LIST"));
-    // @dev key for the account glv supported market list
     bytes32 public constant GLV_SUPPORTED_MARKET_LIST = keccak256(abi.encode("GLV_SUPPORTED_MARKET_LIST"));
 
     // @dev key for the position list
@@ -453,6 +449,14 @@ library Keys {
     // @param account the account for the list
     function accountGlvWithdrawalListKey(address account) internal pure returns (bytes32) {
         return keccak256(abi.encode(ACCOUNT_GLV_WITHDRAWAL_LIST, account));
+    }
+
+    function glvLongTokenKey(address glv) internal pure returns (bytes32) {
+        return keccak256(abi.encode(GLV_LONG_TOKEN, glv));
+    }
+
+    function glvShortTokenKey(address glv) internal pure returns (bytes32) {
+        return keccak256(abi.encode(GLV_SHORT_TOKEN, glv));
     }
 
     // @dev key for the glv supported market list

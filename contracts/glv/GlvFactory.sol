@@ -27,12 +27,12 @@ contract GlvFactory is RoleModule {
 
     bytes32 public constant GLV_SALT = keccak256(abi.encode("GLV_SALT"));
 
-    function getGlvSaltHash(bytes32 salt) internal pure returns (bytes32) {
-        return keccak256(abi.encode(GLV_SALT, salt));
+    function getGlvSaltHash(bytes32 salt, address longToken, address shortToken) internal pure returns (bytes32) {
+        return keccak256(abi.encode(GLV_SALT, salt, longToken, shortToken));
     }
 
-    function createGlv(bytes32 salt) external onlyMarketKeeper returns (address) {
-        bytes32 saltHash = getGlvSaltHash(salt);
+    function createGlv(bytes32 salt, address longToken, address shortToken) external onlyMarketKeeper returns (address) {
+        bytes32 saltHash = getGlvSaltHash(salt, longToken, shortToken);
         address glvAddress = dataStore.getAddress(saltHash);
         if (glvAddress != address(0)) {
             revert Errors.GlvAlreadyExists(salt, glvAddress);
@@ -41,7 +41,9 @@ contract GlvFactory is RoleModule {
         Glv glv = new Glv{salt: salt}(roleStore, dataStore);
 
         dataStore.addAddress(Keys.GLV_LIST, address(glv));
-        dataStore.setAddress(salt, address(glv));
+        dataStore.setAddress(saltHash, address(glv));
+        dataStore.setAddress(Keys.glvLongTokenKey(address(glv)), longToken);
+        dataStore.setAddress(Keys.glvShortTokenKey(address(glv)), shortToken);
 
         emitGlvCreated(address(glv), salt);
 
