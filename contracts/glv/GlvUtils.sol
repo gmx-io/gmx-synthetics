@@ -176,14 +176,29 @@ library GlvUtils {
         return dataStore.getUint(Keys.glvMaxMarketTokenBalanceUsdKey(glv, market));
     }
 
-    function addMarket(DataStore dataStore, address glv, address market) external {
+    function addMarket(DataStore dataStore, address glv, address marketAddress) external {
         validateGlv(dataStore, glv);
-        MarketUtils.validateEnabledMarket(dataStore, market);
+
+        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, marketAddress);
+        (address longToken, address shortToken) = getGlvTokens(dataStore, glv);
+        if (market.longToken != longToken) {
+            revert Errors.GlvInvalidLongToken(glv, market.longToken, longToken);
+        }
+        if (market.shortToken != shortToken) {
+            revert Errors.GlvInvalidShortToken(glv, market.shortToken, shortToken);
+        }
 
         bytes32 key = Keys.glvSupportedMarketListKey(glv);
-        if (dataStore.containsAddress(key, market)) {
-            revert Errors.GlvMarketAlreadyExists(glv, market);
+        if (dataStore.containsAddress(key, marketAddress)) {
+            revert Errors.GlvMarketAlreadyExists(glv, marketAddress);
         }
-        dataStore.addAddress(key, market);
+        dataStore.addAddress(key, marketAddress);
+    }
+
+    function getGlvTokens(DataStore dataStore, address glv) internal view returns (address, address) {
+        address longToken = dataStore.getAddress(Keys.glvLongTokenKey(address(glv)));
+        address shortToken = dataStore.getAddress(Keys.glvShortTokenKey(address(glv)));
+
+        return (longToken, shortToken);
     }
 }
