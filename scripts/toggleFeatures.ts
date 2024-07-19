@@ -9,6 +9,14 @@ export async function main() {
 
   const featureKeys = [
     {
+      baseKey: keys.CREATE_DEPOSIT_FEATURE_DISABLED,
+      data: encodeData(["address"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2"]),
+    },
+    {
+      baseKey: keys.CREATE_WITHDRAWAL_FEATURE_DISABLED,
+      data: encodeData(["address"], ["0x9E32088F3c1a5EB38D32d1Ec6ba0bCBF499DC9ac"]),
+    },
+    {
       baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
       data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.MarketSwap]),
     },
