@@ -76,6 +76,14 @@ const config: {
       dataStreamFeedId: "0x000362205e10b3a147d02792eccee483dca6c7b44ecce7012cb8c6e0b68b3ae9",
       dataStreamFeedDecimals: 18,
     },
+    wstETH: {
+      address: "0x5979D7b546E38E414F7E9822514be443A4800529",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "<to be filled>", // note that this must be for wstETH/USD and not wstETH/ETH
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     BNB: {
       address: "0xa9004A5421372E1D83fB1f85b0fc986c912f91f3",
       decimals: 18,
@@ -226,6 +234,14 @@ const config: {
       decimals: 18,
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x0003571a596aab1cafe1a883795dab90cd8cca48e25f53ab3665aa67d008f386",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    USDe: {
+      address: "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "<to be filled>",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
