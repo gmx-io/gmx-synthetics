@@ -61,7 +61,11 @@ export async function main() {
 
   for (const featureKey of featureKeys) {
     multicallWriteParams.push(
-      config.interface.encodeFunctionData("setBool", [featureKey.baseKey, featureKey.data, isDisabled])
+      config.interface.encodeFunctionData("setBool", [
+        featureKey.baseKey,
+        featureKey.data,
+        isDisabled === "true" ? true : false,
+      ])
     );
   }
 
