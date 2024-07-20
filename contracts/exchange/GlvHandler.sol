@@ -17,6 +17,8 @@ import "../glv/GlvShiftUtils.sol";
 import "../glv/GlvDeposit.sol";
 import "../glv/GlvWithdrawal.sol";
 
+import "hardhat/console.sol";
+
 contract GlvHandler is BaseHandler, ReentrancyGuard {
     using GlvDeposit for GlvDeposit.Props;
     using GlvShift for GlvShift.Props;
@@ -50,6 +52,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         bytes32 key,
         OracleUtils.SetPricesParams calldata oracleParams
     ) external globalNonReentrant onlyOrderKeeper withOraclePrices(oracleParams) {
+        console.log("hello");
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
@@ -62,6 +65,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
 
         uint256 executionGas = GasUtils.getExecutionGas(_dataStore, startingGas);
 
+        console.log("hello2");
         try this._executeGlvDeposit{gas: executionGas}(key, glvDeposit, msg.sender) {} catch (
             bytes memory reasonBytes
         ) {
@@ -81,6 +85,8 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
             startingGas: startingGas,
             keeper: keeper
         });
+
+        console.log("hello3");
 
         GlvDepositUtils.executeGlvDeposit(params, glvDeposit);
     }
@@ -159,11 +165,13 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
 
         uint256 executionGas = GasUtils.getExecutionGas(_dataStore, startingGas);
 
-        try this._executeGlvWithdrawal{gas: executionGas}(key, glvWithdrawal, msg.sender) {} catch (
-            bytes memory reasonBytes
-        ) {
-            _handleGlvWithdrawalError(key, startingGas, reasonBytes);
-        }
+        this._executeGlvWithdrawal{gas: executionGas}(key, glvWithdrawal, msg.sender);
+
+        // try this._executeGlvWithdrawal{gas: executionGas}(key, glvWithdrawal, msg.sender) {} catch (
+        //     bytes memory reasonBytes
+        // ) {
+        //     _handleGlvWithdrawalError(key, startingGas, reasonBytes);
+        // }
     }
 
     function _executeGlvWithdrawal(
@@ -230,9 +238,6 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         );
     }
 
-    // @dev simulate execution of a glv deposit to check for any errors
-    // @param key the glv deposit key
-    // @param params OracleUtils.SimulatePricesParams
     function simulateExecuteGlvDeposit(
         bytes32 key,
         OracleUtils.SimulatePricesParams memory params
@@ -242,9 +247,6 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         this._executeGlvDeposit(key, glvDeposit, msg.sender);
     }
 
-    // @dev simulate execution of a glv withdrawal to check for any errors
-    // @param key the glv withdrawal key
-    // @param params OracleUtils.SimulatePricesParams
     function simulateExecuteGlvWithdrawal(
         bytes32 key,
         OracleUtils.SimulatePricesParams memory params

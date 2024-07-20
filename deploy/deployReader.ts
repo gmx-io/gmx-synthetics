@@ -15,6 +15,9 @@ const func = createDeployFunction({
     "ReaderDepositUtils",
     "ReaderWithdrawalUtils",
     "ReaderPricingUtils",
+    "GlvDepositStoreUtils",
+    "GlvShiftStoreUtils",
+    "GlvWithdrawalStoreUtils",
   ],
 });
 

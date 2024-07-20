@@ -77,7 +77,7 @@ library GlvDepositEventUtils {
         eventData.addressItems.setItem(0, "account", account);
 
         eventData.uintItems.initItems(1);
-        eventData.uintItems.setItem(2, "receivedMarketTokens", receivedMarketTokens);
+        eventData.uintItems.setItem(0, "receivedMarketTokens", receivedMarketTokens);
 
         eventEmitter.emitEventLog2(
             "GlvDepositExecuted",

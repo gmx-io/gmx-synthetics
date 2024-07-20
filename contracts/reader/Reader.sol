@@ -10,6 +10,10 @@ import "../deposit/DepositStoreUtils.sol";
 import "../withdrawal/WithdrawalStoreUtils.sol";
 import "../shift/ShiftStoreUtils.sol";
 
+import "../glv/GlvDepositStoreUtils.sol";
+import "../glv/GlvWithdrawalStoreUtils.sol";
+import "../glv/GlvShiftStoreUtils.sol";
+
 import "../position/Position.sol";
 import "../position/PositionUtils.sol";
 import "../position/PositionStoreUtils.sol";
@@ -57,6 +61,18 @@ contract Reader {
 
     function getOrder(DataStore dataStore, bytes32 key) external view returns (Order.Props memory) {
         return OrderStoreUtils.get(dataStore, key);
+    }
+
+    function getGlvDeposit(DataStore dataStore, bytes32 key) external view returns (GlvDeposit.Props memory) {
+        return GlvDepositStoreUtils.get(dataStore, key);
+    }
+
+    function getGlvWithdrawal(DataStore dataStore, bytes32 key) external view returns (GlvWithdrawal.Props memory) {
+        return GlvWithdrawalStoreUtils.get(dataStore, key);
+    }
+
+    function getGlvShift(DataStore dataStore, bytes32 key) external view returns (GlvShift.Props memory) {
+        return GlvShiftStoreUtils.get(dataStore, key);
     }
 
     function getPositionPnlUsd(
@@ -385,4 +401,5 @@ contract Reader {
             swapPricingType
         );
     }
+
 }

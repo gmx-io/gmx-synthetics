@@ -86,7 +86,7 @@ library GlvWithdrawalUtils {
         uint256 glvTokenAmount = glvVault.recordTransferIn(params.glv);
 
         if (glvTokenAmount == 0) {
-            revert Errors.EmptyWithdrawalAmount();
+            revert Errors.EmptyGlvWithdrawalAmount();
         }
 
         GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawal.Props(
@@ -208,7 +208,11 @@ library GlvWithdrawalUtils {
         ExecuteGlvWithdrawalParams memory params,
         GlvWithdrawal.Props memory glvWithdrawal
     ) private returns (uint256) {
-        (uint256 marketTokenAmount, uint256 usdValue) = _getMarketTokenAmount(params.dataStore, params.oracle, glvWithdrawal);
+        (uint256 marketTokenAmount, uint256 usdValue) = _getMarketTokenAmount(
+            params.dataStore,
+            params.oracle,
+            glvWithdrawal
+        );
 
         Withdrawal.Props memory withdrawal = Withdrawal.Props(
             Withdrawal.Addresses({
@@ -241,17 +245,30 @@ library GlvWithdrawalUtils {
             WithdrawalUtils.WithdrawalType.Glv
         );
 
+        console.log("contract glvWithdrawal.glv(): %s market %s balance of market token %s",
+            glvWithdrawal.glv(),
+            glvWithdrawal.market(),
+            ERC20(glvWithdrawal.market()).balanceOf(glvWithdrawal.glv())
+        );
+        console.log("marketTokenAmount %s", marketTokenAmount);
+
+        Bank(payable(glvWithdrawal.glv())).transferOut(
+            glvWithdrawal.market(),
+            address(params.glvVault),
+            marketTokenAmount
+        );
+
         ExecuteWithdrawalUtils.ExecuteWithdrawalParams memory executeWithdrawalParams = ExecuteWithdrawalUtils
-            .ExecuteWithdrawalParams(
-                params.dataStore,
-                params.eventEmitter,
-                WithdrawalVault(payable(params.glvVault)),
-                params.oracle,
-                withdrawalKey,
-                params.keeper,
-                params.startingGas,
-                ISwapPricingUtils.SwapPricingType.TwoStep
-            );
+            .ExecuteWithdrawalParams({
+                dataStore: params.dataStore,
+                eventEmitter: params.eventEmitter,
+                withdrawalVault: WithdrawalVault(payable(params.glvVault)),
+                oracle: params.oracle,
+                key: withdrawalKey,
+                keeper: params.keeper,
+                startingGas: params.startingGas,
+                swapPricingType: ISwapPricingUtils.SwapPricingType.TwoStep
+            });
 
         ExecuteWithdrawalUtils.executeWithdrawal(executeWithdrawalParams, withdrawal);
 
@@ -263,8 +280,7 @@ library GlvWithdrawalUtils {
         Oracle oracle,
         GlvWithdrawal.Props memory glvWithdrawal
     ) internal view returns (uint256 marketTokenAmount, uint256 usdValue) {
-        Glv glv = Glv(payable(glvWithdrawal.glv()));
-        uint256 glvTokenPrice = GlvUtils.getGlvTokenPrice(dataStore, oracle, glv, false);
+        uint256 glvTokenPrice = GlvUtils.getGlvTokenPrice(dataStore, oracle, glvWithdrawal.glv(), false);
         uint256 glvTokenUsd = glvWithdrawal.glvTokenAmount() * glvTokenPrice;
 
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, glvWithdrawal.market());
@@ -311,7 +327,7 @@ library GlvWithdrawalUtils {
         GlvWithdrawalStoreUtils.remove(dataStore, key, glvWithdrawal.account());
 
         glvVault.transferOut(
-            glvWithdrawal.market(),
+            glvWithdrawal.glv(),
             glvWithdrawal.account(),
             glvWithdrawal.glvTokenAmount(),
             false // shouldUnwrapNativeToken

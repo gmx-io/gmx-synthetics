@@ -63,6 +63,7 @@ export async function deployFixture() {
   const eventEmitter = await hre.ethers.getContract("EventEmitter");
   const oracleStore = await hre.ethers.getContract("OracleStore");
   const orderVault = await hre.ethers.getContract("OrderVault");
+  const glvVault = await hre.ethers.getContract("GlvVault");
   const marketFactory = await hre.ethers.getContract("MarketFactory");
   const glvFactory = await hre.ethers.getContract("GlvFactory");
   const glvHandler = await hre.ethers.getContract("GlvHandler");
@@ -140,6 +141,17 @@ export async function deployFixture() {
     dataStore.address
   );
   const ethUsdSingleTokenMarket = await reader.getMarket(dataStore.address, ethUsdSingleTokenMarketAddress);
+
+  const ethUsdSingleTokenMarket2Address = getMarketTokenAddress(
+    wnt.address,
+    wnt.address,
+    wnt.address,
+    DEFAULT_MARKET_TYPE,
+    marketFactory.address,
+    roleStore.address,
+    dataStore.address
+  );
+  const ethUsdSingleTokenMarket2 = await reader.getMarket(dataStore.address, ethUsdSingleTokenMarket2Address);
 
   const btcUsdMarketAddress = getMarketTokenAddress(
     wbtc.address,
@@ -255,12 +267,14 @@ export async function deployFixture() {
       ethUsdtMarket,
       ethUsdSpotOnlyMarket,
       ethUsdSingleTokenMarket,
+      ethUsdSingleTokenMarket2,
       btcUsdMarket,
       btcUsdSingleTokenMarket,
       solUsdMarket,
       feeHandler,
       glvFactory,
       glvHandler,
+      glvVault,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };

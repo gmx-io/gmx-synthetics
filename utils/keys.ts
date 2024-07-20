@@ -20,11 +20,19 @@ export const MARKET_LIST = hashString("MARKET_LIST");
 export const DEPOSIT_LIST = hashString("DEPOSIT_LIST");
 export const ACCOUNT_DEPOSIT_LIST = hashString("ACCOUNT_DEPOSIT_LIST");
 
+export const GLV_DEPOSIT_LIST = hashString("GLV_DEPOSIT_LIST");
+export const ACCOUNT_GLV_DEPOSIT_LIST = hashString("ACCOUNT_GLV_DEPOSIT_LIST");
+
 export const WITHDRAWAL_LIST = hashString("WITHDRAWAL_LIST");
 export const ACCOUNT_WITHDRAWAL_LIST = hashString("ACCOUNT_WITHDRAWAL_LIST");
 
+export const GLV_WITHDRAWAL_LIST = hashString("GLV_WITHDRAWAL_LIST");
+export const ACCOUNT_GLV_WITHDRAWAL_LIST = hashString("ACCOUNT_GLV_WITHDRAWAL_LIST");
+
 export const SHIFT_LIST = hashString("SHIFT_LIST");
 export const ACCOUNT_SHIFT_LIST = hashString("ACCOUNT_SHIFT_LIST");
+
+export const GLV_SHIFT_LIST = hashString("GLV_SHIFT_LIST");
 
 export const POSITION_LIST = hashString("POSITION_LIST");
 export const ACCOUNT_POSITION_LIST = hashString("ACCOUNT_POSITION_LIST");
@@ -199,6 +207,11 @@ export const SUBACCOUNT_ORDER_ACTION = hashString("SUBACCOUNT_ORDER_ACTION");
 export const GLV_LONG_TOKEN = hashString("GLV_LONG_TOKEN");
 export const GLV_SHORT_TOKEN = hashString("GLV_SHORT_TOKEN");
 export const GLV_SUPPORTED_MARKET_LIST = hashString("GLV_SUPPORTED_MARKET_LIST");
+
+export const GLV_CUMULATIVE_DEPOSITED_USD = hashString("GLV_CUMULATIVE_DEPOSITED_USD");
+export const GLV_MAX_CUMULATIVE_DEPOSIT_USD = hashString("GLV_MAX_CUMULATIVE_DEPOSIT_USD");
+export const GLV_MAX_SHIFT_PRICE_IMPACT_FACTOR = hashString("GLV_MAX_SHIFT_PRICE_IMPACT_FACTOR");
+export const GLV_MAX_MARKET_TOKEN_BALANCE_USD = hashString("GLV_MAX_MARKET_TOKEN_BALANCE_USD");
 
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);

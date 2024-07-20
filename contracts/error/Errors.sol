@@ -68,6 +68,8 @@ library Errors {
     error GlvMaxCumulativeDepositUsdExceeded(uint256 depositUsd, uint256 maxDepositUsd);
     error GlvInvalidLongToken(address glv, address provided, address expected);
     error GlvInvalidShortToken(address glv, address provided, address expected);
+    // GlvShiftUtils
+    error GlvMaxShiftPriceImpactFactorExceeded(uint256 effectivePriceImpactFactor);
     // GlvFactory
     error GlvAlreadyExists(bytes32 salt, address glv);
 

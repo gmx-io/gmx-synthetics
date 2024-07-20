@@ -185,8 +185,6 @@ library GlvShiftUtils {
             startingGas: params.startingGas
         });
 
-        // TODO validate price impact
-
         ExecuteGlvShiftCache memory cache;
         cache.receivedMarketTokens = ShiftUtils.executeShift(executeShiftParams, shift);
 
@@ -237,6 +235,8 @@ library GlvShiftUtils {
             -cache.marketTokensUsd.toInt256()
         );
 
+        validatePriceImpact(params.dataStore, glvShift.glv(), cache.marketTokensUsd, cache.receivedMarketTokensUsd);
+
         GlvShiftEventUtils.emitGlvShiftExecuted(params.eventEmitter, params.key, receivedMarketTokens);
 
         return receivedMarketTokens;
@@ -273,5 +273,30 @@ library GlvShiftUtils {
             keeper,
             keeper // refundReceiver
         );
+    }
+
+    function validatePriceImpact(
+        DataStore dataStore,
+        address glv,
+        uint256 marketTokensUsd,
+        uint256 receivedMarketTokensUsd
+    ) internal view {
+        if (marketTokensUsd < receivedMarketTokensUsd) {
+            // price impact is positive, no need to validate it
+            return;
+        }
+
+        uint256 glvMaxShiftPriceImpactFactor = dataStore.getUint(Keys.glvMaxShiftPriceImpactFactorKey(glv));
+        if (glvMaxShiftPriceImpactFactor < 0) {
+            return;
+        }
+
+        uint256 effectivePriceImpactFactor = Precision.toFactor(
+            marketTokensUsd - receivedMarketTokensUsd,
+            marketTokensUsd
+        );
+        if (effectivePriceImpactFactor > glvMaxShiftPriceImpactFactor) {
+            revert Errors.GlvMaxShiftPriceImpactFactorExceeded(effectivePriceImpactFactor);
+        }
     }
 }

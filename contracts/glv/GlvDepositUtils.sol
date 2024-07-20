@@ -18,6 +18,8 @@ import "../market/MarketUtils.sol";
 import "../data/Keys.sol";
 import "../event/EventUtils.sol";
 
+import "hardhat/console.sol";
+
 library GlvDepositUtils {
     using GlvDeposit for GlvDeposit.Props;
     using Deposit for Deposit.Props;
@@ -173,6 +175,9 @@ library GlvDepositUtils {
 
         GlvDepositStoreUtils.remove(params.dataStore, params.key, glvDeposit.account());
 
+        console.log("glvDeposit.account()", glvDeposit.account());
+        console.log("glvDeposit.market()", glvDeposit.market());
+
         if (glvDeposit.account() == address(0)) {
             revert Errors.EmptyGlvDeposit();
         }
@@ -184,6 +189,7 @@ library GlvDepositUtils {
             );
         }
 
+        console.log("kek0");
         ExecuteGlvDepositCache memory cache;
 
         cache.requestExpirationTime = params.dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
@@ -197,17 +203,27 @@ library GlvDepositUtils {
             );
         }
 
-        cache.receivedMarketTokens = _processMarketDeposit(params, glvDeposit);
+        console.log("kek1");
+        // glvTokenPrice should be calculated before glv receives GM tokens
+        uint256 glvTokenPrice = GlvUtils.getGlvTokenPrice(params.dataStore, params.oracle, glvDeposit.glv(), true);
+        cache.receivedMarketTokens = _processMarketDeposit(params, glvDeposit, params.glvVault);
+        console.log("kek2");
         (cache.mintAmount, cache.receivedUsd) = _getMintAmount(
             params.dataStore,
             params.oracle,
             glvDeposit,
-            cache.receivedMarketTokens
+            cache.receivedMarketTokens,
+            glvTokenPrice
         );
+        console.log("kek3");
 
         if (cache.mintAmount < glvDeposit.minGlvTokens()) {
             revert Errors.MinMarketTokens(cache.mintAmount, glvDeposit.minGlvTokens());
         }
+        console.log("kek3.5");
+
+        Glv(payable(glvDeposit.glv())).mint(glvDeposit.receiver(), cache.mintAmount);
+        console.log("kek4");
 
         GlvUtils.applyDeltaToCumulativeDepositUsd(
             params.dataStore,
@@ -216,6 +232,7 @@ library GlvDepositUtils {
             glvDeposit.market(),
             cache.receivedUsd.toInt256()
         );
+        console.log("kek5");
 
         cache.market = MarketUtils.getEnabledMarket(params.dataStore, glvDeposit.market());
         (cache.marketTokenPrice, ) = MarketUtils.getMarketTokenPrice(
@@ -234,8 +251,9 @@ library GlvDepositUtils {
             cache.market,
             cache.receivedMarketTokens
         );
+        console.log("kek6 mint amount %s", cache.mintAmount);
 
-        Glv(payable(glvDeposit.glv())).mint(glvDeposit.receiver(), cache.mintAmount);
+        console.log("kek7");
 
         GlvDepositEventUtils.emitGlvDepositExecuted(
             params.eventEmitter,
@@ -244,11 +262,13 @@ library GlvDepositUtils {
             cache.mintAmount
         );
 
+        console.log("kek8");
         cache.marketCount = GlvUtils.getMarketCount(params.dataStore, glvDeposit.glv());
         cache.oraclePriceCount = GasUtils.estimateGlvDepositOraclePriceCount(
             cache.marketCount,
             glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length
         );
+        console.log("kek9");
         GasUtils.payExecutionFee(
             params.dataStore,
             params.eventEmitter,
@@ -262,11 +282,13 @@ library GlvDepositUtils {
             glvDeposit.receiver()
         );
 
+        console.log("kek10");
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "receivedGlvTokens", cache.mintAmount);
         CallbackUtils.afterGlvDepositExecution(params.key, glvDeposit, eventData);
 
+        console.log("kek11");
         return cache.mintAmount;
     }
 
@@ -274,9 +296,12 @@ library GlvDepositUtils {
         DataStore dataStore,
         Oracle oracle,
         GlvDeposit.Props memory glvDeposit,
-        uint256 receivedMarketTokens
+        uint256 receivedMarketTokens,
+        uint256 glvTokenPrice
     ) internal view returns (uint256 glvTokenAmount, uint256 usdValue) {
+        console.log("foo0", glvTokenAmount, usdValue);
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, glvDeposit.market());
+        console.log("foo1");
         MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(
             dataStore,
             market,
@@ -286,26 +311,29 @@ library GlvDepositUtils {
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
             false // maximize
         );
+        console.log("foo2");
         uint256 receivedMarketTokensUsd = MarketUtils.marketTokenAmountToUsd(
             receivedMarketTokens,
             poolValueInfo.poolValue.toUint256(),
             ERC20(market.marketToken).totalSupply()
         );
-
-        Glv glv = Glv(payable(glvDeposit.glv()));
-        uint256 glvTokenPrice = GlvUtils.getGlvTokenPrice(dataStore, oracle, glv, true);
+        console.log("foo3");
         return (receivedMarketTokensUsd / glvTokenPrice, receivedMarketTokensUsd);
     }
 
     function _processMarketDeposit(
         ExecuteGlvDepositParams memory params,
-        GlvDeposit.Props memory glvDeposit
+        GlvDeposit.Props memory glvDeposit,
+        GlvVault glvVault
     ) private returns (uint256) {
         if (glvDeposit.market() == glvDeposit.initialLongToken()) {
+            console.log("lol0");
             // user deposited GM tokens
+            glvVault.transferOut(glvDeposit.market(), glvDeposit.glv(), glvDeposit.initialLongTokenAmount());
             return glvDeposit.initialLongTokenAmount();
         }
 
+        console.log("lol1");
         Deposit.Props memory deposit = Deposit.Props(
             Deposit.Addresses({
                 account: glvDeposit.glv(),
@@ -333,6 +361,7 @@ library GlvDepositUtils {
         bytes32 depositKey = NonceUtils.getNextKey(params.dataStore);
         params.dataStore.addBytes32(Keys.DEPOSIT_LIST, depositKey);
         DepositEventUtils.emitDepositCreated(params.eventEmitter, depositKey, deposit, DepositUtils.DepositType.Glv);
+        console.log("lol2");
 
         ExecuteDepositUtils.ExecuteDepositParams memory executeDepositParams = ExecuteDepositUtils.ExecuteDepositParams(
                 params.dataStore,
@@ -345,6 +374,7 @@ library GlvDepositUtils {
                 ISwapPricingUtils.SwapPricingType.TwoStep,
                 true // includeVirtualInventoryImpact
             );
+        console.log("lol3");
 
         return ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);
     }

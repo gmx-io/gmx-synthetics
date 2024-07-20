@@ -80,9 +80,8 @@ export const EXCLUDED_CONFIG_KEYS = {
   WITHDRAWAL_LIST: true,
   WNT: true,
   GLV_LIST: true,
-  GLV_PENDING_SHIFT: true,
-  GLV_PENDING_SHIFT_BACKREF: true,
   GLV_SUPPORTED_MARKET_LIST: true,
+  GLV_CUMULATIVE_DEPOSITED_USD: true,
 };
 
 export async function appendUintConfigIfDifferent(
