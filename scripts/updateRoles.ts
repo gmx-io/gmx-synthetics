@@ -90,14 +90,18 @@ async function main() {
       //   role: "CONTROLLER",
       //   member: "0x352f684ab9e97a6321a13CF03A61316B681D9fD2", // old OrderHandler
       // },
+      {
+        role: "CONTROLLER",
+        member: "0x9Dc4f12Eb2d8405b499FB5B8AF79a5f64aB8a457", // old DepositHandler
+      },
       // {
       //   role: "CONTROLLER",
       //   member: "0x9E32088F3c1a5EB38D32d1Ec6ba0bCBF499DC9ac", // old WithdrawalHandler
       // },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8", // old ExchangeRouter
-      },
+      // {
+      //   role: "ROUTER_PLUGIN",
+      //   member: "0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8", // old ExchangeRouter
+      // },
     ],
     avalanche: [],
   };
@@ -116,14 +120,18 @@ async function main() {
       //   role: "CONTROLLER",
       //   member: "0x352f684ab9e97a6321a13CF03A61316B681D9fD2", // old OrderHandler
       // },
+      {
+        role: "CONTROLLER",
+        member: "0x9Dc4f12Eb2d8405b499FB5B8AF79a5f64aB8a457", // old DepositHandler
+      },
       // {
       //   role: "CONTROLLER",
       //   member: "0x9E32088F3c1a5EB38D32d1Ec6ba0bCBF499DC9ac", // old WithdrawalHandler
       // },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8", // old ExchangeRouter
-      },
+      // {
+      //   role: "ROUTER_PLUGIN",
+      //   member: "0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8", // old ExchangeRouter
+      // },
     ],
   };
 
