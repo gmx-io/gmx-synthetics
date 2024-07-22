@@ -69,7 +69,7 @@ library Errors {
     error GlvInvalidLongToken(address glv, address provided, address expected);
     error GlvInvalidShortToken(address glv, address provided, address expected);
     // GlvShiftUtils
-    error GlvMaxShiftPriceImpactFactorExceeded(uint256 effectivePriceImpactFactor);
+    error GlvMaxShiftPriceImpactFactorExceeded(uint256 effectivePriceImpactFactor, uint256 glvMaxShiftPriceImpactFactor);
     // GlvFactory
     error GlvAlreadyExists(bytes32 salt, address glv);
 

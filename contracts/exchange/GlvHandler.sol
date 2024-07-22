@@ -251,12 +251,11 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
     }
 
     function createGlvShift(
-        address glv,
         GlvShiftUtils.CreateGlvShiftParams memory params
     ) external globalNonReentrant onlyOrderKeeper returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createGlvShiftFeatureDisabledKey(address(this)));
 
-        return GlvShiftUtils.createGlvShift(dataStore, eventEmitter, glvVault, glv, params);
+        return GlvShiftUtils.createGlvShift(dataStore, eventEmitter, glvVault, params);
     }
 
     function executeGlvShift(

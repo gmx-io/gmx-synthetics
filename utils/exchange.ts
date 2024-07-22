@@ -68,6 +68,10 @@ export async function executeWithOracleParams(fixture, overrides) {
   const { signers } = fixture.accounts;
   const { oracleSalt, signerIndexes } = fixture.props;
 
+  if (tokens.length !== precisions.length || tokens.length !== minPrices.length || tokens.length !== maxPrices.length) {
+    throw new Error("`tokens`, `precisions`, `minPrices`, `maxPrices` length should be equal");
+  }
+
   if (simulate && !simulateExecute) {
     throw new Error("`simulateExecute` is required if `simulate` is true");
   }

@@ -11,6 +11,9 @@ import {
   handleGlvDeposit,
   createGlvWithdrawal,
   executeGlvWithdrawal,
+  createGlvShift,
+  handleGlvShift,
+  getGlvShiftKeys,
 } from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
 import { contractAt, deployContract } from "../../utils/deploy";
@@ -37,7 +40,7 @@ describe("Glv", () => {
   const { AddressZero, HashZero } = ethers.constants;
 
   let fixture;
-  let user0, user1, user2;
+  let user0, user1, user2, user3;
   let reader,
     dataStore,
     roleStore,
@@ -50,6 +53,7 @@ describe("Glv", () => {
     btcUsdMarket,
     solUsdMarket,
     wnt,
+    sol,
     usdc,
     wbtc,
     glvFactory,
@@ -61,7 +65,7 @@ describe("Glv", () => {
   beforeEach(async () => {
     fixture = await deployFixture();
 
-    ({ user0, user1, user2 } = fixture.accounts);
+    ({ user0, user1, user2, user3 } = fixture.accounts);
     ({
       reader,
       dataStore,
@@ -75,6 +79,7 @@ describe("Glv", () => {
       btcUsdMarket,
       solUsdMarket,
       wnt,
+      sol,
       usdc,
       wbtc,
       glvFactory,
@@ -313,6 +318,98 @@ describe("Glv", () => {
     });
   });
 
+  it("create glv shift", async () => {
+    await glvHandler.addMarket(glvAddress, ethUsdMarket.marketToken);
+    await glvHandler.addMarket(glvAddress, solUsdMarket.marketToken);
+
+    const tokens = [wnt.address, usdc.address, sol.address];
+    const precisions = [8, 18, 8];
+    const minPrices = [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4)];
+    const maxPrices = [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4)];
+
+    await handleGlvDeposit(fixture, {
+      create: {
+        glv: glvAddress,
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(9 * 5000, 6),
+        tokens,
+        precisions,
+        minPrices,
+        maxPrices,
+      },
+      execute: {
+        tokens,
+        precisions,
+        minPrices,
+        maxPrices,
+      },
+    });
+
+    await createGlvShift(fixture, {
+      glv: glvAddress,
+      fromMarket: ethUsdMarket,
+      toMarket: solUsdMarket,
+      marketTokenAmount: expandDecimals(100, 18),
+      minMarketTokens: expandDecimals(99, 18),
+      executionFee: 500,
+    });
+
+    const block = await provider.getBlock("latest");
+    const glvShiftKeys = await getGlvShiftKeys(dataStore, 0, 1);
+    expect(glvShiftKeys.length).to.eq(1);
+    const glvShift = await reader.getGlvShift(dataStore.address, glvShiftKeys[0]);
+
+    expect(glvShift.addresses.glv).eq(glvAddress);
+    expect(glvShift.addresses.fromMarket).eq(ethUsdMarket.marketToken);
+    expect(glvShift.addresses.toMarket).eq(solUsdMarket.marketToken);
+    expect(glvShift.numbers.marketTokenAmount).eq(expandDecimals(100, 18));
+    expect(glvShift.numbers.minMarketTokens).eq(expandDecimals(99, 18));
+    expect(glvShift.numbers.updatedAtTime).eq(block.timestamp);
+    expect(glvShift.numbers.executionFee).eq("500");
+  });
+
+  it.only("execute glv shift", async () => {
+    await glvHandler.addMarket(glvAddress, ethUsdMarket.marketToken);
+    await glvHandler.addMarket(glvAddress, solUsdMarket.marketToken);
+
+    const tokens = [wnt.address, usdc.address, sol.address];
+    const precisions = [8, 18, 8];
+    const minPrices = [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4)];
+    const maxPrices = [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4)];
+
+    await handleGlvDeposit(fixture, {
+      create: {
+        glv: glvAddress,
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(9 * 5000, 6),
+        tokens,
+        precisions,
+        minPrices,
+        maxPrices,
+      },
+      execute: {
+        tokens,
+        precisions,
+        minPrices,
+        maxPrices,
+      },
+    });
+
+    await handleGlvShift(fixture, {
+      create: {
+        glv: glvAddress,
+        fromMarket: ethUsdMarket,
+        toMarket: solUsdMarket,
+        marketTokenAmount: expandDecimals(100, 18),
+        minMarketTokens: expandDecimals(99, 18),
+        executionFee: 500,
+      },
+      execute: {
+        glv: glvAddress,
+      },
+    });
+  });
+
   it("create glv deposit", async () => {
     await glvHandler.addMarket(glvAddress, ethUsdMarket.marketToken);
 
@@ -326,18 +423,15 @@ describe("Glv", () => {
       longTokenSwapPath: [],
       shortTokenSwapPath: [],
       minGlvTokens: 100,
+      longTokenAmount: expandDecimals(10, 18),
+      shortTokenAmount: expandDecimals(10 * 5000, 6),
+      executionFee: "500",
       shouldUnwrapNativeToken: true,
-      executionFee: "0",
       callbackGasLimit: "200000",
       gasUsageLabel: "createGlvDeposit",
     };
 
-    await createGlvDeposit(fixture, {
-      ...params,
-      longTokenAmount: expandDecimals(10, 18),
-      shortTokenAmount: expandDecimals(10 * 5000, 6),
-      executionFee: "500",
-    });
+    await createGlvDeposit(fixture, params);
 
     const block = await provider.getBlock("latest");
     const glvDepositKeys = await getGlvDepositKeys(dataStore, 0, 1);

@@ -84,7 +84,7 @@ library Keys {
     bytes32 public constant GLV_LONG_TOKEN = keccak256(abi.encode("GLV_LONG_TOKEN"));
     bytes32 public constant GLV_SHORT_TOKEN = keccak256(abi.encode("GLV_SHORT_TOKEN"));
     bytes32 public constant GLV_DEPOSIT_LIST = keccak256(abi.encode("GLV_DEPOSIT_LIST"));
-    bytes32 public constant GLV_SHIFT_LIST = keccak256(abi.encode("GLV_SHIFTLIST"));
+    bytes32 public constant GLV_SHIFT_LIST = keccak256(abi.encode("GLV_SHIFT_LIST"));
     bytes32 public constant ACCOUNT_GLV_DEPOSIT_LIST = keccak256(abi.encode("ACCOUNT_GLV_DEPOSIT_LIST"));
     bytes32 public constant GLV_WITHDRAWAL_LIST = keccak256(abi.encode("GLV_WITHDRAWAL_LIST"));
     bytes32 public constant ACCOUNT_GLV_WITHDRAWAL_LIST = keccak256(abi.encode("ACCOUNT_GLV_WITHDRAWAL_LIST"));
