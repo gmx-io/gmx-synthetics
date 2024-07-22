@@ -78,17 +78,25 @@ async function main() {
 
   const rolesToAdd = {
     arbitrum: [
+      // {
+      //   role: "CONTROLLER",
+      //   member: "0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8", // old ExchangeRouter
+      // },
+      // {
+      //   role: "CONTROLLER",
+      //   member: "0xa11B501c2dd83Acd29F6727570f2502FAaa617F2", // old Oracle
+      // },
+      // {
+      //   role: "CONTROLLER",
+      //   member: "0x352f684ab9e97a6321a13CF03A61316B681D9fD2", // old OrderHandler
+      // },
+      // {
+      //   role: "CONTROLLER",
+      //   member: "0x9E32088F3c1a5EB38D32d1Ec6ba0bCBF499DC9ac", // old WithdrawalHandler
+      // },
       {
-        role: "CONTROLLER",
+        role: "ROUTER_PLUGIN",
         member: "0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8", // old ExchangeRouter
-      },
-      {
-        role: "CONTROLLER",
-        member: "0xa11B501c2dd83Acd29F6727570f2502FAaa617F2", // old Oracle
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x352f684ab9e97a6321a13CF03A61316B681D9fD2", // old OrderHandler
       },
     ],
     avalanche: [],
@@ -96,17 +104,25 @@ async function main() {
 
   const rolesToRemove = {
     arbitrum: [
+      // {
+      //   role: "CONTROLLER",
+      //   member: "0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8", // old ExchangeRouter
+      // },
+      // {
+      //   role: "CONTROLLER",
+      //   member: "0xa11B501c2dd83Acd29F6727570f2502FAaa617F2", // old Oracle
+      // },
+      // {
+      //   role: "CONTROLLER",
+      //   member: "0x352f684ab9e97a6321a13CF03A61316B681D9fD2", // old OrderHandler
+      // },
+      // {
+      //   role: "CONTROLLER",
+      //   member: "0x9E32088F3c1a5EB38D32d1Ec6ba0bCBF499DC9ac", // old WithdrawalHandler
+      // },
       {
-        role: "CONTROLLER",
+        role: "ROUTER_PLUGIN",
         member: "0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8", // old ExchangeRouter
-      },
-      {
-        role: "CONTROLLER",
-        member: "0xa11B501c2dd83Acd29F6727570f2502FAaa617F2", // old Oracle
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x352f684ab9e97a6321a13CF03A61316B681D9fD2", // old OrderHandler
       },
     ],
   };
