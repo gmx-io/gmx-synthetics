@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../event/EventUtils.sol";
-import "../glv/GlvDeposit.sol";
+import "../glv/glvDeposit/GlvDeposit.sol";
 
 // @title IGlvDepositCallbackReceiver
 // @dev interface for a glvDeposit callback contract

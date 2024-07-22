@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.0;
 
-import "../event/EventEmitter.sol";
-import "../event/EventUtils.sol";
-import "../utils/Cast.sol";
+import "../../event/EventEmitter.sol";
+import "../../event/EventUtils.sol";
+import "../../utils/Cast.sol";
 
 import "./GlvDeposit.sol";
 

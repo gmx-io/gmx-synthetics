@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../event/EventUtils.sol";
-import "../glv/GlvWithdrawal.sol";
+import "../glv/glvWithdrawal/GlvWithdrawal.sol";
 
 // @title IGlvWithdrawalCallbackReceiver
 // @dev interface for a glvWithdrawal callback contract

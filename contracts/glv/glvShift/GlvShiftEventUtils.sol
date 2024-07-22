@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.0;
 
-import "../event/EventEmitter.sol";
-import "../event/EventUtils.sol";
+import "../../event/EventEmitter.sol";
+import "../../event/EventUtils.sol";
 
 import "./GlvShift.sol";
 

@@ -2,16 +2,15 @@
 
 pragma solidity ^0.8.0;
 
-import "../gas/GasUtils.sol";
-import "../nonce/NonceUtils.sol";
-import "../bank/Bank.sol";
+import "../../gas/GasUtils.sol";
+import "../../nonce/NonceUtils.sol";
+import "../../bank/Bank.sol";
 
-import "../event/EventEmitter.sol";
-import "../shift/ShiftUtils.sol";
-// import "../shift/ShiftVault.sol";
-// import "../exchange/IShiftHandler.sol";
-import "./GlvUtils.sol";
-import "./GlvVault.sol";
+import "../../event/EventEmitter.sol";
+import "../../shift/ShiftUtils.sol";
+import "../GlvUtils.sol";
+import "../GlvVault.sol";
+
 import "./GlvShiftStoreUtils.sol";
 import "./GlvShiftEventUtils.sol";
 import "./GlvShift.sol";

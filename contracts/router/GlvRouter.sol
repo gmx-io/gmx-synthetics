@@ -7,6 +7,7 @@ import "../exchange/IGlvHandler.sol";
 
 contract GlvRouter is BaseRouter {
     using GlvDeposit for GlvDeposit.Props;
+    using GlvWithdrawal for GlvWithdrawal.Props;
 
     IGlvHandler public immutable glvHandler;
 
@@ -26,7 +27,6 @@ contract GlvRouter is BaseRouter {
             revert Errors.InvalidNativeTokenSender(msg.sender);
         }
     }
-
 
     function createGlvDeposit(
         GlvDepositUtils.CreateGlvDepositParams calldata params
@@ -50,6 +50,30 @@ contract GlvRouter is BaseRouter {
         }
 
         glvHandler.cancelGlvDeposit(key);
+    }
+
+    function createGlvWithdrawal(
+        GlvWithdrawalUtils.CreateGlvWithdrawalParams calldata params
+    ) external payable nonReentrant returns (bytes32) {
+        address account = msg.sender;
+
+        return glvHandler.createGlvWithdrawal(
+            account,
+            params
+        );
+    }
+
+    function cancelGlvWithdrawal(bytes32 key) external payable nonReentrant {
+        GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(dataStore, key);
+        if (glvWithdrawal.account() == address(0)) {
+            revert Errors.EmptyDeposit();
+        }
+
+        if (glvWithdrawal.account() != msg.sender) {
+            revert Errors.Unauthorized(msg.sender, "account for cancelGlvWithdrawal");
+        }
+
+        glvHandler.cancelGlvWithdrawal(key);
     }
 }
 

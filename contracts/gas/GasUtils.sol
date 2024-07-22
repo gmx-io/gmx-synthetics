@@ -13,8 +13,8 @@ import "../withdrawal/Withdrawal.sol";
 import "../shift/Shift.sol";
 import "../order/Order.sol";
 import "../order/BaseOrderUtils.sol";
-import "../glv/GlvWithdrawal.sol";
-import "../glv/GlvShift.sol";
+import "../glv/glvShift/GlvShift.sol";
+import "../glv/glvWithdrawal/GlvWithdrawal.sol";
 
 import "../bank/StrictBank.sol";
 

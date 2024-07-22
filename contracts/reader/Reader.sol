@@ -10,9 +10,9 @@ import "../deposit/DepositStoreUtils.sol";
 import "../withdrawal/WithdrawalStoreUtils.sol";
 import "../shift/ShiftStoreUtils.sol";
 
-import "../glv/GlvDepositStoreUtils.sol";
-import "../glv/GlvWithdrawalStoreUtils.sol";
-import "../glv/GlvShiftStoreUtils.sol";
+import "../glv/glvDeposit/GlvDepositStoreUtils.sol";
+import "../glv/glvWithdrawal/GlvWithdrawalStoreUtils.sol";
+import "../glv/glvShift/GlvShiftStoreUtils.sol";
 
 import "../position/Position.sol";
 import "../position/PositionUtils.sol";

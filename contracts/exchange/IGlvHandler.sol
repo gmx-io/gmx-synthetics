@@ -2,14 +2,26 @@
 
 pragma solidity ^0.8.0;
 
-import "../glv/GlvDepositUtils.sol";
+import "../glv/glvDeposit/GlvDepositUtils.sol";
+import "../glv/glvWithdrawal/GlvWithdrawalUtils.sol";
 import "../oracle/OracleUtils.sol";
 
 interface IGlvHandler {
-    function createGlvDeposit(address account, GlvDepositUtils.CreateGlvDepositParams calldata params) external returns (bytes32);
+    function createGlvDeposit(
+        address account,
+        GlvDepositUtils.CreateGlvDepositParams calldata params
+    ) external returns (bytes32);
+
     function cancelGlvDeposit(bytes32 key) external;
-    function simulateExecuteGlvDeposit(
-        bytes32 key,
-        OracleUtils.SimulatePricesParams memory params
-    ) external;
+
+    function simulateExecuteGlvDeposit(bytes32 key, OracleUtils.SimulatePricesParams memory params) external;
+
+    function createGlvWithdrawal(
+        address account,
+        GlvWithdrawalUtils.CreateGlvWithdrawalParams calldata params
+    ) external returns (bytes32);
+
+    function cancelGlvWithdrawal(bytes32 key) external;
+
+    function simulateExecuteGlvWithdrawal(bytes32 key, OracleUtils.SimulatePricesParams memory params) external;
 }

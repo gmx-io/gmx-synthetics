@@ -2,24 +2,24 @@
 
 pragma solidity ^0.8.0;
 
-import "../glv/Glv.sol";
-import "../glv/GlvVault.sol";
-import "../glv/GlvUtils.sol";
-import "../glv/GlvWithdrawal.sol";
-import "../glv/GlvWithdrawalStoreUtils.sol";
-import "../glv/GlvWithdrawalEventUtils.sol";
-import "../data/DataStore.sol";
-import "../oracle/Oracle.sol";
-import "../market/Market.sol";
-import "../market/MarketUtils.sol";
-import "../withdrawal/ExecuteWithdrawalUtils.sol";
-import "../withdrawal/WithdrawalEventUtils.sol";
-import "../withdrawal/WithdrawalUtils.sol";
-import "../data/Keys.sol";
-import "../event/EventUtils.sol";
-import "../callback/CallbackUtils.sol";
-import "../gas/GasUtils.sol";
-import "../nonce/NonceUtils.sol";
+import "../../data/DataStore.sol";
+import "../../oracle/Oracle.sol";
+import "../../market/Market.sol";
+import "../../market/MarketUtils.sol";
+import "../../withdrawal/ExecuteWithdrawalUtils.sol";
+import "../../withdrawal/WithdrawalEventUtils.sol";
+import "../../withdrawal/WithdrawalUtils.sol";
+import "../../data/Keys.sol";
+import "../../event/EventUtils.sol";
+import "../../callback/CallbackUtils.sol";
+import "../../gas/GasUtils.sol";
+import "../../nonce/NonceUtils.sol";
+import "../Glv.sol";
+import "../GlvVault.sol";
+import "../GlvUtils.sol";
+import "./GlvWithdrawal.sol";
+import "./GlvWithdrawalStoreUtils.sol";
+import "./GlvWithdrawalEventUtils.sol";
 
 library GlvWithdrawalUtils {
     using GlvWithdrawal for GlvWithdrawal.Props;

@@ -2,21 +2,22 @@
 
 pragma solidity ^0.8.0;
 
-import "../glv/Glv.sol";
-import "../glv/GlvVault.sol";
-import "../glv/GlvUtils.sol";
-import "../glv/GlvDeposit.sol";
-import "../glv/GlvDepositEventUtils.sol";
-import "../glv/GlvDepositStoreUtils.sol";
-import "../deposit/DepositVault.sol";
-import "../deposit/ExecuteDepositUtils.sol";
-import "../deposit/DepositUtils.sol";
-import "../data/DataStore.sol";
-import "../oracle/Oracle.sol";
-import "../market/Market.sol";
-import "../market/MarketUtils.sol";
-import "../data/Keys.sol";
-import "../event/EventUtils.sol";
+import "../../glv/Glv.sol";
+import "../../glv/GlvVault.sol";
+import "../../glv/GlvUtils.sol";
+import "../../deposit/DepositVault.sol";
+import "../../deposit/ExecuteDepositUtils.sol";
+import "../../deposit/DepositUtils.sol";
+import "../../data/DataStore.sol";
+import "../../oracle/Oracle.sol";
+import "../../market/Market.sol";
+import "../../market/MarketUtils.sol";
+import "../../data/Keys.sol";
+import "../../event/EventUtils.sol";
+
+import "./GlvDeposit.sol";
+import "./GlvDepositEventUtils.sol";
+import "./GlvDepositStoreUtils.sol";
 
 library GlvDepositUtils {
     using GlvDeposit for GlvDeposit.Props;

@@ -8,14 +8,14 @@ import "./BaseHandler.sol";
 
 import "../glv/Glv.sol";
 import "../glv/GlvUtils.sol";
-import "../glv/GlvDepositUtils.sol";
-import "../glv/GlvDepositStoreUtils.sol";
-import "../glv/GlvWithdrawalUtils.sol";
-import "../glv/GlvWithdrawalStoreUtils.sol";
+import "../glv/glvDeposit/GlvDepositUtils.sol";
+import "../glv/glvDeposit/GlvDepositStoreUtils.sol";
+import "../glv/glvDeposit/GlvDeposit.sol";
+import "../glv/glvWithdrawal/GlvWithdrawalUtils.sol";
+import "../glv/glvWithdrawal/GlvWithdrawalStoreUtils.sol";
+import "../glv/glvWithdrawal/GlvWithdrawal.sol";
+import "../glv/glvShift/GlvShiftUtils.sol";
 import "../glv/GlvVault.sol";
-import "../glv/GlvShiftUtils.sol";
-import "../glv/GlvDeposit.sol";
-import "../glv/GlvWithdrawal.sol";
 
 contract GlvHandler is BaseHandler, ReentrancyGuard {
     using GlvDeposit for GlvDeposit.Props;

@@ -2,12 +2,11 @@
 
 pragma solidity ^0.8.0;
 
-import "../event/EventEmitter.sol";
-import "../event/EventUtils.sol";
-import "../utils/Cast.sol";
+import "../../event/EventEmitter.sol";
+import "../../event/EventUtils.sol";
+import "../../utils/Cast.sol";
 
 import "./GlvWithdrawal.sol";
-import "./GlvWithdrawalUtils.sol";
 
 library GlvWithdrawalEventUtils {
     using GlvWithdrawal for GlvWithdrawal.Props;
