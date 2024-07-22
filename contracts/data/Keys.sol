@@ -119,11 +119,14 @@ library Keys {
     bytes32 public constant CREATE_GLV_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("CREATE_GLV_DEPOSIT_FEATURE_DISABLED"));
     bytes32 public constant CANCEL_GLV_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("CANCEL_GLV_DEPOSIT_FEATURE_DISABLED"));
     bytes32 public constant EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED"));
+
     bytes32 public constant CREATE_GLV_WITHDRAWAL_FEATURE_DISABLED = keccak256(abi.encode("CREATE_GLV_WITHDRAWAL_FEATURE_DISABLED"));
     bytes32 public constant CANCEL_GLV_WITHDRAWAL_FEATURE_DISABLED = keccak256(abi.encode("CANCEL_GLV_WITHDRAWAL_FEATURE_DISABLED"));
     bytes32 public constant EXECUTE_GLV_WITHDRAWAL_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_GLV_WITHDRAWAL_FEATURE_DISABLED"));
-    bytes32 public constant GLV_CREATE_SHIFT_FEATURE_DISABLED = keccak256(abi.encode("GLV_CREATE_SHIFT_FEATURE_DISABLED"));
-    bytes32 public constant GLV_EXECUTE_SHIFT_FEATURE_DISABLED = keccak256(abi.encode("GLV_EXECUTE_SHIFT_FEATURE_DISABLED"));
+
+    bytes32 public constant CREATE_GLV_SHIFT_FEATURE_DISABLED = keccak256(abi.encode("CREATE_GLV_SHIFT_FEATURE_DISABLED"));
+    bytes32 public constant CANCEL_GLV_SHIFT_FEATURE_DISABLED = keccak256(abi.encode("CANCEL_GLV_SHIFT_FEATURE_DISABLED"));
+    bytes32 public constant EXECUTE_GLV_SHIFT_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_GLV_SHIFT_FEATURE_DISABLED"));
 
     // @dev key for whether the create deposit feature is disabled
     bytes32 public constant CREATE_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("CREATE_DEPOSIT_FEATURE_DISABLED"));
@@ -639,16 +642,16 @@ library Keys {
         ));
     }
 
-    function glvCreateShiftFeatureDisabledKey(address module) internal pure returns (bytes32) {
+    function createGlvShiftFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            GLV_CREATE_SHIFT_FEATURE_DISABLED,
+            CREATE_GLV_SHIFT_FEATURE_DISABLED,
             module
         ));
     }
 
-    function glvExecuteShiftFeatureDisabledKey(address module) internal pure returns (bytes32) {
+    function executeGlvShiftFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            GLV_EXECUTE_SHIFT_FEATURE_DISABLED,
+            EXECUTE_GLV_SHIFT_FEATURE_DISABLED,
             module
         ));
     }

@@ -59,7 +59,7 @@ library TokenUtils {
             revert Errors.EmptyTokenTranferGasLimit(token);
         }
 
-        (bool success0, bytes memory returndata2) = nonRevertingTransferWithGasLimit(
+        (bool success0, /* bytes memory returndata */) = nonRevertingTransferWithGasLimit(
             IERC20(token),
             receiver,
             amount,
@@ -67,8 +67,6 @@ library TokenUtils {
         );
 
         if (success0) { return; }
-
-        ErrorUtils.revertWithCustomError(returndata2);
 
         address holdingAddress = dataStore.getAddress(Keys.HOLDING_ADDRESS);
 

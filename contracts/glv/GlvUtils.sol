@@ -9,8 +9,6 @@ import "../market/Market.sol";
 import "../market/MarketUtils.sol";
 import "./GlvEventUtils.sol";
 
-import "hardhat/console.sol";
-
 library GlvUtils {
     using SafeCast for int256;
     using SafeCast for uint256;
@@ -38,16 +36,8 @@ library GlvUtils {
 
         address[] memory marketAddresses = dataStore.getAddressValuesAt(cache.marketListKey, 0, cache.marketCount);
         for (uint256 i = 0; i < marketAddresses.length; i++) {
-            console.log("  loop", i);
             address marketAddress = marketAddresses[i];
-            console.log("  market", marketAddress);
             Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
-            console.log(
-                "  prices",
-                oracle.getPrimaryPrice(market.indexToken).max,
-                oracle.getPrimaryPrice(market.longToken).max,
-                oracle.getPrimaryPrice(market.shortToken).max
-            );
             (int256 marketTokenPrice, ) = MarketUtils.getMarketTokenPrice(
                 dataStore,
                 market,
@@ -57,15 +47,12 @@ library GlvUtils {
                 Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
                 maximize
             );
-            console.log("  marketTokenPrice", marketTokenPrice.toUint256());
 
             if (marketTokenPrice < 0) {
-                console.log("  error");
                 revert Errors.InvalidMarketTokenPrice(marketAddress, marketTokenPrice);
             }
 
             uint256 balance = IERC20(marketAddress).balanceOf(glv);
-            console.log("  balance", balance);
 
             glvValue += Precision.mulDiv(balance, marketTokenPrice.toUint256(), Precision.WEI_PRECISION);
         }
@@ -80,14 +67,10 @@ library GlvUtils {
         uint256 glvValue = GlvUtils.getValue(dataStore, oracle, glv, maximize);
         uint256 glvSupply = ERC20(glv).totalSupply();
 
-        console.log("getGlvTokenPrice", glvValue, glvSupply);
-
         // if the supply is zero then treat the market token price as 1 USD
         if (glvSupply == 0) {
-            console.log("case0");
             return Precision.FLOAT_PRECISION;
         }
-        console.log("case1");
 
         return glvValue / glvSupply;
     }

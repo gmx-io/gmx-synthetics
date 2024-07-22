@@ -115,6 +115,8 @@ export async function executeGlvDeposit(fixture, overrides: any = {}) {
     minPrices,
     maxPrices,
     execute: glvHandler.executeGlvDeposit,
+    simulateExecute: glvHandler.simulateExecuteGlvDeposit,
+    simulate: overrides.simulate,
     gasUsageLabel,
     dataStreamTokens,
     dataStreamData,

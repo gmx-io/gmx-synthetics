@@ -17,8 +17,6 @@ import "../glv/GlvShiftUtils.sol";
 import "../glv/GlvDeposit.sol";
 import "../glv/GlvWithdrawal.sol";
 
-import "hardhat/console.sol";
-
 contract GlvHandler is BaseHandler, ReentrancyGuard {
     using GlvDeposit for GlvDeposit.Props;
     using GlvShift for GlvShift.Props;
@@ -52,7 +50,6 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         bytes32 key,
         OracleUtils.SetPricesParams calldata oracleParams
     ) external globalNonReentrant onlyOrderKeeper withOraclePrices(oracleParams) {
-        console.log("hello");
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
@@ -65,7 +62,6 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
 
         uint256 executionGas = GasUtils.getExecutionGas(_dataStore, startingGas);
 
-        console.log("hello2");
         try this._executeGlvDeposit{gas: executionGas}(key, glvDeposit, msg.sender) {} catch (
             bytes memory reasonBytes
         ) {
@@ -85,8 +81,6 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
             startingGas: startingGas,
             keeper: keeper
         });
-
-        console.log("hello3");
 
         GlvDepositUtils.executeGlvDeposit(params, glvDeposit);
     }
@@ -260,7 +254,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         address glv,
         GlvShiftUtils.CreateGlvShiftParams memory params
     ) external globalNonReentrant onlyOrderKeeper returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.glvCreateShiftFeatureDisabledKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.createGlvShiftFeatureDisabledKey(address(this)));
 
         return GlvShiftUtils.createGlvShift(dataStore, eventEmitter, glvVault, glv, params);
     }
@@ -272,7 +266,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
-        FeatureUtils.validateFeature(dataStore, Keys.glvExecuteShiftFeatureDisabledKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.executeGlvShiftFeatureDisabledKey(address(this)));
 
         GlvShift.Props memory glvShift = GlvShiftStoreUtils.get(_dataStore, key);
         uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvShiftGasLimit(_dataStore);

@@ -245,13 +245,6 @@ library GlvWithdrawalUtils {
             WithdrawalUtils.WithdrawalType.Glv
         );
 
-        console.log("contract glvWithdrawal.glv(): %s market %s balance of market token %s",
-            glvWithdrawal.glv(),
-            glvWithdrawal.market(),
-            ERC20(glvWithdrawal.market()).balanceOf(glvWithdrawal.glv())
-        );
-        console.log("marketTokenAmount %s", marketTokenAmount);
-
         Bank(payable(glvWithdrawal.glv())).transferOut(
             glvWithdrawal.market(),
             address(params.glvVault),

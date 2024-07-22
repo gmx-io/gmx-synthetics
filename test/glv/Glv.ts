@@ -277,7 +277,7 @@ describe("Glv", () => {
     expect(glvWithdrawal.flags.shouldUnwrapNativeToken).eq(true);
   });
 
-  it.only("execute glv withdrawal", async () => {
+  it("execute glv withdrawal", async () => {
     await glvHandler.addMarket(glvAddress, ethUsdMarket.marketToken);
 
     await handleGlvDeposit(fixture, {
@@ -310,7 +310,6 @@ describe("Glv", () => {
     await executeGlvWithdrawal(fixture, {
       gasUsageLabel: "executeGlvWithdrawal",
       glv: glvAddress,
-      simulate: true,
     });
   });
 
@@ -371,6 +370,9 @@ describe("Glv", () => {
         glv: glvAddress,
         longTokenAmount: expandDecimals(10, 18),
         shortTokenAmount: expandDecimals(9 * 5000, 6),
+      },
+      execute: {
+        simulate: true,
       },
     });
 
