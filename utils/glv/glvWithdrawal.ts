@@ -22,6 +22,7 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
   const { wallet, user0 } = fixture.accounts;
 
   const glv = overrides.glv || ethUsdGlvAddress;
+  const sender = overrides.sender || wallet;
   const account = overrides.account || user0;
   const receiver = overrides.receiver || account;
   const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
@@ -39,7 +40,14 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
   await wnt.mint(glvVault.address, executionFee);
 
   const glvToken = await contractAt("Glv", glv);
-  await glvToken.connect(account).transfer(glvVault.address, glvTokenAmount);
+
+  if (glvTokenAmount.gt(0)) {
+    const glvTokenBalance = await glvToken.balanceOf(sender.address);
+    if (glvTokenBalance.lt(glvTokenAmount)) {
+      await glvToken.mint(sender.address, glvTokenAmount);
+    }
+    await glvToken.connect(sender).transfer(glvVault.address, glvTokenAmount);
+  }
 
   const params = {
     receiver: receiver.address,
@@ -64,7 +72,7 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
   }
 
   await logGasUsage({
-    tx: glvHandler.connect(wallet).createGlvWithdrawal(account.address, params),
+    tx: glvHandler.connect(sender).createGlvWithdrawal(account.address, params),
     label: overrides.gasUsageLabel,
   });
 }

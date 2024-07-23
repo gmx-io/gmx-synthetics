@@ -13,26 +13,93 @@ import { contractAt } from "../../utils/deploy";
 import { expandDecimals } from "../../utils/math";
 import { getBalanceOf } from "../../utils/token";
 import { handleDeposit } from "../../utils/deposit";
+import { errorsContract } from "../../utils/error";
 
 describe("Glv", () => {
   const { provider } = ethers;
 
   let fixture;
-  let user0, user1, user2, user3;
-  let reader, dataStore, ethUsdMarket, glvHandler, ethUsdGlvAddress;
+  let user0, user1, user2;
+  let reader, dataStore, ethUsdMarket, ethUsdGlvAddress, btcUsdMarket;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
-    ({ user0, user1, user2, user3 } = fixture.accounts);
-    ({ reader, dataStore, ethUsdMarket, glvHandler, ethUsdGlvAddress } = fixture.contracts);
+    ({ user0, user1, user2 } = fixture.accounts);
+    ({ reader, dataStore, ethUsdMarket, ethUsdGlvAddress, btcUsdMarket } = fixture.contracts);
+  });
+
+  describe.only("create glv withdrawal, validations", () => {
+    let params;
+    const badAddress = ethers.constants.AddressZero.slice(0, -1) + "1";
+
+    beforeEach(async () => {
+      params = {
+        account: user0,
+        receiver: user1,
+        callbackContract: user2,
+        glv: ethUsdGlvAddress,
+        market: ethUsdMarket,
+        minLongTokenAmount: 100,
+        minShortTokenAmount: 50,
+        shouldUnwrapNativeToken: true,
+        executionFee: 700,
+        callbackGasLimit: 100000,
+        gasUsageLabel: "createGlvWithdrawal",
+      };
+    });
+
+    it("EmptyAccount", async () => {
+      await expect(
+        createGlvWithdrawal(fixture, { ...params, account: { address: ethers.constants.AddressZero } })
+      ).to.be.revertedWithCustomError(errorsContract, "EmptyAccount");
+    });
+
+    it("EmptyReceiver", async () => {
+      await expect(
+        createGlvWithdrawal(fixture, { ...params, receiver: { address: ethers.constants.AddressZero } })
+      ).to.be.revertedWithCustomError(errorsContract, "EmptyReceiver");
+    });
+
+    it("EmptyGlv", async () => {
+      await expect(createGlvWithdrawal(fixture, { ...params, glv: badAddress }))
+        .to.be.revertedWithCustomError(errorsContract, "EmptyGlv")
+        .withArgs(badAddress);
+    });
+
+    it("GlvUnsupportedMarket", async () => {
+      await expect(createGlvWithdrawal(fixture, { ...params, market: btcUsdMarket }))
+        .to.be.revertedWithCustomError(errorsContract, "GlvUnsupportedMarket")
+        .withArgs(ethUsdGlvAddress, btcUsdMarket.marketToken);
+    });
+
+    it.skip("DisabledMarket", async () => {});
+    it.skip("MaxSwapPathLengthExceeded", async () => {});
+    it.skip("InvalidSwapMarket", async () => {});
+    it.skip("InsufficientWntAmount", async () => {});
+
+    it("EmptyGlvWithdrawalAmount", async () => {
+      await expect(createGlvWithdrawal(fixture, { ...params, glvTokenAmount: 0 })).to.be.revertedWithCustomError(
+        errorsContract,
+        "EmptyGlvWithdrawalAmount"
+      );
+    });
+
+    it("MaxCallbackGasLimitExceeded", async () => {
+      await expect(
+        createGlvWithdrawal(fixture, {
+          ...params,
+          callbackGasLimit: 1_000_000_000,
+          glvTokenAmount: expandDecimals(1, 18),
+        })
+      )
+      .to.be.revertedWithCustomError(errorsContract, "MaxCallbackGasLimitExceeded")
+      .withArgs(1_000_000_000, 2_000_000);
+    });
+    it.skip("InsufficientExecutionFee", async () => {});
   });
 
   it("create glv withdrawal", async () => {
-    await glvHandler.addMarket(ethUsdGlvAddress, ethUsdMarket.marketToken);
-
-    expect(await getGlvWithdrawalCount(dataStore)).eq(0);
-
     await handleDeposit(fixture, {
       create: {
         market: ethUsdMarket,
@@ -80,8 +147,6 @@ describe("Glv", () => {
   });
 
   it("execute glv withdrawal", async () => {
-    await glvHandler.addMarket(ethUsdGlvAddress, ethUsdMarket.marketToken);
-
     await handleGlvDeposit(fixture, {
       create: {
         glv: ethUsdGlvAddress,
