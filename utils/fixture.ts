@@ -4,6 +4,7 @@ import { expandDecimals } from "./math";
 import { hashData } from "./hash";
 import { getMarketTokenAddress, DEFAULT_MARKET_TYPE } from "./market";
 import { getSyntheticTokenAddress } from "./token";
+import { getGlvAddress } from "./glv";
 
 export async function deployFixture() {
   await hre.deployments.fixture();
@@ -186,6 +187,15 @@ export async function deployFixture() {
   );
   const solUsdMarket = await reader.getMarket(dataStore.address, solUsdMarketAddress);
 
+  const ethUsdGlvAddress = getGlvAddress(
+    wnt.address,
+    usdc.address,
+    ethers.constants.HashZero,
+    glvFactory.address,
+    roleStore.address,
+    dataStore.address
+  );
+
   return {
     accountList,
     getContract: async (contractName) => {
@@ -275,6 +285,7 @@ export async function deployFixture() {
       glvFactory,
       glvHandler,
       glvVault,
+      ethUsdGlvAddress,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };

@@ -1,10 +1,6 @@
 import { ethers } from "hardhat";
-import { calculateCreate2 } from "eth-create2-calculator";
-
-import GlvArtifact from "../../artifacts/contracts/glv/Glv.sol/Glv.json";
 
 import { contractAt } from "../deploy";
-import { hashData } from "../hash";
 import { bigNumberify, expandDecimals } from "../math";
 import { logGasUsage } from "../gas";
 import * as keys from "../keys";
@@ -12,22 +8,6 @@ import { executeWithOracleParams } from "../exchange";
 import { parseLogs } from "../event";
 import { getCancellationReason, getErrorString } from "../error";
 import { expect } from "chai";
-
-export function getGlvAddress(
-  longToken: string,
-  shortToken: string,
-  glvType: string,
-  glvFactoryAddress: string,
-  roleStoreAddress: string,
-  dataStoreAddress: string
-) {
-  const salt = hashData(["string", "address", "address", "bytes32"], ["GMX_GLV", longToken, shortToken, glvType]);
-  const byteCode = GlvArtifact.bytecode;
-  return calculateCreate2(glvFactoryAddress, salt, byteCode, {
-    params: [roleStoreAddress, dataStoreAddress],
-    types: ["address", "address"],
-  });
-}
 
 export function getGlvWithdrawalKeys(dataStore, start, end) {
   return dataStore.getBytes32ValuesAt(keys.GLV_WITHDRAWAL_LIST, start, end);
@@ -38,10 +18,10 @@ export function getGlvWithdrawalCount(dataStore) {
 }
 
 export async function createGlvWithdrawal(fixture, overrides: any = {}) {
-  const { glvVault, glvHandler, wnt, ethUsdMarket } = fixture.contracts;
+  const { glvVault, glvHandler, wnt, ethUsdMarket, ethUsdGlvAddress } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
-  const glv = overrides.glv;
+  const glv = overrides.glv || ethUsdGlvAddress;
   const account = overrides.account || user0;
   const receiver = overrides.receiver || account;
   const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };

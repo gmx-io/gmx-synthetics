@@ -57,8 +57,9 @@ export async function createGlvShift(fixture, overrides: any = {}) {
 }
 
 export async function executeGlvShift(fixture, overrides: any = {}) {
-  const { dataStore, glvHandler, wnt, usdc, sol } = fixture.contracts;
+  const { dataStore, glvHandler, wnt, usdc, sol, ethUsdGlvAddress } = fixture.contracts;
   const { gasUsageLabel } = overrides;
+  const glv = overrides.glv || ethUsdGlvAddress;
   const tokens = overrides.tokens || [wnt.address, usdc.address, sol.address];
   const precisions = overrides.precisions || [8, 18, 8];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4)];
@@ -80,7 +81,7 @@ export async function executeGlvShift(fixture, overrides: any = {}) {
   }
 
   const params: any = {
-    glv: overrides.glv,
+    glv: glv,
     key: glvShiftKey,
     oracleBlockNumber,
     tokens,

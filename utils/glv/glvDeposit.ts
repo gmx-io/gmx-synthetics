@@ -18,10 +18,10 @@ export function getGlvDepositCount(dataStore) {
 }
 
 export async function createGlvDeposit(fixture, overrides: any = {}) {
-  const { glvVault, glvHandler, wnt, ethUsdMarket } = fixture.contracts;
+  const { glvVault, glvHandler, wnt, ethUsdMarket, ethUsdGlvAddress } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
-  const glv = overrides.glv;
+  const glv = overrides.glv || ethUsdGlvAddress;
   const sender = overrides.sender || wallet;
   const account = overrides.account || user0;
   const receiver = overrides.receiver || account;
@@ -84,12 +84,12 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
 }
 
 export async function executeGlvDeposit(fixture, overrides: any = {}) {
-  const { reader, dataStore, glvHandler, wnt, usdc } = fixture.contracts;
+  const { reader, dataStore, glvHandler, wnt, usdc, sol } = fixture.contracts;
   const { gasUsageLabel } = overrides;
-  const tokens = overrides.tokens || [wnt.address, usdc.address];
-  const precisions = overrides.precisions || [8, 18];
-  const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
-  const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
+  const tokens = overrides.tokens || [wnt.address, usdc.address, sol.address];
+  const precisions = overrides.precisions || [8, 18, 8];
+  const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4)];
+  const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4)];
   const glvDepositKeys = await getGlvDepositKeys(dataStore, 0, 1);
   const dataStreamTokens = overrides.dataStreamTokens || [];
   const dataStreamData = overrides.dataStreamData || [];
