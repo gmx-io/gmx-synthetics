@@ -1,10 +1,5 @@
 import { ethers } from "hardhat";
-import { calculateCreate2 } from "eth-create2-calculator";
 
-import GlvArtifact from "../../artifacts/contracts/glv/Glv.sol/Glv.json";
-
-import { contractAt } from "../deploy";
-import { hashData } from "../hash";
 import { bigNumberify, expandDecimals } from "../math";
 import { logGasUsage } from "../gas";
 import * as keys from "../keys";
@@ -15,7 +10,7 @@ import { expect } from "chai";
 
 export async function createGlvShift(fixture, overrides: any = {}) {
   const { glvVault, glvHandler, wnt, ethUsdMarket, solUsdMarket } = fixture.contracts;
-  const { wallet, user0 } = fixture.accounts;
+  const { wallet } = fixture.accounts;
 
   const glv = overrides.glv;
   const sender = overrides.sender || wallet;

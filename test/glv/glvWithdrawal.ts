@@ -9,10 +9,9 @@ import {
   executeGlvWithdrawal,
 } from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
-import { contractAt, deployContract } from "../../utils/deploy";
-import { bigNumberify, expandDecimals, decimalToFloat } from "../../utils/math";
-import { getBalanceOf, getSupplyOf } from "../../utils/token";
-import { getClaimableFeeAmount } from "../../utils/fee";
+import { contractAt } from "../../utils/deploy";
+import { expandDecimals } from "../../utils/math";
+import { getBalanceOf } from "../../utils/token";
 import { handleDeposit } from "../../utils/deposit";
 
 describe("Glv", () => {
@@ -20,52 +19,13 @@ describe("Glv", () => {
 
   let fixture;
   let user0, user1, user2, user3;
-  let reader,
-    dataStore,
-    roleStore,
-    depositVault,
-    depositHandler,
-    depositStoreUtils,
-    ethUsdMarket,
-    ethUsdSpotOnlyMarket,
-    ethUsdSingleTokenMarket2,
-    btcUsdMarket,
-    solUsdMarket,
-    wnt,
-    sol,
-    usdc,
-    wbtc,
-    glvFactory,
-    glvHandler,
-    glvType,
-    ethUsdGlvAddress,
-    config;
+  let reader, dataStore, ethUsdMarket, glvHandler, ethUsdGlvAddress;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
     ({ user0, user1, user2, user3 } = fixture.accounts);
-    ({
-      reader,
-      dataStore,
-      roleStore,
-      depositVault,
-      depositHandler,
-      depositStoreUtils,
-      ethUsdMarket,
-      ethUsdSpotOnlyMarket,
-      ethUsdSingleTokenMarket2,
-      btcUsdMarket,
-      solUsdMarket,
-      wnt,
-      sol,
-      usdc,
-      wbtc,
-      glvFactory,
-      glvHandler,
-      config,
-      ethUsdGlvAddress,
-    } = fixture.contracts);
+    ({ reader, dataStore, ethUsdMarket, glvHandler, ethUsdGlvAddress } = fixture.contracts);
   });
 
   it("create glv withdrawal", async () => {
