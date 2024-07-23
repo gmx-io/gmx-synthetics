@@ -370,10 +370,6 @@ library GlvDepositUtils {
         startingGas -= gasleft() / 63;
 
         GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(dataStore, key);
-        if (glvDeposit.account() == address(0)) {
-            revert Errors.EmptyGlvDeposit();
-        }
-
         GlvDepositStoreUtils.remove(dataStore, key, glvDeposit.account());
 
         if (glvDeposit.initialLongTokenAmount() > 0) {

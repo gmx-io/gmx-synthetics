@@ -73,10 +73,10 @@ describe("Glv", () => {
         .withArgs(ethUsdGlvAddress, btcUsdMarket.marketToken);
     });
 
-    it.skip("DisabledMarket", async () => {});
-    it.skip("MaxSwapPathLengthExceeded", async () => {});
-    it.skip("InvalidSwapMarket", async () => {});
-    it.skip("InsufficientWntAmount", async () => {});
+    it.skip("DisabledMarket");
+    it.skip("MaxSwapPathLengthExceeded");
+    it.skip("InvalidSwapMarket");
+    it.skip("InsufficientWntAmount");
 
     it("EmptyGlvWithdrawalAmount", async () => {
       await expect(createGlvWithdrawal(fixture, { ...params, glvTokenAmount: 0 })).to.be.revertedWithCustomError(
@@ -93,10 +93,10 @@ describe("Glv", () => {
           glvTokenAmount: expandDecimals(1, 18),
         })
       )
-      .to.be.revertedWithCustomError(errorsContract, "MaxCallbackGasLimitExceeded")
-      .withArgs(1_000_000_000, 2_000_000);
+        .to.be.revertedWithCustomError(errorsContract, "MaxCallbackGasLimitExceeded")
+        .withArgs(1_000_000_000, 2_000_000);
     });
-    it.skip("InsufficientExecutionFee", async () => {});
+    it.skip("InsufficientExecutionFee");
   });
 
   it("create glv withdrawal", async () => {

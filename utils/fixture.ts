@@ -68,6 +68,7 @@ export async function deployFixture() {
   const marketFactory = await hre.ethers.getContract("MarketFactory");
   const glvFactory = await hre.ethers.getContract("GlvFactory");
   const glvHandler = await hre.ethers.getContract("GlvHandler");
+  const glvRouter = await hre.ethers.getContract("GlvRouter");
   const depositHandler = await hre.ethers.getContract("DepositHandler");
   const depositUtils = await hre.ethers.getContract("DepositUtils");
   const executeDepositUtils = await hre.ethers.getContract("ExecuteDepositUtils");
@@ -285,6 +286,7 @@ export async function deployFixture() {
       glvFactory,
       glvHandler,
       glvVault,
+      glvRouter,
       ethUsdGlvAddress,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },

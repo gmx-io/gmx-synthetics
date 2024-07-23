@@ -309,10 +309,6 @@ library GlvWithdrawalUtils {
         startingGas -= gasleft() / 63;
 
         GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(dataStore, key);
-        if (glvWithdrawal.account() == address(0)) {
-            revert Errors.EmptyGlvWithdrawal();
-        }
-
         if (glvWithdrawal.glvTokenAmount() == 0) {
             revert Errors.EmptyGlvWithdrawalAmount();
         }

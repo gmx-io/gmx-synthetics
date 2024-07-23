@@ -42,7 +42,7 @@ contract GlvRouter is BaseRouter {
     function cancelGlvDeposit(bytes32 key) external payable nonReentrant {
         GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(dataStore, key);
         if (glvDeposit.account() == address(0)) {
-            revert Errors.EmptyDeposit();
+            revert Errors.EmptyGlvDeposit();
         }
 
         if (glvDeposit.account() != msg.sender) {
@@ -66,7 +66,7 @@ contract GlvRouter is BaseRouter {
     function cancelGlvWithdrawal(bytes32 key) external payable nonReentrant {
         GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(dataStore, key);
         if (glvWithdrawal.account() == address(0)) {
-            revert Errors.EmptyDeposit();
+            revert Errors.EmptyGlvWithdrawal();
         }
 
         if (glvWithdrawal.account() != msg.sender) {
