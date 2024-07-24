@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "./BaseHandler.sol";
 
-import "../glv/Glv.sol";
 import "../glv/GlvUtils.sol";
 import "../glv/glvDeposit/GlvDepositUtils.sol";
 import "../glv/glvDeposit/GlvDepositStoreUtils.sol";

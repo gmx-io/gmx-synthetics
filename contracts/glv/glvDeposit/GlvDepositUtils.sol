@@ -2,9 +2,6 @@
 
 pragma solidity ^0.8.0;
 
-import "../../glv/Glv.sol";
-import "../../glv/GlvVault.sol";
-import "../../glv/GlvUtils.sol";
 import "../../deposit/DepositVault.sol";
 import "../../deposit/ExecuteDepositUtils.sol";
 import "../../deposit/DepositUtils.sol";
@@ -15,6 +12,9 @@ import "../../market/MarketUtils.sol";
 import "../../data/Keys.sol";
 import "../../event/EventUtils.sol";
 
+import "../GlvVault.sol";
+import "../GlvUtils.sol";
+import "../GlvToken.sol";
 import "./GlvDeposit.sol";
 import "./GlvDepositEventUtils.sol";
 import "./GlvDepositStoreUtils.sol";
@@ -213,7 +213,7 @@ library GlvDepositUtils {
             revert Errors.MinMarketTokens(cache.mintAmount, glvDeposit.minGlvTokens());
         }
 
-        Glv(payable(glvDeposit.glv())).mint(glvDeposit.receiver(), cache.mintAmount);
+        GlvToken(payable(glvDeposit.glv())).mint(glvDeposit.receiver(), cache.mintAmount);
 
         GlvUtils.applyDeltaToCumulativeDepositUsd(
             params.dataStore,

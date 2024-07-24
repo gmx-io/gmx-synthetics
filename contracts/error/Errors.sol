@@ -72,6 +72,8 @@ library Errors {
     error GlvMaxShiftPriceImpactFactorExceeded(uint256 effectivePriceImpactFactor, uint256 glvMaxShiftPriceImpactFactor);
     // GlvFactory
     error GlvAlreadyExists(bytes32 salt, address glv);
+    // GlvStoreUtils
+    error GlvNotFound(address key);
 
     // DepositStoreUtils errors
     error DepositNotFound(bytes32 key);

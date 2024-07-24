@@ -14,9 +14,9 @@ import "../../event/EventUtils.sol";
 import "../../callback/CallbackUtils.sol";
 import "../../gas/GasUtils.sol";
 import "../../nonce/NonceUtils.sol";
-import "../Glv.sol";
 import "../GlvVault.sol";
 import "../GlvUtils.sol";
+import "../GlvToken.sol";
 import "./GlvWithdrawal.sol";
 import "./GlvWithdrawalStoreUtils.sol";
 import "./GlvWithdrawalEventUtils.sol";
@@ -178,7 +178,7 @@ library GlvWithdrawalUtils {
             -usdValue.toInt256()
         );
 
-        Glv(payable(glvWithdrawal.glv())).mint(glvWithdrawal.receiver(), cache.marketTokenAmount);
+        GlvToken(payable(glvWithdrawal.glv())).mint(glvWithdrawal.receiver(), cache.marketTokenAmount);
 
         GlvWithdrawalEventUtils.emitGlvWithdrawalExecuted(params.eventEmitter, params.key, glvWithdrawal.account());
 

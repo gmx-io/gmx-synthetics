@@ -2,7 +2,9 @@
 
 pragma solidity ^0.8.0;
 
+import "./GlvToken.sol";
 import "./Glv.sol";
+import "./GlvStoreUtils.sol";
 import "../event/EventEmitter.sol";
 import "../utils/Cast.sol";
 
@@ -25,36 +27,30 @@ contract GlvFactory is RoleModule {
         eventEmitter = _eventEmitter;
     }
 
-    function getGlvSalt(address longToken, address shortToken, bytes32 glvType) internal pure returns (bytes32) {
-        return keccak256(abi.encode("GMX_GLV", longToken, shortToken, glvType));
-    }
-
     function createGlv(
         address longToken,
         address shortToken,
         bytes32 glvType
-    ) external onlyMarketKeeper returns (address) {
-        bytes32 salt = getGlvSalt(longToken, shortToken, glvType);
-        address glvAddress = dataStore.getAddress(salt);
-        if (glvAddress != address(0)) {
-            revert Errors.GlvAlreadyExists(glvType, glvAddress);
+    ) external onlyMarketKeeper returns (Glv.Props memory) {
+        bytes32 salt = keccak256(abi.encode("GMX_GLV", longToken, shortToken, glvType));
+
+        address existingGlvAddress = dataStore.getAddress(GlvStoreUtils.getGlvSaltHash(salt));
+        if (existingGlvAddress != address(0)) {
+            revert Errors.GlvAlreadyExists(glvType, existingGlvAddress);
         }
 
-        Glv glv = new Glv{salt: salt}(roleStore, dataStore);
+        GlvToken glvToken = new GlvToken{salt: salt}(roleStore, dataStore);
 
-        // the glvType is not stored with the glv, it is mainly used to ensure
-        // glvs with the same longToken and shortToken can be created if needed
-        dataStore.addAddress(Keys.GLV_LIST, address(glv));
-        dataStore.setAddress(salt, address(glv));
-        dataStore.setAddress(Keys.glvLongTokenKey(address(glv)), longToken);
-        dataStore.setAddress(Keys.glvShortTokenKey(address(glv)), shortToken);
+        Glv.Props memory glv = Glv.Props({glvToken: address(glvToken), longToken: longToken, shortToken: shortToken});
 
-        emitGlvCreated(address(glv), longToken, shortToken, salt);
+        GlvStoreUtils.set(dataStore, address(glvToken), salt, glv);
 
-        return address(glv);
+        emitGlvCreated(address(glvToken), salt, longToken, shortToken);
+
+        return glv;
     }
 
-    function emitGlvCreated(address glvAddress, address longToken, address shortToken, bytes32 salt) internal {
+    function emitGlvCreated(address glvAddress, bytes32 salt, address longToken, address shortToken) internal {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(3);
