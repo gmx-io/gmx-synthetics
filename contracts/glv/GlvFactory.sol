@@ -49,16 +49,18 @@ contract GlvFactory is RoleModule {
         dataStore.setAddress(Keys.glvLongTokenKey(address(glv)), longToken);
         dataStore.setAddress(Keys.glvShortTokenKey(address(glv)), shortToken);
 
-        emitGlvCreated(address(glv), salt);
+        emitGlvCreated(address(glv), longToken, shortToken, salt);
 
         return address(glv);
     }
 
-    function emitGlvCreated(address glvAddress, bytes32 salt) internal {
+    function emitGlvCreated(address glvAddress, address longToken, address shortToken, bytes32 salt) internal {
         EventUtils.EventLogData memory eventData;
 
-        eventData.addressItems.initItems(1);
+        eventData.addressItems.initItems(3);
         eventData.addressItems.setItem(0, "glv", glvAddress);
+        eventData.addressItems.setItem(1, "longToken", longToken);
+        eventData.addressItems.setItem(2, "shortToken", shortToken);
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "salt", salt);
