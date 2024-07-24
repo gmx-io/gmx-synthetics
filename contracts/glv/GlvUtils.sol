@@ -114,7 +114,7 @@ library GlvUtils {
 
         validateCumulativeDepositUsd(dataStore, glv, market, nextValue);
 
-        GlvEventUtils.emitCumulativeDepositUsdUpdated(eventEmitter, glv, market, deltaUsd, nextValue);
+        GlvEventUtils.emitGlvCumulativeDepositUsdUpdated(eventEmitter, glv, market, deltaUsd, nextValue);
 
         return nextValue;
     }
@@ -186,7 +186,7 @@ library GlvUtils {
         return dataStore.getUint(Keys.glvMaxMarketTokenBalanceUsdKey(glv, market));
     }
 
-    function addMarket(DataStore dataStore, address glv, address marketAddress) external {
+    function addMarket(DataStore dataStore, EventEmitter eventEmitter, address glv, address marketAddress) external {
         validateGlv(dataStore, glv);
 
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, marketAddress);
@@ -203,6 +203,8 @@ library GlvUtils {
             revert Errors.GlvMarketAlreadyExists(glv, marketAddress);
         }
         dataStore.addAddress(key, marketAddress);
+
+        GlvEventUtils.emitGlvMarketAdded(eventEmitter, glv, market.marketToken);
     }
 
     function getGlvTokens(DataStore dataStore, address glv) internal view returns (address, address) {

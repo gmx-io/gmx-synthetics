@@ -318,6 +318,6 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
     }
 
     function addMarket(address glv, address market) external onlyConfigKeeper {
-        GlvUtils.addMarket(dataStore, glv, market);
+        GlvUtils.addMarket(dataStore, eventEmitter, glv, market);
     }
 }

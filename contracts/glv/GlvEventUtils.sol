@@ -15,7 +15,7 @@ library GlvEventUtils {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
-    function emitCumulativeDepositUsdUpdated(
+    function emitGlvCumulativeDepositUsdUpdated(
         EventEmitter eventEmitter,
         address glv,
         address market,
@@ -40,5 +40,15 @@ library GlvEventUtils {
             Cast.toBytes32(market),
             eventData
         );
+    }
+
+    function emitGlvMarketAdded(EventEmitter eventEmitter, address glv, address market) internal {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "glv", glv);
+        eventData.addressItems.setItem(1, "market", market);
+
+        eventEmitter.emitEventLog2("GlvMarketAdded", Cast.toBytes32(glv), Cast.toBytes32(market), eventData);
     }
 }
