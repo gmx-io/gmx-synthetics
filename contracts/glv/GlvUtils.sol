@@ -135,22 +135,6 @@ library GlvUtils {
         }
     }
 
-    function validateCumulativeDepositDeltaUsd(
-        DataStore dataStore,
-        address glv,
-        address market,
-        int256 deltaUsd
-    ) internal view {
-        uint256 currentValue = getCumulativeDepositUsd(dataStore, glv, market);
-
-        // GM price varies over time and negeative cumulative deposited usd is possible
-        if (deltaUsd < 0 && (-deltaUsd).toUint256() > currentValue) {
-            deltaUsd = -currentValue.toInt256();
-        }
-        uint256 nextValue = Calc.sumReturnUint256(currentValue, deltaUsd);
-        validateCumulativeDepositUsd(dataStore, glv, market, nextValue);
-    }
-
     function getCumulativeDepositUsd(DataStore dataStore, address glv, address market) internal view returns (uint256) {
         bytes32 key = Keys.glvCumulativeDepositUsdKey(glv, market);
         return dataStore.getUint(key);
