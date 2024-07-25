@@ -18,6 +18,7 @@ const func = createDeployFunction({
     "GlvDepositStoreUtils",
     "GlvShiftStoreUtils",
     "GlvWithdrawalStoreUtils",
+    "GlvStoreUtils",
   ],
 });
 

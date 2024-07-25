@@ -55,6 +55,7 @@ library GlvDeposit {
     // @param shouldUnwrapNativeToken whether to unwrap the native token when
     struct Flags {
         bool shouldUnwrapNativeToken;
+        bool isMarketTokenDeposit;
     }
 
 
@@ -200,5 +201,13 @@ library GlvDeposit {
 
     function setShouldUnwrapNativeToken(Props memory props, bool value) internal pure {
         props.flags.shouldUnwrapNativeToken = value;
+    }
+
+    function isMarketTokenDeposit(Props memory props) internal pure returns (bool) {
+        return props.flags.isMarketTokenDeposit;
+    }
+
+    function setIsMarketTokenDeposit(Props memory props, bool value) internal pure {
+        props.flags.isMarketTokenDeposit = value;
     }
 }

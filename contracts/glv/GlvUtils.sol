@@ -96,77 +96,41 @@ library GlvUtils {
         return dataStore.getAddressCount(Keys.glvSupportedMarketListKey(glv));
     }
 
-    function applyDeltaToCumulativeDepositUsd(
-        DataStore dataStore,
-        EventEmitter eventEmitter,
-        address glv,
-        address market,
-        int256 deltaUsd
-    ) external returns (uint256) {
-        uint256 currentValue = getCumulativeDepositUsd(dataStore, glv, market);
-
-        // GM price varies over time and negative cumulative deposited usd is possible
-        if (deltaUsd < 0 && (-deltaUsd).toUint256() > currentValue) {
-            deltaUsd = -currentValue.toInt256();
-        }
-        uint256 nextValue = Calc.sumReturnUint256(currentValue, deltaUsd);
-
-        validateCumulativeDepositUsd(dataStore, glv, market, nextValue);
-
-        GlvEventUtils.emitGlvCumulativeDepositUsdUpdated(eventEmitter, glv, market, deltaUsd, nextValue);
-
-        return nextValue;
-    }
-
-    function validateCumulativeDepositUsd(
-        DataStore dataStore,
-        address glv,
-        address market,
-        uint256 cumulativeDepositUsd
-    ) internal view {
-        uint256 maxCumulativeDepositUsd = dataStore.getUint(Keys.glvMaxCumulativeDepositUsdKey(glv, market));
-        if (maxCumulativeDepositUsd == 0) {
-            return;
-        }
-
-        if (cumulativeDepositUsd > maxCumulativeDepositUsd) {
-            revert Errors.GlvMaxCumulativeDepositUsdExceeded(cumulativeDepositUsd, maxCumulativeDepositUsd);
-        }
-    }
-
-    function getCumulativeDepositUsd(DataStore dataStore, address glv, address market) internal view returns (uint256) {
-        bytes32 key = Keys.glvCumulativeDepositUsdKey(glv, market);
-        return dataStore.getUint(key);
-    }
-
-    function validateMarketTokenBalanceUsd(
+    function validateMarketTokenBalance(
         DataStore dataStore,
         address glv,
         Market.Props memory market,
         uint256 marketTokenPrice
     ) internal view {
-        uint256 maxMarketTokenBalanceUsd = getGlvMaxMarketTokenBalanceUsd(dataStore, glv, market.marketToken);
-        if (maxMarketTokenBalanceUsd == 0) {
+        uint256 maxMarketTokenBalanceAmount = dataStore.getUint(Keys.glvMaxMarketTokenBalanceUsdKey(glv, market.marketToken));
+        uint256 maxMarketTokenBalanceUsd = dataStore.getUint(Keys.glvMaxMarketTokenBalanceAmountKey(glv, market.marketToken));
+
+        if (maxMarketTokenBalanceAmount == 0 && maxMarketTokenBalanceUsd == 0) {
             return;
         }
 
-        uint256 marketTokenBalanceUsd = ERC20(market.marketToken).balanceOf(glv) * marketTokenPrice;
-        if (marketTokenBalanceUsd > maxMarketTokenBalanceUsd) {
-            revert Errors.GlvMaxMarketTokenBalanceUsdExceeded(
+        uint256 marketTokenBalanceAmount = ERC20(market.marketToken).balanceOf(glv);
+
+        if (maxMarketTokenBalanceAmount > 0 && marketTokenBalanceAmount > maxMarketTokenBalanceAmount) {
+            revert Errors.GlvMaxMarketTokenBalanceAmountExceeded(
                 glv,
                 market.marketToken,
-                maxMarketTokenBalanceUsd,
-                marketTokenBalanceUsd
+                maxMarketTokenBalanceAmount,
+                marketTokenBalanceAmount
             );
         }
-    }
 
-    function getGlvMaxMarketTokenBalanceUsd(
-        DataStore dataStore,
-        address glv,
-        address market
-    ) internal view returns (uint256) {
-        return dataStore.getUint(Keys.glvMaxMarketTokenBalanceUsdKey(glv, market));
+        if (maxMarketTokenBalanceUsd > 0) {
+            uint256 marketTokenBalanceUsd = marketTokenBalanceAmount * marketTokenPrice;
+            if (marketTokenBalanceUsd > maxMarketTokenBalanceUsd) {
+                revert Errors.GlvMaxMarketTokenBalanceUsdExceeded(
+                    glv,
+                    market.marketToken,
+                    maxMarketTokenBalanceUsd,
+                    marketTokenBalanceUsd
+                );
+            }
+        }
     }
 
     function addMarket(DataStore dataStore, EventEmitter eventEmitter, address glv, address marketAddress) external {

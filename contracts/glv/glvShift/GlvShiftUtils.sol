@@ -201,7 +201,7 @@ library GlvShiftUtils {
         ExecuteGlvShiftCache memory cache;
         cache.receivedMarketTokens = ShiftUtils.executeShift(executeShiftParams, shift);
 
-        GlvUtils.validateMarketTokenBalanceUsd(
+        GlvUtils.validateMarketTokenBalance(
             params.dataStore,
             glvShift.glv(),
             cache.toMarket,
@@ -224,14 +224,6 @@ library GlvShiftUtils {
             Precision.WEI_PRECISION
         );
 
-        GlvUtils.applyDeltaToCumulativeDepositUsd(
-            params.dataStore,
-            params.eventEmitter,
-            glvShift.glv(),
-            glvShift.toMarket(),
-            cache.receivedMarketTokensUsd.toInt256()
-        );
-
         cache.fromMarket = MarketStoreUtils.get(params.dataStore, glvShift.fromMarket());
         (cache.fromMarketTokenPrice, ) = MarketUtils.getMarketTokenPrice(
             params.dataStore,
@@ -247,14 +239,6 @@ library GlvShiftUtils {
             glvShift.marketTokenAmount(),
             cache.fromMarketTokenPrice.toUint256(),
             Precision.WEI_PRECISION
-        );
-
-        GlvUtils.applyDeltaToCumulativeDepositUsd(
-            params.dataStore,
-            params.eventEmitter,
-            glvShift.glv(),
-            glvShift.fromMarket(),
-            -cache.marketTokensUsd.toInt256()
         );
 
         validatePriceImpact(params.dataStore, glvShift.glv(), cache.marketTokensUsd, cache.receivedMarketTokensUsd);

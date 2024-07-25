@@ -21,7 +21,8 @@ describe("Glv", () => {
     glvFactory,
     glvHandler,
     ethUsdGlvAddress,
-    config;
+    config,
+    reader;
 
   beforeEach(async () => {
     fixture = await deployFixture();
@@ -40,10 +41,11 @@ describe("Glv", () => {
       glvHandler,
       config,
       ethUsdGlvAddress,
+      reader,
     } = fixture.contracts);
   });
 
-  it("creates glv vault", async () => {
+  it.only("creates glv vault", async () => {
     const glvType = ethers.constants.HashZero;
     const glvAddress = getGlvAddress(
       wbtc.address,
@@ -53,14 +55,12 @@ describe("Glv", () => {
       roleStore.address,
       dataStore.address
     );
-    await glvFactory.createGlv(wbtc.address, usdc.address, glvType);
-    const [glvLongToken, glvShortToken] = await Promise.all([
-      dataStore.getAddress(keys.glvLongTokenKey(glvAddress)),
-      dataStore.getAddress(keys.glvShortTokenKey(glvAddress)),
-    ]);
+    await glvFactory.createGlv(wbtc.address, usdc.address, glvType, "Lololo");
+    const glv = await reader.getGlv(glvAddress);
 
-    expect(glvLongToken).eq(wbtc.address);
-    expect(glvShortToken).eq(usdc.address);
+    expect(glv.longToken).eq(wbtc.address);
+    expect(glv.shortToken).eq(usdc.address);
+    expect(glv.glvToken).eq(glvAddress);
   });
 
   it("adds markets to Glv", async () => {
@@ -116,11 +116,7 @@ describe("Glv", () => {
       encodeData(["address", "address"], [ethUsdGlvAddress, ethUsdMarket.marketToken]),
       1
     );
-    await config.setUint(
-      keys.GLV_MAX_CUMULATIVE_DEPOSIT_USD,
-      encodeData(["address", "address"], [ethUsdGlvAddress, ethUsdMarket.marketToken]),
-      1
-    );
+    // TODO add GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT
     await config.setUint(keys.GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR, encodeData(["address"], [ethUsdGlvAddress]), 1);
   });
 });

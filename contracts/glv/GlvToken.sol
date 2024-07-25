@@ -8,8 +8,10 @@ import "../bank/Bank.sol";
 contract GlvToken is ERC20, Bank {
     constructor(
         RoleStore _roleStore,
-        DataStore _dataStore
-    ) ERC20("GMX Liquidity Vault", "GLV") Bank(_roleStore, _dataStore) {
+        DataStore _dataStore,
+        string memory _name,
+        string memory _symbol
+    ) ERC20(_name, _symbol) Bank(_roleStore, _dataStore) {
     }
 
     function mint(address account, uint256 amount) external onlyController {

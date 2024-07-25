@@ -168,15 +168,7 @@ library GlvWithdrawalUtils {
             );
         }
 
-        uint256 usdValue = _processMarketWithdrawal(params, glvWithdrawal);
-
-        GlvUtils.applyDeltaToCumulativeDepositUsd(
-            params.dataStore,
-            params.eventEmitter,
-            glvWithdrawal.glv(),
-            glvWithdrawal.market(),
-            -usdValue.toInt256()
-        );
+        _processMarketWithdrawal(params, glvWithdrawal);
 
         GlvToken(payable(glvWithdrawal.glv())).mint(glvWithdrawal.receiver(), cache.marketTokenAmount);
 
@@ -207,8 +199,8 @@ library GlvWithdrawalUtils {
     function _processMarketWithdrawal(
         ExecuteGlvWithdrawalParams memory params,
         GlvWithdrawal.Props memory glvWithdrawal
-    ) private returns (uint256) {
-        (uint256 marketTokenAmount, uint256 usdValue) = _getMarketTokenAmount(
+    ) private {
+        uint256 marketTokenAmount = _getMarketTokenAmount(
             params.dataStore,
             params.oracle,
             glvWithdrawal
@@ -264,15 +256,13 @@ library GlvWithdrawalUtils {
             });
 
         ExecuteWithdrawalUtils.executeWithdrawal(executeWithdrawalParams, withdrawal);
-
-        return usdValue;
     }
 
     function _getMarketTokenAmount(
         DataStore dataStore,
         Oracle oracle,
         GlvWithdrawal.Props memory glvWithdrawal
-    ) internal view returns (uint256 marketTokenAmount, uint256 usdValue) {
+    ) internal view returns (uint256 marketTokenAmount) {
         uint256 glvTokenPrice = GlvUtils.getGlvTokenPrice(dataStore, oracle, glvWithdrawal.glv(), false);
         uint256 glvTokenUsd = glvWithdrawal.glvTokenAmount() * glvTokenPrice;
 
@@ -292,7 +282,7 @@ library GlvWithdrawalUtils {
             ERC20(market.marketToken).totalSupply()
         );
 
-        return (marketTokenAmount, glvTokenUsd);
+        return marketTokenAmount;
     }
 
     function cancelGlvWithdrawal(

@@ -1,19 +1,11 @@
 import { ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import * as keys from "../utils/keys";
-import { setBoolIfDifferent, setBytes32IfDifferent, setUintIfDifferent } from "../utils/dataStore";
-import {
-  DEFAULT_MARKET_TYPE,
-  getMarketTokenAddresses,
-  getMarketKey,
-  getOnchainMarkets,
-  getMarketTokenAddress,
-} from "../utils/market";
-import { updateMarketConfig } from "../scripts/updateMarketConfigUtils";
+import { DEFAULT_MARKET_TYPE, getMarketTokenAddress } from "../utils/market";
 import { getGlvAddress } from "../utils/glv";
 
 const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnvironment) => {
-  const { execute, get, read, log } = deployments;
+  const { execute, get } = deployments;
 
   const { deployer } = await getNamedAccounts();
 
@@ -24,7 +16,16 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
   const sol = tokens.SOL;
   const glvType = ethers.constants.HashZero;
 
-  await execute("GlvFactory", { from: deployer, log: true }, "createGlv", weth.address, usdc.address, glvType);
+  await execute(
+    "GlvFactory",
+    { from: deployer, log: true },
+    "createGlv",
+    weth.address,
+    usdc.address,
+    glvType,
+    "GMX Liquidity Pool [WETH-USD]",
+    "GLV [WETH-USD]"
+  );
 
   const dataStore = await get("DataStore");
   const roleStore = await get("RoleStore");

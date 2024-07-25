@@ -89,9 +89,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
 
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
-        if (OracleUtils.isOracleError(errorSelector) || errorSelector == Errors.DisabledFeature.selector) {
-            ErrorUtils.revertWithCustomError(reasonBytes);
-        }
+        validateNonKeeperError(errorSelector, reasonBytes);
 
         (string memory reason /* bool hasRevertMessage */, ) = ErrorUtils.getRevertMessage(reasonBytes);
 
@@ -158,13 +156,11 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
 
         uint256 executionGas = GasUtils.getExecutionGas(_dataStore, startingGas);
 
-        this._executeGlvWithdrawal{gas: executionGas}(key, glvWithdrawal, msg.sender);
-
-        // try this._executeGlvWithdrawal{gas: executionGas}(key, glvWithdrawal, msg.sender) {} catch (
-        //     bytes memory reasonBytes
-        // ) {
-        //     _handleGlvWithdrawalError(key, startingGas, reasonBytes);
-        // }
+        try this._executeGlvWithdrawal{gas: executionGas}(key, glvWithdrawal, msg.sender) {} catch (
+            bytes memory reasonBytes
+        ) {
+            _handleGlvWithdrawalError(key, startingGas, reasonBytes);
+        }
     }
 
     function _executeGlvWithdrawal(
@@ -192,9 +188,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
 
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
-        if (OracleUtils.isOracleError(errorSelector) || errorSelector == Errors.DisabledFeature.selector) {
-            ErrorUtils.revertWithCustomError(reasonBytes);
-        }
+        validateNonKeeperError(errorSelector, reasonBytes);
 
         (string memory reason /* bool hasRevertMessage */, ) = ErrorUtils.getRevertMessage(reasonBytes);
 
@@ -298,9 +292,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
 
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
 
-        if (OracleUtils.isOracleError(errorSelector) || errorSelector == Errors.DisabledFeature.selector) {
-            ErrorUtils.revertWithCustomError(reasonBytes);
-        }
+        validateNonKeeperError(errorSelector, reasonBytes);
 
         (string memory reason /* bool hasRevertMessage */, ) = ErrorUtils.getRevertMessage(reasonBytes);
 

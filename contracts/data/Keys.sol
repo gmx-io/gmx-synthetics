@@ -413,13 +413,13 @@ library Keys {
 
     // @dev key for the max market token balance usd for glv
     bytes32 public constant GLV_MAX_MARKET_TOKEN_BALANCE_USD = keccak256(abi.encode("GLV_MAX_MARKET_TOKEN_BALANCE_USD"));
+    bytes32 public constant GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT = keccak256(abi.encode("GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT"));
     // @dev key for is glv market disabled
     bytes32 public constant IS_GLV_MARKET_DISABLED = keccak256(abi.encode("IS_GLV_MARKET_DISABLED"));
-    bytes32 public constant GLV_CUMULATIVE_DEPOSITED_USD = keccak256(abi.encode("GLV_CUMULATIVE_DEPOSITED_USD"));
-    bytes32 public constant GLV_MAX_CUMULATIVE_DEPOSIT_USD = keccak256(abi.encode("GLV_MAX_CUMULATIVE_DEPOSIT_USD"));
     bytes32 public constant GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR = keccak256(abi.encode("GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR"));
     bytes32 public constant GLV_SHIFT_LAST_EXECUTED_AT = keccak256(abi.encode("GLV_SHIFT_LAST_EXECUTED_AT"));
     bytes32 public constant GLV_SHIFT_MIN_INTERVAL = keccak256(abi.encode("GLV_SHIFT_MIN_INTERVAL"));
+    bytes32 public constant MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT = keccak256(abi.encode("MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT"));
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
@@ -1783,31 +1783,16 @@ library Keys {
         return keccak256(abi.encode(GLV_MAX_MARKET_TOKEN_BALANCE_USD, glv, market));
     }
 
+    // @dev key for max market token balance amount
+    // it is used to limit amount of funds deposited into each market
+    function glvMaxMarketTokenBalanceAmountKey(address glv, address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT, glv, market));
+    }
+
     // @dev key for is glv market disabled
     function isGlvMarketDisabledKey(address glv, address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             IS_GLV_MARKET_DISABLED,
-            glv,
-            market
-        ));
-    }
-
-    // @dev key for cumulative deposit usd for each market
-    // it is used to limit *cumulative* amount of funds deposited into each market for extra safety
-    function glvCumulativeDepositUsdKey(address glv, address market) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            GLV_CUMULATIVE_DEPOSITED_USD,
-            glv,
-            market
-        ));
-    }
-
-    // @dev key for max allowed cumulative deposit usd for each market
-    // if cumulative deposit usd exceeds max allowed cumulative deposit usd
-    // then deposit or shift fails
-    function glvMaxCumulativeDepositUsdKey(address glv, address market) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            GLV_MAX_CUMULATIVE_DEPOSIT_USD,
             glv,
             market
         ));
@@ -1835,6 +1820,13 @@ library Keys {
     function glvShiftMinIntervalKey(address glv) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             GLV_SHIFT_MIN_INTERVAL,
+            glv
+        ));
+    }
+
+    function minGlvTokensForFirstGlvDepositKey(address glv) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT,
             glv
         ));
     }

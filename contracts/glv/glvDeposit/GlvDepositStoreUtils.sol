@@ -34,86 +34,91 @@ library GlvDepositStoreUtils {
     bytes32 public constant CALLBACK_GAS_LIMIT = keccak256(abi.encode("CALLBACK_GAS_LIMIT"));
 
     bytes32 public constant SHOULD_UNWRAP_NATIVE_TOKEN = keccak256(abi.encode("SHOULD_UNWRAP_NATIVE_TOKEN"));
+    bytes32 public constant IS_MARKET_TOKEN_DEPOSIT = keccak256(abi.encode("IS_MARKET_TOKEN_DEPOSIT"));
 
     function get(DataStore dataStore, bytes32 key) external view returns (GlvDeposit.Props memory) {
-        GlvDeposit.Props memory deposit;
+        GlvDeposit.Props memory glvDeposit;
         if (!dataStore.containsBytes32(Keys.GLV_DEPOSIT_LIST, key)) {
-            return deposit;
+            return glvDeposit;
         }
 
-        deposit.setAccount(dataStore.getAddress(
+        glvDeposit.setAccount(dataStore.getAddress(
             keccak256(abi.encode(key, ACCOUNT))
         ));
 
-        deposit.setReceiver(dataStore.getAddress(
+        glvDeposit.setReceiver(dataStore.getAddress(
             keccak256(abi.encode(key, RECEIVER))
         ));
 
-        deposit.setCallbackContract(dataStore.getAddress(
+        glvDeposit.setCallbackContract(dataStore.getAddress(
             keccak256(abi.encode(key, CALLBACK_CONTRACT))
         ));
 
-        deposit.setUiFeeReceiver(dataStore.getAddress(
+        glvDeposit.setUiFeeReceiver(dataStore.getAddress(
             keccak256(abi.encode(key, UI_FEE_RECEIVER))
         ));
 
-        deposit.setGlv(dataStore.getAddress(
+        glvDeposit.setGlv(dataStore.getAddress(
             keccak256(abi.encode(key, GLV))
         ));
 
-        deposit.setMarket(dataStore.getAddress(
+        glvDeposit.setMarket(dataStore.getAddress(
             keccak256(abi.encode(key, MARKET))
         ));
 
-        deposit.setInitialLongToken(dataStore.getAddress(
+        glvDeposit.setInitialLongToken(dataStore.getAddress(
             keccak256(abi.encode(key, INITIAL_LONG_TOKEN))
         ));
 
-        deposit.setInitialShortToken(dataStore.getAddress(
+        glvDeposit.setInitialShortToken(dataStore.getAddress(
             keccak256(abi.encode(key, INITIAL_SHORT_TOKEN))
         ));
 
-        deposit.setLongTokenSwapPath(dataStore.getAddressArray(
+        glvDeposit.setLongTokenSwapPath(dataStore.getAddressArray(
             keccak256(abi.encode(key, LONG_TOKEN_SWAP_PATH))
         ));
 
-        deposit.setShortTokenSwapPath(dataStore.getAddressArray(
+        glvDeposit.setShortTokenSwapPath(dataStore.getAddressArray(
             keccak256(abi.encode(key, SHORT_TOKEN_SWAP_PATH))
         ));
 
-        deposit.setInitialLongTokenAmount(dataStore.getUint(
+        glvDeposit.setInitialLongTokenAmount(dataStore.getUint(
             keccak256(abi.encode(key, INITIAL_LONG_TOKEN_AMOUNT))
         ));
 
-        deposit.setInitialShortTokenAmount(dataStore.getUint(
+        glvDeposit.setInitialShortTokenAmount(dataStore.getUint(
             keccak256(abi.encode(key, INITIAL_SHORT_TOKEN_AMOUNT))
         ));
 
-        deposit.setMinGlvTokens(dataStore.getUint(
+        glvDeposit.setMinGlvTokens(dataStore.getUint(
             keccak256(abi.encode(key, MIN_GLV_TOKENS))
         ));
 
-        deposit.setUpdatedAtBlock(dataStore.getUint(
+        glvDeposit.setUpdatedAtBlock(dataStore.getUint(
             keccak256(abi.encode(key, UPDATED_AT_BLOCK))
         ));
 
-        deposit.setUpdatedAtTime(dataStore.getUint(
+        glvDeposit.setUpdatedAtTime(dataStore.getUint(
             keccak256(abi.encode(key, UPDATED_AT_TIME))
         ));
 
-        deposit.setExecutionFee(dataStore.getUint(
+        glvDeposit.setExecutionFee(dataStore.getUint(
             keccak256(abi.encode(key, EXECUTION_FEE))
         ));
 
-        deposit.setCallbackGasLimit(dataStore.getUint(
+        glvDeposit.setCallbackGasLimit(dataStore.getUint(
             keccak256(abi.encode(key, CALLBACK_GAS_LIMIT))
         ));
 
-        deposit.setShouldUnwrapNativeToken(dataStore.getBool(
+        glvDeposit.setShouldUnwrapNativeToken(dataStore.getBool(
             keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN))
         ));
 
-        return deposit;
+        glvDeposit.setIsMarketTokenDeposit(dataStore.getBool(
+            keccak256(abi.encode(key, IS_MARKET_TOKEN_DEPOSIT))
+        ));
+
+        return glvDeposit;
     }
 
     function set(DataStore dataStore, bytes32 key, GlvDeposit.Props memory glvDeposit) external {
@@ -216,6 +221,11 @@ library GlvDepositStoreUtils {
             keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN)),
             glvDeposit.shouldUnwrapNativeToken()
         );
+
+        dataStore.setBool(
+            keccak256(abi.encode(key, IS_MARKET_TOKEN_DEPOSIT)),
+            glvDeposit.isMarketTokenDeposit()
+        );
     }
 
     function remove(DataStore dataStore, bytes32 key, address account) external {
@@ -303,6 +313,10 @@ library GlvDepositStoreUtils {
 
         dataStore.removeBool(
             keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN))
+        );
+
+        dataStore.removeBool(
+            keccak256(abi.encode(key, IS_MARKET_TOKEN_DEPOSIT))
         );
     }
 

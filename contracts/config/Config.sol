@@ -405,8 +405,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.CANCEL_DEPOSIT_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.EXECUTE_DEPOSIT_FEATURE_DISABLED] = true;
 
-        allowedBaseKeys[Keys.CREATE_GLV_SHIFT_FEATURE_DISABLED] = true;
-
         allowedBaseKeys[Keys.CREATE_WITHDRAWAL_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CANCEL_WITHDRAWAL_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.EXECUTE_WITHDRAWAL_FEATURE_DISABLED] = true;
@@ -533,7 +531,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.IS_GLV_MARKET_DISABLED] = true;
         allowedBaseKeys[Keys.GLV_MAX_MARKET_TOKEN_BALANCE_USD] = true;
-        allowedBaseKeys[Keys.GLV_MAX_CUMULATIVE_DEPOSIT_USD] = true;
+        allowedBaseKeys[Keys.GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT] = true;
         allowedBaseKeys[Keys.GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR] = true;
         allowedBaseKeys[Keys.GLV_SHIFT_MIN_INTERVAL] = true;
     }

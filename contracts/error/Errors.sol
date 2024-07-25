@@ -48,6 +48,8 @@ library Errors {
     // GlvDepositUtils errors
     error EmptyGlvDepositAmounts();
     error EmptyGlvDeposit();
+    error InvalidMinGlvTokensForFirstGlvDeposit(uint256 minGlvTokens, uint256 expectedMinGlvTokens);
+    error InvalidReceiverForFirstGlvDeposit(address receiver, address expectedReceiver);
     // GlvWithdrawalStoreUtils errors
     error GlvWithdrawalNotFound(bytes32 key);
     // GlvWithdrawalUtils errors
@@ -58,6 +60,7 @@ library Errors {
     error GlvUnsupportedMarket(address glv, address market);
     error GlvDisabledMarket(address glv, address market);
     error GlvMaxMarketTokenBalanceUsdExceeded(address glv, address market, uint256 maxMarketTokenBalanceUsd, uint256 marketTokenBalanceUsd);
+    error GlvMaxMarketTokenBalanceAmountExceeded(address glv, address market, uint256 maxMarketTokenBalanceAmount, uint256 marketTokenBalanceAmount);
     error GlvShiftFromAndToMarketAreEqual(address market);
     error GlvInsufficientMarketTokenBalance(address glv, address market, uint256 marketTokenBalance, uint256 marketTokenAmount);
     error EmptyGlvShift();
@@ -65,7 +68,6 @@ library Errors {
     error GlvInvalidCallbackContract(address glvHandler, address callbackContract);
     error GlvMarketAlreadyExists(address glv, address market);
     error InvalidMarketTokenPrice(address market, int256 price);
-    error GlvMaxCumulativeDepositUsdExceeded(uint256 depositUsd, uint256 maxDepositUsd);
     error GlvInvalidLongToken(address glv, address provided, address expected);
     error GlvInvalidShortToken(address glv, address provided, address expected);
     // GlvShiftUtils
@@ -110,7 +112,8 @@ library Errors {
     error InvalidExecutionFeeForMigration(uint256 totalExecutionFee, uint256 msgValue);
 
     // GlvHandler errors
-    error InvalidGlvDepositInitialShortToken(address initialLongToken, address initialShortToken);
+    error InvalidGlvDepositInitialLongToken(address initialLongToken);
+    error InvalidGlvDepositInitialShortToken(address initialShortToken);
     error InvalidGlvDepositSwapPath(uint256 longTokenSwapPathLength, uint256 shortTokenSwapPathLength);
     error MinGlvTokens(uint256 received, uint256 expected);
 

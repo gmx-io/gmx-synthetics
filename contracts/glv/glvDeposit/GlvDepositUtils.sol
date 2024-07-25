@@ -37,9 +37,10 @@ library GlvDepositUtils {
         address[] longTokenSwapPath;
         address[] shortTokenSwapPath;
         uint256 minGlvTokens;
-        bool shouldUnwrapNativeToken;
         uint256 executionFee;
         uint256 callbackGasLimit;
+        bool shouldUnwrapNativeToken;
+        bool isMarketTokenDeposit;
     }
 
     struct ExecuteGlvDepositParams {
@@ -64,6 +65,8 @@ library GlvDepositUtils {
         uint256 oraclePriceCount;
     }
 
+    address public constant RECEIVER_FOR_FIRST_GLV_DEPOSIT = address(1);
+
     function createGlvDeposit(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -79,10 +82,13 @@ library GlvDepositUtils {
         MarketUtils.validateSwapPath(dataStore, params.longTokenSwapPath);
         MarketUtils.validateSwapPath(dataStore, params.shortTokenSwapPath);
 
-        if (params.initialLongToken == params.market) {
+        if (params.isMarketTokenDeposit) {
             // user deposited GM tokens
+            if (params.initialLongToken != address(0)) {
+                revert Errors.InvalidGlvDepositInitialLongToken(params.initialLongToken);
+            }
             if (params.initialShortToken != address(0)) {
-                revert Errors.InvalidGlvDepositInitialShortToken(params.initialLongToken, params.initialShortToken);
+                revert Errors.InvalidGlvDepositInitialShortToken(params.initialShortToken);
             }
             if (params.longTokenSwapPath.length > 0 || params.shortTokenSwapPath.length > 0) {
                 revert Errors.InvalidGlvDepositSwapPath(
@@ -143,7 +149,10 @@ library GlvDepositUtils {
                 executionFee: params.executionFee,
                 callbackGasLimit: params.callbackGasLimit
             }),
-            GlvDeposit.Flags({shouldUnwrapNativeToken: params.shouldUnwrapNativeToken})
+            GlvDeposit.Flags({
+                shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,
+                isMarketTokenDeposit: params.isMarketTokenDeposit
+            })
         );
 
         CallbackUtils.validateCallbackGasLimit(dataStore, params.callbackGasLimit);
@@ -185,6 +194,9 @@ library GlvDepositUtils {
             );
         }
 
+        // should be called before any tokens are minted
+        _validateFirstGlvDeposit(params, glvDeposit);
+
         ExecuteGlvDepositCache memory cache;
 
         cache.requestExpirationTime = params.dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
@@ -215,14 +227,6 @@ library GlvDepositUtils {
 
         GlvToken(payable(glvDeposit.glv())).mint(glvDeposit.receiver(), cache.mintAmount);
 
-        GlvUtils.applyDeltaToCumulativeDepositUsd(
-            params.dataStore,
-            params.eventEmitter,
-            glvDeposit.glv(),
-            glvDeposit.market(),
-            cache.receivedUsd.toInt256()
-        );
-
         cache.market = MarketUtils.getEnabledMarket(params.dataStore, glvDeposit.market());
         (cache.marketTokenPrice, ) = MarketUtils.getMarketTokenPrice(
             params.dataStore,
@@ -234,11 +238,11 @@ library GlvDepositUtils {
             true // maximize
         );
 
-        GlvUtils.validateMarketTokenBalanceUsd(
+        GlvUtils.validateMarketTokenBalance(
             params.dataStore,
             glvDeposit.glv(),
             cache.market,
-            cache.receivedMarketTokens
+            cache.marketTokenPrice.toUint256()
         );
 
         GlvDepositEventUtils.emitGlvDepositExecuted(
@@ -274,6 +278,30 @@ library GlvDepositUtils {
         return cache.mintAmount;
     }
 
+    function _validateFirstGlvDeposit(
+        ExecuteGlvDepositParams memory params,
+        GlvDeposit.Props memory glvDeposit
+    ) internal view {
+        address glv = glvDeposit.glv();
+        uint256 initialGlvTokenSupply = GlvToken(payable(glv)).totalSupply();
+
+        // return if this is not the first glv deposit
+        if (initialGlvTokenSupply != 0) { return; }
+
+        uint256 minGlvTokens = params.dataStore.getUint(Keys.minGlvTokensForFirstGlvDepositKey(glv));
+
+        // return if there is no minGlvTokens requirement
+        if (minGlvTokens == 0) { return; }
+
+        if (glvDeposit.receiver() != RECEIVER_FOR_FIRST_GLV_DEPOSIT) {
+            revert Errors.InvalidReceiverForFirstGlvDeposit(glvDeposit.receiver(), RECEIVER_FOR_FIRST_GLV_DEPOSIT);
+        }
+
+        if (glvDeposit.minGlvTokens() < minGlvTokens) {
+            revert Errors.InvalidMinGlvTokensForFirstGlvDeposit(glvDeposit.minGlvTokens(), minGlvTokens);
+        }
+    }
+
     function _getMintAmount(
         DataStore dataStore,
         Oracle oracle,
@@ -307,7 +335,7 @@ library GlvDepositUtils {
         GlvDeposit.Props memory glvDeposit,
         GlvVault glvVault
     ) private returns (uint256) {
-        if (glvDeposit.market() == glvDeposit.initialLongToken()) {
+        if (glvDeposit.isMarketTokenDeposit()) {
             // user deposited GM tokens
             glvVault.transferOut(glvDeposit.market(), glvDeposit.glv(), glvDeposit.initialLongTokenAmount());
             return glvDeposit.initialLongTokenAmount();
