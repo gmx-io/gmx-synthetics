@@ -77,8 +77,6 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
     isMarketTokenDeposit,
   };
 
-  console.log("params", params);
-
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined) {
       throw new Error(`param "${key}" is undefined`);
@@ -114,7 +112,7 @@ export async function executeGlvDeposit(fixture, overrides: any = {}) {
     }
     if (!oracleBlockNumber) {
       const glvDeposit = await reader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
-      oracleBlockNumber = glvDeposit.numbers.updatedAtBlock;
+      oracleBlockNumber = glvDeposit.updatedAtBlock;
     }
   }
 

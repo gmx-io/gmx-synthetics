@@ -43,199 +43,55 @@ library GlvDepositStoreUtils {
             return glvDeposit;
         }
 
-        glvDeposit.setAccount(dataStore.getAddress(
-            keccak256(abi.encode(key, ACCOUNT))
-        ));
-
-        glvDeposit.setReceiver(dataStore.getAddress(
-            keccak256(abi.encode(key, RECEIVER))
-        ));
-
-        glvDeposit.setCallbackContract(dataStore.getAddress(
-            keccak256(abi.encode(key, CALLBACK_CONTRACT))
-        ));
-
-        glvDeposit.setUiFeeReceiver(dataStore.getAddress(
-            keccak256(abi.encode(key, UI_FEE_RECEIVER))
-        ));
-
-        glvDeposit.setGlv(dataStore.getAddress(
-            keccak256(abi.encode(key, GLV))
-        ));
-
-        glvDeposit.setMarket(dataStore.getAddress(
-            keccak256(abi.encode(key, MARKET))
-        ));
-
-        glvDeposit.setInitialLongToken(dataStore.getAddress(
-            keccak256(abi.encode(key, INITIAL_LONG_TOKEN))
-        ));
-
-        glvDeposit.setInitialShortToken(dataStore.getAddress(
-            keccak256(abi.encode(key, INITIAL_SHORT_TOKEN))
-        ));
-
-        glvDeposit.setLongTokenSwapPath(dataStore.getAddressArray(
-            keccak256(abi.encode(key, LONG_TOKEN_SWAP_PATH))
-        ));
-
-        glvDeposit.setShortTokenSwapPath(dataStore.getAddressArray(
-            keccak256(abi.encode(key, SHORT_TOKEN_SWAP_PATH))
-        ));
-
-        glvDeposit.setMarketTokenAmount(dataStore.getUint(
-            keccak256(abi.encode(key, MARKET_TOKEN_AMOUNT))
-        ));
-
-        glvDeposit.setInitialLongTokenAmount(dataStore.getUint(
-            keccak256(abi.encode(key, INITIAL_LONG_TOKEN_AMOUNT))
-        ));
-
-        glvDeposit.setInitialShortTokenAmount(dataStore.getUint(
-            keccak256(abi.encode(key, INITIAL_SHORT_TOKEN_AMOUNT))
-        ));
-
-        glvDeposit.setMinGlvTokens(dataStore.getUint(
-            keccak256(abi.encode(key, MIN_GLV_TOKENS))
-        ));
-
-        glvDeposit.setUpdatedAtBlock(dataStore.getUint(
-            keccak256(abi.encode(key, UPDATED_AT_BLOCK))
-        ));
-
-        glvDeposit.setUpdatedAtTime(dataStore.getUint(
-            keccak256(abi.encode(key, UPDATED_AT_TIME))
-        ));
-
-        glvDeposit.setExecutionFee(dataStore.getUint(
-            keccak256(abi.encode(key, EXECUTION_FEE))
-        ));
-
-        glvDeposit.setCallbackGasLimit(dataStore.getUint(
-            keccak256(abi.encode(key, CALLBACK_GAS_LIMIT))
-        ));
-
-        glvDeposit.setShouldUnwrapNativeToken(dataStore.getBool(
-            keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN))
-        ));
-
-        glvDeposit.setIsMarketTokenDeposit(dataStore.getBool(
-            keccak256(abi.encode(key, IS_MARKET_TOKEN_DEPOSIT))
-        ));
+        glvDeposit.account = dataStore.getAddress(keccak256(abi.encode(key, ACCOUNT)));
+        glvDeposit.receiver = dataStore.getAddress(keccak256(abi.encode(key, RECEIVER)));
+        glvDeposit.callbackContract = dataStore.getAddress(keccak256(abi.encode(key, CALLBACK_CONTRACT)));
+        glvDeposit.uiFeeReceiver = dataStore.getAddress(keccak256(abi.encode(key, UI_FEE_RECEIVER)));
+        glvDeposit.glv = dataStore.getAddress(keccak256(abi.encode(key, GLV)));
+        glvDeposit.market = dataStore.getAddress(keccak256(abi.encode(key, MARKET)));
+        glvDeposit.initialLongToken = dataStore.getAddress(keccak256(abi.encode(key, INITIAL_LONG_TOKEN)));
+        glvDeposit.initialShortToken = dataStore.getAddress(keccak256(abi.encode(key, INITIAL_SHORT_TOKEN)));
+        glvDeposit.longTokenSwapPath = dataStore.getAddressArray(keccak256(abi.encode(key, LONG_TOKEN_SWAP_PATH)));
+        glvDeposit.shortTokenSwapPath = dataStore.getAddressArray(keccak256(abi.encode(key, SHORT_TOKEN_SWAP_PATH)));
+        glvDeposit.marketTokenAmount = dataStore.getUint(keccak256(abi.encode(key, MARKET_TOKEN_AMOUNT)));
+        glvDeposit.initialLongTokenAmount = dataStore.getUint(keccak256(abi.encode(key, INITIAL_LONG_TOKEN_AMOUNT)));
+        glvDeposit.initialShortTokenAmount = dataStore.getUint(keccak256(abi.encode(key, INITIAL_SHORT_TOKEN_AMOUNT)));
+        glvDeposit.minGlvTokens = dataStore.getUint(keccak256(abi.encode(key, MIN_GLV_TOKENS)));
+        glvDeposit.updatedAtBlock = dataStore.getUint(keccak256(abi.encode(key, UPDATED_AT_BLOCK)));
+        glvDeposit.updatedAtTime = dataStore.getUint(keccak256(abi.encode(key, UPDATED_AT_TIME)));
+        glvDeposit.executionFee = dataStore.getUint(keccak256(abi.encode(key, EXECUTION_FEE)));
+        glvDeposit.callbackGasLimit = dataStore.getUint(keccak256(abi.encode(key, CALLBACK_GAS_LIMIT)));
+        glvDeposit.shouldUnwrapNativeToken = dataStore.getBool(keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN)));
+        glvDeposit.isMarketTokenDeposit = dataStore.getBool(keccak256(abi.encode(key, IS_MARKET_TOKEN_DEPOSIT)));
 
         return glvDeposit;
     }
 
     function set(DataStore dataStore, bytes32 key, GlvDeposit.Props memory glvDeposit) external {
-        dataStore.addBytes32(
-            Keys.GLV_DEPOSIT_LIST,
-            key
-        );
+        dataStore.addBytes32(Keys.GLV_DEPOSIT_LIST, key);
 
-        dataStore.addBytes32(
-            Keys.accountGlvDepositListKey(glvDeposit.account()),
-            key
-        );
+        dataStore.addBytes32(Keys.accountGlvDepositListKey(glvDeposit.account), key);
 
-        dataStore.setAddress(
-            keccak256(abi.encode(key, ACCOUNT)),
-            glvDeposit.account()
-        );
-
-        dataStore.setAddress(
-            keccak256(abi.encode(key, RECEIVER)),
-            glvDeposit.receiver()
-        );
-
-        dataStore.setAddress(
-            keccak256(abi.encode(key, CALLBACK_CONTRACT)),
-            glvDeposit.callbackContract()
-        );
-
-        dataStore.setAddress(
-            keccak256(abi.encode(key, UI_FEE_RECEIVER)),
-            glvDeposit.uiFeeReceiver()
-        );
-
-        dataStore.setAddress(
-            keccak256(abi.encode(key, GLV)),
-            glvDeposit.glv()
-        );
-
-        dataStore.setAddress(
-            keccak256(abi.encode(key, MARKET)),
-            glvDeposit.market()
-        );
-
-        dataStore.setAddress(
-            keccak256(abi.encode(key, INITIAL_LONG_TOKEN)),
-            glvDeposit.initialLongToken()
-        );
-
-        dataStore.setAddress(
-            keccak256(abi.encode(key, INITIAL_SHORT_TOKEN)),
-            glvDeposit.initialShortToken()
-        );
-
-        dataStore.setAddressArray(
-            keccak256(abi.encode(key, LONG_TOKEN_SWAP_PATH)),
-            glvDeposit.longTokenSwapPath()
-        );
-
-        dataStore.setAddressArray(
-            keccak256(abi.encode(key, SHORT_TOKEN_SWAP_PATH)),
-            glvDeposit.shortTokenSwapPath()
-        );
-
-        dataStore.setUint(
-            keccak256(abi.encode(key, MARKET_TOKEN_AMOUNT)),
-            glvDeposit.marketTokenAmount()
-        );
-
-        dataStore.setUint(
-            keccak256(abi.encode(key, INITIAL_LONG_TOKEN_AMOUNT)),
-            glvDeposit.initialLongTokenAmount()
-        );
-
-        dataStore.setUint(
-            keccak256(abi.encode(key, INITIAL_SHORT_TOKEN_AMOUNT)),
-            glvDeposit.initialShortTokenAmount()
-        );
-
-        dataStore.setUint(
-            keccak256(abi.encode(key, MIN_GLV_TOKENS)),
-            glvDeposit.minGlvTokens()
-        );
-
-        dataStore.setUint(
-            keccak256(abi.encode(key, UPDATED_AT_BLOCK)),
-            glvDeposit.updatedAtBlock()
-        );
-
-        dataStore.setUint(
-            keccak256(abi.encode(key, UPDATED_AT_TIME)),
-            glvDeposit.updatedAtTime()
-        );
-
-        dataStore.setUint(
-            keccak256(abi.encode(key, EXECUTION_FEE)),
-            glvDeposit.executionFee()
-        );
-
-        dataStore.setUint(
-            keccak256(abi.encode(key, CALLBACK_GAS_LIMIT)),
-            glvDeposit.callbackGasLimit()
-        );
-
-        dataStore.setBool(
-            keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN)),
-            glvDeposit.shouldUnwrapNativeToken()
-        );
-
-        dataStore.setBool(
-            keccak256(abi.encode(key, IS_MARKET_TOKEN_DEPOSIT)),
-            glvDeposit.isMarketTokenDeposit()
-        );
+        dataStore.setAddress(keccak256(abi.encode(key, ACCOUNT)), glvDeposit.account);
+        dataStore.setAddress(keccak256(abi.encode(key, RECEIVER)), glvDeposit.receiver);
+        dataStore.setAddress(keccak256(abi.encode(key, CALLBACK_CONTRACT)), glvDeposit.callbackContract);
+        dataStore.setAddress(keccak256(abi.encode(key, UI_FEE_RECEIVER)), glvDeposit.uiFeeReceiver);
+        dataStore.setAddress(keccak256(abi.encode(key, GLV)), glvDeposit.glv);
+        dataStore.setAddress(keccak256(abi.encode(key, MARKET)), glvDeposit.market);
+        dataStore.setAddress(keccak256(abi.encode(key, INITIAL_LONG_TOKEN)), glvDeposit.initialLongToken);
+        dataStore.setAddress(keccak256(abi.encode(key, INITIAL_SHORT_TOKEN)), glvDeposit.initialShortToken);
+        dataStore.setAddressArray(keccak256(abi.encode(key, LONG_TOKEN_SWAP_PATH)), glvDeposit.longTokenSwapPath);
+        dataStore.setAddressArray(keccak256(abi.encode(key, SHORT_TOKEN_SWAP_PATH)), glvDeposit.shortTokenSwapPath);
+        dataStore.setUint(keccak256(abi.encode(key, MARKET_TOKEN_AMOUNT)), glvDeposit.marketTokenAmount);
+        dataStore.setUint(keccak256(abi.encode(key, INITIAL_LONG_TOKEN_AMOUNT)), glvDeposit.initialLongTokenAmount);
+        dataStore.setUint(keccak256(abi.encode(key, INITIAL_SHORT_TOKEN_AMOUNT)), glvDeposit.initialShortTokenAmount);
+        dataStore.setUint(keccak256(abi.encode(key, MIN_GLV_TOKENS)), glvDeposit.minGlvTokens);
+        dataStore.setUint(keccak256(abi.encode(key, UPDATED_AT_BLOCK)), glvDeposit.updatedAtBlock);
+        dataStore.setUint(keccak256(abi.encode(key, UPDATED_AT_TIME)), glvDeposit.updatedAtTime);
+        dataStore.setUint(keccak256(abi.encode(key, EXECUTION_FEE)), glvDeposit.executionFee);
+        dataStore.setUint(keccak256(abi.encode(key, CALLBACK_GAS_LIMIT)), glvDeposit.callbackGasLimit);
+        dataStore.setBool(keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN)), glvDeposit.shouldUnwrapNativeToken);
+        dataStore.setBool(keccak256(abi.encode(key, IS_MARKET_TOKEN_DEPOSIT)), glvDeposit.isMarketTokenDeposit);
     }
 
     function remove(DataStore dataStore, bytes32 key, address account) external {
@@ -243,102 +99,41 @@ library GlvDepositStoreUtils {
             revert Errors.GlvDepositNotFound(key);
         }
 
-        dataStore.removeBytes32(
-            Keys.GLV_DEPOSIT_LIST,
-            key
-        );
+        dataStore.removeBytes32(Keys.GLV_DEPOSIT_LIST, key);
 
-        dataStore.removeBytes32(
-            Keys.accountGlvDepositListKey(account),
-            key
-        );
+        dataStore.removeBytes32(Keys.accountGlvDepositListKey(account), key);
 
-        dataStore.removeAddress(
-            keccak256(abi.encode(key, ACCOUNT))
-        );
-
-        dataStore.removeAddress(
-            keccak256(abi.encode(key, RECEIVER))
-        );
-
-        dataStore.removeAddress(
-            keccak256(abi.encode(key, CALLBACK_CONTRACT))
-        );
-
-        dataStore.removeAddress(
-            keccak256(abi.encode(key, UI_FEE_RECEIVER))
-        );
-
-        dataStore.removeAddress(
-            keccak256(abi.encode(key, GLV))
-        );
-
-        dataStore.removeAddress(
-            keccak256(abi.encode(key, MARKET))
-        );
-
-        dataStore.removeAddress(
-            keccak256(abi.encode(key, INITIAL_LONG_TOKEN))
-        );
-
-        dataStore.removeAddress(
-            keccak256(abi.encode(key, INITIAL_SHORT_TOKEN))
-        );
-
-        dataStore.removeAddressArray(
-            keccak256(abi.encode(key, LONG_TOKEN_SWAP_PATH))
-        );
-
-        dataStore.removeAddressArray(
-            keccak256(abi.encode(key, SHORT_TOKEN_SWAP_PATH))
-        );
-
-        dataStore.removeUint(
-            keccak256(abi.encode(key, MARKET_TOKEN_AMOUNT))
-        );
-
-        dataStore.removeUint(
-            keccak256(abi.encode(key, INITIAL_LONG_TOKEN_AMOUNT))
-        );
-
-        dataStore.removeUint(
-            keccak256(abi.encode(key, INITIAL_SHORT_TOKEN_AMOUNT))
-        );
-
-        dataStore.removeUint(
-            keccak256(abi.encode(key, MIN_GLV_TOKENS))
-        );
-
-        dataStore.removeUint(
-            keccak256(abi.encode(key, UPDATED_AT_BLOCK))
-        );
-
-        dataStore.removeUint(
-            keccak256(abi.encode(key, UPDATED_AT_TIME))
-        );
-
-        dataStore.removeUint(
-            keccak256(abi.encode(key, EXECUTION_FEE))
-        );
-
-        dataStore.removeUint(
-            keccak256(abi.encode(key, CALLBACK_GAS_LIMIT))
-        );
-
-        dataStore.removeBool(
-            keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN))
-        );
-
-        dataStore.removeBool(
-            keccak256(abi.encode(key, IS_MARKET_TOKEN_DEPOSIT))
-        );
+        dataStore.removeAddress(keccak256(abi.encode(key, ACCOUNT)));
+        dataStore.removeAddress(keccak256(abi.encode(key, RECEIVER)));
+        dataStore.removeAddress(keccak256(abi.encode(key, CALLBACK_CONTRACT)));
+        dataStore.removeAddress(keccak256(abi.encode(key, UI_FEE_RECEIVER)));
+        dataStore.removeAddress(keccak256(abi.encode(key, GLV)));
+        dataStore.removeAddress(keccak256(abi.encode(key, MARKET)));
+        dataStore.removeAddress(keccak256(abi.encode(key, INITIAL_LONG_TOKEN)));
+        dataStore.removeAddress(keccak256(abi.encode(key, INITIAL_SHORT_TOKEN)));
+        dataStore.removeAddressArray(keccak256(abi.encode(key, LONG_TOKEN_SWAP_PATH)));
+        dataStore.removeAddressArray(keccak256(abi.encode(key, SHORT_TOKEN_SWAP_PATH)));
+        dataStore.removeUint(keccak256(abi.encode(key, MARKET_TOKEN_AMOUNT)));
+        dataStore.removeUint(keccak256(abi.encode(key, INITIAL_LONG_TOKEN_AMOUNT)));
+        dataStore.removeUint(keccak256(abi.encode(key, INITIAL_SHORT_TOKEN_AMOUNT)));
+        dataStore.removeUint(keccak256(abi.encode(key, MIN_GLV_TOKENS)));
+        dataStore.removeUint(keccak256(abi.encode(key, UPDATED_AT_BLOCK)));
+        dataStore.removeUint(keccak256(abi.encode(key, UPDATED_AT_TIME)));
+        dataStore.removeUint(keccak256(abi.encode(key, EXECUTION_FEE)));
+        dataStore.removeUint(keccak256(abi.encode(key, CALLBACK_GAS_LIMIT)));
+        dataStore.removeBool(keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN)));
+        dataStore.removeBool(keccak256(abi.encode(key, IS_MARKET_TOKEN_DEPOSIT)));
     }
 
     function getGlvDepositCount(DataStore dataStore) internal view returns (uint256) {
         return dataStore.getBytes32Count(Keys.GLV_DEPOSIT_LIST);
     }
 
-    function getGlvDepositKeys(DataStore dataStore, uint256 start, uint256 end) internal view returns (bytes32[] memory) {
+    function getGlvDepositKeys(
+        DataStore dataStore,
+        uint256 start,
+        uint256 end
+    ) internal view returns (bytes32[] memory) {
         return dataStore.getBytes32ValuesAt(Keys.GLV_DEPOSIT_LIST, start, end);
     }
 
@@ -346,7 +141,12 @@ library GlvDepositStoreUtils {
         return dataStore.getBytes32Count(Keys.accountGlvDepositListKey(account));
     }
 
-    function getAccountGlvDepositKeys(DataStore dataStore, address account, uint256 start, uint256 end) internal view returns (bytes32[] memory) {
+    function getAccountGlvDepositKeys(
+        DataStore dataStore,
+        address account,
+        uint256 start,
+        uint256 end
+    ) internal view returns (bytes32[] memory) {
         return dataStore.getBytes32ValuesAt(Keys.accountGlvDepositListKey(account), start, end);
     }
 }

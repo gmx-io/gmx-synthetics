@@ -309,9 +309,9 @@ library CallbackUtils {
         GlvDeposit.Props memory glvDeposit,
         EventUtils.EventLogData memory eventData
     ) internal {
-        if (!isValidCallbackContract(glvDeposit.callbackContract())) { return; }
+        if (!isValidCallbackContract(glvDeposit.callbackContract)) { return; }
 
-        try IGlvDepositCallbackReceiver(glvDeposit.callbackContract()).afterGlvDepositExecution{ gas: glvDeposit.callbackGasLimit() }(
+        try IGlvDepositCallbackReceiver(glvDeposit.callbackContract).afterGlvDepositExecution{ gas: glvDeposit.callbackGasLimit }(
             key,
             glvDeposit,
             eventData
@@ -329,9 +329,9 @@ library CallbackUtils {
         GlvDeposit.Props memory glvDeposit,
         EventUtils.EventLogData memory eventData
     ) internal {
-        if (!isValidCallbackContract(glvDeposit.callbackContract())) { return; }
+        if (!isValidCallbackContract(glvDeposit.callbackContract)) { return; }
 
-        try IGlvDepositCallbackReceiver(glvDeposit.callbackContract()).afterGlvDepositCancellation{ gas: glvDeposit.callbackGasLimit() }(
+        try IGlvDepositCallbackReceiver(glvDeposit.callbackContract).afterGlvDepositCancellation{ gas: glvDeposit.callbackGasLimit }(
             key,
             glvDeposit,
             eventData
