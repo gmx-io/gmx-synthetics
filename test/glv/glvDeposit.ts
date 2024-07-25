@@ -9,6 +9,7 @@ import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import { increaseTime } from "../../utils/time";
 import { printGasUsage } from "../../utils/gas";
+import { contractAt } from "../../utils/deploy";
 
 describe("glv deposits", () => {
   const { provider } = ethers;
@@ -105,8 +106,8 @@ describe("glv deposits", () => {
       market: ethUsdMarket,
       initialLongToken: ethUsdMarket.longToken,
       initialShortToken: ethUsdMarket.shortToken,
-      longTokenSwapPath: [],
-      shortTokenSwapPath: [],
+      longTokenSwapPath: [btcUsdMarket.marketToken],
+      shortTokenSwapPath: [ethUsdMarket.marketToken],
       minGlvTokens: 100,
       longTokenAmount: expandDecimals(10, 18),
       shortTokenAmount: expandDecimals(10 * 5000, 6),
@@ -129,8 +130,9 @@ describe("glv deposits", () => {
     expect(glvDeposit.market).eq(ethUsdMarket.marketToken);
     expect(glvDeposit.initialLongToken).eq(ethUsdMarket.longToken);
     expect(glvDeposit.initialShortToken).eq(ethUsdMarket.shortToken);
-    expect(glvDeposit.longTokenSwapPath).deep.eq([]);
-    expect(glvDeposit.shortTokenSwapPath).deep.eq([]);
+    expect(glvDeposit.longTokenSwapPath).deep.eq([btcUsdMarket.marketToken]);
+    expect(glvDeposit.shortTokenSwapPath).deep.eq([ethUsdMarket.marketToken]);
+    expect(glvDeposit.marketTokenAmount).eq(0);
     expect(glvDeposit.initialLongTokenAmount).eq(expandDecimals(10, 18));
     expect(glvDeposit.initialShortTokenAmount).eq(expandDecimals(10 * 5000, 6));
     expect(glvDeposit.minGlvTokens).eq(100);
@@ -259,6 +261,45 @@ describe("glv deposits", () => {
     // expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(190000, 18));
   });
 
+  describe("execute glv deposit, validations", () => {
+    const minGlvTokensForFirstGlvDeposit = expandDecimals(1000, 18);
+    const firstDepositReceiver = { address: "0x0000000000000000000000000000000000000001" };
+
+    it("InvalidReceiverForFirstGlvDeposit", async () => {
+      await dataStore.setUint(keys.minGlvTokensForFirstGlvDepositKey(ethUsdGlvAddress), minGlvTokensForFirstGlvDeposit);
+      await handleGlvDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(1, 17),
+          shortTokenAmount: expandDecimals(100, 6),
+        },
+        execute: {
+          expectedCancellationReason: {
+            name: "InvalidReceiverForFirstGlvDeposit",
+            args: [user0.address, firstDepositReceiver.address],
+          },
+        },
+      });
+    });
+
+    it("InvalidMinGlvTokensForFirstGlvDeposit", async () => {
+      await dataStore.setUint(keys.minGlvTokensForFirstGlvDepositKey(ethUsdGlvAddress), minGlvTokensForFirstGlvDeposit);
+      await handleGlvDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(1, 17),
+          shortTokenAmount: expandDecimals(100, 6),
+          receiver: firstDepositReceiver,
+          minGlvTokens: expandDecimals(1, 15),
+        },
+        execute: {
+          expectedCancellationReason: {
+            name: "InvalidMinGlvTokensForFirstGlvDeposit",
+            args: [expandDecimals(1, 15), minGlvTokensForFirstGlvDeposit],
+          },
+        },
+      });
+    });
+  });
+
   it("cancel glv deposit", async () => {
     await dataStore.setUint(keys.REQUEST_EXPIRATION_TIME, 300);
 
@@ -295,6 +336,7 @@ describe("glv deposits", () => {
     expect(glvDeposit.initialShortToken).eq(ethUsdMarket.shortToken);
     expect(glvDeposit.longTokenSwapPath).deep.eq([]);
     expect(glvDeposit.shortTokenSwapPath).deep.eq([]);
+    expect(glvDeposit.marketTokenAmount).eq(0);
     expect(glvDeposit.initialLongTokenAmount).eq(expandDecimals(10, 18));
     expect(glvDeposit.initialShortTokenAmount).eq(expandDecimals(10 * 5000, 6));
     expect(glvDeposit.minGlvTokens).eq(100);
@@ -302,6 +344,7 @@ describe("glv deposits", () => {
     expect(glvDeposit.executionFee).eq("500");
     expect(glvDeposit.callbackGasLimit).eq("200000");
     expect(glvDeposit.shouldUnwrapNativeToken).eq(false);
+    expect(glvDeposit.isMarketTokenDeposit).eq(false);
 
     await expect(glvRouter.connect(user1).cancelGlvDeposit(glvDepositKeys[0]))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
@@ -338,6 +381,7 @@ describe("glv deposits", () => {
     expect(glvDeposit.initialShortToken).eq(AddressZero);
     expect(glvDeposit.longTokenSwapPath).deep.eq([]);
     expect(glvDeposit.shortTokenSwapPath).deep.eq([]);
+    expect(glvDeposit.marketTokenAmount).eq(0);
     expect(glvDeposit.initialLongTokenAmount).eq(0);
     expect(glvDeposit.initialShortTokenAmount).eq(0);
     expect(glvDeposit.minGlvTokens).eq(0);
@@ -345,6 +389,108 @@ describe("glv deposits", () => {
     expect(glvDeposit.executionFee).eq(0);
     expect(glvDeposit.callbackGasLimit).eq(0);
     expect(glvDeposit.shouldUnwrapNativeToken).eq(false);
+    expect(glvDeposit.isMarketTokenDeposit).eq(false);
+
+    await printGasUsage(provider, txn, "cancelGlvDeposit");
+    expect(await getGlvDepositCount(dataStore)).eq(0);
+
+    await expect(glvRouter.connect(user0).cancelGlvDeposit(glvDepositKeys[0])).to.be.revertedWithCustomError(
+      errorsContract,
+      "EmptyGlvDeposit"
+    );
+  });
+
+  it("cancel glv deposit, market tokens", async () => {
+    await dataStore.setUint(keys.REQUEST_EXPIRATION_TIME, 300);
+
+    const params = {
+      glv: ethUsdGlvAddress,
+      receiver: user1,
+      market: ethUsdMarket,
+      callbackContract: user2,
+      initialLongToken: AddressZero,
+      initialShortToken: AddressZero,
+      longTokenSwapPath: [],
+      shortTokenSwapPath: [],
+      minGlvTokens: 100,
+      longTokenAmount: 0,
+      shortTokenAmount: 0,
+      marketTokenAmount: expandDecimals(15, 18),
+      executionFee: "500",
+      shouldUnwrapNativeToken: false,
+      callbackGasLimit: "200000",
+      gasUsageLabel: "createGlvDeposit",
+      isMarketTokenDeposit: true,
+    };
+
+    await createGlvDeposit(fixture, params);
+
+    const block = await provider.getBlock("latest");
+    const glvDepositKeys = await getGlvDepositKeys(dataStore, 0, 1);
+    let glvDeposit = await reader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
+
+    expect(glvDeposit.glv).eq(ethUsdGlvAddress);
+    expect(glvDeposit.account).eq(user0.address);
+    expect(glvDeposit.receiver).eq(user1.address);
+    expect(glvDeposit.callbackContract).eq(user2.address);
+    expect(glvDeposit.market).eq(ethUsdMarket.marketToken);
+    expect(glvDeposit.initialLongToken).eq(AddressZero);
+    expect(glvDeposit.initialShortToken).eq(AddressZero);
+    expect(glvDeposit.longTokenSwapPath).deep.eq([]);
+    expect(glvDeposit.shortTokenSwapPath).deep.eq([]);
+    expect(glvDeposit.marketTokenAmount).eq(expandDecimals(15, 18));
+    expect(glvDeposit.initialLongTokenAmount).eq(0);
+    expect(glvDeposit.initialShortTokenAmount).eq(0);
+    expect(glvDeposit.minGlvTokens).eq(100);
+    expect(glvDeposit.updatedAtBlock).eq(block.number);
+    expect(glvDeposit.executionFee).eq("500");
+    expect(glvDeposit.callbackGasLimit).eq("200000");
+    expect(glvDeposit.shouldUnwrapNativeToken).eq(false);
+    expect(glvDeposit.isMarketTokenDeposit).eq(true);
+
+    await expect(glvRouter.connect(user1).cancelGlvDeposit(glvDepositKeys[0]))
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
+      .withArgs(user1.address, "account for cancelGlvDeposit");
+
+    expect(await getGlvDepositCount(dataStore)).eq(1);
+
+    await expect(glvRouter.connect(user0).cancelGlvDeposit(glvDepositKeys[0])).to.be.revertedWithCustomError(
+      errorsContract,
+      "RequestNotYetCancellable"
+    );
+
+    expect(await getGlvDepositCount(dataStore)).eq(1);
+
+    const refTime = (await ethers.provider.getBlock("latest")).timestamp;
+    await increaseTime(refTime, 300);
+
+    const market = await contractAt("GlvToken", ethUsdMarket.marketToken);
+    expect(await market.balanceOf(user0.address)).eq(0);
+
+    const txn = await glvRouter.connect(user0).cancelGlvDeposit(glvDepositKeys[0]);
+
+    expect(await market.balanceOf(user0.address)).eq(expandDecimals(15, 18));
+
+    glvDeposit = await reader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
+
+    expect(glvDeposit.glv).eq(AddressZero);
+    expect(glvDeposit.account).eq(AddressZero);
+    expect(glvDeposit.receiver).eq(AddressZero);
+    expect(glvDeposit.callbackContract).eq(AddressZero);
+    expect(glvDeposit.market).eq(AddressZero);
+    expect(glvDeposit.initialLongToken).eq(AddressZero);
+    expect(glvDeposit.initialShortToken).eq(AddressZero);
+    expect(glvDeposit.longTokenSwapPath).deep.eq([]);
+    expect(glvDeposit.shortTokenSwapPath).deep.eq([]);
+    expect(glvDeposit.marketTokenAmount).eq(0);
+    expect(glvDeposit.initialLongTokenAmount).eq(0);
+    expect(glvDeposit.initialShortTokenAmount).eq(0);
+    expect(glvDeposit.minGlvTokens).eq(0);
+    expect(glvDeposit.updatedAtBlock).eq(0);
+    expect(glvDeposit.executionFee).eq(0);
+    expect(glvDeposit.callbackGasLimit).eq(0);
+    expect(glvDeposit.shouldUnwrapNativeToken).eq(false);
+    expect(glvDeposit.isMarketTokenDeposit).eq(false);
 
     await printGasUsage(provider, txn, "cancelGlvDeposit");
     expect(await getGlvDepositCount(dataStore)).eq(0);

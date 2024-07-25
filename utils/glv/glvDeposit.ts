@@ -141,16 +141,23 @@ export async function executeGlvDeposit(fixture, overrides: any = {}) {
     eventName: "GlvDepositCancelled",
   });
 
+  // todo create separate func to check cancellation reason
   if (cancellationReason) {
     if (overrides.expectedCancellationReason) {
-      expect(cancellationReason.name).eq(overrides.expectedCancellationReason);
+      if (typeof overrides.expectedCancellationReason === "string") {
+        expect(cancellationReason.name).eq(overrides.expectedCancellationReason);
+      } else {
+        expect(overrides.expectedCancellationReason.name).eq(cancellationReason.name);
+        expect(overrides.expectedCancellationReason.args.length).eq(cancellationReason.args.length);
+        expect(overrides.expectedCancellationReason.args).deep.eq(cancellationReason.args);
+      }
     } else {
       throw new Error(`GlvDeposit was cancelled: ${getErrorString(cancellationReason)}`);
     }
   } else {
     if (overrides.expectedCancellationReason) {
       throw new Error(
-        `Deposit was not cancelled, expected cancellation with reason: ${overrides.expectedCancellationReason}`
+        `GlvDeposit was not cancelled, expected cancellation with reason: ${overrides.expectedCancellationReason}`
       );
     }
   }

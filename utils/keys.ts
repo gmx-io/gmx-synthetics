@@ -207,6 +207,7 @@ export const SUBACCOUNT_ORDER_ACTION = hashString("SUBACCOUNT_ORDER_ACTION");
 export const GLV_LONG_TOKEN = hashString("GLV_LONG_TOKEN");
 export const GLV_SHORT_TOKEN = hashString("GLV_SHORT_TOKEN");
 export const GLV_SUPPORTED_MARKET_LIST = hashString("GLV_SUPPORTED_MARKET_LIST");
+export const MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT = hashString("MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT");
 
 export const GLV_CUMULATIVE_DEPOSITED_USD = hashString("GLV_CUMULATIVE_DEPOSITED_USD");
 export const GLV_MAX_CUMULATIVE_DEPOSIT_USD = hashString("GLV_MAX_CUMULATIVE_DEPOSIT_USD");
@@ -640,4 +641,8 @@ export function glvShortTokenKey(glv: string) {
 
 export function glvSupportedMarketListKey(glv: string) {
   return hashData(["bytes32", "address"], [GLV_SUPPORTED_MARKET_LIST, glv]);
+}
+
+export function minGlvTokensForFirstGlvDepositKey(glv: string) {
+  return hashData(["bytes32", "address"], [MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT, glv]);
 }
