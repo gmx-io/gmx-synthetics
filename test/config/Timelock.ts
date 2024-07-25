@@ -198,6 +198,32 @@ describe("Timelock", () => {
     expect(await roleStore.hasRole(user3.address, orderKeeperRole)).eq(false);
   });
 
+  it("setOracleProviderForToken", async () => {
+    await expect(timelock.connect(user2).signalSetOracleProviderForToken(wnt.address, user3.address))
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
+      .withArgs(user2.address, "TIMELOCK_ADMIN");
+
+    await timelock.connect(timelockAdmin).signalSetOracleProviderForToken(wnt.address, user3.address);
+
+    await expect(timelock.connect(user2).setOracleProviderForTokenAfterSignal(wnt.address, user3.address))
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
+      .withArgs(user2.address, "TIMELOCK_ADMIN");
+
+    await expect(
+      timelock.connect(timelockAdmin).setOracleProviderForTokenAfterSignal(wnt.address, user3.address)
+    ).to.be.revertedWithCustomError(errorsContract, "SignalTimeNotYetPassed");
+
+    await time.increase(1 * 24 * 60 * 60 + 10);
+
+    expect(await dataStore.getAddress(keys.oracleProviderForTokenKey(wnt.address))).eq(
+      fixture.contracts.gmOracleProvider.address
+    );
+
+    await timelock.connect(timelockAdmin).setOracleProviderForTokenAfterSignal(wnt.address, user3.address);
+
+    expect(await dataStore.getAddress(keys.oracleProviderForTokenKey(wnt.address))).eq(user3.address);
+  });
+
   it("setPriceFeed", async () => {
     await dataStore.setAddress(keys.priceFeedKey(wnt.address), ethers.constants.AddressZero);
     await dataStore.setUint(keys.priceFeedMultiplierKey(wnt.address), 0);

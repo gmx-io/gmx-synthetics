@@ -80,6 +80,24 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         );
     }
 
+    function initOracleProviderForToken(address token, address provider) external onlyConfigKeeper nonReentrant {
+        if (dataStore.getAddress(Keys.oracleProviderForTokenKey(token)) != address(0)) {
+            revert Errors.OracleProviderAlreadyExistsForToken(token);
+        }
+
+        dataStore.setAddress(Keys.oracleProviderForTokenKey(token), provider);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "token", token);
+        eventData.addressItems.setItem(1, "provider", provider);
+        eventEmitter.emitEventLog(
+            "InitOracleProviderForToken",
+            eventData
+        );
+    }
+
+
     function setPriceFeed(
         address token,
         address priceFeed,
@@ -437,7 +455,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.MAX_ORACLE_PRICE_AGE] = true;
         allowedBaseKeys[Keys.MAX_ORACLE_TIMESTAMP_RANGE] = true;
         allowedBaseKeys[Keys.ORACLE_TIMESTAMP_ADJUSTMENT] = true;
-        allowedBaseKeys[Keys.ORACLE_PROVIDER_FOR_TOKEN] = true;
         allowedBaseKeys[Keys.CHAINLINK_PAYMENT_TOKEN] = true;
         allowedBaseKeys[Keys.SEQUENCER_GRACE_DURATION] = true;
         allowedBaseKeys[Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR] = true;
