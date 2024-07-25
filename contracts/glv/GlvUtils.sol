@@ -7,6 +7,7 @@ import "../oracle/Oracle.sol";
 import "../market/Market.sol";
 import "../market/MarketUtils.sol";
 import "./GlvEventUtils.sol";
+import "./GlvStoreUtils.sol";
 
 library GlvUtils {
     using SafeCast for int256;
@@ -184,31 +185,24 @@ library GlvUtils {
         }
     }
 
-    function addMarket(DataStore dataStore, EventEmitter eventEmitter, address glv, address marketAddress) external {
-        validateGlv(dataStore, glv);
+    function addMarket(DataStore dataStore, EventEmitter eventEmitter, address glvAddress, address marketAddress) external {
+        validateGlv(dataStore, glvAddress);
 
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, marketAddress);
-        (address longToken, address shortToken) = getGlvTokens(dataStore, glv);
-        if (market.longToken != longToken) {
-            revert Errors.GlvInvalidLongToken(glv, market.longToken, longToken);
+        Glv.Props memory glv = GlvStoreUtils.get(dataStore, glvAddress);
+        if (market.longToken != glv.longToken) {
+            revert Errors.GlvInvalidLongToken(glvAddress, market.longToken, glv.longToken);
         }
-        if (market.shortToken != shortToken) {
-            revert Errors.GlvInvalidShortToken(glv, market.shortToken, shortToken);
+        if (market.shortToken != glv.shortToken) {
+            revert Errors.GlvInvalidShortToken(glvAddress, market.shortToken, glv.shortToken);
         }
 
-        bytes32 key = Keys.glvSupportedMarketListKey(glv);
+        bytes32 key = Keys.glvSupportedMarketListKey(glvAddress);
         if (dataStore.containsAddress(key, marketAddress)) {
-            revert Errors.GlvMarketAlreadyExists(glv, marketAddress);
+            revert Errors.GlvMarketAlreadyExists(glvAddress, marketAddress);
         }
         dataStore.addAddress(key, marketAddress);
 
-        GlvEventUtils.emitGlvMarketAdded(eventEmitter, glv, market.marketToken);
-    }
-
-    function getGlvTokens(DataStore dataStore, address glv) internal view returns (address, address) {
-        address longToken = dataStore.getAddress(Keys.glvLongTokenKey(address(glv)));
-        address shortToken = dataStore.getAddress(Keys.glvShortTokenKey(address(glv)));
-
-        return (longToken, shortToken);
+        GlvEventUtils.emitGlvMarketAdded(eventEmitter, glvAddress, market.marketToken);
     }
 }

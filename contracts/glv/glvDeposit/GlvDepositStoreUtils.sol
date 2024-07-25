@@ -25,6 +25,7 @@ library GlvDepositStoreUtils {
     bytes32 public constant LONG_TOKEN_SWAP_PATH = keccak256(abi.encode("LONG_TOKEN_SWAP_PATH"));
     bytes32 public constant SHORT_TOKEN_SWAP_PATH = keccak256(abi.encode("SHORT_TOKEN_SWAP_PATH"));
 
+    bytes32 public constant MARKET_TOKEN_AMOUNT = keccak256(abi.encode("MARKET_TOKEN_AMOUNT"));
     bytes32 public constant INITIAL_LONG_TOKEN_AMOUNT = keccak256(abi.encode("INITIAL_LONG_TOKEN_AMOUNT"));
     bytes32 public constant INITIAL_SHORT_TOKEN_AMOUNT = keccak256(abi.encode("INITIAL_SHORT_TOKEN_AMOUNT"));
     bytes32 public constant MIN_GLV_TOKENS = keccak256(abi.encode("MIN_GLV_TOKENS"));
@@ -80,6 +81,10 @@ library GlvDepositStoreUtils {
 
         glvDeposit.setShortTokenSwapPath(dataStore.getAddressArray(
             keccak256(abi.encode(key, SHORT_TOKEN_SWAP_PATH))
+        ));
+
+        glvDeposit.setMarketTokenAmount(dataStore.getUint(
+            keccak256(abi.encode(key, MARKET_TOKEN_AMOUNT))
         ));
 
         glvDeposit.setInitialLongTokenAmount(dataStore.getUint(
@@ -183,6 +188,11 @@ library GlvDepositStoreUtils {
         );
 
         dataStore.setUint(
+            keccak256(abi.encode(key, MARKET_TOKEN_AMOUNT)),
+            glvDeposit.marketTokenAmount()
+        );
+
+        dataStore.setUint(
             keccak256(abi.encode(key, INITIAL_LONG_TOKEN_AMOUNT)),
             glvDeposit.initialLongTokenAmount()
         );
@@ -281,6 +291,10 @@ library GlvDepositStoreUtils {
 
         dataStore.removeAddressArray(
             keccak256(abi.encode(key, SHORT_TOKEN_SWAP_PATH))
+        );
+
+        dataStore.removeUint(
+            keccak256(abi.encode(key, MARKET_TOKEN_AMOUNT))
         );
 
         dataStore.removeUint(

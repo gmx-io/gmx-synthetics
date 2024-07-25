@@ -1,6 +1,6 @@
 import { calculateCreate2 } from "eth-create2-calculator";
 
-import GlvArtifact from "../../artifacts/contracts/glv/Glv.sol/Glv.json";
+import GlvTokenArtifact from "../../artifacts/contracts/glv/GlvToken.sol/GlvToken.json";
 
 import { hashData } from "../hash";
 
@@ -12,14 +12,16 @@ export function getGlvAddress(
   longToken: string,
   shortToken: string,
   glvType: string,
+  glvName: string,
+  glvSymbol: string,
   glvFactoryAddress: string,
   roleStoreAddress: string,
   dataStoreAddress: string
 ) {
   const salt = hashData(["string", "address", "address", "bytes32"], ["GMX_GLV", longToken, shortToken, glvType]);
-  const byteCode = GlvArtifact.bytecode;
+  const byteCode = GlvTokenArtifact.bytecode;
   return calculateCreate2(glvFactoryAddress, salt, byteCode, {
-    params: [roleStoreAddress, dataStoreAddress],
-    types: ["address", "address"],
+    types: ["address", "address", "string", "string"],
+    params: [roleStoreAddress, dataStoreAddress, glvName, glvSymbol],
   });
 }

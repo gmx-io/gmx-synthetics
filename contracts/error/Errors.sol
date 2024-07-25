@@ -47,6 +47,7 @@ library Errors {
     error GlvDepositNotFound(bytes32 key);
     // GlvDepositUtils errors
     error EmptyGlvDepositAmounts();
+    error EmptyGlvMarketAmount();
     error EmptyGlvDeposit();
     error InvalidMinGlvTokensForFirstGlvDeposit(uint256 minGlvTokens, uint256 expectedMinGlvTokens);
     error InvalidReceiverForFirstGlvDeposit(address receiver, address expectedReceiver);

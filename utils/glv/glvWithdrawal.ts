@@ -39,14 +39,14 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
 
   await wnt.mint(glvVault.address, executionFee);
 
-  const glvToken = await contractAt("Glv", glv);
+  const glvToken = await contractAt("GlvToken", glv);
 
   if (glvTokenAmount.gt(0)) {
-    const glvTokenBalance = await glvToken.balanceOf(sender.address);
+    const glvTokenBalance = await glvToken.balanceOf(account.address);
     if (glvTokenBalance.lt(glvTokenAmount)) {
-      await glvToken.mint(sender.address, glvTokenAmount);
+      await glvToken.mint(account.address, glvTokenAmount.sub(glvTokenBalance));
     }
-    await glvToken.connect(sender).transfer(glvVault.address, glvTokenAmount);
+    await glvToken.connect(account).transfer(glvVault.address, glvTokenAmount);
   }
 
   const params = {
@@ -104,8 +104,6 @@ export async function executeGlvWithdrawal(fixture, overrides: any = {}) {
     dataStreamData,
     priceFeedTokens,
   };
-
-  console.log("executeGlvWithdrawal params", params);
 
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined) {

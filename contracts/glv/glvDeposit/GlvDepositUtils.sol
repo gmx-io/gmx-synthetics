@@ -43,6 +43,12 @@ library GlvDepositUtils {
         bool isMarketTokenDeposit;
     }
 
+    struct CreateGlvDepositCache {
+        uint256 marketTokenAmount;
+        uint256 initialLongTokenAmount;
+        uint256 initialShortTokenAmount;
+    }
+
     struct ExecuteGlvDepositParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
@@ -82,6 +88,8 @@ library GlvDepositUtils {
         MarketUtils.validateSwapPath(dataStore, params.longTokenSwapPath);
         MarketUtils.validateSwapPath(dataStore, params.shortTokenSwapPath);
 
+        CreateGlvDepositCache memory cache;
+
         if (params.isMarketTokenDeposit) {
             // user deposited GM tokens
             if (params.initialLongToken != address(0)) {
@@ -96,22 +104,30 @@ library GlvDepositUtils {
                     params.shortTokenSwapPath.length
                 );
             }
-        }
+            cache.marketTokenAmount = glvVault.recordTransferIn(params.market);
 
-        // if the initialLongToken and initialShortToken are the same, only the initialLongTokenAmount would
-        // be non-zero, the initialShortTokenAmount would be zero
-        uint256 initialLongTokenAmount = glvVault.recordTransferIn(params.initialLongToken);
-        uint256 initialShortTokenAmount;
-        if (params.initialShortToken != address(0)) {
-            // initialShortToken could be zero address if user deposits GM token
-            initialShortTokenAmount = glvVault.recordTransferIn(params.initialShortToken);
+            if (cache.marketTokenAmount == 0) {
+                revert Errors.EmptyGlvMarketAmount();
+            }
+        } else {
+            if (params.initialLongToken == address(0)) {
+                revert Errors.InvalidGlvDepositInitialLongToken(params.initialLongToken);
+            }
+
+            // if the initialLongToken and initialShortToken are the same, only the initialLongTokenAmount would
+            // be non-zero, the initialShortTokenAmount would be zero
+            cache.initialLongTokenAmount = glvVault.recordTransferIn(params.initialLongToken);
+            if (params.initialShortToken != address(0)) {
+                // initialShortToken could be zero address if user deposits GM token
+                cache.initialShortTokenAmount = glvVault.recordTransferIn(params.initialShortToken);
+            }
         }
 
         address wnt = TokenUtils.wnt(dataStore);
         if (params.initialLongToken == wnt) {
-            initialLongTokenAmount -= params.executionFee;
+            cache.initialLongTokenAmount -= params.executionFee;
         } else if (params.initialShortToken == wnt) {
-            initialShortTokenAmount -= params.executionFee;
+            cache.initialShortTokenAmount -= params.executionFee;
         } else {
             uint256 wntAmount = glvVault.recordTransferIn(wnt);
             if (wntAmount < params.executionFee) {
@@ -121,7 +137,7 @@ library GlvDepositUtils {
             params.executionFee = wntAmount;
         }
 
-        if (initialLongTokenAmount == 0 && initialShortTokenAmount == 0) {
+        if (!params.isMarketTokenDeposit && (cache.initialLongTokenAmount == 0 && cache.initialShortTokenAmount == 0)) {
             revert Errors.EmptyGlvDepositAmounts();
         }
 
@@ -141,8 +157,9 @@ library GlvDepositUtils {
                 shortTokenSwapPath: params.shortTokenSwapPath
             }),
             GlvDeposit.Numbers({
-                initialLongTokenAmount: initialLongTokenAmount,
-                initialShortTokenAmount: initialShortTokenAmount,
+                marketTokenAmount: cache.marketTokenAmount,
+                initialLongTokenAmount: cache.initialLongTokenAmount,
+                initialShortTokenAmount: cache.initialShortTokenAmount,
                 minGlvTokens: params.minGlvTokens,
                 updatedAtBlock: Chain.currentBlockNumber(),
                 updatedAtTime: Chain.currentTimestamp(),
@@ -286,12 +303,16 @@ library GlvDepositUtils {
         uint256 initialGlvTokenSupply = GlvToken(payable(glv)).totalSupply();
 
         // return if this is not the first glv deposit
-        if (initialGlvTokenSupply != 0) { return; }
+        if (initialGlvTokenSupply != 0) {
+            return;
+        }
 
         uint256 minGlvTokens = params.dataStore.getUint(Keys.minGlvTokensForFirstGlvDepositKey(glv));
 
         // return if there is no minGlvTokens requirement
-        if (minGlvTokens == 0) { return; }
+        if (minGlvTokens == 0) {
+            return;
+        }
 
         if (glvDeposit.receiver() != RECEIVER_FOR_FIRST_GLV_DEPOSIT) {
             revert Errors.InvalidReceiverForFirstGlvDeposit(glvDeposit.receiver(), RECEIVER_FOR_FIRST_GLV_DEPOSIT);
@@ -337,7 +358,7 @@ library GlvDepositUtils {
     ) private returns (uint256) {
         if (glvDeposit.isMarketTokenDeposit()) {
             // user deposited GM tokens
-            glvVault.transferOut(glvDeposit.market(), glvDeposit.glv(), glvDeposit.initialLongTokenAmount());
+            glvVault.transferOut(glvDeposit.market(), glvDeposit.glv(), glvDeposit.marketTokenAmount());
             return glvDeposit.initialLongTokenAmount();
         }
 
@@ -399,6 +420,15 @@ library GlvDepositUtils {
 
         GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(dataStore, key);
         GlvDepositStoreUtils.remove(dataStore, key, glvDeposit.account());
+
+        if (glvDeposit.marketTokenAmount() > 0) {
+            glvVault.transferOut(
+                glvDeposit.market(),
+                glvDeposit.account(),
+                glvDeposit.marketTokenAmount(),
+                glvDeposit.shouldUnwrapNativeToken()
+            );
+        }
 
         if (glvDeposit.initialLongTokenAmount() > 0) {
             glvVault.transferOut(

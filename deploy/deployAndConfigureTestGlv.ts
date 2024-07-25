@@ -16,6 +16,8 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
   const sol = tokens.SOL;
   const glvType = ethers.constants.HashZero;
 
+  const glvNameSuffix = "[WETH-USDC]";
+  const glvSymbolSuffix = "[WETH-USDC]";
   await execute(
     "GlvFactory",
     { from: deployer, log: true },
@@ -23,8 +25,8 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     weth.address,
     usdc.address,
     glvType,
-    "GMX Liquidity Pool [WETH-USD]",
-    "GLV [WETH-USD]"
+    glvNameSuffix,
+    glvSymbolSuffix
   );
 
   const dataStore = await get("DataStore");
@@ -36,6 +38,8 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     weth.address,
     usdc.address,
     glvType,
+    `GMX Liquidity Vault ${glvNameSuffix}`,
+    `GLV ${glvSymbolSuffix}`,
     glvFactory.address,
     roleStore.address,
     dataStore.address

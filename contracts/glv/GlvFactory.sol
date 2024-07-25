@@ -9,6 +9,8 @@ import "./GlvStoreUtils.sol";
 import "../event/EventEmitter.sol";
 import "../utils/Cast.sol";
 
+import "hardhat/console.sol";
+
 // @title GlvFactory
 // @dev Contract to create glv
 contract GlvFactory is RoleModule {
@@ -32,8 +34,8 @@ contract GlvFactory is RoleModule {
         address longToken,
         address shortToken,
         bytes32 glvType,
-        string memory name,
-        string memory symbol
+        string memory nameSuffix,
+        string memory symbolSuffix
     ) external onlyMarketKeeper returns (Glv.Props memory) {
         bytes32 salt = keccak256(abi.encode("GMX_GLV", longToken, shortToken, glvType));
 
@@ -42,10 +44,10 @@ contract GlvFactory is RoleModule {
             revert Errors.GlvAlreadyExists(glvType, existingGlvAddress);
         }
 
-        string memory glvName = string.concat("GMX Liquidity Vault ", name);
-        string memory glvSymbol = string.concat("GLV ", symbol);
+        string memory name = string.concat("GMX Liquidity Vault", Strings.equal(nameSuffix, "") ? "" : " ", nameSuffix);
+        string memory symbol = string.concat("GLV", Strings.equal(symbolSuffix, "") ? "" : " ", symbolSuffix);
 
-        GlvToken glvToken = new GlvToken{salt: salt}(roleStore, dataStore, glvName, glvSymbol);
+        GlvToken glvToken = new GlvToken{salt: salt}(roleStore, dataStore, name, symbol);
 
         Glv.Props memory glv = Glv.Props({glvToken: address(glvToken), longToken: longToken, shortToken: shortToken});
 

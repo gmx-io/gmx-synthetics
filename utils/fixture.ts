@@ -192,6 +192,8 @@ export async function deployFixture() {
     wnt.address,
     usdc.address,
     ethers.constants.HashZero,
+    "GMX Liquidity Vault [WETH-USDC]",
+    "GLV [WETH-USDC]",
     glvFactory.address,
     roleStore.address,
     dataStore.address

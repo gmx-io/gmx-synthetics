@@ -35,6 +35,7 @@ library GlvDeposit {
         address[] shortTokenSwapPath;
     }
 
+    // @param marketTokenAmount the amount of market tokens to deposit
     // @param initialLongTokenAmount the amount of long tokens to deposit
     // @param initialShortTokenAmount the amount of short tokens to deposit
     // @param minGlvTokens the minimum acceptable number of Glv tokens
@@ -43,6 +44,7 @@ library GlvDeposit {
     // @param executionFee the execution fee for keepers
     // @param callbackGasLimit the gas limit for the callbackContract
     struct Numbers {
+        uint256 marketTokenAmount;
         uint256 initialLongTokenAmount;
         uint256 initialShortTokenAmount;
         uint256 minGlvTokens;
@@ -53,6 +55,7 @@ library GlvDeposit {
     }
 
     // @param shouldUnwrapNativeToken whether to unwrap the native token when
+    // @param isMarketTokenDeposit whether to deposit market tokens or long/short tokens
     struct Flags {
         bool shouldUnwrapNativeToken;
         bool isMarketTokenDeposit;
@@ -137,6 +140,14 @@ library GlvDeposit {
 
     function setShortTokenSwapPath(Props memory props, address[] memory value) internal pure {
         props.addresses.shortTokenSwapPath = value;
+    }
+
+    function marketTokenAmount(Props memory props) internal pure returns (uint256) {
+        return props.numbers.marketTokenAmount;
+    }
+
+    function setMarketTokenAmount(Props memory props, uint256 value) internal pure {
+        props.numbers.marketTokenAmount = value;
     }
 
     function initialLongTokenAmount(Props memory props) internal pure returns (uint256) {

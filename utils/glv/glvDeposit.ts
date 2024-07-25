@@ -37,10 +37,17 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
   const executionFee = overrides.executionFee || "1000000000000000";
   const executionFeeToMint = overrides.executionFeeToMint || executionFee;
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
+  const marketTokenAmount = overrides.marketTokenAmount || bigNumberify(0);
   const longTokenAmount = overrides.longTokenAmount || bigNumberify(0);
   const shortTokenAmount = overrides.shortTokenAmount || bigNumberify(0);
+  const isMarketTokenDeposit = overrides.isMarketTokenDeposit || false;
 
   await wnt.mint(glvVault.address, executionFeeToMint);
+
+  if (marketTokenAmount.gt(0)) {
+    const _marketToken = await contractAt("MintableToken", market.marketToken);
+    await _marketToken.mint(glvVault.address, marketTokenAmount);
+  }
 
   if (longTokenAmount.gt(0)) {
     const _initialLongToken = await contractAt("MintableToken", initialLongToken);
@@ -62,11 +69,15 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
     initialShortToken,
     longTokenSwapPath,
     shortTokenSwapPath,
+    marketTokenAmount,
     minGlvTokens,
     shouldUnwrapNativeToken,
     executionFee,
     callbackGasLimit,
+    isMarketTokenDeposit,
   };
+
+  console.log("params", params);
 
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined) {
