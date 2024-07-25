@@ -12,9 +12,14 @@ library GlvUtils {
     using SafeCast for int256;
     using SafeCast for uint256;
 
-    struct GetValueCache {
+    struct GetGlvValueCache {
         bytes32 marketListKey;
         uint256 marketCount;
+        uint256 glvValue;
+        Price.Props indexTokenPrice;
+        Price.Props longTokenPrice;
+        Price.Props shortTokenPrice;
+        Market.Props market;
     }
 
     // @dev get the USD value of the Glv
@@ -23,26 +28,31 @@ library GlvUtils {
     // @param glv Glv
     // @param maximize
     // @return the USD value of the Glv
-    function getValue(
+    function getGlvValue(
         DataStore dataStore,
         Oracle oracle,
         address glv,
         bool maximize
-    ) internal view returns (uint256 glvValue) {
-        GetValueCache memory cache;
+    ) internal view returns (uint256) {
+        GetGlvValueCache memory cache;
         cache.marketListKey = Keys.glvSupportedMarketListKey(glv);
         cache.marketCount = dataStore.getAddressCount(cache.marketListKey);
+
 
         address[] memory marketAddresses = dataStore.getAddressValuesAt(cache.marketListKey, 0, cache.marketCount);
         for (uint256 i = 0; i < marketAddresses.length; i++) {
             address marketAddress = marketAddresses[i];
             Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
+            if (i == 0) {
+                cache.longTokenPrice = oracle.getPrimaryPrice(market.longToken);
+                cache.shortTokenPrice = oracle.getPrimaryPrice(market.shortToken);
+            }
             (int256 marketTokenPrice, ) = MarketUtils.getMarketTokenPrice(
                 dataStore,
                 market,
                 oracle.getPrimaryPrice(market.indexToken),
-                oracle.getPrimaryPrice(market.longToken),
-                oracle.getPrimaryPrice(market.shortToken),
+                cache.longTokenPrice,
+                cache.shortTokenPrice,
                 Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
                 maximize
             );
@@ -53,8 +63,49 @@ library GlvUtils {
 
             uint256 balance = IERC20(marketAddress).balanceOf(glv);
 
-            glvValue += Precision.mulDiv(balance, marketTokenPrice.toUint256(), Precision.WEI_PRECISION);
+            cache.glvValue += Precision.mulDiv(balance, marketTokenPrice.toUint256(), Precision.WEI_PRECISION);
         }
+
+        return cache.glvValue;
+    }
+
+    function getGlvValue(
+        DataStore dataStore,
+        Price.Props[] memory indexTokenPrices,
+        Price.Props memory longTokenPrice,
+        Price.Props memory shortTokenPrice,
+        address glv,
+        bool maximize
+    ) internal view returns (uint256) {
+        GetGlvValueCache memory cache;
+        cache.marketListKey = Keys.glvSupportedMarketListKey(glv);
+        cache.marketCount = dataStore.getAddressCount(cache.marketListKey);
+
+        address[] memory marketAddresses = dataStore.getAddressValuesAt(cache.marketListKey, 0, cache.marketCount);
+        for (uint256 i = 0; i < marketAddresses.length; i++) {
+            address marketAddress = marketAddresses[i];
+            cache.indexTokenPrice = indexTokenPrices[i];
+            cache.market = MarketStoreUtils.get(dataStore, marketAddress);
+            (int256 marketTokenPrice, ) = MarketUtils.getMarketTokenPrice(
+                dataStore,
+                cache.market,
+                cache.indexTokenPrice,
+                longTokenPrice,
+                shortTokenPrice,
+                Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
+                maximize
+            );
+
+            if (marketTokenPrice < 0) {
+                revert Errors.InvalidMarketTokenPrice(marketAddress, marketTokenPrice);
+            }
+
+            uint256 balance = IERC20(marketAddress).balanceOf(glv);
+
+            cache.glvValue += Precision.mulDiv(balance, marketTokenPrice.toUint256(), Precision.WEI_PRECISION);
+        }
+
+        return cache.glvValue;
     }
 
     function getGlvTokenPrice(
@@ -63,7 +114,7 @@ library GlvUtils {
         address glv,
         bool maximize
     ) internal view returns (uint256) {
-        uint256 glvValue = GlvUtils.getValue(dataStore, oracle, glv, maximize);
+        uint256 glvValue = GlvUtils.getGlvValue(dataStore, oracle, glv, maximize);
         uint256 glvSupply = ERC20(glv).totalSupply();
 
         // if the supply is zero then treat the market token price as 1 USD
