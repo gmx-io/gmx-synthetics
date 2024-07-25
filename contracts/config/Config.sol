@@ -534,7 +534,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.IS_GLV_MARKET_DISABLED] = true;
         allowedBaseKeys[Keys.GLV_MAX_MARKET_TOKEN_BALANCE_USD] = true;
         allowedBaseKeys[Keys.GLV_MAX_CUMULATIVE_DEPOSIT_USD] = true;
-        allowedBaseKeys[Keys.GLV_MAX_SHIFT_PRICE_IMPACT_FACTOR] = true;
+        allowedBaseKeys[Keys.GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR] = true;
+        allowedBaseKeys[Keys.GLV_SHIFT_MIN_INTERVAL] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {

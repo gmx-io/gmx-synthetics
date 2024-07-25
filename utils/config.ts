@@ -87,6 +87,7 @@ export const EXCLUDED_CONFIG_KEYS = {
   GLV_LIST: true,
   GLV_SUPPORTED_MARKET_LIST: true,
   GLV_CUMULATIVE_DEPOSITED_USD: true,
+  GLV_SHIFT_LAST_EXECUTED_AT: true,
 };
 
 export async function appendUintConfigIfDifferent(

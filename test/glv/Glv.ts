@@ -121,6 +121,6 @@ describe("Glv", () => {
       encodeData(["address", "address"], [ethUsdGlvAddress, ethUsdMarket.marketToken]),
       1
     );
-    await config.setUint(keys.GLV_MAX_SHIFT_PRICE_IMPACT_FACTOR, encodeData(["address"], [ethUsdGlvAddress]), 1);
+    await config.setUint(keys.GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR, encodeData(["address"], [ethUsdGlvAddress]), 1);
   });
 });

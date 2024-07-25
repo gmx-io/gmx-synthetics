@@ -133,6 +133,18 @@ library GlvShiftUtils {
         return cache.key;
     }
 
+    function validateGlvShiftInterval(DataStore dataStore, address glv) internal view {
+        uint256 glvShiftMinInterval = dataStore.getUint(Keys.glvShiftMinIntervalKey(glv));
+        if (glvShiftMinInterval == 0) {
+            return;
+        }
+
+        uint256 glvShiftLastExecutedAt = dataStore.getUint(Keys.glvShiftLastExecutedAtKey(glv));
+        if (Chain.currentTimestamp() < glvShiftLastExecutedAt + glvShiftMinInterval) {
+            revert Errors.GlvShiftIntervalNotYetPassed(Chain.currentTimestamp(), glvShiftLastExecutedAt, glvShiftMinInterval);
+        }
+    }
+
     function executeGlvShift(
         ExecuteGlvShiftParams memory params,
         GlvShift.Props memory glvShift
@@ -140,11 +152,13 @@ library GlvShiftUtils {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
-        GlvShiftStoreUtils.remove(params.dataStore, params.key);
-
         if (glvShift.fromMarket() == address(0)) {
             revert Errors.EmptyGlvShift();
         }
+
+        validateGlvShiftInterval(params.dataStore, glvShift.glv());
+
+        GlvShiftStoreUtils.remove(params.dataStore, params.key);
 
         Bank(payable(glvShift.glv())).transferOut(
             glvShift.fromMarket(),
@@ -294,7 +308,7 @@ library GlvShiftUtils {
             return;
         }
 
-        uint256 glvMaxShiftPriceImpactFactor = dataStore.getUint(Keys.glvMaxShiftPriceImpactFactorKey(glv));
+        uint256 glvMaxShiftPriceImpactFactor = dataStore.getUint(Keys.glvShiftMaxPriceImpactFactorKey(glv));
         if (glvMaxShiftPriceImpactFactor == 0) {
             return;
         }
@@ -304,7 +318,7 @@ library GlvShiftUtils {
             marketTokensUsd
         );
         if (effectivePriceImpactFactor > glvMaxShiftPriceImpactFactor) {
-            revert Errors.GlvMaxShiftPriceImpactFactorExceeded(
+            revert Errors.GlvShiftMaxPriceImpactExceeded(
                 effectivePriceImpactFactor,
                 glvMaxShiftPriceImpactFactor
             );
