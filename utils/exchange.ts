@@ -76,6 +76,10 @@ export async function executeWithOracleParams(fixture, overrides) {
     throw new Error("`simulateExecute` is required if `simulate` is true");
   }
 
+  if (!oracleBlockNumber) {
+    throw new Error("`oracleBlockNumber` is required");
+  }
+
   const block = await provider.getBlock(bigNumberify(oracleBlockNumber).toNumber());
   const tokenOracleTypes =
     overrides.tokenOracleTypes || Array(tokens.length).fill(TOKEN_ORACLE_TYPES.DEFAULT, 0, tokens.length);

@@ -122,12 +122,10 @@ export async function executeGlvWithdrawal(fixture, overrides: any = {}) {
     dataStreamTokens,
     dataStreamData,
     priceFeedTokens,
+    oracleBlockNumber,
   };
   if (gasUsageLabel) {
     params.gasUsageLabel = gasUsageLabel;
-  }
-  if (oracleBlockNumber) {
-    params.oracleBlockNumber = oracleBlockNumber;
   }
 
   for (const [key, value] of Object.entries(params)) {

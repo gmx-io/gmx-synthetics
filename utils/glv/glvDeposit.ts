@@ -137,12 +137,10 @@ export async function executeGlvDeposit(fixture, overrides: any = {}) {
     dataStreamTokens,
     dataStreamData,
     priceFeedTokens,
+    oracleBlockNumber,
   };
   if (gasUsageLabel) {
     params.gasUsageLabel = gasUsageLabel;
-  }
-  if (oracleBlockNumber) {
-    params.oracleBlockNumber = oracleBlockNumber;
   }
 
   const txReceipt = await executeWithOracleParams(fixture, params);
