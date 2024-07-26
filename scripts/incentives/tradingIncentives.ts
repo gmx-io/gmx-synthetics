@@ -1,7 +1,9 @@
-import hre from "hardhat";
-import { bigNumberify, expandDecimals, formatAmount } from "../../utils/math";
+import hre, { ethers } from "hardhat";
+import { bigNumberify, formatAmount } from "../../utils/math";
 import {
   getMinRewardThreshold,
+  getRewardToken,
+  getRewardTokenPrice,
   overrideReceivers,
   processArgs,
   requestAllocationData,
@@ -9,7 +11,6 @@ import {
   requestSubgraph,
   saveDistribution,
 } from "./helpers";
-import { BigNumber } from "ethers";
 
 async function requestMigrationData(fromTimestamp: number) {
   const data: {
@@ -40,7 +41,7 @@ async function requestMigrationData(fromTimestamp: number) {
     userTradingIncentivesStats: data.userTradingIncentivesStats
       .map((item) => {
         return {
-          ...item,
+          account: ethers.utils.getAddress(item.account),
           positionFeesUsd: bigNumberify(item.positionFeesUsd),
         };
       })
@@ -55,7 +56,7 @@ async function requestMigrationData(fromTimestamp: number) {
 }
 
 async function main() {
-  const { fromTimestamp, fromDate, toTimestamp, toDate, distributionTypeId } = processArgs();
+  const { fromTimestamp, fromDate, toTimestamp, toDate, distributionTypeId } = processArgs("trading");
 
   console.log("Running script to get distribution data");
   console.log("From: %s (timestamp %s)", fromDate.toISOString().substring(0, 19), fromTimestamp);
@@ -78,15 +79,9 @@ async function main() {
   }
 
   const tokens = await hre.gmx.getTokens();
-  const rewardToken = Object.values(tokens).find((t: any) => t.address === allocationData.trading.token) as any;
+  const rewardToken = getRewardToken(tokens, allocationData.trading.token);
   console.log("rewardToken %s %s", rewardToken.symbol, rewardToken.address);
-  if (!rewardToken) {
-    throw new Error(`Unknown reward token ${allocationData.trading.token}`);
-  }
-  const rewardTokenPrice = prices.find((p) => p.tokenAddress === rewardToken.address);
-  if (!rewardTokenPrice) {
-    throw new Error(`No price for reward token ${rewardToken.symbol}`);
-  }
+  const rewardTokenPrice = getRewardTokenPrice(prices, rewardToken.address);
 
   const jsonResult: Record<string, string> = {};
   const minRewardThreshold = getMinRewardThreshold(rewardToken);
@@ -144,7 +139,7 @@ async function main() {
     jsonResult[item.account] = userRebates.toString();
   }
 
-  overrideReceivers(jsonResult);
+  const appliedOverrides = await overrideReceivers(jsonResult);
 
   console.log(
     "Trading incentives for period from %s to %s",
@@ -175,7 +170,7 @@ async function main() {
     "min reward threshold: %s %s ($%s)",
     formatAmount(minRewardThreshold, rewardToken.expandDecimals, 4),
     rewardToken.symbol,
-    formatAmount(minRewardThreshold.mul(rewardTokenPrice.maxPrice), 30, 2),
+    formatAmount(minRewardThreshold.mul(rewardTokenPrice.maxPrice), 30, 2)
   );
   console.log("eligible users: %s", eligibleUsers);
   console.log("users below threshold: %s", usersBelowThreshold);
@@ -186,7 +181,14 @@ async function main() {
     rewardToken.symbol
   );
 
-  saveDistribution(fromDate, "tradingIncentives", rewardToken.address, jsonResult, distributionTypeId);
+  saveDistribution(
+    fromDate,
+    "tradingIncentives",
+    rewardToken.address,
+    jsonResult,
+    distributionTypeId,
+    appliedOverrides
+  );
 }
 
 main()

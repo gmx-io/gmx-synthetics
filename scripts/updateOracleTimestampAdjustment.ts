@@ -30,6 +30,11 @@ async function main() {
     3,
     "chainlink price feed provider"
   );
+  await setUintIfDifferent(
+    keys.oracleTimestampAdjustmentKey(chainlinkDataStreamProvider.address, tokens.LINK.address),
+    10,
+    "chainlink data stream provider"
+  );
   console.log("done");
 }
 

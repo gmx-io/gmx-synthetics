@@ -6,13 +6,17 @@ import hre from "hardhat";
 import { bigNumberify, expandDecimals, formatAmount } from "../../utils/math";
 import fetch from "node-fetch";
 
-import receiverOverridesMap from "./receiverOverrides";
+import staticReceiverOverridesMap from "./receiverOverrides";
 
-for (const address of Object.keys(receiverOverridesMap)) {
-  const checksumAddress = ethers.utils.getAddress(address);
-  if (checksumAddress !== address) {
-    receiverOverridesMap[checksumAddress] = receiverOverridesMap[address];
-    delete receiverOverridesMap[address];
+normalizeAddressesInMap(staticReceiverOverridesMap);
+
+function normalizeAddressesInMap(map: Record<string, string>) {
+  for (const address of Object.keys(map)) {
+    const checksumAddress = ethers.utils.getAddress(address);
+    if (checksumAddress !== address) {
+      map[checksumAddress] = map[address];
+      delete map[address];
+    }
   }
 }
 
@@ -28,9 +32,9 @@ function getSubgraphEndpoint() {
 
 function getApiEndpoint() {
   if (hre.network.name === "arbitrum") {
-    return "https://arbitrum-api.gmxinfra.io";
+    return "https://arbitrum-api.gmxinfra2.io";
   } else if (hre.network.name === "avalanche") {
-    return "https://avalanche-api.gmxinfra.io";
+    return "https://avalanche-api.gmxinfra2.io";
   } else {
     throw new Error("Unsupported network");
   }
@@ -40,6 +44,8 @@ export function getMinRewardThreshold(rewardToken: any) {
   if (rewardToken.symbol === "WAVAX") {
     return expandDecimals(3, 15);
   } else if (rewardToken.symbol === "ARB") {
+    return expandDecimals(1, 17);
+  } else if (rewardToken.symbol === "GM AVAX+") {
     return expandDecimals(1, 17);
   } else {
     throw new Error(`Undefined min reward threshold for reward token ${rewardToken.symbol}`);
@@ -53,35 +59,79 @@ export const EIP_4844_COMPETITION_1_ID = 2001;
 export const EIP_4844_COMPETITION_2_ID = 2002;
 export const ARBITRUM_STIP_B_LP_ID = 1004;
 export const ARBITRUM_STIP_B_TRADING_ID = 1005;
+export const ARBITRUM_STIP_B_TRADING_BONUS_ID = 1006;
 export const AVALANCHE_RUSH_LP_ID = 1100;
 export const AVALANCHE_RUSH_TRADING_ID = 1101;
 const TEST_DISTRIBUTION_TYPE_ID = 9876;
 
-export const knownDistributionTypeIds = new Set([
-  STIP_LP_DISTRIBUTION_TYPE_ID,
-  STIP_MIGRATION_DISTRIBUTION_TYPE_ID,
-  STIP_TRADING_INCENTIVES_DISTRIBUTION_TYPE_ID,
-  EIP_4844_COMPETITION_1_ID,
-  EIP_4844_COMPETITION_2_ID,
-  TEST_DISTRIBUTION_TYPE_ID,
-  ARBITRUM_STIP_B_LP_ID,
-  ARBITRUM_STIP_B_TRADING_ID,
-  AVALANCHE_RUSH_LP_ID,
-]);
+type IncentivesType = "lp" | "trading" | "glpMigration" | "competition" | "test";
+
+export const distributionTypes: Record<
+  string,
+  Record<
+    string,
+    {
+      name: string;
+      incentivesType: IncentivesType;
+    }
+  >
+> = {
+  [42161]: {
+    [STIP_LP_DISTRIBUTION_TYPE_ID]: {
+      name: "STIP LP",
+      incentivesType: "lp",
+    },
+    [STIP_MIGRATION_DISTRIBUTION_TYPE_ID]: {
+      name: "STIP MIGRATION",
+      incentivesType: "glpMigration",
+    },
+    [STIP_TRADING_INCENTIVES_DISTRIBUTION_TYPE_ID]: {
+      name: "STIP TRADING INCENTIVES",
+      incentivesType: "trading",
+    },
+    [EIP_4844_COMPETITION_1_ID]: {
+      name: "EIP-4844 COMPETITION 1",
+      incentivesType: "competition",
+    },
+    [EIP_4844_COMPETITION_2_ID]: {
+      name: "EIP-4844 COMPETITION 2",
+      incentivesType: "competition",
+    },
+    [TEST_DISTRIBUTION_TYPE_ID]: {
+      name: "TEST",
+      incentivesType: "test",
+    },
+    [ARBITRUM_STIP_B_LP_ID]: {
+      name: "STIP.b LP",
+      incentivesType: "lp",
+    },
+    [ARBITRUM_STIP_B_TRADING_ID]: {
+      name: "STIP.b TRADING",
+      incentivesType: "trading",
+    },
+    [ARBITRUM_STIP_B_TRADING_BONUS_ID]: {
+      name: "STIP.b TRADING BONUS",
+      incentivesType: "trading",
+    },
+  },
+  [43114]: {
+    [AVALANCHE_RUSH_LP_ID]: {
+      name: "AVALANCHE RUSH LP",
+      incentivesType: "lp",
+    },
+    [AVALANCHE_RUSH_TRADING_ID]: {
+      name: "AVALANCHE RUSH TRADING",
+      incentivesType: "trading",
+    },
+  },
+};
 
 export function getDistributionTypeName(distributionTypeId: number) {
-  return {
-    [STIP_LP_DISTRIBUTION_TYPE_ID]: "STIP LP",
-    [STIP_MIGRATION_DISTRIBUTION_TYPE_ID]: "STIP MIGRATION",
-    [STIP_TRADING_INCENTIVES_DISTRIBUTION_TYPE_ID]: "STIP TRADING INCENTIVES",
-    [EIP_4844_COMPETITION_1_ID]: "EIP-4844 COMPETITION 1",
-    [EIP_4844_COMPETITION_2_ID]: "EIP-4844 COMPETITION 2",
-    [TEST_DISTRIBUTION_TYPE_ID]: "TEST",
-    [ARBITRUM_STIP_B_LP_ID]: "STIP.b LP",
-    [ARBITRUM_STIP_B_TRADING_ID]: "STIP.b TRADING",
-    [AVALANCHE_RUSH_LP_ID]: "AVALANCHE RUSH LP",
-    [AVALANCHE_RUSH_TRADING_ID]: "AVALANCHE RUSH TRADING",
-  }[distributionTypeId];
+  const chainId = getChainId();
+  if (!distributionTypes[chainId][distributionTypeId]) {
+    throw new Error(`Unknown distribution with type id ${distributionTypeId} for chain id ${chainId}`);
+  }
+  return distributionTypes[chainId][distributionTypeId].name;
 }
 
 export async function requestSubgraph(query: string) {
@@ -217,7 +267,7 @@ export async function requestAllocationData(timestamp: number) {
   };
 }
 
-function getChainId() {
+export function getChainId() {
   if (hre.network.name === "arbitrum") {
     return 42161;
   }
@@ -242,14 +292,90 @@ export async function getFrameSigner() {
   }
 }
 
-export function overrideReceivers(data: Record<string, string>): void {
+async function validateDolomiteVaults(vaults: string[]) {
+  const dolomiteValidMarginAddress = "0x6Bd780E7fDf01D77e4d475c821f1e7AE05409072";
+  const multicall = await hre.ethers.getContract("Multicall3");
+  const abi = ["function DOLOMITE_MARGIN()"];
+  const iface = new ethers.utils.Interface(abi);
+  const methodName = "DOLOMITE_MARGIN";
+  const data = iface.encodeFunctionData(methodName);
+
+  const batchSize = 500;
+  const multicallRequests = new Array(Math.ceil(vaults.length / batchSize)).fill(0).map(async (_, i) => {
+    const from = i * batchSize;
+    const to = Math.min(from + batchSize, vaults.length);
+    const batch = vaults.slice(from, to);
+    const multicallData = batch.map((vault) => ({
+      target: vault,
+      callData: data,
+    }));
+    console.debug("multicallData %s %s-%s", i, from, to);
+    const result = await multicall.callStatic.aggregate3(multicallData);
+    result.forEach(({ success, returnData }, j: number) => {
+      if (!success) {
+        throw new Error("Multicall request failed");
+      }
+      const dolomiteMargin: string = ethers.utils.defaultAbiCoder.decode(["address"], returnData)[0];
+      console.log("dolomite vault %s margin %s", batch[j], dolomiteMargin);
+      if (dolomiteMargin !== dolomiteValidMarginAddress) {
+        console.error(
+          "ERROR: Dolomite vault %s has incorrect margin %s expected %s",
+          batch[j],
+          dolomiteMargin,
+          dolomiteValidMarginAddress
+        );
+        throw new Error("Dolomite vault has incorrect margin");
+      }
+    });
+  });
+
+  await Promise.all(multicallRequests);
+
+  console.log("Dolomite vaults are valid");
+}
+
+export async function fetchDolomiteReceiverOverrides() {
+  if (hre.network.name !== "arbitrum") {
+    return {};
+  }
+
+  console.log("fetching Dolomite overrides");
+
+  const url = "https://api.dolomite.io/isolation-mode/42161/proxy-vaults/gmx";
+  const res: { data: Record<string, string> } = await fetch(url).then((r) => r.json());
+
+  const overrides = Object.fromEntries(
+    Object.entries(res.data).map(([from, to]) => {
+      return [ethers.utils.getAddress(from), ethers.utils.getAddress(to)];
+    })
+  );
+
+  console.log("received %s overrides", Object.keys(overrides).length);
+
+  normalizeAddressesInMap(overrides);
+
+  await validateDolomiteVaults(Object.keys(overrides));
+
+  return overrides;
+}
+
+export async function overrideReceivers(data: Record<string, string>): Promise<Record<string, string>> {
+  const dolomiteReceiverOverrides = await fetchDolomiteReceiverOverrides();
+  const receiverOverridesMap = {
+    ...staticReceiverOverridesMap,
+    ...dolomiteReceiverOverrides,
+  };
+
+  const appliedOverrides: Record<string, string> = {};
+
   for (const [receiver, amount] of Object.entries(data)) {
     const checksumReceiver = ethers.utils.getAddress(receiver);
     const newReceiver = receiverOverridesMap[checksumReceiver];
     if (!newReceiver) {
       continue;
     }
-    console.warn("WARN: override receiver %s -> %s", receiver, newReceiver);
+    console.warn("WARN: override receiver %s -> %s amount: %s", receiver, newReceiver, amount);
+    appliedOverrides[receiver] = newReceiver;
     delete data[receiver];
     if (newReceiver in data) {
       data[newReceiver] = bigNumberify(data[newReceiver]).add(amount).toString();
@@ -257,6 +383,8 @@ export function overrideReceivers(data: Record<string, string>): void {
       data[newReceiver] = amount;
     }
   }
+
+  return appliedOverrides;
 }
 
 export function saveDistribution(
@@ -264,15 +392,22 @@ export function saveDistribution(
   name: string,
   tokenAddress: string,
   jsonResult: Record<string, string>,
-  distributionTypeId: number
+  distributionTypeId: number,
+  appliedOverrides: Record<string, string>
 ) {
   const dateStr = fromDate.toISOString().substring(0, 10);
-  const dirpath = path.join(__dirname, "distributions", `epoch_${dateStr}_${hre.network.name}`);
-  if (!fs.existsSync(dirpath)) {
-    fs.mkdirSync(dirpath);
+  const dirPath = path.join(__dirname, "distributions", `epoch_${dateStr}_${hre.network.name}`);
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath);
   }
-  const filename = path.join(dirpath, `${name}_distribution.json`);
+  const filename = path.join(dirPath, `${name}_distribution.json`);
   const id = `${dateStr}_${hre.network.name}_${distributionTypeId}`;
+
+  Object.keys(jsonResult).forEach((receiver) => {
+    if (ethers.utils.getAddress(receiver) !== receiver) {
+      throw Error(`Receiver address should be check summed: ${receiver}`);
+    }
+  });
 
   fs.writeFileSync(
     filename,
@@ -280,8 +415,10 @@ export function saveDistribution(
       {
         token: tokenAddress,
         distributionTypeId,
+        chainId: getChainId(),
         id,
         amounts: jsonResult,
+        appliedOverrides,
       },
       null,
       4
@@ -290,7 +427,7 @@ export function saveDistribution(
   console.log("distribution data is saved to %s", filename);
 
   const csv = ["recipient,amount"];
-  const filename3 = path.join(dirpath, `${name}_distribution.csv`);
+  const filename3 = path.join(dirPath, `${name}_distribution.csv`);
   for (const [recipient, amount] of Object.entries(jsonResult)) {
     csv.push(`${recipient},${formatAmount(amount, 18, 2)}`);
   }
@@ -298,7 +435,7 @@ export function saveDistribution(
   console.log("csv data saved to %s", filename3);
 }
 
-export function processArgs() {
+export function processArgs(incentivesType?: IncentivesType) {
   if (!["arbitrum", "avalanche"].includes(hre.network.name)) {
     throw new Error("Unsupported network");
   }
@@ -307,9 +444,25 @@ export function processArgs() {
     throw new Error("DISTRIBUTION_TYPE_ID is required");
   }
 
+  const chainId = getChainId();
+
   const distributionTypeId = Number(process.env.DISTRIBUTION_TYPE_ID);
+  const knownDistributionTypeIds = new Set(Object.keys(distributionTypes[chainId]).map((id) => Number(id)));
   if (!knownDistributionTypeIds.has(distributionTypeId)) {
-    throw new Error(`unknown DISTRIBUTION_TYPE_ID ${distributionTypeId}`);
+    throw new Error(
+      `unknown DISTRIBUTION_TYPE_ID ${distributionTypeId}. Valid values:\n${Array.from(knownDistributionTypeIds)
+        .map((id) => `${id}: ${getDistributionTypeName(id)}`)
+        .join("\n")}`
+    );
+  }
+
+  if (incentivesType && distributionTypes[chainId][distributionTypeId].incentivesType !== incentivesType) {
+    console.error(
+      "ERROR: incorrect incentives type: '%s' expected: '%s'",
+      distributionTypes[chainId][distributionTypeId].incentivesType,
+      incentivesType
+    );
+    throw new Error("Incentives type don't match");
   }
 
   if (!process.env.FROM_DATE) {
@@ -353,4 +506,47 @@ export function processArgs() {
     toDate,
     distributionTypeId,
   };
+}
+
+export function getRewardToken(tokens: any[], address: string) {
+  if (address === "0x08b25A2a89036d298D6dB8A74ace9d1ce6Db15E5") {
+    return {
+      symbol: "GM AVAX+",
+      address,
+      decimals: 18,
+    };
+  }
+
+  const rewardToken = Object.values(tokens).find((t: any) => t.address === address) as any;
+
+  if (!rewardToken) {
+    throw new Error(`Unknown reward token ${address}`);
+  }
+
+  return rewardToken;
+}
+
+export function getRewardTokenPrice(
+  prices: {
+    maxPrice: string;
+    minPrice: string;
+    tokenAddress: string;
+    tokenSymbol: string;
+  }[],
+  address: string
+) {
+  if (address === "0x08b25A2a89036d298D6dB8A74ace9d1ce6Db15E5") {
+    return {
+      maxPrice: "1026000000000",
+      minPrice: "1026000000000",
+      tokenAddress: address,
+      tokenSymbol: "GM AVAX+",
+    };
+  }
+
+  const rewardTokenPrice = prices.find((p) => p.tokenAddress === address);
+  if (!rewardTokenPrice) {
+    throw new Error(`No price for reward token ${address}`);
+  }
+  return rewardTokenPrice;
 }

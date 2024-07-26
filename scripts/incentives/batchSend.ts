@@ -6,7 +6,7 @@ import { range } from "lodash";
 import { bigNumberify, formatAmount } from "../../utils/math";
 import path from "path";
 import BatchSenderAbi from "./abi/BatchSender";
-import { getDistributionTypeName } from "./helpers";
+import { getChainId, getDistributionTypeName } from "./helpers";
 import { setTimeout } from "timers/promises";
 
 /*
@@ -24,9 +24,17 @@ function getArbValues() {
   };
 }
 
+function getAvaxValues() {
+  return {
+    batchSenderAddress: "0x0BEa5D3081921A08d73f150126f99cda0eb29C0e",
+  };
+}
+
 function getValues() {
   if (hre.network.name === "arbitrum") {
     return getArbValues();
+  } else if (hre.network.name === "avalanche") {
+    return getAvaxValues();
   }
 
   throw new Error(`unsupported network ${hre.network.name}`);
@@ -276,6 +284,7 @@ function readDistributionFile() {
   const data: {
     token: string;
     amounts: Record<string, string>;
+    chainId: number;
     distributionTypeId: number;
     id: string;
   } = JSON.parse(fs.readFileSync(filepath).toString());
@@ -295,6 +304,9 @@ function readDistributionFile() {
   }
   if (!data.id) {
     throw new Error("Invalid file format. It should contain `id` string");
+  }
+  if (data.chainId !== getChainId()) {
+    throw new Error(`Invalid current chain id: ${getChainId()}, distribution chain id: ${data.chainId}`);
   }
 
   return {

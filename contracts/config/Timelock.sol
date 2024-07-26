@@ -109,6 +109,36 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         );
     }
 
+    function signalSetOracleProviderForToken(address token, address provider) external onlyTimelockAdmin nonReentrant {
+        bytes32 actionKey = _setOracleProviderForTokenKey(token, provider);
+        _signalPendingAction(actionKey, "setOracleProviderForToken");
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "token", token);
+        eventData.addressItems.setItem(1, "provider", provider);
+        eventEmitter.emitEventLog(
+            "SignalSetOracleProviderForToken",
+            eventData
+        );
+    }
+
+    function setOracleProviderForTokenAfterSignal(address token, address provider) external onlyTimelockAdmin nonReentrant {
+        bytes32 actionKey = _setOracleProviderForTokenKey(token, provider);
+        _validateAndClearAction(actionKey, "setOracleProviderForToken");
+
+        dataStore.setAddress(Keys.oracleProviderForTokenKey(token), provider);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "token", token);
+        eventData.addressItems.setItem(1, "provider", provider);
+        eventEmitter.emitEventLog(
+            "SetOracleProviderForToken",
+            eventData
+        );
+    }
+
     function signalSetOracleProviderEnabled(address provider, bool value) external onlyTimelockAdmin nonReentrant {
         bytes32 actionKey = _setOracleProviderEnabledKey(provider, value);
         _signalPendingAction(actionKey, "setOracleProviderEnabled");
@@ -533,6 +563,10 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
             actionKey,
             eventData
         );
+    }
+
+    function _setOracleProviderForTokenKey(address token, address provider) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("setOracleProviderForToken", token, provider));
     }
 
     function _setOracleProviderEnabledKey(address provider, bool value) internal pure returns (bytes32) {
