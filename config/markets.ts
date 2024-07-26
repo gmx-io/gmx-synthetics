@@ -505,6 +505,56 @@ const config: {
       borrowingFactorForShorts: decimalToFloat(360, 10), // 3.60-8, 40% at 100% utilisation
     },
     {
+      tokens: { indexToken: "WETH", longToken: "wstETH", shortToken: "USDe" },
+      virtualTokenIdForIndexToken: hashString("PERP:ETH/USD"),
+      virtualMarketId: hashString("SPOT:wstETH/USD"),
+
+      ...baseMarketConfig,
+
+      reserveFactorLongs: percentageToFloat("95%"),
+      reserveFactorShorts: percentageToFloat("95%"),
+
+      openInterestReserveFactorLongs: percentageToFloat("90%"),
+      openInterestReserveFactorShorts: percentageToFloat("90%"),
+
+      maxLongTokenPoolAmount: expandDecimals(600, 18),
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6),
+
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(1_500_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(1_500_000),
+
+      negativePositionImpactFactor: decimalToFloat(12, 11),
+      positivePositionImpactFactor: decimalToFloat(6, 11),
+
+      positionImpactPoolDistributionRate: bigNumberify(0),
+      minPositionImpactPoolAmount: bigNumberify(0),
+
+      negativeSwapImpactFactor: decimalToFloat(3, 8),
+      positiveSwapImpactFactor: decimalToFloat(15, 9),
+
+      minCollateralFactor: decimalToFloat(5, 3), // 200x leverage
+
+      // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
+      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(6, 11),
+      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(6, 11),
+
+      maxOpenInterestForLongs: decimalToFloat(1_000_000),
+      maxOpenInterestForShorts: decimalToFloat(1_000_000),
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(576, 15), // 0.00000000000576, at least ~4,8 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(10, 9), // 0.000001%,  0.0864% per day, ~31.5% per year
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+
+      borrowingFactorForLongs: decimalToFloat(36, 9),
+      borrowingFactorForShorts: decimalToFloat(36, 9),
+
+      borrowingExponentFactorForLongs: decimalToFloat(1),
+      borrowingExponentFactorForShorts: decimalToFloat(1),
+    },
+    {
       tokens: { indexToken: "BNB", longToken: "BNB", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:BNB/USD"),
       virtualMarketId: hashString("SPOT:BNB/USD"),
@@ -815,7 +865,7 @@ const config: {
       maxShortTokenPoolUsdForDeposit: decimalToFloat(7_200_000),
 
       negativePositionImpactFactor: decimalToFloat(4, 10),
-      positivePositionImpactFactor: decimalToFloat(2, 10),
+      positivePositionImpactFactor: decimalToFloat(1, 10),
       positionImpactExponentFactor: decimalToFloat(22, 1), // 2.2
 
       negativeSwapImpactFactor: decimalToFloat(6, 9),
@@ -1259,6 +1309,44 @@ const config: {
 
       maxOpenInterestForLongs: decimalToFloat(500_000),
       maxOpenInterestForShorts: decimalToFloat(500_000),
+    },
+    {
+      tokens: { longToken: "wstETH", shortToken: "WETH" },
+
+      ...baseMarketConfig,
+
+      swapOnly: true,
+
+      maxLongTokenPoolAmount: expandDecimals(11_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(11_000_000, 6),
+
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
+
+      negativeSwapImpactFactor: decimalToFloat(5, 9),
+      positiveSwapImpactFactor: decimalToFloat(5, 9),
+
+      swapFeeFactorForPositiveImpact: decimalToFloat(5, 5), // 0.005%,
+      swapFeeFactorForNegativeImpact: decimalToFloat(2, 4), // 0.02%,
+    },
+    {
+      tokens: { longToken: "USDe", shortToken: "USDC" },
+
+      ...baseMarketConfig,
+
+      swapOnly: true,
+
+      maxLongTokenPoolAmount: expandDecimals(11_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(11_000_000, 6),
+
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
+
+      negativeSwapImpactFactor: decimalToFloat(3, 8),
+      positiveSwapImpactFactor: decimalToFloat(3, 8),
+
+      swapFeeFactorForPositiveImpact: decimalToFloat(5, 5), // 0.005%,
+      swapFeeFactorForNegativeImpact: decimalToFloat(2, 4), // 0.02%,
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDC.e" },
