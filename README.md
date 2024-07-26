@@ -46,16 +46,11 @@ To avoid front-running issues, most actions require two steps to execute:
 
 Prices are provided by an off-chain oracle system, which continually signs prices based on the time the prices were queried.
 
-Example:
+Both a minimum price and a maximum price is signed, this allows information about bid-ask spreads to be included.
 
-- Block 100 is finalized on the blockchain at time 20
-- Oracle keepers pull the latest prices from reference exchanges, token A: price 20,000, token B: price 80,000
-- Oracle keepers sign [chainId, time(20), 20,000], [chainId, time(20), 80,000]
-- If in block 100, there was a market order to open a long position for token A, the market order would have a timestamp of 20
-- The prices signed at time 20 can be used to execute this order
-- Order keepers would bundle the signature and price data for token A then execute the order
+Prices stored within the Oracle contract represent the price of one unit of the token using a value with 30 decimals of precision.
 
-The oracle system allows for both a minimum price and a maximum price to be signed, this allows information about bid-ask spreads to be included.
+Representing the prices in this way allows for conversions between token amounts and fiat values to be simplified, e.g. to calculate the fiat value of a given number of tokens the calculation would just be: token amount \* oracle price, to calculate the token amount for a fiat value it would be: fiat value / oracle price.
 
 ## Fees and Pricing
 
@@ -221,16 +216,6 @@ Long position example: if the current index token price is $5000, a stop-loss de
 Short position example: if the current index token price is $5000, a stop-loss decrease order can be created with acceptable price as $5010, the order can be executed when the index token price is >= $5010.
 
 Stop-loss decrease order requests are executed using OrderHandler.executeOrder, if the order was created at timestamp `n`, it should be executed with the oracle prices after timestamp `n`.
-
-# Oracle Prices
-
-Oracle prices are signed as a value together with a precision, this allows prices to be compacted as uint32 values.
-
-The signed prices represent the price of one unit of the token using a value with 30 decimals of precision.
-
-Representing the prices in this way allows for conversions between token amounts and fiat values to be simplified, e.g. to calculate the fiat value of a given number of tokens the calculation would just be: `token amount * oracle price`, to calculate the token amount for a fiat value it would be: `fiat value / oracle price`.
-
-The trade-off of this simplicity in calculation is that tokens with a small USD price and a lot of decimals may have precision issues it is also possible that a token's price changes significantly and results in requiring higher precision.
 
 ## Example 1
 
