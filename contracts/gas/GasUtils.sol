@@ -349,18 +349,18 @@ library GasUtils {
         uint256 gasForGlvMarkets = gasPerGlvPerMarket * marketCount;
         uint256 glvDepositGasLimit = dataStore.getUint(Keys.glvDepositGasLimitKey());
 
-        uint256 gasLimit = glvDepositGasLimit + glvDeposit.callbackGasLimit + gasForGlvMarkets;
+        uint256 gasLimit = glvDepositGasLimit + glvDeposit.callbackGasLimit() + gasForGlvMarkets;
 
-        if (glvDeposit.market == glvDeposit.initialLongToken) {
+        if (glvDeposit.market() == glvDeposit.initialLongToken()) {
             // user provided GM, no separate deposit will be created and executed in this case
             return gasLimit;
         }
 
         uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
-        uint256 swapCount = glvDeposit.longTokenSwapPath.length + glvDeposit.shortTokenSwapPath.length;
+        uint256 swapCount = glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length;
         uint256 gasForSwaps = swapCount * gasPerSwap;
 
-        if (glvDeposit.initialLongTokenAmount == 0 || glvDeposit.initialShortTokenAmount == 0) {
+        if (glvDeposit.initialLongTokenAmount() == 0 || glvDeposit.initialShortTokenAmount() == 0) {
             return gasLimit + dataStore.getUint(Keys.depositGasLimitKey(true)) + gasForSwaps;
         }
         return gasLimit + dataStore.getUint(Keys.depositGasLimitKey(false)) + gasForSwaps;

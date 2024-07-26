@@ -143,32 +143,38 @@ library GlvDepositUtils {
 
         AccountUtils.validateReceiver(params.receiver);
 
-        GlvDeposit.Props memory glvDeposit = GlvDeposit.Props({
-            account: account,
-            glv: params.glv,
-            receiver: params.receiver,
-            callbackContract: params.callbackContract,
-            uiFeeReceiver: params.uiFeeReceiver,
-            market: params.market,
-            initialLongToken: params.initialLongToken,
-            initialShortToken: params.initialShortToken,
-            longTokenSwapPath: params.longTokenSwapPath,
-            shortTokenSwapPath: params.shortTokenSwapPath,
-            marketTokenAmount: cache.marketTokenAmount,
-            initialLongTokenAmount: cache.initialLongTokenAmount,
-            initialShortTokenAmount: cache.initialShortTokenAmount,
-            minGlvTokens: params.minGlvTokens,
-            updatedAtBlock: Chain.currentBlockNumber(),
-            updatedAtTime: Chain.currentTimestamp(),
-            executionFee: params.executionFee,
-            callbackGasLimit: params.callbackGasLimit,
-            shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,
-            isMarketTokenDeposit: params.isMarketTokenDeposit
-        });
+        GlvDeposit.Props memory glvDeposit = GlvDeposit.Props(
+            GlvDeposit.Addresses({
+                account: account,
+                glv: params.glv,
+                receiver: params.receiver,
+                callbackContract: params.callbackContract,
+                uiFeeReceiver: params.uiFeeReceiver,
+                market: params.market,
+                initialLongToken: params.initialLongToken,
+                initialShortToken: params.initialShortToken,
+                longTokenSwapPath: params.longTokenSwapPath,
+                shortTokenSwapPath: params.shortTokenSwapPath
+            }),
+            GlvDeposit.Numbers({
+                marketTokenAmount: cache.marketTokenAmount,
+                initialLongTokenAmount: cache.initialLongTokenAmount,
+                initialShortTokenAmount: cache.initialShortTokenAmount,
+                minGlvTokens: params.minGlvTokens,
+                updatedAtBlock: Chain.currentBlockNumber(),
+                updatedAtTime: Chain.currentTimestamp(),
+                executionFee: params.executionFee,
+                callbackGasLimit: params.callbackGasLimit
+            }),
+            GlvDeposit.Flags({
+                shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,
+                isMarketTokenDeposit: params.isMarketTokenDeposit
+            })
+        );
 
         CallbackUtils.validateCallbackGasLimit(dataStore, params.callbackGasLimit);
 
-        uint256 marketCount = GlvUtils.getMarketCount(dataStore, glvDeposit.glv);
+        uint256 marketCount = GlvUtils.getMarketCount(dataStore, glvDeposit.glv());
         uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvDepositGasLimit(dataStore, glvDeposit, marketCount);
         uint256 oraclePriceCount = GasUtils.estimateGlvDepositOraclePriceCount(
             marketCount,
@@ -192,16 +198,16 @@ library GlvDepositUtils {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
-        GlvDepositStoreUtils.remove(params.dataStore, params.key, glvDeposit.account);
+        GlvDepositStoreUtils.remove(params.dataStore, params.key, glvDeposit.account());
 
-        if (glvDeposit.account == address(0)) {
+        if (glvDeposit.account() == address(0)) {
             revert Errors.EmptyGlvDeposit();
         }
 
-        if (params.oracle.minTimestamp() < glvDeposit.updatedAtTime) {
+        if (params.oracle.minTimestamp() < glvDeposit.updatedAtTime()) {
             revert Errors.OracleTimestampsAreSmallerThanRequired(
                 params.oracle.minTimestamp(),
-                glvDeposit.updatedAtTime
+                glvDeposit.updatedAtTime()
             );
         }
 
@@ -213,16 +219,16 @@ library GlvDepositUtils {
         cache.requestExpirationTime = params.dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
         cache.maxOracleTimestamp = params.oracle.maxTimestamp();
 
-        if (cache.maxOracleTimestamp > glvDeposit.updatedAtTime + cache.requestExpirationTime) {
+        if (cache.maxOracleTimestamp > glvDeposit.updatedAtTime() + cache.requestExpirationTime) {
             revert Errors.OracleTimestampsAreLargerThanRequestExpirationTime(
                 cache.maxOracleTimestamp,
-                glvDeposit.updatedAtTime,
+                glvDeposit.updatedAtTime(),
                 cache.requestExpirationTime
             );
         }
 
         // glvTokenPrice should be calculated before glv receives GM tokens
-        uint256 glvTokenPrice = GlvUtils.getGlvTokenPrice(params.dataStore, params.oracle, glvDeposit.glv, true);
+        uint256 glvTokenPrice = GlvUtils.getGlvTokenPrice(params.dataStore, params.oracle, glvDeposit.glv(), true);
         cache.receivedMarketTokens = _processMarketDeposit(params, glvDeposit, params.glvVault);
         (cache.mintAmount, cache.receivedUsd) = _getMintAmount(
             params.dataStore,
@@ -232,13 +238,13 @@ library GlvDepositUtils {
             glvTokenPrice
         );
 
-        if (cache.mintAmount < glvDeposit.minGlvTokens) {
-            revert Errors.MinMarketTokens(cache.mintAmount, glvDeposit.minGlvTokens);
+        if (cache.mintAmount < glvDeposit.minGlvTokens()) {
+            revert Errors.MinMarketTokens(cache.mintAmount, glvDeposit.minGlvTokens());
         }
 
-        GlvToken(payable(glvDeposit.glv)).mint(glvDeposit.receiver, cache.mintAmount);
+        GlvToken(payable(glvDeposit.glv())).mint(glvDeposit.receiver(), cache.mintAmount);
 
-        cache.market = MarketUtils.getEnabledMarket(params.dataStore, glvDeposit.market);
+        cache.market = MarketUtils.getEnabledMarket(params.dataStore, glvDeposit.market());
         (cache.marketTokenPrice, ) = MarketUtils.getMarketTokenPrice(
             params.dataStore,
             cache.market,
@@ -251,7 +257,7 @@ library GlvDepositUtils {
 
         GlvUtils.validateMarketTokenBalance(
             params.dataStore,
-            glvDeposit.glv,
+            glvDeposit.glv(),
             cache.market,
             cache.marketTokenPrice.toUint256()
         );
@@ -259,26 +265,26 @@ library GlvDepositUtils {
         GlvDepositEventUtils.emitGlvDepositExecuted(
             params.eventEmitter,
             params.key,
-            glvDeposit.account,
+            glvDeposit.account(),
             cache.mintAmount
         );
 
-        cache.marketCount = GlvUtils.getMarketCount(params.dataStore, glvDeposit.glv);
+        cache.marketCount = GlvUtils.getMarketCount(params.dataStore, glvDeposit.glv());
         cache.oraclePriceCount = GasUtils.estimateGlvDepositOraclePriceCount(
             cache.marketCount,
-            glvDeposit.longTokenSwapPath.length + glvDeposit.shortTokenSwapPath.length
+            glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length
         );
         GasUtils.payExecutionFee(
             params.dataStore,
             params.eventEmitter,
             params.glvVault,
             params.key,
-            glvDeposit.callbackContract,
-            glvDeposit.executionFee,
+            glvDeposit.callbackContract(),
+            glvDeposit.executionFee(),
             params.startingGas,
             cache.oraclePriceCount,
             params.keeper,
-            glvDeposit.receiver
+            glvDeposit.receiver()
         );
 
         EventUtils.EventLogData memory eventData;
@@ -293,7 +299,7 @@ library GlvDepositUtils {
         ExecuteGlvDepositParams memory params,
         GlvDeposit.Props memory glvDeposit
     ) internal view {
-        address glv = glvDeposit.glv;
+        address glv = glvDeposit.glv();
         uint256 initialGlvTokenSupply = GlvToken(payable(glv)).totalSupply();
 
         // return if this is not the first glv deposit
@@ -308,12 +314,12 @@ library GlvDepositUtils {
             return;
         }
 
-        if (glvDeposit.receiver != RECEIVER_FOR_FIRST_GLV_DEPOSIT) {
-            revert Errors.InvalidReceiverForFirstGlvDeposit(glvDeposit.receiver, RECEIVER_FOR_FIRST_GLV_DEPOSIT);
+        if (glvDeposit.receiver() != RECEIVER_FOR_FIRST_GLV_DEPOSIT) {
+            revert Errors.InvalidReceiverForFirstGlvDeposit(glvDeposit.receiver(), RECEIVER_FOR_FIRST_GLV_DEPOSIT);
         }
 
-        if (glvDeposit.minGlvTokens < minGlvTokens) {
-            revert Errors.InvalidMinGlvTokensForFirstGlvDeposit(glvDeposit.minGlvTokens, minGlvTokens);
+        if (glvDeposit.minGlvTokens() < minGlvTokens) {
+            revert Errors.InvalidMinGlvTokensForFirstGlvDeposit(glvDeposit.minGlvTokens(), minGlvTokens);
         }
     }
 
@@ -324,7 +330,7 @@ library GlvDepositUtils {
         uint256 receivedMarketTokens,
         uint256 glvTokenPrice
     ) internal view returns (uint256 glvTokenAmount, uint256 usdValue) {
-        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, glvDeposit.market);
+        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, glvDeposit.market());
         MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(
             dataStore,
             market,
@@ -350,30 +356,30 @@ library GlvDepositUtils {
         GlvDeposit.Props memory glvDeposit,
         GlvVault glvVault
     ) private returns (uint256) {
-        if (glvDeposit.isMarketTokenDeposit) {
+        if (glvDeposit.isMarketTokenDeposit()) {
             // user deposited GM tokens
-            glvVault.transferOut(glvDeposit.market, glvDeposit.glv, glvDeposit.marketTokenAmount);
-            return glvDeposit.initialLongTokenAmount;
+            glvVault.transferOut(glvDeposit.market(), glvDeposit.glv(), glvDeposit.marketTokenAmount());
+            return glvDeposit.initialLongTokenAmount();
         }
 
         Deposit.Props memory deposit = Deposit.Props(
             Deposit.Addresses({
-                account: glvDeposit.glv,
-                receiver: glvDeposit.glv,
+                account: glvDeposit.glv(),
+                receiver: glvDeposit.glv(),
                 callbackContract: address(0),
-                uiFeeReceiver: glvDeposit.uiFeeReceiver,
-                market: glvDeposit.market,
-                initialLongToken: glvDeposit.initialLongToken,
-                initialShortToken: glvDeposit.initialShortToken,
+                uiFeeReceiver: glvDeposit.uiFeeReceiver(),
+                market: glvDeposit.market(),
+                initialLongToken: glvDeposit.initialLongToken(),
+                initialShortToken: glvDeposit.initialShortToken(),
                 longTokenSwapPath: new address[](0),
                 shortTokenSwapPath: new address[](0)
             }),
             Deposit.Numbers({
-                initialLongTokenAmount: glvDeposit.initialLongTokenAmount,
-                initialShortTokenAmount: glvDeposit.initialShortTokenAmount,
+                initialLongTokenAmount: glvDeposit.initialLongTokenAmount(),
+                initialShortTokenAmount: glvDeposit.initialShortTokenAmount(),
                 minMarketTokens: 0,
                 updatedAtBlock: 0,
-                updatedAtTime: glvDeposit.updatedAtTime,
+                updatedAtTime: glvDeposit.updatedAtTime(),
                 executionFee: 0,
                 callbackGasLimit: 0
             }),
@@ -413,52 +419,52 @@ library GlvDepositUtils {
         startingGas -= gasleft() / 63;
 
         GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(dataStore, key);
-        GlvDepositStoreUtils.remove(dataStore, key, glvDeposit.account);
+        GlvDepositStoreUtils.remove(dataStore, key, glvDeposit.account());
 
-        if (glvDeposit.marketTokenAmount > 0) {
+        if (glvDeposit.marketTokenAmount() > 0) {
             glvVault.transferOut(
-                glvDeposit.market,
-                glvDeposit.account,
-                glvDeposit.marketTokenAmount,
-                glvDeposit.shouldUnwrapNativeToken
+                glvDeposit.market(),
+                glvDeposit.account(),
+                glvDeposit.marketTokenAmount(),
+                glvDeposit.shouldUnwrapNativeToken()
             );
         }
 
-        if (glvDeposit.initialLongTokenAmount > 0) {
+        if (glvDeposit.initialLongTokenAmount() > 0) {
             glvVault.transferOut(
-                glvDeposit.initialLongToken,
-                glvDeposit.account,
-                glvDeposit.initialLongTokenAmount,
-                glvDeposit.shouldUnwrapNativeToken
+                glvDeposit.initialLongToken(),
+                glvDeposit.account(),
+                glvDeposit.initialLongTokenAmount(),
+                glvDeposit.shouldUnwrapNativeToken()
             );
         }
 
-        if (glvDeposit.initialShortTokenAmount > 0) {
+        if (glvDeposit.initialShortTokenAmount() > 0) {
             glvVault.transferOut(
-                glvDeposit.initialShortToken,
-                glvDeposit.account,
-                glvDeposit.initialShortTokenAmount,
-                glvDeposit.shouldUnwrapNativeToken
+                glvDeposit.initialShortToken(),
+                glvDeposit.account(),
+                glvDeposit.initialShortTokenAmount(),
+                glvDeposit.shouldUnwrapNativeToken()
             );
         }
 
-        GlvDepositEventUtils.emitGlvDepositCancelled(eventEmitter, key, glvDeposit.account, reason, reasonBytes);
+        GlvDepositEventUtils.emitGlvDepositCancelled(eventEmitter, key, glvDeposit.account(), reason, reasonBytes);
 
-        uint256 marketCount = GlvUtils.getMarketCount(dataStore, glvDeposit.glv);
+        uint256 marketCount = GlvUtils.getMarketCount(dataStore, glvDeposit.glv());
         GasUtils.payExecutionFee(
             dataStore,
             eventEmitter,
             glvVault,
             key,
-            glvDeposit.callbackContract,
-            glvDeposit.executionFee,
+            glvDeposit.callbackContract(),
+            glvDeposit.executionFee(),
             startingGas,
             GasUtils.estimateGlvDepositOraclePriceCount(
                 marketCount,
-                glvDeposit.longTokenSwapPath.length + glvDeposit.shortTokenSwapPath.length
+                glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length
             ),
             keeper,
-            glvDeposit.receiver
+            glvDeposit.receiver()
         );
 
         EventUtils.EventLogData memory eventData;

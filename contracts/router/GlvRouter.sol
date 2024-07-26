@@ -41,11 +41,11 @@ contract GlvRouter is BaseRouter {
 
     function cancelGlvDeposit(bytes32 key) external payable nonReentrant {
         GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(dataStore, key);
-        if (glvDeposit.account == address(0)) {
+        if (glvDeposit.account() == address(0)) {
             revert Errors.EmptyGlvDeposit();
         }
 
-        if (glvDeposit.account != msg.sender) {
+        if (glvDeposit.account() != msg.sender) {
             revert Errors.Unauthorized(msg.sender, "account for cancelGlvDeposit");
         }
 

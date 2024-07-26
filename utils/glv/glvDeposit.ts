@@ -112,7 +112,7 @@ export async function executeGlvDeposit(fixture, overrides: any = {}) {
     }
     if (!oracleBlockNumber) {
       const glvDeposit = await reader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
-      oracleBlockNumber = glvDeposit.updatedAtBlock;
+      oracleBlockNumber = glvDeposit.numbers.updatedAtBlock;
     }
   }
 

@@ -254,6 +254,15 @@ describe("Glv", () => {
     });
 
     const glvBalance = await getBalanceOf(ethUsdGlvAddress, user0.address);
+    console.log("user glvBalance %s", glvBalance);
+
+    const marketTokenBalance = await getBalanceOf(ethUsdMarket.marketToken, ethUsdGlvAddress);
+    console.log(
+      "glv %s market %s marketTokenBalance %s",
+      ethUsdMarket.marketToken,
+      ethUsdGlvAddress,
+      marketTokenBalance
+    );
 
     await createGlvWithdrawal(fixture, {
       glv: ethUsdGlvAddress,
