@@ -7,7 +7,6 @@ export const errorsInterface = new ethers.utils.Interface(Errors.abi);
 export const errorsContract = new ethers.Contract(ethers.constants.AddressZero, Errors.abi);
 
 export function getErrorString(error: { name: string; args: any[] }) {
-  console.log(error);
   return JSON.stringify({
     name: error.name,
     args: error.args.map((value) => value.toString()),

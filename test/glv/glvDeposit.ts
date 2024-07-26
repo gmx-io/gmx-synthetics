@@ -71,6 +71,7 @@ describe("Glv Deposits", () => {
     // TODO validate swaps
 
     it("InvalidGlvDepositInitialLongToken", async () => {
+      // TODO check both isMarketTokenDeposit true/false
       await expect(createGlvDeposit(fixture, { ...params, isMarketTokenDeposit: true }))
         .to.be.revertedWithCustomError(errorsContract, "InvalidGlvDepositInitialLongToken")
         .withArgs(ethUsdMarket.longToken);

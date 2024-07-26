@@ -127,7 +127,7 @@ export async function executeGlvWithdrawal(fixture, overrides: any = {}) {
     params.gasUsageLabel = gasUsageLabel;
   }
   if (oracleBlockNumber) {
-    params.oracleBlockNumber = gasUsageLabel;
+    params.oracleBlockNumber = oracleBlockNumber;
   }
 
   for (const [key, value] of Object.entries(params)) {

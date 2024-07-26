@@ -93,7 +93,7 @@ describe("Glv Shifts", () => {
     expect(await getBalanceOf(solUsdMarket.marketToken, ethUsdGlvAddress)).to.be.eq(expandDecimals(1000, 18));
   });
 
-  describe.only("execute glv shift, validations", () => {
+  describe("execute glv shift, validations", () => {
     it.skip("EmptyGlvShift", async () => {
       await expect(executeGlvShift(fixture, { key: ethers.constants.HashZero })).to.be.revertedWithCustomError(
         errorsContract,
