@@ -200,14 +200,8 @@ library GlvShiftUtils {
         ExecuteGlvShiftCache memory cache;
         cache.receivedMarketTokens = ShiftUtils.executeShift(executeShiftParams, shift);
 
-        GlvUtils.validateMarketTokenBalance(
-            params.dataStore,
-            glvShift.glv(),
-            cache.toMarket,
-            cache.toMarketTokenPrice.toUint256()
-        );
-
         cache.toMarket = MarketStoreUtils.get(params.dataStore, glvShift.toMarket());
+
         (cache.toMarketTokenPrice, ) = MarketUtils.getMarketTokenPrice(
             params.dataStore,
             cache.toMarket,
@@ -216,6 +210,12 @@ library GlvShiftUtils {
             params.oracle.getPrimaryPrice(cache.toMarket.shortToken),
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
             false // maximize
+        );
+        GlvUtils.validateMarketTokenBalance(
+            params.dataStore,
+            glvShift.glv(),
+            cache.toMarket,
+            cache.toMarketTokenPrice.toUint256()
         );
         cache.receivedMarketTokensUsd = Precision.mulDiv(
             cache.receivedMarketTokens,

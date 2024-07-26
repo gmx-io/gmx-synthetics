@@ -6,8 +6,8 @@ import { logGasUsage } from "../gas";
 import * as keys from "../keys";
 import { executeWithOracleParams } from "../exchange";
 import { parseLogs } from "../event";
-import { getCancellationReason, getErrorString } from "../error";
-import { expect } from "chai";
+import { getCancellationReason } from "../error";
+import { expectCancellationReason } from "../validation";
 
 export function getGlvDepositKeys(dataStore, start, end) {
   return dataStore.getBytes32ValuesAt(keys.GLV_DEPOSIT_LIST, start, end);
@@ -111,7 +111,7 @@ export async function executeGlvDeposit(fixture, overrides: any = {}) {
   const dataStreamTokens = overrides.dataStreamTokens || [];
   const dataStreamData = overrides.dataStreamData || [];
   const priceFeedTokens = overrides.priceFeedTokens || [];
-  let glvDepositKey = overrides.glvDepositKey;
+  let glvDepositKey = overrides.key;
   let oracleBlockNumber = overrides.oracleBlockNumber;
 
   if (glvDepositKeys.length > 0) {
@@ -124,9 +124,8 @@ export async function executeGlvDeposit(fixture, overrides: any = {}) {
     }
   }
 
-  const params = {
+  const params: any = {
     key: glvDepositKey,
-    oracleBlockNumber,
     tokens,
     precisions,
     minPrices,
@@ -139,6 +138,12 @@ export async function executeGlvDeposit(fixture, overrides: any = {}) {
     dataStreamData,
     priceFeedTokens,
   };
+  if (gasUsageLabel) {
+    params.gasUsageLabel = gasUsageLabel;
+  }
+  if (oracleBlockNumber) {
+    params.oracleBlockNumber = gasUsageLabel;
+  }
 
   const txReceipt = await executeWithOracleParams(fixture, params);
 
@@ -149,26 +154,7 @@ export async function executeGlvDeposit(fixture, overrides: any = {}) {
     eventName: "GlvDepositCancelled",
   });
 
-  // todo create separate func to check cancellation reason
-  if (cancellationReason) {
-    if (overrides.expectedCancellationReason) {
-      if (typeof overrides.expectedCancellationReason === "string") {
-        expect(cancellationReason.name).eq(overrides.expectedCancellationReason);
-      } else {
-        expect(overrides.expectedCancellationReason.name).eq(cancellationReason.name);
-        expect(overrides.expectedCancellationReason.args.length).eq(cancellationReason.args.length);
-        expect(overrides.expectedCancellationReason.args).deep.eq(cancellationReason.args);
-      }
-    } else {
-      throw new Error(`GlvDeposit was cancelled: ${getErrorString(cancellationReason)}`);
-    }
-  } else {
-    if (overrides.expectedCancellationReason) {
-      throw new Error(
-        `GlvDeposit was not cancelled, expected cancellation with reason: ${overrides.expectedCancellationReason}`
-      );
-    }
-  }
+  expectCancellationReason(cancellationReason, overrides.expectedCancellationReason, "GlvDeposit");
 
   const result = { txReceipt, logs };
   return result;

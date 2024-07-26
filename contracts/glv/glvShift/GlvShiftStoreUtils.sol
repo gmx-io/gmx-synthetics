@@ -100,7 +100,7 @@ library GlvShiftStoreUtils {
 
     function remove(DataStore dataStore, bytes32 key) external {
         if (!dataStore.containsBytes32(Keys.GLV_SHIFT_LIST, key)) {
-            revert Errors.ShiftNotFound(key);
+            revert Errors.GlvShiftNotFound(key);
         }
 
         dataStore.removeBytes32(

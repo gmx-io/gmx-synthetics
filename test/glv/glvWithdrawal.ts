@@ -17,7 +17,7 @@ import { errorsContract } from "../../utils/error";
 import { increaseTime } from "../../utils/time";
 import { printGasUsage } from "../../utils/gas";
 
-describe("Glv", () => {
+describe("Glv Withdrawals", () => {
   const { provider } = ethers;
   const { AddressZero } = ethers.constants;
 

@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import * as keys from "../utils/keys";
 import { DEFAULT_MARKET_TYPE, getMarketTokenAddress } from "../utils/market";
-import { getGlvAddress, getGlvShiftCount } from "../utils/glv";
+import { getGlvAddress } from "../utils/glv";
 
 const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnvironment) => {
   const { execute, get } = deployments;
@@ -65,8 +65,8 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
   );
 
   await execute("DataStore", { from: deployer, log: true }, "setUint", keys.tokenTransferGasLimit(glvAddress), 200_000);
-  await execute("GlvHandler", { from: deployer, log: true }, "addMarket", glvAddress, ethUsdMarketAddress);
-  await execute("GlvHandler", { from: deployer, log: true }, "addMarket", glvAddress, solUsdMarketAddress);
+  await execute("GlvHandler", { from: deployer, log: true }, "addMarketToGlv", glvAddress, ethUsdMarketAddress);
+  await execute("GlvHandler", { from: deployer, log: true }, "addMarketToGlv", glvAddress, solUsdMarketAddress);
 };
 
 func.skip = async ({ network }) => {

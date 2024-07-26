@@ -5,14 +5,14 @@ import { logGasUsage } from "../gas";
 import * as keys from "../keys";
 import { executeWithOracleParams } from "../exchange";
 import { parseLogs } from "../event";
-import { getCancellationReason, getErrorString } from "../error";
-import { expect } from "chai";
+import { expectCancellationReason } from "../validation";
+import { getCancellationReason } from "../error";
 
 export async function createGlvShift(fixture, overrides: any = {}) {
-  const { glvVault, glvHandler, wnt, ethUsdMarket, solUsdMarket } = fixture.contracts;
+  const { glvVault, glvHandler, wnt, ethUsdMarket, solUsdMarket, ethUsdGlvAddress } = fixture.contracts;
   const { wallet } = fixture.accounts;
 
-  const glv = overrides.glv;
+  const glv = overrides.glv || ethUsdGlvAddress;
   const sender = overrides.sender || wallet;
   const fromMarket = overrides.fromMarket || ethUsdMarket;
   const toMarket = overrides.toMarket || solUsdMarket;
@@ -63,22 +63,21 @@ export async function executeGlvShift(fixture, overrides: any = {}) {
   const dataStreamTokens = overrides.dataStreamTokens || [];
   const dataStreamData = overrides.dataStreamData || [];
   const priceFeedTokens = overrides.priceFeedTokens || [];
-  let glvShiftKey = overrides.glvShift;
+  let glvShiftKey = overrides.key;
   let oracleBlockNumber = overrides.oracleBlockNumber;
 
   if (glvShiftKeys.length > 0) {
     if (!glvShiftKey) {
       glvShiftKey = glvShiftKeys[0];
     }
-    if (!oracleBlockNumber) {
-      oracleBlockNumber = (await ethers.provider.getBlock("latest")).number;
-    }
+  }
+  if (!oracleBlockNumber) {
+    oracleBlockNumber = (await ethers.provider.getBlock("latest")).number;
   }
 
   const params: any = {
     glv: glv,
     key: glvShiftKey,
-    oracleBlockNumber,
     tokens,
     precisions,
     minPrices,
@@ -87,6 +86,7 @@ export async function executeGlvShift(fixture, overrides: any = {}) {
     dataStreamTokens,
     dataStreamData,
     priceFeedTokens,
+    oracleBlockNumber,
   };
   if (gasUsageLabel) {
     params.gasUsageLabel = gasUsageLabel;
@@ -107,19 +107,7 @@ export async function executeGlvShift(fixture, overrides: any = {}) {
     eventName: "GlvShiftCancelled",
   });
 
-  if (cancellationReason) {
-    if (overrides.expectedCancellationReason) {
-      expect(cancellationReason.name).eq(overrides.expectedCancellationReason);
-    } else {
-      throw new Error(`GlvShift was cancelled: ${getErrorString(cancellationReason)}`);
-    }
-  } else {
-    if (overrides.expectedCancellationReason) {
-      throw new Error(
-        `GlvShift was not cancelled, expected cancellation with reason: ${overrides.expectedCancellationReason}`
-      );
-    }
-  }
+  expectCancellationReason(cancellationReason, overrides.expectedCancellationReason, "GlvShift");
 
   const result = { txReceipt, logs };
   return result;

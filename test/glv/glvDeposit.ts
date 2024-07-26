@@ -11,7 +11,7 @@ import { increaseTime } from "../../utils/time";
 import { printGasUsage } from "../../utils/gas";
 import { contractAt } from "../../utils/deploy";
 
-describe("glv deposits", () => {
+describe("Glv Deposits", () => {
   const { provider } = ethers;
   const { AddressZero } = ethers.constants;
 

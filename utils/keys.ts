@@ -215,6 +215,7 @@ export const GLV_CUMULATIVE_DEPOSITED_USD = hashString("GLV_CUMULATIVE_DEPOSITED
 export const GLV_MAX_CUMULATIVE_DEPOSIT_USD = hashString("GLV_MAX_CUMULATIVE_DEPOSIT_USD");
 export const GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR = hashString("GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR");
 export const GLV_MAX_MARKET_TOKEN_BALANCE_USD = hashString("GLV_MAX_MARKET_TOKEN_BALANCE_USD");
+export const GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT = hashString("GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT");
 
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
@@ -655,4 +656,12 @@ export function accountGlvDepositListKey(account) {
 
 export function accountGlvWithdrawalListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_GLV_WITHDRAWAL_LIST, account]);
+}
+
+export function glvMaxMarketTokenBalanceUsdKey(glv: string, market: string) {
+  return hashData(["bytes32", "address", "address"], [GLV_MAX_MARKET_TOKEN_BALANCE_USD, glv, market]);
+}
+
+export function glvMaxMarketTokenBalanceAmountKey(glv: string, market: string) {
+  return hashData(["bytes32", "address", "address"], [GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT, glv, market]);
 }

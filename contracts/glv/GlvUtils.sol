@@ -39,7 +39,6 @@ library GlvUtils {
         cache.marketListKey = Keys.glvSupportedMarketListKey(glv);
         cache.marketCount = dataStore.getAddressCount(cache.marketListKey);
 
-
         address[] memory marketAddresses = dataStore.getAddressValuesAt(cache.marketListKey, 0, cache.marketCount);
         for (uint256 i = 0; i < marketAddresses.length; i++) {
             address marketAddress = marketAddresses[i];
@@ -154,15 +153,18 @@ library GlvUtils {
         Market.Props memory market,
         uint256 marketTokenPrice
     ) internal view {
-        uint256 maxMarketTokenBalanceAmount = dataStore.getUint(Keys.glvMaxMarketTokenBalanceUsdKey(glv, market.marketToken));
-        uint256 maxMarketTokenBalanceUsd = dataStore.getUint(Keys.glvMaxMarketTokenBalanceAmountKey(glv, market.marketToken));
+        uint256 maxMarketTokenBalanceUsd = dataStore.getUint(
+            Keys.glvMaxMarketTokenBalanceUsdKey(glv, market.marketToken)
+        );
+        uint256 maxMarketTokenBalanceAmount = dataStore.getUint(
+            Keys.glvMaxMarketTokenBalanceAmountKey(glv, market.marketToken)
+        );
 
         if (maxMarketTokenBalanceAmount == 0 && maxMarketTokenBalanceUsd == 0) {
             return;
         }
 
         uint256 marketTokenBalanceAmount = ERC20(market.marketToken).balanceOf(glv);
-
         if (maxMarketTokenBalanceAmount > 0 && marketTokenBalanceAmount > maxMarketTokenBalanceAmount) {
             revert Errors.GlvMaxMarketTokenBalanceAmountExceeded(
                 glv,
@@ -173,7 +175,7 @@ library GlvUtils {
         }
 
         if (maxMarketTokenBalanceUsd > 0) {
-            uint256 marketTokenBalanceUsd = marketTokenBalanceAmount * marketTokenPrice;
+            uint256 marketTokenBalanceUsd = Precision.mulDiv(marketTokenBalanceAmount, marketTokenPrice, Precision.WEI_PRECISION);
             if (marketTokenBalanceUsd > maxMarketTokenBalanceUsd) {
                 revert Errors.GlvMaxMarketTokenBalanceUsdExceeded(
                     glv,
@@ -185,7 +187,12 @@ library GlvUtils {
         }
     }
 
-    function addMarket(DataStore dataStore, EventEmitter eventEmitter, address glvAddress, address marketAddress) external {
+    function addMarketToGlv(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address glvAddress,
+        address marketAddress
+    ) external {
         validateGlv(dataStore, glvAddress);
 
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, marketAddress);

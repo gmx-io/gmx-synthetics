@@ -6,8 +6,8 @@ import { logGasUsage } from "../gas";
 import * as keys from "../keys";
 import { executeWithOracleParams } from "../exchange";
 import { parseLogs } from "../event";
-import { getCancellationReason, getErrorString } from "../error";
-import { expect } from "chai";
+import { getCancellationReason } from "../error";
+import { expectCancellationReason } from "../validation";
 
 export function getGlvWithdrawalKeys(dataStore, start, end) {
   return dataStore.getBytes32ValuesAt(keys.GLV_WITHDRAWAL_LIST, start, end);
@@ -96,12 +96,23 @@ export async function executeGlvWithdrawal(fixture, overrides: any = {}) {
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4)];
   const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4)];
   const glvWithdrawalKeys = await getGlvWithdrawalKeys(dataStore, 0, 1);
-  const glvWithdrawal = await reader.getGlvWithdrawal(dataStore.address, glvWithdrawalKeys[0]);
 
-  const params = {
+  let glvWithdrawalKey = overrides.key;
+  let oracleBlockNumber = overrides.oracleBlockNumber;
+
+  if (glvWithdrawalKeys.length > 0) {
+    if (!glvWithdrawalKey) {
+      glvWithdrawalKey = glvWithdrawalKeys[0];
+    }
+    if (!oracleBlockNumber) {
+      const glvWithdrawal = await reader.getGlvWithdrawal(dataStore.address, glvWithdrawalKeys[0]);
+      oracleBlockNumber = glvWithdrawal.numbers.updatedAtBlock;
+    }
+  }
+
+  const params: any = {
     glv: overrides.glv,
-    key: glvWithdrawalKeys[0],
-    oracleBlockNumber: glvWithdrawal.numbers.updatedAtBlock,
+    key: glvWithdrawalKey,
     tokens,
     precisions,
     minPrices,
@@ -112,6 +123,12 @@ export async function executeGlvWithdrawal(fixture, overrides: any = {}) {
     dataStreamData,
     priceFeedTokens,
   };
+  if (gasUsageLabel) {
+    params.gasUsageLabel = gasUsageLabel;
+  }
+  if (oracleBlockNumber) {
+    params.oracleBlockNumber = gasUsageLabel;
+  }
 
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined) {
@@ -128,19 +145,7 @@ export async function executeGlvWithdrawal(fixture, overrides: any = {}) {
     eventName: "GlvWithdrawalCancelled",
   });
 
-  if (cancellationReason) {
-    if (overrides.expectedCancellationReason) {
-      expect(cancellationReason.name).eq(overrides.expectedCancellationReason);
-    } else {
-      throw new Error(`GlvWithdrawal was cancelled: ${getErrorString(cancellationReason)}`);
-    }
-  } else {
-    if (overrides.expectedCancellationReason) {
-      throw new Error(
-        `GlvWithdrawal was not cancelled, expected cancellation with reason: ${overrides.expectedCancellationReason}`
-      );
-    }
-  }
+  expectCancellationReason(cancellationReason, overrides.expectedCancellationReason, "GlvWithdrawal");
 
   const result = { txReceipt, logs };
   return result;
