@@ -55,7 +55,7 @@ describe("Glv", () => {
       roleStore.address,
       dataStore.address
     );
-    await glvFactory.createGlv(wbtc.address, usdc.address, glvType, "Lololo");
+    await glvFactory.createGlv(wbtc.address, usdc.address, glvType, "Glv name", "Glv symbol");
     const glv = await reader.getGlv(glvAddress);
 
     expect(glv.longToken).eq(wbtc.address);
@@ -73,7 +73,7 @@ describe("Glv", () => {
       roleStore.address,
       dataStore.address
     );
-    await glvFactory.createGlv(wnt.address, usdc.address, glvType);
+    await glvFactory.createGlv(wnt.address, usdc.address, glvType, "Glv name", "Glv symbol");
 
     const marketListKey = keys.glvSupportedMarketListKey(glvAddress);
     let marketListCount = await dataStore.getAddressCount(marketListKey);

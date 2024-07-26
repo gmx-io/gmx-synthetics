@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import * as keys from "../utils/keys";
 import { DEFAULT_MARKET_TYPE, getMarketTokenAddress } from "../utils/market";
-import { getGlvAddress } from "../utils/glv";
+import { getGlvAddress, getGlvShiftCount } from "../utils/glv";
 
 const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnvironment) => {
   const { execute, get } = deployments;
@@ -16,8 +16,8 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
   const sol = tokens.SOL;
   const glvType = ethers.constants.HashZero;
 
-  const glvNameSuffix = "[WETH-USDC]";
-  const glvSymbolSuffix = "[WETH-USDC]";
+  const glvName = "GMX Liquidity Vault [WETH-USDC]";
+  const glvSymbol = "GLV [WETH-USDC]";
   await execute(
     "GlvFactory",
     { from: deployer, log: true },
@@ -25,8 +25,8 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     weth.address,
     usdc.address,
     glvType,
-    glvNameSuffix,
-    glvSymbolSuffix
+    glvName,
+    glvSymbol
   );
 
   const dataStore = await get("DataStore");
@@ -38,8 +38,8 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     weth.address,
     usdc.address,
     glvType,
-    `GMX Liquidity Vault ${glvNameSuffix}`,
-    `GLV ${glvSymbolSuffix}`,
+    glvName,
+    glvSymbol,
     glvFactory.address,
     roleStore.address,
     dataStore.address

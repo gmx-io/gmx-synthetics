@@ -2,14 +2,11 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/Strings.sol";
 import "./GlvToken.sol";
 import "./Glv.sol";
 import "./GlvStoreUtils.sol";
 import "../event/EventEmitter.sol";
 import "../utils/Cast.sol";
-
-import "hardhat/console.sol";
 
 // @title GlvFactory
 // @dev Contract to create glv
@@ -34,8 +31,8 @@ contract GlvFactory is RoleModule {
         address longToken,
         address shortToken,
         bytes32 glvType,
-        string memory nameSuffix,
-        string memory symbolSuffix
+        string memory name,
+        string memory symbol
     ) external onlyMarketKeeper returns (Glv.Props memory) {
         bytes32 salt = keccak256(abi.encode("GMX_GLV", longToken, shortToken, glvType));
 
@@ -43,9 +40,6 @@ contract GlvFactory is RoleModule {
         if (existingGlvAddress != address(0)) {
             revert Errors.GlvAlreadyExists(glvType, existingGlvAddress);
         }
-
-        string memory name = string.concat("GMX Liquidity Vault", Strings.equal(nameSuffix, "") ? "" : " ", nameSuffix);
-        string memory symbol = string.concat("GLV", Strings.equal(symbolSuffix, "") ? "" : " ", symbolSuffix);
 
         GlvToken glvToken = new GlvToken{salt: salt}(roleStore, dataStore, name, symbol);
 
