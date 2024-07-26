@@ -45,18 +45,20 @@ describe("Glv", () => {
     } = fixture.contracts);
   });
 
-  it.only("creates glv vault", async () => {
+  it("creates glv vault", async () => {
     const glvType = ethers.constants.HashZero;
     const glvAddress = getGlvAddress(
       wbtc.address,
       usdc.address,
       glvType,
+      "Glv name",
+      "Glv symbol",
       glvFactory.address,
       roleStore.address,
       dataStore.address
     );
     await glvFactory.createGlv(wbtc.address, usdc.address, glvType, "Glv name", "Glv symbol");
-    const glv = await reader.getGlv(glvAddress);
+    const glv = await reader.getGlv(dataStore.address, glvAddress);
 
     expect(glv.longToken).eq(wbtc.address);
     expect(glv.shortToken).eq(usdc.address);
@@ -69,6 +71,8 @@ describe("Glv", () => {
       wnt.address,
       usdc.address,
       glvType,
+      "Glv name",
+      "Glv symbol",
       glvFactory.address,
       roleStore.address,
       dataStore.address

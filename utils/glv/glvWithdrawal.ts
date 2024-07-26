@@ -17,6 +17,14 @@ export function getGlvWithdrawalCount(dataStore) {
   return dataStore.getBytes32Count(keys.GLV_WITHDRAWAL_LIST);
 }
 
+export function getAccountGlvWithdrawalCount(dataStore, account) {
+  return dataStore.getBytes32Count(keys.accountGlvWithdrawalListKey(account));
+}
+
+export function getAccountGlvWithdrawalKeys(dataStore, account, start, end) {
+  return dataStore.getBytes32ValuesAt(keys.accountGlvWithdrawalListKey(account), start, end);
+}
+
 export async function createGlvWithdrawal(fixture, overrides: any = {}) {
   const { glvVault, glvHandler, wnt, ethUsdMarket, ethUsdGlvAddress } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
@@ -78,15 +86,15 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
 }
 
 export async function executeGlvWithdrawal(fixture, overrides: any = {}) {
-  const { reader, dataStore, glvHandler, wnt, usdc } = fixture.contracts;
+  const { reader, dataStore, glvHandler, wnt, usdc, sol } = fixture.contracts;
   const { gasUsageLabel } = overrides;
-  const tokens = overrides.tokens || [wnt.address, usdc.address];
   const dataStreamTokens = overrides.dataStreamTokens || [];
   const dataStreamData = overrides.dataStreamData || [];
   const priceFeedTokens = overrides.priceFeedTokens || [];
-  const precisions = overrides.precisions || [8, 18];
-  const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
-  const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
+  const tokens = overrides.tokens || [wnt.address, usdc.address, sol.address];
+  const precisions = overrides.precisions || [8, 18, 8];
+  const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4)];
+  const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4)];
   const glvWithdrawalKeys = await getGlvWithdrawalKeys(dataStore, 0, 1);
   const glvWithdrawal = await reader.getGlvWithdrawal(dataStore.address, glvWithdrawalKeys[0]);
 

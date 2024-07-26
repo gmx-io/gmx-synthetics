@@ -2,7 +2,11 @@ import { calculateCreate2 } from "eth-create2-calculator";
 
 import GlvTokenArtifact from "../../artifacts/contracts/glv/GlvToken.sol/GlvToken.json";
 
+import * as keys from "../keys";
+
 import { hashData } from "../hash";
+
+export const DEFAULT_GLV_TYPE = ethers.constants.HashZero;
 
 export * from "./glvDeposit";
 export * from "./glvWithdrawal";
@@ -24,4 +28,12 @@ export function getGlvAddress(
     types: ["address", "address", "string", "string"],
     params: [roleStoreAddress, dataStoreAddress, glvName, glvSymbol],
   });
+}
+
+export function getGlvKeys(dataStore, start, end) {
+  return dataStore.getAddressValuesAt(keys.GLV_LIST, start, end);
+}
+
+export function getGlvCount(dataStore) {
+  return dataStore.getAddressCount(keys.GLV_LIST);
 }

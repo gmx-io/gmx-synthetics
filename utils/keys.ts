@@ -20,6 +20,8 @@ export const MARKET_LIST = hashString("MARKET_LIST");
 export const DEPOSIT_LIST = hashString("DEPOSIT_LIST");
 export const ACCOUNT_DEPOSIT_LIST = hashString("ACCOUNT_DEPOSIT_LIST");
 
+export const GLV_LIST = hashString("GLV_LIST");
+
 export const GLV_DEPOSIT_LIST = hashString("GLV_DEPOSIT_LIST");
 export const ACCOUNT_GLV_DEPOSIT_LIST = hashString("ACCOUNT_GLV_DEPOSIT_LIST");
 
@@ -645,4 +647,12 @@ export function glvSupportedMarketListKey(glv: string) {
 
 export function minGlvTokensForFirstGlvDepositKey(glv: string) {
   return hashData(["bytes32", "address"], [MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT, glv]);
+}
+
+export function accountGlvDepositListKey(account) {
+  return hashData(["bytes32", "address"], [ACCOUNT_GLV_DEPOSIT_LIST, account]);
+}
+
+export function accountGlvWithdrawalListKey(account) {
+  return hashData(["bytes32", "address"], [ACCOUNT_GLV_WITHDRAWAL_LIST, account]);
 }

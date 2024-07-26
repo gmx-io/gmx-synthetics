@@ -19,7 +19,6 @@ library GlvShift {
         uint256 minMarketTokens;
         uint256 updatedAtTime;
         uint256 executionFee;
-        uint256 callbackGasLimit;
     }
 
     function glv(Props memory props) internal pure returns (address) {
@@ -76,14 +75,6 @@ library GlvShift {
 
     function setExecutionFee(Props memory props, uint256 value) internal pure {
         props.numbers.executionFee = value;
-    }
-
-    function callbackGasLimit(Props memory props) internal pure returns (uint256) {
-        return props.numbers.callbackGasLimit;
-    }
-
-    function setCallbackGasLimit(Props memory props, uint256 value) internal pure {
-        props.numbers.callbackGasLimit = value;
     }
 
 }

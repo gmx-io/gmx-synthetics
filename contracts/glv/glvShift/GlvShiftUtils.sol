@@ -113,8 +113,7 @@ library GlvShiftUtils {
                 marketTokenAmount: params.marketTokenAmount,
                 minMarketTokens: params.minMarketTokens,
                 updatedAtTime: Chain.currentTimestamp(),
-                executionFee: params.executionFee,
-                callbackGasLimit: 0
+                executionFee: params.executionFee
             })
         );
 

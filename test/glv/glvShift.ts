@@ -60,9 +60,6 @@ describe("Glv", () => {
   });
 
   it("create glv shift", async () => {
-    await glvHandler.addMarket(ethUsdGlvAddress, ethUsdMarket.marketToken);
-    await glvHandler.addMarket(ethUsdGlvAddress, solUsdMarket.marketToken);
-
     const tokens = [wnt.address, usdc.address, sol.address];
     const precisions = [8, 18, 8];
     const minPrices = [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4)];

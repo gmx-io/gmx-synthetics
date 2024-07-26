@@ -17,6 +17,14 @@ export function getGlvDepositCount(dataStore) {
   return dataStore.getBytes32Count(keys.GLV_DEPOSIT_LIST);
 }
 
+export function getAccountGlvDepositCount(dataStore, account) {
+  return dataStore.getBytes32Count(keys.accountGlvDepositListKey(account));
+}
+
+export function getAccountGlvDepositKeys(dataStore, account, start, end) {
+  return dataStore.getBytes32ValuesAt(keys.accountGlvDepositListKey(account), start, end);
+}
+
 export async function createGlvDeposit(fixture, overrides: any = {}) {
   const { glvVault, glvHandler, wnt, ethUsdMarket, ethUsdGlvAddress } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
