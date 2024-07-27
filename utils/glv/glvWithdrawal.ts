@@ -29,6 +29,7 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
   const { glvVault, glvHandler, wnt, ethUsdMarket, ethUsdGlvAddress } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
+  const gasUsageLabel = overrides.gasUsageLabel || "createGlvWithdrawal";
   const glv = overrides.glv || ethUsdGlvAddress;
   const sender = overrides.sender || wallet;
   const account = overrides.account || user0;
@@ -81,13 +82,14 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
 
   await logGasUsage({
     tx: glvHandler.connect(sender).createGlvWithdrawal(account.address, params),
-    label: overrides.gasUsageLabel,
+    label: gasUsageLabel,
   });
 }
 
 export async function executeGlvWithdrawal(fixture, overrides: any = {}) {
-  const { glvReader, dataStore, glvHandler, wnt, usdc, sol } = fixture.contracts;
-  const { gasUsageLabel } = overrides;
+  const { glvReader, dataStore, glvHandler, wnt, usdc, sol, ethUsdGlvAddress } = fixture.contracts;
+  const gasUsageLabel = overrides.gasUsageLabel || "executeGlvWithdrawal";
+  const glv = overrides.glv || ethUsdGlvAddress;
   const dataStreamTokens = overrides.dataStreamTokens || [];
   const dataStreamData = overrides.dataStreamData || [];
   const priceFeedTokens = overrides.priceFeedTokens || [];
@@ -111,22 +113,19 @@ export async function executeGlvWithdrawal(fixture, overrides: any = {}) {
   }
 
   const params: any = {
-    glv: overrides.glv,
+    glv,
     key: glvWithdrawalKey,
     tokens,
     precisions,
     minPrices,
     maxPrices,
     execute: glvHandler.executeGlvWithdrawal,
-    gasUsageLabel,
     dataStreamTokens,
     dataStreamData,
     priceFeedTokens,
     oracleBlockNumber,
+    gasUsageLabel,
   };
-  if (gasUsageLabel) {
-    params.gasUsageLabel = gasUsageLabel;
-  }
 
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined) {
@@ -147,4 +146,14 @@ export async function executeGlvWithdrawal(fixture, overrides: any = {}) {
 
   const result = { txReceipt, logs };
   return result;
+}
+
+export async function handleGlvWithdrawal(fixture, overrides: any = {}) {
+  const createResult = await createGlvWithdrawal(fixture, overrides.create);
+
+  const createOverridesCopy = { ...overrides.create };
+  delete createOverridesCopy.gasUsageLabel;
+
+  const executeResult = await executeGlvWithdrawal(fixture, { ...createOverridesCopy, ...overrides.execute });
+  return { createResult, executeResult };
 }

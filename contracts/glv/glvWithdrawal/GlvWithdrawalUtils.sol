@@ -170,7 +170,7 @@ library GlvWithdrawalUtils {
 
         _processMarketWithdrawal(params, glvWithdrawal);
 
-        GlvToken(payable(glvWithdrawal.glv())).mint(glvWithdrawal.receiver(), cache.marketTokenAmount);
+        GlvToken(payable(glvWithdrawal.glv())).burn(glvWithdrawal.receiver(), glvWithdrawal.glvTokenAmount());
 
         GlvWithdrawalEventUtils.emitGlvWithdrawalExecuted(params.eventEmitter, params.key, glvWithdrawal.account());
 

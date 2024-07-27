@@ -29,6 +29,7 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
   const { glvVault, glvHandler, wnt, ethUsdMarket, ethUsdGlvAddress } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
+  const gasUsageLabel = overrides.gasUsageLabel || "createGlvWithdrawal";
   const glv = overrides.glv || ethUsdGlvAddress;
   const sender = overrides.sender || wallet;
   const account = overrides.account || user0;
@@ -93,7 +94,7 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
 
   const txReceipt = await logGasUsage({
     tx: glvHandler.connect(sender).createGlvDeposit(account.address, params),
-    label: overrides.gasUsageLabel,
+    label: gasUsageLabel,
   });
 
   const result = { txReceipt };
@@ -102,7 +103,7 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
 
 export async function executeGlvDeposit(fixture, overrides: any = {}) {
   const { glvReader, dataStore, glvHandler, wnt, usdc, sol } = fixture.contracts;
-  const { gasUsageLabel } = overrides;
+  const gasUsageLabel = overrides.gasUsageLabel || "executeGlvWithdrawal";
   const tokens = overrides.tokens || [wnt.address, usdc.address, sol.address];
   const precisions = overrides.precisions || [8, 18, 8];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4)];
@@ -139,9 +140,6 @@ export async function executeGlvDeposit(fixture, overrides: any = {}) {
     priceFeedTokens,
     oracleBlockNumber,
   };
-  if (gasUsageLabel) {
-    params.gasUsageLabel = gasUsageLabel;
-  }
 
   const txReceipt = await executeWithOracleParams(fixture, params);
 
@@ -160,6 +158,10 @@ export async function executeGlvDeposit(fixture, overrides: any = {}) {
 
 export async function handleGlvDeposit(fixture, overrides: any = {}) {
   const createResult = await createGlvDeposit(fixture, overrides.create);
-  const executeResult = await executeGlvDeposit(fixture, overrides.execute);
+
+  const createOverridesCopy = { ...overrides.create };
+  delete createOverridesCopy.gasUsageLabel;
+  const executeResult = await executeGlvDeposit(fixture, { ...createOverridesCopy, ...overrides.execute });
+
   return { createResult, executeResult };
 }

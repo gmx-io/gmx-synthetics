@@ -12,6 +12,7 @@ export async function createGlvShift(fixture, overrides: any = {}) {
   const { glvVault, glvHandler, wnt, ethUsdMarket, solUsdMarket, ethUsdGlvAddress } = fixture.contracts;
   const { wallet } = fixture.accounts;
 
+  const gasUsageLabel = overrides.gasUsageLabel || "createGlvShift";
   const glv = overrides.glv || ethUsdGlvAddress;
   const sender = overrides.sender || wallet;
   const fromMarket = overrides.fromMarket || ethUsdMarket;
@@ -44,7 +45,7 @@ export async function createGlvShift(fixture, overrides: any = {}) {
 
   const txReceipt = await logGasUsage({
     tx: glvHandler.connect(sender).createGlvShift(params),
-    label: overrides.gasUsageLabel,
+    label: gasUsageLabel,
   });
 
   const result = { txReceipt };
@@ -53,7 +54,7 @@ export async function createGlvShift(fixture, overrides: any = {}) {
 
 export async function executeGlvShift(fixture, overrides: any = {}) {
   const { dataStore, glvHandler, wnt, usdc, sol, ethUsdGlvAddress } = fixture.contracts;
-  const { gasUsageLabel } = overrides;
+  const gasUsageLabel = overrides.gasUsageLabel || "executeGlvShift";
   const glv = overrides.glv || ethUsdGlvAddress;
   const tokens = overrides.tokens || [wnt.address, usdc.address, sol.address];
   const precisions = overrides.precisions || [8, 18, 8];
@@ -87,10 +88,8 @@ export async function executeGlvShift(fixture, overrides: any = {}) {
     dataStreamData,
     priceFeedTokens,
     oracleBlockNumber,
+    gasUsageLabel,
   };
-  if (gasUsageLabel) {
-    params.gasUsageLabel = gasUsageLabel;
-  }
 
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined) {
@@ -123,6 +122,10 @@ export function getGlvShiftCount(dataStore) {
 
 export async function handleGlvShift(fixture, overrides: any = {}) {
   const createResult = await createGlvShift(fixture, overrides.create);
-  const executeResult = await executeGlvShift(fixture, overrides.execute);
+
+  const createOverridesCopy = { ...overrides.create };
+  delete createOverridesCopy.gasUsageLabel;
+
+  const executeResult = await executeGlvShift(fixture, { ...createOverridesCopy, ...overrides.execute });
   return { createResult, executeResult };
 }
