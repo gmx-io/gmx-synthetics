@@ -53,6 +53,7 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
   if (glvTokenAmount.gt(0)) {
     const glvTokenBalance = await glvToken.balanceOf(account.address);
     if (glvTokenBalance.lt(glvTokenAmount)) {
+      console.warn("WARN: minting glv tokens without depositing funds. glv token price calculation could be incorrect");
       await glvToken.mint(account.address, glvTokenAmount.sub(glvTokenBalance));
     }
     await glvToken.connect(account).transfer(glvVault.address, glvTokenAmount);

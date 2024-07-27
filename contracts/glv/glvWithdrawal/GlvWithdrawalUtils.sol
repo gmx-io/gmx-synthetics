@@ -52,14 +52,6 @@ library GlvWithdrawalUtils {
         address keeper;
     }
 
-    struct ExecuteGlvWithdrawalCache {
-        uint256 requestExpirationTime;
-        uint256 maxOracleTimestamp;
-        uint256 marketTokenAmount;
-        uint256 marketCount;
-        uint256 oraclePriceCount;
-    }
-
     function createGlvWithdrawal(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -155,28 +147,15 @@ library GlvWithdrawalUtils {
             );
         }
 
-        ExecuteGlvWithdrawalCache memory cache;
-
-        cache.requestExpirationTime = params.dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
-        cache.maxOracleTimestamp = params.oracle.maxTimestamp();
-
-        if (cache.maxOracleTimestamp > glvWithdrawal.updatedAtTime() + cache.requestExpirationTime) {
-            revert Errors.OracleTimestampsAreLargerThanRequestExpirationTime(
-                cache.maxOracleTimestamp,
-                glvWithdrawal.updatedAtTime(),
-                cache.requestExpirationTime
-            );
-        }
-
         _processMarketWithdrawal(params, glvWithdrawal);
 
-        GlvToken(payable(glvWithdrawal.glv())).burn(glvWithdrawal.receiver(), glvWithdrawal.glvTokenAmount());
+        GlvToken(payable(glvWithdrawal.glv())).burn(address(params.glvVault), glvWithdrawal.glvTokenAmount());
 
         GlvWithdrawalEventUtils.emitGlvWithdrawalExecuted(params.eventEmitter, params.key, glvWithdrawal.account());
 
-        cache.marketCount = GlvUtils.getMarketCount(params.dataStore, glvWithdrawal.glv());
-        cache.oraclePriceCount = GasUtils.estimateGlvWithdrawalOraclePriceCount(
-            cache.marketCount,
+        uint256 marketCount = GlvUtils.getMarketCount(params.dataStore, glvWithdrawal.glv());
+        uint256 oraclePriceCount = GasUtils.estimateGlvWithdrawalOraclePriceCount(
+            marketCount,
             glvWithdrawal.longTokenSwapPath().length + glvWithdrawal.shortTokenSwapPath().length
         );
         GasUtils.payExecutionFee(
@@ -187,7 +166,7 @@ library GlvWithdrawalUtils {
             glvWithdrawal.callbackContract(),
             glvWithdrawal.executionFee(),
             params.startingGas,
-            cache.oraclePriceCount,
+            oraclePriceCount,
             params.keeper,
             glvWithdrawal.receiver()
         );

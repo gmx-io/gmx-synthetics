@@ -8,7 +8,6 @@ import { executeWithOracleParams } from "../exchange";
 import { parseLogs } from "../event";
 import { getCancellationReason } from "../error";
 import { expectCancellationReason } from "../validation";
-import { getBalanceOf } from "../token";
 
 export function getGlvDepositKeys(dataStore, start, end) {
   return dataStore.getBytes32ValuesAt(keys.GLV_DEPOSIT_LIST, start, end);

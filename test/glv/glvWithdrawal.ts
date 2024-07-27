@@ -7,6 +7,7 @@ import {
   handleGlvDeposit,
   createGlvWithdrawal,
   executeGlvWithdrawal,
+  handleGlvWithdrawal,
 } from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
 import { contractAt } from "../../utils/deploy";
@@ -23,13 +24,13 @@ describe("Glv Withdrawals", () => {
 
   let fixture;
   let user0, user1, user2;
-  let glvReader, dataStore, ethUsdMarket, ethUsdGlvAddress, btcUsdMarket, glvRouter;
+  let glvReader, dataStore, ethUsdMarket, ethUsdGlvAddress, btcUsdMarket, glvRouter, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ glvReader, dataStore, ethUsdMarket, ethUsdGlvAddress, btcUsdMarket, glvRouter } = fixture.contracts);
+    ({ glvReader, dataStore, ethUsdMarket, ethUsdGlvAddress, btcUsdMarket, glvRouter, wnt, usdc } = fixture.contracts);
   });
 
   describe("create glv withdrawal, validations", () => {
@@ -244,32 +245,39 @@ describe("Glv Withdrawals", () => {
   it.skip("cancel glv withdrawal, market tokens");
 
   it("execute glv withdrawal", async () => {
+    expect(await getBalanceOf(wnt.address, user0.address)).to.be.eq(0);
+    expect(await getBalanceOf(usdc.address, user0.address)).to.be.eq(0);
+
     await handleGlvDeposit(fixture, {
       create: {
-        glv: ethUsdGlvAddress,
-        market: ethUsdMarket,
-        longTokenAmount: expandDecimals(10, 18),
-        shortTokenAmount: expandDecimals(10 * 5000, 6),
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5_000, 6),
       },
     });
 
-    const glvBalance = await getBalanceOf(ethUsdGlvAddress, user0.address);
+    expect(await getBalanceOf(ethUsdGlvAddress, user0.address)).to.be.eq(expandDecimals(10_000, 18));
+    expect(await getBalanceOf(ethUsdMarket.marketToken, ethUsdGlvAddress)).eq(expandDecimals(10_000, 18));
 
-    await createGlvWithdrawal(fixture, {
-      glv: ethUsdGlvAddress,
-      market: ethUsdMarket,
-      glvTokenAmount: glvBalance,
+    await handleGlvWithdrawal(fixture, {
+      create: {
+        glvTokenAmount: expandDecimals(1000, 18),
+      },
     });
 
-    const glvWithdrawalKeys = await getGlvWithdrawalKeys(dataStore, 0, 10);
-    const glvWithdrawal = await glvReader.getGlvWithdrawal(dataStore.address, glvWithdrawalKeys[0]);
+    expect(await getBalanceOf(ethUsdGlvAddress, user0.address)).to.be.eq(expandDecimals(9000, 18));
+    expect(await getBalanceOf(wnt.address, user0.address)).to.be.eq(expandDecimals(1, 17));
+    expect(await getBalanceOf(usdc.address, user0.address)).to.be.eq(expandDecimals(500, 6));
+    expect(await getBalanceOf(ethUsdMarket.marketToken, ethUsdGlvAddress)).eq(expandDecimals(9000, 18));
 
-    expect(glvWithdrawal.addresses.account).eq(user0.address);
-    expect(await getGlvWithdrawalCount(dataStore)).eq(1);
-
-    await executeGlvWithdrawal(fixture, {
-      gasUsageLabel: "executeGlvWithdrawal",
-      glv: ethUsdGlvAddress,
+    await handleGlvWithdrawal(fixture, {
+      create: {
+        glvTokenAmount: expandDecimals(1000, 18),
+      },
     });
+
+    expect(await getBalanceOf(ethUsdGlvAddress, user0.address)).to.be.eq(0);
+    expect(await getBalanceOf(wnt.address, user0.address)).to.be.eq(expandDecimals(1, 18));
+    expect(await getBalanceOf(usdc.address, user0.address)).to.be.eq(expandDecimals(5000, 6));
+    expect(await getBalanceOf(ethUsdMarket.marketToken, ethUsdGlvAddress)).eq(0);
   });
 });
