@@ -102,6 +102,38 @@ describe("Glv Shifts", () => {
       );
     });
 
+    it("MinMarketTokens", async () => {
+      await handleGlvDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(1, 18),
+          shortTokenAmount: expandDecimals(5000, 6),
+        },
+      });
+      await handleGlvShift(fixture, {
+        create: {
+          fromMarket: ethUsdMarket,
+          toMarket: solUsdMarket,
+          marketTokenAmount: expandDecimals(1000, 18),
+          minMarketTokens: expandDecimals(1001, 18),
+        },
+        execute: {
+          expectedCancellationReason: {
+            name: "MinMarketTokens",
+            args: [expandDecimals(1000, 18), expandDecimals(1001, 18)],
+          },
+        },
+      });
+
+      await handleGlvShift(fixture, {
+        create: {
+          fromMarket: ethUsdMarket,
+          toMarket: solUsdMarket,
+          marketTokenAmount: expandDecimals(1000, 18),
+          minMarketTokens: expandDecimals(1000, 18),
+        },
+      });
+    });
+
     it("GlvShiftIntervalNotYetPassed", async () => {
       await handleGlvDeposit(fixture, {
         create: {
