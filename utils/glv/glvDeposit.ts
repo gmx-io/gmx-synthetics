@@ -8,6 +8,7 @@ import { executeWithOracleParams } from "../exchange";
 import { parseLogs } from "../event";
 import { getCancellationReason } from "../error";
 import { expectCancellationReason } from "../validation";
+import { getBalanceOf } from "../token";
 
 export function getGlvDepositKeys(dataStore, start, end) {
   return dataStore.getBytes32ValuesAt(keys.GLV_DEPOSIT_LIST, start, end);
@@ -55,7 +56,14 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
 
   if (marketTokenAmount.gt(0)) {
     const _marketToken = await contractAt("MintableToken", market.marketToken);
-    await _marketToken.mint(glvVault.address, marketTokenAmount);
+    const balance = await _marketToken.balanceOf(account.address);
+    if (balance.lt(marketTokenAmount)) {
+      await _marketToken.mint(account.address, marketTokenAmount.sub(balance));
+      console.warn(
+        "WARN: minting market tokens without depositing funds. market token price calculation could be incorrect"
+      );
+    }
+    await _marketToken.connect(account).transfer(glvVault.address, marketTokenAmount);
   }
 
   if (longTokenAmount.gt(0)) {

@@ -10,6 +10,7 @@ import * as keys from "../../utils/keys";
 import { increaseTime } from "../../utils/time";
 import { printGasUsage } from "../../utils/gas";
 import { contractAt } from "../../utils/deploy";
+import { handleDeposit } from "../../utils/deposit";
 
 describe("Glv Deposits", () => {
   const { provider } = ethers;
@@ -217,7 +218,29 @@ describe("Glv Deposits", () => {
     expect(await getBalanceOf(solUsdMarket.marketToken, ethUsdGlvAddress)).eq(expandDecimals(10_000, 18));
   });
 
-  it.skip("execute glv deposit, market tokens");
+  it("execute glv deposit, market tokens", async () => {
+    await handleDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5000, 6),
+      },
+    });
+
+    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(10_000, 18));
+
+    await handleGlvDeposit(fixture, {
+      create: {
+        market: ethUsdMarket,
+        marketTokenAmount: expandDecimals(5_000, 18),
+        isMarketTokenDeposit: true,
+        initialLongToken: AddressZero,
+        initialShortToken: AddressZero,
+      },
+    });
+
+    expect(await getBalanceOf(ethUsdGlvAddress, user0.address)).eq(expandDecimals(5_000, 18));
+    expect(await getBalanceOf(ethUsdMarket.marketToken, ethUsdGlvAddress)).eq(expandDecimals(5_000, 18));
+  });
 
   describe("execute glv deposit, validations", () => {
     const minGlvTokensForFirstGlvDeposit = expandDecimals(1000, 18);
@@ -225,7 +248,7 @@ describe("Glv Deposits", () => {
 
     it.skip("EmptyGlvDeposit");
 
-    it.only("MinGlvTokens", async () => {
+    it("MinGlvTokens", async () => {
       // deposit 100 USDC, glv token price = $1, glv token amount = 100
       await handleGlvDeposit(fixture, {
         create: {
