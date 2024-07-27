@@ -74,6 +74,8 @@ library GlvShiftUtils {
             revert Errors.GlvShiftFromAndToMarketAreEqual(params.fromMarket);
         }
 
+        validateGlvShiftInterval(dataStore, params.glv);
+
         address wnt = TokenUtils.wnt(dataStore);
         uint256 wntAmount = glvVault.recordTransferIn(wnt);
 
@@ -140,7 +142,11 @@ library GlvShiftUtils {
 
         uint256 glvShiftLastExecutedAt = dataStore.getUint(Keys.glvShiftLastExecutedAtKey(glv));
         if (Chain.currentTimestamp() < glvShiftLastExecutedAt + glvShiftMinInterval) {
-            revert Errors.GlvShiftIntervalNotYetPassed(Chain.currentTimestamp(), glvShiftLastExecutedAt, glvShiftMinInterval);
+            revert Errors.GlvShiftIntervalNotYetPassed(
+                Chain.currentTimestamp(),
+                glvShiftLastExecutedAt,
+                glvShiftMinInterval
+            );
         }
     }
 
@@ -156,6 +162,7 @@ library GlvShiftUtils {
         }
 
         validateGlvShiftInterval(params.dataStore, glvShift.glv());
+        params.dataStore.setUint(Keys.glvShiftLastExecutedAtKey(glvShift.glv()), block.timestamp);
 
         GlvShiftStoreUtils.remove(params.dataStore, params.key);
 
@@ -299,10 +306,7 @@ library GlvShiftUtils {
             marketTokensUsd
         );
         if (effectivePriceImpactFactor > glvMaxShiftPriceImpactFactor) {
-            revert Errors.GlvShiftMaxPriceImpactExceeded(
-                effectivePriceImpactFactor,
-                glvMaxShiftPriceImpactFactor
-            );
+            revert Errors.GlvShiftMaxPriceImpactExceeded(effectivePriceImpactFactor, glvMaxShiftPriceImpactFactor);
         }
     }
 }

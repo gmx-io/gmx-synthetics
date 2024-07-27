@@ -1,5 +1,6 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { handleGlvDeposit, createGlvShift, handleGlvShift, getGlvShiftKeys, executeGlvShift } from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
@@ -99,6 +100,49 @@ describe("Glv Shifts", () => {
         errorsContract,
         "EmptyGlvShift"
       );
+    });
+
+    it("GlvShiftIntervalNotYetPassed", async () => {
+      await handleGlvDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(1, 18),
+          shortTokenAmount: expandDecimals(5000, 6),
+        },
+      });
+
+      const createGlvShiftParams = {
+        fromMarket: ethUsdMarket,
+        toMarket: solUsdMarket,
+        marketTokenAmount: expandDecimals(1000, 18),
+        minMarketTokens: expandDecimals(1000, 18),
+      };
+
+      expect(await dataStore.getUint(keys.glvShiftMinIntervalKey(ethUsdGlvAddress))).to.be.eq(0);
+      // can execute multiple shifts in a row
+      await handleGlvShift(fixture, { create: createGlvShiftParams });
+      await handleGlvShift(fixture, { create: createGlvShiftParams });
+
+      let lastGlvShiftExecutedAt = await time.latest();
+
+      await createGlvShift(fixture, createGlvShiftParams);
+      await dataStore.setUint(keys.glvShiftMinIntervalKey(ethUsdGlvAddress), 60);
+
+      await expect(createGlvShift(fixture, createGlvShiftParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "GlvShiftIntervalNotYetPassed"
+      );
+
+      await expect(executeGlvShift(fixture)).to.be.revertedWithCustomError(
+        errorsContract,
+        "GlvShiftIntervalNotYetPassed"
+      );
+
+      await time.setNextBlockTimestamp(lastGlvShiftExecutedAt + 60);
+      await executeGlvShift(fixture);
+
+      lastGlvShiftExecutedAt = await time.latest();
+      await time.setNextBlockTimestamp(lastGlvShiftExecutedAt + 60);
+      await createGlvShift(fixture, createGlvShiftParams);
     });
 
     it.skip("GlvShiftIntervalNotYetPassed");
