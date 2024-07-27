@@ -204,13 +204,6 @@ library GlvDepositUtils {
             revert Errors.EmptyGlvDeposit();
         }
 
-        if (params.oracle.minTimestamp() < glvDeposit.updatedAtTime()) {
-            revert Errors.OracleTimestampsAreSmallerThanRequired(
-                params.oracle.minTimestamp(),
-                glvDeposit.updatedAtTime()
-            );
-        }
-
         // should be called before any tokens are minted
         _validateFirstGlvDeposit(params, glvDeposit);
 
@@ -218,14 +211,6 @@ library GlvDepositUtils {
 
         cache.requestExpirationTime = params.dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
         cache.maxOracleTimestamp = params.oracle.maxTimestamp();
-
-        if (cache.maxOracleTimestamp > glvDeposit.updatedAtTime() + cache.requestExpirationTime) {
-            revert Errors.OracleTimestampsAreLargerThanRequestExpirationTime(
-                cache.maxOracleTimestamp,
-                glvDeposit.updatedAtTime(),
-                cache.requestExpirationTime
-            );
-        }
 
         // glvTokenPrice should be calculated before glv receives GM tokens
         (uint256 glvTokenPrice, , ) = GlvUtils.getGlvTokenPrice(
@@ -244,7 +229,7 @@ library GlvDepositUtils {
         );
 
         if (cache.mintAmount < glvDeposit.minGlvTokens()) {
-            revert Errors.MinMarketTokens(cache.mintAmount, glvDeposit.minGlvTokens());
+            revert Errors.MinGlvTokens(cache.mintAmount, glvDeposit.minGlvTokens());
         }
 
         GlvToken(payable(glvDeposit.glv())).mint(glvDeposit.receiver(), cache.mintAmount);
@@ -361,7 +346,7 @@ library GlvDepositUtils {
         if (glvDeposit.isMarketTokenDeposit()) {
             // user deposited GM tokens
             glvVault.transferOut(glvDeposit.market(), glvDeposit.glv(), glvDeposit.marketTokenAmount());
-            return glvDeposit.initialLongTokenAmount();
+            return glvDeposit.marketTokenAmount();
         }
 
         Deposit.Props memory deposit = Deposit.Props(

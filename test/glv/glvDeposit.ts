@@ -217,9 +217,34 @@ describe("Glv Deposits", () => {
     expect(await getBalanceOf(solUsdMarket.marketToken, ethUsdGlvAddress)).eq(expandDecimals(10_000, 18));
   });
 
+  it.skip("execute glv deposit, market tokens");
+
   describe("execute glv deposit, validations", () => {
     const minGlvTokensForFirstGlvDeposit = expandDecimals(1000, 18);
     const firstDepositReceiver = { address: "0x0000000000000000000000000000000000000001" };
+
+    it.skip("EmptyGlvDeposit");
+
+    it.only("MinGlvTokens", async () => {
+      // deposit 100 USDC, glv token price = $1, glv token amount = 100
+      await handleGlvDeposit(fixture, {
+        create: {
+          shortTokenAmount: expandDecimals(100, 6),
+          minGlvTokens: expandDecimals(101, 18),
+        },
+        execute: {
+          expectedCancellationReason: {
+            name: "MinGlvTokens",
+          },
+        },
+      });
+      await handleGlvDeposit(fixture, {
+        create: {
+          shortTokenAmount: expandDecimals(100, 6),
+          minGlvTokens: expandDecimals(100, 18),
+        },
+      });
+    });
 
     it("InvalidReceiverForFirstGlvDeposit", async () => {
       await dataStore.setUint(keys.minGlvTokensForFirstGlvDepositKey(ethUsdGlvAddress), minGlvTokensForFirstGlvDeposit);
