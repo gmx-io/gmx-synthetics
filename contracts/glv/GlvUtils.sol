@@ -114,16 +114,29 @@ library GlvUtils {
         address glv,
         bool maximize
     ) internal view returns (uint256) {
-        uint256 glvValue = GlvUtils.getGlvValue(dataStore, oracle, glv, maximize);
-        uint256 glvSupply = ERC20(glv).totalSupply();
+        uint256 value = GlvUtils.getGlvValue(dataStore, oracle, glv, maximize);
+        uint256 supply = ERC20(glv).totalSupply();
 
         // if the supply is zero then treat the market token price as 1 USD
-        if (glvSupply == 0) {
+        if (supply == 0) {
             return Precision.FLOAT_PRECISION;
         }
 
-        // return Precision.mulDiv(Precision.WEI_PRECISION, glvValue, glvSupply);
-        return glvValue / glvSupply;
+        return Precision.mulDiv(Precision.WEI_PRECISION, value, supply);
+    }
+
+    function usdToGlvTokenAmount(
+        uint256 usdValue,
+        uint256 glvTokenPrice
+    ) internal pure returns (uint256) {
+        return Precision.mulDiv(usdValue, Precision.WEI_PRECISION, glvTokenPrice);
+    }
+
+    function glvTokenAmountToUsd(
+        uint256 glvTokenAmount,
+        uint256 glvTokenPrice
+    ) internal pure returns (uint256) {
+        return Precision.mulDiv(glvTokenAmount, glvTokenPrice, Precision.WEI_PRECISION);
     }
 
     function validateMarket(DataStore dataStore, address glv, address market, bool shouldBeEnabled) public view {

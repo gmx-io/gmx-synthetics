@@ -345,10 +345,7 @@ library GlvDepositUtils {
             poolValueInfo.poolValue.toUint256(),
             ERC20(market.marketToken).totalSupply()
         );
-        return (
-            Precision.mulDiv(receivedMarketTokensUsd, Precision.WEI_PRECISION, glvTokenPrice),
-            receivedMarketTokensUsd
-        );
+        return (GlvUtils.usdToGlvTokenAmount(receivedMarketTokensUsd, glvTokenPrice), receivedMarketTokensUsd);
     }
 
     function _processMarketDeposit(

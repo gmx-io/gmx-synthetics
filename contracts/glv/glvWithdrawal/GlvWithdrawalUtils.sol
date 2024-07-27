@@ -200,11 +200,7 @@ library GlvWithdrawalUtils {
         ExecuteGlvWithdrawalParams memory params,
         GlvWithdrawal.Props memory glvWithdrawal
     ) private {
-        uint256 marketTokenAmount = _getMarketTokenAmount(
-            params.dataStore,
-            params.oracle,
-            glvWithdrawal
-        );
+        uint256 marketTokenAmount = _getMarketTokenAmount(params.dataStore, params.oracle, glvWithdrawal);
 
         Withdrawal.Props memory withdrawal = Withdrawal.Props(
             Withdrawal.Addresses({
@@ -264,7 +260,7 @@ library GlvWithdrawalUtils {
         GlvWithdrawal.Props memory glvWithdrawal
     ) internal view returns (uint256 marketTokenAmount) {
         uint256 glvTokenPrice = GlvUtils.getGlvTokenPrice(dataStore, oracle, glvWithdrawal.glv(), false);
-        uint256 glvTokenUsd = glvWithdrawal.glvTokenAmount() * glvTokenPrice;
+        uint256 glvTokenUsd = GlvUtils.glvTokenAmountToUsd(glvWithdrawal.glvTokenAmount(), glvTokenPrice);
 
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, glvWithdrawal.market());
         MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(
