@@ -255,11 +255,11 @@ library GlvDepositUtils {
             true // maximize
         );
 
-        GlvUtils.validateMarketTokenBalance(
+        GlvUtils.validateGlvMarketTokenBalance(
             params.dataStore,
             glvDeposit.glv(),
             cache.market,
-            cache.marketTokenPrice.toUint256()
+            cache.marketTokenPrice
         );
 
         GlvDepositEventUtils.emitGlvDepositExecuted(

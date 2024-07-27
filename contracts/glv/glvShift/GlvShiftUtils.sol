@@ -211,16 +211,15 @@ library GlvShiftUtils {
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
             false // maximize
         );
-        GlvUtils.validateMarketTokenBalance(
+        GlvUtils.validateGlvMarketTokenBalance(
             params.dataStore,
             glvShift.glv(),
             cache.toMarket,
-            cache.toMarketTokenPrice.toUint256()
+            cache.toMarketTokenPrice
         );
-        cache.receivedMarketTokensUsd = Precision.mulDiv(
+        cache.receivedMarketTokensUsd = MarketUtils.marketTokenAmountToUsd(
             cache.receivedMarketTokens,
-            cache.toMarketTokenPrice.toUint256(),
-            Precision.WEI_PRECISION
+            cache.toMarketTokenPrice
         );
 
         cache.fromMarket = MarketStoreUtils.get(params.dataStore, glvShift.fromMarket());
@@ -234,10 +233,9 @@ library GlvShiftUtils {
             false // maximize
         );
 
-        cache.marketTokensUsd = Precision.mulDiv(
+        cache.marketTokensUsd = MarketUtils.marketTokenAmountToUsd(
             glvShift.marketTokenAmount(),
-            cache.fromMarketTokenPrice.toUint256(),
-            Precision.WEI_PRECISION
+            cache.fromMarketTokenPrice
         );
 
         validatePriceImpact(params.dataStore, glvShift.glv(), cache.marketTokensUsd, cache.receivedMarketTokensUsd);

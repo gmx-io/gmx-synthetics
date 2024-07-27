@@ -63,7 +63,7 @@ library GlvUtils {
 
             uint256 balance = IERC20(marketAddress).balanceOf(glv);
 
-            cache.glvValue += Precision.mulDiv(balance, marketTokenPrice.toUint256(), Precision.WEI_PRECISION);
+            cache.glvValue += MarketUtils.marketTokenAmountToUsd(balance, marketTokenPrice);
         }
 
         return cache.glvValue;
@@ -102,7 +102,7 @@ library GlvUtils {
 
             uint256 balance = IERC20(marketAddress).balanceOf(glv);
 
-            cache.glvValue += Precision.mulDiv(balance, marketTokenPrice.toUint256(), Precision.WEI_PRECISION);
+            cache.glvValue += MarketUtils.marketTokenAmountToUsd(balance, marketTokenPrice);
         }
 
         return cache.glvValue;
@@ -122,6 +122,7 @@ library GlvUtils {
             return Precision.FLOAT_PRECISION;
         }
 
+        // return Precision.mulDiv(Precision.WEI_PRECISION, glvValue, glvSupply);
         return glvValue / glvSupply;
     }
 
@@ -147,11 +148,11 @@ library GlvUtils {
         return dataStore.getAddressCount(Keys.glvSupportedMarketListKey(glv));
     }
 
-    function validateMarketTokenBalance(
+    function validateGlvMarketTokenBalance(
         DataStore dataStore,
         address glv,
         Market.Props memory market,
-        uint256 marketTokenPrice
+        int256 marketTokenPrice
     ) internal view {
         uint256 maxMarketTokenBalanceUsd = dataStore.getUint(
             Keys.glvMaxMarketTokenBalanceUsdKey(glv, market.marketToken)
@@ -175,7 +176,7 @@ library GlvUtils {
         }
 
         if (maxMarketTokenBalanceUsd > 0) {
-            uint256 marketTokenBalanceUsd = Precision.mulDiv(marketTokenBalanceAmount, marketTokenPrice, Precision.WEI_PRECISION);
+            uint256 marketTokenBalanceUsd = MarketUtils.marketTokenAmountToUsd(marketTokenBalanceAmount, marketTokenPrice);
             if (marketTokenBalanceUsd > maxMarketTokenBalanceUsd) {
                 revert Errors.GlvMaxMarketTokenBalanceUsdExceeded(
                     glv,
