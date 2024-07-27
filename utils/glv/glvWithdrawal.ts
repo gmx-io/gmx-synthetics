@@ -67,7 +67,6 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
     market: market.marketToken,
     longTokenSwapPath,
     shortTokenSwapPath,
-    glvTokenAmount,
     minLongTokenAmount,
     minShortTokenAmount,
     shouldUnwrapNativeToken,

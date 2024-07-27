@@ -151,6 +151,8 @@ library GlvWithdrawalUtils {
 
         GlvToken(payable(glvWithdrawal.glv())).burn(address(params.glvVault), glvWithdrawal.glvTokenAmount());
 
+        params.glvVault.syncTokenBalance(glvWithdrawal.glv());
+
         GlvWithdrawalEventUtils.emitGlvWithdrawalExecuted(params.eventEmitter, params.key, glvWithdrawal.account());
 
         uint256 marketCount = GlvUtils.getMarketCount(params.dataStore, glvWithdrawal.glv());
