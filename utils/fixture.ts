@@ -56,6 +56,7 @@ export async function deployFixture() {
   const config = await hre.ethers.getContract("Config");
   const timelock = await hre.ethers.getContract("Timelock");
   const reader = await hre.ethers.getContract("Reader");
+  const glvReader = await hre.ethers.getContract("GlvReader");
   const roleStore = await hre.ethers.getContract("RoleStore");
   const dataStore = await hre.ethers.getContract("DataStore");
   const depositVault = await hre.ethers.getContract("DepositVault");
@@ -298,6 +299,7 @@ export async function deployFixture() {
       glvWithdrawalStoreUtils,
       glvShiftStoreUtils,
       glvStoreUtils,
+      glvReader,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };

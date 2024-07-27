@@ -19,7 +19,6 @@ import "./ReaderUtils.sol";
 import "./ReaderDepositUtils.sol";
 import "./ReaderWithdrawalUtils.sol";
 import "./ReaderPositionUtils.sol";
-import "./ReaderGlvUtils.sol";
 
 // @title Reader
 // @dev Library for read functions
@@ -104,7 +103,14 @@ contract Reader {
         MarketUtils.MarketPrices[] memory prices,
         address uiFeeReceiver
     ) external view returns (ReaderPositionUtils.PositionInfo[] memory) {
-        return ReaderPositionUtils.getAccountPositionInfoList(dataStore, referralStorage, positionKeys, prices, uiFeeReceiver);
+        return
+            ReaderPositionUtils.getAccountPositionInfoList(
+                dataStore,
+                referralStorage,
+                positionKeys,
+                prices,
+                uiFeeReceiver
+            );
     }
 
     function isPositionLiquidatable(
@@ -115,14 +121,15 @@ contract Reader {
         MarketUtils.MarketPrices memory prices,
         bool shouldValidateMinCollateralUsd
     ) public view returns (bool, string memory, PositionUtils.IsPositionLiquidatableInfo memory) {
-        return ReaderPositionUtils.isPositionLiquidatable(
-            dataStore,
-            referralStorage,
-            positionKey,
-            market,
-            prices,
-            shouldValidateMinCollateralUsd
-        );
+        return
+            ReaderPositionUtils.isPositionLiquidatable(
+                dataStore,
+                referralStorage,
+                positionKey,
+                market,
+                prices,
+                shouldValidateMinCollateralUsd
+            );
     }
 
     function getAccountOrders(
@@ -320,29 +327,5 @@ contract Reader {
                 uiFeeReceiver,
                 swapPricingType
             );
-    }
-
-    function getGlv(DataStore dataStore, address key) external view returns (Glv.Props memory) {
-        return ReaderGlvUtils.getGlv(dataStore, key);
-    }
-
-    function getGlvBySalt(DataStore dataStore, bytes32 salt) external view returns (Glv.Props memory) {
-        return ReaderGlvUtils.getGlvBySalt(dataStore, salt);
-    }
-
-    function getGlvs(DataStore dataStore, uint256 start, uint256 end) external view returns (Glv.Props[] memory) {
-        return ReaderGlvUtils.getGlvs(dataStore, start, end);
-    }
-
-    function getGlvDeposit(DataStore dataStore, bytes32 key) external view returns (GlvDeposit.Props memory) {
-        return ReaderGlvUtils.getGlvDeposit(dataStore, key);
-    }
-
-    function getGlvWithdrawal(DataStore dataStore, bytes32 key) external view returns (GlvWithdrawal.Props memory) {
-        return ReaderGlvUtils.getGlvWithdrawal(dataStore, key);
-    }
-
-    function getGlvShift(DataStore dataStore, bytes32 key) external view returns (GlvShift.Props memory) {
-        return ReaderGlvUtils.getGlvShift(dataStore, key);
     }
 }

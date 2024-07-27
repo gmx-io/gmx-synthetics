@@ -86,7 +86,7 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
 }
 
 export async function executeGlvWithdrawal(fixture, overrides: any = {}) {
-  const { reader, dataStore, glvHandler, wnt, usdc, sol } = fixture.contracts;
+  const { glvReader, dataStore, glvHandler, wnt, usdc, sol } = fixture.contracts;
   const { gasUsageLabel } = overrides;
   const dataStreamTokens = overrides.dataStreamTokens || [];
   const dataStreamData = overrides.dataStreamData || [];
@@ -105,7 +105,7 @@ export async function executeGlvWithdrawal(fixture, overrides: any = {}) {
       glvWithdrawalKey = glvWithdrawalKeys[0];
     }
     if (!oracleBlockNumber) {
-      const glvWithdrawal = await reader.getGlvWithdrawal(dataStore.address, glvWithdrawalKeys[0]);
+      const glvWithdrawal = await glvReader.getGlvWithdrawal(dataStore.address, glvWithdrawalKeys[0]);
       oracleBlockNumber = glvWithdrawal.numbers.updatedAtBlock;
     }
   }

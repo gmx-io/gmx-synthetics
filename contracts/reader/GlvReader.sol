@@ -7,22 +7,57 @@ import "../position/Position.sol";
 import "../market/Market.sol";
 import "../price/Price.sol";
 
+import "../position/Position.sol";
+import "../market/Market.sol";
+
 import "../glv/GlvUtils.sol";
 import "../glv/GlvStoreUtils.sol";
 import "../glv/glvDeposit/GlvDepositStoreUtils.sol";
 import "../glv/glvWithdrawal/GlvWithdrawalStoreUtils.sol";
 import "../glv/glvShift/GlvShiftStoreUtils.sol";
 
-library ReaderGlvUtils {
+// @title GlvReader
+contract GlvReader {
     function getGlvValue(
         DataStore dataStore,
+        address[] memory marketAddresses,
         Price.Props[] memory indexTokenPrices,
         Price.Props memory longTokenPrice,
         Price.Props memory shortTokenPrice,
         address glv,
         bool maximize
     ) external view returns (uint256) {
-        return GlvUtils.getGlvValue(dataStore, indexTokenPrices, longTokenPrice, shortTokenPrice, glv, maximize);
+        return
+            GlvUtils.getGlvValue(
+                dataStore,
+                marketAddresses,
+                indexTokenPrices,
+                longTokenPrice,
+                shortTokenPrice,
+                glv,
+                maximize
+            );
+    }
+
+    function getGlvTokenPrice(
+        DataStore dataStore,
+        address[] memory marketAddresses,
+        Price.Props[] memory indexTokenPrices,
+        Price.Props memory longTokenPrice,
+        Price.Props memory shortTokenPrice,
+        address glv,
+        bool maximize
+    ) external view returns (uint256, uint256, uint256) {
+        return
+            GlvUtils.getGlvTokenPrice(
+                dataStore,
+                marketAddresses,
+                indexTokenPrices,
+                longTokenPrice,
+                shortTokenPrice,
+                glv,
+                maximize
+            );
     }
 
     function getGlv(DataStore dataStore, address key) external view returns (Glv.Props memory) {

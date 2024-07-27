@@ -22,7 +22,7 @@ describe("Glv", () => {
     glvHandler,
     ethUsdGlvAddress,
     config,
-    reader;
+    glvReader;
 
   beforeEach(async () => {
     fixture = await deployFixture();
@@ -41,7 +41,7 @@ describe("Glv", () => {
       glvHandler,
       config,
       ethUsdGlvAddress,
-      reader,
+      glvReader,
     } = fixture.contracts);
   });
 
@@ -58,7 +58,7 @@ describe("Glv", () => {
       dataStore.address
     );
     await glvFactory.createGlv(wbtc.address, usdc.address, glvType, "Glv name", "Glv symbol");
-    const glv = await reader.getGlv(dataStore.address, glvAddress);
+    const glv = await glvReader.getGlv(dataStore.address, glvAddress);
 
     expect(glv.longToken).eq(wbtc.address);
     expect(glv.shortToken).eq(usdc.address);

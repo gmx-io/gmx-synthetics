@@ -9,7 +9,6 @@ const func = createDeployFunction({
     "PositionStoreUtils",
     "PositionUtils",
     "ReaderDepositUtils",
-    "ReaderGlvUtils",
     "ReaderPositionUtils",
     "ReaderPricingUtils",
     "ReaderUtils",

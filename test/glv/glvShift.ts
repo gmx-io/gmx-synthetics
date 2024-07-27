@@ -12,12 +12,12 @@ describe("Glv Shifts", () => {
   const { provider } = ethers;
 
   let fixture;
-  let reader, dataStore, ethUsdMarket, solUsdMarket, wnt, sol, usdc, ethUsdGlvAddress;
+  let glvReader, dataStore, ethUsdMarket, solUsdMarket, wnt, sol, usdc, ethUsdGlvAddress;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
-    ({ reader, dataStore, ethUsdMarket, solUsdMarket, wnt, sol, usdc, ethUsdGlvAddress } = fixture.contracts);
+    ({ glvReader, dataStore, ethUsdMarket, solUsdMarket, wnt, sol, usdc, ethUsdGlvAddress } = fixture.contracts);
   });
 
   it("create glv shift", async () => {
@@ -56,7 +56,7 @@ describe("Glv Shifts", () => {
     const block = await provider.getBlock("latest");
     const glvShiftKeys = await getGlvShiftKeys(dataStore, 0, 1);
     expect(glvShiftKeys.length).to.eq(1);
-    const glvShift = await reader.getGlvShift(dataStore.address, glvShiftKeys[0]);
+    const glvShift = await glvReader.getGlvShift(dataStore.address, glvShiftKeys[0]);
 
     expect(glvShift.addresses.glv).eq(ethUsdGlvAddress);
     expect(glvShift.addresses.fromMarket).eq(ethUsdMarket.marketToken);

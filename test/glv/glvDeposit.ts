@@ -17,13 +17,13 @@ describe("Glv Deposits", () => {
 
   let fixture;
   let user0, user1, user2;
-  let reader, dataStore, ethUsdMarket, btcUsdMarket, wnt, usdc, glvRouter, ethUsdGlvAddress;
+  let glvReader, dataStore, ethUsdMarket, btcUsdMarket, wnt, usdc, glvRouter, ethUsdGlvAddress;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ reader, dataStore, ethUsdMarket, btcUsdMarket, wnt, usdc, glvRouter, ethUsdGlvAddress } = fixture.contracts);
+    ({ glvReader, dataStore, ethUsdMarket, btcUsdMarket, wnt, usdc, glvRouter, ethUsdGlvAddress } = fixture.contracts);
   });
 
   describe("create glv deposit, validations", () => {
@@ -122,7 +122,7 @@ describe("Glv Deposits", () => {
 
     const block = await provider.getBlock("latest");
     const glvDepositKeys = await getGlvDepositKeys(dataStore, 0, 1);
-    const glvDeposit = await reader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
+    const glvDeposit = await glvReader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
 
     expect(glvDeposit.addresses.glv).eq(ethUsdGlvAddress);
     expect(glvDeposit.addresses.account).eq(user0.address);
@@ -167,7 +167,7 @@ describe("Glv Deposits", () => {
 
     const block = await provider.getBlock("latest");
     const glvDepositKeys = await getGlvDepositKeys(dataStore, 0, 1);
-    const glvDeposit = await reader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
+    const glvDeposit = await glvReader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
 
     expect(glvDeposit.addresses.glv).eq(ethUsdGlvAddress);
     expect(glvDeposit.addresses.account).eq(user0.address);
@@ -327,7 +327,7 @@ describe("Glv Deposits", () => {
 
     const block = await provider.getBlock("latest");
     const glvDepositKeys = await getGlvDepositKeys(dataStore, 0, 1);
-    let glvDeposit = await reader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
+    let glvDeposit = await glvReader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
 
     expect(glvDeposit.addresses.glv).eq(ethUsdGlvAddress);
     expect(glvDeposit.addresses.account).eq(user0.address);
@@ -372,7 +372,7 @@ describe("Glv Deposits", () => {
     expect(await wnt.balanceOf(user0.address)).eq(expandDecimals(10, 18));
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(10 * 5000, 6));
 
-    glvDeposit = await reader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
+    glvDeposit = await glvReader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
 
     expect(glvDeposit.addresses.glv).eq(AddressZero);
     expect(glvDeposit.addresses.account).eq(AddressZero);
@@ -429,7 +429,7 @@ describe("Glv Deposits", () => {
 
     const block = await provider.getBlock("latest");
     const glvDepositKeys = await getGlvDepositKeys(dataStore, 0, 1);
-    let glvDeposit = await reader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
+    let glvDeposit = await glvReader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
 
     expect(glvDeposit.addresses.glv).eq(ethUsdGlvAddress);
     expect(glvDeposit.addresses.account).eq(user0.address);
@@ -473,7 +473,7 @@ describe("Glv Deposits", () => {
 
     expect(await market.balanceOf(user0.address)).eq(expandDecimals(15, 18));
 
-    glvDeposit = await reader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
+    glvDeposit = await glvReader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
 
     expect(glvDeposit.addresses.glv).eq(AddressZero);
     expect(glvDeposit.addresses.account).eq(AddressZero);

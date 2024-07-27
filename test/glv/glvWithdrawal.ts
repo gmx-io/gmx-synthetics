@@ -23,13 +23,13 @@ describe("Glv Withdrawals", () => {
 
   let fixture;
   let user0, user1, user2;
-  let reader, dataStore, ethUsdMarket, ethUsdGlvAddress, btcUsdMarket, glvRouter;
+  let glvReader, dataStore, ethUsdMarket, ethUsdGlvAddress, btcUsdMarket, glvRouter;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ reader, dataStore, ethUsdMarket, ethUsdGlvAddress, btcUsdMarket, glvRouter } = fixture.contracts);
+    ({ glvReader, dataStore, ethUsdMarket, ethUsdGlvAddress, btcUsdMarket, glvRouter } = fixture.contracts);
   });
 
   describe("create glv withdrawal, validations", () => {
@@ -134,7 +134,7 @@ describe("Glv Withdrawals", () => {
 
     const block = await provider.getBlock("latest");
     const glvWithdrawalKeys = await getGlvWithdrawalKeys(dataStore, 0, 1);
-    const glvWithdrawal = await reader.getGlvWithdrawal(dataStore.address, glvWithdrawalKeys[0]);
+    const glvWithdrawal = await glvReader.getGlvWithdrawal(dataStore.address, glvWithdrawalKeys[0]);
 
     expect(glvWithdrawal.addresses.account).eq(user0.address);
     expect(glvWithdrawal.addresses.receiver).eq(user1.address);
@@ -182,7 +182,7 @@ describe("Glv Withdrawals", () => {
     const block = await provider.getBlock("latest");
     const glvWithdrawalKeys = await getGlvWithdrawalKeys(dataStore, 0, 1);
     const glvWithdrawalKey = glvWithdrawalKeys[0];
-    let glvWithdrawal = await reader.getGlvWithdrawal(dataStore.address, glvWithdrawalKey);
+    let glvWithdrawal = await glvReader.getGlvWithdrawal(dataStore.address, glvWithdrawalKey);
 
     expect(glvWithdrawal.addresses.account).eq(user0.address);
     expect(glvWithdrawal.addresses.receiver).eq(user1.address);
@@ -218,7 +218,7 @@ describe("Glv Withdrawals", () => {
 
     expect(await glvToken.balanceOf(user0.address)).eq(expandDecimals(1000, 18));
 
-    glvWithdrawal = await reader.getGlvWithdrawal(dataStore.address, glvWithdrawalKey);
+    glvWithdrawal = await glvReader.getGlvWithdrawal(dataStore.address, glvWithdrawalKey);
 
     expect(glvWithdrawal.addresses.account).eq(AddressZero);
     expect(glvWithdrawal.addresses.receiver).eq(AddressZero);
@@ -262,7 +262,7 @@ describe("Glv Withdrawals", () => {
     });
 
     const glvWithdrawalKeys = await getGlvWithdrawalKeys(dataStore, 0, 10);
-    const glvWithdrawal = await reader.getGlvWithdrawal(dataStore.address, glvWithdrawalKeys[0]);
+    const glvWithdrawal = await glvReader.getGlvWithdrawal(dataStore.address, glvWithdrawalKeys[0]);
 
     expect(glvWithdrawal.addresses.account).eq(user0.address);
     expect(await getGlvWithdrawalCount(dataStore)).eq(1);

@@ -7,11 +7,11 @@ import { getGlvShiftCount, getGlvShiftKeys } from "../../utils/glv/glvShift";
 
 describe("GlvShiftStoreUtils", () => {
   let fixture;
-  let roleStore, reader, glvShiftStoreUtils, glvShiftStoreUtilsTest;
+  let roleStore, glvReader, glvShiftStoreUtils, glvShiftStoreUtilsTest;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ roleStore, reader, glvShiftStoreUtils } = fixture.contracts);
+    ({ roleStore, glvReader, glvShiftStoreUtils } = fixture.contracts);
 
     glvShiftStoreUtilsTest = await deployContract("GlvShiftStoreUtilsTest", [], {
       libraries: {
@@ -27,7 +27,7 @@ describe("GlvShiftStoreUtils", () => {
       fixture,
       getEmptyItem: glvShiftStoreUtilsTest.getEmptyGlvShift,
       getItem: async (dataStore, key) => {
-        return await reader.getGlvShift(dataStore.address, key);
+        return await glvReader.getGlvShift(dataStore.address, key);
       },
       setItem: async (dataStore, key, sampleItem) => {
         return await glvShiftStoreUtilsTest.setGlvShift(dataStore.address, key, sampleItem);

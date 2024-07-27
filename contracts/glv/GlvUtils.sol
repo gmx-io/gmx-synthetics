@@ -71,6 +71,7 @@ library GlvUtils {
 
     function getGlvValue(
         DataStore dataStore,
+        address[] memory marketAddresses,
         Price.Props[] memory indexTokenPrices,
         Price.Props memory longTokenPrice,
         Price.Props memory shortTokenPrice,
@@ -81,7 +82,6 @@ library GlvUtils {
         cache.marketListKey = Keys.glvSupportedMarketListKey(glv);
         cache.marketCount = dataStore.getAddressCount(cache.marketListKey);
 
-        address[] memory marketAddresses = dataStore.getAddressValuesAt(cache.marketListKey, 0, cache.marketCount);
         for (uint256 i = 0; i < marketAddresses.length; i++) {
             address marketAddress = marketAddresses[i];
             cache.indexTokenPrice = indexTokenPrices[i];
@@ -113,29 +113,49 @@ library GlvUtils {
         Oracle oracle,
         address glv,
         bool maximize
-    ) internal view returns (uint256) {
+    ) internal view returns (uint256, uint256, uint256) {
         uint256 value = GlvUtils.getGlvValue(dataStore, oracle, glv, maximize);
         uint256 supply = ERC20(glv).totalSupply();
 
-        // if the supply is zero then treat the market token price as 1 USD
-        if (supply == 0) {
-            return Precision.FLOAT_PRECISION;
-        }
-
-        return Precision.mulDiv(Precision.WEI_PRECISION, value, supply);
+        return _getGlvTokenPrice(value, supply);
     }
 
-    function usdToGlvTokenAmount(
-        uint256 usdValue,
-        uint256 glvTokenPrice
-    ) internal pure returns (uint256) {
+    function getGlvTokenPrice(
+        DataStore dataStore,
+        address[] memory marketAddresses,
+        Price.Props[] memory indexTokenPrices,
+        Price.Props memory longTokenPrice,
+        Price.Props memory shortTokenPrice,
+        address glv,
+        bool maximize
+    ) internal view returns (uint256, uint256, uint256) {
+        uint256 value = GlvUtils.getGlvValue(
+            dataStore,
+            marketAddresses,
+            indexTokenPrices,
+            longTokenPrice,
+            shortTokenPrice,
+            glv,
+            maximize
+        );
+        uint256 supply = ERC20(glv).totalSupply();
+
+        return _getGlvTokenPrice(value, supply);
+    }
+
+    function _getGlvTokenPrice(uint256 value, uint256 supply) internal pure returns (uint256, uint256, uint256) {
+        // if the supply is zero then treat the market token price as 1 USD
+        if (supply == 0) {
+            return (Precision.FLOAT_PRECISION, value, supply);
+        }
+        return (Precision.mulDiv(Precision.WEI_PRECISION, value, supply), value, supply);
+    }
+
+    function usdToGlvTokenAmount(uint256 usdValue, uint256 glvTokenPrice) internal pure returns (uint256) {
         return Precision.mulDiv(usdValue, Precision.WEI_PRECISION, glvTokenPrice);
     }
 
-    function glvTokenAmountToUsd(
-        uint256 glvTokenAmount,
-        uint256 glvTokenPrice
-    ) internal pure returns (uint256) {
+    function glvTokenAmountToUsd(uint256 glvTokenAmount, uint256 glvTokenPrice) internal pure returns (uint256) {
         return Precision.mulDiv(glvTokenAmount, glvTokenPrice, Precision.WEI_PRECISION);
     }
 
@@ -189,7 +209,10 @@ library GlvUtils {
         }
 
         if (maxMarketTokenBalanceUsd > 0) {
-            uint256 marketTokenBalanceUsd = MarketUtils.marketTokenAmountToUsd(marketTokenBalanceAmount, marketTokenPrice);
+            uint256 marketTokenBalanceUsd = MarketUtils.marketTokenAmountToUsd(
+                marketTokenBalanceAmount,
+                marketTokenPrice
+            );
             if (marketTokenBalanceUsd > maxMarketTokenBalanceUsd) {
                 revert Errors.GlvMaxMarketTokenBalanceUsdExceeded(
                     glv,

@@ -228,7 +228,12 @@ library GlvDepositUtils {
         }
 
         // glvTokenPrice should be calculated before glv receives GM tokens
-        uint256 glvTokenPrice = GlvUtils.getGlvTokenPrice(params.dataStore, params.oracle, glvDeposit.glv(), true);
+        (uint256 glvTokenPrice, , ) = GlvUtils.getGlvTokenPrice(
+            params.dataStore,
+            params.oracle,
+            glvDeposit.glv(),
+            true
+        );
         cache.receivedMarketTokens = _processMarketDeposit(params, glvDeposit, params.glvVault);
         (cache.mintAmount, cache.receivedUsd) = _getMintAmount(
             params.dataStore,

@@ -259,7 +259,7 @@ library GlvWithdrawalUtils {
         Oracle oracle,
         GlvWithdrawal.Props memory glvWithdrawal
     ) internal view returns (uint256 marketTokenAmount) {
-        uint256 glvTokenPrice = GlvUtils.getGlvTokenPrice(dataStore, oracle, glvWithdrawal.glv(), false);
+        (uint256 glvTokenPrice, , ) = GlvUtils.getGlvTokenPrice(dataStore, oracle, glvWithdrawal.glv(), false);
         uint256 glvTokenUsd = GlvUtils.glvTokenAmountToUsd(glvWithdrawal.glvTokenAmount(), glvTokenPrice);
 
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, glvWithdrawal.market());

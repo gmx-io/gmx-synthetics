@@ -10,12 +10,12 @@ import { logGasUsage } from "../../utils/gas";
 describe("GlvStoreUtils", () => {
   let fixture;
   let accountList;
-  let dataStore, roleStore, reader, glvStoreUtils, glvStoreUtilsTest;
+  let dataStore, roleStore, glvReader, glvStoreUtils, glvStoreUtilsTest;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ accountList } = fixture);
-    ({ dataStore, roleStore, reader, glvStoreUtils } = fixture.contracts);
+    ({ dataStore, roleStore, glvReader, glvStoreUtils } = fixture.contracts);
 
     glvStoreUtilsTest = await deployContract("GlvStoreUtilsTest", [], {
       libraries: {
@@ -33,7 +33,7 @@ describe("GlvStoreUtils", () => {
 
     const getEmptyItem = glvStoreUtilsTest.getEmptyGlv;
     const getItem = async (dataStore, key) => {
-      return await reader.getGlv(dataStore.address, key);
+      return await glvReader.getGlv(dataStore.address, key);
     };
     const getItemCount = getGlvCount;
     const getItemKeys = getGlvKeys;

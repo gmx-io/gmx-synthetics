@@ -101,7 +101,7 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
 }
 
 export async function executeGlvDeposit(fixture, overrides: any = {}) {
-  const { reader, dataStore, glvHandler, wnt, usdc, sol } = fixture.contracts;
+  const { glvReader, dataStore, glvHandler, wnt, usdc, sol } = fixture.contracts;
   const { gasUsageLabel } = overrides;
   const tokens = overrides.tokens || [wnt.address, usdc.address, sol.address];
   const precisions = overrides.precisions || [8, 18, 8];
@@ -119,7 +119,7 @@ export async function executeGlvDeposit(fixture, overrides: any = {}) {
       glvDepositKey = glvDepositKeys[0];
     }
     if (!oracleBlockNumber) {
-      const glvDeposit = await reader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
+      const glvDeposit = await glvReader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
       oracleBlockNumber = glvDeposit.numbers.updatedAtBlock;
     }
   }

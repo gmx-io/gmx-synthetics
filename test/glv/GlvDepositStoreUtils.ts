@@ -12,11 +12,11 @@ import {
 
 describe("GlvDepositStoreUtils", () => {
   let fixture;
-  let roleStore, reader, glvDepositStoreUtils, glvDepositStoreUtilsTest;
+  let roleStore, glvReader, glvDepositStoreUtils, glvDepositStoreUtilsTest;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ roleStore, reader, glvDepositStoreUtils } = fixture.contracts);
+    ({ roleStore, glvReader, glvDepositStoreUtils } = fixture.contracts);
 
     glvDepositStoreUtilsTest = await deployContract("GlvDepositStoreUtilsTest", [], {
       libraries: {
@@ -32,7 +32,7 @@ describe("GlvDepositStoreUtils", () => {
       fixture,
       getEmptyItem: glvDepositStoreUtilsTest.getEmptyGlvDeposit,
       getItem: async (dataStore, key) => {
-        return await reader.getGlvDeposit(dataStore.address, key);
+        return await glvReader.getGlvDeposit(dataStore.address, key);
       },
       setItem: async (dataStore, key, sampleItem) => {
         return await glvDepositStoreUtilsTest.setGlvDeposit(dataStore.address, key, sampleItem);
