@@ -7,16 +7,24 @@ async function main() {
 
   const positionsCount = await dataStore.getBytes32Count(keys.POSITION_LIST);
 
+  let limit = positionsCount;
+  if (process.env.LIMIT) {
+    limit = Math.min(Number(process.env.LIMIT), positionsCount);
+  }
+  console.log("positionsCount: %s limit: %s", positionsCount, limit);
+
   const chunkLength = 100;
-  for (let from = 0; from < positionsCount; from += chunkLength) {
-    const to = Math.min(positionsCount, from + chunkLength);
+  for (let from = 0; from < limit; from += chunkLength) {
+    const to = Math.min(limit, from + chunkLength);
     console.log("updating positions chunk %s-%s", from, to);
 
     if (process.env.WRITE === "true") {
       const tx = await timestampInitializer.initializePositionTimestamps(from, to);
       console.log("tx sent %s", tx.hash);
     } else {
-      await timestampInitializer.callStatic.initializePositionTimestamps(from, to, {
+      await hre.ethers.provider.call({
+        to: timestampInitializer.address,
+        data: timestampInitializer.interface.encodeFunctionData("initializePositionTimestamps", [from, to]),
         from: "0xe47b36382dc50b90bcf6176ddb159c4b9333a7ab",
       });
     }

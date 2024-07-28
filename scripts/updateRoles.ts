@@ -14,11 +14,11 @@ async function getTimelock() {
   const network = hre.network.name;
 
   if (network === "arbitrum") {
-    return await ethers.getContractAt("Timelock", "0x62aB76Ed722C507f297f2B97920dCA04518fe274");
+    return await ethers.getContractAt("Timelock", "0x2ECB664e934aCd5DF1EE889Dbb2E7D6C1d7CE3Cb");
   }
 
   if (network === "avalanche") {
-    return await ethers.getContractAt("Timelock", "0x4Db91a1Fa4ba3c75510B2885d7d7da48E0209F38");
+    return await ethers.getContractAt("Timelock", "0x844D38f2c3875b8351feB4764718E1c64bD55c46");
   }
 
   throw new Error("Unsupported network");
@@ -77,39 +77,17 @@ async function main() {
   const timelock = await getTimelock();
 
   const rolesToAdd = {
-    arbitrum: [
-      {
-        role: "ROLE_ADMIN",
-        member: "0x2ecb664e934acd5df1ee889dbb2e7d6c1d7ce3cb",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x69c527fc77291722b52649e45c838e41be8bf5d5",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x9f48160edc3ad78f4ca0e3fdf54a75d8fb228452",
-      },
-    ],
-    avalanche: [
-      {
-        role: "ROLE_ADMIN",
-        member: "0x844d38f2c3875b8351feb4764718e1c64bd55c46",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x3be24aed1a4ccadebf2956e02c27a00726d4327d",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0xe5485a4fd6527911e9b82a75a1bfed6e47be2241",
-      },
-    ],
+    arbitrum: [],
+    avalanche: [],
   };
 
   const rolesToRemove = {
-    arbitrum: [],
-    avalanche: [],
+    arbitrum: [
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8",
+      },
+    ],
   };
 
   const multicallWriteParams = [];

@@ -11,6 +11,7 @@ import "hardhat-contract-sizer";
 import "solidity-coverage";
 import "hardhat-gas-reporter";
 import "hardhat-deploy";
+import "@nomicfoundation/hardhat-chai-matchers";
 
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";

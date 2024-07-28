@@ -213,6 +213,20 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             heartbeatDuration: (24 + 1) * 60 * 60,
           },
         },
+        PEPE: {
+          priceFeed: {
+            address: "0x02DEd5a7EDDA750E3Eb240b54437a54d57b74dBE",
+            decimals: 18,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
+        WIF: {
+          priceFeed: {
+            address: "0xF7Ee427318d2Bd0EEd3c63382D0d52Ad8A68f90D",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
         USDC: {
           priceFeed: {
             address: "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",
@@ -240,6 +254,14 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
         DAI: {
           priceFeed: {
             address: "0xc5C8E77B397E531B8EC06BFb0048328B30E9eCfB",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+            stablePrice: decimalToFloat(1),
+          },
+        },
+        USDe: {
+          priceFeed: {
+            address: "0x88AC7Bca36567525A866138F03a6F6844868E0Bc",
             decimals: 8,
             heartbeatDuration: (24 + 1) * 60 * 60,
             stablePrice: decimalToFloat(1),

@@ -59,6 +59,7 @@ export const EIP_4844_COMPETITION_1_ID = 2001;
 export const EIP_4844_COMPETITION_2_ID = 2002;
 export const ARBITRUM_STIP_B_LP_ID = 1004;
 export const ARBITRUM_STIP_B_TRADING_ID = 1005;
+export const ARBITRUM_STIP_B_TRADING_BONUS_ID = 1006;
 export const AVALANCHE_RUSH_LP_ID = 1100;
 export const AVALANCHE_RUSH_TRADING_ID = 1101;
 const TEST_DISTRIBUTION_TYPE_ID = 9876;
@@ -106,6 +107,10 @@ export const distributionTypes: Record<
     },
     [ARBITRUM_STIP_B_TRADING_ID]: {
       name: "STIP.b TRADING",
+      incentivesType: "trading",
+    },
+    [ARBITRUM_STIP_B_TRADING_BONUS_ID]: {
+      name: "STIP.b TRADING BONUS",
       incentivesType: "trading",
     },
   },

@@ -261,6 +261,7 @@ export async function deployFixture() {
       oracle,
       gmOracleProvider,
       chainlinkPriceFeedProvider,
+      chainlinkDataStreamProvider,
       marketUtils,
       marketStoreUtils,
       depositStoreUtils,
