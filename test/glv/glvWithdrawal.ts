@@ -1,5 +1,6 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 import {
   getGlvWithdrawalCount,
@@ -7,6 +8,7 @@ import {
   handleGlvDeposit,
   createGlvWithdrawal,
   handleGlvWithdrawal,
+  executeGlvWithdrawal,
 } from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
 import { contractAt } from "../../utils/deploy";
@@ -241,6 +243,30 @@ describe("Glv Withdrawals", () => {
       errorsContract,
       "EmptyGlvWithdrawal"
     );
+  });
+
+  describe("execute glv withdrawal, validations", () => {
+    it("OracleTimestampsAreLargerThanRequestExpirationTime", async () => {
+      await handleGlvDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(1, 18),
+          shortTokenAmount: expandDecimals(5_000, 6),
+        },
+      });
+
+      await createGlvWithdrawal(fixture, {
+        glvTokenAmount: expandDecimals(1, 18),
+      });
+      const block = await time.latestBlock();
+      await expect(
+        executeGlvWithdrawal(fixture, {
+          oracleBlockNumber: block - 1,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "OracleTimestampsAreSmallerThanRequired");
+      await executeGlvWithdrawal(fixture, {
+        oracleBlockNumber: block,
+      });
+    });
   });
 
   it.skip("cancel glv withdrawal, market tokens");

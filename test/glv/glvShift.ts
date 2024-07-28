@@ -251,9 +251,30 @@ describe("Glv Shifts", () => {
       });
     });
 
-    it.skip("OracleTimestampsAreLargerThanRequestExpirationTime");
+    it("OracleTimestampsAreLargerThanRequestExpirationTime", async () => {
+      await handleGlvDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(1, 18),
+          shortTokenAmount: expandDecimals(5000, 6),
+        },
+      });
+      await createGlvShift(fixture, {
+        fromMarket: ethUsdMarket,
+        toMarket: solUsdMarket,
+        marketTokenAmount: expandDecimals(1000, 18),
+      });
+      const block = await time.latestBlock();
+      await expect(
+        executeGlvShift(fixture, {
+          oracleBlockNumber: block - 1,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "OracleTimestampsAreSmallerThanRequired");
+      await executeGlvShift(fixture, {
+        oracleBlockNumber: block,
+      });
+    });
 
-    it.only("GlvShiftMaxPriceImpactExceeded", async () => {
+    it("GlvShiftMaxPriceImpactExceeded", async () => {
       // make first pool imbalanced
       await handleGlvDeposit(fixture, {
         create: {

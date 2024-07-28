@@ -1,7 +1,14 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 
-import { createGlvDeposit, getGlvDepositCount, getGlvDepositKeys, handleGlvDeposit } from "../../utils/glv";
+import {
+  createGlvDeposit,
+  executeGlvDeposit,
+  getGlvDepositCount,
+  getGlvDepositKeys,
+  handleGlvDeposit,
+} from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals } from "../../utils/math";
 import { getBalanceOf } from "../../utils/token";
@@ -278,7 +285,21 @@ describe("Glv Deposits", () => {
 
     it.skip("EmptyGlvDeposit");
 
-    it.skip("OracleTimestampsAreLargerThanRequestExpirationTime");
+    it("OracleTimestampsAreLargerThanRequestExpirationTime", async () => {
+      await createGlvDeposit(fixture, {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5000, 6),
+      });
+      const block = await time.latestBlock();
+      await expect(
+        executeGlvDeposit(fixture, {
+          oracleBlockNumber: block - 1,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "OracleTimestampsAreSmallerThanRequired");
+      await executeGlvDeposit(fixture, {
+        oracleBlockNumber: block,
+      });
+    });
 
     it("MinGlvTokens", async () => {
       // deposit 100 USDC, glv token price = $1, glv token amount = 100
