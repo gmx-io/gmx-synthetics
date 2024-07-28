@@ -297,9 +297,6 @@ library GlvShiftUtils {
         }
 
         uint256 glvMaxShiftPriceImpactFactor = dataStore.getUint(Keys.glvShiftMaxPriceImpactFactorKey(glv));
-        if (glvMaxShiftPriceImpactFactor == 0) {
-            return;
-        }
 
         uint256 effectivePriceImpactFactor = Precision.toFactor(
             marketTokensUsd - receivedMarketTokensUsd,

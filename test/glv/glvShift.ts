@@ -4,7 +4,7 @@ import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { handleGlvDeposit, createGlvShift, handleGlvShift, getGlvShiftKeys, executeGlvShift } from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
-import { expandDecimals } from "../../utils/math";
+import { decimalToFloat, expandDecimals } from "../../utils/math";
 import { getBalanceOf } from "../../utils/token";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
@@ -177,8 +177,6 @@ describe("Glv Shifts", () => {
       await createGlvShift(fixture, createGlvShiftParams);
     });
 
-    it.skip("GlvShiftIntervalNotYetPassed");
-
     it("GlvMaxMarketTokenBalanceUsdExceeded", async () => {
       await handleGlvDeposit(fixture, {
         create: {
@@ -253,7 +251,88 @@ describe("Glv Shifts", () => {
       });
     });
 
-    it.skip("GlvShiftMaxPriceImpactExceeded");
-    it.skip("bad min tokens");
+    it.skip("OracleTimestampsAreLargerThanRequestExpirationTime");
+
+    it.only("GlvShiftMaxPriceImpactExceeded", async () => {
+      // make first pool imbalanced
+      await handleGlvDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(2, 18),
+          shortTokenAmount: 0,
+        },
+      });
+      await handleGlvDeposit(fixture, {
+        create: {
+          market: solUsdMarket,
+          longTokenAmount: expandDecimals(2, 18),
+          shortTokenAmount: expandDecimals(10_000, 6),
+        },
+      });
+
+      // $1 for $1000 diff
+      await dataStore.setUint(keys.swapImpactFactorKey(solUsdMarket.marketToken, false), decimalToFloat(1, 6));
+      await dataStore.setUint(keys.swapImpactFactorKey(solUsdMarket.marketToken, true), decimalToFloat(5, 7));
+      await dataStore.setUint(keys.swapImpactExponentFactorKey(solUsdMarket.marketToken), decimalToFloat(2, 0));
+
+      await handleGlvShift(fixture, {
+        create: {
+          fromMarket: ethUsdMarket,
+          toMarket: solUsdMarket,
+          marketTokenAmount: expandDecimals(1000, 18),
+        },
+        execute: {
+          expectedCancellationReason: {
+            name: "GlvShiftMaxPriceImpactExceeded",
+
+            // 0.1%
+            args: [decimalToFloat(1, 3), 0],
+          },
+        },
+      });
+
+      await dataStore.setUint(keys.glvShiftMaxPriceImpactFactorKey(ethUsdGlvAddress), decimalToFloat(9, 4)); // 0.09%
+      await handleGlvShift(fixture, {
+        create: {
+          fromMarket: ethUsdMarket,
+          toMarket: solUsdMarket,
+          marketTokenAmount: expandDecimals(1000, 18),
+        },
+        execute: {
+          expectedCancellationReason: {
+            name: "GlvShiftMaxPriceImpactExceeded",
+
+            // 0.1%
+            args: [decimalToFloat(1, 3), decimalToFloat(9, 4)],
+          },
+        },
+      });
+
+      await dataStore.setUint(keys.glvShiftMaxPriceImpactFactorKey(ethUsdGlvAddress), decimalToFloat(1, 3)); // 0.09%
+      await handleGlvShift(fixture, {
+        create: {
+          fromMarket: ethUsdMarket,
+          toMarket: solUsdMarket,
+          marketTokenAmount: expandDecimals(1000, 18),
+        },
+      });
+
+      await handleGlvDeposit(fixture, {
+        create: {
+          market: solUsdMarket,
+          longTokenAmount: 0,
+          shortTokenAmount: expandDecimals(100_000, 6),
+        },
+      });
+
+      // positive impact is always allowed
+      await dataStore.setUint(keys.glvShiftMaxPriceImpactFactorKey(ethUsdGlvAddress), 0);
+      await handleGlvShift(fixture, {
+        create: {
+          fromMarket: ethUsdMarket,
+          toMarket: solUsdMarket,
+          marketTokenAmount: expandDecimals(1000, 18),
+        },
+      });
+    });
   });
 });

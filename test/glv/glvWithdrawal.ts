@@ -52,6 +52,8 @@ describe("Glv Withdrawals", () => {
       };
     });
 
+    it.skip("OracleTimestampsAreLargerThanRequestExpirationTime");
+
     it("EmptyAccount", async () => {
       await expect(
         createGlvWithdrawal(fixture, { ...params, account: { address: ethers.constants.AddressZero } })

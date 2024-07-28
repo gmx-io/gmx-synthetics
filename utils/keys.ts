@@ -670,3 +670,7 @@ export function glvMaxMarketTokenBalanceAmountKey(glv: string, market: string) {
 export function glvShiftMinIntervalKey(glv: string) {
   return hashData(["bytes32", "address"], [GLV_SHIFT_MIN_INTERVAL, glv]);
 }
+
+export function glvShiftMaxPriceImpactFactorKey(glv: string) {
+  return hashData(["bytes32", "address"], [GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR, glv]);
+}

@@ -278,6 +278,8 @@ describe("Glv Deposits", () => {
 
     it.skip("EmptyGlvDeposit");
 
+    it.skip("OracleTimestampsAreLargerThanRequestExpirationTime");
+
     it("MinGlvTokens", async () => {
       // deposit 100 USDC, glv token price = $1, glv token amount = 100
       await handleGlvDeposit(fixture, {
