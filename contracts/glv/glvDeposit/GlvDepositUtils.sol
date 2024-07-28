@@ -63,8 +63,6 @@ library GlvDepositUtils {
     struct ExecuteGlvDepositCache {
         Market.Props market;
         int256 marketTokenPrice;
-        uint256 requestExpirationTime;
-        uint256 maxOracleTimestamp;
         uint256 receivedMarketTokens;
         uint256 mintAmount;
         uint256 receivedUsd;
@@ -210,9 +208,6 @@ library GlvDepositUtils {
         _validateFirstGlvDeposit(params, glvDeposit);
 
         ExecuteGlvDepositCache memory cache;
-
-        cache.requestExpirationTime = params.dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
-        cache.maxOracleTimestamp = params.oracle.maxTimestamp();
 
         // glvTokenPrice should be calculated before glv receives GM tokens
         (uint256 glvTokenPrice, , ) = GlvUtils.getGlvTokenPrice(
