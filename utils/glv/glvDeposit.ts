@@ -181,18 +181,22 @@ export function expectEmptyGlvDeposit(glvDeposit: any) {
   expect(glvDeposit.addresses.account).eq(AddressZero);
   expect(glvDeposit.addresses.receiver).eq(AddressZero);
   expect(glvDeposit.addresses.callbackContract).eq(AddressZero);
+  expect(glvDeposit.addresses.uiFeeReceiver).eq(AddressZero);
   expect(glvDeposit.addresses.market).eq(AddressZero);
   expect(glvDeposit.addresses.initialLongToken).eq(AddressZero);
   expect(glvDeposit.addresses.initialShortToken).eq(AddressZero);
   expect(glvDeposit.addresses.longTokenSwapPath).deep.eq([]);
   expect(glvDeposit.addresses.shortTokenSwapPath).deep.eq([]);
+
   expect(glvDeposit.numbers.marketTokenAmount).eq(0);
   expect(glvDeposit.numbers.initialLongTokenAmount).eq(0);
   expect(glvDeposit.numbers.initialShortTokenAmount).eq(0);
   expect(glvDeposit.numbers.minGlvTokens).eq(0);
   expect(glvDeposit.numbers.updatedAtBlock).eq(0);
+  expect(glvDeposit.numbers.updatedAtTime).eq(0);
   expect(glvDeposit.numbers.executionFee).eq(0);
   expect(glvDeposit.numbers.callbackGasLimit).eq(0);
+
   expect(glvDeposit.flags.shouldUnwrapNativeToken).eq(false);
   expect(glvDeposit.flags.isMarketTokenDeposit).eq(false);
 }

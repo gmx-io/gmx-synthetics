@@ -8,6 +8,9 @@ import { executeWithOracleParams } from "../exchange";
 import { parseLogs } from "../event";
 import { getCancellationReason } from "../error";
 import { expectCancellationReason } from "../validation";
+import { expect } from "chai";
+
+const { AddressZero } = ethers.constants;
 
 export function getGlvWithdrawalKeys(dataStore, start, end) {
   return dataStore.getBytes32ValuesAt(keys.GLV_WITHDRAWAL_LIST, start, end);
@@ -156,4 +159,25 @@ export async function handleGlvWithdrawal(fixture, overrides: any = {}) {
 
   const executeResult = await executeGlvWithdrawal(fixture, { ...createOverridesCopy, ...overrides.execute });
   return { createResult, executeResult };
+}
+
+export function expectEmptyGlvWithdrawal(glvWithdrawal: any) {
+  expect(glvWithdrawal.addresses.account).eq(AddressZero);
+  expect(glvWithdrawal.addresses.receiver).eq(AddressZero);
+  expect(glvWithdrawal.addresses.callbackContract).eq(AddressZero);
+  expect(glvWithdrawal.addresses.market).eq(AddressZero);
+  expect(glvWithdrawal.addresses.glv).eq(AddressZero);
+  expect(glvWithdrawal.addresses.uiFeeReceiver).eq(AddressZero);
+  expect(glvWithdrawal.addresses.longTokenSwapPath).deep.eq([]);
+  expect(glvWithdrawal.addresses.shortTokenSwapPath).deep.eq([]);
+
+  expect(glvWithdrawal.numbers.glvTokenAmount).eq(0);
+  expect(glvWithdrawal.numbers.minLongTokenAmount).eq(0);
+  expect(glvWithdrawal.numbers.minShortTokenAmount).eq(0);
+  expect(glvWithdrawal.numbers.updatedAtBlock).eq(0);
+  expect(glvWithdrawal.numbers.updatedAtTime).eq(0);
+  expect(glvWithdrawal.numbers.executionFee).eq(0);
+  expect(glvWithdrawal.numbers.callbackGasLimit).eq(0);
+
+  expect(glvWithdrawal.flags.shouldUnwrapNativeToken).eq(false);
 }
