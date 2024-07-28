@@ -203,7 +203,7 @@ library GlvWithdrawalUtils {
                 executionFee: 0,
                 callbackGasLimit: 0
             }),
-            Withdrawal.Flags({shouldUnwrapNativeToken: false})
+            Withdrawal.Flags({shouldUnwrapNativeToken: glvWithdrawal.shouldUnwrapNativeToken()})
         );
 
         bytes32 withdrawalKey = NonceUtils.getNextKey(params.dataStore);
