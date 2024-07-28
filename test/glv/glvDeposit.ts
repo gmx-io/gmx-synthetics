@@ -57,6 +57,8 @@ describe("Glv Deposits", () => {
       };
     });
 
+    it.skip("InsufficientExecutionFee");
+
     it("EmptyAccount", async () => {
       await expect(
         createGlvDeposit(fixture, { ...params, account: { address: ethers.constants.AddressZero } })

@@ -26,12 +26,13 @@ library GlvWithdrawalEventUtils {
     ) external {
         EventUtils.EventLogData memory eventData;
 
-        eventData.addressItems.initItems(5);
+        eventData.addressItems.initItems(6);
         eventData.addressItems.setItem(0, "account", glvWithdrawal.account());
         eventData.addressItems.setItem(1, "receiver", glvWithdrawal.receiver());
         eventData.addressItems.setItem(2, "callbackContract", glvWithdrawal.callbackContract());
         eventData.addressItems.setItem(3, "market", glvWithdrawal.market());
-        eventData.addressItems.setItem(4, "glv", glvWithdrawal.market());
+        eventData.addressItems.setItem(4, "glv", glvWithdrawal.glv());
+        eventData.addressItems.setItem(5, "uiFeeReceiver", glvWithdrawal.uiFeeReceiver());
 
         eventData.addressItems.initArrayItems(2);
         eventData.addressItems.setItem(0, "longTokenSwapPath", glvWithdrawal.longTokenSwapPath());

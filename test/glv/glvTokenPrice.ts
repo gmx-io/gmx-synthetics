@@ -3,11 +3,12 @@ import { ethers } from "hardhat";
 
 import { handleGlvDeposit, handleGlvShift, handleGlvWithdrawal } from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
-import { expandDecimals } from "../../utils/math";
+import { decimalToFloat, expandDecimals } from "../../utils/math";
 import { getBalanceOf } from "../../utils/token";
 import { BigNumberish } from "ethers";
 import { handleDeposit } from "../../utils/deposit";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import * as keys from "../../utils/keys";
 
 function getPriceProp(price: BigNumberish, decimals: number) {
   return {
@@ -29,6 +30,8 @@ describe("Glv Token Price", () => {
   });
 
   it("glv token price", async () => {
+    await dataStore.setUint(keys.glvShiftMaxPriceImpactFactorKey(ethUsdGlvAddress), decimalToFloat(1, 3));
+
     async function expectGlvTokenPrice({
       price: expectedPrice,
       value: expectedValue,

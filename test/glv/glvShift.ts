@@ -68,6 +68,15 @@ describe("Glv Shifts", () => {
     expect(glvShift.numbers.executionFee).eq("500");
   });
 
+  describe("create glv shift, validations", () => {
+    it.skip("InsufficientExecutionFee");
+    it.skip("EmptyGlv");
+    it.skip("GlvUnsupportedMarket");
+    it.skip("GlvDisabledMarket");
+    it.skip("GlvShiftFromAndToMarketAreEqual");
+    it.skip("GlvInsufficientMarketTokenBalance");
+  });
+
   it("execute glv shift", async () => {
     expect(await getBalanceOf(ethUsdMarket.marketToken, ethUsdGlvAddress)).to.be.eq(0);
 

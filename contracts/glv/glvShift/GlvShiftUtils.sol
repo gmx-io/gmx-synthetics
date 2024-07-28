@@ -95,17 +95,6 @@ library GlvShiftUtils {
 
         params.executionFee = wntAmount;
 
-        Market.Props memory fromMarket = MarketUtils.getEnabledMarket(dataStore, params.fromMarket);
-        Market.Props memory toMarket = MarketUtils.getEnabledMarket(dataStore, params.toMarket);
-
-        if (fromMarket.longToken != toMarket.longToken) {
-            revert Errors.LongTokensAreNotEqual(fromMarket.longToken, toMarket.longToken);
-        }
-
-        if (fromMarket.shortToken != toMarket.shortToken) {
-            revert Errors.ShortTokensAreNotEqual(fromMarket.shortToken, toMarket.shortToken);
-        }
-
         MarketUtils.validateEnabledMarket(dataStore, params.fromMarket);
         MarketUtils.validateEnabledMarket(dataStore, params.toMarket);
 

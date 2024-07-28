@@ -21,9 +21,10 @@ library GlvShiftEventUtils {
     function emitGlvShiftCreated(EventEmitter eventEmitter, bytes32 key, GlvShift.Props memory glvShift) external {
         EventUtils.EventLogData memory eventData;
 
-        eventData.addressItems.initItems(2);
+        eventData.addressItems.initItems(3);
         eventData.addressItems.setItem(0, "fromMarket", glvShift.fromMarket());
         eventData.addressItems.setItem(1, "toMarket", glvShift.toMarket());
+        eventData.addressItems.setItem(2, "glv", glvShift.glv());
 
         eventData.uintItems.initItems(4);
         eventData.uintItems.setItem(0, "marketTokenAmount", glvShift.marketTokenAmount());
