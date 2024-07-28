@@ -210,6 +210,7 @@ library GlvDepositUtils {
         ExecuteGlvDepositCache memory cache;
 
         // glvTokenPrice should be calculated before glv receives GM tokens
+        // use maximize=true to "sell" glv token at max price
         (uint256 glvTokenPrice, , ) = GlvUtils.getGlvTokenPrice(
             params.dataStore,
             params.oracle,
@@ -333,7 +334,10 @@ library GlvDepositUtils {
             oracle.getPrimaryPrice(market.longToken),
             oracle.getPrimaryPrice(market.shortToken),
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-            false // maximize
+
+            // maximize=true is used for glv token price
+            // use the same for gm token price to avoid applying double spread
+            true // maximize
         );
         uint256 receivedMarketTokensUsd = MarketUtils.marketTokenAmountToUsd(
             receivedMarketTokens,
