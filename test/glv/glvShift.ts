@@ -73,7 +73,6 @@ describe("Glv Shifts", () => {
     it.skip("EmptyGlv");
     it.skip("GlvUnsupportedMarket");
     it.skip("GlvDisabledMarket");
-    it.skip("GlvShiftFromAndToMarketAreEqual");
     it.skip("GlvInsufficientMarketTokenBalance");
   });
 

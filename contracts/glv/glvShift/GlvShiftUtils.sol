@@ -70,10 +70,6 @@ library GlvShiftUtils {
         GlvUtils.validateMarket(dataStore, params.glv, params.fromMarket, false);
         GlvUtils.validateMarket(dataStore, params.glv, params.toMarket, true);
 
-        if (params.fromMarket == params.toMarket) {
-            revert Errors.GlvShiftFromAndToMarketAreEqual(params.fromMarket);
-        }
-
         validateGlvShiftInterval(dataStore, params.glv);
 
         address wnt = TokenUtils.wnt(dataStore);
