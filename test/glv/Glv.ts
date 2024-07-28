@@ -6,6 +6,7 @@ import { deployFixture } from "../../utils/fixture";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import { encodeData } from "../../utils/hash";
+import { contractAt } from "../../utils/deploy";
 
 describe("Glv", () => {
   let fixture;
@@ -63,6 +64,10 @@ describe("Glv", () => {
     expect(glv.longToken).eq(wbtc.address);
     expect(glv.shortToken).eq(usdc.address);
     expect(glv.glvToken).eq(glvAddress);
+
+    const glvToken = await contractAt("MarketToken", glvAddress);
+    expect(await glvToken.name()).to.be.eq("Glv name");
+    expect(await glvToken.symbol()).to.be.eq("Glv symbol");
   });
 
   it("adds markets to Glv", async () => {
