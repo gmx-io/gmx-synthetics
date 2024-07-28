@@ -148,6 +148,14 @@ library GlvWithdrawalUtils {
 
         GlvWithdrawalEventUtils.emitGlvWithdrawalExecuted(params.eventEmitter, params.key, glvWithdrawal.account());
 
+        uint256 glvValue = GlvUtils.getGlvValue(params.dataStore, params.oracle, glvWithdrawal.glv(), true);
+        GlvEventUtils.emitGlvValueUpdated(
+            params.eventEmitter,
+            glvWithdrawal.glv(),
+            glvValue,
+            GlvToken(payable(glvWithdrawal.glv())).totalSupply()
+        );
+
         uint256 marketCount = GlvUtils.getGlvMarketCount(params.dataStore, glvWithdrawal.glv());
         uint256 oraclePriceCount = GasUtils.estimateGlvWithdrawalOraclePriceCount(
             marketCount,

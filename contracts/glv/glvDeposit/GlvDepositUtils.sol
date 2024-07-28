@@ -15,6 +15,7 @@ import "../../event/EventUtils.sol";
 import "../GlvVault.sol";
 import "../GlvUtils.sol";
 import "../GlvToken.sol";
+import "../GlvEventUtils.sol";
 import "./GlvDeposit.sol";
 import "./GlvDepositEventUtils.sol";
 import "./GlvDepositStoreUtils.sol";
@@ -69,6 +70,7 @@ library GlvDepositUtils {
         uint256 receivedUsd;
         uint256 marketCount;
         uint256 oraclePriceCount;
+        uint256 glvValue;
     }
 
     address public constant RECEIVER_FOR_FIRST_GLV_DEPOSIT = address(1);
@@ -257,6 +259,14 @@ library GlvDepositUtils {
             params.key,
             glvDeposit.account(),
             cache.mintAmount
+        );
+
+        cache.glvValue = GlvUtils.getGlvValue(params.dataStore, params.oracle, glvDeposit.glv(), true);
+        GlvEventUtils.emitGlvValueUpdated(
+            params.eventEmitter,
+            glvDeposit.glv(),
+            cache.glvValue,
+            GlvToken(payable(glvDeposit.glv())).totalSupply()
         );
 
         cache.marketCount = GlvUtils.getGlvMarketCount(params.dataStore, glvDeposit.glv());
