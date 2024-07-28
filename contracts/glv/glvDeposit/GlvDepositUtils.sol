@@ -29,10 +29,10 @@ library GlvDepositUtils {
 
     struct CreateGlvDepositParams {
         address glv;
+        address market;
         address receiver;
         address callbackContract;
         address uiFeeReceiver;
-        address market;
         address initialLongToken;
         address initialShortToken;
         address[] longTokenSwapPath;

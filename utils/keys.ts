@@ -217,6 +217,7 @@ export const GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR = hashString("GLV_SHIFT_MAX_PRICE
 export const GLV_MAX_MARKET_TOKEN_BALANCE_USD = hashString("GLV_MAX_MARKET_TOKEN_BALANCE_USD");
 export const GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT = hashString("GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT");
 export const GLV_SHIFT_MIN_INTERVAL = hashString("GLV_SHIFT_MIN_INTERVAL");
+export const IS_GLV_MARKET_DISABLED = hashString("IS_GLV_MARKET_DISABLED");
 
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
@@ -673,4 +674,8 @@ export function glvShiftMinIntervalKey(glv: string) {
 
 export function glvShiftMaxPriceImpactFactorKey(glv: string) {
   return hashData(["bytes32", "address"], [GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR, glv]);
+}
+
+export function isGlvMarketDisabledKey(glv: string, market: string) {
+  return hashData(["bytes32", "address", "address"], [IS_GLV_MARKET_DISABLED, glv, market]);
 }

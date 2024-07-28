@@ -25,14 +25,25 @@ describe("Glv Deposits", () => {
 
   let fixture;
   let user0, user1, user2;
-  let glvReader, dataStore, ethUsdMarket, btcUsdMarket, solUsdMarket, wnt, usdc, sol, glvRouter, ethUsdGlvAddress;
+  let glvReader, dataStore, ethUsdMarket, btcUsdMarket, solUsdMarket, wbtc, wnt, usdc, sol, glvRouter, ethUsdGlvAddress;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ glvReader, dataStore, ethUsdMarket, solUsdMarket, btcUsdMarket, wnt, usdc, sol, glvRouter, ethUsdGlvAddress } =
-      fixture.contracts);
+    ({
+      glvReader,
+      dataStore,
+      ethUsdMarket,
+      solUsdMarket,
+      btcUsdMarket,
+      wbtc,
+      wnt,
+      usdc,
+      sol,
+      glvRouter,
+      ethUsdGlvAddress,
+    } = fixture.contracts);
   });
 
   describe("create glv deposit, validations", () => {
@@ -77,7 +88,13 @@ describe("Glv Deposits", () => {
         .withArgs(ethUsdGlvAddress, btcUsdMarket.marketToken);
     });
 
-    // TODO market is not enabled in GLV
+    it("GlvDisabledMarket", async () => {
+      await dataStore.setBool(keys.isGlvMarketDisabledKey(ethUsdGlvAddress, ethUsdMarket.marketToken), true);
+      await expect(createGlvDeposit(fixture, params))
+        .to.be.revertedWithCustomError(errorsContract, "GlvDisabledMarket")
+        .withArgs(ethUsdGlvAddress, ethUsdMarket.marketToken);
+    });
+
     // TODO market is not enabled globally
     // TODO validate swaps
 
@@ -227,6 +244,37 @@ describe("Glv Deposits", () => {
     expect(await getBalanceOf(solUsdMarket.marketToken, ethUsdGlvAddress)).eq(expandDecimals(10_000, 18));
   });
 
+  it("execute glv deposit with swaps", async () => {
+    await handleDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(100, 18),
+        shortTokenAmount: expandDecimals(500_000, 6),
+      },
+    });
+
+    await createGlvDeposit(fixture, {
+      initialLongToken: usdc.address,
+      longTokenAmount: expandDecimals(50_000, 6),
+      longTokenSwapPath: [ethUsdMarket.marketToken],
+
+      initialShortToken: wnt.address,
+      shortTokenAmount: expandDecimals(10, 18),
+      shortTokenSwapPath: [ethUsdMarket.marketToken],
+    });
+
+    const glvDepositKeys = await getGlvDepositKeys(dataStore, 0, 1);
+    const glvDeposit = await glvReader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
+
+    expect(glvDeposit.addresses.initialLongToken).eq(usdc.address);
+    expect(glvDeposit.addresses.initialShortToken).eq(wnt.address);
+    expect(glvDeposit.addresses.longTokenSwapPath).deep.eq([ethUsdMarket.marketToken]);
+    expect(glvDeposit.addresses.shortTokenSwapPath).deep.eq([ethUsdMarket.marketToken]);
+    expect(glvDeposit.numbers.initialLongTokenAmount).eq(expandDecimals(50_000, 6));
+    expect(glvDeposit.numbers.initialShortTokenAmount).eq(expandDecimals(10, 18));
+
+    await executeGlvDeposit(fixture);
+  });
+
   it("execute glv deposit, market tokens", async () => {
     await handleDeposit(fixture, {
       create: {
@@ -286,6 +334,30 @@ describe("Glv Deposits", () => {
     const firstDepositReceiver = { address: "0x0000000000000000000000000000000000000001" };
 
     it.skip("EmptyGlvDeposit");
+
+    it("invalid long token", async () => {
+      await handleGlvDeposit(fixture, {
+        create: {
+          initialLongToken: wbtc.address,
+          longTokenAmount: expandDecimals(1, 8),
+        },
+        execute: {
+          expectedCancellationReason: "InvalidSwapOutputToken",
+        },
+      });
+    });
+
+    it("invalid short token", async () => {
+      await handleGlvDeposit(fixture, {
+        create: {
+          initialShortToken: wbtc.address,
+          shortTokenAmount: expandDecimals(1, 8),
+        },
+        execute: {
+          expectedCancellationReason: "InvalidSwapOutputToken",
+        },
+      });
+    });
 
     it("OracleTimestampsAreLargerThanRequestExpirationTime", async () => {
       await createGlvDeposit(fixture, {
