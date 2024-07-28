@@ -246,6 +246,8 @@ describe("Glv Withdrawals", () => {
   });
 
   describe("execute glv withdrawal, validations", () => {
+    it.skip("EmptyGlvWithdrawal");
+
     it("OracleTimestampsAreLargerThanRequestExpirationTime", async () => {
       await handleGlvDeposit(fixture, {
         create: {

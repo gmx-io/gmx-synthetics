@@ -467,8 +467,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.DEPOSIT_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.WITHDRAWAL_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.GLV_DEPOSIT_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.GLV_SHIFT_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.GLV_WITHDRAWAL_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.GLV_SHIFT_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.GLV_PER_MARKET_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.SHIFT_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.SINGLE_SWAP_GAS_LIMIT] = true;
@@ -534,6 +534,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT] = true;
         allowedBaseKeys[Keys.GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR] = true;
         allowedBaseKeys[Keys.GLV_SHIFT_MIN_INTERVAL] = true;
+        allowedBaseKeys[Keys.MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {
