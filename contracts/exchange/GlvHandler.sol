@@ -279,6 +279,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
             dataStore: dataStore,
             eventEmitter: eventEmitter,
             shiftVault: shiftVault,
+            glvVault: glvVault,
             oracle: oracle,
             startingGas: startingGas,
             keeper: keeper

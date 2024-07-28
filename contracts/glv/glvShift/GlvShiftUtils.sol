@@ -45,6 +45,7 @@ library GlvShiftUtils {
         EventEmitter eventEmitter;
         Oracle oracle;
         ShiftVault shiftVault;
+        GlvVault glvVault;
         bytes32 key;
         address keeper;
         uint256 startingGas;
@@ -52,12 +53,14 @@ library GlvShiftUtils {
 
     struct ExecuteGlvShiftCache {
         Market.Props fromMarket;
+        Market.Props toMarket;
+        Shift.Props shift;
         int256 fromMarketTokenPrice;
         uint256 marketTokensUsd;
-        Market.Props toMarket;
         int256 toMarketTokenPrice;
         uint256 receivedMarketTokens;
         uint256 receivedMarketTokensUsd;
+        bytes32 shiftKey;
     }
 
     function createGlvShift(
@@ -157,12 +160,13 @@ library GlvShiftUtils {
             glvShift.marketTokenAmount()
         );
 
-        Shift.Props memory shift = Shift.Props(
+        ExecuteGlvShiftCache memory cache;
+        cache.shift = Shift.Props(
             Shift.Addresses({
                 account: glvShift.glv(),
                 receiver: glvShift.glv(),
                 callbackContract: address(0),
-                uiFeeReceiver: address(this),
+                uiFeeReceiver: address(0),
                 fromMarket: glvShift.fromMarket(),
                 toMarket: glvShift.toMarket()
             }),
@@ -175,22 +179,21 @@ library GlvShiftUtils {
             })
         );
 
-        bytes32 shiftKey = NonceUtils.getNextKey(params.dataStore);
-        params.dataStore.addBytes32(Keys.SHIFT_LIST, shiftKey);
-        ShiftEventUtils.emitShiftCreated(params.eventEmitter, shiftKey, shift);
+        cache.shiftKey = NonceUtils.getNextKey(params.dataStore);
+        params.dataStore.addBytes32(Keys.SHIFT_LIST, cache.shiftKey);
+        ShiftEventUtils.emitShiftCreated(params.eventEmitter, cache.shiftKey, cache.shift);
 
         ShiftUtils.ExecuteShiftParams memory executeShiftParams = ShiftUtils.ExecuteShiftParams({
             dataStore: params.dataStore,
             eventEmitter: params.eventEmitter,
             shiftVault: params.shiftVault,
             oracle: params.oracle,
-            key: shiftKey,
+            key: cache.shiftKey,
             keeper: params.keeper,
             startingGas: params.startingGas
         });
 
-        ExecuteGlvShiftCache memory cache;
-        cache.receivedMarketTokens = ShiftUtils.executeShift(executeShiftParams, shift);
+        cache.receivedMarketTokens = ShiftUtils.executeShift(executeShiftParams, cache.shift);
 
         cache.toMarket = MarketStoreUtils.get(params.dataStore, glvShift.toMarket());
 
@@ -233,6 +236,19 @@ library GlvShiftUtils {
         validatePriceImpact(params.dataStore, glvShift.glv(), cache.marketTokensUsd, cache.receivedMarketTokensUsd);
 
         GlvShiftEventUtils.emitGlvShiftExecuted(params.eventEmitter, params.key, cache.receivedMarketTokens);
+
+        GasUtils.payExecutionFee(
+            params.dataStore,
+            params.eventEmitter,
+            params.glvVault,
+            params.key,
+            address(0),
+            glvShift.executionFee(),
+            params.startingGas,
+            GasUtils.estimateGlvShiftOraclePriceCount(),
+            params.keeper,
+            params.keeper // refundReceiver
+        );
 
         return cache.receivedMarketTokens;
     }
