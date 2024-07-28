@@ -140,13 +140,6 @@ library GlvWithdrawalUtils {
             revert Errors.EmptyGlvWithdrawal();
         }
 
-        if (params.oracle.minTimestamp() < glvWithdrawal.updatedAtTime()) {
-            revert Errors.OracleTimestampsAreSmallerThanRequired(
-                params.oracle.minTimestamp(),
-                glvWithdrawal.updatedAtTime()
-            );
-        }
-
         _processMarketWithdrawal(params, glvWithdrawal);
 
         GlvToken(payable(glvWithdrawal.glv())).burn(address(params.glvVault), glvWithdrawal.glvTokenAmount());
