@@ -82,7 +82,7 @@ library GlvDepositUtils {
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
         GlvUtils.validateGlv(dataStore, params.glv);
-        GlvUtils.validateMarket(dataStore, params.glv, params.market, true);
+        GlvUtils.validateGlvMarket(dataStore, params.glv, params.market, true);
 
         MarketUtils.validateEnabledMarket(dataStore, params.market);
         MarketUtils.validateSwapPath(dataStore, params.longTokenSwapPath);
@@ -174,7 +174,7 @@ library GlvDepositUtils {
 
         CallbackUtils.validateCallbackGasLimit(dataStore, params.callbackGasLimit);
 
-        uint256 marketCount = GlvUtils.getMarketCount(dataStore, glvDeposit.glv());
+        uint256 marketCount = GlvUtils.getGlvMarketCount(dataStore, glvDeposit.glv());
         uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvDepositGasLimit(dataStore, glvDeposit, marketCount);
         uint256 oraclePriceCount = GasUtils.estimateGlvDepositOraclePriceCount(
             marketCount,
@@ -259,7 +259,7 @@ library GlvDepositUtils {
             cache.mintAmount
         );
 
-        cache.marketCount = GlvUtils.getMarketCount(params.dataStore, glvDeposit.glv());
+        cache.marketCount = GlvUtils.getGlvMarketCount(params.dataStore, glvDeposit.glv());
         cache.oraclePriceCount = GasUtils.estimateGlvDepositOraclePriceCount(
             cache.marketCount,
             glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length
@@ -437,7 +437,7 @@ library GlvDepositUtils {
 
         GlvDepositEventUtils.emitGlvDepositCancelled(eventEmitter, key, glvDeposit.account(), reason, reasonBytes);
 
-        uint256 marketCount = GlvUtils.getMarketCount(dataStore, glvDeposit.glv());
+        uint256 marketCount = GlvUtils.getGlvMarketCount(dataStore, glvDeposit.glv());
         GasUtils.payExecutionFee(
             dataStore,
             eventEmitter,

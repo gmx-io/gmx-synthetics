@@ -61,7 +61,7 @@ library GlvWithdrawalUtils {
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
         GlvUtils.validateGlv(dataStore, params.glv);
-        GlvUtils.validateMarket(dataStore, params.glv, params.market, true);
+        GlvUtils.validateGlvMarket(dataStore, params.glv, params.market, true);
 
         MarketUtils.validateEnabledMarket(dataStore, params.market);
         MarketUtils.validateSwapPath(dataStore, params.longTokenSwapPath);
@@ -106,7 +106,7 @@ library GlvWithdrawalUtils {
 
         CallbackUtils.validateCallbackGasLimit(dataStore, params.callbackGasLimit);
 
-        uint256 marketCount = GlvUtils.getMarketCount(dataStore, glvWithdrawal.glv());
+        uint256 marketCount = GlvUtils.getGlvMarketCount(dataStore, glvWithdrawal.glv());
         uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvWithdrawalGasLimit(
             dataStore,
             glvWithdrawal,
@@ -148,7 +148,7 @@ library GlvWithdrawalUtils {
 
         GlvWithdrawalEventUtils.emitGlvWithdrawalExecuted(params.eventEmitter, params.key, glvWithdrawal.account());
 
-        uint256 marketCount = GlvUtils.getMarketCount(params.dataStore, glvWithdrawal.glv());
+        uint256 marketCount = GlvUtils.getGlvMarketCount(params.dataStore, glvWithdrawal.glv());
         uint256 oraclePriceCount = GasUtils.estimateGlvWithdrawalOraclePriceCount(
             marketCount,
             glvWithdrawal.longTokenSwapPath().length + glvWithdrawal.shortTokenSwapPath().length
@@ -178,7 +178,7 @@ library GlvWithdrawalUtils {
 
         Withdrawal.Props memory withdrawal = Withdrawal.Props(
             Withdrawal.Addresses({
-                account: glvWithdrawal.account(),
+                account: glvWithdrawal.glv(),
                 receiver: glvWithdrawal.receiver(),
                 callbackContract: address(0),
                 uiFeeReceiver: glvWithdrawal.uiFeeReceiver(),
@@ -290,7 +290,7 @@ library GlvWithdrawalUtils {
             reasonBytes
         );
 
-        uint256 marketCount = GlvUtils.getMarketCount(dataStore, glvWithdrawal.glv());
+        uint256 marketCount = GlvUtils.getGlvMarketCount(dataStore, glvWithdrawal.glv());
         GasUtils.payExecutionFee(
             dataStore,
             eventEmitter,

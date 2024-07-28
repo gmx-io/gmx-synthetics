@@ -159,7 +159,7 @@ library GlvUtils {
         return Precision.mulDiv(glvTokenAmount, glvTokenPrice, Precision.WEI_PRECISION);
     }
 
-    function validateMarket(DataStore dataStore, address glv, address market, bool shouldBeEnabled) public view {
+    function validateGlvMarket(DataStore dataStore, address glv, address market, bool shouldBeEnabled) public view {
         if (!dataStore.containsAddress(Keys.glvSupportedMarketListKey(glv), market)) {
             revert Errors.GlvUnsupportedMarket(glv, market);
         }
@@ -177,7 +177,7 @@ library GlvUtils {
         }
     }
 
-    function getMarketCount(DataStore dataStore, address glv) external view returns (uint256) {
+    function getGlvMarketCount(DataStore dataStore, address glv) external view returns (uint256) {
         return dataStore.getAddressCount(Keys.glvSupportedMarketListKey(glv));
     }
 

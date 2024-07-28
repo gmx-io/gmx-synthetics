@@ -67,8 +67,8 @@ library GlvShiftUtils {
         CreateGlvShiftParams memory params
     ) external returns (bytes32) {
         GlvUtils.validateGlv(dataStore, params.glv);
-        GlvUtils.validateMarket(dataStore, params.glv, params.fromMarket, false);
-        GlvUtils.validateMarket(dataStore, params.glv, params.toMarket, true);
+        GlvUtils.validateGlvMarket(dataStore, params.glv, params.fromMarket, false);
+        GlvUtils.validateGlvMarket(dataStore, params.glv, params.toMarket, true);
 
         validateGlvShiftInterval(dataStore, params.glv);
 

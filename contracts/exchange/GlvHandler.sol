@@ -55,7 +55,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         FeatureUtils.validateFeature(_dataStore, Keys.executeGlvDepositFeatureDisabledKey(address(this)));
 
         GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(_dataStore, key);
-        uint256 marketCount = GlvUtils.getMarketCount(_dataStore, glvDeposit.glv());
+        uint256 marketCount = GlvUtils.getGlvMarketCount(_dataStore, glvDeposit.glv());
         uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvDepositGasLimit(_dataStore, glvDeposit, marketCount);
         GasUtils.validateExecutionGas(_dataStore, startingGas, estimatedGasLimit);
 
@@ -146,7 +146,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         FeatureUtils.validateFeature(_dataStore, Keys.executeGlvWithdrawalFeatureDisabledKey(address(this)));
 
         GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(_dataStore, key);
-        uint256 marketCount = GlvUtils.getMarketCount(_dataStore, glvWithdrawal.glv());
+        uint256 marketCount = GlvUtils.getGlvMarketCount(_dataStore, glvWithdrawal.glv());
         uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvWithdrawalGasLimit(
             _dataStore,
             glvWithdrawal,
