@@ -1,24 +1,13 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
-import {
-  createGlvDeposit,
-  getGlvDepositCount,
-  getGlvDepositKeys,
-  handleGlvDeposit,
-  handleGlvShift,
-  handleGlvWithdrawal,
-} from "../../utils/glv";
+import { handleGlvDeposit, handleGlvShift, handleGlvWithdrawal } from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
-import { decimalToFloat, expandDecimals } from "../../utils/math";
+import { expandDecimals } from "../../utils/math";
 import { getBalanceOf } from "../../utils/token";
-import { errorsContract } from "../../utils/error";
-import * as keys from "../../utils/keys";
-import { increaseTime } from "../../utils/time";
-import { printGasUsage } from "../../utils/gas";
-import { contractAt } from "../../utils/deploy";
 import { BigNumberish } from "ethers";
 import { handleDeposit } from "../../utils/deposit";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 function getPriceProp(price: BigNumberish, decimals: number) {
   return {
@@ -28,31 +17,92 @@ function getPriceProp(price: BigNumberish, decimals: number) {
 }
 
 describe("Glv Token Price", () => {
-  let fixture;
-  let glvReader, reader, dataStore, ethUsdMarket, solUsdMarket, ethUsdGlvAddress, wnt, usdc;
+  let fixture: Awaited<ReturnType<typeof deployFixture>>;
+  let user0: SignerWithAddress;
+  let glvReader, dataStore, ethUsdMarket, solUsdMarket, ethUsdGlvAddress, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
-    ({ glvReader, wnt, usdc, reader, dataStore, ethUsdMarket, solUsdMarket, ethUsdGlvAddress } = fixture.contracts);
+    ({ user0 } = fixture.accounts);
+    ({ glvReader, wnt, usdc, dataStore, ethUsdMarket, solUsdMarket, ethUsdGlvAddress } = fixture.contracts);
   });
 
   it("glv token price", async () => {
-    async function getGlvTokenPrice(ethPrice = 5000, solPrice = 600, usdcPrice = 1) {
+    async function expectGlvTokenPrice({
+      price: expectedPrice,
+      value: expectedValue,
+      supply: expectedSupply,
+      ethPrice = 5000,
+    }) {
       const [price, value, supply] = await glvReader.getGlvTokenPrice(
         dataStore.address,
         [ethUsdMarket.marketToken, solUsdMarket.marketToken],
-        [getPriceProp(ethPrice, 12), getPriceProp(solPrice, 12)],
+        [getPriceProp(ethPrice, 12), getPriceProp(600, 12)],
         getPriceProp(ethPrice, 12),
-        getPriceProp(usdcPrice, 24),
+        getPriceProp(1, 24),
         ethUsdGlvAddress,
         true
       );
-      return [price, value, supply];
+
+      expect(price, "glv token price").to.be.closeTo(expectedPrice, expandDecimals(1, 24));
+      expect(value, "glv value").to.be.closeTo(expectedValue, expandDecimals(1, 24));
+      expect(supply, "glv supply").to.be.closeTo(expectedSupply, expandDecimals(1, 13));
     }
 
-    // deposit $50k WETH / $50k USDC directly at different price
-    // for market token and glv token prices differ
+    async function expectBalances({
+      glv,
+      user,
+    }: {
+      glv?: {
+        ethUsdMarket?: BigNumberish;
+        solUsdMarket?: BigNumberish;
+      };
+      user?: {
+        ethUsdMarket?: BigNumberish;
+        solUsdMarket?: BigNumberish;
+        glv?: BigNumberish;
+        wnt?: BigNumberish;
+        usdc?: BigNumberish;
+      };
+    } = {}) {
+      // glv
+      expect(await getBalanceOf(ethUsdMarket.marketToken, ethUsdGlvAddress), "glv.ethUsdMarket").to.be.closeTo(
+        glv?.ethUsdMarket ?? 0,
+        expandDecimals(1, 13)
+      );
+      expect(await getBalanceOf(solUsdMarket.marketToken, ethUsdGlvAddress), "glv.solUsdMarket").to.be.closeTo(
+        glv?.solUsdMarket ?? 0,
+        expandDecimals(1, 13)
+      );
+      // user
+      expect(await getBalanceOf(ethUsdGlvAddress, user0.address), "user.glv").to.be.closeTo(
+        user?.glv ?? 0,
+        expandDecimals(1, 13)
+      );
+      expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address), "user.ethUsdMarket").to.be.closeTo(
+        user?.ethUsdMarket ?? 0,
+        expandDecimals(1, 13)
+      );
+      expect(await getBalanceOf(solUsdMarket.marketToken, user0.address), "user.solUsdMarket").to.be.closeTo(
+        user?.solUsdMarket ?? 0,
+        expandDecimals(1, 13)
+      );
+      expect(await getBalanceOf(wnt.address, user0.address), "user.wnt").to.be.closeTo(
+        user?.wnt ?? 0,
+        expandDecimals(1, 13)
+      );
+      expect(await getBalanceOf(usdc.address, user0.address), "user.usdc").to.be.closeTo(
+        user?.usdc ?? 0,
+        expandDecimals(1, 13)
+      );
+    }
+
+    // all zeroes
+    await expectBalances();
+
+    // deposit $50k WETH / $50k USDC directly at different eth price $6250
+    // for market token and glv token prices to differ
     await handleDeposit(fixture, {
       create: {
         longTokenAmount: expandDecimals(8, 18),
@@ -64,11 +114,16 @@ describe("Glv Token Price", () => {
       },
     });
 
-    let [price, value, supply] = await getGlvTokenPrice();
-
-    expect(price).to.be.eq(expandDecimals(1, 30));
-    expect(value).to.be.eq(0);
-    expect(supply).to.be.eq(0);
+    await expectBalances({
+      user: {
+        ethUsdMarket: expandDecimals(100_000, 18),
+      },
+    });
+    await expectGlvTokenPrice({
+      price: expandDecimals(1, 30),
+      value: 0,
+      supply: 0,
+    });
 
     // at eth price = $5k pool is $40k WETH / $50k USDC
     // deposit $55k WETH / $45 USDC to balance the pool to simplify calculations
@@ -80,12 +135,23 @@ describe("Glv Token Price", () => {
       },
     });
 
-    [price, value, supply] = await getGlvTokenPrice();
-
     // deposited $100k
-    expect(price).to.be.closeTo(expandDecimals(1, 30), expandDecimals(1, 15));
-    expect(value).to.be.closeTo(expandDecimals(100_000, 30), expandDecimals(1, 15));
-    expect(supply).to.be.closeTo(expandDecimals(100_000, 18), 100);
+    // at eth price $5000 GM token price is $0.90
+    // so 111,111 GM tokens worth ~$100,000
+    await expectBalances({
+      glv: {
+        ethUsdMarket: "111111111111111111111111",
+      },
+      user: {
+        glv: expandDecimals(100_000, 18),
+        ethUsdMarket: expandDecimals(100_000, 18),
+      },
+    });
+    await expectGlvTokenPrice({
+      price: expandDecimals(1, 30),
+      value: expandDecimals(100_000, 30),
+      supply: expandDecimals(100_000, 18),
+    });
 
     await handleGlvDeposit(fixture, {
       create: {
@@ -96,75 +162,56 @@ describe("Glv Token Price", () => {
     });
 
     // deposited $10k, total is $110k
-    [price, value, supply] = await getGlvTokenPrice();
-    expect(price).to.be.closeTo(expandDecimals(1, 30), expandDecimals(1, 24));
-    expect(value).to.be.closeTo(expandDecimals(110_000, 30), expandDecimals(1, 24));
-    expect(supply).to.be.closeTo(expandDecimals(110_000, 18), 100);
+    await expectBalances({
+      glv: {
+        ethUsdMarket: "111111111111111111111111",
+        solUsdMarket: expandDecimals(10_000, 18),
+      },
+      user: {
+        glv: expandDecimals(110_000, 18),
+        ethUsdMarket: expandDecimals(100_000, 18),
+      },
+    });
+    await expectGlvTokenPrice({
+      price: expandDecimals(1, 30),
+      value: expandDecimals(110_000, 30),
+      supply: expandDecimals(110_000, 18),
+    });
 
     await handleGlvShift(fixture, {
       create: {
         fromMarket: ethUsdMarket,
         toMarket: solUsdMarket,
-        marketTokenAmount: expandDecimals(10_000, 18),
+
+        // 11,111 GM tokens worth ~$10,000
+        marketTokenAmount: "11111111111111111111111",
       },
     });
 
     // price/value/supply should not change
-    [price, value, supply] = await getGlvTokenPrice();
-    expect(price).to.be.closeTo(expandDecimals(1, 30), expandDecimals(1, 24));
-    expect(value).to.be.closeTo(expandDecimals(110_000, 30), expandDecimals(1, 24));
-    expect(supply).to.be.closeTo(expandDecimals(110_000, 18), 100);
-
-    // const wethBalanceForEthUsdMarket = await getBalanceOf(wnt.address, ethUsdMarket.marketToken);
-    // const usdcBalanceForEthUsdMarket = await getBalanceOf(usdc.address, ethUsdMarket.marketToken);
-    // const wethBalanceForSolUsdMarket = await getBalanceOf(wnt.address, solUsdMarket.marketToken);
-    // const usdcBalanceForSolUsdMarket = await getBalanceOf(usdc.address, solUsdMarket.marketToken);
-
-    // console.log("weth total balance: %s", wethBalanceForEthUsdMarket.add(wethBalanceForSolUsdMarket));
-    // console.log("usdc total balance: %s", usdcBalanceForEthUsdMarket.add(usdcBalanceForSolUsdMarket));
-
-    // const ethUsdMarketBalance = await getBalanceOf(ethUsdMarket.marketToken, ethUsdGlvAddress);
-    // const solUsdMarketBalance = await getBalanceOf(solUsdMarket.marketToken, ethUsdGlvAddress);
-
-    // const [ethUsdMarketTokenPrice] = await reader.getMarketTokenPrice(
-    //   dataStore.address,
-    //   ethUsdMarket,
-    //   getPriceProp(6000, 12),
-    //   getPriceProp(6000, 12),
-    //   getPriceProp(1, 24),
-    //   ethers.constants.HashZero,
-    //   true
-    // );
-    // const [solUsdMarketTokenPrice] = await reader.getMarketTokenPrice(
-    //   dataStore.address,
-    //   solUsdMarket,
-    //   getPriceProp(600, 12),
-    //   getPriceProp(6000, 12),
-    //   getPriceProp(1, 24),
-    //   ethers.constants.HashZero,
-    //   true
-    // );
-    // console.log(2);
-
-    // console.log(
-    //   "eth market. balance: %s price: %s value: %s",
-    //   ethUsdMarketBalance,
-    //   ethUsdMarketTokenPrice,
-    //   ethUsdMarketTokenPrice.mul(ethUsdMarketBalance).div(expandDecimals(1, 18))
-    // );
-    // console.log(
-    //   "sol market. balance: %s price: %s value: %s",
-    //   solUsdMarketBalance,
-    //   solUsdMarketTokenPrice,
-    //   solUsdMarketTokenPrice.mul(solUsdMarketBalance).div(expandDecimals(1, 18))
-    // );
+    await expectBalances({
+      glv: {
+        ethUsdMarket: expandDecimals(100_000, 18),
+        solUsdMarket: expandDecimals(20_000, 18),
+      },
+      user: {
+        glv: expandDecimals(110_000, 18),
+        ethUsdMarket: expandDecimals(100_000, 18),
+      },
+    });
+    await expectGlvTokenPrice({
+      price: expandDecimals(1, 30),
+      value: expandDecimals(110_000, 30),
+      supply: expandDecimals(110_000, 18),
+    });
 
     // eth price grew by 20%, GLV value grew by 10%
-    [price, value, supply] = await getGlvTokenPrice(6000);
-
-    expect(price).to.be.closeTo(expandDecimals(11, 29), expandDecimals(1, 24));
-    expect(value).to.be.closeTo(expandDecimals(121_000, 30), expandDecimals(1, 24));
-    expect(supply).to.be.closeTo(expandDecimals(110_000, 18), 100);
+    await expectGlvTokenPrice({
+      price: expandDecimals(11, 29),
+      value: expandDecimals(121_000, 30),
+      supply: expandDecimals(110_000, 18),
+      ethPrice: 6000,
+    });
 
     await handleGlvWithdrawal(fixture, {
       create: {
@@ -173,9 +220,53 @@ describe("Glv Token Price", () => {
       },
     });
 
-    [price, value, supply] = await getGlvTokenPrice();
-    expect(price).to.be.closeTo(expandDecimals(1, 30), expandDecimals(1, 24));
-    expect(value).to.be.closeTo(expandDecimals(109_000, 30), expandDecimals(1, 24));
-    expect(supply).to.be.closeTo(expandDecimals(109_000, 18), 100);
+    // withdrew $1k
+    await expectBalances({
+      glv: {
+        ethUsdMarket: expandDecimals(100_000, 18),
+        solUsdMarket: expandDecimals(19_000, 18),
+      },
+      user: {
+        glv: expandDecimals(109_000, 18),
+        ethUsdMarket: expandDecimals(100_000, 18),
+        wnt: expandDecimals(1, 17),
+        usdc: expandDecimals(500, 6),
+      },
+    });
+
+    await expectGlvTokenPrice({
+      price: expandDecimals(1, 30),
+      value: expandDecimals(109_000, 30),
+      supply: expandDecimals(109_000, 18),
+    });
+
+    await handleGlvDeposit(fixture, {
+      create: {
+        // eth usd token price is $0.90
+        marketTokenAmount: expandDecimals(10_000, 18),
+        market: ethUsdMarket,
+        isMarketTokenDeposit: true,
+        initialLongToken: ethers.constants.AddressZero,
+        initialShortToken: ethers.constants.AddressZero,
+      },
+    });
+
+    await expectGlvTokenPrice({
+      price: expandDecimals(1, 30),
+      value: expandDecimals(118_000, 30),
+      supply: expandDecimals(118_000, 18),
+    });
+    await expectBalances({
+      glv: {
+        ethUsdMarket: expandDecimals(110_000, 18),
+        solUsdMarket: expandDecimals(19_000, 18),
+      },
+      user: {
+        glv: expandDecimals(118_000, 18),
+        ethUsdMarket: expandDecimals(90_000, 18),
+        wnt: expandDecimals(1, 17),
+        usdc: expandDecimals(500, 6),
+      },
+    });
   });
 });
