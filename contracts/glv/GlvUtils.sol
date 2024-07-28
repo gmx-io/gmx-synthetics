@@ -47,23 +47,15 @@ library GlvUtils {
                 cache.longTokenPrice = oracle.getPrimaryPrice(market.longToken);
                 cache.shortTokenPrice = oracle.getPrimaryPrice(market.shortToken);
             }
-            (int256 marketTokenPrice, ) = MarketUtils.getMarketTokenPrice(
+            cache.glvValue += _getGlvMarketValue(
                 dataStore,
-                market,
+                glv,
+                marketAddress,
                 oracle.getPrimaryPrice(market.indexToken),
                 cache.longTokenPrice,
                 cache.shortTokenPrice,
-                Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
                 maximize
             );
-
-            if (marketTokenPrice < 0) {
-                revert Errors.InvalidMarketTokenPrice(marketAddress, marketTokenPrice);
-            }
-
-            uint256 balance = IERC20(marketAddress).balanceOf(glv);
-
-            cache.glvValue += MarketUtils.marketTokenAmountToUsd(balance, marketTokenPrice);
         }
 
         return cache.glvValue;
@@ -85,27 +77,50 @@ library GlvUtils {
         for (uint256 i = 0; i < marketAddresses.length; i++) {
             address marketAddress = marketAddresses[i];
             cache.indexTokenPrice = indexTokenPrices[i];
-            cache.market = MarketStoreUtils.get(dataStore, marketAddress);
-            (int256 marketTokenPrice, ) = MarketUtils.getMarketTokenPrice(
+
+            cache.glvValue += _getGlvMarketValue(
                 dataStore,
-                cache.market,
+                glv,
+                marketAddress,
                 cache.indexTokenPrice,
                 longTokenPrice,
                 shortTokenPrice,
-                Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
                 maximize
             );
-
-            if (marketTokenPrice < 0) {
-                revert Errors.InvalidMarketTokenPrice(marketAddress, marketTokenPrice);
-            }
-
-            uint256 balance = IERC20(marketAddress).balanceOf(glv);
-
-            cache.glvValue += MarketUtils.marketTokenAmountToUsd(balance, marketTokenPrice);
         }
 
         return cache.glvValue;
+    }
+
+    function _getGlvMarketValue(
+        DataStore dataStore,
+        address glv,
+        address marketAddress,
+        Price.Props memory indexTokenPrice,
+        Price.Props memory longTokenPrice,
+        Price.Props memory shortTokenPrice,
+        bool maximize
+    ) internal view returns (uint256) {
+        Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
+
+        MarketPoolValueInfo.Props memory marketPoolValueInfo = MarketUtils.getPoolValueInfo(
+            dataStore,
+            market,
+            indexTokenPrice,
+            longTokenPrice,
+            shortTokenPrice,
+            Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
+            maximize
+        );
+        uint256 marketTokenSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(marketAddress)));
+
+        uint256 balance = IERC20(marketAddress).balanceOf(glv);
+
+        if (balance == 0) {
+            return 0;
+        }
+
+        return MarketUtils.marketTokenAmountToUsd(balance, marketPoolValueInfo.poolValue.toUint256(), marketTokenSupply);
     }
 
     function getGlvTokenPrice(
@@ -148,15 +163,43 @@ library GlvUtils {
         if (supply == 0) {
             return (Precision.FLOAT_PRECISION, value, supply);
         }
+        if (value == 0) {
+            return (0, value, supply);
+        }
         return (Precision.mulDiv(Precision.WEI_PRECISION, value, supply), value, supply);
     }
 
-    function usdToGlvTokenAmount(uint256 usdValue, uint256 glvTokenPrice) internal pure returns (uint256) {
-        return Precision.mulDiv(usdValue, Precision.WEI_PRECISION, glvTokenPrice);
+    function usdToGlvTokenAmount(
+        uint256 usdValue,
+        uint256 glvValue,
+        uint256 glvSupply
+    ) internal pure returns (uint256) {
+        // if the supply and glvValue is zero, use 1 USD as the token price
+        if (glvSupply == 0 && glvValue == 0) {
+            return Precision.floatToWei(usdValue);
+        }
+
+        // if the supply is zero and the glvValue is more than zero,
+        // then include the glvValue for the amount of tokens minted so that
+        // the market token price after mint would be 1 USD
+        if (glvSupply == 0 && glvValue > 0) {
+            return Precision.floatToWei(glvValue + usdValue);
+        }
+
+        // round market tokens down
+        return Precision.mulDiv(glvSupply, usdValue, glvValue);
     }
 
-    function glvTokenAmountToUsd(uint256 glvTokenAmount, uint256 glvTokenPrice) internal pure returns (uint256) {
-        return Precision.mulDiv(glvTokenAmount, glvTokenPrice, Precision.WEI_PRECISION);
+    function glvTokenAmountToUsd(
+        uint256 glvTokenAmount,
+        uint256 glvValue,
+        uint256 glvSupply
+    ) internal pure returns (uint256) {
+        if (glvSupply == 0) {
+            revert Errors.EmptyGlvTokenSupply();
+        }
+
+        return Precision.mulDiv(glvValue, glvTokenAmount, glvSupply);
     }
 
     function validateGlvMarket(DataStore dataStore, address glv, address market, bool shouldBeEnabled) public view {
@@ -164,10 +207,8 @@ library GlvUtils {
             revert Errors.GlvUnsupportedMarket(glv, market);
         }
 
-        if (shouldBeEnabled) {
-            if (dataStore.getBool(Keys.isGlvMarketDisabledKey(glv, market))) {
-                revert Errors.GlvDisabledMarket(glv, market);
-            }
+        if (shouldBeEnabled && dataStore.getBool(Keys.isGlvMarketDisabledKey(glv, market))) {
+            revert Errors.GlvDisabledMarket(glv, market);
         }
     }
 
@@ -185,7 +226,8 @@ library GlvUtils {
         DataStore dataStore,
         address glv,
         Market.Props memory market,
-        int256 marketTokenPrice
+        uint256 marketPoolValue,
+        uint256 marketTokenSupply
     ) internal view {
         uint256 maxMarketTokenBalanceUsd = dataStore.getUint(
             Keys.glvMaxMarketTokenBalanceUsdKey(glv, market.marketToken)
@@ -211,7 +253,8 @@ library GlvUtils {
         if (maxMarketTokenBalanceUsd > 0) {
             uint256 marketTokenBalanceUsd = MarketUtils.marketTokenAmountToUsd(
                 marketTokenBalanceAmount,
-                marketTokenPrice
+                marketPoolValue,
+                marketTokenSupply
             );
             if (marketTokenBalanceUsd > maxMarketTokenBalanceUsd) {
                 revert Errors.GlvMaxMarketTokenBalanceUsdExceeded(

@@ -2624,13 +2624,6 @@ library MarketUtils {
         return Precision.mulDiv(poolValue, marketTokenAmount, supply);
     }
 
-    function marketTokenAmountToUsd(
-        uint256 marketTokenAmount,
-        int256 marketTokenPrice
-    ) internal pure returns (uint256) {
-        return Precision.mulDiv(marketTokenAmount, marketTokenPrice.toUint256(), Precision.WEI_PRECISION);
-    }
-
     // @dev validate that the specified market exists and is enabled
     // @param dataStore DataStore
     // @param marketAddress the address of the market

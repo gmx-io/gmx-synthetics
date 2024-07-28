@@ -60,6 +60,7 @@ library Errors {
     error EmptyGlvWithdrawalAmount();
     // GlvUtils errors
     error EmptyGlv(address glv);
+    error EmptyGlvTokenSupply();
     error GlvUnsupportedMarket(address glv, address market);
     error GlvDisabledMarket(address glv, address market);
     error GlvMaxMarketTokenBalanceUsdExceeded(address glv, address market, uint256 maxMarketTokenBalanceUsd, uint256 marketTokenBalanceUsd);

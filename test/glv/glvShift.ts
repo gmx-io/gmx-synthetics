@@ -336,7 +336,7 @@ describe("Glv Shifts", () => {
         },
       });
 
-      await dataStore.setUint(keys.glvShiftMaxPriceImpactFactorKey(ethUsdGlvAddress), decimalToFloat(1, 3)); // 0.09%
+      await dataStore.setUint(keys.glvShiftMaxPriceImpactFactorKey(ethUsdGlvAddress), decimalToFloat(1, 3)); // 0.1%
       await handleGlvShift(fixture, {
         create: {
           fromMarket: ethUsdMarket,

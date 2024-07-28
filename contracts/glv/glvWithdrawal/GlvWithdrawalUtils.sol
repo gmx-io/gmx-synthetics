@@ -191,8 +191,8 @@ library GlvWithdrawalUtils {
                 callbackContract: address(0),
                 uiFeeReceiver: glvWithdrawal.uiFeeReceiver(),
                 market: glvWithdrawal.market(),
-                longTokenSwapPath: new address[](0),
-                shortTokenSwapPath: new address[](0)
+                longTokenSwapPath: glvWithdrawal.longTokenSwapPath(),
+                shortTokenSwapPath: glvWithdrawal.shortTokenSwapPath()
             }),
             Withdrawal.Numbers({
                 minLongTokenAmount: glvWithdrawal.minLongTokenAmount(),
@@ -241,8 +241,9 @@ library GlvWithdrawalUtils {
         Oracle oracle,
         GlvWithdrawal.Props memory glvWithdrawal
     ) internal view returns (uint256 marketTokenAmount) {
-        (uint256 glvTokenPrice, , ) = GlvUtils.getGlvTokenPrice(dataStore, oracle, glvWithdrawal.glv(), false);
-        uint256 glvTokenUsd = GlvUtils.glvTokenAmountToUsd(glvWithdrawal.glvTokenAmount(), glvTokenPrice);
+        uint256 glvValue = GlvUtils.getGlvValue(dataStore, oracle, glvWithdrawal.glv(), false);
+        uint256 glvSupply = GlvToken(payable(glvWithdrawal.glv())).totalSupply();
+        uint256 glvTokenUsd = GlvUtils.glvTokenAmountToUsd(glvWithdrawal.glvTokenAmount(), glvValue, glvSupply);
 
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, glvWithdrawal.market());
         MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(

@@ -62,13 +62,15 @@ library GlvDepositUtils {
 
     struct ExecuteGlvDepositCache {
         Market.Props market;
-        int256 marketTokenPrice;
+        MarketPoolValueInfo.Props marketPoolValueInfo;
+        uint256 marketTokenSupply;
         uint256 receivedMarketTokens;
         uint256 mintAmount;
         uint256 receivedUsd;
         uint256 marketCount;
         uint256 oraclePriceCount;
         uint256 glvValue;
+        uint256 glvSupply;
     }
 
     address public constant RECEIVER_FOR_FIRST_GLV_DEPOSIT = address(1);
@@ -210,20 +212,16 @@ library GlvDepositUtils {
         ExecuteGlvDepositCache memory cache;
 
         // glvTokenPrice should be calculated before glv receives GM tokens
-        // use maximize=true to "sell" glv token at max price
-        (uint256 glvTokenPrice, , ) = GlvUtils.getGlvTokenPrice(
-            params.dataStore,
-            params.oracle,
-            glvDeposit.glv(),
-            true
-        );
+        cache.glvValue = GlvUtils.getGlvValue(params.dataStore, params.oracle, glvDeposit.glv(), true);
+        cache.glvSupply = GlvToken(payable(glvDeposit.glv())).totalSupply();
         cache.receivedMarketTokens = _processMarketDeposit(params, glvDeposit, params.glvVault);
         (cache.mintAmount, cache.receivedUsd) = _getMintAmount(
             params.dataStore,
             params.oracle,
             glvDeposit,
             cache.receivedMarketTokens,
-            glvTokenPrice
+            cache.glvValue,
+            cache.glvSupply
         );
 
         if (cache.mintAmount < glvDeposit.minGlvTokens()) {
@@ -233,7 +231,7 @@ library GlvDepositUtils {
         GlvToken(payable(glvDeposit.glv())).mint(glvDeposit.receiver(), cache.mintAmount);
 
         cache.market = MarketUtils.getEnabledMarket(params.dataStore, glvDeposit.market());
-        (cache.marketTokenPrice, ) = MarketUtils.getMarketTokenPrice(
+        cache.marketPoolValueInfo = MarketUtils.getPoolValueInfo(
             params.dataStore,
             cache.market,
             params.oracle.getPrimaryPrice(cache.market.indexToken),
@@ -242,12 +240,14 @@ library GlvDepositUtils {
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
             true // maximize
         );
+        cache.marketTokenSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(glvDeposit.market())));
 
         GlvUtils.validateGlvMarketTokenBalance(
             params.dataStore,
             glvDeposit.glv(),
             cache.market,
-            cache.marketTokenPrice
+            cache.marketPoolValueInfo.poolValue.toUint256(),
+            cache.marketTokenSupply
         );
 
         GlvDepositEventUtils.emitGlvDepositExecuted(
@@ -258,12 +258,8 @@ library GlvDepositUtils {
         );
 
         cache.glvValue = GlvUtils.getGlvValue(params.dataStore, params.oracle, glvDeposit.glv(), true);
-        GlvEventUtils.emitGlvValueUpdated(
-            params.eventEmitter,
-            glvDeposit.glv(),
-            cache.glvValue,
-            GlvToken(payable(glvDeposit.glv())).totalSupply()
-        );
+        cache.glvSupply = GlvToken(payable(glvDeposit.glv())).totalSupply();
+        GlvEventUtils.emitGlvValueUpdated(params.eventEmitter, glvDeposit.glv(), cache.glvValue, cache.glvSupply);
 
         cache.marketCount = GlvUtils.getGlvMarketCount(params.dataStore, glvDeposit.glv());
         cache.oraclePriceCount = GasUtils.estimateGlvDepositOraclePriceCount(
@@ -324,7 +320,8 @@ library GlvDepositUtils {
         Oracle oracle,
         GlvDeposit.Props memory glvDeposit,
         uint256 receivedMarketTokens,
-        uint256 glvTokenPrice
+        uint256 glvValue,
+        uint256 glvSupply
     ) internal view returns (uint256 glvTokenAmount, uint256 usdValue) {
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, glvDeposit.market());
         MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(
@@ -334,17 +331,17 @@ library GlvDepositUtils {
             oracle.getPrimaryPrice(market.longToken),
             oracle.getPrimaryPrice(market.shortToken),
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-
             // maximize=true is used for glv token price
             // use the same for gm token price to avoid applying double spread
             true // maximize
         );
+        uint256 marketTokenSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
         uint256 receivedMarketTokensUsd = MarketUtils.marketTokenAmountToUsd(
             receivedMarketTokens,
             poolValueInfo.poolValue.toUint256(),
-            ERC20(market.marketToken).totalSupply()
+            marketTokenSupply
         );
-        return (GlvUtils.usdToGlvTokenAmount(receivedMarketTokensUsd, glvTokenPrice), receivedMarketTokensUsd);
+        return (GlvUtils.usdToGlvTokenAmount(receivedMarketTokensUsd, glvValue, glvSupply), receivedMarketTokensUsd);
     }
 
     function _processMarketDeposit(
@@ -367,8 +364,8 @@ library GlvDepositUtils {
                 market: glvDeposit.market(),
                 initialLongToken: glvDeposit.initialLongToken(),
                 initialShortToken: glvDeposit.initialShortToken(),
-                longTokenSwapPath: new address[](0),
-                shortTokenSwapPath: new address[](0)
+                longTokenSwapPath: glvDeposit.longTokenSwapPath(),
+                shortTokenSwapPath: glvDeposit.shortTokenSwapPath()
             }),
             Deposit.Numbers({
                 initialLongTokenAmount: glvDeposit.initialLongTokenAmount(),
