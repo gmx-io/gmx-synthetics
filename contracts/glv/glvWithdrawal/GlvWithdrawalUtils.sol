@@ -142,7 +142,10 @@ library GlvWithdrawalUtils {
 
         GlvWithdrawalStoreUtils.remove(params.dataStore, params.key, glvWithdrawal.account());
 
-        ExecuteWithdrawalUtils.ExecuteWithdrawalResult memory withdrawalResult = _processMarketWithdrawal(params, glvWithdrawal);
+        ExecuteWithdrawalUtils.ExecuteWithdrawalResult memory withdrawalResult = _processMarketWithdrawal(
+            params,
+            glvWithdrawal
+        );
 
         GlvToken(payable(glvWithdrawal.glv())).burn(address(params.glvVault), glvWithdrawal.glvTokenAmount());
 
@@ -151,7 +154,13 @@ library GlvWithdrawalUtils {
         GlvWithdrawalEventUtils.emitGlvWithdrawalExecuted(params.eventEmitter, params.key, glvWithdrawal.account());
 
         ExecuteGlvWithdrawalCache memory cache;
-        cache.glvValue = GlvUtils.getGlvValue(params.dataStore, params.oracle, glvWithdrawal.glv(), true);
+        cache.glvValue = GlvUtils.getGlvValue(
+            params.dataStore,
+            params.oracle,
+            glvWithdrawal.glv(),
+            Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
+            true
+        );
         GlvEventUtils.emitGlvValueUpdated(
             params.eventEmitter,
             glvWithdrawal.glv(),
@@ -250,7 +259,13 @@ library GlvWithdrawalUtils {
         Oracle oracle,
         GlvWithdrawal.Props memory glvWithdrawal
     ) internal view returns (uint256 marketTokenAmount) {
-        uint256 glvValue = GlvUtils.getGlvValue(dataStore, oracle, glvWithdrawal.glv(), false);
+        uint256 glvValue = GlvUtils.getGlvValue(
+            dataStore,
+            oracle,
+            glvWithdrawal.glv(),
+            Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
+            false
+        );
         uint256 glvSupply = GlvToken(payable(glvWithdrawal.glv())).totalSupply();
         uint256 glvTokenUsd = GlvUtils.glvTokenAmountToUsd(glvWithdrawal.glvTokenAmount(), glvValue, glvSupply);
 
