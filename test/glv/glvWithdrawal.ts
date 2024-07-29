@@ -69,12 +69,12 @@ describe("Glv Withdrawals", () => {
         .withArgs("100000000800000", "1");
     });
 
-    it.skip("GlvDisabledMarket", async () => {
-      await dataStore.setBool(keys.isGlvMarketDisabledKey(params.glv, params.market), false);
+    it("GlvDisabledMarket", async () => {
+      await dataStore.setBool(keys.isGlvMarketDisabledKey(ethUsdGlvAddress, ethUsdMarket.marketToken), true);
 
       await expect(createGlvWithdrawal(fixture, { ...params, glvTokenAmount: 1, executionFee: 1 }))
         .to.be.revertedWithCustomError(errorsContract, "GlvDisabledMarket")
-        .withArgs(params.glv, params.market);
+        .withArgs(ethUsdGlvAddress, ethUsdMarket.marketToken);
     });
 
     it.skip("MaxSwapPathLengthExceeded");
@@ -250,7 +250,7 @@ describe("Glv Withdrawals", () => {
   });
 
   describe("execute glv withdrawal, validations", () => {
-    it.only("GlvWithdrawalNotFound", async () => {
+    it("GlvWithdrawalNotFound", async () => {
       const key = ethers.constants.HashZero.slice(0, -1) + "f";
       await expect(executeGlvWithdrawal(fixture, { key }))
         .to.be.revertedWithCustomError(errorsContract, "GlvWithdrawalNotFound")
