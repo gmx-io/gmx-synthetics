@@ -4,11 +4,11 @@ import { ethers } from "hardhat";
 import { handleGlvDeposit, handleGlvShift, handleGlvWithdrawal } from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
 import { decimalToFloat, expandDecimals } from "../../utils/math";
-import { getBalanceOf } from "../../utils/token";
 import { BigNumberish } from "ethers";
 import { handleDeposit } from "../../utils/deposit";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import * as keys from "../../utils/keys";
+import { expectBalances } from "../../utils/validation";
 
 function getPriceProp(price: BigNumberish, decimals: number) {
   return {
@@ -53,7 +53,7 @@ describe("Glv Token Price", () => {
       expect(supply, "glv supply").to.be.closeTo(expectedSupply, expandDecimals(1, 13));
     }
 
-    async function expectBalances({
+    async function _expectBalances({
       glv,
       user,
     }: {
@@ -69,40 +69,24 @@ describe("Glv Token Price", () => {
         usdc?: BigNumberish;
       };
     } = {}) {
-      // glv
-      expect(await getBalanceOf(ethUsdMarket.marketToken, ethUsdGlvAddress), "glv.ethUsdMarket").to.be.closeTo(
-        glv?.ethUsdMarket ?? 0,
-        expandDecimals(1, 13)
-      );
-      expect(await getBalanceOf(solUsdMarket.marketToken, ethUsdGlvAddress), "glv.solUsdMarket").to.be.closeTo(
-        glv?.solUsdMarket ?? 0,
-        expandDecimals(1, 13)
-      );
-      // user
-      expect(await getBalanceOf(ethUsdGlvAddress, user0.address), "user.glv").to.be.closeTo(
-        user?.glv ?? 0,
-        expandDecimals(1, 13)
-      );
-      expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address), "user.ethUsdMarket").to.be.closeTo(
-        user?.ethUsdMarket ?? 0,
-        expandDecimals(1, 13)
-      );
-      expect(await getBalanceOf(solUsdMarket.marketToken, user0.address), "user.solUsdMarket").to.be.closeTo(
-        user?.solUsdMarket ?? 0,
-        expandDecimals(1, 13)
-      );
-      expect(await getBalanceOf(wnt.address, user0.address), "user.wnt").to.be.closeTo(
-        user?.wnt ?? 0,
-        expandDecimals(1, 13)
-      );
-      expect(await getBalanceOf(usdc.address, user0.address), "user.usdc").to.be.closeTo(
-        user?.usdc ?? 0,
-        expandDecimals(1, 13)
-      );
+      await expectBalances({
+        [ethUsdGlvAddress]: {
+          [ethUsdMarket.marketToken]: [glv?.ethUsdMarket ?? 0, expandDecimals(1, 13)],
+          [solUsdMarket.marketToken]: [glv?.solUsdMarket ?? 0, expandDecimals(1, 13)],
+        },
+        [user0.address]: {
+          [ethUsdGlvAddress]: [user?.glv ?? 0, expandDecimals(1, 13)],
+          [ethUsdMarket.marketToken]: [user?.ethUsdMarket ?? 0, expandDecimals(1, 13)],
+          [solUsdMarket.marketToken]: [user?.solUsdMarket ?? 0, expandDecimals(1, 13)],
+          [wnt.address]: [user?.wnt ?? 0, expandDecimals(1, 13)],
+          [usdc.address]: [user?.usdc ?? 0, expandDecimals(1, 13)],
+          [solUsdMarket.marketToken]: [user?.solUsdMarket ?? 0, expandDecimals(1, 13)],
+        },
+      });
     }
 
     // all zeroes
-    await expectBalances();
+    await _expectBalances();
 
     // deposit $50k WETH / $50k USDC directly at different eth price $6250
     // for market token and glv token prices to differ
@@ -117,7 +101,7 @@ describe("Glv Token Price", () => {
       },
     });
 
-    await expectBalances({
+    await _expectBalances({
       user: {
         ethUsdMarket: expandDecimals(100_000, 18),
       },
@@ -141,7 +125,7 @@ describe("Glv Token Price", () => {
     // deposited $100k
     // at eth price $5000 GM token price is $0.90
     // so 111,111 GM tokens worth ~$100,000
-    await expectBalances({
+    await _expectBalances({
       glv: {
         ethUsdMarket: "111111111111111111111111",
       },
@@ -165,7 +149,7 @@ describe("Glv Token Price", () => {
     });
 
     // deposited $10k, total is $110k
-    await expectBalances({
+    await _expectBalances({
       glv: {
         ethUsdMarket: "111111111111111111111111",
         solUsdMarket: expandDecimals(10_000, 18),
@@ -192,7 +176,7 @@ describe("Glv Token Price", () => {
     });
 
     // price/value/supply should not change
-    await expectBalances({
+    await _expectBalances({
       glv: {
         ethUsdMarket: expandDecimals(100_000, 18),
         solUsdMarket: expandDecimals(20_000, 18),
@@ -224,7 +208,7 @@ describe("Glv Token Price", () => {
     });
 
     // withdrew $1k
-    await expectBalances({
+    await _expectBalances({
       glv: {
         ethUsdMarket: expandDecimals(100_000, 18),
         solUsdMarket: expandDecimals(19_000, 18),
@@ -259,7 +243,7 @@ describe("Glv Token Price", () => {
       value: expandDecimals(118_000, 30),
       supply: expandDecimals(118_000, 18),
     });
-    await expectBalances({
+    await _expectBalances({
       glv: {
         ethUsdMarket: expandDecimals(110_000, 18),
         solUsdMarket: expandDecimals(19_000, 18),

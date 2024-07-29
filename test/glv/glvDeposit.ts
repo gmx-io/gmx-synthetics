@@ -12,13 +12,13 @@ import {
 } from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals } from "../../utils/math";
-import { getBalanceOf } from "../../utils/token";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import { increaseTime } from "../../utils/time";
 import { printGasUsage } from "../../utils/gas";
 import { contractAt } from "../../utils/deploy";
 import { handleDeposit } from "../../utils/deposit";
+import { expectBalances } from "../../utils/validation";
 
 describe("Glv Deposits", () => {
   const { provider } = ethers;
@@ -215,8 +215,14 @@ describe("Glv Deposits", () => {
   });
 
   it("execute glv deposit", async () => {
-    expect(await getBalanceOf(ethUsdGlvAddress, user0.address)).eq(0);
-    expect(await getBalanceOf(ethUsdMarket.marketToken, ethUsdGlvAddress)).eq(0);
+    await expectBalances({
+      [user0.address]: {
+        [ethUsdGlvAddress]: 0,
+      },
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: 0,
+      },
+    });
 
     await handleGlvDeposit(fixture, {
       create: {
@@ -225,8 +231,14 @@ describe("Glv Deposits", () => {
       },
     });
 
-    expect(await getBalanceOf(ethUsdGlvAddress, user0.address)).eq(expandDecimals(100_000, 18));
-    expect(await getBalanceOf(ethUsdMarket.marketToken, ethUsdGlvAddress)).eq(expandDecimals(100_000, 18));
+    await expectBalances({
+      [user0.address]: {
+        [ethUsdGlvAddress]: expandDecimals(100_000, 18),
+      },
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(100_000, 18),
+      },
+    });
 
     await handleGlvDeposit(fixture, {
       create: {
@@ -236,9 +248,15 @@ describe("Glv Deposits", () => {
       },
     });
 
-    expect(await getBalanceOf(ethUsdGlvAddress, user0.address)).eq(expandDecimals(110_000, 18));
-    expect(await getBalanceOf(ethUsdMarket.marketToken, ethUsdGlvAddress)).eq(expandDecimals(100_000, 18));
-    expect(await getBalanceOf(solUsdMarket.marketToken, ethUsdGlvAddress)).eq(expandDecimals(10_000, 18));
+    await expectBalances({
+      [user0.address]: {
+        [ethUsdGlvAddress]: expandDecimals(110_000, 18),
+      },
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(100_000, 18),
+        [solUsdMarket.marketToken]: expandDecimals(10_000, 18),
+      },
+    });
   });
 
   it("execute glv deposit with swaps", async () => {
@@ -293,8 +311,12 @@ describe("Glv Deposits", () => {
       },
     });
 
-    expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(10_000, 18));
-    expect(await getBalanceOf(solUsdMarket.marketToken, user0.address)).eq(expandDecimals(20_000, 18));
+    await expectBalances({
+      [user0.address]: {
+        [ethUsdMarket.marketToken]: expandDecimals(10_000, 18),
+        [solUsdMarket.marketToken]: expandDecimals(20_000, 18),
+      },
+    });
 
     await handleGlvDeposit(fixture, {
       create: {
@@ -306,9 +328,15 @@ describe("Glv Deposits", () => {
       },
     });
 
-    expect(await getBalanceOf(ethUsdGlvAddress, user0.address)).eq(expandDecimals(5_000, 18));
-    expect(await getBalanceOf(ethUsdMarket.marketToken, ethUsdGlvAddress)).eq(expandDecimals(5_000, 18));
-    expect(await getBalanceOf(solUsdMarket.marketToken, user0.address)).eq(expandDecimals(20_000, 18));
+    await expectBalances({
+      [user0.address]: {
+        [ethUsdGlvAddress]: expandDecimals(5_000, 18),
+        [solUsdMarket.marketToken]: expandDecimals(20_000, 18),
+      },
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(5_000, 18),
+      },
+    });
 
     await handleGlvDeposit(fixture, {
       create: {
@@ -320,10 +348,16 @@ describe("Glv Deposits", () => {
       },
     });
 
-    expect(await getBalanceOf(ethUsdGlvAddress, user0.address)).eq(expandDecimals(10_000, 18));
-    expect(await getBalanceOf(ethUsdMarket.marketToken, ethUsdGlvAddress)).eq(expandDecimals(5_000, 18));
-    expect(await getBalanceOf(solUsdMarket.marketToken, user0.address)).eq(expandDecimals(15_000, 18));
-    expect(await getBalanceOf(solUsdMarket.marketToken, ethUsdGlvAddress)).eq(expandDecimals(5_000, 18));
+    await expectBalances({
+      [user0.address]: {
+        [ethUsdGlvAddress]: expandDecimals(10_000, 18),
+        [solUsdMarket.marketToken]: expandDecimals(15_000, 18),
+      },
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(5_000, 18),
+        [solUsdMarket.marketToken]: expandDecimals(5_000, 18),
+      },
+    });
   });
 
   describe("execute glv deposit, validations", () => {

@@ -5,9 +5,9 @@ import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { handleGlvDeposit, createGlvShift, handleGlvShift, getGlvShiftKeys, executeGlvShift } from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
 import { decimalToFloat, expandDecimals } from "../../utils/math";
-import { getBalanceOf } from "../../utils/token";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
+import { expectBalances } from "../../utils/validation";
 
 describe("Glv Shifts", () => {
   const { provider } = ethers;
@@ -77,7 +77,11 @@ describe("Glv Shifts", () => {
   });
 
   it("execute glv shift", async () => {
-    expect(await getBalanceOf(ethUsdMarket.marketToken, ethUsdGlvAddress)).to.be.eq(0);
+    await expectBalances({
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: 0,
+      },
+    });
 
     await handleGlvDeposit(fixture, {
       create: {
@@ -86,8 +90,12 @@ describe("Glv Shifts", () => {
       },
     });
 
-    expect(await getBalanceOf(ethUsdMarket.marketToken, ethUsdGlvAddress)).to.be.eq(expandDecimals(10000, 18));
-    expect(await getBalanceOf(solUsdMarket.marketToken, ethUsdGlvAddress)).to.be.eq(0);
+    await expectBalances({
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(10000, 18),
+        [solUsdMarket.marketToken]: 0,
+      },
+    });
 
     await handleGlvShift(fixture, {
       create: {
@@ -98,8 +106,12 @@ describe("Glv Shifts", () => {
       },
     });
 
-    expect(await getBalanceOf(ethUsdMarket.marketToken, ethUsdGlvAddress)).to.be.eq(expandDecimals(9000, 18));
-    expect(await getBalanceOf(solUsdMarket.marketToken, ethUsdGlvAddress)).to.be.eq(expandDecimals(1000, 18));
+    await expectBalances({
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(9000, 18),
+        [solUsdMarket.marketToken]: expandDecimals(1000, 18),
+      },
+    });
   });
 
   describe("execute glv shift, validations", () => {
