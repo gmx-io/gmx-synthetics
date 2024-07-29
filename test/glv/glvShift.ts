@@ -69,7 +69,35 @@ describe("Glv Shifts", () => {
   });
 
   describe("create glv shift, validations", () => {
-    it.skip("InsufficientExecutionFee");
+    const params = {
+      glv: ethUsdGlvAddress,
+      fromMarket: ethUsdMarket,
+      toMarket: solUsdMarket,
+      marketTokenAmount: expandDecimals(100, 18),
+      minMarketTokens: expandDecimals(99, 18),
+      executionFee: 500,
+    };
+
+    it.only("InsufficientWntAmount", async () => {
+      await expect(
+        createGlvShift(fixture, { ...params, executionFeeToMint: 0, executionFee: 2 })
+      ).to.be.revertedWithCustomError(errorsContract, "InsufficientWntAmount");
+    });
+
+    it.only("InsufficientExecutionFee", async () => {
+      await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
+      await dataStore.setUint(keys.glvShiftGasLimitKey(), 1_000_000);
+      await handleGlvDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(1, 18),
+          shortTokenAmount: expandDecimals(5000, 6),
+        },
+      });
+      await expect(createGlvShift(fixture, { ...params, executionFee: 1 }))
+        .to.be.revertedWithCustomError(errorsContract, "InsufficientExecutionFee")
+        .withArgs("1000000008000000", "1");
+    });
+
     it.skip("EmptyGlv");
     it.skip("GlvUnsupportedMarket");
     it.skip("GlvDisabledMarket");

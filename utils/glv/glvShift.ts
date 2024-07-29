@@ -17,12 +17,13 @@ export async function createGlvShift(fixture, overrides: any = {}) {
   const sender = overrides.sender || wallet;
   const fromMarket = overrides.fromMarket || ethUsdMarket;
   const toMarket = overrides.toMarket || solUsdMarket;
-  const marketTokenAmount = overrides.marketTokenAmount || bigNumberify(0);
-  const minMarketTokens = overrides.minMarketTokens || bigNumberify(0);
-  const executionFee = overrides.executionFee || "1000000000000000";
-  const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
+  const marketTokenAmount = bigNumberify(overrides.marketTokenAmount ?? 0);
+  const minMarketTokens = bigNumberify(overrides.minMarketTokens ?? 0);
+  const executionFee = bigNumberify(overrides.executionFee || "1000000000000000");
+  const callbackGasLimit = bigNumberify(overrides.callbackGasLimit ?? 0);
 
-  await wnt.mint(glvVault.address, executionFee);
+  const executionFeeToMint = bigNumberify(overrides.executionFeeToMint ?? executionFee);
+  await wnt.mint(glvVault.address, executionFeeToMint);
 
   // const marketToken = await contractAt("MarketToken", fromMarket.marketToken);
   // await marketToken.connect(sender).transfer(glv, marketTokenAmount);

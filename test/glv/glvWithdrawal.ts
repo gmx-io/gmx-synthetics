@@ -2,6 +2,7 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 
+import * as keys from "../../utils/keys";
 import {
   getGlvWithdrawalCount,
   getGlvWithdrawalKeys,
@@ -13,7 +14,7 @@ import {
 } from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
 import { contractAt } from "../../utils/deploy";
-import { expandDecimals } from "../../utils/math";
+import { decimalToFloat, expandDecimals } from "../../utils/math";
 import { getSupplyOf } from "../../utils/token";
 import { handleDeposit } from "../../utils/deposit";
 import { errorsContract } from "../../utils/error";
@@ -55,9 +56,27 @@ describe("Glv Withdrawals", () => {
       };
     });
 
-    it.skip("InsufficientWntAmount");
-    it.skip("InsufficientExecutionFee");
-    it.skip("DisabledMarket");
+    it("InsufficientWntAmount", async () => {
+      await expect(
+        createGlvWithdrawal(fixture, { ...params, executionFeeToMint: 0, glvTokenAmount: 1, executionFee: 2 })
+      ).to.be.revertedWithCustomError(errorsContract, "InsufficientWntAmount");
+    });
+
+    it("InsufficientExecutionFee", async () => {
+      await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
+      await expect(createGlvWithdrawal(fixture, { ...params, glvTokenAmount: 1, executionFee: 1 }))
+        .to.be.revertedWithCustomError(errorsContract, "InsufficientExecutionFee")
+        .withArgs("100000000800000", "1");
+    });
+
+    it.skip("GlvDisabledMarket", async () => {
+      await dataStore.setBool(keys.isGlvMarketDisabledKey(params.glv, params.market), false);
+
+      await expect(createGlvWithdrawal(fixture, { ...params, glvTokenAmount: 1, executionFee: 1 }))
+        .to.be.revertedWithCustomError(errorsContract, "GlvDisabledMarket")
+        .withArgs(params.glv, params.market);
+    });
+
     it.skip("MaxSwapPathLengthExceeded");
     it.skip("InvalidSwapMarket");
 

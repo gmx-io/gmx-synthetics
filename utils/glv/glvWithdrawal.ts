@@ -42,14 +42,16 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
   const market = overrides.market || ethUsdMarket;
   const longTokenSwapPath = overrides.longTokenSwapPath || [];
   const shortTokenSwapPath = overrides.shortTokenSwapPath || [];
-  const glvTokenAmount = overrides.glvTokenAmount || bigNumberify(0);
-  const minLongTokenAmount = overrides.minLongTokenAmount || bigNumberify(0);
-  const minShortTokenAmount = overrides.minShortTokenAmount || bigNumberify(0);
+  const glvTokenAmount = bigNumberify(overrides.glvTokenAmount ?? 0);
+  const minLongTokenAmount = bigNumberify(overrides.minLongTokenAmount ?? 0);
+  const minShortTokenAmount = bigNumberify(overrides.minShortTokenAmount ?? 0);
   const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
-  const executionFee = overrides.executionFee || "1000000000000000";
-  const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
+  const executionFee = bigNumberify(overrides.executionFee ?? "1000000000000000");
+  const callbackGasLimit = bigNumberify(overrides.callbackGasLimit ?? 0);
 
-  await wnt.mint(glvVault.address, executionFee);
+  // allow for overriding executionFeeToMint to trigger InsufficientWntAmount error
+  const executionFeeToMint = bigNumberify(overrides.executionFeeToMint ?? executionFee);
+  await wnt.mint(glvVault.address, executionFeeToMint);
 
   const glvToken = await contractAt("GlvToken", glv);
 

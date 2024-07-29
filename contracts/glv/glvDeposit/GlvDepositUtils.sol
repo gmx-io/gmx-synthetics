@@ -127,8 +127,14 @@ library GlvDepositUtils {
 
         address wnt = TokenUtils.wnt(dataStore);
         if (params.initialLongToken == wnt) {
+            if (cache.initialLongTokenAmount < params.executionFee) {
+                revert Errors.InsufficientWntAmount(cache.initialLongTokenAmount, params.executionFee);
+            }
             cache.initialLongTokenAmount -= params.executionFee;
         } else if (params.initialShortToken == wnt) {
+            if (cache.initialShortTokenAmount < params.executionFee) {
+                revert Errors.InsufficientWntAmount(cache.initialShortTokenAmount, params.executionFee);
+            }
             cache.initialShortTokenAmount -= params.executionFee;
         } else {
             uint256 wntAmount = glvVault.recordTransferIn(wnt);

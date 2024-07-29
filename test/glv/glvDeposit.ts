@@ -11,7 +11,7 @@ import {
   handleGlvDeposit,
 } from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
-import { expandDecimals } from "../../utils/math";
+import { decimalToFloat, expandDecimals } from "../../utils/math";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import { increaseTime } from "../../utils/time";
@@ -69,7 +69,18 @@ describe("Glv Deposits", () => {
       };
     });
 
-    it.skip("InsufficientExecutionFee");
+    it("InsufficientWntAmount", async () => {
+      await expect(
+        createGlvDeposit(fixture, { ...params, executionFeeToMint: 0, longTokenAmount: 1, executionFee: 2 })
+      ).to.be.revertedWithCustomError(errorsContract, "InsufficientWntAmount");
+    });
+
+    it("InsufficientExecutionFee", async () => {
+      await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
+      await expect(createGlvDeposit(fixture, { ...params, longTokenAmount: 1, executionFee: 1 }))
+        .to.be.revertedWithCustomError(errorsContract, "InsufficientExecutionFee")
+        .withArgs("200000001600000", "1");
+    });
 
     it("EmptyAccount", async () => {
       await expect(
@@ -364,7 +375,18 @@ describe("Glv Deposits", () => {
     const minGlvTokensForFirstGlvDeposit = expandDecimals(1000, 18);
     const firstDepositReceiver = { address: "0x0000000000000000000000000000000000000001" };
 
-    it.skip("EmptyGlvDeposit");
+    it("EmptyGlvDeposit", async () => {
+      await handleGlvDeposit(fixture, {
+        create: {
+          initialLongToken: wbtc.address,
+          longTokenAmount: expandDecimals(1, 8),
+        },
+        execute: {
+          expectedCancellationReason: "InvalidSwapOutputToken",
+          key: ethers.constants.HashZero,
+        },
+      });
+    });
 
     it("invalid long token", async () => {
       await handleGlvDeposit(fixture, {

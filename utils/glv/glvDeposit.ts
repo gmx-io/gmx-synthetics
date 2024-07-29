@@ -44,16 +44,16 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
   const initialShortToken = overrides.initialShortToken || market.shortToken;
   const longTokenSwapPath = overrides.longTokenSwapPath || [];
   const shortTokenSwapPath = overrides.shortTokenSwapPath || [];
-  const minGlvTokens = overrides.minGlvTokens || bigNumberify(0);
+  const minGlvTokens = bigNumberify(overrides.minGlvTokens ?? 0);
   const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
-  const executionFee = overrides.executionFee || "1000000000000000";
-  const executionFeeToMint = overrides.executionFeeToMint || executionFee;
-  const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
-  const marketTokenAmount = overrides.marketTokenAmount || bigNumberify(0);
-  const longTokenAmount = overrides.longTokenAmount || bigNumberify(0);
-  const shortTokenAmount = overrides.shortTokenAmount || bigNumberify(0);
+  const executionFee = bigNumberify(overrides.executionFee ?? "1000000000000000");
+  const callbackGasLimit = bigNumberify(overrides.callbackGasLimit ?? 0);
+  const marketTokenAmount = bigNumberify(overrides.marketTokenAmount ?? 0);
+  const longTokenAmount = bigNumberify(overrides.longTokenAmount ?? 0);
+  const shortTokenAmount = bigNumberify(overrides.shortTokenAmount ?? 0);
   const isMarketTokenDeposit = overrides.isMarketTokenDeposit || false;
 
+  const executionFeeToMint = bigNumberify(overrides.executionFeeToMint ?? executionFee);
   await wnt.mint(glvVault.address, executionFeeToMint);
 
   if (marketTokenAmount.gt(0)) {
