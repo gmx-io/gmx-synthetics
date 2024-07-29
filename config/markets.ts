@@ -865,7 +865,7 @@ const config: {
       maxShortTokenPoolUsdForDeposit: decimalToFloat(7_200_000),
 
       negativePositionImpactFactor: decimalToFloat(4, 10),
-      positivePositionImpactFactor: decimalToFloat(1, 10),
+      positivePositionImpactFactor: decimalToFloat(2, 10),
       positionImpactExponentFactor: decimalToFloat(22, 1), // 2.2
 
       negativeSwapImpactFactor: decimalToFloat(6, 9),
@@ -1317,8 +1317,8 @@ const config: {
 
       swapOnly: true,
 
-      maxLongTokenPoolAmount: expandDecimals(11_000_000, 6),
-      maxShortTokenPoolAmount: expandDecimals(11_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(3300, 18),
+      maxShortTokenPoolAmount: expandDecimals(3300, 18),
 
       maxLongTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
@@ -1342,8 +1342,8 @@ const config: {
       maxLongTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
 
-      negativeSwapImpactFactor: decimalToFloat(3, 8),
-      positiveSwapImpactFactor: decimalToFloat(3, 8),
+      negativeSwapImpactFactor: decimalToFloat(15, 10), // 0.01% for 66,667 USD of imbalance
+      positiveSwapImpactFactor: decimalToFloat(15, 10), // 0.01% for 66,667 USD of imbalance
 
       swapFeeFactorForPositiveImpact: decimalToFloat(5, 5), // 0.005%,
       swapFeeFactorForNegativeImpact: decimalToFloat(2, 4), // 0.02%,
