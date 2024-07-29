@@ -93,16 +93,17 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
 
         (string memory reason /* bool hasRevertMessage */, ) = ErrorUtils.getRevertMessage(reasonBytes);
 
-        GlvDepositUtils.cancelGlvDeposit(
-            dataStore,
-            eventEmitter,
-            glvVault,
-            key,
-            msg.sender,
-            startingGas,
-            reason,
-            reasonBytes
-        );
+        GlvDepositUtils.CancelGlvDepositParams memory params = GlvDepositUtils.CancelGlvDepositParams({
+            dataStore: dataStore,
+            eventEmitter: eventEmitter,
+            glvVault: glvVault,
+            key: key,
+            keeper: msg.sender,
+            startingGas: startingGas,
+            reason: reason,
+            reasonBytes: reasonBytes
+        });
+        GlvDepositUtils.cancelGlvDeposit(params);
     }
 
     function cancelGlvDeposit(bytes32 key) external globalNonReentrant onlyController {
@@ -114,16 +115,17 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(_dataStore, key);
         validateRequestCancellation(glvDeposit.updatedAtTime(), "GlvDeposit");
 
-        GlvDepositUtils.cancelGlvDeposit(
-            _dataStore,
-            eventEmitter,
-            glvVault,
-            key,
-            msg.sender,
-            startingGas,
-            Keys.USER_INITIATED_CANCEL,
-            ""
-        );
+        GlvDepositUtils.CancelGlvDepositParams memory params = GlvDepositUtils.CancelGlvDepositParams({
+            dataStore: dataStore,
+            eventEmitter: eventEmitter,
+            glvVault: glvVault,
+            key: key,
+            keeper: msg.sender,
+            startingGas: startingGas,
+            reason: Keys.USER_INITIATED_CANCEL,
+            reasonBytes: ""
+        });
+        GlvDepositUtils.cancelGlvDeposit(params);
     }
 
     function createGlvWithdrawal(
@@ -192,16 +194,17 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
 
         (string memory reason /* bool hasRevertMessage */, ) = ErrorUtils.getRevertMessage(reasonBytes);
 
-        GlvWithdrawalUtils.cancelGlvWithdrawal(
-            dataStore,
-            eventEmitter,
-            glvVault,
-            key,
-            msg.sender,
-            startingGas,
-            reason,
-            reasonBytes
-        );
+        GlvWithdrawalUtils.CancelGlvWithdrawalParams memory params = GlvWithdrawalUtils.CancelGlvWithdrawalParams({
+            dataStore: dataStore,
+            eventEmitter: eventEmitter,
+            glvVault: glvVault,
+            key: key,
+            keeper: msg.sender,
+            startingGas: startingGas,
+            reason: reason,
+            reasonBytes: reasonBytes
+        });
+        GlvWithdrawalUtils.cancelGlvWithdrawal(params);
     }
 
     function cancelGlvWithdrawal(bytes32 key) external globalNonReentrant onlyController {
@@ -213,16 +216,17 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(_dataStore, key);
         validateRequestCancellation(glvWithdrawal.updatedAtTime(), "GlvWithdrawal");
 
-        GlvWithdrawalUtils.cancelGlvWithdrawal(
-            _dataStore,
-            eventEmitter,
-            glvVault,
-            key,
-            msg.sender,
-            startingGas,
-            Keys.USER_INITIATED_CANCEL,
-            ""
-        );
+        GlvWithdrawalUtils.CancelGlvWithdrawalParams memory params = GlvWithdrawalUtils.CancelGlvWithdrawalParams({
+            dataStore: dataStore,
+            eventEmitter: eventEmitter,
+            glvVault: glvVault,
+            key: key,
+            keeper: msg.sender,
+            startingGas: startingGas,
+            reason: Keys.USER_INITIATED_CANCEL,
+            reasonBytes: ""
+        });
+        GlvWithdrawalUtils.cancelGlvWithdrawal(params);
     }
 
     function simulateExecuteGlvDeposit(

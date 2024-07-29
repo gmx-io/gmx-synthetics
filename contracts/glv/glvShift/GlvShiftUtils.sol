@@ -9,6 +9,7 @@ import "../../bank/Bank.sol";
 import "../../event/EventEmitter.sol";
 import "../../shift/ShiftUtils.sol";
 import "../GlvUtils.sol";
+import "../GlvToken.sol";
 import "../GlvVault.sol";
 
 import "./GlvShiftStoreUtils.sol";
@@ -63,6 +64,8 @@ library GlvShiftUtils {
         uint256 receivedMarketTokens;
         uint256 receivedMarketTokensUsd;
         bytes32 shiftKey;
+        uint256 glvValue;
+        uint256 glvSupply;
     }
 
     function createGlvShift(
@@ -152,7 +155,6 @@ library GlvShiftUtils {
         validateGlvShiftInterval(params.dataStore, glvShift.glv());
         params.dataStore.setUint(Keys.glvShiftLastExecutedAtKey(glvShift.glv()), block.timestamp);
 
-
         Bank(payable(glvShift.glv())).transferOut(
             glvShift.fromMarket(),
             address(params.shiftVault),
@@ -241,6 +243,16 @@ library GlvShiftUtils {
         validatePriceImpact(params.dataStore, glvShift.glv(), cache.marketTokensUsd, cache.receivedMarketTokensUsd);
 
         GlvShiftEventUtils.emitGlvShiftExecuted(params.eventEmitter, params.key, cache.receivedMarketTokens);
+
+        cache.glvValue = GlvUtils.getGlvValue(
+            params.dataStore,
+            params.oracle,
+            glvShift.glv(),
+            Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
+            true // maximize
+        );
+        cache.glvSupply = GlvToken(payable(glvShift.glv())).totalSupply();
+        GlvEventUtils.emitGlvValueUpdated(params.eventEmitter, glvShift.glv(), cache.glvValue, cache.glvSupply);
 
         GasUtils.payExecutionFee(
             params.dataStore,

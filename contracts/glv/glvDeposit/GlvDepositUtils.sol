@@ -73,6 +73,17 @@ library GlvDepositUtils {
         uint256 glvSupply;
     }
 
+    struct CancelGlvDepositParams {
+        DataStore dataStore;
+        EventEmitter eventEmitter;
+        GlvVault glvVault;
+        bytes32 key;
+        address keeper;
+        uint256 startingGas;
+        string reason;
+        bytes reasonBytes;
+    }
+
     address public constant RECEIVER_FOR_FIRST_GLV_DEPOSIT = address(1);
 
     function createGlvDeposit(
@@ -279,6 +290,12 @@ library GlvDepositUtils {
             cache.marketCount,
             glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length
         );
+
+        EventUtils.EventLogData memory eventData;
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "receivedGlvTokens", cache.mintAmount);
+        CallbackUtils.afterGlvDepositExecution(params.key, glvDeposit, eventData);
+
         GasUtils.payExecutionFee(
             params.dataStore,
             params.eventEmitter,
@@ -291,11 +308,6 @@ library GlvDepositUtils {
             params.keeper,
             glvDeposit.receiver()
         );
-
-        EventUtils.EventLogData memory eventData;
-        eventData.uintItems.initItems(1);
-        eventData.uintItems.setItem(0, "receivedGlvTokens", cache.mintAmount);
-        CallbackUtils.afterGlvDepositExecution(params.key, glvDeposit, eventData);
 
         return cache.mintAmount;
     }
@@ -410,23 +422,16 @@ library GlvDepositUtils {
     }
 
     function cancelGlvDeposit(
-        DataStore dataStore,
-        EventEmitter eventEmitter,
-        GlvVault glvVault,
-        bytes32 key,
-        address keeper,
-        uint256 startingGas,
-        string memory reason,
-        bytes memory reasonBytes
+        CancelGlvDepositParams memory params
     ) external {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
-        startingGas -= gasleft() / 63;
+        params.startingGas -= gasleft() / 63;
 
-        GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(dataStore, key);
-        GlvDepositStoreUtils.remove(dataStore, key, glvDeposit.account());
+        GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(params.dataStore, params.key);
+        GlvDepositStoreUtils.remove(params.dataStore, params.key, glvDeposit.account());
 
         if (glvDeposit.marketTokenAmount() > 0) {
-            glvVault.transferOut(
+            params.glvVault.transferOut(
                 glvDeposit.market(),
                 glvDeposit.account(),
                 glvDeposit.marketTokenAmount(),
@@ -435,7 +440,7 @@ library GlvDepositUtils {
         }
 
         if (glvDeposit.initialLongTokenAmount() > 0) {
-            glvVault.transferOut(
+            params.glvVault.transferOut(
                 glvDeposit.initialLongToken(),
                 glvDeposit.account(),
                 glvDeposit.initialLongTokenAmount(),
@@ -444,7 +449,7 @@ library GlvDepositUtils {
         }
 
         if (glvDeposit.initialShortTokenAmount() > 0) {
-            glvVault.transferOut(
+            params.glvVault.transferOut(
                 glvDeposit.initialShortToken(),
                 glvDeposit.account(),
                 glvDeposit.initialShortTokenAmount(),
@@ -452,26 +457,27 @@ library GlvDepositUtils {
             );
         }
 
-        GlvDepositEventUtils.emitGlvDepositCancelled(eventEmitter, key, glvDeposit.account(), reason, reasonBytes);
-
-        uint256 marketCount = GlvUtils.getGlvMarketCount(dataStore, glvDeposit.glv());
-        GasUtils.payExecutionFee(
-            dataStore,
-            eventEmitter,
-            glvVault,
-            key,
-            glvDeposit.callbackContract(),
-            glvDeposit.executionFee(),
-            startingGas,
-            GasUtils.estimateGlvDepositOraclePriceCount(
-                marketCount,
-                glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length
-            ),
-            keeper,
-            glvDeposit.receiver()
-        );
+        GlvDepositEventUtils.emitGlvDepositCancelled(params.eventEmitter, params.key, glvDeposit.account(), params.reason, params.reasonBytes);
 
         EventUtils.EventLogData memory eventData;
-        CallbackUtils.afterGlvDepositCancellation(key, glvDeposit, eventData);
+        CallbackUtils.afterGlvDepositCancellation(params.key, glvDeposit, eventData);
+
+        uint256 marketCount = GlvUtils.getGlvMarketCount(params.dataStore, glvDeposit.glv());
+        uint256 oraclePriceCount = GasUtils.estimateGlvDepositOraclePriceCount(
+            marketCount,
+            glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length
+        );
+        GasUtils.payExecutionFee(
+            params.dataStore,
+            params.eventEmitter,
+            params.glvVault,
+            params.key,
+            glvDeposit.callbackContract(),
+            glvDeposit.executionFee(),
+            params.startingGas,
+            oraclePriceCount,
+            params.keeper,
+            glvDeposit.receiver()
+        );
     }
 }

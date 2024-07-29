@@ -59,6 +59,17 @@ library GlvWithdrawalUtils {
         uint256 oraclePriceCount;
     }
 
+    struct CancelGlvWithdrawalParams {
+        DataStore dataStore;
+        EventEmitter eventEmitter;
+        GlvVault glvVault;
+        bytes32 key;
+        address keeper;
+        uint256 startingGas;
+        string reason;
+        bytes reasonBytes;
+    }
+
     function createGlvWithdrawal(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -288,23 +299,14 @@ library GlvWithdrawalUtils {
         return marketTokenAmount;
     }
 
-    function cancelGlvWithdrawal(
-        DataStore dataStore,
-        EventEmitter eventEmitter,
-        GlvVault glvVault,
-        bytes32 key,
-        address keeper,
-        uint256 startingGas,
-        string memory reason,
-        bytes memory reasonBytes
-    ) external {
+    function cancelGlvWithdrawal(CancelGlvWithdrawalParams memory params) external {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
-        startingGas -= gasleft() / 63;
+        params.startingGas -= gasleft() / 63;
 
-        GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(dataStore, key);
-        GlvWithdrawalStoreUtils.remove(dataStore, key, glvWithdrawal.account());
+        GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(params.dataStore, params.key);
+        GlvWithdrawalStoreUtils.remove(params.dataStore, params.key, glvWithdrawal.account());
 
-        glvVault.transferOut(
+        params.glvVault.transferOut(
             glvWithdrawal.glv(),
             glvWithdrawal.account(),
             glvWithdrawal.glvTokenAmount(),
@@ -312,31 +314,31 @@ library GlvWithdrawalUtils {
         );
 
         GlvWithdrawalEventUtils.emitGlvWithdrawalCancelled(
-            eventEmitter,
-            key,
+            params.eventEmitter,
+            params.key,
             glvWithdrawal.account(),
-            reason,
-            reasonBytes
+            params.reason,
+            params.reasonBytes
         );
 
-        uint256 marketCount = GlvUtils.getGlvMarketCount(dataStore, glvWithdrawal.glv());
+        EventUtils.EventLogData memory eventData;
+        CallbackUtils.afterGlvWithdrawalCancellation(params.key, glvWithdrawal, eventData);
+
+        uint256 marketCount = GlvUtils.getGlvMarketCount(params.dataStore, glvWithdrawal.glv());
         GasUtils.payExecutionFee(
-            dataStore,
-            eventEmitter,
-            glvVault,
-            key,
+            params.dataStore,
+            params.eventEmitter,
+            params.glvVault,
+            params.key,
             glvWithdrawal.callbackContract(),
             glvWithdrawal.executionFee(),
-            startingGas,
+            params.startingGas,
             GasUtils.estimateGlvWithdrawalOraclePriceCount(
                 marketCount,
                 glvWithdrawal.longTokenSwapPath().length + glvWithdrawal.shortTokenSwapPath().length
             ),
-            keeper,
+            params.keeper,
             glvWithdrawal.receiver()
         );
-
-        EventUtils.EventLogData memory eventData;
-        CallbackUtils.afterGlvWithdrawalCancellation(key, glvWithdrawal, eventData);
     }
 }
