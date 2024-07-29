@@ -17,7 +17,7 @@ import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import { increaseTime } from "../../utils/time";
 import { printGasUsage } from "../../utils/gas";
-import { contractAt } from "../../utils/deploy";
+import { contractAt, deployContract } from "../../utils/deploy";
 import { handleDeposit } from "../../utils/deposit";
 import { expectBalances } from "../../utils/validation";
 
@@ -275,6 +275,39 @@ describe("Glv Deposits", () => {
       [user0.address]: {
         [ethUsdGlvAddress]: expandDecimals(100_000, 18),
       },
+    });
+  });
+
+  it("execute glv deposit with callback", async () => {
+    const mockCallbackReceiver = await deployContract("MockCallbackReceiver", []);
+    const params = {
+      longTokenAmount: expandDecimals(1, 18),
+      callbackContract: mockCallbackReceiver,
+      callbackGasLimit: 0,
+    };
+    expect(await mockCallbackReceiver.glvDepositExecutionCalled()).to.be.eq(0);
+
+    await handleGlvDeposit(fixture, { create: params });
+    expect(await mockCallbackReceiver.glvDepositExecutionCalled()).to.be.eq(0);
+    expect(await mockCallbackReceiver.glvDepositCancellationCalled()).to.be.eq(0);
+
+    await handleGlvDeposit(fixture, { create: { ...params, callbackGasLimit: 1_000_000 } });
+    expect(await mockCallbackReceiver.glvDepositExecutionCalled()).to.be.eq(1);
+    expect(await mockCallbackReceiver.glvDepositCancellationCalled()).to.be.eq(0);
+
+    await handleGlvDeposit(fixture, {
+      create: { ...params, minGlvTokens: expandDecimals(5001, 18), callbackGasLimit: 1_000_000 },
+      execute: {
+        expectedCancellationReason: "MinGlvTokens",
+      },
+    });
+    expect(await mockCallbackReceiver.glvDepositExecutionCalled()).to.be.eq(1);
+    expect(await mockCallbackReceiver.glvDepositCancellationCalled()).to.be.eq(1);
+
+    // should be some deployed contract
+    const badCallbackReceiver = { address: ethUsdMarket.marketToken };
+    await handleGlvDeposit(fixture, {
+      create: { ...params, callbackContract: badCallbackReceiver, callbackGasLimit: 1_000_000 },
     });
   });
 

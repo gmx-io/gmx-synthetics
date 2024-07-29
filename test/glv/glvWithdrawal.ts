@@ -13,7 +13,7 @@ import {
   expectEmptyGlvWithdrawal,
 } from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
-import { contractAt } from "../../utils/deploy";
+import { contractAt, deployContract } from "../../utils/deploy";
 import { decimalToFloat, expandDecimals } from "../../utils/math";
 import { getSupplyOf } from "../../utils/token";
 import { handleDeposit } from "../../utils/deposit";
@@ -341,6 +341,45 @@ describe("Glv Withdrawals", () => {
       [ethUsdGlvAddress]: {
         [ethUsdMarket.marketToken]: 0,
       },
+    });
+  });
+
+  it("execute glv deposit with callback", async () => {
+    const mockCallbackReceiver = await deployContract("MockCallbackReceiver", []);
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(1, 18),
+      },
+    });
+
+    const params = {
+      glvTokenAmount: expandDecimals(100, 18),
+      callbackContract: mockCallbackReceiver,
+      callbackGasLimit: 0,
+    };
+    expect(await mockCallbackReceiver.glvWithdrawalExecutionCalled()).to.be.eq(0);
+
+    await handleGlvWithdrawal(fixture, { create: params });
+    expect(await mockCallbackReceiver.glvWithdrawalExecutionCalled()).to.be.eq(0);
+    expect(await mockCallbackReceiver.glvWithdrawalCancellationCalled()).to.be.eq(0);
+
+    await handleGlvWithdrawal(fixture, { create: { ...params, callbackGasLimit: 1_000_000 } });
+    expect(await mockCallbackReceiver.glvWithdrawalExecutionCalled()).to.be.eq(1);
+    expect(await mockCallbackReceiver.glvWithdrawalCancellationCalled()).to.be.eq(0);
+
+    await handleGlvWithdrawal(fixture, {
+      create: { ...params, minLongTokenAmount: expandDecimals(1, 18), callbackGasLimit: 1_000_000 },
+      execute: {
+        expectedCancellationReason: "InsufficientOutputAmount",
+      },
+    });
+    expect(await mockCallbackReceiver.glvWithdrawalExecutionCalled()).to.be.eq(1);
+    expect(await mockCallbackReceiver.glvWithdrawalCancellationCalled()).to.be.eq(1);
+
+    // should be some deployed contract
+    const badCallbackReceiver = { address: ethUsdMarket.marketToken };
+    await handleGlvWithdrawal(fixture, {
+      create: { ...params, callbackContract: badCallbackReceiver, callbackGasLimit: 1_000_000 },
     });
   });
 

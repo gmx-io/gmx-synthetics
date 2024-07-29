@@ -309,7 +309,9 @@ library CallbackUtils {
         GlvDeposit.Props memory glvDeposit,
         EventUtils.EventLogData memory eventData
     ) internal {
-        if (!isValidCallbackContract(glvDeposit.callbackContract())) { return; }
+        if (!isValidCallbackContract(glvDeposit.callbackContract())) {
+            return;
+        }
 
         try IGlvDepositCallbackReceiver(glvDeposit.callbackContract()).afterGlvDepositExecution{ gas: glvDeposit.callbackGasLimit() }(
             key,

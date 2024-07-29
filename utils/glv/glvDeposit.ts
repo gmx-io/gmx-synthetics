@@ -167,7 +167,13 @@ export async function executeGlvDeposit(fixture, overrides: any = {}) {
   return result;
 }
 
-export async function handleGlvDeposit(fixture, overrides: any = {}) {
+export async function handleGlvDeposit(
+  fixture,
+  overrides: {
+    create?: any;
+    execute?: any;
+  } = {}
+) {
   const createResult = await createGlvDeposit(fixture, overrides.create);
 
   const createOverridesCopy = { ...overrides.create };
