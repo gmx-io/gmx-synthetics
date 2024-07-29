@@ -388,6 +388,18 @@ describe("Glv Deposits", () => {
     const minGlvTokensForFirstGlvDeposit = expandDecimals(1000, 18);
     const firstDepositReceiver = { address: "0x0000000000000000000000000000000000000001" };
 
+    it("EmptyAccount", async () => {
+      await expect(
+        createGlvDeposit(fixture, { account: { address: ethers.constants.AddressZero } })
+      ).to.be.revertedWithCustomError(errorsContract, "EmptyAccount");
+    });
+
+    it("EmptyReceiver", async () => {
+      await expect(
+        createGlvDeposit(fixture, { longTokenAmount: 1, receiver: { address: ethers.constants.AddressZero } })
+      ).to.be.revertedWithCustomError(errorsContract, "EmptyReceiver");
+    });
+
     it("GlvDepositNotFound", async () => {
       const key = ethers.constants.HashZero.slice(0, -1) + "f";
       await expect(
