@@ -87,7 +87,12 @@ describe("Glv Shifts", () => {
       await createGlvShift(fixture, { ...params, executionFee: "1000000008000000" });
     });
 
-    it.skip("EmptyGlv");
+    it("EmptyGlv", async () => {
+      const badGlvAddress = ethers.constants.AddressZero.slice(0, -1) + "C";
+      await expect(createGlvShift(fixture, { ...params, glv: badGlvAddress }))
+        .to.be.revertedWithCustomError(errorsContract, "EmptyGlv")
+        .withArgs(badGlvAddress);
+    });
 
     it("GlvUnsupportedMarket", async () => {
       await expect(createGlvShift(fixture, { ...params, fromMarket: btcUsdMarket }))
@@ -113,6 +118,8 @@ describe("Glv Shifts", () => {
         .to.be.revertedWithCustomError(errorsContract, "GlvDisabledMarket")
         .withArgs(ethUsdGlvAddress, solUsdMarket.marketToken);
 
+      // the opposite is okay
+      // it is possible to move liquidity FROM disabled market
       await createGlvShift(fixture, { fromMarket: solUsdMarket, toMarket: ethUsdMarket });
     });
 
@@ -178,175 +185,138 @@ describe("Glv Shifts", () => {
         .withArgs(key);
     });
 
-    it("MinMarketTokens", async () => {
-      await handleGlvDeposit(fixture, {
-        create: {
-          longTokenAmount: expandDecimals(1, 18),
-          shortTokenAmount: expandDecimals(5000, 6),
-        },
-      });
-      await handleGlvShift(fixture, {
-        create: {
-          fromMarket: ethUsdMarket,
-          toMarket: solUsdMarket,
-          marketTokenAmount: expandDecimals(1000, 18),
-          minMarketTokens: expandDecimals(1001, 18),
-        },
-        execute: {
-          expectedCancellationReason: {
-            name: "MinMarketTokens",
-            args: [expandDecimals(1000, 18), expandDecimals(1001, 18)],
+    describe("with initial deposit", () => {
+      // just to avoid copy-pasting `handleGlvDeposit` in all tests
+      beforeEach(async () => {
+        await handleGlvDeposit(fixture, {
+          create: {
+            longTokenAmount: expandDecimals(1, 18),
+            shortTokenAmount: expandDecimals(5000, 6),
           },
-        },
+        });
       });
 
-      await handleGlvShift(fixture, {
-        create: {
-          fromMarket: ethUsdMarket,
-          toMarket: solUsdMarket,
-          marketTokenAmount: expandDecimals(1000, 18),
-          minMarketTokens: expandDecimals(1000, 18),
-        },
-      });
-    });
+      it("MinMarketTokens", async () => {
+        await handleGlvShift(fixture, {
+          create: {
+            marketTokenAmount: expandDecimals(1000, 18),
+            minMarketTokens: expandDecimals(1001, 18),
+          },
+          execute: {
+            expectedCancellationReason: {
+              name: "MinMarketTokens",
+              args: [expandDecimals(1000, 18), expandDecimals(1001, 18)],
+            },
+          },
+        });
 
-    it("GlvShiftIntervalNotYetPassed", async () => {
-      await handleGlvDeposit(fixture, {
-        create: {
-          longTokenAmount: expandDecimals(1, 18),
-          shortTokenAmount: expandDecimals(5000, 6),
-        },
-      });
-
-      const createGlvShiftParams = {
-        fromMarket: ethUsdMarket,
-        toMarket: solUsdMarket,
-        marketTokenAmount: expandDecimals(1000, 18),
-        minMarketTokens: expandDecimals(1000, 18),
-      };
-
-      expect(await dataStore.getUint(keys.glvShiftMinIntervalKey(ethUsdGlvAddress))).to.be.eq(0);
-      // can execute multiple shifts in a row
-      await handleGlvShift(fixture, { create: createGlvShiftParams });
-      await handleGlvShift(fixture, { create: createGlvShiftParams });
-
-      let lastGlvShiftExecutedAt = await time.latest();
-
-      await createGlvShift(fixture, createGlvShiftParams);
-      await dataStore.setUint(keys.glvShiftMinIntervalKey(ethUsdGlvAddress), 60);
-
-      await expect(createGlvShift(fixture, createGlvShiftParams)).to.be.revertedWithCustomError(
-        errorsContract,
-        "GlvShiftIntervalNotYetPassed"
-      );
-
-      await expect(executeGlvShift(fixture)).to.be.revertedWithCustomError(
-        errorsContract,
-        "GlvShiftIntervalNotYetPassed"
-      );
-
-      await time.setNextBlockTimestamp(lastGlvShiftExecutedAt + 60);
-      await executeGlvShift(fixture);
-
-      lastGlvShiftExecutedAt = await time.latest();
-      await time.setNextBlockTimestamp(lastGlvShiftExecutedAt + 60);
-      await createGlvShift(fixture, createGlvShiftParams);
-    });
-
-    it("GlvMaxMarketTokenBalanceUsdExceeded", async () => {
-      await handleGlvDeposit(fixture, {
-        create: {
-          longTokenAmount: expandDecimals(1, 18),
-          shortTokenAmount: expandDecimals(5000, 6),
-        },
+        await handleGlvShift(fixture, {
+          create: {
+            marketTokenAmount: expandDecimals(1000, 18),
+            minMarketTokens: expandDecimals(1000, 18),
+          },
+        });
       });
 
-      await dataStore.setUint(
-        keys.glvMaxMarketTokenBalanceUsdKey(ethUsdGlvAddress, solUsdMarket.marketToken),
-        expandDecimals(999, 30)
-      );
-      await handleGlvShift(fixture, {
-        create: {
-          fromMarket: ethUsdMarket,
-          toMarket: solUsdMarket,
+      it("GlvShiftIntervalNotYetPassed", async () => {
+        const params = {
           marketTokenAmount: expandDecimals(1000, 18),
           minMarketTokens: expandDecimals(1000, 18),
-        },
-        execute: {
-          expectedCancellationReason: {
-            name: "GlvMaxMarketTokenBalanceUsdExceeded",
-            args: [ethUsdGlvAddress, solUsdMarket.marketToken, expandDecimals(999, 30), expandDecimals(1000, 30)],
+        };
+
+        expect(await dataStore.getUint(keys.glvShiftMinIntervalKey(ethUsdGlvAddress))).to.be.eq(0);
+        // can execute multiple shifts in a row
+        await handleGlvShift(fixture, { create: params });
+        await handleGlvShift(fixture, { create: params });
+
+        let lastGlvShiftExecutedAt = await time.latest();
+
+        await createGlvShift(fixture, params);
+        await dataStore.setUint(keys.glvShiftMinIntervalKey(ethUsdGlvAddress), 60);
+
+        await expect(createGlvShift(fixture, params)).to.be.revertedWithCustomError(
+          errorsContract,
+          "GlvShiftIntervalNotYetPassed"
+        );
+
+        await expect(executeGlvShift(fixture)).to.be.revertedWithCustomError(
+          errorsContract,
+          "GlvShiftIntervalNotYetPassed"
+        );
+
+        await time.setNextBlockTimestamp(lastGlvShiftExecutedAt + 60);
+        await executeGlvShift(fixture);
+
+        lastGlvShiftExecutedAt = await time.latest();
+        await time.setNextBlockTimestamp(lastGlvShiftExecutedAt + 60);
+        await createGlvShift(fixture, params);
+      });
+
+      it("GlvMaxMarketTokenBalanceUsdExceeded", async () => {
+        await dataStore.setUint(
+          keys.glvMaxMarketTokenBalanceUsdKey(ethUsdGlvAddress, solUsdMarket.marketToken),
+          expandDecimals(999, 30)
+        );
+        await handleGlvShift(fixture, {
+          create: {
+            marketTokenAmount: expandDecimals(1000, 18),
+            minMarketTokens: expandDecimals(1000, 18),
           },
-        },
-      });
-
-      await handleGlvShift(fixture, {
-        create: {
-          fromMarket: ethUsdMarket,
-          toMarket: solUsdMarket,
-          marketTokenAmount: expandDecimals(999, 18),
-          minMarketTokens: expandDecimals(999, 18),
-        },
-      });
-    });
-
-    it("GlvMaxMarketTokenBalanceAmountExceeded", async () => {
-      await handleGlvDeposit(fixture, {
-        create: {
-          longTokenAmount: expandDecimals(1, 18),
-          shortTokenAmount: expandDecimals(5000, 6),
-        },
-      });
-
-      await dataStore.setUint(
-        keys.glvMaxMarketTokenBalanceAmountKey(ethUsdGlvAddress, solUsdMarket.marketToken),
-        expandDecimals(500, 18)
-      );
-      await handleGlvShift(fixture, {
-        create: {
-          fromMarket: ethUsdMarket,
-          toMarket: solUsdMarket,
-          marketTokenAmount: expandDecimals(501, 18),
-          minMarketTokens: expandDecimals(501, 18),
-        },
-        execute: {
-          expectedCancellationReason: {
-            name: "GlvMaxMarketTokenBalanceAmountExceeded",
-            args: [ethUsdGlvAddress, solUsdMarket.marketToken, expandDecimals(500, 18), expandDecimals(501, 18)],
+          execute: {
+            expectedCancellationReason: {
+              name: "GlvMaxMarketTokenBalanceUsdExceeded",
+              args: [ethUsdGlvAddress, solUsdMarket.marketToken, expandDecimals(999, 30), expandDecimals(1000, 30)],
+            },
           },
-        },
+        });
+
+        await handleGlvShift(fixture, {
+          create: {
+            marketTokenAmount: expandDecimals(999, 18),
+            minMarketTokens: expandDecimals(999, 18),
+          },
+        });
       });
 
-      await handleGlvShift(fixture, {
-        create: {
-          fromMarket: ethUsdMarket,
-          toMarket: solUsdMarket,
-          marketTokenAmount: expandDecimals(500, 18),
-          minMarketTokens: expandDecimals(500, 18),
-        },
-      });
-    });
+      it("GlvMaxMarketTokenBalanceAmountExceeded", async () => {
+        await dataStore.setUint(
+          keys.glvMaxMarketTokenBalanceAmountKey(ethUsdGlvAddress, solUsdMarket.marketToken),
+          expandDecimals(500, 18)
+        );
+        await handleGlvShift(fixture, {
+          create: {
+            marketTokenAmount: expandDecimals(501, 18),
+            minMarketTokens: expandDecimals(501, 18),
+          },
+          execute: {
+            expectedCancellationReason: {
+              name: "GlvMaxMarketTokenBalanceAmountExceeded",
+              args: [ethUsdGlvAddress, solUsdMarket.marketToken, expandDecimals(500, 18), expandDecimals(501, 18)],
+            },
+          },
+        });
 
-    it("OracleTimestampsAreLargerThanRequestExpirationTime", async () => {
-      await handleGlvDeposit(fixture, {
-        create: {
-          longTokenAmount: expandDecimals(1, 18),
-          shortTokenAmount: expandDecimals(5000, 6),
-        },
+        await handleGlvShift(fixture, {
+          create: {
+            marketTokenAmount: expandDecimals(500, 18),
+            minMarketTokens: expandDecimals(500, 18),
+          },
+        });
       });
-      await createGlvShift(fixture, {
-        fromMarket: ethUsdMarket,
-        toMarket: solUsdMarket,
-        marketTokenAmount: expandDecimals(1000, 18),
-      });
-      const block = await time.latestBlock();
-      await expect(
-        executeGlvShift(fixture, {
-          oracleBlockNumber: block - 1,
-        })
-      ).to.be.revertedWithCustomError(errorsContract, "OracleTimestampsAreSmallerThanRequired");
-      await executeGlvShift(fixture, {
-        oracleBlockNumber: block,
+
+      it("OracleTimestampsAreLargerThanRequestExpirationTime", async () => {
+        await createGlvShift(fixture, {
+          marketTokenAmount: expandDecimals(1000, 18),
+        });
+        const block = await time.latestBlock();
+        await expect(
+          executeGlvShift(fixture, {
+            oracleBlockNumber: block - 1,
+          })
+        ).to.be.revertedWithCustomError(errorsContract, "OracleTimestampsAreSmallerThanRequired");
+        await executeGlvShift(fixture, {
+          oracleBlockNumber: block,
+        });
       });
     });
 
