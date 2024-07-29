@@ -253,10 +253,7 @@ library GlvWithdrawalUtils {
             oracle.getPrimaryPrice(market.longToken),
             oracle.getPrimaryPrice(market.shortToken),
             Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
-
-            // maximize=false is used for glv token price
-            // use the same for gm token price to avoid applying double spread
-            false // maximize
+            true // maximize
         );
         marketTokenAmount = MarketUtils.usdToMarketTokenAmount(
             glvTokenUsd,
