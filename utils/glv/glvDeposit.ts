@@ -200,3 +200,54 @@ export function expectEmptyGlvDeposit(glvDeposit: any) {
   expect(glvDeposit.flags.shouldUnwrapNativeToken).eq(false);
   expect(glvDeposit.flags.isMarketTokenDeposit).eq(false);
 }
+
+export function expectGlvDeposit(glvDeposit: any, expected: any) {
+  [
+    "glv",
+    "account",
+    "receiver",
+    "callbackContract",
+    "uiFeeReceiver",
+    "market",
+    "initialLongToken",
+    "initialShortToken",
+  ].forEach((key) => {
+    if (key in expected) {
+      const value = expected[key].address ?? expected[key].marketToken ?? expected[key];
+      expect(glvDeposit.addresses[key], key).eq(value);
+    }
+  });
+
+  ["longTokenSwapPath", "shortTokenSwapPath"].forEach((key) => {
+    if (key in expected) {
+      expect(glvDeposit.addresses[key], key).deep.eq(expected[key]);
+    }
+  });
+
+  [
+    "marketTokenAmount",
+    "initialLongTokenAmount",
+    "initialShortTokenAmount",
+    "minGlvTokens",
+    "updatedAtTime",
+    "executionFee",
+    "callbackGasLimit",
+  ].forEach((key) => {
+    if (key in expected) {
+      expect(glvDeposit.numbers[key], key).eq(expected[key]);
+    }
+  });
+
+  if (expected.longTokenAmount) {
+    expect(glvDeposit.numbers.initialLongTokenAmount, "initialLongTokenAmount").eq(expected.longTokenAmount);
+  }
+  if (expected.shortTokenAmount) {
+    expect(glvDeposit.numbers.initialShortTokenAmount, "initialShortTokenAmount").eq(expected.shortTokenAmount);
+  }
+
+  ["shouldUnwrapNativeToken", "isMarketTokenDeposit"].forEach((key) => {
+    if (key in expected) {
+      expect(glvDeposit.flags[key], key).eq(expected[key]);
+    }
+  });
+}

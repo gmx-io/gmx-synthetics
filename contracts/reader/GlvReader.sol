@@ -84,11 +84,98 @@ contract GlvReader {
         return GlvDepositStoreUtils.get(dataStore, key);
     }
 
+    function getGlvDeposits(
+        DataStore dataStore,
+        uint256 start,
+        uint256 end
+    ) external view returns (GlvDeposit.Props[] memory) {
+        bytes32[] memory glvDepositKeys = GlvDepositStoreUtils.getGlvDepositKeys(dataStore, start, end);
+        GlvDeposit.Props[] memory glvDeposits = new GlvDeposit.Props[](glvDepositKeys.length);
+        for (uint256 i; i < glvDepositKeys.length; i++) {
+            bytes32 glvDepositKey = glvDepositKeys[i];
+            GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(dataStore, glvDepositKey);
+            glvDeposits[i] = glvDeposit;
+        }
+
+        return glvDeposits;
+    }
+
+    function getAccountGlvDeposits(
+        DataStore dataStore,
+        address account,
+        uint256 start,
+        uint256 end
+    ) external view returns (GlvDeposit.Props[] memory) {
+        bytes32[] memory glvDepositKeys = GlvDepositStoreUtils.getAccountGlvDepositKeys(dataStore, account, start, end);
+        GlvDeposit.Props[] memory glvDeposits = new GlvDeposit.Props[](glvDepositKeys.length);
+        for (uint256 i; i < glvDepositKeys.length; i++) {
+            bytes32 glvDepositKey = glvDepositKeys[i];
+            GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(dataStore, glvDepositKey);
+            glvDeposits[i] = glvDeposit;
+        }
+
+        return glvDeposits;
+    }
+
     function getGlvWithdrawal(DataStore dataStore, bytes32 key) external view returns (GlvWithdrawal.Props memory) {
         return GlvWithdrawalStoreUtils.get(dataStore, key);
     }
 
+    function getGlvWithdrawals(
+        DataStore dataStore,
+        uint256 start,
+        uint256 end
+    ) external view returns (GlvWithdrawal.Props[] memory) {
+        bytes32[] memory glvWithdrawalKeys = GlvWithdrawalStoreUtils.getGlvWithdrawalKeys(dataStore, start, end);
+        GlvWithdrawal.Props[] memory glvWithdrawals = new GlvWithdrawal.Props[](glvWithdrawalKeys.length);
+        for (uint256 i; i < glvWithdrawalKeys.length; i++) {
+            bytes32 glvWithdrawalKey = glvWithdrawalKeys[i];
+            GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(dataStore, glvWithdrawalKey);
+            glvWithdrawals[i] = glvWithdrawal;
+        }
+
+        return glvWithdrawals;
+    }
+
+    function getAccountGlvWithdrawals(
+        DataStore dataStore,
+        address account,
+        uint256 start,
+        uint256 end
+    ) external view returns (GlvWithdrawal.Props[] memory) {
+        bytes32[] memory glvWithdrawalKeys = GlvWithdrawalStoreUtils.getAccountGlvWithdrawalKeys(
+            dataStore,
+            account,
+            start,
+            end
+        );
+        GlvWithdrawal.Props[] memory glvWithdrawals = new GlvWithdrawal.Props[](glvWithdrawalKeys.length);
+        for (uint256 i; i < glvWithdrawalKeys.length; i++) {
+            bytes32 glvWithdrawalKey = glvWithdrawalKeys[i];
+            GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(dataStore, glvWithdrawalKey);
+            glvWithdrawals[i] = glvWithdrawal;
+        }
+
+        return glvWithdrawals;
+    }
+
     function getGlvShift(DataStore dataStore, bytes32 key) external view returns (GlvShift.Props memory) {
         return GlvShiftStoreUtils.get(dataStore, key);
+    }
+
+    function getGlvShifts(
+        DataStore dataStore,
+        uint256 start,
+        uint256 end
+    ) external view returns (GlvShift.Props[] memory) {
+        bytes32[] memory glvShiftKeys = GlvShiftStoreUtils.getGlvShiftKeys(dataStore, start, end);
+        GlvShift.Props[] memory glvShifts = new GlvShift.Props[](glvShiftKeys.length);
+        for (uint256 i; i < glvShiftKeys.length; i++) {
+            bytes32 glvShiftKey = glvShiftKeys[i];
+            GlvShift.Props memory glvShift = GlvShiftStoreUtils.get(dataStore, glvShiftKey);
+            glvShifts[i] = glvShift;
+        }
+
+        return glvShifts;
     }
 }
