@@ -40,7 +40,6 @@ library GlvDeposit {
     // @param initialLongTokenAmount the amount of long tokens to deposit
     // @param initialShortTokenAmount the amount of short tokens to deposit
     // @param minGlvTokens the minimum acceptable number of Glv tokens
-    // @param updatedAtBlock the block that the deposit was last updated at
     // sending funds back to the user in case the deposit gets cancelled
     // @param executionFee the execution fee for keepers
     // @param callbackGasLimit the gas limit for the callbackContract
@@ -49,7 +48,6 @@ library GlvDeposit {
         uint256 initialLongTokenAmount;
         uint256 initialShortTokenAmount;
         uint256 minGlvTokens;
-        uint256 updatedAtBlock;
         uint256 updatedAtTime;
         uint256 executionFee;
         uint256 callbackGasLimit;
@@ -173,14 +171,6 @@ library GlvDeposit {
 
     function setMinGlvTokens(Props memory props, uint256 value) internal pure {
         props.numbers.minGlvTokens = value;
-    }
-
-    function updatedAtBlock(Props memory props) internal pure returns (uint256) {
-        return props.numbers.updatedAtBlock;
-    }
-
-    function setUpdatedAtBlock(Props memory props, uint256 value) internal pure {
-        props.numbers.updatedAtBlock = value;
     }
 
     function updatedAtTime(Props memory props) internal pure returns (uint256) {

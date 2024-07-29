@@ -73,7 +73,7 @@ export async function executeGlvShift(fixture, overrides: any = {}) {
     }
   }
   if (!oracleBlockNumber) {
-    oracleBlockNumber = (await ethers.provider.getBlock("latest")).number;
+    oracleBlockNumber = await ethers.provider.getBlockNumber();
   }
 
   const params: any = {

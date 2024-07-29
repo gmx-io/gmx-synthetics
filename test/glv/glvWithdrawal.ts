@@ -134,7 +134,6 @@ describe("Glv Withdrawals", () => {
 
     expect(await getGlvWithdrawalCount(dataStore)).eq(1);
 
-    const block = await provider.getBlock("latest");
     const glvWithdrawalKeys = await getGlvWithdrawalKeys(dataStore, 0, 1);
     const glvWithdrawal = await glvReader.getGlvWithdrawal(dataStore.address, glvWithdrawalKeys[0]);
 
@@ -145,7 +144,6 @@ describe("Glv Withdrawals", () => {
     expect(glvWithdrawal.numbers.glvTokenAmount).eq(expandDecimals(1000, 18));
     expect(glvWithdrawal.numbers.minLongTokenAmount).eq(100);
     expect(glvWithdrawal.numbers.minShortTokenAmount).eq(50);
-    expect(glvWithdrawal.numbers.updatedAtBlock).eq(block.number);
     expect(glvWithdrawal.numbers.executionFee).eq(700);
     expect(glvWithdrawal.numbers.callbackGasLimit).eq(100000);
     expect(glvWithdrawal.flags.shouldUnwrapNativeToken).eq(true);
@@ -181,7 +179,6 @@ describe("Glv Withdrawals", () => {
 
     expect(await getGlvWithdrawalCount(dataStore)).eq(1);
 
-    const block = await provider.getBlock("latest");
     const glvWithdrawalKeys = await getGlvWithdrawalKeys(dataStore, 0, 1);
     const glvWithdrawalKey = glvWithdrawalKeys[0];
     let glvWithdrawal = await glvReader.getGlvWithdrawal(dataStore.address, glvWithdrawalKey);
@@ -193,7 +190,6 @@ describe("Glv Withdrawals", () => {
     expect(glvWithdrawal.numbers.glvTokenAmount).eq(expandDecimals(1000, 18));
     expect(glvWithdrawal.numbers.minLongTokenAmount).eq(100);
     expect(glvWithdrawal.numbers.minShortTokenAmount).eq(50);
-    expect(glvWithdrawal.numbers.updatedAtBlock).eq(block.number);
     expect(glvWithdrawal.numbers.executionFee).eq(700);
     expect(glvWithdrawal.numbers.callbackGasLimit).eq(100000);
     expect(glvWithdrawal.flags.shouldUnwrapNativeToken).eq(true);

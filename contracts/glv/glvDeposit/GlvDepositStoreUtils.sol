@@ -29,7 +29,6 @@ library GlvDepositStoreUtils {
     bytes32 public constant INITIAL_LONG_TOKEN_AMOUNT = keccak256(abi.encode("INITIAL_LONG_TOKEN_AMOUNT"));
     bytes32 public constant INITIAL_SHORT_TOKEN_AMOUNT = keccak256(abi.encode("INITIAL_SHORT_TOKEN_AMOUNT"));
     bytes32 public constant MIN_GLV_TOKENS = keccak256(abi.encode("MIN_GLV_TOKENS"));
-    bytes32 public constant UPDATED_AT_BLOCK = keccak256(abi.encode("UPDATED_AT_BLOCK"));
     bytes32 public constant UPDATED_AT_TIME = keccak256(abi.encode("UPDATED_AT_TIME"));
     bytes32 public constant EXECUTION_FEE = keccak256(abi.encode("EXECUTION_FEE"));
     bytes32 public constant CALLBACK_GAS_LIMIT = keccak256(abi.encode("CALLBACK_GAS_LIMIT"));
@@ -97,10 +96,6 @@ library GlvDepositStoreUtils {
 
         glvDeposit.setMinGlvTokens(dataStore.getUint(
             keccak256(abi.encode(key, MIN_GLV_TOKENS))
-        ));
-
-        glvDeposit.setUpdatedAtBlock(dataStore.getUint(
-            keccak256(abi.encode(key, UPDATED_AT_BLOCK))
         ));
 
         glvDeposit.setUpdatedAtTime(dataStore.getUint(
@@ -208,11 +203,6 @@ library GlvDepositStoreUtils {
         );
 
         dataStore.setUint(
-            keccak256(abi.encode(key, UPDATED_AT_BLOCK)),
-            glvDeposit.updatedAtBlock()
-        );
-
-        dataStore.setUint(
             keccak256(abi.encode(key, UPDATED_AT_TIME)),
             glvDeposit.updatedAtTime()
         );
@@ -307,10 +297,6 @@ library GlvDepositStoreUtils {
 
         dataStore.removeUint(
             keccak256(abi.encode(key, MIN_GLV_TOKENS))
-        );
-
-        dataStore.removeUint(
-            keccak256(abi.encode(key, UPDATED_AT_BLOCK))
         );
 
         dataStore.removeUint(

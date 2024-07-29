@@ -149,7 +149,6 @@ describe("Glv Deposits", () => {
 
     await createGlvDeposit(fixture, params);
 
-    const block = await provider.getBlock("latest");
     const glvDepositKeys = await getGlvDepositKeys(dataStore, 0, 1);
     const glvDeposit = await glvReader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
 
@@ -166,7 +165,6 @@ describe("Glv Deposits", () => {
     expect(glvDeposit.numbers.initialLongTokenAmount).eq(expandDecimals(10, 18));
     expect(glvDeposit.numbers.initialShortTokenAmount).eq(expandDecimals(10 * 5000, 6));
     expect(glvDeposit.numbers.minGlvTokens).eq(100);
-    expect(glvDeposit.numbers.updatedAtBlock).eq(block.number);
     expect(glvDeposit.numbers.executionFee).eq("500");
     expect(glvDeposit.numbers.callbackGasLimit).eq("200000");
     expect(glvDeposit.flags.shouldUnwrapNativeToken).eq(true);
@@ -194,7 +192,6 @@ describe("Glv Deposits", () => {
 
     await createGlvDeposit(fixture, params);
 
-    const block = await provider.getBlock("latest");
     const glvDepositKeys = await getGlvDepositKeys(dataStore, 0, 1);
     const glvDeposit = await glvReader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
 
@@ -211,7 +208,6 @@ describe("Glv Deposits", () => {
     expect(glvDeposit.numbers.initialShortTokenAmount).eq(0);
     expect(glvDeposit.numbers.marketTokenAmount).eq(expandDecimals(15, 18));
     expect(glvDeposit.numbers.minGlvTokens).eq(100);
-    expect(glvDeposit.numbers.updatedAtBlock).eq(block.number);
     expect(glvDeposit.numbers.executionFee).eq("500");
     expect(glvDeposit.numbers.callbackGasLimit).eq("200000");
     expect(glvDeposit.flags.shouldUnwrapNativeToken).eq(true);
@@ -455,7 +451,6 @@ describe("Glv Deposits", () => {
 
     await createGlvDeposit(fixture, params);
 
-    const block = await provider.getBlock("latest");
     const glvDepositKeys = await getGlvDepositKeys(dataStore, 0, 1);
     let glvDeposit = await glvReader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
 
@@ -472,7 +467,6 @@ describe("Glv Deposits", () => {
     expect(glvDeposit.numbers.initialLongTokenAmount).eq(expandDecimals(10, 18));
     expect(glvDeposit.numbers.initialShortTokenAmount).eq(expandDecimals(10 * 5000, 6));
     expect(glvDeposit.numbers.minGlvTokens).eq(100);
-    expect(glvDeposit.numbers.updatedAtBlock).eq(block.number);
     expect(glvDeposit.numbers.executionFee).eq("500");
     expect(glvDeposit.numbers.callbackGasLimit).eq("200000");
     expect(glvDeposit.flags.shouldUnwrapNativeToken).eq(false);
@@ -538,7 +532,6 @@ describe("Glv Deposits", () => {
 
     await createGlvDeposit(fixture, params);
 
-    const block = await provider.getBlock("latest");
     const glvDepositKeys = await getGlvDepositKeys(dataStore, 0, 1);
     let glvDeposit = await glvReader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
 
@@ -555,7 +548,6 @@ describe("Glv Deposits", () => {
     expect(glvDeposit.numbers.initialLongTokenAmount).eq(expandDecimals(10, 18));
     expect(glvDeposit.numbers.initialShortTokenAmount).eq(expandDecimals(10 * 5000, 6));
     expect(glvDeposit.numbers.minGlvTokens).eq(100);
-    expect(glvDeposit.numbers.updatedAtBlock).eq(block.number);
     expect(glvDeposit.numbers.executionFee).eq("500");
     expect(glvDeposit.numbers.callbackGasLimit).eq("200000");
     expect(glvDeposit.flags.shouldUnwrapNativeToken).eq(true);
@@ -626,7 +618,6 @@ describe("Glv Deposits", () => {
 
     await createGlvDeposit(fixture, params);
 
-    const block = await provider.getBlock("latest");
     const glvDepositKeys = await getGlvDepositKeys(dataStore, 0, 1);
     let glvDeposit = await glvReader.getGlvDeposit(dataStore.address, glvDepositKeys[0]);
 
@@ -643,7 +634,6 @@ describe("Glv Deposits", () => {
     expect(glvDeposit.numbers.initialLongTokenAmount).eq(0);
     expect(glvDeposit.numbers.initialShortTokenAmount).eq(0);
     expect(glvDeposit.numbers.minGlvTokens).eq(100);
-    expect(glvDeposit.numbers.updatedAtBlock).eq(block.number);
     expect(glvDeposit.numbers.executionFee).eq("500");
     expect(glvDeposit.numbers.callbackGasLimit).eq("200000");
     expect(glvDeposit.flags.shouldUnwrapNativeToken).eq(false);

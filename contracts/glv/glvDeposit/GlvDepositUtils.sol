@@ -163,7 +163,6 @@ library GlvDepositUtils {
                 initialLongTokenAmount: cache.initialLongTokenAmount,
                 initialShortTokenAmount: cache.initialShortTokenAmount,
                 minGlvTokens: params.minGlvTokens,
-                updatedAtBlock: Chain.currentBlockNumber(),
                 updatedAtTime: Chain.currentTimestamp(),
                 executionFee: params.executionFee,
                 callbackGasLimit: params.callbackGasLimit
@@ -212,7 +211,12 @@ library GlvDepositUtils {
         ExecuteGlvDepositCache memory cache;
 
         // glvTokenPrice should be calculated before glv receives GM tokens
-        cache.glvValue = GlvUtils.getGlvValue(params.dataStore, params.oracle, glvDeposit.glv(), true);
+        cache.glvValue = GlvUtils.getGlvValue(
+            params.dataStore,
+            params.oracle,
+            glvDeposit.glv(),
+            true // maximize
+        );
         cache.glvSupply = GlvToken(payable(glvDeposit.glv())).totalSupply();
         cache.receivedMarketTokens = _processMarketDeposit(params, glvDeposit, params.glvVault);
         (cache.mintAmount, cache.receivedUsd) = _getMintAmount(
@@ -257,7 +261,12 @@ library GlvDepositUtils {
             cache.mintAmount
         );
 
-        cache.glvValue = GlvUtils.getGlvValue(params.dataStore, params.oracle, glvDeposit.glv(), true);
+        cache.glvValue = GlvUtils.getGlvValue(
+            params.dataStore,
+            params.oracle,
+            glvDeposit.glv(),
+            true // maximize
+        );
         cache.glvSupply = GlvToken(payable(glvDeposit.glv())).totalSupply();
         GlvEventUtils.emitGlvValueUpdated(params.eventEmitter, glvDeposit.glv(), cache.glvValue, cache.glvSupply);
 

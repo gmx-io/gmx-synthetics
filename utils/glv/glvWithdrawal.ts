@@ -90,7 +90,7 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
 }
 
 export async function executeGlvWithdrawal(fixture, overrides: any = {}) {
-  const { glvReader, dataStore, glvHandler, wnt, usdc, sol, ethUsdGlvAddress } = fixture.contracts;
+  const { dataStore, glvHandler, wnt, usdc, sol, ethUsdGlvAddress } = fixture.contracts;
   const gasUsageLabel = overrides.gasUsageLabel || "executeGlvWithdrawal";
   const glv = overrides.glv || ethUsdGlvAddress;
   const dataStreamTokens = overrides.dataStreamTokens || [];
@@ -109,10 +109,9 @@ export async function executeGlvWithdrawal(fixture, overrides: any = {}) {
     if (!glvWithdrawalKey) {
       glvWithdrawalKey = glvWithdrawalKeys[0];
     }
-    if (!oracleBlockNumber) {
-      const glvWithdrawal = await glvReader.getGlvWithdrawal(dataStore.address, glvWithdrawalKeys[0]);
-      oracleBlockNumber = glvWithdrawal.numbers.updatedAtBlock;
-    }
+  }
+  if (!oracleBlockNumber) {
+    oracleBlockNumber = await ethers.provider.getBlockNumber();
   }
 
   const params: any = {
@@ -174,7 +173,6 @@ export function expectEmptyGlvWithdrawal(glvWithdrawal: any) {
   expect(glvWithdrawal.numbers.glvTokenAmount).eq(0);
   expect(glvWithdrawal.numbers.minLongTokenAmount).eq(0);
   expect(glvWithdrawal.numbers.minShortTokenAmount).eq(0);
-  expect(glvWithdrawal.numbers.updatedAtBlock).eq(0);
   expect(glvWithdrawal.numbers.updatedAtTime).eq(0);
   expect(glvWithdrawal.numbers.executionFee).eq(0);
   expect(glvWithdrawal.numbers.callbackGasLimit).eq(0);

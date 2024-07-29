@@ -96,7 +96,6 @@ library GlvWithdrawalUtils {
                 glvTokenAmount: glvTokenAmount,
                 minLongTokenAmount: params.minLongTokenAmount,
                 minShortTokenAmount: params.minShortTokenAmount,
-                updatedAtBlock: Chain.currentBlockNumber(),
                 updatedAtTime: Chain.currentTimestamp(),
                 executionFee: params.executionFee,
                 callbackGasLimit: params.callbackGasLimit
