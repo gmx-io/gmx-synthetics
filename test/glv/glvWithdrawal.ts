@@ -257,6 +257,47 @@ describe("Glv Withdrawals", () => {
         .withArgs(key);
     });
 
+    it("min token amount", async () => {
+      await handleGlvDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(1, 18),
+          shortTokenAmount: expandDecimals(5000, 6),
+        },
+      });
+
+      await handleGlvWithdrawal(fixture, {
+        create: {
+          glvTokenAmount: expandDecimals(999, 18),
+          minLongTokenAmount: expandDecimals(1, 17),
+        },
+        execute: {
+          expectedCancellationReason: "InsufficientOutputAmount",
+        },
+      });
+      await handleGlvWithdrawal(fixture, {
+        create: {
+          glvTokenAmount: expandDecimals(1000, 18),
+          minLongTokenAmount: expandDecimals(1, 17),
+        },
+      });
+
+      await handleGlvWithdrawal(fixture, {
+        create: {
+          glvTokenAmount: expandDecimals(999, 18),
+          minShortTokenAmount: expandDecimals(500, 6),
+        },
+        execute: {
+          expectedCancellationReason: "InsufficientOutputAmount",
+        },
+      });
+      await handleGlvWithdrawal(fixture, {
+        create: {
+          glvTokenAmount: expandDecimals(1000, 18),
+          minShortTokenAmount: expandDecimals(500, 6),
+        },
+      });
+    });
+
     it("OracleTimestampsAreLargerThanRequestExpirationTime", async () => {
       await handleGlvDeposit(fixture, {
         create: {
