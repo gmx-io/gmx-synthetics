@@ -709,11 +709,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(167_700, 9),
-      maxShortTokenPoolAmount: expandDecimals(19_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(108_000, 9),
+      maxShortTokenPoolAmount: expandDecimals(20_000_000, 6),
 
-      maxLongTokenPoolUsdForDeposit: decimalToFloat(14_500_000),
-      maxShortTokenPoolUsdForDeposit: decimalToFloat(14_500_000),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(17_500_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(17_500_000),
 
       negativePositionImpactFactor: decimalToFloat(25, 10), // 2.5e-9
       positivePositionImpactFactor: decimalToFloat(125, 11), // 1.25e-9
