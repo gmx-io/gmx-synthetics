@@ -32,7 +32,7 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
   const { glvVault, glvHandler, wnt, ethUsdMarket, ethUsdGlvAddress } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
-  const gasUsageLabel = overrides.gasUsageLabel || "createGlvWithdrawal";
+  const gasUsageLabel = overrides.gasUsageLabel;
   const glv = overrides.glv || ethUsdGlvAddress;
   const sender = overrides.sender || wallet;
   const account = overrides.account || user0;
@@ -93,7 +93,7 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
 
 export async function executeGlvWithdrawal(fixture, overrides: any = {}) {
   const { dataStore, glvHandler, wnt, usdc, sol, ethUsdGlvAddress } = fixture.contracts;
-  const gasUsageLabel = overrides.gasUsageLabel || "executeGlvWithdrawal";
+  const gasUsageLabel = overrides.gasUsageLabel;
   const glv = overrides.glv || ethUsdGlvAddress;
   const dataStreamTokens = overrides.dataStreamTokens || [];
   const dataStreamData = overrides.dataStreamData || [];
@@ -128,8 +128,10 @@ export async function executeGlvWithdrawal(fixture, overrides: any = {}) {
     dataStreamData,
     priceFeedTokens,
     oracleBlockNumber,
-    gasUsageLabel,
   };
+  if (gasUsageLabel) {
+    params.gasUsageLabel = gasUsageLabel;
+  }
 
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined) {

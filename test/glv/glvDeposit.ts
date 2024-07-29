@@ -137,6 +137,9 @@ describe("Glv Deposits", () => {
         .to.be.revertedWithCustomError(errorsContract, "InvalidGlvDepositSwapPath")
         .withArgs(1, 2);
     });
+
+    it.skip("MaxSwapPathLengthExceeded");
+    it.skip("InvalidSwapMarket");
   });
 
   it("create glv deposit", async () => {

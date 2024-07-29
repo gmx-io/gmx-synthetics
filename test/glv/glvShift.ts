@@ -13,35 +13,20 @@ describe("Glv Shifts", () => {
   const { provider } = ethers;
 
   let fixture;
-  let glvReader, dataStore, ethUsdMarket, solUsdMarket, wnt, sol, usdc, ethUsdGlvAddress;
+  let glvReader, dataStore, ethUsdMarket, solUsdMarket, btcUsdMarket, ethUsdGlvAddress;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
-    ({ glvReader, dataStore, ethUsdMarket, solUsdMarket, wnt, sol, usdc, ethUsdGlvAddress } = fixture.contracts);
+    ({ glvReader, dataStore, ethUsdMarket, solUsdMarket, btcUsdMarket, ethUsdGlvAddress } = fixture.contracts);
   });
 
   it("create glv shift", async () => {
-    const tokens = [wnt.address, usdc.address, sol.address];
-    const precisions = [8, 18, 8];
-    const minPrices = [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4)];
-    const maxPrices = [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4)];
-
     await handleGlvDeposit(fixture, {
       create: {
         glv: ethUsdGlvAddress,
         longTokenAmount: expandDecimals(10, 18),
         shortTokenAmount: expandDecimals(9 * 5000, 6),
-        tokens,
-        precisions,
-        minPrices,
-        maxPrices,
-      },
-      execute: {
-        tokens,
-        precisions,
-        minPrices,
-        maxPrices,
       },
     });
 
@@ -82,6 +67,8 @@ describe("Glv Shifts", () => {
       await expect(
         createGlvShift(fixture, { ...params, executionFeeToMint: 0, executionFee: 2 })
       ).to.be.revertedWithCustomError(errorsContract, "InsufficientWntAmount");
+
+      createGlvShift(fixture, { ...params, executionFeeToMint: 1_000_000, executionFee: 1_000_000 });
     });
 
     it("InsufficientExecutionFee", async () => {
@@ -96,12 +83,53 @@ describe("Glv Shifts", () => {
       await expect(createGlvShift(fixture, { ...params, executionFee: 1 }))
         .to.be.revertedWithCustomError(errorsContract, "InsufficientExecutionFee")
         .withArgs("1000000008000000", "1");
+
+      await createGlvShift(fixture, { ...params, executionFee: "1000000008000000" });
     });
 
     it.skip("EmptyGlv");
-    it.skip("GlvUnsupportedMarket");
-    it.skip("GlvDisabledMarket");
-    it.skip("GlvInsufficientMarketTokenBalance");
+
+    it("GlvUnsupportedMarket", async () => {
+      await expect(createGlvShift(fixture, { ...params, fromMarket: btcUsdMarket }))
+        .to.be.revertedWithCustomError(errorsContract, "GlvUnsupportedMarket")
+        .withArgs(ethUsdGlvAddress, btcUsdMarket.marketToken);
+
+      await expect(createGlvShift(fixture, { ...params, toMarket: btcUsdMarket }))
+        .to.be.revertedWithCustomError(errorsContract, "GlvUnsupportedMarket")
+        .withArgs(ethUsdGlvAddress, btcUsdMarket.marketToken);
+    });
+
+    it("GlvDisabledMarket", async () => {
+      await handleGlvDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(1, 18),
+          shortTokenAmount: expandDecimals(5000, 6),
+          market: solUsdMarket,
+        },
+      });
+
+      await dataStore.setBool(keys.isGlvMarketDisabledKey(ethUsdGlvAddress, solUsdMarket.marketToken), true);
+      await expect(createGlvShift(fixture, params))
+        .to.be.revertedWithCustomError(errorsContract, "GlvDisabledMarket")
+        .withArgs(ethUsdGlvAddress, solUsdMarket.marketToken);
+
+      await createGlvShift(fixture, { fromMarket: solUsdMarket, toMarket: ethUsdMarket });
+    });
+
+    it("GlvInsufficientMarketTokenBalance", async () => {
+      await handleGlvDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(1, 18),
+          shortTokenAmount: expandDecimals(5000, 6),
+        },
+      });
+
+      await expect(createGlvShift(fixture, { params, marketTokenAmount: expandDecimals(10001, 18) }))
+        .to.be.revertedWithCustomError(errorsContract, "GlvInsufficientMarketTokenBalance")
+        .withArgs(ethUsdGlvAddress, ethUsdMarket.marketToken, expandDecimals(10000, 18), expandDecimals(10001, 18));
+
+      await createGlvShift(fixture, { params, marketTokenAmount: expandDecimals(10000, 18) });
+    });
   });
 
   it("execute glv shift", async () => {

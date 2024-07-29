@@ -77,9 +77,6 @@ describe("Glv Withdrawals", () => {
         .withArgs(ethUsdGlvAddress, ethUsdMarket.marketToken);
     });
 
-    it.skip("MaxSwapPathLengthExceeded");
-    it.skip("InvalidSwapMarket");
-
     it("EmptyAccount", async () => {
       await expect(
         createGlvWithdrawal(fixture, { ...params, account: { address: ethers.constants.AddressZero } })
@@ -122,6 +119,9 @@ describe("Glv Withdrawals", () => {
         .to.be.revertedWithCustomError(errorsContract, "MaxCallbackGasLimitExceeded")
         .withArgs(1_000_000_000, 2_000_000);
     });
+
+    it.skip("MaxSwapPathLengthExceeded");
+    it.skip("InvalidSwapMarket");
   });
 
   it("create glv withdrawal", async () => {

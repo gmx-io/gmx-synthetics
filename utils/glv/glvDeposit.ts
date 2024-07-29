@@ -32,7 +32,7 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
   const { glvVault, glvHandler, wnt, ethUsdMarket, ethUsdGlvAddress } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
-  const gasUsageLabel = overrides.gasUsageLabel || "createGlvWithdrawal";
+  const gasUsageLabel = overrides.gasUsageLabel;
   const glv = overrides.glv || ethUsdGlvAddress;
   const sender = overrides.sender || wallet;
   const account = overrides.account || user0;
@@ -113,7 +113,7 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
 
 export async function executeGlvDeposit(fixture, overrides: any = {}) {
   const { dataStore, glvHandler, wnt, usdc, sol } = fixture.contracts;
-  const gasUsageLabel = overrides.gasUsageLabel || "executeGlvWithdrawal";
+  const gasUsageLabel = overrides.gasUsageLabel;
   const tokens = overrides.tokens || [wnt.address, usdc.address, sol.address];
   const precisions = overrides.precisions || [8, 18, 8];
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4)];
@@ -143,12 +143,14 @@ export async function executeGlvDeposit(fixture, overrides: any = {}) {
     execute: glvHandler.executeGlvDeposit,
     simulateExecute: glvHandler.simulateExecuteGlvDeposit,
     simulate: overrides.simulate,
-    gasUsageLabel,
     dataStreamTokens,
     dataStreamData,
     priceFeedTokens,
     oracleBlockNumber,
   };
+  if (gasUsageLabel) {
+    params.gasUsageLabel = gasUsageLabel;
+  }
 
   const txReceipt = await executeWithOracleParams(fixture, params);
 

@@ -12,7 +12,7 @@ export async function createGlvShift(fixture, overrides: any = {}) {
   const { glvVault, glvHandler, wnt, ethUsdMarket, solUsdMarket, ethUsdGlvAddress } = fixture.contracts;
   const { wallet } = fixture.accounts;
 
-  const gasUsageLabel = overrides.gasUsageLabel || "createGlvShift";
+  const gasUsageLabel = overrides.gasUsageLabel;
   const glv = overrides.glv || ethUsdGlvAddress;
   const sender = overrides.sender || wallet;
   const fromMarket = overrides.fromMarket || ethUsdMarket;
@@ -55,7 +55,7 @@ export async function createGlvShift(fixture, overrides: any = {}) {
 
 export async function executeGlvShift(fixture, overrides: any = {}) {
   const { dataStore, glvHandler, wnt, usdc, sol, ethUsdGlvAddress } = fixture.contracts;
-  const gasUsageLabel = overrides.gasUsageLabel || "executeGlvShift";
+  const gasUsageLabel = overrides.gasUsageLabel;
   const glv = overrides.glv || ethUsdGlvAddress;
   const tokens = overrides.tokens || [wnt.address, usdc.address, sol.address];
   const precisions = overrides.precisions || [8, 18, 8];
@@ -89,8 +89,10 @@ export async function executeGlvShift(fixture, overrides: any = {}) {
     dataStreamData,
     priceFeedTokens,
     oracleBlockNumber,
-    gasUsageLabel,
   };
+  if (gasUsageLabel) {
+    params.gasUsageLabel = gasUsageLabel;
+  }
 
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined) {
