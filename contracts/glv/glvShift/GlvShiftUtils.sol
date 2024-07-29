@@ -147,14 +147,11 @@ library GlvShiftUtils {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
-        if (glvShift.fromMarket() == address(0)) {
-            revert Errors.EmptyGlvShift();
-        }
+        GlvShiftStoreUtils.remove(params.dataStore, params.key);
 
         validateGlvShiftInterval(params.dataStore, glvShift.glv());
         params.dataStore.setUint(Keys.glvShiftLastExecutedAtKey(glvShift.glv()), block.timestamp);
 
-        GlvShiftStoreUtils.remove(params.dataStore, params.key);
 
         Bank(payable(glvShift.glv())).transferOut(
             glvShift.fromMarket(),

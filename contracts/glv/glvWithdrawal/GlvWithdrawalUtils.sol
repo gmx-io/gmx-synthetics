@@ -142,10 +142,6 @@ library GlvWithdrawalUtils {
 
         GlvWithdrawalStoreUtils.remove(params.dataStore, params.key, glvWithdrawal.account());
 
-        if (glvWithdrawal.account() == address(0)) {
-            revert Errors.EmptyGlvWithdrawal();
-        }
-
         ExecuteWithdrawalUtils.ExecuteWithdrawalResult memory withdrawalResult = _processMarketWithdrawal(params, glvWithdrawal);
 
         GlvToken(payable(glvWithdrawal.glv())).burn(address(params.glvVault), glvWithdrawal.glvTokenAmount());
@@ -291,10 +287,6 @@ library GlvWithdrawalUtils {
         startingGas -= gasleft() / 63;
 
         GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(dataStore, key);
-        if (glvWithdrawal.glvTokenAmount() == 0) {
-            revert Errors.EmptyGlvWithdrawalAmount();
-        }
-
         GlvWithdrawalStoreUtils.remove(dataStore, key, glvWithdrawal.account());
 
         glvVault.transferOut(

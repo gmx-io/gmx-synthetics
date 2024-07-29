@@ -78,13 +78,13 @@ describe("Glv Shifts", () => {
       executionFee: 500,
     };
 
-    it.only("InsufficientWntAmount", async () => {
+    it("InsufficientWntAmount", async () => {
       await expect(
         createGlvShift(fixture, { ...params, executionFeeToMint: 0, executionFee: 2 })
       ).to.be.revertedWithCustomError(errorsContract, "InsufficientWntAmount");
     });
 
-    it.only("InsufficientExecutionFee", async () => {
+    it("InsufficientExecutionFee", async () => {
       await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
       await dataStore.setUint(keys.glvShiftGasLimitKey(), 1_000_000);
       await handleGlvDeposit(fixture, {
@@ -143,11 +143,11 @@ describe("Glv Shifts", () => {
   });
 
   describe("execute glv shift, validations", () => {
-    it.skip("EmptyGlvShift", async () => {
-      await expect(executeGlvShift(fixture, { key: ethers.constants.HashZero })).to.be.revertedWithCustomError(
-        errorsContract,
-        "EmptyGlvShift"
-      );
+    it("GlvShiftNotFound", async () => {
+      const key = ethers.constants.HashZero.slice(0, -1) + "f";
+      await expect(executeGlvShift(fixture, { key }))
+        .to.be.revertedWithCustomError(errorsContract, "GlvShiftNotFound")
+        .withArgs(key);
     });
 
     it("MinMarketTokens", async () => {

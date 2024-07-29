@@ -250,7 +250,12 @@ describe("Glv Withdrawals", () => {
   });
 
   describe("execute glv withdrawal, validations", () => {
-    it.skip("EmptyGlvWithdrawal");
+    it.only("GlvWithdrawalNotFound", async () => {
+      const key = ethers.constants.HashZero.slice(0, -1) + "f";
+      await expect(executeGlvWithdrawal(fixture, { key }))
+        .to.be.revertedWithCustomError(errorsContract, "GlvWithdrawalNotFound")
+        .withArgs(key);
+    });
 
     it("OracleTimestampsAreLargerThanRequestExpirationTime", async () => {
       await handleGlvDeposit(fixture, {

@@ -207,10 +207,6 @@ library GlvDepositUtils {
 
         GlvDepositStoreUtils.remove(params.dataStore, params.key, glvDeposit.account());
 
-        if (glvDeposit.account() == address(0)) {
-            revert Errors.EmptyGlvDeposit();
-        }
-
         // should be called before any tokens are minted
         _validateFirstGlvDeposit(params, glvDeposit);
 
