@@ -275,7 +275,7 @@ library GlvWithdrawalUtils {
             oracle,
             glvWithdrawal.glv(),
             Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
-            false
+            false // maximize
         );
         uint256 glvSupply = GlvToken(payable(glvWithdrawal.glv())).totalSupply();
         uint256 glvTokenUsd = GlvUtils.glvTokenAmountToUsd(glvWithdrawal.glvTokenAmount(), glvValue, glvSupply);
@@ -288,7 +288,9 @@ library GlvWithdrawalUtils {
             oracle.getPrimaryPrice(market.longToken),
             oracle.getPrimaryPrice(market.shortToken),
             Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
-            true // maximize
+
+            // use the same maximize for both glv and market values to avoid applying double spread
+            false // maximize
         );
         marketTokenAmount = MarketUtils.usdToMarketTokenAmount(
             glvTokenUsd,
