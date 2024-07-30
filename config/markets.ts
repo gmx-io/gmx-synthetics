@@ -1318,7 +1318,7 @@ const config: {
       swapOnly: true,
 
       maxLongTokenPoolAmount: expandDecimals(3300, 18),
-      maxShortTokenPoolAmount: expandDecimals(3300, 18),
+      maxShortTokenPoolAmount: expandDecimals(2800, 18),
 
       maxLongTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
