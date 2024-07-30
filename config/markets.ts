@@ -518,7 +518,7 @@ const config: {
       openInterestReserveFactorShorts: percentageToFloat("90%"),
 
       maxLongTokenPoolAmount: expandDecimals(600, 18),
-      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 18),
 
       maxLongTokenPoolUsdForDeposit: decimalToFloat(1_500_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(1_500_000),
@@ -1336,7 +1336,7 @@ const config: {
 
       swapOnly: true,
 
-      maxLongTokenPoolAmount: expandDecimals(11_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(11_000_000, 18),
       maxShortTokenPoolAmount: expandDecimals(11_000_000, 6),
 
       maxLongTokenPoolUsdForDeposit: decimalToFloat(10_000_000),
