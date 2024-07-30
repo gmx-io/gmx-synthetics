@@ -88,7 +88,7 @@ library GlvWithdrawalUtils {
         address wnt = TokenUtils.wnt(dataStore);
         uint256 wntAmount = glvVault.recordTransferIn(wnt);
         if (wntAmount < params.executionFee) {
-            revert Errors.InsufficientWntAmount(wntAmount, params.executionFee);
+            revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
         }
 
         AccountUtils.validateReceiver(params.receiver);

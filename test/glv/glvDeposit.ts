@@ -70,10 +70,11 @@ describe("Glv Deposits", () => {
       };
     });
 
-    it("InsufficientWntAmount", async () => {
+    it("InsufficientWntAmountForExecutionFee", async () => {
+      // TODO add more cases
       await expect(
         createGlvDeposit(fixture, { ...params, executionFeeToMint: 0, longTokenAmount: 1, executionFee: 2 })
-      ).to.be.revertedWithCustomError(errorsContract, "InsufficientWntAmount");
+      ).to.be.revertedWithCustomError(errorsContract, "InsufficientWntAmountForExecutionFee");
     });
 
     it("InsufficientExecutionFee", async () => {

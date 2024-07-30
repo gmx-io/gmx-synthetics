@@ -84,7 +84,7 @@ library GlvShiftUtils {
         uint256 wntAmount = glvVault.recordTransferIn(wnt);
 
         if (wntAmount < params.executionFee) {
-            revert Errors.InsufficientWntAmount(wntAmount, params.executionFee);
+            revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
         }
 
         uint256 fromMarketTokenBalance = ERC20(params.fromMarket).balanceOf(params.glv);

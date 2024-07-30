@@ -63,10 +63,10 @@ describe("Glv Shifts", () => {
       executionFee: 500,
     };
 
-    it("InsufficientWntAmount", async () => {
+    it("InsufficientWntAmountForExecutionFee", async () => {
       await expect(
         createGlvShift(fixture, { ...params, executionFeeToMint: 0, executionFee: 2 })
-      ).to.be.revertedWithCustomError(errorsContract, "InsufficientWntAmount");
+      ).to.be.revertedWithCustomError(errorsContract, "InsufficientWntAmountForExecutionFee");
 
       createGlvShift(fixture, { ...params, executionFeeToMint: 1_000_000, executionFee: 1_000_000 });
     });

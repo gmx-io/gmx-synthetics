@@ -56,10 +56,10 @@ describe("Glv Withdrawals", () => {
       };
     });
 
-    it("InsufficientWntAmount", async () => {
+    it("InsufficientWntAmountForExecutionFee", async () => {
       await expect(
         createGlvWithdrawal(fixture, { ...params, executionFeeToMint: 0, glvTokenAmount: 1, executionFee: 2 })
-      ).to.be.revertedWithCustomError(errorsContract, "InsufficientWntAmount");
+      ).to.be.revertedWithCustomError(errorsContract, "InsufficientWntAmountForExecutionFee");
     });
 
     it("InsufficientExecutionFee", async () => {
