@@ -3,6 +3,7 @@ import hre from "hardhat";
 import { bigNumberify, expandDecimals, formatAmount } from "../../utils/math";
 import {
   getBlockByTimestamp,
+  getDistributionTypeName,
   getMinRewardThreshold,
   getRewardToken,
   getRewardTokenPrice,
@@ -364,7 +365,9 @@ async function main() {
   }
 
   console.log(
-    "Liquidity incentives for period from %s to %s",
+    "Liquidity incentives (%s, %s) for period from %s to %s",
+    hre.network.name,
+    getDistributionTypeName(distributionTypeId),
     fromDate.toISOString().substring(0, 10),
     toDate.toISOString().substring(0, 10)
   );
