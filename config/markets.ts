@@ -703,6 +703,66 @@ const config: {
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
+      tokens: { indexToken: "SHIB", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:SHIB/USD"),
+      virtualMarketId: hashString("SPOT:SHIB/USD"),
+
+      ...synthethicMarketConfig, // FIXME or synthethicMarketConfig_IncreasedCapacity ?
+
+      positionImpactExponentFactor: decimalToFloat(22, 1), // 2.2
+
+      negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~45,000 USD of imbalance
+      positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~90,000 USD of imbalance
+
+      positiveMaxPositionImpactFactor: decimalToFloat(5, 3), // 0.5%
+      negativeMaxPositionImpactFactor: decimalToFloat(5, 3), // 0.5%
+
+      positiveSwapImpactFactor: decimalToFloat(25, 10), // 2.5e-9
+      negativeSwapImpactFactor: decimalToFloat(5, 9), // 5e-9
+
+      swapFeeFactorForPositiveImpact: decimalToFloat(5, 5), // 0.05%
+      swapFeeFactorForNegativeImpact: decimalToFloat(7, 5), // 0.07%
+
+      borrowingFactorForLongs: decimalToFloat(160, 10), // 1.60E-08, ~50% if 100% utilized
+      borrowingFactorForShorts: decimalToFloat(160, 10), // 1.60E-08, ~50% if 100% utilized
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(116, 14), // 0.00000000000116, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: decimalToFloat(150, 10), // 0.00000150%,  0.1296% per day, ~47.3% per year
+
+      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+
+      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(25, 10), // 2.5e-9
+      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(25, 10), // 2.5e-9
+
+      maxOpenInterestForLongs: decimalToFloat(1_000_000),
+      maxOpenInterestForShorts: decimalToFloat(1_000_000),
+
+      reserveFactorLongs: percentageToFloat("80%"),
+      reserveFactorShorts: percentageToFloat("80%"),
+
+      openInterestReserveFactorLongs: percentageToFloat("75%"),
+      openInterestReserveFactorShorts: percentageToFloat("75%"),
+
+      maxPnlFactorForAdlLongs: percentageToFloat("50%"),
+      maxPnlFactorForAdlShorts: percentageToFloat("50%"),
+
+      // FIXME There's no Min Position size field, should be minPositionSize: decimalToFloat(1, 0), // 1
+
+      // FIXME these fields duplicate baseMarketConfig defaults, remove them?
+      borrowingExponentFactorForLongs: decimalToFloat(1),
+      borrowingExponentFactorForShorts: decimalToFloat(1),
+      swapImpactExponentFactor: decimalToFloat(2, 0), // 2
+      maxPositionImpactFactorForLiquidations: bigNumberify(0),
+      minCollateralUsd: decimalToFloat(1, 0), // 1 USD
+      positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
+      positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"),
+      minCollateralFactor: decimalToFloat(1, 2), // 1%
+    },
+    {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:SOL/USD"),
       virtualMarketId: hashString("SPOT:SOL/USD"),
