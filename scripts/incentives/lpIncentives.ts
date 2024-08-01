@@ -270,7 +270,7 @@ async function main() {
       formatAmount(diff, rewardToken.decimals, 2, true),
       formatAmount(diff.mul(10000).div(userBalancesSum), 2, 2, true)
     );
-    if (diff.abs().gt(marketTokensSupply.div(100))) {
+    if (diff.abs().gt(marketTokensSupply.div(1000))) {
       throw Error("Sum of user balances and market tokens supply don't match.");
     }
 
