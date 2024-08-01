@@ -715,8 +715,8 @@ const config: {
       maxLongTokenPoolUsdForDeposit: decimalToFloat(17_500_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(17_500_000),
 
-      negativePositionImpactFactor: decimalToFloat(25, 10), // 2.5e-9
-      positivePositionImpactFactor: decimalToFloat(125, 11), // 1.25e-9
+      negativePositionImpactFactor: decimalToFloat(135, 11), // 1.35e-9
+      positivePositionImpactFactor: decimalToFloat(45, 11), // 0.45e-9
       positionImpactExponentFactor: decimalToFloat(2, 0), // 2.0
 
       negativeSwapImpactFactor: decimalToFloat(35, 10),
