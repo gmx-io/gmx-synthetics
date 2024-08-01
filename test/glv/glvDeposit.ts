@@ -7,6 +7,7 @@ import {
   executeGlvDeposit,
   expectEmptyGlvDeposit,
   expectGlvDeposit,
+  getGlvAddress,
   getGlvDepositCount,
   getGlvDepositKeys,
   handleGlvDeposit,
@@ -27,7 +28,21 @@ describe("Glv Deposits", () => {
 
   let fixture;
   let user0, user1, user2;
-  let glvReader, dataStore, ethUsdMarket, btcUsdMarket, solUsdMarket, wbtc, wnt, usdc, sol, glvRouter, ethUsdGlvAddress;
+  let glvReader,
+    glvFactory,
+    roleStore,
+    dataStore,
+    glvHandler,
+    ethUsdMarket,
+    btcUsdMarket,
+    solUsdMarket,
+    ethUsdSingleTokenMarket2,
+    wbtc,
+    wnt,
+    usdc,
+    sol,
+    glvRouter,
+    ethUsdGlvAddress;
 
   beforeEach(async () => {
     fixture = await deployFixture();
@@ -36,16 +51,43 @@ describe("Glv Deposits", () => {
     ({
       glvReader,
       dataStore,
+      glvHandler,
       ethUsdMarket,
       solUsdMarket,
       btcUsdMarket,
+      ethUsdSingleTokenMarket2,
       wbtc,
       wnt,
       usdc,
       sol,
       glvRouter,
       ethUsdGlvAddress,
+      glvFactory,
+      roleStore,
     } = fixture.contracts);
+  });
+
+  let ethUsdSingleTokenGlvAddress: string;
+  beforeEach(async () => {
+    const glvType = ethers.constants.HashZero;
+
+    ethUsdSingleTokenGlvAddress = getGlvAddress(
+      wnt.address,
+      wnt.address,
+      glvType,
+      "Glv name",
+      "Glv symbol",
+      glvFactory.address,
+      roleStore.address,
+      dataStore.address
+    );
+    await glvFactory.createGlv(wnt.address, wnt.address, glvType, "Glv name", "Glv symbol");
+
+    const marketListKey = keys.glvSupportedMarketListKey(ethUsdSingleTokenGlvAddress);
+    const marketListCount = await dataStore.getAddressCount(marketListKey);
+    expect(marketListCount.toNumber()).eq(0);
+
+    await glvHandler.addMarketToGlv(ethUsdSingleTokenGlvAddress, ethUsdSingleTokenMarket2.marketToken);
   });
 
   describe("create glv deposit, validations", () => {
@@ -71,7 +113,7 @@ describe("Glv Deposits", () => {
     });
 
     it("InsufficientWntAmountForExecutionFee", async () => {
-      // TODO add more cases
+      // TODO add more cases, contract reverts with InsufficientWntAmountForExecutionFee in different cases
       await expect(
         createGlvDeposit(fixture, { ...params, executionFeeToMint: 0, longTokenAmount: 1, executionFee: 2 })
       ).to.be.revertedWithCustomError(errorsContract, "InsufficientWntAmountForExecutionFee");
@@ -204,6 +246,34 @@ describe("Glv Deposits", () => {
     });
   });
 
+  it("create glv deposit, single asset", async () => {
+    const params = {
+      glv: ethUsdSingleTokenGlvAddress,
+      receiver: user1,
+      callbackContract: user2,
+      market: ethUsdSingleTokenMarket2,
+      longTokenAmount: expandDecimals(1, 18),
+      initialLongToken: wnt.address,
+      initialShortToken: AddressZero,
+      longTokenSwapPath: [],
+      shortTokenSwapPath: [],
+      minGlvTokens: 100,
+      executionFee: "500",
+      shouldUnwrapNativeToken: true,
+      callbackGasLimit: "200000",
+      gasUsageLabel: "createGlvDeposit",
+    };
+
+    await createGlvDeposit(fixture, params);
+
+    const glvDeposit = (await glvReader.getGlvDeposits(dataStore.address, 0, 1))[0];
+
+    expectGlvDeposit(glvDeposit, {
+      ...params,
+      account: user0.address,
+    });
+  });
+
   it("execute glv deposit", async () => {
     await expectBalances({
       [user0.address]: {
@@ -275,6 +345,36 @@ describe("Glv Deposits", () => {
     await expectBalances({
       [user0.address]: {
         [ethUsdGlvAddress]: expandDecimals(100_000, 18),
+      },
+    });
+  });
+
+  it("execute glv deposit, single asset", async () => {
+    await handleDeposit(fixture, {
+      create: {
+        market: ethUsdSingleTokenMarket2,
+        longTokenAmount: expandDecimals(100, 18),
+        initialShortToken: wnt.address,
+      },
+    });
+
+    const params = {
+      glv: ethUsdSingleTokenGlvAddress,
+      market: ethUsdSingleTokenMarket2,
+      initialLongToken: wnt.address,
+      longTokenAmount: expandDecimals(10, 18),
+      longTokenSwapPath: [],
+      initialShortToken: wnt.address,
+    };
+    await createGlvDeposit(fixture, params);
+
+    const glvDeposit = (await glvReader.getGlvDeposits(dataStore.address, 0, 1))[0];
+
+    expectGlvDeposit(glvDeposit, params);
+    await executeGlvDeposit(fixture);
+    await expectBalances({
+      [user0.address]: {
+        [ethUsdSingleTokenGlvAddress]: expandDecimals(50_000, 18),
       },
     });
   });

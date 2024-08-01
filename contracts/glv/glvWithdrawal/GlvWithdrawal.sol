@@ -26,12 +26,12 @@ library GlvWithdrawal {
      // @param market The market on which the withdrawal will be executed.
      // @param glv
     struct Addresses {
+        address glv;
+        address market;
         address account;
         address receiver;
         address callbackContract;
         address uiFeeReceiver;
-        address market;
-        address glv;
         address[] longTokenSwapPath;
         address[] shortTokenSwapPath;
     }

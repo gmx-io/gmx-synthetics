@@ -70,6 +70,30 @@ describe("Glv", () => {
     expect(await glvToken.symbol()).to.be.eq("Glv symbol");
   });
 
+  it("creates glv vault, single asset markets", async () => {
+    const glvType = ethers.constants.HashZero;
+    const glvAddress = getGlvAddress(
+      wbtc.address,
+      wbtc.address,
+      glvType,
+      "Glv name",
+      "Glv symbol",
+      glvFactory.address,
+      roleStore.address,
+      dataStore.address
+    );
+    await glvFactory.createGlv(wbtc.address, wbtc.address, glvType, "Glv name", "Glv symbol");
+    const glv = await glvReader.getGlv(dataStore.address, glvAddress);
+
+    expect(glv.longToken).eq(wbtc.address);
+    expect(glv.shortToken).eq(wbtc.address);
+    expect(glv.glvToken).eq(glvAddress);
+
+    const glvToken = await contractAt("MarketToken", glvAddress);
+    expect(await glvToken.name()).to.be.eq("Glv name");
+    expect(await glvToken.symbol()).to.be.eq("Glv symbol");
+  });
+
   it("adds markets to Glv", async () => {
     const glvType = ethers.constants.HashZero.slice(0, -1) + "1"; // to avoid conflict with existing market
     const glvAddress = getGlvAddress(
@@ -101,6 +125,37 @@ describe("Glv", () => {
     );
     expect(listedMarkets[0]).eq(ethUsdMarket.marketToken);
     expect(listedMarkets[1]).eq(solUsdMarket.marketToken);
+  });
+
+  it("adds markets to Glv, single asset markets", async () => {
+    const glvType = ethers.constants.HashZero;
+    const glvAddress = getGlvAddress(
+      wnt.address,
+      wnt.address,
+      glvType,
+      "Glv name",
+      "Glv symbol",
+      glvFactory.address,
+      roleStore.address,
+      dataStore.address
+    );
+    await glvFactory.createGlv(wnt.address, wnt.address, glvType, "Glv name", "Glv symbol");
+
+    const marketListKey = keys.glvSupportedMarketListKey(glvAddress);
+    let marketListCount = await dataStore.getAddressCount(marketListKey);
+    expect(marketListCount.toNumber()).eq(0);
+
+    await glvHandler.addMarketToGlv(glvAddress, ethUsdSingleTokenMarket2.marketToken);
+
+    marketListCount = await dataStore.getAddressCount(marketListKey);
+    expect(marketListCount.toNumber()).eq(1);
+
+    const listedMarkets = await dataStore.getAddressValuesAt(
+      keys.glvSupportedMarketListKey(glvAddress),
+      0,
+      marketListCount
+    );
+    expect(listedMarkets[0]).eq(ethUsdSingleTokenMarket2.marketToken);
   });
 
   it("reverts if market is already added", async () => {

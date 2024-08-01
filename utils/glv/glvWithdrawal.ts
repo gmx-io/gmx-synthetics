@@ -58,7 +58,9 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
   if (glvTokenAmount.gt(0)) {
     const glvTokenBalance = await glvToken.balanceOf(account.address);
     if (glvTokenBalance.lt(glvTokenAmount)) {
-      console.warn("WARN: minting glv tokens without depositing funds. glv token price calculation could be incorrect");
+      console.warn(
+        "WARN: minting glv tokens without Withdrawaling funds. glv token price calculation could be incorrect"
+      );
       await glvToken.mint(account.address, glvTokenAmount.sub(glvTokenBalance));
     }
     await glvToken.connect(account).transfer(glvVault.address, glvTokenAmount);
@@ -182,4 +184,38 @@ export function expectEmptyGlvWithdrawal(glvWithdrawal: any) {
   expect(glvWithdrawal.numbers.callbackGasLimit).eq(0);
 
   expect(glvWithdrawal.flags.shouldUnwrapNativeToken).eq(false);
+}
+
+export function expectGlvWithdrawal(glvWithdrawal: any, expected: any) {
+  ["glv", "market", "account", "receiver", "callbackContract", "uiFeeReceiver"].forEach((key) => {
+    if (key in expected) {
+      const value = expected[key].address ?? expected[key].marketToken ?? expected[key];
+      expect(glvWithdrawal.addresses[key], key).eq(value);
+    }
+  });
+
+  ["longTokenSwapPath", "shortTokenSwapPath"].forEach((key) => {
+    if (key in expected) {
+      expect(glvWithdrawal.addresses[key], key).deep.eq(expected[key]);
+    }
+  });
+
+  [
+    "glvTokenAmount",
+    "minLongTokenAmount",
+    "minShortTokenAmount",
+    "updatedAtTime",
+    "executionFee",
+    "callbackGasLimit",
+  ].forEach((key) => {
+    if (key in expected) {
+      expect(glvWithdrawal.numbers[key], key).eq(expected[key]);
+    }
+  });
+
+  ["shouldUnwrapNativeToken"].forEach((key) => {
+    if (key in expected) {
+      expect(glvWithdrawal.flags[key], key).eq(expected[key]);
+    }
+  });
 }
