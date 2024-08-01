@@ -377,11 +377,11 @@ const config: {
 
       ...singleTokenMarketConfig,
 
-      reserveFactorLongs: percentageToFloat("50%"),
-      reserveFactorShorts: percentageToFloat("50%"),
+      reserveFactorLongs: percentageToFloat("55%"),
+      reserveFactorShorts: percentageToFloat("55%"),
 
-      openInterestReserveFactorLongs: percentageToFloat("45%"),
-      openInterestReserveFactorShorts: percentageToFloat("45%"),
+      openInterestReserveFactorLongs: percentageToFloat("50%"),
+      openInterestReserveFactorShorts: percentageToFloat("50%"),
 
       maxLongTokenPoolAmount: expandDecimals(1000, 8),
       maxShortTokenPoolAmount: expandDecimals(1000, 8),
@@ -471,6 +471,12 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:ETH/USD"),
 
       ...singleTokenMarketConfig,
+
+      reserveFactorLongs: percentageToFloat("55%"),
+      reserveFactorShorts: percentageToFloat("55%"),
+
+      openInterestReserveFactorLongs: percentageToFloat("50%"),
+      openInterestReserveFactorShorts: percentageToFloat("50%"),
 
       maxLongTokenPoolAmount: expandDecimals(20_000, 18),
       maxShortTokenPoolAmount: expandDecimals(20_000, 18),
