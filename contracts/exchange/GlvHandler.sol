@@ -120,7 +120,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
             eventEmitter: eventEmitter,
             glvVault: glvVault,
             key: key,
-            keeper: msg.sender,
+            keeper: glvDeposit.account(),
             startingGas: startingGas,
             reason: Keys.USER_INITIATED_CANCEL,
             reasonBytes: ""
@@ -221,7 +221,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
             eventEmitter: eventEmitter,
             glvVault: glvVault,
             key: key,
-            keeper: msg.sender,
+            keeper: glvWithdrawal.account(),
             startingGas: startingGas,
             reason: Keys.USER_INITIATED_CANCEL,
             reasonBytes: ""
