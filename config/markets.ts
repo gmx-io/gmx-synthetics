@@ -705,9 +705,9 @@ const config: {
     {
       tokens: { indexToken: "SHIB", longToken: "WETH", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:SHIB/USD"),
-      virtualMarketId: hashString("SPOT:SHIB/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
 
-      ...synthethicMarketConfig, // FIXME or synthethicMarketConfig_IncreasedCapacity ?
+      ...synthethicMarketConfig,
 
       positionImpactExponentFactor: decimalToFloat(22, 1), // 2.2
 
@@ -719,9 +719,6 @@ const config: {
 
       positiveSwapImpactFactor: decimalToFloat(25, 10), // 2.5e-9
       negativeSwapImpactFactor: decimalToFloat(5, 9), // 5e-9
-
-      swapFeeFactorForPositiveImpact: decimalToFloat(5, 5), // 0.05%
-      swapFeeFactorForNegativeImpact: decimalToFloat(7, 5), // 0.07%
 
       borrowingFactorForLongs: decimalToFloat(160, 10), // 1.60E-08, ~50% if 100% utilized
       borrowingFactorForShorts: decimalToFloat(160, 10), // 1.60E-08, ~50% if 100% utilized
@@ -749,18 +746,6 @@ const config: {
 
       maxPnlFactorForAdlLongs: percentageToFloat("50%"),
       maxPnlFactorForAdlShorts: percentageToFloat("50%"),
-
-      // FIXME There's no Min Position size field, should be minPositionSize: decimalToFloat(1, 0), // 1
-
-      // FIXME these fields duplicate baseMarketConfig defaults, remove them?
-      borrowingExponentFactorForLongs: decimalToFloat(1),
-      borrowingExponentFactorForShorts: decimalToFloat(1),
-      swapImpactExponentFactor: decimalToFloat(2, 0), // 2
-      maxPositionImpactFactorForLiquidations: bigNumberify(0),
-      minCollateralUsd: decimalToFloat(1, 0), // 1 USD
-      positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
-      positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"),
-      minCollateralFactor: decimalToFloat(1, 2), // 1%
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
