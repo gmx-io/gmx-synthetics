@@ -285,17 +285,16 @@ library GlvDepositUtils {
         cache.glvSupply = GlvToken(payable(glvDeposit.glv())).totalSupply();
         GlvEventUtils.emitGlvValueUpdated(params.eventEmitter, glvDeposit.glv(), cache.glvValue, cache.glvSupply);
 
-        cache.marketCount = GlvUtils.getGlvMarketCount(params.dataStore, glvDeposit.glv());
-        cache.oraclePriceCount = GasUtils.estimateGlvDepositOraclePriceCount(
-            cache.marketCount,
-            glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length
-        );
-
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "receivedGlvTokens", cache.mintAmount);
         CallbackUtils.afterGlvDepositExecution(params.key, glvDeposit, eventData);
 
+        cache.marketCount = GlvUtils.getGlvMarketCount(params.dataStore, glvDeposit.glv());
+        cache.oraclePriceCount = GasUtils.estimateGlvDepositOraclePriceCount(
+            cache.marketCount,
+            glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length
+        );
         GasUtils.payExecutionFee(
             params.dataStore,
             params.eventEmitter,

@@ -179,11 +179,21 @@ library GlvWithdrawalUtils {
             GlvToken(payable(glvWithdrawal.glv())).totalSupply()
         );
 
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "outputToken", withdrawalResult.outputToken);
+        eventData.addressItems.setItem(1, "secondaryOutputToken", withdrawalResult.secondaryOutputToken);
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "outputAmount", withdrawalResult.outputAmount);
+        eventData.uintItems.setItem(1, "secondaryOutputAmount", withdrawalResult.secondaryOutputAmount);
+        CallbackUtils.afterGlvWithdrawalExecution(params.key, glvWithdrawal, eventData);
+
         cache.marketCount = GlvUtils.getGlvMarketCount(params.dataStore, glvWithdrawal.glv());
         cache.oraclePriceCount = GasUtils.estimateGlvWithdrawalOraclePriceCount(
             cache.marketCount,
             glvWithdrawal.longTokenSwapPath().length + glvWithdrawal.shortTokenSwapPath().length
         );
+
         GasUtils.payExecutionFee(
             params.dataStore,
             params.eventEmitter,
@@ -196,15 +206,6 @@ library GlvWithdrawalUtils {
             params.keeper,
             glvWithdrawal.receiver()
         );
-
-        EventUtils.EventLogData memory eventData;
-        eventData.addressItems.initItems(2);
-        eventData.addressItems.setItem(0, "outputToken", withdrawalResult.outputToken);
-        eventData.addressItems.setItem(1, "secondaryOutputToken", withdrawalResult.secondaryOutputToken);
-        eventData.uintItems.initItems(2);
-        eventData.uintItems.setItem(0, "outputAmount", withdrawalResult.outputAmount);
-        eventData.uintItems.setItem(1, "secondaryOutputAmount", withdrawalResult.secondaryOutputAmount);
-        CallbackUtils.afterGlvWithdrawalExecution(params.key, glvWithdrawal, eventData);
     }
 
     function _processMarketWithdrawal(
