@@ -709,6 +709,12 @@ const config: {
 
       ...synthethicMarketConfig,
 
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(1_500_000), // x1.5 of max open interest
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(1_500_000), // x1.5 of max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(636, 18), // ~2M USD
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD
+
       positionImpactExponentFactor: decimalToFloat(22, 1), // 2.2
 
       negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~45,000 USD of imbalance
