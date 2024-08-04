@@ -286,7 +286,13 @@ describe("Glv Withdrawals", () => {
 
     expect(await glvToken.balanceOf(user0.address)).eq(0);
 
+    const refundReceiverBalanceBefore = await ethers.provider.getBalance(user1.address);
+
     const txn = await glvRouter.connect(user0).cancelGlvWithdrawal(glvWithdrawalKey);
+
+    const refundReceiverBalanceAfter = await ethers.provider.getBalance(user1.address);
+    const refund = refundReceiverBalanceAfter.sub(refundReceiverBalanceBefore);
+    expect(refund).to.eq(params.executionFee);
 
     expect(await glvToken.balanceOf(user0.address)).eq(expandDecimals(1000, 18));
 

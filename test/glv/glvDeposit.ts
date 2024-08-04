@@ -694,7 +694,13 @@ describe("Glv Deposits", () => {
     expect(await wnt.balanceOf(user0.address)).eq(0);
     expect(await usdc.balanceOf(user0.address)).eq(0);
 
+    const refundReceiverBalanceBefore = await ethers.provider.getBalance(user1.address);
+
     const txn = await glvRouter.connect(user0).cancelGlvDeposit(glvDepositKeys[0]);
+
+    const refundReceiverBalanceAfter = await ethers.provider.getBalance(user1.address);
+    const refund = refundReceiverBalanceAfter.sub(refundReceiverBalanceBefore);
+    expect(refund).to.eq(params.executionFee);
 
     expect(await wnt.balanceOf(user0.address)).eq(expandDecimals(10, 18));
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(10 * 5000, 6));
@@ -765,7 +771,13 @@ describe("Glv Deposits", () => {
     expect(await usdc.balanceOf(user0.address)).eq(0);
     const balanceBefore = await provider.getBalance(user0.address);
 
+    const refundReceiverBalanceBefore = await ethers.provider.getBalance(user1.address);
+
     const txn = await glvRouter.connect(user0).cancelGlvDeposit(glvDepositKeys[0]);
+
+    const refundReceiverBalanceAfter = await ethers.provider.getBalance(user1.address);
+    const refund = refundReceiverBalanceAfter.sub(refundReceiverBalanceBefore);
+    expect(refund).to.eq(params.executionFee);
 
     expect(await wnt.balanceOf(user0.address)).eq(0);
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(10 * 5000, 6));
