@@ -10,7 +10,7 @@ interface IGlvHandler {
     function createGlvDeposit(
         address account,
         GlvDepositUtils.CreateGlvDepositParams calldata params
-    ) external returns (bytes32);
+    ) external payable returns (bytes32);
 
     function cancelGlvDeposit(bytes32 key) external;
 
@@ -19,7 +19,7 @@ interface IGlvHandler {
     function createGlvWithdrawal(
         address account,
         GlvWithdrawalUtils.CreateGlvWithdrawalParams calldata params
-    ) external returns (bytes32);
+    ) external payable returns (bytes32);
 
     function cancelGlvWithdrawal(bytes32 key) external;
 
