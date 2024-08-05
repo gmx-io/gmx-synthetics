@@ -345,7 +345,7 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(138, 30), // 1.38E+32, 0.119232 BTC / day
       minPositionImpactPoolAmount: expandDecimals(95, 6), // 0.95 BTC
 
-      negativeSwapImpactFactor: decimalToFloat(2, 10), // 0.05% for 2,500,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(4, 10), // 0.05% for 1,250,000 USD of imbalance
       positiveSwapImpactFactor: decimalToFloat(2, 10), // 0.05% for 2,500,000 USD of imbalance
 
       minCollateralFactor: decimalToFloat(5, 3), // 200x leverage
