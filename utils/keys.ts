@@ -178,6 +178,7 @@ export const EXECUTION_GAS_FEE_MULTIPLIER_FACTOR = hashString("EXECUTION_GAS_FEE
 
 export const DEPOSIT_GAS_LIMIT = hashString("DEPOSIT_GAS_LIMIT");
 export const WITHDRAWAL_GAS_LIMIT = hashString("WITHDRAWAL_GAS_LIMIT");
+export const SHIFT_GAS_LIMIT = hashString("SHIFT_GAS_LIMIT");
 export const SINGLE_SWAP_GAS_LIMIT = hashString("SINGLE_SWAP_GAS_LIMIT");
 export const INCREASE_ORDER_GAS_LIMIT = hashString("INCREASE_ORDER_GAS_LIMIT");
 export const DECREASE_ORDER_GAS_LIMIT = hashString("DECREASE_ORDER_GAS_LIMIT");
@@ -542,6 +543,10 @@ export function depositGasLimitKey(singleToken: boolean) {
 
 export function withdrawalGasLimitKey() {
   return WITHDRAWAL_GAS_LIMIT;
+}
+
+export function shiftGasLimitKey() {
+  return SHIFT_GAS_LIMIT;
 }
 
 export function singleSwapGasLimitKey() {
