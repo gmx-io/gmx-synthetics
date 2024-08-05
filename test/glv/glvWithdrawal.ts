@@ -118,14 +118,6 @@ describe("Glv Withdrawals", () => {
         .withArgs("100000000800000", "1");
     });
 
-    it("GlvDisabledMarket", async () => {
-      await dataStore.setBool(keys.isGlvMarketDisabledKey(ethUsdGlvAddress, ethUsdMarket.marketToken), true);
-
-      await expect(createGlvWithdrawal(fixture, { ...params, glvTokenAmount: 1, executionFee: 1 }))
-        .to.be.revertedWithCustomError(errorsContract, "GlvDisabledMarket")
-        .withArgs(ethUsdGlvAddress, ethUsdMarket.marketToken);
-    });
-
     it("EmptyAccount", async () => {
       await expect(
         createGlvWithdrawal(fixture, { ...params, account: { address: ethers.constants.AddressZero } })
@@ -174,6 +166,36 @@ describe("Glv Withdrawals", () => {
   });
 
   it("create glv withdrawal", async () => {
+    const glvToken = await contractAt("GlvToken", ethUsdGlvAddress);
+    const glvTokenAmount = expandDecimals(1000, 18);
+    await glvToken.mint(user0.address, glvTokenAmount);
+
+    const params = {
+      account: user0,
+      receiver: user1,
+      callbackContract: user2,
+      glv: ethUsdGlvAddress,
+      market: ethUsdMarket,
+      glvTokenAmount,
+      minLongTokenAmount: 100,
+      minShortTokenAmount: 50,
+      shouldUnwrapNativeToken: true,
+      executionFee: 700,
+      callbackGasLimit: 100000,
+      gasUsageLabel: "createGlvWithdrawal",
+    };
+    await createGlvWithdrawal(fixture, params);
+
+    expect(await getGlvWithdrawalCount(dataStore)).eq(1);
+
+    const glvWithdrawalKeys = await getGlvWithdrawalKeys(dataStore, 0, 1);
+    const glvWithdrawal = await glvReader.getGlvWithdrawal(dataStore.address, glvWithdrawalKeys[0]);
+
+    expectGlvWithdrawal(glvWithdrawal, params);
+  });
+
+  it("create glv withdrawal, disabled market", async () => {
+    await dataStore.setBool(keys.isGlvMarketDisabledKey(ethUsdGlvAddress, ethUsdMarket.marketToken), true);
     const glvToken = await contractAt("GlvToken", ethUsdGlvAddress);
     const glvTokenAmount = expandDecimals(1000, 18);
     await glvToken.mint(user0.address, glvTokenAmount);

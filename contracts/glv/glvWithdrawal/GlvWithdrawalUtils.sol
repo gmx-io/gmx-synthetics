@@ -79,7 +79,7 @@ library GlvWithdrawalUtils {
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
         GlvUtils.validateGlv(dataStore, params.glv);
-        GlvUtils.validateGlvMarket(dataStore, params.glv, params.market, true);
+        GlvUtils.validateGlvMarket(dataStore, params.glv, params.market, false);
 
         MarketUtils.validateEnabledMarket(dataStore, params.market);
         MarketUtils.validateSwapPath(dataStore, params.longTokenSwapPath);
