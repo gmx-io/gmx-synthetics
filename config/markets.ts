@@ -1833,8 +1833,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(166, 43), // ~143 AVAX/day
       minPositionImpactPoolAmount: expandDecimals(141, 18),
 
-      maxOpenInterestForLongs: decimalToFloat(1_000_000),
-      maxOpenInterestForShorts: decimalToFloat(1_000_000),
+      maxOpenInterestForLongs: decimalToFloat(3_000_000),
+      maxOpenInterestForShorts: decimalToFloat(3_000_000),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(16, 13), // 0.0000000000016, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
