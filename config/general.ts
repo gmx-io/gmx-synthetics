@@ -22,6 +22,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       depositGasLimitSingle: 0,
       depositGasLimitMultiple: 0,
       withdrawalGasLimit: 0,
+      shiftGasLimit: 2_500_000,
 
       singleSwapGasLimit: 0,
       increaseOrderGasLimit: 0,
