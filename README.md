@@ -741,6 +741,8 @@ After the initial setup:
 
 - The first deposit in any market must go to the RECEIVER_FOR_FIRST_DEPOSIT
 
+- The execution fee for deposits depends on whether there is an `initialLongToken` and `initialShortToken` amount, note that since anyone can send tokens into the depositVault, the execution fee sent should be sufficient to cover the case where both `initialLongToken` and `initialShortToken` are non-zero, this would help prevent denial of service manipulations
+
 ### Withdrawal Notes
 
 - Two minimum outputs must be used for withdrawals
