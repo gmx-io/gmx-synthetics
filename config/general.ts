@@ -12,7 +12,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       sequencerUptimeFeed: ethers.constants.AddressZero,
       sequencerGraceDuration: 300,
       maxUiFeeFactor: decimalToFloat(5, 5), // 0.005%
-      maxAutoCancelOrders: 5,
+      maxAutoCancelOrders: 6,
       maxTotalCallbackGasLimitForAutoCancelOrders: 3_000_000,
       minHandleExecutionErrorGas: 1_200_000,
       minHandleExecutionErrorGasToForward: 1_000_000,
@@ -63,7 +63,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     sequencerUptimeFeed: ethers.constants.AddressZero,
     sequencerGraceDuration: 300,
     maxUiFeeFactor: percentageToFloat("0.05%"),
-    maxAutoCancelOrders: 5,
+    maxAutoCancelOrders: 6,
     maxTotalCallbackGasLimitForAutoCancelOrders: 5_000_000,
     minHandleExecutionErrorGas: 1_200_000,
     minHandleExecutionErrorGasToForward: 1_000_000, // measured gas required for an order cancellation: ~600,000
@@ -110,14 +110,16 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
   const networkConfig = {
     arbitrumGoerli: {},
     arbitrumSepolia: {
-      maxAutoCancelOrders: 10,
+      maxAutoCancelOrders: 11,
       maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
     },
     avalancheFuji: {},
     arbitrum: {
-      maxAutoCancelOrders: 10,
+      maxAutoCancelOrders: 11,
       maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
       maxCallbackGasLimit: 3_000_000,
+      estimatedGasPerOraclePrice: false,
+      executionGasPerOraclePrice: false,
       estimatedGasFeeBaseAmount: false,
       executionGasFeeBaseAmount: false,
       sequencerUptimeFeed: "0xFdB631F5EE196F0ed6FAa767959853A9F217697D",
