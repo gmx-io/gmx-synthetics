@@ -77,6 +77,8 @@ library Errors {
     error GlvShiftIntervalNotYetPassed(uint256 currentTimestamp, uint256 lastGlvShiftExecutedAt, uint256 glvShiftMinInterval);
     // GlvFactory
     error GlvAlreadyExists(bytes32 salt, address glv);
+    error GlvSymbolTooLong();
+    error GlvNameTooLong();
     // GlvStoreUtils
     error GlvNotFound(address key);
 

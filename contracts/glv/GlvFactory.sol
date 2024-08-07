@@ -34,6 +34,14 @@ contract GlvFactory is RoleModule {
         string memory name,
         string memory symbol
     ) external onlyMarketKeeper returns (Glv.Props memory) {
+        // not the same as length in characters
+        if (bytes(symbol).length > 30) {
+            revert Errors.GlvSymbolTooLong();
+        }
+        if (bytes(symbol).length > 100) {
+            revert Errors.GlvNameTooLong();
+        }
+
         bytes32 salt = keccak256(abi.encode("GMX_GLV", longToken, shortToken, glvType));
 
         address existingGlvAddress = dataStore.getAddress(GlvStoreUtils.getGlvSaltHash(salt));
