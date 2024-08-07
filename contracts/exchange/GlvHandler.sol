@@ -52,7 +52,6 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
-        FeatureUtils.validateFeature(_dataStore, Keys.executeGlvDepositFeatureDisabledKey(address(this)));
 
         GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(_dataStore, key);
         uint256 marketCount = GlvUtils.getGlvMarketCount(_dataStore, glvDeposit.glv());
@@ -70,6 +69,8 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
 
     function _executeGlvDeposit(bytes32 key, GlvDeposit.Props memory glvDeposit, address keeper) external onlySelf {
         uint256 startingGas = gasleft();
+
+        FeatureUtils.validateFeature(dataStore, Keys.executeGlvDepositFeatureDisabledKey(address(this)));
 
         GlvDepositUtils.ExecuteGlvDepositParams memory params = GlvDepositUtils.ExecuteGlvDepositParams({
             key: key,
@@ -145,7 +146,6 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
-        FeatureUtils.validateFeature(_dataStore, Keys.executeGlvWithdrawalFeatureDisabledKey(address(this)));
 
         GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(_dataStore, key);
         uint256 marketCount = GlvUtils.getGlvMarketCount(_dataStore, glvWithdrawal.glv());
@@ -171,6 +171,8 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         address keeper
     ) external onlySelf {
         uint256 startingGas = gasleft();
+
+        FeatureUtils.validateFeature(dataStore, Keys.executeGlvWithdrawalFeatureDisabledKey(address(this)));
 
         GlvWithdrawalUtils.ExecuteGlvWithdrawalParams memory params = GlvWithdrawalUtils.ExecuteGlvWithdrawalParams({
             key: key,
@@ -262,7 +264,6 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
-        FeatureUtils.validateFeature(dataStore, Keys.executeGlvShiftFeatureDisabledKey(address(this)));
 
         GlvShift.Props memory glvShift = GlvShiftStoreUtils.get(_dataStore, key);
         uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvShiftGasLimit(_dataStore);
@@ -277,6 +278,8 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
 
     function _executeGlvShift(bytes32 key, GlvShift.Props memory glvShift, address keeper) external onlySelf {
         uint256 startingGas = gasleft();
+
+        FeatureUtils.validateFeature(dataStore, Keys.executeGlvShiftFeatureDisabledKey(address(this)));
 
         GlvShiftUtils.ExecuteGlvShiftParams memory params = GlvShiftUtils.ExecuteGlvShiftParams({
             key: key,
