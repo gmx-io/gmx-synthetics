@@ -351,7 +351,7 @@ library GasUtils {
 
         uint256 gasLimit = glvDepositGasLimit + glvDeposit.callbackGasLimit() + gasForGlvMarkets;
 
-        if (glvDeposit.market() == glvDeposit.initialLongToken()) {
+        if (glvDeposit.isMarketTokenDeposit()) {
             // user provided GM, no separate deposit will be created and executed in this case
             return gasLimit;
         }

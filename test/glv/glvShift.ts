@@ -2,12 +2,19 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 
-import { handleGlvDeposit, createGlvShift, handleGlvShift, getGlvShiftKeys, executeGlvShift } from "../../utils/glv";
+import {
+  handleGlvDeposit,
+  createGlvShift,
+  handleGlvShift,
+  getGlvShiftKeys,
+  executeGlvShift,
+  getGlvShiftCount,
+} from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
 import { decimalToFloat, expandDecimals } from "../../utils/math";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
-import { expectBalances } from "../../utils/validation";
+import { expectBalances, expectCancellationReason } from "../../utils/validation";
 
 describe("Glv Shifts", () => {
   const { provider } = ethers;
@@ -229,27 +236,26 @@ describe("Glv Shifts", () => {
         await handleGlvShift(fixture, { create: params });
         await handleGlvShift(fixture, { create: params });
 
-        let lastGlvShiftExecutedAt = await time.latest();
-
         await createGlvShift(fixture, params);
-        await dataStore.setUint(keys.glvShiftMinIntervalKey(ethUsdGlvAddress), 60);
+        await createGlvShift(fixture, params);
+        await dataStore.setUint(keys.glvShiftMinIntervalKey(ethUsdGlvAddress), 300);
+        const lastGlvShiftExecutedAt = await time.latest();
 
         await expect(createGlvShift(fixture, params)).to.be.revertedWithCustomError(
           errorsContract,
           "GlvShiftIntervalNotYetPassed"
         );
 
-        await expect(executeGlvShift(fixture)).to.be.revertedWithCustomError(
-          errorsContract,
-          "GlvShiftIntervalNotYetPassed"
-        );
+        expect(await getGlvShiftCount(dataStore)).to.be.eq(2);
 
-        await time.setNextBlockTimestamp(lastGlvShiftExecutedAt + 60);
+        await executeGlvShift(fixture, {
+          expectedCancellationReason: "GlvShiftIntervalNotYetPassed",
+        });
+
+        expect(await getGlvShiftCount(dataStore)).to.be.eq(1);
+        await time.setNextBlockTimestamp(lastGlvShiftExecutedAt + 300);
         await executeGlvShift(fixture);
-
-        lastGlvShiftExecutedAt = await time.latest();
-        await time.setNextBlockTimestamp(lastGlvShiftExecutedAt + 60);
-        await createGlvShift(fixture, params);
+        expect(await getGlvShiftCount(dataStore)).to.be.eq(0);
       });
 
       it("GlvMaxMarketTokenBalanceUsdExceeded", async () => {
