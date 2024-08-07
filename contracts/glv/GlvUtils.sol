@@ -74,8 +74,6 @@ library GlvUtils {
         bool maximize
     ) internal view returns (uint256) {
         GetGlvValueCache memory cache;
-        cache.marketListKey = Keys.glvSupportedMarketListKey(glv);
-        cache.marketCount = dataStore.getAddressCount(cache.marketListKey);
 
         for (uint256 i = 0; i < marketAddresses.length; i++) {
             address marketAddress = marketAddresses[i];
