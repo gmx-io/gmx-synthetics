@@ -32,9 +32,6 @@ library GlvShiftUtils {
     }
 
     struct CreateGlvShiftCache {
-        Market.Props fromMarket;
-        Market.Props toMarket;
-        int256 toMarketTokenPrice;
         uint256 fromMarketTokenBalance;
         uint256 estimatedGasLimit;
         uint256 oraclePriceCount;
