@@ -90,6 +90,7 @@ library GlvWithdrawalUtils {
         if (wntAmount < params.executionFee) {
             revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
         }
+        params.executionFee = wntAmount;
 
         AccountUtils.validateReceiver(params.receiver);
 

@@ -181,6 +181,7 @@ describe("Glv Withdrawals", () => {
       minShortTokenAmount: 50,
       shouldUnwrapNativeToken: true,
       executionFee: 700,
+      executionFeeToMint: 800,
       callbackGasLimit: 100000,
       gasUsageLabel: "createGlvWithdrawal",
     };
@@ -191,7 +192,8 @@ describe("Glv Withdrawals", () => {
     const glvWithdrawalKeys = await getGlvWithdrawalKeys(dataStore, 0, 1);
     const glvWithdrawal = await glvReader.getGlvWithdrawal(dataStore.address, glvWithdrawalKeys[0]);
 
-    expectGlvWithdrawal(glvWithdrawal, params);
+    // execution fee should be 800 because 800e-18 WETH was sent
+    expectGlvWithdrawal(glvWithdrawal, { ...params, executionFee: 800 });
   });
 
   it("create glv withdrawal, disabled market", async () => {
