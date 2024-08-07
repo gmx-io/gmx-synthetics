@@ -1,12 +1,15 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
-import { getGlvAddress } from "../../utils/glv";
+import { getGlvAddress, handleGlvDeposit, handleGlvShift } from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import { encodeData } from "../../utils/hash";
 import { contractAt } from "../../utils/deploy";
+import { expandDecimals } from "../../utils/math";
+import { expectBalances } from "../../utils/validation";
+import { handleDeposit } from "../../utils/deposit";
 
 describe("Glv", () => {
   let fixture;
@@ -125,6 +128,61 @@ describe("Glv", () => {
     );
     expect(listedMarkets[0]).eq(ethUsdMarket.marketToken);
     expect(listedMarkets[1]).eq(solUsdMarket.marketToken);
+  });
+
+  it("removes markets from Glv", async () => {
+    const marketListKey = keys.glvSupportedMarketListKey(ethUsdGlvAddress);
+    let marketListCount = await dataStore.getAddressCount(marketListKey);
+    expect(marketListCount.toNumber()).eq(2);
+
+    await handleDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(50_000, 6),
+      },
+    });
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(50_000, 6),
+      },
+    });
+
+    await expectBalances({
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(100_000, 18),
+      },
+    });
+
+    let listedMarkets = await dataStore.getAddressValuesAt(marketListKey, 0, marketListCount);
+    expect(listedMarkets[0]).eq(ethUsdMarket.marketToken);
+    expect(listedMarkets[1]).eq(solUsdMarket.marketToken);
+
+    await expect(
+      glvHandler.removeMarketFromGlv(ethUsdGlvAddress, ethUsdMarket.marketToken)
+    ).to.be.revertedWithCustomError(errorsContract, "GlvEnabledMarket");
+
+    await dataStore.setBool(keys.isGlvMarketDisabledKey(ethUsdGlvAddress, ethUsdMarket.marketToken), true);
+    await expect(
+      glvHandler.removeMarketFromGlv(ethUsdGlvAddress, ethUsdMarket.marketToken)
+    ).to.be.revertedWithCustomError(errorsContract, "GlvNonZeroMarketBalance");
+
+    await handleGlvShift(fixture, {
+      create: {
+        marketTokenAmount: expandDecimals(100_000, 18),
+      },
+    });
+    await expectBalances({
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: 0,
+      },
+    });
+    await glvHandler.removeMarketFromGlv(ethUsdGlvAddress, ethUsdMarket.marketToken);
+
+    marketListCount = await dataStore.getAddressCount(marketListKey);
+    expect(marketListCount.toNumber()).eq(1);
+    listedMarkets = await dataStore.getAddressValuesAt(marketListKey, 0, marketListCount);
+    expect(listedMarkets[0]).eq(solUsdMarket.marketToken);
   });
 
   it("adds markets to Glv, single asset markets", async () => {

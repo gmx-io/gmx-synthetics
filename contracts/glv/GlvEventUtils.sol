@@ -25,6 +25,16 @@ library GlvEventUtils {
         eventEmitter.emitEventLog2("GlvMarketAdded", Cast.toBytes32(glv), Cast.toBytes32(market), eventData);
     }
 
+    function emitGlvMarketRemoved(EventEmitter eventEmitter, address glv, address market) internal {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "glv", glv);
+        eventData.addressItems.setItem(1, "market", market);
+
+        eventEmitter.emitEventLog2("GlvMarketRemoved", Cast.toBytes32(glv), Cast.toBytes32(market), eventData);
+    }
+
     function emitGlvValueUpdated(EventEmitter eventEmitter, address glv, uint256 value, uint256 supply) internal {
         EventUtils.EventLogData memory eventData;
 

@@ -125,7 +125,8 @@ library GlvUtils {
             return 0;
         }
 
-        return MarketUtils.marketTokenAmountToUsd(balance, marketPoolValueInfo.poolValue.toUint256(), marketTokenSupply);
+        return
+            MarketUtils.marketTokenAmountToUsd(balance, marketPoolValueInfo.poolValue.toUint256(), marketTokenSupply);
     }
 
     function getGlvTokenPrice(
@@ -299,5 +300,29 @@ library GlvUtils {
         dataStore.addAddress(key, marketAddress);
 
         GlvEventUtils.emitGlvMarketAdded(eventEmitter, glvAddress, market.marketToken);
+    }
+
+    function removeMarketFromGlv(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address glvAddress,
+        address marketAddress
+    ) external {
+        validateGlv(dataStore, glvAddress);
+        validateGlvMarket(dataStore, glvAddress, marketAddress, false);
+
+        if (!dataStore.getBool(Keys.isGlvMarketDisabledKey(glvAddress, marketAddress))) {
+            revert Errors.GlvEnabledMarket(glvAddress, marketAddress);
+        }
+
+        uint256 balance = IERC20(marketAddress).balanceOf(glvAddress);
+        if (balance != 0) {
+            revert Errors.GlvNonZeroMarketBalance(glvAddress, marketAddress);
+        }
+
+        bytes32 key = Keys.glvSupportedMarketListKey(glvAddress);
+        dataStore.removeAddress(key, marketAddress);
+
+        GlvEventUtils.emitGlvMarketRemoved(eventEmitter, glvAddress, marketAddress);
     }
 }
