@@ -6,6 +6,7 @@ import "../data/DataStore.sol";
 import "../oracle/Oracle.sol";
 import "../market/Market.sol";
 import "../market/MarketUtils.sol";
+import "./GlvToken.sol";
 import "./GlvEventUtils.sol";
 import "./GlvStoreUtils.sol";
 
@@ -116,8 +117,7 @@ library GlvUtils {
             maximize
         );
         uint256 marketTokenSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(marketAddress)));
-
-        uint256 balance = IERC20(marketAddress).balanceOf(glv);
+        uint256 balance = GlvToken(payable(glv)).tokenBalances(marketAddress);
 
         if (balance == 0) {
             return 0;
@@ -247,7 +247,7 @@ library GlvUtils {
             return;
         }
 
-        uint256 marketTokenBalanceAmount = ERC20(market.marketToken).balanceOf(glv);
+        uint256 marketTokenBalanceAmount = GlvToken(payable(glv)).tokenBalances(market.marketToken);
         if (maxMarketTokenBalanceAmount > 0 && marketTokenBalanceAmount > maxMarketTokenBalanceAmount) {
             revert Errors.GlvMaxMarketTokenBalanceAmountExceeded(
                 glv,
@@ -313,7 +313,7 @@ library GlvUtils {
             revert Errors.GlvEnabledMarket(glvAddress, marketAddress);
         }
 
-        uint256 balance = IERC20(marketAddress).balanceOf(glvAddress);
+        uint256 balance = GlvToken(payable(glvAddress)).tokenBalances(marketAddress);
         if (balance != 0) {
             revert Errors.GlvNonZeroMarketBalance(glvAddress, marketAddress);
         }

@@ -84,7 +84,7 @@ library GlvShiftUtils {
             revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
         }
 
-        uint256 fromMarketTokenBalance = ERC20(params.fromMarket).balanceOf(params.glv);
+        uint256 fromMarketTokenBalance = GlvToken(payable(params.glv)).tokenBalances(params.fromMarket);
         if (fromMarketTokenBalance < params.marketTokenAmount) {
             revert Errors.GlvInsufficientMarketTokenBalance(
                 params.glv,
@@ -192,6 +192,8 @@ library GlvShiftUtils {
         });
 
         cache.receivedMarketTokens = ShiftUtils.executeShift(executeShiftParams, cache.shift);
+
+        GlvToken(payable(glvShift.glv())).syncTokenBalance(glvShift.toMarket());
 
         cache.toMarket = MarketStoreUtils.get(params.dataStore, glvShift.toMarket());
 

@@ -375,6 +375,7 @@ library GlvDepositUtils {
         if (glvDeposit.isMarketTokenDeposit()) {
             // user deposited GM tokens
             glvVault.transferOut(glvDeposit.market(), glvDeposit.glv(), glvDeposit.marketTokenAmount());
+            GlvToken(payable(glvDeposit.glv())).syncTokenBalance(glvDeposit.market());
             return glvDeposit.marketTokenAmount();
         }
 
@@ -418,7 +419,9 @@ library GlvDepositUtils {
                 true // includeVirtualInventoryImpact
             );
 
-        return ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);
+        uint256 receivedMarketTokens = ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);
+        GlvToken(payable(glvDeposit.glv())).syncTokenBalance(glvDeposit.market());
+        return receivedMarketTokens;
     }
 
     function cancelGlvDeposit(CancelGlvDepositParams memory params) external {
