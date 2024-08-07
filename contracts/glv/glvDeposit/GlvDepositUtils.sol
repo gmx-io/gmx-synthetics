@@ -355,7 +355,6 @@ library GlvDepositUtils {
             oracle.getPrimaryPrice(market.longToken),
             oracle.getPrimaryPrice(market.shortToken),
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-
             // use the same maximize for both glv and market values to avoid applying double spread
             true // maximize
         );
@@ -422,43 +421,48 @@ library GlvDepositUtils {
         return ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);
     }
 
-    function cancelGlvDeposit(
-        CancelGlvDepositParams memory params
-    ) external {
+    function cancelGlvDeposit(CancelGlvDepositParams memory params) external {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
         GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(params.dataStore, params.key);
         GlvDepositStoreUtils.remove(params.dataStore, params.key, glvDeposit.account());
 
-        if (glvDeposit.marketTokenAmount() > 0) {
+        if (glvDeposit.isMarketTokenDeposit()) {
+            // in this case marketTokenAmount > 0
             params.glvVault.transferOut(
                 glvDeposit.market(),
                 glvDeposit.account(),
                 glvDeposit.marketTokenAmount(),
                 glvDeposit.shouldUnwrapNativeToken()
             );
+        } else {
+            if (glvDeposit.initialLongTokenAmount() > 0) {
+                params.glvVault.transferOut(
+                    glvDeposit.initialLongToken(),
+                    glvDeposit.account(),
+                    glvDeposit.initialLongTokenAmount(),
+                    glvDeposit.shouldUnwrapNativeToken()
+                );
+            }
+
+            if (glvDeposit.initialShortTokenAmount() > 0) {
+                params.glvVault.transferOut(
+                    glvDeposit.initialShortToken(),
+                    glvDeposit.account(),
+                    glvDeposit.initialShortTokenAmount(),
+                    glvDeposit.shouldUnwrapNativeToken()
+                );
+            }
         }
 
-        if (glvDeposit.initialLongTokenAmount() > 0) {
-            params.glvVault.transferOut(
-                glvDeposit.initialLongToken(),
-                glvDeposit.account(),
-                glvDeposit.initialLongTokenAmount(),
-                glvDeposit.shouldUnwrapNativeToken()
-            );
-        }
-
-        if (glvDeposit.initialShortTokenAmount() > 0) {
-            params.glvVault.transferOut(
-                glvDeposit.initialShortToken(),
-                glvDeposit.account(),
-                glvDeposit.initialShortTokenAmount(),
-                glvDeposit.shouldUnwrapNativeToken()
-            );
-        }
-
-        GlvDepositEventUtils.emitGlvDepositCancelled(params.eventEmitter, params.key, glvDeposit.account(), params.reason, params.reasonBytes);
+        GlvDepositEventUtils.emitGlvDepositCancelled(
+            params.eventEmitter,
+            params.key,
+            glvDeposit.account(),
+            params.reason,
+            params.reasonBytes
+        );
 
         EventUtils.EventLogData memory eventData;
         CallbackUtils.afterGlvDepositCancellation(params.key, glvDeposit, eventData);
