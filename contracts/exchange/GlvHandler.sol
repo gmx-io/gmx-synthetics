@@ -299,10 +299,6 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
 
         validateNonKeeperError(errorSelector, reasonBytes);
 
-        if (errorSelector == Errors.GlvShiftIntervalNotYetPassed.selector) {
-            ErrorUtils.revertWithCustomError(reasonBytes);
-        }
-
         (string memory reason /* bool hasRevertMessage */, ) = ErrorUtils.getRevertMessage(reasonBytes);
 
         GlvShiftUtils.cancelGlvShift(
