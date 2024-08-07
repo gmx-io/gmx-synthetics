@@ -125,7 +125,6 @@ library Keys {
     bytes32 public constant EXECUTE_GLV_WITHDRAWAL_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_GLV_WITHDRAWAL_FEATURE_DISABLED"));
 
     bytes32 public constant CREATE_GLV_SHIFT_FEATURE_DISABLED = keccak256(abi.encode("CREATE_GLV_SHIFT_FEATURE_DISABLED"));
-    bytes32 public constant CANCEL_GLV_SHIFT_FEATURE_DISABLED = keccak256(abi.encode("CANCEL_GLV_SHIFT_FEATURE_DISABLED"));
     bytes32 public constant EXECUTE_GLV_SHIFT_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_GLV_SHIFT_FEATURE_DISABLED"));
 
     // @dev key for whether the create deposit feature is disabled
