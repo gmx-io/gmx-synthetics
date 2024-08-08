@@ -270,8 +270,8 @@ describe("Exchange.Deposit", () => {
       executeDeposit(fixture, {
         tokens: [wnt.address],
         tokenOracleTypes: [TOKEN_ORACLE_TYPES.DEFAULT],
-        minPrices: [expandDecimals(5000, 4)],
-        maxPrices: [expandDecimals(5000, 4)],
+        minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+        maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
       })
     )
       .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
@@ -283,8 +283,8 @@ describe("Exchange.Deposit", () => {
       executeDeposit(fixture, {
         tokens: [wnt.address],
         tokenOracleTypes: [TOKEN_ORACLE_TYPES.DEFAULT],
-        minPrices: [expandDecimals(5000, 4)],
-        maxPrices: [expandDecimals(5000, 4)],
+        minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+        maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
       })
     )
       .to.be.revertedWithCustomError(errorsContract, "EmptyPrimaryPrice")

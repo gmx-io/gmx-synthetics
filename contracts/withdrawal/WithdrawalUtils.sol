@@ -99,7 +99,6 @@ library WithdrawalUtils {
         if (marketTokenAmount == 0) {
             revert Errors.EmptyWithdrawalAmount();
         }
-
         params.executionFee = wntAmount;
 
         MarketUtils.validateEnabledMarket(dataStore, params.market);

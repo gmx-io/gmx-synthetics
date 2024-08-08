@@ -7,6 +7,7 @@ import "../exchange/IGlvHandler.sol";
 
 contract GlvRouter is BaseRouter {
     using GlvDeposit for GlvDeposit.Props;
+    using GlvWithdrawal for GlvWithdrawal.Props;
 
     IGlvHandler public immutable glvHandler;
 
@@ -27,22 +28,18 @@ contract GlvRouter is BaseRouter {
         }
     }
 
-
     function createGlvDeposit(
         GlvDepositUtils.CreateGlvDepositParams calldata params
     ) external payable nonReentrant returns (bytes32) {
         address account = msg.sender;
 
-        return glvHandler.createGlvDeposit(
-            account,
-            params
-        );
+        return glvHandler.createGlvDeposit(account, params);
     }
 
-    function cancelGlvDeposit(bytes32 key) external payable nonReentrant {
+    function cancelGlvDeposit(bytes32 key) external nonReentrant {
         GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(dataStore, key);
         if (glvDeposit.account() == address(0)) {
-            revert Errors.EmptyDeposit();
+            revert Errors.EmptyGlvDeposit();
         }
 
         if (glvDeposit.account() != msg.sender) {
@@ -51,5 +48,39 @@ contract GlvRouter is BaseRouter {
 
         glvHandler.cancelGlvDeposit(key);
     }
-}
 
+    function simulateExecuteGlvDeposit(
+        bytes32 key,
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams
+    ) external nonReentrant {
+        glvHandler.simulateExecuteGlvDeposit(key, simulatedOracleParams);
+    }
+
+    function createGlvWithdrawal(
+        GlvWithdrawalUtils.CreateGlvWithdrawalParams calldata params
+    ) external payable nonReentrant returns (bytes32) {
+        address account = msg.sender;
+
+        return glvHandler.createGlvWithdrawal(account, params);
+    }
+
+    function cancelGlvWithdrawal(bytes32 key) external nonReentrant {
+        GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(dataStore, key);
+        if (glvWithdrawal.account() == address(0)) {
+            revert Errors.EmptyGlvWithdrawal();
+        }
+
+        if (glvWithdrawal.account() != msg.sender) {
+            revert Errors.Unauthorized(msg.sender, "account for cancelGlvWithdrawal");
+        }
+
+        glvHandler.cancelGlvWithdrawal(key);
+    }
+
+    function simulateExecuteGlvWithdrawal(
+        bytes32 key,
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams
+    ) external nonReentrant {
+        glvHandler.simulateExecuteGlvWithdrawal(key, simulatedOracleParams);
+    }
+}

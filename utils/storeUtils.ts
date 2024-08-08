@@ -8,7 +8,7 @@ function setSampleItemAddresses({ emptyStoreItem, accountList, user0, overrideVa
   }
 
   Object.keys(emptyStoreItem.addresses).forEach((key, index) => {
-    if (isNaN(key)) {
+    if (isNaN(parseInt(key))) {
       let value;
 
       if (Array.isArray(emptyStoreItem.addresses[key])) {
@@ -30,7 +30,7 @@ function setSampleItemAddresses({ emptyStoreItem, accountList, user0, overrideVa
 
 function setSampleItemNumbers({ emptyStoreItem, overrideValues, sampleItem }) {
   Object.keys(emptyStoreItem.numbers).forEach((key, index) => {
-    if (isNaN(key)) {
+    if (isNaN(parseInt(key))) {
       let value = index + 1;
 
       if (overrideValues[`numbers.${key}`]) {
@@ -47,7 +47,7 @@ function setSampleItemFlags({ emptyStoreItem, sampleItem, index }) {
     return;
   }
   Object.keys(emptyStoreItem.flags).forEach((key, flagIndex) => {
-    if (isNaN(key)) {
+    if (isNaN(parseInt(key))) {
       const adjustedIndex = flagIndex - Object.keys(emptyStoreItem.flags).length / 2;
       // only set one flag to true at a time
       sampleItem.flags[key] = adjustedIndex === index;
@@ -59,21 +59,21 @@ async function validateFetchedItemAfterSet({ emptyStoreItem, getItem, dataStore,
   const fetchedItem = await getItem(dataStore, itemKey);
 
   Object.keys(emptyStoreItem.addresses).forEach((key) => {
-    if (isNaN(key)) {
-      expect(fetchedItem.addresses[key]).deep.eq(sampleItem.addresses[key]);
+    if (isNaN(parseInt(key))) {
+      expect(fetchedItem.addresses[key], key).deep.eq(sampleItem.addresses[key]);
     }
   });
 
   Object.keys(emptyStoreItem.numbers).forEach((key) => {
-    if (isNaN(key)) {
-      expect(fetchedItem.numbers[key]).eq(sampleItem.numbers[key]);
+    if (isNaN(parseInt(key))) {
+      expect(fetchedItem.numbers[key], key).eq(sampleItem.numbers[key]);
     }
   });
 
   if (emptyStoreItem.flags !== undefined) {
     Object.keys(emptyStoreItem.flags).forEach((key) => {
-      if (isNaN(key)) {
-        expect(fetchedItem.flags[key]).eq(sampleItem.flags[key]);
+      if (isNaN(parseInt(key))) {
+        expect(fetchedItem.flags[key], key).eq(sampleItem.flags[key]);
       }
     });
   }
@@ -83,25 +83,25 @@ async function validateFetchedItemAfterRemove({ getItem, dataStore, itemKey, emp
   const fetchedItem = await getItem(dataStore, itemKey);
 
   Object.keys(emptyStoreItem.addresses).forEach((key) => {
-    if (isNaN(key)) {
+    if (isNaN(parseInt(key))) {
       if (Array.isArray(emptyStoreItem.addresses[key])) {
-        expect(fetchedItem.addresses[key]).deep.eq([]);
+        expect(fetchedItem.addresses[key], key).deep.eq([]);
       } else {
-        expect(fetchedItem.addresses[key]).eq(ethers.constants.AddressZero);
+        expect(fetchedItem.addresses[key], key).eq(ethers.constants.AddressZero);
       }
     }
   });
 
   Object.keys(emptyStoreItem.numbers).forEach((key) => {
-    if (isNaN(key)) {
-      expect(fetchedItem.numbers[key]).eq(0);
+    if (isNaN(parseInt(key))) {
+      expect(fetchedItem.numbers[key], key).eq(0);
     }
   });
 
   if (emptyStoreItem.flags !== undefined) {
     Object.keys(emptyStoreItem.flags).forEach((key) => {
-      if (isNaN(key)) {
-        expect(fetchedItem.flags[key]).eq(false);
+      if (isNaN(parseInt(key))) {
+        expect(fetchedItem.flags[key], key).eq(false);
       }
     });
   }
@@ -109,15 +109,15 @@ async function validateFetchedItemAfterRemove({ getItem, dataStore, itemKey, emp
 
 export async function validateStoreUtils({
   fixture,
-  expectedPropsLength,
+  expectedPropsLength = 3,
   getEmptyItem,
   getItem,
   setItem,
   removeItem,
   getItemCount,
   getItemKeys,
-  getAccountItemCount,
-  getAccountItemKeys,
+  getAccountItemCount = null,
+  getAccountItemKeys = null,
   overrideValues = {},
 }) {
   const { dataStore } = fixture.contracts;
@@ -125,10 +125,6 @@ export async function validateStoreUtils({
   const { accountList } = fixture;
   const emptyStoreItem = await getEmptyItem();
   const itemKey = hashString("key");
-
-  if (expectedPropsLength === undefined) {
-    expectedPropsLength = 3;
-  }
 
   expect(Object.keys(emptyStoreItem).length).eq(expectedPropsLength * 2);
 
