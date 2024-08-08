@@ -69,8 +69,8 @@ contract ConfigSyncer is ReentrancyGuard {
     }
 
     // Allows CONFIG_KEEPER to enable or disable the ability to apply updates
-    function setIsDisabled(address _market, bool _disabled) external onlyConfigKeeper nonReentrant {
-        isMarketDisabled[_market] = _disabled;
+    function setIsDisabled(bool _disabled) external onlyConfigKeeper nonReentrant {
+        isDisabled = _disabled;
     }
 
     // Allows CONFIG_KEEPER to enable or disable the ability to apply updates of any parameter type for a specific market
