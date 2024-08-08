@@ -99,6 +99,7 @@ contract ConfigSyncer is ReentrancyGuard {
             require(!isMarketParameterDisabled[abi.encodePacked(_markets[i], _parameterTypes[i])]);
             IRiskOracle.RiskParameterUpdate memory riskParameterUpdate = IRiskOracle(riskOracle).getLatestUpdateByParameterAndMarket(_parameterTypes[i], abi.encode(_markets[i]));
             uint256 updateId = riskParameterUpdate.updateId;
+            require(!isCompleted[updateId]);
             (bytes32 baseKey, bytes memory data) = abi.decode(riskParameterUpdate.additionalData, (bytes32, bytes));
             uint256 updatedValue = bytesToUint256(riskParameterUpdate.newValue);
             config.setUint(baseKey, data, updatedValue);
