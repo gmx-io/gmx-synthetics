@@ -6,7 +6,6 @@ import "./BaseHandler.sol";
 import "../shift/ShiftVault.sol";
 import "../shift/Shift.sol";
 import "../shift/ShiftUtils.sol";
-import "../shift/ShiftUtils.sol";
 import "./IShiftHandler.sol";
 
 contract ShiftHandler is IShiftHandler, BaseHandler {
