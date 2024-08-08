@@ -22,6 +22,9 @@ contract ConfigSyncer is ReentrancyGuard {
     Config public immutable config;
     RoleStore public immutable roleStore;
     
+    // Bool that if true disables the ability to apply any updates
+    bool public isDisabled;
+
     // Mapping from updateId to bool that returns true if an update has already been applied and false if it hasn't yet been applied
     mapping(uint256 => bool) public isCompleted;
 
@@ -33,9 +36,6 @@ contract ConfigSyncer is ReentrancyGuard {
 
     // Mapping that if true disables the ability to apply updates of a given parameter type for a given market (bytes = market and parameter type abiEncodePacked)
     mapping(bytes => bool) public isMarketParameterDisabled;
-
-    // Bool that if true disables the ability to apply any updates
-    bool public isDisabled;
 
     constructor(address _riskOracle, address _dataStore, Reader _reader, Config _config, RoleStore _roleStore) {
         // Initialize riskOracle and dataStore addresses
@@ -68,18 +68,23 @@ contract ConfigSyncer is ReentrancyGuard {
         _;
     }
 
+    // Allows CONFIG_KEEPER to enable or disable the ability to apply updates
+    function setIsDisabled(address _market, bool _disabled) external onlyConfigKeeper nonReentrant {
+        isMarketDisabled[_market] = _disabled;
+    }
+
     // Allows CONFIG_KEEPER to enable or disable the ability to apply updates of any parameter type for a specific market
-    function setMarketDisabled(address _market, bool _disabled) external onlyConfigKeeper nonReentrant {
+    function setIsMarketDisabled(address _market, bool _disabled) external onlyConfigKeeper nonReentrant {
         isMarketDisabled[_market] = _disabled;
     }
 
     // Allows CONFIG_KEEPER to enable or disable the ability to apply updates for a specific parameter type for all markets
-    function setParameterDisabled(string memory _parameterType, bool _disabled) external onlyConfigKeeper nonReentrant {
+    function setIsParameterDisabled(string memory _parameterType, bool _disabled) external onlyConfigKeeper nonReentrant {
         isParameterDisabled[_parameterType] = _disabled;
     }
 
     // Allows CONFIG_KEEPER to enable or disable the ability to apply updates for a specific market and parameter type combination
-    function setMarketParameterDisabled(address _market, string memory _parameterType, bool _disabled) external onlyConfigKeeper nonReentrant {
+    function setIsMarketParameterDisabled(address _market, string memory _parameterType, bool _disabled) external onlyConfigKeeper nonReentrant {
         isMarketParameterDisabled[abi.encodePacked(_market, _parameterType)] = _disabled;
     }
 
