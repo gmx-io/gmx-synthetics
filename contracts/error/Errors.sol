@@ -62,6 +62,7 @@ library Errors {
     // GlvUtils errors
     error EmptyGlv(address glv);
     error EmptyGlvTokenSupply();
+    error GlvNegativeMarketPoolValue(address glv, address market);
     error GlvUnsupportedMarket(address glv, address market);
     error GlvDisabledMarket(address glv, address market);
     error GlvEnabledMarket(address glv, address market);

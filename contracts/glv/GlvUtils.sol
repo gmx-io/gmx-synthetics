@@ -123,6 +123,10 @@ library GlvUtils {
             return 0;
         }
 
+        if (marketPoolValueInfo.poolValue < 0) {
+            revert Errors.GlvNegativeMarketPoolValue(glv, marketAddress);
+        }
+
         return
             MarketUtils.marketTokenAmountToUsd(balance, marketPoolValueInfo.poolValue.toUint256(), marketTokenSupply);
     }
