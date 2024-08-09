@@ -358,8 +358,7 @@ library GlvDepositUtils {
             oracle.getPrimaryPrice(market.longToken),
             oracle.getPrimaryPrice(market.shortToken),
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
-            // use the same maximize for both glv and market values to avoid applying double spread
-            true // maximize
+            false // maximize
         );
         uint256 marketTokenSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
         uint256 receivedMarketTokensUsd = MarketUtils.marketTokenAmountToUsd(
