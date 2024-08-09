@@ -93,6 +93,7 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
         for (uint256 i = 0; i < markets.length; i++) {
             market = markets[i];
             parameterType = parameterTypes[i];
+            
             if (isMarketDisabled[market]) {
                 revert Errors.UpdatesDisabledForMarket(market);
             }
