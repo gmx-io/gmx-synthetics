@@ -66,7 +66,6 @@ library GlvDepositUtils {
         uint256 marketTokenSupply;
         uint256 receivedMarketTokens;
         uint256 mintAmount;
-        uint256 receivedUsd;
         uint256 marketCount;
         uint256 oraclePriceCount;
         uint256 glvValue;
@@ -236,7 +235,7 @@ library GlvDepositUtils {
         );
         cache.glvSupply = GlvToken(payable(glvDeposit.glv())).totalSupply();
         cache.receivedMarketTokens = _processMarketDeposit(params, glvDeposit, params.glvVault);
-        (cache.mintAmount, cache.receivedUsd) = _getMintAmount(
+        cache.mintAmount = _getMintAmount(
             params.dataStore,
             params.oracle,
             glvDeposit,
@@ -349,7 +348,7 @@ library GlvDepositUtils {
         uint256 receivedMarketTokens,
         uint256 glvValue,
         uint256 glvSupply
-    ) internal view returns (uint256 glvTokenAmount, uint256 usdValue) {
+    ) internal view returns (uint256) {
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, glvDeposit.market());
         MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(
             dataStore,
@@ -366,7 +365,7 @@ library GlvDepositUtils {
             poolValueInfo.poolValue.toUint256(),
             marketTokenSupply
         );
-        return (GlvUtils.usdToGlvTokenAmount(receivedMarketTokensUsd, glvValue, glvSupply), receivedMarketTokensUsd);
+        return GlvUtils.usdToGlvTokenAmount(receivedMarketTokensUsd, glvValue, glvSupply);
     }
 
     function _processMarketDeposit(

@@ -276,7 +276,7 @@ library GlvWithdrawalUtils {
         DataStore dataStore,
         Oracle oracle,
         GlvWithdrawal.Props memory glvWithdrawal
-    ) internal view returns (uint256 marketTokenAmount) {
+    ) internal view returns (uint256) {
         uint256 glvValue = GlvUtils.getGlvValue(
             dataStore,
             oracle,
@@ -297,7 +297,7 @@ library GlvWithdrawalUtils {
             Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
             true // maximize
         );
-        marketTokenAmount = MarketUtils.usdToMarketTokenAmount(
+        uint256 marketTokenAmount = MarketUtils.usdToMarketTokenAmount(
             glvTokenUsd,
             poolValueInfo.poolValue.toUint256(),
             ERC20(market.marketToken).totalSupply()
