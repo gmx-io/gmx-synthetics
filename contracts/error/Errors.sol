@@ -367,4 +367,14 @@ library Errors {
     // Uint256Mask errors
     error MaskIndexOutOfBounds(uint256 index, string label);
     error DuplicatedIndex(uint256 index, string label);
+
+    // Cast errors
+    error Uint256AsBytesLengthExceeds32Bytes(uint256 length);
+
+    // ConfigSyncer errors
+    error MarketsAndParameterTypesDifferentLengths(uint256 marketsLength, uint256 parameterTypesLength);
+    error UpdatesDisabledForMarket(address market);
+    error UpdatesDisabledForParameterType(string parameterType);
+    error UpdatesDisabledForMarketParameter(address market, string parameterType);
+    error UpdateAlreadyApplied(uint256 updateId);
 }
