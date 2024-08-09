@@ -254,7 +254,7 @@ describe("Glv Deposits", () => {
       market: ethUsdSingleTokenMarket2,
       longTokenAmount: expandDecimals(1, 18),
       initialLongToken: wnt.address,
-      initialShortToken: AddressZero,
+      initialShortToken: wnt.address,
       longTokenSwapPath: [],
       shortTokenSwapPath: [],
       minGlvTokens: 100,
