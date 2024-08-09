@@ -68,7 +68,7 @@ library GlvDepositEventUtils {
         EventEmitter eventEmitter,
         bytes32 key,
         address account,
-        uint256 receivedMarketTokens
+        uint256 receivedGlvTokens
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -79,7 +79,7 @@ library GlvDepositEventUtils {
         eventData.addressItems.setItem(0, "account", account);
 
         eventData.uintItems.initItems(1);
-        eventData.uintItems.setItem(0, "receivedMarketTokens", receivedMarketTokens);
+        eventData.uintItems.setItem(0, "receivedGlvTokens", receivedGlvTokens);
 
         eventEmitter.emitEventLog2(
             "GlvDepositExecuted",
