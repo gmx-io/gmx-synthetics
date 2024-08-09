@@ -57,6 +57,7 @@ library GlvWithdrawalUtils {
         uint256 glvValue;
         uint256 marketCount;
         uint256 oraclePriceCount;
+        uint256 marketTokenAmount;
     }
 
     struct CancelGlvWithdrawalParams {
@@ -154,18 +155,21 @@ library GlvWithdrawalUtils {
 
         GlvWithdrawalStoreUtils.remove(params.dataStore, params.key, glvWithdrawal.account());
 
+        ExecuteGlvWithdrawalCache memory cache;
+        cache.marketTokenAmount = _getMarketTokenAmount(params.dataStore, params.oracle, glvWithdrawal);
+
+        // burn GLV tokens before executing withdrawal
+        GlvToken(payable(glvWithdrawal.glv())).burn(address(params.glvVault), glvWithdrawal.glvTokenAmount());
+        params.glvVault.syncTokenBalance(glvWithdrawal.glv());
+
         ExecuteWithdrawalUtils.ExecuteWithdrawalResult memory withdrawalResult = _processMarketWithdrawal(
             params,
-            glvWithdrawal
+            glvWithdrawal,
+            cache.marketTokenAmount
         );
-
-        GlvToken(payable(glvWithdrawal.glv())).burn(address(params.glvVault), glvWithdrawal.glvTokenAmount());
-
-        params.glvVault.syncTokenBalance(glvWithdrawal.glv());
 
         GlvWithdrawalEventUtils.emitGlvWithdrawalExecuted(params.eventEmitter, params.key, glvWithdrawal.account());
 
-        ExecuteGlvWithdrawalCache memory cache;
         cache.glvValue = GlvUtils.getGlvValue(
             params.dataStore,
             params.oracle,
@@ -211,9 +215,9 @@ library GlvWithdrawalUtils {
 
     function _processMarketWithdrawal(
         ExecuteGlvWithdrawalParams memory params,
-        GlvWithdrawal.Props memory glvWithdrawal
+        GlvWithdrawal.Props memory glvWithdrawal,
+        uint256 marketTokenAmount
     ) private returns (ExecuteWithdrawalUtils.ExecuteWithdrawalResult memory) {
-        uint256 marketTokenAmount = _getMarketTokenAmount(params.dataStore, params.oracle, glvWithdrawal);
 
         Withdrawal.Props memory withdrawal = Withdrawal.Props(
             Withdrawal.Addresses({

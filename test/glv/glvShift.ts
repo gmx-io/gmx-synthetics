@@ -14,7 +14,7 @@ import { deployFixture } from "../../utils/fixture";
 import { decimalToFloat, expandDecimals } from "../../utils/math";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
-import { expectBalances, expectCancellationReason } from "../../utils/validation";
+import { expectBalances } from "../../utils/validation";
 
 describe("Glv Shifts", () => {
   const { provider } = ethers;
