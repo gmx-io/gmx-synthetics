@@ -33,7 +33,7 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
     // Mapping that if true disables the ability to apply updates of a given parameter type for all markets
     mapping(bytes32 => bool) public isParameterTypeDisabled;
 
-    // Mapping that if true disables the ability to apply updates of a given parameter type for a given market (bytes = market and parameter type abiEncodePacked)
+    // Mapping that if true disables the ability to apply updates of a given parameter type for a given market (bytes32 = keccak256(abiPacked(market, parameter type))
     mapping(bytes32 => bool) public isMarketParameterDisabled;
 
     constructor(address _riskOracle, address _dataStore, Reader _reader, Config _config, RoleStore _roleStore) {
@@ -71,7 +71,6 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
         isMarketParameterDisabled[keccak256(abi.encode(market, parameterType))] = disabled;
     }
 
-    
      // @dev Allows the LIMITED_CONFIG_KEEPER to apply updates with the provided markets and parameter types.
      // @param markets An array of market addresses for which updates are to be applied.
      // @param parameterTypes An array of parameter types corresponding to each market for which updates are to be applied.
