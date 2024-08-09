@@ -313,6 +313,8 @@ library CallbackUtils {
             return;
         }
 
+        validateGasLeftForCallback(glvDeposit.callbackGasLimit());
+
         try IGlvDepositCallbackReceiver(glvDeposit.callbackContract()).afterGlvDepositExecution{ gas: glvDeposit.callbackGasLimit() }(
             key,
             glvDeposit,
@@ -332,6 +334,8 @@ library CallbackUtils {
         EventUtils.EventLogData memory eventData
     ) internal {
         if (!isValidCallbackContract(glvDeposit.callbackContract())) { return; }
+
+        validateGasLeftForCallback(glvDeposit.callbackGasLimit());
 
         try IGlvDepositCallbackReceiver(glvDeposit.callbackContract()).afterGlvDepositCancellation{ gas: glvDeposit.callbackGasLimit() }(
             key,
@@ -353,6 +357,8 @@ library CallbackUtils {
     ) internal {
         if (!isValidCallbackContract(glvWithdrawal.callbackContract())) { return; }
 
+        validateGasLeftForCallback(glvWithdrawal.callbackGasLimit());
+
         try IGlvWithdrawalCallbackReceiver(glvWithdrawal.callbackContract()).afterGlvWithdrawalExecution{ gas: glvWithdrawal.callbackGasLimit() }(
             key,
             glvWithdrawal,
@@ -372,6 +378,8 @@ library CallbackUtils {
         EventUtils.EventLogData memory eventData
     ) internal {
         if (!isValidCallbackContract(glvWithdrawal.callbackContract())) { return; }
+
+        validateGasLeftForCallback(glvWithdrawal.callbackGasLimit());
 
         try IGlvWithdrawalCallbackReceiver(glvWithdrawal.callbackContract()).afterGlvWithdrawalCancellation{ gas: glvWithdrawal.callbackGasLimit() }(
             key,
