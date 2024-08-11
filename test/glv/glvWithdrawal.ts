@@ -120,7 +120,11 @@ describe("Glv Withdrawals", () => {
 
     it("EmptyAccount", async () => {
       await expect(
-        createGlvWithdrawal(fixture, { ...params, account: { address: ethers.constants.AddressZero } })
+        createGlvWithdrawal(fixture, {
+          ...params,
+          account: { address: ethers.constants.AddressZero },
+          useGlvHandler: true,
+        })
       ).to.be.revertedWithCustomError(errorsContract, "EmptyAccount");
     });
 

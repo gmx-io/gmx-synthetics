@@ -29,7 +29,7 @@ export function getAccountGlvDepositKeys(dataStore, account, start, end) {
 }
 
 export async function createGlvDeposit(fixture, overrides: any = {}) {
-  const { glvVault, glvHandler, wnt, ethUsdMarket, ethUsdGlvAddress } = fixture.contracts;
+  const { glvVault, glvRouter, glvHandler, wnt, ethUsdMarket, ethUsdGlvAddress } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
   const gasUsageLabel = overrides.gasUsageLabel;
@@ -52,6 +52,7 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
   const longTokenAmount = bigNumberify(overrides.longTokenAmount ?? 0);
   const shortTokenAmount = bigNumberify(overrides.shortTokenAmount ?? 0);
   const isMarketTokenDeposit = overrides.isMarketTokenDeposit || false;
+  const useGlvHandler = Boolean(overrides.useGlvHandler) || false;
 
   const executionFeeToMint = bigNumberify(overrides.executionFeeToMint ?? executionFee);
   await wnt.mint(glvVault.address, executionFeeToMint);
@@ -103,7 +104,9 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
   }
 
   const txReceipt = await logGasUsage({
-    tx: glvHandler.connect(sender).createGlvDeposit(account.address, params),
+    tx: useGlvHandler
+      ? glvHandler.connect(sender).createGlvDeposit(account.address, params)
+      : glvRouter.connect(account).createGlvDeposit(params),
     label: gasUsageLabel,
   });
 
