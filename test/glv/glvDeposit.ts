@@ -639,6 +639,56 @@ describe("Glv Deposits", () => {
     });
   });
 
+  it("simulate execute glv deposit", async () => {
+    await expectBalances({
+      [user0.address]: {
+        [ethUsdGlvAddress]: 0,
+      },
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: 0,
+      },
+    });
+
+    await createGlvDeposit(fixture, {
+      longTokenAmount: expandDecimals(10, 18),
+      shortTokenAmount: expandDecimals(50_000, 6),
+    });
+
+    await expectBalances({
+      [user0.address]: {
+        [ethUsdGlvAddress]: 0,
+      },
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: 0,
+      },
+    });
+
+    await executeGlvDeposit(fixture, {
+      simulate: true,
+    });
+
+    // no change
+    await expectBalances({
+      [user0.address]: {
+        [ethUsdGlvAddress]: 0,
+      },
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: 0,
+      },
+    });
+
+    await executeGlvDeposit(fixture);
+
+    await expectBalances({
+      [user0.address]: {
+        [ethUsdGlvAddress]: expandDecimals(100_000, 18),
+      },
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(100_000, 18),
+      },
+    });
+  });
+
   it("cancel glv deposit", async () => {
     await dataStore.setUint(keys.REQUEST_EXPIRATION_TIME, 300);
 

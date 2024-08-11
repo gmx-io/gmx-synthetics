@@ -95,7 +95,7 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
 }
 
 export async function executeGlvWithdrawal(fixture, overrides: any = {}) {
-  const { dataStore, glvHandler, wnt, usdc, sol, ethUsdGlvAddress } = fixture.contracts;
+  const { dataStore, glvHandler, glvRouter, wnt, usdc, sol, ethUsdGlvAddress } = fixture.contracts;
   const gasUsageLabel = overrides.gasUsageLabel;
   const glv = overrides.glv || ethUsdGlvAddress;
   const dataStreamTokens = overrides.dataStreamTokens || [];
@@ -127,22 +127,27 @@ export async function executeGlvWithdrawal(fixture, overrides: any = {}) {
     minPrices,
     maxPrices,
     execute: glvHandler.executeGlvWithdrawal,
+    simulateExecute: glvRouter.simulateExecuteGlvWithdrawal,
+    simulate: overrides.simulate,
     dataStreamTokens,
     dataStreamData,
     priceFeedTokens,
     oracleBlockNumber,
+    gasUsageLabel,
   };
-  if (gasUsageLabel) {
-    params.gasUsageLabel = gasUsageLabel;
-  }
 
+  const optionalParams = new Set(["gasUsageLabel", "simulate", "simulateExecute"]);
   for (const [key, value] of Object.entries(params)) {
-    if (value === undefined) {
+    if (value === undefined && !optionalParams.has(key)) {
       throw new Error(`param "${key}" is undefined`);
     }
   }
 
   const txReceipt = await executeWithOracleParams(fixture, params);
+
+  if (overrides.simulate) {
+    return;
+  }
 
   const logs = parseLogs(fixture, txReceipt);
 

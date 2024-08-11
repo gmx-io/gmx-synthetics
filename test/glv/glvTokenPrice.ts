@@ -45,7 +45,6 @@ describe("Glv Token Price", () => {
         getPriceProp(ethPrice, 12),
         getPriceProp(1, 24),
         ethUsdGlvAddress,
-        ethers.constants.HashZero,
         true
       );
 

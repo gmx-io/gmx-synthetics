@@ -95,10 +95,12 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
     executionFee,
     callbackGasLimit,
     isMarketTokenDeposit,
+    gasUsageLabel,
   };
 
+  const optionalParams = new Set(["gasUsageLabel", "simulate", "simulateExecute"]);
   for (const [key, value] of Object.entries(params)) {
-    if (value === undefined) {
+    if (value === undefined && !optionalParams.has(key)) {
       throw new Error(`param "${key}" is undefined`);
     }
   }
@@ -115,7 +117,7 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
 }
 
 export async function executeGlvDeposit(fixture, overrides: any = {}) {
-  const { dataStore, glvHandler, wnt, usdc, sol } = fixture.contracts;
+  const { dataStore, glvHandler, glvRouter, wnt, usdc, sol } = fixture.contracts;
   const gasUsageLabel = overrides.gasUsageLabel;
   const tokens = overrides.tokens || [wnt.address, usdc.address, sol.address];
   const precisions = overrides.precisions || [8, 18, 8];
@@ -144,7 +146,7 @@ export async function executeGlvDeposit(fixture, overrides: any = {}) {
     minPrices,
     maxPrices,
     execute: glvHandler.executeGlvDeposit,
-    simulateExecute: glvHandler.simulateExecuteGlvDeposit,
+    simulateExecute: glvRouter.simulateExecuteGlvDeposit,
     simulate: overrides.simulate,
     dataStreamTokens,
     dataStreamData,
@@ -156,6 +158,10 @@ export async function executeGlvDeposit(fixture, overrides: any = {}) {
   }
 
   const txReceipt = await executeWithOracleParams(fixture, params);
+
+  if (overrides.simulate) {
+    return;
+  }
 
   const logs = parseLogs(fixture, txReceipt);
 
