@@ -248,7 +248,6 @@ library GlvShiftUtils {
             params.dataStore,
             params.oracle,
             glvShift.glv(),
-            Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
             true // maximize
         );
         cache.glvSupply = GlvToken(payable(glvShift.glv())).totalSupply();

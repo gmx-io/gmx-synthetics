@@ -25,7 +25,6 @@ contract GlvReader {
         Price.Props memory longTokenPrice,
         Price.Props memory shortTokenPrice,
         address glv,
-        bytes32 pnlFactorType,
         bool maximize
     ) external view returns (uint256) {
         return
@@ -36,7 +35,6 @@ contract GlvReader {
                 longTokenPrice,
                 shortTokenPrice,
                 glv,
-                pnlFactorType,
                 maximize
             );
     }
@@ -48,7 +46,6 @@ contract GlvReader {
         Price.Props memory longTokenPrice,
         Price.Props memory shortTokenPrice,
         address glv,
-        bytes32 pnlFactorType,
         bool maximize
     ) external view returns (uint256, uint256, uint256) {
         return
@@ -59,7 +56,6 @@ contract GlvReader {
                 longTokenPrice,
                 shortTokenPrice,
                 glv,
-                pnlFactorType,
                 maximize
             );
     }

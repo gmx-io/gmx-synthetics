@@ -230,7 +230,6 @@ library GlvDepositUtils {
             params.dataStore,
             params.oracle,
             glvDeposit.glv(),
-            Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
             true // maximize
         );
         cache.glvSupply = GlvToken(payable(glvDeposit.glv())).totalSupply();
@@ -281,7 +280,6 @@ library GlvDepositUtils {
             params.dataStore,
             params.oracle,
             glvDeposit.glv(),
-            Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
             true // maximize
         );
         cache.glvSupply = GlvToken(payable(glvDeposit.glv())).totalSupply();

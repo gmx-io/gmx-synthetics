@@ -34,7 +34,6 @@ library GlvUtils {
         DataStore dataStore,
         Oracle oracle,
         address glv,
-        bytes32 pnlFactorType,
         bool maximize
     ) internal view returns (uint256) {
         GetGlvValueCache memory cache;
@@ -56,7 +55,6 @@ library GlvUtils {
                 oracle.getPrimaryPrice(market.indexToken),
                 cache.longTokenPrice,
                 cache.shortTokenPrice,
-                pnlFactorType,
                 maximize
             );
         }
@@ -71,7 +69,6 @@ library GlvUtils {
         Price.Props memory longTokenPrice,
         Price.Props memory shortTokenPrice,
         address glv,
-        bytes32 pnlFactorType,
         bool maximize
     ) internal view returns (uint256) {
         GetGlvValueCache memory cache;
@@ -87,7 +84,6 @@ library GlvUtils {
                 cache.indexTokenPrice,
                 longTokenPrice,
                 shortTokenPrice,
-                pnlFactorType,
                 maximize
             );
         }
@@ -102,7 +98,6 @@ library GlvUtils {
         Price.Props memory indexTokenPrice,
         Price.Props memory longTokenPrice,
         Price.Props memory shortTokenPrice,
-        bytes32 pnlFactorType,
         bool maximize
     ) internal view returns (uint256) {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
@@ -113,7 +108,7 @@ library GlvUtils {
             indexTokenPrice,
             longTokenPrice,
             shortTokenPrice,
-            pnlFactorType,
+            Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
             maximize
         );
         uint256 marketTokenSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(marketAddress)));
@@ -135,10 +130,9 @@ library GlvUtils {
         DataStore dataStore,
         Oracle oracle,
         address glv,
-        bytes32 pnlFactorType,
         bool maximize
     ) internal view returns (uint256, uint256, uint256) {
-        uint256 value = GlvUtils.getGlvValue(dataStore, oracle, glv, pnlFactorType, maximize);
+        uint256 value = GlvUtils.getGlvValue(dataStore, oracle, glv, maximize);
         uint256 supply = ERC20(glv).totalSupply();
 
         return _getGlvTokenPrice(value, supply);
@@ -151,7 +145,6 @@ library GlvUtils {
         Price.Props memory longTokenPrice,
         Price.Props memory shortTokenPrice,
         address glv,
-        bytes32 pnlFactorType,
         bool maximize
     ) internal view returns (uint256, uint256, uint256) {
         uint256 value = GlvUtils.getGlvValue(
@@ -161,7 +154,6 @@ library GlvUtils {
             longTokenPrice,
             shortTokenPrice,
             glv,
-            pnlFactorType,
             maximize
         );
         uint256 supply = ERC20(glv).totalSupply();
