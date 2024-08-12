@@ -331,9 +331,6 @@ const config: {
       positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~90,000 USD of imbalance
       negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~45,000 USD of imbalance
 
-      positiveMaxPositionImpactFactor: decimalToFloat(5, 3), // 0.5%
-      negativeMaxPositionImpactFactor: decimalToFloat(5, 3), // 0.5%
-
       positiveSwapImpactFactor: decimalToFloat(15, 9), // 1.5e-8
       negativeSwapImpactFactor: decimalToFloat(3, 8),
 
@@ -363,13 +360,10 @@ const config: {
       openInterestReserveFactorLongs: percentageToFloat("90%"),
       openInterestReserveFactorShorts: percentageToFloat("90%"),
 
-      maxPnlFactorForAdlLongs: percentageToFloat("80%"),
-      maxPnlFactorForAdlShorts: percentageToFloat("80%"),
-
       maxLongTokenPoolUsdForDeposit: decimalToFloat(1_500_000), // x1.5 of max open interest
       maxShortTokenPoolUsdForDeposit: decimalToFloat(1_500_000), // x1.5 of max open interest
 
-      maxLongTokenPoolAmount: expandDecimals(3439653, 18), // ~2M USD (x2 of max open interest)
+      maxLongTokenPoolAmount: expandDecimals(3_439_653, 18), // ~2M USD (x2 of max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (x2 of max open interest)
     },
     {
@@ -780,9 +774,6 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~45,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~90,000 USD of imbalance
 
-      positiveMaxPositionImpactFactor: decimalToFloat(5, 3), // 0.5%
-      negativeMaxPositionImpactFactor: decimalToFloat(5, 3), // 0.5%
-
       positiveSwapImpactFactor: decimalToFloat(25, 10), // 2.5e-9
       negativeSwapImpactFactor: decimalToFloat(5, 9), // 5e-9
 
@@ -809,9 +800,6 @@ const config: {
 
       openInterestReserveFactorLongs: percentageToFloat("75%"),
       openInterestReserveFactorShorts: percentageToFloat("75%"),
-
-      maxPnlFactorForAdlLongs: percentageToFloat("50%"),
-      maxPnlFactorForAdlShorts: percentageToFloat("50%"),
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
@@ -875,9 +863,6 @@ const config: {
       positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~90,000 USD of imbalance
       negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~45,000 USD of imbalance
 
-      positiveMaxPositionImpactFactor: decimalToFloat(5, 3), // 0.5%
-      negativeMaxPositionImpactFactor: decimalToFloat(5, 3), // 0.5%
-
       positiveSwapImpactFactor: decimalToFloat(25, 10), // 2.5e-9
       negativeSwapImpactFactor: decimalToFloat(5, 9), // 5e-9
 
@@ -906,9 +891,6 @@ const config: {
 
       openInterestReserveFactorLongs: percentageToFloat("75%"),
       openInterestReserveFactorShorts: percentageToFloat("75%"),
-
-      maxPnlFactorForAdlLongs: percentageToFloat("50%"),
-      maxPnlFactorForAdlShorts: percentageToFloat("50%"),
 
       maxLongTokenPoolUsdForDeposit: decimalToFloat(750_000), // x1.5 of max open interest
       maxShortTokenPoolUsdForDeposit: decimalToFloat(750_000), // x1.5 of max open interest
@@ -1345,9 +1327,6 @@ const config: {
       positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~90,000 USD of imbalance
       negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~45,000 USD of imbalance
 
-      positiveMaxPositionImpactFactor: decimalToFloat(5, 3), // 0.5%
-      negativeMaxPositionImpactFactor: decimalToFloat(5, 3), // 0.5%
-
       positiveSwapImpactFactor: decimalToFloat(25, 10), // 2.5e-9
       negativeSwapImpactFactor: decimalToFloat(5, 9), // 5e-9
 
@@ -1376,9 +1355,6 @@ const config: {
 
       openInterestReserveFactorLongs: percentageToFloat("75%"),
       openInterestReserveFactorShorts: percentageToFloat("75%"),
-
-      maxPnlFactorForAdlLongs: percentageToFloat("50%"),
-      maxPnlFactorForAdlShorts: percentageToFloat("50%"),
 
       maxLongTokenPoolUsdForDeposit: decimalToFloat(750_000), // x1.5 of max open interest
       maxShortTokenPoolUsdForDeposit: decimalToFloat(750_000), // x1.5 of max open interest

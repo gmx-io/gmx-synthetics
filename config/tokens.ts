@@ -61,6 +61,7 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x000316d702a8e25e6b4ef4d449e3413dff067ee77dd366f0550251c07daf05ee",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     BTC: {
       synthetic: true,
