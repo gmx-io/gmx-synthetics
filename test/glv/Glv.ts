@@ -222,6 +222,39 @@ describe("Glv", () => {
       .withArgs(ethUsdGlvAddress, ethUsdMarket.marketToken);
   });
 
+  it("reverts if max market count exceeded", async () => {
+    await dataStore.setUint(keys.GLV_MAX_MARKET_COUNT, 1);
+    const glvType = ethers.constants.HashZero.slice(0, -1) + "1"; // to avoid conflict with existing market
+    const glvAddress = getGlvAddress(
+      wnt.address,
+      usdc.address,
+      glvType,
+      "Glv name",
+      "Glv symbol",
+      glvFactory.address,
+      roleStore.address,
+      dataStore.address
+    );
+    await glvFactory.createGlv(wnt.address, usdc.address, glvType, "Glv name", "Glv symbol");
+
+    const marketListKey = keys.glvSupportedMarketListKey(glvAddress);
+    let marketListCount = await dataStore.getAddressCount(marketListKey);
+    expect(marketListCount.toNumber()).eq(0);
+
+    await glvHandler.addMarketToGlv(glvAddress, ethUsdMarket.marketToken);
+    marketListCount = await dataStore.getAddressCount(marketListKey);
+    expect(marketListCount.toNumber()).eq(1);
+
+    await expect(glvHandler.addMarketToGlv(glvAddress, solUsdMarket.marketToken))
+      .to.be.revertedWithCustomError(errorsContract, "GlvMaxMarketCountExceeded")
+      .withArgs(glvAddress, 1);
+
+    await dataStore.setUint(keys.GLV_MAX_MARKET_COUNT, 2);
+    await glvHandler.addMarketToGlv(glvAddress, solUsdMarket.marketToken);
+    marketListCount = await dataStore.getAddressCount(marketListKey);
+    expect(marketListCount.toNumber()).eq(2);
+  });
+
   it("reverts if market has incorrect tokens", async () => {
     await expect(glvHandler.addMarketToGlv(ethUsdGlvAddress, btcUsdMarket.marketToken))
       .to.be.revertedWithCustomError(errorsContract, "GlvInvalidLongToken")

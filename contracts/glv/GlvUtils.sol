@@ -293,7 +293,20 @@ library GlvUtils {
         }
         dataStore.addAddress(key, marketAddress);
 
+        validateGlvMarketCount(dataStore, glvAddress);
+
         GlvEventUtils.emitGlvMarketAdded(eventEmitter, glvAddress, market.marketToken);
+    }
+
+    function validateGlvMarketCount(DataStore dataStore, address glvAddress) internal view {
+        uint256 glvMaxMarketCount = dataStore.getUint(Keys.GLV_MAX_MARKET_COUNT);
+        if (glvMaxMarketCount > 0) {
+            bytes32 key = Keys.glvSupportedMarketListKey(glvAddress);
+            uint256 glvMarketCount = dataStore.getAddressCount(key);
+            if (glvMarketCount > glvMaxMarketCount) {
+                revert Errors.GlvMaxMarketCountExceeded(glvAddress, glvMaxMarketCount);
+            }
+        }
     }
 
     function removeMarketFromGlv(

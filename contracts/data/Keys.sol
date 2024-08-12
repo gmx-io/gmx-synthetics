@@ -408,10 +408,9 @@ library Keys {
     // @dev key for fee distributor swap fee batch
     bytes32 public constant FEE_DISTRIBUTOR_SWAP_FEE_BATCH = keccak256(abi.encode("FEE_DISTRIBUTOR_SWAP_FEE_BATCH"));
 
-    // @dev key for the max market token balance usd for glv
+    bytes32 public constant GLV_MAX_MARKET_COUNT = keccak256(abi.encode("GLV_MAX_MARKET_COUNT"));
     bytes32 public constant GLV_MAX_MARKET_TOKEN_BALANCE_USD = keccak256(abi.encode("GLV_MAX_MARKET_TOKEN_BALANCE_USD"));
     bytes32 public constant GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT = keccak256(abi.encode("GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT"));
-    // @dev key for is glv market disabled
     bytes32 public constant IS_GLV_MARKET_DISABLED = keccak256(abi.encode("IS_GLV_MARKET_DISABLED"));
     bytes32 public constant GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR = keccak256(abi.encode("GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR"));
     bytes32 public constant GLV_SHIFT_LAST_EXECUTED_AT = keccak256(abi.encode("GLV_SHIFT_LAST_EXECUTED_AT"));
