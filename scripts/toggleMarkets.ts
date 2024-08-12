@@ -15,6 +15,20 @@ export async function main() {
 
   const onchainMarketsByTokens = await getOnchainMarkets(read, dataStore.address);
 
+  const write = process.env.WRITE === "true";
+
+  const toggleMarket = async ({ marketToken, marketNameFull, isDisabled }) => {
+    if (isDisabled) {
+      console.log(`    disabling ${marketNameFull}`);
+    } else {
+      console.log(`    enabling ${marketNameFull}`);
+    }
+
+    if (write) {
+      await config.setBool(keys.IS_MARKET_DISABLED, encodeData(["address"], [marketToken]), isDisabled);
+    }
+  };
+
   for (const marketConfig of markets) {
     const [indexToken, longToken, shortToken] = getMarketTokenAddresses(marketConfig, tokens);
     const marketKey = getMarketKey(indexToken, longToken, shortToken);
@@ -23,28 +37,21 @@ export async function main() {
 
     const marketName = marketConfig.tokens.indexToken ? `${marketConfig.tokens.indexToken}/USD` : "SWAP-ONLY";
     const marketNameFull = `${marketName} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}], ${marketToken}`;
-    console.log(`updating ${marketNameFull}`);
-
-    const write = process.env.WRITE === "true";
+    console.log(`checking ${marketNameFull}`);
 
     if (process.env.ENABLE_ALL) {
       if (marketConfig.isDisabled) {
-        console.warn(`WARNING: ${marketNameFull} has isDisabled set to true, skipping market`);
+        console.warn(`    WARNING: ${marketNameFull} has isDisabled set to true, skipping market`);
         continue;
       }
 
-      console.log(`enabling ${marketNameFull}`);
-      if (write) {
-        await config.setBool(keys.IS_MARKET_DISABLED, encodeData(["address"], [marketToken]), false);
-      }
+      await toggleMarket({ marketToken, marketNameFull, isDisabled: false });
       continue;
     }
 
     if (process.env.DISABLE_ALL) {
       console.log(`disabling ${marketNameFull}`);
-      if (write) {
-        await config.setBool(keys.IS_MARKET_DISABLED, encodeData(["address"], [marketToken]), true);
-      }
+      await toggleMarket({ marketToken, marketNameFull, isDisabled: true });
       continue;
     }
 
@@ -52,21 +59,7 @@ export async function main() {
       continue;
     }
 
-    if (marketConfig.isDisabled === false) {
-      console.log(`enabling ${marketNameFull}`);
-      if (write) {
-        await config.setBool(keys.IS_MARKET_DISABLED, encodeData(["address"], [marketToken]), false);
-      }
-      continue;
-    }
-
-    if (marketConfig.isDisabled === true) {
-      console.log(`disabling ${marketNameFull}`);
-      if (write) {
-        await config.setBool(keys.IS_MARKET_DISABLED, encodeData(["address"], [marketToken]), true);
-      }
-      continue;
-    }
+    await toggleMarket({ marketToken, marketNameFull, isDisabled: marketConfig.isDisabled });
   }
 }
 
