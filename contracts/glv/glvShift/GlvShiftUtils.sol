@@ -150,7 +150,7 @@ library GlvShiftUtils {
         GlvShiftStoreUtils.remove(params.dataStore, params.key);
 
         validateGlvShiftInterval(params.dataStore, glvShift.glv());
-        params.dataStore.setUint(Keys.glvShiftLastExecutedAtKey(glvShift.glv()), block.timestamp);
+        params.dataStore.setUint(Keys.glvShiftLastExecutedAtKey(glvShift.glv()), Chain.currentTimestamp());
 
         Bank(payable(glvShift.glv())).transferOut(
             glvShift.fromMarket(),
