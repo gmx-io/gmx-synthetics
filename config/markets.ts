@@ -1376,6 +1376,8 @@ const config: {
 
       swapOnly: true,
 
+      isDisabled: true,
+
       maxLongTokenPoolAmount: expandDecimals(3300, 18),
       maxShortTokenPoolAmount: expandDecimals(2800, 18),
 

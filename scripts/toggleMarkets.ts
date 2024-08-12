@@ -22,32 +22,49 @@ export async function main() {
     const marketToken = onchainMarket.marketToken;
 
     const marketName = marketConfig.tokens.indexToken ? `${marketConfig.tokens.indexToken}/USD` : "SWAP-ONLY";
-    console.log(`updating ${marketName} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}]`);
+    const marketNameFull = `${marketName} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}]`;
+    console.log(`updating ${marketNameFull}`);
+
+    const write = process.env.WRITE === "true";
 
     if (process.env.ENABLE_ALL) {
       if (marketConfig.isDisabled) {
-        console.warn(
-          `WARNING: ${marketName} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}] has isDisabled set to true, skipping market`
-        );
+        console.warn(`WARNING: ${marketNameFull} has isDisabled set to true, skipping market`);
         continue;
       }
 
-      await config.setBool(keys.IS_MARKET_DISABLED, encodeData(["address"], [marketToken]), false);
+      console.log(`enabling ${marketNameFull}`);
+      if (write) {
+        await config.setBool(keys.IS_MARKET_DISABLED, encodeData(["address"], [marketToken]), false);
+      }
       continue;
     }
 
     if (process.env.DISABLE_ALL) {
-      await config.setBool(keys.IS_MARKET_DISABLED, encodeData(["address"], [marketToken]), true);
+      console.log(`disabling ${marketNameFull}`);
+      if (write) {
+        await config.setBool(keys.IS_MARKET_DISABLED, encodeData(["address"], [marketToken]), true);
+      }
+      continue;
+    }
+
+    if (marketConfig.isDisabled === undefined) {
       continue;
     }
 
     if (marketConfig.isDisabled === false) {
-      await config.setBool(keys.IS_MARKET_DISABLED, encodeData(["address"], [marketToken]), false);
+      console.log(`enabling ${marketNameFull}`);
+      if (write) {
+        await config.setBool(keys.IS_MARKET_DISABLED, encodeData(["address"], [marketToken]), false);
+      }
       continue;
     }
 
     if (marketConfig.isDisabled === true) {
-      await config.setBool(keys.IS_MARKET_DISABLED, encodeData(["address"], [marketToken]), true);
+      console.log(`disabling ${marketNameFull}`);
+      if (write) {
+        await config.setBool(keys.IS_MARKET_DISABLED, encodeData(["address"], [marketToken]), true);
+      }
       continue;
     }
   }
