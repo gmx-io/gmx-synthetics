@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
@@ -53,7 +53,7 @@ contract RiskOracle is Ownable {
      * @param initialSenders List of addresses that will initially be authorized to perform updates.
      * @param initialUpdateTypes List of valid update types initially allowed.
      */
-    constructor(address[] memory initialSenders, string[] memory initialUpdateTypes) Ownable(msg.sender) {
+    constructor(address[] memory initialSenders, string[] memory initialUpdateTypes) {
         for (uint256 i = 0; i < initialSenders.length; i++) {
             authorizedSenders[initialSenders[i]] = true; // Automatically authorize initial senders
         }
