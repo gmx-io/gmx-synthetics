@@ -11,7 +11,6 @@ library GlvStoreUtils {
     using Glv for Glv.Props;
 
     bytes32 public constant GLV_SALT = keccak256(abi.encode("GLV_SALT"));
-    bytes32 public constant GLV_KEY = keccak256(abi.encode("GLV_KEY"));
     bytes32 public constant GLV_TOKEN = keccak256(abi.encode("GLV_TOKEN"));
     bytes32 public constant LONG_TOKEN = keccak256(abi.encode("LONG_TOKEN"));
     bytes32 public constant SHORT_TOKEN = keccak256(abi.encode("SHORT_TOKEN"));
