@@ -126,6 +126,8 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     `withdrawalGasLimit`
   );
 
+  await handleConfig("uint", keys.shiftGasLimitKey(), "0x", generalConfig.shiftGasLimit, `shiftGasLimit`);
+
   await handleConfig(
     "uint",
     keys.singleSwapGasLimitKey(),

@@ -3,6 +3,7 @@ import hre from "hardhat";
 import { bigNumberify, expandDecimals, formatAmount } from "../../utils/math";
 import {
   getBlockByTimestamp,
+  getDistributionTypeName,
   getMinRewardThreshold,
   getRewardToken,
   getRewardTokenPrice,
@@ -269,7 +270,7 @@ async function main() {
       formatAmount(diff, rewardToken.decimals, 2, true),
       formatAmount(diff.mul(10000).div(userBalancesSum), 2, 2, true)
     );
-    if (diff.abs().gt(marketTokensSupply.div(100))) {
+    if (diff.abs().gt(marketTokensSupply.div(1000))) {
       throw Error("Sum of user balances and market tokens supply don't match.");
     }
 
@@ -364,7 +365,9 @@ async function main() {
   }
 
   console.log(
-    "Liquidity incentives for period from %s to %s",
+    "Liquidity incentives (%s, %s) for period from %s to %s",
+    hre.network.name,
+    getDistributionTypeName(distributionTypeId),
     fromDate.toISOString().substring(0, 10),
     toDate.toISOString().substring(0, 10)
   );
