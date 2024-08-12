@@ -865,9 +865,9 @@ const config: {
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
-      tokens: { indexToken: "STX", longToken: "BTC", shortToken: "USDC" },
+      tokens: { indexToken: "STX", longToken: "WBTC.e", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:STX/USD"),
-      virtualMarketId: hashString("SPOT:ETH/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
 
       ...synthethicMarketConfig,
 
@@ -1335,9 +1335,9 @@ const config: {
       maxOpenInterestForShorts: decimalToFloat(1_000_000),
     },
     {
-      tokens: { indexToken: "ORDI", longToken: "BTC", shortToken: "USDC" },
+      tokens: { indexToken: "ORDI", longToken: "WBTC.e", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:ORDI/USD"),
-      virtualMarketId: hashString("SPOT:ETH/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
 
       ...synthethicMarketConfig,
 
