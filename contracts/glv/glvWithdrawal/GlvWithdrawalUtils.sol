@@ -159,6 +159,8 @@ library GlvWithdrawalUtils {
         cache.marketTokenAmount = _getMarketTokenAmount(params.dataStore, params.oracle, glvWithdrawal);
 
         // burn GLV tokens before executing withdrawal
+        // for both GLV amount and token amounts will be correct inside the receive() function
+        // if receiver is a contract
         GlvToken(payable(glvWithdrawal.glv())).burn(address(params.glvVault), glvWithdrawal.glvTokenAmount());
         params.glvVault.syncTokenBalance(glvWithdrawal.glv());
 
