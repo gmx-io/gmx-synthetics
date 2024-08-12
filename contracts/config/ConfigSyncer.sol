@@ -45,8 +45,14 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
         bytes32 cachedSyncConfigLatestUpdateIdKey = Keys.SYNC_CONFIG_LATEST_UPDATE_ID;
         bytes32 cachedSyncConfigUpdateCompletedKey = Keys.SYNC_CONFIG_UPDATE_COMPLETED;
         uint256 cachedLatestUpdate = dataStore.getUint(cachedSyncConfigLatestUpdateIdKey);
+        
         address market;
         string memory parameterType;
+        IRiskOracle.RiskParameterUpdate memory riskParameterUpdate;
+        uint256 updateId;
+        uint256 updatedValue;
+        bytes32 baseKey;
+        bytes memory data;
 
         for (uint256 i = 0; i < markets.length; i++) {
             market = markets[i];
@@ -64,15 +70,15 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
                 revert Errors.SyncConfigUpdatesDisabledForMarketParameter(market, parameterType);
             }
 
-            IRiskOracle.RiskParameterUpdate memory riskParameterUpdate = IRiskOracle(riskOracle).getLatestUpdateByParameterAndMarket(parameterType, abi.encode(market));
-            uint256 updateId = riskParameterUpdate.updateId;
+            riskParameterUpdate = IRiskOracle(riskOracle).getLatestUpdateByParameterAndMarket(parameterType, abi.encode(market));
+            updateId = riskParameterUpdate.updateId;
             
             if (dataStore.getBool(keccak256(bytes.concat(cachedSyncConfigUpdateCompletedKey, abi.encode(updateId))))) {
                 revert Errors.SyncConfigUpdateAlreadyApplied(updateId);
             }
 
-            uint256 updatedValue = Cast.bytesToUint256(riskParameterUpdate.newValue);
-            (bytes32 baseKey, bytes memory data) = abi.decode(riskParameterUpdate.additionalData, (bytes32, bytes));
+            updatedValue = Cast.bytesToUint256(riskParameterUpdate.newValue);
+            (baseKey, data) = abi.decode(riskParameterUpdate.additionalData, (bytes32, bytes));
             config.setUint(baseKey, data, updatedValue);
             config.setBool(cachedSyncConfigUpdateCompletedKey, abi.encode(updateId), true);
             
