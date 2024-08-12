@@ -97,6 +97,8 @@ library CallbackUtils {
 
         uint256 gasLimit = dataStore.getUint(Keys.REFUND_EXECUTION_FEE_GAS_LIMIT);
 
+        validateGasLeftForCallback(gasLimit);
+
         try IGasFeeCallbackReceiver(callbackContract).refundExecutionFee{ gas: gasLimit, value: refundFeeAmount }(
             key,
             eventData
