@@ -70,7 +70,7 @@ library GlvWithdrawalStoreUtils {
             keccak256(abi.encode(key, SHORT_TOKEN_SWAP_PATH))
         ));
 
-        withdrawal.setMarketTokenAmount(dataStore.getUint(
+        withdrawal.setGlvTokenAmount(dataStore.getUint(
             keccak256(abi.encode(key, GLV_TOKEN_AMOUNT))
         ));
 

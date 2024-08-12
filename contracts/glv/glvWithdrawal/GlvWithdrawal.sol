@@ -123,7 +123,7 @@ library GlvWithdrawal {
         return props.numbers.glvTokenAmount;
     }
 
-    function setMarketTokenAmount(Props memory props, uint256 value) internal pure {
+    function setGlvTokenAmount(Props memory props, uint256 value) internal pure {
         props.numbers.glvTokenAmount = value;
     }
 
