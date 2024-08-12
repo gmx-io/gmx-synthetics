@@ -416,6 +416,13 @@ library Keys {
     // @dev key for is glv market disabled
     bytes32 public constant IS_GLV_MARKET_DISABLED = keccak256(abi.encode("IS_GLV_MARKET_DISABLED"));
 
+    // @dev key for disabling automatic parameter updates via ConfigSyncer
+    bytes32 public constant SYNC_CONFIG_FEATURE_DISABLED = keccak256(abi.encode("SYNC_CONFIG_FEATURE_DISABLED"));
+    // @dev key for the latest updateId that has been applied by ConfigSyncer
+    bytes32 public constant SYNC_CONFIG_LATEST_UPDATE_ID = keccak256(abi.encode("SYNC_CONFIG_LATEST_UPDATE_ID"));
+    // @dev key for tracking which updateIds have already been applied by ConfigSyncer
+    bytes32 public constant SYNC_CONFIG_UPDATE_COMPLETED = keccak256(abi.encode("SYNC_CONFIG_UPDATE_COMPLETED"));
+
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
 
