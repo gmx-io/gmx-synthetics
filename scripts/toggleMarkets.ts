@@ -22,7 +22,7 @@ export async function main() {
     const marketToken = onchainMarket.marketToken;
 
     const marketName = marketConfig.tokens.indexToken ? `${marketConfig.tokens.indexToken}/USD` : "SWAP-ONLY";
-    const marketNameFull = `${marketName} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}]`;
+    const marketNameFull = `${marketName} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}], ${marketToken}`;
     console.log(`updating ${marketNameFull}`);
 
     const write = process.env.WRITE === "true";

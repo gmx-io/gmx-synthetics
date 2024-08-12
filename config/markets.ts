@@ -561,6 +561,9 @@ const config: {
 
       borrowingExponentFactorForLongs: decimalToFloat(1),
       borrowingExponentFactorForShorts: decimalToFloat(1),
+
+      swapFeeFactorForPositiveImpact: percentageToFloat("0.5%"),
+      swapFeeFactorForNegativeImpact: percentageToFloat("0.5%"),
     },
     {
       tokens: { indexToken: "BNB", longToken: "BNB", shortToken: "USDC" },
