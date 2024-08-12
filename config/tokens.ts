@@ -55,6 +55,13 @@ const config: {
   [network: string]: TokensConfig;
 } = {
   arbitrum: {
+    APE: {
+      address: "0x74885b4d524d497261259b38900f54e6dbad2210",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000316d702a8e25e6b4ef4d449e3413dff067ee77dd366f0550251c07daf05ee",
+      dataStreamFeedDecimals: 18,
+    },
     BTC: {
       synthetic: true,
       decimals: 8,
@@ -118,6 +125,13 @@ const config: {
       decimals: 9,
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x0003b778d3f6b2ac4991302b89cb313f99a42467d6c9c5f96f57c29c0d2bc24f",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    STX: {
+      synthetic: true,
+      decimals: 6,
+      dataStreamFeedId: "0x0003364401fcbe3153adf158017cd18a2833655db5cc5eb8fad2c16cb0ec82f4",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
@@ -187,6 +201,13 @@ const config: {
       decimals: 18,
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x0003ba5e477371c9cd5446281354a91e66c233dd50e26efe6abbfdc310b92dab",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    ORDI: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003db12da014dbc5a928b9e7a8c6bc1fbab0c60d332ce26c644cc7477b6fe7f",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
