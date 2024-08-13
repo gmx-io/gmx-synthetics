@@ -1372,11 +1372,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(74_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(2_100_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(90_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
 
-      maxLongTokenPoolUsdForDeposit: decimalToFloat(1_800_000),
-      maxShortTokenPoolUsdForDeposit: decimalToFloat(1_800_000),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(2_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(2_000_000),
 
       negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~100,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~178,180 USD of imbalance
@@ -1409,8 +1409,8 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(65, 42), // 6.5e43, 5.6 GMX / day
       minPositionImpactPoolAmount: expandDecimals(50, 18), // 50 GMX
 
-      maxOpenInterestForLongs: decimalToFloat(1_000_000),
-      maxOpenInterestForShorts: decimalToFloat(1_000_000),
+      maxOpenInterestForLongs: decimalToFloat(1_250_000),
+      maxOpenInterestForShorts: decimalToFloat(1_250_000),
     },
     {
       tokens: { indexToken: "PEPE", longToken: "PEPE", shortToken: "USDC" },
