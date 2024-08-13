@@ -36,7 +36,7 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
         
         if (dataStore.getBool(cachedSyncConfigFeatureDisabledKey)) {
                 revert Errors.SyncConfigUpdatesDisabled();
-            }
+        }
         
         if (markets.length != parameterTypes.length) {
             revert Errors.SyncConfigInvalidInputLengths(markets.length, parameterTypes.length);
