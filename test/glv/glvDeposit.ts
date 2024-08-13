@@ -329,6 +329,58 @@ describe("Glv Deposits", () => {
     });
   });
 
+  it("execute glv deposit, factors in GM price after GM deposit", async () => {
+    await expectBalances({
+      [user0.address]: {
+        [ethUsdGlvAddress]: 0,
+      },
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: 0,
+      },
+    });
+
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(10, 18),
+        shortTokenAmount: expandDecimals(50_000, 6),
+      },
+    });
+
+    await expectBalances({
+      [user0.address]: {
+        [ethUsdGlvAddress]: expandDecimals(100_000, 18),
+      },
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(100_000, 18),
+      },
+    });
+
+    await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 1)); // 50%
+    await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 1)); // 50%
+
+    // at this point market is $100k and 100k GM tokens, GM price is $1
+    // user deposits $200k, half of them are fees, user gets 100,000 GM tokens
+    // market is $300k now, supply 200k GM tokens, GM price is $1.5
+    // 100k GM tokens initially held by GLV cost $150k, GLV price = $1.5
+    // GLV tokens to mint = 100,000 GM * $1.5 GM price / $1.5 GLV price = 100,000 GLV
+    await handleGlvDeposit(fixture, {
+      create: {
+        shortTokenAmount: expandDecimals(200_000, 6),
+      },
+    });
+
+    await expectBalances({
+      [user0.address]: {
+        // user received extra 100,000 GLV worth $150,000 for $200,000 deposit
+        [ethUsdGlvAddress]: expandDecimals(200_000, 18),
+      },
+      [ethUsdGlvAddress]: {
+        // GLV received extra 100,000 GM worth $150,000
+        [ethUsdMarket.marketToken]: expandDecimals(200_000, 18),
+      },
+    });
+  });
+
   it("execute glv deposit with swaps", async () => {
     await handleDeposit(fixture, {
       create: {

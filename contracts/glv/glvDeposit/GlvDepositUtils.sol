@@ -225,15 +225,20 @@ library GlvDepositUtils {
 
         ExecuteGlvDepositCache memory cache;
 
-        // glvTokenPrice should be calculated before glv receives GM tokens
+        cache.receivedMarketTokens = _processMarketDeposit(params, glvDeposit, params.glvVault);
+
+        // glvValue should be calculated after funds are deposited into GM market
+        // but before GLV syncs GM token balance for glvValue to account for
+        // slightly increased GM market price because of paid fees
         cache.glvValue = GlvUtils.getGlvValue(
             params.dataStore,
             params.oracle,
             glvDeposit.glv(),
             true // maximize
         );
+        GlvToken(payable(glvDeposit.glv())).syncTokenBalance(glvDeposit.market());
+
         cache.glvSupply = GlvToken(payable(glvDeposit.glv())).totalSupply();
-        cache.receivedMarketTokens = _processMarketDeposit(params, glvDeposit, params.glvVault);
         cache.mintAmount = _getMintAmount(
             params.dataStore,
             params.oracle,
@@ -242,7 +247,6 @@ library GlvDepositUtils {
             cache.glvValue,
             cache.glvSupply
         );
-
         if (cache.mintAmount < glvDeposit.minGlvTokens()) {
             revert Errors.MinGlvTokens(cache.mintAmount, glvDeposit.minGlvTokens());
         }
@@ -374,7 +378,6 @@ library GlvDepositUtils {
         if (glvDeposit.isMarketTokenDeposit()) {
             // user deposited GM tokens
             glvVault.transferOut(glvDeposit.market(), glvDeposit.glv(), glvDeposit.marketTokenAmount());
-            GlvToken(payable(glvDeposit.glv())).syncTokenBalance(glvDeposit.market());
             return glvDeposit.marketTokenAmount();
         }
 
@@ -419,7 +422,6 @@ library GlvDepositUtils {
             );
 
         uint256 receivedMarketTokens = ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);
-        GlvToken(payable(glvDeposit.glv())).syncTokenBalance(glvDeposit.market());
         return receivedMarketTokens;
     }
 
