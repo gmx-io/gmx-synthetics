@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "./Config.sol";
 import "./IRiskOracle.sol";
+import "../feature/FeatureUtils.sol";
 
 contract ConfigSyncer is ReentrancyGuard, RoleModule {
     // Contract instances for the Config and DataStore contracts
@@ -26,69 +27,59 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
      // @param parameterTypes An array of parameter types corresponding to each market for which updates are to be applied.
      // Requirements:
      // - The length of the markets and parameterTypes arrays must be the same.
-     // - The SyncConfig functionality must not be disabled.
+     // - The SyncConfig feature must not be disabled.
      // - Updates for the specified market must not be disabled.
      // - Updates for the specified parameter type must not be disabled.
      // - Updates for the combination of market and parameter type must not be disabled.
      // - The update must not have already been applied.
-    function syncConfig(address[] calldata markets, string[] calldata parameterTypes) external onlyLimitedConfigKeeper nonReentrant {
-        bytes32 cachedSyncConfigFeatureDisabledKey = Keys.SYNC_CONFIG_FEATURE_DISABLED;
-        
-        if (dataStore.getBool(cachedSyncConfigFeatureDisabledKey)) {
-                revert Errors.SyncConfigUpdatesDisabled();
-        }
+    function sync(address[] calldata markets, string[] calldata parameterTypes) external onlyLimitedConfigKeeper nonReentrant {
+        FeatureUtils.validateFeature(dataStore, Keys.syncConfigFeatureDisabledKey(address(this)));
         
         if (markets.length != parameterTypes.length) {
             revert Errors.SyncConfigInvalidInputLengths(markets.length, parameterTypes.length);
         }
 
-        bytes32 cachedSyncConfigLatestUpdateIdKey = Keys.SYNC_CONFIG_LATEST_UPDATE_ID;
-        bytes32 cachedSyncConfigUpdateCompletedKey = Keys.SYNC_CONFIG_UPDATE_COMPLETED;
-        uint256 cachedLatestUpdate = dataStore.getUint(cachedSyncConfigLatestUpdateIdKey);
-        
-        address market;
-        string memory parameterType;
-        IRiskOracle.RiskParameterUpdate memory riskParameterUpdate;
-        uint256 updateId;
-        uint256 updatedValue;
-        bytes32 baseKey;
-        bytes memory data;
+        uint256 latestUpdateId = dataStore.getUint(Keys.syncConfigLatestUpdateIdKey());
 
-        for (uint256 i = 0; i < markets.length; i++) {
-            market = markets[i];
-            parameterType = parameterTypes[i];
+        for (uint256 i; i < markets.length; i++) {
+            address market = markets[i];
+            string memory parameterType = parameterTypes[i];
             
-            if (dataStore.getBool(keccak256(bytes.concat(cachedSyncConfigFeatureDisabledKey, abi.encode(market))))) {
+            bool syncConfigMarketDisabled = dataStore.getBool(Keys.syncConfigMarketDisabledKey(market));
+            if (syncConfigMarketDisabled) {
                 revert Errors.SyncConfigUpdatesDisabledForMarket(market);
             }
-
-            if (dataStore.getBool(keccak256(bytes.concat(cachedSyncConfigFeatureDisabledKey, abi.encode(parameterType))))) {
+            
+            bool syncConfigParameterTypeDisabled = dataStore.getBool(Keys.syncConfigParameterTypeDisabledKey(parameterType));
+            if (syncConfigParameterTypeDisabled) {
                 revert Errors.SyncConfigUpdatesDisabledForParameterType(parameterType);
             }
 
-            if (dataStore.getBool(keccak256(bytes.concat(cachedSyncConfigFeatureDisabledKey, abi.encode(market), abi.encode(parameterType))))) {
+            bool syncConfigMarketParameterDisabled = dataStore.getBool(Keys.syncConfigMarketParameterDisabledKey(market, parameterType));
+            if (syncConfigMarketParameterDisabled) {
                 revert Errors.SyncConfigUpdatesDisabledForMarketParameter(market, parameterType);
             }
 
-            riskParameterUpdate = IRiskOracle(riskOracle).getLatestUpdateByParameterAndMarket(parameterType, abi.encode(market));
-            updateId = riskParameterUpdate.updateId;
+            IRiskOracle.RiskParameterUpdate memory riskParameterUpdate = IRiskOracle(riskOracle).getLatestUpdateByParameterAndMarket(parameterType, abi.encode(market));
+            uint256 updateId = riskParameterUpdate.updateId;
             
-            if (dataStore.getBool(keccak256(bytes.concat(cachedSyncConfigUpdateCompletedKey, abi.encode(updateId))))) {
+            bool syncConfigUpdatedCompleted = dataStore.getBool(Keys.syncConfigUpdateCompletedKey(updateId));
+            if (syncConfigUpdatedCompleted) {
                 revert Errors.SyncConfigUpdateAlreadyApplied(updateId);
             }
 
-            updatedValue = Cast.bytesToUint256(riskParameterUpdate.newValue);
-            (baseKey, data) = abi.decode(riskParameterUpdate.additionalData, (bytes32, bytes));
+            uint256 updatedValue = Cast.bytesToUint256(riskParameterUpdate.newValue);
+            (bytes32 baseKey, bytes memory data) = abi.decode(riskParameterUpdate.additionalData, (bytes32, bytes));
             config.setUint(baseKey, data, updatedValue);
-            config.setBool(cachedSyncConfigUpdateCompletedKey, abi.encode(updateId), true);
+            dataStore.setBool(Keys.syncConfigUpdateCompletedKey(updateId), true);
             
-            if (updateId > cachedLatestUpdate) {
-                cachedLatestUpdate = updateId;
+            if (updateId > latestUpdateId) {
+                latestUpdateId = updateId;
             }
         }
         
-        if (cachedLatestUpdate > dataStore.getUint(cachedSyncConfigLatestUpdateIdKey)) {
-            config.setUint(cachedSyncConfigLatestUpdateIdKey, new bytes(0), cachedLatestUpdate);
+        if (latestUpdateId > dataStore.getUint(Keys.syncConfigLatestUpdateIdKey())) {
+            dataStore.setUint(Keys.syncConfigLatestUpdateIdKey(), latestUpdateId);
         }
     }
 }
