@@ -8,31 +8,31 @@ import "./Config.sol";
 import "./IRiskOracle.sol";
 import "../feature/FeatureUtils.sol";
 
+// @title ConfigSyncer
+// @dev Contract to handle market parameter updates
 contract ConfigSyncer is ReentrancyGuard, RoleModule {
-    // Contract instances for the Config and DataStore contracts
     Config public immutable config;
     DataStore public immutable dataStore;
-
-    // Address for the Chaos Labs RiskOracle contract
     address public immutable riskOracle;
 
-    constructor(RoleStore _roleStore, Config _config, DataStore _dataStore, address _riskOracle) RoleModule(_roleStore) {
+    constructor(
+        RoleStore _roleStore, 
+        Config _config, 
+        DataStore _dataStore, 
+        address _riskOracle
+    ) RoleModule(_roleStore) {
         config = _config;
         dataStore = _dataStore;
         riskOracle = _riskOracle;
     }
 
-     // @dev Allows the LIMITED_CONFIG_KEEPER to apply updates with the provided markets and parameter types.
-     // @param markets An array of market addresses for which updates are to be applied.
-     // @param parameterTypes An array of parameter types corresponding to each market for which updates are to be applied.
-     // Requirements:
-     // - The length of the markets and parameterTypes arrays must be the same.
-     // - The SyncConfig feature must not be disabled.
-     // - Updates for the specified market must not be disabled.
-     // - Updates for the specified parameter type must not be disabled.
-     // - Updates for the combination of market and parameter type must not be disabled.
-     // - The update must not have already been applied.
-    function sync(address[] calldata markets, string[] calldata parameterTypes) external onlyLimitedConfigKeeper nonReentrant {
+    // @dev Allows the LIMITED_CONFIG_KEEPER to apply updates with the provided markets and parameter types.
+    // @param markets An array of market addresses for which updates are to be applied.
+    // @param parameterTypes An array of parameter types corresponding to each market for which updates are to be applied.
+    function sync(
+        address[] calldata markets, 
+        string[] calldata parameterTypes
+    ) external onlyLimitedConfigKeeper nonReentrant {
         FeatureUtils.validateFeature(dataStore, Keys.syncConfigFeatureDisabledKey(address(this)));
         
         if (markets.length != parameterTypes.length) {
