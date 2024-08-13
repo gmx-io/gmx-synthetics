@@ -538,8 +538,9 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.GLV_MAX_MARKET_TOKEN_BALANCE_USD] = true;
 
         allowedBaseKeys[Keys.SYNC_CONFIG_FEATURE_DISABLED] = true;
-        allowedBaseKeys[Keys.SYNC_CONFIG_LATEST_UPDATE_ID] = true;
-        allowedBaseKeys[Keys.SYNC_CONFIG_UPDATE_COMPLETED] = true;
+        allowedBaseKeys[Keys.SYNC_CONFIG_MARKET_DISABLED] = true;
+        allowedBaseKeys[Keys.SYNC_CONFIG_PARAMETER_TYPE_DISABLED] = true;
+        allowedBaseKeys[Keys.SYNC_CONFIG_MARKET_PARAMETER_DISABLED] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {
