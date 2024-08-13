@@ -1,8 +1,14 @@
 import hre from "hardhat";
 import { DEFAULT_MARKET_TYPE, createMarketConfigByKey, getMarketKey, getMarketTokenAddresses } from "../utils/market";
+import * as keys from "../utils/keys";
+import { encodeData } from "../utils/hash";
+import { parseLogs, getEventData } from "../utils/event";
 
 async function main() {
   const marketFactory = await hre.ethers.getContract("MarketFactory");
+  const config = await hre.ethers.getContract("Config");
+  const dataStore = await hre.ethers.getContract("DataStore");
+  const eventEmitter = await hre.ethers.getContract("EventEmitter");
   const tokens = await hre.gmx.getTokens();
 
   // marketKey should be of the form indexToken:longToken:shortToken
@@ -63,7 +69,52 @@ async function main() {
       shortTokenAddress,
       DEFAULT_MARKET_TYPE
     );
-    console.log(`tx sent: ${tx.hash}`);
+    console.log(`create market tx sent: ${tx.hash}`);
+
+    const receipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
+    if (!receipt) {
+      throw new Error("Transaction not found");
+    }
+
+    const fixture = { contracts: { eventEmitter } };
+    const parsedLogs = parseLogs(fixture, receipt);
+    const marketCreatedEvent = getEventData(parsedLogs, "MarketCreated");
+
+    const { marketToken } = marketCreatedEvent;
+
+    console.log(`market created: ${marketToken}`);
+
+    if (marketConfig.virtualMarketId) {
+      console.log(`setting virtualMarketId: ${marketConfig.virtualMarketId}`);
+      await config.setBytes32(
+        keys.VIRTUAL_MARKET_ID,
+        encodeData(["address"], [marketToken]),
+        marketConfig.virtualMarketId
+      );
+    }
+
+    const virtualTokenId = marketConfig.virtualTokenIdForIndexToken;
+    if (virtualTokenId) {
+      const existingVirtualTokenIdForIndexToken = await dataStore.getBytes32(keys.virtualTokenId(indexTokenAddress));
+      console.log(`existingVirtualTokenIdForIndexToken: ${existingVirtualTokenIdForIndexToken}`);
+
+      if (existingVirtualTokenIdForIndexToken.toLowerCase() === virtualTokenId.toLowerCase()) {
+        console.log("skipping setting of virtualTokenId as it already set");
+      } else {
+        if (existingVirtualTokenIdForIndexToken === ethers.constants.AddressZero) {
+          console.log(`setting virtualTokenId: ${virtualTokenId}`);
+          await config.setBytes32(
+            keys.VIRTUAL_TOKEN_ID,
+            encodeData(["address"], [marketToken]),
+            marketConfig.virtualTokenIdForIndexToken
+          );
+        } else {
+          console.warn(
+            "WARNING: virtualTokenId is already set for this index token but is different from configuration for this market"
+          );
+        }
+      }
+    }
   } else {
     console.log("NOTE: executed in read-only mode, no transactions were sent");
   }

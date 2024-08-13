@@ -607,6 +607,9 @@ const config: {
 
       borrowingExponentFactorForLongs: decimalToFloat(1),
       borrowingExponentFactorForShorts: decimalToFloat(1),
+
+      swapFeeFactorForPositiveImpact: percentageToFloat("1%"),
+      swapFeeFactorForNegativeImpact: percentageToFloat("1%"),
     },
     {
       tokens: { indexToken: "BNB", longToken: "BNB", shortToken: "USDC" },
@@ -1508,6 +1511,8 @@ const config: {
 
       swapOnly: true,
 
+      isDisabled: false,
+
       maxLongTokenPoolAmount: expandDecimals(3300, 18),
       maxShortTokenPoolAmount: expandDecimals(2800, 18),
 
@@ -1517,8 +1522,8 @@ const config: {
       negativeSwapImpactFactor: decimalToFloat(5, 9),
       positiveSwapImpactFactor: decimalToFloat(5, 9),
 
-      swapFeeFactorForPositiveImpact: decimalToFloat(5, 5), // 0.005%,
-      swapFeeFactorForNegativeImpact: decimalToFloat(2, 4), // 0.02%,
+      swapFeeFactorForPositiveImpact: percentageToFloat("1%"),
+      swapFeeFactorForNegativeImpact: percentageToFloat("1%"),
     },
     {
       tokens: { longToken: "USDe", shortToken: "USDC" },
