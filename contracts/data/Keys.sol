@@ -1813,8 +1813,6 @@ library Keys {
     // @dev key for the latest sync config update that was completed
     // @return key for sync config latest update id
     function syncConfigLatestUpdateIdKey() internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            SYNC_CONFIG_LATEST_UPDATE_ID
-        ));
+        return SYNC_CONFIG_LATEST_UPDATE_ID;
     }
 }
