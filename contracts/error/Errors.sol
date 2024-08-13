@@ -373,7 +373,6 @@ library Errors {
 
     // ConfigSyncer errors
     error SyncConfigInvalidInputLengths(uint256 marketsLength, uint256 parameterTypesLength);
-    error SyncConfigUpdatesDisabled();
     error SyncConfigUpdatesDisabledForMarket(address market);
     error SyncConfigUpdatesDisabledForParameterType(string parameterType);
     error SyncConfigUpdatesDisabledForMarketParameter(address market, string parameterType);
