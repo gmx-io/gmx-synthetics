@@ -63,15 +63,15 @@ async function main() {
   );
 
   if (process.env.WRITE === "true") {
-    const tx = await marketFactory.createMarket(
+    const tx0 = await marketFactory.createMarket(
       indexTokenAddress,
       longTokenAddress,
       shortTokenAddress,
       DEFAULT_MARKET_TYPE
     );
-    console.log(`create market tx sent: ${tx.hash}`);
+    console.log(`create market tx sent: ${tx0.hash}`);
 
-    const receipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
+    const receipt = await hre.ethers.provider.getTransactionReceipt(tx0.hash);
     if (!receipt) {
       throw new Error("Transaction not found");
     }
@@ -86,28 +86,30 @@ async function main() {
 
     if (marketConfig.virtualMarketId) {
       console.log(`setting virtualMarketId: ${marketConfig.virtualMarketId}`);
-      await config.setBytes32(
+      const tx1 = await config.setBytes32(
         keys.VIRTUAL_MARKET_ID,
         encodeData(["address"], [marketToken]),
         marketConfig.virtualMarketId
       );
+      console.log(`set virtualMarketId tx sent: ${tx1.hash}`);
     }
 
     const virtualTokenId = marketConfig.virtualTokenIdForIndexToken;
     if (virtualTokenId) {
-      const existingVirtualTokenIdForIndexToken = await dataStore.getBytes32(keys.virtualTokenId(indexTokenAddress));
+      const existingVirtualTokenIdForIndexToken = await dataStore.getBytes32(keys.virtualTokenIdKey(indexTokenAddress));
       console.log(`existingVirtualTokenIdForIndexToken: ${existingVirtualTokenIdForIndexToken}`);
 
       if (existingVirtualTokenIdForIndexToken.toLowerCase() === virtualTokenId.toLowerCase()) {
         console.log("skipping setting of virtualTokenId as it already set");
       } else {
-        if (existingVirtualTokenIdForIndexToken === ethers.constants.AddressZero) {
+        if (existingVirtualTokenIdForIndexToken === ethers.constants.HashZero) {
           console.log(`setting virtualTokenId: ${virtualTokenId}`);
-          await config.setBytes32(
+          const tx2 = await config.setBytes32(
             keys.VIRTUAL_TOKEN_ID,
             encodeData(["address"], [marketToken]),
             marketConfig.virtualTokenIdForIndexToken
           );
+          console.log(`set virtualTokenId tx sent: ${tx2.hash}`);
         } else {
           console.warn(
             "WARNING: virtualTokenId is already set for this index token but is different from configuration for this market"
