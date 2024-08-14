@@ -14,7 +14,7 @@ import "../position/PositionStoreUtils.sol";
 import "../order/AutoCancelUtils.sol";
 import "../utils/Cast.sol";
 
-contract AutoCancelConfig is ReentrancyGuard, RoleModule, BasicMulticall {
+contract AutoCancelSyncer is ReentrancyGuard, RoleModule, BasicMulticall {
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.IntItems;
