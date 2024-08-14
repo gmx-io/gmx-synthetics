@@ -420,8 +420,8 @@ library Keys {
     bytes32 public constant SYNC_CONFIG_FEATURE_DISABLED = keccak256(abi.encode("SYNC_CONFIG_FEATURE_DISABLED"));
     // @dev key for disabling all parameter updates for a specific market via ConfigSyncer
     bytes32 public constant SYNC_CONFIG_MARKET_DISABLED = keccak256(abi.encode("SYNC_CONFIG_MARKET_DISABLED"));
-    // @dev key for disabling all updates for a specific parameter type via ConfigSyncer
-    bytes32 public constant SYNC_CONFIG_PARAMETER_TYPE_DISABLED = keccak256(abi.encode("SYNC_CONFIG_PARAMETER_TYPE_DISABLED"));
+    // @dev key for disabling all updates for a specific parameter via ConfigSyncer
+    bytes32 public constant SYNC_CONFIG_PARAMETER_DISABLED = keccak256(abi.encode("SYNC_CONFIG_PARAMETER_DISABLED"));
     // @dev key for disabling all updates for a specific market parameter via ConfigSyncer
     bytes32 public constant SYNC_CONFIG_MARKET_PARAMETER_DISABLED = keccak256(abi.encode("SYNC_CONFIG_MARKET_PARAMETER_DISABLED"));
     // @dev key for tracking which updateIds have already been applied by ConfigSyncer
@@ -1778,25 +1778,25 @@ library Keys {
         ));
     }
 
-    // @dev key for whether sync config updates are disabled for a parameter type
-    // @param parameterType the parameter type to check
-    // @return key for sync config parameter type disabled
-    function syncConfigParameterTypeDisabledKey(string memory parameterType) internal pure returns (bytes32) {
+    // @dev key for whether sync config updates are disabled for a parameter
+    // @param parameter the parameter to check
+    // @return key for sync config parameter disabled
+    function syncConfigParameterDisabledKey(string memory parameter) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            SYNC_CONFIG_PARAMETER_TYPE_DISABLED,
-            parameterType
+            SYNC_CONFIG_PARAMETER_DISABLED,
+            parameter
         ));
     }
 
     // @dev key for whether sync config updates are disabled for a market parameter
     // @param market the market to check
-    // @param parameterType the parameter type to check
+    // @param parameter the parameter to check
     // @return key for sync config market parameter disabled
-    function syncConfigMarketParameterDisabledKey(address market, string memory parameterType) internal pure returns (bytes32) {
+    function syncConfigMarketParameterDisabledKey(address market, string memory parameter) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             SYNC_CONFIG_MARKET_PARAMETER_DISABLED,
             market,
-            parameterType
+            parameter
         ));
     }
 
