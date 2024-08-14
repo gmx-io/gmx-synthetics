@@ -204,14 +204,6 @@ const config: HardhatUserConfig = {
           browserURL: "https://https://sepolia.arbiscan.io/",
         },
       },
-      {
-        network: "arbitrumBlockscout",
-        chainId: 42161,
-        urls: {
-          apiURL: "https://arbitrum.blockscout.com/api",
-          browserURL: "https://arbitrum.blockscout.com/",
-        },
-      },
     ],
   },
   sourcify: {
