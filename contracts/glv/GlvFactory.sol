@@ -38,7 +38,7 @@ contract GlvFactory is RoleModule {
         if (bytes(symbol).length > 30) {
             revert Errors.GlvSymbolTooLong();
         }
-        if (bytes(symbol).length > 100) {
+        if (bytes(name).length > 100) {
             revert Errors.GlvNameTooLong();
         }
 
