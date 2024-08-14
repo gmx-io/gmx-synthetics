@@ -14,7 +14,7 @@ import "../position/PositionStoreUtils.sol";
 import "../order/AutoCancelUtils.sol";
 import "../utils/Cast.sol";
 
-contract AutoCancelConfig is ReentrancyGuard, RoleModule, BasicMulticall {
+contract AutoCancelSyncer is ReentrancyGuard, RoleModule, BasicMulticall {
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.IntItems;
@@ -37,32 +37,39 @@ contract AutoCancelConfig is ReentrancyGuard, RoleModule, BasicMulticall {
         eventEmitter = _eventEmitter;
     }
 
-    function syncAutoCancelOrderList(address account, uint256 start, uint256 end) external onlyConfigKeeper nonReentrant {
+    function syncAutoCancelOrderListForAccount(address account, uint256 start, uint256 end) external onlyConfigKeeper nonReentrant {
         bytes32[] memory positionKeys = PositionStoreUtils.getAccountPositionKeys(dataStore, account, start, end);
 
         for (uint256 i; i < positionKeys.length; i++) {
-            bytes32 positionKey = positionKeys[i];
-            bytes32[] memory orderKeys = AutoCancelUtils.getAutoCancelOrderKeys(dataStore, positionKey);
+            _syncAutoCancelOrderListForPosition(account, positionKeys[i]);
+        }
+    }
 
-            for (uint256 j; j < orderKeys.length; j++) {
-                bytes32 orderKey = orderKeys[j];
-                Order.Props memory order = OrderStoreUtils.get(dataStore, orderKey);
+    function syncAutoCancelOrderListForPosition(address account, bytes32 positionKey) external onlyConfigKeeper nonReentrant {
+        _syncAutoCancelOrderListForPosition(account, positionKey);
+    }
 
-                if (order.account() == address(0) || (order.sizeDeltaUsd() == 0 && order.initialCollateralDeltaAmount() == 0)) {
-                    AutoCancelUtils.removeAutoCancelOrderKey(dataStore, positionKey, orderKey);
+    function _syncAutoCancelOrderListForPosition(address account, bytes32 positionKey) internal {
+        bytes32[] memory orderKeys = AutoCancelUtils.getAutoCancelOrderKeys(dataStore, positionKey);
 
-                    EventUtils.EventLogData memory eventData;
-                    eventData.addressItems.initItems(1);
-                    eventData.addressItems.setItem(0, "account", account);
-                    eventData.bytes32Items.initItems(2);
-                    eventData.bytes32Items.setItem(0, "positionKey", positionKey);
-                    eventData.bytes32Items.setItem(1, "orderKey", orderKey);
-                    eventEmitter.emitEventLog1(
-                        "ConfigSyncAutoCancelOrderList",
-                        Cast.toBytes32(account),
-                        eventData
-                    );
-                }
+        for (uint256 j; j < orderKeys.length; j++) {
+            bytes32 orderKey = orderKeys[j];
+            Order.Props memory order = OrderStoreUtils.get(dataStore, orderKey);
+
+            if (order.account() == address(0) || (order.sizeDeltaUsd() == 0 && order.initialCollateralDeltaAmount() == 0)) {
+                AutoCancelUtils.removeAutoCancelOrderKey(dataStore, positionKey, orderKey);
+
+                EventUtils.EventLogData memory eventData;
+                eventData.addressItems.initItems(1);
+                eventData.addressItems.setItem(0, "account", account);
+                eventData.bytes32Items.initItems(2);
+                eventData.bytes32Items.setItem(0, "positionKey", positionKey);
+                eventData.bytes32Items.setItem(1, "orderKey", orderKey);
+                eventEmitter.emitEventLog1(
+                    "ConfigSyncAutoCancelOrderList",
+                    Cast.toBytes32(account),
+                    eventData
+                );
             }
         }
     }

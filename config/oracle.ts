@@ -107,6 +107,13 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
 
       // price feeds https://docs.chain.link/data-feeds/price-feeds/addresses/?network=arbitrum#Arbitrum%20Mainnet
       tokens: {
+        APE: {
+          priceFeed: {
+            address: "0x221912ce795669f628c51c69b7d0873eDA9C03bB",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
         BTC: {
           priceFeed: {
             address: "0x6ce185860a4963106506C203335A2910413708e9",

@@ -36,6 +36,12 @@ const recommendedStablecoinSwapConfig = {
 // a ratio of 20000 means that the negative position price price impact is twice the positive position price impact
 const recommendedMarketConfig = {
   arbitrum: {
+    APE: {
+      negativePositionImpactFactor: decimalToFloat(5, 10),
+      negativeSwapImpactFactor: decimalToFloat(3, 8),
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
+    },
     BTC: {
       negativePositionImpactFactor: decimalToFloat(5, 11),
       negativeSwapImpactFactor: decimalToFloat(5, 11),
@@ -55,13 +61,13 @@ const recommendedMarketConfig = {
       expectedPositionImpactRatio: 20000,
     },
     LINK: {
-      negativePositionImpactFactor: decimalToFloat(4, 10),
+      negativePositionImpactFactor: decimalToFloat(3, 10),
       negativeSwapImpactFactor: decimalToFloat(5, 10),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
     ARB: {
-      negativePositionImpactFactor: decimalToFloat(5, 10),
+      negativePositionImpactFactor: decimalToFloat(375, 12),
       negativeSwapImpactFactor: decimalToFloat(5, 10),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
@@ -96,6 +102,12 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
+    STX: {
+      negativePositionImpactFactor: decimalToFloat(5, 10),
+      negativeSwapImpactFactor: decimalToFloat(5, 9),
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
+    },
     XRP: {
       negativePositionImpactFactor: decimalToFloat(5, 9),
       negativeSwapImpactFactor: decimalToFloat(5, 9),
@@ -121,7 +133,7 @@ const recommendedMarketConfig = {
       expectedPositionImpactRatio: 20000,
     },
     NEAR: {
-      negativePositionImpactFactor: decimalToFloat(26, 9),
+      negativePositionImpactFactor: decimalToFloat(195, 10),
       negativeSwapImpactFactor: decimalToFloat(26, 9),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
@@ -129,6 +141,12 @@ const recommendedMarketConfig = {
     OP: {
       negativePositionImpactFactor: decimalToFloat(5, 10),
       negativeSwapImpactFactor: decimalToFloat(5, 10),
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
+    },
+    ORDI: {
+      negativePositionImpactFactor: decimalToFloat(5, 10),
+      negativeSwapImpactFactor: decimalToFloat(5, 9),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },

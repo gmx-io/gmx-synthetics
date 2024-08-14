@@ -102,7 +102,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
       },
       ROLE_ADMIN: {
-        "0x2ECB664e934aCd5DF1EE889Dbb2E7D6C1d7CE3Cb": true, // Timelock_3
+        "0xf32b417A93Acc039B236F1eCC86B56bd3cB8E698": true, // Timelock_3
       },
       ROUTER_PLUGIN: {
         "0x69C527fC77291722b52649E45c838e41be8Bf5d5": true, // ExchangeRouter_3
@@ -120,8 +120,9 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xa8af9b86fc47deade1bc66b12673706615e2b011": true, // OracleStore_1
         "0xf5f30b10141e1f63fc11ed772931a8294a591996": true, // MarketFactory_1
 
-        "0xd0Db5Ea893ad4a89e5dBBD94fbD25F0273BBd74c": true, // Config_3
-        "0x2ECB664e934aCd5DF1EE889Dbb2E7D6C1d7CE3Cb": true, // Timelock_3
+        "0x7d36FE0840140Aa2bb45711d8EC228e77F597493": true, // AutoCancelSyncer_3
+        "0x8583b878DA0844B7f59974069f00D3A9eaE0F4ae": true, // Config_3
+        "0xf32b417A93Acc039B236F1eCC86B56bd3cB8E698": true, // Timelock_3
         "0xb8fc96d7a413C462F611A7aC0C912c2FE26EAbC4": true, // Oracle_3
         "0xb0c681DE9CB4B75eD0A620c04A958Bc05f4087b7": true, // SwapHandler_3
         "0x26BC03c944A4800299B4bdfB5EdCE314dD497511": true, // AdlHandler_3
@@ -159,7 +160,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
       },
       ROLE_ADMIN: {
-        "0x844D38f2c3875b8351feB4764718E1c64bD55c46": true, // Timelock_3
+        "0x9Dd6EB1069385D85Ae204543BabB7333181ec8A5": true, // Timelock_3
       },
       ROUTER_PLUGIN: {
         "0x3BE24AED1a4CcaDebF2956e02C27a00726D4327d": true, // ExchangeRouter_3
@@ -177,8 +178,9 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xa6ac2e08c6d6bbd9b237e0daaecd7577996f4e84": true, // OracleStore_1
         "0xc57c155faccd93f62546f329d1483e0e5b9c1241": true, // MarketFactory_1
 
-        "0x8514fc704317057FA86961Ba9b9490956993A5ed": true, // Config_3
-        "0x844D38f2c3875b8351feB4764718E1c64bD55c46": true, // Timelock_3
+        "0x162e3a5B47C9a45ff762E5b4b23D048D6780C14e": true, // AutoCancelSyncer_3
+        "0x8EfE46827AADfe498C27E56F0A428B5B4EE654f7": true, // Config_3
+        "0x9Dd6EB1069385D85Ae204543BabB7333181ec8A5": true, // Timelock_3
         "0xAd7a7568F500F65AEA3D9417A210CBc5dcD7b273": true, // Oracle_3
         "0xb54C8fB6B2F143dD58f5B00fDE7dA4FA05077B20": true, // SwapHandler_3
         "0x352f684ab9e97a6321a13CF03A61316B681D9fD2": true, // AdlHandler_3
