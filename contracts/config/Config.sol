@@ -539,7 +539,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.SYNC_CONFIG_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.SYNC_CONFIG_MARKET_DISABLED] = true;
-        allowedBaseKeys[Keys.SYNC_CONFIG_PARAMETER_TYPE_DISABLED] = true;
+        allowedBaseKeys[Keys.SYNC_CONFIG_PARAMETER_DISABLED] = true;
         allowedBaseKeys[Keys.SYNC_CONFIG_MARKET_PARAMETER_DISABLED] = true;
     }
 
