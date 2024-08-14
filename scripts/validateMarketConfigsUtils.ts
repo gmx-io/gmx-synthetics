@@ -61,13 +61,13 @@ const recommendedMarketConfig = {
       expectedPositionImpactRatio: 20000,
     },
     LINK: {
-      negativePositionImpactFactor: decimalToFloat(4, 10),
+      negativePositionImpactFactor: decimalToFloat(3, 10),
       negativeSwapImpactFactor: decimalToFloat(5, 10),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
     ARB: {
-      negativePositionImpactFactor: decimalToFloat(5, 10),
+      negativePositionImpactFactor: decimalToFloat(375, 12),
       negativeSwapImpactFactor: decimalToFloat(5, 10),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
@@ -133,7 +133,7 @@ const recommendedMarketConfig = {
       expectedPositionImpactRatio: 20000,
     },
     NEAR: {
-      negativePositionImpactFactor: decimalToFloat(26, 9),
+      negativePositionImpactFactor: decimalToFloat(195, 10),
       negativeSwapImpactFactor: decimalToFloat(26, 9),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,

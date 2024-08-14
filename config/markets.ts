@@ -385,8 +385,8 @@ const config: {
       maxLongTokenPoolUsdForDeposit: decimalToFloat(100_000_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(100_000_000),
 
-      negativePositionImpactFactor: decimalToFloat(12, 11),
-      positivePositionImpactFactor: decimalToFloat(6, 11),
+      negativePositionImpactFactor: decimalToFloat(9, 11),
+      positivePositionImpactFactor: decimalToFloat(3, 11),
 
       positionImpactPoolDistributionRate: expandDecimals(138, 30), // 1.38E+32, 0.119232 BTC / day
       minPositionImpactPoolAmount: expandDecimals(95, 6), // 0.95 BTC
@@ -435,8 +435,8 @@ const config: {
       maxLongTokenPoolUsdForDeposit: decimalToFloat(100_000_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(100_000_000),
 
-      negativePositionImpactFactor: decimalToFloat(12, 11),
-      positivePositionImpactFactor: decimalToFloat(6, 11),
+      negativePositionImpactFactor: decimalToFloat(9, 11),
+      positivePositionImpactFactor: decimalToFloat(3, 11),
 
       positionImpactPoolDistributionRate: expandDecimals(46530, 26), // 4,653E+30, 0.0040202449 BTC / day
       minPositionImpactPoolAmount: expandDecimals(5, 6), // 0.05 BTC
@@ -481,8 +481,8 @@ const config: {
       maxLongTokenPoolUsdForDeposit: decimalToFloat(90_000_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(90_000_000),
 
-      negativePositionImpactFactor: decimalToFloat(12, 11),
-      positivePositionImpactFactor: decimalToFloat(6, 11),
+      negativePositionImpactFactor: decimalToFloat(9, 11),
+      positivePositionImpactFactor: decimalToFloat(3, 11),
 
       positionImpactPoolDistributionRate: expandDecimals(2900, 40), // 2.9E+43, 2.5065444873 ETH / day
       minPositionImpactPoolAmount: expandDecimals(10, 18), // 10 ETH
@@ -531,8 +531,8 @@ const config: {
       maxLongTokenPoolUsdForDeposit: decimalToFloat(60_000_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(60_000_000),
 
-      negativePositionImpactFactor: decimalToFloat(12, 11),
-      positivePositionImpactFactor: decimalToFloat(6, 11),
+      negativePositionImpactFactor: decimalToFloat(9, 11),
+      positivePositionImpactFactor: decimalToFloat(3, 11),
 
       positionImpactPoolDistributionRate: expandDecimals(37181, 37), // 3.718184E+41, 0.0321250994 ETH / day
       minPositionImpactPoolAmount: expandDecimals(5, 17), // 0.5 ETH
@@ -577,8 +577,8 @@ const config: {
       maxLongTokenPoolUsdForDeposit: decimalToFloat(2_000_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(2_000_000),
 
-      negativePositionImpactFactor: decimalToFloat(12, 11),
-      positivePositionImpactFactor: decimalToFloat(6, 11),
+      negativePositionImpactFactor: decimalToFloat(9, 11),
+      positivePositionImpactFactor: decimalToFloat(3, 11),
 
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
@@ -675,8 +675,8 @@ const config: {
       maxLongTokenPoolUsdForDeposit: decimalToFloat(2_000_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(2_000_000),
 
-      negativePositionImpactFactor: decimalToFloat(28, 9),
-      positivePositionImpactFactor: decimalToFloat(14, 9),
+      negativePositionImpactFactor: decimalToFloat(21, 9),
+      positivePositionImpactFactor: decimalToFloat(7, 9),
 
       // the swap impact factor is for WETH-stablecoin swaps
       negativeSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
@@ -914,8 +914,8 @@ const config: {
       maxLongTokenPoolUsdForDeposit: decimalToFloat(1_500_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(1_500_000),
 
-      negativePositionImpactFactor: decimalToFloat(36, 9),
-      positivePositionImpactFactor: decimalToFloat(18, 9),
+      negativePositionImpactFactor: decimalToFloat(27, 9),
+      positivePositionImpactFactor: decimalToFloat(9, 9),
 
       // the swap impact factor is for WETH-stablecoin swaps
       negativeSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
@@ -965,8 +965,8 @@ const config: {
       maxLongTokenPoolUsdForDeposit: decimalToFloat(1_500_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(1_500_000),
 
-      negativePositionImpactFactor: decimalToFloat(42, 9),
-      positivePositionImpactFactor: decimalToFloat(21, 9),
+      negativePositionImpactFactor: decimalToFloat(315, 10),
+      positivePositionImpactFactor: decimalToFloat(105, 10),
 
       negativeSwapImpactFactor: decimalToFloat(3, 8), // 0.05% for 16,667 USD of imbalance
       positiveSwapImpactFactor: decimalToFloat(15, 9), // 0.05% for 33,333 USD of imbalance
@@ -1012,8 +1012,8 @@ const config: {
       maxLongTokenPoolUsdForDeposit: decimalToFloat(7_200_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(7_200_000),
 
-      negativePositionImpactFactor: decimalToFloat(4, 10),
-      positivePositionImpactFactor: decimalToFloat(2, 10),
+      negativePositionImpactFactor: decimalToFloat(3, 10),
+      positivePositionImpactFactor: decimalToFloat(1, 10),
       positionImpactExponentFactor: decimalToFloat(22, 1), // 2.2
 
       negativeSwapImpactFactor: decimalToFloat(6, 9),
@@ -1057,8 +1057,8 @@ const config: {
       maxLongTokenPoolUsdForDeposit: decimalToFloat(14_000_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(14_000_000),
 
-      negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~45,000 USD of imbalance
-      positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~90,000 USD of imbalance
+      negativePositionImpactFactor: decimalToFloat(375, 12),
+      positivePositionImpactFactor: decimalToFloat(125, 12),
       positionImpactExponentFactor: decimalToFloat(22, 1), // 2.2
 
       negativeSwapImpactFactor: decimalToFloat(5, 9),
@@ -1244,8 +1244,8 @@ const config: {
       maxLongTokenPoolUsdForDeposit: decimalToFloat(4_500_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(4_500_000),
 
-      negativePositionImpactFactor: decimalToFloat(26, 9),
-      positivePositionImpactFactor: decimalToFloat(13, 9),
+      negativePositionImpactFactor: decimalToFloat(195, 10),
+      positivePositionImpactFactor: decimalToFloat(65, 10),
 
       // the swap impact factor is for WETH-stablecoin swaps
       negativeSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
