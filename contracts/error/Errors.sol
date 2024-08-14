@@ -372,9 +372,8 @@ library Errors {
     error Uint256AsBytesLengthExceeds32Bytes(uint256 length);
 
     // ConfigSyncer errors
-    error SyncConfigInvalidInputLengths(uint256 marketsLength, uint256 parameterTypesLength);
+    error SyncConfigInvalidInputLengths(uint256 marketsLength, uint256 parametersLength);
     error SyncConfigUpdatesDisabledForMarket(address market);
-    error SyncConfigUpdatesDisabledForParameterType(string parameterType);
-    error SyncConfigUpdatesDisabledForMarketParameter(address market, string parameterType);
-    error SyncConfigUpdateAlreadyApplied(uint256 updateId);
+    error SyncConfigUpdatesDisabledForParameter(string parameter);
+    error SyncConfigUpdatesDisabledForMarketParameter(address market, string parameter);
 }
