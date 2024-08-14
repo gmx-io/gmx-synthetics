@@ -632,6 +632,10 @@ After the initial setup:
 
 - There is a dependency on the accuracy of the block timestamp because oracle prices are validated against this value, for blockchains where the blockchain nodes have some control over the timestamp, care should be taken to set the oracleTimestampAdjustment to a value that would make manipulation of the timestamp unprofitable
 
+## GLV
+
+- Malicious user may be able reduce GLV yield by increasing utilisation of market, triggering shift, then reducing utilisation. Configured fees and min shift interval should account for this. Keeper could also support time-weighted utilisation to mitigate this
+
 ## Deployment Notes
 
 - `scripts/verifyFallback.ts` can be used to verify contracts
