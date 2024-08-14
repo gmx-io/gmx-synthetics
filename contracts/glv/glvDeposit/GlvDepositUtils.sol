@@ -133,7 +133,6 @@ library GlvDepositUtils {
             // be non-zero, the initialShortTokenAmount would be zero
             cache.initialLongTokenAmount = glvVault.recordTransferIn(params.initialLongToken);
             if (params.initialShortToken != params.initialLongToken) {
-                // initialShortToken could be zero address if user deposits GM token
                 cache.initialShortTokenAmount = glvVault.recordTransferIn(params.initialShortToken);
             }
         }
