@@ -45,6 +45,8 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         return GlvDepositUtils.createGlvDeposit(dataStore, eventEmitter, glvVault, account, params);
     }
 
+    // @key glvDeposit key
+    // @oracleParams prices for all markets in GLV are required
     function executeGlvDeposit(
         bytes32 key,
         OracleUtils.SetPricesParams calldata oracleParams
@@ -139,6 +141,8 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         return GlvWithdrawalUtils.createGlvWithdrawal(_dataStore, eventEmitter, glvVault, account, params);
     }
 
+    // @key glvDeposit key
+    // @oracleParams prices for all markets in GLV are required
     function executeGlvWithdrawal(
         bytes32 key,
         OracleUtils.SetPricesParams calldata oracleParams
@@ -257,6 +261,8 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         return GlvShiftUtils.createGlvShift(dataStore, eventEmitter, glvVault, params);
     }
 
+    // @key glvDeposit key
+    // @oracleParams prices for `fromMarket` and `toMarket` are required
     function executeGlvShift(
         bytes32 key,
         OracleUtils.SetPricesParams calldata oracleParams
