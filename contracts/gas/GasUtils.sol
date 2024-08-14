@@ -238,6 +238,9 @@ library GasUtils {
 
     // @dev get estimated number of oracle prices for shift
     function estimateShiftOraclePriceCount() internal pure returns (uint256) {
+        // for single asset markets only 3 prices will be required
+        // and keeper will slightly overpay
+        // it should not be an issue because execution fee goes back to keeper
         return 4;
     }
 
@@ -245,6 +248,9 @@ library GasUtils {
         uint256 marketCount,
         uint256 swapsCount
     ) internal pure returns (uint256) {
+        // for single asset markets oracle price count will be overestimated by 1
+        // it should not be an issue for GLV with multiple markets
+        // because relative difference would be insignificant
         return 2 + marketCount + swapsCount;
     }
 
@@ -252,6 +258,9 @@ library GasUtils {
         uint256 marketCount,
         uint256 swapsCount
     ) internal pure returns (uint256) {
+        // for single asset markets oracle price count will be overestimated by 1
+        // it should not be an issue for GLV with multiple markets
+        // because relative difference would be insignificant
         return 2 + marketCount + swapsCount;
     }
 
