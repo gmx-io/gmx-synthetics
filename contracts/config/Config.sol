@@ -653,6 +653,13 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             }
         }
 
+        if (baseKey == Keys.MIN_COLLATERAL_USD) {
+            // revert if value > 10 USD
+            if (value > 10 * Precision.FLOAT_PRECISION) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
         if (
             baseKey == Keys.POSITION_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.SWAP_FEE_RECEIVER_FACTOR ||

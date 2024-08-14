@@ -14,6 +14,7 @@ const stablecoinSymbols = {
   "USDT.e": true,
   DAI: true,
   "DAI.e": true,
+  USDe: true,
 };
 
 const BASIS_POINTS_DIVISOR = 10000;
@@ -35,6 +36,12 @@ const recommendedStablecoinSwapConfig = {
 // a ratio of 20000 means that the negative position price price impact is twice the positive position price impact
 const recommendedMarketConfig = {
   arbitrum: {
+    APE: {
+      negativePositionImpactFactor: decimalToFloat(5, 10),
+      negativeSwapImpactFactor: decimalToFloat(3, 8),
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
+    },
     BTC: {
       negativePositionImpactFactor: decimalToFloat(5, 11),
       negativeSwapImpactFactor: decimalToFloat(5, 11),
@@ -83,9 +90,21 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
+    SHIB: {
+      negativePositionImpactFactor: decimalToFloat(5, 10),
+      negativeSwapImpactFactor: decimalToFloat(5, 9),
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
+    },
     SOL: {
       negativePositionImpactFactor: decimalToFloat(65, 12),
       negativeSwapImpactFactor: decimalToFloat(65, 12),
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
+    },
+    STX: {
+      negativePositionImpactFactor: decimalToFloat(5, 10),
+      negativeSwapImpactFactor: decimalToFloat(5, 9),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
@@ -125,6 +144,12 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
+    ORDI: {
+      negativePositionImpactFactor: decimalToFloat(5, 10),
+      negativeSwapImpactFactor: decimalToFloat(5, 9),
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
+    },
     GMX: {
       negativePositionImpactFactor: decimalToFloat(5, 10),
       negativeSwapImpactFactor: decimalToFloat(8, 9),
@@ -142,6 +167,15 @@ const recommendedMarketConfig = {
       negativeSwapImpactFactor: decimalToFloat(3, 8),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
+    },
+    wstETH: {
+      negativeSwapImpactFactor: decimalToFloat(3, 8),
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
+    },
+    "wstETH-WETH": {
+      negativeSwapImpactFactor: decimalToFloat(5, 9),
+      expectedSwapImpactRatio: 10000,
     },
   },
   avalanche: {
@@ -383,7 +417,7 @@ async function validatePerpConfig({ market, marketConfig, indexTokenSymbol, data
   }
 
   const impactRatio = negativePositionImpactFactor.mul(BASIS_POINTS_DIVISOR).div(positivePositionImpactFactor);
-  if (impactRatio.sub(recommendedPerpConfig.expectedPositionImpactRatio).abs().gt(100)) {
+  if (impactRatio.lt(recommendedPerpConfig.expectedPositionImpactRatio)) {
     throw new Error(`Invalid position impact factors for ${indexTokenSymbol}`);
   }
 
@@ -495,12 +529,14 @@ async function validateSwapConfig({
       recommendedMarketConfig[hre.network.name][configTokenMapping[hre.network.name][longTokenSymbol]];
   }
 
-  if (!recommendedSwapConfig) {
-    throw new Error(`Empty recommendedSwapConfig for ${longTokenSymbol}`);
+  const recommendedSwapConfigOverride =
+    recommendedMarketConfig[hre.network.name][`${longTokenSymbol}-${shortTokenSymbol}`];
+  if (recommendedSwapConfigOverride) {
+    recommendedSwapConfig = recommendedSwapConfigOverride;
   }
 
-  if (!stablecoinSymbols[shortTokenSymbol]) {
-    throw new Error(`Short token has not been categorized as a stablecoin`);
+  if (!recommendedSwapConfig) {
+    throw new Error(`Empty recommendedSwapConfig for ${longTokenSymbol}`);
   }
 
   let negativeSwapImpactFactor = marketConfig.negativeSwapImpactFactor;
@@ -574,15 +610,15 @@ async function validateSwapConfig({
   }
 
   const impactRatio = negativeSwapImpactFactor.mul(BASIS_POINTS_DIVISOR).div(positiveSwapImpactFactor);
-  if (impactRatio.sub(recommendedSwapConfig.expectedSwapImpactRatio).abs().gt(100)) {
+  if (impactRatio.lt(recommendedSwapConfig.expectedSwapImpactRatio)) {
     throw new Error(
-      `Invalid swap impact factors for ${indexTokenSymbol}: ${impactRatio} expected ${recommendedSwapConfig.expectedSwapImpactRatio} negativeSwapImpactFactor ${negativeSwapImpactFactor} positiveSwapImpactFactor ${positiveSwapImpactFactor}`
+      `Invalid swap impact factors for ${indexTokenSymbol}[${longTokenSymbol}-${shortTokenSymbol}]: ${impactRatio} expected ${recommendedSwapConfig.expectedSwapImpactRatio} negativeSwapImpactFactor ${negativeSwapImpactFactor} positiveSwapImpactFactor ${positiveSwapImpactFactor}`
     );
   }
 
   if (negativeSwapImpactFactor.lt(recommendedSwapConfig.negativeSwapImpactFactor)) {
     errors.push({
-      message: `Invalid negativeSwapImpactFactor for ${indexTokenSymbol}`,
+      message: `Invalid negativeSwapImpactFactor for ${indexTokenSymbol}[${longTokenSymbol}-${shortTokenSymbol}]`,
       expected: recommendedSwapConfig.negativeSwapImpactFactor,
       actual: negativeSwapImpactFactor,
     });

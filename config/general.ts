@@ -12,7 +12,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       sequencerUptimeFeed: ethers.constants.AddressZero,
       sequencerGraceDuration: 300,
       maxUiFeeFactor: decimalToFloat(5, 5), // 0.005%
-      maxAutoCancelOrders: 5,
+      maxAutoCancelOrders: 6,
       maxTotalCallbackGasLimitForAutoCancelOrders: 3_000_000,
       minHandleExecutionErrorGas: 1_200_000,
       minHandleExecutionErrorGasToForward: 1_000_000,
@@ -22,6 +22,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       depositGasLimitSingle: 0,
       depositGasLimitMultiple: 0,
       withdrawalGasLimit: 0,
+      shiftGasLimit: 2_500_000,
 
       singleSwapGasLimit: 0,
       increaseOrderGasLimit: 0,
@@ -62,7 +63,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     sequencerUptimeFeed: ethers.constants.AddressZero,
     sequencerGraceDuration: 300,
     maxUiFeeFactor: percentageToFloat("0.05%"),
-    maxAutoCancelOrders: 5,
+    maxAutoCancelOrders: 6,
     maxTotalCallbackGasLimitForAutoCancelOrders: 5_000_000,
     minHandleExecutionErrorGas: 1_200_000,
     minHandleExecutionErrorGasToForward: 1_000_000, // measured gas required for an order cancellation: ~600,000
@@ -72,6 +73,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     depositGasLimitSingle: 1_500_000,
     depositGasLimitMultiple: 1_800_000,
     withdrawalGasLimit: 1_500_000,
+    shiftGasLimit: 2_500_000,
 
     singleSwapGasLimit: 1_000_000, // measured gas required for a swap in a market increase order: ~600,000
     increaseOrderGasLimit: 4_000_000,
@@ -108,14 +110,16 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
   const networkConfig = {
     arbitrumGoerli: {},
     arbitrumSepolia: {
-      maxAutoCancelOrders: 10,
+      maxAutoCancelOrders: 11,
       maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
     },
     avalancheFuji: {},
     arbitrum: {
-      maxAutoCancelOrders: 10,
+      maxAutoCancelOrders: 11,
       maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
       maxCallbackGasLimit: 3_000_000,
+      estimatedGasPerOraclePrice: false,
+      executionGasPerOraclePrice: false,
       estimatedGasFeeBaseAmount: false,
       executionGasFeeBaseAmount: false,
       sequencerUptimeFeed: "0xFdB631F5EE196F0ed6FAa767959853A9F217697D",

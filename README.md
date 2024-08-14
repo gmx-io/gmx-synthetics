@@ -641,6 +641,10 @@ After the initial setup:
 
 - If new contracts are added that may lead to a difference in pricing, e.g. of market tokens between the old and new contracts, then care should be taken to disable the old contracts before the new contracts are enabled
 
+- Any external protocols that use the Reader contract or potentially outdated calculations for pricing should be reminded to use the latest contracts and calculations, e.g. Chainlink price feeds for GM tokens
+
+- It is recommended to publish a best effort Changelog documenting important changes that integrations should be aware about, e.g. if a field is added to a struct that is passed into a callback function, this change may not be obvious to integrations
+
 - If the contracts are used to support equity synthetic markets, care should be taken to ensure that stock splits and similar changes can be handled
 
 - Contracts with the "CONTROLLER" role have access to important functions such as setting DataStore values, due to this, care should be taken to ensure that such contracts do not have generic functions or functions that can be intentionally used to change important values
@@ -736,6 +740,8 @@ After the initial setup:
 - Deposits are not allowed above the MAX_PNL_FACTOR_FOR_DEPOSITS
 
 - The first deposit in any market must go to the RECEIVER_FOR_FIRST_DEPOSIT
+
+- The execution fee for deposits depends on whether there is an `initialLongToken` and `initialShortToken` amount, note that since anyone can send tokens into the depositVault, the execution fee sent should be sufficient to cover the case where both `initialLongToken` and `initialShortToken` are non-zero, this would help prevent denial of service manipulations
 
 ### Withdrawal Notes
 

@@ -55,6 +55,14 @@ const config: {
   [network: string]: TokensConfig;
 } = {
   arbitrum: {
+    APE: {
+      address: "0x74885b4d524d497261259b38900f54e6dbad2210",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000316d702a8e25e6b4ef4d449e3413dff067ee77dd366f0550251c07daf05ee",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     BTC: {
       synthetic: true,
       decimals: 8,
@@ -80,7 +88,7 @@ const config: {
       address: "0x5979D7b546E38E414F7E9822514be443A4800529",
       decimals: 18,
       transferGasLimit: 200 * 1000,
-      dataStreamFeedId: "<to be filled>", // note that this must be for wstETH/USD and not wstETH/ETH
+      dataStreamFeedId: "0x000372582d07a8b67e9b6989a0181a955bbac570532a1389d4a27042a3032605", // note that this must be for wstETH/USD and not wstETH/ETH
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
@@ -106,11 +114,25 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    SHIB: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003591ce9a9d662c43124ca14fd6f8603c9ab856ee45358189a2ce6904b5a3c",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     SOL: {
       address: "0x2bcC6D6CdBbDC0a4071e48bb3B969b06B3330c07",
       decimals: 9,
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x0003b778d3f6b2ac4991302b89cb313f99a42467d6c9c5f96f57c29c0d2bc24f",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    STX: {
+      synthetic: true,
+      decimals: 6,
+      dataStreamFeedId: "0x0003364401fcbe3153adf158017cd18a2833655db5cc5eb8fad2c16cb0ec82f4",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
@@ -183,6 +205,13 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    ORDI: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003db12da014dbc5a928b9e7a8c6bc1fbab0c60d332ce26c644cc7477b6fe7f",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     GMX: {
       address: "0xfc5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a",
       decimals: 18,
@@ -241,7 +270,7 @@ const config: {
       address: "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
       decimals: 18,
       transferGasLimit: 200 * 1000,
-      dataStreamFeedId: "<to be filled>",
+      dataStreamFeedId: "0x000379477abdca006db92300211242ba44479369a15be0ad8d59cabe00e63074",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },

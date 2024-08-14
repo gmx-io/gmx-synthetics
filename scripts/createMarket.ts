@@ -1,25 +1,53 @@
 import hre from "hardhat";
-import { DEFAULT_MARKET_TYPE, createMarketConfigByKey, getMarketKey } from "../utils/market";
+import { DEFAULT_MARKET_TYPE, createMarketConfigByKey, getMarketKey, getMarketTokenAddresses } from "../utils/market";
+import * as keys from "../utils/keys";
+import { encodeData } from "../utils/hash";
+import { parseLogs, getEventData } from "../utils/event";
 
 async function main() {
   const marketFactory = await hre.ethers.getContract("MarketFactory");
+  const config = await hre.ethers.getContract("Config");
+  const dataStore = await hre.ethers.getContract("DataStore");
+  const eventEmitter = await hre.ethers.getContract("EventEmitter");
   const tokens = await hre.gmx.getTokens();
 
   // marketKey should be of the form indexToken:longToken:shortToken
+  // or if SWAP_ONLY=true, then marketKey should be in the form longToken:shortToken
   const marketKey = process.env.MARKET_KEY;
 
   if (!marketKey) {
     throw new Error("MARKET_KEY is empty");
   }
 
+  const swapOnly = process.env.SWAP_ONLY === "true";
+
   const tokenSymbols = marketKey.split(":");
-  if (tokenSymbols.length !== 3) {
-    throw new Error("Invalid MARKET_KEY");
+
+  if (swapOnly) {
+    if (tokenSymbols.length !== 2) {
+      throw new Error("Invalid MARKET_KEY");
+    }
+  } else {
+    if (tokenSymbols.length !== 3) {
+      throw new Error("Invalid MARKET_KEY");
+    }
   }
 
-  const indexTokenAddress = tokens[tokenSymbols[0]].address;
-  const longTokenAddress = tokens[tokenSymbols[1]].address;
-  const shortTokenAddress = tokens[tokenSymbols[2]].address;
+  const indexTokenSymbol = swapOnly ? undefined : tokenSymbols[0];
+  const longTokenSymbol = swapOnly ? tokenSymbols[0] : tokenSymbols[1];
+  const shortTokenSymbol = swapOnly ? tokenSymbols[1] : tokenSymbols[2];
+
+  const [indexTokenAddress, longTokenAddress, shortTokenAddress] = getMarketTokenAddresses(
+    {
+      tokens: {
+        indexToken: indexTokenSymbol,
+        longToken: longTokenSymbol,
+        shortToken: shortTokenSymbol,
+      },
+      swapOnly: swapOnly,
+    },
+    tokens
+  );
 
   const marketConfigs = await hre.gmx.getMarkets();
   const marketConfigKey = getMarketKey(indexTokenAddress, longTokenAddress, shortTokenAddress);
@@ -35,13 +63,60 @@ async function main() {
   );
 
   if (process.env.WRITE === "true") {
-    const tx = await marketFactory.createMarket(
+    const tx0 = await marketFactory.createMarket(
       indexTokenAddress,
       longTokenAddress,
       shortTokenAddress,
       DEFAULT_MARKET_TYPE
     );
-    console.log(`tx sent: ${tx.hash}`);
+    console.log(`create market tx sent: ${tx0.hash}`);
+
+    const receipt = await hre.ethers.provider.getTransactionReceipt(tx0.hash);
+    if (!receipt) {
+      throw new Error("Transaction not found");
+    }
+
+    const fixture = { contracts: { eventEmitter } };
+    const parsedLogs = parseLogs(fixture, receipt);
+    const marketCreatedEvent = getEventData(parsedLogs, "MarketCreated");
+
+    const { marketToken } = marketCreatedEvent;
+
+    console.log(`market created: ${marketToken}`);
+
+    if (marketConfig.virtualMarketId) {
+      console.log(`setting virtualMarketId: ${marketConfig.virtualMarketId}`);
+      const tx1 = await config.setBytes32(
+        keys.VIRTUAL_MARKET_ID,
+        encodeData(["address"], [marketToken]),
+        marketConfig.virtualMarketId
+      );
+      console.log(`set virtualMarketId tx sent: ${tx1.hash}`);
+    }
+
+    const virtualTokenId = marketConfig.virtualTokenIdForIndexToken;
+    if (virtualTokenId) {
+      const existingVirtualTokenIdForIndexToken = await dataStore.getBytes32(keys.virtualTokenIdKey(indexTokenAddress));
+      console.log(`existingVirtualTokenIdForIndexToken: ${existingVirtualTokenIdForIndexToken}`);
+
+      if (existingVirtualTokenIdForIndexToken.toLowerCase() === virtualTokenId.toLowerCase()) {
+        console.log("skipping setting of virtualTokenId as it already set");
+      } else {
+        if (existingVirtualTokenIdForIndexToken === ethers.constants.HashZero) {
+          console.log(`setting virtualTokenId: ${virtualTokenId}`);
+          const tx2 = await config.setBytes32(
+            keys.VIRTUAL_TOKEN_ID,
+            encodeData(["address"], [marketToken]),
+            marketConfig.virtualTokenIdForIndexToken
+          );
+          console.log(`set virtualTokenId tx sent: ${tx2.hash}`);
+        } else {
+          console.warn(
+            "WARNING: virtualTokenId is already set for this index token but is different from configuration for this market"
+          );
+        }
+      }
+    }
   } else {
     console.log("NOTE: executed in read-only mode, no transactions were sent");
   }

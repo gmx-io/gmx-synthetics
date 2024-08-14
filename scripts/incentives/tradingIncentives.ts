@@ -1,6 +1,7 @@
 import hre, { ethers } from "hardhat";
 import { bigNumberify, formatAmount } from "../../utils/math";
 import {
+  getDistributionTypeName,
   getMinRewardThreshold,
   getRewardToken,
   getRewardTokenPrice,
@@ -142,7 +143,9 @@ async function main() {
   const appliedOverrides = await overrideReceivers(jsonResult);
 
   console.log(
-    "Trading incentives for period from %s to %s",
+    "Trading incentives (%s, %s) for period from %s to %s",
+    hre.network.name,
+    getDistributionTypeName(distributionTypeId),
     fromDate.toISOString().substring(0, 10),
     toDate.toISOString().substring(0, 10)
   );
