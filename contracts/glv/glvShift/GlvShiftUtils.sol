@@ -157,7 +157,7 @@ library GlvShiftUtils {
             address(params.shiftVault),
             glvShift.marketTokenAmount()
         );
-        params.shiftVault.syncTokenBalance(glvShift.glv());
+        params.shiftVault.syncTokenBalance(glvShift.fromMarket());
 
         ExecuteGlvShiftCache memory cache;
         cache.shift = Shift.Props(
