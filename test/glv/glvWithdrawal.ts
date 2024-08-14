@@ -38,6 +38,7 @@ describe("Glv Withdrawals", () => {
     wnt,
     usdc,
     glvFactory,
+    glvVault,
     roleStore,
     glvHandler,
     ethUsdSingleTokenMarket2;
@@ -46,6 +47,7 @@ describe("Glv Withdrawals", () => {
     fixture = await deployFixture();
 
     ({ user0, user1, user2 } = fixture.accounts);
+
     ({
       glvReader,
       dataStore,
@@ -56,6 +58,7 @@ describe("Glv Withdrawals", () => {
       wnt,
       usdc,
       glvFactory,
+      glvVault,
       roleStore,
       glvHandler,
       ethUsdSingleTokenMarket2,
@@ -467,6 +470,64 @@ describe("Glv Withdrawals", () => {
       },
       [ethUsdGlvAddress]: {
         [ethUsdMarket.marketToken]: 0,
+      },
+    });
+  });
+
+  it.only("execute glv withdrawal, GM tokens sent directly to GLV vault does not affect withdrawn amount", async () => {
+    await expectBalances({
+      [user0.address]: {
+        [wnt.address]: 0,
+        [usdc.address]: 0,
+      },
+    });
+
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5_000, 6),
+      },
+    });
+
+    expect(await getSupplyOf(ethUsdGlvAddress)).to.be.eq(expandDecimals(10_000, 18));
+    await expectBalances({
+      [user0.address]: {
+        [ethUsdGlvAddress]: expandDecimals(10_000, 18),
+      },
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(10_000, 18),
+      },
+    });
+
+    await createGlvWithdrawal(fixture, {
+      glvTokenAmount: expandDecimals(1000, 18),
+      market: ethUsdMarket,
+    });
+    await expectBalances({
+      [glvVault.address]: {
+        [ethUsdMarket.marketToken]: 0,
+      },
+    });
+
+    const _marketToken = await contractAt("MintableToken", ethUsdMarket.marketToken);
+    await _marketToken.mint(glvVault.address, expandDecimals(100_000, 18));
+    await expectBalances({
+      [glvVault.address]: {
+        [ethUsdMarket.marketToken]: expandDecimals(100_000, 18),
+      },
+    });
+
+    await executeGlvWithdrawal(fixture);
+
+    expect(await getSupplyOf(ethUsdGlvAddress)).to.be.eq(expandDecimals(9000, 18));
+    expectBalances({
+      [user0.address]: {
+        [wnt.address]: expandDecimals(1, 17),
+        [usdc.address]: expandDecimals(500, 6),
+        [ethUsdGlvAddress]: expandDecimals(9000, 18),
+      },
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(9000, 18),
       },
     });
   });
