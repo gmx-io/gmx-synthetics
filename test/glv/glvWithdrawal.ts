@@ -474,7 +474,7 @@ describe("Glv Withdrawals", () => {
     });
   });
 
-  it.only("execute glv withdrawal, GM tokens sent directly to GLV vault does not affect withdrawn amount", async () => {
+  it("execute glv withdrawal, GM tokens sent directly to GLV vault does not affect withdrawn amount", async () => {
     await expectBalances({
       [user0.address]: {
         [wnt.address]: 0,

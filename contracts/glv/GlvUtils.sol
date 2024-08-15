@@ -102,6 +102,13 @@ library GlvUtils {
     ) internal view returns (uint256) {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
 
+        uint256 marketTokenSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(marketAddress)));
+        uint256 balance = GlvToken(payable(glv)).tokenBalances(marketAddress);
+
+        if (balance == 0) {
+            return 0;
+        }
+
         MarketPoolValueInfo.Props memory marketPoolValueInfo = MarketUtils.getPoolValueInfo(
             dataStore,
             market,
@@ -111,12 +118,6 @@ library GlvUtils {
             Keys.MAX_PNL_FACTOR_FOR_DEPOSITS,
             maximize
         );
-        uint256 marketTokenSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(marketAddress)));
-        uint256 balance = GlvToken(payable(glv)).tokenBalances(marketAddress);
-
-        if (balance == 0) {
-            return 0;
-        }
 
         if (marketPoolValueInfo.poolValue < 0) {
             revert Errors.GlvNegativeMarketPoolValue(glv, marketAddress);
