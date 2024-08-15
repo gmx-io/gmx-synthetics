@@ -256,7 +256,7 @@ library GlvWithdrawalUtils {
             address(params.glvVault),
             marketTokenAmount
         );
-        params.glvVault.syncTokenBalance(glvWithdrawal.glv());
+        params.glvVault.syncTokenBalance(glvWithdrawal.market());
 
         ExecuteWithdrawalUtils.ExecuteWithdrawalParams memory executeWithdrawalParams = ExecuteWithdrawalUtils
             .ExecuteWithdrawalParams({
