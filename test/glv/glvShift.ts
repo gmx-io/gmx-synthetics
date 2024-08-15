@@ -9,23 +9,53 @@ import {
   getGlvShiftKeys,
   executeGlvShift,
   getGlvShiftCount,
+  getGlvAddress,
 } from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
 import { decimalToFloat, expandDecimals } from "../../utils/math";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import { expectBalances } from "../../utils/validation";
+import { DEFAULT_MARKET_TYPE, getMarketTokenAddress } from "../../utils/market";
 
 describe("Glv Shifts", () => {
   const { provider } = ethers;
 
   let fixture;
-  let glvReader, dataStore, ethUsdMarket, solUsdMarket, btcUsdMarket, ethUsdGlvAddress;
+  let glvReader,
+    dataStore,
+    ethUsdMarket,
+    solUsdMarket,
+    btcUsdMarket,
+    ethUsdGlvAddress,
+    marketFactory,
+    roleStore,
+    reader,
+    glvFactory,
+    glvHandler,
+    ethUsdSingleTokenMarket2,
+    wnt,
+    sol;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
-    ({ glvReader, dataStore, ethUsdMarket, solUsdMarket, btcUsdMarket, ethUsdGlvAddress } = fixture.contracts);
+    ({
+      glvReader,
+      dataStore,
+      ethUsdMarket,
+      solUsdMarket,
+      btcUsdMarket,
+      ethUsdGlvAddress,
+      marketFactory,
+      roleStore,
+      reader,
+      glvFactory,
+      glvHandler,
+      ethUsdSingleTokenMarket2,
+      sol,
+      wnt,
+    } = fixture.contracts);
   });
 
   it("create glv shift", async () => {
@@ -180,6 +210,83 @@ describe("Glv Shifts", () => {
       [ethUsdGlvAddress]: {
         [ethUsdMarket.marketToken]: expandDecimals(9000, 18),
         [solUsdMarket.marketToken]: expandDecimals(1000, 18),
+      },
+    });
+  });
+
+  it("execute glv shift, single asset", async () => {
+    await marketFactory.createMarket(sol.address, wnt.address, wnt.address, DEFAULT_MARKET_TYPE);
+
+    const solUsdSingleTokenMarket2Address = getMarketTokenAddress(
+      sol.address,
+      wnt.address,
+      wnt.address,
+      DEFAULT_MARKET_TYPE,
+      marketFactory.address,
+      roleStore.address,
+      dataStore.address
+    );
+    const solUsdSingleTokenMarket2 = await reader.getMarket(dataStore.address, solUsdSingleTokenMarket2Address);
+    await dataStore.setUint(
+      keys.maxPoolAmountKey(solUsdSingleTokenMarket2.marketToken, wnt.address),
+      expandDecimals(5, 18)
+    );
+    await dataStore.setUint(
+      keys.maxPoolUsdForDepositKey(solUsdSingleTokenMarket2.marketToken, wnt.address),
+      decimalToFloat(10_000)
+    );
+
+    const glvType = ethers.constants.HashZero;
+    const ethUsdSingleTokenGlvAddress = getGlvAddress(
+      wnt.address,
+      wnt.address,
+      glvType,
+      "Glv name",
+      "Glv symbol",
+      glvFactory.address,
+      roleStore.address,
+      dataStore.address
+    );
+    await glvFactory.createGlv(wnt.address, wnt.address, glvType, "Glv name", "Glv symbol");
+    await glvHandler.addMarketToGlv(ethUsdSingleTokenGlvAddress, ethUsdSingleTokenMarket2.marketToken);
+    await glvHandler.addMarketToGlv(ethUsdSingleTokenGlvAddress, solUsdSingleTokenMarket2.marketToken);
+
+    await expectBalances({
+      [ethUsdGlvAddress]: {
+        [ethUsdSingleTokenMarket2.marketToken]: 0,
+        [solUsdSingleTokenMarket2.marketToken]: 0,
+      },
+    });
+
+    await handleGlvDeposit(fixture, {
+      create: {
+        glv: ethUsdSingleTokenGlvAddress,
+        market: ethUsdSingleTokenMarket2,
+        longTokenAmount: expandDecimals(1, 18),
+      },
+    });
+
+    await expectBalances({
+      [ethUsdSingleTokenGlvAddress]: {
+        [ethUsdSingleTokenMarket2.marketToken]: expandDecimals(5000, 18),
+        [solUsdSingleTokenMarket2.marketToken]: 0,
+      },
+    });
+
+    await handleGlvShift(fixture, {
+      create: {
+        glv: ethUsdSingleTokenGlvAddress,
+        fromMarket: ethUsdSingleTokenMarket2,
+        toMarket: solUsdSingleTokenMarket2,
+        marketTokenAmount: expandDecimals(2000, 18),
+        minMarketTokens: expandDecimals(2000, 18),
+      },
+    });
+
+    await expectBalances({
+      [ethUsdSingleTokenGlvAddress]: {
+        [ethUsdSingleTokenMarket2.marketToken]: expandDecimals(3000, 18),
+        [solUsdSingleTokenMarket2.marketToken]: expandDecimals(2000, 18),
       },
     });
   });
