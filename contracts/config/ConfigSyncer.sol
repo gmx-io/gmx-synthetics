@@ -70,7 +70,7 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
             IRiskOracle.RiskParameterUpdate memory riskParameterUpdate = IRiskOracle(riskOracle).getLatestUpdateByParameterAndMarket(parameter, abi.encode(market));
             uint256 updateId = riskParameterUpdate.updateId;
             (bytes32 baseKey, bytes memory data) = abi.decode(riskParameterUpdate.additionalData, (bytes32, bytes));
-            bytes32 fullKey = data.length == 0 ? baseKey : keccak256(bytes.concat(baseKey, data));
+            bytes32 fullKey = Keys.getFullKey(baseKey, data);
             uint256 prevValue = dataStore.getUint(fullKey);
             uint256 updatedValue = Cast.bytesToUint256(riskParameterUpdate.newValue);
             
