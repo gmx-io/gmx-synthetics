@@ -432,6 +432,17 @@ library Keys {
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
 
+    // @dev function used to calculate fullKey for a given market parameter
+    // @param baseKey the base key for the market parameter
+    // @param data the additional data for the market parameter
+    function getFullKey(bytes32 baseKey, bytes memory data) internal pure returns (bytes32) {
+        if (data.length == 0) {
+            return baseKey;
+        }
+
+        return keccak256(bytes.concat(baseKey, data));
+    }
+
     // @dev key for the account deposit list
     // @param account the account for the list
     function accountDepositListKey(address account) internal pure returns (bytes32) {
