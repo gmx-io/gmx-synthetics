@@ -11,36 +11,14 @@ import { OrderType, handleOrder } from "../../utils/order";
 
 describe("Guardian.Glv", () => {
   let fixture;
-  let user0, user1, user2;
-  let glvReader,
-    dataStore,
-    ethUsdMarket,
-    ethUsdGlvAddress,
-    btcUsdMarket,
-    glvRouter,
-    wnt,
-    usdc,
-    solUsdMarket,
-    reader,
-    sol;
+  let user0, user1;
+  let dataStore, ethUsdMarket, ethUsdGlvAddress, wnt, usdc, solUsdMarket, reader, sol;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
-    ({ user0, user1, user2 } = fixture.accounts);
-    ({
-      glvReader,
-      dataStore,
-      ethUsdMarket,
-      ethUsdGlvAddress,
-      btcUsdMarket,
-      glvRouter,
-      wnt,
-      usdc,
-      solUsdMarket,
-      reader,
-      sol,
-    } = fixture.contracts);
+    ({ user0, user1 } = fixture.accounts);
+    ({ dataStore, ethUsdMarket, ethUsdGlvAddress, wnt, usdc, solUsdMarket, reader, sol } = fixture.contracts);
   });
 
   it("When GM markets in Glv are above PnlToPoolFactor for withdrawals, no value is extractable", async () => {
