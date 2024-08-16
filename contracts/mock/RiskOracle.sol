@@ -50,13 +50,10 @@ contract RiskOracle is Ownable {
 
     /**
      * @notice Constructor to set initial authorized addresses and approved update types.
-     * @param initialSenders List of addresses that will initially be authorized to perform updates.
-     * @param initialUpdateTypes List of valid update types initially allowed.
      */
-    constructor(address[] memory initialSenders, string[] memory initialUpdateTypes) {
-        for (uint256 i = 0; i < initialSenders.length; i++) {
-            authorizedSenders[initialSenders[i]] = true; // Automatically authorize initial senders
-        }
+    constructor() {
+        authorizedSenders[msg.sender] = true; // Automatically authorize initial senders
+        string[50] memory initialUpdateTypes = ["maxLongTokenPoolAmount", "maxShortTokenPoolAmount", "maxLongTokenPoolUsdForDeposit", "maxShortTokenPoolUsdForDeposit", "swapImpactExponentFactor", "swapFeeFactorForPositiveImpact", "swapFeeFactorForNegativeImpact", "atomicSwapFeeFactor", "positiveSwapImpactFactor", "negativeSwapImpactFactor", "tokenTransferGasLimit", "minCollateralFactor", "minCollateralFactorForOpenInterestMultiplierLong", "minCollateralFactorForOpenInterestMultiplierShort", "maxOpenInterestForLongs", "maxOpenInterestForShorts", "reserveFactorLongs", "reserveFactorShorts", "openInterestReserveFactorLongs", "openInterestReserveFactorShorts", "maxPnlFactorForTradersLongs", "maxPnlFactorForTradersShorts", "maxPnlFactorForAdlLongs", "maxPnlFactorForAdlShorts", "minPnlFactorAfterAdlLongs", "minPnlFactorAfterAdlShorts", "maxPnlFactorForDepositsLongs", "maxPnlFactorForDepositsShorts", "maxPnlFactorForWithdrawalsLongs", "maxPnlFactorForWithdrawalsShorts", "positionImpactExponentFactor", "fundingFactor", "fundingExponentFactor", "fundingIncreaseFactorPerSecond", "fundingDecreaseFactorPerSecond", "minFundingFactorPerSecond", "maxFundingFactorPerSecond", "thresholdForStableFunding", "thresholdForDecreaseFunding", "positionFeeFactorForPositiveImpact", "positionFeeFactorForNegativeImpact", "borrowingFactorForLongs", "borrowingFactorForShorts", "borrowingExponentFactorForLongs", "borrowingExponentFactorForShorts", "positivePositionImpactFactor", "negativePositionImpactFactor", "maxPositionImpactFactorForLiquidations", "positiveMaxPositionImpactFactor", "negativeMaxPositionImpactFactor"];
         for (uint256 i = 0; i < initialUpdateTypes.length; i++) {
             validUpdateTypes[initialUpdateTypes[i]] = true; // Register initial valid updates
             allUpdateTypes.push(initialUpdateTypes[i]);
