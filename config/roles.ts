@@ -82,6 +82,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       MARKET_KEEPER: { [deployer]: true },
       FROZEN_ORDER_KEEPER: { [deployer]: true },
       CONFIG_KEEPER: { [deployer]: true },
+      LIMITED_CONFIG_KEEPER: { [deployer]: true },
     },
     arbitrum: {
       ADL_KEEPER: syntheticKeepers.mainnet,
