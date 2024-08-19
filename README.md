@@ -644,6 +644,8 @@ After the initial setup:
 
 - It's technically possible for market value to become negative. In this case the GLV would be unusable until the market value becomes positive.
 
+- GM tokens could become illiquid due to high pnl factor or high reserved usd. Users can deposit illiquid GM tokens into GVL and withdraw liquidity from a different market, leaving the GLV with illiquid tokens. The glvMaxMarketTokenBalanceUsd and glvMaxMarketTokenBalanceAmount parameters should account for the riskiness of a market to avoid having too many GM tokens from a risky market.
+
 ## Other
 
 - Upon adding a Market with the MarketStoreUtils.set function, the Market is given a lookup where the Market address can be obtained with the Market salt. This lookup is not cleared upon market deletion. The same applies to GLV.
