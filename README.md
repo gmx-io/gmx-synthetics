@@ -304,7 +304,7 @@ Example calculation for WBTC:
 - in this case the multiplier should be (10 ^ 44)
 - e.g. `(50,000 * (10 ^ 8)) * (10 ^ 44) / (10 ^ 30) = 50,000 * (10 ^ 22)`
 
-The formula for the multipler is: `10 ^ (60 - dataStreamDecimals - tokenDecimals)`
+The formula for the multiplier is: `10 ^ (60 - dataStreamDecimals - tokenDecimals)`
 
 # Funding Fees
 
@@ -636,6 +636,8 @@ After the initial setup:
 
 - Malicious user may be able reduce GLV yield by increasing utilisation of market, triggering shift, then reducing utilisation. Configured fees and min shift interval should account for this. Keeper could also support time-weighted utilisation to mitigate this
 
+- In GLV there may be GM markets which are above their maximum pnlToPoolFactorForTraders. If this GM market's maxPnlFactorForDeposits is higher than maxPnlFactorForTraders then the GM market is valued lower during deposits than it will be once traders have realized their capped profits. Malicious user may observe a GM market in such a condition and deposit into the GLV containing it in order to gain from ADLs which will soon follow. To avoid this maxPnlFactorForDeposits should be less than or equal to maxPnlFactorForTraders
+
 ## Deployment Notes
 
 - `scripts/verifyFallback.ts` can be used to verify contracts
@@ -661,7 +663,7 @@ After the initial setup:
 
 ## Integration Notes
 
-- Deposits, withdrawals and orders may be cancelled if the requirements specified in the request cannot be fufilled, e.g. min amount out. Do check where funds and gas refunds will be sent to on cancellation to ensure it matches expectations.
+- Deposits, withdrawals and orders may be cancelled if the requirements specified in the request cannot be fulfilled, e.g. min amount out. Do check where funds and gas refunds will be sent to on cancellation to ensure it matches expectations.
 
 - Decrease position orders can output two tokens instead of a single token, in case the decrease position swap fails, it is also possible that the output amount and collateral may not be sufficient to cover fees, causing the order to not be executed
 

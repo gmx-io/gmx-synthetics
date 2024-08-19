@@ -33,6 +33,13 @@ export type BaseMarketConfig = {
   minPnlFactorAfterAdlLongs: BigNumberish;
   minPnlFactorAfterAdlShorts: BigNumberish;
 
+  // In GLV there may be GM markets which are above their maximum pnlToPoolFactorForTraders.
+  // If this GM market's maxPnlFactorForDeposits is higher than maxPnlFactorForTraders
+  // then the GM market is valued lower during deposits than it will be once traders
+  // have realized their capped profits. Malicious user may observe a GM market
+  // in such a condition and deposit into the GLV containing it in order to gain
+  // from ADLs which will soon follow. To avoid this maxPnlFactorForDeposits should be
+  // less than or equal to maxPnlFactorForTraders
   maxPnlFactorForDepositsLongs: BigNumberish;
   maxPnlFactorForDepositsShorts: BigNumberish;
 
@@ -128,17 +135,17 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   maxPnlFactorForTradersLongs: percentageToFloat("90%"),
   maxPnlFactorForTradersShorts: percentageToFloat("90%"),
 
-  maxPnlFactorForAdlLongs: percentageToFloat("100%"),
-  maxPnlFactorForAdlShorts: percentageToFloat("100%"),
+  maxPnlFactorForAdlLongs: percentageToFloat("85%"),
+  maxPnlFactorForAdlShorts: percentageToFloat("85%"),
 
-  minPnlFactorAfterAdlLongs: percentageToFloat("90%"),
-  minPnlFactorAfterAdlShorts: percentageToFloat("90%"),
+  minPnlFactorAfterAdlLongs: percentageToFloat("77%"),
+  minPnlFactorAfterAdlShorts: percentageToFloat("77%"),
 
   maxPnlFactorForDepositsLongs: percentageToFloat("90%"),
   maxPnlFactorForDepositsShorts: percentageToFloat("90%"),
 
-  maxPnlFactorForWithdrawalsLongs: percentageToFloat("90%"),
-  maxPnlFactorForWithdrawalsShorts: percentageToFloat("90%"),
+  maxPnlFactorForWithdrawalsLongs: percentageToFloat("70%"),
+  maxPnlFactorForWithdrawalsShorts: percentageToFloat("70%"),
 
   positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
   positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"),
@@ -192,17 +199,17 @@ const singleTokenMarketConfig: Partial<BaseMarketConfig> = {
   maxPnlFactorForTradersLongs: percentageToFloat("90%"),
   maxPnlFactorForTradersShorts: percentageToFloat("90%"),
 
-  maxPnlFactorForAdlLongs: percentageToFloat("95%"),
-  maxPnlFactorForAdlShorts: percentageToFloat("95%"),
+  maxPnlFactorForAdlLongs: percentageToFloat("85%"),
+  maxPnlFactorForAdlShorts: percentageToFloat("85%"),
 
-  minPnlFactorAfterAdlLongs: percentageToFloat("90%"),
-  minPnlFactorAfterAdlShorts: percentageToFloat("90%"),
+  minPnlFactorAfterAdlLongs: percentageToFloat("77%"),
+  minPnlFactorAfterAdlShorts: percentageToFloat("77%"),
 
-  maxPnlFactorForDepositsLongs: percentageToFloat("95%"),
-  maxPnlFactorForDepositsShorts: percentageToFloat("95%"),
+  maxPnlFactorForDepositsLongs: percentageToFloat("90%"),
+  maxPnlFactorForDepositsShorts: percentageToFloat("90%"),
 
-  maxPnlFactorForWithdrawalsLongs: percentageToFloat("85%"),
-  maxPnlFactorForWithdrawalsShorts: percentageToFloat("85%"),
+  maxPnlFactorForWithdrawalsLongs: percentageToFloat("70%"),
+  maxPnlFactorForWithdrawalsShorts: percentageToFloat("70%"),
 
   swapFeeFactorForPositiveImpact: bigNumberify(0),
   swapFeeFactorForNegativeImpact: bigNumberify(0),
@@ -231,8 +238,8 @@ const synthethicMarketConfig: Partial<BaseMarketConfig> = {
   minPnlFactorAfterAdlLongs: percentageToFloat("50%"),
   minPnlFactorAfterAdlShorts: percentageToFloat("50%"),
 
-  maxPnlFactorForDepositsLongs: percentageToFloat("70%"),
-  maxPnlFactorForDepositsShorts: percentageToFloat("70%"),
+  maxPnlFactorForDepositsLongs: percentageToFloat("60%"),
+  maxPnlFactorForDepositsShorts: percentageToFloat("60%"),
 
   maxPnlFactorForWithdrawalsLongs: percentageToFloat("45%"),
   maxPnlFactorForWithdrawalsShorts: percentageToFloat("45%"),
@@ -256,8 +263,8 @@ const synthethicMarketConfig_IncreasedCapacity: Partial<BaseMarketConfig> = {
   minPnlFactorAfterAdlLongs: percentageToFloat("60%"),
   minPnlFactorAfterAdlShorts: percentageToFloat("60%"),
 
-  maxPnlFactorForDepositsLongs: percentageToFloat("80%"),
-  maxPnlFactorForDepositsShorts: percentageToFloat("80%"),
+  maxPnlFactorForDepositsLongs: percentageToFloat("70%"),
+  maxPnlFactorForDepositsShorts: percentageToFloat("70%"),
 
   maxPnlFactorForWithdrawalsLongs: percentageToFloat("55%"),
   maxPnlFactorForWithdrawalsShorts: percentageToFloat("55%"),
