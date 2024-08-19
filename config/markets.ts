@@ -811,7 +811,7 @@ const config: {
 
       ...baseMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(108_000, 9),
+      maxLongTokenPoolAmount: expandDecimals(140_000, 9),
       maxShortTokenPoolAmount: expandDecimals(20_000_000, 6),
 
       maxLongTokenPoolUsdForDeposit: decimalToFloat(17_500_000),
