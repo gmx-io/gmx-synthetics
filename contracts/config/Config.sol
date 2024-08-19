@@ -547,6 +547,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR] = true;
         allowedBaseKeys[Keys.GLV_SHIFT_MIN_INTERVAL] = true;
         allowedBaseKeys[Keys.MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT] = true;
+        allowedBaseKeys[Keys.GLV_MAX_MARKET_COUNT] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {
