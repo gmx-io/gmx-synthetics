@@ -88,6 +88,10 @@ EnumberableSets are used to allow order lists and position lists to be easily qu
 
 \*eventUtils contracts emit events using the event emitter, the events are generalized to allow new key-values to be added to events without requiring an update of ABIs.
 
+## GLV
+
+Short for GMX Liquidity Vault: a wrapper of multiple markets with the same long and short tokens. Liquidity is automatically rebalanced between underlying markets based on markets utilisation. 
+
 # Technical Overview
 
 This section provides a technical description of the contracts.
@@ -634,9 +638,15 @@ After the initial setup:
 
 ## GLV
 
-- Malicious user may be able reduce GLV yield by increasing utilisation of market, triggering shift, then reducing utilisation. Configured fees and min shift interval should account for this. Keeper could also support time-weighted utilisation to mitigate this
+- The GLV shift feature can be exploited by temporarily increasing the utilization in a market that typically has low utilization. Once the keeper executes the shift, the attacker can lower the utilization back to its normal levels. Position fees and price impact should be configured in a way that makes this attack expensive enough to cover the GLV loss.
 
-- In GLV there may be GM markets which are above their maximum pnlToPoolFactorForTraders. If this GM market's maxPnlFactorForDeposits is higher than maxPnlFactorForTraders then the GM market is valued lower during deposits than it will be once traders have realized their capped profits. Malicious user may observe a GM market in such a condition and deposit into the GLV containing it in order to gain from ADLs which will soon follow. To avoid this maxPnlFactorForDeposits should be less than or equal to maxPnlFactorForTraders
+- In GLV there may be GM markets which are above their maximum pnlToPoolFactorForTraders. If this GM market's maxPnlFactorForDeposits is higher than maxPnlFactorForTraders then the GM market is valued lower during deposits than it will be once traders have realized their capped profits. Malicious user may observe a GM market in such a condition and deposit into the GLV containing it in order to gain from ADLs which will soon follow. To avoid this maxPnlFactorForDeposits should be less than or equal to maxPnlFactorForTraders.
+
+- It's technically possible for market value to become negative. In this case the GLV would be unusable until the market value becomes positive.
+
+## Other
+
+- Upon adding a Market with the MarketStoreUtils.set function, the Market is given a lookup where the Market address can be obtained with the Market salt. This lookup is not cleared upon market deletion. The same applies to GLV.
 
 ## Deployment Notes
 
