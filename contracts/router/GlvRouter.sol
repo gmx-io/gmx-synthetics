@@ -4,21 +4,25 @@ pragma solidity ^0.8.0;
 
 import "./BaseRouter.sol";
 import "../exchange/IGlvHandler.sol";
+import "../external/IExternalHandler.sol";
 
 contract GlvRouter is BaseRouter {
     using GlvDeposit for GlvDeposit.Props;
     using GlvWithdrawal for GlvWithdrawal.Props;
 
     IGlvHandler public immutable glvHandler;
+    IExternalHandler public immutable externalHandler;
 
     constructor(
         Router _router,
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        IGlvHandler _glvHandler
+        IGlvHandler _glvHandler,
+        IExternalHandler _externalHandler
     ) BaseRouter(_router, _roleStore, _dataStore, _eventEmitter) {
         glvHandler = _glvHandler;
+        externalHandler = _externalHandler;
     }
 
     receive() external payable {
@@ -82,5 +86,31 @@ contract GlvRouter is BaseRouter {
         OracleUtils.SimulatePricesParams memory simulatedOracleParams
     ) external nonReentrant {
         glvHandler.simulateExecuteGlvWithdrawal(key, simulatedOracleParams);
+    }
+
+    // makeExternalCalls can be used to perform an external swap before
+    // an action
+    // example:
+    // - ExchangeRouter.sendTokens(token: WETH, receiver: externalHandler, amount: 1e18)
+    // - ExchangeRouter.makeExternalCalls(
+    //     WETH.approve(spender: aggregator, amount: 1e18),
+    //     aggregator.swap(amount: 1, from: WETH, to: USDC, receiver: orderHandler)
+    // )
+    // - ExchangeRouter.createOrder
+    // the msg.sender for makeExternalCalls would be externalHandler
+    // refundTokens can be used to retrieve any excess tokens that may
+    // be left in the externalHandler
+    function makeExternalCalls(
+        address[] memory externalCallTargets,
+        bytes[] memory externalCallDataList,
+        address[] memory refundTokens,
+        address[] memory refundReceivers
+    ) external {
+        externalHandler.makeExternalCalls(
+            externalCallTargets,
+            externalCallDataList,
+            refundTokens,
+            refundReceivers
+        );
     }
 }
