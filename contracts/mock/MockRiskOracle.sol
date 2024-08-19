@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 /**
  * @title Dynamic Risk Oracle
  */
-contract RiskOracle is Ownable {
+contract MockRiskOracle is Ownable {
     struct RiskParameterUpdate {
         uint256 timestamp; // Timestamp of the update
         bytes newValue; // Encoded parameters, flexible for various data types
