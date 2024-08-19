@@ -97,6 +97,7 @@ library GlvDepositUtils {
         GlvUtils.validateGlvMarket(dataStore, params.glv, params.market, true);
 
         MarketUtils.validateEnabledMarket(dataStore, params.market);
+        // TODO: no need to call validateSwapPath if isMarketTokenDeposit is true
         MarketUtils.validateSwapPath(dataStore, params.longTokenSwapPath);
         MarketUtils.validateSwapPath(dataStore, params.shortTokenSwapPath);
 
