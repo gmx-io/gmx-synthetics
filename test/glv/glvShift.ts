@@ -417,7 +417,7 @@ describe("Glv Shifts", () => {
         });
       });
 
-      it("OracleTimestampsAreLargerThanRequestExpirationTime", async () => {
+      it("OracleTimestampsAreSmallerThanRequired", async () => {
         await createGlvShift(fixture, {
           marketTokenAmount: expandDecimals(1000, 18),
         });
@@ -430,6 +430,24 @@ describe("Glv Shifts", () => {
         await executeGlvShift(fixture, {
           oracleBlockNumber: block,
         });
+      });
+
+      it("OracleTimestampsAreLargerThanRequestExpirationTime", async () => {
+        await createGlvShift(fixture, {
+          marketTokenAmount: expandDecimals(1000, 18),
+        });
+        await time.increase(60);
+        await dataStore.setUint(keys.REQUEST_EXPIRATION_TIME, 60);
+        expect(await dataStore.getUint(keys.REQUEST_EXPIRATION_TIME)).to.be.eq(60);
+
+        await expect(executeGlvShift(fixture)).to.be.revertedWithCustomError(
+          errorsContract,
+          "OracleTimestampsAreLargerThanRequestExpirationTime"
+        );
+
+        await dataStore.setUint(keys.REQUEST_EXPIRATION_TIME, 300);
+        expect(await dataStore.getUint(keys.REQUEST_EXPIRATION_TIME)).to.be.eq(300);
+        await executeGlvShift(fixture);
       });
     });
 

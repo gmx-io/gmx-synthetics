@@ -389,7 +389,7 @@ describe("Glv Withdrawals", () => {
       });
     });
 
-    it("OracleTimestampsAreLargerThanRequestExpirationTime", async () => {
+    it("OracleTimestampsAreSmallerThanRequired", async () => {
       await handleGlvDeposit(fixture, {
         create: {
           longTokenAmount: expandDecimals(1, 18),
@@ -409,6 +409,31 @@ describe("Glv Withdrawals", () => {
       await executeGlvWithdrawal(fixture, {
         oracleBlockNumber: block,
       });
+    });
+
+    it("OracleTimestampsAreLargerThanRequestExpirationTime", async () => {
+      await handleGlvDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(1, 18),
+          shortTokenAmount: expandDecimals(5_000, 6),
+        },
+      });
+
+      await createGlvWithdrawal(fixture, {
+        glvTokenAmount: expandDecimals(1, 18),
+      });
+      await time.increase(60);
+      await dataStore.setUint(keys.REQUEST_EXPIRATION_TIME, 60);
+      expect(await dataStore.getUint(keys.REQUEST_EXPIRATION_TIME)).to.be.eq(60);
+
+      await expect(executeGlvWithdrawal(fixture)).to.be.revertedWithCustomError(
+        errorsContract,
+        "OracleTimestampsAreLargerThanRequestExpirationTime"
+      );
+
+      await dataStore.setUint(keys.REQUEST_EXPIRATION_TIME, 300);
+      expect(await dataStore.getUint(keys.REQUEST_EXPIRATION_TIME)).to.be.eq(300);
+      await executeGlvWithdrawal(fixture);
     });
   });
 
