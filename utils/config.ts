@@ -84,6 +84,8 @@ export const EXCLUDED_CONFIG_KEYS = {
   GLV_PENDING_SHIFT: true,
   GLV_PENDING_SHIFT_BACKREF: true,
   GLV_SUPPORTED_MARKET_LIST: true,
+  SYNC_CONFIG_UPDATE_COMPLETED: true,
+  SYNC_CONFIG_LATEST_UPDATE_ID: true,
 };
 
 export async function appendUintConfigIfDifferent(
