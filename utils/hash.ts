@@ -6,6 +6,11 @@ export function encodeData(dataTypes, dataValues) {
   return ethers.utils.hexlify(bytes);
 }
 
+export function encodePackedData(dataTypes, dataValues) {
+  const bytes = ethers.utils.solidityPack(dataTypes, dataValues);
+  return ethers.utils.hexlify(bytes);
+}
+
 export function hashData(dataTypes, dataValues) {
   const bytes = ethers.utils.defaultAbiCoder.encode(dataTypes, dataValues);
   const hash = ethers.utils.keccak256(ethers.utils.arrayify(bytes));
