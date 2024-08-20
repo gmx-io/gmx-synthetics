@@ -4,8 +4,6 @@ import * as keys from "../../utils/keys";
 import { encodeData, encodePackedData } from "../../utils/hash";
 
 describe("Guardian.ConfigSyncer", () => {
-  const { provider } = ethers;
-
   let fixture;
   let dataStore, ethUsdMarket, wnt, configSyncer, mockRiskOracle;
 
