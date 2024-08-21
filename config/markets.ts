@@ -178,7 +178,7 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   minFundingFactorPerSecond: 0,
   maxFundingFactorPerSecond: decimalToFloat(1, 7), // 0.00001%, 0.864% per day, 315.36% per year
 
-  positionImpactPoolDistributionRate: 0,
+  positionImpactPoolDistributionRate: bigNumberify(0),
   minPositionImpactPoolAmount: 0,
 };
 
@@ -388,7 +388,7 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(9, 11),
       positivePositionImpactFactor: decimalToFloat(3, 11),
 
-      positionImpactPoolDistributionRate: expandDecimals(138, 30), // 1.38E+32, 0.119232 BTC / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(138, 30), // 1.38E+32, 0.119232 BTC / day
       minPositionImpactPoolAmount: expandDecimals(95, 6), // 0.95 BTC
 
       negativeSwapImpactFactor: decimalToFloat(4, 10), // 0.05% for 1,250,000 USD of imbalance
@@ -438,7 +438,7 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(9, 11),
       positivePositionImpactFactor: decimalToFloat(3, 11),
 
-      positionImpactPoolDistributionRate: expandDecimals(46530, 26), // 4,653E+30, 0.0040202449 BTC / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(46530, 26), // 4,653E+30, 0.0040202449 BTC / day
       minPositionImpactPoolAmount: expandDecimals(5, 6), // 0.05 BTC
 
       minCollateralFactor: decimalToFloat(5, 3), // 200x leverage
@@ -484,7 +484,7 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(9, 11),
       positivePositionImpactFactor: decimalToFloat(3, 11),
 
-      positionImpactPoolDistributionRate: expandDecimals(2900, 40), // 2.9E+43, 2.5065444873 ETH / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(2900, 40), // 2.9E+43, 2.5065444873 ETH / day
       minPositionImpactPoolAmount: expandDecimals(10, 18), // 10 ETH
 
       negativeSwapImpactFactor: decimalToFloat(2, 10), // 0.05% for 2,500,000 USD of imbalance
@@ -534,7 +534,7 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(9, 11),
       positivePositionImpactFactor: decimalToFloat(3, 11),
 
-      positionImpactPoolDistributionRate: expandDecimals(37181, 37), // 3.718184E+41, 0.0321250994 ETH / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(37181, 37), // 3.718184E+41, 0.0321250994 ETH / day
       minPositionImpactPoolAmount: expandDecimals(5, 17), // 0.5 ETH
 
       minCollateralFactor: decimalToFloat(5, 3), // 200x leverage
@@ -649,7 +649,7 @@ const config: {
       borrowingExponentFactorForLongs: decimalToFloat(1, 0), // 1
       borrowingExponentFactorForShorts: decimalToFloat(1, 0), // 1
 
-      positionImpactPoolDistributionRate: expandDecimals(727, 40), // 0.727895E+43, 0.6289008462 BNB / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(727, 40), // 0.727895E+43, 0.6289008462 BNB / day
       minPositionImpactPoolAmount: expandDecimals(53, 16), // 0.53 BNB
 
       maxOpenInterestForLongs: decimalToFloat(5_000_000),
@@ -700,7 +700,7 @@ const config: {
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
-      positionImpactPoolDistributionRate: expandDecimals(2491, 30), // 2.491335E+33, 215.25128205 XRP / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(2491, 30), // 2.491335E+33, 215.25128205 XRP / day
       minPositionImpactPoolAmount: expandDecimals(4169, 6), // 4169.846154 XRP
 
       maxOpenInterestForLongs: decimalToFloat(2_000_000),
@@ -746,7 +746,7 @@ const config: {
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
-      positionImpactPoolDistributionRate: expandDecimals(488, 34), // 0.488E+37, 4216 DOGE / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(488, 34), // 0.488E+37, 4216 DOGE / day
       minPositionImpactPoolAmount: expandDecimals(26000, 8), // 26000 DOGE
 
       maxOpenInterestForLongs: decimalToFloat(6_000_000),
@@ -842,7 +842,7 @@ const config: {
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
-      positionImpactPoolDistributionRate: expandDecimals(230, 33), // 0.2300306+36, 20 SOL / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(230, 33), // 0.2300306+36, 20 SOL / day
       minPositionImpactPoolAmount: expandDecimals(219, 9), // 219 SOL
 
       maxOpenInterestForLongs: decimalToFloat(17_500_000),
@@ -933,7 +933,7 @@ const config: {
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
-      positionImpactPoolDistributionRate: expandDecimals(2709, 30), // 2.709055E+33, 2.34 LTC / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(2709, 30), // 2.709055E+33, 2.34 LTC / day
       minPositionImpactPoolAmount: expandDecimals(28, 8), // 28 LTC
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
@@ -980,7 +980,7 @@ const config: {
       borrowingFactorForLongs: decimalToFloat(160, 10), // 1.60E-08, ~50% if 100% utilized
       borrowingFactorForShorts: decimalToFloat(160, 10), // 1.60E-08, ~50% if 100% utilized
 
-      positionImpactPoolDistributionRate: expandDecimals(7166, 41), // 0.716642E+45, 61.91 UNI / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(7166, 41), // 0.716642E+45, 61.91 UNI / day
       minPositionImpactPoolAmount: expandDecimals(170, 18),
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
@@ -1031,7 +1031,7 @@ const config: {
       borrowingExponentFactorForLongs: decimalToFloat(15, 1), // 1.5
       borrowingExponentFactorForShorts: decimalToFloat(15, 1), // 1.5
 
-      positionImpactPoolDistributionRate: expandDecimals(827, 42), // 0.827E+45, 71.488 LINK / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(827, 42), // 0.827E+45, 71.488 LINK / day
       minPositionImpactPoolAmount: expandDecimals(638, 18), // 638 LINK
 
       maxOpenInterestForLongs: decimalToFloat(10_000_000),
@@ -1089,7 +1089,7 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      positionImpactPoolDistributionRate: expandDecimals(800, 43), // 0.800565E+46, 691.69 ARB / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(800, 43), // 0.800565E+46, 691.69 ARB / day
       minPositionImpactPoolAmount: expandDecimals(27598, 18), // 27598 ARB
 
       maxOpenInterestForLongs: decimalToFloat(5_000_000),
@@ -1136,7 +1136,7 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      positionImpactPoolDistributionRate: expandDecimals(1097, 40), // 1.0973075E+43, 0.948074216 AAVE / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(1097, 40), // 1.0973075E+43, 0.948074216 AAVE / day
       minPositionImpactPoolAmount: expandDecimals(723, 16), // 7.23 AAVE
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
@@ -1183,7 +1183,7 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      positionImpactPoolDistributionRate: expandDecimals(1643, 41), // 1.64325E+44, 14,2 AVAX / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(1643, 41), // 1.64325E+44, 14,2 AVAX / day
       minPositionImpactPoolAmount: expandDecimals(79, 18), // 79.18 AVAX
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
@@ -1218,7 +1218,7 @@ const config: {
       borrowingFactorForLongs: decimalToFloat(177, 10), // 1.77E-08, ~50% if 100% utilized
       borrowingFactorForShorts: decimalToFloat(177, 10), // 1.77E-08, ~50% if 100% utilized
 
-      positionImpactPoolDistributionRate: expandDecimals(5442, 28), // 5.442645E+31, 4,7 ATOM / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(5442, 28), // 5.442645E+31, 4,7 ATOM / day
       minPositionImpactPoolAmount: expandDecimals(611, 6), // 611 ATOM
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
@@ -1259,7 +1259,7 @@ const config: {
       borrowingFactorForLongs: decimalToFloat(185, 10), // 1.85E-8, ~52% if 100% utilized
       borrowingFactorForShorts: decimalToFloat(185, 10), // 1.85E-8, ~52% if 100% utilized
 
-      positionImpactPoolDistributionRate: expandDecimals(928, 48), // 0.928E+51, 80.22629972 NEAR / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(928, 48), // 0.928E+51, 80.22629972 NEAR / day
       minPositionImpactPoolAmount: expandDecimals(4361, 24), // 4361 NEAR
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
@@ -1313,7 +1313,7 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      positionImpactPoolDistributionRate: expandDecimals(2100, 41), // 2.1E+44, 18.14 OP / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(2100, 41), // 2.1E+44, 18.14 OP / day
       minPositionImpactPoolAmount: expandDecimals(311, 18), // 311 OP
 
       maxOpenInterestForLongs: decimalToFloat(1_000_000),
@@ -1406,7 +1406,7 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      positionImpactPoolDistributionRate: expandDecimals(65, 42), // 6.5e43, 5.6 GMX / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(65, 42), // 6.5e43, 5.6 GMX / day
       minPositionImpactPoolAmount: expandDecimals(50, 18), // 50 GMX
 
       maxOpenInterestForLongs: decimalToFloat(1_250_000),
@@ -1452,7 +1452,7 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      positionImpactPoolDistributionRate: 0,
+      positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: 0,
 
       maxOpenInterestForLongs: decimalToFloat(1_500_000),
@@ -1498,7 +1498,7 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      positionImpactPoolDistributionRate: 0,
+      positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: 0,
 
       maxOpenInterestForLongs: decimalToFloat(500_000),
