@@ -123,8 +123,15 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       estimatedGasFeeBaseAmount: false,
       executionGasFeeBaseAmount: false,
       sequencerUptimeFeed: "0xFdB631F5EE196F0ed6FAa767959853A9F217697D",
+
+      increaseOrderGasLimit: 3_000_000,
+      decreaseOrderGasLimit: 3_000_000,
+      swapOrderGasLimit: 2_500_000,
     },
-    avalanche: {},
+    avalanche: {
+      increaseOrderGasLimit: 3_500_000,
+      decreaseOrderGasLimit: 3_500_000,
+    },
   }[network.name];
 
   if (!networkConfig) {
