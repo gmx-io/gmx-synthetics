@@ -7,6 +7,7 @@ const func = createDeployFunction({
     "GlvDepositStoreUtils",
     "GlvShiftStoreUtils",
     "GlvWithdrawalStoreUtils",
+    "GlvUtils",
     "MarketStoreUtils",
     "MarketUtils",
   ],

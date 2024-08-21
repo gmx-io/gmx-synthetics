@@ -60,8 +60,20 @@ contract GlvReader {
             );
     }
 
-    function getGlv(DataStore dataStore, address key) external view returns (Glv.Props memory) {
-        return GlvStoreUtils.get(dataStore, key);
+    function getGlv(DataStore dataStore, address glv) external view returns (Glv.Props memory) {
+        return GlvStoreUtils.get(dataStore, glv);
+    }
+
+    struct GlvInfo {
+        Glv.Props glv;
+        address[] markets;
+    }
+
+    function getGlvInfo(DataStore dataStore, address glv) public view returns (GlvInfo memory) {
+        bytes32 key = Keys.glvSupportedMarketListKey(glv);
+        uint256 count = dataStore.getAddressCount(key);
+        address[] memory markets = dataStore.getAddressValuesAt(key, 0, count);
+        return GlvInfo({glv: GlvStoreUtils.get(dataStore, glv), markets: markets});
     }
 
     function getGlvBySalt(DataStore dataStore, bytes32 salt) external view returns (Glv.Props memory) {
@@ -69,6 +81,10 @@ contract GlvReader {
     }
 
     function getGlvs(DataStore dataStore, uint256 start, uint256 end) external view returns (Glv.Props[] memory) {
+        uint256 glvCount = GlvStoreUtils.getGlvCount(dataStore);
+        if (end > glvCount) {
+            end = glvCount;
+        }
         address[] memory glvKeys = GlvStoreUtils.getGlvKeys(dataStore, start, end);
         Glv.Props[] memory glvs = new Glv.Props[](glvKeys.length);
         for (uint256 i; i < glvKeys.length; i++) {
@@ -78,6 +94,21 @@ contract GlvReader {
         }
 
         return glvs;
+    }
+
+    function getGlvInfoList(DataStore dataStore, uint256 start, uint256 end) external view returns (GlvInfo[] memory) {
+        uint256 glvCount = GlvStoreUtils.getGlvCount(dataStore);
+        if (end > glvCount) {
+            end = glvCount;
+        }
+        address[] memory glvKeys = GlvStoreUtils.getGlvKeys(dataStore, start, end);
+        GlvInfo[] memory glvInfoLists = new GlvInfo[](glvKeys.length);
+        for (uint256 i; i < glvKeys.length; i++) {
+            address glvKey = glvKeys[i];
+            glvInfoLists[i] = getGlvInfo(dataStore, glvKey);
+        }
+
+        return glvInfoLists;
     }
 
     function getGlvDeposit(DataStore dataStore, bytes32 key) external view returns (GlvDeposit.Props memory) {

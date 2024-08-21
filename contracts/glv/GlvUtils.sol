@@ -35,7 +35,7 @@ library GlvUtils {
         Oracle oracle,
         address glv,
         bool maximize
-    ) internal view returns (uint256) {
+    ) public view returns (uint256) {
         GetGlvValueCache memory cache;
         cache.marketListKey = Keys.glvSupportedMarketListKey(glv);
         cache.marketCount = dataStore.getAddressCount(cache.marketListKey);
@@ -70,7 +70,7 @@ library GlvUtils {
         Price.Props memory shortTokenPrice,
         address glv,
         bool maximize
-    ) internal view returns (uint256) {
+    ) public view returns (uint256) {
         GetGlvValueCache memory cache;
 
         for (uint256 i = 0; i < marketAddresses.length; i++) {
@@ -133,7 +133,7 @@ library GlvUtils {
         address glv,
         bool maximize
     ) internal view returns (uint256, uint256, uint256) {
-        uint256 value = GlvUtils.getGlvValue(dataStore, oracle, glv, maximize);
+        uint256 value = getGlvValue(dataStore, oracle, glv, maximize);
         uint256 supply = ERC20(glv).totalSupply();
 
         return _getGlvTokenPrice(value, supply);
@@ -148,7 +148,7 @@ library GlvUtils {
         address glv,
         bool maximize
     ) internal view returns (uint256, uint256, uint256) {
-        uint256 value = GlvUtils.getGlvValue(
+        uint256 value = getGlvValue(
             dataStore,
             marketAddresses,
             indexTokenPrices,
@@ -232,7 +232,7 @@ library GlvUtils {
         Market.Props memory market,
         uint256 marketPoolValue,
         uint256 marketTokenSupply
-    ) internal view {
+    ) external view {
         uint256 maxMarketTokenBalanceUsd = dataStore.getUint(
             Keys.glvMaxMarketTokenBalanceUsdKey(glv, market.marketToken)
         );

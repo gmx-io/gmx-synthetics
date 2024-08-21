@@ -376,6 +376,21 @@ library GlvDepositUtils {
         GlvVault glvVault
     ) private returns (uint256) {
         if (glvDeposit.isMarketTokenDeposit()) {
+            Market.Props memory market = MarketUtils.getEnabledMarket(params.dataStore, glvDeposit.market());
+
+            MarketUtils.MarketPrices memory marketPrices = MarketUtils.MarketPrices(
+                params.oracle.getPrimaryPrice(market.indexToken),
+                params.oracle.getPrimaryPrice(market.longToken),
+                params.oracle.getPrimaryPrice(market.shortToken)
+            );
+            MarketUtils.validateMaxPnl(
+                params.dataStore,
+                market,
+                marketPrices,
+                Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
+                Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS
+            );
+
             // user deposited GM tokens
             glvVault.transferOut(glvDeposit.market(), glvDeposit.glv(), glvDeposit.marketTokenAmount());
             return glvDeposit.marketTokenAmount();
