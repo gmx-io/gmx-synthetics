@@ -198,6 +198,15 @@ export const SUBACCOUNT_ACTION_COUNT = hashString("SUBACCOUNT_ACTION_COUNT");
 export const SUBACCOUNT_AUTO_TOP_UP_AMOUNT = hashString("SUBACCOUNT_AUTO_TOP_UP_AMOUNT");
 export const SUBACCOUNT_ORDER_ACTION = hashString("SUBACCOUNT_ORDER_ACTION");
 
+export const SYNC_CONFIG_FEATURE_DISABLED = hashString("SYNC_CONFIG_FEATURE_DISABLED");
+export const SYNC_CONFIG_MARKET_DISABLED = hashString("SYNC_CONFIG_MARKET_DISABLED");
+export const SYNC_CONFIG_PARAMETER_DISABLED = hashString("SYNC_CONFIG_PARAMETER_DISABLED");
+export const SYNC_CONFIG_MARKET_PARAMETER_DISABLED = hashString("SYNC_CONFIG_MARKET_PARAMETER_DISABLED");
+export const SYNC_CONFIG_UPDATE_COMPLETED = hashString("SYNC_CONFIG_UPDATE_COMPLETED");
+export const SYNC_CONFIG_LATEST_UPDATE_ID = hashString("SYNC_CONFIG_LATEST_UPDATE_ID");
+
+
+
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
 }
@@ -605,4 +614,28 @@ export function subaccountActionCountKey(account: string, subaccount: string, ac
 
 export function subaccountAutoTopUpAmountKey(account: string, subaccount: string) {
   return hashData(["bytes32", "address", "address"], [SUBACCOUNT_AUTO_TOP_UP_AMOUNT, account, subaccount]);
+}
+
+export function syncConfigFeatureDisabledKey(contract: string) {
+  return hashData(["bytes32", "address"], [SYNC_CONFIG_FEATURE_DISABLED, contract]);
+}
+
+export function syncConfigMarketDisabledKey(market: string) {
+  return hashData(["bytes32", "address"], [SYNC_CONFIG_MARKET_DISABLED, market]);
+}
+
+export function syncConfigParameterDisabledKey(parameter: string) {
+  return hashData(["bytes32", "string"], [SYNC_CONFIG_PARAMETER_DISABLED, parameter]);
+}
+
+export function syncConfigMarketParameterDisabledKey(market: string, parameter: string) {
+  return hashData(["bytes32", "address", "string"], [SYNC_CONFIG_MARKET_PARAMETER_DISABLED, market, parameter]);
+}
+
+export function syncConfigUpdateCompletedKey(updateId: number) {
+  return hashData(["bytes32", "uint256"], [SYNC_CONFIG_UPDATE_COMPLETED, updateId]);
+}
+
+export function syncConfigLatestUpdateIdKey() {
+  return SYNC_CONFIG_LATEST_UPDATE_ID;
 }
