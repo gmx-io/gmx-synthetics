@@ -1,12 +1,13 @@
 import { expect } from "chai";
 import { deployFixture } from "../../utils/fixture";
+
+import { parametersList, getDataForKey } from "../../utils/configSyncer";
+import { getFullKey } from "../../utils/config";
 import { grantRole } from "../../utils/role";
 import { encodeData } from "../../utils/hash";
 import { errorsContract } from "../../utils/error";
-import * as keys from "../../utils/keys";
-import { getFullKey } from "../../utils/config";
-import { parametersList, getDataForKey } from "../../utils/configSyncer";
 import { parseLogs } from "../../utils/event"
+import * as keys from "../../utils/keys";
 
 describe("ConfigSyncer", () => {
   let fixture;
@@ -27,6 +28,7 @@ describe("ConfigSyncer", () => {
     const markets = Array(parametersList.length).fill(ethUsdMarket.marketToken);
     const additionalData: string[] = [];
     for (let i = 0; i < parametersList.length; i++) {
+      // Sets a unique value for each parameter and added logic to make 2 of the 5 test values left padded to validate Cast.bytesToUint256 function used in sync
       const hexValue = ethers.utils.hexValue(2000000 + i);
       const data = getDataForKey(parametersList[i], ethUsdMarket.marketToken, ethUsdMarket.longToken, ethUsdMarket.shortToken);
       const encodedData = encodeData(["bytes32", "bytes"], [parametersList[i].baseKey, data]);
@@ -207,5 +209,4 @@ describe("ConfigSyncer", () => {
       expect(await dataStore.getUint(fullKey)).to.equal(update.newValue);
     }
   });
-
 });
