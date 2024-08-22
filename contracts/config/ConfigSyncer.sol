@@ -19,6 +19,9 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
     EventEmitter public immutable eventEmitter;
     address public immutable riskOracle;
 
+    // @dev the base keys that can be set
+    mapping (bytes32 => bool) public allowedBaseKeys;
+
     constructor(
         RoleStore _roleStore, 
         Config _config, 
@@ -30,6 +33,8 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         riskOracle = _riskOracle;
+
+        _initAllowedBaseKeys();
     }
 
     // @dev Allows the LIMITED_CONFIG_KEEPER to apply updates with the provided markets and parameters.
@@ -70,6 +75,9 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
             IRiskOracle.RiskParameterUpdate memory riskParameterUpdate = IRiskOracle(riskOracle).getLatestUpdateByParameterAndMarket(parameter, abi.encodePacked(market));
             uint256 updateId = riskParameterUpdate.updateId;
             (bytes32 baseKey, bytes memory data) = abi.decode(riskParameterUpdate.additionalData, (bytes32, bytes));
+
+            _validateKey(baseKey);
+
             bytes32 fullKey = Keys.getFullKey(baseKey, data);
             uint256 prevValue = dataStore.getUint(fullKey);
             uint256 updatedValue = Cast.bytesToUint256(riskParameterUpdate.newValue);
@@ -104,5 +112,33 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
         if (latestUpdateId > dataStore.getUint(Keys.syncConfigLatestUpdateIdKey())) {
             dataStore.setUint(Keys.syncConfigLatestUpdateIdKey(), latestUpdateId);
         }
+    }
+
+    // @dev initialize the allowed base keys
+    function _initAllowedBaseKeys() internal {
+        allowedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
+        allowedBaseKeys[Keys.MAX_POOL_USD_FOR_DEPOSIT] = true;
+        allowedBaseKeys[Keys.MAX_OPEN_INTEREST] = true;
+
+        allowedBaseKeys[Keys.POSITION_IMPACT_FACTOR] = true;
+        allowedBaseKeys[Keys.POSITION_IMPACT_EXPONENT_FACTOR] = true;
+
+        allowedBaseKeys[Keys.SWAP_IMPACT_FACTOR] = true;
+        allowedBaseKeys[Keys.SWAP_IMPACT_EXPONENT_FACTOR] = true;
+
+        allowedBaseKeys[Keys.FUNDING_INCREASE_FACTOR_PER_SECOND] = true;
+        allowedBaseKeys[Keys.FUNDING_DECREASE_FACTOR_PER_SECOND] = true;
+        allowedBaseKeys[Keys.MIN_FUNDING_FACTOR_PER_SECOND] = true;
+        allowedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND] = true;
+    }
+
+    // @dev validate that the baseKey is allowed to be used
+    // @param baseKey the base key to validate
+    function _validateKey(bytes32 baseKey) internal view {
+        if (!allowedBaseKeys[baseKey]) {
+            revert Errors.InvalidBaseKey(baseKey);
+        }
+
+        return;
     }
 }
