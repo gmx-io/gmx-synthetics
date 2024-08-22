@@ -18,6 +18,15 @@ const maxLongTokenPoolAmount: ParameterDetails = {
   isLongToken: true,
 };
 
+const maxShortTokenPoolAmount: ParameterDetails = {
+  parameterName: "maxShortTokenPoolAmount",
+  updateFormat: "updateFormat1",
+  baseKey: hashString("MAX_POOL_AMOUNT"),
+  extKey: null,
+  isLong: false,
+  isLongToken: false,
+};
+
 const swapImpactExponentFactor: ParameterDetails = {
   parameterName: "swapImpactExponentFactor",
   updateFormat: "updateFormat2",
@@ -27,16 +36,25 @@ const swapImpactExponentFactor: ParameterDetails = {
   isLongToken: false,
 };
 
-const swapFeeFactorForPositiveImpact: ParameterDetails = {
-  parameterName: "swapFeeFactorForPositiveImpact",
+const maxOpenInterestForLongs: ParameterDetails = {
+  parameterName: "maxOpenInterestForLongs",
   updateFormat: "updateFormat3",
-  baseKey: hashString("SWAP_FEE_FACTOR"),
+  baseKey: hashString("MAX_OPEN_INTEREST"),
   extKey: null,
   isLong: true,
   isLongToken: false,
 };
 
-const maxPnlFactorForTradersLongs: ParameterDetails = {
+const maxOpenInterestForShorts: ParameterDetails = {
+  parameterName: "maxOpenInterestForShorts",
+  updateFormat: "updateFormat3",
+  baseKey: hashString("MAX_OPEN_INTEREST"),
+  extKey: null,
+  isLong: false,
+  isLongToken: false,
+};
+
+export const maxPnlFactorForTradersLongs: ParameterDetails = {
   parameterName: "maxPnlFactorForTradersLongs",
   updateFormat: "updateFormat4",
   baseKey: hashString("MAX_PNL_FACTOR"),
@@ -47,9 +65,10 @@ const maxPnlFactorForTradersLongs: ParameterDetails = {
 
 export const parametersList: ParameterDetails[] = [
   maxLongTokenPoolAmount,
+  maxShortTokenPoolAmount,
   swapImpactExponentFactor,
-  swapFeeFactorForPositiveImpact,
-  maxPnlFactorForTradersLongs
+  maxOpenInterestForLongs,
+  maxOpenInterestForShorts
 ];  
 
 export function getDataForKey(
