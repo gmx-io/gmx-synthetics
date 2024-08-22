@@ -25,10 +25,10 @@ describe("ConfigSyncer", () => {
     const referenceIds = Array(parametersList.length).fill("NotApplicable");
     const newValues = Array(parametersList.length).fill(ethers.utils.hexValue(2000000));
     const updateTypes: string[] = [];
-    const markets = Array(parametersList.length).fill(ethUsdMarket[0])
+    const markets = Array(parametersList.length).fill(ethUsdMarket.marketToken);
     const additionalData: string[] = [];
     for (let i = 0; i < parametersList.length; i++) {
-      const data = getDataForKey(parametersList[i], ethUsdMarket[0], ethUsdMarket[2], ethUsdMarket[3]);
+      const data = getDataForKey(parametersList[i], ethUsdMarket.marketToken, ethUsdMarket.longToken, ethUsdMarket.shortToken);
       const encodedData = encodeData(["bytes32", "bytes"], [parametersList[i].baseKey, data]);
       updateTypes.push(parametersList[i].parameterName);
       additionalData.push(encodedData);
@@ -42,7 +42,7 @@ describe("ConfigSyncer", () => {
   });
 
   it("reverts when unauthorized access attempts to sync", async () => {
-    const markets = [ethUsdMarket[0]];
+    const markets = [ethUsdMarket.marketToken];
     const parameters = [parametersList[0].parameterName];
   
     await expect(
@@ -51,7 +51,7 @@ describe("ConfigSyncer", () => {
   });
 
   it("allows LIMITED_CONFIG_KEEPER to sync a single update", async () => {
-    const markets = [ethUsdMarket[0]];
+    const markets = [ethUsdMarket.marketToken];
     const parameters = [parametersList[0].parameterName];
     await configSyncer.connect(user1).sync(markets, parameters);
     
