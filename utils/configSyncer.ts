@@ -52,13 +52,13 @@ export const parametersList: ParameterDetails[] = [
   maxPnlFactorForTradersLongs
 ];  
 
-export function computeData(
+export function getDataForKey(
   parameterDetails: ParameterDetails,
   marketAddress: string,
   longToken: string,
   shortToken: string,
 ) {
-  if (parameterDetails.updateFormat = "updateFormat1") {
+  if (parameterDetails.updateFormat === "updateFormat1") {
     if (parameterDetails.isLongToken) {
       return encodeData(["address", "address"], [marketAddress, longToken]);
     }
@@ -67,15 +67,15 @@ export function computeData(
     }
   }
 
-  else if (parameterDetails.updateFormat = "updateFormat2") {
+  else if (parameterDetails.updateFormat === "updateFormat2") {
     return encodeData(["address"], [marketAddress]);
   }
 
-  else if (parameterDetails.updateFormat = "updateFormat3") {
+  else if (parameterDetails.updateFormat === "updateFormat3") {
     return encodeData(["address", "bool"], [marketAddress, parameterDetails.isLong]);
   }
 
-  else if (parameterDetails.updateFormat = "updateFormat4") {
+  else if (parameterDetails.updateFormat === "updateFormat4") {
     return encodeData(["bytes32", "address", "bool"], [parameterDetails.extKey, marketAddress, parameterDetails.isLong]);
   }
   else {
