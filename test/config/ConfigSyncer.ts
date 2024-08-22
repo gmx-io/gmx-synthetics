@@ -1,12 +1,11 @@
 import { expect } from "chai";
 import { deployFixture } from "../../utils/fixture";
 import { grantRole } from "../../utils/role";
-import { encodeData, hashString } from "../../utils/hash";
-import { decimalToFloat, expandDecimals } from "../../utils/math";
+import { encodeData } from "../../utils/hash";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import { getFullKey } from "../../utils/config";
-import { parametersList, computeData } from "../../utils/configSyncer";
+import { parametersList, getDataForKey } from "../../utils/configSyncer";
 import { ethers } from "ethers";
 
 describe("ConfigSyncer", () => {
@@ -29,7 +28,7 @@ describe("ConfigSyncer", () => {
     const markets = Array(parametersList.length).fill(ethUsdMarket[0])
     const additionalData: string[] = [];
     for (let i = 0; i < parametersList.length; i++) {
-      const data = computeData(parametersList[i], ethUsdMarket[0], ethUsdMarket[2], ethUsdMarket[3]);
+      const data = getDataForKey(parametersList[i], ethUsdMarket[0], ethUsdMarket[2], ethUsdMarket[3]);
       const encodedData = encodeData(["bytes32", "bytes"], [parametersList[i].baseKey, data]);
       updateTypes.push(parametersList[i].parameterName);
       additionalData.push(encodedData);
