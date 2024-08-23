@@ -14,11 +14,11 @@ async function getTimelock() {
   const network = hre.network.name;
 
   if (network === "arbitrum") {
-    return await ethers.getContractAt("Timelock", "0x2ECB664e934aCd5DF1EE889Dbb2E7D6C1d7CE3Cb");
+    return await ethers.getContractAt("Timelock", "0xf32b417A93Acc039B236F1eCC86B56bd3cB8E698");
   }
 
   if (network === "avalanche") {
-    return await ethers.getContractAt("Timelock", "0x844D38f2c3875b8351feB4764718E1c64bD55c46");
+    return await ethers.getContractAt("Timelock", "0x9Dd6EB1069385D85Ae204543BabB7333181ec8A5");
   }
 
   throw new Error("Unsupported network");
@@ -139,10 +139,10 @@ async function main() {
         role: "CONTROLLER",
         member: "0x8514fc704317057FA86961Ba9b9490956993A5ed",
       },
-      {
-        role: "ROLE_ADMIN",
-        member: "0x844D38f2c3875b8351feB4764718E1c64bD55c46",
-      },
+      // {
+      //   role: "ROLE_ADMIN",
+      //   member: "0x844D38f2c3875b8351feB4764718E1c64bD55c46",
+      // },
     ],
   };
 
