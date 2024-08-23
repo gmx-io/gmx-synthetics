@@ -67,13 +67,13 @@ export async function getMarketTokenPriceWithPoolValue(fixture, overrides: any =
 }
 
 export function getMarketTokenAddress(
-  indexToken,
-  longToken,
-  shortToken,
-  marketType,
-  marketFactoryAddress,
-  roleStoreAddress,
-  dataStoreAddress
+  indexToken: string,
+  longToken: string,
+  shortToken: string,
+  marketType: string,
+  marketFactoryAddress: string,
+  roleStoreAddress: string,
+  dataStoreAddress: string
 ) {
   const salt = hashData(
     ["string", "address", "address", "address", "bytes32"],

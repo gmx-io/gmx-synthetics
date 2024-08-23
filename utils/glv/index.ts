@@ -4,9 +4,9 @@ import GlvTokenArtifact from "../../artifacts/contracts/glv/GlvToken.sol/GlvToke
 
 import * as keys from "../keys";
 
-import { hashData } from "../hash";
+import { hashData, hashString } from "../hash";
 
-export const DEFAULT_GLV_TYPE = ethers.constants.HashZero;
+export const DEFAULT_GLV_TYPE = hashString("basic-v1");
 
 export * from "./glvDeposit";
 export * from "./glvWithdrawal";
@@ -36,4 +36,26 @@ export function getGlvKeys(dataStore, start, end) {
 
 export function getGlvCount(dataStore) {
   return dataStore.getAddressCount(keys.GLV_LIST);
+}
+
+export function getGlvTokenAddresses(longTokenSymbol, shortTokenSymbol, tokens) {
+  const longToken = tokens[longTokenSymbol].address;
+  const shortToken = tokens[shortTokenSymbol].address;
+  return [longToken, shortToken];
+}
+
+export function getGlvKey(longToken: string, shortToken: string) {
+  return [longToken, shortToken].join(":");
+}
+
+export function createGlvConfigByKey({ glvConfigs, tokens }) {
+  const glvConfigByKey = {};
+
+  for (const glvConfig of glvConfigs) {
+    const [longToken, shortToken] = getGlvTokenAddresses(glvConfig.longToken, glvConfig.shortToken, tokens);
+    const glvKey = getGlvKey(longToken, shortToken);
+    glvConfigByKey[glvKey] = glvConfig;
+  }
+
+  return glvConfigByKey;
 }

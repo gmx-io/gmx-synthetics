@@ -251,6 +251,16 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
       `requestExpirationTime`
     );
   }
+
+  if (generalConfig.requestExpirationTime !== undefined) {
+    await handleConfig(
+      "uint",
+      keys.REQUEST_EXPIRATION_TIME,
+      "0x",
+      generalConfig.requestExpirationTime,
+      `requestExpirationTime`
+    );
+  }
 };
 
 export async function updateGeneralConfig({ write }) {
