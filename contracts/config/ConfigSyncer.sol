@@ -130,6 +130,12 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
         allowedBaseKeys[Keys.FUNDING_DECREASE_FACTOR_PER_SECOND] = true;
         allowedBaseKeys[Keys.MIN_FUNDING_FACTOR_PER_SECOND] = true;
         allowedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND] = true;
+
+        allowedBaseKeys[Keys.OPTIMAL_USAGE_FACTOR] = true;
+        allowedBaseKeys[Keys.BASE_BORROWING_FACTOR] = true;
+        allowedBaseKeys[Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR] = true;
+        allowedBaseKeys[Keys.BORROWING_FACTOR] = true;
+        allowedBaseKeys[Keys.BORROWING_EXPONENT_FACTOR] = true;
     }
 
     // @dev validate that the baseKey is allowed to be used
