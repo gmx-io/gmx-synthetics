@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { deployFixture } from "../../utils/fixture";
 
-import { parametersList, getDataForKey } from "../../utils/configSyncer";
+import { parametersList, getDataForKey, maxPnlFactorForTradersLongs } from "../../utils/configSyncer";
 import { getFullKey } from "../../utils/config";
 import { grantRole } from "../../utils/role";
 import { encodeData } from "../../utils/hash";
@@ -11,16 +11,17 @@ import * as keys from "../../utils/keys";
 
 describe("ConfigSyncer", () => {
   let fixture;
-  let wallet, user0, user1;
+  let wallet, user0, user1, user2;
   let configSyncer, dataStore, roleStore, mockRiskOracle, ethUsdMarket;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ configSyncer, dataStore, roleStore, mockRiskOracle, ethUsdMarket } = fixture.contracts);
-    ({ wallet, user0, user1 } = fixture.accounts);
+    ({ wallet, user0, user1, user2 } = fixture.accounts);
 
     await grantRole(roleStore, user0.address, "CONFIG_KEEPER");
     await grantRole(roleStore, user1.address, "LIMITED_CONFIG_KEEPER");
+    await grantRole(roleStore, user2.address, "CONTROLLER");
     
     const referenceIds = Array(parametersList.length).fill("NotApplicable");
     const newValues: string[] = [];
@@ -48,11 +49,6 @@ describe("ConfigSyncer", () => {
       }
     }
     await mockRiskOracle.connect(wallet).publishBulkRiskParameterUpdates(referenceIds, newValues, updateTypes, markets, additionalData);
-  });
-
-  it("should interact correctly with MockRiskOracle", async () => {
-    const mockValue = await mockRiskOracle.isAuthorized(wallet.address);
-    expect(mockValue).to.equal(true);
   });
 
   it("reverts when unauthorized account attempts to sync", async () => {
@@ -161,7 +157,7 @@ describe("ConfigSyncer", () => {
     const parameter = parametersList[1].parameterName; // Chose 2nd to last parameter (given reversed) that will be updated in batch update to verify that it is skipped and last one still gets updated
     const tx1 = await configSyncer.connect(user1).sync([market], [parameter]);
     const receipt1 = await tx1.wait();
-    const parsedEventLogs1 = parseLogs(fixture, receipt1).filter((log: { parsedEventInfo: { eventName: string; }; }) => log.parsedEventInfo.eventName === "SyncConfig");
+    const parsedEventLogs1 = parseLogs(fixture, receipt1).filter(log => log.parsedEventInfo.eventName === "SyncConfig");
     const eventData1 = parsedEventLogs1[0].parsedEventData;
     expect(parsedEventLogs1.length).to.equal(1);
     expect(eventData1.updateApplied).to.be.true;
@@ -184,7 +180,7 @@ describe("ConfigSyncer", () => {
 
     const tx2 = await configSyncer.connect(user1).sync(markets, parameters);
     const receipt2 = await tx2.wait(); 
-    const parsedEventLogs2 = parseLogs(fixture, receipt2).filter((log: { parsedEventInfo: { eventName: string; }; }) => log.parsedEventInfo.eventName === "SyncConfig");
+    const parsedEventLogs2 = parseLogs(fixture, receipt2).filter(log => log.parsedEventInfo.eventName === "SyncConfig");
     const eventData2 = parsedEventLogs2[parameters.length - 2].parsedEventData;
     const eventData3 = parsedEventLogs2[parameters.length - 1].parsedEventData;
     expect(parsedEventLogs2.length).to.equal(5);
@@ -208,5 +204,64 @@ describe("ConfigSyncer", () => {
       const fullKey = getFullKey(baseKey, data);
       expect(await dataStore.getUint(fullKey)).to.equal(update.newValue);
     }
+  });
+
+  it("reverts when updates for a market are disabled", async () => {
+    const market = ethUsdMarket.marketToken;
+    const parameter = parametersList[0].parameterName;
+
+    await dataStore.connect(user2).setBool(keys.syncConfigMarketDisabledKey(market), true);
+    
+    await expect(
+      configSyncer.connect(user1).sync([market], [parameter])
+    ).to.be.revertedWithCustomError(errorsContract, "SyncConfigUpdatesDisabledForMarket");
+  });
+
+  it("reverts when updates for a parameter are disabled", async () => {
+    const market = ethUsdMarket.marketToken;
+    const parameter = parametersList[0].parameterName;
+
+    await dataStore.connect(user2).setBool(keys.syncConfigParameterDisabledKey(parameter), true);
+
+    await expect(
+      configSyncer.connect(user1).sync([market], [parameter])
+    ).to.be.revertedWithCustomError(errorsContract, "SyncConfigUpdatesDisabledForParameter");
+  });
+
+  it("reverts when updates for a market parameter are disabled", async () => {
+    const market = ethUsdMarket.marketToken;
+    const parameter = parametersList[0].parameterName;
+
+    await dataStore.connect(user2).setBool(keys.syncConfigMarketParameterDisabledKey(market, parameter), true);
+
+    await expect(
+      configSyncer.connect(user1).sync([market], [parameter])
+    ).to.be.revertedWithCustomError(errorsContract, "SyncConfigUpdatesDisabledForMarketParameter");
+  });
+
+  it("reverts when the SyncConfig feature is disabled", async () => {
+    const market = ethUsdMarket.marketToken;
+    const parameter = parametersList[0].parameterName;
+
+    await dataStore.connect(user2).setBool(keys.syncConfigFeatureDisabledKey(configSyncer.address), true);
+
+    await expect(
+      configSyncer.connect(user1).sync([market], [parameter])
+    ).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+  });
+
+  it("reverts when a parameter's baseKey is not whitelisted", async () => {
+    const market = ethUsdMarket.marketToken;
+    const parameter = maxPnlFactorForTradersLongs.parameterName;
+    
+    const referenceId = "NotApplicable";
+    const newValue = ethers.utils.hexValue(2000000);
+    const data = getDataForKey(maxPnlFactorForTradersLongs, ethUsdMarket.marketToken, ethUsdMarket.longToken, ethUsdMarket.shortToken);
+    const additionalData = encodeData(["bytes32", "bytes"], [maxPnlFactorForTradersLongs.baseKey, data]);
+    await mockRiskOracle.connect(wallet).publishRiskParameterUpdate(referenceId, newValue, parameter, market, additionalData);
+
+    await expect(
+      configSyncer.connect(user1).sync([market], [parameter])
+    ).to.be.revertedWithCustomError(errorsContract, "InvalidBaseKey");
   });
 });
