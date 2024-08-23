@@ -112,10 +112,6 @@ library ShiftUtils {
             revert Errors.ShortTokensAreNotEqual(fromMarket.shortToken, toMarket.shortToken);
         }
 
-        // TODO: duplicates logic inside getEnabledMarket
-        MarketUtils.validateEnabledMarket(dataStore, params.fromMarket);
-        MarketUtils.validateEnabledMarket(dataStore, params.toMarket);
-
         Shift.Props memory shift = Shift.Props(
             Shift.Addresses(
                 account,
