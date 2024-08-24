@@ -32,7 +32,7 @@ async function main() {
 
   const [wallet] = await ethers.getSigners();
 
-  const executionFee = expandDecimals(2, 15); // 0.002 WNT
+  const executionFee = expandDecimals(2, 17); // 0.2 AVAX
   if ((await wnt.balanceOf(wallet.address)).lt(executionFee)) {
     console.log("depositing %s WNT", executionFee.toString());
     await wnt.deposit({ value: executionFee });
