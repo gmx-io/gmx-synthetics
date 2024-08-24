@@ -88,12 +88,6 @@ async function main() {
         isContractVerified = await getIsContractVerified(address);
       }
 
-      if (isContractVerified) {
-        cache[address] = true;
-        console.log("Contract %s %s is already verified", name, address);
-        continue;
-      }
-
       console.log("Verifying contract %s %s %s", name, address, argStr);
       const metadata = JSON.parse(deployment.metadata);
       const contractFQN = `${Object.keys(metadata.settings.compilationTarget)[0]}:${name}`;
