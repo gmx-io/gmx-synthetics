@@ -9,7 +9,7 @@ import { expectCancellationReason } from "../validation";
 import { getCancellationReason } from "../error";
 
 export async function createGlvShift(fixture, overrides: any = {}) {
-  const { glvVault, glvHandler, wnt, ethUsdMarket, solUsdMarket, ethUsdGlvAddress } = fixture.contracts;
+  const { glvHandler, ethUsdMarket, solUsdMarket, ethUsdGlvAddress } = fixture.contracts;
   const { wallet } = fixture.accounts;
 
   const gasUsageLabel = overrides.gasUsageLabel;
@@ -19,14 +19,7 @@ export async function createGlvShift(fixture, overrides: any = {}) {
   const toMarket = overrides.toMarket || solUsdMarket;
   const marketTokenAmount = bigNumberify(overrides.marketTokenAmount ?? 0);
   const minMarketTokens = bigNumberify(overrides.minMarketTokens ?? 0);
-  const executionFee = bigNumberify(overrides.executionFee || "1000000000000000");
   const callbackGasLimit = bigNumberify(overrides.callbackGasLimit ?? 0);
-
-  const executionFeeToMint = bigNumberify(overrides.executionFeeToMint ?? executionFee);
-  await wnt.mint(glvVault.address, executionFeeToMint);
-
-  // const marketToken = await contractAt("MarketToken", fromMarket.marketToken);
-  // await marketToken.connect(sender).transfer(glv, marketTokenAmount);
 
   const params = {
     glv,
@@ -34,7 +27,6 @@ export async function createGlvShift(fixture, overrides: any = {}) {
     toMarket: toMarket.marketToken,
     marketTokenAmount,
     minMarketTokens,
-    executionFee,
     callbackGasLimit,
   };
 

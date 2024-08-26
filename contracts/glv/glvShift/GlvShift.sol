@@ -18,7 +18,6 @@ library GlvShift {
         uint256 marketTokenAmount;
         uint256 minMarketTokens;
         uint256 updatedAtTime;
-        uint256 executionFee;
     }
 
     function glv(Props memory props) internal pure returns (address) {
@@ -68,13 +67,4 @@ library GlvShift {
     function setUpdatedAtTime(Props memory props, uint256 value) internal pure {
         props.numbers.updatedAtTime = value;
     }
-
-    function executionFee(Props memory props) internal pure returns (uint256) {
-        return props.numbers.executionFee;
-    }
-
-    function setExecutionFee(Props memory props, uint256 value) internal pure {
-        props.numbers.executionFee = value;
-    }
-
 }

@@ -26,11 +26,10 @@ library GlvShiftEventUtils {
         eventData.addressItems.setItem(1, "toMarket", glvShift.toMarket());
         eventData.addressItems.setItem(2, "glv", glvShift.glv());
 
-        eventData.uintItems.initItems(4);
+        eventData.uintItems.initItems(3);
         eventData.uintItems.setItem(0, "marketTokenAmount", glvShift.marketTokenAmount());
         eventData.uintItems.setItem(1, "minMarketTokens", glvShift.minMarketTokens());
         eventData.uintItems.setItem(2, "updatedAtTime", glvShift.updatedAtTime());
-        eventData.uintItems.setItem(3, "executionFee", glvShift.executionFee());
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);

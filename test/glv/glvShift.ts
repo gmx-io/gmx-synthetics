@@ -73,7 +73,6 @@ describe("Glv Shifts", () => {
       toMarket: solUsdMarket,
       marketTokenAmount: expandDecimals(100, 18),
       minMarketTokens: expandDecimals(99, 18),
-      executionFee: 500,
     });
 
     const block = await provider.getBlock("latest");
@@ -87,7 +86,6 @@ describe("Glv Shifts", () => {
     expect(glvShift.numbers.marketTokenAmount).eq(expandDecimals(100, 18));
     expect(glvShift.numbers.minMarketTokens).eq(expandDecimals(99, 18));
     expect(glvShift.numbers.updatedAtTime).eq(block.timestamp);
-    expect(glvShift.numbers.executionFee).eq("500");
   });
 
   describe("create glv shift, validations", () => {
@@ -97,32 +95,7 @@ describe("Glv Shifts", () => {
       toMarket: solUsdMarket,
       marketTokenAmount: expandDecimals(100, 18),
       minMarketTokens: expandDecimals(99, 18),
-      executionFee: 500,
     };
-
-    it("InsufficientWntAmountForExecutionFee", async () => {
-      await expect(
-        createGlvShift(fixture, { ...params, executionFeeToMint: 0, executionFee: 2 })
-      ).to.be.revertedWithCustomError(errorsContract, "InsufficientWntAmountForExecutionFee");
-
-      createGlvShift(fixture, { ...params, executionFeeToMint: 1_000_000, executionFee: 1_000_000 });
-    });
-
-    it("InsufficientExecutionFee", async () => {
-      await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
-      await dataStore.setUint(keys.glvShiftGasLimitKey(), 1_000_000);
-      await handleGlvDeposit(fixture, {
-        create: {
-          longTokenAmount: expandDecimals(1, 18),
-          shortTokenAmount: expandDecimals(5000, 6),
-        },
-      });
-      await expect(createGlvShift(fixture, { ...params, executionFee: 1 }))
-        .to.be.revertedWithCustomError(errorsContract, "InsufficientExecutionFee")
-        .withArgs("1000000008000000", "1");
-
-      await createGlvShift(fixture, { ...params, executionFee: "1000000008000000" });
-    });
 
     it("EmptyGlv", async () => {
       const badGlvAddress = ethers.constants.AddressZero.slice(0, -1) + "C";

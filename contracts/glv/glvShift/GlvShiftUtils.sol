@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.0;
 
-import "../../gas/GasUtils.sol";
 import "../../nonce/NonceUtils.sol";
 import "../../bank/Bank.sol";
 
@@ -27,15 +26,7 @@ library GlvShiftUtils {
         address toMarket;
         uint256 marketTokenAmount;
         uint256 minMarketTokens;
-        uint256 executionFee;
         uint256 callbackGasLimit;
-    }
-
-    struct CreateGlvShiftCache {
-        uint256 fromMarketTokenBalance;
-        uint256 estimatedGasLimit;
-        uint256 oraclePriceCount;
-        bytes32 key;
     }
 
     struct ExecuteGlvShiftParams {
@@ -46,7 +37,6 @@ library GlvShiftUtils {
         GlvVault glvVault;
         bytes32 key;
         address keeper;
-        uint256 startingGas;
     }
 
     struct ExecuteGlvShiftCache {
@@ -68,7 +58,6 @@ library GlvShiftUtils {
     function createGlvShift(
         DataStore dataStore,
         EventEmitter eventEmitter,
-        GlvVault glvVault,
         CreateGlvShiftParams memory params
     ) external returns (bytes32) {
         GlvUtils.validateGlv(dataStore, params.glv);
@@ -76,13 +65,6 @@ library GlvShiftUtils {
         GlvUtils.validateGlvMarket(dataStore, params.glv, params.toMarket, true);
 
         validateGlvShiftInterval(dataStore, params.glv);
-
-        address wnt = TokenUtils.wnt(dataStore);
-        uint256 wntAmount = glvVault.recordTransferIn(wnt);
-
-        if (wntAmount < params.executionFee) {
-            revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
-        }
 
         uint256 fromMarketTokenBalance = GlvToken(payable(params.glv)).tokenBalances(params.fromMarket);
         if (fromMarketTokenBalance < params.marketTokenAmount) {
@@ -94,8 +76,6 @@ library GlvShiftUtils {
             );
         }
 
-        params.executionFee = wntAmount;
-
         MarketUtils.validateEnabledMarket(dataStore, params.fromMarket);
         MarketUtils.validateEnabledMarket(dataStore, params.toMarket);
 
@@ -104,24 +84,17 @@ library GlvShiftUtils {
             GlvShift.Numbers({
                 marketTokenAmount: params.marketTokenAmount,
                 minMarketTokens: params.minMarketTokens,
-                updatedAtTime: Chain.currentTimestamp(),
-                executionFee: params.executionFee
+                updatedAtTime: Chain.currentTimestamp()
             })
         );
 
-        CreateGlvShiftCache memory cache;
+        bytes32 key = NonceUtils.getNextKey(dataStore);
 
-        cache.estimatedGasLimit = GasUtils.estimateExecuteGlvShiftGasLimit(dataStore);
-        cache.oraclePriceCount = GasUtils.estimateGlvShiftOraclePriceCount();
-        GasUtils.validateExecutionFee(dataStore, cache.estimatedGasLimit, params.executionFee, cache.oraclePriceCount);
+        GlvShiftStoreUtils.set(dataStore, key, glvShift);
 
-        cache.key = NonceUtils.getNextKey(dataStore);
+        GlvShiftEventUtils.emitGlvShiftCreated(eventEmitter, key, glvShift);
 
-        GlvShiftStoreUtils.set(dataStore, cache.key, glvShift);
-
-        GlvShiftEventUtils.emitGlvShiftCreated(eventEmitter, cache.key, glvShift);
-
-        return cache.key;
+        return key;
     }
 
     function validateGlvShiftInterval(DataStore dataStore, address glv) internal view {
@@ -144,9 +117,6 @@ library GlvShiftUtils {
         ExecuteGlvShiftParams memory params,
         GlvShift.Props memory glvShift
     ) external returns (uint256) {
-        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
-        params.startingGas -= gasleft() / 63;
-
         GlvShiftStoreUtils.remove(params.dataStore, params.key);
 
         validateGlvShiftInterval(params.dataStore, glvShift.glv());
@@ -189,7 +159,10 @@ library GlvShiftUtils {
             oracle: params.oracle,
             key: cache.shiftKey,
             keeper: params.keeper,
-            startingGas: params.startingGas
+
+            // executionFee is not used for GlvShift's
+            // pass gasleft() not to break startGas calculations inside ShiftUtils
+            startingGas: gasleft()
         });
 
         cache.receivedMarketTokens = ShiftUtils.executeShift(executeShiftParams, cache.shift);
@@ -253,53 +226,19 @@ library GlvShiftUtils {
         cache.glvSupply = GlvToken(payable(glvShift.glv())).totalSupply();
         GlvEventUtils.emitGlvValueUpdated(params.eventEmitter, glvShift.glv(), cache.glvValue, cache.glvSupply);
 
-        GasUtils.payExecutionFee(
-            params.dataStore,
-            params.eventEmitter,
-            params.glvVault,
-            params.key,
-            address(0),
-            glvShift.executionFee(),
-            params.startingGas,
-            GasUtils.estimateGlvShiftOraclePriceCount(),
-            params.keeper,
-            params.keeper // refundReceiver
-        );
-
         return cache.receivedMarketTokens;
     }
 
     function cancelGlvShift(
         DataStore dataStore,
         EventEmitter eventEmitter,
-        GlvVault glvVault,
         bytes32 key,
-        address keeper,
-        uint256 startingGas,
         string memory reason,
         bytes memory reasonBytes
     ) external {
-        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
-        startingGas -= gasleft() / 63;
-
-        GlvShift.Props memory glvShift = GlvShiftStoreUtils.get(dataStore, key);
-
         GlvShiftStoreUtils.remove(dataStore, key);
 
         GlvShiftEventUtils.emitGlvShiftCancelled(eventEmitter, key, reason, reasonBytes);
-
-        GasUtils.payExecutionFee(
-            dataStore,
-            eventEmitter,
-            glvVault,
-            key,
-            address(0),
-            glvShift.executionFee(),
-            startingGas,
-            GasUtils.estimateGlvShiftOraclePriceCount(),
-            keeper,
-            keeper // refundReceiver
-        );
     }
 
     function validatePriceImpact(

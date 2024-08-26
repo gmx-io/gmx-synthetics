@@ -480,7 +480,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.WITHDRAWAL_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.GLV_DEPOSIT_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.GLV_WITHDRAWAL_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.GLV_SHIFT_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.GLV_PER_MARKET_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.SHIFT_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.SINGLE_SWAP_GAS_LIMIT] = true;

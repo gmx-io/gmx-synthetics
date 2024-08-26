@@ -32,7 +32,6 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       glvPerMarketGasLimit: 0,
       glvDepositGasLimit: 0,
       glvWithdrawalGasLimit: 0,
-      glvShiftGasLimit: 0,
 
       tokenTransferGasLimit: 200_000,
       nativeTokenTransferGasLimit: 50_000,
@@ -88,7 +87,6 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     glvPerMarketGasLimit: 100_000,
     glvDepositGasLimit: 2_000_000,
     glvWithdrawalGasLimit: 2_000_000,
-    glvShiftGasLimit: 3_000_000,
 
     tokenTransferGasLimit: 200_000,
     nativeTokenTransferGasLimit: 50_000,

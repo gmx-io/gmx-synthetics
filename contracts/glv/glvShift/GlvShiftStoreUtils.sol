@@ -17,7 +17,6 @@ library GlvShiftStoreUtils {
     bytes32 public constant MARKET_TOKEN_AMOUNT = keccak256(abi.encode("MARKET_TOKEN_AMOUNT"));
     bytes32 public constant MIN_MARKET_TOKENS = keccak256(abi.encode("MIN_MARKET_TOKENS"));
     bytes32 public constant UPDATED_AT_TIME = keccak256(abi.encode("UPDATED_AT_TIME"));
-    bytes32 public constant EXECUTION_FEE = keccak256(abi.encode("EXECUTION_FEE"));
 
     function get(DataStore dataStore, bytes32 key) external view returns (GlvShift.Props memory) {
         GlvShift.Props memory glvShift;
@@ -47,10 +46,6 @@ library GlvShiftStoreUtils {
 
         glvShift.setUpdatedAtTime(dataStore.getUint(
             keccak256(abi.encode(key, UPDATED_AT_TIME))
-        ));
-
-        glvShift.setExecutionFee(dataStore.getUint(
-            keccak256(abi.encode(key, EXECUTION_FEE))
         ));
 
         return glvShift;
@@ -91,11 +86,6 @@ library GlvShiftStoreUtils {
             keccak256(abi.encode(key, UPDATED_AT_TIME)),
             glvShift.updatedAtTime()
         );
-
-        dataStore.setUint(
-            keccak256(abi.encode(key, EXECUTION_FEE)),
-            glvShift.executionFee()
-        );
     }
 
     function remove(DataStore dataStore, bytes32 key) external {
@@ -130,10 +120,6 @@ library GlvShiftStoreUtils {
 
         dataStore.removeUint(
             keccak256(abi.encode(key, UPDATED_AT_TIME))
-        );
-
-        dataStore.removeUint(
-            keccak256(abi.encode(key, EXECUTION_FEE))
         );
     }
 

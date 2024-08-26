@@ -258,7 +258,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
     ) external globalNonReentrant onlyOrderKeeper returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createGlvShiftFeatureDisabledKey(address(this)));
 
-        return GlvShiftUtils.createGlvShift(dataStore, eventEmitter, glvVault, params);
+        return GlvShiftUtils.createGlvShift(dataStore, eventEmitter, params);
     }
 
     // @key glvDeposit key
@@ -272,19 +272,15 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         DataStore _dataStore = dataStore;
 
         GlvShift.Props memory glvShift = GlvShiftStoreUtils.get(_dataStore, key);
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvShiftGasLimit(_dataStore);
-        GasUtils.validateExecutionGas(_dataStore, startingGas, estimatedGasLimit);
 
         uint256 executionGas = GasUtils.getExecutionGas(_dataStore, startingGas);
 
         try this._executeGlvShift{gas: executionGas}(key, glvShift, msg.sender) {} catch (bytes memory reasonBytes) {
-            _handleGlvShiftError(key, startingGas, reasonBytes);
+            _handleGlvShiftError(key, reasonBytes);
         }
     }
 
     function _executeGlvShift(bytes32 key, GlvShift.Props memory glvShift, address keeper) external onlySelf {
-        uint256 startingGas = gasleft();
-
         FeatureUtils.validateFeature(dataStore, Keys.executeGlvShiftFeatureDisabledKey(address(this)));
 
         GlvShiftUtils.ExecuteGlvShiftParams memory params = GlvShiftUtils.ExecuteGlvShiftParams({
@@ -294,14 +290,13 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
             shiftVault: shiftVault,
             glvVault: glvVault,
             oracle: oracle,
-            startingGas: startingGas,
             keeper: keeper
         });
 
         GlvShiftUtils.executeGlvShift(params, glvShift);
     }
 
-    function _handleGlvShiftError(bytes32 key, uint256 startingGas, bytes memory reasonBytes) internal {
+    function _handleGlvShiftError(bytes32 key, bytes memory reasonBytes) internal {
         GasUtils.validateExecutionErrorGas(dataStore, reasonBytes);
 
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
@@ -313,10 +308,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         GlvShiftUtils.cancelGlvShift(
             dataStore,
             eventEmitter,
-            glvVault,
             key,
-            msg.sender,
-            startingGas,
             reason,
             reasonBytes
         );

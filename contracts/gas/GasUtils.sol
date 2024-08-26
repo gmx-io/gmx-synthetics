@@ -13,7 +13,6 @@ import "../withdrawal/Withdrawal.sol";
 import "../shift/Shift.sol";
 import "../order/Order.sol";
 import "../order/BaseOrderUtils.sol";
-import "../glv/glvShift/GlvShift.sol";
 import "../glv/glvWithdrawal/GlvWithdrawal.sol";
 
 import "../bank/StrictBank.sol";
@@ -264,10 +263,6 @@ library GasUtils {
         return 2 + marketCount + swapsCount;
     }
 
-    function estimateGlvShiftOraclePriceCount() internal pure returns (uint256) {
-        return 4;
-    }
-
     // @dev the estimated gas limit for deposits
     // @param dataStore DataStore
     // @param deposit the deposit to estimate the gas limit for
@@ -391,10 +386,6 @@ library GasUtils {
         uint256 gasForSwaps = swapCount * gasPerSwap;
 
         return gasLimit + dataStore.getUint(Keys.withdrawalGasLimitKey()) + gasForSwaps;
-    }
-
-    function estimateExecuteGlvShiftGasLimit(DataStore dataStore) internal view returns (uint256) {
-        return dataStore.getUint(Keys.glvShiftGasLimitKey());
     }
 
     function emitKeeperExecutionFee(
