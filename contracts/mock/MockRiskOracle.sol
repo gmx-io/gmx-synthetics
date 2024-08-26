@@ -15,7 +15,7 @@ contract MockRiskOracle is Ownable {
         bytes previousValue; // Previous value of the parameter for historical comparison
         string updateType; // Classification of the update for validation purposes
         uint256 updateId; // Unique identifier for this specific update
-        bytes market; // Unique identifier for market of the parameter update
+        address market; // Unique identifier for market of the parameter update
         bytes additionalData; // Additional data for the update
     }
 
@@ -25,7 +25,7 @@ contract MockRiskOracle is Ownable {
     mapping(uint256 => RiskParameterUpdate) private updatesById; // Mapping from unique update ID to the update details
     mapping(address => bool) private authorizedSenders; // Authorized accounts capable of executing updates
 
-    mapping(bytes => mapping(string => uint256)) public latestUpdateIdByMarketAndType; // Mapping to store the latest update ID for each combination of market and update type
+    mapping(address => mapping(string => uint256)) public latestUpdateIdByMarketAndType; // Mapping to store the latest update ID for each combination of market and update type
     uint256 public updateCounter; // Counter to keep track of the total number of updates
 
     event ParameterUpdated(
@@ -35,7 +35,7 @@ contract MockRiskOracle is Ownable {
         uint256 timestamp,
         string indexed updateType,
         uint256 indexed updateId,
-        bytes indexed market,
+        address indexed market,
         bytes additionalData
     );
 
@@ -104,7 +104,7 @@ contract MockRiskOracle is Ownable {
         string memory referenceId,
         bytes memory newValue,
         string memory updateType,
-        bytes memory market,
+        address market,
         bytes memory additionalData
     ) external onlyAuthorized {
         require(validUpdateTypes[updateType], "Unauthorized update type.");
@@ -124,7 +124,7 @@ contract MockRiskOracle is Ownable {
         string[] memory referenceIds,
         bytes[] memory newValues,
         string[] memory updateTypes,
-        bytes[] memory markets,
+        address[] memory markets,
         bytes[] memory additionalData
     ) external onlyAuthorized {
         require(
@@ -145,7 +145,7 @@ contract MockRiskOracle is Ownable {
         string memory referenceId,
         bytes memory newValue,
         string memory updateType,
-        bytes memory market,
+        address market,
         bytes memory additionalData
     ) internal {
         updateCounter++;
@@ -188,7 +188,7 @@ contract MockRiskOracle is Ownable {
      * @param market The market identifier.
      * @return The most recent RiskParameterUpdate for the specified parameter and market.
      */
-    function getLatestUpdateByParameterAndMarket(string memory updateType, bytes memory market)
+    function getLatestUpdateByParameterAndMarket(string memory updateType, address market)
         external
         view
         returns (RiskParameterUpdate memory)
