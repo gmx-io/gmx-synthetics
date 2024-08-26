@@ -11,8 +11,8 @@ interface IRiskOracle {
         bytes previousValue;
         string updateType;
         uint256 updateId;
-        bytes market;
+        address market;
         bytes additionalData;
     }
-    function getLatestUpdateByParameterAndMarket(string memory updateType, bytes memory market) external view returns (RiskParameterUpdate memory);
+    function getLatestUpdateByParameterAndMarket(string memory updateType, address market) external view returns (RiskParameterUpdate memory);
 }
