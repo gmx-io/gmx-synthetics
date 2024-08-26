@@ -72,7 +72,7 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
                 revert Errors.SyncConfigUpdatesDisabledForMarketParameter(market, parameter);
             }
 
-            IRiskOracle.RiskParameterUpdate memory riskParameterUpdate = IRiskOracle(riskOracle).getLatestUpdateByParameterAndMarket(parameter, abi.encodePacked(market));
+            IRiskOracle.RiskParameterUpdate memory riskParameterUpdate = IRiskOracle(riskOracle).getLatestUpdateByParameterAndMarket(parameter, market);
             uint256 updateId = riskParameterUpdate.updateId;
             (bytes32 baseKey, bytes memory data) = abi.decode(riskParameterUpdate.additionalData, (bytes32, bytes));
 
@@ -82,8 +82,8 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
             uint256 prevValue = dataStore.getUint(fullKey);
             uint256 updatedValue = Cast.bytesToUint256(riskParameterUpdate.newValue);
             
-            bool syncConfigUpdatedCompleted = dataStore.getBool(Keys.syncConfigUpdateCompletedKey(updateId));
-            if (!syncConfigUpdatedCompleted) {
+            bool syncConfigUpdateCompleted = dataStore.getBool(Keys.syncConfigUpdateCompletedKey(updateId));
+            if (!syncConfigUpdateCompleted) {
                 config.setUint(baseKey, data, updatedValue);
                 dataStore.setBool(Keys.syncConfigUpdateCompletedKey(updateId), true);
                 updateApplied = true;
