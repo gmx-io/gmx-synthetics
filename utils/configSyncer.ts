@@ -2,7 +2,7 @@ import { hashString, encodeData } from "./hash";
 
 type ParameterDetails = {
   parameterName: string;
-  updateFormat: string;
+  parameterFormat: string;
   baseKey: string;
   extKey: string | null;
   isLong: boolean;
@@ -11,7 +11,7 @@ type ParameterDetails = {
 
 const maxLongTokenPoolAmount: ParameterDetails = {
   parameterName: "maxLongTokenPoolAmount",
-  updateFormat: "updateFormat1",
+  parameterFormat: "parameterFormat1",
   baseKey: hashString("MAX_POOL_AMOUNT"),
   extKey: null,
   isLong: false,
@@ -20,7 +20,7 @@ const maxLongTokenPoolAmount: ParameterDetails = {
 
 const maxShortTokenPoolAmount: ParameterDetails = {
   parameterName: "maxShortTokenPoolAmount",
-  updateFormat: "updateFormat1",
+  parameterFormat: "parameterFormat1",
   baseKey: hashString("MAX_POOL_AMOUNT"),
   extKey: null,
   isLong: false,
@@ -29,7 +29,7 @@ const maxShortTokenPoolAmount: ParameterDetails = {
 
 const swapImpactExponentFactor: ParameterDetails = {
   parameterName: "swapImpactExponentFactor",
-  updateFormat: "updateFormat2",
+  parameterFormat: "parameterFormat2",
   baseKey: hashString("SWAP_IMPACT_EXPONENT_FACTOR"),
   extKey: null,
   isLong: false,
@@ -38,7 +38,7 @@ const swapImpactExponentFactor: ParameterDetails = {
 
 const maxOpenInterestForLongs: ParameterDetails = {
   parameterName: "maxOpenInterestForLongs",
-  updateFormat: "updateFormat3",
+  parameterFormat: "parameterFormat3",
   baseKey: hashString("MAX_OPEN_INTEREST"),
   extKey: null,
   isLong: true,
@@ -47,19 +47,10 @@ const maxOpenInterestForLongs: ParameterDetails = {
 
 const maxOpenInterestForShorts: ParameterDetails = {
   parameterName: "maxOpenInterestForShorts",
-  updateFormat: "updateFormat3",
+  parameterFormat: "parameterFormat3",
   baseKey: hashString("MAX_OPEN_INTEREST"),
   extKey: null,
   isLong: false,
-  isLongToken: false,
-};
-
-export const maxPnlFactorForTradersLongs: ParameterDetails = {
-  parameterName: "maxPnlFactorForTradersLongs",
-  updateFormat: "updateFormat4",
-  baseKey: hashString("MAX_PNL_FACTOR"),
-  extKey: hashString("MAX_PNL_FACTOR_FOR_TRADERS"),
-  isLong: true,
   isLongToken: false,
 };
 
@@ -69,7 +60,16 @@ export const parametersList: ParameterDetails[] = [
   swapImpactExponentFactor,
   maxOpenInterestForLongs,
   maxOpenInterestForShorts
-];  
+];
+
+export const maxPnlFactorForTradersLongs: ParameterDetails = {
+  parameterName: "maxPnlFactorForTradersLongs",
+  parameterFormat: "parameterFormat4",
+  baseKey: hashString("MAX_PNL_FACTOR"),
+  extKey: hashString("MAX_PNL_FACTOR_FOR_TRADERS"),
+  isLong: true,
+  isLongToken: false,
+};
 
 export function getDataForKey(
   parameterDetails: ParameterDetails,
@@ -77,7 +77,7 @@ export function getDataForKey(
   longToken: string,
   shortToken: string,
 ) {
-  if (parameterDetails.updateFormat === "updateFormat1") {
+  if (parameterDetails.parameterFormat === "parameterFormat1") {
     if (parameterDetails.isLongToken) {
       return encodeData(["address", "address"], [marketAddress, longToken]);
     }
@@ -86,18 +86,18 @@ export function getDataForKey(
     }
   }
 
-  else if (parameterDetails.updateFormat === "updateFormat2") {
+  else if (parameterDetails.parameterFormat === "parameterFormat2") {
     return encodeData(["address"], [marketAddress]);
   }
 
-  else if (parameterDetails.updateFormat === "updateFormat3") {
+  else if (parameterDetails.parameterFormat === "parameterFormat3") {
     return encodeData(["address", "bool"], [marketAddress, parameterDetails.isLong]);
   }
 
-  else if (parameterDetails.updateFormat === "updateFormat4") {
+  else if (parameterDetails.parameterFormat === "parameterFormat4") {
     return encodeData(["bytes32", "address", "bool"], [parameterDetails.extKey, marketAddress, parameterDetails.isLong]);
   }
   else {
-    throw new Error(`Unsupported updateFormat: ${parameterDetails.updateFormat}`);
+    throw new Error(`Unsupported parameterFormat: ${parameterDetails.parameterFormat}`);
   }
 }
