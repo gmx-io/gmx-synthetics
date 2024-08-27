@@ -376,4 +376,5 @@ library Errors {
     error SyncConfigUpdatesDisabledForMarket(address market);
     error SyncConfigUpdatesDisabledForParameter(string parameter);
     error SyncConfigUpdatesDisabledForMarketParameter(address market, string parameter);
+    error SyncConfigInvalidMarketFromData(address market, address marketFromData);
 }
