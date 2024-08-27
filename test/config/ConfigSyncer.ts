@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { deployFixture } from "../../utils/fixture";
 
-import { parametersList, getDataForKey, maxPnlFactorForTradersLongs } from "../../utils/configSyncer";
+import { parametersList, maxPnlFactorForTradersLongs, getDataForKey } from "../../utils/configSyncer";
 import { getFullKey } from "../../utils/config";
 import { grantRole } from "../../utils/role";
 import { encodeData } from "../../utils/hash";
@@ -12,11 +12,11 @@ import * as keys from "../../utils/keys";
 describe("ConfigSyncer", () => {
   let fixture;
   let wallet, user0, user1, user2;
-  let configSyncer, dataStore, roleStore, mockRiskOracle, ethUsdMarket;
+  let configSyncer, dataStore, roleStore, mockRiskOracle, ethUsdMarket, btcUsdMarket;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ configSyncer, dataStore, roleStore, mockRiskOracle, ethUsdMarket } = fixture.contracts);
+    ({ configSyncer, dataStore, roleStore, mockRiskOracle, ethUsdMarket, btcUsdMarket } = fixture.contracts);
     ({ wallet, user0, user1, user2 } = fixture.accounts);
 
     await grantRole(roleStore, user0.address, "CONFIG_KEEPER");
@@ -29,7 +29,6 @@ describe("ConfigSyncer", () => {
     const markets = Array(parametersList.length).fill(ethUsdMarket.marketToken);
     const additionalData: string[] = [];
     for (let i = 0; i < parametersList.length; i++) {
-      // Sets a unique value for each parameter and added logic to make 2 of the 5 test values left padded to validate Cast.bytesToUint256 function used in sync
       const hexValue = ethers.utils.hexValue(2000000 + i);
       const data = getDataForKey(parametersList[i], ethUsdMarket.marketToken, ethUsdMarket.longToken, ethUsdMarket.shortToken);
       const encodedData = encodeData(["bytes32", "bytes"], [parametersList[i].baseKey, data]);
@@ -78,7 +77,6 @@ describe("ConfigSyncer", () => {
     const markets = Array(parametersList.length).fill(ethUsdMarket.marketToken);
     const parameters: string[] = [];
     
-    // Assigning the parameters in reverse order to validate that the order of parameters and markets does not matter (as long as the indices are aligned)
     for (let i = (parametersList.length - 1); i >= 0; i--) {
       parameters.push(parametersList[i].parameterName);
     }
@@ -154,7 +152,7 @@ describe("ConfigSyncer", () => {
 
   it("skips if update for market parameter was already applied", async () => {
     const market = ethUsdMarket.marketToken;
-    const parameter = parametersList[1].parameterName; // Chose 2nd to last parameter (given reversed) that will be updated in batch update to verify that it is skipped and last one still gets updated
+    const parameter = parametersList[1].parameterName;
     const tx1 = await configSyncer.connect(user1).sync([market], [parameter]);
     const receipt1 = await tx1.wait();
     const parsedEventLogs1 = parseLogs(fixture, receipt1).filter(log => log.parsedEventInfo.eventName === "SyncConfig");
@@ -187,7 +185,6 @@ describe("ConfigSyncer", () => {
     expect(eventData2.updateApplied).to.be.false;
     expect(eventData3.updateApplied).to.be.true;
     
-    // Not sure if the additional validation needs to be repeated here
     for (let i = 0; i < parameters.length; i++) {
       const update = await mockRiskOracle.getLatestUpdateByParameterAndMarket(parameters[i], markets[i]);
       expect(await dataStore.getBool(keys.syncConfigUpdateCompletedKey(update.updateId))).to.be.true;
@@ -248,6 +245,39 @@ describe("ConfigSyncer", () => {
     await expect(
       configSyncer.connect(user1).sync([market], [parameter])
     ).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+  });
+
+  it("reverts when market does not equal market from data", async () => {
+    if (parametersList[0].parameterFormat === "parameterFormat4") {
+      console.error('Make sure parameterList[0].parameterFormat does not equal "parameterFormat4" or part of this test is redundant');
+      throw Error;
+    }
+    
+    const hexValue = ethers.utils.hexValue(2000000);
+    const market = btcUsdMarket.marketToken;
+    const parameter1 = parametersList[0].parameterName;
+    const parameter2 = maxPnlFactorForTradersLongs.parameterName;
+
+    const data1 = getDataForKey(parametersList[0], ethUsdMarket.marketToken, ethUsdMarket.longToken, ethUsdMarket.shortToken);
+    const data2 = getDataForKey(maxPnlFactorForTradersLongs, ethUsdMarket.marketToken, ethUsdMarket.longToken, ethUsdMarket.shortToken);
+
+    const additionalData1 = encodeData(["bytes32", "bytes"], [parametersList[0].baseKey, data1]);
+    const additionalData2 = encodeData(["bytes32", "bytes"], [maxPnlFactorForTradersLongs.baseKey, data2]);
+
+    const referenceIds = Array(2).fill("NotApplicable");
+    const newValues = Array(2).fill(hexValue);
+    const updateTypes: string[] = [parameter1, parameter2];
+    const markets = Array(2).fill(market);
+    const additionalData: string[] = [additionalData1, additionalData2];
+    await mockRiskOracle.connect(wallet).publishBulkRiskParameterUpdates(referenceIds, newValues, updateTypes, markets, additionalData);
+
+    await expect(
+      configSyncer.connect(user1).sync([market], [parameter1])
+    ).to.be.revertedWithCustomError(errorsContract, "SyncConfigInvalidMarketFromData");
+
+    await expect(
+      configSyncer.connect(user1).sync([market], [parameter2])
+    ).to.be.revertedWithCustomError(errorsContract, "SyncConfigInvalidMarketFromData");
   });
 
   it("reverts when a parameter's baseKey is not whitelisted", async () => {
