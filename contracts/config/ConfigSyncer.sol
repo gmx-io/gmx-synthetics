@@ -76,6 +76,8 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
             uint256 updateId = riskParameterUpdate.updateId;
             (bytes32 baseKey, bytes memory data) = abi.decode(riskParameterUpdate.additionalData, (bytes32, bytes));
 
+            _validateMarketInData(baseKey, market, data);
+
             _validateKey(baseKey);
 
             bytes32 fullKey = Keys.getFullKey(baseKey, data);
@@ -136,6 +138,9 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
         allowedBaseKeys[Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR] = true;
         allowedBaseKeys[Keys.BORROWING_FACTOR] = true;
         allowedBaseKeys[Keys.BORROWING_EXPONENT_FACTOR] = true;
+
+        allowedBaseKeys[Keys.RESERVE_FACTOR] = true;
+        allowedBaseKeys[Keys.OPEN_INTEREST_RESERVE_FACTOR] = true;
     }
 
     // @dev validate that the baseKey is allowed to be used
@@ -144,7 +149,25 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
         if (!allowedBaseKeys[baseKey]) {
             revert Errors.InvalidBaseKey(baseKey);
         }
+    }
 
-        return;
+    // @dev validate that the market within data is equal to market
+    // @param baseKey the base key to validate
+    // @param market the market address
+    // @param data the data used to compute fullKey
+    function _validateMarketInData(bytes32 baseKey, address market, bytes memory data) internal pure {
+        address marketFromData;
+        if (baseKey == Keys.MAX_PNL_FACTOR) {
+            bytes32 unusedBytes32;
+            bool unusedBool;
+            (unusedBytes32, marketFromData, unusedBool) = abi.decode(data, (bytes32, address, bool));
+        } 
+        else { 
+            marketFromData = abi.decode(data, (address));
+        }
+
+        if (market != marketFromData) {
+            revert Errors.SyncConfigInvalidMarketFromData(market, marketFromData);
+        }
     }
 }
