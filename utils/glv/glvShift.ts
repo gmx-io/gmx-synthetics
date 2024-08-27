@@ -19,7 +19,6 @@ export async function createGlvShift(fixture, overrides: any = {}) {
   const toMarket = overrides.toMarket || solUsdMarket;
   const marketTokenAmount = bigNumberify(overrides.marketTokenAmount ?? 0);
   const minMarketTokens = bigNumberify(overrides.minMarketTokens ?? 0);
-  const callbackGasLimit = bigNumberify(overrides.callbackGasLimit ?? 0);
 
   const params = {
     glv,
@@ -27,7 +26,6 @@ export async function createGlvShift(fixture, overrides: any = {}) {
     toMarket: toMarket.marketToken,
     marketTokenAmount,
     minMarketTokens,
-    callbackGasLimit,
   };
 
   for (const [key, value] of Object.entries(params)) {

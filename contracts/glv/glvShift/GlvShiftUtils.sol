@@ -26,7 +26,6 @@ library GlvShiftUtils {
         address toMarket;
         uint256 marketTokenAmount;
         uint256 minMarketTokens;
-        uint256 callbackGasLimit;
     }
 
     struct ExecuteGlvShiftParams {
