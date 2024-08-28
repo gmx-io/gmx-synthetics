@@ -5,6 +5,8 @@ import { percentageToFloat, expandDecimals } from "../utils/math";
 type GlvConfig = {
   longToken: string;
   shortToken: string;
+  // address is required for updateGlvConfig script
+  address?: string;
   type: string;
   shiftMaxPriceImpactFactor: BigNumberish;
   shiftMinInterval: number;
@@ -24,6 +26,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     avalancheFuji: [
       {
         name: "GMX Liquidity Vault [WETH-USDC]",
+        address: "0xc519a5b8e5e93D3ec85D62231C1681c44952689d",
         symbol: "GLV",
         longToken: "WETH",
         shortToken: "USDC",
@@ -31,11 +34,20 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         shiftMinInterval: 300, // 5 minutes
         minTokensForFirstGlvDeposit: expandDecimals(2, 18),
         markets: [
-          // https://testnet.snowtrace.io/tx/0xfbd56d504b30ab188c4805d3db4c326a466168f4d40d9e4293fa5d2ee46db283?chainid=43113
           {
             indexToken: "WETH",
             glvMaxMarketTokenBalanceAmount: expandDecimals(10_000, 18),
             glvMaxMarketTokenBalanceUsd: expandDecimals(10_000, 30),
+          },
+          {
+            indexToken: "DOT",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(5_000, 18),
+            glvMaxMarketTokenBalanceUsd: expandDecimals(5_000, 30),
+          },
+          {
+            indexToken: "TEST",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(5_000, 18),
+            glvMaxMarketTokenBalanceUsd: expandDecimals(5_000, 30),
           },
         ],
       },
