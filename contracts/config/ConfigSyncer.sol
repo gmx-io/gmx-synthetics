@@ -158,11 +158,9 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
     function _validateMarketInData(bytes32 baseKey, address market, bytes memory data) internal pure {
         address marketFromData;
         if (baseKey == Keys.MAX_PNL_FACTOR) {
-            bytes32 unusedBytes32;
-            bool unusedBool;
-            (unusedBytes32, marketFromData, unusedBool) = abi.decode(data, (bytes32, address, bool));
-        } 
-        else { 
+            (/* bytes32 extKey */, marketFromData, /* bool isLong */) = abi.decode(data, (bytes32, address, bool));
+        }
+        else {
             marketFromData = abi.decode(data, (address));
         }
 
