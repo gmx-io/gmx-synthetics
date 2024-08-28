@@ -76,6 +76,11 @@ async function main() {
       continue;
     }
 
+    if (!name.startsWith("Glv")) {
+      console.log("skip non glv");
+      continue;
+    }
+
     try {
       let isContractVerified = cache[address];
       if (!isContractVerified) {
