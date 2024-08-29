@@ -19,9 +19,9 @@ contract MockRiskOracle is Ownable {
         bytes additionalData; // Additional data for the update
     }
 
-    RiskParameterUpdate[] private updateHistory; // Stores all historical updates
+    RiskParameterUpdate[] internal updateHistory; // Stores all historical updates
     string[] private allUpdateTypes; // Array to store all update types
-    mapping(string => bool) private validUpdateTypes; // Whitelist of valid update type identifiers
+    mapping(string => bool) internal validUpdateTypes; // Whitelist of valid update type identifiers
     mapping(uint256 => RiskParameterUpdate) private updatesById; // Mapping from unique update ID to the update details
     mapping(address => bool) private authorizedSenders; // Authorized accounts capable of executing updates
 
@@ -50,10 +50,13 @@ contract MockRiskOracle is Ownable {
 
     /**
      * @notice Constructor to set initial authorized addresses and approved update types.
+     * @param initialSenders List of addresses that will initially be authorized to perform updates.
+     * @param initialUpdateTypes List of valid update types initially allowed.
      */
-    constructor() {
-        authorizedSenders[msg.sender] = true; // Automatically authorize initial senders
-        string[50] memory initialUpdateTypes = ["maxLongTokenPoolAmount", "maxShortTokenPoolAmount", "maxLongTokenPoolUsdForDeposit", "maxShortTokenPoolUsdForDeposit", "swapImpactExponentFactor", "swapFeeFactorForPositiveImpact", "swapFeeFactorForNegativeImpact", "atomicSwapFeeFactor", "positiveSwapImpactFactor", "negativeSwapImpactFactor", "tokenTransferGasLimit", "minCollateralFactor", "minCollateralFactorForOpenInterestMultiplierLong", "minCollateralFactorForOpenInterestMultiplierShort", "maxOpenInterestForLongs", "maxOpenInterestForShorts", "reserveFactorLongs", "reserveFactorShorts", "openInterestReserveFactorLongs", "openInterestReserveFactorShorts", "maxPnlFactorForTradersLongs", "maxPnlFactorForTradersShorts", "maxPnlFactorForAdlLongs", "maxPnlFactorForAdlShorts", "minPnlFactorAfterAdlLongs", "minPnlFactorAfterAdlShorts", "maxPnlFactorForDepositsLongs", "maxPnlFactorForDepositsShorts", "maxPnlFactorForWithdrawalsLongs", "maxPnlFactorForWithdrawalsShorts", "positionImpactExponentFactor", "fundingFactor", "fundingExponentFactor", "fundingIncreaseFactorPerSecond", "fundingDecreaseFactorPerSecond", "minFundingFactorPerSecond", "maxFundingFactorPerSecond", "thresholdForStableFunding", "thresholdForDecreaseFunding", "positionFeeFactorForPositiveImpact", "positionFeeFactorForNegativeImpact", "borrowingFactorForLongs", "borrowingFactorForShorts", "borrowingExponentFactorForLongs", "borrowingExponentFactorForShorts", "positivePositionImpactFactor", "negativePositionImpactFactor", "maxPositionImpactFactorForLiquidations", "positiveMaxPositionImpactFactor", "negativeMaxPositionImpactFactor"];
+    constructor(address[] memory initialSenders, string[] memory initialUpdateTypes) {
+        for (uint256 i = 0; i < initialSenders.length; i++) {
+            authorizedSenders[initialSenders[i]] = true; // Automatically authorize initial senders
+        }
         for (uint256 i = 0; i < initialUpdateTypes.length; i++) {
             validUpdateTypes[initialUpdateTypes[i]] = true; // Register initial valid updates
             allUpdateTypes.push(initialUpdateTypes[i]);
@@ -149,7 +152,9 @@ contract MockRiskOracle is Ownable {
         bytes memory additionalData
     ) internal {
         updateCounter++;
-        bytes memory previousValue = updateCounter > 0 ? updatesById[updateCounter - 1].newValue : bytes("");
+        uint256 previousUpdateId = latestUpdateIdByMarketAndType[market][updateType];
+        bytes memory previousValue = previousUpdateId > 0 ? updatesById[previousUpdateId].newValue : bytes("");
+
         RiskParameterUpdate memory newUpdate = RiskParameterUpdate(
             block.timestamp, newValue, referenceId, previousValue, updateType, updateCounter, market, additionalData
         );
@@ -162,20 +167,6 @@ contract MockRiskOracle is Ownable {
         emit ParameterUpdated(
             referenceId, newValue, previousValue, block.timestamp, updateType, updateCounter, market, additionalData
         );
-    }
-
-    /**
-     * @notice Retrieves the most recent update for a given update type.
-     * @param updateType The specific type of update to retrieve.
-     * @return The most recent RiskParameterUpdate of the specified type.
-     */
-    function getLatestUpdateByType(string memory updateType) external view returns (RiskParameterUpdate memory) {
-        for (uint256 i = updateHistory.length; i > 0; i--) {
-            if (Strings.equal(updateHistory[i - 1].updateType, updateType)) {
-                return updateHistory[i - 1];
-            }
-        }
-        revert("No updates found for the specified type.");
     }
 
     function getAllUpdateTypes() external view returns (string[] memory) {
