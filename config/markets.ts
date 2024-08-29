@@ -679,8 +679,8 @@ const config: {
       positivePositionImpactFactor: decimalToFloat(7, 9),
 
       // the swap impact factor is for WETH-stablecoin swaps
-      negativeSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(25, 10),
+      positiveSwapImpactFactor: decimalToFloat(25, 10),
 
       minCollateralFactor: decimalToFloat(5, 3), // 200x leverage
       // minCollateralFactor of 0.005 (0.5%) when open interest is 2,000,000 USD
@@ -730,8 +730,8 @@ const config: {
       positivePositionImpactFactor: decimalToFloat(75, 10),
 
       // the swap impact factor is for WETH-stablecoin swaps
-      negativeSwapImpactFactor: decimalToFloat(4, 9),
-      positiveSwapImpactFactor: decimalToFloat(4, 9),
+      negativeSwapImpactFactor: decimalToFloat(2, 9),
+      positiveSwapImpactFactor: decimalToFloat(2, 9),
 
       minCollateralFactor: decimalToFloat(5, 3), // 200x leverage
 
@@ -777,8 +777,8 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~45,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~90,000 USD of imbalance
 
-      positiveSwapImpactFactor: decimalToFloat(25, 10), // 2.5e-9
-      negativeSwapImpactFactor: decimalToFloat(5, 9), // 5e-9
+      positiveSwapImpactFactor: decimalToFloat(25, 10),
+      negativeSwapImpactFactor: decimalToFloat(25, 10),
 
       borrowingFactorForLongs: decimalToFloat(160, 10), // 1.60E-08, ~50% if 100% utilized
       borrowingFactorForShorts: decimalToFloat(160, 10), // 1.60E-08, ~50% if 100% utilized
@@ -917,9 +917,8 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(27, 9),
       positivePositionImpactFactor: decimalToFloat(9, 9),
 
-      // the swap impact factor is for WETH-stablecoin swaps
-      negativeSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(25, 10),
+      positiveSwapImpactFactor: decimalToFloat(25, 10),
 
       minCollateralFactor: decimalToFloat(5, 3), // 200x leverage
       // minCollateralFactor of 0.005 (0.5%) when open interest is 1,500,000 USD
@@ -1206,8 +1205,8 @@ const config: {
       positivePositionImpactFactor: decimalToFloat(13, 9),
 
       // the swap impact factor is for WETH-stablecoin swaps
-      negativeSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(25, 10),
+      positiveSwapImpactFactor: decimalToFloat(25, 10),
 
       minCollateralFactor: decimalToFloat(833, 5), // 120x leverage
       // minCollateralFactor of 0.00833 (0.833%) when open interest is 1,700,000 USD
@@ -1247,9 +1246,8 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(195, 10),
       positivePositionImpactFactor: decimalToFloat(65, 10),
 
-      // the swap impact factor is for WETH-stablecoin swaps
-      negativeSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(5, 9), // 0.05% for 100,000 USD of imbalance
+      negativeSwapImpactFactor: decimalToFloat(25, 10),
+      positiveSwapImpactFactor: decimalToFloat(25, 10),
 
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(25, 10),
