@@ -164,6 +164,24 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
 
   await handleConfig(
     "uint",
+    keys.glvDepositGasLimitKey(),
+    "0x",
+    generalConfig.glvDepositGasLimit,
+    `glvDepositGasLimit`
+  );
+
+  await handleConfig(
+    "uint",
+    keys.glvWithdrawalGasLimitKey(),
+    "0x",
+    generalConfig.glvWithdrawalGasLimit,
+    `glvWithdrawalGasLimit`
+  );
+
+  await handleConfig("uint", keys.glvShiftGasLimitKey(), "0x", generalConfig.glvShiftGasLimit, `glvShiftGasLimit`);
+
+  await handleConfig(
+    "uint",
     keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT,
     "0x",
     generalConfig.nativeTokenTransferGasLimit,

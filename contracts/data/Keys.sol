@@ -222,6 +222,7 @@ library Keys {
     bytes32 public constant WITHDRAWAL_GAS_LIMIT = keccak256(abi.encode("WITHDRAWAL_GAS_LIMIT"));
     bytes32 public constant GLV_DEPOSIT_GAS_LIMIT = keccak256(abi.encode("GLV_DEPOSIT_GAS_LIMIT"));
     bytes32 public constant GLV_WITHDRAWAL_GAS_LIMIT = keccak256(abi.encode("GLV_WITHDRAWAL_GAS_LIMIT"));
+    bytes32 public constant GLV_SHIFT_GAS_LIMIT = keccak256(abi.encode("GLV_SHIFT_GAS_LIMIT"));
     bytes32 public constant GLV_PER_MARKET_GAS_LIMIT = keccak256(abi.encode("GLV_PER_MARKET_GAS_LIMIT"));
     // @dev key for the estimated gas limit for shifts
     bytes32 public constant SHIFT_GAS_LIMIT = keccak256(abi.encode("SHIFT_GAS_LIMIT"));
@@ -530,6 +531,10 @@ library Keys {
 
     function glvWithdrawalGasLimitKey() internal pure returns (bytes32) {
         return GLV_WITHDRAWAL_GAS_LIMIT;
+    }
+
+    function glvShiftGasLimitKey() internal pure returns (bytes32) {
+        return GLV_SHIFT_GAS_LIMIT;
     }
 
     function glvPerMarketGasLimitKey() internal pure returns (bytes32) {

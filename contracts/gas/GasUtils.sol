@@ -388,6 +388,11 @@ library GasUtils {
         return gasLimit + dataStore.getUint(Keys.withdrawalGasLimitKey()) + gasForSwaps;
     }
 
+
+    function estimateExecuteGlvShiftGasLimit(DataStore dataStore) internal view returns (uint256) {
+        return dataStore.getUint(Keys.glvShiftGasLimitKey());
+    }
+
     function emitKeeperExecutionFee(
         EventEmitter eventEmitter,
         address keeper,

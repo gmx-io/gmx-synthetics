@@ -272,6 +272,8 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         DataStore _dataStore = dataStore;
 
         GlvShift.Props memory glvShift = GlvShiftStoreUtils.get(_dataStore, key);
+        uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvShiftGasLimit(_dataStore);
+        GasUtils.validateExecutionGas(_dataStore, startingGas, estimatedGasLimit);
 
         uint256 executionGas = GasUtils.getExecutionGas(_dataStore, startingGas);
 
