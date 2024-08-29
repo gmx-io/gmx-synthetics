@@ -50,6 +50,11 @@ export async function main() {
     //   baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
     //   data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.Liquidation]),
     // },
+    // SYNC_CONFIG_FEATURE_DISABLED address is a placeholder and needs to be updated once final contract is deployed to mainnet
+    // {
+    //   baseKey: keys.SYNC_CONFIG_FEATURE_DISABLED,
+    //   data: encodeData(["address"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2"]),
+    // },
   ];
 
   const isDisabled = process.env.IS_DISABLED;
