@@ -5,16 +5,16 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<string |
 
   const config: { [network: string]: { riskOracleConfig?: string } } = {
     arbitrum: {
-      riskOracleConfig: "0x526d6789fCb503F2F898f45912A7a24fe9dd48e4", // Not yet deployed to arbitrum, using Arbitrum Sepolia address as a placeholder
+      riskOracleConfig: "0xd7042642Dd2DE0D7B9e9972Aa4cDfb23FBe9eBaD", // Not yet deployed to arbitrum, using Arbitrum Sepolia address as a placeholder
     },
     avalanche: {
-      riskOracleConfig: "0x526d6789fCb503F2F898f45912A7a24fe9dd48e4", // Not yet deployed to avalanche, using Arbitrum Sepolia address as a placeholder
+      riskOracleConfig: "0xd7042642Dd2DE0D7B9e9972Aa4cDfb23FBe9eBaD", // Not yet deployed to avalanche, using Arbitrum Sepolia address as a placeholder
     },
     avalancheFuji: {
-      riskOracleConfig: "0x526d6789fCb503F2F898f45912A7a24fe9dd48e4", // Not yet deployed to avalancheFuji, using Arbitrum Sepolia address as a placeholder
+      riskOracleConfig: "0x2BBF5807b765e8A299C3C5B9044dB66c583c5595",
     },
     arbitrumSepolia: {
-      riskOracleConfig: "0x526d6789fCb503F2F898f45912A7a24fe9dd48e4",
+      riskOracleConfig: "0xd7042642Dd2DE0D7B9e9972Aa4cDfb23FBe9eBaD",
     },
   };
 
