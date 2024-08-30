@@ -435,8 +435,8 @@ const config: {
       maxLongTokenPoolUsdForDeposit: decimalToFloat(100_000_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(100_000_000),
 
-      negativePositionImpactFactor: decimalToFloat(9, 11),
-      positivePositionImpactFactor: decimalToFloat(3, 11),
+      negativePositionImpactFactor: 0, // decimalToFloat(9, 11),
+      positivePositionImpactFactor: 0, // decimalToFloat(3, 11),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(46530, 26), // 4,653E+30, 0.0040202449 BTC / day
       minPositionImpactPoolAmount: expandDecimals(5, 6), // 0.05 BTC
@@ -447,8 +447,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(6, 11),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(6, 11),
 
-      maxOpenInterestForLongs: decimalToFloat(20_000_000),
-      maxOpenInterestForShorts: decimalToFloat(20_000_000),
+      maxOpenInterestForLongs: decimalToFloat(5_000_000),
+      maxOpenInterestForShorts: decimalToFloat(5_000_000),
 
       // funding increase rate is higher for single asset pools
       fundingIncreaseFactorPerSecond: decimalToFloat(158, 14), // 0.0000000000158, at least 1h45m to reach max funding
@@ -531,8 +531,8 @@ const config: {
       maxLongTokenPoolUsdForDeposit: decimalToFloat(60_000_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(60_000_000),
 
-      negativePositionImpactFactor: decimalToFloat(9, 11),
-      positivePositionImpactFactor: decimalToFloat(3, 11),
+      negativePositionImpactFactor: 0, // decimalToFloat(9, 11),
+      positivePositionImpactFactor: 0, // decimalToFloat(3, 11),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(37181, 37), // 3.718184E+41, 0.0321250994 ETH / day
       minPositionImpactPoolAmount: expandDecimals(5, 17), // 0.5 ETH
@@ -543,8 +543,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(6, 11),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(6, 11),
 
-      maxOpenInterestForLongs: decimalToFloat(20_000_000),
-      maxOpenInterestForShorts: decimalToFloat(20_000_000),
+      maxOpenInterestForLongs: decimalToFloat(5_000_000),
+      maxOpenInterestForShorts: decimalToFloat(5_000_000),
 
       // funding increase rate is higher for single asset pools
       fundingIncreaseFactorPerSecond: decimalToFloat(158, 14), // 0.0000000000158, at least 1h45m to reach max funding
