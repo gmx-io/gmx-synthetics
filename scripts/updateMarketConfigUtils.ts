@@ -429,7 +429,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       );
     }
 
-    if (marketConfig.positivePositionImpactFactor) {
+    if (marketConfig.positivePositionImpactFactor !== undefined) {
       await handleConfig(
         "uint",
         keys.POSITION_IMPACT_FACTOR,
@@ -439,7 +439,7 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       );
     }
 
-    if (marketConfig.negativePositionImpactFactor) {
+    if (marketConfig.negativePositionImpactFactor !== undefined) {
       await handleConfig(
         "uint",
         keys.POSITION_IMPACT_FACTOR,
