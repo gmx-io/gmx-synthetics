@@ -423,11 +423,11 @@ const config: {
 
       ...singleTokenMarketConfig,
 
-      reserveFactorLongs: percentageToFloat("55%"),
-      reserveFactorShorts: percentageToFloat("55%"),
+      reserveFactorLongs: percentageToFloat("80%"),
+      reserveFactorShorts: percentageToFloat("80%"),
 
-      openInterestReserveFactorLongs: percentageToFloat("50%"),
-      openInterestReserveFactorShorts: percentageToFloat("50%"),
+      openInterestReserveFactorLongs: percentageToFloat("75%"),
+      openInterestReserveFactorShorts: percentageToFloat("75%"),
 
       maxLongTokenPoolAmount: expandDecimals(1000, 8),
       maxShortTokenPoolAmount: expandDecimals(1000, 8),
@@ -519,11 +519,11 @@ const config: {
 
       ...singleTokenMarketConfig,
 
-      reserveFactorLongs: percentageToFloat("55%"),
-      reserveFactorShorts: percentageToFloat("55%"),
+      reserveFactorLongs: percentageToFloat("80%"),
+      reserveFactorShorts: percentageToFloat("80%"),
 
-      openInterestReserveFactorLongs: percentageToFloat("50%"),
-      openInterestReserveFactorShorts: percentageToFloat("50%"),
+      openInterestReserveFactorLongs: percentageToFloat("75%"),
+      openInterestReserveFactorShorts: percentageToFloat("75%"),
 
       maxLongTokenPoolAmount: expandDecimals(20_000, 18),
       maxShortTokenPoolAmount: expandDecimals(20_000, 18),
