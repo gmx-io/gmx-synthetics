@@ -5,16 +5,16 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<string |
 
   const config: { [network: string]: { riskOracleConfig?: string } } = {
     arbitrum: {
-      riskOracleConfig: "0xd7042642Dd2DE0D7B9e9972Aa4cDfb23FBe9eBaD", // Not yet deployed to arbitrum, using Arbitrum Sepolia address as a placeholder
+      riskOracleConfig: "0x48b67764dBB6B8fc2A0c3987ed3819e543212Bc3", // Not yet deployed to arbitrum, using Arbitrum Sepolia address as a placeholder
     },
     avalanche: {
-      riskOracleConfig: "0xd7042642Dd2DE0D7B9e9972Aa4cDfb23FBe9eBaD", // Not yet deployed to avalanche, using Arbitrum Sepolia address as a placeholder
+      riskOracleConfig: "0x48b67764dBB6B8fc2A0c3987ed3819e543212Bc3", // Not yet deployed to avalanche, using Arbitrum Sepolia address as a placeholder
     },
     avalancheFuji: {
-      riskOracleConfig: "0x2BBF5807b765e8A299C3C5B9044dB66c583c5595",
+      riskOracleConfig: "0xE05354F4187820bF0832bF1f5fAd6a0F592b8fB6",
     },
     arbitrumSepolia: {
-      riskOracleConfig: "0xd7042642Dd2DE0D7B9e9972Aa4cDfb23FBe9eBaD",
+      riskOracleConfig: "0x48b67764dBB6B8fc2A0c3987ed3819e543212Bc3",
     },
   };
 
