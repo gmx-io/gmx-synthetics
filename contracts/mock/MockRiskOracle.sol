@@ -15,7 +15,7 @@ contract MockRiskOracle is Ownable {
         bytes previousValue; // Previous value of the parameter for historical comparison
         string updateType; // Classification of the update for validation purposes
         uint256 updateId; // Unique identifier for this specific update
-        address market; // Unique identifier for market of the parameter update
+        address market; // Address for market of the parameter update
         bytes additionalData; // Additional data for the update
     }
 
@@ -25,7 +25,8 @@ contract MockRiskOracle is Ownable {
     mapping(uint256 => RiskParameterUpdate) private updatesById; // Mapping from unique update ID to the update details
     mapping(address => bool) private authorizedSenders; // Authorized accounts capable of executing updates
 
-    mapping(address => mapping(string => uint256)) public latestUpdateIdByMarketAndType; // Mapping to store the latest update ID for each combination of market and update type
+    mapping(address => mapping(string => uint256))
+        public latestUpdateIdByMarketAndType; // Mapping to store the latest update ID for each combination of market and update type
     uint256 public updateCounter; // Counter to keep track of the total number of updates
 
     event ParameterUpdated(
@@ -44,7 +45,18 @@ contract MockRiskOracle is Ownable {
     event UpdateTypeAdded(string indexed updateType);
 
     modifier onlyAuthorized() {
-        require(authorizedSenders[msg.sender], "Unauthorized: Sender not authorized.");
+        require(
+            authorizedSenders[msg.sender],
+            "Unauthorized: Sender not authorized."
+        );
+        _;
+    }
+
+    modifier onlyValidString(string memory input) {
+        require(
+            bytes(input).length > 0 && bytes(input).length <= 64,
+            "Invalid update type string"
+        );
         _;
     }
 
@@ -53,15 +65,20 @@ contract MockRiskOracle is Ownable {
      * @param initialSenders List of addresses that will initially be authorized to perform updates.
      * @param initialUpdateTypes List of valid update types initially allowed.
      */
-    constructor(address[] memory initialSenders, string[] memory initialUpdateTypes) {
+    constructor(
+        address[] memory initialSenders,
+        string[] memory initialUpdateTypes
+    ) {
         for (uint256 i = 0; i < initialSenders.length; i++) {
             authorizedSenders[initialSenders[i]] = true; // Automatically authorize initial senders
         }
         for (uint256 i = 0; i < initialUpdateTypes.length; i++) {
-            validUpdateTypes[initialUpdateTypes[i]] = true; // Register initial valid updates
-            allUpdateTypes.push(initialUpdateTypes[i]);
+            if (!validUpdateTypes[initialUpdateTypes[i]]) {
+                // Ensure no duplicate updateTypes can be set
+                validUpdateTypes[initialUpdateTypes[i]] = true; // Register initial valid updates
+                allUpdateTypes.push(initialUpdateTypes[i]);
+            }
         }
-        updateCounter = 0; // Initialize the update counter
     }
 
     /**
@@ -88,8 +105,13 @@ contract MockRiskOracle is Ownable {
      * @notice Adds a new type of update to the list of authorized update types.
      * @param newUpdateType New type of update to allow.
      */
-    function addUpdateType(string memory newUpdateType) external onlyOwner {
-        require(!validUpdateTypes[newUpdateType], "Update type already exists.");
+    function addUpdateType(
+        string memory newUpdateType
+    ) external onlyOwner onlyValidString(newUpdateType) {
+        require(
+            !validUpdateTypes[newUpdateType],
+            "Update type already exists."
+        );
         validUpdateTypes[newUpdateType] = true;
         allUpdateTypes.push(newUpdateType);
         emit UpdateTypeAdded(newUpdateType);
@@ -100,7 +122,7 @@ contract MockRiskOracle is Ownable {
      * @param referenceId An external reference ID associated with the update.
      * @param newValue The new value of the risk parameter being updated.
      * @param updateType Type of update performed, must be previously authorized.
-     * @param market Unique identifier for market of the parameter update
+     * @param market Address for market of the parameter update
      * @param additionalData Additional data for the update
      */
     function publishRiskParameterUpdate(
@@ -111,7 +133,13 @@ contract MockRiskOracle is Ownable {
         bytes memory additionalData
     ) external onlyAuthorized {
         require(validUpdateTypes[updateType], "Unauthorized update type.");
-        _processUpdate(referenceId, newValue, updateType, market, additionalData);
+        _processUpdate(
+            referenceId,
+            newValue,
+            updateType,
+            market,
+            additionalData
+        );
     }
 
     /**
@@ -119,7 +147,7 @@ contract MockRiskOracle is Ownable {
      * @param referenceIds Array of external reference IDs.
      * @param newValues Array of new values for each update.
      * @param updateTypes Array of types for each update, all must be authorized.
-     * @param markets Array of unique identifiers for markets of the parameter updates
+     * @param markets Array of addresses for markets of the parameter updates
      * @param additionalData Array of additional data for the updates
      *
      */
@@ -131,13 +159,24 @@ contract MockRiskOracle is Ownable {
         bytes[] memory additionalData
     ) external onlyAuthorized {
         require(
-            referenceIds.length == newValues.length && newValues.length == updateTypes.length
-                && updateTypes.length == markets.length && markets.length == additionalData.length,
+            referenceIds.length == newValues.length &&
+                newValues.length == updateTypes.length &&
+                updateTypes.length == markets.length &&
+                markets.length == additionalData.length,
             "Mismatch between argument array lengths."
         );
         for (uint256 i = 0; i < referenceIds.length; i++) {
-            require(validUpdateTypes[updateTypes[i]], "Unauthorized update type at index");
-            _processUpdate(referenceIds[i], newValues[i], updateTypes[i], markets[i], additionalData[i]);
+            require(
+                validUpdateTypes[updateTypes[i]],
+                "Unauthorized update type at index"
+            );
+            _processUpdate(
+                referenceIds[i],
+                newValues[i],
+                updateTypes[i],
+                markets[i],
+                additionalData[i]
+            );
         }
     }
 
@@ -152,11 +191,22 @@ contract MockRiskOracle is Ownable {
         bytes memory additionalData
     ) internal {
         updateCounter++;
-        uint256 previousUpdateId = latestUpdateIdByMarketAndType[market][updateType];
-        bytes memory previousValue = previousUpdateId > 0 ? updatesById[previousUpdateId].newValue : bytes("");
+        uint256 previousUpdateId = latestUpdateIdByMarketAndType[market][
+            updateType
+        ];
+        bytes memory previousValue = previousUpdateId > 0
+            ? updatesById[previousUpdateId].newValue
+            : bytes("");
 
         RiskParameterUpdate memory newUpdate = RiskParameterUpdate(
-            block.timestamp, newValue, referenceId, previousValue, updateType, updateCounter, market, additionalData
+            block.timestamp,
+            newValue,
+            referenceId,
+            previousValue,
+            updateType,
+            updateCounter,
+            market,
+            additionalData
         );
         updatesById[updateCounter] = newUpdate;
         updateHistory.push(newUpdate);
@@ -165,7 +215,14 @@ contract MockRiskOracle is Ownable {
         latestUpdateIdByMarketAndType[market][updateType] = updateCounter;
 
         emit ParameterUpdated(
-            referenceId, newValue, previousValue, block.timestamp, updateType, updateCounter, market, additionalData
+            referenceId,
+            newValue,
+            previousValue,
+            block.timestamp,
+            updateType,
+            updateCounter,
+            market,
+            additionalData
         );
     }
 
@@ -179,13 +236,15 @@ contract MockRiskOracle is Ownable {
      * @param market The market identifier.
      * @return The most recent RiskParameterUpdate for the specified parameter and market.
      */
-    function getLatestUpdateByParameterAndMarket(string memory updateType, address market)
-        external
-        view
-        returns (RiskParameterUpdate memory)
-    {
+    function getLatestUpdateByParameterAndMarket(
+        string memory updateType,
+        address market
+    ) external view returns (RiskParameterUpdate memory) {
         uint256 updateId = latestUpdateIdByMarketAndType[market][updateType];
-        require(updateId > 0, "No update found for the specified parameter and market.");
+        require(
+            updateId > 0,
+            "No update found for the specified parameter and market."
+        );
         return updatesById[updateId];
     }
 
@@ -194,8 +253,13 @@ contract MockRiskOracle is Ownable {
      * @param updateId Update ID.
      * @return The most recent RiskParameterUpdate for the specified id.
      */
-    function getUpdateById(uint256 updateId) external view returns (RiskParameterUpdate memory) {
-        require(updateId > 0 && updateId <= updateCounter, "Invalid update ID.");
+    function getUpdateById(
+        uint256 updateId
+    ) external view returns (RiskParameterUpdate memory) {
+        require(
+            updateId > 0 && updateId <= updateCounter,
+            "Invalid update ID."
+        );
         return updatesById[updateId];
     }
 
