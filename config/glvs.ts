@@ -1,6 +1,6 @@
 import { BigNumberish } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { percentageToFloat, expandDecimals } from "../utils/math";
+import { percentageToFloat, expandDecimals, decimalToFloat } from "../utils/math";
 
 type GlvConfig = {
   longToken: string;
@@ -21,7 +21,54 @@ type GlvConfig = {
 
 export default async function ({ network }: HardhatRuntimeEnvironment) {
   const config: GlvConfig = {
-    arbitrum: [] as any,
+    arbitrum: [
+      {
+        name: "GMX Liquidity Vault [WETH-USDC]",
+        symbol: "GLV",
+        longToken: "WETH",
+        shortToken: "USDC",
+        shiftMaxPriceImpactFactor: percentageToFloat("0.1%"),
+        shiftMinInterval: 60 * 60, // 1 hour
+        minTokensForFirstGlvDeposit: expandDecimals(1, 18),
+        markets: [
+          {
+            indexToken: "WETH",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(7_000_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(10_000_000),
+          },
+          {
+            indexToken: "DOGE",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(1_300_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(2_000_000),
+          },
+          {
+            indexToken: "LTC",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(750_000),
+          },
+          {
+            indexToken: "XRP",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(670_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_000_000),
+          },
+          {
+            indexToken: "ATOM",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
+          },
+          {
+            indexToken: "NEAR",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(1_000_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_000_000),
+          },
+          {
+            indexToken: "SHIB",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
+          },
+        ],
+      },
+    ],
     avalanche: [] as any,
     avalancheFuji: [
       {
