@@ -14,12 +14,15 @@ async function main() {
   const glvReader = await hre.ethers.getContract("GlvReader");
   const dataStore = await hre.ethers.getContract("DataStore");
   console.log("reading data from DataStore %s Reader %s", dataStore.address, glvReader.address);
-  const glvs = [...(await glvReader.getGlvs(dataStore.address, 0, 100))];
+  const glvInfoList = [...(await glvReader.getGlvInfoList(dataStore.address, 0, 100))];
 
-  for (const glv of glvs) {
-    const longTokenSymbol = addressToSymbol[glv.longToken];
-    const shortTokenSymbol = addressToSymbol[glv.shortToken];
-    console.log("%s long: %s short: %s", glv.glvToken, longTokenSymbol?.padEnd(5), shortTokenSymbol?.padEnd(5));
+  for (const glvInfo of glvInfoList) {
+    const longTokenSymbol = addressToSymbol[glvInfo.glv.longToken];
+    const shortTokenSymbol = addressToSymbol[glvInfo.glv.shortToken];
+    console.log("%s long: %s short: %s", glvInfo.glv.glvToken, longTokenSymbol?.padEnd(5), shortTokenSymbol?.padEnd(5));
+    for (const market of glvInfo.markets) {
+      console.log("\t%s", market);
+    }
   }
 }
 
