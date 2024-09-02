@@ -29,6 +29,11 @@ async function main() {
   const roleStore = await ethers.getContract("RoleStore");
   const roleCount = await roleStore.getRoleCount();
   const roles = await roleStore.getRoles(0, roleCount);
+  const deployments = await hre.deployments.all();
+
+  const addressToName = Object.fromEntries(
+    Object.entries(deployments).map(([name, deployment]) => [deployment.address, name])
+  );
 
   for (const [roleHash, role] of Object.entries(knownRoles)) {
     console.log("%s %s", role, roleHash);
@@ -38,7 +43,13 @@ async function main() {
   for (const role of roles) {
     const roleMemberCount = await roleStore.getRoleMemberCount(role);
     const roleMembers = await roleStore.getRoleMembers(role, 0, roleMemberCount);
-    console.log("%s:\n\t%s", knownRoles[role] || role, roleMembers.join("\n\t"));
+    const roleData = roleMembers.map((m) => {
+      if (!addressToName[m]) {
+        return m;
+      }
+      return `${m} (${addressToName[m]})`;
+    });
+    console.log("%s:\n\t%s", knownRoles[role] || role, roleData.join("\n\t"));
   }
 }
 
