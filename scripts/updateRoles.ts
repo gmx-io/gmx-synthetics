@@ -80,6 +80,10 @@ async function main() {
     arbitrum: [
       {
         role: "CONTROLLER",
+        member: "0xff10ff89195191d22f7b934a5e1cd581ec0ccb93",
+      },
+      {
+        role: "CONTROLLER",
         member: "0x26dddaa629bb35fc1853d051561f2200dd190588",
       },
       {
@@ -99,7 +103,12 @@ async function main() {
   };
 
   const rolesToRemove = {
-    arbitrum: [],
+    arbitrum: [
+      {
+        role: "CONTROLLER",
+        member: "0x8583b878DA0844B7f59974069f00D3A9eaE0F4ae",
+      },
+    ],
     avalanche: [
       {
         role: "ROLE_ADMIN",
