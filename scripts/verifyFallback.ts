@@ -76,16 +76,16 @@ async function main() {
       continue;
     }
 
-    if (!name.startsWith("Glv")) {
-      console.log("skip non glv");
-      continue;
-    }
-
     try {
       let isContractVerified = cache[address];
       if (!isContractVerified) {
         await setTimeout(200);
         isContractVerified = await getIsContractVerified(address);
+      }
+
+      if (isContractVerified) {
+        console.log("%s already verified", name);
+        continue;
       }
 
       console.log("Verifying contract %s %s %s", name, address, argStr);

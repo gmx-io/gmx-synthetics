@@ -77,7 +77,24 @@ async function main() {
   const timelock = await getTimelock();
 
   const rolesToAdd = {
-    arbitrum: [],
+    arbitrum: [
+      {
+        role: "CONTROLLER",
+        member: "0x26dddaa629bb35fc1853d051561f2200dd190588",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x75eafd2b4e306dad8dd6334456f8018218bc9882",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0xdafa7deb67805d7498aa926002bb2d713d1d9256",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0x75eafd2b4e306dad8dd6334456f8018218bc9882",
+      },
+    ],
     avalanche: [],
   };
 
