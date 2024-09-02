@@ -3,18 +3,18 @@ import { createDeployFunction } from "../utils/deploy";
 const func = createDeployFunction({
   contractName: "Reader",
   libraryNames: [
-    "MarketUtils",
-    "MarketStoreUtils",
     "DepositStoreUtils",
-    "WithdrawalStoreUtils",
-    "ShiftStoreUtils",
+    "MarketStoreUtils",
+    "MarketUtils",
     "PositionStoreUtils",
     "PositionUtils",
-    "OrderStoreUtils",
-    "ReaderUtils",
     "ReaderDepositUtils",
-    "ReaderWithdrawalUtils",
+    "ReaderPositionUtils",
     "ReaderPricingUtils",
+    "ReaderUtils",
+    "ReaderWithdrawalUtils",
+    "ShiftStoreUtils",
+    "WithdrawalStoreUtils",
   ],
 });
 

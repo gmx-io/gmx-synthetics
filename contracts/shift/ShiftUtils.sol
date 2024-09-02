@@ -68,6 +68,7 @@ library ShiftUtils {
         Deposit.Props deposit;
         bytes32 depositKey;
         ExecuteDepositUtils.ExecuteDepositParams executeDepositParams;
+        uint256 receivedMarketTokens;
     }
 
     function createShift(
@@ -111,9 +112,6 @@ library ShiftUtils {
             revert Errors.ShortTokensAreNotEqual(fromMarket.shortToken, toMarket.shortToken);
         }
 
-        MarketUtils.validateEnabledMarket(dataStore, params.fromMarket);
-        MarketUtils.validateEnabledMarket(dataStore, params.toMarket);
-
         Shift.Props memory shift = Shift.Props(
             Shift.Addresses(
                 account,
@@ -152,7 +150,7 @@ library ShiftUtils {
     function executeShift(
         ExecuteShiftParams memory params,
         Shift.Props memory shift
-    ) external {
+    ) external returns (uint256) {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
@@ -289,7 +287,7 @@ library ShiftUtils {
             false // includeVirtualInventoryImpact
         );
 
-        uint256 receivedMarketTokens = ExecuteDepositUtils.executeDeposit(
+        cache.receivedMarketTokens = ExecuteDepositUtils.executeDeposit(
             cache.executeDepositParams,
             cache.deposit
         );
@@ -298,12 +296,12 @@ library ShiftUtils {
             params.eventEmitter,
             params.key,
             shift.account(),
-            receivedMarketTokens
+            cache.receivedMarketTokens
         );
 
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(1);
-        eventData.uintItems.setItem(0, "receivedMarketTokens", receivedMarketTokens);
+        eventData.uintItems.setItem(0, "receivedMarketTokens", cache.receivedMarketTokens);
         CallbackUtils.afterShiftExecution(params.key, shift, eventData);
 
         GasUtils.payExecutionFee(
@@ -318,6 +316,8 @@ library ShiftUtils {
             params.keeper,
             shift.receiver()
         );
+
+        return cache.receivedMarketTokens;
     }
 
     function cancelShift(

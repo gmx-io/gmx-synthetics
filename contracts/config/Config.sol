@@ -415,8 +415,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.CANCEL_DEPOSIT_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.EXECUTE_DEPOSIT_FEATURE_DISABLED] = true;
 
-        allowedBaseKeys[Keys.GLV_SHIFT_FEATURE_DISABLED] = true;
-
         allowedBaseKeys[Keys.CREATE_WITHDRAWAL_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CANCEL_WITHDRAWAL_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.EXECUTE_WITHDRAWAL_FEATURE_DISABLED] = true;
@@ -435,6 +433,13 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.CREATE_GLV_DEPOSIT_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CANCEL_GLV_DEPOSIT_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED] = true;
+
+        allowedBaseKeys[Keys.CREATE_GLV_WITHDRAWAL_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.CANCEL_GLV_WITHDRAWAL_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.EXECUTE_GLV_WITHDRAWAL_FEATURE_DISABLED] = true;
+
+        allowedBaseKeys[Keys.CREATE_GLV_SHIFT_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.EXECUTE_GLV_SHIFT_FEATURE_DISABLED] = true;
 
         allowedBaseKeys[Keys.CLAIM_FUNDING_FEES_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CLAIM_COLLATERAL_FEATURE_DISABLED] = true;
@@ -464,9 +469,10 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR] = true;
 
         allowedBaseKeys[Keys.DEPOSIT_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.GLV_DEPOSIT_GAS_LIMIT] = true;
-        allowedBaseKeys[Keys.GLV_PER_MARKET_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.WITHDRAWAL_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.GLV_DEPOSIT_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.GLV_WITHDRAWAL_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.GLV_PER_MARKET_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.SHIFT_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.SINGLE_SWAP_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.INCREASE_ORDER_GAS_LIMIT] = true;
@@ -528,6 +534,11 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.IS_GLV_MARKET_DISABLED] = true;
         allowedBaseKeys[Keys.GLV_MAX_MARKET_TOKEN_BALANCE_USD] = true;
+        allowedBaseKeys[Keys.GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT] = true;
+        allowedBaseKeys[Keys.GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR] = true;
+        allowedBaseKeys[Keys.GLV_SHIFT_MIN_INTERVAL] = true;
+        allowedBaseKeys[Keys.MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT] = true;
+        allowedBaseKeys[Keys.GLV_MAX_MARKET_COUNT] = true;
 
         allowedBaseKeys[Keys.SYNC_CONFIG_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.SYNC_CONFIG_MARKET_DISABLED] = true;

@@ -88,6 +88,10 @@ EnumberableSets are used to allow order lists and position lists to be easily qu
 
 \*eventUtils contracts emit events using the event emitter, the events are generalized to allow new key-values to be added to events without requiring an update of ABIs.
 
+## GLV
+
+Short for GMX Liquidity Vault: a wrapper of multiple markets with the same long and short tokens. Liquidity is automatically rebalanced between underlying markets based on markets utilisation. 
+
 # Technical Overview
 
 This section provides a technical description of the contracts.
@@ -304,7 +308,7 @@ Example calculation for WBTC:
 - in this case the multiplier should be (10 ^ 44)
 - e.g. `(50,000 * (10 ^ 8)) * (10 ^ 44) / (10 ^ 30) = 50,000 * (10 ^ 22)`
 
-The formula for the multipler is: `10 ^ (60 - dataStreamDecimals - tokenDecimals)`
+The formula for the multiplier is: `10 ^ (60 - dataStreamDecimals - tokenDecimals)`
 
 # Funding Fees
 
@@ -632,6 +636,20 @@ After the initial setup:
 
 - There is a dependency on the accuracy of the block timestamp because oracle prices are validated against this value, for blockchains where the blockchain nodes have some control over the timestamp, care should be taken to set the oracleTimestampAdjustment to a value that would make manipulation of the timestamp unprofitable
 
+## GLV
+
+- The GLV shift feature can be exploited by temporarily increasing the utilization in a market that typically has low utilization. Once the keeper executes the shift, the attacker can lower the utilization back to its normal levels. Position fees and price impact should be configured in a way that makes this attack expensive enough to cover the GLV loss.
+
+- In GLV there may be GM markets which are above their maximum pnlToPoolFactorForTraders. If this GM market's maxPnlFactorForDeposits is higher than maxPnlFactorForTraders then the GM market is valued lower during deposits than it will be once traders have realized their capped profits. Malicious user may observe a GM market in such a condition and deposit into the GLV containing it in order to gain from ADLs which will soon follow. To avoid this maxPnlFactorForDeposits should be less than or equal to maxPnlFactorForTraders.
+
+- It's technically possible for market value to become negative. In this case the GLV would be unusable until the market value becomes positive.
+
+- GM tokens could become illiquid due to high pnl factor or high reserved usd. Users can deposit illiquid GM tokens into GVL and withdraw liquidity from a different market, leaving the GLV with illiquid tokens. The glvMaxMarketTokenBalanceUsd and glvMaxMarketTokenBalanceAmount parameters should account for the riskiness of a market to avoid having too many GM tokens from a risky market.
+
+## Other
+
+- Upon adding a Market with the MarketStoreUtils.set function, the Market is given a lookup where the Market address can be obtained with the Market salt. This lookup is not cleared upon market deletion. The same applies to GLV.
+
 ## Deployment Notes
 
 - `scripts/verifyFallback.ts` can be used to verify contracts
@@ -657,7 +675,7 @@ After the initial setup:
 
 ## Integration Notes
 
-- Deposits, withdrawals and orders may be cancelled if the requirements specified in the request cannot be fufilled, e.g. min amount out. Do check where funds and gas refunds will be sent to on cancellation to ensure it matches expectations.
+- Deposits, withdrawals and orders may be cancelled if the requirements specified in the request cannot be fulfilled, e.g. min amount out. Do check where funds and gas refunds will be sent to on cancellation to ensure it matches expectations.
 
 - Decrease position orders can output two tokens instead of a single token, in case the decrease position swap fails, it is also possible that the output amount and collateral may not be sufficient to cover fees, causing the order to not be executed
 

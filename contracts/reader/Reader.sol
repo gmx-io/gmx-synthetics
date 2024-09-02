@@ -2,8 +2,6 @@
 
 pragma solidity ^0.8.0;
 
-import "../data/Keys.sol";
-
 import "../market/MarketStoreUtils.sol";
 
 import "../deposit/DepositStoreUtils.sol";
@@ -14,16 +12,13 @@ import "../position/Position.sol";
 import "../position/PositionUtils.sol";
 import "../position/PositionStoreUtils.sol";
 
-import "../order/OrderStoreUtils.sol";
-
 import "../market/MarketUtils.sol";
 import "../market/Market.sol";
-
-import "../adl/AdlUtils.sol";
 
 import "./ReaderUtils.sol";
 import "./ReaderDepositUtils.sol";
 import "./ReaderWithdrawalUtils.sol";
+import "./ReaderPositionUtils.sol";
 
 // @title Reader
 // @dev Library for read functions
@@ -56,7 +51,7 @@ contract Reader {
     }
 
     function getOrder(DataStore dataStore, bytes32 key) external view returns (Order.Props memory) {
-        return OrderStoreUtils.get(dataStore, key);
+        return ReaderUtils.getOrder(dataStore, key);
     }
 
     function getPositionPnlUsd(
@@ -77,38 +72,7 @@ contract Reader {
         uint256 start,
         uint256 end
     ) external view returns (Position.Props[] memory) {
-        bytes32[] memory positionKeys = PositionStoreUtils.getAccountPositionKeys(dataStore, account, start, end);
-        Position.Props[] memory positions = new Position.Props[](positionKeys.length);
-        for (uint256 i; i < positionKeys.length; i++) {
-            bytes32 positionKey = positionKeys[i];
-            positions[i] = PositionStoreUtils.get(dataStore, positionKey);
-        }
-
-        return positions;
-    }
-
-    function getAccountPositionInfoList(
-        DataStore dataStore,
-        IReferralStorage referralStorage,
-        bytes32[] memory positionKeys,
-        MarketUtils.MarketPrices[] memory prices,
-        address uiFeeReceiver
-    ) external view returns (ReaderUtils.PositionInfo[] memory) {
-        ReaderUtils.PositionInfo[] memory positionInfoList = new ReaderUtils.PositionInfo[](positionKeys.length);
-        for (uint256 i; i < positionKeys.length; i++) {
-            bytes32 positionKey = positionKeys[i];
-            positionInfoList[i] = getPositionInfo(
-                dataStore,
-                referralStorage,
-                positionKey,
-                prices[i],
-                0, // sizeDeltaUsd
-                uiFeeReceiver,
-                true // usePositionSizeAsSizeDeltaUsd
-            );
-        }
-
-        return positionInfoList;
+        return ReaderPositionUtils.getAccountPositions(dataStore, account, start, end);
     }
 
     function getPositionInfo(
@@ -119,9 +83,9 @@ contract Reader {
         uint256 sizeDeltaUsd,
         address uiFeeReceiver,
         bool usePositionSizeAsSizeDeltaUsd
-    ) public view returns (ReaderUtils.PositionInfo memory) {
+    ) public view returns (ReaderPositionUtils.PositionInfo memory) {
         return
-            ReaderUtils.getPositionInfo(
+            ReaderPositionUtils.getPositionInfo(
                 dataStore,
                 referralStorage,
                 positionKey,
@@ -129,6 +93,23 @@ contract Reader {
                 sizeDeltaUsd,
                 uiFeeReceiver,
                 usePositionSizeAsSizeDeltaUsd
+            );
+    }
+
+    function getAccountPositionInfoList(
+        DataStore dataStore,
+        IReferralStorage referralStorage,
+        bytes32[] memory positionKeys,
+        MarketUtils.MarketPrices[] memory prices,
+        address uiFeeReceiver
+    ) external view returns (ReaderPositionUtils.PositionInfo[] memory) {
+        return
+            ReaderPositionUtils.getAccountPositionInfoList(
+                dataStore,
+                referralStorage,
+                positionKeys,
+                prices,
+                uiFeeReceiver
             );
     }
 
@@ -140,13 +121,11 @@ contract Reader {
         MarketUtils.MarketPrices memory prices,
         bool shouldValidateMinCollateralUsd
     ) public view returns (bool, string memory, PositionUtils.IsPositionLiquidatableInfo memory) {
-        Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
-
         return
-            PositionUtils.isPositionLiquidatable(
+            ReaderPositionUtils.isPositionLiquidatable(
                 dataStore,
                 referralStorage,
-                position,
+                positionKey,
                 market,
                 prices,
                 shouldValidateMinCollateralUsd
@@ -159,26 +138,11 @@ contract Reader {
         uint256 start,
         uint256 end
     ) external view returns (Order.Props[] memory) {
-        bytes32[] memory orderKeys = OrderStoreUtils.getAccountOrderKeys(dataStore, account, start, end);
-        Order.Props[] memory orders = new Order.Props[](orderKeys.length);
-        for (uint256 i; i < orderKeys.length; i++) {
-            bytes32 orderKey = orderKeys[i];
-            orders[i] = OrderStoreUtils.get(dataStore, orderKey);
-        }
-
-        return orders;
+        return ReaderUtils.getAccountOrders(dataStore, account, start, end);
     }
 
     function getMarkets(DataStore dataStore, uint256 start, uint256 end) external view returns (Market.Props[] memory) {
-        address[] memory marketKeys = MarketStoreUtils.getMarketKeys(dataStore, start, end);
-        Market.Props[] memory markets = new Market.Props[](marketKeys.length);
-        for (uint256 i; i < marketKeys.length; i++) {
-            address marketKey = marketKeys[i];
-            Market.Props memory market = MarketStoreUtils.get(dataStore, marketKey);
-            markets[i] = market;
-        }
-
-        return markets;
+        return ReaderUtils.getMarkets(dataStore, start, end);
     }
 
     function getMarketInfoList(
@@ -187,15 +151,7 @@ contract Reader {
         uint256 start,
         uint256 end
     ) external view returns (ReaderUtils.MarketInfo[] memory) {
-        address[] memory marketKeys = MarketStoreUtils.getMarketKeys(dataStore, start, end);
-        ReaderUtils.MarketInfo[] memory marketInfoList = new ReaderUtils.MarketInfo[](marketKeys.length);
-        for (uint256 i; i < marketKeys.length; i++) {
-            MarketUtils.MarketPrices memory prices = marketPricesList[i];
-            address marketKey = marketKeys[i];
-            marketInfoList[i] = getMarketInfo(dataStore, prices, marketKey);
-        }
-
-        return marketInfoList;
+        return ReaderUtils.getMarketInfoList(dataStore, marketPricesList, start, end);
     }
 
     function getMarketInfo(
@@ -203,11 +159,7 @@ contract Reader {
         MarketUtils.MarketPrices memory prices,
         address marketKey
     ) public view returns (ReaderUtils.MarketInfo memory) {
-        return ReaderUtils.getMarketInfo(
-            dataStore,
-            prices,
-            marketKey
-        );
+        return ReaderUtils.getMarketInfo(dataStore, prices, marketKey);
     }
 
     function getMarketTokenPrice(
@@ -332,18 +284,7 @@ contract Reader {
         bool isLong,
         MarketUtils.MarketPrices memory prices
     ) external view returns (uint256, bool, int256, uint256) {
-        uint256 latestAdlTime = AdlUtils.getLatestAdlTime(dataStore, market, isLong);
-        Market.Props memory _market = MarketUtils.getEnabledMarket(dataStore, market);
-
-        (bool shouldEnableAdl, int256 pnlToPoolFactor, uint256 maxPnlFactor) = MarketUtils.isPnlFactorExceeded(
-            dataStore,
-            _market,
-            prices,
-            isLong,
-            Keys.MAX_PNL_FACTOR_FOR_ADL
-        );
-
-        return (latestAdlTime, shouldEnableAdl, pnlToPoolFactor, maxPnlFactor);
+        return ReaderUtils.getAdlState(dataStore, market, isLong, prices);
     }
 
     function getDepositAmountOut(
@@ -356,16 +297,17 @@ contract Reader {
         ISwapPricingUtils.SwapPricingType swapPricingType,
         bool includeVirtualInventoryImpact
     ) external view returns (uint256) {
-        return ReaderDepositUtils.getDepositAmountOut(
-            dataStore,
-            market,
-            prices,
-            longTokenAmount,
-            shortTokenAmount,
-            uiFeeReceiver,
-            swapPricingType,
-            includeVirtualInventoryImpact
-        );
+        return
+            ReaderDepositUtils.getDepositAmountOut(
+                dataStore,
+                market,
+                prices,
+                longTokenAmount,
+                shortTokenAmount,
+                uiFeeReceiver,
+                swapPricingType,
+                includeVirtualInventoryImpact
+            );
     }
 
     function getWithdrawalAmountOut(
@@ -376,13 +318,14 @@ contract Reader {
         address uiFeeReceiver,
         ISwapPricingUtils.SwapPricingType swapPricingType
     ) external view returns (uint256, uint256) {
-        return ReaderWithdrawalUtils.getWithdrawalAmountOut(
-            dataStore,
-            market,
-            prices,
-            marketTokenAmount,
-            uiFeeReceiver,
-            swapPricingType
-        );
+        return
+            ReaderWithdrawalUtils.getWithdrawalAmountOut(
+                dataStore,
+                market,
+                prices,
+                marketTokenAmount,
+                uiFeeReceiver,
+                swapPricingType
+            );
     }
 }

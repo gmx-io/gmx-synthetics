@@ -7,6 +7,9 @@ import "../exchange/IWithdrawalHandler.sol";
 import "../exchange/IShiftHandler.sol";
 import "../exchange/IOrderHandler.sol";
 import "../external/IExternalHandler.sol";
+import "../shift/ShiftUtils.sol";
+import "../shift/ShiftStoreUtils.sol";
+import "../referral/ReferralUtils.sol";
 
 import "../order/OrderStoreUtils.sol";
 

@@ -47,8 +47,10 @@ library ExecuteWithdrawalUtils {
         uint256 requestExpirationTime;
         uint256 maxOracleTimestamp;
         uint256 marketTokensBalance;
+        uint256 oraclePriceCount;
         Market.Props market;
         MarketUtils.MarketPrices prices;
+        ExecuteWithdrawalResult result;
     }
 
     struct _ExecuteWithdrawalCache {
@@ -79,7 +81,10 @@ library ExecuteWithdrawalUtils {
      *
      * @param params The parameters for executing the withdrawal.
      */
-    function executeWithdrawal(ExecuteWithdrawalParams memory params, Withdrawal.Props memory withdrawal) external {
+    function executeWithdrawal(
+        ExecuteWithdrawalParams memory params,
+        Withdrawal.Props memory withdrawal
+    ) external returns (ExecuteWithdrawalResult memory) {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
@@ -112,36 +117,21 @@ library ExecuteWithdrawalUtils {
             );
         }
 
-        MarketUtils.distributePositionImpactPool(
-            params.dataStore,
-            params.eventEmitter,
-            withdrawal.market()
-        );
+        MarketUtils.distributePositionImpactPool(params.dataStore, params.eventEmitter, withdrawal.market());
 
         cache.market = MarketUtils.getEnabledMarket(params.dataStore, withdrawal.market());
-        cache.prices = MarketUtils.getMarketPrices(
-            params.oracle,
-            cache.market
-        );
+        cache.prices = MarketUtils.getMarketPrices(params.oracle, cache.market);
 
-        PositionUtils.updateFundingAndBorrowingState(
-            params.dataStore,
-            params.eventEmitter,
-            cache.market,
-            cache.prices
-        );
+        PositionUtils.updateFundingAndBorrowingState(params.dataStore, params.eventEmitter, cache.market, cache.prices);
 
-        cache.marketTokensBalance = MarketToken(payable(withdrawal.market())).balanceOf(address(params.withdrawalVault));
+        cache.marketTokensBalance = MarketToken(payable(withdrawal.market())).balanceOf(
+            address(params.withdrawalVault)
+        );
         if (cache.marketTokensBalance < withdrawal.marketTokenAmount()) {
             revert Errors.InsufficientMarketTokens(cache.marketTokensBalance, withdrawal.marketTokenAmount());
         }
 
-        ExecuteWithdrawalResult memory result = _executeWithdrawal(
-            params,
-            withdrawal,
-            cache.market,
-            cache.prices
-        );
+        cache.result = _executeWithdrawal(params, withdrawal, cache.market, cache.prices);
 
         WithdrawalEventUtils.emitWithdrawalExecuted(
             params.eventEmitter,
@@ -152,12 +142,16 @@ library ExecuteWithdrawalUtils {
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(2);
-        eventData.addressItems.setItem(0, "outputToken", result.outputToken);
-        eventData.addressItems.setItem(1, "secondaryOutputToken", result.secondaryOutputToken);
+        eventData.addressItems.setItem(0, "outputToken", cache.result.outputToken);
+        eventData.addressItems.setItem(1, "secondaryOutputToken", cache.result.secondaryOutputToken);
         eventData.uintItems.initItems(2);
-        eventData.uintItems.setItem(0, "outputAmount", result.outputAmount);
-        eventData.uintItems.setItem(1, "secondaryOutputAmount", result.secondaryOutputAmount);
+        eventData.uintItems.setItem(0, "outputAmount", cache.result.outputAmount);
+        eventData.uintItems.setItem(1, "secondaryOutputAmount", cache.result.secondaryOutputAmount);
         CallbackUtils.afterWithdrawalExecution(params.key, withdrawal, eventData);
+
+        cache.oraclePriceCount = GasUtils.estimateWithdrawalOraclePriceCount(
+            withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length
+        );
 
         GasUtils.payExecutionFee(
             params.dataStore,
@@ -167,10 +161,12 @@ library ExecuteWithdrawalUtils {
             withdrawal.callbackContract(),
             withdrawal.executionFee(),
             params.startingGas,
-            GasUtils.estimateWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length),
+            cache.oraclePriceCount,
             params.keeper,
             withdrawal.receiver()
         );
+
+        return cache.result;
     }
 
     /**
@@ -186,7 +182,12 @@ library ExecuteWithdrawalUtils {
     ) internal returns (ExecuteWithdrawalResult memory) {
         _ExecuteWithdrawalCache memory cache;
 
-        (cache.longTokenOutputAmount, cache.shortTokenOutputAmount) = _getOutputAmounts(params, market, prices, withdrawal.marketTokenAmount());
+        (cache.longTokenOutputAmount, cache.shortTokenOutputAmount) = _getOutputAmounts(
+            params,
+            market,
+            prices,
+            withdrawal.marketTokenAmount()
+        );
 
         cache.longTokenFees = SwapPricingUtils.getSwapFees(
             params.dataStore,
@@ -269,19 +270,9 @@ library ExecuteWithdrawalUtils {
             -cache.shortTokenPoolAmountDelta.toInt256()
         );
 
-        MarketUtils.validateReserve(
-            params.dataStore,
-            market,
-            prices,
-            true
-        );
+        MarketUtils.validateReserve(params.dataStore, market, prices, true);
 
-        MarketUtils.validateReserve(
-            params.dataStore,
-            market,
-            prices,
-            false
-        );
+        MarketUtils.validateReserve(params.dataStore, market, prices, false);
 
         MarketUtils.validateMaxPnl(
             params.dataStore,
@@ -291,10 +282,7 @@ library ExecuteWithdrawalUtils {
             Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS
         );
 
-        MarketToken(payable(market.marketToken)).burn(
-            address(params.withdrawalVault),
-            withdrawal.marketTokenAmount()
-        );
+        MarketToken(payable(market.marketToken)).burn(address(params.withdrawalVault), withdrawal.marketTokenAmount());
 
         params.withdrawalVault.syncTokenBalance(market.marketToken);
 
@@ -458,9 +446,6 @@ library ExecuteWithdrawalUtils {
         uint256 longTokenOutputUsd = Precision.mulDiv(marketTokensUsd, longTokenPoolUsd, totalPoolUsd);
         uint256 shortTokenOutputUsd = Precision.mulDiv(marketTokensUsd, shortTokenPoolUsd, totalPoolUsd);
 
-        return (
-            longTokenOutputUsd / prices.longTokenPrice.max,
-            shortTokenOutputUsd / prices.shortTokenPrice.max
-        );
+        return (longTokenOutputUsd / prices.longTokenPrice.max, shortTokenOutputUsd / prices.shortTokenPrice.max);
     }
 }

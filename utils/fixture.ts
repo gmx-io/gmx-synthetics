@@ -4,6 +4,7 @@ import { expandDecimals } from "./math";
 import { hashData } from "./hash";
 import { getMarketTokenAddress, DEFAULT_MARKET_TYPE } from "./market";
 import { getSyntheticTokenAddress } from "./token";
+import { getGlvAddress } from "./glv";
 
 export async function deployFixture() {
   await hre.deployments.fixture();
@@ -57,6 +58,7 @@ export async function deployFixture() {
   const mockRiskOracle = await hre.ethers.getContract("MockRiskOracle");
   const timelock = await hre.ethers.getContract("Timelock");
   const reader = await hre.ethers.getContract("Reader");
+  const glvReader = await hre.ethers.getContract("GlvReader");
   const roleStore = await hre.ethers.getContract("RoleStore");
   const dataStore = await hre.ethers.getContract("DataStore");
   const depositVault = await hre.ethers.getContract("DepositVault");
@@ -65,7 +67,15 @@ export async function deployFixture() {
   const eventEmitter = await hre.ethers.getContract("EventEmitter");
   const oracleStore = await hre.ethers.getContract("OracleStore");
   const orderVault = await hre.ethers.getContract("OrderVault");
+  const glvVault = await hre.ethers.getContract("GlvVault");
   const marketFactory = await hre.ethers.getContract("MarketFactory");
+  const glvFactory = await hre.ethers.getContract("GlvFactory");
+  const glvHandler = await hre.ethers.getContract("GlvHandler");
+  const glvRouter = await hre.ethers.getContract("GlvRouter");
+  const glvDepositStoreUtils = await hre.ethers.getContract("GlvDepositStoreUtils");
+  const glvWithdrawalStoreUtils = await hre.ethers.getContract("GlvWithdrawalStoreUtils");
+  const glvShiftStoreUtils = await hre.ethers.getContract("GlvShiftStoreUtils");
+  const glvStoreUtils = await hre.ethers.getContract("GlvStoreUtils");
   const depositHandler = await hre.ethers.getContract("DepositHandler");
   const depositUtils = await hre.ethers.getContract("DepositUtils");
   const executeDepositUtils = await hre.ethers.getContract("ExecuteDepositUtils");
@@ -142,6 +152,17 @@ export async function deployFixture() {
   );
   const ethUsdSingleTokenMarket = await reader.getMarket(dataStore.address, ethUsdSingleTokenMarketAddress);
 
+  const ethUsdSingleTokenMarket2Address = getMarketTokenAddress(
+    wnt.address,
+    wnt.address,
+    wnt.address,
+    DEFAULT_MARKET_TYPE,
+    marketFactory.address,
+    roleStore.address,
+    dataStore.address
+  );
+  const ethUsdSingleTokenMarket2 = await reader.getMarket(dataStore.address, ethUsdSingleTokenMarket2Address);
+
   const btcUsdMarketAddress = getMarketTokenAddress(
     wbtc.address,
     wbtc.address,
@@ -174,6 +195,17 @@ export async function deployFixture() {
     dataStore.address
   );
   const solUsdMarket = await reader.getMarket(dataStore.address, solUsdMarketAddress);
+
+  const ethUsdGlvAddress = getGlvAddress(
+    wnt.address,
+    usdc.address,
+    ethers.constants.HashZero,
+    "GMX Liquidity Vault [WETH-USDC]",
+    "GLV [WETH-USDC]",
+    glvFactory.address,
+    roleStore.address,
+    dataStore.address
+  );
 
   return {
     accountList,
@@ -259,10 +291,21 @@ export async function deployFixture() {
       ethUsdtMarket,
       ethUsdSpotOnlyMarket,
       ethUsdSingleTokenMarket,
+      ethUsdSingleTokenMarket2,
       btcUsdMarket,
       btcUsdSingleTokenMarket,
       solUsdMarket,
       feeHandler,
+      glvFactory,
+      glvHandler,
+      glvVault,
+      glvRouter,
+      ethUsdGlvAddress,
+      glvDepositStoreUtils,
+      glvWithdrawalStoreUtils,
+      glvShiftStoreUtils,
+      glvStoreUtils,
+      glvReader,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };

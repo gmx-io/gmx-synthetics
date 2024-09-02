@@ -4,6 +4,22 @@ import { encodeData } from "../utils/hash";
 import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../utils/market";
 import * as keys from "../utils/keys";
 
+async function toggleMarket({ config, multicallWriteParams, marketToken, marketNameFull, isDisabled }) {
+  if (isDisabled) {
+    console.log(`    disabling ${marketNameFull}`);
+  } else {
+    console.log(`    enabling ${marketNameFull}`);
+  }
+
+  multicallWriteParams.push(
+    config.interface.encodeFunctionData("setBool", [
+      keys.IS_MARKET_DISABLED,
+      encodeData(["address"], [marketToken]),
+      isDisabled,
+    ])
+  );
+}
+
 export async function main() {
   const { read } = hre.deployments;
 
@@ -15,6 +31,8 @@ export async function main() {
 
   const onchainMarketsByTokens = await getOnchainMarkets(read, dataStore.address);
 
+  const multicallWriteParams = [];
+
   for (const marketConfig of markets) {
     const [indexToken, longToken, shortToken] = getMarketTokenAddresses(marketConfig, tokens);
     const marketKey = getMarketKey(indexToken, longToken, shortToken);
@@ -22,34 +40,42 @@ export async function main() {
     const marketToken = onchainMarket.marketToken;
 
     const marketName = marketConfig.tokens.indexToken ? `${marketConfig.tokens.indexToken}/USD` : "SWAP-ONLY";
-    console.log(`updating ${marketName} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}]`);
+    const marketNameFull = `${marketName} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}], ${marketToken}`;
+    console.log(`checking ${marketNameFull}`);
+
+    const toggleMarketParams = { config, multicallWriteParams, marketToken, marketNameFull };
 
     if (process.env.ENABLE_ALL) {
       if (marketConfig.isDisabled) {
-        console.warn(
-          `WARNING: ${marketName} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}] has isDisabled set to true, skipping market`
-        );
+        console.warn(`    WARNING: ${marketNameFull} has isDisabled set to true, skipping market`);
         continue;
       }
 
-      await config.setBool(keys.IS_MARKET_DISABLED, encodeData(["address"], [marketToken]), false);
+      await toggleMarket({ ...toggleMarketParams, isDisabled: false });
       continue;
     }
 
     if (process.env.DISABLE_ALL) {
-      await config.setBool(keys.IS_MARKET_DISABLED, encodeData(["address"], [marketToken]), true);
+      console.log(`disabling ${marketNameFull}`);
+      await toggleMarket({ ...toggleMarketParams, isDisabled: true });
       continue;
     }
 
-    if (marketConfig.isDisabled === false) {
-      await config.setBool(keys.IS_MARKET_DISABLED, encodeData(["address"], [marketToken]), false);
+    if (marketConfig.isDisabled === undefined) {
       continue;
     }
 
-    if (marketConfig.isDisabled === true) {
-      await config.setBool(keys.IS_MARKET_DISABLED, encodeData(["address"], [marketToken]), true);
-      continue;
-    }
+    await toggleMarket({ ...toggleMarketParams, isDisabled: marketConfig.isDisabled });
+  }
+
+  console.log(`updating ${multicallWriteParams.length} params`);
+  console.log("multicallWriteParams", multicallWriteParams);
+
+  if (process.env.WRITE === "true") {
+    const tx = await config.multicall(multicallWriteParams);
+    console.log(`tx sent: ${tx.hash}`);
+  } else {
+    console.log("NOTE: executed in read-only mode, no transactions were sent");
   }
 }
 

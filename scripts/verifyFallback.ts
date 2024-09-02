@@ -5,15 +5,8 @@ import { readJsonFile, writeJsonFile } from "../utils/file";
 import hre from "hardhat";
 import got from "got";
 
-let apiUrl, apiKey;
-
-if (hre.network.name === "snowtrace") {
-  apiUrl = "https://api.snowtrace.io";
-  apiKey = process.env.SNOWTRACE_API_KEY;
-} else {
-  apiUrl = hre.network.config.verify.etherscan.apiUrl;
-  apiKey = hre.network.config.verify.etherscan.apiKey;
-}
+const apiUrl = hre.network.config.verify.etherscan.apiUrl;
+const apiKey = hre.network.config.verify.etherscan.apiKey;
 
 // a custom argument file may be needed for complex arguments
 // https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify#complex-arguments
@@ -91,8 +84,7 @@ async function main() {
       }
 
       if (isContractVerified) {
-        cache[address] = true;
-        console.log("Contract %s %s is already verified", name, address);
+        console.log("%s already verified", name);
         continue;
       }
 

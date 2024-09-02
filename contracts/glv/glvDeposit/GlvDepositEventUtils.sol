@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.0;
 
-import "../event/EventEmitter.sol";
-import "../event/EventUtils.sol";
-import "../utils/Cast.sol";
+import "../../event/EventEmitter.sol";
+import "../../event/EventUtils.sol";
+import "../../utils/Cast.sol";
 
 import "./GlvDeposit.sol";
 
@@ -26,7 +26,7 @@ library GlvDepositEventUtils {
     ) external {
         EventUtils.EventLogData memory eventData;
 
-        eventData.addressItems.initItems(7);
+        eventData.addressItems.initItems(8);
         eventData.addressItems.setItem(0, "account", glvDeposit.account());
         eventData.addressItems.setItem(1, "receiver", glvDeposit.receiver());
         eventData.addressItems.setItem(2, "callbackContract", glvDeposit.callbackContract());
@@ -34,6 +34,7 @@ library GlvDepositEventUtils {
         eventData.addressItems.setItem(4, "glv", glvDeposit.glv());
         eventData.addressItems.setItem(5, "initialLongToken", glvDeposit.initialLongToken());
         eventData.addressItems.setItem(6, "initialShortToken", glvDeposit.initialShortToken());
+        eventData.addressItems.setItem(7, "uiFeeReceiver", glvDeposit.uiFeeReceiver());
 
         eventData.addressItems.initArrayItems(2);
         eventData.addressItems.setItem(0, "longTokenSwapPath", glvDeposit.longTokenSwapPath());
@@ -43,13 +44,14 @@ library GlvDepositEventUtils {
         eventData.uintItems.setItem(0, "initialLongTokenAmount", glvDeposit.initialLongTokenAmount());
         eventData.uintItems.setItem(1, "initialShortTokenAmount", glvDeposit.initialShortTokenAmount());
         eventData.uintItems.setItem(2, "minGlvTokens", glvDeposit.minGlvTokens());
-        eventData.uintItems.setItem(3, "updatedAtBlock", glvDeposit.updatedAtBlock());
-        eventData.uintItems.setItem(4, "updatedAtTime", glvDeposit.updatedAtTime());
-        eventData.uintItems.setItem(5, "executionFee", glvDeposit.executionFee());
-        eventData.uintItems.setItem(6, "callbackGasLimit", glvDeposit.callbackGasLimit());
+        eventData.uintItems.setItem(3, "updatedAtTime", glvDeposit.updatedAtTime());
+        eventData.uintItems.setItem(4, "executionFee", glvDeposit.executionFee());
+        eventData.uintItems.setItem(5, "callbackGasLimit", glvDeposit.callbackGasLimit());
+        eventData.uintItems.setItem(6, "marketTokenAmount", glvDeposit.marketTokenAmount());
 
-        eventData.boolItems.initItems(1);
+        eventData.boolItems.initItems(2);
         eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", glvDeposit.shouldUnwrapNativeToken());
+        eventData.boolItems.setItem(1, "isMarketTokenDeposit", glvDeposit.isMarketTokenDeposit());
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
@@ -66,7 +68,7 @@ library GlvDepositEventUtils {
         EventEmitter eventEmitter,
         bytes32 key,
         address account,
-        uint256 receivedMarketTokens
+        uint256 receivedGlvTokens
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -77,7 +79,7 @@ library GlvDepositEventUtils {
         eventData.addressItems.setItem(0, "account", account);
 
         eventData.uintItems.initItems(1);
-        eventData.uintItems.setItem(2, "receivedMarketTokens", receivedMarketTokens);
+        eventData.uintItems.setItem(0, "receivedGlvTokens", receivedGlvTokens);
 
         eventEmitter.emitEventLog2(
             "GlvDepositExecuted",

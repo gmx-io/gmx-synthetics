@@ -29,6 +29,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       decreaseOrderGasLimit: 0,
       swapOrderGasLimit: 0,
 
+      glvPerMarketGasLimit: 0,
+      glvDepositGasLimit: 0,
+      glvWithdrawalGasLimit: 0,
+      glvShiftGasLimit: 0,
+
       tokenTransferGasLimit: 200_000,
       nativeTokenTransferGasLimit: 50_000,
 
@@ -80,6 +85,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     decreaseOrderGasLimit: 4_000_000,
     swapOrderGasLimit: 3_000_000,
 
+    glvPerMarketGasLimit: 100_000,
+    glvDepositGasLimit: 2_000_000,
+    glvWithdrawalGasLimit: 2_000_000,
+    glvShiftGasLimit: 3_000_000,
+
     tokenTransferGasLimit: 200_000,
     nativeTokenTransferGasLimit: 50_000,
 
@@ -123,8 +133,15 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       estimatedGasFeeBaseAmount: false,
       executionGasFeeBaseAmount: false,
       sequencerUptimeFeed: "0xFdB631F5EE196F0ed6FAa767959853A9F217697D",
+
+      increaseOrderGasLimit: 3_000_000,
+      decreaseOrderGasLimit: 3_000_000,
+      swapOrderGasLimit: 2_500_000,
     },
-    avalanche: {},
+    avalanche: {
+      increaseOrderGasLimit: 3_500_000,
+      decreaseOrderGasLimit: 3_500_000,
+    },
   }[network.name];
 
   if (!networkConfig) {
