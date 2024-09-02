@@ -222,6 +222,15 @@ export const GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT = hashString("GLV_MAX_MARKET_TO
 export const GLV_SHIFT_MIN_INTERVAL = hashString("GLV_SHIFT_MIN_INTERVAL");
 export const IS_GLV_MARKET_DISABLED = hashString("IS_GLV_MARKET_DISABLED");
 
+export const SYNC_CONFIG_FEATURE_DISABLED = hashString("SYNC_CONFIG_FEATURE_DISABLED");
+export const SYNC_CONFIG_MARKET_DISABLED = hashString("SYNC_CONFIG_MARKET_DISABLED");
+export const SYNC_CONFIG_PARAMETER_DISABLED = hashString("SYNC_CONFIG_PARAMETER_DISABLED");
+export const SYNC_CONFIG_MARKET_PARAMETER_DISABLED = hashString("SYNC_CONFIG_MARKET_PARAMETER_DISABLED");
+export const SYNC_CONFIG_UPDATE_COMPLETED = hashString("SYNC_CONFIG_UPDATE_COMPLETED");
+export const SYNC_CONFIG_LATEST_UPDATE_ID = hashString("SYNC_CONFIG_LATEST_UPDATE_ID");
+
+
+
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
 }
@@ -681,4 +690,27 @@ export function glvShiftMaxPriceImpactFactorKey(glv: string) {
 
 export function isGlvMarketDisabledKey(glv: string, market: string) {
   return hashData(["bytes32", "address", "address"], [IS_GLV_MARKET_DISABLED, glv, market]);
+
+export function syncConfigFeatureDisabledKey(contract: string) {
+  return hashData(["bytes32", "address"], [SYNC_CONFIG_FEATURE_DISABLED, contract]);
+}
+
+export function syncConfigMarketDisabledKey(market: string) {
+  return hashData(["bytes32", "address"], [SYNC_CONFIG_MARKET_DISABLED, market]);
+}
+
+export function syncConfigParameterDisabledKey(parameter: string) {
+  return hashData(["bytes32", "string"], [SYNC_CONFIG_PARAMETER_DISABLED, parameter]);
+}
+
+export function syncConfigMarketParameterDisabledKey(market: string, parameter: string) {
+  return hashData(["bytes32", "address", "string"], [SYNC_CONFIG_MARKET_PARAMETER_DISABLED, market, parameter]);
+}
+
+export function syncConfigUpdateCompletedKey(updateId: number) {
+  return hashData(["bytes32", "uint256"], [SYNC_CONFIG_UPDATE_COMPLETED, updateId]);
+}
+
+export function syncConfigLatestUpdateIdKey() {
+  return SYNC_CONFIG_LATEST_UPDATE_ID;
 }

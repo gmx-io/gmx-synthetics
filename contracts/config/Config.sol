@@ -250,7 +250,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     function setBool(bytes32 baseKey, bytes memory data, bool value) external onlyKeeper nonReentrant {
         _validateKey(baseKey);
 
-        bytes32 fullKey = _getFullKey(baseKey, data);
+        bytes32 fullKey = Keys.getFullKey(baseKey, data);
 
         dataStore.setBool(fullKey, value);
 
@@ -279,7 +279,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     function setAddress(bytes32 baseKey, bytes memory data, address value) external onlyKeeper nonReentrant {
         _validateKey(baseKey);
 
-        bytes32 fullKey = _getFullKey(baseKey, data);
+        bytes32 fullKey = Keys.getFullKey(baseKey, data);
 
         dataStore.setAddress(fullKey, value);
 
@@ -308,7 +308,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     function setBytes32(bytes32 baseKey, bytes memory data, bytes32 value) external onlyKeeper nonReentrant {
         _validateKey(baseKey);
 
-        bytes32 fullKey = _getFullKey(baseKey, data);
+        bytes32 fullKey = Keys.getFullKey(baseKey, data);
 
         dataStore.setBytes32(fullKey, value);
 
@@ -335,7 +335,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     function setUint(bytes32 baseKey, bytes memory data, uint256 value) external onlyKeeper nonReentrant {
         _validateKey(baseKey);
 
-        bytes32 fullKey = _getFullKey(baseKey, data);
+        bytes32 fullKey = Keys.getFullKey(baseKey, data);
 
         _validateRange(baseKey, value);
 
@@ -366,7 +366,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     function setInt(bytes32 baseKey, bytes memory data, int256 value) external onlyKeeper nonReentrant {
         _validateKey(baseKey);
 
-        bytes32 fullKey = _getFullKey(baseKey, data);
+        bytes32 fullKey = Keys.getFullKey(baseKey, data);
 
         dataStore.setInt(fullKey, value);
 
@@ -386,14 +386,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey,
             eventData
         );
-    }
-
-    function _getFullKey(bytes32 baseKey, bytes memory data) internal pure returns (bytes32) {
-        if (data.length == 0) {
-            return baseKey;
-        }
-
-        return keccak256(bytes.concat(baseKey, data));
     }
 
     // @dev initialize the allowed base keys
@@ -547,6 +539,11 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.GLV_SHIFT_MIN_INTERVAL] = true;
         allowedBaseKeys[Keys.MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT] = true;
         allowedBaseKeys[Keys.GLV_MAX_MARKET_COUNT] = true;
+
+        allowedBaseKeys[Keys.SYNC_CONFIG_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.SYNC_CONFIG_MARKET_DISABLED] = true;
+        allowedBaseKeys[Keys.SYNC_CONFIG_PARAMETER_DISABLED] = true;
+        allowedBaseKeys[Keys.SYNC_CONFIG_MARKET_PARAMETER_DISABLED] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {

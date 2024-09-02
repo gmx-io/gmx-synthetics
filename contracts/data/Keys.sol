@@ -417,8 +417,32 @@ library Keys {
     bytes32 public constant GLV_SHIFT_MIN_INTERVAL = keccak256(abi.encode("GLV_SHIFT_MIN_INTERVAL"));
     bytes32 public constant MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT = keccak256(abi.encode("MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT"));
 
+    // @dev key for disabling automatic parameter updates via ConfigSyncer
+    bytes32 public constant SYNC_CONFIG_FEATURE_DISABLED = keccak256(abi.encode("SYNC_CONFIG_FEATURE_DISABLED"));
+    // @dev key for disabling all parameter updates for a specific market via ConfigSyncer
+    bytes32 public constant SYNC_CONFIG_MARKET_DISABLED = keccak256(abi.encode("SYNC_CONFIG_MARKET_DISABLED"));
+    // @dev key for disabling all updates for a specific parameter via ConfigSyncer
+    bytes32 public constant SYNC_CONFIG_PARAMETER_DISABLED = keccak256(abi.encode("SYNC_CONFIG_PARAMETER_DISABLED"));
+    // @dev key for disabling all updates for a specific market parameter via ConfigSyncer
+    bytes32 public constant SYNC_CONFIG_MARKET_PARAMETER_DISABLED = keccak256(abi.encode("SYNC_CONFIG_MARKET_PARAMETER_DISABLED"));
+    // @dev key for tracking which updateIds have already been applied by ConfigSyncer
+    bytes32 public constant SYNC_CONFIG_UPDATE_COMPLETED = keccak256(abi.encode("SYNC_CONFIG_UPDATE_COMPLETED"));
+    // @dev key for the latest updateId that has been applied by ConfigSyncer
+    bytes32 public constant SYNC_CONFIG_LATEST_UPDATE_ID = keccak256(abi.encode("SYNC_CONFIG_LATEST_UPDATE_ID"));
+    
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
+
+    // @dev function used to calculate fullKey for a given market parameter
+    // @param baseKey the base key for the market parameter
+    // @param data the additional data for the market parameter
+    function getFullKey(bytes32 baseKey, bytes memory data) internal pure returns (bytes32) {
+        if (data.length == 0) {
+            return baseKey;
+        }
+
+        return keccak256(bytes.concat(baseKey, data));
+    }
 
     // @dev key for the account deposit list
     // @param account the account for the list
@@ -1817,5 +1841,63 @@ library Keys {
             MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT,
             glv
         ));
+    }
+
+    // @dev key for whether the sync config feature is disabled
+    // @param module the sync config module
+    // @return key for sync config feature disabled
+    function syncConfigFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            SYNC_CONFIG_FEATURE_DISABLED,
+            module
+        ));
+    }
+
+    // @dev key for whether sync config updates are disabled for a market
+    // @param market the market to check
+    // @return key for sync config market disabled
+    function syncConfigMarketDisabledKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            SYNC_CONFIG_MARKET_DISABLED,
+            market
+        ));
+    }
+
+    // @dev key for whether sync config updates are disabled for a parameter
+    // @param parameter the parameter to check
+    // @return key for sync config parameter disabled
+    function syncConfigParameterDisabledKey(string memory parameter) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            SYNC_CONFIG_PARAMETER_DISABLED,
+            parameter
+        ));
+    }
+
+    // @dev key for whether sync config updates are disabled for a market parameter
+    // @param market the market to check
+    // @param parameter the parameter to check
+    // @return key for sync config market parameter disabled
+    function syncConfigMarketParameterDisabledKey(address market, string memory parameter) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            SYNC_CONFIG_MARKET_PARAMETER_DISABLED,
+            market,
+            parameter
+        ));
+    }
+
+    // @dev key for whether a sync config update is completed
+    // @param updateId the update id to check
+    // @return key for sync config market update completed
+    function syncConfigUpdateCompletedKey(uint256 updateId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            SYNC_CONFIG_UPDATE_COMPLETED,
+            updateId
+        ));
+    }
+
+    // @dev key for the latest sync config update that was completed
+    // @return key for sync config latest update id
+    function syncConfigLatestUpdateIdKey() internal pure returns (bytes32) {
+        return SYNC_CONFIG_LATEST_UPDATE_ID;
     }
 }

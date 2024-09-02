@@ -8,6 +8,7 @@ import glvsConfig from "./glvs";
 import oracleConfig from "./oracle";
 import generalConfig from "./general";
 import rolesConfig from "./roles";
+import riskOracleConfig from "./riskOracle";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 extendEnvironment(async (hre: HardhatRuntimeEnvironment) => {
@@ -20,5 +21,6 @@ extendEnvironment(async (hre: HardhatRuntimeEnvironment) => {
     getGlvs: _.memoize(async () => glvsConfig(hre)),
     getGeneral: _.memoize(async () => generalConfig(hre)),
     getRoles: _.memoize(async () => rolesConfig(hre)),
+    getRiskOracle: _.memoize(async () => riskOracleConfig(hre)),
   };
 });

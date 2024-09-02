@@ -55,6 +55,14 @@ contract RoleModule {
     }
 
     /**
+     * @dev Only allows addresses with the LIMITED_CONFIG_KEEPER role to call the function.
+     */
+    modifier onlyLimitedConfigKeeper() {
+        _validateRole(Role.LIMITED_CONFIG_KEEPER, "LIMITED_CONFIG_KEEPER");
+        _;
+    }
+
+    /**
      * @dev Only allows addresses with the CONTROLLER role to call the function.
      */
     modifier onlyController() {

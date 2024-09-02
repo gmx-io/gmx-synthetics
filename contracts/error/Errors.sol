@@ -388,4 +388,14 @@ library Errors {
     // Uint256Mask errors
     error MaskIndexOutOfBounds(uint256 index, string label);
     error DuplicatedIndex(uint256 index, string label);
+
+    // Cast errors
+    error Uint256AsBytesLengthExceeds32Bytes(uint256 length);
+
+    // ConfigSyncer errors
+    error SyncConfigInvalidInputLengths(uint256 marketsLength, uint256 parametersLength);
+    error SyncConfigUpdatesDisabledForMarket(address market);
+    error SyncConfigUpdatesDisabledForParameter(string parameter);
+    error SyncConfigUpdatesDisabledForMarketParameter(address market, string parameter);
+    error SyncConfigInvalidMarketFromData(address market, address marketFromData);
 }
