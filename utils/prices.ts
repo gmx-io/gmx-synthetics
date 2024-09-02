@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import hre from "hardhat";
+import hre, { ethers } from "hardhat";
 import { expandDecimals, bigNumberify } from "./math";
 
 export async function fetchTickerPrices() {
@@ -30,7 +30,7 @@ export function getTickersUrl() {
   throw new Error("Unsupported network");
 }
 
-export const prices = {};
+export const prices: Record<string, any> = {};
 
 prices.wnt = {
   contractName: "wnt",

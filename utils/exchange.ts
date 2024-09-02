@@ -1,3 +1,4 @@
+import { ethers } from "hardhat";
 import { logGasUsage } from "./gas";
 import { bigNumberify } from "./math";
 import { getOracleParams, getOracleParamsForSimulation, TOKEN_ORACLE_TYPES } from "./oracle";
@@ -56,6 +57,8 @@ export async function executeWithOracleParams(fixture, overrides) {
     minPrices,
     maxPrices,
     execute,
+    simulateExecute,
+    simulate,
     gasUsageLabel,
     dataStreamTokens,
     dataStreamData,
@@ -64,6 +67,18 @@ export async function executeWithOracleParams(fixture, overrides) {
   const { provider } = ethers;
   const { signers } = fixture.accounts;
   const { oracleSalt, signerIndexes } = fixture.props;
+
+  if (tokens.length > precisions.length || tokens.length > minPrices.length || tokens.length > maxPrices.length) {
+    throw new Error("`tokens` should not be bigger than `precisions`, `minPrices` or `maxPrices`");
+  }
+
+  if (simulate && !simulateExecute) {
+    throw new Error("`simulateExecute` is required if `simulate` is true");
+  }
+
+  if (!oracleBlockNumber) {
+    throw new Error("`oracleBlockNumber` is required");
+  }
 
   const block = await provider.getBlock(bigNumberify(oracleBlockNumber).toNumber());
   const tokenOracleTypes =
@@ -115,12 +130,18 @@ export async function executeWithOracleParams(fixture, overrides) {
   let oracleParams;
   if (overrides.simulate) {
     oracleParams = await getOracleParamsForSimulation(args);
+    try {
+      await simulateExecute(key, oracleParams);
+    } catch (ex) {
+      if (!ex.toString().includes("EndOfOracleSimulation")) {
+        throw ex;
+      }
+    }
   } else {
     oracleParams = await getOracleParams(args);
+    return logGasUsage({
+      tx: execute(key, oracleParams),
+      label: gasUsageLabel,
+    });
   }
-
-  return await logGasUsage({
-    tx: execute(key, oracleParams),
-    label: gasUsageLabel,
-  });
 }

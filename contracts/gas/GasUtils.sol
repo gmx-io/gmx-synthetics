@@ -13,6 +13,7 @@ import "../withdrawal/Withdrawal.sol";
 import "../shift/Shift.sol";
 import "../order/Order.sol";
 import "../order/BaseOrderUtils.sol";
+import "../glv/glvWithdrawal/GlvWithdrawal.sol";
 
 import "../bank/StrictBank.sol";
 
@@ -24,6 +25,7 @@ library GasUtils {
     using Shift for Shift.Props;
     using Order for Order.Props;
     using GlvDeposit for GlvDeposit.Props;
+    using GlvWithdrawal for GlvWithdrawal.Props;
 
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
@@ -235,16 +237,29 @@ library GasUtils {
 
     // @dev get estimated number of oracle prices for shift
     function estimateShiftOraclePriceCount() internal pure returns (uint256) {
+        // for single asset markets only 3 prices will be required
+        // and keeper will slightly overpay
+        // it should not be an issue because execution fee goes back to keeper
         return 4;
     }
 
-    // @dev get estimated number of oracle prices for glv deposit
-    // @param marketCount number of markets in the glv
-    // @param swapsCount number of swaps in the glv deposit
     function estimateGlvDepositOraclePriceCount(
         uint256 marketCount,
         uint256 swapsCount
     ) internal pure returns (uint256) {
+        // for single asset markets oracle price count will be overestimated by 1
+        // it should not be an issue for GLV with multiple markets
+        // because relative difference would be insignificant
+        return 2 + marketCount + swapsCount;
+    }
+
+    function estimateGlvWithdrawalOraclePriceCount(
+        uint256 marketCount,
+        uint256 swapsCount
+    ) internal pure returns (uint256) {
+        // for single asset markets oracle price count will be overestimated by 1
+        // it should not be an issue for GLV with multiple markets
+        // because relative difference would be insignificant
         return 2 + marketCount + swapsCount;
     }
 
@@ -340,7 +355,7 @@ library GasUtils {
 
         uint256 gasLimit = glvDepositGasLimit + glvDeposit.callbackGasLimit() + gasForGlvMarkets;
 
-        if (glvDeposit.market() == glvDeposit.initialLongToken()) {
+        if (glvDeposit.isMarketTokenDeposit()) {
             // user provided GM, no separate deposit will be created and executed in this case
             return gasLimit;
         }
@@ -353,6 +368,29 @@ library GasUtils {
             return gasLimit + dataStore.getUint(Keys.depositGasLimitKey(true)) + gasForSwaps;
         }
         return gasLimit + dataStore.getUint(Keys.depositGasLimitKey(false)) + gasForSwaps;
+    }
+
+    // @dev the estimated gas limit for glv withdrawals
+    // @param dataStore DataStore
+    // @param withdrawal the withdrawal to estimate the gas limit for
+    function estimateExecuteGlvWithdrawalGasLimit(DataStore dataStore, GlvWithdrawal.Props memory glvWithdrawal, uint256 marketCount) internal view returns (uint256) {
+        // glv withdrawal execution gas consumption depends on the amount of markets
+        uint256 gasPerGlvPerMarket = dataStore.getUint(Keys.glvPerMarketGasLimitKey());
+        uint256 gasForGlvMarkets = gasPerGlvPerMarket * marketCount;
+        uint256 glvWithdrawalGasLimit = dataStore.getUint(Keys.glvWithdrawalGasLimitKey());
+
+        uint256 gasLimit = glvWithdrawalGasLimit + glvWithdrawal.callbackGasLimit() + gasForGlvMarkets;
+
+        uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
+        uint256 swapCount = glvWithdrawal.longTokenSwapPath().length + glvWithdrawal.shortTokenSwapPath().length;
+        uint256 gasForSwaps = swapCount * gasPerSwap;
+
+        return gasLimit + dataStore.getUint(Keys.withdrawalGasLimitKey()) + gasForSwaps;
+    }
+
+
+    function estimateExecuteGlvShiftGasLimit(DataStore dataStore) internal view returns (uint256) {
+        return dataStore.getUint(Keys.glvShiftGasLimitKey());
     }
 
     function emitKeeperExecutionFee(

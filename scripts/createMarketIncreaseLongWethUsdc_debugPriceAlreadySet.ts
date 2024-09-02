@@ -58,7 +58,7 @@ async function main() {
     await usdc.mint(wallet.address, tokenAmount);
   }
 
-  const market = "0xbf338a6C595f06B7Cfff2FA8c958d49201466374"
+  const market = "0xbf338a6C595f06B7Cfff2FA8c958d49201466374";
   console.log("market %s", market);
 
   // based on failed order 0xc1fc90672000b67b64e1a548a4a078f957de75f9cad9d438a1ebdf5e95129a35

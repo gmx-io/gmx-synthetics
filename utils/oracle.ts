@@ -195,7 +195,7 @@ export async function getOracleParamsForSimulation({ tokens, minPrices, maxPrice
     throw new Error(`Invalid input, tokens.length != maxPrices.length ${tokens}, ${maxPrices}`);
   }
 
-  const currentTimestamp = (await ethers.provider.getBlock()).timestamp + 2;
+  const currentTimestamp = (await ethers.provider.getBlock("latest")).timestamp + 2;
   let minTimestamp = currentTimestamp;
   let maxTimestamp = currentTimestamp;
   for (const timestamp of oracleTimestamps) {

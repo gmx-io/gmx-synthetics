@@ -84,8 +84,7 @@ async function main() {
       }
 
       if (isContractVerified) {
-        cache[address] = true;
-        console.log("Contract %s %s is already verified", name, address);
+        console.log("%s already verified", name);
         continue;
       }
 

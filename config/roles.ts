@@ -107,6 +107,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       ROUTER_PLUGIN: {
         "0x69C527fC77291722b52649E45c838e41be8Bf5d5": true, // ExchangeRouter_3
         "0x9F48160eDc3Ad78F4cA0E3FDF54A75D8FB228452": true, // SubaccountRouter_2
+        "0x75eAFD2B4e306Dad8dd6334456F8018218Bc9882": true, // GlvRouter_1
       },
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
@@ -136,6 +137,10 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
 
         "0x4895170e184441da9BD2bF95c120c07ba628eeF0": true, // TimestampInitializer_3
         "0xEa90EC1228F7D1b3D47D84d1c9D46dBDFEfF7709": true, // ShiftHandler_3
+
+        "0x26DdDaA629Bb35FC1853d051561f2200dD190588": true, // GlvHandler_1
+        "0x75eAFD2B4e306Dad8dd6334456F8018218Bc9882": true, // GlvRouter_1
+        "0xdaFa7Deb67805d7498Aa926002bB2d713D1d9256": true, // GlvFactory_2
       },
       GOV_TOKEN_CONTROLLER: {
         "0x159854e14A862Df9E39E1D128b8e5F70B4A3cE9B": true, // RewardRouterV2_1

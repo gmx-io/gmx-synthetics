@@ -29,6 +29,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       decreaseOrderGasLimit: 0,
       swapOrderGasLimit: 0,
 
+      glvPerMarketGasLimit: 0,
+      glvDepositGasLimit: 0,
+      glvWithdrawalGasLimit: 0,
+      glvShiftGasLimit: 0,
+
       tokenTransferGasLimit: 200_000,
       nativeTokenTransferGasLimit: 50_000,
 
@@ -79,6 +84,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     increaseOrderGasLimit: 4_000_000,
     decreaseOrderGasLimit: 4_000_000,
     swapOrderGasLimit: 3_000_000,
+
+    glvPerMarketGasLimit: 100_000,
+    glvDepositGasLimit: 2_000_000,
+    glvWithdrawalGasLimit: 2_000_000,
+    glvShiftGasLimit: 3_000_000,
 
     tokenTransferGasLimit: 200_000,
     nativeTokenTransferGasLimit: 50_000,
