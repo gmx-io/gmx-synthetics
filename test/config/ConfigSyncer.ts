@@ -249,8 +249,7 @@ describe("ConfigSyncer", () => {
 
   it("reverts when market does not equal market from data", async () => {
     if (parametersList[0].parameterFormat === "parameterFormat4") {
-      console.error('Make sure parameterList[0].parameterFormat does not equal "parameterFormat4" or part of this test is redundant');
-      throw Error;
+      throw new Error('Make sure parameterList[0].parameterFormat does not equal "parameterFormat4" or part of this test is redundant');
     }
     
     const hexValue = ethers.utils.hexValue(2000000);
