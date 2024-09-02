@@ -690,6 +690,7 @@ export function glvShiftMaxPriceImpactFactorKey(glv: string) {
 
 export function isGlvMarketDisabledKey(glv: string, market: string) {
   return hashData(["bytes32", "address", "address"], [IS_GLV_MARKET_DISABLED, glv, market]);
+}
 
 export function syncConfigFeatureDisabledKey(contract: string) {
   return hashData(["bytes32", "address"], [SYNC_CONFIG_FEATURE_DISABLED, contract]);
