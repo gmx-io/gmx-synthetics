@@ -42,31 +42,31 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
             glvMaxMarketTokenBalanceAmount: expandDecimals(1_300_000, 18),
             glvMaxMarketTokenBalanceUsd: decimalToFloat(2_000_000),
           },
-          // {
-          //   indexToken: "LTC",
-          //   glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
-          //   glvMaxMarketTokenBalanceUsd: decimalToFloat(750_000),
-          // },
-          // {
-          //   indexToken: "XRP",
-          //   glvMaxMarketTokenBalanceAmount: expandDecimals(670_000, 18),
-          //   glvMaxMarketTokenBalanceUsd: decimalToFloat(1_000_000),
-          // },
-          // {
-          //   indexToken: "ATOM",
-          //   glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
-          //   glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
-          // },
-          // {
-          //   indexToken: "NEAR",
-          //   glvMaxMarketTokenBalanceAmount: expandDecimals(1_000_000, 18),
-          //   glvMaxMarketTokenBalanceUsd: decimalToFloat(1_000_000),
-          // },
-          // {
-          //   indexToken: "SHIB",
-          //   glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
-          //   glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
-          // },
+          {
+            indexToken: "LTC",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(750_000),
+          },
+          {
+            indexToken: "XRP",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(670_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_000_000),
+          },
+          {
+            indexToken: "ATOM",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
+          },
+          {
+            indexToken: "NEAR",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(1_000_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_000_000),
+          },
+          {
+            indexToken: "SHIB",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
+          },
         ],
       },
     ],
