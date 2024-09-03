@@ -82,22 +82,6 @@ async function main() {
         role: "CONTROLLER",
         member: "0xff10ff89195191d22f7b934a5e1cd581ec0ccb93",
       },
-      {
-        role: "CONTROLLER",
-        member: "0x26dddaa629bb35fc1853d051561f2200dd190588",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x75eafd2b4e306dad8dd6334456f8018218bc9882",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0xdafa7deb67805d7498aa926002bb2d713d1d9256",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x75eafd2b4e306dad8dd6334456f8018218bc9882",
-      },
     ],
     avalanche: [],
   };
