@@ -24,7 +24,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     arbitrum: [
       {
         name: "GMX Liquidity Vault [WETH-USDC]",
-        symbol: "GLV",
+        symbol: "GLV [WETH-USDC]",
         longToken: "WETH",
         shortToken: "USDC",
         shiftMaxPriceImpactFactor: percentageToFloat("0.1%"),
