@@ -35,18 +35,31 @@ async function main() {
     throw new Error("Empty glv config");
   }
 
-  const glvName = `GMX Liquidity Vault [${longTokenSymbol}-${shortTokenSymbol}]`;
-
-  // Metamask doesn't accept token symbol longer than 11 symbols
-  const glvSymbol = "GLV";
-  if (glvSymbol.length > 11) {
-    throw new Error("GLV_SYMBOL should not be longer than 11 symbols");
+  const glvName = glvConfig.name;
+  if (!glvName) {
+    throw new Error("Glv name is required");
   }
 
-  console.info(`creating glv: longToken: ${longTokenAddress}, shortToken: ${shortTokenAddress}`);
+  const glvSymbol = glvConfig.symbol;
+  if (!glvSymbol) {
+    throw new Error("Glv symbol is required");
+  }
+
+  const glvType = DEFAULT_GLV_TYPE;
+
+  console.info(
+    'creating glv longToken: %s (%s) shortToken: %s (%s) name: "%s" symbol: "%s" type: %s',
+    longTokenSymbol,
+    longTokenAddress,
+    shortTokenSymbol,
+    shortTokenAddress,
+    glvName,
+    glvSymbol,
+    glvType
+  );
 
   if (process.env.WRITE === "true") {
-    const tx0 = await glvFactory.createGlv(longTokenAddress, shortTokenAddress, DEFAULT_GLV_TYPE, glvName, glvSymbol);
+    const tx0 = await glvFactory.createGlv(longTokenAddress, shortTokenAddress, glvType, glvName, glvSymbol);
     console.log(`create glv tx sent: ${tx0.hash}`);
 
     let receipt;
@@ -70,7 +83,7 @@ async function main() {
 
     console.log(`glv created: ${glvToken}`);
   } else {
-    await glvFactory.callStatic.createGlv(longTokenAddress, shortTokenAddress, DEFAULT_GLV_TYPE, glvName, glvSymbol);
+    await glvFactory.callStatic.createGlv(longTokenAddress, shortTokenAddress, glvType, glvName, glvSymbol);
     console.log("NOTE: executed in read-only mode, no transactions were sent");
   }
 }
