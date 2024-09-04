@@ -7,6 +7,7 @@ type GlvConfig = {
   shortToken: string;
   // address is required for updateGlvConfig script
   address?: string;
+  transferGasLimit: number;
   type: string;
   shiftMaxPriceImpactFactor: BigNumberish;
   shiftMinInterval: number;
@@ -27,6 +28,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         symbol: "GLV [WETH-USDC]",
         address: "0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9",
         longToken: "WETH",
+        transferGasLimit: 200_000,
         shortToken: "USDC",
         shiftMaxPriceImpactFactor: percentageToFloat("0.1%"),
         shiftMinInterval: 60 * 60, // 1 hour
@@ -78,6 +80,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         symbol: "GLV",
         longToken: "WETH",
         shortToken: "USDC",
+        transferGasLimit: 200_000,
         shiftMaxPriceImpactFactor: percentageToFloat("2%"),
         shiftMinInterval: 300, // 5 minutes
         minTokensForFirstGlvDeposit: expandDecimals(2, 18),

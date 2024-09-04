@@ -44,6 +44,14 @@ const processGlvs = async ({ glvs, onchainMarketsByTokens, tokens, handleConfig 
       `minTokensForFirstGlvDeposit ${glvSymbol}`
     );
 
+    await handleConfig(
+      "uint",
+      keys.TOKEN_TRANSFER_GAS_LIMIT,
+      encodeData(["address"], [glvConfig.address]),
+      glvConfig.transferGasLimit,
+      `transferGasLimit ${glvConfig.transferGasLimit}`
+    );
+
     const glvSupportedMarketList = await dataStore.getAddressValuesAt(
       keys.glvSupportedMarketListKey(glvAddress),
       0,
