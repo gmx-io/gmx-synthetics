@@ -154,31 +154,33 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
 
   await handleConfig("uint", keys.swapOrderGasLimitKey(), "0x", generalConfig.swapOrderGasLimit, `swapOrderGasLimit`);
 
-  await handleConfig(
-    "uint",
-    keys.glvPerMarketGasLimitKey(),
-    "0x",
-    generalConfig.glvPerMarketGasLimit,
-    `glvPerMarketGasLimit`
-  );
+  if (hre.network.name !== "avalanche" || process.env.SKIP_GLV_LIMITS_AVALANCHE !== "true") {
+    await handleConfig(
+      "uint",
+      keys.glvPerMarketGasLimitKey(),
+      "0x",
+      generalConfig.glvPerMarketGasLimit,
+      `glvPerMarketGasLimit`
+    );
 
-  await handleConfig(
-    "uint",
-    keys.glvDepositGasLimitKey(),
-    "0x",
-    generalConfig.glvDepositGasLimit,
-    `glvDepositGasLimit`
-  );
+    await handleConfig(
+      "uint",
+      keys.glvDepositGasLimitKey(),
+      "0x",
+      generalConfig.glvDepositGasLimit,
+      `glvDepositGasLimit`
+    );
 
-  await handleConfig(
-    "uint",
-    keys.glvWithdrawalGasLimitKey(),
-    "0x",
-    generalConfig.glvWithdrawalGasLimit,
-    `glvWithdrawalGasLimit`
-  );
+    await handleConfig(
+      "uint",
+      keys.glvWithdrawalGasLimitKey(),
+      "0x",
+      generalConfig.glvWithdrawalGasLimit,
+      `glvWithdrawalGasLimit`
+    );
 
-  await handleConfig("uint", keys.glvShiftGasLimitKey(), "0x", generalConfig.glvShiftGasLimit, `glvShiftGasLimit`);
+    await handleConfig("uint", keys.glvShiftGasLimitKey(), "0x", generalConfig.glvShiftGasLimit, `glvShiftGasLimit`);
+  }
 
   await handleConfig(
     "uint",
@@ -354,10 +356,27 @@ export async function updateGeneralConfig({ write }) {
   console.log(`updating ${multicallWriteParams.length} params`);
   console.log("multicallWriteParams", multicallWriteParams);
 
-  if (write) {
-    const tx = await config.multicall(multicallWriteParams);
-    console.log(`tx sent: ${tx.hash}`);
-  } else {
-    console.log("NOTE: executed in read-only mode, no transactions were sent");
+  try {
+    if (write) {
+      const tx = await config.multicall(multicallWriteParams);
+      console.log(`tx sent: ${tx.hash}`);
+    } else {
+      await config.callStatic.multicall(multicallWriteParams, {
+        from: "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745",
+      });
+      console.log("NOTE: executed in read-only mode, no transactions were sent");
+    }
+  } catch (ex) {
+    if (
+      ex.errorName === "InvalidBaseKey" &&
+      hre.network.name === "avalanche" &&
+      process.env.SKIP_GLV_LIMITS_AVALANCHE !== "true"
+    ) {
+      console.error(ex);
+      console.log("Use SKIP_GLV_LIMITS_AVALANCHE=true to skip updating GLV gas limits on Avalanche");
+      return;
+    }
+
+    throw ex;
   }
 }
