@@ -51,6 +51,8 @@ export function getGlvKey(longToken: string, shortToken: string) {
 export function createGlvConfigByKey({ glvConfigs, tokens }) {
   const glvConfigByKey = {};
 
+  // TODO check if long/short tokens are duplicated
+
   for (const glvConfig of glvConfigs) {
     const [longToken, shortToken] = getGlvTokenAddresses(glvConfig.longToken, glvConfig.shortToken, tokens);
     const glvKey = getGlvKey(longToken, shortToken);

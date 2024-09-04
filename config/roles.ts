@@ -123,7 +123,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xf5f30b10141e1f63fc11ed772931a8294a591996": true, // MarketFactory_1
 
         "0x7d36FE0840140Aa2bb45711d8EC228e77F597493": true, // AutoCancelSyncer_3
-        "0x8583b878DA0844B7f59974069f00D3A9eaE0F4ae": true, // Config_3
+        "0xFf10Ff89195191d22F7B934A5E1Cd581Ec0Ccb93": true, // Config_3
         "0xf32b417A93Acc039B236F1eCC86B56bd3cB8E698": true, // Timelock_3
         "0xb8fc96d7a413C462F611A7aC0C912c2FE26EAbC4": true, // Oracle_3
         "0xb0c681DE9CB4B75eD0A620c04A958Bc05f4087b7": true, // SwapHandler_3

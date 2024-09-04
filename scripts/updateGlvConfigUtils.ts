@@ -19,7 +19,7 @@ const processGlvs = async ({ glvs, onchainMarketsByTokens, tokens, handleConfig 
     const glvAddress = glvConfig.address;
 
     if (!glvAddress) {
-      throw new Error(`No address for GLV ${longToken}-${shortToken}`);
+      throw new Error(`No address for GLV ${glvConfig.longToken}-${glvConfig.shortToken} in the config`);
     }
 
     await handleConfig(
@@ -42,6 +42,14 @@ const processGlvs = async ({ glvs, onchainMarketsByTokens, tokens, handleConfig 
       encodeData(["address"], [glvAddress]),
       glvConfig.minTokensForFirstGlvDeposit,
       `minTokensForFirstGlvDeposit ${glvSymbol}`
+    );
+
+    await handleConfig(
+      "uint",
+      keys.TOKEN_TRANSFER_GAS_LIMIT,
+      encodeData(["address"], [glvConfig.address]),
+      glvConfig.transferGasLimit,
+      `transferGasLimit ${glvConfig.transferGasLimit}`
     );
 
     const glvSupportedMarketList = await dataStore.getAddressValuesAt(
@@ -163,6 +171,18 @@ export async function updateGlvConfig({ write }) {
       console.info(`update config tx sent: ${tx.hash}`);
     });
   } else {
+    for (const [glvAddress, marketAddress] of marketsToAdd) {
+      console.log("simulating adding market %s to glv %s", marketAddress, glvAddress);
+      await glvHandler.callStatic.addMarketToGlv(glvAddress, marketAddress);
+      console.info("done");
+    }
+
+    await handleInBatches(multicallWriteParams, 100, async (batch) => {
+      console.log("simulating config updates");
+      await config.callStatic.multicall(batch);
+      console.log("done");
+    });
+
     console.info("NOTE: executed in read-only mode, no transactions were sent");
   }
 }
