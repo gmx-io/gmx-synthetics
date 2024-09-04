@@ -80,26 +80,19 @@ async function main() {
     arbitrum: [
       {
         role: "CONTROLLER",
-        member: "0x26dddaa629bb35fc1853d051561f2200dd190588",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x75eafd2b4e306dad8dd6334456f8018218bc9882",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0xdafa7deb67805d7498aa926002bb2d713d1d9256",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x75eafd2b4e306dad8dd6334456f8018218bc9882",
+        member: "0xff10ff89195191d22f7b934a5e1cd581ec0ccb93",
       },
     ],
     avalanche: [],
   };
 
   const rolesToRemove = {
-    arbitrum: [],
+    arbitrum: [
+      {
+        role: "CONTROLLER",
+        member: "0x8583b878DA0844B7f59974069f00D3A9eaE0F4ae",
+      },
+    ],
     avalanche: [
       {
         role: "ROLE_ADMIN",
