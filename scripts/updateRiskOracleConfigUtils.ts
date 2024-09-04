@@ -1,7 +1,6 @@
 import hre from "hardhat";
 
 import { encodeData } from "../utils/hash";
-import { bigNumberify } from "../utils/math";
 import { getFullKey } from "../utils/config";
 import { handleInBatches } from "../utils/batch";
 import * as keys from "../utils/keys";
@@ -95,7 +94,7 @@ export async function updateRiskOracleConfig({ write }) {
     const description = syncConfigKeys[i].description;
     const baseKey = syncConfigKeys[i].baseKey;
     const data = syncConfigKeys[i].data;
-    const oldValue = !bigNumberify(result[i].returnData).isZero();
+    const oldValue = ethers.utils.defaultAbiCoder.decode(["bool"], result[i].returnData)[0];
     const newValue = syncConfigKeys[i].newValue;
     
     if (newValue !== oldValue) {
