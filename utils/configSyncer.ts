@@ -80,24 +80,16 @@ export function getDataForKey(
   if (parameterDetails.parameterFormat === "parameterFormat1") {
     if (parameterDetails.isLongToken) {
       return encodeData(["address", "address"], [marketAddress, longToken]);
-    }
-    else {
+    } else {
       return encodeData(["address", "address"], [marketAddress, shortToken]);
     }
-  }
-
-  else if (parameterDetails.parameterFormat === "parameterFormat2") {
+  } else if (parameterDetails.parameterFormat === "parameterFormat2") {
     return encodeData(["address"], [marketAddress]);
-  }
-
-  else if (parameterDetails.parameterFormat === "parameterFormat3") {
+  } else if (parameterDetails.parameterFormat === "parameterFormat3") {
     return encodeData(["address", "bool"], [marketAddress, parameterDetails.isLong]);
-  }
-
-  else if (parameterDetails.parameterFormat === "parameterFormat4") {
+  } else if (parameterDetails.parameterFormat === "parameterFormat4") {
     return encodeData(["bytes32", "address", "bool"], [parameterDetails.extKey, marketAddress, parameterDetails.isLong]);
-  }
-  else {
+  } else {
     throw new Error(`Unsupported parameterFormat: ${parameterDetails.parameterFormat}`);
   }
 }
