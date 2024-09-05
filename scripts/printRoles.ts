@@ -22,6 +22,8 @@ const knownRoles = Object.fromEntries(
     "PRICING_KEEPER",
     "LIQUIDATION_KEEPER",
     "ADL_KEEPER",
+    "CONTRIBUTOR_KEEPER",
+    "CONTRIBUTOR_DISTRIBUTOR",
   ].map((role) => [hashString(role), role])
 );
 

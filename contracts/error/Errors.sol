@@ -29,11 +29,18 @@ library Errors {
     // Config errors
     error InvalidBaseKey(bytes32 baseKey);
     error ConfigValueExceedsAllowedRange(bytes32 baseKey, uint256 value);
+    error ConfigValueBelowAllowedRange(bytes32 baseKey, uint256 value);
     error InvalidClaimableFactor(uint256 value);
     error OracleProviderAlreadyExistsForToken(address token);
     error PriceFeedAlreadyExistsForToken(address token);
     error DataStreamIdAlreadyExistsForToken(address token);
     error MaxFundingFactorPerSecondLimitExceeded(uint256 maxFundingFactorPerSecond, uint256 limit);
+
+    // ContributorHandler errors
+    error InvalidSetContributorPaymentInput(uint256 tokensLength, uint256 amountsLength);
+    error InvalidContributorToken(address token);
+    error MaxTotalContributorTokenAmountExceeded(address token, uint256 totalAmount, uint256 maxTotalAmount);
+    error MinContributorPaymentIntervalNotYetPassed(uint256 minPaymentInterval);
 
     // Timelock errors
     error ActionAlreadySignalled();

@@ -429,7 +429,22 @@ library Keys {
     bytes32 public constant SYNC_CONFIG_UPDATE_COMPLETED = keccak256(abi.encode("SYNC_CONFIG_UPDATE_COMPLETED"));
     // @dev key for the latest updateId that has been applied by ConfigSyncer
     bytes32 public constant SYNC_CONFIG_LATEST_UPDATE_ID = keccak256(abi.encode("SYNC_CONFIG_LATEST_UPDATE_ID"));
-    
+
+    // @dev key for the contributor account list
+    bytes32 public constant CONTRIBUTOR_ACCOUNT_LIST = keccak256(abi.encode("CONTRIBUTOR_ACCOUNT_LIST"));
+    // @dev key for the contributor token list
+    bytes32 public constant CONTRIBUTOR_TOKEN_LIST = keccak256(abi.encode("CONTRIBUTOR_TOKEN_LIST"));
+    // @dev key for the contributor token amount
+    bytes32 public constant CONTRIBUTOR_TOKEN_AMOUNT = keccak256(abi.encode("CONTRIBUTOR_TOKEN_AMOUNT"));
+    // @dev key for the max total contributor token amount
+    bytes32 public constant MAX_TOTAL_CONTRIBUTOR_TOKEN_AMOUNT = keccak256(abi.encode("MAX_TOTAL_CONTRIBUTOR_TOKEN_AMOUNT"));
+    // @dev key for the contributor token vault
+    bytes32 public constant CONTRIBUTOR_TOKEN_VAULT = keccak256(abi.encode("CONTRIBUTOR_TOKEN_VAULT"));
+    // @dev key for the contributor last payment at
+    bytes32 public constant CONTRIBUTOR_LAST_PAYMENT_AT = keccak256(abi.encode("CONTRIBUTOR_LAST_PAYMENT_AT"));
+    // @dev key for the min contributor payment interval
+    bytes32 public constant MIN_CONTRIBUTOR_PAYMENT_INTERVAL = keccak256(abi.encode("MIN_CONTRIBUTOR_PAYMENT_INTERVAL"));
+
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
 
@@ -1899,5 +1914,37 @@ library Keys {
     // @return key for sync config latest update id
     function syncConfigLatestUpdateIdKey() internal pure returns (bytes32) {
         return SYNC_CONFIG_LATEST_UPDATE_ID;
+    }
+
+    // @dev key for the contributor token amount
+    // @param account the contributor account
+    // @param token the contributor token
+    // @return key for the contributor token amount
+    function contributorTokenAmountKey(address account, address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CONTRIBUTOR_TOKEN_AMOUNT,
+            account,
+            token
+        ));
+    }
+
+    // @dev key for the max total contributor token amount
+    // @param token the contributor token
+    // @return key for the max contributor token amount
+    function maxTotalContributorTokenAmountKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MAX_TOTAL_CONTRIBUTOR_TOKEN_AMOUNT,
+            token
+        ));
+    }
+
+    // @dev key for the contributor token vault
+    // @param token the contributor token
+    // @return key for the contributor token vault
+    function contributorTokenVaultKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CONTRIBUTOR_TOKEN_VAULT,
+            token
+        ));
     }
 }
