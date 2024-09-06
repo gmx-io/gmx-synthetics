@@ -3,6 +3,7 @@ import { MarketConfig } from "./markets";
 import { OracleConfig } from "./oracle";
 import getGeneral from "./general";
 import { RolesConfig } from "./roles";
+import { RiskOracleConfig } from "./riskOracle";
 
 // extend hardhat config with custom gmx property
 declare module "hardhat/types/runtime" {
@@ -13,6 +14,7 @@ declare module "hardhat/types/runtime" {
       getOracle: () => Promise<OracleConfig>;
       getGeneral: () => ReturnType<typeof getGeneral>;
       getRoles: () => Promise<RolesConfig>;
+      getRiskOracle: () => Promise<RiskOracleConfig>;
     };
   }
 }

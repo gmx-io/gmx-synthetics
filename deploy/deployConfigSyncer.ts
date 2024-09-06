@@ -7,7 +7,8 @@ const func = createDeployFunction({
   contractName: "ConfigSyncer",
   dependencyNames: constructorContracts,
   getDeployArgs: async ({ dependencyContracts, gmx, network, get }) => {
-    let riskOracleAddress = await gmx.getRiskOracle();
+    const riskOracleConfig = await gmx.getRiskOracle();
+    let riskOracleAddress = riskOracleConfig.riskOracle;
     if (network.name === "hardhat") {
       const riskOracle = await get("MockRiskOracle");
       riskOracleAddress = riskOracle.address;

@@ -37,12 +37,10 @@ describe("ConfigSyncer", () => {
 
       if (i < (parametersList.length - 2)) {
         newValues.push(hexValue);
-      }
-      else if (i < (parametersList.length - 1)) {
+      } else if (i < (parametersList.length - 1)) {
         const paddedHex = "0x00" + hexValue.slice(2);
         newValues.push(paddedHex);
-      }
-      else {
+      } else {
         const paddedHex32Bytes = "0x" + hexValue.slice(2).padStart(64, '0');
         newValues.push(paddedHex32Bytes);
       }
@@ -50,7 +48,7 @@ describe("ConfigSyncer", () => {
     await mockRiskOracle.connect(wallet).publishBulkRiskParameterUpdates(referenceIds, newValues, updateTypes, markets, additionalData);
   });
 
-  it("reverts when unauthorized account attempts to sync", async () => {
+  it("reverts when an unauthorized account attempts to sync", async () => {
     const market = ethUsdMarket.marketToken;
     const parameter = parametersList[0].parameterName;
   
@@ -59,85 +57,15 @@ describe("ConfigSyncer", () => {
     ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
   });
 
-  it("allows LIMITED_CONFIG_KEEPER to sync a single update", async () => {
-    const market = ethUsdMarket.marketToken;
+  it("reverts when no update is found for market and parameter", async () => {
+    const markets = btcUsdMarket.marketToken;
     const parameter = parametersList[0].parameterName;
-    await configSyncer.connect(user1).sync([market], [parameter]);
-    
-    const update = await mockRiskOracle.getLatestUpdateByParameterAndMarket(parameter, market);
-    expect(await dataStore.getBool(keys.syncConfigUpdateCompletedKey(update.updateId))).to.be.true;
-    expect(await dataStore.getUint(keys.syncConfigLatestUpdateIdKey())).to.equal(update.updateId);
 
-    const [baseKey, data] = ethers.utils.defaultAbiCoder.decode(["bytes32", "bytes"], update.additionalData);
-    const fullKey = getFullKey(baseKey, data);
-    expect(await dataStore.getUint(fullKey)).to.equal(update.newValue);
+    await expect(configSyncer.connect(user1).sync([markets], [parameter])).to.be.revertedWith(
+      "No update found for the specified parameter and market."
+    );
   });
-
-  it("allows LIMITED_CONFIG_KEEPER to sync multiple updates", async () => {
-    const markets = Array(parametersList.length).fill(ethUsdMarket.marketToken);
-    const parameters: string[] = [];
-    
-    for (let i = (parametersList.length - 1); i >= 0; i--) {
-      parameters.push(parametersList[i].parameterName);
-    }
-    
-    let latestUpdateId = await dataStore.getUint(keys.syncConfigLatestUpdateIdKey());
-
-    await configSyncer.connect(user1).sync(markets, parameters);
-    
-    for (let i = 0; i < parameters.length; i++) {
-      const update = await mockRiskOracle.getLatestUpdateByParameterAndMarket(parameters[i], markets[i]);
-      expect(await dataStore.getBool(keys.syncConfigUpdateCompletedKey(update.updateId))).to.be.true;
-      
-      if (update.updateId > latestUpdateId) {
-        latestUpdateId = update.updateId;
-      }
-
-      if (i === (parameters.length - 1)) {
-        expect(await dataStore.getUint(keys.syncConfigLatestUpdateIdKey())).to.equal(latestUpdateId);
-      }
-      
-      const [baseKey, data] = ethers.utils.defaultAbiCoder.decode(["bytes32", "bytes"], update.additionalData);
-      const fullKey = getFullKey(baseKey, data);
-      expect(await dataStore.getUint(fullKey)).to.equal(update.newValue);
-    }
-  });
-
-  it("SYNC_CONFIG_LATEST_UPDATE_ID still equals latest update ID", async () => {
-    const market = ethUsdMarket.marketToken;
-    const parameter = parametersList[parametersList.length - 1].parameterName;
-    await configSyncer.connect(user1).sync([market], [parameter]);
-    
-    const update = await mockRiskOracle.getLatestUpdateByParameterAndMarket(parameter, market);
-    expect(await dataStore.getBool(keys.syncConfigUpdateCompletedKey(update.updateId))).to.be.true;
-    
-    const latestUpdateId = update.updateId;
-    expect(await dataStore.getUint(keys.syncConfigLatestUpdateIdKey())).to.equal(latestUpdateId);
-
-    const [baseKey, data] = ethers.utils.defaultAbiCoder.decode(["bytes32", "bytes"], update.additionalData);
-    const fullKey = getFullKey(baseKey, data);
-    expect(await dataStore.getUint(fullKey)).to.equal(update.newValue);
-
-    const markets = Array(parametersList.length - 1).fill(ethUsdMarket.marketToken);
-    const parameters: string[] = [];
-    for (let i = (parametersList.length - 2); i >= 0; i--) {
-      parameters.push(parametersList[i].parameterName);
-    }
-
-    await configSyncer.connect(user1).sync(markets, parameters);
-    
-    for (let i = 0; i < parameters.length; i++) {
-      const update = await mockRiskOracle.getLatestUpdateByParameterAndMarket(parameters[i], markets[i]);
-      expect(await dataStore.getBool(keys.syncConfigUpdateCompletedKey(update.updateId))).to.be.true;
-
-      const [baseKey, data] = ethers.utils.defaultAbiCoder.decode(["bytes32", "bytes"], update.additionalData);
-      const fullKey = getFullKey(baseKey, data);
-      expect(await dataStore.getUint(fullKey)).to.equal(update.newValue);
-    }
-
-    expect(await dataStore.getUint(keys.syncConfigLatestUpdateIdKey())).to.equal(latestUpdateId);
-  });
-
+  
   it("reverts when number of markets and parameters don't match", async () => {
     const markets = Array(parametersList.length + 1).fill(ethUsdMarket.marketToken);
     const parameters: string[] = [];
@@ -148,59 +76,6 @@ describe("ConfigSyncer", () => {
     await expect(
       configSyncer.connect(user1).sync(markets, parameters)
     ).to.be.revertedWithCustomError(errorsContract, "SyncConfigInvalidInputLengths");
-  });
-
-  it("skips if update for market parameter was already applied", async () => {
-    const market = ethUsdMarket.marketToken;
-    const parameter = parametersList[1].parameterName;
-    const tx1 = await configSyncer.connect(user1).sync([market], [parameter]);
-    const receipt1 = await tx1.wait();
-    const parsedEventLogs1 = parseLogs(fixture, receipt1).filter(log => log.parsedEventInfo.eventName === "SyncConfig");
-    const eventData1 = parsedEventLogs1[0].parsedEventData;
-    expect(parsedEventLogs1.length).to.equal(1);
-    expect(eventData1.updateApplied).to.be.true;
-
-    const update = await mockRiskOracle.getLatestUpdateByParameterAndMarket(parameter, market);
-    expect(await dataStore.getBool(keys.syncConfigUpdateCompletedKey(update.updateId))).to.be.true;
-    expect(await dataStore.getUint(keys.syncConfigLatestUpdateIdKey())).to.equal(update.updateId);
-
-    const [baseKey, data] = ethers.utils.defaultAbiCoder.decode(["bytes32", "bytes"], update.additionalData);
-    const fullKey = getFullKey(baseKey, data);
-    expect(await dataStore.getUint(fullKey)).to.equal(update.newValue);
-
-    const markets = Array(parametersList.length).fill(ethUsdMarket.marketToken);
-    const parameters: string[] = [];
-    for (let i = (parametersList.length - 1); i >= 0; i--) {
-      parameters.push(parametersList[i].parameterName);
-    }
-    
-    let latestUpdateId = await dataStore.getUint(keys.syncConfigLatestUpdateIdKey());
-
-    const tx2 = await configSyncer.connect(user1).sync(markets, parameters);
-    const receipt2 = await tx2.wait(); 
-    const parsedEventLogs2 = parseLogs(fixture, receipt2).filter(log => log.parsedEventInfo.eventName === "SyncConfig");
-    const eventData2 = parsedEventLogs2[parameters.length - 2].parsedEventData;
-    const eventData3 = parsedEventLogs2[parameters.length - 1].parsedEventData;
-    expect(parsedEventLogs2.length).to.equal(5);
-    expect(eventData2.updateApplied).to.be.false;
-    expect(eventData3.updateApplied).to.be.true;
-    
-    for (let i = 0; i < parameters.length; i++) {
-      const update = await mockRiskOracle.getLatestUpdateByParameterAndMarket(parameters[i], markets[i]);
-      expect(await dataStore.getBool(keys.syncConfigUpdateCompletedKey(update.updateId))).to.be.true;
-      
-      if (update.updateId > latestUpdateId) {
-        latestUpdateId = update.updateId;
-      }
-
-      if (i === (parameters.length - 1)) {
-        expect(await dataStore.getUint(keys.syncConfigLatestUpdateIdKey())).to.equal(latestUpdateId);
-      }
-      
-      const [baseKey, data] = ethers.utils.defaultAbiCoder.decode(["bytes32", "bytes"], update.additionalData);
-      const fullKey = getFullKey(baseKey, data);
-      expect(await dataStore.getUint(fullKey)).to.equal(update.newValue);
-    }
   });
 
   it("reverts when updates for a market are disabled", async () => {
@@ -249,8 +124,7 @@ describe("ConfigSyncer", () => {
 
   it("reverts when market does not equal market from data", async () => {
     if (parametersList[0].parameterFormat === "parameterFormat4") {
-      console.error('Make sure parameterList[0].parameterFormat does not equal "parameterFormat4" or part of this test is redundant');
-      throw Error;
+      throw new Error('Make sure parameterList[0].parameterFormat does not equal "parameterFormat4" or part of this test is redundant');
     }
     
     const hexValue = ethers.utils.hexValue(2000000);
@@ -293,5 +167,244 @@ describe("ConfigSyncer", () => {
     await expect(
       configSyncer.connect(user1).sync([market], [parameter])
     ).to.be.revertedWithCustomError(errorsContract, "InvalidBaseKey");
+  });
+
+  it("allows LIMITED_CONFIG_KEEPER to sync a single update", async () => {
+    const market = ethUsdMarket.marketToken;
+    const parameter = parametersList[0].parameterName;
+    await configSyncer.connect(user1).sync([market], [parameter]);
+    
+    const update = await mockRiskOracle.getLatestUpdateByParameterAndMarket(parameter, market);
+    expect(await dataStore.getBool(keys.syncConfigUpdateCompletedKey(update.updateId))).to.be.true;
+    expect(await dataStore.getUint(keys.syncConfigLatestUpdateIdKey())).to.equal(update.updateId);
+
+    const [baseKey, data] = ethers.utils.defaultAbiCoder.decode(["bytes32", "bytes"], update.additionalData);
+    const fullKey = getFullKey(baseKey, data);
+    expect(await dataStore.getUint(fullKey)).to.equal(update.newValue);
+    
+    const hexValue = ethers.utils.hexValue(2000000);
+    const keyData = getDataForKey(parametersList[0], ethUsdMarket.marketToken, ethUsdMarket.longToken, ethUsdMarket.shortToken);
+    const encodedData = encodeData(["bytes32", "bytes"], [parametersList[0].baseKey, keyData]);
+    expect(update.referenceId).to.equal("NotApplicable");
+    expect(update.newValue).to.equal(hexValue);
+    expect(update.updateType).to.equal(parameter);
+    expect(update.market).to.equal(market);
+    expect(update.additionalData).to.equal(encodedData);
+    expect(update.timestamp).to.be.gt(0);
+    expect(update.updateId).to.equal(1);
+    expect(update.previousValue).to.eq("0x");
+  });
+
+  it("allows LIMITED_CONFIG_KEEPER to sync multiple updates", async () => {
+    const markets = Array(parametersList.length).fill(ethUsdMarket.marketToken);
+    const parameters: string[] = [];
+    const newValues: string[] = [];
+    for (let i = (parametersList.length - 1); i >= 0; i--) {
+      parameters.push(parametersList[i].parameterName);
+      const hexValue = ethers.utils.hexValue(2000000 + i);
+      if (i < (parametersList.length - 2)) {
+        newValues.push(hexValue);
+      } else if (i < (parametersList.length - 1)) {
+        const paddedHex = "0x00" + hexValue.slice(2);
+        newValues.push(paddedHex);
+      } else {
+        const paddedHex32Bytes = "0x" + hexValue.slice(2).padStart(64, '0');
+        newValues.push(paddedHex32Bytes);
+      }
+    }
+    
+    let latestUpdateId = await dataStore.getUint(keys.syncConfigLatestUpdateIdKey());
+
+    await configSyncer.connect(user1).sync(markets, parameters);
+    
+    for (let i = 0; i < parameters.length; i++) {
+      const parameter = parameters[i];
+      const market = markets[i];
+      const update = await mockRiskOracle.getLatestUpdateByParameterAndMarket(parameter, market);
+      expect(await dataStore.getBool(keys.syncConfigUpdateCompletedKey(update.updateId))).to.be.true;
+      
+      if (update.updateId > latestUpdateId) {
+        latestUpdateId = update.updateId;
+      }
+
+      if (i === (parameters.length - 1)) {
+        expect(await dataStore.getUint(keys.syncConfigLatestUpdateIdKey())).to.equal(latestUpdateId);
+      }
+      
+      const [baseKey, data] = ethers.utils.defaultAbiCoder.decode(["bytes32", "bytes"], update.additionalData);
+      const fullKey = getFullKey(baseKey, data);
+      expect(await dataStore.getUint(fullKey)).to.equal(update.newValue);
+      
+      const hexValue = newValues[i];
+      const keyData = getDataForKey(parametersList[4 - i], ethUsdMarket.marketToken, ethUsdMarket.longToken, ethUsdMarket.shortToken);
+      const encodedData = encodeData(["bytes32", "bytes"], [parametersList[4 - i].baseKey, keyData]);
+      expect(update.referenceId).to.equal("NotApplicable");
+      expect(update.newValue).to.equal(hexValue);
+      expect(update.updateType).to.equal(parameter);
+      expect(update.market).to.equal(market);
+      expect(update.additionalData).to.equal(encodedData);
+      expect(update.timestamp).to.be.gt(0);
+      expect(update.updateId).to.equal(5 - i);
+      expect(update.previousValue).to.eq("0x");
+    }
+  });
+
+  it("SYNC_CONFIG_LATEST_UPDATE_ID still equals latest update ID", async () => {
+    const market = ethUsdMarket.marketToken;
+    const parameter = parametersList[parametersList.length - 1].parameterName;
+    await configSyncer.connect(user1).sync([market], [parameter]);
+    
+    const update = await mockRiskOracle.getLatestUpdateByParameterAndMarket(parameter, market);
+    expect(await dataStore.getBool(keys.syncConfigUpdateCompletedKey(update.updateId))).to.be.true;
+    
+    const latestUpdateId = update.updateId;
+    expect(await dataStore.getUint(keys.syncConfigLatestUpdateIdKey())).to.equal(latestUpdateId);
+
+    const [baseKey, data] = ethers.utils.defaultAbiCoder.decode(["bytes32", "bytes"], update.additionalData);
+    const fullKey = getFullKey(baseKey, data);
+    expect(await dataStore.getUint(fullKey)).to.equal(update.newValue);
+
+    const hexValue = "0x" + ethers.utils.hexValue(2000004).slice(2).padStart(64, '0');
+    const keyData = getDataForKey(parametersList[parametersList.length - 1], ethUsdMarket.marketToken, ethUsdMarket.longToken, ethUsdMarket.shortToken);
+    const encodedData = encodeData(["bytes32", "bytes"], [parametersList[parametersList.length - 1].baseKey, keyData]);
+    expect(update.referenceId).to.equal("NotApplicable");
+    expect(update.newValue).to.equal(hexValue);
+    expect(update.updateType).to.equal(parameter);
+    expect(update.market).to.equal(market);
+    expect(update.additionalData).to.equal(encodedData);
+    expect(update.timestamp).to.be.gt(0);
+    expect(update.updateId).to.equal(5);
+    expect(update.previousValue).to.eq("0x");
+
+    const markets = Array(parametersList.length - 1).fill(ethUsdMarket.marketToken);
+    const parameters: string[] = [];
+    const newValues: string[] = [];
+    for (let i = (parametersList.length - 2); i >= 0; i--) {
+      parameters.push(parametersList[i].parameterName);
+      const hexValue = ethers.utils.hexValue(2000000 + i);
+      if (i < (parametersList.length - 2)) {
+        newValues.push(hexValue);
+      } else {
+        const paddedHex = "0x00" + hexValue.slice(2);
+        newValues.push(paddedHex);
+      }
+    }
+
+    await configSyncer.connect(user1).sync(markets, parameters);
+    
+    for (let i = 0; i < parameters.length; i++) {
+      const parameter = parameters[i];
+      const market = markets[i];
+      const update = await mockRiskOracle.getLatestUpdateByParameterAndMarket(parameter, market);
+      expect(await dataStore.getBool(keys.syncConfigUpdateCompletedKey(update.updateId))).to.be.true;
+
+      const [baseKey, data] = ethers.utils.defaultAbiCoder.decode(["bytes32", "bytes"], update.additionalData);
+      const fullKey = getFullKey(baseKey, data);
+      expect(await dataStore.getUint(fullKey)).to.equal(update.newValue);
+
+      const hexValue = newValues[i];
+      const keyData = getDataForKey(parametersList[3 - i], ethUsdMarket.marketToken, ethUsdMarket.longToken, ethUsdMarket.shortToken);
+      const encodedData = encodeData(["bytes32", "bytes"], [parametersList[3 - i].baseKey, keyData]);
+      expect(update.referenceId).to.equal("NotApplicable");
+      expect(update.newValue).to.equal(hexValue);
+      expect(update.updateType).to.equal(parameter);
+      expect(update.market).to.equal(market);
+      expect(update.additionalData).to.equal(encodedData);
+      expect(update.timestamp).to.be.gt(0);
+      expect(update.updateId).to.equal(4 - i);
+      expect(update.previousValue).to.eq("0x");
+    }
+
+    expect(await dataStore.getUint(keys.syncConfigLatestUpdateIdKey())).to.equal(latestUpdateId);
+  });
+
+  it("skips if update for market parameter was already applied", async () => {
+    const market = ethUsdMarket.marketToken;
+    const parameter = parametersList[1].parameterName;
+    const tx1 = await configSyncer.connect(user1).sync([market], [parameter]);
+    const receipt1 = await tx1.wait();
+    const parsedEventLogs1 = parseLogs(fixture, receipt1).filter(log => log.parsedEventInfo.eventName === "SyncConfig");
+    const eventData1 = parsedEventLogs1[0].parsedEventData;
+    expect(parsedEventLogs1.length).to.equal(1);
+    expect(eventData1.updateApplied).to.be.true;
+
+    const update = await mockRiskOracle.getLatestUpdateByParameterAndMarket(parameter, market);
+    expect(await dataStore.getBool(keys.syncConfigUpdateCompletedKey(update.updateId))).to.be.true;
+    expect(await dataStore.getUint(keys.syncConfigLatestUpdateIdKey())).to.equal(update.updateId);
+
+    const [baseKey, data] = ethers.utils.defaultAbiCoder.decode(["bytes32", "bytes"], update.additionalData);
+    const fullKey = getFullKey(baseKey, data);
+    expect(await dataStore.getUint(fullKey)).to.equal(update.newValue);
+
+    const hexValue = ethers.utils.hexValue(2000001);
+    const keyData = getDataForKey(parametersList[1], ethUsdMarket.marketToken, ethUsdMarket.longToken, ethUsdMarket.shortToken);
+    const encodedData = encodeData(["bytes32", "bytes"], [parametersList[1].baseKey, keyData]);
+    expect(update.referenceId).to.equal("NotApplicable");
+    expect(update.newValue).to.equal(hexValue);
+    expect(update.updateType).to.equal(parameter);
+    expect(update.market).to.equal(market);
+    expect(update.additionalData).to.equal(encodedData);
+    expect(update.timestamp).to.be.gt(0);
+    expect(update.updateId).to.equal(2);
+    expect(update.previousValue).to.eq("0x");
+
+    const markets = Array(parametersList.length).fill(ethUsdMarket.marketToken);
+    const parameters: string[] = [];
+    const newValues: string[] = [];
+    for (let i = (parametersList.length - 1); i >= 0; i--) {
+      parameters.push(parametersList[i].parameterName);
+      const hexValue = ethers.utils.hexValue(2000000 + i);
+      if (i < (parametersList.length - 2)) {
+        newValues.push(hexValue);
+      } else if (i < (parametersList.length - 1)) {
+        const paddedHex = "0x00" + hexValue.slice(2);
+        newValues.push(paddedHex);
+      } else {
+        const paddedHex32Bytes = "0x" + hexValue.slice(2).padStart(64, '0');
+        newValues.push(paddedHex32Bytes);
+      }
+    }
+    
+    let latestUpdateId = await dataStore.getUint(keys.syncConfigLatestUpdateIdKey());
+
+    const tx2 = await configSyncer.connect(user1).sync(markets, parameters);
+    const receipt2 = await tx2.wait(); 
+    const parsedEventLogs2 = parseLogs(fixture, receipt2).filter(log => log.parsedEventInfo.eventName === "SyncConfig");
+    const eventData2 = parsedEventLogs2[parameters.length - 2].parsedEventData;
+    const eventData3 = parsedEventLogs2[parameters.length - 1].parsedEventData;
+    expect(parsedEventLogs2.length).to.equal(5);
+    expect(eventData2.updateApplied).to.be.false;
+    expect(eventData3.updateApplied).to.be.true;
+    
+    for (let i = 0; i < parameters.length; i++) {
+      const parameter = parameters[i];
+      const market = markets[i];
+      const update = await mockRiskOracle.getLatestUpdateByParameterAndMarket(parameter, market);
+      expect(await dataStore.getBool(keys.syncConfigUpdateCompletedKey(update.updateId))).to.be.true;
+      
+      if (update.updateId > latestUpdateId) {
+        latestUpdateId = update.updateId;
+      }
+
+      if (i === (parameters.length - 1)) {
+        expect(await dataStore.getUint(keys.syncConfigLatestUpdateIdKey())).to.equal(latestUpdateId);
+      }
+      
+      const [baseKey, data] = ethers.utils.defaultAbiCoder.decode(["bytes32", "bytes"], update.additionalData);
+      const fullKey = getFullKey(baseKey, data);
+      expect(await dataStore.getUint(fullKey)).to.equal(update.newValue);
+
+      const hexValue = newValues[i];
+      const keyData = getDataForKey(parametersList[4 - i], ethUsdMarket.marketToken, ethUsdMarket.longToken, ethUsdMarket.shortToken);
+      const encodedData = encodeData(["bytes32", "bytes"], [parametersList[4 - i].baseKey, keyData]);
+      expect(update.referenceId).to.equal("NotApplicable");
+      expect(update.newValue).to.equal(hexValue);
+      expect(update.updateType).to.equal(parameter);
+      expect(update.market).to.equal(market);
+      expect(update.additionalData).to.equal(encodedData);
+      expect(update.timestamp).to.be.gt(0);
+      expect(update.updateId).to.equal(5 - i);
+      expect(update.previousValue).to.eq("0x");
+    }
   });
 });
