@@ -13,6 +13,7 @@ import "./IWithdrawalCallbackReceiver.sol";
 import "./IShiftCallbackReceiver.sol";
 import "./IGasFeeCallbackReceiver.sol";
 import "./IGlvDepositCallbackReceiver.sol";
+import "./IGlvWithdrawalCallbackReceiver.sol";
 
 // @title CallbackUtils
 // @dev most features require a two step process to complete
@@ -37,6 +38,7 @@ library CallbackUtils {
     using Shift for Shift.Props;
     using Order for Order.Props;
     using GlvDeposit for GlvDeposit.Props;
+    using GlvWithdrawal for GlvWithdrawal.Props;
 
     event AfterDepositExecutionError(bytes32 key, Deposit.Props deposit);
     event AfterDepositCancellationError(bytes32 key, Deposit.Props deposit);
@@ -53,6 +55,8 @@ library CallbackUtils {
 
     event AfterGlvDepositExecutionError(bytes32 key, GlvDeposit.Props glvDeposit);
     event AfterGlvDepositCancellationError(bytes32 key, GlvDeposit.Props glvDeposit);
+    event AfterGlvWithdrawalExecutionError(bytes32 key, GlvWithdrawal.Props glvWithdrawal);
+    event AfterGlvWithdrawalCancellationError(bytes32 key, GlvWithdrawal.Props glvWithdrawal);
 
     // @dev validate that the callbackGasLimit is less than the max specified value
     // this is to prevent callback gas limits which are larger than the max gas limits per block
@@ -92,6 +96,8 @@ library CallbackUtils {
         if (!isValidCallbackContract(callbackContract)) { return false; }
 
         uint256 gasLimit = dataStore.getUint(Keys.REFUND_EXECUTION_FEE_GAS_LIMIT);
+
+        validateGasLeftForCallback(gasLimit);
 
         try IGasFeeCallbackReceiver(callbackContract).refundExecutionFee{ gas: gasLimit, value: refundFeeAmount }(
             key,
@@ -305,7 +311,11 @@ library CallbackUtils {
         GlvDeposit.Props memory glvDeposit,
         EventUtils.EventLogData memory eventData
     ) internal {
-        if (!isValidCallbackContract(glvDeposit.callbackContract())) { return; }
+        if (!isValidCallbackContract(glvDeposit.callbackContract())) {
+            return;
+        }
+
+        validateGasLeftForCallback(glvDeposit.callbackGasLimit());
 
         try IGlvDepositCallbackReceiver(glvDeposit.callbackContract()).afterGlvDepositExecution{ gas: glvDeposit.callbackGasLimit() }(
             key,
@@ -327,6 +337,8 @@ library CallbackUtils {
     ) internal {
         if (!isValidCallbackContract(glvDeposit.callbackContract())) { return; }
 
+        validateGasLeftForCallback(glvDeposit.callbackGasLimit());
+
         try IGlvDepositCallbackReceiver(glvDeposit.callbackContract()).afterGlvDepositCancellation{ gas: glvDeposit.callbackGasLimit() }(
             key,
             glvDeposit,
@@ -334,6 +346,50 @@ library CallbackUtils {
         ) {
         } catch {
             emit AfterGlvDepositCancellationError(key, glvDeposit);
+        }
+    }
+
+    // @dev called after a glvWithdrawal execution
+    // @param key the key of the glvWithdrawal
+    // @param glvWithdrawal the glvWithdrawal that was executed
+    function afterGlvWithdrawalExecution(
+        bytes32 key,
+        GlvWithdrawal.Props memory glvWithdrawal,
+        EventUtils.EventLogData memory eventData
+    ) internal {
+        if (!isValidCallbackContract(glvWithdrawal.callbackContract())) { return; }
+
+        validateGasLeftForCallback(glvWithdrawal.callbackGasLimit());
+
+        try IGlvWithdrawalCallbackReceiver(glvWithdrawal.callbackContract()).afterGlvWithdrawalExecution{ gas: glvWithdrawal.callbackGasLimit() }(
+            key,
+            glvWithdrawal,
+            eventData
+        ) {
+        } catch {
+            emit AfterGlvWithdrawalExecutionError(key, glvWithdrawal);
+        }
+    }
+
+    // @dev called after a glvWithdrawal cancellation
+    // @param key the key of the glvWithdrawal
+    // @param glvWithdrawal the glvWithdrawal that was cancelled
+    function afterGlvWithdrawalCancellation(
+        bytes32 key,
+        GlvWithdrawal.Props memory glvWithdrawal,
+        EventUtils.EventLogData memory eventData
+    ) internal {
+        if (!isValidCallbackContract(glvWithdrawal.callbackContract())) { return; }
+
+        validateGasLeftForCallback(glvWithdrawal.callbackGasLimit());
+
+        try IGlvWithdrawalCallbackReceiver(glvWithdrawal.callbackContract()).afterGlvWithdrawalCancellation{ gas: glvWithdrawal.callbackGasLimit() }(
+            key,
+            glvWithdrawal,
+            eventData
+        ) {
+        } catch {
+            emit AfterGlvWithdrawalCancellationError(key, glvWithdrawal);
         }
     }
 

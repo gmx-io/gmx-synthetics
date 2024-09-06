@@ -67,13 +67,13 @@ export async function getMarketTokenPriceWithPoolValue(fixture, overrides: any =
 }
 
 export function getMarketTokenAddress(
-  indexToken,
-  longToken,
-  shortToken,
-  marketType,
-  marketFactoryAddress,
-  roleStoreAddress,
-  dataStoreAddress
+  indexToken: string,
+  longToken: string,
+  shortToken: string,
+  marketType: string,
+  marketFactoryAddress: string,
+  roleStoreAddress: string,
+  dataStoreAddress: string
 ) {
   const salt = hashData(
     ["string", "address", "address", "address", "bytes32"],
@@ -127,6 +127,18 @@ export async function getOnchainMarkets(
 }
 
 export function getMarketTokenAddresses(marketConfig, tokens) {
+  if (!marketConfig.swapOnly && !tokens[marketConfig.tokens.indexToken]) {
+    throw new Error("invalid indexToken");
+  }
+
+  if (!tokens[marketConfig.tokens.longToken]) {
+    throw new Error("invalid longToken");
+  }
+
+  if (!tokens[marketConfig.tokens.shortToken]) {
+    throw new Error("invalid shortToken");
+  }
+
   const indexToken = marketConfig.swapOnly
     ? ethers.constants.AddressZero
     : tokens[marketConfig.tokens.indexToken].address;

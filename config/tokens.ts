@@ -390,6 +390,11 @@ const config: {
       dataStreamFeedId: "0x0001829d7d4c7c5badcd54d2126e621c51eabf32393ffab969e311b18ed80138",
       dataStreamFeedDecimals: 18,
     },
+    GLV_WETH_USDC: {
+      address: "0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+    },
   },
   arbitrumGoerli: {
     WETH: {

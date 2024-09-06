@@ -15,6 +15,7 @@ import "@nomicfoundation/hardhat-chai-matchers";
 
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";
+import "@nomicfoundation/hardhat-chai-matchers";
 
 // extends hre with gmx domain data
 import "./config";
@@ -202,14 +203,6 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api-sepolia.arbiscan.io/api",
           browserURL: "https://https://sepolia.arbiscan.io/",
-        },
-      },
-      {
-        network: "arbitrumBlockscout",
-        chainId: 42161,
-        urls: {
-          apiURL: "https://arbitrum.blockscout.com/api",
-          browserURL: "https://arbitrum.blockscout.com/",
         },
       },
     ],

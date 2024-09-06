@@ -26,12 +26,14 @@ async function main() {
     const longTokenSymbol = addressToSymbol[market.longToken];
     const shortTokenSymbol = addressToSymbol[market.shortToken];
     console.log(
-      "%s index: %s long: %s short: %s is disabled: %s",
-      market.marketToken,
+      "index: %s long: %s short: %s is disabled: %s",
       indexTokenSymbol?.padEnd(5) || "(swap only)",
       longTokenSymbol?.padEnd(5),
       shortTokenSymbol?.padEnd(5),
       isDisabled[i]
+    );
+    console.log(
+      `    market: ${market.marketToken}, index: ${market.indexToken}, long: ${market.longToken}, short: ${market.shortToken}`
     );
   }
 }

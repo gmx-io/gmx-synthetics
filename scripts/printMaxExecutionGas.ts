@@ -23,7 +23,7 @@ async function main() {
     dataStore.getUint(keys.INCREASE_ORDER_GAS_LIMIT),
     dataStore.getUint(keys.DECREASE_ORDER_GAS_LIMIT),
     dataStore.getUint(keys.SWAP_ORDER_GAS_LIMIT),
-    dataStore.getUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT),
+    dataStore.getUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1),
     dataStore.getUint(keys.SINGLE_SWAP_GAS_LIMIT),
     dataStore.getUint(keys.MAX_CALLBACK_GAS_LIMIT),
   ]);

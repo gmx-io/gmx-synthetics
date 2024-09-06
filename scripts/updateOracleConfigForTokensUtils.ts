@@ -3,7 +3,6 @@ import hre, { ethers } from "hardhat";
 import { expandDecimals } from "../utils/math";
 import { encodeData } from "../utils/hash";
 import { getFullKey } from "../utils/config";
-import { timelockWriteMulticall } from "../utils/timelock";
 
 import * as keys from "../utils/keys";
 import { OracleProvider } from "../config/oracle";
@@ -97,7 +96,6 @@ export async function updateOracleConfigForTokens({ write }) {
   }
 
   const multicallWriteParams = [];
-  const multicallWriteParamsForTimelockAdmin = [];
 
   for (let i = 0; i < tokenSymbols.length; i++) {
     const tokenSymbol = tokenSymbols[i];
@@ -132,7 +130,7 @@ export async function updateOracleConfigForTokens({ write }) {
 
       console.log(`setDataStream(${tokenSymbol} ${token.dataStreamFeedId}, ${dataStreamMultiplier.toString()})`);
 
-      multicallWriteParamsForTimelockAdmin.push(
+      multicallWriteParams.push(
         config.interface.encodeFunctionData("setDataStream", [
           token.address,
           token.dataStreamFeedId,
@@ -169,6 +167,9 @@ export async function updateOracleConfigForTokens({ write }) {
     if (onchainConfig.oracleProvider.toLowerCase() !== oracleProvider.toLowerCase()) {
       console.log(`update oracle provider for ${tokenSymbol}`);
       multicallWriteParams.push(
+        config.interface.encodeFunctionData("initOracleProviderForToken", [token.address, oracleProvider])
+      );
+      multicallWriteParams.push(
         config.interface.encodeFunctionData("setAddress", [
           keys.ORACLE_PROVIDER_FOR_TOKEN,
           encodeData(["address"], [token.address]),
@@ -178,18 +179,13 @@ export async function updateOracleConfigForTokens({ write }) {
     }
   }
 
-  console.log(`updating ${multicallWriteParams.length + multicallWriteParamsForTimelockAdmin.length} params`);
+  console.log(`updating ${multicallWriteParams.length} params`);
   console.log("multicallWriteParams", multicallWriteParams);
-  console.log("multicallWriteParamsForTimelockAdmin", multicallWriteParamsForTimelockAdmin);
 
   if (write && multicallWriteParams.length > 0) {
     const tx = await config.multicall(multicallWriteParams);
     console.log(`tx sent: ${tx.hash}`);
   } else {
     console.log("NOTE: executed in read-only mode, no transactions were sent");
-  }
-
-  if (multicallWriteParamsForTimelockAdmin.length > 0) {
-    await timelockWriteMulticall({ timelock: config, multicallWriteParams: multicallWriteParamsForTimelockAdmin });
   }
 }

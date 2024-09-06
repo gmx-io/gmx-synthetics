@@ -14,11 +14,11 @@ async function getTimelock() {
   const network = hre.network.name;
 
   if (network === "arbitrum") {
-    return await ethers.getContractAt("Timelock", "0x2ECB664e934aCd5DF1EE889Dbb2E7D6C1d7CE3Cb");
+    return await ethers.getContractAt("Timelock", "0xf32b417A93Acc039B236F1eCC86B56bd3cB8E698");
   }
 
   if (network === "avalanche") {
-    return await ethers.getContractAt("Timelock", "0x844D38f2c3875b8351feB4764718E1c64bD55c46");
+    return await ethers.getContractAt("Timelock", "0x9Dd6EB1069385D85Ae204543BabB7333181ec8A5");
   }
 
   throw new Error("Unsupported network");
@@ -84,8 +84,14 @@ async function main() {
   const rolesToRemove = {
     arbitrum: [
       {
-        role: "ROUTER_PLUGIN",
-        member: "0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8",
+        role: "CONTROLLER",
+        member: "0x8583b878DA0844B7f59974069f00D3A9eaE0F4ae",
+      },
+    ],
+    avalanche: [
+      {
+        role: "ROLE_ADMIN",
+        member: "0x844D38f2c3875b8351feB4764718E1c64bD55c46",
       },
     ],
   };

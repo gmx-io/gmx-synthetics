@@ -2,7 +2,9 @@
 
 pragma solidity ^0.8.0;
 
+import "./GlvToken.sol";
 import "./Glv.sol";
+import "./GlvStoreUtils.sol";
 import "../event/EventEmitter.sol";
 import "../utils/Cast.sol";
 
@@ -25,42 +27,50 @@ contract GlvFactory is RoleModule {
         eventEmitter = _eventEmitter;
     }
 
-    bytes32 public constant GLV_SALT = keccak256(abi.encode("GLV_SALT"));
-
-    function getGlvSaltHash(bytes32 salt) internal pure returns (bytes32) {
-        return keccak256(abi.encode(GLV_SALT, salt));
-    }
-
-    // @dev creates a market
-    // @param indexToken address of the index token for the market
-    // @param longToken address of the long token for the market
-    // @param shortToken address of the short token for the market
-    // @param marketType the type of the market
-    function createGlv(bytes32 salt) external onlyMarketKeeper returns (address) {
-        bytes32 saltHash = getGlvSaltHash(salt);
-        address glvAddress = dataStore.getAddress(saltHash);
-        if (glvAddress != address(0)) {
-            revert Errors.MarketAlreadyExists(salt, glvAddress);
+    function createGlv(
+        address longToken,
+        address shortToken,
+        bytes32 glvType,
+        string memory name,
+        string memory symbol
+    ) external onlyMarketKeeper returns (Glv.Props memory) {
+        // not the same as length in characters
+        if (bytes(symbol).length > 30) {
+            revert Errors.GlvSymbolTooLong();
+        }
+        if (bytes(name).length > 100) {
+            revert Errors.GlvNameTooLong();
         }
 
-        Glv glv = new Glv{salt: salt}(roleStore, dataStore);
+        bytes32 salt = keccak256(abi.encode("GMX_GLV", longToken, shortToken, glvType));
 
-        dataStore.addAddress(Keys.GLV_LIST, address(glv));
-        dataStore.setAddress(salt, address(glv));
+        address existingGlvAddress = dataStore.getAddress(GlvStoreUtils.getGlvSaltHash(salt));
+        if (existingGlvAddress != address(0)) {
+            revert Errors.GlvAlreadyExists(glvType, existingGlvAddress);
+        }
 
-        emitGlvCreated(address(glv), salt);
+        GlvToken glvToken = new GlvToken{salt: salt}(roleStore, dataStore, name, symbol);
 
-        return address(glv);
+        Glv.Props memory glv = Glv.Props({glvToken: address(glvToken), longToken: longToken, shortToken: shortToken});
+
+        GlvStoreUtils.set(dataStore, address(glvToken), salt, glv);
+
+        emitGlvCreated(address(glvToken), salt, longToken, shortToken, glvType);
+
+        return glv;
     }
 
-    function emitGlvCreated(address glvAddress, bytes32 salt) internal {
+    function emitGlvCreated(address glvAddress, bytes32 salt, address longToken, address shortToken, bytes32 glvType) internal {
         EventUtils.EventLogData memory eventData;
 
-        eventData.addressItems.initItems(1);
-        eventData.addressItems.setItem(0, "glv", glvAddress);
+        eventData.addressItems.initItems(3);
+        eventData.addressItems.setItem(0, "glvToken", glvAddress);
+        eventData.addressItems.setItem(1, "longToken", longToken);
+        eventData.addressItems.setItem(2, "shortToken", shortToken);
 
-        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.initItems(2);
         eventData.bytes32Items.setItem(0, "salt", salt);
+        eventData.bytes32Items.setItem(1, "glvType", glvType);
 
         eventEmitter.emitEventLog1("GlvCreated", Cast.toBytes32(glvAddress), eventData);
     }

@@ -20,11 +20,21 @@ export const MARKET_LIST = hashString("MARKET_LIST");
 export const DEPOSIT_LIST = hashString("DEPOSIT_LIST");
 export const ACCOUNT_DEPOSIT_LIST = hashString("ACCOUNT_DEPOSIT_LIST");
 
+export const GLV_LIST = hashString("GLV_LIST");
+
+export const GLV_DEPOSIT_LIST = hashString("GLV_DEPOSIT_LIST");
+export const ACCOUNT_GLV_DEPOSIT_LIST = hashString("ACCOUNT_GLV_DEPOSIT_LIST");
+
 export const WITHDRAWAL_LIST = hashString("WITHDRAWAL_LIST");
 export const ACCOUNT_WITHDRAWAL_LIST = hashString("ACCOUNT_WITHDRAWAL_LIST");
 
+export const GLV_WITHDRAWAL_LIST = hashString("GLV_WITHDRAWAL_LIST");
+export const ACCOUNT_GLV_WITHDRAWAL_LIST = hashString("ACCOUNT_GLV_WITHDRAWAL_LIST");
+
 export const SHIFT_LIST = hashString("SHIFT_LIST");
 export const ACCOUNT_SHIFT_LIST = hashString("ACCOUNT_SHIFT_LIST");
+
+export const GLV_SHIFT_LIST = hashString("GLV_SHIFT_LIST");
 
 export const POSITION_LIST = hashString("POSITION_LIST");
 export const ACCOUNT_POSITION_LIST = hashString("ACCOUNT_POSITION_LIST");
@@ -183,6 +193,10 @@ export const SINGLE_SWAP_GAS_LIMIT = hashString("SINGLE_SWAP_GAS_LIMIT");
 export const INCREASE_ORDER_GAS_LIMIT = hashString("INCREASE_ORDER_GAS_LIMIT");
 export const DECREASE_ORDER_GAS_LIMIT = hashString("DECREASE_ORDER_GAS_LIMIT");
 export const SWAP_ORDER_GAS_LIMIT = hashString("SWAP_ORDER_GAS_LIMIT");
+export const GLV_DEPOSIT_GAS_LIMIT = hashString("GLV_DEPOSIT_GAS_LIMIT");
+export const GLV_WITHDRAWAL_GAS_LIMIT = hashString("GLV_WITHDRAWAL_GAS_LIMIT");
+export const GLV_SHIFT_GAS_LIMIT = hashString("GLV_SHIFT_GAS_LIMIT");
+export const GLV_PER_MARKET_GAS_LIMIT = hashString("GLV_PER_MARKET_GAS_LIMIT");
 
 export const CUMULATIVE_BORROWING_FACTOR = hashString("CUMULATIVE_BORROWING_FACTOR");
 export const CUMULATIVE_BORROWING_FACTOR_UPDATED_AT = hashString("CUMULATIVE_BORROWING_FACTOR_UPDATED_AT");
@@ -197,6 +211,25 @@ export const MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT = hashString("MAX_ALLOWED_SUBAC
 export const SUBACCOUNT_ACTION_COUNT = hashString("SUBACCOUNT_ACTION_COUNT");
 export const SUBACCOUNT_AUTO_TOP_UP_AMOUNT = hashString("SUBACCOUNT_AUTO_TOP_UP_AMOUNT");
 export const SUBACCOUNT_ORDER_ACTION = hashString("SUBACCOUNT_ORDER_ACTION");
+
+export const GLV_SUPPORTED_MARKET_LIST = hashString("GLV_SUPPORTED_MARKET_LIST");
+export const MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT = hashString("MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT");
+
+export const GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR = hashString("GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR");
+export const GLV_MAX_MARKET_COUNT = hashString("GLV_MAX_MARKET_COUNT");
+export const GLV_MAX_MARKET_TOKEN_BALANCE_USD = hashString("GLV_MAX_MARKET_TOKEN_BALANCE_USD");
+export const GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT = hashString("GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT");
+export const GLV_SHIFT_MIN_INTERVAL = hashString("GLV_SHIFT_MIN_INTERVAL");
+export const IS_GLV_MARKET_DISABLED = hashString("IS_GLV_MARKET_DISABLED");
+
+export const SYNC_CONFIG_FEATURE_DISABLED = hashString("SYNC_CONFIG_FEATURE_DISABLED");
+export const SYNC_CONFIG_MARKET_DISABLED = hashString("SYNC_CONFIG_MARKET_DISABLED");
+export const SYNC_CONFIG_PARAMETER_DISABLED = hashString("SYNC_CONFIG_PARAMETER_DISABLED");
+export const SYNC_CONFIG_MARKET_PARAMETER_DISABLED = hashString("SYNC_CONFIG_MARKET_PARAMETER_DISABLED");
+export const SYNC_CONFIG_UPDATE_COMPLETED = hashString("SYNC_CONFIG_UPDATE_COMPLETED");
+export const SYNC_CONFIG_LATEST_UPDATE_ID = hashString("SYNC_CONFIG_LATEST_UPDATE_ID");
+
+
 
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
@@ -565,6 +598,22 @@ export function swapOrderGasLimitKey() {
   return SWAP_ORDER_GAS_LIMIT;
 }
 
+export function glvDepositGasLimitKey() {
+  return GLV_DEPOSIT_GAS_LIMIT;
+}
+
+export function glvWithdrawalGasLimitKey() {
+  return GLV_WITHDRAWAL_GAS_LIMIT;
+}
+
+export function glvShiftGasLimitKey() {
+  return GLV_SHIFT_GAS_LIMIT;
+}
+
+export function glvPerMarketGasLimitKey() {
+  return GLV_PER_MARKET_GAS_LIMIT;
+}
+
 export function cumulativeBorrowingFactorKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [CUMULATIVE_BORROWING_FACTOR, market, isLong]);
 }
@@ -605,4 +654,64 @@ export function subaccountActionCountKey(account: string, subaccount: string, ac
 
 export function subaccountAutoTopUpAmountKey(account: string, subaccount: string) {
   return hashData(["bytes32", "address", "address"], [SUBACCOUNT_AUTO_TOP_UP_AMOUNT, account, subaccount]);
+}
+
+export function glvSupportedMarketListKey(glv: string) {
+  return hashData(["bytes32", "address"], [GLV_SUPPORTED_MARKET_LIST, glv]);
+}
+
+export function minGlvTokensForFirstGlvDepositKey(glv: string) {
+  return hashData(["bytes32", "address"], [MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT, glv]);
+}
+
+export function accountGlvDepositListKey(account) {
+  return hashData(["bytes32", "address"], [ACCOUNT_GLV_DEPOSIT_LIST, account]);
+}
+
+export function accountGlvWithdrawalListKey(account) {
+  return hashData(["bytes32", "address"], [ACCOUNT_GLV_WITHDRAWAL_LIST, account]);
+}
+
+export function glvMaxMarketTokenBalanceUsdKey(glv: string, market: string) {
+  return hashData(["bytes32", "address", "address"], [GLV_MAX_MARKET_TOKEN_BALANCE_USD, glv, market]);
+}
+
+export function glvMaxMarketTokenBalanceAmountKey(glv: string, market: string) {
+  return hashData(["bytes32", "address", "address"], [GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT, glv, market]);
+}
+
+export function glvShiftMinIntervalKey(glv: string) {
+  return hashData(["bytes32", "address"], [GLV_SHIFT_MIN_INTERVAL, glv]);
+}
+
+export function glvShiftMaxPriceImpactFactorKey(glv: string) {
+  return hashData(["bytes32", "address"], [GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR, glv]);
+}
+
+export function isGlvMarketDisabledKey(glv: string, market: string) {
+  return hashData(["bytes32", "address", "address"], [IS_GLV_MARKET_DISABLED, glv, market]);
+}
+
+export function syncConfigFeatureDisabledKey(contract: string) {
+  return hashData(["bytes32", "address"], [SYNC_CONFIG_FEATURE_DISABLED, contract]);
+}
+
+export function syncConfigMarketDisabledKey(market: string) {
+  return hashData(["bytes32", "address"], [SYNC_CONFIG_MARKET_DISABLED, market]);
+}
+
+export function syncConfigParameterDisabledKey(parameter: string) {
+  return hashData(["bytes32", "string"], [SYNC_CONFIG_PARAMETER_DISABLED, parameter]);
+}
+
+export function syncConfigMarketParameterDisabledKey(market: string, parameter: string) {
+  return hashData(["bytes32", "address", "string"], [SYNC_CONFIG_MARKET_PARAMETER_DISABLED, market, parameter]);
+}
+
+export function syncConfigUpdateCompletedKey(updateId: number) {
+  return hashData(["bytes32", "uint256"], [SYNC_CONFIG_UPDATE_COMPLETED, updateId]);
+}
+
+export function syncConfigLatestUpdateIdKey() {
+  return SYNC_CONFIG_LATEST_UPDATE_ID;
 }

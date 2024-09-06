@@ -82,6 +82,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       MARKET_KEEPER: { [deployer]: true },
       FROZEN_ORDER_KEEPER: { [deployer]: true },
       CONFIG_KEEPER: { [deployer]: true },
+      LIMITED_CONFIG_KEEPER: { [deployer]: true },
     },
     arbitrum: {
       ADL_KEEPER: syntheticKeepers.mainnet,
@@ -107,6 +108,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       ROUTER_PLUGIN: {
         "0x69C527fC77291722b52649E45c838e41be8Bf5d5": true, // ExchangeRouter_3
         "0x9F48160eDc3Ad78F4cA0E3FDF54A75D8FB228452": true, // SubaccountRouter_2
+        "0x75eAFD2B4e306Dad8dd6334456F8018218Bc9882": true, // GlvRouter_1
       },
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
@@ -121,7 +123,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xf5f30b10141e1f63fc11ed772931a8294a591996": true, // MarketFactory_1
 
         "0x7d36FE0840140Aa2bb45711d8EC228e77F597493": true, // AutoCancelSyncer_3
-        "0x8583b878DA0844B7f59974069f00D3A9eaE0F4ae": true, // Config_3
+        "0xFf10Ff89195191d22F7B934A5E1Cd581Ec0Ccb93": true, // Config_3
         "0xf32b417A93Acc039B236F1eCC86B56bd3cB8E698": true, // Timelock_3
         "0xb8fc96d7a413C462F611A7aC0C912c2FE26EAbC4": true, // Oracle_3
         "0xb0c681DE9CB4B75eD0A620c04A958Bc05f4087b7": true, // SwapHandler_3
@@ -136,6 +138,10 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
 
         "0x4895170e184441da9BD2bF95c120c07ba628eeF0": true, // TimestampInitializer_3
         "0xEa90EC1228F7D1b3D47D84d1c9D46dBDFEfF7709": true, // ShiftHandler_3
+
+        "0x26DdDaA629Bb35FC1853d051561f2200dD190588": true, // GlvHandler_1
+        "0x75eAFD2B4e306Dad8dd6334456F8018218Bc9882": true, // GlvRouter_1
+        "0xdaFa7Deb67805d7498Aa926002bB2d713D1d9256": true, // GlvFactory_2
       },
       GOV_TOKEN_CONTROLLER: {
         "0x159854e14A862Df9E39E1D128b8e5F70B4A3cE9B": true, // RewardRouterV2_1
