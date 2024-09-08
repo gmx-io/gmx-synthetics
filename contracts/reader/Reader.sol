@@ -113,6 +113,29 @@ contract Reader {
             );
     }
 
+    function getAccountPositionInfoList2(
+        DataStore dataStore,
+        IReferralStorage referralStorage,
+        address account,
+        address[] memory markets,
+        MarketUtils.MarketPrices[] memory marketPrices,
+        address uiFeeReceiver,
+        uint256 start,
+        uint256 end
+    ) external view returns (ReaderPositionUtils.PositionInfo[] memory) {
+        return
+            ReaderPositionUtils.getAccountPositionInfoList(
+                dataStore,
+                referralStorage,
+                account,
+                markets,
+                marketPrices,
+                uiFeeReceiver,
+                start,
+                end
+            );
+    }
+
     function isPositionLiquidatable(
         DataStore dataStore,
         IReferralStorage referralStorage,

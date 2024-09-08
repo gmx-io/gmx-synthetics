@@ -81,6 +81,50 @@ library ReaderPositionUtils {
         return positionInfoList;
     }
 
+    function getAccountPositionInfoList(
+        DataStore dataStore,
+        IReferralStorage referralStorage,
+        address account,
+        address[] memory markets,
+        MarketUtils.MarketPrices[] memory marketPrices,
+        address uiFeeReceiver,
+        uint256 start,
+        uint256 end
+    ) external view returns (ReaderPositionUtils.PositionInfo[] memory) {
+        bytes32[] memory positionKeys = PositionStoreUtils.getAccountPositionKeys(dataStore, account, start, end);
+        ReaderPositionUtils.PositionInfo[] memory positionInfoList = new ReaderPositionUtils.PositionInfo[](positionKeys.length);
+        for (uint256 i; i < positionKeys.length; i++) {
+            bytes32 positionKey = positionKeys[i];
+            Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
+            MarketUtils.MarketPrices memory prices = _getMarketPriceByAddress(markets, marketPrices, position.market());
+            positionInfoList[i] = getPositionInfo(
+                dataStore,
+                referralStorage,
+                positionKey,
+                prices,
+                0, // sizeDeltaUsd
+                uiFeeReceiver,
+                true // usePositionSizeAsSizeDeltaUsd
+            );
+        }
+
+        return positionInfoList;
+    }
+
+    function _getMarketPriceByAddress(
+        address[] memory markets,
+        MarketUtils.MarketPrices[] memory marketPrices,
+        address market
+    ) internal pure returns (MarketUtils.MarketPrices memory) {
+        for (uint256 i = 0; i < markets.length; i++) {
+            address currentMarket = markets[i];
+            if (currentMarket == market) {
+                return marketPrices[i];
+            }
+        }
+        revert("Price not found");
+    }
+
     function getNextFundingAmountPerSize(
         DataStore dataStore,
         Market.Props memory market,
@@ -98,7 +142,7 @@ library ReaderPositionUtils {
         address account,
         uint256 start,
         uint256 end
-    ) external view returns (Position.Props[] memory) {
+    ) public view returns (Position.Props[] memory) {
         bytes32[] memory positionKeys = PositionStoreUtils.getAccountPositionKeys(dataStore, account, start, end);
         Position.Props[] memory positions = new Position.Props[](positionKeys.length);
         for (uint256 i; i < positionKeys.length; i++) {
