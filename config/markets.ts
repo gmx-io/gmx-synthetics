@@ -481,8 +481,8 @@ const config: {
       maxLongTokenPoolUsdForDeposit: decimalToFloat(1_500_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(1_500_000),
 
-      negativePositionImpactFactor: decimalToFloat(12, 11),
-      positivePositionImpactFactor: decimalToFloat(6, 11),
+      negativePositionImpactFactor: decimalToFloat(9, 11),
+      positivePositionImpactFactor: decimalToFloat(3, 11),
 
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
