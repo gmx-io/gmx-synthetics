@@ -87,18 +87,18 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         markets: [
           {
             indexToken: "WETH",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(10_000, 18),
-            glvMaxMarketTokenBalanceUsd: expandDecimals(10_000, 30),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(75_000, 18),
+            glvMaxMarketTokenBalanceUsd: expandDecimals(100_000, 30),
           },
           {
             indexToken: "DOT",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(5_000, 18),
-            glvMaxMarketTokenBalanceUsd: expandDecimals(5_000, 30),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(100_000, 18),
+            glvMaxMarketTokenBalanceUsd: expandDecimals(100_000, 30),
           },
           {
             indexToken: "TEST",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(5_000, 18),
-            glvMaxMarketTokenBalanceUsd: expandDecimals(5_000, 30),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(100_000, 18),
+            glvMaxMarketTokenBalanceUsd: expandDecimals(50_000, 30),
           },
         ],
       },
