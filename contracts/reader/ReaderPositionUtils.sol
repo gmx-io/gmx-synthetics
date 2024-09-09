@@ -96,11 +96,11 @@ library ReaderPositionUtils {
         for (uint256 i; i < positionKeys.length; i++) {
             bytes32 positionKey = positionKeys[i];
             Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
-            MarketUtils.MarketPrices memory prices = _getMarketPriceByAddress(markets, marketPrices, position.market());
+            MarketUtils.MarketPrices memory prices = _getMarketPricesByAddress(markets, marketPrices, position.market());
             positionInfoList[i] = getPositionInfo(
                 dataStore,
                 referralStorage,
-                positionKey,
+                position,
                 prices,
                 0, // sizeDeltaUsd
                 uiFeeReceiver,
@@ -111,7 +111,7 @@ library ReaderPositionUtils {
         return positionInfoList;
     }
 
-    function _getMarketPriceByAddress(
+    function _getMarketPricesByAddress(
         address[] memory markets,
         MarketUtils.MarketPrices[] memory marketPrices,
         address market
@@ -143,7 +143,7 @@ library ReaderPositionUtils {
         address account,
         uint256 start,
         uint256 end
-    ) public view returns (Position.Props[] memory) {
+    ) external view returns (Position.Props[] memory) {
         bytes32[] memory positionKeys = PositionStoreUtils.getAccountPositionKeys(dataStore, account, start, end);
         Position.Props[] memory positions = new Position.Props[](positionKeys.length);
         for (uint256 i; i < positionKeys.length; i++) {
@@ -163,10 +163,35 @@ library ReaderPositionUtils {
         address uiFeeReceiver,
         bool usePositionSizeAsSizeDeltaUsd
     ) public view returns (PositionInfo memory) {
+        Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
+        return getPositionInfo(
+            dataStore,
+            referralStorage,
+            position,
+            prices,
+            sizeDeltaUsd,
+            uiFeeReceiver,
+            usePositionSizeAsSizeDeltaUsd
+        );
+    }
+
+    function getPositionInfo(
+        DataStore dataStore,
+        IReferralStorage referralStorage,
+        Position.Props memory position,
+        MarketUtils.MarketPrices memory prices,
+        uint256 sizeDeltaUsd,
+        address uiFeeReceiver,
+        bool usePositionSizeAsSizeDeltaUsd
+    ) internal view returns (PositionInfo memory) {
+        if (position.account() == address(0)) {
+            revert Errors.EmptyPosition();
+        }
+
         PositionInfo memory positionInfo;
         GetPositionInfoCache memory cache;
 
-        positionInfo.position = PositionStoreUtils.get(dataStore, positionKey);
+        positionInfo.position = position;
         cache.market = MarketStoreUtils.get(dataStore, positionInfo.position.market());
         cache.collateralTokenPrice = MarketUtils.getCachedTokenPrice(positionInfo.position.collateralToken(), cache.market, prices);
 
