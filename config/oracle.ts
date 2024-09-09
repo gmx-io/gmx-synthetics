@@ -129,6 +129,14 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             heartbeatDuration: (24 + 1) * 60 * 60,
           },
         },
+        tBTC: {
+          priceFeed: {
+            // use the BTC price feed since the oracle would report the BTC price as well
+            address: "0x6ce185860a4963106506C203335A2910413708e9",
+            decimals: 8,
+            heartbeatDuration: (24 + 1) * 60 * 60,
+          },
+        },
         WETH: {
           priceFeed: {
             address: "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612",
