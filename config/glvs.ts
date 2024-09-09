@@ -5,9 +5,13 @@ import { percentageToFloat, expandDecimals, decimalToFloat } from "../utils/math
 type GlvConfig = {
   longToken: string;
   shortToken: string;
+
   // address is required for updateGlvConfig script
   address?: string;
-  transferGasLimit: number;
+
+  // not required, default value will be used if not specified
+  transferGasLimit?: number;
+
   type: string;
   shiftMaxPriceImpactFactor: BigNumberish;
   shiftMinInterval: number;
