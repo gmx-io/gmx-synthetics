@@ -122,7 +122,8 @@ library ReaderPositionUtils {
                 return marketPrices[i];
             }
         }
-        revert("Price not found");
+
+        revert Errors.EmptyMarketPrice(market);
     }
 
     function getNextFundingAmountPerSize(

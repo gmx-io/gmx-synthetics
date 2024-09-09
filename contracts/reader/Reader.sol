@@ -113,6 +113,7 @@ contract Reader {
             );
     }
 
+    // `markets` and `marketPrices` should contain perp markets only
     function getAccountPositionInfoList2(
         DataStore dataStore,
         IReferralStorage referralStorage,
