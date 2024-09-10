@@ -86,18 +86,18 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         markets: [
           {
             indexToken: "BTC",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(600_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_000_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(6_500_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(11_000_000),
           },
           {
             indexToken: "ORDI",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(101_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(100_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(400_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(400_000),
           },
           {
             indexToken: "STX",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(102_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(100_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(550_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(550_000),
           },
         ],
       },
