@@ -77,6 +77,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       {
         name: "GMX Liquidity Vault [WBTC-USDC]",
         symbol: "GLV [WBTC-USDC]",
+        address: "0xdF03EEd325b82bC1d4Db8b49c30ecc9E05104b96",
         longToken: "WBTC.e",
         shortToken: "USDC",
         shiftMaxPriceImpactFactor: percentageToFloat("0.1%"),
