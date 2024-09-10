@@ -32,7 +32,6 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         symbol: "GLV [WETH-USDC]",
         address: "0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9",
         longToken: "WETH",
-        transferGasLimit: 200_000,
         shortToken: "USDC",
         shiftMaxPriceImpactFactor: percentageToFloat("0.1%"),
         shiftMinInterval: 60 * 60, // 1 hour
@@ -72,6 +71,32 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
             indexToken: "SHIB",
             glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
             glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
+          },
+        ],
+      },
+      {
+        name: "GMX Liquidity Vault [WBTC-USDC]",
+        symbol: "GLV [WBTC-USDC]",
+        longToken: "WBTC.e",
+        shortToken: "USDC",
+        shiftMaxPriceImpactFactor: percentageToFloat("0.1%"),
+        shiftMinInterval: 60 * 60, // 1 hour
+        minTokensForFirstGlvDeposit: expandDecimals(1, 18),
+        markets: [
+          {
+            indexToken: "BTC",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(600_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_000_000),
+          },
+          {
+            indexToken: "ORDI",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(101_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(100_000),
+          },
+          {
+            indexToken: "STX",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(102_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(100_000),
           },
         ],
       },
