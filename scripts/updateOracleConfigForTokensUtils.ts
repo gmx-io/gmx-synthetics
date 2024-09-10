@@ -169,13 +169,6 @@ export async function updateOracleConfigForTokens({ write }) {
       multicallWriteParams.push(
         config.interface.encodeFunctionData("initOracleProviderForToken", [token.address, oracleProvider])
       );
-      multicallWriteParams.push(
-        config.interface.encodeFunctionData("setAddress", [
-          keys.ORACLE_PROVIDER_FOR_TOKEN,
-          encodeData(["address"], [token.address]),
-          oracleProvider,
-        ])
-      );
     }
   }
 
