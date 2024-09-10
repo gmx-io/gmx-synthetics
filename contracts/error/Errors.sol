@@ -398,4 +398,7 @@ library Errors {
     error SyncConfigUpdatesDisabledForParameter(string parameter);
     error SyncConfigUpdatesDisabledForMarketParameter(address market, string parameter);
     error SyncConfigInvalidMarketFromData(address market, address marketFromData);
+
+    // Reader errors
+    error EmptyMarketPrice(address market);
 }
