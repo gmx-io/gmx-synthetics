@@ -232,6 +232,7 @@ export async function requestAllocationData(timestamp: number) {
       period: number;
       rewardsPerMarket: Record<string, string>;
       token: string;
+      excludeHolders: string[];
     };
     migration: {
       isActive: boolean;

@@ -17,179 +17,162 @@ import {
 import { toLoggableObject } from "../../utils/print";
 import { setTimeout } from "timers/promises";
 
-function getUserMarketInfosQuery(i: number, toBlockNumber: number, marketsWithRewardsCond: string) {
+function getUserMarketInfosQuery(i: number, toBlockNumber: number, glvOrMarketsWithRewardsCond: string) {
   return `
-    userMarketInfos(
+    liquidityProviderInfos(
       first: 10000
       skip: ${i * 10000}
       block: {
         number: ${toBlockNumber}
       }
       where: {
-        marketAddress_in: ${marketsWithRewardsCond}
+        glvOrMarketAddress_in: ${glvOrMarketsWithRewardsCond}
       }
     ) {
       account
-      marketAddress
-      marketTokensBalance
+      glvOrMarketAddress
+      type
+      tokensBalance
     }
   `;
 }
 
-type UserMarketInfo = {
+type LiquidityProviderInfo = {
   account: string;
-  marketAddress: string;
-  marketTokensBalance: string;
+  glvOrMarketAddress: string;
+  tokensBalance: string;
 };
 
-async function requestBalancesData(fromTimestamp: number, toBlockNumber: number, marketsWithRewards: string[]) {
-  const marketsWithRewardsCond = '["' + marketsWithRewards.map((m) => m.toLowerCase()).join('","') + '"]';
+async function requestBalancesData(
+  fromTimestamp: number,
+  toBlockNumber: number,
+  glvOrMarketsWithRewards: string[],
+  excludeHolders: string[]
+) {
+  const glvOrMarketsWithRewardsCond = '["' + glvOrMarketsWithRewards.map((m) => m.toLowerCase()).join('","') + '"]';
+
+  // subgraph returns empty result if `account_not_in` is empty array
+  const excludeHoldersCond =
+    excludeHolders.length > 0 ? JSON.stringify(excludeHolders.map((h) => h.toLowerCase())) : '["0x"]';
+
   const data: {
     liquidityProviderIncentivesStats: {
       account: string;
-      marketAddress: string;
-      weightedAverageMarketTokensBalance: string;
+      glvOrMarketAddress: string;
+      type: string;
+      weightedAverageTokensBalance: string;
     }[];
-    marketIncentivesStats: {
-      weightedAverageMarketTokensSupply: string;
-      marketAddress: string;
+    incentivesStats: {
+      type: string;
+      glvOrMarketAddress: string;
     }[];
-    userMarketInfos0: UserMarketInfo[];
-    userMarketInfos1: UserMarketInfo[];
-    userMarketInfos2: UserMarketInfo[];
-    userMarketInfos3: UserMarketInfo[];
-    userMarketInfos4: UserMarketInfo[];
-    userMarketInfos5: UserMarketInfo[];
-    userMarketInfos6: UserMarketInfo[];
-    userMarketInfos7: UserMarketInfo[];
-    userMarketInfos8: UserMarketInfo[];
-    marketInfos: {
-      marketToken: string;
-      marketTokensSupply: string;
-    }[];
+    liquidityProviderInfos0: LiquidityProviderInfo[];
+    liquidityProviderInfos1: LiquidityProviderInfo[];
+    liquidityProviderInfos2: LiquidityProviderInfo[];
+    liquidityProviderInfos3: LiquidityProviderInfo[];
+    liquidityProviderInfos4: LiquidityProviderInfo[];
+    liquidityProviderInfos5: LiquidityProviderInfo[];
+    liquidityProviderInfos6: LiquidityProviderInfo[];
+    liquidityProviderInfos7: LiquidityProviderInfo[];
+    liquidityProviderInfos8: LiquidityProviderInfo[];
   } = await requestSubgraph(`{
     liquidityProviderIncentivesStats(
       first: 10000
       where: {
         timestamp: ${fromTimestamp}
         period: "1w"
-        marketAddress_in: ${marketsWithRewardsCond}
+        account_not_in: ${excludeHoldersCond}
+        glvOrMarketAddress_in: ${glvOrMarketsWithRewardsCond}
       }
     ) {
       account
-      marketAddress
-      weightedAverageMarketTokensBalance
+      glvOrMarketAddress
+      type
+      weightedAverageTokensBalance
     }
-    marketIncentivesStats(
+    incentivesStats(
       first: 10000
       where: {
-        marketAddress_in: ${marketsWithRewardsCond}
+        glvOrMarketAddress_in: ${glvOrMarketsWithRewardsCond}
         timestamp: ${fromTimestamp}
         period: "1w"
       }
     ) {
-      marketAddress
-      weightedAverageMarketTokensSupply
+      glvOrMarketAddress
+      type
     }
-    userMarketInfos0: ${getUserMarketInfosQuery(0, toBlockNumber, marketsWithRewardsCond)}
-    userMarketInfos1: ${getUserMarketInfosQuery(1, toBlockNumber, marketsWithRewardsCond)}
-    userMarketInfos2: ${getUserMarketInfosQuery(2, toBlockNumber, marketsWithRewardsCond)}
-    userMarketInfos3: ${getUserMarketInfosQuery(3, toBlockNumber, marketsWithRewardsCond)}
-    userMarketInfos4: ${getUserMarketInfosQuery(4, toBlockNumber, marketsWithRewardsCond)}
-    userMarketInfos5: ${getUserMarketInfosQuery(5, toBlockNumber, marketsWithRewardsCond)}
-    userMarketInfos6: ${getUserMarketInfosQuery(6, toBlockNumber, marketsWithRewardsCond)}
-    userMarketInfos7: ${getUserMarketInfosQuery(7, toBlockNumber, marketsWithRewardsCond)}
-    userMarketInfos8: ${getUserMarketInfosQuery(8, toBlockNumber, marketsWithRewardsCond)}
-    marketInfos(
-      first: 10000
-      block: {
-        number: ${toBlockNumber}
-      }
-      where: {
-        marketToken_in: ${marketsWithRewardsCond}
-      }
-    ) {
-      marketToken
-      marketTokensSupply
-    }
+    liquidityProviderInfos0: ${getUserMarketInfosQuery(0, toBlockNumber, glvOrMarketsWithRewardsCond)}
+    liquidityProviderInfos1: ${getUserMarketInfosQuery(1, toBlockNumber, glvOrMarketsWithRewardsCond)}
+    liquidityProviderInfos2: ${getUserMarketInfosQuery(2, toBlockNumber, glvOrMarketsWithRewardsCond)}
+    liquidityProviderInfos3: ${getUserMarketInfosQuery(3, toBlockNumber, glvOrMarketsWithRewardsCond)}
+    liquidityProviderInfos4: ${getUserMarketInfosQuery(4, toBlockNumber, glvOrMarketsWithRewardsCond)}
+    liquidityProviderInfos5: ${getUserMarketInfosQuery(5, toBlockNumber, glvOrMarketsWithRewardsCond)}
+    liquidityProviderInfos6: ${getUserMarketInfosQuery(6, toBlockNumber, glvOrMarketsWithRewardsCond)}
+    liquidityProviderInfos7: ${getUserMarketInfosQuery(7, toBlockNumber, glvOrMarketsWithRewardsCond)}
+    liquidityProviderInfos8: ${getUserMarketInfosQuery(8, toBlockNumber, glvOrMarketsWithRewardsCond)}
   }`);
 
-  if (data.marketInfos.length === 10000) {
-    throw new Error("should paginate marketInfos");
-  }
-
-  if (data.marketIncentivesStats.length === 10000) {
-    throw new Error("should paginate marketIncentivesStats");
+  if (data.incentivesStats.length === 10000) {
+    throw new Error("should paginate incentivesStats");
   }
 
   if (data.liquidityProviderIncentivesStats.length === 10000) {
     throw new Error("should paginate liquidityProviderIncentivesStats");
   }
 
-  const userMarketInfos = [
-    ...data.userMarketInfos0,
-    ...data.userMarketInfos1,
-    ...data.userMarketInfos2,
-    ...data.userMarketInfos3,
-    ...data.userMarketInfos4,
-    ...data.userMarketInfos5,
-    ...data.userMarketInfos6,
-    ...data.userMarketInfos7,
-    ...data.userMarketInfos8,
+  const liquidityProviderInfos = [
+    ...data.liquidityProviderInfos0,
+    ...data.liquidityProviderInfos1,
+    ...data.liquidityProviderInfos2,
+    ...data.liquidityProviderInfos3,
+    ...data.liquidityProviderInfos4,
+    ...data.liquidityProviderInfos5,
+    ...data.liquidityProviderInfos6,
+    ...data.liquidityProviderInfos7,
+    ...data.liquidityProviderInfos8,
   ];
 
-  if (userMarketInfos.length === 90000) {
-    throw new Error("should paginate userMarketInfos");
+  if (liquidityProviderInfos.length === 90000) {
+    throw new Error("should paginate liquidityProviderInfos");
   }
 
   const seenUserMarketInfo = new Set();
-  for (const userMarketInfo of userMarketInfos) {
-    const key = `${userMarketInfo.account}:${userMarketInfo.marketAddress}`;
+  for (const liquidityProviderInfo of liquidityProviderInfos) {
+    const key = `${liquidityProviderInfo.account}:${liquidityProviderInfo.glvOrMarketAddress}`;
     if (seenUserMarketInfo.has(key)) {
       console.error(
-        "ERROR: duplicated userMarketInfo account %s market %s",
-        userMarketInfo.account,
-        userMarketInfo.marketAddress
+        "ERROR: duplicated liquidityProviderInfo account %s glv or market %s",
+        liquidityProviderInfo.account,
+        liquidityProviderInfo.glvOrMarketAddress
       );
-      throw new Error("Duplicated userMarketInfo");
+      throw new Error("Duplicated liquidityProviderInfo");
     }
     seenUserMarketInfo.add(key);
   }
 
   const dataByMarket = Object.fromEntries(
-    data.marketInfos.map((marketInfo) => {
+    glvOrMarketsWithRewards.map((glvOrMarketAddress) => {
+      glvOrMarketAddress = glvOrMarketAddress.toLowerCase();
       const userBalances: Record<string, BigNumber> = {};
       for (const lpStat of data.liquidityProviderIncentivesStats) {
-        if (lpStat.marketAddress === marketInfo.marketToken) {
-          userBalances[ethers.utils.getAddress(lpStat.account)] = bigNumberify(
-            lpStat.weightedAverageMarketTokensBalance
-          );
+        if (lpStat.glvOrMarketAddress === glvOrMarketAddress) {
+          userBalances[ethers.utils.getAddress(lpStat.account)] = bigNumberify(lpStat.weightedAverageTokensBalance);
         }
       }
-      for (const info of userMarketInfos) {
-        if (info.marketAddress !== marketInfo.marketToken) {
+      for (const info of liquidityProviderInfos) {
+        if (info.glvOrMarketAddress !== glvOrMarketAddress) {
           continue;
         }
         if (ethers.utils.getAddress(info.account) in userBalances) {
           continue;
         }
-        if (info.marketTokensBalance === "0") {
+        if (info.tokensBalance === "0") {
           continue;
         }
-        userBalances[ethers.utils.getAddress(info.account)] = bigNumberify(info.marketTokensBalance);
+        userBalances[ethers.utils.getAddress(info.account)] = bigNumberify(info.tokensBalance);
       }
 
-      const weightedAverageMarketTokensSupply = data.marketIncentivesStats.find(
-        (marketStat) => marketStat.marketAddress == marketInfo.marketToken
-      )?.weightedAverageMarketTokensSupply;
-
-      return [
-        ethers.utils.getAddress(marketInfo.marketToken),
-        {
-          marketTokensSupply: bigNumberify(weightedAverageMarketTokensSupply || marketInfo.marketTokensSupply),
-          userBalances,
-        },
-      ];
+      return [ethers.utils.getAddress(glvOrMarketAddress), userBalances];
     })
   );
 
@@ -220,13 +203,22 @@ async function main() {
     return;
   }
 
-  const marketsWithRewards = Object.entries(lpAllocationData.rewardsPerMarket)
+  if (lpAllocationData.excludeHolders.length > 0) {
+    console.warn("WARN: excludeHolders: %s", lpAllocationData.excludeHolders.join(", "));
+  }
+
+  const glvOrMarketsWithRewards = Object.entries(lpAllocationData.rewardsPerMarket)
     .filter(([, allocation]) => {
       return allocation.gt(0);
     })
-    .map(([marketAddress]) => marketAddress);
+    .map(([glvOrMarketAddress]) => glvOrMarketAddress);
 
-  const balancesData = await requestBalancesData(fromTimestamp, toBlock.number, marketsWithRewards);
+  const balancesData = await requestBalancesData(
+    fromTimestamp,
+    toBlock.number,
+    glvOrMarketsWithRewards,
+    lpAllocationData.excludeHolders
+  );
 
   const tokens = await hre.gmx.getTokens();
   const rewardToken = getRewardToken(tokens, lpAllocationData.token);
@@ -235,7 +227,7 @@ async function main() {
   const rewardTokenPrice = getRewardTokenPrice(prices, rewardToken.address);
 
   if (Math.abs(lpAllocationData.totalShare - 1) > 0.001) {
-    console.warn("WARN: total share %s of market allocations is not 1", lpAllocationData.totalShare);
+    console.warn("WARN: total share %s of glv or market allocations is not 1", lpAllocationData.totalShare);
     await setTimeout(3000);
   }
 
@@ -247,40 +239,24 @@ async function main() {
 
   const usersDistributionResult: Record<string, BigNumber> = {};
 
-  for (const marketAddress of Object.keys(lpAllocationData.rewardsPerMarket)) {
-    if (lpAllocationData.rewardsPerMarket[marketAddress].eq(0)) {
+  for (const glvOrMarketAddress of Object.keys(lpAllocationData.rewardsPerMarket)) {
+    if (lpAllocationData.rewardsPerMarket[glvOrMarketAddress].eq(0)) {
       continue;
     }
-    if (!(marketAddress in balancesData)) {
-      throw new Error(`No balances data for market ${marketAddress}`);
+    if (!(glvOrMarketAddress in balancesData)) {
+      throw new Error(`No balances data for glv or market ${glvOrMarketAddress}`);
     }
-    const userBalances = balancesData[marketAddress].userBalances;
+    const userBalances = balancesData[glvOrMarketAddress];
     const userBalancesSum = Object.values(userBalances).reduce((acc, userBalance) => {
       return acc.add(userBalance);
     }, bigNumberify(0));
 
-    const { marketTokensSupply } = balancesData[marketAddress];
-
-    const diff = userBalancesSum.sub(marketTokensSupply);
-    console.info(
-      "market %s sum of user balances %s, market tokens supply %s, diff %s (%s%)",
-      marketAddress,
-      formatAmount(userBalancesSum, rewardToken.decimals, 2, true),
-      formatAmount(marketTokensSupply, rewardToken.decimals, 2, true),
-      formatAmount(diff, rewardToken.decimals, 2, true),
-      formatAmount(diff.mul(10000).div(userBalancesSum), 2, 2, true)
-    );
-    if (diff.abs().gt(marketTokensSupply.div(1000))) {
-      throw Error("Sum of user balances and market tokens supply don't match.");
-    }
-
-    const marketAllocation = lpAllocationData.rewardsPerMarket[marketAddress];
+    const allocation = lpAllocationData.rewardsPerMarket[glvOrMarketAddress];
     console.log(
-      "market %s allocation %s userBalancesSum: %s marketTokensSupply: %s",
-      marketAddress,
-      formatAmount(marketAllocation, rewardToken.decimals, 2, true),
-      formatAmount(userBalancesSum, rewardToken.decimals, 2, true),
-      formatAmount(marketTokensSupply, rewardToken.decimals, 2, true)
+      "glv or market %s allocation %s userBalancesSum: %s",
+      glvOrMarketAddress,
+      formatAmount(allocation, rewardToken.decimals, 2, true),
+      formatAmount(userBalancesSum, rewardToken.decimals, 2, true)
     );
 
     let userTotalRewardsForMarket = bigNumberify(0);
@@ -289,30 +265,30 @@ async function main() {
         usersDistributionResult[userAccount] = bigNumberify(0);
       }
 
-      const userRewards = userBalance.mul(marketAllocation).div(userBalancesSum);
+      const userRewards = userBalance.mul(allocation).div(userBalancesSum);
       userTotalRewardsForMarket = userTotalRewardsForMarket.add(userRewards);
 
       console.log(
-        "market %s user %s rewards %s %s avg balance %s (%s%)",
-        marketAddress,
+        "glv or market %s user %s rewards %s %s avg balance %s (%s%)",
+        glvOrMarketAddress,
         userAccount,
         formatAmount(userRewards, rewardToken.decimals, 2, true).padStart(8),
         rewardToken.symbol,
         formatAmount(userBalance, rewardToken.decimals, 2, true).padStart(12),
-        formatAmount(userBalance.mul(10000).div(marketTokensSupply), 2, 2)
+        formatAmount(userBalance.mul(10000).div(userBalancesSum), 2, 2)
       );
 
       usersDistributionResult[userAccount] = usersDistributionResult[userAccount].add(userRewards);
     }
 
-    if (userTotalRewardsForMarket.gt(marketAllocation)) {
+    if (userTotalRewardsForMarket.gt(allocation)) {
       console.error(
-        "ERROR: market %s user total rewards for market %s exceeds market allocation %s",
-        marketAddress,
+        "ERROR: glv or market %s user total rewards %s exceeds allocation %s",
+        glvOrMarketAddress,
         formatAmount(userTotalRewardsForMarket, rewardToken.decimals, 2, true),
-        formatAmount(marketAllocation, rewardToken.decimals, 2, true)
+        formatAmount(allocation, rewardToken.decimals, 2, true)
       );
-      throw new Error("User total rewards for market exceeds market allocation");
+      throw new Error("User total rewards for glv or market exceeds allocation");
     }
   }
   const minRewardThreshold = getMinRewardThreshold(rewardToken);
@@ -356,11 +332,11 @@ async function main() {
 
   const appliedOverrides = await overrideReceivers(jsonResult);
 
-  for (const marketAddress of Object.keys(lpAllocationData.rewardsPerMarket)) {
+  for (const glvOrMarketAddress of Object.keys(lpAllocationData.rewardsPerMarket)) {
     console.log(
-      "market %s allocation: %s",
-      marketAddress,
-      formatAmount(lpAllocationData.rewardsPerMarket[marketAddress], rewardToken.decimals, 2, true)
+      "glv or market %s allocation: %s",
+      glvOrMarketAddress,
+      formatAmount(lpAllocationData.rewardsPerMarket[glvOrMarketAddress], rewardToken.decimals, 2, true)
     );
   }
 
