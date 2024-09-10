@@ -203,8 +203,13 @@ async function main() {
     return;
   }
 
+  const deployments = await hre.deployments.all();
+  // to avoid sending funds to e.g. Vault contracts
+  const excludeHolders = Object.values(deployments).map((d) => d.address);
+
   if (lpAllocationData.excludeHolders.length > 0) {
     console.warn("WARN: excludeHolders: %s", lpAllocationData.excludeHolders.join(", "));
+    excludeHolders.push(...lpAllocationData.excludeHolders);
   }
 
   const glvOrMarketsWithRewards = Object.entries(lpAllocationData.rewardsPerMarket)
@@ -217,7 +222,7 @@ async function main() {
     fromTimestamp,
     toBlock.number,
     glvOrMarketsWithRewards,
-    lpAllocationData.excludeHolders
+    excludeHolders
   );
 
   const tokens = await hre.gmx.getTokens();
