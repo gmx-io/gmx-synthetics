@@ -20,12 +20,12 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
     address public immutable riskOracle;
 
     // @dev the base keys that can be set
-    mapping (bytes32 => bool) public allowedBaseKeys;
+    mapping(bytes32 => bool) public allowedBaseKeys;
 
     constructor(
-        RoleStore _roleStore, 
-        Config _config, 
-        DataStore _dataStore, 
+        RoleStore _roleStore,
+        Config _config,
+        DataStore _dataStore,
         EventEmitter _eventEmitter,
         address _riskOracle
     ) RoleModule(_roleStore) {
@@ -37,15 +37,18 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
         _initAllowedBaseKeys();
     }
 
-    // @dev Allows the LIMITED_CONFIG_KEEPER to apply updates with the provided markets and parameters.
-    // @param markets An array of market addresses for which updates are to be applied.
-    // @param parameters An array of parameters corresponding to each market for which updates are to be applied.
+    // @dev Allows the LIMITED_CONFIG_KEEPER to apply updates with the provided markets and parameters
+    // Values for parameters with the following base keys are not currently validated on-chain, they should be
+    // validated off-chain if needed: MIN_FUNDING_FACTOR_PER_SECOND, MAX_POOL_AMOUNT, MAX_POOL_USD_FOR_DEPOSIT,
+    // MAX_OPEN_INTEREST, POSITION_IMPACT_FACTOR, SWAP_IMPACT_FACTOR, RESERVE_FACTOR, OPEN_INTEREST_RESERVE_FACTOR
+    // @param markets An array of market addresses for which updates are to be applied
+    // @param parameters An array of parameters corresponding to each market for which updates are to be applied
     function sync(
-        address[] calldata markets, 
+        address[] calldata markets,
         string[] calldata parameters
     ) external onlyLimitedConfigKeeper nonReentrant {
         FeatureUtils.validateFeature(dataStore, Keys.syncConfigFeatureDisabledKey(address(this)));
-        
+
         if (markets.length != parameters.length) {
             revert Errors.SyncConfigInvalidInputLengths(markets.length, parameters.length);
         }
@@ -61,18 +64,21 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
             if (syncConfigMarketDisabled) {
                 revert Errors.SyncConfigUpdatesDisabledForMarket(market);
             }
-            
+
             bool syncConfigparameterDisabled = dataStore.getBool(Keys.syncConfigParameterDisabledKey(parameter));
             if (syncConfigparameterDisabled) {
                 revert Errors.SyncConfigUpdatesDisabledForParameter(parameter);
             }
 
-            bool syncConfigMarketParameterDisabled = dataStore.getBool(Keys.syncConfigMarketParameterDisabledKey(market, parameter));
+            bool syncConfigMarketParameterDisabled = dataStore.getBool(
+                Keys.syncConfigMarketParameterDisabledKey(market, parameter)
+            );
             if (syncConfigMarketParameterDisabled) {
                 revert Errors.SyncConfigUpdatesDisabledForMarketParameter(market, parameter);
             }
 
-            IRiskOracle.RiskParameterUpdate memory riskParameterUpdate = IRiskOracle(riskOracle).getLatestUpdateByParameterAndMarket(parameter, market);
+            IRiskOracle.RiskParameterUpdate memory riskParameterUpdate = IRiskOracle(riskOracle)
+                .getLatestUpdateByParameterAndMarket(parameter, market);
             uint256 updateId = riskParameterUpdate.updateId;
             (bytes32 baseKey, bytes memory data) = abi.decode(riskParameterUpdate.additionalData, (bytes32, bytes));
 
@@ -83,7 +89,7 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
             bytes32 fullKey = Keys.getFullKey(baseKey, data);
             uint256 prevValue = dataStore.getUint(fullKey);
             uint256 updatedValue = Cast.bytesToUint256(riskParameterUpdate.newValue);
-            
+
             bool syncConfigUpdateCompleted = dataStore.getBool(Keys.syncConfigUpdateCompletedKey(updateId));
             if (!syncConfigUpdateCompleted) {
                 config.setUint(baseKey, data, updatedValue);
@@ -104,13 +110,10 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
 
             eventData.boolItems.initItems(1);
             eventData.boolItems.setItem(0, "updateApplied", updateApplied);
-            
-            eventEmitter.emitEventLog(
-                "SyncConfig",
-                eventData
-            );
+
+            eventEmitter.emitEventLog("SyncConfig", eventData);
         }
-        
+
         if (latestUpdateId > dataStore.getUint(Keys.syncConfigLatestUpdateIdKey())) {
             dataStore.setUint(Keys.syncConfigLatestUpdateIdKey(), latestUpdateId);
         }
@@ -152,15 +155,16 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
     }
 
     // @dev validate that the market within data is equal to market
+    // With the exception of parameters that use the MAX_PNL_FACTOR base key, this function currently
+    // only supports parameters for which the market address is the first element in the 'data' param
     // @param baseKey the base key to validate
     // @param market the market address
     // @param data the data used to compute fullKey
     function _validateMarketInData(bytes32 baseKey, address market, bytes memory data) internal pure {
         address marketFromData;
         if (baseKey == Keys.MAX_PNL_FACTOR) {
-            (/* bytes32 extKey */, marketFromData, /* bool isLong */) = abi.decode(data, (bytes32, address, bool));
-        }
-        else {
+            (, /* bytes32 extKey */ marketFromData /* bool isLong */, ) = abi.decode(data, (bytes32, address, bool));
+        } else {
             marketFromData = abi.decode(data, (address));
         }
 

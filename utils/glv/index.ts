@@ -39,6 +39,12 @@ export function getGlvCount(dataStore) {
 }
 
 export function getGlvTokenAddresses(longTokenSymbol, shortTokenSymbol, tokens) {
+  if (!(longTokenSymbol in tokens)) {
+    throw new Error(`Unknown token ${longTokenSymbol}`);
+  }
+  if (!(shortTokenSymbol in tokens)) {
+    throw new Error(`Unknown token ${shortTokenSymbol}`);
+  }
   const longToken = tokens[longTokenSymbol].address;
   const shortToken = tokens[shortTokenSymbol].address;
   return [longToken, shortToken];
