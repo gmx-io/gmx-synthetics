@@ -17,7 +17,12 @@ import {
 import { toLoggableObject } from "../../utils/print";
 import { setTimeout } from "timers/promises";
 
-function getUserMarketInfosQuery(i: number, toBlockNumber: number, glvOrMarketsWithRewardsCond: string) {
+function getUserMarketInfosQuery(
+  i: number,
+  toBlockNumber: number,
+  glvOrMarketsWithRewardsCond: string,
+  excludeHoldersCond: string
+) {
   return `
     liquidityProviderInfos(
       first: 10000
@@ -26,6 +31,7 @@ function getUserMarketInfosQuery(i: number, toBlockNumber: number, glvOrMarketsW
         number: ${toBlockNumber}
       }
       where: {
+        account_not_in: ${excludeHoldersCond}
         glvOrMarketAddress_in: ${glvOrMarketsWithRewardsCond}
       }
     ) {
@@ -53,7 +59,7 @@ async function requestBalancesData(
 
   // subgraph returns empty result if `account_not_in` is empty array
   const excludeHoldersCond =
-    excludeHolders.length > 0 ? JSON.stringify(excludeHolders.map((h) => h.toLowerCase())) : '["0x"]';
+    excludeHolders.length > 0 ? '["' + excludeHolders.map((m) => m.toLowerCase()).join('","') + '"]' : '["0x"]';
 
   const data: {
     liquidityProviderIncentivesStats: {
@@ -101,15 +107,60 @@ async function requestBalancesData(
       glvOrMarketAddress
       type
     }
-    liquidityProviderInfos0: ${getUserMarketInfosQuery(0, toBlockNumber, glvOrMarketsWithRewardsCond)}
-    liquidityProviderInfos1: ${getUserMarketInfosQuery(1, toBlockNumber, glvOrMarketsWithRewardsCond)}
-    liquidityProviderInfos2: ${getUserMarketInfosQuery(2, toBlockNumber, glvOrMarketsWithRewardsCond)}
-    liquidityProviderInfos3: ${getUserMarketInfosQuery(3, toBlockNumber, glvOrMarketsWithRewardsCond)}
-    liquidityProviderInfos4: ${getUserMarketInfosQuery(4, toBlockNumber, glvOrMarketsWithRewardsCond)}
-    liquidityProviderInfos5: ${getUserMarketInfosQuery(5, toBlockNumber, glvOrMarketsWithRewardsCond)}
-    liquidityProviderInfos6: ${getUserMarketInfosQuery(6, toBlockNumber, glvOrMarketsWithRewardsCond)}
-    liquidityProviderInfos7: ${getUserMarketInfosQuery(7, toBlockNumber, glvOrMarketsWithRewardsCond)}
-    liquidityProviderInfos8: ${getUserMarketInfosQuery(8, toBlockNumber, glvOrMarketsWithRewardsCond)}
+    liquidityProviderInfos0: ${getUserMarketInfosQuery(
+      0,
+      toBlockNumber,
+      glvOrMarketsWithRewardsCond,
+      excludeHoldersCond
+    )}
+    liquidityProviderInfos1: ${getUserMarketInfosQuery(
+      1,
+      toBlockNumber,
+      glvOrMarketsWithRewardsCond,
+      excludeHoldersCond
+    )}
+    liquidityProviderInfos2: ${getUserMarketInfosQuery(
+      2,
+      toBlockNumber,
+      glvOrMarketsWithRewardsCond,
+      excludeHoldersCond
+    )}
+    liquidityProviderInfos3: ${getUserMarketInfosQuery(
+      3,
+      toBlockNumber,
+      glvOrMarketsWithRewardsCond,
+      excludeHoldersCond
+    )}
+    liquidityProviderInfos4: ${getUserMarketInfosQuery(
+      4,
+      toBlockNumber,
+      glvOrMarketsWithRewardsCond,
+      excludeHoldersCond
+    )}
+    liquidityProviderInfos5: ${getUserMarketInfosQuery(
+      5,
+      toBlockNumber,
+      glvOrMarketsWithRewardsCond,
+      excludeHoldersCond
+    )}
+    liquidityProviderInfos6: ${getUserMarketInfosQuery(
+      6,
+      toBlockNumber,
+      glvOrMarketsWithRewardsCond,
+      excludeHoldersCond
+    )}
+    liquidityProviderInfos7: ${getUserMarketInfosQuery(
+      7,
+      toBlockNumber,
+      glvOrMarketsWithRewardsCond,
+      excludeHoldersCond
+    )}
+    liquidityProviderInfos8: ${getUserMarketInfosQuery(
+      8,
+      toBlockNumber,
+      glvOrMarketsWithRewardsCond,
+      excludeHoldersCond
+    )}
   }`);
 
   if (data.incentivesStats.length === 10000) {
