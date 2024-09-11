@@ -545,10 +545,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.SYNC_CONFIG_MARKET_DISABLED] = true;
         allowedBaseKeys[Keys.SYNC_CONFIG_PARAMETER_DISABLED] = true;
         allowedBaseKeys[Keys.SYNC_CONFIG_MARKET_PARAMETER_DISABLED] = true;
-
-        allowedBaseKeys[Keys.MAX_TOTAL_CONTRIBUTOR_TOKEN_AMOUNT] = true;
-        allowedBaseKeys[Keys.CONTRIBUTOR_TOKEN_VAULT] = true;
-        allowedBaseKeys[Keys.MIN_CONTRIBUTOR_PAYMENT_INTERVAL] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {
@@ -684,13 +680,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             // revert if value > 100%
             if (value > Precision.FLOAT_PRECISION) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
-            }
-        }
-
-        if (baseKey == Keys.MIN_CONTRIBUTOR_PAYMENT_INTERVAL) {
-            // revert if < 20 days
-            if (value < 20 days) {
-                revert Errors.ConfigValueBelowAllowedRange(Keys.MIN_CONTRIBUTOR_PAYMENT_INTERVAL, value);
             }
         }
     }

@@ -60,6 +60,32 @@ contract ContributorHandler is ReentrancyGuard, RoleModule, BasicMulticall {
         dataStore.removeAddress(Keys.CONTRIBUTOR_TOKEN_LIST, token);
     }
 
+    function setContributorTokenVault(address token, address vault) external nonReentrant onlyConfigKeeper {
+        dataStore.setAddress(Keys.contributorTokenVaultKey(token), vault);
+    }
+
+    function setMinContributorPaymentInterval(uint256 interval) external nonReentrant onlyTimelockMultisig {
+        // revert if < 20 days
+        if (interval < 20 days) {
+            revert Errors.MinContributorPaymentIntervalBelowAllowedRange(interval);
+        }
+
+        dataStore.setUint(Keys.MIN_CONTRIBUTOR_PAYMENT_INTERVAL, interval);
+    }
+
+    function setMaxTotalContributorTokenAmount(
+        address[] memory tokens,
+        uint256[] memory amounts
+    ) external nonReentrant onlyTimelockMultisig {
+        if (tokens.length != amounts.length) {
+            revert Errors.InvalidSetMaxTotalContributorTokenAmountInput(tokens.length, amounts.length);
+        }
+
+        for (uint256 i; i < tokens.length; i++) {
+            dataStore.setUint(Keys.maxTotalContributorTokenAmountKey(tokens[i]), amounts[i]);
+        }
+    }
+
     function sendPayments() external nonReentrant onlyContributorDistributor {
         uint256 lastPaymentAt = dataStore.getUint(Keys.CONTRIBUTOR_LAST_PAYMENT_AT);
         uint256 minPaymentInterval = dataStore.getUint(Keys.MIN_CONTRIBUTOR_PAYMENT_INTERVAL);

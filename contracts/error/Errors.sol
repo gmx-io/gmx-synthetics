@@ -29,7 +29,6 @@ library Errors {
     // Config errors
     error InvalidBaseKey(bytes32 baseKey);
     error ConfigValueExceedsAllowedRange(bytes32 baseKey, uint256 value);
-    error ConfigValueBelowAllowedRange(bytes32 baseKey, uint256 value);
     error InvalidClaimableFactor(uint256 value);
     error OracleProviderAlreadyExistsForToken(address token);
     error PriceFeedAlreadyExistsForToken(address token);
@@ -41,6 +40,8 @@ library Errors {
     error InvalidContributorToken(address token);
     error MaxTotalContributorTokenAmountExceeded(address token, uint256 totalAmount, uint256 maxTotalAmount);
     error MinContributorPaymentIntervalNotYetPassed(uint256 minPaymentInterval);
+    error MinContributorPaymentIntervalBelowAllowedRange(uint256 interval);
+    error InvalidSetMaxTotalContributorTokenAmountInput(uint256 tokensLength, uint256 amountsLength);
 
     // Timelock errors
     error ActionAlreadySignalled();
