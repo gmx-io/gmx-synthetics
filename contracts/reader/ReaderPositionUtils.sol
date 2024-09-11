@@ -57,7 +57,7 @@ library ReaderPositionUtils {
         );
     }
 
-    function getAccountPositionInfoList(
+    function getPositionInfoList(
         DataStore dataStore,
         IReferralStorage referralStorage,
         bytes32[] memory positionKeys,

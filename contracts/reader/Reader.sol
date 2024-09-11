@@ -104,7 +104,7 @@ contract Reader {
         address uiFeeReceiver
     ) external view returns (ReaderPositionUtils.PositionInfo[] memory) {
         return
-            ReaderPositionUtils.getAccountPositionInfoList(
+            ReaderPositionUtils.getPositionInfoList(
                 dataStore,
                 referralStorage,
                 positionKeys,
