@@ -67,6 +67,13 @@ export type BaseMarketConfig = {
 
   minCollateralUsd: BigNumberish;
 
+  aboveOptimalUsageBorrowingFactorForLongs: BigNumberish;
+  aboveOptimalUsageBorrowingFactorForShorts: BigNumberish;
+  baseBorrowingFactorForLongs: BigNumberish;
+  baseBorrowingFactorForShorts: BigNumberish;
+  optimalUsageFactorForLongs: BigNumberish;
+  optimalUsageFactorForShorts: BigNumberish;
+
   borrowingFactorForLongs: BigNumberish;
   borrowingFactorForShorts: BigNumberish;
 
@@ -1045,11 +1052,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      reserveFactorLongs: percentageToFloat("165%"),
-      reserveFactorShorts: percentageToFloat("165%"),
+      reserveFactorLongs: percentageToFloat("235%"),
+      reserveFactorShorts: percentageToFloat("235%"),
 
-      openInterestReserveFactorLongs: percentageToFloat("160%"),
-      openInterestReserveFactorShorts: percentageToFloat("160%"),
+      openInterestReserveFactorLongs: percentageToFloat("230%"),
+      openInterestReserveFactorShorts: percentageToFloat("230%"),
 
       maxLongTokenPoolAmount: expandDecimals(600_000, 18),
       maxShortTokenPoolAmount: expandDecimals(8_000_000, 6),
@@ -1068,6 +1075,15 @@ const config: {
       // minCollateralFactor of 0.005 (0.5%) when open interest is 8,000,000 USD
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(64, 11),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(64, 11),
+
+      optimalUsageFactorForLongs: percentageToFloat("75%"),
+      optimalUsageFactorForShorts: percentageToFloat("75%"),
+
+      baseBorrowingFactorForLongs: percentageToFloat("60%"),
+      baseBorrowingFactorForShorts: percentageToFloat("60%"),
+
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%"),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%"),
 
       // factor in open interest reserve factor 140%
       borrowingFactorForLongs: decimalToFloat(540, 14), // 5.40E-12, ~50% at 100% utilisation
