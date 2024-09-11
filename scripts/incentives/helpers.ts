@@ -64,6 +64,8 @@ export const AVALANCHE_RUSH_LP_ID = 1100;
 export const AVALANCHE_RUSH_TRADING_ID = 1101;
 const TEST_DISTRIBUTION_TYPE_ID = 9876;
 
+export const INCENTIVES_DISTRIBUTOR_ADDRESS = "0x8704EE9AB8622BbC25410C7D4717ED51f776c7f6";
+
 type IncentivesType = "lp" | "trading" | "glpMigration" | "competition" | "test";
 
 export const distributionTypes: Record<

@@ -7,6 +7,7 @@ import {
   getMinRewardThreshold,
   getRewardToken,
   getRewardTokenPrice,
+  INCENTIVES_DISTRIBUTOR_ADDRESS,
   overrideReceivers,
   processArgs,
   requestAllocationData,
@@ -256,7 +257,10 @@ async function main() {
 
   const deployments = await hre.deployments.all();
   // to avoid sending funds to e.g. Vault contracts
-  const excludeHolders = Object.values(deployments).map((d) => d.address);
+  const excludeHolders = [
+    INCENTIVES_DISTRIBUTOR_ADDRESS, //
+    ...Object.values(deployments).map((d) => d.address),
+  ];
 
   if (lpAllocationData.excludeHolders.length > 0) {
     console.warn("WARN: excludeHolders: %s", lpAllocationData.excludeHolders.join(", "));
