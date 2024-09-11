@@ -96,7 +96,7 @@ contract Reader {
             );
     }
 
-    function getAccountPositionInfoList(
+    function getPositionInfoList(
         DataStore dataStore,
         IReferralStorage referralStorage,
         bytes32[] memory positionKeys,
@@ -114,7 +114,7 @@ contract Reader {
     }
 
     // `markets` and `marketPrices` should contain perp markets only
-    function getAccountPositionInfoList2(
+    function getAccountPositionInfoList(
         DataStore dataStore,
         IReferralStorage referralStorage,
         address account,
