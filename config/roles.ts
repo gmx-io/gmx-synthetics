@@ -48,6 +48,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     "0xC84f3398eDf6336E1Ef55b50Ca3F9f9f96B8b504": true,
     "0xFb11f15f206bdA02c224EDC744b0E50E46137046": true,
     "0xb38302e27bAe8932536A84ab362c3d1013420Cb4": true,
+    "0xc9e1CE91d3f782499cFe787b6F1d2AF0Ca76C049": true,
   };
 
   const testnetConfig = {
@@ -217,6 +218,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true,
         "0xc9e1CE91d3f782499cFe787b6F1d2AF0Ca76C049": true,
         "0x03d717E27aF1B566C3efb729F1151E775B411f2B": true,
+        "0xC84f3398eDf6336E1Ef55b50Ca3F9f9f96B8b504": true,
       },
       ...testnetConfig,
     },
