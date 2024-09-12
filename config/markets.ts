@@ -1053,11 +1053,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      reserveFactorLongs: percentageToFloat("235%"),
-      reserveFactorShorts: percentageToFloat("235%"),
+      reserveFactorLongs: percentageToFloat("165%"),
+      reserveFactorShorts: percentageToFloat("165%"),
 
-      openInterestReserveFactorLongs: percentageToFloat("230%"),
-      openInterestReserveFactorShorts: percentageToFloat("230%"),
+      openInterestReserveFactorLongs: percentageToFloat("160%"),
+      openInterestReserveFactorShorts: percentageToFloat("160%"),
 
       maxLongTokenPoolAmount: expandDecimals(600_000, 18),
       maxShortTokenPoolAmount: expandDecimals(8_000_000, 6),
@@ -1077,8 +1077,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(64, 11),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(64, 11),
 
-      optimalUsageFactorForLongs: percentageToFloat("75%").div(SECONDS_PER_YEAR),
-      optimalUsageFactorForShorts: percentageToFloat("75%").div(SECONDS_PER_YEAR),
+      optimalUsageFactorForLongs: 0, // percentageToFloat("75%").div(SECONDS_PER_YEAR),
+      optimalUsageFactorForShorts: 0, //percentageToFloat("75%").div(SECONDS_PER_YEAR),
 
       baseBorrowingFactorForLongs: percentageToFloat("60%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("60%").div(SECONDS_PER_YEAR),
