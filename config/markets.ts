@@ -3,6 +3,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { expandDecimals, decimalToFloat, bigNumberify, percentageToFloat } from "../utils/math";
 import { hashString } from "../utils/hash";
+import { SECONDS_PER_YEAR } from "../utils/constants";
 
 export type BaseMarketConfig = {
   reserveFactorLongs: BigNumberish;
@@ -1076,14 +1077,14 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(64, 11),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(64, 11),
 
-      optimalUsageFactorForLongs: percentageToFloat("75%"),
-      optimalUsageFactorForShorts: percentageToFloat("75%"),
+      optimalUsageFactorForLongs: percentageToFloat("75%").div(SECONDS_PER_YEAR),
+      optimalUsageFactorForShorts: percentageToFloat("75%").div(SECONDS_PER_YEAR),
 
-      baseBorrowingFactorForLongs: percentageToFloat("60%"),
-      baseBorrowingFactorForShorts: percentageToFloat("60%"),
+      baseBorrowingFactorForLongs: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactorForShorts: percentageToFloat("60%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%"),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%"),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
 
       // factor in open interest reserve factor 140%
       borrowingFactorForLongs: decimalToFloat(540, 14), // 5.40E-12, ~50% at 100% utilisation
