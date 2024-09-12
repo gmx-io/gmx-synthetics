@@ -608,11 +608,17 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         if (
             baseKey == Keys.BORROWING_FACTOR ||
-            baseKey == Keys.BASE_BORROWING_FACTOR ||
-            baseKey == Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR
+            baseKey == Keys.BASE_BORROWING_FACTOR
         ) {
             // 0.000005% per second, ~157% per year at 100% utilization
             if (value > 50000000000000000000000) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (baseKey == Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR) {
+            // 0.00001% per second, ~315% per year at 100% utilization
+            if (value > 100000000000000000000000) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }

@@ -1083,8 +1083,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("60%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("60%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: "50000000000000000000000", // ~157%, max value allowed by Config
+      aboveOptimalUsageBorrowingFactorForShorts: "50000000000000000000000",
 
       // factor in open interest reserve factor 140%
       borrowingFactorForLongs: decimalToFloat(540, 14), // 5.40E-12, ~50% at 100% utilisation
