@@ -342,9 +342,11 @@ library Errors {
     error MaxSubaccountActionCountExceeded(address account, address subaccount, uint256 count, uint256 maxCount);
 
     // TokenUtils errors
-    error EmptyTokenTranferGasLimit(address token);
     error TokenTransferError(address token, address receiver, uint256 amount);
     error EmptyHoldingAddress();
+    // Note that Transfer is misspelled as Tranfer in the EmptyTokenTranferGasLimit error
+    // some contracts with this error cannot be re-deployed so it has been left as is
+    error EmptyTokenTranferGasLimit(address token);
 
     // AccountUtils errors
     error EmptyAccount();
