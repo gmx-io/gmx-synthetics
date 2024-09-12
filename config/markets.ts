@@ -1077,8 +1077,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(64, 11),
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(64, 11),
 
-      optimalUsageFactorForLongs: 0, // percentageToFloat("75%").div(SECONDS_PER_YEAR),
-      optimalUsageFactorForShorts: 0, //percentageToFloat("75%").div(SECONDS_PER_YEAR),
+      optimalUsageFactorForLongs: percentageToFloat("75%"),
+      optimalUsageFactorForShorts: percentageToFloat("75%"),
 
       baseBorrowingFactorForLongs: percentageToFloat("60%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("60%").div(SECONDS_PER_YEAR),
