@@ -618,6 +618,9 @@ export async function updateMarketConfig({ write }) {
       console.info(`tx sent: ${tx.hash}`);
     });
   } else {
+    await handleInBatches(multicallWriteParams, 100, async (batch) => {
+      await config.callStatic.multicall(batch);
+    });
     console.info("NOTE: executed in read-only mode, no transactions were sent");
   }
 }
