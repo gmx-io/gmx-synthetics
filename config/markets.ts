@@ -1053,11 +1053,11 @@ const config: {
 
       ...baseMarketConfig,
 
-      reserveFactorLongs: percentageToFloat("165%"),
-      reserveFactorShorts: percentageToFloat("165%"),
+      reserveFactorLongs: percentageToFloat("235%"),
+      reserveFactorShorts: percentageToFloat("235%"),
 
-      openInterestReserveFactorLongs: percentageToFloat("160%"),
-      openInterestReserveFactorShorts: percentageToFloat("160%"),
+      openInterestReserveFactorLongs: percentageToFloat("230%"),
+      openInterestReserveFactorShorts: percentageToFloat("230%"),
 
       maxLongTokenPoolAmount: expandDecimals(600_000, 18),
       maxShortTokenPoolAmount: expandDecimals(8_000_000, 6),
