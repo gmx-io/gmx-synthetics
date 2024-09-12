@@ -193,7 +193,7 @@ async function appendConfigIfDifferent(
     );
     list.push(config.interface.encodeFunctionData(setMethod, [baseKey, keyData, value]));
   } else {
-    console.info("skipping config %s %s (%s) as it is already set to %s", type, label, key, value.toString());
+    // console.info("skipping config %s %s (%s) as it is already set to %s", type, label, key, value.toString());
   }
 }
 
