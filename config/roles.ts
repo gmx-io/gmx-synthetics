@@ -211,6 +211,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xFb11f15f206bdA02c224EDC744b0E50E46137046": true,
         "0xc9e1CE91d3f782499cFe787b6F1d2AF0Ca76C049": true,
         "0x03d717E27aF1B566C3efb729F1151E775B411f2B": true,
+        "0x9f7198eb1b9Ccc0Eb7A07eD228d8FbC12963ea33": true,
         [deployer]: true,
       },
       LIMITED_CONFIG_KEEPER: {
