@@ -122,13 +122,23 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "DOT",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(100_000, 18),
-            glvMaxMarketTokenBalanceUsd: expandDecimals(100_000, 30),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(10_000, 18),
+            glvMaxMarketTokenBalanceUsd: expandDecimals(10_000, 30),
           },
           {
             indexToken: "TEST",
             glvMaxMarketTokenBalanceAmount: expandDecimals(100_000, 18),
             glvMaxMarketTokenBalanceUsd: expandDecimals(50_000, 30),
+          },
+          {
+            indexToken: "SOL",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(4_000, 18),
+            glvMaxMarketTokenBalanceUsd: expandDecimals(5_000, 30),
+          },
+          {
+            indexToken: "MATIC",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(1_000, 18),
+            glvMaxMarketTokenBalanceUsd: expandDecimals(2_000, 30),
           },
         ],
       },
