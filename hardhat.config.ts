@@ -59,7 +59,7 @@ const getEnvAccounts = (chainName?: string) => {
   }
 
   if (ACCOUNT_KEY_FILE) {
-    const filepath = path.join("./keys/", ACCOUNT_KEY_FILE);
+    const filepath = path.resolve(ACCOUNT_KEY_FILE);
     const data = JSON.parse(fs.readFileSync(filepath));
     if (!data) {
       throw new Error("Invalid key file");
