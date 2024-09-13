@@ -143,6 +143,22 @@ contract RoleModule {
     }
 
     /**
+     * @dev Only allows addresses with the CONTRIBUTOR_KEEPER role to call the function.
+     */
+    modifier onlyContributorKeeper() {
+        _validateRole(Role.CONTRIBUTOR_KEEPER, "CONTRIBUTOR_KEEPER");
+        _;
+    }
+
+    /**
+     * @dev Only allows addresses with the CONTRIBUTOR_DISTRIBUTOR role to call the function.
+     */
+    modifier onlyContributorDistributor() {
+        _validateRole(Role.CONTRIBUTOR_DISTRIBUTOR, "CONTRIBUTOR_DISTRIBUTOR");
+        _;
+    }
+
+    /**
      * @dev Validates that the caller has the specified role.
      *
      * If the caller does not have the specified role, the transaction is reverted.

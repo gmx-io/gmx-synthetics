@@ -35,6 +35,14 @@ library Errors {
     error DataStreamIdAlreadyExistsForToken(address token);
     error MaxFundingFactorPerSecondLimitExceeded(uint256 maxFundingFactorPerSecond, uint256 limit);
 
+    // ContributorHandler errors
+    error InvalidSetContributorPaymentInput(uint256 tokensLength, uint256 amountsLength);
+    error InvalidContributorToken(address token);
+    error MaxTotalContributorTokenAmountExceeded(address token, uint256 totalAmount, uint256 maxTotalAmount);
+    error MinContributorPaymentIntervalNotYetPassed(uint256 minPaymentInterval);
+    error MinContributorPaymentIntervalBelowAllowedRange(uint256 interval);
+    error InvalidSetMaxTotalContributorTokenAmountInput(uint256 tokensLength, uint256 amountsLength);
+
     // Timelock errors
     error ActionAlreadySignalled();
     error ActionNotSignalled();
