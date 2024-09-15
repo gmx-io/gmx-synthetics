@@ -144,6 +144,7 @@ export const POSITION_IMPACT_EXPONENT_FACTOR = hashString("POSITION_IMPACT_EXPON
 export const MAX_POSITION_IMPACT_FACTOR = hashString("MAX_POSITION_IMPACT_FACTOR");
 export const MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS = hashString("MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS");
 export const POSITION_FEE_FACTOR = hashString("POSITION_FEE_FACTOR");
+export const LIQUIDATION_FEE_FACTOR = hashString("LIQUIDATION_FEE_FACTOR");
 
 export const RESERVE_FACTOR = hashString("RESERVE_FACTOR");
 export const OPEN_INTEREST_RESERVE_FACTOR = hashString("OPEN_INTEREST_RESERVE_FACTOR");
@@ -500,6 +501,10 @@ export function maxPositionImpactFactorForLiquidationsKey(market: string) {
 
 export function positionFeeFactorKey(market: string, forPositiveImpact: boolean) {
   return hashData(["bytes32", "address", "bool"], [POSITION_FEE_FACTOR, market, forPositiveImpact]);
+}
+
+export function liquidationFeeFactorKey(market: string) {
+  return hashData(["bytes32", "address"], [LIQUIDATION_FEE_FACTOR, market]);
 }
 
 export function latestAdlBlockKey(market: string, isLong: boolean) {

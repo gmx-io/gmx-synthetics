@@ -197,6 +197,8 @@ library Keys {
 
     // @dev key for the percentage amount of position fees to be received
     bytes32 public constant POSITION_FEE_RECEIVER_FACTOR = keccak256(abi.encode("POSITION_FEE_RECEIVER_FACTOR"));
+    // @dev key for the percentage amount of liquidation fees to be received
+    bytes32 public constant LIQUIDATION_FEE_RECEIVER_FACTOR = keccak256(abi.encode("LIQUIDATION_FEE_RECEIVER_FACTOR"));
     // @dev key for the percentage amount of swap fees to be received
     bytes32 public constant SWAP_FEE_RECEIVER_FACTOR = keccak256(abi.encode("SWAP_FEE_RECEIVER_FACTOR"));
     // @dev key for the percentage amount of borrowing fees to be received
@@ -273,6 +275,8 @@ library Keys {
     bytes32 public constant MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS = keccak256(abi.encode("MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS"));
     // @dev key for the position fee factor
     bytes32 public constant POSITION_FEE_FACTOR = keccak256(abi.encode("POSITION_FEE_FACTOR"));
+    // @dev key for the liquidation fee factor
+    bytes32 public constant LIQUIDATION_FEE_FACTOR = keccak256(abi.encode("LIQUIDATION_FEE_FACTOR"));
     // @dev key for the swap impact factor
     bytes32 public constant SWAP_IMPACT_FACTOR = keccak256(abi.encode("SWAP_IMPACT_FACTOR"));
     // @dev key for the swap impact exponent factor
@@ -429,7 +433,7 @@ library Keys {
     bytes32 public constant SYNC_CONFIG_UPDATE_COMPLETED = keccak256(abi.encode("SYNC_CONFIG_UPDATE_COMPLETED"));
     // @dev key for the latest updateId that has been applied by ConfigSyncer
     bytes32 public constant SYNC_CONFIG_LATEST_UPDATE_ID = keccak256(abi.encode("SYNC_CONFIG_LATEST_UPDATE_ID"));
-    
+
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
 
@@ -1054,6 +1058,17 @@ library Keys {
             POSITION_FEE_FACTOR,
             market,
             forPositiveImpact
+        ));
+    }
+
+    // @dev key for liquidation fee factor
+    // @param market the market address to check
+    // @param forPositiveImpact whether the fee is for an action that has a positive price impact
+    // @return key for liquidation fee factor
+    function liquidationFeeFactorKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            LIQUIDATION_FEE_FACTOR,
+            market
         ));
     }
 
