@@ -95,6 +95,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
         "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9": true, // multisig_1
+        "0x31FaBf54278E79069c4E102e9fB79d6a44be53A8": true, // ConfigSyncer_3
       },
       FEE_KEEPER: {
         "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
@@ -124,7 +125,8 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xf5f30b10141e1f63fc11ed772931a8294a591996": true, // MarketFactory_1
 
         "0x7d36FE0840140Aa2bb45711d8EC228e77F597493": true, // AutoCancelSyncer_3
-        "0xFf10Ff89195191d22F7B934A5E1Cd581Ec0Ccb93": true, // Config_3
+        "0x43F0080E40A32A44413fd562788c27E3f5BEddbC": true, // Config_3
+        "0x31FaBf54278E79069c4E102e9fB79d6a44be53A8": true, // ConfigSyncer_3
         "0xf32b417A93Acc039B236F1eCC86B56bd3cB8E698": true, // Timelock_3
         "0xb8fc96d7a413C462F611A7aC0C912c2FE26EAbC4": true, // Oracle_3
         "0xb0c681DE9CB4B75eD0A620c04A958Bc05f4087b7": true, // SwapHandler_3
@@ -158,6 +160,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
         "0x15F9eBC71c539926B8f652a534d29B4Af57CaD55": true, // multisig_1
+        "0xe75f1fA4858A99e07ca878388AE9259Ba048C87A": true, // ConfigSyncer_3
       },
       FEE_KEEPER: {
         "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
@@ -186,7 +189,8 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xc57c155faccd93f62546f329d1483e0e5b9c1241": true, // MarketFactory_1
 
         "0x162e3a5B47C9a45ff762E5b4b23D048D6780C14e": true, // AutoCancelSyncer_3
-        "0x8EfE46827AADfe498C27E56F0A428B5B4EE654f7": true, // Config_3
+        "0x989618BE5450B40F7a2675549643E2e2Dab9978A": true, // Config_3
+        "0xe75f1fA4858A99e07ca878388AE9259Ba048C87A": true, // ConfigSyncer_3
         "0x9Dd6EB1069385D85Ae204543BabB7333181ec8A5": true, // Timelock_3
         "0xAd7a7568F500F65AEA3D9417A210CBc5dcD7b273": true, // Oracle_3
         "0xb54C8fB6B2F143dD58f5B00fDE7dA4FA05077B20": true, // SwapHandler_3
