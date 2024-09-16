@@ -100,4 +100,14 @@ library Role {
      * Hash: 0xb37d64edaeaf5e634c13682dbd813f5a12fec9eb4f74433a089e7a3c3289af91
      */
     bytes32 public constant ADL_KEEPER = keccak256(abi.encode("ADL_KEEPER"));
+    /**
+     * @dev The CONTRIBUTOR_KEEPER role.
+     * Hash: 0xfa89e7b5ea0a346d73c71d7d6a3512b9f2ea2c2e6c5fb8211ec351d35deef0f4
+     */
+    bytes32 public constant CONTRIBUTOR_KEEPER = keccak256(abi.encode("CONTRIBUTOR_KEEPER"));
+    /**
+     * @dev The CONTRIBUTOR_DISTRIBUTOR role.
+     * Hash: 0xcdf6da7ad30d8b9afea66fb1cb11b1b7d0b50e9b30b69561a3ca52c39251360c
+     */
+    bytes32 public constant CONTRIBUTOR_DISTRIBUTOR = keccak256(abi.encode("CONTRIBUTOR_DISTRIBUTOR"));
 }

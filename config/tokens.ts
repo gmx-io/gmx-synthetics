@@ -76,6 +76,13 @@ const config: {
       dataStreamFeedId: "0x00039d9e45394f473ab1f050a1b963e6b05351e52d71e507509ada0c95ed75b8",
       dataStreamFeedDecimals: 18,
     },
+    tBTC: {
+      address: "0x6c84a8f1c29108f47a79964b5fe888d4f4d0de40",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00039d9e45394f473ab1f050a1b963e6b05351e52d71e507509ada0c95ed75b8",
+      dataStreamFeedDecimals: 18,
+    },
     WETH: {
       address: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
       decimals: 18,

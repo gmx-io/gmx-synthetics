@@ -77,8 +77,34 @@ async function main() {
   const timelock = await getTimelock();
 
   const rolesToAdd = {
-    arbitrum: [],
-    avalanche: [],
+    arbitrum: [
+      {
+        role: "CONFIG_KEEPER",
+        member: "0x31fabf54278e79069c4e102e9fb79d6a44be53a8",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x43f0080e40a32a44413fd562788c27e3f5beddbc",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x31fabf54278e79069c4e102e9fb79d6a44be53a8",
+      },
+    ],
+    avalanche: [
+      {
+        role: "CONFIG_KEEPER",
+        member: "0xe75f1fa4858a99e07ca878388ae9259ba048c87a",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x989618be5450b40f7a2675549643e2e2dab9978a",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0xe75f1fa4858a99e07ca878388ae9259ba048c87a",
+      },
+    ],
   };
 
   const rolesToRemove = {
@@ -87,11 +113,15 @@ async function main() {
         role: "CONTROLLER",
         member: "0x8583b878DA0844B7f59974069f00D3A9eaE0F4ae",
       },
+      {
+        role: "CONTROLLER",
+        member: "0xFf10Ff89195191d22F7B934A5E1Cd581Ec0Ccb93",
+      },
     ],
     avalanche: [
       {
-        role: "ROLE_ADMIN",
-        member: "0x844D38f2c3875b8351feB4764718E1c64bD55c46",
+        role: "CONTROLLER",
+        member: "0x8EfE46827AADfe498C27E56F0A428B5B4EE654f7",
       },
     ],
   };

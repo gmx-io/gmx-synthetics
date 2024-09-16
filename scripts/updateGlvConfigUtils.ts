@@ -48,7 +48,7 @@ const processGlvs = async ({ glvs, onchainMarketsByTokens, tokens, handleConfig 
       "uint",
       keys.TOKEN_TRANSFER_GAS_LIMIT,
       encodeData(["address"], [glvConfig.address]),
-      glvConfig.transferGasLimit,
+      glvConfig.transferGasLimit || 200_000,
       `transferGasLimit ${glvConfig.transferGasLimit}`
     );
 

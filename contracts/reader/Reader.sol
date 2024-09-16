@@ -96,7 +96,7 @@ contract Reader {
             );
     }
 
-    function getAccountPositionInfoList(
+    function getPositionInfoList(
         DataStore dataStore,
         IReferralStorage referralStorage,
         bytes32[] memory positionKeys,
@@ -104,12 +104,36 @@ contract Reader {
         address uiFeeReceiver
     ) external view returns (ReaderPositionUtils.PositionInfo[] memory) {
         return
-            ReaderPositionUtils.getAccountPositionInfoList(
+            ReaderPositionUtils.getPositionInfoList(
                 dataStore,
                 referralStorage,
                 positionKeys,
                 prices,
                 uiFeeReceiver
+            );
+    }
+
+    // `markets` and `marketPrices` should contain perp markets only
+    function getAccountPositionInfoList(
+        DataStore dataStore,
+        IReferralStorage referralStorage,
+        address account,
+        address[] memory markets,
+        MarketUtils.MarketPrices[] memory marketPrices,
+        address uiFeeReceiver,
+        uint256 start,
+        uint256 end
+    ) external view returns (ReaderPositionUtils.PositionInfo[] memory) {
+        return
+            ReaderPositionUtils.getAccountPositionInfoList(
+                dataStore,
+                referralStorage,
+                account,
+                markets,
+                marketPrices,
+                uiFeeReceiver,
+                start,
+                end
             );
     }
 

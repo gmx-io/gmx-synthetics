@@ -36,10 +36,10 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RiskOrac
     },
     hardhat: {},
     arbitrum: {
-      riskOracle: "0x48b67764dBB6B8fc2A0c3987ed3819e543212Bc3", // Not yet deployed to arbitrum, using Arbitrum Sepolia address as a placeholder
+      riskOracle: "0x0efb5a96Ed1B33308a73355C56Aa1Bc1aa7E4A8E",
     },
     avalanche: {
-      riskOracle: "0x48b67764dBB6B8fc2A0c3987ed3819e543212Bc3", // Not yet deployed to avalanche, using Arbitrum Sepolia address as a placeholder
+      riskOracle: "0x0efb5a96Ed1B33308a73355C56Aa1Bc1aa7E4A8E",
     },
     avalancheFuji: {
       riskOracle: "0xE05354F4187820bF0832bF1f5fAd6a0F592b8fB6",

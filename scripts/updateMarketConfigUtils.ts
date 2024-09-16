@@ -389,6 +389,66 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       );
     }
 
+    if (marketConfig.optimalUsageFactorForLongs !== undefined) {
+      await handleConfig(
+        "uint",
+        keys.OPTIMAL_USAGE_FACTOR,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.optimalUsageFactorForLongs,
+        `optimalUsageFactorForLongs ${marketLabel} (${marketToken})`
+      );
+    }
+
+    if (marketConfig.optimalUsageFactorForShorts !== undefined) {
+      await handleConfig(
+        "uint",
+        keys.OPTIMAL_USAGE_FACTOR,
+        encodeData(["address", "bool"], [marketToken, false]),
+        marketConfig.optimalUsageFactorForShorts,
+        `optimalUsageFactorForShorts ${marketLabel} (${marketToken})`
+      );
+    }
+
+    if (marketConfig.baseBorrowingFactorForLongs) {
+      await handleConfig(
+        "uint",
+        keys.BASE_BORROWING_FACTOR,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.baseBorrowingFactorForLongs,
+        `baseBorrowingFactorForLongs ${marketLabel} (${marketToken})`
+      );
+    }
+
+    if (marketConfig.baseBorrowingFactorForShorts) {
+      await handleConfig(
+        "uint",
+        keys.BASE_BORROWING_FACTOR,
+        encodeData(["address", "bool"], [marketToken, false]),
+        marketConfig.baseBorrowingFactorForShorts,
+        `baseBorrowingFactorForShorts ${marketLabel} (${marketToken})`
+      );
+    }
+
+    if (marketConfig.aboveOptimalUsageBorrowingFactorForLongs) {
+      await handleConfig(
+        "uint",
+        keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.aboveOptimalUsageBorrowingFactorForLongs,
+        `aboveOptimalUsageBorrowingFactorForLongs ${marketLabel} (${marketToken})`
+      );
+    }
+
+    if (marketConfig.aboveOptimalUsageBorrowingFactorForShorts) {
+      await handleConfig(
+        "uint",
+        keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR,
+        encodeData(["address", "bool"], [marketToken, false]),
+        marketConfig.aboveOptimalUsageBorrowingFactorForShorts,
+        `aboveOptimalUsageBorrowingFactorForShorts ${marketLabel} (${marketToken})`
+      );
+    }
+
     if (marketConfig.borrowingFactorForLongs) {
       await handleConfig(
         "uint",
@@ -558,6 +618,9 @@ export async function updateMarketConfig({ write }) {
       console.info(`tx sent: ${tx.hash}`);
     });
   } else {
+    await handleInBatches(multicallWriteParams, 100, async (batch) => {
+      await config.callStatic.multicall(batch);
+    });
     console.info("NOTE: executed in read-only mode, no transactions were sent");
   }
 }

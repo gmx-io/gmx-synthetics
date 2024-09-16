@@ -5,9 +5,13 @@ import { percentageToFloat, expandDecimals, decimalToFloat } from "../utils/math
 type GlvConfig = {
   longToken: string;
   shortToken: string;
+
   // address is required for updateGlvConfig script
   address?: string;
-  transferGasLimit: number;
+
+  // not required, default value will be used if not specified
+  transferGasLimit?: number;
+
   type: string;
   shiftMaxPriceImpactFactor: BigNumberish;
   shiftMinInterval: number;
@@ -28,7 +32,6 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         symbol: "GLV [WETH-USDC]",
         address: "0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9",
         longToken: "WETH",
-        transferGasLimit: 200_000,
         shortToken: "USDC",
         shiftMaxPriceImpactFactor: percentageToFloat("0.1%"),
         shiftMinInterval: 60 * 60, // 1 hour
@@ -36,8 +39,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         markets: [
           {
             indexToken: "WETH",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(10_500_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(15_000_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(14_000_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(20_000_000),
           },
           {
             indexToken: "DOGE",
@@ -71,6 +74,33 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
         ],
       },
+      {
+        name: "GMX Liquidity Vault [WBTC-USDC]",
+        symbol: "GLV [WBTC-USDC]",
+        address: "0xdF03EEd325b82bC1d4Db8b49c30ecc9E05104b96",
+        longToken: "WBTC.e",
+        shortToken: "USDC",
+        shiftMaxPriceImpactFactor: percentageToFloat("0.1%"),
+        shiftMinInterval: 60 * 60, // 1 hour
+        minTokensForFirstGlvDeposit: expandDecimals(1, 18),
+        markets: [
+          {
+            indexToken: "BTC",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(13_000_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(22_000_000),
+          },
+          {
+            indexToken: "ORDI",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(400_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(400_000),
+          },
+          {
+            indexToken: "STX",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(550_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(550_000),
+          },
+        ],
+      },
     ],
     avalanche: [] as any,
     avalancheFuji: [
@@ -87,18 +117,28 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         markets: [
           {
             indexToken: "WETH",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(75_000, 18),
+            glvMaxMarketTokenBalanceUsd: expandDecimals(100_000, 30),
+          },
+          {
+            indexToken: "DOT",
             glvMaxMarketTokenBalanceAmount: expandDecimals(10_000, 18),
             glvMaxMarketTokenBalanceUsd: expandDecimals(10_000, 30),
           },
           {
-            indexToken: "DOT",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(5_000, 18),
+            indexToken: "TEST",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(100_000, 18),
+            glvMaxMarketTokenBalanceUsd: expandDecimals(50_000, 30),
+          },
+          {
+            indexToken: "SOL",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(4_000, 18),
             glvMaxMarketTokenBalanceUsd: expandDecimals(5_000, 30),
           },
           {
-            indexToken: "TEST",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(5_000, 18),
-            glvMaxMarketTokenBalanceUsd: expandDecimals(5_000, 30),
+            indexToken: "MATIC",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(1_000, 18),
+            glvMaxMarketTokenBalanceUsd: expandDecimals(2_000, 30),
           },
         ],
       },
