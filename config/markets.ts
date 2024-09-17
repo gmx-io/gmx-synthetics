@@ -1201,8 +1201,8 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(1097, 40), // 1.0973075E+43, 0.948074216 AAVE / day
       minPositionImpactPoolAmount: expandDecimals(723, 16), // 7.23 AAVE
 
-      maxOpenInterestForLongs: decimalToFloat(1_250_000),
-      maxOpenInterestForShorts: decimalToFloat(1_250_000),
+      maxOpenInterestForLongs: decimalToFloat(1_500_000),
+      maxOpenInterestForShorts: decimalToFloat(1_500_000),
     },
     {
       tokens: { indexToken: "AVAX", longToken: "AVAX", shortToken: "USDC" },
