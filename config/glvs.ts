@@ -86,8 +86,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         markets: [
           {
             indexToken: "BTC",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(13_000_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(22_000_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(10_000_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(16_500_000),
           },
           {
             indexToken: "ORDI",
@@ -139,6 +139,24 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
             indexToken: "MATIC",
             glvMaxMarketTokenBalanceAmount: expandDecimals(1_000, 18),
             glvMaxMarketTokenBalanceUsd: expandDecimals(2_000, 30),
+          },
+        ],
+      },
+      {
+        name: "GMX Liquidity Vault [WBTC-USDC]",
+        address: "0xA5e6D641E88b4f17c2D39bf0E55769C63D6AaE46",
+        symbol: "GLV [WBTC-USDC]",
+        longToken: "WBTC",
+        shortToken: "USDC",
+        transferGasLimit: 200_000,
+        shiftMaxPriceImpactFactor: percentageToFloat("2%"),
+        shiftMinInterval: 300, // 5 minutes
+        minTokensForFirstGlvDeposit: expandDecimals(2, 18),
+        markets: [
+          {
+            indexToken: "WBTC",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(75_000, 18),
+            glvMaxMarketTokenBalanceUsd: expandDecimals(100_000, 30),
           },
         ],
       },
