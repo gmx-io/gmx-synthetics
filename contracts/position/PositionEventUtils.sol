@@ -268,7 +268,7 @@ library PositionEventUtils {
 
         // in case the position was insolvent, the fundingFeeAmount and feeAmountForPool
         // values may not be accurate
-        eventData.uintItems.initItems(28);
+        eventData.uintItems.initItems(30);
         eventData.uintItems.setItem(0, "collateralTokenPrice.min", fees.collateralTokenPrice.min);
         eventData.uintItems.setItem(1, "collateralTokenPrice.max", fees.collateralTokenPrice.max);
         eventData.uintItems.setItem(2, "tradeSizeUsd", tradeSizeUsd);
@@ -297,6 +297,8 @@ library PositionEventUtils {
         eventData.uintItems.setItem(25, "totalCostAmount", fees.totalCostAmount);
         eventData.uintItems.setItem(26, "uiFeeReceiverFactor", fees.ui.uiFeeReceiverFactor);
         eventData.uintItems.setItem(27, "uiFeeAmount", fees.ui.uiFeeAmount);
+        eventData.uintItems.setItem(28, "pro.traderDiscountFactor", fees.pro.traderDiscountFactor);
+        eventData.uintItems.setItem(29, "pro.traderDiscountAmount", fees.pro.traderDiscountAmount);
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "isIncrease", isIncrease);

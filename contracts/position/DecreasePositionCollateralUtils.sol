@@ -361,7 +361,7 @@ library DecreasePositionCollateralUtils {
             // empty the fees since the amount was entirely paid to the pool instead of for fees
             // it is possible for the txn execution to still complete even in this case
             // as long as the remainingCostUsd is still zero
-            fees = getEmptyFees(fees);
+            fees = getEmptyFees();
         }
 
         if (collateralCache.result.remainingCostUsd > 0) {
@@ -610,67 +610,13 @@ library DecreasePositionCollateralUtils {
             step
         );
 
-        return (values, getEmptyFees(fees));
+        return (values, getEmptyFees());
     }
 
-    function getEmptyFees(
-        PositionPricingUtils.PositionFees memory fees
-    ) internal pure returns (PositionPricingUtils.PositionFees memory) {
-        PositionPricingUtils.PositionReferralFees memory referral = PositionPricingUtils.PositionReferralFees(
-            bytes32(0), // referralCode
-            address(0), // affiliate
-            address(0), // trader
-            0, // totalRebateFactor
-            0, // traderDiscountFactor
-            0, // totalRebateAmount
-            0, // traderDiscountAmount
-            0 // affiliateRewardAmount
-        );
-
-        // allow the accumulated funding fees to still be claimable
-        // return the latestFundingFeeAmountPerSize, latestLongTokenClaimableFundingAmountPerSize,
-        // latestShortTokenClaimableFundingAmountPerSize values as these may be used to update the
-        // position's values if the position will be partially closed
-        PositionPricingUtils.PositionFundingFees memory funding = PositionPricingUtils.PositionFundingFees(
-            0, // fundingFeeAmount
-            fees.funding.claimableLongTokenAmount, // claimableLongTokenAmount
-            fees.funding.claimableShortTokenAmount, // claimableShortTokenAmount
-            fees.funding.latestFundingFeeAmountPerSize, // latestFundingFeeAmountPerSize
-            fees.funding.latestLongTokenClaimableFundingAmountPerSize, // latestLongTokenClaimableFundingAmountPerSize
-            fees.funding.latestShortTokenClaimableFundingAmountPerSize // latestShortTokenClaimableFundingAmountPerSize
-        );
-
-        PositionPricingUtils.PositionBorrowingFees memory borrowing = PositionPricingUtils.PositionBorrowingFees(
-            0, // borrowingFeeUsd
-            0, // borrowingFeeAmount
-            0, // borrowingFeeReceiverFactor
-            0 // borrowingFeeAmountForFeeReceiver
-        );
-
-        PositionPricingUtils.PositionUiFees memory ui = PositionPricingUtils.PositionUiFees(
-            address(0), // uiFeeReceiver
-            0, // uiFeeReceiverFactor
-            0 // uiFeeAmount
-        );
-
+    function getEmptyFees() internal pure returns (PositionPricingUtils.PositionFees memory) {
         // all fees are zeroed even though funding may have been paid
         // the funding fee amount value may not be accurate in the events due to this
-        PositionPricingUtils.PositionFees memory _fees = PositionPricingUtils.PositionFees(
-            referral, // referral
-            funding, // funding
-            borrowing, // borrowing
-            ui, // ui
-            fees.collateralTokenPrice, // collateralTokenPrice
-            0, // positionFeeFactor
-            0, // protocolFeeAmount
-            0, // positionFeeReceiverFactor
-            0, // feeReceiverAmount
-            0, // feeAmountForPool
-            0, // positionFeeAmountForPool
-            0, // positionFeeAmount
-            0, // totalCostAmountExcludingFunding
-            0 // totalCostAmount
-        );
+        PositionPricingUtils.PositionFees memory _fees;
 
         return _fees;
     }

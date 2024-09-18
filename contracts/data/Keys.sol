@@ -273,6 +273,8 @@ library Keys {
     bytes32 public constant MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS = keccak256(abi.encode("MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS"));
     // @dev key for the position fee factor
     bytes32 public constant POSITION_FEE_FACTOR = keccak256(abi.encode("POSITION_FEE_FACTOR"));
+    bytes32 public constant PRO_TRADER_TIER = keccak256(abi.encode("PRO_TRADER_TIER"));
+    bytes32 public constant PRO_DISCOUNT_FACTOR = keccak256(abi.encode("PRO_DISCOUNT_FACTOR"));
     // @dev key for the swap impact factor
     bytes32 public constant SWAP_IMPACT_FACTOR = keccak256(abi.encode("SWAP_IMPACT_FACTOR"));
     // @dev key for the swap impact exponent factor
@@ -1067,8 +1069,24 @@ library Keys {
     function positionFeeFactorKey(address market, bool forPositiveImpact) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             POSITION_FEE_FACTOR,
+            POSITION_FEE_FACTOR,
             market,
             forPositiveImpact
+        ));
+    }
+
+    function proTraderTierKey(address account) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            PRO_TRADER_TIER,
+            account
+        ));
+    }
+
+
+    function proDiscountFactorKey(uint256 proTier) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            PRO_DISCOUNT_FACTOR,
+            proTier
         ));
     }
 

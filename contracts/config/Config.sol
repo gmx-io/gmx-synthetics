@@ -496,6 +496,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.POSITION_IMPACT_EXPONENT_FACTOR] = true;
         allowedBaseKeys[Keys.MAX_POSITION_IMPACT_FACTOR] = true;
         allowedBaseKeys[Keys.POSITION_FEE_FACTOR] = true;
+        allowedBaseKeys[Keys.PRO_DISCOUNT_FACTOR] = true;
+        allowedBaseKeys[Keys.PRO_TRADER_TIER] = true;
 
         allowedBaseKeys[Keys.SWAP_IMPACT_FACTOR] = true;
         allowedBaseKeys[Keys.SWAP_IMPACT_EXPONENT_FACTOR] = true;
@@ -681,7 +683,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.BORROWING_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.MAX_PNL_FACTOR ||
             baseKey == Keys.MIN_PNL_FACTOR_AFTER_ADL ||
-            baseKey == Keys.OPTIMAL_USAGE_FACTOR
+            baseKey == Keys.OPTIMAL_USAGE_FACTOR ||
+            baseKey == Keys.PRO_DISCOUNT_FACTOR
         ) {
             // revert if value > 100%
             if (value > Precision.FLOAT_PRECISION) {

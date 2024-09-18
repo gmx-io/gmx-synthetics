@@ -77,6 +77,7 @@ library PositionPricingUtils {
     // @param totalCostAmount the total cost amount in tokens
     struct PositionFees {
         PositionReferralFees referral;
+        PositionProFees pro;
         PositionFundingFees funding;
         PositionBorrowingFees borrowing;
         PositionUiFees ui;
@@ -90,6 +91,13 @@ library PositionPricingUtils {
         uint256 positionFeeAmount;
         uint256 totalCostAmountExcludingFunding;
         uint256 totalCostAmount;
+        uint256 totalDiscountAmount;
+    }
+
+    struct PositionProFees {
+        uint256 traderTier;
+        uint256 traderDiscountFactor;
+        uint256 traderDiscountAmount;
     }
 
     // @param affiliate the referral affiliate of the trader
@@ -468,7 +476,19 @@ library PositionPricingUtils {
         fees.referral.traderDiscountAmount = Precision.applyFactor(fees.referral.totalRebateAmount, fees.referral.traderDiscountFactor);
         fees.referral.affiliateRewardAmount = fees.referral.totalRebateAmount - fees.referral.traderDiscountAmount;
 
-        fees.protocolFeeAmount = fees.positionFeeAmount - fees.referral.totalRebateAmount;
+        fees.pro.traderTier = dataStore.getUint(Keys.proTraderTierKey(account));
+        if (fees.pro.traderTier > 0) {
+            fees.pro.traderDiscountFactor = dataStore.getUint(Keys.proDiscountFactorKey(fees.pro.traderTier));
+            if (fees.pro.traderDiscountFactor > 0) {
+                fees.pro.traderDiscountAmount = Precision.applyFactor(fees.positionFeeAmount, fees.pro.traderDiscountFactor);
+            }
+        }
+
+        fees.totalDiscountAmount = fees.pro.traderDiscountAmount > fees.referral.traderDiscountAmount
+            ? fees.pro.traderDiscountAmount
+            : fees.referral.traderDiscountAmount;
+
+        fees.protocolFeeAmount = fees.positionFeeAmount - fees.referral.affiliateRewardAmount - fees.totalDiscountAmount;
 
         fees.positionFeeReceiverFactor = dataStore.getUint(Keys.POSITION_FEE_RECEIVER_FACTOR);
         fees.feeReceiverAmount = Precision.applyFactor(fees.protocolFeeAmount, fees.positionFeeReceiverFactor);

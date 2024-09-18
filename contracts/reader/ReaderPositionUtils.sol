@@ -309,7 +309,7 @@ library ReaderPositionUtils {
             positionInfo.fees.positionFeeAmount
             + positionInfo.fees.borrowing.borrowingFeeAmount
             + positionInfo.fees.ui.uiFeeAmount
-            - positionInfo.fees.referral.traderDiscountAmount;
+            - positionInfo.fees.totalDiscountAmount;
 
         positionInfo.fees.totalCostAmount =
             positionInfo.fees.totalCostAmountExcludingFunding
