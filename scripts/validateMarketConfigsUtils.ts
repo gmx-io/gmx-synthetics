@@ -286,6 +286,14 @@ async function validatePerpConfig({
   let borrowingExponentFactorForLongs = bigNumberify(marketConfig.borrowingExponentFactorForLongs);
   let borrowingFactorForShorts = bigNumberify(marketConfig.borrowingFactorForShorts);
   let borrowingExponentFactorForShorts = bigNumberify(marketConfig.borrowingExponentFactorForShorts);
+  const optimalUsageFactorForLongs = bigNumberify(marketConfig.optimalUsageFactorForLongs);
+  const optimalUsageFactorForShorts = bigNumberify(marketConfig.optimalUsageFactorForShorts);
+  const baseBorrowingFactorForLongs = bigNumberify(marketConfig.baseBorrowingFactorForLongs);
+  const baseBorrowingFactorForShorts = bigNumberify(marketConfig.baseBorrowingFactorForShorts);
+  const aboveOptimalUsageBorrowingFactorForLongs = bigNumberify(marketConfig.aboveOptimalUsageBorrowingFactorForLongs);
+  const aboveOptimalUsageBorrowingFactorForShorts = bigNumberify(
+    marketConfig.aboveOptimalUsageBorrowingFactorForShorts
+  );
   let fundingFactor = bigNumberify(marketConfig.fundingFactor);
   let fundingExponentFactor = bigNumberify(marketConfig.fundingExponentFactor);
   const maxOpenInterestForLongs = bigNumberify(marketConfig.maxOpenInterestForLongs);
@@ -515,6 +523,33 @@ async function validatePerpConfig({
   }
 
   console.log(`    maxBorrowingFactorForShortsPerYear: ${formatAmount(maxBorrowingFactorForShortsPerYear, 28)}%`);
+
+  for (const [key, value] of Object.entries({
+    optimalUsageFactorForLongs,
+    optimalUsageFactorForShorts,
+  })) {
+    if (value.gt(decimalToFloat(1))) {
+      throw new Error(`${key} is more than 100% annualized`);
+    }
+  }
+
+  for (const [key, value] of Object.entries({
+    baseBorrowingFactorForLongs,
+    baseBorrowingFactorForShorts,
+  })) {
+    if (value.mul(SECONDS_PER_YEAR).gt(decimalToFloat(1))) {
+      throw new Error(`${key} is more than 100% annualized`);
+    }
+  }
+
+  for (const [key, value] of Object.entries({
+    aboveOptimalUsageBorrowingFactorForLongs,
+    aboveOptimalUsageBorrowingFactorForShorts,
+  })) {
+    if (value.mul(SECONDS_PER_YEAR).gt(decimalToFloat(3))) {
+      throw new Error(`${key} is more than 300% annualized`);
+    }
+  }
 
   if (!fundingExponentFactor.eq(decimalToFloat(1))) {
     throw new Error("fundingExponentFactor != 1");
