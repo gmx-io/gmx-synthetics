@@ -457,6 +457,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR] = true;
 
         allowedBaseKeys[Keys.POSITION_FEE_RECEIVER_FACTOR] = true;
+        allowedBaseKeys[Keys.LIQUIDATION_FEE_RECEIVER_FACTOR] = true;
         allowedBaseKeys[Keys.SWAP_FEE_RECEIVER_FACTOR] = true;
         allowedBaseKeys[Keys.BORROWING_FEE_RECEIVER_FACTOR] = true;
 
@@ -498,6 +499,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.POSITION_FEE_FACTOR] = true;
         allowedBaseKeys[Keys.PRO_DISCOUNT_FACTOR] = true;
         allowedBaseKeys[Keys.PRO_TRADER_TIER] = true;
+        allowedBaseKeys[Keys.LIQUIDATION_FEE_FACTOR] = true;
 
         allowedBaseKeys[Keys.SWAP_IMPACT_FACTOR] = true;
         allowedBaseKeys[Keys.SWAP_IMPACT_EXPONENT_FACTOR] = true;
@@ -670,6 +672,13 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             }
         }
 
+        if (baseKey == Keys.LIQUIDATION_FEE_FACTOR) {
+            // revert if value > 1%
+            if (value > Precision.FLOAT_PRECISION / 100) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
         if (baseKey == Keys.MIN_COLLATERAL_USD) {
             // revert if value > 10 USD
             if (value > 10 * Precision.FLOAT_PRECISION) {
@@ -681,6 +690,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.POSITION_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.SWAP_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.BORROWING_FEE_RECEIVER_FACTOR ||
+            baseKey == Keys.LIQUIDATION_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.MAX_PNL_FACTOR ||
             baseKey == Keys.MIN_PNL_FACTOR_AFTER_ADL ||
             baseKey == Keys.OPTIMAL_USAGE_FACTOR ||

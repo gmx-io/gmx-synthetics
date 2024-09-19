@@ -197,6 +197,8 @@ library Keys {
 
     // @dev key for the percentage amount of position fees to be received
     bytes32 public constant POSITION_FEE_RECEIVER_FACTOR = keccak256(abi.encode("POSITION_FEE_RECEIVER_FACTOR"));
+    // @dev key for the percentage amount of liquidation fees to be received
+    bytes32 public constant LIQUIDATION_FEE_RECEIVER_FACTOR = keccak256(abi.encode("LIQUIDATION_FEE_RECEIVER_FACTOR"));
     // @dev key for the percentage amount of swap fees to be received
     bytes32 public constant SWAP_FEE_RECEIVER_FACTOR = keccak256(abi.encode("SWAP_FEE_RECEIVER_FACTOR"));
     // @dev key for the percentage amount of borrowing fees to be received
@@ -275,6 +277,8 @@ library Keys {
     bytes32 public constant POSITION_FEE_FACTOR = keccak256(abi.encode("POSITION_FEE_FACTOR"));
     bytes32 public constant PRO_TRADER_TIER = keccak256(abi.encode("PRO_TRADER_TIER"));
     bytes32 public constant PRO_DISCOUNT_FACTOR = keccak256(abi.encode("PRO_DISCOUNT_FACTOR"));
+    // @dev key for the liquidation fee factor
+    bytes32 public constant LIQUIDATION_FEE_FACTOR = keccak256(abi.encode("LIQUIDATION_FEE_FACTOR"));
     // @dev key for the swap impact factor
     bytes32 public constant SWAP_IMPACT_FACTOR = keccak256(abi.encode("SWAP_IMPACT_FACTOR"));
     // @dev key for the swap impact exponent factor
@@ -1075,6 +1079,7 @@ library Keys {
         ));
     }
 
+    // @dev key for pro trader's tier
     function proTraderTierKey(address account) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             PRO_TRADER_TIER,
@@ -1083,10 +1088,22 @@ library Keys {
     }
 
 
+    // @dev key for pro discount factor for specific tier
     function proDiscountFactorKey(uint256 proTier) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             PRO_DISCOUNT_FACTOR,
             proTier
+        ));
+    }
+
+    // @dev key for liquidation fee factor
+    // @param market the market address to check
+    // @param forPositiveImpact whether the fee is for an action that has a positive price impact
+    // @return key for liquidation fee factor
+    function liquidationFeeFactorKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            LIQUIDATION_FEE_FACTOR,
+            market
         ));
     }
 

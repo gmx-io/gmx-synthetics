@@ -140,7 +140,7 @@ library PositionEventUtils {
         );
     }
 
-    function emitInsolventCloseInfo(
+    function emitInsolventClose(
         EventEmitter eventEmitter,
         bytes32 orderKey,
         uint256 positionCollateralAmount,
@@ -268,7 +268,19 @@ library PositionEventUtils {
 
         // in case the position was insolvent, the fundingFeeAmount and feeAmountForPool
         // values may not be accurate
-        eventData.uintItems.initItems(30);
+
+        uint256 uintItemsCount;
+        if (fees.liquidation.liquidationFeeAmount > 0 && fees.pro.traderDiscountFactor > 0) {
+            uintItemsCount = 33;
+        } else if (fees.liquidation.liquidationFeeAmount > 0) {
+            uintItemsCount = 31;
+        } else if (fees.pro.traderDiscountFactor > 0) {
+            uintItemsCount = 30;
+        } else {
+            uintItemsCount = 28;
+        }
+
+        eventData.uintItems.initItems(33);
         eventData.uintItems.setItem(0, "collateralTokenPrice.min", fees.collateralTokenPrice.min);
         eventData.uintItems.setItem(1, "collateralTokenPrice.max", fees.collateralTokenPrice.max);
         eventData.uintItems.setItem(2, "tradeSizeUsd", tradeSizeUsd);
@@ -297,8 +309,19 @@ library PositionEventUtils {
         eventData.uintItems.setItem(25, "totalCostAmount", fees.totalCostAmount);
         eventData.uintItems.setItem(26, "uiFeeReceiverFactor", fees.ui.uiFeeReceiverFactor);
         eventData.uintItems.setItem(27, "uiFeeAmount", fees.ui.uiFeeAmount);
-        eventData.uintItems.setItem(28, "pro.traderDiscountFactor", fees.pro.traderDiscountFactor);
-        eventData.uintItems.setItem(29, "pro.traderDiscountAmount", fees.pro.traderDiscountAmount);
+
+        // ++lastItemIndex is pre-increment, first the value is incremented, then update value is returned
+        uint256 lastItemIndex = 27;
+
+        if (fees.pro.traderDiscountFactor > 0) {
+            eventData.uintItems.setItem(++lastItemIndex, "pro.traderDiscountFactor", fees.pro.traderDiscountFactor);
+            eventData.uintItems.setItem(++lastItemIndex, "pro.traderDiscountAmount", fees.pro.traderDiscountAmount);
+        }
+        if (fees.liquidation.liquidationFeeAmount > 0) {
+            eventData.uintItems.setItem(++lastItemIndex, "liquidationFeeAmount", fees.liquidation.liquidationFeeAmount);
+            eventData.uintItems.setItem(++lastItemIndex, "liquidationFeeReceiverFactor", fees.liquidation.liquidationFeeReceiverFactor);
+            eventData.uintItems.setItem(++lastItemIndex, "liquidationFeeAmountForFeeReceiver", fees.liquidation.liquidationFeeAmountForFeeReceiver);
+        }
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "isIncrease", isIncrease);

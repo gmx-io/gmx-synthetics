@@ -209,17 +209,18 @@ library ReaderPositionUtils {
             positionInfo.position.isLong()
         );
 
-        PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams(
-            dataStore, // dataStore
-            referralStorage, // referralStorage
-            positionInfo.position, // position
-            cache.collateralTokenPrice, // collateralTokenPrice
-            positionInfo.executionPriceResult.priceImpactUsd > 0, // forPositiveImpact
-            cache.market.longToken, // longToken
-            cache.market.shortToken, // shortToken
-            sizeDeltaUsd, // sizeDeltaUsd
-            uiFeeReceiver // uiFeeReceiver
-        );
+        PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams({
+            dataStore: dataStore,
+            referralStorage: referralStorage,
+            position: positionInfo.position,
+            collateralTokenPrice: cache.collateralTokenPrice,
+            forPositiveImpact: positionInfo.executionPriceResult.priceImpactUsd > 0,
+            longToken: cache.market.longToken,
+            shortToken: cache.market.shortToken,
+            sizeDeltaUsd: sizeDeltaUsd,
+            uiFeeReceiver: uiFeeReceiver,
+            isLiquidation: false
+        });
 
         positionInfo.fees = PositionPricingUtils.getPositionFees(getPositionFeesParams);
 

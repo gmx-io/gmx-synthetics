@@ -41,6 +41,7 @@ library PositionPricingUtils {
         address shortToken;
         uint256 sizeDeltaUsd;
         address uiFeeReceiver;
+        bool isLiquidation;
     }
 
     // @dev GetPriceImpactUsdParams struct used in getPriceImpactUsd to avoid stack
@@ -81,6 +82,7 @@ library PositionPricingUtils {
         PositionFundingFees funding;
         PositionBorrowingFees borrowing;
         PositionUiFees ui;
+        PositionLiquidationFees liquidation;
         Price.Props collateralTokenPrice;
         uint256 positionFeeFactor;
         uint256 protocolFeeAmount;
@@ -98,6 +100,13 @@ library PositionPricingUtils {
         uint256 traderTier;
         uint256 traderDiscountFactor;
         uint256 traderDiscountAmount;
+    }
+
+    struct PositionLiquidationFees {
+        uint256 liquidationFeeUsd;
+        uint256 liquidationFeeAmount;
+        uint256 liquidationFeeReceiverFactor;
+        uint256 liquidationFeeAmountForFeeReceiver;
     }
 
     // @param affiliate the referral affiliate of the trader
@@ -323,8 +332,20 @@ library PositionPricingUtils {
             borrowingFeeUsd
         );
 
-        fees.feeAmountForPool = fees.positionFeeAmountForPool + fees.borrowing.borrowingFeeAmount - fees.borrowing.borrowingFeeAmountForFeeReceiver;
-        fees.feeReceiverAmount += fees.borrowing.borrowingFeeAmountForFeeReceiver;
+        if (params.isLiquidation) {
+            fees.liquidation = getLiquidationFees(params.dataStore, params.position.market(), params.sizeDeltaUsd, params.collateralTokenPrice);
+        }
+
+        fees.feeAmountForPool =
+            fees.positionFeeAmountForPool +
+            fees.borrowing.borrowingFeeAmount -
+            fees.borrowing.borrowingFeeAmountForFeeReceiver +
+            fees.liquidation.liquidationFeeAmount -
+            fees.liquidation.liquidationFeeAmountForFeeReceiver;
+
+        fees.feeReceiverAmount +=
+            fees.borrowing.borrowingFeeAmountForFeeReceiver +
+            fees.liquidation.liquidationFeeAmountForFeeReceiver;
 
         fees.funding.latestFundingFeeAmountPerSize = MarketUtils.getFundingFeeAmountPerSize(
             params.dataStore,
@@ -362,6 +383,7 @@ library PositionPricingUtils {
         fees.totalCostAmountExcludingFunding =
             fees.positionFeeAmount
             + fees.borrowing.borrowingFeeAmount
+            + fees.liquidation.liquidationFeeAmount
             + fees.ui.uiFeeAmount
             - fees.referral.traderDiscountAmount;
 
@@ -497,4 +519,17 @@ library PositionPricingUtils {
         return fees;
     }
 
+    function getLiquidationFees(DataStore dataStore, address market, uint256 sizeInUsd, Price.Props memory collateralTokenPrice) internal view returns (PositionLiquidationFees memory) {
+        PositionLiquidationFees memory liquidationFees;
+        uint256 liquidationFeeFactor = dataStore.getUint(Keys.liquidationFeeFactorKey(market));
+        if (liquidationFeeFactor == 0) {
+            return liquidationFees;
+        }
+
+        liquidationFees.liquidationFeeUsd = Precision.applyFactor(sizeInUsd, liquidationFeeFactor);
+        liquidationFees.liquidationFeeAmount = liquidationFees.liquidationFeeUsd / collateralTokenPrice.min;
+        liquidationFees.liquidationFeeReceiverFactor = dataStore.getUint(Keys.LIQUIDATION_FEE_RECEIVER_FACTOR);
+        liquidationFees.liquidationFeeAmountForFeeReceiver = Precision.applyFactor(liquidationFees.liquidationFeeAmount, liquidationFees.liquidationFeeReceiverFactor);
+        return liquidationFees;
+    }
 }

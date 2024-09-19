@@ -112,11 +112,8 @@ library DecreasePositionCollateralUtils {
             params.market.longToken, // longToken
             params.market.shortToken, // shortToken
             params.order.sizeDeltaUsd(), // sizeDeltaUsd
-            params.order.uiFeeReceiver() // uiFeeReceiver
-        );
-
-        PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
-            getPositionFeesParams
+            params.order.uiFeeReceiver(), // uiFeeReceiver
+            BaseOrderUtils.isLiquidationOrder(params.order.orderType()) // isLiquidation
         );
 
         // if the pnl is positive, deduct the pnl amount from the pool
@@ -193,6 +190,10 @@ library DecreasePositionCollateralUtils {
         }
 
         values.remainingCollateralAmount = params.position.collateralAmount();
+
+        PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(
+            getPositionFeesParams
+        );
 
         // pay for funding fees
         (values, collateralCache.result) = payForCost(
@@ -601,7 +602,7 @@ library DecreasePositionCollateralUtils {
             fees
         );
 
-        PositionEventUtils.emitInsolventCloseInfo(
+        PositionEventUtils.emitInsolventClose(
             params.contracts.eventEmitter,
             params.orderKey,
             params.position.collateralAmount(),
