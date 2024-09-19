@@ -154,6 +154,13 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         depositHandler.simulateExecuteDeposit(key, simulatedOracleParams);
     }
 
+    function simulateExecuteLatestDeposit(
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams
+    ) external payable nonReentrant {
+        bytes32 key = NonceUtils.getCurrentKey(dataStore);
+        depositHandler.simulateExecuteDeposit(key, simulatedOracleParams);
+    }
+
     function createWithdrawal(
         WithdrawalUtils.CreateWithdrawalParams calldata params
     ) external override payable nonReentrant returns (bytes32) {
@@ -192,6 +199,14 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         OracleUtils.SimulatePricesParams memory simulatedOracleParams,
         ISwapPricingUtils.SwapPricingType swapPricingType
     ) external payable nonReentrant {
+        withdrawalHandler.simulateExecuteWithdrawal(key, simulatedOracleParams, swapPricingType);
+    }
+
+    function simulateExecuteLatestWithdrawal(
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams,
+        ISwapPricingUtils.SwapPricingType swapPricingType
+    ) external payable nonReentrant {
+        bytes32 key = NonceUtils.getCurrentKey(dataStore);
         withdrawalHandler.simulateExecuteWithdrawal(key, simulatedOracleParams, swapPricingType);
     }
 
@@ -316,6 +331,13 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         bytes32 key,
         OracleUtils.SimulatePricesParams memory simulatedOracleParams
     ) external payable nonReentrant {
+        orderHandler.simulateExecuteOrder(key, simulatedOracleParams);
+    }
+
+    function simulateExecuteLatestOrder(
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams
+    ) external payable nonReentrant {
+        bytes32 key = NonceUtils.getCurrentKey(dataStore);
         orderHandler.simulateExecuteOrder(key, simulatedOracleParams);
     }
 

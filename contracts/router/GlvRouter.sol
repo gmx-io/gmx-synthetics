@@ -60,6 +60,13 @@ contract GlvRouter is BaseRouter {
         glvHandler.simulateExecuteGlvDeposit(key, simulatedOracleParams);
     }
 
+    function simulateExecuteLatestGlvDeposit(
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams
+    ) external payable nonReentrant {
+        bytes32 key = NonceUtils.getCurrentKey(dataStore);
+        glvHandler.simulateExecuteGlvDeposit(key, simulatedOracleParams);
+    }
+
     function createGlvWithdrawal(
         GlvWithdrawalUtils.CreateGlvWithdrawalParams calldata params
     ) external payable nonReentrant returns (bytes32) {
@@ -85,6 +92,13 @@ contract GlvRouter is BaseRouter {
         bytes32 key,
         OracleUtils.SimulatePricesParams memory simulatedOracleParams
     ) external payable nonReentrant {
+        glvHandler.simulateExecuteGlvWithdrawal(key, simulatedOracleParams);
+    }
+
+    function simulateExecuteLatestGlvWithdrawal(
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams
+    ) external payable nonReentrant {
+        bytes32 key = NonceUtils.getCurrentKey(dataStore);
         glvHandler.simulateExecuteGlvWithdrawal(key, simulatedOracleParams);
     }
 
