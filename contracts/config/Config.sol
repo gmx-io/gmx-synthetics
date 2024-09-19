@@ -563,6 +563,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedLimitedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
         allowedLimitedBaseKeys[Keys.MAX_POOL_USD_FOR_DEPOSIT] = true;
         allowedLimitedBaseKeys[Keys.MAX_OPEN_INTEREST] = true;
+
+        allowedLimitedBaseKeys[Keys.PRO_TRADER_TIER] = true;
     }
 
     // @dev validate that the baseKey is allowed to be used
