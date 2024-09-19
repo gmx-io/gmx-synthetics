@@ -385,7 +385,7 @@ library PositionPricingUtils {
             + fees.borrowing.borrowingFeeAmount
             + fees.liquidation.liquidationFeeAmount
             + fees.ui.uiFeeAmount
-            - fees.referral.traderDiscountAmount;
+            - fees.totalDiscountAmount;
 
         fees.totalCostAmount =
             fees.totalCostAmountExcludingFunding
