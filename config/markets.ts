@@ -387,8 +387,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("65%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("65%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("120%").div(SECONDS_PER_YEAR),
 
       maxLongTokenPoolUsdForDeposit: decimalToFloat(1_500_000), // x1.5 of max open interest
       maxShortTokenPoolUsdForDeposit: decimalToFloat(1_500_000), // x1.5 of max open interest
@@ -446,8 +446,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("60%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("60%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("120%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "BTC", longToken: "WBTC.e", shortToken: "WBTC.e" },
@@ -496,8 +496,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("65%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("65%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("210%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("210%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "BTC", longToken: "tBTC", shortToken: "tBTC" },
@@ -546,8 +546,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("65%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("65%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("210%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("210%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
@@ -599,8 +599,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("60%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("60%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("120%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "WETH" },
@@ -649,8 +649,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("65%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("65%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("210%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("210%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "WETH", longToken: "wstETH", shortToken: "USDe" },
@@ -702,8 +702,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("70%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("70%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("210%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("210%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
 
       swapFeeFactorForPositiveImpact: percentageToFloat("1%"),
       swapFeeFactorForNegativeImpact: percentageToFloat("1%"),
@@ -745,8 +745,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("65%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("65%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("120%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(727, 40), // 0.727895E+43, 0.6289008462 BNB / day
       minPositionImpactPoolAmount: expandDecimals(53, 16), // 0.53 BNB
@@ -850,8 +850,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("65%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("65%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("210%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("210%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(488, 34), // 0.488E+37, 4216 DOGE / day
       minPositionImpactPoolAmount: expandDecimals(26000, 8), // 26000 DOGE
@@ -914,8 +914,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("70%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("70%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("210%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("210%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
@@ -954,8 +954,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("60%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("60%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("120%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(230, 33), // 0.2300306+36, 20 SOL / day
       minPositionImpactPoolAmount: expandDecimals(219, 9), // 219 SOL
@@ -1013,8 +1013,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("70%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("70%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("210%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("210%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
 
       maxLongTokenPoolUsdForDeposit: decimalToFloat(1_000_000), // x2 of max open interest
       maxShortTokenPoolUsdForDeposit: decimalToFloat(1_000_000), // x2 of max open interest
@@ -1057,8 +1057,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("70%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("70%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("210%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("210%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(2709, 30), // 2.709055E+33, 2.34 LTC / day
       minPositionImpactPoolAmount: expandDecimals(28, 8), // 28 LTC
@@ -1157,8 +1157,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("60%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("60%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("120%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(827, 42), // 0.827E+45, 71.488 LINK / day
       minPositionImpactPoolAmount: expandDecimals(638, 18), // 638 LINK
@@ -1210,8 +1210,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("60%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("60%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("120%").div(SECONDS_PER_YEAR),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(846, 15), // 0.00000000000846, at least ~5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -1262,8 +1262,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("65%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("65%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("120%").div(SECONDS_PER_YEAR),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(116, 14), // 0.00000000000116, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -1314,8 +1314,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("65%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("65%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("120%").div(SECONDS_PER_YEAR),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(116, 14), // 0.00000000000116, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -1367,8 +1367,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("70%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("70%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("210%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("210%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(5442, 28), // 5.442645E+31, 4,7 ATOM / day
       minPositionImpactPoolAmount: expandDecimals(611, 6), // 611 ATOM
@@ -1418,8 +1418,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("70%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("70%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("210%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("210%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(928, 48), // 0.928E+51, 80.22629972 NEAR / day
       minPositionImpactPoolAmount: expandDecimals(4361, 24), // 4361 NEAR
@@ -1470,8 +1470,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("65%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("65%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("120%").div(SECONDS_PER_YEAR),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(116, 14), // 0.00000000000116, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -1532,8 +1532,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("70%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("70%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("210%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("210%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
 
       maxLongTokenPoolUsdForDeposit: decimalToFloat(1_000_000), // x2 of max open interest
       maxShortTokenPoolUsdForDeposit: decimalToFloat(1_000_000), // x2 of max open interest
@@ -1577,8 +1577,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("65%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("65%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("120%").div(SECONDS_PER_YEAR),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(116, 14), // 0.00000000000116, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -1628,8 +1628,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("65%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("65%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("120%").div(SECONDS_PER_YEAR),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(174, 14), // 0.00000000000174, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -1679,8 +1679,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("65%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("65%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("120%").div(SECONDS_PER_YEAR),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(174, 14), // 0.00000000000174, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -2001,8 +2001,8 @@ const config: {
       baseBorrowingFactorForLongs: percentageToFloat("70%").div(SECONDS_PER_YEAR),
       baseBorrowingFactorForShorts: percentageToFloat("70%").div(SECONDS_PER_YEAR),
 
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("210%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("210%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WAVAX", shortToken: "USDC" },
