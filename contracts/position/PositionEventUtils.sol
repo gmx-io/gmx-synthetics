@@ -269,18 +269,15 @@ library PositionEventUtils {
         // in case the position was insolvent, the fundingFeeAmount and feeAmountForPool
         // values may not be accurate
 
-        uint256 uintItemsCount;
-        if (fees.liquidation.liquidationFeeAmount > 0 && fees.pro.traderDiscountFactor > 0) {
-            uintItemsCount = 33;
-        } else if (fees.liquidation.liquidationFeeAmount > 0) {
-            uintItemsCount = 31;
-        } else if (fees.pro.traderDiscountFactor > 0) {
-            uintItemsCount = 30;
-        } else {
-            uintItemsCount = 28;
+        uint256 uintItemsCount = 28;
+        if (fees.liquidation.liquidationFeeAmount > 0) {
+            uintItemsCount += 3;
+        }
+        if (fees.pro.traderDiscountFactor > 0) {
+            uintItemsCount += 2;
         }
 
-        eventData.uintItems.initItems(33);
+        eventData.uintItems.initItems(uintItemsCount);
         eventData.uintItems.setItem(0, "collateralTokenPrice.min", fees.collateralTokenPrice.min);
         eventData.uintItems.setItem(1, "collateralTokenPrice.max", fees.collateralTokenPrice.max);
         eventData.uintItems.setItem(2, "tradeSizeUsd", tradeSizeUsd);
@@ -310,9 +307,10 @@ library PositionEventUtils {
         eventData.uintItems.setItem(26, "uiFeeReceiverFactor", fees.ui.uiFeeReceiverFactor);
         eventData.uintItems.setItem(27, "uiFeeAmount", fees.ui.uiFeeAmount);
 
-        // ++lastItemIndex is pre-increment, first the value is incremented, then update value is returned
         uint256 lastItemIndex = 27;
 
+        // ++lastItemIndex is pre-increment, first the value is incremented, then updated value is returned
+        // i.e. if lastItemIndex is 27, then ++lastItemIndex returns 28
         if (fees.pro.traderDiscountFactor > 0) {
             eventData.uintItems.setItem(++lastItemIndex, "pro.traderDiscountFactor", fees.pro.traderDiscountFactor);
             eventData.uintItems.setItem(++lastItemIndex, "pro.traderDiscountAmount", fees.pro.traderDiscountAmount);
