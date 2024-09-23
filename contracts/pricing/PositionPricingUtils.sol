@@ -117,6 +117,8 @@ library PositionPricingUtils {
         address affiliate;
         address trader;
         uint256 totalRebateFactor;
+        uint256 affiliateRewardFactor;
+        uint256 adjustedAffiliateRewardFactor;
         uint256 traderDiscountFactor;
         uint256 totalRebateAmount;
         uint256 traderDiscountAmount;
@@ -478,13 +480,14 @@ library PositionPricingUtils {
         fees.collateralTokenPrice = collateralTokenPrice;
 
         fees.referral.trader = account;
-
+        uint256 minAffiliateRewardFactor;
         (
             fees.referral.referralCode,
             fees.referral.affiliate,
-            fees.referral.totalRebateFactor,
-            fees.referral.traderDiscountFactor
-        ) = ReferralUtils.getReferralInfo(referralStorage, account);
+            fees.referral.affiliateRewardFactor,
+            fees.referral.traderDiscountFactor,
+            minAffiliateRewardFactor
+        ) = ReferralUtils.getReferralInfo(dataStore, referralStorage, account);
 
         // note that since it is possible to incur both positive and negative price impact values
         // and the negative price impact factor may be larger than the positive impact factor
@@ -494,22 +497,66 @@ library PositionPricingUtils {
         fees.positionFeeFactor = dataStore.getUint(Keys.positionFeeFactorKey(market, forPositiveImpact));
         fees.positionFeeAmount = Precision.applyFactor(sizeDeltaUsd, fees.positionFeeFactor) / collateralTokenPrice.min;
 
-        fees.referral.totalRebateAmount = Precision.applyFactor(fees.positionFeeAmount, fees.referral.totalRebateFactor);
-        fees.referral.traderDiscountAmount = Precision.applyFactor(fees.referral.totalRebateAmount, fees.referral.traderDiscountFactor);
-        fees.referral.affiliateRewardAmount = fees.referral.totalRebateAmount - fees.referral.traderDiscountAmount;
-
         fees.pro.traderTier = dataStore.getUint(Keys.proTraderTierKey(account));
         if (fees.pro.traderTier > 0) {
             fees.pro.traderDiscountFactor = dataStore.getUint(Keys.proDiscountFactorKey(fees.pro.traderTier));
+
             if (fees.pro.traderDiscountFactor > 0) {
                 fees.pro.traderDiscountAmount = Precision.applyFactor(fees.positionFeeAmount, fees.pro.traderDiscountFactor);
             }
         }
 
+        // use max of referral discount and pro discount
+        uint256 totalDiscountFactor = fees.pro.traderDiscountAmount > fees.referral.traderDiscountFactor
+            ? fees.pro.traderDiscountAmount
+            : fees.referral.traderDiscountFactor;
+
+        // if pro discount is higher than referral discount then affiliate reward is capped at (total referral rebate - pro discount)
+        // but can not be lower than min affiliate reward
+        //
+        // example 1:
+        // referral code is 10% affiliate reward and 10% trader discount, pro discount is 5%
+        // min affiliate rewad 5%, affiliate reward cap is max of (20% - 5%, 5%) = 15%
+        // trader gets 10% discount, affiliate gets 10% reward
+        // protocol gets 70%
+        //
+        // example 2:
+        // referral code is 10% affiliate reward and 10% trader discount, pro discount is 15%
+        // min affiliate rewad 5%, affiliate reward cap is max of (20% - 15%, 5%) = 5%
+        // trader gets 15% discount, affiliate gets 5% reward
+        // protocol gets 80%
+        //
+        // example 3:
+        // referral code is 10% affiliate reward and 10% trader discount, pro discount is 18%
+        // min affiliate rewad 5%, affiliate reward cap is max of (20% - 18%, 5%) = 5%
+        // trader gets 18% discount, affiliate gets 5% reward
+        // protocol gets 77%
+        //
+        // example 4:
+        // referral code is 10% affiliate reward and 10% trader discount, pro discount is 25%
+        // min affiliate rewad 5%, affiliate reward cap is max of (20% - 25%, 5%) = 5%
+        // trader gets 25% discount, affiliate gets 5% reward
+        // protocol gets 70%
+
+        fees.referral.adjustedAffiliateRewardFactor = fees.referral.affiliateRewardFactor;
+
+        fees.referral.totalRebateFactor = fees.referral.affiliateRewardFactor + fees.referral.traderDiscountFactor;
+        if (fees.pro.traderDiscountFactor > fees.referral.traderDiscountFactor) {
+            fees.referral.adjustedAffiliateRewardFactor = fees.pro.traderDiscountFactor > fees.referral.totalRebateFactor
+                ? minAffiliateRewardFactor
+                : fees.referral.totalRebateFactor - totalDiscountFactor;
+            if (fees.referral.adjustedAffiliateRewardFactor < minAffiliateRewardFactor) {
+                fees.referral.adjustedAffiliateRewardFactor = minAffiliateRewardFactor;
+            }
+        }
+
+        fees.referral.affiliateRewardAmount = Precision.applyFactor(fees.positionFeeAmount, fees.referral.adjustedAffiliateRewardFactor);
+        fees.referral.traderDiscountAmount = Precision.applyFactor(fees.positionFeeAmount, fees.referral.traderDiscountFactor);
+        fees.referral.totalRebateAmount = fees.referral.affiliateRewardAmount + fees.referral.traderDiscountAmount;
+
         fees.totalDiscountAmount = fees.pro.traderDiscountAmount > fees.referral.traderDiscountAmount
             ? fees.pro.traderDiscountAmount
             : fees.referral.traderDiscountAmount;
-
         fees.protocolFeeAmount = fees.positionFeeAmount - fees.referral.affiliateRewardAmount - fees.totalDiscountAmount;
 
         fees.positionFeeReceiverFactor = dataStore.getUint(Keys.POSITION_FEE_RECEIVER_FACTOR);

@@ -318,25 +318,4 @@ library ReaderPositionUtils {
 
         return positionInfo;
     }
-
-    function isPositionLiquidatable(
-        DataStore dataStore,
-        IReferralStorage referralStorage,
-        bytes32 positionKey,
-        Market.Props memory market,
-        MarketUtils.MarketPrices memory prices,
-        bool shouldValidateMinCollateralUsd
-    ) public view returns (bool, string memory, PositionUtils.IsPositionLiquidatableInfo memory) {
-        Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
-
-        return
-            PositionUtils.isPositionLiquidatable(
-                dataStore,
-                referralStorage,
-                position,
-                market,
-                prices,
-                shouldValidateMinCollateralUsd
-            );
-    }
 }

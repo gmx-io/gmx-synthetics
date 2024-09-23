@@ -400,6 +400,7 @@ library Keys {
     // @dev key for total borrowing amount
     bytes32 public constant TOTAL_BORROWING = keccak256(abi.encode("TOTAL_BORROWING"));
     // @dev key for affiliate reward
+    bytes32 public constant MIN_AFFILIATE_REWARD = keccak256(abi.encode("MIN_AFFILIATE_REWARD"));
     bytes32 public constant AFFILIATE_REWARD = keccak256(abi.encode("AFFILIATE_REWARD"));
     // @dev key for max allowed subaccount action count
     bytes32 public constant MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT = keccak256(abi.encode("MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT"));
