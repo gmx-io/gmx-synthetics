@@ -884,8 +884,8 @@ const config: {
       negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~45,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~90,000 USD of imbalance
 
-      positiveSwapImpactFactor: decimalToFloat(25, 10),
-      negativeSwapImpactFactor: decimalToFloat(25, 10),
+      positiveSwapImpactFactor: decimalToFloat(5, 9),
+      negativeSwapImpactFactor: decimalToFloat(5, 9),
 
       fundingIncreaseFactorPerSecond: decimalToFloat(116, 14), // 0.00000000000116, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
