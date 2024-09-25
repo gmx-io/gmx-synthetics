@@ -53,7 +53,7 @@ describe("Exchange.PositionFees", () => {
     await dataStore.setUint(keys.fundingExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(1));
   });
 
-  it.only("pro tier discount", async () => {
+  it("pro tier discount", async () => {
     await dataStore.setUint(keys.proTraderTierKey(user0.address), 1);
 
     await dataStore.setUint(keys.proDiscountFactorKey(1), decimalToFloat(5, 1)); // pro discount is 50%
