@@ -79,11 +79,13 @@ library ReferralUtils {
         address affiliate;
         uint256 totalRebate;
         uint256 discountShare;
+        uint256 minAffiliateRewardFactor;
 
         if (code != bytes32(0)) {
             affiliate = referralStorage.codeOwners(code);
             uint256 referralTierLevel = referralStorage.referrerTiers(affiliate);
             (totalRebate, discountShare) = referralStorage.tiers(referralTierLevel);
+            minAffiliateRewardFactor = dataStore.getUint(Keys.minAffiliateRewardFactorKey(referralTierLevel));
 
             uint256 customDiscountShare = referralStorage.referrerDiscountShares(affiliate);
             if (customDiscountShare != 0) {
@@ -94,7 +96,6 @@ library ReferralUtils {
         uint256 traderDiscountFactor = Precision.basisPointsToFloat(totalRebate * discountShare / Precision.BASIS_POINTS_DIVISOR);
         uint256 totalRebateFactor = Precision.basisPointsToFloat(totalRebate);
         uint256 affiliateRewardFactor = totalRebateFactor - traderDiscountFactor;
-        uint256 minAffiliateRewardFactor = dataStore.getUint(Keys.MIN_AFFILIATE_REWARD);
 
         return (
             code,

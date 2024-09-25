@@ -57,7 +57,7 @@ describe("Exchange.PositionFees", () => {
     await dataStore.setUint(keys.proTraderTierKey(user0.address), 1);
 
     await dataStore.setUint(keys.proDiscountFactorKey(1), decimalToFloat(5, 1)); // pro discount is 50%
-    await dataStore.setUint(keys.MIN_AFFILIATE_REWARD, decimalToFloat(5, 2)); // min affiliate reward is 5%
+    await dataStore.setUint(keys.minAffiliateRewardFactorKey(1), decimalToFloat(5, 2)); // min affiliate reward is 5%
 
     await handleOrder(fixture, {
       create: {
@@ -337,7 +337,7 @@ describe("Exchange.PositionFees", () => {
 
           // positionFee: 80,000 * 0.05% => 40 USD
           // totalRebate: 40 * 20% => 8 USD
-          // traderDiscount: 8 * 25% => 2 USD
+          // traderDiscountShare: 8 * 25% => 2 USD
           // affiliateReward: 8 - 2 => 6 USD
           // protocolFee: positionFeeAmount - totalRebateAmount => 40 - 8 => 32 USD
           // positionFeeForPool: 32 * 80% => 25.6 USD
@@ -354,7 +354,7 @@ describe("Exchange.PositionFees", () => {
           expect(positionFeesCollectedEvent["collateralTokenPrice.max"]).eq(expandDecimals(1, 24));
           expect(positionFeesCollectedEvent.tradeSizeUsd).eq(decimalToFloat(80 * 1000));
           expect(positionFeesCollectedEvent["referral.totalRebateFactor"]).eq(decimalToFloat(2, 1)); // 20%
-          expect(positionFeesCollectedEvent["referral.traderDiscountFactor"]).eq(decimalToFloat(25, 2)); // 25%
+          expect(positionFeesCollectedEvent["referral.traderDiscountFactor"]).eq(decimalToFloat(5, 2)); // 5%
           expect(positionFeesCollectedEvent["referral.totalRebateAmount"]).eq("8000000"); // 8 USD
           expect(positionFeesCollectedEvent["referral.traderDiscountAmount"]).eq("2000000"); // 2 USD
           expect(positionFeesCollectedEvent["referral.affiliateRewardAmount"]).eq("6000000"); // 6 USD

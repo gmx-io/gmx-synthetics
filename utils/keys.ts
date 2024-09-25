@@ -69,7 +69,7 @@ export const CLAIMABLE_COLLATERAL_TIME_DIVISOR = hashString("CLAIMABLE_COLLATERA
 export const CLAIMABLE_UI_FEE_AMOUNT = hashString("CLAIMABLE_UI_FEE_AMOUNT");
 export const AFFILIATE_REWARD = hashString("AFFILIATE_REWARD");
 export const MAX_UI_FEE_FACTOR = hashString("MAX_UI_FEE_FACTOR");
-export const MIN_AFFILIATE_REWARD = hashString("MIN_AFFILIATE_REWARD");
+export const MIN_AFFILIATE_REWARD_FACTOR = hashString("MIN_AFFILIATE_REWARD_FACTOR");
 
 export const MAX_AUTO_CANCEL_ORDERS = hashString("MAX_AUTO_CANCEL_ORDERS");
 export const MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS = hashString(
@@ -345,6 +345,10 @@ export function claimableUiFeeAmountKey(market: string, token: string, uiFeeRece
 
 export function affiliateRewardKey(market: string, token: string, account: string) {
   return hashData(["bytes32", "address", "address", "address"], [AFFILIATE_REWARD, market, token, account]);
+}
+
+export function minAffiliateRewardFactorKey(referralTierLevel: number) {
+  return hashData(["bytes32", "uint256"], [MIN_AFFILIATE_REWARD_FACTOR, referralTierLevel]);
 }
 
 export function tokenTransferGasLimit(token: string) {
