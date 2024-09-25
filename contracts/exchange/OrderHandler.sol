@@ -124,7 +124,8 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             acceptablePrice,
             triggerPrice,
             minOutputAmount,
-            order.updatedAtTime()
+            order.updatedAtTime(),
+            autoCancel
         );
     }
 

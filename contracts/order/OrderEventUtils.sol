@@ -52,7 +52,7 @@ library OrderEventUtils {
         eventData.boolItems.initItems(3);
         eventData.boolItems.setItem(0, "isLong", order.isLong());
         eventData.boolItems.setItem(1, "shouldUnwrapNativeToken", order.shouldUnwrapNativeToken());
-        eventData.boolItems.setItem(2, "isFrozen", order.isFrozen());
+        eventData.boolItems.setItem(2, "autoCancel", order.autoCancel());
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
@@ -98,7 +98,8 @@ library OrderEventUtils {
         uint256 acceptablePrice,
         uint256 triggerPrice,
         uint256 minOutputAmount,
-        uint256 updatedAtTime
+        uint256 updatedAtTime,
+        bool autoCancel
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -114,6 +115,9 @@ library OrderEventUtils {
         eventData.uintItems.setItem(2, "triggerPrice", triggerPrice);
         eventData.uintItems.setItem(3, "minOutputAmount", minOutputAmount);
         eventData.uintItems.setItem(4, "updatedAtTime", updatedAtTime);
+
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "autoCancel", autoCancel);
 
         eventEmitter.emitEventLog2(
             "OrderUpdated",
