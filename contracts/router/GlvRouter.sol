@@ -119,7 +119,7 @@ contract GlvRouter is BaseRouter {
         bytes[] memory externalCallDataList,
         address[] memory refundTokens,
         address[] memory refundReceivers
-    ) external {
+    ) external nonReentrant {
         externalHandler.makeExternalCalls(
             externalCallTargets,
             externalCallDataList,
