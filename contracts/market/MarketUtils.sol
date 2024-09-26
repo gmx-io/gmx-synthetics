@@ -504,13 +504,9 @@ library MarketUtils {
     ) internal view returns (uint256) {
         uint256 reserveFactor = getOpenInterestReserveFactor(dataStore, market.marketToken, isLong);
         uint256 maxReservedUsd = Precision.applyFactor(poolUsd, reserveFactor);
-        uint256 reserveUsageFactor = Precision.toFactor(reservedUsd, maxReservedUsd);
+        uint256 usageFactor = Precision.toFactor(reservedUsd, maxReservedUsd);
 
-        uint256 maxOpenInterest = getMaxOpenInterest(dataStore, market.marketToken, isLong);
-        uint256 openInterest = getOpenInterest(dataStore, market, isLong);
-        uint256 openInterestUsageFactor = Precision.toFactor(openInterest, maxOpenInterest);
-
-        return reserveUsageFactor > openInterestUsageFactor ? reserveUsageFactor : openInterestUsageFactor;
+        return usageFactor;
     }
 
     // @dev get the max open interest allowed for the market
