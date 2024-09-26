@@ -668,6 +668,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         if (
             baseKey == Keys.SWAP_FEE_FACTOR ||
+            baseKey == Keys.DEPOSIT_FEE_FACTOR ||
+            baseKey == Keys.WITHDRAWAL_FEE_FACTOR ||
             baseKey == Keys.POSITION_FEE_FACTOR ||
             baseKey == Keys.MAX_UI_FEE_FACTOR ||
             baseKey == Keys.ATOMIC_SWAP_FEE_FACTOR
