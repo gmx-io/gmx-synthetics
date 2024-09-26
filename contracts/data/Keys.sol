@@ -287,6 +287,8 @@ library Keys {
     bytes32 public constant SWAP_FEE_FACTOR = keccak256(abi.encode("SWAP_FEE_FACTOR"));
     // @dev key for the atomic swap fee factor
     bytes32 public constant ATOMIC_SWAP_FEE_FACTOR = keccak256(abi.encode("ATOMIC_SWAP_FEE_FACTOR"));
+    bytes32 public constant DEPOSIT_FEE_FACTOR = keccak256(abi.encode("DEPOSIT_FEE_FACTOR"));
+    bytes32 public constant WITHDRAWAL_FEE_FACTOR = keccak256(abi.encode("WITHDRAWAL_FEE_FACTOR"));
     // @dev key for the oracle type
     bytes32 public constant ORACLE_TYPE = keccak256(abi.encode("ORACLE_TYPE"));
     // @dev key for open interest
@@ -1148,6 +1150,22 @@ library Keys {
         return keccak256(abi.encode(
             ATOMIC_SWAP_FEE_FACTOR,
             market
+        ));
+    }
+
+    function depositFeeFactorKey(address market, bool forPositiveImpact) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            DEPOSIT_FEE_FACTOR,
+            market,
+            forPositiveImpact
+        ));
+    }
+
+    function withdrawalFeeFactorKey(address market, bool forPositiveImpact) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            WITHDRAWAL_FEE_FACTOR,
+            market,
+            forPositiveImpact
         ));
     }
 

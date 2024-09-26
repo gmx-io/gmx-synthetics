@@ -432,7 +432,7 @@ library GlvDepositUtils {
                 depositKey,
                 params.keeper,
                 params.startingGas,
-                ISwapPricingUtils.SwapPricingType.TwoStep,
+                ISwapPricingUtils.SwapPricingType.Deposit,
                 true // includeVirtualInventoryImpact
             );
 

@@ -267,7 +267,7 @@ library GlvWithdrawalUtils {
                 key: withdrawalKey,
                 keeper: params.keeper,
                 startingGas: params.startingGas,
-                swapPricingType: ISwapPricingUtils.SwapPricingType.TwoStep
+                swapPricingType: ISwapPricingUtils.SwapPricingType.Withdrawal
             });
 
         return ExecuteWithdrawalUtils.executeWithdrawal(executeWithdrawalParams, withdrawal);
