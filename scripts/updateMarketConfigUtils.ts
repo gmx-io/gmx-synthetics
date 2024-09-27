@@ -18,7 +18,7 @@ const processMarkets = async ({
   handleConfig: handleConfigArg,
 }) => {
   const shouldHandleBaseKey = (baseKey: string) => {
-    if (process.env.INCLUDE_RISK_ORACLE_KEYS) {
+    if (process.env.INCLUDE_RISK_ORACLE_BASE_KEYS) {
       return true;
     }
 
@@ -655,7 +655,7 @@ export async function updateMarketConfig({ write }) {
   if (ignoredRiskOracleParams.length > 0) {
     console.log();
     console.log("=================");
-    console.warn("WARN: Ignored risk oracle params (add `INCLUDE_RISK_ORACLE_KEYS=1` to include them):");
+    console.warn("WARN: Ignored risk oracle params (add `INCLUDE_RISK_ORACLE_BASE_KEYS=1` to include them):");
     console.log();
 
     const marketsByParameterName = ignoredRiskOracleParams
