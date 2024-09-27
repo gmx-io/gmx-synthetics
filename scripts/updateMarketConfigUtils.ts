@@ -8,7 +8,25 @@ import { getFullKey, appendUintConfigIfDifferent } from "../utils/config";
 import { handleInBatches } from "../utils/batch";
 import * as keys from "../utils/keys";
 
-const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, generalConfig, handleConfig }) => {
+const RISK_ORACLE_MANAGED_BASE_KEYS = [keys.MAX_OPEN_INTEREST];
+
+const processMarkets = async ({
+  markets,
+  onchainMarketsByTokens,
+  tokens,
+  generalConfig,
+  handleConfig: handleConfigArg,
+}) => {
+  const shouldHandleBaseKey = (baseKey: string) => {
+    if (process.env.INCLUDE_RISK_ORACLE_KEYS) {
+      return true;
+    }
+
+    return !RISK_ORACLE_MANAGED_BASE_KEYS.includes(baseKey);
+  };
+
+  const ignoredRiskOracleParams: string[] = [];
+
   for (const marketConfig of markets) {
     const [indexToken, longToken, shortToken] = getMarketTokenAddresses(marketConfig, tokens);
     const marketKey = getMarketKey(indexToken, longToken, shortToken);
@@ -21,6 +39,14 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
 
     const marketToken = onchainMarket.marketToken;
     const marketLabel = `${marketConfig.tokens.indexToken} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}]`;
+
+    const handleConfig = async (type, baseKey, keyData, value, label) => {
+      if (shouldHandleBaseKey(baseKey)) {
+        await handleConfigArg(type, baseKey, keyData, value, label);
+      } else {
+        ignoredRiskOracleParams.push(label);
+      }
+    };
 
     await handleConfig(
       "uint",
@@ -539,6 +565,8 @@ const processMarkets = async ({ markets, onchainMarketsByTokens, tokens, general
       );
     }
   }
+
+  return ignoredRiskOracleParams;
 };
 
 export async function updateMarketConfig({ write }) {
@@ -595,7 +623,7 @@ export async function updateMarketConfig({ write }) {
 
   const multicallWriteParams = [];
 
-  await processMarkets({
+  const ignoredRiskOracleParams = await processMarkets({
     markets,
     onchainMarketsByTokens,
     tokens,
@@ -622,5 +650,33 @@ export async function updateMarketConfig({ write }) {
       await config.callStatic.multicall(batch);
     });
     console.info("NOTE: executed in read-only mode, no transactions were sent");
+  }
+
+  if (ignoredRiskOracleParams.length > 0) {
+    console.log();
+    console.log("=================");
+    console.warn("WARN: Ignored risk oracle params (add `INCLUDE_RISK_ORACLE_KEYS=1` to include them):");
+    console.log();
+
+    const marketsByParameterName = ignoredRiskOracleParams
+      .map((label) => {
+        return {
+          parameterName: label.split(" ")[0],
+          market: label.split(" ").slice(1, 3).join(" "),
+        };
+      })
+      .reduce((acc, { parameterName, market }) => {
+        acc[parameterName] = acc[parameterName] || [];
+        acc[parameterName].push(market);
+        return acc;
+      }, {} as Record<string, string[]>);
+
+    Object.entries(marketsByParameterName).forEach(([parameterName, markets]) => {
+      console.log();
+      console.log("parameter name:", parameterName + ":");
+      console.log("markets:", markets.join(", "));
+    });
+
+    console.log();
   }
 }
