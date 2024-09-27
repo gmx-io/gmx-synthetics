@@ -383,6 +383,7 @@ library Keys {
     bytes32 public constant CLAIMABLE_COLLATERAL_TIME_DIVISOR = keccak256(abi.encode("CLAIMABLE_COLLATERAL_TIME_DIVISOR"));
     // @dev key for claimed collateral amount
     bytes32 public constant CLAIMED_COLLATERAL_AMOUNT = keccak256(abi.encode("CLAIMED_COLLATERAL_AMOUNT"));
+    bytes32 public constant USAGE_FACTOR_IGNORE_OPEN_INTEREST = keccak256(abi.encode("USAGE_FACTOR_IGNORE_OPEN_INTEREST"));
     // @dev key for optimal usage factor
     bytes32 public constant OPTIMAL_USAGE_FACTOR = keccak256(abi.encode("OPTIMAL_USAGE_FACTOR"));
     // @dev key for base borrowing factor

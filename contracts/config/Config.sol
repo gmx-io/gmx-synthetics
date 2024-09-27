@@ -532,6 +532,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.THRESHOLD_FOR_STABLE_FUNDING] = true;
         allowedBaseKeys[Keys.THRESHOLD_FOR_DECREASE_FUNDING] = true;
 
+        allowedBaseKeys[Keys.USAGE_FACTOR_IGNORE_OPEN_INTEREST] = true;
+
         allowedBaseKeys[Keys.OPTIMAL_USAGE_FACTOR] = true;
         allowedBaseKeys[Keys.BASE_BORROWING_FACTOR] = true;
         allowedBaseKeys[Keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR] = true;
