@@ -154,7 +154,7 @@ library OrderUtils {
         order.touch();
 
         BaseOrderUtils.validateNonEmptyOrder(order);
-        OrderStoreUtils.set(dataStore, key, order);
+        OrderStoreUtils.set(dataStore, key, order, true);
 
         updateAutoCancelList(dataStore, key, order, order.autoCancel());
         validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, order);
@@ -261,7 +261,7 @@ library OrderUtils {
 
         order.setExecutionFee(0);
         order.setIsFrozen(true);
-        OrderStoreUtils.set(dataStore, key, order);
+        OrderStoreUtils.set(dataStore, key, order, false);
 
         OrderEventUtils.emitOrderFrozen(
             eventEmitter,

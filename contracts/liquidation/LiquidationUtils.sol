@@ -87,7 +87,7 @@ library LiquidationUtils {
         );
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
-        OrderStoreUtils.set(dataStore, key, order);
+        OrderStoreUtils.set(dataStore, key, order, true);
 
         OrderEventUtils.emitOrderCreated(eventEmitter, key, order);
 

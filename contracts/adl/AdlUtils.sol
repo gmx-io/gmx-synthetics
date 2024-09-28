@@ -193,7 +193,7 @@ library AdlUtils {
         );
 
         bytes32 key = NonceUtils.getNextKey(params.dataStore);
-        OrderStoreUtils.set(params.dataStore, key, order);
+        OrderStoreUtils.set(params.dataStore, key, order, true);
 
         OrderEventUtils.emitOrderCreated(params.eventEmitter, key, order);
 

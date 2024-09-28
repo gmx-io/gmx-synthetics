@@ -111,7 +111,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
 
         BaseOrderUtils.validateNonEmptyOrder(order);
 
-        OrderStoreUtils.set(dataStore, key, order);
+        OrderStoreUtils.set(dataStore, key, order, false);
 
         OrderUtils.updateAutoCancelList(dataStore, key, order, autoCancel);
         OrderUtils.validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, order);

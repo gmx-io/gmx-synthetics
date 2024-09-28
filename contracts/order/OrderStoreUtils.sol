@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "../data/Keys.sol";
 import "../data/DataStore.sol";
+import "./BaseOrderUtils.sol";
 
 import "./Order.sol";
 
@@ -50,24 +51,33 @@ library OrderStoreUtils {
             keccak256(abi.encode(key, ACCOUNT))
         ));
 
-        order.setReceiver(dataStore.getAddress(
+        address receiver = dataStore.getAddress(
             keccak256(abi.encode(key, RECEIVER))
-        ));
+        );
+        if (receiver == address(0)) {
+            // if account equals receiver than receiver is not saved to DataStore
+            receiver = order.account();
+        }
+        order.setReceiver(receiver);
 
         order.setCancellationReceiver(dataStore.getAddress(
             keccak256(abi.encode(key, CANCELLATION_RECEIVER))
         ));
 
-        order.setCallbackContract(dataStore.getAddress(
+        address callbackContract = dataStore.getAddress(
             keccak256(abi.encode(key, CALLBACK_CONTRACT))
-        ));
+        );
+        order.setCallbackContract(callbackContract);
+
+        if (callbackContract != address(0)) {
+            // no need to read callbackGasLimit if there is no callback
+            order.setCallbackGasLimit(dataStore.getUint(
+                keccak256(abi.encode(key, CALLBACK_GAS_LIMIT))
+            ));
+        }
 
         order.setUiFeeReceiver(dataStore.getAddress(
             keccak256(abi.encode(key, UI_FEE_RECEIVER))
-        ));
-
-        order.setMarket(dataStore.getAddress(
-            keccak256(abi.encode(key, MARKET))
         ));
 
         order.setInitialCollateralToken(dataStore.getAddress(
@@ -78,36 +88,45 @@ library OrderStoreUtils {
             keccak256(abi.encode(key, SWAP_PATH))
         ));
 
-        order.setOrderType(Order.OrderType(dataStore.getUint(
+        Order.OrderType orderType = Order.OrderType(dataStore.getUint(
             keccak256(abi.encode(key, ORDER_TYPE))
-        )));
-
-        order.setDecreasePositionSwapType(Order.DecreasePositionSwapType(dataStore.getUint(
-            keccak256(abi.encode(key, DECREASE_POSITION_SWAP_TYPE))
-        )));
-
-        order.setSizeDeltaUsd(dataStore.getUint(
-            keccak256(abi.encode(key, SIZE_DELTA_USD))
         ));
+        order.setOrderType(orderType);
+
+        if (!BaseOrderUtils.isSwapOrder(order.orderType())) {
+            // these fields are not used with swap orders
+
+            order.setMarket(dataStore.getAddress(
+                keccak256(abi.encode(key, MARKET))
+            ));
+
+            order.setDecreasePositionSwapType(Order.DecreasePositionSwapType(dataStore.getUint(
+                keccak256(abi.encode(key, DECREASE_POSITION_SWAP_TYPE))
+            )));
+
+            order.setSizeDeltaUsd(dataStore.getUint(
+                keccak256(abi.encode(key, SIZE_DELTA_USD))
+            ));
+
+            order.setTriggerPrice(dataStore.getUint(
+                keccak256(abi.encode(key, TRIGGER_PRICE))
+            ));
+
+            order.setAcceptablePrice(dataStore.getUint(
+                keccak256(abi.encode(key, ACCEPTABLE_PRICE))
+            ));
+
+            order.setIsLong(dataStore.getBool(
+                keccak256(abi.encode(key, IS_LONG))
+            ));
+        }
 
         order.setInitialCollateralDeltaAmount(dataStore.getUint(
             keccak256(abi.encode(key, INITIAL_COLLATERAL_DELTA_AMOUNT))
         ));
 
-        order.setTriggerPrice(dataStore.getUint(
-            keccak256(abi.encode(key, TRIGGER_PRICE))
-        ));
-
-        order.setAcceptablePrice(dataStore.getUint(
-            keccak256(abi.encode(key, ACCEPTABLE_PRICE))
-        ));
-
         order.setExecutionFee(dataStore.getUint(
             keccak256(abi.encode(key, EXECUTION_FEE))
-        ));
-
-        order.setCallbackGasLimit(dataStore.getUint(
-            keccak256(abi.encode(key, CALLBACK_GAS_LIMIT))
         ));
 
         order.setMinOutputAmount(dataStore.getUint(
@@ -118,30 +137,32 @@ library OrderStoreUtils {
             keccak256(abi.encode(key, UPDATED_AT_TIME))
         ));
 
-        order.setValidFromTime(dataStore.getUint(
-            keccak256(abi.encode(key, VALID_FROM_TIME))
-        ));
+        if (!BaseOrderUtils.isMarketOrder(orderType)) {
+            // validFromTime, isFrozen and autoCancel are not used with market orders
+            order.setValidFromTime(dataStore.getUint(
+                keccak256(abi.encode(key, VALID_FROM_TIME))
+            ));
 
-        order.setIsLong(dataStore.getBool(
-            keccak256(abi.encode(key, IS_LONG))
-        ));
+            order.setIsFrozen(dataStore.getBool(
+                keccak256(abi.encode(key, IS_FROZEN))
+            ));
+
+            order.setAutoCancel(dataStore.getBool(
+                keccak256(abi.encode(key, AUTO_CANCEL))
+            ));
+        }
 
         order.setShouldUnwrapNativeToken(dataStore.getBool(
             keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN))
         ));
 
-        order.setIsFrozen(dataStore.getBool(
-            keccak256(abi.encode(key, IS_FROZEN))
-        ));
-
-        order.setAutoCancel(dataStore.getBool(
-            keccak256(abi.encode(key, AUTO_CANCEL))
-        ));
-
         return order;
     }
 
-    function set(DataStore dataStore, bytes32 key, Order.Props memory order) external {
+    function set(DataStore dataStore, bytes32 key, Order.Props memory order, bool isNew) external {
+        bool isMarketOrder = BaseOrderUtils.isMarketOrder(order.orderType());
+        bool isSwapOrder = BaseOrderUtils.isSwapOrder(order.orderType());
+
         dataStore.addBytes32(
             Keys.ORDER_LIST,
             key
@@ -157,20 +178,35 @@ library OrderStoreUtils {
             order.account()
         );
 
-        dataStore.setAddress(
-            keccak256(abi.encode(key, RECEIVER)),
-            order.receiver()
-        );
+        if (order.account() != order.receiver()) {
+            dataStore.setAddress(
+                keccak256(abi.encode(key, RECEIVER)),
+                order.receiver()
+            );
+        }
 
-        dataStore.setAddress(
-            keccak256(abi.encode(key, CANCELLATION_RECEIVER)),
-            order.cancellationReceiver()
-        );
+        if (order.cancellationReceiver() != address(0)) {
+            // cancellationReceiver can be set during order creation and can't be updated later
+            // if cancellationReceiver is zero then there is no need to store it
+            dataStore.setAddress(
+                keccak256(abi.encode(key, CANCELLATION_RECEIVER)),
+                order.cancellationReceiver()
+            );
+        }
 
-        dataStore.setAddress(
-            keccak256(abi.encode(key, CALLBACK_CONTRACT)),
-            order.callbackContract()
-        );
+        if (order.callbackContract() != address(0)) {
+            // callbackContract can be set during order creation and can't be updated later
+            // if callbackContract is zero then there is no need to store it
+            dataStore.setAddress(
+                keccak256(abi.encode(key, CALLBACK_CONTRACT)),
+                order.callbackContract()
+            );
+
+            dataStore.setUint(
+                keccak256(abi.encode(key, CALLBACK_GAS_LIMIT)),
+                order.callbackGasLimit()
+            );
+        }
 
         dataStore.setAddress(
             keccak256(abi.encode(key, UI_FEE_RECEIVER)),
@@ -187,85 +223,123 @@ library OrderStoreUtils {
             order.initialCollateralToken()
         );
 
-        dataStore.setAddressArray(
-            keccak256(abi.encode(key, SWAP_PATH)),
-            order.swapPath()
-        );
+        if (order.swapPath().length > 0) {
+            // swapPath can be set during order creation and can't be updated later
+            // if swapPath is zero then there is no need to store it
+            dataStore.setAddressArray(
+                keccak256(abi.encode(key, SWAP_PATH)),
+                order.swapPath()
+            );
+        }
 
         dataStore.setUint(
             keccak256(abi.encode(key, ORDER_TYPE)),
             uint256(order.orderType())
         );
 
-        dataStore.setUint(
-            keccak256(abi.encode(key, DECREASE_POSITION_SWAP_TYPE)),
-            uint256(order.decreasePositionSwapType())
-        );
+        if (!isSwapOrder) {
+            // swap orders don't use these fields
 
-        dataStore.setUint(
-            keccak256(abi.encode(key, SIZE_DELTA_USD)),
-            order.sizeDeltaUsd()
-        );
+            if (order.decreasePositionSwapType() != Order.DecreasePositionSwapType.NoSwap) {
+                // decreasePositionSwapType is set on order creation and never updated later
+                // explicitly store non-default value only
+                dataStore.setUint(
+                    keccak256(abi.encode(key, DECREASE_POSITION_SWAP_TYPE)),
+                    uint256(order.decreasePositionSwapType())
+                );
+            }
 
-        dataStore.setUint(
-            keccak256(abi.encode(key, INITIAL_COLLATERAL_DELTA_AMOUNT)),
-            order.initialCollateralDeltaAmount()
-        );
+            if (!isNew || order.sizeDeltaUsd() > 0) {
+                // if this is new order then store sizeDeltaUsd if only it's non-zero
+                dataStore.setUint(
+                    keccak256(abi.encode(key, SIZE_DELTA_USD)),
+                    order.sizeDeltaUsd()
+                );
+            }
 
-        dataStore.setUint(
-            keccak256(abi.encode(key, TRIGGER_PRICE)),
-            order.triggerPrice()
-        );
+            if (!isNew || order.triggerPrice() > 0) {
+                // if this is new order then store triggerPrice if only it's non-zero
+                dataStore.setUint(
+                    keccak256(abi.encode(key, TRIGGER_PRICE)),
+                    order.triggerPrice()
+                );
+            }
 
-        dataStore.setUint(
-            keccak256(abi.encode(key, ACCEPTABLE_PRICE)),
-            order.acceptablePrice()
-        );
+            if (!isNew || order.acceptablePrice() > 0) {
+                // if this is new order then store acceptablePrice if only it's non-zero
+                dataStore.setUint(
+                    keccak256(abi.encode(key, ACCEPTABLE_PRICE)),
+                    order.acceptablePrice()
+                );
+            }
+
+            if (order.isLong()) {
+                // isLong is set on order creation and never updated later
+                // explicitly store non-default value only
+                dataStore.setBool(
+                    keccak256(abi.encode(key, IS_LONG)),
+                    order.isLong()
+                );
+            }
+
+            if (!isNew) {
+                // isFrozen is always false for new orders
+                dataStore.setBool(
+                    keccak256(abi.encode(key, IS_FROZEN)),
+                    order.isFrozen()
+                );
+            }
+
+            if (!isMarketOrder) {
+                // autoCancel is irrelevant for market orders
+                dataStore.setBool(
+                    keccak256(abi.encode(key, AUTO_CANCEL)),
+                    order.autoCancel()
+                );
+            }
+        }
+
+        if (!isNew || order.initialCollateralDeltaAmount() > 0) {
+            dataStore.setUint(
+                keccak256(abi.encode(key, INITIAL_COLLATERAL_DELTA_AMOUNT)),
+                order.initialCollateralDeltaAmount()
+            );
+        }
 
         dataStore.setUint(
             keccak256(abi.encode(key, EXECUTION_FEE)),
             order.executionFee()
         );
 
-        dataStore.setUint(
-            keccak256(abi.encode(key, CALLBACK_GAS_LIMIT)),
-            order.callbackGasLimit()
-        );
-
-        dataStore.setUint(
-            keccak256(abi.encode(key, MIN_OUTPUT_AMOUNT)),
-            order.minOutputAmount()
-        );
+        if (!isNew || order.minOutputAmount() > 0) {
+            // if this is new order then store minOutputAmount if only it's non-zero
+            dataStore.setUint(
+                keccak256(abi.encode(key, MIN_OUTPUT_AMOUNT)),
+                order.minOutputAmount()
+            );
+        }
 
         dataStore.setUint(
             keccak256(abi.encode(key, UPDATED_AT_TIME)),
             order.updatedAtTime()
         );
 
-        dataStore.setUint(
-            keccak256(abi.encode(key, VALID_FROM_TIME)),
-            order.validFromTime()
-        );
+        if (!isMarketOrder) {
+            // validFromTime is irrelevant for market orders
+            dataStore.setUint(
+                keccak256(abi.encode(key, VALID_FROM_TIME)),
+                order.validFromTime()
+            );
+        }
 
-        dataStore.setBool(
-            keccak256(abi.encode(key, IS_LONG)),
-            order.isLong()
-        );
-
-        dataStore.setBool(
-            keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN)),
-            order.shouldUnwrapNativeToken()
-        );
-
-        dataStore.setBool(
-            keccak256(abi.encode(key, IS_FROZEN)),
-            order.isFrozen()
-        );
-
-        dataStore.setBool(
-            keccak256(abi.encode(key, AUTO_CANCEL)),
-            order.autoCancel()
-        );
+        if (order.shouldUnwrapNativeToken()) {
+            // shouldUnwrapNativeToken is set on order creation and never updated later
+            // explicitly store non-default value only
+            dataStore.setBool(
+                keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN)),
+                order.shouldUnwrapNativeToken()
+            );
+        }
     }
 
     function remove(DataStore dataStore, bytes32 key, address account) external {
