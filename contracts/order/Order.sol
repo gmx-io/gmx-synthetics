@@ -116,6 +116,7 @@ library Order {
         uint256 minOutputAmount;
         uint256 updatedAtBlock;
         uint256 updatedAtTime;
+        uint256 validFromTime;
     }
 
     // @param isLong whether the order is for a long or short
@@ -381,6 +382,13 @@ library Order {
     // @param value the value to set to
     function setUpdatedAtTime(Props memory props, uint256 value) internal pure {
         props.numbers.updatedAtTime = value;
+    }
+
+    function validFromTime(Props memory props) internal pure returns (uint256) {
+        return props.numbers.validFromTime;
+    }
+    function setValidFromTime(Props memory props, uint256 value) internal pure {
+        props.numbers.validFromTime = value;
     }
 
     // @dev whether the order is for a long or short

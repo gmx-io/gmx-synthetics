@@ -9,6 +9,7 @@ import { getPositionCount, getAccountPositionCount } from "../../utils/position"
 import { getEventData } from "../../utils/event";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
+import { increaseTo, latest } from "@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time";
 
 describe("Exchange.LimitIncreaseOrder", () => {
   const { provider } = ethers;
@@ -129,6 +130,39 @@ describe("Exchange.LimitIncreaseOrder", () => {
     expect(await getOrderCount(dataStore)).eq(0);
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
     expect(await getPositionCount(dataStore)).eq(1);
+  });
+
+  it("executeOrder validFromTime", async () => {
+    expect(await getOrderCount(dataStore)).eq(0);
+
+    const validFromTime = (await latest()) + 60;
+
+    const params = {
+      market: ethUsdMarket,
+      initialCollateralToken: wnt,
+      initialCollateralDeltaAmount: expandDecimals(10, 18),
+      swapPath: [],
+      sizeDeltaUsd: decimalToFloat(200 * 1000),
+      acceptablePrice: expandDecimals(5001, 12),
+      triggerPrice: expandDecimals(5000, 12),
+      executionFee: expandDecimals(1, 15),
+      minOutputAmount: expandDecimals(50000, 6),
+      orderType: OrderType.LimitIncrease,
+      isLong: true,
+      shouldUnwrapNativeToken: false,
+      validFromTime,
+    };
+
+    await expect(
+      handleOrder(fixture, {
+        create: params,
+      })
+    ).to.revertedWithCustomError(errorsContract, "OrderValidFromTimeNotReached");
+
+    await increaseTo(validFromTime);
+    await handleOrder(fixture, {
+      create: params,
+    });
   });
 
   it("uses execution price with price impact", async () => {

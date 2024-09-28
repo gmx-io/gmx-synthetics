@@ -131,6 +131,7 @@ describe("ExchangeRouter", () => {
               executionFee,
               callbackGasLimit: "200000",
               minOutputAmount: 700,
+              validFromTime: 0,
             },
             orderType: OrderType.LimitIncrease,
             decreasePositionSwapType: DecreasePositionSwapType.SwapCollateralTokenToPnlToken,

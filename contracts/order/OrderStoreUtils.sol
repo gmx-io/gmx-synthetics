@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "../data/Keys.sol";
 import "../data/DataStore.sol";
+import "./BaseOrderUtils.sol";
 
 import "./Order.sol";
 
@@ -34,6 +35,7 @@ library OrderStoreUtils {
     bytes32 public constant MIN_OUTPUT_AMOUNT = keccak256(abi.encode("MIN_OUTPUT_AMOUNT"));
     bytes32 public constant UPDATED_AT_BLOCK = keccak256(abi.encode("UPDATED_AT_BLOCK"));
     bytes32 public constant UPDATED_AT_TIME = keccak256(abi.encode("UPDATED_AT_TIME"));
+    bytes32 public constant VALID_FROM_TIME = keccak256(abi.encode("VALID_FROM_TIME"));
 
     bytes32 public constant IS_LONG = keccak256(abi.encode("IS_LONG"));
     bytes32 public constant SHOULD_UNWRAP_NATIVE_TOKEN = keccak256(abi.encode("SHOULD_UNWRAP_NATIVE_TOKEN"));
@@ -120,6 +122,10 @@ library OrderStoreUtils {
 
         order.setUpdatedAtTime(dataStore.getUint(
             keccak256(abi.encode(key, UPDATED_AT_TIME))
+        ));
+
+        order.setValidFromTime(dataStore.getUint(
+            keccak256(abi.encode(key, VALID_FROM_TIME))
         ));
 
         order.setIsLong(dataStore.getBool(
@@ -245,6 +251,11 @@ library OrderStoreUtils {
         dataStore.setUint(
             keccak256(abi.encode(key, UPDATED_AT_TIME)),
             order.updatedAtTime()
+        );
+
+        dataStore.setUint(
+            keccak256(abi.encode(key, VALID_FROM_TIME)),
+            order.validFromTime()
         );
 
         dataStore.setBool(

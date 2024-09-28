@@ -240,8 +240,15 @@ library BaseOrderUtils {
     function validateOrderValidFromTime(
         Order.OrderType orderType,
         uint256 validFromTime
-    ) internal pure {
+    ) internal view {
+        if (isMarketOrder(orderType)) {
+            return;
+        }
 
+        uint256 currentTimestamp = Chain.currentTimestamp();
+        if (validFromTime > currentTimestamp) {
+            revert Errors.OrderValidFromTimeNotReached(validFromTime, currentTimestamp);
+        }
     }
 
     function getExecutionPriceForIncrease(

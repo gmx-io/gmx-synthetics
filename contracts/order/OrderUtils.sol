@@ -132,6 +132,7 @@ library OrderUtils {
         order.setExecutionFee(params.numbers.executionFee);
         order.setCallbackGasLimit(params.numbers.callbackGasLimit);
         order.setMinOutputAmount(params.numbers.minOutputAmount);
+        order.setValidFromTime(params.numbers.validFromTime);
         order.setIsLong(params.isLong);
         order.setShouldUnwrapNativeToken(params.shouldUnwrapNativeToken);
         order.setAutoCancel(params.autoCancel);

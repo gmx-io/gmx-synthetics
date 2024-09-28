@@ -178,7 +178,8 @@ library AdlUtils {
             params.dataStore.getUint(Keys.MAX_CALLBACK_GAS_LIMIT), // callbackGasLimit
             0, // minOutputAmount
             params.updatedAtBlock, // updatedAtBlock
-            params.updatedAtTime // updatedAtTime
+            params.updatedAtTime, // updatedAtTime
+            0 // validFromTime
         );
 
         Order.Flags memory flags = Order.Flags(
