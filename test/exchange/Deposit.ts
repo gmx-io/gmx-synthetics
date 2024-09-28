@@ -821,8 +821,8 @@ describe("Exchange.Deposit", () => {
 
   it("price impact, fees", async () => {
     // 0.05%: 0.0005
-    await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 4));
-    await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.depositFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.depositFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 4));
     // 30%
     await dataStore.setUint(keys.SWAP_FEE_RECEIVER_FACTOR, decimalToFloat(3, 1));
 

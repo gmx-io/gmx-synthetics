@@ -355,8 +355,8 @@ describe("Glv Deposits", () => {
       },
     });
 
-    await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 1)); // 50%
-    await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 1)); // 50%
+    await dataStore.setUint(keys.depositFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 1)); // 50%
+    await dataStore.setUint(keys.depositFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 1)); // 50%
 
     // at this point market is $100k and 100k GM tokens, GM price is $1
     // user deposits $200k, half of them are fees, user gets 100,000 GM tokens

@@ -480,6 +480,14 @@ export function swapFeeFactorKey(market: string, forPositiveImpact: boolean) {
   return hashData(["bytes32", "address", "bool"], [SWAP_FEE_FACTOR, market, forPositiveImpact]);
 }
 
+export function depositFeeFactorKey(market: string, forPositiveImpact: boolean) {
+  return hashData(["bytes32", "address", "bool"], [DEPOSIT_FEE_FACTOR, market, forPositiveImpact]);
+}
+
+export function withdrawalFeeFactorKey(market: string, forPositiveImpact: boolean) {
+  return hashData(["bytes32", "address", "bool"], [WITHDRAWAL_FEE_FACTOR, market, forPositiveImpact]);
+}
+
 export function atomicSwapFeeFactorKey(market: string) {
   return hashData(["bytes32", "address"], [ATOMIC_SWAP_FEE_FACTOR, market]);
 }

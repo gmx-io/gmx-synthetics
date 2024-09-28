@@ -18,6 +18,7 @@ export const OrderType = {
   LimitDecrease: 5,
   StopLossDecrease: 6,
   Liquidation: 7,
+  StopIncrease: 8,
 };
 
 export const DecreasePositionSwapType = {
@@ -75,10 +76,13 @@ export async function createOrder(fixture, overrides) {
   const referralCode = overrides.referralCode || ethers.constants.HashZero;
 
   if (
-    orderType === OrderType.MarketSwap ||
-    orderType === OrderType.LimitSwap ||
-    orderType === OrderType.MarketIncrease ||
-    orderType === OrderType.LimitIncrease
+    [
+      OrderType.MarketSwap,
+      OrderType.LimitSwap,
+      OrderType.MarketIncrease,
+      OrderType.LimitIncrease,
+      OrderType.StopIncrease,
+    ].includes(orderType)
   ) {
     await initialCollateralToken.mint(orderVault.address, initialCollateralDeltaAmount);
   }

@@ -73,7 +73,8 @@ library OrderUtils {
             params.orderType == Order.OrderType.MarketSwap ||
             params.orderType == Order.OrderType.LimitSwap ||
             params.orderType == Order.OrderType.MarketIncrease ||
-            params.orderType == Order.OrderType.LimitIncrease
+            params.orderType == Order.OrderType.LimitIncrease ||
+            params.orderType == Order.OrderType.StopIncrease
         ) {
             // for swaps and increase orders, the initialCollateralDeltaAmount is set based on the amount of tokens
             // transferred to the orderVault

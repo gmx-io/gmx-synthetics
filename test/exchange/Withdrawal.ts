@@ -206,8 +206,12 @@ describe("Exchange.Withdrawal", () => {
 
   it("price impact, fees", async () => {
     // 0.05%: 0.0005
+    await dataStore.setUint(keys.depositFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.depositFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 4));
     await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 4));
     await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.withdrawalFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.withdrawalFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 4));
 
     // set price impact to 0.1% for every $100,000 of token imbalance
     // 0.1% => 0.001
