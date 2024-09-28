@@ -130,10 +130,10 @@ export async function createOrder(fixture, overrides) {
   return { txReceipt, logs, key };
 }
 
-export async function executeOrder(fixture, overrides = {}) {
+export async function executeOrder(fixture, overrides: any = {}) {
   const { wnt, usdc } = fixture.contracts;
   const { gasUsageLabel, oracleBlockNumberOffset } = overrides;
-  const { reader, dataStore, orderHandler } = fixture.contracts;
+  const { dataStore, orderHandler } = fixture.contracts;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
   const dataStreamTokens = overrides.dataStreamTokens || [];
   const dataStreamData = overrides.dataStreamData || [];
@@ -143,8 +143,7 @@ export async function executeOrder(fixture, overrides = {}) {
   const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const orderKeys = await getOrderKeys(dataStore, 0, 20);
   const orderKey = overrides.orderKey || orderKeys[orderKeys.length - 1];
-  const order = await reader.getOrder(dataStore.address, orderKey);
-  let oracleBlockNumber = overrides.oracleBlockNumber || order.numbers.updatedAtBlock;
+  let oracleBlockNumber = overrides.oracleBlockNumber || (await ethers.provider.getBlockNumber());
   oracleBlockNumber = bigNumberify(oracleBlockNumber);
 
   const oracleBlocks = overrides.oracleBlocks;

@@ -234,7 +234,6 @@ library GlvWithdrawalUtils {
                 minLongTokenAmount: glvWithdrawal.minLongTokenAmount(),
                 minShortTokenAmount: glvWithdrawal.minShortTokenAmount(),
                 marketTokenAmount: marketTokenAmount,
-                updatedAtBlock: 0,
                 updatedAtTime: glvWithdrawal.updatedAtTime(),
                 executionFee: 0,
                 callbackGasLimit: 0

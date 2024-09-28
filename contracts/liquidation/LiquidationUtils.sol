@@ -69,7 +69,6 @@ library LiquidationUtils {
             0, // executionFee
             dataStore.getUint(Keys.MAX_CALLBACK_GAS_LIMIT), // callbackGasLimit
             0, // minOutputAmount
-            Chain.currentBlockNumber(), // updatedAtBlock
             Chain.currentTimestamp(), // updatedAtTime
             0 // validFromTime
         );

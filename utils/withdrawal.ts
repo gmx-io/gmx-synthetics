@@ -24,7 +24,7 @@ export function getAccountWithdrawalKeys(dataStore, account, start, end) {
   return dataStore.getBytes32ValuesAt(keys.accountWithdrawalListKey(account), start, end);
 }
 
-export async function createWithdrawal(fixture, overrides = {}) {
+export async function createWithdrawal(fixture, overrides: any = {}) {
   const { withdrawalVault, withdrawalHandler, wnt, ethUsdMarket } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
@@ -68,8 +68,8 @@ export async function createWithdrawal(fixture, overrides = {}) {
   });
 }
 
-export async function executeWithdrawal(fixture, overrides = {}) {
-  const { reader, dataStore, withdrawalHandler, wnt, usdc } = fixture.contracts;
+export async function executeWithdrawal(fixture, overrides: any = {}) {
+  const { dataStore, withdrawalHandler, wnt, usdc } = fixture.contracts;
   const { gasUsageLabel } = overrides;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
   const dataStreamTokens = overrides.dataStreamTokens || [];
@@ -79,11 +79,10 @@ export async function executeWithdrawal(fixture, overrides = {}) {
   const minPrices = overrides.minPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const withdrawalKeys = await getWithdrawalKeys(dataStore, 0, 1);
-  const withdrawal = await reader.getWithdrawal(dataStore.address, withdrawalKeys[0]);
 
   const params = {
     key: withdrawalKeys[0],
-    oracleBlockNumber: withdrawal.numbers.updatedAtBlock,
+    oracleBlockNumber: await ethers.provider.getBlockNumber(),
     tokens,
     precisions,
     minPrices,
@@ -121,7 +120,7 @@ export async function executeWithdrawal(fixture, overrides = {}) {
   return result;
 }
 
-export async function executeAtomicWithdrawal(fixture, overrides = {}) {
+export async function executeAtomicWithdrawal(fixture, overrides: any = {}) {
   const { withdrawalVault, withdrawalHandler, wnt, usdc, ethUsdMarket, chainlinkPriceFeedProvider } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
@@ -175,7 +174,7 @@ export async function executeAtomicWithdrawal(fixture, overrides = {}) {
   });
 }
 
-export async function handleWithdrawal(fixture, overrides = {}) {
+export async function handleWithdrawal(fixture, overrides: { create?: any; execute?: any } = {}) {
   await createWithdrawal(fixture, overrides.create);
   await executeWithdrawal(fixture, overrides.execute);
 }

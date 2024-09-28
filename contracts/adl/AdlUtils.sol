@@ -48,7 +48,6 @@ library AdlUtils {
     // @param collateralToken the position's collateralToken
     // @param isLong whether the position is long or short
     // @param sizeDeltaUsd the size to reduce the position by
-    // @param updatedAtBlock the block to set the order's updatedAtBlock to
     struct CreateAdlOrderParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
@@ -57,7 +56,6 @@ library AdlUtils {
         address collateralToken;
         bool isLong;
         uint256 sizeDeltaUsd;
-        uint256 updatedAtBlock;
         uint256 updatedAtTime;
     }
 
@@ -177,7 +175,6 @@ library AdlUtils {
             0, // executionFee
             params.dataStore.getUint(Keys.MAX_CALLBACK_GAS_LIMIT), // callbackGasLimit
             0, // minOutputAmount
-            params.updatedAtBlock, // updatedAtBlock
             params.updatedAtTime, // updatedAtTime
             0 // validFromTime
         );

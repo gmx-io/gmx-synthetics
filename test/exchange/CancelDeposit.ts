@@ -45,7 +45,6 @@ describe("Exchange.CancelDeposit", () => {
       gasUsageLabel: "createDeposit",
     });
 
-    const block = await provider.getBlock();
     const depositKeys = await getDepositKeys(dataStore, 0, 1);
     let deposit = await reader.getDeposit(dataStore.address, depositKeys[0]);
 
@@ -60,7 +59,6 @@ describe("Exchange.CancelDeposit", () => {
     expect(deposit.numbers.initialLongTokenAmount).eq(expandDecimals(10, 18));
     expect(deposit.numbers.initialShortTokenAmount).eq(expandDecimals(10 * 5000, 6));
     expect(deposit.numbers.minMarketTokens).eq(100);
-    expect(deposit.numbers.updatedAtBlock).eq(block.number);
     expect(deposit.numbers.executionFee).eq("500");
     expect(deposit.numbers.callbackGasLimit).eq("200000");
     expect(deposit.flags.shouldUnwrapNativeToken).eq(false);
@@ -102,7 +100,6 @@ describe("Exchange.CancelDeposit", () => {
     expect(deposit.numbers.initialLongTokenAmount).eq(0);
     expect(deposit.numbers.initialShortTokenAmount).eq(0);
     expect(deposit.numbers.minMarketTokens).eq(0);
-    expect(deposit.numbers.updatedAtBlock).eq(0);
     expect(deposit.numbers.executionFee).eq(0);
     expect(deposit.numbers.callbackGasLimit).eq(0);
     expect(deposit.flags.shouldUnwrapNativeToken).eq(false);

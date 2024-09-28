@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 
 import "../data/Keys.sol";
 import "../data/DataStore.sol";
-import "./BaseOrderUtils.sol";
 
 import "./Order.sol";
 
@@ -33,7 +32,6 @@ library OrderStoreUtils {
     bytes32 public constant EXECUTION_FEE = keccak256(abi.encode("EXECUTION_FEE"));
     bytes32 public constant CALLBACK_GAS_LIMIT = keccak256(abi.encode("CALLBACK_GAS_LIMIT"));
     bytes32 public constant MIN_OUTPUT_AMOUNT = keccak256(abi.encode("MIN_OUTPUT_AMOUNT"));
-    bytes32 public constant UPDATED_AT_BLOCK = keccak256(abi.encode("UPDATED_AT_BLOCK"));
     bytes32 public constant UPDATED_AT_TIME = keccak256(abi.encode("UPDATED_AT_TIME"));
     bytes32 public constant VALID_FROM_TIME = keccak256(abi.encode("VALID_FROM_TIME"));
 
@@ -114,10 +112,6 @@ library OrderStoreUtils {
 
         order.setMinOutputAmount(dataStore.getUint(
             keccak256(abi.encode(key, MIN_OUTPUT_AMOUNT))
-        ));
-
-        order.setUpdatedAtBlock(dataStore.getUint(
-            keccak256(abi.encode(key, UPDATED_AT_BLOCK))
         ));
 
         order.setUpdatedAtTime(dataStore.getUint(
@@ -244,11 +238,6 @@ library OrderStoreUtils {
         );
 
         dataStore.setUint(
-            keccak256(abi.encode(key, UPDATED_AT_BLOCK)),
-            order.updatedAtBlock()
-        );
-
-        dataStore.setUint(
             keccak256(abi.encode(key, UPDATED_AT_TIME)),
             order.updatedAtTime()
         );
@@ -360,10 +349,6 @@ library OrderStoreUtils {
 
         dataStore.removeUint(
             keccak256(abi.encode(key, MIN_OUTPUT_AMOUNT))
-        );
-
-        dataStore.removeUint(
-            keccak256(abi.encode(key, UPDATED_AT_BLOCK))
         );
 
         dataStore.removeUint(

@@ -412,7 +412,6 @@ library GlvDepositUtils {
                 initialLongTokenAmount: glvDeposit.initialLongTokenAmount(),
                 initialShortTokenAmount: glvDeposit.initialShortTokenAmount(),
                 minMarketTokens: 0,
-                updatedAtBlock: 0,
                 updatedAtTime: glvDeposit.updatedAtTime(),
                 executionFee: 0,
                 callbackGasLimit: 0

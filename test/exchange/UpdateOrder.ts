@@ -130,8 +130,6 @@ describe("Exchange.UpdateOrder", () => {
 
     expect(await getOrderCount(dataStore)).eq(1);
 
-    let block = await provider.getBlock();
-
     const orderKeys = await getOrderKeys(dataStore, 0, 1);
     let order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
@@ -146,7 +144,6 @@ describe("Exchange.UpdateOrder", () => {
     expect(order.numbers.triggerPrice).eq(expandDecimals(5000, 12));
     expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
     expect(order.numbers.minOutputAmount).eq(expandDecimals(50000, 6));
-    expect(order.numbers.updatedAtBlock).eq(block.number);
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
     expect(order.flags.autoCancel).eq(false);
@@ -171,7 +168,6 @@ describe("Exchange.UpdateOrder", () => {
       expandDecimals(52000, 6),
       true // autoCancel
     );
-    block = await provider.getBlock();
 
     await printGasUsage(provider, txn, "updateOrder");
 
@@ -187,7 +183,6 @@ describe("Exchange.UpdateOrder", () => {
     expect(order.numbers.triggerPrice).eq(expandDecimals(5050, 12));
     expect(order.numbers.executionFee).eq("1000000000000700");
     expect(order.numbers.minOutputAmount).eq(expandDecimals(52000, 6));
-    expect(order.numbers.updatedAtBlock).eq(block.number);
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
     expect(order.flags.autoCancel).eq(true);

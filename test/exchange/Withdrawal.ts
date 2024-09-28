@@ -27,7 +27,6 @@ import * as keys from "../../utils/keys";
 
 describe("Exchange.Withdrawal", () => {
   const { AddressZero } = ethers.constants;
-  const { provider } = ethers;
 
   let fixture;
   let user0, user1, user2;
@@ -84,7 +83,6 @@ describe("Exchange.Withdrawal", () => {
 
     expect(await getWithdrawalCount(dataStore)).eq(1);
 
-    const block = await provider.getBlock();
     const withdrawalKeys = await getWithdrawalKeys(dataStore, 0, 1);
     const withdrawal = await reader.getWithdrawal(dataStore.address, withdrawalKeys[0]);
 
@@ -95,7 +93,6 @@ describe("Exchange.Withdrawal", () => {
     expect(withdrawal.numbers.marketTokenAmount).eq(expandDecimals(1000, 18));
     expect(withdrawal.numbers.minLongTokenAmount).eq(100);
     expect(withdrawal.numbers.minShortTokenAmount).eq(50);
-    expect(withdrawal.numbers.updatedAtBlock).eq(block.number);
     expect(withdrawal.numbers.executionFee).eq(700);
     expect(withdrawal.numbers.callbackGasLimit).eq(100000);
     expect(withdrawal.flags.shouldUnwrapNativeToken).eq(true);

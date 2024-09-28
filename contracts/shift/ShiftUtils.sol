@@ -194,7 +194,6 @@ library ShiftUtils {
                 shift.marketTokenAmount(),
                 0, // minLongTokenAmount
                 0, // minShortTokenAmount
-                0, // updatedAtBlock
                 shift.updatedAtTime(),
                 0, // executionFee
                 0 // callbackGasLimit
@@ -255,7 +254,6 @@ library ShiftUtils {
                 cache.initialLongTokenAmount,
                 cache.initialShortTokenAmount,
                 shift.minMarketTokens(),
-                0, // updatedAtBlock
                 shift.updatedAtTime(),
                 0, // executionFee
                 0 // callbackGasLimit

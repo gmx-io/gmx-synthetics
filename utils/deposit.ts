@@ -83,7 +83,7 @@ export async function createDeposit(fixture, overrides: any = {}) {
 }
 
 export async function executeDeposit(fixture, overrides: any = {}) {
-  const { reader, dataStore, depositHandler, wnt, usdc } = fixture.contracts;
+  const { dataStore, depositHandler, wnt, usdc } = fixture.contracts;
   const { gasUsageLabel } = overrides;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
   const precisions = overrides.precisions || [8, 18];
@@ -100,10 +100,9 @@ export async function executeDeposit(fixture, overrides: any = {}) {
     if (!depositKey) {
       depositKey = depositKeys[0];
     }
-    if (!oracleBlockNumber) {
-      const deposit = await reader.getDeposit(dataStore.address, depositKeys[0]);
-      oracleBlockNumber = deposit.numbers.updatedAtBlock;
-    }
+  }
+  if (!oracleBlockNumber) {
+    oracleBlockNumber = await ethers.provider.getBlockNumber();
   }
 
   const params = {
