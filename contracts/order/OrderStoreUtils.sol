@@ -342,7 +342,7 @@ library OrderStoreUtils {
         }
     }
 
-    function remove(DataStore dataStore, bytes32 key, address account) external {
+    function remove(DataStore dataStore, bytes32 key, Order.Props memory order) external {
         if (!dataStore.containsBytes32(Keys.ORDER_LIST, key)) {
             revert Errors.OrderNotFound(key);
         }
@@ -353,7 +353,7 @@ library OrderStoreUtils {
         );
 
         dataStore.removeBytes32(
-            Keys.accountOrderListKey(account),
+            Keys.accountOrderListKey(order.account()),
             key
         );
 
@@ -361,93 +361,129 @@ library OrderStoreUtils {
             keccak256(abi.encode(key, ACCOUNT))
         );
 
-        dataStore.removeAddress(
-            keccak256(abi.encode(key, RECEIVER))
-        );
+        if (order.receiver() != address(0)) {
+            dataStore.removeAddress(
+                keccak256(abi.encode(key, RECEIVER))
+            );
+        }
 
-        dataStore.removeAddress(
-            keccak256(abi.encode(key, CANCELLATION_RECEIVER))
-        );
+        if (order.cancellationReceiver() != address(0)) {
+            dataStore.removeAddress(
+                keccak256(abi.encode(key, CANCELLATION_RECEIVER))
+            );
+        }
 
-        dataStore.removeAddress(
-            keccak256(abi.encode(key, CALLBACK_CONTRACT))
-        );
+        if (order.callbackContract() != address(0)) {
+            dataStore.removeAddress(
+                keccak256(abi.encode(key, CALLBACK_CONTRACT))
+            );
+        }
 
-        dataStore.removeAddress(
-            keccak256(abi.encode(key, UI_FEE_RECEIVER))
-        );
+        if (order.uiFeeReceiver() != address(0)) {
+            dataStore.removeAddress(
+                keccak256(abi.encode(key, UI_FEE_RECEIVER))
+            );
+        }
 
-        dataStore.removeAddress(
-            keccak256(abi.encode(key, MARKET))
-        );
+        if (order.market() != address(0)) {
+            dataStore.removeAddress(
+                keccak256(abi.encode(key, MARKET))
+            );
+        }
 
         dataStore.removeAddress(
             keccak256(abi.encode(key, INITIAL_COLLATERAL_TOKEN))
         );
 
-        dataStore.removeAddressArray(
-            keccak256(abi.encode(key, SWAP_PATH))
-        );
+        if (order.swapPath().length > 0) {
+            dataStore.removeAddressArray(
+                keccak256(abi.encode(key, SWAP_PATH))
+            );
+        }
 
         dataStore.removeUint(
             keccak256(abi.encode(key, ORDER_TYPE))
         );
 
-        dataStore.removeUint(
-            keccak256(abi.encode(key, DECREASE_POSITION_SWAP_TYPE))
-        );
+        if (order.decreasePositionSwapType() != Order.DecreasePositionSwapType.NoSwap) {
+            dataStore.removeUint(
+                keccak256(abi.encode(key, DECREASE_POSITION_SWAP_TYPE))
+            );
+        }
 
-        dataStore.removeUint(
-            keccak256(abi.encode(key, SIZE_DELTA_USD))
-        );
+        if (order.sizeDeltaUsd() > 0) {
+            dataStore.removeUint(
+                keccak256(abi.encode(key, SIZE_DELTA_USD))
+            );
+        }
 
-        dataStore.removeUint(
-            keccak256(abi.encode(key, INITIAL_COLLATERAL_DELTA_AMOUNT))
-        );
+        if (order.triggerPrice() > 0) {
+            dataStore.removeUint(
+                keccak256(abi.encode(key, TRIGGER_PRICE))
+            );
+        }
 
-        dataStore.removeUint(
-            keccak256(abi.encode(key, TRIGGER_PRICE))
+        if (order.acceptablePrice() > 0) {
+            dataStore.removeUint(
+                keccak256(abi.encode(key, ACCEPTABLE_PRICE))
         );
+        }
 
-        dataStore.removeUint(
-            keccak256(abi.encode(key, ACCEPTABLE_PRICE))
-        );
+        if (order.initialCollateralDeltaAmount() > 0) {
+            dataStore.removeUint(
+                keccak256(abi.encode(key, INITIAL_COLLATERAL_DELTA_AMOUNT))
+            );
+        }
 
         dataStore.removeUint(
             keccak256(abi.encode(key, EXECUTION_FEE))
         );
 
-        dataStore.removeUint(
-            keccak256(abi.encode(key, CALLBACK_GAS_LIMIT))
-        );
+        if (order.callbackGasLimit() > 0) {
+            dataStore.removeUint(
+                keccak256(abi.encode(key, CALLBACK_GAS_LIMIT))
+            );
+        }
 
-        dataStore.removeUint(
-            keccak256(abi.encode(key, MIN_OUTPUT_AMOUNT))
-        );
+        if (order.minOutputAmount() > 0) {
+            dataStore.removeUint(
+                keccak256(abi.encode(key, MIN_OUTPUT_AMOUNT))
+            );
+        }
 
         dataStore.removeUint(
             keccak256(abi.encode(key, UPDATED_AT_TIME))
         );
 
-        dataStore.removeUint(
-            keccak256(abi.encode(key, VALID_FROM_TIME))
-        );
+        if (order.validFromTime() > 0) {
+            dataStore.removeUint(
+                keccak256(abi.encode(key, VALID_FROM_TIME))
+            );
+        }
 
-        dataStore.removeBool(
-            keccak256(abi.encode(key, IS_LONG))
-        );
+        if (order.isLong()) {
+            dataStore.removeBool(
+                keccak256(abi.encode(key, IS_LONG))
+            );
+        }
 
-        dataStore.removeBool(
-            keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN))
-        );
+        if (order.shouldUnwrapNativeToken()) {
+            dataStore.removeBool(
+                keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN))
+            );
+        }
 
-        dataStore.removeBool(
-            keccak256(abi.encode(key, IS_FROZEN))
-        );
+        if (order.isFrozen()) {
+            dataStore.removeBool(
+                keccak256(abi.encode(key, IS_FROZEN))
+            );
+        }
 
-        dataStore.removeBool(
-            keccak256(abi.encode(key, AUTO_CANCEL))
-        );
+        if (order.autoCancel()) {
+            dataStore.removeBool(
+                keccak256(abi.encode(key, AUTO_CANCEL))
+            );
+        }
     }
 
     function getOrderCount(DataStore dataStore) internal view returns (uint256) {

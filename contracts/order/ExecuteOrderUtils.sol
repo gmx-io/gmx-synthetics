@@ -35,7 +35,7 @@ library ExecuteOrderUtils {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
-        OrderStoreUtils.remove(params.contracts.dataStore, params.key, params.order.account());
+        OrderStoreUtils.remove(params.contracts.dataStore, params.key, params.order);
 
         BaseOrderUtils.validateNonEmptyOrder(params.order);
 

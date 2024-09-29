@@ -180,7 +180,7 @@ library OrderUtils {
         Order.Props memory order = OrderStoreUtils.get(params.dataStore, params.key);
         BaseOrderUtils.validateNonEmptyOrder(order);
 
-        OrderStoreUtils.remove(params.dataStore, params.key, order.account());
+        OrderStoreUtils.remove(params.dataStore, params.key, order);
 
         if (BaseOrderUtils.isIncreaseOrder(order.orderType()) || BaseOrderUtils.isSwapOrder(order.orderType())) {
             if (order.initialCollateralDeltaAmount() > 0) {
