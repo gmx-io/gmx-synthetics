@@ -26,109 +26,121 @@ describe("Exchange.StopIncreaseOrder", () => {
       create: {
         market: ethUsdMarket,
         longTokenAmount: expandDecimals(1000, 18),
+        shortTokenAmount: expandDecimals(5_000_000, 6),
       },
     });
   });
 
-  it("executeOrder validations", async () => {
-    const params = {
-      account: user0,
-      market: ethUsdMarket,
-      initialCollateralToken: wnt,
-      initialCollateralDeltaAmount: expandDecimals(1, 18),
-      swapPath: [],
-      sizeDeltaUsd: decimalToFloat(1000),
-      acceptablePrice: expandDecimals(4999, 12),
-      triggerPrice: expandDecimals(5000, 12),
-      executionFee: expandDecimals(1, 15),
-      minOutputAmount: 0,
-      orderType: OrderType.StopIncrease,
+  [
+    {
       isLong: true,
-      shouldUnwrapNativeToken: false,
-    };
+      acceptablePrice: 4999,
+      executionPrice: 4995,
+    },
+    {
+      isLong: false,
+      acceptablePrice: 5001,
+      executionPrice: 5005,
+    },
+  ].forEach(({ isLong, acceptablePrice, executionPrice }) => {
+    it(`executeOrder validations, ${isLong ? "long" : "short"}`, async () => {
+      const params = {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(1, 18),
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(1000),
+        acceptablePrice: expandDecimals(acceptablePrice, 12),
+        triggerPrice: expandDecimals(5000, 12),
+        executionFee: expandDecimals(1, 15),
+        minOutputAmount: 0,
+        orderType: OrderType.StopIncrease,
+        isLong,
+        shouldUnwrapNativeToken: false,
+      };
 
-    const block0 = await provider.getBlock();
+      const block0 = await provider.getBlock();
 
-    await expect(
-      handleOrder(fixture, {
-        create: {
-          ...params,
-          initialCollateralToken: usdc,
-          initialCollateralDeltaAmount: expandDecimals(5000, 6),
-        },
-        execute: {
-          tokens: [wnt.address, usdc.address],
-          minPrices: [expandDecimals(4995, 4), expandDecimals(1, 6)],
-          maxPrices: [expandDecimals(4995, 4), expandDecimals(1, 6)],
-          precisions: [8, 18],
-          oracleBlocks: [block0, block0],
-        },
-      })
-    )
-      .to.be.revertedWithCustomError(errorsContract, "InvalidOrderPrices")
-      .withArgs("4995000000000000", "4995000000000000", "5000000000000000", OrderType.StopIncrease);
-
-    await expect(
-      handleOrder(fixture, {
-        create: {
-          ...params,
-          initialCollateralToken: usdc,
-          initialCollateralDeltaAmount: expandDecimals(5000, 6),
-          isLong: false,
-        },
-        execute: {
-          tokens: [wnt.address, usdc.address],
-          minPrices: [expandDecimals(5005, 4), expandDecimals(1, 6)],
-          maxPrices: [expandDecimals(5005, 4), expandDecimals(1, 6)],
-          precisions: [8, 18],
-          oracleBlocks: [block0, block0],
-        },
-      })
-    )
-      .to.be.revertedWithCustomError(errorsContract, "InvalidOrderPrices")
-      .withArgs("5005000000000000", "5005000000000000", "5000000000000000", OrderType.StopIncrease);
+      await expect(
+        handleOrder(fixture, {
+          create: {
+            ...params,
+            initialCollateralToken: usdc,
+            initialCollateralDeltaAmount: expandDecimals(5000, 6),
+          },
+          execute: {
+            tokens: [wnt.address, usdc.address],
+            minPrices: [expandDecimals(executionPrice, 4), expandDecimals(1, 6)],
+            maxPrices: [expandDecimals(executionPrice, 4), expandDecimals(1, 6)],
+            precisions: [8, 18],
+            oracleBlocks: [block0, block0],
+          },
+        })
+      )
+        .to.be.revertedWithCustomError(errorsContract, "InvalidOrderPrices")
+        .withArgs(
+          expandDecimals(executionPrice, 12),
+          expandDecimals(executionPrice, 12),
+          "5000000000000000",
+          OrderType.StopIncrease
+        );
+    });
   });
 
-  it("executeOrder", async () => {
-    expect(await getOrderCount(dataStore)).eq(0);
-
-    const params = {
-      market: ethUsdMarket,
-      initialCollateralToken: wnt,
-      initialCollateralDeltaAmount: expandDecimals(10, 18),
-      swapPath: [],
-      sizeDeltaUsd: decimalToFloat(200 * 1000),
-      acceptablePrice: expandDecimals(5010, 12),
-      triggerPrice: expandDecimals(5000, 12),
-      executionFee: expandDecimals(1, 15),
-      minOutputAmount: expandDecimals(50000, 6),
-      orderType: OrderType.StopIncrease,
+  [
+    {
       isLong: true,
-      shouldUnwrapNativeToken: false,
-    };
+      acceptablePrice: 5010,
+      executionPrice: 5005,
+    },
+    {
+      isLong: false,
+      acceptablePrice: 4990,
+      executionPrice: 4995,
+    },
+  ].forEach(({ isLong, acceptablePrice, executionPrice }) => {
+    it(`executeOrder, ${isLong ? "long" : "short"}`, async () => {
+      expect(await getOrderCount(dataStore)).eq(0);
 
-    await createOrder(fixture, params);
+      const params = {
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(200 * 1000),
+        acceptablePrice: expandDecimals(acceptablePrice, 12),
+        triggerPrice: expandDecimals(5000, 12),
+        executionFee: expandDecimals(1, 15),
+        minOutputAmount: expandDecimals(50000, 6),
+        orderType: OrderType.StopIncrease,
+        isLong,
+        shouldUnwrapNativeToken: false,
+      };
 
-    expect(await getOrderCount(dataStore)).eq(1);
-    expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
-    expect(await getPositionCount(dataStore)).eq(0);
+      await createOrder(fixture, params);
 
-    await mine(5);
+      expect(await getOrderCount(dataStore)).eq(1);
+      expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
+      expect(await getPositionCount(dataStore)).eq(0);
 
-    const block0 = await provider.getBlock();
+      await mine(5);
 
-    await executeOrder(fixture, {
-      tokens: [wnt.address, usdc.address],
-      minPrices: [expandDecimals(5005, 4), expandDecimals(1, 6)],
-      maxPrices: [expandDecimals(5005, 4), expandDecimals(1, 6)],
-      precisions: [8, 18],
-      oracleBlocks: [block0, block0],
-      gasUsageLabel: "executeOrder",
+      const block0 = await provider.getBlock();
+
+      await executeOrder(fixture, {
+        tokens: [wnt.address, usdc.address],
+        minPrices: [expandDecimals(executionPrice, 4), expandDecimals(1, 6)],
+        maxPrices: [expandDecimals(executionPrice, 4), expandDecimals(1, 6)],
+        precisions: [8, 18],
+        oracleBlocks: [block0, block0],
+        gasUsageLabel: "executeOrder",
+      });
+
+      expect(await getOrderCount(dataStore)).eq(0);
+      expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
+      expect(await getPositionCount(dataStore)).eq(1);
     });
-
-    expect(await getOrderCount(dataStore)).eq(0);
-    expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
-    expect(await getPositionCount(dataStore)).eq(1);
   });
 
   it("uses execution price with price impact", async () => {
