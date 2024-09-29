@@ -489,6 +489,7 @@ describe("SubaccountRouter", () => {
       expandDecimals(5020, 12), // acceptablePrice
       expandDecimals(4850, 12), // triggerPrice
       800, // minOutputAmount
+      0, // validFromTime
       false // autoCancel
     );
 
@@ -528,6 +529,7 @@ describe("SubaccountRouter", () => {
         expandDecimals(5020, 12), // acceptablePrice
         expandDecimals(4850, 12), // triggerPrice
         800, // minOutputAmount
+        0, // validFromTime
         false // autoCancel
       )
     ).to.be.revertedWithCustomError(errorsContract, "SubaccountNotAuthorized");

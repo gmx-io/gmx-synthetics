@@ -61,32 +61,32 @@ describe("Exchange.UpdateOrder", () => {
 
     await dataStore.setBool(_updateOrderFeatureDisabledKey, true);
 
+    const validFromTime = 100;
+
     await expect(
-      exchangeRouter
-        .connect(user1)
-        .updateOrder(
-          orderKeys[0],
-          decimalToFloat(250 * 1000),
-          expandDecimals(4950, 12),
-          expandDecimals(5050, 12),
-          expandDecimals(52000, 6),
-          false
-        )
+      exchangeRouter.connect(user1).updateOrder(
+        orderKeys[0],
+        decimalToFloat(250 * 1000),
+        expandDecimals(4950, 12),
+        expandDecimals(5050, 12),
+        expandDecimals(52000, 6),
+        validFromTime,
+        false // autoCancel
+      )
     )
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user1.address, "account for updateOrder");
 
     await expect(
-      exchangeRouter
-        .connect(user0)
-        .updateOrder(
-          orderKeys[0],
-          decimalToFloat(250 * 1000),
-          expandDecimals(4950, 12),
-          expandDecimals(5050, 12),
-          expandDecimals(52000, 6),
-          false
-        )
+      exchangeRouter.connect(user0).updateOrder(
+        orderKeys[0],
+        decimalToFloat(250 * 1000),
+        expandDecimals(4950, 12),
+        expandDecimals(5050, 12),
+        expandDecimals(52000, 6),
+        validFromTime,
+        false // autoCancel
+      )
     )
       .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
       .withArgs(_updateOrderFeatureDisabledKey);
@@ -94,16 +94,15 @@ describe("Exchange.UpdateOrder", () => {
     await dataStore.setBool(_updateOrderFeatureDisabledKey, false);
 
     await expect(
-      exchangeRouter
-        .connect(user0)
-        .updateOrder(
-          orderKeys[0],
-          decimalToFloat(250 * 1000),
-          expandDecimals(4950, 12),
-          expandDecimals(5050, 12),
-          expandDecimals(52000, 6),
-          false
-        )
+      exchangeRouter.connect(user0).updateOrder(
+        orderKeys[0],
+        decimalToFloat(250 * 1000),
+        expandDecimals(4950, 12),
+        expandDecimals(5050, 12),
+        expandDecimals(52000, 6),
+        validFromTime,
+        false // autoCancel
+      )
     )
       .to.be.revertedWithCustomError(errorsContract, "OrderNotUpdatable")
       .withArgs(OrderType.MarketIncrease);
@@ -160,12 +159,15 @@ describe("Exchange.UpdateOrder", () => {
     // mint wnt to top up execution fee
     await wnt.mint(orderVault.address, "700");
 
+    const validFromTime = 100;
+
     const txn = await exchangeRouter.connect(user0).updateOrder(
       orderKeys[0],
       decimalToFloat(250 * 1000),
       expandDecimals(4950, 12),
       expandDecimals(5050, 12),
       expandDecimals(52000, 6),
+      validFromTime,
       true // autoCancel
     );
 
@@ -183,11 +185,14 @@ describe("Exchange.UpdateOrder", () => {
     expect(order.numbers.triggerPrice).eq(expandDecimals(5050, 12));
     expect(order.numbers.executionFee).eq("1000000000000700");
     expect(order.numbers.minOutputAmount).eq(expandDecimals(52000, 6));
+    expect(order.numbers.validFromTime).eq(validFromTime);
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
     expect(order.flags.autoCancel).eq(true);
 
     expect(await getAutoCancelOrderKeys(dataStore, positionKey, 0, 10)).eql([orderKeys[0]]);
+
+    const newValidFromTime = 200;
 
     await exchangeRouter.connect(user0).updateOrder(
       orderKeys[0],
@@ -195,11 +200,13 @@ describe("Exchange.UpdateOrder", () => {
       expandDecimals(4950, 12),
       expandDecimals(5050, 12),
       expandDecimals(52000, 6),
+      newValidFromTime,
       false // autoCancel
     );
 
     order = await reader.getOrder(dataStore.address, orderKeys[0]);
     expect(order.flags.autoCancel).eq(false);
+    expect(order.numbers.validFromTime).eq(newValidFromTime);
 
     expect(await getAutoCancelOrderKeys(dataStore, positionKey, 0, 10)).eql([]);
   });

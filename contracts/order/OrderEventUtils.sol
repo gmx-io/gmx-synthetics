@@ -93,13 +93,7 @@ library OrderEventUtils {
     function emitOrderUpdated(
         EventEmitter eventEmitter,
         bytes32 key,
-        address account,
-        uint256 sizeDeltaUsd,
-        uint256 acceptablePrice,
-        uint256 triggerPrice,
-        uint256 minOutputAmount,
-        uint256 updatedAtTime,
-        bool autoCancel
+        Order.Props memory order
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -107,22 +101,23 @@ library OrderEventUtils {
         eventData.bytes32Items.setItem(0, "key", key);
 
         eventData.addressItems.initItems(1);
-        eventData.addressItems.setItem(0, "account", account);
+        eventData.addressItems.setItem(0, "account", order.account());
 
-        eventData.uintItems.initItems(5);
-        eventData.uintItems.setItem(0, "sizeDeltaUsd", sizeDeltaUsd);
-        eventData.uintItems.setItem(1, "acceptablePrice", acceptablePrice);
-        eventData.uintItems.setItem(2, "triggerPrice", triggerPrice);
-        eventData.uintItems.setItem(3, "minOutputAmount", minOutputAmount);
-        eventData.uintItems.setItem(4, "updatedAtTime", updatedAtTime);
+        eventData.uintItems.initItems(6);
+        eventData.uintItems.setItem(0, "sizeDeltaUsd", order.sizeDeltaUsd());
+        eventData.uintItems.setItem(1, "acceptablePrice", order.acceptablePrice());
+        eventData.uintItems.setItem(2, "triggerPrice", order.triggerPrice());
+        eventData.uintItems.setItem(3, "minOutputAmount", order.minOutputAmount());
+        eventData.uintItems.setItem(4, "updatedAtTime", order.updatedAtTime());
+        eventData.uintItems.setItem(5, "validFromTime", order.validFromTime());
 
         eventData.boolItems.initItems(1);
-        eventData.boolItems.setItem(0, "autoCancel", autoCancel);
+        eventData.boolItems.setItem(0, "autoCancel", order.autoCancel());
 
         eventEmitter.emitEventLog2(
             "OrderUpdated",
             key,
-            Cast.toBytes32(account),
+            Cast.toBytes32(order.account()),
             eventData
         );
     }
