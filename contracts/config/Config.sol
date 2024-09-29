@@ -56,30 +56,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         _;
     }
 
-    function setFundingRate(
-        address market,
-        uint256 maxFundingFactorPerSecond
-    ) external onlyKeeper nonReentrant {
-        uint256 limit = dataStore.getUint(Keys.MAX_FUNDING_FACTOR_PER_SECOND_LIMIT);
-
-        if (maxFundingFactorPerSecond > limit) {
-            revert Errors.MaxFundingFactorPerSecondLimitExceeded(maxFundingFactorPerSecond, limit);
-        }
-
-        dataStore.setUint(Keys.maxFundingFactorPerSecondKey(market), maxFundingFactorPerSecond);
-
-        EventUtils.EventLogData memory eventData;
-        eventData.addressItems.initItems(1);
-        eventData.addressItems.setItem(0, "market", market);
-        eventData.uintItems.initItems(1);
-        eventData.uintItems.setItem(0, "maxFundingFactorPerSecond", maxFundingFactorPerSecond);
-        eventEmitter.emitEventLog1(
-            "ConfigSetFundingRate",
-            Cast.toBytes32(market),
-            eventData
-        );
-    }
-
     function initOracleProviderForToken(address token, address provider) external onlyConfigKeeper nonReentrant {
         if (dataStore.getAddress(Keys.oracleProviderForTokenKey(token)) != address(0)) {
             revert Errors.OracleProviderAlreadyExistsForToken(token);
@@ -528,7 +504,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.FUNDING_DECREASE_FACTOR_PER_SECOND] = true;
         allowedBaseKeys[Keys.MIN_FUNDING_FACTOR_PER_SECOND] = true;
         allowedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND] = true;
-        allowedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND_LIMIT] = true;
         allowedBaseKeys[Keys.THRESHOLD_FOR_STABLE_FUNDING] = true;
         allowedBaseKeys[Keys.THRESHOLD_FOR_DECREASE_FUNDING] = true;
 
@@ -564,7 +539,9 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1] = true;
         allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE] = true;
-        allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR] = true;
+        allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE] = true;
+
+        allowedLimitedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND] = true;
 
         allowedLimitedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
         allowedLimitedBaseKeys[Keys.MAX_POOL_USD_FOR_DEPOSIT] = true;
@@ -609,8 +586,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         }
 
         if (
-            baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND ||
-            baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND_LIMIT
+            baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND
         ) {
             // 0.00001% per second, ~315% per year
             if (value > 100000000000000000000000) {
