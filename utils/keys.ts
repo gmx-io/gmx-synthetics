@@ -602,8 +602,8 @@ export function borrowingExponentFactorKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [BORROWING_EXPONENT_FACTOR, market, isLong]);
 }
 
-export function depositGasLimitKey(singleToken: boolean) {
-  return hashData(["bytes32", "bool"], [DEPOSIT_GAS_LIMIT, singleToken]);
+export function depositGasLimitKey() {
+  return DEPOSIT_GAS_LIMIT;
 }
 
 export function withdrawalGasLimitKey() {

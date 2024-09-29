@@ -361,8 +361,6 @@ library Keys {
     bytes32 public constant MIN_FUNDING_FACTOR_PER_SECOND = keccak256(abi.encode("MIN_FUNDING_FACTOR_PER_SECOND"));
     // @dev key for max funding factor
     bytes32 public constant MAX_FUNDING_FACTOR_PER_SECOND = keccak256(abi.encode("MAX_FUNDING_FACTOR_PER_SECOND"));
-    // @dev key for max funding factor limit
-    bytes32 public constant MAX_FUNDING_FACTOR_PER_SECOND_LIMIT = keccak256(abi.encode("MAX_FUNDING_FACTOR_PER_SECOND_LIMIT"));
     // @dev key for threshold for stable funding
     bytes32 public constant THRESHOLD_FOR_STABLE_FUNDING = keccak256(abi.encode("THRESHOLD_FOR_STABLE_FUNDING"));
     // @dev key for threshold for decrease funding
@@ -555,11 +553,8 @@ library Keys {
     // @dev key for deposit gas limit
     // @param singleToken whether a single token or pair tokens are being deposited
     // @return key for deposit gas limit
-    function depositGasLimitKey(bool singleToken) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            DEPOSIT_GAS_LIMIT,
-            singleToken
-        ));
+    function depositGasLimitKey() internal pure returns (bytes32) {
+        return DEPOSIT_GAS_LIMIT;
     }
 
     // @dev key for withdrawal gas limit

@@ -1,4 +1,4 @@
-// minHandleExecutionErrorGas + max(depositGasLimitSingle, depositGasLimitMultiple, withdrawalGasLimit, increaseOrderGasLimit, decreaseOrderGasLimit, swapOrderGasLimit) + estimatedGasFeeBaseAmount + singleSwapGasLimit * (maxSwapPathLength +1) + maxCallbackGasLimit
+// minHandleExecutionErrorGas + max(depositGasLimit, withdrawalGasLimit, increaseOrderGasLimit, decreaseOrderGasLimit, swapOrderGasLimit) + estimatedGasFeeBaseAmount + singleSwapGasLimit * (maxSwapPathLength +1) + maxCallbackGasLimit
 
 import hre from "hardhat";
 import * as keys from "../utils/keys";
@@ -7,8 +7,8 @@ async function main() {
   const dataStore = await hre.ethers.getContract("DataStore");
 
   const [
-    minHandleExecutionErroGas,
-    depositGasLimitSingle,
+    minHandleExecutionErrorGas,
+    depositGasLimit,
     withdrawalGasLimit,
     increaseOrderGasLimit,
     decreaseOrderGasLimit,
@@ -28,7 +28,7 @@ async function main() {
     dataStore.getUint(keys.MAX_CALLBACK_GAS_LIMIT),
   ]);
 
-  let maxActionGasLimit = depositGasLimitSingle;
+  let maxActionGasLimit = depositGasLimit;
 
   for (const gasLimit of [withdrawalGasLimit, increaseOrderGasLimit, decreaseOrderGasLimit, swapOrderGasLimit]) {
     if (maxActionGasLimit.lt(gasLimit)) {
@@ -36,7 +36,7 @@ async function main() {
     }
   }
 
-  const total = minHandleExecutionErroGas
+  const total = minHandleExecutionErrorGas
     .add(maxActionGasLimit)
     .add(estimatedGasFeeBaseAmount)
     .add(singleSwapGasLimit.mul(4))
