@@ -429,6 +429,10 @@ library OrderStoreUtils {
             keccak256(abi.encode(key, UPDATED_AT_TIME))
         );
 
+        dataStore.removeUint(
+            keccak256(abi.encode(key, VALID_FROM_TIME))
+        );
+
         dataStore.removeBool(
             keccak256(abi.encode(key, IS_LONG))
         );
