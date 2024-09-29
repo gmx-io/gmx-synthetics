@@ -18,6 +18,11 @@ const processMarkets = async ({
   handleConfig: handleConfigArg,
 }) => {
   const shouldHandleBaseKey = (baseKey: string) => {
+    if (hre.network.name !== "arbitrum") {
+      // risk oracle is enabled on arbitrum only
+      return true;
+    }
+
     if (process.env.INCLUDE_RISK_ORACLE_BASE_KEYS) {
       return true;
     }
