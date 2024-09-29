@@ -163,6 +163,10 @@ describe("Exchange.LimitIncreaseOrder", () => {
     await handleOrder(fixture, {
       create: params,
     });
+
+    await handleOrder(fixture, {
+      create: { ...params, validFromTime: 0 },
+    });
   });
 
   it("uses execution price with price impact", async () => {
