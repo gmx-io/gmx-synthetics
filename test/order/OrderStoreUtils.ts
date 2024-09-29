@@ -39,8 +39,8 @@ describe("OrderStoreUtils", () => {
       setItem: async (dataStore, key, sampleItem) => {
         return await orderStoreUtilsTest.setOrder(dataStore.address, key, sampleItem);
       },
-      removeItem: async (dataStore, itemKey, sampleItem) => {
-        return await orderStoreUtilsTest.removeOrder(dataStore.address, itemKey, sampleItem.addresses.account);
+      removeItem: async (dataStore, itemKey) => {
+        return await orderStoreUtilsTest.removeOrder(dataStore.address, itemKey);
       },
       getItemCount: getOrderCount,
       getItemKeys: getOrderKeys,

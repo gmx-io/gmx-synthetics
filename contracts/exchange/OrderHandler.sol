@@ -296,8 +296,8 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             // the transaction is reverted for InvalidOrderPrices since the oracle prices
             // do not fulfill the specified trigger price
             errorSelector == Errors.InvalidOrderPrices.selector ||
-            // keeper tried to execute order before valid from time was reached
             // order should not be cancelled or frozen in this case
+            // otherwise malicious keepers can cancel orders before valid from time is reached
             errorSelector == Errors.OrderValidFromTimeNotReached.selector
         ) {
             ErrorUtils.revertWithCustomError(reasonBytes);

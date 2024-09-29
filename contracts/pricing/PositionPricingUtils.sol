@@ -506,53 +506,51 @@ library PositionPricingUtils {
             }
         }
 
-        // use max of referral discount and pro discount
-        uint256 totalDiscountFactor = fees.pro.traderDiscountAmount > fees.referral.traderDiscountFactor
-            ? fees.pro.traderDiscountAmount
-            : fees.referral.traderDiscountFactor;
-
         // if pro discount is higher than referral discount then affiliate reward is capped at (total referral rebate - pro discount)
-        // but can not be lower than min affiliate reward
+        // but can not be lower than configured min affiliate reward
         //
         // example 1:
         // referral code is 10% affiliate reward and 10% trader discount, pro discount is 5%
-        // min affiliate rewad 5%, affiliate reward cap is max of (20% - 5%, 5%) = 15%
-        // trader gets 10% discount, affiliate gets 10% reward
-        // protocol gets 70%
+        // min affiliate reward 5%, total referral rebate is 20%, affiliate reward cap is max of (20% - 5%, 5%) = 15%
+        // trader gets 10% discount, affiliate reward is capped at 15%, affiliate gets full 10% reward
+        // protocol gets 80%
         //
         // example 2:
-        // referral code is 10% affiliate reward and 10% trader discount, pro discount is 15%
-        // min affiliate rewad 5%, affiliate reward cap is max of (20% - 15%, 5%) = 5%
-        // trader gets 15% discount, affiliate gets 5% reward
+        // referral code is 10% affiliate reward and 10% trader discount, pro discount is 13%
+        // min affiliate reward 5%, total referral rebate is 20%, affiliate reward cap is max of (20% - 13%, 5%) = 7%
+        // trader gets 13% discount, affiliate reward is capped at 7%, affiliate gets capped 7% reward
         // protocol gets 80%
         //
         // example 3:
         // referral code is 10% affiliate reward and 10% trader discount, pro discount is 18%
-        // min affiliate rewad 5%, affiliate reward cap is max of (20% - 18%, 5%) = 5%
-        // trader gets 18% discount, affiliate gets 5% reward
+        // min affiliate reward 5%, total referral rebate is 20%, affiliate reward cap is max of (20% - 18%, 5%) = 5%
+        // trader gets 18% discount, affiliate reward is capped at 5%, affiliate gets capped 5% reward
         // protocol gets 77%
         //
         // example 4:
         // referral code is 10% affiliate reward and 10% trader discount, pro discount is 25%
-        // min affiliate rewad 5%, affiliate reward cap is max of (20% - 25%, 5%) = 5%
-        // trader gets 25% discount, affiliate gets 5% reward
+        // min affiliate reward 5%, total referral rebate is 20%, affiliate reward cap is max of (20% - 25%, 5%) = 5%
+        // trader gets 25% discount, affiliate reward is capped at 5%, affiliate gets capped 5% reward
         // protocol gets 70%
 
-        fees.referral.adjustedAffiliateRewardFactor = fees.referral.affiliateRewardFactor;
-
-        fees.referral.totalRebateFactor = fees.referral.affiliateRewardFactor + fees.referral.traderDiscountFactor;
-        if (fees.pro.traderDiscountFactor > fees.referral.traderDiscountFactor) {
-            fees.referral.adjustedAffiliateRewardFactor = fees.pro.traderDiscountFactor > fees.referral.totalRebateFactor
-                ? minAffiliateRewardFactor
-                : fees.referral.totalRebateFactor - totalDiscountFactor;
-            if (fees.referral.adjustedAffiliateRewardFactor < minAffiliateRewardFactor) {
-                fees.referral.adjustedAffiliateRewardFactor = minAffiliateRewardFactor;
+        if (fees.referral.referralCode != bytes32(0)) {
+            fees.referral.adjustedAffiliateRewardFactor = fees.referral.affiliateRewardFactor;
+            fees.referral.totalRebateFactor = fees.referral.affiliateRewardFactor + fees.referral.traderDiscountFactor;
+            // if pro discount is higher than referral discount then affiliate reward should be capped
+            // at max of (min affiliate reward, total referral rebate - pro discount)
+            if (fees.pro.traderDiscountFactor > fees.referral.traderDiscountFactor) {
+                fees.referral.adjustedAffiliateRewardFactor = fees.pro.traderDiscountFactor > fees.referral.totalRebateFactor
+                    ? minAffiliateRewardFactor
+                    : fees.referral.totalRebateFactor - fees.pro.traderDiscountFactor;
+                if (fees.referral.adjustedAffiliateRewardFactor < minAffiliateRewardFactor) {
+                    fees.referral.adjustedAffiliateRewardFactor = minAffiliateRewardFactor;
+                }
             }
-        }
 
-        fees.referral.affiliateRewardAmount = Precision.applyFactor(fees.positionFeeAmount, fees.referral.adjustedAffiliateRewardFactor);
-        fees.referral.traderDiscountAmount = Precision.applyFactor(fees.positionFeeAmount, fees.referral.traderDiscountFactor);
-        fees.referral.totalRebateAmount = fees.referral.affiliateRewardAmount + fees.referral.traderDiscountAmount;
+            fees.referral.affiliateRewardAmount = Precision.applyFactor(fees.positionFeeAmount, fees.referral.adjustedAffiliateRewardFactor);
+            fees.referral.traderDiscountAmount = Precision.applyFactor(fees.positionFeeAmount, fees.referral.traderDiscountFactor);
+            fees.referral.totalRebateAmount = fees.referral.affiliateRewardAmount + fees.referral.traderDiscountAmount;
+        }
 
         fees.totalDiscountAmount = fees.pro.traderDiscountAmount > fees.referral.traderDiscountAmount
             ? fees.pro.traderDiscountAmount
