@@ -321,7 +321,7 @@ library OrderStoreUtils {
             keccak256(abi.encode(key, INITIAL_COLLATERAL_TOKEN))
         );
 
-        if (order.swapPath().length > 0) {
+        if (order.swapPath().length != 0) {
             dataStore.removeAddressArray(
                 keccak256(abi.encode(key, SWAP_PATH))
             );
@@ -337,25 +337,25 @@ library OrderStoreUtils {
             );
         }
 
-        if (order.sizeDeltaUsd() > 0) {
+        if (order.sizeDeltaUsd() != 0) {
             dataStore.removeUint(
                 keccak256(abi.encode(key, SIZE_DELTA_USD))
             );
         }
 
-        if (order.triggerPrice() > 0) {
+        if (order.triggerPrice() != 0) {
             dataStore.removeUint(
                 keccak256(abi.encode(key, TRIGGER_PRICE))
             );
         }
 
-        if (order.acceptablePrice() > 0) {
+        if (order.acceptablePrice() != 0) {
             dataStore.removeUint(
                 keccak256(abi.encode(key, ACCEPTABLE_PRICE))
         );
         }
 
-        if (order.initialCollateralDeltaAmount() > 0) {
+        if (order.initialCollateralDeltaAmount() != 0) {
             dataStore.removeUint(
                 keccak256(abi.encode(key, INITIAL_COLLATERAL_DELTA_AMOUNT))
             );
@@ -365,13 +365,13 @@ library OrderStoreUtils {
             keccak256(abi.encode(key, EXECUTION_FEE))
         );
 
-        if (order.callbackGasLimit() > 0) {
+        if (order.callbackGasLimit() != 0) {
             dataStore.removeUint(
                 keccak256(abi.encode(key, CALLBACK_GAS_LIMIT))
             );
         }
 
-        if (order.minOutputAmount() > 0) {
+        if (order.minOutputAmount() != 0) {
             dataStore.removeUint(
                 keccak256(abi.encode(key, MIN_OUTPUT_AMOUNT))
             );
@@ -381,7 +381,7 @@ library OrderStoreUtils {
             keccak256(abi.encode(key, UPDATED_AT_TIME))
         );
 
-        if (order.validFromTime() > 0) {
+        if (order.validFromTime() != 0) {
             dataStore.removeUint(
                 keccak256(abi.encode(key, VALID_FROM_TIME))
             );
