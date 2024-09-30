@@ -506,7 +506,7 @@ library MarketUtils {
          uint256 maxReservedUsd = Precision.applyFactor(poolUsd, reserveFactor);
          uint256 reserveUsageFactor = Precision.toFactor(reservedUsd, maxReservedUsd);
 
-         if (dataStore.getBool(Keys.USAGE_FACTOR_IGNORE_OPEN_INTEREST)) {
+         if (dataStore.getBool(Keys.IGNORE_OPEN_INTEREST_FOR_USAGE_FACTOR)) {
             return reserveUsageFactor;
          }
 
