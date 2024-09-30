@@ -114,6 +114,7 @@ export async function validateStoreUtils({
   getItem,
   setItem,
   removeItem,
+  afterRemoval,
   getItemCount,
   getItemKeys,
   getAccountItemCount = null,
@@ -179,6 +180,10 @@ export async function validateStoreUtils({
     }
 
     await removeItem(dataStore, itemKey, sampleItem);
+
+    if (afterRemoval) {
+      await afterRemoval(dataStore, itemKey, sampleItem);
+    }
 
     expect(await getItemCount(dataStore)).eq(initialItemCount);
     expect(await getItemKeys(dataStore, 0, 10)).deep.equal(initialItemKeys);

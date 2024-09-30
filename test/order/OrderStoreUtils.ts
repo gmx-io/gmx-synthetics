@@ -11,6 +11,9 @@ import {
   getAccountOrderCount,
   getAccountOrderKeys,
 } from "../../utils/order";
+import { hashData } from "../../utils/hash";
+import * as keys from "../../utils/keys";
+import { expect } from "chai";
 
 describe("OrderStoreUtils", () => {
   let fixture;
@@ -41,6 +44,12 @@ describe("OrderStoreUtils", () => {
       },
       removeItem: async (dataStore, itemKey, sampleItem) => {
         return await orderStoreUtilsTest.removeOrder(dataStore.address, itemKey, sampleItem.addresses.account);
+      },
+      afterRemoval: async (dataStore, itemKey) => {
+        const validFromTime = await dataStore.getUint(
+          hashData(["bytes32", "uint256"], [itemKey, keys.VALID_FROM_TIME])
+        );
+        expect(validFromTime).eq(0);
       },
       getItemCount: getOrderCount,
       getItemKeys: getOrderKeys,
