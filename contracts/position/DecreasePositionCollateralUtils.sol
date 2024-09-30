@@ -617,23 +617,80 @@ library DecreasePositionCollateralUtils {
     function getEmptyFees(
         PositionPricingUtils.PositionFees memory fees
     ) internal pure returns (PositionPricingUtils.PositionFees memory) {
-        PositionPricingUtils.PositionFees memory _fees;
+        PositionPricingUtils.PositionReferralFees memory referral = PositionPricingUtils.PositionReferralFees({
+            referralCode: bytes32(0),
+            affiliate: address(0),
+            trader: address(0),
+            totalRebateFactor: 0,
+            affiliateRewardFactor: 0,
+            adjustedAffiliateRewardFactor: 0,
+            traderDiscountFactor: 0,
+            totalRebateAmount: 0,
+            traderDiscountAmount: 0,
+            affiliateRewardAmount: 0
+        });
+
+        PositionPricingUtils.PositionProFees memory pro = PositionPricingUtils.PositionProFees({
+            traderTier: 0,
+            traderDiscountFactor: 0,
+            traderDiscountAmount: 0
+        });
 
         // allow the accumulated funding fees to still be claimable
         // return the latestFundingFeeAmountPerSize, latestLongTokenClaimableFundingAmountPerSize,
         // latestShortTokenClaimableFundingAmountPerSize values as these may be used to update the
         // position's values if the position will be partially closed
-        _fees.funding = PositionPricingUtils.PositionFundingFees(
-            0, // fundingFeeAmount
-            fees.funding.claimableLongTokenAmount, // claimableLongTokenAmount
-            fees.funding.claimableShortTokenAmount, // claimableShortTokenAmount
-            fees.funding.latestFundingFeeAmountPerSize, // latestFundingFeeAmountPerSize
-            fees.funding.latestLongTokenClaimableFundingAmountPerSize, // latestLongTokenClaimableFundingAmountPerSize
-            fees.funding.latestShortTokenClaimableFundingAmountPerSize // latestShortTokenClaimableFundingAmountPerSize
-        );
+        PositionPricingUtils.PositionFundingFees memory funding = PositionPricingUtils.PositionFundingFees({
+            fundingFeeAmount: 0,
+            claimableLongTokenAmount: fees.funding.claimableLongTokenAmount,
+            claimableShortTokenAmount: fees.funding.claimableShortTokenAmount,
+            latestFundingFeeAmountPerSize: fees.funding.latestFundingFeeAmountPerSize,
+            latestLongTokenClaimableFundingAmountPerSize: fees.funding.latestLongTokenClaimableFundingAmountPerSize,
+            latestShortTokenClaimableFundingAmountPerSize: fees.funding.latestShortTokenClaimableFundingAmountPerSize
+        });
+
+        PositionPricingUtils.PositionBorrowingFees memory borrowing = PositionPricingUtils.PositionBorrowingFees({
+            borrowingFeeUsd: 0,
+            borrowingFeeAmount: 0,
+            borrowingFeeReceiverFactor: 0,
+            borrowingFeeAmountForFeeReceiver: 0
+        });
+
+        PositionPricingUtils.PositionUiFees memory ui = PositionPricingUtils.PositionUiFees({
+            uiFeeReceiver: address(0),
+            uiFeeReceiverFactor: 0,
+            uiFeeAmount: 0
+        });
+
+        PositionPricingUtils.PositionLiquidationFees memory liquidation = PositionPricingUtils.PositionLiquidationFees({
+            liquidationFeeUsd: 0,
+            liquidationFeeAmount: 0,
+            liquidationFeeReceiverFactor: 0,
+            liquidationFeeAmountForFeeReceiver: 0
+        });
 
         // all fees are zeroed even though funding may have been paid
         // the funding fee amount value may not be accurate in the events due to this
+        PositionPricingUtils.PositionFees memory _fees = PositionPricingUtils.PositionFees({
+            referral: referral,
+            pro: pro,
+            funding: funding,
+            borrowing: borrowing,
+            ui: ui,
+            liquidation: liquidation,
+            collateralTokenPrice: fees.collateralTokenPrice,
+            positionFeeFactor: 0,
+            protocolFeeAmount: 0,
+            positionFeeReceiverFactor: 0,
+            feeReceiverAmount: 0,
+            feeAmountForPool: 0,
+            positionFeeAmountForPool: 0,
+            positionFeeAmount: 0,
+            totalCostAmountExcludingFunding: 0,
+            totalCostAmount: 0,
+            totalDiscountAmount: 0
+        });
+
         return _fees;
     }
 }
