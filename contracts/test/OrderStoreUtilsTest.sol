@@ -16,7 +16,7 @@ contract OrderStoreUtilsTest {
     }
 
     function setOrder(DataStore dataStore, bytes32 key, Order.Props memory order) external {
-        OrderStoreUtils.set(dataStore, key, order, false);
+        OrderStoreUtils.set(dataStore, key, order);
     }
 
     function removeOrder(DataStore dataStore, bytes32 key) external {

@@ -118,7 +118,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
 
         BaseOrderUtils.validateNonEmptyOrder(order);
 
-        OrderStoreUtils.set(dataStore, key, order, false);
+        OrderStoreUtils.set(dataStore, key, order);
 
         OrderEventUtils.emitOrderUpdated(
             eventEmitter,
