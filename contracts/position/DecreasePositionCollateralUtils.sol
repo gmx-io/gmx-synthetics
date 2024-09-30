@@ -362,7 +362,7 @@ library DecreasePositionCollateralUtils {
             // empty the fees since the amount was entirely paid to the pool instead of for fees
             // it is possible for the txn execution to still complete even in this case
             // as long as the remainingCostUsd is still zero
-            fees = getEmptyFees();
+            fees = getEmptyFees(fees);
         }
 
         if (collateralCache.result.remainingCostUsd > 0) {
@@ -611,14 +611,29 @@ library DecreasePositionCollateralUtils {
             step
         );
 
-        return (values, getEmptyFees());
+        return (values, getEmptyFees(fees));
     }
 
-    function getEmptyFees() internal pure returns (PositionPricingUtils.PositionFees memory) {
-        // all fees are zeroed even though funding may have been paid
-        // the funding fee amount value may not be accurate in the events due to this
+    function getEmptyFees(
+        PositionPricingUtils.PositionFees memory fees
+    ) internal pure returns (PositionPricingUtils.PositionFees memory) {
         PositionPricingUtils.PositionFees memory _fees;
 
+        // allow the accumulated funding fees to still be claimable
+        // return the latestFundingFeeAmountPerSize, latestLongTokenClaimableFundingAmountPerSize,
+        // latestShortTokenClaimableFundingAmountPerSize values as these may be used to update the
+        // position's values if the position will be partially closed
+        _fees.funding = PositionPricingUtils.PositionFundingFees(
+            0, // fundingFeeAmount
+            fees.funding.claimableLongTokenAmount, // claimableLongTokenAmount
+            fees.funding.claimableShortTokenAmount, // claimableShortTokenAmount
+            fees.funding.latestFundingFeeAmountPerSize, // latestFundingFeeAmountPerSize
+            fees.funding.latestLongTokenClaimableFundingAmountPerSize, // latestLongTokenClaimableFundingAmountPerSize
+            fees.funding.latestShortTokenClaimableFundingAmountPerSize // latestShortTokenClaimableFundingAmountPerSize
+        );
+
+        // all fees are zeroed even though funding may have been paid
+        // the funding fee amount value may not be accurate in the events due to this
         return _fees;
     }
 }
