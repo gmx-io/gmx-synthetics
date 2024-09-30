@@ -19,8 +19,7 @@ contract OrderStoreUtilsTest {
         OrderStoreUtils.set(dataStore, key, order);
     }
 
-    function removeOrder(DataStore dataStore, bytes32 key) external {
-        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
-        OrderStoreUtils.remove(dataStore, key, order);
+    function removeOrder(DataStore dataStore, bytes32 key, address account) external {
+        OrderStoreUtils.remove(dataStore, key, account);
     }
 }
