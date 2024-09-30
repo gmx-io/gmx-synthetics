@@ -102,7 +102,39 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         ],
       },
     ],
-    avalanche: [] as any,
+    avalanche: [
+      {
+        name: "GMX Liquidity Vault [WAVAX-USDC]",
+        symbol: "GLV [WAVAX-USDC]",
+        longToken: "WAVAX",
+        shortToken: "USDC",
+        shiftMaxPriceImpactFactor: percentageToFloat("0.1%"),
+        shiftMinInterval: 60 * 60, // 1 hour
+        minTokensForFirstGlvDeposit: expandDecimals(1, 18),
+        markets: [
+          {
+            indexToken: "WAVAX",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(6_770_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(13_000_000),
+          },
+          {
+            indexToken: "XRP",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(74_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(150_000),
+          },
+          {
+            indexToken: "DOGE",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(80_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(170_000),
+          },
+          {
+            indexToken: "LTC",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(46_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(125_000),
+          },
+        ],
+      },
+    ],
     avalancheFuji: [
       {
         name: "GMX Liquidity Vault [WETH-USDC]",
