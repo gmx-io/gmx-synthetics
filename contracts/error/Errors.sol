@@ -140,6 +140,8 @@ library Errors {
 
     // FeeHandler errors
     error InvalidClaimFeesInput(uint256 marketsLength, uint256 tokensLength);
+    error InvalidSwapTokenInput(address swapToken, uint256 arrayPosition);
+    error InsufficientClaimAmount(address market, address feeToken, address swapToken, uint256 swapTokenFeeAmount);
 
     // GasUtils errors
     error InsufficientExecutionFee(uint256 minExecutionFee, uint256 executionFee);
