@@ -451,8 +451,8 @@ library Keys {
     bytes32 public constant BUYBACK_AVAILABLE_FEE_AMOUNT = keccak256(abi.encode("BUYBACK_AVAILABLE_FEE_AMOUNT"));
     // @dev key for the buyback gmx fee factor used in calculating fees by GMX/WETH
     bytes32 public constant BUYBACK_GMX_FACTOR = keccak256(abi.encode("BUYBACK_GMX_FACTOR"));
-    // @dev key for the FeeHandler max swap price impact when claiming/swapping fees
-    bytes32 public constant BUYBACK_MAX_SWAP_PRICE_IMPACT = keccak256(abi.encode("BUYBACK_MAX_SWAP_PRICE_IMPACT"));
+    // @dev key for the FeeHandler max price impact when buying back fees
+    bytes32 public constant BUYBACK_MAX_PRICE_IMPACT_FACTOR = keccak256(abi.encode("BUYBACK_MAX_PRICE_IMPACT_FACTOR"));
     
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
@@ -1974,7 +1974,7 @@ library Keys {
     function buybackAvailableFeeAmountKey(address feeToken, address swapToken) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             BUYBACK_AVAILABLE_FEE_AMOUNT,
-            feetoken,
+            feeToken,
             swapToken
         ));
     }
@@ -1989,12 +1989,12 @@ library Keys {
         ));
     }
 
-    // @dev key for the buyback max swap price impact
-    // @param token the token for which to retrieve the swap price impact key
-    // @return key for buyback swap price impact for a given token
-    function buybackMaxSwapPriceImpactKey(address token) internal pure returns (bytes32) {
+    // @dev key for the buyback max price impact factor
+    // @param token the token for which to retrieve the max price impact factor key
+    // @return key for buyback max price impact factor for a given token
+    function buybackMaxPriceImpactFactorKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            BUYBACK_MAX_SWAP_PRICE_IMPACT,
+            BUYBACK_MAX_PRICE_IMPACT_FACTOR,
             token
         ));
     }

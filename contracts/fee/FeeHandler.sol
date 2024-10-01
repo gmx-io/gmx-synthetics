@@ -8,165 +8,164 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "../data/DataStore.sol";
 import "../role/RoleModule.sol";
+import "../utils/BasicMulticall.sol";
 import "../fee/FeeUtils.sol";
 import "../data/Keys.sol";
 import "../v1/IVaultV1.sol";
 import "./IFeedAddress.sol";
 
 // @title FeeHandler
-contract FeeHandler is ReentrancyGuard, RoleModule {
+contract FeeHandler is ReentrancyGuard, RoleModule, BasicMulticall {
     using SafeERC20 for IERC20;
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
-    address public immutable vault;
+    address public immutable vaultV1;
     address public immutable gmx;
-    address public immutable wnt;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        address _vault,
-        address _gmx,
-        address _wnt
+        address _vaultV1,
+        address _gmx
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
-        vault = _vault;
+        vaultV1 = _vaultV1;
         gmx = _gmx;
-        wnt = _wnt;
+    }
+
+    // @dev withdraw fees from this contract
+    // @param token the token for which to claim fees
+    // @param amount the amount of fees to claim
+    function withdrawFees(address token, uint256 amount) external nonReentrant onlyFeeKeeper {
+        address receiver = dataStore.getAddress(Keys.FEE_RECEIVER);
+        IERC20(token).safeTransfer(receiver, amount);
     }
 
     // @dev claim fees from the specified markets
-    // @param markets the markets to claim fees from
-    // @param feeTokens the fee tokens to claim for (GMX/WNT)
-    // @param swapTokens the provided swap token (GMX/WNT)
-    function claimFees(
-        address[] calldata markets,
-        address[] calldata feeTokens,
-        address[] calldata swapTokens
-    ) external nonReentrant onlyFeeKeeper {
-        if (markets.length != feeTokens.length) {
-            revert Errors.InvalidClaimFeesInput(markets.length, feeTokens.length);
-        }
-
-        if (markets.length != swapTokens.length) {
-            revert Errors.InvalidClaimFeesInput(markets.length, swapTokens.length);
-        }
-
-        address receiver = address(this);
-
-        (uint256 gmxTokenOraclePrice, uint256 gmxTokenOracleDecimals, uint256 gmxTokenDecimals) = _getTokenPricingValues(gmx);
-        (uint256 wntTokenOraclePrice, uint256 wntTokenOracleDecimals, uint256 wntTokenDecimals) = _getTokenPricingValues(wnt);
-
-        uint256 gmxBatchSize = _getBatchSize(gmx);
-        uint256 wntBatchSize = _getBatchSize(wnt);
-
-        uint256 buybackGmxFactorV1 = dataStore.getUint(Keys.buybackGmxFactorKey(1));
-        uint256 buybackGmxFactorV2 = dataStore.getUint(Keys.buybackGmxFactorKey(2));
-
-        for (uint256 i; i < markets.length; i++) {
-            address swapToken = swapTokens[i];
-            if (swapToken != gmx && swapToken != wnt) {
-                revert Errors.InvalidSwapTokenInput(swapToken, i);
-            }
-
-            address market = markets[i];
-            address feeToken = feeTokens[i];
-
-            uint256 availableFeeAmount = _getAvailableFeeAmount(feeToken, swaptoken);
-            uint256 maxSwapPriceImpact = _getMaxSwapPriceImpact(feeToken);
-
-            (uint256 feeTokenOraclePrice, uint256 feeTokenOracleDecimals, uint256 feeTokenDecimals) = _getTokenPricingValues(feeToken);
-
-            uint256 swapTokenOraclePrice;
-            uint256 swapTokenOracleDecimals;
-            uint256 swapTokenDecimals;
-            uint256 batchSize;
-            address otherToken;
-            if (swapToken == gmx) {
-                swapTokenOraclePrice = gmxTokenOraclePrice;
-                swapTokenOracleDecimals = gmxTokenOracleDecimals;
-                swapTokenDecimals = gmxTokenDecimals;
-                batchSize = gmxBatchSize;
-                otherToken = wnt;
-            } else {
-                swapTokenOraclePrice = wntTokenOraclePrice;
-                swapTokenOracleDecimals = wntTokenOracleDecimals;
-                swapTokenDecimals = wntTokenDecimals;
-                batchSize = wntBatchSize;
-                otherToken = gmx;
-            }
-
-            uint256 feeTokenPriceInSwapToken = _getFeeTokenPriceInSwapToken(
-                feeTokenOraclePrice,
-                feeTokenOracleDecimals,
-                swapTokenOraclePrice,
-                swapTokenOracleDecimals
-            );
-            
-            uint256 minFeeTokenAmount = _getMinFeeTokenAmount(
-                batchSize,
-                feeTokenPriceInSwapToken,
-                swapTokenDecimals,
-                feeTokenDecimals
-            );
-            
-            uint256 maxFeeTokenAmount = _getMaxFeeTokenAmount(minFeeTokenAmount, maxSwapPriceImpact);
-            
-            if (availableFeeAmount >= maxFeeTokenAmount) {
-                _swapFees(feeToken, swapToken, receiver, batchSize, maxFeeTokenAmount, availableFeeAmount);
-                continue;
-            } else if (availableFeeAmount >= minFeeTokenAmount) {
-                _swapFees(feeToken, swapToken, receiver, batchSize, availableFeeAmount, availableFeeAmount);
-                continue;
-            }
-
-            uint256 feeAmount;
-            uint256 swapTokenFeeAmount;
-            uint256 otherTokenFeeAmount;
-            if (market == address(0)) {
-                feeAmount = IVaultV1(vault).withdrawFees(feeToken, receiver);
-                (swapTokenFeeAmount, otherTokenFeeAmount) = _getFeeAmounts(swapToken, feeAmount, buybackGmxFactorV1);
-            } else {
-                feeAmount = FeeUtils.claimFees(dataStore, eventEmitter, market, feeToken, receiver);
-                (swapTokenFeeAmount, otherTokenFeeAmount) = _getFeeAmounts(swapToken, feeAmount, buybackGmxFactorV2);
-            }
-            
-            availableFeeAmount = availableFeeAmount + swapTokenfeeAmount;
-            if (availableFeeAmount >= maxFeeTokenAmount) {
-                _swapFees(feeToken, swapToken, receiver, batchSize, maxFeeTokenAmount, availableFeeAmount);
-            } else if (availableFeeAmount >= minFeeTokenAmount) {
-                _swapFees(feeToken, swapToken, receiver, batchSize, availableFeeAmount, availableFeeAmount);
-            } else {
-                revert Errors.InsufficientClaimAmount(market, feeToken, swapToken, swapTokenFeeAmount);
-            }
-
-            uint256 otherTokenAvailableFeeAmount = _getAvailableFeeAmount(feeToken, otherToken) + otherTokenFeeAmount;
-            _setAvailableFeeAmount(feeToken, otherToken, otherTokenAvailableFeeAmount)
+    // @param market the markets to claim fees from
+    // @param feeToken the fee tokens to claim
+    function claimFees(address market, address feeToken) external nonReentrant {
+        uint256 version;
+        uint256 buybackGmxFactor;
+        uint256 feeAmount;
+        if (market == address(0)) {
+            version = 1;
+            buybackGmxFactor = _getBuybackGmxFactor(version);
+            feeAmount = IVaultV1(vaultV1).withdrawFees(feeToken, address(this));
+            _setAvailableFeeAmounts(version, feeToken, feeAmount);
+        } else {
+            version = 2;
+            buybackGmxFactor = _getBuybackGmxFactor(version);
+            feeAmount = FeeUtils.claimFees(dataStore, eventEmitter, market, feeToken, address(this));
+            _setAvailableFeeAmounts(version, feeToken, feeAmount);
         }
     }
 
-    function _swapFees(address feeToken, address swapToken, address receiver, uint256 batchSize, uint256 swapAmount, uint256 availableFeeAmount) private {
-        IERC20[feeToken].safeTransfer(msg.sender, swapAmount);
-        IERC20[swapToken].safeTransferFrom(msg.sender, receiver, batchSize);
-        availableFeeAmount = availableFeeAmount - swapAmount;
-        _setAvailableFeeAmount(feeToken, swaptoken, availableFeeAmount);
+    // @dev receive an amount in feeToken by depositing the batchSize amount of the buybackToken
+    // @param feeToken the token to receive with the fee amount calculated via an oracle price
+    // @param buybackToken the token to deposit in the amount of batchSize in return for fees
+    function buybackFees(address feeToken, address buybackToken) external nonReentrant {
+        uint256 batchSize = dataStore.getUint(Keys.buybackBatchAmountKey(buybackToken));
+        if (batchSize == 0) {
+            revert Errors.InvalidBuybackTokenInput(buybackToken);
+        }
+
+        uint256 minFeeTokenAmount = _getMinFeeTokenAmount(feeToken, buybackToken, batchSize);
+
+        uint256 maxPriceImpactFactor = dataStore.getUint(Keys.buybackMaxPriceImpactFactorKey(feeToken));
+        uint256 maxFeeTokenAmount = (minFeeTokenAmount * (maxPriceImpactFactor + 10000)) / 10000;
+
+        uint256 availableFeeAmount = _getAvailableFeeAmount(feeToken, buybackToken);
+
+        if (availableFeeAmount >= maxFeeTokenAmount) {
+            _buybackFees(feeToken, buybackToken, batchSize, maxFeeTokenAmount, availableFeeAmount);
+        } else if (availableFeeAmount >= minFeeTokenAmount) {
+            _buybackFees(feeToken, buybackToken, batchSize, availableFeeAmount, availableFeeAmount);
+        } else {
+            revert Errors.InsufficientFeeAmount(feeToken, buybackToken, availableFeeAmount);
+        }
     }
 
-    function _setAvailableFeeAmount(address feeToken, address swapToken, uint256 availableFeeAmount) private {
-        dataStore.setUint(Keys.buybackAvailableFeeAmountKey(feeToken, swaptoken), availableFeeAmount);
+    function _buybackFees(
+        address feeToken,
+        address buybackToken,
+        uint256 batchSize,
+        uint256 buybackAmount,
+        uint256 availableFeeAmount
+    ) private {
+        IERC20(feeToken).safeTransfer(msg.sender, buybackAmount);
+        IERC20(buybackToken).safeTransferFrom(msg.sender, address(this), batchSize);
+        availableFeeAmount = availableFeeAmount - buybackAmount;
+        _setAvailableFeeAmount(feeToken, buybackToken, availableFeeAmount);
     }
 
-    function _getMaxSwapPriceImpact(address token) private view returns (uint256) {
-        uint256 maxSwapPriceImpact = dataStore.getUint(Keys.buybackMaxSwapPriceImpactKey(token));
-        return maxSwapPriceImpact;
+    function _setAvailableFeeAmounts(uint256 version, address feeToken, uint256 feeAmount) private {
+        address wnt = dataStore.getAddress(Keys.WNT);
+
+        uint256 buybackGmxFactor = _getBuybackGmxFactor(version);
+        uint256 feeAmountGmx = (feeAmount * buybackGmxFactor) / 1e30;
+        uint256 feeAmountWnt = feeAmount - feeAmountGmx;
+
+        uint256 availableFeeAmountGmx = _getAvailableFeeAmount(feeToken, gmx) + feeAmountGmx;
+        uint256 availableFeeAmountWnt = _getAvailableFeeAmount(feeToken, wnt) + feeAmountWnt;
+
+        _setAvailableFeeAmount(feeToken, gmx, availableFeeAmountGmx);
+        _setAvailableFeeAmount(feeToken, wnt, availableFeeAmountWnt);
     }
 
-    function _getAvailableFeeAmount(address feeToken, address swapToken) private view returns (uint256) {
-        uint256 availableFeeAmount = dataStore.getUint(Keys.buybackAvailableFeeAmountKey(feeToken, swaptoken));
+    function _setAvailableFeeAmount(address feeToken, address buybackToken, uint256 availableFeeAmount) private {
+        dataStore.setUint(Keys.buybackAvailableFeeAmountKey(feeToken, buybackToken), availableFeeAmount);
+    }
+
+    function _getAvailableFeeAmount(address feeToken, address buybackToken) private view returns (uint256) {
+        uint256 availableFeeAmount = dataStore.getUint(Keys.buybackAvailableFeeAmountKey(feeToken, buybackToken));
         return availableFeeAmount;
+    }
+
+    function _getBuybackGmxFactor(uint256 version) private view returns (uint256) {
+        uint256 buybackGmxFactor = dataStore.getUint(Keys.buybackGmxFactorKey(version));
+        return buybackGmxFactor;
+    }
+
+    function _getMinFeeTokenAmount(
+        address feeToken,
+        address buybackToken,
+        uint256 batchSize
+    ) private view returns (uint256) {
+        (
+            uint256 feeTokenOraclePrice,
+            uint256 feeTokenOracleDecimals,
+            uint256 feeTokenDecimals
+        ) = _getTokenPricingValues(feeToken);
+
+        (
+            uint256 buybackTokenOraclePrice,
+            uint256 buybackTokenOracleDecimals,
+            uint256 buybackTokenDecimals
+        ) = _getTokenPricingValues(buybackToken);
+
+        if (feeTokenOracleDecimals > buybackTokenOracleDecimals) {
+            buybackTokenOraclePrice =
+                buybackTokenOraclePrice *
+                (10 ** (feeTokenOracleDecimals - buybackTokenOracleDecimals));
+        } else if (buybackTokenOracleDecimals > feeTokenOracleDecimals) {
+            feeTokenOraclePrice = feeTokenOraclePrice * (10 ** (buybackTokenOracleDecimals - feeTokenOracleDecimals));
+        }
+
+        uint256 feeTokenPriceInBuybackToken = (feeTokenOraclePrice * 1e30) / buybackTokenOraclePrice;
+
+        // this assumes the batchSize amount is stored in buybackTokenDecimals i.e. batchSize of 100 GMX stored as 100 * (10 ^ 18)
+        if (buybackTokenDecimals > feeTokenDecimals) {
+            batchSize = batchSize / (10 ** (buybackTokenDecimals - feeTokenDecimals));
+        } else if (feeTokenDecimals > buybackTokenDecimals) {
+            batchSize = batchSize * (10 ** (feeTokenDecimals - buybackTokenDecimals));
+        }
+
+        uint256 feeTokenAmount = (batchSize * feeTokenPriceInBuybackToken) / 1e30;
+        return feeTokenAmount;
     }
 
     function _getTokenPricingValues(address token) private view returns (uint256, uint256, uint256) {
@@ -175,57 +174,5 @@ contract FeeHandler is ReentrancyGuard, RoleModule {
         uint256 tokenOracleDecimals = IFeedAddress(tokenPriceFeedAddress).decimals();
         uint256 tokenDecimals = IFeedAddress(token).decimals(); // IERC20().decimals() is not included in the openzeppelin IERC20 interface so using IFeedAddress().decimals() instead but can change if necessary
         return (tokenOraclePrice, tokenOracleDecimals, tokenDecimals);
-    }
-
-    function _getBatchSize(address token) private view returns (uint256) {
-        uint256 batchSize = dataStore.getUint(Keys.buybackBatchAmountKey(token));
-        return batchSize;
-    }
-
-    function _getFeeTokenPriceInSwapToken(
-        uint256 feeTokenPrice,
-        uint256 feeTokenDecimals,
-        uint256 swapTokenPrice,
-        uint256 swapTokenDecimals
-    ) private pure returns (uint256) {
-        if (feeTokenDecimals > swapTokenDecimals) {
-            swapTokenPrice = swapTokenPrice * (10 ** (feeTokenDecimals - swapTokenDecimals));
-        } else if (swapTokenDecimals > feeTokenDecimals) {
-            feeTokenPrice = feeTokenPrice * (10 ** (swapTokenDecimals - feeTokenDecimals));
-        }
-
-        uint256 tokenPrice = (feeTokenPrice * 1e30) / swapTokenPrice;
-        return tokenPrice;
-    }
-
-    function _getMinFeeTokenAmount(
-        uint256 batchSize,
-        uint256 tokenPrice,
-        uint256 swapTokenDecimals,
-        uint256 feeTokenDecimals
-    ) private pure returns (uint256) {
-        if (swapTokenDecimals > feeTokenDecimals) {
-            batchSize = batchSize / (10 ** (swapTokenDecimals - feeTokenDecimals));
-        } else if (feeTokenDecimals > swapTokenDecimals) {
-            batchSize = batchSize * (10 ** (feeTokenDecimals - swapTokenDecimals));
-        }
-
-        uint256 tokenAmount = (batchSize * tokenPrice) / 1e30;
-        return tokenAmount;
-    }
-
-    function _getMaxFeeTokenAmount(uint256 minFeeTokenAmount, uint256 maxSwapPriceImpact) private pure returns (uint256) {
-        (minFeeTokenAmount * (maxSwapPriceImpact + 10000)) / 10000;
-    }
-
-    function _getFeeAmounts(address swapToken, uint256 feeAmount, uint256 buybackGmxFactor) private pure returns (uint256, uint256) {
-        uint256 gmxFeeAmount = (feeAmount * buybackGmxFactor) / 1e30;
-        uint256 wntFeeAmount = feeAmount - gmxFeeAmount;
-        
-        if (swapToken == gmx) {
-            return (gmxFeeAmount, wntFeeAmount);
-        } else {
-            return (wntFeeAmount, gmxFeeAmount);
-        }
     }
 }
