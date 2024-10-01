@@ -121,6 +121,13 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    EIGEN: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "FIXME",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     SHIB: {
       synthetic: true,
       decimals: 18,

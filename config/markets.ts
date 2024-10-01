@@ -866,6 +866,66 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
+
+    {
+      tokens: { indexToken: "EIGEN", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:DOGE/USD"),
+      virtualMarketId: hashString("SPOT:DOGE/USD"),
+
+      ...synthethicMarketConfig,
+
+      positionImpactExponentFactor: decimalToFloat(22, 1), // 2.2
+      positivePositionImpactFactor: decimalToFloat(4, 9), // 4e-9,
+      negativePositionImpactFactor: decimalToFloat(8, 9), // 8e-9
+
+      positiveMaxPositionImpactFactor: percentageToFloat("0.5%"), // default
+      negativeMaxPositionImpactFactor: percentageToFloat("0.5%"), // default
+      maxPositionImpactFactorForLiquidations: bigNumberify(0), // default
+      swapImpactExponentFactor: decimalToFloat(2, 0), // default
+
+      positiveSwapImpactFactor: decimalToFloat(25, 10), // 2.5e-9
+      negativeSwapImpactFactor: decimalToFloat(5, 9), // 5e-9
+
+      swapFeeFactorForPositiveImpact: percentageToFloat("0.05%"), // default
+      swapFeeFactorForNegativeImpact: percentageToFloat("0.07%"), // default
+
+      positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"), // default
+      positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"), // default
+
+      optimalUsageFactorForLongs: percentageToFloat("75%"),
+      optimalUsageFactorForShorts: percentageToFloat("75%"),
+
+      baseBorrowingFactorForLongs: percentageToFloat("70%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactorForShorts: percentageToFloat("70%").div(SECONDS_PER_YEAR),
+
+      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+
+      fundingIncreaseFactorPerSecond: decimalToFloat(181, 14), // 181e-14
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // default
+
+      maxFundingFactorPerSecond: decimalToFloat(235, 10), // 235e-10
+      minFundingFactorPerSecond: decimalToFloat(3, 10), // 3e-10
+
+      thresholdForStableFunding: percentageToFloat("5%"),
+      thresholdForDecreaseFunding: percentageToFloat("0%"), // default
+
+      minCollateralFactor: percentageToFloat("1%"),
+      minCollateralUsd: decimalToFloat(1, 0), // default
+
+      minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(38, 10), // 38e-10
+      minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(38, 10), // 38e-10
+
+      maxOpenInterestForLongs: decimalToFloat(250_000),
+      maxOpenInterestForShorts: decimalToFloat(250_000),
+
+      reserveFactorLongs: percentageToFloat("105%"),
+      reserveFactorShorts: percentageToFloat("105%"),
+
+      openInterestReserveFactorLongs: percentageToFloat("100%"),
+      openInterestReserveFactorShorts: percentageToFloat("100%"),
+    },
+
     {
       tokens: { indexToken: "SHIB", longToken: "WETH", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:SHIB/USD"),
