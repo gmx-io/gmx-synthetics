@@ -104,6 +104,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     ],
     avalanche: [
       {
+        address: "0x901eE57f7118A7be56ac079cbCDa7F22663A3874",
         name: "GMX Liquidity Vault [WAVAX-USDC]",
         symbol: "GLV [WAVAX-USDC]",
         longToken: "WAVAX",
