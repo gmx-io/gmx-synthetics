@@ -114,8 +114,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         markets: [
           {
             indexToken: "WAVAX",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(6_770_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(13_000_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(3_385_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(6_500_000),
           },
           {
             indexToken: "XRP",
