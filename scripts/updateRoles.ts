@@ -80,29 +80,37 @@ async function main() {
     arbitrum: [
       {
         role: "CONFIG_KEEPER",
-        member: "0x31fabf54278e79069c4e102e9fb79d6a44be53a8",
+        member: "0xd5f8b9ba4255b2f73b06f245fcca73d114d1d460",
       },
       {
-        role: "CONTROLLER",
-        member: "0x43f0080e40a32a44413fd562788c27e3f5beddbc",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x31fabf54278e79069c4e102e9fb79d6a44be53a8",
+        role: "MARKET_KEEPER",
+        member: "0xd5f8b9ba4255b2f73b06f245fcca73d114d1d460",
       },
     ],
     avalanche: [
       {
         role: "CONFIG_KEEPER",
-        member: "0xe75f1fa4858a99e07ca878388ae9259ba048c87a",
+        member: "0xd5f8b9ba4255b2f73b06f245fcca73d114d1d460",
       },
       {
         role: "CONTROLLER",
-        member: "0x989618be5450b40f7a2675549643e2e2dab9978a",
+        member: "0x9ab8b533b817c41506999d6ff05d25079b0a38cc",
       },
       {
         role: "CONTROLLER",
-        member: "0xe75f1fa4858a99e07ca878388ae9259ba048c87a",
+        member: "0xea90ec1228f7d1b3d47d84d1c9d46dbdfeff7709",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x5d6b84086da6d4b0b6c0df7e02f8a6a039226530",
+      },
+      {
+        role: "MARKET_KEEPER",
+        member: "0xd5f8b9ba4255b2f73b06f245fcca73d114d1d460",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0xea90ec1228f7d1b3d47d84d1c9d46dbdfeff7709",
       },
     ],
   };
