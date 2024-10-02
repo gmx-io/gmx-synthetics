@@ -868,8 +868,8 @@ const config: {
     },
     {
       tokens: { indexToken: "EIGEN", longToken: "WETH", shortToken: "USDC" },
-      virtualTokenIdForIndexToken: hashString("PERP:DOGE/USD"),
-      virtualMarketId: hashString("SPOT:DOGE/USD"),
+      virtualTokenIdForIndexToken: hashString("PERP:EIGEN/USD"),
+      virtualMarketId: hashString("SPOT:WETH/USD"),
 
       ...synthethicMarketConfig,
 
