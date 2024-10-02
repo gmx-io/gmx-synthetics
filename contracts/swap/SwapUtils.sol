@@ -246,7 +246,7 @@ library SwapUtils {
             _params.amountIn,
             cache.priceImpactUsd > 0, // forPositiveImpact
             params.uiFeeReceiver,
-            ISwapPricingUtils.SwapPricingType.TwoStep
+            ISwapPricingUtils.SwapPricingType.Swap
         );
 
         FeeUtils.incrementClaimableFeeAmount(

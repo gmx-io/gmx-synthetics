@@ -1,6 +1,5 @@
 import hre, { network } from "hardhat";
 
-import { encodeData } from "../utils/hash";
 import { bigNumberify } from "../utils/math";
 import { getFullKey, appendUintConfigIfDifferent, appendAddressConfigIfDifferent } from "../utils/config";
 import * as keys from "../utils/keys";
@@ -102,29 +101,9 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     `positionFeeReceiverFactor`
   );
 
-  await handleConfig(
-    "uint",
-    keys.DEPOSIT_GAS_LIMIT,
-    encodeData(["bool"], [true]),
-    generalConfig.depositGasLimitSingle,
-    `depositGasLimitSingle`
-  );
+  await handleConfig("uint", keys.DEPOSIT_GAS_LIMIT, "0x", generalConfig.depositGasLimit, `depositGasLimit`);
 
-  await handleConfig(
-    "uint",
-    keys.DEPOSIT_GAS_LIMIT,
-    encodeData(["bool"], [false]),
-    generalConfig.depositGasLimitMultiple,
-    `depositGasLimitMultiple`
-  );
-
-  await handleConfig(
-    "uint",
-    keys.withdrawalGasLimitKey(),
-    "0x",
-    generalConfig.withdrawalGasLimit,
-    `withdrawalGasLimit`
-  );
+  await handleConfig("uint", keys.WITHDRAWAL_GAS_LIMIT, "0x", generalConfig.withdrawalGasLimit, `withdrawalGasLimit`);
 
   await handleConfig("uint", keys.shiftGasLimitKey(), "0x", generalConfig.shiftGasLimit, `shiftGasLimit`);
 

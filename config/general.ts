@@ -19,8 +19,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       minAdditionalGasForExecution: 1_000_000,
       refundExecutionFeeGasLimit: 200_000,
 
-      depositGasLimitSingle: 0,
-      depositGasLimitMultiple: 0,
+      depositGasLimit: 0,
       withdrawalGasLimit: 0,
       shiftGasLimit: 2_500_000,
 
@@ -75,8 +74,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     minAdditionalGasForExecution: 1_000_000,
     refundExecutionFeeGasLimit: 200_000,
 
-    depositGasLimitSingle: 1_500_000,
-    depositGasLimitMultiple: 1_800_000,
+    depositGasLimit: 1_800_000,
     withdrawalGasLimit: 1_500_000,
     shiftGasLimit: 2_500_000,
 

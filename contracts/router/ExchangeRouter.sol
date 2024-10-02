@@ -105,7 +105,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         bytes[] memory externalCallDataList,
         address[] memory refundTokens,
         address[] memory refundReceivers
-    ) external {
+    ) external nonReentrant {
         externalHandler.makeExternalCalls(
             externalCallTargets,
             externalCallDataList,
@@ -154,6 +154,13 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         depositHandler.simulateExecuteDeposit(key, simulatedOracleParams);
     }
 
+    function simulateExecuteLatestDeposit(
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams
+    ) external payable nonReentrant {
+        bytes32 key = NonceUtils.getCurrentKey(dataStore);
+        depositHandler.simulateExecuteDeposit(key, simulatedOracleParams);
+    }
+
     function createWithdrawal(
         WithdrawalUtils.CreateWithdrawalParams calldata params
     ) external override payable nonReentrant returns (bytes32) {
@@ -192,6 +199,14 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         OracleUtils.SimulatePricesParams memory simulatedOracleParams,
         ISwapPricingUtils.SwapPricingType swapPricingType
     ) external payable nonReentrant {
+        withdrawalHandler.simulateExecuteWithdrawal(key, simulatedOracleParams, swapPricingType);
+    }
+
+    function simulateExecuteLatestWithdrawal(
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams,
+        ISwapPricingUtils.SwapPricingType swapPricingType
+    ) external payable nonReentrant {
+        bytes32 key = NonceUtils.getCurrentKey(dataStore);
         withdrawalHandler.simulateExecuteWithdrawal(key, simulatedOracleParams, swapPricingType);
     }
 
@@ -272,6 +287,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         uint256 acceptablePrice,
         uint256 triggerPrice,
         uint256 minOutputAmount,
+        uint256 validFromTime,
         bool autoCancel
     ) external payable nonReentrant {
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
@@ -285,6 +301,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
             acceptablePrice,
             triggerPrice,
             minOutputAmount,
+            validFromTime,
             autoCancel,
             order
         );
@@ -316,6 +333,13 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         bytes32 key,
         OracleUtils.SimulatePricesParams memory simulatedOracleParams
     ) external payable nonReentrant {
+        orderHandler.simulateExecuteOrder(key, simulatedOracleParams);
+    }
+
+    function simulateExecuteLatestOrder(
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams
+    ) external payable nonReentrant {
+        bytes32 key = NonceUtils.getCurrentKey(dataStore);
         orderHandler.simulateExecuteOrder(key, simulatedOracleParams);
     }
 

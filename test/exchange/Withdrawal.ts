@@ -27,7 +27,6 @@ import * as keys from "../../utils/keys";
 
 describe("Exchange.Withdrawal", () => {
   const { AddressZero } = ethers.constants;
-  const { provider } = ethers;
 
   let fixture;
   let user0, user1, user2;
@@ -84,7 +83,6 @@ describe("Exchange.Withdrawal", () => {
 
     expect(await getWithdrawalCount(dataStore)).eq(1);
 
-    const block = await provider.getBlock();
     const withdrawalKeys = await getWithdrawalKeys(dataStore, 0, 1);
     const withdrawal = await reader.getWithdrawal(dataStore.address, withdrawalKeys[0]);
 
@@ -95,7 +93,6 @@ describe("Exchange.Withdrawal", () => {
     expect(withdrawal.numbers.marketTokenAmount).eq(expandDecimals(1000, 18));
     expect(withdrawal.numbers.minLongTokenAmount).eq(100);
     expect(withdrawal.numbers.minShortTokenAmount).eq(50);
-    expect(withdrawal.numbers.updatedAtBlock).eq(block.number);
     expect(withdrawal.numbers.executionFee).eq(700);
     expect(withdrawal.numbers.callbackGasLimit).eq(100000);
     expect(withdrawal.flags.shouldUnwrapNativeToken).eq(true);
@@ -206,8 +203,12 @@ describe("Exchange.Withdrawal", () => {
 
   it("price impact, fees", async () => {
     // 0.05%: 0.0005
+    await dataStore.setUint(keys.depositFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.depositFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 4));
     await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 4));
     await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.withdrawalFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.withdrawalFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 4));
 
     // set price impact to 0.1% for every $100,000 of token imbalance
     // 0.1% => 0.001

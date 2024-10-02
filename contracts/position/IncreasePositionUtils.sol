@@ -264,7 +264,8 @@ library IncreasePositionUtils {
             params.market.longToken, // longToken
             params.market.shortToken, // shortToken
             params.order.sizeDeltaUsd(), // sizeDeltaUsd
-            params.order.uiFeeReceiver() // uiFeeReceiver
+            params.order.uiFeeReceiver(), // uiFeeReceiver
+            false // isLiquidation
         );
 
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(getPositionFeesParams);

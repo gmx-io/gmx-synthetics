@@ -18,6 +18,7 @@ export const OrderType = {
   LimitDecrease: 5,
   StopLossDecrease: 6,
   Liquidation: 7,
+  StopIncrease: 8,
 };
 
 export const DecreasePositionSwapType = {
@@ -73,12 +74,16 @@ export async function createOrder(fixture, overrides) {
   const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
   const autoCancel = overrides.autoCancel || false;
   const referralCode = overrides.referralCode || ethers.constants.HashZero;
+  const validFromTime = overrides.validFromTime || 0;
 
   if (
-    orderType === OrderType.MarketSwap ||
-    orderType === OrderType.LimitSwap ||
-    orderType === OrderType.MarketIncrease ||
-    orderType === OrderType.LimitIncrease
+    [
+      OrderType.MarketSwap,
+      OrderType.LimitSwap,
+      OrderType.MarketIncrease,
+      OrderType.LimitIncrease,
+      OrderType.StopIncrease,
+    ].includes(orderType)
   ) {
     await initialCollateralToken.mint(orderVault.address, initialCollateralDeltaAmount);
   }
@@ -103,6 +108,7 @@ export async function createOrder(fixture, overrides) {
       executionFee,
       callbackGasLimit,
       minOutputAmount,
+      validFromTime,
     },
     orderType,
     decreasePositionSwapType,
@@ -124,10 +130,10 @@ export async function createOrder(fixture, overrides) {
   return { txReceipt, logs, key };
 }
 
-export async function executeOrder(fixture, overrides = {}) {
+export async function executeOrder(fixture, overrides: any = {}) {
   const { wnt, usdc } = fixture.contracts;
   const { gasUsageLabel, oracleBlockNumberOffset } = overrides;
-  const { reader, dataStore, orderHandler } = fixture.contracts;
+  const { dataStore, orderHandler } = fixture.contracts;
   const tokens = overrides.tokens || [wnt.address, usdc.address];
   const dataStreamTokens = overrides.dataStreamTokens || [];
   const dataStreamData = overrides.dataStreamData || [];
@@ -137,8 +143,7 @@ export async function executeOrder(fixture, overrides = {}) {
   const maxPrices = overrides.maxPrices || [expandDecimals(5000, 4), expandDecimals(1, 6)];
   const orderKeys = await getOrderKeys(dataStore, 0, 20);
   const orderKey = overrides.orderKey || orderKeys[orderKeys.length - 1];
-  const order = await reader.getOrder(dataStore.address, orderKey);
-  let oracleBlockNumber = overrides.oracleBlockNumber || order.numbers.updatedAtBlock;
+  let oracleBlockNumber = overrides.oracleBlockNumber || (await ethers.provider.getBlockNumber());
   oracleBlockNumber = bigNumberify(oracleBlockNumber);
 
   const oracleBlocks = overrides.oracleBlocks;

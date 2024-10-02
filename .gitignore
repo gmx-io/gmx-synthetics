@@ -21,3 +21,4 @@ artifacts
 deployments/localhost
 deployments.txt
 *.log
+.cursorignore*

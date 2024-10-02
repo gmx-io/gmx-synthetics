@@ -120,8 +120,7 @@ library DepositUtils {
                 initialLongTokenAmount,
                 initialShortTokenAmount,
                 params.minMarketTokens,
-                Chain.currentBlockNumber(),
-                Chain.currentTimestamp(),
+                Chain.currentTimestamp(), // updatedAtTime
                 params.executionFee,
                 params.callbackGasLimit
             ),

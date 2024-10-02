@@ -145,11 +145,13 @@ contract Reader {
         MarketUtils.MarketPrices memory prices,
         bool shouldValidateMinCollateralUsd
     ) public view returns (bool, string memory, PositionUtils.IsPositionLiquidatableInfo memory) {
+        Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
+
         return
-            ReaderPositionUtils.isPositionLiquidatable(
+            PositionUtils.isPositionLiquidatable(
                 dataStore,
                 referralStorage,
-                positionKey,
+                position,
                 market,
                 prices,
                 shouldValidateMinCollateralUsd
