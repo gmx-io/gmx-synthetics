@@ -10,18 +10,18 @@ import { bigNumberify } from "../utils/math";
 import { validateMarketConfigs } from "./validateMarketConfigsUtils";
 
 const RISK_ORACLE_MANAGED_BASE_KEYS = [keys.MAX_OPEN_INTEREST];
+const RISK_ORACLE_SUPPORTED_NETWORKS = ["arbitrum", "avalancheFuji"];
 
 const processMarkets = async ({
   markets,
   onchainMarketsByTokens,
-  supportedByRiskOracleMarkets,
+  supportedRiskOracleMarkets,
   tokens,
   generalConfig,
   handleConfig: handleConfigArg,
 }) => {
   const shouldHandleBaseKey = (baseKey: string, isSupportedByRiskOracle: boolean) => {
-    if (hre.network.name !== "arbitrum" && hre.network.name !== "avalancheFuji") {
-      // risk oracle is enabled on arbitrum only
+    if (!RISK_ORACLE_SUPPORTED_NETWORKS.includes(hre.network.name)) {
       return true;
     }
 
@@ -52,7 +52,7 @@ const processMarkets = async ({
     const marketLabel = `${marketConfig.tokens.indexToken} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}]`;
 
     const handleConfig = async (type, baseKey, keyData, value, label) => {
-      if (shouldHandleBaseKey(baseKey, supportedByRiskOracleMarkets.has(marketConfig))) {
+      if (shouldHandleBaseKey(baseKey, supportedRiskOracleMarkets.has(marketConfig))) {
         await handleConfigArg(type, baseKey, keyData, value, label);
       } else {
         ignoredRiskOracleParams.push(label);
@@ -603,13 +603,13 @@ export async function updateMarketConfig({ write }) {
   const configKeys = [];
   const multicallReadParams = [];
 
-  const supportedByRiskOracleMarkets = await getSupportedByRiskOracleMarkets(markets, tokens, onchainMarketsByTokens);
+  const supportedRiskOracleMarkets = await getSupportedRiskOracleMarkets(markets, tokens, onchainMarketsByTokens);
 
   await processMarkets({
     markets,
     onchainMarketsByTokens,
     tokens,
-    supportedByRiskOracleMarkets,
+    supportedRiskOracleMarkets,
     generalConfig,
     handleConfig: async (type, baseKey, keyData) => {
       if (type !== "uint") {
@@ -640,7 +640,7 @@ export async function updateMarketConfig({ write }) {
   const ignoredRiskOracleParams = await processMarkets({
     markets,
     onchainMarketsByTokens,
-    supportedByRiskOracleMarkets,
+    supportedRiskOracleMarkets,
     tokens,
     generalConfig,
     handleConfig: async (type, baseKey, keyData, value, label) => {
@@ -696,14 +696,9 @@ export async function updateMarketConfig({ write }) {
   }
 }
 
-async function getSupportedByRiskOracleMarkets(markets, tokens, onchainMarketsByTokens) {
-  const address =
-    hre.network.name === "avalancheFuji"
-      ? "0xE05354F4187820bF0832bF1f5fAd6a0F592b8fB6"
-      : "0x0efb5a96Ed1B33308a73355C56Aa1Bc1aa7E4A8E";
-
-  const { ethers } = hre;
-  const contract = (await ethers.getContractAt("MockRiskOracle", address)) as MockRiskOracle;
+async function getSupportedRiskOracleMarkets(markets, tokens, onchainMarketsByTokens) {
+  const address = (await hre.gmx.getRiskOracle()).riskOracle;
+  const contract = (await hre.ethers.getContractAt("MockRiskOracle", address)) as MockRiskOracle;
   const supported = new Set();
 
   for (const market of markets) {
