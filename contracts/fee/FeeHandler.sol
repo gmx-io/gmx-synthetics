@@ -11,12 +11,18 @@ import "../role/RoleModule.sol";
 import "../utils/BasicMulticall.sol";
 import "../fee/FeeUtils.sol";
 import "../data/Keys.sol";
+import "../oracle/ChainlinkPriceFeedUtils.sol";
 import "../v1/IVaultV1.sol";
-import "./IFeedAddress.sol";
+import "../v1/IVaultGovV1.sol";
 
 // @title FeeHandler
 contract FeeHandler is ReentrancyGuard, RoleModule, BasicMulticall {
     using SafeERC20 for IERC20;
+
+    struct FeeAmounts {
+        uint256 gmx;
+        uint256 wnt;
+    }
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
@@ -36,56 +42,93 @@ contract FeeHandler is ReentrancyGuard, RoleModule, BasicMulticall {
         gmx = _gmx;
     }
 
-    // @dev withdraw fees from this contract
-    // @param token the token for which to claim fees
-    // @param amount the amount of fees to claim
-    function withdrawFees(address token, uint256 amount) external nonReentrant onlyFeeKeeper {
+    // @dev withdraw fees in buybackTokens from this contract
+    // @param marketTokens the markets from which to withdraw fees
+    // @param buybackToken the token for which to withdraw fees
+    function withdrawFees(address[] calldata markets, address buybackToken) external nonReentrant onlyFeeKeeper {
+        uint256 batchSize = dataStore.getUint(Keys.buybackBatchAmountKey(buybackToken));
+        _validateBuybackToken(batchSize, buybackToken);
+
+        for (uint256 i; i < markets.length; i++) {
+            FeeUtils.claimFees(dataStore, eventEmitter, markets[i], buybackToken, address(this));
+        }
+
         address receiver = dataStore.getAddress(Keys.FEE_RECEIVER);
-        IERC20(token).safeTransfer(receiver, amount);
+        IERC20(buybackToken).safeTransfer(receiver, IERC20(buybackToken).balanceOf(address(this)));
     }
 
-    // @dev claim fees from the specified markets
-    // @param market the markets to claim fees from
-    // @param feeToken the fee tokens to claim
+    // @dev claim fees in feeToken from the specified markets
+    // @param market the market from which to claim fees
+    // @param feeToken the fee tokens to claim from the market
     function claimFees(address market, address feeToken) external nonReentrant {
-        uint256 version;
-        uint256 buybackGmxFactor;
+        uint256 batchSize = dataStore.getUint(Keys.buybackBatchAmountKey(feeToken));
+        if (batchSize != 0) {
+            revert Errors.InvalidFeeToken(feeToken);
+        }
+
         uint256 feeAmount;
         if (market == address(0)) {
-            version = 1;
-            buybackGmxFactor = _getBuybackGmxFactor(version);
-            feeAmount = IVaultV1(vaultV1).withdrawFees(feeToken, address(this));
-            _setAvailableFeeAmounts(version, feeToken, feeAmount);
+            address gov = IVaultV1(vaultV1).gov();
+            feeAmount = IVaultGovV1(gov).withdrawFees(vaultV1, feeToken, address(this));
+            _setAvailableFeeAmounts(1, feeToken, feeAmount);
         } else {
-            version = 2;
-            buybackGmxFactor = _getBuybackGmxFactor(version);
             feeAmount = FeeUtils.claimFees(dataStore, eventEmitter, market, feeToken, address(this));
-            _setAvailableFeeAmounts(version, feeToken, feeAmount);
+            _setAvailableFeeAmounts(2, feeToken, feeAmount);
         }
     }
 
     // @dev receive an amount in feeToken by depositing the batchSize amount of the buybackToken
     // @param feeToken the token to receive with the fee amount calculated via an oracle price
     // @param buybackToken the token to deposit in the amount of batchSize in return for fees
-    function buybackFees(address feeToken, address buybackToken) external nonReentrant {
-        uint256 batchSize = dataStore.getUint(Keys.buybackBatchAmountKey(buybackToken));
-        if (batchSize == 0) {
-            revert Errors.InvalidBuybackTokenInput(buybackToken);
+    // @param minOutputAmount the minimum amount of the feeToken that the caller will receive
+    function buyback(address feeToken, address buybackToken, uint256 minOutputAmount) external nonReentrant {
+        if (feeToken == buybackToken) {
+            revert Errors.BuybackAndFeeTokenAreEqual(feeToken, buybackToken);
         }
 
-        uint256 minFeeTokenAmount = _getMinFeeTokenAmount(feeToken, buybackToken, batchSize);
-
-        uint256 maxPriceImpactFactor = dataStore.getUint(Keys.buybackMaxPriceImpactFactorKey(feeToken));
-        uint256 maxFeeTokenAmount = (minFeeTokenAmount * (maxPriceImpactFactor + 10000)) / 10000;
+        uint256 batchSize = dataStore.getUint(Keys.buybackBatchAmountKey(buybackToken));
+        _validateBuybackToken(batchSize, buybackToken);
 
         uint256 availableFeeAmount = _getAvailableFeeAmount(feeToken, buybackToken);
-
+        uint256 maxFeeTokenAmount = _getMaxFeeTokenAmount(feeToken, buybackToken, batchSize);
         if (availableFeeAmount >= maxFeeTokenAmount) {
             _buybackFees(feeToken, buybackToken, batchSize, maxFeeTokenAmount, availableFeeAmount);
-        } else if (availableFeeAmount >= minFeeTokenAmount) {
+        } else if (availableFeeAmount >= minOutputAmount) {
             _buybackFees(feeToken, buybackToken, batchSize, availableFeeAmount, availableFeeAmount);
         } else {
-            revert Errors.InsufficientFeeAmount(feeToken, buybackToken, availableFeeAmount);
+            revert Errors.InsufficientBuybackOutputAmount(feeToken, buybackToken, availableFeeAmount);
+        }
+    }
+
+    function getOutputAmount(
+        address[] calldata markets,
+        address feeToken,
+        address buybackToken
+    ) external view returns (uint256) {
+        uint256 batchSize = dataStore.getUint(Keys.buybackBatchAmountKey(buybackToken));
+        _validateBuybackToken(batchSize, buybackToken);
+
+        uint256 feeAmount;
+        FeeAmounts memory feeAmounts;
+        uint256 availableFeeAmount = _getAvailableFeeAmount(feeToken, buybackToken);
+        for (uint256 i; i < markets.length; i++) {
+            if (markets[i] == address(0)) {
+                feeAmount = IVaultV1(vaultV1).feeReserves(feeToken);
+                feeAmounts = _getFeeAmounts(1, feeAmount);
+            } else {
+                feeAmount = dataStore.getUint(Keys.claimableFeeAmountKey(markets[i], feeToken));
+                feeAmounts = _getFeeAmounts(2, feeAmount);
+            }
+
+            feeAmount = buybackToken == gmx ? feeAmounts.gmx : feeAmounts.wnt;
+            availableFeeAmount = availableFeeAmount + feeAmount;
+        }
+
+        uint256 maxFeeTokenAmount = _getMaxFeeTokenAmount(feeToken, buybackToken, batchSize);
+        if (availableFeeAmount >= maxFeeTokenAmount) {
+            return maxFeeTokenAmount;
+        } else {
+            return availableFeeAmount;
         }
     }
 
@@ -98,6 +141,7 @@ contract FeeHandler is ReentrancyGuard, RoleModule, BasicMulticall {
     ) private {
         IERC20(feeToken).safeTransfer(msg.sender, buybackAmount);
         IERC20(buybackToken).safeTransferFrom(msg.sender, address(this), batchSize);
+
         availableFeeAmount = availableFeeAmount - buybackAmount;
         _setAvailableFeeAmount(feeToken, buybackToken, availableFeeAmount);
     }
@@ -105,12 +149,10 @@ contract FeeHandler is ReentrancyGuard, RoleModule, BasicMulticall {
     function _setAvailableFeeAmounts(uint256 version, address feeToken, uint256 feeAmount) private {
         address wnt = dataStore.getAddress(Keys.WNT);
 
-        uint256 buybackGmxFactor = _getBuybackGmxFactor(version);
-        uint256 feeAmountGmx = (feeAmount * buybackGmxFactor) / 1e30;
-        uint256 feeAmountWnt = feeAmount - feeAmountGmx;
+        FeeAmounts memory feeAmounts = _getFeeAmounts(version, feeAmount);
 
-        uint256 availableFeeAmountGmx = _getAvailableFeeAmount(feeToken, gmx) + feeAmountGmx;
-        uint256 availableFeeAmountWnt = _getAvailableFeeAmount(feeToken, wnt) + feeAmountWnt;
+        uint256 availableFeeAmountGmx = _getAvailableFeeAmount(feeToken, gmx) + feeAmounts.gmx;
+        uint256 availableFeeAmountWnt = _getAvailableFeeAmount(feeToken, wnt) + feeAmounts.wnt;
 
         _setAvailableFeeAmount(feeToken, gmx, availableFeeAmountGmx);
         _setAvailableFeeAmount(feeToken, wnt, availableFeeAmountWnt);
@@ -125,54 +167,44 @@ contract FeeHandler is ReentrancyGuard, RoleModule, BasicMulticall {
         return availableFeeAmount;
     }
 
-    function _getBuybackGmxFactor(uint256 version) private view returns (uint256) {
+    function _getFeeAmounts(uint256 version, uint256 feeAmount) private view returns (FeeAmounts memory) {
         uint256 buybackGmxFactor = dataStore.getUint(Keys.buybackGmxFactorKey(version));
-        return buybackGmxFactor;
+        FeeAmounts memory feeAmounts;
+
+        feeAmounts.gmx = (feeAmount * buybackGmxFactor) / 1e30;
+        feeAmounts.wnt = feeAmount - feeAmounts.gmx;
+        return (feeAmounts);
     }
 
-    function _getMinFeeTokenAmount(
+    function _getMaxFeeTokenAmount(
         address feeToken,
         address buybackToken,
         uint256 batchSize
     ) private view returns (uint256) {
-        (
-            uint256 feeTokenOraclePrice,
-            uint256 feeTokenOracleDecimals,
-            uint256 feeTokenDecimals
-        ) = _getTokenPricingValues(feeToken);
+        uint256 feeTokenPrice = _getPriceFeedPrice(feeToken);
+        uint256 buybackTokenPrice = _getPriceFeedPrice(buybackToken);
 
-        (
-            uint256 buybackTokenOraclePrice,
-            uint256 buybackTokenOracleDecimals,
-            uint256 buybackTokenDecimals
-        ) = _getTokenPricingValues(buybackToken);
+        uint256 expectedFeeTokenAmount = (batchSize * feeTokenPrice) / buybackTokenPrice;
+        uint256 maxPriceImpactFactor = dataStore.getUint(Keys.buybackMaxPriceImpactFactorKey(feeToken));
 
-        if (feeTokenOracleDecimals > buybackTokenOracleDecimals) {
-            buybackTokenOraclePrice =
-                buybackTokenOraclePrice *
-                (10 ** (feeTokenOracleDecimals - buybackTokenOracleDecimals));
-        } else if (buybackTokenOracleDecimals > feeTokenOracleDecimals) {
-            feeTokenOraclePrice = feeTokenOraclePrice * (10 ** (buybackTokenOracleDecimals - feeTokenOracleDecimals));
-        }
-
-        uint256 feeTokenPriceInBuybackToken = (feeTokenOraclePrice * 1e30) / buybackTokenOraclePrice;
-
-        // this assumes the batchSize amount is stored in buybackTokenDecimals i.e. batchSize of 100 GMX stored as 100 * (10 ^ 18)
-        if (buybackTokenDecimals > feeTokenDecimals) {
-            batchSize = batchSize / (10 ** (buybackTokenDecimals - feeTokenDecimals));
-        } else if (feeTokenDecimals > buybackTokenDecimals) {
-            batchSize = batchSize * (10 ** (feeTokenDecimals - buybackTokenDecimals));
-        }
-
-        uint256 feeTokenAmount = (batchSize * feeTokenPriceInBuybackToken) / 1e30;
-        return feeTokenAmount;
+        uint256 maxFeeTokenAmount = (expectedFeeTokenAmount * (maxPriceImpactFactor + 10000)) / 10000;
+        return maxFeeTokenAmount;
     }
 
-    function _getTokenPricingValues(address token) private view returns (uint256, uint256, uint256) {
-        address tokenPriceFeedAddress = dataStore.getAddress(Keys.priceFeedKey(token));
-        uint256 tokenOraclePrice = IFeedAddress(tokenPriceFeedAddress).latestAnswer();
-        uint256 tokenOracleDecimals = IFeedAddress(tokenPriceFeedAddress).decimals();
-        uint256 tokenDecimals = IFeedAddress(token).decimals(); // IERC20().decimals() is not included in the openzeppelin IERC20 interface so using IFeedAddress().decimals() instead but can change if necessary
-        return (tokenOraclePrice, tokenOracleDecimals, tokenDecimals);
+    // @dev There is some risk of front-running due to the potential for a stale oracle price feed
+    function _getPriceFeedPrice(address token) private view returns (uint256) {
+        (bool hasTokenPriceFeed, uint256 tokenPrice) = ChainlinkPriceFeedUtils.getPriceFeedPrice(dataStore, token);
+
+        if (!hasTokenPriceFeed) {
+            revert Errors.EmptyChainlinkPriceFeed(token);
+        }
+
+        return tokenPrice;
+    }
+
+    function _validateBuybackToken(uint256 batchSize, address buybackToken) private pure {
+        if (batchSize == 0) {
+            revert Errors.InvalidBuybackToken(buybackToken);
+        }
     }
 }

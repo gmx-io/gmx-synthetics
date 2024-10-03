@@ -139,8 +139,10 @@ library Errors {
     error DisabledFeature(bytes32 key);
 
     // FeeHandler errors
-    error InvalidBuybackTokenInput(address buybackToken);
-    error InsufficientFeeAmount(address feeToken, address buybackToken, uint256 availableFeeAmount);
+    error InvalidFeeToken(address feeToken);
+    error InvalidBuybackToken(address buybackToken);
+    error InsufficientBuybackOutputAmount(address feeToken, address buybackToken, uint256 availableFeeAmount);
+    error BuybackAndFeeTokenAreEqual(address buybackToken, address feeToken);
 
     // GasUtils errors
     error InsufficientExecutionFee(uint256 minExecutionFee, uint256 executionFee);
