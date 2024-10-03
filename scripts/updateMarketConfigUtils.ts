@@ -1,33 +1,39 @@
 import hre, { network } from "hardhat";
 
-import { validateMarketConfigs } from "./validateMarketConfigsUtils";
-import { encodeData } from "../utils/hash";
-import { bigNumberify } from "../utils/math";
-import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../utils/market";
-import { getFullKey, appendUintConfigIfDifferent } from "../utils/config";
+import { MockRiskOracle } from "../typechain-types";
 import { handleInBatches } from "../utils/batch";
+import { appendUintConfigIfDifferent, getFullKey } from "../utils/config";
+import { encodeData } from "../utils/hash";
 import * as keys from "../utils/keys";
+import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../utils/market";
+import { bigNumberify } from "../utils/math";
+import { validateMarketConfigs } from "./validateMarketConfigsUtils";
 
 const RISK_ORACLE_MANAGED_BASE_KEYS = [keys.MAX_OPEN_INTEREST];
+const RISK_ORACLE_SUPPORTED_NETWORKS = ["arbitrum", "avalancheFuji"];
 
 const processMarkets = async ({
   markets,
   onchainMarketsByTokens,
+  supportedRiskOracleMarkets,
   tokens,
   generalConfig,
   handleConfig: handleConfigArg,
 }) => {
-  const shouldHandleBaseKey = (baseKey: string) => {
-    if (hre.network.name !== "arbitrum") {
-      // risk oracle is enabled on arbitrum only
+  const shouldHandleBaseKey = (baseKey: string, isSupportedByRiskOracle: boolean) => {
+    if (!RISK_ORACLE_SUPPORTED_NETWORKS.includes(hre.network.name)) {
       return true;
     }
 
-    if (process.env.INCLUDE_RISK_ORACLE_BASE_KEYS) {
+    if (!RISK_ORACLE_MANAGED_BASE_KEYS.includes(baseKey)) {
       return true;
     }
 
-    return !RISK_ORACLE_MANAGED_BASE_KEYS.includes(baseKey);
+    if (isSupportedByRiskOracle) {
+      return process.env.INCLUDE_RISK_ORACLE_BASE_KEYS;
+    }
+
+    return true;
   };
 
   const ignoredRiskOracleParams: string[] = [];
@@ -46,7 +52,7 @@ const processMarkets = async ({
     const marketLabel = `${marketConfig.tokens.indexToken} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}]`;
 
     const handleConfig = async (type, baseKey, keyData, value, label) => {
-      if (shouldHandleBaseKey(baseKey)) {
+      if (shouldHandleBaseKey(baseKey, supportedRiskOracleMarkets.has(marketConfig))) {
         await handleConfigArg(type, baseKey, keyData, value, label);
       } else {
         ignoredRiskOracleParams.push(label);
@@ -597,10 +603,13 @@ export async function updateMarketConfig({ write }) {
   const configKeys = [];
   const multicallReadParams = [];
 
+  const supportedRiskOracleMarkets = await getSupportedRiskOracleMarkets(markets, tokens, onchainMarketsByTokens);
+
   await processMarkets({
     markets,
     onchainMarketsByTokens,
     tokens,
+    supportedRiskOracleMarkets,
     generalConfig,
     handleConfig: async (type, baseKey, keyData) => {
       if (type !== "uint") {
@@ -631,6 +640,7 @@ export async function updateMarketConfig({ write }) {
   const ignoredRiskOracleParams = await processMarkets({
     markets,
     onchainMarketsByTokens,
+    supportedRiskOracleMarkets,
     tokens,
     generalConfig,
     handleConfig: async (type, baseKey, keyData, value, label) => {
@@ -684,4 +694,30 @@ export async function updateMarketConfig({ write }) {
 
     console.log();
   }
+}
+
+async function getSupportedRiskOracleMarkets(markets, tokens, onchainMarketsByTokens) {
+  const address = (await hre.gmx.getRiskOracle()).riskOracle;
+  const contract = (await hre.ethers.getContractAt("MockRiskOracle", address)) as MockRiskOracle;
+  const supported = new Set();
+
+  for (const market of markets) {
+    const [indexToken, longToken, shortToken] = getMarketTokenAddresses(market, tokens);
+    const marketKey = getMarketKey(indexToken, longToken, shortToken);
+    const onchainMarket = onchainMarketsByTokens[marketKey];
+    const marketToken = onchainMarket.marketToken;
+    let update;
+    try {
+      update = await contract.getLatestUpdateByParameterAndMarket("maxOpenInterestForLongs", marketToken);
+    } catch (e) {
+      if (e.reason !== "No update found for the specified parameter and market.") {
+        throw e;
+      }
+    }
+    if (update) {
+      supported.add(market);
+    }
+  }
+
+  return supported;
 }
