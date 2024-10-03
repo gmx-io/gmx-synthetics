@@ -124,7 +124,7 @@ const config: {
     EIGEN: {
       synthetic: true,
       decimals: 18,
-      dataStreamFeedId: "FIXME",
+      dataStreamFeedId: "0x00032f3b5e95e313e484cac35ccff3904358100010b5f3ac2cf8e263c2ccc873",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
