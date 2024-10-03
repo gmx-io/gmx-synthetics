@@ -122,8 +122,9 @@ const config: {
       oracleTimestampAdjustment: 1,
     },
     EIGEN: {
-      synthetic: true,
+      address: "0x606c3e5075e5555e79aa15f1e9facb776f96c248",
       decimals: 18,
+      transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x00032f3b5e95e313e484cac35ccff3904358100010b5f3ac2cf8e263c2ccc873",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
