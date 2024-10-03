@@ -497,6 +497,8 @@ library PositionPricingUtils {
         fees.positionFeeFactor = dataStore.getUint(Keys.positionFeeFactorKey(market, forPositiveImpact));
         fees.positionFeeAmount = Precision.applyFactor(sizeDeltaUsd, fees.positionFeeFactor) / collateralTokenPrice.min;
 
+        // pro tiers are provided as a flexible option to allow for custom criteria based discounts,
+        // the exact criteria and usage of this feature should be decided by the DAO
         fees.pro.traderTier = dataStore.getUint(Keys.proTraderTierKey(account));
         if (fees.pro.traderTier > 0) {
             fees.pro.traderDiscountFactor = dataStore.getUint(Keys.proDiscountFactorKey(fees.pro.traderTier));
