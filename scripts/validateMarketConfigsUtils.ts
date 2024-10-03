@@ -740,9 +740,7 @@ export async function validateMarketConfigs() {
       !marketConfig.maxLongTokenPoolAmount ||
       !marketConfig.maxShortTokenPoolAmount ||
       !marketConfig.maxLongTokenPoolUsdForDeposit ||
-      !marketConfig.maxShortTokenPoolUsdForDeposit ||
-      !marketConfig.maxOpenInterestForLongs ||
-      !marketConfig.maxOpenInterestForShorts
+      !marketConfig.maxShortTokenPoolUsdForDeposit
     ) {
       throw new Error(`Missing configs for ${indexTokenSymbol}[${longTokenSymbol}-${shortTokenSymbol}]`);
     }
