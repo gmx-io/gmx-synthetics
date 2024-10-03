@@ -125,15 +125,6 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   minCollateralFactorForOpenInterestMultiplierLong: 0,
   minCollateralFactorForOpenInterestMultiplierShort: 0,
 
-  maxLongTokenPoolAmount: expandDecimals(1_000_000_000, 18),
-  maxShortTokenPoolAmount: expandDecimals(1_000_000_000, 18),
-
-  maxLongTokenPoolUsdForDeposit: decimalToFloat(1_000_000_000),
-  maxShortTokenPoolUsdForDeposit: decimalToFloat(1_000_000_000),
-
-  maxOpenInterestForLongs: expandDecimals(1_000_000_000, 30),
-  maxOpenInterestForShorts: expandDecimals(1_000_000_000, 30),
-
   reserveFactorLongs: percentageToFloat("95%"),
   reserveFactorShorts: percentageToFloat("95%"),
 

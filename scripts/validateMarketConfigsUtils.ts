@@ -730,6 +730,17 @@ export async function validateMarketConfigs() {
       shortTokenSymbol?.padEnd(5)
     );
 
+    if (
+      !marketConfig.maxLongTokenPoolAmount ||
+      !marketConfig.maxShortTokenPoolAmount ||
+      !marketConfig.maxLongTokenPoolUsdForDeposit ||
+      !marketConfig.maxShortTokenPoolUsdForDeposit ||
+      !marketConfig.maxOpenInterestForLongs ||
+      !marketConfig.maxOpenInterestForShorts
+    ) {
+      throw new Error(`Missing configs for ${indexTokenSymbol}[${longTokenSymbol}-${shortTokenSymbol}]`);
+    }
+
     await validatePerpConfig({ marketConfig, indexTokenSymbol, longTokenSymbol, shortTokenSymbol, dataStore, errors });
     await validateSwapConfig({ marketConfig, indexTokenSymbol, longTokenSymbol, shortTokenSymbol, dataStore, errors });
   }
