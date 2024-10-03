@@ -699,22 +699,40 @@ export async function updateMarketConfig({ write }) {
 async function getSupportedRiskOracleMarkets(markets, tokens, onchainMarketsByTokens) {
   const address = (await hre.gmx.getRiskOracle()).riskOracle;
   const contract = (await hre.ethers.getContractAt("MockRiskOracle", address)) as MockRiskOracle;
+  const provider = new hre.ethers.providers.JsonRpcBatchProvider(hre.network.config.url);
+  contract.connect(provider);
   const supported = new Set();
 
-  for (const market of markets) {
-    const [indexToken, longToken, shortToken] = getMarketTokenAddresses(market, tokens);
-    const marketKey = getMarketKey(indexToken, longToken, shortToken);
-    const onchainMarket = onchainMarketsByTokens[marketKey];
-    const marketToken = onchainMarket.marketToken;
-    let update;
-    try {
-      update = await contract.getLatestUpdateByParameterAndMarket("maxOpenInterestForLongs", marketToken);
-    } catch (e) {
-      if (e.reason !== "No update found for the specified parameter and market.") {
-        throw e;
-      }
+  const batchSize = 20;
+  const results = [];
+  let count = 0;
+
+  await handleInBatches(markets, batchSize, async (batch) => {
+    console.log(`getSupportedRiskOracleMarkets: ${count} / ${markets.length}`);
+
+    const promises = [];
+
+    for (const market of batch) {
+      const [indexToken, longToken, shortToken] = getMarketTokenAddresses(market, tokens);
+      const marketKey = getMarketKey(indexToken, longToken, shortToken);
+      const onchainMarket = onchainMarketsByTokens[marketKey];
+      const marketToken = onchainMarket.marketToken;
+      const promise = new Promise((resolve) => {
+        contract
+          .getLatestUpdateByParameterAndMarket("maxOpenInterestForLongs", marketToken)
+          .then(() => resolve(true))
+          .catch(() => resolve(false));
+      });
+      promises.push(promise);
+      count++;
     }
-    if (update) {
+
+    const list = await Promise.all(promises);
+    results.push(...list);
+  });
+
+  for (const [index, market] of markets.entries()) {
+    if (results[index] === true) {
       supported.add(market);
     }
   }
