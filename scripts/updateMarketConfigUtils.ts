@@ -704,38 +704,27 @@ async function getSupportedRiskOracleMarkets(markets, tokens, onchainMarketsByTo
   const supported = new Set();
 
   const batchSize = 20;
-  const results = [];
   let count = 0;
 
   await handleInBatches(markets, batchSize, async (batch) => {
     console.log(`getSupportedRiskOracleMarkets: ${count} / ${markets.length}`);
 
-    const promises = [];
-
-    for (const market of batch) {
-      const [indexToken, longToken, shortToken] = getMarketTokenAddresses(market, tokens);
-      const marketKey = getMarketKey(indexToken, longToken, shortToken);
-      const onchainMarket = onchainMarketsByTokens[marketKey];
-      const marketToken = onchainMarket.marketToken;
-      const promise = new Promise((resolve) => {
-        contract
-          .getLatestUpdateByParameterAndMarket("maxOpenInterestForLongs", marketToken)
-          .then(() => resolve(true))
-          .catch(() => resolve(false));
-      });
-      promises.push(promise);
-      count++;
-    }
-
-    const list = await Promise.all(promises);
-    results.push(...list);
+    await Promise.all(
+      batch.map(async (market) => {
+        const [indexToken, longToken, shortToken] = getMarketTokenAddresses(market, tokens);
+        const marketKey = getMarketKey(indexToken, longToken, shortToken);
+        const onchainMarket = onchainMarketsByTokens[marketKey];
+        const marketToken = onchainMarket.marketToken;
+        try {
+          await contract.getLatestUpdateByParameterAndMarket("maxOpenInterestForLongs", marketToken);
+          supported.add(market);
+        } catch (err) {
+          // no update found, skip
+        }
+      })
+    );
+    count += batch.length;
   });
-
-  for (const [index, market] of markets.entries()) {
-    if (results[index] === true) {
-      supported.add(market);
-    }
-  }
 
   return supported;
 }
