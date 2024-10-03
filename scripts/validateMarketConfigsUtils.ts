@@ -102,6 +102,12 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
+    EIGEN: {
+      negativePositionImpactFactor: decimalToFloat(8, 9),
+      negativeSwapImpactFactor: decimalToFloat(5, 9),
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
+    },
     SHIB: {
       negativePositionImpactFactor: decimalToFloat(5, 10),
       negativeSwapImpactFactor: decimalToFloat(5, 9),
@@ -729,6 +735,15 @@ export async function validateMarketConfigs() {
       longTokenSymbol?.padEnd(5),
       shortTokenSymbol?.padEnd(5)
     );
+
+    if (
+      !marketConfig.maxLongTokenPoolAmount ||
+      !marketConfig.maxShortTokenPoolAmount ||
+      !marketConfig.maxLongTokenPoolUsdForDeposit ||
+      !marketConfig.maxShortTokenPoolUsdForDeposit
+    ) {
+      throw new Error(`Missing configs for ${indexTokenSymbol}[${longTokenSymbol}-${shortTokenSymbol}]`);
+    }
 
     await validatePerpConfig({ marketConfig, indexTokenSymbol, longTokenSymbol, shortTokenSymbol, dataStore, errors });
     await validateSwapConfig({ marketConfig, indexTokenSymbol, longTokenSymbol, shortTokenSymbol, dataStore, errors });
