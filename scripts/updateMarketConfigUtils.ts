@@ -1,6 +1,6 @@
 import hre, { network } from "hardhat";
 
-import { MockRiskOracle } from "../typechain-types";
+import fetch from "node-fetch";
 import { handleInBatches } from "../utils/batch";
 import { appendUintConfigIfDifferent, getFullKey } from "../utils/config";
 import { encodeData } from "../utils/hash";
@@ -697,34 +697,50 @@ export async function updateMarketConfig({ write }) {
 }
 
 async function getSupportedRiskOracleMarkets(markets, tokens, onchainMarketsByTokens) {
-  const address = (await hre.gmx.getRiskOracle()).riskOracle;
-  const contract = (await hre.ethers.getContractAt("MockRiskOracle", address)) as MockRiskOracle;
-  const provider = new hre.ethers.providers.JsonRpcBatchProvider(hre.network.config.url);
-  contract.connect(provider);
   const supported = new Set();
 
-  const batchSize = 20;
-  let count = 0;
+  // only arbitrum and avalanche have risk oracle managed markets
+  if (network.name === "avalancheFuji") {
+    return supported;
+  }
 
-  await handleInBatches(markets, batchSize, async (batch) => {
-    console.log(`getSupportedRiskOracleMarkets: ${count} / ${markets.length}`);
+  if (!RISK_ORACLE_SUPPORTED_NETWORKS.includes(network.name)) {
+    return supported;
+  }
 
-    await Promise.all(
-      batch.map(async (market) => {
-        const [indexToken, longToken, shortToken] = getMarketTokenAddresses(market, tokens);
-        const marketKey = getMarketKey(indexToken, longToken, shortToken);
-        const onchainMarket = onchainMarketsByTokens[marketKey];
-        const marketToken = onchainMarket.marketToken;
-        try {
-          await contract.getLatestUpdateByParameterAndMarket("maxOpenInterestForLongs", marketToken);
-          supported.add(market);
-        } catch (err) {
-          // no update found, skip
-        }
-      })
-    );
-    count += batch.length;
+  const response = await fetch("https://cloud.chaoslabs.co/query/ccar-perpetuals", {
+    method: "POST",
+    headers: {
+      protocol: `gmx-v2-${network.name}`,
+      "content-type": "application/json",
+    },
+    body: `{
+      "query": "{ markets { id } }"
+    }`,
+  });
+
+  const { data } = await response.json();
+  const supportedMarketTokens = data.markets.map((market) => market.id);
+
+  supportedMarketTokens.forEach((supportedMarketToken) => {
+    const market = markets.find((market) => {
+      const marketToken = getMarketToken(market, tokens, onchainMarketsByTokens);
+      return marketToken.toLowerCase() === supportedMarketToken.toLowerCase();
+    });
+
+    if (!market) {
+      throw new Error(`Market with id ${supportedMarketToken} not found`);
+    }
+
+    supported.add(market);
   });
 
   return supported;
+}
+
+function getMarketToken(market, tokens, onchainMarketsByTokens) {
+  const [indexToken, longToken, shortToken] = getMarketTokenAddresses(market, tokens);
+  const marketKey = getMarketKey(indexToken, longToken, shortToken);
+  const onchainMarket = onchainMarketsByTokens[marketKey];
+  return onchainMarket.marketToken;
 }
