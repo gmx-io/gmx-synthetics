@@ -141,8 +141,9 @@ library Errors {
     // FeeHandler errors
     error InvalidFeeToken(address feeToken);
     error InvalidBuybackToken(address buybackToken);
-    error InsufficientBuybackOutputAmount(address feeToken, address buybackToken, uint256 availableFeeAmount);
-    error BuybackAndFeeTokenAreEqual(address buybackToken, address feeToken);
+    error InsufficientBuybackOutputAmount(address feeToken, address buybackToken, uint256 outputAmount, uint256 minOutputAmount);
+    error BuybackAndFeeTokenAreEqual(address feeToken, address buybackToken);
+    error AvailableFeeAmountIsZero(address feeToken, address buybackToken, uint256 availableFeeAmount);
 
     // GasUtils errors
     error InsufficientExecutionFee(uint256 minExecutionFee, uint256 executionFee);
