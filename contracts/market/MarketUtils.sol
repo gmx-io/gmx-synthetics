@@ -1277,20 +1277,10 @@ library MarketUtils {
         FundingConfigCache memory configCache;
         configCache.fundingIncreaseFactorPerSecond = dataStore.getUint(Keys.fundingIncreaseFactorPerSecondKey(market));
 
-        if (cache.diffUsd == 0) {
-            // if the open interest difference is zero and adaptive funding
-            // is not enabled, then return zero as the funding factor
-            if (configCache.fundingIncreaseFactorPerSecond == 0) {
-                return (0, true, 0);
-            } else {
-                // if the open interest difference is zero and adaptive funding
-                // is enabled, then return the savedFundingFactorPerSecond
-                return (
-                    cache.savedFundingFactorPerSecond.abs(),
-                    cache.savedFundingFactorPerSecond > 0,
-                    cache.savedFundingFactorPerSecond
-                );
-            }
+        // if the open interest difference is zero and adaptive funding
+        // is not enabled, then return zero as the funding factor
+        if (cache.diffUsd == 0 && configCache.fundingIncreaseFactorPerSecond == 0) {
+            return (0, true, 0);
         }
 
         if (cache.totalOpenInterest == 0) {
@@ -1337,6 +1327,8 @@ library MarketUtils {
             if (cache.diffUsdToOpenInterestFactor > configCache.thresholdForStableFunding) {
                 fundingRateChangeType = FundingRateChangeType.Increase;
             } else if (cache.diffUsdToOpenInterestFactor < configCache.thresholdForDecreaseFunding) {
+                // if thresholdForDecreaseFunding is zero and diffUsdToOpenInterestFactor is also zero
+                // then the fundingRateChangeType would be NoChange
                 fundingRateChangeType = FundingRateChangeType.Decrease;
             }
         } else {
