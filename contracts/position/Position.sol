@@ -59,8 +59,8 @@ library Position {
     // for the market.longToken
     // @param shortTokenClaimableFundingAmountPerSize the position's claimable funding amount per size
     // for the market.shortToken
-    // @param increasedAtBlock the block at which the position was last increased
-    // @param decreasedAtBlock the block at which the position was last decreased
+    // @param increasedAtTime the time at which this position was increased
+    // @param decreasedAtTime the time at which this position was decreased
     struct Numbers {
         uint256 sizeInUsd;
         uint256 sizeInTokens;
@@ -69,8 +69,6 @@ library Position {
         uint256 fundingFeeAmountPerSize;
         uint256 longTokenClaimableFundingAmountPerSize;
         uint256 shortTokenClaimableFundingAmountPerSize;
-        uint256 increasedAtBlock;
-        uint256 decreasedAtBlock;
         uint256 increasedAtTime;
         uint256 decreasedAtTime;
     }
@@ -158,22 +156,6 @@ library Position {
 
     function setShortTokenClaimableFundingAmountPerSize(Props memory props, uint256 value) internal pure {
         props.numbers.shortTokenClaimableFundingAmountPerSize = value;
-    }
-
-    function increasedAtBlock(Props memory props) internal pure returns (uint256) {
-        return props.numbers.increasedAtBlock;
-    }
-
-    function setIncreasedAtBlock(Props memory props, uint256 value) internal pure {
-        props.numbers.increasedAtBlock = value;
-    }
-
-    function decreasedAtBlock(Props memory props) internal pure returns (uint256) {
-        return props.numbers.decreasedAtBlock;
-    }
-
-    function setDecreasedAtBlock(Props memory props, uint256 value) internal pure {
-        props.numbers.decreasedAtBlock = value;
     }
 
     function increasedAtTime(Props memory props) internal pure returns (uint256) {

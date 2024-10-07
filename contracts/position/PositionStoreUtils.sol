@@ -78,14 +78,6 @@ library PositionStoreUtils {
             keccak256(abi.encode(key, SHORT_TOKEN_CLAIMABLE_FUNDING_AMOUNT_PER_SIZE))
         ));
 
-        position.setIncreasedAtBlock(dataStore.getUint(
-            keccak256(abi.encode(key, INCREASED_AT_BLOCK))
-        ));
-
-        position.setDecreasedAtBlock(dataStore.getUint(
-            keccak256(abi.encode(key, DECREASED_AT_BLOCK))
-        ));
-
         position.setIncreasedAtTime(dataStore.getUint(
             keccak256(abi.encode(key, INCREASED_AT_TIME))
         ));
@@ -160,16 +152,6 @@ library PositionStoreUtils {
         dataStore.setUint(
             keccak256(abi.encode(key, SHORT_TOKEN_CLAIMABLE_FUNDING_AMOUNT_PER_SIZE)),
             position.shortTokenClaimableFundingAmountPerSize()
-        );
-
-        dataStore.setUint(
-            keccak256(abi.encode(key, INCREASED_AT_BLOCK)),
-            position.increasedAtBlock()
-        );
-
-        dataStore.setUint(
-            keccak256(abi.encode(key, DECREASED_AT_BLOCK)),
-            position.decreasedAtBlock()
         );
 
         dataStore.setUint(
