@@ -668,10 +668,9 @@ export async function updateMarketConfig({ write }) {
   }
 
   if (ignoredRiskOracleParams.length > 0) {
-    console.log();
-    console.log("=================");
-    console.warn("WARN: Ignored risk oracle params (add `INCLUDE_RISK_ORACLE_BASE_KEYS=1` to include them):");
-    console.log();
+    console.warn("\n=================\n");
+    console.warn(`WARN: Ignored risk oracle params for ${supportedRiskOracleMarkets.size} markets`);
+    console.warn("Add `INCLUDE_RISK_ORACLE_BASE_KEYS=1` to include them");
 
     const marketsByParameterName = ignoredRiskOracleParams
       .map((label) => {
