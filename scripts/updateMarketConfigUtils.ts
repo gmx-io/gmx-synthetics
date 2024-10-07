@@ -10,7 +10,7 @@ import { bigNumberify } from "../utils/math";
 import { validateMarketConfigs } from "./validateMarketConfigsUtils";
 
 const RISK_ORACLE_MANAGED_BASE_KEYS = [keys.MAX_OPEN_INTEREST];
-const RISK_ORACLE_SUPPORTED_NETWORKS = ["arbitrum", "avalancheFuji"];
+const RISK_ORACLE_SUPPORTED_NETWORKS = ["arbitrum", "avalanche", "avalancheFuji"];
 
 const processMarkets = async ({
   markets,
@@ -35,6 +35,8 @@ const processMarkets = async ({
 
     return true;
   };
+
+  console.log(`supportedRiskOracleMarkets: ${supportedRiskOracleMarkets.size}`);
 
   const ignoredRiskOracleParams: string[] = [];
 
@@ -698,8 +700,7 @@ export async function updateMarketConfig({ write }) {
 async function getSupportedRiskOracleMarkets(markets, tokens, onchainMarketsByTokens) {
   const supported = new Set();
 
-  // only arbitrum and avalanche have risk oracle managed markets
-  if (network.name === "avalancheFuji") {
+  if (!RISK_ORACLE_SUPPORTED_NETWORKS.includes(hre.network.name)) {
     return supported;
   }
 
