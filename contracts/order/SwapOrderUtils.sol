@@ -33,6 +33,13 @@ library SwapOrderUtils {
             );
         }
 
+        if (params.order.validFromTime() != 0 && params.minOracleTimestamp < params.order.validFromTime()) {
+            revert Errors.OracleTimestampsAreSmallerThanRequired(
+                params.minOracleTimestamp,
+                params.order.validFromTime()
+            );
+        }
+
         uint256 requestExpirationTime = params.contracts.dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
 
         if (

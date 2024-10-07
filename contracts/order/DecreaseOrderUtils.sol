@@ -37,6 +37,7 @@ library DecreaseOrderUtils {
             params.contracts.dataStore,
             order.orderType(),
             order.updatedAtTime(),
+            order.validFromTime(),
             position.increasedAtTime(),
             position.decreasedAtTime(),
             params.minOracleTimestamp,
@@ -152,6 +153,7 @@ library DecreaseOrderUtils {
         DataStore dataStore,
         Order.OrderType orderType,
         uint256 orderUpdatedAtTime,
+        uint256 orderValidFromTime,
         uint256 positionIncreasedAtTime,
         uint256 positionDecreasedAtTime,
         uint256 minOracleTimestamp,
@@ -160,6 +162,9 @@ library DecreaseOrderUtils {
         if (orderType == Order.OrderType.MarketDecrease) {
             if (minOracleTimestamp < orderUpdatedAtTime) {
                 revert Errors.OracleTimestampsAreSmallerThanRequired(minOracleTimestamp, orderUpdatedAtTime);
+            }
+            if (orderValidFromTime != 0 && minOracleTimestamp < orderValidFromTime) {
+                revert Errors.OracleTimestampsAreSmallerThanRequired(minOracleTimestamp, orderValidFromTime);
             }
 
             uint256 requestExpirationTime = dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
