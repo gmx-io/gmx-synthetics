@@ -2009,11 +2009,11 @@ const config: {
       maxLongTokenPoolUsdForDeposit: decimalToFloat(1_000_000),
       maxShortTokenPoolUsdForDeposit: decimalToFloat(1_000_000),
 
-      reserveFactorLongs: percentageToFloat("165%"),
-      reserveFactorShorts: percentageToFloat("165%"),
+      reserveFactorLongs: decimalToFloat(8, 1), // 80%,
+      reserveFactorShorts: decimalToFloat(8, 1), // 80%,
 
-      openInterestReserveFactorLongs: percentageToFloat("160%"),
-      openInterestReserveFactorShorts: percentageToFloat("160%"),
+      openInterestReserveFactorLongs: decimalToFloat(75, 2), // 75%,
+      openInterestReserveFactorShorts: decimalToFloat(75, 2), // 75%,
 
       negativePositionImpactFactor: decimalToFloat(8, 9), // 0.05% for 62,500 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(4, 9), // 0.05% for 125,000 USD of imbalance
@@ -2036,14 +2036,9 @@ const config: {
       thresholdForStableFunding: decimalToFloat(5, 2), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      optimalUsageFactorForLongs: percentageToFloat("75%"),
-      optimalUsageFactorForShorts: percentageToFloat("75%"),
-
-      baseBorrowingFactorForLongs: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      baseBorrowingFactorForShorts: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-
-      aboveOptimalUsageBorrowingFactorForLongs: percentageToFloat("160%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactorForShorts: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      // for OI reserve factor = 75%
+      borrowingFactorForLongs: decimalToFloat(2950, 11), // 0.0000000295 * 75% max reserve, ~70%
+      borrowingFactorForShorts: decimalToFloat(2950, 11),
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WAVAX", shortToken: "USDC" },
