@@ -574,7 +574,7 @@ library PositionPricingUtils {
         }
 
         liquidationFees.liquidationFeeUsd = Precision.applyFactor(sizeInUsd, liquidationFeeFactor);
-        liquidationFees.liquidationFeeAmount = liquidationFees.liquidationFeeUsd / collateralTokenPrice.min;
+        liquidationFees.liquidationFeeAmount = Calc.roundUpDivision(liquidationFees.liquidationFeeUsd, collateralTokenPrice.min);
         liquidationFees.liquidationFeeReceiverFactor = dataStore.getUint(Keys.LIQUIDATION_FEE_RECEIVER_FACTOR);
         liquidationFees.liquidationFeeAmountForFeeReceiver = Precision.applyFactor(liquidationFees.liquidationFeeAmount, liquidationFees.liquidationFeeReceiverFactor);
         return liquidationFees;
