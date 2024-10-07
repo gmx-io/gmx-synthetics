@@ -180,6 +180,12 @@ library OrderUtils {
         Order.Props memory order = OrderStoreUtils.get(params.dataStore, params.key);
         BaseOrderUtils.validateNonEmptyOrder(order);
 
+        // this could happen if the order was created in new contracts that support new order types
+        // but the order is being cancelled in old contracts
+        if (!BaseOrderUtils.isSupportedOrder(order.orderType())) {
+            revert Errors.UnsupportedOrderType(uint256(order.orderType()));
+        }
+
         OrderStoreUtils.remove(params.dataStore, params.key, order.account());
 
         if (BaseOrderUtils.isIncreaseOrder(order.orderType()) || BaseOrderUtils.isSwapOrder(order.orderType())) {

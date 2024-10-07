@@ -71,6 +71,18 @@ library BaseOrderUtils {
         int256 adjustedPriceImpactUsd;
     }
 
+    function isSupportedOrder(Order.OrderType orderType) internal pure returns (bool) {
+        return orderType == Order.OrderType.MarketSwap ||
+               orderType == Order.OrderType.LimitSwap ||
+               orderType == Order.OrderType.MarketIncrease ||
+               orderType == Order.OrderType.MarketDecrease ||
+               orderType == Order.OrderType.LimitIncrease ||
+               orderType == Order.OrderType.LimitDecrease ||
+               orderType == Order.OrderType.StopIncrease ||
+               orderType == Order.OrderType.StopLossDecrease ||
+               orderType == Order.OrderType.Liquidation;
+    }
+
     // @dev check if an orderType is a market order
     // @param orderType the order type
     // @return whether an orderType is a market order

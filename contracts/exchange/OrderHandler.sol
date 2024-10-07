@@ -91,6 +91,12 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             revert Errors.OrderNotUpdatable(uint256(order.orderType()));
         }
 
+        // this could happen if the order was created in new contracts that support new order types
+        // but the order is being updated in old contracts
+        if (!BaseOrderUtils.isSupportedOrder(order.orderType())) {
+            revert Errors.UnsupportedOrderType(uint256(order.orderType()));
+        }
+
         // allow topping up of executionFee as frozen orders
         // will have their executionFee reduced
         address wnt = TokenUtils.wnt(dataStore);
