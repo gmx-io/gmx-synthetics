@@ -151,6 +151,13 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    SATS: {
+      synthetic: true,
+      decimals: 6,
+      dataStreamFeedId: "0x000308eb21e48b6673ee81b8baf25b34468597824a7897f3392c499c6a080606",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     LTC: {
       synthetic: true,
       decimals: 8,
