@@ -110,6 +110,10 @@ library OrderUtils {
             MarketUtils.validatePositionMarket(dataStore, params.addresses.market);
         }
 
+        if (BaseOrderUtils.isMarketOrder(params.orderType) && params.numbers.validFromTime != 0) {
+            revert Errors.UnexpectedValidFromTime(uint256(params.orderType));
+        }
+
         // validate swap path markets
         MarketUtils.validateSwapPath(dataStore, params.addresses.swapPath);
 

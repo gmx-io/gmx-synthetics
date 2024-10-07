@@ -265,6 +265,7 @@ library Errors {
     error OrderAlreadyFrozen();
     error MaxTotalCallbackGasLimitForAutoCancelOrdersExceeded(uint256 totalCallbackGasLimit, uint256 maxTotalCallbackGasLimit);
     error InvalidReceiver(address receiver);
+    error UnexpectedValidFromTime(uint256 orderType);
 
     // OrderStoreUtils errors
     error OrderNotFound(bytes32 key);
