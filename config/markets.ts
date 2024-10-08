@@ -1058,7 +1058,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(1_500_000, 6), // ~1,5M USD (x3 of max open interest)
     },
     {
-      tokens: { indexToken: "STX", longToken: "WBTC.e", shortToken: "USDC" },
+      tokens: { indexToken: "SATS", longToken: "WBTC.e", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:SATS/USD"),
       virtualMarketId: hashString("SPOT:BTC/USD"),
 
