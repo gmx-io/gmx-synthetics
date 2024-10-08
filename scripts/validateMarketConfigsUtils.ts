@@ -126,6 +126,12 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
+    SATS: {
+      negativePositionImpactFactor: decimalToFloat(5, 10),
+      negativeSwapImpactFactor: decimalToFloat(5, 9),
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
+    },
     XRP: {
       negativePositionImpactFactor: decimalToFloat(5, 9),
       negativeSwapImpactFactor: decimalToFloat(5, 9),
