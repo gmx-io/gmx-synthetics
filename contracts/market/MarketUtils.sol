@@ -1270,10 +1270,6 @@ library MarketUtils {
         cache.diffUsd = Calc.diff(longOpenInterest, shortOpenInterest);
         cache.totalOpenInterest = longOpenInterest + shortOpenInterest;
 
-        // if the savedFundingFactorPerSecond is positive then longs pay shorts
-        // if the savedFundingFactorPerSecond is negative then shorts pay longs
-        cache.savedFundingFactorPerSecond = getSavedFundingFactorPerSecond(dataStore, market);
-
         FundingConfigCache memory configCache;
         configCache.fundingIncreaseFactorPerSecond = dataStore.getUint(Keys.fundingIncreaseFactorPerSecondKey(market));
 
@@ -1310,6 +1306,9 @@ library MarketUtils {
             );
         }
 
+        // if the savedFundingFactorPerSecond is positive then longs pay shorts
+        // if the savedFundingFactorPerSecond is negative then shorts pay longs
+        cache.savedFundingFactorPerSecond = getSavedFundingFactorPerSecond(dataStore, market);
         cache.savedFundingFactorPerSecondMagnitude = cache.savedFundingFactorPerSecond.abs();
 
         configCache.thresholdForStableFunding = dataStore.getUint(Keys.thresholdForStableFundingKey(market));
