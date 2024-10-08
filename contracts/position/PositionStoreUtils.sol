@@ -25,8 +25,6 @@ library PositionStoreUtils {
     bytes32 public constant FUNDING_FEE_AMOUNT_PER_SIZE = keccak256(abi.encode("FUNDING_FEE_AMOUNT_PER_SIZE"));
     bytes32 public constant LONG_TOKEN_CLAIMABLE_FUNDING_AMOUNT_PER_SIZE = keccak256(abi.encode("LONG_TOKEN_CLAIMABLE_FUNDING_AMOUNT_PER_SIZE"));
     bytes32 public constant SHORT_TOKEN_CLAIMABLE_FUNDING_AMOUNT_PER_SIZE = keccak256(abi.encode("SHORT_TOKEN_CLAIMABLE_FUNDING_AMOUNT_PER_SIZE"));
-    bytes32 public constant INCREASED_AT_BLOCK = keccak256(abi.encode("INCREASED_AT_BLOCK"));
-    bytes32 public constant DECREASED_AT_BLOCK = keccak256(abi.encode("DECREASED_AT_BLOCK"));
     bytes32 public constant INCREASED_AT_TIME = keccak256(abi.encode("INCREASED_AT_TIME"));
     bytes32 public constant DECREASED_AT_TIME = keccak256(abi.encode("DECREASED_AT_TIME"));
 
@@ -223,14 +221,6 @@ library PositionStoreUtils {
 
         dataStore.removeUint(
             keccak256(abi.encode(key, SHORT_TOKEN_CLAIMABLE_FUNDING_AMOUNT_PER_SIZE))
-        );
-
-        dataStore.removeUint(
-            keccak256(abi.encode(key, INCREASED_AT_BLOCK))
-        );
-
-        dataStore.removeUint(
-            keccak256(abi.encode(key, DECREASED_AT_BLOCK))
         );
 
         dataStore.removeUint(
