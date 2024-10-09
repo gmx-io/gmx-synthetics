@@ -1270,7 +1270,14 @@ library MarketUtils {
         cache.diffUsd = Calc.diff(longOpenInterest, shortOpenInterest);
         cache.totalOpenInterest = longOpenInterest + shortOpenInterest;
 
-        if (cache.diffUsd == 0) { return (0, true, 0); }
+        FundingConfigCache memory configCache;
+        configCache.fundingIncreaseFactorPerSecond = dataStore.getUint(Keys.fundingIncreaseFactorPerSecondKey(market));
+
+        // if the open interest difference is zero and adaptive funding
+        // is not enabled, then return zero as the funding factor
+        if (cache.diffUsd == 0 && configCache.fundingIncreaseFactorPerSecond == 0) {
+            return (0, true, 0);
+        }
 
         if (cache.totalOpenInterest == 0) {
             revert Errors.UnableToGetFundingFactorEmptyOpenInterest();
@@ -1280,9 +1287,6 @@ library MarketUtils {
 
         cache.diffUsdAfterExponent = Precision.applyExponentFactor(cache.diffUsd, cache.fundingExponentFactor);
         cache.diffUsdToOpenInterestFactor = Precision.toFactor(cache.diffUsdAfterExponent, cache.totalOpenInterest);
-
-        FundingConfigCache memory configCache;
-        configCache.fundingIncreaseFactorPerSecond = dataStore.getUint(Keys.fundingIncreaseFactorPerSecondKey(market));
 
         if (configCache.fundingIncreaseFactorPerSecond == 0) {
             cache.fundingFactor = getFundingFactor(dataStore, market);
@@ -1322,6 +1326,8 @@ library MarketUtils {
             if (cache.diffUsdToOpenInterestFactor > configCache.thresholdForStableFunding) {
                 fundingRateChangeType = FundingRateChangeType.Increase;
             } else if (cache.diffUsdToOpenInterestFactor < configCache.thresholdForDecreaseFunding) {
+                // if thresholdForDecreaseFunding is zero and diffUsdToOpenInterestFactor is also zero
+                // then the fundingRateChangeType would be NoChange
                 fundingRateChangeType = FundingRateChangeType.Decrease;
             }
         } else {
