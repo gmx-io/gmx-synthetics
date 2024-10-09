@@ -163,9 +163,6 @@ library DecreaseOrderUtils {
             if (minOracleTimestamp < orderUpdatedAtTime) {
                 revert Errors.OracleTimestampsAreSmallerThanRequired(minOracleTimestamp, orderUpdatedAtTime);
             }
-            if (orderValidFromTime != 0 && minOracleTimestamp < orderValidFromTime) {
-                revert Errors.OracleTimestampsAreSmallerThanRequired(minOracleTimestamp, orderValidFromTime);
-            }
 
             uint256 requestExpirationTime = dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
 
@@ -177,6 +174,13 @@ library DecreaseOrderUtils {
                 );
             }
             return;
+        }
+
+        if (
+            !BaseOrderUtils.isMarketOrder(orderType) &&
+            minOracleTimestamp < orderValidFromTime
+        ) {
+            revert Errors.OracleTimestampsAreSmallerThanRequired(minOracleTimestamp, orderValidFromTime);
         }
 
         // a user could attempt to frontrun prices by creating a limit decrease

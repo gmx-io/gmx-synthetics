@@ -57,7 +57,10 @@ library IncreaseOrderUtils {
             );
         }
 
-        if (params.order.validFromTime() != 0 && params.minOracleTimestamp < params.order.validFromTime()) {
+        if (
+            !BaseOrderUtils.isMarketOrder(params.order.orderType()) &&
+            params.minOracleTimestamp < params.order.validFromTime()
+        ) {
             revert Errors.OracleTimestampsAreSmallerThanRequired(
                 params.minOracleTimestamp,
                 params.order.validFromTime()
