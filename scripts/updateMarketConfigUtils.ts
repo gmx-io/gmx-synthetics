@@ -36,7 +36,7 @@ const processMarkets = async ({
     return true;
   };
 
-  console.log(`supportedRiskOracleMarkets: ${supportedRiskOracleMarkets.size}`);
+  console.info(`supportedRiskOracleMarkets: ${supportedRiskOracleMarkets.size}`);
 
   const ignoredRiskOracleParams: string[] = [];
 
@@ -46,7 +46,7 @@ const processMarkets = async ({
     const onchainMarket = onchainMarketsByTokens[marketKey];
 
     if (!onchainMarket) {
-      console.warn("WARN: market %s:%s:%s:%s does not exist. skip", marketKey, indexToken, longToken, shortToken);
+      console.info("WARN: market %s:%s:%s:%s does not exist. skip", marketKey, indexToken, longToken, shortToken);
       continue;
     }
 
@@ -666,13 +666,13 @@ export async function updateMarketConfig({ write }) {
     await handleInBatches(multicallWriteParams, 100, async (batch) => {
       await config.callStatic.multicall(batch);
     });
-    console.info("NOTE: executed in read-only mode, no transactions were sent");
+    await console.info("NOTE: executed in read-only mode, no transactions were sent");
   }
 
   if (ignoredRiskOracleParams.length > 0) {
-    console.warn("\n=================\n");
-    console.warn(`WARN: Ignored risk oracle params for ${supportedRiskOracleMarkets.size} markets`);
-    console.warn("Add `INCLUDE_RISK_ORACLE_BASE_KEYS=1` to include them");
+    console.info("\n=================\n");
+    console.info(`WARN: Ignored risk oracle params for ${supportedRiskOracleMarkets.size} markets`);
+    console.info("Add `INCLUDE_RISK_ORACLE_BASE_KEYS=1` to include them");
 
     const marketsByParameterName = ignoredRiskOracleParams
       .map((label) => {
@@ -688,12 +688,12 @@ export async function updateMarketConfig({ write }) {
       }, {} as Record<string, string[]>);
 
     Object.entries(marketsByParameterName).forEach(([parameterName, markets]) => {
-      console.log();
-      console.log("parameter name:", parameterName + ":");
-      console.log("markets:", markets.join(", "));
+      console.info();
+      console.info("parameter name:", parameterName + ":");
+      console.info("markets:", markets.join(", "));
     });
 
-    console.log();
+    console.info();
   }
 }
 
