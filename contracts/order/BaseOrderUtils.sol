@@ -205,7 +205,7 @@ library BaseOrderUtils {
         //      - the order should be executed when the oracle price is <= triggerPrice
         //      - primaryPrice.min should be used for the oracle price
         if (orderType == Order.OrderType.StopIncrease) {
-            bool ok = isLong ? primaryPrice.min >= triggerPrice : primaryPrice.max <= triggerPrice;
+            bool ok = isLong ? primaryPrice.max >= triggerPrice : primaryPrice.min <= triggerPrice;
 
             if (!ok) {
                 revert Errors.InvalidOrderPrices(primaryPrice.min, primaryPrice.max, triggerPrice, uint256(orderType));
