@@ -8,6 +8,7 @@ import { parseLogs, getEventDataValue } from "./event";
 import { getCancellationReason, getErrorString } from "./error";
 
 import * as keys from "./keys";
+import { Contract } from "ethers";
 
 export const OrderType = {
   MarketSwap: 0,
@@ -27,23 +28,42 @@ export const DecreasePositionSwapType = {
   SwapCollateralTokenToPnlToken: 2,
 };
 
-export function getOrderCount(dataStore) {
+export function getOrderCount(dataStore: Contract): Promise<number> {
   return dataStore.getBytes32Count(keys.ORDER_LIST);
 }
 
-export function getOrderKeys(dataStore, start, end) {
+export function getOrderKeys(dataStore: Contract, start: number, end: number): Promise<string[]> {
   return dataStore.getBytes32ValuesAt(keys.ORDER_LIST, start, end);
 }
 
-export function getAccountOrderCount(dataStore, account) {
+export async function getLastAccountOrder(dataStore: Contract, reader: Contract, account: string): Promise<any> {
+  const orderCount = await getAccountOrderCount(dataStore, account);
+  if (orderCount === 0) {
+    return null;
+  }
+  const orderKeys = await getAccountOrderKeys(dataStore, account, orderCount - 1, orderCount);
+  return reader.getOrder(dataStore.address, orderKeys[0]);
+}
+
+export function getAccountOrderCount(dataStore: Contract, account: string): Promise<number> {
   return dataStore.getBytes32Count(keys.accountOrderListKey(account));
 }
 
-export function getAccountOrderKeys(dataStore, account, start, end) {
+export function getAccountOrderKeys(
+  dataStore: Contract,
+  account: string,
+  start: number,
+  end: number
+): Promise<string[]> {
   return dataStore.getBytes32ValuesAt(keys.accountOrderListKey(account), start, end);
 }
 
-export function getAutoCancelOrderKeys(dataStore, positionKey, start, end) {
+export function getAutoCancelOrderKeys(
+  dataStore: Contract,
+  positionKey: string,
+  start: number,
+  end: number
+): Promise<string[]> {
   return dataStore.getBytes32ValuesAt(keys.autoCancelOrderListKey(positionKey), start, end);
 }
 

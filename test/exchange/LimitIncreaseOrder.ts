@@ -4,7 +4,15 @@ import { mine } from "@nomicfoundation/hardhat-network-helpers";
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
-import { OrderType, getOrderCount, getOrderKeys, createOrder, executeOrder, handleOrder } from "../../utils/order";
+import {
+  OrderType,
+  getOrderCount,
+  getOrderKeys,
+  createOrder,
+  executeOrder,
+  handleOrder,
+  getLastAccountOrder,
+} from "../../utils/order";
 import { getPositionCount, getAccountPositionCount } from "../../utils/position";
 import { getEventData } from "../../utils/event";
 import { errorsContract } from "../../utils/error";
@@ -135,7 +143,7 @@ describe("Exchange.LimitIncreaseOrder", () => {
   it("executeOrder validFromTime", async () => {
     expect(await getOrderCount(dataStore)).eq(0);
 
-    const validFromTime = (await latest()) + 60;
+    let validFromTime = (await latest()) + 60;
 
     const params = {
       market: ethUsdMarket,
@@ -153,6 +161,7 @@ describe("Exchange.LimitIncreaseOrder", () => {
       validFromTime,
     };
 
+    // fails if validFromTime is not reached
     await expect(
       handleOrder(fixture, {
         create: params,
@@ -160,13 +169,38 @@ describe("Exchange.LimitIncreaseOrder", () => {
     ).to.revertedWithCustomError(errorsContract, "OrderValidFromTimeNotReached");
 
     await increaseTo(validFromTime);
-    await handleOrder(fixture, {
-      create: params,
-    });
+    // works if validFromTime is reached
+    await executeOrder(fixture);
 
+    // works if validFromTime is not set
     await handleOrder(fixture, {
       create: { ...params, validFromTime: 0 },
     });
+
+    expect(await getOrderCount(dataStore)).eq(0);
+
+    validFromTime = (await latest()) + 60;
+    await createOrder(fixture, {
+      ...params,
+      validFromTime,
+    });
+    const order = await getLastAccountOrder(dataStore, reader, user0.address);
+    expect(order.numbers.validFromTime).eq(validFromTime);
+    await increaseTo(validFromTime);
+
+    // only prices signed after validFromTime can be used
+    await expect(
+      executeOrder(fixture, {
+        oracleTimestamps: [validFromTime - 1, validFromTime - 1],
+      })
+    )
+      .to.be.revertedWithCustomError(errorsContract, "OracleTimestampsAreSmallerThanRequired")
+      .withArgs(validFromTime - 1, validFromTime);
+
+    await executeOrder(fixture, {
+      oracleTimestamps: [validFromTime, validFromTime],
+    });
+    expect(await getOrderCount(dataStore)).eq(0);
   });
 
   it("uses execution price with price impact", async () => {
