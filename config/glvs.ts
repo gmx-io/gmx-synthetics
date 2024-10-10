@@ -72,6 +72,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
             glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
             glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
           },
+          {
+            indexToken: "EIGEN",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(300_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(300_000),
+          },
         ],
       },
       {
@@ -86,18 +91,23 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         markets: [
           {
             indexToken: "BTC",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(13_000_000, 18),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(13_000_000, 8),
             glvMaxMarketTokenBalanceUsd: decimalToFloat(22_000_000),
           },
           {
             indexToken: "ORDI",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(600_000, 18),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(600_000, 8),
             glvMaxMarketTokenBalanceUsd: decimalToFloat(600_000),
           },
           {
             indexToken: "STX",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(800_000, 18),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(800_000, 8),
             glvMaxMarketTokenBalanceUsd: decimalToFloat(800_000),
+          },
+          {
+            indexToken: "SATS",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(400_000, 8),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(400_000),
           },
         ],
       },
