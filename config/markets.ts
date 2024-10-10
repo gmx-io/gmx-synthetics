@@ -858,15 +858,15 @@ const config: {
 
       ...synthethicMarketConfig,
 
-      maxLongTokenPoolAmount: expandDecimals(209, 18), // ~$500k
-      maxShortTokenPoolAmount: expandDecimals(500_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(1249, 18), // ~$3m
+      maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
 
-      maxLongTokenPoolUsdForDeposit: decimalToFloat(375_000),
-      maxShortTokenPoolUsdForDeposit: decimalToFloat(375_000),
+      maxLongTokenPoolUsdForDeposit: decimalToFloat(2_000_000),
+      maxShortTokenPoolUsdForDeposit: decimalToFloat(2_000_000),
 
       positionImpactExponentFactor: decimalToFloat(22, 1), // 2.2
-      positivePositionImpactFactor: decimalToFloat(4, 9), // 4e-9,
-      negativePositionImpactFactor: decimalToFloat(8, 9), // 8e-9
+      positivePositionImpactFactor: decimalToFloat(25, 11), // 2.5e-10,
+      negativePositionImpactFactor: decimalToFloat(5, 10), // 5e-10
 
       positiveSwapImpactFactor: decimalToFloat(25, 10), // 2.5e-9
       negativeSwapImpactFactor: decimalToFloat(5, 9), // 5e-9
@@ -892,8 +892,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplierLong: decimalToFloat(38, 10), // 38e-10
       minCollateralFactorForOpenInterestMultiplierShort: decimalToFloat(38, 10), // 38e-10
 
-      maxOpenInterestForLongs: decimalToFloat(250_000),
-      maxOpenInterestForShorts: decimalToFloat(250_000),
+      maxOpenInterestForLongs: decimalToFloat(1_000_000),
+      maxOpenInterestForShorts: decimalToFloat(1_000_000),
 
       reserveFactorLongs: percentageToFloat("105%"),
       reserveFactorShorts: percentageToFloat("105%"),

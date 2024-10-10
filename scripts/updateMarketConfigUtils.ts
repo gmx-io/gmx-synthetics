@@ -36,8 +36,6 @@ const processMarkets = async ({
     return true;
   };
 
-  console.info(`supportedRiskOracleMarkets: ${supportedRiskOracleMarkets.size}`);
-
   const ignoredRiskOracleParams: string[] = [];
 
   for (const marketConfig of markets) {
@@ -670,9 +668,7 @@ export async function updateMarketConfig({ write }) {
   }
 
   if (ignoredRiskOracleParams.length > 0) {
-    console.info("\n=================\n");
-    console.info(`WARN: Ignored risk oracle params for ${supportedRiskOracleMarkets.size} markets`);
-    console.info("Add `INCLUDE_RISK_ORACLE_BASE_KEYS=1` to include them");
+    const ignoredParameterNames = [];
 
     const marketsByParameterName = ignoredRiskOracleParams
       .map((label) => {
@@ -687,13 +683,14 @@ export async function updateMarketConfig({ write }) {
         return acc;
       }, {} as Record<string, string[]>);
 
-    Object.entries(marketsByParameterName).forEach(([parameterName, markets]) => {
-      console.info();
-      console.info("parameter name:", parameterName + ":");
-      console.info("markets:", markets.join(", "));
+    Object.entries(marketsByParameterName).forEach(([parameterName]) => {
+      ignoredParameterNames.push(parameterName);
     });
 
-    console.info();
+    console.info("\n=================\n");
+    console.info(`WARN: Ignored risk oracle params for ${supportedRiskOracleMarkets.size} markets`);
+    console.info(`Ignored params: ${ignoredParameterNames.join(",")}`);
+    console.info("Add `INCLUDE_RISK_ORACLE_BASE_KEYS=1` to include them");
   }
 }
 

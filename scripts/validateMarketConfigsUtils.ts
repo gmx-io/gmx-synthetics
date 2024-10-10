@@ -103,7 +103,7 @@ const recommendedMarketConfig = {
       expectedPositionImpactRatio: 20000,
     },
     EIGEN: {
-      negativePositionImpactFactor: decimalToFloat(8, 9),
+      negativePositionImpactFactor: decimalToFloat(5, 10),
       negativeSwapImpactFactor: decimalToFloat(5, 9),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
