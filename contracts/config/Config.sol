@@ -545,6 +545,10 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.SYNC_CONFIG_MARKET_DISABLED] = true;
         allowedBaseKeys[Keys.SYNC_CONFIG_PARAMETER_DISABLED] = true;
         allowedBaseKeys[Keys.SYNC_CONFIG_MARKET_PARAMETER_DISABLED] = true;
+
+        allowedBaseKeys[Keys.BUYBACK_BATCH_AMOUNT] = true;
+        allowedBaseKeys[Keys.BUYBACK_GMX_FACTOR] = true;
+        allowedBaseKeys[Keys.BUYBACK_MAX_PRICE_IMPACT_FACTOR] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {
@@ -660,7 +664,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.SWAP_FEE_FACTOR ||
             baseKey == Keys.POSITION_FEE_FACTOR ||
             baseKey == Keys.MAX_UI_FEE_FACTOR ||
-            baseKey == Keys.ATOMIC_SWAP_FEE_FACTOR
+            baseKey == Keys.ATOMIC_SWAP_FEE_FACTOR ||
+            baseKey == Keys.BUYBACK_MAX_PRICE_IMPACT_FACTOR
         ) {
             // revert if value > 5%
             if (value > 5 * Precision.FLOAT_PRECISION / 100) {
@@ -681,7 +686,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.BORROWING_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.MAX_PNL_FACTOR ||
             baseKey == Keys.MIN_PNL_FACTOR_AFTER_ADL ||
-            baseKey == Keys.OPTIMAL_USAGE_FACTOR
+            baseKey == Keys.OPTIMAL_USAGE_FACTOR ||
+            baseKey == Keys.BUYBACK_GMX_FACTOR
         ) {
             // revert if value > 100%
             if (value > Precision.FLOAT_PRECISION) {

@@ -445,6 +445,15 @@ library Keys {
     // @dev key for the min contributor payment interval
     bytes32 public constant MIN_CONTRIBUTOR_PAYMENT_INTERVAL = keccak256(abi.encode("MIN_CONTRIBUTOR_PAYMENT_INTERVAL"));
 
+    // @dev key for the buyback batch amount used when claiming and swapping fees
+    bytes32 public constant BUYBACK_BATCH_AMOUNT = keccak256(abi.encode("BUYBACK_BATCH_AMOUNT"));
+    // @dev key for the buyback available fees
+    bytes32 public constant BUYBACK_AVAILABLE_FEE_AMOUNT = keccak256(abi.encode("BUYBACK_AVAILABLE_FEE_AMOUNT"));
+    // @dev key for the buyback gmx fee factor used in calculating fees by GMX/WETH
+    bytes32 public constant BUYBACK_GMX_FACTOR = keccak256(abi.encode("BUYBACK_GMX_FACTOR"));
+    // @dev key for the FeeHandler max price impact when buying back fees
+    bytes32 public constant BUYBACK_MAX_PRICE_IMPACT_FACTOR = keccak256(abi.encode("BUYBACK_MAX_PRICE_IMPACT_FACTOR"));
+    
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
 
@@ -1944,6 +1953,48 @@ library Keys {
     function contributorTokenVaultKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             CONTRIBUTOR_TOKEN_VAULT,
+            token
+        ));
+    }
+
+    // @dev key for the buyback batch amount
+    // @param token the token for which to retrieve batch amount (GMX or WETH)
+    // @return key for buyback batch amount for a given token
+    function buybackBatchAmountKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            BUYBACK_BATCH_AMOUNT,
+            token
+        ));
+    }
+
+    // @dev key for the buyback available fee amount
+    // @param feeToken the token in which the fees are denominated
+    // @param swapToken the token for which fees are accumulated (GMX or WETH)
+    // @return key for buyback available fee amount for a given token and feeToken
+    function buybackAvailableFeeAmountKey(address feeToken, address swapToken) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            BUYBACK_AVAILABLE_FEE_AMOUNT,
+            feeToken,
+            swapToken
+        ));
+    }
+
+    // @dev key for the buyback gmx fee factor
+    // @param version the version for which to retrieve the fee numerator
+    // @return key for buyback gmx fee factor for a given version
+    function buybackGmxFactorKey(uint256 version) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            BUYBACK_GMX_FACTOR,
+            version
+        ));
+    }
+
+    // @dev key for the buyback max price impact factor
+    // @param token the token for which to retrieve the max price impact factor key
+    // @return key for buyback max price impact factor for a given token
+    function buybackMaxPriceImpactFactorKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            BUYBACK_MAX_PRICE_IMPACT_FACTOR,
             token
         ));
     }
