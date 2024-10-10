@@ -690,7 +690,7 @@ export async function updateMarketConfig({ write }) {
     console.info("\n=================\n");
     console.info(`WARN: Ignored risk oracle params for ${supportedRiskOracleMarkets.size} markets`);
     console.info(`Ignored params: ${ignoredParameterNames.join(",")}`);
-    console.info("Add `INCLUDE_RISK_ORACLE_BASE_KEYS=1` to include them");
+    console.info("Add `INCLUDE_RISK_ORACLE_BASE_KEYS=1` to include them\n");
   }
 }
 
