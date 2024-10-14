@@ -6,24 +6,24 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "../data/DataStore.sol";
 import "../role/RoleModule.sol";
+import "../oracle/OracleModule.sol";
 import "../utils/BasicMulticall.sol";
 import "../fee/FeeUtils.sol";
-import "../data/Keys.sol";
-import "../oracle/ChainlinkPriceFeedUtils.sol";
-import "../utils/Precision.sol";
 import "../v1/IVaultV1.sol";
 import "../v1/IVaultGovV1.sol";
 
 // @title FeeHandler
-contract FeeHandler is ReentrancyGuard, RoleModule, BasicMulticall {
+contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall {
     using SafeERC20 for IERC20;
 
     struct FeeAmounts {
         uint256 gmx;
         uint256 wnt;
     }
+
+    uint256 public constant v1 = 1;
+    uint256 public constant v2 = 2;
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
@@ -32,11 +32,12 @@ contract FeeHandler is ReentrancyGuard, RoleModule, BasicMulticall {
 
     constructor(
         RoleStore _roleStore,
+        Oracle _oracle,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         IVaultV1 _vaultV1,
         address _gmx
-    ) RoleModule(_roleStore) {
+    ) RoleModule(_roleStore) OracleModule(_oracle) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         vaultV1 = _vaultV1;
@@ -60,26 +61,33 @@ contract FeeHandler is ReentrancyGuard, RoleModule, BasicMulticall {
     // @dev claim fees in feeToken from the specified markets
     // @param market the market from which to claim fees
     // @param feeToken the fee tokens to claim from the market
-    function claimFees(address market, address feeToken) external nonReentrant {
+    function claimFees(address market, address feeToken, uint256 version) external nonReentrant {
         if (_getBatchSize(feeToken) != 0) {
             revert Errors.InvalidFeeToken(feeToken);
         }
 
         uint256 feeAmount;
-        if (market == address(0)) {
+        if (version == v1) {
             feeAmount = IVaultGovV1(vaultV1.gov()).withdrawFees(address(vaultV1), feeToken, address(this));
-            _incrementAvailableFeeAmounts(1, feeToken, feeAmount);
-        } else {
+        } else if (version == v2) {
             feeAmount = FeeUtils.claimFees(dataStore, eventEmitter, market, feeToken, address(this));
-            _incrementAvailableFeeAmounts(2, feeToken, feeAmount);
+        } else {
+            revert Errors.InvalidVersion(version);
         }
+
+        _incrementAvailableFeeAmounts(version, feeToken, feeAmount);
     }
 
     // @dev receive an amount in feeToken by depositing the batchSize amount of the buybackToken
     // @param feeToken the token to receive with the fee amount calculated via an oracle price
     // @param buybackToken the token to deposit in the amount of batchSize in return for fees
     // @param minOutputAmount the minimum amount of the feeToken that the caller will receive
-    function buyback(address feeToken, address buybackToken, uint256 minOutputAmount) external nonReentrant {
+    function buyback(
+        address feeToken,
+        address buybackToken,
+        uint256 minOutputAmount,
+        OracleUtils.SetPricesParams memory params
+    ) external nonReentrant withOraclePrices(params) {
         if (feeToken == buybackToken) {
             revert Errors.BuybackAndFeeTokenAreEqual(feeToken, buybackToken);
         }
@@ -105,23 +113,24 @@ contract FeeHandler is ReentrancyGuard, RoleModule, BasicMulticall {
     function getOutputAmount(
         address[] calldata markets,
         address feeToken,
-        address buybackToken
+        address buybackToken,
+        uint256 version
     ) external view returns (uint256) {
         uint256 batchSize = _getBatchSize(buybackToken);
         _validateBuybackToken(batchSize, buybackToken);
 
         uint256 feeAmount;
-        FeeAmounts memory feeAmounts;
         uint256 availableFeeAmount = _getAvailableFeeAmount(feeToken, buybackToken);
         for (uint256 i; i < markets.length; i++) {
-            if (markets[i] == address(0)) {
+            if (version == v1) {
                 feeAmount = vaultV1.feeReserves(feeToken);
-                feeAmounts = _getFeeAmounts(1, feeAmount);
-            } else {
+            } else if (version == v2) {
                 feeAmount = _getUint(Keys.claimableFeeAmountKey(markets[i], feeToken));
-                feeAmounts = _getFeeAmounts(2, feeAmount);
+            } else {
+                revert Errors.InvalidVersion(version);
             }
 
+            FeeAmounts memory feeAmounts = _getFeeAmounts(version, feeAmount);
             feeAmount = buybackToken == gmx ? feeAmounts.gmx : feeAmounts.wnt;
             availableFeeAmount = availableFeeAmount + feeAmount;
         }
@@ -141,8 +150,8 @@ contract FeeHandler is ReentrancyGuard, RoleModule, BasicMulticall {
         uint256 buybackAmount,
         uint256 availableFeeAmount
     ) private {
-        IERC20(feeToken).safeTransfer(msg.sender, buybackAmount);
         IERC20(buybackToken).safeTransferFrom(msg.sender, address(this), batchSize);
+        IERC20(feeToken).safeTransfer(msg.sender, buybackAmount);
 
         _setAvailableFeeAmount(feeToken, buybackToken, availableFeeAmount - buybackAmount);
     }
@@ -181,24 +190,21 @@ contract FeeHandler is ReentrancyGuard, RoleModule, BasicMulticall {
         address buybackToken,
         uint256 batchSize
     ) private view returns (uint256) {
-        uint256 feeTokenPrice = _getPriceFeedPrice(feeToken);
-        uint256 buybackTokenPrice = _getPriceFeedPrice(buybackToken);
-
-        uint256 expectedFeeTokenAmount = Precision.mulDiv(batchSize, feeTokenPrice, buybackTokenPrice);
-        uint256 maxPriceImpactFactor = _getUint(Keys.buybackMaxPriceImpactFactorKey(feeToken));
-
-        return Precision.applyFactor(expectedFeeTokenAmount, maxPriceImpactFactor + Precision.FLOAT_PRECISION);
-    }
-
-    // @dev There is some risk of front-running due to the potential for a stale oracle price feed
-    function _getPriceFeedPrice(address token) private view returns (uint256) {
-        (bool hasTokenPriceFeed, uint256 tokenPrice) = ChainlinkPriceFeedUtils.getPriceFeedPrice(dataStore, token);
-
-        if (!hasTokenPriceFeed) {
-            revert Errors.EmptyChainlinkPriceFeed(token);
+        uint256 priceTimestamp = oracle.minTimestamp();
+        uint256 maxPriceAge = _getUint(Keys.buybackMaxPriceAgeKey());
+        uint256 currentTimestamp = Chain.currentTimestamp();
+        if ((priceTimestamp + maxPriceAge) < currentTimestamp) {
+            revert Errors.PricesOlderThanMaxPriceAge(priceTimestamp, maxPriceAge, currentTimestamp);
         }
 
-        return tokenPrice;
+        uint256 feeTokenPrice = oracle.getPrimaryPrice(feeToken).max;
+        uint256 buybackTokenPrice = oracle.getPrimaryPrice(buybackToken).min;
+
+        uint256 expectedFeeTokenAmount = Precision.mulDiv(batchSize, buybackTokenPrice, feeTokenPrice);
+        uint256 maxPriceImpactFactor = _getUint(Keys.buybackMaxPriceImpactFactorKey(feeToken)) +
+            _getUint(Keys.buybackMaxPriceImpactFactorKey(buybackToken));
+
+        return Precision.applyFactor(expectedFeeTokenAmount, maxPriceImpactFactor + Precision.FLOAT_PRECISION);
     }
 
     function _getBatchSize(address buybackToken) private view returns (uint256) {

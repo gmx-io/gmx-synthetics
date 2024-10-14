@@ -453,6 +453,8 @@ library Keys {
     bytes32 public constant BUYBACK_GMX_FACTOR = keccak256(abi.encode("BUYBACK_GMX_FACTOR"));
     // @dev key for the FeeHandler max price impact when buying back fees
     bytes32 public constant BUYBACK_MAX_PRICE_IMPACT_FACTOR = keccak256(abi.encode("BUYBACK_MAX_PRICE_IMPACT_FACTOR"));
+    // @dev key for the maximum price delay in seconds when buying back fees
+    bytes32 public constant BUYBACK_MAX_PRICE_AGE = keccak256(abi.encode("BUYBACK_MAX_PRICE_AGE"));
     
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
@@ -1997,5 +1999,11 @@ library Keys {
             BUYBACK_MAX_PRICE_IMPACT_FACTOR,
             token
         ));
+    }
+
+    // @dev key for the buyback max price age
+    // @return key for buyback max price age
+    function buybackMaxPriceAgeKey() internal pure returns (bytes32) {
+        return BUYBACK_MAX_PRICE_AGE;
     }
 }
