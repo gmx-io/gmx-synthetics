@@ -150,7 +150,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xdaFa7Deb67805d7498Aa926002bB2d713D1d9256": true, // GlvFactory_2
       },
       GOV_TOKEN_CONTROLLER: {
-        "0x159854e14A862Df9E39E1D128b8e5F70B4A3cE9B": true, // RewardRouterV2_1
+        "0x5E4766F932ce00aA4a1A82d3Da85adf15C5694A1": true, // RewardRouterV2_2
       },
     },
     avalanche: {
@@ -217,7 +217,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x5d6B84086DA6d4B0b6C0dF7E02f8a6A039226530": true, // GlvFactory_2
       },
       GOV_TOKEN_CONTROLLER: {
-        "0xa192D0681E2b9484d1fA48083D36B8A2D0Da1809": true, // RewardRouterV2_1
+        "0x091eD806490Cc58Fd514441499e58984cCce0630": true, // RewardRouterV2_2
       },
     },
     avalancheFuji: {
