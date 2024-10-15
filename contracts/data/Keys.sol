@@ -455,7 +455,9 @@ library Keys {
     bytes32 public constant BUYBACK_MAX_PRICE_IMPACT_FACTOR = keccak256(abi.encode("BUYBACK_MAX_PRICE_IMPACT_FACTOR"));
     // @dev key for the maximum price delay in seconds when buying back fees
     bytes32 public constant BUYBACK_MAX_PRICE_AGE = keccak256(abi.encode("BUYBACK_MAX_PRICE_AGE"));
-    
+    // @dev key for the buyback withdrawable fees
+    bytes32 public constant WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = keccak256(abi.encode("WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT"));
+
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
 
@@ -1978,6 +1980,16 @@ library Keys {
             BUYBACK_AVAILABLE_FEE_AMOUNT,
             feeToken,
             swapToken
+        ));
+    }
+
+    // @dev key for the buyback withdrawable fee amount
+    // @param buybackToken the token that was bought back
+    // @return key for the buyback withdrawable fee amount
+    function withdrawableBuybackTokenAmountKey(address buybackToken) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT,
+            buybackToken
         ));
     }
 

@@ -45,27 +45,25 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
     }
 
     // @dev withdraw fees in buybackTokens from this contract
+    // note that claimFees should be called to claim pending fees if needed
+    // before calling this function
     // @param marketTokens the markets from which to withdraw fees
     // @param buybackToken the token for which to withdraw fees
-    function withdrawFees(address[] calldata markets, address buybackToken) external nonReentrant onlyFeeKeeper {
+    function withdrawFees(address buybackToken) external nonReentrant onlyFeeKeeper {
         _validateBuybackToken(_getBatchSize(buybackToken), buybackToken);
 
-        for (uint256 i; i < markets.length; i++) {
-            FeeUtils.claimFees(dataStore, eventEmitter, markets[i], buybackToken, address(this));
-        }
-
         address receiver = dataStore.getAddress(Keys.FEE_RECEIVER);
-        IERC20(buybackToken).safeTransfer(receiver, IERC20(buybackToken).balanceOf(address(this)));
+
+        uint256 amount = dataStore.getUint(Keys.withdrawableBuybackTokenAmountKey(buybackToken));
+        dataStore.setUint(Keys.withdrawableBuybackTokenAmountKey(buybackToken), 0);
+
+        IERC20(buybackToken).safeTransfer(receiver, amount);
     }
 
     // @dev claim fees in feeToken from the specified markets
     // @param market the market from which to claim fees
     // @param feeToken the fee tokens to claim from the market
     function claimFees(address market, address feeToken, uint256 version) external nonReentrant {
-        if (_getBatchSize(feeToken) != 0) {
-            revert Errors.InvalidFeeToken(feeToken);
-        }
-
         uint256 feeAmount;
         if (version == v1) {
             feeAmount = IVaultGovV1(vaultV1.gov()).withdrawFees(address(vaultV1), feeToken, address(this));
@@ -110,7 +108,11 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
         _buybackFees(feeToken, buybackToken, batchSize, outputAmount, availableFeeAmount);
     }
 
-    function getOutputAmount(
+    // @dev note that the returned amount is not capped by _getMaxFeeTokenAmount
+    // as _getMaxFeeTokenAmount requires oracle prices
+    // calculation of output amount would need to be done off-chain based on
+    // the oracle prices and max acceptable price impact
+    function getAvailableFeeAmount(
         address[] calldata markets,
         address feeToken,
         address buybackToken,
@@ -135,12 +137,7 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
             availableFeeAmount = availableFeeAmount + feeAmount;
         }
 
-        uint256 maxFeeTokenAmount = _getMaxFeeTokenAmount(feeToken, buybackToken, batchSize);
-        if (availableFeeAmount >= maxFeeTokenAmount) {
-            return maxFeeTokenAmount;
-        } else {
-            return availableFeeAmount;
-        }
+        return availableFeeAmount;
     }
 
     function _buybackFees(
@@ -149,34 +146,48 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
         uint256 batchSize,
         uint256 buybackAmount,
         uint256 availableFeeAmount
-    ) private {
+    ) internal {
+        _incrementWithdrawableBuybackTokenAmount(buybackToken, batchSize);
+        _setAvailableFeeAmount(feeToken, buybackToken, availableFeeAmount - buybackAmount);
+
         IERC20(buybackToken).safeTransferFrom(msg.sender, address(this), batchSize);
         IERC20(feeToken).safeTransfer(msg.sender, buybackAmount);
-
-        _setAvailableFeeAmount(feeToken, buybackToken, availableFeeAmount - buybackAmount);
     }
 
-    function _incrementAvailableFeeAmounts(uint256 version, address feeToken, uint256 feeAmount) private {
+    function _incrementWithdrawableBuybackTokenAmount(address buybackToken, uint256 amount) internal {
+        uint256 withdrawableAmount = dataStore.getUint(Keys.withdrawableBuybackTokenAmountKey(buybackToken));
+        dataStore.setUint(Keys.withdrawableBuybackTokenAmountKey(buybackToken), withdrawableAmount + amount);
+    }
+
+    function _incrementAvailableFeeAmounts(uint256 version, address feeToken, uint256 feeAmount) internal {
         address wnt = dataStore.getAddress(Keys.WNT);
 
         FeeAmounts memory feeAmounts = _getFeeAmounts(version, feeAmount);
 
-        uint256 availableFeeAmountGmx = _getAvailableFeeAmount(feeToken, gmx) + feeAmounts.gmx;
-        uint256 availableFeeAmountWnt = _getAvailableFeeAmount(feeToken, wnt) + feeAmounts.wnt;
-
-        _setAvailableFeeAmount(feeToken, gmx, availableFeeAmountGmx);
-        _setAvailableFeeAmount(feeToken, wnt, availableFeeAmountWnt);
+        _incrementAvailableFeeAmount(feeToken, gmx, feeAmounts.gmx);
+        _incrementAvailableFeeAmount(feeToken, wnt, feeAmounts.wnt);
     }
 
-    function _setAvailableFeeAmount(address feeToken, address buybackToken, uint256 availableFeeAmount) private {
+    function _incrementAvailableFeeAmount(address feeToken, address buybackToken, uint256 amount) internal {
+        // if the feeToken is the same as the buybackToken then no buyback swap is needed
+        // increase the withdrawable buyback token amount directly in this case
+        if (feeToken == buybackToken) {
+            _incrementWithdrawableBuybackTokenAmount(buybackToken, amount);
+        } else {
+            uint256 availableFeeAmount = _getAvailableFeeAmount(feeToken, buybackToken);
+            _setAvailableFeeAmount(feeToken, buybackToken, availableFeeAmount + amount);
+        }
+    }
+
+    function _setAvailableFeeAmount(address feeToken, address buybackToken, uint256 availableFeeAmount) internal {
         dataStore.setUint(Keys.buybackAvailableFeeAmountKey(feeToken, buybackToken), availableFeeAmount);
     }
 
-    function _getAvailableFeeAmount(address feeToken, address buybackToken) private view returns (uint256) {
+    function _getAvailableFeeAmount(address feeToken, address buybackToken) internal view returns (uint256) {
         return _getUint(Keys.buybackAvailableFeeAmountKey(feeToken, buybackToken));
     }
 
-    function _getFeeAmounts(uint256 version, uint256 feeAmount) private view returns (FeeAmounts memory) {
+    function _getFeeAmounts(uint256 version, uint256 feeAmount) internal view returns (FeeAmounts memory) {
         uint256 gmxFactor = _getUint(Keys.buybackGmxFactorKey(version));
         FeeAmounts memory feeAmounts;
 
@@ -189,7 +200,7 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
         address feeToken,
         address buybackToken,
         uint256 batchSize
-    ) private view returns (uint256) {
+    ) internal view returns (uint256) {
         uint256 priceTimestamp = oracle.minTimestamp();
         uint256 maxPriceAge = _getUint(Keys.buybackMaxPriceAgeKey());
         uint256 currentTimestamp = Chain.currentTimestamp();
@@ -207,15 +218,15 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
         return Precision.applyFactor(expectedFeeTokenAmount, maxPriceImpactFactor + Precision.FLOAT_PRECISION);
     }
 
-    function _getBatchSize(address buybackToken) private view returns (uint256) {
+    function _getBatchSize(address buybackToken) internal view returns (uint256) {
         return _getUint(Keys.buybackBatchAmountKey(buybackToken));
     }
 
-    function _getUint(bytes32 fullKey) private view returns (uint256) {
+    function _getUint(bytes32 fullKey) internal view returns (uint256) {
         return dataStore.getUint(fullKey);
     }
 
-    function _validateBuybackToken(uint256 batchSize, address buybackToken) private pure {
+    function _validateBuybackToken(uint256 batchSize, address buybackToken) internal pure {
         if (batchSize == 0) {
             revert Errors.InvalidBuybackToken(buybackToken);
         }

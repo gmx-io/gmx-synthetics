@@ -139,7 +139,6 @@ library Errors {
     error DisabledFeature(bytes32 key);
 
     // FeeHandler errors
-    error InvalidFeeToken(address feeToken);
     error InvalidBuybackToken(address buybackToken);
     error InvalidVersion(uint256 version);
     error InsufficientBuybackOutputAmount(address feeToken, address buybackToken, uint256 outputAmount, uint256 minOutputAmount);
