@@ -144,7 +144,8 @@ library Errors {
     error InsufficientBuybackOutputAmount(address feeToken, address buybackToken, uint256 outputAmount, uint256 minOutputAmount);
     error BuybackAndFeeTokenAreEqual(address feeToken, address buybackToken);
     error AvailableFeeAmountIsZero(address feeToken, address buybackToken, uint256 availableFeeAmount);
-    error PricesOlderThanMaxPriceAge(uint256 priceTimestamp, uint256 buybackMaxPriceAge, uint256 currentTimestamp);
+    error MaxBuybackPriceAgeExceeded(uint256 priceTimestamp, uint256 buybackMaxPriceAge, uint256 currentTimestamp);
+    error EmptyClaimFeesMarket();
 
     // GasUtils errors
     error InsufficientExecutionFee(uint256 minExecutionFee, uint256 executionFee);

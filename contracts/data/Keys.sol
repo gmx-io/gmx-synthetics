@@ -2012,10 +2012,4 @@ library Keys {
             token
         ));
     }
-
-    // @dev key for the buyback max price age
-    // @return key for buyback max price age
-    function buybackMaxPriceAgeKey() internal pure returns (bytes32) {
-        return BUYBACK_MAX_PRICE_AGE;
-    }
 }

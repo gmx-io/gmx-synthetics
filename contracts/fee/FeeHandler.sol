@@ -16,6 +16,8 @@ import "../v1/IVaultGovV1.sol";
 // @title FeeHandler
 contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall {
     using SafeERC20 for IERC20;
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
 
     struct FeeAmounts {
         uint256 gmx;
@@ -68,6 +70,8 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
         if (version == v1) {
             feeAmount = IVaultGovV1(vaultV1.gov()).withdrawFees(address(vaultV1), feeToken, address(this));
         } else if (version == v2) {
+            _validateMarket(market);
+            
             feeAmount = FeeUtils.claimFees(dataStore, eventEmitter, market, feeToken, address(this));
         } else {
             revert Errors.InvalidVersion(version);
@@ -125,7 +129,10 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
             if (version == v1) {
                 feeAmount = vaultV1.feeReserves(feeToken);
             } else if (version == v2) {
-                feeAmount = _getUint(Keys.claimableFeeAmountKey(markets[i], feeToken));
+                address market = markets[i];
+                _validateMarket(market);
+                
+                feeAmount = _getUint(Keys.claimableFeeAmountKey(market, feeToken));
             } else {
                 revert Errors.InvalidVersion(version);
             }
@@ -162,6 +169,19 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
 
         IERC20(buybackToken).safeTransferFrom(msg.sender, address(this), batchSize);
         IERC20(feeToken).safeTransfer(msg.sender, buybackAmount);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "feeToken", feeToken);
+        eventData.addressItems.setItem(1, "buybackToken", buybackToken);
+
+        eventData.uintItems.initItems(3);
+        eventData.uintItems.setItem(0, "batchSize", batchSize);
+        eventData.uintItems.setItem(1, "buybackAmount", buybackAmount);
+        eventData.uintItems.setItem(2, "availableFeeAmount", availableFeeAmount);
+
+        eventEmitter.emitEventLog("BuybackFees", eventData);
     }
 
     function _incrementWithdrawableBuybackTokenAmount(address buybackToken, uint256 amount) internal {
@@ -191,6 +211,17 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
 
     function _setAvailableFeeAmount(address feeToken, address buybackToken, uint256 availableFeeAmount) internal {
         dataStore.setUint(Keys.buybackAvailableFeeAmountKey(feeToken, buybackToken), availableFeeAmount);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "feeToken", feeToken);
+        eventData.addressItems.setItem(1, "buybackToken", buybackToken);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "availableFeeAmount", availableFeeAmount);
+
+        eventEmitter.emitEventLog("SetAvailableFeeAmount", eventData);
     }
 
     function _getAvailableFeeAmount(address feeToken, address buybackToken) internal view returns (uint256) {
@@ -212,10 +243,10 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
         uint256 batchSize
     ) internal view returns (uint256) {
         uint256 priceTimestamp = oracle.minTimestamp();
-        uint256 maxPriceAge = _getUint(Keys.buybackMaxPriceAgeKey());
+        uint256 maxPriceAge = _getUint(Keys.BUYBACK_MAX_PRICE_AGE);
         uint256 currentTimestamp = Chain.currentTimestamp();
         if ((priceTimestamp + maxPriceAge) < currentTimestamp) {
-            revert Errors.PricesOlderThanMaxPriceAge(priceTimestamp, maxPriceAge, currentTimestamp);
+            revert Errors.MaxBuybackPriceAgeExceeded(priceTimestamp, maxPriceAge, currentTimestamp);
         }
 
         uint256 feeTokenPrice = oracle.getPrimaryPrice(feeToken).max;
@@ -255,6 +286,12 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
     function _validateBuybackToken(uint256 batchSize, address buybackToken) internal pure {
         if (batchSize == 0) {
             revert Errors.InvalidBuybackToken(buybackToken);
+        }
+    }
+
+    function _validateMarket(address market) internal pure {
+        if (market == address(0)) {
+            revert Errors.EmptyClaimFeesMarket();
         }
     }
 }
