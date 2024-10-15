@@ -108,15 +108,13 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
         _buybackFees(feeToken, buybackToken, batchSize, outputAmount, availableFeeAmount);
     }
 
-    // @dev note that the returned amount is not capped by _getMaxFeeTokenAmount
-    // as _getMaxFeeTokenAmount requires oracle prices
-    // calculation of output amount would need to be done off-chain based on
-    // the oracle prices and max acceptable price impact
-    function getAvailableFeeAmount(
+    function getOutputAmount(
         address[] calldata markets,
         address feeToken,
         address buybackToken,
-        uint256 version
+        uint256 version,
+        uint256 feeTokenPrice,
+        uint256 buybackTokenPrice
     ) external view returns (uint256) {
         uint256 batchSize = _getBatchSize(buybackToken);
         _validateBuybackToken(batchSize, buybackToken);
@@ -135,6 +133,18 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
             FeeAmounts memory feeAmounts = _getFeeAmounts(version, feeAmount);
             feeAmount = buybackToken == gmx ? feeAmounts.gmx : feeAmounts.wnt;
             availableFeeAmount = availableFeeAmount + feeAmount;
+        }
+
+        uint256 maxFeeTokenAmount = _getMaxFeeTokenAmount(
+            feeToken,
+            buybackToken,
+            batchSize,
+            feeTokenPrice,
+            buybackTokenPrice
+        );
+
+        if (availableFeeAmount > maxFeeTokenAmount) {
+            return maxFeeTokenAmount;
         }
 
         return availableFeeAmount;
@@ -211,6 +221,22 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
         uint256 feeTokenPrice = oracle.getPrimaryPrice(feeToken).max;
         uint256 buybackTokenPrice = oracle.getPrimaryPrice(buybackToken).min;
 
+        return _getMaxFeeTokenAmount(
+            feeToken,
+            buybackToken,
+            batchSize,
+            feeTokenPrice,
+            buybackTokenPrice
+        );
+    }
+
+    function _getMaxFeeTokenAmount(
+        address feeToken,
+        address buybackToken,
+        uint256 batchSize,
+        uint256 feeTokenPrice,
+        uint256 buybackTokenPrice
+    ) internal view returns (uint256) {
         uint256 expectedFeeTokenAmount = Precision.mulDiv(batchSize, buybackTokenPrice, feeTokenPrice);
         uint256 maxPriceImpactFactor = _getUint(Keys.buybackMaxPriceImpactFactorKey(feeToken)) +
             _getUint(Keys.buybackMaxPriceImpactFactorKey(buybackToken));
