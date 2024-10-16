@@ -30,8 +30,19 @@ library NonceUtils {
     // @return bytes32 hash using the next nonce value
     function getNextKey(DataStore dataStore) internal returns (bytes32) {
         uint256 nonce = incrementNonce(dataStore);
-        bytes32 key = keccak256(abi.encode(address(dataStore), nonce));
+        bytes32 key = getKey(dataStore, nonce);
 
         return key;
+    }
+
+    function getCurrentKey(DataStore dataStore) internal view returns (bytes32) {
+        uint256 nonce = getCurrentNonce(dataStore);
+        bytes32 key = getKey(dataStore, nonce);
+
+        return key;
+    }
+
+    function getKey(DataStore dataStore, uint256 nonce) internal pure returns (bytes32) {
+        return keccak256(abi.encode(address(dataStore), nonce));
     }
 }

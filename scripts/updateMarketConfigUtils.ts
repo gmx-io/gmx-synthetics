@@ -121,6 +121,46 @@ const processMarkets = async ({
       );
     }
 
+    if (marketConfig.depositFeeFactorForPositiveImpact || marketConfig.swapFeeFactorForPositiveImpact) {
+      await handleConfig(
+        "uint",
+        keys.DEPOSIT_FEE_FACTOR,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.depositFeeFactorForPositiveImpact ?? marketConfig.swapFeeFactorForPositiveImpact,
+        `depositFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
+      );
+    }
+
+    if (marketConfig.depositFeeFactorForNegativeImpact || marketConfig.swapFeeFactorForNegativeImpact) {
+      await handleConfig(
+        "uint",
+        keys.DEPOSIT_FEE_FACTOR,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.depositFeeFactorForNegativeImpact ?? marketConfig.swapFeeFactorForNegativeImpact,
+        `depositFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
+      );
+    }
+
+    if (marketConfig.withdrawalFeeFactorForPositiveImpact || marketConfig.swapFeeFactorForPositiveImpact) {
+      await handleConfig(
+        "uint",
+        keys.WITHDRAWAL_FEE_FACTOR,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.withdrawalFeeFactorForPositiveImpact ?? marketConfig.swapFeeFactorForPositiveImpact,
+        `withdrawalFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
+      );
+    }
+
+    if (marketConfig.withdrawalFeeFactorForNegativeImpact || marketConfig.swapFeeFactorForNegativeImpact) {
+      await handleConfig(
+        "uint",
+        keys.WITHDRAWAL_FEE_FACTOR,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.withdrawalFeeFactorForNegativeImpact ?? marketConfig.swapFeeFactorForNegativeImpact,
+        `withdrawalFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
+      );
+    }
+
     if (marketConfig.atomicSwapFeeFactor) {
       await handleConfig(
         "uint",

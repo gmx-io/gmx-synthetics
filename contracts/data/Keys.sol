@@ -197,6 +197,8 @@ library Keys {
 
     // @dev key for the percentage amount of position fees to be received
     bytes32 public constant POSITION_FEE_RECEIVER_FACTOR = keccak256(abi.encode("POSITION_FEE_RECEIVER_FACTOR"));
+    // @dev key for the percentage amount of liquidation fees to be received
+    bytes32 public constant LIQUIDATION_FEE_RECEIVER_FACTOR = keccak256(abi.encode("LIQUIDATION_FEE_RECEIVER_FACTOR"));
     // @dev key for the percentage amount of swap fees to be received
     bytes32 public constant SWAP_FEE_RECEIVER_FACTOR = keccak256(abi.encode("SWAP_FEE_RECEIVER_FACTOR"));
     // @dev key for the percentage amount of borrowing fees to be received
@@ -273,6 +275,10 @@ library Keys {
     bytes32 public constant MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS = keccak256(abi.encode("MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS"));
     // @dev key for the position fee factor
     bytes32 public constant POSITION_FEE_FACTOR = keccak256(abi.encode("POSITION_FEE_FACTOR"));
+    bytes32 public constant PRO_TRADER_TIER = keccak256(abi.encode("PRO_TRADER_TIER"));
+    bytes32 public constant PRO_DISCOUNT_FACTOR = keccak256(abi.encode("PRO_DISCOUNT_FACTOR"));
+    // @dev key for the liquidation fee factor
+    bytes32 public constant LIQUIDATION_FEE_FACTOR = keccak256(abi.encode("LIQUIDATION_FEE_FACTOR"));
     // @dev key for the swap impact factor
     bytes32 public constant SWAP_IMPACT_FACTOR = keccak256(abi.encode("SWAP_IMPACT_FACTOR"));
     // @dev key for the swap impact exponent factor
@@ -281,6 +287,8 @@ library Keys {
     bytes32 public constant SWAP_FEE_FACTOR = keccak256(abi.encode("SWAP_FEE_FACTOR"));
     // @dev key for the atomic swap fee factor
     bytes32 public constant ATOMIC_SWAP_FEE_FACTOR = keccak256(abi.encode("ATOMIC_SWAP_FEE_FACTOR"));
+    bytes32 public constant DEPOSIT_FEE_FACTOR = keccak256(abi.encode("DEPOSIT_FEE_FACTOR"));
+    bytes32 public constant WITHDRAWAL_FEE_FACTOR = keccak256(abi.encode("WITHDRAWAL_FEE_FACTOR"));
     // @dev key for the oracle type
     bytes32 public constant ORACLE_TYPE = keccak256(abi.encode("ORACLE_TYPE"));
     // @dev key for open interest
@@ -353,8 +361,6 @@ library Keys {
     bytes32 public constant MIN_FUNDING_FACTOR_PER_SECOND = keccak256(abi.encode("MIN_FUNDING_FACTOR_PER_SECOND"));
     // @dev key for max funding factor
     bytes32 public constant MAX_FUNDING_FACTOR_PER_SECOND = keccak256(abi.encode("MAX_FUNDING_FACTOR_PER_SECOND"));
-    // @dev key for max funding factor limit
-    bytes32 public constant MAX_FUNDING_FACTOR_PER_SECOND_LIMIT = keccak256(abi.encode("MAX_FUNDING_FACTOR_PER_SECOND_LIMIT"));
     // @dev key for threshold for stable funding
     bytes32 public constant THRESHOLD_FOR_STABLE_FUNDING = keccak256(abi.encode("THRESHOLD_FOR_STABLE_FUNDING"));
     // @dev key for threshold for decrease funding
@@ -375,6 +381,7 @@ library Keys {
     bytes32 public constant CLAIMABLE_COLLATERAL_TIME_DIVISOR = keccak256(abi.encode("CLAIMABLE_COLLATERAL_TIME_DIVISOR"));
     // @dev key for claimed collateral amount
     bytes32 public constant CLAIMED_COLLATERAL_AMOUNT = keccak256(abi.encode("CLAIMED_COLLATERAL_AMOUNT"));
+    bytes32 public constant IGNORE_OPEN_INTEREST_FOR_USAGE_FACTOR = keccak256(abi.encode("IGNORE_OPEN_INTEREST_FOR_USAGE_FACTOR"));
     // @dev key for optimal usage factor
     bytes32 public constant OPTIMAL_USAGE_FACTOR = keccak256(abi.encode("OPTIMAL_USAGE_FACTOR"));
     // @dev key for base borrowing factor
@@ -394,6 +401,7 @@ library Keys {
     // @dev key for total borrowing amount
     bytes32 public constant TOTAL_BORROWING = keccak256(abi.encode("TOTAL_BORROWING"));
     // @dev key for affiliate reward
+    bytes32 public constant MIN_AFFILIATE_REWARD_FACTOR = keccak256(abi.encode("MIN_AFFILIATE_REWARD_FACTOR"));
     bytes32 public constant AFFILIATE_REWARD = keccak256(abi.encode("AFFILIATE_REWARD"));
     // @dev key for max allowed subaccount action count
     bytes32 public constant MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT = keccak256(abi.encode("MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT"));
@@ -545,11 +553,8 @@ library Keys {
     // @dev key for deposit gas limit
     // @param singleToken whether a single token or pair tokens are being deposited
     // @return key for deposit gas limit
-    function depositGasLimitKey(bool singleToken) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            DEPOSIT_GAS_LIMIT,
-            singleToken
-        ));
+    function depositGasLimitKey() internal pure returns (bytes32) {
+        return DEPOSIT_GAS_LIMIT;
     }
 
     // @dev key for withdrawal gas limit
@@ -1072,6 +1077,34 @@ library Keys {
         ));
     }
 
+    // @dev key for pro trader's tier
+    function proTraderTierKey(address account) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            PRO_TRADER_TIER,
+            account
+        ));
+    }
+
+
+    // @dev key for pro discount factor for specific tier
+    function proDiscountFactorKey(uint256 proTier) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            PRO_DISCOUNT_FACTOR,
+            proTier
+        ));
+    }
+
+    // @dev key for liquidation fee factor
+    // @param market the market address to check
+    // @param forPositiveImpact whether the fee is for an action that has a positive price impact
+    // @return key for liquidation fee factor
+    function liquidationFeeFactorKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            LIQUIDATION_FEE_FACTOR,
+            market
+        ));
+    }
+
     // @dev key for swap impact factor
     // @param market the market address to check
     // @param isPositive whether the impact is positive or negative
@@ -1113,6 +1146,22 @@ library Keys {
         return keccak256(abi.encode(
             ATOMIC_SWAP_FEE_FACTOR,
             market
+        ));
+    }
+
+    function depositFeeFactorKey(address market, bool forPositiveImpact) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            DEPOSIT_FEE_FACTOR,
+            market,
+            forPositiveImpact
+        ));
+    }
+
+    function withdrawalFeeFactorKey(address market, bool forPositiveImpact) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            WITHDRAWAL_FEE_FACTOR,
+            market,
+            forPositiveImpact
         ));
     }
 
@@ -1664,6 +1713,13 @@ library Keys {
             AFFILIATE_REWARD,
             market,
             token
+        ));
+    }
+
+    function minAffiliateRewardFactorKey(uint256 referralTierLevel) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MIN_AFFILIATE_REWARD_FACTOR,
+            referralTierLevel
         ));
     }
 

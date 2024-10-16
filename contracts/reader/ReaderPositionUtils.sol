@@ -209,17 +209,18 @@ library ReaderPositionUtils {
             positionInfo.position.isLong()
         );
 
-        PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams(
-            dataStore, // dataStore
-            referralStorage, // referralStorage
-            positionInfo.position, // position
-            cache.collateralTokenPrice, // collateralTokenPrice
-            positionInfo.executionPriceResult.priceImpactUsd > 0, // forPositiveImpact
-            cache.market.longToken, // longToken
-            cache.market.shortToken, // shortToken
-            sizeDeltaUsd, // sizeDeltaUsd
-            uiFeeReceiver // uiFeeReceiver
-        );
+        PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams({
+            dataStore: dataStore,
+            referralStorage: referralStorage,
+            position: positionInfo.position,
+            collateralTokenPrice: cache.collateralTokenPrice,
+            forPositiveImpact: positionInfo.executionPriceResult.priceImpactUsd > 0,
+            longToken: cache.market.longToken,
+            shortToken: cache.market.shortToken,
+            sizeDeltaUsd: sizeDeltaUsd,
+            uiFeeReceiver: uiFeeReceiver,
+            isLiquidation: false
+        });
 
         positionInfo.fees = PositionPricingUtils.getPositionFees(getPositionFeesParams);
 
@@ -309,33 +310,12 @@ library ReaderPositionUtils {
             positionInfo.fees.positionFeeAmount
             + positionInfo.fees.borrowing.borrowingFeeAmount
             + positionInfo.fees.ui.uiFeeAmount
-            - positionInfo.fees.referral.traderDiscountAmount;
+            - positionInfo.fees.totalDiscountAmount;
 
         positionInfo.fees.totalCostAmount =
             positionInfo.fees.totalCostAmountExcludingFunding
             + positionInfo.fees.funding.fundingFeeAmount;
 
         return positionInfo;
-    }
-
-    function isPositionLiquidatable(
-        DataStore dataStore,
-        IReferralStorage referralStorage,
-        bytes32 positionKey,
-        Market.Props memory market,
-        MarketUtils.MarketPrices memory prices,
-        bool shouldValidateMinCollateralUsd
-    ) public view returns (bool, string memory, PositionUtils.IsPositionLiquidatableInfo memory) {
-        Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
-
-        return
-            PositionUtils.isPositionLiquidatable(
-                dataStore,
-                referralStorage,
-                position,
-                market,
-                prices,
-                shouldValidateMinCollateralUsd
-            );
     }
 }

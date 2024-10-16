@@ -13,8 +13,6 @@ import { errorsContract } from "../../utils/error";
 import { OrderType, DecreasePositionSwapType, getOrderKeys } from "../../utils/order";
 
 describe("ExchangeRouter", () => {
-  const { provider } = ethers;
-
   let fixture;
   let user0, user1, user2, user3;
   let reader,
@@ -79,7 +77,6 @@ describe("ExchangeRouter", () => {
       { value: expandDecimals(11, 18) }
     );
 
-    const block = await provider.getBlock();
     const depositKeys = await getDepositKeys(dataStore, 0, 1);
     const deposit = await reader.getDeposit(dataStore.address, depositKeys[0]);
 
@@ -94,7 +91,6 @@ describe("ExchangeRouter", () => {
     expect(deposit.numbers.initialLongTokenAmount).eq(expandDecimals(10, 18));
     expect(deposit.numbers.initialShortTokenAmount).eq(expandDecimals(10 * 5000, 6));
     expect(deposit.numbers.minMarketTokens).eq(100);
-    expect(deposit.numbers.updatedAtBlock).eq(block.number);
     expect(deposit.numbers.executionFee).eq(expandDecimals(1, 18));
     expect(deposit.numbers.callbackGasLimit).eq("200000");
     expect(deposit.flags.shouldUnwrapNativeToken).eq(true);
@@ -131,6 +127,7 @@ describe("ExchangeRouter", () => {
               executionFee,
               callbackGasLimit: "200000",
               minOutputAmount: 700,
+              validFromTime: 0,
             },
             orderType: OrderType.LimitIncrease,
             decreasePositionSwapType: DecreasePositionSwapType.SwapCollateralTokenToPnlToken,
@@ -143,7 +140,6 @@ describe("ExchangeRouter", () => {
       { value: expandDecimals(11, 18) }
     );
 
-    const block = await provider.getBlock();
     const orderKeys = await getOrderKeys(dataStore, 0, 1);
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
@@ -162,7 +158,6 @@ describe("ExchangeRouter", () => {
     expect(order.numbers.executionFee).eq(expandDecimals(1, 18));
     expect(order.numbers.callbackGasLimit).eq("200000");
     expect(order.numbers.minOutputAmount).eq(700);
-    expect(order.numbers.updatedAtBlock).eq(block.number);
 
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(true);
@@ -213,7 +208,6 @@ describe("ExchangeRouter", () => {
       { value: expandDecimals(1, 18) }
     );
 
-    const block = await provider.getBlock();
     const withdrawalKeys = await getWithdrawalKeys(dataStore, 0, 1);
     const withdrawal = await reader.getWithdrawal(dataStore.address, withdrawalKeys[0]);
 
@@ -227,7 +221,6 @@ describe("ExchangeRouter", () => {
     expect(withdrawal.numbers.marketTokenAmount).eq(700);
     expect(withdrawal.numbers.minLongTokenAmount).eq(800);
     expect(withdrawal.numbers.minShortTokenAmount).eq(900);
-    expect(withdrawal.numbers.updatedAtBlock).eq(block.number);
     expect(withdrawal.numbers.executionFee).eq(expandDecimals(1, 18));
     expect(withdrawal.numbers.callbackGasLimit).eq("200000");
     expect(withdrawal.flags.shouldUnwrapNativeToken).eq(true);

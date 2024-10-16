@@ -412,7 +412,6 @@ library GlvDepositUtils {
                 initialLongTokenAmount: glvDeposit.initialLongTokenAmount(),
                 initialShortTokenAmount: glvDeposit.initialShortTokenAmount(),
                 minMarketTokens: 0,
-                updatedAtBlock: 0,
                 updatedAtTime: glvDeposit.updatedAtTime(),
                 executionFee: 0,
                 callbackGasLimit: 0
@@ -432,7 +431,7 @@ library GlvDepositUtils {
                 depositKey,
                 params.keeper,
                 params.startingGas,
-                ISwapPricingUtils.SwapPricingType.TwoStep,
+                ISwapPricingUtils.SwapPricingType.Deposit,
                 true // includeVirtualInventoryImpact
             );
 

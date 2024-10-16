@@ -270,12 +270,16 @@ library SwapPricingUtils {
         // a user could split the order into two, to incur a smaller fee, reducing the fee through this should not be a large issue
         uint256 feeFactor;
 
-        if (swapPricingType == ISwapPricingUtils.SwapPricingType.TwoStep) {
+        if (swapPricingType == ISwapPricingUtils.SwapPricingType.Swap) {
             feeFactor = dataStore.getUint(Keys.swapFeeFactorKey(marketToken, forPositiveImpact));
         } else if (swapPricingType == ISwapPricingUtils.SwapPricingType.Shift) {
             // empty branch as feeFactor is already zero
         } else if (swapPricingType == ISwapPricingUtils.SwapPricingType.Atomic) {
             feeFactor = dataStore.getUint(Keys.atomicSwapFeeFactorKey(marketToken));
+        } else if (swapPricingType == ISwapPricingUtils.SwapPricingType.Deposit) {
+            feeFactor = dataStore.getUint(Keys.depositFeeFactorKey(marketToken, forPositiveImpact));
+        } else if (swapPricingType == ISwapPricingUtils.SwapPricingType.Withdrawal) {
+            feeFactor = dataStore.getUint(Keys.withdrawalFeeFactorKey(marketToken, forPositiveImpact));
         }
 
         uint256 swapFeeReceiverFactor = dataStore.getUint(Keys.SWAP_FEE_RECEIVER_FACTOR);
