@@ -56,30 +56,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         _;
     }
 
-    function setFundingRate(
-        address market,
-        uint256 maxFundingFactorPerSecond
-    ) external onlyKeeper nonReentrant {
-        uint256 limit = dataStore.getUint(Keys.MAX_FUNDING_FACTOR_PER_SECOND_LIMIT);
-
-        if (maxFundingFactorPerSecond > limit) {
-            revert Errors.MaxFundingFactorPerSecondLimitExceeded(maxFundingFactorPerSecond, limit);
-        }
-
-        dataStore.setUint(Keys.maxFundingFactorPerSecondKey(market), maxFundingFactorPerSecond);
-
-        EventUtils.EventLogData memory eventData;
-        eventData.addressItems.initItems(1);
-        eventData.addressItems.setItem(0, "market", market);
-        eventData.uintItems.initItems(1);
-        eventData.uintItems.setItem(0, "maxFundingFactorPerSecond", maxFundingFactorPerSecond);
-        eventEmitter.emitEventLog1(
-            "ConfigSetFundingRate",
-            Cast.toBytes32(market),
-            eventData
-        );
-    }
-
     function initOracleProviderForToken(address token, address provider) external onlyConfigKeeper nonReentrant {
         if (dataStore.getAddress(Keys.oracleProviderForTokenKey(token)) != address(0)) {
             revert Errors.OracleProviderAlreadyExistsForToken(token);
@@ -337,7 +313,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         bytes32 fullKey = Keys.getFullKey(baseKey, data);
 
-        _validateRange(baseKey, value);
+        _validateRange(baseKey, data, value);
 
         dataStore.setUint(fullKey, value);
 
@@ -446,6 +422,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CLAIM_UI_FEES_FEATURE_DISABLED] = true;
 
+        allowedBaseKeys[Keys.MIN_AFFILIATE_REWARD_FACTOR] = true;
+
         allowedBaseKeys[Keys.SUBACCOUNT_FEATURE_DISABLED] = true;
 
         allowedBaseKeys[Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS] = true;
@@ -457,6 +435,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR] = true;
 
         allowedBaseKeys[Keys.POSITION_FEE_RECEIVER_FACTOR] = true;
+        allowedBaseKeys[Keys.LIQUIDATION_FEE_RECEIVER_FACTOR] = true;
         allowedBaseKeys[Keys.SWAP_FEE_RECEIVER_FACTOR] = true;
         allowedBaseKeys[Keys.BORROWING_FEE_RECEIVER_FACTOR] = true;
 
@@ -496,10 +475,15 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.POSITION_IMPACT_EXPONENT_FACTOR] = true;
         allowedBaseKeys[Keys.MAX_POSITION_IMPACT_FACTOR] = true;
         allowedBaseKeys[Keys.POSITION_FEE_FACTOR] = true;
+        allowedBaseKeys[Keys.PRO_DISCOUNT_FACTOR] = true;
+        allowedBaseKeys[Keys.PRO_TRADER_TIER] = true;
+        allowedBaseKeys[Keys.LIQUIDATION_FEE_FACTOR] = true;
 
         allowedBaseKeys[Keys.SWAP_IMPACT_FACTOR] = true;
         allowedBaseKeys[Keys.SWAP_IMPACT_EXPONENT_FACTOR] = true;
         allowedBaseKeys[Keys.SWAP_FEE_FACTOR] = true;
+        allowedBaseKeys[Keys.DEPOSIT_FEE_FACTOR] = true;
+        allowedBaseKeys[Keys.WITHDRAWAL_FEE_FACTOR] = true;
         allowedBaseKeys[Keys.ATOMIC_SWAP_FEE_FACTOR] = true;
 
         allowedBaseKeys[Keys.MAX_UI_FEE_FACTOR] = true;
@@ -520,9 +504,10 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.FUNDING_DECREASE_FACTOR_PER_SECOND] = true;
         allowedBaseKeys[Keys.MIN_FUNDING_FACTOR_PER_SECOND] = true;
         allowedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND] = true;
-        allowedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND_LIMIT] = true;
         allowedBaseKeys[Keys.THRESHOLD_FOR_STABLE_FUNDING] = true;
         allowedBaseKeys[Keys.THRESHOLD_FOR_DECREASE_FUNDING] = true;
+
+        allowedBaseKeys[Keys.IGNORE_OPEN_INTEREST_FOR_USAGE_FACTOR] = true;
 
         allowedBaseKeys[Keys.OPTIMAL_USAGE_FACTOR] = true;
         allowedBaseKeys[Keys.BASE_BORROWING_FACTOR] = true;
@@ -556,9 +541,13 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE] = true;
         allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR] = true;
 
+        allowedLimitedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND] = true;
+
         allowedLimitedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
         allowedLimitedBaseKeys[Keys.MAX_POOL_USD_FOR_DEPOSIT] = true;
         allowedLimitedBaseKeys[Keys.MAX_OPEN_INTEREST] = true;
+
+        allowedLimitedBaseKeys[Keys.PRO_TRADER_TIER] = true;
     }
 
     // @dev validate that the baseKey is allowed to be used
@@ -586,7 +575,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @dev validate that the value is within the allowed range
     // @param baseKey the base key for the value
     // @param value the value to be set
-    function _validateRange(bytes32 baseKey, uint256 value) internal pure {
+    function _validateRange(bytes32 baseKey, bytes memory data, uint256 value) internal view {
         if (
             baseKey == Keys.SEQUENCER_GRACE_DURATION
         ) {
@@ -597,11 +586,26 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         }
 
         if (
-            baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND ||
-            baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND_LIMIT
+            baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND
         ) {
             // 0.00001% per second, ~315% per year
             if (value > 100000000000000000000000) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+
+            bytes32 minFundingFactorPerSecondKey = Keys.getFullKey(Keys.MIN_FUNDING_FACTOR_PER_SECOND, data);
+            uint256 minFundingFactorPerSecond = dataStore.getUint(minFundingFactorPerSecondKey);
+            if (value < minFundingFactorPerSecond) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (
+            baseKey == Keys.MIN_FUNDING_FACTOR_PER_SECOND
+        ) {
+            bytes32 maxFundingFactorPerSecondKey = Keys.getFullKey(Keys.MAX_FUNDING_FACTOR_PER_SECOND, data);
+            uint256 maxFundingFactorPerSecond = dataStore.getUint(maxFundingFactorPerSecondKey);
+            if (value > maxFundingFactorPerSecond) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }
@@ -658,12 +662,21 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         if (
             baseKey == Keys.SWAP_FEE_FACTOR ||
+            baseKey == Keys.DEPOSIT_FEE_FACTOR ||
+            baseKey == Keys.WITHDRAWAL_FEE_FACTOR ||
             baseKey == Keys.POSITION_FEE_FACTOR ||
             baseKey == Keys.MAX_UI_FEE_FACTOR ||
             baseKey == Keys.ATOMIC_SWAP_FEE_FACTOR
         ) {
             // revert if value > 5%
             if (value > 5 * Precision.FLOAT_PRECISION / 100) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (baseKey == Keys.LIQUIDATION_FEE_FACTOR) {
+            // revert if value > 1%
+            if (value > Precision.FLOAT_PRECISION / 100) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }
@@ -679,9 +692,11 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.POSITION_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.SWAP_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.BORROWING_FEE_RECEIVER_FACTOR ||
+            baseKey == Keys.LIQUIDATION_FEE_RECEIVER_FACTOR ||
             baseKey == Keys.MAX_PNL_FACTOR ||
             baseKey == Keys.MIN_PNL_FACTOR_AFTER_ADL ||
-            baseKey == Keys.OPTIMAL_USAGE_FACTOR
+            baseKey == Keys.OPTIMAL_USAGE_FACTOR ||
+            baseKey == Keys.PRO_DISCOUNT_FACTOR
         ) {
             // revert if value > 100%
             if (value > Precision.FLOAT_PRECISION) {

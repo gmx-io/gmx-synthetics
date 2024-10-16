@@ -41,6 +41,7 @@ interface IBaseOrderUtils {
     // @param executionFee for order.executionFee
     // @param callbackGasLimit for order.callbackGasLimit
     // @param minOutputAmount for order.minOutputAmount
+    // @param validFromTime for order.validFromTime
     struct CreateOrderParamsNumbers {
         uint256 sizeDeltaUsd;
         uint256 initialCollateralDeltaAmount;
@@ -49,5 +50,6 @@ interface IBaseOrderUtils {
         uint256 executionFee;
         uint256 callbackGasLimit;
         uint256 minOutputAmount;
+        uint256 validFromTime;
     }
 }

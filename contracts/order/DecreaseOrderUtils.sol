@@ -37,6 +37,7 @@ library DecreaseOrderUtils {
             params.contracts.dataStore,
             order.orderType(),
             order.updatedAtTime(),
+            order.validFromTime(),
             position.increasedAtTime(),
             position.decreasedAtTime(),
             params.minOracleTimestamp,
@@ -152,6 +153,7 @@ library DecreaseOrderUtils {
         DataStore dataStore,
         Order.OrderType orderType,
         uint256 orderUpdatedAtTime,
+        uint256 orderValidFromTime,
         uint256 positionIncreasedAtTime,
         uint256 positionDecreasedAtTime,
         uint256 minOracleTimestamp,
@@ -172,6 +174,13 @@ library DecreaseOrderUtils {
                 );
             }
             return;
+        }
+
+        if (
+            !BaseOrderUtils.isMarketOrder(orderType) &&
+            minOracleTimestamp < orderValidFromTime
+        ) {
+            revert Errors.OracleTimestampsAreSmallerThanRequired(minOracleTimestamp, orderValidFromTime);
         }
 
         // a user could attempt to frontrun prices by creating a limit decrease

@@ -13,16 +13,18 @@ import {
   handleOrder,
 } from "../../utils/order";
 import { getAccountPositionCount } from "../../utils/position";
+import * as keys from "../../utils/keys";
+import { errorsContract } from "../../utils/error";
 
 describe("Exchange.AutoCancelOrder", () => {
   let fixture;
   let user0;
-  let dataStore, ethUsdMarket, wnt;
+  let dataStore, exchangeRouter, reader, ethUsdMarket, wnt;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0 } = fixture.accounts);
-    ({ dataStore, ethUsdMarket, wnt } = fixture.contracts);
+    ({ dataStore, exchangeRouter, reader, ethUsdMarket, wnt } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -30,6 +32,52 @@ describe("Exchange.AutoCancelOrder", () => {
         longTokenAmount: expandDecimals(1000, 18),
       },
     });
+  });
+
+  it("MaxAutoCancelOrdersExceeded", async () => {
+    await dataStore.setUint(keys.MAX_AUTO_CANCEL_ORDERS, 2);
+
+    const _createOrder = () =>
+      createOrder(fixture, {
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: 0,
+        sizeDeltaUsd: decimalToFloat(200 * 1000),
+        acceptablePrice: expandDecimals(4800, 12),
+        orderType: OrderType.StopLossDecrease,
+        isLong: true,
+        autoCancel: true,
+      });
+
+    await _createOrder();
+    await _createOrder();
+
+    let orderKeys = await getOrderKeys(dataStore, 0, 10);
+    const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+    expect(orderKeys.length).eq(2);
+
+    // there was a bug that caused order updates to fail with MaxAutoCancelOrdersExceeded
+    // if amount of auto cancel orders was at max (not exceeded)
+    await exchangeRouter
+      .connect(user0)
+      .updateOrder(
+        orderKeys[0],
+        order.numbers.sizeDeltaUsd,
+        order.numbers.acceptablePrice,
+        order.numbers.triggerPrice,
+        order.numbers.minOutputAmount,
+        order.numbers.validFromTime,
+        order.flags.autoCancel
+      );
+
+    // expect revert
+    await expect(_createOrder()).to.be.revertedWithCustomError(errorsContract, "MaxAutoCancelOrdersExceeded");
+    expect(orderKeys.length).eq(2);
+
+    await dataStore.setUint(keys.MAX_AUTO_CANCEL_ORDERS, 3);
+    await _createOrder();
+    orderKeys = await getOrderKeys(dataStore, 0, 10);
+    expect(orderKeys.length).eq(3);
   });
 
   it("auto cancels orders on position close", async () => {
