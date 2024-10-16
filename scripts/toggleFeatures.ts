@@ -28,6 +28,10 @@ export async function main() {
       baseKey: keys.EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED,
       data: encodeData(["address"], ["0xa19fa3f0d8e7b7a8963420de504b624167e709b2"]),
     },
+    {
+      baseKey: keys.CREATE_GLV_DEPOSIT_FEATURE_DISABLED,
+      data: encodeData(["address"], ["0x26DdDaA629Bb35FC1853d051561f2200dD190588"]),
+    },
     // {
     //   baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
     //   data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.MarketSwap]),
