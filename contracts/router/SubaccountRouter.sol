@@ -100,7 +100,8 @@ contract SubaccountRouter is BaseRouter {
             params.orderType == Order.OrderType.MarketSwap ||
             params.orderType == Order.OrderType.LimitSwap ||
             params.orderType == Order.OrderType.MarketIncrease ||
-            params.orderType == Order.OrderType.LimitIncrease
+            params.orderType == Order.OrderType.LimitIncrease ||
+            params.orderType == Order.OrderType.StopIncrease
         ) {
             router.pluginTransfer(
                 params.addresses.initialCollateralToken, // token
@@ -131,6 +132,7 @@ contract SubaccountRouter is BaseRouter {
         uint256 acceptablePrice,
         uint256 triggerPrice,
         uint256 minOutputAmount,
+        uint256 validFromTime,
         bool autoCancel
     ) external payable nonReentrant {
         uint256 startingGas = gasleft();
@@ -147,6 +149,7 @@ contract SubaccountRouter is BaseRouter {
             acceptablePrice,
             triggerPrice,
             minOutputAmount,
+            validFromTime,
             autoCancel,
             order
         );

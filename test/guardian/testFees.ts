@@ -206,9 +206,9 @@ describe("Guardian.Fees", () => {
 
           // Trader splits $50 discount with the affiliate
           expect(positionFeesCollectedEvent.affiliate).to.eq(user1.address);
-          expect(positionFeesCollectedEvent.totalRebateAmount).to.eq(expandDecimals(50, 6));
-          expect(positionFeesCollectedEvent.traderDiscountAmount).to.eq(expandDecimals(25, 6));
-          expect(positionFeesCollectedEvent.affiliateRewardAmount).to.eq(expandDecimals(25, 6));
+          expect(positionFeesCollectedEvent["referral.totalRebateAmount"]).to.eq(expandDecimals(50, 6));
+          expect(positionFeesCollectedEvent["referral.traderDiscountAmount"]).to.eq(expandDecimals(25, 6));
+          expect(positionFeesCollectedEvent["referral.affiliateRewardAmount"]).to.eq(expandDecimals(25, 6));
         },
       },
     });
@@ -259,9 +259,9 @@ describe("Guardian.Fees", () => {
 
           // Trader splits $25 discount with the affiliate
           expect(positionFeesCollectedEvent.affiliate).to.eq(user1.address);
-          expect(positionFeesCollectedEvent.totalRebateAmount).to.eq(expandDecimals(25, 6));
-          expect(positionFeesCollectedEvent.traderDiscountAmount).to.eq(expandDecimals(125, 5));
-          expect(positionFeesCollectedEvent.affiliateRewardAmount).to.eq(expandDecimals(125, 5));
+          expect(positionFeesCollectedEvent["referral.totalRebateAmount"]).to.eq(expandDecimals(25, 6));
+          expect(positionFeesCollectedEvent["referral.traderDiscountAmount"]).to.eq(expandDecimals(125, 5));
+          expect(positionFeesCollectedEvent["referral.affiliateRewardAmount"]).to.eq(expandDecimals(125, 5));
         },
       },
     });
@@ -308,9 +308,9 @@ describe("Guardian.Fees", () => {
 
           // Trader splits $25 discount with the affiliate
           expect(positionFeesCollectedEvent.affiliate).to.eq(user1.address);
-          expect(positionFeesCollectedEvent.totalRebateAmount).to.eq(expandDecimals(25, 6));
-          expect(positionFeesCollectedEvent.traderDiscountAmount).to.eq(expandDecimals(125, 5));
-          expect(positionFeesCollectedEvent.affiliateRewardAmount).to.eq(expandDecimals(125, 5));
+          expect(positionFeesCollectedEvent["referral.totalRebateAmount"]).to.eq(expandDecimals(25, 6));
+          expect(positionFeesCollectedEvent["referral.traderDiscountAmount"]).to.eq(expandDecimals(125, 5));
+          expect(positionFeesCollectedEvent["referral.affiliateRewardAmount"]).to.eq(expandDecimals(125, 5));
         },
       },
     });
@@ -750,8 +750,8 @@ describe("Guardian.Fees", () => {
 
           // uiFeeAmount & referral amounts should be 0
           expect(positionFeesCollectedEvent.uiFeeAmount).to.eq(0);
-          expect(positionFeesCollectedEvent.totalRebateAmount).to.eq(0);
-          expect(positionFeesCollectedEvent.traderDiscountAmount).to.eq(0);
+          expect(positionFeesCollectedEvent["referral.totalRebateAmount"]).to.eq(undefined);
+          expect(positionFeesCollectedEvent["referral.traderDiscountAmount"]).to.eq(undefined);
 
           // Negative impact amount for $25,000 of imbalance
           // 25,000^2 * 1e22 / 1e30 = $6.25
@@ -885,8 +885,8 @@ describe("Guardian.Fees", () => {
 
           // uiFeeAmount & referral amounts should be 0
           expect(positionFeesCollectedEvent.uiFeeAmount).to.eq(0);
-          expect(positionFeesCollectedEvent.totalRebateAmount).to.eq(0);
-          expect(positionFeesCollectedEvent.traderDiscountAmount).to.eq(0);
+          expect(positionFeesCollectedEvent["referral.totalRebateAmount"]).to.eq(undefined);
+          expect(positionFeesCollectedEvent["referral.traderDiscountAmount"]).to.eq(undefined);
 
           // Positive impact amount for $25,000 of balance
           // 25,000^2 * 5e21 / 1e30 = $3.125
@@ -1042,8 +1042,8 @@ describe("Guardian.Fees", () => {
 
           // uiFeeAmount & referral amounts should be 0
           expect(positionFeesCollectedEvent.uiFeeAmount).to.eq(0);
-          expect(positionFeesCollectedEvent.totalRebateAmount).to.eq(0);
-          expect(positionFeesCollectedEvent.traderDiscountAmount).to.eq(0);
+          expect(positionFeesCollectedEvent["referral.totalRebateAmount"]).to.eq(undefined);
+          expect(positionFeesCollectedEvent["referral.traderDiscountAmount"]).to.eq(undefined);
 
           // No price impact is applied
           expect(positionDecreasedEvent.priceImpactUsd).to.eq(0);
@@ -1175,8 +1175,8 @@ describe("Guardian.Fees", () => {
 
         // uiFeeAmount & referral amounts should be 0
         expect(positionFeesCollectedEvent.uiFeeAmount).to.eq(0);
-        expect(positionFeesCollectedEvent.totalRebateAmount).to.eq(0);
-        expect(positionFeesCollectedEvent.traderDiscountAmount).to.eq(0);
+        expect(positionFeesCollectedEvent["referral.totalRebateAmount"]).to.eq(undefined);
+        expect(positionFeesCollectedEvent["referral.traderDiscountAmount"]).to.eq(undefined);
 
         // Positive impact amount for $25,000 of balance
         // 25,000^2 * 5e21 / 1e30 = $3.125

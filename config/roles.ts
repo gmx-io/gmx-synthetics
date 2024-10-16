@@ -95,6 +95,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       CONFIG_KEEPER: {
         "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
+        "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
         "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9": true, // multisig_1
         "0x31FaBf54278E79069c4E102e9fB79d6a44be53A8": true, // ConfigSyncer_3
       },
@@ -104,6 +105,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       MARKET_KEEPER: {
         "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
+        "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
       },
       ROLE_ADMIN: {
         "0xf32b417A93Acc039B236F1eCC86B56bd3cB8E698": true, // Timelock_3
@@ -148,7 +150,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xdaFa7Deb67805d7498Aa926002bB2d713D1d9256": true, // GlvFactory_2
       },
       GOV_TOKEN_CONTROLLER: {
-        "0x159854e14A862Df9E39E1D128b8e5F70B4A3cE9B": true, // RewardRouterV2_1
+        "0x5E4766F932ce00aA4a1A82d3Da85adf15C5694A1": true, // RewardRouterV2_2
       },
     },
     avalanche: {
@@ -160,6 +162,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       CONFIG_KEEPER: {
         "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
+        "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
         "0x15F9eBC71c539926B8f652a534d29B4Af57CaD55": true, // multisig_1
         "0xe75f1fA4858A99e07ca878388AE9259Ba048C87A": true, // ConfigSyncer_3
       },
@@ -169,6 +172,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       MARKET_KEEPER: {
         "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
+        "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
       },
       ROLE_ADMIN: {
         "0x9Dd6EB1069385D85Ae204543BabB7333181ec8A5": true, // Timelock_3
@@ -176,6 +180,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       ROUTER_PLUGIN: {
         "0x3BE24AED1a4CcaDebF2956e02C27a00726D4327d": true, // ExchangeRouter_3
         "0xe5485a4fD6527911e9b82A75A1bFEd6e47BE2241": true, // SubaccountRouter_2
+        "0xEa90EC1228F7D1b3D47D84d1c9D46dBDFEfF7709": true, // GlvRouter_1
       },
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
@@ -206,9 +211,13 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
 
         "0x28AD6fF2683a3D36C05F1D9ec95b907086431a27": true, // TimestampInitializer_3
         "0x7dA618EE7b32af18B749a3715332DBcD820D0913": true, // ShiftHandler_3
+
+        "0x9ab8b533B817C41506999D6ff05d25079B0A38cc": true, // GlvHandler_1
+        "0xEa90EC1228F7D1b3D47D84d1c9D46dBDFEfF7709": true, // GlvRouter_1
+        "0x5d6B84086DA6d4B0b6C0dF7E02f8a6A039226530": true, // GlvFactory_2
       },
       GOV_TOKEN_CONTROLLER: {
-        "0xa192D0681E2b9484d1fA48083D36B8A2D0Da1809": true, // RewardRouterV2_1
+        "0x091eD806490Cc58Fd514441499e58984cCce0630": true, // RewardRouterV2_2
       },
     },
     avalancheFuji: {

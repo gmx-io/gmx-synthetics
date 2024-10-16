@@ -70,7 +70,7 @@ contract MarketFactory is RoleModule {
 
         MarketStoreUtils.set(dataStore, address(marketToken), salt, market);
 
-        emitMarketCreated(address(marketToken), salt, indexToken, longToken, shortToken);
+        emitMarketCreated(address(marketToken), salt, indexToken, longToken, shortToken, marketType);
 
         return market;
     }
@@ -80,7 +80,8 @@ contract MarketFactory is RoleModule {
         bytes32 salt,
         address indexToken,
         address longToken,
-        address shortToken
+        address shortToken,
+        bytes32 marketType
     ) internal {
         EventUtils.EventLogData memory eventData;
 
@@ -90,8 +91,9 @@ contract MarketFactory is RoleModule {
         eventData.addressItems.setItem(2, "longToken", longToken);
         eventData.addressItems.setItem(3, "shortToken", shortToken);
 
-        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.initItems(2);
         eventData.bytes32Items.setItem(0, "salt", salt);
+        eventData.bytes32Items.setItem(1, "marketType", marketType);
 
         eventEmitter.emitEventLog1(
             "MarketCreated",

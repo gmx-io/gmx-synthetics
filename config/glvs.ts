@@ -72,6 +72,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
             glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
             glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
           },
+          {
+            indexToken: "EIGEN",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(300_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(300_000),
+          },
         ],
       },
       {
@@ -86,24 +91,30 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         markets: [
           {
             indexToken: "BTC",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(10_000_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(16_500_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(13_000_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(22_000_000),
           },
           {
             indexToken: "ORDI",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(400_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(400_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(600_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(600_000),
           },
           {
             indexToken: "STX",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(550_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(550_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(800_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(800_000),
+          },
+          {
+            indexToken: "SATS",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(400_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(400_000),
           },
         ],
       },
     ],
     avalanche: [
       {
+        address: "0x901eE57f7118A7be56ac079cbCDa7F22663A3874",
         name: "GMX Liquidity Vault [WAVAX-USDC]",
         symbol: "GLV [WAVAX-USDC]",
         longToken: "WAVAX",
@@ -114,8 +125,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         markets: [
           {
             indexToken: "WAVAX",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(6_770_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(13_000_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(3_385_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(6_500_000),
           },
           {
             indexToken: "XRP",

@@ -81,7 +81,7 @@ library ReaderPricingUtils {
             amountIn,
             priceImpactUsd > 0, // forPositiveImpact
             uiFeeReceiver,
-            ISwapPricingUtils.SwapPricingType.TwoStep
+            ISwapPricingUtils.SwapPricingType.Swap
         );
 
         int256 impactAmount;

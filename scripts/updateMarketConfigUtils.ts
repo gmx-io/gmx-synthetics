@@ -1,33 +1,39 @@
 import hre, { network } from "hardhat";
 
-import { validateMarketConfigs } from "./validateMarketConfigsUtils";
-import { encodeData } from "../utils/hash";
-import { bigNumberify } from "../utils/math";
-import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../utils/market";
-import { getFullKey, appendUintConfigIfDifferent } from "../utils/config";
+import fetch from "node-fetch";
 import { handleInBatches } from "../utils/batch";
+import { appendUintConfigIfDifferent, getFullKey } from "../utils/config";
+import { encodeData } from "../utils/hash";
 import * as keys from "../utils/keys";
+import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../utils/market";
+import { bigNumberify } from "../utils/math";
+import { validateMarketConfigs } from "./validateMarketConfigsUtils";
 
 const RISK_ORACLE_MANAGED_BASE_KEYS = [keys.MAX_OPEN_INTEREST];
+const RISK_ORACLE_SUPPORTED_NETWORKS = ["arbitrum", "avalanche", "avalancheFuji"];
 
 const processMarkets = async ({
   markets,
   onchainMarketsByTokens,
+  supportedRiskOracleMarkets,
   tokens,
   generalConfig,
   handleConfig: handleConfigArg,
 }) => {
-  const shouldHandleBaseKey = (baseKey: string) => {
-    if (hre.network.name !== "arbitrum") {
-      // risk oracle is enabled on arbitrum only
+  const shouldHandleBaseKey = (baseKey: string, isSupportedByRiskOracle: boolean) => {
+    if (!RISK_ORACLE_SUPPORTED_NETWORKS.includes(hre.network.name)) {
       return true;
     }
 
-    if (process.env.INCLUDE_RISK_ORACLE_BASE_KEYS) {
+    if (!RISK_ORACLE_MANAGED_BASE_KEYS.includes(baseKey)) {
       return true;
     }
 
-    return !RISK_ORACLE_MANAGED_BASE_KEYS.includes(baseKey);
+    if (isSupportedByRiskOracle) {
+      return process.env.INCLUDE_RISK_ORACLE_BASE_KEYS;
+    }
+
+    return true;
   };
 
   const ignoredRiskOracleParams: string[] = [];
@@ -38,7 +44,7 @@ const processMarkets = async ({
     const onchainMarket = onchainMarketsByTokens[marketKey];
 
     if (!onchainMarket) {
-      console.warn("WARN: market %s:%s:%s:%s does not exist. skip", marketKey, indexToken, longToken, shortToken);
+      console.info("WARN: market %s:%s:%s:%s does not exist. skip", marketKey, indexToken, longToken, shortToken);
       continue;
     }
 
@@ -46,7 +52,7 @@ const processMarkets = async ({
     const marketLabel = `${marketConfig.tokens.indexToken} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}]`;
 
     const handleConfig = async (type, baseKey, keyData, value, label) => {
-      if (shouldHandleBaseKey(baseKey)) {
+      if (shouldHandleBaseKey(baseKey, supportedRiskOracleMarkets.has(marketConfig))) {
         await handleConfigArg(type, baseKey, keyData, value, label);
       } else {
         ignoredRiskOracleParams.push(label);
@@ -112,6 +118,46 @@ const processMarkets = async ({
         encodeData(["address", "bool"], [marketToken, false]),
         marketConfig.swapFeeFactorForNegativeImpact,
         `swapFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
+      );
+    }
+
+    if (marketConfig.depositFeeFactorForPositiveImpact || marketConfig.swapFeeFactorForPositiveImpact) {
+      await handleConfig(
+        "uint",
+        keys.DEPOSIT_FEE_FACTOR,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.depositFeeFactorForPositiveImpact ?? marketConfig.swapFeeFactorForPositiveImpact,
+        `depositFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
+      );
+    }
+
+    if (marketConfig.depositFeeFactorForNegativeImpact || marketConfig.swapFeeFactorForNegativeImpact) {
+      await handleConfig(
+        "uint",
+        keys.DEPOSIT_FEE_FACTOR,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.depositFeeFactorForNegativeImpact ?? marketConfig.swapFeeFactorForNegativeImpact,
+        `depositFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
+      );
+    }
+
+    if (marketConfig.withdrawalFeeFactorForPositiveImpact || marketConfig.swapFeeFactorForPositiveImpact) {
+      await handleConfig(
+        "uint",
+        keys.WITHDRAWAL_FEE_FACTOR,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.withdrawalFeeFactorForPositiveImpact ?? marketConfig.swapFeeFactorForPositiveImpact,
+        `withdrawalFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
+      );
+    }
+
+    if (marketConfig.withdrawalFeeFactorForNegativeImpact || marketConfig.swapFeeFactorForNegativeImpact) {
+      await handleConfig(
+        "uint",
+        keys.WITHDRAWAL_FEE_FACTOR,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.withdrawalFeeFactorForNegativeImpact ?? marketConfig.swapFeeFactorForNegativeImpact,
+        `withdrawalFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
       );
     }
 
@@ -597,10 +643,13 @@ export async function updateMarketConfig({ write }) {
   const configKeys = [];
   const multicallReadParams = [];
 
+  const supportedRiskOracleMarkets = await getSupportedRiskOracleMarkets(markets, tokens, onchainMarketsByTokens);
+
   await processMarkets({
     markets,
     onchainMarketsByTokens,
     tokens,
+    supportedRiskOracleMarkets,
     generalConfig,
     handleConfig: async (type, baseKey, keyData) => {
       if (type !== "uint") {
@@ -631,6 +680,7 @@ export async function updateMarketConfig({ write }) {
   const ignoredRiskOracleParams = await processMarkets({
     markets,
     onchainMarketsByTokens,
+    supportedRiskOracleMarkets,
     tokens,
     generalConfig,
     handleConfig: async (type, baseKey, keyData, value, label) => {
@@ -654,14 +704,11 @@ export async function updateMarketConfig({ write }) {
     await handleInBatches(multicallWriteParams, 100, async (batch) => {
       await config.callStatic.multicall(batch);
     });
-    console.info("NOTE: executed in read-only mode, no transactions were sent");
+    await console.info("NOTE: executed in read-only mode, no transactions were sent");
   }
 
   if (ignoredRiskOracleParams.length > 0) {
-    console.log();
-    console.log("=================");
-    console.warn("WARN: Ignored risk oracle params (add `INCLUDE_RISK_ORACLE_BASE_KEYS=1` to include them):");
-    console.log();
+    const ignoredParameterNames = [];
 
     const marketsByParameterName = ignoredRiskOracleParams
       .map((label) => {
@@ -676,12 +723,61 @@ export async function updateMarketConfig({ write }) {
         return acc;
       }, {} as Record<string, string[]>);
 
-    Object.entries(marketsByParameterName).forEach(([parameterName, markets]) => {
-      console.log();
-      console.log("parameter name:", parameterName + ":");
-      console.log("markets:", markets.join(", "));
+    Object.entries(marketsByParameterName).forEach(([parameterName]) => {
+      ignoredParameterNames.push(parameterName);
     });
 
-    console.log();
+    console.info("\n=================\n");
+    console.info(`WARN: Ignored risk oracle params for ${supportedRiskOracleMarkets.size} markets`);
+    console.info(`Ignored params: ${ignoredParameterNames.join(",")}`);
+    console.info("Add `INCLUDE_RISK_ORACLE_BASE_KEYS=1` to include them\n");
   }
+}
+
+async function getSupportedRiskOracleMarkets(markets, tokens, onchainMarketsByTokens) {
+  const supported = new Set();
+
+  if (!RISK_ORACLE_SUPPORTED_NETWORKS.includes(hre.network.name)) {
+    return supported;
+  }
+
+  if (!RISK_ORACLE_SUPPORTED_NETWORKS.includes(network.name)) {
+    return supported;
+  }
+
+  const response = await fetch("https://cloud.chaoslabs.co/query/ccar-perpetuals", {
+    method: "POST",
+    headers: {
+      protocol: `gmx-v2-${network.name}`,
+      "content-type": "application/json",
+    },
+    body: `{
+      "query": "{ markets { id } }"
+    }`,
+  });
+
+  const { data } = await response.json();
+  const supportedMarketTokens = data.markets.map((market) => market.id);
+
+  supportedMarketTokens.forEach((supportedMarketToken) => {
+    const market = markets.find((market) => {
+      const marketToken = getMarketToken(market, tokens, onchainMarketsByTokens);
+      return marketToken.toLowerCase() === supportedMarketToken.toLowerCase();
+    });
+
+    if (!market) {
+      throw new Error(`Market with id ${supportedMarketToken} not found`);
+    }
+
+    supported.add(market);
+  });
+
+  return supported;
+}
+
+function getMarketToken(market, tokens, onchainMarketsByTokens) {
+  const [indexToken, longToken, shortToken] = getMarketTokenAddresses(market, tokens);
+  const marketKey = getMarketKey(indexToken, longToken, shortToken);
+  const onchainMarket = onchainMarketsByTokens[marketKey];
+  return onchainMarket.marketToken;
 }

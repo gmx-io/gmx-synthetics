@@ -32,7 +32,7 @@ library OrderStoreUtils {
     bytes32 public constant EXECUTION_FEE = keccak256(abi.encode("EXECUTION_FEE"));
     bytes32 public constant CALLBACK_GAS_LIMIT = keccak256(abi.encode("CALLBACK_GAS_LIMIT"));
     bytes32 public constant MIN_OUTPUT_AMOUNT = keccak256(abi.encode("MIN_OUTPUT_AMOUNT"));
-    bytes32 public constant UPDATED_AT_BLOCK = keccak256(abi.encode("UPDATED_AT_BLOCK"));
+    bytes32 public constant VALID_FROM_TIME = keccak256(abi.encode("VALID_FROM_TIME"));
     bytes32 public constant UPDATED_AT_TIME = keccak256(abi.encode("UPDATED_AT_TIME"));
 
     bytes32 public constant IS_LONG = keccak256(abi.encode("IS_LONG"));
@@ -114,8 +114,8 @@ library OrderStoreUtils {
             keccak256(abi.encode(key, MIN_OUTPUT_AMOUNT))
         ));
 
-        order.setUpdatedAtBlock(dataStore.getUint(
-            keccak256(abi.encode(key, UPDATED_AT_BLOCK))
+        order.setValidFromTime(dataStore.getUint(
+            keccak256(abi.encode(key, VALID_FROM_TIME))
         ));
 
         order.setUpdatedAtTime(dataStore.getUint(
@@ -238,8 +238,8 @@ library OrderStoreUtils {
         );
 
         dataStore.setUint(
-            keccak256(abi.encode(key, UPDATED_AT_BLOCK)),
-            order.updatedAtBlock()
+            keccak256(abi.encode(key, VALID_FROM_TIME)),
+            order.validFromTime()
         );
 
         dataStore.setUint(
@@ -352,7 +352,7 @@ library OrderStoreUtils {
         );
 
         dataStore.removeUint(
-            keccak256(abi.encode(key, UPDATED_AT_BLOCK))
+            keccak256(abi.encode(key, VALID_FROM_TIME))
         );
 
         dataStore.removeUint(
