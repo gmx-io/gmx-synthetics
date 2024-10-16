@@ -71,7 +71,6 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
             feeAmount = IVaultGovV1(vaultV1.gov()).withdrawFees(address(vaultV1), feeToken, address(this));
         } else if (version == v2) {
             _validateMarket(market);
-            
             feeAmount = FeeUtils.claimFees(dataStore, eventEmitter, market, feeToken, address(this));
         } else {
             revert Errors.InvalidVersion(version);
@@ -112,6 +111,8 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
         _buybackFees(feeToken, buybackToken, batchSize, outputAmount, availableFeeAmount);
     }
 
+    // note that there should not be any duplicates in the markets array
+    // otherwise the returned output amount would not be accurate
     function getOutputAmount(
         address[] calldata markets,
         address feeToken,
@@ -131,7 +132,6 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
             } else if (version == v2) {
                 address market = markets[i];
                 _validateMarket(market);
-                
                 feeAmount = _getUint(Keys.claimableFeeAmountKey(market, feeToken));
             } else {
                 revert Errors.InvalidVersion(version);
