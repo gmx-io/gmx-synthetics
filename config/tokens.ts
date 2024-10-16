@@ -121,6 +121,14 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    EIGEN: {
+      address: "0x606c3e5075e5555e79aa15f1e9facb776f96c248",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00032f3b5e95e313e484cac35ccff3904358100010b5f3ac2cf8e263c2ccc873",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     SHIB: {
       synthetic: true,
       decimals: 18,
@@ -140,6 +148,13 @@ const config: {
       synthetic: true,
       decimals: 6,
       dataStreamFeedId: "0x0003364401fcbe3153adf158017cd18a2833655db5cc5eb8fad2c16cb0ec82f4",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    SATS: {
+      synthetic: true,
+      decimals: 6,
+      dataStreamFeedId: "0x000308eb21e48b6673ee81b8baf25b34468597824a7897f3392c499c6a080606",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
