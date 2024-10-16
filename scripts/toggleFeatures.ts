@@ -21,6 +21,10 @@ export async function main() {
       data: encodeData(["address"], ["0xa19fa3f0d8e7b7a8963420de504b624167e709b2"]),
     },
     {
+      baseKey: keys.EXECUTE_WITHDRAWAL_FEATURE_DISABLED,
+      data: encodeData(["address"], ["0xa19fa3f0d8e7b7a8963420de504b624167e709b2"]),
+    },
+    {
       baseKey: keys.EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED,
       data: encodeData(["address"], ["0xa19fa3f0d8e7b7a8963420de504b624167e709b2"]),
     },
