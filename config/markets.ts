@@ -1,7 +1,7 @@
 import { BigNumberish, ethers } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { expandDecimals, decimalToFloat, bigNumberify, percentageToFloat } from "../utils/math";
+import { expandDecimals, exponentToFloat, decimalToFloat, bigNumberify, percentageToFloat } from "../utils/math";
 import { hashString } from "../utils/hash";
 import { SECONDS_PER_YEAR } from "../utils/constants";
 
@@ -291,25 +291,25 @@ const config: {
 
       ...baseMarketConfig,
 
-      positionImpactExponentFactor: decimalToFloat(22, 1), // 2.2
-      positivePositionImpactFactor: decimalToFloat(25, 11), // 0.05% for ~90,000 USD of imbalance
-      negativePositionImpactFactor: decimalToFloat(5, 10), // 0.05% for ~45,000 USD of imbalance
+      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
+      negativePositionImpactFactor: exponentToFloat("5e-10"), // 0.05% for ~45,000 USD of imbalance
 
-      positiveSwapImpactFactor: decimalToFloat(15, 9), // 1.5e-8
-      negativeSwapImpactFactor: decimalToFloat(3, 8),
+      positiveSwapImpactFactor: exponentToFloat("1.5e-8"), // 1.5e-8
+      negativeSwapImpactFactor: exponentToFloat("3e-8"),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(174, 14), // 0.00000000000174, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: exponentToFloat("1.74e-12"), // 0.00000000000174, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
 
-      maxFundingFactorPerSecond: decimalToFloat(225, 10), // 0.00000225%,  0,1944% per day, ~71% per year
-      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: exponentToFloat("2.25e-8"), // 0.00000225%,  0,1944% per day, ~71% per year
+      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
 
-      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      thresholdForStableFunding: percentageToFloat("5%"), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      minCollateralFactor: decimalToFloat(1, 2), // 1%
+      minCollateralFactor: percentageToFloat("1%"), // 1%
 
-      minCollateralFactorForOpenInterestMultiplier: decimalToFloat(25, 10), // 2.5e-9
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"), // 2.5e-9
 
       maxOpenInterest: decimalToFloat(1_000_000),
       optimalUsageFactor: percentageToFloat("75%"),
@@ -336,27 +336,27 @@ const config: {
 
       maxPoolUsdForDeposit: decimalToFloat(100_000_000),
 
-      negativePositionImpactFactor: decimalToFloat(9, 11),
-      positivePositionImpactFactor: decimalToFloat(3, 11),
+      negativePositionImpactFactor: exponentToFloat("9e-11"),
+      positivePositionImpactFactor: exponentToFloat("3e-11"),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(138, 30), // 1.38E+32, 0.119232 BTC / day
       minPositionImpactPoolAmount: expandDecimals(95, 6), // 0.95 BTC
 
-      negativeSwapImpactFactor: decimalToFloat(4, 10), // 0.05% for 1,250,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(2, 10), // 0.05% for 2,500,000 USD of imbalance
+      negativeSwapImpactFactor: exponentToFloat("4e-10"), // 0.05% for 1,250,000 USD of imbalance
+      positiveSwapImpactFactor: exponentToFloat("2e-10"), // 0.05% for 2,500,000 USD of imbalance
 
-      minCollateralFactor: decimalToFloat(5, 3), // 200x leverage
+      minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
 
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
-      minCollateralFactorForOpenInterestMultiplier: decimalToFloat(6, 11),
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
       maxOpenInterest: decimalToFloat(90_000_000),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(576, 15), // 0.00000000000576, at least ~4,8 hours to reach max funding
+      fundingIncreaseFactorPerSecond: exponentToFloat("5.76e-13"), // 0.00000000000576, at least ~4,8 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(10, 9), // 0.000001%,  0.0864% per day, ~31.5% per year
-      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: exponentToFloat("1e-8"), // 0.000001%,  0.0864% per day, ~31.5% per year
+      thresholdForStableFunding: percentageToFloat("5%"), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       optimalUsageFactor: percentageToFloat("75%"),
@@ -383,19 +383,19 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(46530, 26), // 4,653E+30, 0.0040202449 BTC / day
       minPositionImpactPoolAmount: expandDecimals(5, 6), // 0.05 BTC
 
-      minCollateralFactor: decimalToFloat(5, 3), // 200x leverage
+      minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
 
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
-      minCollateralFactorForOpenInterestMultiplier: decimalToFloat(6, 11),
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
       maxOpenInterest: decimalToFloat(5_000_000),
 
       // funding increase rate is higher for single asset pools
-      fundingIncreaseFactorPerSecond: decimalToFloat(158, 14), // 0.0000000000158, at least 1h45m to reach max funding
+      fundingIncreaseFactorPerSecond: exponentToFloat("1.58e-12"), // 0.0000000000158, at least 1h45m to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(10, 9), // 0.000001%,  0.0864% per day, ~31.5% per year
-      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: exponentToFloat("1e-8"), // 0.000001%,  0.0864% per day, ~31.5% per year
+      thresholdForStableFunding: percentageToFloat("5%"), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       optimalUsageFactor: percentageToFloat("75%"),
@@ -422,19 +422,19 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
 
-      minCollateralFactor: decimalToFloat(5, 3), // 200x leverage
+      minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
 
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
-      minCollateralFactorForOpenInterestMultiplier: decimalToFloat(6, 11),
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
       maxOpenInterest: decimalToFloat(1_000_000),
 
       // funding increase rate is higher for single asset pools
-      fundingIncreaseFactorPerSecond: decimalToFloat(3, 12),
+      fundingIncreaseFactorPerSecond: exponentToFloat("3e-12"),
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(10, 9), // 0.000001%,  0.0864% per day, ~31.5% per year
-      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: exponentToFloat("1e-8"), // 0.000001%,  0.0864% per day, ~31.5% per year
+      thresholdForStableFunding: percentageToFloat("5%"), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       optimalUsageFactor: percentageToFloat("75%"),
@@ -456,27 +456,27 @@ const config: {
 
       maxPoolUsdForDeposit: decimalToFloat(90_000_000),
 
-      negativePositionImpactFactor: decimalToFloat(9, 11),
-      positivePositionImpactFactor: decimalToFloat(3, 11),
+      negativePositionImpactFactor: exponentToFloat("9e-11"),
+      positivePositionImpactFactor: exponentToFloat("3e-11"),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(2900, 40), // 2.9E+43, 2.5065444873 ETH / day
       minPositionImpactPoolAmount: expandDecimals(10, 18), // 10 ETH
 
-      negativeSwapImpactFactor: decimalToFloat(2, 10), // 0.05% for 2,500,000 USD of imbalance
-      positiveSwapImpactFactor: decimalToFloat(2, 10), // 0.05% for 2,500,000 USD of imbalance
+      negativeSwapImpactFactor: exponentToFloat("2e-10"), // 0.05% for 2,500,000 USD of imbalance
+      positiveSwapImpactFactor: exponentToFloat("2e-10"), // 0.05% for 2,500,000 USD of imbalance
 
-      minCollateralFactor: decimalToFloat(5, 3), // 200x leverage
+      minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
 
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
-      minCollateralFactorForOpenInterestMultiplier: decimalToFloat(6, 11),
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
       maxOpenInterest: decimalToFloat(80_000_000),
 
-      fundingIncreaseFactorPerSecond: decimalToFloat(576, 15), // 0.00000000000576, at least ~4,8 hours to reach max funding
+      fundingIncreaseFactorPerSecond: exponentToFloat("5.76e-13"), // 0.00000000000576, at least ~4,8 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(10, 9), // 0.000001%,  0.0864% per day, ~31.5% per year
-      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: exponentToFloat("1e-8"), // 0.000001%,  0.0864% per day, ~31.5% per year
+      thresholdForStableFunding: percentageToFloat("5%"), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       optimalUsageFactor: percentageToFloat("75%"),
@@ -503,19 +503,19 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(37181, 37), // 3.718184E+41, 0.0321250994 ETH / day
       minPositionImpactPoolAmount: expandDecimals(5, 17), // 0.5 ETH
 
-      minCollateralFactor: decimalToFloat(5, 3), // 200x leverage
+      minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
 
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
-      minCollateralFactorForOpenInterestMultiplier: decimalToFloat(6, 11),
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
       maxOpenInterest: decimalToFloat(5_000_000),
 
       // funding increase rate is higher for single asset pools
-      fundingIncreaseFactorPerSecond: decimalToFloat(158, 14), // 0.0000000000158, at least 1h45m to reach max funding
+      fundingIncreaseFactorPerSecond: exponentToFloat("1.58e-12"), // 0.0000000000158, at least 1h45m to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: decimalToFloat(3, 10), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: decimalToFloat(10, 9), // 0.000001%,  0.0864% per day, ~31.5% per year
-      thresholdForStableFunding: decimalToFloat(5, 2), // 5%
+      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
+      maxFundingFactorPerSecond: exponentToFloat("1e-8"), // 0.000001%,  0.0864% per day, ~31.5% per year
+      thresholdForStableFunding: percentageToFloat("5%"), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       optimalUsageFactor: percentageToFloat("75%"),
