@@ -297,6 +297,15 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
     },
+    POL: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003a845b2e108468ec6f42a5c88609082e9ec86fe9d2529c9e5f8af440079f8",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // there seems to be a Chainlink on-chain feed, but it is indicated as
+      // a High Market Risk feed so has not been added
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,

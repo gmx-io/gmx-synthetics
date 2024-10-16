@@ -1,5 +1,5 @@
 import hre from "hardhat";
-import { decimalToFloat, bigNumberify, formatAmount, pow, FLOAT_PRECISION } from "../utils/math";
+import { decimalToFloat, exponentToFloat, bigNumberify, formatAmount, pow, FLOAT_PRECISION } from "../utils/math";
 import { createMarketConfigByKey, getMarketKey } from "../utils/market";
 import { performMulticall } from "../utils/multicall";
 import { SECONDS_PER_YEAR } from "../utils/constants";
@@ -189,6 +189,11 @@ const recommendedMarketConfig = {
     WIF: {
       negativePositionImpactFactor: decimalToFloat(5, 10),
       negativeSwapImpactFactor: decimalToFloat(3, 8),
+      expectedSwapImpactRatio: 20000,
+      expectedPositionImpactRatio: 20000,
+    },
+    POL: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
       expectedSwapImpactRatio: 20000,
       expectedPositionImpactRatio: 20000,
     },
