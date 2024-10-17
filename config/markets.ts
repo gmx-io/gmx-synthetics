@@ -775,6 +775,142 @@ const config: {
       aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
     },
     {
+      tokens: { indexToken: "AAVE", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:AAVE/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
+
+      ...synthethicMarketConfig,
+
+      positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
+
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+
+      positiveSwapImpactFactor: exponentToFloat("2e-10"),
+      negativeSwapImpactFactor: exponentToFloat("2e-10"),
+
+      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"), // 0.00000000000116, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+
+      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
+      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
+
+      thresholdForStableFunding: percentageToFloat("5%"), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.8e-9"),
+
+      maxOpenInterest: decimalToFloat(2_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(3_000_000), // x1.5 of max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(1525, 18),
+      maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
+
+      reserveFactor: percentageToFloat("160%"),
+      openInterestReserveFactor: percentageToFloat("155%"),
+
+      maxPnlFactorForTraders: percentageToFloat("75%"),
+      maxPnlFactorForDeposits: percentageToFloat("75%"),
+      maxPnlFactorForAdl: percentageToFloat("70%"),
+      minPnlFactorAfterAdl: percentageToFloat("65%"),
+      maxPnlFactorForWithdrawals: percentageToFloat("60%"),
+
+      optimalUsageFactor: percentageToFloat("75%"),
+      baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+    },
+    {
+      tokens: { indexToken: "UNI", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:UNI/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
+
+      ...synthethicMarketConfig,
+
+      positionImpactExponentFactor: exponentToFloat("2e0"),
+
+      positivePositionImpactFactor: exponentToFloat("1.05e-10"),
+      negativePositionImpactFactor: exponentToFloat("3.15e-10"),
+
+      positiveSwapImpactFactor: exponentToFloat("2e-10"),
+      negativeSwapImpactFactor: exponentToFloat("2e-10"),
+
+      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"), // 0.00000000000116, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+
+      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
+      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
+
+      thresholdForStableFunding: percentageToFloat("5%"), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+
+      minCollateralFactor: percentageToFloat("0.833%"), // max leverage 120x
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.5e-9"),
+
+      maxOpenInterest: decimalToFloat(2_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(3_000_000), // x1.5 of max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(1525, 18),
+      maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
+
+      reserveFactor: percentageToFloat("160%"),
+      openInterestReserveFactor: percentageToFloat("155%"),
+
+      maxPnlFactorForTraders: percentageToFloat("75%"),
+      maxPnlFactorForDeposits: percentageToFloat("75%"),
+      maxPnlFactorForAdl: percentageToFloat("70%"),
+      minPnlFactorAfterAdl: percentageToFloat("65%"),
+      maxPnlFactorForWithdrawals: percentageToFloat("60%"),
+
+      optimalUsageFactor: percentageToFloat("75%"),
+      baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+    },
+    {
+      tokens: { indexToken: "PEPE", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:PEPE/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
+
+      ...synthethicMarketConfig,
+
+      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+
+      positiveSwapImpactFactor: exponentToFloat("2e-10"),
+      negativeSwapImpactFactor: exponentToFloat("2e-10"),
+
+      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"), // 0.00000000000116, at least 3.5 hours to reach max funding
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+
+      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
+      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
+
+      thresholdForStableFunding: percentageToFloat("5%"), // 5%
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
+
+      maxOpenInterest: decimalToFloat(1_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_500_000), // x1.5 of max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(750, 18),
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6),
+
+      reserveFactor: percentageToFloat("100%"),
+      openInterestReserveFactor: percentageToFloat("95%"),
+
+      maxPnlFactorForTraders: percentageToFloat("50%"),
+      maxPnlFactorForDeposits: percentageToFloat("50%"),
+      maxPnlFactorForAdl: percentageToFloat("45%"),
+      minPnlFactorAfterAdl: percentageToFloat("40%"),
+      maxPnlFactorForWithdrawals: percentageToFloat("35%"),
+
+      optimalUsageFactor: percentageToFloat("75%"),
+      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+    },
+    {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:SOL/USD"),
       virtualMarketId: hashString("SPOT:SOL/USD"),

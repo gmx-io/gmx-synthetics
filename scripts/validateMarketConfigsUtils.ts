@@ -85,7 +85,7 @@ const recommendedMarketConfig = {
       expectedPositionImpactRatio: 20_000,
     },
     UNI: {
-      negativePositionImpactFactor: exponentToFloat("3e-8"),
+      negativePositionImpactFactor: exponentToFloat("3.15e-10"),
       negativeSwapImpactFactor: exponentToFloat("3e-8"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
