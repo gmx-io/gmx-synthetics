@@ -3,6 +3,9 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { percentageToFloat, expandDecimals, decimalToFloat } from "../utils/math";
 
 type GlvConfig = {
+  name: string;
+  symbol: string;
+
   longToken: string;
   shortToken: string;
 
@@ -12,7 +15,6 @@ type GlvConfig = {
   // not required, default value will be used if not specified
   transferGasLimit?: number;
 
-  type: string;
   shiftMaxPriceImpactFactor: BigNumberish;
   shiftMinInterval: number;
   minTokensForFirstGlvDeposit: BigNumberish;
@@ -76,6 +78,21 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
             indexToken: "EIGEN",
             glvMaxMarketTokenBalanceAmount: expandDecimals(300_000, 18),
             glvMaxMarketTokenBalanceUsd: decimalToFloat(300_000),
+          },
+          {
+            indexToken: "UNI",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(510_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(800_000),
+          },
+          {
+            indexToken: "AAVE",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(1_000_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_400_000),
+          },
+          {
+            indexToken: "PEPE",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(810_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_000_000),
           },
         ],
       },
