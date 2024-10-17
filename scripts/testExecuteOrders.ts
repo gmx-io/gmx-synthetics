@@ -18,6 +18,22 @@ const orders = [
     priceTimestamp: 1728673667,
     blockNumber: 262787741,
   },
+  {
+    key: "0x24acc6b0a714ba4fd5a300ccf55b95888657747266b09c94a59004f9ff375c91",
+    tokens: ["0x2bcC6D6CdBbDC0a4071e48bb3B969b06B3330c07", "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"],
+    prices: [
+      {
+        min: "144788768892410870000000",
+        max: "144810902363310220000000",
+      },
+      {
+        min: "999844445684416100000000",
+        max: "1000070500000000000000000",
+      },
+    ],
+    priceTimestamp: 1727892324,
+    blockNumber: 259687527,
+  },
 ];
 
 async function simulateExecuteOrders() {
@@ -35,9 +51,13 @@ async function simulateExecuteOrders() {
         },
         { blockTag: order.blockNumber }
       );
-      console.log("order %s successfully executed", order.key);
     } catch (ex) {
-      console.log("order %s execution failed: %s", order.key, parseError(ex.data)?.name);
+      const parsedErrorName = parseError(ex.data)?.name;
+      if (parsedErrorName === "EndOfOracleSimulation") {
+        console.log("order %s was executed", order.key);
+        continue;
+      }
+      console.log("order %s execution failed: %s", order.key, parsedErrorName);
     }
   }
 }
