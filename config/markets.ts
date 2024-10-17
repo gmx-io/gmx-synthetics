@@ -806,8 +806,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(1525, 18),
       maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
 
-      reserveFactor: percentageToFloat("160%"),
-      openInterestReserveFactor: percentageToFloat("155%"),
+      reserveFactor: percentageToFloat("165%"),
+      openInterestReserveFactor: percentageToFloat("160%"),
 
       maxPnlFactorForTraders: percentageToFloat("75%"),
       maxPnlFactorForDeposits: percentageToFloat("75%"),
@@ -852,8 +852,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(1525, 18),
       maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
 
-      reserveFactor: percentageToFloat("160%"),
-      openInterestReserveFactor: percentageToFloat("155%"),
+      reserveFactor: percentageToFloat("165%"),
+      openInterestReserveFactor: percentageToFloat("160%"),
 
       maxPnlFactorForTraders: percentageToFloat("75%"),
       maxPnlFactorForDeposits: percentageToFloat("75%"),
@@ -897,8 +897,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(750, 18),
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6),
 
-      reserveFactor: percentageToFloat("100%"),
-      openInterestReserveFactor: percentageToFloat("95%"),
+      reserveFactor: percentageToFloat("105%"),
+      openInterestReserveFactor: percentageToFloat("100%"),
 
       maxPnlFactorForTraders: percentageToFloat("50%"),
       maxPnlFactorForDeposits: percentageToFloat("50%"),
