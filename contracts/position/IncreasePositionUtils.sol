@@ -151,7 +151,6 @@ library IncreasePositionUtils {
         params.position.setShortTokenClaimableFundingAmountPerSize(fees.funding.latestShortTokenClaimableFundingAmountPerSize);
 
         params.position.setBorrowingFactor(cache.nextPositionBorrowingFactor);
-        params.position.setIncreasedAtBlock(Chain.currentBlockNumber());
         params.position.setIncreasedAtTime(Chain.currentTimestamp());
 
         PositionStoreUtils.set(params.contracts.dataStore, params.positionKey, params.position);
@@ -264,7 +263,8 @@ library IncreasePositionUtils {
             params.market.longToken, // longToken
             params.market.shortToken, // shortToken
             params.order.sizeDeltaUsd(), // sizeDeltaUsd
-            params.order.uiFeeReceiver() // uiFeeReceiver
+            params.order.uiFeeReceiver(), // uiFeeReceiver
+            false // isLiquidation
         );
 
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(getPositionFeesParams);

@@ -40,6 +40,7 @@ describe("Guardian.UpdateOrder", () => {
         expandDecimals(5200, 12),
         expandDecimals(5200, 12),
         expandDecimals(52000, 6),
+        0, // validFromTime
         false // autoCancel
       )
     )
@@ -77,6 +78,7 @@ describe("Guardian.UpdateOrder", () => {
         expandDecimals(5200, 12),
         expandDecimals(5200, 12),
         expandDecimals(52000, 6),
+        0, // validFromTime
         false // autoCancel
       )
     )
@@ -114,6 +116,7 @@ describe("Guardian.UpdateOrder", () => {
         expandDecimals(5200, 12),
         expandDecimals(5200, 12),
         expandDecimals(52000, 6),
+        0, // validFromTime
         false // autoCancel
       )
     )
@@ -151,6 +154,7 @@ describe("Guardian.UpdateOrder", () => {
         expandDecimals(5200, 12),
         expandDecimals(5200, 12),
         expandDecimals(52000, 6),
+        0, // validFromTime
         false // autoCancel
       )
     )
@@ -188,6 +192,7 @@ describe("Guardian.UpdateOrder", () => {
         expandDecimals(5200, 12),
         expandDecimals(5200, 12),
         expandDecimals(52000, 6),
+        0, // validFromTime
         false // autoCancel
       )
     )
@@ -225,6 +230,7 @@ describe("Guardian.UpdateOrder", () => {
         expandDecimals(5200, 12),
         expandDecimals(5200, 12),
         expandDecimals(52000, 6),
+        0, // validFromTime
         false // autoCancel
       )
     )
@@ -261,6 +267,7 @@ describe("Guardian.UpdateOrder", () => {
       expandDecimals(5200, 12), // acceptablePrice
       expandDecimals(5200, 12), // triggerPrice
       expandDecimals(52000, 6), // minOutputAmount
+      0, // validFromTime
       false // autoCancel
     );
 
@@ -296,6 +303,7 @@ describe("Guardian.UpdateOrder", () => {
       expandDecimals(5200, 12), // acceptablePrice
       expandDecimals(5200, 12), // triggerPrice
       expandDecimals(52000, 6), // minOutputAmount
+      0, // validFromTime
       false // autoCancel
     );
 
@@ -331,6 +339,7 @@ describe("Guardian.UpdateOrder", () => {
       expandDecimals(5200, 12), // acceptablePrice
       expandDecimals(5200, 12), // triggerPrice
       expandDecimals(52000, 6), // minOutputAmount
+      0, // validFromTime
       false // autoCancel
     );
 
@@ -366,6 +375,7 @@ describe("Guardian.UpdateOrder", () => {
       expandDecimals(5200, 12), // acceptablePrice
       expandDecimals(5200, 12), // triggerPrice
       expandDecimals(52000, 6), // minOutputAmount
+      0, // validFromTime
       false // autoCancel
     );
 
@@ -401,6 +411,7 @@ describe("Guardian.UpdateOrder", () => {
       expandDecimals(5200, 12), // acceptablePrice
       expandDecimals(5200, 12), // triggerPrice
       expandDecimals(52000, 6), // minOutputAmount
+      0, // validFromTime
       false // autoCancel
     );
 
@@ -436,6 +447,7 @@ describe("Guardian.UpdateOrder", () => {
       expandDecimals(5200, 12), // acceptablePrice
       expandDecimals(5200, 12), // triggerPrice
       expandDecimals(52000, 6), // minOutputAmount
+      0, // validFromTime
       false // autoCancel
     );
 

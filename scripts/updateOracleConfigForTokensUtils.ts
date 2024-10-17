@@ -10,7 +10,6 @@ import { OracleProvider } from "../config/oracle";
 const DEFAULT_ORACLE_PROVIDER: OracleProvider = "chainlinkDataStream";
 
 export async function updateOracleConfigForTokens({ write }) {
-  const oracleConfig = await hre.gmx.getOracle();
   const tokens = await hre.gmx.getTokens();
 
   const dataStore = await hre.ethers.getContract("DataStore");
@@ -101,10 +100,9 @@ export async function updateOracleConfigForTokens({ write }) {
     const tokenSymbol = tokenSymbols[i];
     const token = tokens[tokenSymbol];
     const onchainConfig = onchainOracleConfig[tokenSymbol];
-    const oracleInfo = oracleConfig.tokens[tokenSymbol];
 
-    if (onchainConfig.priceFeed === ethers.constants.AddressZero && oracleInfo && oracleInfo.priceFeed) {
-      const { priceFeed } = oracleInfo;
+    if (onchainConfig.priceFeed === ethers.constants.AddressZero && token.priceFeed) {
+      const { priceFeed } = token;
       const priceFeedMultiplier = expandDecimals(1, 60 - token.decimals - priceFeed.decimals);
       const stablePrice = priceFeed.stablePrice ? priceFeed.stablePrice : 0;
 

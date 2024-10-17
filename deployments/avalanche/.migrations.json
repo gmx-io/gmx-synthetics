@@ -22,5 +22,8 @@
   "ChainlinkDataStreamProvider_3": 1718612334,
   "ShiftVault_1": 1718612418,
   "OrderHandler_6": 1718612451,
-  "SubaccountRouter_2": 1718612522
+  "SubaccountRouter_2": 1718612522,
+  "GlvFactory_2": 1727673472,
+  "GlvVault_1": 1727673480,
+  "GlvHandler_1": 1727673624
 }

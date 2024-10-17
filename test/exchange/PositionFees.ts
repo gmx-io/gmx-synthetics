@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { deployFixture } from "../../utils/fixture";
-import { expandDecimals, decimalToFloat } from "../../utils/math";
+import { expandDecimals, decimalToFloat, percentageToFloat, FLOAT_PRECISION } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, handleOrder } from "../../utils/order";
 import { getEventData } from "../../utils/event";
@@ -37,9 +37,7 @@ describe("Exchange.PositionFees", () => {
 
     await referralStorage.setReferrerTier(user2.address, 1);
     await referralStorage.setReferrerTier(user3.address, 2);
-  });
 
-  it("position fees", async () => {
     await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 4)); // 0.05%
     await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 4)); // 0.05%
 
@@ -53,7 +51,226 @@ describe("Exchange.PositionFees", () => {
 
     await dataStore.setUint(keys.fundingFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 10));
     await dataStore.setUint(keys.fundingExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(1));
+  });
 
+  describe("min affiliate reward is capped", () => {
+    const scenarios = [
+      {
+        name: "pro discount exceeds total affiliate reward",
+        proDiscount: percentageToFloat("90%"), // 90% discount
+        expectedAdjustedAffiliateRewardFactor: percentageToFloat("3%"),
+        expectedTotalDiscountFactor: percentageToFloat("90%"),
+      },
+      {
+        name: "pro discount exceeds referral discount only",
+        proDiscount: percentageToFloat("9%"), // 5% discount
+        expectedAdjustedAffiliateRewardFactor: percentageToFloat("3%"),
+        expectedTotalDiscountFactor: percentageToFloat("9%"),
+      },
+      {
+        name: "pro discount exceeds referral discount only",
+        proDiscount: percentageToFloat("5%"), // 5% discount
+        expectedAdjustedAffiliateRewardFactor: percentageToFloat("5%"),
+        expectedTotalDiscountFactor: percentageToFloat("5%"),
+      },
+      {
+        name: "pro discount less than referral discount",
+        proDiscount: percentageToFloat("1%"), // 1% discount
+        expectedAdjustedAffiliateRewardFactor: percentageToFloat("8%"),
+        expectedTotalDiscountFactor: percentageToFloat("2%"), // referral discount is 2%
+      },
+    ];
+
+    scenarios.forEach((scenario) => {
+      it(scenario.name, async () => {
+        await dataStore.setUint(keys.proTraderTierKey(user0.address), 1);
+        await dataStore.setUint(keys.minAffiliateRewardFactorKey(1), percentageToFloat("3%")); // min affiliate reward is 3%
+        await dataStore.setUint(keys.proDiscountFactorKey(1), scenario.proDiscount);
+
+        const feeAmount = expandDecimals(2, 16); // 0.02 ETH
+
+        await handleOrder(fixture, {
+          create: {
+            account: user0,
+            market: ethUsdMarket,
+            initialCollateralToken: wnt,
+            initialCollateralDeltaAmount: expandDecimals(10, 18),
+            swapPath: [],
+            sizeDeltaUsd: decimalToFloat(200 * 1000),
+            acceptablePrice: expandDecimals(5050, 12),
+            executionFee: expandDecimals(1, 15),
+            minOutputAmount: 0,
+            orderType: OrderType.MarketIncrease,
+            isLong: true,
+            shouldUnwrapNativeToken: false,
+            referralCode: referralCode0,
+          },
+          execute: {
+            afterExecution: ({ logs }) => {
+              const event = getEventData(logs, "PositionFeesCollected");
+
+              expect(event["referral.adjustedAffiliateRewardFactor"], "referral.adjustedAffiliateRewardFactor").eq(
+                scenario.expectedAdjustedAffiliateRewardFactor
+              );
+
+              const expectedAffiliateRewardAmount = feeAmount
+                .mul(scenario.expectedAdjustedAffiliateRewardFactor)
+                .div(FLOAT_PRECISION);
+              expect(event["referral.affiliateRewardAmount"], "referral.affiliateRewardAmount").eq(
+                expectedAffiliateRewardAmount
+              );
+
+              expect(event["referral.traderDiscountAmount"], "referral.traderDiscountAmount").eq(expandDecimals(4, 14));
+              expect(event["referral.totalRebateAmount"], "referral.totalRebateAmount").eq(
+                expectedAffiliateRewardAmount.add(expandDecimals(4, 14))
+              );
+
+              expect(event["pro.traderDiscountAmount"]).eq(feeAmount.mul(scenario.proDiscount).div(FLOAT_PRECISION));
+            },
+          },
+        });
+
+        // size: 200,000, fee: 100 USD
+        const traderDiscountAmount = feeAmount.mul(scenario.expectedTotalDiscountFactor).div(FLOAT_PRECISION);
+        const affiliateRewardAmount = feeAmount
+          .mul(scenario.expectedAdjustedAffiliateRewardFactor)
+          .div(FLOAT_PRECISION);
+        const expectedCollateralSum = expandDecimals(998, 16).add(traderDiscountAmount);
+        expect(await dataStore.getUint(keys.collateralSumKey(ethUsdMarket.marketToken, wnt.address, true))).eq(
+          expectedCollateralSum
+        );
+        expect(await dataStore.getUint(keys.collateralSumKey(ethUsdMarket.marketToken, usdc.address, false))).eq(0);
+
+        const feeAmountForPool = feeAmount.sub(traderDiscountAmount).sub(affiliateRewardAmount);
+        // pool is increased by (position fee - affiliate reward - trader discount) * 80%
+        const expectedPoolAmountLong = expandDecimals(1000, 18).add(feeAmountForPool.div(5).mul(4));
+        expect(await dataStore.getUint(keys.poolAmountKey(ethUsdMarket.marketToken, wnt.address))).eq(
+          expectedPoolAmountLong
+        );
+        expect(await dataStore.getUint(keys.poolAmountKey(ethUsdMarket.marketToken, usdc.address))).eq(
+          expandDecimals(500 * 1000, 6)
+        );
+      });
+    });
+  });
+
+  it("pro tier discount", async () => {
+    await dataStore.setUint(keys.proTraderTierKey(user0.address), 1);
+
+    await dataStore.setUint(keys.proDiscountFactorKey(1), decimalToFloat(5, 1)); // pro discount is 50%
+    await dataStore.setUint(keys.minAffiliateRewardFactorKey(1), decimalToFloat(5, 2)); // min affiliate reward is 5%
+
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(200 * 1000),
+        acceptablePrice: expandDecimals(5050, 12),
+        executionFee: expandDecimals(1, 15),
+        minOutputAmount: 0,
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+        shouldUnwrapNativeToken: false,
+        referralCode: referralCode0,
+      },
+      execute: {
+        afterExecution: ({ logs }) => {
+          const event = getEventData(logs, "PositionFeesCollected");
+
+          expect(event["referral.traderDiscountAmount"], "referral.traderDiscountAmount").eq(
+            expandDecimals(4, 14).toString()
+          ); // 0.0004 WETH, 2 USD
+          expect(event["referral.affiliateRewardAmount"], "referral.affiliateRewardAmount").eq(
+            expandDecimals(1, 15).toString()
+          ); // 0.001 WETH, 5 USD
+          expect(event["referral.adjustedAffiliateRewardFactor"], "referral.adjustedAffiliateRewardFactor").eq(
+            percentageToFloat("5%")
+          ); // 0.001 WETH, 5 USD
+          expect(event["referral.totalRebateAmount"], "referral.totalRebateAmount").eq(
+            expandDecimals(14, 14).toString()
+          ); // 0.0014 WETH, 7 USD, 7%
+
+          expect(event["pro.traderDiscountAmount"]).eq(expandDecimals(1, 16).toString()); // 0.01 WETH, 50 USD, 50%
+        },
+      },
+    });
+
+    // pro discount is 50%, referral trader discount is 2%
+    // the biggest of referral and pro discount should be used
+
+    // size: 200,000, fee: 100 USD, trader discount: 100 * 50% => 50 USD
+    expect(await dataStore.getUint(keys.collateralSumKey(ethUsdMarket.marketToken, wnt.address, true))).eq(
+      "9990000000000000000"
+    ); // 9.99 ETH, 49950 USD
+    expect(await dataStore.getUint(keys.collateralSumKey(ethUsdMarket.marketToken, usdc.address, false))).eq(0);
+
+    // position fee: 200,000 * 0.05% => 100 USD
+    // trader discount: 100 * 50% => 50 USD
+    // affiliate reward: 100 * 10% * 80% => 8 USD
+    // adjusted affiliate reward: 5 USD
+    // fee amount for pool: (100 - 50 - 5) * 80% => 36 USD
+    expect(await dataStore.getUint(keys.poolAmountKey(ethUsdMarket.marketToken, wnt.address))).eq(
+      "1000007200000000000000"
+    ); // 1000.0072 ETH => 5,000,036 USD
+
+    expect(await dataStore.getUint(keys.poolAmountKey(ethUsdMarket.marketToken, usdc.address))).eq(
+      expandDecimals(500 * 1000, 6)
+    );
+
+    // pro discount is 1% now, lower than referral trader discount 2%
+    await dataStore.setUint(keys.proDiscountFactorKey(1), decimalToFloat(1, 2));
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: 0,
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(100 * 1000),
+        acceptablePrice: expandDecimals(4950, 12),
+        executionFee: expandDecimals(1, 15),
+        minOutputAmount: 0,
+        orderType: OrderType.MarketDecrease,
+        isLong: true,
+        shouldUnwrapNativeToken: false,
+      },
+      execute: {
+        afterExecution: ({ logs }) => {
+          const event = getEventData(logs, "PositionFeesCollected");
+
+          expect(event["referral.traderDiscountAmount"]).eq(expandDecimals(2, 14)); // 0.0002 WETH, 1 USD
+          expect(event["referral.totalRebateAmount"]).eq(expandDecimals(1, 15)); // 0.001 WETH, 5 USD, 10%
+          expect(event["referral.affiliateRewardAmount"]).eq(expandDecimals(8, 14)); // 0.0008 WETH, 4 USD
+          expect(event["referral.adjustedAffiliateRewardFactor"]).eq(percentageToFloat("8%"));
+          expect(event["pro.traderDiscountAmount"]).eq(expandDecimals(1, 14)); // 0.0001 WETH, 0.5 USD, 1%
+        },
+      },
+    });
+
+    // position fee is 50 USD, referral trader discount is 1 USD => diff $49
+    expect(await dataStore.getUint(keys.collateralSumKey(ethUsdMarket.marketToken, wnt.address, true))).closeTo(
+      "9980200000000000000",
+      "1000000000000" // +- 0.000001 ETH
+    );
+
+    // position fee: 50 USD
+    // trader discount: 50 * 2% => 1 USD
+    // affiliate reward: 50 * 10% * 80% => 4 USD
+    // fee amount for pool: (50 - 1 - 4) * 80% => 36 USD
+    expect(await dataStore.getUint(keys.poolAmountKey(ethUsdMarket.marketToken, wnt.address))).closeTo(
+      "1000014400000000000000",
+      "1000000000000" // +- 0.000001 ETH
+    ); // 1000.0144 ETH => 5,000,072 USD
+
+    expect(await dataStore.getUint(keys.poolAmountKey(ethUsdMarket.marketToken, usdc.address))).eq(
+      expandDecimals(500 * 1000, 6)
+    );
+  });
+
+  it("position fees", async () => {
     expect(await dataStore.getUint(keys.collateralSumKey(ethUsdMarket.marketToken, wnt.address, true))).eq(0);
     expect(await dataStore.getUint(keys.collateralSumKey(ethUsdMarket.marketToken, usdc.address, false))).eq(0);
 
@@ -170,11 +387,11 @@ describe("Exchange.PositionFees", () => {
           expect(positionFeesCollectedEvent["collateralTokenPrice.min"]).eq(expandDecimals(5000, 12));
           expect(positionFeesCollectedEvent["collateralTokenPrice.max"]).eq(expandDecimals(5000, 12));
           expect(positionFeesCollectedEvent.tradeSizeUsd).eq(decimalToFloat(190 * 1000));
-          expect(positionFeesCollectedEvent.totalRebateFactor).eq(decimalToFloat(1, 1)); // 10%
-          expect(positionFeesCollectedEvent.traderDiscountFactor).eq(decimalToFloat(2, 1)); // 20%
-          expect(positionFeesCollectedEvent.totalRebateAmount).eq("1900000000000000"); // 0.0019 ETH => 9.5 USD
-          expect(positionFeesCollectedEvent.traderDiscountAmount).eq("380000000000000"); // 0.00038 ETH => 1.9 USD
-          expect(positionFeesCollectedEvent.affiliateRewardAmount).eq("1520000000000000"); // 0.00152 ETH => 7.6 USD
+          expect(positionFeesCollectedEvent["referral.totalRebateFactor"]).eq(decimalToFloat(1, 1)); // 10%
+          expect(positionFeesCollectedEvent["referral.traderDiscountFactor"]).eq(decimalToFloat(2, 2)); // 2%
+          expect(positionFeesCollectedEvent["referral.totalRebateAmount"]).eq("1900000000000000"); // 0.0019 ETH => 9.5 USD
+          expect(positionFeesCollectedEvent["referral.traderDiscountAmount"]).eq("380000000000000"); // 0.00038 ETH => 1.9 USD
+          expect(positionFeesCollectedEvent["referral.affiliateRewardAmount"]).eq("1520000000000000"); // 0.00152 ETH => 7.6 USD
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("1612803999999999", "10000000000"); // 0.001612803999999999 ETH => 8.064019999 USD
           expect(positionFeesCollectedEvent.claimableLongTokenAmount).eq("0");
           expect(positionFeesCollectedEvent.claimableShortTokenAmount).eq("0");
@@ -225,7 +442,7 @@ describe("Exchange.PositionFees", () => {
 
           // positionFee: 80,000 * 0.05% => 40 USD
           // totalRebate: 40 * 20% => 8 USD
-          // traderDiscount: 8 * 25% => 2 USD
+          // traderDiscountShare: 8 * 25% => 2 USD
           // affiliateReward: 8 - 2 => 6 USD
           // protocolFee: positionFeeAmount - totalRebateAmount => 40 - 8 => 32 USD
           // positionFeeForPool: 32 * 80% => 25.6 USD
@@ -241,11 +458,11 @@ describe("Exchange.PositionFees", () => {
           expect(positionFeesCollectedEvent["collateralTokenPrice.min"]).eq(expandDecimals(1, 24));
           expect(positionFeesCollectedEvent["collateralTokenPrice.max"]).eq(expandDecimals(1, 24));
           expect(positionFeesCollectedEvent.tradeSizeUsd).eq(decimalToFloat(80 * 1000));
-          expect(positionFeesCollectedEvent.totalRebateFactor).eq(decimalToFloat(2, 1)); // 20%
-          expect(positionFeesCollectedEvent.traderDiscountFactor).eq(decimalToFloat(25, 2)); // 25%
-          expect(positionFeesCollectedEvent.totalRebateAmount).eq("8000000"); // 8 USD
-          expect(positionFeesCollectedEvent.traderDiscountAmount).eq("2000000"); // 2 USD
-          expect(positionFeesCollectedEvent.affiliateRewardAmount).eq("6000000"); // 6 USD
+          expect(positionFeesCollectedEvent["referral.totalRebateFactor"]).eq(decimalToFloat(2, 1)); // 20%
+          expect(positionFeesCollectedEvent["referral.traderDiscountFactor"]).eq(decimalToFloat(5, 2)); // 5%
+          expect(positionFeesCollectedEvent["referral.totalRebateAmount"]).eq("8000000"); // 8 USD
+          expect(positionFeesCollectedEvent["referral.traderDiscountAmount"]).eq("2000000"); // 2 USD
+          expect(positionFeesCollectedEvent["referral.affiliateRewardAmount"]).eq("6000000"); // 6 USD
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("24", "30");
           expect(positionFeesCollectedEvent.claimableLongTokenAmount).closeTo("1612803999900000", "10000000000"); // 0.0016128039999 ETH, 8.0640199995 USD
           expect(positionFeesCollectedEvent.claimableShortTokenAmount).eq("0");

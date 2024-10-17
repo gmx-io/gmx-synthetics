@@ -46,13 +46,13 @@ library OrderEventUtils {
         eventData.uintItems.setItem(6, "executionFee", order.executionFee());
         eventData.uintItems.setItem(7, "callbackGasLimit", order.callbackGasLimit());
         eventData.uintItems.setItem(8, "minOutputAmount", order.minOutputAmount());
-        eventData.uintItems.setItem(9, "updatedAtBlock", order.updatedAtBlock());
-        eventData.uintItems.setItem(10, "updatedAtTime", order.updatedAtTime());
+        eventData.uintItems.setItem(9, "updatedAtTime", order.updatedAtTime());
+        eventData.uintItems.setItem(10, "validFromTime", order.validFromTime());
 
         eventData.boolItems.initItems(3);
         eventData.boolItems.setItem(0, "isLong", order.isLong());
         eventData.boolItems.setItem(1, "shouldUnwrapNativeToken", order.shouldUnwrapNativeToken());
-        eventData.boolItems.setItem(2, "isFrozen", order.isFrozen());
+        eventData.boolItems.setItem(2, "autoCancel", order.autoCancel());
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
@@ -93,12 +93,7 @@ library OrderEventUtils {
     function emitOrderUpdated(
         EventEmitter eventEmitter,
         bytes32 key,
-        address account,
-        uint256 sizeDeltaUsd,
-        uint256 acceptablePrice,
-        uint256 triggerPrice,
-        uint256 minOutputAmount,
-        uint256 updatedAtTime
+        Order.Props memory order
     ) external {
         EventUtils.EventLogData memory eventData;
 
@@ -106,19 +101,23 @@ library OrderEventUtils {
         eventData.bytes32Items.setItem(0, "key", key);
 
         eventData.addressItems.initItems(1);
-        eventData.addressItems.setItem(0, "account", account);
+        eventData.addressItems.setItem(0, "account", order.account());
 
-        eventData.uintItems.initItems(5);
-        eventData.uintItems.setItem(0, "sizeDeltaUsd", sizeDeltaUsd);
-        eventData.uintItems.setItem(1, "acceptablePrice", acceptablePrice);
-        eventData.uintItems.setItem(2, "triggerPrice", triggerPrice);
-        eventData.uintItems.setItem(3, "minOutputAmount", minOutputAmount);
-        eventData.uintItems.setItem(4, "updatedAtTime", updatedAtTime);
+        eventData.uintItems.initItems(6);
+        eventData.uintItems.setItem(0, "sizeDeltaUsd", order.sizeDeltaUsd());
+        eventData.uintItems.setItem(1, "acceptablePrice", order.acceptablePrice());
+        eventData.uintItems.setItem(2, "triggerPrice", order.triggerPrice());
+        eventData.uintItems.setItem(3, "minOutputAmount", order.minOutputAmount());
+        eventData.uintItems.setItem(4, "updatedAtTime", order.updatedAtTime());
+        eventData.uintItems.setItem(5, "validFromTime", order.validFromTime());
+
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "autoCancel", order.autoCancel());
 
         eventEmitter.emitEventLog2(
             "OrderUpdated",
             key,
-            Cast.toBytes32(account),
+            Cast.toBytes32(order.account()),
             eventData
         );
     }

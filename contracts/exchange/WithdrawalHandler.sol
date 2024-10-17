@@ -103,7 +103,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
             key,
             withdrawal,
             msg.sender,
-            ISwapPricingUtils.SwapPricingType.TwoStep
+            ISwapPricingUtils.SwapPricingType.Withdrawal
         ) {
         } catch (bytes memory reasonBytes) {
             _handleWithdrawalError(

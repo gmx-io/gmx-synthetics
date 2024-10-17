@@ -1,5 +1,6 @@
+import _ from "lodash";
 import { expect } from "chai";
-import { hashString } from "./hash";
+import { hashString, hashData } from "./hash";
 import { logGasUsage } from "./gas";
 
 function setSampleItemAddresses({ emptyStoreItem, accountList, user0, overrideValues, sampleItem }) {
@@ -79,31 +80,52 @@ async function validateFetchedItemAfterSet({ emptyStoreItem, getItem, dataStore,
   }
 }
 
-async function validateFetchedItemAfterRemove({ getItem, dataStore, itemKey, emptyStoreItem }) {
-  const fetchedItem = await getItem(dataStore, itemKey);
-
-  Object.keys(emptyStoreItem.addresses).forEach((key) => {
+async function validateFetchedItemAfterRemove({ dataStore, itemKey, emptyStoreItem }) {
+  for (const key in emptyStoreItem.addresses) {
     if (isNaN(parseInt(key))) {
+      const storeKey = _.snakeCase(key).toUpperCase();
+      const hash = hashData(["bytes32", "bytes32"], [itemKey, hashString(storeKey)]);
+
       if (Array.isArray(emptyStoreItem.addresses[key])) {
-        expect(fetchedItem.addresses[key], key).deep.eq([]);
+        const value = await dataStore.getAddressArray(hash);
+        expect(value, key).deep.eq([]);
       } else {
-        expect(fetchedItem.addresses[key], key).eq(ethers.constants.AddressZero);
+        const value = await dataStore.getAddress(hash);
+        expect(value, key).eq(ethers.constants.AddressZero);
       }
     }
-  });
+  }
 
-  Object.keys(emptyStoreItem.numbers).forEach((key) => {
+  for (const key in emptyStoreItem.numbers) {
     if (isNaN(parseInt(key))) {
-      expect(fetchedItem.numbers[key], key).eq(0);
+      const storeKey = _.snakeCase(key).toUpperCase();
+      const hash = hashData(["bytes32", "bytes32"], [itemKey, hashString(storeKey)]);
+
+      if (Array.isArray(emptyStoreItem.numbers[key])) {
+        const value = await dataStore.getUintArray(hash);
+        expect(value, key).deep.eq([]);
+      } else {
+        const value = await dataStore.getUint(hash);
+        expect(value, key).eq(0);
+      }
     }
-  });
+  }
 
   if (emptyStoreItem.flags !== undefined) {
-    Object.keys(emptyStoreItem.flags).forEach((key) => {
+    for (const key in emptyStoreItem.flags) {
       if (isNaN(parseInt(key))) {
-        expect(fetchedItem.flags[key], key).eq(false);
+        const storeKey = _.snakeCase(key).toUpperCase();
+        const hash = hashData(["bytes32", "bytes32"], [itemKey, hashString(storeKey)]);
+
+        if (Array.isArray(emptyStoreItem.flags[key])) {
+          const value = await dataStore.getBoolArray(hash);
+          expect(value, key).deep.eq([]);
+        } else {
+          const value = await dataStore.getBool(hash);
+          expect(value, key).eq(false);
+        }
       }
-    });
+    }
   }
 }
 
@@ -191,6 +213,6 @@ export async function validateStoreUtils({
       expect(await getAccountItemKeys(dataStore, user1.address, 0, 10)).deep.equal([]);
     }
 
-    await validateFetchedItemAfterRemove({ getItem, dataStore, itemKey, emptyStoreItem });
+    await validateFetchedItemAfterRemove({ dataStore, itemKey, emptyStoreItem });
   }
 }

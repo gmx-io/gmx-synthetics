@@ -47,6 +47,11 @@ library ExecuteOrderUtils {
             params.order.isLong()
         );
 
+        BaseOrderUtils.validateOrderValidFromTime(
+            params.order.orderType(),
+            params.order.validFromTime()
+        );
+
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(
             params.contracts.oracle,
             params.market

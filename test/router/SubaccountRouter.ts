@@ -146,6 +146,7 @@ describe("SubaccountRouter", () => {
         executionFee: expandDecimals(1, 17),
         callbackGasLimit: "200000",
         minOutputAmount: 700,
+        validFromTime: 0,
       },
       orderType: OrderType.Liquidation,
       decreasePositionSwapType: DecreasePositionSwapType.SwapCollateralTokenToPnlToken,
@@ -308,6 +309,7 @@ describe("SubaccountRouter", () => {
         executionFee: expandDecimals(1, 17),
         callbackGasLimit: "200000",
         minOutputAmount: 700,
+        validFromTime: 0,
       },
       orderType: OrderType.MarketIncrease,
       decreasePositionSwapType: DecreasePositionSwapType.SwapCollateralTokenToPnlToken,
@@ -441,6 +443,7 @@ describe("SubaccountRouter", () => {
         executionFee: expandDecimals(1, 17),
         callbackGasLimit: "200000",
         minOutputAmount: 700,
+        validFromTime: 800,
       },
       orderType: OrderType.LimitIncrease,
       decreasePositionSwapType: DecreasePositionSwapType.SwapCollateralTokenToPnlToken,
@@ -475,6 +478,7 @@ describe("SubaccountRouter", () => {
       expect(order.numbers.acceptablePrice).eq(expandDecimals(5010, 12));
       expect(order.numbers.triggerPrice).eq(expandDecimals(4800, 12));
       expect(order.numbers.minOutputAmount).eq(700);
+      expect(order.numbers.validFromTime).eq(800);
     });
 
     const initialWntBalance0 = await wnt.balanceOf(user0.address);
@@ -485,6 +489,7 @@ describe("SubaccountRouter", () => {
       expandDecimals(5020, 12), // acceptablePrice
       expandDecimals(4850, 12), // triggerPrice
       800, // minOutputAmount
+      0, // validFromTime
       false // autoCancel
     );
 
@@ -524,6 +529,7 @@ describe("SubaccountRouter", () => {
         expandDecimals(5020, 12), // acceptablePrice
         expandDecimals(4850, 12), // triggerPrice
         800, // minOutputAmount
+        0, // validFromTime
         false // autoCancel
       )
     ).to.be.revertedWithCustomError(errorsContract, "SubaccountNotAuthorized");
@@ -573,6 +579,7 @@ describe("SubaccountRouter", () => {
         executionFee: expandDecimals(1, 17),
         callbackGasLimit: "200000",
         minOutputAmount: 700,
+        validFromTime: 800,
       },
       orderType: OrderType.LimitIncrease,
       decreasePositionSwapType: DecreasePositionSwapType.SwapCollateralTokenToPnlToken,
@@ -607,6 +614,7 @@ describe("SubaccountRouter", () => {
       expect(order.numbers.acceptablePrice).eq(expandDecimals(5010, 12));
       expect(order.numbers.triggerPrice).eq(expandDecimals(4800, 12));
       expect(order.numbers.minOutputAmount).eq(700);
+      expect(order.numbers.validFromTime).eq(800);
     });
 
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(1, 6));
@@ -615,7 +623,7 @@ describe("SubaccountRouter", () => {
 
     await subaccountRouter.connect(subaccount).cancelOrder(orderKey);
 
-    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1109919005919568", "10000000000000"); // 0.001109919005919568 ETH
+    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1119069005968368", "10000000000000"); // 0.001137828006068416 ETH
 
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(101, 6));
 

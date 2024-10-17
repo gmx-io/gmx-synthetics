@@ -140,7 +140,7 @@ library PositionEventUtils {
         );
     }
 
-    function emitInsolventCloseInfo(
+    function emitInsolventClose(
         EventEmitter eventEmitter,
         bytes32 orderKey,
         uint256 positionCollateralAmount,
@@ -268,35 +268,63 @@ library PositionEventUtils {
 
         // in case the position was insolvent, the fundingFeeAmount and feeAmountForPool
         // values may not be accurate
-        eventData.uintItems.initItems(28);
+
+        uint256 uintItemsCount = 23;
+        uint256 dynamicItemIndex = uintItemsCount - 1;
+        if (fees.referral.totalRebateFactor > 0) {
+            uintItemsCount += 6;
+        }
+        if (fees.liquidation.liquidationFeeAmount > 0) {
+            uintItemsCount += 3;
+        }
+        if (fees.pro.traderDiscountFactor > 0) {
+            uintItemsCount += 2;
+        }
+
+        eventData.uintItems.initItems(uintItemsCount);
         eventData.uintItems.setItem(0, "collateralTokenPrice.min", fees.collateralTokenPrice.min);
         eventData.uintItems.setItem(1, "collateralTokenPrice.max", fees.collateralTokenPrice.max);
         eventData.uintItems.setItem(2, "tradeSizeUsd", tradeSizeUsd);
-        eventData.uintItems.setItem(3, "totalRebateFactor", fees.referral.totalRebateFactor);
-        eventData.uintItems.setItem(4, "traderDiscountFactor", fees.referral.traderDiscountFactor);
-        eventData.uintItems.setItem(5, "totalRebateAmount", fees.referral.totalRebateAmount);
-        eventData.uintItems.setItem(6, "traderDiscountAmount", fees.referral.traderDiscountAmount);
-        eventData.uintItems.setItem(7, "affiliateRewardAmount", fees.referral.affiliateRewardAmount);
-        eventData.uintItems.setItem(8, "fundingFeeAmount", fees.funding.fundingFeeAmount);
-        eventData.uintItems.setItem(9, "claimableLongTokenAmount", fees.funding.claimableLongTokenAmount);
-        eventData.uintItems.setItem(10, "claimableShortTokenAmount", fees.funding.claimableShortTokenAmount);
-        eventData.uintItems.setItem(11, "latestFundingFeeAmountPerSize", fees.funding.latestFundingFeeAmountPerSize);
-        eventData.uintItems.setItem(12, "latestLongTokenClaimableFundingAmountPerSize", fees.funding.latestLongTokenClaimableFundingAmountPerSize);
-        eventData.uintItems.setItem(13, "latestShortTokenClaimableFundingAmountPerSize", fees.funding.latestShortTokenClaimableFundingAmountPerSize);
-        eventData.uintItems.setItem(14, "borrowingFeeUsd", fees.borrowing.borrowingFeeUsd);
-        eventData.uintItems.setItem(15, "borrowingFeeAmount", fees.borrowing.borrowingFeeAmount);
-        eventData.uintItems.setItem(16, "borrowingFeeReceiverFactor", fees.borrowing.borrowingFeeReceiverFactor);
-        eventData.uintItems.setItem(17, "borrowingFeeAmountForFeeReceiver", fees.borrowing.borrowingFeeAmountForFeeReceiver);
-        eventData.uintItems.setItem(18, "positionFeeFactor", fees.positionFeeFactor);
-        eventData.uintItems.setItem(19, "protocolFeeAmount", fees.protocolFeeAmount);
-        eventData.uintItems.setItem(20, "positionFeeReceiverFactor", fees.positionFeeReceiverFactor);
-        eventData.uintItems.setItem(21, "feeReceiverAmount", fees.feeReceiverAmount);
-        eventData.uintItems.setItem(22, "feeAmountForPool", fees.feeAmountForPool);
-        eventData.uintItems.setItem(23, "positionFeeAmountForPool", fees.positionFeeAmountForPool);
-        eventData.uintItems.setItem(24, "positionFeeAmount", fees.positionFeeAmount);
-        eventData.uintItems.setItem(25, "totalCostAmount", fees.totalCostAmount);
-        eventData.uintItems.setItem(26, "uiFeeReceiverFactor", fees.ui.uiFeeReceiverFactor);
-        eventData.uintItems.setItem(27, "uiFeeAmount", fees.ui.uiFeeAmount);
+        eventData.uintItems.setItem(3, "fundingFeeAmount", fees.funding.fundingFeeAmount);
+        eventData.uintItems.setItem(4, "claimableLongTokenAmount", fees.funding.claimableLongTokenAmount);
+        eventData.uintItems.setItem(5, "claimableShortTokenAmount", fees.funding.claimableShortTokenAmount);
+        eventData.uintItems.setItem(6, "latestFundingFeeAmountPerSize", fees.funding.latestFundingFeeAmountPerSize);
+        eventData.uintItems.setItem(7, "latestLongTokenClaimableFundingAmountPerSize", fees.funding.latestLongTokenClaimableFundingAmountPerSize);
+        eventData.uintItems.setItem(8, "latestShortTokenClaimableFundingAmountPerSize", fees.funding.latestShortTokenClaimableFundingAmountPerSize);
+        eventData.uintItems.setItem(9, "borrowingFeeUsd", fees.borrowing.borrowingFeeUsd);
+        eventData.uintItems.setItem(10, "borrowingFeeAmount", fees.borrowing.borrowingFeeAmount);
+        eventData.uintItems.setItem(11, "borrowingFeeReceiverFactor", fees.borrowing.borrowingFeeReceiverFactor);
+        eventData.uintItems.setItem(12, "borrowingFeeAmountForFeeReceiver", fees.borrowing.borrowingFeeAmountForFeeReceiver);
+        eventData.uintItems.setItem(13, "positionFeeFactor", fees.positionFeeFactor);
+        eventData.uintItems.setItem(14, "protocolFeeAmount", fees.protocolFeeAmount);
+        eventData.uintItems.setItem(15, "positionFeeReceiverFactor", fees.positionFeeReceiverFactor);
+        eventData.uintItems.setItem(16, "feeReceiverAmount", fees.feeReceiverAmount);
+        eventData.uintItems.setItem(17, "feeAmountForPool", fees.feeAmountForPool);
+        eventData.uintItems.setItem(18, "positionFeeAmountForPool", fees.positionFeeAmountForPool);
+        eventData.uintItems.setItem(19, "positionFeeAmount", fees.positionFeeAmount);
+        eventData.uintItems.setItem(20, "totalCostAmount", fees.totalCostAmount);
+        eventData.uintItems.setItem(21, "uiFeeReceiverFactor", fees.ui.uiFeeReceiverFactor);
+        eventData.uintItems.setItem(22, "uiFeeAmount", fees.ui.uiFeeAmount);
+
+        // ++dynamicItemIndex is pre-increment, first the value is incremented, then updated value is returned
+        // i.e. if dynamicItemIndex is 22, then ++dynamicItemIndex returns 23
+        if (fees.referral.totalRebateFactor > 0) {
+            eventData.uintItems.setItem(++dynamicItemIndex, "referral.totalRebateFactor", fees.referral.totalRebateFactor);
+            eventData.uintItems.setItem(++dynamicItemIndex, "referral.adjustedAffiliateRewardFactor", fees.referral.adjustedAffiliateRewardFactor);
+            eventData.uintItems.setItem(++dynamicItemIndex, "referral.traderDiscountFactor", fees.referral.traderDiscountFactor);
+            eventData.uintItems.setItem(++dynamicItemIndex, "referral.totalRebateAmount", fees.referral.totalRebateAmount);
+            eventData.uintItems.setItem(++dynamicItemIndex, "referral.traderDiscountAmount", fees.referral.traderDiscountAmount);
+            eventData.uintItems.setItem(++dynamicItemIndex, "referral.affiliateRewardAmount", fees.referral.affiliateRewardAmount);
+        }
+        if (fees.pro.traderDiscountFactor > 0) {
+            eventData.uintItems.setItem(++dynamicItemIndex, "pro.traderDiscountFactor", fees.pro.traderDiscountFactor);
+            eventData.uintItems.setItem(++dynamicItemIndex, "pro.traderDiscountAmount", fees.pro.traderDiscountAmount);
+        }
+        if (fees.liquidation.liquidationFeeAmount > 0) {
+            eventData.uintItems.setItem(++dynamicItemIndex, "liquidationFeeAmount", fees.liquidation.liquidationFeeAmount);
+            eventData.uintItems.setItem(++dynamicItemIndex, "liquidationFeeReceiverFactor", fees.liquidation.liquidationFeeReceiverFactor);
+            eventData.uintItems.setItem(++dynamicItemIndex, "liquidationFeeAmountForFeeReceiver", fees.liquidation.liquidationFeeAmountForFeeReceiver);
+        }
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "isIncrease", isIncrease);

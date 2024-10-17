@@ -81,6 +81,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         uint256 acceptablePrice,
         uint256 triggerPrice,
         uint256 minOutputAmount,
+        uint256 validFromTime,
         bool autoCancel,
         Order.Props memory order
     ) external override globalNonReentrant onlyController {
@@ -90,12 +91,11 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             revert Errors.OrderNotUpdatable(uint256(order.orderType()));
         }
 
-        order.setSizeDeltaUsd(sizeDeltaUsd);
-        order.setTriggerPrice(triggerPrice);
-        order.setAcceptablePrice(acceptablePrice);
-        order.setMinOutputAmount(minOutputAmount);
-        order.setIsFrozen(false);
-        order.setAutoCancel(autoCancel);
+        // this could happen if the order was created in new contracts that support new order types
+        // but the order is being updated in old contracts
+        if (!BaseOrderUtils.isSupportedOrder(order.orderType())) {
+            revert Errors.UnsupportedOrderType(uint256(order.orderType()));
+        }
 
         // allow topping up of executionFee as frozen orders
         // will have their executionFee reduced
@@ -107,24 +107,29 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         uint256 oraclePriceCount = GasUtils.estimateOrderOraclePriceCount(order.swapPath().length);
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee(), oraclePriceCount);
 
+        if (order.autoCancel() != autoCancel) {
+            OrderUtils.updateAutoCancelList(dataStore, key, order, autoCancel);
+            OrderUtils.validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, order);
+        }
+        order.setAutoCancel(autoCancel);
+
+        order.setSizeDeltaUsd(sizeDeltaUsd);
+        order.setTriggerPrice(triggerPrice);
+        order.setAcceptablePrice(acceptablePrice);
+        order.setMinOutputAmount(minOutputAmount);
+        order.setValidFromTime(validFromTime);
+        order.setIsFrozen(false);
+
         order.touch();
 
         BaseOrderUtils.validateNonEmptyOrder(order);
 
         OrderStoreUtils.set(dataStore, key, order);
 
-        OrderUtils.updateAutoCancelList(dataStore, key, order, autoCancel);
-        OrderUtils.validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, order);
-
         OrderEventUtils.emitOrderUpdated(
             eventEmitter,
             key,
-            order.account(),
-            sizeDeltaUsd,
-            acceptablePrice,
-            triggerPrice,
-            minOutputAmount,
-            order.updatedAtTime()
+            order
         );
     }
 
@@ -294,7 +299,10 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             errorSelector == Errors.UnsupportedOrderType.selector ||
             // the transaction is reverted for InvalidOrderPrices since the oracle prices
             // do not fulfill the specified trigger price
-            errorSelector == Errors.InvalidOrderPrices.selector
+            errorSelector == Errors.InvalidOrderPrices.selector ||
+            // order should not be cancelled or frozen in this case
+            // otherwise malicious keepers can cancel orders before valid from time is reached
+            errorSelector == Errors.OrderValidFromTimeNotReached.selector
         ) {
             ErrorUtils.revertWithCustomError(reasonBytes);
         }

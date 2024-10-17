@@ -50,14 +50,24 @@ library IncreaseOrderUtils {
             position.setIsLong(params.order.isLong());
         }
 
-        uint256 requestExpirationTime = params.contracts.dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
-
         if (params.minOracleTimestamp < params.order.updatedAtTime()) {
             revert Errors.OracleTimestampsAreSmallerThanRequired(
                 params.minOracleTimestamp,
                 params.order.updatedAtTime()
             );
         }
+
+        if (
+            !BaseOrderUtils.isMarketOrder(params.order.orderType()) &&
+            params.minOracleTimestamp < params.order.validFromTime()
+        ) {
+            revert Errors.OracleTimestampsAreSmallerThanRequired(
+                params.minOracleTimestamp,
+                params.order.validFromTime()
+            );
+        }
+
+        uint256 requestExpirationTime = params.contracts.dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
 
         if (
             params.order.orderType() == Order.OrderType.MarketIncrease &&

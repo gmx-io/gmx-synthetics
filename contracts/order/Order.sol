@@ -28,7 +28,9 @@ library Order {
         // @dev StopLossDecrease: decrease position if the triggerPrice is reached and the acceptablePrice can be fulfilled
         StopLossDecrease,
         // @dev Liquidation: allows liquidation of positions if the criteria for liquidation are met
-        Liquidation
+        Liquidation,
+        // @dev StopIncrease: increase position if the triggerPrice is reached and the acceptablePrice can be fulfilled
+        StopIncrease
     }
 
     // to help further differentiate orders
@@ -100,7 +102,6 @@ library Order {
     // @param minOutputAmount the minimum output amount for decrease orders and swaps
     // note that for decrease orders, multiple tokens could be received, for this reason, the
     // minOutputAmount value is treated as a USD value for validation in decrease orders
-    // @param updatedAtBlock the block at which the order was last updated
     struct Numbers {
         OrderType orderType;
         DecreasePositionSwapType decreasePositionSwapType;
@@ -111,8 +112,8 @@ library Order {
         uint256 executionFee;
         uint256 callbackGasLimit;
         uint256 minOutputAmount;
-        uint256 updatedAtBlock;
         uint256 updatedAtTime;
+        uint256 validFromTime;
     }
 
     // @param isLong whether the order is for a long or short
@@ -352,20 +353,6 @@ library Order {
         props.numbers.minOutputAmount = value;
     }
 
-    // @dev the order updatedAtBlock
-    // @param props Props
-    // @return the order updatedAtBlock
-    function updatedAtBlock(Props memory props) internal pure returns (uint256) {
-        return props.numbers.updatedAtBlock;
-    }
-
-    // @dev set the order updatedAtBlock
-    // @param props Props
-    // @param value the value to set to
-    function setUpdatedAtBlock(Props memory props, uint256 value) internal pure {
-        props.numbers.updatedAtBlock = value;
-    }
-
     // @dev the order updatedAtTime
     // @param props Props
     // @return the order updatedAtTime
@@ -378,6 +365,13 @@ library Order {
     // @param value the value to set to
     function setUpdatedAtTime(Props memory props, uint256 value) internal pure {
         props.numbers.updatedAtTime = value;
+    }
+
+    function validFromTime(Props memory props) internal pure returns (uint256) {
+        return props.numbers.validFromTime;
+    }
+    function setValidFromTime(Props memory props, uint256 value) internal pure {
+        props.numbers.validFromTime = value;
     }
 
     // @dev whether the order is for a long or short
@@ -432,10 +426,8 @@ library Order {
         props.flags.autoCancel = value;
     }
 
-    // @dev set the order.updatedAtBlock to the current block number
     // @param props Props
     function touch(Props memory props) internal view {
-        props.setUpdatedAtBlock(Chain.currentBlockNumber());
         props.setUpdatedAtTime(Chain.currentTimestamp());
     }
 }
