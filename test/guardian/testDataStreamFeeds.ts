@@ -1,6 +1,6 @@
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../utils/math";
-import { OrderType, getOrderCount, createOrder, executeOrder, getOrderKeys } from "../../utils/order";
+import { OrderType, getOrderCount, createOrder, executeOrder } from "../../utils/order";
 import { handleDeposit } from "../../utils/deposit";
 import { getPositionCount } from "../../utils/position";
 import { expect } from "chai";
@@ -15,7 +15,7 @@ describe("Guardian.DataStreamFeeds", () => {
 
   let fixture;
   let user1;
-  let reader, dataStore, solUsdMarket, solAddr, ethUsdMarket, wnt, usdc;
+  let dataStore, solUsdMarket, solAddr, ethUsdMarket, wnt, usdc;
 
   const getBaseDataStreamData = (block) => {
     const buffer = 2;
@@ -37,7 +37,7 @@ describe("Guardian.DataStreamFeeds", () => {
     fixture = await deployFixture();
 
     ({ user1 } = fixture.accounts);
-    ({ reader, dataStore, solUsdMarket, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ dataStore, solUsdMarket, ethUsdMarket, wnt, usdc } = fixture.contracts);
 
     solAddr = getSyntheticTokenAddress(hre.network.config.chainId, "SOL");
 
@@ -89,10 +89,7 @@ describe("Guardian.DataStreamFeeds", () => {
 
     await createOrder(fixture, increaseParams);
 
-    let orderKey = (await getOrderKeys(dataStore, 0, 1))[0];
-    let order = await reader.getOrder(dataStore.address, orderKey);
-
-    let block = await provider.getBlock(parseInt(order.numbers.updatedAtBlock));
+    let block = await provider.getBlock();
     let baseDataStreamData = getBaseDataStreamData(block);
 
     await executeOrder(fixture, {
@@ -119,14 +116,11 @@ describe("Guardian.DataStreamFeeds", () => {
     expect(await getPositionCount(dataStore)).to.eq(0);
 
     await createOrder(fixture, increaseParams);
+    block = await provider.getBlock();
 
     expect(await getOrderCount(dataStore)).to.eq(1);
     expect(await getPositionCount(dataStore)).to.eq(0);
 
-    orderKey = (await getOrderKeys(dataStore, 0, 1))[0];
-    order = await reader.getOrder(dataStore.address, orderKey);
-
-    block = await provider.getBlock(parseInt(order.numbers.updatedAtBlock));
     baseDataStreamData = getBaseDataStreamData(block);
 
     await executeOrder(fixture, {
@@ -174,10 +168,7 @@ describe("Guardian.DataStreamFeeds", () => {
 
     await createOrder(fixture, increaseParams);
 
-    let orderKey = (await getOrderKeys(dataStore, 0, 1))[0];
-    let order = await reader.getOrder(dataStore.address, orderKey);
-
-    let block = await provider.getBlock(parseInt(order.numbers.updatedAtBlock));
+    let block = await provider.getBlock();
     let baseDataStreamData = getBaseDataStreamData(block);
 
     await executeOrder(fixture, {
@@ -201,14 +192,11 @@ describe("Guardian.DataStreamFeeds", () => {
     expect(await getPositionCount(dataStore)).to.eq(0);
 
     await createOrder(fixture, increaseParams);
+    block = await provider.getBlock();
 
     expect(await getOrderCount(dataStore)).to.eq(1);
     expect(await getPositionCount(dataStore)).to.eq(0);
 
-    orderKey = (await getOrderKeys(dataStore, 0, 1))[0];
-    order = await reader.getOrder(dataStore.address, orderKey);
-
-    block = await provider.getBlock(parseInt(order.numbers.updatedAtBlock));
     baseDataStreamData = getBaseDataStreamData(block);
 
     await executeOrder(fixture, {
@@ -252,11 +240,8 @@ describe("Guardian.DataStreamFeeds", () => {
     };
 
     await createOrder(fixture, increaseParams);
+    let block = await provider.getBlock();
 
-    let orderKey = (await getOrderKeys(dataStore, 0, 1))[0];
-    let order = await reader.getOrder(dataStore.address, orderKey);
-
-    let block = await provider.getBlock(parseInt(order.numbers.updatedAtBlock));
     let baseDataStreamData = getBaseDataStreamData(block);
 
     await executeOrder(fixture, {
@@ -278,14 +263,11 @@ describe("Guardian.DataStreamFeeds", () => {
     expect(await getPositionCount(dataStore)).to.eq(0);
 
     await createOrder(fixture, increaseParams);
+    block = await provider.getBlock();
 
     expect(await getOrderCount(dataStore)).to.eq(1);
     expect(await getPositionCount(dataStore)).to.eq(0);
 
-    orderKey = (await getOrderKeys(dataStore, 0, 1))[0];
-    order = await reader.getOrder(dataStore.address, orderKey);
-
-    block = await provider.getBlock(parseInt(order.numbers.updatedAtBlock));
     baseDataStreamData = getBaseDataStreamData(block);
 
     await executeOrder(fixture, {

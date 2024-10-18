@@ -11,9 +11,18 @@ function getArbValues() {
   };
 }
 
+function getAvaxValues() {
+  return {
+    tokenAddress: "0x08b25A2a89036d298D6dB8A74ace9d1ce6Db15E5",
+    receiver: "0xA9B03C3AadAc922D105B23304E3EC7d6F0D6360b",
+  };
+}
+
 function getValues() {
   if (hre.network.name === "arbitrum") {
     return getArbValues();
+  } else if (hre.network.name === "avalanche") {
+    return getAvaxValues();
   }
 
   throw new Error(`unsupported network ${hre.network.name}`);

@@ -6,7 +6,6 @@ import { handleDeposit } from "../../utils/deposit";
 import { OrderType, getOrderCount, createOrder } from "../../utils/order";
 import { grantRole } from "../../utils/role";
 import * as keys from "../../utils/keys";
-import { encodeData } from "../../utils/hash";
 import { getDepositCount, createDeposit } from "../../utils/deposit";
 import { createWithdrawal, getWithdrawalCount } from "../../utils/withdrawal";
 import { errorsContract } from "../../utils/error";
@@ -45,14 +44,14 @@ describe("Guardian.GasEstimation", () => {
 
   it("Estimates gas properly for deposits with a single token", async () => {
     // Create a deposit for a single token
-    const singleTokenDepositGasLimitKey = keys.depositGasLimitKey(true);
+    const depositGasLimitKey = keys.depositGasLimitKey();
     const baseGasLimitKey = keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1;
     const gasPerOraclePriceKey = keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE;
     const gasMultiplierKey = keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR;
 
     await dataStore.setUint(baseGasLimitKey, 50_000);
     await dataStore.setUint(gasPerOraclePriceKey, 16_600);
-    await dataStore.setUint(singleTokenDepositGasLimitKey, 200_000);
+    await dataStore.setUint(depositGasLimitKey, 200_000);
     await dataStore.setUint(gasMultiplierKey, expandDecimals(15, 29)); // 1.5x
 
     // Gas required is around 0.0004 ETH, create fails
@@ -116,7 +115,7 @@ describe("Guardian.GasEstimation", () => {
 
     await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1, "0x", 50_000);
     await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE, "0x", 7_000);
-    await config.connect(wallet).setUint(keys.DEPOSIT_GAS_LIMIT, encodeData(["bool"], [false]), 300_000);
+    await config.connect(wallet).setUint(keys.DEPOSIT_GAS_LIMIT, "0x", 300_000);
     await config.connect(wallet).setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, "0x", expandDecimals(15, 29)); // 1.5x
     await config.connect(wallet).setUint(keys.SINGLE_SWAP_GAS_LIMIT, "0x", 25_000);
 

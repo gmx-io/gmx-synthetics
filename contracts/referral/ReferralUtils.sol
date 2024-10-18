@@ -71,18 +71,21 @@ library ReferralUtils {
     // @param trader The trader's address.
     // @return The affiliate's address, the total rebate, and the discount share.
     function getReferralInfo(
+        DataStore dataStore,
         IReferralStorage referralStorage,
         address trader
-    ) internal view returns (bytes32, address, uint256, uint256) {
+    ) internal view returns (bytes32, address, uint256, uint256, uint256) {
         bytes32 code = referralStorage.traderReferralCodes(trader);
         address affiliate;
         uint256 totalRebate;
         uint256 discountShare;
+        uint256 minAffiliateRewardFactor;
 
         if (code != bytes32(0)) {
             affiliate = referralStorage.codeOwners(code);
             uint256 referralTierLevel = referralStorage.referrerTiers(affiliate);
             (totalRebate, discountShare) = referralStorage.tiers(referralTierLevel);
+            minAffiliateRewardFactor = dataStore.getUint(Keys.minAffiliateRewardFactorKey(referralTierLevel));
 
             uint256 customDiscountShare = referralStorage.referrerDiscountShares(affiliate);
             if (customDiscountShare != 0) {
@@ -90,11 +93,16 @@ library ReferralUtils {
             }
         }
 
+        uint256 traderDiscountFactor = Precision.basisPointsToFloat(totalRebate * discountShare / Precision.BASIS_POINTS_DIVISOR);
+        uint256 totalRebateFactor = Precision.basisPointsToFloat(totalRebate);
+        uint256 affiliateRewardFactor = totalRebateFactor - traderDiscountFactor;
+
         return (
             code,
             affiliate,
-            Precision.basisPointsToFloat(totalRebate),
-            Precision.basisPointsToFloat(discountShare)
+            affiliateRewardFactor,
+            traderDiscountFactor,
+            minAffiliateRewardFactor
         );
     }
 

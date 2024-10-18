@@ -9,13 +9,13 @@ import "../error/Errors.sol";
 library AutoCancelUtils {
     function addAutoCancelOrderKey(DataStore dataStore, bytes32 positionKey, bytes32 orderKey) internal {
         bytes32 listKey = Keys.autoCancelOrderListKey(positionKey);
+        dataStore.addBytes32(listKey, orderKey);
+
         uint256 maxAutoCancelOrders = getMaxAutoCancelOrders(dataStore);
         uint256 count = dataStore.getBytes32Count(listKey);
-        if (count >= maxAutoCancelOrders) {
+        if (count > maxAutoCancelOrders) {
             revert Errors.MaxAutoCancelOrdersExceeded(count, maxAutoCancelOrders);
         }
-
-        dataStore.addBytes32(listKey, orderKey);
     }
 
     function removeAutoCancelOrderKey(DataStore dataStore, bytes32 positionKey, bytes32 orderKey) internal {

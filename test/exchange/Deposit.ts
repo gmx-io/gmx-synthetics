@@ -184,7 +184,6 @@ describe("Exchange.Deposit", () => {
       executionFee: "500",
     });
 
-    const block = await provider.getBlock();
     const depositKeys = await getDepositKeys(dataStore, 0, 1);
     const deposit = await reader.getDeposit(dataStore.address, depositKeys[0]);
 
@@ -199,7 +198,6 @@ describe("Exchange.Deposit", () => {
     expect(deposit.numbers.initialLongTokenAmount).eq(expandDecimals(10, 18));
     expect(deposit.numbers.initialShortTokenAmount).eq(expandDecimals(10 * 5000, 6));
     expect(deposit.numbers.minMarketTokens).eq(100);
-    expect(deposit.numbers.updatedAtBlock).eq(block.number);
     expect(deposit.numbers.executionFee).eq("500");
     expect(deposit.numbers.callbackGasLimit).eq("200000");
     expect(deposit.flags.shouldUnwrapNativeToken).eq(true);
@@ -821,8 +819,8 @@ describe("Exchange.Deposit", () => {
 
   it("price impact, fees", async () => {
     // 0.05%: 0.0005
-    await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 4));
-    await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.depositFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.depositFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 4));
     // 30%
     await dataStore.setUint(keys.SWAP_FEE_RECEIVER_FACTOR, decimalToFloat(3, 1));
 

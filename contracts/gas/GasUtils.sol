@@ -271,11 +271,7 @@ library GasUtils {
         uint256 swapCount = deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length;
         uint256 gasForSwaps = swapCount * gasPerSwap;
 
-        if (deposit.initialLongTokenAmount() == 0 || deposit.initialShortTokenAmount() == 0) {
-            return dataStore.getUint(Keys.depositGasLimitKey(true)) + deposit.callbackGasLimit() + gasForSwaps;
-        }
-
-        return dataStore.getUint(Keys.depositGasLimitKey(false)) + deposit.callbackGasLimit() + gasForSwaps;
+        return dataStore.getUint(Keys.depositGasLimitKey()) + deposit.callbackGasLimit() + gasForSwaps;
     }
 
     // @dev the estimated gas limit for withdrawals
@@ -364,10 +360,7 @@ library GasUtils {
         uint256 swapCount = glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length;
         uint256 gasForSwaps = swapCount * gasPerSwap;
 
-        if (glvDeposit.initialLongTokenAmount() == 0 || glvDeposit.initialShortTokenAmount() == 0) {
-            return gasLimit + dataStore.getUint(Keys.depositGasLimitKey(true)) + gasForSwaps;
-        }
-        return gasLimit + dataStore.getUint(Keys.depositGasLimitKey(false)) + gasForSwaps;
+        return gasLimit + dataStore.getUint(Keys.depositGasLimitKey()) + gasForSwaps;
     }
 
     // @dev the estimated gas limit for glv withdrawals

@@ -41,6 +41,7 @@ library PositionPricingUtils {
         address shortToken;
         uint256 sizeDeltaUsd;
         address uiFeeReceiver;
+        bool isLiquidation;
     }
 
     // @dev GetPriceImpactUsdParams struct used in getPriceImpactUsd to avoid stack
@@ -77,9 +78,11 @@ library PositionPricingUtils {
     // @param totalCostAmount the total cost amount in tokens
     struct PositionFees {
         PositionReferralFees referral;
+        PositionProFees pro;
         PositionFundingFees funding;
         PositionBorrowingFees borrowing;
         PositionUiFees ui;
+        PositionLiquidationFees liquidation;
         Price.Props collateralTokenPrice;
         uint256 positionFeeFactor;
         uint256 protocolFeeAmount;
@@ -90,6 +93,20 @@ library PositionPricingUtils {
         uint256 positionFeeAmount;
         uint256 totalCostAmountExcludingFunding;
         uint256 totalCostAmount;
+        uint256 totalDiscountAmount;
+    }
+
+    struct PositionProFees {
+        uint256 traderTier;
+        uint256 traderDiscountFactor;
+        uint256 traderDiscountAmount;
+    }
+
+    struct PositionLiquidationFees {
+        uint256 liquidationFeeUsd;
+        uint256 liquidationFeeAmount;
+        uint256 liquidationFeeReceiverFactor;
+        uint256 liquidationFeeAmountForFeeReceiver;
     }
 
     // @param affiliate the referral affiliate of the trader
@@ -100,6 +117,8 @@ library PositionPricingUtils {
         address affiliate;
         address trader;
         uint256 totalRebateFactor;
+        uint256 affiliateRewardFactor;
+        uint256 adjustedAffiliateRewardFactor;
         uint256 traderDiscountFactor;
         uint256 totalRebateAmount;
         uint256 traderDiscountAmount;
@@ -315,8 +334,20 @@ library PositionPricingUtils {
             borrowingFeeUsd
         );
 
-        fees.feeAmountForPool = fees.positionFeeAmountForPool + fees.borrowing.borrowingFeeAmount - fees.borrowing.borrowingFeeAmountForFeeReceiver;
-        fees.feeReceiverAmount += fees.borrowing.borrowingFeeAmountForFeeReceiver;
+        if (params.isLiquidation) {
+            fees.liquidation = getLiquidationFees(params.dataStore, params.position.market(), params.sizeDeltaUsd, params.collateralTokenPrice);
+        }
+
+        fees.feeAmountForPool =
+            fees.positionFeeAmountForPool +
+            fees.borrowing.borrowingFeeAmount -
+            fees.borrowing.borrowingFeeAmountForFeeReceiver +
+            fees.liquidation.liquidationFeeAmount -
+            fees.liquidation.liquidationFeeAmountForFeeReceiver;
+
+        fees.feeReceiverAmount +=
+            fees.borrowing.borrowingFeeAmountForFeeReceiver +
+            fees.liquidation.liquidationFeeAmountForFeeReceiver;
 
         fees.funding.latestFundingFeeAmountPerSize = MarketUtils.getFundingFeeAmountPerSize(
             params.dataStore,
@@ -354,8 +385,9 @@ library PositionPricingUtils {
         fees.totalCostAmountExcludingFunding =
             fees.positionFeeAmount
             + fees.borrowing.borrowingFeeAmount
+            + fees.liquidation.liquidationFeeAmount
             + fees.ui.uiFeeAmount
-            - fees.referral.traderDiscountAmount;
+            - fees.totalDiscountAmount;
 
         fees.totalCostAmount =
             fees.totalCostAmountExcludingFunding
@@ -448,13 +480,14 @@ library PositionPricingUtils {
         fees.collateralTokenPrice = collateralTokenPrice;
 
         fees.referral.trader = account;
-
+        uint256 minAffiliateRewardFactor;
         (
             fees.referral.referralCode,
             fees.referral.affiliate,
-            fees.referral.totalRebateFactor,
-            fees.referral.traderDiscountFactor
-        ) = ReferralUtils.getReferralInfo(referralStorage, account);
+            fees.referral.affiliateRewardFactor,
+            fees.referral.traderDiscountFactor,
+            minAffiliateRewardFactor
+        ) = ReferralUtils.getReferralInfo(dataStore, referralStorage, account);
 
         // note that since it is possible to incur both positive and negative price impact values
         // and the negative price impact factor may be larger than the positive impact factor
@@ -464,11 +497,67 @@ library PositionPricingUtils {
         fees.positionFeeFactor = dataStore.getUint(Keys.positionFeeFactorKey(market, forPositiveImpact));
         fees.positionFeeAmount = Precision.applyFactor(sizeDeltaUsd, fees.positionFeeFactor) / collateralTokenPrice.min;
 
-        fees.referral.totalRebateAmount = Precision.applyFactor(fees.positionFeeAmount, fees.referral.totalRebateFactor);
-        fees.referral.traderDiscountAmount = Precision.applyFactor(fees.referral.totalRebateAmount, fees.referral.traderDiscountFactor);
-        fees.referral.affiliateRewardAmount = fees.referral.totalRebateAmount - fees.referral.traderDiscountAmount;
+        // pro tiers are provided as a flexible option to allow for custom criteria based discounts,
+        // the exact criteria and usage of this feature should be decided by the DAO
+        fees.pro.traderTier = dataStore.getUint(Keys.proTraderTierKey(account));
+        if (fees.pro.traderTier > 0) {
+            fees.pro.traderDiscountFactor = dataStore.getUint(Keys.proDiscountFactorKey(fees.pro.traderTier));
 
-        fees.protocolFeeAmount = fees.positionFeeAmount - fees.referral.totalRebateAmount;
+            if (fees.pro.traderDiscountFactor > 0) {
+                fees.pro.traderDiscountAmount = Precision.applyFactor(fees.positionFeeAmount, fees.pro.traderDiscountFactor);
+            }
+        }
+
+        // if pro discount is higher than referral discount then affiliate reward is capped at (total referral rebate - pro discount)
+        // but can not be lower than configured min affiliate reward
+        //
+        // example 1:
+        // referral code is 10% affiliate reward and 10% trader discount, pro discount is 5%
+        // min affiliate reward 5%, total referral rebate is 20%, affiliate reward cap is max of (20% - 5%, 5%) = 15%
+        // trader gets 10% discount, affiliate reward is capped at 15%, affiliate gets full 10% reward
+        // protocol gets 80%
+        //
+        // example 2:
+        // referral code is 10% affiliate reward and 10% trader discount, pro discount is 13%
+        // min affiliate reward 5%, total referral rebate is 20%, affiliate reward cap is max of (20% - 13%, 5%) = 7%
+        // trader gets 13% discount, affiliate reward is capped at 7%, affiliate gets capped 7% reward
+        // protocol gets 80%
+        //
+        // example 3:
+        // referral code is 10% affiliate reward and 10% trader discount, pro discount is 18%
+        // min affiliate reward 5%, total referral rebate is 20%, affiliate reward cap is max of (20% - 18%, 5%) = 5%
+        // trader gets 18% discount, affiliate reward is capped at 5%, affiliate gets capped 5% reward
+        // protocol gets 77%
+        //
+        // example 4:
+        // referral code is 10% affiliate reward and 10% trader discount, pro discount is 25%
+        // min affiliate reward 5%, total referral rebate is 20%, affiliate reward cap is max of (20% - 25%, 5%) = 5%
+        // trader gets 25% discount, affiliate reward is capped at 5%, affiliate gets capped 5% reward
+        // protocol gets 70%
+
+        if (fees.referral.referralCode != bytes32(0)) {
+            fees.referral.adjustedAffiliateRewardFactor = fees.referral.affiliateRewardFactor;
+            fees.referral.totalRebateFactor = fees.referral.affiliateRewardFactor + fees.referral.traderDiscountFactor;
+            // if pro discount is higher than referral discount then affiliate reward should be capped
+            // at max of (min affiliate reward, total referral rebate - pro discount)
+            if (fees.pro.traderDiscountFactor > fees.referral.traderDiscountFactor) {
+                fees.referral.adjustedAffiliateRewardFactor = fees.pro.traderDiscountFactor > fees.referral.totalRebateFactor
+                    ? minAffiliateRewardFactor
+                    : fees.referral.totalRebateFactor - fees.pro.traderDiscountFactor;
+                if (fees.referral.adjustedAffiliateRewardFactor < minAffiliateRewardFactor) {
+                    fees.referral.adjustedAffiliateRewardFactor = minAffiliateRewardFactor;
+                }
+            }
+
+            fees.referral.affiliateRewardAmount = Precision.applyFactor(fees.positionFeeAmount, fees.referral.adjustedAffiliateRewardFactor);
+            fees.referral.traderDiscountAmount = Precision.applyFactor(fees.positionFeeAmount, fees.referral.traderDiscountFactor);
+            fees.referral.totalRebateAmount = fees.referral.affiliateRewardAmount + fees.referral.traderDiscountAmount;
+        }
+
+        fees.totalDiscountAmount = fees.pro.traderDiscountAmount > fees.referral.traderDiscountAmount
+            ? fees.pro.traderDiscountAmount
+            : fees.referral.traderDiscountAmount;
+        fees.protocolFeeAmount = fees.positionFeeAmount - fees.referral.affiliateRewardAmount - fees.totalDiscountAmount;
 
         fees.positionFeeReceiverFactor = dataStore.getUint(Keys.POSITION_FEE_RECEIVER_FACTOR);
         fees.feeReceiverAmount = Precision.applyFactor(fees.protocolFeeAmount, fees.positionFeeReceiverFactor);
@@ -477,4 +566,17 @@ library PositionPricingUtils {
         return fees;
     }
 
+    function getLiquidationFees(DataStore dataStore, address market, uint256 sizeInUsd, Price.Props memory collateralTokenPrice) internal view returns (PositionLiquidationFees memory) {
+        PositionLiquidationFees memory liquidationFees;
+        uint256 liquidationFeeFactor = dataStore.getUint(Keys.liquidationFeeFactorKey(market));
+        if (liquidationFeeFactor == 0) {
+            return liquidationFees;
+        }
+
+        liquidationFees.liquidationFeeUsd = Precision.applyFactor(sizeInUsd, liquidationFeeFactor);
+        liquidationFees.liquidationFeeAmount = Calc.roundUpDivision(liquidationFees.liquidationFeeUsd, collateralTokenPrice.min);
+        liquidationFees.liquidationFeeReceiverFactor = dataStore.getUint(Keys.LIQUIDATION_FEE_RECEIVER_FACTOR);
+        liquidationFees.liquidationFeeAmountForFeeReceiver = Precision.applyFactor(liquidationFees.liquidationFeeAmount, liquidationFees.liquidationFeeReceiverFactor);
+        return liquidationFees;
+    }
 }

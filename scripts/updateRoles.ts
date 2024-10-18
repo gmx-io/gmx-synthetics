@@ -79,30 +79,14 @@ async function main() {
   const rolesToAdd = {
     arbitrum: [
       {
-        role: "CONFIG_KEEPER",
-        member: "0x31fabf54278e79069c4e102e9fb79d6a44be53a8",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x43f0080e40a32a44413fd562788c27e3f5beddbc",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x31fabf54278e79069c4e102e9fb79d6a44be53a8",
+        role: "GOV_TOKEN_CONTROLLER",
+        member: "0x5e4766f932ce00aa4a1a82d3da85adf15c5694a1",
       },
     ],
     avalanche: [
       {
-        role: "CONFIG_KEEPER",
-        member: "0xe75f1fa4858a99e07ca878388ae9259ba048c87a",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x989618be5450b40f7a2675549643e2e2dab9978a",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0xe75f1fa4858a99e07ca878388ae9259ba048c87a",
+        role: "GOV_TOKEN_CONTROLLER",
+        member: "0x091ed806490cc58fd514441499e58984ccce0630",
       },
     ],
   };
@@ -117,11 +101,19 @@ async function main() {
         role: "CONTROLLER",
         member: "0xFf10Ff89195191d22F7B934A5E1Cd581Ec0Ccb93",
       },
+      {
+        role: "GOV_TOKEN_CONTROLLER",
+        member: "0x159854e14A862Df9E39E1D128b8e5F70B4A3cE9B",
+      },
     ],
     avalanche: [
       {
         role: "CONTROLLER",
         member: "0x8EfE46827AADfe498C27E56F0A428B5B4EE654f7",
+      },
+      {
+        role: "GOV_TOKEN_CONTROLLER",
+        member: "0xa192D0681E2b9484d1fA48083D36B8A2D0Da1809",
       },
     ],
   };

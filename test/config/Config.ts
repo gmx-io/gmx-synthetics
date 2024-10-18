@@ -374,6 +374,19 @@ describe("Config", () => {
     );
   });
 
+  it("validates max funding fee factor is higher than min funding fee factor", async () => {
+    await config.setUint(keys.MAX_FUNDING_FACTOR_PER_SECOND, encodeData(["address"], [ethUsdMarket.marketToken]), 10);
+    await config.setUint(keys.MIN_FUNDING_FACTOR_PER_SECOND, encodeData(["address"], [ethUsdMarket.marketToken]), 5);
+
+    await expect(
+      config.setUint(keys.MIN_FUNDING_FACTOR_PER_SECOND, encodeData(["address"], [ethUsdMarket.marketToken]), 11)
+    ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
+
+    await expect(
+      config.setUint(keys.MAX_FUNDING_FACTOR_PER_SECOND, encodeData(["address"], [ethUsdMarket.marketToken]), 4)
+    ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
+  });
+
   it("setClaimableCollateralFactorForAccount", async () => {
     await expect(
       config.connect(user1).setClaimableCollateralFactorForAccount(

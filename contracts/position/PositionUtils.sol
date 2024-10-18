@@ -377,7 +377,10 @@ library PositionUtils {
             market.longToken, // longToken
             market.shortToken, // shortToken
             position.sizeInUsd(), // sizeDeltaUsd
-            address(0) // uiFeeReceiver
+            address(0), // uiFeeReceiver
+
+            // should not account for liquidation fees to determine if position should be liquidated
+            false // isLiquidation
         );
 
         PositionPricingUtils.PositionFees memory fees = PositionPricingUtils.getPositionFees(getPositionFeesParams);

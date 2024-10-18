@@ -42,6 +42,7 @@ interface IExchangeRouter {
         uint256 acceptablePrice,
         uint256 triggerPrice,
         uint256 minOutputAmount,
+        uint256 validFromTime,
         bool autoCancel
     ) external payable;
 

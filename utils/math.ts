@@ -17,6 +17,24 @@ export function percentageToFloat(value) {
   return ethers.utils.parseUnits(trimmedValue, 28);
 }
 
+export function exponentToFloat(value) {
+  if (!value.includes("e")) {
+    throw new Error("Invalid exponent input");
+  }
+
+  const components = value.split("e");
+  if (components.length !== 2) {
+    throw new Error("Invalid exponent input");
+  }
+
+  const exponent = parseInt(components[1]);
+  if (isNaN(exponent)) {
+    throw new Error("Invalid exponent");
+  }
+
+  return ethers.utils.parseUnits(components[0], 30 + exponent);
+}
+
 export function bigNumberify(n) {
   return ethers.BigNumber.from(n);
 }
