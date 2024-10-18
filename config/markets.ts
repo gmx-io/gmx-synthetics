@@ -880,7 +880,7 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("2e-10"),
       negativeSwapImpactFactor: exponentToFloat("2e-10"),
 
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"), // 0.00000000000116, at least 3.5 hours to reach max funding
+      fundingIncreaseFactorPerSecond: exponentToFloat("1.74e-12"), // 0.00000000000116, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
 
       maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
