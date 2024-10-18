@@ -828,8 +828,8 @@ const config: {
 
       positionImpactExponentFactor: exponentToFloat("2e0"),
 
-      positivePositionImpactFactor: exponentToFloat("1.05e-10"),
-      negativePositionImpactFactor: exponentToFloat("3.15e-10"),
+      negativePositionImpactFactor: exponentToFloat("3.15e-8"),
+      positivePositionImpactFactor: exponentToFloat("1.05e-8"),
 
       positiveSwapImpactFactor: exponentToFloat("2e-10"),
       negativeSwapImpactFactor: exponentToFloat("2e-10"),
