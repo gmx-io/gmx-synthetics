@@ -32,7 +32,7 @@ async function main() {
     multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [provider, true]));
   }
 
-  console.log(`updating ${multicallWriteParams.length} providers`);
+  console.log(`sending ${multicallWriteParams.length} updates`);
   await timelockWriteMulticall({ timelock, multicallWriteParams });
 }
 
