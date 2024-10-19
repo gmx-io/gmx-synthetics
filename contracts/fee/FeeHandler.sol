@@ -126,6 +126,8 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
 
         uint256 feeAmount;
         uint256 availableFeeAmount = _getAvailableFeeAmount(feeToken, buybackToken);
+        FeeAmounts memory feeAmounts;
+
         for (uint256 i; i < markets.length; i++) {
             if (version == v1) {
                 feeAmount = vaultV1.feeReserves(feeToken);
@@ -137,7 +139,7 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
                 revert Errors.InvalidVersion(version);
             }
 
-            FeeAmounts memory feeAmounts = _getFeeAmounts(version, feeAmount);
+            feeAmounts = _getFeeAmounts(version, feeAmount);
             feeAmount = buybackToken == gmx ? feeAmounts.gmx : feeAmounts.wnt;
             availableFeeAmount = availableFeeAmount + feeAmount;
         }
