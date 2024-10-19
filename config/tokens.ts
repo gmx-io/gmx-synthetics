@@ -621,6 +621,11 @@ const config: {
       transferGasLimit: 200 * 1000,
       deploy: true,
     },
+    GMX: {
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      deploy: true,
+    },
     WBTC: {
       decimals: 8,
       transferGasLimit: 200 * 1000,
@@ -644,6 +649,11 @@ const config: {
   localhost: {
     WETH: {
       wrappedNative: true,
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      deploy: true,
+    },
+    GMX: {
       decimals: 18,
       transferGasLimit: 200 * 1000,
       deploy: true,

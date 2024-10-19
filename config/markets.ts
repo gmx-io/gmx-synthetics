@@ -2661,6 +2661,9 @@ const config: {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
     },
     {
+      tokens: { indexToken: "GMX", longToken: "GMX", shortToken: "USDC" },
+    },
+    {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDT" },
     },
     {
@@ -2686,6 +2689,9 @@ const config: {
   localhost: [
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
+    },
+    {
+      tokens: { indexToken: "GMX", longToken: "GMX", shortToken: "USDC" },
     },
     {
       tokens: { longToken: "WETH", shortToken: "USDC" },

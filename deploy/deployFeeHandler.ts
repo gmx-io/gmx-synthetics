@@ -12,9 +12,9 @@ const func = createDeployFunction({
     let gmxAddress = vaultV1Config.gmx;
     if (network.name === "hardhat") {
       const vaultV1 = await get("MockVaultV1");
+      const tokens = await hre.gmx.getTokens();
       vaultV1Address = vaultV1.address;
-      const gmx = await get("MockGMX");
-      gmxAddress = gmx.address;
+      gmxAddress = tokens.GMX.address;
     }
     if (!vaultV1Address) {
       throw new Error("vaultV1Address is not defined");
@@ -31,6 +31,5 @@ const func = createDeployFunction({
 });
 
 func.dependencies = func.dependencies.concat(["MockVaultV1"]);
-func.dependencies = func.dependencies.concat(["MockGMX"]);
 
 export default func;

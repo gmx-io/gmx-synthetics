@@ -36,6 +36,8 @@ export async function deployFixture() {
   const wnt = await hre.ethers.getContract("WETH");
   await wnt.deposit({ value: expandDecimals(50, 18) });
 
+  const gmx = await hre.ethers.getContract("GMX");
+
   const wbtc = await hre.ethers.getContract("WBTC");
   const sol = { address: getSyntheticTokenAddress(hre.network.config.chainId, "SOL") };
 
@@ -50,6 +52,9 @@ export async function deployFixture() {
 
   const wethPriceFeed = await hre.ethers.getContract("WETHPriceFeed");
   await wethPriceFeed.setAnswer(expandDecimals(5000, 8));
+
+  const gmxPriceFeed = await hre.ethers.getContract("GMXPriceFeed");
+  await gmxPriceFeed.setAnswer(expandDecimals(20, 8));
 
   const oracleSalt = hashData(["uint256", "string"], [chainId, "xget-oracle-v1"]);
 
@@ -207,6 +212,17 @@ export async function deployFixture() {
     dataStore.address
   );
 
+  const gmxUsdMarketAddress = getMarketTokenAddress(
+    gmx.address,
+    gmx.address,
+    usdc.address,
+    DEFAULT_MARKET_TYPE,
+    marketFactory.address,
+    roleStore.address,
+    dataStore.address
+  );
+  const gmxUsdMarket = await reader.getMarket(dataStore.address, gmxUsdMarketAddress);
+
   return {
     accountList,
     getContract: async (contractName) => {
@@ -282,12 +298,15 @@ export async function deployFixture() {
       referralStorage,
       usdcPriceFeed,
       wethPriceFeed,
+      gmxPriceFeed,
       wnt,
+      gmx,
       wbtc,
       sol,
       usdc,
       usdt,
       ethUsdMarket,
+      gmxUsdMarket,
       ethUsdtMarket,
       ethUsdSpotOnlyMarket,
       ethUsdSingleTokenMarket,

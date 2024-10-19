@@ -92,6 +92,14 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
             initPrice: "500000000000",
           },
         },
+        GMX: {
+          priceFeed: {
+            decimals: 8,
+            heartbeatDuration: 24 * 60 * 60,
+            deploy: true,
+            initPrice: "10000000000",
+          },
+        },
       },
     },
 

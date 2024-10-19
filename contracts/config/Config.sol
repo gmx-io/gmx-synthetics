@@ -534,6 +534,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.BUYBACK_BATCH_AMOUNT] = true;
         allowedBaseKeys[Keys.BUYBACK_GMX_FACTOR] = true;
         allowedBaseKeys[Keys.BUYBACK_MAX_PRICE_IMPACT_FACTOR] = true;
+        allowedBaseKeys[Keys.BUYBACK_MAX_PRICE_AGE] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {
