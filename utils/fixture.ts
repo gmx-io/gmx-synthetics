@@ -112,6 +112,7 @@ export async function deployFixture() {
   const swapUtils = await hre.ethers.getContract("SwapUtils");
   const referralStorage = await hre.ethers.getContract("ReferralStorage");
   const feeHandler = await hre.ethers.getContract("FeeHandler");
+  const mockVaultV1 = await hre.ethers.getContract("MockVaultV1");
 
   const ethUsdMarketAddress = getMarketTokenAddress(
     wnt.address,
@@ -212,17 +213,6 @@ export async function deployFixture() {
     dataStore.address
   );
 
-  const gmxUsdMarketAddress = getMarketTokenAddress(
-    gmx.address,
-    gmx.address,
-    usdc.address,
-    DEFAULT_MARKET_TYPE,
-    marketFactory.address,
-    roleStore.address,
-    dataStore.address
-  );
-  const gmxUsdMarket = await reader.getMarket(dataStore.address, gmxUsdMarketAddress);
-
   return {
     accountList,
     getContract: async (contractName) => {
@@ -306,7 +296,6 @@ export async function deployFixture() {
       usdc,
       usdt,
       ethUsdMarket,
-      gmxUsdMarket,
       ethUsdtMarket,
       ethUsdSpotOnlyMarket,
       ethUsdSingleTokenMarket,
@@ -325,6 +314,7 @@ export async function deployFixture() {
       glvShiftStoreUtils,
       glvStoreUtils,
       glvReader,
+      mockVaultV1,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };

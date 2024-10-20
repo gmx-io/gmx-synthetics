@@ -20,7 +20,7 @@ contract MockVaultV1 {
     }
 
     function feeReserves(address feeToken) external view returns (uint256) {
-        uint256 balance = IERC20(feeToken).balanceOf(gov);
+        uint256 balance = IERC20(feeToken).balanceOf(address(this));
         return balance;
     }
 }
