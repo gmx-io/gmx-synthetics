@@ -24,7 +24,6 @@ describe("Guardian.Fees", () => {
     ethUsdMarket,
     referralStorage,
     exchangeRouter,
-    feeHandler,
     reader,
     decreasePositionUtils;
 
@@ -39,7 +38,6 @@ describe("Guardian.Fees", () => {
       usdc,
       referralStorage,
       exchangeRouter,
-      feeHandler,
       reader,
       decreasePositionUtils,
     } = fixture.contracts);
@@ -57,109 +55,6 @@ describe("Guardian.Fees", () => {
         maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
       },
     });
-  });
-
-  it("FeeKeeper claims fees through FeeHandler", async () => {
-    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 3)); // 50 BIPs
-    await dataStore.setUint(keys.POSITION_FEE_RECEIVER_FACTOR, decimalToFloat(1, 1)); // 10%
-
-    // Fee Amount is initially 0
-    let claimableFeeAmount = await dataStore.getUint(
-      keys.claimableFeeAmountKey(ethUsdMarket.marketToken, usdc.address)
-    );
-    expect(claimableFeeAmount).to.eq(0);
-
-    // User opens a position and experiences a position fee,
-    // a portion of which is claimable by the fee keeper
-    await handleOrder(fixture, {
-      create: {
-        account: user0,
-        market: ethUsdMarket,
-        initialCollateralToken: usdc,
-        initialCollateralDeltaAmount: expandDecimals(50 * 1000, 6), // $50,000
-        swapPath: [],
-        sizeDeltaUsd: decimalToFloat(50 * 1000), // $50,000 Position
-        acceptablePrice: expandDecimals(5000, 12),
-        executionFee: expandDecimals(1, 15),
-        minOutputAmount: 0,
-        orderType: OrderType.MarketIncrease,
-        isLong: true,
-        shouldUnwrapNativeToken: false,
-      },
-    });
-
-    // The increase size is 50,000 -> position fee = .50% * 50,000 = $250
-    // 10% * $250 = $25 for the feeReceiver
-    const positionFeeFromIncrease = expandDecimals(25, 6);
-
-    claimableFeeAmount = await dataStore.getUint(keys.claimableFeeAmountKey(ethUsdMarket.marketToken, usdc.address));
-    expect(claimableFeeAmount).to.eq(positionFeeFromIncrease);
-
-    // User decreases their position and experiences a position fee,
-    // a portion of which is claimable by the fee keeper
-    await handleOrder(fixture, {
-      create: {
-        account: user0,
-        market: ethUsdMarket,
-        initialCollateralToken: usdc,
-        initialCollateralDeltaAmount: 0,
-        swapPath: [],
-        sizeDeltaUsd: decimalToFloat(25 * 1000), // Decrease by half
-        acceptablePrice: expandDecimals(5000, 12),
-        executionFee: expandDecimals(1, 15),
-        minOutputAmount: 0,
-        orderType: OrderType.MarketDecrease,
-        isLong: true,
-        shouldUnwrapNativeToken: false,
-      },
-    });
-
-    // The decrease size is 25,000 -> position fee = .50% * 25,000 = $125
-    // 10% * $125 = $12.5 for the feeReceiver
-    const positionFeeFromDecrease = expandDecimals(125, 5);
-
-    claimableFeeAmount = await dataStore.getUint(keys.claimableFeeAmountKey(ethUsdMarket.marketToken, usdc.address));
-    expect(claimableFeeAmount).to.eq(positionFeeFromDecrease.add(positionFeeFromIncrease));
-
-    // User closes their position and experiences a position fee,
-    // a portion of which is claimable by the fee keeper
-    await handleOrder(fixture, {
-      create: {
-        account: user0,
-        market: ethUsdMarket,
-        initialCollateralToken: usdc,
-        initialCollateralDeltaAmount: 0,
-        swapPath: [],
-        sizeDeltaUsd: decimalToFloat(25 * 1000), // Decrease by the rest
-        acceptablePrice: expandDecimals(5000, 12),
-        executionFee: expandDecimals(1, 15),
-        minOutputAmount: 0,
-        orderType: OrderType.MarketDecrease,
-        isLong: true,
-        shouldUnwrapNativeToken: false,
-      },
-    });
-
-    // The decrease size is 25,000 -> position fee = .50% & 25,000 = $125
-    // 10% * $125 = $12.5 for the feeReceiver
-    claimableFeeAmount = await dataStore.getUint(keys.claimableFeeAmountKey(ethUsdMarket.marketToken, usdc.address));
-    expect(claimableFeeAmount).to.eq(positionFeeFromDecrease.mul(2).add(positionFeeFromIncrease));
-
-    const keeperBalBefore = await usdc.balanceOf(wallet.address);
-
-    // The feeKeeper is able to claim the fees from the feeHandler
-    await grantRole(roleStore, wallet.address, "FEE_KEEPER");
-    await dataStore.setAddress(keys.FEE_RECEIVER, wallet.address);
-
-    await feeHandler.connect(wallet).claimFees([ethUsdMarket.marketToken], [usdc.address]);
-
-    const keeperBalAfter = await usdc.balanceOf(wallet.address);
-
-    expect(keeperBalAfter.sub(keeperBalBefore)).to.eq(claimableFeeAmount);
-
-    // Claimable fees are now 0
-    claimableFeeAmount = await dataStore.getUint(keys.claimableFeeAmountKey(ethUsdMarket.marketToken, usdc.address));
-    expect(claimableFeeAmount).to.eq(0);
   });
 
   it("Affiliates are able to claim their rewards", async () => {

@@ -880,6 +880,17 @@ const config: {
         initPrice: "500000000000",
       },
     },
+    GMX: {
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      deploy: true,
+      priceFeed: {
+        decimals: 8,
+        heartbeatDuration: 24 * 60 * 60,
+        deploy: true,
+        initPrice: "10000000000",
+      },
+    },
     WBTC: {
       decimals: 8,
       transferGasLimit: 200 * 1000,
@@ -915,6 +926,11 @@ const config: {
   localhost: {
     WETH: {
       wrappedNative: true,
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      deploy: true,
+    },
+    GMX: {
       decimals: 18,
       transferGasLimit: 200 * 1000,
       deploy: true,

@@ -36,6 +36,8 @@ export async function deployFixture() {
   const wnt = await hre.ethers.getContract("WETH");
   await wnt.deposit({ value: expandDecimals(50, 18) });
 
+  const gmx = await hre.ethers.getContract("GMX");
+
   const wbtc = await hre.ethers.getContract("WBTC");
   const sol = { address: getSyntheticTokenAddress(hre.network.config.chainId, "SOL") };
 
@@ -50,6 +52,9 @@ export async function deployFixture() {
 
   const wethPriceFeed = await hre.ethers.getContract("WETHPriceFeed");
   await wethPriceFeed.setAnswer(expandDecimals(5000, 8));
+
+  const gmxPriceFeed = await hre.ethers.getContract("GMXPriceFeed");
+  await gmxPriceFeed.setAnswer(expandDecimals(20, 8));
 
   const oracleSalt = hashData(["uint256", "string"], [chainId, "xget-oracle-v1"]);
 
@@ -107,6 +112,7 @@ export async function deployFixture() {
   const swapUtils = await hre.ethers.getContract("SwapUtils");
   const referralStorage = await hre.ethers.getContract("ReferralStorage");
   const feeHandler = await hre.ethers.getContract("FeeHandler");
+  const mockVaultV1 = await hre.ethers.getContract("MockVaultV1");
 
   const ethUsdMarketAddress = getMarketTokenAddress(
     wnt.address,
@@ -282,7 +288,9 @@ export async function deployFixture() {
       referralStorage,
       usdcPriceFeed,
       wethPriceFeed,
+      gmxPriceFeed,
       wnt,
+      gmx,
       wbtc,
       sol,
       usdc,
@@ -306,6 +314,7 @@ export async function deployFixture() {
       glvShiftStoreUtils,
       glvStoreUtils,
       glvReader,
+      mockVaultV1,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };

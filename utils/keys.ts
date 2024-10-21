@@ -247,6 +247,13 @@ export const SYNC_CONFIG_MARKET_PARAMETER_DISABLED = hashString("SYNC_CONFIG_MAR
 export const SYNC_CONFIG_UPDATE_COMPLETED = hashString("SYNC_CONFIG_UPDATE_COMPLETED");
 export const SYNC_CONFIG_LATEST_UPDATE_ID = hashString("SYNC_CONFIG_LATEST_UPDATE_ID");
 
+export const BUYBACK_BATCH_AMOUNT = hashString("BUYBACK_BATCH_AMOUNT");
+export const BUYBACK_AVAILABLE_FEE_AMOUNT = hashString("BUYBACK_AVAILABLE_FEE_AMOUNT");
+export const BUYBACK_GMX_FACTOR = hashString("BUYBACK_GMX_FACTOR");
+export const BUYBACK_MAX_PRICE_IMPACT_FACTOR = hashString("BUYBACK_MAX_PRICE_IMPACT_FACTOR");
+export const BUYBACK_MAX_PRICE_AGE = hashString("BUYBACK_MAX_PRICE_AGE");
+export const WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = hashString("WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT");
+
 export const VALID_FROM_TIME = hashString("VALID_FROM_TIME");
 
 export function accountDepositListKey(account) {
@@ -756,4 +763,24 @@ export function syncConfigUpdateCompletedKey(updateId: number) {
 
 export function syncConfigLatestUpdateIdKey() {
   return SYNC_CONFIG_LATEST_UPDATE_ID;
+}
+
+export function buybackBatchAmountKey(token: string) {
+  return hashData(["bytes32", "address"], [BUYBACK_BATCH_AMOUNT, token]);
+}
+
+export function buybackAvailableFeeAmountKey(feeToken: string, swapToken: string) {
+  return hashData(["bytes32", "address", "address"], [BUYBACK_AVAILABLE_FEE_AMOUNT, feeToken, swapToken]);
+}
+
+export function buybackGmxFactorKey(version: number) {
+  return hashData(["bytes32", "uint256"], [BUYBACK_GMX_FACTOR, version]);
+}
+
+export function buybackMaxPriceImpactFactorKey(token: string) {
+  return hashData(["bytes32", "address"], [BUYBACK_MAX_PRICE_IMPACT_FACTOR, token]);
+}
+
+export function withdrawableBuybackTokenAmountKey(buybackToken: string) {
+  return hashData(["bytes32", "address"], [WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT, buybackToken]);
 }

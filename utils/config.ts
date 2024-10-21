@@ -96,6 +96,8 @@ export const EXCLUDED_CONFIG_KEYS = {
   GLV_SHIFT_LAST_EXECUTED_AT: true,
   SYNC_CONFIG_UPDATE_COMPLETED: true,
   SYNC_CONFIG_LATEST_UPDATE_ID: true,
+  BUYBACK_AVAILABLE_FEE_AMOUNT: true,
+  WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT: true,
 };
 
 export async function appendUintConfigIfDifferent(

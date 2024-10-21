@@ -139,7 +139,13 @@ library Errors {
     error DisabledFeature(bytes32 key);
 
     // FeeHandler errors
-    error InvalidClaimFeesInput(uint256 marketsLength, uint256 tokensLength);
+    error InvalidBuybackToken(address buybackToken);
+    error InvalidVersion(uint256 version);
+    error InsufficientBuybackOutputAmount(address feeToken, address buybackToken, uint256 outputAmount, uint256 minOutputAmount);
+    error BuybackAndFeeTokenAreEqual(address feeToken, address buybackToken);
+    error AvailableFeeAmountIsZero(address feeToken, address buybackToken, uint256 availableFeeAmount);
+    error MaxBuybackPriceAgeExceeded(uint256 priceTimestamp, uint256 buybackMaxPriceAge, uint256 currentTimestamp);
+    error EmptyClaimFeesMarket();
 
     // GasUtils errors
     error InsufficientExecutionFee(uint256 minExecutionFee, uint256 executionFee);
