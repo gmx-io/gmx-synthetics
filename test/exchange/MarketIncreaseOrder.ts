@@ -258,7 +258,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
 
     await handleOrder(fixture, { create: params });
 
-    expect((await provider.getBalance(user1.address)).sub(initialBalance)).closeTo("175946985407576", "10000000000000");
+    expect((await provider.getBalance(user1.address)).sub(initialBalance)).closeTo("206999985656000", "10000000000000");
   });
 
   it("refund execution fee callback", async () => {
@@ -290,7 +290,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
 
     expect((await provider.getBalance(user1.address)).sub(initialBalance)).eq(0);
 
-    expect(await provider.getBalance(mockCallbackReceiver.address)).closeTo("156270985250168", "10000000000000");
+    expect(await provider.getBalance(mockCallbackReceiver.address)).closeTo("187324985498600", "10000000000000");
   });
 
   it("validates reserve", async () => {
@@ -486,8 +486,8 @@ describe("Exchange.MarketIncreaseOrder", () => {
     expect(position0.position.numbers.fundingFeeAmountPerSize).eq(0);
     expect(position0.position.numbers.longTokenClaimableFundingAmountPerSize).eq(0);
     expect(position0.position.numbers.shortTokenClaimableFundingAmountPerSize).eq(0);
-    expect(position0.position.numbers.increasedAtBlock).eq(block.number);
-    expect(position0.position.numbers.decreasedAtBlock).eq(0);
+    expect(position0.position.numbers.increasedAtTime).eq(block.timestamp);
+    expect(position0.position.numbers.decreasedAtTime).eq(0);
     expect(position0.position.flags.isLong).eq(true);
   });
 
