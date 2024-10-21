@@ -125,8 +125,8 @@ async function verifyForNetwork(verificationNetwork) {
 
 async function main() {
   if (hre.network.name === "avalanche") {
-    await verifyForNetwork("snowscan");
     await verifyForNetwork("avalanche");
+    await verifyForNetwork("snowscan");
   } else {
     await verifyForNetwork(hre.network.name);
   }
