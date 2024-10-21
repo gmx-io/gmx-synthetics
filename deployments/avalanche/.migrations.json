@@ -10,8 +10,6 @@
   "Oracle_3": 1688465827,
   "MarketFactory_3": 1688466337,
   "Multicall3": 1688466541,
-  "OrderHandler_3": 1703663250,
-  "SubaccountRouter_1": 1703667083,
   "GovToken_1": 1705380400,
   "GovTimelockController_1": 1718612278,
   "ProtocolGovernor_1": 1718612288,
@@ -21,9 +19,6 @@
   "Oracle_4": 1718612330,
   "ChainlinkDataStreamProvider_3": 1718612334,
   "ShiftVault_1": 1718612418,
-  "OrderHandler_6": 1718612451,
-  "SubaccountRouter_2": 1718612522,
   "GlvFactory_2": 1727673472,
-  "GlvVault_1": 1727673480,
-  "GlvHandler_1": 1727673624
+  "GlvVault_1": 1727673480
 }
