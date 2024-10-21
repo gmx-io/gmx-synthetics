@@ -1,11 +1,11 @@
 import { setTimeout } from "timers/promises";
 import { exec } from "child_process";
 import { readJsonFile, writeJsonFile } from "../utils/file";
+import { getExplorerUrl } from "../hardhat.config";
 
 import hre from "hardhat";
 import got from "got";
 
-const apiUrl = hre.network.config.verify.etherscan.apiUrl;
 const apiKey = hre.network.config.verify.etherscan.apiKey;
 
 // a custom argument file may be needed for complex arguments
@@ -13,7 +13,7 @@ const apiKey = hre.network.config.verify.etherscan.apiKey;
 //
 // example:
 // ARBISCAN_API_KEY=<api key> npx hardhat --network arbitrum verify --constructor-args ./verification/gov/govTimelockController.js --contract contracts/gov/GovTimelockController.sol:GovTimelockController 0x99Ff4D52e97813A1784bC4A1b37554DC3499D67e
-async function getIsContractVerified(address: string) {
+async function getIsContractVerified(apiUrl: string, address: string) {
   const res: any = await got
     .get(`${apiUrl}api`, {
       searchParams: {
@@ -53,10 +53,11 @@ function encodeArg(arg) {
   return `"${arg}"`;
 }
 
-async function main() {
-  const verificationNetwork = process.env.VERIFICATION_NETWORK ? process.env.VERIFICATION_NETWORK : hre.network.name;
-  const cacheFilePath = `./scripts/cache/${verificationNetwork}.json`;
+async function verifyForNetwork(verificationNetwork) {
+  const apiUrl = getExplorerUrl(verificationNetwork);
+  const cacheFilePath = `./scripts/cache/verification/${verificationNetwork}.json`;
   console.log("cacheFilePath", cacheFilePath);
+  console.log("apiUrl", apiUrl);
 
   let cache = readJsonFile(cacheFilePath);
   if (cache === undefined) {
@@ -80,11 +81,11 @@ async function main() {
       let isContractVerified = cache[address];
       if (!isContractVerified) {
         await setTimeout(200);
-        isContractVerified = await getIsContractVerified(address);
+        isContractVerified = await getIsContractVerified(apiUrl, address);
       }
 
       if (isContractVerified) {
-        console.log("%s already verified", name);
+        console.log(`${name} already verified: ${address}`);
         continue;
       }
 
@@ -120,6 +121,15 @@ async function main() {
 
   writeJsonFile(cacheFilePath, cache);
   console.log("Done");
+}
+
+async function main() {
+  if (hre.network.name === "avalanche") {
+    await verifyForNetwork("snowscan");
+    await verifyForNetwork("avalanche");
+  } else {
+    await verifyForNetwork(hre.network.name);
+  }
 }
 
 main()
