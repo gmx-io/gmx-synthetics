@@ -14,31 +14,36 @@ const apiKey = hre.network.config.verify.etherscan.apiKey;
 // example:
 // ARBISCAN_API_KEY=<api key> npx hardhat --network arbitrum verify --constructor-args ./verification/gov/govTimelockController.js --contract contracts/gov/GovTimelockController.sol:GovTimelockController 0x99Ff4D52e97813A1784bC4A1b37554DC3499D67e
 async function getIsContractVerified(apiUrl: string, address: string) {
-  const res: any = await got
-    .get(`${apiUrl}api`, {
-      searchParams: {
-        module: "contract",
-        action: "getabi",
-        address,
-        apikey: apiKey,
-      },
-    })
-    .json();
+  try {
+    const res: any = await got
+      .get(`${apiUrl}api`, {
+        searchParams: {
+          module: "contract",
+          action: "getabi",
+          address,
+          apikey: apiKey,
+        },
+      })
+      .json();
 
-  if (res.status !== "1") {
-    if (res.result?.includes("rate limit reached")) {
-      throw new Error("Rate limit reached");
-    }
-    if (res.result?.includes("Invalid API URL endpoint")) {
-      throw new Error("Invalid API URL endpoint");
+    if (res.status !== "1") {
+      if (res.result?.includes("rate limit reached")) {
+        throw new Error("Rate limit reached");
+      }
+      if (res.result?.includes("Invalid API URL endpoint")) {
+        throw new Error("Invalid API URL endpoint");
+      }
+
+      if (!res.result?.includes("Contract source code not verified")) {
+        console.warn("%s: %s", res.message, res.result);
+      }
     }
 
-    if (!res.result?.includes("Contract source code not verified")) {
-      console.warn("%s: %s", res.message, res.result);
-    }
+    return res.status === "1";
+  } catch (e) {
+    console.warn(`getIsContractVerified error: ${e}`);
+    return false;
   }
-
-  return res.status === "1";
 }
 
 function encodeArg(arg) {
@@ -81,6 +86,7 @@ async function verifyForNetwork(verificationNetwork) {
       let isContractVerified = cache[address];
       if (!isContractVerified) {
         await setTimeout(200);
+        console.log(`checking contract verification ${address}`);
         isContractVerified = await getIsContractVerified(apiUrl, address);
       }
 
@@ -124,11 +130,13 @@ async function verifyForNetwork(verificationNetwork) {
 }
 
 async function main() {
-  if (hre.network.name === "avalanche") {
+  const networkName = process.env.VERIFICATION_NETWORK ? process.env.VERIFICATION_NETWORK : hre.network.name;
+
+  if (networkName === "avalanche") {
     await verifyForNetwork("avalanche");
     await verifyForNetwork("snowscan");
   } else {
-    await verifyForNetwork(hre.network.name);
+    await verifyForNetwork(networkName);
   }
 }
 

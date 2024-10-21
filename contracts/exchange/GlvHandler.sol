@@ -6,15 +6,9 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "./BaseHandler.sol";
 
-import "../glv/GlvUtils.sol";
 import "../glv/glvDeposit/GlvDepositUtils.sol";
-import "../glv/glvDeposit/GlvDepositStoreUtils.sol";
-import "../glv/glvDeposit/GlvDeposit.sol";
 import "../glv/glvWithdrawal/GlvWithdrawalUtils.sol";
-import "../glv/glvWithdrawal/GlvWithdrawalStoreUtils.sol";
-import "../glv/glvWithdrawal/GlvWithdrawal.sol";
 import "../glv/glvShift/GlvShiftUtils.sol";
-import "../glv/GlvVault.sol";
 
 contract GlvHandler is BaseHandler, ReentrancyGuard {
     using GlvDeposit for GlvDeposit.Props;

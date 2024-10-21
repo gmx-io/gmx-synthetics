@@ -7,6 +7,12 @@ pragma solidity ^0.8.0;
  * @dev Struct for withdrawals
  */
 library Withdrawal {
+    enum WithdrawalType {
+        Normal,
+        Shift,
+        Glv
+    }
+
     // @dev there is a limit on the number of fields a struct can have when being passed
     // or returned as a memory variable which can cause "Stack too deep" errors
     // use sub-structs to avoid this issue

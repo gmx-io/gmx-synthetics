@@ -7,7 +7,6 @@ import "../event/EventUtils.sol";
 import "../utils/Cast.sol";
 
 import "./Withdrawal.sol";
-import "./WithdrawalUtils.sol";
 import "../pricing/ISwapPricingUtils.sol";
 
 library WithdrawalEventUtils {
@@ -25,7 +24,7 @@ library WithdrawalEventUtils {
         EventEmitter eventEmitter,
         bytes32 key,
         Withdrawal.Props memory withdrawal,
-        WithdrawalUtils.WithdrawalType withdrawalType
+        Withdrawal.WithdrawalType withdrawalType
     ) external {
         EventUtils.EventLogData memory eventData;
 

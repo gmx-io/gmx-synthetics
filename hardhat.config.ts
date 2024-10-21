@@ -55,6 +55,7 @@ export const getExplorerUrl = (network) => {
     arbitrumGoerli: "https://api-goerli.arbiscan.io/",
     arbitrumSepolia: "https://api-sepolia.arbiscan.io/",
     avalancheFuji: "https://api-testnet.snowtrace.io/",
+    arbitrumBlockscout: "https://arbitrum.blockscout.com/api",
   };
 
   const url = urls[network];
@@ -167,6 +168,12 @@ const config: HardhatUserConfig = {
     arbitrumBlockscout: {
       url: getRpcUrl("arbitrumBlockscout"),
       accounts: getEnvAccounts(),
+      verify: {
+        etherscan: {
+          apiUrl: getExplorerUrl("arbitrumBlockscout"),
+          apiKey: "arbitrumBlockscout",
+        },
+      },
     },
     arbitrumGoerli: {
       url: getRpcUrl("arbitrumGoerli"),

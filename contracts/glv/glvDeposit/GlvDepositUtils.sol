@@ -2,21 +2,12 @@
 
 pragma solidity ^0.8.0;
 
-import "../../deposit/DepositVault.sol";
 import "../../deposit/ExecuteDepositUtils.sol";
-import "../../deposit/DepositUtils.sol";
-import "../../data/DataStore.sol";
-import "../../oracle/Oracle.sol";
-import "../../market/Market.sol";
-import "../../market/MarketUtils.sol";
-import "../../data/Keys.sol";
-import "../../event/EventUtils.sol";
+
+import "../../nonce/NonceUtils.sol";
 
 import "../GlvVault.sol";
 import "../GlvUtils.sol";
-import "../GlvToken.sol";
-import "../GlvEventUtils.sol";
-import "./GlvDeposit.sol";
 import "./GlvDepositEventUtils.sol";
 import "./GlvDepositStoreUtils.sol";
 
@@ -421,7 +412,7 @@ library GlvDepositUtils {
 
         bytes32 depositKey = NonceUtils.getNextKey(params.dataStore);
         params.dataStore.addBytes32(Keys.DEPOSIT_LIST, depositKey);
-        DepositEventUtils.emitDepositCreated(params.eventEmitter, depositKey, deposit, DepositUtils.DepositType.Glv);
+        DepositEventUtils.emitDepositCreated(params.eventEmitter, depositKey, deposit, Deposit.DepositType.Glv);
 
         ExecuteDepositUtils.ExecuteDepositParams memory executeDepositParams = ExecuteDepositUtils.ExecuteDepositParams(
                 params.dataStore,
