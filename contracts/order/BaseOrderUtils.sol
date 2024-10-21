@@ -71,6 +71,18 @@ library BaseOrderUtils {
         int256 adjustedPriceImpactUsd;
     }
 
+    function isSupportedOrder(Order.OrderType orderType) internal pure returns (bool) {
+        return orderType == Order.OrderType.MarketSwap ||
+               orderType == Order.OrderType.LimitSwap ||
+               orderType == Order.OrderType.MarketIncrease ||
+               orderType == Order.OrderType.MarketDecrease ||
+               orderType == Order.OrderType.LimitIncrease ||
+               orderType == Order.OrderType.LimitDecrease ||
+               orderType == Order.OrderType.StopIncrease ||
+               orderType == Order.OrderType.StopLossDecrease ||
+               orderType == Order.OrderType.Liquidation;
+    }
+
     // @dev check if an orderType is a market order
     // @param orderType the order type
     // @return whether an orderType is a market order
@@ -79,15 +91,6 @@ library BaseOrderUtils {
         return orderType == Order.OrderType.MarketSwap ||
                orderType == Order.OrderType.MarketIncrease ||
                orderType == Order.OrderType.MarketDecrease;
-    }
-
-    // @dev check if an orderType is a limit order
-    // @param orderType the order type
-    // @return whether an orderType is a limit order
-    function isLimitOrder(Order.OrderType orderType) internal pure returns (bool) {
-        return orderType == Order.OrderType.LimitSwap ||
-               orderType == Order.OrderType.LimitIncrease ||
-               orderType == Order.OrderType.LimitDecrease;
     }
 
     // @dev check if an orderType is a swap order
@@ -110,7 +113,8 @@ library BaseOrderUtils {
     // @return whether an orderType is an increase order
     function isIncreaseOrder(Order.OrderType orderType) internal pure returns (bool) {
         return orderType == Order.OrderType.MarketIncrease ||
-               orderType == Order.OrderType.LimitIncrease;
+               orderType == Order.OrderType.LimitIncrease ||
+               orderType == Order.OrderType.StopIncrease;
     }
 
     // @dev check if an orderType is a decrease order
@@ -194,6 +198,22 @@ library BaseOrderUtils {
             return;
         }
 
+        // for stop increase long positions:
+        //      - the order should be executed when the oracle price is >= triggerPrice
+        //      - primaryPrice.max should be used for the oracle price
+        // for stop increase short positions:
+        //      - the order should be executed when the oracle price is <= triggerPrice
+        //      - primaryPrice.min should be used for the oracle price
+        if (orderType == Order.OrderType.StopIncrease) {
+            bool ok = isLong ? primaryPrice.max >= triggerPrice : primaryPrice.min <= triggerPrice;
+
+            if (!ok) {
+                revert Errors.InvalidOrderPrices(primaryPrice.min, primaryPrice.max, triggerPrice, uint256(orderType));
+            }
+
+            return;
+        }
+
         // for limit decrease long positions:
         //      - the order should be executed when the oracle price is >= triggerPrice
         //      - primaryPrice.min should be used for the oracle price
@@ -227,6 +247,20 @@ library BaseOrderUtils {
         }
 
         revert Errors.UnsupportedOrderType(uint256(orderType));
+    }
+
+    function validateOrderValidFromTime(
+        Order.OrderType orderType,
+        uint256 validFromTime
+    ) internal view {
+        if (isMarketOrder(orderType)) {
+            return;
+        }
+
+        uint256 currentTimestamp = Chain.currentTimestamp();
+        if (validFromTime > currentTimestamp) {
+            revert Errors.OrderValidFromTimeNotReached(validFromTime, currentTimestamp);
+        }
     }
 
     function getExecutionPriceForIncrease(

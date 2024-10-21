@@ -109,8 +109,6 @@ describe("Exchange.CancelOrder", () => {
 
     expect(await getOrderCount(dataStore)).eq(1);
 
-    const block = await provider.getBlock();
-
     const orderKeys = await getOrderKeys(dataStore, 0, 1);
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
@@ -125,7 +123,6 @@ describe("Exchange.CancelOrder", () => {
     expect(order.numbers.triggerPrice).eq(expandDecimals(5000, 12));
     expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
     expect(order.numbers.minOutputAmount).eq(expandDecimals(50000, 6));
-    expect(order.numbers.updatedAtBlock).eq(block.number);
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
 
@@ -165,8 +162,6 @@ describe("Exchange.CancelOrder", () => {
 
     expect(await getOrderCount(dataStore)).eq(1);
 
-    const block = await provider.getBlock();
-
     const orderKeys = await getOrderKeys(dataStore, 0, 1);
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
@@ -181,7 +176,6 @@ describe("Exchange.CancelOrder", () => {
     expect(order.numbers.triggerPrice).eq(expandDecimals(5000, 12));
     expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
     expect(order.numbers.minOutputAmount).eq(expandDecimals(50000, 6));
-    expect(order.numbers.updatedAtBlock).eq(block.number);
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
 

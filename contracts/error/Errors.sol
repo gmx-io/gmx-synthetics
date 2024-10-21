@@ -139,7 +139,13 @@ library Errors {
     error DisabledFeature(bytes32 key);
 
     // FeeHandler errors
-    error InvalidClaimFeesInput(uint256 marketsLength, uint256 tokensLength);
+    error InvalidBuybackToken(address buybackToken);
+    error InvalidVersion(uint256 version);
+    error InsufficientBuybackOutputAmount(address feeToken, address buybackToken, uint256 outputAmount, uint256 minOutputAmount);
+    error BuybackAndFeeTokenAreEqual(address feeToken, address buybackToken);
+    error AvailableFeeAmountIsZero(address feeToken, address buybackToken, uint256 availableFeeAmount);
+    error MaxBuybackPriceAgeExceeded(uint256 priceTimestamp, uint256 buybackMaxPriceAge, uint256 currentTimestamp);
+    error EmptyClaimFeesMarket();
 
     // GasUtils errors
     error InsufficientExecutionFee(uint256 minExecutionFee, uint256 executionFee);
@@ -255,6 +261,7 @@ library Errors {
     error PriceImpactLargerThanOrderSize(int256 priceImpactUsd, uint256 sizeDeltaUsd);
     error NegativeExecutionPrice(int256 executionPrice, uint256 price, uint256 positionSizeInUsd, int256 priceImpactUsd, uint256 sizeDeltaUsd);
     error OrderNotFulfillableAtAcceptablePrice(uint256 price, uint256 acceptablePrice);
+    error OrderValidFromTimeNotReached(uint256 validFromTime, uint256 currentTimestamp);
 
     // IncreaseOrderUtils errors
     error UnexpectedPositionState();
@@ -264,6 +271,7 @@ library Errors {
     error OrderAlreadyFrozen();
     error MaxTotalCallbackGasLimitForAutoCancelOrdersExceeded(uint256 totalCallbackGasLimit, uint256 maxTotalCallbackGasLimit);
     error InvalidReceiver(address receiver);
+    error UnexpectedValidFromTime(uint256 orderType);
 
     // OrderStoreUtils errors
     error OrderNotFound(bytes32 key);

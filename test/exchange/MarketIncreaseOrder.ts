@@ -87,8 +87,6 @@ describe("Exchange.MarketIncreaseOrder", () => {
 
     expect(await getOrderCount(dataStore)).eq(1);
 
-    const block = await provider.getBlock();
-
     const orderKeys = await getOrderKeys(dataStore, 0, 1);
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
@@ -103,7 +101,6 @@ describe("Exchange.MarketIncreaseOrder", () => {
     expect(order.numbers.acceptablePrice).eq(expandDecimals(5001, 12));
     expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
     expect(order.numbers.minOutputAmount).eq(expandDecimals(50000, 6));
-    expect(order.numbers.updatedAtBlock).eq(block.number);
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
 
@@ -261,7 +258,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
 
     await handleOrder(fixture, { create: params });
 
-    expect((await provider.getBalance(user1.address)).sub(initialBalance)).closeTo("162583985300672", "10000000000000");
+    expect((await provider.getBalance(user1.address)).sub(initialBalance)).closeTo("206999985656000", "10000000000000");
   });
 
   it("refund execution fee callback", async () => {
@@ -293,7 +290,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
 
     expect((await provider.getBalance(user1.address)).sub(initialBalance)).eq(0);
 
-    expect(await provider.getBalance(mockCallbackReceiver.address)).closeTo("142918985143352", "10000000000000");
+    expect(await provider.getBalance(mockCallbackReceiver.address)).closeTo("187324985498600", "10000000000000");
   });
 
   it("validates reserve", async () => {
@@ -489,8 +486,8 @@ describe("Exchange.MarketIncreaseOrder", () => {
     expect(position0.position.numbers.fundingFeeAmountPerSize).eq(0);
     expect(position0.position.numbers.longTokenClaimableFundingAmountPerSize).eq(0);
     expect(position0.position.numbers.shortTokenClaimableFundingAmountPerSize).eq(0);
-    expect(position0.position.numbers.increasedAtBlock).eq(block.number);
-    expect(position0.position.numbers.decreasedAtBlock).eq(0);
+    expect(position0.position.numbers.increasedAtTime).eq(block.timestamp);
+    expect(position0.position.numbers.decreasedAtTime).eq(0);
     expect(position0.position.flags.isLong).eq(true);
   });
 

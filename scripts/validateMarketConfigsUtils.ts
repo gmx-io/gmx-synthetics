@@ -1,5 +1,5 @@
 import hre from "hardhat";
-import { decimalToFloat, bigNumberify, formatAmount, pow, FLOAT_PRECISION } from "../utils/math";
+import { decimalToFloat, exponentToFloat, bigNumberify, formatAmount, pow, FLOAT_PRECISION } from "../utils/math";
 import { createMarketConfigByKey, getMarketKey } from "../utils/market";
 import { performMulticall } from "../utils/multicall";
 import { SECONDS_PER_YEAR } from "../utils/constants";
@@ -17,12 +17,12 @@ const stablecoinSymbols = {
   USDe: true,
 };
 
-const BASIS_POINTS_DIVISOR = 10000;
+const BASIS_POINTS_DIVISOR = 10_000;
 
 const recommendedStablecoinSwapConfig = {
   negativeSwapImpactFactor: decimalToFloat(1, 9).div(2),
   negativePositionImpactFactor: decimalToFloat(1, 9).div(2),
-  expectedSwapImpactRatio: 10000,
+  expectedSwapImpactRatio: 10_000,
 };
 
 // negativePositionImpactFactor: the recommended negative position impact factor
@@ -30,208 +30,225 @@ const recommendedStablecoinSwapConfig = {
 // the market config should be validated to have a higher or equal value to the recommended value
 //
 // expectedSwapImpactRatio: expected ratio of negative to positive swap price impact
-// a ratio of 20000 means that the negative swap price price impact is twice the positive swap price impact
+// a ratio of 20_000 means that the negative swap price price impact is twice the positive swap price impact
 //
 // expectedPositionImpactRatio: expected ratio of negative to positive position price impact
-// a ratio of 20000 means that the negative position price price impact is twice the positive position price impact
+// a ratio of 20_000 means that the negative position price price impact is twice the positive position price impact
 const recommendedMarketConfig = {
   arbitrum: {
     APE: {
-      negativePositionImpactFactor: decimalToFloat(5, 10),
-      negativeSwapImpactFactor: decimalToFloat(3, 8),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      negativeSwapImpactFactor: exponentToFloat("3e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     BTC: {
-      negativePositionImpactFactor: decimalToFloat(5, 11),
-      negativeSwapImpactFactor: decimalToFloat(5, 11),
-      expectedSwapImpactRatio: 10000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("5e-11"),
+      negativeSwapImpactFactor: exponentToFloat("5e-11"),
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 20_000,
     },
     "BTC:WBTC.e:WBTC.e": {
       negativePositionImpactFactor: 0,
       negativeSwapImpactFactor: 0,
-      expectedSwapImpactRatio: 10000,
-      expectedPositionImpactRatio: 20000,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 20_000,
     },
     WETH: {
-      negativePositionImpactFactor: decimalToFloat(5, 11),
-      negativeSwapImpactFactor: decimalToFloat(5, 11),
-      expectedSwapImpactRatio: 10000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("5e-11"),
+      negativeSwapImpactFactor: exponentToFloat("5e-11"),
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 20_000,
     },
     "WETH:WETH:WETH": {
       negativePositionImpactFactor: 0,
       negativeSwapImpactFactor: 0,
-      expectedSwapImpactRatio: 10000,
-      expectedPositionImpactRatio: 20000,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 20_000,
     },
     BNB: {
-      negativePositionImpactFactor: decimalToFloat(38, 12),
-      negativeSwapImpactFactor: decimalToFloat(38, 12),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("3.8e-11"),
+      negativeSwapImpactFactor: exponentToFloat("3.8e-11"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     LINK: {
-      negativePositionImpactFactor: decimalToFloat(3, 10),
-      negativeSwapImpactFactor: decimalToFloat(5, 10),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("3e-10"),
+      negativeSwapImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     ARB: {
-      negativePositionImpactFactor: decimalToFloat(375, 12),
-      negativeSwapImpactFactor: decimalToFloat(5, 10),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("3.75e-10"),
+      negativeSwapImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     UNI: {
-      negativePositionImpactFactor: decimalToFloat(3, 8),
-      negativeSwapImpactFactor: decimalToFloat(3, 8),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("3.15e-8"),
+      negativeSwapImpactFactor: exponentToFloat("3e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     LTC: {
-      negativePositionImpactFactor: decimalToFloat(8, 9),
-      negativeSwapImpactFactor: decimalToFloat(8, 9),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("8e-9"),
+      negativeSwapImpactFactor: exponentToFloat("8e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     DOGE: {
-      negativePositionImpactFactor: decimalToFloat(8, 9),
-      negativeSwapImpactFactor: decimalToFloat(8, 9),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("8e-9"),
+      negativeSwapImpactFactor: exponentToFloat("8e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    EIGEN: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      negativeSwapImpactFactor: exponentToFloat("5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     SHIB: {
-      negativePositionImpactFactor: decimalToFloat(5, 10),
-      negativeSwapImpactFactor: decimalToFloat(5, 9),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      negativeSwapImpactFactor: exponentToFloat("5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     SOL: {
       negativePositionImpactFactor: decimalToFloat(65, 12),
       negativeSwapImpactFactor: decimalToFloat(65, 12),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     STX: {
-      negativePositionImpactFactor: decimalToFloat(5, 10),
-      negativeSwapImpactFactor: decimalToFloat(5, 9),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      negativeSwapImpactFactor: exponentToFloat("5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    SATS: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      negativeSwapImpactFactor: exponentToFloat("5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     XRP: {
-      negativePositionImpactFactor: decimalToFloat(5, 9),
-      negativeSwapImpactFactor: decimalToFloat(5, 9),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("5e-9"),
+      negativeSwapImpactFactor: exponentToFloat("5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     AAVE: {
-      negativePositionImpactFactor: decimalToFloat(5, 10),
-      negativeSwapImpactFactor: decimalToFloat(5, 10),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      negativeSwapImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     AVAX: {
-      negativePositionImpactFactor: decimalToFloat(5, 9),
-      negativeSwapImpactFactor: decimalToFloat(5, 9),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("5e-9"),
+      negativeSwapImpactFactor: exponentToFloat("5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     ATOM: {
-      negativePositionImpactFactor: decimalToFloat(26, 9),
-      negativeSwapImpactFactor: decimalToFloat(26, 9),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("2.6e-8"),
+      negativeSwapImpactFactor: exponentToFloat("2.6e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     NEAR: {
-      negativePositionImpactFactor: decimalToFloat(195, 10),
-      negativeSwapImpactFactor: decimalToFloat(26, 9),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("1.95e-8"),
+      negativeSwapImpactFactor: exponentToFloat("2.6e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     OP: {
-      negativePositionImpactFactor: decimalToFloat(5, 10),
-      negativeSwapImpactFactor: decimalToFloat(5, 10),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      negativeSwapImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     ORDI: {
-      negativePositionImpactFactor: decimalToFloat(5, 10),
-      negativeSwapImpactFactor: decimalToFloat(5, 9),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      negativeSwapImpactFactor: exponentToFloat("5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     GMX: {
-      negativePositionImpactFactor: decimalToFloat(5, 10),
-      negativeSwapImpactFactor: decimalToFloat(8, 9),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      negativeSwapImpactFactor: exponentToFloat("8e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     PEPE: {
-      negativePositionImpactFactor: decimalToFloat(5, 10),
-      negativeSwapImpactFactor: decimalToFloat(3, 8),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      negativeSwapImpactFactor: exponentToFloat("3e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     WIF: {
-      negativePositionImpactFactor: decimalToFloat(5, 10),
-      negativeSwapImpactFactor: decimalToFloat(3, 8),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      negativeSwapImpactFactor: exponentToFloat("3e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    POL: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     wstETH: {
-      negativeSwapImpactFactor: decimalToFloat(3, 8),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativeSwapImpactFactor: exponentToFloat("3e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     "wstETH-WETH": {
-      negativeSwapImpactFactor: decimalToFloat(5, 9),
-      expectedSwapImpactRatio: 10000,
+      negativeSwapImpactFactor: exponentToFloat("5e-9"),
+      expectedSwapImpactRatio: 10_000,
     },
   },
   avalanche: {
     "BTC.b": {
-      negativePositionImpactFactor: decimalToFloat(5, 11).div(2),
-      negativeSwapImpactFactor: decimalToFloat(5, 11).div(2),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 16666,
+      negativePositionImpactFactor: exponentToFloat("5e-11").div(2),
+      negativeSwapImpactFactor: exponentToFloat("5e-11").div(2),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 16_666,
     },
     "WETH.e": {
-      negativePositionImpactFactor: decimalToFloat(5, 11).div(2),
-      negativeSwapImpactFactor: decimalToFloat(5, 11).div(2),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 16666,
+      negativePositionImpactFactor: exponentToFloat("5e-11").div(2),
+      negativeSwapImpactFactor: exponentToFloat("5e-11").div(2),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 16_666,
     },
     WAVAX: {
-      negativePositionImpactFactor: decimalToFloat(1, 8).div(2),
-      negativeSwapImpactFactor: decimalToFloat(5, 9).div(2),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("1e-8").div(2),
+      negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     LTC: {
-      negativePositionImpactFactor: decimalToFloat(8, 9).div(2),
-      negativeSwapImpactFactor: decimalToFloat(8, 9).div(2),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("8e-9").div(2),
+      negativeSwapImpactFactor: exponentToFloat("8e-9").div(2),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     DOGE: {
-      negativePositionImpactFactor: decimalToFloat(8, 9).div(2),
-      negativeSwapImpactFactor: decimalToFloat(8, 9).div(2),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("8e-9").div(2),
+      negativeSwapImpactFactor: exponentToFloat("8e-9").div(2),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     SOL: {
-      negativePositionImpactFactor: decimalToFloat(5, 9).div(2),
-      negativeSwapImpactFactor: decimalToFloat(5, 9).div(2),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("5e-9").div(2),
+      negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     XRP: {
-      negativePositionImpactFactor: decimalToFloat(5, 9).div(2),
-      negativeSwapImpactFactor: decimalToFloat(5, 9).div(2),
-      expectedSwapImpactRatio: 20000,
-      expectedPositionImpactRatio: 20000,
+      negativePositionImpactFactor: exponentToFloat("5e-9").div(2),
+      negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
   },
 };
@@ -286,6 +303,14 @@ async function validatePerpConfig({
   let borrowingExponentFactorForLongs = bigNumberify(marketConfig.borrowingExponentFactorForLongs);
   let borrowingFactorForShorts = bigNumberify(marketConfig.borrowingFactorForShorts);
   let borrowingExponentFactorForShorts = bigNumberify(marketConfig.borrowingExponentFactorForShorts);
+  const optimalUsageFactorForLongs = bigNumberify(marketConfig.optimalUsageFactorForLongs);
+  const optimalUsageFactorForShorts = bigNumberify(marketConfig.optimalUsageFactorForShorts);
+  const baseBorrowingFactorForLongs = bigNumberify(marketConfig.baseBorrowingFactorForLongs);
+  const baseBorrowingFactorForShorts = bigNumberify(marketConfig.baseBorrowingFactorForShorts);
+  const aboveOptimalUsageBorrowingFactorForLongs = bigNumberify(marketConfig.aboveOptimalUsageBorrowingFactorForLongs);
+  const aboveOptimalUsageBorrowingFactorForShorts = bigNumberify(
+    marketConfig.aboveOptimalUsageBorrowingFactorForShorts
+  );
   let fundingFactor = bigNumberify(marketConfig.fundingFactor);
   let fundingExponentFactor = bigNumberify(marketConfig.fundingExponentFactor);
   const maxOpenInterestForLongs = bigNumberify(marketConfig.maxOpenInterestForLongs);
@@ -516,6 +541,33 @@ async function validatePerpConfig({
 
   console.log(`    maxBorrowingFactorForShortsPerYear: ${formatAmount(maxBorrowingFactorForShortsPerYear, 28)}%`);
 
+  for (const [key, value] of Object.entries({
+    optimalUsageFactorForLongs,
+    optimalUsageFactorForShorts,
+  })) {
+    if (value.gt(decimalToFloat(1))) {
+      throw new Error(`${key} is more than 100% annualized`);
+    }
+  }
+
+  for (const [key, value] of Object.entries({
+    baseBorrowingFactorForLongs,
+    baseBorrowingFactorForShorts,
+  })) {
+    if (value.mul(SECONDS_PER_YEAR).gt(decimalToFloat(1))) {
+      throw new Error(`${key} is more than 100% annualized`);
+    }
+  }
+
+  for (const [key, value] of Object.entries({
+    aboveOptimalUsageBorrowingFactorForLongs,
+    aboveOptimalUsageBorrowingFactorForShorts,
+  })) {
+    if (value.mul(SECONDS_PER_YEAR).gt(decimalToFloat(3))) {
+      throw new Error(`${key} is more than 300% annualized`);
+    }
+  }
+
   if (!fundingExponentFactor.eq(decimalToFloat(1))) {
     throw new Error("fundingExponentFactor != 1");
   }
@@ -694,6 +746,15 @@ export async function validateMarketConfigs() {
       longTokenSymbol?.padEnd(5),
       shortTokenSymbol?.padEnd(5)
     );
+
+    if (
+      !marketConfig.maxLongTokenPoolAmount ||
+      !marketConfig.maxShortTokenPoolAmount ||
+      !marketConfig.maxLongTokenPoolUsdForDeposit ||
+      !marketConfig.maxShortTokenPoolUsdForDeposit
+    ) {
+      throw new Error(`Missing configs for ${indexTokenSymbol}[${longTokenSymbol}-${shortTokenSymbol}]`);
+    }
 
     await validatePerpConfig({ marketConfig, indexTokenSymbol, longTokenSymbol, shortTokenSymbol, dataStore, errors });
     await validateSwapConfig({ marketConfig, indexTokenSymbol, longTokenSymbol, shortTokenSymbol, dataStore, errors });

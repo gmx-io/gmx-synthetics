@@ -234,7 +234,6 @@ library GlvWithdrawalUtils {
                 minLongTokenAmount: glvWithdrawal.minLongTokenAmount(),
                 minShortTokenAmount: glvWithdrawal.minShortTokenAmount(),
                 marketTokenAmount: marketTokenAmount,
-                updatedAtBlock: 0,
                 updatedAtTime: glvWithdrawal.updatedAtTime(),
                 executionFee: 0,
                 callbackGasLimit: 0
@@ -267,7 +266,7 @@ library GlvWithdrawalUtils {
                 key: withdrawalKey,
                 keeper: params.keeper,
                 startingGas: params.startingGas,
-                swapPricingType: ISwapPricingUtils.SwapPricingType.TwoStep
+                swapPricingType: ISwapPricingUtils.SwapPricingType.Withdrawal
             });
 
         return ExecuteWithdrawalUtils.executeWithdrawal(executeWithdrawalParams, withdrawal);

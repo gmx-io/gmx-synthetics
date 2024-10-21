@@ -119,8 +119,7 @@ library WithdrawalUtils {
                 marketTokenAmount,
                 params.minLongTokenAmount,
                 params.minShortTokenAmount,
-                Chain.currentBlockNumber(),
-                Chain.currentTimestamp(),
+                Chain.currentTimestamp(), // updatedAtTime
                 params.executionFee,
                 params.callbackGasLimit
             ),

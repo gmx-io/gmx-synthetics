@@ -47,6 +47,24 @@ const getRpcUrl = (network) => {
   return rpc;
 };
 
+export const getExplorerUrl = (network) => {
+  const urls = {
+    arbitrum: "https://api.arbiscan.io/",
+    avalanche: "https://api.snowtrace.io/",
+    snowscan: "https://api.snowscan.xyz/",
+    arbitrumGoerli: "https://api-goerli.arbiscan.io/",
+    arbitrumSepolia: "https://api-sepolia.arbiscan.io/",
+    avalancheFuji: "https://api-testnet.snowtrace.io/",
+  };
+
+  const url = urls[network];
+  if (!url) {
+    throw new Error(`Empty explorer url for ${network}`);
+  }
+
+  return url;
+};
+
 const getEnvAccounts = (chainName?: string) => {
   const { ACCOUNT_KEY, ACCOUNT_KEY_FILE, ARBITRUM_SEPOLIA_ACCOUNT_KEY } = process.env;
 
@@ -110,7 +128,7 @@ const config: HardhatUserConfig = {
       accounts: getEnvAccounts(),
       verify: {
         etherscan: {
-          apiUrl: "https://api.arbiscan.io/",
+          apiUrl: getExplorerUrl("arbitrum"),
           apiKey: process.env.ARBISCAN_API_KEY,
         },
       },
@@ -123,7 +141,20 @@ const config: HardhatUserConfig = {
       gasPrice: 200000000000,
       verify: {
         etherscan: {
-          apiUrl: "https://api.snowtrace.io/",
+          apiUrl: getExplorerUrl("avalanche"),
+          apiKey: process.env.SNOWTRACE_API_KEY,
+        },
+      },
+      blockGasLimit: 15_000_000,
+    },
+    snowscan: {
+      url: getRpcUrl("avalanche"),
+      chainId: 43114,
+      accounts: getEnvAccounts(),
+      gasPrice: 200000000000,
+      verify: {
+        etherscan: {
+          apiUrl: getExplorerUrl("snowscan"),
           apiKey: process.env.SNOWTRACE_API_KEY,
         },
       },
@@ -143,7 +174,7 @@ const config: HardhatUserConfig = {
       accounts: getEnvAccounts(),
       verify: {
         etherscan: {
-          apiUrl: "https://api-goerli.arbiscan.io/",
+          apiUrl: getExplorerUrl("arbitrumGoerli"),
           apiKey: process.env.ARBISCAN_API_KEY,
         },
       },
@@ -155,7 +186,7 @@ const config: HardhatUserConfig = {
       accounts: getEnvAccounts("arbitrumSepolia"),
       verify: {
         etherscan: {
-          apiUrl: "https://api-sepolia.arbiscan.io/",
+          apiUrl: getExplorerUrl("arbitrumSepolia"),
           apiKey: process.env.ARBISCAN_API_KEY,
         },
       },
@@ -167,7 +198,7 @@ const config: HardhatUserConfig = {
       accounts: getEnvAccounts(),
       verify: {
         etherscan: {
-          apiUrl: "https://api-testnet.snowtrace.io/",
+          apiUrl: getExplorerUrl("avalancheFuji"),
           apiKey: process.env.SNOWTRACE_API_KEY,
         },
       },
