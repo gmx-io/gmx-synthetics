@@ -2,18 +2,13 @@
 
 pragma solidity ^0.8.0;
 
-import "../../nonce/NonceUtils.sol";
-import "../../bank/Bank.sol";
-
 import "../../event/EventEmitter.sol";
 import "../../shift/ShiftUtils.sol";
 import "../GlvUtils.sol";
-import "../GlvToken.sol";
 import "../GlvVault.sol";
 
 import "./GlvShiftStoreUtils.sol";
 import "./GlvShiftEventUtils.sol";
-import "./GlvShift.sol";
 
 library GlvShiftUtils {
     using GlvShift for GlvShift.Props;

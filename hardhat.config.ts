@@ -55,6 +55,7 @@ export const getExplorerUrl = (network) => {
     arbitrumGoerli: "https://api-goerli.arbiscan.io/",
     arbitrumSepolia: "https://api-sepolia.arbiscan.io/",
     avalancheFuji: "https://api-testnet.snowtrace.io/",
+    arbitrumBlockscout: "https://arbitrum.blockscout.com/api",
   };
 
   const url = urls[network];
@@ -167,6 +168,12 @@ const config: HardhatUserConfig = {
     arbitrumBlockscout: {
       url: getRpcUrl("arbitrumBlockscout"),
       accounts: getEnvAccounts(),
+      verify: {
+        etherscan: {
+          apiUrl: getExplorerUrl("arbitrumBlockscout"),
+          apiKey: "arbitrumBlockscout",
+        },
+      },
     },
     arbitrumGoerli: {
       url: getRpcUrl("arbitrumGoerli"),
@@ -236,6 +243,14 @@ const config: HardhatUserConfig = {
           browserURL: "https://https://sepolia.arbiscan.io/",
         },
       },
+      // {
+      //   network: "arbitrumBlockscout",
+      //   chainId: 42161,
+      //   urls: {
+      //     apiURL: "https://arbitrum.blockscout.com/api",
+      //     browserURL: "https://arbitrum.blockscout.com",
+      //   },
+      // },
     ],
   },
   sourcify: {
