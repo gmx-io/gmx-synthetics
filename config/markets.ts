@@ -2001,8 +2001,8 @@ const config: {
       negativeSwapImpactFactor: exponentToFloat("2.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.25e-9"),
 
-      // minCollateralFactor of 0.01 (1%) when open interest is 500,000 USD
-      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-8"),
+      // minCollateralFactor of 0.00833 (0.833%) when open interest is 3,300,000 USD
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
       positionImpactPoolDistributionRate: expandDecimals(166, 43), // ~143 AVAX/day
       minPositionImpactPoolAmount: expandDecimals(141, 18),
