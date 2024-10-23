@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { getSyntheticTokenAddress } from "../utils/token";
-import { decimalToFloat } from "../utils/math";
+import { decimalToFloat, percentageToFloat } from "../utils/math";
 import { OracleProvider } from "./oracle";
 import { BigNumberish } from "ethers";
 import { TOKEN_ORACLE_TYPES } from "../utils/oracle";
@@ -58,6 +58,7 @@ type RealTokenConfig = {
   dataStreamFeedDecimals?: number;
   oracleProvider?: OracleProvider;
   oracleTimestampAdjustment?: number;
+  buybackMaxPriceImpactFactor?: BigNumberish;
 };
 
 // test token to deploy in local and test networks
@@ -78,6 +79,9 @@ export type TestTokenConfig = {
 export type TokenConfig = SyntheticTokenConfig | RealTokenConfig | TestTokenConfig;
 export type TokensConfig = { [tokenSymbol: string]: TokenConfig };
 
+const LOW_BUYBACK_IMPACT = percentageToFloat("0.1%");
+const MID_BUYBACK_IMPACT = percentageToFloat("0.3%");
+
 const config: {
   [network: string]: TokensConfig;
 } = {
@@ -94,6 +98,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
     BTC: {
       synthetic: true,
@@ -118,6 +123,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
     tBTC: {
       address: "0x6c84a8f1c29108f47a79964b5fe888d4f4d0de40",
@@ -131,6 +137,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
     WETH: {
       address: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
@@ -144,6 +151,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
     wstETH: {
       address: "0x5979D7b546E38E414F7E9822514be443A4800529",
@@ -152,6 +160,7 @@ const config: {
       dataStreamFeedId: "0x000372582d07a8b67e9b6989a0181a955bbac570532a1389d4a27042a3032605", // note that this must be for wstETH/USD and not wstETH/ETH
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
     BNB: {
       address: "0xa9004A5421372E1D83fB1f85b0fc986c912f91f3",
@@ -165,6 +174,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
     XRP: {
       synthetic: true,
@@ -192,6 +202,7 @@ const config: {
       dataStreamFeedId: "0x00032f3b5e95e313e484cac35ccff3904358100010b5f3ac2cf8e263c2ccc873",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
     SHIB: {
       synthetic: true,
@@ -212,6 +223,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
     STX: {
       synthetic: true,
@@ -246,6 +258,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
     LINK: {
       address: "0xf97f4df75117a78c1A5a0DBb814Af92458539FB4",
@@ -259,6 +272,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
     ARB: {
       address: "0x912CE59144191C1204E64559FE8253a0e49E6548",
@@ -272,6 +286,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
     ATOM: {
       synthetic: true,
@@ -318,6 +333,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
     AVAX: {
       address: "0x565609fAF65B92F7be02468acF86f8979423e514",
@@ -331,6 +347,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
     OP: {
       address: "0xaC800FD6159c2a2CB8fC31EF74621eB430287a5A",
@@ -344,6 +361,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
     ORDI: {
       synthetic: true,
@@ -364,6 +382,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
     PEPE: {
       address: "0x25d887Ce7a35172C62FeBFD67a1856F20FaEbB00",
@@ -377,6 +396,7 @@ const config: {
         decimals: 18,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
     WIF: {
       address: "0xA1b91fe9FD52141Ff8cac388Ce3F10BFDc1dE79d",
@@ -390,6 +410,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
     USDC: {
       address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
@@ -403,6 +424,7 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
         stablePrice: decimalToFloat(1),
       },
+      buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
     "USDC.e": {
       address: "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
@@ -416,6 +438,7 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
         stablePrice: decimalToFloat(1),
       },
+      buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
     USDT: {
       address: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
@@ -430,6 +453,7 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
         stablePrice: decimalToFloat(1),
       },
+      buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
     DAI: {
       address: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
@@ -444,6 +468,7 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
         stablePrice: decimalToFloat(1),
       },
+      buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
     USDe: {
       address: "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
@@ -458,6 +483,7 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
         stablePrice: decimalToFloat(1),
       },
+      buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
   },
   avalanche: {
@@ -472,6 +498,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
     "WETH.e": {
       address: "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB",
@@ -484,6 +511,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
     XRP: {
       synthetic: true,
@@ -506,6 +534,7 @@ const config: {
       dataStreamFeedId: "0x0003b778d3f6b2ac4991302b89cb313f99a42467d6c9c5f96f57c29c0d2bc24f",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
     LTC: {
       synthetic: true,
@@ -527,6 +556,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
     USDC: {
       address: "0xb97ef9ef8734c71904d8002f8b6bc66dd9c48a6e",
@@ -540,6 +570,7 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
         stablePrice: decimalToFloat(1),
       },
+      buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
     "USDC.e": {
       address: "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
@@ -553,6 +584,7 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
         stablePrice: decimalToFloat(1),
       },
+      buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
     USDT: {
       address: "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7",
@@ -567,6 +599,7 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
         stablePrice: decimalToFloat(1),
       },
+      buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
     "USDT.e": {
       address: "0xc7198437980c041c805A1EDcbA50c1Ce5db95118",
@@ -581,6 +614,7 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
         stablePrice: decimalToFloat(1),
       },
+      buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
     "DAI.e": {
       address: "0xd586E7F844cEa2F87f50152665BCbc2C279D8d70",
@@ -595,6 +629,7 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
         stablePrice: decimalToFloat(1),
       },
+      buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
   },
   arbitrumSepolia: {

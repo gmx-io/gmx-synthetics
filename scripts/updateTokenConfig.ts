@@ -20,6 +20,14 @@ const processTokens = async ({ tokens, handleConfig }) => {
       token.transferGasLimit,
       `transferGasLimit ${token.transferGasLimit}`
     );
+
+    await handleConfig(
+      "uint",
+      keys.BUYBACK_MAX_PRICE_IMPACT_FACTOR,
+      encodeData(["address"], [token.address]),
+      token.buybackMaxPriceImpactFactor,
+      `buybackMaxPriceImpactFactor ${token.buybackMaxPriceImpactFactor}`
+    );
   }
 };
 
