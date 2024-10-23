@@ -330,6 +330,15 @@ const config: {
       oracleProvider: "chainlinkDataStream",
       // Chainlink on-chain feed not available
     },
+    SEI: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003487e79423ea3c34f4edfc8bb112b0d0fbe054906644912b04bd5a3c6243b",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      oracleProvider: "chainlinkDataStream",
+      // Chainlink on-chain feed not available
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,
