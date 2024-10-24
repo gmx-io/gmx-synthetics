@@ -1636,7 +1636,7 @@ const config: {
       maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
 
       maxLongTokenPoolAmount: expandDecimals(763, 18), // ~2M USD (2x the max open interest)
-      maxShortTokenPoolAmount: expandDecimals(1_036_000, 6), // ~2M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"),
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -1680,7 +1680,7 @@ const config: {
       maxPoolUsdForDeposit: decimalToFloat(1_000_000),
 
       maxLongTokenPoolAmount: expandDecimals(763, 18), // ~2M USD (2x the max open interest)
-      maxShortTokenPoolAmount: expandDecimals(4_655_000, 6), // ~2M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"),
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
