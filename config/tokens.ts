@@ -308,7 +308,7 @@ const config: {
     },
     SUI: {
       synthetic: true,
-      decimals: 18,
+      decimals: 9,
       dataStreamFeedId: "0x000348ce31679e9ce1f80ec929f1d7c86499569d67f1cea80a90d6e5e3c127a7",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
