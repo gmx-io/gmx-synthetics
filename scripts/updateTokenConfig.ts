@@ -21,13 +21,15 @@ const processTokens = async ({ tokens, handleConfig }) => {
       `transferGasLimit ${token.transferGasLimit}`
     );
 
-    await handleConfig(
-      "uint",
-      keys.BUYBACK_MAX_PRICE_IMPACT_FACTOR,
-      encodeData(["address"], [token.address]),
-      token.buybackMaxPriceImpactFactor,
-      `buybackMaxPriceImpactFactor ${token.buybackMaxPriceImpactFactor}`
-    );
+    if (token.buybackMaxPriceImpactFactor) {
+      await handleConfig(
+        "uint",
+        keys.BUYBACK_MAX_PRICE_IMPACT_FACTOR,
+        encodeData(["address"], [token.address]),
+        token.buybackMaxPriceImpactFactor,
+        `buybackMaxPriceImpactFactor ${token.buybackMaxPriceImpactFactor}`
+      );
+    }
   }
 };
 
