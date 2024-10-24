@@ -87,7 +87,7 @@ const config: {
 } = {
   arbitrum: {
     APE: {
-      address: "0x74885b4d524d497261259b38900f54e6dbad2210",
+      address: "0x7f9fbf9bdd3f4105c478b996b648fe6e828a1e98",
       decimals: 18,
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x000316d702a8e25e6b4ef4d449e3413dff067ee77dd366f0550251c07daf05ee",
