@@ -197,6 +197,16 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
+    SUI: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    SEI: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
     wstETH: {
       negativeSwapImpactFactor: exponentToFloat("3e-8"),
       expectedSwapImpactRatio: 20_000,
@@ -760,11 +770,21 @@ export async function validateMarketConfigs() {
     await validateSwapConfig({ marketConfig, indexTokenSymbol, longTokenSymbol, shortTokenSymbol, dataStore, errors });
   }
 
+  const marketKeysToSkip = {
+    "0x74885b4D524d497261259B38900f54e6dbAd2210:0x74885b4D524d497261259B38900f54e6dbAd2210:0xaf88d065e77c8cC2239327C5EDb3A432268e5831":
+      true, // old APE market
+  };
+
   for (const market of markets) {
     const indexTokenSymbol = addressToSymbol[market.indexToken];
     const longTokenSymbol = addressToSymbol[market.longToken];
     const shortTokenSymbol = addressToSymbol[market.shortToken];
     const marketKey = getMarketKey(market.indexToken, market.longToken, market.shortToken);
+
+    if (marketKeysToSkip[marketKey]) {
+      continue;
+    }
+
     const marketConfig = marketConfigByKey[marketKey];
 
     console.log(
