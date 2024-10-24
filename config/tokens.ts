@@ -83,7 +83,7 @@ const config: {
 } = {
   arbitrum: {
     APE: {
-      address: "0x74885b4d524d497261259b38900f54e6dbad2210",
+      address: "0x7f9FBf9bDd3F4105C478b996B648FE6e828a1e98",
       decimals: 18,
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x000316d702a8e25e6b4ef4d449e3413dff067ee77dd366f0550251c07daf05ee",
@@ -305,6 +305,22 @@ const config: {
       oracleTimestampAdjustment: 1,
       // there seems to be a Chainlink on-chain feed, but it is indicated as
       // a High Market Risk feed so has not been added
+    },
+    SUI: {
+      synthetic: true,
+      decimals: 9,
+      dataStreamFeedId: "0x000348ce31679e9ce1f80ec929f1d7c86499569d67f1cea80a90d6e5e3c127a7",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    SEI: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003487e79423ea3c34f4edfc8bb112b0d0fbe054906644912b04bd5a3c6243b",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
     },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
