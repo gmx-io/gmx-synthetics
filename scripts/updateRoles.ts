@@ -80,157 +80,13 @@ async function main() {
     arbitrum: [
       {
         role: "CONTROLLER",
-        member: "0xe37d052e1deb99901de205e7186e31a36e4ef70c",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x55e8e153048294c060455e5762d7280faee86dc7",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x7a967d114b8676874fa2cfc1c14f3095c88418eb",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x9cbb37630d65324af064f28ccd9df6e667cb16f1",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x9242fbed25700e82ae26ae319bcf68e9c508451c",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0xfe2df84627950a0fb98ead49c69a1de3f66867d6",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x64fbd82d9f987baf5a59401c64e823232182e8ed",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0xe68caaacdf6439628dfd2fe624847602991a31eb",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x674ee2ffe588c4b1fde6d5481c55ef6133004cba",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x7cc506c8d711c2a17b61a75bd082d2514160baad",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0xdab9ba9e3a301ccb353f18b4c8542ba2149e4010",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0xa329221a77be08485f59310b873b14815c82e10d",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x48787f7847068f9cc1398e5f589bef9744730c8d",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x3f6df0c3a7221ba1375e87e7097885a601b41afc",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0xd59a808bca24812c483c1b3bf0a0e8d7d5932e4c",
-      },
-      {
-        role: "ROLE_ADMIN",
-        member: "0x7a967d114b8676874fa2cfc1c14f3095c88418eb",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x674ee2ffe588c4b1fde6d5481c55ef6133004cba",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0xa329221a77be08485f59310b873b14815c82e10d",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0xd59a808bca24812c483c1b3bf0a0e8d7d5932e4c",
+        member: "0x7eb417637a3e6d1c19e6d69158c47610b7a5d9b3",
       },
     ],
     avalanche: [
       {
         role: "CONTROLLER",
-        member: "0x1ad2560bd34d17a413e4eb9420643d1782466dda",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0xcf71721924c312374bf8366c3f60a127a1e80e3c",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0xdf23692341538340db0ff04c65017f51b69a29f6",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x81d8b0f2fd89d31728e8fe36fa3c9ad8bacf10dc",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x129174043b134ad27eae552d6bea08f23f771205",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x8ae344deed1526b1772addf78718722a169288dc",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x1b0a44dd3bccc2ddae33921694ebc34e3ecc1415",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x088711c3d2fa992188125e009e65c726ba090ad6",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0xe60b7526e05d8d8aea17607245fd6d7c9953a1ca",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x775caaa2cb635a56c6c3dfb9c65b5fa6335f79e7",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x34acbf9fb2f0ddab489f6b75fbf394c240b97276",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x5aeb6ad978f59e220aa9099e09574e1c5e03aafd",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x418f9cc6ca4870be1088ce03cc48985b145c79a8",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x48486caf8851ed0085432789d28a8820becbfd45",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x2098465fc0329c4d2f3b266190a6a664fbc6e0db",
-      },
-      {
-        role: "ROLE_ADMIN",
-        member: "0xdf23692341538340db0ff04c65017f51b69a29f6",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0xe60b7526e05d8d8aea17607245fd6d7c9953a1ca",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x5aeb6ad978f59e220aa9099e09574e1c5e03aafd",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x2098465fc0329c4d2f3b266190a6a664fbc6e0db",
+        member: "0x1a3a103f9f536a0456c9b205152a3ac2b3c54490",
       },
     ],
   };
@@ -312,6 +168,10 @@ async function main() {
       {
         role: "CONTROLLER",
         member: "0x31FaBf54278E79069c4E102e9fB79d6a44be53A8",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x7cC506C8d711C2A17B61A75bd082d2514160baAd",
       },
       {
         role: "GOV_TOKEN_CONTROLLER",
@@ -406,6 +266,10 @@ async function main() {
       {
         role: "CONTROLLER",
         member: "0xEa90EC1228F7D1b3D47D84d1c9D46dBDFEfF7709",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x775CaaA2cB635a56c6C3dFb9C65B5Fa6335F79E7",
       },
       {
         role: "GOV_TOKEN_CONTROLLER",

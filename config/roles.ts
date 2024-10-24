@@ -138,7 +138,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x64fbD82d9F987baF5A59401c64e823232182E8Ed": true, // WithdrawalHandler_4
         "0xe68CAAACdf6439628DFD2fe624847602991A31eB": true, // OrderHandler_4
         "0x674Ee2FFe588c4b1Fde6D5481c55Ef6133004cbA": true, // ExchangeRouter_4
-        "0x7cC506C8d711C2A17B61A75bd082d2514160baAd": true, // FeeHandler_4
+        "0x7EB417637a3E6d1C19E6d69158c47610b7a5d9B3": true, // FeeHandler_4
         "0xdAb9bA9e3a301CCb353f18B4C8542BA2149E4010": true, // LiquidationHandler_4
         "0xa329221a77BE08485f59310b873b14815c82E10D": true, // SubaccountRouter_4
 
@@ -202,7 +202,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x1b0a44dD3bCCC2Ddae33921694EBc34E3ECC1415": true, // WithdrawalHandler_4
         "0x088711C3d2FA992188125e009E65c726bA090AD6": true, // OrderHandler_4
         "0xe60B7526e05d8D8aEA17607245fd6D7C9953A1CA": true, // ExchangeRouter_4
-        "0x775CaaA2cB635a56c6C3dFb9C65B5Fa6335F79E7": true, // FeeHandler_4
+        "0x1A3A103F9F536a0456C9b205152A3ac2b3c54490": true, // FeeHandler_4
         "0x34acBf9Fb2f0dDAB489F6B75FBf394C240b97276": true, // LiquidationHandler_4
         "0x5aEb6AD978f59e220aA9099e09574e1c5E03AafD": true, // SubaccountRouter_4
 
