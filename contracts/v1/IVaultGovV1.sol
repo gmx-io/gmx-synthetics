@@ -3,5 +3,5 @@
 pragma solidity ^0.8.0;
 
 interface IVaultGovV1 {
-    function withdrawFees(address _vault, address _token, address _receiver) external returns (uint256);
+    function withdrawFees(address _vault, address _token, address _receiver) external;
 }

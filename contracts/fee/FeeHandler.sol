@@ -68,7 +68,10 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
     function claimFees(address market, address feeToken, uint256 version) external nonReentrant {
         uint256 feeAmount;
         if (version == v1) {
-            feeAmount = IVaultGovV1(vaultV1.gov()).withdrawFees(address(vaultV1), feeToken, address(this));
+            uint256 balanceBefore = IERC20(feeToken).balanceOf(address(this));
+            IVaultGovV1(vaultV1.gov()).withdrawFees(address(vaultV1), feeToken, address(this));
+            uint256 balanceAfter = IERC20(feeToken).balanceOf(address(this));
+            feeAmount = balanceAfter - balanceBefore;
         } else if (version == v2) {
             _validateMarket(market);
             feeAmount = FeeUtils.claimFees(dataStore, eventEmitter, market, feeToken, address(this));

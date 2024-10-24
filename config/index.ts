@@ -7,6 +7,7 @@ import marketsConfig from "./markets";
 import glvsConfig from "./glvs";
 import oracleConfig from "./oracle";
 import generalConfig from "./general";
+import buybackConfig from "./buyback";
 import rolesConfig from "./roles";
 import riskOracleConfig from "./riskOracle";
 import vaultV1Config from "./vaultV1";
@@ -21,6 +22,7 @@ extendEnvironment(async (hre: HardhatRuntimeEnvironment) => {
     getMarkets: _.memoize(async () => marketsConfig(hre)),
     getGlvs: _.memoize(async () => glvsConfig(hre)),
     getGeneral: _.memoize(async () => generalConfig(hre)),
+    getBuyback: _.memoize(async () => buybackConfig(hre)),
     getRoles: _.memoize(async () => rolesConfig(hre)),
     getRiskOracle: _.memoize(async () => riskOracleConfig(hre)),
     getVaultV1: _.memoize(async () => vaultV1Config(hre)),

@@ -36,12 +36,6 @@ library WithdrawalUtils {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
-    enum WithdrawalType {
-        Normal,
-        Shift,
-        Glv
-    }
-
     /**
      * @param receiver The address that will receive the withdrawal tokens.
      * @param callbackContract The contract that will be called back.
@@ -138,7 +132,7 @@ library WithdrawalUtils {
 
         WithdrawalStoreUtils.set(dataStore, key, withdrawal);
 
-        WithdrawalEventUtils.emitWithdrawalCreated(eventEmitter, key, withdrawal, WithdrawalType.Normal);
+        WithdrawalEventUtils.emitWithdrawalCreated(eventEmitter, key, withdrawal, Withdrawal.WithdrawalType.Normal);
 
         return key;
     }

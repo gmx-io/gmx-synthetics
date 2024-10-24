@@ -2,22 +2,12 @@
 
 pragma solidity ^0.8.0;
 
-import "../../data/DataStore.sol";
-import "../../oracle/Oracle.sol";
-import "../../market/Market.sol";
-import "../../market/MarketUtils.sol";
 import "../../withdrawal/ExecuteWithdrawalUtils.sol";
-import "../../withdrawal/WithdrawalEventUtils.sol";
-import "../../withdrawal/WithdrawalUtils.sol";
-import "../../data/Keys.sol";
-import "../../event/EventUtils.sol";
-import "../../callback/CallbackUtils.sol";
-import "../../gas/GasUtils.sol";
+
 import "../../nonce/NonceUtils.sol";
+
 import "../GlvVault.sol";
 import "../GlvUtils.sol";
-import "../GlvToken.sol";
-import "./GlvWithdrawal.sol";
 import "./GlvWithdrawalStoreUtils.sol";
 import "./GlvWithdrawalEventUtils.sol";
 
@@ -247,7 +237,7 @@ library GlvWithdrawalUtils {
             params.eventEmitter,
             withdrawalKey,
             withdrawal,
-            WithdrawalUtils.WithdrawalType.Glv
+            Withdrawal.WithdrawalType.Glv
         );
 
         Bank(payable(glvWithdrawal.glv())).transferOut(

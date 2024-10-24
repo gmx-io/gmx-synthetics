@@ -31,7 +31,7 @@ async function main() {
   }
 
   if (process.env.WRITE !== "true") {
-    console.log("skip sending transaction");
+    console.log("NOTE: executed in read-only mode, no transactions were sent");
   }
 }
 
