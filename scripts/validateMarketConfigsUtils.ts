@@ -199,13 +199,11 @@ const recommendedMarketConfig = {
     },
     SUI: {
       negativePositionImpactFactor: exponentToFloat("5e-10"),
-      negativeSwapImpactFactor: exponentToFloat("5e-9"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
     SEI: {
       negativePositionImpactFactor: exponentToFloat("5e-10"),
-      negativeSwapImpactFactor: exponentToFloat("5e-9"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
