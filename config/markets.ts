@@ -1589,10 +1589,10 @@ const config: {
       minPositionImpactPoolAmount: bigNumberify(0),
 
       maxOpenInterest: decimalToFloat(500_000),
-      maxPoolUsdForDeposit: decimalToFloat(1_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(750_000),
 
-      maxLongTokenPoolAmount: expandDecimals(600, 18),
-      maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(400, 18),
+      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.74e-12"),
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0

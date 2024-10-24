@@ -612,6 +612,19 @@ const config: {
         stablePrice: decimalToFloat(1),
       },
     },
+    GMX: {
+      address: "0x62edc0692BD897D2295872a9FFCac5425011c661",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003169a4ebb9178e5ec6281913d1a8a4f676f414c94b60a4cb2e432f9081c60",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x3F968A21647d7ca81Fb8A5b69c0A452701d5DCe8",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
   },
   arbitrumSepolia: {
     WETH: {
