@@ -312,7 +312,6 @@ const config: {
       dataStreamFeedId: "0x000348ce31679e9ce1f80ec929f1d7c86499569d67f1cea80a90d6e5e3c127a7",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      oracleProvider: "chainlinkDataStream",
       // Chainlink on-chain feed not available
     },
     SEI: {
@@ -321,7 +320,6 @@ const config: {
       dataStreamFeedId: "0x0003487e79423ea3c34f4edfc8bb112b0d0fbe054906644912b04bd5a3c6243b",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      oracleProvider: "chainlinkDataStream",
       // Chainlink on-chain feed not available
     },
     AAVE: {
