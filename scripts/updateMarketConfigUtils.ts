@@ -135,7 +135,7 @@ const processMarkets = async ({
       await handleConfig(
         "uint",
         keys.DEPOSIT_FEE_FACTOR,
-        encodeData(["address", "bool"], [marketToken, true]),
+        encodeData(["address", "bool"], [marketToken, false]),
         marketConfig.depositFeeFactorForNegativeImpact ?? marketConfig.swapFeeFactorForNegativeImpact,
         `depositFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
       );
@@ -155,7 +155,7 @@ const processMarkets = async ({
       await handleConfig(
         "uint",
         keys.WITHDRAWAL_FEE_FACTOR,
-        encodeData(["address", "bool"], [marketToken, true]),
+        encodeData(["address", "bool"], [marketToken, false]),
         marketConfig.withdrawalFeeFactorForNegativeImpact ?? marketConfig.swapFeeFactorForNegativeImpact,
         `withdrawalFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
       );
