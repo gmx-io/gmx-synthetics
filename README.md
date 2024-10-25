@@ -90,7 +90,7 @@ EnumberableSets are used to allow order lists and position lists to be easily qu
 
 ## GLV
 
-Short for GMX Liquidity Vault: a wrapper of multiple markets with the same long and short tokens. Liquidity is automatically rebalanced between underlying markets based on markets utilisation. 
+Short for GMX Liquidity Vault: a wrapper of multiple markets with the same long and short tokens. Liquidity is automatically rebalanced between underlying markets based on markets utilisation.
 
 # Technical Overview
 
@@ -665,11 +665,13 @@ After the initial setup:
 
 - If the contracts are used to support equity synthetic markets, care should be taken to ensure that stock splits and similar changes can be handled
 
-- Contracts with the "CONTROLLER" role have access to important functions such as setting DataStore values, due to this, care should be taken to ensure that such contracts do not have generic functions or functions that can be intentionally used to change important values
+- Contracts with the "CONTROLLER" role have access to important functions such as setting DataStore values, due to this, care should be taken to ensure that such contracts do not have generic functions or functions that can be used to change important values
 
 - Tests should be added for the different market types, e.g. spot only markets, single token markets
 
 - The ordering of values in the eventData for callbacks should not be modified unless strictly necessary, since callback contracts may reference the values by a fixed index
+
+- Note that if a struct that is passed into callbacks is changed, e.g. Deposit, Withdrawal, Order structs, this would cause the functions of callback contracts expecting the previous struct to stop working, due to this, the changes in structs should be highlighted to integrations
 
 - If the referral system is being used, the OrderHandler should be given access to update the referral code for traders
 
