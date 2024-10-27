@@ -34,7 +34,7 @@ async function main() {
 
   const pricesByToken = await getPricesFromTickers();
   const dataStore = await hre.ethers.getContract("DataStore");
-  const buybackTokens = [tokens.GMX, hre.network === "arbitrum" ? tokens.WETH : tokens.WAVAX];
+  const buybackTokens = [tokens.GMX, hre.network.name === "arbitrum" ? tokens.WETH : tokens.WAVAX];
 
   const data = await Promise.all(
     buybackTokens
