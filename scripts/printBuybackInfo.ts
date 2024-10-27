@@ -59,10 +59,11 @@ async function main() {
       }
       const price = pricesByToken[feeToken.address];
       console.log(
-        `    Fee token: ${feeToken.symbol} amount: ${formatAmount(amount, feeToken.decimals, 4)} ($${formatAmount(
-          amount.mul(price),
-          30
-        )})`
+        `    Fee token: ${feeToken.symbol.padEnd(6)} amount: ${formatAmount(
+          amount,
+          feeToken.decimals,
+          4
+        )} ($${formatAmount(amount.mul(price), 30, 2)})`
       );
     }
   }
