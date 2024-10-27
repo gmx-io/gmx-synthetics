@@ -61,11 +61,11 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise {
       batchAmounts: [
         {
           token: "0x62edc0692BD897D2295872a9FFCac5425011c661", // GMX
-          amount: expandDecimals(10, 18),
+          amount: expandDecimals(50, 18),
         },
         {
           token: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7", // WAVAX
-          amount: expandDecimals(5, 18),
+          amount: expandDecimals(50, 18),
         },
       ],
       gmxFactors: defaultBuybackGmxFactor,
