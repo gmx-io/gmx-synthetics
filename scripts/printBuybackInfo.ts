@@ -1,6 +1,25 @@
 import hre from "hardhat";
 import * as keys from "../utils/keys";
 import { formatAmount } from "../utils/math";
+import got from "got";
+
+function getOracleAbi() {
+  if (hre.network.name === "arbitrum") {
+    return "https://arbitrum-api.gmxinfra.io/";
+  } else if (hre.network.name === "avalanche") {
+    return "https://avalanche-api.gmxinfra.io/";
+  }
+  throw new Error("Unsupported network");
+}
+
+async function getPricesFromTickers() {
+  const tickers: any[] = await got(`${getOracleAbi()}prices/tickers`).json();
+  return Object.fromEntries(
+    tickers.map((ticker) => {
+      return [ticker.tokenAddress, ticker.maxPrice];
+    })
+  );
+}
 
 async function main() {
   const tokens = await hre.gmx.getTokens();
@@ -13,8 +32,9 @@ async function main() {
     addressToSymbol[address] = tokenSymbol;
   }
 
+  const pricesByToken = await getPricesFromTickers();
   const dataStore = await hre.ethers.getContract("DataStore");
-  const buybackTokens = [tokens.GMX, tokens.WETH];
+  const buybackTokens = [tokens.GMX, hre.network === "arbitrum" ? tokens.WETH : tokens.WAVAX];
 
   const data = await Promise.all(
     buybackTokens
@@ -28,6 +48,7 @@ async function main() {
 
   const tokensLength = Object.values(tokens).length;
 
+  console.log("buybackAvailableFeeAmount:");
   for (const [i, buybackToken] of buybackTokens.entries()) {
     console.log(`Buyback token: ${buybackToken.symbol}`);
     for (const [j, feeToken] of Object.values(tokens).entries()) {
@@ -36,7 +57,13 @@ async function main() {
       if (amount.eq(0)) {
         continue;
       }
-      console.log(`    Fee token: ${feeToken.symbol} amount: ${formatAmount(amount, feeToken.decimals, 4)}`);
+      const price = pricesByToken[feeToken.address];
+      console.log(
+        `    Fee token: ${feeToken.symbol} amount: ${formatAmount(amount, feeToken.decimals, 4)} ($${formatAmount(
+          amount.mul(price),
+          30
+        )})`
+      );
     }
   }
 }
